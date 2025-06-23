@@ -73,12 +73,16 @@ defineExpose({
   setSubmitLoading: (val: boolean) => {
     submitLoading.value = val
   },
+  clearValidateMessages: () => {
+    formInstance.value?.clearValidateMessages()
+  },
 })
 </script>
 
 <template>
   <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')" />
-  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false"
+    layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center text-[12px]">
       <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />
@@ -95,10 +99,14 @@ defineExpose({
     <div class="divider">
       <span class="mx-2">{{ $t('或') }}</span>
     </div>
-    <RxButton class="w-full" severity="secondary" size="md" icon="websites/rx_site_google" :label="$t('通过 {value} 账号登录', { value: 'Google' })" @click="oauth2LoginMap.google"></RxButton>
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
+    <RxButton class="w-full" severity="secondary" size="md" icon="websites/rx_site_google"
+      :label="$t('通过 {value} 账号登录', { value: 'Google' })" @click="oauth2LoginMap.google"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
     </RxButton>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
