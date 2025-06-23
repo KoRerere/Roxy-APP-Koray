@@ -30,8 +30,22 @@ const generateQrcode = async () => {
   }
 }
 
-generateQrcode();
+watch(() => moduleValue.value.qrcode, () => {
+  generateQrcode();
+}, { immediate: true })
 
+const inputOtpRef = useTemplateRef<any>('inputOtpRef');
+
+onMounted(() => {
+  nextTick(() => {
+    const inputs = inputOtpRef.value.$el.querySelectorAll('input');
+    if (inputs.length > 0) {
+      setTimeout(() => {
+        inputs[0].focus();
+      }, 200)
+    }
+  });
+})
 </script>
 
 
@@ -66,7 +80,7 @@ generateQrcode();
       {{ $t('步骤 2：从应用中验证二维码') }}
     </div>
 
-    <InputOtp class="inputotp-auto" name="passcode" :length="6" v-model="moduleValue.code" />
+    <InputOtp class="inputotp-auto" name="passcode" :length="6" v-model="moduleValue.code" ref="inputOtpRef" />
   </div>
 </template>
 

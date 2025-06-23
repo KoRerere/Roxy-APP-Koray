@@ -27,7 +27,7 @@ export const getSettings = () =>
     {
       label: $t('验证'),
       name: 'authentication',
-      icon: 'base/rx_ic_keys',
+      icon: 'base/rx_ic_key',
     },
     {
       label: $t("软件设置"),

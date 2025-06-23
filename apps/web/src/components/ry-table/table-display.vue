@@ -17,9 +17,9 @@ function toggle(event: Event) {
 const isBadge = computed(() => {
   if (sortField.value && sortColumns.value) {
     const col = sortColumns.value.find(item => item.key === sortField.value);
-    // 修复老的字段不存在的问题
-    if (col) return col._visible;
-    return false;
+    if (col) return !col._visible;
+    // 老的排序字段不可能显示在table上，所以它永远要显示这个Badge
+    return true;
   }
   return false
 })
@@ -28,17 +28,22 @@ const isBadge = computed(() => {
 <template>
   <slot name="before"></slot>
   <div class="position-relative flex">
-    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')" @click="toggle" />
-    <div v-if="isBadge" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 size-8px rounded-full bg-[var(--colors-background-bg-brand)]"></div>
+    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')"
+      @click="toggle" />
+    <div v-if="isBadge"
+      class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 size-8px rounded-full bg-[var(--colors-background-bg-brand)]">
+    </div>
   </div>
   <RyPopover ref="popover">
     <div :class="display.content">
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
           <RxSvgIcon name="base/rx_ic_dots_drag" class="cursor-grab handle" />
-          <span :class="['flex-auto', sortField === item.key ? 'color-[var(--colors-text-text-brand)]' : '', display.label]">
+          <span
+            :class="['flex-auto', sortField === item.key ? 'color-[var(--colors-text-text-brand)]' : '', display.label]">
             {{ item.title }}
-            <RxSvgIcon v-if="sortField === item.key" :name="getSortIcon(sortOrder as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)" />
+            <RxSvgIcon v-if="sortField === item.key" :name="getSortIcon(sortOrder as SortOrderNumber)" size="12px"
+              color="var(--colors-icon-icon-note)" />
           </span>
           <rxToggleSwitch v-if="!item.disabledToggle" v-model="item._visible" />
         </div>

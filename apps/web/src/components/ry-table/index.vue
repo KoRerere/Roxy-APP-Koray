@@ -552,6 +552,11 @@ const slots: any = useSlots()
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
     }
+
+    &:global(.p-datatable-column-sorted) {
+      background: var(--p-datatable-header-cell-background);
+      color: var(--p-datatable-header-cell-color);
+    }
   }
 }
 

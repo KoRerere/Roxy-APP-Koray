@@ -64,7 +64,7 @@ const handleConfirm = () => {
     <RecoveryCodes v-model="recoveryCodes" />
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="handleConfirm" />
+        <RxButton :label="$t('我已经保存了我的代码')" severity="primary" class="w-full" @click="handleConfirm" />
         <RxButton :label="$t('生成新的恢复代码')" severity="secondary" class="w-full" @click="generateNewCode" outlined />
       </div>
     </template>

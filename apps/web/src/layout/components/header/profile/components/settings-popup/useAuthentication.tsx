@@ -37,9 +37,17 @@ export const useAuthentication = () => {
                   <Auth2fa
                     defaultValue={enabledDefault}
                     modelValue={item.value}
-                    onChange={(val: boolean) => enabledDefault = val}
-                    bindCode={() => recoverCode.value = true}
-                    bindEmail={() => recoverEmail.value = true}
+                    onChange={(val: 'code' | 'email' | 'close') => {
+                      if (val === 'code') {
+                        recoverCode.value = true
+                      }
+                      if (val === 'email') {
+                        recoverEmail.value = true
+                      }
+                      if (val === 'close') {
+                        enabledDefault = false
+                      }
+                    }}
                   />
                 );
               },
