@@ -32,7 +32,7 @@ const handleViewCode = () => {
 }
 
 const generateNewCode = async () => {
-  const res = await API.base.userGenerateValidatorRecoverCodeList({
+  const res = await API.base.generateValidatorRecoverCodeList({
     type: 'modify'
   })
   onlyErrorToast(res.code, res.msg)

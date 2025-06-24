@@ -20,7 +20,7 @@ const handleViewCode = () => {
   const dialogInstance = showAuth2FA({
     header: $t('确认访问'),
     handleOk: async () => {
-      const res = await API.base.userGetValidatorTokenList()
+      const res = await API.base.getValidatorTokenInfoList({})
       onlyErrorToast(res.code, res.msg)
       if (res.code === 0) {
         dialogInstance.handleCancel()

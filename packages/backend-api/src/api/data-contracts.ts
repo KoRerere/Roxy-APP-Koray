@@ -1766,6 +1766,7 @@ export interface UserGetUserInfoListData {
      */
     firstCreateTip: boolean;
     clientId: string;
+    setPasswordStatus: boolean;
     /** 列表备注状态 */
     remarkDisplayStatus: boolean;
   };
@@ -3086,6 +3087,29 @@ export interface Get2FaLoginInfoListParams {
 }
 
 export interface Get2FaLoginInfoListData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface CheckEmailPasswordCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 邮箱 */
+  email: string;
+  /** 密码 */
+  password: string;
+}
+
+export interface CheckEmailPasswordCreateData {
   code: number;
   data: {
     is_migrate: boolean;

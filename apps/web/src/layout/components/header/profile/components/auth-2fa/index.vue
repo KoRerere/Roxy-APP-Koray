@@ -23,12 +23,6 @@ const [showToast, onlyErrorToast] = useResponseToast()
 
 const emailCode = ref('')
 
-const qrcode2FA = reactive({
-  qrcode: '',
-  secret: '',
-  code: '',
-})
-
 const close2faCode = ref('')
 
 const handleChange = () => {

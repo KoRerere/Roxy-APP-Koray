@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VerifyModal from '/@/views/login/components/recovery-code/verify-modal.vue';
-import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/index.vue';
+import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/setps-2fa.vue';
 import { $t } from '/@/locales'
 import { useLoginContext } from '/@/views/login/hooks/useLoginContext'
 import { useThemeStore } from '/@/stores/theme'
@@ -43,14 +43,14 @@ function verifyPassword(email: string) {
       container: ({ hideModal }) => h(VerifyModal, {
         email,
         onConfirm: async (formData: any) => {
-          // const { code, msg } = await API.base.forgetPasswordCreate(formData)
-          // onlyErrorToast(code, msg)
-          // if (code !== 0) return
-          // setNew2FA()
-          // hideModal()
+          const { code, msg } = await API.base.checkEmailPasswordCreate({ temp_token: tempToken, ...formData })
+          onlyErrorToast(code, msg)
+          if (code !== 0) return
+          setNew2FA()
+          hideModal()
         },
         onCancel: () => {
-          // hideModal()
+          hideModal()
         },
       }),
     },

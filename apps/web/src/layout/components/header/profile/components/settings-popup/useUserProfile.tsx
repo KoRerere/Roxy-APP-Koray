@@ -21,10 +21,10 @@ import { useToast } from "primevue/usetoast";
 // TODO 解决 options.instance 为 null 的问题，为 null 会报错
 const MyTooltip: ObjectDirective = {
   ...Tooltip,
-  beforeMount(el, options) {
+  beforeMount(el, options, ...args) {
     // console.log("beforeMount", el, options);
     options.instance ||= {}
-    Tooltip.beforeMount(el, options);
+    Tooltip.beforeMount?.(el, options, ...args);
   },
 }
 

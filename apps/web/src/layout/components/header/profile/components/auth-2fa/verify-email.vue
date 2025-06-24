@@ -5,7 +5,7 @@ const userStore = useUserStore()
 const userInfo = computed(() => userStore.userInfo)
 const modelValue = defineModel<string>()
 defineProps<{
-  request: ({ email }: { email?: string }) => Promise<{ code: number, msg: string, data: any }>,
+  request: (params: any) => Promise<any>,
 }>()
 
 </script>

@@ -13,6 +13,8 @@
 import {
   Check2FaLoginVerifyCreateData,
   Check2FaLoginVerifyCreatePayload,
+  CheckEmailPasswordCreateData,
+  CheckEmailPasswordCreatePayload,
   CheckOtherDeviceLoginListData,
   CheckOtherDeviceLoginListParams,
   CheckRecoverCodeCreateData,
@@ -1569,6 +1571,27 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/get_2fa_login_info`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckEmailPasswordCreate
+   * @summary 校验邮箱密码
+   * @request POST:/check_email_password
+   * @response `200` `CheckEmailPasswordCreateData`
+   */
+  checkEmailPasswordCreate = (
+    data: CheckEmailPasswordCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckEmailPasswordCreateData, any>({
+      path: `/check_email_password`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
