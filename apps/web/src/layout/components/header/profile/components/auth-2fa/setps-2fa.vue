@@ -74,7 +74,8 @@ const handleNext = async () => {
   if (currentSetp.value === '1') {
     const res = await API.base.getPersonalVerifyValidatorCodeList({
       code: qrcode2FA.code,
-      temp_token: props.tempToken
+      temp_token: props.tempToken,
+      type: props.tempToken ? 'login_recover_code' : 'add_2fa_info'
     })
     onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {

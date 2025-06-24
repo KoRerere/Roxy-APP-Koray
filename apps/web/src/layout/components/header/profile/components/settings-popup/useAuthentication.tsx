@@ -51,11 +51,11 @@ export const useAuthentication = () => {
             {
               label: $t("邮箱地址"),
               name: "email",
-              value: currentData.value?.email ?? "",
+              value: userStore.userInfo?.email ?? "",
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return <div class="w-full flex gap-2 items-center justify-between">
-                  {withDirectives(h("div", { class: "truncate w-[152px]" }, currentData.value?.email), [
-                    [MyTooltip, { value: currentData.value?.email }, '', { top: true }]
+                  {withDirectives(h("div", { class: "truncate w-[152px]" }, userStore.userInfo?.email), [
+                    [MyTooltip, { value: userStore.userInfo?.email }, '', { top: true }]
                   ])}
                   <RxButton
                     severity="secondary"
@@ -240,10 +240,7 @@ export const useAuthentication = () => {
         default: ({ hideModal }) => {
           const onSuccess = async () => {
             hideModal()
-            const { code, data } = await userStore.fetchUserInfo()
-            if (code === 0) {
-              Object.assign(currentData.value, data)
-            }
+            userStore.fetchUserInfo()
           }
           return <EmailChangeDialog onSuccess={onSuccess} />
         },

@@ -27,6 +27,7 @@ const handleViewCode = () => {
       })
       onlyErrorToast(res.code, res.msg)
       if (res.code === 0) {
+        code2FA.value = ''
         email2FA.value = res.data.recoverEmail;
         dialogInstance.handleCancel()
         visible.value = true;

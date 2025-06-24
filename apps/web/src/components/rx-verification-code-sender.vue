@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { useResponseToast } from '../hooks/useResponseToast';
 
 const { interval = 60, email, request } = defineProps<{
@@ -44,7 +45,7 @@ defineExpose({
 
 <template>
   <div class="w-full flex justify-between items-center gap-[12px] overflow-hidden">
-    <InputText v-model="modelValue" type="text" v-bind="$attrs" class="w-full" />
+    <TsFormInputText v-model="modelValue" type="text" v-bind="$attrs" class="w-full" />
     <RxButton severity="secondary" outlined class="flex-shrink-0" :disabled="countdown > 0" @click="handleSendCode">
       {{ countdown > 0 ? $t('{time} 秒后可重新获取', { time: countdown }) : $t('发送验证码') }}
     </RxButton>

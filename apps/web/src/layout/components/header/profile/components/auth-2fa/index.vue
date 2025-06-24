@@ -37,7 +37,7 @@ const handleChange = () => {
 
 const verifyEmailCode = async () => {
   const res = await API.base.userVerifyValidatorVerifyCodeList({
-    ver_code: emailCode.value,
+    ver_code: emailCode.value.trim(),
   })
   onlyErrorToast(res.code, res.msg)
   if (res.code === 0) {

@@ -1545,6 +1545,10 @@ export interface LoginCreateData {
     /** 旧字段，是否迁移数据 */
     is_migrate: boolean;
     workspaceId: number;
+    /** 420状态会有这个字段 */
+    recover_type?: string;
+    /** 420状态会有这个字段 */
+    recover_email?: string;
   };
   msg: string;
 }
@@ -2919,6 +2923,11 @@ export interface GetPersonalVerifyValidatorCodeListParams {
    */
   code: string;
   temp_token?: string;
+  /**
+   * 验证码校验类型
+   * @example ""login_2fa", "login_recover_code", "update_2fa_info", "add_2fa_info""
+   */
+  type: string;
 }
 
 export interface GetPersonalVerifyValidatorCodeListData {
@@ -2963,12 +2972,12 @@ export interface ValidatorBindCreatePayload {
    * 恢复邮箱
    * 恢复邮箱
    */
-  recover_email: string;
+  recover_email?: string;
   /**
    * 恢复邮箱验证码
    * 恢复邮箱验证码
    */
-  ver_code: string;
+  ver_code?: string;
   temp_token?: string;
 }
 
@@ -3076,6 +3085,7 @@ export interface CheckRecoverCodeCreatePayload {
 export interface CheckRecoverCodeCreateData {
   code: number;
   data: string;
+  msg: string;
 }
 
 export interface Get2FaLoginInfoListParams {

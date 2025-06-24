@@ -47,8 +47,11 @@ const handleHide = () => {
   isGenerated.value = false;
 }
 
-const handleConfirm = () => {
-  visible.value = false;
+const handleConfirm = async () => {
+  const { code, msg } = await API.base.validatorBindCreate({ recover_type: 'code' })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+  handleHide()
 }
 </script>
 

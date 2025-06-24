@@ -9,26 +9,26 @@ import TeamSpace from './TeamSpace.vue';
 const tabs = [
   {
     key: 'SupportMorePlatform',
-    title: $t('Support More Platform'),
-    desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
+    title: $t('广泛业务平台支持'),
+    desc: $t('RoxyBrowser 致力于服务来自世界各地的企业和个人用户，助力全球业务高效流转。'),
     component: SupportMorePlatform,
   },
   {
     key: 'MultiAccounting',
-    title: $t('Multi Accounting'),
-    desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
+    title: $t('集成式多账户管理'),
+    desc: $t('同步 RoxyBrowser 核心研究成果，定义安全多账户协同标准。'),
     component: MultiAccounting
   },
   {
     key: 'ProfilesSyncing',
-    title: $t('Profiles Syncing'),
-    desc: $t('Integer dui odio, placerat venenatis enim eu, congue hendrerit libero. Donec cursus ultrices rhoncus. Mauris ultrices ultrices eros sed ultricies.'),
+    title: $t('跨多窗口同步操作'),
+    desc: $t('同时操作多个环境，大幅提升工作流程和生产效率，轻松应对多任务处理及重复操作。'),
     component: ProfilesSyncing
   },
   {
     key: 'TeamSpace',
-    title: $t('Team Space'),
-    desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
+    title: $t('释放团队协作潜力'),
+    desc: $t('RoxyBrowser 支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
     component: TeamSpace
   }
 ]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import VerifyModal from '/@/views/login/components/recovery-code/verify-modal.vue';
+import VerifyModal from '/@/views/login/components/recovery/verify-modal.vue';
 import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/setps-2fa.vue';
 import { $t } from '/@/locales'
 import { useLoginContext } from '/@/views/login/hooks/useLoginContext'
@@ -13,6 +13,9 @@ interface Props {
 }
 
 const { tempToken } = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'success', data: any): void
+}>()
 
 const themeStore = useThemeStore()
 const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
@@ -46,7 +49,7 @@ function verifyPassword(email: string) {
           const { code, msg } = await API.base.checkEmailPasswordCreate({ temp_token: tempToken, ...formData })
           onlyErrorToast(code, msg)
           if (code !== 0) return
-          setNew2FA()
+          visible2FA.value = true
           hideModal()
         },
         onCancel: () => {
@@ -57,21 +60,21 @@ function verifyPassword(email: string) {
   })
 }
 
-function setNew2FA() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    closeOnEscape: false,
-    pt: {
-      content: '!pa-0'
-    },
-    slots: {
-      container: ({ hideModal }) => h(Auth2FA),
-    },
-  })
+const visible2FA = ref(false)
+
+function hideDialog() {
+  visible2FA.value = false;
 }
 
+async function getLoginBy2FA() {
+  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken })
+
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+
+  visible2FA.value = false;
+  emit('success', data)
+}
 </script>
 
 <template>
@@ -80,7 +83,7 @@ function setNew2FA() {
     <img class="mx-auto w-32" :src="imgSrc"></img>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-3">
-        <div class="description">If you are unable to access your authenticator app, enter one of your recovery codes to verify your identity</div>
+        <div class="description">{{ $t('如果您无法访问您的身份验证器应用，请输入其中一个恢复代码来验证您的身份') }}</div>
         <InputMask class="text-center" v-model="recoverCode" mask="*****-*****" placeholder="*****-*****" />
       </div>
       <RxButton size="md" class="w-full" :disabled="recoverCode.length !== 11" @click="handleSubmit">{{ $t('登录') }}</RxButton>
@@ -90,6 +93,7 @@ function setNew2FA() {
         </template>
       </i18n-t>
     </div>
+    <Auth2FA v-model:visible="visible2FA" :temp-token="tempToken" @success="getLoginBy2FA" @cancel="hideDialog" />
   </div>
 </template>
 

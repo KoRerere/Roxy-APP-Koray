@@ -8,9 +8,10 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 interface Props {
   tempToken: string
+  recoverType: 'code' | 'email' | (string & {})
 }
 
-const { tempToken } = defineProps<Props>()
+const { recoverType, tempToken } = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'success', data: any): void
@@ -26,13 +27,22 @@ const fa_code = ref('')
 const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href)
 
 async function handleSubmit() {
-  const { code, data, msg } = await API.base.check2FaLoginVerifyList({ temp_token: tempToken, fa_code: fa_code.value })
+  const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ temp_token: tempToken, code: fa_code.value, type: 'login_2fa' })
   onlyErrorToast(code, msg)
   if (code !== 0) {
     isShowAlert.value = true
     mixpanel.track('login', { method: '2fa', success: false, error: msg })
     return
   }
+  getLoginInfoBy2FA()
+}
+
+async function getLoginInfoBy2FA() {
+  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken })
+
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+
   emit('success', data)
 }
 </script>
@@ -50,7 +60,8 @@ async function handleSubmit() {
       <RxButton size="md" class="w-full" :disabled="fa_code.length !== 6" @click="handleSubmit">{{ $t('登录') }}</RxButton>
       <i18n-t class="description" tag="div" :keypath="$t('无法登录？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
-          <a class="description-link" @click="setCurrentComponent('recoveryCode')">{{ $t('使用恢复代码') }}</a>
+          <a v-if="recoverType === 'code'" class="description-link" @click="setCurrentComponent('recoveryCode')">{{ $t('使用恢复代码') }}</a>
+          <a v-else class="description-link" @click="setCurrentComponent('recoveryEmail')">{{ $t('使用恢复邮箱') }}</a>
         </template>
       </i18n-t>
     </div>

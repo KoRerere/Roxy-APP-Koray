@@ -7,7 +7,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback, type OauthLoginType } from '/@/utils'
-import { EmailCodeInputOtp, ResetPassword, SignForm, Verify2fa, RecoveryCode } from './components/'
+import { EmailCodeInputOtp, ResetPassword, SignForm, Verify2fa, RecoveryCode, RecoveryEmail } from './components/'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -34,6 +34,8 @@ const signFormData = ref<LoginCreatePayload>({
 const updateInfo = ref<ResourceUpdateMessage>()
 const signFormSwitchRegister = ref(false)
 const tempToken = ref()
+const recoverType = ref()
+const recoverEmail = ref()
 
 const showUpdaterMessage = computed(() => {
   return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
@@ -73,7 +75,9 @@ async function handleSubmit() {
 
   if (code !== 0) {
     if (code === 420) {
-      tempToken.value = data
+      tempToken.value = data.token
+      recoverType.value = data.recover_type!
+      recoverEmail.value = data.recover_email!
       setCurrentComponent('verify2fa')
       return
     }
@@ -256,8 +260,9 @@ provideLoginContext({
           <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
-          <Verify2fa v-else-if="currentComp === 'verify2fa'" :temp-token="tempToken" @success="afterLogin" />
+          <Verify2fa v-else-if="currentComp === 'verify2fa'" :temp-token="tempToken" :recover-type="recoverType" @success="afterLogin" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
+          <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
         </div>
 
         <div class="footer">

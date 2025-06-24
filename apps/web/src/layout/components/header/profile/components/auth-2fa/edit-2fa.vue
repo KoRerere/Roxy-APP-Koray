@@ -20,17 +20,26 @@ const handleViewCode = () => {
   const dialogInstance = showAuth2FA({
     header: $t('确认访问'),
     handleOk: async () => {
-      const res = await API.base.getValidatorTokenInfoList({})
-      onlyErrorToast(res.code, res.msg)
-      if (res.code === 0) {
-        dialogInstance.handleCancel()
-        visibleQRCode.value = true;
-        code2FA.value = '';
-        qrcode2FA.qrcode = res.data.google_keyuri;
-        qrcode2FA.secret = res.data.secret;
-      }
+      const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ code: code2FA.value, type: 'update_2fa_info' })
+
+      onlyErrorToast(code, msg)
+      if (code !== 0) return
+      code2FA.value = ''
+      dialogInstance.handleCancel()
+      getSecret()
     }
   })
+}
+
+async function getSecret() {
+  const res = await API.base.getValidatorTokenInfoList({})
+  onlyErrorToast(res.code, res.msg)
+  if (res.code === 0) {
+    visibleQRCode.value = true;
+    code2FA.value = '';
+    qrcode2FA.qrcode = res.data.google_keyuri;
+    qrcode2FA.secret = res.data.secret;
+  }
 }
 
 const reset2FA = async () => {
