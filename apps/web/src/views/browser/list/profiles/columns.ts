@@ -19,8 +19,8 @@ export function getColumns() {
         sortable: true,
         slot: 'profile',
         style: {
-          width: '30%',
-          minWidth: '215px',
+          width: '0%',
+          minWidth: '180px',
         }
       },
       {

@@ -5,7 +5,7 @@ import { generateApi } from "swagger-typescript-api";
 /* NOTE: all fields are optional expect one of `input`, `url`, `spec` */
 generateApi({
   output: path.resolve(process.cwd(), "./src/api"),
-  url: "http://127.0.0.1:4523/export/openapi/19?version=3.0",
+  url: "http://127.0.0.1:4523/export/openapi/21?version=3.0",
   httpClientType: "axios", // or "fetch"
   modular: true,
   //  generateRouteTypes: true,

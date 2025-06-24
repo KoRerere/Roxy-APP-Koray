@@ -40,7 +40,7 @@ const inputs = ref([
   },
   {
     label: $t('验证码'),
-    name: 'code',
+    name: 'ver_code',
     render: () => h(RxVerificationCodeSender, {
       placeholder: $t('请输入验证码'),
       request: async () => {
@@ -56,7 +56,7 @@ const inputs = ref([
 ])
 
 async function handleSubmit(formData: any) {
-  const { code, data, msg } = await API.base.checkRecoverCodeCreate({ temp_token: tempToken, ...formData })
+  const { code, data, msg } = await API.base.verifyValidatorEmailVerifyCodeCreate({ temp_token: tempToken, ...formData })
   onlyErrorToast(code, msg)
   if (code !== 0) return
   verifyPassword(data)

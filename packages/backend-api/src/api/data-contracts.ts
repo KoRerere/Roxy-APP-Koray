@@ -3054,27 +3054,6 @@ export interface UserUpdateValidatorTokenCreateData {
   msg: string;
 }
 
-export interface Check2FaLoginVerifyCreatePayload {
-  /** 临时token */
-  temp_token: string;
-  /** 验证码 */
-  fa_code: number;
-}
-
-export interface Check2FaLoginVerifyCreateData {
-  code: number;
-  data: {
-    is_migrate: boolean;
-    role: string;
-    token: string;
-    type: number;
-    user_id: number;
-    user_name: string;
-    workspaceId: number;
-  };
-  msg: string;
-}
-
 export interface CheckRecoverCodeCreatePayload {
   /** 临时token */
   temp_token: string;
@@ -3094,6 +3073,11 @@ export interface Get2FaLoginInfoListParams {
    * @example "oQNTHk45wom22tT71750668640993"
    */
   temp_token: string;
+  /**
+   * 登录验证的类型
+   * @example "recover_code，recover_email, 2fa_code"
+   */
+  type?: string;
 }
 
 export interface Get2FaLoginInfoListData {
@@ -3130,6 +3114,19 @@ export interface CheckEmailPasswordCreateData {
     user_name: string;
     workspaceId: number;
   };
+  msg: string;
+}
+
+export interface VerifyValidatorEmailVerifyCodeCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface VerifyValidatorEmailVerifyCodeCreateData {
+  code: number;
+  data: string;
   msg: string;
 }
 

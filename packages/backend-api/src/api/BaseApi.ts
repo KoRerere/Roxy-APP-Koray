@@ -11,8 +11,6 @@
  */
 
 import {
-  Check2FaLoginVerifyCreateData,
-  Check2FaLoginVerifyCreatePayload,
   CheckEmailPasswordCreateData,
   CheckEmailPasswordCreatePayload,
   CheckOtherDeviceLoginListData,
@@ -143,6 +141,8 @@ import {
   UserWriteInviteCodeCreatePayload,
   ValidatorBindCreateData,
   ValidatorBindCreatePayload,
+  VerifyValidatorEmailVerifyCodeCreateData,
+  VerifyValidatorEmailVerifyCodeCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -1516,27 +1516,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name Check2FaLoginVerifyCreate
-   * @summary 2FA登录验证
-   * @request POST:/check_2fa_login_verify
-   * @response `200` `Check2FaLoginVerifyCreateData`
-   */
-  check2FaLoginVerifyCreate = (
-    data: Check2FaLoginVerifyCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<Check2FaLoginVerifyCreateData, any>({
-      path: `/check_2fa_login_verify`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name CheckRecoverCodeCreate
    * @summary 恢复代码
    * @request POST:/check_recover_code
@@ -1589,6 +1568,27 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<CheckEmailPasswordCreateData, any>({
       path: `/check_email_password`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name VerifyValidatorEmailVerifyCodeCreate
+   * @summary 验证恢复邮箱验证码
+   * @request POST:/verify_validator_email_verify_code
+   * @response `200` `VerifyValidatorEmailVerifyCodeCreateData`
+   */
+  verifyValidatorEmailVerifyCodeCreate = (
+    data: VerifyValidatorEmailVerifyCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<VerifyValidatorEmailVerifyCodeCreateData, any>({
+      path: `/verify_validator_email_verify_code`,
       method: "POST",
       body: data,
       type: ContentType.Json,

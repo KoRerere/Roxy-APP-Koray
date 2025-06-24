@@ -351,7 +351,8 @@ const slots: any = useSlots()
 
         <slot name="column-before"></slot>
 
-        <Column v-if="selectionMode" header-style="width:0px; min-width: 45px" :selection-mode="selectionMode" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" />
+        <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;" bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
+          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" />
 
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>

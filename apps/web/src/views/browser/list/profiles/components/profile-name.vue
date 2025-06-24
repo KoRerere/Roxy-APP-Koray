@@ -75,8 +75,7 @@ function handleClickInplace(e: MouseEvent) {
         <div class="profile-name-content">{{ windowName }}</div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
-          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
           @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
@@ -101,7 +100,6 @@ function handleClickInplace(e: MouseEvent) {
 
 :deep(.p-inplace-display) {
   display: flex;
-  justify-content: center;
   border: 0 none;
   padding: 0;
 
