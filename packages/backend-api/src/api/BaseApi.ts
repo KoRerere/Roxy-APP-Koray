@@ -11,6 +11,8 @@
  */
 
 import {
+  CheckEmailOr2FaVerifyListData,
+  CheckEmailOr2FaVerifyListParams,
   CheckEmailPasswordCreateData,
   CheckEmailPasswordCreatePayload,
   CheckOtherDeviceLoginListData,
@@ -1592,6 +1594,26 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckEmailOr2FaVerifyList
+   * @summary 校验是用邮箱还是2FA码验证
+   * @request GET:/check_email_or_2fa_verify
+   * @response `200` `CheckEmailOr2FaVerifyListData`
+   */
+  checkEmailOr2FaVerifyList = (
+    query: CheckEmailOr2FaVerifyListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckEmailOr2FaVerifyListData, any>({
+      path: `/check_email_or_2fa_verify`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

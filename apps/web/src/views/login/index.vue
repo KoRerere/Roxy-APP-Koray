@@ -17,6 +17,7 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { motion, AnimatePresence } from 'motion-v'
 import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
@@ -25,6 +26,7 @@ const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite, } = simpleLocaleStore
 const { setToken, setPassword, initUserInfo, userInfo, setLoginWay } = useUserStore()
 const { rememberMe, password } = storeToRefs(useUserStore())
+const [_, onlyErrorToast] = useResponseToast()
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
@@ -75,10 +77,7 @@ async function handleSubmit() {
 
   if (code !== 0) {
     if (code === 420) {
-      tempToken.value = data.token
-      recoverType.value = data.recover_type!
-      recoverEmail.value = data.recover_email!
-      setCurrentComponent('verify2fa')
+      to2faVerify(data)
       return
     }
 
@@ -98,6 +97,27 @@ async function handleSubmit() {
   }
 
   await afterLogin(data)
+}
+
+function to2faVerify(data: any) {
+  tempToken.value = data.token
+  recoverType.value = data.recover_type!
+  recoverEmail.value = data.recover_email!
+  setCurrentComponent('verify2fa')
+}
+
+async function handleSubmitBy2fa(faCode: string) {
+  const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ temp_token: tempToken.value, code: faCode, type: 'login_2fa' })
+  onlyErrorToast(code, msg)
+  if (code !== 0) {
+    mixpanel.track('login', { method: '2fa', success: false, error: msg })
+    return
+  }
+
+  const { code: code2, data, msg: msg2 } = await API.base.get2FaLoginInfoList({ temp_token: tempToken.value, type: '2fa_code' })
+  onlyErrorToast(code2, msg2)
+  if (code2 !== 0) return
+  afterLogin(data)
 }
 
 async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | OauthLoginType = 'password') {
@@ -169,23 +189,28 @@ useOauth2Callback(async (params) => {
 
       const { code, data, msg = $t('登录失败') } = await api()
 
-      if (code === 0) {
-        if (source === 'google' && data.workspaceId === 0) {
-          showModal({
-            slots: {
-              container: ({ hideModal }) => (
-                <MigrationTips closeCallback={hideModal} token={data.token} onFinish={() => afterLogin(data)} />
-              ),
-            },
-          })
+      if (code !== 0) {
+        if (code === 420) {
+          to2faVerify(data)
           return
         }
 
-        afterLogin(data, source)
-      } else {
         mixpanel.track('login', { method: source, success: false, error: msg })
         toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+        return
       }
+
+      if (source === 'google' && data.workspaceId === 0) {
+        showModal({
+          slots: {
+            container: ({ hideModal }) => (
+              <MigrationTips closeCallback={hideModal} token={data.token} onFinish={() => afterLogin(data)} />
+            ),
+          },
+        })
+        return
+      }
+      afterLogin(data, source)
     }
     catch (e) {
       console.error('oauth2 error', e)
@@ -260,7 +285,7 @@ provideLoginContext({
           <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
-          <Verify2fa v-else-if="currentComp === 'verify2fa'" :temp-token="tempToken" :recover-type="recoverType" @success="afterLogin" />
+          <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" @submit="handleSubmitBy2fa" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
           <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
         </div>

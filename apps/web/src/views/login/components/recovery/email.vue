@@ -106,14 +106,14 @@ async function getLoginBy2FA() {
 
 <template>
   <div class="flex flex-col items-start gap-6">
-    <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="setCurrentComponent('verify2fa')"></RxButton>
+    <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回登录')" @click="setCurrentComponent('signForm')"></RxButton>
     <img class="mx-auto w-32" :src="imgSrc"></img>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-3">
         <div class="description">{{ $t('如果您无法访问您的身份验证器应用，请输入您的恢复邮箱 ({email}) 和代码来验证您的身份', { email: recoverEmail }) }}</div>
         <TsForm ref="wcis" id="wcis" :inputs="inputs" @submit="handleSubmit" />
       </div>
-      <RxButton size="md" class="w-full" type="submit" form="wcis">{{ $t('登录') }}</RxButton>
+      <RxButton size="md" class="w-full" type="submit" form="wcis">{{ $t('确认') }}</RxButton>
       <i18n-t class="description" tag="div" :keypath="$t('无法使用您的身份验证器应用程序或恢复邮箱？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
           <a class="description-link" @click="$showLiveChat">{{ $t('联系我们') }}</a>

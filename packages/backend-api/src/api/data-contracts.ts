@@ -3130,6 +3130,25 @@ export interface VerifyValidatorEmailVerifyCodeCreateData {
   msg: string;
 }
 
+export interface CheckEmailOr2FaVerifyListParams {
+  /**
+   * 邮箱
+   * @example "1876019890@qq.com"
+   */
+  email: string;
+}
+
+export interface CheckEmailOr2FaVerifyListData {
+  code: number;
+  data: {
+    /** 验证方式，2fa/邮箱 */
+    verify_type: string;
+    /** 恢复方式，代码/邮箱 */
+    recover_type: string;
+  };
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];

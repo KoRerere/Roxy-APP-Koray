@@ -6,13 +6,14 @@ import { RxForm } from '/@/components/rx-form'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
+import Verify2fa from './verify-2fa.vue'
 import { getResetPasswordSchemas, getEmailSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const rxFormRef = useTemplateRef('rxForm')
 const emailFormData = ref({
@@ -21,29 +22,23 @@ const emailFormData = ref({
 const emailCode = ref('')
 const resetPwdFormData = ref({ email: '', newPassword: '', confirmPassword: '' })
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
+const step2Type = ref<'email' | '2fa'>()
 const isShowAlert = ref(false)
 
 async function handleSubmit() {
   isShowAlert.value = false
 
   if (currentStep.value === 'step1') {
-    const { code, msg } = await API.base.sendEmailForgetVerifyCodeList({
-      email: emailFormData.value.user_name,
-    })
+    const { code, data, msg } = await API.base.checkEmailOr2FaVerifyList({ email: emailFormData.value.user_name })
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
 
-    if (code === 0) {
-      toast.add({ severity: 'success', summary: $t('验证码已发送'), detail: $t('请检查您的邮箱。'), life: 2500 })
+    step2Type.value = data.verify_type as 'email' | '2fa'
+
+    if (step2Type.value === '2fa') {
       currentStep.value = 'step2'
-    }
-    else {
-      mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
-      // toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
-      if (code === 102) {
-        isShowAlert.value = true
-      } else {
-        isShowAlert.value = false
-        showToast(code, msg)
-      }
+    } else {
+      sendEmailCode()
     }
   }
   else if (currentStep.value === 'step3') {
@@ -66,13 +61,41 @@ async function handleSubmit() {
   }
 }
 
+async function sendEmailCode() {
+  const { code, msg } = await API.base.sendEmailForgetVerifyCodeList({
+    email: emailFormData.value.user_name,
+  })
+
+  if (code === 0) {
+    toast.add({ severity: 'success', summary: $t('验证码已发送'), detail: $t('请检查您的邮箱。'), life: 2500 })
+    currentStep.value = 'step2'
+  }
+  else {
+    mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
+    if (code === 102) {
+      isShowAlert.value = true
+    } else {
+      isShowAlert.value = false
+      showToast(code, msg)
+    }
+  }
+}
+
 function backToSignIn() {
-  console.log('backToSignIn')
   setCurrentComponent('signForm')
 }
 
+async function receive2faCode(ver_code: string) {
+  const { code, msg } = await API.base.getCheckBindEmailVerCodeList({
+    email: emailFormData.value.user_name,
+    ver_code,
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+  receiveEmailCode(ver_code)
+}
+
 function receiveEmailCode(code: string) {
-  console.log('receiveEmailCode', code)
   emailCode.value = code
   currentStep.value = 'step3'
 }
@@ -102,7 +125,8 @@ function receiveEmailCode(code: string) {
     </div>
   </template>
   <template v-else>
-    <EmailCodeInputOtp type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode" @back="currentStep = 'step1'" />
+    <EmailCodeInputOtp v-if="step2Type === 'email'" type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode" @back="currentStep = 'step1'" />
+    <Verify2fa v-if="step2Type === '2fa'" recoverType="code" @submit="receive2faCode"></Verify2fa>
   </template>
 </template>
 

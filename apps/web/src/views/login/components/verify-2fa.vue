@@ -3,48 +3,25 @@ import { RxAlert } from '/@/components/rx-alert/'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { useThemeStore } from '/@/stores/theme'
-import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
 
 interface Props {
-  tempToken: string
   recoverType: 'code' | 'email' | (string & {})
 }
 
-const { recoverType, tempToken } = defineProps<Props>()
+const { recoverType } = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: 'success', data: any): void
+defineEmits<{
+  (e: 'submit', faCode: string): void
 }>()
 
 const themeStore = useThemeStore()
-const [_, onlyErrorToast] = useResponseToast()
-const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
+const { setCurrentComponent } = useLoginContext()
 
 const isShowAlert = ref(false)
 const fa_code = ref('')
 
 const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href)
 
-async function handleSubmit() {
-  const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ temp_token: tempToken, code: fa_code.value, type: 'login_2fa' })
-  onlyErrorToast(code, msg)
-  if (code !== 0) {
-    isShowAlert.value = true
-    mixpanel.track('login', { method: '2fa', success: false, error: msg })
-    return
-  }
-  getLoginInfoBy2FA()
-}
-
-async function getLoginInfoBy2FA() {
-  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken, type: '2fa_code' })
-
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-
-  emit('success', data)
-}
 </script>
 
 <template>
@@ -53,11 +30,9 @@ async function getLoginInfoBy2FA() {
     <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="setCurrentComponent('signForm')"></RxButton>
     <img class="mx-auto w-32" :src="imgSrc"></img>
     <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-3">
-        <div class="description">Please check your authentication app and enter the one-time password below to continue: </div>
-        <InputOtp v-model="fa_code" class="inputotp" :length="6" />
-      </div>
-      <RxButton size="md" class="w-full" :disabled="fa_code.length !== 6" @click="handleSubmit">{{ $t('登录') }}</RxButton>
+      <div class="description">{{ $t('请检查您的身份验证应用并输入以下一次性密码以继续：') }}</div>
+      <InputOtp v-model="fa_code" class="inputotp" :length="6" />
+      <RxButton class="w-full" size="md" :disabled="fa_code.length !== 6" @click="$emit('submit', fa_code)">{{ $t('确认') }}</RxButton>
       <i18n-t class="description" tag="div" :keypath="$t('无法登录？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
           <a v-if="recoverType === 'code'" class="description-link" @click="setCurrentComponent('recoveryCode')">{{ $t('使用恢复代码') }}</a>
