@@ -98,7 +98,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="select-none">
     <motion.div class="absolute w-1000px left-156px -bottom-205px" :initial="{ opacity: 0, y: 100 }"
       :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
       <img :src="img1" alt="" class="w-full select-none opacity-60" draggable="false">
