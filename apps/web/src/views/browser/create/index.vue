@@ -352,7 +352,7 @@ async function batchCreateProfile(params: any) {
     return
   }
   const accountDiffCount = createCount - windowPlatformList.length - platformUrlIds.length
-  if (platformBindType === AccountBindType.Random && accountDiffCount < 0) {
+  if (platformBindType === AccountBindType.Order && accountDiffCount < 0) {
     onlyErrorToast(-1, $t('账号数量不能大于窗口'))
     return
   }

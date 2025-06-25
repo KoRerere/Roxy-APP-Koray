@@ -96,7 +96,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const getCoreVersionOptions = (os: string, version: string) => {
     return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
-      ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本  
+      ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
       : $dict_map.coreVersion
   }
 
@@ -320,7 +320,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('平台账号'),
       name: 'windowPlatformList',
       value: data.windowPlatformList ?? [],
-      platformBindType: AccountBindType.Random,
+      platformBindType: AccountBindType.Order,
       formatValue: (input: any, _inputs: any, formData: any) => {
         const platformUrlIds = input.value.map((item: any) => item.id).filter(Boolean)
         Object.assign(formData, {

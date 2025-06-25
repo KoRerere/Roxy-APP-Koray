@@ -1,5 +1,5 @@
 export enum AccountBindType {
-  Random = 1,
+  Order = 1,
   MultiWindow = 2,
 }
 

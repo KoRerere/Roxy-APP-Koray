@@ -19,7 +19,7 @@ const { isBatch, createCount } = useTableContext()
 const attrs = useAttrs()
 const drawerInstance = useDrawer()
 const windowPlatformList = defineModel<any[]>('modelValue')
-const type = defineModel<number>('type', { default: AccountBindType.Random })
+const accountType = defineModel<number>('type', { default: AccountBindType.Order })
 
 const input = ref<Record<string, any>>({
   type: 'select',
@@ -30,7 +30,7 @@ const input = ref<Record<string, any>>({
     options: [
       {
         label: $t('顺序分配'),
-        value: AccountBindType.Random
+        value: AccountBindType.Order
       },
       {
         label: $t('应用于所有窗口'),
@@ -43,8 +43,8 @@ const input = ref<Record<string, any>>({
 const selectedAccount = computed(() => windowPlatformList.value?.filter((item: any) => item.id))
 const sumAccountCount = computed(() => windowPlatformList.value?.length ?? 0)
 
-function toggleDrawer(type: 'create' | 'list', item?: any) {
-  const dismissable = type === 'list'
+function toggleDrawer(addType: 'create' | 'list', item?: any) {
+  const dismissable = addType === 'list'
   const title = dismissable ? $t('平台账号列表') : $t('添加平台账号')
   const data = dismissable ? { windowPlatformList: selectedAccount.value } : deepClone(item)
   const RenderComponent = dismissable ? AccountList : AccountCreate
@@ -55,6 +55,9 @@ function toggleDrawer(type: 'create' | 'list', item?: any) {
     slots: {
       container: () => h(RenderComponent, {
         data,
+        isBatch: isBatch.value,
+        createCount: createCount.value,
+        accountType: accountType.value,
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: (formData: Record<string, any>) => {
 
@@ -103,7 +106,7 @@ function replaceData(data: any) {
       <div class="flex-1 items-center flex gap-2">
         <div class="title">{{ attrs.label }}</div>
         <div v-if="isBatch" class="flex items-center gap-2">
-          <TsFormSelect v-model="type" v-bind="input.props" />
+          <TsFormSelect v-model="accountType" v-bind="input.props" />
           <SvgIcon v-tooltip="{ value: $t('顺序分配: 账号顺序分配给窗口，一个窗口应用一个账号\n应用于所有窗口: 将账号应用到所有窗口'), showDelay: 300, pt: { root: '!max-w-65' } }" name="base/rx_ic_info"
             color="var(--colors-icon-icon-note)" />
         </div>
@@ -112,7 +115,7 @@ function replaceData(data: any) {
       <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
 
-    <RxAlert v-if="isBatch && type === AccountBindType.Random && sumAccountCount > createCount" class="w-full" type="warn"
+    <RxAlert v-if="isBatch && accountType === AccountBindType.Order && sumAccountCount > createCount" class="w-full" type="warn"
       :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumAccountCount, max: createCount, message: $t('当前选择绑定的账号数量已超过创建窗口数。') })" :closable="false"></RxAlert>
     <div v-if="windowPlatformList?.length">
       <div v-if="isBatch" class="mb-2 subtitle">{{ $t('账号列表 ({count})', { count: sumAccountCount }) }}</div>

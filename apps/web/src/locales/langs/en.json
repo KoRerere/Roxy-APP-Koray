@@ -1227,6 +1227,7 @@
   "覆盖原窗口中已有书签": "Override existing bookmarks in the profile",
   "覆盖当前模板": "Overwrite current template",
   "视频": "Video",
+  "视频加载失败!": "Video loading failed!",
   "解析": "Parse",
   "解析错误，请检查格式": "Parse Error, Please Check Format",
   "解绑": "Unbind",
@@ -1493,6 +1494,5 @@
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
-  "默认项目": "Default project",
-  "视频加载失败!": "Video loading failed!"
+  "默认项目": "Default project"
 }

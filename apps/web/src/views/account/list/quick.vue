@@ -4,27 +4,24 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
 import { RxAlert } from '/@/components/rx-alert'
-
+import { AccountBindType } from '/@/enums/account'
 
 interface Props {
   data?: Record<string, any>
   isBatch?: boolean
   createCount?: number
+  accountType?: AccountBindType
 }
 
-const props = defineProps({
-  data: {
-    type: Object as PropType<any>,
-    default: undefined,
-  },
-})
+const { data, isBatch = false, createCount = 1, accountType = AccountBindType.Order } = defineProps<Props>()
 const emit = defineEmits(['confirm', 'close'])
 
 const columns = getRawColumns({
   filters: ['actions'],
 })
 
-const selection = ref(props.data?.windowPlatformList.filter((item: any) => item.id))
+const selection = ref(data?.windowPlatformList.filter((item: any) => item.id))
+const sumProxyCount = computed(() => selection.value?.length ?? 0)
 
 async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
@@ -38,8 +35,8 @@ function handleSave() {
 
 <template>
   <div class="flex flex-col h-full account-content">
-    <!-- <RxAlert class="w-full mt-3" :visible="isBatch" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"  /> -->
+    <RxAlert class="w-full mt-3" :visible="isBatch && accountType === AccountBindType.Order" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+      :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? $t('当前选择绑定的账号数量已超过创建窗口数。') : '' })" />
     <div class="flex-ovh-1">
       <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
         :context-menu="false" :show-actions="false">
