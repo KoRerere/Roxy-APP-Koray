@@ -12,49 +12,49 @@ const logs = ref([
   {
     id: 1,
     imgUrl: '',
-    role: 'Owner',
-    content: 'I am the owner of the team',
-    color: '#DA4C4C',
+    role: 'Manager',
+    content: 'Invite user support@roxybrowser.com to project Amazon Shop.',
+    color: '#11A3FD',
     workspace: 'Amazon',
   },
   {
     id: 2,
     imgUrl: '',
-    role: 'Manager',
-    content: 'I am a manager of the team',
-    color: '#11A3FD',
+    role: 'Viewer',
+    content: 'Open and check profile, profile index: ROX-190',
+    color: '#F8981D',
     workspace: 'Facebook',
   },
   {
     id: 3,
     imgUrl: '',
-    role: 'Editor',
-    content: 'I am a editor of the team',
+    role: 'Viewer',
+    content: 'Open and check profile, profile index: ROX-187',
     color: '#F8981D',
     workspace: 'Facebook',
   },
   {
     id: 4,
     imgUrl: '',
-    role: 'Viewer',
-    content: 'I am a viewer of the team',
-    color: '#11A3FD',
+    role: 'Editor',
+    content: 'Plugin installed to Shopify Shop.',
+    color: '#DA4C4C',
     workspace: 'Shopify',
   },
   {
     id: 5,
     imgUrl: '',
-    role: 'Viewer',
-    content: 'I am a viewer of the team',
-    color: '#95BF46',
+    role: 'Manager',
+    content: 'Invite user support@roxybrowser.com to project Amazon Shop.',
+    color: '#11A3FD',
     workspace: 'Amazon',
   },
   {
     id: 6,
     imgUrl: '',
     role: 'Editor',
-    content: 'I am a editor of the team',
-    color: '#D7DADF',
+    content: 'Modified 1 profile, profile index: ROX-203',
+    color: '#DA4C4C',
     workspace: 'Amazon',
   }
 ])
@@ -105,7 +105,7 @@ onUnmounted(() => {
     </motion.div>
     <motion.div class="team-logs" layout :data-length="visibleLogs.length" :initial="{ opacity: 0, y: 100 }"
       :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01], delay: 0.2 }">
-      <AnimatePresence :initial="false" multiple mode="popLayout">
+      <AnimatePresence :initial="false" mode="popLayout">
         <motion.div layout v-for="log in visibleLogs" :key="log.id" class="log-item"
           :initial="{ opacity: 0, y: 50, scale: 0.3 }" :animate="{
             opacity: 1,
@@ -124,7 +124,7 @@ onUnmounted(() => {
                 <img :src="`/images/login/image-${log.id}.jpg`" class="select-none" draggable="false">
                 <p class="log-role text-[var(--colors-text-text-primary)]">{{ log.role }}</p>
               </div>
-              <p class="log-content text-[var(--colors-text-text-primary)]">{{ log.content }}</p>
+              <p class="log-content text-[var(--colors-text-text-secondary)] leading-[1.5]">{{ log.content }}</p>
             </div>
           </div>
         </motion.div>

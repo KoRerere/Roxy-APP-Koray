@@ -130,7 +130,6 @@ const sendRecoveryEmailCodeRequest = async () => {
       type: 'add',
       temp_token: props.tempToken
     })
-    onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
       showToast(0, $t('验证码已发送'))
     }
