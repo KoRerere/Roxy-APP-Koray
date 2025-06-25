@@ -55,8 +55,8 @@ const inputs = ref([
   },
 ])
 
-async function handleSubmit(formData: any) {
-  const { code, data, msg } = await API.base.verifyValidatorEmailVerifyCodeCreate({ temp_token: tempToken, ...formData })
+async function handleSubmit({ ver_code }: Record<string, any>) {
+  const { code, data, msg } = await API.base.verifyValidatorEmailVerifyCodeCreate({ temp_token: tempToken, ver_code: ver_code.trim() })
   onlyErrorToast(code, msg)
   if (code !== 0) return
   verifyPassword(data)
@@ -94,7 +94,7 @@ function hideDialog() {
 }
 
 async function getLoginBy2FA() {
-  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken })
+  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken, type: 'recover_email' })
 
   onlyErrorToast(code, msg)
   if (code !== 0) return

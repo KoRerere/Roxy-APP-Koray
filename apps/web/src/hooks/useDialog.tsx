@@ -8,8 +8,8 @@ import type { JSX } from 'vue/jsx-runtime'
 import type { ButtonProps } from 'primevue/button'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
-  handleCancel?: () => any
-  handleOk?: () => any
+  handleCancel?: (...args: any[]) => any
+  handleOk?: (...args: any[]) => any
   okText?: string
   okProps?: ButtonProps
   cancelText?: string

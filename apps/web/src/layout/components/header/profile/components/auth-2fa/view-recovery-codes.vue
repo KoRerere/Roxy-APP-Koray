@@ -51,7 +51,7 @@ const handleConfirm = async () => {
   const { code, msg } = await API.base.validatorBindCreate({ recover_type: 'code' })
   onlyErrorToast(code, msg)
   if (code !== 0) return
-  handleHide()
+  visible.value = false
 }
 </script>
 

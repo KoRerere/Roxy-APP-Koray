@@ -11,6 +11,7 @@ import Setps2FA from './setps-2fa.vue'
 
 const props = defineProps<{
   defaultValue: boolean
+  beforeEnable?: () => Promise<boolean> | boolean,
   onChange?: (val: 'code' | 'email' | 'close') => void
 }>()
 
@@ -25,8 +26,10 @@ const emailCode = ref('')
 
 const close2faCode = ref('')
 
-const handleChange = () => {
+const handleChange = async () => {
   if (!modelValue.value) {
+    const beforeEnable = await props.beforeEnable?.()
+    if (beforeEnable === false) return
     // 开启 2FA
     visibleEmail.value = true;
   } else {

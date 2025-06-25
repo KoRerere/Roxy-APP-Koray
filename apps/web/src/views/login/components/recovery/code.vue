@@ -67,7 +67,7 @@ function hideDialog() {
 }
 
 async function getLoginBy2FA() {
-  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken })
+  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken, type: 'recover_code' })
 
   onlyErrorToast(code, msg)
   if (code !== 0) return

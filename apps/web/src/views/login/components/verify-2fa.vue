@@ -38,7 +38,7 @@ async function handleSubmit() {
 }
 
 async function getLoginInfoBy2FA() {
-  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken })
+  const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken, type: '2fa_code' })
 
   onlyErrorToast(code, msg)
   if (code !== 0) return

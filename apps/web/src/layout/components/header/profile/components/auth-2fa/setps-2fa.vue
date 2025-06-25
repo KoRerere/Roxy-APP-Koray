@@ -87,7 +87,7 @@ const handleNext = async () => {
     const res = await API.base.validatorBindCreate({
       recover_type: recoveryType.value as string,
       recover_email: recoveryEmail.email,
-      ver_code: recoveryEmail.code,
+      ver_code: recoveryEmail.code.trim(),
       temp_token: props.tempToken
     })
     onlyErrorToast(res.code, res.msg);

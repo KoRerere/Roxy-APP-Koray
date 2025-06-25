@@ -61,7 +61,7 @@ const handleChangeEmail = async () => {
   const res = await API.base.validatorBindCreate({
     recover_type: 'email',
     recover_email: email2FACode.email,
-    ver_code: email2FACode.code
+    ver_code: email2FACode.code.trim()
   })
   onlyErrorToast(res.code, res.msg);
   if (res.code === 0) {

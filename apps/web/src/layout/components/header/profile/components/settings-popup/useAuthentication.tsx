@@ -17,7 +17,6 @@ import type { Items, SettingsModule, } from "/@/layout/components/header/profile
 const MyTooltip: ObjectDirective = {
   ...Tooltip,
   beforeMount(el, options, ...args) {
-    // console.log("beforeMount", el, options);
     options.instance ||= {}
     Tooltip.beforeMount?.(el, options, ...args);
   },
@@ -32,7 +31,6 @@ export const useAuthentication = () => {
   const enabled = ref(false);
   const recoverCode = ref(false);
   const recoverEmail = ref(false);
-  const currentData = ref({} as Recordable<any>)
 
   const getAuthentication = async (): Promise<SettingsModule> => {
     const res = await API.base.userGetValidatorBindInfoList({})
@@ -106,6 +104,9 @@ export const useAuthentication = () => {
                   <Auth2fa
                     defaultValue={enabledDefault}
                     modelValue={item.value}
+                    beforeEnable={async () => {
+                      return showSettingPasswordDialog()
+                    }}
                     onChange={(val: 'code' | 'email' | 'close') => {
                       if (val === 'code') {
                         recoverCode.value = true
@@ -163,9 +164,9 @@ export const useAuthentication = () => {
 
   /** 显示设置密码弹窗 */
   async function showSettingPasswordDialog() {
-    console.log("showSettingPasswordDialog");
+    const { promise, resolve, } = Promise.withResolvers<boolean>()
 
-    await showFormDialog({
+    showFormDialog({
       header: $t("设置密码"),
       class: "w-[400px]",
       schemas: getSettingPasswordFormSchemas(),
@@ -193,17 +194,18 @@ export const useAuthentication = () => {
           userStore.setPassword(params.password);
           showToast(0, $t("密码设置成功"));
           userStore.fetchUserInfo();
+          resolve(true)
         } else {
-          return Promise.reject(res.msg);
+          resolve(false)
         }
       },
-    });
+    })
+
+    return promise
   }
 
   /** 显示重置密码弹窗 */
   async function showResetPasswordDialog() {
-    console.log("showResetPasswordDialog");
-
     await showFormDialog({
       header: $t("重置密码"),
       class: "w-[400px]",
