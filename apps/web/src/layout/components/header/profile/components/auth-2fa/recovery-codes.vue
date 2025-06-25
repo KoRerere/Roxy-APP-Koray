@@ -17,14 +17,16 @@ const onCopySecret = () => {
     <div class="text-[var(--colors-text-text-secondary)] font-12px font-400 font-[Inter]">{{
       $t('您可以在无法使用身份验证器应用时利用恢复代码来进行账号恢复。我们建议您使用安全的密码管理器（例如 1Password、Authy 或 Keeper）保存它们。') }}</div>
     <div class="flex justify-center px-16px py-12px rounded-8px bg-[var(--colors-background-bg-block)] ">
-      <div class="grid grid-cols-2 gap-x-64px justify-center font-[DM_Mono] font-14px font-500 text-[var(--colors-text-text-primary)] leading-24px">
+      <div
+        class="grid grid-cols-2 gap-x-64px justify-center font-[DM_Mono] text-3.5 font-500 text-[var(--colors-text-text-primary)] leading-24px">
         <div v-for="i in modelValue">{{ i }}</div>
       </div>
     </div>
     <div class="flex justify-end w-full">
       <RxButton size="xxs" :label="$t('复制代码')" severity="secondary" outlined @click="onCopySecret">
         <template #icon>
-          <RxSvgIcon :name="copied ? 'base/rx_ic_check' : 'base/rx_ic_copy'" size="16px" :color="copied ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'"
+          <RxSvgIcon :name="copied ? 'base/rx_ic_check' : 'base/rx_ic_copy'" size="16px"
+            :color="copied ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'"
             class="cursor-pointer" @click="onCopySecret" />
         </template>
       </RxButton>

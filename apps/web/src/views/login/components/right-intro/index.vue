@@ -100,7 +100,7 @@ function clearExistingTimers() {
 
 // 组件挂载时启动计时器
 onMounted(() => {
-  // startTimers();
+  startTimers();
 });
 
 // 组件卸载时清除计时器

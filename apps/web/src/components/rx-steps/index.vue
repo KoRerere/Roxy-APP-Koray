@@ -76,6 +76,6 @@ defineExpose({
 }
 
 .rx-setp-line {
-  border-bottom: 1px dashed var(--component-border-color, #E5E5E5);
+  border-bottom: 1px dashed var(--colors-border-divider-dashed);
 }
 </style>

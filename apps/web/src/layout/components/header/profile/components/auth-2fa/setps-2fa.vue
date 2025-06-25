@@ -150,7 +150,8 @@ watchEffect(async () => {
 </script>
 
 <template>
-  <Dialog class="w-480px" v-model:visible="visible" :header="$t('添加新的两步验证方法')" modal :draggable="false" :closable="closable">
+  <Dialog class="w-480px" v-model:visible="visible" :header="$t('添加新的两步验证方法')" modal :draggable="false"
+    :closable="closable">
     <RxSteps class="px-24px mb-24px" v-model="currentSetp" :steps="steps" ref="stepsRef" />
 
     <!-- 步骤一 -->
@@ -172,9 +173,10 @@ watchEffect(async () => {
 
         <div class="flex gap-12px">
           <div
-            class="flex-1 flex flex-col items-center justify-between gap-2 border-1 border-solid border-[var(--colors-border-border-subtle)] rounded-8px px-16px py-12px bg-[var(--colors-background-bg-example)]">
+            class="flex-1 flex flex-col items-center justify-between gap-2 rounded-8px px-16px py-12px bg-[var(--colors-background-bg-example)]">
             <div class="flex flex-col gap-2px w-full">
-              <div class="text-14px font-[Inter] font-600 text-[var(--colors-text-text-primary)]">{{ $t('备份恢复代码') }}</div>
+              <div class="text-14px font-[Inter] font-600 text-[var(--colors-text-text-primary)]">{{ $t('备份恢复代码') }}
+              </div>
             </div>
             <div class="w-full flex flex-col items-center">
               <RxSvgIcon name="base/rx_ic_recovery_codes" size="100" color="var(--colors-icon-icon-example)" />
@@ -185,11 +187,13 @@ watchEffect(async () => {
           </div>
 
           <div
-            class="flex-1 flex flex-col items-center justify-between gap-2 border-1 border-solid border-[var(--colors-border-border-subtle)] rounded-8px px-16px py-12px bg-[var(--colors-background-bg-example)]">
+            class="flex-1 flex flex-col items-center justify-between gap-2 rounded-8px px-16px py-12px bg-[var(--colors-background-bg-example)]">
             <div class="flex flex-col gap-2px w-full">
-              <div class="text-14px font-[Inter] font-600 text-[var(--colors-text-text-primary)]">{{ $t('绑定恢复邮箱') }}</div>
+              <div class="text-14px font-[Inter] font-600 text-[var(--colors-text-text-primary)]">{{ $t('绑定恢复邮箱') }}
+              </div>
             </div>
             <div class="w-full flex flex-col items-center">
+
               <RxSvgIcon name="base/rx_ic_recovery_email" size="100" color="var(--colors-icon-icon-example)" />
               <div class="flex justify-end w-full">
                 <RxButton :label="$t('选择')" severity="secondary" outlined @click="chooseRecovery(RecoveryType.Email)" />
@@ -214,8 +218,10 @@ watchEffect(async () => {
 
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton v-if="currentSetp !== '2'" :label="currentSetp === '3' ? $t('确认') : $t('下一步')" severity="primary" class="w-full" @click="handleNext" />
-        <RxButton v-if="currentSetp === '3'" :label="$t('返回上一步')" severity="secondary" class="w-full" @click="prev" outlined />
+        <RxButton v-if="currentSetp !== '2'" :label="currentSetp === '3' ? $t('确认') : $t('下一步')" severity="primary"
+          class="w-full" @click="handleNext" />
+        <RxButton v-if="currentSetp === '3'" :label="$t('返回上一步')" severity="secondary" class="w-full" @click="prev"
+          outlined />
       </div>
     </template>
 

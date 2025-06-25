@@ -5,6 +5,9 @@ import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import SignCardHeader from './sign-card-header.vue'
 import { RxAlert } from '/@/components/rx-alert/'
+import { useThemeStore } from '/@/stores/theme'
+
+const themeStore = useThemeStore()
 
 const props = defineProps({
   type: {
@@ -102,6 +105,8 @@ async function handleSubmit() {
   }
 }
 
+const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_mail.svg`, import.meta.url).href)
+
 onBeforeMount(() => {
   startCountdown()
 })
@@ -112,15 +117,15 @@ onBeforeMount(() => {
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
     <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')"
       @click="toReEnter"></RxButton>
-    <SignCardHeader :subTitle="$t('请检查您的邮箱')">
+
+    <img :src="imgSrc" class="mx-auto w-22.5">
+    <SignCardHeader>
       <template #description>
-        <div class="description">
-          <div class="description-item">{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
-          <div class="email-text">{{ getEmail }} </div>
-          <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
-          <div class="description-item mt-[12px]">
-            {{ $t('请检查邮件以获取验证码') }}
-          </div>
+        <div class="description-item">{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
+        <div class="email-text">{{ getEmail }} </div>
+        <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
+        <div class="description-item mt-[12px]">
+          {{ $t('请检查邮件以获取验证码') }}
         </div>
       </template>
     </SignCardHeader>
@@ -197,8 +202,8 @@ onBeforeMount(() => {
 
   :deep(.p-inputotp-input) {
     display: flex;
-    width: 50px;
-    height: 60px;
+    width: 67px;
+    height: 76px;
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;

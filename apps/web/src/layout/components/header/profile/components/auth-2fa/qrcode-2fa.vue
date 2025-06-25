@@ -65,12 +65,14 @@ onMounted(() => {
     </div>
 
     <div class="flex flex-col gap-12px mb-32px">
-      <div class="text-12px font-[Inter] font-600 text-[var(--colors-text-text-secondary)]">{{
+      <div class="text-12px font-[Inter] font-600 text-[var(--colors-text-text-secondary)] text-center">{{
         $t('如果您无法扫描此二维码，请在应用中手动输入以下字符串') }}</div>
-      <div class="flex items-center justify-center gap-4px text-center text-16px font-[JetBrains_Mono] font-500 text-[var(--colors-text-text-primary)]">
+      <div
+        class="flex items-center justify-center gap-4px text-center text-16px font-[JetBrains_Mono] font-500 text-[var(--colors-text-text-primary)]">
         {{ moduleValue.secret }}
-        <RxSvgIcon :name="copied ? 'base/rx_ic_check' : 'base/rx_ic_copy'" size="16px" :color="copied ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'" class="cursor-pointer"
-          @click="onCopySecret" />
+        <RxSvgIcon :name="copied ? 'base/rx_ic_check' : 'base/rx_ic_copy'" size="16px"
+          :color="copied ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'"
+          class="cursor-pointer" @click="onCopySecret" />
       </div>
     </div>
 

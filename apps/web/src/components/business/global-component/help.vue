@@ -8,7 +8,7 @@
       <template #item="{ item, props }">
         <a v-ripple class="flex items-center whitespace-nowrap" v-bind="props.action">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
-          <span>{{ item.label }}</span>
+          <span class="text-3.5">{{ item.label }}</span>
         </a>
       </template>
     </Menu>
