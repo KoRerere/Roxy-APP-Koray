@@ -70,6 +70,7 @@ const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
+const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
@@ -839,6 +840,13 @@ async function deleteProfile(datas: any, ids: number[]) {
   const result = await getNotUsedProfiles(datas)
   if (result.length !== datas.length) {
     onlyErrorToast(-1, $t('请先关闭窗口'))
+    return
+  }
+
+  const usePeoples = datas.some((item: any) => item.statusInfo.filter((item: any) => item.openUserId !== userStore.userInfo.id).length > 0)
+
+  if (usePeoples) {
+    onlyErrorToast(-1, $t('无法删除正在被其他成员使用的窗口'))
     return
   }
 
