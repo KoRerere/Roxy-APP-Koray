@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { $t } from '/@/locales'
 
 const modelValue = defineModel<{ email: string, code: string }>({
@@ -17,7 +18,7 @@ defineProps<{
       {{ $t('设置您的恢复邮箱') }}
     </div>
     <div class="text-[var(--colors-text-text-secondary)] font-12px font-400 font-[Inter]">
-      {{ $t('如果您无法访问设备，可以使用恢复邮箱作为第二重身份验证。') }}
+      {{ $t('您可以在无法使用身份验证器应用时利用恢复邮箱来进行账号恢复。') }}
     </div>
 
     <div class="flex flex-col gap-4px">
@@ -25,7 +26,7 @@ defineProps<{
         <span class="text-[#ff4d4f]">*</span>
         {{ $t('恢复邮箱') }}
       </label>
-      <InputText v-model="modelValue.email" class="w-full" :placeholder="$t('请输入您的邮箱地址')" />
+      <TsFormInputText v-model="modelValue.email" class="w-full" :placeholder="$t('请输入您的邮箱地址')" />
     </div>
     <div class="flex flex-col gap-4px">
       <label for="verification-code">

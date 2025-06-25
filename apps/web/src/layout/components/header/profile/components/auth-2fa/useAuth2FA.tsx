@@ -10,7 +10,7 @@ export const useAuth2FA = (): [(options: UseDialogProps) => UseDialogInstance, R
 
   const showAuth2FA = (options: UseDialogProps) => {
     return showModal({
-      header: $t('确认访问'),
+      header: $t('身份验证'),
       style: {
         width: '384px',
       },

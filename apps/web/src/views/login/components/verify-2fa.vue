@@ -6,9 +6,10 @@ import { useThemeStore } from '/@/stores/theme'
 
 interface Props {
   recoverType: 'code' | 'email' | (string & {})
+  recover?: boolean
 }
 
-const { recoverType } = defineProps<Props>()
+const { recoverType, recover = true } = defineProps<Props>()
 
 defineEmits<{
   (e: 'submit', faCode: string): void
@@ -30,10 +31,10 @@ const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realT
     <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="setCurrentComponent('signForm')"></RxButton>
     <img class="mx-auto w-32" :src="imgSrc"></img>
     <div class="flex flex-col gap-4">
-      <div class="description">{{ $t('请检查您的身份验证应用并输入以下一次性密码以继续：') }}</div>
+      <div class="description">{{ $t('请检查身份验证器应用以获取验证码。') }}</div>
       <InputOtp v-model="fa_code" class="inputotp" :length="6" />
       <RxButton class="w-full" size="md" :disabled="fa_code.length !== 6" @click="$emit('submit', fa_code)">{{ $t('确认') }}</RxButton>
-      <i18n-t class="description" tag="div" :keypath="$t('无法登录？请{recovery}。', { recovery: '{recovery}' })" scope="global">
+      <i18n-t v-if="recover" class="description" tag="div" :keypath="$t('无法登录？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
           <a v-if="recoverType === 'code'" class="description-link" @click="setCurrentComponent('recoveryCode')">{{ $t('使用恢复代码') }}</a>
           <a v-else class="description-link" @click="setCurrentComponent('recoveryEmail')">{{ $t('使用恢复邮箱') }}</a>

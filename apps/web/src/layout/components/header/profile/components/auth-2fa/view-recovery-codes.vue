@@ -59,15 +59,15 @@ const handleConfirm = async () => {
   <Action @click="handleViewCode" status="normal" v-bind="$attrs" />
 
   <Dialog class="w-480px" v-model:visible="visible" :header="$t('恢复代码')" modal :draggable="false" @hide="handleHide">
-    <RxAlert v-model:visible="isGenerated" class="!w-full checkermessage" type="success" :title="$t('您的新代码已生成')">
+    <RxAlert v-model:visible="isGenerated" class="!w-full mb-3 checkermessage" type="success" :title="$t('您的新恢复代码已生成')">
       <template #content>
-        {{ $t('请仔细保存您的新代码。请注意，旧代码将不再有效。') }}
+        {{ $t('请仔细保存您的新恢复代码。请注意，旧恢复代码将不再有效。') }}
       </template>
     </RxAlert>
     <RecoveryCodes v-model="recoveryCodes" />
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton :label="$t('我已经保存了我的代码')" severity="primary" class="w-full" @click="handleConfirm" />
+        <RxButton :label="$t('我已保存新恢复代码')" severity="primary" class="w-full" @click="handleConfirm" />
         <RxButton :label="$t('生成新的恢复代码')" severity="secondary" class="w-full" @click="generateNewCode" outlined />
       </div>
     </template>

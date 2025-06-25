@@ -25,7 +25,7 @@ export const getSettings = () =>
       icon: "base/rx_ic_user_circle",
     },
     {
-      label: $t('验证'),
+      label: $t('两步验证'),
       name: 'authentication',
       icon: 'base/rx_ic_key',
     },

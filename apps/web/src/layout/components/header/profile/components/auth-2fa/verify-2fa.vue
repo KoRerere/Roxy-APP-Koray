@@ -31,7 +31,7 @@ onMounted(() => {
 
     <div class="flex flex-col gap-12px">
       <div class="text-[var(--colors-text-text-tertiary)] font-12px font-400 font-[Inter]">
-        {{ $t('要继续，请检查您的身份验证应用并输入以下一次性密码：') }}
+        {{ $t('请检查身份验证器应用以获取验证码。') }}
       </div>
       <InputOtp ref="inputOtpRef" class="inputotp-auto" name="passcode" :length="6" v-model="modelValue" />
     </div>

@@ -71,14 +71,10 @@ const handleChangeEmail = async () => {
 </script>
 <template>
   <Action @click="handleViewCode" status="normal" v-bind="$attrs" />
-  <Dialog class="w-480px" v-model:visible="visible" :header="$t('恢复代码')" modal :draggable="false">
+  <Dialog class="w-480px" v-model:visible="visible" :header="$t('恢复邮箱')" modal :draggable="false">
     <div class="flex flex-col gap-12px">
-      <div class="text-14px font-600 font-[Inter] leading-[20px] text-[var(--colors-text-text-primary)]">{{
-        $t('您的恢复电子邮件') }}</div>
-      <div class="text-12px font-400 font-[Inter] leading-[18px] text-[var(--colors-text-text-secondary)]">{{
-        $t('您可以使用恢复电子邮件作为第二个因素进行身份验证，以防您无法访问您的设备。') }}</div>
       <div class="flex flex-col gap-4px">
-        <label for="email">{{ $t('恢复邮箱') }}</label>
+        <label for="email">{{ $t('当前恢复邮箱') }}</label>
         <InputText v-model="email2FA" name="email" class="w-full" disabled :placeholder="$t('请输入您的邮箱地址')" />
       </div>
     </div>

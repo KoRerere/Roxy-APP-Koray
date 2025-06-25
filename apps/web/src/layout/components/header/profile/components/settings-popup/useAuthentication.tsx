@@ -44,7 +44,7 @@ export const useAuthentication = () => {
     }
 
     const items = reactive({
-      title: $t("验证"),
+      title: $t("两步验证"),
       description: $t("管理您的密码和身份验证。"),
       list: [
         {
@@ -97,7 +97,7 @@ export const useAuthentication = () => {
           ],
         },
         {
-          subtitle: $t("双因素身份验证"),
+          subtitle: $t("两步验证"),
           items: [
             {
               label: $t("登录时使用 2FA"),

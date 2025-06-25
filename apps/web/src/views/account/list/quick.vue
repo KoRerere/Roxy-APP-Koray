@@ -3,6 +3,14 @@ import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
+import { RxAlert } from '/@/components/rx-alert'
+
+
+interface Props {
+  data?: Record<string, any>
+  isBatch?: boolean
+  createCount?: number
+}
 
 const props = defineProps({
   data: {
@@ -30,6 +38,8 @@ function handleSave() {
 
 <template>
   <div class="flex flex-col h-full account-content">
+    <!-- <RxAlert class="w-full mt-3" :visible="isBatch" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"  /> -->
     <div class="flex-ovh-1">
       <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
         :context-menu="false" :show-actions="false">

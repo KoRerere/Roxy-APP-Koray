@@ -18,7 +18,7 @@ const qrcode2FA = reactive({
 
 const handleViewCode = () => {
   const dialogInstance = showAuth2FA({
-    header: $t('确认访问'),
+    header: $t('身份验证'),
     handleOk: async () => {
       const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ code: code2FA.value, type: 'update_2fa_info' })
 
@@ -59,7 +59,7 @@ const reset2FA = async () => {
 <template>
   <Action @click="handleViewCode" status="normal" v-bind="$attrs" />
 
-  <Dialog class="w-480px" v-model:visible="visibleQRCode" :header="$t('添加新的双因素方法')" modal :draggable="false">
+  <Dialog class="w-480px" v-model:visible="visibleQRCode" :header="$t('添加新的两步验证方法')" modal :draggable="false">
     <QRCode2FA v-model="qrcode2FA" />
 
     <template #footer>

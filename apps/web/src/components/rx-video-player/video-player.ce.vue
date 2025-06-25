@@ -143,8 +143,8 @@ useEventListener(document, 'keydown', (e) => {
 
 <template>
   <div ref="videoPlayer" class="video-player" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
-    <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause"
-      @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay" @error="onPlayError" />
+    <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause" @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay"
+      @error="onPlayError" />
 
     <!-- 剩余播放时间 -->
     <div v-if="!showControls && !isPlayError" class="remaining-time">
@@ -180,7 +180,7 @@ useEventListener(document, 'keydown', (e) => {
     <div v-if="isPlayError" class="play-error-mask">
       <div class="play-error-mask-content">
         <div class="play-error-mask-content-title">
-          {{ $t('糟糕！我们丢失了这个视频') }}
+          {{ $t('视频加载失败!') }}
         </div>
         <div class="play-error-mask-content-text">
           {{ $t('网络连接已断开。') }}

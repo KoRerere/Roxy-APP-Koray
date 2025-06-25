@@ -106,7 +106,7 @@ const showDownloadError = debounce((data: ResourceUpdateMessage) => {
     severity: 'error',
     summary: () =>
       <I18nT keypath={data.description || $t('获取内核失败，{tech}', { tech: '{tech}' })}>
-        {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('请联系技术支持')}</a> }}
+        {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('联系技术支持')}</a> }}
       </I18nT>
   });
 }, 100)
