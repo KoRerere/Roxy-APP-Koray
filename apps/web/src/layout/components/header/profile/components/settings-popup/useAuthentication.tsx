@@ -107,7 +107,8 @@ export const useAuthentication = () => {
                   <Auth2fa
                     defaultValue={enabledDefault}
                     modelValue={item.value}
-                    beforeEnable={async () => {
+                    enableBefore={() => {
+                      if (userStore.userInfo?.setPasswordStatus) return true
                       return showSettingPasswordDialog()
                     }}
                     onChange={(val: 'code' | 'email' | 'close') => {
@@ -192,6 +193,9 @@ export const useAuthentication = () => {
           resolve(false)
         }
       },
+      handleCancel: () => {
+        resolve(false)
+      }
     })
 
     return promise
