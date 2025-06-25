@@ -56,8 +56,8 @@ async function onSubmit(formData: any) {
 
 <template>
   <div class="flex flex-col gap-4 pt-4 pb-6 px-6 w-120">
-    <div class="title">Enter your password</div>
-    <div class="content">For your account security, the current operation requires you to enter your account password.</div>
+    <div class="title">{{ $t('请输入密码') }}</div>
+    <div class="content">{{ $t('为了您的账户安全，当前操作需要您输入账户密码') }}</div>
     <TsForm id="verify" :inputs="inputs" @submit="onSubmit" />
     <RxButton class="w-full mt-2" size="lg" :label="$t('下一步')" type="submit" form="verify" :loading="loading" />
   </div>
