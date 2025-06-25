@@ -29,15 +29,18 @@ export const useAuthentication = () => {
   const [showModal] = useDialog()
   const router = useRouter();
   const enabled = ref(false);
-  const recoverCode = ref(false);
-  const recoverEmail = ref(false);
+  const recoverType = ref();
 
   const getAuthentication = async (): Promise<SettingsModule> => {
     const res = await API.base.userGetValidatorBindInfoList({})
     let enabledDefault = res.data.validatorIsBind === 1;
     enabled.value = enabledDefault;
-    recoverCode.value = res.data.recoverCode === 1;
-    recoverEmail.value = res.data.recoverEmail === 1;
+    if (res.data.recoverCode === 1) {
+      recoverType.value = "code"
+    }
+    if (res.data.recoverEmail === 1) {
+      recoverType.value = "email"
+    }
 
     const items = reactive({
       title: $t("验证"),
@@ -108,15 +111,8 @@ export const useAuthentication = () => {
                       return showSettingPasswordDialog()
                     }}
                     onChange={(val: 'code' | 'email' | 'close') => {
-                      if (val === 'code') {
-                        recoverCode.value = true
-                      }
-                      if (val === 'email') {
-                        recoverEmail.value = true
-                      }
-                      if (val === 'close') {
-                        enabledDefault = false
-                      }
+                      enabledDefault = !(val === 'close')
+                      recoverType.value = val;
                     }}
                   />
                 );
@@ -125,7 +121,6 @@ export const useAuthentication = () => {
             {
               label: $t("身份验证应用"),
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === "2faSwitch")?.value,
-              // status/rx_ic_warn_fill
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
                   <Edit2FA />
@@ -134,9 +129,8 @@ export const useAuthentication = () => {
             },
             {
               label: $t("恢复代码"),
-              value: recoverCode,
+              value: recoverType.value === "code",
               hide: (item: Items, items: Items[]) => !item.value || !enabled.value,
-              // status/rx_ic_warn_fill
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
                   <ViewRecoveryCodes />
@@ -145,9 +139,8 @@ export const useAuthentication = () => {
             },
             {
               label: $t("恢复邮箱"),
-              value: recoverEmail,
+              value: recoverType.value === "email",
               hide: (item: Items, items: Items[]) => !item.value || !enabled.value,
-              // status/rx_ic_warn_fill
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
                   <ViewRecoveryEmail />
