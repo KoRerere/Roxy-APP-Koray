@@ -615,6 +615,7 @@
   "当前设备": "Current Device",
   "当前账号于 {time} 在 {deviceName} 设备上登录。": "Your account was accessed on {deviceName} at {time}.",
   "当前选择绑定的代理数量已超过创建窗口数。": "Chosen proxies exceed the number of profiles you create.",
+  "当前选择绑定的账号数量已超过创建窗口数。": "Chosen accounts exceed the number of profiles you create.",
   "当前项目成员列表": "Current project members",
   "当点击关闭客户端时": "When click close client",
   "当系统代理识别失败时尝试启用": "Attempt to enable when system proxy identification fails",
