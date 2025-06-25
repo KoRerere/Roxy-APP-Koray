@@ -22,8 +22,6 @@ const visible = defineModel<boolean>('visible', { required: true })
 
 const [showToast, onlyErrorToast] = useResponseToast()
 
-// const emailCode = ref('')
-
 const stepsRef = useTemplateRef<SetpsRef>('stepsRef')
 const defaultSetp = '1'
 const currentSetp = ref(defaultSetp)
@@ -116,6 +114,8 @@ const resetStatus = () => {
   qrcode2FA.secret = '';
   qrcode2FA.code = '';
   recoveryType.value = undefined
+  recoveryEmail.email = ''
+  recoveryEmail.code = ''
 }
 
 const hideDialog = () => {

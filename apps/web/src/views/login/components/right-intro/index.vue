@@ -33,7 +33,7 @@ const tabs = [
   }
 ]
 
-const currentTab = ref('SupportMorePlatform')
+const currentTab = ref('TeamSpace')
 const progressWidth = ref(100);
 const FULL_PROGRESS = 100; // 进度条最大值（100%）
 const intervalTime = 8000; // 8秒
@@ -100,7 +100,7 @@ function clearExistingTimers() {
 
 // 组件挂载时启动计时器
 onMounted(() => {
-  startTimers();
+  // startTimers();
 });
 
 // 组件卸载时清除计时器
