@@ -62,6 +62,7 @@ const verifyClose2FACode = async () => {
   if (res.code === 0) {
     visibleClose2FA.value = false;
     modelValue.value = false;
+    close2faCode.value = '';
     props.onChange?.('close');
   }
 }
@@ -96,7 +97,7 @@ const handleSuccess = (type: 'code' | 'email') => {
     </template>
   </Dialog>
 
-  <Setps2FA v-model:visible="visible2FA" @success="handleSuccess" @cancel="hideDialog" />
+  <Setps2FA v-model:visible="visible2FA" @success="handleSuccess" :onCancel="hideDialog" />
 
   <Dialog class="w-384px" v-model:visible="visibleClose2FA" :header="$t('关闭 2FA')" modal :draggable="false">
     <Verify2FA v-model="close2faCode" />

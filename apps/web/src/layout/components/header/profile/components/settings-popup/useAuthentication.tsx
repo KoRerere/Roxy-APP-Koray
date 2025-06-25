@@ -12,6 +12,7 @@ import { useDialog } from "/@/hooks/useDialog";
 import { getResetPasswordFormSchemas, getSettingPasswordFormSchemas } from "/@/layout/components/header/profile/components/schemas";
 import { h, withDirectives, type ObjectDirective } from 'vue'
 import type { Items, SettingsModule, } from "/@/layout/components/header/profile/type";
+import { RecoveryType } from "/@/enums/account";
 
 // TODO 解决 options.instance 为 null 的问题，为 null 会报错
 const MyTooltip: ObjectDirective = {
@@ -36,10 +37,10 @@ export const useAuthentication = () => {
     let enabledDefault = res.data.validatorIsBind === 1;
     enabled.value = enabledDefault;
     if (res.data.recoverCode === 1) {
-      recoverType.value = "code"
+      recoverType.value = RecoveryType.Code
     }
     if (res.data.recoverEmail === 1) {
-      recoverType.value = "email"
+      recoverType.value = RecoveryType.Email
     }
 
     const items = reactive({
@@ -130,7 +131,7 @@ export const useAuthentication = () => {
             },
             {
               label: $t("恢复代码"),
-              value: recoverType.value === "code",
+              value: computed(() => recoverType.value === RecoveryType.Code),
               hide: (item: Items, items: Items[]) => !item.value || !enabled.value,
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
@@ -140,7 +141,7 @@ export const useAuthentication = () => {
             },
             {
               label: $t("恢复邮箱"),
-              value: recoverType.value === "email",
+              value: computed(() => recoverType.value === RecoveryType.Email),
               hide: (item: Items, items: Items[]) => !item.value || !enabled.value,
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
@@ -183,7 +184,7 @@ export const useAuthentication = () => {
       },
       handleOk: async (params: any) => {
         const res = await API.base.userSettingPasswordCreate({ ...params });
-        showToast(res.code, res.msg);
+        onlyErrorToast(res.code, res.msg);
         if (res.code === 0 && params.password) {
           userStore.setPassword(params.password);
           showToast(0, $t("密码设置成功"));

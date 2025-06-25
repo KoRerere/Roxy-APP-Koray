@@ -49,6 +49,9 @@ const reset2FA = async () => {
   onlyErrorToast(res.code, res.msg);
   if (res.code === 0) {
     visibleQRCode.value = false;
+    qrcode2FA.code = '';
+    qrcode2FA.qrcode = '';
+    qrcode2FA.secret = '';
   }
 }
 </script>
