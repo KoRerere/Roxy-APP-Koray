@@ -27,6 +27,7 @@ const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realT
 function onSubmit() {
   if (fa_code.value.length !== 6) return
   emit('submit', fa_code.value)
+  fa_code.value = ''
 }
 </script>
 
