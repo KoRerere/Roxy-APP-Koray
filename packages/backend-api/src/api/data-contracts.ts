@@ -4750,6 +4750,17 @@ export interface UserAddPlatformInfoBatchCreateData {
   msg: string;
 }
 
+export interface UserGetPlatformFromWindowListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      platformUrl: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引

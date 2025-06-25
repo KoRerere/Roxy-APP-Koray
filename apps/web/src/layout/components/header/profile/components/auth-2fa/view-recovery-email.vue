@@ -68,6 +68,12 @@ const handleChangeEmail = async () => {
     visibleChangeEmail.value = false;
   }
 }
+
+const handleHide = () => {
+  visibleChangeEmail.value = false;
+  email2FACode.email = '';
+  email2FACode.code = '';
+}
 </script>
 <template>
   <Action @click="handleViewCode" status="normal" v-bind="$attrs" />
@@ -91,7 +97,7 @@ const handleChangeEmail = async () => {
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
         <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="handleChangeEmail" />
-        <RxButton :label="$t('取消')" severity="secondary" class="w-full" outlined />
+        <RxButton :label="$t('取消')" severity="secondary" class="w-full" outlined @click="handleHide" />
       </div>
     </template>
   </Dialog>

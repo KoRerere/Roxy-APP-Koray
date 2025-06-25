@@ -66,8 +66,8 @@ export async function getCustomFilters(params: any = {}) {
       label: $t('业务平台'),
       icon: 'base/rx_ic_keys',
       getOptions: async () => {
-        const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
-        return (data.rows || []).map((item: any) => ({
+        const { data } = await API.platform.userGetPlatformFromWindowList()
+        return (data || []).map((item: any) => ({
           parentName: 'platformUrlIds',
           value: `${item.id}`,
           label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
