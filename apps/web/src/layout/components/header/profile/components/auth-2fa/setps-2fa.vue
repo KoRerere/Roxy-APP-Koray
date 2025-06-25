@@ -22,8 +22,6 @@ const visible = defineModel<boolean>('visible', { required: true })
 
 const [showToast, onlyErrorToast] = useResponseToast()
 
-// const emailCode = ref('')
-
 const stepsRef = useTemplateRef<SetpsRef>('stepsRef')
 const defaultSetp = '1'
 const currentSetp = ref(defaultSetp)
@@ -116,6 +114,8 @@ const resetStatus = () => {
   qrcode2FA.secret = '';
   qrcode2FA.code = '';
   recoveryType.value = undefined
+  recoveryEmail.email = ''
+  recoveryEmail.code = ''
 }
 
 const hideDialog = () => {
@@ -130,7 +130,6 @@ const sendRecoveryEmailCodeRequest = async () => {
       type: 'add',
       temp_token: props.tempToken
     })
-    onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
       showToast(0, $t('验证码已发送'))
     }

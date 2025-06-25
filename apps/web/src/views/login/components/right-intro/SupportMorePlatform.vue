@@ -35,11 +35,11 @@ const mqList = computed(() => {
 </script>
 
 <template>
-  <div class="mt-100px w-full select-none" draggable="false">
+  <div class="mt-100px min-[1440px]:mt-180px w-full select-none" draggable="false">
     <motion.div v-for="(mq, i) in mqList" :initial="{ opacity: 0, y: 100 }" :animate="{ opacity: 1, y: 0 }"
       :transition="{ duration: 0.4, ease: [0, 0.71, 0.2, 1.01], delay: (i - 1) * 0.1 }">
       <Marquee :reverse="mq.reverse" :class="mq.duration">
-        <img v-for="i in mq.list" :src="i" :class="mq.imgClass">
+        <img v-for="i in mq.list" :src="i" :class="mq.imgClass" draggable="false">
       </Marquee>
     </motion.div>
   </div>

@@ -170,7 +170,7 @@ defineExpose({
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--colors-border-border-container);
+  background: var(--colors-border-divider);
 }
 
 .login-ways {

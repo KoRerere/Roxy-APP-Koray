@@ -1,7 +1,7 @@
 const si = require('systeminformation');
 
 async function getDeviceFingerprint() {
-  console.log('uuid', await si.uuid())
+  console.log('UUUUU', await si.uuid())
 }
 
 getDeviceFingerprint()
