@@ -85,6 +85,7 @@ export const getDeviceId = (() => {
       clearTimeout(timer)
     } else {
       console.debug('设备 ID 已存在', store.deviceId)
+      store.deviceId = await fileOperations.executeTask('genDeviceId', undefined)
     }
   })
 
