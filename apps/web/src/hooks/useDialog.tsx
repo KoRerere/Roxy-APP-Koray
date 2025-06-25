@@ -10,6 +10,7 @@ import type { ButtonProps } from 'primevue/button'
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
   handleCancel?: (...args: any[]) => any
   handleOk?: (...args: any[]) => any
+  beforeClose?: (closeCallback: () => any) => any
   okText?: string
   okProps?: ButtonProps
   cancelText?: string
@@ -70,6 +71,7 @@ export function useDialog( ) {
 
       const visible = ref(false)
       const instance = {
+        dialogRef: ref<InstanceType<typeof Dialog> | null>(null),
         hideModal,
         handleOk: () => innerProps.value.handleOk?.(),
         handleCancel: () => innerProps.value.handleCancel?.(),
@@ -100,7 +102,7 @@ export function useDialog( ) {
         }
 
         return (
-          <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
+          <Dialog ref={instance.dialogRef} v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
           </Dialog>
         )
       }
@@ -109,7 +111,16 @@ export function useDialog( ) {
     vnode.appContext = appContext
     render(vnode, div)
     visible.value = true
-
+    if (instance.dialogRef.value?.close) {
+      const originalClose = instance.dialogRef.value.close
+      instance.dialogRef.value.close = () => {
+        if (props.beforeClose) {
+          props.beforeClose(originalClose)
+        } else {
+          originalClose()
+        }
+      }
+    }
       return instance
   }
 
