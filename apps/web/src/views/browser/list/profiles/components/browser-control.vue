@@ -36,15 +36,16 @@ const browser = computed(() => {
   }
 
   const { uploading, pending, code, data, error } = message
+  const isFailed = code === 1 || error
   const complted = data?.percent === 100
-  const opening = !(error || complted)
+  const opening = !(isFailed || complted)
 
   return {
     code,
     pending,
-    msg: error ? $t('打开') : data?.message,
+    msg: isFailed ? $t('打开') : data?.message,
     percent: data?.percent || 0,
-    error: error?.message,
+    error: error?.message || (isFailed ? message?.message : undefined),
     warning: data?.warningMessages?.join('\n'),
     opening,
     uploading,

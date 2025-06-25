@@ -287,10 +287,9 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
-
-        res.data.rows.forEach(item => {
-          if (!dirIds.includes(item.dirId!)) {
-            sendErrorMessage($t('窗口不存在'), item.dirId!)
+        dirIds.forEach(dirId => {
+          if (!res.data.rows.some(item => item.dirId === dirId)) {
+            sendErrorMessage($t('窗口不存在'), dirId)
           }
         })
 
