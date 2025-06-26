@@ -7,6 +7,7 @@ import ejs from "ejs";
 import { appConfig } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
+import CDP from 'chrome-remote-interface'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
@@ -99,15 +100,22 @@ export class AfterLaunchTask {
       return
     }
 
-    if (this.isPhone) {
-      this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' }).catch((err) => {
-        console.log('setTouchEmulationEnabled error', err)
-      })
-    }
-
     const saveCookies = async () => {
       const { cookies } = await this.browser.client.Storage.getCookies()
       this.cookies = cookies
+    }
+
+    if (this.isPhone) {
+      try {
+        const targets = await CDP.List({ port: this.browser.actualPort })
+        targets.forEach(async (target) => {
+          const client = await CDP({ target: target.webSocketDebuggerUrl });
+          await client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' })
+          console.log('setTouchEmulationEnabled success')
+        })
+      } catch (error) {
+        console.log('setTouchEmulationEnabled error', error)
+      }
     }
 
     const startTime = Date.now()
@@ -131,6 +139,7 @@ export class AfterLaunchTask {
             await e.goto(url).catch((err) => {
               console.log(`goto ${url} 失败`, err)
             })
+
           }
         })
       }

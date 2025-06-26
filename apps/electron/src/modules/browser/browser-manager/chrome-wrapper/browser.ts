@@ -22,12 +22,14 @@ export class ChromeBrowser extends EventEmitter {
   private disconnectedEmitted = false
   #browserProcessExiting: Promise<void> | null = null
   #exited = false;
+  actualPort?: number
 
-  constructor(client: Client, wsEndpoint: string, browserProcess?: ChildProcess) {
+  constructor(client: Client, wsEndpoint: string, browserProcess?: ChildProcess, actualPort?: number) {
     super()
     this.client = client
     this._wsEndpoint = wsEndpoint
     this.browserProcess = browserProcess || null
+    this.actualPort = actualPort
     this.setupEventListeners()
     this.#browserProcessExiting = new Promise<void>((resolve) => {
       this.browserProcess?.once('exit', () => {
