@@ -7,11 +7,12 @@ import { useThemeStore } from '/@/stores/theme'
 interface Props {
   recoverType: 'code' | 'email' | (string & {})
   recover?: boolean
+  onConfirm?: (faCode: string) => Promise<void> | void
 }
 
-const { recoverType, recover = true } = defineProps<Props>()
+const { recoverType, recover = true, onConfirm } = defineProps<Props>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'submit', faCode: string): void
 }>()
 
@@ -20,13 +21,14 @@ const { setCurrentComponent } = useLoginContext()
 
 const isShowAlert = ref(false)
 const fa_code = ref('')
-
+const loading = ref(false)
 const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href)
 
-
-function onSubmit() {
+async function onSubmit() {
   if (fa_code.value.length !== 6) return
-  emit('submit', fa_code.value)
+  loading.value = true
+  await onConfirm?.(fa_code.value)
+  loading.value = false
   fa_code.value = ''
 }
 </script>
@@ -39,7 +41,7 @@ function onSubmit() {
     <div class="flex flex-col gap-4">
       <div class="description">{{ $t('请检查身份验证器应用以获取验证码。') }}</div>
       <InputOtp v-model="fa_code" class="inputotp" :length="6" />
-      <RxButton class="w-full" size="md" :disabled="fa_code.length !== 6" @click="onSubmit">{{ $t('确认') }}</RxButton>
+      <RxButton class="w-full" size="md" :loading="loading" :disabled="fa_code.length !== 6" @click="onSubmit">{{ $t('确认') }}</RxButton>
       <i18n-t v-if="recover" class="description" tag="div" :keypath="$t('无法登录？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
           <a v-if="recoverType === 'code'" class="description-link" @click="setCurrentComponent('recoveryCode')">{{ $t('使用恢复代码') }}</a>

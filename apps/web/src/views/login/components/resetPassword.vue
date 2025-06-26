@@ -126,7 +126,7 @@ function receiveEmailCode(code: string) {
   </template>
   <template v-else>
     <EmailCodeInputOtp v-if="step2Type === 'email'" type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode" @back="currentStep = 'step1'" />
-    <Verify2fa v-if="step2Type === '2fa'" recoverType="code" :recover="false" @submit="receive2faCode"></Verify2fa>
+    <Verify2fa v-if="step2Type === '2fa'" recoverType="code" :recover="false" :onConfirm="receive2faCode"></Verify2fa>
   </template>
 </template>
 
