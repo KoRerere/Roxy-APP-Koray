@@ -194,10 +194,11 @@ export const appUpdater = new class AppUpdater {
   }
 
   /** 立即退出应用并且更新 */
-  upgradeNow() {
+  async upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`立即退出应用并且更新`)
     if (isPackaged) {
+      await this.downloadPromiser?.promise
       this.isQuittingForUpdate = true
       this.#autoUpdater.quitAndInstall(true, true)
     }

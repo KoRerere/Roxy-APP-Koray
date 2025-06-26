@@ -169,7 +169,7 @@ router.post('/open', async (req, res) => {
   }
 
   if (!Array.isArray(args)) {
-    return res.error('args is required')
+    return res.error('args is not array')
   }
 
   if (browserManager.openedBrowserMap.has(dirId)) {
@@ -184,7 +184,7 @@ router.post('/open', async (req, res) => {
       if (!winInfo) {
         return res.error('window not found')
       }
-      winInfo.startupParam = [winInfo.startupParam, ...args].join(',')
+      winInfo.startupParam = [winInfo.startupParam, ...args].filter(Boolean).join(';')
       try {
         const launchInfo = await browserManager.launch(winInfo, 'api')
         res.success(launchInfo)

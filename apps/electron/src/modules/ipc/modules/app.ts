@@ -130,7 +130,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   });
   /** 程序化显示和隐藏红绿灯 */
   ipcMain.on("app:showHideTrafficLight", (event, show) => {
-    getMainWindow()?.setWindowButtonVisibility(show);
+    getMainWindow()?.setWindowButtonVisibility?.(show);
   });
 
   /** 当前 APP 窗口是否是主窗口 */
