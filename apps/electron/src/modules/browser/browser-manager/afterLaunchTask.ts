@@ -99,6 +99,12 @@ export class AfterLaunchTask {
       return
     }
 
+    if (this.isPhone) {
+      this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' }).catch((err) => {
+        console.log('setTouchEmulationEnabled error', err)
+      })
+    }
+
     const saveCookies = async () => {
       const { cookies } = await this.browser.client.Storage.getCookies()
       this.cookies = cookies
@@ -115,12 +121,6 @@ export class AfterLaunchTask {
         })
         console.log('Storage.setCookies success')
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
-
-        if (this.isPhone) {
-          await this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' }).catch((err) => {
-            console.log('setTouchEmulationEnabled error', err)
-          })
-        }
 
         const pages = await this.browser?.pages()
         // cookie导入成功后，把打开的tab页重新加载一次
