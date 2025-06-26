@@ -234,13 +234,13 @@ async function modifyFilter() {
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
           <div v-if="item.value.startsWith('u_')" class="flex items-center gap-2">
             <RxAvatar :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
-            <span>{{ item.label }}</span>
+            <span class="text-3.25">{{ item.label }}</span>
           </div>
-          <span v-else class="ellipsis-1" :title="(item.label as string)">{{ item.label }}</span>
+          <span v-else class="ellipsis-1 text-3.25" :title="(item.label as string)">{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-          <span>{{ item.label }}</span>
+          <span class="text-3.25">{{ item.label }}</span>
         </div>
       </a>
     </template>
@@ -265,7 +265,7 @@ async function modifyFilter() {
   display: flex;
   align-items: center;
   padding: 8px var(--spacing-md, 6px) 8px 10px !important;
-  gap: var(--spacing-md, 6px) !important;
+  gap: 6px !important;
   width: 100%;
 }
 </style>

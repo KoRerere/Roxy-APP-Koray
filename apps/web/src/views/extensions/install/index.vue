@@ -371,19 +371,14 @@ defineExpose({
 </script>
 
 <template>
-  <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple"
-    :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
+  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
     :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler">
     <template #filter-after>
       <div class="flex items-center justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')"
-            @click.stop="installViaUrl" />
-          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')"
-            @click.stop="onUploadExtension()" />
+          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />
+          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click.stop="onUploadExtension()" />
         </div>
       </div>
     </template>
@@ -392,8 +387,7 @@ defineExpose({
       <CustomEmpty icon="rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs"
-              icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
+            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
@@ -418,15 +412,13 @@ defineExpose({
         <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
         <span v-else>
           <span>{{ $t('团队') }}</span>
-          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1"
-            name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
+          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
         </span>
       </div>
     </template>
 
     <template #related="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
-        @click.stop="operationHandler({ name: 'install' }, data)">
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click.stop="operationHandler({ name: 'install' }, data)">
         <!-- <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" /> -->
         <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -444,10 +436,8 @@ defineExpose({
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs"
-          @click.stop="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info"
-          color="var(--colors-icon-icon-note)" />
+        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
       </div>
       <div v-else class="update-info">
         --
@@ -455,16 +445,12 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
-        class="flex items-center">
-        <div v-tooltip.top="{ value: $t('固定'), showDelay: 500 }"
-          class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
+        <div v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
           @click.stop="showPinMenu($event, data)">
-          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
-            :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
+          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'" :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
         </div>
-        <div v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }"
-          class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
+        <div v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
           @click.stop="showShieldDialog(data)">
           <RxSvgIcon name="base/rx_ic_shield" />
         </div>

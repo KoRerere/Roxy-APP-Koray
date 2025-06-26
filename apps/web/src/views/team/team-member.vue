@@ -220,7 +220,7 @@ async function handleShowInviteUserFormDialog() {
     </template>
     <template #filter-after>
       <div class="flex items-center justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>
