@@ -8,7 +8,7 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged } from '/@/utils'
+import { isMac, isPackaged } from '/@/constants/common'
 import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { forceSaveConfig, store } from '/@/modules/store'
 
@@ -194,12 +194,19 @@ export const appUpdater = new class AppUpdater {
   }
 
   /** 立即退出应用并且更新 */
-  upgradeNow() {
+  async upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`立即退出应用并且更新`)
     if (isPackaged) {
-      this.isQuittingForUpdate = true
-      this.#autoUpdater.quitAndInstall(true, true)
+      if (this.downloadPromiser?.promise) {
+        this.downloadPromiser.promise.finally(() => {
+          this.isQuittingForUpdate = true
+          this.#autoUpdater.quitAndInstall(true, true)
+        })
+      } else {
+        this.isQuittingForUpdate = true
+        this.#autoUpdater.quitAndInstall(true, true)
+      }
     }
   }
 

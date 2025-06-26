@@ -3,7 +3,8 @@ import { getBaseUrl, getGatewayConfig, getOpenAPIUrl } from '/@/api/getGatewayCo
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
-import { appCliStartArgs, getCommonRequestHeaders, isDev, isPackaged } from '/@/utils'
+import { getCommonRequestHeaders } from '/@/utils'
+import { appCliStartArgs, isDev, isPackaged } from '/@/constants/common'
 import { attachAxiosLogger } from './axiosLogger'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,

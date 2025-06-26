@@ -22,7 +22,7 @@ export function useMateGroup() {
           <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" fill={item.color} />
           </svg>
-          <span class="ellipsis-1" title={item.name}>{item.name}</span>
+          <span class="ellipsis-1 text-3.25" title={item.name}>{item.name}</span>
         </div>
       ),
     }))
@@ -42,7 +42,7 @@ export function useMateGroup() {
         return (
           <div class="flex items-center gap-1">
             <RxAvatar avatar={item.avatar} size={24} fontSize={12} name={item.userName?.slice(0, 2)} color={item.avatarColor} />
-            <div class="ellipsis-1">{item.userName}</div>
+            <div class="ellipsis-1 text-3.25">{item.userName}</div>
           </div>
         )
       },

@@ -2,19 +2,24 @@
 import { useElementSize } from '@vueuse/core';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
-defineProps({
-  name: String,
-  label: String,
-  tooltip: String,
-  labelWidth: {
-    type: String,
-  },
+interface Props {
+  name?: string
+  label?: string
+  tooltip?: string
+  labelWidth?: string
+}
+
+defineOptions({
+  inheritAttrs: false,
 })
 
-const labelElRef = useTemplateRef('labelEl')
-const { height, stop } = useElementSize(labelElRef)
+defineProps<Props>()
+
+const labelRef = useTemplateRef('label')
+const { height, stop } = useElementSize(labelRef)
 const lineHeight = ref('32px')
 
+// 兼容俄语，当 label高 度大于 50px 时，自动设置 lineHeight 为 auto
 const stopWatch = watch(height, () => {
   if (height.value > 50) {
     lineHeight.value = 'auto'
@@ -25,32 +30,19 @@ const stopWatch = watch(height, () => {
 </script>
 
 <template>
-  <label v-if="label" ref="labelEl" class="rx-label" :for="name">
-    <div class="rx-label__content">
-      <div>
-        <span>{{ label }}</span>
-        <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" class="align-middle ml-1"
-          name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
-      </div>
-    </div>
+  <label v-if="label" ref="label" class="rx-label" :for="name">
+    <span>{{ label }}</span>
+    <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" class="align-middle ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
   </label>
 </template>
 
 <style lang="scss" scoped>
 .rx-label {
-  margin-right: var(--spacing-lg, 8px);
-  width: v-bind(labelWidth);
+  margin-right: 8px;
   min-width: 130px;
-  color: var(--colors-text-text-primary, #111213);
-  font-family: Inter;
+  width: v-bind(labelWidth);
+  line-height: v-bind(lineHeight);
+  color: var(--colors-text-text-primary);
   font-size: 13px;
-  font-weight: 500;
-  line-height: var(--Line-Height-display-xs, v-bind(lineHeight));
-
-  &__content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm, 4px);
-  }
 }
 </style>

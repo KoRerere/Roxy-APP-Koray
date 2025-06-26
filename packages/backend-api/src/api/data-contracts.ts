@@ -1542,7 +1542,13 @@ export interface LoginCreateData {
     user_name: string;
     user_id: number;
     role: string;
+    /** 旧字段，是否迁移数据 */
     is_migrate: boolean;
+    workspaceId: number;
+    /** 420状态会有这个字段 */
+    recover_type?: string;
+    /** 420状态会有这个字段 */
+    recover_email?: string;
   };
   msg: string;
 }
@@ -1764,6 +1770,7 @@ export interface UserGetUserInfoListData {
      */
     firstCreateTip: boolean;
     clientId: string;
+    setPasswordStatus: boolean;
     /** 列表备注状态 */
     remarkDisplayStatus: boolean;
   };
@@ -2509,7 +2516,7 @@ export interface CheckOtherDeviceLoginListParams {
    * 登录类型
    * @example "login/google/github"
    */
-  login_type: string;
+  login_type?: string;
   /**
    * 登录token：google/github token
    * @example ""
@@ -2889,6 +2896,256 @@ export interface UserModifyRemarkDisplayStatusCreatePayload {
 
 export interface UserModifyRemarkDisplayStatusCreateData {
   code: number;
+  msg: string;
+}
+
+export interface GetValidatorTokenInfoListParams {
+  /**
+   * 临时token
+   * @example "0oPwO4vway3Vty0D1750430479980"
+   */
+  temp_token?: string;
+}
+
+export interface GetValidatorTokenInfoListData {
+  code: number;
+  data: {
+    google_keyuri: string;
+    secret: string;
+  };
+  msg: string;
+}
+
+export interface GetPersonalVerifyValidatorCodeListParams {
+  /**
+   * 验证码
+   * @example "123456"
+   */
+  code: string;
+  temp_token?: string;
+  /**
+   * 验证码校验类型
+   * @example ""login_2fa", "login_recover_code", "update_2fa_info", "add_2fa_info""
+   */
+  type: string;
+}
+
+export interface GetPersonalVerifyValidatorCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface SendValidatorEmailVerifyCodeListParams {
+  email?: string;
+  /** @example "add" */
+  type?: string;
+  temp_token?: string;
+}
+
+export interface SendValidatorEmailVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface GenerateValidatorRecoverCodeListParams {
+  /**
+   * 类型：修改还是新增:"modify", "add"
+   * @example "modify"
+   */
+  type: string;
+  temp_token?: string;
+}
+
+export interface GenerateValidatorRecoverCodeListData {
+  code: number;
+  data: string[];
+  msg: string;
+}
+
+export interface ValidatorBindCreatePayload {
+  /**
+   * 恢复方式：恢复邮箱/代码
+   * 恢复方式：恢复邮箱/代码
+   */
+  recover_type: string;
+  /**
+   * 恢复邮箱
+   * 恢复邮箱
+   */
+  recover_email?: string;
+  /**
+   * 恢复邮箱验证码
+   * 恢复邮箱验证码
+   */
+  ver_code?: string;
+  temp_token?: string;
+}
+
+export interface ValidatorBindCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSendValidatorVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeListParams {
+  /** @example "123123" */
+  ver_code?: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCloseValidatorCreatePayload {
+  /** 2fa码 */
+  code: string;
+}
+
+export interface UserCloseValidatorCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetValidatorBindInfoListData {
+  code: number;
+  data: {
+    /** 绑定状态：0，未绑定，1绑定，2，异常 */
+    validatorIsBind: number;
+    /** APP状态 */
+    validatorAPP: number;
+    /** 恢复邮箱状态 */
+    recoverEmail: number;
+    /** 恢复代码状态 */
+    recoverCode: number;
+  };
+  msg: string;
+}
+
+export interface UserGetValidatorInfoListParams {
+  /**
+   * code码
+   * @example "123456"
+   */
+  code?: string;
+}
+
+export interface UserGetValidatorInfoListData {
+  code: number;
+  data: {
+    /** 恢复邮箱 */
+    recoverEmail: string;
+    /** 恢复代码 */
+    recoverCode: string[];
+  };
+  msg: string;
+}
+
+export interface UserUpdateValidatorTokenCreatePayload {
+  code: string;
+}
+
+export interface UserUpdateValidatorTokenCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface CheckRecoverCodeCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 恢复代码 */
+  recover_code: string;
+}
+
+export interface CheckRecoverCodeCreateData {
+  code: number;
+  data: string;
+  msg: string;
+}
+
+export interface Get2FaLoginInfoListParams {
+  /**
+   * 临时token
+   * @example "oQNTHk45wom22tT71750668640993"
+   */
+  temp_token: string;
+  /**
+   * 登录验证的类型
+   * @example "recover_code，recover_email, 2fa_code"
+   */
+  type?: string;
+}
+
+export interface Get2FaLoginInfoListData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface CheckEmailPasswordCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 邮箱 */
+  email: string;
+  /** 密码 */
+  password: string;
+}
+
+export interface CheckEmailPasswordCreateData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface VerifyValidatorEmailVerifyCodeCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface VerifyValidatorEmailVerifyCodeCreateData {
+  code: number;
+  data: string;
+  msg: string;
+}
+
+export interface CheckEmailOr2FaVerifyListParams {
+  /**
+   * 邮箱
+   * @example "1876019890@qq.com"
+   */
+  email: string;
+}
+
+export interface CheckEmailOr2FaVerifyListData {
+  code: number;
+  data: {
+    /** 验证方式，2fa/邮箱 */
+    verify_type: string;
+    /** 恢复方式，代码/邮箱 */
+    recover_type: string;
+  };
   msg: string;
 }
 
@@ -4493,6 +4750,17 @@ export interface UserAddPlatformInfoBatchCreateData {
   msg: string;
 }
 
+export interface UserGetPlatformFromWindowListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      platformUrl: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -5663,6 +5931,16 @@ export interface CheckAddUserByProjectInfoCreateData {
   msg: string;
 }
 
+export interface UserMdfProjectSortCreatePayload {
+  projectIds: number[];
+  projectSortNumList: number[];
+}
+
+export interface UserMdfProjectSortCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetDurationDiscountsListData {
   code: number;
   data: {
@@ -6018,6 +6296,8 @@ export interface UserGetUserPayInfoListData {
     showGiftDlg: boolean;
     /** 服务器当前时间 */
     subCurrentDate: number;
+    /** 日志保留时长 */
+    subscriptionLogDays: number;
   };
   msg: string;
 }

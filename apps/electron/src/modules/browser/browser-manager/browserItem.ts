@@ -17,8 +17,6 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
-import { setTimeout } from 'node:timers/promises'
-import type { CDPSession } from './chrome-wrapper/'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -149,9 +147,6 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
-    queueMicrotask(async () => {
-      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
-    })
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
@@ -170,11 +165,15 @@ export class BrowserItem {
       })
     }
     else {
+      // 启动时是否需要生成随机指纹
+      await this.handleRandomFingerprint()
+      queueMicrotask(async () => {
+        Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
+      })
+      // 解密代理信息
       await this.decryptProxyInfo().catch((error) => {
         console.error('decryptProxyInfo error: ', error)
       })
-      // 启动时是否需要生成随机指纹
-      this.handleRandomFingerprint()
       // 创建启动任务
       this.beforeLaunchTask = new BeforeLaunchTask(this)
       // 拉起浏览器
@@ -280,12 +279,13 @@ export class BrowserItem {
   /** 启动时生成随机指纹 */
   async handleRandomFingerprint() {
     if (this.winInfo.randomFingerprint) {
-      const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
-        console.error('genRandomFingerprint error: ', error)
-        sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
-        return Promise.reject(new Error($t('启动时生成随机指纹失败')))
-      })
       try {
+        const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
+          console.error('genRandomFingerprint error: ', error)
+          sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
+          return Promise.reject(new Error($t('启动时生成随机指纹失败')))
+        })
+
         const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
         if (code === 0) {
           console.log('修改指纹成功', fingerprint)

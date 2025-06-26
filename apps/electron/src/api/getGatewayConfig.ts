@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { isDev, isPackaged, ProxyDetectionResult } from '/@/utils'
+import { ProxyDetectionResult } from '/@/utils'
+import { isDev, isPackaged } from '/@/constants/common'
 import { ipcMain } from '/@/modules/ipc'
 
 const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']
@@ -18,7 +19,6 @@ export function getBaseUrl(): string {
 }
 
 // CN(中国) --> hz
-// AS(亚洲) --> hk
 // NA，SA，EU(欧洲，北美洲，南美洲) --> us
 // 其他州 --> sg
 
@@ -35,8 +35,6 @@ async function getMapKey() {
     if (country_code === 'CN') {
       return 'hz'
     }
-    // 非中国内地都走香港
-    return 'hk'
   }
 
   // 北美洲，南美洲，欧洲
@@ -109,24 +107,19 @@ async function getAvailableUrl(data: Record<string, string[]>, mapKey: string) {
   // 根据原始的 mapKey获取 API 域名
   let domain = await testBackendUrl(data[mapKey])
 
-  // 当前是hz,拿数组的下一个,没有下一个了,就拿hk的数组, hk的数组也不通，就拿sg的数组.
+  // 当前是hz,拿数组的下一个,没有下一个了,就拿sg的数组, sg的数组也不通，就拿us的数组
   if (!domain && mapKey === 'hz') {
-    mapKey = 'hk'
-    domain = await testBackendUrl(data[mapKey])
-  }
-  // 当前是hk,拿数组的下一个,没有下一个了,就拿sg的数组.
-  if (!domain && mapKey === 'hk') {
     mapKey = 'sg'
     domain = await testBackendUrl(data[mapKey])
   }
-  // 当前是sg,拿数组的下一个,没有下一个了,就拿hk的数组.
+  // 当前是sg,拿数组的下一个,没有下一个了,就拿us的数组.
   if (!domain && mapKey === 'sg') {
-    mapKey = 'hk'
+    mapKey = 'us'
     domain = await testBackendUrl(data[mapKey])
   }
-  // 当前是us,拿数组的下一个,没有下一个了,就拿hk的数组
+  // 当前是us,拿数组的下一个,没有下一个了,就拿sg的数组.
   if (!domain && mapKey === 'us') {
-    mapKey = 'hk'
+    mapKey = 'sg'
     domain = await testBackendUrl(data[mapKey])
   }
 

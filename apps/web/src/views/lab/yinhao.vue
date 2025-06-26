@@ -161,86 +161,66 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
 }))
 //====================================
 import TsForm from './components/form/index.vue';
-import Test from './components/test.vue'
-import type { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 const inputs = [
-  // {
-  //   type: 'text',
-  //   name: 'username',
-  //   label: 'Username',
-  //   props: {
-  //     preIcon: 'base/rx_ic_2fa',
-  //     icon: 'base/rx_ic_2fa',
-  //     size: 'md',
-  //   },
-  //   resolver: (z: any) => z.string({
-  //     invalid_type_error: $t('请输入空间名称'),
-  //   })
-  //     .min(1, $t('请输入空间名称'))
-  //     .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
-  //     .max(20, $t('空间名称最多 20 个字符')),
-  // },
-  // {
-  //   type: 'number',
-  //   name: 'aaaaa',
-  //   label: 'Age',
-  //   value: 1102,
-  // },
-  // {
-  //   type: 'mselect',
-  //   name: 'scvr1',
-  //   label: 'Scvr1',
-  //   value: [1, 2, 3, 4],
-  //   props: {
-  //     maxSelectedLabels: 3,
-  //     options: [
-  //       { label: '1111111', value: 1 },
-  //       { label: '2222222', value: 2 },
-  //       { label: '3333333', value: 3 },
-  //       { label: '4444444', value: 4 },
-  //       { label: '5555555', value: 5 },
-  //     ],
-  //   },
-  // },
-  // {
-  //   type: 'select',
-  //   name: 'eddp',
-  //   value: { label: '1', value: 1 },
-  //   props: {
-  //     options: [
-  //       { label: '1', value: 1 },
-  //       { label: '2', value: 2 },
-  //       { label: '3', value: 3 },
-  //     ],
-  //   },
-  // },
-  // {
-  //   type: 'textarea',
-  //   name: 'lastname',
-  //   label: 'Last Name',
-  //   resolver: (z: any) => z.string({
-  //     invalid_type_error: 'wcis man!',
-  //   })
-  //     .min(2, 'wcis man!')
-  // },
-  // {
-  //   type: 'text',
-  //   name: 'mamba',
-  //   label: 'mamba',
-  //   value: 'what can is say men!',
-  //   render: (props: any) => <Test {...props}></Test>,
-  //   resolver: (z: any) => z.string({
-  //     invalid_type_error: 'must 5 string man!'
-  //   })
-  //     .min(5, 'must 5 string man!'),
-  // }
   {
-    type: 'date',
-    name: 'date',
+    type: 'text',
+    name: 'username',
+    label: 'Username',
     props: {
-      placeholder: $t('全部时间'),
-    }
+      preIcon: 'base/rx_ic_2fa',
+      icon: 'base/rx_ic_2fa',
+      size: 'md',
+    },
+    resolver: (z: any) => z.string({
+      invalid_type_error: $t('请输入空间名称'),
+    })
+      .min(1, $t('请输入空间名称'))
+      .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
+      .max(20, $t('空间名称最多 20 个字符')),
+  },
+  {
+    type: 'number',
+    name: 'aaaaa',
+    label: 'Age',
+    value: 1102,
+  },
+  {
+    type: 'mselect',
+    name: 'scvr1',
+    label: 'Scvr1',
+    value: [1, 2, 3, 4],
+    props: {
+      maxSelectedLabels: 3,
+      options: [
+        { label: '1111111', value: 1 },
+        { label: '2222222', value: 2 },
+        { label: '3333333', value: 3 },
+        { label: '4444444', value: 4 },
+        { label: '5555555', value: 5 },
+      ],
+    },
+  },
+  {
+    type: 'select',
+    name: 'eddp',
+    value: { label: '1', value: 1 },
+    props: {
+      options: [
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+        { label: '3', value: 3 },
+      ],
+    },
+  },
+  {
+    type: 'textarea',
+    name: 'lastname',
+    label: 'Last Name',
+    resolver: (z: any) => z.string({
+      invalid_type_error: 'wcis man!',
+    })
+      .min(2, 'wcis man!')
   }
 ]
 
@@ -253,45 +233,15 @@ const formRef = useTemplateRef<any>('wcisman')
 function noFormIdSubmit() {
   formRef.value?.instance.submit()
 }
-//==================================
-
-const filters = reactive({
-  value: 0,
-  options: [
-    {
-      name: $t('全部'),
-      value: 0,
-    },
-    {
-      name: $t('团队'),
-      value: 1,
-    },
-    {
-      name: $t('个人'),
-      value: 2,
-    },
-  ],
-  onChange() {
-  },
-  resetFilters() {
-  },
-})
-
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <!-- <div class="flex flex-col gap-2">
-      <RxAlert announcement title="wcis man!" type="success"></RxAlert>
-      <RxAlert title="wcis man!" type="info"></RxAlert>
-      <RxAlert title="wcis man!" type="warn"></RxAlert>
-      <RxAlert title="wcis man!" type="error"></RxAlert>
-    </div> -->
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
-      <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
-      <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
-      <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
+    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+      <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
+      <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
+      <RxButton class="w-full" label="test submit" @click="noFormIdSubmit"></RxButton>
     </div>
   </div>
 </template>

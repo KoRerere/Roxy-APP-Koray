@@ -4,12 +4,10 @@ import { differenceInDays, format, subDays } from 'date-fns'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import { } from "date-fns";
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from "/@/stores/role"
 import { I18nT } from 'vue-i18n'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
-import { emitter } from "/@/utils/eventBus"
 import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
@@ -37,7 +35,7 @@ const columns = ref([
   {
     title: $t('具体内容'),
     key: 'operateDetail',
-    width: 240,
+    slot: 'operateDetail',
   },
   {
     title: $t('时间'),
@@ -125,10 +123,8 @@ function upgradePlan() {
   const isFree = [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.subLevel as SubLevelEnum)
   const isExpired = userPayInfo.subLevel === SubLevelEnum.Expired
 
-  if (isFree) {
+  if (isFree || isExpired) {
     router.push({ name: 'subscribe-plan' })
-  } else if (isExpired) {
-    emitter.emit('showRenewalDialog')
   } else {
     router.push({ name: 'upgrade-plan' })
   }
@@ -143,6 +139,12 @@ function upgradePlan() {
       <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无匹配结果')" :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')" />
+        </template>
+
+        <template #operateDetail="{ data }">
+          <div class="operate-detail w-240px" v-tooltip.top="{ pt: { root: 'max-w-320px' }, value: data.operateDetail, showDelay: 200, hideDelay: 200 }">
+            {{ data.operateDetail }}
+          </div>
         </template>
 
         <template #location="{ data }">
@@ -184,6 +186,18 @@ function upgradePlan() {
   font-style: normal;
   font-weight: 400;
   line-height: 16px;
+}
+
+.operate-detail {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .locationip {

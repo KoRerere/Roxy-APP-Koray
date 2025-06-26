@@ -194,7 +194,7 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
-          <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
+          <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
               :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />

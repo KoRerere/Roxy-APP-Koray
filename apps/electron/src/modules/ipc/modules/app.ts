@@ -5,7 +5,7 @@ import { chromeCoreManager } from "/@/modules/browser";
 import type { IPCMainInstance } from "/@/modules/ipc/types";
 import { startMoveWindow, stopMoveWindow } from "/@/modules/ipc/utils";
 import { openAPIServer } from "/@/modules/openapi";
-import { startRoxynet } from "/@/modules/roxynet";
+import { setSystemProxy, } from "/@/modules/roxynet";
 import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
@@ -42,14 +42,14 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     if (store.systemProxySwitch !== originSystemProxySwitch) {
       if (store.systemProxySwitch) {
         // 重新设置系统代理
-        startRoxynet();
+        setSystemProxy()
       } else {
         // 这里不需要关闭 roxynet，因为关闭 roxynet 会导致已打开的窗口的系统代理失效
         // stopRoxynet()
       }
     } else if (store.v2raySwitch !== originV2raySwitch) {
       // 重新设置系统代理
-      startRoxynet();
+      setSystemProxy();
     }
   });
 
@@ -130,7 +130,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   });
   /** 程序化显示和隐藏红绿灯 */
   ipcMain.on("app:showHideTrafficLight", (event, show) => {
-    getMainWindow()?.setWindowButtonVisibility(show);
+    getMainWindow()?.setWindowButtonVisibility?.(show);
   });
 
   /** 当前 APP 窗口是否是主窗口 */
@@ -186,6 +186,13 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 用户已读新功能提示 */
   ipcMain.on("app:hideNewFeatureTips", (event) => {
     store.showNewFeatureTips = false
+  });
+
+  /** 是否显示长时间未登录提示 */
+  ipcMain.on("app:isShowLongTimeNotLoginTips", (event) => {
+    const isShow = store.showLongTimeNotLoginTips || false
+    store.showLongTimeNotLoginTips = false
+    return isShow
   });
 
   /** 开启系统代理 */

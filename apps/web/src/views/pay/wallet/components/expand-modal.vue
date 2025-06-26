@@ -184,8 +184,7 @@ function close(isCancel: boolean) {
     <div class="flex gap-6">
       <div class="flex-1 flex flex-col gap-8">
         <div class="flex flex-col gap-4">
-          <RxAlert class="w-full" type="info" size="small"
-            :title="$t('您当前拥有: {member} 团队成员, {workspace} 工作空间', { member: userPayInfo?.maxMemberCount, workspace: userPayInfo?.maxWorkspaceCount })"
+          <RxAlert class="w-full" type="info" size="small" :title="$t('您当前拥有: {member} 团队成员, {workspace} 工作空间', { member: userPayInfo?.maxMemberCount, workspace: userPayInfo?.maxWorkspaceCount })"
             :closable="false"></RxAlert>
           <div>
             <div class="sub-title">{{ $t('请选择数量') }}</div>
@@ -194,20 +193,18 @@ function close(isCancel: boolean) {
           <div class="flex flex-col gap-6">
             <div class="flex items-center gap-4" v-for="item in buyList" :key="item.label">
               <div class="w-28 label">{{ item.label }}</div>
-              <RxStep class="!w-30" size="xs" v-model="item.value" :min="min" :max="max"
-                @update:modelValue="onUpdate($event, item)" @change="delayQuery" />
+              <RxStepInput class="!w-30" size="xs" v-model="item.value" :min="min" :max="max" @update:modelValue="onUpdate($event, item)" @change="delayQuery" />
               <div>{{ currency(item.cost).format() }} / {{ item.label }}</div>
             </div>
           </div>
         </div>
         <ItemBlock :title="$t('支付方式')">
-          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="supportPayWays"
-            :disabledMethods="disabledMethods"></RxPaymentMethods>
+          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="supportPayWays" :disabledMethods="disabledMethods"></RxPaymentMethods>
         </ItemBlock>
         <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="finalAmount" @recharge:failed="close(true)">
         </Blance>
       </div>
-      <Detail class="w-90" :list="detail">
+      <Detail class="w-80" :list="detail">
         <template #oldprice="{ item }">
           <div class="flex justify-between">
             <div class="details-label">{{ item.label }}</div>
@@ -229,8 +226,7 @@ function close(isCancel: boolean) {
         <template #after>
           <div class="flex-1 flex flex-col justify-end gap-3">
             <RxButton :disabled="disabled" size="lg" :label="$t('确认付款')" @click="confirm"></RxButton>
-            <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
-              scope="global">
+            <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>
                 <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
               </template>

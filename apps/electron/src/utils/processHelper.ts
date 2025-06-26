@@ -96,6 +96,41 @@ export async function isProcessExists(pids: number[]): Promise<boolean[]> {
 }
 
 
+export function isProcessRunning(pid: number) {
+  if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) {
+    return false; // 无效 PID
+  }
+
+  try {
+    // process.kill(pid, 0) 的第二个参数 0 表示不发送任何信号，仅仅用于检查进程是否存在。
+    // 如果进程存在，process.kill 会执行成功，try 代码块中的 return true; 会被执行。
+    // 如果进程不存在，process.kill 会抛出异常，catch 代码块中的 return false; 会被执行
+    process.kill(pid, 0);  // 不会真的杀进程
+    // 没抛异常说明存在
+    return true;
+  } catch (e: any) {
+    if (e.code === 'ERR_INVALID_ARG_TYPE') {
+      // 针对 `process.kill` 的错误，表示 pid 不是数字或超出范围
+      return false;
+    }
+    if (e.code === 'EPERM') {
+      // 权限不足（但进程可能存在）
+      return true;
+    }
+    if (e.code === 'ESRCH') {
+      // 进程不存在
+      return false;
+    }
+    if (e.code === 'EINVAL') {
+      // 无效的信号
+      return false;
+    }
+    // 其他未知错误，保守起见返回 false
+    return false;
+  }
+}
+
+
 /**
  * 查找占用某个句柄的进程
  *

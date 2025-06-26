@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyTable from '/@/views/agent/list/quick.vue'
-import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
@@ -25,10 +24,10 @@ const { showSimpleDialog } = useSimpleDialog()
 const { testProxy: checkProxy, checkResult, batchTestShowToast } = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
 
+const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
-const proxySwitch = defineModel('proxySwitch', { default: false })
 
-const checkIndex = ref()
+const checkIndex = reactive<Record<string, boolean>>({})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 
@@ -109,9 +108,10 @@ function onChoose(data: any) {
   }
 }
 
-async function testProxy(data: any, index: number) {
-  checkIndex.value = index
+async function testProxySpeed(data: any, index: number) {
+  checkIndex[index] = true;
   const result = await checkProxy(toRaw(data))
+  checkIndex[index] = false;
   batchTestShowToast(result)
   Object.assign(data, result)
 }
@@ -149,134 +149,100 @@ function tooltipValue(item: any) {
   ]
   return {
     value: value.join('\n').replace(/(\/|:)?undefined/g, '--'),
-    showDelay: 500,
+    showDelay: 300,
     pt: { root: '!max-w-80' }
   }
 }
-
 </script>
 
 <template>
-  <div class="w-full">
-    <div class="proxy-switch">
-      <RxInputRadio v-model="proxySwitch" size="xs" name="proxySwitch" :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
-    </div>
-    <div v-if="!proxySwitch" class="direct">
-      {{ $t('* 不使用代理则默认通过本地直连 ({value})', {
-        value: `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}`
-      }) }}
-    </div>
-    <template v-else>
-      <div class="button-group">
-        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+  <div class="w-full flex flex-col gap-3">
+    <div class="flex items-center self-stretch gap-2">
+      <div class="flex-1 items-center flex gap-2 ">
+        <span class="title">{{ attrs.label }}</span>
+        <span v-if="!proxyList.length" class="tips">{{ $t('* 不使用代理则默认通过本地直连 ({value})', {
+          value:
+            `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}`
+        }) }}</span>
       </div>
-      <div>
-        <template v-if="isBatch">
-          <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn"
-            :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false" />
-          <RxCard class="multiple" v-for="(item, index) in proxyList" :key="index" @click="onEdit(item)" @close="deleteProxy(index)">
-            <div class="multiple-region">
-              <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
-              <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-              <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
-            </div>
-            <RxTag class="cursor-pointer" icon="base/rx_ic_browser" :label="item._proxyCount" @click.stop="modifyProxyCount(item)" />
-            <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex === index && checkResult.loading }"
-              :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" @click.stop="testProxy(item, index)" />
-          </RxCard>
-        </template>
-        <template v-else>
-          <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @click="onEdit(item)" @close="deleteProxy(index)">
-            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
-            <div class="flex justify-between single-region ">
-              <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-              <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-                color="var(--colors-icon-icon-primary)" @click.stop="testProxy(item, index)" />
-            </div>
-            <div class="flex justify-between single-time">{{ item.ipType }} {{ item.proxyCategory }}{{ strConcat('://', item.host) }}{{ strConcat(':', item.port) }}</div>
-          </RxCard>
-        </template>
-      </div>
-    </template>
+      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
+        @click="toggleDrawer('list')" />
+      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus"
+        :label="$t('添加')" @click="toggleDrawer('create')" />
+    </div>
+    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn"
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })"
+      :closable="false"></RxAlert>
+    <div class="grid gap-2 list" v-if="proxyList.length">
+      <RxCard class="flex gap-2 items-start overflow-hidden" v-for="(item, index) in proxyList" :key="index"
+        :closable="false" @click="onEdit(item)">
+        <RxSvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth"
+          color="var(--colors-icon-icon-tertiary)" />
+        <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+          <div class="flex items-center gap-2 region">
+            <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
+            <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12"
+              color="var(--colors-icon-icon-note)" />
+          </div>
+          <div class="flex items-center gap-1.5 info" v-if="isBatch">
+            <span>{{ $t('绑定窗口数:') }}</span>
+            <span class="text-[var(--colors-text-text-primary)] font-bold">{{ item._proxyCount }}</span>
+            <span class="text-[var(--colors-text-text-link)] cursor-pointer" @click.stop="modifyProxyCount(item)">{{
+              $t('修改') }}</span>
+          </div>
+          <div class="flex items-center gap-1.5 info" v-else>
+            <div>{{ item.ipType }}</div>
+            <div class="line"></div>
+            <div class="flex-1 ellipsis-1">{{ item.proxyCategory || item.protocol }}{{ strConcat('://', item.host) }}{{
+              strConcat(':', item.port) }}</div>
+          </div>
+        </div>
+        <div class="mt-0.5 flex gap-2">
+          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
+            :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+            color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, index)" />
+          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)"
+            @click.stop="deleteProxy(index)" />
+        </div>
+      </RxCard>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.proxy-switch {
-  :deep(.rx-radio-group-item) {
-    min-width: 90px;
-  }
-}
-
-.direct {
-  margin-top: var(--spacing-xl, 12px);
-  color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
   line-height: 16px;
 }
 
-.button-group {
-  margin-top: var(--spacing-xl, 12px);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg, 8px);
-  align-self: stretch;
+.tips {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
 }
 
-.single {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-lg, 8px);
-  grid-row-gap: var(--spacing-xs, 4px);
-  margin-top: 10px;
-
-  &-img {
-    width: 16px;
-    height: 16px;
-    grid-row-start: span 2;
-  }
-
-  &-region {
-    color: var(--colors-text-text-primary, #fafafa);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
-
-  &-time {
-    color: var(--colors-text-text-inactive, #a3a9ad);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
+.list {
+  grid-template-columns: repeat(2, 1fr);
 }
 
-.multiple {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md, 6px);
-  margin-top: 10px;
+.line {
+  width: 1px;
+  height: 12px;
+  background: var(--component-dropdown-divider);
+}
 
-  &-region {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    gap: var(--spacing-md, 6px);
+.region {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
 
-    color: var(--colors-text-text-primary, #fafafa);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: var(--Line-Height-text-lg, 20px);
-  }
+.info {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
 }
 </style>

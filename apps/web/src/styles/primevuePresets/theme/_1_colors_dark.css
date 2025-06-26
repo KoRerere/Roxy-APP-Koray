@@ -25,7 +25,9 @@
 	--colors-alpha-alpha-black-100: #000000;
 	--colors-background-bg-mask: rgba(36, 38, 41, 0.8000);
 	--colors-background-bg-mode: #000000;
+	--colors-background-bg-mode-transparent: rgba(0, 0, 0, 0.0000);
 	--colors-background-bg-mode-reverse: #ffffff;
+	--colors-background-bg-mode-reverse-transparent: rgba(255, 255, 255, 0.0000);
 	--colors-background-bg-example: #20262c;
 	--colors-background-bg-app: var(--primitives-netural-950);
 	--colors-background-bg-page: var(--primitives-netural-900);
@@ -90,6 +92,7 @@
 	--colors-border-border-overlay: var(--colors-border-border-subtle);
 	--colors-border-divider: var(--colors-border-border-inactive);
 	--colors-border-divider-dashed: var(--colors-border-border-subtle);
+	--colors-icon-icon-example: #00385c;
 	--colors-icon-icon-primary: var(--primitives-netural-200);
 	--colors-icon-icon-primary-hover: var(--primitives-netural-100);
 	--colors-icon-icon-secondary: var(--primitives-netural-300);
@@ -140,13 +143,13 @@
 	--component-dropdown-bg-active: var(--primitives-blue-600);
 	--component-dropdown-text-active: var(--primitives-netural-0);
 	--component-dropdown-icon-active: var(--primitives-netural-0);
+	--component-scrollbar-bg: var(--primitives-netural-800);
+	--component-scrollbar-border: var(--colors-border-border-subtle);
+	--component-scrollbar-indicator: var(--primitives-netural-600);
 	--component-marquee-indicator: var(--primitives-netural-700);
 	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-skeleton-bg: var(--primitives-netural-800);
 	--component-collapse-bg: var(--primitives-netural-800);
-	--component-scrollbar-bg: var(--primitives-netural-800);
-	--component-scrollbar-border: var(--colors-border-border-subtle);
-	--component-scrollbar-indicator: var(--primitives-netural-600);
 	--component-button-primary-bg: var(--primitives-blue-500);
 	--component-button-primary-bg-hover: var(--primitives-blue-400);
 	--component-button-primary-text: var(--primitives-netural-0);
@@ -181,10 +184,6 @@
 	--component-tooltip-text-primary: var(--primitives-netural-0);
 	--component-tooltip-text-secondary: var(--primitives-netural-200);
 	--component-tooltip-divider: var(--primitives-netural-600);
-	--component-segment-bg-tab: var(--primitives-netural-900);
-	--component-segment-bg-selection: var(--primitives-netural-800);
-	--component-segment-bg-selection-active: var(--primitives-netural-700);
-	--component-segment-border-selection-active: var(--primitives-netural-500);
 	--component-table-bg-header: var(--primitives-netural-800);
 	--component-table-border-header: var(--colors-border-border-subtle);
 	--component-table-bg-hover: var(--primitives-netural-800);
@@ -198,6 +197,11 @@
 	--component-table-bg-updated-hover: var(--primitives-green-800);
 	--component-table-border-updated: var(--primitives-green-700);
 	--component-table-border-updated-hover: var(--primitives-green-600);
+	--component-segment-bg-tab: var(--primitives-netural-900);
+	--component-segment-bg-selection: var(--primitives-netural-800);
+	--component-segment-bg-selection-active: var(--primitives-netural-700);
+	--component-segment-border-selection-active: var(--primitives-netural-600);
+	--component-segment-text: var(--colors-text-text-secondary);
 	--component-rainbow-Yellow: #ffdd19;
 	--component-rainbow-Indigo: #0064d6;
 	--component-rainbow-Violet: #9747ff;
@@ -233,8 +237,8 @@
 	--pattern-drawer-border: var(--colors-border-border-inactive);
 	--pattern-profiles-input-bg: var(--primitives-netural-700);
 	--pattern-profiles-input-border: var(--primitives-netural-600);
-	--pattern-syncbar-btn-bg: var(--primitives-netural-800);
 	--pattern-syncbar-btn-bg-hover: var(--primitives-netural-700);
+	--pattern-syncbar-btn-bg: var(--primitives-netural-800);
 	--pattern-syncbar-btn-border: var(--primitives-netural-600);
 	--pattern-syncbar-btn-border-hover: var(--primitives-netural-500);
 	--pattern-syncbar-btn-text: var(--primitives-netural-25);
@@ -290,6 +294,5 @@
 	--pattern-pay-mood-blue: #7cfbff;
 	--pattern-pay-mood-cyan: #6f47ff;
 	--pattern-pay-gradient-selected-start: var(--primitives-blue-800);
-	--pattern-pay-gradient-selected-end: var(--colors-background-bg-action);
-	--primitives-netural-0: #ffffff
+	--pattern-pay-gradient-selected-end: var(--colors-background-bg-action)
 }

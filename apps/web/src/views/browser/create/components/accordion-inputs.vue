@@ -1,33 +1,34 @@
 <script lang="ts" setup>
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import inputLabel from '/@/components/ry-form/input-label.vue'
+import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales/index.js'
-import { copyText } from '/@/utils/'
-import accountItem from './account.vue'
-import proxyItem from './proxy.vue'
-import urlsItem from './urls.vue'
+import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import Position from '/@/views/browser/create/components/position.vue'
+import AccountItem from './account.vue'
+import ProxyItem from './proxy.vue'
+import UrlsItem from './urls.vue'
+import CookiesItem from './cookies.vue'
 import Os from './os.vue'
+import { $t } from '/@/locales/index.js'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { copyText } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
-defineProps({
-  accordions: {
-    type: Object as PropType<Accordions>,
-    default: undefined,
-  },
-  inputsGroup: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  windowInfo: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  }
-})
+interface Props {
+  accordions?: Accordions
+  inputsGroup?: any[]
+}
+
+const { accordions, inputsGroup = [] } = defineProps<Props>()
 
 const [showToast] = useResponseToast()
+
+const settings = computed(() => {
+  const [basic, ...others] = inputsGroup
+  return {
+    basic,
+    others
+  }
+})
 
 function onCopy(dirId: string) {
   copyText(dirId)
@@ -37,76 +38,66 @@ function onCopy(dirId: string) {
 
 <template>
   <div class="flex-ovh-1 flex-col">
-    <div v-if="accordions" class="flex-1 overflow-auto content">
-      <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
-        <template #collapseicon>
-          <RxSvgIcon name="base/rx_ic_chevron_down" />
+    <div v-if="accordions" class="flex-1 overflow-auto pb-4 content">
+      <slot name="before"></slot>
+      <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
+        <template #name="{ input }">
+          <div class="flex flex-col px-4">
+            <div class="flex items-center justify-between">
+              <InputLabel v-bind="input" />
+              <div class="flex items-center gap-2.5 mb-2 dir-id" v-if="!!input.dirId">
+                <span>ID:{{ input.dirId }}</span>
+                <span class="color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
+              </div>
+            </div>
+            <RxInputText v-model="input.value" v-bind="input" />
+          </div>
         </template>
-        <template #expandicon>
-          <RxSvgIcon name="base/rx_ic_chevron_up" />
+        <template #system="{ input }">
+          <div class="flex flex-col px-4">
+            <InputLabel v-bind="input" />
+            <div class="flex flex-col gap-2">
+              <div class="flex gap-2">
+                <InputGroup>
+                  <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
+                  <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
+                </InputGroup>
+                <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+              </div>
+              <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">{{ input.items[2].help }}</Message>
+            </div>
+          </div>
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
-          <AccordionHeader as="div" class="accordion-header">
-            {{ panels.title }}
+        <template #proxy="{ input }">
+          <div class="-mt-5 px-4 py-6 w-full dashed-border">
+            <ProxyItem v-model="input.value" v-bind="input" />
+          </div>
+        </template>
+        <template #accounts="{ input }">
+          <div class="-mt-5 px-4 py-6 w-full dashed-border">
+            <AccountItem v-model="input.value" v-model:type="input.platformBindType" v-bind="input" />
+          </div>
+        </template>
+        <template #urls="{ input }">
+          <UrlsItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+        </template>
+        <template #cookies="{ input }">
+          <CookiesItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+        </template>
+      </RyForm>
+      <RxAccordion :value="accordions.value" multiple>
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-dashed' }">
+          <AccordionHeader as="div" #default="{ active }">
+            <div class="flex items-center gap-3 header">
+              <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
+              <span>{{ panels.title }}</span>
+            </div>
           </AccordionHeader>
-          <AccordionContent :pt="{ content: '!py-4 !px-2' }">
-            <RyForm :inputs="inputsGroup[index]" label-position="left">
-              <template #profileId="{ input }">
-                <div class="flex leading-[32px]">
-                  <inputLabel v-bind="input" />
-                  <span class="dir-id">{{ input.value }}</span>
-                  <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
-                </div>
-              </template>
-              <template #system="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1 flex flex-col gap-2">
-                    <div class="flex-1 flex gap-2">
-                      <InputGroup>
-                        <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
-                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
-                      </InputGroup>
-                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
-                    </div>
-                    <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
-                      {{ input.items[2].help }}
-                    </Message>
-                  </div>
-                </div>
-              </template>
-              <template #searchEngine="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1 flex gap-2">
-                    <div class="flex-1">
-                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
-                    </div>
-                    <div class="flex-1"></div>
-                  </div>
-                </div>
-              </template>
-              <template #proxy="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <proxyItem v-model:proxy-switch="input.switch" v-model="input.value" class="flex-1" />
-                </div>
-              </template>
-              <template #accounts="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <accountItem v-model="input.value" class="flex-1" />
-                </div>
-              </template>
-              <template #urls="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
-                </div>
-              </template>
+          <AccordionContent>
+            <RyForm :inputs="settings.others[index]" label-position="left">
               <template #windowOpenSize="{ input }">
                 <div class="flex">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <div class="flex gap-[8px]">
                     <InputGroup v-for="(item, index) in input.items" :key="item.name">
                       <InputGroupAddon>{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
@@ -117,13 +108,13 @@ function onCopy(dirId: string) {
               </template>
               <template #windowRatioPosition="{ input }">
                 <div class="flex py-4">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <Position v-model="input.value" />
                 </div>
               </template>
               <template #forbiddenPictureSize="{ input }">
                 <div class="flex">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <div>
                     <div class="tip-text">
                       {{ $t('禁止加载超过以下大小的图片（如果设置为0则不加载任何图片，为避免无法显示验证码，建议填写10KB）') }}
@@ -140,32 +131,14 @@ function onCopy(dirId: string) {
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
-      </Accordion>
+      </RxAccordion>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.dir-id {
-  font-size: 12px;
-  font-family: 'JetBrains Mono';
-}
-
-.content {
-  padding: 0 36px 40px 64px;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
 :deep(.p-accordionheader) {
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 16px;
+  padding: 24px 16px;
 }
 
 :deep(.p-inputgroup) {
@@ -180,9 +153,55 @@ function onCopy(dirId: string) {
   max-width: 120px;
 }
 
+.content {
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.profile-info {
+  :deep(.separator) {
+    border-style: dashed;
+  }
+
+  :deep(.rx-input) {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  :deep(.rx-label) {
+    margin-bottom: 8px;
+    font-weight: 400;
+    line-height: 16px !important;
+  }
+}
+
+.dashed-border {
+  border-bottom: 1px dashed var(--colors-border-divider-dashed);
+}
+
+.dir-id {
+  font-size: 12px;
+  font-family: 'JetBrains Mono';
+}
+
+.header {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+
+  &-icon {
+    border: 1px solid var(--colors-border-border-base);
+    border-radius: 4px;
+    padding: 2px;
+    background: var(--colors-background-bg-action);
+  }
+}
+
 .tip-text {
   color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
   font-size: 12px;
   line-height: 16px;
 }

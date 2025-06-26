@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <DatePicker />
+  <DatePicker :pt="{ dayview: '!text-3.5' }" />
 </template>
 
 <style lang="scss" scoped></style>

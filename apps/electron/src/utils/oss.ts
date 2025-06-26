@@ -1,8 +1,6 @@
-import type { UserGetOssCredentialListData } from '@roxy/backend-api'
 import type { ReadStream } from 'node:fs'
 import OSS from 'ali-oss'
 import { createWriteStream } from 'node:fs'
-import { isPackaged } from '/@/utils'
 import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
@@ -65,7 +63,7 @@ const _aliOSS = new class AliOSS {
 
   /** 流式下载文件到本地 */
   async getStreamPromise(remotePath: string, localPath: string) {
-    const { promise, reject, resolve } = Promise.withResolvers()
+    const { promise, reject, resolve } = Promise.withResolvers<void>()
     // 填写Object完整路径。Object完整路径中不能包含Bucket名称。
     const result = await this.store.getStream(remotePath)
 

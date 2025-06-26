@@ -1,6 +1,7 @@
 import { BrowserWindow, BrowserWindowConstructorOptions, net, Protocol, Session, session } from "electron"
 import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from "/@/constants"
-import { encryptAESGCM, getCommonRequestHeaders, getDeviceId, isPackaged } from "/@/utils"
+import { encryptAESGCM, getCommonRequestHeaders, getDeviceId } from "/@/utils"
+import { isPackaged } from "/@/constants/common"
 import { store } from "/@/modules/store"
 import { getBaseUrl } from "/@/api/getGatewayConfig"
 import { getRemoteConfig } from "/@/modules/browser/browser-manager/utils"
@@ -57,8 +58,8 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
   }
 
   let deviceId = ''
-
-  const localUrl = `https://roxybrowser.app/api`// 拦截所有 URL
+  // 原文为 https://roxybrowser.app/api
+  const localUrl = atob('aHR0cHM6Ly9yb3h5YnJvd3Nlci5hcHAvYXBp')// 拦截所有 URL
   const headers = getCommonRequestHeaders()
 
   protocol.handle(customProtocol, async (request) => {
@@ -95,10 +96,21 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
 
     }
 
+    if (request.url.includes('action/upload_file') && !request.headers.has('origin')) {
+      request.headers.set('origin', request.referrer)
+    }
+
     // 其它请求原样处理
     return net.fetch(request, {
       bypassCustomProtocolHandlers: true,
       duplex: 'half',
-    });
+    }).catch(err => {
+      console.error('net.fetch error', {
+        url: request.url,
+        error: err,
+        headers: Object.fromEntries(request.headers),
+      })
+      return Promise.reject(err)
+    })
   });
 }

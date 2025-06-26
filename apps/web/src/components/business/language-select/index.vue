@@ -20,8 +20,8 @@ watch(() => currentLocale.value, (val) => {
   <div class="card flex justify-center">
     <div variant="text" class="help-btn">
       <LiveChat class="live-chat">
-        <SvgIcon name="base/rx_ic_headphone_2" />
-        <span class="text">
+        <SvgIcon name="base/rx_ic_headphone_2" color="var(--colors-icon-icon-secondary)" />
+        <span class="text-[var(--colors-text-text-primary)]">
           {{ $t('帮助') }}
         </span>
       </LiveChat>

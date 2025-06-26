@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { store } from '/@/modules/store'
-import { isPackaged } from '/@/utils'
+import { isPackaged } from '/@/constants/common'
 import { appConfig } from '/@/constants'
 
 /**

@@ -4,8 +4,8 @@
  *  ELECTRON_RUN_AS_NODE=1 electron scripts/update-electron-vendors.js
  */
 
-const { writeFileSync } = require('node:fs')
-const path = require('node:path')
+import { writeFileSync } from 'node:fs'
+import path from 'node:path'
 
 const electronRelease = process.versions
 

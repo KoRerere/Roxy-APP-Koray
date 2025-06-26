@@ -37,6 +37,7 @@ const data = computed(() => {
   const text = `${props.country || '--'}${strConcat('/', props.city)}`;
   if (isLoading.value) {
     return {
+      svg: 'base/rx_ic_earth',
       title: $t('测试中...'),
       color: 'var(--colors-text-text-primary)',
       svgColor: 'var(--colors-icon-icon-tertiary)'
@@ -50,6 +51,7 @@ const data = computed(() => {
     };
   } else if (status.value === ProxyCheckStatus.failure) {
     return {
+      svg: 'base/rx_ic_earth',
       title: $t('测试失败'),
       color: 'var(--colors-text-text-error)',
       svgColor: 'var(--colors-icon-icon-error)'
@@ -68,7 +70,7 @@ const data = computed(() => {
 <template>
   <div class="flex gap-2 proxycard">
     <div>
-      <RxSvgIcon :name="data.svg as SvgNames" fallback="base/rx_ic_earth" :color="data.svgColor" />
+      <RxSvgIcon :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
       <div class="flex items-center proxycard-title" :style="{ color: data.color }">

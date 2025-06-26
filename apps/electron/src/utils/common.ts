@@ -8,51 +8,15 @@ import { format } from 'date-fns'
 import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
 import { readFile } from 'node:fs/promises'
-import { parseArgs } from 'node:util';
+import { isMac } from '/@/constants/common'
 
 const webReadyPromise = Promise.withResolvers<true>()
-
-/** 是否处于开发环境 */
-export const isDev = import.meta.env.DEV
-/** 是否处于生产环境 */
-export const isProd = import.meta.env.PROD
-/** 是否处于打包状态 */
-export const isPackaged = app.isPackaged
-
-export const isMac = process.platform === 'darwin'
-export const isWindows = process.platform === 'win32'
 
 /** 前端是否准备就绪 */
 export const isWebReady = () => webReadyPromise.promise
 /** 前端已经准备就绪 */
 export const setWebReady = () => webReadyPromise.resolve(true)
 
-console.log('isDev', isDev)
-
-export const appCliStartArgs = (() => {
-  const options = {
-    /** 日志级别 */
-    'roxy-log-level': {
-      type: 'string',
-      default: isPackaged ? 'info' : 'silly',  // 默认 info
-      // default: 'info',  // 默认 info
-    },
-  } as const
-
-  const args = parseArgs({
-    options,
-    strict: false, // 默认 true，遇到未知参数会报错
-  });
-
-  if (isDev) {
-    console.log('appCliStartArgs', args)
-  }
-
-  return args.values
-})()
-
-/** 是否处于调试模式 */
-export const isDebugMode = appCliStartArgs['roxy-log-level'] === 'debug'
 
 export function safeStringify(obj) {
   const seen = new WeakSet()
@@ -121,6 +85,7 @@ export const getDeviceId = (() => {
       clearTimeout(timer)
     } else {
       console.debug('设备 ID 已存在', store.deviceId)
+      store.deviceId = await fileOperations.executeTask('genDeviceId', undefined)
     }
   })
 

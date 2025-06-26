@@ -73,12 +73,14 @@ defineExpose({
   setSubmitLoading: (val: boolean) => {
     submitLoading.value = val
   },
+  clearValidateMessages: () => {
+    formInstance.value?.clearValidateMessages()
+  },
 })
 </script>
 
 <template>
-  <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')"
-    :description="isRegister ? $t('创建账号以体验 Roxy 提供的服务') : $t('登录账号以体验 Roxy 提供的服务')" />
+  <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')" />
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false"
     layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
@@ -91,23 +93,21 @@ defineExpose({
     </div>
   </div>
   <div class="login-ways">
-    <RxButton :loading="submitLoading" type="button" size="md" class="w-full" @click="handleSubmit">
+    <RxButton :loading="submitLoading" type="button" size="lg" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('注册') : $t('登录') }}
     </RxButton>
     <div class="divider">
       <span class="mx-2">{{ $t('或') }}</span>
     </div>
-    <RxButton class="w-full" outlined severity="secondary" size="md" icon="websites/rx_site_google"
+    <RxButton class="w-full" severity="secondary" size="md" icon="websites/rx_site_google"
       :label="$t('通过 {value} 账号登录', { value: 'Google' })" @click="oauth2LoginMap.google"></RxButton>
-    <div class="w-full flex gap-2">
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'VK' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
-      </RxButton>
-    </div>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" severity="secondary" size="md"
+      icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
+    </RxButton>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">
@@ -170,7 +170,7 @@ defineExpose({
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-border-divider);
 }
 
 .login-ways {
@@ -179,6 +179,10 @@ defineExpose({
   align-items: center;
   gap: var(--spacing-2xl, 16px);
   align-self: stretch;
+
+  :deep(.p-button) {
+    box-shadow: none;
+  }
 }
 
 .signup-tips {

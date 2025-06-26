@@ -5,9 +5,9 @@ import { SyncControlUtil } from '/@/modules/sync-control/util'
 import { join } from 'node:path'
 import ejs from "ejs";
 import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/utils'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
+import CDP from 'chrome-remote-interface'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
@@ -105,6 +105,19 @@ export class AfterLaunchTask {
       this.cookies = cookies
     }
 
+    if (this.isPhone) {
+      try {
+        const targets = await CDP.List({ port: this.browser.actualPort })
+        targets.forEach(async (target) => {
+          const client = await CDP({ target: target.webSocketDebuggerUrl });
+          await client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' })
+          console.log('setTouchEmulationEnabled success')
+        })
+      } catch (error) {
+        console.log('setTouchEmulationEnabled error', error)
+      }
+    }
+
     const startTime = Date.now()
 
     // 是否同步 cookie
@@ -116,6 +129,7 @@ export class AfterLaunchTask {
         })
         console.log('Storage.setCookies success')
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
+
         const pages = await this.browser?.pages()
         // cookie导入成功后，把打开的tab页重新加载一次
         pages.map(async (e) => {
@@ -125,6 +139,7 @@ export class AfterLaunchTask {
             await e.goto(url).catch((err) => {
               console.log(`goto ${url} 失败`, err)
             })
+
           }
         })
       }

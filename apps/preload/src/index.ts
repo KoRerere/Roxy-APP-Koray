@@ -4,7 +4,7 @@
 
 import './polyfill'
 
-import { contextBridge, webUtils } from 'electron'
+import { contextBridge, webFrame, webUtils } from 'electron'
 
 import type { MainMessage, RenderMessage } from './types/'
 
@@ -20,6 +20,9 @@ const electronAPI = {
   on: ipcRenderer.on,
   getPathForFile: (file: File) => {
     return webUtils.getPathForFile(file)
+  },
+  setZoomFactor: (factor: number) => {
+    webFrame.setZoomFactor(factor)
   },
 } as const
 

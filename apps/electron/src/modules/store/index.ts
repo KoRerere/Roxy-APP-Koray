@@ -75,11 +75,16 @@ export interface StoreType {
   browserColorScheme?: 'light' | 'dark' | 'system'
   /** 书签 */
   bookText?: Record<string, any>
+  /** 记录上次登录时间，15 天内不活动，则清除 token，重新登录 */
+  lastLoginTime: number
+  /** 是否显示长时间未登录提示 */
+  showLongTimeNotLoginTips?: boolean
 }
 
 const excludeKeys = ['bookText', 'allWorkspaceId']
 
 const defaultValues: StoreType = {
+  lastLoginTime: Date.now(),
   language: '',
   closeSoft: 'pop',
   memoryLimit: 95,
@@ -198,6 +203,9 @@ export const store = new Proxy(_store, {
 
 /** 获取用户远程软件配置 */
 export async function fetchUserConfig() {
+  if (!store.token) {
+    return
+  }
   try {
     // 启动时，获取用户配置
     const { code, data } = await API.base.userGetUserConfigList()
@@ -232,6 +240,16 @@ async function initStore() {
       return JSON.parse(decryptedConfig)
     })
     Object.assign(store, lastStore)
+    // 如果上次登录时间超过 15 天，则清除 token 和 userId
+    if (Date.now() - store.lastLoginTime > 1000 * 60 * 60 * 24 * 15) {
+      store.showLongTimeNotLoginTips = Boolean(store.token)
+      store.token = ''
+      Reflect.deleteProperty(store, 'userId')
+      store.lastLoginTime = Date.now()
+      console.log('上次登录时间超过 15 天，清除 token 和 userId')
+    } else {
+      store.showLongTimeNotLoginTips = false
+    }
     await fetchUserConfig()
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
     // if (!messages[store.language]) {

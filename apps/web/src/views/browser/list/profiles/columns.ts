@@ -1,5 +1,6 @@
 import { format, min } from 'date-fns'
 import { $t } from '/@/locales'
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 const skeleton = {
   width: '120px',
@@ -12,13 +13,25 @@ export function getColumns() {
     key: 'browser.list',
     data: [
       {
-        title: $t('窗口信息'),
-        key: 'profile',
+        title: 'ID',
+        key: 'windowSortNum',
         disabledToggle: true,
+        sortable: true,
         slot: 'profile',
         style: {
-          width: '30%',
-          minWidth: '375px',
+          width: '0%',
+          minWidth: '180px',
+        }
+      },
+      {
+        title: $t('窗口名称'),
+        key: 'name',
+        disabledToggle: true,
+        sortable: true,
+        slot: 'profileName',
+        style: {
+          width: '10%',
+          minWidth: '160px',
         }
       },
       {
@@ -66,6 +79,7 @@ export function getColumns() {
         key: 'createTime',
         _visible: false,
         skeleton,
+        sortable: true,
         getText: (row: any) => row.createTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',
@@ -77,6 +91,7 @@ export function getColumns() {
         key: 'updateTime',
         _visible: false,
         skeleton,
+        sortable: true,
         getText: (row: any) => row.updateTime ? format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',
@@ -87,6 +102,7 @@ export function getColumns() {
         title: $t('最后打开'),
         key: 'openTime',
         skeleton,
+        sortable: true,
         getText: (row: any) => row.openTime ? format(new Date(row.openTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',

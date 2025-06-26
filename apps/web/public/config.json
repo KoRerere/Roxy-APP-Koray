@@ -12,6 +12,7 @@
     "/login_vk",
     "/login_facebook",
     "/send_email_register_verify_code",
-    "/check_other_device_login"
+    "/check_other_device_login",
+    "/get_2fa_login_info"
   ]
 }

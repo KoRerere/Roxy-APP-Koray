@@ -8,7 +8,7 @@ export function silentUpdateProxy(origin: Record<string, any>, params: Record<st
   })
   origin.beforeProxyInfo = beforeProxyInfo;
 
-  ['moduleId', 'proxyMethod', 'checkChannel', 'checkStatus', 'checkTime', 'country', 'createTime', 'host', 'ipType', 'lastCity', 'lastCountry', 'lastIp', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'updateTime', 'timezone', 'proxyNetwork']
+  ['moduleId', 'proxyMethod', 'checkChannel', 'checkStatus', 'checkTime', 'country', 'host', 'ipType', 'lastCity', 'lastCountry', 'lastIp', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'timezone', 'proxyNetwork']
     .forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(params, key)) {
         Reflect.set(origin, key, params[key])

@@ -1,6 +1,6 @@
 import { IntlMessageFormat } from 'intl-messageformat'
 import { store } from '/@/modules/store'
-import { isDev, isPackaged } from '/@/utils'
+import { isDev, isPackaged } from '/@/constants/common'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { appConfig } from '/@/constants'

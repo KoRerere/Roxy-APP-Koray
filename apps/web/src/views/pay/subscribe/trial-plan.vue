@@ -128,8 +128,7 @@ async function onSubscribe() {
           <div class="flex flex-col items-center pt-4 pb-6 current" v-if="selectedPlan">
             <div>
               <span class="current-unit">$</span>
-              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange
-                class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
+              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
             <div class="mt-1 current-desc">{{ $t('窗口单价（{value} 数量区间）', {
@@ -138,20 +137,18 @@ async function onSubscribe() {
           </div>
           <div class="flex items-center justify-between py-8" v-if="dataList?.length">
             <div class="flex items-center sub-title">{{ $t('窗口数量') }}</div>
-            <RxStep readonly size="lg" class="!w-40" v-model="selectedCount" :min="10" :max="10" />
+            <RxStepInput readonly size="lg" class="!w-40" v-model="selectedCount" :min="10" :max="10" />
           </div>
-          <div
-            class="flex justify-between items-center py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+          <div class="flex justify-between items-center py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
             <div class="flex items-center gap-2 sub-title">
               <span>{{ $t('试用时长') }}</span>
             </div>
             <div class="period">{{ $t('截止 {value}', { value: format(addDays(Date.now(), 7), 'yyyy/MM/dd') }) }}</div>
           </div>
-          <AdvancedFeat :plan="selectedPlan"
-            class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
         </div>
-        <Detail class="w-88" :list="details">
+        <Detail class="w-80" :list="details">
           <template #oldprice="{ item }">
             <div class="flex justify-between">
               <div class="details-label">{{ item.label }}</div>

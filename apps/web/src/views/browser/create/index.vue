@@ -1,52 +1,32 @@
 <script lang="tsx" setup>
 import MateGroup from './components/mate-group.vue'
-import { useConfirm } from 'primevue/useconfirm'
-import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import AccordionInputs from './components/accordion-inputs.vue'
+import ImportWindow from './components/import-window.vue'
+import PreviewCard from './components/preview-card.vue'
+import RxButton from '/@/components/rx-button';
+import { RxSvgIcon } from '/@/components/rx-icon';
 import { RxInputNumber } from '/@/components/rx-input-number'
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { useSimpleDialog } from '/@/components/simplePopup'
-import { Role } from '/@/enums'
-import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useConfirm } from 'primevue/useconfirm'
+import { I18nT } from "vue-i18n"
+import { API } from '/@/api'
 import { $t } from '/@/locales'
+import { useSimpleDialog } from '/@/components/simplePopup'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
-import { emitter } from '/@/utils/eventBus'
-import type { WindowMetaData } from '/@/views/browser/create/components/type'
+import { useRoleStore } from "/@/stores/role"
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import accordionInputs from './components/accordion-inputs.vue'
-import importWindow from './components/import-window.vue'
-import PreviewCard from './components/preview-card.vue'
-import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { getDefaultTemplate, getDefaultWindowName } from './utils'
+import { getDefaultTemplate } from './utils'
 import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { I18nT } from "vue-i18n"
-
-interface TemplateMap {
-  default: { [key: string]: any }
-  [key: string]: { [key: string]: any }
-}
-interface TemplateOption {
-  label: string
-  value: string
-  action: boolean
-}
-
-interface ProfileTemplate {
-  value: string
-  oldValue: string
-  props: {
-    options: TemplateOption[]
-    optionValue: string
-    filter: boolean
-    onChange: () => void
-    [key: string]: any
-  }
-}
+import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
+import { emitter } from '/@/utils/eventBus'
+import { withModifiers } from 'vue'
+import { AccountBindType } from '/@/enums/account'
+import type { WindowMetaData } from '/@/views/browser/create/components/type'
 
 const confirm = useConfirm()
 const router = useRouter()
@@ -55,10 +35,12 @@ const userStore = useUserStore()
 const backRoute = useBackRoute()
 const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
+const { isOwner } = storeToRefs(useRoleStore())
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
+const { showMenu } = usePopupMenu()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -70,13 +52,11 @@ const tabs = ref([
   { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const defaultWindowName = getDefaultWindowName()
-const windowName = ref(defaultWindowName)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
-const rawMainSetting: any = ref([])
-const mainSetting: any = ref([])
-const extraSetting: any = ref([])
+const rawMainSetting = ref<any[]>([])
+const mainSetting = ref<any[]>([])
+const extraSettings = ref<any[][]>([])
 const original = ref()
 const metaData = ref<WindowMetaData>({
   projectName: $t('未指定项目'),
@@ -85,13 +65,20 @@ const metaData = ref<WindowMetaData>({
   windowRemark: '',
 })
 const loading = ref(false)
+const collapsed = ref(false)
+
+const accordions = ref({
+  value: [],
+  panels: [$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
+    .map((title, index) => ({ title, value: index.toString() })),
+})
 
 const items = computed(() => [
   {
     label: $t('覆盖当前模板'),
     disabled: !!profileTemplate.value && profileTemplate.value === 'default',
     command: () => {
-      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
+      const option = templateModel.value.find(item => item.value === profileTemplate.value)
       onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
     },
   },
@@ -101,49 +88,33 @@ const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount 
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
-    ? [...extraSetting.value]
-    : [...mainSetting.value, ...extraSetting.value]
+    ? [[], ...extraSettings.value]
+    : [mainSetting.value, ...extraSettings.value]
 })
 
 const previewInputs = computed(() => {
   return tabsValue.value === 'import'
-    ? [rawMainSetting.value, ...inputsGroup.value]
-    : inputsGroup.value
+    ? [rawMainSetting.value, ...extraSettings.value]
+    : [mainSetting.value, ...extraSettings.value]
 })
 
-const accordions = computed(() => {
-  const startIndex = tabsValue.value === 'import' ? 1 : 0
-  return {
-    value: tabsValue.value === 'import' ? [] : ['0'],
-    panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
+const templateMap = ref<Record<string, any>>()
+const templateModel = ref<any[]>([])
+const profileTemplate = reactive({
+  value: 'default',
+  oldValue: 'default',
+  label: $t('不使用模板'),
+  select: () => {
+    if (profileTemplate.value === profileTemplate.oldValue) return
+    profileTemplate.oldValue = profileTemplate.value
+    const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
+    initFormInputs(template)
   }
 })
 
-const templateMap = ref<TemplateMap>()
-
-const profileTemplate = reactive<ProfileTemplate>({
-  value: 'default',
-  oldValue: 'default',
-  props: {
-    options: [
-      { label: 'No Template', value: 'default', action: false },
-    ],
-    optionValue: 'value',
-    filter: false,
-    onChange: () => {
-      if (profileTemplate.value === profileTemplate.oldValue)
-        return
-      profileTemplate.oldValue = profileTemplate.value
-      const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
-      initFormInputs(template)
-    },
-  },
-})
-
-const isOwner = computed(() => currentWorkspace.value?.role === Role.OWNER)
-
 watch(() => tabsValue.value, (value: any) => {
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
+  setInputFieldByInputKey(inputsGroup.value[0], 'windowPlatformList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
   onUpdateFinger()
 })
@@ -162,7 +133,7 @@ onBeforeMount(() => {
 async function getTemplateList() {
   const { data } = await API.window.userGetWindowTemplateListList()
 
-  const defaultValue: any = {
+  const defaultValue: { map: Record<string, any>, options: any[] } = {
     map: {
       default: getDefaultTemplate(),
     },
@@ -181,15 +152,41 @@ async function getTemplateList() {
   }, defaultValue)
 
   templateMap.value = map
-  profileTemplate.props.options = options
+  templateModel.value = options.map(item => {
+    return {
+      ...item,
+      command: () => {
+        profileTemplate.value = item.value
+        profileTemplate.label = item.label
+        profileTemplate.select()
+      },
+      render: ({ item, btnPt }: any) => {
+        return <RxButton text severity="secondary" class="w-full" pt={btnPt}>
+          <div class="w-full flex items-center gap-2">
+            <div class="flex-1 text-left">{item.label}</div>
+            {
+              item.action && <>
+                <div onClick={withModifiers((event) => saveTemplatePopup(event, item), ['stop'])}>
+                  <RxSvgIcon name="base/rx_ic_edit" />
+                </div>
+                <div onClick={withModifiers(() => deleteTemplate(item), ['stop'])}>
+                  <RxSvgIcon name="base/rx_ic_bin_1" />
+                </div>
+              </>
+            }
+          </div>
+        </RxButton>
+      }
+    }
+  })
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
   const [inputsGroup, _original] = await getInputsGroup(template, showToast)
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
-  mainSetting.value = [windowInputs]
-  extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
+  mainSetting.value = windowInputs
+  extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
 }
@@ -204,7 +201,11 @@ async function onUpdateFinger() {
   Object.assign(original.value, data[0])
 }
 
-async function saveTemplatePopup(event: Event, option?: TemplateOption) {
+function showTemplates(event: MouseEvent) {
+  showMenu(event, { model: templateModel.value })
+}
+
+async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
   const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
     if (!isOwner.value) {
@@ -261,14 +262,16 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
   const { code, msg } = id
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-  // onlyErrorToast(code, msg)
-  if (code === 0) {
-    getTemplateList()
-  } else {
+
+  if (code !== 0) {
     handleBusinessCode(code, () => {
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
     })
+    return
   }
+
+  if (id) profileTemplate.label = templateName
+  getTemplateList()
 }
 
 async function deleteTemplate(data: any) {
@@ -302,8 +305,6 @@ async function createProfile(openBrowser: boolean) {
   const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
-    windowName: windowName.value === defaultWindowName ? '' : windowName.value,
-    windowNamePrefix: windowName.value === defaultWindowName ? '' : windowName.value,
     createCount: createCount.value,
     ...original.value,
     ...formData,
@@ -343,16 +344,22 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 async function batchCreateProfile(params: any) {
+  const { createCount, proxyInfoList, platformBindType, platformUrlIds, windowPlatformList } = params
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
-  const diffCount = params.createCount - params.proxyInfoList.length
-  if (diffCount < 0) {
+  const proxyDiffCount = createCount - proxyInfoList.length
+  if (proxyDiffCount < 0) {
     onlyErrorToast(-1, $t('代理数量不能大于窗口'))
+    return
+  }
+  const accountDiffCount = createCount - windowPlatformList.length - platformUrlIds.length
+  if (platformBindType === AccountBindType.Order && accountDiffCount < 0) {
+    onlyErrorToast(-1, $t('账号数量不能大于窗口'))
     return
   }
 
   loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
-  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
+  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
@@ -393,43 +400,37 @@ async function importProfile(params: any) {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-    <div class="flex-1 flex overflow-hidden">
-      <div class="flex-1 flex flex-col">
-        <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
-        <div class="flex-1 flex flex-col overflow-hidden">
-          <div class="profile-basic">
-            <div v-show="tabsValue !== 'import'" class="flex gap-2">
-              <WindowNameEdit v-model="windowName" class="flex-1" />
-              <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
-                <template #option-extra="{ option }">
-                  <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                    <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
-                    <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
-                  </div>
-                </template>
-              </RxInputSelect>
-            </div>
-            <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
+    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+    <div class="flex flex-1 justify-center px-32 overflow-hidden">
+      <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
+        <div class="flex-1 flex gap-8 overflow-hidden">
+          <div class="flex-1 flex flex-col">
+            <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">
-                <div>{{ $t('窗口数量') }}</div>
-                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
-                </RxInputNumber>
+                <div class="subtitle">{{ $t('窗口数量') }}</div>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]"></RxInputNumber>
               </div>
-              <div class="select-none multi-block-info">
-                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
-              </div>
+              <div class="select-none multiple-tip">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
             </div>
-            <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
+            <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+              <template #before>
+                <ImportWindow v-if="tabsValue === 'import'" class="pt-4" v-model:error="fileAnalyzeError" @import-success="importSuccess" />
+                <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
+                  <div class="subtitle">{{ $t('窗口信息') }}</div>
+                  <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)"></RxButton>
+                </div>
+              </template>
+            </AccordionInputs>
           </div>
-          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
+          <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
+        </div>
+        <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
+          <div class="footer-separator"></div>
+          <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
+          <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+          <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
         </div>
       </div>
-      <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
-    </div>
-    <div class="flex items-center gap-2 footer">
-      <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
-      <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-      <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
     </div>
   </div>
 </template>
@@ -460,38 +461,24 @@ async function importProfile(params: any) {
   }
 }
 
-.profile-basic {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px 42px 16px 64px;
+.subtitle {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.multi-block {
-  color: var(--colors-text-text-primary, #171c1f);
-  font-family: Inter;
-  font-size: 13px;
-  font-weight: 500;
+.multiple {
+  border-bottom: 1px dashed var(--colors-border-divider-dashed);
 
-  &-info {
-    margin-top: var(--spacing-xs, 4px);
-    color: var(--colors-text-text-tertiary, #575D60);
+  &-tip {
+    margin-top: 4px;
+    color: var(--colors-text-text-inactive);
     text-align: right;
     font-size: 12px;
-
-    &-jump {
-      color: var(--colors-text-text-brand, #12a3fc);
-      cursor: pointer;
-      user-select: none;
-    }
   }
 }
 
 .footer {
-  padding: 16px 64px;
-  max-height: 64px;
-  border-top: 1px solid var(--colors-border-border-subtle);
-
   :deep(.p-button) {
     max-width: 150px;
   }
@@ -500,6 +487,16 @@ async function importProfile(params: any) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &-separator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300%;
+    height: 1px;
+    background-color: var(--p-colors-border-divider);
   }
 }
 </style>

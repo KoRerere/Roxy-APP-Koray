@@ -265,7 +265,7 @@ function onRefreshTable() {
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
-          <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
+          <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0"
               :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
               :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />

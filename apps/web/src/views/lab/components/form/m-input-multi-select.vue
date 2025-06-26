@@ -34,11 +34,11 @@ function _onChange(event: any) {
 
 <template>
   <MultiSelect v-bind="{ filter, optionLabel, optionValue, ...props }" :options="[]" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="_onChange">
-    <template #dropdownicon>
-      <RxSvgIcon name="base/rx_ic_chevron_down" />
+    <template #dropdownicon="props">
+      <RxSvgIcon name="base/rx_ic_chevron_down" v-bind="props" />
     </template>
-    <template #chipicon>
-      <RxSvgIcon name="base/rx_ic_delete" />
+    <template #chipicon="{ removeCallback, ...props }">
+      <RxSvgIcon name="base/rx_ic_delete" v-bind="props" @click="removeCallback" />
     </template>
   </MultiSelect>
 </template>

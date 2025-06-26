@@ -330,11 +330,8 @@ function jumpToProfile() {
       <ViewsHeader :title="$route.meta.title" />
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount"
-            :list="dataList" :min="sliderMin"></Profile>
-          <div
-            class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]"
-            v-if="dataList?.length">
+          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :min="sliderMin"></Profile>
+          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]" v-if="dataList?.length">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
             <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
             <div v-else class="due">
@@ -344,11 +341,10 @@ function jumpToProfile() {
               }) }}</span>
             </div>
           </div>
-          <AdvancedFeat :plan="selectedPlan"
-            class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
         </div>
-        <div class="relative w-88">
+        <div class="relative w-80">
           <RxLoading v-model="loading"></RxLoading>
           <Detail :list="details">
             <template #oldprice="{ item }">
@@ -374,24 +370,21 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0"
-                  :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
-                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
-                  scope="global">
+                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
+                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                      }}</a>
+                    }}</a>
                   </template>
                 </i18n-t>
               </div>
             </template>
           </Detail>
-          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount"
-            class="mt2.5 whitespace-pre-wrap next-bill">{{
-              $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
-                bill: currency(nextBill.amount).format(),
-                date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
-              }) }}
+          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount" class="mt2.5 whitespace-pre-wrap next-bill">{{
+            $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
+              bill: currency(nextBill.amount).format(),
+              date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
+            }) }}
           </div>
         </div>
       </div>

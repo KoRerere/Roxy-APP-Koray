@@ -125,8 +125,9 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
           </template>
         </div>
         <div v-if="item.version !== item.currentVersion">
-          <rich-text :html="item?.upgradeContent" class="feature-content" />
-          <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+          <roxy-rich-text :html="item?.upgradeContent" class="feature-content" />
+          <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
+            :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
             :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
         </div>
       </div>

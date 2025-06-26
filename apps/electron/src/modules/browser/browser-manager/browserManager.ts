@@ -11,6 +11,7 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { asyncDebounce } from '/@/utils'
 import { shallowReactive, watch } from '@vue/reactivity';
 import { store } from '/@/modules/store'
+import { debounce } from 'es-toolkit'
 
 export class BrowserManager {
   /** 已经打开过的空间 ID */
@@ -23,8 +24,6 @@ export class BrowserManager {
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
   openedBrowserMap = shallowReactive(new Map<string, BrowserItem>())
-  /** 同步窗口打开状态控制器 */
-  syncWindowOpenStatusController?: AbortController
   /** 频繁关闭窗口时，等待的上传数据队列 */
   uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
   /** 获取已打开的浏览器列表 */
@@ -101,11 +100,12 @@ export class BrowserManager {
 
       const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
         console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
-        ipcMain.send('browser:on-close', dirId)
         browserItem.off(`close-${dirId}`, onCloseHandler)
         if (uploadDataPromise) {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
+          ipcMain.send('browser:on-close-syncing-data', [dirId])
         }
+        this.openedBrowserMap.delete(dirId)
         await this.#batchUploadData()
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
@@ -177,6 +177,8 @@ export class BrowserManager {
     const dirIds = [...this.uploadDataQueue.keys()]
     const uploadDataQueue = [...this.uploadDataQueue.values()]
 
+    ipcMain.send('browser:on-close-syncing-data', dirIds)
+
     const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
     const uploadParamsObj = Object.groupBy(results, item => {
@@ -200,8 +202,9 @@ export class BrowserManager {
         this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
       })
+      ipcMain.send('browser:on-close', dirIds)
     })
-  }, 500)
+  }, 300)
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
@@ -284,10 +287,9 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
-
-        res.data.rows.forEach(item => {
-          if (!dirIds.includes(item.dirId!)) {
-            sendErrorMessage($t('窗口不存在'), item.dirId!)
+        dirIds.forEach(dirId => {
+          if (!res.data.rows.some(item => item.dirId === dirId)) {
+            sendErrorMessage($t('窗口不存在'), dirId)
           }
         })
 
@@ -303,15 +305,25 @@ export class BrowserManager {
     return winInfoList
   }
 
-  /** 同步窗口数据 */
+  /** 同步窗口数据, 限制最多 10个 作为一批 */
   async syncWindowData(uploadParams: Record<string, any>[], headers: any) {
     console.debug('syncWindowData uploadParams', uploadParams)
     console.debug('syncWindowData headers', headers)
-    await API.window.userMdfWindowSyncV2Create(uploadParams, { headers }).then((res) => {
-      console.log('user_mdf_window_sync_v2 uploadData', res)
-    }).catch((error) => {
-      console.error('user_mdf_window_sync_v2 uploadData error: ', error)
-    })
+
+    const batchSize = 10
+    const batches: Record<string, any>[][] = []
+    for (let i = 0; i < uploadParams.length; i += batchSize) {
+      batches.push(uploadParams.slice(i, i + batchSize))
+    }
+    console.debug('syncWindowData batches', batches.length)
+    for (const batch of batches) {
+      console.debug('syncWindowData batch', batch.map(item => item.id))
+      await API.window.userMdfWindowSyncV2Create(batch, { headers }).then((res) => {
+        console.log('user_mdf_window_sync_v2 uploadData', res)
+      }).catch((error) => {
+        console.error('user_mdf_window_sync_v2 uploadData error: ', error)
+      })
+    }
   }
 
   /** 每隔 30分钟 定时同步窗口状态 */
@@ -338,12 +350,7 @@ export class BrowserManager {
   }
 
   /** 同步窗口打开状态 */
-  async syncWindowOpenStatus() {
-    this.syncWindowOpenStatusController?.abort()
-    this.syncWindowOpenStatusController = new AbortController()
-    const { signal } = this.syncWindowOpenStatusController
-    await scheduler.wait(1000 * 3, { signal })
-
+  syncWindowOpenStatus = debounce(async () => {
     const browserItems = [...this.openedBrowserMap.values()]
     const needSyncItems = browserItems.filter(item => !item.isSyncedWindowOpenStatus)
     const groupByWorkspaceId = Object.groupBy(needSyncItems, item => item.winInfo.workspaceId!)
@@ -357,5 +364,5 @@ export class BrowserManager {
         })
       })
     })
-  }
+  }, 1000 * 3)
 }

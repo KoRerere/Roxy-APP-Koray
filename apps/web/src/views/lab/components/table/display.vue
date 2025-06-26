@@ -8,7 +8,7 @@ const columns = defineModel<any[]>({ default: [] })
 const popRef = useTemplateRef('popover')
 
 function toggle(event: Event) {
-  popRef.value?.getRef()?.toggle(event)
+  popRef.value?.instance?.toggle(event)
 }
 </script>
 
@@ -19,7 +19,7 @@ function toggle(event: Event) {
       <div class="py-1.5 px-1">
         <VueDraggable v-model="columns" :animation="150" handle=".handle">
           <div v-for="item in columns" :key="item.field" class="flex items-center" :class="display.item">
-            <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
+            <RxSvgIcon name="base/rx_ic_dots_drag" class="cursor-grab handle" />
             <span class="flex-auto font-500">{{ item.header }}</span>
             <RxToggleSwitch v-if="!item.disabledToggle" v-model="item._visible" />
           </div>

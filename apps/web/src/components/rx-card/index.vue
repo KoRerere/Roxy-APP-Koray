@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
+interface Props {
+  closable?: boolean
+}
+const { closable = true } = defineProps<Props>()
+
 defineEmits(['close'])
 </script>
 
 <template>
   <div class="rx-card">
-    <RxSvgIcon class="cursor-pointer rx-card-close" name="base/rx_ic_delete_fill" @click.stop="$emit('close')" />
+    <RxSvgIcon v-if="closable" class="cursor-pointer rx-card-close" name="base/rx_ic_delete_fill" @click.stop="$emit('close')" />
     <slot></slot>
   </div>
 </template>

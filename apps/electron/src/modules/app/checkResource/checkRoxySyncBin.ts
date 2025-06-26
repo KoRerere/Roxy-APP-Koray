@@ -5,7 +5,8 @@ import { access, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
-import { calculateFileHash, fileExists, isMac } from '/@/utils'
+import { calculateFileHash, fileExists } from '/@/utils'
+import { isMac } from '/@/constants/common'
 
 // roxySync 下载重试次数
 let roxySyncDownloadRetry = 0
@@ -33,7 +34,7 @@ const config = {
   },
   /** roxySync 版本文件下载地址 */
   get versionUrl() {
-    return `${config.webDomain}/public/static/roxysync/${platform}/version`
+    return `${config.webDomain}/public/static/roxysync/version`
   },
   /** roxySync sha512 哈希值文件下载地址 */
   get sha512Url() {

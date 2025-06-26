@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import tags from '/@/views/browser/list/tags'
+import Profiles from './profiles'
+import Recycle from './recycle'
+import Transfer from './transfer'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -7,10 +11,6 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import tags from '/@/views/browser/list/tags'
-import Profiles from './profiles'
-import Recycle from './recycle'
-import Transfer from './transfer'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
 import { sleep } from '/@/utils'
@@ -299,12 +299,12 @@ async function hidePopover() {
 
   <RyPopover ref="config" @hide="hidePopover">
     <div v-for="item in pinTabs" :key="item.name" class="sort-item">
-      <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
+      <RxSvgIcon name="base/rx_ic_dots_drag" class="invisible" />
       <span>{{ item.label }}</span>
     </div>
     <VueDraggable v-model="sortTabs" :animation="150" @change="sortChange">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
-        <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
+        <RxSvgIcon name="base/rx_ic_dots_drag" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>
         <template v-if="!item.isLocal">
           <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" @click="onEditFilter(item)" />
@@ -313,7 +313,7 @@ async function hidePopover() {
       </div>
     </VueDraggable>
     <div class="sort-item" v-for="suffixItem in suffixTabs" :key="suffixItem.id">
-      <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
+      <RxSvgIcon name="base/rx_ic_dots_drag" class="invisible" />
       <span>{{ suffixItem.label }}</span>
     </div>
   </RyPopover>

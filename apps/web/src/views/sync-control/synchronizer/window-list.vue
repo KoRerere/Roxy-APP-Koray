@@ -163,8 +163,8 @@ const disabledRows = debounce(() => {
   })
 }, 100)
 
-window.electronAPI.on('browser:on-close', (dirId) => {
-  selectedRows.value = selectedRows.value?.filter((n: any) => n.dirId !== dirId)
+window.electronAPI.on('browser:on-close', (dirIds) => {
+  selectedRows.value = selectedRows.value?.filter((n: any) => !dirIds.includes(n.dirId))
   getOpenedBrowser()
 })
 window.electronAPI.on('browser:opened-browser-list-change', (data) => {
@@ -263,10 +263,8 @@ electronAPI.on('syncControl:start', startSync)
             </template>
           </MultiSelect>
         </template>
-        <IconField>
-          <InputIcon class="pi pi-search" />
-          <InputText v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" class="w-[120px]" size="small" />
-        </IconField>
+        <rx-input-text v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" iconFieldClass="!w-[120px]" size="sm"
+          leftIcon="base/rx_ic_magnify" />
       </div>
     </template>
     <template #table-empty>
@@ -274,10 +272,10 @@ electronAPI.on('syncControl:start', startSync)
         :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
       <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('请先打开至少两个窗口')">
         <template #desc>
-          <div class="whitespace-pre-wrap text-[var(--colors-text-text-tertiary)]">
+          <div class="whitespace-pre-wrap text-[var(--colors-text-text-tertiary)] text-3.5">
             {{ $t('窗口同步：即窗口群控，可同时控制多个窗口，实现鼠标同步，键盘同步，大幅提高工作效率。') }}
           </div>
-          <div class="mt-[16px] whitespace-pre-wrap text-[var(--colors-text-text-tertiary)]">
+          <div class="mt-[16px] whitespace-pre-wrap text-[var(--colors-text-text-tertiary)] text-3.5">
             {{ $t('注意：不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
           </div>
           <div v-if="false" class="mt-3">
@@ -418,6 +416,9 @@ electronAPI.on('syncControl:start', startSync)
     }
   }
 
+  :deep(.table-wrapper) {
+    border-top: none;
+  }
 }
 
 .main-control-status {

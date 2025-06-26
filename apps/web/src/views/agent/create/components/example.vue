@@ -1,20 +1,13 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { ParseMode, IPType } from "/@/utils"
 import { $t } from '/@/locales'
 
 const props = defineProps<{
   parserType: ParseMode
-  ipType: IPType
+  ipType?: IPType
 }>()
 
-const template1 = '192.168.0.1:8000[RefreshURL]{Notes}';
-const template2 = '192.168.0.1:8000:{username}:{password}[RefreshURL]{Notes}';
-const template3 = '{username}:{password}@192.168.0.1:8000[RefreshURL]{Notes}';
-
 const ipv6Host = 'fe80::1:9dc0:f1ab:90a3'
-const template1_ipv6 = '[ipv6]:8000[RefreshURL]{Notes}';
-const template2_ipv6 = '[ipv6]:8000:{username}:{password}[RefreshURL]{Notes}';
-const template3_ipv6 = '{username}:{password}@[ipv6]:8000[RefreshURL]{Notes}';
 
 function replaceRulesInto_UP(template: string) {
   return template.replace('{username}:{password}', $t('用户名:密码'))
@@ -34,22 +27,28 @@ function replaceRulesInto_IPV6(template: string) {
 
 const rules = computed(() => {
   if (props.parserType === ParseMode.one) {
+    const template_ipv4 = '192.168.0.1:8000[RefreshURL]{Notes}';
+    const template_ipv6 = '[ipv6]:8000[RefreshURL]{Notes}';
     return [
-      { type: IPType.IPV4, content: template1.replace('{Notes}', "").replace('[RefreshURL]', '') },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(template1) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template1_ipv6)) }
+      { type: IPType.IPV4, content: template_ipv4.replace('[RefreshURL]{Notes}', "") },
+      { type: IPType.IPV4, content: replaceRulesInto_RN(template_ipv4) },
+      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
     ]
   } else if (props.parserType === ParseMode.two) {
+    const template_ipv4 = '192.168.0.1:8000:{username}:{password}[RefreshURL]{Notes}';
+    const template_ipv6 = '[ipv6]:8000:{username}:{password}[RefreshURL]{Notes}';
     return [
-      { type: IPType.IPV4, content: replaceRulesInto_UP(template2).replace('{Notes}', "").replace('[RefreshURL]', '') },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template2)) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template2_ipv6)) }
+      { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4).replace('[RefreshURL]{Notes}', "") },
+      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4)) },
+      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
     ]
   } else if (props.parserType === ParseMode.three) {
+    const template_ipv4 = '{username}:{password}@192.168.0.1:8000[RefreshURL]{Notes}';
+    const template_ipv6 = '{username}:{password}@[ipv6]:8000[RefreshURL]{Notes}';
     return [
-      { type: IPType.IPV4, content: replaceRulesInto_UP(template3).replace('{Notes}', "").replace('[RefreshURL]', '') },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template3)) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template3_ipv6)) }
+      { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4).replace('[RefreshURL]{Notes}', "") },
+      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4)) },
+      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
     ]
   } else {
     return [];

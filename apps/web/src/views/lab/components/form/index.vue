@@ -121,11 +121,11 @@ defineExpose({
 </script>
 
 <template>
-  <Form ref="wcisform" :id="id" @submit="onFormSubmit" class="flex flex-col gap-6 w-full">
+  <Form ref="wcisform" :id="id" @submit="onFormSubmit" class="flex flex-col gap-3 w-full">
     <FormField class="flex flex-col gap-1" v-slot="$field" v-for="input in _inputs" :key="input.name" v-bind="genFormFieldProps(input)">
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
-      <component v-else :is="INPUT_TYPE_MAP[input.type!]" v-bind="input.props" />
+      <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />
       <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>
   </Form>

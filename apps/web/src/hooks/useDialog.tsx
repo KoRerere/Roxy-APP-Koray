@@ -5,11 +5,14 @@ import RxButton from '/@/components/rx-button/'
 import { $t } from '/@/locales'
 import { isEqualWith, isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
+import type { ButtonProps } from 'primevue/button'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
-  handleCancel?: () => any
-  handleOk?: () => any
+  handleCancel?: (...args: any[]) => any
+  handleOk?: (...args: any[]) => any
+  beforeClose?: (closeCallback: () => any) => any
   okText?: string
+  okProps?: ButtonProps
   cancelText?: string
   slots?: {[key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element}
 }
@@ -68,6 +71,7 @@ export function useDialog( ) {
 
       const visible = ref(false)
       const instance = {
+        dialogRef: ref<InstanceType<typeof Dialog> | null>(null),
         hideModal,
         handleOk: () => innerProps.value.handleOk?.(),
         handleCancel: () => innerProps.value.handleCancel?.(),
@@ -78,13 +82,13 @@ export function useDialog( ) {
       }
 
       const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
-        const { handleCancel, handleOk, okText, cancelText, slots, ...dialogProps } = innerProps.value
+        const { handleCancel, handleOk, okText, cancelText, slots, okProps, ...dialogProps } = innerProps.value
 
         const __dialogSlots = {
           footer: () => (
             <div class="flex justify-end gap-2">
               {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
-              <RxButton type="button" label={okText || $t('保存')} onClick={handleOk}></RxButton>
+              <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk}></RxButton>
             </div>
           ),
           ...Object.entries(slots || {}).reduce((acc, [key, value]) => {
@@ -98,7 +102,7 @@ export function useDialog( ) {
         }
 
         return (
-          <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
+          <Dialog ref={instance.dialogRef} v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
           </Dialog>
         )
       }
@@ -107,7 +111,16 @@ export function useDialog( ) {
     vnode.appContext = appContext
     render(vnode, div)
     visible.value = true
-
+    if (instance.dialogRef.value?.close) {
+      const originalClose = instance.dialogRef.value.close
+      instance.dialogRef.value.close = () => {
+        if (props.beforeClose) {
+          props.beforeClose(originalClose)
+        } else {
+          originalClose()
+        }
+      }
+    }
       return instance
   }
 

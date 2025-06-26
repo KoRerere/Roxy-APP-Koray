@@ -31,14 +31,12 @@ function onSubmit(event: any) {
 </script>
 
 <template>
-  <form class="ry-form" @submit.prevent="onSubmit">
+  <form class="flex flex-col gap-5" @submit.prevent="onSubmit">
     <template v-for="input in _inputs" :key="input.name">
       <slot :name="input.slot" :input="input" :label-position="labelPosition">
-        <div v-if="input.separator" class="ry-form-line" />
-
+        <div v-if="input.separator" class="separator"></div>
         <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value" v-bind="input" :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)"
           @change="onChange(input, inputs)" />
-
         <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition" @change="onChange(input, inputs)" @icon-click="() => input.iconClick?.(input, inputs)" />
       </slot>
     </template>
@@ -46,15 +44,10 @@ function onSubmit(event: any) {
 </template>
 
 <style lang="scss" scoped>
-.ry-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xl, 16px);
-
-  &-line {
-    width: 100%;
-    height: 0.5px;
-    background: var(--colors-border-divider);
-  }
+.separator {
+  width: 100%;
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: var(--colors-border-divider-dashed);
 }
 </style>

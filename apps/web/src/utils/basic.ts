@@ -1,5 +1,6 @@
 import { $t } from '/@/locales'
 import currency from 'currency.js'
+import { type SvgNames } from '/@/components/rx-icon'
 
 export function getRawType(data: any) {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
@@ -384,4 +385,31 @@ export function hexToRgba(hex: string, alpha: number): string {
   const g = Number.parseInt(hex.slice(3, 5), 16)
   const b = Number.parseInt(hex.slice(5, 7), 16)
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+export type SortOrder = 'asc' | 'desc';
+export type SortOrderNumber = 1 | -1 | 0;
+
+export function transformSortOrder(order: string): SortOrderNumber;
+export function transformSortOrder(order: number): SortOrder;
+export function transformSortOrder(order: undefined): undefined;
+export function transformSortOrder(order: number | string | undefined): SortOrderNumber | SortOrder | undefined {
+  if (!order) return;
+  // 1 升序，-1 降序
+  const map = {
+    '1': 'asc',
+    '-1': 'desc',
+    asc: 1,
+    desc: -1,
+  } as const;
+  return map[order.toString() as keyof typeof map];
+}
+
+export function getSortIcon(sortOrder: SortOrderNumber) {
+  const map = {
+    '0': 'base/rx_ic_chevron_2',
+    '-1': 'base/rx_ic_chevron_2_down',
+    '1': 'base/rx_ic_chevron_2_up',
+  }
+  return map[sortOrder.toString() as keyof typeof map] as SvgNames
 }

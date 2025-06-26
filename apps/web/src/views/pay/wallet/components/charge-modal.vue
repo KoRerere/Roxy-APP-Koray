@@ -86,7 +86,7 @@ function close(isCancel: boolean) {
     <div class="flex flex-col gap-4">
       <div class="sub-title">{{ $t('请输入充值金额') }}</div>
       <div class="flex items-center gap-2">
-        <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
+        <RxStepInput class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStepInput>
         <rx-amount-quick-check @select="quickSelect" />
       </div>
     </div>

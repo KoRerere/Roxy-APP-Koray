@@ -35,9 +35,8 @@ async function showWorkspaceManager() {
 
 <template>
   <div class="workspace-manager" @click="showWorkspaceManager">
-    <Avatar :label="currentWorkspace?.workspacePicture || currentWorkspace?.workspaceName?.slice(0, 2)"
-      class="workspace-icon-small" :style="avatarStyle" />
-    <div>{{ currentWorkspace?.workspaceName }}</div>
+    <Avatar :label="currentWorkspace?.workspacePicture || currentWorkspace?.workspaceName?.slice(0, 2)" class="workspace-icon-small" :style="avatarStyle" />
+    <div class="text-3.5">{{ currentWorkspace?.workspaceName }}</div>
     <RxSvgIcon name="base/rx_ic_chevron_right" :size="12" />
   </div>
 </template>

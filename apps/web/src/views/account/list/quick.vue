@@ -3,20 +3,25 @@ import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
+import { RxAlert } from '/@/components/rx-alert'
+import { AccountBindType } from '/@/enums/account'
 
-const props = defineProps({
-  data: {
-    type: Object as PropType<any>,
-    default: undefined,
-  },
-})
-const emit = defineEmits(['confirm'])
+interface Props {
+  data?: Record<string, any>
+  isBatch?: boolean
+  createCount?: number
+  accountType?: AccountBindType
+}
+
+const { data, isBatch = false, createCount = 1, accountType = AccountBindType.Order } = defineProps<Props>()
+const emit = defineEmits(['confirm', 'close'])
 
 const columns = getRawColumns({
   filters: ['actions'],
 })
 
-const selection = ref(props.data?.windowPlatformList.filter((item: any) => item.id))
+const selection = ref(data?.windowPlatformList.filter((item: any) => item.id))
+const sumProxyCount = computed(() => selection.value?.length ?? 0)
 
 async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
@@ -24,16 +29,19 @@ async function tableRequest(params: any) {
 
 function handleSave() {
   emit('confirm', selection.value)
+  emit('close')
 }
 </script>
 
 <template>
   <div class="flex flex-col h-full account-content">
+    <RxAlert class="w-full mt-3" :visible="isBatch && accountType === AccountBindType.Order" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+      :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? $t('当前选择绑定的账号数量已超过创建窗口数。') : '' })" />
     <div class="flex-ovh-1">
       <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
         :context-menu="false" :show-actions="false">
         <template #platform="{ data: row }">
-          <div class="flex gap-2 account">
+          <div class="flex gap-2 select-none account">
             <div>
               <platformIcon v-if="row.platformIcon" :platformIcon="row.platformIcon" :platformIconDark="row.platformIconDark" class="w-4 h-4" />
               <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
@@ -50,7 +58,7 @@ function handleSave() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
             :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
         </template>
       </RyTable>

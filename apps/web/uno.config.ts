@@ -14,7 +14,9 @@ export default defineConfig({
     presetMini({ dark: 'class' }),
     // https://unocss.dev/presets/attributify#properties-conflicts
     presetAttributify({ prefix: 'un-', prefixedOnly: true }),
-    presetWind3({ important: 'body' })
+    presetWind3({
+      // important: 'body'
+    })
   ],
   rules: [['loading-circle', {
     animation: 'loadingCircle 1s infinite linear',

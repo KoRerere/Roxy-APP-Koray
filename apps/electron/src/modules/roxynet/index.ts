@@ -4,13 +4,15 @@ import { setTimeout } from 'node:timers/promises'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { fileExists, getSystemProxy, isMac, isProcessExists } from '/@/utils'
+import { fileExists, getSystemProxy, isProcessExists } from '/@/utils'
+import { isMac } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { chmod } from 'node:fs/promises'
 
 export * from './util'
 
 let roxynetProcess: ChildProcess | null = null
+let lastCheckTime = 0
 
 export function getRoxynetProcess() {
   return roxynetProcess
@@ -35,8 +37,10 @@ export async function startRoxynet() {
   }
 
   if (roxynetProcess?.pid) {
-    // 重新设置系统代理
-    setSystemProxy()
+    if (Date.now() - lastCheckTime < 60 * 1000 * 1) {
+      return
+    }
+    lastCheckTime = Date.now()
     console.log('Roxynet has been started')
     const [processExists] = await isProcessExists([roxynetProcess.pid])
     if (!processExists) {
@@ -98,11 +102,18 @@ export async function startRoxynet() {
   // 监听子进程关闭事件
   roxynetProcess.on('close', (code) => {
     console.log(`roxynetProcess exited with code ${code}`)
+    roxynetProcess = null
+  })
+
+  roxynetProcess.on('exit', (code) => {
+    console.log(`roxynetProcess exited with code ${code}`)
+    roxynetProcess = null
   })
 
   // 监听子进程错误事件
   roxynetProcess.on('error', (error) => {
     console.error('roxynetProcess Error executing file:', error)
+    roxynetProcess = null
   })
 
   console.log(`Child process ID: ${roxynetProcess.pid}`)

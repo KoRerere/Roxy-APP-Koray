@@ -18,6 +18,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     // 重新获取用户配置
     fetchUserConfig()
     openAPIServer.start()
+    store.lastLoginTime = Date.now()
     // aliOSS.init()
   })
 

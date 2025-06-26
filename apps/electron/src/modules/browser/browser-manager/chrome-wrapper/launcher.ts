@@ -81,13 +81,14 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
   // 获取 WebSocket 端点
   const version = await CDP.Version({ port: actualPort })
   const wsEndpoint = version.webSocketDebuggerUrl
+  console.debug('wsEndpoint', wsEndpoint, actualPort)
   // 连接到 Chrome
   const client = await CDP({ target: wsEndpoint }) as Client
 
   // 启用必要的域
   await client.Target.setDiscoverTargets({ discover: true })
 
-  return new ChromeBrowser(client, wsEndpoint, chromeProcess)
+  return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
 }
 
 /**

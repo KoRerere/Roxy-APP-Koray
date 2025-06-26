@@ -35,25 +35,27 @@ const browser = computed(() => {
     }
   }
 
-  const { pending, code, data, error } = message
+  const { uploading, pending, code, data, error } = message
+  const isFailed = code === 1 || error
   const complted = data?.percent === 100
-  const opening = !(error || complted)
+  const opening = !(isFailed || complted)
 
   return {
     code,
     pending,
-    msg: error ? $t('打开') : data?.message,
+    msg: isFailed ? $t('打开') : data?.message,
     percent: data?.percent || 0,
-    error: error?.message,
+    error: error?.message || (isFailed ? message?.message : undefined),
     warning: data?.warningMessages?.join('\n'),
     opening,
+    uploading,
     complted,
-    classes: opening ? 'cursor-not-allowed' : 'cursor-pointer',
+    classes: opening || uploading ? 'cursor-not-allowed' : 'cursor-pointer',
   }
 })
 
 async function openBrowser() {
-  if (browser.value.pending || browser.value.opening) {
+  if (browser.value.pending || browser.value.opening || browser.value.uploading) {
     return
   }
   emits('open', props.data)
@@ -67,7 +69,7 @@ async function openBrowser() {
       <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5"
         :value="browser.percent" />
       <RxSvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
-      <span class="select-none">{{ browser.complted ? $t('查看') : browser?.msg }}</span>
+      <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
     </RxButton>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
     <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill"

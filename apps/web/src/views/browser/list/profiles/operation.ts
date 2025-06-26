@@ -2,7 +2,8 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { getDictMap, getFormData, setInputValueByFormData } from '/@/utils'
+import { getDictMap, setInputValueByFormData, transformSortOrder, type SortOrderNumber } from '/@/utils'
+import { getColumns } from './columns'
 
 const role = useRoleStore()
 
@@ -66,9 +67,21 @@ export async function getCustomFilters(params: any = {}) {
       icon: 'base/rx_ic_keys',
       getOptions: async () => {
         const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
-        return (data.rows || []).map((item: any) => ({
+        const __data = (data.rows || []).reduce((obj, curr) => {
+          const url = curr.platformUrl!;
+          if (!obj[url]) obj[url] = [];
+          obj[url].push(curr.id!)
+          return obj;
+        }, {} as Record<string, number[]>)
+        const rows = Object.entries(__data).map(([key, values]) => {
+          return {
+            platformUrl: key,
+            ids: values.join(',')
+          }
+        })
+        return (rows).map((item: any) => ({
           parentName: 'platformUrlIds',
-          value: `${item.id}`,
+          value: item.ids,
           label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
         }))
       },
@@ -206,43 +219,26 @@ export async function getCustomFilters(params: any = {}) {
 }
 
 export async function getSorts() {
+  const columns = getColumns()
   const { data } = await API.window.userGetWindowTableSortOrderList()
 
-  const list = [
-    {
-      label: $t('排序标准'),
-      name: 'orderName',
-      value: data?.orderName ?? 'windowSortNum',
-      defaultValue: 'windowSortNum',
-      options: [
-        { label: $t('序号'), value: 'windowSortNum' },
-        { label: $t('名称'), value: 'name' },
-        { label: $t('创建时间'), value: 'createTime' },
-        { label: $t('修改时间'), value: 'updateTime' },
-        { label: $t('最后打开时间'), value: 'openTime' },
-        { label: $t('最后关闭时间'), value: 'closeTime' },
-      ],
-      icon: 'base/rx_ic_sort_a2z',
-    },
-    {
-      label: $t('排序方式'),
-      name: 'orderType',
-      value: data?.orderType ?? 'desc',
-      defaultValue: 'desc',
-      options: [
-        { label: $t('倒序'), value: 'desc' },
-        { label: $t('正序'), value: 'asc' },
-      ],
-      icon: 'base/rx_ic_sort_ascending',
-    },
-  ]
-
-  const onChange = () => {
-    API.window.userSaveWindowTableSortOrderCreate(getFormData(list))
+  const onChange = (data: any) => {
+    const params: Record<string, any> = {};
+    if (data.sortField && columns.data.find(item => item.key === data.sortField && item.sortable)) {
+      params.orderName = data.sortField
+      params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
+    }
+    API.window.userSaveWindowTableSortOrderCreate(params)
   }
 
+  // 需要处理旧字段，如果字段已经不在我们新版的设计中，那么这个字段就不能传到接口中去
+  const isSorField = columns.data.find(item => item.key === data?.orderName && item.sortable)
+
   return {
-    data: list,
+    data: {
+      sortField: isSorField ? data?.orderName : undefined,
+      sortOrder: transformSortOrder(data?.orderType ?? 'desc'),
+    },
     onChange,
   }
 }

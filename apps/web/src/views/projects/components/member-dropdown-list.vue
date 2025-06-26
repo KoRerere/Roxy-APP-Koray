@@ -94,7 +94,7 @@ function toggle(event: Event) {
   align-items: flex-start;
   gap: var(--spacing-none, 0px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  border-bottom: 0.5px solid var(--p-component-dropdown-divider);
 }
 
 .member-item {

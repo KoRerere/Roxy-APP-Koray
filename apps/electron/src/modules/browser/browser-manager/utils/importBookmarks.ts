@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileExists } from "/@/utils";
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { dirname } from "path";
 import { store, } from "/@/modules/store";
 
