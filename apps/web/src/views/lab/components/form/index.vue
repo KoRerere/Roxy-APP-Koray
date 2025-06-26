@@ -44,8 +44,6 @@ const { id = Date.now().toString(32), inputs = [] } = defineProps<{
   inputs: Input[]
 }>()
 
-const _inputs = ref(inputs)
-
 const emit = defineEmits<{
   (e: 'submit', values: Record<string, any>): void
 }>()
@@ -62,22 +60,25 @@ genFormContext({
   }
 })
 
-const formRef = useTemplateRef<any>('wcisform')
+const initialForm = inputs.reduce((acc, input) => {
+  const { name, label, props, required, resolver } = input
+  acc.values.push([name, initialFieldValue(input)])
 
-function genFormFieldProps(input: Input) {
-  const { name, label, required, props, resolver } = input
-  return {
-    name,
-    initialValue: initialValue(input),
-    resolver: isFunction(resolver)
-      ? zodResolver(resolver(z))
-      : required
-        ? zodResolver(z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder })))
-        : undefined,
+  if (isFunction(resolver)) {
+    acc.resolver.push([name, resolver(z)])
+  } else if (required) {
+    acc.resolver.push([name, z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder }))])
   }
-}
 
-function initialValue(input: Input) {
+  return acc
+}, { values: [], resolver: [] } as { values: [string, any][], resolver: [string, any][] })
+
+const formRef = useTemplateRef<any>('tsform')
+const _inputs = ref(inputs)
+const initialValues = reactive(Object.fromEntries(initialForm.values))
+const resolver = zodResolver(z.object(Object.fromEntries(initialForm.resolver)))
+
+function initialFieldValue(input: Input) {
   if (input.value) return input.value
 
   switch (input.type) {
@@ -121,8 +122,8 @@ defineExpose({
 </script>
 
 <template>
-  <Form ref="wcisform" :id="id" @submit="onFormSubmit" class="flex flex-col gap-3 w-full">
-    <FormField class="flex flex-col gap-1" v-slot="$field" v-for="input in _inputs" :key="input.name" v-bind="genFormFieldProps(input)">
+  <Form ref="tsform" :id="id" :initialValues="initialValues" :resolver="resolver" @submit="onFormSubmit" class="flex flex-col gap-3 self-stretch">
+    <FormField class="flex flex-col gap-1" v-for="input in _inputs" :key="input.name" v-slot="$field" :name="input.name">
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />

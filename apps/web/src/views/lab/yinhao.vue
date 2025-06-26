@@ -165,8 +165,8 @@ import TsForm from './components/form/index.vue';
 const inputs = [
   {
     type: 'text',
-    name: 'username',
-    label: 'Username',
+    name: 'firstname',
+    label: 'First Name',
     props: {
       preIcon: 'base/rx_ic_2fa',
       icon: 'base/rx_ic_2fa',
@@ -180,43 +180,20 @@ const inputs = [
       .max(20, $t('空间名称最多 20 个字符')),
   },
   {
-    type: 'number',
-    name: 'aaaaa',
-    label: 'Age',
-    value: 1102,
+    type: 'text',
+    name: 'lastname',
+    label: 'Last Name',
+    required: true,
   },
   {
-    type: 'mselect',
-    name: 'scvr1',
-    label: 'Scvr1',
-    value: [1, 2, 3, 4],
-    props: {
-      maxSelectedLabels: 3,
-      options: [
-        { label: '1111111', value: 1 },
-        { label: '2222222', value: 2 },
-        { label: '3333333', value: 3 },
-        { label: '4444444', value: 4 },
-        { label: '5555555', value: 5 },
-      ],
-    },
-  },
-  {
-    type: 'select',
-    name: 'eddp',
-    value: { label: '1', value: 1 },
-    props: {
-      options: [
-        { label: '1', value: 1 },
-        { label: '2', value: 2 },
-        { label: '3', value: 3 },
-      ],
-    },
+    type: 'text',
+    name: 'username',
+    label: 'Username',
   },
   {
     type: 'textarea',
-    name: 'lastname',
-    label: 'Last Name',
+    name: 'password',
+    label: 'Password',
     resolver: (z: any) => z.string({
       invalid_type_error: 'wcis man!',
     })
@@ -241,7 +218,7 @@ function noFormIdSubmit() {
     <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
-      <RxButton class="w-full" label="test submit" @click="noFormIdSubmit"></RxButton>
+      <!-- <RxButton class="w-full" label="test submit" @click="noFormIdSubmit"></RxButton> -->
     </div>
   </div>
 </template>
