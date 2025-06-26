@@ -22,7 +22,7 @@ const value = item[field ?? 'name']
       <Checkbox v-if="type === 'multiple'" v-model="selected" name="checkbox" :input-id="value" :value="value" />
       <slot>
         <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-        <span class="ellipsis-1 text-[13px]" :title="(item.label as string)">{{ item.label }}</span>
+        <span class="ellipsis-1 text-3.25" :title="(item.label as string)">{{ item.label }}</span>
       </slot>
     </label>
   </a>

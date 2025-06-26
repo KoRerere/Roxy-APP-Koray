@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 import { useDebounceFn } from '@vueuse/core'
 import Fuse from 'fuse.js'
@@ -126,8 +127,7 @@ defineExpose({
   <div class="flex flex-1 justify-between flex-row-reverse hub">
     <div>
       <div class="hub-categories">
-        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
-          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item" :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
           {{ item.categoryName }}
         </div>
       </div>
@@ -137,7 +137,7 @@ defineExpose({
         <InputGroupAddon>
           <RxSvgIcon name="base/rx_ic_magnify" />
         </InputGroupAddon>
-        <InputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
+        <TsFormInputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
       <div class="flex-1 overflow-y-auto list-container dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
@@ -162,10 +162,8 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check"
-                  :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud"
-                  :label="$t('下载')" @click="onInstall(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check" :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>

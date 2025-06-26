@@ -285,7 +285,7 @@ provideLoginContext({
           <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
-          <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" @submit="handleSubmitBy2fa" />
+          <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :onConfirm="handleSubmitBy2fa" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
           <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
         </div>

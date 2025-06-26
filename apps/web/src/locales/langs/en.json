@@ -590,7 +590,6 @@
   "延迟点击 开/关": "Delayed Click On/Off",
   "延迟输入 开/关": "Delayed Input On/Off",
   "开启": "Open",
-  "开启 2FA": "Enable 2FA",
   "开始免费试用": "Start Free Trial",
   "开始同步": "Start sync",
   "开始同步 {count} 个窗口": "Start syncing {count} Profiles",
@@ -615,7 +614,6 @@
   "当前设备": "Current Device",
   "当前账号于 {time} 在 {deviceName} 设备上登录。": "Your account was accessed on {deviceName} at {time}.",
   "当前选择绑定的代理数量已超过创建窗口数。": "Chosen proxies exceed the number of profiles you create.",
-  "当前选择绑定的账号数量已超过创建窗口数。": "Chosen accounts exceed the number of profiles you create.",
   "当前项目成员列表": "Current project members",
   "当点击关闭客户端时": "When click close client",
   "当系统代理识别失败时尝试启用": "Attempt to enable when system proxy identification fails",
@@ -837,6 +835,7 @@
   "无效的验证码": "Invalid verification code",
   "无法使用您的身份验证器应用程序或恢复代码？请{recovery}。": "Cannot use your authenticator app or recovery codes? Please {recovery}.",
   "无法使用您的身份验证器应用程序或恢复邮箱？请{recovery}。": "Cannot use your authenticator app or recovery email? Please {recovery}.",
+  "无法删除正在被其他成员使用的窗口": "Cannot delete profiles that are being used by other members",
   "无法收到验证码？请{tryAgain}或{contact}。": "Unable to receive email? {tryAgain} or {contact}.",
   "无法收到验证码？请检查您的垃圾邮件或重新发送验证码": "Can't receive verification code? Please check your spam folder or resend the code",
   "无法登录？请{recovery}。": "Cannot log in? Please {recovery}.",
@@ -1495,6 +1494,5 @@
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
-  "默认项目": "Default project",
-  "无法删除正在被其他成员使用的窗口": "Cannot delete profiles that are being used by other members"
+  "默认项目": "Default project"
 }

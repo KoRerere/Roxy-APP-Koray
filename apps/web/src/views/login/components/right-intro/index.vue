@@ -112,8 +112,7 @@ onUnmounted(() => {
 <template>
   <div class="mt-100px ml-100px">
     <template v-for="tab in tabs">
-      <motion.div class="intro" v-if="currentTab === tab.key" :initial="{ opacity: 0, y: -30 }"
-        :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
+      <motion.div class="intro" v-if="currentTab === tab.key" :initial="{ opacity: 0, y: -30 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
         <div class="intro-title">{{ tab.title }}</div>
         <div class="intro-desc">{{ tab.desc }}</div>
       </motion.div>
@@ -145,6 +144,7 @@ onUnmounted(() => {
   }
 
   .intro-desc {
+    padding-right: 16px;
     color: #FFF;
     font-family: Inter;
     font-size: 16px;
