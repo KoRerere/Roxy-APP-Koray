@@ -153,6 +153,7 @@ const items = computed(() => {
           if (!isConfirm) return
         }
         showPageLoading()
+        await API.base.userLogoutList()
         router.push({ name: "login" }).finally(() => {
           userStore.clearUserInfo()
         });
@@ -224,11 +225,8 @@ function toggle(event: Event) {
 <template>
   <div class="settings cursor-pointer" @click="toggle">
     <template v-if="userStore.userInfo">
-      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
-        :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
-        :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall"
-          class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
+        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
       </RxAvatar>
       <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     </template>
@@ -241,7 +239,7 @@ function toggle(event: Event) {
       <a v-ripple class="flex items-center" v-bind="props.action">
         <component :is="item.render" v-if="item.render" />
         <template v-else>
-          <RxSvgIcon :name="(item.icon as SvgNames)" />
+          <RxSvgIcon :name="(item.icon as SvgNames)" color="var(--colors-icon-icon-secondary)" />
           <span class="menu-label">{{ item.label }}</span>
           <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
           <RxSvgIcon v-if="item.isCheck?.()" class="ml-auto" name="base/rx_ic_check" />

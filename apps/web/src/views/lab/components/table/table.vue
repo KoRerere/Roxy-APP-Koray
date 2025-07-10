@@ -216,12 +216,15 @@ async function _request() {
 }
 
 defineExpose({
+  getParams: _getParams,
   refresh: (outerParams = {}, force = true) => {
     if (force) paginatorFirst.value = 0
     _outerParams.value = outerParams
     _request()
   },
-  getParams: () => [_getParams(), (list: any[]) => { _dataList.value = list }],
+  updateDataList: (list: any[]) => {
+    _dataList.value = list || []
+  },
 })
 </script>
 
@@ -255,7 +258,7 @@ defineExpose({
         @more="onSelectionContextmenu({ originalEvent: $event, data: selectedProduct })"></SelectionActions>
       <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
-    <div class="pa-2 w-full bg-gray-200">
+    <div class="w-full">
       <TablePaginator v-model:first="paginatorFirst" v-model:rows="paginatorRows" :cacheKey="cacheKey" :totalRecords="totalRecords" @update="onPaginatorUpdate"></TablePaginator>
     </div>
     <ContextMenu ref="ctxmenu" :model="(contextModel as MenuItem[])" @hide="contextMenuSelection = null">

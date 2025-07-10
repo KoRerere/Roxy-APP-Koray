@@ -73,7 +73,7 @@ async function tableRequest(params: any) {
 }
 
 function getOperation(data: Project) {
-  const pinStatus = data.user_info!.find(item=> item.userId === userInfo.value.id)?.pinStatus
+  const pinStatus = data.user_info!.find(item => item.userId === userInfo.value.id)?.pinStatus
   const isPinned = pinStatus === ProjectPin.pinned
 
   return [
@@ -163,12 +163,12 @@ function operationHandler(operate: any, data?: any) {
   }
 }
 
-async function onRowReorder ({ value }: any) {
-  const { projectIds,projectSortNumList } = value.reduce((acc: any, item: any, index: number)=>{
+async function onRowReorder({ value }: any) {
+  const { projectIds, projectSortNumList } = value.reduce((acc: any, item: any, index: number) => {
     acc.projectIds.push(item.project_id)
     acc.projectSortNumList.push(index + 1)
     return acc
-  },{ projectIds:[], projectSortNumList:[] } as Record<string,any[]>)
+  }, { projectIds: [], projectSortNumList: [] } as Record<string, any[]>)
 
   const { code, msg } = await API.limit.userMdfProjectSortCreate({
     projectIds,
@@ -176,13 +176,13 @@ async function onRowReorder ({ value }: any) {
   })
 
   onlyErrorToast(code, msg)
-  if(code !== 0) return
+  if (code !== 0) return
   tableRef.value?.updateDataList(value)
   getProjects()
 }
 
 async function pinProject(data: Project) {
-  const oldPinStatus = data.user_info!.find(item=> item.userId === userInfo.value.id)?.pinStatus
+  const oldPinStatus = data.user_info!.find(item => item.userId === userInfo.value.id)?.pinStatus
   const pinStatus = oldPinStatus === ProjectPin.pinned ? ProjectPin.none : ProjectPin.pinned
 
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })

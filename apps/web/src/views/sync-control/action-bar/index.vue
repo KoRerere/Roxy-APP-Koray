@@ -229,8 +229,8 @@ body {
 #app {
   display: flex;
   justify-content: center;
-  --p-menubar-background: transparent;
-  --p-menubar-border-color: transparent;
+  --menubar-background: transparent;
+  --menubar-border-color: transparent;
 
   .p-toggleswitch {
     transform: scale(0.7);
@@ -362,8 +362,8 @@ body {
     flex-wrap: nowrap;
 
     >.p-menubar-item>.p-menubar-item-content {
-      --p-menubar-item-active-background: var(--primitives-neutrals-800, #252A2E);
-      --p-menubar-item-focus-background: var(--primitives-neutrals-800, #252A2E);
+      --menubar-item-active-background: var(--primitives-neutrals-800, #252A2E);
+      --menubar-item-focus-background: var(--primitives-neutrals-800, #252A2E);
       color: var(--Colors-Alpha-alpha-white-90, rgba(255, 255, 255, 0.90));
 
       .p-menubar-item-link {

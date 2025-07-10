@@ -105,6 +105,7 @@ import {
   UserGetValidatorInfoListParams,
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
+  UserLogoutListData,
   UserMigrateDataListData,
   UserModifyRemarkDisplayStatusCreateData,
   UserModifyRemarkDisplayStatusCreatePayload,
@@ -1614,6 +1615,22 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/check_email_or_2fa_verify`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserLogoutList
+   * @summary 用户退出登录
+   * @request GET:/user_logout
+   * @response `200` `UserLogoutListData`
+   */
+  userLogoutList = (params: RequestParams = {}) =>
+    this.http.request<UserLogoutListData, any>({
+      path: `/user_logout`,
+      method: "GET",
       format: "json",
       ...params,
     });

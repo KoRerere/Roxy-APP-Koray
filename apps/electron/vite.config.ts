@@ -35,6 +35,7 @@ const config: UserConfig = {
     emptyOutDir: true,
     reportCompressedSize: false,
   },
+  plugins: [],
 }
 
 export default config

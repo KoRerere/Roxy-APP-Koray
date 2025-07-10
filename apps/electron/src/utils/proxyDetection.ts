@@ -125,12 +125,13 @@ export async function proxyDetection(
   console.log("systemProxySwitch", store.systemProxySwitch);
   console.log(`dirId && proxyUserName`, dirId, proxyUserName);
   const systemProxyAddress = await getSystemProxy();
+  await startRoxynet();
+
   const isUseSystemProxy =
     proxyCategory === "SSH" ||
     (getRoxynetProcess() && systemProxySwitch && systemProxyAddress);
 
   if (isUseSystemProxy) {
-    await startRoxynet();
     const protocal = proxyCategory.toLocaleLowerCase();
     const addr = host && port ? `${host}:${port}` : "";
     const roxynetParams = {

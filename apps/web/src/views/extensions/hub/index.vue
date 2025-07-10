@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginListData } from '@roxy/backend-api'
-import { useDebounceFn } from '@vueuse/core'
 import Fuse from 'fuse.js'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import installExtension from '/@/views/extensions/install/components/install-extension.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useDebounceFn } from '@vueuse/core'
 import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import installExtension from '/@/views/extensions/install/components/install-extension.vue'
+import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 
 type CategoryItem = UnwrapRowType<UserGetPluginCategoryListData>
 type PluginItem = UnwrapRowType<UserGetSystemPluginListData>
@@ -18,6 +18,7 @@ interface PluginMap {
     items: PluginItem[]
   }
 }
+
 const [showToast, onlyErrorToast] = useResponseToast()
 const dialog = useDialog()
 
@@ -29,13 +30,9 @@ const pluginList = ref()
 const fuse = ref()
 const search = ref('')
 const searchResult = ref()
-
+const isInit = ref(false)
+const loading = ref(false)
 const extensionList = computed(() => searchResult.value?.length > 0 ? searchResult.value : pluginList.value)
-
-onBeforeMount(async () => {
-  await getCategoryList()
-  getPluginList()
-})
 
 const searchPlugins = useDebounceFn(() => {
   const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
@@ -53,6 +50,15 @@ function formatPluginList(list: PluginItem[]) {
     map[item.categoryName].items.push(item)
     return map
   }, {}))
+}
+
+async function getRecommendPluginList() {
+  if (isInit.value) return
+  isInit.value = true
+  loading.value = true
+  await getCategoryList()
+  await getPluginList()
+  loading.value = false
 }
 
 async function getCategoryList() {
@@ -115,6 +121,7 @@ async function onInstall(plugin: PluginItem) {
 }
 
 defineExpose({
+  getRecommendPluginList,
   refresh: () => {
     search.value = ''
     searchResult.value = undefined
@@ -139,7 +146,7 @@ defineExpose({
         </InputGroupAddon>
         <TsFormInputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
-      <div class="flex-1 overflow-y-auto list-container dynamic-padding">
+      <div class="relative flex-1 overflow-y-auto list-container dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
           <div :id="`category_${item.categoryId}`" class="list-group-title">
             {{ item.categoryName }}
@@ -168,6 +175,7 @@ defineExpose({
             </div>
           </div>
         </div>
+        <RxLoading v-model="loading" :opacity="0.6"></RxLoading>
       </div>
     </div>
   </div>

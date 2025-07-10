@@ -3,10 +3,11 @@ import './ipc'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
-import { setupStore } from '/@/modules/store'
+import { setupStore, } from '/@/modules/store'
 import { setupApp } from './app/'
 import { fileExists } from '/@/utils'
 import { appConfig } from '/@/constants'
+
 
 // Sentry.init({
 //   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -36,3 +37,4 @@ export async function setupModules() {
     console.error('setupModules', error)
   }
 }
+

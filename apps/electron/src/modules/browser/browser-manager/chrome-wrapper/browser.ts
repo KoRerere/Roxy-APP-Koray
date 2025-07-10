@@ -71,20 +71,32 @@ export class ChromeBrowser extends EventEmitter {
 
     // 监听浏览器进程事件
     if (this.browserProcess) {
+      let closed = false;
+
       // 进程退出事件
-      this.browserProcess.on('exit', (code, signal) => {
+      this.browserProcess.on('exit', async (code, signal) => {
+        console.debug('browser process exit', code, signal)
         this.emitDisconnected()
         this.emit('process-exit', { code, signal })
+        await setTimeout(1500)
+        // 如果底层管道建立失败或早期崩溃，导致 Node 无法 cleanly 收尾，则需要手动触发 close
+        if (!closed) {
+          this.emit('process-close', { code, signal })
+          this.kill()
+        }
       })
 
       // 进程关闭事件
       this.browserProcess.on('close', (code, signal) => {
+        console.debug('browser process close', code, signal)
         this.emitDisconnected()
         this.emit('process-close', { code, signal })
+        closed = true;
       })
 
       // 进程错误事件
       this.browserProcess.on('error', (error) => {
+        console.debug('browser process error', error)
         this.emit('process-error', error)
       })
     }

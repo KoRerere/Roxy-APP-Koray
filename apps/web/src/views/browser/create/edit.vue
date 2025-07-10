@@ -81,10 +81,10 @@ function oldFieldsFormat() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :title="$t('编辑窗口')" />
-    <div class="flex flex-1 justify-center px-32 overflow-hidden">
-      <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
+    <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
+      <div class="h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>
@@ -93,13 +93,14 @@ function oldFieldsFormat() {
           </AccordionInputs>
           <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
         </div>
-        <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
+        <div class="relative flex items-center gap-2 py-4 min-h-16 overflow-hidden footer">
           <div class="footer-separator"></div>
           <MateGroup v-model="metaData" class="flex-1" />
           <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
         </div>
       </div>
     </div>
+    <div class="foot-separator"></div>
   </div>
 </template>
 
@@ -120,15 +121,15 @@ function oldFieldsFormat() {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
 
-  &-separator {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300%;
-    height: 1px;
-    background-color: var(--p-colors-border-divider);
-  }
+.foot-separator {
+  position: absolute;
+  bottom: 65.6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 1px;
+  background-color: var(--colors-border-divider);
 }
 </style>

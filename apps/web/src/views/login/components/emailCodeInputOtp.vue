@@ -95,6 +95,7 @@ async function handleSubmit() {
     ver_code: emailCode.value,
   })
   if (code === 0) {
+    window.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
     await toSignIn()
     mixpanel.track('signUp', { method: 'email', success: true })
     emit('ok', emailCode.value)
@@ -115,8 +116,7 @@ onBeforeMount(() => {
 <template>
   <div class="container">
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
-    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')"
-      @click="toReEnter"></RxButton>
+    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter"></RxButton>
 
     <img :src="imgSrc" class="mx-auto w-22.5">
     <SignCardHeader>
@@ -140,8 +140,7 @@ onBeforeMount(() => {
       {{ countdown > 0 ? $t('{time} 秒后可重新获取', { time: `${countdown}` }) : $t('重新发送') }}
     </RxButton>
     <div class="tips">
-      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })"
-        scope="global">
+      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global">
         <template #tryAgain>
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>

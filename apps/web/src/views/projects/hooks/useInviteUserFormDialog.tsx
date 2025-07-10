@@ -30,7 +30,7 @@ export function useInviteUserFormDialog() {
     const originl = data;
 
     const dialogInstance = await showFormDialog({
-      header: originl.user_id ? $t("编辑用户") : $t("邀请用户"),
+      header: originl.email ? $t("编辑用户") : $t("邀请用户"),
       class: "w-[500px]",
       formProps: {
         layout: "vertical",

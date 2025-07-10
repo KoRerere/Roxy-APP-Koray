@@ -200,14 +200,17 @@ export const appUpdater = new class AppUpdater {
     if (isPackaged) {
       if (this.downloadPromiser?.promise) {
         this.downloadPromiser.promise.finally(() => {
-          this.isQuittingForUpdate = true
-          this.#autoUpdater.quitAndInstall(true, true)
+          this.quitAndInstall()
         })
       } else {
-        this.isQuittingForUpdate = true
-        this.#autoUpdater.quitAndInstall(true, true)
+        this.quitAndInstall()
       }
     }
+  }
+
+  quitAndInstall() {
+    this.isQuittingForUpdate = true
+    this.#autoUpdater.quitAndInstall(true, true)
   }
 
   private sendSuccessMessage() {

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# PKG postinstall 脚本
+# 在安装完成后执行，写入安装程序路径到应用数据目录（类似 Windows 的 installer.nsh）
+
+# 应用名称（将在构建时被替换）
+APP_NAME="RoxyBrowser"
+
+# 获取安装程序包路径（PKG 文件路径）
+# $1 = 安装包路径，这就是我们要的安装程序路径
+INSTALLER_PATH="$1"
+
+# 获取当前用户的主目录
+USER_HOME="$HOME"
+if [ -z "$USER_HOME" ]; then
+    USER_HOME=$(eval echo "~$USER")
+fi
+
+# 获取当前用户名（用于 chown 命令）
+CURRENT_USER="$USER"
+if [ -z "$CURRENT_USER" ]; then
+    # 如果 $USER 为空，尝试从 $HOME 路径获取用户名
+    CURRENT_USER=$(basename "$USER_HOME")
+fi
+
+# 应用数据目录路径
+APP_DATA_DIR="$USER_HOME/Library/Application Support/$APP_NAME"
+
+# 创建应用数据目录
+mkdir -p "$APP_DATA_DIR"
+
+# 安装程序路径文件（与 Windows 保持一致的文件名）
+INSTALLER_PATH_FILE="$APP_DATA_DIR/installer-path"
+
+# 直接写入安装程序路径（类似 Windows 的 $EXEPATH）
+echo "$INSTALLER_PATH" > "$INSTALLER_PATH_FILE"
+
+# 设置文件权限
+chmod 644 "$INSTALLER_PATH_FILE"
+
+# 重要：将目录和文件的所有权改为当前用户
+# 这样用户就可以正常修改这些文件了
+chown -R "$CURRENT_USER:staff" "$APP_DATA_DIR"
+
+exit 0

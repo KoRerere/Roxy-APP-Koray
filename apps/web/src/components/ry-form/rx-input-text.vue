@@ -56,11 +56,11 @@ const slots = useSlots()
     line-height: $lineHeight;
 
     &:not(:first-child) {
-      padding-left: calc($pl + var(--p-icon-size) + $gap);
+      padding-left: calc($pl + var(--icon-size) + $gap);
     }
 
     &:not(:last-child) {
-      padding-right: calc($pr + var(--p-icon-size) + $gap);
+      padding-right: calc($pr + var(--icon-size) + $gap);
     }
   }
 }

@@ -1,9 +1,10 @@
 <script setup lang="tsx">
+import PlanModal from '../pay/wallet/components/plan-success.vue'
+import BalanceModal from '../pay/wallet/components/balance-success.vue'
+import { motion } from 'motion-v';
 import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
-import PlanModal from '../pay/wallet/components/plan-success.vue'
-import BalanceModal from '../pay/wallet/components/balance-success.vue'
 import { useDialog } from '/@/hooks/useDialog'
 
 const [showModal] = useDialog()
@@ -41,7 +42,7 @@ function open2() {
   })
 }
 
-//===============================
+//============ table ===================
 import wcisTable from './components/table/table.vue'
 
 async function tableFilters() {
@@ -159,7 +160,7 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
   category: `category_${index}`,
   quantity: 'actions',
 }))
-//====================================
+//============ form ========================
 import TsForm from './components/form/index.vue';
 
 const inputs = [
@@ -178,6 +179,12 @@ const inputs = [
       .min(1, $t('请输入空间名称'))
       .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
       .max(20, $t('空间名称最多 20 个字符')),
+  },
+  {
+    type: 'number',
+    name: 'number',
+    label: 'Number',
+    value: 10000,
   },
   {
     type: 'text',
@@ -201,24 +208,30 @@ const inputs = [
   }
 ]
 
-const onFormSubmit = (values: Record<string, any>) => {
+const onFormWcis = (values: Record<string, any>) => {
   console.log(values)
 }
 
 const formRef = useTemplateRef<any>('wcisman')
 
-function noFormIdSubmit() {
+function noFormIdWcis() {
   formRef.value?.instance.submit()
 }
+//=========================================
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
-      <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
+    <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+      <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
-      <!-- <RxButton class="w-full" label="test submit" @click="noFormIdSubmit"></RxButton> -->
+      <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
+    </div> -->
+    <div class="w-full px-10 bg-orange overflow-x-auto">
+      <RxContainer class="bg-pink">
+        <h1 class="ma-0">Hello</h1>
+      </RxContainer>
     </div>
   </div>
 </template>

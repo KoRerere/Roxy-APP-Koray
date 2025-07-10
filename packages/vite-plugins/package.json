@@ -23,7 +23,9 @@
     "adm-zip": "^0.5.16",
     "body-parser": "^1.20.3",
     "formidable": "^3.5.2",
-    "glob": "^11.0.1"
+    "glob": "^11.0.1",
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.43.1"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",

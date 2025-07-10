@@ -398,11 +398,11 @@ async function importProfile(params: any) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
-    <div class="flex flex-1 justify-center px-32 overflow-hidden">
-      <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
+    <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
+      <div class="h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <div class="flex-1 flex flex-col">
             <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">
@@ -425,13 +425,13 @@ async function importProfile(params: any) {
           <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
         </div>
         <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
-          <div class="footer-separator"></div>
           <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
           <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
           <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
         </div>
       </div>
     </div>
+    <div class="foot-separator"></div>
   </div>
 </template>
 
@@ -488,15 +488,15 @@ async function importProfile(params: any) {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
 
-  &-separator {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300%;
-    height: 1px;
-    background-color: var(--p-colors-border-divider);
-  }
+.foot-separator {
+  position: absolute;
+  bottom: 65.6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 1px;
+  background-color: var(--colors-border-divider);
 }
 </style>

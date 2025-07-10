@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue';
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import './rich-text/'
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 
 defineProps<{
@@ -13,7 +13,6 @@ defineProps<{
 
 const confirm = useConfirm()
 const userStore = useUserStore()
-const { currentLocale } = useSimpleLocale()
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -21,17 +20,17 @@ function formatClientBtnLabel(item: ResourceUpdateMessage) {
   }
   else if (item.status === 'downloaded') {
     if (item.type === 'app') {
-      return $t('升级并重启')
+      return $t('重启并安装')
     }
     else if (item.type === 'web') {
-      return $t('立即更新')
+      return $t('刷新')
     }
   }
   else if (item.status === 'failed') {
     return $t('重试')
   }
   else {
-    return $t('下载')
+    return $t('下载 v{version}', { version: item.version })
   }
 }
 
@@ -77,23 +76,27 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 </script>
 
 <template>
-  <div class="app-updater">
+  <div class="flex flex-col items-start self-stretch gap-3 min-h-65">
     <template v-if="upgradeList.length">
       <template v-for="item in upgradeList" :key="item.releaseTime">
-        <div class="upgrade-container">
-          <div class="upgrade-header">
-            <div class="upgrade-title">
-              <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
-              <span> {{ item.title }} {{ item.version }}</span>
-            </div>
-            <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
+        <div v-if="item.type === 'app'" class="w-full flex flex-col items-center gap-6 pa-6 app">
+          <MotionArrow class="mx-auto"></MotionArrow>
+          <div class="flex flex-col gap-1.5">
+            <div class="app-title">{{ $t('有新的更新可用') }}</div>
+            <div class="app-desc">{{ $t('最新版本 v{version} 已发布，请更新客户端以保持稳定性并享受最新功能。', { version: item.version }) }}</div>
           </div>
-          <div class="pl-[56px] pr-[16px]">
-            <roxy-rich-text :html="item.originUpgradeData?.upgradeContent" />
-            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
+          <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)"></RxButton>
+          <RxButton v-else class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
+            @click="handleClientItemClick(item)"></RxButton>
+        </div>
+        <div v-if="item.type === 'web'" class="w-full flex items-start gap-2.5 px-4 py-3 patch">
+          <RxSvgIcon class="flex-shrink-0" name="base/rx_ic_patch" color="var(--colors-icon-icon-brand)" />
+          <div class="flex-1 flex flex-col gap-1">
+            <div class="patch-title">{{ $t('v{version} 补丁', { version: item.version }) }}</div>
+            <div class="patch-version">{{ $t('点击刷新以应用更新补丁') }}</div>
           </div>
+          <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_refresh" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
+            @click="handleClientItemClick(item)"></RxButton>
         </div>
       </template>
     </template>
@@ -116,65 +119,36 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 </template>
 
 <style lang="scss" scoped>
-.app-updater {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-xl, 12px);
-  align-self: stretch;
+.app {
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 16px;
+  }
 
-  &:not(:has(.client-no-data)) {
-    background: var(--component-table-bg-selected);
-    border-color: var(--component-table-border-selected);
+  &-desc {
+    color: var(--colors-text-text-secondary);
+    font-size: 12px;
+    line-height: 18px;
   }
 }
 
-.upgrade-container {
-  width: 100%;
-  display: flex;
-  padding: var(--spacing-xl, 12px) 0px var(--spacing-4xl, 24px) 0px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-xl, 12px);
-  align-self: stretch;
+.patch {
+  border-bottom: 1px solid var(--component-dropdown-divider, #E2E9EE);
 
-  &:not(:last-child) {
-    border-bottom: 0.5px solid var(--colors-border-border-base);
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 16px;
   }
-}
 
-.upgrade-header {
-  width: 100%;
-  display: flex;
-  padding: 0px var(--spacing-2xl, 16px);
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
-}
-
-.upgrade-title {
-  display: flex;
-  align-items: center;
-  color: var(--colors-text-text-primary, #fafafa);
-  font-family: Inter;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: normal;
-}
-
-.release-time {
-  color: var(--colors-text-text-tertiary, #575D60);
-  text-align: right;
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: normal;
-}
-
-.feature-content {
-  padding-left: 57px;
+  &-version {
+    color: var(--colors-text-text-secondary);
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 
 .client-no-data {

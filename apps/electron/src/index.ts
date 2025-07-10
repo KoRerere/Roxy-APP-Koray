@@ -2,13 +2,6 @@ import './catchException'
 import './polyfill'
 import './locales/'
 import { setupModules } from '/@/modules/'
+import { initDebug } from '/@/debug'
 
-setupModules()
-
-// 方便测试环境调试
-if (import.meta.env.DEV) {
-  import('electron').then(electron => {
-    globalThis.electron = electron
-  })
-}
-
+setupModules().finally(initDebug)

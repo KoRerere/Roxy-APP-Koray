@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { API } from '/@/api'
 import { $t } from '/@/locales';
 import { debounce } from 'es-toolkit'
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
@@ -142,7 +143,7 @@ function getAvatarStyle(workspacePicture: string) {
       <RxLoading :size="16" v-model="openLoading" />
     </div>
     <RyPopover ref="choose" @hide="clearSearch">
-      <div class="content relative flex flex-col gap-3 pa-3">
+      <div class="content relative flex flex-col gap-3 pa-3 overflow-hidden">
         <div class="flex justify-between items-center">
           <div class="header">{{ $t('选择空间') }}</div>
           <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
@@ -151,12 +152,13 @@ function getAvatarStyle(workspacePicture: string) {
             </template>
           </i18n-t>
         </div>
-        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch" @input="onInput">
+        <TsFormInputText v-model="search" size="md" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @pre-icon-click="onSearch"
+          @input="onInput">
           <template #icon>
             <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
           </template>
-        </RxInputText>
-        <div class="relative flex flex-col gap-6 max-h-80 overflow-y-auto">
+        </TsFormInputText>
+        <div class="relative flex flex-col gap-6 -mr-3 pr-3 max-h-80 overflow-y-auto">
           <RxLoading :opacity="0.9" v-model="searchLoading" />
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">

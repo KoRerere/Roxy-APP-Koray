@@ -160,7 +160,7 @@ export const useUserStore = defineStore(
     }
 
     async function getUserConfig(force = false) {
-      if (!force && userConfig.value) {
+      if (!force && Object.keys(userConfig.value).length > 0) {
         return userConfig.value;
       }
       return updateUserConfig();

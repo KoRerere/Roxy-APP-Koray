@@ -23,6 +23,10 @@ export async function checkResource() {
           sendLaunchMessage($t('下载完成，准备重启...'))
           setTimeout(() => {
             appUpdater.upgradeNow()
+            // 超时后强制退出
+            setTimeout(() => {
+              appUpdater.quitAndInstall()
+            }, 1500)
           }, 500)
           reject('下载完成，准备重启...')
         } else {

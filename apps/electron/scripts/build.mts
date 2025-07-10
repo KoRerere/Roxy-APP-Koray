@@ -29,6 +29,24 @@ cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dis
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
 cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
 
+// 处理 macOS PKG 脚本中的占位符
+if (platform === 'darwin') {
+  const { readFileSync, writeFileSync } = await import('node:fs')
+  const postinstallPath = path.join(workDir, 'buildResources/pkg-scripts/postinstall')
+
+  try {
+    let postinstallContent = readFileSync(postinstallPath, 'utf8')
+    postinstallContent = postinstallContent.replace(/RoxyBrowser(?:Dev)?/g, appName)
+    writeFileSync(postinstallPath, postinstallContent)
+
+    // 确保脚本有执行权限
+    const { chmodSync } = await import('node:fs')
+    chmodSync(postinstallPath, 0o755)
+  } catch (error) {
+    console.warn('处理 macOS postinstall 脚本时出错:', error)
+  }
+}
+
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
   appId: isDev ? 'com.roxybrowser.dev.app' : 'com.roxybrowser.app',
@@ -59,7 +77,7 @@ const options: Configuration = {
     },
   ],
 
-  // "store” | “normal” | "maximum". - For testing builds, use 'store' to reduce build time significantly.
+  // "store" | "normal" | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: 'normal',
   removePackageScripts: true,
 
@@ -88,7 +106,7 @@ const options: Configuration = {
     installerSidebar: './buildResources/installerSidebar.bmp',
     uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',
     // 引入自定义 NSIS 脚本
-    // include: './build/installer.nsh',
+    include: './buildResources/installer.nsh',
     oneClick: false,
     allowElevation: true,
     allowToChangeInstallationDirectory: true,
@@ -109,6 +127,10 @@ const options: Configuration = {
         target: 'default',
         arch: ['x64', 'arm64'],
       },
+      {
+        target: 'pkg',
+        arch: ['x64', 'arm64'],
+      },
     ],
     icon: 'logo.icns',
     hardenedRuntime: true,
@@ -117,6 +139,11 @@ const options: Configuration = {
     entitlementsInherit: 'buildResources/entitlements.plist', // 继承的沙盒权限
     identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
     notarize: false,
+  },
+  pkg: {
+    scripts: 'pkg-scripts',
+    isRelocatable: false,
+    identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
   },
   publish: [
     {
@@ -148,3 +175,27 @@ build({
     console.log('\x1B[31m', '打包失败，错误信息：', error)
     exit(1)
   })
+  .then(() => {
+    // 打包完成后将占位符还原
+    replacePlaceholder(appName, '{{APP_NAME}}')
+  })
+
+async function replacePlaceholder(oldStr: string, newStr: string) {
+  // 处理 macOS PKG 脚本中的占位符
+  if (platform === 'darwin') {
+    const { readFileSync, writeFileSync } = await import('node:fs')
+    const postinstallPath = path.join(workDir, 'buildResources/pkg-scripts/postinstall')
+
+    try {
+      let postinstallContent = readFileSync(postinstallPath, 'utf8')
+      postinstallContent = postinstallContent.replace(oldStr, newStr)
+      writeFileSync(postinstallPath, postinstallContent)
+
+      // 确保脚本有执行权限
+      const { chmodSync } = await import('node:fs')
+      chmodSync(postinstallPath, 0o755)
+    } catch (error) {
+      console.warn('处理 macOS postinstall 脚本时出错:', error)
+    }
+  }
+}

@@ -181,7 +181,7 @@ defineExpose({
   box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   svg {
-    transition: color var(--p-button-transition-duration);
+    transition: color var(--button-transition-duration);
   }
 
   &:disabled {
@@ -189,6 +189,12 @@ defineExpose({
     border-color: var(--component-button-primary-border-inactive);
     color: var(--component-button-primary-text-inactive);
     opacity: 1;
+  }
+
+  &-secondary {
+    &:disabled {
+      background: var(--component-button-pale-bg-inactive);
+    }
   }
 
   &-danger {
@@ -256,7 +262,7 @@ defineExpose({
 
     &:disabled {
       color: var(--colors-text-text-inactive);
-      background: var(--colors-background-bg-action-inactive);
+      background: transparent;
 
       svg {
         color: var(--colors-icon-icon-inactive);

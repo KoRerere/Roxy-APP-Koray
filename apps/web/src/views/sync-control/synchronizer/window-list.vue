@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
-import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 
@@ -193,8 +194,8 @@ async function startSync() {
     return
   }
 
-  const hasWindows = selectedRowsFilter.value.find(item => ['Windows', 'macOS'].includes(item.platform))
-  const hasMobile = selectedRowsFilter.value.find(item => ['Android', 'IOS'].includes(item.platform))
+  const hasWindows = selectedRowsFilter.value.find((item: any) => ['Windows', 'macOS'].includes(item.platform))
+  const hasMobile = selectedRowsFilter.value.find((item: any) => ['Android', 'IOS'].includes(item.platform))
   if (hasWindows && hasMobile) {
     toast.add({ severity: 'warn', summary: $t('同步窗口失败'), detail: $t('桌面系统的窗口暂时无法和手机系统的窗口进行同步操作') })
     return
@@ -228,29 +229,23 @@ electronAPI.on('syncControl:start', startSync)
 </script>
 
 <template>
-  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false"
-    :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-    :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table"
-    :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }" @row-select-all="handleRowSelectAll"
-    v-bind="$attrs">
+  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
+    :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }"
+    @row-select-all="handleRowSelectAll" v-bind="$attrs">
     <template v-if="!isSyncing && tableData.length" #table-header>
-      <div class="w-full flex justify-between">
+      <div class="w-full flex gap-2.5">
         <template v-for="item in searchList" :key="item.name">
-          <MultiSelect v-model="searchParams[item.name]" :options="item.options" :showToggleAll="false"
-            optionLabel="label" optionValue="value" :placeholder="item.placeholder" :maxSelectedLabels="1" size="small">
+          <MultiSelect class="flex-1 min-w-0" v-model="searchParams[item.name as keyof typeof searchParams]" :options="item.options" :showToggleAll="false" optionLabel="label" optionValue="value"
+            :placeholder="item.placeholder" :maxSelectedLabels="1" size="small">
             <template #option="slotProps">
               <template v-if="item.name === 'labelIds'">
                 <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
-                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)"
-                    :color="slotProps.option.labelColor" :size="18" :font-size="10" />
+                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
                   <span>{{ slotProps.option.label }}</span>
                 </div>
                 <div v-else class="flex items-center">
-                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
-                    fill="none">
-                    <path
-                      d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
-                      :fill="slotProps.option.labelColor" />
+                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
                   </svg>
                   <div class="ellipsis-1">
                     {{ slotProps.option.labelName }}
@@ -263,13 +258,11 @@ electronAPI.on('syncControl:start', startSync)
             </template>
           </MultiSelect>
         </template>
-        <rx-input-text v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" iconFieldClass="!w-[120px]" size="sm"
-          leftIcon="base/rx_ic_magnify" />
+        <TsFormInputText :field-props="{ class: 'flex-1 min-w-0' }" v-model="searchParams.windowName" preIcon="base/rx_ic_magnify" size="sm" :placeholder="$t('搜索窗口')" />
       </div>
     </template>
     <template #table-empty>
-      <CustomEmpty v-if="tableData.length && tableFilterData.length === 0" icon="rx_illustration_filter.svg"
-        :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
+      <CustomEmpty v-if="tableData.length && tableFilterData.length === 0" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
       <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('请先打开至少两个窗口')">
         <template #desc>
           <div class="whitespace-pre-wrap text-[var(--colors-text-text-tertiary)] text-3.5">
@@ -289,8 +282,7 @@ electronAPI.on('syncControl:start', startSync)
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data"
-        :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
+      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
     <template #status="{ data }">
       <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">
@@ -304,8 +296,7 @@ electronAPI.on('syncControl:start', startSync)
       <div class="flex gap-2 cursor-pointer">
         <RxSvgIcon v-tooltip="$t('预览')" name="base/rx_ic_show_profile" @click.stop="viewBrowser(data.dirId)" />
         <span v-tooltip="$t('设为主控')">
-          <RxSvgIcon name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }"
-            @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
+          <RxSvgIcon name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }" @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
         </span>
       </div>
     </template>

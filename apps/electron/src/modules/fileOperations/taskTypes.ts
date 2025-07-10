@@ -1,3 +1,5 @@
+import type { Systeminformation } from "systeminformation"
+
 /** 定义任务类型与返回值类型的映射 */
 export interface TaskMap {
   /**  压缩任务，返回压缩后的文件路径 */
@@ -9,7 +11,7 @@ export interface TaskMap {
   /**  获取压缩文件大小，传入目标文件路径，返回文件大小  */
   getCompressedSize: (dest: string) => number
   /** 生成设备 ID  */
-  genDeviceId: () => string
+  getDeviceInfo: () => Systeminformation.UuidData & { serialNum: string }
 }
 
 /** 任务选项，定义压缩和解压任务所需的参数 */

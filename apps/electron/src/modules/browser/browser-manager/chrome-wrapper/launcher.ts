@@ -61,6 +61,11 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
       reject(new Error('Failed to get debugging port from Chrome'))
     }, 30000)
 
+    chromeProcess.stdout.on('data', (data) => {
+      // 可选：打印日志
+      // console.log('[chrome stdout]', data.toString());
+    });
+
     chromeProcess.stderr.on('data', (data: Buffer) => {
       const output = data.toString()
       // console.debug('chromeProcess.stderr.on', output)

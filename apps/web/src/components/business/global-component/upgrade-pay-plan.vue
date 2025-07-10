@@ -151,7 +151,7 @@ onUnmounted(() => {
   display: flex;
   gap: 29px;
   overflow: hidden;
-  border-radius: var(--p-dialog-border-radius);
+  border-radius: var(--dialog-border-radius);
   overflow: hidden;
 
   .left {

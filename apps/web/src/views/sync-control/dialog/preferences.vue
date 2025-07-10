@@ -9,8 +9,7 @@
       <TabPanels v-if="isLoaded">
         <template v-for="(tab) in tabs" :key="tab.id">
           <TabPanel :value="tab.id">
-            <component v-model="formData[tab.id]" :ref="(ins) => refs[tab.id] = ins" :is="tab.component"
-              class="form-container" />
+            <component v-model="formData[tab.id]" :ref="(ins) => refs[tab.id] = ins" :is="tab.component" class="form-container" />
             <RxButton class="save-button" @click="tab.onSave">
               {{ $t('保存并生效') }}
             </RxButton>

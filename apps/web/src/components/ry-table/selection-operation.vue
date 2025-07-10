@@ -2,11 +2,6 @@
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { deepClone } from '/@/utils'
 
-interface Data {
-  count: number
-  [key: string]: any
-}
-
 const props = defineProps({
   selection: {
     type: Array as PropType<any[]>,
@@ -24,32 +19,27 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selection', 'batchOperation', 'batchMore'])
 
-const multipleOperation = computed<any[]>(() => props.operation.reduce((acc, item) => {
-  if (!item.multiple) return acc
-  const { items, ...rest } = toRaw(item)
-  acc.push({
-    ...rest,
-    items: items?.filter((item: any) => item.multiple !== false),
-  })
-  return acc
-}, []))
+const multipleOptions = computed<Record<string, any>>(() => {
+  const { menu, group, count } = props.operation.reduce((acc, item) => {
+    if (!item.multiple) return acc
+    const { items, ...rest } = toRaw(item)
+    acc.menu.push({ ...rest, items: items?.filter((it: any) => it.multiple !== false) })
 
-const { count, ...groupMap } = props.operation.reduce((data, item) => {
-  if (item.multipleProps) {
-    data[item.multipleProps.name] ??= ([] as any)
+    if (rest.multipleProps) {
+      acc.group[rest.multipleProps.name] ??= []
+      acc.group[rest.multipleProps.name].push({ ...rest, ...rest.multipleProps, _rawItem: rest })
+      acc.count += 1
+    }
 
-    data[item.multipleProps.name].push({
-      _rawItem: item,
-      ...item,
-      ...item.multipleProps,
-    })
-    data.count += 1
+    return acc
+  }, { menu: [], group: {}, count: 0 } as Record<string, any>)
+
+  return {
+    menu,
+    showMore: menu.length > count,
+    group: Object.entries(group).toSorted((a, b) => a[0].localeCompare(b[0])).map(([_, value]) => value),
   }
-  return data
-}, { count: 0 } as Data)
-
-const groups = ref<any[][]>(Object.entries(groupMap).toSorted((a, b) => a[0].localeCompare(b[0])).map(([_, value]) => value) as any)
-const showMore = multipleOperation.value.length > count
+})
 
 function batchOperation(event: MouseEvent, item: any) {
   if (item.disabled) {
@@ -59,7 +49,7 @@ function batchOperation(event: MouseEvent, item: any) {
 }
 
 function onMore(event: Event) {
-  emit('batchMore', { event, operation: multipleOperation.value })
+  emit('batchMore', { event, operation: multipleOptions.value.menu })
 }
 </script>
 
@@ -79,14 +69,14 @@ function onMore(event: Event) {
       <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
-      <div v-for="(list, index) in groups" :key="index" class="multiple-group">
+      <div v-for="(list, index) in multipleOptions.group" :key="index" class="multiple-group">
         <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
           @click="batchOperation($event, item._rawItem)">
           <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
           <span class="icon-label" v-if="item.showLabel">{{ item.label }}</span>
         </div>
       </div>
-      <div v-if="showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
+      <div v-if="multipleOptions.showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
         <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" />
       </div>
     </slot>

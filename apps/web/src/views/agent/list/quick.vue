@@ -270,7 +270,7 @@ function saveSelected() {
       background: var(--colors-background-bg-action, #fff);
 
       &[disabled] {
-        background: var(--p-inputtext-disabled-background);
+        background: var(--inputtext-disabled-background);
       }
     }
 

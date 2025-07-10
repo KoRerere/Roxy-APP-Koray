@@ -46,6 +46,7 @@ const kickedOut = (params: MittEvents['kickedOut']) => {
       router.push({ name: 'login' })
     },
   })
+  electronAPI.send('browser:closeAll')
 }
 
 // 监听其他窗口/标签页发来的消息
@@ -87,5 +88,9 @@ emitter.on('kickedOut', (params) => {
   font-size: 12px;
   font-weight: 600;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.p-dialog-footer .p-button {
+  font-size: 14px;
 }
 </style>

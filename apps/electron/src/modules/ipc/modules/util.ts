@@ -5,7 +5,7 @@ import url from 'node:url'
 import { mediaProtocolName } from '/@/constants'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getUTCOffsetHours } from '/@/utils'
+import { clearInstallerPath, decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getUTCOffsetHours } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
@@ -144,4 +144,8 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
     return isRegistered
   })
 
+  /** 清空安装程序路径 */
+  ipcMain.on('util:clearInstallerPath', () => {
+    return clearInstallerPath()
+  })
 }

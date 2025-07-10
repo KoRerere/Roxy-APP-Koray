@@ -13,7 +13,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -27,6 +27,6 @@
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-border-divider);
 }
 </style>

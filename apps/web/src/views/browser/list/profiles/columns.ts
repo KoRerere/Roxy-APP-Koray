@@ -115,8 +115,9 @@ export function getColumns() {
         alignFrozen: 'right',
         slot: 'actions',
         style: {
-          width: '0rem',
+          width: '0%',
           minWidth: '120px',
+          maxWidth: '120px',
         }
       },
     ],

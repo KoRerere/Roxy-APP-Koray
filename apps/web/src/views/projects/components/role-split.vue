@@ -34,15 +34,14 @@ const selectedRoleLabel = computed(() => {
 </script>
 
 <template>
-  <SplitButton :model="items" severity="secondary" size="small">
-    {{ selectedRoleLabel }}
+  <SplitButton :model="items" severity="secondary" size="small" :label="selectedRoleLabel">
     <template #item="{ item }">
       <div class="item" @click.stop>
         <RadioButton v-model="roleModelValue" :input-id="item.label + item.value" :value="item.value" />
-        <div class="detail">
-          <label :for="item.label + item.value" class="label">{{ item.label }}</label>
+        <label class="detail" :for="item.label + item.value">
+          <div class="label">{{ item.label }}</div>
           <div class="description">{{ item.description }}</div>
-        </div>
+        </label>
       </div>
     </template>
   </SplitButton>
@@ -65,6 +64,7 @@ const selectedRoleLabel = computed(() => {
     align-items: start;
     gap: var(--spacing-none, 0px);
     flex: 1 0 0;
+    user-select: none;
   }
 
   .label {

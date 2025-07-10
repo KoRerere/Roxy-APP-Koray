@@ -3149,6 +3149,11 @@ export interface CheckEmailOr2FaVerifyListData {
   msg: string;
 }
 
+export interface UserLogoutListData {
+  code: number;
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -4747,17 +4752,6 @@ export type UserAddPlatformInfoBatchCreatePayload = {
 export interface UserAddPlatformInfoBatchCreateData {
   code: number;
   data: object;
-  msg: string;
-}
-
-export interface UserGetPlatformFromWindowListData {
-  code: number;
-  data: {
-    rows: {
-      id: number;
-      platformUrl: string;
-    }[];
-  };
   msg: string;
 }
 

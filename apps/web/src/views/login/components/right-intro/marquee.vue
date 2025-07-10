@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<!-- <script lang="ts" setup>
 withDefaults(
   defineProps<{
     class?: string
@@ -60,4 +60,41 @@ withDefaults(
     transform: translateY(calc(-100% - var(--gap)));
   }
 }
-</style>
+</style> -->
+
+<script lang="ts" setup>
+import { motion } from 'motion-v'
+withDefaults(
+  defineProps<{
+    class?: string
+    reverse?: boolean
+    vertical?: boolean
+    duration?: number
+  }>(),
+  {
+    vertical: false,
+    duration: 40
+  },
+)
+</script>
+
+<template>
+  <div class="group flex overflow-hidden p-16px [--gap:1rem] [gap:var(--gap)]" :class="[
+    vertical ? 'flex-col' : 'flex-row',
+    $props.class,
+  ]">
+    <motion.div class="flex shrink-0 justify-around [gap:var(--gap)]" :class="[
+      vertical ? 'flex-col' : 'flex-row',
+    ]" :animate="vertical ? {
+      y: reverse ? ['-40%', 0] : [0, '-100%']
+    } : {
+      x: reverse ? ['-40%', 0] : [0, '-100%']
+    }" :transition="{
+      duration: duration,
+      repeat: Infinity,
+      // repeatType: reverse ? 'reverse' : 'loop'
+    }">
+      <slot />
+    </motion.div>
+  </div>
+</template>

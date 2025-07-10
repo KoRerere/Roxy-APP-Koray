@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
-import hub from './hub/index.vue'
-import list from './install/index.vue'
+import Hub from './hub/index.vue'
+import Install from './install/index.vue'
 
-const role = useRoleStore()
 const tabs = ref([
   {
     title: $t('已安装扩展'),
@@ -33,9 +31,12 @@ function onChange(value: any) {
     listRef.value?.refresh()
     syncList.value = false
   }
-  else if (value === 'hub' && syncHub.value) {
-    hubRef.value?.refresh()
-    syncHub.value = false
+  else if (value === 'hub') {
+    hubRef.value?.getRecommendPluginList()
+    if (syncHub.value) {
+      hubRef.value?.refresh()
+      syncHub.value = false
+    }
   }
 }
 function onSearch() {
@@ -49,10 +50,10 @@ function onSearch() {
   <div class="flex flex-col h-full w-full extensions">
     <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" head-tabs @update:value="onChange">
       <template #installed>
-        <list ref="listref" v-model:needsync="syncHub" @search="onSearch" />
+        <Install ref="listref" v-model:needsync="syncHub" @search="onSearch" />
       </template>
       <template #hub>
-        <hub ref="hubref" v-model:needsync="syncList" />
+        <Hub ref="hubref" v-model:needsync="syncList" />
       </template>
     </RxTabs>
   </div>

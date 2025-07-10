@@ -20,6 +20,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     openAPIServer.start()
     store.lastLoginTime = Date.now()
     // aliOSS.init()
+    browserManager.reportWindowOpenStatus()
   })
 
   /** 退出登录 */

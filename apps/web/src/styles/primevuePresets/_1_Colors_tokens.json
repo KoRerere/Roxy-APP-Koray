@@ -182,6 +182,11 @@
       "collapse": {
         "bg": "{primitives.netural.100}"
       },
+      "progress": {
+        "bg": "{primitives.netural.200}",
+        "success": "{primitives.green.500}",
+        "info": "{primitives.blue.500}"
+      },
       "button": {
         "primary": {
           "bg": "{primitives.blue.500}",
@@ -211,6 +216,17 @@
           "text-inactive": "{primitives.red.100}",
           "bg-inactive": "{primitives.red.300}",
           "border-inactive": "{primitives.red.400}"
+        },
+        "pale": {
+          "bg": "{primitives.netural.50}",
+          "bg-hover": "{primitives.netural.100}",
+          "bg-inactive": "{colors.background.bg-action-inactive}",
+          "text": "{colors.text.text-primary}",
+          "text-hover": "{colors.text.text-primary-hover}",
+          "text-inactive": "{colors.text.text-inactive}",
+          "icon": "{colors.icon.icon-secondary}",
+          "icon-hover": "{colors.icon.icon-secondary-hover}",
+          "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
       "tag": {
@@ -223,6 +239,13 @@
         "border": "{colors.border.border-subtle}",
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{component.tag.bg}"
+      },
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}",
+        "text": "{colors.text.text-secondary}"
       },
       "tooltip": {
         "bg": "{primitives.netural.900}",
@@ -244,13 +267,6 @@
         "bg-updated-hover": "{primitives.green.100}",
         "border-updated": "{primitives.green.300}",
         "border-updated-hover": "{primitives.green.400}"
-      },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}",
-        "text": "{colors.text.text-secondary}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -310,6 +326,14 @@
         }
       },
       "syncbar": {
+        "dropdown": {
+          "bg": "{pattern.syncbar.bg}",
+          "bg-hover": "{primitives.netural.700}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.50}",
+          "icon-hover": "{primitives.netural.25}"
+        },
         "btn": {
           "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
@@ -319,14 +343,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.25}",
           "icon-hover": "{primitives.netural.0}"
-        },
-        "dropdown": {
-          "bg": "{pattern.syncbar.bg}",
-          "bg-hover": "{primitives.netural.700}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.50}",
-          "icon-hover": "{primitives.netural.25}"
         },
         "title": "#0cef4c",
         "tag": {
@@ -570,6 +586,11 @@
       "collapse": {
         "bg": "{primitives.netural.800}"
       },
+      "progress": {
+        "bg": "{primitives.netural.700}",
+        "success": "{primitives.green.400}",
+        "info": "{primitives.blue.400}"
+      },
       "button": {
         "primary": {
           "bg": "{primitives.blue.500}",
@@ -599,6 +620,17 @@
           "text-inactive": "{primitives.red.700}",
           "bg-inactive": "{primitives.red.900}",
           "border-inactive": "{primitives.red.950}"
+        },
+        "pale": {
+          "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
+          "bg-inactive": "{colors.background.bg-action-inactive}",
+          "text": "{colors.text.text-primary}",
+          "text-hover": "{colors.text.text-primary-hover}",
+          "text-inactive": "{colors.text.text-inactive}",
+          "icon": "{colors.icon.icon-secondary}",
+          "icon-hover": "{colors.icon.icon-secondary-hover}",
+          "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
       "tag": {
@@ -611,6 +643,13 @@
         "border": "{colors.border.border-subtle}",
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{primitives.netural.700}"
+      },
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.600}",
+        "text": "{colors.text.text-secondary}"
       },
       "tooltip": {
         "bg": "{primitives.netural.700}",
@@ -632,13 +671,6 @@
         "bg-updated-hover": "{primitives.green.800}",
         "border-updated": "{primitives.green.700}",
         "border-updated-hover": "{primitives.green.600}"
-      },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.600}",
-        "text": "{colors.text.text-secondary}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -698,6 +730,14 @@
         }
       },
       "syncbar": {
+        "dropdown": {
+          "bg": "{pattern.syncbar.bg}",
+          "bg-hover": "{primitives.netural.700}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.50}",
+          "icon-hover": "{primitives.netural.25}"
+        },
         "btn": {
           "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
@@ -707,14 +747,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.25}",
           "icon-hover": "{primitives.netural.0}"
-        },
-        "dropdown": {
-          "bg": "{pattern.syncbar.bg}",
-          "bg-hover": "{primitives.netural.700}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.50}",
-          "icon-hover": "{primitives.netural.25}"
         },
         "title": "#0cef4c",
         "tag": {

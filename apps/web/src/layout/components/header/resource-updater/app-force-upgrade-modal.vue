@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { $t } from '/@/locales'
 import { RxAlert } from '/@/components/rx-alert/'
+import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue';
 
 const props = defineProps<{
   isForceUpgrade: boolean
@@ -43,11 +44,9 @@ function remindMeLater() {
   <Dialog v-model:visible="visible" modal :closable="false" class="w-[380px]">
     <div class="app-force-upgrade">
       <div class="detail-box">
+        <div class="detail-title">{{ $t('有新的更新可用') }}</div>
         <div class="detail-body">
-          <div class="relative">
-            <SvgIcon class="app-logo" name="base/logo" />
-            <SvgIcon class="upgrade-icon" name="base/rx_ic_updates" />
-          </div>
+          <MotionArrow class="mx-auto"></MotionArrow>
           <RxAlert class="whitespace-pre-wrap w-full" :title="$t('RoxyBrowser 更新通知')" :content="`${$t('RoxyBrowser 当前有重要的优化更新，请点击以下按钮重启客户端。')}\n\n${$t('请注意，重启客户端会关闭你当前打开的窗口。')}`" type="warn"
             :closable="false"></RxAlert>
         </div>
@@ -93,6 +92,13 @@ function remindMeLater() {
       z-index: 10;
       background-color: white;
       border-radius: 50%;
+    }
+
+    .detail-title {
+      color: var(--colors-text-text-primary);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: normal;
     }
 
     .detail-body {

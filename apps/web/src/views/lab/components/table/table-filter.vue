@@ -77,18 +77,18 @@ function onFilterChange() {
 
 :deep(.p-datepicker:has(.p-datepicker-dropdown) .p-datepicker-input) {
   border-top-left-radius: 0;
-  border-top-right-radius: var(--p-inputtext-border-radius);
+  border-top-right-radius: var(--inputtext-border-radius);
   border-bottom-left-radius: 0;
-  border-bottom-right-radius: var(--p-inputtext-border-radius);
+  border-bottom-right-radius: var(--inputtext-border-radius);
 }
 
 :deep(.p-datepicker-dropdown) {
   width: auto;
   border-right: none;
-  border-left: 1px solid var(--p-datepicker-dropdown-border-color);
-  border-top-left-radius: var(--p-inputtext-border-radius);
+  border-left: 1px solid var(--datepicker-dropdown-border-color);
+  border-top-left-radius: var(--inputtext-border-radius);
   border-top-right-radius: 0;
-  border-bottom-left-radius: var(--p-inputtext-border-radius);
+  border-bottom-left-radius: var(--inputtext-border-radius);
   border-bottom-right-radius: 0;
   background: var(--colors-background-bg-action);
 }

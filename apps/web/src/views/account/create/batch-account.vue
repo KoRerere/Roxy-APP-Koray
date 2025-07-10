@@ -6,8 +6,10 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
+import { useConfirm } from 'primevue/useconfirm'
 
 const router = useRouter()
+const confirm = useConfirm()
 const themeStore = useThemeStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
@@ -152,6 +154,25 @@ function onRemark(data: any) {
   })
 }
 
+function clearAccount() {
+  confirm.require({
+    header: $t('清空账号'),
+    message: $t('您确认清空所有账号吗?'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: () => {
+      dataList.value = []
+    }
+  })
+}
+
 async function onSave(needMore: boolean) {
   const { code, msg } = await API.platform.userAddPlatformInfoBatchCreate(toRaw(dataList.value))
   onlyErrorToast(code, msg)
@@ -179,8 +200,7 @@ async function onSave(needMore: boolean) {
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
           <div class="flex justify-end information-actions">
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
-              @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
           </div>
         </div>
       </div>
@@ -191,10 +211,7 @@ async function onSave(needMore: boolean) {
         <div class="relative overflow-hidden flex-1">
           <div class="rules relative z-10">
             <div class="rules-example">USERNAME1:PASSWORD1</div>
-            <div class="rules-example">USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span
-                class="text-blue break-all">{{
-                  `\{${$t('备注')}\}` }}</span>
-            </div>
+            <div class="rules-example">USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span class="text-blue break-all">{{ `\{${$t('备注')}\}` }}</span></div>
             <br></br>
             <div class="rules-help">{{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}</div>
             <div class="rules-help">{{ $t('2.每行一个账号，一次最多添加{count}个账号。', { count: 500 }) }}</div>
@@ -204,16 +221,19 @@ async function onSave(needMore: boolean) {
       </div>
     </div>
     <div class="flex flex-col flex-1">
-      <div class="flex items-center justify-between pt-6 pb-3 table-toolbar subtitle">{{ $t('已解析账号') }}</div>
-      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
-        :show-table-header="false" :show-actions="false">
+      <div class="flex items-center justify-between pt-6 pb-3 table-toolbar ">
+        <div class="subtitle">{{ $t('已解析账号') }}</div>
+        <div class="flex gap-2">
+          <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :label="$t('清空账号')" :disabled="!dataList?.length" @click.stop="clearAccount" />
+        </div>
+      </div>
+      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" class="min-h-262px" />
         </template>
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
-              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
             }}</div>
@@ -225,8 +245,7 @@ async function onSave(needMore: boolean) {
       </RyTable>
     </div>
     <div class="flex justify-end gap-3 footer">
-      <RxButton :label="$t('保存 & 继续添加')" :disabled="!dataList?.length" severity="secondary" outlined
-        @click.stop="onSave(true)" />
+      <RxButton :label="$t('保存 & 继续添加')" :disabled="!dataList?.length" severity="secondary" outlined @click.stop="onSave(true)" />
       <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave(false)" />
     </div>
   </div>

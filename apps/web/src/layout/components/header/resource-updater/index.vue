@@ -52,9 +52,8 @@ async function checkForUpdates() {
 }
 
 function toggle(event: Event) {
-  const popIns = popoverRef.value?.instance
-  popIns.toggle(event)
-  if (popIns.visible) {
+  popoverRef.value?.instance?.toggle(event)
+  if (popoverRef.value?.instance?.visible) {
     tabs.value.some(tab => {
       if (tab.badge) {
         tabModel.value = tab.value
@@ -76,7 +75,7 @@ electronAPI.on('app:core-list-update', getKernelList)
 async function getKernelList() {
   const list = await window.electronAPI.send('app:getCoreList')
   console.log('getKernelList', list)
-  kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
+  kernelUpdates.value = list.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
 }
 
 // 5 分钟内不重复提示
@@ -125,7 +124,7 @@ window.electronAPI.on('app:resource-update', (data) => {
       kernelUpdates.value[index] = data
     }
     isDownloadingKernel.value = data.status === 'downloading' && !data.silent
-    kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
+    kernelUpdates.value.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
   }
   // 客户端升级(app、web、patch)
   else {
@@ -135,6 +134,11 @@ window.electronAPI.on('app:resource-update', (data) => {
     }
     else {
       clientUpdates.value[index] = data
+    }
+
+    // 有 app 更新就不展示 web 资源更新
+    if (clientUpdates.value.length > 1 && clientUpdates.value.some(data => data.type === 'app')) {
+      clientUpdates.value = clientUpdates.value.filter(data => data.type === 'app')
     }
   }
 })
@@ -173,7 +177,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 
 <style lang="scss" module="classes">
 .popover {
-  width: var(--width-xs, 384px);
+  width: 384px;
 
   :global(.header) {
     display: flex;

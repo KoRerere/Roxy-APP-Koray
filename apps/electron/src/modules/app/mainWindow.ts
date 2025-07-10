@@ -149,6 +149,8 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
     mainWindow.restore()
   }
 
+  mainWindow.setSkipTaskbar(false)
+
   mainWindow.focus()
   return mainWindow
 }

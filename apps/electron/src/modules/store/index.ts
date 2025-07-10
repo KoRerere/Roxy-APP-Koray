@@ -56,6 +56,8 @@ export interface StoreType {
   isExternalWeb: boolean
   /** 设备 ID */
   deviceId?: string
+  /** mac 地址 */
+  mac?: string
   /** 是否开启工作台, 0: 不开启, 1: 开启*/
   openWorkbench?: 0 | 1
   /** 订阅等级 */
@@ -115,8 +117,6 @@ const defaultValues: StoreType = {
 const _store: StoreType = {
   ...defaultValues,
 }
-
-console.debug('_store', JSON.stringify(_store, null, 2))
 
 /** 加密密钥，使用 PBKDF2 生成固定长度的密钥 */
 const SALT = 'roxy-browser-salt' // 盐值

@@ -8,7 +8,7 @@ import { useResponseToast } from "/@/hooks/useResponseToast";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { getRoleLabelMap, Role } from '/@/enums/'
 import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete';
-import { useToast } from 'primevue/usetoast';
+
 interface Props {
   project?: Record<string, any>
   projects?: any[]
@@ -24,7 +24,6 @@ const emit = defineEmits(['close'])
 const roleLabelMap = getRoleLabelMap()
 const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
-const toast = useToast();
 
 const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
@@ -102,9 +101,9 @@ async function inviteNewMember() {
 
   handleBusinessCode(code, () => {
     if (code == 0) {
-      toast.add({ severity: 'success', summary: $t("邀请已发送"), life: 2500 });
+      showToast(code, $t("邀请已发送"))
     } else {
-      toast.add({ severity: 'error', summary: msg, life: 2500 });
+      showToast(code, msg)
     }
   })
   if (code !== 0) return
@@ -129,11 +128,13 @@ function updateCurrentMembers(member: Record<string, any>) {
       <span class="header">{{ $t('邀请用户加入{project}', { project: project?.projectName }) }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary, #575D60)" @click="$emit('close')" />
     </div>
-    <div class="flex flex-col gap-2" v-if="projects?.length">
-      <div class="title">{{ $t('选择项目') }}</div>
-      <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" optionValue="value" />
-    </div>
-    <div class="separator" v-if="projects?.length"></div>
+    <template v-if="projects?.length && roleValue !== Role.MANAGER">
+      <div class="flex flex-col gap-2">
+        <div class="title">{{ $t('选择项目') }}</div>
+        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" optionValue="value" />
+      </div>
+      <div class="separator"></div>
+    </template>
     <div class="flex flex-col gap-2">
       <div class="title">{{ $t('成员邮箱') }}</div>
       <div class="w-full flex items-center gap-2">

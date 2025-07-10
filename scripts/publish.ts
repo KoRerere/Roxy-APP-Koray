@@ -27,7 +27,7 @@ const ymlFilePath = join(outDir, `latest${isMac ? "-mac" : ""}.yml`);
 // 读取 YAML 文件
 const fileContents = fs.readFileSync(ymlFilePath, "utf8");
 // 解析 YAML 文件
-const fileContentObj = yaml.load(fileContents);
+const fileContentObj = yaml.load(fileContents) as Record<string, any>;
 /** 获取版本号 */
 const appVersion = fileContentObj.version;
 /** APP 名称 */
@@ -49,13 +49,17 @@ function genUploadPath(osBit: string, fileName: string) {
   }
 }
 
-/** 生成 YAML 文件内容 */
+/** 根据 YAML 文件内容生成上传文件内容 */
 function genYamlContent(osBit: string, extName: string) {
   const targetFile = {
     ...fileContentObj.files.find(
       (file) => file.url === `${appName}_${osBit}_${appVersion}.${extName}`,
     ),
   };
+  // 如果是 mac 且文件名是 dmg，则将文件名改为 pkg, 并上传到 pkg 目录
+  if (isMac && extName === "dmg") {
+    targetFile.url = targetFile.url.replace(".dmg", ".pkg")
+  }
 
   if (osBit === "ia32" || isMac) {
     const newFileName = targetFile.url.replace(osBit, osBitMap[osBit]);
@@ -102,6 +106,7 @@ async function getTargetVersion(params: { osBit: string; cpu: string }) {
     .then((res) => res.json())
     .then((res) =>
       res.data.rows.find((row) => {
+        Reflect.deleteProperty(row, 'downloadUrl')
         return (
           row.version === appVersion && row.osBit === osBit && row.cpu === cpu
         );
@@ -151,7 +156,6 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
     cpu: defaultParams.cpu,
   });
   Object.assign(defaultParams, { ...targetVersion });
-
   fetch(
     `${apiBaseUrl}/${defaultParams.id ? `/admin_mdf_version` : `/admin_add_version`}`,
     {
@@ -190,6 +194,7 @@ async function uploadFile() {
       const filePath = join(outDir, fileName);
       const uploadPath = genUploadPath(osBit, fileName);
       console.log("上传路径：", uploadPath);
+      console.log("文件路径：", filePath);
       if (fileName.endsWith(".exe") || fileName.endsWith(".zip")) {
         const { url: ymlUrl } = await client.put(
           `${dirname(uploadPath)}/${basename(ymlFilePath)}`,
@@ -213,7 +218,8 @@ async function uploadFile() {
             ?.split("?")[0]
             .replace("http://", "https://");
           console.log(`${fileName} 上传成功: `, url);
-          if (url.endsWith(".exe") || url.endsWith(".dmg")) {
+          console.log('++++++++++++++++++++++++++++++++++++')
+          if (url.endsWith(".exe") || url.endsWith(".pkg")) {
             publishVersion({
               osBit: osBit === "ia32" ? "32" : "64",
               cpu: osBit === "arm64" ? "apple" : "intel",

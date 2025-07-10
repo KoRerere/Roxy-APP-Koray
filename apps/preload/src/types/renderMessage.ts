@@ -229,6 +229,8 @@ export interface RenderMessage {
     language: string;
     UTCOffsetHours: number;
   };
+  /** 清空安装程序路径 */
+  "util:clearInstallerPath": () => Promise<boolean>;
 
   /** 前端已准备就绪 */
   "web:ready": () => void;

@@ -163,10 +163,12 @@ export class AfterLaunchTask {
       this.checkIpChange()
     }, 1000 * 8)
 
-    const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
-    const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))
+    // const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
+    // const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))
 
-    if (activePage) {
+    const allPages = await this.browser?.pages()
+    allPages.map(async (activePage) => {
+      // if (activePage) {
       // 在网页里面发送检测 IP 请求
       const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '', city: '' }))
 
@@ -242,7 +244,8 @@ export class AfterLaunchTask {
             })
           })
         }
+        // }
       }
-    }
+    })
   }
 }

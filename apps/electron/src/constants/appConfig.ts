@@ -67,4 +67,4 @@ export const appConfig = {
   }
 } as const
 
-console.log('appConfig', appConfig)
+console.debug('appConfig', appConfig)

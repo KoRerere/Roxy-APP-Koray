@@ -17,7 +17,6 @@ import {
   UserAddPlatformInfoCreatePayload,
   UserDelPlatformInfoCreateData,
   UserDelPlatformInfoCreatePayload,
-  UserGetPlatformFromWindowListData,
   UserGetPlatformInfoListData,
   UserGetPlatformInfoListParams,
   UserGetPlatformInfoV2ListData,
@@ -252,22 +251,6 @@ export class PlatformApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Platform
-   * @name UserGetPlatformFromWindowList
-   * @summary 用户业务平台窗口列表（窗口筛选用，要去重）
-   * @request GET:/user_get_platform_from_window
-   * @response `200` `UserGetPlatformFromWindowListData`
-   */
-  userGetPlatformFromWindowList = (params: RequestParams = {}) =>
-    this.http.request<UserGetPlatformFromWindowListData, any>({
-      path: `/user_get_platform_from_window`,
-      method: "GET",
       format: "json",
       ...params,
     });

@@ -1,5 +1,6 @@
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
+// const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
 
 /** @type { import('webpack').Configuration } */
 module.exports = {
@@ -18,7 +19,7 @@ module.exports = {
     __filename: false,
   },
   optimization: {
-    // moduleIds: 'named',  // 避免模块变成数字
+    moduleIds: 'named',  // 避免模块变成数字
     minimize: true, // 启用代码压缩和混淆
     minimizer: [
       new TerserPlugin({
@@ -74,13 +75,25 @@ module.exports = {
       },
     },
   },
-  // module: {
-  //   rules: [
-  //     {
-  //       test: /\.js$/,
-  //       exclude: /node_modules/,
-  //       use: 'babel-loader', // 如果需要转换现代 JavaScript 语法
-  //     },
-  //   ],
-  // },
+  module: {
+    rules: [
+      {
+        test: require.resolve('systeminformation'),
+        loader: 'expose-loader',
+        options: {
+          exposes: ['systeminformation'],
+        },
+      },
+    ]
+  },
+  plugins: [
+    // new JavascriptObfuscatorPlugin({
+    //   include: ['**/*.cjs'],       // 匹配所有 JS 文件
+    //   exclude: ['vendors.cjs'],     // 排除特定文件
+    //   obfuscatorOptions: {
+    //     compact: true,
+    //     controlFlowFlattening: true
+    //   }
+    // })
+  ]
 }

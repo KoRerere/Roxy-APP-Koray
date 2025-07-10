@@ -61,7 +61,7 @@ const FormItemMap: Record<string, any> = {
   &-help {
     display: flex;
     margin-top: var(--spacing-sm, 4px);
-    color: var(--p-red-400, #f87171);
+    color: var(--red-400, #f87171);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);

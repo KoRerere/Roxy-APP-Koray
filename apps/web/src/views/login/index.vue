@@ -210,6 +210,7 @@ useOauth2Callback(async (params) => {
         })
         return
       }
+      window.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
       afterLogin(data, source)
     }
     catch (e) {

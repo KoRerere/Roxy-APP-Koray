@@ -402,10 +402,10 @@ async function hidePopover() {
         content: '';
         position: absolute;
         left: 0;
-        bottom: var(--p-tabs-active-bar-bottom);
+        bottom: var(--tabs-active-bar-bottom);
         width: 100%;
         height: 2px;
-        background: var(--p-tabs-active-bar-background);
+        background: var(--tabs-active-bar-background);
         transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
         z-index: 1;
       }

@@ -16,7 +16,7 @@ export function setupLog() {
   log.transports.console.useStyles = true
   // 禁用生产环境的控制台输出
   if (isPackaged) {
-    log.transports.console.level = false
+    // log.transports.console.level = false
   }
   // silly < debug < verbose < info < warn < error，文件只保留 info 及以上
   log.transports.file.level = appCliStartArgs['roxy-log-level'] as LevelOption

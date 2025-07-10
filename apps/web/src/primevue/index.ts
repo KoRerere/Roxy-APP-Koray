@@ -21,6 +21,7 @@ export function setupPrimeVue(app: App) {
     ripple: true,
     theme: {
       options: {
+        prefix: '',//去掉 primevue 的默认前缀，基于 primevue 的 bug 运行
         darkModeSelector: 'html[data-theme="dark"]',
       },
       preset: definePreset(Aura, customPreset),

@@ -1,7 +1,7 @@
 import express from 'express'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { accountMapping, browserListMapping, browserListMappingV2, mapping2List } from '/@/modules/openapi/routes/mapping/'
+import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { getDefaultBrowserCreateParams } from './constants/'
@@ -123,11 +123,44 @@ router.get('/list', async (req, res) => {
 
 
 
-/* 获取浏览器窗口列表 新接口 */
+/* 获取浏览器窗口列表 新接口（已废弃，请用 list_v3） */
 router.get('/list_v2', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
     const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...openAPICommonHeaders } })
+    if (result.code === 0 && result.data?.rows) {
+      // console.log('browserListV2Mapping', result.data.rows)
+      result.data.rows = mapping2List(result.data.rows, browserListMappingV2)
+    }
+    res.json(result)
+  }
+  catch (error) {
+    console.error('list error', error)
+    res.error(error)
+  }
+})
+
+
+router.get('/list_v3', async (req, res) => {
+  const { workspaceId, ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...openAPICommonHeaders } })
+    if (result.code === 0 && result.data?.rows) {
+      // console.log('browserListV2Mapping', result.data.rows)
+      result.data.rows = mapping2List(result.data.rows, browserListMappingV3)
+    }
+    res.json(result)
+  }
+  catch (error) {
+    console.error('list error', error)
+    res.error(error)
+  }
+})
+
+router.get('/detail', async (req, res) => {
+  const { workspaceId, ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.window.userGetWindowInfoV2List(rest, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       // console.log('browserListV2Mapping', result.data.rows)
       result.data.rows = mapping2List(result.data.rows, browserListMappingV2, ['cookie'])
@@ -139,7 +172,6 @@ router.get('/list_v2', async (req, res) => {
     res.error(error)
   }
 })
-
 
 /* 删除窗口 */
 router.post('/delete', async (req, res) => {

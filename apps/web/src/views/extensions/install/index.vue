@@ -223,12 +223,19 @@ function installViaUrl() {
       try {
         await uploadRecordCheck()
         const { code, data, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
-        onlyErrorToast(code, msg)
-        if (code === 0) {
-          filters.resetFilters()
-          const plugin = await getExtensionDetail(data.plugin_id)
-          onInstall(plugin)
+        if (code !== 0) {
+          if (code === 421) { // 扩展推荐中已存在该扩展，直接安装
+            filters.resetFilters()
+            onInstall(data)
+            return
+          }
+          onlyErrorToast(code, msg)
+          return
         }
+
+        filters.resetFilters()
+        const plugin = await getExtensionDetail(data.plugin_id)
+        onInstall(plugin)
       }
       catch (error) {
         onlyErrorToast(-1, error as string)

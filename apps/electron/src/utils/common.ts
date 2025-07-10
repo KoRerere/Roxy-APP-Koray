@@ -63,12 +63,22 @@ export function getCommonRequestHeaders() {
   }
 }
 
+/** 生成设备 ID */
+const genDeviceId = async () => {
+  const deviceInfo = await fileOperations.executeTask('getDeviceInfo', undefined)
+  store.mac ||= deviceInfo.macs[0]
+  const uniqueString = `${deviceInfo.os}-${deviceInfo.hardware}-${store.mac}-${deviceInfo.serialNum}`
+  const deviceId = createHash("sha256").update(uniqueString).digest("hex");
+  return deviceId
+}
+
 /** 获取设备唯一 ID */
 export const getDeviceId = (() => {
   const { promise, resolve } = Promise.withResolvers<string>()
 
   queueMicrotask(async () => {
     await initStorePromise.promise
+
     if (!store.deviceId) {
       // 如果 15s 内没有获取到设备 ID，则生成一个随机 ID
       const timer = setTimeout(() => {
@@ -78,14 +88,16 @@ export const getDeviceId = (() => {
       }, 1000 * 15)
 
       console.time('获取设备 ID 耗时')
-      store.deviceId ||= await fileOperations.executeTask('genDeviceId', undefined)
+      store.deviceId ||= await genDeviceId()
       resolve(store.deviceId)
       console.timeEnd('获取设备 ID 耗时')
       console.debug("设备唯一 ID:", store.deviceId)
       clearTimeout(timer)
     } else {
       console.debug('设备 ID 已存在', store.deviceId)
-      store.deviceId = await fileOperations.executeTask('genDeviceId', undefined)
+      if (!store.mac) {
+        store.deviceId = await genDeviceId()
+      }
     }
   })
 

@@ -5,7 +5,7 @@ export function responseMiddleware(req: Request, res: Response, next: NextFuncti
   /**
    * 统一的成功响应
    */
-  res.success = (data, msg = '成功') => {
+  res.success = (data, msg = $t('成功')) => {
     res.json({
       code: 0,
       msg,

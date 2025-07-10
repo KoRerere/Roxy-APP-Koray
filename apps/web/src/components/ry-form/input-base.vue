@@ -46,7 +46,7 @@ defineEmits(['iconClick', 'change'])
         <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs" @input="$emit('change')" />
         <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg ? $attrs.errorMsg
           : $attrs.placeholder
-          }}</small>
+        }}</small>
         <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
       </div>
     </slot>
@@ -64,7 +64,7 @@ defineEmits(['iconClick', 'change'])
 
 :deep(.p-iconfield) {
   .p-textarea:not(:last-child) {
-    padding-right: calc((var(--p-form-field-padding-x) * 2) + var(--p-icon-size));
+    padding-right: calc((var(--form-field-padding-x) * 2) + var(--icon-size));
   }
 }
 
@@ -80,7 +80,7 @@ defineEmits(['iconClick', 'change'])
     display: flex;
     margin-top: var(--spacing-sm, 4px);
     gap: var(--spacing-sm, 4px);
-    color: var(--p-red-400, #f87171);
+    color: var(--red-400, #f87171);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

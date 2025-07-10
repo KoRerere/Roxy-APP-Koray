@@ -320,8 +320,7 @@ const slots: any = useSlots()
           <slot name="filter-after" />
         </div>
         <div v-if="showDisplay" class="flex gap-2 items-center">
-          <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns"
-            @update:columns="$emit('update:columns', $event)">
+          <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
             <template #before>
               <slot name="display-before" />
             </template>
@@ -344,8 +343,7 @@ const slots: any = useSlots()
         tbody: ColumnCss_Module.tbody,
         headerrow: ColumnCss_Module.headerrow,
         bodyrow: ColumnCss_Module.bodyrow,
-      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu" :sortOrder="_sorts.sortOrder"
-        :sortField="_sorts.sortField">
+      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu" :sortOrder="_sorts.sortOrder" :sortField="_sorts.sortField">
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -355,16 +353,13 @@ const slots: any = useSlots()
 
         <slot name="column-before"></slot>
 
-        <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;"
-          bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
+        <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;" bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
           :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" />
 
-        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key"
-          v-bind="fmtColumnProps(column)">
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
-              <component v-if="headerRender" :is="headerRender" :column="column"
-                :class="ColumnCss_Module.columntitle" />
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
@@ -376,8 +371,7 @@ const slots: any = useSlots()
                   <Skeleton v-bind="column.skeleton"></Skeleton>
                 </template>
                 <template v-else>
-                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes"
-                    :title="column.getText?.(data) || data[column.key]">
+                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
                     {{ column.getText?.(data) || data[column.key] }}
                   </div>
                 </template>
@@ -386,24 +380,20 @@ const slots: any = useSlots()
           </template>
           <template #sorticon="{ sorted, sortOrder, ...rest }">
             <div :class="rest.class">
-              <RxSvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px"
-                color="var(--colors-icon-icon-note)"></RxSvgIcon>
+              <RxSvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)"></RxSvgIcon>
             </div>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
-          header-style="width: 0px; min-width: 120px" :pt="{
-            columntitle: ColumnCss_Module.columntitle,
-            headercell: ColumnCss_Module.headercell,
-            bodycell: ColumnCss_Module.bodycell,
-          }">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0px; min-width: 120px" :pt="{
+          columntitle: ColumnCss_Module.columntitle,
+          headercell: ColumnCss_Module.headercell,
+          bodycell: ColumnCss_Module.bodycell,
+        }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data"></slot>
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data, 'single')"
-                  @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -412,14 +402,12 @@ const slots: any = useSlots()
       <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
-        @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
-              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -430,9 +418,8 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -557,12 +544,12 @@ const slots: any = useSlots()
     }
 
     &:global(.p-datatable-sortable-column) {
-      background: var(--p-datatable-header-cell-background);
-      color: var(--p-datatable-header-cell-color);
+      background: var(--datatable-header-cell-background);
+      color: var(--datatable-header-cell-color);
 
       &:not(.p-datatable-column-sorted):hover {
-        background: var(--p-datatable-header-cell-background);
-        color: var(--p-datatable-header-cell-color);
+        background: var(--datatable-header-cell-background);
+        color: var(--datatable-header-cell-color);
       }
     }
   }
@@ -586,7 +573,7 @@ const slots: any = useSlots()
       background: var(--colors-background-bg-page, #FFF);
       border-left: 1px solid var(--component-table-border-cell);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
-      transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
+      transition: background var(--datatable-transition-duration), color var(--datatable-transition-duration), border-color var(--datatable-transition-duration), outline-color var(--datatable-transition-duration), box-shadow var(--datatable-transition-duration)
     }
   }
 }

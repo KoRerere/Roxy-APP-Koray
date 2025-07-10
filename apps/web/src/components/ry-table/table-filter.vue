@@ -49,14 +49,15 @@ function onFilterChange() {
 
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
-    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false"
+    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="min-w-37.5" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false"
       :pt="{ list: 'text-3.5' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide">
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>
     </MultiSelect>
-    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
-    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" class="" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }"
+      @change="onFilterChange" />
+    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="min-w-37.5 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
       :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange" @clear-click="onDateClear" />
   </div>
 </template>
@@ -72,24 +73,20 @@ function onFilterChange() {
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
-.mw-150 {
-  min-width: 150px;
-}
-
 :deep(.p-datepicker:has(.p-datepicker-dropdown) .p-datepicker-input) {
   border-top-left-radius: 0;
-  border-top-right-radius: var(--p-inputtext-border-radius);
+  border-top-right-radius: var(--inputtext-border-radius);
   border-bottom-left-radius: 0;
-  border-bottom-right-radius: var(--p-inputtext-border-radius);
+  border-bottom-right-radius: var(--inputtext-border-radius);
 }
 
 :deep(.p-datepicker-dropdown) {
   width: auto;
   border-right: none;
-  border-left: 1px solid var(--p-datepicker-dropdown-border-color);
-  border-top-left-radius: var(--p-inputtext-border-radius);
+  border-left: 1px solid var(--datepicker-dropdown-border-color);
+  border-top-left-radius: var(--inputtext-border-radius);
   border-top-right-radius: 0;
-  border-bottom-left-radius: var(--p-inputtext-border-radius);
+  border-bottom-left-radius: var(--inputtext-border-radius);
   border-bottom-right-radius: 0;
   background: var(--colors-background-bg-action);
 }

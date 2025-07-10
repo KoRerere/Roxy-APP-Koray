@@ -1,9 +1,4 @@
-
-
-
-
 import type { AxiosResponse } from "axios";
-import { useUserStore } from "/@/stores/user";
 import { useWorkspaceStore } from "/@/stores/workspace";
 
 
@@ -12,12 +7,17 @@ import { useWorkspaceStore } from "/@/stores/workspace";
 
 let isCheckingUserIdentity = false
 
+// 某些接口不检查身份变化
+const ignore = [
+  '/user_logout'
+]
+
 export async function checkPermission(response: AxiosResponse<any, any>) {
   const userIdentity = Number(response.headers['r-user-identity'])
 
   const { currentWorkspace, getWorkspaceList } = useWorkspaceStore()
 
-  if (!currentWorkspace?.id) {
+  if (!currentWorkspace?.id || ignore.includes(response.config.url!)) {
     return
   }
 

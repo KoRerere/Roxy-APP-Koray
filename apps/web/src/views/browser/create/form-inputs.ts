@@ -232,7 +232,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
           options: coreVersionOptions,
           icon: 'base/rx_ic_chrome',
-          iconColor: 'var(--p-primary-color, #12a3fc)',
+          iconColor: 'var(--primary-color, #12a3fc)',
           required: true,
           filter: false,
           change: async (item: any) => {

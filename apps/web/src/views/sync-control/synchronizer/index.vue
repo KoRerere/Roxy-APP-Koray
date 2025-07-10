@@ -16,7 +16,7 @@ electronAPI.send('app:showCurrentWebviewWindow')
 html,
 body {
   background: transparent;
-  --p-disabled-opacity: 1;
+  --disabled-opacity: 1;
 }
 </style>
 
