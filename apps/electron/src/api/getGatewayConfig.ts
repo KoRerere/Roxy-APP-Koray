@@ -23,11 +23,33 @@ export function getBaseUrl(): string {
 // 其他州 --> sg
 
 const US_CONTINENT_CODES = ['NA', 'SA', 'EU']
+/** 备用的 IP 查询渠道 */
+const IP_QUERY_URLS = [
+  'https://ip234.in/ip.json',
+  'https://ipwho.is',
+  'https://www.travel-eye.org/ip.json',
+  'http://myip.ip123.us/ip.json',
+]
 
 async function getMapKey() {
-  const result = await axios.get<ProxyDetectionResult>('https://ip234.in/ip.json')
-  console.debug(`getMapKey result`, result.data)
-  const { continent_code, country_code } = result.data
+  let result = {}
+
+  for await (const url of IP_QUERY_URLS) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000) // 5秒超时
+    try {
+      result = await fetch(url, { signal: controller.signal }).then(res => res.json())
+      break
+    }
+    catch (error) {
+      console.debug(`getMapKey error`, error)
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  console.debug(`getMapKey result`, result)
+  const { continent_code, country_code } = result as ProxyDetectionResult
   console.debug(`getMapKey ipInfo`, { continent_code, country_code })
   // 亚洲
   if (continent_code === 'AS') {

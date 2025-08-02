@@ -2,6 +2,8 @@ import CDP from 'chrome-remote-interface'
 import type { Client } from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
 import { ChromeBrowser } from './browser'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 /**
  * 启动选项接口
@@ -60,6 +62,22 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     const timeout = setTimeout(() => {
       reject(new Error('Failed to get debugging port from Chrome'))
     }, 30000)
+
+    setTimeout(async () => {
+      try {
+        const userDataDir = args.find(n => n.startsWith('--user-data-dir='))?.split('=')[1]
+        const devToolsActivePort = await readFile(join(userDataDir!, 'DevToolsActivePort'), 'utf8')
+        const port = Number(devToolsActivePort.split('\n')[0])
+        console.log('devToolsActivePort', port)
+        if (port) {
+          clearTimeout(timeout)
+          resolve(port)
+        }
+      }
+      catch (error) {
+        console.error(error)
+      }
+    }, 3000)
 
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志

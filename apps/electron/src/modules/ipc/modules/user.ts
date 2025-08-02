@@ -11,16 +11,16 @@ import { closeAllSyncDialogs } from "/@/modules/sync-control/common"
 export function setupUserIpc(ipcMain: IPCMainInstance) {
 
   /** 登录成功后，保存用户信息 */
-  ipcMain.on('user:setUserInfo', (event, userInfo) => {
+  ipcMain.on('user:setUserInfo', async (event, userInfo) => {
     store.token = userInfo.token
     store.userId = userInfo.userId
     store.workspaceId = userInfo.workspaceId
-    // 重新获取用户配置
-    fetchUserConfig()
-    openAPIServer.start()
+    browserManager.reportWindowOpenStatus()
     store.lastLoginTime = Date.now()
     // aliOSS.init()
-    browserManager.reportWindowOpenStatus()
+    // 重新获取用户配置
+    await fetchUserConfig()
+    openAPIServer.start()
   })
 
   /** 退出登录 */
