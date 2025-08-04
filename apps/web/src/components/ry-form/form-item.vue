@@ -60,11 +60,11 @@ const FormItemMap: Record<string, any> = {
 
   &-help {
     display: flex;
-    margin-top: var(--spacing-sm, 4px);
-    color: var(--red-400, #f87171);
+    margin-top: 4px;
+    color: var(--colors-text-text-error);
     font-family: Inter;
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 }
 </style>

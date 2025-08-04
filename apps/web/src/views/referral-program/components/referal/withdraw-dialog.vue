@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
 import { API } from '/@/api';
 import RxPaymentMethods from '/@/components/rx-payment-methods.vue'
@@ -163,17 +164,14 @@ function handleBlur(event: InputNumberBlurEvent) {
       <div class="withdrawal-input">
         <IconField>
           <InputIcon class="text-[14px]">$</InputIcon>
-          <InputNumber v-model="form.amount" :minFractionDigits="0" :maxFractionDigits="5" :min="0"
-            :max="promotionInfo.withdrawAmount" fluid :useGrouping="false" input-class="!w-[150px]"
+          <InputNumber v-model="form.amount" :minFractionDigits="0" :maxFractionDigits="5" :min="0" :max="promotionInfo.withdrawAmount" fluid :useGrouping="false" input-class="!w-[150px]"
             @blur="handleBlur" />
         </IconField>
         <template v-if="form.withdraw_method === PayWay.Balance">
-          <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined
-            severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
+          <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
         </template>
         <template v-else>
-          <rx-amount-quick-check :presets="[50, 100, 200, 300]" :disabled="isAmountLessThan50"
-            @select="handleAmountQuickCheck($event)" />
+          <rx-amount-quick-check :presets="[50, 100, 200, 300]" :disabled="isAmountLessThan50" @select="handleAmountQuickCheck($event)" />
         </template>
       </div>
     </div>
@@ -186,7 +184,7 @@ function handleBlur(event: InputNumberBlurEvent) {
       <template v-if="form.withdraw_method === PayWay.USDT">
         <div class="usdt-info">
           <div class="label">{{ $t('您的 USDT 钱包地址') }}</div>
-          <InputText v-model="form.withdraw_address" type="text" :placeholder="$t('USDT 钱包地址')" class="w-full" />
+          <TsFormInputText v-model="form.withdraw_address" size="md" type="text" :placeholder="$t('USDT 钱包地址')" class="w-full" />
           <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{
             withdrawAddressErrorText }}</Message>
           <div class="desc">
@@ -195,8 +193,7 @@ function handleBlur(event: InputNumberBlurEvent) {
         </div>
       </template>
     </div>
-    <RxButton size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled"
-      @click="handleConfirmWithdrawal" />
+    <RxButton size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled" @click="handleConfirmWithdrawal" />
   </div>
 </template>
 

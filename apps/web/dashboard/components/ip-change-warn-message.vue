@@ -1,57 +1,13 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxAlert } from "/@/components/rx-alert";
 </script>
 
 <template>
-  <Message closable severity="warn" class="warn-message">
-    <template #icon>
-      <RxSvgIcon name="base/rx_ic_warn_fill" />
-    </template>
-    <div class="content">
-      <div class="title">
-        {{ $t('您的 IP 地址已变更') }}
-      </div>
-
-      <div class="description">
-        {{ $t('请注意，您访问账户的操作可能存在风险') }}
-      </div>
-    </div>
-  </Message>
+  <RxAlert class="warn-message" type="warn" :title="$t('您的 IP 地址已变更')" :content="$t('请注意，您访问账户的操作可能存在风险')"></RxAlert>
 </template>
 
 <style lang="scss" scoped>
 .warn-message {
   width: 100%;
-
-  :deep(.p-message-content) {
-    align-items: flex-start;
-  }
-
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    align-self: stretch;
-  }
-
-  .title {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-  }
-
-  .description {
-    color: var(--colors-text-text-tertiary, #8A9093);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 18px;
-    /* 150% */
-  }
 }
 </style>

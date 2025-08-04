@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
-import InputText from 'primevue/inputtext'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -97,7 +97,7 @@ function handleDeleteConfirm() {
             {{ br: () => <br /> }}
           </I18nT>
         </div>
-        <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('请确认要删除的空间名称')} />
+        <TsFormInputText v-model={workspaceName.value} class="w-full" size="md" placeholder={$t('请确认要删除的空间名称')} />
         <div class="w-full flex justify-end gap-2">
           <RxButton outlined label={$t('取消')} onClick={() => dialogRef.value.close()} />
           <RxButton severity="danger" label={$t('删除空间')} disabled={workspaceName.value !== workspaceInfo.value.workspaceName} onClick={confirmDelete} />

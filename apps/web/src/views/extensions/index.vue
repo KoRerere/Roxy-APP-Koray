@@ -41,6 +41,7 @@ function onChange(value: any) {
 }
 function onSearch() {
   if (tabs.value[1]) {
+    hubRef.value?.getRecommendPluginList()
     tabsValue.value = tabs.value[1].value
   }
 }

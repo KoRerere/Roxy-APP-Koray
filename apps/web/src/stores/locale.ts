@@ -33,8 +33,8 @@ export const useSimpleLocale = defineStore('locale', () => {
 
   function getOfficialFaqWebsite(pathname = '') {
     // TODO 官网只有中文和英文，所以这里需要根据当前语言来判断
-    const locale = siteLocale.value === 'zh' ? 'zh' : 'en'
-    return `${import.meta.env.VITE_OFFICIAL_FAQ_WEBSITE}/${locale}/${pathname}`
+    const locale = siteLocale.value === 'zh' ? '/zh' : ''
+    return `${import.meta.env.VITE_OFFICIAL_FAQ_WEBSITE}${locale}${pathname}`
   }
 
   return {

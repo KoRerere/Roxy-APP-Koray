@@ -175,27 +175,3 @@ build({
     console.log('\x1B[31m', '打包失败，错误信息：', error)
     exit(1)
   })
-  .then(() => {
-    // 打包完成后将占位符还原
-    replacePlaceholder(appName, '{{APP_NAME}}')
-  })
-
-async function replacePlaceholder(oldStr: string, newStr: string) {
-  // 处理 macOS PKG 脚本中的占位符
-  if (platform === 'darwin') {
-    const { readFileSync, writeFileSync } = await import('node:fs')
-    const postinstallPath = path.join(workDir, 'buildResources/pkg-scripts/postinstall')
-
-    try {
-      let postinstallContent = readFileSync(postinstallPath, 'utf8')
-      postinstallContent = postinstallContent.replace(oldStr, newStr)
-      writeFileSync(postinstallPath, postinstallContent)
-
-      // 确保脚本有执行权限
-      const { chmodSync } = await import('node:fs')
-      chmodSync(postinstallPath, 0o755)
-    } catch (error) {
-      console.warn('处理 macOS postinstall 脚本时出错:', error)
-    }
-  }
-}

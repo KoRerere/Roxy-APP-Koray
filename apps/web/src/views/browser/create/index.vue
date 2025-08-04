@@ -242,7 +242,7 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
         },
       },
     ],
-    afterRender: () => <ol class="pl-[14px] m-0">
+    afterRender: () => <ol class="pl-3.5 m-0">
       <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
       <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
     </ol>,
@@ -327,7 +327,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
     const { path, query } = backRoute
     console.log('onBack', path, query)
     const backRoutes = ['/browser', '/projects']
-    const toPath = !backRoutes.some(n => path.startsWith(n)) ? '/browser' : path
+    const toPath = !backRoutes.some(n => path.startsWith(n)) || path === '/browser/edit' ? '/browser' : path
     console.log('toPath', toPath)
     router.replace({
       path: toPath,

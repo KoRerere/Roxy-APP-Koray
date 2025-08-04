@@ -15,10 +15,11 @@ interface Props {
   projectValues?: number[]
   allMembers?: any[]
   multiple?: boolean
+  inviteRole?: Role
   onBeforeClose?: (refresh?: boolean) => void
 }
 
-const { project, projects, projectValues, allMembers = [], multiple = false, onBeforeClose } = defineProps<Props>()
+const { project, projects, projectValues, allMembers = [], multiple = false, inviteRole = Role.VIEWER, onBeforeClose } = defineProps<Props>()
 const emit = defineEmits(['close'])
 
 const roleLabelMap = getRoleLabelMap()
@@ -29,7 +30,7 @@ const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
 const needRefresh = ref(false)
 const filteredMembers = ref<any[]>([])
-const roleValue = ref(Role.VIEWER)
+const roleValue = ref(inviteRole)
 const selectedProjects = ref(projectValues)
 const memberValue = ref()
 
@@ -139,15 +140,15 @@ function updateCurrentMembers(member: Record<string, any>) {
       <div class="title">{{ $t('成员邮箱') }}</div>
       <div class="w-full flex items-center gap-2">
         <div class="flex-1 relative">
-          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="!absolute right-2 top-1/2 -translate-y-1/2 z-1" />
+          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="!absolute right-2 position-y-center z-1" />
           <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
             :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }">
             <template #option="{ option }">
               <div class="flex items-center gap-2">
                 <RxAvatar :avatar="option.avatar" :name="option.userName.slice(0, 2)" :color="option.avatarColor" :size="28" :font-size="14" />
                 <div>
-                  <div class="member-name">{{ option.email }}</div>
-                  <div class="member-email">{{ option.userName }}</div>
+                  <div :class="member.name">{{ option.email }}</div>
+                  <div :class="member.email">{{ option.userName }}</div>
                 </div>
               </div>
             </template>
@@ -177,6 +178,20 @@ function updateCurrentMembers(member: Record<string, any>) {
     </div>
   </div>
 </template>
+
+<style module="member">
+.email {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.name {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}
+</style>
 
 <style lang="scss" scoped>
 :deep(.p-inputtext) {
@@ -215,18 +230,6 @@ function updateCurrentMembers(member: Record<string, any>) {
 
     &:last-of-type {
       border-bottom: none;
-    }
-
-    &-email {
-      color: var(--colors-text-text-primary, #111213);
-      font-size: 12px;
-      line-height: 16px;
-    }
-
-    &-name {
-      color: var(--colors-text-text-tertiary, #575D60);
-      font-size: 12px;
-      line-height: 16px;
     }
   }
 }

@@ -236,6 +236,7 @@ function clearProxy() {
     },
     accept: () => {
       dataList.value = []
+      showMessage.value = false
     }
   })
 }
@@ -325,7 +326,7 @@ function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <TsFormSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+                <TsFormSelect class="!w-32" v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center gap-1.5">
                 <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />

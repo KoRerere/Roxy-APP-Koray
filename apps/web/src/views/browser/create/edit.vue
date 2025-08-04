@@ -66,7 +66,11 @@ async function createProfile() {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   onlyErrorToast(code, msg)
   if (code === 0) {
-    router.replace({ path, query })
+    if (path === '/browser/edit') {
+      router.replace({ path: '/browser' })
+    } else {
+      router.replace({ path, query })
+    }
   }
   loading.value = false
 }

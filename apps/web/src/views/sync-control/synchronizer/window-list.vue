@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue';
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -234,30 +235,26 @@ electronAPI.on('syncControl:start', startSync)
     @row-select-all="handleRowSelectAll" v-bind="$attrs">
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex gap-2.5">
-        <template v-for="item in searchList" :key="item.name">
-          <MultiSelect class="flex-1 min-w-0" v-model="searchParams[item.name as keyof typeof searchParams]" :options="item.options" :showToggleAll="false" optionLabel="label" optionValue="value"
-            :placeholder="item.placeholder" :maxSelectedLabels="1" size="small">
-            <template #option="slotProps">
-              <template v-if="item.name === 'labelIds'">
-                <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
-                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
-                  <span>{{ slotProps.option.label }}</span>
-                </div>
-                <div v-else class="flex items-center">
-                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
-                  </svg>
-                  <div class="ellipsis-1">
-                    {{ slotProps.option.labelName }}
-                  </div>
-                </div>
-              </template>
+        <TsFormMultiSelect v-for="{ name, ...props } in searchList" :key="name" class="flex-1 min-w-0" v-model="searchParams[name as keyof typeof searchParams]" v-bind="props" :maxSelectedLabels="1"
+          :showToggleAll="false" :filter="false">
+          <template #option="slotProps">
+            <template v-if="name === 'labelIds'">
+              <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
+                <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
+                <span class="text-3.25">{{ slotProps.option.label }}</span>
+              </div>
               <div v-else class="flex items-center">
-                <div>{{ slotProps.option.label }}</div>
+                <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
+                </svg>
+                <div class="text-3.25 ellipsis-1">{{ slotProps.option.labelName }}</div>
               </div>
             </template>
-          </MultiSelect>
-        </template>
+            <div v-else class="flex items-center">
+              <div class="text-3.25">{{ slotProps.option.label }}</div>
+            </div>
+          </template>
+        </TsFormMultiSelect>
         <TsFormInputText :field-props="{ class: 'flex-1 min-w-0' }" v-model="searchParams.windowName" preIcon="base/rx_ic_magnify" size="sm" :placeholder="$t('搜索窗口')" />
       </div>
     </template>
@@ -293,11 +290,10 @@ electronAPI.on('syncControl:start', startSync)
       </template>
     </template>
     <template #actions="{ data }">
-      <div class="flex gap-2 cursor-pointer">
-        <RxSvgIcon v-tooltip="$t('预览')" name="base/rx_ic_show_profile" @click.stop="viewBrowser(data.dirId)" />
-        <span v-tooltip="$t('设为主控')">
-          <RxSvgIcon name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }" @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
-        </span>
+      <div class="flex gap-2.5 cursor-pointer">
+        <RxSvgIcon v-tooltip="$t('预览')" color="var(--colors-icon-icon-secondary)" name="base/rx_ic_show_profile" @click.stop="viewBrowser(data.dirId)" />
+        <RxSvgIcon v-tooltip="$t('设为主控')" color="var(--colors-icon-icon-secondary)" name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }"
+          @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
       </div>
     </template>
   </RyTable>
@@ -374,8 +370,6 @@ electronAPI.on('syncControl:start', startSync)
   }
 
   td {
-    padding: 10px 6px !important;
-
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px) !important;
     }

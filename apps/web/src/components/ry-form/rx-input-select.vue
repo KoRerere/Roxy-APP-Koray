@@ -79,6 +79,13 @@ const attrs = useAttrs()
   font-family: Inter;
 }
 
+:deep(.p-select-clear-icon) {
+  width: 12px;
+  height: 12px;
+  margin-top: 0;
+  transform: translateY(-50%);
+}
+
 .lg {
   border-radius: var(--radius-lg, 8px);
   border-width: 1px;

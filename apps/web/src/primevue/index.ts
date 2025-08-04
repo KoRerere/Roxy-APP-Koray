@@ -1,5 +1,5 @@
-import { definePreset } from '@primevue/themes'
-import Aura from '@primevue/themes/aura'
+import { definePreset } from '@primeuix/themes'
+import Aura from '@primeuix/themes/aura'
 import PrimeVue from "primevue/config";
 import type { App } from 'vue';
 import ConfirmationService from "primevue/confirmationservice";
@@ -26,6 +26,13 @@ export function setupPrimeVue(app: App) {
       },
       preset: definePreset(Aura, customPreset),
     },
+    pt: {
+      splitbutton: {
+        pcMenu: {
+          item: 'text-3.25',
+        }
+      }
+    }
   });
 }
 

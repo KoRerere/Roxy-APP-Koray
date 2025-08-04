@@ -90,6 +90,7 @@ const filters = reactive({
 
 const members = ref()
 const allProjects = ref()
+const currentRole = computed(() => workspaceStore.currentWorkspace?.role ?? -1)
 
 async function tableRequest(params: any) {
   const data = await API.team.userGetMemberInfoByWorkspaceList(params)
@@ -99,7 +100,7 @@ async function tableRequest(params: any) {
 
 function tableOperation(data: TableRow) {
   // 只能修改比自己权限低的成员
-  const disabled = (workspaceStore.currentWorkspace?.role ?? -1) <= data.role
+  const disabled = currentRole.value <= data.role
   return [
     {
       name: 'edit',
@@ -142,7 +143,16 @@ function editMember(data: TableRow) {
   const { email, project_info, role, user_id } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
   const disableds = email ? ['email'] : []
-  showInviteUserFormDialog({ tableRef: tableRef as any, email, projectIds, role, user_id, disableds })
+  showInviteUserFormDialog({
+     email,
+     projectIds,
+     role,
+     user_id,
+     disableds,
+     handleOk: () => {
+      filters.onChange()
+    }
+  })
 }
 
 async function deleteMember(data: TableRow) {
@@ -177,7 +187,7 @@ async function getAllProjects() {
   return allProjects.value
 }
 
-async function handleShowInviteUserFormDialog() {
+async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
   const { maxMemberCount, useMemberCount } = userPayInfo.value
   if (useMemberCount >= maxMemberCount) {
     handleBusinessCode(BUSINESS_CODE.MEMBER_MAX_LIMIT)
@@ -200,6 +210,7 @@ async function handleShowInviteUserFormDialog() {
         projects={projects}
         projectValues={projectValues}
         multiple={true}
+        inviteRole={role}
         onClose={hideModal}
         onBeforeClose={(refresh) => {
           if (refresh) {
@@ -216,7 +227,7 @@ async function handleShowInviteUserFormDialog() {
   <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
     :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #display-before>
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog" />
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
     </template>
     <template #filter-after>
       <div class="flex items-center justify-between w-full">
@@ -227,7 +238,8 @@ async function handleShowInviteUserFormDialog() {
       <CustomEmpty icon="rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog" />
+            <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')"
+              @click.stop="handleShowInviteUserFormDialog(filters.value)" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" /> -->
           </div>
         </template>

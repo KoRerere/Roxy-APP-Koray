@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { defaultColors } from '/@/utils/constants'
@@ -48,7 +49,7 @@ onMounted(() => {
     </div>
 
     <div class="square-container" />
-    <InputText v-model="tagName" type="text" :placeholder="$t('请输入标签名')" />
+    <TsFormInputText v-model="tagName" size="md" type="text" :placeholder="$t('请输入标签名')" />
     <div class="footer">
       <RxButton :label="$t('取消')" text severity="secondary" @click="close" />
       <RxButton :label="$t('保存')" @click="onConfirm" />

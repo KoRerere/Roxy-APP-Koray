@@ -66,14 +66,14 @@ const contents = computed(() => {
 </script>
 
 <template>
-  <div v-bind="$attrs" class="break-keep-all font-[JetBrains_Mono]">
+  <div v-bind="$attrs" class="break-keep-all example">
     <div>{{ $t('示例') }}: </div>
     <div v-for="rule in contents" v-html="rule.content" class="text-[var(--colors-text-text-primary)]"></div>
     <br />
-    <div class="font-[Inter]">
+    <div class="help">
       <span v-if="ipType === IPType.IPV6">1. </span>{{ $t('一行一个代理，一次最多添加 500 个；') }}
     </div>
-    <div v-if="ipType === IPType.IPV6" class="font-[Inter]">
+    <div v-if="ipType === IPType.IPV6" class="help">
       {{ $t('2. IPV6 的主机需填写在 [ ] 内；') }}
     </div>
   </div>
@@ -88,5 +88,19 @@ const contents = computed(() => {
 
 .break-keep-all span {
   word-break: break-word;
+}
+
+.example {
+  color: var(--colors-text-text-primary);
+  font-family: "JetBrains Mono";
+  font-size: 12px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.help {
+  font-family: Inter;
+  color: var(--colors-text-text-inactive);
+  font-size: 12px;
+  line-height: var(--Line-Height-text-lg, 20px);
 }
 </style>

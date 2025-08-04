@@ -132,8 +132,7 @@ function close(isCancel: boolean) {
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress-value" cx="18" cy="18" r="14"
-                :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+              <circle class="progress-value" cx="18" cy="18" r="14" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </div>
           <div>
@@ -165,18 +164,18 @@ function close(isCancel: boolean) {
 
 <style lang="scss" scoped>
 .popup {
-  width: 480px;
+  width: 520px;
 }
 
 .header {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
 }
 
 .title {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
@@ -192,7 +191,7 @@ function close(isCancel: boolean) {
 .tag {
   border-radius: 4px;
   background: #26A17B;
-  color: var(--primitives-neutrals-0, #FFF);
+  color: var(--primitives-neutrals-0);
   font-family: "JetBrains Mono";
   font-size: 20px;
   font-weight: 700;
@@ -200,13 +199,13 @@ function close(isCancel: boolean) {
 }
 
 .qrcode-desc {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-size: 12px;
   line-height: normal;
 }
 
 .chain {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-family: "JetBrains Mono";
   font-size: 14px;
   font-weight: 500;
@@ -219,38 +218,38 @@ function close(isCancel: boolean) {
 }
 
 .remaining {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-size: 12px;
   line-height: normal;
 }
 
 .countdown {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 500;
   line-height: normal;
 }
 
 .status {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-size: 12px;
   line-height: normal;
 }
 
 .note {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-size: 12px;
   font-weight: 500;
   line-height: 19.2px;
 }
 
 .help {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--colors-text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;

@@ -63,8 +63,8 @@ const { size = 'sm', ...props } = defineProps<Props>()
   padding: var(--input-padding);
   border-radius: var(--input-radius);
   border-width: var(--input-border-width);
-  border-color: var(--colors-border-border-base, #AFB7BB);
-  color: var(--colors-text-text-primary, #111213);
+  border-color: var(--colors-border-border-base);
+  color: var(--colors-text-text-primary);
   font-size: var(--input-font-size);
   line-height: var(--input-line-height);
 }

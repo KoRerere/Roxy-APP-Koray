@@ -235,8 +235,7 @@ async function onSave(needMore: boolean) {
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
-            }}</div>
+            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks }}</div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -296,13 +295,11 @@ async function onSave(needMore: boolean) {
   gap: var(--spacing-md, 6px);
   height: 100%;
   border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-  // border: 1px solid var(--colors-border-border-action);
-  // background: var(--colors-background-bg-overlay, #2C2E30);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
 
   &-example {
-    color: var(--colors-text-text-primary, #111213);
+    color: var(--colors-text-text-primary);
     font-family: "JetBrains Mono";
     font-size: 12px;
     line-height: var(--Line-Height-text-lg, 20px);

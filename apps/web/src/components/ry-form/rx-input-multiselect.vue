@@ -24,12 +24,12 @@ const defaultProps: MultiSelectProps = {
 </script>
 
 <template>
-  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="$emit('change')">
+  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel, list: 'text-3.25', emptymessage: 'text-3.25' }" @change="$emit('change')">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
-    <template #chipicon>
-      <RxSvgIcon name="base/rx_ic_delete" />
+    <template #chipicon="{ removeCallback, ...props }">
+      <RxSvgIcon name="base/rx_ic_delete" v-bind="props" @click="removeCallback" />
     </template>
   </MultiSelect>
 </template>

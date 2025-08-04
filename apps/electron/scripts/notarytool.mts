@@ -4,18 +4,12 @@ import { existsSync, statSync, readdirSync } from 'node:fs'
 
 const workDir = path.join(import.meta.dirname, '../')
 
-// 配置参数
 const config = {
-  folderPath: process.argv[2] || path.join(workDir, '../../out'),
-  keychainProfile: process.argv[3] || 'RoxyBrowser'
-};
-
-// 验证参数
-if (!config.folderPath) {
-  console.error('错误: 请提供文件夹路径');
-  console.log('使用方法: node notarize.js <文件夹路径> [密钥链配置文件]');
-  console.log('示例: node notarize.js ./dist MY_PASSWORD');
-  process.exit(1);
+  folderPath: path.join(workDir, '../../out'),
+  keychainProfile: 'RoxyBrowser',
+  pollInterval: 10000, // 查询间隔：10秒
+  maxPollCount: 60,    // 最大查询次数：60次（10分钟）
+  timeoutMinutes: 10   // 超时时间：10分钟
 }
 
 // 验证文件夹路径是否存在
@@ -25,8 +19,7 @@ if (!existsSync(config.folderPath)) {
 }
 
 // 检查是否为文件夹
-const stats = statSync(config.folderPath);
-if (!stats.isDirectory()) {
+if (!statSync(config.folderPath).isDirectory()) {
   console.error(`错误: 提供的路径不是文件夹: ${config.folderPath}`);
   process.exit(1);
 }
@@ -57,8 +50,6 @@ pkgFiles.forEach((file, index) => {
 });
 
 console.log(`\n开始公证 ${pkgFiles.length} 个 .pkg 文件...`);
-console.log(`文件夹路径: ${config.folderPath}`);
-console.log(`密钥链配置文件: ${config.keychainProfile}`);
 
 // 处理每个 .pkg 文件的函数
 async function processPkgFile(pkgPath, index) {
@@ -87,38 +78,85 @@ async function processPkgFile(pkgPath, index) {
     }
 
     const notaryId = notaryIdMatch[1];
-    console.log(`公证ID: ${notaryId}`);
 
-    // 第二步: 查询公证状态
-    console.log(`\n2. 查询 ${fileName} 公证状态...`);
-    const infoCommand = `xcrun notarytool info ${notaryId} --keychain-profile "${config.keychainProfile}"`;
-    console.log(`执行命令: ${infoCommand}`);
+    // 第二步: 定时查询公证状态直到完成
+    console.log(`\n2. 开始定时查询 ${fileName} 公证状态...`);
+    console.log(`查询间隔: ${config.pollInterval / 1000}秒, 最大查询次数: ${config.maxPollCount}次, 超时时间: ${config.timeoutMinutes}分钟`);
 
-    try {
-      const infoResult = execSync(infoCommand, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
+    const startTime = Date.now();
+    let pollCount = 0;
+    let isAccepted = false;
 
-      console.log(`${fileName} 公证状态查询成功!`);
+    while (pollCount < config.maxPollCount) {
+      pollCount++;
+      const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
 
-      // 检查公证状态
-      if (infoResult.includes('status: Accepted')) {
-        console.log(`${fileName} 公证已通过!`);
-      } else if (infoResult.includes('status: In Progress')) {
-        console.log(`${fileName} 公证进行中...`);
-      } else {
-        console.log(`${fileName} 公证状态: ${infoResult.match(/status: ([^\n]+)/)?.[1] || '未知'}`);
+      // 计算预计剩余时间
+      const estimatedTotalTime = (config.maxPollCount * config.pollInterval) / 1000; // 秒
+      const remainingSeconds = Math.max(0, estimatedTotalTime - elapsedSeconds);
+      const remainingMinutes = Math.floor(remainingSeconds / 60);
+      const remainingSecs = remainingSeconds % 60;
+
+      console.log(`\n第 ${pollCount}/${config.maxPollCount} 次查询 (已用时: ${elapsedMinutes}分${elapsedSeconds % 60}秒, 预计剩余: ${remainingMinutes}分${remainingSecs}秒)...`);
+
+      const infoCommand = `xcrun notarytool info ${notaryId} --keychain-profile "${config.keychainProfile}"`;
+
+      try {
+        const infoResult = execSync(infoCommand, {
+          encoding: 'utf8',
+          stdio: 'pipe'
+        });
+
+        // 检查公证状态
+        if (infoResult.includes('status: Accepted')) {
+          console.log(`✅ ${fileName} 公证已通过! (用时: ${elapsedMinutes}分${elapsedSeconds % 60}秒)`);
+          isAccepted = true;
+          break;
+        } else if (infoResult.includes('status: In Progress')) {
+          console.log(`⏳ ${fileName} 公证进行中...`);
+        } else if (infoResult.includes('status: Invalid')) {
+          console.error(`❌ ${fileName} 公证失败!`);
+          console.log(`公证详情: ${infoResult}`);
+          return false;
+        } else {
+          const statusMatch = infoResult.match(/status: ([^\n]+)/);
+          const status = statusMatch ? statusMatch[1] : '未知';
+          console.log(`ℹ️ ${fileName} 公证状态: ${status}`);
+        }
+
+        // 检查是否超时
+        if (elapsedMinutes >= config.timeoutMinutes) {
+          console.error(`⏰ ${fileName} 公证查询超时 (${config.timeoutMinutes}分钟)`);
+          return false;
+        }
+
+        // 如果不是最后一次查询，则等待后继续
+        if (pollCount < config.maxPollCount) {
+          console.log(`等待 ${config.pollInterval / 1000} 秒后进行下次查询...`);
+          await new Promise(resolve => setTimeout(resolve, config.pollInterval));
+        }
+
+      } catch (infoError) {
+        console.error(`${fileName} 第 ${pollCount} 次查询公证状态失败:`, infoError.message);
+
+        // 如果是网络错误，继续重试
+        if (pollCount < config.maxPollCount) {
+          console.log(`等待 ${config.pollInterval / 1000} 秒后重试...`);
+          await new Promise(resolve => setTimeout(resolve, config.pollInterval));
+          continue;
+        } else {
+          console.error(`${fileName} 查询次数已达上限，停止查询`);
+          return false;
+        }
       }
-
-    } catch (infoError) {
-      console.error(`${fileName} 查询公证状态失败:`, infoError.message);
-      return false;
     }
 
-    // 等待一段时间确保公证完成
-    console.log(`\n等待 ${fileName} 公证完成...`);
-    await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒
+    if (!isAccepted) {
+      const totalElapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+      console.error(`❌ ${fileName} 公证未在预期时间内完成 (总用时: ${totalElapsedMinutes}分钟)`);
+      return false;
+    }
 
     // 第三步: 装订公证票证到应用
     console.log(`\n3. 装订公证票证到 ${fileName}...`);

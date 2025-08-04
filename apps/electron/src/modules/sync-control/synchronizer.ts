@@ -26,8 +26,8 @@ export async function createSynchronizerWindow() {
 
   const win = createWindow({
     roxyWindowId: ROXY_SYNC_CONTROL_WINDOW_ID,
-    width: 556,
-    height: 472,
+    width: 640,
+    height: 560,
     resizable: false,
     frame: false,
     alwaysOnTop: true,

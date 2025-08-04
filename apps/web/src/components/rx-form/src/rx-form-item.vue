@@ -144,8 +144,7 @@ onMounted(async () => {
         <component :is="LabelComponent" />
       </label>
       <div class="form-item-control">
-        <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue"
-          :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
+        <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue" :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
           @[triggerEventName]="validateField" />
         <Message v-if="errors[schema.field] || !schema.label" severity="error" size="small" variant="simple" class="error-message">
           {{ errors[schema.field] }}
@@ -157,6 +156,10 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
+:deep(.p-inputtext) {
+  font-size: 13px;
+}
+
 .field {
   &:last-of-type {
     .form-item-control {

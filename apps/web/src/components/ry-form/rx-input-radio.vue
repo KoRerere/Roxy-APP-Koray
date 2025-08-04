@@ -7,6 +7,8 @@ interface Props extends Omit<RadioButtonProps, 'size'> {
     value: string | number | boolean
     label: string
     afterRender?: any
+    disabled?: boolean
+    [key: string]: any
   }>
 }
 
@@ -20,12 +22,12 @@ defineEmits(['change'])
 
 <template>
   <div class="flex items-start flex-wrap gap-2 rx-radio-group">
-    <template v-for="option in options" :key="option.label">
-      <label :for="`${props.name}_${option.value}`" class="flex items-center cursor-pointer rx-radio-group-item" :class="styles[size]">
-        <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value" @change="$emit('change')" />
-        <div class="select-none rx-radio-group-item__text">{{ option.label }}</div>
+    <template v-for="{ label, value, afterRender, disabled, ...ops } in options" :key="label">
+      <label :for="`${props.name}_${value}`" class="flex items-center cursor-pointer rx-radio-group-item" :class="[styles[size], { 'cursor-not-allowed': disabled }]">
+        <RadioButton v-bind="{ ...$attrs, ...props, ...ops }" :input-id="`${props.name}_${value}`" :disabled="disabled" :value="value" @change="$emit('change')" />
+        <div class="select-none rx-radio-group-item__text">{{ label }}</div>
       </label>
-      <component :is="option.afterRender" v-if="option.afterRender" />
+      <component :is="afterRender" v-if="afterRender" />
     </template>
   </div>
 </template>

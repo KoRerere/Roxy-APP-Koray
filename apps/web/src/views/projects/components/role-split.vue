@@ -48,6 +48,11 @@ const selectedRoleLabel = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+:deep(.p-splitbutton-button),
+:deep(.p-splitbutton-dropdown) {
+  background: var(--component-tag-bg-strong)
+}
+
 .item {
   width: 100%;
   display: flex;

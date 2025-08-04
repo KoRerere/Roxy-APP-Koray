@@ -12,26 +12,17 @@ const reload = () => {
     <div class="w-[384px]">
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
-          <i18n-t class="color-[var(--colors-text-text-tertiary)] leading-[1.6]"
-            :keypath="$t('RoxyBrowser 的响应时间过长。{br}{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })"
-            tag="div">
-            <template #br><br /></template>
-            <!-- <template #link>
-              <a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">
-                {{ $t('常见问题') }}
-              </a>
-            </template> -->
-            <template #tech>
-              <a @click="$showLiveChat" class="cursor-pointer">
-                {{ $t('联系技术支持') }}
-              </a>
-            </template>
-          </i18n-t>
+          <div class="error-help">
+            <div class="mb-2">{{ $t('RoxyBrowser 的响应时间过长。') }}</div>
+            <div>{{ $t('请尝试以下方法：') }}</div>
+            <div>{{ $t('1.检查网络连接状态') }}</div>
+            <div>{{ $t('2.同步当前系统时间') }}</div>
+            <div class="cursor-pointer error-link" @click="$showLiveChat">{{ $t('3.联系技术支持') }}</div>
+          </div>
         </template>
         <template #extra>
           <div class="flex">
-            <RxButton severity="secondary" outlined class="w-full" @click="reload" :label="$t('刷新页面')"
-              icon="base/rx_ic_refresh" />
+            <RxButton severity="secondary" outlined class="w-full" @click="reload" :label="$t('刷新页面')" icon="base/rx_ic_refresh" />
           </div>
         </template>
       </CustomEmpty>
@@ -47,5 +38,16 @@ const reload = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.error-help {
+  color: var(--colors-text-text-tertiary);
+  font-family: Inter;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.error-link {
+  color: var(--colors-text-text-link, #11A3FD);
 }
 </style>

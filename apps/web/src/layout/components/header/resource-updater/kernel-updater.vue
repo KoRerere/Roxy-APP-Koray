@@ -40,10 +40,10 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
   }
 }
 
-function handleCollapsed(item: ResourceUpdateMessage) {
-  console.log('handleCollapsed', item)
-  collapsedMap.value[item.coreVersion] = !collapsedMap.value[item.coreVersion]
-}
+// function handleCollapsed(item: ResourceUpdateMessage) {
+//   console.log('handleCollapsed', item)
+//   collapsedMap.value[item.coreVersion!] = !collapsedMap.value[item.coreVersion!]
+// }
 
 const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   if (item.status !== 'downloaded') {
@@ -51,7 +51,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   }
 
   confirm.require({
-    target: event.currentTarget,
+    target: event.currentTarget as HTMLElement,
     message: $t('确定删除该内核吗？'),
     group: 'popup',
     rejectProps: {
@@ -67,7 +67,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
     },
     accept: async () => {
       try {
-        await window.electronAPI.send('app:delete-chrome-core', item.coreVersion)
+        await window.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
         item.status = 'uninstalled'
       } catch (error) {
         console.error('error', error)
@@ -81,7 +81,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 <template>
   <div class="kernel-updater">
     <template v-for="item in upgradeList" :key="item.releaseTime">
-      <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion] }">
+      <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion!] }">
         <div class="updater-header">
           <div class="updater-header-left">
             <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
@@ -90,13 +90,10 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'"
-              @click="handleKernelItemClick(item)" />
+            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
             <div class="flex-cc cursor-pointer" @click="handleRemove($event, item)">
-              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon"
-                :class="{ 'disabled': item.status !== 'downloaded' }" />
+              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon" :class="{ 'disabled': item.status !== 'downloaded' }" />
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
       },
       image: '/images/payments/pay-wall-synchronizer.png',
       about: $t('关于同步器'),
-      document: getOfficialFaqWebsite('guide/9-Synchronizer')
+      document: getOfficialFaqWebsite('/features/synchronizer')
     },
     createProfileTemplates: {
       title: $t('使用窗口模板快速新建环境'),
@@ -50,7 +50,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
         </I18nT>
       },
       about: $t('关于窗口模板'),
-      document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
+      document: getOfficialFaqWebsite('/features/profile-configuration#template')
     },
     transfer: {
       title: $t('使用窗口投送提升资源分享效率'),
@@ -62,8 +62,8 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
         </I18nT>
       },
       image: '/images/payments/pay-wall-transfer.png',
-      // about: $t('关于窗口投送'),
-      // document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
+      about: $t('关于窗口投送'),
+      document: getOfficialFaqWebsite('/features/transfer-profile')
     }
   }
 })

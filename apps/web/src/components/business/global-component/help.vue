@@ -51,11 +51,6 @@ const items = ref([
     separator: true
   },
   {
-    label: $t('支持文档'),
-    icon: 'base/rx_ic_books',
-    command: () => window.open(`https://faq.roxybrowser.org/${currentLocale.split('-')[0]}`, '_blank')
-  },
-  {
     label: $t('意见反馈'),
     icon: 'base/rx_ic_survy',
     command: async () => {
@@ -63,6 +58,11 @@ const items = ref([
       const tgLink = $dict_map.feedback.find((item: any) => item.label === currentLocale) || $dict_map.tgLink[0]
       window.open(tgLink.value, '_blank')
     }
+  },
+  {
+    label: $t('帮助中心'),
+    icon: 'base/rx_ic_books',
+    command: () => window.open(`https://faq.roxybrowser.org/${currentLocale.split('-')[0]}`, '_blank')
   },
   {
     label: $t('联系技术支持'),

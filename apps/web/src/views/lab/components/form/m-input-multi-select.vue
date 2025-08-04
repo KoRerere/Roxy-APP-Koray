@@ -4,7 +4,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { isLikeFunction } from '/@/utils'
 
 interface Props extends /* @vue-ignore */ Omit<MultiSelectProps, 'size' | 'filter' | 'optionLabel' | 'optionValue'> {
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   filter?: boolean
   optionLabel?: string
   optionValue?: string
@@ -20,6 +20,7 @@ const {
   ...props
 } = defineProps<Props>()
 
+const slots = useSlots()
 
 function _onChange(event: any) {
   if (onChange && isLikeFunction(onChange)) {
@@ -33,12 +34,16 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <MultiSelect v-bind="{ filter, optionLabel, optionValue, ...props }" :options="[]" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="_onChange">
+  <MultiSelect v-bind="props" :filter="filter" :optionLabel="optionLabel" :optionValue="optionValue" :pt="{ root: size, optionlabel: classes.optionlabel, emptymessage: 'text-3.25' }"
+    @change="_onChange">
     <template #dropdownicon="props">
       <RxSvgIcon name="base/rx_ic_chevron_down" v-bind="props" />
     </template>
     <template #chipicon="{ removeCallback, ...props }">
       <RxSvgIcon name="base/rx_ic_delete" v-bind="props" @click="removeCallback" />
+    </template>
+    <template v-for="(_, name) in slots" #[name]="slotProps">
+      <slot :name="name" v-bind="slotProps"></slot>
     </template>
   </MultiSelect>
 </template>

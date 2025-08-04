@@ -50,7 +50,7 @@ function onFilterChange() {
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
     <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="min-w-37.5" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false"
-      :pt="{ list: 'text-3.5' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide">
+      :pt="{ list: 'text-3.25', emptymessage: 'text-3.25' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide">
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>

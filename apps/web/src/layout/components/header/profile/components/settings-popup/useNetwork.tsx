@@ -1,8 +1,8 @@
-import Message from "primevue/message";
 import Textarea from "primevue/textarea";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
+import { RxAlert } from "/@/components/rx-alert";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import type {
   Items,
@@ -10,41 +10,9 @@ import type {
 } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import { getDictMap } from "/@/utils";
-import { RxSvgIcon } from "/@/components/rx-icon";
-
-const ProxySuccessMessage = ({ item }: any) => {
-  return (
-    item.value && (
-      <Message
-        severity="success"
-        closable={true}
-        pt={{ content: "!items-start" }}
-        onClose={() => {
-          item.value = null;
-        }}
-      >
-        {{
-          icon: () => <RxSvgIcon name="status/rx_ic_check_fill" />,
-          default: () => <>
-            <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
-            <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-              {$t("位置")}:{item.value.country_code}/
-              {item.value.country}
-            </div>
-            <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-              IP:
-              {item.value.ip}
-            </div>
-          </>
-        }}
-      </Message>
-    )
-  );
-}
 
 export function useNetworkPanel() {
-  const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } =
-    useCommonUtil();
+  const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } = useCommonUtil();
 
   const getNetworkPanels = async (data?: any): Promise<SettingsModule> => {
     const $dict_map = await getDictMap();
@@ -96,37 +64,47 @@ export function useNetworkPanel() {
             },
             {
               label: $t("检查系统代理"),
-              component: ({ item }: any) => {
-                return (
-                  <RxButton
-                    class="mb-1.5"
-                    size="sm"
-                    outlined
-                    severity="secondary"
-                    icon="base/rx_ic_speed_test"
-                    label={$t("检测")}
-                    onClick={() => detectSystemNetwork(item)}
-                  />
-                );
-              },
-              afterComponent: ProxySuccessMessage,
+              component: ({ item }: any) => <RxButton
+                class="mb-1.5"
+                size="sm"
+                outlined
+                severity="secondary"
+                icon="base/rx_ic_speed_test"
+                label={$t("检测")}
+                onClick={() => detectSystemNetwork(item)}
+              />,
+              afterComponent: ({ item }: any) =>
+                item.value && <RxAlert
+                  class="w-full whitespace-pre-wrap"
+                  type="success"
+                  visible={true}
+                  closable={true}
+                  title={$t("检测成功")}
+                  content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
+                  onClose={() => { item.value = null; }}
+                />
             },
             {
               label: $t("检测本地网络"),
-              component: ({ item }: any) => {
-                return (
-                  <RxButton
-                    class="mb-1.5"
-                    size="sm"
-                    outlined
-                    severity="secondary"
-                    icon="base/rx_ic_speed_test"
-                    label={$t("检测")}
-                    onClick={() => detectLocalNetwork(item)}
-                  />
-                );
-              },
-              afterComponent: ProxySuccessMessage,
+              component: ({ item }: any) => <RxButton
+                class="mb-1.5"
+                size="sm"
+                outlined
+                severity="secondary"
+                icon="base/rx_ic_speed_test"
+                label={$t("检测")}
+                onClick={() => detectLocalNetwork(item)}
+              />,
+              afterComponent: ({ item }: any) =>
+                item.value && <RxAlert
+                  class="w-full whitespace-pre-wrap"
+                  type="success"
+                  visible={true}
+                  closable={true}
+                  title={$t("检测成功")}
+                  content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
+                  onClose={() => { item.value = null; }}
+                />
             },
           ],
         },

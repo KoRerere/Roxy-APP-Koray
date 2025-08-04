@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { $t } from '/@/locales'
 import RoleSplit from './role-split.vue'
 import type { Role } from '/@/enums'
@@ -13,15 +13,12 @@ const roleModelValue = defineModel<Role>('role')
 </script>
 
 <template>
-  <IconField>
-    <InputIcon>
-      <RxSvgIcon name="base/rx_ic_mail" />
-    </InputIcon>
-    <InputText v-bind="$attrs" v-model="modelValue" :placeholder="$t('请输入邮箱地址')" class="w-full" />
-    <InputIcon class="position-y-center !mt-0">
+  <div class="relative">
+    <TsFormInputText class="w-full" v-bind="$attrs" v-model="modelValue" pre-icon="base/rx_ic_mail" size="md" :placeholder="$t('请输入邮箱地址')"></TsFormInputText>
+    <div class="absolute position-y-center right-2">
       <RoleSplit v-model="roleModelValue"></RoleSplit>
-    </InputIcon>
-  </IconField>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped></style>

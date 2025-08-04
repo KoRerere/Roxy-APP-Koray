@@ -30,13 +30,9 @@ function parseInput(input: any) {
     <template v-for="(item, index) in _inputs" :key="index">
       <div v-if="!item.separator" class="number-group-item">
         <input v-model="item.value" class="number-group-item-input" type="number" v-bind="parseInput(item)">
-        <div v-if="item.invalid" class="number-group-item-error">
-          {{ item.errorMsg }}
-        </div>
+        <div v-if="item.invalid" class="number-group-item-error">{{ item.errorMsg }}</div>
       </div>
-      <div v-else class="number-group-separator">
-        {{ item.value || ':' }}
-      </div>
+      <div v-else class="number-group-separator">{{ item.value || ':' }}</div>
     </template>
   </div>
 </template>
@@ -70,14 +66,20 @@ function parseInput(input: any) {
       width: 100%;
       padding: 0;
       border: none;
+      color: var(--colors-text-text-primary);
       background-color: var(--colors-background-bg-action);
+
+      &:disabled {
+        color: var(--colors-text-text-inactive);
+      }
     }
 
     &-error {
       position: absolute;
       left: -8px;
-      top: 170%;
+      top: 160%;
       color: var(--colors-text-text-error);
+      font-size: 12px;
       z-index: 1;
     }
   }

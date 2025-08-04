@@ -29,7 +29,7 @@ const hasOccupy = ref(false)
 
 
 const apiDocUrl = computed(() => {
-  return getOfficialFaqWebsite('guide/10-API')
+  return getOfficialFaqWebsite('/api-documentation/api-reference')
 })
 
 const illustrate = computed(() => [

@@ -18,6 +18,7 @@ interface PropsType {
   role?: Role;
   projectIds?: number[];
   disableds?: string[];
+  handleOk?: (formModel: any) => any | Promise<any>;
 }
 
 export function useInviteUserFormDialog() {
@@ -26,7 +27,7 @@ export function useInviteUserFormDialog() {
   const toast = useToast();
   const { handleBusinessCode } = useHandleBusinessCode()
 
-  const showDialog = async ({ tableRef, disableds, ...data }: PropsType) => {
+  const showDialog = async ({ tableRef, disableds, handleOk, ...data }: PropsType) => {
     const originl = data;
 
     const dialogInstance = await showFormDialog({
@@ -72,6 +73,7 @@ export function useInviteUserFormDialog() {
           if (!originl.user_id) {
             toast.add({ severity: "success", summary: $t("操作成功"), detail: $t("发送邀请成功"), life: 3000 });
           }
+          handleOk?.(formModel)
         } else {
           handleBusinessCode(code, () => {
             toast.add({ severity: "error", summary: $t("发生错误"), detail: msg || $t("发送邀请失败"), life: 3000 });

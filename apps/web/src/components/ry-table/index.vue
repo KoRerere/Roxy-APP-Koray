@@ -5,7 +5,7 @@ import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
-import { getFormData, isEmptyValue, isFunction, operationPower, type Operation } from '/@/utils'
+import { getFormData, isEmptyValue, isFunction, isLikeFunction, operationPower, type Operation } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
@@ -29,6 +29,7 @@ interface Props {
   tableRequest?: (data: any) => any | Promise<any>
   tableOperation?: (data: any) => Operation[]
   operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
+  beforeRefresh?: () => any | Promise<any>
   selectionMode?: 'single' | 'multiple'
   immediate?: boolean
   multipleOperation?: boolean
@@ -48,7 +49,6 @@ const props = withDefaults(defineProps<Props>(), {
   tableSort: () => [],
   tableFilters: () => [],
   tableOperation: () => [],
-  operationHandler: () => ({}),
   immediate: true,
   multipleOperation: true,
   paginator: true,
@@ -62,7 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
 defineEmits(['update:columns'])
 
 const route = useRoute()
-const [show] = useContextMenu()
+const [showContextMenu] = useContextMenu()
 const columnCss = useCssModule('ColumnCss_Module')
 const rootElRef = useTemplateRef('rootEl')
 
@@ -174,7 +174,7 @@ function fmtColumnProps(column: Record<string, any>) {
 
 async function batchOperation(item: any) {
   try {
-    await props.operationHandler(item, selectionData.value, 'batch')
+    await props.operationHandler?.(item, selectionData.value, 'batch')
     _clearSelection()
   }
   catch (error) {
@@ -259,12 +259,12 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
     return
   }
 
-  show(event.originalEvent, {
-    operation,
+  showContextMenu(event.originalEvent, {
+    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command, ...item }) => item) : operation,
     operationHandler: async (operate: any) => {
       try {
         const _operate = { ...deepClone(toRaw(operate)), _event: event.originalEvent }
-        await props.operationHandler(_operate, event.data, 'single')
+        await props.operationHandler?.(_operate, event.data, 'single')
       }
       catch (error) {
         console.log(error)
@@ -273,13 +273,13 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   })
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any, operationType: 'batch' | 'single') {
-  show(event, {
-    operation,
+function showOperationMenu({ event, operation }: { event: Event, operation: any[] }, data: any, operationType: 'batch' | 'single') {
+  showContextMenu(event, {
+    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command, ...item }) => item) : operation,
     operationHandler: async (operate: any) => {
       try {
         const _operate = { ...deepClone(toRaw(operate)), _event: event }
-        await props.operationHandler(_operate, data, operationType)
+        await props.operationHandler?.(_operate, data, operationType)
       }
       catch (error) {
         console.log(error)
@@ -292,6 +292,11 @@ function _updateDataList(list: any[]) {
   _dataList.value = list || []
 }
 
+async function _onRefresh() {
+  await props.beforeRefresh?.()
+  _request()
+}
+
 defineExpose({
   rootElRef,
   selectionData,
@@ -300,7 +305,7 @@ defineExpose({
     if (force) {
       paginatorConfig.first = 0
     }
-    _request()
+    _onRefresh()
   },
   clearSelection: _clearSelection,
   updateDataList: _updateDataList,
@@ -331,7 +336,7 @@ const slots: any = useSlots()
             </template> -->
           </TableDisplay>
           <Divider layout="vertical" class="!mx-[3px] h-[20px]" />
-          <TableReload :loading="_loading" @click="_request" />
+          <TableReload :loading="_loading" @click="_onRefresh" />
         </div>
       </slot>
     </div>
@@ -393,7 +398,7 @@ const slots: any = useSlots()
             <div class="flex items-center">
               <slot name="actions-extra" :data="data"></slot>
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler?.($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>

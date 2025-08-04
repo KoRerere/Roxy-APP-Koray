@@ -33,7 +33,7 @@ async function onSubmit(formData: any) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 pt-4 pb-6 px-6 w-120">
+  <div class="flex flex-col gap-3 pt-4 pb-6 px-6 w-120 popup">
     <div v-if="title" class="title">{{ title }}</div>
     <div v-if="content" class="content">{{ content }}</div>
     <TsForm id="simpleform" :inputs="inputs" @submit="onSubmit" />
@@ -46,6 +46,12 @@ async function onSubmit(formData: any) {
 </template>
 
 <style lang="scss" scoped>
+.popup {
+  font-family: Inter;
+  font-size: 12px;
+  line-height: normal;
+}
+
 .title {
   color: var(--colors-text-text-primary);
   font-size: 14px;

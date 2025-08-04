@@ -1,5 +1,5 @@
 import primitivesTokens from '/@/styles/primevuePresets/_Primitives_tokens.json'
-import { updatePreset } from '@primevue/themes'
+import { updatePreset } from '@primeuix/themes'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useUserStore } from '/@/stores/user'

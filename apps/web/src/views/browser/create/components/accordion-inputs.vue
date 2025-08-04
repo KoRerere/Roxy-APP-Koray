@@ -98,10 +98,10 @@ function onCopy(dirId: string) {
               <template #windowOpenSize="{ input }">
                 <div class="flex">
                   <InputLabel v-bind="input" />
-                  <div class="flex gap-[8px]">
+                  <div class="flex gap-2">
                     <InputGroup v-for="(item, index) in input.items" :key="item.name">
-                      <InputGroupAddon>{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
-                      <InputText v-bind="item" v-model="item.value" type="text" />
+                      <InputGroupAddon class="text-3.5">{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
+                      <RxInputText class="!w-25" v-bind="item" v-model="item.value" />
                     </InputGroup>
                   </div>
                 </div>

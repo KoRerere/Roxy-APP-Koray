@@ -62,7 +62,7 @@ const imgSrc = computed(() => {
   text-align: left;
 
   &-title {
-    color: var(--colors-text-text-secondary, #b2b6b8);
+    color: var(--colors-text-text-secondary);
     font-family: Inter;
     font-size: 16px;
     font-weight: bold;
@@ -70,7 +70,7 @@ const imgSrc = computed(() => {
   }
 
   &-desc {
-    color: var(--colors-text-text-tertiary, #575d60);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 12px;
     line-height: 20px;

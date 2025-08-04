@@ -34,6 +34,10 @@ const isInit = ref(false)
 const loading = ref(false)
 const extensionList = computed(() => searchResult.value?.length > 0 ? searchResult.value : pluginList.value)
 
+const listContainerRef = useTemplateRef('listContainer')
+const observer = ref<IntersectionObserver>()
+const isNavScrolling = ref(false) // 点击导航滚动标记
+
 const searchPlugins = useDebounceFn(() => {
   const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
   searchResult.value = formatPluginList(list)
@@ -52,6 +56,83 @@ function formatPluginList(list: PluginItem[]) {
   }, {}))
 }
 
+function setupIntersectionObserver() {
+  if (!listContainerRef.value) return
+
+  cleanupObserver()
+
+  observer.value = new IntersectionObserver(
+    (entries) => {
+      if (isNavScrolling.value) return
+
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const categoryId = parseInt(entry.target.id.replace('category_', ''))
+          activeCategory.value = categoryId
+        }
+      })
+    },
+    {
+      root: listContainerRef.value,
+      rootMargin: '-20% 0px -70% 0px', // 触发区域
+      threshold: 0
+    }
+  )
+
+  // 添加滚动监听来处理边界情况
+  const handleScroll = () => {
+    if (isNavScrolling.value) return
+
+    const container = listContainerRef.value
+    if (!container) return
+
+    const scrollTop = container.scrollTop
+
+    // 如果滚动到顶部，高亮第一个分类
+    if (scrollTop <= 0 && categories.value.length > 0) {
+      activeCategory.value = categories.value[0].id
+      return
+    }
+
+    // 如果滚动到底部，高亮最后一个分类
+    const scrollHeight = container.scrollHeight
+    const clientHeight = container.clientHeight
+    if (scrollTop + clientHeight >= scrollHeight - 10 && categories.value.length > 0) {
+      activeCategory.value = categories.value[categories.value.length - 1].id
+      return
+    }
+  }
+
+  // 添加滚动事件监听
+  listContainerRef.value.addEventListener('scroll', handleScroll, { passive: true })
+
+    // 保存handleScroll引用以便清理时使用
+    ; (listContainerRef.value as any)._handleScroll = handleScroll
+
+  nextTick(() => {
+    const categoryElements = document.querySelectorAll('[id^="category_"]')
+    categoryElements.forEach((element) => {
+      observer.value?.observe(element)
+    })
+  })
+}
+
+function cleanupObserver() {
+  if (observer.value) {
+    observer.value.disconnect()
+    observer.value = undefined
+  }
+
+  // 移除滚动事件监听器
+  if (listContainerRef.value) {
+    const handleScroll = (listContainerRef.value as any)._handleScroll
+    if (handleScroll) {
+      listContainerRef.value.removeEventListener('scroll', handleScroll)
+      delete (listContainerRef.value as any)._handleScroll
+    }
+  }
+}
+
 async function getRecommendPluginList() {
   if (isInit.value) return
   isInit.value = true
@@ -59,6 +140,9 @@ async function getRecommendPluginList() {
   await getCategoryList()
   await getPluginList()
   loading.value = false
+  nextTick(() => {
+    setupIntersectionObserver()
+  })
 }
 
 async function getCategoryList() {
@@ -79,7 +163,47 @@ async function getPluginList() {
 
 function jumpToCategory(item: CategoryItem) {
   activeCategory.value = item.id
-  document.getElementById(`category_${item.id}`)?.scrollIntoView({ behavior: 'smooth' })
+  isNavScrolling.value = true
+
+  const targetElement = document.getElementById(`category_${item.id}`)
+  if (targetElement) {
+    targetElement.scrollIntoView({ behavior: 'smooth' })
+
+    // 使用更可靠的滚动完成检测
+    let lastScrollTop = 0
+    let scrollEndTimer: NodeJS.Timeout | null = null
+
+    const checkScrollComplete = () => {
+      const container = listContainerRef.value
+      if (container) {
+        const currentScrollTop = container.scrollTop
+
+        if (scrollEndTimer) {
+          clearTimeout(scrollEndTimer)
+        }
+
+        // 如果滚动位置没有变化，设置定时器等待滚动真正结束
+        if (currentScrollTop === lastScrollTop) {
+          scrollEndTimer = setTimeout(() => {
+            isNavScrolling.value = false
+          }, 150) // 等待滚动动画完全结束
+        } else {
+          lastScrollTop = currentScrollTop
+          requestAnimationFrame(checkScrollComplete)
+        }
+      }
+    }
+
+    // 延迟开始检测，等待滚动动画开始
+    setTimeout(() => {
+      checkScrollComplete()
+    }, 50)
+  } else {
+    // 如果找不到目标元素，直接重置标记
+    setTimeout(() => {
+      isNavScrolling.value = false
+    }, 500)
+  }
 }
 
 async function onInstall(plugin: PluginItem) {
@@ -120,12 +244,19 @@ async function onInstall(plugin: PluginItem) {
   })
 }
 
+onUnmounted(() => {
+  cleanupObserver()
+})
+
 defineExpose({
   getRecommendPluginList,
   refresh: () => {
     search.value = ''
     searchResult.value = undefined
     getPluginList()
+    nextTick(() => {
+      setupIntersectionObserver()
+    })
   },
 })
 </script>
@@ -146,7 +277,7 @@ defineExpose({
         </InputGroupAddon>
         <TsFormInputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
-      <div class="relative flex-1 overflow-y-auto list-container dynamic-padding">
+      <div ref="listContainer" class="relative flex-1 overflow-y-auto list-container dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
           <div :id="`category_${item.categoryId}`" class="list-group-title">
             {{ item.categoryName }}

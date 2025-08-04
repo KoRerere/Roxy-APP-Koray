@@ -89,8 +89,4 @@ emitter.on('kickedOut', (params) => {
   font-weight: 600;
   line-height: var(--Line-Height-text-xs, 16px);
 }
-
-.p-dialog-footer .p-button {
-  font-size: 14px;
-}
 </style>

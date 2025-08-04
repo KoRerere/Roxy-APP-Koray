@@ -169,6 +169,7 @@ const inputs = [
     name: 'firstname',
     label: 'First Name',
     props: {
+      placeholder: '请选择',
       preIcon: 'base/rx_ic_2fa',
       icon: 'base/rx_ic_2fa',
       size: 'md',
@@ -181,30 +182,16 @@ const inputs = [
       .max(20, $t('空间名称最多 20 个字符')),
   },
   {
-    type: 'number',
-    name: 'number',
-    label: 'Number',
-    value: 10000,
-  },
-  {
-    type: 'text',
-    name: 'lastname',
-    label: 'Last Name',
-    required: true,
-  },
-  {
-    type: 'text',
-    name: 'username',
-    label: 'Username',
-  },
-  {
-    type: 'textarea',
-    name: 'password',
-    label: 'Password',
-    resolver: (z: any) => z.string({
-      invalid_type_error: 'wcis man!',
-    })
-      .min(2, 'wcis man!')
+    type: 'mselect',
+    name: 'mselect',
+    label: 'Multi Select',
+    props: {
+      showToggleAll: false,
+      filter: false,
+      placeholder: '请选择',
+      options: [
+      ]
+    }
   }
 ]
 
@@ -218,20 +205,24 @@ function noFormIdWcis() {
   formRef.value?.instance.submit()
 }
 //=========================================
+const checked = ref(false)
+const checked2 = ref(2)
+
+const router = useRouter()
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+    <div class="flex flex-col gap-2 pa-20 scale-150">
+      <!-- <ToggleSwitch v-model="checked" /> -->
+      <!-- <ToggleSwitch v-model="checked" disabled /> -->
+      <RxInputRadio v-model="checked2" :options="[{ label: '1', value: 1 }, { label: '2', value: 2 }]" />
+    </div>
+    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
-    </div> -->
-    <div class="w-full px-10 bg-orange overflow-x-auto">
-      <RxContainer class="bg-pink">
-        <h1 class="ma-0">Hello</h1>
-      </RxContainer>
     </div>
   </div>
 </template>
