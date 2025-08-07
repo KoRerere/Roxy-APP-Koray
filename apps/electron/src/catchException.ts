@@ -1,4 +1,11 @@
 import { crashReporter, dialog } from "electron"
+delete process.env.HTTP_PROXY;
+delete process.env.HTTPS_PROXY;
+delete process.env.http_proxy;
+delete process.env.https_proxy;
+delete process.env.ALL_PROXY;
+delete process.env.all_proxy;
+
 
 // （不推荐）忽略 SSL 证书验证,让 axios 忽略 SSL 证书验证，绕过 UNABLE_TO_VERIFY_LEAF_SIGNATURE 错误
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'

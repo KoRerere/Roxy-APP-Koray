@@ -13,6 +13,7 @@ import { attachAxiosLogger } from './axiosLogger'
 export const httpClient = new HttpClient({
   // baseURL: 'https://lumitest.lumibrowser.com/',
   timeout: 15000,
+  proxy: false,
   // httpsAgent: agent,
   // adapter: 'fetch',
 })

@@ -26,19 +26,24 @@ const US_CONTINENT_CODES = ['NA', 'SA', 'EU']
 /** 备用的 IP 查询渠道 */
 const IP_QUERY_URLS = [
   'https://ip234.in/ip.json',
-  'https://ipwho.is',
-  'https://www.travel-eye.org/ip.json',
+  'https://pro.ip-api.com/json?fields=3207167&key=c1ulk9X5j8NKqTV',
+  'https://api.ipinfo.io/lite/me?token=bf04980da05946',
   'http://myip.ip123.us/ip.json',
+  'http://www.travel-eye.org/ip.json',
 ]
 
+
+
 async function getMapKey() {
-  let result = {}
+  let result
 
   for await (const url of IP_QUERY_URLS) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000) // 5秒超时
     try {
       result = await fetch(url, { signal: controller.signal }).then(res => res.json())
+      result.continent_code ||= result.continentCode
+      result.country_code ||= result.countryCode
       break
     }
     catch (error) {
@@ -48,6 +53,12 @@ async function getMapKey() {
     }
   }
 
+  // 如果获取不到，则默认走hz
+  if (!result) {
+    return 'hz'
+  }
+
+  // 如果获取到，则根据结果返回
   console.debug(`getMapKey result`, result)
   const { continent_code, country_code } = result as ProxyDetectionResult
   console.debug(`getMapKey ipInfo`, { continent_code, country_code })
@@ -66,7 +77,6 @@ async function getMapKey() {
 
   // 亚洲以外都走新加坡
   return 'sg'
-
 }
 
 /**

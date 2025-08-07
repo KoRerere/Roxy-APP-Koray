@@ -28,10 +28,10 @@ export async function setupModules() {
     await setupStore()
     // 启动 app 内置服务
     await setupAppServer()
-    // 启动 roxynet 服务
-    startRoxynet()
     // 启动 app
     await setupApp()
+    // 启动 roxynet 服务
+    startRoxynet()
   }
   catch (error) {
     console.error('setupModules', error)
