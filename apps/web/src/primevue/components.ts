@@ -3642,9 +3642,9 @@ export const components = {
       transitionDuration: '{transition.duration}',
     },
     tablist: {
-      borderWidth: '0 0 1px 0',
+      borderWidth: '0 0 0.5px 0',
       background: 'transparent',
-      borderColor: '{component.dropdown.divider}',
+      borderColor: '{colors.border.divider}',
     },
     tab: {
       background: 'transparent',

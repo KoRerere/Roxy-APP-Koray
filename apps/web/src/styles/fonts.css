@@ -63,7 +63,56 @@
 /** Archivo */
 @font-face {
   font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-Black.ttf');
+  font-weight: 900;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-ExtraBold.ttf');
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: 'Archivo';
   src: url('/fonts/Archivo/Archivo-Bold.ttf');
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-SemiBold.ttf');
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-Medium.ttf');
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-Regular.ttf');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-Light.ttf');
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-ExtraLight.ttf');
+  font-weight: 200;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-Thin.ttf');
+  font-weight: 100;
 }
 
 /** DM Mono */

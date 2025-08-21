@@ -88,7 +88,7 @@ function oldFieldsFormat() {
   <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :title="$t('编辑窗口')" />
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
-      <div class="h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
+      <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>

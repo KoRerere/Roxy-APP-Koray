@@ -5,13 +5,15 @@ interface TagProps {
   icon?: SvgNames
   label?: string | number
   disabled?: boolean
+  readonly?: boolean
+  tooltip?: string
 }
 
 defineProps<TagProps>()
 </script>
 
 <template>
-  <div class="flex items-center rx-tag" :class="{ 'icon-only': !label, 'disabled': disabled }">
+  <div v-tooltip.top="tooltip" class="flex items-center rx-tag" :class="{ 'icon-only': !label, 'disabled': disabled, 'readonly': readonly }">
     <RxSvgIcon v-if="icon" class="pointer-events-none" :name="(icon as SvgNames)" :size="14" />
     <div v-if="label" class="select-none pointer-events-none rx-tag-label">
       {{ label }}
@@ -36,10 +38,15 @@ defineProps<TagProps>()
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 
-  &:not(.disabled):hover {
+  &:not(.disabled):not(.readonly):hover {
     .rx-tag-label {
       color: var(--component-tag-text-hover, #343a3d);
     }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   &.icon-only {

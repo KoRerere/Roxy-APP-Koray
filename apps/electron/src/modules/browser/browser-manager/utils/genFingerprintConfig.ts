@@ -428,6 +428,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         return
       }
 
+      const proxyByPassList = winInfo.proxyByPassList?.length ? winInfo.proxyByPassList : store.ipBlackList
+
       return {
         // 代理类型 http https,socks5
         // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
@@ -441,7 +443,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         // 密码，选填
         password: isUseSystemProxy ? winInfo.dirId : proxyPassword,
         // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
-        proxyByPassList: store.ipBlackList?.join?.(';'),
+        proxyByPassList: proxyByPassList?.join?.(';'),
       }
       // $LOG(`newData.fproxy.ipBlackList`, $config.userConfig?.ipBlackList?.join?.(';'))
       // }

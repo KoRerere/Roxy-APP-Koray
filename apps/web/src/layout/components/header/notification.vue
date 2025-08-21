@@ -177,7 +177,7 @@ function showAcceptInvitationDialog(item: Message) {
           <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
-          <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
+          <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px] !border-[var(--colors-border-border-subtle)]', activeBar: '!h-[2px]' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />

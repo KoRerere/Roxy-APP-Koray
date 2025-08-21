@@ -47,17 +47,17 @@ function onChange() {
   <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
-        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
+        <label v-if="type === 'radio'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>
           <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop @change="onChange" />
           <span>{{ item.label }}</span>
         </label>
 
-        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
+        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>
           <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
 
-        <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">
+        <div v-if="type === 'default'" :class="menu.item" @click="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
           <span class="flex-1">{{ item.label }}</span>
           <RxSvgIcon v-if="item.items" :class="item.iconClass" name="base/rx_ic_chevron_right" />
@@ -67,15 +67,13 @@ function onChange() {
   </ContextMenu>
 </template>
 
-<style lang="scss" module="classes">
-.context {
-  &-item {
-    display: flex;
-    align-items: center;
-    padding: 8px var(--spacing-md, 6px) 8px 10px !important;
-    gap: var(--spacing-md, 6px) !important;
-    width: 100%;
-    font-size: 13px;
-  }
+<style lang="scss" module="menu">
+.item {
+  display: flex;
+  align-items: center;
+  padding: 8px var(--spacing-md, 6px) 8px 10px !important;
+  gap: var(--spacing-md, 6px) !important;
+  width: 100%;
+  font-size: 13px;
 }
 </style>

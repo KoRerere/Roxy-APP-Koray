@@ -21,7 +21,6 @@ interface PluginMap {
 
 const [showToast, onlyErrorToast] = useResponseToast()
 const dialog = useDialog()
-
 const needsync = defineModel('needsync')
 
 const categories = ref<CategoryItem[]>([])

@@ -143,16 +143,16 @@
 	--component-dropdown-bg-active: var(--primitives-blue-600);
 	--component-dropdown-text-active: var(--primitives-netural-0);
 	--component-dropdown-icon-active: var(--primitives-netural-0);
-	--component-scrollbar-bg: var(--primitives-netural-800);
-	--component-scrollbar-border: var(--colors-border-border-subtle);
-	--component-scrollbar-indicator: var(--primitives-netural-600);
-	--component-marquee-indicator: var(--primitives-netural-700);
-	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-skeleton-bg: var(--primitives-netural-800);
 	--component-collapse-bg: var(--primitives-netural-800);
 	--component-progress-bg: var(--primitives-netural-700);
 	--component-progress-success: var(--primitives-green-400);
 	--component-progress-info: var(--primitives-blue-400);
+	--component-scrollbar-bg: var(--primitives-netural-800);
+	--component-scrollbar-border: var(--colors-border-border-subtle);
+	--component-scrollbar-indicator: var(--primitives-netural-600);
+	--component-marquee-indicator: var(--primitives-netural-700);
+	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-button-primary-bg: var(--primitives-blue-500);
 	--component-button-primary-bg-hover: var(--primitives-blue-400);
 	--component-button-primary-text: var(--primitives-netural-0);
@@ -222,7 +222,6 @@
 	--component-rainbow-Green: var(--primitives-green-500);
 	--component-rainbow-Blue: var(--primitives-blue-500);
 	--component-rainbow-Netural: var(--primitives-netural-600);
-	--pattern-Color: #ffffff;
 	--pattern-editor-key: #79c0ff;
 	--pattern-editor-value: #a5d6ff;
 	--pattern-editor-btn-bg: var(--primitives-netural-700);
@@ -237,16 +236,16 @@
 	--pattern-editor-bg: var(--primitives-netural-800);
 	--pattern-editor-code: var(--primitives-netural-0);
 	--pattern-dashboard-card-bg: var(--colors-alpha-alpha-white-5);
-	--pattern-topnav-space-bg-hover: var(--primitives-netural-800);
-	--pattern-topnav-space-avatar-bg: var(--primitives-netural-700);
-	--pattern-topnav-space-avatar-text: var(--primitives-netural-0);
-	--pattern-topnav-space-emoji-bg: var(--primitives-netural-800);
 	--pattern-drawer-bg-create-btn: var(--colors-alpha-alpha-white-10);
 	--pattern-drawer-bg-create-btn-active: var(--colors-background-bg-brand);
 	--pattern-drawer-bg-create-icon: var(--primitives-netural-0);
 	--pattern-drawer-bg-create-icon-active: var(--primitives-netural-0);
 	--pattern-drawer-bg: var(--colors-background-bg-app);
 	--pattern-drawer-border: var(--colors-border-border-inactive);
+	--pattern-topnav-space-bg-hover: var(--primitives-netural-800);
+	--pattern-topnav-space-avatar-bg: var(--primitives-netural-700);
+	--pattern-topnav-space-avatar-text: var(--primitives-netural-0);
+	--pattern-topnav-space-emoji-bg: var(--primitives-netural-800);
 	--pattern-profiles-input-bg: var(--primitives-netural-700);
 	--pattern-profiles-input-border: var(--primitives-netural-600);
 	--pattern-syncbar-dropdown-bg: var(--pattern-syncbar-bg);
@@ -305,6 +304,23 @@
 	--pattern-pay-mood-magenta: #e60eff;
 	--pattern-pay-mood-blue: #7cfbff;
 	--pattern-pay-mood-cyan: #6f47ff;
+	--pattern-pay-wallet-bg-start: #150c18;
+	--pattern-pay-wallet-bg-end: #233959;
+	--pattern-pay-wallet-cover-bg: #131313;
+	--pattern-pay-wallet-cover-border: #4d4d4d;
 	--pattern-pay-gradient-selected-start: var(--primitives-blue-800);
-	--pattern-pay-gradient-selected-end: var(--colors-background-bg-action)
+	--pattern-pay-gradient-selected-end: var(--colors-background-bg-action);
+	--pattern-wallet-founding-bg-tint: #271801;
+	--pattern-wallet-founding-bg-shade: #b66c0a;
+	--pattern-wallet-founding-border-tint: #fdaf49;
+	--pattern-wallet-founding-border-shade: #442904;
+	--pattern-wallet-vip-bg-tint: #0d0e0f;
+	--pattern-wallet-vip-bg-shade: #384374;
+	--pattern-wallet-vip-border-tint: #a4acd2;
+	--pattern-wallet-vip-border-shade: #3c405a;
+	--pattern-wallet-prime-border-orange: #ff8b64;
+	--pattern-wallet-prime-border-blue: #4161ff;
+	--pattern-wallet-prime-border-purple: #e65cff;
+	--pattern-wallet-cover: #131313;
+	--pattern-wallet-cover-border: #4d4d4d
 }

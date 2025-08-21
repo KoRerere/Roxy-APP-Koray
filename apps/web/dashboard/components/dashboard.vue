@@ -151,9 +151,14 @@ onBeforeMount(() => {
         <div class="sort-number">
           {{ windowInfo.workspaceName?.slice(0, 3).toLocaleUpperCase() }}-{{ windowInfo.windowSortNum }}
         </div>
-        <div class="window-name">
-          {{ windowInfo.windowName }}
-        </div>
+        <RxTooltip>
+          <div class="window-name ellipsis-1">
+            {{ windowInfo.windowName }}
+          </div>
+          <template #content>
+            <div class="text-white max-w-200px">{{ windowInfo.windowName }}</div>
+          </template>
+        </RxTooltip>
       </div>
       <div class="time">
         {{ timeZone }} (GMT{{ offsetHours }}) <span class="now">{{ now }}</span>
@@ -323,6 +328,7 @@ onBeforeMount(() => {
       font-style: normal;
       font-weight: 600;
       line-height: var(--Line-Height-text-xs, 16px);
+      max-width: 250px;
       /* 114.286% */
     }
   }

@@ -133,7 +133,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="target" class="inline-block">
+  <div ref="target" class="inline-block" v-bind="$attrs">
     <slot :hide="hide" />
   </div>
   <Teleport to="body" v-if="show">

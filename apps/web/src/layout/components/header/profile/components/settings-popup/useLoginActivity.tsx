@@ -4,6 +4,7 @@ import type { SettingsModule } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import { isWindows } from "/@/utils";
 import LoginDevices from "../login-devices.vue";
+import type { UserGetLoginInfoListData } from "@roxy/backend-api";
 
 const deviceInfo: Recordable = ref({});
 
@@ -25,10 +26,12 @@ requestIdleCallback(() => {
 });
 
 export function useLoginActive() {
-	async function getLoginActivityPanels(): Promise<SettingsModule> {
-		const { data: loginHistory } = await API.base.userGetLoginInfoList();
+	const currentDevice = ref<UserGetLoginInfoListData['data'][number]>();
+	const historicalDevices = ref<UserGetLoginInfoListData['data']>([]);
 
-		const currentDevice =
+	const getLoginActivityData = async () => {
+		const { data: loginHistory } = await API.base.userGetLoginInfoList();
+		const __currentDevice =
 			loginHistory.find(
 				(item) => item.deviceId === deviceInfo.value.deviceId,
 			) ||
@@ -38,9 +41,15 @@ export function useLoginActive() {
 					decodeURIComponent(deviceInfo.value.deviceName),
 			);
 
-		const historicalDevices = loginHistory.filter(
-			(item) => item !== currentDevice,
+		historicalDevices.value = loginHistory.filter(
+			(item) => item !== __currentDevice,
 		);
+
+		currentDevice.value = __currentDevice;
+	}
+
+	async function getLoginActivityPanels(): Promise<SettingsModule> {
+		await getLoginActivityData();
 
 		return {
 			title: $t("登录历史"),
@@ -52,23 +61,23 @@ export function useLoginActive() {
 						{
 							name: "currentDevice",
 							text: () => (
-								<LoginDevices devices={[currentDevice || deviceInfo.value]} />
+								<LoginDevices devices={reactive([currentDevice.value || deviceInfo.value])} isEdit={true} onChange={getLoginActivityData} />
 							),
 						},
 					],
 				},
-				...(historicalDevices.length
+				...(historicalDevices.value.length
 					? [
-							{
-								subtitle: $t("历史设备"),
-								items: [
-									{
-										name: "historicalDevices",
-										text: () => <LoginDevices devices={historicalDevices} />,
-									},
-								],
-							},
-						]
+						{
+							subtitle: $t("历史设备"),
+							items: [
+								{
+									name: "historicalDevices",
+									text: () => <LoginDevices devices={historicalDevices.value} />,
+								},
+							],
+						},
+					]
 					: []),
 			],
 		};

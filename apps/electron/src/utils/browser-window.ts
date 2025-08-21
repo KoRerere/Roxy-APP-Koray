@@ -81,7 +81,7 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
       for (const key in headers) {
         request.headers.set(key, headers[key])
       }
-      const targetUrl = request.url.replace(localUrl, getBaseUrl())
+      const targetUrl = request.url.replace(localUrl, getBaseUrl())//将web的虚拟地址替换为真实地址
 
       if (isPackaged) {
         console.debug('request.url', targetUrl)

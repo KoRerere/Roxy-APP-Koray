@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
+import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import EditProxy from '/@/views/agent/create/quick.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -6,29 +9,26 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { concurrentControl, setOperationLoading, setRowsLoading, strConcat } from '/@/utils'
+import { concurrentControl, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
-import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import { useColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import { ProxyCheckStatus } from '/@/enums'
 
 const router = useRouter()
 const role = useRoleStore()
+const confirm = useConfirm()
+const drawerInstance = useDrawer()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const [showToast, onlyErrorToast] = useResponseToast()
-const confirm = useConfirm()
-const drawerInstance = useDrawer()
 const { showSimpleDialog } = useSimpleDialog()
 
-const tableRef = useTemplateRef('proxyTable')
+const tableRef = useTemplateRef('listtable')
 const filtersMenu = ref()
 const dataList = ref()
 
@@ -147,6 +147,7 @@ function onRemark(data: any) {
         value: data.remark,
         props: {
           placeholder: $t('请输入备注'),
+          rows: 6,
         }
       },
     ],
@@ -216,16 +217,19 @@ function onRefreshTable() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
-    </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
+      <RyTable ref="listtable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
         :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
         <template #filter-after>
-          <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+          <div class="w-full flex gap-1.5 items-start">
+            <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+            <div class="flex items-center gap-1.5">
+              <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
+              <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+              <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
+            </div>
+          </div>
         </template>
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
@@ -236,21 +240,6 @@ function onRefreshTable() {
               </div>
             </template>
           </CustomEmpty>
-        </template>
-
-        <template #proxy="{ data }">
-          <div class="flex flex-col gap-1">
-            <div class="proxy-host">
-              <span>{{ strConcat(data.protocol?.toLocaleLowerCase(), '://') }}</span>
-              <span>{{ data.host }}</span>
-              <span>{{ strConcat(':', data.port) }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 ip-type">
-              <span>{{ data.ipType }}</span>
-              <Divider class="!ma-0" layout="vertical" />
-              <span>{{ data.proxyUserName }}</span>
-            </div>
-          </div>
         </template>
         <template #outbound="{ data }">
           <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data.id]" :is-loading="data.loadingOperationMap?.test" />
@@ -281,14 +270,6 @@ function onRefreshTable() {
 </template>
 
 <style lang="scss" scoped>
-.proxy-host {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-family: 'JetBrains Mono';
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
-}
-
 .note {
   &-header {
     color: var(--colors-text-text-primary, #FAFAFA);
@@ -313,13 +294,5 @@ function onRefreshTable() {
       color: var(--colors-text-text-brand, #11A3FD) !important;
     }
   }
-}
-
-.ip-type {
-  color: var(--colors-text-text-tertiary, #a3a9ad);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

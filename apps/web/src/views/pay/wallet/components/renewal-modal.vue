@@ -1,65 +1,51 @@
 <script setup lang="ts">
+import Detail from '/@/views/pay/subscribe/components/detail.vue';
+import Duration from '/@/views/pay/subscribe/components/duration.vue';
+import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
 import currency from 'currency.js'
 import { addDays, format } from "date-fns";
 import { $t } from '/@/locales';
-import { useUserStore } from '/@/stores/user';
-import { PayWay } from '/@/enums/pay';
-import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
-import Blance from '/@/views/pay/subscribe/components/blance.vue'
-import Duration from '/@/views/pay/subscribe/components/duration.vue';
-import Detail from '/@/views/pay/subscribe/components/detail.vue';
-import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import { API } from '/@/api';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleLocale } from '/@/stores/locale';
-
+import { useDialog } from '/@/hooks/useDialog'
+import { useUserStore } from '/@/stores/user';
+import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
+import { SubLevelEnum } from '/@/enums/pay';
 
 const dialogRef = inject<any>('dialogRef')
+const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
+const [showModal] = useDialog()
 
-const isAuto = ref(false)
 const selectedDuration = ref()
-const selectedPayway = ref()
-const disabledMethods = ref<PayWay[]>([])
 const monthAmount = ref(0)
 const loading = ref(false)
 
-const paywayList = computed(() => {
-  return Object.values(PayWay)
-    .map(item => ({ value: item, discount: item === PayWay.Balance ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
-})
+const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
 const allDiscount = computed(() => {
-  const { discount, walletDiscount } = userPayInfo.value!
+  const { discount } = userPayInfo.value!
   const { discount: durationDiscount } = selectedDuration.value || {}
 
   return Object.fromEntries([
     ['discount', discount, true],
-    ['walletDiscount', walletDiscount, selectedPayway.value === PayWay.Balance],
     ['durationDiscount', durationDiscount, !!durationDiscount],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
 })
 
-//钱包支付立减金额
-const walletAmount = computed(() => {
-  // 钱包暂不支持自动续费，所以需要减去 autoRenewAmount，让钱包显示正确的优惠金额
-  const { walletDiscount, autoRenewDiscount, ...otherDiscount } = allDiscount.value
-  const discount: number[] = Object.values({ ...otherDiscount, walletDiscount: userPayInfo.value.walletDiscount })
-  const _amount = currency(monthAmount.value).multiply(discountCalculate(discount)).value
-  return currency(monthAmount.value).multiply(discountCalculate(Object.values(otherDiscount))).subtract(_amount).multiply(selectedDuration.value?.month ?? 1).value
-})
+const disabled = computed(() => loading.value || !selectedDuration.value)
 
-const totalAmount = computed(() => currency(monthAmount.value).multiply(discountCalculate(Object.values(allDiscount.value))).multiply(selectedDuration.value?.month ?? 1).value)
-
-const disabled = computed(() => loading.value || !selectedDuration.value || (selectedPayway.value === PayWay.Balance && totalAmount.value > userPayInfo.value?.balance))
+const totalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).multiply(discountCalculate(Object.values(allDiscount.value))).value)
+const originalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value)
+const discountAmount = computed(() => currency(originalAmount.value).subtract(totalAmount.value).value)
 
 const detail = computed(() => {
-  const { purchaseWindowCount, freeWindowCount, subscriptionLogDays } = userPayInfo.value!
-  const { discount, walletDiscount, durationDiscount } = allDiscount.value
-
-  const originalAmount = currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value
+  const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
+  const { discount, durationDiscount } = allDiscount.value
 
   const profileCount = currency(purchaseWindowCount, { precision: 0, symbol: '' })
   const freeCount = currency(freeWindowCount, { precision: 0, symbol: '' })
@@ -104,26 +90,19 @@ const detail = computed(() => {
           class: '!color-[#FC9D12]',
           visible: !!durationDiscount
         },
-        {
-          label: $t('钱包支付优惠'),
-          class: '!color-[#FC9D12]',
-          value: currency(walletAmount.value, { symbol: '-$' }).format(),
-          visible: !!walletDiscount
-        },
       ].filter(item => item.visible !== false)
     },
     {
       items: [
         {
           label: $t('套餐原价'),
-          value: currency(originalAmount).format(),
-          visible: originalAmount !== totalAmount.value,
+          value: currency(originalAmount.value).format(),
+          visible: originalAmount.value !== totalAmount.value,
           slot: 'oldprice'
         },
         {
           label: $t('实际价格'),
           value: currency(totalAmount.value).format(),
-          diffValue: currency(originalAmount).subtract(totalAmount.value).value,
           slot: 'price'
         },
       ].filter(item => item.visible !== false)
@@ -145,48 +124,50 @@ async function getMonthlyAmount() {
   loading.value = true
   const { code, data, msg } = await API.pay.userCalculateWindowMonthsPriceList({ windowCount: userPayInfo.value.purchaseWindowCount })
   loading.value = false
+  onlyErrorToast(code, msg)
   if (code === 0) {
     monthAmount.value = data
-    nextTick(() => {
-      querySupportPayway()
-    })
   }
-}
-
-async function querySupportPayway() {
-  loading.value = true
-  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(totalAmount.value) })
-  loading.value = false
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-  const supportPayway = Object.values(data).flat().concat(PayWay.Balance) as PayWay[]
-  disabledMethods.value = Object.values(PayWay).filter(item => !supportPayway.includes(item))
-
-  if (!supportPayway.includes(selectedPayway.value)) {
-    selectedPayway.value = supportPayway[0] !== PayWay.Card ? PayWay.Balance : supportPayway[0]
-  }
-}
-
-function onChange() {
-  nextTick(() => {
-    querySupportPayway()
-  })
 }
 
 async function confirm() {
-  await _onConfirm.value?.({
-    isAuto: isAuto.value,
-    payType: selectedPayway.value,
-    orderNo: userPayInfo.value!.orderNo,
-    subscriptionMonths: selectedDuration.value.month
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(WalletPayModal, {
+        amount: totalAmount.value,
+        originalAmount: originalAmount.value,
+        discountAmount: discountAmount.value,
+        onClose: hideModal,
+        onConfirm: async ({ payType, isAuto }) => {
+          await _onConfirm.value?.({
+            payType,
+            isAuto,
+            orderNo: userPayInfo.value!.orderNo,
+            subscriptionMonths: selectedDuration.value.month
+          })
+          close()
+        }
+      }),
+    },
   })
-  close(false)
 }
 
-function close(isCancel: boolean) {
+function close(isCancel = false) {
   dialogRef.value.close()
   if (isCancel)
     _onCancel.value?.()
+}
+
+function onUpgradePlan() {
+  if (isExpired.value) {
+    router.push({ name: 'subscribe-plan' })
+  } else {
+    router.push({ name: 'upgrade-plan' })
+  }
+  close()
 }
 </script>
 
@@ -199,13 +180,27 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex mt-6 gap-6">
       <div class="flex-1 flex flex-col gap-8">
+        <ItemBlock :title="$t('当前套餐')">
+          <div>
+            <div class="plan">{{ $t('{count} 窗口', {
+              count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format()
+            }) }}</div>
+            <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="$t('若要增加窗口上限，请{terms}{text}新套餐。', { terms: '{terms}', text: '{text}' })" scope="global">
+              <template #terms>
+                <a class="cursor-pointer terms-link" target="_blank" @click="onUpgradePlan">{{ $t('单击此处') }}</a>
+              </template>
+              <template #text>
+                {{ isExpired ? $t('购买') : $t('升级') }}
+              </template>
+            </i18n-t>
+          </div>
+        </ItemBlock>
         <ItemBlock :title="$t('选择续费时长')">
-          <Duration v-model="selectedDuration" :price="monthAmount" @change="onChange"></Duration>
+          <div class="flex flex-col gap-2.5">
+            <Duration v-model="selectedDuration" :price="monthAmount"></Duration>
+            <div v-if="!isExpired" class="help">{{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}</div>
+          </div>
         </ItemBlock>
-        <ItemBlock :title="$t('选择支付方式')">
-          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="paywayList" :disabledMethods="disabledMethods"></RxPaymentMethods>
-        </ItemBlock>
-        <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="totalAmount"></Blance>
       </div>
       <Detail class="w-80" :list="detail">
         <template #oldprice="{ item }">
@@ -219,9 +214,8 @@ function close(isCancel: boolean) {
             <div class="details-label">{{ item.label }}</div>
             <div>
               <div class="details-price">{{ item.value }}</div>
-              <div v-if="item.diffValue > 0" class="details-diffprice">{{ $t('节省 {value}', {
-                value:
-                  currency(item.diffValue).format()
+              <div v-if="discountAmount > 0" class="details-diffprice">{{ $t('节省 {value}', {
+                value: currency(discountAmount).format()
               }) }}</div>
             </div>
           </div>
@@ -250,6 +244,20 @@ function close(isCancel: boolean) {
   color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 20px;
   font-weight: 600;
+  line-height: normal;
+}
+
+.plan {
+  color: var(--colors-text-text-primary);
+  font-family: "DingTalk JinBuTi", Inter, sans-serif;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.help {
+  color: var(--colors-text-text-inactive);
+  font-family: Inter;
+  font-size: 12px;
   line-height: normal;
 }
 

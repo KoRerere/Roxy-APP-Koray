@@ -64,7 +64,10 @@ const updateApiKeys = useDebounceFn(async () => {
     onlyErrorToast(code, msg)
     if (code === 0) {
       // 开关或端口改变时 重启 API 服务
-      if (original.value.open !== apiConfig.value.open || original.value.port !== apiConfig.value.port) {
+      const { apiKey, open, port } = apiConfig.value
+      const { apiKey: originalApiKey, open: originalOpen, port: originalPort } = original.value
+
+      if (originalApiKey !== apiKey || originalOpen !== open || originalPort !== port) {
         electronAPI.send('app:restartAPIServer')
       }
       original.value = { ...apiConfig.value }
@@ -134,6 +137,7 @@ async function resetApiKey() {
     accept: async () => {
       apiConfig.value.apiKey = await window.electronAPI.send('util:genApiKey')
       updateApiKeys()
+      // window.electronAPI.send('app:saveSoftConfig', { apiKey: apiConfig.value.apiKey })
     },
   })
 }
@@ -155,7 +159,7 @@ onBeforeMount(() => {
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
+          <RxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">

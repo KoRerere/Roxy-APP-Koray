@@ -32,6 +32,12 @@ export enum OrderType {
   Exchange = "exchange",
   /** 赠送 */
   Gift = "gift",
+  /** 代理购买 */
+  ProxyPurchase = "proxy_purchase",
+  /** 代理退款 */
+  ProxyRefund = "proxy_refund",
+  /** 代理续费 */
+  ProxyRenew = "proxy_renew",
 }
 
 export const OrderTypeStr = {
@@ -59,6 +65,8 @@ export enum SubOrderType {
   Workspace_Member = "workspace_member",
   /** 降级 */
   Downgrade = "downgrade",
+  /** 代理 */
+  Proxy = "proxy",
 }
 
 export enum PaySubOrderType {
@@ -101,6 +109,8 @@ export enum PayIdentity {
   new = "new",
   /** 特邀用户 */
   invited = "invited",
+  /** 合作用户 */
+  agent = "agent",
 }
 
 export enum PurchaseType {
@@ -114,6 +124,8 @@ export enum PurchaseType {
   Profile = "profile",
   /** 工作空间和员工 */
   Workspace_Staff = "workspace_staff",
+  /** 代理 */
+  Proxy = "proxy",
 }
 
 export const PayIdentityStr = {
@@ -172,3 +184,26 @@ export const LogRetentionDays = {
   [SubLevelEnum.Business]: 30,
   [SubLevelEnum.Enterprise]: 60,
 } as Record<SubLevelEnum, number>
+
+export enum AutoRenewalStatus {
+  /** 关闭 */
+  Close = 0,
+  /** 开启 */
+  Open = 1,
+}
+
+export enum AutoRechargeStatus {
+  /** 关闭 */
+  Close = 0,
+  /** 开启 */
+  Open = 1,
+}
+
+export enum AutoRenewalPayStatus {
+  /** 未扣款 */
+  Unpaid = 0,
+  /** 扣款成功 */
+  Success = 1,
+  /** 扣款失败 */
+  Fail = 2,
+}

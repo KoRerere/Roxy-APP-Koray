@@ -1,10 +1,13 @@
 <script lang="ts" setup>
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RxAvatar from '/@/components/rx-avatar'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import Fuse from 'fuse.js'
 import { format } from 'date-fns'
-import { useSimpleDialog } from '/@/components/simplePopup'
+import { useDebounceFn } from '@vueuse/core'
 import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
+import { useSimpleDialog } from '/@/components/simplePopup'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props {
   currentFilter?: Record<string, any>
@@ -19,6 +22,8 @@ const emit = defineEmits(['filterChange'])
 const { showSimpleDialog } = useSimpleDialog()
 
 const menuRef = useTemplateRef('tmenu')
+const fuse = ref()
+const search = ref()
 const isAllProfiles = ref(true)
 const isChanged = ref(false)
 const isChildren = ref(false)
@@ -98,6 +103,11 @@ function inputPopup(data: any) {
   })
 }
 
+const onSearch = useDebounceFn(() => {
+  const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
+  subMenuOptions.value = [subMenuOptions.value[0], ...(!!search.value ? list : fuse.value._docs)]
+}, 300)
+
 function onRadioChose(item: any) {
   setInputFieldByInputKey(filtersMenu, item.parentName, 'value', item.value)
   menuRef.value?.hide()
@@ -116,8 +126,14 @@ async function openCheckbox(item: any) {
     const [options] = await Promise.all([item.getOptions(), sleep(20)])
     item._options = options
     isChildren.value = true
-    subMenuOptions.value = item._options
     selectedCategories.value = item.value?.map((it: any) => it.value)
+
+    if (!item.search) {
+      subMenuOptions.value = item._options
+    } else {
+      subMenuOptions.value = [{ search: true, placeholder: item.searchPlaceholder }, ...item._options]
+      fuse.value = new Fuse(item._options, { threshold: 0.3, keys: item.searchKeys || ['label'] })
+    }
     return
   }
   menuRef.value?.hide()
@@ -207,12 +223,12 @@ async function modifyFilter() {
   <div class="flex flex-1 justify-between">
     <div class="flex flex-1 items-center flex-wrap mr-2 gap-2">
       <div v-for="(item, index) in labels" :key="index" class="labels-item">
-        <RxSvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
+        <SvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
       <RxButton severity="secondary" size="xxs" :disabled="currentFilter?.disabledFilter" text @click="showMenu">
-        <RxSvgIcon name="base/rx_ic_filter" />
+        <SvgIcon name="base/rx_ic_filter" />
         <span v-if="!labels.length">{{ $t('筛选条件') }}</span>
       </RxButton>
     </div>
@@ -230,16 +246,21 @@ async function modifyFilter() {
   <TieredMenu ref="tmenu" popup :model="menuOptions" :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
-        <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
-          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
-          <div v-if="item.value.startsWith('u_')" class="flex items-center gap-2">
-            <RxAvatar :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
-            <span class="text-3.25">{{ item.label }}</span>
+        <template v-if="isChildren">
+          <div v-if="item.search" @click.stop class="w-full">
+            <TsFormInputText class="w-full" v-model="search" :placeholder="item.placeholder" @input="onSearch" />
           </div>
-          <span v-else class="ellipsis-1 text-3.25" :title="(item.label as string)">{{ item.label }}</span>
-        </label>
+          <label v-else class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
+            <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
+            <div v-if="item.value.startsWith('u_')" class="flex items-center gap-2">
+              <RxAvatar :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
+              <span class="text-3.25">{{ item.label }}</span>
+            </div>
+            <span v-else class="ellipsis-1 text-3.25" :title="(item.label as string)">{{ item.label }}</span>
+          </label>
+        </template>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
-          <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
+          <SvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
           <span class="text-3.25">{{ item.label }}</span>
         </div>
       </a>

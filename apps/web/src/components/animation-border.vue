@@ -1,5 +1,7 @@
 <script setup lang="ts">
 interface Props {
+  borderWidth?: number
+  borderRadius?: number
   deg?: number
   animation?: boolean
   animationDuration?: number
@@ -8,14 +10,18 @@ interface Props {
 }
 
 const {
+  borderWidth = 2,
+  borderRadius = 6,
   deg = 0,
   animation = true,
   animationDuration = 8,
-  bgColor = '#ffffff',
-  gradient = ['#12a3fc', '#ec51f7'],
+  bgColor = 'transparent',
+  gradient = ['#12a3fc', '#ec51f7', '#ec51f7'],
 } = defineProps<Props>()
 
-const [startColor, endColor] = gradient
+const [startColor, midColor, endColor] = gradient
+const _borderWidth = CSS.px(borderWidth).toString()
+const _borderRadius = CSS.px(borderRadius).toString()
 
 const cssVar = computed(() => ({
   '--angle': `${deg}deg`,
@@ -37,11 +43,11 @@ const cssVar = computed(() => ({
 }
 
 :where(.gradient) {
-  border: 2px solid transparent;
-  border-radius: 6px;
+  border: v-bind(_borderWidth) solid transparent;
+  border-radius: v-bind(_borderRadius);
   background:
     linear-gradient(v-bind(bgColor), v-bind(bgColor)) padding-box,
-    linear-gradient(var(--angle), v-bind(startColor), v-bind(endColor)) border-box;
+    linear-gradient(var(--angle), v-bind(startColor), v-bind(midColor), v-bind(endColor)) border-box;
 }
 
 .animation {

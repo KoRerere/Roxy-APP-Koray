@@ -28,6 +28,7 @@ export async function createSynchronizerWindow() {
     roxyWindowId: ROXY_SYNC_CONTROL_WINDOW_ID,
     width: 640,
     height: 560,
+    maxWidth: 750,
     resizable: false,
     frame: false,
     alwaysOnTop: true,

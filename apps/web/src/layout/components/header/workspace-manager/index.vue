@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import RxAvatar from "/@/components/rx-avatar";
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { useDialog } from '/@/hooks/useDialog';
 import { $t } from '/@/locales';
@@ -9,11 +10,14 @@ const [showModal] = useDialog()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 
-const avatarStyle = computed(() => {
-  return currentWorkspace.value?.workspacePicture ? {} : {
-    backgroundColor: 'var(--pattern-topnav-space-avatar-bg)',
-    color: '#fff',
-    fontSize: '14px'
+const avatarProps = computed(() => {
+  const { workspacePicture, workspaceName } = currentWorkspace.value || {}
+  return {
+    name: workspacePicture || workspaceName?.slice(0, 2),
+    color: workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+    size: 26,
+    fontSize: workspacePicture ? 16 : 14,
+    radius: '6px',
   }
 })
 
@@ -35,7 +39,7 @@ async function showWorkspaceManager() {
 
 <template>
   <div class="workspace-manager" @click="showWorkspaceManager">
-    <Avatar :label="currentWorkspace?.workspacePicture || currentWorkspace?.workspaceName?.slice(0, 2)" class="workspace-icon-small" :style="avatarStyle" />
+    <RxAvatar v-bind="avatarProps" />
     <div class="text-3.5">{{ currentWorkspace?.workspaceName }}</div>
     <RxSvgIcon name="base/rx_ic_chevron_right" :size="12" />
   </div>
@@ -48,22 +52,5 @@ async function showWorkspaceManager() {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-}
-
-.workspace-icon-small {
-  display: flex;
-  align-items: center;
-  width: 26px;
-  height: 26px;
-  text-transform: uppercase;
-  color: #FFF;
-  text-align: center;
-  font-family: "JetBrains Mono";
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 14px;
-  /* 153.846% */
-  letter-spacing: -0.26px;
 }
 </style>

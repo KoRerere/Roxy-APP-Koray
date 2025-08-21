@@ -1,29 +1,28 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
-import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import RxButton from '/@/components/rx-button'
+import WorkspaceForm from './workspace-form.vue'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
-import RxButton from '/@/components/rx-button'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { Role } from '/@/enums'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import WorkspaceForm from './workspace-form.vue'
 import { copyText, showPageLoading } from '/@/utils'
+import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 
 const props = defineProps<{
   workspaceInfo: UnwrapRowType<UserGetWorkspaceListListData>
 }>()
 
 const emit = defineEmits<{
-  delete: [],
+  delete: [{ isCurrentWorkspace: boolean, id: number }],
   save: [],
   leave: [{ isCurrentWorkspace: boolean }],
 }>()
@@ -43,20 +42,12 @@ const errorMessage = ref('')
 const workspaceInfo = ref({ ...props.workspaceInfo })
 const isOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
 
-// watch(currentWorkspace, () => {
-//   workspaceInfo.value.id = currentWorkspace.value?.id
-//   workspaceInfo.value.workspacePicture = currentWorkspace.value?.workspacePicture
-//   workspaceInfo.value.workspaceName = currentWorkspace.value?.workspaceName
-//   workspaceInfo.value.maxWindowCount = currentWorkspace.value?.maxWindowCount
-//   workspaceInfo.value.workspaceDefault = currentWorkspace.value?.workspaceDefault
-// })
-
 function showMoreActions(event: MouseEvent) {
   moreActionPopoverRef.value?.toggle(event)
 }
 
 function copyWorkspaceName() {
-  copyText(workspaceInfo.value.workspaceName)
+  copyText(workspaceInfo.value.workspaceName!)
   toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
 }
 
@@ -66,19 +57,22 @@ function handleDeleteConfirm() {
     const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')!
 
     async function confirmDelete() {
-      const workspaceId = workspaceInfo.value.id
+      const workspaceId = workspaceInfo.value.id!
       // 先删除本地空间的浏览器数据
       await electronAPI.send('util:removeWorkspace', workspaceId)
-      const { code, msg } = await API.limit.userDelWorkspaceInfoCreate({
+      const { code, data, msg } = await API.limit.userDelWorkspaceInfoCreate({
         workspaceName: workspaceName.value,
         workspaceId,
       })
       if (code === 0) {
-        getWorkspaceList()
-        userStore.fetchUserInfo()
+        const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
+        if (!isCurrentWorkspace) {
+          getWorkspaceList()
+          userStore.fetchUserInfo()
+        }
         dialogRef.value.close()
         // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
-        emit('delete')
+        emit('delete', { isCurrentWorkspace, id: data })
       }
       else {
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
@@ -117,7 +111,7 @@ async function handleSaveChange() {
   if (errorMessage.value)
     return
 
-  const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
+  const { code, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value as any)
   if (code === 0) {
     getWorkspaceList()
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })

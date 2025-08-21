@@ -1,5 +1,6 @@
-<script lang="ts" setup>
-import { RxSvgIcon } from '/@/components/rx-icon/'
+<script lang="tsx" setup>
+import RxButton from '/@/components/rx-button'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { createDefaultObject, formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
@@ -8,15 +9,15 @@ import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useConfirm } from 'primevue/useconfirm'
-import { useCheckProxy } from '/@/views/agent/hooks'
+import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 
 import ProxyCreate from '/@/views/agent/create/quick.vue'
-import ProxyList from '/@/views/agent/list/quick.vue'
+import ProxyQuick from '/@/views/agent/quick.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
-import { ProfileModifyType, ProxyCheckStatus } from '/@/enums'
+import { ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from '../util';
 import PlatformIcon from '/@/views/account/list/platform-icon.vue';
 import ProxyTooltip from './proxy-tooltip.vue';
@@ -51,13 +52,16 @@ const OS_ICON: any = {
   android: 'platforms/rx_os_android',
 }
 
+const router = useRouter()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
+const { buyProxy } = useProxy()
 
+const proxyCss = useCssModule('proxy')
 const hasProxy = computed(() => data.proxyCategory !== 'noproxy')
 const isOpenBrowser = computed(() => openMessage?.[data.dirId]?.data?.percent === 100)
 
@@ -164,7 +168,7 @@ function getProxyModel() {
       command: async () => {
         const checkRes = await checkProxy(toRaw(data))
         batchTestShowToast(checkRes)
-        if (data.moduleId) {
+        if (data.moduleId && data.buyProxyType === ProxyType.resource) {
           API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
         }
         if (checkRes.checkStatus === ProxyCheckStatus.success) {
@@ -191,7 +195,7 @@ function getProxyModel() {
     {
       label: $t('编辑代理'),
       icon: 'base/rx_ic_edit',
-      visible: hasProxy.value && !role.isViewer,
+      visible: data.buyProxyType === ProxyType.resource && hasProxy.value && !role.isViewer,
       command: () => {
         if (data.isEncryptProxy) {
           showToast(-1, $t('该代理已加密无法编辑，如需更换，请先删除此代理或选择其他代理'))
@@ -209,6 +213,31 @@ function getProxyModel() {
       },
     },
     {
+      visible: role.isOwner,
+      separator: true,
+    },
+    {
+      label: $t('购买代理'),
+      icon: 'base/rx_ic_cart',
+      visible: role.isOwner,
+      command: () => {
+        buyProxy(orderInfo => {
+          router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo.orderNo } })
+        })
+      },
+      render: ({ item, btnPt }: any) => {
+        return <RxButton severity="secondary" text pt={btnPt}>
+          {{
+            default: () => <div class="flex items-center gap-2">
+              <RxSvgIcon name={item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
+              <span class="p-button-label">{item.label}</span>
+              <div class={`${proxyCss.dot}`}></div>
+            </div>
+          }}
+        </RxButton>
+      }
+    },
+    {
       visible: hasProxy.value && !role.isViewer,
       separator: true,
     },
@@ -223,20 +252,23 @@ function getProxyModel() {
           rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
           acceptProps: { label: $t('确认'), severity: 'danger' },
           accept: async () => {
-            const params = {
-              id: data.id,
-              dirId: data.dirId,
-              moduleId: 0, // 为 0 表示解除关联
-              proxyCategory: 'noproxy',
-              proxyMethod: 'custom',
-              ...createDefaultObject(clearProxyKeys, ''),
-            }
-            updateProfile(params, {
-              success: () => {
-                if (!data.openTime) Reflect.set(params, 'lastIp', '')
-                silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+            const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids: [data.id], type: ProfileModifyType.ProxyDelete })
+            onlyErrorToast(code, msg)
+            if (code === 0) {
+              const params = {
+                moduleId: 0, // 为 0 表示解除关联
+                proxyCategory: 'noproxy',
+                proxyMethod: 'custom',
+                buyProxyType: ProxyType.resource,
+                ...createDefaultObject(clearProxyKeys, ''),
               }
-            })
+              if (!data.openTime) {
+                Reflect.set(params, 'lastIp', '')
+              } else {
+                Reflect.deleteProperty(params, 'lastIp')
+              }
+              silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+            }
           }
         })
       },
@@ -370,9 +402,9 @@ function chooseProxy(proxyData: Record<string, any>) {
     title: $t('为[{workspaceName}-{uid}]选择代理', { workspaceName, uid: data.windowSortNum }),
     dismissable: false,
     slots: {
-      container: () => h(ProxyList, {
+      container: () => h(ProxyQuick, {
         data: proxyData,
-        onConfirm: ({ id: moduleId, proxyCategory, protocol, ...formData }: any) => {
+        onConfirm: ({ id: moduleId, proxyCategory, protocol, proxyProviderId, ...formData }: any) => {
           const { id, dirId } = data
           updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
             success: () => silentUpdateProxy(data, {
@@ -381,6 +413,7 @@ function chooseProxy(proxyData: Record<string, any>) {
               protocol,
               proxyCategory: proxyCategory || protocol,
               proxyMethod: 'choose',
+              buyProxyType: proxyProviderId ? ProxyType.buy : ProxyType.resource,
             }, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()
@@ -463,6 +496,15 @@ async function updateProfile(params: any, options?: Record<string, any>) {
     </div>
   </div>
 </template>
+
+<style module="proxy">
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--colors-background-bg-error);
+}
+</style>
 
 <style lang="scss" scoped>
 $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),

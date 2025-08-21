@@ -38,10 +38,12 @@ async function onSubmit(formData: any) {
     <div v-if="content" class="content">{{ content }}</div>
     <TsForm id="simpleform" :inputs="inputs" @submit="onSubmit" />
     <component v-if="afterRender" :is="afterRender" />
-    <div class="flex justify-end items-center self-stretch gap-3">
-      <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton size="sm" :label="$t('保存')" type="submit" form="simpleform" :loading="loading" />
-    </div>
+    <slot name="footer">
+      <div class="flex justify-end items-center self-stretch gap-3">
+        <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
+        <RxButton size="sm" :label="$t('保存')" type="submit" form="simpleform" :loading="loading" />
+      </div>
+    </slot>
   </div>
 </template>
 

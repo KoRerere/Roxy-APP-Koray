@@ -82,9 +82,10 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         meta: {
           title: $t("代理资源"),
           icon: "base/rx_ic_internet",
+          newBadge: 'base/new_badge',
           roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
         },
-        component: () => import("/@/views/agent/list"),
+        component: () => import("/@/views/agent"),
       },
       {
         path: "create",
@@ -221,7 +222,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
     name: "trial-plan",
     path: "trial-plan",
     meta: {
-      title: $t("7 天免费试用"),
+      title: $t('{day} 天免费试用', { day: 7 }),
       icon: "base/rx_ic_wallet",
       hideInMenu: true,
       roles: [Role.OWNER],

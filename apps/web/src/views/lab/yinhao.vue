@@ -1,11 +1,9 @@
 <script setup lang="tsx">
-import PlanModal from '../pay/wallet/components/plan-success.vue'
-import BalanceModal from '../pay/wallet/components/balance-success.vue'
-import { motion } from 'motion-v';
 import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useDialog } from '/@/hooks/useDialog'
+import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -16,28 +14,32 @@ function open1() {
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!bg-transparent !border-none !shadow-none",
-      content: "!pa-20",
-      mask: "!backdrop-blur-md",
+      root: "!border-none !shadow-none rounded-lg",
+      // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: () => <PlanModal />,
+      container: () => <div></div>
     },
   })
 }
 
 function open2() {
+  const data = {
+    endTime: "2025-08-11 16:04:06",
+    orderAmount: 6,
+    orderNo: "175489584640630090",
+    payId: "rybda4b969-014e-4952-811b-a07034222b8d",
+    payType: "USDT",
+    payUrl: "TMvCmCtz2Chayje3igsFbWkzo8prNQo7fa",
+    realAmount: 6.03
+  }
+
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
-    pt: {
-      root: "!bg-transparent !border-none !shadow-none",
-      content: "!pa-20",
-      mask: "!backdrop-blur-md",
-    },
     slots: {
-      container: () => <BalanceModal />,
+      container: ({ hideModal }) => <WechatPayModal data={data} onClose={hideModal} />,
     },
   })
 }
@@ -157,11 +159,14 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
   id: `${index}`,
   code: index * 2,
   name: `mamba_${index}`,
+  faq: 'man!',
   category: `category_${index}`,
   quantity: 'actions',
 }))
 //============ form ========================
 import TsForm from './components/form/index.vue';
+import Test from '/@/views/lab/components/test.vue';
+import type { PayWay } from '/@/enums/pay';
 
 const inputs = [
   {
@@ -192,6 +197,15 @@ const inputs = [
       options: [
       ]
     }
+  },
+  {
+    name: 'mamba',
+    label: 'mamba',
+    value: 'x',
+    render: (props: any) => <Test {...props}></Test>,
+    resolver: (z: any) => z.string({
+      invalid_type_error: 'must 5 string man!'
+    }).min(5, 'must 5 string man!'),
   }
 ]
 
@@ -205,25 +219,65 @@ function noFormIdWcis() {
   formRef.value?.instance.submit()
 }
 //=========================================
-const checked = ref(false)
-const checked2 = ref(2)
 
-const router = useRouter()
+const wciscolumns = ref([
+  { key: 'name', title: 'Name' },
+  { key: 'country', title: 'Country' },
+  { key: 'company', title: 'Company' },
+  { key: 'representative', title: 'Representative' },
+])
+
+const wcisdatalist = Array.from({ length: 5 }, (_, index) => ({
+  id: `${index ** 2}`,
+  name: `mamba_${index}`,
+  country: `country_${index}`,
+  company: `company_${index}`,
+  representative: `representative_${index}`,
+}))
+
+const wcisRows = (data: any) => {
+  return {
+    'p-disabled': data.id === '0',
+  }
+}
+
+
+const isDuplicate = ref(false)
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <RxButton label="open1" @click="open1"></RxButton>
+    <RxButton label="open2" @click="open2"></RxButton>
+
+
+    <RxCheckbox v-model="isDuplicate" input-id="wrap" binary />
+    <!-- <RxButton label="exportText" @click="exportText"></RxButton> -->
+    <!-- <RxButton label="exportCSV" @click="exportCSV"></RxButton> -->
+    <!-- <DataTable :value="datalist.slice(0, 3)">
+      <Column selection-mode="multiple">
+        <template #headercheckboxicon="slotProps">
+          {{ slotProps }}
+        </template>
+<template #rowcheckboxicon="{ checked }">
+          <SvgIcon v-if="checked" name="base/rx_ic_delete" color="#ffffff" />
+        </template>
+</Column>
+<Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header"></Column>
+</DataTable> -->
+
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <div class="flex flex-col gap-2 pa-20 scale-150">
-      <!-- <ToggleSwitch v-model="checked" /> -->
-      <!-- <ToggleSwitch v-model="checked" disabled /> -->
+    <!-- <div class="flex flex-col gap-2 pa-20 scale-150">
       <RxInputRadio v-model="checked2" :options="[{ label: '1', value: 1 }, { label: '2', value: 2 }]" />
-    </div>
-    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+    </div> -->
+    <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
-    </div>
+    </div> -->
+    <!-- <div class="flex w-full h-full overflow-hidden">
+      <RyTable :columns="wciscolumns" :data-list="wcisdatalist" :row-class="wcisRows"></RyTable>
+    </div> -->
   </div>
 </template>
 

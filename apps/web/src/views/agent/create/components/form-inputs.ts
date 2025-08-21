@@ -4,13 +4,14 @@ import { useUserStore } from '/@/stores/user'
 import { findInputByName, getDictMap, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData, IPType } from '/@/utils'
 const userStore = useUserStore()
 
-export async function getInputs(data: any = {}) {
+export async function getInputs(data: Record<string, any> = {}) {
   const [showToast] = useResponseToast()
 
   const userConfig = await userStore.getUserConfig()
   const $dict_map = await getDictMap()
 
-  const proxyCategory: string = data.proxyCategory || data.protocol
+  const proxyCategory = (data.proxyCategory || data.protocol)?.split('/')[0]
+  const port = data.port?.split('/')[0] ?? null
 
   const inputs = reactive([
     {
@@ -68,7 +69,7 @@ export async function getInputs(data: any = {}) {
         {
           type: 'select',
           name: 'proxyCategory',
-          value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory,
+          value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory?.toLocaleUpperCase(),
           options: $dict_map.protocol,
           optionValue: 'value',
           filter: false,
@@ -97,7 +98,7 @@ export async function getInputs(data: any = {}) {
         {
           type: 'number',
           name: 'port',
-          value: data.port ?? null,
+          value: port,
           placeholder: $t('端口'),
           required: true,
           onBlur: async () => {

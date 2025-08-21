@@ -143,16 +143,16 @@
 	--component-dropdown-bg-active: var(--primitives-blue-500);
 	--component-dropdown-text-active: var(--primitives-netural-0);
 	--component-dropdown-icon-active: var(--primitives-netural-0);
-	--component-scrollbar-bg: var(--primitives-netural-50);
-	--component-scrollbar-border: var(--colors-border-border-inactive);
-	--component-scrollbar-indicator: var(--primitives-netural-200);
-	--component-marquee-indicator: var(--primitives-netural-100);
-	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-skeleton-bg: #ebf1f5;
 	--component-collapse-bg: var(--primitives-netural-100);
 	--component-progress-bg: var(--primitives-netural-200);
 	--component-progress-success: var(--primitives-green-500);
 	--component-progress-info: var(--primitives-blue-500);
+	--component-scrollbar-bg: var(--primitives-netural-50);
+	--component-scrollbar-border: var(--colors-border-border-inactive);
+	--component-scrollbar-indicator: var(--primitives-netural-200);
+	--component-marquee-indicator: var(--primitives-netural-100);
+	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-button-primary-bg: var(--primitives-blue-500);
 	--component-button-primary-bg-hover: var(--primitives-blue-600);
 	--component-button-primary-text: var(--primitives-netural-0);
@@ -222,7 +222,6 @@
 	--component-rainbow-Green: var(--primitives-green-500);
 	--component-rainbow-Blue: var(--primitives-blue-500);
 	--component-rainbow-Netural: var(--primitives-netural-300);
-	--pattern-Color: #ffffff;
 	--pattern-editor-key: #005cc5;
 	--pattern-editor-value: #032f62;
 	--pattern-editor-btn-bg: var(--primitives-netural-600);
@@ -237,16 +236,16 @@
 	--pattern-editor-bg: var(--primitives-netural-800);
 	--pattern-editor-code: var(--primitives-netural-0);
 	--pattern-dashboard-card-bg: rgba(0, 0, 0, 0.0200);
-	--pattern-topnav-space-bg-hover: var(--primitives-netural-100);
-	--pattern-topnav-space-avatar-bg: var(--primitives-netural-900);
-	--pattern-topnav-space-avatar-text: var(--primitives-netural-0);
-	--pattern-topnav-space-emoji-bg: var(--primitives-netural-100);
 	--pattern-drawer-bg-create-btn: var(--colors-alpha-alpha-black-10);
 	--pattern-drawer-bg-create-btn-active: var(--component-button-primary-bg);
 	--pattern-drawer-bg-create-icon: var(--primitives-netural-500);
 	--pattern-drawer-bg-create-icon-active: var(--primitives-netural-0);
 	--pattern-drawer-bg: var(--colors-background-bg-app);
 	--pattern-drawer-border: var(--colors-border-border-inactive);
+	--pattern-topnav-space-bg-hover: var(--primitives-netural-100);
+	--pattern-topnav-space-avatar-bg: var(--primitives-netural-900);
+	--pattern-topnav-space-avatar-text: var(--primitives-netural-0);
+	--pattern-topnav-space-emoji-bg: var(--primitives-netural-100);
 	--pattern-profiles-input-bg: var(--primitives-netural-25);
 	--pattern-profiles-input-border: var(--colors-border-border-subtle);
 	--pattern-syncbar-dropdown-bg: var(--pattern-syncbar-bg);
@@ -305,6 +304,23 @@
 	--pattern-pay-mood-magenta: #ff90ea;
 	--pattern-pay-mood-blue: #0094ff;
 	--pattern-pay-mood-cyan: #b8e2ff;
+	--pattern-pay-wallet-bg-start: #ffffff;
+	--pattern-pay-wallet-bg-end: #e0f1fe;
+	--pattern-pay-wallet-cover-bg: #131313;
+	--pattern-pay-wallet-cover-border: #131313;
 	--pattern-pay-gradient-selected-start: var(--primitives-blue-50);
-	--pattern-pay-gradient-selected-end: var(--colors-alpha-alpha-white-0)
+	--pattern-pay-gradient-selected-end: var(--colors-alpha-alpha-white-0);
+	--pattern-wallet-founding-bg-tint: #fdf0dd;
+	--pattern-wallet-founding-bg-shade: #fde1bd;
+	--pattern-wallet-founding-border-tint: #fbe2be;
+	--pattern-wallet-founding-border-shade: #dfab65;
+	--pattern-wallet-vip-bg-tint: #ffffff;
+	--pattern-wallet-vip-bg-shade: #a7afd2;
+	--pattern-wallet-vip-border-tint: #e3e6f7;
+	--pattern-wallet-vip-border-shade: #a7afd2;
+	--pattern-wallet-prime-border-orange: #fed1d1;
+	--pattern-wallet-prime-border-blue: #66ccff;
+	--pattern-wallet-prime-border-purple: #f462fe;
+	--pattern-wallet-cover: #131313;
+	--pattern-wallet-cover-border: #131313
 }

@@ -40,8 +40,13 @@ const columns = ref([
     key: 'profile',
     slot: 'profile',
     style: {
-      width: '50%'
+      width: '35%'
     }
+  },
+  {
+    title: $t('窗口名称'),
+    key: 'windowName',
+    slot: 'windowName',
   },
   {
     title: $t('状态'),
@@ -288,6 +293,9 @@ electronAPI.on('syncControl:start', startSync)
       <template v-else>
         --
       </template>
+    </template>
+    <template #windowName="{ data }">
+      <div class="ellipsis-1 max-w-150px" v-tooltip.top="{ value: data.windowName }">{{ data.windowName }}</div>
     </template>
     <template #actions="{ data }">
       <div class="flex gap-2.5 cursor-pointer">

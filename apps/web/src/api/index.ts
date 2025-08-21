@@ -67,7 +67,12 @@ const reGetGatewayConfig = debounce(() => {
   electronAPI.send('util:getGatewayConfig')
 }, 200)
 
+const reGetGatewayConfigByIpChange = debounce((ip: string) => {
+  electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
+}, 200)
+
 httpClient.instance.interceptors.response.use(async (response) => {
+  reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
   const code = response.data.code
   if (code === 405) {
     // 踢出登录

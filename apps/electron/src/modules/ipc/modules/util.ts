@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
 import { clearInstallerPath, decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getUTCOffsetHours } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
-import { getGatewayConfig } from '/@/api/getGatewayConfig'
+import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
 import { getPortPromise } from 'portfinder'
 import { app, globalShortcut } from 'electron'
@@ -94,6 +94,11 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   /** 获取网关配置 */
   ipcMain.on('util:getGatewayConfig', (event,) => {
     return getGatewayConfig()
+  })
+
+  /** 根据 ip 变化重新获取网关配置 */
+  ipcMain.on('util:reGetGatewayConfigByIpChange', (event, ip: string) => {
+    return reGetGatewayConfigByIpChange(ip)
   })
 
   /** 检查端口是否被占用 */

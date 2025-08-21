@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import RxAvatar from "/@/components/rx-avatar";
 import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api';
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap, Role } from '/@/enums';
@@ -26,8 +27,14 @@ const roleLabelMap = getRoleLabelMap()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast] = useResponseToast()
 
-function getAvatarStyle(workspacePicture: string) {
-  return workspacePicture ? {} : { backgroundColor: 'var(--pattern-topnav-space-avatar-bg)', color: '#fff', fontSize: '14px' }
+function getAvatarProps(item: Data) {
+  return {
+    name: item.workspacePicture || item.workspaceName?.slice(0, 2),
+    color: item.workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+    size: 48,
+    fontSize: item.workspacePicture ? 32 : 28,
+    radius: '6px',
+  }
 }
 
 function showEditWorkspaceDialog(workspaceInfo: Data) {
@@ -36,17 +43,17 @@ function showEditWorkspaceDialog(workspaceInfo: Data) {
     class: 'w-[520px]',
     slots: {
       default: ({ handleCancel }) => {
-        function handleLeaveWorkspace({ isCurrentWorkspace }: { isCurrentWorkspace: boolean }) {
-          // 如何离开的是当前空间，则需要进入其他空间
+        function handleLeaveWorkspace({ isCurrentWorkspace, id }: { isCurrentWorkspace: boolean, id?: number }) {
+          // 如果离开/删除的是当前空间，则需要进入其他空间
           handleCancel()
           if (isCurrentWorkspace) {
-            emit('enterWorkspace')
+            enterWorkspace({ id })
           }
         }
 
         return <WorkspaceSetting
           workspaceInfo={workspaceInfo}
-          onDelete={handleCancel}
+          onDelete={handleLeaveWorkspace}
           onSave={handleCancel}
           onLeave={handleLeaveWorkspace} />
       },
@@ -56,7 +63,7 @@ function showEditWorkspaceDialog(workspaceInfo: Data) {
 }
 
 async function enterWorkspace(item: Data) {
-  workspaceStore.setCurrentWorkspace(item.id!)
+  item.id && workspaceStore.setCurrentWorkspace(item.id)
   emit('enterWorkspace')
 }
 
@@ -88,9 +95,7 @@ function onConfig(event: MouseEvent, item: Data) {
     <template v-for="item in list" :key="item.id">
       <div class="workspace-item">
         <div class="workspace-item-info">
-          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
-            :style="getAvatarStyle(item.workspacePicture)"
-            :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
+          <RxAvatar v-bind="getAvatarProps(item)" />
           <div class="workspace-item-detail">
             <div class="detail-header">
               <div class="workspace-name" v-tooltip.top="item.workspaceName">
@@ -101,7 +106,7 @@ function onConfig(event: MouseEvent, item: Data) {
                 {{ $t('Default') }}
               </div>
               <div v-if="type === 'member'" class="badge">
-                {{ roleLabelMap[item.role] }}
+                {{ roleLabelMap[item.role as keyof typeof roleLabelMap] }}
               </div>
             </div>
             <div v-if="type !== 'member'" class="detail-footer">
@@ -112,8 +117,7 @@ function onConfig(event: MouseEvent, item: Data) {
           </div>
         </div>
         <div class="workspace-item-actions">
-          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id"
-            @click="enterWorkspace(item)">
+          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id" @click="enterWorkspace(item)">
             {{ item.id === currentWorkspace?.id ? $t('当前空间') : $t('进入空间') }}
           </RxButton>
           <RxButton severity="secondary" outlined size="md" icon="base/rx_ic_gear" @click="onConfig($event, item)">
@@ -184,20 +188,6 @@ function onConfig(event: MouseEvent, item: Data) {
           font-weight: 400;
           line-height: var(--Line-Height-text-xs, 16px);
         }
-      }
-
-      .workspace-icon {
-        width: 48px;
-        height: 48px;
-        color: #fff;
-        text-align: center;
-        font-family: 'JetBrains Mono';
-        font-size: 20px !important;
-        font-style: normal;
-        font-weight: 700;
-        line-height: 20px;
-        letter-spacing: -0.4px;
-        text-transform: uppercase;
       }
 
       .workspace-name {

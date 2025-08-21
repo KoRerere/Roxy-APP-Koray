@@ -151,7 +151,7 @@ const keyboardItems = ref<KeyboardItem[]>([
   },
   {
     label: $t('同步偏好设置'),
-    key: 'openSyncWindowSettings',
+    key: 'openPreferenceSettings',
   },
 ].map((n) => ({ ...n, onClear }) as KeyboardItem))
 

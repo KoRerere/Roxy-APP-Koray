@@ -1,6 +1,7 @@
 import type { Application } from 'express'
 import { store } from '/@/modules/store'
 import browserRouter from './browser'
+import { API } from '/@/api'
 
 const notNeedTokenRoutes = [
   '/health',
@@ -14,6 +15,8 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/open',
   '/browser/workspace',
   '/browser/clear_local_cache',
+  '/user/info',
+  '/user/config',
 ]
 
 export function setupRoutes(app: Application) {
@@ -45,6 +48,16 @@ export function setupRoutes(app: Application) {
   // 浏览器健康检查
   app.use('/health', (req, res) => {
     res.success('ok')
+  })
+
+  /** 获取当前用户信息 */
+  app.use('/user/info', (req, res) => {
+    res.success(store.userInfo)
+  })
+
+  /** 更新用户软件配置 */
+  app.use('/user/config', async (req, res) => {
+    res.json(await API.base.userSetUserConfigCreate(req.body))
   })
 
   app.use('/browser', browserRouter)

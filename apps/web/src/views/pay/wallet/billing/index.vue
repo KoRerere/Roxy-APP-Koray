@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
 import currency from 'currency.js';
 import { format } from 'date-fns';
 import { API } from '/@/api'
-import { OrderType, OrderTypeStr, SubOrderType, PaymentStatus, PaymentStatusStr } from '/@/enums/pay'
+import { OrderType, OrderTypeStr, SubOrderType, PaymentStatus, PaymentStatusStr, PurchaseType, PayWay } from '/@/enums/pay'
 import { $t } from '/@/locales'
-import { usePay } from '../hook';
+import { usePay } from '/@/views/pay/wallet/hook.tsx';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { emitter } from '/@/utils/eventBus';
+import { useDialog } from '/@/hooks/useDialog'
 
+const router = useRouter()
 const { openProcessing } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
+const [showModal] = useDialog()
 
 const columns = [
   {
@@ -65,6 +69,7 @@ const detailMapStr = {
     ].filter(([value]) => value > 0).map(([_, label]) => label).join(', ')
   },
   [SubOrderType.Downgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
+  [SubOrderType.Proxy]: (data: any) => data.proxyContent,
 }
 
 async function tableRequest(params: any) {
@@ -88,7 +93,10 @@ async function tableFilters() {
         { label: $t('套餐购买'), value: OrderType.Subscribe },
         { label: $t('套餐变更'), value: OrderType.Change },
         { label: $t('套餐续费'), value: OrderType.Renew },
-        { label: $t('其他购买'), value: OrderType.Purchase },
+        { label: $t('空间和成员'), value: OrderType.Purchase },
+        { label: $t('代理购买'), value: OrderType.ProxyPurchase },
+        { label: $t('代理退款'), value: OrderType.ProxyRefund },
+        { label: $t('代理续费'), value: OrderType.ProxyRenew },
         // { label: $t('提现'), value: OrderType.Withdraw },
         // { label: $t('退款'), value: OrderType.Refund },
         // { label: $t('兑换'), value: OrderType.Exchange },
@@ -112,15 +120,52 @@ async function tableFilters() {
   ]
 }
 
-async function onRepay(row: any) {
+function onRepay(row: any) {
+  if (row.payType === PayWay.Balance) {
+    reAutoRenew(row)
+  } else {
+    onRecharge(row)
+  }
+}
+
+async function onRecharge(row: any) {
   const { data, code, msg } = await API.pay.userGetPayLinkList({ orderNo: row.orderNo })
   onlyErrorToast(code, msg)
   if (code !== 0) return
 
-  openProcessing({ ...row, ...data }, row.orderType)
+  const isPurchaseProxy = row.purchaseType === PurchaseType.Proxy
+
+  openProcessing({ ...row, ...data }, isPurchaseProxy ? 'silent' : row.orderType)
     .finally(() => {
-      tableRef.value?.refresh()
+      if (isPurchaseProxy) {
+        router.push({ name: 'agent-list', query: { name: 'shop' } })
+      } else {
+        tableRef.value?.refresh()
+      }
     })
+}
+
+function reAutoRenew(row: any) {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(WalletPayModal, {
+        amount: row.actualAmount,
+        onClose: hideModal,
+        onConfirm: async () => {
+          const { code, msg } = await API.pay.userWalletSettlementCreate({ orderNo: row.orderNo })
+          onlyErrorToast(code, msg)
+          if (code !== 0) return
+          openProcessing(row, row.orderType)
+            .finally(() => {
+              tableRef.value?.refresh()
+            })
+        }
+      }),
+    },
+  })
 }
 
 defineExpose({
@@ -132,43 +177,29 @@ defineExpose({
 </script>
 
 <template>
-  <div>
-    <div class="px-6 title">{{ $t('账单列表') }}</div>
-    <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="rxtable" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
-        <template #table-empty>
-          <CustomEmpty icon="rx_illustration_coin.svg" :title="$t('暂无帐单记录')" :desc="$t('您的付款记录和订阅订单将在此显示')">
-          </CustomEmpty>
-        </template>
-        <template #amount="{ data }">
-          <div class="amount inc" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }"
-            v-if="[OrderType.Recharge, OrderType.Gift, OrderType.Withdraw, OrderType.Exchange].includes(data.orderType)">
-            {{ currency(data.actualAmount, { symbol: '+$' }).format() }}
-          </div>
-          <div class="amount" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }" v-else>
-            {{ currency(data.actualAmount, { symbol: '-$' }).format() }}
-          </div>
-        </template>
-        <template #status="{ data }">
-          <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
-            <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-            <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
-          </div>
-        </template>
-      </RyTable>
-    </div>
-  </div>
+  <RyTable ref="rxtable" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+    <template #table-empty>
+      <CustomEmpty icon="rx_illustration_coin.svg" :title="$t('暂无帐单记录')" :desc="$t('您的付款记录和订阅订单将在此显示')">
+      </CustomEmpty>
+    </template>
+    <template #amount="{ data }">
+      <div class="amount inc" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }" v-if="data.positiveNegativeShow">
+        {{ currency(data.actualAmount, { symbol: '+$' }).format() }}
+      </div>
+      <div class="amount" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }" v-else>
+        {{ currency(data.actualAmount, { symbol: '-$' }).format() }}
+      </div>
+    </template>
+    <template #status="{ data }">
+      <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
+        <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
+        <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
+      </div>
+    </template>
+  </RyTable>
 </template>
 
 <style lang="scss" scoped>
-.title {
-  color: var(--colors-text-text-primary, #FAFAFA);
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
 .amount {
   color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;

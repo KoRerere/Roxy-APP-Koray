@@ -87,6 +87,8 @@ import {
   UserSaveWindowRowsSortCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
   UserSaveWindowTableSortOrderCreatePayload,
+  UserTransferWindowByWorkspaceIdCreateData,
+  UserTransferWindowByWorkspaceIdCreatePayload,
   UserTransferWindowCreateData,
   UserTransferWindowCreatePayload,
   UserTransferWindowVerifyCodeListData,
@@ -1001,6 +1003,27 @@ export class WindowApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserMdfWindowDataBatchCreateData, any>({
       path: `/user_mdf_window_data_batch`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserTransferWindowByWorkspaceIdCreate
+   * @summary 根据空间ID转移窗口信息
+   * @request POST:/user_transfer_window_by_workspace_id
+   * @response `200` `UserTransferWindowByWorkspaceIdCreateData`
+   */
+  userTransferWindowByWorkspaceIdCreate = (
+    data: UserTransferWindowByWorkspaceIdCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserTransferWindowByWorkspaceIdCreateData, any>({
+      path: `/user_transfer_window_by_workspace_id`,
       method: "POST",
       body: data,
       type: ContentType.Json,

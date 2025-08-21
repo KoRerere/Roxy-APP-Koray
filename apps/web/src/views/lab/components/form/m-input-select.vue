@@ -5,7 +5,8 @@ import { isLikeFunction } from '/@/utils'
 interface Props {
   icon?: SvgNames
   iconColor?: string
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | string
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
+  darkMode?: boolean
   options?: any[]
   optionLabel?: string
   optionValue?: string
@@ -17,6 +18,7 @@ const {
   icon,
   iconColor = 'var(--colors-text-text-primary, #171c1f)',
   size = 'sm',
+  darkMode = false,
   options,
   optionLabel = 'label',
   optionValue,
@@ -57,7 +59,7 @@ function _onChange(event: any) {
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="selectitem">
         <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
-        <img v-if="value.image" class="selectitem__image" :src="value.image">
+        <img v-if="value.image" class="selectitem__image" :src="darkMode ? value.darkImage : value.image">
         <div>{{ value.label }}</div>
       </div>
       <div v-else>{{ placeholder }}</div>
@@ -65,7 +67,7 @@ function _onChange(event: any) {
     <template #option="{ option }">
       <div class="selectitem">
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
-        <img v-if="option.image" class="selectitem__image" :src="option.image">
+        <img v-if="option.image" class="selectitem__image" :src="darkMode ? option.darkImage : option.image">
         <div>{{ option.label }}</div>
         <slot name="option-extra" :option="option"></slot>
       </div>

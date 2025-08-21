@@ -30,6 +30,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const debounceGetPayInfo = debounce(() => {
     userStore.userPayInfo = {} as UserGetUserPayInfoListData['data']
     userStore.getUserPayInfo()
+    userStore.getUserCards()
   }, 50)
 
   watch(currentWorkspace, (val, old) => {

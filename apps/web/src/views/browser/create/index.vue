@@ -4,6 +4,7 @@ import AccordionInputs from './components/accordion-inputs.vue'
 import ImportWindow from './components/import-window.vue'
 import PreviewCard from './components/preview-card.vue'
 import RxButton from '/@/components/rx-button';
+import RxLoading from '/@/components/rx-loading.vue'
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useConfirm } from 'primevue/useconfirm'
@@ -13,6 +14,7 @@ import { $t } from '/@/locales'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useDialog } from '/@/hooks/useDialog'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -41,6 +43,7 @@ const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
+const [showModal] = useDialog()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -242,7 +245,7 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
         },
       },
     ],
-    afterRender: () => <ol class="pl-3.5 m-0">
+    afterRender: () => <ol class="pl-3.5 m-0 color-[var(--colors-text-text-secondary)]">
       <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
       <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
     </ol>,
@@ -324,19 +327,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   onlyErrorToast(code, msg)
   if (code === 0) {
-    const { path, query } = backRoute
-    console.log('onBack', path, query)
-    const backRoutes = ['/browser', '/projects']
-    const toPath = !backRoutes.some(n => path.startsWith(n)) || path === '/browser/edit' ? '/browser' : path
-    console.log('toPath', toPath)
-    router.replace({
-      path: toPath,
-      query: {
-        ...query,
-        title: metaData.value.projectName,
-        browser: JSON.stringify({ windowId: data?.windowId, openBrowser })
-      }
-    })
+    onBack(data, openBrowser)
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
@@ -381,13 +372,15 @@ async function importProfile(params: any) {
     return
   }
   loading.value = true
+  const modal = showLoading()
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
   const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
   loading.value = false
+  modal.hideModal()
   if (code === 0) {
     showToast(0, msg)
-    router.back()
+    onBack()
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
@@ -395,6 +388,41 @@ async function importProfile(params: any) {
     fileAnalyzeError.value = Array.isArray(msg) ? msg.join('\n') : msg
   }
 }
+
+function showLoading() {
+  return showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    closeOnEscape: false,
+    pt: {
+      root: "!border-none !shadow-none rounded-lg",
+    },
+    slots: {
+      container: () => <div class="flex flex-col justify-center items-center gap-6 w-60 h-37">
+        <div class="relative w-8 h-8">
+          <RxLoading modelValue={true} opacity={0.9}></RxLoading>
+        </div>
+        <div>{$t('创建中...')}</div>
+      </div>,
+    },
+  })
+}
+
+function onBack(data?: any, openBrowser = false) {
+  const { path, query } = backRoute
+  const backRoutes = ['/browser', '/projects']
+  const toPath = !backRoutes.some(n => path.startsWith(n)) || path === '/browser/edit' ? '/browser' : path
+  router.replace({
+    path: toPath,
+    query: {
+      ...query,
+      title: metaData.value.projectName,
+      browser: JSON.stringify({ windowId: data?.windowId, openBrowser })
+    }
+  })
+}
+
 </script>
 
 <template>
@@ -402,7 +430,7 @@ async function importProfile(params: any) {
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
-      <div class="h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
+      <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <div class="flex-1 flex flex-col">
             <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">

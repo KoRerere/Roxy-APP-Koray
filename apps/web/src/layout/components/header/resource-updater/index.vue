@@ -159,7 +159,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </div>
       </div>
       <Tabs v-model:value="tabModel">
-        <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
+        <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px] !border-[var(--colors-border-border-subtle)]', activeBar: '!h-[2px]' }">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}
             <Badge v-if="tab.badge" :value="tab.badge" severity="danger" size="small" />

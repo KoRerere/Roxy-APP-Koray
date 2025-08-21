@@ -10,6 +10,7 @@ const props = defineProps<{
   hideFn: () => void,
 }>()
 
+const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 const features = getAdvancedFeature()
 
@@ -19,7 +20,11 @@ const featureTexts = computed(() => [
 ])
 
 function onRenewal() {
-  emitter.emit('showRenewalDialog')
+  if (userPayInfo.value.isAuto) {
+    router.replace({ name: 'wallet', query: { name: 'billing' } })
+  } else {
+    emitter.emit('showRenewalDialog')
+  }
   hideDialog()
 }
 

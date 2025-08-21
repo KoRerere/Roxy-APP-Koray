@@ -13,17 +13,38 @@
 import {
   UserAddProxyModuleCreateData,
   UserAddProxyModuleCreatePayload,
+  UserCheckProxyCreateData,
+  UserCheckProxyCreatePayload,
+  UserCheckWindowProxyStatusCreateData,
+  UserCheckWindowProxyStatusCreatePayload,
   UserDelProxyModuleV2CreateData,
   UserDelProxyModuleV2CreatePayload,
+  UserGetProxyAllCountriesListData,
+  UserGetProxyAllCountriesListParams,
+  UserGetProxyBusinessUseListListData,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
+  UserGetProxyProviderListListData,
+  UserGetProxyPurchaseCountryListListData,
+  UserGetProxyPurchaseCountryListListParams,
+  UserGetProxyPurchaseTimePriceListData,
   UserGetProxyRecommendInfoListData,
+  UserGetProxyRefundInfoListData,
+  UserGetProxyRefundInfoListParams,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
   UserGetTimezoneByCoordinatesInfoListData,
   UserGetTimezoneByCoordinatesInfoListParams,
+  UserGetTimezoneByIpListData,
+  UserGetTimezoneByIpListParams,
+  UserGetUserBuyProxyListListData,
+  UserGetUserBuyProxyListListParams,
   UserMdfProxyModuleCreateData,
   UserMdfProxyModuleCreatePayload,
+  UserMdfUserBuyProxyRemarkCreateData,
+  UserMdfUserBuyProxyRemarkCreatePayload,
+  UserProxyRefundOrReplaceCreateData,
+  UserProxyRefundOrReplaceCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
   UserUpdateProxyTableRowsCreateData,
@@ -105,7 +126,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserGetProxyTableSortOrderList
-   * @summary 获取代理列表排序规则（暂时没有用到）
+   * @summary 获取代理列表排序规则
    * @request GET:/user_get_proxy_table_sort_order
    * @response `200` `UserGetProxyTableSortOrderListData`
    */
@@ -121,7 +142,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserSaveProxyTableSortOrderCreate
-   * @summary 保存代理列表排序规则（暂时没有用到）
+   * @summary 保存代理列表排序规则）
    * @request POST:/user_save_proxy_table_sort_order
    * @response `200` `UserSaveProxyTableSortOrderCreateData`
    */
@@ -179,7 +200,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserGetProxyRecommendInfoList
-   * @summary 代理推荐列表（暂时没有用到）
+   * @summary 代理推荐列表
    * @request GET:/user_get_proxy_recommend_info
    * @response `200` `UserGetProxyRecommendInfoListData`
    */
@@ -226,6 +247,238 @@ export class ProxyApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserGetTimezoneByCoordinatesInfoListData, any>({
       path: `/user_get_timezone_by_coordinates_info`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyProviderListList
+   * @summary 获取代理供应商列表
+   * @request GET:/user_get_proxy_provider_list
+   * @response `200` `UserGetProxyProviderListListData`
+   */
+  userGetProxyProviderListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyProviderListListData, any>({
+      path: `/user_get_proxy_provider_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetUserBuyProxyListList
+   * @summary 获取用户购买的代理列表
+   * @request GET:/user_get_user_buy_proxy_list
+   * @response `200` `UserGetUserBuyProxyListListData`
+   */
+  userGetUserBuyProxyListList = (
+    query: UserGetUserBuyProxyListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetUserBuyProxyListListData, any>({
+      path: `/user_get_user_buy_proxy_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserMdfUserBuyProxyRemarkCreate
+   * @summary 修改用户购买的代理备注
+   * @request POST:/user_mdf_user_buy_proxy_remark
+   * @response `200` `UserMdfUserBuyProxyRemarkCreateData`
+   */
+  userMdfUserBuyProxyRemarkCreate = (
+    data: UserMdfUserBuyProxyRemarkCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfUserBuyProxyRemarkCreateData, any>({
+      path: `/user_mdf_user_buy_proxy_remark`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyBusinessUseListList
+   * @summary 获取代理商业用途列表
+   * @request GET:/user_get_proxy_business_use_list
+   * @response `200` `UserGetProxyBusinessUseListListData`
+   */
+  userGetProxyBusinessUseListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyBusinessUseListListData, any>({
+      path: `/user_get_proxy_business_use_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyPurchaseCountryListList
+   * @summary 获取代理购买国家
+   * @request GET:/user_get_proxy_purchase_country_list
+   * @response `200` `UserGetProxyPurchaseCountryListListData`
+   */
+  userGetProxyPurchaseCountryListList = (
+    query: UserGetProxyPurchaseCountryListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyPurchaseCountryListListData, any>({
+      path: `/user_get_proxy_purchase_country_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyPurchaseTimePriceList
+   * @summary 获取代理购买时长单价
+   * @request GET:/user_get_proxy_purchase_time_price
+   * @response `200` `UserGetProxyPurchaseTimePriceListData`
+   */
+  userGetProxyPurchaseTimePriceList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyPurchaseTimePriceListData, any>({
+      path: `/user_get_proxy_purchase_time_price`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserProxyRefundOrReplaceCreate
+   * @summary 用户代理退款或者更换
+   * @request POST:/user_proxy_refund_or_replace
+   * @response `200` `UserProxyRefundOrReplaceCreateData`
+   */
+  userProxyRefundOrReplaceCreate = (
+    data: UserProxyRefundOrReplaceCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserProxyRefundOrReplaceCreateData, any>({
+      path: `/user_proxy_refund_or_replace`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserCheckProxyCreate
+   * @summary 检测代理
+   * @request POST:/user_check_proxy
+   * @response `200` `UserCheckProxyCreateData`
+   */
+  userCheckProxyCreate = (
+    data: UserCheckProxyCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCheckProxyCreateData, any>({
+      path: `/user_check_proxy`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserCheckWindowProxyStatusCreate
+   * @summary 校验窗口的代理状态
+   * @request POST:/user_check_window_proxy_status
+   * @response `200` `UserCheckWindowProxyStatusCreateData`
+   */
+  userCheckWindowProxyStatusCreate = (
+    data: UserCheckWindowProxyStatusCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCheckWindowProxyStatusCreateData, any>({
+      path: `/user_check_window_proxy_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyRefundInfoList
+   * @summary 获取代理退款详细信息
+   * @request GET:/user_get_proxy_refund_info
+   * @response `200` `UserGetProxyRefundInfoListData`
+   */
+  userGetProxyRefundInfoList = (
+    query: UserGetProxyRefundInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyRefundInfoListData, any>({
+      path: `/user_get_proxy_refund_info`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyAllCountriesList
+   * @summary 获取代理列表国家地区
+   * @request GET:/user_get_proxy_all_countries
+   * @response `200` `UserGetProxyAllCountriesListData`
+   */
+  userGetProxyAllCountriesList = (
+    query: UserGetProxyAllCountriesListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyAllCountriesListData, any>({
+      path: `/user_get_proxy_all_countries`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetTimezoneByIpList
+   * @summary 根据IP地址获取时区
+   * @request GET:/user_get_timezone_by_ip
+   * @response `200` `UserGetTimezoneByIpListData`
+   */
+  userGetTimezoneByIpList = (
+    query: UserGetTimezoneByIpListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTimezoneByIpListData, any>({
+      path: `/user_get_timezone_by_ip`,
       method: "GET",
       query: query,
       format: "json",

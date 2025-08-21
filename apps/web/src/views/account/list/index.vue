@@ -119,6 +119,7 @@ function onRemark(data: Data) {
         value: data?.platformRemarks,
         props: {
           placeholder: $t('请输入备注'),
+          rows: 6,
         }
       },
     ],
@@ -167,19 +168,17 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
-        @click.stop="createAccount" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple"
-        :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+      <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs"
-                  icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
+                  @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
@@ -188,15 +187,13 @@ function deletePopup(data: any) {
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
-            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }"
-              class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-              @click.stop="toggleRemarkDisplayStatus(_cache)" />
+            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
+              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
-              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{
               data.platformRemarks }}</div>
@@ -205,8 +202,7 @@ function deletePopup(data: any) {
         <template #platform="{ data }">
           <div class="flex gap-2 account">
             <div>
-              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark"
-                :platform-icon="data.platformIcon" class="w-4 h-4" />
+              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark" :platform-icon="data.platformIcon" class="w-4 h-4" />
               <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
@@ -222,8 +218,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">
-            <Actions :operation="operation" :show-menu="false"
-              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </RyTable>

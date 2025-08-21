@@ -38,7 +38,7 @@ defineProps({
         <div class="flex gap-8px items-center">
           <RxSvgIcon class="size-16px" fallback="base/rx_ic_earth" :name="`country-code/${beforeCountry}`" />
           <div class="flex-1 text-12px text-[var(--component-tooltip-text-secondary)] font-600 ellipsis-1">
-            {{ beforeCountry }}/{{ beforeCity }}
+            {{ beforeCountry }}{{ beforeCity }}
           </div>
           <div class="text-12px text-[var(--component-tooltip-text-secondary)] font-400">
             {{ beforeTime }}
@@ -57,7 +57,7 @@ defineProps({
       <div class="flex gap-8px items-center">
         <RxSvgIcon class="size-16px" fallback="base/rx_ic_earth" :name="`country-code/${lastCountry}`" />
         <div class="flex-1 text-12px text-[var(--component-tooltip-text-primary)] font-600 ellipsis-1">
-          {{ lastCountry }}/{{ lastCity }}
+          {{ lastCountry }}{{ lastCity }}
         </div>
         <div class="text-12px text-[var(--component-tooltip-text-secondary)] font-400">
           {{ checkTime }}

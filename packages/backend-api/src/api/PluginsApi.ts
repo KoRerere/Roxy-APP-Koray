@@ -18,6 +18,7 @@ import {
   UserBatchDelPluginInfoCreateData,
   UserBatchDelPluginInfoCreatePayload,
   UserCheckAllPluginsVersionListData,
+  UserCheckAllPluginsVersionListError,
   UserCheckAllPluginsVersionListParams,
   UserDelPluginInfoCreateData,
   UserDelPluginInfoCreatePayload,
@@ -178,12 +179,16 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @summary 用户检查自己所有插件版本
    * @request GET:/user_check_all_plugins_version
    * @response `200` `UserCheckAllPluginsVersionListData`
+   * @response `x-200:成功` `object`
    */
   userCheckAllPluginsVersionList = (
     query: UserCheckAllPluginsVersionListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserCheckAllPluginsVersionListData, any>({
+    this.http.request<
+      UserCheckAllPluginsVersionListData,
+      UserCheckAllPluginsVersionListError
+    >({
       path: `/user_check_all_plugins_version`,
       method: "GET",
       query: query,

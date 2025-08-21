@@ -127,6 +127,7 @@ defineExpose({
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />
+      <component v-if="input.afterRender" :is="input.afterRender" :field="$field" :input="input"></component>
       <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>
   </Form>

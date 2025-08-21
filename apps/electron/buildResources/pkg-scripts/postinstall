@@ -4,7 +4,7 @@
 # 在安装完成后执行，写入安装程序路径到应用数据目录（类似 Windows 的 installer.nsh）
 
 # 应用名称（将在构建时被替换）
-APP_NAME="RoxyBrowser"
+APP_NAME="RoxyBrowserDev"
 
 # 获取安装程序包路径（PKG 文件路径）
 # $1 = 安装包路径，这就是我们要的安装程序路径

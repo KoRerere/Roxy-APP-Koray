@@ -3154,6 +3154,52 @@ export interface UserLogoutListData {
   msg: string;
 }
 
+export interface UserGetPromotionInfoByTypeListParams {
+  /** @example "Link_A" */
+  linkType?: string;
+}
+
+export interface UserGetPromotionInfoByTypeListData {
+  code: number;
+  data: {
+    /** 可提现金额 */
+    withdrawAmount: number;
+    /** 用户推广点击链接次数 */
+    promotionClickCount: number;
+    /** 当天推广点击链接次数 */
+    todayPromotionClickCount: number;
+    /** 已注册的用户数量 */
+    registeredUserNum: number;
+    /** 当天注册的用户数量 */
+    todayRegisteredUserNum: number;
+    /** 已下单购买成功的用户数量 */
+    purchaseUserNum: number;
+    /** 当天下单购买成功的用户数量 */
+    todayPurchaseUserNum: number;
+    /** 用户总收益 */
+    totalIncome: number;
+    /** 当天收益 */
+    todayIncome: number;
+    /** 推荐用户的总交易额 */
+    purchaseUserTotalAmount: number;
+    /** 待收益金额 */
+    pendingAmount: number;
+  };
+  msg: string;
+}
+
+export interface UserUpdateDeviceNameCreatePayload {
+  /** 设备mac地址 */
+  deviceMac: string;
+  /** 设备名称 */
+  deviceName: string;
+}
+
+export interface UserUpdateDeviceNameCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -4134,12 +4180,17 @@ export interface UserGetWindowInfoListListData {
       lastCountry?: string;
       lastCity?: string;
       checkTime?: string;
-      openTime?: string;
       checkStatus?: number;
       openLimitStatus?: boolean;
       labelInfo?: string[];
       platformUrlList?: string[];
       maxWindowSort?: number;
+      buyProxyType?: number;
+      /** 0:已过期 1:使用中 2：快过期 */
+      proxyExpireStatus?: number;
+      /** 0:代理资源的，1：购买的 */
+      proxyType?: number;
+      openTime?: string;
     }[];
   };
   msg: string;
@@ -4600,6 +4651,17 @@ export interface UserMdfWindowDataBatchCreateData {
   msg: string;
 }
 
+export interface UserTransferWindowByWorkspaceIdCreatePayload {
+  windowIds: number[];
+  /** 转移的空间ID */
+  workspaceId: number;
+}
+
+export interface UserTransferWindowByWorkspaceIdCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -4973,21 +5035,15 @@ export interface UserMdfProxyModuleCreateData {
 export interface UserGetProxyTableSortOrderListData {
   code: number;
   data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序规则 */
-    order_type?: string;
-  }[];
+    orderName: string;
+    orderType: string;
+  };
   msg: string;
 }
 
 export interface UserSaveProxyTableSortOrderCreatePayload {
-  table_sort: {
-    /** 名称 */
-    name?: string;
-    /** 判断降序还是升序 */
-    order?: string;
-  }[];
+  orderName: string;
+  orderType: string;
 }
 
 export interface UserSaveProxyTableSortOrderCreateData {
@@ -4996,7 +5052,7 @@ export interface UserSaveProxyTableSortOrderCreateData {
 }
 
 export interface UserUpdateProxyTableRowsCreatePayload {
-  table_rows: {
+  tableRows: {
     /** 名称 */
     name: string;
     /** 排序 */
@@ -5080,6 +5136,333 @@ export interface UserGetTimezoneByCoordinatesInfoListParams {
 }
 
 export interface UserGetTimezoneByCoordinatesInfoListData {
+  code: number;
+  data: {
+    /** 时区 */
+    timezone: string;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyProviderListListData {
+  code: number;
+  data: {
+    /** id */
+    id?: number;
+    /** 创建时间 */
+    createTime?: string;
+    proxyProviderAdv?: string[];
+    /** 代理供应商描述 */
+    proxyProviderDesc?: string;
+    /** 代理供应商图标 */
+    proxyProviderIcon?: string;
+    /** 代理供应商名称 */
+    proxyProviderName?: string;
+    /** 代理供应商单个价格 */
+    proxyProviderPrice?: number;
+    /** 代理供应商网址 */
+    proxyProviderWebsite?: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetUserBuyProxyListListParams {
+  /**
+   * 分页索引
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数
+   * @example 15
+   */
+  page_size: number;
+  /**
+   * 排序字段
+   * @example "createTime"
+   */
+  orderName?: string;
+  /**
+   * 排序规则
+   * @example "desc"
+   */
+  orderType?: string;
+  /**
+   * 代理是否隐藏，0：隐藏，1：不隐藏
+   * @example 1
+   */
+  isHideProxy?: number;
+  /**
+   * 代理IP（代理链接）
+   * @example "13.21.211.11"
+   */
+  proxyHost?: string;
+  /**
+   * 代理备注
+   * @example "xxx"
+   */
+  proxyRemark?: string;
+  /**
+   * 代理过期状态 0:已过期 1:使用中 2：快过期
+   * @example 0
+   */
+  proxyExpireStatus?: number;
+  /**
+   * 国家
+   * @example "us"
+   */
+  proxyLastCountry?: string;
+  /**
+   * 代理协议，枚举值：HTTP, HTTPS, SOCKS5
+   * @example "SOCKS5"
+   */
+  proxyProtocol?: string;
+  /**
+   * 查询类型：list_use：代理列表, window_use：窗口使用
+   * @example "list_use"
+   */
+  type: string;
+}
+
+export interface UserGetUserBuyProxyListListData {
+  code: number;
+  data: {
+    rows: {
+      /** 绑定窗口数量 */
+      bindCount?: number;
+      /** 绑定的窗口信息 */
+      bindList?: string[];
+      /** 检测时间 */
+      checkTime?: null;
+      /** 创建时间 */
+      createTime?: string;
+      /** id */
+      id?: number;
+      /** 是否绑定 */
+      isBind?: boolean;
+      /** 商业用途 */
+      poxyBusinessPurpose?: string;
+      /** 代理检测地址 */
+      proxyCheckChannel?: string;
+      checkChannelValue?: string;
+      /** 代理检测状态 0:未检测 1:成功 2:检测失败 */
+      checkStatus?: number;
+      /** 购买国家 */
+      country?: string;
+      /** 代理过期状态 0:已过期 1:使用中 2：快过期 */
+      proxyExpireStatus?: number;
+      /** 购买的IP */
+      host?: string;
+      /** IP类型 */
+      ipType?: string;
+      /** 出口城市 */
+      lastCity?: string;
+      /** 出口国家 */
+      lastCountry?: string;
+      /** 出口IP */
+      lastIp?: string;
+      /** 出口州/省 */
+      lastState?: string;
+      /** 代理密码 */
+      proxyPassword?: string;
+      /** 代理端口号 */
+      port?: string;
+      /** 代理协议 */
+      protocol?: string;
+      /** 供应商ID */
+      proxyProviderId?: number;
+      /** 供应商名称 */
+      proxyProviderName?: string;
+      /** 备注 */
+      remark?: string;
+      /** 代理用户名 */
+      proxyUserName?: string;
+      /** 续费时间 */
+      renewalTime?: null;
+      /** 修改时间 */
+      updateTime?: string;
+      /** 用户ID */
+      userId?: number;
+      /** 空间ID */
+      workspaceId?: number;
+      /** 过期时间 */
+      expireDate?: string;
+      /** 订单号 */
+      orderNo?: string;
+      /** 订单状态 0：配置中,1：已完成 2：退款中 3：更换中, */
+      orderStatus?: number;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserMdfUserBuyProxyRemarkCreatePayload {
+  /** id */
+  id: number;
+  /** 代理备注 */
+  proxyRemark: string;
+}
+
+export interface UserMdfUserBuyProxyRemarkCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyBusinessUseListListData {
+  code: number;
+  data: {
+    /** 创建时间 */
+    createTime?: string;
+    /** icon图标 */
+    proxyBusinessIcon?: string;
+    /** icon图标深色 */
+    proxyBusinessIconDark?: string;
+    /** 值 */
+    proxyBusinessValue?: string;
+    /** 键 */
+    proxyBusinessKey?: string;
+    /** 排序 */
+    sort?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyPurchaseCountryListListParams {
+  /**
+   * 代理商名称：PrivateProxy,ProxySeller
+   * @example "ProxySeller"
+   */
+  proxyProviderName: string;
+}
+
+export interface UserGetProxyPurchaseCountryListListData {
+  code: number;
+  data: {
+    /** 国家编码 */
+    country_code: string;
+    /** 国家名称 */
+    country_name: string;
+    /** 代理运营商 */
+    op_name: string;
+    /** status，active: 可选，inactive: 不可选。 */
+    status: string;
+    inventory: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyPurchaseTimePriceListData {
+  code: number;
+  data: {
+    /** 单个价格 */
+    proxyPrice: number;
+    /** 月份 */
+    proxyPurchaseMonths: number;
+  }[];
+  msg: string;
+}
+
+export interface UserProxyRefundOrReplaceCreatePayload {
+  /** 代理id */
+  proxyBuyId: number;
+  /** 类型 refund：退款，replace：更换 */
+  replaceType: string;
+}
+
+export interface UserProxyRefundOrReplaceCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCheckProxyCreatePayload {
+  /** 代理列表 */
+  proxyBuyId: number;
+}
+
+export interface UserCheckProxyCreateData {
+  code: number;
+  data: {
+    checkTime: string;
+    lastCity: string;
+    lastCountry: string;
+    lastIp: string;
+  };
+  msg: string;
+}
+
+export interface UserCheckWindowProxyStatusCreatePayload {
+  windowIds: string[];
+}
+
+export interface UserCheckWindowProxyStatusCreateData {
+  code: number;
+  data: string[];
+  msg: string;
+}
+
+export interface UserGetProxyRefundInfoListParams {
+  /**
+   * 退款代理ID
+   * @example 11
+   */
+  proxyBuyId: number;
+}
+
+export interface UserGetProxyRefundInfoListData {
+  code: number;
+  data: {
+    /** 总天数 */
+    totalDays: number;
+    /** 剩下天数 */
+    remainingDays: number;
+    /** 单个代理总额 */
+    proxyAmount: number;
+    /** 实际金额 */
+    actualAmount: number;
+    /** 退款时间 */
+    refundHours: number;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyAllCountriesListParams {
+  /**
+   * 1:代理列表 2：代理商店
+   * @example "0"
+   */
+  queryType: string;
+  /**
+   * 代理过期状态 0:已过期 1:使用中 2：快过期
+   * @example "1"
+   */
+  proxyExpireStatus?: string;
+  /**
+   * 代理是否隐藏，0：隐藏，1：不隐藏
+   * @example "1"
+   */
+  isHideProxy?: string;
+}
+
+export interface UserGetProxyAllCountriesListData {
+  code: number;
+  data: {
+    label: string;
+    type: string;
+    value: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetTimezoneByIpListParams {
+  /**
+   * IP地址
+   * @example "45.192.242.201"
+   */
+  ip?: string;
+}
+
+export interface UserGetTimezoneByIpListData {
   code: number;
   data: {
     /** 时区 */
@@ -5195,7 +5578,7 @@ export interface UserGetPluginListListParams {
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example ["15","10"]
    */
   page_size?: number;
   /**
@@ -5208,6 +5591,8 @@ export interface UserGetPluginListListParams {
    * @example "true"
    */
   status?: boolean;
+  /** @example "1" */
+  pluginSwitchType?: string;
 }
 
 export interface UserGetPluginListListData {
@@ -5235,15 +5620,23 @@ export interface UserGetPluginListListData {
       provider?: string;
       /** 开启：true, 关闭： false */
       useStatus?: boolean;
+      /** 是否有权限修改 */
+      canModify?: boolean;
       /** 是否有权限删除 */
       canDelete?: boolean;
       /** 上传者 */
       uploader?: string;
       /** 最后更新时间 */
       lateUpdateTime?: string;
-      /** 插件更新状态，0:没有更新，1:有更新 */
+      /**
+       * 插件更新状态，0:没有更新，1:有更新
+       * 插件更新状态，0:没有更新，1:有更新
+       */
       pluginUpdateState?: number;
-      /** 插件最新版本，通过检测得到 */
+      /**
+       * 插件最新版本，通过检测得到
+       * 显示插件最新版本号
+       */
       pluginNewVersion?: string;
     }[];
   };
@@ -5263,18 +5656,36 @@ export interface UserDelPluginInfoCreateData {
 export interface UserCheckAllPluginsVersionListParams {
   /** 插件目录ID */
   pluginDir: string;
+  /** 插件id */
+  pluginID: number;
 }
 
 export interface UserCheckAllPluginsVersionListData {
   code: number;
+  data: {
+    pluginUpdateStates: {
+      /** 插件目录ID */
+      pluginDir?: string;
+      /** 插件版本号 */
+      pluginVersion?: string;
+      /** 插件更新状态 */
+      pluginUpdateState?: number;
+      /** 插件新版本号 */
+      pluginNewVersion?: string;
+    }[];
+  };
   msg: string;
 }
+
+export type UserCheckAllPluginsVersionListError = object;
 
 export interface UserUpgradePluginsCreatePayload {
   /** 插件目录ID */
   pluginDir: string;
   /** 插件名称 */
   pluginName: string;
+  /** 插件ID */
+  pluginID: number;
 }
 
 export interface UserUpgradePluginsCreateData {
@@ -5636,6 +6047,8 @@ export interface UserGetWorkspaceListListData {
       /** 窗口编号 */
       workspaceNo?: number;
       email?: string;
+      /** 团队成员数量 */
+      useMemberCount?: number;
     }[];
   };
   msg: string;
@@ -5673,7 +6086,12 @@ export interface UserMdfWorkspaceInfoCreateData {
 }
 
 export interface UserDelWorkspaceInfoCreatePayload {
-  /** 工作空间ID */
+  /** 工作空间名称 */
+  workspaceName: string;
+  /**
+   * 工作空间ID
+   * 工作空间ID
+   */
   workspaceId: number;
 }
 
@@ -6194,8 +6612,8 @@ export interface UserGetUserPayInfoListData {
      */
     autoRenewDiscount: number;
     /**
-     * 7天是否试用，0：未试用 1：已试用 2：试用中
-     * 7天是否试用，0：未试用 1：已试用 2：试用中
+     * 7天是否试用，0：未试用 1：已试用
+     * 7天是否试用，0：未试用 1：已试用
      */
     isTrial: number;
     /**
@@ -6288,10 +6706,32 @@ export interface UserGetUserPayInfoListData {
      * GIft显示,false: 不显示，true:显示
      */
     showGiftDlg: boolean;
-    /** 服务器当前时间 */
+    /**
+     * 服务器当前时间
+     * 服务器当前时间
+     */
     subCurrentDate: number;
-    /** 日志保留时长 */
+    /**
+     * 日志保留时长
+     * 日志保留时长
+     */
     subscriptionLogDays: number;
+    /**
+     * 代理即将过期条数
+     * 代理即将过期条数
+     */
+    proxyExpireCount: number;
+    /**
+     * 代理使用中条数
+     * 代理使用中条数
+     */
+    proxyUsingCount: number;
+    /** 自动充值到钱包 */
+    autoRecharge: number;
+    /** 日志保留天数 */
+    logDays: number;
+    /** api请求次数 */
+    apiRate: number;
   };
   msg: string;
 }
@@ -6301,6 +6741,12 @@ export interface UserRechargeSettlementCreatePayload {
   payType: string;
   /** 充值金额 */
   rechargeAmount: number;
+  /** 支付方式ID */
+  paymentMethodId?: string;
+  /** 银行卡ID */
+  cardId?: string;
+  /** 客户key */
+  customerIdKey?: string;
 }
 
 export interface UserRechargeSettlementCreateData {
@@ -6313,6 +6759,7 @@ export interface UserRechargeSettlementCreateData {
     payType: string;
     payUrl: string;
     realAmount: number;
+    clientSecret: string;
   };
   msg: string;
 }
@@ -6488,5 +6935,280 @@ export interface UserUpdateGiftTipsListData {
 
 export interface UserCheckTeamUserRightsListData {
   code: number;
+  msg: string;
+}
+
+export interface UserBuyProxySettlementCreatePayload {
+  /** 购买数量 */
+  purchaseMember?: number;
+  /** 购买月数(1) */
+  subscriptionMonths: number;
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  payType: string;
+  /** 订单类型(续费//购买:renew/purchase) */
+  orderType: string;
+  /** 购买供应商ID */
+  proxyProviderId?: number;
+  /** 购买的城市 */
+  purchaseCountry?: string;
+  /** 商业用途 */
+  businessUse?: string;
+  renewIdList?: number[];
+}
+
+export interface UserBuyProxySettlementCreateData {
+  code: number;
+  data: {
+    /**
+     * 订单号
+     * 订单号
+     */
+    order_no: string;
+    /**
+     * 支付方式
+     * 支付方式
+     */
+    pay_type: string;
+    /**
+     * 支付地址
+     * 支付地址
+     */
+    pay_url: string;
+    /**
+     * usdt支付id
+     * usdt支付id
+     */
+    pay_id: string;
+    /**
+     * 订单金额
+     * 订单金额
+     */
+    order_amount: string;
+    /**
+     * 支付结束时间
+     * 支付结束时间
+     */
+    end_time: string;
+    /**
+     * 实际支付金额
+     * 实际支付金额
+     */
+    real_amount: string;
+    /** 类型 */
+    subOrderType: string;
+  };
+  msg: string;
+}
+
+export interface UserSetAutoRenewalStatusCreatePayload {
+  /** 0：关闭  1：开启 */
+  status: number;
+}
+
+export interface UserSetAutoRenewalStatusCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPendingPaymentListListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+}
+
+export interface UserGetPendingPaymentListListData {
+  code: number;
+  data: {
+    rows: {
+      /** 代扣费金额 */
+      amount?: number;
+      /** 续费月份 */
+      subscriptionMonths?: number;
+      /** 续费天数 */
+      days?: number;
+      /** 续费说明 */
+      details?: string;
+      /** 0待执行 2执行失败 */
+      status?: number;
+      /** 下个账单日期 */
+      startTime?: string;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserGetStripePkKeyListParams {
+  /**
+   * 0 银行卡绑定  1银行卡支付
+   * @example "0"
+   */
+  queryType?: string;
+}
+
+export interface UserGetStripePkKeyListData {
+  code: number;
+  data: {
+    stripe_pk_key: string;
+    client_secret: string;
+    customer_id_key: string;
+  };
+  msg: string;
+}
+
+export interface UserBindCardCreatePayload {
+  paymentMethodId: string;
+  cardDefault?: boolean;
+}
+
+export interface UserBindCardCreateData {
+  code: number;
+  data: {
+    cardId: number;
+  };
+  msg: string;
+}
+
+export interface UserGetBindCardListListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+}
+
+export interface UserGetBindCardListListData {
+  code: number;
+  data: {
+    rows: {
+      /** 银行卡品牌 */
+      brand?: string;
+      /** 银行卡ID */
+      cardId?: number;
+      /** 银行卡号后4位 */
+      last4?: string;
+      exp_month?: number;
+      exp_year?: number;
+      funding?: string;
+      country?: string;
+      /** 是否主卡 0 不是 1 是 */
+      cardDefault?: number;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserSetAutoRechargeStatusCreatePayload {
+  /** 1开启 0关闭 */
+  status: number;
+}
+
+export interface UserSetAutoRechargeStatusCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUnbindCardCreatePayload {
+  /** 银行卡ID */
+  cardId: number;
+}
+
+export interface UserUnbindCardCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSetMainCardCreatePayload {
+  /** 银行卡ID */
+  cardId: number;
+}
+
+export interface UserSetMainCardCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserWalletSettlementCreatePayload {
+  /**
+   * 订单号
+   * 订单号
+   */
+  orderNo: string;
+}
+
+export interface UserWalletSettlementCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetAutoSubscriptionInfoListParams {
+  /**
+   * profile：窗口
+   * @example "profile"
+   */
+  queryType?: string;
+}
+
+export interface UserGetAutoSubscriptionInfoListData {
+  code: number;
+  data: {
+    orderPrice: number;
+    subscriptionMonths: number;
+    subscriptionDays: number;
+    windowCount: number;
+    nextTime: string;
+  };
+  msg: string;
+}
+
+export interface UserCalculatePriceDifferenceV2ListParams {
+  /**
+   * 窗口数量
+   * @example 100
+   */
+  purchaseMember: number;
+}
+
+export interface UserCalculatePriceDifferenceV2ListData {
+  code: number;
+  /** 差价金额(美元) */
+  data: number;
+  msg: string;
+}
+
+export interface UserDowngradeSubscriptionV2ListParams {
+  /**
+   * 窗口数量
+   * @example 0
+   */
+  purchaseMember: number;
+}
+
+export interface UserDowngradeSubscriptionV2ListData {
+  code: number;
+  /** 订阅地址 */
+  data: string;
+  msg: string;
+}
+
+export interface UserGetWindowSubscriptionUpgradeMessageListParams {
+  /**
+   * 窗口数量
+   * @example 0
+   */
+  windowCount: number;
+}
+
+export interface UserGetWindowSubscriptionUpgradeMessageListData {
+  code: number;
+  data: {
+    /** 金额 */
+    amount: number;
+    /** 下次扣费时间 */
+    payTime: string;
+    /** 天数 */
+    subscriptionDays: number;
+  };
   msg: string;
 }

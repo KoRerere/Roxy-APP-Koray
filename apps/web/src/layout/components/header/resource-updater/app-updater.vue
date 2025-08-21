@@ -16,7 +16,7 @@ const userStore = useUserStore()
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return `${$t('正在下载')} ${Math.floor(item.percent)}%`
+    return `${$t('正在下载')} ${Math.floor(item.percent!)}%`
   }
   else if (item.status === 'downloaded') {
     if (item.type === 'app') {

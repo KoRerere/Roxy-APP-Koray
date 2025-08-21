@@ -83,6 +83,11 @@ export async function startRoxynet() {
   if (loglevelIndex !== -1) {
     startRoxynetArgs.push(...startAppCmdArgs.splice(loglevelIndex, 2))
   }
+
+  if (roxynetProcess) {
+    return
+  }
+
   console.log('startAppCmdArgs:', startAppCmdArgs)
   console.log('startRoxynetArgs:', startRoxynetArgs)
   roxynetProcess = spawn(appConfig.roxynetBinPath, startRoxynetArgs, {

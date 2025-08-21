@@ -5,12 +5,11 @@ import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { $t } from '/@/locales'
-import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
+import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import { ProxyCheckStatus } from '/@/enums'
+import { ProxyCheckStatus, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
 import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
 
@@ -31,25 +30,21 @@ const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>
 
 const emit = defineEmits(['confirm'])
 
-const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const [showToast, onlyErrorToast] = useResponseToast()
+const { testProxy, batchTestShowToast } = useCheckProxy()
+const [_, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('agent')
 
-const testStatus = ref<Record<string, ProxyCheckStatus>>({})
-
+const _selection = ref<any>(toRaw(outerData))
+const operation = ref(tableOperation().filter(item => item.name === 'test').map(item => ({ ...item, disabled: false })))
+const filtersMenu = ref()
+const boundeds = ref<Boundeds>()
+const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
-
-const warnMessage = $t('当前选择绑定的代理数量已超过创建窗口数。')
-
-const operation = ref(tableOperation().filter(item => item.name === 'test'))
-const selection = ref(outerData)
-const filtersMenu = ref()
 const dataList = ref()
-const boundeds = ref<Boundeds>({})
 const tableProps = {
   columns,
   showDisplay: false,
@@ -60,22 +55,23 @@ const tableProps = {
     ? {}
     : {
       onRowSelect({ data }: any) {
-        boundeds.value[data.id].disabled = false
+        Reflect.set(boundeds.value![data.id], 'disabled', false)
       },
       onRowSelectAll({ data }: any) {
         data.forEach((item: any) => {
-          boundeds.value[item.id].disabled = false
+          Reflect.set(boundeds.value![item.id], 'disabled', false)
         })
       },
       onRowUnselect({ data }: any) {
-        boundeds.value[data.id].disabled = true
+        Reflect.set(boundeds.value![data.id], 'disabled', true)
       },
       onRowUnselectAll() {
-        boundeds.value = Object.fromEntries(Object.entries(boundeds.value).map(([id, item]) => [id, { ...item, disabled: true }]))
+        boundeds.value = Object.fromEntries(Object.entries(boundeds.value!).map(([id, item]) => [id, { ...item, disabled: true }]))
       },
     }),
 }
-const sumProxyCount = computed(() => Object.values(boundeds.value).reduce((sum: number, item: any) => sum += (!item.disabled ? item.value : 0), 0))
+
+const sumProxyCount = computed(() => Object.values(boundeds.value ?? {}).reduce((sum: number, item: any) => sum += (!item.disabled ? item.value : 0), 0))
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
@@ -87,16 +83,13 @@ function onRefreshTable() {
 }
 
 async function getTableList(params: any) {
-  const result = await tableRequest(params)
+  const result = await tableRequest({ ...params, type: 'window_use' })
   dataList.value = result.data.rows
   if (isBatch) {
-    boundeds.value = Object.fromEntries(
+    boundeds.value ??= Object.fromEntries(
       result.data.rows.map(item => {
-        const _data = outerData?.find((it: any) => item.id === it.id)
-        return [item.id, {
-          value: _data?._proxyCount ?? 1,
-          disabled: !_data,
-        }]
+        const target = _selection.value?.find((it: any) => item.id === it.id)
+        return [item.id, { value: target?._proxyCount ?? 1, disabled: !target }]
       })
     )
   }
@@ -106,93 +99,73 @@ async function getTableList(params: any) {
 function operationHandler(operate: any, data: ProxyItem) {
   const datas = ([] as ProxyItem[]).concat(data)
   switch (operate.name) {
-    case 'refresh':
-      refreshUrl(datas)
-      break
     case 'test':
-      testProxy(datas, operate.name)
+      onCheckProxyStatus(datas, operate.name)
       break
   }
 }
 
-function refreshUrl(datas: ProxyItem[]) {
-  datas.forEach(async (item) => {
-    const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
-    showToast(isOK ? 0 : -1, item.refreshUrl as string)
-  })
+async function onCheckAllProxy() {
+  if (!dataList.value?.length) {
+    onlyErrorToast(-1, $t('暂无代理'))
+    return
+  }
+  await onCheckProxyStatus(dataList.value, 'test')
 }
 
-async function testProxy(datas: ProxyItem[], operateName: string) {
+async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
   const tasks = datas.map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
-      const checkResult = await checkProxy(toRaw(item))
+      const checkResult = await testProxy(toRaw(item))
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
-      testStatus.value[item.id] = checkResult.checkStatus;
+      checkedMessage.value[item.id!] = checkResult.checkStatus;
       return { ...checkResult, id: item.id }
     }
   })
 
   const results = await concurrentControl(tasks, 5)
   batchTestShowToast(results)
-  API.proxy.userMdfProxyModuleCreate(results)
-}
-
-async function testAllProxy() {
-  if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理'))
-    return
-  }
-  await testProxy(dataList.value, 'test')
 }
 
 function saveSelected() {
-  const _selection = !isBatch
-    ? selection.value
-    : selection.value?.map(({ loadingOperationMap, ...item }: any) => ({ ...item, _proxyCount: boundeds.value[item.id].value }))
-
-  emit('confirm', _selection)
+  const list = !isBatch
+    ? _selection.value
+    : _selection.value?.map(({ loadingOperationMap, ...item }: any) => ({
+      ...item,
+      _proxyCount: boundeds.value![item.id].value,
+      _type: ProxyType.buy
+    }))
+  emit('confirm', list)
 }
+
+const message = $t('当前选择绑定的代理数量已超过创建窗口数。')
 </script>
 
 <template>
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })" :closable="false" />
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false" />
     <div class="flex-ovh-1">
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
+      <RyTable ref="agent" v-model:selection="_selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
         :show-actions="false" :show-table-header="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
-        <template #proxy="{ data: row }">
-          <div class="flex flex-col gap-1 select-none">
-            <div class="proxy-host">
-              <span>{{ strConcat(row.protocol?.toLocaleLowerCase(), '://') }}</span>
-              <span>{{ row.host }}</span>
-              <span>{{ strConcat(':', row.port) }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 ip-type">
-              <span>{{ row.ipType }}</span>
-              <Divider class="!ma-0" layout="vertical" />
-              <span>{{ row.proxyUserName }}</span>
-            </div>
-          </div>
-        </template>
         <template #outbound="{ data }">
-          <OutboundIp class="select-none" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data.id]"
+          <OutboundIp class="select-none" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
             :is-loading="data.loadingOperationMap?.test" />
         </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
-          <div class="bounded" @click.stop>
+          <div v-if="boundeds" class="bounded" @click.stop>
             <RxInputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="1" :step="1"></RxInputNumber>
           </div>
         </template>

@@ -14,6 +14,10 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:setUserInfo', async (event, userInfo) => {
     store.token = userInfo.token
     store.userId = userInfo.userId
+    store.userInfo = {
+      username: userInfo.userName,
+      email: userInfo.email,
+    }
     store.workspaceId = userInfo.workspaceId
     browserManager.reportWindowOpenStatus()
     store.lastLoginTime = Date.now()

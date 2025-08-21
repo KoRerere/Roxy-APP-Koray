@@ -23,9 +23,9 @@ export interface ResourceUpdateMessage {
   /** 更新类型 */
   type: 'app' | 'patch' | 'web' | 'kernel'
   /** 状态 */
-  status?: 'downloading' | 'downloaded' | 'uninstalled' | 'failed'
+  status?: 'downloading' | 'downloaded' | 'uninstalled' | 'failed' | 'update'
   /** 下载进度 */
-  percent: number
+  percent?: number
   /** 总大小 */
   total?: number
   /** 更新标题信息 */
@@ -89,4 +89,8 @@ export interface MainMessage {
   'syncControl:toggleClickDelay': () => void
   /** 开启/关闭延迟输入 */
   'syncControl:toggleInputDelay': () => void
+  /** 暂停同步 */
+  'syncControl:pause': () => void
+  /** 恢复同步 */
+  'syncControl:resume': () => void
 }

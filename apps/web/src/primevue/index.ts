@@ -22,7 +22,8 @@ export function setupPrimeVue(app: App) {
     theme: {
       options: {
         prefix: '',//去掉 primevue 的默认前缀，基于 primevue 的 bug 运行
-        darkModeSelector: 'html[data-theme="dark"]',
+        // darkModeSelector: 'html[data-theme="dark"]',
+        darkModeSelector: '.app-dark',// primevue bug，4.3.6 版本后，自定义属性失效需要使用 class 选择器，后续版本可能会恢复
       },
       preset: definePreset(Aura, customPreset),
     },

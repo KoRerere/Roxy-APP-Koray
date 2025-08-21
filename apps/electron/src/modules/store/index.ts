@@ -62,6 +62,11 @@ export interface StoreType {
   openWorkbench?: 0 | 1
   /** 订阅等级 */
   subLevel?: string
+  /** 用户信息 */
+  userInfo: {
+    username: string
+    email: string
+  }
   simulation: {
     delay: 100,
     enable: false,
@@ -101,6 +106,10 @@ const defaultValues: StoreType = {
   isExternalWeb: false,
   openWorkbench: 1,
   subLevel: '',
+  userInfo: {
+    username: '',
+    email: '',
+  },
   simulation: {
     delay: 100,
     enable: false,

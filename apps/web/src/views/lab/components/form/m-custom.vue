@@ -1,12 +1,16 @@
 <script setup lang="ts">
-defineOptions({
-  inheritAttrs: false,
-})
+import { useFormContext } from '/@/views/lab/components/form/useContext'
 
-defineProps<{
-  field: any
-  input: any
-}>()
+defineOptions({ inheritAttrs: false })
+
+const { field, input } = defineProps<{ field: any, input: any }>()
+
+const { setFieldValue } = useFormContext()
+
+function onUpdate(value: any) {
+  setFieldValue(input.name, value)
+}
+
 </script>
 
 <template>

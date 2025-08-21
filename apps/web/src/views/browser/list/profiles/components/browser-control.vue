@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { ProxyExpireStatus } from '/@/enums/proxy'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
+import { useProxy } from '/@/views/agent/hooks'
 
 const props = defineProps({
   data: {
@@ -17,7 +19,9 @@ const props = defineProps({
 
 const emits = defineEmits(['open'])
 
+const router = useRouter()
 const userStore = useUserStore()
+const { viewExpiresSoonProxy } = useProxy()
 
 const usePeoples = computed(() => props.data.statusInfo
   .filter((item: any) => item.openUserId !== userStore.userInfo.id)
@@ -32,6 +36,7 @@ const browser = computed(() => {
     return {
       msg: $t('打开'),
       classes: 'cursor-pointer',
+      error: props.data.proxyExpireStatus === ProxyExpireStatus.expired ? $t('您购买的代理已过期。请在打开窗口前更新代理信息') : undefined
     }
   }
 
@@ -64,16 +69,23 @@ async function openBrowser() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined
-      severity="secondary" @click.stop="openBrowser">
-      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5"
-        :value="browser.percent" />
+    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
+      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
       <RxSvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
       <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
     </RxButton>
-    <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
-    <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill"
-      class="text-orange" />
+    <RxTooltip v-if="browser?.error || browser?.warning">
+      <template #default>
+        <RxSvgIcon name="base/rx_ic_info_fill" :class="[browser?.error ? 'text-red' : 'text-orange']" />
+      </template>
+      <template #content>
+        <i18n-t class="error" tag="div" :keypath="browser.error || browser.warning" scope="global">
+          <template #link>
+            <span class="cursor-pointer error-link" @click="router.push({ name: 'agent-list', query: { name: 'shop' } })">{{ $t('代理页面') }}</span>
+          </template>
+        </i18n-t>
+      </template>
+    </RxTooltip>
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />
   </div>
 </template>
@@ -100,6 +112,24 @@ async function openBrowser() {
     .control-icon {
       color: #12A3FC;
     }
+  }
+}
+
+.error {
+  color: var(--component-tooltip-text-primary, #FFF);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xs, 16px);
+
+  &-link {
+    color: var(--colors-text-text-brand);
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: auto;
+    text-underline-offset: auto;
+    text-underline-position: from-font;
   }
 }
 </style>

@@ -5,6 +5,7 @@ import { emitter, type MittEvents } from '/@/utils/eventBus'
 import { useThemeStore } from '/@/stores/theme'
 
 const userStore = useUserStore()
+const route = useRoute()
 const router = useRouter()
 const themeStore = useThemeStore()
 const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
@@ -23,7 +24,7 @@ const customerName = computed(() => {
   return `[Roxy]-${userName || '游客'}`
 })
 
-function handleVisibilityChanged(data) {
+function handleVisibilityChanged(data: any) {
   console.log('data.visibility', data.visibility)
   visibility.value = data.visibility
 }
@@ -31,7 +32,7 @@ function handleVisibilityChanged(data) {
 watch(() => themeStore.realTheme, (newVal) => {
   console.log('newVal', newVal)
   // LiveChatWidget?.call?.("destroy");
-  router.replace({ ...router.currentRoute.value, query: { theme: newVal } })
+  router.replace({ ...router.currentRoute.value, query: { ...route.query, theme: newVal } as Record<string, any> })
 }, { immediate: true })
 
 emitter.on('toggleChatVisible', (_visibility) => {
@@ -44,8 +45,8 @@ onErrorCaptured((err) => {
 </script>
 
 <template>
-  <LiveChatWidget :key="themeStore.realTheme" license="18087441" :customer-name="customerName"
-    :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged" />
+  <LiveChatWidget :key="themeStore.realTheme" license="18087441" :customer-name="customerName" :session-variables="sessionVariables" :visibility="visibility"
+    @visibility-changed="handleVisibilityChanged" />
 </template>
 
 <style></style>

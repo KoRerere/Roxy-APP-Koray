@@ -52,10 +52,12 @@ export const useThemeStore = defineStore('theme', () => {
     if (theme.value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', systemTheme)
+      document.documentElement.classList.toggle('app-dark', systemTheme === 'dark')
       realTheme.value = systemTheme
     } else {
       document.documentElement.setAttribute('data-theme', theme.value)
       realTheme.value = theme.value
+      document.documentElement.classList.toggle('app-dark', theme.value === 'dark')
     }
     // 更新 primevue 的 primitive 以适应不同风格 theme
     updatePreset({

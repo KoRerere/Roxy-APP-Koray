@@ -8,11 +8,11 @@ const { name } = defineProps<{
 const { setValues } = useFormContext()
 
 function onUpdate1(value: string) {
-  setValues({ [name]: value, lastname: 'x' })
+  setValues({ [name]: value, firstname: 'x' })
 }
 
 function onUpdate2(value: string) {
-  setValues({ [name]: value, lastname: value })
+  setValues({ [name]: value, firstname: value })
 }
 </script>
 

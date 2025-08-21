@@ -23,7 +23,7 @@ const defaultMethods = [
     icon: '/images/payments/rx_payment_balance.svg'
   },
   {
-    label: $t('银行卡'),
+    label: 'Card',
     value: PayWay.Card,
     icon: '/images/payments/rx_payment_cards.svg'
   },

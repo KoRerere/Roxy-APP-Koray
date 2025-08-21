@@ -1,6 +1,6 @@
 import { app, } from 'electron'
 import { osConfig, } from '/@/constants'
-import { hostname } from 'node:os'
+import { userInfo } from 'node:os'
 import { createHash, randomUUID } from 'node:crypto'
 import { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { detectNetwork } from '/@/utils'
@@ -9,6 +9,7 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
 import { readFile } from 'node:fs/promises'
 import { isMac } from '/@/constants/common'
+import { execSync } from 'node:child_process'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -57,7 +58,7 @@ export function getCommonRequestHeaders() {
     ['R-OS']: isMac ? 'mac' : 'win',
     ['R-OSBIT']: isMac ? osConfig.cpu : osConfig.osBit,
     // ['R-DEVICE-ID']: await getDeviceId(),
-    ['R-DEVICE-NAME']: encodeURIComponent(hostname()),
+    ['R-DEVICE-NAME']: encodeURIComponent(getSystemUserName()),
     ['R-Local-Timezone-Offset']: Intl.DateTimeFormat().resolvedOptions().timeZone,
     ['R-Local-System-Language']: app.getLocale(),
   }
@@ -116,7 +117,7 @@ export async function getDeviceInfo(): Promise<UserGetLoginInfoListData['data'][
   const result = await detectNetwork('local')
 
   return {
-    deviceName: hostname(),
+    deviceName: getSystemUserName(),
     deviceId: await getDeviceId(),
     /** 用户IP地址 */
     address: result.ip,
@@ -183,4 +184,9 @@ export function asyncDebounce<T extends (...args: any[]) => Promise<any>>(
       }, delay);
     });
   };
+}
+
+// 获取系统用户名
+export const getSystemUserName = () => {
+  return userInfo().username;
 }

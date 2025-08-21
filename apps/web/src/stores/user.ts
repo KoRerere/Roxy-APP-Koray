@@ -1,4 +1,4 @@
-import type { UserGetUserConfigListData, UserGetUserInfoListData, UserGetUserPayInfoListData } from "@roxy/backend-api";
+import type { UserGetBindCardListListData, UserGetUserConfigListData, UserGetUserInfoListData, UserGetUserPayInfoListData, UnwrapRowsType } from "@roxy/backend-api";
 import mixpanel from "mixpanel-browser";
 import { defineStore } from "pinia";
 import { ref } from "vue";
@@ -14,6 +14,8 @@ import { encryptAESGCM, hidePageLoading, isWindows, type OauthLoginType } from "
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
+type UserCards = UnwrapRowsType<UserGetBindCardListListData>
+type UserPayInfo = UserGetUserPayInfoListData["data"];
 
 export const useUserStore = defineStore(
   "user",
@@ -29,7 +31,10 @@ export const useUserStore = defineStore(
     /** 用户信息 */
     const userInfo = ref<UserInfo>({});
     /** 用户付费详情 */
-    const userPayInfo = ref<UserGetUserPayInfoListData["data"]>({} as UserGetUserPayInfoListData["data"]);
+    const userPayInfo = ref<UserPayInfo>({} as UserPayInfo);
+    const userCards = ref<UserCards>()
+
+
     const userConfig = ref<UserConfig>({});
     const token = ref('');
     const appVersion = ref("");
@@ -124,6 +129,8 @@ export const useUserStore = defineStore(
           token: token.value,
           userId: userInfo.value.id!,
           workspaceId: userInfo.value.workspaceId!,
+          userName: userInfo.value.userName!,
+          email: userInfo.value.email!,
         });
       });
 
@@ -153,6 +160,7 @@ export const useUserStore = defineStore(
         userInfo.value = {}
         password.value = ''
       }
+      userCards.value = undefined
       token.value = ''
       electronAPI.send('user:logout')
       mixpanel.reset()
@@ -214,6 +222,15 @@ export const useUserStore = defineStore(
       }
     }
 
+    async function getUserCards(force = false) {
+      if (!force && userCards.value) return userCards.value
+      const { code, data } = await API.pay.userGetBindCardListList({ page_index: '1', page_size: '20' })
+      if (code === 0) {
+        userCards.value = data.rows
+      }
+      return userCards.value
+    }
+
     function setToken(_token: string) {
       token.value = _token;
     }
@@ -249,6 +266,7 @@ export const useUserStore = defineStore(
       userInfo,
       userConfig,
       userPayInfo,
+      userCards,
       password,
       appVersion,
       identityInfo,
@@ -262,6 +280,7 @@ export const useUserStore = defineStore(
       updateUserConfig,
       fetchUserInfo,
       getUserPayInfo,
+      getUserCards,
       initUserInfo,
       clearRememberMe,
       setLoginWay

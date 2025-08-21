@@ -15,12 +15,14 @@ interface OptionGorup {
     label: string
     value: string
     tooltip?: string
+    disabled?: boolean
   }[]
 }
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { ids: windowIds } = defineProps<{
+const { ids: windowIds, buyProxyType = false } = defineProps<{
   ids: number[]
+  buyProxyType?: boolean
 }>()
 
 const emit = defineEmits(['close', 'confirm'])
@@ -42,11 +44,11 @@ const optionsGroup = computed<OptionGorup[]>(() => [
         label: $t('窗口备注'),
         value: 'notes'
       },
-      {
-        label: $t('窗口代理加密'),
-        value: 'hideProxy',
-        tooltip: $t('接收方仅能使用，无法查看到代理主机/端口/账密等信息')
-      },
+      // {
+      //   label: $t('窗口代理加密'),
+      //   value: 'hideProxy',
+      //   tooltip: $t('接收方仅能使用，无法查看到代理主机/端口/账密等信息')
+      // },
       {
         label: $t('投送后彻底删除窗口（该操作无法撤销）'),
         value: 'delete'
@@ -59,7 +61,9 @@ const optionsGroup = computed<OptionGorup[]>(() => [
     options: [
       {
         label: $t('同时删除代理资源中仅与投送窗口有绑定关系的代理'),
-        value: 'proxy'
+        value: 'proxy',
+        disabled: buyProxyType,
+        tooltip: buyProxyType ? $t('投送窗口中存在购买代理') : undefined
       },
       {
         label: $t('同时删除平台账号中仅与投送窗口有绑定关系的账号'),
@@ -150,7 +154,7 @@ async function onTransfer(isSelf: boolean) {
           <div class="title">{{ group.title }}</div>
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
-              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
+              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" :disabled="option.disabled" />
               <label :for="option.value">{{ option.label }}</label>
               <SvgIcon v-if="option.tooltip" v-tooltip="option.tooltip" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)"></SvgIcon>
             </div>

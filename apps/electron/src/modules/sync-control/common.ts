@@ -17,5 +17,13 @@ export function closeAllSyncDialogs() {
   closeSyncingWindowListWindow()
 }
 
+export function closeSyncOtherDialogs() {
+  closePreferencesDialogWindowWindow()
+  closeCustomLayoutsDialogWindow()
+  closeBatchInputsDialogWindow()
+  closeOpenSitesDialogWindow()
+  closeSyncingWindowListWindow()
+}
+
 /** 默认主控标题栏颜色 */
 export const defaultMainControlWindowColor = 'C7CDD1'

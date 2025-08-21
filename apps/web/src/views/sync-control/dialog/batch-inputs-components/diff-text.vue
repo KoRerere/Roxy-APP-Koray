@@ -12,6 +12,8 @@ const props = defineProps({
 
 const workspaceStore = useWorkspaceStore()
 const textMap = ref<Recordable>({})
+const labelList = ref<HTMLLabelElement[]>([])
+const maxLabelWidth = ref(0)
 
 const workspaceName = computed(() => {
   return workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
@@ -33,6 +35,18 @@ defineExpose({
     }, {})
   }
 })
+
+onMounted(() => {
+  let w = 0
+  labelList.value.forEach(label => {
+    const rect = label.getBoundingClientRect()
+    if (w < rect.width) {
+      w = rect.width
+    }
+  })
+  // 向上取整
+  maxLabelWidth.value = Math.ceil(w)
+})
 </script>
 
 <template>
@@ -40,13 +54,14 @@ defineExpose({
     <template v-for="window in syncWindows" :key="window.dirId">
       <div class="form-item">
         <div class="form-item-label">
-          <label for="diff-text">
+          <label for="diff-text" ref="labelList" :style="{ width: `${maxLabelWidth}px` }">
             <span class="profile-name">{{ workspaceName }}-</span>
             <span class="profile-num">{{ window.windowSortNum }}</span>
           </label>
         </div>
         <div class="form-item-content">
-          <Textarea v-model="textMap[window.dirId!]" class="textarea" rows="1" autoResize :placeholder="$t('请在此输入内容，支持换行')" />
+          <Textarea v-model="textMap[window.dirId!]" class="textarea" rows="1" autoResize
+            :placeholder="$t('请在此输入内容，支持换行')" />
         </div>
       </div>
     </template>

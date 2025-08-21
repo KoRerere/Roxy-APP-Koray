@@ -1,0 +1,126 @@
+<script setup lang="ts">
+import { RxAlert } from "/@/components/rx-alert";
+import currency from 'currency.js';
+import { format } from 'date-fns';
+import { API } from '/@/api'
+import { $t } from '/@/locales'
+import { AutoRenewalPayStatus } from "/@/enums/pay";
+import { emitter } from '/@/utils/eventBus';
+
+
+const router = useRouter()
+
+const hasUnpaid = ref(false)
+const tableRef = useTemplateRef('autorenew')
+const columns = [
+  {
+    title: $t('服务详情'),
+    key: 'details',
+  },
+  {
+    title: $t('续费价格'),
+    key: 'amount',
+    slot: 'amount',
+    getText: (row: any) => currency(row.amount).format()
+  },
+  {
+    title: $t('下一次账单日期'),
+    key: 'startTime',
+    getText: (row: any) => row.startTime ? format(row.startTime, 'yyyy/MM/dd') : '--'
+  }
+]
+
+async function tableRequest(params: any) {
+  const data = await API.pay.userGetPendingPaymentListList(params)
+  hasUnpaid.value = data.data.rows.some(item => item.status === AutoRenewalPayStatus.Fail)
+  return data
+}
+
+function toBilling() {
+  router.replace({ name: 'wallet', query: { name: 'billing' } })
+}
+
+onMounted(() => {
+  emitter.on('updateAutoRenewList', () => {
+    tableRef.value?.refresh()
+  })
+})
+</script>
+
+<template>
+  <div class="flex flex-col gap-3">
+    <div class="title">{{ $t('自动续订服务') }}</div>
+    <RxAlert v-if="hasUnpaid" class="w-full" type="warn">
+      <template #title>
+        <i18n-t tag="div" scope="global" :keypath="$t('您有一笔未支付的续订费用，{billing}。', { billing: '{billing}' })">
+          <template #billing>
+            <a class="cursor-pointer help-link" @click="toBilling">{{ $t('前往支付') }}</a>
+          </template>
+        </i18n-t>
+      </template>
+    </RxAlert>
+    <div class="flex-1 overflow-hidden rounded-xl list">
+      <RyTable ref="autorenew" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false" :show-table-header="false" :paginator="false">
+        <template #table-empty>
+          <CustomEmpty icon="rx_illustration_coin.svg" :desc="$t('您目前没有将服务设置为自动续订')" />
+        </template>
+        <template #amount="{ data }">
+          <div class="flex items-baseline gap-0.5">
+            <span class="price">{{ currency(data.amount).format() }}</span>
+            <span>/</span>
+            <span class="days">{{ $t('{day} 天', { day: data.days }) }}</span>
+          </div>
+        </template>
+      </RyTable>
+    </div>
+    <i18n-t class="help" tag="div" scope="global" :keypath="$t('* 要查看所有交易记录，请访问{billing}。', { billing: '{billing}' })">
+      <template #billing>
+        <a class="cursor-pointer help-link" @click="toBilling">{{ $t('账单页面') }}</a>
+      </template>
+    </i18n-t>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.list {
+  border: 1px solid var(--colors-border-border-inactive);
+}
+
+.price {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.days {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.help {
+  color: var(--colors-text-text-inactive);
+  text-align: right;
+  font-family: Inter;
+  font-size: 12px;
+  line-height: normal;
+
+  &-link {
+    color: var(--colors-text-text-link);
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: auto;
+    text-underline-offset: auto;
+    text-underline-position: from-font;
+  }
+}
+</style>

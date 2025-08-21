@@ -1,12 +1,28 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { UserGetLoginInfoListData } from '@roxy/backend-api';
 import { RxSvgIcon } from '/@/components/rx-icon'
-
-
+import { useDialog } from '/@/hooks/useDialog'
+import RxInputText from '/@/components/ry-form/rx-input-text.vue'
+import { $t } from '/@/locales'
+import Message from 'primevue/message';
+import { API } from "/@/api";
+import { useResponseToast } from "/@/hooks/useResponseToast";
 
 const props = defineProps<{
   devices: UserGetLoginInfoListData['data']
+  isEdit?: boolean
 }>()
+
+const emit = defineEmits<{
+  (e: 'change', value: string): void
+}>()
+const [showModal] = useDialog()
+const [, onlyErrorToast] = useResponseToast();
+const editDeviceInfo = reactive({
+  deviceName: '',
+  deviceId: '',
+  isError: false
+})
 
 const deviceIconMap = {
   win: 'platforms/rx_os_windows',
@@ -24,6 +40,53 @@ const deviceList = computed(() => {
   })
 })
 
+const handleEdit = (deviceName: string, deviceId: string) => {
+  editDeviceInfo.deviceName = deviceName;
+  editDeviceInfo.deviceId = deviceId;
+  handleBlur()
+  showModal({
+    header: $t('编辑设备名称'),
+    okText: $t('确认'),
+    style: {
+      width: '480px',
+    },
+    slots: {
+      default: () => <div class="flex flex-col gap-3">
+        <div>
+          {$t('当前设备将显示以下名称：')}
+        </div>
+        <RxInputText modelValue={editDeviceInfo.deviceName} onBlur={handleBlur} onUpdate:modelValue={(val: string) => editDeviceInfo.deviceName = val} />
+        {editDeviceInfo.isError ? <Message severity="error" size="small" variant="simple">{$t('设备名称最多支持 30 个字符')}</Message> : <></>}
+      </div>,
+    },
+    handleOk: async () => {
+      console.log('editDeviceInfo', editDeviceInfo)
+      handleBlur();
+      if (editDeviceInfo.isError) {
+        throw new Error('报错阻止关闭弹窗')
+      }
+
+      if (editDeviceInfo.deviceName !== deviceName) {
+        const result = await API.base.userUpdateDeviceNameCreate({
+          deviceName: editDeviceInfo.deviceName,
+          deviceMac: editDeviceInfo.deviceId,
+        })
+        onlyErrorToast(result.code, result.msg)
+        if (result.code === 0) {
+          emit('change', editDeviceInfo.deviceName)
+        }
+      }
+    }
+  })
+}
+
+watch(editDeviceInfo, (newVal) => {
+  console.log(newVal)
+})
+
+const handleBlur = () => {
+  editDeviceInfo.isError = editDeviceInfo.deviceName.length > 30;
+}
 </script>
 
 <template>
@@ -34,7 +97,10 @@ const deviceList = computed(() => {
       </div>
       <div class="device-item__info">
         <div class="device-item__name">
-          <span class="text-[color:--colors-text-text-primary]">{{ item.deviceName }}</span>
+          <span class="text-[color:--colors-text-text-primary] flex items-center gap-2">
+            <span class="max-w-220px ellipsis-1" v-tooltip.top="{ value: item.deviceName }">{{ item.deviceName }}</span>
+            <RxSvgIcon name="base/rx_ic_edit" size="16px" class="cursor-pointer" v-if="isEdit" @click="handleEdit(item.deviceName, item.deviceId!)" />
+          </span>
           <span class="text-[color:--colors-text-text-tertiary]">{{ item.createTime }}</span>
         </div>
         <div class="device-item__ip">

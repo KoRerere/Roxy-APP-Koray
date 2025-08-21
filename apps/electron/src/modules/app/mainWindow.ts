@@ -84,7 +84,7 @@ export async function intoLaunchPage() {
 
 /** 进入主页面 */
 export async function intoMainPage() {
-  mainWindow?.removeAllListeners()
+  mainWindow?.removeAllListeners?.()
   closeMainWindow()
   const defaultWidth = 1440
   const defaultHeight = 960
@@ -157,7 +157,7 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
 
 function closeMainWindow() {
   const win = mainWindow
-  mainWindow?.close()
+  mainWindow?.close?.()
   mainWindow = undefined
   setTimeout(() => {
     win?.destroy()

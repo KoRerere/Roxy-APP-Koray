@@ -1,10 +1,12 @@
-<script setup lang="ts">
-import type { UserGetBannerPictureListListData, UserGetPromotionInfoListData } from '@roxy/backend-api';
+<script setup lang="tsx">
+import type { UserGetBannerPictureListListData, UserGetPromotionInfoListData, UserGetPromotionInfoByTypeListData } from '@roxy/backend-api';
 import { API } from '/@/api';
 import { RxAlert } from '/@/components/rx-alert/'
 import { RxCopyContent } from '/@/components/rx-copy';
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { $t } from '/@/locales';
+import currency from 'currency.js';
+import RxTooltip from '/@/components/rx-tooltip/index.vue';
 
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
@@ -58,6 +60,83 @@ function isLocked(linkStatus: number) {
   return linkStatus === 0
 }
 
+const dataPreformanceValue = ref<UserGetPromotionInfoByTypeListData['data']>()
+const maxNumber = 999999
+const dataPreformance = computed(() => ([
+  {
+    title: $t('链接点击次数'),
+    total: dataPreformanceValue.value?.promotionClickCount || 0,
+    todayCount: dataPreformanceValue.value?.todayPromotionClickCount || 0,
+  },
+  {
+    title: $t('名下用户'),
+    total: dataPreformanceValue.value?.registeredUserNum || 0,
+    todayCount: dataPreformanceValue.value?.todayRegisteredUserNum || 0,
+  },
+  {
+    title: $t('充值用户'),
+    total: dataPreformanceValue.value?.purchaseUserNum || 0,
+    todayCount: dataPreformanceValue.value?.todayPurchaseUserNum || 0,
+  },
+  {
+    title: $t('近 30 天名下用户消费金额'),
+    total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, maxNumber),
+    todayCount: 0,
+    format(val: number) {
+      return currency(val).format()
+    }
+  },
+  {
+    title: $t('审核中'),
+    total: dataPreformanceValue.value?.pendingAmount || 0,
+    todayCount: 0,
+    tootip: $t('消费后 7 天内完成审核'),
+    format(val: number) {
+      return currency(val).format()
+    }
+  },
+  {
+    title: $t('已审核奖励'),
+    total: Math.min(maxNumber, dataPreformanceValue.value?.awardsReviewed || 0),
+    todayCount: dataPreformanceValue.value?.todayAwardsReviewed || 0,
+    style: {
+      color: '#12A3FC',
+    },
+    format(val: number) {
+      return currency(val).format()
+    }
+  },
+]))
+
+const DataPreformance = (props: any) => {
+  return <div class="flex justify-between items-center px-3 py-2.5 rounded-1 bg-[var(--colors-background-bg-page)] gap-2">
+    <RxTooltip class="ellipsis-1">
+      {{
+        default: () => <span class="text-14px text-[var(--colors-text-text-tertiary)] text-3.5 font-500 ellipsis-1">
+          {props.title}:
+        </span>, content: () => <span class="text-white">{props.title}</span>
+      }}
+    </RxTooltip>
+    <span class="flex items-center gap-2.5">
+      {props.todayCount > 0 ? <span class="text-[var(--colors-text-text-success)] text-3 font-500">
+        +{props.format ? props.format(props.todayCount) : props.todayCount}</span> : <></>}
+      <span class="text-[var(--colors-text-text-primary)] text-4 font-700" style={props.style}>
+        {props.format ? props.format(props.total) : props.total}
+      </span>
+    </span>
+  </div>
+}
+
+watch(activeMenu, (val) => {
+  API.base.userGetPromotionInfoByTypeList({
+    linkType: activeMenu.value.linkType?.replace(' ', '_')
+  }).then(({ code, data }) => {
+    if (code === 0) {
+      dataPreformanceValue.value = data
+    }
+  })
+}, { immediate: true })
+
 </script>
 
 <template>
@@ -77,7 +156,9 @@ function isLocked(linkStatus: number) {
     </aside>
     <div class="content">
       <div class="row">
-        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn" :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false" class="w-full" />
+        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn"
+          :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false"
+          class="w-full" />
         <div class="title">{{ $t('推广链接') }}</div>
         <RxCopyContent :text="referralLink" :mask="isLocked(activeMenu.linkStatus)" />
         <div class="benefit">
@@ -95,6 +176,21 @@ function isLocked(linkStatus: number) {
           </template>
         </div>
       </div>
+
+      <div class="row">
+        <div class="title">{{ $t('数据统计') }}</div>
+        <div class="grid grid-cols-10 gap-3 w-full">
+          <div
+            class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
+            <DataPreformance v-for="i in 3" v-bind="dataPreformance[i - 1]" />
+          </div>
+          <div
+            class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-6">
+            <DataPreformance v-for="i in 3" v-bind="dataPreformance[i + 2]" />
+          </div>
+        </div>
+      </div>
+
       <div class="row">
         <div class="title">
           {{ $t('推广宣传图（建站用户专用）') }}
@@ -104,16 +200,15 @@ function isLocked(linkStatus: number) {
             <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
             <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
           </div>
-
         </div>
         <div class="banner-preview-container">
           <div class="banner-preview">
-            <Image :src="currentBannerImage.image_1x" alt="Image" preview :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
-              <template #original="slotProps">
-                <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" :style="slotProps.style"
-                  @click.stop="slotProps.previewCallback" />
+            <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" class="p-3">
+              <template #original>
+                <img :src="currentBannerImage.image_1x"
+                  :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" />
               </template>
-            </Image>
+            </RxImage>
           </div>
           <RxCopyContent :text="bannerImagePreviewHtmlCode" :mask="isLocked(activeMenu.linkStatus)" class="flex-1" />
         </div>

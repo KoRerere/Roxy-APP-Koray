@@ -1,18 +1,9 @@
 <script setup lang="ts">
-const currentSetp = ref('2')
-const steps = [
-  {
-    key: '1',
-  },
-  {
-    key: '2',
-  },
-  {
-    key: '3',
-  },
-]
+
 </script>
 
 <template>
-  <RxSteps v-model="currentSetp" :steps="steps" />
+  <div class="w-300px">
+    <RxImage src="https://roxybrowser.com/banner_picture_new/link_c/zh/630_330_1x.png" />
+  </div>
 </template>

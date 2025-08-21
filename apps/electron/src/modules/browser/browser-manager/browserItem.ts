@@ -309,13 +309,21 @@ export class BrowserItem {
       return this.beforeLaunchTask.proxyInfo
     }
 
-    const res = await proxyDetection(this.winInfo)
+    const { protocol, port, ...res } = await proxyDetection(this.winInfo)
+
+    const _protocol = protocol || this.winInfo.protocol?.split('/')[0]
+    const _port = port || this.winInfo.port?.toString().split('/')[0]
+    this.winInfo.protocol = _protocol
+    this.winInfo.proxyCategory = _protocol
+    this.winInfo.port = _port
+
     if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
       this.beforeLaunchTask.proxyInfo = res
     }
     if (isDetectWithOpenapi) {
       this.isFirstDetectProxyByDashboard = false
     }
+
     return res
   }
 

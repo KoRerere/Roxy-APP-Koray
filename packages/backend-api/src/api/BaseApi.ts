@@ -92,6 +92,8 @@ import {
   UserGetLoginInfoListData,
   UserGetNotifyListData,
   UserGetOssCredentialV2ListData,
+  UserGetPromotionInfoByTypeListData,
+  UserGetPromotionInfoByTypeListParams,
   UserGetPromotionInfoListData,
   UserGetRewardRecordListListData,
   UserGetRewardRecordListListParams,
@@ -128,6 +130,8 @@ import {
   UserSetUserConfigCreatePayload,
   UserUnbindEmailCreateData,
   UserUnbindEmailCreatePayload,
+  UserUpdateDeviceNameCreateData,
+  UserUpdateDeviceNameCreatePayload,
   UserUpdateValidatorTokenCreateData,
   UserUpdateValidatorTokenCreatePayload,
   UserUploadAvatarCreateData,
@@ -1631,6 +1635,47 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserLogoutListData, any>({
       path: `/user_logout`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetPromotionInfoByTypeList
+   * @summary 根据链接类型获取用户推广信息
+   * @request GET:/user_get_promotion_info_by_type
+   * @response `200` `UserGetPromotionInfoByTypeListData`
+   */
+  userGetPromotionInfoByTypeList = (
+    query: UserGetPromotionInfoByTypeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPromotionInfoByTypeListData, any>({
+      path: `/user_get_promotion_info_by_type`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserUpdateDeviceNameCreate
+   * @summary 修改当前登录设备名称
+   * @request POST:/user_update_device_name
+   * @response `200` `UserUpdateDeviceNameCreateData`
+   */
+  userUpdateDeviceNameCreate = (
+    data: UserUpdateDeviceNameCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdateDeviceNameCreateData, any>({
+      path: `/user_update_device_name`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

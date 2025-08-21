@@ -28,6 +28,8 @@ export interface ProxyDetectionResult {
   longitude: number;
   timezone: string;
   region: string;
+  protocol?: string;
+  port?: string;
 }
 
 
@@ -98,116 +100,116 @@ export function tryRefreshUrl(refreshUrl: string) {
 }
 
 /** 代理检测 */
-export async function proxyDetection(
-  proxyDetectionParams: ProxyDetectionParams,
-): Promise<ProxyDetectionResult> {
-  const {
-    dirId,
-    outerParamFirst,
-    protocol,
-    proxyCategory = protocol || "noproxy",
-    ipType,
-    host,
-    port,
-    proxyUserName,
-    proxyPassword,
-  } = proxyDetectionParams;
-  const systemProxySwitch = Reflect.has(
-    proxyDetectionParams,
-    "systemProxySwitch",
-  )
-    ? proxyDetectionParams.systemProxySwitch
-    : store.systemProxySwitch;
+export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
 
-  if (systemProxySwitch && !dirId) {
-    throw new Error(`dirId is required when systemProxySwitch is true`);
-  }
-  console.log("systemProxySwitch", store.systemProxySwitch);
-  console.log(`dirId && proxyUserName`, dirId, proxyUserName);
-  const systemProxyAddress = await getSystemProxy();
-  await startRoxynet();
+  async function __proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
+    const {
+      dirId,
+      outerParamFirst,
+      protocol,
+      proxyCategory = protocol || "noproxy",
+      ipType,
+      host,
+      port,
+      proxyUserName,
+      proxyPassword,
+    } = proxyDetectionParams;
+    const systemProxySwitch = Reflect.has(
+      proxyDetectionParams,
+      "systemProxySwitch",
+    )
+      ? proxyDetectionParams.systemProxySwitch
+      : store.systemProxySwitch;
 
-  const isUseSystemProxy =
-    proxyCategory === "SSH" ||
-    (getRoxynetProcess() && systemProxySwitch && systemProxyAddress);
+    if (systemProxySwitch && !dirId) {
+      throw new Error(`dirId is required when systemProxySwitch is true`);
+    }
+    console.log("systemProxySwitch", store.systemProxySwitch);
+    console.log(`dirId && proxyUserName`, dirId, proxyUserName);
+    const systemProxyAddress = await getSystemProxy();
+    await startRoxynet();
 
-  if (isUseSystemProxy) {
-    const protocal = proxyCategory.toLocaleLowerCase();
-    const addr = host && port ? `${host}:${port}` : "";
-    const roxynetParams = {
-      addr: protocal === "noproxy" ? "" : addr,
-      user_name: proxyUserName || "",
-      password: proxyPassword || "",
-      protocal,
+    const isUseSystemProxy =
+      proxyCategory === "SSH" ||
+      (getRoxynetProcess() && systemProxySwitch && systemProxyAddress);
+
+    if (isUseSystemProxy) {
+      const protocal = proxyCategory.toLocaleLowerCase();
+      const addr = host && port ? `${host}:${port}` : "";
+      const roxynetParams = {
+        addr: protocal === "noproxy" ? "" : addr,
+        user_name: proxyUserName || "",
+        password: proxyPassword || "",
+        protocal,
+      };
+      console.log("roxynetParams", roxynetParams);
+
+      if (dirId) {
+        await setRoxynetProxy({
+          [dirId]: roxynetParams,
+        });
+      }
+      console.log("本次代理检测经过 roxynet");
+    } else {
+      console.log("本次代理检测不经过 roxynet");
+    }
+    // 是否为直连
+    const isNoProxy = proxyCategory.toLocaleLowerCase() === "noproxy";
+    let __protocol = proxyCategory;
+    if (outerParamFirst) {
+      __protocol = proxyCategory;
+    } else if (isUseSystemProxy) {
+      if (proxyCategory !== "SOCKS5") {
+        __protocol = proxyCategory === "SSH" ? "SOCKS5" : "HTTP";
+      }
+    } else if (isNoProxy && systemProxyAddress) {
+      __protocol = "HTTP";
+    }
+
+    const checkChannel = isNoProxy
+      ? store.ipChecker
+      : proxyDetectionParams.checkChannel;
+    const params: ProxyDetectionParams = {
+      proxyCategory: __protocol,
+      host: isUseSystemProxy ? "127.0.0.1" : host,
+      port: isUseSystemProxy ? store.roxynetProxyPort : port,
+      proxyUserName: isUseSystemProxy ? dirId : proxyUserName,
+      proxyPassword: isUseSystemProxy ? dirId : proxyPassword,
+      checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
     };
-    console.log("roxynetParams", roxynetParams);
 
-    if (dirId) {
-      await setRoxynetProxy({
-        [dirId]: roxynetParams,
-      });
-    }
-    console.log("本次代理检测经过 roxynet");
-  } else {
-    console.log("本次代理检测不经过 roxynet");
-  }
-  // 是否为直连
-  const isNoProxy = proxyCategory.toLocaleLowerCase() === "noproxy";
-  let __protocol = proxyCategory;
-  if (outerParamFirst) {
-    __protocol = proxyCategory;
-  } else if (isUseSystemProxy) {
-    if (proxyCategory !== "SOCKS5") {
-      __protocol = proxyCategory === "SSH" ? "SOCKS5" : "HTTP";
-    }
-  } else if (isNoProxy && systemProxyAddress) {
-    __protocol = "HTTP";
-  }
+    // console.log('proxyDetectionParams', proxyDetectionParams)
+    const checkMode = getCheckFunction(params.proxyCategory);
+    console.log("proxyDetection params", params);
+    const result = await checkMode(params, isUseSystemProxy).catch((error) => {
+      Reflect.deleteProperty(error, 'config')
+      console.error("proxyDetection error", error);
+      return Promise.reject($t("代理检测失败"));
+    });
 
-  const checkChannel = isNoProxy
-    ? store.ipChecker
-    : proxyDetectionParams.checkChannel;
-  const params: ProxyDetectionParams = {
-    proxyCategory: __protocol,
-    host: isUseSystemProxy ? "127.0.0.1" : host,
-    port: isUseSystemProxy ? store.roxynetProxyPort : port,
-    proxyUserName: isUseSystemProxy ? dirId : proxyUserName,
-    proxyPassword: isUseSystemProxy ? dirId : proxyPassword,
-    checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
-  };
+    console.log("proxyDetection result", result);
 
-  // console.log('proxyDetectionParams', proxyDetectionParams)
-  const checkMode = getCheckFunction(params.proxyCategory);
-  console.log("proxyDetection params", params);
-  const result = await checkMode(params, isUseSystemProxy).catch((error) => {
-    Reflect.deleteProperty(error, 'config')
-    console.error("proxyDetection error", error);
-    return Promise.reject($t("代理检测失败"));
-  });
+    // 下面为什么会有这么多的判断？因为不同的检测渠道返回的数据字段名不一样，所以需要做一些兼容处理
+    if (result) {
+      result.checkChannel = params.checkChannel;
+      result.ip ||= result.query;
+      result.region ||= result.region_name;
+      result.city ||= result.city_name;
+      result.country ||= result.country_name || result.country_long;
+      result.country_code ||= result.country_short || result.countryCode;
+      result.timezone ||= result.time_zone;
+      result.latitude ||= result.lat;
+      result.longitude ||= result.lon;
 
-  console.log("proxyDetection result", result);
-
-  // 下面为什么会有这么多的判断？因为不同的检测渠道返回的数据字段名不一样，所以需要做一些兼容处理
-  if (result) {
-    result.checkChannel = params.checkChannel;
-    result.ip ||= result.query;
-    result.region ||= result.region_name;
-    result.city ||= result.city_name;
-    result.country ||= result.country_name || result.country_long;
-    result.country_code ||= result.country_short || result.countryCode;
-    result.timezone ||= result.time_zone;
-    result.latitude ||= result.lat;
-    result.longitude ||= result.lon;
-
-    if (ipType === `IPV6`) {
+      // if (ipType === `IPV6`) {
       const { code, data } = await API.proxy
-        .userGetTimezoneByCoordinatesInfoList({
-          latitude: result.latitude,
-          longitude: result.longitude,
+        .userGetTimezoneByIpList({
+          ip: result.ip,
+          // longitude: result.longitude,
         })
         .catch((error) => {
           console.log(
-            `获取时区失败 === user_get_timezone_by_coordinates_info`,
+            `获取时区失败 === user_get_timezone_by_ip`,
             error,
           );
           return { code: 1, data: { timezone: "" } };
@@ -215,10 +217,39 @@ export async function proxyDetection(
       if (code === 0) {
         result.timezone = data.timezone;
       }
+      // }
+    }
+
+    return result || {};
+  }
+
+  // 处理多协议的情况，比如 socks5/http 或者 http/https 这样支持多协议的代理
+  const { protocol, proxyCategory = protocol || "noproxy", port } = proxyDetectionParams
+  const protocols = proxyCategory?.split('/').map(item => item.toUpperCase()) || []
+  const ports = port?.toString().split('/') || []
+  const errors: any[] = []
+
+  for (let index = 0; index < protocols.length; index++) {
+    const protocol = protocols[index]
+    const port = ports[index] || ports[0]
+    const res = await __proxyDetection({
+      ...proxyDetectionParams,
+      proxyCategory: protocol,
+      protocol,
+      port,
+    }).catch(error => {
+      errors.push(error)
+    })
+    if (res?.ip) {
+      return { ...res, protocol, port }
     }
   }
 
-  return result || {};
+  if (errors.length === protocols.length) {
+    return Promise.reject(errors[0])
+  }
+
+  return {} as ProxyDetectionResult
 }
 
 function logProxyConfig(params: ProxyDetectionParams, name = ``) {

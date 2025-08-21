@@ -4,8 +4,10 @@ import { useRoleStore } from '/@/stores/role'
 import OperationLog from './operation-log.vue'
 import TeamMember from './team-member.vue'
 
+const route = useRoute()
+const router = useRouter()
 const role = useRoleStore()
-const activeTabValue = ref('team-member')
+const activeTabValue = ref((route.query.name as string) || 'team-member')
 
 const tabs = computed(() => {
   return [
@@ -17,11 +19,15 @@ const tabs = computed(() => {
 const activeTab = computed(() => {
   return tabs.value.find(tab => tab.value === activeTabValue.value)
 })
+
+function onChange(value: any) {
+  router.replace({ name: 'teams', query: { name: value } })
+}
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs></RxTabs>
+    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs @update:value="onChange"></RxTabs>
     <div class="flex-1 overflow-hidden">
       <component :is="activeTab?.component" />
     </div>

@@ -1,5 +1,5 @@
 import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
-import { getBaseUrl, getGatewayConfig, getOpenAPIUrl } from '/@/api/getGatewayConfig'
+import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByIpChange, getOpenAPIUrl } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
@@ -55,6 +55,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
 
 httpClient.instance.interceptors.response.use((response) => {
   // handleResponse(response)
+  reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
   return response
 })
 

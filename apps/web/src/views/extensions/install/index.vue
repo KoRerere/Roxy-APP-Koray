@@ -6,7 +6,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxSvgIcon, } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
+import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType, ExtensionsSource } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -16,6 +16,7 @@ import uploadExtension from '/@/views/extensions/install/components/upload-exten
 import { useDialog as useCustomDialog } from "/@/hooks/useDialog";
 import ShieldDialog from './components/shield-dialog.vue'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { concurrentControl } from '/@/utils'
 
 type Data = UnwrapRowType<UserGetPluginListListData>
 
@@ -33,6 +34,9 @@ const { showMenu: showPopupMenu } = usePopupMenu()
 
 const needsync = defineModel('needsync')
 const tableRef = useTemplateRef('extable')
+
+const checkUpdateExtension = ref<{ [key: string]: boolean }>({})
+const updatingMap = ref<{ [key: string]: boolean }>({})
 
 const columns = setColumns([
   {
@@ -137,12 +141,39 @@ async function showPinMenu(event: any, data: any) {
 function tableOperation(data: any) {
   const datas = [].concat(data)
   const isPersonal = !datas.some((data: any) => data.pluginSwitchType !== PluginSwitchType.personal)
+  const canUpdate = datas.some((data: any) => data.pluginUpdateState === ExtensionsStatus.update)
+
   return [
     {
       name: 'checkUpdate',
       label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
       power: isPersonal || role.isOwner || role.isManager,
+      multiple: true,
+      multipleProps: {
+        name: 'G1',
+        showLabel: true,
+      },
+      visible: false,
+      tooltip: $t('检查更新'),
+      quick: true,
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      },
+    },
+    {
+      name: 'update',
+      label: $t('更新'),
+      icon: 'base/rx_ic_renew',
+      power: isPersonal || role.isOwner || role.isManager,
+      visible: canUpdate,
+      disabled: !canUpdate,
+      disabledTooltip: $t('暂无需要更新的扩展'),
+      multiple: true,
+      multipleProps: {
+        name: 'G2',
+        showLabel: true,
+      },
       command: ({ item }: any) => {
         operationHandler(item, data)
       }
@@ -160,6 +191,7 @@ function tableOperation(data: any) {
     {
       separator: true,
       power: isPersonal || role.isOwner || role.isManager,
+      visible: data.source === 'local',
     },
     {
       name: 'delete',
@@ -170,13 +202,14 @@ function tableOperation(data: any) {
       power: isPersonal || role.isOwner || role.isManager,
       multiple: true,
       multipleProps: {
-        name: 'G1',
+        name: 'G3',
+        showLabel: true,
       },
       command: ({ item }: any) => {
         operationHandler(item, data)
       }
     },
-  ].filter(item => item.visible !== false)
+  ]
 }
 
 async function operationHandler(operate: any, data: any) {
@@ -189,7 +222,9 @@ async function operationHandler(operate: any, data: any) {
     case 'updateLocal':
       break
     case 'checkUpdate':
-      checkUpdate(data)
+      return checkUpdate(data)
+    case 'update':
+      updateExtension(data)
       break
     case 'edit':
       onUploadExtension(data)
@@ -243,7 +278,6 @@ function installViaUrl() {
     },
   })
 }
-
 
 function onUploadExtension(data = ({} as any)) {
   const { pluginDir, localKey } = data
@@ -312,14 +346,53 @@ async function getExtensionDetail(pluginId: number) {
   return plugin
 }
 
-async function checkUpdate(data: Data) {
-  await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir as string })
-  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成'), life: 2500 })
-  filters.onChange()
+async function checkUpdate(data: Data[]) {
+  const detectable = data.filter(item => item.source !== ExtensionsSource.local || !checkUpdateExtension.value[item.pluginDir!])
+  detectable.forEach(item => {
+    checkUpdateExtension.value[item.pluginDir as string] = true;
+  })
+  const results = await concurrentControl(detectable.map(item => () => {
+    return API.plugins.userCheckAllPluginsVersionList({ pluginDir: item.pluginDir!, pluginID: item.id! }).then((result) => {
+      if (result.code === 0 && result.data) {
+        const newItem = result.data.pluginUpdateStates[0];
+        item.pluginUpdateState = newItem?.pluginUpdateState ?? item.pluginUpdateState;
+        item.pluginNewVersion = newItem?.pluginNewVersion ?? item.pluginNewVersion;
+        item.pluginVersion = newItem?.pluginVersion ?? item.pluginVersion;
+      }
+      return result
+    }).finally(() => {
+      checkUpdateExtension.value[item.pluginDir as string] = false;
+    })
+  }), 2)
+  const updateCount = results.filter(item => {
+    if (item.code === 0 && item.data) {
+      return item.data.pluginUpdateStates[0]?.pluginUpdateState === ExtensionsStatus.update
+    }
+  }).length
+  if (detectable.length > 1) {
+    // 批量的
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成，{count}个扩展有更新', { count: updateCount }), life: 2500 })
+  } else {
+    // 单个的
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成'), life: 2500 })
+  }
 }
 
-async function updateExtension(data: any) {
-  await API.plugins.userUpgradePluginsCreate(data)
+// !todo 优化交互体验
+async function updateExtension(data: Data | Data[]) {
+  const task = ([] as Data[])
+    .concat(data)
+    .filter(item => item.pluginUpdateState === ExtensionsStatus.update)
+    .map(item => {
+      Reflect.set(updatingMap.value, item.pluginDir!, true)
+      return async () => {
+        const { code, msg } = await API.plugins.userUpgradePluginsCreate({ pluginDir: item.pluginDir!, pluginName: item.pluginName!, pluginID: item.id! })
+        onlyErrorToast(code, `${item.pluginName}: ${msg}`)
+        Reflect.deleteProperty(updatingMap.value, item.pluginDir!)
+        return { code, msg }
+      }
+    })
+  await concurrentControl(task, 2)
   filters.resetFilters()
 }
 
@@ -442,26 +515,36 @@ defineExpose({
     </template>
 
     <template #update="{ data }">
-      <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
-      </div>
-      <div v-else class="update-info">
-        --
-      </div>
+      <template v-if="checkUpdateExtension[data.pluginDir]">
+        <span class="flex items-end gap-1">
+          <span>{{ $t('检查中') }}</span>
+          <span class="dots"></span>
+        </span>
+      </template>
+      <template v-else>
+        <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
+          <RxButton severity="success" icon="base/rx_ic_renew" :loading="updatingMap[data.pluginDir]" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
+          <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
+        </div>
+        <div v-else class="update-info">
+          --
+        </div>
+      </template>
     </template>
 
     <template #actions="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
-        <div v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
-          @click.stop="showPinMenu($event, data)">
-          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'" :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
-        </div>
-        <div v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
-          @click.stop="showShieldDialog(data)">
-          <RxSvgIcon name="base/rx_ic_shield" />
-        </div>
-        <Actions :operation="tableOperation(data)" @more="showOperationMenu" />
+        <RxButton v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" text severity="secondary" size="xxs" @click.stop="showPinMenu($event, data)">
+          <template #icon>
+            <RxSvgIcon class="block pointer-events-none" :class="{ pinned: data.fixedPlugin === 'pin' }" :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
+              color="var(--colors-icon-icon-secondary)" />
+          </template>
+        </RxButton>
+        <RxButton v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_shield" text @click.stop="showShieldDialog(data)"></RxButton>
+        <RxButton v-tooltip.top="{ value: $t('检查更新'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_clock_rotate" text
+          @click.stop="operationHandler({ name: 'checkUpdate' }, [data])">
+        </RxButton>
+        <Actions :operation="tableOperation(data).filter(item => item.visible !== false)" @more="showOperationMenu" />
       </div>
     </template>
   </RyTable>
@@ -525,5 +608,34 @@ defineExpose({
 
 .pinned {
   color: var(--colors-text-text-brand, #12a3fc);
+}
+
+.dots {
+  width: 20px;
+}
+
+/* 动画效果 */
+.dots::after {
+  content: "";
+  animation: loadingDots 1.5s steps(5, end) infinite;
+}
+
+/* 动画关键帧 */
+@keyframes loadingDots {
+  0% {
+    content: ".";
+  }
+
+  33% {
+    content: "..";
+  }
+
+  66% {
+    content: "...";
+  }
+
+  100% {
+    content: ".";
+  }
 }
 </style>

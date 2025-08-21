@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import ProxyCreate from '/@/views/agent/create/quick.vue'
-import ProxyTable from '/@/views/agent/list/quick.vue'
+import ProxyQuick from '/@/views/agent/quick.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
-import { useNetworkStore } from '/@/stores/network'
 import { deepClone, isEmptyValue, strConcat } from '/@/utils'
-import { useCheckProxy } from '/@/views/agent/hooks'
+import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
@@ -16,13 +15,14 @@ defineOptions({
   inheritAttrs: false,
 })
 
+const router = useRouter()
 const [showToast] = useResponseToast()
-const network = useNetworkStore()
 const drawerInstance = useDrawer()
 const { showSimpleDialog } = useSimpleDialog()
 
-const { testProxy: checkProxy, checkResult, batchTestShowToast } = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
+const { buyProxy } = useProxy()
 
 const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
@@ -30,6 +30,13 @@ const proxyList = defineModel<any>('modelValue')
 const checkIndex = reactive<Record<string, boolean>>({})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
+
+
+function onBuyProxy() {
+  buyProxy(orderInfo => {
+    router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo.orderNo } })
+  })
+}
 
 function onEdit(item: any) {
   if (item.isEncryptProxy) {
@@ -50,7 +57,7 @@ function toggleDrawer(type: 'create' | 'list', item?: any) {
   const data = dismissable
     ? isBatch.value ? selectedPorxys.value : selectedPorxys.value[0]
     : deepClone(item)
-  const RenderComponent = dismissable ? ProxyTable : ProxyCreate
+  const RenderComponent = dismissable ? ProxyQuick : ProxyCreate
 
   drawerInstance.showDrawer({
     title,
@@ -99,7 +106,7 @@ function addProxy(data: any) {
 function onChoose(data: any) {
   if (!isEmptyValue(data)) {
     if (isBatch.value) {
-      const addsProxy = proxyList.value.filter((item: any) => !item.id)
+      const addsProxy = proxyList.value.filter((item: any) => !item.id)//过滤手动新增的代理
       proxyList.value = addsProxy.concat(data).map(({ bindList: _bindList, ...item }: any) => toRaw(item))
     }
     else {
@@ -153,36 +160,27 @@ function tooltipValue(item: any) {
     pt: { root: '!max-w-80' }
   }
 }
+
+const message = $t('当前选择绑定的代理数量已超过创建窗口数。')
 </script>
 
 <template>
   <div class="w-full flex flex-col gap-3">
     <div class="flex items-center self-stretch gap-2">
-      <div class="flex-1 items-center flex gap-2 ">
-        <span class="title">{{ attrs.label }}</span>
-        <span v-if="!proxyList.length" class="tips">{{ $t('* 不使用代理则默认通过本地直连 ({value})', {
-          value:
-            `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}`
-        }) }}</span>
-      </div>
-      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
-        @click="toggleDrawer('list')" />
-      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus"
-        :label="$t('添加')" @click="toggleDrawer('create')" />
+      <div class="flex-1 items-center flex gap-2 title">{{ attrs.label }}</div>
+      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
+      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
+      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })"
+    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
       :closable="false"></RxAlert>
     <div class="grid gap-2 list" v-if="proxyList.length">
-      <RxCard class="flex gap-2 items-start overflow-hidden" v-for="(item, index) in proxyList" :key="index"
-        :closable="false" @click="onEdit(item)">
-        <RxSvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth"
-          color="var(--colors-icon-icon-tertiary)" />
+      <RxCard class="flex gap-2 items-start overflow-hidden" v-for="(item, index) in proxyList" :key="index" :closable="false" @click="onEdit(item)">
+        <RxSvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
         <div class="flex-1 flex flex-col gap-1 overflow-hidden">
           <div class="flex items-center gap-2 region">
             <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-            <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12"
-              color="var(--colors-icon-icon-note)" />
+            <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
           </div>
           <div class="flex items-center gap-1.5 info" v-if="isBatch">
             <span>{{ $t('绑定窗口数:') }}</span>
@@ -198,11 +196,9 @@ function tooltipValue(item: any) {
           </div>
         </div>
         <div class="mt-0.5 flex gap-2">
-          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
-            :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
             color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, index)" />
-          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)"
-            @click.stop="deleteProxy(index)" />
+          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(index)" />
         </div>
       </RxCard>
     </div>

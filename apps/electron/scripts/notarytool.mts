@@ -7,8 +7,8 @@ const workDir = path.join(import.meta.dirname, '../')
 const config = {
   folderPath: path.join(workDir, '../../out'),
   keychainProfile: 'RoxyBrowser',
-  pollInterval: 10000, // 查询间隔：10秒
-  maxPollCount: 60,    // 最大查询次数：60次（10分钟）
+  pollInterval: 30000, // 查询间隔：10秒
+  maxPollCount: 20,    // 最大查询次数：60次（10分钟）
   timeoutMinutes: 10   // 超时时间：10分钟
 }
 

@@ -167,15 +167,6 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.50}",
-        "border": "{colors.border.border-inactive}",
-        "indicator": "{primitives.netural.200}"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.100}",
-        "indicator-active": "{colors.background.bg-brand}"
-      },
       "skeleton": {
         "bg": "#ebf1f5"
       },
@@ -186,6 +177,15 @@
         "bg": "{primitives.netural.200}",
         "success": "{primitives.green.500}",
         "info": "{primitives.blue.500}"
+      },
+      "scrollbar": {
+        "bg": "{primitives.netural.50}",
+        "border": "{colors.border.border-inactive}",
+        "indicator": "{primitives.netural.200}"
+      },
+      "marquee": {
+        "indicator": "{primitives.netural.100}",
+        "indicator-active": "{colors.background.bg-brand}"
       },
       "button": {
         "primary": {
@@ -280,7 +280,6 @@
       }
     },
     "pattern": {
-      "Color": "#ffffff",
       "editor": {
         "key": "#005cc5",
         "value": "#032f62",
@@ -303,14 +302,6 @@
           "bg": "rgba(0, 0, 0, 0.0200)"
         }
       },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.100}",
-          "avatar-bg": "{primitives.netural.900}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.100}"
-        }
-      },
       "drawer": {
         "bg-create-btn": "{colors.alpha.alpha-black-10}",
         "bg-create-btn-active": "{component.button.primary.bg}",
@@ -318,6 +309,14 @@
         "bg-create-icon-active": "{primitives.netural.0}",
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
+      },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.100}",
+          "avatar-bg": "{primitives.netural.900}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.100}"
+        }
       },
       "profiles": {
         "input": {
@@ -398,8 +397,49 @@
           "blue": "#0094ff",
           "cyan": "#b8e2ff"
         },
+        "wallet": {
+          "bg": {
+            "start": "#ffffff",
+            "end": "#e0f1fe"
+          },
+          "cover": {
+            "bg": "#131313",
+            "border": "#131313"
+          }
+        },
         "gradient-selected-start": "{primitives.blue.50}",
         "gradient-selected-end": "{colors.alpha.alpha-white-0}"
+      },
+      "wallet": {
+        "founding": {
+          "bg": {
+            "tint": "#fdf0dd",
+            "shade": "#fde1bd"
+          },
+          "border": {
+            "tint": "#fbe2be",
+            "shade": "#dfab65"
+          }
+        },
+        "vip": {
+          "bg": {
+            "tint": "#ffffff",
+            "shade": "#a7afd2"
+          },
+          "border": {
+            "tint": "#e3e6f7",
+            "shade": "#a7afd2"
+          }
+        },
+        "prime": {
+          "border": {
+            "orange": "#fed1d1",
+            "blue": "#66ccff",
+            "purple": "#f462fe"
+          }
+        },
+        "cover": "#131313",
+        "cover-border": "#131313"
       }
     }
   },
@@ -571,15 +611,6 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.800}",
-        "border": "{colors.border.border-subtle}",
-        "indicator": "{primitives.netural.600}"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.700}",
-        "indicator-active": "{colors.background.bg-brand}"
-      },
       "skeleton": {
         "bg": "{primitives.netural.800}"
       },
@@ -590,6 +621,15 @@
         "bg": "{primitives.netural.700}",
         "success": "{primitives.green.400}",
         "info": "{primitives.blue.400}"
+      },
+      "scrollbar": {
+        "bg": "{primitives.netural.800}",
+        "border": "{colors.border.border-subtle}",
+        "indicator": "{primitives.netural.600}"
+      },
+      "marquee": {
+        "indicator": "{primitives.netural.700}",
+        "indicator-active": "{colors.background.bg-brand}"
       },
       "button": {
         "primary": {
@@ -684,7 +724,6 @@
       }
     },
     "pattern": {
-      "Color": "#ffffff",
       "editor": {
         "key": "#79c0ff",
         "value": "#a5d6ff",
@@ -707,14 +746,6 @@
           "bg": "{colors.alpha.alpha-white-5}"
         }
       },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.800}",
-          "avatar-bg": "{primitives.netural.700}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.800}"
-        }
-      },
       "drawer": {
         "bg-create-btn": "{colors.alpha.alpha-white-10}",
         "bg-create-btn-active": "{colors.background.bg-brand}",
@@ -722,6 +753,14 @@
         "bg-create-icon-active": "{primitives.netural.0}",
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
+      },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.800}",
+          "avatar-bg": "{primitives.netural.700}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.800}"
+        }
       },
       "profiles": {
         "input": {
@@ -802,8 +841,49 @@
           "blue": "#7cfbff",
           "cyan": "#6f47ff"
         },
+        "wallet": {
+          "bg": {
+            "start": "#150c18",
+            "end": "#233959"
+          },
+          "cover": {
+            "bg": "#131313",
+            "border": "#4d4d4d"
+          }
+        },
         "gradient-selected-start": "{primitives.blue.800}",
         "gradient-selected-end": "{colors.background.bg-action}"
+      },
+      "wallet": {
+        "founding": {
+          "bg": {
+            "tint": "#271801",
+            "shade": "#b66c0a"
+          },
+          "border": {
+            "tint": "#fdaf49",
+            "shade": "#442904"
+          }
+        },
+        "vip": {
+          "bg": {
+            "tint": "#0d0e0f",
+            "shade": "#384374"
+          },
+          "border": {
+            "tint": "#a4acd2",
+            "shade": "#3c405a"
+          }
+        },
+        "prime": {
+          "border": {
+            "orange": "#ff8b64",
+            "blue": "#4161ff",
+            "purple": "#e65cff"
+          }
+        },
+        "cover": "#131313",
+        "cover-border": "#4d4d4d"
       }
     }
   }

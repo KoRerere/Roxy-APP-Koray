@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -18,10 +18,13 @@ const collapsedMap = ref<Recordable<boolean>>({})
 
 function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return `${$t('正在下载')} ${Math.floor(item.percent)}%`
+    return `${$t('正在下载')} ${Math.floor(item.percent!)}%`
   }
   else if (item.status === 'downloaded') {
     return $t('下载完成')
+  }
+  else if (item.status === 'update') {
+    return $t('更新')
   }
   else if (item.status === 'failed') {
     return $t('重试')
@@ -29,6 +32,17 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   else {
     return $t('下载')
   }
+}
+
+function formatKernelIcon(item: ResourceUpdateMessage): SvgNames {
+
+  const iconMap: Recordable<SvgNames> = {
+    'downloading': 'base/rx_ic_download',
+    'downloaded': 'base/rx_ic_check',
+    'update': 'base/rx_ic_renew'
+  }
+
+  return iconMap[item.status as keyof typeof iconMap] || 'base/rx_ic_download'
 }
 
 function handleKernelItemClick(item: ResourceUpdateMessage) {
@@ -46,10 +60,6 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
 // }
 
 const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
-  if (item.status !== 'downloaded') {
-    return
-  }
-
   confirm.require({
     target: event.currentTarget as HTMLElement,
     message: $t('确定删除该内核吗？'),
@@ -90,11 +100,9 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
-            <div class="flex-cc cursor-pointer" @click="handleRemove($event, item)">
-              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon" :class="{ 'disabled': item.status !== 'downloaded' }" />
-            </div>
+            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="formatKernelIcon(item)" :loading="item.status === 'downloading'"
+              :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
+            <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :disabled="!['downloaded', 'update'].includes(item.status!)" @click="handleRemove($event, item)"></RxButton>
           </div>
         </div>
         <roxy-rich-text :html="item.upgradeContent" class="updater-content" />
@@ -108,15 +116,6 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-
-  .remove-icon {
-    cursor: pointer;
-
-    &.disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-  }
 }
 
 .updater-item {

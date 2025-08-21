@@ -17,7 +17,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:selection', 'batchOperation', 'batchMore'])
+const emit = defineEmits(['clearSelection', 'batchOperation', 'batchMore'])
 
 const multipleOptions = computed<Record<string, any>>(() => {
   const { menu, group, count } = props.operation.reduce((acc, item) => {
@@ -66,7 +66,7 @@ function onMore(event: Event) {
           </template>
         </i18n-t>
       </div>
-      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('update:selection', [])" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('clearSelection')" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in multipleOptions.group" :key="index" class="multiple-group">
@@ -96,7 +96,7 @@ function onMore(event: Event) {
   align-items: center;
   gap: var(--spacing-sm, 4px);
   border-radius: 8px;
-  background: var(--pattern-actionbar-bg, #111213);
+  background: var(--pattern-actionbar-bg);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -108,14 +108,14 @@ function onMore(event: Event) {
     align-items: center;
     padding: 8px 12px;
     border-radius: 5px;
-    border: 0.5px solid var(--pattern-actionbar-btn-border, #34393D);
-    background: var(--pattern-actionbar-btn, #2C2E30);
+    border: 0.5px solid var(--pattern-actionbar-btn-border);
+    background: var(--pattern-actionbar-btn);
     white-space: nowrap;
   }
 
   &-selected {
     gap: var(--spacing-md, 6px);
-    color: var(--pattern-actionbar-text-subtle, #AFB7BB);
+    color: var(--pattern-actionbar-text-subtle);
     font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -123,7 +123,7 @@ function onMore(event: Event) {
 
   &-group {
     gap: 12px;
-    color: var(--pattern-actionbar-text, #FAFAFA);
+    color: var(--pattern-actionbar-text);
 
     &:has(.icon-label) {
       padding: 0;
@@ -136,7 +136,7 @@ function onMore(event: Event) {
     &-item {
       display: flex;
       align-items: center;
-      gap: var(--spacing-sm, 4px);
+      gap: 4px;
 
       color: #fff;
       text-align: center;
@@ -144,7 +144,7 @@ function onMore(event: Event) {
       font-size: 13px;
       font-style: normal;
       font-weight: 600;
-      line-height: var(--Line-Height-text-xs, 16px);
+      line-height: 16px;
       cursor: pointer;
       user-select: none;
     }
@@ -153,5 +153,6 @@ function onMore(event: Event) {
 
 .disabled {
   cursor: not-allowed;
+  opacity: 0.4;
 }
 </style>

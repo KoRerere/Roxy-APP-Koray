@@ -1,388 +1,43 @@
-<script setup lang="tsx">
-import ChargeModal from '/@/views/pay/wallet/components/charge-modal.vue';
-import ManageModal from '/@/views/pay/wallet/components/manage-modal.vue'
-import BillingList from '/@/views/pay/wallet/billing';
-import currency from 'currency.js'
-import { format } from 'date-fns'
-import { $t } from '/@/locales';
-import { API } from '/@/api';
-import { strConcat } from '/@/utils';
-import { useDialog } from 'primevue/usedialog'
-import { usePay } from '/@/views/pay/wallet/hook.tsx'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useUserStore } from '/@/stores/user';
-import { OrderType, PayWay, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
-import { emitter } from '/@/utils/eventBus';
-import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+<script setup lang="ts">
+import Manage from '/@/views/pay/wallet/manage/index.vue'
+import Billing from '/@/views/pay/wallet/billing/index.vue'
+import { $t } from '/@/locales'
 
+const route = useRoute()
 const router = useRouter()
-const dialog = useDialog()
-const { openProcessing } = usePay()
-const [_, onlyErrorToast] = useResponseToast()
-const { userPayInfo } = storeToRefs(useUserStore())
-const { getUserPayInfo } = useUserStore()
-const [showModal] = RxUseDialog()
 
-const nextBillText = ref()
+const activeTabValue = ref((route.query.name as string) || 'manage')
 
-const other = computed(() => {
+const tabs = computed(() => {
   return [
-    {
-      type: 'staff',
-      title: $t('团队成员'),
-      used: userPayInfo.value?.useMemberCount,
-      total: userPayInfo.value?.maxMemberCount,
-    },
-    {
-      type: 'workspace',
-      title: $t('工作空间'),
-      used: userPayInfo.value?.useWorkspaceCount,
-      total: userPayInfo.value?.maxWorkspaceCount,
-    }
+    { title: $t('服务和钱包'), value: 'manage', component: markRaw(Manage) },
+    { title: $t('账单'), value: 'billing', component: markRaw(Billing) },
   ]
 })
-const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value.subLevel as SubLevelEnum))
-const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
-const planActions = computed(() => [
-  {
-    label: $t('购买套餐'),
-    visible: isFree.value || isExpired.value,
-    command: () => {
-      router.push({ name: 'subscribe-plan' })
-    }
-  },
-  {
-    label: $t('更改套餐'),
-    visible: !isFree.value && !isExpired.value,
-    props: {
-      disabled: userPayInfo.value.autoRenewDowngrade
-    },
-    command: () => {
-      router.push({ name: 'upgrade-plan' })
-    }
-  },
-  {
-    label: $t('续费'),
-    visible: !isFree.value && !userPayInfo.value.isAuto,
-    command: () => {
-      emitter.emit('showRenewalDialog', {
-        paySuccess: () => {
-          emitter.emit('updateBillList')
-        }
-      })
-    }
-  },
-  {
-    label: $t('管理订阅'),
-    visible: !!userPayInfo.value.isAuto,
-    command: () => {
-      showModal({
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-        pt: {
-          content: '!pa-0'
-        },
-        slots: {
-          container: ({ hideModal }) => <ManageModal onClose={hideModal} />,
-        },
-      })
-    }
-  }
-].filter(item => item.visible !== false))
-const infoValue = computed(() => {
-  const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
-  return $t('每日可创建数: {num1}\n每日可打开数: {num2}', { num1: profileCount.multiply(30).format(), num2: profileCount.multiply(100).format() })
-})
-const planBgColor = computed(() => {
-  return [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value?.subLevel as SubLevelEnum)
-    ? '#90AFC2'
-    : 'linear-gradient(90deg, #12A3FC 0%, #DB54F9 100%)'
-})
 
-onBeforeMount(() => {
-  getUserPayInfo()
-  getNextBillingDate()
-})
+const activeTab = computed(() => tabs.value.find(tab => tab.value === activeTabValue.value))
 
-async function getNextBillingDate() {
-  if (!userPayInfo.value.autoRenewDowngrade) return
-  const { code, data, msg } = await API.pay.userGetDowngradeSubscriptionInfoList()
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-  nextBillText.value = $t('下个计费周期，套餐已更改：\n窗口数量：{count}\n计费金额：{amount}\n账单日期：{date}', {
-    count: data.windowCount,
-    amount: currency(data.amount).format(),
-    date: format(data.windowStartDate, 'yyyy/MM/dd')
-  })
-}
-
-function onCharge() {
-  dialog.open(ChargeModal, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        content: '!pa-0'
-      }
-    },
-    data: {
-      onConfirm: async (params: { payType: PayWay, rechargeAmount: number }) => {
-        const { code, data, msg } = await API.pay.userRechargeSettlementCreate(params)
-        onlyErrorToast(code, msg)
-        if (code === 0) {
-          openProcessing(data, OrderType.Recharge)
-            .finally(() => {
-              emitter.emit('updateBillList')
-            })
-        }
-      },
-    },
-  })
-}
-
-function onExpand(defaultType?: 'workspace' | 'staff') {
-  emitter.emit('showExpandDialog', {
-    defaultType,
-    paySuccess: () => {
-      emitter.emit('updateBillList')
+watch(
+  () => route.query.name,
+  (value) => {
+    if (!!value && tabs.value.some(tab => tab.value === value) && value !== activeTabValue.value) {
+      activeTabValue.value = value as string
+      router.replace({ name: 'wallet', query: route.query })
     }
   })
+
+function onChange(value: any) {
+  router.replace({ name: 'wallet', query: { name: value } })
 }
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full">
-    <ViewsHeader :title="($route.meta.title as string)">
-    </ViewsHeader>
-    <div class="overflow-auto">
-      <div class="rx-container ml-0 h-auto">
-        <div class="flex gap-2 px-6 pt-6">
-          <div class="relative flex flex-col justify-between pa-4 w-100 h-55 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden balance">
-            <div class="balance-title">{{ $t('Roxy 钱包余额') }}</div>
-            <div>
-              <div class="balance-balance">{{ currency(userPayInfo.balance).format() }}</div>
-              <i18n-t class="mt-1.5 balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
-                <template #invite>
-                  <span class="cursor-pointer balance-desc-link" @click="router.push({ name: 'referral-program' })">{{
-                    $t('推广计划') }}</span>
-                </template>
-              </i18n-t>
-            </div>
-            <div class="flex justify-end">
-              <RxButton :label="$t('充值')" size="md" @click="onCharge"></RxButton>
-            </div>
-          </div>
-          <div class="relative flex flex-col justify-between pa-4 w-100 h-55 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden plan">
-            <div class="flex justify-between items-center">
-              <div class="plan-title">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-              <template v-if="userPayInfo?.subEndDate">
-                <div v-if="userPayInfo.isAuto" class="flex items-center gap-1 plan-expired">
-                  <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
-                  <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12"></SvgIcon>
-                </div>
-                <div v-else class="plan-expired">{{ $t('到期时间: {value}', {
-                  value: format(userPayInfo.subEndDate,
-                    'yyyy/MM/dd')
-                }) }}</div>
-              </template>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <div class="plan-value">{{ $t('{count} 窗口', {
-                count: currency(userPayInfo?.maxWindowCount, {
-                  symbol: '',
-                  precision:
-                    0
-                }).format()
-              }) }}</div>
-              <div class="balance-desc" v-if="!!userPayInfo.isAuto">{{ $t('每月 {price} (自动续费)', {
-                price:
-                  currency(userPayInfo.realAmount).format()
-              }) }}</div>
-            </div>
-            <div class="flex justify-end items-center gap-2.5">
-              <div class="flex-1">
-                <span v-tooltip.top="{ value: infoValue, showDelay: 300, pt: { root: '!max-w-60' } }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
-                  <span>{{ $t('详情') }}</span>
-                  <SvgIcon size="14" name="base/rx_ic_info" color="#C7CDD1"></SvgIcon>
-                </span>
-              </div>
-              <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" outlined severity="secondary" :label="item.label" size="md" @click="item.command"></RxButton>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] other" v-for="item in other"
-              :key="item.type">
-              <div class="flex justify-between items-center gap-6">
-                <span class="other-title">{{ item.title }}</span>
-                <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{
-                  $t('新增')
-                }}</span>
-              </div>
-              <div>
-                <span class="other-used">{{ item.used }}</span>
-                <span class="other-total">{{ strConcat('/', item.total?.toString()) }} </span>
-                <span class="ml-2 other-text">{{ $t('已使用') }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="flex flex-col h-full w-full">
+    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs @update:value="onChange"></RxTabs>
+    <div class="flex-1 overflow-hidden">
+      <component :is="activeTab?.component" />
     </div>
-    <BillingList class="flex flex-col flex-1 mt-9 overflow-hidden"></BillingList>
   </div>
 </template>
 
-<style scoped lang="scss">
-.balance {
-  z-index: 1;
-  background: var(--colors-background-bg-overlay);
-
-  &:after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('/images/payments/gradient_light.svg') no-repeat -300px -370px/960px 620px;
-    z-index: -2;
-  }
-
-  &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Archivo, Inter;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: normal;
-  }
-
-  &-balance {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 40px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-
-    &::first-letter {
-      font-size: 32px;
-    }
-  }
-
-  &-desc {
-    color: var(--colors-text-text-tertiary, #575D60);
-    font-family: Inter;
-    font-size: 12px;
-    line-height: normal;
-
-    &-link {
-      color: var(--pattern-sidenav-text-active, #3FB6FD);
-      text-decoration-line: underline;
-      text-decoration-style: solid;
-      text-decoration-skip-ink: auto;
-      text-decoration-thickness: auto;
-      text-underline-offset: auto;
-      text-underline-position: from-font;
-    }
-  }
-}
-
-[data-theme="dark"] {
-  .balance::after {
-    background-image: url('/images/payments/gradient_dark.svg');
-  }
-}
-
-.plan {
-  z-index: 1;
-  background: var(--colors-background-bg-overlay);
-
-  &:after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('/images/payments/ripple_light.svg') no-repeat 86px -174px/380px 380px;
-    z-index: -2;
-  }
-
-  &-title {
-    font-family: "DingTalk JinBuTi";
-    font-size: 20px;
-    line-height: normal;
-    background: v-bind(planBgColor);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  &-expired {
-    color: var(--colors-text-text-secondary, #B2B6B8);
-    font-family: "JetBrains Mono";
-    font-size: 12px;
-    line-height: normal;
-  }
-
-  &-value {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: "DingTalk JinBuTi", Inter, sans-serif;
-    font-size: 32px;
-    line-height: normal;
-  }
-
-  &-detail {
-    color: var(--colors-text-text-tertiary, #575D60);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 20px;
-  }
-}
-
-[data-theme="dark"] {
-  .plan::after {
-    background-image: url('/images/payments/ripple_dark.svg');
-  }
-}
-
-.other {
-  background: var(--colors-background-bg-overlay);
-
-  &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Archivo, Inter, sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: normal;
-  }
-
-  &-more {
-    color: var(--pattern-sidenav-text-active, #3FB6FD);
-    font-family: Inter;
-    font-size: 12px;
-    line-height: normal;
-  }
-
-  &-used {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 32px;
-    font-weight: 700;
-    line-height: normal;
-  }
-
-  &-total {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: normal;
-  }
-
-  &-text {
-    color: var(--colors-text-text-tertiary);
-    font-family: Inter;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: normal;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

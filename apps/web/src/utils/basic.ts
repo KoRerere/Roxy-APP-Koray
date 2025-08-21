@@ -290,6 +290,7 @@ export function concurrentControl(tasks: (() => Promise<any>)[], limit: number =
 }
 
 export function formatProxyTime(time: string) {
+  if (!time) return '--'
   const now = new Date()
   const timestamp = new Date(time).getTime()
   const diff = (now.getTime() - timestamp) / 1000

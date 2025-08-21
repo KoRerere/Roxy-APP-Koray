@@ -1,4 +1,5 @@
 import RelatedInfo from '/@/components/related-info.vue'
+import BasicInfo from '/@/views/agent/list/components/basic-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
@@ -11,7 +12,7 @@ export function getRawColumns(options?: any) {
     {
       title: $t('代理信息'),
       key: 'proxy',
-      slot: 'proxy',
+      render: ({ data }: any) => <BasicInfo data={data}></BasicInfo>,
     },
     {
       title: $t('出口 IP'),

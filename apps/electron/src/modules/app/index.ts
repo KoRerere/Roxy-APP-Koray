@@ -23,6 +23,7 @@ if (!app.isPackaged) {
 // app.commandLine.appendSwitch('inspect', '9229');
 // 设置渲染进程远程调试端口
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
+app.commandLine.appendSwitch('experimental-network-inspection')
 app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=3072')
 app.commandLine.appendSwitch('--no-sandbox')

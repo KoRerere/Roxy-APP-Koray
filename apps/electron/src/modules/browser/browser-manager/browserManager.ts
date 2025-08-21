@@ -13,6 +13,15 @@ import { shallowReactive, watch } from '@vue/reactivity';
 import { store } from '/@/modules/store'
 import { debounce } from 'es-toolkit'
 
+const OpenErrorMessageMap = {
+  get 1() { return $t('您购买的代理检测到错误。要解决此问题，请访问{link}', { link: '{link}' }) },//IP检测不通
+  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。要解决此问题，请访问{link}', { link: '{link}' }) },//国家不一致
+  get 3() { return $t('您购买的代理已过期。请在打开窗口前更新代理信息') },//已过期
+  get 4() { return $t('您当前窗口的代理已退款，无法使用。请在打开窗口之前更新代理信息。') },//已退款
+  get 5() { return $t('您购买的代理正在退款中，无法使用。请在打开窗口之前更新代理信息。') },//退款中
+  get 6() { return $t('您购买的代理正在更换中，无法使用。请在打开窗口之前更新代理信息。') },//更换中
+}
+
 export class BrowserManager {
   /** 已经打开过的空间 ID */
   #openedWorkspaceIds = new Set<number>()
@@ -37,7 +46,9 @@ export class BrowserManager {
   }
 
   constructor() {
-    this.#syncWindowStatus()
+    queueMicrotask(() => {
+      this.#syncWindowStatus()
+    })
 
     watch(this.openedBrowserMap, () => {
       ipcMain.send('browser:opened-browser-list-change', this.openedBrowserList)
@@ -65,7 +76,10 @@ export class BrowserManager {
     }
 
     if (this.uploadDataQueue.has(dirId)) {
-      console.log(`BrowserManager ${dirId} === 浏览器数据正在上传中，终止打开`)
+      console.log(`BrowserManager ${dirId} === 浏览器数据正在上传中`)
+      await this.uploadDataQueue.get(dirId)
+      await setTimeout(50)
+      await this.launch(winInfo, launchBy)
       return
     }
 
@@ -114,6 +128,7 @@ export class BrowserManager {
       return browserItem.launchInfo
     } catch (error) {
       console.error(`BrowserManager ${dirId} === 启动失败`, error)
+      return Promise.reject(error)
     } finally {
       this.openingBrowserMap.delete(dirId)
     }
@@ -293,7 +308,16 @@ export class BrowserManager {
           }
         })
 
-        return res.data.rows.sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
+        return res.data.rows.reduce((acc, item) => {
+          if (!item.buyProxyStatus || item.buyProxyStatus === 0) {
+            acc.push(item)
+          } else {
+            const errorMessage = OpenErrorMessageMap[item.buyProxyStatus]
+            sendErrorMessage(errorMessage, item.dirId!)
+          }
+          return acc
+        }, [] as typeof res.data.rows)
+          .sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {
         console.error(`BrowserManager === 获取窗口信息失败`, error)
@@ -341,6 +365,11 @@ export class BrowserManager {
         groupByWorkspaceId[wId] = []
       }
     })
+
+    // 确保每次都能定时上报
+    if (store.workspaceId && !groupByWorkspaceId[store.workspaceId]) {
+      groupByWorkspaceId[store.workspaceId] = []
+    }
 
     Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
       const ids = browserItems!.map(item => item.winInfo.id!)

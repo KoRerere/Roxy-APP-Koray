@@ -11,6 +11,7 @@ import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessC
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
+import { emitter } from '/@/utils/eventBus'
 
 const role = useRoleStore()
 const route = useRoute()
@@ -21,6 +22,7 @@ const [projectModfiyDialog] = useProjectActions()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast] = useResponseToast()
 
+const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
 const members = ref()
@@ -35,6 +37,12 @@ watch(() => route.params.id, (value) => {
 onBeforeMount(() => {
   getMemberByCurrentProject()
   getMemberByCurrentWorkspace()
+})
+
+onMounted(() => {
+  emitter.on('updateProjectList', () => {
+    projectRef.value?.tableRef?.refresh()
+  })
 })
 
 async function getMemberByCurrentProject() {
@@ -121,7 +129,7 @@ async function toCreateBrowser() {
     </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-1 overflow-hidden">
-      <Profiles ref="profiles" is-project-profile />
+      <Profiles ref="project" is-project-profile />
     </div>
   </div>
 </template>

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
-import { RxSvgIcon } from '/@/components/rx-icon'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon'
 
 const props = defineProps<{
   item: RouteRecordRaw
   collapsed: boolean
 }>()
 
+const cacheKey = 'isShowBuyProxyNewBadge'
+const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
 
 const route = useRoute()
 const isCollapsed = defineModel('open', { default: false })
@@ -37,23 +39,25 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   else if (!canOpen.value || props.item.redirect) {
     navigate()
   }
+
+  if (props.item.meta?.newBadge) {
+    localStorage.setItem(cacheKey, 'true')
+    isShowNewBadge.value = false
+  }
 }
 </script>
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
-    <RouterLink v-slot="{ navigate, href, isActive }"
-      :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
-        :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+    <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
         @click="handleClickItem($event, navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title" :title="item.meta?.title">
-          <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
-          {{ item.meta?.title }}
+          <span>{{ item.meta?.title }}</span>
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
-          @click.stop="toggle" />
+        <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" class="new-badge" size="25" :name="(item.meta?.newBadge as SvgNames)" />
+        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>
@@ -99,11 +103,9 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   .menu-title {
     position: relative;
     flex: auto;
-    font-family: Inter;
     font-size: 14px;
     font-weight: 500;
-    font-style: normal;
-    line-height: var(--Line-Height-text-md, 16px);
+    line-height: 16px;
     text-overflow: ellipsis;
     overflow: hidden;
     line-height: 20px;
@@ -136,6 +138,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 .new-badge {
   position: absolute;
   margin-left: 6px;
-  top: -3px;
+  top: 0;
+  right: 3px;
 }
 </style>

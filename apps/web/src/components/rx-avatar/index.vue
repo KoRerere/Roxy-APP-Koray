@@ -10,15 +10,16 @@ interface Props extends Avatar {
   max?: number
   size?: number
   fontSize?: number
+  radius?: string
 }
 
-const { list, max, size = 32, fontSize = 16, ...props } = defineProps<Props>()
+const { list, max, size = 32, fontSize = 16, radius = '50%', ...avatar } = defineProps<Props>()
 
 const _size = computed(() => `${size}px`)
 const _fontSize = computed(() => `${fontSize}px`)
 
 const avatars = computed(() => {
-  const _list = list || [props]
+  const _list = list || [avatar]
 
   return max && _list.length > max
     ? _list.slice(0, max).concat({ name: `+${_list.length - max}`, color: '#7ECCFC' })
@@ -42,7 +43,7 @@ const avatars = computed(() => {
 .avatar {
   width: v-bind(_size);
   height: v-bind(_size);
-  border-radius: 50%;
+  border-radius: v-bind(radius);
   object-fit: cover;
 }
 

@@ -133,7 +133,6 @@ function onExpand() {
           <SvgIcon v-tooltip="{ value: infoValue, pt: { root: '!max-w-[fit-content]', text: '!whitespace-pre' } }" class="cursor-pointer" size="14" name="base/rx_ic_info"
             color="var(--colors-icon-icon-note)"></SvgIcon>
         </div>
-        <!-- 七天免费使用 -->
         <div v-if="userPayInfo?.isTrial === 0" class="pay-metrics-free-usage" @click.stop="$router.push({ name: 'trial-plan' })">
           🎁
           {{ $t('{day} 天免费试用', { day: 7 }) }}

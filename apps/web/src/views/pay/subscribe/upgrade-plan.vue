@@ -1,14 +1,13 @@
 <script setup lang="tsx">
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxButton from '/@/components/rx-button/'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
-import SubscribeModal from './components/subscribe-modal.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import currency from 'currency.js';
 import { format, differenceInDays } from 'date-fns'
 import { debounce } from 'es-toolkit'
-import { useDialog } from 'primevue/usedialog'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
@@ -20,46 +19,37 @@ import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
+
 const router = useRouter()
-const dialog = useDialog()
 const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccess } = usePay()
-const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
+const { userPayInfo } = storeToRefs(useUserStore())
 
 const popupCss = useCssModule('popup')
-const { getOfficialWebsite } = useSimpleLocale()
 
 const loading = ref(false)
 const dataList = ref<Plan[]>()
 const selectedPlan = ref()
 const selectedCount = ref(userPayInfo.value.purchaseWindowCount)
 const originalAmount = ref(0)
+const nextBill = ref()
 
 const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.value.purchaseWindowCount)
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
 const needPayAmount = computed(() => currency(originalAmount.value).multiply(discountCalculate([userPayInfo.value.discount])).value)
-const nextBill = computed(() => {
-  const { isAuto, discount, autoRenewDiscount, purchaseWindowCount } = userPayInfo.value
-  if (!isAuto || !dataList.value || purchaseWindowCount === selectedCount.value) return { original: 0, amount: 0, discount: 0 }
+const discountAmount = computed(() => currency(originalAmount.value).subtract(needPayAmount.value).value)
 
-  const { value } = tierCalculate(dataList.value!, selectedCount.value)
-  const _discount = discountCalculate([discount, autoRenewDiscount])
-  const amount = currency(value).multiply(_discount).value
-  return {
-    original: value,
-    amount,
-    discount: currency(value).subtract(amount).value
-  }
-})
 const details = computed(() => {
   const { discount } = userPayInfo.value
 
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
 
-  const { original: nextBillOriginal, amount: nextBillAmount, discount: nextBillDiscount } = nextBill.value
+  const { originalAmount: nextBillOriginal, actualAmount: nextBillAmount } = nextBill.value ?? {}
+  const nextBillDiscount = currency(nextBillOriginal).subtract(nextBillAmount).value
 
   return [
     {
@@ -110,7 +100,7 @@ const details = computed(() => {
         {
           label: $t('需付差价'),
           value: currency(needPayAmount.value).format(),
-          diffValue: currency(originalAmount.value).subtract(needPayAmount.value).value,
+          diffValue: discountAmount.value,
           visible: isUpgrade.value,
           slot: 'price'
         },
@@ -137,18 +127,26 @@ const getOriginalAmount = debounce(async () => {
     loading.value = false
     return
   }
-  const { code, data, msg } = await API.pay.userCalculatePriceDifferenceList({
-    purchaseMember: selectedCount.value,
-    source: !!userPayInfo.value.isAuto ? 'AutoRenew' : 'Fixed'// 自动续订：AutoRenew，固定套餐：Fixed
-  })
+
+  if (userPayInfo.value.isAuto) {
+    const { code, data, msg } = await API.pay.userGetWindowSubscriptionUpgradeMessageList({ windowCount: selectedCount.value })
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+    nextBill.value = data
+  }
+
+  if (selectedCount.value > userPayInfo.value.purchaseWindowCount) {
+    const { code, data, msg } = await API.pay.userCalculatePriceDifferenceV2List({ purchaseMember: selectedCount.value })
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+    originalAmount.value = data
+  }
+
   loading.value = false
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-  originalAmount.value = data
+
 }, 500)
 
 watch(() => selectedCount.value, () => {
-  if (selectedCount.value < userPayInfo.value.purchaseWindowCount) return
   loading.value = true
   getOriginalAmount()
 })
@@ -201,41 +199,35 @@ async function onSubscribe() {
 
 // 普通套餐升级
 async function planUpgrade() {
-  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(originalAmount.value) })
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-
-  dialog.open(SubscribeModal, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        content: '!pa-0'
-      }
-    },
-    data: {
-      props: {
-        subscribeOriginalPrice: toRaw(originalAmount.value),
-        supportPayWay: Object.values(data).flat()
-      },
-      onConfirm: async (params: { isAuto: boolean, payType: PayWay }) => {
-        const { code, data, msg } = await API.pay.userPaySettlementCreate({
-          purchaseMember: { profile: selectedCount.value },
-          purchaseType: PurchaseType.Profile,
-          subLevel: selectedPlan.value.subLevel,
-          subOrderType: PaySubOrderType.Upgrade,
-          ...params,
-          orderType: OrderType.Subscribe,
-        })
-        onlyErrorToast(code, msg)
-        if (code === 0) {
-          (params.payType === PayWay.Balance ? planSuccess() : openProcessing({ payType: params.payType, ...data }, OrderType.Subscribe))
-            .then(() => {
-              router.push({ name: 'browser-list' })
-            })
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(WalletPayModal, {
+        amount: needPayAmount.value,
+        originalAmount: originalAmount.value,
+        discountAmount: discountAmount.value,
+        onClose: hideModal,
+        onConfirm: async ({ payType }) => {
+          const { code, data, msg } = await API.pay.userPaySettlementCreate({
+            payType,
+            purchaseMember: { profile: selectedCount.value },
+            subLevel: selectedPlan.value.subLevel,
+            purchaseType: PurchaseType.Profile,
+            subOrderType: PaySubOrderType.Upgrade,
+            orderType: OrderType.Subscribe,
+            isAuto: !!userPayInfo.value.isAuto,
+          })
+          onlyErrorToast(code, msg)
+          if (code === 0) {
+            (payType === PayWay.Balance ? planSuccess() : openProcessing({ payType, ...data }, OrderType.Subscribe))
+              .then(() => {
+                router.push({ name: 'browser-list' })
+              })
+          }
         }
-      },
+      }),
     },
   })
 }
@@ -262,21 +254,17 @@ function subscribeUpgrade() {
           <RxAlert class="w-full" type="info" closable={false} title={$t('操作后，新的订阅将会立即生效')}></RxAlert>
           <div class="flex justify-end gap-2">
             <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={handleCancel}></RxButton>
-            <RxButton size='md' label={$t('确认升级')} onClick={_onConfirm}></RxButton>
+            <RxButton size='md' label={$t('确认升级')} onClick={
+              () => {
+                handleCancel()
+                planUpgrade()
+              }
+            }></RxButton>
           </div>
         </div>
       }
     },
   })
-
-  async function _onConfirm() {
-    const { code, msg } = await API.pay.userAutoRenewUpgradeList({ purchaseMember: selectedCount.value })
-    onlyErrorToast(code, msg)
-    dialogInstance.handleCancel()
-    if (code !== 0) return
-    showToast(code, msg)
-    jumpToProfile()
-  }
 }
 
 // 自动续订套餐降级
@@ -298,7 +286,6 @@ async function subscribeDowngrade() {
             </span>
           </div>
           <div class={`whitespace-pre-wrap ${popupCss.content}`}>{$t('您选择的窗口数量少于当前套餐，确认后，新的订阅将会在下个付费周期生效。')}</div>
-          <RxAlert class="w-full" type="warn" closable={false} title={$t('操作后，套餐订阅状态在下个付费周期前无法再次修改。')}></RxAlert>
           <div class="flex justify-end gap-2">
             <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={handleCancel}></RxButton>
             <RxButton size='md' label={$t('确认降级')} onClick={_onConfirm}></RxButton>
@@ -309,7 +296,7 @@ async function subscribeDowngrade() {
   })
 
   async function _onConfirm() {
-    const { code, msg } = await API.pay.userDowngradeSubscriptionList({ purchaseMember: selectedCount.value })
+    const { code, msg } = await API.pay.userDowngradeSubscriptionV2List({ purchaseMember: selectedCount.value })
     onlyErrorToast(code, msg)
     if (code !== 0) return
     dialogInstance.handleCancel()
@@ -362,8 +349,7 @@ function jumpToProfile() {
                 <div>
                   <div class="details-price">{{ item.value }}</div>
                   <div v-if="item.diffValue > 0" class="details-diffprice">{{ $t('节省 {value}', {
-                    value:
-                      currency(item.diffValue).format()
+                    value: currency(item.diffValue).format()
                   }) }}</div>
                 </div>
               </div>
@@ -373,17 +359,17 @@ function jumpToProfile() {
                 <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
-                    <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                    }}</a>
+                    <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                   </template>
                 </i18n-t>
               </div>
             </template>
           </Detail>
-          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount" class="mt2.5 whitespace-pre-wrap next-bill">{{
-            $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
-              bill: currency(nextBill.amount).format(),
-              date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
+          <div v-if="!loading && needPayAmount && isUpgrade && nextBill?.actualAmount" class="mt2.5 whitespace-pre-wrap next-bill">{{
+            $t('* 下个账单费用: {bill} / {days}天\n* 下个账单生效日期: {date}', {
+              bill: currency(nextBill.actualAmount).format(),
+              days: nextBill.subscriptionDays,
+              date: format(nextBill.payTime, 'yyyy/MM/dd')
             }) }}
           </div>
         </div>

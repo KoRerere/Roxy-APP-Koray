@@ -6,22 +6,61 @@ import { useUserStore } from "/@/stores/user";
 import BalanceSuccessModal from "./components/balance-success.vue";
 import PlanSuccessModal from "./components/plan-success.vue";
 import ProcessingModal from "./components/processing-modal.vue";
-import UsdtPayModal from "./components/usdt-modal.vue";
-import { OrderType, PayWay } from "/@/enums/pay";
+import UsdtPayModal from "./components/payway-usdt-modal.vue";
+import WechatPayModal from "./components/payway-wechat-modal.vue";
+import WalletRechargeModal from '/@/views/pay/wallet/components/wallet-recharge-modal.vue'
+import { OrderType, PaymentStatus, PayWay } from "/@/enums/pay";
+import { API } from "/@/api";
+import { sleep } from "/@/utils/basic";
+import type { UserRechargeSettlementCreateData } from "@roxy/backend-api";
+
+type Data = UserRechargeSettlementCreateData["data"]
+type ChargeParams = {
+  next?: (data: Data) => void
+  [key: string]: any
+}
+
+const modalMap = {
+  [PayWay.Alipay]: markRaw(ProcessingModal),
+  [PayWay.Wechat]: markRaw(WechatPayModal),
+  [PayWay.USDT]: markRaw(UsdtPayModal),
+}
 
 export function usePay() {
   const router = useRouter();
   const dialog = useDialog();
   const [showModal] = RxUseDialog()
-  const [showToast] = useResponseToast();
+  const [showToast, onlyErrorToast] = useResponseToast();
   const { userPayInfo } = storeToRefs(useUserStore());
   const { getUserPayInfo } = useUserStore();
+  const isUnmounted = ref(false)
 
-  function openProcessing(
-    data: Record<string, any>,
-    type: OrderType | "silent",
-  ) {
+  onBeforeUnmount(() => {
+    isUnmounted.value = true
+  })
+
+  async function checkOrderStatus(orderNo: string) {
+    if (isUnmounted.value) return
+    const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
+    onlyErrorToast(code, msg);
+    if (code !== 0) throw new Error(msg)
+    if (data === PaymentStatus.Success) {
+      return Promise.resolve();
+    } else {
+      await sleep(3000)
+      return await checkOrderStatus(orderNo);
+    }
+  }
+
+  function openProcessing(data: Record<string, any>, type: OrderType | "silent") {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
+
+    if (data.payType === PayWay.Card) {
+      onConfirm()
+      return promise
+    }
+
+    const ModalComponent = modalMap[data.payType as keyof typeof modalMap] || markRaw(ProcessingModal)
     showModal({
       showHeader: false,
       modal: true,
@@ -31,19 +70,12 @@ export function usePay() {
         content: '!pa-0'
       },
       slots: {
-        container: ({ hideModal }) => data.payType === PayWay.USDT
-          ? <UsdtPayModal
-            data={data}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-            onClose={hideModal}
-          />
-          : <ProcessingModal
-            data={data}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-            onClose={hideModal}
-          />,
+        container: ({ hideModal }) => <ModalComponent
+          data={data}
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+          onClose={hideModal}
+        ></ModalComponent>
       },
     })
 
@@ -63,11 +95,14 @@ export function usePay() {
         case "silent":
           resolve();
           break;
+        default:
+          resolve();
+          break;
       }
     }
 
     function onCancel() {
-      router.push({ name: "wallet" });
+      router.push({ name: 'wallet', query: { name: 'billing' } })
       reject();
     }
 
@@ -128,5 +163,48 @@ export function usePay() {
     }), { life: 5000 });
   }
 
-  return { openProcessing, planSuccess, balanceSuccess, purchaseSuccess };
+  async function walletRecharge(chargeParams: ChargeParams) {
+    const { next: settlementNext, ...rest } = chargeParams
+
+    const onRecharge = async (params: { payType: PayWay, rechargeAmount: number, extra: any }) => {
+      const { payType, rechargeAmount, extra } = params
+      // 仅用卡片充值不绑卡的情况下会提前生成充值单 _PRE_ORDER 为 userRechargeSettlementCreate 的返回值
+      const { code, data, msg } = extra?._PRE_ORDER || await API.pay.userRechargeSettlementCreate({
+        payType,
+        rechargeAmount,
+        paymentMethodId: extra?.payment_method,
+        customerIdKey: extra?._customerIdKey,
+        cardId: extra?.cardId
+      })
+
+      onlyErrorToast(code, msg)
+      if (code !== 0) return
+
+      try {
+        if (payType === PayWay.Card) {
+          await checkOrderStatus(data.orderNo)
+        }
+
+        settlementNext?.(data)
+
+      } catch (error) {
+        onlyErrorToast(code, (error as Error).message)
+      }
+    }
+
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      slots: {
+        container: ({ hideModal }) => h(WalletRechargeModal, {
+          onClose: hideModal,
+          onConfirm: onRecharge,
+          ...rest,
+        })
+      },
+    })
+  }
+
+  return { checkOrderStatus, openProcessing, planSuccess, balanceSuccess, purchaseSuccess, walletRecharge };
 }

@@ -11,6 +11,7 @@ import { closeSyncingWindowListWindow, openSyncingWindowList } from "/@/modules/
 import { checkShortcutKeysIsOccupied, registerGlobalShortcut } from "/@/modules/sync-control/shortcutKey"
 import { globalShortcut } from "electron"
 import { SyncControlUtil } from "/@/modules/sync-control/util"
+import { closeSyncOtherDialogs } from "/@/modules/sync-control/common"
 
 
 export function closeSyncControl() {
@@ -64,6 +65,19 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   /** 停止同步窗口 */
   ipcMain.on('syncControl:stop', (event, payload) => {
     SyncControlUtil.stop(payload)
+  })
+
+  /** 暂停同步 */
+  ipcMain.on('syncControl:pause', (event) => {
+    SyncControlUtil.pause()
+    globalShortcut.unregisterAll()
+    closeSyncOtherDialogs()
+  })
+
+  /** 恢复同步 */
+  ipcMain.on('syncControl:resume', (event) => {
+    SyncControlUtil.resume()
+    registerGlobalShortcut()
   })
 
   /** 宫格布局、堆叠布局、自定义布局 */

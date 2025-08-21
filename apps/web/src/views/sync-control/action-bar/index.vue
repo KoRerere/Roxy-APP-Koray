@@ -8,6 +8,7 @@ import { useUserStore } from '/@/stores/user';
 import { merge } from 'es-toolkit';
 import { hidePageLoading, isWindows } from '/@/utils';
 import { $t } from '/@/locales';
+import { useToast } from 'primevue/usetoast'
 
 const os = isWindows ? 'windows' : 'mac'
 
@@ -23,6 +24,17 @@ const formData = ref(preferenceSettings)
 const operationList = ref(getOperationList(formData))
 let removeHoverTimer: any = null
 let dragTimer: any = null
+const isPlaying = ref(true)
+const pauseAndPlayLoading = ref(false)
+const toast = useToast()
+
+const pauseAndResumeIcon = computed(() => {
+  if (pauseAndPlayLoading.value) {
+    return 'base/rx_ic_renew'
+  } else {
+    return isPlaying.value ? 'base/rx_ic_pause2' : 'base/rx_ic_play'
+  }
+})
 
 hidePageLoading()
 let requestAnimationFrameId: any = null
@@ -88,8 +100,10 @@ function handleMousedown(event: MouseEvent) {
 }
 
 function handleMouseenterSyncText() {
-  console.log('handleMouseenterSyncText')
-  actionBarRef.value!.classList.add('hover')
+  if (isPlaying.value) {
+    console.log('handleMouseenterSyncText')
+    actionBarRef.value!.classList.add('hover')
+  }
 }
 
 function showAllWindows() {
@@ -98,6 +112,26 @@ function showAllWindows() {
 
 function stopSync() {
   electronAPI.send('syncControl:stop')
+}
+
+async function pauseAndResumeSync() {
+  if (pauseAndPlayLoading.value) return;
+
+  pauseAndPlayLoading.value = true
+  try {
+    if (isPlaying.value) {
+      await electronAPI.send('syncControl:pause')
+      actionBarRef.value?.classList.remove('hover')
+      bottomBarRef.value?.click()
+    } else {
+      await electronAPI.send('syncControl:resume')
+    }
+    isPlaying.value = !isPlaying.value
+  } catch (error) {
+    toast.add({ severity: 'error', summary: $t('操作失败'), life: 3000 })
+  } finally {
+    pauseAndPlayLoading.value = false
+  }
 }
 
 function showPreferences() {
@@ -168,10 +202,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave" @mousedown="handleMousedown">
+  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave"
+    @mousedown="handleMousedown">
     <div class="top-bar">
-      <div class="sync-text" @mouseenter="handleMouseenterSyncText">
-        {{ $t('{count} 个窗口正在同步中', { count: syncWindowCount }) }}
+      <div class="sync-text" @mouseenter="handleMouseenterSyncText"
+        :style="{ color: isPlaying ? '#0cef4c' : '#898989' }">
+        <template v-if="isPlaying">
+          {{ $t('{count} 个窗口正在同步中', { count: syncWindowCount }) }}
+        </template>
+        <template v-else>
+          {{ $t('已暂停同步') }}
+        </template>
         <div class="dots"></div>
       </div>
       <div class="actions">
@@ -179,8 +220,12 @@ onUnmounted(() => {
           <RxSvgIcon name="base/rx_ic_show_profile" />
           {{ $t('显示所有窗口') }}
         </div>
+        <div class="action-item" @click="pauseAndResumeSync">
+          <RxSvgIcon :name="pauseAndResumeIcon" />
+          {{ isPlaying ? $t('暂停同步') : $t('恢复同步') }}
+        </div>
         <div class="action-item stop" @click="stopSync">
-          <RxSvgIcon name="base/rx_ic_pause" />
+          <RxSvgIcon name="base/rx_ic_shut_down" />
           {{ $t('停止同步') }}
         </div>
       </div>
@@ -201,7 +246,9 @@ onUnmounted(() => {
           </template>
         </Menubar>
         <div class="split-line"></div>
-        <div class="other-item" v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }" @click="showSyncingWindowListDialog">
+        <div class="other-item"
+          v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }"
+          @click="showSyncingWindowListDialog">
           <RxSvgIcon name="base/rx_ic_list_2" />
         </div>
         <div class="other-item" v-tooltip.top="settingsTooltip" @click="showPreferences">
@@ -285,7 +332,6 @@ body {
     padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
     align-items: flex-start;
     gap: 2px;
-    color: #0cef4c;
     font-size: 13px;
     font-style: normal;
     font-weight: 500;
@@ -318,12 +364,15 @@ body {
       }
 
       &.stop {
-        color: var(--colors-text-text-error, #F53838);
+        // color: var(--colors-text-text-error, #F53838);
         text-align: center;
         font-size: 13px;
         font-style: normal;
         font-weight: 500;
         line-height: var(--Line-Height-text-xs, 16px);
+        background: #F53838;
+        border-color: #F53838;
+        color: #fff;
         /* 123.077% */
       }
     }

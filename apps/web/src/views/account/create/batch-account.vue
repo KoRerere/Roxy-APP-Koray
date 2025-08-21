@@ -145,6 +145,7 @@ function onRemark(data: any) {
         value: data?.platformRemarks,
         props: {
           placeholder: $t('请输入备注'),
+          rows: 6,
         }
       },
     ],

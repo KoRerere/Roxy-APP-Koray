@@ -68,9 +68,9 @@ const data = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-2 proxycard">
-    <div>
-      <RxSvgIcon :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" />
+  <div class="flex gap-2 items-center proxycard">
+    <div class="icon">
+      <RxSvgIcon class="block" :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" size="24" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
       <div class="flex items-center proxycard-title" :style="{ color: data.color }">
@@ -86,7 +86,14 @@ const data = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+.icon {
+  border-radius: 50%;
+  border: 0.5px solid var(--colors-border-border-subtle);
+  overflow: hidden;
+}
+
 .proxycard {
+  min-width: 200px;
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);

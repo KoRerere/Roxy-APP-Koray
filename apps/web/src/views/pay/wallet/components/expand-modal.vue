@@ -1,17 +1,14 @@
 <script setup lang="tsx">
-import { $t } from '/@/locales'
-import { PayWay } from '/@/enums/pay'
-import { useUserStore } from '/@/stores/user';
-import { RxAlert } from '/@/components/rx-alert'
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import currency from 'currency.js'
-import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
-import Blance from '/@/views/pay/subscribe/components/blance.vue'
-import { API } from '/@/api';
-import { debounce } from 'es-toolkit'
-import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user';
+import { RxAlert } from '/@/components/rx-alert'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts';
 import { useSimpleLocale } from '/@/stores/locale';
+import { useDialog } from '/@/hooks/useDialog'
+
 const dialogRef = inject<any>('dialogRef')
 const _props = ref()
 const _onConfirm = ref()
@@ -19,11 +16,8 @@ const _onCancel = ref()
 
 const { getOfficialWebsite } = useSimpleLocale()
 const { userPayInfo } = storeToRefs(useUserStore())
-const [_, onlyErrorToast] = useResponseToast()
+const [showModal] = useDialog()
 
-const selectedPayway = ref()
-const disabledMethods = ref<PayWay[]>([])
-const loading = ref(false)
 const min = 0
 const max = 500
 
@@ -42,36 +36,23 @@ const buyList = ref([
   }
 ])
 
-const supportPayWays = computed(() => {
-  return Object.values(PayWay)
-    .map((item: PayWay) => ({ value: item, discount: (item === PayWay.Balance && walletAmount.value) ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
-})
-
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
 
-const disabled = computed(() => !buyList.value.some(item => item.value > 0) || (loading.value || selectedPayway.value === PayWay.Balance && finalAmount.value > userPayInfo.value?.balance))
+const disabled = computed(() => !buyList.value.some(item => item.value > 0))
 
 const allDiscount = computed(() => {
-  const { discount, walletDiscount } = userPayInfo.value!
+  const { discount } = userPayInfo.value!
   return Object.fromEntries([
     ['discount', discount, true],
-    ['walletDiscount', walletDiscount, selectedPayway.value === PayWay.Balance],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
-})
-
-//钱包支付立减金额
-const walletAmount = computed(() => {
-  // 钱包暂不支持自动续费，所以需要减去 autoRenewAmount，让钱包显示正确的优惠金额
-  const { walletDiscount, autoRenewDiscount, ...otherDiscount } = allDiscount.value
-  const discount: number[] = Object.values({ ...otherDiscount, walletDiscount: userPayInfo.value.walletDiscount })
-  const _amount = currency(allAmount.value).multiply(discountCalculate(discount)).value
-  return currency(allAmount.value).multiply(discountCalculate(Object.values(otherDiscount))).subtract(_amount).value
 })
 
 const finalAmount = computed(() => currency(allAmount.value).multiply(discountCalculate(Object.values(allDiscount.value))).value)
 
+const discountAmount = computed(() => currency(allAmount.value).subtract(finalAmount.value).value)
+
 const detail = computed(() => {
-  const { discount, walletDiscount } = allDiscount.value
+  const { discount } = allDiscount.value
 
   const list = buyList.value.map(item => ({
     title: item.label,
@@ -94,12 +75,6 @@ const detail = computed(() => {
           class: '!color-[#FC9D12]',
           visible: !!discount
         },
-        {
-          label: $t('钱包支付优惠'),
-          class: '!color-[#FC9D12]',
-          value: currency(walletAmount.value, { symbol: '-$' }).format(),
-          visible: !!walletDiscount
-        },
       ].filter(item => item.visible !== false)
     },
     {
@@ -113,7 +88,6 @@ const detail = computed(() => {
         {
           label: $t('实际价格'),
           value: currency(finalAmount.value).format(),
-          diffValue: currency(allAmount.value).subtract(finalAmount.value).value,
           slot: 'price'
         },
       ].filter(item => item.visible !== false)
@@ -133,38 +107,35 @@ onMounted(() => {
       Reflect.set(item, 'value', 1)
     }
   })
-  querySupportPayway()//部分地区不支持某些支付，初始化时查询一次
 })
-
-async function querySupportPayway() {
-  loading.value = true
-  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(allAmount.value) })
-  loading.value = false
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-  const supportPayway = Object.values(data).flat().concat(PayWay.Balance) as PayWay[]
-  disabledMethods.value = Object.values(PayWay).filter(item => !supportPayway.includes(item))
-
-  if (!supportPayway.includes(selectedPayway.value)) {
-    selectedPayway.value = supportPayway[0] !== PayWay.Card ? PayWay.Balance : supportPayway[0]
-  }
-}
-
-const delayQuery = debounce(querySupportPayway, 300)
 
 function onUpdate(value: number, item: any) {
   nextTick(() => {
     if (!value) item.value = 0
-    delayQuery()
   })
 }
 
 async function confirm() {
-  await _onConfirm.value?.({
-    payType: selectedPayway.value,
-    ...Object.fromEntries(buyList.value.map(item => [item.key, item.value]))
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(WalletPayModal, {
+        amount: finalAmount.value,
+        originalAmount: allAmount.value,
+        discountAmount: discountAmount.value,
+        onClose: hideModal,
+        onConfirm: async ({ payType }) => {
+          await _onConfirm.value?.({
+            payType,
+            ...Object.fromEntries(buyList.value.map(item => [item.key, item.value]))
+          })
+          close(false)
+        }
+      }),
+    },
   })
-  close(false)
 }
 
 function close(isCancel: boolean) {
@@ -193,16 +164,11 @@ function close(isCancel: boolean) {
           <div class="flex flex-col gap-6">
             <div class="flex items-center gap-4" v-for="item in buyList" :key="item.label">
               <div class="w-28 label">{{ item.label }}</div>
-              <RxStepInput class="!w-30" size="xs" v-model="item.value" :min="min" :max="max" @update:modelValue="onUpdate($event, item)" @change="delayQuery" />
+              <RxStepInput class="!w-30" size="xs" v-model="item.value" :min="min" :max="max" @update:modelValue="onUpdate($event, item)" />
               <div>{{ currency(item.cost).format() }} / {{ item.label }}</div>
             </div>
           </div>
         </div>
-        <ItemBlock :title="$t('支付方式')">
-          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="supportPayWays" :disabledMethods="disabledMethods"></RxPaymentMethods>
-        </ItemBlock>
-        <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="finalAmount" @recharge:failed="close(true)">
-        </Blance>
       </div>
       <Detail class="w-80" :list="detail">
         <template #oldprice="{ item }">
@@ -216,9 +182,8 @@ function close(isCancel: boolean) {
             <div class="details-label">{{ item.label }}</div>
             <div>
               <div class="details-price">{{ item.value }}</div>
-              <div v-if="item.diffValue > 0" class="details-diffprice">{{ $t('节省 {value}', {
-                value:
-                  currency(item.diffValue).format()
+              <div v-if="discountAmount > 0" class="details-diffprice">{{ $t('节省 {value}', {
+                value: currency(discountAmount).format()
               }) }}</div>
             </div>
           </div>

@@ -7,6 +7,7 @@ const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.
 
 let openAPIUrl = ''
 let baseUrl = ''
+let userIp = ''//用户真实ip, 变动后重新获取网关配置
 
 /** 通过 API 调用的接口采用此域名 */
 export function getOpenAPIUrl(): string {
@@ -79,6 +80,22 @@ async function getMapKey() {
   return 'sg'
 }
 
+export async function reGetGatewayConfigByIpChange(ip: string) {
+  if (!ip) return
+
+  // 初始化会获取一次网关，所以只存 ip 不重新获取网关
+  if (!userIp) {
+    userIp = ip
+    return
+  }
+
+  if (userIp !== ip) {
+    console.log(`🚀 ~ ip发生变化, 上一次ip: ${userIp}, 当前ip: ${ip}`)
+    userIp = ip
+    getGatewayConfig()
+  }
+}
+
 /**
  * 读取网关配置
  */
@@ -130,7 +147,8 @@ export async function getGatewayConfig(): Promise<string> {
     }
   }
 
-  baseUrl = isDev ? 'https://lumitest.lumibrowser.com' : 'https://gate.roxybrowser.net'
+  openAPIUrl ||= 'https://hz.api.roxybrowser.cn'
+  baseUrl = isDev ? 'https://lumitest.lumibrowser.com' : 'https://hz.gate.roxybrowser.cn'
   return baseUrl
 }
 

@@ -51,8 +51,8 @@ const menus = computed(() => {
 })
 
 // 切换空间后重新获取 pin 项目
-watch(currentWorkspace, () => {
-  if (currentWorkspace.value?.id) {
+watch(currentWorkspace, (workspace, oldWorkspace) => {
+  if (workspace?.id && workspace.id !== oldWorkspace?.id) {
     setTimeout(() => {
       projectStore.getProjects()
     })
@@ -157,7 +157,6 @@ async function toCreateBrowser() {
     transition: width 0.3s;
     height: 36px;
     font-size: 14px;
-    gap: 8px;
     z-index: 10;
     opacity: 1 !important;
   }
@@ -174,18 +173,15 @@ async function toCreateBrowser() {
 
     &::-webkit-scrollbar-thumb,
     &::-webkit-scrollbar-track {
-      background-color: transparent;
-      box-shadow: none;
+      background: transparent;
     }
 
     &:hover::-webkit-scrollbar-thumb {
-      background-color: rgb(190, 190, 190);
-      box-shadow: inset 0 0 6px rgb(186 183 183);
+      background: var(--component-scrollbar-indicator);
     }
 
     &:hover::-webkit-scrollbar-track {
-      background-color: #f5f5f5;
-      box-shadow: inset 0 0 6px rgb(186 183 183);
+      background: var(--component-scrollbar-bg);
     }
   }
 }

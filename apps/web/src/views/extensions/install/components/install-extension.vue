@@ -107,9 +107,8 @@ onMounted(() => {
         {{ $t('扩展将被安装至所选项目中的所有窗口') }}
       </div>
       <div class="project-table mt-2.5 h-60">
-        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList"
-          :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
-          selection-mode="multiple" size="small">
+        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
+          :multiple-operation="false" selection-mode="multiple" size="small">
           <template #project="{ data }">
             <div class="flex items-center gap-2">
               <RxSvgIcon name="base/rx_ic_stack" color="var(--colors-icon-icon-secondary, #575D61)" />
@@ -124,7 +123,7 @@ onMounted(() => {
           <span class="title">
             {{ $t('为所选项目的所有成员安装') }}
           </span>
-          <rxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
+          <RxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
         </div>
         <div class="description">
           {{ $t('您可以在扩展列表中更改此选项') }}

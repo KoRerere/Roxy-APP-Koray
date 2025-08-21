@@ -103,3 +103,14 @@ export function syncSettings(settings: SyncControlSettings) {
 
   return instance.post(`${baseUrl}/api/sync_settings`, settings)
 }
+
+/* 开始同步 */
+export function startSyncControl() {
+  const baseUrl = getRoxySyncAPIBaseURL()
+  return instance.get(`${baseUrl}/api/start_sync`)
+}
+/* 暂停同步 */
+export function stopSyncControl() {
+  const baseUrl = getRoxySyncAPIBaseURL()
+  return instance.get(`${baseUrl}/api/stop_sync`)
+}

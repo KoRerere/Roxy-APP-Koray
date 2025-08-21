@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import type { DataTableRowContextMenuEvent, DataTableSortEvent } from 'primevue/datatable'
-import type { PageState } from 'primevue/paginator'
-import type { SelectChangeEvent } from 'primevue/select'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { $t } from '/@/locales'
-import { getFormData, isEmptyValue, isFunction, isLikeFunction, operationPower, type Operation } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableReload from './table-reload.vue'
+import type { DataTableRowContextMenuEvent, DataTableSortEvent } from 'primevue/datatable'
+import type { PageState } from 'primevue/paginator'
+import type { SelectChangeEvent } from 'primevue/select'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { $t } from '/@/locales'
+import { getFormData, isEmptyValue, isFunction, isLikeFunction, operationPower, type Operation } from '/@/utils'
 import { deepClone, getSortIcon, transformSortOrder, type SortOrderNumber } from '/@/utils'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon'
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 defineOptions({
   inheritAttrs: false,
@@ -24,12 +24,6 @@ interface Props {
   dataList?: any[]
   operation?: Operation[]
   tableParams?: Record<string, any>
-  tableSort?: () => any
-  tableFilters?: () => any
-  tableRequest?: (data: any) => any | Promise<any>
-  tableOperation?: (data: any) => Operation[]
-  operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
-  beforeRefresh?: () => any | Promise<any>
   selectionMode?: 'single' | 'multiple'
   immediate?: boolean
   multipleOperation?: boolean
@@ -40,15 +34,19 @@ interface Props {
   showActionsMenu?: boolean
   skeleton?: boolean
   reorderableColumns?: boolean
+  removableSort?: boolean
+  tableSort?: () => any
+  tableFilters?: () => any
+  tableRequest?: (data: any) => any | Promise<any>
+  tableOperation?: (data: any) => Operation[]
+  operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
+  beforeRefresh?: () => any | Promise<any>
+  rowAttrs?: (rowData: any) => Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   dataKey: 'id',
   cacheKey: '',
-  tableRequest: () => ({}),
-  tableSort: () => [],
-  tableFilters: () => [],
-  tableOperation: () => [],
   immediate: true,
   multipleOperation: true,
   paginator: true,
@@ -56,7 +54,13 @@ const props = withDefaults(defineProps<Props>(), {
   showDisplay: true,
   showActions: true,
   showActionsMenu: true,
-  reorderableColumns: false
+  reorderableColumns: false,
+  removableSort: true,
+  tableRequest: () => ({}),
+  tableSort: () => [],
+  tableFilters: () => [],
+  tableOperation: () => [],
+  rowAttrs: () => ({}),
 })
 
 defineEmits(['update:columns'])
@@ -73,6 +77,7 @@ const _columns = computed(() => props.columns.filter((item: any) => item._visibl
 const _dataList = ref()
 const _filters = ref()
 const _outerParams = ref()
+const _selectionDisableds = ref<string[]>([])
 const _sorts = reactive<{
   sortField: string
   sortOrder: SortOrderNumber
@@ -88,13 +93,31 @@ const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList 
 const { selection: outerSelection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
 
 const tableAttrs = reactive({
-  'data-key': props.dataKey,
-  'scrollable': true,
-  'scroll-height': 'flex',
-  'context-menu': true,
-  'show-gridlines': false,
-  'resizable-columns': true,
-  'column-resize-mode': 'expand',
+  dataKey: props.dataKey,
+  scrollable: true,
+  scrollHeight: 'flex',
+  contextMenu: true,
+  showGridlines: false,
+  resizableColumns: true,
+  columnResizeMode: 'expand',
+  removableSort: props.removableSort,
+  selectionMode: props.selectionMode,
+  onRowSelectAll: async () => {
+    await nextTick()
+    const disableds: any[] = []
+    document.querySelectorAll('.p-datatable-selectable-row.row-disabled').forEach(tr => {
+      disableds.push(tr.getAttribute('data-row-id'))
+      const checkboxChecked = tr.querySelector<HTMLDivElement>('.p-checkbox-checked')
+      if (checkboxChecked) {
+        checkboxChecked.classList.remove('p-checkbox-checked')
+        const checkboxIcon = checkboxChecked.querySelector<HTMLDivElement>('.p-checkbox-icon')
+        if (checkboxIcon) {
+          checkboxIcon.style.display = 'none'
+        }
+      }
+    })
+    _selectionDisableds.value = disableds
+  },
   ...attrs,
 })
 
@@ -113,6 +136,10 @@ const selectionData = computed({
       innerSelection.value = value
     }
   },
+})
+// primevue 缺少 row disabled 功能，所以需要自己手动过滤 selection 数据用于使用，创造全选的 '假象'
+const realUseSelection = computed(() => {
+  return selectionData.value?.filter((item: any) => !_selectionDisableds.value.includes(item[props.dataKey].toString()))
 })
 
 const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || 10
@@ -174,7 +201,7 @@ function fmtColumnProps(column: Record<string, any>) {
 
 async function batchOperation(item: any) {
   try {
-    await props.operationHandler?.(item, selectionData.value, 'batch')
+    await props.operationHandler?.(item, realUseSelection.value, 'batch')
     _clearSelection()
   }
   catch (error) {
@@ -188,7 +215,6 @@ function onFilterChange() {
 }
 
 async function _onSortChange(event: DataTableSortEvent) {
-  console.log('event', event)
   _sorts.sortField = event.sortField as string
   _sorts.sortOrder = event.sortOrder as SortOrderNumber
   paginatorConfig.onResetPage()
@@ -245,11 +271,12 @@ function _getOperation(data: any) {
 function _clearSelection() {
   if (!hasOuterSelection) {
     selectionData.value = undefined
+    _selectionDisableds.value = []
   }
 }
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
-  if (!tableAttrs['context-menu']) {
+  if (!tableAttrs.contextMenu) {
     return
   }
 
@@ -299,7 +326,7 @@ async function _onRefresh() {
 
 defineExpose({
   rootElRef,
-  selectionData,
+  selectionData: realUseSelection,
   refresh: (outerParams = {}, force = true) => {
     _outerParams.value = outerParams
     if (force) {
@@ -313,6 +340,15 @@ defineExpose({
 })
 
 const slots: any = useSlots()
+const ColumnCss_Module = useCssModule('ColumnCss_Module')
+
+function initBodyrow(options: any) {
+  return {
+    class: ColumnCss_Module.bodyrow,
+    'data-row-id': options.props.rowData[props.dataKey],
+    ...props.rowAttrs(options.props.rowData)
+  }
+}
 </script>
 
 <template>
@@ -324,7 +360,7 @@ const slots: any = useSlots()
           <TableFilter :filters="_filters" @change="onFilterChange" />
           <slot name="filter-after" />
         </div>
-        <div v-if="showDisplay" class="flex gap-2 items-center">
+        <div v-if="showDisplay" class="flex gap-1.5 items-center">
           <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
             <template #before>
               <slot name="display-before" />
@@ -335,20 +371,20 @@ const slots: any = useSlots()
               </slot>
             </template> -->
           </TableDisplay>
-          <Divider layout="vertical" class="!mx-[3px] h-[20px]" />
+          <Divider layout="vertical" class="!mx-0 h-4" />
           <TableReload :loading="_loading" @click="_onRefresh" />
         </div>
       </slot>
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder" :sort-field="_sorts.sortField" :pt="{
         root: ColumnCss_Module.tableroot,
         table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
         emptymessagecell: '!whitespace-normal !text-center',
         tbody: ColumnCss_Module.tbody,
         headerrow: ColumnCss_Module.headerrow,
-        bodyrow: ColumnCss_Module.bodyrow,
-      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu" :sortOrder="_sorts.sortOrder" :sortField="_sorts.sortField">
+        bodyrow: initBodyrow,
+      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -359,7 +395,11 @@ const slots: any = useSlots()
         <slot name="column-before"></slot>
 
         <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;" bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
-          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" />
+          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }">
+          <template #rowcheckboxicon="{ checked }">
+            <SvgIcon v-if="checked" name="base/rx_ic_checkmark" color="#ffffff" />
+          </template>
+        </Column>
 
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
@@ -423,10 +463,10 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && realUseSelection?.length > 0" :selection="realUseSelection" :total="tableList.length"
+        :operation="_getOperation(realUseSelection)" @clear-selection="_clearSelection" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, realUseSelection, 'batch')">
         <template #custom-operation>
-          <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
+          <slot name="multiple-operation" :selection="realUseSelection" :clear-selection="_clearSelection" />
         </template>
       </SelectionOperation>
     </Transition>
@@ -588,8 +628,13 @@ const slots: any = useSlots()
     height: 40px;
   }
 
+  :global(.row-disabled) {
+    pointer-events: none;
+    opacity: var(--disabled-opacity);
+  }
+
   .table .tbody .bodyrow {
-    &[data-p-selected='true'] {
+    &:global(:not(.row-disabled)[data-p-selected='true']) {
       background: var(--component-table-bg-selected);
 
       .bodycell {
@@ -601,7 +646,7 @@ const slots: any = useSlots()
       }
     }
 
-    &:not([data-p-selected='true']):hover {
+    &:global(:not(.row-disabled):not([data-p-selected='true']):hover) {
       background: var(--component-table-bg-hover);
 
       .bodycell {

@@ -46,6 +46,10 @@ export type MittEvents = {
   showOldUserGiftDialog?: void;
   /** 显示账号设置弹窗 */
   showAccountSetupDialog?: void;
+  /** 更新项目列表 */
+  updateProjectList?: void;
+  /** 更新自动续费列表 */
+  updateAutoRenewList?: void;
 };
 
 export const emitter = mitt<MittEvents>();

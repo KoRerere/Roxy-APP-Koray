@@ -2,6 +2,7 @@
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
+import { ExtensionsSource } from '/@/enums'
 
 const dialogRef = inject<any>('dialogRef')
 const toast = useToast()
@@ -44,7 +45,7 @@ async function confirm() {
   try {
     await uploadToOSS()
     await _onConfirm.value?.({
-      source: 'local',
+      source: ExtensionsSource.local,
       ...extension.value,
       ...extensionOss.value,
     })
@@ -81,7 +82,8 @@ onMounted(() => {
       <div class="flex items-center gap-4 mt-1">
         <RxButton outlined icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
         <span class="upload-or">{{ $t('或') }}</span>
-        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
+        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')"
+          @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
@@ -115,8 +117,8 @@ onMounted(() => {
     <div class="guide">
       <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
-          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
-            class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
+          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins"
+            target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>

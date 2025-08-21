@@ -2,7 +2,7 @@
 import { useThemeStore } from '/@/stores/theme'
 
 interface Props {
-  title: string
+  title?: string
   icon?: string
   desc?: string
 }
@@ -21,7 +21,7 @@ const imgSrc = computed(() => {
     <div class="empty-content">
       <img v-if="icon" class="empty-img" :src="imgSrc">
       <div class="empty-info">
-        <div class="empty-info-title">
+        <div class="empty-info-title" v-if="title">
           {{ title }}
         </div>
         <slot name="desc">

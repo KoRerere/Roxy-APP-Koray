@@ -1,6 +1,7 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type {
+  UnwrapRowType,
   UnwrapRowsType,
   UserGetCoreUpgradeCreateData,
 } from "@roxy/backend-api";
@@ -71,13 +72,32 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           type: "kernel",
           version: core.version,
           coreVersion: core.coreVersion,
-          status: (await fileExists(this.genCoreDir(core.coreVersion)))
-            ? "downloaded"
-            : "uninstalled",
+          status: await this.getCoreStatus(core)
         };
       },
     );
     return Promise.all(arr);
+  }
+
+  private async getCoreStatus(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
+    const isExists = await fileExists(this.genCoreDir(core.coreVersion!))
+    if (!isExists) return "uninstalled"
+
+    return this.checkCoreVersion(core)
+  }
+
+  private async checkCoreVersion(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
+    try {
+      const coreDir = this.genCoreDir(core.coreVersion!);
+      const localCoreVersion = await readFile(join(coreDir, "version"), "utf-8");
+      if (compare(localCoreVersion.trim(), core.version!, "<")) {
+        return "update"
+      }
+      return "downloaded"
+    } catch (error) {
+      console.error("getCoreExePath error", error);
+      return "uninstalled"
+    }
   }
 
   /** 根据内核版本获取内核所在目录 */
@@ -166,20 +186,15 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       await this.downloadCore(coreVersion, msgCallback, silent);
     }
 
-    try {
-      // 本地内核版本
-      const localCoreVersion = await readFile(
-        join(coreDir, "version"),
-        "utf-8",
-      );
-      // 如果本地内核版本小于远程内核版本
-      if (compare(localCoreVersion.trim(), availableCore.version, "<")) {
-        // 重新下载
-        await this.downloadCore(coreVersion, msgCallback);
-      }
-    } catch (error) {
-      console.error("getCoreExePath error", error);
-      return Promise.reject(error);
+    const status = await this.checkCoreVersion(availableCore)
+    if (status === "update") {
+      ipcMain.send("app:resource-update", {
+        ...availableCore,
+        type: "kernel",
+        version: availableCore.version,
+        coreVersion: availableCore.coreVersion,
+        status: "update"
+      })
     }
 
     console.log("getCoreExePath", exePath);

@@ -115,7 +115,7 @@ onUnmounted(() => {
       <div class="upgrade-pay-plan-btn-group">
         <RxButton :label="$t('升级')" class="w-full" @click="toUpgrade" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" />
         <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">
-          🎁 {{ $t('7 天免费试用') }}
+          🎁 {{ $t('{day} 天免费试用', { day: 7 }) }}
         </RxButton>
       </div>
     </div>

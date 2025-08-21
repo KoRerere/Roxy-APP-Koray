@@ -37,7 +37,7 @@ const emit = defineEmits<{
   minus: [value: number]
 }>()
 
-const currentValue = defineModel('modelValue', { required: true, default: 0 })
+const currentValue = defineModel<number>({ default: 0 })
 
 const isMinusDisabled = computed(() => disabled || Number(currentValue.value) <= min)
 const isPlusDisabled = computed(() => disabled || Number(currentValue.value) >= max)

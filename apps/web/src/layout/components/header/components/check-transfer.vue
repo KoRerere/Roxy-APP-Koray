@@ -7,7 +7,7 @@ import { $t } from '/@/locales';
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
-import { useProjectStore } from '/@/stores/project'
+import { emitter } from '/@/utils/eventBus';
 
 const { windowTransferNo } = defineProps<{
   windowTransferNo: string
@@ -18,7 +18,6 @@ const emit = defineEmits(['close'])
 const router = useRouter()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
-const { getProjects: getProjectList } = useProjectStore()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
@@ -67,6 +66,16 @@ async function tableRequest(params: any) {
   return result
 }
 
+function getWorkspaceProps(item: Record<string, any>) {
+  return {
+    name: item.workspacePicture || item.workspaceName?.slice(0, 2),
+    color: item.workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+    size: 24,
+    fontSize: item.workspacePicture ? 12 : 14,
+    radius: '6px',
+  }
+}
+
 async function onReceive() {
   const { code, msg } = await API.window.userAgreeTransferWindowCreate({
     total: transferTotal.value,
@@ -89,10 +98,11 @@ async function onReject() {
 
 async function toProject() {
   //接收完窗口后跳转到项目列表
-  const { data: { rows } } = await getProjectList()
+  const { data: { rows } } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
   const projectItem = rows.find(item => !!item.isTransfer)
   if (projectItem) {
     router.push({ name: 'project-item', params: { id: projectItem.project_id }, query: { title: projectItem.projectName } })
+    emitter.emit('updateProjectList')
   }
 }
 
@@ -115,16 +125,13 @@ async function toProject() {
         </template>
         <template #transfer="{ data }">
           <div class="flex items-center">
-            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon"
-              :class="{ '!bg-[var(--pattern-topnav-space-avatar-bg)]': !data.workspacePicture }"
-              :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
+            <RxAvatar v-bind="getWorkspaceProps(data)"></RxAvatar>
             <div class="ml-3 space-name">{{ data.workspaceName }}</div>
           </div>
         </template>
         <template #from="{ data }">
           <div class="flex items-center gap-2">
-            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)"
-              :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
+            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)" :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
             <span class="space-name">{{ data.operatorUserName }}</span>
           </div>
         </template>
@@ -149,19 +156,6 @@ async function toProject() {
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-}
-
-.space-icon {
-  width: 24px;
-  height: 24px;
-  color: #fff;
-  text-align: center;
-  font-family: 'JetBrains Mono';
-  font-size: 12px !important;
-  font-weight: 700;
-  line-height: 12px;
-  letter-spacing: -0.4px;
-  text-transform: uppercase;
 }
 
 .space-name {

@@ -35,6 +35,9 @@ export async function setupModules() {
   }
   catch (error) {
     console.error('setupModules', error)
+  } finally {
+    // 启动 roxynet 服务
+    startRoxynet()
   }
 }
 

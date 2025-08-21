@@ -3,6 +3,7 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { getDictMap } from '/@/utils'
+import { ProxyType } from '/@/enums/proxy'
 
 export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   loadingOperationMap: {
@@ -73,17 +74,22 @@ export async function tableRequest(params: any) {
 
 export async function getCustomFilters() {
   const $dict_map = await getDictMap()
+  const { data: country } = await API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.resource.toString() })
 
   const inputs = [
     {
       type: 'Checkbox',
       label: $t('国家/地区'),
       name: 'lastCountry',
+      search: true,
+      searchPlaceholder: $t('搜索国家/地区'),
+      searchKeys: ['alias'],
       getOptions: () => {
-        return ($dict_map.country || []).map((item: any) => ({
+        return (country || []).map((item: any) => ({
           parentName: 'lastCountry',
           value: item.value,
           label: item.label,
+          alias: `${item.label}/${item.value}`,
         }))
       },
       formatValue: (input: any) => {

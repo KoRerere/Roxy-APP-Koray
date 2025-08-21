@@ -13,7 +13,7 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
-import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
+import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks, getTimezoneByCity } from './utils'
 import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
 
 /** 最后一次发送的消息 */
@@ -421,7 +421,9 @@ export class BeforeLaunchTask {
       if (stopOpenNet) {
         return Promise.reject(new Error($t('网络不通停止打开')))
       }
-      this.warningMessages.push($t('代理检测失败'))
+
+      const message = this.browserItem.winInfo.buyProxyType === 1 ? $t('无法连接至代理，请检查您当前的网络环境并重试。') : $t('代理检测失败')
+      this.warningMessages.push(message)
     }
 
     // IP发生变化停止打开
@@ -440,6 +442,16 @@ export class BeforeLaunchTask {
 
   /** 创建指纹配置文件 */
   private async createFingerprintConfigFile() {
+    // TODO: 仅当用户选择`基于IP匹配`时，才去校准时区
+    // if (this.browserItem.winInfo.isTimeZone) {
+    //   try {
+    //     const timezone = await getTimezoneByCity(this.proxyInfo.city, this.proxyInfo.country_code)
+    //     this.proxyInfo.timezone = timezone || this.proxyInfo.timezone;
+    //   } catch (error) {
+    //     console.error('获取时区失败', error)
+    //   }
+    // }
+
     // 生成指纹配置
     const fingerprintConfig = genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
     console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)

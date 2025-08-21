@@ -1,7 +1,7 @@
 <script setup lang="tsx">
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
 import currency from 'currency.js';
 import { addDays, format } from "date-fns";
-import { useDialog } from 'primevue/usedialog'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -9,7 +9,6 @@ import { RxAlert } from "/@/components/rx-alert";
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
-import SubscribeModal from './components/subscribe-modal.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import { tierCalculate, discountCalculate } from './util'
 import { OrderType, PayWay, PurchaseType, PaySubOrderType } from '/@/enums/pay'
@@ -17,13 +16,14 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
 import { useSimpleLocale } from '/@/stores/locale';
+import { useDialog } from '/@/hooks/useDialog'
 
 const { getOfficialWebsite } = useSimpleLocale()
-const dialog = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing, planSuccess } = usePay()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const [showModal] = useDialog()
 
 const dataList = ref<Plan[]>()
 
@@ -31,20 +31,21 @@ const selectedPlan = ref()
 const selectedCount = ref()
 const selectedDuration = ref()
 
-const subscribeOriginalPrice = computed(() => tierCalculate(dataList.value!, selectedCount.value).value)
+const priceSubscribePerMonth = computed(() => tierCalculate(dataList.value!, selectedCount.value).value)
 
 const showAlert = computed(() => selectedCount.value && currency(selectedCount.value).add(userPayInfo.value.freeWindowCount).value < userPayInfo.value.useWindowCount)
 
 const finalDiscount = computed(() => discountCalculate([userPayInfo.value?.discount, selectedDuration.value?.discount]))
 
-const finalAmount = computed(() => currency(subscribeOriginalPrice.value).multiply(selectedDuration.value?.month ?? 1).multiply(finalDiscount.value).value)
+const finalOriginalAmount = computed(() => currency(priceSubscribePerMonth.value).multiply(selectedDuration.value?.month ?? 1).value)
+const finalAmount = computed(() => currency(finalOriginalAmount.value).multiply(finalDiscount.value).value)
+const finalDiscountAmount = computed(() => currency(finalOriginalAmount.value).subtract(finalAmount.value).value)
 
 const details = computed(() => {
-
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
-  const totalAmount = currency(subscribeOriginalPrice.value).multiply(finalDiscount.value).value
-  const discountAmount = currency(subscribeOriginalPrice.value).subtract(totalAmount).value
+  const pricePerMonth = currency(priceSubscribePerMonth.value).multiply(finalDiscount.value).value
+  const discountPerMonth = currency(priceSubscribePerMonth.value).subtract(pricePerMonth).value
 
   return [
     {
@@ -92,14 +93,14 @@ const details = computed(() => {
       items: [
         {
           label: $t('套餐原价'),
-          value: currency(subscribeOriginalPrice.value).format(),
-          visible: totalAmount !== subscribeOriginalPrice.value,
+          value: currency(priceSubscribePerMonth.value).format(),
+          visible: pricePerMonth !== priceSubscribePerMonth.value,
           slot: 'oldprice'
         },
         {
           label: $t('实际价格'),
-          value: currency(totalAmount).format(),
-          diffValue: discountAmount,
+          value: currency(pricePerMonth).format(),
+          diffValue: discountPerMonth,
           slot: 'price'
         },
       ].filter(item => item.visible !== false)
@@ -127,43 +128,37 @@ async function getTierPricingList() {
 }
 
 async function onSubscribe() {
-  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(finalAmount.value) })
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-
-  dialog.open(SubscribeModal, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        content: '!pa-0'
-      }
-    },
-    data: {
-      props: {
-        subscribeDuration: toRaw(selectedDuration.value),
-        subscribeOriginalPrice: toRaw(subscribeOriginalPrice.value),
-        supportPayWay: Object.values(data).flat()
-      },
-      onConfirm: async (params: { isAuto: boolean, payType: PayWay }) => {
-        const { code, data, msg } = await API.pay.userPaySettlementCreate({
-          purchaseMember: { profile: selectedCount.value },
-          purchaseType: PurchaseType.Profile,
-          subLevel: selectedPlan.value.subLevel,
-          subscriptionMonths: selectedDuration.value.month,
-          subOrderType: PaySubOrderType.Purchase,
-          ...params,
-          orderType: OrderType.Subscribe,
-        })
-        onlyErrorToast(code, msg)
-        if (code === 0) {
-          (params.payType === PayWay.Balance ? planSuccess() : openProcessing({ payType: params.payType, ...data }, OrderType.Subscribe))
-            .then(() => {
-              router.push({ name: 'browser-list' })
-            })
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(WalletPayModal, {
+        amount: finalAmount.value,
+        originalAmount: finalOriginalAmount.value,
+        discountAmount: finalDiscountAmount.value,
+        showAutoRenew: true,
+        onClose: hideModal,
+        onConfirm: async ({ payType, isAuto }) => {
+          const { code, data, msg } = await API.pay.userPaySettlementCreate({
+            purchaseMember: { profile: selectedCount.value },
+            purchaseType: PurchaseType.Profile,
+            subLevel: selectedPlan.value.subLevel,
+            subscriptionMonths: selectedDuration.value.month,
+            subOrderType: PaySubOrderType.Purchase,
+            payType,
+            isAuto,
+            orderType: OrderType.Subscribe,
+          })
+          onlyErrorToast(code, msg)
+          if (code === 0) {
+            (payType === PayWay.Balance ? planSuccess() : openProcessing({ payType, ...data }, OrderType.Subscribe))
+              .then(() => {
+                router.push({ name: 'browser-list' })
+              })
+          }
         }
-      },
+      }),
     },
   })
 }
@@ -178,7 +173,7 @@ async function onSubscribe() {
           <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
           <div class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
             <div class="title">{{ $t('订阅时长') }}</div>
-            <Duration class="mt-4" v-model="selectedDuration" :price="subscribeOriginalPrice"></Duration>
+            <Duration class="mt-4" v-model="selectedDuration" :price="priceSubscribePerMonth"></Duration>
           </div>
           <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
@@ -213,8 +208,7 @@ async function onSubscribe() {
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe"></RxButton>
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
-                    <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                      }}</a>
+                    <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                   </template>
                 </i18n-t>
               </div>

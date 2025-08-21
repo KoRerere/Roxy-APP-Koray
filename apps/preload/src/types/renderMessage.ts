@@ -84,7 +84,7 @@ export interface RenderMessage {
   "proxy:refreshUrl": (refreshUrl: string) => Promise<boolean>;
 
   /** 保存用户信息 */
-  "user:setUserInfo": (userInfo: { token: string; userId: number, workspaceId: number }) => void;
+  "user:setUserInfo": (userInfo: { token: string; userId: number, workspaceId: number, userName: string, email: string }) => void;
   /** 用户退出登录 */
   "user:logout": () => void;
   /** 切换空间时设置当前空间 ID  */
@@ -216,6 +216,8 @@ export interface RenderMessage {
   "util:checkPort": (port: number) => Promise<number>;
   /** 获取网关配置 */
   "util:getGatewayConfig": () => Promise<string>;
+  /** 根据 ip 变化重新获取网关配置 */
+  "util:reGetGatewayConfigByIpChange": (ip: string) => void;
   /** 获取公共请求头部*/
   "util:getCommonRequestHeaders": () => CommonRequestHeaders;
   /** 获取设备唯一 ID */
@@ -347,4 +349,8 @@ export interface RenderMessage {
   "syncControl:checkShortcutKeysIsOccupied": (
     payload: Partial<PreferenceSettings["shortcutKey"]>,
   ) => Promise<ShortcutKeyRegisterResult>;
+  /** 暂停同步 */
+  "syncControl:pause": () => void;
+  /** 恢复同步 */
+  "syncControl:resume": () => void;
 }

@@ -2,7 +2,7 @@ import { browserManager } from "/@/modules/browser"
 import { createSynchronizerActionBarWindow } from "/@/modules/sync-control/actionBar"
 import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser, startRoxySync, stopRoxySync } from "/@/modules/sync-control/bin"
 import { closeSynchronizerWindow, createSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
-import { showAllWindows, windowArrange } from "/@/modules/sync-control/api"
+import { showAllWindows, windowArrange, startSyncControl, stopSyncControl } from "/@/modules/sync-control/api"
 import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constants"
 import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
 import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
@@ -225,5 +225,15 @@ export class SyncControlUtil {
     } else {
       console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
     }
+  }
+
+  static pause = async () => {
+    console.log('暂停同步')
+    return stopSyncControl()
+  }
+
+  static resume = async () => {
+    console.log('恢复同步')
+    return startSyncControl()
   }
 }
