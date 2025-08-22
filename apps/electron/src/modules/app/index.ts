@@ -6,7 +6,7 @@ import { createTray } from '/@/modules/app/tray'
 import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged, isWindows } from '/@/constants/common'
+import { isMac, isPackaged, isWindows, proxyBypassRules } from '/@/constants/common'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady } from '/@/utils'
@@ -103,13 +103,16 @@ export async function setupApp() {
   /**
    * @see https://www.electronjs.org/docs/v14-x-y/api/app#event-activate-macos Event: 'activate'
    */
-  app.on('activate', restoreOrCreateWindow)
+  app.on('activate', () => restoreOrCreateWindow())
 
   /**
    * Create app window when background process will be ready
    */
   try {
     await app.whenReady()
+    session.defaultSession.setProxy({
+      proxyBypassRules: '*.lumibrowser.*;*.roxybrowser.*'
+    })
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
 

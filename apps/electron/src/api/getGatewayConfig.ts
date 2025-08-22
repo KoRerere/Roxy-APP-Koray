@@ -130,7 +130,7 @@ export async function getGatewayConfig(): Promise<string> {
         ipcMain.send('app:backend-url-change', domain)
       }
 
-      baseUrl = domain || response.data.prod || baseUrl
+      baseUrl = domain || baseUrl
 
       openAPIUrl = await getAvailableUrl(response.data.prod_apis, mapKey)
       console.debug(`getAvailableUrl openAPIUrl`, openAPIUrl)
@@ -149,6 +149,7 @@ export async function getGatewayConfig(): Promise<string> {
 
   openAPIUrl ||= 'https://hz.api.roxybrowser.cn'
   baseUrl = isDev ? 'https://lumitest.lumibrowser.com' : 'https://hz.gate.roxybrowser.cn'
+  ipcMain.send('app:backend-url-change', baseUrl)
   return baseUrl
 }
 

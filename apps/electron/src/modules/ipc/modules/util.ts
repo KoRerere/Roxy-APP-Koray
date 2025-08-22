@@ -5,7 +5,7 @@ import url from 'node:url'
 import { mediaProtocolName } from '/@/constants'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { clearInstallerPath, decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getUTCOffsetHours } from '/@/utils'
+import { clearInstallerPath, decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getInviteCode, getUTCOffsetHours } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
 import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
@@ -125,8 +125,13 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 获取设备唯一 ID */
-  ipcMain.on('util:getDeviceId', (event,) => {
-    return getDeviceId()
+  ipcMain.on('util:getDeviceId', async (event,) => {
+    return encryptAESGCM(await getDeviceId())
+  })
+
+  /** 获取推广计划进来的用户的邀请码 */
+  ipcMain.on('util:getInviteCode', (event,) => {
+    return getInviteCode()
   })
 
   /** 获取设备信息 */

@@ -62,7 +62,7 @@ const items = ref([
   {
     label: $t('帮助中心'),
     icon: 'base/rx_ic_books',
-    command: () => window.open(`https://faq.roxybrowser.org/${currentLocale.split('-')[0]}`, '_blank')
+    command: () => window.open(`https://faq.roxybrowser.com/${currentLocale.split('-')[0]}`, '_blank')
   },
   {
     label: $t('联系技术支持'),

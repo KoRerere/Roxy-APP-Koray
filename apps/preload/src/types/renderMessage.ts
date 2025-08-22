@@ -220,6 +220,8 @@ export interface RenderMessage {
   "util:reGetGatewayConfigByIpChange": (ip: string) => void;
   /** 获取公共请求头部*/
   "util:getCommonRequestHeaders": () => CommonRequestHeaders;
+  /** 获取推广计划进来的用户的邀请码 */
+  "util:getInviteCode": () => Promise<string>;
   /** 获取设备唯一 ID */
   "util:getDeviceId": () => Promise<string>;
   /** 获取设备信息 */

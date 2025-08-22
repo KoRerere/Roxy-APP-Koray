@@ -239,7 +239,7 @@
   "代理类型, 如: SOCKS5, 留空则自动使用 \"直连\"": "Proxy type, such as SOCKS5, leave it blank to automatically use \"No proxy\"",
   "代理续费": "Proxy Renewal",
   "代理购买": "Proxy Purchase",
-  "代理资源": "Proxies",
+  "代理 IP": "Proxies",
   "代理过期后将被停用，无法找回或再次续费。": "After the proxy expires, it will be deactivated and cannot be recovered or renewed again.",
   "代理退款": "Proxy Refund",
   "代理页面": "Proxy page",

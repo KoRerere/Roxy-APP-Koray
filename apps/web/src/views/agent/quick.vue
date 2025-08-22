@@ -17,7 +17,7 @@ const attrs = useAttrs()
 
 const tabs = ref([
   {
-    title: $t('代理资源'),
+    title: $t('代理 IP'),
     value: 'list',
     slot: 'list',
   },

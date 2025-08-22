@@ -80,7 +80,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         path: "agent",
         name: "agent-list",
         meta: {
-          title: $t("代理资源"),
+          title: $t("代理 IP"),
           icon: "base/rx_ic_internet",
           newBadge: 'base/new_badge',
           roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],

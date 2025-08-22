@@ -12,7 +12,7 @@ import {
   PayApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
-import { handleRequest, handleResponse } from '/@/api/util'
+import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, handleRequest, handleResponse, needDeviceIdApis } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -28,13 +28,39 @@ export const httpClient = new HttpClient({
   /**
    * baseURL: import.meta.env.VITE_BASE_URL,
    */
-  baseURL: 'https://roxybrowser.app/api',
+  // baseURL: 'https://roxybrowser.app/api',
   paramsSerializer(params) {
     return qs.stringify(params, { arrayFormat: 'comma' })
   },
 })
 
+let baseURL = ''
+let commonHeaders
+let deviceId = ''
+let inviteCode = ''
+
+globalThis?.electronAPI?.on('app:backend-url-change', (url) => {
+  console.log('app:backend-url-change', url)
+  baseURL = url
+})
+
 httpClient.instance.interceptors.request.use(async (config) => {
+  baseURL ||= await getGatewayConfig()
+  commonHeaders ||= await getCommonHeaders()
+  inviteCode ||= await getInviteCode()
+
+  if (needDeviceIdApis.some(api => config.url?.includes(api))) {
+    deviceId ||= await getDeviceId()
+    config.headers['R-DEVICE-ID'] = deviceId
+  }
+
+  Object.assign(config.headers, {
+    ...commonHeaders,
+    ...config.headers,
+  })
+
+  console.debug('baseURL', baseURL)
+  config.baseURL ||= baseURL
 
   const { token, appVersion } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
@@ -44,6 +70,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   config.headers.source = 'app'
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
+  config.headers['R-INVITE-CODE'] = inviteCode
   // R-OS:mac/win
   // R-OSBIT:apple/intel/64/11
   // R-VERSION:1.0.0

@@ -201,7 +201,8 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     console.log(payload);
     await mainWindow.webContents.session.setProxy({
       ...payload,
-      proxyBypassRules: "localhost",
+      // 保留原有的 proxyBypassRules，如果没有则使用默认值
+      proxyBypassRules: payload.proxyBypassRules || "localhost",
     });
     console.log("代理设置完毕");
   });

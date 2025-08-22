@@ -17,6 +17,18 @@ const responseHandleUrls = [
   '/user_get_window_info_recycle',
 ]
 
+export const needDeviceIdApis = [
+  "/reg",
+  "/login",
+  "/login_google_v2",
+  "/login_github",
+  "/login_vk",
+  "/login_facebook",
+  "/send_email_register_verify_code",
+  "/check_other_device_login",
+  "/get_2fa_login_info"
+]
+
 export async function handleRequest(config: InternalAxiosRequestConfig<any>) {
   if (!isDev && config.method === 'post' && requestHandleUrls.some(url => config.url?.includes(url))) {
     console.log('config.url', config.url)
@@ -32,4 +44,51 @@ export async function handleResponse(response: AxiosResponse<any, any>) {
       response.data.data = await decryptAESGCM(response.data.data)
     }
   }
+}
+
+let commonHeadersPromise: Promise<Record<string, string>> | null = null
+export async function getCommonHeaders() {
+  if (commonHeadersPromise) {
+    return commonHeadersPromise
+  }
+  commonHeadersPromise = electronAPI.send('util:getCommonRequestHeaders')
+    .catch(() => ({}))
+    .finally(() => {
+      commonHeadersPromise = null
+    })
+}
+
+let getGatewayConfigPromise: Promise<string> | null = null
+export async function getGatewayConfig() {
+  if (getGatewayConfigPromise) {
+    return getGatewayConfigPromise
+  }
+  getGatewayConfigPromise = electronAPI.send('util:getGatewayConfig')
+  return getGatewayConfigPromise.finally(() => {
+    getGatewayConfigPromise = null
+  })
+}
+
+let getInviteCodePromise: Promise<string> | null = null
+export async function getInviteCode() {
+  if (getInviteCodePromise) {
+    return getInviteCodePromise
+  }
+  getInviteCodePromise = electronAPI.send('util:getInviteCode')
+    .catch(() => '')
+  return getInviteCodePromise.finally(() => {
+    getInviteCodePromise = null
+  })
+}
+
+let getDeviceIdPromise: Promise<string> | null = null
+export async function getDeviceId() {
+  if (getDeviceIdPromise) {
+    return getDeviceIdPromise
+  }
+  getDeviceIdPromise = electronAPI.send('util:getDeviceId')
+    .catch(() => '')
+  return getDeviceIdPromise.finally(() => {
+    getDeviceIdPromise = null
+  })
 }

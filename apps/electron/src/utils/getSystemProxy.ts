@@ -1,4 +1,4 @@
-import { session } from 'electron'
+import { Session, session } from 'electron'
 import { setSystemProxy } from '/@/modules/roxynet'
 
 let systemProxyAddr = ''
@@ -9,6 +9,8 @@ export function getSystemProxyAddress() {
 
 let reGetTime = Date.now()
 
+let sess: Session
+
 /** 获取系统代理设置 */
 export async function getSystemProxy(force = false) {
   // 6秒内不重复获取
@@ -16,8 +18,9 @@ export async function getSystemProxy(force = false) {
     return systemProxyAddr
   }
   reGetTime = Date.now()
+  sess ||= session.fromPartition('persist:work')
 
-  const proxy = await session.defaultSession.resolveProxy('https://www.google.com')
+  const proxy = await sess.resolveProxy('https://www.google.com')
   console.log('getSystemProxy resolveProxy', proxy)
   const currSystemProxyAddr = proxy === 'DIRECT' ? '' : proxy?.split(' ').at(-1) || ''
   if (currSystemProxyAddr !== systemProxyAddr) {

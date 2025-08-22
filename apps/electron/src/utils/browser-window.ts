@@ -15,10 +15,9 @@ export function createWindow(options: BrowserWindowConstructorOptions & { roxyWi
 
   // ses.setProxy({ mode: 'direct' })
 
-
   // 主窗口处理媒体协议
   if (roxyWindowId === ROXY_MAIN_WINDOW_ID) {
-    handleRequest()
+    // handleRequest()
     handleCustomProtocol()
   }
 

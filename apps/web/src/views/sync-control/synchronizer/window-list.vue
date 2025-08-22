@@ -276,7 +276,7 @@ electronAPI.on('syncControl:start', startSync)
           <div v-if="false" class="mt-3">
             <i18n-t :keypath="$t('更多的文档说明，请访问：{link}', { link: '{link}' })" scope="global">
               <template #link>
-                <a href="https://faq.roxybrowser.org/" target="_blank">{{ $t('窗口同步器') }}</a>
+                <a href="https://faq.roxybrowser.com/" target="_blank">{{ $t('窗口同步器') }}</a>
               </template>
             </i18n-t>
           </div>
