@@ -223,8 +223,9 @@ export const useUserStore = defineStore(
     }
 
     async function getUserCards(force = false) {
+      if (!roleStore.isOwner) return
       if (!force && userCards.value) return userCards.value
-      const { code, data } = await API.pay.userGetBindCardListList({ page_index: '1', page_size: '20' })
+      const { code, data } = await API.pay.userGetBindCardListList({})
       if (code === 0) {
         userCards.value = data.rows
       }

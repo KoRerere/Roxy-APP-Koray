@@ -1771,6 +1771,8 @@ export interface UserGetUserInfoListData {
     firstCreateTip: boolean;
     clientId: string;
     setPasswordStatus: boolean;
+    /** 是否绑定邮箱 */
+    isBindEmail: boolean;
     /** 列表备注状态 */
     remarkDisplayStatus: boolean;
   };
@@ -5428,7 +5430,7 @@ export interface UserGetProxyRefundInfoListData {
 
 export interface UserGetProxyAllCountriesListParams {
   /**
-   * 1:代理列表 2：代理商店
+   * 0:代理列表 1：代理商店
    * @example "0"
    */
   queryType: string;
