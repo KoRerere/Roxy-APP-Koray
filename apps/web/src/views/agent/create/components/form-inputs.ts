@@ -11,7 +11,7 @@ export async function getInputs(data: Record<string, any> = {}) {
   const $dict_map = await getDictMap()
 
   const proxyCategory = (data.proxyCategory || data.protocol)?.split('/')[0]
-  const port = data.port?.split('/')[0] ?? null
+  const port = data.port?.split?.('/')?.[0] ?? null
 
   const inputs = reactive([
     {
