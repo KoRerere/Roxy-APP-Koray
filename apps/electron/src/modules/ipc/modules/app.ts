@@ -11,6 +11,7 @@ import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
 import { getMacAddress } from "/@/utils";
 import { compare } from "compare-versions";
+import { proxyManager } from "/@/modules/app/proxy-manager";
 
 export function setupAppIpc(ipcMain: IPCMainInstance) {
 
@@ -196,19 +197,26 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   });
 
   /** 开启系统代理 */
-  ipcMain.on("app:setProxy", async (event, payload: Config) => {
-    const mainWindow = getMainWindow()!;
+  ipcMain.on("app:setProxy", async (event, payload: any) => {
     console.log(payload);
-    await mainWindow.webContents.session.setProxy({
-      ...payload,
-      // 保留原有的 proxyBypassRules，如果没有则使用默认值
+
+    // 更新代理管理器配置
+    proxyManager.updateConfig({
+      proxyRules: payload.proxyRules || '',
       proxyBypassRules: payload.proxyBypassRules || "localhost",
     });
+    await proxyManager.enableDefaultProxy()
+
     console.log("代理设置完毕");
   });
+
   /** 关闭系统代理 */
-  ipcMain.on("app:removeProxy", (event) => {
-    const mainWindow = getMainWindow()!;
-    mainWindow.webContents.session.setProxy({});
+  ipcMain.on("app:removeProxy", async (event) => {
+    await proxyManager.disableProxy();
+  });
+
+  /** 获取系统代理信息 */
+  ipcMain.on("app:getSystemProxyInfo", async (event) => {
+    return await proxyManager.getSystemProxyInfo();
   });
 }

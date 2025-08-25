@@ -99,6 +99,17 @@ export interface RenderMessage {
   /** 选择文件 */
   "dialog:selectFile": (filters?: FileFilter[]) => Promise<string>;
 
+  /** 开启系统代理 */
+  "app:setProxy": (payload: { proxyRules?: string; proxyBypassRules?: string }) => void;
+  /** 关闭系统代理 */
+  "app:removeProxy": () => void;
+  /** 获取系统代理信息 */
+  "app:getSystemProxyInfo": () => Promise<{
+    address: string;
+    isEnabled: boolean;
+    proxyRules: string;
+  }>;
+
   /** 保存软件设置 */
   "app:saveSoftConfig": (
     config: Partial<UserGetUserConfigListData["data"] & StoreType>,

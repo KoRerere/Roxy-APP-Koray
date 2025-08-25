@@ -1,0 +1,152 @@
+import { session } from 'electron'
+import { getSystemProxy } from '/@/utils/getSystemProxy'
+
+export interface ProxyConfig {
+  proxyRules: string
+  proxyBypassRules: string
+}
+
+class ProxyManager {
+  private defaultConfig: ProxyConfig = {
+    proxyRules: '', // 将从系统代理获取
+    proxyBypassRules: '*.lumibrowser.*;*.roxybrowser.*;localhost;127.0.0.1'
+  }
+
+  private isEnabled = false
+
+  /**
+   * 从系统代理获取代理规则
+   */
+  private async getSystemProxyRules(): Promise<string> {
+    try {
+      const systemProxy = await getSystemProxy(true) // 强制获取最新系统代理
+
+      if (!systemProxy) {
+        return 'direct://'
+      }
+
+      // 解析系统代理地址
+      const [host, port] = systemProxy.split(':')
+      if (!host || !port) {
+        return 'direct://'
+      }
+
+      // 构建 proxyRules 格式
+      const proxyRules = `http=${host}:${port};https=${host}:${port}`
+      return proxyRules
+
+    } catch (error) {
+      return 'direct://'
+    }
+  }
+
+  /**
+   * 启用默认代理设置
+   */
+  async enableDefaultProxy() {
+    try {
+      // 获取系统代理设置
+      const systemProxyRules = await this.getSystemProxyRules()
+      this.defaultConfig.proxyRules = systemProxyRules
+
+      await session.defaultSession.setProxy(this.defaultConfig)
+      this.isEnabled = true
+      console.log('默认代理设置成功，使用系统代理:', systemProxyRules)
+
+      // 验证代理设置
+      const proxyInfo = await session.defaultSession.resolveProxy('https://www.google.com')
+      console.log('代理验证结果:', proxyInfo)
+
+      return true
+    } catch (error) {
+      console.error('设置默认代理失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 禁用代理设置
+   */
+  async disableProxy() {
+    try {
+      await session.defaultSession.setProxy({})
+      this.isEnabled = false
+      console.log('代理已禁用')
+      return true
+    } catch (error) {
+      console.error('禁用代理失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 重新设置代理（用于在 roxynet 启动后重新应用）
+   */
+  async resetProxy() {
+    if (this.isEnabled) {
+      return await this.enableDefaultProxy()
+    }
+    return true
+  }
+
+  /**
+   * 监听系统代理变化并自动更新
+   */
+  startSystemProxyWatcher() {
+    // 每15秒检查一次系统代理变化
+    setInterval(async () => {
+      if (this.isEnabled) {
+        const newSystemProxyRules = await this.getSystemProxyRules()
+        if (newSystemProxyRules !== this.defaultConfig.proxyRules) {
+          console.log('检测到系统代理变化，正在更新...')
+          this.defaultConfig.proxyRules = newSystemProxyRules
+          await this.enableDefaultProxy()
+        }
+      }
+    }, 15 * 1000) // 15秒检查一次
+  }
+
+  /**
+   * 检查代理是否已启用
+   */
+  isProxyEnabled() {
+    return this.isEnabled
+  }
+
+  /**
+   * 获取当前代理配置
+   */
+  getCurrentConfig(): ProxyConfig {
+    return { ...this.defaultConfig }
+  }
+
+  /**
+   * 更新代理配置
+   */
+  updateConfig(config: Partial<ProxyConfig>) {
+    this.defaultConfig = { ...this.defaultConfig, ...config }
+  }
+
+  /**
+   * 获取当前系统代理信息
+   */
+  async getSystemProxyInfo() {
+    try {
+      const systemProxy = await getSystemProxy(true)
+      return {
+        address: systemProxy,
+        isEnabled: !!systemProxy,
+        proxyRules: this.defaultConfig.proxyRules
+      }
+    } catch (error) {
+      console.error('获取系统代理信息失败:', error)
+      return {
+        address: '',
+        isEnabled: false,
+        proxyRules: this.defaultConfig.proxyRules
+      }
+    }
+  }
+}
+
+export const proxyManager = new ProxyManager()

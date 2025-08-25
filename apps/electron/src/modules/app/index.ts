@@ -6,10 +6,11 @@ import { createTray } from '/@/modules/app/tray'
 import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged, isWindows, proxyBypassRules } from '/@/constants/common'
+import { isMac, isPackaged, isWindows } from '/@/constants/common'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady } from '/@/utils'
+import { proxyManager } from './proxy-manager'
 
 // 获取 GPU 信息
 // app.getGPUFeatureStatus()
@@ -110,9 +111,12 @@ export async function setupApp() {
    */
   try {
     await app.whenReady()
-    session.defaultSession.setProxy({
-      proxyBypassRules: '*.lumibrowser.*;*.roxybrowser.*'
-    })
+
+    // 设置默认代理配置
+    await proxyManager.enableDefaultProxy()
+    // 启动系统代理监听器
+    proxyManager.startSystemProxyWatcher()
+
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
 
