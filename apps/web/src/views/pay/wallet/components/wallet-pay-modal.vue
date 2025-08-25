@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import currency from 'currency.js'
 import { $t } from '/@/locales'
-import { useDialog } from '/@/hooks/useDialog'
+import { RxAlert } from '/@/components/rx-alert'
 import { useUserStore } from '/@/stores/user';
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useThemeStore } from '/@/stores/theme'
@@ -102,6 +102,7 @@ function close(isCancel: boolean) {
         </div>
       </div>
       <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+      <RxAlert v-if="finalResult.needRecharge" class="w-full" type="warn" :title="$t('您当前的余额不足以支付此订单，请充值后继续。')" :closable="false" />
       <div class="flex flex-col gap-2.5">
         <div class="relative h-24 flex px-3 justify-end items-end overflow-hidden balance-bg">
           <img class="block absolute top-8 left-8" :src="imgSrc">
@@ -132,7 +133,7 @@ function close(isCancel: boolean) {
 
     <div class="flex flex-col">
       <RxButton v-if="finalResult.needRecharge" :disabled="loading" size="lg" :label="$t('前往充值')" @click="onRecharge"></RxButton>
-      <RxButton v-else :disabled="loading" size="lg" :label="$t('完成支付')" @click="confirm"></RxButton>
+      <RxButton v-else :disabled="loading" size="lg" :label="$t('支付')" @click="confirm"></RxButton>
     </div>
   </div>
 </template>

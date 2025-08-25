@@ -218,6 +218,7 @@
   "仅支持Excel类型文件": "Supports Excel files only",
   "付费计划还包含以下高级功能：": "Paid plans also include the following advanced features:",
   "代理": "Proxy",
+  "代理 IP": "Proxies",
   "代理主机": "Proxy host",
   "代理主机:端口:用户名:密码[刷新URL]": "Proxy host:port:username:password[Refresh URL]",
   "代理信息": "Proxy Info",
@@ -239,7 +240,6 @@
   "代理类型, 如: SOCKS5, 留空则自动使用 \"直连\"": "Proxy type, such as SOCKS5, leave it blank to automatically use \"No proxy\"",
   "代理续费": "Proxy Renewal",
   "代理购买": "Proxy Purchase",
-  "代理 IP": "Proxies",
   "代理过期后将被停用，无法找回或再次续费。": "After the proxy expires, it will be deactivated and cannot be recovered or renewed again.",
   "代理退款": "Proxy Refund",
   "代理页面": "Proxy page",
@@ -555,7 +555,6 @@
   "安全检查": "Security Check",
   "安装到项目:": "Install to projects:",
   "完成": "Done",
-  "完成支付": "Complete Payment",
   "完成注册": "Registration Complete",
   "官方网站": "Official Website",
   "实际价格": "Actual Price",
@@ -1623,5 +1622,7 @@
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
   "默认项目": "Default project",
-  "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)"
+  "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
+  "您当前的余额不足以支付此订单，请充值后继续。": "Your current balance is insufficient. Please recharge and continue.",
+  "支付": "Pay"
 }
