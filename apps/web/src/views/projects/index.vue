@@ -272,15 +272,16 @@ async function inviteUserInProject(project: Project) {
           </Column>
         </template>
         <template #projectName="{ data }">
-          <router-link class="flex items-center gap-2 name text-[var(--colors-text-text-primary)]" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
+          <RouterLink class="flex items-center gap-2 name text-[var(--colors-text-text-primary)]" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
+            @click.stop.prevent>
             <RxSvgIcon name="base/rx_ic_stack" />
             <span>{{ data.projectName }}</span>
-          </router-link>
+          </RouterLink>
         </template>
         <template #action="{ data }">
-          <router-link class="flex items-center gap-2 name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
+          <RouterLink class="flex items-center gap-2 name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" @click.stop.prevent>
             <RxButton :label="$t('查看详情')" outlined severity="secondary" size="xs" />
-          </router-link>
+          </RouterLink>
         </template>
         <template #actions="{ data }">
           <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu" />

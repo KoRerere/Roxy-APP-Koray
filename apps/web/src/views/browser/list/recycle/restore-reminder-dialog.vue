@@ -22,7 +22,7 @@ function handleConfirm() {
     </div>
     <div class="mt-[20px] flex justify-between">
       <div class="flex items-center gap-2">
-        <Checkbox v-model="isRemind" :input-id="cid" name="pizza" value="Cheese" />
+        <RxCheckbox v-model="isRemind" :input-id="cid" name="pizza" value="Cheese" />
         <label :for="cid"> {{ $t('不再提醒') }} </label>
       </div>
       <RxButton @click="handleConfirm">

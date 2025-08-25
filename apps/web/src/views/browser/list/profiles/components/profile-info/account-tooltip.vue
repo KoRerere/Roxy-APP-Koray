@@ -12,18 +12,33 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col gap-8px">
-    <div v-for="item in platformList" :key="item.platformUrl">
-      <div class="flex items-center gap-6px">
-        <PlatformIcon class="size-16px" v-if="item.platformIcon" :platform-icon="item.platformIconDark"
-          :platform-icon-dark="item.platformIconDark" />
-        <RxSvgIcon v-else name="base/rx_ic_user_key" class="size-12px" color="#FFF" />
-        <div class="text-12px color-[var(--component-tooltip-text-primary)] font-500">{{ item.platformUrl }}</div>
-      </div>
-      <div class="mt-4px text-12px color-[var(--component-tooltip-text-secondary)] font-400 pl-22px"
-        v-if="platformList.length === 1 && item.platformUserName">
-        {{ item.platformUserName }}
+  <div class="flex flex-col gap-2">
+    <div class="flex gap-1.5" v-for="item in platformList" :key="item.platformUrl">
+      <PlatformIcon class="w-4 h-4" v-if="item.platformIcon" :platform-icon="item.platformIconDark" :platform-icon-dark="item.platformIconDark" />
+      <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--component-tooltip-text-primary)" />
+      <div class="flex flex-col gap-1">
+        <div class="primary" v-if="platformList.length !== 1">{{ item.platformUserName || '--' }}</div>
+        <template v-else>
+          <div class="primary">{{ item.platformUrl }}</div>
+          <div v-if="item.platformUserName" class="secondary">{{ item.platformUserName }}</div>
+        </template>
       </div>
     </div>
   </div>
 </template>
+
+
+<style lang="scss" scoped>
+.primary {
+  color: var(--component-tooltip-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.secondary {
+  color: var(--component-tooltip-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+</style>

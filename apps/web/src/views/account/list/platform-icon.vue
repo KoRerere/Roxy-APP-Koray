@@ -1,5 +1,5 @@
 <template>
-  <img v-if="iconUrl" :src="iconUrl" v-bind="$attrs">
+  <img class="block" v-if="iconUrl" :src="iconUrl" v-bind="$attrs">
 </template>
 
 <script setup lang="ts">

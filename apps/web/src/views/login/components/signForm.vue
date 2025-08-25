@@ -84,7 +84,7 @@ defineExpose({
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center text-[12px]">
-      <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />
+      <RxCheckbox v-model="rememberMe" input-id="remember-me" :binary="true" />
       <label for="remember-me" class="ml-2"> {{ $t('记住登录状态') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">

@@ -1,12 +1,8 @@
 <script setup lang="ts">
-
-interface Props {
+defineProps<{
   label: string
   tooltip?: string
-}
-
-defineProps<Props>()
-
+}>()
 </script>
 
 <template>
@@ -18,9 +14,9 @@ defineProps<Props>()
 
 <style scoped lang="scss">
 .label {
-  color: var(--colors-text-text-primary, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 12px;
   font-weight: 500;
-  line-height: var(--Line-Height-text-lg, 20px);
+  line-height: 20px;
 }
 </style>

@@ -1,12 +1,11 @@
 <template>
   <BaseDialog :header="$t('打开网址')" @hide="handleHide">
     <div class="open-sites">
-      <Textarea v-model="formData.urls" rows="8"
-        :placeholder="$t('输入网址，多个网址通过换行区分: \nhttps://www.amazon.com \nhttps://www.facebook.com')" class="w-full" />
+      <Textarea v-model="formData.urls" rows="8" :placeholder="$t('输入网址，多个网址通过换行区分: \nhttps://www.amazon.com \nhttps://www.facebook.com')" class="w-full" />
     </div>
     <div class="footer">
       <div class="flex items-center gap-2">
-        <Checkbox v-model="formData.replaceCurrentTab" inputId="ingredient1" binary size="small" />
+        <RxCheckbox v-model="formData.replaceCurrentTab" inputId="ingredient1" binary size="small" />
         <label for="ingredient1"> {{ $t('网址从当前标签页开始打开') }} </label>
       </div>
       <RxButton class="apply-button" @click="openSites">

@@ -127,7 +127,7 @@ async function onTransfer(isSelf: boolean) {
   <div class="flex flex-col pa-6 pt-4 gap-5 max-h-[80vh] overflow-y-auto popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
       <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口')
-        }}</span>
+      }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">
@@ -154,7 +154,7 @@ async function onTransfer(isSelf: boolean) {
           <div class="title">{{ group.title }}</div>
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
-              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" :disabled="option.disabled" />
+              <RxCheckbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" :disabled="option.disabled" />
               <label :for="option.value">{{ option.label }}</label>
               <SvgIcon v-if="option.tooltip" v-tooltip="option.tooltip" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)"></SvgIcon>
             </div>

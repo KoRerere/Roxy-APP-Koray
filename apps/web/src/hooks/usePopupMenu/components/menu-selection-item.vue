@@ -19,7 +19,7 @@ const value = item[field ?? 'name']
   <a class="max-w-80 !pa-0">
     <label class="flex items-center py-2 pl-2.5 pr-2.5 gap-2 cursor-pointer w-full" :for="value">
       <RadioButton v-if="type === 'single'" v-model="selected" name="radio" :input-id="value" :value="value" />
-      <Checkbox v-if="type === 'multiple'" v-model="selected" name="checkbox" :input-id="value" :value="value" />
+      <RxCheckbox v-if="type === 'multiple'" v-model="selected" name="checkbox" :input-id="value" :value="value" />
       <slot>
         <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
         <span class="ellipsis-1 text-3.25" :title="(item.label as string)">{{ item.label }}</span>

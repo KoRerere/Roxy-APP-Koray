@@ -12,7 +12,7 @@
             <component :ref="(ins) => tabRefMap[tab.id] = ins" :is="tab.component" :syncWindows="syncWindows" />
             <div class="footer">
               <div class="flex items-center gap-2">
-                <Checkbox v-model="append" inputId="append" binary size="small" :trueValue="false" :falseValue="true" />
+                <RxCheckbox v-model="append" inputId="append" binary size="small" :trueValue="false" :falseValue="true" />
                 <label for="append"> {{ $t('输入前清空内容') }} </label>
               </div>
               <RxButton class="save-button" @click="startBatchInputs(tab)">

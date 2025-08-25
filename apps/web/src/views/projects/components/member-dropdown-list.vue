@@ -36,7 +36,7 @@ function toggle(event: Event) {
       </div>
     </div>
     <div class="manage-users">
-      <RouterLink :to="{ name: 'teams' }">{{ $t('管理成员') }}</RouterLink>
+      <RouterLink :to="{ name: 'teams' }" @click.stop.prevent>{{ $t('管理成员') }}</RouterLink>
     </div>
   </Popover>
 </template>

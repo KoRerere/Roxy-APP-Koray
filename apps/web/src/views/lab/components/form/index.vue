@@ -39,8 +39,10 @@ interface Input {
   [key: string]: any
 }
 
-const { id = Date.now().toString(32), inputs = [] } = defineProps<{
+const { id = Date.now().toString(32), inputs = [], position = 'top', labelProps } = defineProps<{
   id?: string
+  position?: 'top' | 'left'
+  labelProps?: Record<string, any>
   inputs: Input[]
 }>()
 
@@ -124,9 +126,11 @@ defineExpose({
 <template>
   <Form ref="tsform" :id="id" :initialValues="initialValues" :resolver="resolver" @submit="onFormSubmit" class="flex flex-col gap-3 self-stretch">
     <FormField class="flex flex-col gap-1" v-for="input in _inputs" :key="input.name" v-slot="$field" :name="input.name">
-      <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
-      <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
-      <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />
+      <div class="flex flex-col gap-1">
+        <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
+        <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
+        <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />
+      </div>
       <component v-if="input.afterRender" :is="input.afterRender" :field="$field" :input="input"></component>
       <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>

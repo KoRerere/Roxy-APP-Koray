@@ -29,15 +29,15 @@ const formData = defineModel<PreferenceSettings['base']>({ required: true });
       <div class="form-item-content">
         <div class="checkbox-list">
           <div class="checkbox-item">
-            <Checkbox v-model="formData.enableSyncMouseClick" binary size="small" input-id="enableSyncMouseClick" />
+            <RxCheckbox v-model="formData.enableSyncMouseClick" binary size="small" input-id="enableSyncMouseClick" />
             <label for="enableSyncMouseClick">{{ $t('点击') }}</label>
           </div>
           <div class="checkbox-item">
-            <Checkbox v-model="formData.enableSyncMouseScroll" binary size="small" input-id="enableSyncMouseScroll" />
+            <RxCheckbox v-model="formData.enableSyncMouseScroll" binary size="small" input-id="enableSyncMouseScroll" />
             <label for="enableSyncMouseScroll">{{ $t('滚动') }}</label>
           </div>
           <div class="checkbox-item">
-            <Checkbox v-model="formData.enableSyncMouseMove" binary size="small" input-id="enableSyncMouseMove" />
+            <RxCheckbox v-model="formData.enableSyncMouseMove" binary size="small" input-id="enableSyncMouseMove" />
             <label for="enableSyncMouseMove">{{ $t('轨迹') }}</label>
           </div>
         </div>

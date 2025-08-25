@@ -206,7 +206,7 @@ async function otherConfirm() {
       <StripePay class="w-full" v-show="openOther && modelValue === PayWay.Card" v-model:bind="saveCard" :rechargeAmount="rechargeAmount" :onConfirm="cardConfirm">
         <template #after v-if="cardList.length < 4">
           <div class="flex items-center gap-2.5">
-            <Checkbox v-model="saveCard" input-id="wrap" binary />
+            <RxCheckbox v-model="saveCard" input-id="wrap" binary />
             <label for="wrap" class="select-none default">{{ $t('保存卡片') }}</label>
           </div>
         </template>

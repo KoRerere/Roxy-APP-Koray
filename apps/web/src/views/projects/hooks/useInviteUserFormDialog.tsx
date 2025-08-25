@@ -1,5 +1,5 @@
 import type { UserMdfTeamInfoV2CreateData } from "@roxy/backend-api";
-import Checkbox from "primevue/checkbox";
+import RxCheckbox from "/@/components/rx-checkbox/index.vue";
 import { useToast } from "primevue/usetoast";
 import type { Ref } from "vue";
 import { API } from "/@/api";
@@ -49,7 +49,7 @@ export function useInviteUserFormDialog() {
             <div class="flex gap-2">
               {!originl.user_id && (
                 <div class="flex items-center">
-                  <Checkbox v-model={isInviteMore.value} input-id="ingredient1" binary />
+                  <RxCheckbox v-model={isInviteMore.value} input-id="ingredient1" binary />
                   <label for="ingredient1" class="ml-2">
                     {$t("发送 & 邀请更多")}
                   </label>

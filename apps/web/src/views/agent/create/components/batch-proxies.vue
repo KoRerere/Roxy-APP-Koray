@@ -329,7 +329,7 @@ function onSave() {
                 <TsFormSelect class="!w-32" v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center gap-1.5">
-                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
+                <RxCheckbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
                 <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('自动去重') }}</label>
                 <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />

@@ -173,6 +173,7 @@ const inputs = [
     type: 'text',
     name: 'firstname',
     label: 'First Name',
+    tooltip: 'wcis man!',
     props: {
       placeholder: '请选择',
       preIcon: 'base/rx_ic_2fa',
@@ -220,29 +221,8 @@ function noFormIdWcis() {
 }
 //=========================================
 
-const wciscolumns = ref([
-  { key: 'name', title: 'Name' },
-  { key: 'country', title: 'Country' },
-  { key: 'company', title: 'Company' },
-  { key: 'representative', title: 'Representative' },
-])
-
-const wcisdatalist = Array.from({ length: 5 }, (_, index) => ({
-  id: `${index ** 2}`,
-  name: `mamba_${index}`,
-  country: `country_${index}`,
-  company: `company_${index}`,
-  representative: `representative_${index}`,
-}))
-
-const wcisRows = (data: any) => {
-  return {
-    'p-disabled': data.id === '0',
-  }
-}
-
-
 const isDuplicate = ref(false)
+
 </script>
 
 <template>
@@ -270,14 +250,11 @@ const isDuplicate = ref(false)
     <!-- <div class="flex flex-col gap-2 pa-20 scale-150">
       <RxInputRadio v-model="checked2" :options="[{ label: '1', value: 1 }, { label: '2', value: 2 }]" />
     </div> -->
-    <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
-      <TsForm ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
+    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+      <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
-    </div> -->
-    <!-- <div class="flex w-full h-full overflow-hidden">
-      <RyTable :columns="wciscolumns" :data-list="wcisdatalist" :row-class="wcisRows"></RyTable>
-    </div> -->
+    </div>
   </div>
 </template>
 

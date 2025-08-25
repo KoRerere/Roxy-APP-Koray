@@ -7,10 +7,13 @@ interface Props extends Omit<CheckboxProps, 'size'> {
 
 const { size = 'sm', ...props } = defineProps<Props>()
 
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
 </script>
 
 <template>
-  <Checkbox v-bind="props">
+  <Checkbox v-bind="{ ...props, ...attrs }">
     <template #icon="slotProps">
       <slot name="icon" v-bind="slotProps">
         <SvgIcon v-if="slotProps.checked" :class="slotProps.class" name="base/rx_ic_checkmark" color="#ffffff" />

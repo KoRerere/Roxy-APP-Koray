@@ -236,7 +236,7 @@ function setNewOrderNo(value: string) {
               <div class="flex flex-1 gap-3">
                 <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
                 <div class="flex items-center gap-1.5">
-                  <Checkbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
+                  <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
                     :false-value="hideTypeConfig.falseValue" @change="filters.onChange" />
                   <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                     $t('隐藏不可用代理') }}</label>

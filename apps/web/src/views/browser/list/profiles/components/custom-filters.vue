@@ -251,7 +251,7 @@ async function modifyFilter() {
             <TsFormInputText class="w-full" v-model="search" :placeholder="item.placeholder" @input="onSearch" />
           </div>
           <label v-else class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
-            <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
+            <RxCheckbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
             <div v-if="item.value.startsWith('u_')" class="flex items-center gap-2">
               <RxAvatar :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
               <span class="text-3.25">{{ item.label }}</span>

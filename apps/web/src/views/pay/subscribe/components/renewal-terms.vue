@@ -16,7 +16,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 <template>
   <div class="select-none">
     <label class="flex items-center gap-2" for="auto">
-      <Checkbox inputId="auto" v-model="isAuto" binary />
+      <RxCheckbox inputId="auto" v-model="isAuto" binary />
       <i18n-t tag="div" class="discount" :keypath="$t('允许自动续订 {discount}', { discount: '{discount}' })" scope="global">
         <template #discount>
           <span class="discount-value"> {{ $t('{amount} /月', {

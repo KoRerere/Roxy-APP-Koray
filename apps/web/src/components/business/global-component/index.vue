@@ -48,7 +48,7 @@ setTimeout(() => {
         </div>
         <div class="p-dialog-footer">
           <div class="flex flex-1 items-center" v-if="message.checkboxProps">
-            <Checkbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="double" binary />
+            <RxCheckbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="double" binary />
             <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">
               {{ message.checkboxProps.label }}
             </label>

@@ -53,7 +53,7 @@ function onChange() {
         </label>
 
         <label v-if="type === 'checkbox'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>
-          <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
+          <RxCheckbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
 

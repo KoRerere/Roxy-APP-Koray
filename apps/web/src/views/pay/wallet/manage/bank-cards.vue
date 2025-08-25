@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue';
-import Checkbox from 'primevue/checkbox';
+import RxCheckbox from '/@/components/rx-checkbox/index.vue';
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user';
 import { $t } from '/@/locales';
@@ -19,7 +19,7 @@ const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const bindCss = useCssModule('bind')
-const cardDefault = ref(false)
+// const cardDefault = ref(false)
 const autoRecharge = ref(userPayInfo.value.autoRecharge.toString())
 const cardTypeMap = {
   amex: 'cards/american-express',
@@ -97,45 +97,50 @@ async function enableAutoRecharge() {
 function bindCard(defaultCard: boolean = false) {
   const { promise, resolve, reject } = Promise.withResolvers<boolean>()
 
+
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     slots: {
-      container: ({ hideModal }) => <div class="w-120 flex flex-col gap-4 pa-6 pt-4">
-        <div class="h-9 flex justify-between items-center">
-          <div>{$t('新增卡片')}</div>
-          <div class="cursor-pointer" onClick={
-            () => {
-              hideModal()
-              reject(false)
-            }
-          }>
-            <RxSvgIcon size="20" name="base/rx_ic_delete" ></RxSvgIcon>
-          </div>
-        </div>
-        <StripePay class="w-full !min-w-auto"
-          bind={true}
-          onConfirm={async (card) => {
-            const { code, msg } = await API.pay.userBindCardCreate({ paymentMethodId: card.payment_method, cardDefault: defaultCard || cardDefault.value })
-            onlyErrorToast(code, msg)
-            hideModal()
-            if (code !== 0) {
-              reject(false)
-              return
-            }
-            getUserCards(true)
-            resolve(true)
-          }}
-        >{{
-          after: () => {
-            return !defaultCard && <div class="flex items-center gap-2.5">
-              <Checkbox v-model={cardDefault.value} input-id="wrap" binary />
-              <label for="wrap" class={`select-none ${bindCss.default}`}>{$t('设置为默认卡片')}</label>
+      container: ({ hideModal }) => {
+        const isDefault = ref(false)
+
+        return <div class="w-120 flex flex-col gap-4 pa-6 pt-4">
+          <div class="h-9 flex justify-between items-center">
+            <div>{$t('新增卡片')}</div>
+            <div class="cursor-pointer" onClick={
+              () => {
+                hideModal()
+                reject(false)
+              }
+            }>
+              <RxSvgIcon size="20" name="base/rx_ic_delete" ></RxSvgIcon>
             </div>
-          }
-        }}</StripePay>
-      </div>,
+          </div>
+          <StripePay class="w-full !min-w-auto"
+            bind={true}
+            onConfirm={async (card) => {
+              const { code, msg } = await API.pay.userBindCardCreate({ paymentMethodId: card.payment_method, cardDefault: defaultCard || isDefault.value })
+              onlyErrorToast(code, msg)
+              hideModal()
+              if (code !== 0) {
+                reject(false)
+                return
+              }
+              getUserCards(true)
+              resolve(true)
+            }}
+          >{{
+            after: () => {
+              return !defaultCard && <div class="flex items-center gap-2.5">
+                <RxCheckbox v-model={isDefault.value} input-id="wrap" binary />
+                <label for="wrap" class={`select-none ${bindCss.default}`}>{$t('设置为默认卡片')}</label>
+              </div>
+            }
+          }}</StripePay>
+        </div>
+      },
     }
   })
 
