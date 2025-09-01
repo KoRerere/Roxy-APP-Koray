@@ -2,7 +2,7 @@ import CDP from 'chrome-remote-interface'
 import type { Client } from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
 import { ChromeBrowser } from './browser'
-import { readFile } from 'node:fs/promises'
+import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
 /**
@@ -51,6 +51,9 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     args.push('--remote-debugging-port=0')
   }
 
+  const userDataDir = args.find(n => n.startsWith('--user-data-dir='))?.split('=')[1]
+  await rm(join(userDataDir!, 'DevToolsActivePort'), { force: true }).catch(() => { })
+
   // 启动 Chrome 进程
   const chromeProcess = spawn(executablePath, args, {
     detached: false,
@@ -63,9 +66,9 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
       reject(new Error('Failed to get debugging port from Chrome'))
     }, 30000)
 
-    setTimeout(async () => {
+    let tryCount = 0
+    const readDevToolsActivePort = async () => {
       try {
-        const userDataDir = args.find(n => n.startsWith('--user-data-dir='))?.split('=')[1]
         const devToolsActivePort = await readFile(join(userDataDir!, 'DevToolsActivePort'), 'utf8')
         const port = Number(devToolsActivePort.split('\n')[0])
         console.log('devToolsActivePort', port)
@@ -76,8 +79,12 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
       }
       catch (error) {
         console.error(error)
+        if (tryCount++ < 5) {
+          setTimeout(readDevToolsActivePort, 3000)
+        }
       }
-    }, 3000)
+    }
+    setTimeout(readDevToolsActivePort, 3000)
 
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志
