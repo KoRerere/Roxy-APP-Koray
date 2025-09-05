@@ -18,10 +18,11 @@ defineOptions({
 
 const { size = 'sm', options, ...props } = defineProps<Props>()
 defineEmits(['change'])
+const attrs = useAttrs()
 </script>
 
 <template>
-  <div class="flex items-start flex-wrap gap-2 rx-radio-group">
+  <div class="flex items-start flex-wrap gap-2 rx-radio-group" :class="attrs.class">
     <template v-for="{ label, value, afterRender, disabled, ...ops } in options" :key="label">
       <label :for="`${props.name}_${value}`" class="flex items-center cursor-pointer rx-radio-group-item" :class="[styles[size], { 'cursor-not-allowed': disabled }]">
         <RadioButton v-bind="{ ...$attrs, ...props, ...ops }" :input-id="`${props.name}_${value}`" :disabled="disabled" :value="value" @change="$emit('change')" />

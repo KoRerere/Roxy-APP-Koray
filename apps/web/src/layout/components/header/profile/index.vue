@@ -2,7 +2,6 @@
 import { useDialog } from "primevue/usedialog";
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import { useToast } from "primevue/usetoast";
-import { useTemplateRef, withModifiers } from "vue";
 import { API } from "/@/api";
 import RxAvatar from "/@/components/rx-avatar";
 import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
@@ -14,7 +13,7 @@ import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
 import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
-import { useResponseToast } from '/@/hooks/useResponseToast'
+import { emitter } from '/@/utils/eventBus'
 
 const router = useRouter();
 const dialog = useDialog();
@@ -24,7 +23,6 @@ const simpleLocale = useSimpleLocale();
 const themeStore = useThemeStore()
 const styles = useCssModule();
 const toast = useToast();
-const [showToast] = useResponseToast()
 
 const menuRef = useTemplateRef("menu");
 
@@ -34,7 +32,7 @@ const Identity = () => {
 
   return (
     <div class={styles.identity}>
-      <RxSvgIcon name={identityInfo.icon} />
+      <RxSvgIcon name={identityInfo.icon as any} />
       <span
         class={styles["identity-name"]}
         style={{ color: identityInfo.color }}
@@ -93,7 +91,7 @@ const items = computed(() => {
           ...item,
           isCheck: () => themeStore.theme === item.value,
           command: async () => {
-            themeStore.setTheme(item.value);
+            themeStore.setTheme(item.value as any);
             // 如果用户是第一次切换主题，则弹出提示框
             if (userStore.userConfig?.isFirstSwitchTheme) {
               showModal({
@@ -162,6 +160,12 @@ const items = computed(() => {
   ].filter((item) => !item.vIf || item.vIf());
 });
 
+onMounted(() => {
+  emitter.on('openSettings', ({ settingsKey, anchorPoint }) => {
+    openSettings(settingsKey, anchorPoint)
+  })
+})
+
 function showLogoutConfirm() {
   const { promise, resolve, } = Promise.withResolvers<boolean>()
   showModal({
@@ -195,7 +199,7 @@ function copyUserInfo() {
   });
 }
 
-function openSettings(activeKey: string) {
+function openSettings(activeKey: string, anchorPoint?: string) {
   dialog.open(SettingsPopup, {
     props: {
       showHeader: false,
@@ -211,6 +215,7 @@ function openSettings(activeKey: string) {
     data: {
       props: {
         activeKey,
+        anchorPoint,
       },
     },
   });
@@ -226,7 +231,7 @@ function toggle(event: Event) {
   <div class="settings cursor-pointer" @click="toggle">
     <template v-if="userStore.userInfo">
       <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="(userStore.identityInfo.iconSmall as any)" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
       </RxAvatar>
       <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     </template>

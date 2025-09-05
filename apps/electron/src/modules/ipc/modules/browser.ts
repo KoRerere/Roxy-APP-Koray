@@ -74,4 +74,8 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
       return Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalDataExcludeExtension(dirId)))
     }
   })
+
+  ipcMain.on('browser:clearCacheByTimestamp', async (event, payload) => {
+    return browserManager.clearCacheByTimestamp(payload)
+  })
 }

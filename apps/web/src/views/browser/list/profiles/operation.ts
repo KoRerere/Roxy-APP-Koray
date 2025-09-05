@@ -228,7 +228,7 @@ export async function getSorts() {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
     }
-    API.window.userSaveWindowTableSortOrderCreate(params)
+    API.window.userSaveWindowTableSortOrderCreate(params as any)
   }
 
   // 需要处理旧字段，如果字段已经不在我们新版的设计中，那么这个字段就不能传到接口中去
@@ -439,9 +439,57 @@ export function getOperation(row: any = {}) {
   ]
 }
 
+export function getAdvancedSearch() {
+  return [
+    {
+      key: 'name',
+      label: $t('窗口名称'),
+      icon: 'base/rx_ic_browser',
+      syntax: 'name::'
+    },
+    {
+      key: 'remark',
+      label: $t('备注'),
+      icon: 'base/rx_ic_doc_article',
+      syntax: 'note::'
+    },
+    {
+      key: 'account',
+      label: $t('平台账号'),
+      icon: 'base/rx_ic_keys',
+      syntax: 'account::'
+    },
+    {
+      key: 'proxy',
+      label: $t('代理'),
+      icon: 'base/rx_ic_internet',
+      syntax: 'proxy::'
+    },
+    {
+      key: 'tag',
+      label: $t('标签'),
+      icon: 'base/rx_ic_tag',
+      syntax: 'tag::'
+    },
+    {
+      key: 'project_name',
+      label: $t('项目'),
+      icon: 'base/rx_ic_stack',
+      syntax: 'project::'
+    },
+    {
+      key: 'sortNum',
+      label: ' ID',
+      icon: 'base/rx_ic_id',
+      syntax: 'id::'
+    }
+  ]
+}
+
 export default {
   tableFilters,
   getCustomFilters,
   getSorts,
   getOperation,
+  getAdvancedSearch,
 }

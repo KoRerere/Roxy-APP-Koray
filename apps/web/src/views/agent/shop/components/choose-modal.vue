@@ -30,22 +30,7 @@ const bgSrc = computed(() => {
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--colors-background-bg-page);
-    background-image: v-bind(bgSrc);
-    background-size: 100% auto;
-    background-repeat: no-repeat;
-    background-position: 0 0;
-    opacity: 0.6;
-    z-index: -1;
-  }
-
+  &::before,
   &::after {
     content: '';
     position: absolute;
@@ -54,6 +39,17 @@ const bgSrc = computed(() => {
     width: 100%;
     height: 100%;
     background-color: var(--colors-background-bg-page);
+  }
+
+  &::before {
+    background-image: v-bind(bgSrc);
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    z-index: -1;
+  }
+
+  &::after {
     z-index: -2;
   }
 }

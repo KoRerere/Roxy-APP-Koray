@@ -1,7 +1,10 @@
 export enum ProxyCheckStatus {
-  none = 0, // 没有测试
-  success = 1, // 测试成功
-  failure = 2, // 检测失败
+  /** 没有测试 */
+  none = 0,
+  /** 测试成功 */
+  success = 1,
+  /** 检测失败 */
+  failure = 2,
 }
 
 export enum ProxyProtocol {
@@ -51,6 +54,13 @@ export enum ProxyReplaceType {
   Replace = 'replace',
   /** 退款 */
   Refund = 'refund',
+}
+
+export enum ProxyReplaceStatus {
+  /** 未更换 */
+  none = 0,
+  /** 已更换 */
+  replaced = 1,
 }
 
 export enum ProxyStockStatus {

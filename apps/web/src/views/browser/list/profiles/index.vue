@@ -11,6 +11,7 @@ import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
+import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
 import { useSimpleDialog } from '/@/components/simplePopup'
 import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
 import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyType } from '/@/enums'
@@ -32,8 +33,9 @@ import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info/index.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from './components/util'
-import { getCustomFilters, getOperation, getSorts } from './operation'
+import { getCustomFilters, getOperation, getSorts, getAdvancedSearch } from './operation'
 import { useHandleBusinessCode, toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
@@ -76,6 +78,7 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+const advancedSearchOptions = getAdvancedSearch()
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
@@ -303,6 +306,11 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await deleteProfile(datas, ids)
       break
   }
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  onRefreshTable({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
 }
 
 function autoOpenBrowser(list: Data[]) {
@@ -854,6 +862,10 @@ async function deleteProfile(datas: any, ids: number[]) {
     return
   }
 
+  // 每次删除窗口前，先同步一下窗口的打开状态，避免无法删除
+  const windowStatus = ids.map(id => ({ id, openStatus: false }))
+  await API.window.userMdfWindowSyncV2Create(windowStatus)
+
   const usePeoples = datas.some((item: any) => item.statusInfo.filter((item: any) => item.openUserId !== userStore.userInfo.id).length > 0)
 
   if (usePeoples) {
@@ -923,9 +935,27 @@ async function batchModifyWindow(params: any, silent = false) {
   }
 }
 
+function showDiskSpaceModal() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: ({ hideModal }) => h(DiskInsufficient, {
+        onClose: hideModal
+      })
+    }
+  })
+}
+
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
-    // console.log('browser:launch-process-message', event)
+    if (event.code === 1 && event.message.includes('ERR101')) {
+      showDiskSpaceModal()
+    }
     const id = event.data?.dirId || event.data
     Reflect.set(openMessage, id as string, event)
   })
@@ -971,7 +1001,13 @@ defineExpose({
   <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
     :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table" removableSort>
     <template #filter-after>
-      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      <div class="flex items-start gap-2">
+        <div class="w-35">
+          <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+        </div>
+        <RxDivider class="py-1" vertical line-only></RxDivider>
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      </div>
     </template>
     <template #table-empty>
       <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />

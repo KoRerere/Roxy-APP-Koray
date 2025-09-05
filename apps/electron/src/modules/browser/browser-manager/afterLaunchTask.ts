@@ -82,19 +82,19 @@ export class AfterLaunchTask {
   async getUploadData() {
     const defaultOpenUrl = await this.getDefaultOpenUrl()
     const lumiLogin = await this.getLumiLogin()
-    const { id, syncCookie } = this.browserItem.winInfo
-
+    const { id, syncCookie, cookie } = this.browserItem.winInfo
+    // console.log('getUploadData cookie', this.cookies)
     return {
       id,
       defaultOpenUrl,
-      cookie: syncCookie ? this.cookies || [] : [],
+      cookie: syncCookie ? (this.cookies || []) : cookie,
       lumiLogin,
     }
   }
 
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
-    const { cookie, syncCookie } = this.browserItem.winInfo
+    const { cookie, syncCookie, clearCookie } = this.browserItem.winInfo
 
     if (!this.browser) {
       return
@@ -119,34 +119,34 @@ export class AfterLaunchTask {
     }
 
     const startTime = Date.now()
+    // 导入 cookie
+    if (cookie && !clearCookie) {
+      await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
+        console.log('导入cookie失败', err)
+      })
+      console.log('Storage.setCookies success')
+      console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
+    }
+
+    const pages = await this.browser?.pages()
+    // cookie导入成功后，把打开的tab页重新加载一次
+    pages.map(async (e) => {
+      const target = e.target()
+      const url = target.url()
+      if (url && url !== 'about:blank') {
+        await e.goto(url).catch((err) => {
+          console.log(`goto ${url} 失败`, err)
+        })
+
+      }
+    })
 
     // 是否同步 cookie
     if (syncCookie) {
-      // 导入 cookie
-      if (cookie) {
-        await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
-          console.log('导入cookie失败', err)
-        })
-        console.log('Storage.setCookies success')
-        console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
-
-        const pages = await this.browser?.pages()
-        // cookie导入成功后，把打开的tab页重新加载一次
-        pages.map(async (e) => {
-          const target = e.target()
-          const url = target.url()
-          if (url && url !== 'about:blank') {
-            await e.goto(url).catch((err) => {
-              console.log(`goto ${url} 失败`, err)
-            })
-
-          }
-        })
-      }
-
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
+      setTimeout(saveCookies, 1000)
     }
 
   }

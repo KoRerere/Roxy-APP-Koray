@@ -21,6 +21,16 @@ defineEmits(['preIconClick', 'iconClick'])
 const attrs = useAttrs()
 const slots = useSlots()
 
+const inputRef = useTemplateRef<{ $el: HTMLInputElement }>('input')
+
+defineExpose({
+  focus: () => {
+    inputRef.value?.$el.focus()
+  },
+  blur: () => {
+    inputRef.value?.$el.blur()
+  }
+})
 </script>
 
 <template>
@@ -28,7 +38,7 @@ const slots = useSlots()
     <InputIcon v-if="preIcon">
       <RxSvgIcon class="cursor-pointer" :name="preIcon" @click="$emit('preIconClick')" />
     </InputIcon>
-    <InputText v-bind="{ ...attrs, ...props }" :fluid />
+    <InputText ref="input" v-bind="{ ...attrs, ...props }" :fluid />
     <InputIcon v-if="icon || slots.icon">
       <slot name="icon">
         <RxSvgIcon class="cursor-pointer" :name="icon!" @click="$emit('iconClick')" />
@@ -40,56 +50,63 @@ const slots = useSlots()
 <style lang="scss" scoped>
 .lg {
   --input-padding: 10px;
-  --input-left-padding: var(--spacing-xl, 12px);
+  --input-left-padding: 12px;
   --input-gap: 8px;
   --input-border-width: 1px;
-  --input-radius: var(--component-colors-textinput-radius-radius-lg, 8px);
+  --input-radius: 8px;
   --input-font-size: 14px;
-  --input-line-height: var(--line-height-text-lg, 20px);
+  --input-line-height: 20px;
 }
 
 .md {
   --input-padding: 8px;
   --input-left-padding: 10px;
-  --input-gap: var(--spacing-md, 6px);
+  --input-gap: 6px;
   --input-border-width: 1px;
-  --input-radius: var(--component-colors-textinput-radius-radius-md, 6px);
+  --input-radius: 6px;
   --input-font-size: 13px;
-  --input-line-height: var(--line-height-text-lg, 20px);
+  --input-line-height: 20px;
 }
 
 .sm {
-  --input-padding: var(--spacing-md, 6px);
+  --input-padding: 6px;
   --input-left-padding: 8px;
-  --input-gap: var(--spacing-md, 6px);
+  --input-gap: 6px;
   --input-border-width: 1px;
-  --input-radius: var(--component-colors-textinput-radius-radius-md, 6px);
+  --input-radius: 6px;
   --input-font-size: 12px;
-  --input-line-height: var(--line-height-text-lg, 20px);
+  --input-line-height: 20px;
 }
 
 .xs {
-  --input-padding: var(--spacing-md, 6px);
-  --input-left-padding: var(--spacing-md, 6px);
-  --input-gap: var(--spacing-md, 6px);
+  --input-padding: 6px;
+  --input-left-padding: 6px;
+  --input-gap: 6px;
   --input-border-width: 0.5px;
-  --input-radius: var(--radius-sm, 4px);
+  --input-radius: 4px;
   --input-font-size: 12px;
-  --input-line-height: var(--line-height-text-xs, 16px);
+  --input-line-height: 16px;
 }
 
 .xxs {
-  --input-padding: var(--spacing-sm, 4px);
-  --input-left-padding: var(--spacing-md, 6px);
-  --input-gap: var(--spacing-md, 6px);
+  --input-padding: 4px;
+  --input-left-padding: 6px;
+  --input-gap: 6px;
   --input-border-width: 0.5px;
-  --input-radius: var(--radius-sm, 4px);
+  --input-radius: 4px;
   --input-font-size: 12px;
-  --input-line-height: var(--line-height-text-xs, 16px);
+  --input-line-height: 16px;
+}
+
+.p-iconfield {
+  svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
+  }
 }
 
 // 统一的样式规则
-.p-inputtext {
+.p-iconfield .p-inputtext {
   font-family: Inter;
   padding: var(--input-padding);
   border-width: var(--input-border-width);
@@ -99,21 +116,25 @@ const slots = useSlots()
 
   &:not(:first-child) {
     padding-left: calc(var(--input-left-padding) + var(--icon-size) + var(--input-gap));
+    padding-inline-start: calc(var(--input-left-padding) + var(--icon-size) + var(--input-gap));
   }
 
   &:not(:last-child) {
     padding-right: calc(var(--input-padding) + var(--icon-size) + var(--input-gap));
+    padding-inline-end: calc(var(--input-left-padding) + var(--icon-size) + var(--input-gap));
   }
 }
 
 // 图标位置
-.p-inputicon {
+.p-iconfield .p-inputicon {
   &:first-child {
     left: var(--input-left-padding);
+    inset-inline-start: var(--input-left-padding);
   }
 
   &:last-child {
     right: var(--input-padding);
+    inset-inline-end: var(--input-padding);
   }
 }
 </style>

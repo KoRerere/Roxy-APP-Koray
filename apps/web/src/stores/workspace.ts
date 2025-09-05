@@ -58,6 +58,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
+      electronAPI.send('app:restartAPIServer')
     }, 1200)
   }, { flush: 'post' })
 

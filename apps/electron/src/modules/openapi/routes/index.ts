@@ -29,9 +29,7 @@ export function setupRoutes(app: Application) {
 
     // 如果不是白名单路由，需要校验 token
     if (!notNeedTokenRoutes.some(n => req.path.startsWith(n))) {
-      if (req.header(`token`) !== store.apiKey) {
-        return res.error($t('无效的 token'))
-      }
+      store.userApiToken = req.header(`token`)
 
       // 如果不是白名单路由，需要校验 workspaceId
       if (!notNeedWorkspaceIdRoutes.some(n => req.path.startsWith(n))) {

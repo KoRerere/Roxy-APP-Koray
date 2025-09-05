@@ -69,6 +69,10 @@ export class BrowserItem {
     return join(this.userDataDir, 'lumi.conf')
   }
 
+  get closeTimestampPath() {
+    return join(this.userDataDir, 'close_timestamp')
+  }
+
   /** 浏览器关闭后，标签页保存的文件路径 */
   get roxyTabsPath() {
     return join(this.userDataDir, 'roxy_tabs')
@@ -229,7 +233,8 @@ export class BrowserItem {
   /** 关闭浏览器后需要同步的数据 */
   async uploadData() {
     const params = await this.afterLaunchTask.getUploadData()
-    const { id, syncValue, ossDirPath } = this.winInfo
+
+    const { id, dirId, syncValue, ossDirPath, syncCookie } = this.winInfo
 
     const needSyncFiles = this.needSyncFiles.map(url => ({
       src: join(this.userDataDir, url),
@@ -248,6 +253,7 @@ export class BrowserItem {
       const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
+      writeFile(this.closeTimestampPath, `${Date.now().toString()}_${dirId}`)
       console.log(`oss 缓存文件上传成功`)
     }
     catch (error) {
@@ -256,7 +262,7 @@ export class BrowserItem {
     finally {
       const uploadParams = {
         id,
-        cookie: Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie,
+        cookie: syncCookie ? (Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie) : undefined,
         defaultOpenUrl: params.defaultOpenUrl,
         lumiLogin: params.lumiLogin,
         syncValue: {

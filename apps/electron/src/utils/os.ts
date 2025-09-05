@@ -1,6 +1,7 @@
 import systeminformation, { Systeminformation } from 'systeminformation'
 import { execSync } from 'node:child_process'
 import { networkInterfaces, platform } from 'node:os'
+import { parse } from 'node:path'
 
 /** 获取操作系统版本 */
 export function getOSVersion(): string {
@@ -36,4 +37,22 @@ export function getOSVersion(): string {
 export async function getMacAddress() {
   const networkData = await systeminformation.networkInterfaces()
   return ([] as Systeminformation.NetworkInterfacesData[]).concat(networkData).find(iface => !iface.internal)?.mac || ''
+}
+
+/** 获取本机系统磁盘 */
+function getSystemDisks() {
+  return systeminformation.fsSize()
+}
+
+/** 获取本机系统磁盘信息 by path */
+export async function getDiskInfoByPath(filePath: string) {
+  const diskId = process.platform === 'win32' ? parse(filePath).root.replace(/\\/g, '') : '/'
+  const disks = await getSystemDisks()
+
+  return disks.find(disk => {
+    if (process.platform === 'win32') {
+      return disk.fs.toUpperCase().startsWith(diskId.toUpperCase());
+    }
+    return filePath.startsWith(disk.mount);
+  })
 }

@@ -181,9 +181,18 @@ router.post('/delete', async (req, res) => {
     return res.error('dirIds is required')
   }
 
+  const hasOpenedBrowser = dirIds.some(dirId => browserManager.openedBrowserMap.has(dirId))
+  if (hasOpenedBrowser) {
+    return res.error($t('请先关闭窗口'))
+  }
+
   try {
+    // 每次删除窗口前，先同步一下窗口的打开状态，避免无法删除
+    const windowStatus = dirIds.map(dirId => ({ dirId, openStatus: false }))
+    await API.window.userMdfWindowSyncV2Create(windowStatus)
+
     const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
-    dirIds.forEach(dirId => browserManager.removeLocalData(dirId))
+    await Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
 
     res.json(result)
   }
@@ -210,6 +219,13 @@ router.post('/open', async (req, res) => {
   }
 
   try {
+    const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ dirIds: [dirId] }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    if (code !== 0) return res.error(msg)
+    const opened = data.find(item => item.statusInfo.length > 0)
+    if (opened) {
+      const openUserNames = opened.statusInfo.map(item => item.openUserName).join(', ')
+      return res.error(`[${openUserNames}] is using this browser\ndirId: ${dirId}`)
+    }
     const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: "open" }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]

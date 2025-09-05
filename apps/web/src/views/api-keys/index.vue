@@ -1,19 +1,16 @@
 <script setup lang="tsx">
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
+import { RxAlert } from '/@/components/rx-alert'
 import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
-import { RxAlert } from '/@/components/rx-alert'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
 import { findInputByName, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
 import { useSimpleLocale } from '/@/stores/locale'
 
-const role = useRoleStore()
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialFaqWebsite } = useSimpleLocale()
@@ -46,11 +43,7 @@ const illustrate = computed(() => [
     content: () => (
       <I18nT keypath={$t('更多 API 功能和使用方法, 请参考 {link}', { link: '{link}' })}>
         {{
-          link: () => (
-            <a class="decoration-underline" target="__blank" href={apiDocUrl.value}>
-              {$t('API 文档')}
-            </a>
-          ),
+          link: () => <a class="decoration-underline" target="__blank" href={apiDocUrl.value}>{$t('API 文档')}</a>,
         }}
       </I18nT>
     ),
@@ -167,12 +160,6 @@ onBeforeMount(() => {
               <div>{{ $t('API 密钥') }}</div>
               <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
             </div>
-            <div v-if="!role.isOwner" class="api-content-desc">
-              <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
-              <div class="flex-1 text-[var(--colors-text-text-secondary)]">
-                {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
-              </div>
-            </div>
             <div class="api-content-key">
               <div class="flex items-center justify-between">
                 <div class="api-content-key-value">
@@ -249,19 +236,6 @@ onBeforeMount(() => {
       font-size: 12px;
       font-weight: 500;
       line-height: 24px;
-    }
-
-    &-desc {
-      display: flex;
-      margin-top: var(--spacing-md, 6px);
-      padding: 12px;
-      gap: 8px;
-      border-radius: var(--radius-md, 6px);
-      background: var(--component-alert-bg-warn, #653B01);
-      color: var(--colors-text-text-secondary, #b2b6b8);
-      font-family: Inter;
-      font-size: 12px;
-      line-height: 18px;
     }
 
     &-key {

@@ -1,13 +1,4 @@
-<template>
-  <div>哈哈</div>
-</template>
-
 <script setup lang="tsx">
-import VideoPlayer from '/@/components/video-player/index.vue'
-import { useDialog } from '/@/hooks/useDialog'
-
-const [showModal] = useDialog()
-
 // showModal({
 //   header: 'v{appVersion} 更新概览',
 //   class: 'w-[500px] max-h-[90vh]',
@@ -29,3 +20,7 @@ const [showModal] = useDialog()
 //   }
 // })
 </script>
+
+<template>
+  <div>哈哈</div>
+</template>

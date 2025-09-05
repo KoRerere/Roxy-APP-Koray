@@ -243,8 +243,8 @@ function setNewOrderNo(value: string) {
                 </div>
               </div>
               <div class="flex items-center gap-1.5">
-                <div class="relative">
-                  <RxButton v-if="isOwner" size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy"></RxButton>
+                <div class="relative" v-if="isOwner">
+                  <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy"></RxButton>
                   <div class="new-dot"></div>
                 </div>
                 <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />

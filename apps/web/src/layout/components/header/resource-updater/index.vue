@@ -8,12 +8,20 @@ import KernelUpdater from './kernel-updater.vue'
 import { useToast } from 'primevue/usetoast'
 import { debounce } from 'es-toolkit'
 import { I18nT } from 'vue-i18n'
+import { safeParseJSON } from '/@/utils'
+
+type KernelUpdateGroup = {
+  title: string
+  list: (ResourceUpdateMessage & { _light?: boolean, _desc?: string })[]
+}
 
 const toast = useToast();
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
+const kernelUpdateGroup = ref<KernelUpdateGroup[]>([])
+
 const tabs = ref([
   {
     title: $t('客户端升级'),
@@ -24,9 +32,9 @@ const tabs = ref([
   },
   {
     title: $t('内核升级'),
-    list: kernelUpdates,
+    list: kernelUpdateGroup,
     value: 'kernel',
-    badge: computed(() => kernelUpdates.value.filter(item => item.status === 'downloading').length),
+    badge: computed(() => kernelUpdateGroup.value[0]?.list.filter(item => item._light).length),
     component: markRaw(KernelUpdater),
   },
 ])
@@ -34,7 +42,7 @@ const tabModel = ref(tabs.value[0].value)
 const isDownloadingKernel = ref(false)
 
 const noticeNum = computed(() => {
-  return clientUpdates.value.length + kernelUpdates.value.filter(item => item.status === 'downloading').length
+  return clientUpdates.value.length + kernelUpdateGroup.value[0]?.list.filter(item => item._light).length
 })
 
 const isDownloading = computed(() => {
@@ -76,6 +84,46 @@ async function getKernelList() {
   const list = await window.electronAPI.send('app:getCoreList')
   console.log('getKernelList', list)
   kernelUpdates.value = list.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
+  genKernelGroup(toRaw(kernelUpdates.value))
+}
+
+function genKernelGroup(list: ResourceUpdateMessage[]) {
+  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
+
+  const defaults: KernelUpdateGroup[] = [
+    {
+      title: $t('新内容'),
+      list: []
+    },
+    {
+      title: $t('内核列表'),
+      list: []
+    }
+  ]
+
+  kernelUpdateGroup.value = list.reduce((acc, item, index) => {
+    if (index === 0 && !['update', 'downloaded'].includes(item.status!) && !readMap[item.coreVersion!]) {
+      acc[0].list.push({ ...item, _light: true, _desc: $t('新版本') })
+    } else if (item.status === 'update' && !readMap[item.coreVersion!]) {
+      acc[0].list.push({ ...item, _light: true, _desc: $t('有新的更新可用') })
+    } else {
+      acc[1].list.push(item)
+    }
+    return acc
+  }, defaults).filter(item => item.list.length > 0)
+}
+
+function updateKernelReadRap(data: ResourceUpdateMessage) {
+  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
+  Reflect.deleteProperty(readMap, data.coreVersion!)
+  localStorage.setItem('kernel-read-map', JSON.stringify(readMap))
+}
+
+function updateKernelStatus(data: ResourceUpdateMessage) {
+  const item = kernelUpdateGroup.value.flatMap(item => item.list).find(item => item.coreVersion === data.coreVersion)
+  if (item) {
+    Object.assign(item, data)
+  }
 }
 
 // 5 分钟内不重复提示
@@ -113,18 +161,27 @@ const showDownloadError = debounce((data: ResourceUpdateMessage) => {
 window.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
+
     if (data.status === 'failed') {
       showDownloadError(data)
     }
+
     const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
     if (index === -1) {
       kernelUpdates.value.push(data)
-    }
-    else {
+      kernelUpdates.value.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
+      genKernelGroup(toRaw(kernelUpdates.value))
+    } else {
       kernelUpdates.value[index] = data
+      updateKernelStatus(data)
     }
+
+    if (data.status === 'downloaded') {
+      updateKernelReadRap(data)
+      genKernelGroup(toRaw(kernelUpdates.value))
+    }
+
     isDownloadingKernel.value = data.status === 'downloading' && !data.silent
-    kernelUpdates.value.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
   }
   // 客户端升级(app、web、patch)
   else {
@@ -167,7 +224,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
-            <component :is="tab.component" :upgrade-list="tab.list" @onDownloadClick="onDownloadClick" />
+            <component :is="tab.component" :upgrade-list="(tab.list as any)" @onDownloadClick="onDownloadClick" />
           </TabPanel>
         </TabPanels>
       </Tabs>

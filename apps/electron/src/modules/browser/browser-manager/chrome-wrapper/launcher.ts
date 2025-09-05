@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { ChromeBrowser } from './browser'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
+import { getErrorMessage } from '/@/utils'
 
 /**
  * 启动选项接口
@@ -78,13 +79,12 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
         }
       }
       catch (error) {
-        console.error(error)
         if (tryCount++ < 5) {
-          setTimeout(readDevToolsActivePort, 3000)
+          readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
         }
       }
     }
-    setTimeout(readDevToolsActivePort, 3000)
+    let readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
 
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志
@@ -97,6 +97,8 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
       const match = output.match(/DevTools listening on ws:\/\/[^:]+:(\d+)/)
       if (match) {
         clearTimeout(timeout)
+        clearTimeout(readDevToolsActivePortTimer)
+        console.debug('chromeProcess match', match[1])
         resolve(parseInt(match[1]))
       }
     })
@@ -108,17 +110,26 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     })
   })
 
-  // 获取 WebSocket 端点
-  const version = await CDP.Version({ port: actualPort })
-  const wsEndpoint = version.webSocketDebuggerUrl
-  console.debug('wsEndpoint', wsEndpoint, actualPort)
-  // 连接到 Chrome
-  const client = await CDP({ target: wsEndpoint }) as Client
+  try {
+    // 获取 WebSocket 端点
+    const version = await CDP.Version({ port: actualPort })
+    const wsEndpoint = version.webSocketDebuggerUrl
+    console.debug('wsEndpoint', wsEndpoint, actualPort)
+    // 连接到 Chrome
+    const client = await CDP({ target: wsEndpoint }) as Client
 
-  // 启用必要的域
-  await client.Target.setDiscoverTargets({ discover: true })
+    // 启用必要的域
+    await client.Target.setDiscoverTargets({ discover: true })
+    return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
+  } catch (error) {
+    console.error('connect error', error)
+    chromeProcess.kill()
+    if (getErrorMessage(error).startsWith('connect ')) {
+      throw new Error($t('内核连接失败，请重试'))
+    }
+    throw error
+  }
 
-  return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
 }
 
 /**

@@ -34,7 +34,7 @@ export interface ProxyDetectionResult {
 
 
 // 检测超时时间
-const TIMEOUT = 10000;
+const TIMEOUT = 20000;
 
 const commonAxiosConfig = {
   timeout: TIMEOUT,

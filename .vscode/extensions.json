@@ -17,8 +17,6 @@
     // iconify 图标插件
     "antfu.iconify",
     // i18n 插件
-    "Lokalise.i18n-ally",
-    // CSS 变量提示
     "vunguyentuan.vscode-css-variables"
   ],
   "unwantedRecommendations": [

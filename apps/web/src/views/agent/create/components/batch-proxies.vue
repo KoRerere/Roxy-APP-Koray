@@ -206,18 +206,39 @@ async function refreshUrl(data: any, operateName: string) {
 }
 
 async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
-  const tasks = (([] as ProxyItem[]).concat(data)).map((item) => {
-    setOperationLoading(item, operateName, true)
-    return async () => {
-      const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
-      Object.assign(item, checkResult)
-      testStatus.value[item._id] = checkResult.checkStatus;
-      setOperationLoading(item, operateName, false)
-      return checkResult
-    }
-  })
+  const secondCheckMap = new Map<number, () => Promise<any>>()
+
+  const tasks = ([] as ProxyItem[])
+    .concat(data)
+    .map((item, index) => {
+      setOperationLoading(item, operateName, true)
+
+      const _task = async () => {
+        const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
+        if (checkResult.checkStatus === ProxyCheckStatus.failure && !item._secondCheck) {
+          Reflect.set(item, '_secondCheck', true)
+          secondCheckMap.set(index, _task)
+        } else {
+          Reflect.deleteProperty(item, '_secondCheck')
+          Object.assign(item, checkResult)
+          testStatus.value[item._id] = checkResult.checkStatus;
+          setOperationLoading(item, operateName, false)
+        }
+        return checkResult
+      }
+
+      return _task
+    })
 
   const results = await concurrentControl(tasks, 5)
+
+  // 将失败的代理进行二次测试，验证是否真的失败
+  if (secondCheckMap.size > 0) {
+    const res = await concurrentControl([...secondCheckMap.values()], 5)
+    secondCheckMap.keys().forEach((key, index) => results[key] = res[index])
+    secondCheckMap.clear()
+  }
+
   batchTestShowToast(results)
 }
 

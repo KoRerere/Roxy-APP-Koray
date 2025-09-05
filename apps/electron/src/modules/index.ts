@@ -3,7 +3,8 @@ import './ipc'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
-import { setupStore, } from '/@/modules/store'
+import { setupStore } from '/@/modules/store'
+import { browserManager } from '/@/modules/browser'
 import { setupApp } from './app/'
 import { fileExists } from '/@/utils'
 import { appConfig } from '/@/constants'
@@ -30,14 +31,13 @@ export async function setupModules() {
     await setupAppServer()
     // 启动 app
     await setupApp()
-    // 启动 roxynet 服务
-    startRoxynet()
   }
   catch (error) {
     console.error('setupModules', error)
   } finally {
     // 启动 roxynet 服务
     startRoxynet()
+    browserManager.autoClearByTimestamp()
   }
 }
 

@@ -17,6 +17,8 @@ export const toUpgradePlan = () => {
     router.push({ name: 'subscribe-plan' })
   } else if (!userPayInfo?.isAuto && !isFree) {
     emitter.emit('showRenewalDialog')
+  } else if (userPayInfo?.isAuto) {
+    router.push({ name: 'upgrade-plan' })
   }
 }
 
@@ -135,15 +137,6 @@ export function useHandleBusinessCode() {
         </I18nT>,
         life: 5000
       })
-      // !todo
-      // showToast({
-      //   severity: 'warn',
-      //   summary: $t('窗口创建次数不足'),
-      //   detail: <I18nT keypath={$t('您已达到最大窗口创建次数限制，{link}', { link: '{link}' })} >
-      //     {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
-      //   </I18nT>,
-      //   life: 5000
-      // })
     } else if (code === BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT) {
       showToast({
         severity: 'warn',

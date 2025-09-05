@@ -40,6 +40,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   // api请求后端使用新域名
   if (config.headers.source === 'api') {
     config.baseURL = getOpenAPIUrl()
+    config.headers['r-api-token'] = store.userApiToken
   }
 
   console.debug('config.headers', config.url, config.headers)

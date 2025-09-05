@@ -12,12 +12,14 @@ export interface Items {
   classes?: string
   props?: any
   component?: any
+  renderComponent?: any
   afterComponent?: any
   hide?: ((item: Items, items: Items[]) => boolean)
   formatValue?: (item: Items) => any
   vaildator?: (item: Items) => boolean
 }
 export interface List {
+  subId?: string
   subtitle?: string
   items: Items[]
 }

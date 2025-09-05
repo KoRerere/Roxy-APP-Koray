@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import currency from 'currency.js'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 
@@ -14,7 +15,7 @@ onBeforeMount(() => {
 
 async function getProviders() {
   const { data } = await API.proxy.userGetProxyProviderListList()
-  providers.value = data
+  providers.value = data.map(item => ({ ...item, proxyPriceFmt: currency(item.proxyPrice).format() }))
 }
 
 function onBuy(item: any) {
@@ -60,8 +61,9 @@ function onClose() {
                 </div>
               </div>
             </div>
-            <div class="mt-5 flex justify-end items-center">
-              <RxButton icon="base/rx_ic_arrow_right" :label="$t('购买代理')" @click="onBuy(item)"></RxButton>
+            <div class="mt-5 flex justify-between items-center">
+              <div class="provider-price">{{ $t('Roxy 独家特惠: {amount} / IP', { amount: item.proxyPriceFmt }) }}</div>
+              <RxButton icon="base/rx_ic_cart" :label="$t('购买代理')" @click="onBuy(item)"></RxButton>
             </div>
           </div>
         </div>
@@ -153,6 +155,16 @@ function onClose() {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+
+  &-price {
+    font-family: "DingTalk JinBuTi";
+    font-size: 13px;
+    line-height: 16px;
+    background: linear-gradient(90deg, #12A3FC 0%, #DB54F9 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 

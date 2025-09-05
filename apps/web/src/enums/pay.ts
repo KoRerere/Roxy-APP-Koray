@@ -38,6 +38,8 @@ export enum OrderType {
   ProxyRefund = "proxy_refund",
   /** 代理续费 */
   ProxyRenew = "proxy_renew",
+  /** 官方赠送 */
+  OfficialGift = "official_gift",
 }
 
 export const OrderTypeStr = {
@@ -50,6 +52,10 @@ export const OrderTypeStr = {
   get [OrderType.Refund]() { return $t("退款") },
   get [OrderType.Exchange]() { return $t("兑换") },
   get [OrderType.Gift]() { return $t("赠送") },
+  get [OrderType.ProxyPurchase]() { return $t("代理购买") },
+  get [OrderType.ProxyRefund]() { return $t("代理退款") },
+  get [OrderType.ProxyRenew]() { return $t("代理续费") },
+  get [OrderType.OfficialGift]() { return $t("官方赠送") },
 };
 
 export enum SubOrderType {

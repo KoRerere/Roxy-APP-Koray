@@ -50,6 +50,10 @@ export type MittEvents = {
   updateProjectList?: void;
   /** 更新自动续费列表 */
   updateAutoRenewList?: void;
+  openSettings: {
+    settingsKey: "profiles" | "authentication" | "preferences" | "network" | "loginActivity"
+    anchorPoint?: string
+  };
 };
 
 export const emitter = mitt<MittEvents>();

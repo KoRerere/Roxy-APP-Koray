@@ -1,22 +1,24 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
+import installExtension from '/@/views/extensions/install/components/install-extension.vue'
+import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
+import ShieldDialog from '/@/views/extensions/install/components/shield-dialog.vue'
+import HowToGet from '/@/views/extensions/install/components/how-to-get.vue'
+import { RxSvgIcon, } from '/@/components/rx-icon/'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { RxSvgIcon, } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType, ExtensionsSource } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import installExtension from '/@/views/extensions/install/components/install-extension.vue'
-import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 import { useDialog as useCustomDialog } from "/@/hooks/useDialog";
-import ShieldDialog from './components/shield-dialog.vue'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { concurrentControl } from '/@/utils'
+
+import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetPluginListListData>
 
@@ -189,9 +191,15 @@ function tableOperation(data: any) {
       }
     },
     {
+      name: 'install',
+      label: $t('安装到项目'),
+      icon: 'base/rx_ic_stack_install',
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
+    },
+    {
       separator: true,
-      power: isPersonal || role.isOwner || role.isManager,
-      visible: data.source === 'local',
     },
     {
       name: 'delete',
@@ -202,7 +210,7 @@ function tableOperation(data: any) {
       power: isPersonal || role.isOwner || role.isManager,
       multiple: true,
       multipleProps: {
-        name: 'G3',
+        name: 'G4',
         showLabel: true,
       },
       command: ({ item }: any) => {
@@ -244,6 +252,7 @@ function installViaUrl() {
   showSimpleDialog({
     title: $t('添加 Google 扩展'),
     content: $t('每日总扩展添加数量限制为 5 个。'),
+    confirmText: $t('确认添加'),
     inputs: [
       {
         name: 'url',
@@ -276,6 +285,7 @@ function installViaUrl() {
         onlyErrorToast(-1, error as string)
       }
     },
+    afterRender: () => <HowToGet class="mt-2" />
   })
 }
 

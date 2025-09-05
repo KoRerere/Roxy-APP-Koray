@@ -137,7 +137,7 @@ const details = computed(() => {
     {
       items: [
         {
-          label: $t('实际价格'),
+          label: $t('Roxy 独家特惠'),
           value: currency(totalAmount.value).format(),
           slot: 'price'
         },
@@ -477,10 +477,13 @@ async function onPay() {
 
 .details {
   &-label {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 20px;
+    font-family: "DingTalk JinBuTi";
+    font-size: 15px;
+    line-height: 16px;
+    background: linear-gradient(90deg, #11A3FD 0%, #F047FF 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   &-price {

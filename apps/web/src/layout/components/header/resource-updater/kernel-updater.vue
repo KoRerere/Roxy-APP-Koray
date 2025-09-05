@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { useResponseToast } from "/@/hooks/useResponseToast";
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { SvgNames } from '/@/components/rx-icon'
+import { safeParseJSON } from '/@/utils';
+
+type KernelUpdateItem = ResourceUpdateMessage & {
+  _light?: boolean
+  _desc?: string
+}
 
 defineProps<{
-  upgradeList: ResourceUpdateMessage[]
+  upgradeList: {
+    title: string
+    list: KernelUpdateItem[]
+  }[]
 }>()
 
 const emit = defineEmits(['onDownloadClick'])
 
-const toast = useToast();
 const confirm = useConfirm();
+const [_, onlyErrorToast] = useResponseToast()
 
-const collapsedMap = ref<Recordable<boolean>>({})
-
-function formatKernelBtnLabel(item: ResourceUpdateMessage) {
+function formatKernelBtnLabel(item: KernelUpdateItem) {
   if (item.status === 'downloading') {
     return `${$t('正在下载')} ${Math.floor(item.percent!)}%`
   }
@@ -34,7 +41,7 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   }
 }
 
-function formatKernelIcon(item: ResourceUpdateMessage): SvgNames {
+function formatKernelIcon(item: KernelUpdateItem) {
 
   const iconMap: Recordable<SvgNames> = {
     'downloading': 'base/rx_ic_download',
@@ -45,7 +52,7 @@ function formatKernelIcon(item: ResourceUpdateMessage): SvgNames {
   return iconMap[item.status as keyof typeof iconMap] || 'base/rx_ic_download'
 }
 
-function handleKernelItemClick(item: ResourceUpdateMessage) {
+function handleKernelItemClick(item: KernelUpdateItem) {
   if (item.status === 'downloading') {
     return $t('正在下载')
   } else if (item.coreVersion) {
@@ -54,12 +61,7 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
   }
 }
 
-// function handleCollapsed(item: ResourceUpdateMessage) {
-//   console.log('handleCollapsed', item)
-//   collapsedMap.value[item.coreVersion!] = !collapsedMap.value[item.coreVersion!]
-// }
-
-const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
+const handleRemove = (event: MouseEvent, item: KernelUpdateItem) => {
   confirm.require({
     target: event.currentTarget as HTMLElement,
     message: $t('确定删除该内核吗？'),
@@ -81,97 +83,78 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
         item.status = 'uninstalled'
       } catch (error) {
         console.error('error', error)
-        toast.add({ severity: 'error', summary: $t('删除失败'), life: 2500 });
+        onlyErrorToast(-1, $t('删除失败'))
       }
     },
-  });
-};
+  })
+}
+
+const onRead = (item: KernelUpdateItem) => {
+  item._light = false
+  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
+  readMap[item.coreVersion!] = true
+  localStorage.setItem('kernel-read-map', JSON.stringify(readMap))
+}
 </script>
 
 <template>
-  <div class="kernel-updater">
-    <template v-for="item in upgradeList" :key="item.releaseTime">
-      <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion!] }">
-        <div class="updater-header">
-          <div class="updater-header-left">
-            <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
-            <div class="updater-title">
-              RoxyChrome {{ item.coreVersion }}
+  <div class="flex flex-col items-start gap-3">
+    <div class="w-full" v-for="upgrade in upgradeList" :key="upgrade.title">
+      <div v-if="upgradeList?.length > 1" class="py-3 px-4 title">{{ upgrade.title }}</div>
+      <div v-for="item in upgrade.list" :key="item.releaseTime" class="w-full flex flex-col items-start  item" :class="{ 'light': item._light }">
+        <div class="w-full flex justify-between items-center self-stretch">
+          <div class="flex-1 flex items-center gap-1.5 py-3 pl-4" @click="onRead(item)">
+            <div class="relative">
+              <img class="block w-8 h-8" src="/kernel-logo.png">
+              <div v-if="item._light" class="absolute top-0 right-0 w-2 h-2 bg-red rounded-full"></div>
+            </div>
+            <div>
+              <div class="version">{{ `RoxyChrome ${item.coreVersion}` }}</div>
+              <div v-if="item._desc" class="mt-0.5 desc">{{ item._desc }}</div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="shrink-0 flex items-center gap-2 pr-4">
             <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="formatKernelIcon(item)" :loading="item.status === 'downloading'"
               :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
             <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :disabled="!['downloaded', 'update'].includes(item.status!)" @click="handleRemove($event, item)"></RxButton>
           </div>
         </div>
-        <roxy-rich-text :html="item.upgradeContent" class="updater-content" />
       </div>
-    </template>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.kernel-updater {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.updater-item {
-  width: 100%;
-  display: flex;
-  padding: var(--spacing-xl, 12px) 0px;
-  flex-direction: column;
-  align-items: flex-start;
-
-  &:not(:last-child) {
-    border-bottom: 0.5px solid var(--component-dropdown-divider, #6A757C);
-  }
-
-  &.collapsed {
-    gap: var(--spacing-xl, 12px);
-    border-bottom: 0.5px solid var(--primitives-blue-400, #7eccfc);
-    background: var(--primitives-blue-100, #e8f5fc);
-
-    &:last-of-type {
-      border-bottom: 0;
-    }
-
-    .updater-content {
-      max-height: 300px;
-    }
-  }
-}
-
-.updater-header {
-  width: 100%;
-  display: flex;
-  padding: 0px 16px;
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
-}
-
-.updater-header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md, 6px);
-}
-
-.updater-title {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-family: Inter;
-  font-size: 14px;
-  font-style: normal;
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
   font-weight: 600;
   line-height: normal;
 }
 
-.updater-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s;
-  padding-left: 42px;
+.item {
+  border-bottom: 0.5px solid var(--component-dropdown-divider);
+
+  &.light {
+    border-bottom: 0.5px solid var(--component-table-border-selected);
+    background: var(--component-table-bg-selected);
+
+    .desc {
+      color: var(--colors-text-text-brand);
+    }
+  }
+}
+
+.version {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.desc {
+  color: var(--colors-text-text-inactive);
+  font-size: 12px;
+  line-height: normal;
 }
 </style>

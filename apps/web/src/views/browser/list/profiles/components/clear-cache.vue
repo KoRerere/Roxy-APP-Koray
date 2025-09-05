@@ -22,7 +22,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('1.清除本电脑上除了窗口扩展及扩展数据外的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={$t('1.清除扩展数据以外的所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -43,7 +43,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('1.清除本电脑上的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={$t('1.清除所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -65,7 +65,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('1.清除本电脑及云端的Cookie和全部缓存。{light}。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={$t('1.清除本地及云端的 Cookie 和全部缓存。{light}。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('同步的标签页和浏览器相关登录状态会全部失效')}</span>,
                   }}
@@ -150,6 +150,7 @@ onMounted(() => {
       border: none;
       min-width: auto;
       box-shadow: none;
+      background: transparent;
     }
 
     .p-radiobutton-checked+.rx-radio-group-item__text {

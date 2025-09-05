@@ -1960,6 +1960,16 @@ export interface UserGetUserConfigListData {
     searchEngine: string;
     /** 列表备注详情切换 */
     remarkDisplayStatus: boolean;
+    /** 磁盘限制，默认8 */
+    diskLimit: number;
+    /** 自动清除缓存,0:关闭, 1:开启, 默认0 */
+    autoClearCache: boolean;
+    /** 自动缓存清除时间,默认30 */
+    clearCachePeriod: number;
+    /** 缓存清除类型，默认partial */
+    clearCacheType: string;
+    /** 是否第一次切换主题 */
+    isFirstSwitchTheme: boolean;
   };
   msg: string;
 }
@@ -2016,6 +2026,7 @@ export interface UserSetUserConfigCreatePayload {
   ipChecker?: string;
   ipBlackList?: string[];
   apiToken?: string;
+  isFirstSwitchTheme?: boolean;
   remarkDisplayStatus?: boolean;
   /** 偏好设置 */
   preferenceSettings?: object;
@@ -4129,6 +4140,16 @@ export interface UserGetWindowInfoListListParams {
    * @example "2024-05-24"
    */
   endUpdateDate?: string;
+  /**
+   * 查询key: ["name_remark","name", "remark", "account", "tag","proxy", "project_name", "sortNum"]
+   * @example "name"
+   */
+  queryKey?: string;
+  /**
+   * 查询的值
+   * @example "1111"
+   */
+  queryValue?: string;
 }
 
 export interface UserGetWindowInfoListListData {
@@ -5230,69 +5251,164 @@ export interface UserGetUserBuyProxyListListData {
   code: number;
   data: {
     rows: {
-      /** 绑定窗口数量 */
+      /**
+       * 绑定窗口数量
+       * 绑定窗口数量
+       */
       bindCount?: number;
-      /** 绑定的窗口信息 */
+      /**
+       * 绑定的窗口信息
+       * 绑定的窗口信息
+       */
       bindList?: string[];
-      /** 检测时间 */
+      /**
+       * 检测时间
+       * 检测时间
+       */
       checkTime?: null;
-      /** 创建时间 */
+      /**
+       * 创建时间
+       * 创建时间
+       */
       createTime?: string;
-      /** id */
+      /**
+       * id
+       * id
+       */
       id?: number;
-      /** 是否绑定 */
+      /**
+       * 是否绑定
+       * 是否绑定
+       */
       isBind?: boolean;
-      /** 商业用途 */
+      /**
+       * 商业用途
+       * 商业用途
+       */
       poxyBusinessPurpose?: string;
-      /** 代理检测地址 */
+      /**
+       * 代理检测地址
+       * 代理检测地址
+       */
       proxyCheckChannel?: string;
       checkChannelValue?: string;
-      /** 代理检测状态 0:未检测 1:成功 2:检测失败 */
+      /**
+       * 代理检测状态 0:未检测 1:成功 2:检测失败
+       * 代理检测状态 0:未检测 1:成功 2:检测失败
+       */
       checkStatus?: number;
-      /** 购买国家 */
+      /**
+       * 购买国家
+       * 购买国家
+       */
       country?: string;
-      /** 代理过期状态 0:已过期 1:使用中 2：快过期 */
+      /**
+       * 代理过期状态 0:已过期 1:使用中 2：快过期
+       * 代理过期状态 0:已过期 1:使用中 2：快过期
+       */
       proxyExpireStatus?: number;
-      /** 购买的IP */
+      /**
+       * 购买的IP
+       * 购买的IP
+       */
       host?: string;
-      /** IP类型 */
+      /**
+       * IP类型
+       * IP类型
+       */
       ipType?: string;
-      /** 出口城市 */
+      /**
+       * 出口城市
+       * 出口城市
+       */
       lastCity?: string;
-      /** 出口国家 */
+      /**
+       * 出口国家
+       * 出口国家
+       */
       lastCountry?: string;
-      /** 出口IP */
+      /**
+       * 出口IP
+       * 出口IP
+       */
       lastIp?: string;
-      /** 出口州/省 */
+      /**
+       * 出口州/省
+       * 出口州/省
+       */
       lastState?: string;
-      /** 代理密码 */
+      /**
+       * 代理密码
+       * 代理密码
+       */
       proxyPassword?: string;
-      /** 代理端口号 */
+      /**
+       * 代理端口号
+       * 代理端口号
+       */
       port?: string;
-      /** 代理协议 */
+      /**
+       * 代理协议
+       * 代理协议
+       */
       protocol?: string;
-      /** 供应商ID */
+      /**
+       * 供应商ID
+       * 供应商ID
+       */
       proxyProviderId?: number;
-      /** 供应商名称 */
+      /**
+       * 供应商名称
+       * 供应商名称
+       */
       proxyProviderName?: string;
-      /** 备注 */
+      /**
+       * 备注
+       * 备注
+       */
       remark?: string;
-      /** 代理用户名 */
+      /**
+       * 代理用户名
+       * 代理用户名
+       */
       proxyUserName?: string;
-      /** 续费时间 */
+      /**
+       * 续费时间
+       * 续费时间
+       */
       renewalTime?: null;
-      /** 修改时间 */
+      /**
+       * 修改时间
+       * 修改时间
+       */
       updateTime?: string;
-      /** 用户ID */
+      /**
+       * 用户ID
+       * 用户ID
+       */
       userId?: number;
-      /** 空间ID */
+      /**
+       * 空间ID
+       * 空间ID
+       */
       workspaceId?: number;
-      /** 过期时间 */
+      /**
+       * 过期时间
+       * 过期时间
+       */
       expireDate?: string;
-      /** 订单号 */
+      /**
+       * 订单号
+       * 订单号
+       */
       orderNo?: string;
-      /** 订单状态 0：配置中,1：已完成 2：退款中 3：更换中, */
+      /**
+       * 订单状态 0：配置中,1：已完成 2：退款中 3：更换中,
+       * 订单状态 0：配置中,1：已完成 2：退款中 3：更换中,
+       */
       orderStatus?: number;
+      /** 代理更换状态 0未更换， 1已更换 */
+      replaceStatus?: number;
     }[];
     total: number;
   };

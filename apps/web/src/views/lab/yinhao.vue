@@ -1,26 +1,30 @@
 <script setup lang="tsx">
 import { $t } from '/@/locales'
-import { sleep } from '/@/utils'
+import { safeParseJSON, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useDialog } from '/@/hooks/useDialog'
 import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
+import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
+import { emitter } from '/@/utils/eventBus'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 
 function open1() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    pt: {
-      root: "!border-none !shadow-none rounded-lg",
-      // mask: "!backdrop-blur-md",
-    },
-    slots: {
-      container: () => <div></div>
-    },
-  })
+  emitter.emit('openSettings', { settingsKey: 'preferences', anchorPoint: 'diskSettings' })
+
+  // showModal({
+  //   showHeader: false,
+  //   modal: true,
+  //   blockScroll: true,
+  //   pt: {
+  //     root: "!border-none !shadow-none rounded-lg",
+  //     // mask: "!backdrop-blur-md",
+  //   },
+  //   slots: {
+  //     container: () => <DiskInsufficient></DiskInsufficient>
+  //   },
+  // })
 }
 
 function open2() {
@@ -167,6 +171,7 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
 import TsForm from './components/form/index.vue';
 import Test from '/@/views/lab/components/test.vue';
 import type { PayWay } from '/@/enums/pay';
+import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete';
 
 const inputs = [
   {
@@ -220,18 +225,18 @@ function noFormIdWcis() {
   formRef.value?.instance.submit()
 }
 //=========================================
-
-const isDuplicate = ref(false)
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
     <RxButton label="open1" @click="open1"></RxButton>
-    <RxButton label="open2" @click="open2"></RxButton>
+    <RxButton label="open2" @click="open1"></RxButton>
 
-
-    <RxCheckbox v-model="isDuplicate" input-id="wrap" binary />
+    <div class="w-50">
+    </div>
+    <!-- <KernelUpdater :upgrade-list="upgradeList" :upgrades="wcis"></KernelUpdater> -->
     <!-- <RxButton label="exportText" @click="exportText"></RxButton> -->
     <!-- <RxButton label="exportCSV" @click="exportCSV"></RxButton> -->
     <!-- <DataTable :value="datalist.slice(0, 3)">
@@ -250,12 +255,25 @@ const isDuplicate = ref(false)
     <!-- <div class="flex flex-col gap-2 pa-20 scale-150">
       <RxInputRadio v-model="checked2" :options="[{ label: '1', value: 1 }, { label: '2', value: 2 }]" />
     </div> -->
-    <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
+    <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
       <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <style lang="scss" scoped></style>
+<style module="member">
+.email {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.name {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}
+</style>

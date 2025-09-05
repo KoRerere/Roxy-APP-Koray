@@ -4,32 +4,32 @@ import InputNumber from "primevue/inputnumber";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
-import { UaStrictMode } from "/@/enums";
-import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
-import type {
-  Items,
-  SettingsModule,
-} from "/@/layout/components/header/profile/type";
-import { $t } from "/@/locales";
 import FolderDirectory from "../folder-directory.vue";
-import { API } from '/@/api'
+import DiskOverview from "../disk-overview.vue";
 import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
+import ClearCache from '/@/layout/components/header/profile/components/settings-popup/components/clear-cache.vue';
+import RxTooltip from '/@/components/rx-tooltip';
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { ClearType, UaStrictMode } from "/@/enums";
+import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
+import { $t } from "/@/locales";
+import { API } from '/@/api'
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from "/@/stores/theme";
-// import { useLock } from '/@/stores/lock'
-// import LockAppComponent from "../lock-app.vue";
-// import LockAppLabel from "../lock-app-label.vue";
+import type { Items, SettingsModule } from "/@/layout/components/header/profile/type";
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil();
 
-  const getPreferencesPanels = async (data?: any): Promise<SettingsModule> => {
-    const softConfig = await electronAPI.send("app:getSoftConfig");
-
-    const searchEngineResult = await API.platform.userGetSearchEnginesList()
+  const getPreferencesPanels = async (data?: any) => {
+    let [softConfig, disk, searchEngineResult] = await Promise.all([
+      electronAPI.send("app:getSoftConfig"),
+      electronAPI.send("app:getBrowserCacheDisk"),
+      API.platform.userGetSearchEnginesList()
+    ])
 
     let searchEngineOptions: { label: string, value: string, image: string }[] = []
     if (searchEngineResult.code === 0 && searchEngineResult.data) {
@@ -48,7 +48,7 @@ export function usePreferencesPanel() {
       shortcutKey: DEFAULT_SIMULATION_SHORTCUT_KEYS
     }
 
-    const items = reactive({
+    const items = reactive<SettingsModule>({
       title: $t("软件设置"),
       description: $t("设置您的客户端使用偏好"),
       list: [
@@ -144,7 +144,7 @@ export function usePreferencesPanel() {
             {
               label: $t("UA 严格模式"),
               text: () => (
-                <div class="w-[370px]">
+                <div class="w-88">
                   {$t(
                     "关闭此选项后，可以自定义浏览器的版本。一般情况下我们推荐保持该选项开启。",
                   )}
@@ -169,7 +169,7 @@ export function usePreferencesPanel() {
             {
               label: $t("工作台"),
               text: () => (
-                <div class="w-[370px]">
+                <div class="w-88">
                   {$t(
                     "打开窗口时，是否打开工作台页面",
                   )}
@@ -194,7 +194,7 @@ export function usePreferencesPanel() {
             {
               label: $t("Google 登录"),
               text: () => (
-                <div class="w-[370px]">
+                <div class="w-88">
                   {$t(
                     "窗口是否开启谷歌账号登录",
                   )}
@@ -215,7 +215,7 @@ export function usePreferencesPanel() {
             {
               label: $t("IP 变化提示"),
               text: () => (
-                <div class="w-[370px]">
+                <div class="w-88">
                   {$t(
                     "IP 变化时是否弹窗提示",
                   )}
@@ -342,11 +342,15 @@ export function usePreferencesPanel() {
           ]
         },
         {
-          subtitle: $t("本地设置"),
+          subtitle: $t("磁盘使用和设置"),
+          subId: 'diskSettings',
           items: [
             {
+              renderComponent: () => <DiskOverview disk={disk} data={data} softConfig={softConfig} />
+            },
+            {
               label: $t("缓存目录"),
-              text: $t("设置 RoxyBrowser 缓存路径"),
+              text: $t("修改缓存路径"),
               name: "browserCacheRootDir",
               value: softConfig.browserCacheRootDir ?? "",
               props: {
@@ -358,11 +362,141 @@ export function usePreferencesPanel() {
                     item={item}
                     {...item.props}
                     {...props}
+                    onChange={async () => {
+                      await saveUserConfig(item)
+                    }}
+                  />
+                );
+              },
+            },
+            {
+              label: $t("磁盘限制"),
+              name: "diskLimit",
+              value: data?.diskLimit ?? 8,
+              text: () => (
+                <div class="w-88">{$t("磁盘空间低于设置的阈值时，将停止打开浏览器窗口")}</div>
+              ),
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                const oldValue = item.value;
+                return (
+                  <div class="flex">
+                    <IconField class="w-25">
+                      <InputNumber
+                        {...item.props}
+                        {...props}
+                        name={item.name}
+                        useGrouping={false}
+                        fluid
+                        min={0}
+                        max={100000}
+                        onValueChange={() => {
+                          if (oldValue !== item.value) {
+                            saveUserConfig(item)
+                          }
+                        }}
+                      />
+                      <InputIcon class="pt-0.5">GB</InputIcon>
+                    </IconField>
+                  </div>
+                );
+              },
+            },
+            {
+              label: $t("手动清除缓存"),
+              name: "manuallyClear",
+              component: () => <ClearCache />,
+            },
+            {
+              label: $t("自动清除缓存"),
+              name: "autoClearCache",
+              value: data?.autoClearCache ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
                     onChange={() => saveUserConfig(item)}
                   />
                 );
               },
             },
+            {
+              label: $t("自动清除缓存选项"),
+              name: "clearCacheType",
+              value: data?.clearCacheType ?? ClearType.partial,
+              props: {
+                filter: false,
+                optionValue: "value",
+                options: [
+                  {
+                    label: $t('清除本地缓存（保留插件）'),
+                    value: ClearType.partial,
+                    tooltip: $t('清除扩展数据以外的所有本地缓存文件，登录状态不会失效！窗口指纹信息、IP 不会被清理。')
+                  },
+                  {
+                    label: $t('清除本地缓存'),
+                    value: ClearType.all,
+                    tooltip: $t('清除所有本地缓存文件，登录状态不会失效！窗口指纹信息、IP 不会被清理。')
+                  },
+                ],
+              },
+              hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'autoClearCache')?.value,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxInputSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  >
+                    {{
+                      'option-extra': ({ option }: any) => {
+                        return <RxTooltip class="flex items-center">
+                          {{
+                            default: () => <RxSvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)"></RxSvgIcon>,
+                            content: () => <div class="w-76 whitespace-pre-wrap text-3" style="color: var(--component-tooltip-text-primary)">{option.tooltip}</div>
+                          }}
+                        </RxTooltip>
+                      }
+                    }}
+                  </RxInputSelect>
+                );
+              },
+            },
+            {
+              label: $t("自动清除缓存时间"),
+              text: () => <div class="w-88">{$t("清除过去指定时间内未使用窗口的缓存数据")}</div>,
+              name: "clearCachePeriod",
+              value: data?.clearCachePeriod ?? 30,
+              hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'autoClearCache')?.value,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                const oldValue = item.value;
+                return (
+                  <IconField class="w-25">
+                    <InputNumber
+                      {...item.props}
+                      {...props}
+                      name={item.name}
+                      useGrouping={false}
+                      fluid
+                      min={0}
+                      max={100}
+                      onValueChange={() => {
+                        if (oldValue !== item.value) {
+                          saveUserConfig(item)
+                        }
+                      }}
+                    />
+                    <InputIcon class="pt-0.5">{$t('天')}</InputIcon>
+                  </IconField>
+                );
+              },
+            },
+          ],
+        },
+        {
+          subtitle: $t("本地设置"),
+          items: [
             {
               label: $t("系统日志"),
               name: "systemLogDir",
@@ -384,7 +518,7 @@ export function usePreferencesPanel() {
               name: "memoryLimit",
               value: data?.memoryLimit ?? "",
               text: () => (
-                <div class="w-[370px]">
+                <div class="w-88">
                   {$t("内存使用达到设置的阈值时，将停止打开浏览器窗口")}
                 </div>
               ),
@@ -392,7 +526,7 @@ export function usePreferencesPanel() {
                 const oldValue = item.value;
                 return (
                   <div class="flex">
-                    <IconField class="w-[60px]">
+                    <IconField class="w-16">
                       <InputNumber
                         {...item.props}
                         {...props}
@@ -407,7 +541,7 @@ export function usePreferencesPanel() {
                           }
                         }}
                       />
-                      <InputIcon>%</InputIcon>
+                      <InputIcon class="pt-0.5">%</InputIcon>
                     </IconField>
                   </div>
                 );
@@ -459,7 +593,7 @@ export function usePreferencesPanel() {
           ]
         }
       ],
-    });
+    })
 
     return items
   };

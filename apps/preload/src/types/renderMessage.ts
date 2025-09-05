@@ -69,6 +69,11 @@ export interface RenderMessage {
     clearType: "partial" | "all";
     dirIds: string[];
   }) => void;
+  /** 根据时间清除浏览器缓存 */
+  "browser:clearCacheByTimestamp": (payload: {
+    days: number,
+    clearType: "partial" | "all"
+  }) => void;
   /** 根据进程 PID 判断进程是否存在 */
   "browser:isProcessExists": (dirIds: string[]) => Promise<boolean[]>;
 
@@ -140,10 +145,14 @@ export interface RenderMessage {
   "app:download-chrome-core": (coreVersion: string) => void;
   /** 删除指定内核 */
   "app:delete-chrome-core": (coreVersion: string) => void;
+  /** 显示 RoxyBrowser 缓存所在目录 */
+  "app:showCacheDir": () => void;
   /** 显示系统日志所在目录 */
   "app:showLogDir": () => void;
   /** 获取本机 mac address */
   "app:getMacAddress": () => Promise<string>;
+  /** 获取浏览器缓存所在磁盘 */
+  "app:getBrowserCacheDisk": () => Promise<any>;
   /** 程序化显示和隐藏红绿灯 */
   "app:showHideTrafficLight": (show: boolean) => void;
   /** 设置窗口是否忽略鼠标事件 */

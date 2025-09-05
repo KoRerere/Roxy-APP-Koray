@@ -170,7 +170,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         meta: {
           title: $t("API"),
           icon: "base/rx_ic_doc_code",
-          roles: [Role.OWNER],
+          roles: [Role.OWNER, Role.MANAGER],
         },
         component: () => import("/@/views/api-keys"),
       },

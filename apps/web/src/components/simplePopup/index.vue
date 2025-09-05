@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { $t } from '/@/locales'
 import TsForm from '/@/views/lab/components/form/index.vue'
 
 interface Props {
   title?: string
   content?: string
   inputs: any[]
+  cancelText?: string
+  confirmText?: string
   afterRender?: any
   onConfirm?: (formData: any) => Promise<void> | void
   onCancel?: () => void
 }
 
-const { title, content, inputs, onConfirm, onCancel } = defineProps<Props>()
+const { title, content, inputs, cancelText = $t('取消'), confirmText = $t('保存'), onConfirm, onCancel } = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -40,8 +43,8 @@ async function onSubmit(formData: any) {
     <component v-if="afterRender" :is="afterRender" />
     <slot name="footer">
       <div class="flex justify-end items-center self-stretch gap-3">
-        <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-        <RxButton size="sm" :label="$t('保存')" type="submit" form="simpleform" :loading="loading" />
+        <RxButton size="sm" text severity="secondary" :label="cancelText" @click="close" />
+        <RxButton size="sm" type="submit" form="simpleform" :label="confirmText" :loading="loading" />
       </div>
     </slot>
   </div>

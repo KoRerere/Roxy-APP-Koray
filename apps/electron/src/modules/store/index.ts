@@ -22,6 +22,14 @@ export interface StoreType {
   closeSoft: 'pop' | 'min' | 'exit'
   /** 性能监控 */
   memoryLimit: number
+  /** 磁盘限制 */
+  diskLimit: number
+  /** 是否开启自动清除缓存 */
+  autoClearCache: boolean,
+  /** 自动清除缓存时间 */
+  clearCachePeriod: number,
+  /** 自动清除缓存类型 */
+  clearCacheType: 'partial' | 'all',
   /** 用户 token */
   token?: string
   /** 用户 ID */
@@ -42,6 +50,8 @@ export interface StoreType {
   appPort: number
   /** openapi key */
   apiKey?: string
+  /** 用户传过来的 userApiToken */
+  userApiToken?: string
   /** openapi 端口 */
   apiPort?: number
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
@@ -95,6 +105,10 @@ const defaultValues: StoreType = {
   language: '',
   closeSoft: 'pop',
   memoryLimit: 95,
+  diskLimit: 8,
+  autoClearCache: false,
+  clearCachePeriod: 30,
+  clearCacheType: 'partial',
   browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
   v2raySwitch: true,

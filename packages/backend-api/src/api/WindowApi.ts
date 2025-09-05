@@ -227,6 +227,7 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_del_window_info`,
       method: "POST",
       body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

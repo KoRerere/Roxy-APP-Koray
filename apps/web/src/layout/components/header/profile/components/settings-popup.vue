@@ -11,10 +11,16 @@ function closePopup() {
   dialogRef?.value.close();
 }
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   activePanel.key = dialogRef?.value?.data?.props?.activeKey;
-  initPanels();
-});
+  await initPanels();
+  nextTick(() => {
+    const anchorPoint = dialogRef?.value?.data?.props?.anchorPoint;
+    if (anchorPoint) {
+      document.getElementById(anchorPoint)?.scrollIntoView({ behavior: 'smooth' });
+    }
+  })
+})
 </script>
 
 <template>
@@ -33,23 +39,18 @@ onBeforeMount(() => {
       </RxButton>
     </div>
     <div class="settings-content">
-      <div class="settings-content-wrapper">
-        <div v-if="activePanel.panel" class="w-full panel">
+      <div class="mx-auto w-2/3 pt-6">
+        <div v-if="activePanel.panel" class="w-full flex flex-col gap-6">
           <div>
-            <div class="panel-title">
-              {{ activePanel.panel.title }}
-            </div>
-            <div class="panel-description">
-              {{ activePanel.panel.description }}
-            </div>
+            <div class="panel-title">{{ activePanel.panel.title }}</div>
+            <div class="panel-description">{{ activePanel.panel.description }}</div>
           </div>
-          <div v-for="item in activePanel.panel.list" :key="item.subtitle">
-            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-[color:--colors-text-text-primary]">
-              {{ item.subtitle }}
-            </div>
+          <div v-for="item in activePanel.panel.list" :key="item.subtitle" :id="item.subId || item.subtitle">
+            <div v-if="item.subtitle" class="pt-6 pb-3 panel-subtitle">{{ item.subtitle }}</div>
             <template v-for="subItem in item.items" :key="subItem.label">
               <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
-                <div class="flex flex-1 items-center" :class="subItem.classes">
+                <component v-if="subItem.renderComponent" :is="subItem.renderComponent" />
+                <div v-else class="flex flex-1 items-center" :class="subItem.classes">
                   <div class="flex-1">
                     <div class="panel-item-label">
                       <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
@@ -62,7 +63,7 @@ onBeforeMount(() => {
                     <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
                   </div>
                 </div>
-                <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
+                <component v-if="subItem.afterComponent" :is="subItem.afterComponent" :item="subItem" />
               </div>
             </template>
           </div>
@@ -139,20 +140,10 @@ onBeforeMount(() => {
     overflow-y: auto;
     margin: 8px 0;
     margin-top: 0;
-
-    &-wrapper {
-      margin: 0 auto;
-      padding-top: 24px;
-      width: calc(100% / 3 * 2);
-    }
   }
 }
 
 .panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--oversize-spacing-3rem, 48px);
-
   &-title {
     color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 18px;
@@ -164,6 +155,13 @@ onBeforeMount(() => {
     color: var(--colors-text-text-tertiary, #575D60);
     font-size: 12px;
     line-height: normal;
+  }
+
+  &-subtitle {
+    color: var(--colors-text-text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 20px;
   }
 
   &-item {

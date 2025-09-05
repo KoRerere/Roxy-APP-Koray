@@ -15,6 +15,7 @@ import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
 import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks, getTimezoneByCity } from './utils'
 import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
+import { getDiskInfoByPath } from '/@/utils'
 
 /** 最后一次发送的消息 */
 export interface LastMessage {
@@ -66,8 +67,9 @@ export class BeforeLaunchTask {
 
   /** 开始执行任务 */
   async run() {
-    this.taskMap.set($t('内存检测中'), { handler: this.memoryDetection, start: 0, end: 5 })
-    this.taskMap.set($t('代理检测中'), { handler: this.handleProxyDetection, start: 5, end: 10 })
+    this.taskMap.set($t('内存检测中'), { handler: this.memoryDetection, start: 0, end: 3 })
+    this.taskMap.set($t('可用磁盘大小检测中'), { handler: this.diskSizeDetection, start: 3, end: 6 })
+    this.taskMap.set($t('代理检测中'), { handler: this.handleProxyDetection, start: 6, end: 10 })
     this.taskMap.set($t('判断是否需要清理浏览器缓存'), { handler: this.clearBrowserCache, start: 10, end: 15 })
     this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 25 })
     this.taskMap.set($t('生成指纹配置文件'), { handler: this.createFingerprintConfigFile, start: 25, end: 30 })
@@ -275,6 +277,11 @@ export class BeforeLaunchTask {
         clearInterval(timer)
       })
       if (plugins.length) {
+        await Promise.allSettled(plugins.map(async plugin => {
+          const localPath = join(plugin, '_metadata', 'generated_indexed_rulesets')
+          console.log('delete plugin', localPath)
+          await rm(localPath, { recursive: true, force: true })
+        }))
         args.push(`--load-extension=${plugins.join(',')}`)
       }
     }
@@ -615,26 +622,25 @@ export class BeforeLaunchTask {
             console.log(`cookieFilePath 删除失败`, err)
           }
         }
+      }
+      console.log(`是否清空 localStorage:${clearLocalStorage}`)
+      // 当清空缓存先删除
+      if (clearLocalStorage) {
+        const localStorageFilePath = join(
+          this.browserItem.userDataDir,
+          'Default',
+          'Local Storage',
+        )
 
-        console.log(`是否清空 localStorage:${clearLocalStorage}`)
-        // 当清空缓存先删除
-        if (clearLocalStorage) {
-          const localStorageFilePath = join(
-            this.browserItem.userDataDir,
-            'Default',
-            'Local Storage',
-          )
-
-          if (await fileExists(localStorageFilePath)) {
-            try {
-              console.log('localStorageFilePath: ', localStorageFilePath)
-              await rm(localStorageFilePath, { recursive: true })
-              console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
-            }
-            catch (err) {
-              console.log(`localStorage_fileUrl 删失败`, err)
-              this.warningMessages.push($t('localStorage文件删除失败'))
-            }
+        if (await fileExists(localStorageFilePath)) {
+          try {
+            console.log('localStorageFilePath: ', localStorageFilePath)
+            await rm(localStorageFilePath, { recursive: true })
+            console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
+          }
+          catch (err) {
+            console.log(`localStorage_fileUrl 删失败`, err)
+            this.warningMessages.push($t('localStorage文件删除失败'))
           }
         }
       }
@@ -661,6 +667,16 @@ export class BeforeLaunchTask {
       const tips = $t('启动失败，内存使用率超出 {memoryLimit}%', { memoryLimit: store.memoryLimit })
       // 停止打开后续窗口
       return Promise.reject(new Error(tips))
+    }
+    return Promise.resolve()
+  }
+
+  private async diskSizeDetection() {
+    const disk = await getDiskInfoByPath(store.browserCacheRootDir)
+
+    if (disk?.available && disk?.available / (1024 ** 3) < store.diskLimit) {
+      const tips = $t('启动失败，磁盘空间不足，请清理磁盘空间')
+      return Promise.reject(new Error(`ERR101: ${tips}`))
     }
     return Promise.resolve()
   }

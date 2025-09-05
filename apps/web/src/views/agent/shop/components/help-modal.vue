@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { API } from '/@/api';
-import type { SvgNames } from '/@/components/rx-icon';
-import { ProxyReplaceType } from '/@/enums/proxy';
 import { $t } from '/@/locales';
+import { API } from '/@/api';
+import { ProxyReplaceStatus, ProxyReplaceType } from '/@/enums/proxy';
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { type ProxyItem } from '../operation'
+import type { ProxyItem } from '../operation'
+import type { SvgNames } from '/@/components/rx-icon';
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -18,7 +18,7 @@ const { data, info } = defineProps<{
 
 const [_, onlyErrorToast] = useResponseToast()
 
-const helps = [
+const helps = computed(() => [
   {
     icon: 'base/rx_ic_headphone',
     title: $t('联系我们'),
@@ -60,8 +60,9 @@ const helps = [
       variant: 'outlined',
       onClick: () => replaceProxy(ProxyReplaceType.Replace),
     },
+    visible: data.replaceStatus !== ProxyReplaceStatus.replaced,
   },
-]
+].filter(item => item.visible !== false))
 
 async function replaceProxy(replaceType: ProxyReplaceType) {
   const { code, msg } = await API.proxy.userProxyRefundOrReplaceCreate({

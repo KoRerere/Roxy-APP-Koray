@@ -9,7 +9,7 @@ import { setSystemProxy, } from "/@/modules/roxynet";
 import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
-import { getMacAddress } from "/@/utils";
+import { getMacAddress, getDiskInfoByPath } from "/@/utils";
 import { compare } from "compare-versions";
 import { proxyManager } from "/@/modules/app/proxy-manager";
 
@@ -123,6 +123,16 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取本机 mac address */
   ipcMain.on("app:getMacAddress", (event) => {
     return getMacAddress();
+  });
+
+  /** 获取浏览器缓存所在磁盘 */
+  ipcMain.on("app:getBrowserCacheDisk", () => {
+    return getDiskInfoByPath(appConfig.browserCacheRootDir);
+  });
+
+  /** 显示 RoxyBrowser 缓存所在目录 */
+  ipcMain.on("app:showCacheDir", (event) => {
+    shell.openPath(appConfig.browserCacheRootDir);
   });
 
   /** 显示系统日志所在目录 */

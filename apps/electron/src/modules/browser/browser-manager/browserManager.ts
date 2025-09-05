@@ -1,4 +1,5 @@
 import { readdir, rm } from 'node:fs/promises'
+import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { setTimeout, scheduler } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
@@ -290,6 +291,31 @@ export class BrowserManager {
     await Promise.all(outPromises)
   }
 
+  /** 清除超过指定时间的缓存 */
+  async clearCacheByTimestamp({ days, clearType }: { days: number, clearType: "partial" | "all" }) {
+    const browserCacheRootDir = getUserDataDirPath('')
+    const dirIds: string[] = [];
+
+    for (const dirent of readdirSync(browserCacheRootDir, { withFileTypes: true })) {
+      if (dirent.isDirectory()) {
+        const targetFile = join(browserCacheRootDir, dirent.name, "close_timestamp");
+        if (existsSync(targetFile)) {
+          const [timestamp, dirId] = readFileSync(targetFile, "utf-8").split('_')
+          if (Date.now() - Number(timestamp) > days * 24 * 60 * 60 * 1000) {
+            dirIds.push(dirId);
+          }
+        }
+      }
+    }
+    return Promise.allSettled(dirIds.map(dirId => clearType === 'all' ? this.removeLocalData(dirId) : this.removeLocalDataExcludeExtension(dirId)))
+  }
+
+  /** 自动清除超过指定时间的缓存 */
+  autoClearByTimestamp() {
+    if (!store.autoClearCache) return
+    this.clearCacheByTimestamp({ days: store.clearCachePeriod, clearType: store.clearCacheType })
+  }
+
   /** 获取窗口列表 */
   private async getWindowList(dirIds: string[]) {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
@@ -350,9 +376,9 @@ export class BrowserManager {
     }
   }
 
-  /** 每隔 30分钟 定时同步窗口状态 */
+  /** 每隔 5分钟 定时同步窗口状态 */
   async #syncWindowStatus() {
-    setInterval(this.reportWindowOpenStatus, 1000 * 60 * 30)
+    setInterval(this.reportWindowOpenStatus, 1000 * 60 * 5)
     this.reportWindowOpenStatus()
   }
 

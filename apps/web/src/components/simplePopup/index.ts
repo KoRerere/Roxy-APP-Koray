@@ -4,9 +4,11 @@ interface SimpleDialogData {
   inputs: any[]
   title?: string
   content?: string
+  cancelText?: string
+  confirmText?: string
+  afterRender?: any
   onConfirm?: (formData: any) => Promise<void> | void
   onCancel?: () => void
-  afterRender?: () => void
 }
 
 export function useSimpleDialog() {
