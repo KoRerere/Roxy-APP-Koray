@@ -5,52 +5,53 @@ import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useDialog } from '/@/hooks/useDialog'
 import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
 import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
-import { emitter } from '/@/utils/eventBus'
+import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue';
+import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
+import VideoModal from '/@/views/tutorial/components/video-modal.vue';
+import CustomNewEmpty from '/@/components/custom-new-empty.vue'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
-
 function open1() {
-  emitter.emit('openSettings', { settingsKey: 'preferences', anchorPoint: 'diskSettings' })
-
-  // showModal({
-  //   showHeader: false,
-  //   modal: true,
-  //   blockScroll: true,
-  //   pt: {
-  //     root: "!border-none !shadow-none rounded-lg",
-  //     // mask: "!backdrop-blur-md",
-  //   },
-  //   slots: {
-  //     container: () => <DiskInsufficient></DiskInsufficient>
-  //   },
-  // })
-}
-
-function open2() {
-  const data = {
-    endTime: "2025-08-11 16:04:06",
-    orderAmount: 6,
-    orderNo: "175489584640630090",
-    payId: "rybda4b969-014e-4952-811b-a07034222b8d",
-    payType: "USDT",
-    payUrl: "TMvCmCtz2Chayje3igsFbWkzo8prNQo7fa",
-    realAmount: 6.03
-  }
-
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
+    pt: {
+      root: "!border-none !shadow-none rounded-lg",
+      // mask: "!backdrop-blur-md",
+    },
     slots: {
-      container: ({ hideModal }) => <WechatPayModal data={data} onClose={hideModal} />,
+      container: ({ hideModal }) => <GuideModal
+        title={$t('欢迎加入')}
+        desc={({ class: className }) => {
+          return <>
+            <div class={className}>Incididunt et elit pariatur mollit Lorem consectetur sunt aliqua et in mollit consectetur Lorem et ullamco. Nulla minim elit qui. Laborum ex do fugiat irure eiusmod laborum
+              velit anim ut. Quis enim id est. Nulla consequat incididunt labore enim enim. </div>
+            <div class={className}>Incididunt et elit pariatur mollit Lorem consectetur sunt aliqua et in mollit consectetur Lorem et ullamco. Nulla minim elit qui. </div>
+          </>
+        }}
+        video="/video/copy_workspace_id.mp4"
+        onClose={hideModal}
+      ></GuideModal>
     },
   })
 }
-
+function open2() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      root: "!bg-transparent !border-none !shadow-none",
+    },
+    slots: {
+      container: ({ hideModal }) => <VideoModal video="https://roxybrowser.com" external="https://roxybrowser.com" onClose={hideModal} />,
+    },
+  })
+}
 //============ table ===================
 import wcisTable from './components/table/table.vue'
-
 async function tableFilters() {
   return [
     {
@@ -95,14 +96,12 @@ async function tableFilters() {
     },
   ]
 }
-
 const columns = ref([
   { header: "Tomato 🍅", field: 'code' },
   { header: "Lettuce 🥬", field: 'name' },
   { header: "Cheese 🧀", field: 'category' },
   { header: "Carrot 🥕", field: 'quantity' }
 ])
-
 const originalModel = [
   {
     label: 'only quick',
@@ -158,7 +157,6 @@ const originalModel = [
     disabled: true,
   },
 ]
-
 const datalist = Array.from({ length: 50 }, (_, index) => ({
   id: `${index}`,
   code: index * 2,
@@ -170,9 +168,9 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
 //============ form ========================
 import TsForm from './components/form/index.vue';
 import Test from '/@/views/lab/components/test.vue';
-import type { PayWay } from '/@/enums/pay';
-import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete';
+import FormItem from '/@/views/lab/components/form/item.vue'
 
+const formRef = useTemplateRef<any>('wcisman')
 const inputs = [
   {
     type: 'text',
@@ -191,6 +189,9 @@ const inputs = [
       .min(1, $t('请输入空间名称'))
       .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
       .max(20, $t('空间名称最多 20 个字符')),
+  },
+  {
+    separator: true,
   },
   {
     type: 'mselect',
@@ -214,31 +215,38 @@ const inputs = [
     }).min(5, 'must 5 string man!'),
   }
 ]
-
 const onFormWcis = (values: Record<string, any>) => {
   console.log(values)
 }
-
-const formRef = useTemplateRef<any>('wcisman')
-
 function noFormIdWcis() {
   formRef.value?.instance.submit()
 }
-//=========================================
-import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-
+function setInputsProps() {
+  formRef.value?.setInputsProps({
+    firstname: {
+      preIcon: 'base/rx_ic_portrait-spark-light',
+    },
+    mselect: {
+      options: [
+        { label: 'test1', value: 'test1' },
+        { label: 'test2', value: 'test2' },
+        { label: 'test3', value: 'test3' },
+        { label: 'test4', value: 'test4' },
+        { label: 'test5', value: 'test5' },
+        { label: 'test6', value: 'test6' },
+        { label: 'test7', value: 'test7' },
+      ],
+    }
+  })
+}
+//==========================================
+import GenSingle from '/@/views/lab/gen-single.vue';
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <RxButton label="open1" @click="open1"></RxButton>
-    <RxButton label="open2" @click="open1"></RxButton>
-
-    <div class="w-50">
-    </div>
-    <!-- <KernelUpdater :upgrade-list="upgradeList" :upgrades="wcis"></KernelUpdater> -->
-    <!-- <RxButton label="exportText" @click="exportText"></RxButton> -->
-    <!-- <RxButton label="exportCSV" @click="exportCSV"></RxButton> -->
+    <!-- <RxButton label="open1" @click="open1"></RxButton> -->
+    <!-- <RxButton label="open2" @click="open2"></RxButton> -->
     <!-- <DataTable :value="datalist.slice(0, 3)">
       <Column selection-mode="multiple">
         <template #headercheckboxicon="slotProps">
@@ -252,28 +260,29 @@ import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 </DataTable> -->
 
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <!-- <div class="flex flex-col gap-2 pa-20 scale-150">
-      <RxInputRadio v-model="checked2" :options="[{ label: '1', value: 1 }, { label: '2', value: 2 }]" />
-    </div> -->
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
-      <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis"></TsForm>
-      <RxButton class="w-full" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
-      <RxButton class="w-full" label="test submit" @click="noFormIdWcis"></RxButton>
+      <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
+        <template #default="{ inputs }">
+          <Accordion :value="['0']" multiple>
+            <AccordionPanel value="0">
+              <AccordionHeader>what can i say man!</AccordionHeader>
+              <AccordionContent>
+                <div class="flex flex-col gap-3">
+                  <FormItem v-for="input in inputs" :key="input.name" :input="input" />
+                </div>
+              </AccordionContent>
+            </AccordionPanel>
+          </Accordion>
+        </template>
+      </TsForm>
+      <RxButton class="w-full" type="submit" label="normal submit" form="wcis" />
+      <RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
+      <RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
     </div> -->
+    <!-- <GenSingle></GenSingle> -->
+    <div class="w-100 flex">
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped></style>
-<style module="member">
-.email {
-  color: var(--colors-text-text-primary);
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.name {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 16px;
-}
-</style>

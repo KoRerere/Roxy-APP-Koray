@@ -97,10 +97,10 @@ const details = computed(() => {
   const { purchaseCountry, subscriptionMonths, purchaseMember } = configValue.value
   return [
     {
-      title: $t('代理信息'),
+      title: $t('代理 IP 信息'),
       items: [
         {
-          label: $t('代理数量'),
+          label: $t('代理 IP 数量'),
           value: purchaseMember
         },
         {
@@ -194,7 +194,7 @@ async function initConfig() {
 
   return [
     {
-      title: $t('选择代理国家/地区:'),
+      title: $t('选择代理 IP 国家/地区:'),
       name: 'purchaseCountry',
       value: _purchaseCountry[0],
       props: {
@@ -244,7 +244,7 @@ async function initConfig() {
       }
     },
     {
-      title: $t('代理数量:'),
+      title: $t('代理 IP 数量:'),
       name: 'purchaseMember',
       value: 1,
       render: ({ item }: any) => <div class="flex items-center gap-4">
@@ -259,7 +259,7 @@ async function initConfig() {
       </div>
     },
     {
-      title: $t('代理用途:'),
+      title: $t('代理 IP 用途:'),
       name: 'businessUse',
       props: {
         options: _businessUse,
@@ -367,7 +367,7 @@ async function onPay() {
         </div>
       </div>
       <div class="flex flex-col gap-2">
-        <RxAlert v-if="isCN" class="!w-88" type="warn" :title="$t('温馨提示')" :content="$t('您当前的网络环境属于中国大陆，无法直连代理。请确保实际使用时的网络环境可正常连接至代理，再进行下单购买。')"></RxAlert>
+        <RxAlert v-if="isCN" class="!w-88" type="warn" :title="$t('温馨提示')" :content="$t('您当前的网络环境属于中国大陆，无法直连代理 IP。请确保实际使用时的网络环境可正常连接至代理 IP，再进行下单购买。')"></RxAlert>
         <Detail class="w-88" :list="details">
           <template #price="{ item }">
             <div class="flex justify-between items-center">

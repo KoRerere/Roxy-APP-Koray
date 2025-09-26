@@ -1,7 +1,7 @@
 <template>
   <BaseDialog :header="$t('偏好设置')" @hide="handleHide">
     <Tabs v-model:value="activeTab">
-      <TabList>
+      <TabList :pt="{ root: 'flex-shrink-0' }">
         <template v-for="(tab) in tabs" :key="tab.id">
           <Tab :value="tab.id">{{ tab.label }}</Tab>
         </template>
@@ -9,7 +9,8 @@
       <TabPanels v-if="isLoaded">
         <template v-for="(tab) in tabs" :key="tab.id">
           <TabPanel :value="tab.id">
-            <component v-model="formData[tab.id]" :ref="(ins) => refs[tab.id] = ins" :is="tab.component" class="form-container" />
+            <component v-model="formData[tab.id]" :ref="(ins) => refs[tab.id] = ins" :is="tab.component"
+              class="form-container" />
             <RxButton class="save-button" @click="tab.onSave">
               {{ $t('保存并生效') }}
             </RxButton>

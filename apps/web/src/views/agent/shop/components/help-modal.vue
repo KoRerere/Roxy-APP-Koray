@@ -48,10 +48,11 @@ const helps = computed(() => [
       variant: 'outlined',
       onClick: () => replaceProxy(ProxyReplaceType.Refund),
     },
+    visible: data.canRefund,
   },
   {
     icon: 'base/rx_ic_renew',
-    title: $t('更换新代理'),
+    title: $t('更换新代理 IP'),
     description: $t('预计在 {hours} 小时内处理完成。', { hours: info.refundHours }),
     class: 'help-item',
     buttonProps: {
@@ -80,11 +81,11 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-4 rounded-lg w-120">
     <div class="h-9 flex items-center justify-between">
-      <span class="header">{{ $t('代理商店') }}</span>
+      <span class="header">{{ $t('帮助') }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="description">
-      {{ $t("我们检测到您购买的代理存在问题，以下是一些推荐的解决方案。") }}
+      {{ $t("我们检测到您购买的代理 IP 存在问题，以下是一些推荐的解决方案。") }}
     </div>
     <div class="flex flex-col gap-3">
       <template v-for="help in helps" :key="help.title">
@@ -107,7 +108,7 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
         {{ $t('提示:') }}
       </div>
       <div class="tips">
-        {{ $t('出现网络波动的代理通常会在几小时内自动恢复，若您已将其已投入长期使用计划，可以尝试耐心等待其自动恢复或联系我们取得确切答复。') }}
+        {{ $t('出现网络波动的代理 IP 通常会在几小时内自动恢复，若您已将其已投入长期使用计划，可以尝试耐心等待其自动恢复或联系我们取得确切答复。') }}
       </div>
     </div>
   </div>

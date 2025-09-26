@@ -2,10 +2,8 @@
 import type { ButtonProps } from 'primevue/button'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
-
 interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   icon?: SvgNames
   rotate?: boolean
   disabled?: boolean

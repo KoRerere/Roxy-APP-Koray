@@ -1,14 +1,19 @@
-import { format } from 'date-fns'
 import ExcelJS from 'exceljs';
+import { format } from 'date-fns'
 import { $t } from '/@/locales';
-import { getDictMap } from '/@/utils'
 import { API } from '/@/api'
+import { getDictMap, safeParseJSON } from '/@/utils'
+import { parseIntelligent } from '/@/views/account/create/utils'
+
+interface DownloadTemplateOptions {
+  afterAddExplain?: (worksheet: ExcelJS.Worksheet) => any
+}
 
 export function getDefaultTemplate() {
   return {
     os: 'Windows',
     osVersion: '11',
-    coreVersion: '136',
+    coreVersion: '138',
     browserVersion: null,
     isLanguageBaseIp: true,
     language: 'sq-AL',
@@ -146,23 +151,23 @@ const getExportColumns = async () => {
       key: 'windowPlatformList',
       width: 90,
       placeholder: 'richText',
-      example: `${exampleText}: \n[\n${Array.from({ length: 2 }, () => '  {"platformUrl": "", "platformUserName": "", "platformPassword": "", "platformEfa": ""}').join(',\n')}\n]`,
+      example: `${exampleText}: \n[\n  "https://x.com/:roxy1:123",\n  "https://www.tiktok.com/:roxy2:456",\n  "https://www.youtube.com/:roxy3:789:roxy_2fa"\n]`,
       richText: [
         { 'text': $t('仅支持 JSON 格式的数组, 可支持填写多个账号, 多个账号请使用英文逗号隔开! ') },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
-        { 'text': `${$t('请务必按照示例填写, 其中')}\n` },
-        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformUrl: 平台网址')}\n` },
-        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformUserName: 平台账号')}\n` },
-        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformPassword: 平台密码')}\n` },
-        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformEfa: 平台2FA')}` },
+        { 'text': `${$t('请务必按照示例填写\n')}` },
+        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('【平台:账号:密码:2FA】')}` },
       ],
-      formatValue(value: string) {
-        try {
-          return JSON.parse(value)
-        }
-        catch (error) {
-          return value
-        }
+      formatValue: (value: string) => {
+        return safeParseJSON(value, []).map((str: string) => {
+          const { platform, username, password, twoFactor } = parseIntelligent(str)
+          return {
+            platformUrl: platform,
+            platformUserName: username ?? '',
+            platformPassword: password ?? '',
+            platformEfa: twoFactor ?? '',
+          }
+        })
       }
     },
     {
@@ -176,14 +181,7 @@ const getExportColumns = async () => {
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
         { 'text': $t('多个标签页请使用英文逗号隔开!\n网址前请加 http:// 或 https:// 否则无效!') },
       ],
-      formatValue(value: string) {
-        try {
-          return JSON.parse(value)
-        }
-        catch (error) {
-          return value
-        }
-      }
+      formatValue: (value: string) => safeParseJSON(value, [])
     },
     {
       header: 'Cookie',
@@ -195,14 +193,7 @@ const getExportColumns = async () => {
         { 'text': $t('仅支持 JSON 格式的数组, 可支持填写多个 cookie, 多个 cookie 请使用英文逗号隔开! ') },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
       ],
-      formatValue(value: string) {
-        try {
-          return JSON.parse(value)
-        }
-        catch (error) {
-          return value
-        }
-      }
+      formatValue: (value: string) => safeParseJSON(value, [])
     },
     {
       header: $t('窗口备注'),
@@ -227,10 +218,6 @@ const getExportColumns = async () => {
       example: searchEngine.join('\n'),
     },
   ]
-}
-
-interface DownloadTemplateOptions {
-  afterAddExplain?: (worksheet: ExcelJS.Worksheet) => any
 }
 
 export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
@@ -311,7 +298,7 @@ export async function downloadTextTemplate() {
       osVersion: 11,
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:80:username:password',
-      windowPlatformList: '[{ "platformUrl": "https://www.x.com/", "platformUserName": "xxxx", "platformPassword": "132456", "platformEfa": "" }]',
+      windowPlatformList: '["https://x.com/:roxy1:123", "https://www.tiktok.com/:roxy2:456", "https://www.youtube.com/:roxy3:789:roxy_2fa"]',
       defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark1',
@@ -324,7 +311,7 @@ export async function downloadTextTemplate() {
       osVersion: '17.0',
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:81:username:password',
-      windowPlatformList: '[{ "platformUrl": "https://www.x.com/", "platformUserName": "xxxx", "platformPassword": "132456", "platformEfa": "" }]',
+      windowPlatformList: '["https://x.com/:roxy1:123", "https://www.tiktok.com/:roxy2:456", "https://www.youtube.com/:roxy3:789:roxy_2fa"]',
       defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark2',
@@ -434,9 +421,17 @@ export async function parseTextFile(file: File) {
           return {
             rowNum: index + 1,
             ...data,
-            cookie: JSON.parse(cookie || '[]'),
-            defaultOpenUrl: JSON.parse(defaultOpenUrl || '[]'),
-            windowPlatformList: JSON.parse(windowPlatformList || '[]'),
+            cookie: safeParseJSON(cookie, []),
+            defaultOpenUrl: safeParseJSON(defaultOpenUrl, []),
+            windowPlatformList: safeParseJSON(windowPlatformList, []).map((str: string) => {
+              const { platform, username, password, twoFactor } = parseIntelligent(str)
+              return {
+                platformUrl: platform,
+                platformUserName: username ?? '',
+                platformPassword: password ?? '',
+                platformEfa: twoFactor ?? '',
+              }
+            }),
           }
         })
         resolve(result)

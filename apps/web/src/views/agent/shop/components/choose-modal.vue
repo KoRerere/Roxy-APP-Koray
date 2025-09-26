@@ -20,7 +20,7 @@ const bgSrc = computed(() => {
 
 <template>
   <div class="flex flex-col rounded-lg popup">
-    <ProviderList v-show="!currentProvider" v-model="currentProvider" @close="$emit('close')"></ProviderList>
+    <ProviderList v-show="!currentProvider" v-model="currentProvider" @close="$emit('close')" @success="$emit('success', $event)"></ProviderList>
     <ProviderDetail v-if="currentProvider" :data="currentProvider" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)"></ProviderDetail>
   </div>
 </template>

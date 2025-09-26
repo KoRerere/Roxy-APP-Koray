@@ -1,7 +1,7 @@
 import Textarea from "primevue/textarea";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
-import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { RxAlert } from "/@/components/rx-alert";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import type {
@@ -122,7 +122,7 @@ export function useNetworkPanel() {
               },
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
-                  <RxInputSelect
+                  <TsFormSelect
                     {...item.props}
                     {...props}
                     name={item.name}

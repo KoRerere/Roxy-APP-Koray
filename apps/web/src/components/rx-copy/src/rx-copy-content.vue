@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast';
-import { RxSvgIcon } from '/@/components/rx-icon';
 import { $t } from '/@/locales';
 import { copyText } from '/@/utils';
 
@@ -30,10 +29,8 @@ async function onCopy() {
       </slot>
     </div>
     <div class="text-value">
-      {{ text }}
-      <template v-if="mask && !text">
-        https://roxybrowser.com/invite?code=13122341233
-      </template>
+      <span>{{ text }}</span>
+      <span v-if="mask && !text" class="pointer-events-none select-none"> https://roxybrowser.com/invite?code=13122341233</span>
     </div>
     <RxButton v-if="!mask" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click.stop="onCopy" />
   </div>

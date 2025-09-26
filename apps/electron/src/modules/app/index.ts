@@ -7,7 +7,7 @@ import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
 import { isMac, isPackaged, isWindows } from '/@/constants/common'
-import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
+import { getMainWindow, intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady } from '/@/utils'
 import { proxyManager } from './proxy-manager'
@@ -31,15 +31,13 @@ app.commandLine.appendSwitch('--no-sandbox')
 // 开发环境忽略 localhost 连接数限制
 !isPackaged && app.commandLine.appendSwitch('--ignore-connections-limit=localhost')
 
+// macOS 的行为不同：当应用通过协议被启动时，系统不会把参数放在 process.argv，而是触发 open-url 事件，必须在 ready 之前监听
+app.on('open-url', async (event, url) => {
+  event.preventDefault()
+  await dispatchDeepLink(url, 'open-url')
+})
+
 export async function setupApp() {
-  /**
-   * 防止多实例
-   */
-  const isSingleInstance = app.requestSingleInstanceLock()
-  if (!isSingleInstance) {
-    app.quit()
-    process.exit(0)
-  }
 
   app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
@@ -54,33 +52,7 @@ export async function setupApp() {
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
-    await isWebReady()
-    const searchParams = commandLine.at(-1)?.split('?')[1]
-    // Windows 系统需要通过这种方式获取参数
-    if (commandLine.at(-1)?.includes(`${appProtocolName}://oauth2callback`)) {
-      console.log('oauth2callback: ', commandLine)
-      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
-    }
-    // Windows 系统需要通过这种方式获取参数
-    if (commandLine.at(-1)?.includes(`${appProtocolName}://inviteUser2project`)) {
-      console.log('inviteUser2project: ', commandLine)
-      ipcMain.send('invite:to-project', `?${searchParams}`)
-    }
-  })
-
-  // macOS 系统通过 open-url 事件获取参数
-  app.on('open-url', async (event, url) => {
-    console.log('open-url: ', url)
-    const searchParams = url.split('?')[1]
-    await isWebReady()
-    if (url?.includes(`${appProtocolName}://oauth2callback`)) {
-      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
-      console.log('oauth2callback: ', url)
-    }
-    if (url?.includes(`${appProtocolName}://inviteUser2project`)) {
-      console.log('inviteUser2project: ', url)
-      ipcMain.send('invite:to-project', `?${searchParams}`)
-    }
+    await dispatchDeepLink(commandLine.at(-1) || '', 'second-instance')
   })
 
   //  系统自带浏览器打开
@@ -119,15 +91,15 @@ export async function setupApp() {
 
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
-
-    // 进入启动页
-    await intoLaunchPage()
     // 检查资源是否准备完毕
     await checkResource()
     // 进入主页
     await intoMainPage()
     // 创建托盘
     createTray()
+    // 处理冷启动
+    await handleColdStart()
+
     console.log('setupApp done')
     // 初始化应用程序事件
     initAppEvent()
@@ -188,4 +160,57 @@ function initAppEvent() {
 }
 
 
+async function handleColdStart() {
+  // 冷启动通过自定义协议唤起时，从 argv 中获取参数
+  // 注意：macOS 在应用未启动时通过自定义协议拉起应用，不会触发 open-url 事件
+  // 而是会将协议 URL 作为启动参数传递，因此这里也需要处理 macOS 的情况
+  try {
+    const startupUrl = process.argv.find(arg => arg.startsWith(`${appProtocolName}://`))
+    if (startupUrl) {
+      await dispatchDeepLink(startupUrl, 'cold-start')
+    }
+  }
+  catch (error) {
+    console.error('Failed to handle protocol on cold start:', error)
+  }
+}
 
+/**
+ * 统一处理自定义协议（deep link）的分发逻辑。
+ *
+ * 用途：
+ * - 在三种入口调用：冷启动（cold-start）、macOS 的 open-url、Windows/Linux 的 second-instance。
+ * - 根据 URL 路径将参数分发到对应的渲染进程 IPC 通道。
+ *
+ * 行为：
+ * - 非法或不以 `${appProtocolName}://` 开头的 URL 将被忽略。
+ * - 内部会等待渲染端就绪（isWebReady）再发送消息，避免丢包。
+ * - 当前支持的路由：oauth2callback / inviteUser2project / open-page。
+ *
+ * @param url 形如 `${appProtocolName}://path?query` 的完整链接
+ * @param source 触发来源标识（'second-instance' | 'open-url' | 'cold-start'），用于日志排查
+ */
+async function dispatchDeepLink(url: string, source: 'second-instance' | 'open-url' | 'cold-start') {
+  try {
+    if (!url || !url.startsWith(`${appProtocolName}://`)) return
+    console.log(`deep-link [${source}]:`, url)
+    const searchParams = url.split('?')[1]
+    await isWebReady()
+    if (url.includes(`${appProtocolName}://oauth2callback`)) {
+      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
+      console.log('oauth2callback:', source, url)
+    }
+    if (url.includes(`${appProtocolName}://inviteUser2project`)) {
+      ipcMain.send('invite:to-project', `?${searchParams}`)
+      console.log('inviteUser2project:', source, url)
+    }
+    if (url.includes(`${appProtocolName}://open-page`)) {
+      ipcMain.send('open:page', `?${searchParams}`)
+      console.log('open-page:', source, url)
+    }
+    getMainWindow()?.show?.()
+  }
+  catch (error) {
+    console.error('Failed to dispatch deep link:', source, error)
+  }
+}

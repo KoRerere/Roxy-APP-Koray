@@ -3189,8 +3189,8 @@ export const components = {
   },
   radiobutton: {
     root: {
-      width: '1.25rem',
-      height: '1.25rem',
+      width: '1rem',
+      height: '1rem',
       background: '{form.field.background}',
       checkedBackground: '{primary.color}',
       checkedHoverBackground: '{primary.hover.color}',
@@ -3214,24 +3214,24 @@ export const components = {
       },
       transitionDuration: '{form.field.transition.duration}',
       sm: {
-        width: '1rem',
-        height: '1rem',
+        width: '0.75rem',
+        height: '0.75rem',
       },
       lg: {
-        width: '1.5rem',
-        height: '1.5rem',
+        width: '1.25rem',
+        height: '1.25rem',
       },
     },
     icon: {
-      size: '0.75rem',
+      size: '0.5rem',
       checkedColor: '{component.checker.bg}',
       checkedHoverColor: '{component.checker.bg}',
       disabledColor: 'transparent',
       sm: {
-        size: '0.5rem',
+        size: '0.375rem',
       },
       lg: {
-        size: '1rem',
+        size: '0.625rem',
       },
     },
   },

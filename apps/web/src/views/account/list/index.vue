@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import PlatformIcon from './platform-icon.vue'
-import { useConfirm } from 'primevue/useconfirm'
-import { API } from '/@/api'
+import AccountEdit from '/@/views/account/create/quick.vue'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useConfirm } from 'primevue/useconfirm'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import AccountEdit from '/@/views/account/create/quick.vue'
 import { useColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
+import { useTutorialStore } from '/@/stores/tutorial';
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
@@ -23,6 +25,7 @@ const { userConfig } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { showSimpleDialog } = useSimpleDialog()
+const { getVideoMaps } = useTutorialStore()
 
 const tableRef = useTemplateRef('account')
 const operation = ref([
@@ -61,6 +64,15 @@ const operation = ref([
     },
   },
 ])
+
+const videoData = ref()
+
+onBeforeMount(() => {
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.account_management
+    })
+})
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
@@ -174,15 +186,15 @@ function deletePopup(data: any) {
       <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
+          <CustomNewEmpty icon="base/rx_ic_keys" img="empty-accounts.png" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
-              <div class="flex items-center gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
+              <div class="flex gap-3">
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
                   @click.stop="operationHandler({ name: 'create' })" />
-                <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
+                <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
               </div>
             </template>
-          </CustomEmpty>
+          </CustomNewEmpty>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header">

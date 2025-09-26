@@ -5,19 +5,21 @@ defineOptions({ inheritAttrs: false })
 
 const { field, input } = defineProps<{ field: any, input: any }>()
 
-const { setFieldValue } = useFormContext()
+const { setFieldValue, setValues } = useFormContext()
 
 function onUpdate(value: any) {
   setFieldValue(input.name, value)
 }
 
+function onUpdates(value: Record<string, any>) {
+  setValues(value)
+}
+
 </script>
 
 <template>
-  <div>
-    <input :value="field.value" type="hidden">
-    <component :is="input.render" :name="input.name" v-bind="{ ...input.props, ...$attrs }" />
-  </div>
+  <input :value="field.value" type="hidden">
+  <component :is="input.render" :name="input.name" v-bind="{ ...input.props, ...$attrs }" @update="onUpdate" @updates="onUpdates" />
 </template>
 
 <style scoped></style>

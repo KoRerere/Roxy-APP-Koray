@@ -106,7 +106,7 @@ export const preferenceSettings = {
       // /** 随机数字输入 */
       // openRandomNumberDialog: 'Ctrl + Alt + F',
       /** 统一标签页 */
-      // unifiedTabs: 'Ctrl + Alt + X',
+      unifiedTabs: 'Ctrl + Alt + X',
       /** 关闭其他标签页 */
       closeOtherTabs: 'Ctrl + Alt + B',
       /** 关闭当前标签页 */
@@ -142,7 +142,7 @@ export const preferenceSettings = {
       // /** 随机数字输入 */
       // openRandomNumberDialog: 'Ctrl + Alt + F',
       /** 统一标签页 */
-      // unifiedTabs: 'Ctrl + Alt + X',
+      unifiedTabs: 'Ctrl + Alt + X',
       /** 关闭其他标签页 */
       closeOtherTabs: 'Ctrl + Alt + B',
       /** 关闭当前标签页 */

@@ -60,6 +60,7 @@ import {
   UserGetWindowInfoListListParams,
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
+  UserGetWindowPlatformAccountListListData,
   UserGetWindowRowsSortListData,
   UserGetWindowStatusInfoCreateData,
   UserGetWindowStatusInfoCreatePayload,
@@ -1028,6 +1029,22 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowPlatformAccountListList
+   * @summary 获取窗口平台URL信息
+   * @request GET:/user_get_window_platform_account_list
+   * @response `200` `UserGetWindowPlatformAccountListListData`
+   */
+  userGetWindowPlatformAccountListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowPlatformAccountListListData, any>({
+      path: `/user_get_window_platform_account_list`,
+      method: "GET",
       format: "json",
       ...params,
     });

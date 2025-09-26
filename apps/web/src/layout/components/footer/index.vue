@@ -12,9 +12,8 @@
         </ShinyButton>
         <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
-          <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
-            {{ item.label }}
-          </span>
+          <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">{{ item.label }}</span>
+          <component v-if="!collapsed && item.extra" :is="item.extra" />
         </a>
       </template>
     </TieredMenu>
@@ -32,10 +31,12 @@
 </template>
 
 <script setup lang="ts">
+import PayMetrics from './components/pay-metrics.vue'
+import TaskCircle from '/@/views/tutorial/components/task-progress.vue';
 import { RxSvgIcon } from "/@/components/rx-icon";
 import { $t } from "/@/locales";
-import PayMetrics from './components/pay-metrics.vue'
 import { useWorkspaceStore } from "/@/stores/workspace";
+import { useUserStore } from "/@/stores/user";
 import { useRoleStore } from "/@/stores/role";
 import { getRoleLabelMap } from "/@/enums";
 
@@ -44,11 +45,25 @@ const collapsed = defineModel('collapsed', { default: false })
 const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { userPayInfo, userConfig } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 
 const items = computed(() => {
   return [
+    {
+      label: $t('新手教程'),
+      icon: 'base/rx_ic_books',
+      rootMenu: true,
+      routeName: 'tutorial',
+      visible: !userPayInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus,
+      command: () => {
+        router.push({ name: 'tutorial' })
+      },
+      extra: () => h(TaskCircle, {
+        class: 'mx-auto mr-0'
+      })
+    },
     {
       label: $t('费用中心'),
       icon: 'base/rx_ic_wallet',

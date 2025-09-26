@@ -35,15 +35,15 @@ const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
 const backRoute = useBackRoute()
-const { userPayInfo } = storeToRefs(userStore)
+const { userPayInfo, userConfig } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const { isOwner } = storeToRefs(useRoleStore())
-const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -192,6 +192,9 @@ async function initFormInputs(template: Record<string, any> = {}) {
   extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
+  nextTick(() => {
+    showGuide()
+  })
 }
 
 async function onShuffle() {
@@ -422,12 +425,48 @@ function onBack(data?: any, openBrowser = false) {
     }
   })
 }
+//=================================================
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 
+const guideCss = useCssModule('guide')
+const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+
+const driverObj = driver({
+  nextBtnText: $t('下一步'),
+  doneBtnText: $t('完成'),
+  showButtons: ["next"],
+  overlayColor: 'var(--pattern-tour-mask-bg)',
+  overlayOpacity: 1,
+  progressText: '{{current}} / {{total}}',
+  showProgress: true,
+  allowClose: false,
+  disableActiveInteraction: true,
+  popoverClass: guideCss.popover,
+  steps: [
+    { element: '.guide1', disableActiveInteraction: false, popover: { description: $t('请为您的第一个窗口命名。'), side: 'top', align: 'start' } },
+    { element: '.guide2', popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'start' } },
+    { element: '.guide3', popover: { description: $t('配置代理可以让您改变出口 IP 地址，从而为该窗口的所有行动提供匿名性。'), side: 'top', align: 'center' } },
+    { element: '.guide4', popover: { description: $t('此处展示的是当前窗口的指纹信息预览，您可以根据业务需求继续自定义配置。'), side: 'left', align: 'center' } },
+    { element: '.guide5', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
+  ],
+  onDestroyed: () => {
+    console.log('修改状态')
+    updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
+  }
+})
+
+function showGuide() {
+  if (!userPayInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus) {
+    driverObj.drive()
+  }
+}
 </script>
 
 <template>
   <div class="relative flex flex-col h-full">
-    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
+    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')"></ViewsHeader>
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
@@ -455,13 +494,73 @@ function onBack(data?: any, openBrowser = false) {
         <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
           <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
           <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-          <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
+          <RxButton class="guide5" :label="$t('创建窗口')" @click.stop="createProfile(false)" />
         </div>
       </div>
     </div>
     <div class="foot-separator"></div>
   </div>
 </template>
+
+<style module="guide">
+.popover {
+  min-width: 220px;
+  max-width: 220px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--pattern-tour-tips-bg);
+  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.07), 0 2px 5px 0 rgba(0, 0, 0, 0.07), 0 1px 1px 0 rgba(0, 0, 0, 0.07);
+
+  :global(.driver-popover-description),
+  :global(.driver-popover-progress-text) {
+    color: var(--component-tooltip-text-primary);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
+  :global(.driver-popover-footer) {
+    margin-top: 6px;
+  }
+
+  :global(.driver-popover-arrow-side-left.driver-popover-arrow) {
+    border-left-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-right.driver-popover-arrow) {
+    border-right-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-top.driver-popover-arrow) {
+    border-top-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-bottom.driver-popover-arrow) {
+    border-bottom-color: var(--pattern-tour-tips-bg);
+  }
+
+  button {
+    min-width: 60px;
+    padding: 4px 8px;
+    text-align: center;
+    border-radius: 4px;
+    background: var(--colors-alpha-alpha-white-20);
+    color: var(--component-tooltip-text-primary);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    border: none;
+    text-shadow: none;
+
+    &:focus,
+    &:hover {
+      background: var(--colors-alpha-alpha-white-20);
+    }
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 :deep(.p-splitbutton) {

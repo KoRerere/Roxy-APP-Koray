@@ -55,7 +55,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           id: 'unifyTabs',
           label: $t('统一标签页'),
           hidden: isProd,
-          // shortcutKey: shortcutKey.unifiedTabs,
+          shortcutKey: shortcutKey.unifiedTabs,
           command: () => {
             electronAPI.send('syncControl:unifyTabs')
           }

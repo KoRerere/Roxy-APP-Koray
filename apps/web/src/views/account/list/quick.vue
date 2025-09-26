@@ -40,6 +40,9 @@ function handleSave() {
     <div class="flex-ovh-1">
       <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
         :context-menu="false" :show-actions="false">
+        <template #table-empty>
+          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')"></CustomEmpty>
+        </template>
         <template #platform="{ data: row }">
           <div class="flex gap-2 select-none account">
             <div>

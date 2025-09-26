@@ -2,6 +2,7 @@
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -17,6 +18,7 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from '
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
 import { ProxyCheckStatus } from '/@/enums'
+import { useTutorialStore } from '/@/stores/tutorial';
 
 const router = useRouter()
 const role = useRoleStore()
@@ -27,15 +29,21 @@ const { userConfig } = storeToRefs(useUserStore())
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
+const { getVideoMaps } = useTutorialStore()
 
 const tableRef = useTemplateRef('listtable')
 const filtersMenu = ref()
 const dataList = ref()
-
+const videoData = ref()
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
+
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.proxy_management
+    })
 })
 
 async function getTableList(params: any) {
@@ -129,7 +137,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
 
 async function testAllProxy() {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理'))
+    onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
   await testProxy(dataList.value, 'test')
@@ -232,14 +240,14 @@ function onRefreshTable() {
           </div>
         </template>
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
+          <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
-              <div class="flex items-center gap-3">
+              <div class="flex gap-3">
                 <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
-                <!-- <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" /> -->
+                <PlayVideo size="xs" v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
               </div>
             </template>
-          </CustomEmpty>
+          </CustomNewEmpty>
         </template>
         <template #outbound="{ data }">
           <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data.id]" :is-loading="data.loadingOperationMap?.test" />

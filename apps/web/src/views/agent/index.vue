@@ -13,8 +13,8 @@ const activeTabValue = ref((route.query.name as string) || 'list')
 
 const tabs = computed(() => {
   return [
-    { title: $t('代理列表'), value: 'list', component: markRaw(AgentList) },
-    { title: $t('代理商店'), icon: 'base/rx_ic_cart_solid', suffixIcon: 'base/new_badge', value: 'shop', component: markRaw(AgentShop), visible: !isViewer.value },
+    { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList) },
+    { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', suffixIcon: 'base/new_badge', value: 'shop', component: markRaw(AgentShop), visible: !isViewer.value },
   ].filter(tab => tab.visible !== false)
 })
 

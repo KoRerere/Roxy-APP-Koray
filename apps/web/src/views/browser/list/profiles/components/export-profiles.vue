@@ -33,28 +33,33 @@ const excelSchema = [
     name: $t('系统版本')
   },
   {
-    key: 'userAgent',
-    name: 'User-Agent',
+    key: 'proxyCategory',
+    name: $t('代理类型'),
+    getText: (item: Data) => item.proxyCategory === 'noproxy' ? '直连' : item.proxyCategory?.toLocaleUpperCase(),
   },
   {
-    key: 'platformUrl',
+    key: 'proxyInfo',
+    name: $t('代理信息'),
+    getText: (item: Data) => {
+      if (!item.host) return ''
+      const ipType = item.ipType!.toLocaleLowerCase() === 'ipv4' ? '' : 'ipv6:'
+      const proxyAccount = item.proxyUserName ? `:${item.proxyUserName}:${item.proxyPassword}` : ''
+      const refreshUrl = item.refreshUrl ? `[${item.refreshUrl}]` : ''
+      return `${ipType}${item.host}:${item.port}${proxyAccount}${refreshUrl}`
+    },
+  },
+  {
+    key: 'windowPlatformList',
     name: $t('平台账号'),
-    mergeKey: 'windowPlatformList',
+    getText: (item: Data) => {
+      const data = item.windowPlatformList?.map(it => [it.platformUrl, it.platformUserName, it.platformPassword, it.platformEfa].filter(Boolean).join(':'))
+      return exportType.value ? JSON.stringify(data, null, 2) : JSON.stringify(data)//导出 txt 不能换行
+    }
   },
   {
-    key: 'platformUserName',
-    name: $t('用户名'),
-    mergeKey: 'windowPlatformList',
-  },
-  {
-    key: 'platformPassword',
-    name: $t('密码'),
-    mergeKey: 'windowPlatformList',
-  },
-  {
-    key: 'platformEfa',
-    name: '2FA',
-    mergeKey: 'windowPlatformList',
+    key: 'defaultOpenUrl',
+    name: $t('自定义打开 URL'),
+    getText: (item: Data) => JSON.stringify(item.defaultOpenUrl || '[]')
   },
   {
     key: 'cookie',
@@ -70,41 +75,17 @@ const excelSchema = [
     },
   },
   {
-    key: 'defaultOpenUrl',
-    name: $t('自定义打开 URL'),
-    getText: (item: Data) => JSON.stringify(item.defaultOpenUrl || '[]')
-  },
-  {
-    key: 'proxyCategory',
-    name: $t('代理类型'),
-    getText: (item: Data) => item.proxyCategory === 'noproxy' ? '直连' : item.proxyCategory,
-  },
-  {
-    key: 'proxyInfo',
-    name: $t('代理信息'),
-    getText: (item: Data) => {
-      const ipType = item.ipType!.toLocaleLowerCase() === 'ipv4' ? '' : 'ipv6:'
-
-      if (!item.host) {
-        return ''
-      }
-
-      return `${ipType}${item.host}:${item.port}${strConcat(':', item.proxyUserName as string)}${strConcat(':', item.proxyPassword as string)}`
-    },
-  },
-  {
     key: 'windowRemark',
     name: $t('备注'),
+  },
+  {
+    key: 'userAgent',
+    name: 'User-Agent',
   },
   {
     key: 'searchEngine',
     name: $t('搜索引擎'),
   },
-  // {
-  //   key: 'windowSize',
-  //   name: $t('窗口大小'),
-  //   getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
-  // },
 ].map((item, _index) => ({ ...item, _index }))
 const selection = ref(excelSchema.slice())
 
@@ -115,22 +96,10 @@ async function getExportData() {
     const sortArr = selection.value.sort((a, b) => a._index - b._index)
     return sortArr.reduce((acc, schema) => {
 
-      if (acc[schema.key] || acc[schema.mergeKey!]) {
+      if (acc[schema.key]) {
         return acc
       }
-
-      if (schema.mergeKey) {
-        const mergeKeyItems = sortArr.filter(s => s.mergeKey === schema.mergeKey)
-        const datalist = (item[schema.mergeKey as keyof typeof item] as any[])?.map((platform: any) =>
-          mergeKeyItems.reduce((acc, schema) => {
-            acc[schema.key] = schema.getText?.({ ...item, ...platform }) || platform[schema.key]
-            return acc
-          }, {} as Record<string, any>))
-
-        acc[schema.mergeKey] = JSON.stringify(datalist || [])
-      } else {
-        acc[schema.key] = schema.getText?.(item) ?? item[schema.key as keyof typeof item] ?? ''
-      }
+      acc[schema.key] = schema.getText?.(item) ?? item[schema.key as keyof typeof item] ?? ''
       return acc
     }, {} as Record<string, any>)
   })

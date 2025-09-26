@@ -3,6 +3,7 @@ import Services from '/@/views/pay/wallet/manage/services.vue'
 import AutoRenew from '/@/views/pay/wallet/manage/auto-renew.vue'
 import Wallet from '/@/views/pay/wallet/manage/wallet.vue'
 import BankCards from '/@/views/pay/wallet/manage/bank-cards.vue'
+// import Redeem from '/@/views/pay/wallet/manage/redeem.vue'
 import { useUserStore } from '/@/stores/user';
 
 const { getUserPayInfo } = useUserStore()
@@ -26,6 +27,8 @@ onBeforeMount(() => {
           <Wallet></Wallet>
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <BankCards></BankCards>
+          <!-- <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
+          <Redeem></Redeem> -->
         </div>
       </div>
     </div>

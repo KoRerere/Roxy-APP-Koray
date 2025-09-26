@@ -62,28 +62,19 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
-      name: 'platformUrlIds',
+      name: 'platformUrls',
       label: $t('业务平台'),
       icon: 'base/rx_ic_keys',
       getOptions: async () => {
-        const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
-        const __data = (data.rows || []).reduce((obj, curr) => {
-          const url = curr.platformUrl!;
-          if (!obj[url]) obj[url] = [];
-          obj[url].push(curr.id!)
-          return obj;
-        }, {} as Record<string, number[]>)
-        const rows = Object.entries(__data).map(([key, values]) => {
+        const { data } = await API.window.userGetWindowPlatformAccountListList()
+        return (data?.rows || []).map((item: any) => {
+          const label = new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1')
           return {
-            platformUrl: key,
-            ids: values.join(',')
+            parentName: 'platformUrls',
+            label,
+            value: label,
           }
         })
-        return (rows).map((item: any) => ({
-          parentName: 'platformUrlIds',
-          value: item.ids,
-          label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
-        }))
       },
       formatValue: (input: any) => {
         return input.value?.map((item: any) => item.value)

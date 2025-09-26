@@ -1,16 +1,16 @@
 <script setup lang="tsx">
-import { useConfirm } from 'primevue/useconfirm'
-import { useTemplateRef } from 'vue'
-import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
+import RestoreReminderDialog from './restore-reminder-dialog.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-import { getOperation } from './operation'
-import { useUserStore } from '/@/stores/user'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
-import RestoreReminderDialog from './restore-reminder-dialog.vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { getOperation, getAdvancedSearch } from './operation'
+import { useUserStore } from '/@/stores/user'
 import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
 
 const columns = [
@@ -19,7 +19,16 @@ const columns = [
     key: 'profile',
     slot: 'profile',
     style: {
-      width: '40%'
+      width: '0%',
+      minWidth: '180px',
+    }
+  },
+  {
+    title: $t('窗口名称'),
+    key: 'windowName',
+    style: {
+      width: '10%',
+      minWidth: '160px',
     }
   },
   {
@@ -28,20 +37,34 @@ const columns = [
     slot: 'note',
     style: {
       width: '10%',
+      minWidth: '120px',
     },
   },
   {
     title: $t('标签'),
     slot: 'tags',
+    style: {
+      width: '10%',
+      minWidth: '95px',
+    }
   },
   {
     title: $t('删除记录'),
     key: 'group',
     slot: 'log',
+    style: {
+      width: '10%',
+      minWidth: '140px',
+    },
   },
   {
     title: $t('操作'),
     slot: 'actions',
+    style: {
+      width: '0%',
+      minWidth: '100px',
+      maxWidth: '100px',
+    }
   },
 ]
 
@@ -52,6 +75,7 @@ const workspaceStore = useWorkspaceStore()
 const [showModal] = useDialog()
 
 const operation = getOperation()
+const advancedSearchOptions = getAdvancedSearch()
 
 const tableRef = useTemplateRef('recycleTable')
 
@@ -70,6 +94,11 @@ function operationHandler(operate: any, data: any) {
       deleteHandler(datas)
       break
   }
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  tableRef.value?.refresh({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
 }
 
 async function recoverHandler(datas: any) {
@@ -144,30 +173,29 @@ async function deleteHandler(datas: any) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns"
-    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-    :show-actions="false" :show-table-header="false">
+  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    :show-gridlines="false" :show-actions="false" :show-display="false">
+    <template #filter-after>
+      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+    </template>
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')"
-        :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
+      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>
     <template #profile="{ data }">
-      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()"
-        :data="data" disabled />
+      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
     </template>
     <template #note="{ data }">
-      <RemarkIcon :value="data.windowRemark" disabled />
+      <div class="inline-flex items-center gap-2">
+        <RemarkIcon :value="data.windowRemark" disabled />
+        <div :title="data.windowRemark" class="min-w-30 whitespace-pre-wrap note-content">{{ data.windowRemark }}</div>
+      </div>
     </template>
     <template #tags="{ data }">
       <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />
     </template>
     <template #log="{ data }">
-      <div class="delete-name">
-        {{ data.email }}
-      </div>
-      <div class="delete-time">
-        {{ data.updateTime }}
-      </div>
+      <div class="delete-name">{{ data.email }}</div>
+      <div class="delete-time">{{ data.updateTime }}</div>
     </template>
     <template #actions="{ data }">
       <Actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />

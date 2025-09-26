@@ -18,10 +18,18 @@ const { disk } = defineProps<{
   softConfig: any,
 }>()
 
+const browserCacheSize = ref()
+
 const used = computed(() => `${bytesToGB(disk.used ?? 0)}GB`)
 const size = computed(() => `${bytesToGB(disk.size ?? 0)}GB`)
 const available = computed(() => `${bytesToGB(disk.available ?? 0)}GB`)
 const percent = computed(() => `${disk.use ?? 0}%`)
+const roxyCache = computed(() => {
+  return {
+    size: `${bytesToGB(browserCacheSize.value ?? 0)}GB`,
+    percent: `${Math.floor(browserCacheSize.value / disk.used * 100) / 100}%`
+  }
+})
 const percentBg = computed(() => {
   const limit = Number(size.value.replace('GB', '')) - Number(used.value.replace('GB', '')) < 2
   if (limit) {
@@ -31,19 +39,32 @@ const percentBg = computed(() => {
   }
   return 'var(--colors-background-bg-brand)'
 })
-
 const legend = computed(() => {
   return [
     {
+      text: $t('Roxy 缓存 ({value})', { value: roxyCache.value.size }),
+      style: { background: percentBg.value }
+    },
+    {
       text: $t('已使用 ({value})', { value: used.value }),
-      color: percentBg.value
+      style: { background: percentBg.value, opacity: 0.3 }
     },
     {
       text: $t('剩余可用 ({value})', { value: available.value }),
-      color: 'var(--pattern-sidenav-metrics-progress)'
+      style: { background: 'var(--pattern-sidenav-metrics-progress)' }
     }
   ]
 })
+
+onMounted(() => {
+  getBrowserCacheSize()
+})
+
+async function getBrowserCacheSize() {
+  if (browserCacheSize.value !== undefined) return
+  const size = await electronAPI.send("app:getBrowserCacheSize")
+  browserCacheSize.value = size
+}
 
 function bytesToGB(bytes: number, fractionDigits = 2) {
   if (!bytes || isNaN(bytes)) return 0;
@@ -58,10 +79,10 @@ function bytesToGB(bytes: number, fractionDigits = 2) {
       <div class="relative w-full h-4 rounded overflow-hidden progress"></div>
       <div class="shrink-0">{{ used }} / {{ size }}</div>
     </div>
-    <div class="flex justify-between items-center progress-text">
+    <div class="flex justify-between items-center text">
       <div class="flex items-center gap-2">
         <div v-for="item in legend" :key="item.text" class="flex items-center gap-1">
-          <div class="w-3 h-3 rounded-sm" :style="{ background: item.color }"></div>
+          <div class="w-3 h-3 rounded-sm" :style="item.style"></div>
           <div>{{ item.text }}</div>
         </div>
       </div>
@@ -82,7 +103,8 @@ function bytesToGB(bytes: number, fractionDigits = 2) {
 .progress {
   background: var(--pattern-sidenav-metrics-progress);
 
-  &::before {
+  &::before,
+  &::after {
     content: '';
     position: absolute;
     left: 0;
@@ -90,12 +112,19 @@ function bytesToGB(bytes: number, fractionDigits = 2) {
     width: v-bind(percent);
     height: 100%;
     background: v-bind(percentBg);
+    opacity: 0.3;
   }
 
-  &-text {
-    color: var(--colors-text-text-secondary);
-    font-size: 12px;
-    line-height: 16px;
+  &::after {
+    width: v-bind('roxyCache.percent');
+    opacity: 1;
+    z-index: 1;
   }
+}
+
+.text {
+  color: var(--colors-text-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
 }
 </style>

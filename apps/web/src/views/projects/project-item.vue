@@ -16,17 +16,16 @@ import { emitter } from '/@/utils/eventBus'
 const role = useRoleStore()
 const route = useRoute()
 const router = useRouter()
-const { getProjects } = useProjectStore()
 const [showModal] = useDialog()
 const [projectModfiyDialog] = useProjectActions()
+const [_, onlyErrorToast] = useResponseToast()
+const { getProjects } = useProjectStore()
 const { handleBusinessCode } = useHandleBusinessCode()
-const [showToast] = useResponseToast()
 
 const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
 const members = ref()
-const allMembers = ref()
 
 watch(() => route.params.id, (value) => {
   projectId.value = Number(value)
@@ -34,12 +33,8 @@ watch(() => route.params.id, (value) => {
   getMemberByCurrentProject()
 })
 
-onBeforeMount(() => {
-  getMemberByCurrentProject()
-  getMemberByCurrentWorkspace()
-})
-
 onMounted(() => {
+  getMemberByCurrentProject()
   emitter.on('updateProjectList', () => {
     projectRef.value?.tableRef?.refresh()
   })
@@ -55,14 +50,9 @@ async function getMemberByCurrentProject() {
   }
 }
 
-async function getMemberByCurrentWorkspace() {
-  const { code, data } = await API.team.userGetMemberInfoByWorkspaceList({})
-  if (code === 0) {
-    allMembers.value = data.rows
-  }
-}
+async function handleShowDialog() {
+  const { data:{ rows } } = await API.team.userGetMemberInfoByWorkspaceList({})
 
-function handleShowDialog() {
   showModal({
     showHeader: false,
     modal: true,
@@ -73,7 +63,7 @@ function handleShowDialog() {
     slots: {
       container: ({ hideModal }) => <InviteUserModal
         v-model:currentMembers={members.value}
-        allMembers={allMembers.value}
+        allMembers={rows}
         project={{
           projectName: projectName.value,
           projectId: projectId.value,
@@ -96,38 +86,22 @@ function editProject() {
   })
 }
 
-async function toCreateBrowser() {
-  const { code, msg } = await API.window.userCheckWindowTotalCountList()
-  if (code === 0) {
-    router.push({ name: 'browser-create', query: { projectId: projectId.value } })
-  } else {
-    handleBusinessCode(code, () => {
-      showToast(code, msg)
-    })
-  }
-}
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <ViewsHeader class="project-header">
+    <ViewsHeader>
       <template #title>
-        <div class="project-header-title cursor-pointer" @click="() => router.push({ name: 'projects' })">
-          {{ $t('项目管理') }}
-        </div>
+        <div class="cursor-pointer title" @click="() => router.replace({ name: 'projects' })">{{ $t('项目管理') }}</div>
       </template>
       <template #title-after>
         <RxSvgIcon name="base/rx_ic_play" :size="8" />
-        <div class="project-header-subproject">
-          {{ projectName }}
-        </div>
-        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer" @click="editProject" />
+        <div class="subproject">{{ projectName }}</div>
+        <RxSvgIcon v-if="role.isOwner || role.isManager" class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-text-text-secondary)" @click="editProject" />
       </template>
       <MemberDropdownList :members="members" />
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
-      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="toCreateBrowser" />
     </ViewsHeader>
-    <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-1 overflow-hidden">
       <Profiles ref="project" is-project-profile />
     </div>
@@ -135,17 +109,15 @@ async function toCreateBrowser() {
 </template>
 
 <style lang="scss" scoped>
-.project-header {
-  color: var(--colors-text-text-secondary, #b2b6b8);
+.title {
+  color: var(--colors-text-text-secondary);
 
-  &-title {
-    &:hover {
-      color: var(--colors-text-text-brand, #12a3fc);
-    }
+  &:hover {
+    color: var(--colors-text-text-brand);
   }
+}
 
-  &-subproject {
-    color: var(--colors-text-text-primary, #fafafa);
-  }
+.subproject {
+  color: var(--colors-text-text-primary);
 }
 </style>

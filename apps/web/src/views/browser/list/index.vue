@@ -1,26 +1,27 @@
 <script setup lang="ts">
-import tags from '/@/views/browser/list/tags'
-import Profiles from './profiles'
-import Recycle from './recycle'
-import Transfer from './transfer'
-import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
-import { VueDraggable } from 'vue-draggable-plus'
-import { API } from '/@/api'
+import Tags from '/@/views/browser/list/tags'
+import Profiles from '/@/views/browser/list/profiles'
+import Recycle from '/@/views/browser/list/recycle'
+import Transfer from '/@/views/browser/list/transfer'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { I18nT } from "vue-i18n"
+import { debounce } from 'es-toolkit'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useConfirm } from 'primevue/useconfirm'
+// import { useDialog } from 'primevue/usedialog'
+import { useDialog } from '/@/hooks/useDialog'
+import { VueDraggable } from 'vue-draggable-plus'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
 import { sleep } from '/@/utils'
-import { debounce } from 'es-toolkit'
 import { emitter } from '/@/utils/eventBus'
-import { I18nT } from "vue-i18n"
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 const confirm = useConfirm()
-const dialog = useDialog()
+const [showDialog] = useDialog()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
@@ -228,13 +229,18 @@ async function deleteFilterItem(item: any) {
 }
 
 async function openManageCategory() {
-  dialog.open(tags, {
-    props: {
-      header: $t('标签管理'),
-      modal: true,
-      style: { width: '70vw', height: '50vh' },
-      pt: { content: 'flex-1' },
+  showDialog({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      content: '!pa-0'
     },
+    slots: {
+      container: ({ hideModal }) => h(Tags, {
+        onClose: hideModal,
+      }),
+    }
   })
 }
 

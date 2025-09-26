@@ -1,112 +1,105 @@
 <script setup lang="tsx">
-import type { UserGetBannerPictureListListData, UserGetPromotionInfoListData, UserGetPromotionInfoByTypeListData } from '@roxy/backend-api';
-import { API } from '/@/api';
+import RxTooltip from '/@/components/rx-tooltip/index.vue';
 import { RxAlert } from '/@/components/rx-alert/'
 import { RxCopyContent } from '/@/components/rx-copy';
 import { RxSvgIcon } from '/@/components/rx-icon';
-import { $t } from '/@/locales';
 import currency from 'currency.js';
-import RxTooltip from '/@/components/rx-tooltip/index.vue';
+import { $t } from '/@/locales';
+import { API } from '/@/api';
+import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api';
 
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
 
-
 const activeMenu = ref(promotionInfo.promotionLinkList[0])
-const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
+const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
 const selectBannerSize = ref('')
+const dataPreformanceValue = ref()
+const maxNumber = 999999
 
-const referralLink = computed(() => {
-  return activeMenu.value.promotionLink
-})
-
-const currentBannerImage = computed(() => {
-  return bannerList.value.find(item => item.size === selectBannerSize.value) || {}
-})
-
-
-const bannerImagePreviewHtmlCode = computed(() => {
-  const { image_1x, image_2x } = currentBannerImage.value
-  const srcset = `${image_1x} 1x, ${image_2x} 2x`
-  return `<a href="${referralLink.value}" target="_blank"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
-})
-
-const benefitList = computed(() => {
-  const targetMenu = promotionInfo.promotionLinkList.find(item => item.linkType === activeMenu.value.linkType)
+const dataPreformance = computed(() => {
   return [
     {
-      title: $t('您将获取的推广奖励: {ratio} 名下用户消费金额', { ratio: '{ratio}' }),
-      ratio: targetMenu?.promotionDiscount,
+      title: $t('链接点击次数'),
+      total: dataPreformanceValue.value?.promotionClickCount || 0,
+      // todayCount: dataPreformanceValue.value?.todayPromotionClickCount || 0,
     },
     {
-      title: $t('您邀请的用户将获取: {ratio} 永久账号消费优惠', { ratio: '{ratio}' }),
-      ratio: targetMenu?.userDiscount,
+      title: $t('名下用户'),
+      total: dataPreformanceValue.value?.registeredUserNum || 0,
+      // todayCount: dataPreformanceValue.value?.todayRegisteredUserNum || 0,
+    },
+    {
+      title: $t('充值用户'),
+      total: dataPreformanceValue.value?.purchaseUserNum || 0,
+      // todayCount: dataPreformanceValue.value?.todayPurchaseUserNum || 0,
+    },
+    {
+      title: $t('近 30 天名下用户消费金额'),
+      total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, maxNumber),
+      // todayCount: 0,
+      format(val: number) {
+        return currency(val).format()
+      }
+    },
+    {
+      title: $t('审核中'),
+      total: dataPreformanceValue.value?.pendingAmount || 0,
+      // todayCount: 0,
+      tootip: $t('消费后 7 天内完成审核'),
+      format(val: number) {
+        return currency(val).format()
+      }
+    },
+    {
+      title: $t('已审核奖励'),
+      total: Math.min(maxNumber, dataPreformanceValue.value?.awardsReviewed || 0),
+      // todayCount: dataPreformanceValue.value?.todayAwardsReviewed || 0,
+      style: {
+        color: '#12A3FC',
+      },
+      format(val: number) {
+        return currency(val).format()
+      }
     },
   ]
 })
-
-watch(activeMenu, getBannerPictureList, { immediate: true })
-
-async function getBannerPictureList() {
-  const { code, data } = await API.base.userGetBannerPictureListV2List({ linkType: activeMenu.value.linkType?.replace(' ', '_') })
-  if (code === 0) {
-    bannerList.value = data
-    selectBannerSize.value = bannerList.value[0].size
-  }
-}
-
-function isLocked(linkStatus: number) {
-  return linkStatus === 0
-}
-
-const dataPreformanceValue = ref<UserGetPromotionInfoByTypeListData['data']>()
-const maxNumber = 999999
-const dataPreformance = computed(() => ([
-  {
-    title: $t('链接点击次数'),
-    total: dataPreformanceValue.value?.promotionClickCount || 0,
-    todayCount: dataPreformanceValue.value?.todayPromotionClickCount || 0,
-  },
-  {
-    title: $t('名下用户'),
-    total: dataPreformanceValue.value?.registeredUserNum || 0,
-    todayCount: dataPreformanceValue.value?.todayRegisteredUserNum || 0,
-  },
-  {
-    title: $t('充值用户'),
-    total: dataPreformanceValue.value?.purchaseUserNum || 0,
-    todayCount: dataPreformanceValue.value?.todayPurchaseUserNum || 0,
-  },
-  {
-    title: $t('近 30 天名下用户消费金额'),
-    total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, maxNumber),
-    todayCount: 0,
-    format(val: number) {
-      return currency(val).format()
-    }
-  },
-  {
-    title: $t('审核中'),
-    total: dataPreformanceValue.value?.pendingAmount || 0,
-    todayCount: 0,
-    tootip: $t('消费后 7 天内完成审核'),
-    format(val: number) {
-      return currency(val).format()
-    }
-  },
-  {
-    title: $t('已审核奖励'),
-    total: Math.min(maxNumber, dataPreformanceValue.value?.awardsReviewed || 0),
-    todayCount: dataPreformanceValue.value?.todayAwardsReviewed || 0,
-    style: {
-      color: '#12A3FC',
+const referralLink = computed(() => {
+  return activeMenu.value.promotionLink
+})
+const currentBannerImage = computed(() => {
+  return bannerList.value?.find(item => item.size === selectBannerSize.value)
+})
+const bannerImagePreviewHtmlCode = computed(() => {
+  const { image_1x, image_2x } = currentBannerImage.value || {}
+  const srcset = `${image_1x} 1x, ${image_2x} 2x`
+  return `<a href="${referralLink.value}" target="_blank"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
+})
+const bonusList = computed(() => {
+  const targetMenu = promotionInfo.promotionLinkList.find(item => item.linkType === activeMenu.value.linkType)
+  return [
+    {
+      icon: 'referral-program/rx_referral_coin',
+      title: $t('您将获得'),
+      desc: $t('{ratio} 消费金额', { ratio: '{ratio}' }),
+      ratio: targetMenu?.promotionDiscount,
+      class: 'get',
     },
-    format(val: number) {
-      return currency(val).format()
+    {
+      icon: 'referral-program/rx_referral_discount',
+      title: $t('他们得到'),
+      desc: $t('{ratio} 消费优惠', { ratio: '{ratio}' }),
+      ratio: targetMenu?.userDiscount,
+      class: 'give',
     }
-  },
-]))
+  ]
+})
+
+watch(activeMenu, () => {
+  getBannerPictureList()
+  getPromotionInfoByTypeList()
+}, { immediate: true })
 
 const DataPreformance = (props: any) => {
   return <div class="flex justify-between items-center px-3 py-2.5 rounded-1 bg-[var(--colors-background-bg-page)] gap-2">
@@ -127,92 +120,103 @@ const DataPreformance = (props: any) => {
   </div>
 }
 
-watch(activeMenu, (val) => {
-  API.base.userGetPromotionInfoByTypeList({
-    linkType: activeMenu.value.linkType?.replace(' ', '_')
-  }).then(({ code, data }) => {
-    if (code === 0) {
-      dataPreformanceValue.value = data
-    }
-  })
-}, { immediate: true })
+async function getBannerPictureList() {
+  const { code, data } = await API.base.userGetBannerPictureListV2List({ linkType: activeMenu.value.linkType?.replace(' ', '_') })
+  if (code === 0) {
+    bannerList.value = data
+    selectBannerSize.value = bannerList.value[0].size
+  }
+}
 
+async function getPromotionInfoByTypeList() {
+  const { code, data } = await API.base.userGetPromotionInfoByTypeList({
+    linkType: activeMenu.value.linkType?.replace(' ', '_')
+  })
+  if (code === 0) {
+    dataPreformanceValue.value = data
+  }
+}
+
+function isLocked(linkStatus: number) {
+  return linkStatus === 0
+}
 </script>
 
 <template>
   <div class="referal-link-container">
     <aside>
-      <div class="title">{{ $t('选择推广链接') }}</div>
-      <div class="menu">
-        <template v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType">
-          <div class="menu-item" :class="{ active: activeMenu.linkType === menu.linkType }" @click="activeMenu = menu">
-            {{ menu.linkType }}
-            <template v-if="isLocked(menu.linkStatus)">
-              <RxSvgIcon name="base/rx_ic_lock" />
-            </template>
-          </div>
-        </template>
+      <div class="referal-title">{{ $t('选择推广链接') }}</div>
+      <div class="flex flex-col items-start self-stretch gap-3">
+        <div class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item" :class="{ active: activeMenu.linkType === menu.linkType }"
+          v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType" @click="activeMenu = menu">
+          <RxSvgIcon :class="{ 'invisible': !isLocked(menu.linkStatus!) }" name="base/rx_ic_lock" color="var(--colors-icon-icon-note)" />
+          <div class="flex-1">{{ menu.linkType }}</div>
+          <CircleProgress v-if="isLocked(menu.linkStatus!)" :value="(menu.completed_count! / menu.total_count!) * 100" size="20" stroke-width="4"></CircleProgress>
+        </div>
       </div>
     </aside>
     <div class="content">
       <div class="row">
-        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn"
-          :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false"
-          class="w-full" />
-        <div class="title">{{ $t('推广链接') }}</div>
-        <RxCopyContent :text="referralLink" :mask="isLocked(activeMenu.linkStatus)" />
-        <div class="benefit">
-          <template v-for="benefit in benefitList" :key="benefit">
-            <div class="benefit-item">
-              <RxSvgIcon name="base/rx_ic_check_fill" color="#1CC94D" />
-              <div>
-                <i18n-t :keypath="benefit.title" scope="global">
-                  <template #ratio>
-                    <span class="ratio">{{ benefit.ratio }}%</span>
-                  </template>
-                </i18n-t>
-              </div>
-            </div>
-          </template>
+        <div class="flex items-center gap-3">
+          <span class="referal-title">{{ activeMenu.linkType }}</span>
+          <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人解锁', { count: activeMenu.total_count }) }})</span>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="title">{{ $t('数据统计') }}</div>
-        <div class="grid grid-cols-10 gap-3 w-full">
-          <div
-            class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
-            <DataPreformance v-for="i in 3" v-bind="dataPreformance[i - 1]" />
-          </div>
-          <div
-            class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-6">
-            <DataPreformance v-for="i in 3" v-bind="dataPreformance[i + 2]" />
+        <div v-if="isLocked(activeMenu.linkStatus!)" class="w-full flex items-center gap-3">
+          <div class="referal-desc">{{ $t('用户邀请数据:') }}</div>
+          <Usage class="flex-1 gap-1.5 referal-progress" :ratio="(activeMenu.completed_count! / activeMenu.total_count!)" :block-count="10" defaultColor="var(--colors-border-border-inactive)"
+            :color-level="{ normal: 'var(--component-alert-announcement-border-success)', weak: 'var(--component-alert-announcement-border-success)' }" />
+          <div class="flex items-baseline gap-1">
+            <span class="referal-value">{{ activeMenu.completed_count }}</span>
+            <span class="referal-need">/{{ activeMenu.total_count }}</span>
           </div>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="title">
-          {{ $t('推广宣传图（建站用户专用）') }}
-        </div>
-        <div class="banner-sizes">
-          <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
-            <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
-            <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
-          </div>
-        </div>
-        <div class="banner-preview-container">
-          <div class="banner-preview">
-            <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" class="p-3">
-              <template #original>
-                <img :src="currentBannerImage.image_1x"
-                  :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" />
+        <RxCopyContent :text="referralLink!" :mask="isLocked(activeMenu.linkStatus!)" />
+        <div class="desc">{{ $t('受邀用户消费时:') }}</div>
+        <div class="w-full flex gap-2.5">
+          <div class="relative flex-1 h-22 flex flex-col justify-center py-3 px-4 rounded-md bonus" :class="item.class" v-for="item in bonusList" :key="item.title">
+            <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88"></SvgIcon>
+            <div class="bonus-title">{{ item.title }}</div>
+            <i18n-t class="bonus-desc" tag="div" scope="global" :keypath="item.desc">
+              <template #ratio>
+                <span class="bonus-ratio">{{ item.ratio }}%</span>
               </template>
-            </RxImage>
+            </i18n-t>
           </div>
-          <RxCopyContent :text="bannerImagePreviewHtmlCode" :mask="isLocked(activeMenu.linkStatus)" class="flex-1" />
         </div>
       </div>
+      <template v-if="!isLocked(activeMenu.linkStatus!)">
+        <div class="row">
+          <div class="title">{{ $t('数据统计') }}</div>
+          <div class="grid grid-cols-10 gap-3 w-full">
+            <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
+              <DataPreformance v-for="i in 3" v-bind="dataPreformance[i - 1]" />
+            </div>
+            <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-6">
+              <DataPreformance v-for="i in 3" v-bind="dataPreformance[i + 2]" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="title">{{ $t('推广宣传图（建站用户专用）') }}</div>
+          <div class="banner-sizes">
+            <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
+              <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
+              <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
+            </div>
+          </div>
+          <div class="banner-preview-container">
+            <div class="banner-preview" v-if="currentBannerImage">
+              <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" class="p-3">
+                <template #original>
+                  <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" />
+                </template>
+              </RxImage>
+            </div>
+            <RxCopyContent :text="bannerImagePreviewHtmlCode" :mask="isLocked(activeMenu.linkStatus!)" class="flex-1" />
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -229,40 +233,6 @@ watch(activeMenu, (val) => {
     align-items: flex-start;
     gap: 16px;
     padding-right: 27px;
-
-    .title {
-      color: var(--colors-text-text-primary, #FAFAFA);
-      font-family: Inter;
-      font-size: 14px;
-      font-style: normal;
-      font-weight: 600;
-      line-height: 20px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-      align-self: stretch;
-
-      .menu-item {
-        display: flex;
-        padding: 8px 12px;
-        gap: var(--spacing-xl, 12px);
-        align-items: center;
-        align-self: stretch;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 14px;
-
-        &:is(:hover, .active) {
-          color: var(--pattern-sidenav-text-active, #3FB6FD);
-          background: var(--pattern-sidenav-bg-active, #013D65);
-        }
-      }
-    }
   }
 
   .content {
@@ -292,40 +262,7 @@ watch(activeMenu, (val) => {
         margin-bottom: 4px;
       }
     }
-
-
   }
-
-
-  .benefit {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-
-    .benefit-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-lg, 8px);
-      align-self: stretch;
-      color: var(--colors-text-text-secondary, #B2B6B8);
-      font-family: Inter;
-      font-size: 14px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: 20px;
-
-      .ratio {
-        color: var(--primitives-yellow-500, #FC9D12);
-        font-family: Inter;
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 20px;
-      }
-    }
-  }
-
 
   .banner-sizes {
     width: 100%;
@@ -384,6 +321,103 @@ watch(activeMenu, (val) => {
         }
       }
     }
+  }
+}
+
+.menu {
+  &-item {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    transition: all 0.2s ease;
+
+    &:is(:hover, .active) {
+      color: var(--pattern-sidenav-text-active);
+      font-weight: 600;
+      background: var(--pattern-sidenav-bg-active);
+    }
+  }
+}
+
+.referal {
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+  }
+
+  &-unlocked {
+    color: var(--colors-text-text-secondary);
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  &-desc {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  &-progress {
+    :deep(.color-block) {
+      height: 6px;
+      border-radius: 100px;
+    }
+  }
+
+  &-value {
+    color: var(--colors-text-text-primary);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+  }
+
+  &-need {
+    color: var(--colors-text-text-inactive);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 22px;
+  }
+}
+
+.desc {
+  color: var(--colors-text-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.bonus {
+  &.get {
+    border: 1px solid var(--pattern-dashboard-card-border-card-referral);
+    background: linear-gradient(90deg, var(--pattern-dashboard-card-bg-card-referral-1) 0%, var(--pattern-dashboard-card-bg-card-referral-2) 100%);
+  }
+
+  &.give {
+    border: 1px solid var(--pattern-dashboard-card-border-card-bonus);
+    background: linear-gradient(90deg, var(--pattern-dashboard-card-bg-card-bonust-1) 0%, var(--pattern-dashboard-card-bg-card-bonus-2) 100%);
+  }
+
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  &-desc {
+    color: var(--colors-text-text-inactive);
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  &-ratio {
+    color: var(--colors-text-text-warning);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
   }
 }
 </style>

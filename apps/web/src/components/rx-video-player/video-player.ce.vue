@@ -4,14 +4,17 @@ import { useEventListener } from '@vueuse/core'
 
 interface Props {
   src: string
+  fullscreen?: boolean
+  autoplay?: boolean
 }
 
-const props = defineProps<Props>()
+const { fullscreen = true, autoplay = true } = defineProps<Props>()
 
 const videoPlayerRef = useTemplateRef('videoPlayer')
 const videoRef = useTemplateRef('video')
+const isMuted = ref(autoplay)
 const isPlaying = ref(false)
-const showControls = ref(false)
+const showControls = ref(!autoplay)
 const duration = ref(0)
 const currentTime = ref(0)
 const isFullscreen = ref(false)
@@ -33,6 +36,14 @@ function togglePlay() {
   else {
     video.pause()
   }
+}
+
+function toggleVolume() {
+  const video = videoRef.value
+  if (!video)
+    return
+  isMuted.value = !video.muted
+  video.muted = isMuted.value
 }
 
 function updateTime() {
@@ -71,41 +82,111 @@ function handleMouseLeave() {
 }
 
 let animation: Animation | undefined
+let originalRect: DOMRect | undefined
+
 function toggleFullscreen() {
-  const video = videoRef.value
-  if (!video)
+  const videoPlayer = videoPlayerRef.value
+  if (!videoPlayer)
     return
 
   isFullscreen.value = !isFullscreen.value
 
-  if (animation) {
-    animation.reverse()
-    return
-  }
-
   if (isFullscreen.value) {
-    const keyframe = {
-      position: 'fixed',
-      left: '50%',
-      top: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: '1000',
+    // 进入全屏模式
+    enterFullscreen()
+  } else {
+    // 退出全屏模式
+    exitFullscreen()
+  }
+}
+
+function enterFullscreen() {
+  const videoPlayer = videoPlayerRef.value
+  if (!videoPlayer) return
+
+  // 保存当前位置和尺寸
+  originalRect = videoPlayer.getBoundingClientRect()
+
+  // 计算目标尺寸（85vw宽度，保持16:9比例）
+  const targetWidth = window.innerWidth * 0.85
+  const targetHeight = targetWidth * (9 / 16)
+
+  // 计算目标位置（屏幕中心）
+  const targetLeft = (window.innerWidth - targetWidth) / 2
+  const targetTop = (window.innerHeight - targetHeight) / 2
+
+  // 设置初始状态
+  videoPlayer.style.position = 'fixed'
+  videoPlayer.style.zIndex = '1001' // 确保在mask之上
+  videoPlayer.style.transformOrigin = 'top left'
+
+  // 执行动画 - 直接动画到目标位置和尺寸
+  animation = videoPlayer.animate([
+    {
+      left: `${originalRect.left}px`,
+      top: `${originalRect.top}px`,
+      width: `${originalRect.width}px`,
+      height: `${originalRect.height}px`,
+    },
+    {
+      left: `${targetLeft}px`,
+      top: `${targetTop}px`,
+      width: `${targetWidth}px`,
+      height: `${targetHeight}px`,
     }
-    animation = videoPlayerRef.value?.animate([
-      {
-        ...keyframe,
-        offset: 0,
-      },
-      {
-        ...keyframe,
-        width: '85vw',
-        offset: 1,
-      },
-    ], {
-      duration: 300,
-      easing: 'ease-in-out',
-      fill: 'forwards',
-    })
+  ], {
+    duration: 400,
+    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fill: 'forwards',
+  })
+}
+
+function exitFullscreen() {
+  if (!originalRect) return
+
+  const videoPlayer = videoPlayerRef.value
+  if (!videoPlayer) return
+
+  // 获取当前的计算样式
+  const currentStyles = window.getComputedStyle(videoPlayer)
+  const currentLeft = parseFloat(currentStyles.left) || 0
+  const currentTop = parseFloat(currentStyles.top) || 0
+  const currentWidth = parseFloat(currentStyles.width) || originalRect.width
+  const currentHeight = parseFloat(currentStyles.height) || originalRect.height
+
+  // 执行反向动画
+  const reverseAnimation = videoPlayer.animate([
+    {
+      left: `${currentLeft}px`,
+      top: `${currentTop}px`,
+      width: `${currentWidth}px`,
+      height: `${currentHeight}px`,
+    },
+    {
+      left: `${originalRect.left}px`,
+      top: `${originalRect.top}px`,
+      width: `${originalRect.width}px`,
+      height: `${originalRect.height}px`,
+    }
+  ], {
+    duration: 400,
+    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fill: 'forwards',
+  })
+
+  reverseAnimation.onfinish = () => {
+    // 恢复原始样式
+    videoPlayer.style.position = ''
+    videoPlayer.style.zIndex = ''
+    videoPlayer.style.left = ''
+    videoPlayer.style.top = ''
+    videoPlayer.style.width = ''
+    videoPlayer.style.height = ''
+    videoPlayer.style.transform = ''
+    videoPlayer.style.transformOrigin = ''
+
+    animation = undefined
+    originalRect = undefined
   }
 }
 
@@ -139,58 +220,78 @@ useEventListener(document, 'keydown', (e) => {
     togglePlay()
   }
 })
+
+// 监听窗口大小变化
+useEventListener(window, 'resize', () => {
+  if (isFullscreen.value && originalRect) {
+    // 如果在全屏状态下窗口大小发生变化，重新计算动画
+    exitFullscreen()
+    // 延迟一帧后重新进入全屏，确保新的窗口尺寸已经生效
+    nextTick(() => {
+      isFullscreen.value = true
+      enterFullscreen()
+    })
+  }
+})
+
 </script>
 
 <template>
-  <div ref="videoPlayer" class="video-player" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
-    <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause" @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay"
-      @error="onPlayError" />
+  <div ref="videoPlayer" class="video-player">
+    <div class="video-centent" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
+      <video ref="video" class="video" :src="src" :autoplay="autoplay" :muted="autoplay" loop @timeupdate="updateTime" @pause="onPause" @play="onPlay" @loadedmetadata="onLoadedMetadata"
+        @click="togglePlay" @error="onPlayError" />
 
-    <!-- 剩余播放时间 -->
-    <div v-if="!showControls && !isPlayError" class="remaining-time">
-      {{ remainingTime }}
-    </div>
+      <!-- 剩余播放时间 -->
+      <div v-if="!showControls && !isPlayError" class="remaining-time">
+        {{ remainingTime }}
+      </div>
 
-    <!-- 控件 -->
-    <div class="controls" :class="{ hide: !showControls || isPlayError }">
-      <!-- 进度条 -->
-      <input v-model="currentTime" type="range" min="0" :max="duration" step="any" @input="seek">
+      <!-- 控件 -->
+      <div class="controls" :class="{ hide: !showControls || isPlayError }">
+        <!-- 进度条 -->
+        <input v-model="currentTime" type="range" min="0" :max="duration" step="any" @input="seek">
 
-      <div class="control-tools">
-        <!-- 播放/暂停按钮 -->
-        <div :class="{ 'playing-btn': isPlaying }" class="control-btn" @click.stop="togglePlay">
-          <roxy-svg-icon :name="isPlaying ? 'base/rx_ic_pause2' : 'base/rx_ic_play'" size="24" />
-        </div>
-
-        <div class="control-right">
-          <!-- 时间显示 -->
-          <div class="time-text">
-            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+        <div class="control-tools">
+          <!-- 播放/暂停按钮 -->
+          <div :class="{ 'playing-btn': isPlaying }" class="control-btn" @click.stop="togglePlay">
+            <roxy-svg-icon :name="isPlaying ? 'base/rx_ic_pause2' : 'base/rx_ic_play'" size="24" />
           </div>
 
-          <!-- 全屏 -->
-          <div class="control-btn" @click="toggleFullscreen">
-            <roxy-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
+          <div class="control-right">
+            <!-- 时间显示 -->
+            <div class="time-text">
+              {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+            </div>
+            <div class="control-btn" @click="toggleVolume">
+              <roxy-svg-icon :name="isMuted ? 'base/rx_ic_volumn-mute' : 'base/rx_ic_volumn'" size="24" />
+            </div>
+
+            <!-- 全屏 -->
+            <div v-if="fullscreen" class="control-btn" @click="toggleFullscreen">
+              <roxy-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 播放错误蒙层 -->
+      <div v-if="isPlayError" class="play-error-mask">
+        <div class="play-error-mask-content">
+          <div class="play-error-mask-content-title">
+            {{ $t('视频加载失败!') }}
+          </div>
+          <div class="play-error-mask-content-text">
+            {{ $t('网络连接已断开。') }}
+          </div>
+          <div class="play-error-mask-content-btn" @click="reloadVideo">
+            <roxy-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
+            {{ isTryReLoading ? $t('加载中...') : $t('重试') }}
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 播放错误蒙层 -->
-    <div v-if="isPlayError" class="play-error-mask">
-      <div class="play-error-mask-content">
-        <div class="play-error-mask-content-title">
-          {{ $t('视频加载失败!') }}
-        </div>
-        <div class="play-error-mask-content-text">
-          {{ $t('网络连接已断开。') }}
-        </div>
-        <div class="play-error-mask-content-btn" @click="reloadVideo">
-          <roxy-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
-          {{ isTryReLoading ? $t('加载中...') : $t('重试') }}
-        </div>
-      </div>
-    </div>
+    <slot name="after"></slot>
   </div>
 </template>
 
@@ -227,17 +328,19 @@ input[type='range'] {
 }
 
 .video-player {
-  position: relative;
   width: 100%;
   transform-origin: center;
+}
+
+.video-centent {
+  position: relative;
+  width: 100%;
   border-radius: 8px;
   overflow: hidden;
-  // 不知为何底部会空出6px，所以需要clip-path
-  clip-path: inset(0 0 6px 0 round 0 0 8px 8px);
-  margin-bottom: -6px;
 }
 
 .video {
+  display: block;
   width: 100%;
 }
 
@@ -261,7 +364,7 @@ input[type='range'] {
 
 .controls {
   position: absolute;
-  bottom: 6px;
+  bottom: 0;
   left: 0;
   width: 100%;
   display: flex;

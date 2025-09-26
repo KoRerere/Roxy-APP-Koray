@@ -113,11 +113,11 @@ async function onPay() {
 <template>
   <div class="flex flex-col gap-9 pa-8 rounded-lg w-240 popup">
     <div class="flex items-center justify-between">
-      <span class="header">{{ $t('代理商店') }}</span>
+      <span class="header">{{ $t('续费代理 IP') }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="flex flex-col gap-3 h-76">
-      <div class="subtitle">{{ $t('您将要续费 {count} 个代理:', { count: dataList.length }) }}</div>
+      <div class="subtitle">{{ $t('您将要续费 {count} 个代理 IP:', { count: dataList.length }) }}</div>
       <RyTable class="proxies" :columns="columns" :data-list="dataList" :show-table-header="false" :paginator="false" :show-actions="false">
         <template #expired="{ data }">
           <div class="flex items-center gap-3">
@@ -131,9 +131,9 @@ async function onPay() {
     <div class="flex items-center gap-6">
       <div class="w-40 text-right subtitle">{{ $t('续费时长:') }}</div>
       <div class="flex gap-4">
-        <div v-for="item in periods" :key="item.value" class="px-5 py-2 cursor-pointer select-none period" :class="{ active: item.value === periodValue.value }" @click="periodValue = item">{{
-          item.label
-          }}</div>
+        <div v-for="item in periods" :key="item.value" class="px-5 py-2 cursor-pointer select-none period" :class="{ active: item.value === periodValue.value }" @click="periodValue = item">
+          {{ item.label }}
+        </div>
       </div>
     </div>
     <div class="separator"></div>

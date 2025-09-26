@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
 import { API } from '/@/api';
 import { $t } from '/@/locales';
 import Referal from './components/referal/index.vue'
@@ -33,7 +32,7 @@ const tabs = [
 const defaultTab = tabs.at(0)!
 const activeTabValue = ref(defaultTab.value)
 
-const promotionInfo = ref<UserGetPromotionInfoListData['data']>({} as any)
+const promotionInfo = ref()
 
 const activeTab = computed(() => {
   return tabs.find(n => n.value === activeTabValue.value)
@@ -61,7 +60,7 @@ provideReferralProgram({
   <div class="flex flex-col h-full w-full">
     <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs></RxTabs>
     <div class="flex flex-1 overflow-hidden">
-      <component :is="activeTab?.component" :promotionInfo />
+      <component v-if="promotionInfo" :is="activeTab?.component" :promotionInfo />
     </div>
   </div>
 

@@ -79,6 +79,7 @@ export function getRawColumns(options?: any) {
     {
       title: $t('服务商'),
       key: 'proxyProviderName',
+      getText: (data: any) => data.proxyProviderName || $t('官方赠送'),
       sortable: true,
     },
     {

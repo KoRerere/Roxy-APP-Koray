@@ -65,6 +65,8 @@ export interface MainMessage {
   'oauth2:google-callback': (payload: string) => void
   /** 邀请用户进入项目 */
   'invite:to-project': (payload: string) => void
+  /** 打开某个页面 */
+  'open:page': (payload: string) => void
   /** APP、patch、web 资源更新事件 */
   'app:resource-update': (payload: ResourceUpdateMessage) => void
   /** APP 启动时的消息 */

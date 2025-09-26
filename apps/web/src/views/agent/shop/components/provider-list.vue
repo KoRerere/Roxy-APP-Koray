@@ -1,13 +1,19 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import Redeem from '/@/views/pay/wallet/manage/redeem.vue'
 import currency from 'currency.js'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'success'])
+
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const currentProvider = defineModel()
 
 const providers = ref<Record<string, any>[]>()
+const redeemCode = ref('')
 
 onBeforeMount(() => {
   getProviders()
@@ -15,7 +21,7 @@ onBeforeMount(() => {
 
 async function getProviders() {
   const { data } = await API.proxy.userGetProxyProviderListList()
-  providers.value = data.map(item => ({ ...item, proxyPriceFmt: currency(item.proxyPrice).format() }))
+  providers.value = data.map(item => ({ ...item, proxyPriceFmt: currency(item.proxyPrice!).format() }))
 }
 
 function onBuy(item: any) {
@@ -25,16 +31,25 @@ function onBuy(item: any) {
 function onClose() {
   emit('close')
 }
+
+async function redeem() {
+  const { code, msg } = await API.proxy.userRedeemProxyCodeCreate({ code: redeemCode.value })
+  showToast(code, msg)
+  if (code !== 0) return
+  redeemCode.value = ''
+  emit('close')
+  emit('success')
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-9 pa-8 w-240">
     <div class="header">
       <div class="flex items-center justify-between">
-        <span class="header-title">{{ $t('代理商店') }}</span>
+        <span class="header-title">{{ $t('代理 IP 商店') }}</span>
         <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="onClose" />
       </div>
-      <div class="mt-2.5 header-desc">{{ $t('RoxyBrowser 为您精选、验证、集成了来自不同可靠服务商的最优质代理。') }}</div>
+      <div class="mt-2.5 header-desc">{{ $t('RoxyBrowser 为您精选、验证、集成了来自不同可靠服务商的最优质代理 IP。') }}</div>
     </div>
     <div class="flex flex-col gap-5">
       <div class="gap-5 content">
@@ -63,17 +78,28 @@ function onClose() {
             </div>
             <div class="mt-5 flex justify-between items-center">
               <div class="provider-price">{{ $t('Roxy 独家特惠: {amount} / IP', { amount: item.proxyPriceFmt }) }}</div>
-              <RxButton icon="base/rx_ic_cart" :label="$t('购买代理')" @click="onBuy(item)"></RxButton>
+              <RxButton icon="base/rx_ic_cart" :label="$t('购买代理 IP')" @click="onBuy(item)"></RxButton>
             </div>
           </div>
         </div>
         <div class="flex flex-col justify-center items-center gap-6 pa-6 connect">
           <div class="w-88 flex flex-col items-center gap-1.5">
-            <div class="connect-text">{{ $t('更多类型的优质代理即将推出...') }}</div>
-            <div class="connect-desc">{{ $t('我们将会为您集成更多高质量的服务商及代理，敬请期待！') }}</div>
+            <div class="connect-text">{{ $t('更多类型的优质代理 IP 即将推出...') }}</div>
+            <div class="connect-desc">{{ $t('我们将会为您集成更多高质量的代理 IP 服务，敬请期待！') }}</div>
           </div>
           <RxButton severity="secondary" outlined icon="base/rx_ic_headphone_2" :label="$t('联系我们')" @click="$showLiveChat"></RxButton>
         </div>
+      </div>
+    </div>
+    <RxDivider line-only line-style="dashed"></RxDivider>
+    <div class="flex justify-between items-center select-none">
+      <div class="flex flex-col gap-1.5">
+        <div class="redeem-title">{{ $t('兑换代理 IP') }}</div>
+        <div class="redeem-desc">{{ $t('从 Roxy 官方礼品或奖励中兑换代理 IP') }}</div>
+      </div>
+      <div class="flex gap-2.5">
+        <TsFormInputText class="!w-75" v-model="redeemCode" size="lg" :placeholder="$t('在此处粘贴兑换码')"></TsFormInputText>
+        <RxButton severity="secondary" variant="outlined" size="lg" :disabled="!redeemCode" :label="$t('兑换')" @click="redeem" />
       </div>
     </div>
   </div>
@@ -185,6 +211,21 @@ function onClose() {
     text-align: center;
     font-size: 13px;
     line-height: 18px;
+  }
+}
+
+.redeem {
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  &-desc {
+    color: var(--colors-text-text-secondary);
+    font-size: 14px;
+    line-height: 20px;
   }
 }
 </style>

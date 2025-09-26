@@ -18,6 +18,7 @@ interface Tab {
   noRead: number
 }
 
+const router = useRouter()
 const [showModal] = RxUseDialog()
 
 const pop = ref()
@@ -123,6 +124,8 @@ async function markAllAsRead() {
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
     showAcceptInvitationDialog(item)
+  } else if (item.type === '代理奖励通知') {
+    router.replace({ name: 'tutorial' })
   }
 }
 

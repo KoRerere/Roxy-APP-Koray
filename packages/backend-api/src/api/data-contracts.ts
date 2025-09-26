@@ -1872,80 +1872,35 @@ export interface UserGetCoreUpgradeCreateData {
 export interface UserGetUserConfigListData {
   code: number;
   data: {
-    /**
-     * 语言
-     * 语言
-     */
+    /** 语言 */
     language: string;
-    /**
-     * 时区
-     * 时区
-     */
+    /** 时区 */
     timeZone: string;
-    /**
-     * 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
-     * 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
-     */
+    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
     closeSoft: string;
-    /**
-     * 文件下载目录
-     * 文件下载目录
-     */
+    /** 文件下载目录 */
     uploadDir: string;
-    /**
-     * 文件缓存目录
-     * 文件缓存目录
-     */
+    /** 文件缓存目录 */
     cacheDir: string;
-    /**
-     * 缓存删除条件，5天前的
-     * 缓存删除条件，5天前的
-     */
+    /** 缓存删除条件，5天前的 */
     autoDelDays: string;
-    /**
-     * 缓存删除条件，2GB以上的
-     * 缓存删除条件，2GB以上的
-     */
+    /** 缓存删除条件，2GB以上的 */
     autoDelSize: string;
-    /**
-     * 性能监控，内存使用率%95以上时停止打开窗口
-     * 性能监控，内存使用率%95以上时停止打开窗口
-     */
+    /** 性能监控，内存使用率%95以上时停止打开窗口 */
     memoryLimit: string;
-    /**
-     * app 风格 0:系统 ,1:亮色,2:暗色
-     * app 风格 0:系统 ,1:亮色,2:暗色
-     */
+    /** app 风格 0:系统 ,1:亮色,2:暗色 */
     appearance: number;
-    /**
-     * 系统代理开关，true,false,默认true
-     * 系统代理开关，true,false,默认true
-     */
+    /** 系统代理开关，true,false,默认true */
     systemProxySwitch: boolean;
-    /**
-     * v2ray开关，true,false,默认true
-     * v2ray开关，true,false,默认true
-     */
+    /** v2ray开关，true,false,默认true */
     v2raySwitch: boolean;
-    /**
-     * ip检测
-     * ip检测
-     */
+    /** ip检测 */
     ipChecker: string;
-    /**
-     * 偏好设置
-     * 偏好设置
-     */
+    /** 偏好设置 */
     preferenceSettings: object;
-    /**
-     * 快捷键设置
-     * 快捷键设置
-     */
+    /** 快捷键设置 */
     keySettings: object;
-    /**
-     * 同步设置
-     * 同步设置
-     */
+    /** 同步设置 */
     syncSettings: object;
     /** 深色模式：auto | light | dark，默认值：system */
     colorScheme: string;
@@ -2549,34 +2504,28 @@ export interface CheckOtherDeviceLoginListData {
 export interface UserGetPromotionInfoListData {
   code: number;
   data: {
-    /** 可提现金额 */
     withdrawAmount: number;
-    /** 用户推广点击链接次数 */
     promotionClickCount: number;
-    /** 当天推广点击链接次数 */
     todayPromotionClickCount: number;
-    /** 已注册的用户数量 */
     registeredUserNum: number;
-    /** 当天注册的用户数量 */
     todayRegisteredUserNum: number;
-    /** 已下单购买成功的用户数量 */
     purchaseUserNum: number;
-    /** 当天下单购买成功的用户数量 */
     todayPurchaseUserNum: number;
-    /** 用户总收益 */
     totalIncome: number;
-    /** 当天收益 */
-    todayIncome: number;
-    /** 推荐用户的总交易额 */
     purchaseUserTotalAmount: number;
-    /** 待收益金额 */
     pendingAmount: number;
     promotionLinkList: {
-      promotionLink?: string;
-      linkType?: string;
+      isModify?: number;
       linkStatus?: number;
+      linkType?: string;
       promotionDiscount?: number;
+      promotionLink?: string;
+      purchaseTotalAmount?: number;
       userDiscount?: number;
+      /** 已经邀请人数 */
+      completed_count?: number;
+      /** 解锁需要总邀请人数 */
+      total_count?: number;
     }[];
   };
   msg: string;
@@ -2634,6 +2583,8 @@ export interface UserGetRewardRecordListListData {
       rewardStatus?: string;
       /** 支付时间 */
       payTime?: number;
+      /** 0：推广奖励数据 1：活动奖励数据（给什么展示什么） */
+      dataType?: number;
     }[];
   };
   msg: string;
@@ -2760,11 +2711,9 @@ export interface UserGetBannerPictureListV2ListParams {
 export interface UserGetBannerPictureListV2ListData {
   code: number;
   data: {
-    language: string;
-    images: {
-      size: string;
-      image: string;
-    }[];
+    image_1x: string;
+    image_2x: string;
+    size: string;
   }[];
   msg: string;
 }
@@ -3175,28 +3124,17 @@ export interface UserGetPromotionInfoByTypeListParams {
 export interface UserGetPromotionInfoByTypeListData {
   code: number;
   data: {
-    /** 可提现金额 */
-    withdrawAmount: number;
-    /** 用户推广点击链接次数 */
-    promotionClickCount: number;
-    /** 当天推广点击链接次数 */
-    todayPromotionClickCount: number;
-    /** 已注册的用户数量 */
-    registeredUserNum: number;
-    /** 当天注册的用户数量 */
-    todayRegisteredUserNum: number;
-    /** 已下单购买成功的用户数量 */
-    purchaseUserNum: number;
-    /** 当天下单购买成功的用户数量 */
-    todayPurchaseUserNum: number;
-    /** 用户总收益 */
-    totalIncome: number;
-    /** 当天收益 */
-    todayIncome: number;
-    /** 推荐用户的总交易额 */
-    purchaseUserTotalAmount: number;
+    awardsReviewed: number;
     /** 待收益金额 */
     pendingAmount: number;
+    /** 用户推广点击链接次数 */
+    promotionClickCount: number;
+    /** 已下单购买成功的用户数量 */
+    purchaseUserNum: number;
+    /** 推荐用户的总交易额 */
+    purchaseUserTotalAmount: number;
+    /** 已注册的用户数量 */
+    registeredUserNum: number;
   };
   msg: string;
 }
@@ -3210,6 +3148,100 @@ export interface UserUpdateDeviceNameCreatePayload {
 
 export interface UserUpdateDeviceNameCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserUpdateOnboardingTaskStatusCreatePayload {
+  /** 首次注册指引弹窗：False未完成 True已完成 */
+  firstRegisterGuideStatus?: boolean;
+  /** 隐藏侧边栏入口：False未完成 True已完成 */
+  hideSidebarEntryStatus?: boolean;
+  /** 右键操作点击指引：False未完成 True已完成 */
+  contextMenuGuideStatus?: boolean;
+  /** 保存筛选条件：False未完成 True已完成 */
+  saveFilterGuideStatus?: boolean;
+  /** 创建窗口视频入口：False未完成 True已完成 */
+  createProfileVideoEntryStatus?: boolean;
+}
+
+export interface UserUpdateOnboardingTaskStatusCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetGuideVideosByTypeListParams {
+  /**
+   * 不传查询全部
+   * create_profile: 创建窗口
+   * bind_proxy: 绑定代理
+   * invite_user_register: 邀请用户注册
+   * context_menu: 右键菜单
+   * manage_and_classify: 管理与分类（标签/项目等）
+   * advanced_filter: 高级筛选器
+   * account_management: 账号管理
+   * plugin_management: 插件管理
+   * synchronizer: 同步器
+   * team_management: 团队管理
+   * 查询类型 多个用，隔开
+   * @example "create_profile,bind_proxy"
+   */
+  type?: string;
+}
+
+export interface UserGetGuideVideosByTypeListData {
+  code: number;
+  data: {
+    create_profile: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    bind_proxy: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    invite_user_register: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    context_menu: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    manage_and_classify: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    advanced_filter: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    account_management: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    plugin_management: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    synchronizer: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    team_management: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+  };
   msg: string;
 }
 
@@ -4105,7 +4137,7 @@ export interface UserGetWindowInfoListListParams {
   labelIds?: string;
   /**
    * 账号平台（多选）,传数字ID
-   * @example "1,2,3"
+   * @example ["1,2,3"]
    */
   platformUrlIds?: string;
   /**
@@ -4150,6 +4182,11 @@ export interface UserGetWindowInfoListListParams {
    * @example "1111"
    */
   queryValue?: string;
+  /**
+   * 平台URL 多个使用英文逗号分隔, str, 非必传 (多选)
+   * @example "facebook"
+   */
+  platformUrls?: string;
 }
 
 export interface UserGetWindowInfoListListData {
@@ -4685,158 +4722,14 @@ export interface UserTransferWindowByWorkspaceIdCreateData {
   msg: string;
 }
 
-export interface UserGetPlatformInfoListParams {
-  /**
-   * 业务平台
-   * @example "amazon"
-   */
-  platformUrl?: string;
-}
-
-export interface UserGetPlatformInfoListData {
+export interface UserGetWindowPlatformAccountListListData {
   code: number;
   data: {
     rows: {
-      createTime?: string;
-      id?: number;
-      platformIcon?: string;
-      platformIconDark?: string;
       platformUrl?: string;
-      sort?: number;
-      updateTime?: string;
     }[];
+    total: number;
   };
-  msg: string;
-}
-
-export interface UserAddPlatformInfoCreatePayload {
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon: string;
-  /** 平台URL */
-  platformUrl: string;
-  /** 平台账号 */
-  platformUserName: string;
-  /** 平台密码 */
-  platformPassword: string;
-  /** 2FA密钥 */
-  platformEfa: string;
-  /** 平台cookeies */
-  platformCookies: string;
-  /** 平台名称 */
-  platformName: string;
-  /** 平台备注 */
-  platformRemarks: string;
-}
-
-export interface UserAddPlatformInfoCreateData {
-  code: number;
-  data: object;
-  msg: string;
-}
-
-export interface UserDelPlatformInfoCreatePayload {
-  /** 要删除的业务平台id列表 */
-  ids: number[];
-}
-
-export interface UserDelPlatformInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export type UserMdfPlatformInfoCreatePayload = {
-  /** 平台ID */
-  id?: number;
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon?: string;
-  /** 平台URL */
-  platformUrl?: string;
-  /** 平台账号 */
-  platformUserName?: string;
-  /** 平台密码 */
-  platformPassword?: string;
-  /** 2FA密钥 */
-  platformEfa?: string;
-  /** 平台cookeies */
-  platformCookies?: string;
-  /** 平台名称 */
-  platformName?: string;
-  /** 平台备注 */
-  platformRemarks?: string;
-}[];
-
-export interface UserMdfPlatformInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserUpdatePlatformTableRowsCreatePayload {
-  table_rows: {
-    /** 名称 */
-    name: string;
-    /** 排序 */
-    sort: number;
-    /** 状态 */
-    status: number;
-  }[];
-}
-
-export interface UserUpdatePlatformTableRowsCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserSavePlatformTableSortOrderCreatePayload {
-  table_sort: {
-    /** 名称 */
-    name?: string;
-    /** 判断降序还是升序 */
-    order?: string;
-  }[];
-}
-
-export interface UserSavePlatformTableSortOrderCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetPlatformTableRowsListData {
-  code: number;
-  data: {
-    /** 名称 */
-    name?: string;
-    /** 排序 */
-    sort?: number;
-    /** 状态 */
-    status?: number;
-  }[];
-  msg: string;
-}
-
-export interface UserGetPlatformTableSortOrderListData {
-  code: number;
-  data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序类型 */
-    order_type?: string;
-  }[];
-  msg: string;
-}
-
-export type UserAddPlatformInfoBatchCreatePayload = {
-  platformIcon: string;
-  platformIconDark: string;
-  platformUrl: string;
-  platformUserName: string;
-  platformPassword: string;
-  platformEfa: string;
-  platformRemarks: string;
-}[];
-
-export interface UserAddPlatformInfoBatchCreateData {
-  code: number;
-  data: object;
   msg: string;
 }
 
@@ -5170,20 +5063,14 @@ export interface UserGetTimezoneByCoordinatesInfoListData {
 export interface UserGetProxyProviderListListData {
   code: number;
   data: {
-    /** id */
     id?: number;
-    /** 创建时间 */
     createTime?: string;
+    proxyPrice?: number;
     proxyProviderAdv?: string[];
-    /** 代理供应商描述 */
     proxyProviderDesc?: string;
-    /** 代理供应商图标 */
     proxyProviderIcon?: string;
-    /** 代理供应商名称 */
     proxyProviderName?: string;
-    /** 代理供应商单个价格 */
     proxyProviderPrice?: number;
-    /** 代理供应商网址 */
     proxyProviderWebsite?: string;
   }[];
   msg: string;
@@ -5251,161 +5138,70 @@ export interface UserGetUserBuyProxyListListData {
   code: number;
   data: {
     rows: {
-      /**
-       * 绑定窗口数量
-       * 绑定窗口数量
-       */
+      /** 绑定窗口数量 */
       bindCount?: number;
-      /**
-       * 绑定的窗口信息
-       * 绑定的窗口信息
-       */
+      /** 是否展示退款 false 不展示 true 展示 */
+      canRefund?: boolean;
+      /** 绑定的窗口信息 */
       bindList?: string[];
-      /**
-       * 检测时间
-       * 检测时间
-       */
+      /** 检测时间 */
       checkTime?: null;
-      /**
-       * 创建时间
-       * 创建时间
-       */
+      /** 创建时间 */
       createTime?: string;
-      /**
-       * id
-       * id
-       */
+      /** id */
       id?: number;
-      /**
-       * 是否绑定
-       * 是否绑定
-       */
+      /** 是否绑定 */
       isBind?: boolean;
-      /**
-       * 商业用途
-       * 商业用途
-       */
+      /** 商业用途 */
       poxyBusinessPurpose?: string;
-      /**
-       * 代理检测地址
-       * 代理检测地址
-       */
+      /** 代理检测地址 */
       proxyCheckChannel?: string;
       checkChannelValue?: string;
-      /**
-       * 代理检测状态 0:未检测 1:成功 2:检测失败
-       * 代理检测状态 0:未检测 1:成功 2:检测失败
-       */
+      /** 代理检测状态 0:未检测 1:成功 2:检测失败 */
       checkStatus?: number;
-      /**
-       * 购买国家
-       * 购买国家
-       */
+      /** 购买国家 */
       country?: string;
-      /**
-       * 代理过期状态 0:已过期 1:使用中 2：快过期
-       * 代理过期状态 0:已过期 1:使用中 2：快过期
-       */
+      /** 代理过期状态 0:已过期 1:使用中 2：快过期 */
       proxyExpireStatus?: number;
-      /**
-       * 购买的IP
-       * 购买的IP
-       */
+      /** 购买的IP */
       host?: string;
-      /**
-       * IP类型
-       * IP类型
-       */
+      /** IP类型 */
       ipType?: string;
-      /**
-       * 出口城市
-       * 出口城市
-       */
+      /** 出口城市 */
       lastCity?: string;
-      /**
-       * 出口国家
-       * 出口国家
-       */
+      /** 出口国家 */
       lastCountry?: string;
-      /**
-       * 出口IP
-       * 出口IP
-       */
+      /** 出口IP */
       lastIp?: string;
-      /**
-       * 出口州/省
-       * 出口州/省
-       */
+      /** 出口州/省 */
       lastState?: string;
-      /**
-       * 代理密码
-       * 代理密码
-       */
+      /** 代理密码 */
       proxyPassword?: string;
-      /**
-       * 代理端口号
-       * 代理端口号
-       */
+      /** 代理端口号 */
       port?: string;
-      /**
-       * 代理协议
-       * 代理协议
-       */
+      /** 代理协议 */
       protocol?: string;
-      /**
-       * 供应商ID
-       * 供应商ID
-       */
+      /** 供应商ID */
       proxyProviderId?: number;
-      /**
-       * 供应商名称
-       * 供应商名称
-       */
+      /** 供应商名称 */
       proxyProviderName?: string;
-      /**
-       * 备注
-       * 备注
-       */
+      /** 备注 */
       remark?: string;
-      /**
-       * 代理用户名
-       * 代理用户名
-       */
+      /** 代理用户名 */
       proxyUserName?: string;
-      /**
-       * 续费时间
-       * 续费时间
-       */
+      /** 续费时间 */
       renewalTime?: null;
-      /**
-       * 修改时间
-       * 修改时间
-       */
+      /** 修改时间 */
       updateTime?: string;
-      /**
-       * 用户ID
-       * 用户ID
-       */
+      /** 用户ID */
       userId?: number;
-      /**
-       * 空间ID
-       * 空间ID
-       */
+      /** 空间ID */
       workspaceId?: number;
-      /**
-       * 过期时间
-       * 过期时间
-       */
+      /** 过期时间 */
       expireDate?: string;
-      /**
-       * 订单号
-       * 订单号
-       */
+      /** 订单号 */
       orderNo?: string;
-      /**
-       * 订单状态 0：配置中,1：已完成 2：退款中 3：更换中,
-       * 订单状态 0：配置中,1：已完成 2：退款中 3：更换中,
-       */
+      /** 订单状态 0：配置中,1：已完成 2：退款中 3：更换中, */
       orderStatus?: number;
       /** 代理更换状态 0未更换， 1已更换 */
       replaceStatus?: number;
@@ -5586,6 +5382,187 @@ export interface UserGetTimezoneByIpListData {
     /** 时区 */
     timezone: string;
   };
+  msg: string;
+}
+
+export interface UserGetPromotionRedeemCodeListListParams {
+  /**
+   * proxy:代理兑换码
+   * @example "proxy"
+   */
+  queryType?: string;
+}
+
+export interface UserGetPromotionRedeemCodeListListData {
+  code: number;
+  data: {
+    code: string;
+    country: string;
+    days: number;
+    count: number;
+  };
+  msg: string;
+}
+
+export type UserRedeemProxyCodeCreatePayload = object;
+
+export interface UserRedeemProxyCodeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPlatformInfoListParams {
+  /**
+   * 业务平台
+   * @example "amazon"
+   */
+  platformUrl?: string;
+}
+
+export interface UserGetPlatformInfoListData {
+  code: number;
+  data: {
+    rows: {
+      createTime?: string;
+      id?: number;
+      platformIcon?: string;
+      platformIconDark?: string;
+      platformUrl?: string;
+      sort?: number;
+      updateTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddPlatformInfoCreatePayload {
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
+  platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
+}
+
+export interface UserAddPlatformInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
+export interface UserDelPlatformInfoCreatePayload {
+  /** 要删除的业务平台id列表 */
+  ids: number[];
+}
+
+export interface UserDelPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export type UserMdfPlatformInfoCreatePayload = {
+  /** 平台ID */
+  id?: number;
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon?: string;
+  /** 平台URL */
+  platformUrl?: string;
+  /** 平台账号 */
+  platformUserName?: string;
+  /** 平台密码 */
+  platformPassword?: string;
+  /** 2FA密钥 */
+  platformEfa?: string;
+  /** 平台cookeies */
+  platformCookies?: string;
+  /** 平台名称 */
+  platformName?: string;
+  /** 平台备注 */
+  platformRemarks?: string;
+}[];
+
+export interface UserMdfPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUpdatePlatformTableRowsCreatePayload {
+  table_rows: {
+    /** 名称 */
+    name: string;
+    /** 排序 */
+    sort: number;
+    /** 状态 */
+    status: number;
+  }[];
+}
+
+export interface UserUpdatePlatformTableRowsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSavePlatformTableSortOrderCreatePayload {
+  table_sort: {
+    /** 名称 */
+    name?: string;
+    /** 判断降序还是升序 */
+    order?: string;
+  }[];
+}
+
+export interface UserSavePlatformTableSortOrderCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPlatformTableRowsListData {
+  code: number;
+  data: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetPlatformTableSortOrderListData {
+  code: number;
+  data: {
+    /** 排序名称 */
+    order_name?: string;
+    /** 排序类型 */
+    order_type?: string;
+  }[];
+  msg: string;
+}
+
+export type UserAddPlatformInfoBatchCreatePayload = {
+  platformIcon: string;
+  platformIconDark: string;
+  platformUrl: string;
+  platformUserName: string;
+  platformPassword: string;
+  platformEfa: string;
+  platformRemarks: string;
+}[];
+
+export interface UserAddPlatformInfoBatchCreateData {
+  code: number;
+  data: object;
   msg: string;
 }
 
@@ -6627,6 +6604,8 @@ export interface UserGetPurchaseRecordsInfoListData {
     rows: {
       /** 订单号 */
       orderNo?: string;
+      /** 是否隐藏金额 true 是 false 不是 */
+      showAmount?: boolean;
       /** 订单类型 */
       orderType?: string;
       /** 实际金额(美元) */
@@ -6659,190 +6638,79 @@ export interface UserGetPurchaseRecordsInfoListData {
 export interface UserGetUserPayInfoListData {
   code: number;
   data: {
-    /**
-     * 用户折扣
-     * 用户折扣
-     */
+    /** 用户折扣 */
     discount: number;
-    /**
-     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
-     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
-     */
+    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
     identity: string;
-    /**
-     * 已用空间数量
-     * 已用空间数量
-     */
+    /** 已用空间数量 */
     useWorkspaceCount: number;
-    /**
-     * 已用窗口数量
-     * 已用窗口数量
-     */
+    /** 已用窗口数量 */
     useWindowCount: number;
-    /**
-     * 已用成员数量
-     * 已用成员数量
-     */
+    /** 已用成员数量 */
     useMemberCount: number;
-    /**
-     * 最大窗口数量
-     * 最大窗口数量
-     */
+    /** 最大窗口数量 */
     maxWindowCount: number;
-    /**
-     * 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise)
-     * 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise)
-     */
+    /** 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise) */
     subLevel: string;
-    /**
-     * 订阅到期时间
-     * 订阅到期时间
-     */
+    /** 订阅到期时间 */
     subEndDate: number;
-    /**
-     * 最大成员数量
-     * 最大成员数量
-     */
+    /** 最大成员数量 */
     maxMemberCount: number;
-    /**
-     * 最大空间数量
-     * 最大空间数量
-     */
+    /** 最大空间数量 */
     maxWorkspaceCount: number;
-    /**
-     * 免费项目数量
-     * 免费项目数量
-     */
+    /** 免费项目数量 */
     freeProjectCount: number;
-    /**
-     * 已使用项目数量
-     * 已使用项目数量
-     */
+    /** 已使用项目数量 */
     useProjectCount: number;
-    /**
-     * 余额
-     * 余额
-     */
+    /** 余额 */
     balance: number;
-    /**
-     * 自动续费折扣
-     * 自动续费折扣
-     */
+    /** 自动续费折扣 */
     autoRenewDiscount: number;
-    /**
-     * 7天是否试用，0：未试用 1：已试用
-     * 7天是否试用，0：未试用 1：已试用
-     */
+    /** 7天是否试用，0：未试用 1：已试用 */
     isTrial: number;
-    /**
-     * '是否自动购买和续费,1:自动 0:人工',
-     * '是否自动购买和续费,1:自动 0:人工',
-     */
+    /** '是否自动购买和续费,1:自动 0:人工', */
     isAuto: number;
-    /**
-     * 实际金额
-     * 实际金额
-     */
+    /** 实际金额 */
     realAmount: string;
-    /**
-     * 订单号
-     * 订单号
-     */
+    /** 订单号 */
     orderNo: string;
-    /**
-     * 成员价格(美元)
-     * 成员价格(美元)
-     */
+    /** 成员价格(美元) */
     staffSinglePrice: number;
-    /**
-     * 空间价格(美元)
-     * 空间价格(美元)
-     */
+    /** 空间价格(美元) */
     workspaceSinglePrice: number;
-    /**
-     * 单个价格(美元)
-     * 单个价格(美元)
-     */
+    /** 单个价格(美元) */
     singlePrice: number;
-    /**
-     * 原始金额(美元)
-     * 原始金额(美元)
-     */
+    /** 原始金额(美元) */
     originalAmount: number;
-    /**
-     * 钱包优惠余额
-     * 钱包优惠余额
-     */
+    /** 钱包优惠余额 */
     walletDiscount: number;
-    /**
-     * 订阅到期
-     * 订阅到期
-     */
+    /** 订阅到期 */
     showSubExpiredDlg: boolean;
-    /**
-     * 付费墙显示
-     * 付费墙显示
-     */
+    /** 付费墙显示 */
     showPayWallDlg: boolean;
-    /**
-     * 自动续费降级接口状态判断 true:已降级，false：未降级
-     * 自动续费降级接口状态判断 true:已降级，false：未降级
-     */
+    /** 自动续费降级接口状态判断 true:已降级，false：未降级 */
     autoRenewDowngrade: boolean;
-    /**
-     * 购买窗口数量
-     * 购买窗口数量
-     */
+    /** 购买窗口数量 */
     purchaseWindowCount: number;
-    /**
-     * "免费窗口数量"
-     * "免费窗口数量"
-     */
+    /** "免费窗口数量" */
     freeWindowCount: number;
-    /**
-     * 今日已创建次数
-     * 今日已创建次数
-     */
+    /** 今日已创建次数 */
     createWindowTimes: number;
-    /**
-     * /今日总共可创建次数
-     * /今日总共可创建次数
-     */
+    /** /今日总共可创建次数 */
     totalCreateWindowTimes: number;
-    /**
-     * 今日打开次数
-     * 今日打开次数
-     */
+    /** 今日打开次数 */
     openWindowTimes: number;
-    /**
-     * 今日总共可打开次数
-     * 今日总共可打开次数
-     */
+    /** 今日总共可打开次数 */
     totalOpenWindowTimes: number;
-    /**
-     * GIft显示,false: 不显示，true:显示
-     * GIft显示,false: 不显示，true:显示
-     */
+    /** GIft显示,false: 不显示，true:显示 */
     showGiftDlg: boolean;
-    /**
-     * 服务器当前时间
-     * 服务器当前时间
-     */
+    /** 服务器当前时间 */
     subCurrentDate: number;
-    /**
-     * 日志保留时长
-     * 日志保留时长
-     */
+    /** 日志保留时长 */
     subscriptionLogDays: number;
-    /**
-     * 代理即将过期条数
-     * 代理即将过期条数
-     */
+    /** 代理即将过期条数 */
     proxyExpireCount: number;
-    /**
-     * 代理使用中条数
-     * 代理使用中条数
-     */
+    /** 代理使用中条数 */
     proxyUsingCount: number;
     /** 自动充值到钱包 */
     autoRecharge: number;
@@ -6850,6 +6718,28 @@ export interface UserGetUserPayInfoListData {
     logDays: number;
     /** api请求次数 */
     apiRate: number;
+    onboardingTaskStatus: {
+      /** 创建窗口任务状态 False未完成 True已完成 */
+      createProfileStatus: boolean;
+      /** 创建成员任务状态 False未完成 True已完成 */
+      createProxyStatus: boolean;
+      /** 邀请成员任务 False未完成 True已完成 */
+      inviteMemberStatus: boolean;
+      /** 首次注册指引弹窗：False未完成 True已完成 */
+      firstRegisterGuideStatus: boolean;
+      /** 隐藏侧边栏入口：False未完成 True已完成 */
+      hideSidebarEntryStatus: boolean;
+      /** 右键操作点击指引：False未完成 True已完成 */
+      contextMenuGuideStatus: boolean;
+      /** 保存筛选条件：False未完成 True已完成 */
+      saveFilterGuideStatus: boolean;
+      /** 创建窗口视频入口：False未完成 True已完成 */
+      createProfileVideoEntryStatus: boolean;
+      /** False未完成 True已完成 */
+      createProfileTourGuideStatus: boolean;
+      /** False未完成 True已完成 */
+      createProxyVideoEntryStatus: boolean;
+    };
   };
   msg: string;
 }

@@ -58,6 +58,7 @@ function toggleDrawer(addType: 'create' | 'list', item?: any) {
         isBatch: isBatch.value,
         createCount: createCount.value,
         accountType: accountType.value,
+        showRemark: false,
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: (formData: Record<string, any>) => {
 

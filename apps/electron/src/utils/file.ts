@@ -99,3 +99,14 @@ export async function unzipFile(zipFilePath: string, outputDir?: string) {
   outputDir ||= zipFilePath.replace(/\.zip$/, '')
   return fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
 }
+
+export async function getFolderSize(folderPath: string) {
+  const isFileExists = await fileExists(folderPath)
+  if (!isFileExists) {
+    return 0
+  }
+  // CommonJS 兼容处理
+  const _getFolderSize = (await import("get-folder-size")).default;
+
+  return _getFolderSize.loose(folderPath)
+}

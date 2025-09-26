@@ -254,7 +254,7 @@ export function setUserConfig(data: Record<string, any>) {
   })
 }
 
-async function initStore() {
+export async function initLocalConfig() {
   try {
     const encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
     // 解密数据
@@ -273,6 +273,15 @@ async function initStore() {
     } else {
       store.showLongTimeNotLoginTips = false
     }
+  }
+  catch (error) {
+    console.error('initLocalConfig', error)
+  }
+}
+
+async function initStore() {
+  try {
+    // await initLocalConfig()
     await fetchUserConfig()
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
     // if (!messages[store.language]) {

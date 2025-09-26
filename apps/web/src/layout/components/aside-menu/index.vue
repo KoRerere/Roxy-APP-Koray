@@ -20,13 +20,13 @@ defineProps({
 })
 
 const { handleBusinessCode } = useHandleBusinessCode()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
+const route = useRoute()
 const router = useRouter()
 const roleStore = useRoleStore()
-const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 const menuRoutes = getMenuRoutes()
-
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
@@ -81,12 +81,16 @@ function filterMenus(menus: RouteRecordRaw[]) {
 
 async function toCreateBrowser() {
   const { code, msg } = await API.window.userCheckWindowTotalCountList()
-  if (code === 0) {
-    router.push({ name: 'browser-create' })
+  if (code !== 0) {
+    handleBusinessCode(code, () => onlyErrorToast(code, msg))
+    return
+  }
+
+  // 项目中创建窗口，方便自动关联项目选择
+  if (route.name === 'project-item') {
+    router.push({ name: 'browser-create', query: { projectId: route.params.id } })
   } else {
-    handleBusinessCode(code, () => {
-      showToast(code, msg)
-    })
+    router.push({ name: 'browser-create' })
   }
 }
 </script>

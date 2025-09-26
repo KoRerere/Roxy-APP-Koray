@@ -204,38 +204,15 @@ export enum ParseMode {
   three, // 主机:端口
 }
 
-export function parseProxyUrl(url: string, mode?: ParseMode): ProxyObject {
-  mode = mode ?? ParseMode.one
-  if (mode === ParseMode.one || mode === ParseMode.two) {
-    return parseProxyUrlOne(url)
-  }
-  else {
-    return parseProxyUrlThree(url)
-  }
-}
-
-function parseProxyUrlOne(url: string): ProxyObject {
-  const regex = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:\[\]\{\}]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+export function parseProxyUrl(url: string, mode = ParseMode.one): ProxyObject {
+  const regex1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:\[\]\{\}]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+  const regex2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port2>\d+):(?<user2>[^:\[\]\{\}]+):(?<pass2>[^:\[\]\{\}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+  const regex = [ParseMode.one, ParseMode.two].includes(mode) ? regex1 : regex2
 
   const match = url.match(regex)
   const data = match?.groups
   return {
     protocol: data?.protocol,
-    host: data?.host,
-    port: data?.port,
-    proxyUserName: data?.user,
-    proxyPassword: data?.pass,
-    refreshUrl: data?.refresh,
-    remark: data?.remark,
-  }
-}
-
-function parseProxyUrlThree(url: string): ProxyObject {
-  const regex = /^(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
-
-  const match = url.match(regex)
-  const data = match?.groups
-  return {
     host: data?.host,
     port: data?.port,
     proxyUserName: data?.user,

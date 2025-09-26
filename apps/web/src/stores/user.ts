@@ -6,6 +6,8 @@ import { API } from "/@/api";
 import { $t } from "/@/locales";
 import { useSimpleLocale } from "/@/stores/locale";
 import { useWorkspaceStore } from "/@/stores/workspace";
+import { useTutorialStore } from "/@/stores/tutorial";
+
 import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
 import { useToast } from "primevue/usetoast";
@@ -24,6 +26,7 @@ export const useUserStore = defineStore(
     const toast = useToast()
     const locale = useSimpleLocale();
     const workspaceStore = useWorkspaceStore();
+    const tutorialStore = useTutorialStore();
     const roleStore = useRoleStore();
 
     // 登录方式
@@ -132,6 +135,11 @@ export const useUserStore = defineStore(
           userName: userInfo.value.userName!,
           email: userInfo.value.email!,
         });
+        const openPageUrl = sessionStorage.getItem('openPageUrl')
+        if (openPageUrl) {
+          sessionStorage.removeItem('openPageUrl')
+          router.push(openPageUrl)
+        }
       });
 
       requestIdleCallback(async () => {
@@ -165,6 +173,7 @@ export const useUserStore = defineStore(
       electronAPI.send('user:logout')
       mixpanel.reset()
       workspaceStore.resetWorkspace()
+      tutorialStore.resetVideoMaps()
     }
 
     async function getUserConfig(force = false) {
@@ -174,16 +183,18 @@ export const useUserStore = defineStore(
       return updateUserConfig();
     }
 
-    function setLoginWay(way: 'password' | OauthLoginType) {
-      loginWay.value = way
-    }
-
     async function updateUserConfig() {
       const { code, data } = await API.base.userGetUserConfigList();
       if (code === 0) {
         userConfig.value = data;
       }
       return userConfig.value;
+    }
+
+    async function setUserConfig(config: UserConfig) {
+      const { code } = await API.base.userSetUserConfigCreate(config)
+      if (code !== 0) return
+      updateUserConfig()
     }
 
     /** 获取用户付费详情 */
@@ -259,6 +270,10 @@ export const useUserStore = defineStore(
       password.value = ''
     }
 
+    function setLoginWay(way: 'password' | OauthLoginType) {
+      loginWay.value = way
+    }
+
     return {
       token,
       loginWay,
@@ -276,6 +291,7 @@ export const useUserStore = defineStore(
       clearUserInfo,
       setToken,
       getUserInfo,
+      setUserConfig,
       getUserConfig,
       updateUserConfig,
       fetchUserInfo,

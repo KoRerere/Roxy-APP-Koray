@@ -164,7 +164,7 @@ onMounted(() => {
     height: 36px;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-    background: var(--colors-background-bg-app, #fff);
+    background: var(--colors-background-bg-block);
 
     &-image {
       width: 100%;

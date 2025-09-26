@@ -139,7 +139,7 @@ checkExtensionInfo()
     gap: 13.333px;
     border-radius: 8px;
     border: 1px solid var(--colors-border-border-base, #C7CDD1);
-    background: var(--colors-background-bg-app, #FFF);
+    background: var(--colors-background-bg-block);
 
     img {
       display: flex;

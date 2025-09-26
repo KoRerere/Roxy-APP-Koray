@@ -27,6 +27,7 @@ import { getDictMap } from "/@/utils";
 let timer: any = null
 const showTooltipDelay = 60 * 1000
 const route = useRoute()
+const router = useRouter()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const showTooltip = ref(false)
 
@@ -60,8 +61,15 @@ const items = ref([
     }
   },
   {
-    label: $t('帮助中心'),
+    label: $t('新手教程'),
     icon: 'base/rx_ic_books',
+    command: () => {
+      router.replace({ name: 'tutorial' })
+    }
+  },
+  {
+    label: $t('帮助文档'),
+    icon: 'base/rx_ic_doc_article',
     command: () => window.open(`https://faq.roxybrowser.com/${currentLocale.split('-')[0]}`, '_blank')
   },
   {

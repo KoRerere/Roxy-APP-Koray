@@ -19,6 +19,8 @@ import {
   UserCheckWindowProxyStatusCreatePayload,
   UserDelProxyModuleV2CreateData,
   UserDelProxyModuleV2CreatePayload,
+  UserGetPromotionRedeemCodeListListData,
+  UserGetPromotionRedeemCodeListListParams,
   UserGetProxyAllCountriesListData,
   UserGetProxyAllCountriesListParams,
   UserGetProxyBusinessUseListListData,
@@ -45,6 +47,8 @@ import {
   UserMdfUserBuyProxyRemarkCreatePayload,
   UserProxyRefundOrReplaceCreateData,
   UserProxyRefundOrReplaceCreatePayload,
+  UserRedeemProxyCodeCreateData,
+  UserRedeemProxyCodeCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
   UserUpdateProxyTableRowsCreateData,
@@ -481,6 +485,47 @@ export class ProxyApi<SecurityDataType = unknown> {
       path: `/user_get_timezone_by_ip`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetPromotionRedeemCodeListList
+   * @summary 查询未使用的代理IP活动兑换码
+   * @request GET:/user_get_promotion_redeem_code_list
+   * @response `200` `UserGetPromotionRedeemCodeListListData`
+   */
+  userGetPromotionRedeemCodeListList = (
+    query: UserGetPromotionRedeemCodeListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPromotionRedeemCodeListListData, any>({
+      path: `/user_get_promotion_redeem_code_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserRedeemProxyCodeCreate
+   * @summary 代理IP奖励兑换
+   * @request POST:/user_redeem_proxy_code
+   * @response `200` `UserRedeemProxyCodeCreateData`
+   */
+  userRedeemProxyCodeCreate = (
+    data: UserRedeemProxyCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRedeemProxyCodeCreateData, any>({
+      path: `/user_redeem_proxy_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

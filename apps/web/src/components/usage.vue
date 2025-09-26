@@ -9,7 +9,7 @@ const {
   ratio,
   blockCount,
   defaultColor = 'var(--pattern-sidenav-metrics-progress)',
-  shape = 'rect'
+  shape = 'rect',
 } = defineProps<{
   /** 比值 */
   ratio: number
@@ -40,12 +40,10 @@ const colorLevel = computed(() => {
 </script>
 
 <template>
-  <div v-if="shape === 'rect'" class="usage">
-    <template v-for="num in blockCount" :key="num">
-      <div class="color-block" :class="{ 'color-level': num <= percent, 'last-item': num === percent && decimal % 1 }" />
-    </template>
+  <div v-if="shape === 'rect'" class="flex items-center self-stretch gap-0.5">
+    <div v-for="num in blockCount" :key="num" class="color-block" :class="{ 'color-level': num <= percent, 'last-item': num === percent && decimal % 1 }" />
   </div>
-  <div v-else-if="shape === 'circle'">
+  <div v-else-if="shape === 'circle'" class="circle">
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
       <g>
         <path d="M9.10081 11.5344C10.2587 9.94061 11.8234 8.68707 13.6314 7.9047C15.4393 7.12233 17.4242 6.83983 19.3787 7.08674"
@@ -64,36 +62,29 @@ const colorLevel = computed(() => {
 </template>
 
 <style lang="scss" scoped>
-.usage {
-  display: flex;
-  align-items: flex-start;
-  gap: 2px;
-  align-self: stretch;
+.color-block {
+  height: 8px;
+  flex: 1 0 0;
+  background: v-bind('defaultColor');
 
-  .color-block {
-    height: 8px;
-    flex: 1 0 0;
-    background: v-bind('defaultColor');
+  &:first-of-type {
+    border-radius: 6px 0px 0px 6px;
+  }
 
-    &:first-of-type {
-      border-radius: 6px 0px 0px 6px;
-    }
+  &:last-of-type {
+    border-radius: 0px 6px 6px 0px;
+  }
 
-    &:last-of-type {
-      border-radius: 0px 6px 6px 0px;
-    }
+  &.color-level {
+    background-color: v-bind('colorLevel.normal');
 
-    &.color-level {
-      background-color: v-bind('colorLevel.normal');
-
-      &.last-item {
-        background-color: v-bind('colorLevel.weak');
-      }
+    &.last-item {
+      background-color: v-bind('colorLevel.weak');
     }
   }
 }
 
-svg {
+.circle {
   path {
     stroke: v-bind('defaultColor');
   }

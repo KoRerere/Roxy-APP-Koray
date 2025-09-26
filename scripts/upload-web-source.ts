@@ -117,27 +117,31 @@ function getCurrentFormattedTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-startUpload()
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
+
+if (isProd) {
+  rl.question('您正准备发正式环境，请输入 1234 确认（这只是简单的验证，防止不小心执行错命令）：', (answer) => {
+    if (answer === '1234') {
+      startUpload()
+        .catch((err) => {
+          console.error(err);
+          process.exit(1);
+        })
+        .finally(() => {
+          rl.close()
+          process.exit(0);
+        });
+    } else {
+      console.log('输入错误，请重新输入');
+      rl.close()
+    }
   })
-  .finally(() => {
-    process.exit(0);
-  });
-// if (isProd) {
-//   rl.question('最低支持的 APP 版本： ', (version) => {
-//     if (version) {
-//       console.log(`最低支持的 APP 版本：${version}`)
-//     }
-//     else {
-//       console.log('未输入最低支持的 APP 版本，将默认为 0.0.0')
-//     }
-//     startUpload(version || '0.0.0')
-//     rl.close()
-//   })
-// } else {
-//   startUpload('0.0.0').finally(() => {
-//     process.exit(0)
-//   })
-// }
+} else {
+  startUpload()
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    })
+    .finally(() => {
+      process.exit(0);
+    });
+}

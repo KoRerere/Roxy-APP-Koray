@@ -2,6 +2,7 @@
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -16,6 +17,9 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getSort
 import { useUserStore } from '/@/stores/user'
 import { ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
+import { useTutorialStore } from '/@/stores/tutorial';
+
+
 
 const route = useRoute()
 const router = useRouter()
@@ -27,7 +31,9 @@ const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy } = useProxy()
 const [showModal] = useDialog()
+const { getVideoMaps } = useTutorialStore()
 
+const videoData = ref()
 const tableRef = useTemplateRef('shoptable')
 const filtersMenu = ref()
 const dataList = ref()
@@ -70,6 +76,10 @@ const filters = reactive({
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.proxy_management
+    })
 })
 
 async function getTableList(params: any) {
@@ -100,13 +110,13 @@ async function operationHandler(operate: any, data: ProxyItem) {
 function onBuyProxy() {
   buyProxy(orderInfo => {
     onRefreshTable()
-    setNewOrderNo(orderInfo.orderNo)
+    setNewOrderNo(orderInfo?.orderNo)
   })
 }
 
 async function testAllProxy() {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理'))
+    onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
   await onCheckProxyStatus(dataList.value, 'test')
@@ -239,7 +249,7 @@ function setNewOrderNo(value: string) {
                   <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
                     :false-value="hideTypeConfig.falseValue" @change="filters.onChange" />
                   <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
-                    $t('隐藏不可用代理') }}</label>
+                    $t('隐藏不可用代理 IP') }}</label>
                 </div>
               </div>
               <div class="flex items-center gap-1.5">
@@ -255,13 +265,14 @@ function setNewOrderNo(value: string) {
           </div>
         </template>
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此购买代理，并更方便地与窗口进行绑定。')">
+          <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此购买代理 IP，并更方便地与窗口进行绑定。')">
             <template #extra>
-              <div class="flex items-center gap-3">
+              <div class="flex gap-3">
                 <RxButton v-if="isOwner" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy" />
+                <PlayVideo size="xs" v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
               </div>
             </template>
-          </CustomEmpty>
+          </CustomNewEmpty>
         </template>
         <template #outbound="{ data }">
           <div class="flex items-center gap-2.5">

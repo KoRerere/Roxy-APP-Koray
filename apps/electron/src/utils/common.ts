@@ -1,6 +1,7 @@
 import { app, } from 'electron'
 import { osConfig, } from '/@/constants'
 import { userInfo } from 'node:os'
+import { URL } from "node:url";
 import { createHash, randomUUID } from 'node:crypto'
 import { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { detectNetwork } from '/@/utils'
@@ -41,6 +42,13 @@ export function safeParseJSON(str: string, fallback?: () => any) {
   }
 }
 
+export function safeGetURL(url: string) {
+  try {
+    return new URL(url)
+  } catch (error) {
+    return null
+  }
+}
 
 /** 2fa 剩余有效时间 */
 export const calculateRemainingTime = (timeStep = 30) => {

@@ -15,12 +15,6 @@ import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setR
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getColumns } from './columns'
 
-const emit = defineEmits(['cancel', 'save'])
-const confirm = useConfirm()
-const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const [showToast, onlyErrorToast] = useResponseToast()
-const userStore = useUserStore()
-
 interface ProxyItem {
   checkChannel?: string
   checkChannelValue?: string
@@ -48,6 +42,15 @@ interface IpCheckerConfig {
   onChange: () => void
 }
 
+const { onConfirm } = defineProps<{
+  onConfirm: (data: ProxyItem[]) => Promise<void> | void
+}>()
+
+const confirm = useConfirm()
+const { getUserConfig } = useUserStore()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
+const [showToast, onlyErrorToast] = useResponseToast()
+
 const proxiesText = ref('')
 const dataList = ref<ProxyItem[]>([])
 const isDuplicate = ref(true)
@@ -57,13 +60,11 @@ const filterCount = ref(0)
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 const protocolOptions = ref<any[]>([])
 const protocolValue = ref()
-const parserTypeOptions = computed(() => {
-  return [
-    { label: $t('主机:端口'), value: ParseMode.one },
-    { label: $t('主机:端口:用户名:密码'), value: ParseMode.two },
-    { label: $t('用户名:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.three },
-  ]
-})
+const parserTypeOptions = [
+  { label: $t('主机:端口'), value: ParseMode.one },
+  { label: $t('主机:端口:用户名:密码'), value: ParseMode.two },
+  { label: $t('用户名:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.three },
+]
 const parserType = ref(ParseMode.one)
 const ipTypeOptions = ref<any[]>([])
 const ipType = ref()
@@ -113,8 +114,7 @@ const missMessage = computed(() => {
 })
 
 onBeforeMount(async () => {
-  const $dict_map = await getDictMap()
-  const userConfig = await userStore.getUserConfig()
+  const [$dict_map, userConfig] = await Promise.all([getDictMap(), getUserConfig()])
   ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
   protocolOptions.value = $dict_map.protocol
@@ -264,7 +264,7 @@ function clearProxy() {
 
 async function testAllProxy() {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理'))
+    onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
   await testProxy(dataList.value, 'test')
@@ -290,26 +290,27 @@ function deleteFailProxy() {
   })
 }
 
-function onSave() {
+async function onSave() {
   const list = dataList.value.map(item => ({
     ...item,
     checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
   }))
 
   if (!list.some(item => item._missIndex)) {
-    emit('save', list)
+    await onConfirm(list)
     return
   }
+
+  const { promise, resolve } = Promise.withResolvers<void>();
 
   const { success, miss } = list.reduce((data, item) => {
     if (item._missIndex) {
       data.miss.push(item)
-    }
-    else {
+    } else {
       data.success.push(item)
     }
     return data
-  }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
+  }, { success: [], miss: [] } as Record<string, ProxyItem[]>)
 
   confirm.require({
     header: $t('警告'),
@@ -323,10 +324,13 @@ function onSave() {
       label: $t('确认'),
       severity: 'info',
     },
-    accept: () => {
-      emit('save', success)
+    accept: async () => {
+      await onConfirm(success)
+      resolve()
     },
+    reject: resolve,
   })
+  return promise
 }
 </script>
 

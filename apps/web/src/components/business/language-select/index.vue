@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
 import LiveChat from '/@/components/business/live-chat/index.vue'
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { ISO639List } from '/@/constants/iso-639'
 import { useSimpleLocale } from '/@/stores/locale'
 
@@ -21,13 +20,11 @@ watch(() => currentLocale.value, (val) => {
     <div variant="text" class="help-btn">
       <LiveChat class="live-chat">
         <SvgIcon name="base/rx_ic_headphone_2" color="var(--colors-icon-icon-secondary)" />
-        <span class="text-[var(--colors-text-text-primary)]">
-          {{ $t('帮助') }}
-        </span>
+        <span class="help">{{ $t('帮助') }}</span>
       </LiveChat>
     </div>
 
-    <RxInputSelect v-model="currentLocale" name="language" :options="ISO639" :filter="false" class="md:w-36" />
+    <TsFormSelect v-model="currentLocale" :options="ISO639" :filter="false" class="md:w-36" />
 
     <component is="style">
       #chat-widget-container {
@@ -69,5 +66,12 @@ watch(() => currentLocale.value, (val) => {
       color: white;
     }
   }
+}
+
+.help {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
 }
 </style>

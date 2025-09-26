@@ -9,6 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
+import { emitter } from "/@/utils/eventBus";
 
 const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME);
 
@@ -59,6 +60,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
       electronAPI.send('app:restartAPIServer')
+      if (userStore?.userPayInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
+        emitter.emit('showUserGuideDialog')
+      }
     }, 1200)
   }, { flush: 'post' })
 

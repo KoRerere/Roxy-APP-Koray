@@ -85,6 +85,8 @@ import {
   UserGetCoreUpgradeCreatePayload,
   UserGetDefConfigListData,
   UserGetDictVersionListData,
+  UserGetGuideVideosByTypeListData,
+  UserGetGuideVideosByTypeListParams,
   UserGetInviteCodeListData,
   UserGetInviteLinkListData,
   UserGetInviteUserListV2ListData,
@@ -132,6 +134,8 @@ import {
   UserUnbindEmailCreatePayload,
   UserUpdateDeviceNameCreateData,
   UserUpdateDeviceNameCreatePayload,
+  UserUpdateOnboardingTaskStatusCreateData,
+  UserUpdateOnboardingTaskStatusCreatePayload,
   UserUpdateValidatorTokenCreateData,
   UserUpdateValidatorTokenCreatePayload,
   UserUploadAvatarCreateData,
@@ -1676,6 +1680,47 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserUpdateOnboardingTaskStatusCreate
+   * @summary 更新引导状态
+   * @request POST:/user_update_onboarding_task_status
+   * @response `200` `UserUpdateOnboardingTaskStatusCreateData`
+   */
+  userUpdateOnboardingTaskStatusCreate = (
+    data: UserUpdateOnboardingTaskStatusCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdateOnboardingTaskStatusCreateData, any>({
+      path: `/user_update_onboarding_task_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetGuideVideosByTypeList
+   * @summary 通过类型查询引导视频
+   * @request GET:/user_get_guide_videos_by_type
+   * @response `200` `UserGetGuideVideosByTypeListData`
+   */
+  userGetGuideVideosByTypeList = (
+    query: UserGetGuideVideosByTypeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetGuideVideosByTypeListData, any>({
+      path: `/user_get_guide_videos_by_type`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

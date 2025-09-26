@@ -628,6 +628,10 @@ function initBodyrow(options: any) {
     height: 40px;
   }
 
+  :global(.p-datatable-scrollable-table > .p-datatable-thead) {
+    z-index: 2;
+  }
+
   :global(.row-disabled) {
     pointer-events: none;
     opacity: var(--disabled-opacity);

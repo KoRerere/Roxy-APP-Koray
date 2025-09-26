@@ -1,5 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="tsx">
+import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
@@ -41,8 +43,10 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import ProfileName from './components/profile-name.vue'
+import { useTutorialStore } from '/@/stores/tutorial';
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -62,8 +66,9 @@ const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, userConfig } = storeToRefs(useUserStore())
+const { userInfo, userPayInfo, userConfig } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
+const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const { getProjects } = useMateGroup()
 const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -71,6 +76,7 @@ const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { getVideoMaps } = useTutorialStore()
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -79,6 +85,7 @@ const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
+const videoData = ref()
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
@@ -110,6 +117,10 @@ onBeforeMount(() => {
   canceCloselListener = listenCloseMessage()
   canceCloseSyncingDataListener = listenCloseSyncingDataMessage()
 
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.create_profile
+    })
   // 列表备注显示状态现在保存到后台
   updateColumns((columns) => {
     const column = columns.find(column => column.key === 'note')
@@ -185,11 +196,6 @@ async function saveFilters(formData: any) {
   }
   onlyErrorToast(code, msg)
 }
-
-// async function coverDefaultDisplay() {
-//   warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
-//     .then(() => { })
-// }
 
 async function tableRequest(params: any) {
   // 0: 未删除
@@ -389,17 +395,38 @@ function onOpenBrowser(datas: Data[]) {
   }
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
-  show(event, {
-    operation,
-    operationHandler: async (operate: any) => {
-      try {
-        const _operate = { ...deepClone(toRaw(operate)), _event: event }
-        await operationHandler(_operate, data)
+function showOperationMenu(props: { event: Event, operation: any[] }, data: any) {
+  if (userPayInfo.value.onboardingTaskStatus?.contextMenuGuideStatus) {
+    show(props.event, {
+      operation: props.operation,
+      operationHandler: async (operate: any) => {
+        try {
+          const _operate = { ...deepClone(toRaw(operate)), _event: props.event }
+          await operationHandler(_operate, data)
+        }
+        catch (error) {
+          console.log(error)
+        }
       }
-      catch (error) {
-        console.log(error)
-      }
+    })
+    return
+  }
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    handleCancel: () => updateOnboardingTaskStatus({ contextMenuGuideStatus: true }),
+    slots: {
+      container: ({ hideModal }) => <GuideModal
+        title={$t('鼠标右键编辑')}
+        desc={({ class: className }) => {
+          return <div class={className}>{$t('绝大多数的 RoxyBrowser 列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
+        }}
+        video="/public/video/right-click.mp4"
+        onClose={hideModal}
+        onConfirm={hideModal}
+      ></GuideModal>
     },
   })
 }
@@ -937,6 +964,7 @@ async function batchModifyWindow(params: any, silent = false) {
 
 function showDiskSpaceModal() {
   showModal({
+    header: $t('磁盘空间不足'),
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -1001,23 +1029,23 @@ defineExpose({
   <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
     :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table" removableSort>
     <template #filter-after>
-      <div class="flex items-start gap-2">
-        <div class="w-35">
-          <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
-        </div>
+      <div class="w-full flex items-start gap-2">
+        <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
         <RxDivider class="py-1" vertical line-only></RxDivider>
-        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/public/video/profile-filter.mp4" :save-filters="saveFilters"
+          @filter-change="onRefreshTable" />
       </div>
     </template>
     <template #table-empty>
       <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
-      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
+      <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
         <template #extra>
-          <div class="flex items-center gap-3">
-            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
+          <div class="flex gap-3">
+            <RxButton v-if="!role.isViewer" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
+            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
           </div>
         </template>
-      </CustomEmpty>
+      </CustomNewEmpty>
     </template>
     <template #profile="{ data }">
       <template v-if="data.id">

@@ -39,6 +39,7 @@ const attrs = useAttrs()
 
 <style lang="scss" scoped>
 :deep(.p-textarea) {
+  display: block;
   resize: vertical;
   color: var(--colors-text-text-primary, #111213);
   font-family: Inter;

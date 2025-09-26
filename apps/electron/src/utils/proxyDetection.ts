@@ -14,6 +14,7 @@ import {
 } from "/@/modules/roxynet";
 import { store } from "/@/modules/store";
 import { getSystemProxy } from "/@/utils/getSystemProxy";
+import { safeGetURL } from "/@/utils/common";
 
 export interface ProxyDetectionResult {
   ip: string;
@@ -173,15 +174,15 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       proxyCategory: __protocol,
       host: isUseSystemProxy ? "127.0.0.1" : host,
       port: isUseSystemProxy ? store.roxynetProxyPort : port,
-      proxyUserName: isUseSystemProxy ? dirId : proxyUserName,
-      proxyPassword: isUseSystemProxy ? dirId : proxyPassword,
+      proxyUserName: isUseSystemProxy ? dirId! : proxyUserName,
+      proxyPassword: isUseSystemProxy ? dirId! : proxyPassword,
       checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
     };
 
     // console.log('proxyDetectionParams', proxyDetectionParams)
     const checkMode = getCheckFunction(params.proxyCategory);
     console.log("proxyDetection params", params);
-    const result = await checkMode(params, isUseSystemProxy).catch((error) => {
+    const result = await checkMode(params, !!isUseSystemProxy).catch((error) => {
       Reflect.deleteProperty(error, 'config')
       console.error("proxyDetection error", error);
       return Promise.reject($t("代理检测失败"));
@@ -191,33 +192,29 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
     // 下面为什么会有这么多的判断？因为不同的检测渠道返回的数据字段名不一样，所以需要做一些兼容处理
     if (result) {
+      if (!result.city || typeof result.city !== 'string') result.city = result.city_name;
+      if (!result.region || typeof result.region !== 'string') result.region = result.region_name;
+      if (!result.country || typeof result.country !== 'string') result.country = result.country_name || result.country_long;
+
       result.checkChannel = params.checkChannel;
       result.ip ||= result.query;
-      result.region ||= result.region_name;
-      result.city ||= result.city_name;
-      result.country ||= result.country_name || result.country_long;
       result.country_code ||= result.country_short || result.countryCode;
       result.timezone ||= result.time_zone;
       result.latitude ||= result.lat;
       result.longitude ||= result.lon;
 
-      // if (ipType === `IPV6`) {
-      const { code, data } = await API.proxy
-        .userGetTimezoneByIpList({
-          ip: result.ip,
-          // longitude: result.longitude,
-        })
-        .catch((error) => {
-          console.log(
-            `获取时区失败 === user_get_timezone_by_ip`,
-            error,
-          );
-          return { code: 1, data: { timezone: "" } };
-        });
-      if (code === 0) {
-        result.timezone = data.timezone;
+      // 如果检测渠道不是 ip-api，则获取时区
+      if (!safeGetURL(result.checkChannel)?.host.toLocaleLowerCase().includes('ip-api')) {
+        const { code, data } = await API.proxy
+          .userGetTimezoneByIpList({ ip: result.ip })
+          .catch((error) => {
+            console.log(`获取时区失败 === user_get_timezone_by_ip`, error);
+            return { code: 1, data: { timezone: "" } };
+          });
+        if (code === 0) {
+          result.timezone = data.timezone;
+        }
       }
-      // }
     }
 
     return result || {};

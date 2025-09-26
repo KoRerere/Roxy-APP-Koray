@@ -7,6 +7,7 @@ import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useConfirm } from 'primevue/useconfirm'
+import { parseIntelligent } from '/@/views/account/create/utils'
 
 const router = useRouter()
 const confirm = useConfirm()
@@ -117,16 +118,16 @@ function parseValue() {
   const { platformIcon = '', platformIconDark = '' } = input.value._rows.find((item: any) => item.platformUrl === input.value.value) || {}
 
   dataList.value = [...new Set(list)].map((str, index) => {
-    const [_, platformUserName, platformPassword, platformEfa = '', platformRemarks = ''] = str.match(/^([^:{}]+):([^:{}]+)(?::([^:{}]+))?(?:\{([^:{}]+)\})?$/) || []
+    const { username, password, twoFactor, remark } = parseIntelligent(str)
     return {
       id: index,
       platformUrl: input.value.value,
       platformIcon,
       platformIconDark,
-      platformUserName,
-      platformPassword,
-      platformEfa,
-      platformRemarks,
+      platformUserName: username ?? '',
+      platformPassword: password ?? '',
+      platformEfa: twoFactor ?? '',
+      platformRemarks: remark ?? '',
     }
   })
   const filterCount = list.length - dataList.value.length

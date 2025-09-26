@@ -2,16 +2,39 @@
 import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
 import ReferalLink from './referal-link.vue';
 import ReferalReward from './referal-reward.vue'
+import { useSimpleLocale } from "/@/stores/locale";
 
-const { promotionInfo } = defineProps<{
+defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
+
+const { currentLocale, getOfficialWebsite } = useSimpleLocale();
+
+const bonusImage = computed(() => {
+  if (['zh-CN', 'en', 'ru'].includes(currentLocale)) {
+    return `/images/invite-bonus-banner_${currentLocale}.png`
+  }
+  return '/images/invite-bonus-banner_en.png'
+})
+
+function viewDetail() {
+  window.open(getOfficialWebsite('blog/referral-power-up'), '_blank')
+}
 </script>
 
 <template>
   <div class="referal">
     <div class="reward">
       <ReferalReward class="content" :promotionInfo />
+    </div>
+    <div class="relative flex items-center content">
+      <RxButton class="!absolute right-16" size="lg" @click="viewDetail">
+        <template #default>
+          <span>{{ $t('查看详情') }}</span>
+          <SvgIcon name="base/rx_ic_arrow_right"></SvgIcon>
+        </template>
+      </RxButton>
+      <img class="block w-full rounded-xl" :src="bonusImage">
     </div>
     <ReferalLink v-if="promotionInfo.promotionLinkList?.length" class="content" :promotionInfo />
   </div>

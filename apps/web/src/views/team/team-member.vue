@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
@@ -221,6 +222,18 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     }
   })
 }
+
+//==============================
+import { useTutorialStore } from '/@/stores/tutorial';
+const { getVideoMaps } = useTutorialStore()
+const videoData = ref()
+
+onBeforeMount(() => {
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.team_management
+    })
+})
 </script>
 
 <template>
@@ -235,15 +248,15 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
       </div>
     </template>
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
+      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
-          <div class="flex items-center gap-3">
-            <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')"
+          <div class="flex gap-3">
+            <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
               @click.stop="handleShowInviteUserFormDialog(filters.value)" />
-            <!-- <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" /> -->
+            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
           </div>
         </template>
-      </CustomEmpty>
+      </CustomNewEmpty>
     </template>
     <template #member="{ data }">
       <div class="member">

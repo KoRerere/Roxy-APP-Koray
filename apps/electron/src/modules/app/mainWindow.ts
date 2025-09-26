@@ -11,6 +11,7 @@ import { isDev, isPackaged, isProd, isWindows } from '/@/constants/common'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { ipcMain } from '/@/modules/ipc'
 import { createWindow } from '/@/utils/browser-window'
+import { sendLaunchMessage } from '/@/modules/app/checkResource'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
@@ -80,6 +81,7 @@ export async function intoLaunchPage() {
   const launchUrl = await getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`)
   console.log('intoLaunchPage', launchUrl)
   await launchWin.loadURL(launchUrl)
+  sendLaunchMessage($t('正在初始化应用...'))
 }
 
 /** 进入主页面 */

@@ -1,43 +1,12 @@
 <script setup lang="tsx">
-import type { FormSubmitEvent } from '@primevue/forms';
-import { z, type ZodFirstPartySchemaTypes } from 'zod';
-import { zodResolver } from '@primevue/forms/resolvers/zod';
-import { isFunction } from 'es-toolkit';
+import FormItem from './item.vue';
+import { z } from 'zod';
 import { $t } from '/@/locales';
 import { genFormContext } from './useContext';
-import mInputLabel from './m-input-label.vue'
-import mInputText from './m-input-text.vue'
-import mInputNumber from './m-input-number.vue'
-import mInputPassword from './m-input-password.vue'
-import mInputTextarea from './m-input-textarea.vue'
-import mInputSelect from './m-input-select.vue'
-import mInputMultiSelect from './m-input-multi-select.vue'
-import mInputDatePicker from './m-input-date-picker.vue'
-import mCustom from './m-custom.vue';
-
-const INPUT_TYPE_MAP = {
-  text: mInputText,
-  number: mInputNumber,
-  password: mInputPassword,
-  textarea: mInputTextarea,
-  select: mInputSelect,
-  mselect: mInputMultiSelect,
-  date: mInputDatePicker,
-  // 'checkbox': 'checkbox',
-  // 'radio': 'radio',
-  // 'switch': 'switch',
-} as Record<string, Component>
-
-interface Input {
-  name: string
-  label?: string
-  tooltip?: string
-  type?: keyof typeof INPUT_TYPE_MAP
-  props?: Record<string, any>
-  render?: (props: any) => any
-  resolver?: (zod: typeof z) => ZodFirstPartySchemaTypes
-  [key: string]: any
-}
+import { isFunction } from 'es-toolkit';
+import { zodResolver } from '@primevue/forms/resolvers/zod';
+import type { FormInstance, FormSubmitEvent } from '@primevue/forms';
+import type { Input } from './type';
 
 const { id = Date.now().toString(32), inputs = [], position = 'top', labelProps } = defineProps<{
   id?: string
@@ -75,7 +44,7 @@ const initialForm = inputs.reduce((acc, input) => {
   return acc
 }, { values: [], resolver: [] } as { values: [string, any][], resolver: [string, any][] })
 
-const formRef = useTemplateRef<any>('tsform')
+const formRef = useTemplateRef<FormInstance>('tsform')
 const _inputs = ref(inputs)
 const initialValues = reactive(Object.fromEntries(initialForm.values))
 const resolver = zodResolver(z.object(Object.fromEntries(initialForm.resolver)))
@@ -114,6 +83,9 @@ defineExpose({
   setValues: (values: Record<string, any>) => {
     formRef.value?.setValues(values)
   },
+  getValues: () => {
+    return Object.fromEntries(Object.entries(formRef.value?.states!).map(([key, value]) => [key, value.value]))
+  },
   reset: () => {
     formRef.value?.reset()
   },
@@ -124,16 +96,12 @@ defineExpose({
 </script>
 
 <template>
-  <Form ref="tsform" :id="id" :initialValues="initialValues" :resolver="resolver" @submit="onFormSubmit" class="flex flex-col gap-3 self-stretch">
-    <FormField class="flex flex-col gap-1" v-for="input in _inputs" :key="input.name" v-slot="$field" :name="input.name">
-      <div class="flex flex-col gap-1">
-        <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
-        <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
-        <component v-else :is="INPUT_TYPE_MAP[input.type || 'text']" v-bind="input.props" />
-      </div>
-      <component v-if="input.afterRender" :is="input.afterRender" :field="$field" :input="input"></component>
-      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
-    </FormField>
+  <Form ref="tsform" :id="id" :initialValues="initialValues" :resolver="resolver" @submit="onFormSubmit" class="flex flex-col gap-4 self-stretch">
+    <slot name="default" :inputs="_inputs">
+      <template v-for="input in _inputs" :key="input.name">
+        <FormItem :input="input"></FormItem>
+      </template>
+    </slot>
   </Form>
 </template>
 

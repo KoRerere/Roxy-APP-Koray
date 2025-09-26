@@ -187,15 +187,14 @@ defineExpose({
       </CustomEmpty>
     </template>
     <template #amount="{ data }">
-      <div v-if="data.orderType === OrderType.OfficialGift" class="amount">--</div>
-      <div v-else class="amount" :class="{
+      <div class="amount" :class="{
         'gray': data.payStatus === PaymentStatus.Closed,
         'inc': data.positiveNegativeShow
-      }">{{ currency(data.actualAmount, { symbol: data.positiveNegativeShow ? '+$' : '-$' }).format() }}</div>
+      }">{{ !data.showAmount ? '--' : currency(data.actualAmount, { symbol: data.positiveNegativeShow ? '+$' : '-$' }).format() }}</div>
     </template>
     <template #status="{ data }">
       <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
-        <div>{{ data.orderType === OrderType.OfficialGift ? '--' : PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
+        <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] || '--' }}</div>
         <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
       </div>
     </template>

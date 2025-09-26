@@ -27,7 +27,7 @@ const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Exp
 
 const otherCards = computed(() => [
   {
-    title: $t('代理'),
+    title: $t('代理 IP'),
     used: userPayInfo.value.proxyExpireCount || userPayInfo.value.proxyUsingCount,
     text: userPayInfo.value.proxyExpireCount > 0 ? $t('即将过期') : $t('使用中'),
     addText: $t('购买'),
@@ -35,7 +35,7 @@ const otherCards = computed(() => [
     visibleJump: userPayInfo.value.proxyExpireCount > 0,
     addClick: () => {
       buyProxy(orderInfo => {
-        router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo.orderNo } })
+        router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
       })
     },
     jump: () => {

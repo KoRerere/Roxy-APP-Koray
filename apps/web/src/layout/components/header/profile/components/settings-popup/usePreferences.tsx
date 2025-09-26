@@ -3,14 +3,14 @@ import InputIcon from "primevue/inputicon";
 import InputNumber from "primevue/inputnumber";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
-import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import FolderDirectory from "../folder-directory.vue";
 import DiskOverview from "../disk-overview.vue";
 import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
 import ClearCache from '/@/layout/components/header/profile/components/settings-popup/components/clear-cache.vue';
 import RxTooltip from '/@/components/rx-tooltip';
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ClearType, UaStrictMode } from "/@/enums";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import { $t } from "/@/locales";
@@ -70,7 +70,7 @@ export function usePreferencesPanel() {
         //       formatValue: (item: Items) => item.value.value,
         //       component: ({ item, ...props }: { item: Items, props: any }) => {
         //         return (
-        //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
+        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
         //         )
         //       },
         //     },
@@ -86,7 +86,7 @@ export function usePreferencesPanel() {
         //       },
         //       component: ({ item, ...props }: { item: Items, props: any }) => {
         //         return (
-        //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
+        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
         //         )
         //       },
         //     },
@@ -107,7 +107,7 @@ export function usePreferencesPanel() {
         //       formatValue: (item: Items) => Number(item.value),
         //       component: ({ item, ...props }: { item: Items, props: any }) => {
         //         return (
-        //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
+        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
         //         )
         //       },
         //     },
@@ -130,13 +130,11 @@ export function usePreferencesPanel() {
               },
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
-                  <RxInputSelect
+                  <TsFormSelect
                     {...item.props}
                     {...props}
                     name={item.name}
-                    onChange={() => {
-                      saveUserConfig(item)
-                    }}
+                    onChange={() => saveUserConfig(item)}
                   />
                 );
               },
@@ -249,13 +247,11 @@ export function usePreferencesPanel() {
               },
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
-                  <RxInputSelect
+                  <TsFormSelect
                     {...item.props}
                     {...props}
                     name={item.name}
-                    onChange={() => {
-                      saveUserConfig(item)
-                    }}
+                    onChange={() => saveUserConfig(item)}
                   />
                 );
               },
@@ -282,9 +278,7 @@ export function usePreferencesPanel() {
                   <RxToggleSwitch
                     {...item.props}
                     {...props}
-                    onChange={() => {
-                      saveUserConfig(item, items)
-                    }}
+                    onChange={() => saveUserConfig(item, items)}
                   />
                 );
               },
@@ -362,9 +356,7 @@ export function usePreferencesPanel() {
                     item={item}
                     {...item.props}
                     {...props}
-                    onChange={async () => {
-                      await saveUserConfig(item)
-                    }}
+                    onChange={() => saveUserConfig(item)}
                   />
                 );
               },
@@ -443,7 +435,7 @@ export function usePreferencesPanel() {
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'autoClearCache')?.value,
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
-                  <RxInputSelect
+                  <TsFormSelect
                     {...item.props}
                     {...props}
                     name={item.name}
@@ -459,7 +451,7 @@ export function usePreferencesPanel() {
                         </RxTooltip>
                       }
                     }}
-                  </RxInputSelect>
+                  </TsFormSelect>
                 );
               },
             },
@@ -581,7 +573,7 @@ export function usePreferencesPanel() {
               },
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return (
-                  <RxInputSelect
+                  <TsFormSelect
                     {...item.props}
                     {...props}
                     name={item.name}

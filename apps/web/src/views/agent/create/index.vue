@@ -64,7 +64,6 @@ async function saveProxies(__proxies: any) {
   }
 }
 
-
 </script>
 
 <template>
@@ -81,7 +80,7 @@ async function saveProxies(__proxies: any) {
     </div>
     <div class="flex-ovh-1 w-full">
       <singleProxies v-show="tabsValue === 'single'" @save="saveProxies" />
-      <batchProxies v-show="tabsValue === 'batch'" @save="saveProxies" />
+      <batchProxies v-show="tabsValue === 'batch'" :onConfirm="saveProxies" />
       <!-- <RecommendedProxies v-show="tabsValue === 'recommended'" /> -->
     </div>
   </div>

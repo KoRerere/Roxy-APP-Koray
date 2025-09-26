@@ -13,13 +13,6 @@ import { ProxyCheckStatus, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
 import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
 
-interface Boundeds {
-  [id: number]: {
-    value: number
-    disabled: boolean
-  }
-}
-
 interface Props {
   data?: any
   isBatch?: boolean
@@ -35,16 +28,17 @@ const [_, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('agent')
 
-const _selection = ref<any>(toRaw(outerData))
-const operation = ref(tableOperation().filter(item => item.name === 'test').map(item => ({ ...item, disabled: false })))
 const filtersMenu = ref()
-const boundeds = ref<Boundeds>()
+const dataList = ref()
+const selection = ref(toRaw(outerData))
+const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
+
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
-const dataList = ref()
+
 const tableProps = {
   columns,
   showDisplay: false,
@@ -55,23 +49,28 @@ const tableProps = {
     ? {}
     : {
       onRowSelect({ data }: any) {
-        Reflect.set(boundeds.value![data.id], 'disabled', false)
-      },
-      onRowSelectAll({ data }: any) {
-        data.forEach((item: any) => {
-          Reflect.set(boundeds.value![item.id], 'disabled', false)
-        })
+        Reflect.set(data, '_disabled', false)
       },
       onRowUnselect({ data }: any) {
-        Reflect.set(boundeds.value![data.id], 'disabled', true)
+        Reflect.set(data, '_disabled', true)
+      },
+      onRowSelectAll() {
+        dataList.value.forEach((item: any) => {
+          Reflect.set(item, '_disabled', false)
+        })
       },
       onRowUnselectAll() {
-        boundeds.value = Object.fromEntries(Object.entries(boundeds.value!).map(([id, item]) => [id, { ...item, disabled: true }]))
+        dataList.value.forEach((item: any) => {
+          Reflect.set(item, '_disabled', true)
+        })
       },
     }),
 }
 
-const sumProxyCount = computed(() => Object.values(boundeds.value ?? {}).reduce((sum: number, item: any) => sum += (!item.disabled ? item.value : 0), 0))
+const sumProxyCount = computed(() => {
+  if (!isBatch) return 0
+  return (selection.value || []).reduce((sum: number, item: any) => sum += item._proxyCount, 0)
+})
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
@@ -83,17 +82,16 @@ function onRefreshTable() {
 }
 
 async function getTableList(params: any) {
-  const result = await tableRequest({ ...params, type: 'window_use' })
-  dataList.value = result.data.rows
-  if (isBatch) {
-    boundeds.value ??= Object.fromEntries(
-      result.data.rows.map(item => {
-        const target = _selection.value?.find((it: any) => item.id === it.id)
-        return [item.id, { value: target?._proxyCount ?? 1, disabled: !target }]
-      })
-    )
-  }
-  return result
+  const { code, msg, data: { rows, ...rest } } = await tableRequest({ ...params, type: 'window_use' })
+
+  const _rows = rows.map(item => {
+    if (!isBatch) return item
+    const target = selection.value?.find((it: any) => item.id === it.id)
+    return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
+  })
+
+  dataList.value = _rows
+  return { code, msg, data: { rows: _rows, ...rest } }
 }
 
 function operationHandler(operate: any, data: ProxyItem) {
@@ -107,7 +105,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 
 async function onCheckAllProxy() {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理'))
+    onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
   await onCheckProxyStatus(dataList.value, 'test')
@@ -130,14 +128,13 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
 }
 
 function saveSelected() {
-  const list = !isBatch
-    ? _selection.value
-    : _selection.value?.map(({ loadingOperationMap, ...item }: any) => ({
+  const selectProxy = !isBatch
+    ? selection.value
+    : selection.value?.map(({ loadingOperationMap, _disabled, ...item }: any) => ({
       ...item,
-      _proxyCount: boundeds.value![item.id].value,
       _type: ProxyType.buy
     }))
-  emit('confirm', list)
+  emit('confirm', selectProxy)
 }
 
 const message = $t('当前选择绑定的代理数量已超过创建窗口数。')
@@ -152,10 +149,10 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
       :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false" />
     <div class="flex-ovh-1">
-      <RyTable ref="agent" v-model:selection="_selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
+      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
         :show-actions="false" :show-table-header="false">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
+          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
         </template>
         <template #outbound="{ data }">
           <OutboundIp class="select-none" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
@@ -165,8 +162,8 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
-          <div v-if="boundeds" class="bounded" @click.stop>
-            <RxInputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="1" :step="1"></RxInputNumber>
+          <div class="bounded" @click.stop>
+            <RxInputNumber v-model="row._proxyCount" :disabled="row._disabled" :min="1" :step="1"></RxInputNumber>
           </div>
         </template>
         <template #actions="{ data: row }">

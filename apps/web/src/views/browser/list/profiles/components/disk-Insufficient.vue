@@ -8,7 +8,7 @@ const { userConfig } = storeToRefs(useUserStore())
 const emit = defineEmits(['close'])
 
 async function openSettings() {
-  emitter.emit('openSettings', 'preferences')
+  emitter.emit('openSettings', { settingsKey: 'preferences', anchorPoint: 'diskSettings' })
   close()
 }
 
@@ -28,7 +28,6 @@ function close() {
         <span class="cursor-pointer help-bold" @click="$showLiveChat">{{ userConfig.diskLimit }}GB</span>
       </template>
     </i18n-t>
-    <!-- <div class="help">{{ $t('您可以前往软件设置中调整磁盘限制。') }}</div> -->
     <div class="flex justify-end gap-2">
       <RxButton outlined severity="secondary" size="md" :label="$t('取消')" @click="close"></RxButton>
       <RxButton size="md" :label="$t('打开设置')" @click="openSettings"></RxButton>

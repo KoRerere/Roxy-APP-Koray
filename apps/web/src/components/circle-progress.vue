@@ -1,29 +1,41 @@
 <script lang="ts" setup>
-defineProps({
-  value: {
-    type: [Number, String],
-    default: 0,
-  },
-  size: {
-    type: [Number, String],
-    default: 32,
-  },
-  strokeWidth: {
-    type: [Number, String],
-    default: 2,
-  },
+interface Props {
+  value?: number | string
+  size?: number | string
+  strokeWidth?: number | string
+}
+
+const { value = 0, strokeWidth = 2, size = 32 } = defineProps<Props>()
+
+const viewboxSize = computed(() => Number(size) + Number(strokeWidth))
+const viewboxString = computed(() => `0 0 ${viewboxSize.value} ${viewboxSize.value}`)
+const center = computed(() => viewboxSize.value / 2)
+const radius = computed(() => {
+  const padding = Math.max(1, viewboxSize.value * 0.03)
+  return center.value - padding - Number(strokeWidth) / 2
 })
+const pathString = computed(() => {
+  const r = radius.value
+  const c = center.value
+  return `M${c} ${c - r}
+           a ${r} ${r} 0 0 1 0 ${2 * r}
+           a ${r} ${r} 0 0 1 0 ${-2 * r}`
+})
+
+const dashArray = computed(() => {
+  const circumference = 2 * Math.PI * radius.value
+  const progress = (Number(value) / 100) * circumference
+  return `${progress}, ${circumference}`
+})
+
+const strokeLinecap = computed(() => Number(value) <= 2 ? 'butt' : 'round')
 </script>
 
 <template>
   <div>
-    <svg viewBox="0 0 36 36" :width="size" class="block">
-      <path class="circle-bg" :stroke-width="strokeWidth" d="M18 2.0845
-           a 15.9155 15.9155 0 0 1 0 31.831
-           a 15.9155 15.9155 0 0 1 0 -31.831" />
-      <path class="circle-val" :stroke-width="strokeWidth" :stroke-dasharray="`${value}, 100`" d="M18 2.0845
-           a 15.9155 15.9155 0 0 1 0 31.831
-           a 15.9155 15.9155 0 0 1 0 -31.831" />
+    <svg :viewBox="viewboxString" :width="size" class="block">
+      <path class="circle-bg" :stroke-width="strokeWidth" :d="pathString" />
+      <path class="circle-val" :stroke-width="strokeWidth" :stroke-dasharray="dashArray" :stroke-linecap="strokeLinecap" :d="pathString" />
     </svg>
   </div>
 </template>
@@ -39,7 +51,6 @@ defineProps({
 .circle-val {
   fill: none;
   stroke: var(--component-progress-success);
-  stroke-linecap: round;
   transition: stroke-dasharray 0.3s ease-out;
 }
 </style>

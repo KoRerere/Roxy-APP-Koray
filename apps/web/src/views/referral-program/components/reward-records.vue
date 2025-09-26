@@ -1,10 +1,10 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetPromotionInfoListData, UserGetRewardRecordListListData } from '@roxy/backend-api'
+import currency from 'currency.js'
 import { format } from 'date-fns'
+import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
-import currency from 'currency.js'
+import type { UnwrapRowType, UserGetPromotionInfoListData, UserGetRewardRecordListListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetRewardRecordListListData>
 
@@ -13,20 +13,16 @@ const { promotionInfo } = defineProps<{
 }>()
 
 const rewardStatusMap = {
-  'approved': $t('审核成功'),
-  'auditing': $t('审核中 (消费后 7 日内完成)'),
-  'rejected': $t('审核失败'),
+  approved: $t('审核成功'),
+  auditing: $t('审核中 (消费后 7 日内完成)'),
+  rejected: $t('审核失败'),
 }
 
 const columns = ref([
   {
     title: $t('用户'),
     key: 'userName',
-    render: ({ data }: { data: Data }) => (
-      <div>
-        {data.email?.slice(0, 2)}****{data.email?.split('@')[1]}
-      </div>
-    ),
+    getText: (data: Data) => `${data.email?.slice(0, 2)}****${data.email?.split('@')[1]}`,
   },
   {
     title: $t('来源链接'),
@@ -35,30 +31,30 @@ const columns = ref([
   {
     title: $t('消费金额'),
     key: 'payAmount',
-    getText: (data: Data) => currency(data.payAmount).format(),
+    getText: (data: Data) => data.dataType === 1 ? data.payAmount : currency(data.payAmount!).format(),
   },
   {
     title: $t('返利比例'),
     key: 'rewardRatio',
     width: 240,
-    getText: (data: Data) => `${data.rewardRatio}%`,
+    getText: (data: Data) => data.dataType === 1 ? data.rewardRatio : `${data.rewardRatio}%`,
   },
   {
     title: $t('奖励'),
     key: 'reward',
-    getText: (data: Data) => currency(data.reward).format(),
+    getText: (data: Data) => currency(data.reward!).format(),
   },
   {
     title: $t('状态'),
     key: 'rewardStatus',
     getText: (data: Data) => {
-      return rewardStatusMap[data.rewardStatus]
+      return rewardStatusMap[data.rewardStatus! as keyof typeof rewardStatusMap]
     },
   },
   {
     title: $t('创建时间'),
     key: 'payTime',
-    getText: (data: Data) => format(data.payTime * 1000, 'yyyy-MM-dd HH:mm:ss'),
+    getText: (data: Data) => format(data.payTime! * 1000, 'yyyy-MM-dd HH:mm:ss'),
   },
 ])
 

@@ -1,25 +1,33 @@
-<script lang="ts" setup>
+<script lang="tsx" setup>
+import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RxAvatar from '/@/components/rx-avatar'
 import Fuse from 'fuse.js'
 import { format } from 'date-fns'
 import { useDebounceFn } from '@vueuse/core'
 import { $t } from '/@/locales'
+import { useUserStore } from "/@/stores/user";
+import { useDialog } from '/@/hooks/useDialog'
 import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 import { useSimpleDialog } from '/@/components/simplePopup'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props {
   currentFilter?: Record<string, any>
   filtersMenu?: any[]
   enabledFilterSave?: boolean
+  videoUrl?: string
   saveFilters?: (params: any) => Promise<void> | void
 }
 
-const { currentFilter, filtersMenu = [], enabledFilterSave, saveFilters } = defineProps<Props>()
+const { currentFilter, filtersMenu = [], enabledFilterSave, videoUrl = '', saveFilters } = defineProps<Props>()
 const emit = defineEmits(['filterChange'])
 
+const [showModal] = useDialog()
 const { showSimpleDialog } = useSimpleDialog()
+const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+const { userPayInfo } = storeToRefs(useUserStore())
 
 const menuRef = useTemplateRef('tmenu')
 const fuse = ref()
@@ -68,6 +76,11 @@ watch(() => currentFilter?.id, (value) => {
 })
 
 function showMenu(event: any) {
+  if (!userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus) {
+    onShowGuideModal()
+    return
+  }
+
   menuRef.value?.show(event)
 }
 
@@ -182,6 +195,7 @@ function resetFilters() {
 }
 
 function onFilterChange() {
+
   if (isAllProfiles.value) {
     isChanged.value = labels.value.length > 0
   }
@@ -190,6 +204,26 @@ function onFilterChange() {
   }
 
   emit('filterChange')
+}
+
+function onShowGuideModal() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    handleCancel: () => updateOnboardingTaskStatus({ saveFilterGuideStatus: true }),
+    slots: {
+      container: ({ hideModal }) => <GuideModal
+        title={$t('高级筛选')}
+        desc={({ class: className }) => {
+          return <div class={className}>{$t('希望快速通过条件定位相应窗口？试试"高级筛选"功能，其亦可被保存为常驻"分组"！')} </div>
+        }}
+        video={videoUrl}
+        onClose={hideModal}
+        onConfirm={hideModal}
+      ></GuideModal>
+    },
+  })
 }
 
 function onSaveFilters() {

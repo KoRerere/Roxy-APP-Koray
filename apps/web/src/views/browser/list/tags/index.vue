@@ -1,15 +1,16 @@
 <script setup lang="tsx">
-import { useConfirm } from 'primevue/useconfirm'
-import { API } from '/@/api'
 import RelatedInfo from '/@/components/related-info.vue'
+import { API } from '/@/api'
 import { $t } from '/@/locales'
+import { useConfirm } from 'primevue/useconfirm'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
 
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
+defineEmits(['close'])
 
 const confirm = useConfirm()
+const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
 
@@ -27,7 +28,6 @@ const columns = ref([
     key: 'relatedProfiles',
     render: ({ data }: any) => {
       const list = data.bindWindowIds.map((id: number) => `${workspaceName}-${id}`)
-
       return <RelatedInfo list={list}></RelatedInfo>
     },
   },
@@ -110,34 +110,31 @@ async function deleteTag(data: any) {
 </script>
 
 <template>
-  <div class="flex-ovh-1 flex-col h-full">
-    <div class="flex justify-between items-center px-4 py-3 gap-2">
-      <div class="flex-1 total-tags">
-        {{ $t('新增标签') }} ({{ totalNum }})
-      </div>
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')"
-        @click.stop="editTag()" />
+  <div class="w-180 h-50vh flex flex-col pa-6 pt-4">
+    <div class="h-9 flex justify-between items-center">
+      <div class="header">{{ $t('标签管理') }}</div>
+      <RxButton class="!rounded-full" text size="md" severity="secondary" icon="base/rx_ic_delete" @click="$emit('close')"></RxButton>
+    </div>
+    <div class="flex justify-between items-center py-3 gap-2">
+      <div class="flex-1 total-tags">{{ $t('新增标签') }} ({{ totalNum }})</div>
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')" @click.stop="editTag()" />
     </div>
     <div class="flex-ovh-1">
-      <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler"
-        :table-request="tableRequest" :paginator="false" :show-table-header="false" selection-mode="multiple"
-        :show-actions="false">
+      <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
+        selection-mode="multiple" :show-actions="false">
         <template #table-empty>
           <CustomEmpty :title="$t('暂无标签')" />
         </template>
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path :fill="data.color"
-                d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
+              <path :fill="data.color" d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
             </svg>
             <span>{{ data.name }}</span>
           </div>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-            @quick-click="operationHandler($event, data)" />
+          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
         </template>
       </RyTable>
     </div>
@@ -145,6 +142,13 @@ async function deleteTag(data: any) {
 </template>
 
 <style lang="scss" scoped>
+.header {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+}
+
 .total-tags {
   color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;

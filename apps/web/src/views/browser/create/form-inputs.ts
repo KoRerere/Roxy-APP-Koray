@@ -453,7 +453,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
-      visible: true,
+      visible: !initInputVisible(data.position, 2, false),
       change(input: any) {
         filterInputsByNames(basicInputs, ['longitude', 'latitude', 'precisionPos']).forEach((ipt) => {
           ipt.visible = input.visible && input.value === false

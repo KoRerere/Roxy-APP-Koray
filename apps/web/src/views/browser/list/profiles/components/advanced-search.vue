@@ -27,6 +27,7 @@ const searchQuery = ref('')
 const showDropdown = ref(false)
 const selectedAdvancedOption = ref<any>(null)
 const loading = ref(false)
+const isFocus = ref(false)
 
 // Keyboard navigation state: 0 = basic option, 1..N = advanced options
 const highlightIndex = ref(0)
@@ -51,6 +52,22 @@ watch(searchQuery, (newQuery) => {
     highlightIndex.value = 0
   }
 })
+
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+})
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key.toLowerCase() === 'f') {
+    event.preventDefault()
+    inputRef.value?.focus()
+  }
+}
 
 /**
  * Methods
@@ -144,16 +161,22 @@ function handleKeydown(event: any) {
   }
 }
 
+function handleFocus() {
+  showDropdown.value = true
+  isFocus.value = true
+}
+
 function handleBlur() {
   setTimeout(() => {
     showDropdown.value = false
+    isFocus.value = false
   }, 150)
 }
 </script>
 
 <template>
-  <div class="relative w-full">
-    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" preIcon="base/rx_ic_magnify" :placeholder="$t('搜索')" :disabled="loading" @focus="showDropdown = true" @blur="handleBlur"
+  <div class="relative transition-all duration-300 ease" :class="[searchQuery || isFocus ? 'w-50' : 'w-35']">
+    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" preIcon="base/rx_ic_magnify" :placeholder="$t('搜索 Ctrl + F')" :disabled="loading" @focus="handleFocus" @blur="handleBlur"
       @keydown="handleKeydown">
       <template v-if="searchQuery" #icon>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch" size="16" />

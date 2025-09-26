@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyExpireStatus } from '/@/enums/proxy'
 import { $t } from '/@/locales'
@@ -70,7 +69,7 @@ async function openBrowser() {
 <template>
   <div class="flex items-center gap-2">
     <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
-      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
+      <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
       <RxSvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
       <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
     </RxButton>

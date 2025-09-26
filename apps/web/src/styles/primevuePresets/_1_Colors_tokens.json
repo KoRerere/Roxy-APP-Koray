@@ -167,25 +167,25 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "marquee": {
+        "indicator": "{primitives.netural.100}",
+        "indicator-active": "{colors.background.bg-brand}"
+      },
       "skeleton": {
         "bg": "#ebf1f5"
-      },
-      "collapse": {
-        "bg": "{primitives.netural.100}"
       },
       "progress": {
         "bg": "{primitives.netural.200}",
         "success": "{primitives.green.500}",
         "info": "{primitives.blue.500}"
       },
+      "collapse": {
+        "bg": "{primitives.netural.100}"
+      },
       "scrollbar": {
         "bg": "{primitives.netural.50}",
         "border": "{colors.border.border-inactive}",
         "indicator": "{primitives.netural.200}"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.100}",
-        "indicator-active": "{colors.background.bg-brand}"
       },
       "button": {
         "primary": {
@@ -240,13 +240,6 @@
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{component.tag.bg}"
       },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}",
-        "text": "{colors.text.text-secondary}"
-      },
       "tooltip": {
         "bg": "{primitives.netural.900}",
         "text-primary": "{primitives.netural.0}",
@@ -268,6 +261,13 @@
         "border-updated": "{primitives.green.300}",
         "border-updated-hover": "{primitives.green.400}"
       },
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}",
+        "text": "{colors.text.text-secondary}"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -280,6 +280,35 @@
       }
     },
     "pattern": {
+      "tour": {
+        "tips": {
+          "bg": "{component.tooltip.bg}",
+          "border": "{component.tooltip.bg}"
+        },
+        "mask": {
+          "bg": "{colors.alpha.alpha-black-40}"
+        }
+      },
+      "tutorial": {
+        "banner": {
+          "bg-start": "#faebf3",
+          "bg-end": "#ffffff",
+          "theme": "#a35ce6",
+          "blob1": "#a35ce6",
+          "blob2": "#e1cdf4",
+          "blob3": "#f3ecf9"
+        },
+        "video": {
+          "bg-start": "#fbf6fd",
+          "bg-end": "#faedfb",
+          "bg-icon": "#b617da",
+          "bg-play": "#efbff6"
+        }
+      },
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.4000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      },
       "editor": {
         "key": "#005cc5",
         "value": "#032f62",
@@ -299,7 +328,13 @@
       },
       "dashboard": {
         "card": {
-          "bg": "rgba(0, 0, 0, 0.0200)"
+          "bg": "rgba(0, 0, 0, 0.0200)",
+          "bg-card-referral-1": "#fefbf5",
+          "bg-card-referral-2": "#fdf0dd",
+          "bg-card-bonust-1": "#fafcff",
+          "bg-card-bonus-2": "#eff7ff",
+          "border-card-referral": "#fdebd3",
+          "border-card-bonus": "#e5f2ff"
         }
       },
       "drawer": {
@@ -325,6 +360,16 @@
         }
       },
       "syncbar": {
+        "btn": {
+          "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
+          "border": "{primitives.netural.600}",
+          "border-hover": "{primitives.netural.500}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.25}",
+          "icon-hover": "{primitives.netural.0}"
+        },
         "dropdown": {
           "bg": "{pattern.syncbar.bg}",
           "bg-hover": "{primitives.netural.700}",
@@ -332,16 +377,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.50}",
           "icon-hover": "{primitives.netural.25}"
-        },
-        "btn": {
-          "bg-hover": "{primitives.netural.700}",
-          "bg": "{primitives.netural.800}",
-          "border": "{primitives.netural.600}",
-          "border-hover": "{primitives.netural.500}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.25}",
-          "icon-hover": "{primitives.netural.0}"
         },
         "title": "#0cef4c",
         "tag": {
@@ -441,7 +476,8 @@
         "cover": "#131313",
         "cover-border": "#131313"
       }
-    }
+    },
+    "bg-start": "#ffffff"
   },
   "dark": {
     "colors": {
@@ -611,10 +647,11 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
-      "skeleton": {
-        "bg": "{primitives.netural.800}"
+      "marquee": {
+        "indicator": "{primitives.netural.700}",
+        "indicator-active": "{colors.background.bg-brand}"
       },
-      "collapse": {
+      "skeleton": {
         "bg": "{primitives.netural.800}"
       },
       "progress": {
@@ -622,14 +659,13 @@
         "success": "{primitives.green.400}",
         "info": "{primitives.blue.400}"
       },
+      "collapse": {
+        "bg": "{primitives.netural.800}"
+      },
       "scrollbar": {
         "bg": "{primitives.netural.800}",
         "border": "{colors.border.border-subtle}",
         "indicator": "{primitives.netural.600}"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.700}",
-        "indicator-active": "{colors.background.bg-brand}"
       },
       "button": {
         "primary": {
@@ -684,13 +720,6 @@
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{primitives.netural.700}"
       },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.600}",
-        "text": "{colors.text.text-secondary}"
-      },
       "tooltip": {
         "bg": "{primitives.netural.700}",
         "text-primary": "{primitives.netural.0}",
@@ -712,6 +741,13 @@
         "border-updated": "{primitives.green.700}",
         "border-updated-hover": "{primitives.green.600}"
       },
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.600}",
+        "text": "{colors.text.text-secondary}"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -724,6 +760,35 @@
       }
     },
     "pattern": {
+      "tour": {
+        "tips": {
+          "bg": "{colors.background.bg-brand}",
+          "border": "{colors.border.border-brand}"
+        },
+        "mask": {
+          "bg": "rgba(36, 38, 41, 0.9000)"
+        }
+      },
+      "tutorial": {
+        "banner": {
+          "bg-start": "#500745",
+          "bg-end": "#160119",
+          "theme": "#bd76ff",
+          "blob1": "#bd76ff",
+          "blob2": "#a57aa6",
+          "blob3": "#5c385c"
+        },
+        "video": {
+          "bg-start": "#3c0e3a",
+          "bg-end": "#3c0e3a",
+          "bg-icon": "#efbff6",
+          "bg-play": "#cb4fe7"
+        }
+      },
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.8000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      },
       "editor": {
         "key": "#79c0ff",
         "value": "#a5d6ff",
@@ -743,6 +808,12 @@
       },
       "dashboard": {
         "card": {
+          "bg-card-referral-1": "#311e03",
+          "bg-card-referral-2": "#613c05",
+          "bg-card-bonust-1": "#030f1c",
+          "bg-card-bonus-2": "#002951",
+          "border-card-referral": "#4a2d07",
+          "border-card-bonus": "#0a315c",
           "bg": "{colors.alpha.alpha-white-5}"
         }
       },
@@ -769,6 +840,16 @@
         }
       },
       "syncbar": {
+        "btn": {
+          "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
+          "border": "{primitives.netural.600}",
+          "border-hover": "{primitives.netural.500}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.25}",
+          "icon-hover": "{primitives.netural.0}"
+        },
         "dropdown": {
           "bg": "{pattern.syncbar.bg}",
           "bg-hover": "{primitives.netural.700}",
@@ -776,16 +857,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.50}",
           "icon-hover": "{primitives.netural.25}"
-        },
-        "btn": {
-          "bg-hover": "{primitives.netural.700}",
-          "bg": "{primitives.netural.800}",
-          "border": "{primitives.netural.600}",
-          "border-hover": "{primitives.netural.500}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.25}",
-          "icon-hover": "{primitives.netural.0}"
         },
         "title": "#0cef4c",
         "tag": {
@@ -885,6 +956,7 @@
         "cover": "#131313",
         "cover-border": "#4d4d4d"
       }
-    }
+    },
+    "bg-start": "#ffffff"
   }
 }

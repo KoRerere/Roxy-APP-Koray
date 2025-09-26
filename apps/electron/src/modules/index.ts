@@ -3,12 +3,13 @@ import './ipc'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
-import { setupStore } from '/@/modules/store'
+import { initLocalConfig, setupStore } from '/@/modules/store'
 import { browserManager } from '/@/modules/browser'
 import { setupApp } from './app/'
 import { fileExists } from '/@/utils'
 import { appConfig } from '/@/constants'
-
+import { intoLaunchPage } from '/@/modules/app/mainWindow'
+import { app } from 'electron'
 
 // Sentry.init({
 //   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -25,10 +26,15 @@ export async function setupModules() {
   setupLog()
   // }
   try {
-    // 设置 store
-    await setupStore()
+    await app.whenReady()
+    // 初始化本地配置
+    await initLocalConfig()
     // 启动 app 内置服务
     await setupAppServer()
+    // 进入启动页
+    await intoLaunchPage()
+    // 设置 store
+    await setupStore()
     // 启动 app
     await setupApp()
   }

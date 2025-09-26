@@ -217,12 +217,12 @@ function getProxyModel() {
       separator: true,
     },
     {
-      label: $t('购买代理'),
+      label: $t('购买代理 IP'),
       icon: 'base/rx_ic_cart',
       visible: role.isOwner,
       command: () => {
         buyProxy(orderInfo => {
-          router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo.orderNo } })
+          router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
         })
       },
       render: ({ item, btnPt }: any) => {

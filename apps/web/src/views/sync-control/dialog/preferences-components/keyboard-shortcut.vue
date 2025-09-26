@@ -125,10 +125,10 @@ const keyboardItems = ref<KeyboardItem[]>([
     label: $t('批量输入'),
     key: 'openBatchInputDialog',
   },
-  // {
-  //   label: $t('统一标签页'),
-  //   key: 'unifiedTabs',
-  // },
+  {
+    label: $t('统一标签页'),
+    key: 'unifiedTabs',
+  },
   {
     label: $t('关闭其他标签页'),
     key: 'closeOtherTabs',

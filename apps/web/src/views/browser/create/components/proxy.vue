@@ -10,6 +10,7 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
+import { useNetworkStore } from '/@/stores/network'
 
 defineOptions({
   inheritAttrs: false,
@@ -23,6 +24,7 @@ const { showSimpleDialog } = useSimpleDialog()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
 const { buyProxy } = useProxy()
+const network = useNetworkStore()
 
 const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
@@ -34,7 +36,7 @@ const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item
 
 function onBuyProxy() {
   buyProxy(orderInfo => {
-    router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo.orderNo } })
+    router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
   })
 }
 
@@ -167,10 +169,20 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
 <template>
   <div class="w-full flex flex-col gap-3">
     <div class="flex items-center self-stretch gap-2">
-      <div class="flex-1 items-center flex gap-2 title">{{ attrs.label }}</div>
+      <div class="flex-1 flex flex-col gap-1.5 ">
+        <div class="title">{{ attrs.label }}</div>
+        <div class="flex items-center gap-1 tips">
+          <span>{{ $t('当前: {value}({ip})', {
+            value: strConcat(network.info?.country_code, strConcat('/', network.info?.city)),
+            ip: network.info?.ip
+          }) }}</span>
+          <SvgIcon v-tooltip.top="{ value: $t('无代理的情况下该窗口将使用当前 ip 作为出口 ip') }" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)"></SvgIcon>
+        </div>
+      </div>
+
       <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
       <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton class="guide3" v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
       :closable="false"></RxAlert>

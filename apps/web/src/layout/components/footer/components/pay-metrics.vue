@@ -138,10 +138,6 @@ function onExpand() {
           {{ $t('{day} 天免费试用', { day: 7 }) }}
         </div>
       </PayMetricsCard>
-      <div v-if="collapsed" class="pay-metrics-divider"></div>
-      <PayMetricsCard class="extend cursor-pointer" @click="onExpand">
-        <PayMetricsList :items="payMetricsList" />
-      </PayMetricsCard>
     </div>
   </DefineTemplate>
 

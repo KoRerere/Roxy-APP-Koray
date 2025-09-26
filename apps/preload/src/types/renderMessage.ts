@@ -153,6 +153,8 @@ export interface RenderMessage {
   "app:getMacAddress": () => Promise<string>;
   /** 获取浏览器缓存所在磁盘 */
   "app:getBrowserCacheDisk": () => Promise<any>;
+  /** 获取浏览器缓存文件夹大小 */
+  "app:getBrowserCacheSize": () => Promise<any>;
   /** 程序化显示和隐藏红绿灯 */
   "app:showHideTrafficLight": (show: boolean) => void;
   /** 设置窗口是否忽略鼠标事件 */

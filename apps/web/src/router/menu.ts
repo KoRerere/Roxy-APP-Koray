@@ -1,7 +1,7 @@
 import type { RouteRecordRaw } from "vue-router";
 import { Role } from "/@/enums";
 import { $t } from "/@/locales";
-import { isWindows } from "/@/utils";
+// import { isWindows } from "/@/utils/common";
 import { emitter } from "/@/utils/eventBus";
 import { API } from "/@/api";
 import { I18nT } from "vue-i18n"
@@ -129,7 +129,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
           title: $t("窗口同步"),
           type: "button",
           icon: "base/rx_ic_frame_stack",
-          hideInMenu: !isWindows,
+          hideInMenu: !navigator.platform.includes('Win'),
           onClick: async (event: Event) => {
             const { isOwner } = useRoleStore();
             const { code } = await API.pay.userCheckTeamUserRightsList()
@@ -239,5 +239,15 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
       roles: [Role.OWNER],
     },
     component: () => import("/@/views/pay/wallet"),
+  },
+  {
+    name: "tutorial",
+    path: "tutorial",
+    meta: {
+      title: $t("新手教程"),
+      icon: "base/rx_ic_wallet",
+      hideInMenu: true,
+    },
+    component: () => import("/@/views/tutorial"),
   },
 ];

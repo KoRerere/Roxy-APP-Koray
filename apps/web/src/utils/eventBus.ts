@@ -46,6 +46,8 @@ export type MittEvents = {
   showOldUserGiftDialog?: void;
   /** 显示账号设置弹窗 */
   showAccountSetupDialog?: void;
+  /** 显示用户引导 */
+  showUserGuideDialog?: void;
   /** 更新项目列表 */
   updateProjectList?: void;
   /** 更新自动续费列表 */

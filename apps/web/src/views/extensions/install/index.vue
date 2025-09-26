@@ -3,7 +3,8 @@ import installExtension from '/@/views/extensions/install/components/install-ext
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 import ShieldDialog from '/@/views/extensions/install/components/shield-dialog.vue'
 import HowToGet from '/@/views/extensions/install/components/how-to-get.vue'
-import { RxSvgIcon, } from '/@/components/rx-icon/'
+import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -458,6 +459,18 @@ defineExpose({
     tableRef.value?.refresh({ pluginSwitchType: filters.value })
   },
 })
+
+//==============================
+import { useTutorialStore } from '/@/stores/tutorial';
+const { getVideoMaps } = useTutorialStore()
+const videoData = ref()
+
+onBeforeMount(() => {
+  getVideoMaps()
+    .then(data => {
+      videoData.value = data?.plugin_management
+    })
+})
 </script>
 
 <template>
@@ -474,14 +487,14 @@ defineExpose({
     </template>
 
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
+      <CustomNewEmpty icon="base/rx_ic_extension_store" img="empty-extensions.png" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
-          <div class="flex items-center gap-3">
-            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
-            <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
+          <div class="flex gap-3">
+            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
+            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
           </div>
         </template>
-      </CustomEmpty>
+      </CustomNewEmpty>
     </template>
     <template #extension="{ data }">
       <div class="flex items-center gap-3 w-75">
@@ -574,7 +587,7 @@ defineExpose({
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     border: 0.5px solid var(--colors-border-border-subtle, #c7cdd1);
-    background: var(--colors-background-bg-app, #fff);
+    background: var(--colors-background-bg-block);
   }
 
   &-info {

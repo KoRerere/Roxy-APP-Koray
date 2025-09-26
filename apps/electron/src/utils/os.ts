@@ -1,5 +1,5 @@
 import systeminformation, { Systeminformation } from 'systeminformation'
-import { execSync } from 'node:child_process'
+import { exec, execSync } from 'node:child_process'
 import { networkInterfaces, platform } from 'node:os'
 import { parse } from 'node:path'
 
@@ -44,15 +44,46 @@ function getSystemDisks() {
   return systeminformation.fsSize()
 }
 
+function getMacDiskInfo(filePath: string) {
+  return new Promise((resolve) => {
+    exec(`df -P "${filePath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`执行 df 命令失败: ${error}`)
+        return resolve({ error: error.message })
+      }
+
+      const lines = stdout.trim().split('\n')
+      if (lines.length < 2) {
+        return resolve({ error: '无法解析 df 命令输出' })
+      }
+
+      const data = lines[1].trim().split(/\s+/)
+      const totalBlocks = parseInt(data[1])
+      const usedBlocks = parseInt(data[2])
+      const availableBlocks = parseInt(data[3])
+      const totalBytes = totalBlocks * 512
+      const usedBytes = usedBlocks * 512
+      const availableBytes = availableBlocks * 512
+      const usageRatio = totalBytes > 0 ? Math.floor((usedBytes / totalBytes) * 10000) / 100 : 0
+
+      resolve({
+        size: totalBytes,
+        used: usedBytes,
+        available: availableBytes,
+        use: usageRatio,
+      })
+
+    })
+  })
+}
+
 /** 获取本机系统磁盘信息 by path */
 export async function getDiskInfoByPath(filePath: string) {
-  const diskId = process.platform === 'win32' ? parse(filePath).root.replace(/\\/g, '') : '/'
-  const disks = await getSystemDisks()
+  if (process.platform === 'darwin') {
+    return getMacDiskInfo(filePath)
+  }
 
-  return disks.find(disk => {
-    if (process.platform === 'win32') {
-      return disk.fs.toUpperCase().startsWith(diskId.toUpperCase());
-    }
-    return filePath.startsWith(disk.mount);
-  })
+  const diskId = parse(filePath).root.replace(/\\/g, '')
+  const disks = await getSystemDisks()
+  return disks.find(disk => disk.fs.toUpperCase().startsWith(diskId.toUpperCase()))
 }

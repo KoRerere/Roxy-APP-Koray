@@ -2,6 +2,7 @@ import { useDialog } from "primevue/usedialog"
 import { useUserStore } from "/@/stores/user"
 import { usePay } from "/@/views/pay/wallet/hook.tsx"
 import { useResponseToast } from "/@/hooks/useResponseToast";
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import { OrderType, PayWay, PurchaseType } from "/@/enums/pay";
 import { API } from "/@/api";
 import { emitter, type MittEvents } from "/@/utils/eventBus";
@@ -22,6 +23,7 @@ const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-ex
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
+const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal.vue'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
@@ -44,6 +46,7 @@ export function useSubscribe() {
   const { handleBusinessCode } = useHandleBusinessCode()
   const userStore = useUserStore()
   const { getUserPayInfo, clearUserInfo } = userStore
+  const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 
   watchEffect(() => {
     if (userStore.token) {
@@ -60,6 +63,21 @@ export function useSubscribe() {
 
   // 显示toast
   emitter.on('showToast', showToast)
+  // 打开页面
+  electronAPI.on('open:page', (query) => {
+    console.log('open:page', query)
+    if (query) {
+      const searchParams = new URLSearchParams(query)
+      const url = searchParams.get('url')
+      if (url) {
+        sessionStorage.setItem('openPageUrl', url)
+        router.push(url)
+        if (userStore.userInfo?.id) {
+          sessionStorage.removeItem('openPageUrl')
+        }
+      }
+    }
+  })
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
 
@@ -77,6 +95,8 @@ export function useSubscribe() {
     emitter.on('showExpandDialog', onExpand)
     // 显示账号设置弹窗
     emitter.on('showAccountSetupDialog', showAccountSetupDialog)
+    // 显示用户引导
+    emitter.on('showUserGuideDialog', showUserGuideDialog)
 
     // 达到窗口打开次数限制
     electronAPI.on('browser:window-open-limit', (result) => {
@@ -136,7 +156,7 @@ export function useSubscribe() {
     const appVersion = await electronAPI.send("app:getAppVersion")
     showModal({
       header: $t('v{appVersion} 更新概览', { appVersion }),
-      class: 'w-[500px] max-h-[90vh]',
+      class: 'w-[500px] max-h-[90vh] !transform-none',
       draggable: false,
       handleCancel: () => {
         electronAPI.send('app:hideNewFeatureTips')
@@ -274,6 +294,21 @@ export function useSubscribe() {
         }
       },
     });
+  }
+
+  function showUserGuideDialog() {
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      pt: {
+        root: "!border-none !shadow-none rounded-lg",
+      },
+      handleCancel: () => updateOnboardingTaskStatus({ firstRegisterGuideStatus: true }),
+      slots: {
+        container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
+      }
+    })
   }
 }
 

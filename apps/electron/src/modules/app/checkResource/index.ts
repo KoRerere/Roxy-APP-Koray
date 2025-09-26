@@ -38,9 +38,13 @@ export async function checkResource() {
     })
     const webDomain = await getWebDomain()
     // 检测更新 roxynet
-    await checkRoxynetBin(webDomain)
+    await checkRoxynetBin(webDomain).catch((error) => {
+      console.log('checkRoxynetBin error', error)
+    })
     // 检测更新 roxySync
-    await checkRoxySyncBin(webDomain)
+    await checkRoxySyncBin(webDomain).catch((error) => {
+      console.log('checkRoxySyncBin error', error)
+    })
     // 检测更新 web
     await webUpdater.checkForUpdates({
       onDownloadProgress: (percentage) => {
@@ -50,6 +54,8 @@ export async function checkResource() {
         sendLaunchMessage($t('UI 资源更新完成'))
         await webUpdater.extract()
       },
+    }).catch((error) => {
+      console.log('webUpdater checkForUpdates error', error)
     })
   }
   catch (error) {
