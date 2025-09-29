@@ -24,6 +24,7 @@ const tabs = ref([
   {
     title: $t('已购代理'),
     value: 'shop',
+    total: 0,
     slot: 'shop',
   },
 ])
@@ -47,14 +48,26 @@ function shopConfirm(data: any) {
 <template>
   <div class="flex flex-col h-full w-full">
     <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" head-tabs>
+      <template #tab="{ data }">
+        <div class="flex items-center gap-1">
+          <div>{{ data.title }}</div>
+          <div v-if="data.total" class="flex items-center justify-center w-4 h-4 rounded-full mark">{{ data.total }}</div>
+        </div>
+      </template>
       <template #list>
         <ListSimple v-bind="attrs" :data="listData" :is-batch="isBatch" @confirm="listConfirm" />
       </template>
       <template #shop>
-        <ShopSimple v-bind="attrs" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
+        <ShopSimple v-bind="attrs" v-model:total="tabs[1].total" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
       </template>
     </RxTabs>
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.mark {
+  font-size: 12px;
+  color: #ffffff;
+  background-color: var(--colors-background-bg-error);
+}
+</style>

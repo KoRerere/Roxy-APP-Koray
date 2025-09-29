@@ -30,6 +30,7 @@ import {
   UserGetProxyPurchaseCountryListListData,
   UserGetProxyPurchaseCountryListListParams,
   UserGetProxyPurchaseTimePriceListData,
+  UserGetProxyPurchaseTimePriceListParams,
   UserGetProxyRecommendInfoListData,
   UserGetProxyRefundInfoListData,
   UserGetProxyRefundInfoListParams,
@@ -358,10 +359,14 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request GET:/user_get_proxy_purchase_time_price
    * @response `200` `UserGetProxyPurchaseTimePriceListData`
    */
-  userGetProxyPurchaseTimePriceList = (params: RequestParams = {}) =>
+  userGetProxyPurchaseTimePriceList = (
+    query: UserGetProxyPurchaseTimePriceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetProxyPurchaseTimePriceListData, any>({
       path: `/user_get_proxy_purchase_time_price`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

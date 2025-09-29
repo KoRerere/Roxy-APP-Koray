@@ -2,7 +2,7 @@
 import RxButton from "/@/components/rx-button";
 import AnimationBorder from '/@/components/animation-border.vue';
 import ClaimModal from '/@/views/tutorial/components/claim-modal.vue';
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { I18nT } from "vue-i18n"
 import { API } from "/@/api";
 import { $t } from '/@/locales';
@@ -261,7 +261,6 @@ async function claimReward(queryType: string) {
     blockScroll: true,
     pt: {
       content: '!pa-0',
-      mask: '!z-19'
     },
     slots: {
       container: ({ hideModal }) => <ClaimModal
@@ -347,7 +346,7 @@ function jumpToVideo(item: any) {
                 <component :is="item.render" :item="item"></component>
               </div>
               <div class="flex-2/5 flex flex-col pa-2.5 gap-1 rounded-xl video">
-                <PlayVideo :videoUrl="item.videoUrl" :externalLink="item.externalLink" :autoplay="false">
+                <TutorialVideo :videoUrl="item.videoUrl" :externalLink="item.externalLink" :autoplay="false">
                   <template #default="{ onPlay }">
                     <div class="relative rounded-lg cursor-pointer overflow-hidden" @click="onPlay">
                       <img class="block w-full" :src="item.coverImage"></img>
@@ -356,7 +355,7 @@ function jumpToVideo(item: any) {
                       </div>
                     </div>
                   </template>
-                </PlayVideo>
+                </TutorialVideo>
                 <div class="flex justify-end items-center gap-1">
                   <a class="video-external" :href="item.externalLink" target="_blank">{{ $t('Youtube 观看') }}</a>
                   <SvgIcon name="base/rx_ic_outlink" size="14" color="var(--colors-text-text-tertiary)"></SvgIcon>

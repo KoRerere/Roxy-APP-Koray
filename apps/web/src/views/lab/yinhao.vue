@@ -279,8 +279,8 @@ import GenSingle from '/@/views/lab/gen-single.vue';
       <RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
       <RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
     </div> -->
-    <!-- <GenSingle></GenSingle> -->
-    <div class="w-100 flex">
+    <div class="mx-auto w-100 flex">
+      <GenSingle></GenSingle>
     </div>
   </div>
 </template>

@@ -452,7 +452,6 @@ const driverObj = driver({
     { element: '.guide5', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
   ],
   onDestroyed: () => {
-    console.log('修改状态')
     updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
   }
 })

@@ -18,6 +18,7 @@ type KernelUpdateGroup = {
 const toast = useToast();
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
+const tabComponentRef = ref()
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdateGroup = ref<KernelUpdateGroup[]>([])
@@ -139,6 +140,7 @@ watch(isDownloadingKernel, () => {
     nextTick(() => {
       tabModel.value = tabs.value[1].value
       isDownloadingKernel.value = false
+      tabComponentRef.value?.[1].focusKernel()//内核过多，展开时滚动到下载中的位置
     })
   }
 })
@@ -151,10 +153,10 @@ function onDownloadClick(item: ResourceUpdateMessage) {
 const showDownloadError = debounce((data: ResourceUpdateMessage) => {
   toast.add({
     severity: 'error',
-    summary: () =>
+    summary: (() =>
       <I18nT keypath={data.description || $t('获取内核失败，{tech}', { tech: '{tech}' })}>
         {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('联系技术支持')}</a> }}
-      </I18nT>
+      </I18nT>) as any
   });
 }, 100)
 
@@ -209,22 +211,22 @@ window.electronAPI.on('app:resource-update', (data) => {
       <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
-    <RyPopover ref="popover" :class="classes.popover">
+    <RyPopover ref="popover" :class="popup.content">
       <div class="header">
         <div class="title">
           {{ $t('更新') }}
         </div>
       </div>
       <Tabs v-model:value="tabModel">
-        <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px] !border-[var(--colors-border-border-subtle)]', activeBar: '!h-[2px]' }">
+        <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px] !border-[var(--colors-border-border-subtle)]', activeBar: '!h-[2px]' }">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}
             <Badge v-if="tab.badge" :value="tab.badge" severity="danger" size="small" />
           </Tab>
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
-          <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
-            <component :is="tab.component" :upgrade-list="(tab.list as any)" @onDownloadClick="onDownloadClick" />
+          <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="overflow-hidden">
+            <component ref="tabComponentRef" :is="tab.component" :upgrade-list="(tab.list as any)" @onDownloadClick="onDownloadClick" />
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -232,8 +234,8 @@ window.electronAPI.on('app:resource-update', (data) => {
   </div>
 </template>
 
-<style lang="scss" module="classes">
-.popover {
+<style lang="scss" module="popup">
+.content {
   width: 384px;
 
   :global(.header) {
@@ -259,10 +261,6 @@ window.electronAPI.on('app:resource-update', (data) => {
     line-height: 24px;
     /* 171.429% */
   }
-}
-
-.tabpanel {
-  overflow: hidden;
 }
 </style>
 

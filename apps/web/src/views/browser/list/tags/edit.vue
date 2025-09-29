@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { defaultColors } from '/@/utils/constants'
 
@@ -34,23 +33,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col popup">
-    <div class="popup-title">
-      {{ isEdit ? $t('编辑标签') : $t('新增标签') }}
-    </div>
-    <!-- <div class="popup-content">
-      {{ $t('请选择颜色') }}
-    </div> -->
-    <div class="colors">
-      <template v-for="color in defaultColors" :key="color">
-        <RxSvgIcon v-if="color === selectdColor" name="base/rx_ic_check_line" :size="20" :color="color" />
-        <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }" @click="selectdColor = color" />
-      </template>
-    </div>
-
-    <div class="square-container" />
+  <div class="w-100 flex flex-col gap-6 pt-5 popup">
+    <div class="title">{{ isEdit ? $t('编辑标签') : $t('新增标签') }}</div>
+    <ColorsSelect v-model="selectdColor" :colors="defaultColors" />
     <TsFormInputText v-model="tagName" size="md" type="text" :placeholder="$t('请输入标签名')" />
-    <div class="footer">
+    <div class="flex justify-end items-center self-stretch gap-3">
       <RxButton :label="$t('取消')" text severity="secondary" @click="close" />
       <RxButton :label="$t('保存')" @click="onConfirm" />
     </div>
@@ -58,47 +45,12 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-.popup {
-  width: 400px;
-  padding-top: 1.25rem;
-  gap: var(--spacing-xl, 12px);
-
-  &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-  }
-
-  &-content {
-    color: var(--primitives-neutrals-600, #575d61);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 18px;
-  }
-}
-
-.colors {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-
-  &-item {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-  }
-}
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-xl, 12px);
-  align-self: stretch;
+.title {
+  color: var(--colors-text-text-primary);
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>

@@ -1,33 +1,16 @@
 <script setup lang="ts">
-// import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
 import { $t } from '/@/locales';
-// import { useDialog } from '/@/hooks/useDialog'
 
 const emit = defineEmits(['close', 'confirm'])
 
 const router = useRouter()
-// const [showModal] = useDialog()
-
-function onSkip() {
-  // showModal({
-  //   showHeader: false,
-  //   modal: true,
-  //   blockScroll: true,
-  //   slots: {
-  //     container: ({ hideModal }) => h(GuideModal, {
-  //       title: $t('教程提示'),
-  //       desc: $t('当您对 RoxyBrowser 的产品功能不熟悉或希望学习更多技巧时，可以随时通过右下方蓝色按钮找到"教程"入口。'),
-  //       video: "/video/tour-hide-guide.mp4",
-  //       onClose: hideModal,
-  //       onConfirm: hideModal
-  //     })
-  //   }
-  // })
-  emit('close')
-}
 
 function toUserGuide() {
   router.push({ name: 'tutorial' })
+  onClose()
+}
+
+function onClose() {
   emit('close')
 }
 </script>
@@ -36,7 +19,7 @@ function toUserGuide() {
   <div class="w-120 inline-flex flex-col pa-6 pt-4 gap-4">
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('欢迎加入') }}</span>
-      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="onSkip" />
+      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="onClose" />
     </div>
     <img class="block w-full rounded-lg" src="/public/images/welcome-banner.png">
     <div class="flex flex-col gap-6">
@@ -44,7 +27,7 @@ function toUserGuide() {
       <div class="desc">{{ $t('在此之前，让我们先进行一些简单的新手教程，助您快速掌握使用技巧！') }}</div>
     </div>
     <div class="flex justify-between items-center">
-      <RxButton severity="secondary" variant="outlined" size="md" :label="$t('跳过')" @click="onSkip" />
+      <RxButton severity="secondary" variant="outlined" size="md" :label="$t('跳过')" @click="onClose" />
       <RxButton size="md" icon="base/rx_ic_books" :label="$t('现在开始')" @click="toUserGuide" />
     </div>
   </div>

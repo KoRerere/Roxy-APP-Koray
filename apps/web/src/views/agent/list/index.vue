@@ -2,7 +2,7 @@
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -18,7 +18,6 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from '
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
 import { ProxyCheckStatus } from '/@/enums'
-import { useTutorialStore } from '/@/stores/tutorial';
 
 const router = useRouter()
 const role = useRoleStore()
@@ -29,21 +28,14 @@ const { userConfig } = storeToRefs(useUserStore())
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
-const { getVideoMaps } = useTutorialStore()
 
 const tableRef = useTemplateRef('listtable')
 const filtersMenu = ref()
 const dataList = ref()
-const videoData = ref()
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
-
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.proxy_management
-    })
 })
 
 async function getTableList(params: any) {
@@ -244,7 +236,7 @@ function onRefreshTable() {
             <template #extra>
               <div class="flex gap-3">
                 <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
-                <PlayVideo size="xs" v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+                <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>
           </CustomNewEmpty>

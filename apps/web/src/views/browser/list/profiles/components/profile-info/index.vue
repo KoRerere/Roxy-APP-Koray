@@ -404,7 +404,7 @@ function chooseProxy(proxyData: Record<string, any>) {
     slots: {
       container: () => h(ProxyQuick, {
         data: proxyData,
-        onConfirm: ({ id: moduleId, proxyCategory, protocol, proxyProviderId, ...formData }: any) => {
+        onConfirm: ({ id: moduleId, proxyCategory, protocol, proxyType, ...formData }: any) => {
           const { id, dirId } = data
           updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
             success: () => silentUpdateProxy(data, {
@@ -413,7 +413,7 @@ function chooseProxy(proxyData: Record<string, any>) {
               protocol,
               proxyCategory: proxyCategory || protocol,
               proxyMethod: 'choose',
-              buyProxyType: proxyProviderId ? ProxyType.buy : ProxyType.resource,
+              buyProxyType: proxyType ?? ProxyType.resource,
             }, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()

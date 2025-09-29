@@ -11,7 +11,7 @@ type KernelUpdateItem = ResourceUpdateMessage & {
   _desc?: string
 }
 
-defineProps<{
+const { upgradeList } = defineProps<{
   upgradeList: {
     title: string
     list: KernelUpdateItem[]
@@ -95,13 +95,22 @@ const onRead = (item: KernelUpdateItem) => {
   readMap[item.coreVersion!] = true
   localStorage.setItem('kernel-read-map', JSON.stringify(readMap))
 }
+
+defineExpose({
+  focusKernel() {
+    const coreVersion = upgradeList[1]?.list.find(item => item.status === 'downloading')?.coreVersion
+    if (coreVersion) {
+      document.getElementById(`kernel_${coreVersion}`)?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+})
 </script>
 
 <template>
   <div class="flex flex-col items-start gap-3">
     <div class="w-full" v-for="upgrade in upgradeList" :key="upgrade.title">
       <div v-if="upgradeList?.length > 1" class="py-3 px-4 title">{{ upgrade.title }}</div>
-      <div v-for="item in upgrade.list" :key="item.releaseTime" class="w-full flex flex-col items-start  item" :class="{ 'light': item._light }">
+      <div :id="`kernel_${item.coreVersion}`" v-for="item in upgrade.list" :key="item.releaseTime" class="w-full flex flex-col items-start item" :class="{ 'light': item._light }">
         <div class="w-full flex justify-between items-center self-stretch">
           <div class="flex-1 flex items-center gap-1.5 py-3 pl-4" @click="onRead(item)">
             <div class="relative">

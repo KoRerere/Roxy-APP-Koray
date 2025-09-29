@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
-import { RxAlert } from '/@/components/rx-alert'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import { RxAlert } from '/@/components/rx-alert'
+import { $t } from '/@/locales';
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import { getFormData, strConcat } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 
@@ -14,6 +16,7 @@ const props = defineProps({
   },
 })
 
+const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 const { testProxy: checkProxy, checkResult, batchTestShowToast } = useCheckProxy()
 const rxAlertRef = useTemplateRef('rxalert')
 const original = defineModel<any>('original')
@@ -43,52 +46,11 @@ async function testProxy() {
 }
 
 defineExpose({ testProxy, visible })
-
-//=========================
-import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
-import { useUserStore } from "/@/stores/user";
-import { useTutorialStore } from '/@/stores/tutorial';
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
-import { useDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales';
-
-const { userPayInfo } = storeToRefs(useUserStore())
-const { getVideoMaps } = useTutorialStore()
-const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-const [showModal] = useDialog()
-
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.proxy_management
-    })
-})
-
-function onHideTips() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    handleCancel: () => updateOnboardingTaskStatus({ createProxyVideoEntryStatus: true }),
-    slots: {
-      container: ({ hideModal }) => h(GuideModal, {
-        title: $t('教程提示'),
-        desc: $t('当您对 RoxyBrowser 的产品功能不熟悉或希望学习更多技巧时，可以随时通过右下方蓝色按钮找到"教程"入口。'),
-        video: "/video/tour-hide-guide.mp4",
-        onClose: hideModal,
-        onConfirm: hideModal,
-      })
-    }
-  })
-}
 </script>
 
 <template>
   <div class="h-full w-full proxies-form">
-    <PlayVideo v-if="videoData && !userPayInfo.onboardingTaskStatus?.createProxyVideoEntryStatus" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" :autoplay="false">
+    <TutorialVideo v-if="!onboardingTaskStatus?.createProxyVideoEntryStatus" video-type="proxy_management" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
@@ -97,13 +59,14 @@ function onHideTips() {
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
               <span class="video-title">{{ $t('代理教程') }}</span>
-              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="onHideTips"></SvgIcon>
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProxyVideoEntryStatus')">
+              </SvgIcon>
             </div>
             <div class="video-desc">{{ $t('了解如何导入和配置代理 IP') }}</div>
           </div>
         </div>
       </template>
-    </PlayVideo>
+    </TutorialVideo>
     <RyForm :inputs="inputs">
       <template #server="{ input }">
         <div class="flex flex-col">

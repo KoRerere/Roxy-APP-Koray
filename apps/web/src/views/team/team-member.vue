@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
@@ -223,17 +223,6 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
   })
 }
 
-//==============================
-import { useTutorialStore } from '/@/stores/tutorial';
-const { getVideoMaps } = useTutorialStore()
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.team_management
-    })
-})
 </script>
 
 <template>
@@ -253,7 +242,7 @@ onBeforeMount(() => {
           <div class="flex gap-3">
             <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
               @click.stop="handleShowInviteUserFormDialog(filters.value)" />
-            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+            <TutorialVideo video-type="team_management" :autoplay="false" />
           </div>
         </template>
       </CustomNewEmpty>

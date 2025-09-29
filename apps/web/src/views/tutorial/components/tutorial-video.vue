@@ -2,35 +2,42 @@
 import RxButton from '/@/components/rx-button/index.vue'
 import VideoModal from '/@/views/tutorial/components/video-modal.vue';
 import { useDialog } from '/@/hooks/useDialog'
+import { useTutorialStore } from '/@/stores/tutorial'
+import type { UserGetGuideVideosByTypeListData } from '@roxy/backend-api'
 
 type RxButtonProps = InstanceType<typeof RxButton>['$props']
-interface PlayVideoProps extends /* @vue-ignore */ Omit<RxButtonProps, 'onClick' | 'type'> {
-  type?: string
+interface Props extends /* @vue-ignore */ Omit<RxButtonProps, 'onClick' | 'type'> {
+  videoType?: keyof UserGetGuideVideosByTypeListData['data']
   videoUrl?: string
   externalLink?: string
   autoplay?: boolean
 }
 
-const { type, videoUrl, externalLink, autoplay = true } = defineProps<PlayVideoProps>()
+const { videoType, videoUrl, externalLink, autoplay = true } = defineProps<Props>()
 
 defineOptions({ inheritAttrs: false })
 
 const attrs = useAttrs()
 const [showModal] = useDialog()
+const { getVideoMaps } = useTutorialStore()
 
-function openVideoModal() {
+async function openVideoModal() {
+  const { videoUrl: video, externalLink: external } = videoType
+    ? await getVideoMaps().then(data => data![videoType])
+    : { videoUrl, externalLink }
+
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     pt: {
       root: "!bg-transparent !border-none !shadow-none",
-      mask: 'z-20'
+      mask: '!z-1200'
     },
     slots: {
       container: ({ hideModal }) => h(VideoModal, {
-        video: videoUrl!,
-        external: externalLink!,
+        video: video!,
+        external: external!,
         autoplay,
         onClose: hideModal
       })

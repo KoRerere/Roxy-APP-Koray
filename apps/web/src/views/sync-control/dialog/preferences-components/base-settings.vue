@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import RxTagColorCheckbox from '/@/components/rx-tag-color-checkbox/index.vue'
 import { type PreferenceSettings } from '/@/views/sync-control/model';
 
 const colorOptions = ['#FF12A3FC', '#FFEB5757', '#FFD17CFE', '#FFFBC26F', '#C7CDD1'].map((color) => {
@@ -15,7 +14,7 @@ const formData = defineModel<PreferenceSettings['base']>({ required: true });
     <div class="form-item">
       <label class="form-item-label">{{ $t('主控窗口颜色') }}</label>
       <div class="form-item-content">
-        <RxTagColorCheckbox v-model="formData.mainControlWindowColor" :colorOptions="colorOptions" />
+        <ColorsSelect v-model="formData.mainControlWindowColor" :colors="colorOptions" />
       </div>
     </div>
     <div class="form-item">

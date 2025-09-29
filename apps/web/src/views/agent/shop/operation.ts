@@ -20,7 +20,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
   const hasRefunded = datas.some(item => item.orderStatus === ProxyOrderStatus.refunded)
 
   const isDone = datas.every(item => item.orderStatus === ProxyOrderStatus.done)
-  const isGift = datas.some(item => !item.proxyProviderId)
+  const isGift = datas.some(item => !item.proxyProviderId && !item.renewalTime)
 
   return [
     {
@@ -54,13 +54,12 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('续费'),
       icon: 'base/rx_ic_renew2',
       tooltip: $t('续费'),
-      disabled: hasExpired || !isDone || !isOwner.value || isGift,
+      disabled: hasExpired || !isDone || !isOwner.value,
       quick: true,
       multiple: true,
       multipleProps: {
         name: 'G3',
         showLabel: true,
-        disabledTooltip: isGift ? $t('官方赠送的代理 IP 暂时无法续费') : undefined,
       },
     },
     {

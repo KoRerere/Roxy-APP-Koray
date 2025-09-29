@@ -1,22 +1,33 @@
 <script setup lang="tsx">
-import { createReusableTemplate } from '@vueuse/core';
-import { RxSvgIcon } from '/@/components/rx-icon';
-import Usage from '/@/components/usage.vue'
-import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
-import { $t } from '/@/locales';
-import { useUserStore } from '/@/stores/user';
 import PayMetricsCard from './pay-metrics-card.vue'
 import PayMetricsList from './pay-metrics-list.vue'
+import Usage from '/@/components/usage.vue'
+import { RxSvgIcon } from '/@/components/rx-icon';
+import { createReusableTemplate } from '@vueuse/core';
+import { $t } from '/@/locales';
+import { useUserStore } from '/@/stores/user';
 import { emitter } from '/@/utils/eventBus';
+import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
 
 const { collapsed } = defineProps<{
   collapsed: boolean
 }>()
+
+const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
+
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 
-const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
 const opRef = useTemplateRef('op')
+const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value?.subLevel as SubLevelEnum))
+const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
+
+const blockCount = computed(() => {
+  if (isFree.value || isExpired.value) {
+    return 5
+  }
+  return 10
+})
 
 const badgeBgColor = computed(() => {
   if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value?.subLevel as SubLevelEnum)) {
@@ -25,19 +36,9 @@ const badgeBgColor = computed(() => {
   return 'linear-gradient(90deg, #8780FE 0%, #C491F1 100%)'
 })
 
-const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value?.subLevel as SubLevelEnum))
-const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
-
 const ratio = computed(() => {
   const { useWindowCount, maxWindowCount } = userPayInfo.value
   return useWindowCount / maxWindowCount
-})
-
-const blockCount = computed(() => {
-  if (isFree.value || isExpired.value) {
-    return 5
-  }
-  return 10
 })
 
 const payMetricsItems = computed(() => {
@@ -50,51 +51,36 @@ const payMetricsItems = computed(() => {
   ]
 })
 
-const payMetricsList = computed(() => {
-  const { useMemberCount, maxMemberCount, useWorkspaceCount, maxWorkspaceCount } = userPayInfo.value
-
+const actions = computed(() => {
   return [
     {
-      label: $t('团队成员'),
-      usage: `${useMemberCount} / ${maxMemberCount}`
+      label: $t('升级'),
+      visible: isFree.value,
+      command: () => {
+        router.push({ name: 'subscribe-plan' })
+      }
     },
     {
-      label: $t('工作空间'),
-      usage: `${useWorkspaceCount} / ${maxWorkspaceCount}`
+      label: $t('续费'),
+      visible: !userPayInfo.value?.isAuto && !isFree.value,
+      command: () => {
+        emitter.emit('showRenewalDialog', {
+          paySuccess: () => {
+            emitter.emit('updateBillList')
+          }
+        })
+      }
+    },
+    {
+      label: $t('详情'),
+      visible: !!userPayInfo.value?.isAuto,
+      command: () => {
+        router.push({ name: 'wallet' })
+      }
     }
-  ]
+  ].filter(item => item.visible !== false)
 })
 
-const toggle = (event: Event) => {
-  opRef.value?.toggle(event);
-}
-const actions = computed(() => [
-  {
-    label: $t('升级'),
-    visible: isFree.value,
-    command: () => {
-      router.push({ name: 'subscribe-plan' })
-    }
-  },
-  {
-    label: $t('续费'),
-    visible: !userPayInfo.value?.isAuto && !isFree.value,
-    command: () => {
-      emitter.emit('showRenewalDialog', {
-        paySuccess: () => {
-          emitter.emit('updateBillList')
-        }
-      })
-    }
-  },
-  {
-    label: $t('详情'),
-    visible: !!userPayInfo.value?.isAuto,
-    command: () => {
-      router.push({ name: 'wallet' })
-    }
-  }
-].filter(item => item.visible !== false))
 const infoValue = computed(() => {
   const { totalOpenWindowTimes, totalCreateWindowTimes, openWindowTimes, createWindowTimes } = userPayInfo.value
   return $t('每日可创建数: {num1}\n每日可打开数: {num2}', { num1: `${createWindowTimes}/${totalCreateWindowTimes}`, num2: `${openWindowTimes}/${totalOpenWindowTimes}` })
@@ -107,12 +93,8 @@ function getColorLevel(percent: number, blockCount: number) {
   }
 }
 
-function onExpand() {
-  emitter.emit('showExpandDialog', {
-    paySuccess: () => {
-      emitter.emit('updateBillList')
-    }
-  })
+function toggle(event: Event) {
+  opRef.value?.toggle(event);
 }
 </script>
 

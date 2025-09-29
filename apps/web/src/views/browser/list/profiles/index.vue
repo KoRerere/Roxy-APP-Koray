@@ -1,7 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="tsx">
 import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
@@ -46,7 +46,6 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import ProfileName from './components/profile-name.vue'
-import { useTutorialStore } from '/@/stores/tutorial';
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -76,7 +75,6 @@ const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
-const { getVideoMaps } = useTutorialStore()
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -85,7 +83,6 @@ const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
-const videoData = ref()
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
@@ -117,10 +114,6 @@ onBeforeMount(() => {
   canceCloselListener = listenCloseMessage()
   canceCloseSyncingDataListener = listenCloseSyncingDataMessage()
 
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.create_profile
-    })
   // 列表备注显示状态现在保存到后台
   updateColumns((columns) => {
     const column = columns.find(column => column.key === 'note')
@@ -351,9 +344,9 @@ async function openBrowserBefore(data: Data | Data[]) {
 
   const result = await checkProfileStatus(datas)
   //过滤自身打开的窗口
-  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
+  const openList = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
   // 1.如果没有其他人打开窗口，则直接打开
-  if (!list.length) {
+  if (!openList.length) {
     onOpenBrowser(datas)
     return
   }
@@ -361,7 +354,7 @@ async function openBrowserBefore(data: Data | Data[]) {
   // 2.如果窗口其他人打开了，那么就提示用户，让用户选择是否继续打开
   confirm.require({
     header: $t('警告'),
-    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),
+    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: openList.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -638,14 +631,14 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     onlyErrorToast(code, msg)
     if (code !== 0) return
 
-    const { protocol, proxyCategory, proxyProviderId, ...rest } = formData
+    const { protocol, proxyCategory, proxyType, ...rest } = formData
     const params = {
       ...rest,
       moduleId: id ?? 0,
       proxyMethod,
       protocol,
       proxyCategory: proxyCategory || protocol,
-      buyProxyType: proxyProviderId ? ProxyType.buy : ProxyType.resource,
+      buyProxyType: proxyType ?? ProxyType.resource,
     }
     datas.forEach(item => {
       silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
@@ -1042,7 +1035,7 @@ defineExpose({
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="!role.isViewer" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
-            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+            <TutorialVideo video-type="create_profile" :autoplay="false" />
           </div>
         </template>
       </CustomNewEmpty>

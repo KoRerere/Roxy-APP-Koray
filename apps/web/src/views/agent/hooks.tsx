@@ -102,7 +102,7 @@ export function useCheckProxy(): useCheckProxyResult {
     if (results.length === 1) {
       const checkRes = results[0]
       const [code, msg] = checkRes.checkStatus == ProxyCheckStatus.failure ? [-1, checkRes.error || $t('测试代理失败')]
-        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp })]
+        : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
       showToast(code, msg)
     } else {
       const success = results.filter(item => item.checkStatus == ProxyCheckStatus.success);

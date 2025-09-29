@@ -2,7 +2,7 @@
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -17,8 +17,6 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getSort
 import { useUserStore } from '/@/stores/user'
 import { ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
-import { useTutorialStore } from '/@/stores/tutorial';
-
 
 
 const route = useRoute()
@@ -31,9 +29,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy } = useProxy()
 const [showModal] = useDialog()
-const { getVideoMaps } = useTutorialStore()
 
-const videoData = ref()
 const tableRef = useTemplateRef('shoptable')
 const filtersMenu = ref()
 const dataList = ref()
@@ -76,10 +72,6 @@ const filters = reactive({
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.proxy_management
-    })
 })
 
 async function getTableList(params: any) {
@@ -269,7 +261,7 @@ function setNewOrderNo(value: string) {
             <template #extra>
               <div class="flex gap-3">
                 <RxButton v-if="isOwner" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy" />
-                <PlayVideo size="xs" v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+                <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>
           </CustomNewEmpty>

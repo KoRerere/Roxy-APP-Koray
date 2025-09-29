@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { motion, AnimatePresence } from "motion-v";
 import { $t } from '/@/locales';
-import { useUserStore } from "/@/stores/user";
-import { useDialog } from '/@/hooks/useDialog'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import { filterInputsByNames } from '/@/utils';
 import type { SvgNames } from '/@/components/rx-icon';
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
 
 interface Props {
   inputsGroup?: any[]
@@ -18,48 +15,7 @@ interface Props {
 }
 const { inputsGroup = [], onShuffle, showOverview = true, isBatch = false } = defineProps<Props>()
 
-const [showModal] = useDialog()
-const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-const { userPayInfo } = storeToRefs(useUserStore())
-
-const bannerMap = {
-  macos: '/images/systeam/mac.webp',
-  ios: '/images/systeam/ios.webp',
-  android: '/images/systeam/android.webp',
-  windows: '/images/systeam/windows.webp',
-}
-
-const collapsed = defineModel<Boolean>('collapsed', { default: false })
-const previewData = computed(() => getPreview(inputsGroup.flat()))
-
-const systeam = computed(() => {
-  const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
-  const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
-    image: item.platformIcon,
-    icon: 'base/rx_ic_user_key'
-  }))
-  const _os = os?.value?.value.toLowerCase()
-
-  return {
-    os: _os,
-    banner: bannerMap[_os as keyof typeof bannerMap],
-    icons: [
-      {
-        icon: os?.value?.icon || 'base/rx_ic_plus',
-      },
-      {
-        icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
-        fallback: 'base/rx_ic_earth',
-      },
-      {
-        icon: aItem1?.icon || 'base/rx_ic_plus',
-        image: aItem1?.image,
-        subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
-        subImage: account?.value?.length > 2 ? '' : aItem2?.image,
-      },
-    ]
-  }
-})
+const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
 const variantsLeft = {
   visible: {
@@ -102,6 +58,45 @@ const variantsRight = {
   },
 }
 
+const bannerMap = {
+  macos: '/images/systeam/mac.webp',
+  ios: '/images/systeam/ios.webp',
+  android: '/images/systeam/android.webp',
+  windows: '/images/systeam/windows.webp',
+}
+
+const collapsed = defineModel<Boolean>('collapsed', { default: false })
+const previewData = computed(() => getPreview(inputsGroup.flat()))
+
+const systeam = computed(() => {
+  const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
+  const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
+    image: item.platformIcon,
+    icon: 'base/rx_ic_user_key'
+  }))
+  const _os = os?.value?.value.toLowerCase()
+
+  return {
+    os: _os,
+    banner: bannerMap[_os as keyof typeof bannerMap],
+    icons: [
+      {
+        icon: os?.value?.icon || 'base/rx_ic_plus',
+      },
+      {
+        icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
+        fallback: 'base/rx_ic_earth',
+      },
+      {
+        icon: aItem1?.icon || 'base/rx_ic_plus',
+        image: aItem1?.image,
+        subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
+        subImage: account?.value?.length > 2 ? '' : aItem2?.image,
+      },
+    ]
+  }
+})
+
 function getPreview(list: any[]) {
   return list.flatMap((item) => {
     if (item.preview)
@@ -118,42 +113,11 @@ function getPreview(list: any[]) {
     }
   })
 }
-
-function onHideTips() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    handleCancel: () => updateOnboardingTaskStatus({ createProfileVideoEntryStatus: true }),
-    slots: {
-      container: ({ hideModal }) => h(GuideModal, {
-        title: $t('教程提示'),
-        desc: $t('当您对 RoxyBrowser 的产品功能不熟悉或希望学习更多技巧时，可以随时通过右下方蓝色按钮找到"教程"入口。'),
-        video: "/video/tour-hide-guide.mp4",
-        onClose: hideModal,
-        onConfirm: hideModal,
-      })
-    }
-  })
-}
-
-//==============================
-import { useTutorialStore } from '/@/stores/tutorial';
-const { getVideoMaps } = useTutorialStore()
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.create_profile
-    })
-})
 </script>
 
 <template>
   <div class="flex flex-col my-4 gap-2.5 preview" :class="[!collapsed ? '' : 'hide']">
-    <PlayVideo v-if="videoData && !collapsed && !userPayInfo.onboardingTaskStatus?.createProfileVideoEntryStatus" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink"
-      :autoplay="false">
+    <TutorialVideo v-if="!collapsed && !onboardingTaskStatus?.createProfileVideoEntryStatus" video-type="create_profile" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
@@ -162,13 +126,14 @@ onBeforeMount(() => {
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
               <span class="video-title">{{ $t('窗口教程') }}</span>
-              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="onHideTips"></SvgIcon>
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProfileVideoEntryStatus')">
+              </SvgIcon>
             </div>
             <div class="video-desc">{{ $t('了解窗口和窗口指纹') }}</div>
           </div>
         </div>
       </template>
-    </PlayVideo>
+    </TutorialVideo>
     <div class="flex-1 flex flex-col items-start justify-start pa-4 gap-3 rounded-xl overflow-hidden content guide4">
       <div class="flex flex-row-reverse items-center justify-between self-stretch select-none header">
         <SvgIcon v-tooltip="!collapsed ? $t('收起') : $t('展开')" class="shrink-0 cursor-pointer" :name="!collapsed ? 'base/rx_ic_hide_preview' : 'base/rx_ic_show_preview'"
@@ -195,17 +160,17 @@ onBeforeMount(() => {
             </div>
             <div v-if="systeam.os" class="absolute top-20 left-1/2 -translate-x-1/2 flex gap-6">
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os" :variants="variantsLeft" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os" :variants="(variantsLeft as any)" initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full object-contain" />
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence :initial="false" mode="wait">
-                <motion.div class="overview-banner" :key="systeam.os" :variants="variantsCenter" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="overview-banner" :key="systeam.os" :variants="(variantsCenter as any)" initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full w-full object-contain">
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os" :variants="variantsRight" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os" :variants="(variantsRight as any)" initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full object-contain" />
                 </motion.div>
               </AnimatePresence>

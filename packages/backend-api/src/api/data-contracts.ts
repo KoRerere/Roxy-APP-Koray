@@ -3162,6 +3162,10 @@ export interface UserUpdateOnboardingTaskStatusCreatePayload {
   saveFilterGuideStatus?: boolean;
   /** 创建窗口视频入口：False未完成 True已完成 */
   createProfileVideoEntryStatus?: boolean;
+  /** 创建窗口步骤指引：False未完成 True已完成 */
+  createProfileTourGuideStatus?: boolean;
+  /** 创建代理视频入口：False未完成 True已完成 */
+  createProxyVideoEntryStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -3217,6 +3221,11 @@ export interface UserGetGuideVideosByTypeListData {
       externalLink: string;
     };
     advanced_filter: {
+      videoUrl: string;
+      coverImage: string;
+      externalLink: string;
+    };
+    proxy_management: {
       videoUrl: string;
       coverImage: string;
       externalLink: string;
@@ -4264,7 +4273,8 @@ export interface UserGetWindowStatusInfoCreatePayload {
 export interface UserGetWindowStatusInfoCreateData {
   code: number;
   data: {
-    sortNum?: number;
+    dirId: string;
+    sortNum: number;
     /**
      * 窗口ID
      * 窗口ID
@@ -5205,6 +5215,8 @@ export interface UserGetUserBuyProxyListListData {
       orderStatus?: number;
       /** 代理更换状态 0未更换， 1已更换 */
       replaceStatus?: number;
+      /** 代理价格 */
+      proxyPrice?: number;
     }[];
     total: number;
   };
@@ -5264,6 +5276,11 @@ export interface UserGetProxyPurchaseCountryListListData {
     inventory: number;
   }[];
   msg: string;
+}
+
+export interface UserGetProxyPurchaseTimePriceListParams {
+  /** @example "供应商id" */
+  proxyProviderId?: string;
 }
 
 export interface UserGetProxyPurchaseTimePriceListData {

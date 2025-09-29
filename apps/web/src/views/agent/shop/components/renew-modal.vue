@@ -28,8 +28,6 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 
-const periods = ref()
-const periodValue = ref()
 const columns = [
   {
     title: $t('出口 IP'),
@@ -37,8 +35,13 @@ const columns = [
     render: ({ data }: any) => <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />,
   },
   {
+    title: $t('Roxy 独家特惠'),
+    getText: (data: any) => currency(data.proxyProviderPrice).format(),
+  },
+  {
     title: $t('服务商'),
     key: 'proxyProviderName',
+    getText: (data: any) => data.proxyProviderName || $t('官方赠送'),
   },
   {
     title: $t('到期时间'),
@@ -47,13 +50,15 @@ const columns = [
   },
 ]
 
+const periods = ref()
+const periodValue = ref()
+
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/shop_dialog_bg.svg")' : 'url("/images/proxy/shop_dialog_bg_dark.svg")'
 })
 
 const totalAmount = computed(() => {
-  const { proxyPrice } = periodValue.value || {}
-  return currency(proxyPrice * dataList.length).value
+  return dataList.reduce((acc, item) => currency(periodValue.value?.value).multiply(item.proxyProviderPrice).add(acc).value, 0)
 })
 
 onBeforeMount(() => {
@@ -61,7 +66,7 @@ onBeforeMount(() => {
 })
 
 async function getPeriodList() {
-  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList()
+  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({})
   onlyErrorToast(code, msg)
   if (code !== 0) return
 

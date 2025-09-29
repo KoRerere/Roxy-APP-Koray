@@ -10,7 +10,8 @@ export const fingerprintInfoList = [
     label: () => $t('系统/内核'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
-      return `${winInfo.os || '--'} / ${winInfo.coreVersion || '--'}`
+      const { os, coreVersion } = winInfo
+      return `${(os === 'IOS' ? 'iOS' : os) || '--'} / ${coreVersion || '--'}`
     },
   },
   {

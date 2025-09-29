@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AccountEdit from '/@/views/account/create/quick.vue'
 import PlatformIcon from '/@/views/account/list/platform-icon.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
@@ -12,7 +12,6 @@ import { useRoleStore } from '/@/stores/role'
 import { useColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
-import { useTutorialStore } from '/@/stores/tutorial';
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
@@ -25,7 +24,6 @@ const { userConfig } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { showSimpleDialog } = useSimpleDialog()
-const { getVideoMaps } = useTutorialStore()
 
 const tableRef = useTemplateRef('account')
 const operation = ref([
@@ -64,15 +62,6 @@ const operation = ref([
     },
   },
 ])
-
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.account_management
-    })
-})
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
@@ -191,7 +180,7 @@ function deletePopup(data: any) {
               <div class="flex gap-3">
                 <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
                   @click.stop="operationHandler({ name: 'create' })" />
-                <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+                <TutorialVideo video-type="account_management" :autoplay="false" />
               </div>
             </template>
           </CustomNewEmpty>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { $t } from '/@/locales';
 import { copyText } from '/@/utils/basic';
 import { useResponseToast } from "/@/hooks/useResponseToast";
@@ -39,11 +39,11 @@ function onCopy() {
     </div>
     <i18n-t tag="div" class="select-none desc" :keypath="$t('请根据以下指引进行代理兑换：前往费用中心，点击代理卡片旁的购买按钮，在弹出的浮层窗口中完成代理的兑换即可。{video}', { video: '{video}' })" scope="global">
       <template #video>
-        <PlayVideo video-url="/video/redeem_proxy.mp4">
+        <TutorialVideo video-url="/video/redeem_proxy.mp4">
           <template #default="{ onPlay }">
             <span class="cursor-pointer desc-link" @click="onPlay">{{ $t('[视频引导]') }}</span>
           </template>
-        </PlayVideo>
+        </TutorialVideo>
       </template>
     </i18n-t>
     <div class="tip">{{ $t('* 您可以在费用中心兑换代码。请注意，兑换码仅对当前登录的用户有效。') }}</div>

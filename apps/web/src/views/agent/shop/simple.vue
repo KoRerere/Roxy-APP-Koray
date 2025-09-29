@@ -23,6 +23,8 @@ const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>
 
 const emit = defineEmits(['confirm'])
 
+const totalMark = defineModel<number>('total')
+
 const { testProxy, batchTestShowToast } = useCheckProxy()
 const [_, onlyErrorToast] = useResponseToast()
 
@@ -82,7 +84,7 @@ function onRefreshTable() {
 }
 
 async function getTableList(params: any) {
-  const { code, msg, data: { rows, ...rest } } = await tableRequest({ ...params, type: 'window_use' })
+  const { code, msg, data: { rows, total } } = await tableRequest({ ...params, type: 'window_use' })
 
   const _rows = rows.map(item => {
     if (!isBatch) return item
@@ -91,7 +93,8 @@ async function getTableList(params: any) {
   })
 
   dataList.value = _rows
-  return { code, msg, data: { rows: _rows, ...rest } }
+  totalMark.value = total
+  return { code, msg, data: { rows: _rows, total } }
 }
 
 function operationHandler(operate: any, data: ProxyItem) {

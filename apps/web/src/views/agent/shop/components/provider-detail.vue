@@ -287,7 +287,7 @@ async function getBusinessUseList() {
 }
 
 async function getPurchaseTimePriceList() {
-  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList()
+  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({ proxyProviderId: provider.id })
   onlyErrorToast(code, msg)
   if (code !== 0) return []
   return data

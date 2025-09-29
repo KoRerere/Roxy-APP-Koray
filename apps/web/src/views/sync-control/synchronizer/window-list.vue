@@ -2,7 +2,7 @@
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue';
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
@@ -234,17 +234,6 @@ async function handleRowSelectAll() {
 
 electronAPI.on('syncControl:start', startSync)
 
-//==============================
-import { useTutorialStore } from '/@/stores/tutorial';
-const { getVideoMaps } = useTutorialStore()
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.synchronizer
-    })
-})
 </script>
 
 <template>
@@ -295,7 +284,7 @@ onBeforeMount(() => {
           </div>
         </template>
         <template #extra>
-          <PlayVideo v-if="videoData" variant="outlined" size="xs" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+          <TutorialVideo variant="outlined" size="xs" video-type="synchronizer" :autoplay="false" />
         </template>
       </CustomEmpty>
     </template>

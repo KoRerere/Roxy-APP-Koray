@@ -3,7 +3,7 @@ import installExtension from '/@/views/extensions/install/components/install-ext
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 import ShieldDialog from '/@/views/extensions/install/components/shield-dialog.vue'
 import HowToGet from '/@/views/extensions/install/components/how-to-get.vue'
-import PlayVideo from '/@/views/tutorial/components/play-video.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
@@ -460,17 +460,6 @@ defineExpose({
   },
 })
 
-//==============================
-import { useTutorialStore } from '/@/stores/tutorial';
-const { getVideoMaps } = useTutorialStore()
-const videoData = ref()
-
-onBeforeMount(() => {
-  getVideoMaps()
-    .then(data => {
-      videoData.value = data?.plugin_management
-    })
-})
 </script>
 
 <template>
@@ -491,7 +480,7 @@ onBeforeMount(() => {
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
-            <PlayVideo v-if="videoData" :video-url="videoData?.videoUrl" :external-link="videoData?.externalLink" />
+            <TutorialVideo video-type="plugin_management" :autoplay="false" />
           </div>
         </template>
       </CustomNewEmpty>
