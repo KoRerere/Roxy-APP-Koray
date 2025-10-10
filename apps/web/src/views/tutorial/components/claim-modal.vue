@@ -61,7 +61,7 @@ function onCopy() {
 
 .proxy {
   background: linear-gradient(180deg, #FFF 0%, #EFF8FF 100%);
-  background-image: url('/public/images/claim-bg.png');
+  background-image: url('/images/claim-bg.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;

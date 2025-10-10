@@ -416,7 +416,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
         desc={({ class: className }) => {
           return <div class={className}>{$t('绝大多数的 RoxyBrowser 列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
         }}
-        video="/public/video/right-click.mp4"
+        video="/video/right-click.mp4"
         onClose={hideModal}
         onConfirm={hideModal}
       ></GuideModal>
@@ -1025,7 +1025,7 @@ defineExpose({
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
         <RxDivider class="py-1" vertical line-only></RxDivider>
-        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/public/video/profile-filter.mp4" :save-filters="saveFilters"
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
           @filter-change="onRefreshTable" />
       </div>
     </template>

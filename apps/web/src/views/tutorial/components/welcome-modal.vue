@@ -21,7 +21,7 @@ function onClose() {
       <span class="header">{{ $t('欢迎加入') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="onClose" />
     </div>
-    <img class="block w-full rounded-lg" src="/public/images/welcome-banner.png">
+    <img class="block w-full rounded-lg" src="/images/welcome-banner.png">
     <div class="flex flex-col gap-6">
       <div class="desc">{{ $t('欢迎来到 RoxyBrowser，准备好开始您的隐私之旅了吗？') }}</div>
       <div class="desc">{{ $t('在此之前，让我们先进行一些简单的新手教程，助您快速掌握使用技巧！') }}</div>

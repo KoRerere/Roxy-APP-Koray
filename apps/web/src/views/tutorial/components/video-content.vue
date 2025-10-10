@@ -321,7 +321,7 @@ function jumpToVideo(item: any) {
           <div class="desc">{{ $t('使用 RoxyBrowser，您就可以在一台电脑上安全地管理多个平台账号。在网站看来，每个账号都来自于一台完全不同的真实设备，从而避免了因账号关联产生的限制行为或隐私泄露。') }}</div>
           <div class="desc">{{ $t('可以将 RoxyBrowser 想象成谷歌浏览器的“终极强化版”。谷歌浏览器的多用户模式，如同为每个用户在一栋房子里分隔出不同的房间；而 RoxyBrowser 则是直接为每个用户都提供了一栋全新的、位于任意城市的、允许个性化装修的房子。') }}</div>
         </div>
-        <img class="w-120" src="/public/images/guide-intro.png">
+        <img class="w-120" src="/images/guide-intro.png">
       </div>
     </div>
     <RxDivider line-only line-style="dashed" />
