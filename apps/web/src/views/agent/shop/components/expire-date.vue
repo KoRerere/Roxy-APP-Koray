@@ -37,7 +37,7 @@ const statusColor = computed(() => status.value.color)
 
 <template>
   <div class="flex flex-col gap-1">
-    <div v-if="showTime" class="date">{{ data.expireDate ? format(data.expireDate, 'yyyy-MM-dd') : '--' }}</div>
+    <div v-if="showTime" class="date">{{ data.expireDate || '--' }}</div>
     <div class="status">{{ status.text }}</div>
   </div>
 </template>

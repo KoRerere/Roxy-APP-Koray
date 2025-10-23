@@ -1,24 +1,24 @@
 <script setup lang="tsx">
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import RxButton from '/@/components/rx-button/'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
+import RxButton from '/@/components/rx-button/'
+import { RxAlert } from '/@/components/rx-alert/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import currency from 'currency.js';
 import { format, differenceInDays } from 'date-fns'
 import { debounce } from 'es-toolkit'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { RxAlert } from '/@/components/rx-alert/'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, PurchaseType, PaySubOrderType } from '/@/enums/pay'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
-import { useUserStore } from '/@/stores/user';
-import { type Plan } from './type'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import { useUserStore } from '/@/stores/user';
 import { useSimpleLocale } from '/@/stores/locale'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { discountCalculate } from './util'
+import { OrderType, PayWay, PurchaseType, PaySubOrderType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
+import { type Plan } from './type'
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
@@ -41,6 +41,11 @@ const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.val
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
 const needPayAmount = computed(() => currency(originalAmount.value).multiply(discountCalculate([userPayInfo.value.discount])).value)
 const discountAmount = computed(() => currency(originalAmount.value).subtract(needPayAmount.value).value)
+
+const currentSubscribe = computed(() => {
+  const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
+  return $t('当前权益: {subLevel} ({count} 窗口)\n窗口用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+})
 
 const details = computed(() => {
   const { discount } = userPayInfo.value
@@ -315,10 +320,11 @@ function jumpToProfile() {
   <div class="overflow-auto wh-full">
     <div class="rx-container">
       <ViewsHeader :title="$route.meta.title" />
-      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
-        <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :min="sliderMin"></Profile>
-          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]" v-if="dataList?.length">
+      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto">
+        <div class="flex-1 flex flex-col gap-8">
+          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :raw-list="dataList" :min="sliderMin"></Profile>
+          <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+          <div class="flex items-center justify-between" v-if="dataList?.length">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
             <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
             <div v-else class="due">
@@ -328,18 +334,16 @@ function jumpToProfile() {
               }) }}</span>
             </div>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
-          </AdvancedFeat>
+          <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+          <AdvancedFeat :plan="selectedPlan"></AdvancedFeat>
         </div>
-        <div class="relative w-80">
+        <div class="relative flex flex-col gap-3 w-80">
           <RxLoading v-model="loading"></RxLoading>
+          <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false"></RxAlert>
           <Detail :list="details">
             <template #oldprice="{ item }">
               <div class="flex justify-between">
-                <div class="flex items-center gap-1.5 details-label">
-                  <span>{{ item.label }}</span>
-                  <!-- <SvgIcon v-tooltip.top="{ value: $t('例：A套餐总时长180天'), showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_info" color="#A3A9AD" size="14"></SvgIcon> -->
-                </div>
+                <div class="flex items-center gap-1.5 details-label">{{ item.label }}</div>
                 <div class="details-oldprice">{{ item.value }}</div>
               </div>
             </template>

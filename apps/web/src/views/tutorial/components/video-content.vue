@@ -121,7 +121,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       return <div class="flex flex-wrap justify-start gap-3">
         <RxButton variant="outlined" size="md" label={$t('前往尝试')} onClick={() => {
           router.push({ name: 'browser-list' })
-          if (!userPayInfo.value.onboardingTaskStatus?.contextMenuGuideStatus) {
+          if (userPayInfo.value.onboardingTaskStatus?.contextMenuGuideStatus === false) {
             updateOnboardingTaskStatus({ contextMenuGuideStatus: true })
           }
         }}></RxButton>
@@ -150,7 +150,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       return <div class="flex flex-wrap justify-start gap-3">
         <RxButton variant="outlined" size="md" label={$t('前往尝试')} onClick={() => {
           router.push({ name: 'browser-list' })
-          if (!userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus) {
+          if (userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus === false) {
             updateOnboardingTaskStatus({ saveFilterGuideStatus: true })
           }
         }}></RxButton>

@@ -1,4 +1,4 @@
-import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
+import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi, AppTrackingEventApi } from '@roxy/backend-api'
 import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByIpChange, getOpenAPIUrl } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
@@ -71,4 +71,5 @@ export const API = {
   limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),
   pay: new PayApi(httpClient),
+  appTrackingEvent: new AppTrackingEventApi(httpClient),
 } as const

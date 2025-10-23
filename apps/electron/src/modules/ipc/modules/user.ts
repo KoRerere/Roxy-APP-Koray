@@ -7,6 +7,7 @@ import { openAPIServer } from "/@/modules/openapi"
 import { fetchUserConfig, store, } from "/@/modules/store"
 import { aliOSS } from "/@/utils"
 import { closeAllSyncDialogs } from "/@/modules/sync-control/common"
+import { getCurrentScope } from "@sentry/electron/main"
 
 export function setupUserIpc(ipcMain: IPCMainInstance) {
 
@@ -14,10 +15,21 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:setUserInfo', async (event, userInfo) => {
     store.token = userInfo.token
     store.userId = userInfo.userId
+    store.hasLoggedIn = true
+    store.visitorId = ''
     store.userInfo = {
       username: userInfo.userName,
       email: userInfo.email,
     }
+
+    const scope = getCurrentScope();
+    scope.setUser({
+      id: userInfo.userId,
+      email: userInfo.email,
+      username: userInfo.userName,
+    });
+    scope.setTag('process', 'main')
+
     store.workspaceId = userInfo.workspaceId
     browserManager.reportWindowOpenStatus()
     store.lastLoginTime = Date.now()

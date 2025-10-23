@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { $t } from '/@/locales'
+import { isMacOS } from '/@/utils/basic'
 
 interface Props {
   options?: {
@@ -22,12 +23,14 @@ const suggestions = computed(() => {
   }))
 })
 
+const isMac = isMacOS()
 const inputRef = useTemplateRef('input')
 const searchQuery = ref('')
-const showDropdown = ref(false)
 const selectedAdvancedOption = ref<any>(null)
+const showDropdown = ref(false)
 const loading = ref(false)
 const isFocus = ref(false)
+const searched = ref(false)
 
 // Keyboard navigation state: 0 = basic option, 1..N = advanced options
 const highlightIndex = ref(0)
@@ -35,6 +38,10 @@ const highlightIndex = ref(0)
 // Computed properties
 const cleanDisplayQuery = computed(() => {
   return extractBaseQuery(searchQuery.value) || searchQuery.value
+})
+
+const shortcutText = computed(() => {
+  return isMac ? '⌘ + F' : 'Ctrl + F'
 })
 
 // Watch for syntax changes - only update highlight, not selected option
@@ -53,7 +60,6 @@ watch(searchQuery, (newQuery) => {
   }
 })
 
-
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown)
 })
@@ -63,15 +69,13 @@ onUnmounted(() => {
 })
 
 function handleKeyDown(event: KeyboardEvent) {
-  if (event.ctrlKey && event.key.toLowerCase() === 'f') {
+  const isCorrectModifier = isMac ? event.metaKey : event.ctrlKey
+  if (isCorrectModifier && event.key.toLowerCase() === 'f') {
     event.preventDefault()
     inputRef.value?.focus()
   }
 }
 
-/**
- * Methods
- */
 function detectAdvancedSyntax(query: any) {
   const syntaxMatch = query.match(/^(\w+)::(.*)$/)
   if (syntaxMatch) {
@@ -85,7 +89,10 @@ function clearSearch() {
   searchQuery.value = ''
   selectedAdvancedOption.value = undefined
   showDropdown.value = false
-  clear?.()
+  if (searched.value) {
+    searched.value = false
+    clear?.()
+  }
 }
 
 function selectBasicSearch() {
@@ -113,6 +120,7 @@ function selectAdvancedSearch(option: any) {
 async function executeSearch() {
   inputRef.value?.blur()
   loading.value = true
+  searched.value = true
 
   const value = selectedAdvancedOption.value
     ? searchQuery.value.replace(new RegExp(selectedAdvancedOption.value.syntax), '')
@@ -176,8 +184,8 @@ function handleBlur() {
 
 <template>
   <div class="relative transition-all duration-300 ease" :class="[searchQuery || isFocus ? 'w-50' : 'w-35']">
-    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" preIcon="base/rx_ic_magnify" :placeholder="$t('搜索 Ctrl + F')" :disabled="loading" @focus="handleFocus" @blur="handleBlur"
-      @keydown="handleKeydown">
+    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" preIcon="base/rx_ic_magnify" :placeholder="$t('搜索 {shortcut}', { shortcut: shortcutText })" :disabled="loading" @focus="handleFocus"
+      @blur="handleBlur" @keydown="handleKeydown">
       <template v-if="searchQuery" #icon>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch" size="16" />
       </template>

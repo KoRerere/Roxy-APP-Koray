@@ -1,5 +1,6 @@
 import type { UserConfig } from 'vite'
 import { join } from 'node:path'
+import { builtinModules } from 'node:module'
 import dts from 'vite-plugin-dts'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
@@ -10,6 +11,12 @@ const config: UserConfig = {
   mode: process.env.MODE,
   root: PACKAGE_ROOT,
   envDir: PROJECT_ROOT,
+  resolve: {
+    alias: {
+      // 强制把子路径解析到具体文件，便于被打包器内联
+      '@sentry/electron/preload': join(PACKAGE_ROOT, 'node_modules/@sentry/electron/preload/default.js'),
+    },
+  },
   build: {
     ssr: true,
     sourcemap: 'inline',

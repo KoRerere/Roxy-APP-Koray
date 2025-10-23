@@ -9,7 +9,6 @@ import SubscribePlans from '/@/views/pay/subscribe/components/subscribe-plans.vu
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import TierSlider from '/@/views/pay/subscribe/components/tier-slider.vue'
-import { getStep } from './util'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
 import { SubLevelEnum } from '/@/enums/pay';
@@ -20,7 +19,7 @@ const router = useRouter()
 
 const dataList = ref<Plan[]>()
 
-const tiersList = computed(() => (dataList.value || []).map(({ minWindows, maxWindows }) => ({ start: minWindows, end: maxWindows, step: getStep(minWindows) })))
+const tiersList = computed(() => (dataList.value || []).map(({ minWindows, maxWindows }) => ({ start: minWindows, end: maxWindows, step: 10 })))
 
 const selectedPlan = ref()
 const selectedCount = ref()

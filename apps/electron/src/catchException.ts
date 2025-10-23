@@ -1,10 +1,34 @@
-import { crashReporter, dialog } from "electron"
+import { dialog, app } from "electron"
+import { init as initSentry, consoleLoggingIntegration, captureException } from "@sentry/electron/main"
+
 delete process.env.HTTP_PROXY;
 delete process.env.HTTPS_PROXY;
 delete process.env.http_proxy;
 delete process.env.https_proxy;
 delete process.env.ALL_PROXY;
 delete process.env.all_proxy;
+
+// Sentry 主进程初始化（尽早调用）
+// DSN 来自环境变量：SENTRY_DSN；环境：SENTRY_ENV 或 NODE_ENV；版本：app.getVersion()
+initSentry({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  release: import.meta.env.VITE_APP_VERSION,
+  sendDefaultPii: true,
+  // 启用结构化日志
+  enableLogs: true,
+  // 离线缓存参数（可按需调整）
+  transportOptions: {
+    maxAgeDays: 30,
+    maxQueueSize: 30,
+    flushAtStartup: false,
+  },
+  // 如需性能追踪，打开采样率（默认关闭以减少开销）
+  tracesSampleRate: 0,
+  // 将 console.* 同步为 Sentry 日志（取决于 SDK 版本）
+  integrations: [
+    consoleLoggingIntegration(),
+  ],
+})
 
 
 // （不推荐）忽略 SSL 证书验证,让 axios 忽略 SSL 证书验证，绕过 UNABLE_TO_VERIFY_LEAF_SIGNATURE 错误
@@ -17,21 +41,22 @@ dialog.showErrorBox = function (title, content) {
 };
 
 // 捕获未捕获的异常
-process.on("uncaughtException", (error, origin) => {
+process.on("uncaughtException", (error) => {
   console.error("未捕获的异常:", error);
-  // 在这里执行一些清理操作或记录错误日志
-});
+  try {
+    captureException(error);
+  } catch { }
+})
 
 // 捕获未处理的 Promise 拒绝
-process.on("unhandledRejection", (reason, promise) => {
+process.on("unhandledRejection", (reason) => {
   console.error("未处理的 Promise 拒绝:", reason);
-  // 在这里执行一些清理操作或记录错误日志
-});
+  try {
+    captureException(reason instanceof Error ? reason : new Error(String(reason)));
+  } catch { }
+})
 
-// 捕获崩溃信息
-crashReporter.start({
-  uploadToServer: false,
-});
+// 让 Sentry 管理 crashReporter，无需手动启动
 
 // 方便测试崩溃信息
 // setTimeout(() => {

@@ -22,6 +22,14 @@ export function isLikeFunction(fn: any) {
   return ['function', 'asyncfunction'].includes(getRawType(fn))
 }
 
+export function isMacOS() {
+  if ('userAgentData' in navigator) {
+    const uaData = (navigator as any).userAgentData
+    return /mac\s?os/i.test(uaData.platform || '')
+  }
+  return /Macintosh|Mac OS X/.test(navigator.userAgent)
+}
+
 export function hasOwnProperty(data: any, key: any) {
   return Object.prototype.hasOwnProperty.call(data, key)
 }

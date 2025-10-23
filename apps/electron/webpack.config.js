@@ -1,11 +1,15 @@
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
+const { sentryWebpackPlugin } = require("@sentry/webpack-plugin");
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
+
+console.log('process.env.NODE_ENV', process.env.NODE_ENV)
 
 /** @type { import('webpack').Configuration } */
 module.exports = {
   mode: 'production', // 或者 'development'
   target: 'electron-main', // 目标环境设置为 Node.js
+  devtool: 'source-map', // 生成 source map 以便上报到 Sentry
   entry: {
     main: './dist-vite/index.cjs',
     fileWorker: './dist-vite/fileWorker.cjs',
@@ -17,6 +21,10 @@ module.exports = {
   node: {
     __dirname: false, // 保持 __dirname 的原样（在 Node.js 中很重要）
     __filename: false,
+  },
+  // 将 font-list 作为外部依赖，不参与打包，由运行时从 dist/node_modules 加载
+  externals: {
+    'font-list': 'commonjs2 font-list',
   },
   optimization: {
     // moduleIds: 'named',  // 避免模块变成数字
@@ -87,6 +95,15 @@ module.exports = {
     ]
   },
   plugins: [
+    sentryWebpackPlugin({
+      org: process.env.VITE_SENTRY_ORG,
+      project: process.env.VITE_SENTRY_PROJECT,
+      authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_APP_VERSION,
+        dist: process.env.VITE_APP_VERSION,
+      }
+    }),
     // new JavascriptObfuscatorPlugin({
     //   include: ['**/*.cjs'],       // 匹配所有 JS 文件
     //   exclude: ['vendors.cjs'],     // 排除特定文件

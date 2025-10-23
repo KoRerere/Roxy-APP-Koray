@@ -74,7 +74,6 @@ export async function tableRequest(params: any) {
 
 export async function getCustomFilters() {
   const $dict_map = await getDictMap()
-  const { data: country } = await API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.resource.toString() })
 
   const inputs = [
     {
@@ -84,8 +83,9 @@ export async function getCustomFilters() {
       search: true,
       searchPlaceholder: $t('搜索国家/地区'),
       searchKeys: ['alias'],
-      getOptions: () => {
-        return (country || []).map((item: any) => ({
+      getOptions: async () => {
+        const { data } = await API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.resource.toString() })
+        return (data || []).map((item: any) => ({
           parentName: 'lastCountry',
           value: item.value,
           label: item.label,
@@ -122,6 +122,34 @@ export async function getCustomFilters() {
       name: 'remark',
     },
   ]
-
   return inputs
+}
+
+export function getAdvancedSearch() {
+  return [
+    {
+      key: 'host',
+      label: $t('代理 IP'),
+      icon: 'base/rx_ic_internet',
+      syntax: 'host::'
+    },
+    {
+      key: 'username',
+      label: $t('用户名'),
+      icon: 'base/rx_ic_user_sm',
+      syntax: 'name::'
+    },
+    {
+      key: 'lastCountry',
+      label: $t('国家/地区'),
+      icon: 'base/rx_ic_earth',
+      syntax: 'region::'
+    },
+    {
+      key: 'remark',
+      label: $t('备注'),
+      icon: 'base/rx_ic_doc_article',
+      syntax: 'note::'
+    },
+  ]
 }

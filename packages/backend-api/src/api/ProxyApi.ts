@@ -27,6 +27,7 @@ import {
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
   UserGetProxyProviderListListData,
+  UserGetProxyProvidersTypeListData,
   UserGetProxyPurchaseCountryListListData,
   UserGetProxyPurchaseCountryListListParams,
   UserGetProxyPurchaseTimePriceListData,
@@ -52,6 +53,8 @@ import {
   UserRedeemProxyCodeCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
+  UserSetProxyAutoRenewalCreateData,
+  UserSetProxyAutoRenewalCreatePayload,
   UserUpdateProxyTableRowsCreateData,
   UserUpdateProxyTableRowsCreatePayload,
 } from "./data-contracts";
@@ -531,6 +534,43 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserSetProxyAutoRenewalCreate
+   * @summary 用户开启/关闭代理IP自动续费
+   * @request POST:/user_set_proxy_auto_renewal
+   * @response `200` `UserSetProxyAutoRenewalCreateData`
+   */
+  userSetProxyAutoRenewalCreate = (
+    data: UserSetProxyAutoRenewalCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSetProxyAutoRenewalCreateData, any>({
+      path: `/user_set_proxy_auto_renewal`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyProvidersTypeList
+   * @summary 获取代理类型
+   * @request GET:/user_get_proxy_providers_type
+   * @response `200` `UserGetProxyProvidersTypeListData`
+   */
+  userGetProxyProvidersTypeList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyProvidersTypeListData, any>({
+      path: `/user_get_proxy_providers_type`,
+      method: "GET",
       format: "json",
       ...params,
     });

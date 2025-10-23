@@ -124,5 +124,5 @@ export function useDialog( ) {
       return instance
   }
 
-  return [showModal]
+  return [showModal] as const
 }

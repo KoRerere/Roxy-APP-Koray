@@ -45,7 +45,7 @@ const collapsed = defineModel('collapsed', { default: false })
 const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { userPayInfo, userConfig } = storeToRefs(useUserStore())
+const { userPayInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 
@@ -56,7 +56,7 @@ const items = computed(() => {
       icon: 'base/rx_ic_books',
       rootMenu: true,
       routeName: 'tutorial',
-      visible: !userPayInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus,
+      visible: userPayInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus === false,
       command: () => {
         router.push({ name: 'tutorial' })
       },

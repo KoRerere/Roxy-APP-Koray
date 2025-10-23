@@ -56,13 +56,15 @@ const actions = computed(() => {
     {
       label: $t('升级'),
       visible: isFree.value,
+      btnText: userPayInfo?.value.isTrial && $t('立即升级'),
       command: () => {
         router.push({ name: 'subscribe-plan' })
       }
     },
     {
-      label: $t('续费'),
+      label: $t('续订'),
       visible: !userPayInfo.value?.isAuto && !isFree.value,
+      btnText: isExpired.value && $t('立即续订'),
       command: () => {
         emitter.emit('showRenewalDialog', {
           paySuccess: () => {
@@ -74,8 +76,9 @@ const actions = computed(() => {
     {
       label: $t('详情'),
       visible: !!userPayInfo.value?.isAuto,
+      btnText: isExpired.value && $t('前往支付'),
       command: () => {
-        router.push({ name: 'wallet' })
+        router.push({ name: 'wallet', query: { name: 'billing' } })
       }
     }
   ].filter(item => item.visible !== false)
@@ -104,21 +107,30 @@ function toggle(event: Event) {
       <PayMetricsCard class="cursor-pointer" v-for="item in actions" :key="item.label" @click="item.command">
         <div class="pay-metrics-title">
           <div class="pay-metrics-title-badge">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-          <div class="pay-metrics-title-upgrade">
+          <div class="pay-metrics-title-upgrade" v-if="!item.btnText">
             <span>{{ item.label }}</span>
             <RxSvgIcon name="base/rx_ic_arrow_right_2" size="12" />
           </div>
         </div>
+
         <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, blockCount)" :block-count="blockCount" />
+
         <div class="inline-flex items-center self-stretch gap-1">
           <PayMetricsList :items="payMetricsItems" />
           <SvgIcon v-tooltip="{ value: infoValue, pt: { root: '!max-w-[fit-content]', text: '!whitespace-pre' } }" class="cursor-pointer" size="14" name="base/rx_ic_info"
             color="var(--colors-icon-icon-note)"></SvgIcon>
         </div>
-        <div v-if="userPayInfo?.isTrial === 0" class="pay-metrics-free-usage" @click.stop="$router.push({ name: 'trial-plan' })">
-          🎁
-          {{ $t('{day} 天免费试用', { day: 7 }) }}
-        </div>
+
+        <AnimationBorder class="w-full" v-if="item.btnText" bg-color="var(--pattern-sidenav-metrics-btn)"
+          :gradient="['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']">
+          <RxButton class="w-full" severity="secondary" variant="text" size="xs" :label="item.btnText" @click.stop="item.command"></RxButton>
+        </AnimationBorder>
+
+        <RxButton v-if="userPayInfo?.isTrial === 0" class="w-full" severity="secondary" variant="outlined" size="xs"
+          @click.stop="$router.push({ name: 'subscribe-plan', query: { type: SubLevelEnum.Trial } })">
+          <span>🎁</span>
+          <span>{{ $t('{day} 天免费试用', { day: 7 }) }}</span>
+        </RxButton>
       </PayMetricsCard>
     </div>
   </DefineTemplate>
@@ -129,9 +141,6 @@ function toggle(event: Event) {
 
   <div v-else class="pay-metrics-collapsed" @click="toggle">
     <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, 5)" :block-count="5" shape="circle" />
-    <!-- <div class="pay-metrics-collapsed-text" v-for="item in actions" :key="item.label" @click.stop="item.command">
-      {{ item.label }}
-    </div> -->
   </div>
 
   <Popover ref="op" unstyled appendTo="self">
@@ -192,28 +201,6 @@ function toggle(event: Event) {
       cursor: pointer;
     }
   }
-}
-
-.pay-metrics-free-usage {
-  display: flex;
-  min-width: 64px;
-  padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-lg, 8px);
-  align-self: stretch;
-  border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
-  background: var(--colors-background-bg-action, #FFF);
-  box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-  color: var(--colors-text-text-primary, #171C1F);
-  text-align: center;
-  font-family: Inter;
-  font-size: var(--Font-Size-text-sm, 12px);
-  font-style: normal;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
-  cursor: pointer;
 }
 
 .pay-metrics-collapsed {

@@ -159,11 +159,12 @@ function isLocked(linkStatus: number) {
       <div class="row">
         <div class="flex items-center gap-3">
           <span class="referal-title">{{ activeMenu.linkType }}</span>
-          <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人解锁', { count: activeMenu.total_count }) }})</span>
+          <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人订阅后解锁', { count: activeMenu.total_count }) }})</span>
         </div>
         <div v-if="isLocked(activeMenu.linkStatus!)" class="w-full flex items-center gap-3">
           <div class="referal-desc">{{ $t('用户邀请数据:') }}</div>
-          <Usage class="flex-1 gap-1.5 referal-progress" :ratio="(activeMenu.completed_count! / activeMenu.total_count!)" :block-count="10" defaultColor="var(--colors-border-border-inactive)"
+          <Usage class="flex-1 gap-1.5 referal-progress" :ratio="(activeMenu.completed_count! / activeMenu.total_count!)" :block-count="Math.min(10, activeMenu.total_count!)"
+            defaultColor="var(--colors-border-border-inactive)"
             :color-level="{ normal: 'var(--component-alert-announcement-border-success)', weak: 'var(--component-alert-announcement-border-success)' }" />
           <div class="flex items-baseline gap-1">
             <span class="referal-value">{{ activeMenu.completed_count }}</span>

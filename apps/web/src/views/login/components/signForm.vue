@@ -33,6 +33,7 @@ watch(isRegister, (val) => {
 }, { immediate: true, flush: 'post' })
 
 async function handleSubmit() {
+  if (submitLoading.value) return
   submitLoading.value = true
   try {
     const formData = await formInstance.value?.submit()

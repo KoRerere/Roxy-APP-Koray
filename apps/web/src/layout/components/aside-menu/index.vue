@@ -139,6 +139,9 @@ async function toCreateBrowser() {
   word-break: keep-all;
   isolation: isolate;
   overflow: hidden;
+  // background-image: url('/images/bg_scrollcontentblur.svg');
+  // background-position: bottom -120px center;
+  // background-repeat: no-repeat;
 
   &.collapsed {
 

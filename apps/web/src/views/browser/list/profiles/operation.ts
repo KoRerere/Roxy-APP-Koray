@@ -139,6 +139,7 @@ export async function getCustomFilters(params: any = {}) {
       type: 'switch',
       name: 'isOften',
       label: $t('收藏'),
+      _text: ' ',
       icon: 'base/rx_ic_bookmark',
     },
     {
@@ -152,6 +153,7 @@ export async function getCustomFilters(params: any = {}) {
       type: 'switch',
       name: 'openStatus',
       label: $t('已打开'),
+      _text: ' ',
       icon: 'base/rx_ic_browsers_line',
     },
     {

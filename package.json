@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": false,
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@10.18.3",
   "author": {
     "name": "buqiyuan",
     "email": "1743369777@qq.com",
@@ -15,12 +15,12 @@
     "url": "https://github.com/buqiyuan/electron-vite-monorepo.git"
   },
   "engines": {
-    "pnpm": ">=10.0.0",
-    "node": ">=22.16.0"
+    "pnpm": ">=10.18.3",
+    "node": ">=22.20.0"
   },
   "volta": {
-    "node": "22.16.0",
-    "pnpm": "10.10.0"
+    "node": "22.20.0",
+    "pnpm": "10.18.3"
   },
   "scripts": {
     "dev": "tsx scripts/watch.ts",
@@ -43,6 +43,7 @@
     "publish:web:win:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production PLATFORM=win pnpx tsx ./scripts/upload-web-source.ts",
     "publish:app:dev:noPack": "cross-env NODE_ENV=development tsx scripts/publish.ts",
     "publish:app:prod:noPack": "cross-env NODE_ENV=production tsx scripts/publish.ts",
+    "publish:app:mac:dev": "pnpm -F roxybrowserdev run pack:app:mac:dev && pnpm run publish:app:dev:noPack",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
     "genLanguage": "pnpm -F web run genLanguage",
     "postinstall": "npm run build:pkg & npm run install:electron",
@@ -64,21 +65,21 @@
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",
-    "@unocss/eslint-plugin": "^66.2.3",
+    "@unocss/eslint-plugin": "^66.5.4",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.23.0",
     "axios": "^1.10.0",
     "cross-env": "^7.0.3",
     "eslint": "9.29.0",
-    "eslint-plugin-format": "^1.0.1",
+    "eslint-plugin-format": "^1.0.2",
     "js-yaml": "^4.1.0",
     "lint-staged": "^16.1.0",
     "rimraf": "^6.0.1",
-    "simple-git-hooks": "^2.13.0",
-    "tsx": "^4.20.1",
+    "simple-git-hooks": "^2.13.1",
+    "tsx": "^4.20.6",
     "turbo": "^2.5.4",
-    "typescript": "^5.8.3",
-    "vite": "^6.3.5",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.7",
     "vite-plugin-dts": "^4.5.4"
   },
   "pnpm": {

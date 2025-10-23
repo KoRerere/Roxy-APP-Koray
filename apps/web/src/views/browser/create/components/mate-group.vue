@@ -4,17 +4,17 @@ import { $t } from '/@/locales/index.js'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useRoleStore } from "/@/stores/role"
 import type { WindowMetaData } from './type.ts'
 
-defineProps({
-  showRemark: {
-    type: Boolean,
-    default: true,
-  },
-})
+const { isEdit = false, showRemark = true } = defineProps<{
+  isEdit?: boolean
+  showRemark?: boolean
+}>()
 
 const route = useRoute()
 const { showMenu: showPopupMenu } = usePopupMenu()
+const { isOwner } = storeToRefs(useRoleStore())
 
 const { getTags, getProjects, getProjectMember } = useMateGroup()
 
@@ -29,14 +29,14 @@ const metaData = defineModel<WindowMetaData>('modelValue', {
 })
 
 onMounted(async () => {
-  if (isEmptyValue(metaData.value.projectId)) {
+  if (!isEdit && isEmptyValue(metaData.value.projectId)) {
     const projects = await getProjects()
-    //  优先使用路由传递的 projectId
-    const routeProject = projects.find(item => item.value === route.query.projectId)
-    const defaultProject = routeProject || projects.find(item => item.projectDefault)
-    if (defaultProject) {
-      metaData.value.projectId = Number(defaultProject.value)
-      metaData.value.projectName = defaultProject.label
+    // 优先使用路由传递的 projectId, 非 owner 使用第一个项目
+    const targetId = route.query.projectId || (!isOwner.value && projects[0].value)
+    const targetProject = projects.find(item => targetId ? item.value === targetId : item.projectDefault)
+    if (targetProject) {
+      metaData.value.projectId = Number(targetProject.value)
+      metaData.value.projectName = targetProject.label
       metaData.value.projectDefault = 1
     }
   }

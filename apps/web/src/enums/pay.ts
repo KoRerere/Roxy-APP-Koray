@@ -115,10 +115,10 @@ export const PaymentStatusStr = {
 }
 
 export enum PayIdentity {
-  /** 老用户 */
-  old = "old",
   /** 新用户 */
   new = "new",
+  /** 老用户 */
+  old = "old",
   /** 特邀用户 */
   invited = "invited",
   /** 合作用户 */
@@ -170,7 +170,7 @@ export const SubLevelEnumStr = {
     return $t('已过期');
   },
   get [SubLevelEnum.Trial]() {
-    return $t('7天试用');
+    return $t('免费试用');
   },
   get [SubLevelEnum.Basic]() {
     return $t('基础版');

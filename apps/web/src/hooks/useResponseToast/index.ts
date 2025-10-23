@@ -29,5 +29,5 @@ export function useResponseToast() {
     }
   }
 
-  return [showToast, onlyErrorToast]
+  return [showToast, onlyErrorToast] as const
 }

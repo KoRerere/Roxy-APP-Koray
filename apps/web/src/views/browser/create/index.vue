@@ -19,7 +19,6 @@ import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from "/@/stores/role"
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
@@ -35,10 +34,9 @@ const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
 const backRoute = useBackRoute()
-const { userPayInfo, userConfig } = storeToRefs(userStore)
+const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const { isOwner } = storeToRefs(useRoleStore())
-const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
@@ -115,7 +113,7 @@ const profileTemplate = reactive({
   }
 })
 
-watch(() => tabsValue.value, (value: any) => {
+watch(() => tabsValue.value, () => {
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   setInputFieldByInputKey(inputsGroup.value[0], 'windowPlatformList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
@@ -125,12 +123,6 @@ watch(() => tabsValue.value, (value: any) => {
 onBeforeMount(() => {
   getTemplateList()
   initFormInputs()
-  if (!isOwner.value) {
-    getProjects().then((operation) => {
-      metaData.value.projectId = Number(operation[0].value)
-      metaData.value.projectName = operation[0].label
-    })
-  }
 })
 
 async function getTemplateList() {
@@ -457,7 +449,7 @@ const driverObj = driver({
 })
 
 function showGuide() {
-  if (!userPayInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus) {
+  if (userPayInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
     driverObj.drive()
   }
 }

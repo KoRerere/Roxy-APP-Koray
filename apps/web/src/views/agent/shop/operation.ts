@@ -45,6 +45,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       quick: true,
       multiple: true,
       multipleProps: {
+        disabledTooltip: isGift ? $t('官方赠送的代理 IP 无法下载') : undefined,
         name: 'G2',
         showLabel: true,
       },
@@ -123,6 +124,38 @@ export async function getCustomFilters() {
       label: $t('备注'),
       name: 'proxyRemark',
     },
+    {
+      type: 'Checkbox',
+      label: $t('服务商'),
+      name: 'proxyProvider',
+      getOptions: () => {
+        return ['PrivateProxy', 'RoxyBrowser'].map(label => ({
+          parentName: 'proxyProvider',
+          label,
+          value: label
+        }))
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
+      },
+    },
+    {
+      type: 'switchGroup',
+      name: 'proxyAutoRenew',
+      label: $t('自动续费'),
+      options: [
+        {
+          label: $t('自动续费-开启'),
+          value: '1',
+          text: $t('开启')
+        },
+        {
+          label: $t('自动续费-关闭'),
+          value: '0',
+          text: $t('关闭')
+        },
+      ],
+    },
   ]
 
   return inputs
@@ -151,4 +184,33 @@ export async function getSorts() {
     },
     onChange,
   }
+}
+
+export function getAdvancedSearch() {
+  return [
+    {
+      key: 'proxyHost',
+      label: $t('代理 IP'),
+      icon: 'base/rx_ic_internet',
+      syntax: 'host::'
+    },
+    {
+      key: 'proxyLastCountry',
+      label: $t('国家/地区'),
+      icon: 'base/rx_ic_earth',
+      syntax: 'region::'
+    },
+    {
+      key: 'proxyRemark',
+      label: $t('备注'),
+      icon: 'base/rx_ic_doc_article',
+      syntax: 'note::'
+    },
+    {
+      key: 'proxyProvider',
+      label: $t('服务商'),
+      icon: 'base/rx_ic_browser_proxy',
+      syntax: 'provider::'
+    },
+  ]
 }

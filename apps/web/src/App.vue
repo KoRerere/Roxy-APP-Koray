@@ -67,7 +67,6 @@ emitter.on('kickedOut', (params) => {
     window.close()
   }
 })
-
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { $t } from '/@/locales'
-import { safeParseJSON, sleep } from '/@/utils'
+import { isEmptyValue, safeParseJSON, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useDialog } from '/@/hooks/useDialog'
 import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
@@ -239,12 +239,19 @@ function setInputsProps() {
     }
   })
 }
-//==========================================
-import GenSingle from '/@/views/lab/gen-single.vue';
+
+//=========================================
+import AsyncSwitch from './components/async-switch.vue';
+const checked1 = ref(false);
+const checked2 = ref(true);
+
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <!-- <div @click="checked = !checked">111</div> -->
+    <AsyncSwitch v-model="checked1"></AsyncSwitch>
+    <AsyncSwitch v-model="checked2"></AsyncSwitch>
     <!-- <RxButton label="open1" @click="open1"></RxButton> -->
     <!-- <RxButton label="open2" @click="open2"></RxButton> -->
     <!-- <DataTable :value="datalist.slice(0, 3)">
@@ -279,9 +286,6 @@ import GenSingle from '/@/views/lab/gen-single.vue';
       <RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
       <RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
     </div> -->
-    <div class="mx-auto w-100 flex">
-      <GenSingle></GenSingle>
-    </div>
   </div>
 </template>
 

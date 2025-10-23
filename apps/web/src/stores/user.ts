@@ -7,11 +7,11 @@ import { $t } from "/@/locales";
 import { useSimpleLocale } from "/@/stores/locale";
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { useTutorialStore } from "/@/stores/tutorial";
-
+import * as Sentry from "@sentry/vue";
 import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
 import { useToast } from "primevue/usetoast";
-import { SubLevelEnum } from "/@/enums/pay";
+import { PayIdentity, SubLevelEnum } from "/@/enums/pay";
 import { encryptAESGCM, hidePageLoading, isWindows, type OauthLoginType } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
@@ -56,34 +56,39 @@ export const useUserStore = defineStore(
     })
 
     /** 用户身份 */
-    const identityInfo = computed(() => {
-      const { identity } = userInfo.value;
-      if (identity === "old") {
-        return {
+    const identityInfo = computed<{
+      identity: PayIdentity;
+      text: string
+      color: string
+      icon?: string
+      iconSmall?: string
+    }>(() => {
+      const identity = userInfo.value.identity as PayIdentity
+      const identityMap = {
+        [PayIdentity.new]: {
+          text: $t("普通用户"),
+          color: "var(--colors-text-text-primary)",
+        },
+        [PayIdentity.old]: {
           text: $t("创始用户"),
           icon: "referral-program/golden",
           iconSmall: "referral-program/golden-small",
           color: "#DFAB65",
-        };
-      } else if (identity === "invited") {
-        return {
+        },
+        [PayIdentity.invited]: {
           text: $t("特邀用户"),
           icon: "referral-program/diamond",
           iconSmall: "referral-program/diamond-small",
           color: "#7B88C2",
-        };
-      } else if (identity === "agent") {
-        return {
+        },
+        [PayIdentity.agent]: {
           text: $t("合作用户"),
           icon: "referral-program/agent",
           iconSmall: "referral-program/agent-small",
           color: "#12A3FC",
-        };
+        },
       }
-      return {
-        text: $t("普通用户"),
-        color: "var(--colors-text-text-primary)",
-      };
+      return { identity, ...identityMap[identity] };
     });
 
     async function getUserInfo() {
@@ -124,8 +129,28 @@ export const useUserStore = defineStore(
       return result;
     }
 
-    function setUserInfo(info: UserInfo) {
+    async function setUserInfo(info: UserInfo) {
       userInfo.value = info;
+      const appSoftConfig = await window.electronAPI.send("app:getSoftConfig");
+
+      const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000;
+
+      // 如果是 5 分钟内的新用户，则记录新用户事件
+      if (isNewUser && appSoftConfig.visitorId) {
+        API.appTrackingEvent.appTrackingEventCreate({
+          uuid: appSoftConfig.visitorId,
+          userId: userInfo.value.id,
+          eventType: 'registration_complete',
+        })
+      }
+
+      // 如果不是新用户，则取消记录用户事件
+      if (!isNewUser && appSoftConfig.visitorId) {
+        API.appTrackingEvent.appTrackingEventDelete({
+          uuid: appSoftConfig.visitorId,
+        })
+      }
+
       // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
       setTimeout(() => {
         window.electronAPI.send("user:setUserInfo", {
@@ -143,6 +168,14 @@ export const useUserStore = defineStore(
       });
 
       requestIdleCallback(async () => {
+        const scope = Sentry.getCurrentScope();
+        scope.setUser({
+          id: userInfo.value.id,
+          email: userInfo.value.email,
+          username: userInfo.value.userName,
+        });
+        scope.setTag('process', 'renderer')
+
         mixpanel.identify(String(userInfo.value.id));
 
         const localNetwork = await window.electronAPI.send("proxy:detectNetwork", "local");

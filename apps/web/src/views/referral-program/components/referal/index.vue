@@ -20,6 +20,10 @@ const bonusImage = computed(() => {
 function viewDetail() {
   window.open(getOfficialWebsite('blog/referral-power-up'), '_blank')
 }
+
+const hideBonus = computed(() => {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Kiritimati' })) >= new Date('2025-10-27T00:00:00')
+})
 </script>
 
 <template>
@@ -27,7 +31,7 @@ function viewDetail() {
     <div class="reward">
       <ReferalReward class="content" :promotionInfo />
     </div>
-    <div class="relative flex items-center content">
+    <div v-if="!hideBonus" class="relative flex items-center content">
       <RxButton class="!absolute right-16" size="lg" @click="viewDetail">
         <template #default>
           <span>{{ $t('查看详情') }}</span>

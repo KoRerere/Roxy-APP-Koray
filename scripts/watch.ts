@@ -55,7 +55,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
 
           console.log('Reloading electron app...', String(electronPath))
           /** 启动新的electron进程 */
-          electronApp = spawn(String(electronPath), ['--inspect', '.'], {
+          electronApp = spawn(String(electronPath), ['--inspect', '.', '--experimental-network-inspection'], {
             // 设置工作目录
             cwd: path.resolve(import.meta.dirname, '../apps/electron'),
           })

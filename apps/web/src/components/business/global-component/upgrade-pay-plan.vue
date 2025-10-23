@@ -7,6 +7,7 @@ import type { MittEvents } from '/@/utils/eventBus';
 import { toUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode';
 import { API } from '/@/api';
 import { getAdvancedFeature } from '/@/constants/advanced-feature';
+import { SubLevelEnum } from '/@/enums/pay';
 
 const props = defineProps<{
   hideFn: () => void,
@@ -58,7 +59,7 @@ function toUpgrade() {
 }
 
 function toFreeTrial() {
-  router.push({ name: 'trial-plan' })
+  router.push({ name: 'subscribe-plan', query: { type: SubLevelEnum.Trial } })
   hideDialog()
 }
 
@@ -113,9 +114,13 @@ onUnmounted(() => {
         </template>
       </div>
       <div class="upgrade-pay-plan-btn-group">
-        <RxButton :label="$t('升级')" class="w-full" @click="toUpgrade" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" />
+        <div class="relative w-full">
+          <div class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">{{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}</div>
+          <RxButton :label="$t('升级')" class="w-full" @click="toUpgrade" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" />
+        </div>
         <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">
-          🎁 {{ $t('{day} 天免费试用', { day: 7 }) }}
+          <span>🎁</span>
+          <span>{{ $t('{day} 天免费试用', { day: 7 }) }}</span>
         </RxButton>
       </div>
     </div>
@@ -330,6 +335,15 @@ onUnmounted(() => {
       }
     }
   }
+}
+
+.discount {
+  background: #FC9D12;
+  color: #FFF;
+  font-family: "DingTalk JinBuTi", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .slide-up-enter-active,

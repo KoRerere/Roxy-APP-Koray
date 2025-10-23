@@ -14,10 +14,12 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale';
 import { useNetworkStore } from '/@/stores/network'
+import { useUserStore } from '/@/stores/user';
 import { PayWay } from '/@/enums/pay'
 import { ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useThemeStore } from '/@/stores/theme'
+import { discountCalculate } from '/@/views/pay/subscribe/util'
 
 const { data: provider = {} } = defineProps<{
   data: Record<string, any>
@@ -32,6 +34,7 @@ const { openProcessing } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
 const { realTheme } = storeToRefs(useThemeStore())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
+const { userPayInfo } = storeToRefs(useUserStore())
 
 const ONE_BUY_MAX = 1000
 const configs = ref<any[]>([])
@@ -66,7 +69,9 @@ const notes = [
     text: $t('{bold0}', { bold0: '{bold0}' }),
     bolds: [$t('所有代理均由 RoxyBrowser 从 {name} 特挑。', { name: provider.proxyProviderName })]
   }
-]
+].slice(0, provider.proxyProviderName === 'RoxyBrowser' ? 6 : 7)
+
+const durationOptionsMap = new Map()
 
 const isCN = computed(() => networkInfo.value.country_code === 'CN')
 const configValue = computed(() => {
@@ -88,13 +93,20 @@ const currentCountry = computed(() => {
   }
 })
 
-const totalAmount = computed(() => {
+const originalAmount = computed(() => {
   const { subscriptionMonths, purchaseMember } = configValue.value
   return currency(subscriptionMonths.proxyPrice * purchaseMember).value
 })
 
+const finalAmount = computed(() => {
+  const { proxyDiscount } = userPayInfo.value!
+  return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
+})
+
 const details = computed(() => {
   const { purchaseCountry, subscriptionMonths, purchaseMember } = configValue.value
+  const { proxyDiscount } = userPayInfo.value!
+
   return [
     {
       title: $t('代理 IP 信息'),
@@ -109,10 +121,6 @@ const details = computed(() => {
         },
         {
           label: $t('价格'),
-          value: $t('{month}/个', { month: currency(subscriptionMonths.proxyPrice).format() })
-        },
-        {
-          label: $t('续费价格'),
           value: $t('{month}/个', { month: currency(subscriptionMonths.proxyPrice).format() })
         },
       ]
@@ -137,11 +145,18 @@ const details = computed(() => {
     {
       items: [
         {
+          label: $t('专属折扣'),
+          value: `-${proxyDiscount}%`,
+          class: '!color-[#FC9D12]',
+          visible: !!proxyDiscount
+        },
+        {
           label: $t('Roxy 独家特惠'),
-          value: currency(totalAmount.value).format(),
+          value: currency(finalAmount.value).format(),
+          diffValue: currency(originalAmount.value).subtract(finalAmount.value).value,
           slot: 'price'
         },
-      ]
+      ].filter(item => item.visible !== false)
     }
   ]
 })
@@ -152,38 +167,17 @@ onMounted(async () => {
 
 async function initConfig() {
   loading.value = true
-  const [purchaseCountry, businessUse, purchaseTimePrice] = await Promise.all([
+  const _typeOptions = provider.proxyTypeList.map((item: any) => ({
+    ...item,
+    value: item.id,
+    label: item.typeName,
+  }))
+  const [_countryOptions, _businessOptions, _durationOptions] = await Promise.all([
     getCountryList(),
     getBusinessUseList(),
-    getPurchaseTimePriceList(),
+    getPurchaseTimePriceList(_typeOptions[0].value),
   ])
   loading.value = false
-
-  const _purchaseCountry = purchaseCountry.map(item => ({
-    ...item,
-    icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
-    label: `${item.country_name} / ${item.country_code.toLocaleUpperCase()}`,
-    name: item.country_name,
-    value: item.country_code,
-    inventoryFmt:
-      item.inventory > ONE_BUY_MAX
-        ? $t('充足')
-        : item.inventory === 0
-          ? $t('库存不足')
-          : $t('剩余 {count}', { count: item.inventory })
-  }))
-
-  const _businessUse = businessUse.map(item => ({
-    image: item.proxyBusinessIcon,
-    darkImage: item.proxyBusinessIconDark,
-    label: item.proxyBusinessKey,
-    value: item.proxyBusinessValue
-  }))
-
-  const _purchaseTimePrice = purchaseTimePrice.map(item => {
-    const day = item.proxyPurchaseMonths * 30
-    return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
-  })
 
   const updatePurchaseMember = (inventory: number) => {
     const purchaseMember = configs.value.find(item => item.name === 'purchaseMember')
@@ -194,19 +188,43 @@ async function initConfig() {
 
   return [
     {
+      title: $t('代理 IP 类型:'),
+      name: 'proxyProviderId',
+      value: _typeOptions[0],
+      fullWidth: true,
+      props: {
+        options: _typeOptions,
+        disabled: _typeOptions.length === 1,
+      },
+      render: ({ item }: any) => {
+        return <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} onUpdate:modelValue={
+          async (opt: any) => {
+            const _durationOptions = await getPurchaseTimePriceList(opt.value)
+            const subscriptionMonths = configs.value.find(item => item.name === 'subscriptionMonths')
+            if (subscriptionMonths) {
+              subscriptionMonths.value = _durationOptions[0]
+              subscriptionMonths.props.options = _durationOptions
+            }
+          }
+        } />
+      }
+    },
+    {
       title: $t('选择代理 IP 国家/地区:'),
       name: 'purchaseCountry',
-      value: _purchaseCountry[0],
+      value: _countryOptions[0],
+      fullWidth: true,
       props: {
         filter: true,
-        options: _purchaseCountry,
+        disabled: _countryOptions.length === 1,
+        options: _countryOptions,
         optionDisabled: (opt: any) => opt.inventory <= 0,
       },
       render: ({ item }: any) => {
         const quicks = item.props.options.filter((item: any) => item.inventory > 0).slice(0, 3)
         return <div class="flex flex-col gap-1.5">
           <div class="flex items-center gap-6">
-            <TsFormSelect class="!w-60" size="lg" v-model={item.value} {...item.props} onUpdate:modelValue={
+            <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} onUpdate:modelValue={
               (opt: any) => {
                 updatePurchaseMember(opt.inventory)
               }
@@ -233,13 +251,14 @@ async function initConfig() {
     {
       title: $t('选择时长:'),
       name: 'subscriptionMonths',
-      value: _purchaseTimePrice[0],
+      value: _durationOptions[0],
+      fullWidth: true,
       props: {
-        options: _purchaseTimePrice,
+        options: _durationOptions,
       },
       render: ({ item }: any) => {
         return <div class="flex gap-4">
-          {item.props.options.map((option: any) => <div class={`px-5 py-2 cursor-pointer select-none ${styles.period} ${item.value.value === option.value ? styles.active : ''}`} onClick={() => item.value = option}>{option.label}</div>)}
+          {item.props.options.map((option: any) => <div class={`px-5 py-1.5 cursor-pointer select-none ${styles.period} ${item.value.value === option.value ? styles.active : ''}`} onClick={() => item.value = option}>{option.label}</div>)}
         </div>
       }
     },
@@ -247,9 +266,10 @@ async function initConfig() {
       title: $t('代理 IP 数量:'),
       name: 'purchaseMember',
       value: 1,
+      fullWidth: true,
       render: ({ item }: any) => <div class="flex items-center gap-4">
         <div class="w-40">
-          <RxStepInput disabled={currentCountry.value.outOfStock} v-model={item.value} min={1} max={Math.min(currentCountry.value.inventory, ONE_BUY_MAX)} size="lg" onUpdate:modelValue={(value: number) => {
+          <RxStepInput disabled={currentCountry.value.outOfStock} v-model={item.value} min={1} max={Math.min(currentCountry.value.inventory, ONE_BUY_MAX)} size="md" onUpdate:modelValue={(value: number) => {
             nextTick(() => {
               if (!value) item.value = 1
             })
@@ -261,12 +281,13 @@ async function initConfig() {
     {
       title: $t('代理 IP 用途:'),
       name: 'businessUse',
+      fullWidth: true,
       props: {
-        options: _businessUse,
+        options: _businessOptions,
         placeholder: $t('任意用途'),
       },
       render: ({ item }: any) => {
-        return <TsFormSelect class="!w-60" size="lg" v-model={item.value} {...item.props} darkMode={realTheme.value === 'dark'} />
+        return <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} darkMode={realTheme.value === 'dark'} />
       }
     },
   ]
@@ -276,23 +297,48 @@ async function getCountryList() {
   const { code, data, msg } = await API.proxy.userGetProxyPurchaseCountryListList({ proxyProviderName: provider.proxyProviderName })
   onlyErrorToast(code, msg)
   if (code !== 0) return []
-  return data
+
+  return data.map(item => ({
+    ...item,
+    icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
+    label: `${item.country_name} / ${item.country_code.toLocaleUpperCase()}`,
+    name: item.country_name,
+    value: item.country_code,
+    inventoryFmt:
+      item.inventory > ONE_BUY_MAX
+        ? $t('充足')
+        : item.inventory === 0
+          ? $t('库存不足')
+          : $t('剩余 {count}', { count: item.inventory })
+  }))
 }
 
 async function getBusinessUseList() {
   const { code, data, msg } = await API.proxy.userGetProxyBusinessUseListList()
   onlyErrorToast(code, msg)
   if (code !== 0) return []
-  return data
+  return data.map(item => ({
+    image: item.proxyBusinessIcon,
+    darkImage: item.proxyBusinessIconDark,
+    label: item.proxyBusinessKey,
+    value: item.proxyBusinessValue
+  }))
 }
 
-async function getPurchaseTimePriceList() {
-  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({ proxyProviderId: provider.id })
+async function getPurchaseTimePriceList(proxyProviderId: string) {
+  if (durationOptionsMap.has(proxyProviderId)) {
+    return durationOptionsMap.get(proxyProviderId)
+  }
+  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({ proxyProviderId })
   onlyErrorToast(code, msg)
   if (code !== 0) return []
-  return data
+  const _data = data.map(item => {
+    const day = item.proxyPurchaseMonths * 30
+    return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
+  })
+  durationOptionsMap.set(proxyProviderId, _data)
+  return _data
 }
-
 
 async function onPay() {
   showModal({
@@ -301,7 +347,7 @@ async function onPay() {
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => <WalletPayModal
-        amount={totalAmount.value}
+        amount={finalAmount.value}
         onClose={hideModal}
         onConfirm={onConfirm}
       />,
@@ -309,13 +355,13 @@ async function onPay() {
   })
 
   async function onConfirm({ payType }: any) {
-    const { purchaseMember, subscriptionMonths, purchaseCountry, businessUse } = configValue.value
+    const { purchaseMember, subscriptionMonths, proxyProviderId, purchaseCountry, businessUse } = configValue.value
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
       purchaseMember,
       subscriptionMonths: subscriptionMonths.value,
       payType,
       orderType: ProxyOrderType.Purchase,
-      proxyProviderId: provider.id,
+      proxyProviderId: proxyProviderId.value,
       purchaseCountry: purchaseCountry.value,
       businessUse: businessUse?.value,
     })
@@ -341,7 +387,9 @@ async function onPay() {
         <div class="flex flex-col gap-1.5">
           <div class="flex items-center gap-2">
             <span class="provider-name">{{ provider.proxyProviderName }}</span>
-            <span class="provider-tag">{{ $t('静态住宅代理') }}</span>
+            <div class="flex gap-2">
+              <span v-for="item in provider.proxyTypeList" class="provider-tag">{{ item.typeName }}</span>
+            </div>
           </div>
           <div class="provider-website">{{ provider.proxyProviderWebsite }}</div>
         </div>
@@ -351,9 +399,11 @@ async function onPay() {
     <div class="relative flex-1 flex gap-6 overflow-y-auto px-8">
       <RxLoading v-model="loading" :opacity="0.9"></RxLoading>
       <div class="flex-1 flex flex-col gap-9">
-        <div class="flex flex-col gap-4" v-for="item in configs" :key="item.name">
-          <div class="subtitle">{{ item.title }}</div>
-          <component v-if="item.render" :is="item.render" :item="item" />
+        <div class="grid grid-cols-2 gap-y-6">
+          <div class="flex flex-col gap-2" :class="[item.fullWidth ? 'col-span-2' : 'col-span-1']" v-for="item in configs" :key="item.name">
+            <div class="subtitle">{{ item.title }}</div>
+            <component v-if="item.render" :is="item.render" :item="item" />
+          </div>
         </div>
         <div class="flex flex-col gap-2">
           <div class="subtitle">{{ $t('注意事项:') }}</div>
@@ -372,7 +422,10 @@ async function onPay() {
           <template #price="{ item }">
             <div class="flex justify-between items-center">
               <div class="details-label">{{ item.label }}</div>
-              <div class="details-price">{{ item.value }}</div>
+              <div>
+                <div class="details-price">{{ item.value }}</div>
+                <div v-if="item.diffValue > 0" class="details-diffprice">{{ $t('节省 {value}', { value: currency(item.diffValue).format() }) }}</div>
+              </div>
             </div>
           </template>
           <template #after>
@@ -459,7 +512,7 @@ async function onPay() {
 
 .subtitle {
   color: var(--colors-text-text-primary);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: normal;
 }
@@ -488,8 +541,18 @@ async function onPay() {
 
   &-price {
     color: #12A3FC;
+    text-align: right;
     font-size: 24px;
     font-weight: 600;
+    line-height: normal;
+  }
+
+  &-diffprice {
+    color: var(--primitives-yellow-500);
+    text-align: right;
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 500;
     line-height: normal;
   }
 }

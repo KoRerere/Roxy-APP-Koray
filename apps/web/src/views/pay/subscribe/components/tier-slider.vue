@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+import { formatNumberToKMB } from '/@/utils/basic';
 
 interface Tier {
   start: number
@@ -12,9 +12,12 @@ interface Props {
   max?: number
   step?: number
   tiers?: Tier[]
+  hideLabels?: number[]
   useLogarithmic?: boolean
   useKMB?: boolean
-  formatter?: ((value: number) => string) | null
+  tooltip?: boolean
+  tooltipFormatter?: ((value: number) => string) | null
+  numberFormatter?: ((value: number) => string) | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -22,9 +25,12 @@ const props = withDefaults(defineProps<Props>(), {
   max: 100,
   step: 1,
   tiers: () => [],
+  hideLabels: () => [],
   useLogarithmic: true,
   useKMB: true,
-  formatter: null,
+  tooltip: true,
+  tooltipFormatter: null,
+  numberFormatter: null,
 })
 
 const emit = defineEmits<{
@@ -41,7 +47,6 @@ const sliderTrack = useTemplateRef('slider')
 const thumbExtra = useTemplateRef('thumbex')
 
 const currentPosition = computed(() => getPosition(selectedValue.value))
-const currentCount = computed(() => formatNumber(selectedValue.value))
 // 额外提示框的位置，处理边界情况
 const thumbExtraPosition = computed(() => {
   if (!sliderTrack.value || !thumbExtra.value)
@@ -74,6 +79,7 @@ const thumbExtraPosition = computed(() => {
     transform: `translateX(${translateX}%)`,
   }
 })
+
 // 计算所有可选值
 const values = computed<number[]>(() => {
   // 非区间模式：根据 min、max 和 step 生成等间距值数组
@@ -115,6 +121,7 @@ const values = computed<number[]>(() => {
   }
   return result
 })
+
 // 计算主要刻度值
 const majorValues = computed<number[]>(() => {
   // 区间模式：使用区间的起始点和结束点作为主要刻度
@@ -135,57 +142,21 @@ const majorValues = computed<number[]>(() => {
 })
 
 // 计算刻度标签的位置
-const labelPositions = computed<{
-  value: number
-  position: number
-}[]>(() =>
-  majorValues.value.map(value => ({
-    value,
-    position: getPosition(value),
-    disabled: value < props.min,
-  })),
-)
+const labelPositions = computed(() => {
+  return majorValues.value.map(value => ({ value, position: getPosition(value), hide: props.hideLabels.includes(value) }))
+})
 
-/**
- * 将值标准化到0-100范围
- */
-function normalizeToRange(value: number, min: number, max: number): number {
-  return ((value - min) / (max - min)) * 100
-}
-
-/**
- * 将像素值转换为百分比
- */
-function pixelToPercent(pixels: number, trackWidth: number): number {
-  return (pixels / trackWidth) * 100
-}
-
-/**
- * 计算对数刻度下的位置
- */
-function calculateLogarithmicPosition(value: number): number {
-  const epsilon = props.max * 1e-6
-  const minValue = value === 0 && props.min === 0 ? epsilon : value || epsilon
-  const minLog = Math.log(props.min || epsilon)
-  return ((Math.log(minValue) - minLog) / (Math.log(props.max) - minLog)) * 100
-}
-
-/**
- * 计算插值位置（用于区间模式）
- */
-function calculateInterpolatedPosition(value: number, sortedValues: number[], segmentWidth: number): number {
-  const index = sortedValues.findIndex(v => v > value)
-  const start = sortedValues[index - 1]
-  const end = sortedValues[index]
-  return VISUAL_PADDING_PX + ((index - 1) + (value - start) / (end - start)) * segmentWidth
-}
+// 当前滑块值 tooltip
+const tooltipValue = computed(() => {
+  return props.tooltipFormatter?.(selectedValue.value) ?? formatter(selectedValue.value)
+})
 
 /**
  * 获取值对应的位置（百分比）
  */
 function getPosition(value: number): number {
-  if (!sliderTrack.value)
-    return 0
+  if (!sliderTrack.value) return 0
+
   const trackWidth = sliderTrack.value.clientWidth
 
   if (!props.tiers.length) {
@@ -207,6 +178,40 @@ function getPosition(value: number): number {
     : calculateInterpolatedPosition(value, sortedValues, segmentWidth)
 
   return pixelToPercent(pixelPosition, trackWidth)
+}
+
+/**
+ * 计算对数刻度下的位置
+ */
+function calculateLogarithmicPosition(value: number): number {
+  const epsilon = props.max * 1e-6
+  const minValue = value === 0 && props.min === 0 ? epsilon : value || epsilon
+  const minLog = Math.log(props.min || epsilon)
+  return ((Math.log(minValue) - minLog) / (Math.log(props.max) - minLog)) * 100
+}
+
+/**
+ * 将值标准化到0-100范围
+ */
+function normalizeToRange(value: number, min: number, max: number): number {
+  return ((value - min) / (max - min)) * 100
+}
+
+/**
+ * 将像素值转换为百分比
+ */
+function pixelToPercent(pixels: number, trackWidth: number): number {
+  return (pixels / trackWidth) * 100
+}
+
+/**
+ * 计算插值位置（用于区间模式）
+ */
+function calculateInterpolatedPosition(value: number, sortedValues: number[], segmentWidth: number): number {
+  const index = sortedValues.findIndex(v => v > value)
+  const start = sortedValues[index - 1]
+  const end = sortedValues[index]
+  return VISUAL_PADDING_PX + ((index - 1) + (value - start) / (end - start)) * segmentWidth
 }
 
 /**
@@ -269,25 +274,14 @@ function findClosestValue(clientX: number): number {
 /**
  * 格式化数字显示（支持K/M/B格式）
  */
-function formatNumber(num: number): string {
-  if (props.formatter)
-    return props.formatter(num)
+function formatter(value: number): string {
+  if (props.numberFormatter)
+    return props.numberFormatter(value)
 
-  if (props.useKMB) {
-    const formats = [
-      { threshold: 1e9, suffix: 'B' },
-      { threshold: 1e6, suffix: 'M' },
-      { threshold: 1e3, suffix: 'K' },
-    ]
+  if (props.useKMB)
+    return formatNumberToKMB(value, 1)
 
-    for (const { threshold, suffix } of formats) {
-      if (num >= threshold) {
-        return `${(num / threshold).toFixed(1)}${suffix}`
-      }
-    }
-  }
-
-  return num?.toLocaleString('en-US')
+  return value.toLocaleString('en-US')
 }
 
 function handleLabelClick(value: number): void {
@@ -363,21 +357,19 @@ onMounted(() => {
     <!-- 滑动轨道 -->
     <div ref="slider" class="relative h-5 rounded-full cursor-pointer bg-gradient-to-r from-[#12A3FC] to-[#EC51F7]" @mousedown="handleMouseDown">
       <!-- 未选中部分的轨道 -->
-      <div class="absolute top-0 right-0 h-full rounded-r-full bg-orange track-slider" :style="{ width: `calc(${100 - currentPosition}% - 9px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
+      <div class="absolute top-0 right-0 h-full rounded-r-full track-slider" :style="{ width: `calc(${100 - currentPosition}% - 8px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
       <!-- 刻度标记和标签 -->
-      <template v-for="{ value, position } in labelPositions" :key="value">
-        <div class="absolute top-1/2 -translate-1/2 w-2.5 h-2.5 rounded-full" :class="[
-          position < currentPosition
-            ? 'bg-white opacity-30'
-            : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'track-dot',
-        ]" :style="{ left: `${position}%` }" />
-      </template>
+      <div v-for="{ value, position } in labelPositions" :key="value" class="absolute top-1/2 -translate-1/2 w-2.5 h-2.5 rounded-full" :class="[
+        position < currentPosition
+          ? 'bg-white opacity-30'
+          : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'track-dot',
+      ]" :style="{ left: `${position}%` }" />
       <!-- 滑块 -->
-      <div class="absolute top-1/2 -translate-1/2 thumb" :class="[isDragging ? 'thumb-dragging' : '']" :style="{
+      <div class="absolute top-1/2 -translate-1/2 thumb" :class="{ 'tooltip': tooltip }" :style="{
         left: `${currentPosition}%`,
         transition: isDragging ? 'none' : 'all 0.3s ease',
-      }" :data-count="$t('{count} 个窗口', { count: currentCount })">
-        <div class="cursor-grab active:cursor-grabbing thumb-tooltip" />
+      }" :data-tooltip="tooltipValue">
+        <div class="cursor-grab active:cursor-grabbing thumb-grabbing" />
         <!-- Thumb Extra -->
         <div ref="thumbex" class="absolute top-15" :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">
           <slot name="thumb-extra" />
@@ -386,10 +378,8 @@ onMounted(() => {
     </div>
     <!-- 底部数值标签 -->
     <div class="relative h-5 mt-2">
-      <div v-for="{ value, position } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer track-marker"
-        :class="{ 'foucs font-semibold': value === selectedValue }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">
-        {{ formatNumber(value) }}
-      </div>
+      <div v-for="{ value, position, hide } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer track-marker"
+        :class="{ 'foucs font-semibold': value === selectedValue, 'hidden': hide }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">{{ formatter(value) }}</div>
     </div>
   </div>
 </template>
@@ -415,18 +405,9 @@ onMounted(() => {
   }
 }
 
-
 .thumb {
-  &.thumb-dragging::before {
-    opacity: 1;
-  }
-
-  &:has(.thumb-tooltip:hover)::before {
-    opacity: 1;
-  }
-
-  &::before {
-    content: attr(data-count);
+  &.tooltip::before {
+    content: attr(data-tooltip);
     position: absolute;
     top: -110%;
     left: 50%;
@@ -447,7 +428,7 @@ onMounted(() => {
     white-space: nowrap;
   }
 
-  &-tooltip {
+  &-grabbing {
     width: 26px;
     height: 26px;
     border-radius: 50%;

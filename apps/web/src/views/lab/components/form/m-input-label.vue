@@ -8,7 +8,8 @@ defineProps<{
 <template>
   <label>
     <span class="label">{{ label }}</span>
-    <SvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 300 }" class="ml-1 align-middle" name="base/rx_ic_info" color="var(--colors-icon-icon-note, #AFB7BB)" size="12" />
+    <SvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 300, pt: { root: '!max-w-70' } }" class="ml-1 align-middle" name="base/rx_ic_info" color="var(--colors-icon-icon-note, #AFB7BB)"
+      size="12" />
   </label>
 </template>
 

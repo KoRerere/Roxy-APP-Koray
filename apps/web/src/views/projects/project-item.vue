@@ -7,8 +7,6 @@ import { ProjectPin } from '/@/enums'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
@@ -18,9 +16,7 @@ const route = useRoute()
 const router = useRouter()
 const [showModal] = useDialog()
 const [projectModfiyDialog] = useProjectActions()
-const [_, onlyErrorToast] = useResponseToast()
 const { getProjects } = useProjectStore()
-const { handleBusinessCode } = useHandleBusinessCode()
 
 const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))

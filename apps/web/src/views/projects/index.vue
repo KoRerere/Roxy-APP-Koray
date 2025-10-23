@@ -164,6 +164,8 @@ function operationHandler(operate: any, data?: any) {
 }
 
 async function onRowReorder({ value }: any) {
+  const params = tableRef.value?.getParams()
+
   const { projectIds, projectSortNumList } = value.reduce((acc: any, item: any, index: number) => {
     acc.projectIds.push(item.project_id)
     acc.projectSortNumList.push(index + 1)
@@ -172,7 +174,9 @@ async function onRowReorder({ value }: any) {
 
   const { code, msg } = await API.limit.userMdfProjectSortCreate({
     projectIds,
-    projectSortNumList
+    projectSortNumList,
+    page_index: params?.page_index ?? 1,
+    page_size: params?.page_size ?? 10,
   })
 
   onlyErrorToast(code, msg)

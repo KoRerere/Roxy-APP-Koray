@@ -55,5 +55,5 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
     });
   }
 
-  return [addDialog];
+  return [addDialog] as const
 }

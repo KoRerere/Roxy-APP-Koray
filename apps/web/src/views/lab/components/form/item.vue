@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MInputLabel from './m-input-label.vue'
+import MInputGroup from './m-input-group.vue';
 import MInputText from './m-input-text.vue'
 import MInputNumber from './m-input-number.vue'
 import MInputPassword from './m-input-password.vue'
@@ -35,18 +36,15 @@ const INPUT_TYPE_MAP = {
   // 'switch': 'switch',
 } as Partial<Record<InputType, Component>>
 
-// todo! 暂时只有 radio 组件需要 name 后续优化此处
-const name = input.type === 'radio' ? input.name : undefined
 </script>
 
 <template>
   <DefineTemplate v-slot="{ input: ipt, class: fieldClass }">
     <FormField class="flex flex-col gap-1" :class="fieldClass" v-slot="$field" :name="ipt.name">
-      <MInputLabel v-if="ipt.label" :label="ipt.label" :tooltip="ipt.tooltip"></MInputLabel>
-      <div class="inline-flex">
-        <MCustom v-if="ipt.render" :field="$field" :input="ipt"></MCustom>
-        <component v-else :is="INPUT_TYPE_MAP[ipt.type] || MInputText" v-bind="ipt.props" :name="name" />
-      </div>
+
+      <MCustom v-if="ipt.render" :field="$field" :input="ipt"></MCustom>
+      <component v-else :is="INPUT_TYPE_MAP[ipt.type] || MInputText" v-bind="ipt.props" />
+
       <component v-if="ipt.afterRender" :is="ipt.afterRender" :field="$field" :input="ipt"></component>
       <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>
@@ -54,13 +52,15 @@ const name = input.type === 'radio' ? input.name : undefined
 
   <RxDivider v-if="input.separator" line-only></RxDivider>
 
-  <InputGroup v-else-if="input.type === 'group'">
-    <InputGroupAddon class="!pa-0" :class="child.groupClass" v-for="child in input.items" :key="child.name">
-      <ReuseTemplate class="w-full" :input="child" />
-    </InputGroupAddon>
-  </InputGroup>
+  <div v-else class="flex flex-col gap-1">
+    <MInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></MInputLabel>
 
-  <ReuseTemplate v-else :input="input" />
+    <MInputGroup v-if="input.type === 'group'">
+      <ReuseTemplate v-for="child in input.items" :key="child.name" :class="child.itemClass" :input="child" />
+    </MInputGroup>
+
+    <ReuseTemplate v-else :input="input" />
+  </div>
 </template>
 
 <style scoped></style>

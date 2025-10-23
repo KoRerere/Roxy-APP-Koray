@@ -1,8 +1,6 @@
 import RelatedInfo from '/@/components/related-info.vue'
-import BasicInfo from '/@/views/agent/list/components/basic-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
-import currency from 'currency.js';
 import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -29,6 +27,16 @@ export function getRawColumns(options?: any) {
       key: 'expireDate',
       sortable: true,
       render: ({ data }: any) => <ExpireDate data={data}></ExpireDate>,
+    },
+    {
+      title: $t('价格'),
+      key: 'proxyProviderPrice',
+      slot: 'price',
+    },
+    {
+      title: $t('自动续费'),
+      key: 'autoRenew',
+      slot: 'renew',
     },
     {
       title: $t('订单号'),
@@ -81,6 +89,12 @@ export function getRawColumns(options?: any) {
       key: 'proxyProviderName',
       getText: (data: any) => data.proxyProviderName || $t('官方赠送'),
       sortable: true,
+    },
+    {
+      title: $t('代理类型'),
+      key: 'providerType',
+      slot: 'providerType',
+      _visible: false,
     },
     {
       title: $t('操作'),

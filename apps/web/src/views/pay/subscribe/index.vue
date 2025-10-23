@@ -1,51 +1,65 @@
 <script setup lang="tsx">
-import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
-import currency from 'currency.js';
-import { addDays, format } from "date-fns";
-import { $t } from '/@/locales'
-import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { RxAlert } from "/@/components/rx-alert";
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
-import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, PurchaseType, PaySubOrderType } from '/@/enums/pay'
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
+import { RxAlert } from "/@/components/rx-alert";
+import currency from 'currency.js';
+import { addDays, format } from "date-fns";
+import { $t } from '/@/locales'
+import { API } from '/@/api'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
-import { useUserStore } from '/@/stores/user';
-import { type Plan } from './type'
-import { useSimpleLocale } from '/@/stores/locale';
 import { useDialog } from '/@/hooks/useDialog'
+import { useUserStore } from '/@/stores/user';
+import { useSimpleLocale } from '/@/stores/locale';
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { deepClone } from '/@/utils';
+import { tierCalculate, discountCalculate } from './util'
+import { OrderType, PayWay, PurchaseType, PaySubOrderType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
+import { type Plan } from './type'
 
-const { getOfficialWebsite } = useSimpleLocale()
-const [_, onlyErrorToast] = useResponseToast()
-const { openProcessing, planSuccess } = usePay()
+const route = useRoute()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { getOfficialWebsite } = useSimpleLocale()
+const { openProcessing, planSuccess } = usePay()
 const [showModal] = useDialog()
+const [showToast, onlyErrorToast] = useResponseToast()
 
+const rawList = ref<Plan[]>()
 const dataList = ref<Plan[]>()
 
 const selectedPlan = ref()
 const selectedCount = ref()
 const selectedDuration = ref()
 
-const priceSubscribePerMonth = computed(() => tierCalculate(dataList.value!, selectedCount.value).value)
+const monthlySubscribePrice = computed(() => {
+  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial) return 0
+  return tierCalculate(rawList.value!, selectedCount.value).value
+})
 
 const showAlert = computed(() => selectedCount.value && currency(selectedCount.value).add(userPayInfo.value.freeWindowCount).value < userPayInfo.value.useWindowCount)
 
 const finalDiscount = computed(() => discountCalculate([userPayInfo.value?.discount, selectedDuration.value?.discount]))
 
-const finalOriginalAmount = computed(() => currency(priceSubscribePerMonth.value).multiply(selectedDuration.value?.month ?? 1).value)
+const finalOriginalAmount = computed(() => currency(monthlySubscribePrice.value).multiply(selectedDuration.value?.month ?? 1).value)
 const finalAmount = computed(() => currency(finalOriginalAmount.value).multiply(finalDiscount.value).value)
 const finalDiscountAmount = computed(() => currency(finalOriginalAmount.value).subtract(finalAmount.value).value)
 
+const isTrial = computed(() => selectedPlan.value?.subLevel === SubLevelEnum.Trial)
+
+const currentSubscribe = computed(() => {
+  const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
+  return $t('当前权益: {subLevel} ({count} 窗口)\n窗口用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+})
+
 const details = computed(() => {
-  const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
+  // 处理试用导致显示窗口数量小于 10 的情况
+  const profileCount = currency(Math.max(selectedCount.value, 10), { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
-  const pricePerMonth = currency(priceSubscribePerMonth.value).multiply(finalDiscount.value).value
-  const discountPerMonth = currency(priceSubscribePerMonth.value).subtract(pricePerMonth).value
+  const pricePerMonth = currency(monthlySubscribePrice.value).multiply(finalDiscount.value).value
+  const discountPerMonth = currency(monthlySubscribePrice.value).subtract(pricePerMonth).value
 
   return [
     {
@@ -65,13 +79,15 @@ const details = computed(() => {
         },
         {
           label: $t('订阅时长'),
-          value: selectedDuration.value?.title
+          value: selectedDuration.value?.title,
+          visible: !isTrial.value,
         },
         {
           label: $t('到期时间'),
-          value: format(addDays(Date.now(), selectedDuration.value?.day ?? 30), 'yyyy/MM/dd')
+          value: format(addDays(Date.now(), selectedDuration.value?.day ?? 30), 'yyyy/MM/dd'),
+          visible: !isTrial.value,
         },
-      ]
+      ].filter(item => item.visible !== false)
     },
     {
       items: [
@@ -85,7 +101,7 @@ const details = computed(() => {
           label: $t('订阅折扣'),
           value: `-${selectedDuration.value?.discount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!selectedDuration.value?.discount
+          visible: !isTrial.value && !!selectedDuration.value?.discount
         },
       ].filter(item => item.visible !== false)
     },
@@ -93,8 +109,8 @@ const details = computed(() => {
       items: [
         {
           label: $t('套餐原价'),
-          value: currency(priceSubscribePerMonth.value).format(),
-          visible: pricePerMonth !== priceSubscribePerMonth.value,
+          value: currency(monthlySubscribePrice.value).format(),
+          visible: pricePerMonth !== monthlySubscribePrice.value,
           slot: 'oldprice'
         },
         {
@@ -116,8 +132,19 @@ async function getTierPricingList() {
   try {
     const { code, data, msg } = await API.pay.userGetWindowPricingRulesListList()
     if (code === 0) {
-      dataList.value = data.rows
-      selectedPlan.value = dataList.value[0]
+      rawList.value = deepClone(data.rows)
+      // 试用套餐的 maxWindows 用于 tier 的显示，实际为最低级套餐，后续逻辑会处理
+      if (!userPayInfo.value.isTrial) {
+        const [first, ...rest] = data.rows
+        const trial = { ...first, windowPrice: 0, maxWindows: 5, subLevel: SubLevelEnum.Trial }
+        const basic = { ...first, minWindows: trial.maxWindows }
+        dataList.value = [trial, basic, ...rest]
+        selectedPlan.value = route.query.type === SubLevelEnum.Trial ? dataList.value[0] : dataList.value[1]
+      } else {
+        dataList.value = data.rows
+        selectedPlan.value = dataList.value[0]
+      }
+
       selectedCount.value = selectedPlan.value.maxWindows
     } else {
       throw new Error(msg)
@@ -128,6 +155,11 @@ async function getTierPricingList() {
 }
 
 async function onSubscribe() {
+  if (selectedPlan.value.subLevel === SubLevelEnum.Trial) {
+    await trialSubscribe()
+    return
+  }
+
   showModal({
     showHeader: false,
     modal: true,
@@ -141,14 +173,16 @@ async function onSubscribe() {
         onClose: hideModal,
         onConfirm: async ({ payType, isAuto }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
-            purchaseMember: { profile: selectedCount.value },
-            purchaseType: PurchaseType.Profile,
+            isAuto,
+            payType,
+            purchaseMember: {
+              profile: selectedCount.value
+            },
             subLevel: selectedPlan.value.subLevel,
             subscriptionMonths: selectedDuration.value.month,
-            subOrderType: PaySubOrderType.Purchase,
-            payType,
-            isAuto,
             orderType: OrderType.Subscribe,
+            purchaseType: PurchaseType.Profile,
+            subOrderType: PaySubOrderType.Purchase,
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
@@ -162,25 +196,42 @@ async function onSubscribe() {
     },
   })
 }
+
+async function trialSubscribe() {
+  const { code, msg } = await API.pay.userSevenDayTrialCreate({})
+  onlyErrorToast(code, msg)
+  if (code === 0) {
+    showToast(code, $t('成功激活试用'))
+    router.push({ name: 'browser-list' })
+  }
+}
 </script>
 
 <template>
   <div class="overflow-auto wh-full">
     <div class="rx-container">
       <ViewsHeader :title="$route.meta.title" />
-      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
-        <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
-          <div class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto">
+        <div class="flex-1 flex flex-col gap-8">
+          <Profile class="w-full" v-if="dataList?.length" :list="dataList" :raw-list="rawList!" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
+          <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+          <div v-show="!isTrial">
             <div class="title">{{ $t('订阅时长') }}</div>
-            <Duration class="mt-4" v-model="selectedDuration" :price="priceSubscribePerMonth"></Duration>
+            <Duration class="mt-4" v-model="selectedDuration" :price="monthlySubscribePrice"></Duration>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
-          </AdvancedFeat>
+          <div v-if="isTrial" class="flex items-center justify-between">
+            <div class="title">{{ $t('订阅时长') }}</div>
+            <div class="due">
+              <div class="due-title">{{ $t('{day} 天', { day: 7 }) }}</div>
+              <div class="due-date">{{ format(addDays(Date.now(), 7), 'yyyy/MM/dd') }}</div>
+            </div>
+          </div>
+          <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+          <AdvancedFeat :plan="selectedPlan"></AdvancedFeat>
         </div>
         <div class="flex flex-col gap-3 w-80">
-          <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="$t('购买窗口数量少于当前窗口数')" :closable="false">
-          </RxAlert>
+          <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false"></RxAlert>
+          <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="$t('购买窗口数量少于当前窗口数')" :closable="false"></RxAlert>
           <Detail :list="details">
             <template #oldprice="{ item }">
               <div class="flex justify-between">
@@ -229,11 +280,19 @@ async function onSubscribe() {
   line-height: 20px;
 }
 
-.desc {
-  color: var(--colors-text-text-primary, #FAFAFA);
-  font-family: Inter;
-  font-size: 12px;
-  line-height: normal;
+.due {
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  &-date {
+    color: var(--colors-text-text-tertiary);
+    font-size: 12px;
+    line-height: 20px;
+  }
 }
 
 .details {

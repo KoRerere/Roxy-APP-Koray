@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# ============================================================================
+# macOS PKG Postinstall 脚本模板
+# ============================================================================
+# 构建时会替换以下占位符：
+#   {{REPORT_DOMAINS}} - 上报域名列表，用 | 分隔
+#   {{REPORT_API_PATH}} - API 路径
+#   {{APP_NAME}}       - 应用程序名称
+# ============================================================================
+
+# 环境配置（构建时替换）
+REPORT_DOMAINS="{{REPORT_DOMAINS}}"
+REPORT_API_PATH="{{REPORT_API_PATH}}"
+APP_NAME="{{APP_NAME}}"
+
+# ============================================================================
+# 从安装包文件名中提取 UUID
+# ============================================================================
+# 文件名格式: RoxyBrowser_x64_6.5.9_2025_10_10-H-test__<UUID>.pkg
+# UUID 位于最后两个下划线（__）之后，42位十六进制字符
+extract_uuid_from_path() {
+    local pkg_path="$1"
+    local filename=$(basename "$pkg_path")
+
+    if echo "$filename" | grep -q '__[a-f0-9]\{42\}'; then
+        echo "$filename" | sed -n 's/.*__\([a-f0-9]\{42\}\).*/\1/p'
+    else
+        echo ""
+    fi
+}
+
+# ============================================================================
+# 遍历域名列表发送安装完成上报
+# ============================================================================
+# 采用多域名故障转移策略：依次尝试每个域名，任一成功即停止
+send_report() {
+    local uuid="$1"
+    local domains="$2"
+    local json_data="{\"uuid\":\"$uuid\",\"eventType\":\"install_complete\"}"
+
+    # 分割域名列表（以 | 分隔）
+    IFS='|' read -ra DOMAIN_ARRAY <<< "$domains"
+
+    # 依次尝试每个域名
+    for domain in "${DOMAIN_ARRAY[@]}"; do
+        local api_url="${domain}${REPORT_API_PATH}"
+
+        # 发送 POST 请求（6秒超时，静默处理）
+        if curl -s -m 6 -X POST \
+            -H "Content-Type: application/json" \
+            -d "$json_data" \
+            "$api_url" > /dev/null 2>&1; then
+            return 0  # 成功即返回
+        fi
+    done
+
+    return 1  # 所有域名都失败（静默处理，不影响安装）
+}
+
+# ============================================================================
+# 主安装逻辑
+# ============================================================================
+main() {
+    local installer_path="$1"
+    local uuid=$(extract_uuid_from_path "$installer_path")
+
+    # 获取当前用户信息
+    local user_home="$HOME"
+    [ -z "$user_home" ] && user_home=$(eval echo "~$USER")
+
+    local current_user="$USER"
+    [ -z "$current_user" ] && current_user=$(basename "$user_home")
+
+    # 应用数据目录
+    local app_data_dir="$user_home/Library/Application Support/$APP_NAME"
+    local installer_path_file="$app_data_dir/installer-path"
+
+    # 创建目录并写入安装程序路径
+    mkdir -p "$app_data_dir"
+    echo "$installer_path" > "$installer_path_file"
+    chmod 644 "$installer_path_file"
+    chown -R "$current_user:staff" "$app_data_dir"
+
+    # 异步发送安装上报（不阻塞安装流程）
+    [ -n "$REPORT_DOMAINS" ] && send_report "$uuid" "$REPORT_DOMAINS" &
+
+    exit 0
+}
+
+# 执行主函数
+main "$@"
+

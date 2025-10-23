@@ -36,7 +36,7 @@ const columns = [
   },
   {
     title: $t('Roxy 独家特惠'),
-    getText: (data: any) => currency(data.proxyProviderPrice).format(),
+    getText: (data: any) => currency(data.proxyProviderDiscountPrice).format(),
   },
   {
     title: $t('服务商'),
@@ -52,13 +52,13 @@ const columns = [
 
 const periods = ref()
 const periodValue = ref()
+const loading = ref(false)
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/shop_dialog_bg.svg")' : 'url("/images/proxy/shop_dialog_bg_dark.svg")'
 })
-
 const totalAmount = computed(() => {
-  return dataList.reduce((acc, item) => currency(periodValue.value?.value).multiply(item.proxyProviderPrice).add(acc).value, 0)
+  return dataList.reduce((acc, item) => currency(periodValue.value?.value).multiply(item.proxyProviderDiscountPrice).add(acc).value, 0)
 })
 
 onBeforeMount(() => {
@@ -66,7 +66,9 @@ onBeforeMount(() => {
 })
 
 async function getPeriodList() {
+  loading.value = true
   const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({})
+  loading.value = false
   onlyErrorToast(code, msg)
   if (code !== 0) return
 
@@ -112,11 +114,11 @@ async function onPay() {
       })
   }
 }
-
 </script>
 
 <template>
-  <div class="flex flex-col gap-9 pa-8 rounded-lg w-240 popup">
+  <div class="relative flex flex-col gap-9 pa-8 rounded-lg w-240 popup">
+    <RxLoading v-model="loading" :opacity="0.9"></RxLoading>
     <div class="flex items-center justify-between">
       <span class="header">{{ $t('续费代理 IP') }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="$emit('close')" />
@@ -149,8 +151,6 @@ async function onPay() {
     </div>
   </div>
 </template>
-
-
 
 <style lang="scss" scoped>
 .popup {

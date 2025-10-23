@@ -8,27 +8,25 @@ interface Tier {
 
 export function tierCalculate(list: Tier[], count: number) {
   if (!list?.length || !count || count < 1) {
-    return { value: 0, algorithm: "" };
+    return { value: 0, algorithm: '' }
   }
 
-  const { sum, algorithm } = list.reduceRight(
-    (acc, { windowPrice, minWindows }) => {
-      if (count < minWindows) return acc;
+  const { sum, algorithm } = list.reduceRight((acc, { windowPrice, minWindows }) => {
+    if (count < minWindows) return acc
 
-      const tiersCount = currency(count).subtract(minWindows).value;
+    const tiersCount = currency(count).subtract(minWindows).value
 
-      if (tiersCount !== 0) {
-        acc.algorithm.unshift(`${minWindows === 0 ? count : `(${count} - ${minWindows})`} × $${windowPrice.toFixed(2)}`)
-      }
+    if (tiersCount !== 0) {
+      acc.algorithm.unshift(`${minWindows === 0 ? count : `(${count} - ${minWindows})`} × $${windowPrice.toFixed(2)}`)
+    }
 
-      count = minWindows;
-      acc.sum = currency(tiersCount, { precision: 6 }).multiply(windowPrice).add(acc.sum).value;
-      return acc;
-    },
-    { sum: 0, algorithm: [] } as { sum: number; algorithm: string[] },
-  );
+    count = minWindows
+    acc.sum = currency(tiersCount, { precision: 6 }).multiply(windowPrice).add(acc.sum).value
 
-  return { value: sum, algorithm: algorithm.join(" + ") + ` = $${sum}` };
+    return acc
+  }, { sum: 0, algorithm: [] as string[] })
+
+  return { value: sum, algorithm: algorithm.join(' + ') + ` = $${sum.toFixed(2)}` }
 }
 
 export function discountCalculate(discounts: number[]) {
@@ -37,17 +35,6 @@ export function discountCalculate(discounts: number[]) {
       .divide(100)
       .add(-1)
       .multiply(acc).value), 1);
-}
-
-export function getStep(value: number, math: 'plus' | 'minus' = 'plus') {
-  return (
-    [
-      [0, 10],
-      [10, 40],
-      [50, 50],
-      [100, 100],
-    ].findLast(([min]) => math === 'plus' ? value >= min : value > min)?.[1] || 10
-  );
 }
 
 export function ceilByStep(value: number, step: number) {

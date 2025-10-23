@@ -69,3 +69,10 @@ export enum ProxyStockStatus {
   /** 缺货 */
   Inactive = 'inactive',
 }
+
+export enum ProxyAutoRenewalStatus {
+  /** 未启用 */
+  Disabled = 0,
+  /** 启用 */
+  Enabled = 1,
+}

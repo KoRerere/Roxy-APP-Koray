@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
@@ -11,7 +12,7 @@ import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { ProxyCheckStatus, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
-import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
+import { type ProxyItem, getCustomFilters, tableOperation, tableRequest, getAdvancedSearch } from './operation'
 
 interface Props {
   data?: any
@@ -28,6 +29,7 @@ const totalMark = defineModel<number>('total')
 const { testProxy, batchTestShowToast } = useCheckProxy()
 const [_, onlyErrorToast] = useResponseToast()
 
+const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('agent')
 
 const filtersMenu = ref()
@@ -38,7 +40,7 @@ const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
-  filters: ['ipChecker'],
+  filters: ['ipChecker', 'proxyProviderPrice', 'autoRenew'],
 })
 
 const tableProps = {
@@ -78,9 +80,12 @@ onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
 })
 
-function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(filtersMenu.value))
-  tableRef.value!.refresh(params)
+function onRefreshTable(tabParams = {}, force = false) {
+  const params = {
+    ...tabParams,
+    ...filterFieldByValue(getFormData(filtersMenu.value))
+  }
+  tableRef.value?.refresh(params, force)
 }
 
 async function getTableList(params: any) {
@@ -104,6 +109,11 @@ function operationHandler(operate: any, data: ProxyItem) {
       onCheckProxyStatus(datas, operate.name)
       break
   }
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  onRefreshTable({ queryKey: value && (key || 'fuzzy'), queryValue: value }, true)
 }
 
 async function onCheckAllProxy() {
@@ -146,6 +156,7 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
 <template>
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
+      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
     </div>

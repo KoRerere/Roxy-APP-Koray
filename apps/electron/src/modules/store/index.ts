@@ -7,7 +7,8 @@ import { fileExists } from '/@/utils/file'
 import { loadLocaleMessages } from '/@/locales'
 import { app } from 'electron'
 import crypto from 'node:crypto'
-import { safeParseJSON } from '/@/utils'
+import { getInstallerParams, safeParseJSON } from '/@/utils'
+import { getCurrentScope } from '@sentry/electron/main'
 
 export interface StoreType {
   language: string
@@ -96,6 +97,10 @@ export interface StoreType {
   lastLoginTime: number
   /** 是否显示长时间未登录提示 */
   showLongTimeNotLoginTips?: boolean
+  /** 访客 ID */
+  visitorId?: string
+  /** 此设备是否有登录过 */
+  hasLoggedIn?: boolean
 }
 
 const excludeKeys = ['bookText', 'allWorkspaceId']
@@ -135,6 +140,8 @@ const defaultValues: StoreType = {
   browserColorScheme: 'system',
   ipv6CheckUrl: 'http://api.ip2location.io/?key=B47E6CE8266988810896AA77EED8CEA1',
   bookText: {},
+  visitorId: '',
+  hasLoggedIn: false,
 }
 
 const _store: StoreType = {
@@ -254,6 +261,9 @@ export function setUserConfig(data: Record<string, any>) {
   })
 }
 
+/** 初始化本地配置的 promise */
+const initLocalConfigPromise = Promise.withResolvers<void>()
+
 export async function initLocalConfig() {
   try {
     const encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
@@ -263,6 +273,10 @@ export async function initLocalConfig() {
       return JSON.parse(decryptedConfig)
     })
     Object.assign(store, lastStore)
+    // 有用户信息，则认为有登录过
+    if (store.token || store.userId || store.userInfo?.email) {
+      store.hasLoggedIn = true
+    }
     // 如果上次登录时间超过 15 天，则清除 token 和 userId
     if (Date.now() - store.lastLoginTime > 1000 * 60 * 60 * 24 * 15) {
       store.showLongTimeNotLoginTips = Boolean(store.token)
@@ -272,16 +286,31 @@ export async function initLocalConfig() {
       console.log('上次登录时间超过 15 天，清除 token 和 userId')
     } else {
       store.showLongTimeNotLoginTips = false
+      if (store.userInfo?.email) {
+        const scope = getCurrentScope();
+        scope.setUser({
+          id: store.userId,
+          email: store.userInfo.email,
+          username: store.userInfo.username,
+        });
+        scope.setTag('process', 'main')
+      }
     }
   }
   catch (error) {
     console.error('initLocalConfig', error)
   }
+  // 没有设备 ID，则记录首次打开应用事件
+  console.debug('deviceId', store.deviceId)
+  if (!store.deviceId) {
+    recordFirstLaunchAppEvent()
+  }
+  initLocalConfigPromise.resolve()
 }
 
 async function initStore() {
   try {
-    // await initLocalConfig()
+    await initLocalConfigPromise.promise
     await fetchUserConfig()
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
     // if (!messages[store.language]) {
@@ -335,4 +364,19 @@ export async function canUseSyncControl() {
     lastCheckTime: now,
   }
   return canUseSyncControlMap[store.workspaceId!].canUse
+}
+
+
+
+/** 安装后首次打开应用，需要记录事件 */
+const recordFirstLaunchAppEvent = async () => {
+  await getInstallerParams()
+  console.debug('访客 ID：', store.visitorId)
+  if (store.visitorId) {
+    console.debug('用户首次安装并打开应用')
+    await API.appTrackingEvent.appTrackingEventCreate({
+      uuid: store.visitorId,
+      eventType: 'app_open',
+    })
+  }
 }

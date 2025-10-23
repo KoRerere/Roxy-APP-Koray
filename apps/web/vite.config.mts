@@ -11,6 +11,7 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 /* eslint-env node */
 import { type PluginOption, type UserConfig, loadEnv } from "vite";
 import vueDevTools from "vite-plugin-vue-devtools";
@@ -133,7 +134,7 @@ const config: UserConfig = {
   },
 
   build: {
-    sourcemap: false,
+    sourcemap: true,
     target: `chrome${chrome}`,
     outDir: "dist",
     assetsDir: ".",
@@ -241,10 +242,15 @@ export type SvgNames = ${typeDefine}`;
         }),
       ],
     }),
-    // sentryVitePlugin({
-    //   org: 'huoshan-9f',
-    //   project: process.env.NODE_ENV === 'development' ? 'roxybrowser-development' : 'roxybrowser-production',
-    // }),
+    sentryVitePlugin({
+      org: process.env.VITE_SENTRY_ORG,
+      project: process.env.VITE_SENTRY_PROJECT,
+      authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_VERSION,
+        dist: process.env.VITE_VERSION,
+      }
+    }),
   ],
 };
 

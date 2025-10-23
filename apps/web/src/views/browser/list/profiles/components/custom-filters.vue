@@ -8,7 +8,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { $t } from '/@/locales'
 import { useUserStore } from "/@/stores/user";
 import { useDialog } from '/@/hooks/useDialog'
-import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
+import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, findInputByName, setInputValueByFormData, sleep } from '/@/utils'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import type { SvgNames } from '/@/components/rx-icon/'
@@ -21,7 +21,7 @@ interface Props {
   saveFilters?: (params: any) => Promise<void> | void
 }
 
-const { currentFilter, filtersMenu = [], enabledFilterSave, videoUrl = '', saveFilters } = defineProps<Props>()
+const { currentFilter, filtersMenu = [], enabledFilterSave, videoUrl, saveFilters } = defineProps<Props>()
 const emit = defineEmits(['filterChange'])
 
 const [showModal] = useDialog()
@@ -56,6 +56,7 @@ const rawOptions = computed(() => {
   }).flat()
 })
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
+
 const labels = computed(() => {
   return filtersMenu.reduce((acc, item) => {
     if (!isEmptyValue(item.value)) {
@@ -64,7 +65,7 @@ const labels = computed(() => {
         : item.type === 'date'
           ? item.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd')).join(' ~ ')
           : item.value.map((it: any) => it.label).join(', ')
-      acc.push({ ...toRaw(item), value })
+      acc.push({ ...toRaw(item), value, _text: item._text })
     }
     return acc
   }, [])
@@ -76,7 +77,7 @@ watch(() => currentFilter?.id, (value) => {
 })
 
 function showMenu(event: any) {
-  if (!userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus) {
+  if (videoUrl && userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus === false) {
     onShowGuideModal()
     return
   }
@@ -122,7 +123,11 @@ const onSearch = useDebounceFn(() => {
 }, 300)
 
 function onRadioChose(item: any) {
-  setInputFieldByInputKey(filtersMenu, item.parentName, 'value', item.value)
+  const menuItem = findInputByName(filtersMenu, item.parentName)
+  if (menuItem) {
+    Reflect.set(menuItem, 'value', item.value)
+    Reflect.set(menuItem, '_text', item.text)
+  }
   menuRef.value?.hide()
   onFilterChange()
 }
@@ -140,6 +145,11 @@ async function openCheckbox(item: any) {
     item._options = options
     isChildren.value = true
     selectedCategories.value = item.value?.map((it: any) => it.value)
+
+    if (isEmptyValue(options)) {
+      subMenuOptions.value = [{ empty: true, text: $t('暂无') + ' ' + item.label }]
+      return
+    }
 
     if (!item.search) {
       subMenuOptions.value = item._options
@@ -259,12 +269,9 @@ async function modifyFilter() {
       <div v-for="(item, index) in labels" :key="index" class="labels-item">
         <SvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
         <span class="select-none">{{ item.label }}:</span>
-        <span class="cursor-pointer">{{ item.value }}</span>
+        <span class="cursor-pointer">{{ item._text || item.value }}</span>
       </div>
-      <RxButton severity="secondary" size="xxs" :disabled="currentFilter?.disabledFilter" text @click="showMenu">
-        <SvgIcon name="base/rx_ic_filter" />
-        <span v-if="!labels.length">{{ $t('筛选条件') }}</span>
-      </RxButton>
+      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu"></RxButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="flex items-start">
       <div class="labels-actions">
@@ -279,7 +286,8 @@ async function modifyFilter() {
   </div>
   <TieredMenu ref="tmenu" popup :model="menuOptions" :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
-      <a v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
+      <div v-if="item.empty" class="max-w-60 cursor-pointer text-3.25" :class="classes.item">{{ item.text }}</div>
+      <a v-else v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
         <template v-if="isChildren">
           <div v-if="item.search" @click.stop class="w-full">
             <TsFormInputText class="w-full" v-model="search" :placeholder="item.placeholder" @input="onSearch" />
@@ -309,7 +317,7 @@ async function modifyFilter() {
 }
 
 .list {
-  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
+  padding: 6px 4px !important;
 }
 
 .separator {
@@ -319,7 +327,7 @@ async function modifyFilter() {
 .item {
   display: flex;
   align-items: center;
-  padding: 8px var(--spacing-md, 6px) 8px 10px !important;
+  padding: 8px 6px 8px 10px !important;
   gap: 6px !important;
   width: 100%;
 }

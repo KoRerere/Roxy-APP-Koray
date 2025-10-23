@@ -2,6 +2,7 @@
 import AccountEdit from '/@/views/account/create/quick.vue'
 import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
@@ -63,6 +64,27 @@ const operation = ref([
   },
 ])
 
+const advancedSearchOptions = [
+  {
+    key: 'platform',
+    label: $t('平台名称'),
+    icon: 'base/rx_ic_keys',
+    syntax: 'platform::'
+  },
+  {
+    key: 'account',
+    label: $t('账号名称'),
+    icon: 'base/rx_ic_user_key',
+    syntax: 'account::'
+  },
+  {
+    key: 'remark',
+    label: $t('备注'),
+    icon: 'base/rx_ic_doc_article',
+    syntax: 'note::'
+  }
+]
+
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'edit':
@@ -78,6 +100,11 @@ function operationHandler(operate: any, data?: any) {
       createAccount()
       break
   }
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  tableRef.value?.refresh({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
 }
 
 function tableRequest(params: any) {
@@ -174,6 +201,9 @@ function deletePopup(data: any) {
     <div class="flex flex-1 overflow-hidden">
       <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
+        <template #filter-after>
+          <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+        </template>
         <template #table-empty>
           <CustomNewEmpty icon="base/rx_ic_keys" img="empty-accounts.png" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>

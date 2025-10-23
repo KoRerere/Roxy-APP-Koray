@@ -62,5 +62,5 @@ export function useFormDialog() {
     }
   }
 
-  return [showModal]
+  return [showModal] as const
 }

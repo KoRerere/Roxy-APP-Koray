@@ -1,8 +1,12 @@
 <script setup lang="tsx">
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
+import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import AsyncSwitch from '/@/views/lab/components/async-switch.vue';
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import currency from 'currency.js';
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -13,9 +17,9 @@ import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
-import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getSorts } from './operation'
+import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getSorts, getAdvancedSearch } from './operation'
 import { useUserStore } from '/@/stores/user'
-import { ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
+import { ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyAutoRenewalStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
 
 
@@ -30,6 +34,7 @@ const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy } = useProxy()
 const [showModal] = useDialog()
 
+const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('shoptable')
 const filtersMenu = ref()
 const dataList = ref()
@@ -44,38 +49,58 @@ const hideTypeConfig = reactive({
 })
 
 const filters = reactive({
-  value: Number(route.query.expireStatus) || undefined,
-  options: [
+  list: [
     {
-      name: $t('全部'),
-      value: undefined,
-    },
-    {
-      name: $t('使用中'),
-      value: ProxyExpireStatus.using,
-    },
-    {
-      name: $t('即将过期'),
-      value: ProxyExpireStatus.soon,
+      name: 'proxyExpireStatus',
+      value: Number(route.query.expireStatus) || undefined,
+      options: [
+        {
+          name: $t('全部'),
+          value: undefined,
+        },
+        {
+          name: $t('使用中'),
+          value: ProxyExpireStatus.using,
+        },
+        {
+          name: $t('即将过期'),
+          value: ProxyExpireStatus.soon,
+        },
+      ],
     },
   ],
+  getValues() {
+    return Object.fromEntries(filters.list.filter(item => item.value).map(item => [item.name, item.value]))
+  },
   onChange() {
-    tableRef.value?.refresh({ proxyExpireStatus: filters.value, type: hideTypeConfig.value })
-  },
-  resetFilters() {
-    filters.value = undefined
-    hideTypeConfig.value = hideTypeConfig.falseValue
-    filters.onChange()
-  },
+    tableRef.value?.refresh({ ...filters.getValues() })
+  }
 })
 
 onBeforeMount(async () => {
+  getProviderTypeFilter()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
 })
 
+async function getProviderTypeFilter() {
+  const { code, data } = await API.proxy.userGetProxyProvidersTypeList()
+  if (code !== 0) return
+  filters.list.push({
+    name: 'providerType',
+    value: undefined,
+    options: [
+      {
+        name: $t('全部'),
+        value: undefined
+      },
+      ...data.map(name => ({ name, value: name } as any))
+    ]
+  })
+}
+
 async function getTableList(params: any) {
-  const data = await tableRequest({ proxyExpireStatus: filters.value, type: hideTypeConfig.falseValue, ...params })
+  const data = await tableRequest({ ...filters.getValues(), type: hideTypeConfig.value, ...params })
   dataList.value = (data.data?.rows || []).filter(item => item.proxyExpireStatus !== ProxyExpireStatus.expired && [ProxyOrderStatus.done, ProxyOrderStatus.refunding, ProxyOrderStatus.changing].includes(item.orderStatus!))
   return data
 }
@@ -97,6 +122,11 @@ async function operationHandler(operate: any, data: ProxyItem) {
       onRemark(data)
       break
   }
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  onRefreshTable({ queryKey: value && (key || 'fuzzy'), queryValue: value }, true)
 }
 
 function onBuyProxy() {
@@ -203,9 +233,12 @@ function tableBeforeRefresh() {
   checkedMessage.value = {}
 }
 
-function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(filtersMenu.value))
-  tableRef.value?.refresh(params)
+function onRefreshTable(tabParams = {}, force = false) {
+  const params = {
+    ...tabParams,
+    ...filterFieldByValue(getFormData(filtersMenu.value))
+  }
+  tableRef.value?.refresh(params, force)
 }
 
 function rowClass(data: ProxyItem) {
@@ -224,6 +257,58 @@ function setNewOrderNo(value: string) {
     router.replace({ name: 'agent-list', query })
   }, 3000)
 }
+
+async function autoRenewChange(data: ProxyItem) {
+  const expireDate = new Date(data.expireDate!).getTime()
+  const isLimit = expireDate > Date.now() && (expireDate - Date.now()) < 1000 * 60 * 60
+
+  if (isLimit && data.autoRenew === ProxyAutoRenewalStatus.Enabled) {
+    onlyErrorToast(-1, $t('到期前 {hour} 小时无法修改自动续费开关。', { hour: 1 }), {
+      severity: 'warn',
+      summary: $t('操作失败'),
+      life: 5000
+    })
+    return false
+  }
+
+  const notShowAgain = localStorage.getItem('autoRenewModalNotShowAgain')
+
+  if (!!notShowAgain || data.autoRenew === ProxyAutoRenewalStatus.Enabled) {
+    return toggleAutoRenew(data)
+  }
+
+  const { promise, resolve } = Promise.withResolvers<boolean>()
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => <AutoRenewModal
+        onClose={
+          () => {
+            hideModal()
+            resolve(false)
+          }
+        }
+        onConfirm={
+          async () => {
+            const isOK = await toggleAutoRenew(data)
+            resolve(isOK)
+            hideModal()
+          }
+        } />,
+    },
+  })
+  return promise
+}
+
+async function toggleAutoRenew(data: ProxyItem) {
+  const status = data.autoRenew === ProxyAutoRenewalStatus.Enabled ? ProxyAutoRenewalStatus.Disabled : ProxyAutoRenewalStatus.Enabled
+  const { code, msg } = await API.proxy.userSetProxyAutoRenewalCreate({ proxyId: data.id, status })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return false
+  return true
+}
 </script>
 
 <template>
@@ -233,10 +318,11 @@ function setNewOrderNo(value: string) {
       <RyTable ref="shoptable" v-model:columns="columns" cacheKey="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :table-sort="getSorts"
         :row-class="rowClass" :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
         <template #filter-after>
-          <div class="w-full">
-            <div class="pb-3 flex gap-1.5 items-start">
-              <div class="flex flex-1 gap-3">
-                <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+          <div class="w-full flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+              <div class="flex gap-3">
+                <RxSelectButton v-for="item in filters.list" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
+                  @change="filters.onChange" />
                 <div class="flex items-center gap-1.5">
                   <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
                     :false-value="hideTypeConfig.falseValue" @change="filters.onChange" />
@@ -253,7 +339,10 @@ function setNewOrderNo(value: string) {
                 <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
               </div>
             </div>
-            <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+            <div class="w-full flex gap-1.5 items-start">
+              <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+              <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+            </div>
           </div>
         </template>
         <template #table-empty>
@@ -270,10 +359,24 @@ function setNewOrderNo(value: string) {
           <div class="flex items-center gap-2.5">
             <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
               :is-loading="data.loadingOperationMap?.test" />
-            <div v-if="data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done" class="flex items-center gap-1.5">
+            <div v-if="data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired"
+              class="flex items-center gap-1.5">
               <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-error)"></SvgIcon>
               <RxButton v-if="isOwner" outlined severity="secondary" size="xxs" icon="base/rx_ic_fix" :label="$t('帮助')" @click.stop="openHelp(data)"></RxButton>
             </div>
+          </div>
+        </template>
+        <template #price="{ data }">
+          <div>
+            <span>{{ currency(data.proxyProviderDiscountPrice).format() }}</span>
+            <span class="days"> / {{ $t('{day} 天', { day: 30 }) }}</span>
+          </div>
+        </template>
+        <template #renew="{ data }">
+          <div class="scale-80" @click.stop>
+            <AsyncSwitch v-model="data.autoRenew" :disabled="data.orderStatus !== ProxyOrderStatus.done || data.proxyExpireStatus === ProxyExpireStatus.expired" :true-value="1" :false-value="0"
+              :before-change="() => autoRenewChange(data)">
+            </AsyncSwitch>
           </div>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">
@@ -289,6 +392,11 @@ function setNewOrderNo(value: string) {
               :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{
               data.remark }}</div>
+          </div>
+        </template>
+        <template #providerType="{ data }">
+          <div class="flex items-center gap-2">
+            <div class="tag">{{ data.providerType }}</div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -326,6 +434,10 @@ function setNewOrderNo(value: string) {
   background-color: var(--colors-background-bg-error);
 }
 
+.days {
+  color: var(--colors-text-text-inactive);
+}
+
 .note {
   &-header {
     color: var(--colors-text-text-primary);
@@ -350,5 +462,17 @@ function setNewOrderNo(value: string) {
       color: var(--colors-text-text-brand) !important;
     }
   }
+}
+
+.tag {
+  padding: 5px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--component-tag-border);
+  background: var(--component-tag-bg);
+  color: var(--colors-text-text-secondary);
+  font-family: "JetBrains Mono";
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 8px;
 }
 </style>

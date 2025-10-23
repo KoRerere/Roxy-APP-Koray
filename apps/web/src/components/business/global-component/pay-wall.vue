@@ -6,9 +6,10 @@ import { $t } from '/@/locales';
 import { useSimpleLocale } from '/@/stores/locale';
 import { type MittEvents, type PayWallType, emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
+import { useUserStore } from '/@/stores/user';
 import { useRoleStore } from "/@/stores/role"
-import { showToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 
+const { userPayInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const popoverRef = useTemplateRef('popover')
@@ -140,16 +141,14 @@ function handleImageLoad() {
           <img :src="currentText.image" class="w-full rounded-lg" @load="handleImageLoad" />
         </div>
         <div class="whitespace-pre-line description">
-          <!-- {{ currentText.description }} -->
           <component :is="currentText.description"></component>
         </div>
-        <div class="pay-wall-footer">
-          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
-            {{ currentText.about }}
-          </RxButton>
-          <RxButton class="pay-wall-footer-button" @click="toUpgrade($event)">
-            {{ $t('立即升级') }}
-          </RxButton>
+        <div class="flex gap-2 self-stretch" :class="[userPayInfo.discount ? 'flex-col' : 'flex-row-reverse']">
+          <div class="relative">
+            <div v-if="userPayInfo.discount" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">{{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}</div>
+            <RxButton class="w-full" :label="$t('立即升级')" @click="toUpgrade"></RxButton>
+          </div>
+          <RxButton v-if="currentText.about" severity="secondary" outlined :label="currentText.about" @click="toDocument"></RxButton>
         </div>
       </div>
     </AnimationBorder>
@@ -200,11 +199,12 @@ function handleImageLoad() {
   line-height: 20px;
 }
 
-.pay-wall-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-lg, 8px);
-  align-self: stretch;
+.discount {
+  background: #FC9D12;
+  color: #FFF;
+  font-family: "DingTalk JinBuTi", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>

@@ -3,6 +3,7 @@ import CustomFilter from '/@/views/browser/list/profiles/components/custom-filte
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -14,7 +15,7 @@ import { concurrentControl, setOperationLoading, setRowsLoading } from '/@/utils
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
-import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
+import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getAdvancedSearch } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
 import { ProxyCheckStatus } from '/@/enums'
@@ -29,6 +30,7 @@ const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
 
+const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('listtable')
 const filtersMenu = ref()
 const dataList = ref()
@@ -66,12 +68,18 @@ async function operationHandler(operate: any, data: ProxyItem) {
   }
 }
 
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  onRefreshTable({ queryKey: value && (key || 'fuzzy'), queryValue: value }, true)
+}
+
 function editProxy(data: ProxyItem) {
   drawerInstance.showDrawer({
     title: $t('编辑代理'),
     slots: {
       container: () => h(EditProxy, {
         data,
+        showRemark: true,
         onConfirm: async (formData: any) => {
           const { code, msg } = await onEdit([formData])
           onlyErrorToast(code, msg)
@@ -209,9 +217,12 @@ function tableBeforeRefresh() {
   testStatus.value = {}
 }
 
-function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(filtersMenu.value))
-  tableRef.value?.refresh(params)
+function onRefreshTable(tabParams = {}, force = false) {
+  const params = {
+    ...tabParams,
+    ...filterFieldByValue(getFormData(filtersMenu.value))
+  }
+  tableRef.value?.refresh(params, force)
 }
 </script>
 
@@ -223,6 +234,7 @@ function onRefreshTable() {
         :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
         <template #filter-after>
           <div class="w-full flex gap-1.5 items-start">
+            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
             <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             <div class="flex items-center gap-1.5">
               <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />

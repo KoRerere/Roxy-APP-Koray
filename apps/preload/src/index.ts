@@ -2,6 +2,7 @@
  * @module preload
  */
 
+// import '@sentry/electron/preload'
 import './polyfill'
 
 import { contextBridge, webFrame, webUtils } from 'electron'

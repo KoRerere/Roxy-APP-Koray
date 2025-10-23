@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { basename, join, parse } from 'node:path'
 import { app } from 'electron'
+import { store } from '/@/modules/store'
 
 /**
  * 获取安装程序路径
@@ -38,13 +39,22 @@ export async function isInstalledViaInstaller(): Promise<boolean> {
  * 获取安装程序文件名
  * @returns 安装程序文件名，如果无法获取则返回 null
  */
-export async function getInstallerFileName(): Promise<string | null> {
+export async function getInstallerParams() {
   const installerPath = await getInstallerPath()
   if (!installerPath) return null
 
   try {
-    const { basename } = await import('node:path')
-    return basename(installerPath)
+    const fileName = parse(installerPath).name.split('-H-')[1] || ''
+    const [inviteCode, visitorId] = fileName.split('__')
+
+    if (visitorId) {
+      store.visitorId = visitorId
+    }
+
+    return {
+      inviteCode,
+      visitorId,
+    }
   } catch {
     return null
   }
@@ -55,8 +65,8 @@ export async function getInstallerFileName(): Promise<string | null> {
  * @returns 邀请码
  */
 export async function getInviteCode(): Promise<string> {
-  const fileName = await getInstallerFileName()
-  return fileName?.split('-H-')[1]?.split('.').at(0) || ''
+  const params = await getInstallerParams()
+  return params?.inviteCode || ''
 }
 
 /**

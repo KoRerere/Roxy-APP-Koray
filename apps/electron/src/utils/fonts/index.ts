@@ -1,7 +1,12 @@
-import fontList from 'font-list'
 import { ipfighterFonts } from './ipfighter'
 import { pixelscanFonts } from './pixelscan'
+import { isPackaged } from '/@/constants/common'
+import { appConfig } from '/@/constants'
+import { join } from 'path'
+import { createRequire } from 'node:module'
 
+const require = createRequire(import.meta.url)
+const fontList = require(`${isPackaged ? join(process.resourcesPath, 'node_modules', 'font-list', 'index.js') : 'font-list'}`)
 /**
  * 计算两个list的交集
  */

@@ -5,7 +5,9 @@ import { format } from 'date-fns';
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { AutoRenewalPayStatus } from "/@/enums/pay";
+import { strConcat } from '/@/utils'
 import { emitter } from '/@/utils/eventBus';
+import type { SvgNames } from '/@/components/rx-icon';
 
 
 const router = useRouter()
@@ -16,17 +18,17 @@ const columns = [
   {
     title: $t('服务详情'),
     key: 'details',
+    slot: 'details'
   },
   {
     title: $t('续费价格'),
     key: 'amount',
     slot: 'amount',
-    getText: (row: any) => currency(row.amount).format()
   },
   {
     title: $t('下一次账单日期'),
     key: 'startTime',
-    getText: (row: any) => row.startTime ? format(row.startTime, 'yyyy/MM/dd') : '--'
+    getText: (row: any) => row.startTime || '--'
   }
 ]
 
@@ -64,6 +66,26 @@ onMounted(() => {
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_coin.svg" :desc="$t('您目前没有将服务设置为自动续订')" />
         </template>
+        <template #details="{ data }">
+          <div class="flex items-center gap-1">
+            <div>{{ data.details }}</div>
+            <RxTooltip v-if="data.proxyInfo.lastIp">
+              <template #default>
+                <SvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)"></SvgIcon>
+              </template>
+              <template #content>
+                <div class="flex flex-col gap-1 min-w-60">
+                  <div class="flex items-center gap-2">
+                    <SvgIcon :name="(`country-code/${data.proxyInfo.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
+                    <div class="flex-1 proxy-text">{{ data.proxyInfo.lastCountry }}{{ strConcat('/', data.proxyInfo.lastCity) }}</div>
+                    <div class="pl-6 proxy-type">{{ data.proxyInfo.proxyType }}</div>
+                  </div>
+                  <div class="pl-6 proxy-text">{{ data.proxyInfo.lastIp }}</div>
+                </div>
+              </template>
+            </RxTooltip>
+          </div>
+        </template>
         <template #amount="{ data }">
           <div class="flex items-baseline gap-0.5">
             <span class="price">{{ currency(data.amount).format() }}</span>
@@ -98,6 +120,21 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;
+}
+
+.proxy {
+  &-text {
+    color: var(--component-tooltip-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+
+  &-type {
+    color: var(--component-tooltip-text-secondary);
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 
 .days {

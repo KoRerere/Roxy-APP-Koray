@@ -99,7 +99,7 @@ function oldFieldsFormat() {
         </div>
         <div class="relative flex items-center gap-2 py-4 min-h-16 overflow-hidden footer">
           <div class="footer-separator"></div>
-          <MateGroup v-model="metaData" class="flex-1" />
+          <MateGroup class="flex-1" v-model="metaData" is-edit />
           <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
         </div>
       </div>

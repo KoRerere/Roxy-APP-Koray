@@ -33,31 +33,32 @@ const defaultMethods = [
   {
     label: $t('Roxy 钱包'),
     value: PayWay.Balance,
-    icon: '/images/payments/rx_payment_balance.svg'
+    image: '/images/payments/rx_payment_balance.svg'
   },
   {
     label: 'Card',
     value: PayWay.Card,
-    icon: '/images/payments/rx_payment_cards.svg'
+    image: '/images/payments/rx_payment_cards.svg'
   },
   {
     label: $t('支付宝'),
     value: PayWay.Alipay,
-    icon: '/images/payments/rx_payment_alipay.svg',
+    image: '/images/payments/rx_payment_alipay.svg',
     desc: $t('您已选择{method}作为付款方式。', { method: $t('支付宝') }),
-    tip: $t('提交后，您将被重定向到一个安全页面，以完成剩余步骤。')
+    // tip: $t('提交后，您将被重定向到一个安全页面，以完成剩余步骤。')
+    tip: $t('提交后将前往支付界面，请在规定的期限内完成付款。')
   },
   {
     label: $t('微信支付'),
     value: PayWay.Wechat,
-    icon: '/images/payments/rx_payment_wepay.svg',
+    image: '/images/payments/rx_payment_wepay.svg',
     desc: $t('您已选择{method}作为付款方式。', { method: $t('微信支付') }),
     tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。')
   },
   {
     label: 'USDT',
     value: PayWay.USDT,
-    icon: '/images/payments/rx_payment_usdt.svg',
+    image: '/images/payments/rx_payment_usdt.svg',
     desc: $t('您已选择{method}作为付款方式。', { method: 'USDT' }),
     tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。')
   }
@@ -77,11 +78,11 @@ const cardTypeMap = {
 
 const paymentMethods = computed<Record<string, any>[]>(() => {
   return methods.map(({ value: payway, ...meta }) => {
-    const { label, value, icon } = defaultMethods.find(item => item.value === payway) ?? {}
+    const { label, value, image } = defaultMethods.find(item => item.value === payway) ?? {}
     return {
       label,
       value,
-      icon,
+      image,
       ...meta,
       disabled: disabledMethods.includes(payway)
     }
@@ -197,7 +198,7 @@ async function otherConfirm() {
         <div class="relative flex flex-col items-center justify-center gap-1.5 payway-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }"
           @click="handleClick(item.value!)">
           <div class="payway-item-discount" v-if="item.discount">{{ item.discount }}</div>
-          <img class="h-10" :src="item.icon">
+          <img class="h-10" :src="item.image">
           <div>{{ item.label }}</div>
         </div>
       </template>
@@ -214,12 +215,12 @@ async function otherConfirm() {
     </div>
     <div v-if="openOther && modelValue !== PayWay.Card" class="-mt-3 flex flex-col gap-2.5 pa-4 rounded-md extend">
       <div class="flex flex-col items-start gap-1.5">
-        <img class="h-8" :src="chooseMethod.icon">
+        <img class="h-8" :src="chooseMethod.image">
         <div class="extend-desc">{{ chooseMethod.desc }}</div>
       </div>
       <RxDivider line-only line-color="var(--colors-border-border-action)"></RxDivider>
       <div class="flex items-center gap-2.5">
-        <SvgIcon name="base/rx_ic_jump" size="48" color="var(--colors-icon-icon-tertiary)"></SvgIcon>
+        <SvgIcon name="base/rx_ic_modal" size="48" color="var(--colors-icon-icon-tertiary)"></SvgIcon>
         <div class="extend-tip">{{ chooseMethod.tip }}</div>
       </div>
     </div>

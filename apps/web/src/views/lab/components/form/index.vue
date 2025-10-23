@@ -31,23 +31,29 @@ genFormContext({
   }
 })
 
-const initialForm = inputs.reduce((acc, input) => {
-  const { name, label, props, required, resolver } = input
-  acc.values.push([name, initialFieldValue(input)])
-
-  if (isFunction(resolver)) {
-    acc.resolver.push([name, resolver(z)])
-  } else if (required) {
-    acc.resolver.push([name, z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder }))])
-  }
-
-  return acc
-}, { values: [], resolver: [] } as { values: [string, any][], resolver: [string, any][] })
-
 const formRef = useTemplateRef<FormInstance>('tsform')
 const _inputs = ref(inputs)
+const initialForm = formatForm(inputs)
 const initialValues = reactive(Object.fromEntries(initialForm.values))
 const resolver = zodResolver(z.object(Object.fromEntries(initialForm.resolver)))
+
+function formatForm(inputs: Input[]) {
+  return inputs.reduce((acc, input) => {
+    const { name, label, props, items, required, resolver } = input
+
+    if (items?.length) {
+      const { resolver, values } = formatForm(items)
+      acc.resolver.push(...resolver)
+      acc.values.push(...values)
+    } else if (name) {
+      const _resolver = (isFunction(resolver) && resolver(z)) || (required && z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder })))
+      _resolver && acc.resolver.push([name, _resolver])
+      acc.values.push([name, initialFieldValue(input)])
+    }
+
+    return acc
+  }, { resolver: [], values: [] } as { resolver: [string, any][], values: [string, any][] })
+}
 
 function initialFieldValue(input: Input) {
   if (input.value) return input.value
@@ -67,15 +73,25 @@ function onFormSubmit(event: FormSubmitEvent) {
   }
 }
 
+function setInputsProps(map: Record<string, any>, inputs: Input[]) {
+  inputs.forEach(item => {
+    if (item.items?.length) {
+      setInputsProps(map, item.items)
+    } else if (map.hasOwnProperty(item.name)) {
+      const { value, ...props } = map[item.name]
+      Reflect.set(item, 'props', { ...item.props, ...props })
+      if (value) {
+        Reflect.set(initialValues, item.name, value)
+        formRef.value?.setFieldValue(item.name, value)
+      }
+    }
+  })
+}
+
 defineExpose({
   instance: formRef,
   setInputsProps: (map: Record<string, any>) => {
-    _inputs.value = _inputs.value.map(item => {
-      if (map.hasOwnProperty(item.name)) {
-        item.props = { ...item.props, ...map[item.name] }
-      }
-      return item
-    })
+    setInputsProps(map, _inputs.value)
   },
   getFieldState: (name: string) => {
     return formRef.value?.getFieldState(name)

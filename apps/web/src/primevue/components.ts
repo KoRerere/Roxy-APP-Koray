@@ -2537,7 +2537,7 @@ export const components = {
       fontSize: '1rem',
       fontWeight: '500',
       sm: {
-        fontSize: '0.875rem',
+        fontSize: '0.75rem',
       },
       lg: {
         fontSize: '1.125rem',
@@ -2646,21 +2646,21 @@ export const components = {
         error: {
           background: 'color-mix(in srgb, {red.50}, transparent 5%)',
           borderColor: '{red.200}',
-          color: '{red.600}',
+          color: '{colors.text.text-error}',
           shadow: '0px 4px 8px 0px color-mix(in srgb, {red.500}, transparent 96%)',
           closeButton: {
             hoverBackground: '{red.100}',
             focusRing: {
-              color: '{red.600}',
+              color: '{colors.text.text-error}',
               shadow: 'none',
             },
           },
           outlined: {
-            color: '{red.600}',
-            borderColor: '{red.600}',
+            color: '{colors.text.text-error}',
+            borderColor: '{colors.text.text-error}',
           },
           simple: {
-            color: '{red.600}',
+            color: '{colors.text.text-error}',
           },
         },
         secondary: {
@@ -2766,23 +2766,23 @@ export const components = {
           },
         },
         error: {
-          background: 'color-mix(in srgb, {red.500}, transparent 84%)',
+          background: 'color-mix(in srgb, {colors.text.text-error}, transparent 84%)',
           borderColor: 'color-mix(in srgb, {red.700}, transparent 64%)',
-          color: '{red.500}',
-          shadow: '0px 4px 8px 0px color-mix(in srgb, {red.500}, transparent 96%)',
+          color: '{colors.text.text-error}',
+          shadow: '0px 4px 8px 0px color-mix(in srgb, {colors.text.text-error}, transparent 96%)',
           closeButton: {
             hoverBackground: 'rgba(255, 255, 255, 0.05)',
             focusRing: {
-              color: '{red.500}',
+              color: '{colors.text.text-error}',
               shadow: 'none',
             },
           },
           outlined: {
-            color: '{red.500}',
-            borderColor: '{red.500}',
+            color: '{colors.text.text-error}',
+            borderColor: '{colors.text.text-error}',
           },
           simple: {
-            color: '{red.500}',
+            color: '{colors.text.text-error}',
           },
         },
         secondary: {

@@ -3347,6 +3347,7 @@ export interface UserGetDeviceNameV2ListParams {
    * @example "Windows"
    */
   os: string;
+  count?: number;
 }
 
 export interface UserGetDeviceNameV2ListData {
@@ -4905,6 +4906,10 @@ export interface UserAddProxyModuleCreatePayload {
 
 export interface UserAddProxyModuleCreateData {
   code: number;
+  data?: {
+    index?: number;
+    msg?: string[];
+  }[];
   msg: string;
 }
 
@@ -5073,15 +5078,18 @@ export interface UserGetTimezoneByCoordinatesInfoListData {
 export interface UserGetProxyProviderListListData {
   code: number;
   data: {
-    id?: number;
-    createTime?: string;
-    proxyPrice?: number;
-    proxyProviderAdv?: string[];
-    proxyProviderDesc?: string;
-    proxyProviderIcon?: string;
-    proxyProviderName?: string;
-    proxyProviderPrice?: number;
-    proxyProviderWebsite?: string;
+    id: number;
+    proxyProviderName: string;
+    proxyTypeList: {
+      typeName: string;
+      id: number;
+    }[];
+    proxyProviderWebsite: string;
+    proxyProviderIcon: string;
+    proxyPrice: number;
+    createTime: string;
+    proxyProviderDesc: null;
+    proxyProviderAdv: null;
   }[];
   msg: string;
 }
@@ -5142,81 +5150,63 @@ export interface UserGetUserBuyProxyListListParams {
    * @example "list_use"
    */
   type: string;
+  /**
+   * fuzzy，proxyHost，proxyLastCountry，proxyRemark，proxyProvider
+   * @example "fuzzy"
+   */
+  queryKey?: string;
+  /** @example "1" */
+  queryValue?: string;
+  /**
+   * ISP Proxies，DataCenter Proxies
+   * @example "ISP Proxies"
+   */
+  providerType?: string;
 }
 
 export interface UserGetUserBuyProxyListListData {
   code: number;
   data: {
     rows: {
-      /** 绑定窗口数量 */
       bindCount?: number;
-      /** 是否展示退款 false 不展示 true 展示 */
       canRefund?: boolean;
-      /** 绑定的窗口信息 */
       bindList?: string[];
-      /** 检测时间 */
       checkTime?: null;
-      /** 创建时间 */
       createTime?: string;
-      /** id */
       id?: number;
-      /** 是否绑定 */
       isBind?: boolean;
-      /** 商业用途 */
       poxyBusinessPurpose?: string;
-      /** 代理检测地址 */
       proxyCheckChannel?: string;
       checkChannelValue?: string;
-      /** 代理检测状态 0:未检测 1:成功 2:检测失败 */
       checkStatus?: number;
-      /** 购买国家 */
       country?: string;
-      /** 代理过期状态 0:已过期 1:使用中 2：快过期 */
       proxyExpireStatus?: number;
-      /** 购买的IP */
       host?: string;
-      /** IP类型 */
       ipType?: string;
-      /** 出口城市 */
       lastCity?: string;
-      /** 出口国家 */
       lastCountry?: string;
-      /** 出口IP */
       lastIp?: string;
-      /** 出口州/省 */
       lastState?: string;
-      /** 代理密码 */
       proxyPassword?: string;
-      /** 代理端口号 */
       port?: string;
-      /** 代理协议 */
       protocol?: string;
-      /** 供应商ID */
       proxyProviderId?: number;
-      /** 供应商名称 */
       proxyProviderName?: string;
-      /** 备注 */
       remark?: string;
-      /** 代理用户名 */
       proxyUserName?: string;
-      /** 续费时间 */
       renewalTime?: null;
-      /** 修改时间 */
       updateTime?: string;
-      /** 用户ID */
       userId?: number;
-      /** 空间ID */
       workspaceId?: number;
-      /** 过期时间 */
       expireDate?: string;
-      /** 订单号 */
       orderNo?: string;
-      /** 订单状态 0：配置中,1：已完成 2：退款中 3：更换中, */
       orderStatus?: number;
-      /** 代理更换状态 0未更换， 1已更换 */
       replaceStatus?: number;
-      /** 代理价格 */
-      proxyPrice?: number;
+      /** 0关闭 1开启 */
+      autoRenew?: number;
+      providerType?: string;
+      /** 折扣后价格 */
+      proxyProviderDiscountPrice?: number;
     }[];
     total: number;
   };
@@ -5425,6 +5415,19 @@ export type UserRedeemProxyCodeCreatePayload = object;
 
 export interface UserRedeemProxyCodeCreateData {
   code: number;
+  msg: string;
+}
+
+export type UserSetProxyAutoRenewalCreatePayload = object;
+
+export interface UserSetProxyAutoRenewalCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyProvidersTypeListData {
+  code: number;
+  data: string[];
   msg: string;
 }
 
@@ -6657,6 +6660,8 @@ export interface UserGetUserPayInfoListData {
   data: {
     /** 用户折扣 */
     discount: number;
+    /** 用户代理折扣 */
+    proxyDiscount: number;
     /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
     identity: string;
     /** 已用空间数量 */
@@ -7046,18 +7051,17 @@ export interface UserGetPendingPaymentListListData {
   code: number;
   data: {
     rows: {
-      /** 代扣费金额 */
-      amount?: number;
-      /** 续费月份 */
-      subscriptionMonths?: number;
-      /** 续费天数 */
-      days?: number;
-      /** 续费说明 */
-      details?: string;
-      /** 0待执行 2执行失败 */
-      status?: number;
-      /** 下个账单日期 */
-      startTime?: string;
+      amount: number;
+      subscriptionMonths: number;
+      days: number;
+      details: string;
+      status: number;
+      proxyInfo: {
+        lastIp: string;
+        lastCountry: string;
+        proxyType: string;
+      };
+      startTime: string;
     }[];
     total: number;
   };
@@ -7106,17 +7110,13 @@ export interface UserGetBindCardListListData {
   code: number;
   data: {
     rows: {
-      /** 银行卡品牌 */
       brand?: string;
-      /** 银行卡ID */
-      cardId?: number;
-      /** 银行卡号后4位 */
+      cardId?: string;
       last4?: string;
       exp_month?: number;
       exp_year?: number;
       funding?: string;
       country?: string;
-      /** 是否主卡 0 不是 1 是 */
       cardDefault?: number;
     }[];
     total: number;
@@ -7235,5 +7235,43 @@ export interface UserGetWindowSubscriptionUpgradeMessageListData {
     /** 天数 */
     subscriptionDays: number;
   };
+  msg: string;
+}
+
+export interface CheckIpDownloadLimitListData {
+  code: number;
+  msg: string;
+}
+
+export interface AppTrackingEventCreatePayload {
+  /** 用户唯一标识 */
+  uuid: string;
+  /** 用户语言，例如en, zh, ru */
+  language?: string;
+  /** 落地页 */
+  landingPagePath?: string;
+  /** 转化页 */
+  conversionPagePath?: string;
+  /** 渠道来源的完整URL */
+  channelSourceUrl?: string;
+  /** 操作系统 */
+  operatingSystem?: string;
+  /** 事件类型 'download_click':下载, 'install_complete'：安装完整, 'app_open'：打开APP, 'registration_complete'：注册完成 */
+  eventType: string;
+  /** eventType 为registration_complete 传 */
+  userId?: number;
+}
+
+export interface AppTrackingEventCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface AppTrackingEventDeletePayload {
+  uuid: string;
+}
+
+export interface AppTrackingEventDeleteData {
+  code: number;
   msg: string;
 }

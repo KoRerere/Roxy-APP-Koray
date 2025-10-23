@@ -1,14 +1,15 @@
 import { execSync } from 'node:child_process'
 import path from 'node:path'
-import { existsSync, statSync, readdirSync } from 'node:fs'
+import { existsSync, statSync, readFileSync } from 'node:fs'
 
 const workDir = path.join(import.meta.dirname, '../')
 
 const config = {
   folderPath: path.join(workDir, '../../out'),
+  ymlFilePath: path.join(workDir, '../../out/latest-mac.yml'),
   keychainProfile: 'RoxyBrowser',
-  pollInterval: 30000, // 查询间隔：10秒
-  maxPollCount: 20,    // 最大查询次数：60次（10分钟）
+  pollInterval: 30000, // 查询间隔：30秒
+  maxPollCount: 20,    // 最大查询次数：20次（10分钟）
   timeoutMinutes: 10   // 超时时间：10分钟
 }
 
@@ -24,35 +25,79 @@ if (!statSync(config.folderPath).isDirectory()) {
   process.exit(1);
 }
 
-// 获取文件夹下所有的 .pkg 文件
-function getPkgFiles(folderPath) {
+// 验证 YAML 文件是否存在
+if (!existsSync(config.ymlFilePath)) {
+  console.error(`错误: latest-mac.yml 文件不存在: ${config.ymlFilePath}`);
+  process.exit(1);
+}
+
+// 解析 YAML 文件获取版本号并构建 PKG 文件列表
+function getPkgFilesFromYaml(ymlPath: string, folderPath: string): string[] {
   try {
-    const files = readdirSync(folderPath);
-    return files
-      .filter(file => file.endsWith('.pkg'))
-      .map(file => path.join(folderPath, file));
+    const ymlContent = readFileSync(ymlPath, 'utf-8');
+    const pkgFiles: string[] = [];
+
+    // 解析 version 字段
+    const versionMatch = ymlContent.match(/^version:\s*(.+)$/m);
+    if (!versionMatch) {
+      console.error('错误: 无法从 YAML 文件中找到 version 字段');
+      return [];
+    }
+
+    const version = versionMatch[1].trim();
+    console.log(`版本号: ${version}`);
+
+    // 从第一个 ZIP/DMG 文件名中提取产品名称
+    // 格式：RoxyBrowserDev_x64_6.6.0.zip
+    const fileMatch = ymlContent.match(/url:\s*(\w+)_(?:x64|arm64)_[\d.]+\./);
+    if (!fileMatch) {
+      console.error('错误: 无法从 YAML 文件中提取产品名称');
+      return [];
+    }
+
+    const productName = fileMatch[1]; // RoxyBrowserDev 或 RoxyBrowser
+    console.log(`产品名称: ${productName}`);
+
+    // 构建 PKG 文件名：{productName}_{arch}_{version}.pkg
+    const architectures = ['intel', 'apple'];
+
+    for (const arch of architectures) {
+      const fileName = `${productName}_${arch}_${version}.pkg`;
+      const fullPath = path.join(folderPath, fileName);
+
+      // 检查文件是否存在
+      if (existsSync(fullPath)) {
+        pkgFiles.push(fullPath);
+        console.log(`✓ 找到 PKG 文件: ${fileName}`);
+      } else {
+        console.warn(`⚠️  PKG 文件不存在: ${fileName}`);
+      }
+    }
+
+    return pkgFiles;
   } catch (error) {
-    console.error(`读取文件夹失败: ${error.message}`);
+    console.error(`解析 YAML 文件失败: ${(error as Error).message}`);
     return [];
   }
 }
 
-const pkgFiles = getPkgFiles(config.folderPath);
+console.log(`读取配置文件: ${path.basename(config.ymlFilePath)}\n`);
+const pkgFiles = getPkgFilesFromYaml(config.ymlFilePath, config.folderPath);
 
 if (pkgFiles.length === 0) {
-  console.error(`错误: 在文件夹 ${config.folderPath} 中没有找到 .pkg 文件`);
+  console.error(`\n错误: 在 ${config.ymlFilePath} 中没有找到有效的 .pkg 文件`);
   process.exit(1);
 }
 
-console.log(`找到 ${pkgFiles.length} 个 .pkg 文件:`);
+console.log(`\n将公证 ${pkgFiles.length} 个 PKG 文件:\n`);
 pkgFiles.forEach((file, index) => {
   console.log(`  ${index + 1}. ${path.basename(file)}`);
 });
 
-console.log(`\n开始公证 ${pkgFiles.length} 个 .pkg 文件...`);
+console.log(`\n开始公证流程...`);
 
 // 处理每个 .pkg 文件的函数
-async function processPkgFile(pkgPath, index) {
+async function processPkgFile(pkgPath: string, index: number): Promise<boolean> {
   const fileName = path.basename(pkgPath);
   console.log(`\n=== 处理文件 ${index + 1}/${pkgFiles.length}: ${fileName} ===`);
 
@@ -138,7 +183,7 @@ async function processPkgFile(pkgPath, index) {
         }
 
       } catch (infoError) {
-        console.error(`${fileName} 第 ${pollCount} 次查询公证状态失败:`, infoError.message);
+        console.error(`${fileName} 第 ${pollCount} 次查询公证状态失败:`, (infoError as Error).message);
 
         // 如果是网络错误，继续重试
         if (pollCount < config.maxPollCount) {
@@ -173,7 +218,7 @@ async function processPkgFile(pkgPath, index) {
 
     return true;
   } catch (error) {
-    console.error(`${fileName} 处理失败:`, error.message);
+    console.error(`${fileName} 处理失败:`, (error as Error).message);
     return false;
   }
 }

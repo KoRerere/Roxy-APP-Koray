@@ -8,6 +8,7 @@ import PlanSuccessModal from "./components/plan-success.vue";
 import ProcessingModal from "./components/processing-modal.vue";
 import UsdtPayModal from "./components/payway-usdt-modal.vue";
 import WechatPayModal from "./components/payway-wechat-modal.vue";
+import AlipayPayModal from "./components/payway-alipay-modal.vue";
 import WalletRechargeModal from '/@/views/pay/wallet/components/wallet-recharge-modal.vue'
 import { OrderType, PaymentStatus, PayWay } from "/@/enums/pay";
 import { API } from "/@/api";
@@ -21,9 +22,9 @@ type ChargeParams = {
 }
 
 const modalMap = {
-  [PayWay.Alipay]: markRaw(ProcessingModal),
-  [PayWay.Wechat]: markRaw(WechatPayModal),
-  [PayWay.USDT]: markRaw(UsdtPayModal),
+  [PayWay.Alipay]: (data: Record<string, any>) => data.show_type === 'qrcode' ? markRaw(AlipayPayModal) : markRaw(ProcessingModal),
+  [PayWay.Wechat]: () => markRaw(WechatPayModal),
+  [PayWay.USDT]: () => markRaw(UsdtPayModal),
 }
 
 export function usePay() {
@@ -60,7 +61,7 @@ export function usePay() {
       return promise
     }
 
-    const ModalComponent = modalMap[data.payType as keyof typeof modalMap] || markRaw(ProcessingModal)
+    const ModalComponent = modalMap[data.payType as keyof typeof modalMap](data) || markRaw(ProcessingModal)
     showModal({
       showHeader: false,
       modal: true,

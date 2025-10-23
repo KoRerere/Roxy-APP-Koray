@@ -20,7 +20,7 @@ export async function openOpenSitesDialog() {
   const win = createWindow({
     roxyWindowId: ROXY_SYNC_CONTROL_OPEN_SITES_WINDOW_ID,
     width: 450,
-    height: 320,
+    height: 350,
     frame: false,
     alwaysOnTop: true,
     show: false,

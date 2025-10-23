@@ -108,7 +108,7 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
         {{ $t('提示:') }}
       </div>
       <div class="tips">
-        {{ $t('出现网络波动的代理 IP 通常会在几小时内自动恢复，若您已将其已投入长期使用计划，可以尝试耐心等待其自动恢复或联系我们取得确切答复。') }}
+        {{ $t('出现网络波动的代理 IP 通常会在几小时内自动恢复，若您已将其投入长期使用计划，可以尝试耐心等待其自动恢复或联系我们取得确切答复。') }}
       </div>
     </div>
   </div>

@@ -108,6 +108,9 @@ function handleMouseenterSyncText() {
 
 function showAllWindows() {
   electronAPI.send('syncControl:showAll')
+  setTimeout(() => {
+    electronAPI.send('app:set-ignore-mouse-events', false)
+  }, 100)
 }
 
 function stopSync() {

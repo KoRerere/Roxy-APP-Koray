@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import PlatformIcon from '/@/views/account/list/platform-icon.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
 import { RxAlert } from '/@/components/rx-alert'
 import { AccountBindType } from '/@/enums/account'
+import { $t } from '/@/locales'
 
 interface Props {
   data?: Record<string, any>
@@ -20,8 +22,36 @@ const columns = getRawColumns({
   filters: ['actions'],
 })
 
+const tableRef = useTemplateRef('quick')
+
+const advancedSearchOptions = [
+  {
+    key: 'platform',
+    label: $t('平台名称'),
+    icon: 'base/rx_ic_keys',
+    syntax: 'platform::'
+  },
+  {
+    key: 'account',
+    label: $t('账号名称'),
+    icon: 'base/rx_ic_user_key',
+    syntax: 'account::'
+  },
+  {
+    key: 'remark',
+    label: $t('备注'),
+    icon: 'base/rx_ic_doc_article',
+    syntax: 'note::'
+  }
+]
+
 const selection = ref(data?.windowPlatformList.filter((item: any) => item.id))
 const sumProxyCount = computed(() => selection.value?.length ?? 0)
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  tableRef.value?.refresh({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
+}
 
 async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
@@ -34,12 +64,13 @@ function handleSave() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full account-content">
-    <RxAlert class="w-full mb-3" :visible="isBatch && accountType === AccountBindType.Order" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+  <div class="flex flex-col gap-3 h-full account-content">
+    <RxAlert class="w-full" :visible="isBatch && accountType === AccountBindType.Order" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
       :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? $t('当前选择绑定的账号数量已超过创建窗口数。') : '' })" />
+    <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
     <div class="flex-ovh-1">
-      <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
-        :context-menu="false" :show-actions="false">
+      <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false"
+        :show-display="false" :context-menu="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')"></CustomEmpty>
         </template>

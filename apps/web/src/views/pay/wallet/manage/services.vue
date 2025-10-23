@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import AutoModal from '/@/views/pay/wallet/manage/components/auto-modal.vue';
+import Identity from '/@/views/pay/wallet/manage/identity.vue';
 import currency from 'currency.js'
 import { format } from 'date-fns'
 import { $t } from '/@/locales';
@@ -15,9 +16,9 @@ import { ProxyExpireStatus } from '/@/enums/proxy';
 import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue';
 
 const router = useRouter()
+const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
-const [showModal] = RxUseDialog()
 const { buyProxy } = useProxy()
 
 const nextBillText = ref()
@@ -59,6 +60,7 @@ const otherCards = computed(() => [
     addClick: () => onExpand('workspace')
   }
 ])
+
 const planActions = computed(() => [
   {
     label: $t('启用自动续订'),
@@ -105,6 +107,7 @@ const planActions = computed(() => [
     command: enableAutoRenew
   }
 ].filter(item => item.visible !== false))
+
 const dailyCount = computed(() => {
   const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
   return {
@@ -112,41 +115,23 @@ const dailyCount = computed(() => {
     open: profileCount.multiply(100).format(),
   }
 })
+
 const planTextColor = computed(() => {
   return [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value?.subLevel as SubLevelEnum)
     ? '#90AFC2'
     : 'linear-gradient(90deg, #12A3FC 0%, #DB54F9 100%)'
 })
-const identityMap = {
-  [PayIdentity.old]: {
-    gradient: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-    color: 'var(--colors-text-text-primary)',
-    extendBgColor: 'linear-gradient(270deg, var(--pattern-wallet-founding-bg-tint) 0%, var(--pattern-wallet-founding-bg-shade) 100%)',
-  },
-  [PayIdentity.invited]: {
-    gradient: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-    color: '#FFFFFF',
-    extendBgColor: 'linear-gradient(270deg, var(--pattern-wallet-vip-bg-tint, #FFF) 0%, var(--pattern-wallet-vip-bg-shade, #A7AFD2) 100%)',
-  },
-  [PayIdentity.agent]: {
-    gradient: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-    color: '#FFFFFF',
-    extendBgColor: '#FFFFFF',
-  },
-  [PayIdentity.new]: {
-    gradient: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-    color: '#FFFFFF',
-    extendBgColor: '#FFFFFF',
-  },
-}
 
-const identity = computed(() => {
-  return {
-    ...identityInfo.value,
-    ...identityMap[userPayInfo.value.identity as keyof typeof identityMap],
-  }
+const animationGradient = computed(() => {
+  return (isFree.value || isExpired.value)
+    ? ['var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)']
+    : {
+      [PayIdentity.old]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
+      [PayIdentity.invited]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
+      [PayIdentity.agent]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
+      [PayIdentity.new]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
+    }[userPayInfo.value.identity]
 })
-const grayGradient = ['var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)']
 
 onBeforeMount(() => {
   getNextBillingDate()
@@ -203,7 +188,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     </div>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-2.5">
-        <AnimationBorder :border-width="(isFree || isExpired) ? 1 : 2" :animation-duration="12" class="rounded-xl" :gradient="(isFree || isExpired) ? grayGradient : identity.gradient">
+        <AnimationBorder :border-width="(isFree || isExpired) ? 1 : 2" :animation-duration="12" class="rounded-xl" :gradient="animationGradient">
           <div class="rounded overflow-hidden">
             <div class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan">
               <div class="flex justify-between items-center">
@@ -234,17 +219,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             </div>
           </div>
         </AnimationBorder>
-        <div v-if="identity.icon || userPayInfo.discount" class="flex items-center px-4 gap-3">
-          <div v-if="identity.icon" class="flex items-center gap-0.5">
-            <SvgIcon :name="(identity.icon as any)"></SvgIcon>
-            <div class="identity-label" :style="{ color: identity.color }">{{ identity.text }}</div>
-          </div>
-          <i18n-t v-if="userPayInfo.discount" class="identity-value" tag="div" scope="global" :keypath="$t('永久享受 {discount} 订阅折扣', { discount: '{discount}' })">
-            <template #discount>
-              <span class="identity-discount">{{ $t('{value}%', { value: userPayInfo.discount }) }}</span>
-            </template>
-          </i18n-t>
-        </div>
+        <Identity v-if="identityInfo.icon || userPayInfo.discount" class="px-4"></Identity>
       </div>
       <div class="flex gap-2">
         <div class="h-26 flex flex-col justify-between flex-1 pa-4 rounded-xl others" v-for="item in otherCards">
@@ -336,25 +311,6 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   font-family: "DingTalk JinBuTi", Inter, sans-serif;
   font-size: 14px;
   line-height: 20px;
-}
-
-.identity {
-  &-label {
-    color: var(--colors-text-text-primary);
-    font-family: "DingTalk JinBuTi";
-    font-size: 12px;
-    line-height: 16px;
-  }
-
-  &-value {
-    color: var(--colors-text-text-secondary);
-    font-size: 12px;
-    line-height: 16px;
-  }
-
-  &-discount {
-    color: var(--colors-text-text-warning);
-  }
 }
 
 .others {

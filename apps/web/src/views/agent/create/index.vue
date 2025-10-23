@@ -2,9 +2,9 @@
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import SingleProxies from './components/single-proxies.vue';
 import batchProxies from './components/batch-proxies.vue'
 // import RecommendedProxies from './components/recommended-proxies.vue'
-import singleProxies from './components/single-proxies.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import RxButton from '/@/components/rx-button'
 import { getColumns } from './components/columns'
@@ -79,7 +79,9 @@ async function saveProxies(__proxies: any) {
       </Tabs>
     </div>
     <div class="flex-ovh-1 w-full">
-      <singleProxies v-show="tabsValue === 'single'" @save="saveProxies" />
+      <div class="mx-auto h-full pt-4 pb-5">
+        <SingleProxies v-show="tabsValue === 'single'" show-remark :onConfirm="saveProxies"></SingleProxies>
+      </div>
       <batchProxies v-show="tabsValue === 'batch'" :onConfirm="saveProxies" />
       <!-- <RecommendedProxies v-show="tabsValue === 'recommended'" /> -->
     </div>

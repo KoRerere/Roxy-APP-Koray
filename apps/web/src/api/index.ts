@@ -10,6 +10,7 @@ import {
   TeamApi,
   WindowApi,
   PayApi,
+  AppTrackingEventApi
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, handleRequest, handleResponse, needDeviceIdApis } from '/@/api/util'
@@ -140,4 +141,5 @@ export const API = {
   limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),
   pay: new PayApi(httpClient),
+  appTrackingEvent: new AppTrackingEventApi(httpClient),
 }

@@ -1,17 +1,19 @@
 import type { Configuration } from 'electron-builder'
 import type { CopySyncOptions } from 'node:fs'
 import { build, Platform } from 'electron-builder'
-import { cpSync, rmSync } from 'node:fs'
+import { cpSync, readFileSync, writeFileSync, chmodSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
 
 const version = process.env.VITE_APP_VERSION
-const isDev = process.env.NODE_ENV === 'development'
+const isDev = process.env.NODE_ENV !== 'production'
+const skipCodeSigning = isDev && process.platform === 'win32' ? true : Boolean(process.env.SKIP_CODE_SIGNING) // 是否跳过代码签名
 const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
 const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
 
 console.log('是否是测试环境：', isDev, appName)
+console.log('是否跳过代码签名：', skipCodeSigning)
 console.log('APP 版本号：', version)
 
 const workDir = path.join(import.meta.dirname, '../')
@@ -29,23 +31,58 @@ cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dis
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
 cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
 
-// 处理 macOS PKG 脚本中的占位符
-if (platform === 'darwin') {
-  const { readFileSync, writeFileSync } = await import('node:fs')
-  const postinstallPath = path.join(workDir, 'buildResources/pkg-scripts/postinstall')
+// ============================================================================
+// 根据环境动态生成安装脚本
+// ============================================================================
 
-  try {
-    let postinstallContent = readFileSync(postinstallPath, 'utf8')
-    postinstallContent = postinstallContent.replace(/RoxyBrowser(?:Dev)?/g, appName)
-    writeFileSync(postinstallPath, postinstallContent)
-
-    // 确保脚本有执行权限
-    const { chmodSync } = await import('node:fs')
-    chmodSync(postinstallPath, 0o755)
-  } catch (error) {
-    console.warn('处理 macOS postinstall 脚本时出错:', error)
+// 根据环境设置配置
+const config = isDev
+  ? {
+    REPORT_DOMAINS: 'https://lumitest.lumibrowser.com',
+    REPORT_API_PATH: '/app_tracking_event',
+    APP_NAME: 'RoxyBrowserDev'
   }
+  : {
+    REPORT_DOMAINS: 'https://hz.gate.roxybrowser.cn|https://sg.gate.roxybrowser.net|https://us.gate.roxybrowser.net',
+    REPORT_API_PATH: '/app_tracking_event',
+    APP_NAME: 'RoxyBrowser'
+  }
+
+// 处理 macOS PKG 脚本
+if (platform === 'darwin') {
+  const templatePath = path.join(workDir, 'buildResources/postinstall.template')
+  const template = readFileSync(templatePath, 'utf-8')
+
+  const script = template
+    .replaceAll('{{REPORT_DOMAINS}}', config.REPORT_DOMAINS)
+    .replaceAll('{{REPORT_API_PATH}}', config.REPORT_API_PATH)
+    .replaceAll('{{APP_NAME}}', config.APP_NAME)
+
+  const outputPath = path.join(workDir, 'buildResources/pkg-scripts/postinstall')
+  mkdirSync(path.dirname(outputPath), { recursive: true })
+  writeFileSync(outputPath, script)
+  chmodSync(outputPath, 0o755)
+
+  console.log(`✅ 已生成 macOS 安装脚本 (${isDev ? '开发' : '生产'}环境)`)
 }
+
+// 处理 Windows NSIS 脚本
+if (platform === 'win32') {
+  const templatePath = path.join(workDir, 'buildResources/installer.template.nsh')
+  const template = readFileSync(templatePath, 'utf-8')
+
+  const script = template
+    .replaceAll('{{REPORT_DOMAINS}}', config.REPORT_DOMAINS)
+    .replaceAll('{{REPORT_API_PATH}}', config.REPORT_API_PATH)
+
+  const outputPath = path.join(workDir, 'buildResources/installer.nsh')
+  writeFileSync(outputPath, script)
+
+  console.log(`✅ 已生成 Windows 安装脚本 (${isDev ? '开发' : '生产'}环境)`)
+}
+
+console.log(`📡 上报域名: ${config.REPORT_DOMAINS}`)
+console.log(`📡 API 路径: ${config.REPORT_API_PATH}`)
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
@@ -66,6 +103,12 @@ const options: Configuration = {
     output: '../../out',
     buildResources: 'buildResources',
   },
+  extraResources: [
+    {
+      from: 'node_modules/font-list',
+      to: 'node_modules/font-list',
+    },
+  ],
   files: [
     'dist',
     'resources',
@@ -81,7 +124,8 @@ const options: Configuration = {
   compression: 'normal',
   removePackageScripts: true,
 
-  afterSign: async (context) => {
+  // 根据环境变量决定是否跳过签名后的公证流程
+  afterSign: skipCodeSigning ? undefined : async (context) => {
     await notarizeMac(context)
   },
   nodeGypRebuild: false,
@@ -96,7 +140,7 @@ const options: Configuration = {
       },
     ],
     verifyUpdateCodeSignature: false,
-    signtoolOptions: isDev ? undefined : {
+    signtoolOptions: skipCodeSigning ? undefined : {
       rfc3161TimeStampServer: 'http://timestamp.digicert.com',
       certificateFile: './pfx/linkv.pfx',
       certificatePassword: '0000',
@@ -105,7 +149,7 @@ const options: Configuration = {
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',
     uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',
-    // 引入自定义 NSIS 脚本
+    // 使用动态生成的 NSIS 脚本
     include: './buildResources/installer.nsh',
     oneClick: false,
     allowElevation: true,
@@ -119,7 +163,7 @@ const options: Configuration = {
     shortcutName,
   },
   dmg: {
-    sign: true,
+    sign: !skipCodeSigning, // 根据环境变量决定是否签名
   },
   mac: {
     target: [
@@ -133,25 +177,25 @@ const options: Configuration = {
       },
     ],
     icon: 'logo.icns',
-    hardenedRuntime: true,
+    hardenedRuntime: !skipCodeSigning, // 根据环境变量决定是否需要强化运行时
     gatekeeperAssess: false,
-    entitlements: 'buildResources/entitlements.plist', // 沙盒权限
-    entitlementsInherit: 'buildResources/entitlements.plist', // 继承的沙盒权限
-    identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
+    entitlements: skipCodeSigning ? undefined : 'buildResources/entitlements.plist', // 根据环境变量决定是否需要沙盒权限
+    entitlementsInherit: skipCodeSigning ? undefined : 'buildResources/entitlements.plist',
+    identity: skipCodeSigning ? '-' : 'LINKV TECH PTE. LTD. (GLM223L5MF)', // 根据环境变量决定使用 ad-hoc 签名或证书签名
     notarize: false,
   },
   pkg: {
     scripts: 'pkg-scripts',
     isRelocatable: false,
-    identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
+    identity: skipCodeSigning ? '-' : 'LINKV TECH PTE. LTD. (GLM223L5MF)', // 根据环境变量决定使用 ad-hoc 签名或证书签名
   },
-  publish: [
-    {
-      provider: 'github',
-      releaseType: 'draft',
-      // private: true,
-    },
-  ],
+  // publish: [
+  //   {
+  //     provider: 'github',
+  //     releaseType: 'draft',
+  //     // private: true,
+  //   },
+  // ],
 }
 
 // 要打包的目标平台
