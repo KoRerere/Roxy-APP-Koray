@@ -125,6 +125,7 @@ const defaultValues: StoreType = {
   isExternalWeb: false,
   openWorkbench: 1,
   subLevel: '',
+  token: '',
   userInfo: {
     username: '',
     email: '',
