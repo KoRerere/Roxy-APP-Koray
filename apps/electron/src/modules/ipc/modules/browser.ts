@@ -1,6 +1,6 @@
 
 
-import { browserManager } from "/@/modules/browser"
+import { browserManager, chromeCoreManager } from "/@/modules/browser"
 import { IPCMainInstance } from "/@/modules/ipc/types"
 
 export function setupBrowserIpc(ipcMain: IPCMainInstance) {
@@ -42,9 +42,21 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     }))
   })
 
+  /** 获取正在使用中的内核 */
+  ipcMain.on('browser:usingCores', (event) => {
+    return [...chromeCoreManager.usingCores]
+  })
+
   /** 获取所有已打开的窗口 */
   ipcMain.on('browser:getOpenedBrowser', (event,) => {
     return browserManager.openedBrowserList
+  })
+
+  /** 获取所有已打开的窗口数量 */
+  ipcMain.on('browser:getOpenedBrowserCount', (event, targetWorkspaceId?: number) => {
+    return browserManager.openedBrowserList
+      .filter(item => targetWorkspaceId ? item.workspaceId === targetWorkspaceId : true)
+      .length
   })
 
   /** 获取所有已打开的窗口的消息 */

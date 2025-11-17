@@ -31,6 +31,8 @@ import {
   GetCheckBindEmailVerCodeListParams,
   GetCoreUpgradeCreateData,
   GetCoreUpgradeCreatePayload,
+  GetFaqHelpList2Data,
+  GetFaqHelpListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
   GetValidatorTokenInfoListData,
@@ -109,6 +111,7 @@ import {
   UserGetValidatorInfoListParams,
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
+  UserIsNaifeiUserListData,
   UserLogoutListData,
   UserMigrateDataListData,
   UserModifyRemarkDisplayStatusCreateData,
@@ -1721,6 +1724,56 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/user_get_guide_videos_by_type`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetFaqHelpList
+   * @summary 获取FAQ&HELP
+   * @request GET:/get_faq_help
+   * @response `200` `GetFaqHelpListData`
+   */
+  getFaqHelpList = (params: RequestParams = {}) =>
+    this.http.request<GetFaqHelpListData, any>({
+      path: `/get_faq_help`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserIsNaifeiUserList
+   * @summary 获取奈飞用户列表
+   * @request GET:/user_is_naifei_user
+   * @response `200` `UserIsNaifeiUserListData`
+   */
+  userIsNaifeiUserList = (params: RequestParams = {}) =>
+    this.http.request<UserIsNaifeiUserListData, any>({
+      path: `/user_is_naifei_user`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetFaqHelpList2
+   * @summary 获取FAQ&HELP
+   * @request GET:/app_statistics/get_faq_help
+   * @originalName getFaqHelpList
+   * @duplicate
+   * @response `200` `GetFaqHelpList2Data`
+   */
+  getFaqHelpList2 = (params: RequestParams = {}) =>
+    this.http.request<GetFaqHelpList2Data, any>({
+      path: `/app_statistics/get_faq_help`,
+      method: "GET",
       format: "json",
       ...params,
     });

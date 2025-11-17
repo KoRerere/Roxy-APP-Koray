@@ -6,6 +6,8 @@ import { store } from '/@/modules/store'
 import { getCommonRequestHeaders } from '/@/utils'
 import { appCliStartArgs, isDev, isPackaged } from '/@/constants/common'
 import { attachAxiosLogger } from './axiosLogger'
+import { browserManager } from '/@/modules/browser'
+import { ipcMain } from '/@/modules/ipc'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
 // })
@@ -57,6 +59,11 @@ httpClient.instance.interceptors.request.use(async (config) => {
 httpClient.instance.interceptors.response.use((response) => {
   // handleResponse(response)
   reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
+  const code = response.data.code
+  if (code === 405) {
+    ipcMain.send('user:kicked-out', response.data.data)
+    browserManager.closeAll()
+  }
   return response
 })
 

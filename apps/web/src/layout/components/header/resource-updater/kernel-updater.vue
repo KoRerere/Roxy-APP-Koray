@@ -5,6 +5,7 @@ import { useResponseToast } from "/@/hooks/useResponseToast";
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type { SvgNames } from '/@/components/rx-icon'
 import { safeParseJSON } from '/@/utils';
+import { RxAlert } from '/@/components/rx-alert'
 
 type KernelUpdateItem = ResourceUpdateMessage & {
   _light?: boolean
@@ -22,6 +23,7 @@ const emit = defineEmits(['onDownloadClick'])
 
 const confirm = useConfirm();
 const [_, onlyErrorToast] = useResponseToast()
+const popoverRef = useTemplateRef('popover')
 
 function formatKernelBtnLabel(item: KernelUpdateItem) {
   if (item.status === 'downloading') {
@@ -52,7 +54,14 @@ function formatKernelIcon(item: KernelUpdateItem) {
   return iconMap[item.status as keyof typeof iconMap] || 'base/rx_ic_download'
 }
 
-function handleKernelItemClick(item: KernelUpdateItem) {
+async function handleKernelItemClick(event: MouseEvent, item: KernelUpdateItem) {
+  const usingCores = await window.electronAPI.send('browser:usingCores')
+
+  if (usingCores.includes(item.coreVersion!)) {
+    popoverRef.value?.instance?.show(event, event.target)
+    return
+  }
+
   if (item.status === 'downloading') {
     return $t('正在下载')
   } else if (item.coreVersion) {
@@ -124,13 +133,18 @@ defineExpose({
           </div>
           <div class="shrink-0 flex items-center gap-2 pr-4">
             <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="formatKernelIcon(item)" :loading="item.status === 'downloading'"
-              :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
-            <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :disabled="!['downloaded', 'update'].includes(item.status!)" @click="handleRemove($event, item)"></RxButton>
+              :disabled="item.status === 'downloaded'" @click="handleKernelItemClick($event, item)" />
+            <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :disabled="!['downloaded', 'update'].includes(item.status!)" @click="handleRemove($event, item)">
+            </RxButton>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <RyPopover ref="popover">
+    <RxAlert type="warn" :title="$t('更新内核前请先关闭窗口。')"></RxAlert>
+  </RyPopover>
 </template>
 
 <style lang="scss" scoped>

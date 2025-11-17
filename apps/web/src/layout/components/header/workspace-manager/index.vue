@@ -1,14 +1,15 @@
 <script setup lang="tsx">
-import RxAvatar from "/@/components/rx-avatar";
-import { RxSvgIcon } from '/@/components/rx-icon';
+import WorkspaceManagerDialog from './workspace-manager-dialog.vue';
 import { useDialog } from '/@/hooks/useDialog';
 import { $t } from '/@/locales';
+import { useRoleStore } from "/@/stores/role"
 import { useWorkspaceStore } from '/@/stores/workspace';
-import WorkspaceManagerDialog from './workspace-manager-dialog.vue';
+import { WorkspaceType } from "/@/enums";
 
 const [showModal] = useDialog()
-const workspaceStore = useWorkspaceStore()
-const { currentWorkspace } = storeToRefs(workspaceStore)
+const { isOwner } = storeToRefs(useRoleStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { getWorkspaceList, setCurrentWorkspace } = useWorkspaceStore()
 
 const avatarProps = computed(() => {
   const { workspacePicture, workspaceName } = currentWorkspace.value || {}
@@ -21,8 +22,10 @@ const avatarProps = computed(() => {
   }
 })
 
+const showBack = computed(() => currentWorkspace.value?.workspaceType === WorkspaceType.Public && !isOwner.value)
+
 async function showWorkspaceManager() {
-  await workspaceStore.getWorkspaceList()
+  await getWorkspaceList()
   showModal({
     header: $t('工作空间管理'),
     pt: {
@@ -35,13 +38,17 @@ async function showWorkspaceManager() {
     }
   })
 }
+
 </script>
 
 <template>
-  <div class="workspace-manager" @click="showWorkspaceManager">
-    <RxAvatar v-bind="avatarProps" />
-    <div class="text-3.5">{{ currentWorkspace?.workspaceName }}</div>
-    <RxSvgIcon name="base/rx_ic_chevron_right" :size="12" />
+  <div class="flex items-center gap-1.5">
+    <div class="workspace-manager" @click="showWorkspaceManager">
+      <RxAvatar v-bind="avatarProps" />
+      <div class="text-3.5">{{ currentWorkspace?.workspaceName }}</div>
+      <SvgIcon name="base/rx_ic_chevron_right" :size="12" />
+    </div>
+    <RxButton v-if="showBack" class="!shadow-none" size="xs" severity="secondary" icon="base/rx_ic_return" :label="$t('回到默认空间')" @click="setCurrentWorkspace(-1)"></RxButton>
   </div>
 </template>
 

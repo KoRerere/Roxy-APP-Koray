@@ -59,7 +59,7 @@ function getPkgFilesFromYaml(ymlPath: string, folderPath: string): string[] {
     console.log(`产品名称: ${productName}`);
 
     // 构建 PKG 文件名：{productName}_{arch}_{version}.pkg
-    const architectures = ['intel', 'apple'];
+    const architectures = ['x64', 'arm64'];
 
     for (const arch of architectures) {
       const fileName = `${productName}_${arch}_${version}.pkg`;

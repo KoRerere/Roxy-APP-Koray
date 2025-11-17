@@ -9,25 +9,28 @@ import { $t } from '/@/locales'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 
-const props = defineProps({
-  showType: {
-    type: String as PropType<'opened' | 'syncing'>,
-    default: 'opened',
-  },
-  selectionMode: {
-    type: String as PropType<'single' | 'multiple'>,
-  },
-  mainControlWindowDirId: {
-    type: String,
-    default: '',
-  },
+interface Props {
+  selectionMode?: 'single' | 'multiple'
+  showType?: 'opened' | 'syncing'
+  mainControlWindowDirId?: string
+}
 
+interface SearchParams {
+  projectIds: string[]
+  labelIds: string[]
+  os: string[]
+  windowName: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showType: 'opened',
+  mainControlWindowDirId: '',
 })
 
 const syncControlTableRef = useTemplateRef('syncControlTable')
 const toast = useToast()
 
-const searchParams = ref({
+const searchParams = ref<SearchParams>({
   projectIds: [],
   labelIds: [],
   os: [],
@@ -84,7 +87,7 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
         const tableContainer = document.querySelector('.p-datatable-table-container')
         console.log('tableContainer scrollWidth', tableContainer?.scrollWidth)
         electronAPI.send('app:resizeWindow', {
-          width: window.innerWidth + tableContainer?.scrollWidth - tableContainer?.clientWidth,
+          width: window.innerWidth + tableContainer?.scrollWidth! - tableContainer?.clientWidth!,
           height: window.innerHeight
         })
       }

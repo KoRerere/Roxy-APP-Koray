@@ -59,6 +59,11 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     store.allWorkspaceId = workspaceIds
   })
 
+  /** 设置公共空间列表 */
+  ipcMain.on('user:setSharedWorkspaceList', (event, workspaceList) => {
+    store.sharedWorkspaceList = workspaceList
+  })
+
   /** 用户上传头像 */
   ipcMain.on('user:uploadAvatar', async (event, avatarPath) => {
     const userId = store.userId

@@ -21,5 +21,5 @@ export function useContextMenu() {
     (vm.component?.refs.ctxMenu as Menu).hide()
   }
 
-  return [show, hide]
+  return [show, hide] as const
 }

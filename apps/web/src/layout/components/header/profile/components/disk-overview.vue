@@ -27,7 +27,7 @@ const percent = computed(() => `${disk.use ?? 0}%`)
 const roxyCache = computed(() => {
   return {
     size: `${bytesToGB(browserCacheSize.value ?? 0)}GB`,
-    percent: `${Math.floor(browserCacheSize.value / disk.used * 100) / 100}%`
+    percent: `${Math.floor(browserCacheSize.value / disk.used * 10000) / 100}%`
   }
 })
 const percentBg = computed(() => {
@@ -62,7 +62,7 @@ onMounted(() => {
 
 async function getBrowserCacheSize() {
   if (browserCacheSize.value !== undefined) return
-  const size = await electronAPI.send("app:getBrowserCacheSize")
+  const size = await electronAPI.send("app:getRoxyCacheSize")
   browserCacheSize.value = size
 }
 

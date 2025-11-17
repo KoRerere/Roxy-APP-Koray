@@ -42,6 +42,7 @@ import {
   UserGetPendingPaymentListListParams,
   UserGetPurchaseRecordsInfoListData,
   UserGetPurchaseRecordsInfoListParams,
+  UserGetStablecoinInfoListData,
   UserGetStripePkKeyListData,
   UserGetStripePkKeyListParams,
   UserGetSupportPayTypeListData,
@@ -746,6 +747,22 @@ export class PayApi<SecurityDataType = unknown> {
       path: `/user_get_window_subscription_upgrade_message`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserGetStablecoinInfoList
+   * @summary 获取加密币支付方式
+   * @request GET:/user_get_stablecoin_info
+   * @response `200` `UserGetStablecoinInfoListData`
+   */
+  userGetStablecoinInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetStablecoinInfoListData, any>({
+      path: `/user_get_stablecoin_info`,
+      method: "GET",
       format: "json",
       ...params,
     });

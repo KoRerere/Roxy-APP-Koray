@@ -40,5 +40,5 @@ export function useTagsActions() {
     })
   }
 
-  return [editDialog]
+  return [editDialog] as const
 }

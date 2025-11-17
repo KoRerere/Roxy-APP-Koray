@@ -4,7 +4,6 @@ import CustomFilter from '/@/views/browser/list/profiles/components/custom-filte
 import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import AsyncSwitch from '/@/views/lab/components/async-switch.vue';
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import currency from 'currency.js';
 import { $t } from '/@/locales'
@@ -81,6 +80,10 @@ onBeforeMount(async () => {
   getProviderTypeFilter()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
+  if (route.query.action === 'buy') {
+    await nextTick()
+    onBuyProxy()
+  }
 })
 
 async function getProviderTypeFilter() {
@@ -315,8 +318,8 @@ async function toggleAutoRenew(data: ProxyItem) {
   <div class="flex flex-col w-full h-full">
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="shoptable" v-model:columns="columns" cacheKey="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :table-sort="getSorts"
-        :row-class="rowClass" :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
+      <RyTable ref="shoptable" v-model:columns="columns" cacheKey="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removableSort
+        :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
         <template #filter-after>
           <div class="w-full flex flex-col gap-3">
             <div class="flex justify-between items-center">
@@ -374,9 +377,9 @@ async function toggleAutoRenew(data: ProxyItem) {
         </template>
         <template #renew="{ data }">
           <div class="scale-80" @click.stop>
-            <AsyncSwitch v-model="data.autoRenew" :disabled="data.orderStatus !== ProxyOrderStatus.done || data.proxyExpireStatus === ProxyExpireStatus.expired" :true-value="1" :false-value="0"
+            <RxToggleSwitch v-model="data.autoRenew" :disabled="data.orderStatus !== ProxyOrderStatus.done || data.proxyExpireStatus === ProxyExpireStatus.expired" :true-value="1" :false-value="0"
               :before-change="() => autoRenewChange(data)">
-            </AsyncSwitch>
+            </RxToggleSwitch>
           </div>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">

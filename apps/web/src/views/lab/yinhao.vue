@@ -6,12 +6,13 @@ import { useDialog } from '/@/hooks/useDialog'
 import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
 import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue';
-import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
 import VideoModal from '/@/views/tutorial/components/video-modal.vue';
 import CustomNewEmpty from '/@/components/custom-new-empty.vue'
+import HomeBackModal from '/@/views/browser/shared/home-back-modal.vue';
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
+
 function open1() {
   showModal({
     showHeader: false,
@@ -22,58 +23,48 @@ function open1() {
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <GuideModal
-        title={$t('欢迎加入')}
-        desc={({ class: className }) => {
-          return <>
-            <div class={className}>Incididunt et elit pariatur mollit Lorem consectetur sunt aliqua et in mollit consectetur Lorem et ullamco. Nulla minim elit qui. Laborum ex do fugiat irure eiusmod laborum
-              velit anim ut. Quis enim id est. Nulla consequat incididunt labore enim enim. </div>
-            <div class={className}>Incididunt et elit pariatur mollit Lorem consectetur sunt aliqua et in mollit consectetur Lorem et ullamco. Nulla minim elit qui. </div>
-          </>
-        }}
-        video="/video/copy_workspace_id.mp4"
-        onClose={hideModal}
-      ></GuideModal>
+      container: ({ hideModal }) => <WelcomeModal></WelcomeModal>
     },
   })
 }
+
 function open2() {
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!bg-transparent !border-none !shadow-none",
+      // root: "!bg-transparent !border-none !shadow-none",
     },
     slots: {
-      container: ({ hideModal }) => <VideoModal video="https://roxybrowser.com" external="https://roxybrowser.com" onClose={hideModal} />,
+      container: ({ hideModal }) => <HomeBackModal />,
     },
   })
 }
 //============ table ===================
 import wcisTable from './components/table/table.vue'
+import { useUserStore } from '/@/stores/user'
+
+import { differenceInDays, format, subDays } from 'date-fns'
+import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
+const { userPayInfo } = storeToRefs(useUserStore())
+
 async function tableFilters() {
+  const { data } = await API.team.userGetMemberInfoByWorkspaceList({})
+
+  const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
   return [
     {
-      type: 'select',
-      name: 'wcis',
-      value: [],
+      type: 'mselect',
+      name: 'userNameIds',
       props: {
-        placeholder: $t('操作'),
-        options: [
-          { label: $t('窗口'), value: 'Profiles' },
-          { label: $t('代理'), value: 'Proxies' },
-          { label: $t('账号'), value: 'Accounts' },
-          { label: $t('项目'), value: 'Projects' },
-          { label: $t('扩展'), value: 'Extensions' },
-          { label: $t('团队'), value: 'Teams' },
-        ],
+        placeholder: $t('全部成员'),
+        options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
       }
     },
     {
-      type: 'multiple',
+      type: 'mselect',
       name: 'operateModule',
-      value: [],
       props: {
         placeholder: $t('全部操作'),
         options: [
@@ -91,17 +82,43 @@ async function tableFilters() {
       name: 'date',
       props: {
         placeholder: $t('全部时间'),
+        selectionMode: 'range',
         maxDate: new Date(),
-      }
+        minDate: subDays(new Date(), 60),// 只会保留 60 天内的数据
+      },
+      // formatValue: (input: any, _: any, formData: any) => {
+      //   // 如果用户是免费用户，则只能查询过去3天的数据， 3 天之前需要提示
+      //   if (input.value?.[0] && days < 60) {
+      //     if (differenceInDays(new Date(), new Date(input.value[0])) > days) {
+      //       // showToast({
+      //       //   severity: 'warn',
+      //       //   summary: $t('您只能查看{days}天内的日志', { days }),
+      //       //   detail: !isOwner.value
+      //       //     ? $t('如需查看更多日志，请联系空间的拥有者进行升级。')
+      //       //     : userPayInfo.value.autoRenewDowngrade
+      //       //       ? ''// 特殊情况，如果用户是自动续费降级用户，则不显示升级提醒
+      //       //       : <I18nT keypath={$t('如需查看更多历史日志，请{link}', { link: '{link}' })} >
+      //       //         {{ link: () => <a class="cursor-pointer align-middle" onClick={upgradePlan}>{$t('单击此处升级')}</a> }}
+      //       //       </I18nT>,
+      //       //   life: 5000
+      //       // })
+      //       return
+      //     }
+      //   }
+      //   const [startDate, endDate = startDate] = (input.value || []).map((date: Date) => date ? format(date, 'yyyy-MM-dd') : undefined)
+      //   Object.assign(formData, { startDate, endDate })
+      // },
     },
   ]
 }
-const columns = ref([
+
+const columns = [
   { header: "Tomato 🍅", field: 'code' },
   { header: "Lettuce 🥬", field: 'name' },
   { header: "Cheese 🧀", field: 'category' },
   { header: "Carrot 🥕", field: 'quantity' }
-])
+]
+
 const originalModel = [
   {
     label: 'only quick',
@@ -157,18 +174,23 @@ const originalModel = [
     disabled: true,
   },
 ]
+
 const datalist = Array.from({ length: 50 }, (_, index) => ({
   id: `${index}`,
-  code: index * 2,
+  code: index,
   name: `mamba_${index}`,
   faq: 'man!',
   category: `category_${index}`,
   quantity: 'actions',
 }))
+
+const selectedProducts = ref()
+
 //============ form ========================
 import TsForm from './components/form/index.vue';
 import Test from '/@/views/lab/components/test.vue';
 import FormItem from '/@/views/lab/components/form/item.vue'
+import { API } from '/@/api';
 
 const formRef = useTemplateRef<any>('wcisman')
 const inputs = [
@@ -241,32 +263,22 @@ function setInputsProps() {
 }
 
 //=========================================
-import AsyncSwitch from './components/async-switch.vue';
-const checked1 = ref(false);
-const checked2 = ref(true);
 
 </script>
 
 <template>
-  <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <!-- <div @click="checked = !checked">111</div> -->
-    <AsyncSwitch v-model="checked1"></AsyncSwitch>
-    <AsyncSwitch v-model="checked2"></AsyncSwitch>
-    <!-- <RxButton label="open1" @click="open1"></RxButton> -->
-    <!-- <RxButton label="open2" @click="open2"></RxButton> -->
-    <!-- <DataTable :value="datalist.slice(0, 3)">
-      <Column selection-mode="multiple">
-        <template #headercheckboxicon="slotProps">
-          {{ slotProps }}
-        </template>
-<template #rowcheckboxicon="{ checked }">
-          <SvgIcon v-if="checked" name="base/rx_ic_delete" color="#ffffff" />
-        </template>
-</Column>
-<Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header"></Column>
-</DataTable> -->
+  <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
+    <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" :columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple">
+    </wcisTable> -->
 
-    <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
+    <!-- RoxyBrowser 团队提供了对流媒体特别优化的代理服务，您可以前往代理中心进行<a href="#/resource/agent?name=shop&action=buy">购买与使用</a>。
+
+    RoxyBrowser Team provides proxy services specially optimized for streaming media. You can go to the Proxy Center to <a href="#/resource/agent?name=shop&action=buy">purchase and use</a>.
+
+    Команда RoxyBrowser предоставляет прокси для стриминга. Перейдите в Центр прокси для <a href="#/resource/agent?name=shop&action=buy">покупки и использования</a>. -->
+
+    <RxButton label="open1" @click="open1"></RxButton>
+    <RxButton label="open2" @click="open2"></RxButton>
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
         <template #default="{ inputs }">
@@ -281,11 +293,11 @@ const checked2 = ref(true);
             </AccordionPanel>
           </Accordion>
         </template>
-      </TsForm>
-      <RxButton class="w-full" type="submit" label="normal submit" form="wcis" />
-      <RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
-      <RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
-    </div> -->
+</TsForm>
+<RxButton class="w-full" type="submit" label="normal submit" form="wcis" />
+<RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
+<RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
+</div> -->
   </div>
 </template>
 

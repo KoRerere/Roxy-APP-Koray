@@ -33,15 +33,13 @@ interface Props {
   showActions?: boolean
   showActionsMenu?: boolean
   skeleton?: boolean
-  reorderableColumns?: boolean
-  removableSort?: boolean
+  pageRows?: number
   tableSort?: () => any
   tableFilters?: () => any
   tableRequest?: (data: any) => any | Promise<any>
   tableOperation?: (data: any) => Operation[]
   operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
   beforeRefresh?: () => any | Promise<any>
-  rowAttrs?: (rowData: any) => Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -54,13 +52,11 @@ const props = withDefaults(defineProps<Props>(), {
   showDisplay: true,
   showActions: true,
   showActionsMenu: true,
-  reorderableColumns: false,
-  removableSort: true,
+  pageRows: 10,
   tableRequest: () => ({}),
   tableSort: () => [],
   tableFilters: () => [],
   tableOperation: () => [],
-  rowAttrs: () => ({}),
 })
 
 defineEmits(['update:columns'])
@@ -100,7 +96,6 @@ const tableAttrs = reactive({
   showGridlines: false,
   resizableColumns: true,
   columnResizeMode: 'expand',
-  removableSort: props.removableSort,
   selectionMode: props.selectionMode,
   onRowSelectAll: async () => {
     await nextTick()
@@ -126,7 +121,7 @@ const innerSelection = ref()
 
 const selectionData = computed({
   get() {
-    return hasOuterSelection ? outerSelection.value : innerSelection.value
+    return hasOuterSelection ? outerSelection?.value : innerSelection.value
   },
   set(value: any) {
     if (hasOuterSelection) {
@@ -142,7 +137,7 @@ const realUseSelection = computed(() => {
   return selectionData.value?.filter((item: any) => !_selectionDisableds.value.includes(item[props.dataKey].toString()))
 })
 
-const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || 10
+const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || props.pageRows
 const paginatorConfig = reactive({
   rows: cachedRows,
   first: cachedRows * ((Number(route.query.page_index) || 1) - 1),
@@ -346,7 +341,6 @@ function initBodyrow(options: any) {
   return {
     class: ColumnCss_Module.bodyrow,
     'data-row-id': options.props.rowData[props.dataKey],
-    ...props.rowAttrs(options.props.rowData)
   }
 }
 </script>
@@ -360,18 +354,13 @@ function initBodyrow(options: any) {
           <TableFilter :filters="_filters" @change="onFilterChange" />
           <slot name="filter-after" />
         </div>
-        <div v-if="showDisplay" class="flex gap-1.5 items-center">
-          <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
+        <div class="flex gap-1.5 items-center">
+          <TableDisplay v-if="showDisplay" :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
             <template #before>
               <slot name="display-before" />
             </template>
-            <!-- <template #footer>
-              <slot name="config-footer">
-                <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
-              </slot>
-            </template> -->
           </TableDisplay>
-          <Divider layout="vertical" class="!mx-0 h-4" />
+          <Divider v-if="showDisplay" layout="vertical" class="!mx-0 h-4" />
           <TableReload :loading="_loading" @click="_onRefresh" />
         </div>
       </slot>
@@ -396,6 +385,9 @@ function initBodyrow(options: any) {
 
         <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;" bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
           :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }">
+          <template #headercheckboxicon="{ checked }">
+            <SvgIcon v-if="checked" name="base/rx_ic_checkmark" color="#ffffff" />
+          </template>
           <template #rowcheckboxicon="{ checked }">
             <SvgIcon v-if="checked" name="base/rx_ic_checkmark" color="#ffffff" />
           </template>

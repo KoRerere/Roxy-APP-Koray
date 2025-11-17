@@ -27,6 +27,7 @@ import {
   UserGetMemberInfoByProjectIdListParams,
   UserGetProjectInfoByWorkspaceListData,
   UserGetProjectInfoByWorkspaceListParams,
+  UserGetPublicWorkspaceListListData,
   UserGetTopProjectInfoListData,
   UserGetWorkspaceListListData,
   UserInviteCreateData,
@@ -163,6 +164,22 @@ export class LimitApi<SecurityDataType = unknown> {
   userMdfWorkspaceTipInfoList = (params: RequestParams = {}) =>
     this.http.request<UserMdfWorkspaceTipInfoListData, any>({
       path: `/user_mdf_workspace_tip_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetPublicWorkspaceListList
+   * @summary 获取公共工作空间列表
+   * @request GET:/user_get_public_workspace_list
+   * @response `200` `UserGetPublicWorkspaceListListData`
+   */
+  userGetPublicWorkspaceListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPublicWorkspaceListListData, any>({
+      path: `/user_get_public_workspace_list`,
       method: "GET",
       format: "json",
       ...params,

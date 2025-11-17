@@ -25,7 +25,7 @@ function close() {
     </div>
     <i18n-t class="help" tag="div" :keypath="$t('当前所在磁盘空间不足 {bold}，无法打开窗口。您可以前往软件设置中调整磁盘限制。', { bold: '{bold}' })" scope="global">
       <template #bold>
-        <span class="cursor-pointer help-bold" @click="$showLiveChat">{{ userConfig.diskLimit }}GB</span>
+        <span class="help-bold">{{ userConfig.diskLimit }}GB</span>
       </template>
     </i18n-t>
     <div class="flex justify-end gap-2">

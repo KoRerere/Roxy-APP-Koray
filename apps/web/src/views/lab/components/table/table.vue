@@ -8,6 +8,7 @@ interface Props {
   cacheKey?: string
   displayKey?: string
   model?: any[]
+  columns?: any[]
   dataList?: any[]
   selectionMode?: 'single' | 'multiple'
   tableParams?: Record<string, any>
@@ -16,10 +17,13 @@ interface Props {
   immediate?: boolean
 }
 
+defineOptions({ inheritAttrs: false })
+
 const {
   dataKey = 'id',
   cacheKey = '',
   displayKey,
+  columns = [],
   dataList = [],
   model: originalModel = [],
   selectionMode,
@@ -28,6 +32,8 @@ const {
   tableFilters = () => [],
   immediate = true
 } = defineProps<Props>()
+
+const { class: wrapClass, ...attrs } = useAttrs()
 
 const tableAttrs = {
   dataKey,
@@ -39,54 +45,45 @@ const tableAttrs = {
   columnResizeMode: 'expand',
   selectionMode,
   onRowContextmenu: onRowContextmenu,
-  ...useAttrs()
+  ...attrs
 }
-
-const columns = defineModel<any[]>('columns', { default: [] })
 
 //============== 头部 ==============
 import Display from './display.vue'
 import { setDisplay } from './utils'
 
-const rawColumns = computed({
-  get() {
-    if (columns.value.some(col => col._displayed)) {
-      return columns.value
-    }
+const rawColumns = ref(initColumns())
 
-    let updatedColumns = [...columns.value]
+const _tableColumns = computed(() => rawColumns.value.filter((item: any) => item._visible ?? true))
 
-    if (!updatedColumns.some(item => item.field === 'actions')) {
-      updatedColumns.push({
-        header: 'Actions',
-        field: 'actions',
-        props: {
-          frozen: true,
-          alignFrozen: 'right',
-          headerStyle: 'width: 0rem; min-width: 120px',
-          pt: {},
-        },
-        render: ({ data, index }: { data: any, index: number }) => h(Actions, {
-          model: originalModel,
-          data,
-          onMore: (event: any) => onRowContextmenu({ originalEvent: event, data, index })
-        })
-      })
-    }
-
-    updatedColumns = displayKey
-      ? setDisplay(displayKey, updatedColumns)
-      : updatedColumns.map(col => ({ ...col, _displayed: true }))
-
-    columns.value = updatedColumns
-    return updatedColumns
-  },
-  set(value: any[]) {
-    columns.value = value
+onBeforeUnmount(() => {
+  if (displayKey) {
+    const _cache = rawColumns.value.map((item, index) => [item.field, { visible: item._visible, sort: index, cache: item._cache }])
+    localStorage.setItem(displayKey, JSON.stringify(_cache))
   }
 })
 
-const _tableColumns = computed(() => rawColumns.value.filter((item: any) => item._visible ?? true))
+function initColumns() {
+  const _columns = columns.some(item => item.field === 'actions')
+    ? [...columns]
+    : columns.concat({
+      header: 'Actions',
+      field: 'actions',
+      props: {
+        frozen: true,
+        alignFrozen: 'right',
+        headerStyle: 'width: 0rem; min-width: 120px',
+        pt: {},
+      },
+      render: ({ data, index }: { data: any, index: number }) => h(Actions, {
+        model: originalModel,
+        data,
+        onMore: (event: any) => onRowContextmenu({ originalEvent: event, data, index })
+      })
+    })
+
+  return setDisplay(displayKey, _columns)
+}
 
 //============== 操作部分 ==============
 import Actions from './actions.vue'
@@ -157,10 +154,8 @@ function onPaginatorUpdate() {
 
 // ======================= 生成数据 =======================
 import TableFilter from './table-filter.vue'
-import TableReload from './table-reload.vue';
-// const tableCss = useCssModule('tableCss')
-// const rootElRef = useTemplateRef('rootEl')
-let _getConditionPromise: Promise<any> | undefined
+import TableReload from './table-reload.vue'
+
 const _firstLoad = ref(false)
 const _loading = ref(false)
 const _outerParams = ref()
@@ -169,19 +164,14 @@ const _filters = ref()
 
 const _tableValue = computed(() => Array.isArray(dataList) ? dataList : _dataList.value)
 
+let _getConditionPromise: Promise<any> | undefined
+
 onBeforeMount(async () => {
   _getConditionPromise = _getCondition()
   if (immediate) {
     await _request()
   }
   _firstLoad.value = true
-})
-
-onBeforeUnmount(() => {
-  if (displayKey) {
-    const _cache = rawColumns.value.map((item, index) => [item.field, { visible: item._visible, sort: index, cache: item._cache }])
-    localStorage.setItem(displayKey, JSON.stringify(_cache))
-  }
 })
 
 function onFilterChange() {
@@ -229,22 +219,31 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="rootEl" class="w-220 h-120 flex flex-col">
+  <div class="w-full h-full flex flex-col" :class="wrapClass">
+
     <div class="w-full h-10 px-4 flex justify-end items-center bg-blue">
       <div class="flex-1 flex flex-wrap gap-2">
         <slot name="filter-before"></slot>
-        <TableFilter :filters="_filters" @change="onFilterChange" />
+        <TableFilter v-if="_filters" :filters="_filters" @change="onFilterChange" />
         <slot name="filter-after"></slot>
       </div>
       <div class="flex items-center gap-2">
-        <Display v-model="rawColumns"></Display>
-        <Divider layout="vertical" class="!mx-[3px] h-[20px]" />
+        <Display v-if="displayKey" v-model="rawColumns"></Display>
+        <RxDivider class="!h-5" vertical line-only />
         <TableReload :loading="_loading" @click="_request" />
       </div>
     </div>
+
     <div class="relative flex-1 overflow-hidden">
       <DataTable :value="_tableValue" v-bind="tableAttrs" v-model:selection="selectedProduct">
-        <Column v-if="!!tableAttrs.selectionMode" :selectionMode="tableAttrs.selectionMode" headerStyle="width: 0rem; min-width: 48px"></Column>
+        <Column v-if="!!tableAttrs.selectionMode" :selectionMode="tableAttrs.selectionMode" headerStyle="width: 0rem; min-width: 48px">
+          <template #headercheckboxicon="{ checked }">
+            <SvgIcon v-show="checked" name="base/rx_ic_checkmark" color="#ffffff" />
+          </template>
+          <template #rowcheckboxicon="{ checked }">
+            <SvgIcon v-show="checked" name="base/rx_ic_checkmark" color="#ffffff" />
+          </template>
+        </Column>
         <Column v-for="{ render, slot, ...col } of _tableColumns" :key="col.field" :field="col.field" :header="col.header" v-bind="col.props">
           <template #body="{ data, index }">
             <component v-if="render" :is="render" :data="data" :index="index"></component>
@@ -258,9 +257,9 @@ defineExpose({
         @more="onSelectionContextmenu({ originalEvent: $event, data: selectedProduct })"></SelectionActions>
       <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
-    <div class="w-full">
-      <TablePaginator v-model:first="paginatorFirst" v-model:rows="paginatorRows" :cacheKey="cacheKey" :totalRecords="totalRecords" @update="onPaginatorUpdate"></TablePaginator>
-    </div>
+
+    <TablePaginator v-model:first="paginatorFirst" v-model:rows="paginatorRows" :cacheKey="cacheKey" :totalRecords="totalRecords" @update="onPaginatorUpdate"></TablePaginator>
+
     <ContextMenu ref="ctxmenu" :model="(contextModel as MenuItem[])" @hide="contextMenuSelection = null">
       <template #item="{ item, props }">
         <RxButton class="w-full !justify-start" v-bind="getMenuProps(item, props.action)" text severity="secondary" @click.stop="onMenuCommand($event, item)" />
@@ -269,4 +268,4 @@ defineExpose({
   </div>
 </template>
 
-<style scoped module="tableCss"></style>
+<style scoped></style>

@@ -14,6 +14,7 @@ import { useRoleStore } from '/@/stores/role'
 import { useThemeStore } from '../stores/theme'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useProxy } from '/@/views/agent/hooks'
+import { WorkspaceType } from '../enums'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
@@ -49,7 +50,7 @@ watchEffect(() => {
 })
 
 
-async function getAnnt() {
+async function getAnntList() {
   const { data } = await API.base.userGetAnntListList()
   anntList.value = data?.rows || []
 }
@@ -101,11 +102,9 @@ watch(() => currentWorkspace.value?.id, () => {
   remainTime.value = 0
   clearInterval(timer)
   timer = setInterval(calcSubscriptionExpired, 10 * 1000)
-})
-
-onBeforeMount(() => {
-  getAnnt()
-})
+  collapsed.value = currentWorkspace.value?.workspaceType === WorkspaceType.Public && !roleStore.isOwner
+  getAnntList()
+}, { immediate: true })// 下个版本从所有公告中根据 id 过滤 11.06
 
 onBeforeUnmount(() => {
   clearInterval(timer)
@@ -142,10 +141,12 @@ function onRenewal() {
       <AsideMenu :collapsed />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
-    <main class="rx-main">
+    <main class="flex-1 flex flex-col overflow-hidden">
       <RxLayoutHeader />
-      <div class="rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
+
+      <div class="mr-4 flex flex-col gap-2 rx-main-announcement">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" :class="{ 'campaing': !!annt.announceType }" closable
+          @close="handleCloseAnnt(annt.id!)">
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -177,7 +178,8 @@ function onRenewal() {
           </template>
         </RxAlert>
       </div>
-      <div class="rx-main-content">
+
+      <div class="flex-1 mr-4 mb-4 rounded overflow-hidden rx-main-content">
         <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
       </div>
     </main>
@@ -300,83 +302,56 @@ function onRenewal() {
   }
 }
 
-.rx-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.rx-main-content {
+  border: 0.5px solid var(--colors-border-border-inactive);
+  background: var(--colors-background-bg-page);
+}
 
-  &-announcement {
-    margin-right: var(--spacing-2xl, 16px);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs, 8px);
+.rx-main-announcement {
+  &:not(:empty) {
+    padding-bottom: 12px;
+  }
 
-    &:not(:empty) {
-      padding-bottom: 12px;
+  &__content {
+    border-radius: 4px;
+    background: #303256;
+    outline-style: none;
+    outline-width: 0;
+
+    &.campaing {
+      background: var(--campaign-netflix-bg-announcement);
     }
 
-    &__content {
-      border-radius: 4px;
-      background: #303256;
-      outline-style: none;
-      outline-width: 0;
-
-      &:first-of-type {
-        margin-top: 0;
-      }
-
-      &.subscription-expired {
-        border: 1px solid var(--primitives-yellow-400, #ffcb80);
-        background: var(--primitives-yellow-100, #fff5e6);
-
-        :deep(.p-message-text) {
-          color: var(--primitives-yellow-800, #db8d1a);
-          font-family: Inter;
-          font-size: 14px;
-          font-style: normal;
-          font-weight: 400;
-          line-height: 16px;
-        }
-      }
-    }
-
-    :deep(a) {
-      color: #ffffff;
-      text-decoration: underline;
-    }
-
-    :deep(.p-message-content) {
-      padding: var(--spacing-lg, 10px) var(--spacing-xl, 12px);
-    }
-
-    :deep(.p-message-text) {
-      width: 95%;
-      color: #ffffff;
-      font-family: Inter;
-      font-size: 13px;
-      line-height: 16px;
-    }
-
-    :deep(.p-message-close-button) {
-      color: #ffffff;
-      width: auto;
-      height: auto;
-
-      &:hover {
-        background-color: transparent;
-      }
+    &:first-of-type {
+      margin-top: 0;
     }
   }
 
-  &-content {
-    flex: 1;
-    margin-right: var(--spacing-2xl, 16px);
-    margin-bottom: var(--spacing-2xl, 16px);
-    border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--colors-border-border-inactive);
-    background: var(--colors-background-bg-page);
-    overflow: hidden;
+  :deep(a) {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
+  :deep(.p-message-content) {
+    padding: 10px 12px;
+  }
+
+  :deep(.p-message-text) {
+    width: 95%;
+    color: #ffffff;
+    font-family: Inter;
+    font-size: 13px;
+    line-height: 16px;
+  }
+
+  :deep(.p-message-close-button) {
+    color: #ffffff;
+    width: auto;
+    height: auto;
+
+    &:hover {
+      background-color: transparent;
+    }
   }
 }
 

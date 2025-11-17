@@ -21,20 +21,21 @@ const [_, onlyErrorToast] = useResponseToast()
 const timer = ref()
 const loading = ref(false)
 const qrcode = ref()
-// const stopCountdown = ref()
-// const countdown = ref()
+const stopCountdown = ref()
+const countdown = ref()
 
 onMounted(() => {
   checkStatus()
   genProxyQrcode()
-  // stopCountdown.value = startCountdown(new Date(props.endTime), (time) => {
-  //   countdown.value = time
-  // })
+  stopCountdown.value = startCountdown(new Date(props.endTime), (time) => {
+    const { minutes, seconds } = time
+    countdown.value = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0')
+  })
 })
 
 onBeforeUnmount(() => {
   clearTimeout(timer.value)
-  // stopCountdown.value?.()
+  stopCountdown.value?.()
 })
 
 async function genProxyQrcode() {
@@ -81,7 +82,11 @@ function close(isCancel: boolean) {
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
     <div class="flex flex-col gap-12">
-      <div class="sacn-desc">{{ $t('使用微信扫码完成支付。') }}</div>
+      <i18n-t class="sacn-desc" tag="div" :keypath="$t('请于 {time} 内使用微信扫码完成支付。', { time: '{time}' })" scope="global">
+        <template #time>
+          <span v-if="countdown" class="inline-block w-12 cursor-pointer sacn-time">{{ countdown }}</span>
+        </template>
+      </i18n-t>
       <div class="flex flex-col items-center gap-2.5 pa-5 self-center sacn-area">
         <div class="pa-2 rounded-lg bg-white">
           <img :src="qrcode" class="block pointer-events-none w-45 h-45" />
@@ -118,6 +123,11 @@ function close(isCancel: boolean) {
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
+  }
+
+  &-time {
+    color: var(--colors-text-text-warning);
+    font-weight: 600;
   }
 
   &-area {

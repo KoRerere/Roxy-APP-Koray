@@ -46,5 +46,16 @@ export const isProd = appCliStartArgs['roxy-env'] ? appCliStartArgs['roxy-env'] 
 export const isMac = process.platform === 'darwin'
 export const isWindows = process.platform === 'win32'
 
+export enum Role {
+  /** 查看者 */
+  VIEWER = 0,
+  /** 编辑者 */
+  EDITOR = 1,
+  /** 管理者 */
+  MANAGER = 2,
+  /** 拥有者 */
+  OWNER = 3,
+}
+
 console.log('isDev', isDev)
 

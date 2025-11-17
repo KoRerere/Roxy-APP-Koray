@@ -27,7 +27,7 @@ export function usePreferencesPanel() {
   const getPreferencesPanels = async (data?: any) => {
     let [softConfig, disk, searchEngineResult] = await Promise.all([
       electronAPI.send("app:getSoftConfig"),
-      electronAPI.send("app:getBrowserCacheDisk"),
+      electronAPI.send("app:getRoxyCacheDiskInfo"),
       API.platform.userGetSearchEnginesList()
     ])
 

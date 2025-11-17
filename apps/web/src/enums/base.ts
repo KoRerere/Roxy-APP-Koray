@@ -24,3 +24,10 @@ export enum UaStrictMode {
   close = 0, // 关闭
   open = 1, // 开启
 }
+
+export enum WorkspaceType {
+  /** 私有 */
+  Private = 0,
+  /** 公共 */
+  Public = 1,
+}

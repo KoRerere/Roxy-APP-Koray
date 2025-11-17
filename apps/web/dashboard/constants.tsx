@@ -18,7 +18,7 @@ export const fingerprintInfoList = [
     label: () => $t('语言'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
-      return winInfo.language || '--'
+      return winInfo.isLanguageBaseIp ? '--' : (winInfo.language || '--')
     },
   },
   {

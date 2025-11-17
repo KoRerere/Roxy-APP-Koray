@@ -10,7 +10,11 @@
  * ---------------------------------------------------------------
  */
 
-import { CheckIpDownloadLimitListData } from "./data-contracts";
+import {
+  CheckIpDownloadLimitListData,
+  GetVersionListListData,
+  GetVersionListListParams,
+} from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
 export class AppStatisticsApi<SecurityDataType = unknown> {
@@ -32,6 +36,25 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
     this.http.request<CheckIpDownloadLimitListData, any>({
       path: `/app_statistics/check_ip_download_limit`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetVersionListList
+   * @summary 官网获取APP版本信息
+   * @request GET:/app_statistics/get_version_list
+   * @response `200` `GetVersionListListData`
+   */
+  getVersionListList = (
+    query: GetVersionListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetVersionListListData, any>({
+      path: `/app_statistics/get_version_list`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

@@ -166,6 +166,10 @@ onMounted(() => {
   })
 })
 
+onBeforeUnmount(() => {
+  emitter.off('openSettings')
+})
+
 function showLogoutConfirm() {
   const { promise, resolve, } = Promise.withResolvers<boolean>()
   showModal({

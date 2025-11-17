@@ -489,6 +489,11 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     googleApi: {
       ...getRemoteConfig()?.googleApi,
       enable: store.googleLoginEnable,
-    }
+    },
+    /** 仅允许访问特定的域名 */
+    get allowDomainList() {
+      const domainList = winInfo.allowDomainList?.split?.(',')?.filter(Boolean)
+      return domainList?.length ? domainList : undefined
+    },
   }
 }

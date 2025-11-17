@@ -29,11 +29,11 @@ function handleVisibilityChanged(data: any) {
   visibility.value = data.visibility
 }
 
-watch(() => themeStore.realTheme, (newVal) => {
-  console.log('newVal', newVal)
-  // LiveChatWidget?.call?.("destroy");
-  router.replace({ ...router.currentRoute.value, query: { ...route.query, theme: newVal } as Record<string, any> })
-}, { immediate: true })
+// watch(() => themeStore.realTheme, (newVal) => {
+//   console.log('newVal', newVal)
+//   // LiveChatWidget?.call?.("destroy");
+//   router.replace({ ...router.currentRoute.value, query: { ...route.query, theme: newVal } as Record<string, any> })
+// }, { immediate: true })
 
 emitter.on('toggleChatVisible', (_visibility) => {
   visibility.value = _visibility
@@ -45,8 +45,8 @@ onErrorCaptured((err) => {
 </script>
 
 <template>
-  <LiveChatWidget :key="themeStore.realTheme" license="18087441" :customer-name="customerName" :session-variables="sessionVariables" :visibility="visibility"
-    @visibility-changed="handleVisibilityChanged" />
+  <LiveChatWidget :key="$route.query.theme" license="18087441" :customer-name="customerName"
+    :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged" />
 </template>
 
 <style></style>

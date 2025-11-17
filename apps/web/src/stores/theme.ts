@@ -32,6 +32,7 @@ export const getColorSchemeList = () => [
 const channel = new BroadcastChannel(SWITCH_THEME_CHANNEL_NAME);
 
 export const useThemeStore = defineStore('theme', () => {
+  const router = useRouter()
   const userStore = useUserStore()
   const theme = ref<ColorScheme>('system')
   const realTheme = ref<Omit<ColorScheme, 'system'>>('light')

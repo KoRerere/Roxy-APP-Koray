@@ -36,6 +36,12 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
     ],
   },
   {
+    path: "shared",
+    name: "shared",
+    meta: { title: $t("共享窗口"), icon: "base/rx_ic_browser", hideInMenu: true, shared: true },
+    component: () => import("/@/views/browser/shared"),
+  },
+  {
     path: "projects",
     name: "projects",
     meta: { title: $t("项目管理"), icon: "base/rx_ic_stack" },
@@ -58,7 +64,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
   {
     path: "resource",
     name: "resource",
-    meta: { title: $t("资源"), type: "group" },
+    meta: { title: $t("工具"), type: "group" },
     children: [
       {
         path: "account",
@@ -159,7 +165,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
               return
             }
             console.log("sync-control");
-            electronAPI.send("syncControl:open");
+            electronAPI.send("syncControl:open", isOwner);
           },
         },
         component: () => import("/@/views/api-keys"),
@@ -168,7 +174,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         path: "api-keys",
         name: "api-keys",
         meta: {
-          title: $t("API"),
+          title: "API & MCP",
           icon: "base/rx_ic_doc_code",
           roles: [Role.OWNER, Role.MANAGER],
         },

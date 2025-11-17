@@ -1,11 +1,12 @@
-import { BrowserWindow, } from 'electron'
+import { BrowserWindow } from 'electron'
 import { ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { setTimeout } from 'timers/promises'
 import { isPackaged } from '/@/constants/common'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
 import { createWindow } from '/@/utils/browser-window'
+import { browserManager } from "/@/modules/browser";
+import { canUseSyncControl } from '/@/modules/store'
 
 export function getSynchronizerWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_WINDOW_ID)
@@ -54,7 +55,6 @@ export async function createSynchronizerWindow() {
   })
 }
 
-
 export function closeSynchronizerWindow() {
   const targetWin = getSynchronizerWindow()
 
@@ -62,4 +62,15 @@ export function closeSynchronizerWindow() {
     targetWin.close()
   }
   closeSynchronizerActionBarWindow()
+}
+
+export async function checkOpenedBrowserStatus() {
+  let force = true
+  for (const [dirId, browserItem] of browserManager.openedBrowserMap) {
+    if (!browserItem.winInfo.$canUseSyncControl) {
+      Reflect.set(browserItem.winInfo, '$canUseSyncControl', await canUseSyncControl(force))
+      browserManager.openedBrowserMap.set(dirId, browserItem)
+      force = false
+    }
+  }
 }

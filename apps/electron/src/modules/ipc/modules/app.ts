@@ -9,7 +9,7 @@ import { setSystemProxy, } from "/@/modules/roxynet";
 import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
-import { getMacAddress, getDiskInfoByPath, getFolderSize } from "/@/utils";
+import { getMacAddress, getDiskInfoByPath, getFolderSize, fileExists } from "/@/utils";
 import { compare } from "compare-versions";
 import { proxyManager } from "/@/modules/app/proxy-manager";
 
@@ -126,12 +126,13 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   });
 
   /** 获取浏览器缓存所在磁盘 */
-  ipcMain.on("app:getBrowserCacheDisk", () => {
+  ipcMain.on("app:getRoxyCacheDiskInfo", async () => {
+    await fileExists(appConfig.browserCacheRootDir, true)
     return getDiskInfoByPath(appConfig.browserCacheRootDir);
   });
 
   /** 获取浏览器缓存文件夹大小 */
-  ipcMain.on("app:getBrowserCacheSize", () => {
+  ipcMain.on("app:getRoxyCacheSize", () => {
     return getFolderSize(appConfig.browserCacheRootDir);
   });
 

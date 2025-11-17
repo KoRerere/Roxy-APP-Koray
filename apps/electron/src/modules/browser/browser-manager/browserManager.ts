@@ -13,10 +13,11 @@ import { asyncDebounce } from '/@/utils'
 import { shallowReactive, watch } from '@vue/reactivity';
 import { store } from '/@/modules/store'
 import { debounce } from 'es-toolkit'
+import { Role } from '/@/constants/common'
 
 const OpenErrorMessageMap = {
-  get 1() { return $t('您购买的代理检测到错误。要解决此问题，请访问{link}', { link: '{link}' }) },//IP检测不通
-  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。要解决此问题，请访问{link}', { link: '{link}' }) },//国家不一致
+  get 1() { return $t('您购买的代理检测到错误。{link}', { link: '{link}' }) },//IP检测不通
+  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) },//国家不一致
   get 3() { return $t('您购买的代理已过期。请在打开窗口前更新代理信息') },//已过期
   get 4() { return $t('您当前窗口的代理已退款，无法使用。请在打开窗口之前更新代理信息。') },//已退款
   get 5() { return $t('您购买的代理正在退款中，无法使用。请在打开窗口之前更新代理信息。') },//退款中
@@ -121,6 +122,16 @@ export class BrowserManager {
           ipcMain.send('browser:on-close-syncing-data', [dirId])
         }
         this.openedBrowserMap.delete(dirId)
+
+        const sharedWorkspace = store.sharedWorkspaceList?.find(item => item.workspaceId === browserItem.winInfo.workspaceId)
+        const isSharedWorkspaceOwner = sharedWorkspace?.role === Role.OWNER
+        // 如果是空间拥有者的话，不能删
+        if (!isSharedWorkspaceOwner && sharedWorkspace) {
+          setTimeout().then(() => {
+            rm(join(browserItem.userDataDir, 'Local State'), { force: true })
+          })
+        }
+
         await this.#batchUploadData()
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除

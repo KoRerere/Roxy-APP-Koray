@@ -4,6 +4,7 @@ import RxAvatar from "/@/components/rx-avatar";
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { API } from '/@/api';
 import { $t } from '/@/locales';
+import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
@@ -18,8 +19,10 @@ const emit = defineEmits(['close'])
 const router = useRouter()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
-const workspaceStore = useWorkspaceStore()
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
+const { isOwner } = storeToRefs(useRoleStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+
+const workspaceName = computed(() => currentWorkspace.value?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
 const transferTotal = ref(0)
 const columns = [
@@ -97,6 +100,7 @@ async function onReject() {
 }
 
 async function toProject() {
+  if (!isOwner.value) return
   //接收完窗口后跳转到项目列表
   const { data: { rows } } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
   const projectItem = rows.find(item => !!item.isTransfer)

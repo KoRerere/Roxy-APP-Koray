@@ -10,14 +10,11 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import SubMenuItem from './sub-menu-item.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { ProjectPin } from '/@/enums'
+import { ProjectPin, WorkspaceType } from '/@/enums'
 
-defineProps({
-  collapsed: {
-    type: Boolean,
-    default: false,
-  }
-})
+const { collapsed = false } = defineProps<{
+  collapsed: boolean
+}>()
 
 const { handleBusinessCode } = useHandleBusinessCode()
 const [_, onlyErrorToast] = useResponseToast()
@@ -39,6 +36,11 @@ const projectList = computed(() => {
 })
 
 const menus = computed(() => {
+  if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
+    const menu = menuRoutes.find(item => item.name === 'shared')!
+    return filterMenus(cloneDeep([{ ...menu, meta: { ...menu.meta, hideInMenu: false } }]))
+  }
+
   const projectIndex = menuRoutes.findIndex(item => item.name === 'projects')!
   return filterMenus(cloneDeep([
     ...menuRoutes.slice(0, projectIndex),
@@ -47,17 +49,26 @@ const menus = computed(() => {
       children: projectList.value,
     },
     ...menuRoutes.slice(projectIndex + 1),
-  ]))
+  ] as RouteRecordRaw[]))
 })
 
 // 切换空间后重新获取 pin 项目
 watch(currentWorkspace, (workspace, oldWorkspace) => {
-  if (workspace?.id && workspace.id !== oldWorkspace?.id) {
+  if (workspace?.id && workspace.id !== oldWorkspace?.id && !(!roleStore.isOwner && workspace.workspaceType === WorkspaceType.Public)) {
     setTimeout(() => {
       projectStore.getProjects()
     })
   }
 }, { immediate: true })
+
+// watch([
+//   () => projectList.value.length,
+//   () => collapsed
+// ], () => {
+//   nextTick(() => {
+//     updateMask()
+//   })
+// })
 
 /** 过滤菜单 */
 function filterMenus(menus: RouteRecordRaw[]) {
@@ -93,48 +104,53 @@ async function toCreateBrowser() {
     router.push({ name: 'browser-create' })
   }
 }
+//======================
+
+// const asidemenusRef = useTemplateRef('asidemenus')
+// const showTopMask = ref(false)
+// const showBottomMask = ref(false)
+
+// function updateMask() {
+//   const el = asidemenusRef.value
+//   if (!el)
+//     return
+
+//   const { scrollTop, scrollHeight, clientHeight } = el
+
+//   const canScroll = scrollHeight > clientHeight + 1
+//   if (!canScroll) {
+//     showTopMask.value = false
+//     showBottomMask.value = false
+//     return
+//   }
+
+//   showTopMask.value = scrollTop > 0
+//   showBottomMask.value = scrollTop + clientHeight < scrollHeight - 1
+// }
+
+function handleScroll() {
+  // updateMask()
+}
+
 </script>
 
 <template>
-  <aside class="aside" :class="{ collapsed }">
+  <aside class="flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
-      <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
+      <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
-    <nav class="menu">
-      <SubMenuItem :items="menus" :collapsed />
-    </nav>
+    <div class="relative flex-1 overflow-hidden">
+      <!-- <div v-if="showTopMask" class="mask top-mask" /> -->
+      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu" @scroll="handleScroll">
+        <SubMenuItem class="relative z-1" :items="menus" :collapsed />
+      </nav>
+      <!-- <div v-if="showBottomMask" class="mask bottom-mask" /> -->
+    </div>
   </aside>
 </template>
 
-<style lang="scss" module>
-.description {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-md, 6px);
-  align-self: stretch;
-  color: var(--primitives-neutrals-600, #575D61);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-sm, 18px);
-}
-
-.contact-us {
-  display: inline;
-  color: var(--colors-text-text-brand, #12A3FC);
-  vertical-align: middle;
-}
-</style>
-
 <style lang="scss" scoped>
 .aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl, 12px);
-  flex: 1 0 0;
-  align-self: stretch;
   white-space: nowrap;
   word-break: keep-all;
   isolation: isolate;
@@ -148,48 +164,52 @@ async function toCreateBrowser() {
     .menu::-webkit-scrollbar {
       display: none;
     }
+  }
+}
 
-    .new-profile-btn {
-      :deep(.p-button-label) {
-        display: none;
-      }
-    }
+.new-profile-btn {
+  position: relative;
+  flex-shrink: 0;
+  white-space: nowrap;
+  word-break: keep-all;
+  transition: width 0.3s;
+  height: 36px;
+  font-size: 14px;
+  z-index: 10;
+}
+
+.menu {
+
+  &::-webkit-scrollbar-thumb,
+  &::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  .new-profile-btn {
-    position: relative;
-    flex-shrink: 0;
-    white-space: nowrap;
-    word-break: keep-all;
-    transition: width 0.3s;
-    height: 36px;
-    font-size: 14px;
-    z-index: 10;
-    opacity: 1 !important;
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(--component-scrollbar-indicator);
   }
 
-  .menu {
-    flex: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-xl, 12px);
-    align-self: stretch;
-    overflow: hidden;
-    overflow-y: auto;
+  &:hover::-webkit-scrollbar-track {
+    background: var(--component-scrollbar-bg);
+  }
+}
 
-    &::-webkit-scrollbar-thumb,
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
+.mask {
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  flex-shrink: 0;
+  pointer-events: none;
+  z-index: 10;
 
-    &:hover::-webkit-scrollbar-thumb {
-      background: var(--component-scrollbar-indicator);
-    }
+  &.top-mask {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
+  }
 
-    &:hover::-webkit-scrollbar-track {
-      background: var(--component-scrollbar-bg);
-    }
+  &.bottom-mask {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
   }
 }
 </style>

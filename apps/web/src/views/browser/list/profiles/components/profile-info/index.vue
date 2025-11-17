@@ -490,8 +490,7 @@ async function updateProfile(params: any, options?: Record<string, any>) {
       </div>
       <div v-if="list.length > 1" class="state-line">
         <CanvasLine v-if="isOpenBrowser" :waveWidth="1.2" :blur="0" speed="fast" :waveOpacity="1"></CanvasLine>
-        <div v-else class="w-[100px] border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]">
-        </div>
+        <RxDivider v-else class="!w-25" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
       </div>
     </div>
   </div>

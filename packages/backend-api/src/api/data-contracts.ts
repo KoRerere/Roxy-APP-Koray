@@ -2084,6 +2084,8 @@ export interface UserGetAnntListListData {
       createTime?: string;
       /** 颜色提示：success(绿色), warning（警告）, error（错误）, info（信息） */
       colorTips?: string;
+      /** 公告类型 0普通的 1 定制 */
+      announceType?: number;
     }[];
   };
   msg: string;
@@ -3254,6 +3256,28 @@ export interface UserGetGuideVideosByTypeListData {
   msg: string;
 }
 
+export interface GetFaqHelpListData {
+  code: number;
+  data: {
+    rows: {
+      title: string;
+      detail: string[];
+    }[];
+    qq_qrcode: string;
+    wx_qrcode: string;
+    tg_qrcode: string;
+  };
+  msg: string;
+}
+
+export interface UserIsNaifeiUserListData {
+  code: number;
+  data: {
+    is_naifei_user: boolean;
+  };
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -4197,6 +4221,11 @@ export interface UserGetWindowInfoListListParams {
    * @example "facebook"
    */
   platformUrls?: string;
+  /**
+   * 窗口可用状态 true 可用 false 不可用 非必传
+   * @example "true"
+   */
+  enableStatus?: string;
 }
 
 export interface UserGetWindowInfoListListData {
@@ -6094,74 +6123,37 @@ export interface UserGetWorkspaceListListData {
   code: number;
   data: {
     rows: {
-      /**
-       * ID
-       * ID
-       */
+      /** ID */
       id?: number;
-      /**
-       * 创建人ID
-       * 创建人ID
-       */
+      /** 创建人ID */
       userId?: number;
-      /**
-       * 工作空间名称
-       * 工作空间名称
-       */
+      /** 工作空间名称 */
       workspaceName?: string;
-      /**
-       * 总窗口数量
-       * 总窗口数量
-       */
+      /** 总窗口数量 */
       totalWindowCount?: number;
-      /**
-       * 总成员数量
-       * 总成员数量
-       */
+      /** 总成员数量 */
       totalMemberCount?: number;
-      /**
-       * 工作空间图片
-       * 工作空间图片
-       */
+      /** 工作空间图片 */
       workspacePicture?: string;
-      /**
-       * 是否默认工作空间，1：是 0：不是，默认不是
-       * 是否默认工作空间，1：是 0：不是，默认不是
-       */
+      /** 是否默认工作空间，1：是 0：不是，默认不是 */
       workspaceDefault?: number;
-      /**
-       * 工作空间状态，1：启用 0：停用
-       * 工作空间状态，1：启用 0：停用
-       */
+      /** 工作空间状态，1：启用 0：停用 */
       workspaceStatus?: number;
-      /**
-       * 创建时间
-       * 创建时间
-       */
+      /** 创建时间 */
       createTime?: string;
-      /**
-       * 修改时间
-       * 修改时间
-       */
+      /** 修改时间 */
       updateTime?: string;
-      /**
-       * 权限
-       * 权限
-       */
+      /** 权限 */
       role?: number;
-      /**
-       * 总窗口数量
-       * 总窗口数量
-       */
+      /** 总窗口数量 */
       maxWindowCount?: number;
-      /**
-       * 窗口使用数量
-       * 窗口使用数量
-       */
+      /** 窗口使用数量 */
       useWindowCount?: number;
       /** 窗口编号 */
       workspaceNo?: number;
       email?: string;
+      /** 0私有 1 公共的 */
+      workspaceType?: number;
       /** 团队成员数量 */
       useMemberCount?: number;
     }[];
@@ -6227,6 +6219,24 @@ export interface UserLeaveWorkspaceListData {
 
 export interface UserMdfWorkspaceTipInfoListData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetPublicWorkspaceListListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      workspaceName?: string;
+      workspaceNo?: string;
+      workspaceType?: number;
+      workspacePicture?: string;
+      workspaceDefault?: number;
+      workspaceStatus?: number;
+      createTime?: string;
+      updateTime?: string;
+    }[];
+  };
   msg: string;
 }
 
@@ -6767,16 +6777,33 @@ export interface UserGetUserPayInfoListData {
 }
 
 export interface UserRechargeSettlementCreatePayload {
-  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  /**
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   */
   payType: string;
-  /** 充值金额 */
+  /**
+   * 充值金额
+   * 充值金额
+   */
   rechargeAmount: number;
-  /** 支付方式ID */
+  /**
+   * 支付方式ID
+   * 支付方式ID
+   */
   paymentMethodId?: string;
-  /** 银行卡ID */
+  /**
+   * 银行卡ID
+   * 银行卡ID
+   */
   cardId?: string;
-  /** 客户key */
+  /**
+   * 客户key
+   * 客户key
+   */
   customerIdKey?: string;
+  /** 支付方式 为USDT USDC时候传 链类型 （TRX BSC SOLANA POLYGON） */
+  chainType?: string;
 }
 
 export interface UserRechargeSettlementCreateData {
@@ -6790,6 +6817,7 @@ export interface UserRechargeSettlementCreateData {
     payUrl: string;
     realAmount: number;
     clientSecret: string;
+    chainAlias: string;
   };
   msg: string;
 }
@@ -7238,6 +7266,23 @@ export interface UserGetWindowSubscriptionUpgradeMessageListData {
   msg: string;
 }
 
+export interface UserGetStablecoinInfoListData {
+  code: number;
+  data: {
+    USDT: {
+      value: string;
+      label: string;
+      alias: string;
+    }[];
+    USDC: {
+      value: string;
+      label: string;
+      alias: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface CheckIpDownloadLimitListData {
   code: number;
   msg: string;
@@ -7273,5 +7318,69 @@ export interface AppTrackingEventDeletePayload {
 
 export interface AppTrackingEventDeleteData {
   code: number;
+  msg: string;
+}
+
+export interface GetVersionListListParams {
+  /**
+   * Windows,macOS
+   * @example "Windows"
+   */
+  os?: string;
+  /**
+   * 64,32
+   * @example "64"
+   */
+  osBit?: string;
+  /** @example "1" */
+  page_size?: string;
+  /** @example "1" */
+  page_index?: string;
+}
+
+export interface GetVersionListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      os?: string;
+      osVersion?: string;
+      osBit?: string;
+      cpu?: string;
+      versionType?: string;
+      coreVersion?: string;
+      coreRealVersion?: string;
+      version?: string;
+      upgradeTitle?: string;
+      upgradeDesc?: string;
+      upgradeContent?: string;
+      upgradeContentEn?: string;
+      upgradeContentRu?: string;
+      releaseTime?: string;
+      downloadUrl?: string;
+      forceUpgrade?: boolean;
+      ipLimit?: boolean;
+      createTime?: string;
+      updateTime?: string;
+      dataType?: string;
+      status?: boolean;
+      newFeatureTips?: object;
+    }[];
+  };
+  msg: string;
+}
+
+export interface GetFaqHelpList2Data {
+  code: number;
+  data: {
+    rows: {
+      title: string;
+      detail: string[];
+    }[];
+    qq_qrcode: string;
+    wx_qrcode: string;
+    tg_qrcode: string;
+  };
   msg: string;
 }

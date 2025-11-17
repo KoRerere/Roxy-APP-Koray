@@ -48,6 +48,19 @@ const illustrate = computed(() => [
       </I18nT>
     ),
   },
+  {
+    title: 'MCP',
+    content: () => (
+      <>
+        <div>
+          <a class="decoration-underline" target="__blank" href='https://github.com/roxybrowserlabs/roxybrowser-mcp-server?tab=readme-ov-file#roxybrowser-mcp-server-beta'>RoxyBrowser MCP Server</a>
+        </div>
+        <div>
+          <a class="decoration-underline" target="__blank" href='https://github.com/roxybrowserlabs/roxybrowser-playwright-mcp?tab=readme-ov-file#playwright-mcp'>Playwright MCP</a>
+        </div>
+      </>
+    ),
+  }
 ])
 
 const updateApiKeys = useDebounceFn(async () => {

@@ -1,15 +1,18 @@
-import type { UnwrapRowsType, UnwrapRowType, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserGetUserPayInfoListData, UserGetWorkspaceListListData, UserGetPublicWorkspaceListListData } from '@roxy/backend-api'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
-import { Role } from '/@/enums'
+import { Role, WorkspaceType } from '/@/enums'
 import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
 import { emitter } from "/@/utils/eventBus";
+
+type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
+type SharedWorkspace = UnwrapRowsType<UserGetPublicWorkspaceListListData>
 
 const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME);
 
@@ -20,8 +23,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const userStore = useUserStore()
   const toast = useToast()
 
-  const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
-  const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
+  const currentWorkspace = ref<Workspace>()
+  const workspaceList = ref<Workspace[]>([])
+  const sharedWorkspaceList = ref<SharedWorkspace>()
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
   const maxCreateWindowCount = computed(() => {
@@ -43,13 +47,20 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     debounceGetPayInfo()
     const currentRoute = router.currentRoute.value
+    const isPublic = val.workspaceType === WorkspaceType.Public
+
     // 如果当前路由是项目详情页，则跳转到项目列表页
     if (currentRoute.name === 'project-item') {
       router.replace({ name: 'project-list' })
     }
     // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role!)) {
-      router.replace({ path: '/' })
+    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role!) && !isPublic) {
+      router.replace({ name: 'home' })
+    }
+
+    // 空间类型变化
+    if ((old && old.workspaceType !== val.workspaceType) || (!old && val.workspaceType === WorkspaceType.Public)) {
+      router.replace({ name: isPublic && val.role !== Role.OWNER ? 'shared' : 'home' })
     }
 
     // 如果当前工作空间有 ID 且是主窗口，则发送消息给主进程
@@ -71,8 +82,23 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
 
+  async function fetchSharedWorkspaceList(force = false) {
+    if (!sharedWorkspaceList.value?.length || force) {
+      const { code, data } = await API.limit.userGetPublicWorkspaceListList()
+      if (code !== 0) return
+      sharedWorkspaceList.value = data.rows
+      // 设置公共空间列表
+      electronAPI.send('user:setSharedWorkspaceList', data.rows.map(item => ({ workspaceId: item.id!, role: item.role! })))
+    }
+    return sharedWorkspaceList.value
+  }
+
   async function fetchWorkspaceList() {
-    const result = await API.limit.userGetWorkspaceListList()
+    const [result, sharedWorkspace] = await Promise.all([
+      API.limit.userGetWorkspaceListList(),
+      fetchSharedWorkspaceList()
+    ])
+
     // 如果获取工作空间列表失败，则清除用户信息
     if (result.code !== 0 || !result.data?.rows?.length) {
       userStore.clearUserInfo()
@@ -84,7 +110,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         life: 5000,
       })
     }
-    workspaceList.value = result.data?.rows || []
+
+    const list = [
+      ...(result.data.rows || []),
+      ...toRaw(sharedWorkspace?.filter(item => item.role !== Role.OWNER) || []) as Workspace[]
+    ]
+
+    workspaceList.value = list
+    result.data.rows = list
 
     if (workspaceList.value.length) {
       window.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
@@ -115,6 +148,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   function resetWorkspace() {
     currentWorkspace.value = undefined
     workspaceList.value = []
+    sharedWorkspaceList.value = []
+    electronAPI.send('user:setSharedWorkspaceList', [])
   }
 
   /** 登录成功后，设置当前工作区 */
@@ -147,6 +182,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   return {
     defaultWorkspace,
     workspaceList,
+    sharedWorkspaceList,
     currentWorkspace,
     maxCreateWindowCount,
     resetWorkspace,

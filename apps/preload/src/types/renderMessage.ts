@@ -62,6 +62,8 @@ export interface RenderMessage {
   "browser:batchRemove": (dirIds: string[]) => void;
   /** 获取已打开的窗口 */
   "browser:getOpenedBrowser": () => WindowItemType[];
+  /** 获取已打开的窗口数量 */
+  "browser:getOpenedBrowserCount": (targetWorkspaceId?: number) => number;
   /** 获取已打开创建信息 */
   "browser:getOpenedBrowserMessage": () => LastMessage[];
   /** 清除浏览器缓存， */
@@ -76,6 +78,8 @@ export interface RenderMessage {
   }) => void;
   /** 根据进程 PID 判断进程是否存在 */
   "browser:isProcessExists": (dirIds: string[]) => Promise<boolean[]>;
+  /** 正在使用中的内核 */
+  "browser:usingCores": () => string[];
 
   /** 代理检测 */
   "proxy:detect": (proxyParams: ProxyDetectionParams) => ProxyDetectionResult;
@@ -98,6 +102,8 @@ export interface RenderMessage {
   "user:uploadAvatar": (avatarPath: string) => Promise<string>;
   /** 设置所有空间 ID */
   "user:setAllWorkspaceId": (workspaceIds: number[]) => void;
+  /** 设置公共空间列表 */
+  "user:setSharedWorkspaceList": (workspaceList: { workspaceId: number, role: number }[]) => void;
 
   /** 选择文件夹 */
   "dialog:selectDir": (defaultPath?: string) => Promise<string>;
@@ -152,9 +158,9 @@ export interface RenderMessage {
   /** 获取本机 mac address */
   "app:getMacAddress": () => Promise<string>;
   /** 获取浏览器缓存所在磁盘 */
-  "app:getBrowserCacheDisk": () => Promise<any>;
+  "app:getRoxyCacheDiskInfo": () => Promise<any>;
   /** 获取浏览器缓存文件夹大小 */
-  "app:getBrowserCacheSize": () => Promise<any>;
+  "app:getRoxyCacheSize": () => Promise<any>;
   /** 程序化显示和隐藏红绿灯 */
   "app:showHideTrafficLight": (show: boolean) => void;
   /** 设置窗口是否忽略鼠标事件 */
@@ -263,7 +269,7 @@ export interface RenderMessage {
 
   /** 窗口同步器相关 */
   /** 打开窗口同步器 */
-  "syncControl:open": () => void;
+  "syncControl:open": (isOwner?: boolean) => void;
   /** 关闭窗口同步器 */
   "syncControl:close": () => void;
   /** 开始同步窗口 */

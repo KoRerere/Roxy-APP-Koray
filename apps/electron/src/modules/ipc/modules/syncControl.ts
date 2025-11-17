@@ -1,6 +1,6 @@
 
 import { IPCMainInstance } from "/@/modules/ipc/types"
-import { closeSynchronizerWindow, createSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
+import { closeSynchronizerWindow, createSynchronizerWindow, checkOpenedBrowserStatus } from "/@/modules/sync-control/synchronizer"
 import { getAllSyncControlBrowsers, getMainControlBrowser, getMainControlBrowserSize, getRoxySyncStartResult, getSyncWindowCount, } from "/@/modules/sync-control/bin"
 import { sendText, syncSettings } from "/@/modules/sync-control/api"
 import { closePreferencesDialogWindowWindow, openPreferencesDialog, resizePreferencesDialog } from "/@/modules/sync-control/dialog/preferences"
@@ -22,11 +22,16 @@ export function closeSyncControl() {
 /** 窗口同步器相关 */
 export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   /** 打开窗口同步器 */
-  ipcMain.on('syncControl:open', () => {
+  ipcMain.on('syncControl:open', async (event, isOwner = false) => {
     console.log('打开窗口同步器')
     // return openPreferencesDialog()
     // return createSynchronizerActionBarWindow()
     // openCustomLayoutDialog()
+    if (isOwner) {
+      // 修复付费之前已打开的窗口无法同步的问题
+      await checkOpenedBrowserStatus()
+    }
+    console.log(1)
     createSynchronizerWindow()
     registerGlobalShortcut()
     // openBatchInputsDialog()

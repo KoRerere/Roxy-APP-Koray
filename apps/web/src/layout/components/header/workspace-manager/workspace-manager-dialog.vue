@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { Role } from '/@/enums';
+import { Role, WorkspaceType } from '/@/enums';
 import { useWorkspaceStore } from '/@/stores/workspace';
 import WorkspaceList from './workspace-list.vue';
 import { RxSvgIcon } from '/@/components/rx-icon';
@@ -12,6 +12,7 @@ import { $t } from '/@/locales';
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 import WorkspaceGuide from '../components/workspace-guide.vue'
 import { API } from '/@/api';
+import { sleep } from '/@/utils';
 
 const { hideFn } = defineProps<{
   hideFn: () => any,
@@ -25,7 +26,7 @@ const [showWorkspaceFormDialog] = useDialog()
 const [showModal] = useDialog()
 const toast = useToast()
 const { userPayInfo } = storeToRefs(useUserStore())
-
+const router = useRouter()
 const workspaceForm = ref({
   workspaceName: '',
   workspacePicture: '',
@@ -34,8 +35,8 @@ const workspaceForm = ref({
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 
 const workspaceGroup = computed(() => {
-  return Object.groupBy(workspaceList.value, ({ role }) => {
-    return role === Role.OWNER ? 'owner' : 'member'
+  return Object.groupBy(workspaceList.value, ({ role, workspaceType }) => {
+    return role === Role.OWNER ? 'owner' : workspaceType === WorkspaceType.Private ? 'member' : 'shared'
   })
 })
 
@@ -96,6 +97,9 @@ async function showCreateWorkspaceDialog() {
         resetWorkspaceForm()
         await workspaceStore.getWorkspaceList()
         workspaceStore.setCurrentWorkspace(data?.workspaceId)
+        sleep(600).then(() => {
+          router.replace({ name: 'home' })
+        })
       } else {
        await handleBusinessCode(code, () => {
           toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })

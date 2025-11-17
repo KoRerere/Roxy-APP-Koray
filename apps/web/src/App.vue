@@ -14,7 +14,7 @@ const router = useRouter()
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
-const kickedOut = (params: MittEvents['kickedOut']) => {
+const handleKickedOut = (params: MittEvents['kickedOut']) => {
   hidePageLoading()
   showModal({
     header: $t('登录提醒'),
@@ -53,20 +53,23 @@ const kickedOut = (params: MittEvents['kickedOut']) => {
 channel.onmessage = (event) => {
   if (isMainWindow) {
     console.log('Received message:', event.data);
-    kickedOut(event.data)
+    handleKickedOut(event.data)
   } else {
     window.close()
   }
 };
 
-emitter.on('kickedOut', (params) => {
+const onKickedOut = (params: MittEvents['kickedOut']) => {
   if (isMainWindow) {
     channel.postMessage(params)
-    kickedOut(params)
+    handleKickedOut(params)
   } else {
     window.close()
   }
-})
+}
+
+emitter.on('kickedOut', onKickedOut)
+electronAPI.on('user:kicked-out', onKickedOut)
 </script>
 
 <template>

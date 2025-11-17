@@ -61,6 +61,8 @@ export interface MainMessage {
   'browser:on-close-syncing-data': (dirIds: string[]) => void
   /** 达到窗口打开次数限制 */
   'browser:window-open-limit': (result: { code: number, msg: string }) => void
+  /** 用户被挤号 */
+  'user:kicked-out': (params: { deviceName: string, createTime: string }) => void
   /** google 授权登录 */
   'oauth2:google-callback': (payload: string) => void
   /** 邀请用户进入项目 */

@@ -258,7 +258,7 @@ async function inviteUserInProject(project: Project) {
     </ViewsHeader>
     <div class="flex-1 flex overflow-hidden">
       <RyTable ref="project" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
-        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" reorderable-columns @rowReorder="onRowReorder">
+        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" @rowReorder="onRowReorder">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>

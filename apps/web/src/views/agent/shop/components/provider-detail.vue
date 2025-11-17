@@ -73,7 +73,7 @@ const notes = [
 
 const durationOptionsMap = new Map()
 
-const isCN = computed(() => networkInfo.value.country_code === 'CN')
+const isCN = computed(() => networkInfo.value?.country_code === 'CN')
 const configValue = computed(() => {
   const config = Object.fromEntries(configs.value.map(item => [item.name, item.value]))
   return {
@@ -224,26 +224,27 @@ async function initConfig() {
         const quicks = item.props.options.filter((item: any) => item.inventory > 0).slice(0, 3)
         return <div class="flex flex-col gap-1.5">
           <div class="flex items-center gap-6">
-            <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} onUpdate:modelValue={
-              (opt: any) => {
-                updatePurchaseMember(opt.inventory)
-              }
-            }>
+            <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} onUpdate:modelValue={(opt: any) => updatePurchaseMember(opt.inventory)}>
               {{
                 'option-extra': ({ option }: any) => <div class={`flex-1 text-right ${styles.stock}`}>{option.inventoryFmt}</div>
               }}
             </TsFormSelect>
-            <div class="flex gap-2">
-              {quicks.map((quick: any) => <RxButton class="!shadow-none" severity="secondary" onClick={
-                () => {
-                  item.value = quick
-                  updatePurchaseMember(quick.inventory)
+            {
+              quicks.length > 1 && <div class="flex gap-2">
+                {
+                  quicks.map((quick: any) => <RxButton
+                    class="!shadow-none"
+                    severity="secondary"
+                    onClick={() => {
+                      item.value = quick
+                      updatePurchaseMember(quick.inventory)
+                    }}>
+                    <RxSvgIcon name={quick.icon}></RxSvgIcon>
+                    <div>{quick.name}</div>
+                  </RxButton>)
                 }
-              }>
-                <RxSvgIcon name={quick.icon}></RxSvgIcon>
-                <div>{quick.name}</div>
-              </RxButton>)}
-            </div>
+              </div>
+            }
           </div>
         </div>
       }
@@ -301,7 +302,7 @@ async function getCountryList() {
   return data.map(item => ({
     ...item,
     icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
-    label: `${item.country_name} / ${item.country_code.toLocaleUpperCase()}`,
+    label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
     name: item.country_name,
     value: item.country_code,
     inventoryFmt:

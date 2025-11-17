@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user';
+import SpecialSupportFor from './special-support-for.vue';
 
 const emit = defineEmits(['close', 'success'])
 
@@ -50,62 +51,80 @@ async function redeem() {
     <div class="px-8 header">
       <div class="flex items-center justify-between">
         <span class="header-title">{{ $t('代理 IP 商店') }}</span>
-        <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="onClose" />
+        <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete"
+          @click="onClose" />
       </div>
       <div class="mt-2.5 header-desc">{{ $t('RoxyBrowser 为您精选、验证、集成了来自不同可靠服务商的最优质代理 IP。') }}</div>
     </div>
     <div class="flex-1 flex flex-col px-8 gap-9 overflow-y-auto">
       <div class="flex flex-col gap-5">
-        <AnimationBorder class="-mb-2.5" v-if="identityInfo.icon || userPayInfo.proxyDiscount" :gradient="animationGradient" bg-color="var(--pattern-sidenav-metrics-btn)">
+        <AnimationBorder class="-mb-2.5" v-if="identityInfo.icon || userPayInfo.proxyDiscount"
+          :gradient="animationGradient" bg-color="var(--pattern-sidenav-metrics-btn)">
           <Identity class="px-3 py-2"></Identity>
         </AnimationBorder>
-        <div class="grid grid-cols-2 gap-5">
+        <div class="grid grid-cols-2 gap-5" v-if="providers">
           <div class="pa-5 provider" v-for="item in providers" :key="item.proxyProviderName">
             <div class="h-full flex flex-col">
               <div class="flex items-center gap-2.5">
-                <img class="block w-11 h-11 rounded-lg border-1 border-solid border-color-[var(--colors-border-border-action)]" :src="item.proxyProviderIcon" />
-                <div class="flex flex-col gap-0.5">
+                <img
+                  class="block w-11 h-11 rounded-lg border-1 border-solid border-color-[var(--colors-border-border-action)]"
+                  :src="item.proxyProviderIcon" />
+                <div class="flex flex-col gap-1.5">
                   <div class="provider-name">{{ item.proxyProviderName }}</div>
-                  <div class="provider-website">{{ item.proxyProviderWebsite }}</div>
+                  <div class="flex gap-2.5">
+                    <div class="provider-tag" v-for="tag in item.proxyTypeList">{{ tag.typeName }}</div>
+                  </div>
                 </div>
               </div>
-              <div class="flex-1 mt-2.5 provider-desc">{{ item.proxyProviderDesc }}</div>
-              <RxDivider class="my-4" line-only></RxDivider>
-              <div class="flex items-center gap-2.5">
-                <div class="provider-desc">{{ $t('代理类型') }}:</div>
-                <div class="provider-tag" v-for="tag in item.proxyTypeList">{{ tag.typeName }}</div>
-              </div>
-              <RxDivider class="my-4" line-only></RxDivider>
+              <div class="mt-2.5 provider-desc">{{ item.proxyProviderDesc }}</div>
+              <RxDivider class="my-4 flex-1 " line-only></RxDivider>
+
+              <template v-if="item.proxyProviderName === 'RoxyBrowser'">
+                <SpecialSupportFor />
+                <RxDivider class="my-4" line-only></RxDivider>
+              </template>
+
               <div class="flex flex-col gap-3">
                 <div class="provider-subtitle">{{ $t('优势') }}</div>
-                <div class="provider-advantages">
+                <div class="grid gap-2.5" :class="[item.proxyProviderAdv.length > 4 ? 'grid-cols-3' : 'grid-cols-2']">
                   <div class="flex items-center gap-1.5" v-for="advantage in item.proxyProviderAdv">
                     <SvgIcon class="cursor-pointer" name="status/rx_ic_check_fill" size="14" />
                     <span class="provider-desc">{{ advantage }}</span>
                   </div>
                 </div>
               </div>
-              <div class="mt-5 flex justify-end items-center">
-                <div v-if="item.proxyProviderName !== 'RoxyBrowser'" class="flex-1 provider-price">{{ $t('Roxy 独家特惠: 低至 {amount} / IP', { amount: item.proxyPriceFmt }) }}</div>
-                <RxButton v-if="!userPayInfo.proxyDiscount" icon="base/rx_ic_cart" :label="$t('购买代理 IP')" @click="onBuy(item)"></RxButton>
-              </div>
-              <div class="relative mt-3" v-if="userPayInfo.proxyDiscount">
-                <div class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">{{ $t('额外 {discount}% Off', { discount: userPayInfo.proxyDiscount }) }}</div>
-                <RxButton class="w-full" size="md" icon="base/rx_ic_cart" :label="$t('购买代理 IP')" @click="onBuy(item)"></RxButton>
+              <div class="mt-5 flex"
+                :class="[userPayInfo.proxyDiscount ? 'flex-col gap-3' : 'justify-end items-center']">
+                <div class="flex-1 provider-price" :class="{ 'invisible': item.proxyProviderName === 'RoxyBrowser' }">{{
+                  $t('Roxy 独家特惠: 低至 {amount} / IP', { amount: item.proxyPriceFmt }) }}</div>
+                <div class="relative">
+                  <div v-if="userPayInfo.proxyDiscount"
+                    class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
+                    {{ $t('额外 {discount}% Off', { discount: userPayInfo.proxyDiscount }) }}
+                  </div>
+                  <RxButton class="w-full" :size="userPayInfo.proxyDiscount ? 'md' : 'sm'" icon="base/rx_ic_cart"
+                    :label="$t('购买代理 IP')" @click="onBuy(item)"></RxButton>
+                </div>
               </div>
             </div>
           </div>
-          <div v-if="providers && providers.length % 2 !== 0" class="flex flex-col justify-center items-center gap-6 pa-6 connect">
+          <div v-if="providers && providers.length % 2 !== 0"
+            class="flex flex-col justify-center items-center gap-6 pa-6 connect">
             <div class="w-88 flex flex-col items-center gap-1.5">
               <div class="connect-text">{{ $t('更多类型的优质代理 IP 即将推出...') }}</div>
               <div class="connect-desc">{{ $t('我们将会为您集成更多高质量的代理 IP 服务，敬请期待！') }}</div>
             </div>
-            <RxButton severity="secondary" outlined icon="base/rx_ic_headphone_2" :label="$t('联系我们')" @click="$showLiveChat"></RxButton>
+            <RxButton severity="secondary" outlined icon="base/rx_ic_headphone_2" :label="$t('联系我们')"
+              @click="$showLiveChat">
+            </RxButton>
           </div>
         </div>
-        <div v-if="providers && providers.length % 2 === 0" class="flex justify-between items-center gap-6 pa-6 connect">
+        <div v-if="providers && providers.length % 2 === 0"
+          class="flex justify-between items-center gap-6 pa-6 connect">
           <div class="connect-text">{{ $t('更多类型的优质代理 IP 即将推出...') }}</div>
-          <RxButton severity="secondary" outlined icon="base/rx_ic_headphone_2" :label="$t('联系我们')" @click="$showLiveChat"></RxButton>
+          <RxButton severity="secondary" outlined icon="base/rx_ic_headphone_2" :label="$t('联系我们')"
+            @click="$showLiveChat">
+          </RxButton>
         </div>
       </div>
       <RxDivider line-only line-style="dashed"></RxDivider>
@@ -116,7 +135,8 @@ async function redeem() {
         </div>
         <div class="flex gap-2.5">
           <TsFormInputText class="!w-75" v-model="redeemCode" size="lg" :placeholder="$t('在此处粘贴兑换码')"></TsFormInputText>
-          <RxButton severity="secondary" variant="outlined" size="lg" :disabled="!redeemCode" :label="$t('兑换')" @click="redeem" />
+          <RxButton severity="secondary" variant="outlined" size="lg" :disabled="!redeemCode" :label="$t('兑换')"
+            @click="redeem" />
         </div>
       </div>
     </div>
@@ -181,12 +201,6 @@ async function redeem() {
     font-size: 13px;
     font-weight: 500;
     line-height: normal;
-  }
-
-  &-advantages {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
   }
 
   &-price {

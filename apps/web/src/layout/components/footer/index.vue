@@ -38,7 +38,7 @@ import { $t } from "/@/locales";
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { useUserStore } from "/@/stores/user";
 import { useRoleStore } from "/@/stores/role";
-import { getRoleLabelMap } from "/@/enums";
+import { getRoleLabelMap, WorkspaceType } from "/@/enums";
 
 const collapsed = defineModel('collapsed', { default: false })
 
@@ -50,6 +50,10 @@ const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 
 const items = computed(() => {
+  if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
+    return []
+  }
+
   return [
     {
       label: $t('新手教程'),
@@ -198,6 +202,16 @@ const items = computed(() => {
       font-weight: 500;
       line-height: normal;
     }
+  }
+}
+
+.shared {
+  background: linear-gradient(90deg, #000 0%, #0063B4 138.74%);
+
+  &-text {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
   }
 }
 </style>

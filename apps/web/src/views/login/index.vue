@@ -11,26 +11,26 @@ import { EmailCodeInputOtp, ResetPassword, SignForm, Verify2fa, RecoveryCode, Re
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useThemeStore } from '/@/stores/theme'
 import AppUpdater from './components/app-updater.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { motion, AnimatePresence } from 'motion-v'
 import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { Role, WorkspaceType } from '/@/enums'
 
-const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite, } = simpleLocaleStore
-const { setToken, setPassword, initUserInfo, userInfo, setLoginWay } = useUserStore()
-const { rememberMe, password } = storeToRefs(useUserStore())
+const { setToken, setPassword, initUserInfo, setLoginWay } = useUserStore()
+
+const { rememberMe, password, userInfo } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
-  user_name: userInfo.email || '',
+  user_name: userInfo.value.email || '',
   password: '',
 })
 const updateInfo = ref<ResourceUpdateMessage>()
@@ -128,7 +128,10 @@ async function afterLogin(loginData: LoginCreateData['data'], method: 'password'
   setPassword(rememberMe.value ? signFormData.value.password : '')
   setLoginWay(method)
   API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
-  await router.push({ name: 'home' })
+
+  const name = userInfo.value.workspaceType === WorkspaceType.Public && userInfo.value.role !== Role.OWNER ? 'shared' : 'home'
+  await router.push({ name })
+
   mixpanel.track('login', { method })
 }
 

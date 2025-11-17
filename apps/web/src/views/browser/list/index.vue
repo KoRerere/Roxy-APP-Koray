@@ -94,9 +94,39 @@ onBeforeMount(() => {
   switchActiveTabByQuery(suffixTabs.value)
   nextTick(() => {
     getFilterTabs()
+    if (!localStorage.getItem('__$mamba_out') && !localStorage.getItem('__$wcis_nf')) {
+      showWelcomeModal()
+    }
   })
 })
 
+//==============================
+import HomeBackModal from '/@/views/browser/shared/home-back-modal.vue';
+
+async function showWelcomeModal() {
+  const { code, data } = await API.base.userIsNaifeiUserList()
+  if (code !== 0 || !data?.is_naifei_user) return
+
+  showDialog({
+    header: '__$mamba_out',
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      root: "!border-none !shadow-none rounded-lg",
+    },
+    handleCancel: () => {
+      localStorage.setItem('__$mamba_out', '1')
+    },
+    slots: {
+      container: ({ hideModal }) => h(HomeBackModal, {
+        onClose: hideModal
+      })
+    }
+  })
+}
+
+//==============================
 async function getFilterTabs() {
   const { code, data, msg } = await API.window.userGetWindowFilterNameListList()
   if (code === 0) {

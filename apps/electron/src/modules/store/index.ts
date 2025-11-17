@@ -39,6 +39,8 @@ export interface StoreType {
   workspaceId?: number
   /** 当前用户所有的空间 ID */
   allWorkspaceId?: number[]
+  /** 公共空间列表 */
+  sharedWorkspaceList?: { workspaceId: number, role: number }[]
   /** 是否使用系统代理 */
   systemProxySwitch?: boolean
   /** roxynet 本地 http 服务端口 */
@@ -122,6 +124,7 @@ const defaultValues: StoreType = {
   blockDomainList: [],
   ipChecker: '',
   allWorkspaceId: [],
+  sharedWorkspaceList: [],
   isExternalWeb: false,
   openWorkbench: 1,
   subLevel: '',
@@ -350,13 +353,13 @@ async function initLanguage() {
 
 const canUseSyncControlMap: Record<number, { canUse: boolean, lastCheckTime: number }> = {}
 /** 是否可以使用群控 */
-export async function canUseSyncControl() {
+export async function canUseSyncControl(force = false) {
   if (!store.workspaceId) {
     return false
   }
   const now = Date.now()
   const lastCheckTime = canUseSyncControlMap[store.workspaceId!]?.lastCheckTime || 0
-  if (now - lastCheckTime < 1000 * 60) {
+  if (!force && now - lastCheckTime < 1000 * 60) {
     return canUseSyncControlMap[store.workspaceId!].canUse
   }
   const { code } = await API.pay.userCheckTeamUserRightsList()
@@ -366,8 +369,6 @@ export async function canUseSyncControl() {
   }
   return canUseSyncControlMap[store.workspaceId!].canUse
 }
-
-
 
 /** 安装后首次打开应用，需要记录事件 */
 const recordFirstLaunchAppEvent = async () => {

@@ -22,18 +22,26 @@ export const toUpgradePlan = () => {
   }
 }
 
-export const switchWorkspaceAndToUpgradePlan = async () => {
-  const workspaceStore = useWorkspaceStore()
-  if (workspaceStore.workspaceList.length === 0) {
-    await workspaceStore.getWorkspaceList()
-  }
-  const ownerWorkspace = workspaceStore.workspaceList.find(item => item.workspaceDefault && item.role === Role.OWNER)
-  if (ownerWorkspace) {
-    workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).finally(() => {
-      setTimeout(() => {
-        toUpgradePlan()
-      }, 1500)
-    })
+export const switchWorkspaceAndToUpgradePlan = executeSomethingBySwitchWorkspace(toUpgradePlan)
+
+function buyMoreExpand(defaultType: 'workspace' | 'staff') {
+  emitter.emit('showExpandDialog', { defaultType })
+}
+
+function executeSomethingBySwitchWorkspace(next: (...args: any[]) => void) {
+  return async (...args: any[]) => {
+    const workspaceStore = useWorkspaceStore()
+    if (workspaceStore.workspaceList.length === 0) {
+      await workspaceStore.getWorkspaceList()
+    }
+    const ownerWorkspace = workspaceStore.workspaceList.find(item => item.workspaceDefault && item.role === Role.OWNER)
+    if (ownerWorkspace) {
+      workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).finally(() => {
+        setTimeout(() => {
+          next?.(...args)
+        }, 1500)
+      })
+    }
   }
 }
 
@@ -45,13 +53,15 @@ export function useHandleBusinessCode() {
 
   async function handleBusinessCode(code: number, next?: () => void) {
     const privateUpgrade = isOwner.value ? toUpgradePlan : switchWorkspaceAndToUpgradePlan
+    const privateMoreExpand = isOwner.value ? buyMoreExpand : executeSomethingBySwitchWorkspace(buyMoreExpand)
+
     // 空间数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
       showToast({
         severity: 'warn',
         summary: $t('工作空间用量不足'),
         detail: <I18nT keypath={$t('您已达到最大工作空间创建限制，可通过删除不再使用的工作空间或 {link}', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={() => emitter.emit('showExpandDialog', { defaultType: 'workspace' })}>{$t('购买更多')}</a> }}
+          {{ link: () => <a class="cursor-pointer" onClick={() => privateMoreExpand('workspace')}>{$t('购买更多')}</a> }}
         </I18nT>,
         life: 5000
       })
@@ -69,7 +79,7 @@ export function useHandleBusinessCode() {
         severity: 'warn',
         summary: $t('团队成员用量不足'),
         detail: <I18nT keypath={$t('您已达到最大团队成员添加限制，可通过删除不再活跃的团队成员或 {link}', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={() => emitter.emit('showExpandDialog', { defaultType: 'staff' })}>{$t('购买更多')}</a> }}
+          {{ link: () => <a class="cursor-pointer" onClick={() => privateMoreExpand('staff')}>{$t('购买更多')}</a> }}
         </I18nT>,
         life: 5000
       })

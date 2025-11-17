@@ -590,10 +590,10 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
   const isChoose = proxyMethod === 'choose'
 
   const _proxydata = {
-    id: datas[0].moduleId,
+    id: datas[0]!.moduleId,
     ...Object.fromEntries(
       ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
-        .map(key => [key, datas[0][key as keyof Data]])
+        .map(key => [key, datas[0]![key as keyof Data]])
     )
   }
 
@@ -737,7 +737,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
   }
 
   async function singleConfirm(formData: any) {
-    const { id, dirId, windowPlatformList } = datas[0]
+    const { id, dirId, windowPlatformList } = datas[0]!
     const params: any = { id, dirId }
     if (isChoose) {
       params.platformUrlIds = (formData as any[]).filter(item => item.id).map(item => item.id)
@@ -747,7 +747,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
     if (code === 0) {
       const _windowPlatformList = params.windowPlatformList || windowPlatformList!.filter((item: any) => !item.id).concat(formData)
-      silentUpdateAccount(datas[0], _windowPlatformList)
+      silentUpdateAccount(datas[0]!, _windowPlatformList)
     }
     return { code, msg }
   }
@@ -800,7 +800,7 @@ async function onRemark(data: Data | Data[]) {
         {
           type: 'textarea',
           name: 'windowRemark',
-          value: datas[0].windowRemark,
+          value: datas[0]!.windowRemark,
           props: {
             placeholder: $t('请输入备注'),
             rows: 6,

@@ -5,49 +5,26 @@ import XiaoZheng from './xiaozheng.vue'
 
 const who = ref(localStorage.getItem('__who') ?? '0')
 
+const tabs = [
+  { title: '原神', value: '0', component: markRaw(QiYuan) },
+  { title: '跛豪', value: '1', component: markRaw(YinHao) },
+  { title: '小郑', value: '2', component: markRaw(XiaoZheng) },
+]
+
+const activeTab = computed(() => tabs.find(tab => tab.value === who.value))
+
 watch(who, () => {
   localStorage.setItem('__who', who.value)
 })
 </script>
 
 <template>
-  <Tabs v-model:value="who" class="h-full w-full lab-container">
-    <TabList>
-      <Tab value="0">
-        原神
-      </Tab>
-      <Tab value="1">
-        跛豪
-      </Tab>
-      <Tab value="2">
-        小郑
-      </Tab>
-    </TabList>
-    <TabPanels>
-      <TabPanel value="0">
-        <QiYuan text="原神" />
-      </TabPanel>
-      <TabPanel value="1">
-        <YinHao />
-      </TabPanel>
-      <TabPanel value="2">
-        <XiaoZheng />
-      </TabPanel>
-    </TabPanels>
-  </Tabs>
+  <div class="flex flex-col h-full w-full">
+    <RxTabs v-model:value="who" :tabs="tabs" head-tabs only-tabs></RxTabs>
+    <div class="flex-1 overflow-hidden">
+      <component :is="activeTab?.component" />
+    </div>
+  </div>
 </template>
 
-<style lang="scss" scoped>
-:deep(.p-tabpanels) {
-  flex: 1;
-  background: var(--colors-background-bg-page, #FFF);
-
-  .p-tabpanel {
-    height: 100%;
-  }
-}
-
-.lab-container {
-  background: var(--colors-background-bg-page, #FFF);
-}
-</style>
+<style lang="scss" scoped></style>
