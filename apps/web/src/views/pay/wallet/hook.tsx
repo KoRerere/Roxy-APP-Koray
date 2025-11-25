@@ -25,6 +25,7 @@ const modalMap = {
   [PayWay.Alipay]: (data: Record<string, any>) => data.show_type === 'qrcode' ? markRaw(AlipayPayModal) : markRaw(ProcessingModal),
   [PayWay.Wechat]: () => markRaw(WechatPayModal),
   [PayWay.USDT]: () => markRaw(UsdtPayModal),
+  [PayWay.USDC]: () => markRaw(UsdtPayModal),
 }
 
 export function usePay() {
@@ -167,15 +168,15 @@ export function usePay() {
   async function walletRecharge(chargeParams: ChargeParams) {
     const { next: settlementNext, ...rest } = chargeParams
 
-    const onRecharge = async (params: { payType: PayWay, rechargeAmount: number, extra: any }) => {
-      const { payType, rechargeAmount, extra } = params
-      // 仅用卡片充值不绑卡的情况下会提前生成充值单 _PRE_ORDER 为 userRechargeSettlementCreate 的返回值
-      const { code, data, msg } = extra?._PRE_ORDER || await API.pay.userRechargeSettlementCreate({
+    const onRecharge = async (params: any) => {
+      const { _PRE_ORDER, payType, rechargeAmount, cardId, chainType } = params
+      // _PRE_ORDER 为 userRechargeSettlementCreate 的返回值，用于后续的支付。
+      // 仅卡片充值且不绑卡的情况下才会提前生成充值单。
+      const { code, data, msg } = _PRE_ORDER || await API.pay.userRechargeSettlementCreate({
         payType,
         rechargeAmount,
-        paymentMethodId: extra?.payment_method,
-        customerIdKey: extra?._customerIdKey,
-        cardId: extra?.cardId
+        cardId,
+        chainType,
       })
 
       onlyErrorToast(code, msg)

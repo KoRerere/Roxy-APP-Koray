@@ -13,7 +13,7 @@ import { appConfig } from "/@/constants/appConfig";
 import { browserManager } from "/@/modules/browser/browser-manager";
 import { ipcMain } from "/@/modules/ipc";
 import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, unzipFile } from "/@/utils";
-import { isMac } from "/@/constants/common";
+import { isMac, isWindows } from "/@/constants/common";
 import { setTimeout } from "node:timers/promises";
 
 export const chromeCoreManager = new (class ChromeCoreManager {
@@ -23,7 +23,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   /** 内核执行程序文件名称 */
   private chromeBinName = isMac
     ? "RoxyChrome.app/Contents/MacOS/RoxyChrome"
-    : "RoxyChrome.exe";
+    : `RoxyChrome${isWindows ? '.exe' : ''}`;
 
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>();
@@ -115,7 +115,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   genCoreDriverPath(coreVersion: string) {
     return join(
       this.genCoreDir(coreVersion),
-      isMac ? "chromedriver" : "chromedriver.exe",
+      isWindows ? "chromedriver.exe" : "chromedriver",
     );
   }
 

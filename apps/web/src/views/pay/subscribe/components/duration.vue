@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
 import currency from 'currency.js';
+import { format, addDays } from 'date-fns'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useUserStore } from '/@/stores/user';
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
+import type { Duration } from '/@/views/pay/subscribe/type'
 
-interface Duration {
-  discount: number
-  month: number
-  day: number
-  key: string
-  title: string
-  label: string
-}
-
-interface Props {
+const { price } = defineProps<{
   price: number
-}
+}>()
 
 const emit = defineEmits<{
   (e: 'change', duration: Duration): void
 }>()
-const { price } = defineProps<Props>()
 
+const { userPayInfo } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
-const durationList = ref<Duration[]>()
+
 const selectedDuration = defineModel<Duration>('modelValue')
+
+const durationList = ref<Duration[]>()
 const loading = ref(false)
 
 const durationsDiscountPrice = computed(() =>
@@ -54,9 +50,11 @@ async function getDiscountByDuration() {
     key: `month${month}`,
     title: $t('{day} 天', { day: Number(month) * 30 }),
     label: discount > 0 ? $t('{discount}% Off', { discount }) : '',
+    due: format(addDays(userPayInfo.value.subEndDate || Date.now(), Number(month) * 30), 'yyyy/MM/dd'),
   }))
   selectedDuration.value = durationList.value![0]
 }
+
 function onSelected(item: Duration) {
   selectedDuration.value = item
   emit('change', item)

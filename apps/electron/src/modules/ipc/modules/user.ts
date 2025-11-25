@@ -40,13 +40,13 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 退出登录 */
-  ipcMain.on('user:logout', (event,) => {
+  ipcMain.on('user:logout', async (event,) => {
     closeAllSyncDialogs()
-    browserManager.closeAll().finally(() => {
+    openAPIServer.stop()
+    await browserManager.closeAll().finally(() => {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')
     })
-    openAPIServer.stop()
   })
 
   /** 切换空间时设置当前空间 ID  */
@@ -68,7 +68,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:uploadAvatar', async (event, avatarPath) => {
     const userId = store.userId
     const extname = path.extname(avatarPath)
-    console.log('上传头像', userId, avatarPath, extname)
+    console.log('Uploading avatar', userId, avatarPath, extname)
     const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
     return url
   })

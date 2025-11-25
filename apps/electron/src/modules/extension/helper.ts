@@ -54,7 +54,7 @@ export async function getPluginManifestInfo(pluginDir: string) {
     // 移除 UTF-8 BOM
     if (manifestFile.charCodeAt(0) === 0xFEFF) {
       manifestFile = manifestFile.slice(1)
-      console.log('manifestFile 移除 UTF-8 BOM')
+      console.log('manifestFile removed UTF-8 BOM')
     }
     const manifestInfo = JSON.parse(manifestFile)
     return {
@@ -208,6 +208,6 @@ export function genExtensionKey() {
   // 提取公钥的 Base64 编码
   const base64PublicKey = extractBase64PublicKey(publicKey);
 
-  console.log('公钥的 Base64 编码:', base64PublicKey);
+  console.log('Base64 encoded public key:', base64PublicKey);
   return base64PublicKey
 }

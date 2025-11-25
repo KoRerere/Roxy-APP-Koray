@@ -1,0 +1,15 @@
+# Cursor AI 规则配置
+
+## Git Commit 消息规则
+- 所有 commit 消息必须使用中文
+- 格式：类型(范围): 简短描述 + 详细描述
+- 忽略 components.d.ts 和 src/components/svgicon/svg-icon-types.ts 文件的改动
+
+## 类型说明：
+- feat: 新功能 - 描述新增的功能
+- fix: 修复bug - 描述修复的问题
+- docs: 文档更新 - 描述文档的更新内容
+- style: 代码格式调整 - 描述样式和格式的改动
+- refactor: 代码重构 - 描述重构的原因和改动
+- test: 测试相关 - 描述测试的添加或修改
+- chore: 构建过程或辅助工具的变动 - 描述构建和工具的改动

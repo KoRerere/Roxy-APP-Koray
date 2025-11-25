@@ -1,17 +1,11 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetWithdrawRecordListListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { PayWay } from '/@/enums/pay'
+import type { UnwrapRowType, UserGetWithdrawRecordListListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetWithdrawRecordListListData>
-
-const withdrawTypeMap = {
-  'Wallet': $t('Roxy 钱包'),
-  'Card': $t('加密货币'),
-}
 
 const withdrawStatusMap = {
   'Pending': $t('处理中...'),
@@ -36,11 +30,11 @@ const columns = ref([
   {
     title: $t('提现金额'),
     key: 'withdrawAmount',
+    getText: (data: Data) => `$${data.withdrawAmount}`
   },
   {
     title: $t('提现类型'),
     key: 'withdrawType',
-    getText: (data: Data) => withdrawTypeMap[data.withdrawType as keyof typeof withdrawTypeMap],
   },
   {
     title: $t('状态'),
@@ -68,7 +62,6 @@ async function tableFilters() {
           const [start_time, end_time] = (input.value || []).map((date: Date) => date / 1000)
           Object.assign(formData, { start_time, end_time: end_time ? end_time : start_time + 86399 })
         }
-        console.log('input.value ', input.value)
       },
     },
     {
@@ -77,7 +70,11 @@ async function tableFilters() {
       size: "small",
       placeholder: $t('请选择提现类型'),
       showClear: true,
-      options: [{ label: $t('Roxy 钱包'), value: PayWay.Balance }, { label: $t('加密货币'), value: PayWay.USDT }],
+      options: [
+        { label: $t('Roxy 钱包'), value: PayWay.Balance },
+        { label: $t('加密货币'), value: PayWay.USDT },
+        { label: 'PayPal', value: PayWay.PayPal }
+      ],
     },
     {
       type: 'select',
@@ -96,8 +93,7 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest"
-    :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无提现记录')" />
     </template>

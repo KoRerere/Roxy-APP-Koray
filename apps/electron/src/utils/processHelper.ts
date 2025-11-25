@@ -154,7 +154,7 @@ export function findProcessByHandle(handleName: string) {
 
   exec(command, (error, stdout, stderr) => {
     if (error) {
-      console.error('获取进程失败:', stderr);
+      console.error('Failed to get process:', stderr);
       return reject(error);
     }
 

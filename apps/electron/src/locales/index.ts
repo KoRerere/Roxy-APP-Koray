@@ -57,7 +57,7 @@ export function loadLocaleMessages(language: string) {
     messages[language] = require(targetLanguageFilePath)
     return true
   } catch (error) {
-    console.error('加载语言文件失败：', error)
+    console.error('Failed to load language file:', error)
     messages[language] = {}
     return false
   }

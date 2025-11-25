@@ -63,6 +63,7 @@ const bannerMap = {
   ios: '/images/systeam/ios.webp',
   android: '/images/systeam/android.webp',
   windows: '/images/systeam/windows.webp',
+  linux: '/images/systeam/linux.png',
 }
 
 const collapsed = defineModel<Boolean>('collapsed', { default: false })
@@ -117,7 +118,8 @@ function getPreview(list: any[]) {
 
 <template>
   <div class="flex flex-col my-4 gap-2.5 preview" :class="[!collapsed ? '' : 'hide']">
-    <TutorialVideo v-if="!collapsed && !onboardingTaskStatus?.createProfileVideoEntryStatus" video-type="create_profile" :autoplay="false">
+    <TutorialVideo v-if="!collapsed && !onboardingTaskStatus?.createProfileVideoEntryStatus" video-type="create_profile"
+      :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
@@ -126,7 +128,8 @@ function getPreview(list: any[]) {
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
               <span class="video-title">{{ $t('窗口教程') }}</span>
-              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProfileVideoEntryStatus')">
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)"
+                @click.stop="closeGuideTipsAndUpdateTaskStatus('createProfileVideoEntryStatus')">
               </SvgIcon>
             </div>
             <div class="video-desc">{{ $t('了解窗口和窗口指纹') }}</div>
@@ -136,21 +139,25 @@ function getPreview(list: any[]) {
     </TutorialVideo>
     <div class="flex-1 flex flex-col items-start justify-start pa-4 gap-3 rounded-xl overflow-hidden content guide4">
       <div class="flex flex-row-reverse items-center justify-between self-stretch select-none header">
-        <SvgIcon v-tooltip="!collapsed ? $t('收起') : $t('展开')" class="shrink-0 cursor-pointer" :name="!collapsed ? 'base/rx_ic_hide_preview' : 'base/rx_ic_show_preview'"
-          color="var(--colors-icon-primary)" @click="collapsed = !collapsed" />
+        <SvgIcon v-tooltip="!collapsed ? $t('收起') : $t('展开')" class="shrink-0 cursor-pointer"
+          :name="!collapsed ? 'base/rx_ic_hide_preview' : 'base/rx_ic_show_preview'" color="var(--colors-icon-primary)"
+          @click="collapsed = !collapsed" />
         <div v-if="!collapsed">{{ $t('概要') }}</div>
       </div>
       <div v-if="!collapsed" class="w-full infos">
         <div class="list">
-          <div v-if="showOverview" class="relative flex flex-col mb-2 pt-6 items-center overflow-hidden pointer-events-none select-none overview">
+          <div v-if="showOverview"
+            class="relative flex flex-col mb-2 pt-6 items-center overflow-hidden pointer-events-none select-none overview">
             <div class="flex items-center gap-3">
               <div class="w-34 flex items-center justify-between relative">
                 <div class="line"></div>
                 <template v-for="item in systeam.icons" :key="item.icon">
                   <div v-if="item.icon" class="relative icon">
                     <img v-if="item.image" class="w-full h-full" :src="item.image" />
-                    <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#7d8387" :fallback="item.fallback" />
-                    <div v-if="item.subIcon || item.subImage" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
+                    <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#7d8387"
+                      :fallback="item.fallback" />
+                    <div v-if="item.subIcon || item.subImage"
+                      class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
                       <img v-if="item.subImage" class="w-full h-full" :src="item.subImage" />
                       <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" color="#7d8387" />
                     </div>
@@ -160,30 +167,35 @@ function getPreview(list: any[]) {
             </div>
             <div v-if="systeam.os" class="absolute top-20 left-1/2 -translate-x-1/2 flex gap-6">
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os" :variants="(variantsLeft as any)" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os"
+                  :variants="(variantsLeft as any)" initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full object-contain" />
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence :initial="false" mode="wait">
-                <motion.div class="overview-banner" :key="systeam.os" :variants="(variantsCenter as any)" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="overview-banner" :key="systeam.os" :variants="(variantsCenter as any)"
+                  initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full w-full object-contain">
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os" :variants="(variantsRight as any)" initial="hidden" animate="visible" exit="hidden">
+                <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os"
+                  :variants="(variantsRight as any)" initial="hidden" animate="visible" exit="hidden">
                   <img :src="systeam.banner" class="block h-full object-contain" />
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
-          <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-1 px-3 gap-1 select-none">
+          <div v-for="(item, key) in previewData" :key="key"
+            class="flex items-start self-stretch py-1 px-3 gap-1 select-none">
             <div class="label">{{ item.label }}</div>
             <div class="value">{{ item.value }}</div>
           </div>
           <div class="h-6 w-full invisible"></div>
         </div>
       </div>
-      <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle" />
+      <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined
+        @click="onShuffle" />
     </div>
   </div>
 </template>

@@ -51,15 +51,15 @@ class ProxyManager {
 
       await session.defaultSession.setProxy(this.defaultConfig)
       this.isEnabled = true
-      console.log('默认代理设置成功，使用系统代理:', systemProxyRules)
+      console.log('Default proxy configured successfully, using system proxy:', systemProxyRules)
 
       // 验证代理设置
       const proxyInfo = await session.defaultSession.resolveProxy('https://www.google.com')
-      console.log('代理验证结果:', proxyInfo)
+      console.log('Proxy verification result:', proxyInfo)
 
       return true
     } catch (error) {
-      console.error('设置默认代理失败:', error)
+      console.error('Failed to set default proxy:', error)
       return false
     }
   }
@@ -71,10 +71,10 @@ class ProxyManager {
     try {
       await session.defaultSession.setProxy({})
       this.isEnabled = false
-      console.log('代理已禁用')
+      console.log('Proxy disabled')
       return true
     } catch (error) {
-      console.error('禁用代理失败:', error)
+      console.error('Failed to disable proxy:', error)
       return false
     }
   }
@@ -98,7 +98,7 @@ class ProxyManager {
       if (this.isEnabled) {
         const newSystemProxyRules = await this.getSystemProxyRules()
         if (newSystemProxyRules !== this.defaultConfig.proxyRules) {
-          console.log('检测到系统代理变化，正在更新...')
+          console.log('System proxy change detected, updating...')
           this.defaultConfig.proxyRules = newSystemProxyRules
           await this.enableDefaultProxy()
         }
@@ -139,7 +139,7 @@ class ProxyManager {
         proxyRules: this.defaultConfig.proxyRules
       }
     } catch (error) {
-      console.error('获取系统代理信息失败:', error)
+      console.error('Failed to get system proxy info:', error)
       return {
         address: '',
         isEnabled: false,

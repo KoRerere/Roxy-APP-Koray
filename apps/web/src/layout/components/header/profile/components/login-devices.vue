@@ -27,9 +27,10 @@ const editDeviceInfo = reactive({
 const deviceIconMap = {
   win: 'platforms/rx_os_windows',
   mac: 'platforms/rx_os_macOS',
+  linux: 'platforms/rx_os_linux',
   ios: 'platforms/rx_os_iOS',
   android: 'platforms/rx_os_android',
-}
+} as const
 
 const deviceList = computed(() => {
   return props.devices.map((item) => {
@@ -93,7 +94,7 @@ const handleBlur = () => {
   <template v-for="item in deviceList" :key="item.id">
     <div class="device-item" :class="{ line: devices.length > 1 }">
       <div class="device-item__icon">
-        <RxSvgIcon :name="deviceIconMap[item.platform] || 'base/rx_ic_browsers_fill'" size="24px" />
+        <RxSvgIcon :name="deviceIconMap[item.platform as keyof typeof deviceIconMap] || 'base/rx_ic_browsers_fill'" size="24px" />
       </div>
       <div class="device-item__info">
         <div class="device-item__name">

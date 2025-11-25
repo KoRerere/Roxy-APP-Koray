@@ -1,0 +1,17 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="16" height="16" rx="3" fill="#1E1E2E"/>
+<path d="M11.5 6.5V9.5L5 12.5V10.5L10.416 8L5 5.5V3.5L11.5 6.5Z" fill="url(#paint0_linear_1048_8992)"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M13 0C14.6569 0 16 1.34315 16 3V13C16 14.6569 14.6569 16 13 16H3L2.8457 15.9961C1.26055 15.9158 0 14.6051 0 13V3C0 1.34315 1.34315 0 3 0H13ZM3 1C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15H13C14.1046 15 15 14.1046 15 13V3C15 1.89543 14.1046 1 13 1H3Z" fill="url(#paint1_linear_1048_8992)"/>
+<defs>
+<linearGradient id="paint0_linear_1048_8992" x1="-1.95112e-07" y1="10.5" x2="16" y2="2" gradientUnits="userSpaceOnUse">
+<stop offset="0.413462" stop-color="#1F7CFE"/>
+<stop offset="0.620192" stop-color="#8765AE"/>
+<stop offset="0.865385" stop-color="#EE4D5D"/>
+</linearGradient>
+<linearGradient id="paint1_linear_1048_8992" x1="-1.95112e-07" y1="10.5" x2="16" y2="2" gradientUnits="userSpaceOnUse">
+<stop offset="0.413462" stop-color="#1F7CFE"/>
+<stop offset="0.620192" stop-color="#8765AE"/>
+<stop offset="0.865385" stop-color="#EE4D5D"/>
+</linearGradient>
+</defs>
+</svg>

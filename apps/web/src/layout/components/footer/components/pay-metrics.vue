@@ -68,6 +68,7 @@ const actions = computed(() => {
       command: () => {
         emitter.emit('showRenewalDialog', {
           paySuccess: () => {
+            router.replace({ name: 'wallet', query: { name: 'manage' } })
             emitter.emit('updateBillList')
           }
         })
@@ -78,7 +79,7 @@ const actions = computed(() => {
       visible: !!userPayInfo.value?.isAuto,
       btnText: isExpired.value && $t('前往支付'),
       command: () => {
-        router.push({ name: 'wallet', query: { name: 'billing' } })
+        router.push({ name: 'wallet', query: { name: isExpired.value ? 'billing' : 'manage' } })
       }
     }
   ].filter(item => item.visible !== false)

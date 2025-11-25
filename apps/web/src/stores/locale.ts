@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { API } from '/@/api'
-import { clearDictCache } from '/@/utils/'
+import { clearDictCache, getDictMap } from '/@/utils/'
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
@@ -8,7 +8,7 @@ export const useSimpleLocale = defineStore('locale', () => {
   const currentLocale = ref(defaultLanguage)
 
   const siteLocale = computed(() => {
-    return currentLocale.value.split('-')[0]
+    return currentLocale.value?.split('-')[0]
   })
 
   const setSimpleLocale = async (locale: string) => {
@@ -37,9 +37,16 @@ export const useSimpleLocale = defineStore('locale', () => {
     return `${import.meta.env.VITE_OFFICIAL_FAQ_WEBSITE}${locale}${pathname}`
   }
 
+  async function openTelegram() {
+    const $dict_map = await getDictMap()
+    const tgLink = $dict_map.tgLink!.find(item => item.label === currentLocale.value) || $dict_map.tgLink![0]
+    window.open(tgLink!.value, '_blank')
+  }
+
   return {
     siteLocale,
     currentLocale,
+    openTelegram,
     setSimpleLocale,
     getOfficialWebsite,
     getOfficialFaqWebsite

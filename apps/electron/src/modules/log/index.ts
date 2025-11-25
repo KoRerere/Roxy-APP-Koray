@@ -74,16 +74,16 @@ async function cleanupOldLogs() {
       if (fileAge > 7 * 24 * 60 * 60 * 1000) {
         rm(filePath, { recursive: true, force: true })
           .then(() => {
-            log.info(`已删除过期日志文件: ${file}`)
+            log.info(`Deleted expired log file: ${file}`)
           })
           .catch((err) => {
-            log.error(`删除文件失败: ${file}`, err)
+            log.error(`Failed to delete file: ${file}`, err)
           })
       }
     })
   }
   catch (error) {
-    log.error('无法读取日志目录:', error)
+    log.error('Failed to read log directory:', error)
   }
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
+import BlackFridayDuration from '/@/views/campaign/black-friday-duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
@@ -13,6 +14,7 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user';
 import { useSimpleLocale } from '/@/stores/locale';
+import { useCampaignStore } from '/@/stores/campaign';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { deepClone } from '/@/utils';
 import { tierCalculate, discountCalculate } from './util'
@@ -22,6 +24,7 @@ import { type Plan } from './type'
 const route = useRoute()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { blackFridayPeriod } = storeToRefs(useCampaignStore())
 const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccess } = usePay()
 const [showModal] = useDialog()
@@ -84,7 +87,7 @@ const details = computed(() => {
         },
         {
           label: $t('到期时间'),
-          value: format(addDays(Date.now(), selectedDuration.value?.day ?? 30), 'yyyy/MM/dd'),
+          value: selectedDuration.value?.due,
           visible: !isTrial.value,
         },
       ].filter(item => item.visible !== false)
@@ -98,7 +101,7 @@ const details = computed(() => {
           visible: !!userPayInfo.value?.discount
         },
         {
-          label: $t('订阅折扣'),
+          label: selectedDuration.value?.discountStr || $t('订阅折扣'),
           value: `-${selectedDuration.value?.discount}%`,
           class: '!color-[#FC9D12]',
           visible: !isTrial.value && !!selectedDuration.value?.discount
@@ -136,10 +139,10 @@ async function getTierPricingList() {
       // 试用套餐的 maxWindows 用于 tier 的显示，实际为最低级套餐，后续逻辑会处理
       if (!userPayInfo.value.isTrial) {
         const [first, ...rest] = data.rows
-        const trial = { ...first, windowPrice: 0, maxWindows: 5, subLevel: SubLevelEnum.Trial }
-        const basic = { ...first, minWindows: trial.maxWindows }
+        const trial = { ...first, windowPrice: 0, maxWindows: 5, subLevel: SubLevelEnum.Trial } as Plan
+        const basic = { ...first, minWindows: trial.maxWindows } as Plan
         dataList.value = [trial, basic, ...rest]
-        selectedPlan.value = route.query.type === SubLevelEnum.Trial ? dataList.value[0] : dataList.value[1]
+        selectedPlan.value = route.query.type === SubLevelEnum.Trial ? dataList.value![0] : dataList.value![1]
       } else {
         dataList.value = data.rows
         selectedPlan.value = dataList.value[0]
@@ -211,13 +214,14 @@ async function trialSubscribe() {
   <div class="overflow-auto wh-full">
     <div class="rx-container">
       <ViewsHeader :title="$route.meta.title" />
-      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto">
+      <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto content">
         <div class="flex-1 flex flex-col gap-8">
           <Profile class="w-full" v-if="dataList?.length" :list="dataList" :raw-list="rawList!" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
           <div v-show="!isTrial">
             <div class="title">{{ $t('订阅时长') }}</div>
-            <Duration class="mt-4" v-model="selectedDuration" :price="monthlySubscribePrice"></Duration>
+            <BlackFridayDuration v-if="blackFridayPeriod && !userPayInfo.isBlackFriday" class="mt-1" v-model="selectedDuration"></BlackFridayDuration>
+            <Duration v-else class="mt-4" v-model="selectedDuration" :price="monthlySubscribePrice"></Duration>
           </div>
           <div v-if="isTrial" class="flex items-center justify-between">
             <div class="title">{{ $t('订阅时长') }}</div>
@@ -272,6 +276,10 @@ async function trialSubscribe() {
 </template>
 
 <style lang="scss" scoped>
+.content::-webkit-scrollbar {
+  display: none;
+}
+
 .title {
   color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;

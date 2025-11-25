@@ -45,12 +45,12 @@ export class AfterLaunchTask {
     try {
       const roxyTabs = await readFile(this.browserItem.roxyTabsPath, 'utf8')
       defaultOpenUrl = JSON.parse(roxyTabs).filter(url => this.browserItem.isValidURL(url))
-      console.log('同步标签页 roxy_tabs', defaultOpenUrl)
+      console.log('Syncing tabs roxy_tabs', defaultOpenUrl)
       // 如果浏览器是由于关闭最后一个标签页而导致关闭的，这个时候龙哥会检测不到，所以每次读完 roxy_tabs，都要删除
       rm(this.browserItem.roxyTabsPath)
     } catch (error) {
       defaultOpenUrl = this.browserItem.winInfo.defaultOpenUrl || []
-      console.log(`roxy_tabs 文件不存在 跳过`, error)
+      console.log(`roxy_tabs file does not exist, skipping`, error)
     }
     return defaultOpenUrl
   }
@@ -68,12 +68,12 @@ export class AfterLaunchTask {
         lumiLogin = await readFile(this.browserItem.lumiLoginPath, 'utf8')
       }
       else {
-        console.log('lumiLogin文件超过1M，不同步到服务器', stats.size)
+        console.log('lumiLogin file exceeds 1M, not syncing to server', stats.size)
       }
       console.log('lumiLogin', lumiLogin)
     }
     catch (error) {
-      console.log(`lumiLogin 文件不存在 跳过`, error)
+      console.log(`lumiLogin file does not exist, skipping`, error)
     }
     return lumiLogin
   }
@@ -122,10 +122,10 @@ export class AfterLaunchTask {
     // 导入 cookie
     if (cookie && !clearCookie) {
       await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
-        console.log('导入cookie失败', err)
+        console.log('Failed to import cookies', err)
       })
       console.log('Storage.setCookies success')
-      console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
+      console.log('Cookie import time:', Date.now() - startTime, 'ms')
     }
 
     const pages = await this.browser?.pages()
@@ -135,7 +135,7 @@ export class AfterLaunchTask {
       const url = target.url()
       if (url && url !== 'about:blank') {
         await e.goto(url).catch((err) => {
-          console.log(`goto ${url} 失败`, err)
+          console.log(`goto ${url} failed`, err)
         })
 
       }
@@ -172,8 +172,8 @@ export class AfterLaunchTask {
       // 在网页里面发送检测 IP 请求
       const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '', city: '' }))
 
-      console.debug('当前 IP', latestProxyInfo.ip)
-      console.debug('上次 IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
+      console.debug('Current IP', latestProxyInfo.ip)
+      console.debug('Previous IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
       if (latestProxyInfo.ip && this.browserItem.beforeLaunchTask.proxyInfo.ip && latestProxyInfo.ip !== this.browserItem.beforeLaunchTask.proxyInfo.ip) {
 
         const dialogHtmlString = await ejs.renderFile(join(appConfig.htmlTemplateDir, 'ip-change-modal.ejs'), {

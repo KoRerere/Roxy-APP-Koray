@@ -34,7 +34,7 @@ instance.interceptors.response.use((response) => {
  * */
 export function windowArrange(params: SyncControlDoLayoutPayload) {
   const baseUrl = getRoxySyncAPIBaseURL()
-  console.log('窗口排列 params:', params)
+  console.log('Window arrangement params:', params)
   return instance.get(`${baseUrl}/api/arrange`, { params })
 }
 

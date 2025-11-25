@@ -21,10 +21,13 @@ export async function getSystemProxy(force = false) {
   sess ||= session.fromPartition('persist:resolveProxy')
 
   const proxy = await sess.resolveProxy('https://www.google.com')
-  const currSystemProxyAddr = proxy === 'DIRECT' ? '' : proxy?.split(' ').at(-1) || ''
+  const currSystemProxyAddr = proxy === 'DIRECT'
+    ? ''
+    : proxy?.split(' ').at(-1)?.split(';')?.filter(n => n !== 'DIRECT')?.[0] || ''
+
   if (currSystemProxyAddr !== systemProxyAddr) {
     // 系统代理地址发生变化，重新设置系统代理
-    setSystemProxy()
+    queueMicrotask(() => setSystemProxy())
   }
   if (systemProxyAddr !== currSystemProxyAddr) {
     console.log('getSystemProxy resolveProxy', proxy)

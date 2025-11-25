@@ -12,7 +12,7 @@ import { API } from '/@/api'
 
 interface Props {
   needAmount?: number
-  onConfirm?: (params: { payType: PayWay, rechargeAmount: number, extra: any }) => any | Promise<any>
+  onConfirm?: (params: { payType: PayWay, rechargeAmount: number, [key: string]: any }) => any | Promise<any>
   onCancel?: () => any | Promise<any>
 }
 
@@ -24,16 +24,17 @@ const emit = defineEmits<{
 const [_, onlyErrorToast] = useResponseToast()
 
 const selectedPayway = ref(PayWay.Card)
-const paywayList = Object.values(PayWay).filter(item => item !== PayWay.Balance).map(item => ({ value: item, discount: 0 }))
+const paywayList = [PayWay.Card, PayWay.Alipay, PayWay.Wechat, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
+
 const disabledMethods = ref<PayWay[]>([])
-const step = 10
 const min = 10
 const max = 10 ** 5
+const step = 10
 const amount = ref(10)
 const loading = ref(false)
 const minRechargeAmount = 1
 
-const rechargeAmount = computed(() => !!needAmount ? Math.max(needAmount, minRechargeAmount) : amount.value)
+const rechargeAmount = computed(() => !!needAmount ? Math.max(needAmount, minRechargeAmount) : (amount.value ?? min))
 
 onBeforeMount(() => {
   if (!!needAmount) {
@@ -53,7 +54,7 @@ async function querySupportPayway() {
   disabledMethods.value = Object.values(PayWay).filter(item => !payway.includes(item))
 
   if (!payway.includes(selectedPayway.value)) {
-    selectedPayway.value = payway[0]
+    selectedPayway.value = payway[0]!
   }
 }
 
@@ -69,11 +70,11 @@ function quickSelect(value: number) {
   delayQuery()
 }
 
-async function confirm(extra: any) {
+async function confirm(extraData: any) {
   await onConfirm?.({
     payType: selectedPayway.value,
     rechargeAmount: rechargeAmount.value,
-    extra
+    ...extraData,
   })
   close(false)
 }
@@ -100,12 +101,15 @@ function close(isCancel: boolean) {
         <RxAlert v-if="needAmount < minRechargeAmount" class="w-full" type="info" :content="$t('根据支付平台的要求，最低充值金额为 {amount}。', { amount: currency(minRechargeAmount).format() })"></RxAlert>
       </div>
       <ItemBlock v-else :title="$t('请输入充值金额')">
-        <div class="flex items-center gap-2">
-          <RxStepInput class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStepInput>
-          <RxAmountQuickCheck @select="quickSelect" />
+        <div class="flex flex-col items-center gap-4">
+          <RxStepInput class="!w-60 !h-18" size="lg" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" mode="currency" currency="USD" locale="en-US"
+            :minFractionDigits="0" :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @change="delayQuery">
+          </RxStepInput>
+          <div class="flex gap-2">
+            <RxAmountQuickCheck @select="quickSelect" />
+          </div>
         </div>
       </ItemBlock>
-      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
     </div>
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">

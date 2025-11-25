@@ -165,7 +165,7 @@ export class BrowserItem {
     // 如果浏览器已经存在，直接激活
     if (this.#browser) {
       await this.beforeLaunchTask.makeBrowserActive().catch((error) => {
-        console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
+        console.error(`make browser active ${this.winInfo.dirId} === Relaunch failed`, error)
       })
     }
     else {
@@ -243,18 +243,18 @@ export class BrowserItem {
 
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     let newVersion = syncValue?.version || 1
-    console.log('需要同步的文件：', needSyncFiles)
+    console.log('Files to sync:', needSyncFiles)
     try {
       const outputDist = await fileOperations.executeTask('compressFiles', { files: needSyncFiles, dest: outputZipPath })
-      console.log('缓存文件压缩成功：', outputDist)
+      console.log('Cache files compressed successfully:', outputDist)
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
-      console.log('开始上传缓存文件', remoteOssPath)
+      console.log('Starting to upload cache files', remoteOssPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
       writeFile(this.closeTimestampPath, `${Date.now().toString()}_${dirId}`)
-      console.log(`oss 缓存文件上传成功`)
+      console.log(`OSS cache files uploaded successfully`)
     }
     catch (error) {
       console.log('uploadData error: ', error)
@@ -294,7 +294,7 @@ export class BrowserItem {
 
         const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
         if (code === 0) {
-          console.log('修改指纹成功', fingerprint)
+          console.log('Fingerprint modified successfully', fingerprint)
           const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
           if (code === 0 && data.rows[0]) {
             // console.log('获取窗口信息成功', data.rows[0])

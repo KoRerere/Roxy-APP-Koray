@@ -189,6 +189,29 @@ const options: Configuration = {
     isRelocatable: false,
     identity: skipCodeSigning ? '-' : 'LINKV TECH PTE. LTD. (GLM223L5MF)', // 根据环境变量决定使用 ad-hoc 签名或证书签名
   },
+  linux: {
+    icon: 'logo.icns',
+    target: [
+      {
+        target: 'AppImage',
+        arch: ['x64',],
+      },
+      {
+        target: 'deb',
+        arch: ['x64',],
+      },
+    ],
+    category: 'Network',
+    synopsis: isDev ? 'Roxy Browser Dev - 开发版浏览器' : 'Roxy Browser - 现代化浏览器',
+    description: isDev ? 'RoxyBrowser 开发版本' : 'RoxyBrowser 是一款现代化的浏览器应用',
+    // Linux 启动参数（会添加到 .desktop 文件的 Exec 字段中）
+    executableArgs: ['--no-sandbox'],
+    desktop: {
+      Name: shortcutName,
+      Comment: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
+      Categories: 'Network;WebBrowser;',
+    },
+  },
   // publish: [
   //   {
   //     provider: 'github',
@@ -214,6 +237,9 @@ build({
     console.log(JSON.stringify(result))
     const outDir = path.join(workDir, options.directories!.output!)
     console.log('\x1B[32m', `打包完成🎉🎉🎉你要的都在 ${outDir} 目录里🤪🤪🤪`)
+    if (platform === 'darwin') {
+      import('./notarytool.mts')
+    }
   })
   .catch((error) => {
     console.log('\x1B[31m', '打包失败，错误信息：', error)

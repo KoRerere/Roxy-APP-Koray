@@ -29,27 +29,27 @@ const shortcutKeyCallbackMap: Record<ShortcutKey, () => any> = {
   // },
   /** 停止同步 */
   stopSync: () => {
-    console.log('停止同步 的快捷键被触发')
+    console.log('Stop sync shortcut triggered')
     SyncControlUtil.stop()
   },
   /** 显示所有窗口 */
   showAllWindows: () => {
-    console.log('显示所有窗口 的快捷键被触发')
+    console.log('Show all windows shortcut triggered')
     SyncControlUtil.showAllWindows()
   },
   /** 窗口排列 - 宫格布局 */
   gridLayout: () => {
-    console.log('窗口排列 的快捷键被触发')
+    console.log('Window arrangement shortcut triggered')
     SyncControlUtil.doLayout({ type: 'grid' })
   },
   /** 窗口排列 - 堆叠布局 */
   stackLayout: () => {
-    console.log('窗口排列 的快捷键被触发')
+    console.log('Window arrangement shortcut triggered')
     SyncControlUtil.doLayout({ type: 'stack' })
   },
   /** 批量输入 */
   openBatchInputDialog: () => {
-    console.log('批量输入 的快捷键被触发')
+    console.log('Batch input shortcut triggered')
     openBatchInputsDialog()
   },
   /** 延迟点击 开/关 */
@@ -74,37 +74,37 @@ const shortcutKeyCallbackMap: Record<ShortcutKey, () => any> = {
   // },
   /** 统一标签页 */
   unifiedTabs: () => {
-    console.log('统一标签页 的快捷键被触发')
+    console.log('Unify tabs shortcut triggered')
     SyncControlUtil.unifyTabs()
   },
   /** 关闭其他标签页 */
   closeOtherTabs: () => {
-    console.log('关闭其他标签页 的快捷键被触发')
+    console.log('Close other tabs shortcut triggered')
     SyncControlUtil.closeOtherTabs()
   },
   /** 关闭当前标签页 */
   closeCurrentTab: () => {
-    console.log('关闭当前标签页 的快捷键被触发')
+    console.log('Close current tab shortcut triggered')
     SyncControlUtil.closeCurrentTab()
   },
   /** 关闭空白标签页 */
   closeBlankTabs: () => {
-    console.log('关闭空白标签页 的快捷键被触发')
+    console.log('Close blank tabs shortcut triggered')
     SyncControlUtil.closeBlankTabs()
   },
   /** 显示同步窗口列表 */
   openSyncWindowList: () => {
-    console.log('显示同步窗口列表 的快捷键被触发')
+    console.log('Show sync window list shortcut triggered')
     openSyncingWindowList()
   },
   /** 打开网址 */
   openSites: () => {
-    console.log('打开网址 的快捷键被触发')
+    console.log('Open URLs shortcut triggered')
     openOpenSitesDialog()
   },
   /** 同步偏好设置 */
   openPreferenceSettings: () => {
-    console.log('同步偏好设置 的快捷键被触发')
+    console.log('Sync preferences shortcut triggered')
     openPreferencesDialog()
   },
 }
@@ -151,7 +151,7 @@ export async function registerGlobalShortcut(shortcutKey?: PreferenceSettings['s
 
   Object.assign(shortcutKeyBindingMap, shortcutKeys)
 
-  console.log('窗口同步器快捷键注册结果:', registerResult)
+  console.log('Window synchronizer shortcut registration result:', registerResult)
   return registerResult
 }
 

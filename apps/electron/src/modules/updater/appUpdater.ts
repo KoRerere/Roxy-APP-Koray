@@ -43,7 +43,7 @@ export const appUpdater = new class AppUpdater {
     console.debug(`user_get_app_upgrade result`, result)
 
     if (result.code !== 0 || !result.data) {
-      console.log(`更新数据为空 跳出更新`)
+      console.log(`Update data is empty, skipping update`)
       return result
     }
 
@@ -59,7 +59,7 @@ export const appUpdater = new class AppUpdater {
     console.debug(`AppUpdater downloadUrl`, downloadUrl)
 
     if (!downloadUrl) {
-      console.log(`更新地址为空 跳出更新`)
+      console.log(`Update URL is empty, skipping update`)
       return result
     }
     const publishOptions = {
@@ -73,9 +73,9 @@ export const appUpdater = new class AppUpdater {
     if (this.#autoUpdater) {
       // 动态更新autoUpdater的配置
       this.#autoUpdater.setFeedURL(publishOptions)
-      console.log('APP 远程版本：', version)
-      console.log('APP 本地版本：', app.getVersion())
-      console.log('远程版本是否大于本地版本：', compare(version, app.getVersion(), '>'))
+      console.log('APP remote version:', version)
+      console.log('APP local version:', app.getVersion())
+      console.log('Is remote version greater than local version:', compare(version, app.getVersion(), '>'))
       // 远程版本发生变化，重新检查更新
       if (version && compare(version, app.getVersion(), '>')) {
         await this.checkForUpdates()
@@ -104,22 +104,22 @@ export const appUpdater = new class AppUpdater {
       }
 
       this.downloadPromiser?.reject(error)
-      console.error(`autoUpdater 出现错误`, error)
+      console.error(`autoUpdater error occurred`, error)
     })
 
     this.#autoUpdater.on(`checking-for-update`, () => {
-      console.log(`autoUpdater 检查更新`)
+      console.log(`autoUpdater checking for updates`)
     })
 
     this.#autoUpdater.on('update-available', (updateInfo) => {
       this.isInProgress = true
-      console.log(`有更新`, updateInfo)
+      console.log(`Update available`, updateInfo)
     })
 
     // 更新下载完成
     this.#autoUpdater.on('update-downloaded', (event) => {
       this.isInProgress = false
-      console.log(`更新下载完成`, event)
+      console.log(`Update download completed`, event)
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
       this.sendSuccessMessage()
@@ -130,7 +130,7 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
       this.isInProgress = false
-      console.log(`当前无更新`, updateInfo)
+      console.log(`No update available`, updateInfo)
       this.downloadPromiser?.resolve()
     })
 
@@ -138,7 +138,7 @@ export const appUpdater = new class AppUpdater {
       this.isInProgress = true
       const { percent, total } = progressInfo
       this.checkForUpdatesOptions?.onDownloadProgress?.(Math.floor(percent))
-      console.log(`更新进度: `, percent)
+      console.log(`Update progress:`, percent)
       this.#updateMessageData.status = 'downloading'
       this.#updateMessageData.percent = percent
       this.#updateMessageData.total = total
@@ -158,7 +158,7 @@ export const appUpdater = new class AppUpdater {
   }
 
   async checkForUpdates() {
-    console.info(`检查更新 checkAppUpdate`, this.isInProgress)
+    console.info(`Checking for updates checkAppUpdate`, this.isInProgress)
 
     if (this.isInProgress) {
       return
@@ -189,14 +189,14 @@ export const appUpdater = new class AppUpdater {
   async hasUpdate() {
     const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
     const { version } = data
-    console.log(`远程版本`, version, `本地版本`, app.getVersion())
+    console.log(`Remote version`, version, `Local version`, app.getVersion())
     return Boolean(version) && compare(version, app.getVersion(), '>')
   }
 
   /** 立即退出应用并且更新 */
   async upgradeNow() {
     // autoUpdater.quitAndInstall();
-    console.info(`立即退出应用并且更新`)
+    console.info(`Quitting app and updating immediately`)
     if (isPackaged) {
       if (this.downloadPromiser?.promise) {
         this.downloadPromiser.promise.finally(() => {

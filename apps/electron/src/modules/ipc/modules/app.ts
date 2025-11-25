@@ -29,7 +29,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   ipcMain.on("app:restartAPIServer", (event) => {
     console.log(
       "app:restartAPIServer",
-      "openapi 端口或开关发生变化，正在重启服务...",
+      "OpenAPI port or switch changed, restarting service...",
     );
     openAPIServer.start();
   });
@@ -61,7 +61,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
 
   /** 重新拉起远程软件设置 */
   ipcMain.on("app:fetchSoftConfig", () => {
-    console.log("远程系统配置发生变化，重新拉取远程配置");
+    console.log("Remote system configuration changed, fetching remote config");
     fetchUserConfig();
   });
 
@@ -223,7 +223,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     });
     await proxyManager.enableDefaultProxy()
 
-    console.log("代理设置完毕");
+    console.log("Proxy configuration completed");
   });
 
   /** 关闭系统代理 */

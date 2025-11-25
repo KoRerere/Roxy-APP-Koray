@@ -166,13 +166,13 @@ function updateCurrentMembers(member: Record<string, any>) {
     <div class="flex flex-col gap-2" v-if="!multiple && currentMembers?.length">
       <div class="title">{{ $t('当前项目成员列表') }}</div>
       <div class="member-list">
-        <div class="flex items-center gap-2 member-item" v-for="member in currentMembers" :key="member.id">
-          <RxAvatar :avatar="member.avatar" :name="member.userName.slice(0, 2)" :color="member.avatarColor" :size="28" :font-size="14" />
+        <div class="flex items-center gap-2 member-item" v-for="item in currentMembers" :key="item.id">
+          <RxAvatar :avatar="item.avatar" :name="item.userName.slice(0, 2)" :color="item.avatarColor" :size="28" :font-size="14" />
           <div class="flex-1">
-            <div class="member-item-email">{{ member.email }}</div>
-            <div class="member-item-name">{{ member.userName }}</div>
+            <div :class="member.email">{{ item.email }}</div>
+            <div :class="member.name">{{ item.userName }}</div>
           </div>
-          <RxTag disabled :label="roleLabelMap[member.role as keyof typeof roleLabelMap]" />
+          <RxTag disabled :label="roleLabelMap[item.role as keyof typeof roleLabelMap]" />
         </div>
       </div>
     </div>
@@ -182,7 +182,7 @@ function updateCurrentMembers(member: Record<string, any>) {
 <style module="member">
 .email {
   color: var(--colors-text-text-primary);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 16px;
 }
 

@@ -1,5 +1,4 @@
 import type express from 'express'
-import { createProxyMiddleware } from 'http-proxy-middleware'
 import twoFactor from 'node-2fa'
 import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
@@ -73,7 +72,7 @@ export async function setupDashboardServer(app: express.Application) {
       res.success(proxyInfo)
     }
     catch (error) {
-      res.error('代理检测失败')
+      res.error('proxy detection failed')
       console.log('proxyDetection error', error)
     }
   })
@@ -87,7 +86,7 @@ export async function setupDashboardServer(app: express.Application) {
       res.success(result)
     }
     catch (error) {
-      res.error('刷新 URL 失败')
+      res.error('refresh url failed')
       console.log('refreshUrl error', error)
     }
   })
@@ -149,6 +148,7 @@ export async function setupDashboardServer(app: express.Application) {
     })
   }
   else {
+    const { createProxyMiddleware } = await import('http-proxy-middleware')
     app.use(createProxyMiddleware({
       target: import.meta.env.VITE_DEV_SERVER_URL,
       changeOrigin: true,

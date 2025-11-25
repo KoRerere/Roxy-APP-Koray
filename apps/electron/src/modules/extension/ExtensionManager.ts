@@ -12,7 +12,7 @@ import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
-import { isMac } from '/@/constants/common'
+import { isWindows } from '/@/constants/common'
 import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 import { store } from '/@/modules/store'
 import { ipcMain } from '/@/modules/ipc'
@@ -215,7 +215,7 @@ export class ExtensionManager {
       dirName = hash.digest('hex')
     }
 
-    pluginIconPath = pluginIconPath.replace(`${mediaProtocolName}:`, isMac ? '/' : '')
+    pluginIconPath = pluginIconPath.replace(`${mediaProtocolName}:`, isWindows ? '' : '/')
 
     const zip = new AdmZip()
     // 获取目录名

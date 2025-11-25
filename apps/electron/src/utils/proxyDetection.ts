@@ -128,7 +128,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     console.log("systemProxySwitch", store.systemProxySwitch);
     console.log(`dirId && proxyUserName`, dirId, proxyUserName);
     const systemProxyAddress = await getSystemProxy();
-    await startRoxynet();
+    await startRoxynet().catch(() => { })
 
     const isUseSystemProxy =
       proxyCategory === "SSH" ||
@@ -150,9 +150,9 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
           [dirId]: roxynetParams,
         });
       }
-      console.log("本次代理检测经过 roxynet");
+      console.log("This proxy detection goes through roxynet");
     } else {
-      console.log("本次代理检测不经过 roxynet");
+      console.log("This proxy detection does not go through roxynet");
     }
     // 是否为直连
     const isNoProxy = proxyCategory.toLocaleLowerCase() === "noproxy";
@@ -208,7 +208,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
         const { code, data } = await API.proxy
           .userGetTimezoneByIpList({ ip: result.ip })
           .catch((error) => {
-            console.log(`获取时区失败 === user_get_timezone_by_ip`, error);
+            console.log(`Failed to get timezone === user_get_timezone_by_ip`, error);
             return { code: 1, data: { timezone: "" } };
           });
         if (code === 0) {
@@ -338,7 +338,7 @@ async function checkHttpProxy(
     ...proxyConfig,
   });
 
-  console.log(`http 检测成功 url:${checkChannel}`, response.data);
+  console.log(`HTTP detection successful url:${checkChannel}`, response.data);
 
   return response.data;
 }

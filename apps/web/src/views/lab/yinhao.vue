@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { $t } from '/@/locales'
-import { isEmptyValue, safeParseJSON, sleep } from '/@/utils'
+import { enhanceCountdown, isEmptyValue, safeParseJSON, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { useDialog } from '/@/hooks/useDialog'
 import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
@@ -9,6 +9,7 @@ import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue';
 import VideoModal from '/@/views/tutorial/components/video-modal.vue';
 import CustomNewEmpty from '/@/components/custom-new-empty.vue'
 import HomeBackModal from '/@/views/browser/shared/home-back-modal.vue';
+import BlackFridayModal from '/@/views/campaign/black-friday-modal.vue';
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -23,7 +24,7 @@ function open1() {
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <WelcomeModal></WelcomeModal>
+      container: ({ hideModal }) => <HomeBackModal onClose={hideModal}></HomeBackModal>
     },
   })
 }
@@ -34,10 +35,11 @@ function open2() {
     modal: true,
     blockScroll: true,
     pt: {
-      // root: "!bg-transparent !border-none !shadow-none",
+      root: "!bg-transparent !border-none !shadow-none",
+      // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <HomeBackModal />,
+      container: ({ hideModal }) => <BlackFridayModal onClose={hideModal}></BlackFridayModal>
     },
   })
 }
@@ -263,6 +265,18 @@ function setInputsProps() {
 }
 
 //=========================================
+const countdown = ref()
+
+function testCountdown() {
+  const endTimestamp = 24 * 60 * 60 * 1000 + Date.now() + 3000
+  countdown.value = enhanceCountdown(endTimestamp, (data) => {
+    console.log(data)
+  }, { lessThan24Interval: 1 / 60 })
+}
+
+function stopTestCountdown() {
+  countdown.value?.stop()
+}
 
 </script>
 
@@ -279,6 +293,9 @@ function setInputsProps() {
 
     <RxButton label="open1" @click="open1"></RxButton>
     <RxButton label="open2" @click="open2"></RxButton>
+
+    <RxButton severity="secondary" label="start" @click="testCountdown"></RxButton>
+    <RxButton severity="secondary" label="stop" @click="stopTestCountdown"></RxButton>
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
         <template #default="{ inputs }">
@@ -301,4 +318,19 @@ function setInputsProps() {
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.platform {
+  color: var(--colors-text-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.cmd {
+  border: 1px solid var(--primitives-netural-900);
+  background: var(--pattern-editor-bg);
+  color: var(--pattern-editor-code);
+  font-family: "JetBrains Mono";
+  font-size: 12px;
+  font-weight: 500;
+}
+</style>

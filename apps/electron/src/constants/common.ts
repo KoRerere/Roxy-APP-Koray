@@ -45,6 +45,23 @@ export const isProd = appCliStartArgs['roxy-env'] ? appCliStartArgs['roxy-env'] 
 
 export const isMac = process.platform === 'darwin'
 export const isWindows = process.platform === 'win32'
+export const isLinux = process.platform === 'linux'
+/** 当前操作系统 */
+export const currentOS: 'macos' | 'windows' | 'linux' = {
+  darwin: 'macos',
+  win32: 'windows',
+  linux: 'linux',
+}[process.platform]
+/** 当前操作系统架构 */
+export const currentArch = (() => {
+  if (isMac) {
+    return process.arch === 'x64' ? 'intel' : 'apple'
+  } else if (isLinux) {
+    return 'x64'
+  } else {
+    return process.arch === 'x64' ? 'x64' : 'x86'
+  }
+})()
 
 export enum Role {
   /** 查看者 */
@@ -56,6 +73,4 @@ export enum Role {
   /** 拥有者 */
   OWNER = 3,
 }
-
-console.log('isDev', isDev)
 

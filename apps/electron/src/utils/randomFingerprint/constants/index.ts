@@ -1,3 +1,3 @@
-export * from './font-array'
+export * from './font-list'
 export * from './ssl-array'
 export * from './voices'

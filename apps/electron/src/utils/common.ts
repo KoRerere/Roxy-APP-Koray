@@ -9,7 +9,7 @@ import { format } from 'date-fns'
 import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
 import { readFile } from 'node:fs/promises'
-import { isMac } from '/@/constants/common'
+import { isLinux, isMac } from '/@/constants/common'
 import { execSync } from 'node:child_process'
 
 const webReadyPromise = Promise.withResolvers<true>()
@@ -63,7 +63,7 @@ export function getCommonRequestHeaders() {
     source: 'app',
     appVersion: app.getVersion(),
     osVersion: osConfig.osVersion,
-    ['R-OS']: isMac ? 'mac' : 'win',
+    ['R-OS']: isMac ? 'mac' : (isLinux ? 'linux' : 'win'),
     ['R-OSBIT']: isMac ? osConfig.cpu : osConfig.osBit,
     // ['R-DEVICE-ID']: await getDeviceId(),
     ['R-DEVICE-NAME']: encodeURIComponent(getSystemUserName()),
@@ -92,7 +92,7 @@ export const getDeviceId = (() => {
       // 如果 15s 内没有获取到设备 ID，则生成一个随机 ID
       const timer = setTimeout(() => {
         store.deviceId ||= randomUUID()
-        console.debug('15s 内没有获取到设备 ID，随机生成：', store.deviceId)
+        console.debug('Device ID not obtained within 15s, generating random ID:', store.deviceId)
         resolve(store.deviceId)
       }, 1000 * 15)
 
@@ -100,10 +100,10 @@ export const getDeviceId = (() => {
       store.deviceId ||= await genDeviceId()
       resolve(store.deviceId)
       console.timeEnd('获取设备 ID 耗时')
-      console.debug("设备唯一 ID:", store.deviceId)
+      console.debug("Unique device ID:", store.deviceId)
       clearTimeout(timer)
     } else {
-      console.debug('设备 ID 已存在', store.deviceId)
+      console.debug('Device ID already exists', store.deviceId)
       if (!store.mac) {
         store.deviceId = await genDeviceId()
       }

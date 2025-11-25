@@ -24,3 +24,13 @@ export function validateTRC20Address(address: string) {
 
   return { isValid: true, message: '地址有效' }
 }
+
+export function validatePayPalAddress(address: string) {
+  const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+
+  if (!emailRegex.test(address)) {
+    return { isValid: false, message: $t('请输入正确的邮箱地址') }
+  }
+
+  return { isValid: true, message: '地址有效' }
+}

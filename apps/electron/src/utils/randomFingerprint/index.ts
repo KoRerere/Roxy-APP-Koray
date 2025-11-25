@@ -1,9 +1,10 @@
 import type { UserAddWindowInfoV2CreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api/'
 import { genRandomFonts, getMacAddress } from '/@/utils'
-import { voices } from './constants/'
+import { fontList, voices } from './constants/'
 import { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import { openAPICommonHeaders } from '/@/constants/common'
+import { sampleSize } from 'es-toolkit'
 
 /**
  * 获取canvas随机值,从0123456789ABCDEF里面随机取32位
@@ -13,6 +14,11 @@ export function getCanvasContextNoiseValue() {
   return Array.from({ length: 32 }, () => {
     return randStr[getRandomInt(0, randStr.length - 1)]
   }).join('')
+}
+
+/** 字体选择随机的时候，就从 font.json 文件里面随机选择100-500个，传给allowFontList ，用; 分割 */
+export function getAllowFontList() {
+  return sampleSize(fontList, Math.floor(Math.random() * 400) + 100).join(';')
 }
 
 export function getwebGLNoiseValue() {
@@ -129,6 +135,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoV2CreatePay
         },
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
       font: fontType ? genRandomFonts().join(';') : undefined,
+      allowFontList: fontType ? getAllowFontList() : undefined,
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
       canvasValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : undefined,
@@ -150,6 +157,7 @@ export const randomFingerprintFuncMap = {
   getSpeechSynthesis,
   getClientRectsValue,
   getwebGLNoiseValue,
+  getAllowFontList
 }
 
 export type RandomFingerprintFuncMap = keyof typeof randomFingerprintFuncMap

@@ -39,7 +39,7 @@ async function download() {
     URL.revokeObjectURL(url)
   }
   catch (error) {
-    console.error('下载图片失败:', error)
+    console.error('Failed to download image:', error)
   }
 }
 

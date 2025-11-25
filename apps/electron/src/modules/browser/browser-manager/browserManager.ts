@@ -64,7 +64,7 @@ export class BrowserManager {
     }
     // 这里需要延迟到下一次事件循环，因为浏览器启动是异步的
     await setTimeout()
-    console.log(`BrowserManager ${dirId} === 获取已打开的浏览器`)
+    console.log(`BrowserManager ${dirId} === Getting opened browser`)
     console.log('openedBrowserMap size:', this.openedBrowserMap.size)
     return this.openedBrowserMap.get(dirId)
   }
@@ -72,13 +72,13 @@ export class BrowserManager {
   /** 启动浏览器 */
   async launch(winInfo: WindowItemType, launchBy?: LaunchBy) {
     const dirId = winInfo.dirId
-    console.log(`BrowserManager ${dirId} === 启动浏览器`)
+    console.log(`BrowserManager ${dirId} === Launching browser`)
     if (!dirId) {
-      throw new Error('dirId 不能为空')
+      throw new Error('dirId is empty')
     }
 
     if (this.uploadDataQueue.has(dirId)) {
-      console.log(`BrowserManager ${dirId} === 浏览器数据正在上传中`)
+      console.log(`BrowserManager ${dirId} === Browser data is uploading`)
       await this.uploadDataQueue.get(dirId)
       await setTimeout(50)
       await this.launch(winInfo, launchBy)
@@ -115,7 +115,7 @@ export class BrowserManager {
       this.syncWindowOpenStatus()
 
       const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
-        console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
+        console.log(`BrowserManager ${dirId} === Browser disconnected`)
         browserItem.off(`close-${dirId}`, onCloseHandler)
         if (uploadDataPromise) {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
@@ -139,7 +139,7 @@ export class BrowserManager {
 
       return browserItem.launchInfo
     } catch (error) {
-      console.error(`BrowserManager ${dirId} === 启动失败`, error)
+      console.error(`BrowserManager ${dirId} === Launch failed`, error)
       return Promise.reject(error)
     } finally {
       this.openingBrowserMap.delete(dirId)
@@ -149,7 +149,7 @@ export class BrowserManager {
 
   /** 批量启动浏览器 */
   async batchLaunch(dirIds: string[]) {
-    console.log(`BrowserManager === 批量启动浏览器`, dirIds)
+    console.log(`BrowserManager === Batch launching browsers`, dirIds)
     const isNeedBatchReq = dirIds.length > 8
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
@@ -159,13 +159,13 @@ export class BrowserManager {
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
     for (const winInfo of winInfoList) {
       await this.launch(winInfo).catch((error) => {
-        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
+        console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
       })
     }
 
     for (const winInfo of await secondPromise) {
       await this.launch(winInfo).catch((error) => {
-        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
+        console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
       })
     }
   }
@@ -265,7 +265,7 @@ export class BrowserManager {
       return { dirId, success: true }
     }
     catch (error) {
-      console.error(`BrowserManager ${dirId} === 删除失败`, error)
+      console.error(`BrowserManager ${dirId} === Delete failed`, error)
       return { dirId, success: false }
     }
   }
@@ -357,7 +357,7 @@ export class BrowserManager {
           .sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {
-        console.error(`BrowserManager === 获取窗口信息失败`, error)
+        console.error(`BrowserManager === Failed to get window info`, error)
         dirIds.forEach(dirId => {
           sendErrorMessage($t('获取窗口信息失败'), dirId, error)
         })
@@ -411,10 +411,10 @@ export class BrowserManager {
     Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
       const ids = browserItems!.map(item => item.winInfo.id!)
       API.window.userModifyWindowReportTimeCreate({ ids }, { headers: { workspaceId } }).then(() => {
-        console.log(`定时同步窗口状态`, ids)
+        console.log(`Scheduled sync window status`, ids)
       }).catch((e) => {
-        console.error(`窗口 ids:`, ids)
-        console.error(`定时同步窗口状态失败`, e)
+        console.error(`Window ids:`, ids)
+        console.error(`Scheduled sync window status failed`, e)
       })
     })
   }
@@ -428,7 +428,7 @@ export class BrowserManager {
     Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
       const params = browserItems!.map(item => ({ id: item.winInfo.id, openStatus: true }))
       API.window.userMdfWindowSyncV2Create(params, { headers: { workspaceId } }).then(() => {
-        console.log(`启动时同步窗口打开状态`, params)
+        console.log(`Sync window open status on launch`, params)
         browserItems?.forEach(item => {
           item.isSyncedWindowOpenStatus = true
         })

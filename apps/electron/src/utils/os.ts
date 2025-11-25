@@ -48,7 +48,7 @@ function getMacDiskInfo(filePath: string) {
   return new Promise((resolve) => {
     exec(`df -P "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
-        console.error(`执行 df 命令失败: ${error}`)
+        console.error(`Failed to execute df command: ${error}`)
         return resolve({ error: error.message })
       }
 

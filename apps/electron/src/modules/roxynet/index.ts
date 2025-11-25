@@ -5,7 +5,7 @@ import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { fileExists, getSystemProxy, isProcessExists } from '/@/utils'
-import { isMac } from '/@/constants/common'
+import { isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { chmod } from 'node:fs/promises'
 
@@ -74,7 +74,7 @@ export async function startRoxynet() {
   console.log('originText:', originText)
   const encText = encryptByDESModeCBC(originText)
 
-  if (isMac) {
+  if (!isWindows) {
     await chmod(appConfig.roxynetBinPath, 0o755)
   }
   const startAppCmdArgs = process.argv.slice(1)

@@ -210,7 +210,7 @@ function reloadVideo() {
   isTryReLoading.value = true
   videoRef.value?.load()
   videoRef.value?.play().catch(err => {
-    console.error('重新播放失败：', err);
+    console.error('Failed to replay:', err);
   });
 }
 

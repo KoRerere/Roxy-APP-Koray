@@ -19,9 +19,16 @@ const [showModal] = useDialog()
 const { getPromotionInfo } = useReferralProgram()
 const overviewItems = computed(() => {
   const {
-    promotionClickCount = 0, registeredUserNum = 0, purchaseUserNum = 0, totalIncome = 0, todayIncome = 0,
-    todayRegisteredUserNum = 0, purchaseUserTotalAmount = 0, pendingAmount = 0,
-    todayPromotionClickCount = 0, todayPurchaseUserNum = 0
+    promotionClickCount = 0,
+    registeredUserNum = 0,
+    purchaseUserNum = 0,
+    totalIncome = 0,
+    // todayIncome = 0,
+    todayRegisteredUserNum = 0,
+    purchaseUserTotalAmount = 0,
+    pendingAmount = 0,
+    todayPromotionClickCount = 0,
+    todayPurchaseUserNum = 0
   } = promotionInfo
 
   return [
@@ -50,7 +57,10 @@ const overviewItems = computed(() => {
       tootip: $t('消费后 7 天内完成审核'),
       totalNumberFlowProps: {
         maximumFractionDigits: 0,
-        format: { style: 'currency', currency: 'USD' }
+        format: {
+          style: 'currency',
+          currency: 'USD'
+        }
       }
     },
     {
@@ -69,7 +79,7 @@ const overviewItems = computed(() => {
     {
       title: $t('已获推广奖励'),
       total: Math.min(maxNumber, totalIncome),
-      todayCount: todayIncome,
+      // todayCount: todayIncome,
       // tootip: $t('已获推广奖励'),
       style: {
         color: '#12A3FC',
@@ -121,12 +131,10 @@ function showWithdrawDialog() {
         <div class="referal-reward-overview-item">
           <div class="title">
             <span class="total" :style="item.style">
-              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0"
-                v-bind="item.totalNumberFlowProps" />
+              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0" v-bind="(item.totalNumberFlowProps as any)" />
             </span>
             <span v-if="item.todayCount" class="increase">
-              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0"
-                v-bind="item.todayNumberFlowProps" />
+              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0" />
             </span>
           </div>
           <div class="desc">

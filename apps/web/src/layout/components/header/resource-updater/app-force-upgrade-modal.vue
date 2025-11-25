@@ -28,7 +28,7 @@ function remindMeLater() {
   clearTimeout(timer)
 
   if (isDev) {
-    console.log('开发环境下，稍后提醒我无效')
+    console.log('In development environment, "remind me later" is invalid')
     return
   }
 

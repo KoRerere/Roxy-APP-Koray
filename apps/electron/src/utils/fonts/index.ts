@@ -111,7 +111,7 @@ fontList.getFonts()
   })
   .catch((err) => {
     console.log(err)
-    console.log('获取本地字体失败')
+    console.log('Failed to get local fonts')
   })
 
 /** 随机生成字体 */

@@ -42,7 +42,7 @@ const newOrderNo = ref()
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const hideTypeConfig = reactive({
-  value: 'list_use',
+  value: localStorage.getItem('ProxyShopHideType') || 'window_use',
   trueValue: 'window_use',
   falseValue: 'list_use',
 })
@@ -72,6 +72,7 @@ const filters = reactive({
     return Object.fromEntries(filters.list.filter(item => item.value).map(item => [item.name, item.value]))
   },
   onChange() {
+    localStorage.setItem('ProxyShopHideType', hideTypeConfig.value)
     tableRef.value?.refresh({ ...filters.getValues() })
   }
 })

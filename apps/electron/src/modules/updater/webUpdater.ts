@@ -8,7 +8,7 @@ import { appConfig } from '/@/constants'
 import { getLocalWebVersion, getMainWindow, getWebEntryUrl, updateMainWindowPageTitle } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
 import { fileExists } from '/@/utils'
-import { isMac } from '/@/constants/common'
+import { isWindows } from '/@/constants/common'
 import { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { ipcMain } from '/@/modules/ipc'
 import { store } from '/@/modules/store'
@@ -26,6 +26,8 @@ export interface CheckForUpdatesOptions {
   onDownloadProgress?: (percentage: number) => void
   onDownloadComplete?: () => any
 }
+
+const os = isWindows ? 'Windows' : 'macOS'
 
 export const webUpdater = new class WebUpdater {
   timer: NodeJS.Timeout | null = null
@@ -50,12 +52,12 @@ export const webUpdater = new class WebUpdater {
   }
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
-    return `${this.webDomain}/public/package/web/${app.getVersion()}/${isMac ? 'macOS' : 'Windows'}/version.json`
+    return `${this.webDomain}/public/package/web/${app.getVersion()}/${os}/version.json`
   }
 
   /** web 资源包下载地址 */
   get downloadUrl() {
-    return `${this.webDomain}/public/package/web/${app.getVersion()}/${isMac ? 'macOS' : 'Windows'}/dist.zip`
+    return `${this.webDomain}/public/package/web/${app.getVersion()}/${os}/dist.zip`
   }
 
   constructor() {

@@ -37,7 +37,7 @@ if (import.meta.hot) {
         i18n.global.setLocaleMessage(i18n.global.locale.value, data)
       })
       .catch((error) => {
-        console.error('JSON加载失败:', error)
+        console.error('Failed to load JSON:', error)
       })
   })
 }

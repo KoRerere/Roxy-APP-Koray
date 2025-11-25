@@ -34,11 +34,15 @@ function executeSomethingBySwitchWorkspace(next: (...args: any[]) => void) {
     if (workspaceStore.workspaceList.length === 0) {
       await workspaceStore.getWorkspaceList()
     }
+    if (workspaceStore.currentWorkspace?.role === Role.OWNER) {
+      next(...args)
+      return
+    }
     const ownerWorkspace = workspaceStore.workspaceList.find(item => item.workspaceDefault && item.role === Role.OWNER)
     if (ownerWorkspace) {
       workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).finally(() => {
         setTimeout(() => {
-          next?.(...args)
+          next(...args)
         }, 1500)
       })
     }
@@ -52,8 +56,7 @@ export function useHandleBusinessCode() {
   const { isOwner } = storeToRefs(useRoleStore())
 
   async function handleBusinessCode(code: number, next?: () => void) {
-    const privateUpgrade = isOwner.value ? toUpgradePlan : switchWorkspaceAndToUpgradePlan
-    const privateMoreExpand = isOwner.value ? buyMoreExpand : executeSomethingBySwitchWorkspace(buyMoreExpand)
+    const privateMoreExpand = executeSomethingBySwitchWorkspace(buyMoreExpand)
 
     // 空间数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
@@ -152,7 +155,7 @@ export function useHandleBusinessCode() {
         severity: 'warn',
         summary: $t('请升级您的套餐'),
         detail: <I18nT keypath={$t('模板功能仅限 Roxy 会员使用，{link}', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={privateUpgrade}>{$t('单击此处升级')}</a> }}
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
         </I18nT>,
         life: 5000
       })

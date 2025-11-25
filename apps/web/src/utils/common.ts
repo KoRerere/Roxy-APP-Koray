@@ -19,7 +19,7 @@ export function showPageLoading() {
   clearTimeout(pageLoadingTimer)
   // 如果 10s 内没有加载完成，则跳转到 500 页面
   pageLoadingTimer = setTimeout(async () => {
-    console.log('跳转到 500 页面')
+    console.log('Redirecting to 500 page')
     const { default: router } = await import('/@/router')
     router.push({ name: '500' })
     hidePageLoading()

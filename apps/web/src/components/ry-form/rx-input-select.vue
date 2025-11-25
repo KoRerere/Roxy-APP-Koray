@@ -82,7 +82,7 @@ const attrs = useAttrs()
 :deep(.p-select-clear-icon) {
   width: 12px;
   height: 12px;
-  margin-top: 0;
+  margin-top: 10px;
   transform: translateY(-50%);
 }
 

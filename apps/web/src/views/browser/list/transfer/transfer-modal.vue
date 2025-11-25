@@ -4,7 +4,7 @@ import ChooseSpace from './choose-space.vue'
 import { API } from '/@/api';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
-import { startCountdown } from '/@/utils';
+import { enhanceCountdown } from '/@/utils';
 import { useWorkspaceStore } from '/@/stores/workspace';
 import { useRoleStore } from "/@/stores/role"
 
@@ -88,7 +88,7 @@ const countdown = ref()
 const stopCountdown = ref()
 
 onBeforeUnmount(() => {
-  stopCountdown.value?.()
+  stopCountdown.value?.stop()
 })
 
 async function sendCode() {
@@ -101,9 +101,9 @@ async function sendCode() {
   const { code, msg } = await API.window.userTransferWindowVerifyCodeList({ targetWorkspaceId: selectedWorkspace.value.workspaceId })
   if (code !== 0) return onlyErrorToast(code, msg)
   step2.value = true
-  stopCountdown.value = startCountdown(Date.now() + 1000 * 60, (time) => {
+  stopCountdown.value = enhanceCountdown(Date.now() + 1000 * 60, (time) => {
     countdown.value = time
-  })
+  }, { alwaysSecondLevel: true })
 }
 
 async function onTransfer(isSelf: boolean) {

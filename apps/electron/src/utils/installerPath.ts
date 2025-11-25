@@ -21,7 +21,7 @@ export async function getInstallerPath(): Promise<string | null> {
     // 去除可能的换行符和空格
     return content.trim()
   } catch (error) {
-    console.warn('无法读取安装程序路径文件:', error)
+    console.warn('Failed to read installer path file:', error)
     return null
   }
 }
@@ -81,10 +81,10 @@ export async function clearInstallerPath(): Promise<boolean> {
     // 清空文件内容（写入空字符串）
     await writeFile(installerPathFile, '', 'utf-8')
 
-    console.log('installer-path 文件内容已清空')
+    console.log('installer-path file content cleared')
     return true
   } catch (error) {
-    console.error('清空 installer-path 文件失败:', error)
+    console.error('Failed to clear installer-path file:', error)
     return false
   }
 }

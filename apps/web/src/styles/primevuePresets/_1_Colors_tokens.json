@@ -167,25 +167,37 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "scrollbar": {
+        "bg": "{primitives.netural.50}",
+        "border": "{colors.border.border-inactive}",
+        "indicator": "{primitives.netural.200}"
+      },
+      "collapse": {
+        "bg": "{primitives.netural.100}"
+      },
       "marquee": {
         "indicator": "{primitives.netural.100}",
         "indicator-active": "{colors.background.bg-brand}"
       },
       "skeleton": {
-        "bg": "#ebf1f5"
-      },
-      "collapse": {
-        "bg": "{primitives.netural.100}"
+        "bg": "#ebf1f5",
+        "bg-overlay": "#ebf1f5"
       },
       "progress": {
         "bg": "{primitives.netural.200}",
         "success": "{primitives.green.500}",
         "info": "{primitives.blue.500}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.50}",
-        "border": "{colors.border.border-inactive}",
-        "indicator": "{primitives.netural.200}"
+      "tag": {
+        "bg": "{primitives.netural.100}",
+        "bg-hover": "{primitives.netural.200}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
+        "border": "{colors.border.border-subtle}",
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{component.tag.bg}"
       },
       "button": {
         "primary": {
@@ -229,16 +241,12 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
-      "tag": {
-        "bg": "{primitives.netural.100}",
-        "bg-hover": "{primitives.netural.200}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{component.tag.bg}"
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}",
+        "text": "{colors.text.text-secondary}"
       },
       "tooltip": {
         "action": {
@@ -248,13 +256,6 @@
         "text-primary": "{primitives.netural.0}",
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
-      },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}",
-        "text": "{colors.text.text-secondary}"
       },
       "table": {
         "bg-header": "{primitives.netural.50}",
@@ -370,6 +371,16 @@
         }
       },
       "syncbar": {
+        "btn": {
+          "bg-hover": "{primitives.netural.700}",
+          "bg": "{primitives.netural.800}",
+          "border": "{primitives.netural.600}",
+          "border-hover": "{primitives.netural.500}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.25}",
+          "icon-hover": "{primitives.netural.0}"
+        },
         "dropdown": {
           "bg": "{pattern.syncbar.bg}",
           "bg-hover": "{primitives.netural.700}",
@@ -377,16 +388,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.50}",
           "icon-hover": "{primitives.netural.25}"
-        },
-        "btn": {
-          "bg": "{primitives.netural.800}",
-          "bg-hover": "{primitives.netural.700}",
-          "border": "{primitives.netural.600}",
-          "border-hover": "{primitives.netural.500}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.25}",
-          "icon-hover": "{primitives.netural.0}"
         },
         "title": "#0cef4c",
         "tag": {
@@ -493,6 +494,9 @@
         "text-announcement": "#ffffff",
         "bg-faq-btn": "{colors.background.bg-block}",
         "bg-nav-btn": "{colors.alpha.alpha-black-5}"
+      },
+      "BFCM": {
+        "bg-card": "#000000"
       }
     },
     "bg-start": "#ffffff"
@@ -665,14 +669,20 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "scrollbar": {
+        "bg": "{primitives.netural.800}",
+        "border": "{colors.border.border-subtle}",
+        "indicator": "{primitives.netural.600}"
+      },
+      "collapse": {
+        "bg": "{primitives.netural.800}"
+      },
       "marquee": {
         "indicator": "{primitives.netural.700}",
         "indicator-active": "{colors.background.bg-brand}"
       },
       "skeleton": {
-        "bg": "{primitives.netural.800}"
-      },
-      "collapse": {
+        "bg-overlay": "#363d45",
         "bg": "{primitives.netural.800}"
       },
       "progress": {
@@ -680,10 +690,16 @@
         "success": "{primitives.green.400}",
         "info": "{primitives.blue.400}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.800}",
+      "tag": {
+        "bg": "{colors.background.bg-action}",
+        "bg-hover": "{colors.background.bg-action-hover}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
         "border": "{colors.border.border-subtle}",
-        "indicator": "{primitives.netural.600}"
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{primitives.netural.700}"
       },
       "button": {
         "primary": {
@@ -727,16 +743,12 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
-      "tag": {
-        "bg": "{colors.background.bg-action}",
-        "bg-hover": "{colors.background.bg-action-hover}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{primitives.netural.700}"
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.600}",
+        "text": "{colors.text.text-secondary}"
       },
       "tooltip": {
         "action": {
@@ -746,13 +758,6 @@
         "text-primary": "{primitives.netural.0}",
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
-      },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.600}",
-        "text": "{colors.text.text-secondary}"
       },
       "table": {
         "bg-header": "{primitives.netural.800}",
@@ -868,6 +873,16 @@
         }
       },
       "syncbar": {
+        "btn": {
+          "bg-hover": "{primitives.netural.700}",
+          "bg": "{primitives.netural.800}",
+          "border": "{primitives.netural.600}",
+          "border-hover": "{primitives.netural.500}",
+          "text": "{primitives.netural.25}",
+          "text-hover": "{primitives.netural.0}",
+          "icon": "{primitives.netural.25}",
+          "icon-hover": "{primitives.netural.0}"
+        },
         "dropdown": {
           "bg": "{pattern.syncbar.bg}",
           "bg-hover": "{primitives.netural.700}",
@@ -875,16 +890,6 @@
           "text-hover": "{primitives.netural.0}",
           "icon": "{primitives.netural.50}",
           "icon-hover": "{primitives.netural.25}"
-        },
-        "btn": {
-          "bg": "{primitives.netural.800}",
-          "bg-hover": "{primitives.netural.700}",
-          "border": "{primitives.netural.600}",
-          "border-hover": "{primitives.netural.500}",
-          "text": "{primitives.netural.25}",
-          "text-hover": "{primitives.netural.0}",
-          "icon": "{primitives.netural.25}",
-          "icon-hover": "{primitives.netural.0}"
         },
         "title": "#0cef4c",
         "tag": {
@@ -991,6 +996,9 @@
         "bg-announcement": "{colors.background.bg-brand}",
         "bg-faq-btn": "{colors.background.bg-example}",
         "bg-nav-btn": "{colors.alpha.alpha-white-10}"
+      },
+      "BFCM": {
+        "bg-card": "#222938"
       }
     },
     "bg-start": "#ffffff"

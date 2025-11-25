@@ -22,9 +22,10 @@ module.exports = {
     __dirname: false, // 保持 __dirname 的原样（在 Node.js 中很重要）
     __filename: false,
   },
-  // 将 font-list 作为外部依赖，不参与打包，由运行时从 dist/node_modules 加载
+  // 将某些库作为外部依赖，不参与打包，由运行时从 node_modules 加载
   externals: {
     'font-list': 'commonjs2 font-list',
+    'http-proxy-middleware': 'commonjs2 http-proxy-middleware',
   },
   optimization: {
     // moduleIds: 'named',  // 避免模块变成数字

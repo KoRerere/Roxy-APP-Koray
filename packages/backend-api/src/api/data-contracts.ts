@@ -3278,6 +3278,16 @@ export interface UserIsNaifeiUserListData {
   msg: string;
 }
 
+export interface GetBlackFridayTimeListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    discountPercentage: number;
+  };
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -4207,7 +4217,7 @@ export interface UserGetWindowInfoListListParams {
    */
   endUpdateDate?: string;
   /**
-   * 查询key: ["name_remark","name", "remark", "account", "tag","proxy", "project_name", "sortNum"]
+   * 查询key: ["name_remark","name", "remark", "account", "tag","proxy", "project_name", "sortNum"，"os","osVersion"]
    * @example "name"
    */
   queryKey?: string;
@@ -6772,6 +6782,8 @@ export interface UserGetUserPayInfoListData {
       /** False未完成 True已完成 */
       createProxyVideoEntryStatus: boolean;
     };
+    /** 是否购买黑五套餐 */
+    isBlackFriday: boolean;
   };
   msg: string;
 }

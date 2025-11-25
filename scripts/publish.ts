@@ -8,7 +8,9 @@ import yaml from "js-yaml";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const isProd = process.env.NODE_ENV === "production";
 const isMac = process.platform === "darwin";
+const isLinux = process.platform === "linux";
 console.log("isMac:", isMac);
+console.log("isLinux:", isLinux);
 console.log("isProd:", isProd);
 const ossConfig = {
   region: "oss-cn-shenzhen",
@@ -19,7 +21,7 @@ const ossConfig = {
 
 const apiBaseUrl = `${isProd ? "https://admin.lumibrowser.com" : "https://admintest.roxybrowser.co"}/fb-admin-api`;
 // 懒得模拟登录获取 token 了，反正 token 是永久的
-const token = isProd ? 'ratCYB7Rf5LOp89x1744776621745' : 'UJ4UKYUU3UKGfAmo1743595549211'
+const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'UJ4UKYUU3UKGfAmo1743595549211'
 /** 安装包输出路径 */
 const outDir = join(import.meta.dirname, "../out");
 /** YAML 文件路径 */
@@ -46,6 +48,8 @@ function genUploadPath(osBit: string, fileName: string) {
     return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`;
   } else if (isMac) {
     return `/public/package/app/macOS/${osBitMap[osBit]}/${appVersion}/${fileName}`;
+  } else if (isLinux) {
+    return `/public/package/app/Linux/x64/${appVersion}/${fileName}`;
   }
 }
 

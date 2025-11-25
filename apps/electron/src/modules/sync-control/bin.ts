@@ -119,7 +119,7 @@ export async function startRoxySync(pIds: number[] = []) {
         resolve(true)
         const browser = getMainControlBrowser()
         Reflect.set(browser!, 'disconnectedListener', () => {
-          console.log('主控浏览器关闭，停止同步')
+          console.log('Main control browser closed, stopping sync')
           closeAllSyncDialogs()
           createSynchronizerWindow()
           stopRoxySync()
@@ -169,7 +169,7 @@ export function getMainControlBrowser() {
   const allSyncControlBrowsers = getAllSyncControlBrowsers()
   const mainControlBrowser = allSyncControlBrowsers.find(item => item.launchInfo?.pid === mainControlPId)
   if (!mainControlBrowser) {
-    console.error('主控浏览器不存在', mainControlPId)
+    console.error('Main control browser does not exist', mainControlPId)
   }
   return mainControlBrowser
 }
@@ -203,16 +203,16 @@ export async function setMainControlColor(color = syncControlSettings.mainContro
   const mainControlWindowColor = color.split('#').at(-1)!
   console.log('mainControlWindowColor', mainControlWindowColor)
   const rgb = mainControlWindowColor === defaultMainControlWindowColor ? '' : mainControlWindowColor.slice(-2) + mainControlWindowColor.slice(0, -2)
-  console.log('设置主控窗口颜色', rgb)
+  console.log('Setting main control window color', rgb)
   // 设置主窗口颜色： await cdpSesssion.send('Browser.setColor',{rgb:"FFFF6347"});
   // 还原背景颜色： await cdpSesssion.send('Browser.setColor',{rgb:""});
   const mainWindow = getMainControlBrowser()
   if (mainWindow) {
     await mainWindow.getBrowser()?.client.Browser.setColor({ rgb }).catch((err) => {
-      console.error('设置主控窗口颜色失败', err)
+      console.error('Failed to set main control window color', err)
     })
-    console.log('设置主控窗口颜色成功', rgb)
+    console.log('Main control window color set successfully', rgb)
   } else {
-    mainControlPId && console.error('主控窗口不存在', mainControlPId)
+    mainControlPId && console.error('Main control window does not exist', mainControlPId)
   }
 }

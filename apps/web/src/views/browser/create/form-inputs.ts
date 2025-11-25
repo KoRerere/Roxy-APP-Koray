@@ -88,7 +88,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const osIconMap = {
     windows: 'platforms/rx_os_windows',
-    linux: 'base/logo',
+    linux: 'platforms/rx_os_linux',
     macos: 'platforms/rx_os_macOS',
     android: 'platforms/rx_os_android',
     ios: 'platforms/rx_os_iOS',
@@ -676,11 +676,15 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { genRandomFonts } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { genRandomFonts, getAllowFontList } = await electronAPI.send('util:callRandomFingerprintFunc', {
             genRandomFonts: [],
+            getAllowFontList: [],
           })
 
-          Object.assign(original, { font: genRandomFonts.join(';') })
+          Object.assign(original, {
+            font: genRandomFonts.join(';'),
+            allowFontList: getAllowFontList
+          })
         }
         else {
           Reflect.deleteProperty(original, 'font')

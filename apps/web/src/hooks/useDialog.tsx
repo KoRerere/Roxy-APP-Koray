@@ -58,6 +58,7 @@ export function useDialog( ) {
       }
 
       const innerProps = ref<UseDialogProps>({
+        draggable:false,
         ...props,
         handleCancel: () => {
           hideModal()

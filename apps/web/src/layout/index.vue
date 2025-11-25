@@ -117,6 +117,7 @@ function onRenewal() {
   } else {
     emitter.emit('showRenewalDialog', {
       paySuccess: () => {
+        router.replace({ name: 'wallet', query: { name: 'manage' } })
         emitter.emit('updateBillList')
       }
     })

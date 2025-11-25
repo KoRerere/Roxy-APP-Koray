@@ -192,7 +192,8 @@ export const useUserStore = defineStore(
       });
     }
 
-    function clearUserInfo() {
+    async function clearUserInfo() {
+      const logoutPromise = electronAPI.send('user:logout')
       if (loginWay.value === 'password') {
         userInfo.value = {
           email: userInfo.value.email,
@@ -203,10 +204,10 @@ export const useUserStore = defineStore(
       }
       userCards.value = undefined
       token.value = ''
-      electronAPI.send('user:logout')
       mixpanel.reset()
       workspaceStore.resetWorkspace()
       tutorialStore.resetVideoMaps()
+      await logoutPromise
     }
 
     async function getUserConfig(force = false) {

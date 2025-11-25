@@ -30,6 +30,7 @@ interface Props {
   paginator?: boolean
   showTableHeader?: boolean
   showDisplay?: boolean
+  showReload?: boolean
   showActions?: boolean
   showActionsMenu?: boolean
   skeleton?: boolean
@@ -50,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
   paginator: true,
   showTableHeader: true,
   showDisplay: true,
+  showReload: true,
   showActions: true,
   showActionsMenu: true,
   pageRows: 10,
@@ -347,21 +349,23 @@ function initBodyrow(options: any) {
 
 <template>
   <div ref="rootEl" class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
-    <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
+    <div v-if="showTableHeader" class="flex items-start justify-between self-stretch gap-2 rx-header">
       <slot name="table-header">
         <div class="flex flex-1 gap-2 flex-wrap">
           <slot name="filter-before" />
           <TableFilter :filters="_filters" @change="onFilterChange" />
           <slot name="filter-after" />
         </div>
-        <div class="flex gap-1.5 items-center">
-          <TableDisplay v-if="showDisplay" :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
-            <template #before>
-              <slot name="display-before" />
-            </template>
-          </TableDisplay>
-          <Divider v-if="showDisplay" layout="vertical" class="!mx-0 h-4" />
-          <TableReload :loading="_loading" @click="_onRefresh" />
+        <div class="flex gap-2 items-center">
+          <template v-if="showDisplay">
+            <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
+              <template #before>
+                <slot name="display-before" />
+              </template>
+            </TableDisplay>
+            <Divider layout="vertical" class="!mx-0 h-4" />
+          </template>
+          <TableReload v-if="showReload" :loading="_loading" @click="_onRefresh" />
         </div>
       </slot>
     </div>

@@ -42,7 +42,7 @@ process.parentPort?.on('message', async (e) => {
           break
         }
       default:
-        throw new Error('未知任务类型')
+        throw new Error('unknown task type')
     }
   }
   catch (error) {
@@ -106,7 +106,7 @@ function getCompressedSize(dest: string) {
 
 /** 获取设备信息 */
 const getDeviceInfo = async () => {
-  console.time('获取设备 ID 耗时')
+  console.time('get device info time')
   const queue = [si.uuid(), si.diskLayout()] as const
   const [uuid, disk,] = await Promise.all(queue)
 

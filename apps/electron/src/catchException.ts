@@ -37,12 +37,12 @@ initSentry({
 // 禁止弹出错误框
 dialog.showErrorBox = function (title, content) {
   // 只记录错误，不显示弹窗
-  console.error(`只记录错误，不显示系统弹窗：${title}\n${content}`);
+  console.error(`Error logged without system dialog: ${title}\n${content}`);
 };
 
 // 捕获未捕获的异常
 process.on("uncaughtException", (error) => {
-  console.error("未捕获的异常:", error);
+  console.error("Uncaught exception:", error);
   try {
     captureException(error);
   } catch { }
@@ -50,7 +50,7 @@ process.on("uncaughtException", (error) => {
 
 // 捕获未处理的 Promise 拒绝
 process.on("unhandledRejection", (reason) => {
-  console.error("未处理的 Promise 拒绝:", reason);
+  console.error("Unhandled promise rejection:", reason);
   try {
     captureException(reason instanceof Error ? reason : new Error(String(reason)));
   } catch { }

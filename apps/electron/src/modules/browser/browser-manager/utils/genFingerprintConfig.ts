@@ -163,6 +163,12 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         return winInfo.font
       }
     },
+    /** 字体选择随机的时候，就从 font.json 文件里面随机选择100-500个，传给allowFontList ，用; 分割 */
+    get allowFontList() {
+      if (winInfo.fontType) {
+        return winInfo.allowFontList
+      }
+    },
     /** 当前浏览器是否不被站点追踪个人信息 */
     doNotTrack: winInfo.doNotTrack,
 
@@ -494,6 +500,6 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     get allowDomainList() {
       const domainList = winInfo.allowDomainList?.split?.(',')?.filter(Boolean)
       return domainList?.length ? domainList : undefined
-    },
+    }
   }
 }

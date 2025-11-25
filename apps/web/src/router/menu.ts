@@ -185,7 +185,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
   {
     path: "workspace",
     name: "workspace",
-    meta: { title: $t("工作空间"), type: "group" },
+    meta: { title: $t("团队协作"), type: "group" },
     redirect: { name: "teams" },
     children: [
       {
@@ -223,17 +223,6 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
       roles: [Role.OWNER],
     },
     component: () => import("/@/views/pay/subscribe/upgrade-plan.vue"),
-  },
-  {
-    name: "trial-plan",
-    path: "trial-plan",
-    meta: {
-      title: $t('{day} 天免费试用', { day: 7 }),
-      icon: "base/rx_ic_wallet",
-      hideInMenu: true,
-      roles: [Role.OWNER],
-    },
-    component: () => import("/@/views/pay/subscribe/trial-plan.vue"),
   },
   {
     name: "wallet",

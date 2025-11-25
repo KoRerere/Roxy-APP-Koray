@@ -23,7 +23,7 @@ export function closeSyncControl() {
 export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   /** 打开窗口同步器 */
   ipcMain.on('syncControl:open', async (event, isOwner = false) => {
-    console.log('打开窗口同步器')
+    console.log('Opening window synchronizer')
     // return openPreferencesDialog()
     // return createSynchronizerActionBarWindow()
     // openCustomLayoutDialog()
@@ -39,7 +39,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 
   /** 关闭窗口同步器 */
   ipcMain.on('syncControl:close', (event) => {
-    console.log('关闭窗口同步器')
+    console.log('Closing window synchronizer')
     closeSyncControl()
   })
 
@@ -87,90 +87,90 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 
   /** 宫格布局、堆叠布局、自定义布局 */
   ipcMain.on('syncControl:doLayout', (event, payload) => {
-    console.log('宫格布局、堆叠布局、自定义布局:', payload)
+    console.log('Grid layout, stack layout, custom layout:', payload)
     return SyncControlUtil.doLayout(payload)
   })
 
   /** 显示所有窗口 */
   ipcMain.on('syncControl:showAll', (event) => {
-    console.log('显示所有窗口')
+    console.log('Showing all windows')
     return SyncControlUtil.showAllWindows()
   })
 
   /** 动态修改同步设置 */
   ipcMain.on('syncControl:changeSyncSettings', async (event, payload) => {
-    console.log('动态修改同步设置 payload:', payload)
+    console.log('Changing sync settings payload:', payload)
     const result = await syncSettings(payload)
-    console.log('动态修改同步设置 result:', result)
+    console.log('Changing sync settings result:', result)
     return result
   })
 
   /** 打开偏好设置弹窗 */
   ipcMain.on('syncControl:openPreferencesDialog', (event, payload) => {
-    console.log('打开偏好设置弹窗')
+    console.log('Opening preferences dialog')
     openPreferencesDialog(payload)
   })
 
   /** 关闭偏好设置弹窗 */
   ipcMain.on('syncControl:closePreferencesDialog', (event) => {
-    console.log('关闭偏好设置弹窗')
+    console.log('Closing preferences dialog')
     closePreferencesDialogWindowWindow()
   })
 
 
   /** 动态改变偏好设置弹窗弹窗大小 */
   ipcMain.on('syncControl:resizePreferencesDialog', (event, payload) => {
-    console.log('动态改变偏好设置弹窗弹窗大小:', payload)
+    console.log('Resizing preferences dialog:', payload)
     resizePreferencesDialog(payload)
   })
 
   /** 获取当前同步窗口的个数 */
   ipcMain.on('syncControl:getSyncWindowCount', (event) => {
-    console.log('获取当前同步窗口的个数')
+    console.log('Getting sync window count')
     return getSyncWindowCount()
   })
 
   /** 打开自定义布局弹窗 */
   ipcMain.on('syncControl:openCustomLayoutDialog', (event) => {
-    console.log('打开自定义布局弹窗')
+    console.log('Opening custom layout dialog')
     openCustomLayoutDialog()
   })
 
   /** 关闭自定义布局弹窗 */
   ipcMain.on('syncControl:closeCustomLayoutDialog', (event) => {
-    console.log('关闭自定义布局弹窗')
+    console.log('Closing custom layout dialog')
     closeCustomLayoutsDialogWindow()
   })
 
   /** 获取同步器启动返回的结果 */
   ipcMain.on('syncControl:getSyncStartResult', (event) => {
-    console.log('获取同步器启动返回的结果')
+    console.log('Getting sync start result')
     return getRoxySyncStartResult()
   })
 
   /** 打开批量输入文本弹窗 */
   ipcMain.on('syncControl:openBatchInputsDialog', (event) => {
-    console.log('打开批量输入文本弹窗')
+    console.log('Opening batch input dialog')
     openBatchInputsDialog()
   })
 
   /** 关闭批量输入文本弹窗 */
   ipcMain.on('syncControl:closeBatchInputsDialog', (event) => {
-    console.log('关闭批量输入文本弹窗')
+    console.log('Closing batch input dialog')
     closeBatchInputsDialogWindow()
   })
 
   /** 动态改变匹配输入文本弹窗大小 */
   ipcMain.on('syncControl:resizeBatchInputsDialog', (event, payload) => {
-    console.log('动态改变匹配输入文本弹窗大小:', payload)
+    console.log('Resizing batch input dialog:', payload)
     resizeBatchInputsDialog(payload)
   })
 
   /** 开始执行批量输入文本 */
   ipcMain.on('syncControl:batchInputText', async (event, payload) => {
-    console.log('开始执行批量输入文本:', payload)
+    console.log('Starting batch input text:', payload)
     const result = await sendText(payload)
-    console.log('开始执行批量输入文本 result:', result)
+    console.log('Batch input text result:', result)
     return result
   })
 
@@ -206,38 +206,38 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 
   /** 打开 打开网址弹窗 */
   ipcMain.on('syncControl:openOpenSitesDialog', (event) => {
-    console.log('打开打开网址弹窗')
+    console.log('Opening open sites dialog')
     openOpenSitesDialog()
   })
 
   /** 关闭打开网址弹窗 */
   ipcMain.on('syncControl:closeOpenSitesDialog', (event) => {
-    console.log('关闭打开网址弹窗')
+    console.log('Closing open sites dialog')
     closeOpenSitesDialogWindow()
   })
 
 
   /** 显示所有正在同步的窗口列表弹窗 */
   ipcMain.on('syncControl:openSyncingWindowListDialog', (event) => {
-    console.log('显示所有正在同步的窗口列表')
+    console.log('Showing all syncing windows list')
     openSyncingWindowList()
   })
 
   /** 关闭所有正在同步的窗口列表弹窗 */
   ipcMain.on('syncControl:closeSyncingWindowListDialog', (event) => {
-    console.log('关闭所有正在同步的窗口列表')
+    console.log('Closing syncing windows list')
     closeSyncingWindowListWindow()
   })
 
   /** 获取主控窗口 dirId */
   ipcMain.on('syncControl:getMainControlDirId', (event) => {
-    console.log('获取主控窗口 dirId')
+    console.log('Getting main control window dirId')
     return getMainControlBrowser()?.winInfo.dirId
   })
 
   /** 获取所有群控中的窗口 */
   ipcMain.on('syncControl:getAllSyncingWindows', (event) => {
-    console.log('获取所有群控中的窗口')
+    console.log('Getting all syncing windows')
     return getAllSyncControlBrowsers().map(browser => ({
       ...browser.winInfo,
       $pId: browser.launchInfo?.pid,
@@ -246,15 +246,15 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 
   /** 注册快捷键 */
   ipcMain.on('syncControl:registerShortcut', async (event, payload) => {
-    console.log('注册快捷键:', payload)
+    console.log('Registering shortcut:', payload)
     return registerGlobalShortcut(payload)
   })
 
   /** 检测快捷键是否被占用 */
   ipcMain.on('syncControl:checkShortcutKeysIsOccupied', async (event, payload) => {
-    console.log('检测快捷键是否被占用:', payload)
+    console.log('Checking if shortcut keys are occupied:', payload)
     const result = checkShortcutKeysIsOccupied(payload)
-    console.log('检测快捷键是否被占用 result:', result)
+    console.log('Shortcut keys occupation check result:', result)
     return result
   })
 }

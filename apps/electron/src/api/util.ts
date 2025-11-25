@@ -46,14 +46,14 @@ export async function getWebDomain(force = true) {
   if (lastWebDomain && Date.now() - lastRequestTime < 1000 * 60 * 5) {
     return lastWebDomain
   }
-  const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
+  const { code, data, msg } = await API.base.getAppUpgradeCreate(osConfig)
   console.debug('getWebDomain', code, data)
   if (code === 0 && data.webDomain) {
     lastWebDomain = data.webDomain
     lastRequestTime = Date.now()
   }
   if (code !== 0) {
-    console.error('getWebDomain error', osConfig)
+    console.error('getWebDomain error', osConfig, msg)
   }
   return lastWebDomain
 }

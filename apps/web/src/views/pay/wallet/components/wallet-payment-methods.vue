@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue';
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { PayWay } from '/@/enums/pay';
 import { $t } from '/@/locales';
 import { API } from '/@/api';
@@ -12,6 +13,16 @@ interface Methods {
   [key: string]: any
 }
 
+interface AvailableMethods {
+  label: string,
+  value: PayWay[],
+  image: string,
+  discount: number,
+  disabled: boolean,
+  getValue?: () => PayWay,
+  [key: string]: any,
+}
+
 const { rechargeAmount, methods = [], disabledMethods = [], onConfirm } = defineProps<{
   rechargeAmount: number,
   methods: Methods[],
@@ -22,47 +33,15 @@ const { rechargeAmount, methods = [], disabledMethods = [], onConfirm } = define
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getUserCards } = useUserStore()
 const confirm = useConfirm()
-const modelValue = defineModel<PayWay>()
+
+const selectedPayway = defineModel<PayWay>()
+
 const cardList = ref()
 const activeCard = ref()
 const openOther = ref(false)
-const firstOpen = ref(false)
+const genStripe = ref(false)
 const loading = ref(false)
-
-const defaultMethods = [
-  {
-    label: $t('Roxy 钱包'),
-    value: PayWay.Balance,
-    image: '/images/payments/rx_payment_balance.svg'
-  },
-  {
-    label: 'Card',
-    value: PayWay.Card,
-    image: '/images/payments/rx_payment_cards.svg'
-  },
-  {
-    label: $t('支付宝'),
-    value: PayWay.Alipay,
-    image: '/images/payments/rx_payment_alipay.svg',
-    desc: $t('您已选择{method}作为付款方式。', { method: $t('支付宝') }),
-    // tip: $t('提交后，您将被重定向到一个安全页面，以完成剩余步骤。')
-    tip: $t('提交后将前往支付界面，请在规定的期限内完成付款。')
-  },
-  {
-    label: $t('微信支付'),
-    value: PayWay.Wechat,
-    image: '/images/payments/rx_payment_wepay.svg',
-    desc: $t('您已选择{method}作为付款方式。', { method: $t('微信支付') }),
-    tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。')
-  },
-  {
-    label: 'USDT',
-    value: PayWay.USDT,
-    image: '/images/payments/rx_payment_usdt.svg',
-    desc: $t('您已选择{method}作为付款方式。', { method: 'USDT' }),
-    tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。')
-  }
-]
+const saveCard = ref(false)
 
 const cardTypeMap = {
   amex: 'cards/american-express',
@@ -76,21 +55,70 @@ const cardTypeMap = {
   visa: 'cards/visa',
 }
 
-const paymentMethods = computed<Record<string, any>[]>(() => {
-  return methods.map(({ value: payway, ...meta }) => {
-    const { label, value, image } = defaultMethods.find(item => item.value === payway) ?? {}
-    return {
+const defaultMethods = [
+  {
+    label: $t('Roxy 钱包'),
+    value: [PayWay.Balance],
+    image: '/images/payments/rx_payment_balance.svg'
+  },
+  {
+    label: 'Card',
+    value: [PayWay.Card],
+    image: '/images/payments/rx_payment_cards.svg'
+  },
+  {
+    label: $t('支付宝'),
+    value: [PayWay.Alipay],
+    image: '/images/payments/rx_payment_alipay.svg',
+    desc: $t('您已选择{method}作为付款方式。', { method: $t('支付宝') }),
+    tip: $t('提交后将前往支付界面，请在规定的期限内完成付款。')
+  },
+  {
+    label: $t('微信支付'),
+    value: [PayWay.Wechat],
+    image: '/images/payments/rx_payment_wepay.svg',
+    desc: $t('您已选择{method}作为付款方式。', { method: $t('微信支付') }),
+    tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。')
+  },
+  {
+    label: 'USDT/USDC',
+    value: [PayWay.USDT, PayWay.USDC],
+    image: '/images/payments/rx_payment_usdt_usdc.svg',
+    desc: $t('您已选择{method}作为付款方式。', { method: 'USDT/USDC' }),
+    tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。'),
+    getValue: () => {
+      return cryptoCoins.value.find((item: any) => item.name === 'stablecoin')?.value?.value as PayWay
+    },
+  }
+]
+
+const cryptoCoins = ref()
+
+const availableMethods = computed(() => {
+  return methods.reduce((acc, { value: payway, discount, ...meta }) => {
+    if (acc.some(item => item.value.includes(payway))) return acc
+
+    const { label = '', value = [], image = '', getValue } = defaultMethods.find(item => item.value.includes(payway)) ?? {}
+
+    acc.push({
       label,
       value,
       image,
+      discount,
       ...meta,
-      disabled: disabledMethods.includes(payway)
-    }
-  })
+      disabled: disabledMethods.includes(payway),
+      getValue,
+    })
+
+    return acc
+  }, [] as AvailableMethods[])
 })
+
+const chooseMethod = computed(() => defaultMethods.find(item => item.value.includes(selectedPayway.value!))!)
 
 onBeforeMount(() => {
   getCardList()
+  getCryptoCoins()
 })
 
 async function getCardList() {
@@ -103,6 +131,42 @@ async function getCardList() {
   }
   cardList.value = data?.map(item => ({ ...item, cardIcon: cardTypeMap[item.brand as keyof typeof cardTypeMap] }))
   activeCard.value = data?.[0]
+}
+
+async function getCryptoCoins() {
+  const { code, data, msg } = await API.pay.userGetStablecoinInfoList()
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+
+  const coinOptions = Object.entries(data).map(([coin, chain]) => ({ label: coin, value: coin, chain })).reverse()
+  const chainOptions = coinOptions[0]?.chain || []
+
+  cryptoCoins.value = [
+    {
+      label: $t('选择币种'),
+      name: 'stablecoin',
+      value: coinOptions[0],
+      props: {
+        options: coinOptions,
+        onChange: (data: any) => {
+          selectedPayway.value = data.value.value as PayWay
+          const chain = cryptoCoins.value.find((item: any) => item.name === 'chain')
+          if (chain) {
+            Reflect.set(chain.props, 'options', data.value.chain)
+            Reflect.set(chain, 'value', data.value.chain[0])
+          }
+        }
+      }
+    },
+    {
+      label: $t('选择网络'),
+      name: 'chain',
+      value: chainOptions[0],
+      props: {
+        options: chainOptions
+      }
+    }
+  ]
 }
 
 function deleteCard(cardId: number) {
@@ -127,45 +191,45 @@ function deleteCard(cardId: number) {
   })
 }
 
-function handleClick(method: PayWay) {
-  if (disabledMethods.includes(method)) {
-    return
-  }
-  modelValue.value = method
-  activeCard.value = undefined
-}
-
 function handleCardClick(card: any) {
-  modelValue.value = PayWay.Card
+  selectedPayway.value = PayWay.Card
   activeCard.value = card
   openOther.value = false
 }
 
+function handleClick(item: typeof availableMethods.value[number]) {
+  if (item.disabled) return
+
+  selectedPayway.value = item.getValue?.() || item.value[0]
+  activeCard.value = undefined
+}
+
 function toggleOtherPay() {
-  firstOpen.value = true
+  genStripe.value = true
   openOther.value = !openOther.value
   activeCard.value = openOther.value ? undefined : cardList.value?.[0]
 }
-//=============================
-const saveCard = ref(false)
-const chooseMethod = computed(() => defaultMethods.find(item => item.value === modelValue.value)!)
 
-async function cardConfirm(card: any) {
+async function newCardConfirm(stripeResult: any) {
   if (!saveCard.value) {
-    await onConfirm(card)
+    await onConfirm(stripeResult)
     return
   }
 
-  const { code, data, msg } = await API.pay.userBindCardCreate({ paymentMethodId: card.payment_method })
+  const { code, data, msg } = await API.pay.userBindCardCreate({ paymentMethodId: stripeResult.payment_method })
   onlyErrorToast(code, msg)
-  await onConfirm({ ...card, ...data })
-  if (code === 0) {
-    getCardList()
-  }
+  if (code !== 0) return
+  await onConfirm({ ...stripeResult, ...data })
+  getCardList()
 }
 
-async function otherConfirm() {
-  await onConfirm(toRaw(activeCard.value))
+async function payConfirm() {
+  const data = { ...toRaw(activeCard.value) }
+  if ([PayWay.USDT, PayWay.USDC].includes(selectedPayway.value!)) {
+    const { value } = cryptoCoins.value?.find((item: any) => item.name === 'chain')!.value
+    Reflect.set(data, 'chainType', value)
+  }
+  await onConfirm(data)
 }
 </script>
 
@@ -194,17 +258,17 @@ async function otherConfirm() {
       </div>
     </div>
     <div v-show="openOther" class="w-full grid gap-3 select-none payway">
-      <template v-for="item in paymentMethods" :key="item.value">
-        <div class="relative flex flex-col items-center justify-center gap-1.5 payway-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }"
-          @click="handleClick(item.value!)">
+      <template v-for="item in availableMethods" :key="item.value">
+        <div class="relative flex flex-col items-center justify-center gap-1.5 payway-item" :class="{ 'active': item.value.includes(selectedPayway!), 'disabled': item.disabled }"
+          @click="handleClick(item)">
           <div class="payway-item-discount" v-if="item.discount">{{ item.discount }}</div>
           <img class="h-10" :src="item.image">
           <div>{{ item.label }}</div>
         </div>
       </template>
     </div>
-    <div v-if="firstOpen" class="w-full">
-      <StripePay class="w-full" v-show="openOther && modelValue === PayWay.Card" v-model:bind="saveCard" :rechargeAmount="rechargeAmount" :onConfirm="cardConfirm">
+    <div v-if="genStripe" class="w-full">
+      <StripePay class="w-full" v-show="openOther && selectedPayway === PayWay.Card" v-model:bind="saveCard" :rechargeAmount="rechargeAmount" :onConfirm="newCardConfirm">
         <template #after v-if="cardList.length < 4">
           <div class="flex items-center gap-2.5">
             <RxCheckbox v-model="saveCard" input-id="wrap" binary />
@@ -212,19 +276,28 @@ async function otherConfirm() {
           </div>
         </template>
       </StripePay>
-    </div>
-    <div v-if="openOther && modelValue !== PayWay.Card" class="-mt-3 flex flex-col gap-2.5 pa-4 rounded-md extend">
-      <div class="flex flex-col items-start gap-1.5">
-        <img class="h-8" :src="chooseMethod.image">
-        <div class="extend-desc">{{ chooseMethod.desc }}</div>
+
+      <div v-show="openOther && selectedPayway !== PayWay.Card" class="flex flex-col gap-3">
+        <div class="flex gap-2.5" v-if="[PayWay.USDT, PayWay.USDC].includes(selectedPayway!) && cryptoCoins.length">
+          <div v-for="item in cryptoCoins" :key="item.name" class="flex-1 flex flex-col gap-1.5">
+            <div class="label">{{ item.label }}</div>
+            <TsFormSelect v-model="item.value" v-bind="item.props" size="lg"></TsFormSelect>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2.5 pa-4 rounded-md extend">
+          <div class="flex flex-col items-start gap-1.5">
+            <img class="h-8" :src="chooseMethod.image">
+            <div class="extend-desc">{{ chooseMethod.desc }}</div>
+          </div>
+          <RxDivider line-only line-color="var(--colors-border-border-action)"></RxDivider>
+          <div class="flex items-center gap-2.5">
+            <SvgIcon name="base/rx_ic_modal" size="48" color="var(--colors-icon-icon-tertiary)"></SvgIcon>
+            <div class="extend-tip">{{ chooseMethod.tip }}</div>
+          </div>
+        </div>
       </div>
-      <RxDivider line-only line-color="var(--colors-border-border-action)"></RxDivider>
-      <div class="flex items-center gap-2.5">
-        <SvgIcon name="base/rx_ic_modal" size="48" color="var(--colors-icon-icon-tertiary)"></SvgIcon>
-        <div class="extend-tip">{{ chooseMethod.tip }}</div>
-      </div>
     </div>
-    <RxButton v-if="!openOther || (openOther && modelValue !== PayWay.Card)" class="w-full" size="lg" :label="$t('确认')" @click="otherConfirm"></RxButton>
+    <RxButton v-if="!openOther || (openOther && selectedPayway !== PayWay.Card)" class="w-full" size="lg" :label="$t('确认')" @click="payConfirm"></RxButton>
   </div>
 </template>
 
@@ -330,8 +403,7 @@ async function otherConfirm() {
 }
 
 .extend {
-  border: 1px solid var(--colors-border-border-action);
-  background: var(--colors-background-bg-action);
+  background: var(--colors-background-bg-block);
 
   &-desc {
     color: var(--colors-text-text-primary);
@@ -346,5 +418,11 @@ async function otherConfirm() {
     font-size: 12px;
     line-height: normal;
   }
+}
+
+.label {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  line-height: normal;
 }
 </style>

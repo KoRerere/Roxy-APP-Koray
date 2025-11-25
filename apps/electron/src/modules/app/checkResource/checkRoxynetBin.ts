@@ -6,22 +6,15 @@ import { dirname, join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
 import { calculateFileHash, fileExists } from '/@/utils'
-import { isMac } from '/@/constants/common'
+import { isWindows, currentOS, currentArch } from '/@/constants/common'
 
 // roxynet 下载重试次数
 let roxynetDownloadRetry = 0
 
 // 获取文件所在的目录路径
 const roxynetBinDir = dirname(appConfig.roxynetBinPath)
-const platform = isMac ? 'macos' : 'windows'
-let arch = ''
-if (isMac) {
-  arch = process.arch === 'x64' ? 'intel' : 'apple'
-}
-else {
-  arch = process.arch === 'x64' ? 'x64' : 'x86'
-}
-const binFile = `roxynet${isMac ? '' : '.exe'}`
+
+const binFile = `roxynet${isWindows ? '.exe' : ''}`
 
 
 const config = {
@@ -31,7 +24,7 @@ const config = {
   localVersionFilePath: join(roxynetBinDir, 'version'),
   /** roxynet 执行文件下载地址 */
   get downloadUrl() {
-    return `${config.webDomain}/public/static/roxynet/${platform}/${arch}/${binFile}`
+    return `${config.webDomain}/public/static/roxynet/${currentOS}/${currentArch}/${binFile}`
   },
   /** roxynet 版本文件下载地址 */
   get versionUrl() {
@@ -39,7 +32,7 @@ const config = {
   },
   /** roxynet sha512 哈希值文件下载地址 */
   get sha512Url() {
-    return `${config.webDomain}/public/static/roxynet/${platform}/${arch}/sha512`
+    return `${config.webDomain}/public/static/roxynet/${currentOS}/${currentArch}/sha512`
   },
 }
 
@@ -107,7 +100,7 @@ export async function checkRoxynetBin(webDomain: string) {
 /** 下载 roxynet */
 async function downloadRoxynetBin() {
   const { promise, resolve } = Promise.withResolvers()
-  console.log('正在下载 roxynet')
+  console.log('Downloading roxynet')
   // 下载 roxynet
   const response = await axios({
     url: config.downloadUrl,

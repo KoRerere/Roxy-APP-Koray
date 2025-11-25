@@ -38,7 +38,7 @@ import TagsIcon from './components/tags-icon.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from './components/util'
 import { getCustomFilters, getOperation, getSorts, getAdvancedSearch } from './operation'
-import { useHandleBusinessCode, toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
@@ -479,7 +479,7 @@ async function onTransfer(datas: Data[], operate?: any) {
         life: 5000,
         summary: $t('窗口投送不可用'),
         detail: <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
         </I18nT>
       })
     }

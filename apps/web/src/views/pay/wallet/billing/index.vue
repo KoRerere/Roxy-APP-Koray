@@ -76,7 +76,7 @@ const detailMapStr = {
 async function tableRequest(params: any) {
   const data = await API.pay.userGetPurchaseRecordsInfoList(params)
   data.data.rows = data.data.rows.map(({ detail, ...item }) => {
-    const detailStr = detailMapStr[detail?.subType as SubOrderType]?.(detail) || '--'
+    const detailStr = detail?.content || detailMapStr[detail?.subType as SubOrderType]?.(detail) || '--'
     return { detail, detailStr, ...item }
   })
   return data

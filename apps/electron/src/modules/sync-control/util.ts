@@ -29,7 +29,7 @@ export class SyncControlUtil {
     const isSuccess = await startRoxySync(pIds)
     console.log('syncControl:start isSuccess:', isSuccess)
     if (isSuccess) {
-      console.log('窗口同步程序执行成功，关闭同步器窗口，开始打开同步器操作栏窗口')
+      console.log('Window sync program executed successfully, closing synchronizer window, opening synchronizer action bar window')
       closeSynchronizerWindow()
       createSynchronizerActionBarWindow()
     }
@@ -37,7 +37,7 @@ export class SyncControlUtil {
 
   /** 停止同步 */
   static stop = async (isShowSyncingWindowListDialog = true) => {
-    console.log('停止同步窗口', isShowSyncingWindowListDialog)
+    console.log('Stopping sync windows', isShowSyncingWindowListDialog)
     stopRoxySync()
     if (isShowSyncingWindowListDialog) {
       await setTimeout(100)
@@ -51,7 +51,7 @@ export class SyncControlUtil {
   static doLayout = windowArrange
   /** 统一标签页 */
   static unifyTabs = async () => {
-    console.log('统一标签页')
+    console.log('Unifying tabs')
     const mainControlBrowser = getMainControlBrowser()
     const controlledBrowsers = getControlledBrowsers()
     if (mainControlBrowser) {
@@ -103,7 +103,7 @@ export class SyncControlUtil {
 
   /** 关闭其他标签页 */
   static closeOtherTabs = async () => {
-    console.log('关闭其他标签页')
+    console.log('Closing other tabs')
     // https://chromedevtools.github.io/devtools-protocol/
     // http://127.0.0.1:61854/json/list
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
@@ -122,14 +122,14 @@ export class SyncControlUtil {
 
   /** 关闭当前标签页 */
   static closeCurrentTab = async () => {
-    console.log('关闭当前标签页')
+    console.log('Closing current tab')
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
 
     allSyncControlBrowsers.forEach(async (browser) => {
       const activeTargetId = await this.getActivePageTargetId(browser)
       const pages = await browser?.getBrowser()?.pages()
       if (pages?.length === 1) {
-        console.log('只有一个标签页，不关闭')
+        console.log('Only one tab, not closing')
         return
       }
       pages?.forEach(async page => {
@@ -143,7 +143,7 @@ export class SyncControlUtil {
 
   /** 关闭空白标签页 */
   static closeBlankTabs = () => {
-    console.log('关闭空白标签页')
+    console.log('Closing blank tabs')
     const blankTabs = ['chrome://newtab/', 'about:blank', 'chrome://new-tab-page/']
     // 例如：chrome://newtab/
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
@@ -152,7 +152,7 @@ export class SyncControlUtil {
       const totalPageCount = pages!.length
       // 如果只有一个标签页，不关闭
       if (totalPageCount === 1) {
-        console.log('只有一个标签页，不关闭')
+        console.log('Only one tab, not closing')
         return
       }
 
@@ -175,7 +175,7 @@ export class SyncControlUtil {
 
   /** 打开网址 */
   static openSites = async (payload: { urls: string[], replaceCurrentTab: boolean }) => {
-    console.log('打开网址:', payload)
+    console.log('Opening URLs:', payload)
     const { urls, replaceCurrentTab } = payload
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
     allSyncControlBrowsers.forEach(async (browser) => {
@@ -223,17 +223,17 @@ export class SyncControlUtil {
       const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
       return currentActivePage
     } else {
-      console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
+      console.log(`${browser.winInfo.dirId} === Failed to get browser's currently active tab:`, result)
     }
   }
 
   static pause = async () => {
-    console.log('暂停同步')
+    console.log('Pausing sync')
     return stopSyncControl()
   }
 
   static resume = async () => {
-    console.log('恢复同步')
+    console.log('Resuming sync')
     return startSyncControl()
   }
 }

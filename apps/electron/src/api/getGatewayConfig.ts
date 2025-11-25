@@ -3,6 +3,26 @@ import { ProxyDetectionResult } from '/@/utils'
 import { isDev, isPackaged } from '/@/constants/common'
 import { ipcMain } from '/@/modules/ipc'
 
+type GateConf = {
+  "test": string,
+  "prod": string,
+  "prod_api": string,
+  "prod_apps": {
+    "hz": string[],
+    "hk": string[],
+    "sg": string[],
+    "us": string[]
+  },
+  "prod_apis": {
+    "hz": string[],
+    "hk": string[],
+    "sg": string[],
+    "us": string[]
+  }
+}
+
+
+
 const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']
 
 let openAPIUrl = ''
@@ -63,12 +83,15 @@ async function getMapKey() {
   console.debug(`getMapKey result`, result)
   const { continent_code, country_code } = result as ProxyDetectionResult
   console.debug(`getMapKey ipInfo`, { continent_code, country_code })
+
   // 亚洲
   if (continent_code === 'AS') {
     // 中国内地
     if (country_code === 'CN') {
       return 'hz'
     }
+    // 非中国内地都走香港
+    return 'hk'
   }
 
   // 北美洲，南美洲，欧洲
@@ -90,7 +113,7 @@ export async function reGetGatewayConfigByIpChange(ip: string) {
   }
 
   if (userIp !== ip) {
-    console.log(`🚀 ~ ip发生变化, 上一次ip: ${userIp}, 当前ip: ${ip}`)
+    console.log(`🚀 ~ IP changed, previous IP: ${userIp}, current IP: ${ip}`)
     userIp = ip
     getGatewayConfig()
   }
@@ -123,19 +146,20 @@ export async function getGatewayConfig(): Promise<string> {
         return baseUrl
       }
 
-      const domain = await getAvailableUrl(response.data.prod_apps, mapKey)
+      const data: GateConf = response.data
+      const domain = await getAvailableUrl(data.prod_apps, mapKey)
       console.debug(`getAvailableUrl domain`, domain)
 
       if (baseUrl !== domain) {
         ipcMain.send('app:backend-url-change', domain)
       }
 
-      baseUrl = domain || baseUrl || 'https://hz.gate.roxybrowser.cn'
+      baseUrl = domain || baseUrl || data.prod_apps?.hz?.[0] || 'https://hz.gate.roxybrowser.cn'
 
-      openAPIUrl = await getAvailableUrl(response.data.prod_apis, mapKey)
+      openAPIUrl = await getAvailableUrl(data.prod_apis, mapKey)
       console.debug(`getAvailableUrl openAPIUrl`, openAPIUrl)
 
-      openAPIUrl ||= response.data.prod_api || 'https://hz.api.roxybrowser.cn'
+      openAPIUrl ||= data.prod_apis?.hz?.[0] || 'https://hz.api.roxybrowser.cn'
 
       console.debug(`getGatewayConfig baseUrl`, baseUrl)
       console.debug(`getGatewayConfig openAPIUrl`, openAPIUrl)
@@ -158,19 +182,24 @@ async function getAvailableUrl(data: Record<string, string[]>, mapKey: string) {
   // 根据原始的 mapKey获取 API 域名
   let domain = await testBackendUrl(data[mapKey])
 
-  // 当前是hz,拿数组的下一个,没有下一个了,就拿sg的数组, sg的数组也不通，就拿us的数组
+  // 当前是hz,拿数组的下一个,没有下一个了,就拿hk的数组, hk的数组也不通，就拿sg的数组.
   if (!domain && mapKey === 'hz') {
+    mapKey = 'hk'
+    domain = await testBackendUrl(data[mapKey])
+  }
+  // 当前是hk,拿数组的下一个,没有下一个了,就拿sg的数组.
+  if (!domain && mapKey === 'hk') {
     mapKey = 'sg'
     domain = await testBackendUrl(data[mapKey])
   }
-  // 当前是sg,拿数组的下一个,没有下一个了,就拿us的数组.
+  // 当前是sg,拿数组的下一个,没有下一个了,就拿hk的数组.
   if (!domain && mapKey === 'sg') {
-    mapKey = 'us'
+    mapKey = 'hk'
     domain = await testBackendUrl(data[mapKey])
   }
-  // 当前是us,拿数组的下一个,没有下一个了,就拿sg的数组.
+  // 当前是us,拿数组的下一个,没有下一个了,就拿hk的数组
   if (!domain && mapKey === 'us') {
-    mapKey = 'sg'
+    mapKey = 'hk'
     domain = await testBackendUrl(data[mapKey])
   }
 

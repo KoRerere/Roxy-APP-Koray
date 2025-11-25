@@ -323,7 +323,7 @@ function onUploadExtension(data = ({} as any)) {
   })
 }
 
-async function onInstall(data: Data) {
+async function onInstall(data?: Data) {
   if (!data) {
     return
   }
@@ -466,7 +466,7 @@ defineExpose({
   <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
     :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler">
     <template #filter-after>
-      <div class="flex items-center justify-between w-full">
+      <div class="flex items-start justify-between w-full">
         <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
           <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />

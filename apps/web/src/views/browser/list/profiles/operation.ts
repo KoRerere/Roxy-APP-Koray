@@ -472,10 +472,22 @@ export function getAdvancedSearch() {
     },
     {
       key: 'sortNum',
-      label: ' ID',
+      label: 'ID',
       icon: 'base/rx_ic_id',
       syntax: 'id::'
-    }
+    },
+    {
+      key: 'os',
+      label: $t('操作系统'),
+      icon: 'base/rx_ic_laptop',
+      syntax: 'system::'
+    },
+    {
+      key: 'coreVersion',
+      label: $t('内核版本'),
+      icon: 'base/rx_ic_chrome',
+      syntax: 'kernel::'
+    },
   ]
 }
 

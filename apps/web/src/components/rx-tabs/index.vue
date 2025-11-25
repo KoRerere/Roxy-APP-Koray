@@ -7,6 +7,7 @@ interface Props extends /* @vue-ignore */ TabProps {
     title: string
     value: string
     icon?: string
+    image?: string
     content?: string
     slot?: string
     render?: any
@@ -24,11 +25,12 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 <template>
   <Tabs :class="{ 'head-tabs': headTabs }" v-bind="props">
     <slot name="tablist">
-      <TabList>
+      <TabList :pt="{ tablist: 'px-6 py-0 gap-4' }">
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
           <slot name="tab" :data="tab">
             <div class="flex items-center gap-2">
-              <SvgIcon v-if="tab.icon" :name="(tab.icon as SvgNames)" />
+              <SvgIcon v-if="tab.icon" :name="(tab.icon as SvgNames)" color="var(--colors-icon-icon-primary)" />
+              <img v-if="tab.image" class="w-4 object-contain" :src="tab.image">
               <span>{{ tab.title }}</span>
             </div>
           </slot>
@@ -38,7 +40,7 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
     <slot name="tabpanels" v-if="!onlyTabs">
       <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
         <TabPanel class="flex flex-1 overflow-hidden" v-for="{ slot, render, panelProps, ...tab } in tabs" :key="tab.title" :value="tab.value" v-bind="panelProps">
-          <slot :name="slot || tab.title" :tab="tab">
+          <slot :name="slot || 'content'" :tab="tab">
             <component v-if="render" :is="render" />
             <template v-else>{{ tab.content }}</template>
           </slot>
@@ -52,11 +54,6 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 </template>
 
 <style lang="scss" scoped>
-:deep(.p-tablist-tab-list) {
-  gap: 16px;
-  padding: 0px 24px;
-}
-
 :deep(.p-tab) {
   padding: 8px;
   font-size: 12px;

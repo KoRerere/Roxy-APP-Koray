@@ -81,7 +81,7 @@ export class BeforeLaunchTask {
       try {
         if (this.#lastToken !== store.token) {
           this.taskMap.clear()
-          throw new Error('用户凭证不一样，中断浏览器打开')
+          throw new Error('token is different, interrupt browser open')
         }
 
         this.currentTask = task
@@ -108,7 +108,7 @@ export class BeforeLaunchTask {
         lastIp: this.proxyInfo.ip,
         lastCountry: this.proxyInfo.country_code,
       }, { headers: this.browserItem.requestHeaders }).then(() => {
-        console.log('同步ip信息成功')
+        console.log('IP info synced successfully')
       })
     }
   }
@@ -131,7 +131,7 @@ export class BeforeLaunchTask {
     await this.modifyLocalStateFile()
     // 导入书签
     await this.importBookmarks().catch((error) => {
-      console.error('导入书签失败', error)
+      console.error('Failed to import bookmarks', error)
     })
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
@@ -271,7 +271,7 @@ export class BeforeLaunchTask {
         }, 60)
       }).catch((error) => {
         this.warningMessages.push($t('获取扩展失败'))
-        console.log('获取扩展失败', error)
+        console.log('Failed to get extensions', error)
         return []
       }).finally(() => {
         clearInterval(timer)
@@ -407,7 +407,7 @@ export class BeforeLaunchTask {
       preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
       await writeFile(preferencesPath, JSON.stringify(preferences))
     } catch (error) {
-      console.error('更新浏览器偏好设置失败', error)
+      console.error('Failed to update browser preferences', error)
     }
   }
 
@@ -423,7 +423,7 @@ export class BeforeLaunchTask {
       this.proxyInfo = await this.browserItem.proxyDetection()
     }
     catch (error) {
-      console.error('代理检测失败', error)
+      console.error('Proxy detection failed', error)
       //  网络不通停止打开
       if (stopOpenNet) {
         return Promise.reject(new Error($t('网络不通停止打开')))
@@ -468,7 +468,7 @@ export class BeforeLaunchTask {
       await writeFile(this.browserItem.fingerprintConfigPath, content)
     }
     catch (error) {
-      console.error('创建指纹配置文件失败', error)
+      console.error('Failed to create fingerprint config file', error)
       return Promise.reject(new Error($t('创建指纹配置文件失败')))
     }
   }
@@ -489,7 +489,7 @@ export class BeforeLaunchTask {
 
     //  如果没有远程版本号，不拉取
     if (!remoteVersion) {
-      console.log('没有远程版本号，不拉取')
+      console.log('No remote version, skipping pull')
       return
     }
 
@@ -502,7 +502,7 @@ export class BeforeLaunchTask {
 
     // 如果本地版本大于等于远程版本，不拉取
     if (Number(localVersion) >= Number(remoteVersion)) {
-      console.log('本地版本大于等于远程版本，不拉取')
+      console.log('Local version >= remote version, skipping pull')
       return
     }
 
@@ -511,23 +511,23 @@ export class BeforeLaunchTask {
 
     try {
       await fileExists(dirname(localCacheFilePath), true)
-      console.log('开始拉取远程缓存文件', remoteCacheFilePath)
+      console.log('Starting to pull remote cache files', remoteCacheFilePath)
       // 下载远程缓存文件
       await aliOSS.get(remoteCacheFilePath, localCacheFilePath, { workspaceId: this.browserItem.winInfo.workspaceId })
-      console.log('下载远程缓存文件成功', localCacheFilePath)
+      console.log('Remote cache files downloaded successfully', localCacheFilePath)
       // 解压缓存文件
       await fileOperations.executeTask('decompress', {
         src: localCacheFilePath,
         dest: this.browserItem.userDataDir,
         filters: this.browserItem.needSyncFiles.map(path => path.slice(1)),
       })
-      console.log('解压缓存文件成功', localCacheFilePath)
+      console.log('Cache files decompressed successfully', localCacheFilePath)
 
       console.log('ossCacheVersionPath', this.browserItem.ossCacheVersionPath)
       writeFile(this.browserItem.ossCacheVersionPath, String(remoteVersion))
     }
     catch (error) {
-      console.error('同步远程缓存文件失败', error)
+      console.error('Failed to sync remote cache files', error)
       this.warningMessages.push($t('同步远程缓存文件失败'))
       // return Promise.reject(error)
     }
@@ -542,11 +542,11 @@ export class BeforeLaunchTask {
         const defaultDir = join(this.browserItem.userDataDir, 'Default')
         await fileExists(defaultDir, true)
         await writeFile(this.browserItem.lumiLoginPath, lumiLogin, 'utf8')
-        console.log('写入 LumiLogin 成功')
+        console.log('LumiLogin written successfully')
       }
       catch (error) {
         this.warningMessages.push($t('登录信息写入失败'))
-        console.error('写入 LumiLogin 失败', error)
+        console.error('Failed to write LumiLogin', error)
       }
     }
   }
@@ -581,7 +581,7 @@ export class BeforeLaunchTask {
       }
       await writeFile(roxyLocalStatePath, JSON.stringify(localState))
     } catch (error) {
-      console.error('修改 Local State 文件失败', error)
+      console.error('Failed to modify Local State file', error)
     }
   }
 
@@ -593,7 +593,7 @@ export class BeforeLaunchTask {
       const cacheFilePath = this.browserItem.userDataDir
       try {
         await rm(cacheFilePath, { recursive: true, force: true })
-        console.log('cacheFilePath 删除成功', cacheFilePath)
+        console.log('cacheFilePath deleted successfully', cacheFilePath)
       }
       catch (err) {
         // console.log(`cacheFilePath 删除失败`, err)
@@ -602,7 +602,7 @@ export class BeforeLaunchTask {
     }
     else {
       // 当清空缓存先删除cookie文件
-      console.log(`是否清空cookie:${clearCookie}`)
+      console.log(`Clear cookies: ${clearCookie}`)
       if (clearCookie) {
         const cookieFilePath = join(
           this.browserItem.userDataDir,
@@ -615,15 +615,15 @@ export class BeforeLaunchTask {
           try {
             console.log('cookieFilePath: ', cookieFilePath)
             await rm(cookieFilePath, { recursive: true })
-            console.log('cookieFilePath 删除成功')
+            console.log('cookieFilePath deleted successfully')
           }
           catch (err) {
             this.warningMessages.push($t('cookie文件删除失败'))
-            console.log(`cookieFilePath 删除失败`, err)
+            console.log(`cookieFilePath deletion failed`, err)
           }
         }
       }
-      console.log(`是否清空 localStorage:${clearLocalStorage}`)
+      console.log(`Clear localStorage: ${clearLocalStorage}`)
       // 当清空缓存先删除
       if (clearLocalStorage) {
         const localStorageFilePath = join(
@@ -636,10 +636,10 @@ export class BeforeLaunchTask {
           try {
             console.log('localStorageFilePath: ', localStorageFilePath)
             await rm(localStorageFilePath, { recursive: true })
-            console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
+            console.log('localStorage_fileUrl deleted successfully', localStorageFilePath)
           }
           catch (err) {
-            console.log(`localStorage_fileUrl 删失败`, err)
+            console.log(`localStorage_fileUrl deletion failed`, err)
             this.warningMessages.push($t('localStorage文件删除失败'))
           }
         }

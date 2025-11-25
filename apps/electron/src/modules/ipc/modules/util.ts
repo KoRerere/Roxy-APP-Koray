@@ -39,9 +39,9 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
     if (result.code === 0) {
       const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo.dirId!))
       Promise.all(promiseArr).then((data) => {
-        console.log('删除工作空间成功', data)
+        console.log('Workspace deleted successfully', data)
       }).catch((error) => {
-        console.error('删除工作空间失败', error)
+        console.error('Failed to delete workspace', error)
       })
     }
   })
@@ -53,9 +53,9 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
     if (result.code === 0) {
       const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo.dirId!))
       Promise.all(promiseArr).then((data) => {
-        console.log('删除项目成功', data)
+        console.log('Project deleted successfully', data)
       }).catch((error) => {
-        console.error('删除项目失败', error)
+        console.error('Failed to delete project', error)
       })
     }
   })

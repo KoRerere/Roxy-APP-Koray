@@ -27,6 +27,7 @@ import {
   Get2FaLoginInfoListParams,
   GetAppUpgradeCreateData,
   GetAppUpgradeCreatePayload,
+  GetBlackFridayTimeListData,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
   GetCoreUpgradeCreateData,
@@ -1755,6 +1756,22 @@ export class BaseApi<SecurityDataType = unknown> {
   userIsNaifeiUserList = (params: RequestParams = {}) =>
     this.http.request<UserIsNaifeiUserListData, any>({
       path: `/user_is_naifei_user`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetBlackFridayTimeList
+   * @summary 获取黑色星期五活动时间
+   * @request GET:/get_black_friday_time
+   * @response `200` `GetBlackFridayTimeListData`
+   */
+  getBlackFridayTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetBlackFridayTimeListData, any>({
+      path: `/get_black_friday_time`,
       method: "GET",
       format: "json",
       ...params,

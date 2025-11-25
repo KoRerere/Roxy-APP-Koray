@@ -14,7 +14,7 @@ const showTooltipDelay = 60 * 1000
 
 const route = useRoute()
 const router = useRouter()
-const { currentLocale, getOfficialWebsite } = useSimpleLocale()
+const { currentLocale, openTelegram, getOfficialWebsite } = useSimpleLocale()
 const { showMenu } = usePopupMenu()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [showModal] = useDialog()
@@ -85,12 +85,6 @@ function showHelp(event: MouseEvent) {
 
 function hideHelp() {
   faqRef.value?.instance?.hide()
-}
-
-async function openTelegram() {
-  const $dict_map = await getDictMap()
-  const tgLink = $dict_map.tgLink!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
-  window.open(tgLink!.value, '_blank')
 }
 
 function openTutorial() {

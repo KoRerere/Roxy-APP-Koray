@@ -6,22 +6,14 @@ import { dirname, join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
 import { calculateFileHash, fileExists } from '/@/utils'
-import { isMac } from '/@/constants/common'
+import { isWindows, currentOS, currentArch } from '/@/constants/common'
 
 // roxySync 下载重试次数
 let roxySyncDownloadRetry = 0
 // 获取文件所在的目录路径
 const roxySyncBinDir = dirname(appConfig.roxySyncBinPath)
 
-const platform = isMac ? 'macos' : 'windows'
-let arch = ''
-if (isMac) {
-  arch = process.arch === 'x64' ? 'intel' : 'apple'
-}
-else {
-  arch = process.arch === 'x64' ? 'x64' : 'x86'
-}
-const binFile = `roxy-sync${isMac ? '' : '.exe'}`
+const binFile = `roxy-sync${isWindows ? '.exe' : ''}`
 
 const config = {
   /** 资源服务器域名 */
@@ -30,7 +22,7 @@ const config = {
   localVersionFilePath: join(roxySyncBinDir, 'version'),
   /** roxySync 执行文件下载地址 */
   get downloadUrl() {
-    return `${config.webDomain}/public/static/roxysync/${platform}/${arch}/${binFile}`
+    return `${config.webDomain}/public/static/roxysync/${currentOS}/${currentArch}/${binFile}`
   },
   /** roxySync 版本文件下载地址 */
   get versionUrl() {
@@ -38,7 +30,7 @@ const config = {
   },
   /** roxySync sha512 哈希值文件下载地址 */
   get sha512Url() {
-    return `${config.webDomain}/public/static/roxysync/${platform}/${arch}/sha512`
+    return `${config.webDomain}/public/static/roxysync/${currentOS}/${currentArch}/sha512`
   },
 }
 
@@ -46,6 +38,11 @@ const config = {
 
 /** 检查 roxySync 是否存在 */
 export async function checkRoxySyncBin(webDomain: string) {
+  //TODO 暂时只有 windows 的
+  if (!isWindows) {
+    return Promise.resolve(true)
+  }
+
   config.webDomain = webDomain
   const { promise, resolve } = Promise.withResolvers()
 
@@ -108,7 +105,7 @@ export async function checkRoxySyncBin(webDomain: string) {
 /** 下载 roxySync */
 async function downloadRoxySyncBin() {
   const { promise, resolve } = Promise.withResolvers()
-  console.log('正在下载 roxySync')
+  console.log('Downloading roxySync')
   // 下载 roxySync
   const response = await axios({
     url: config.downloadUrl,

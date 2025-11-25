@@ -23,7 +23,7 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
+import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, filterInputsByNames, setInputValue } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
@@ -47,12 +47,12 @@ const isBatch = ref(false)
 const createCount = ref(1)
 createTableContext({ isBatch, createCount })
 
-const tabs = ref([
+const tabs = [
   { title: $t('单个创建'), value: 'single' },
-  { title: $t('批量创建'), value: 'multi' },
+  { title: $t('批量创建'), value: 'multiple' },
   { title: $t('窗口导入'), value: 'import' },
-])
-const tabsValue = ref('single')
+]
+const tabsValue = ref(tabs[0]!.value)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
 const rawMainSetting = ref<any[]>([])
@@ -113,10 +113,24 @@ const profileTemplate = reactive({
   }
 })
 
-watch(() => tabsValue.value, () => {
-  setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
-  setInputFieldByInputKey(inputsGroup.value[0], 'windowPlatformList', 'value', [])
-  isBatch.value = tabsValue.value === 'multi'
+const cachesMap = { proxyInfoList: [], windowPlatformList: [] }
+const tempCache = ref<Record<string, any[]>>({})
+
+watch(() => tabsValue.value, (value, oldValue) => {
+  isBatch.value = value === 'multiple'
+
+  if (oldValue !== 'import') {
+    const cache = filterInputsByNames(inputsGroup.value[0]!, Object.keys(cachesMap)).map(item => [item.name, deepClone(item.value)])
+    Reflect.set(tempCache.value, oldValue, cache)
+  }
+
+  if (value !== 'import') {
+    const data = tempCache.value[value] ?? Object.entries(cachesMap)
+    data.map(([name, value]) => {
+      setInputValue(inputsGroup.value[0]!, name, value)
+    })
+  }
+
   onUpdateFinger()
 })
 
@@ -127,10 +141,11 @@ onBeforeMount(() => {
 
 async function getTemplateList() {
   const { data } = await API.window.userGetWindowTemplateListList()
+  const defaultTemplate = await getDefaultTemplate()
 
   const defaultValue: { map: Record<string, any>, options: any[] } = {
     map: {
-      default: getDefaultTemplate(),
+      default: defaultTemplate,
     },
     options: [
       { label: $t('不使用模板'), value: 'default', action: false },
@@ -251,15 +266,11 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
 }
 
 async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
-  const formData = getFormDataByList(inputsGroup.value)
-  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
-    acc[cur] = formData[cur]
-    return acc
-  }, {} as any)
+  const content = JSON.stringify(getFormDataByList(inputsGroup.value))
 
   const { code, msg } = id
-    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
-    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
+    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content })
+    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content })
 
   if (code !== 0) {
     handleBusinessCode(code, () => {
@@ -268,7 +279,7 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
     return
   }
 
-  if (id) profileTemplate.label = templateName
+  if (id && Number(profileTemplate.value) === id) profileTemplate.label = templateName
   getTemplateList()
 }
 
@@ -310,7 +321,7 @@ async function createProfile(openBrowser: boolean) {
   switch (tabsValue.value) {
     case 'single':
       return singleCreateProfile(params, openBrowser)
-    case 'multi':
+    case 'multiple':
       return batchCreateProfile(params)
     case 'import':
       return importProfile(params)
@@ -407,7 +418,7 @@ function showLoading() {
 function onBack(data?: any, openBrowser = false) {
   const { path, query } = backRoute
   const backRoutes = ['/browser', '/projects']
-  const toPath = !backRoutes.some(n => path.startsWith(n)) || path === '/browser/edit' ? '/browser' : path
+  const toPath = !backRoutes.some(n => path?.startsWith(n)) || path === '/browser/edit' ? '/browser' : path
   router.replace({
     path: toPath,
     query: {
@@ -463,10 +474,10 @@ function showGuide() {
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <div class="flex-1 flex flex-col">
-            <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">
+            <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">
                 <div class="subtitle">{{ $t('窗口数量') }}</div>
-                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]"></RxInputNumber>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-30"></RxInputNumber>
               </div>
               <div class="select-none multiple-tip">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
             </div>

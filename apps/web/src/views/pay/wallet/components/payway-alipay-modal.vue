@@ -4,7 +4,7 @@ import { API } from '/@/api'
 import { PaymentStatus } from '/@/enums/pay'
 import { $t } from '/@/locales'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { startCountdown } from '/@/utils'
+import { enhanceCountdown } from '/@/utils'
 
 interface Props {
   data: Record<string, any>
@@ -26,15 +26,15 @@ const countdown = ref()
 onMounted(() => {
   checkStatus()
   genProxyQrcode()
-  stopCountdown.value = startCountdown(new Date(props.endTime), (time) => {
+  stopCountdown.value = enhanceCountdown(new Date(props.endTime), (time) => {
     const { minutes, seconds } = time
     countdown.value = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0')
-  })
+  }, { alwaysSecondLevel: true, onEnd: () => close(true) })
 })
 
 onBeforeUnmount(() => {
   clearTimeout(timer.value)
-  stopCountdown.value?.()
+  stopCountdown.value?.stop()
 })
 
 async function genProxyQrcode() {

@@ -8,3 +8,15 @@ export interface Plan {
   disabled?: boolean
   tierCount?: string
 }
+
+export interface Duration {
+  key: string
+  due: string
+  day: number
+  month: number
+  title: string
+  discount: number
+  discountStr?: string
+  label?: string
+  [key: string]: any
+}

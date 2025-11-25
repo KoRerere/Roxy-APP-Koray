@@ -4,7 +4,7 @@ import { API } from '/@/api'
 import { PaymentStatus } from '/@/enums/pay'
 import { $t } from '/@/locales'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { copyText, startCountdown } from '/@/utils'
+import { copyText, enhanceCountdown } from '/@/utils'
 import { RxAlert } from '/@/components/rx-alert/'
 
 interface Props {
@@ -18,6 +18,14 @@ const { data: props, onConfirm, onCancel } = defineProps<Props>()
 const emit = defineEmits(['close'])
 
 const [showToast, onlyErrorToast] = useResponseToast()
+
+const colorMap = {
+  ['TRC-20']: '#26A17B',
+  ['BEP-20']: '#FC9D12',
+  ['SPL']: '#CD51FE',
+  ['ERC-20']: '#293038',
+}
+
 const HOUR = 60 * 60 * 1000
 const timer = ref()
 const loading = ref(false)
@@ -25,6 +33,9 @@ const qrcode = ref()
 const stopCountdown = ref()
 const countdown = ref()
 
+const bgColor = computed(() => {
+  return colorMap[props.chainAlias as keyof typeof colorMap] || colorMap['TRC-20']
+})
 
 const progress = computed(() => {
   if (!countdown.value) return 0
@@ -36,6 +47,7 @@ const countdownText = computed(() => {
   const { hours, minutes, seconds } = countdown.value
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
+
 const notes = computed(() => ({
   title: $t('注意事项'),
   items: [
@@ -47,18 +59,18 @@ const notes = computed(() => ({
 onMounted(() => {
   checkStatus()
   genProxyQrcode()
-  stopCountdown.value = startCountdown(new Date(props.endTime), (time) => {
+  stopCountdown.value = enhanceCountdown(new Date(props.endTime), (time) => {
     countdown.value = time
-  })
+  }, { alwaysSecondLevel: true, onEnd: () => close(true) })
 })
 
 onBeforeUnmount(() => {
   clearTimeout(timer.value)
-  stopCountdown.value?.()
+  stopCountdown.value?.stop()
 })
 
 async function genProxyQrcode() {
-  qrcode.value = await QRCode.toDataURL(props.payUrl)
+  qrcode.value = await QRCode.toDataURL(props.payUrl, { margin: 2.5 })
 }
 
 async function checkStatus(force = false) {
@@ -98,11 +110,10 @@ function close(isCancel: boolean) {
 }
 </script>
 
-
 <template>
-  <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none popup">
+  <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none min-w-130">
     <div class="relative flex items-center h-10 header">
-      <span>{{ $t('USDT 支付') }}</span>
+      <span>{{ $t('{type} 支付', { type: props.payType }) }}</span>
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)">
       </SvgIcon>
     </div>
@@ -110,8 +121,8 @@ function close(isCancel: boolean) {
     <div class="flex flex-col gap-3">
       <div class="title">{{ $t('订单金额') }}</div>
       <div class="flex items-center gap-4">
-        <div class="amount">{{ props.realAmount }} USDT</div>
-        <div class="py-1 px-2 tag">TRC-20</div>
+        <div class="amount">{{ props.realAmount }} {{ props.payType }}</div>
+        <div class="py-1 px-2 tag">{{ props.chainAlias }}</div>
       </div>
     </div>
 
@@ -129,10 +140,10 @@ function close(isCancel: boolean) {
       </div>
       <div class="flex gap-2">
         <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
-          <div>
-            <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
-              <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress-value" cx="18" cy="18" r="14" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+          <div class="flex items-center justify-center">
+            <svg class="progress-circle" width="32" height="32" viewBox="0 0 32 32">
+              <circle class="progress-bg" cx="16" cy="16" r="13" />
+              <circle class="progress-value" cx="16" cy="16" r="13" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </div>
           <div>
@@ -163,10 +174,6 @@ function close(isCancel: boolean) {
 </template>
 
 <style lang="scss" scoped>
-.popup {
-  width: 520px;
-}
-
 .header {
   color: var(--colors-text-text-primary);
   font-size: 20px;
@@ -190,8 +197,8 @@ function close(isCancel: boolean) {
 
 .tag {
   border-radius: 4px;
-  background: #26A17B;
-  color: var(--primitives-neutrals-0);
+  background: v-bind(bgColor);
+  color: #ffffff;
   font-family: "JetBrains Mono";
   font-size: 20px;
   font-weight: 700;

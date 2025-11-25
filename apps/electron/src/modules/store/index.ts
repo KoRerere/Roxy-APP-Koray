@@ -178,7 +178,7 @@ function encryptData(data: string): string {
     // 将 IV 和加密数据组合在一起
     return `${iv.toString('hex')}:${encrypted}`
   } catch (error) {
-    console.error('加密数据失败:', error)
+    console.error('Failed to encrypt data:', error)
     throw error
   }
 }
@@ -196,7 +196,7 @@ function decryptData(encryptedData: string): string {
     decrypted += decipher.final('utf8')
     return decrypted
   } catch (error) {
-    console.error('解密数据失败:', error)
+    console.error('Failed to decrypt data:', error)
     throw error
   }
 }
@@ -287,7 +287,7 @@ export async function initLocalConfig() {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')
       store.lastLoginTime = Date.now()
-      console.log('上次登录时间超过 15 天，清除 token 和 userId')
+      console.log('Last login time exceeds 15 days, clearing token and userId')
     } else {
       store.showLongTimeNotLoginTips = false
       if (store.userInfo?.email) {
@@ -373,9 +373,9 @@ export async function canUseSyncControl(force = false) {
 /** 安装后首次打开应用，需要记录事件 */
 const recordFirstLaunchAppEvent = async () => {
   await getInstallerParams()
-  console.debug('访客 ID：', store.visitorId)
+  console.debug('Visitor ID:', store.visitorId)
   if (store.visitorId) {
-    console.debug('用户首次安装并打开应用')
+    console.debug('User first install and open app')
     await API.appTrackingEvent.appTrackingEventCreate({
       uuid: store.visitorId,
       eventType: 'app_open',

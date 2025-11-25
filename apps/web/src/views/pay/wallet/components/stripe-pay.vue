@@ -9,7 +9,7 @@ import { useThemeStore } from '/@/stores/theme'
 const { confirmText = $t('确认'), rechargeAmount = 0, onConfirm } = defineProps<{
   rechargeAmount?: number,
   confirmText?: string
-  onConfirm: (data: any) => void | Promise<void>
+  onConfirm: (stripeResult: any) => void | Promise<void>
 }>()
 
 const bindCard = defineModel<boolean>('bind', { default: false })
@@ -135,8 +135,8 @@ async function handleSubmit(event: Event) {
     if (error) {
       throw error.message
     }
-    console.log('stripe 成功:', result)
-    await onConfirm({ ...result, _customerIdKey: customerIdKey.value })
+    console.log('Stripe success:', result)
+    await onConfirm(result)
     // 重置表单
     cardNumber.clear()
     cardExpiry?.clear()

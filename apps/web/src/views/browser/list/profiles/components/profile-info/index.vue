@@ -47,6 +47,7 @@ const emits = defineEmits(['refresh'])
 
 const OS_ICON: any = {
   windows: 'platforms/rx_os_windows',
+  linux: 'platforms/rx_os_linux',
   macos: 'platforms/rx_os_macOS',
   ios: 'platforms/rx_os_iOS',
   android: 'platforms/rx_os_android',

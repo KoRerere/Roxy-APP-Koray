@@ -1,11 +1,13 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { store } from '/@/modules/store'
-import { isDev, isMac, isPackaged } from '/@/constants/common'
+import { isDev, isWindows, isPackaged } from '/@/constants/common'
 
 const sessionDir = app.getPath('sessionData')
 
 export const appConfig = {
+  /** 应用数据根目录 */
+  sessionDir,
   /** 系统语言 */
   lang: app.getLocale(),
   /** 内核缓存目录 */
@@ -24,11 +26,11 @@ export const appConfig = {
   logsDir: app.getPath('logs'),
   /** roxynet 执行文件路径 */
   get roxynetBinPath() {
-    return join(sessionDir, 'roxynet-bin', isMac ? 'roxynet' : 'roxynet.exe')
+    return join(sessionDir, 'roxynet-bin', isWindows ? 'roxynet.exe' : 'roxynet')
   },
   /** roxysync 执行文件路径 */
   get roxySyncBinPath() {
-    return join(sessionDir, 'roxy-sync-bin', isMac ? 'roxy-sync' : 'roxy-sync.exe')
+    return join(sessionDir, 'roxy-sync-bin', isWindows ? 'roxy-sync.exe' : 'roxy-sync')
   },
   /** 配置文件 */
   configFile: join(sessionDir, 'config.json'),

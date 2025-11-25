@@ -200,7 +200,7 @@ onMounted(() => {
 
 async function startSync() {
   if (selectedRowsFilter.value?.length < 2) {
-    console.log('请先打开至少两个窗口', selectedRowsFilter.value?.length)
+    console.log('Please open at least two windows first', selectedRowsFilter.value?.length)
     return
   }
 
@@ -241,7 +241,7 @@ electronAPI.on('syncControl:start', startSync)
 
 <template>
   <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-    :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }"
+    :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }"
     @row-select-all="handleRowSelectAll" v-bind="$attrs">
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex gap-2.5">

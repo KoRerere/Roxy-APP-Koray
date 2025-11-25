@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { $t } from '/@/locales';
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { WorkspaceType } from '/@/enums';
 
 const emit = defineEmits(['close', 'confirm'])
 
 const router = useRouter()
-const { sharedWorkspaceList } = storeToRefs(useWorkspaceStore())
-const { setCurrentWorkspace } = useWorkspaceStore()
 
 const welcome = [
   {

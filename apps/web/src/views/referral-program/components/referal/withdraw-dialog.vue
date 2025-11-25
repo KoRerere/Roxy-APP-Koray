@@ -7,7 +7,7 @@ import { PayWay } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { $t } from '/@/locales';
 import currency from 'currency.js'
-import { validateTRC20Address } from './utils'
+import { validatePayPalAddress, validateTRC20Address } from './utils'
 import { useDialog } from '/@/hooks/useDialog';
 import IdentityVerification from './identity-verification.vue';
 import { ceilByStep } from '/@/views/pay/subscribe/util';
@@ -30,9 +30,12 @@ const form = ref({
 })
 const withdrawAddressErrorText = ref('')
 
-const paymentMethods = [PayWay.Balance, PayWay.USDT, PayWay.Card, PayWay.Alipay].map(item => ({ value: item }))
-const disabledMethods = [PayWay.Card, PayWay.Alipay]
+const paymentMethods = [PayWay.Balance, PayWay.USDT, PayWay.PayPal].map(item => ({ value: item }))
 
+const validateMap = {
+  [PayWay.USDT]: validateTRC20Address,
+  [PayWay.PayPal]: validatePayPalAddress,
+}
 // 提现到非Roxy钱包, 金额需要大于50
 const isAmountLessThan50 = computed(() => {
   return promotionInfo.withdrawAmount < 50 || form.value.amount < 50
@@ -44,6 +47,7 @@ const withdrawDisabled = computed(() => {
     case PayWay.Balance:
       return promotionInfo.withdrawAmount <= 0 || form.value.amount <= 0
     case PayWay.USDT:
+    case PayWay.PayPal:
       return isAmountLessThan50.value || !form.value.withdraw_address.trim() || withdrawAddressErrorText.value.trim().length > 0
     default:
       return false
@@ -60,11 +64,15 @@ const minWithdrawAmountText = computed(() => {
 
 watch(() => form.value.withdraw_method, (val) => {
   handleWithdrawAmountChange(form.value.amount)
+  withdrawAddressErrorText.value = ''
+  form.value.withdraw_address = ''
 })
 
 watch(() => form.value.withdraw_address, (val) => {
-  if (val && form.value.withdraw_method === PayWay.USDT) {
-    const { isValid, message } = validateTRC20Address(val)
+  if (val && [PayWay.USDT, PayWay.PayPal].includes(form.value.withdraw_method)) {
+
+    const { isValid, message } = validateMap[form.value.withdraw_method as keyof typeof validateMap](val)
+
     if (!isValid) {
       withdrawAddressErrorText.value = message
     } else {
@@ -130,7 +138,7 @@ function handleAmountQuickCheck(amount: number) {
 }
 
 function handleWithdrawAmountChange(amount: number) {
-  if (amount && form.value.withdraw_method === PayWay.USDT) {
+  if (amount && [PayWay.USDT, PayWay.PayPal].includes(form.value.withdraw_method)) {
     console.log('handleWithdrawAmountChange', amount)
     const step = 50
     const tempValue = ceilByStep(currency(amount).value, step)
@@ -178,18 +186,24 @@ function handleBlur(event: InputNumberBlurEvent) {
     <div class="row">
       <div class="label">{{ $t('提现到') }}</div>
       <div class="desc">
-        {{ $t('目前仅支持提现至 Roxy 钱包及 USDT 地址，更多选项即将推出。') }}
+        {{ $t('目前仅支持提现至 Roxy 钱包、USDT、PayPal 地址，更多选项即将推出。') }}
       </div>
-      <RxPaymentMethods v-model="form.withdraw_method" :methods="paymentMethods" :disabled-methods="disabledMethods" />
+      <RxPaymentMethods v-model="form.withdraw_method" :methods="paymentMethods" />
       <template v-if="form.withdraw_method === PayWay.USDT">
         <div class="usdt-info">
           <div class="label">{{ $t('您的 USDT 钱包地址') }}</div>
           <TsFormInputText v-model="form.withdraw_address" size="md" type="text" :placeholder="$t('USDT 钱包地址')" class="w-full" />
-          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{
-            withdrawAddressErrorText }}</Message>
-          <div class="desc">
-            {{ $t('提现到账时间：5 个工作日内') }}
-          </div>
+          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{ withdrawAddressErrorText }}</Message>
+          <div class="desc">{{ $t('提现到账时间：5 个工作日内') }}</div>
+        </div>
+      </template>
+      <template v-if="form.withdraw_method === PayWay.PayPal">
+        <div class="usdt-info">
+          <div class="label">{{ $t('您的 PayPal 地址') }}</div>
+          <TsFormInputText v-model="form.withdraw_address" size="md" type="text" :placeholder="$t('PayPal 邮箱')" class="w-full" />
+          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{ withdrawAddressErrorText }}</Message>
+          <div class="desc">{{ $t('处理时间：最长 7 个工作日') }}</div>
+          <div class="desc">{{ $t('正确输入您的 PayPal 电子邮件，以防钱款丢失。您将通过应用程序和电子邮件收到转账通知。') }}</div>
         </div>
       </template>
     </div>

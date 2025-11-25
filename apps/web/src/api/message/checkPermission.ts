@@ -26,7 +26,7 @@ export async function checkPermission(response: AxiosResponse<any, any>) {
     getWorkspaceList().finally(() => {
       isCheckingUserIdentity = false
     })
-    console.log('工作空间角色发生变化，重新获取工作空间列表')
+    console.log('Workspace role changed, re-fetching workspace list')
   }
 }
 

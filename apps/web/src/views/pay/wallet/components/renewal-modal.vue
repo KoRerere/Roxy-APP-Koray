@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import Detail from '/@/views/pay/subscribe/components/detail.vue';
 import Duration from '/@/views/pay/subscribe/components/duration.vue';
+import BlackFridayDuration from '/@/views/campaign/black-friday-duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
+import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
-import { addDays, format } from "date-fns";
 import { $t } from '/@/locales';
 import { API } from '/@/api';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleLocale } from '/@/stores/locale';
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user';
+import { useCampaignStore } from '/@/stores/campaign';
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { SubLevelEnum } from '/@/enums/pay';
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { blackFridayPeriod } = storeToRefs(useCampaignStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
@@ -72,7 +75,7 @@ const detail = computed(() => {
         },
         {
           label: $t('到期时间'),
-          value: format(addDays(userPayInfo.value.subEndDate || new Date(), selectedDuration.value?.day ?? 30), 'yyyy/MM/dd')
+          value: selectedDuration.value?.due
         }
       ]
     },
@@ -85,7 +88,7 @@ const detail = computed(() => {
           visible: !!discount
         },
         {
-          label: $t('订阅折扣'),
+          label: selectedDuration.value?.discountStr || $t('订阅折扣'),
           value: `-${durationDiscount}%`,
           class: '!color-[#FC9D12]',
           visible: !!durationDiscount
@@ -197,40 +200,47 @@ function onUpgradePlan() {
         </ItemBlock>
         <ItemBlock :title="$t('选择续费时长')">
           <div class="flex flex-col gap-2.5">
-            <Duration v-model="selectedDuration" :price="monthAmount"></Duration>
+            <template v-if="blackFridayPeriod && !userPayInfo.isBlackFriday">
+              <BlackFridayDuration v-model="selectedDuration"></BlackFridayDuration>
+              <div class="help">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。') }}</div>
+            </template>
+            <Duration v-else v-model="selectedDuration" :price="monthAmount"></Duration>
             <div v-if="!isExpired" class="help">{{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}</div>
           </div>
         </ItemBlock>
       </div>
-      <Detail class="w-80" :list="detail">
-        <template #oldprice="{ item }">
-          <div class="flex justify-between">
-            <div class="details-label">{{ item.label }}</div>
-            <div class="details-oldprice">{{ item.value }}</div>
-          </div>
-        </template>
-        <template #price="{ item }">
-          <div class="flex justify-between items-center">
-            <div class="details-label">{{ item.label }}</div>
-            <div>
-              <div class="details-price">{{ item.value }}</div>
-              <div v-if="discountAmount > 0" class="details-diffprice">{{ $t('节省 {value}', {
-                value: currency(discountAmount).format()
-              }) }}</div>
+      <div class="flex flex-col gap-2.5 w-80">
+        <RxAlert v-if="blackFridayPeriod && userPayInfo?.isAuto" class="w-full" type="info" :closable="false" :title="$t('注意：购买黑色星期五优惠后，自动续订功能将会关闭。')"></RxAlert>
+        <Detail :list="detail">
+          <template #oldprice="{ item }">
+            <div class="flex justify-between">
+              <div class="details-label">{{ item.label }}</div>
+              <div class="details-oldprice">{{ item.value }}</div>
             </div>
-          </div>
-        </template>
-        <template #after>
-          <div class="flex-1 flex flex-col justify-end mt-4">
-            <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm"></RxButton>
-            <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
-              <template #terms>
-                <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
-              </template>
-            </i18n-t>
-          </div>
-        </template>
-      </Detail>
+          </template>
+          <template #price="{ item }">
+            <div class="flex justify-between items-center">
+              <div class="details-label">{{ item.label }}</div>
+              <div>
+                <div class="details-price">{{ item.value }}</div>
+                <div v-if="discountAmount > 0" class="details-diffprice">{{ $t('节省 {value}', {
+                  value: currency(discountAmount).format()
+                }) }}</div>
+              </div>
+            </div>
+          </template>
+          <template #after>
+            <div class="flex-1 flex flex-col justify-end mt-4">
+              <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm"></RxButton>
+              <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+                <template #terms>
+                  <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+                </template>
+              </i18n-t>
+            </div>
+          </template>
+        </Detail>
+      </div>
     </div>
   </div>
 </template>

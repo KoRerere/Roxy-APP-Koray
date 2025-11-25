@@ -11,6 +11,10 @@ export enum PayWay {
   Wechat = "Wechat",
   /** USDT */
   USDT = "USDT",
+  /** USDC */
+  USDC = "USDC",
+  /** PayPal */
+  PayPal = "PayPal",
 }
 
 export enum OrderType {

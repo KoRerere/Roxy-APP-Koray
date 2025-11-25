@@ -9,11 +9,13 @@ interface DownloadTemplateOptions {
   afterAddExplain?: (worksheet: ExcelJS.Worksheet) => any
 }
 
-export function getDefaultTemplate() {
+export async function getDefaultTemplate() {
+  const { coreVersion } = await getDictMap()
+
   return {
     os: 'Windows',
     osVersion: '11',
-    coreVersion: '138',
+    coreVersion: coreVersion![0]!.value,
     browserVersion: null,
     isLanguageBaseIp: true,
     language: 'sq-AL',
@@ -90,9 +92,9 @@ const getExportColumns = async () => {
     API.platform.userGetSearchEnginesList()
   ])
 
-  const { os, version } = $dict_map.os.reduce((acc, item, index) => {
+  const { os, version } = $dict_map.os!.reduce((acc, item, index) => {
     const os = `${exampleText}${index + 1}: ${item.label}`
-    const version = $dict_map[`osversion_${item.value.toLocaleLowerCase()}`].map(item => item.value).join('、')
+    const version = $dict_map[`osversion_${item.value.toLocaleLowerCase()}`]!.map(item => item.value).join('、')
 
     acc.os.push(os)
     acc.version.push(`${os}: ${version}`)
@@ -242,7 +244,7 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   const row = worksheet.getRow(1)
   row.height = 30;
   row.eachCell((cell, colIndex) => {
-    const col = columns[colIndex - 1]
+    const col = columns[colIndex - 1]!
     cell.style = {
       font: {
         bold: true,
@@ -410,7 +412,7 @@ export async function parseTextFile(file: File) {
         const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((text, index) => {
           const textFmt = text.trim().split('\n').map(line => {
             const [key, ...value] = line.trim().split('=')
-            return keys.includes(key) ? [key, value.join('=')] : []
+            return keys.includes(key!) ? [key!, value.join('=')] : []
           }).filter(item => item.length)
 
           const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)

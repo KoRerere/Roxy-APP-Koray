@@ -41,6 +41,11 @@ const defaultMethods = [
     label: 'USDT',
     value: PayWay.USDT,
     icon: '/images/payments/rx_payment_usdt.svg'
+  },
+  {
+    label: 'PayPal',
+    value: PayWay.PayPal,
+    icon: '/images/payments/rx_payment_paypal.svg'
   }
 ]
 
@@ -64,7 +69,7 @@ function handleClick(method: PayWay) {
 </script>
 
 <template>
-  <div class="rx-payment-methods">
+  <div class="relative w-full grid grid-cols-3 gap-3 select-none">
     <RxLoading v-model="loading" :opacity="0.6"></RxLoading>
     <template v-for="item in paymentMethods" :key="item.value">
       <div class="rx-payment-methods-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }" @click="handleClick(item.value!)">
@@ -78,12 +83,6 @@ function handleClick(method: PayWay) {
 
 <style scoped lang="scss">
 .rx-payment-methods {
-  position: relative;
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(25% - 12px)), 1fr));
-  gap: 12px;
-  user-select: none;
 
   &-item {
     position: relative;

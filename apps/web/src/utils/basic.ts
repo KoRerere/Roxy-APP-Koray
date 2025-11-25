@@ -105,7 +105,7 @@ export async function readCookiesFile(): Promise<any> {
       ],
       excludeAcceptAllOption: true,
       multiple: false,
-    }).then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
+    }).then((handleFile: FileSystemFileHandle[]) => handleFile[0]!.getFile())
 
     const reader = new FileReader()
     reader.readAsText(file)
@@ -258,7 +258,7 @@ export function concurrentControl(tasks: (() => Promise<any>)[], limit: number =
 
     function runNext() {
       while (activeCount < limit && taskIndex < tasks.length) {
-        const currentTask = tasks[taskIndex]
+        const currentTask = tasks[taskIndex]!
         const currentIndex = taskIndex
         taskIndex++
         activeCount++
@@ -284,7 +284,7 @@ export function formatProxyTime(time: string) {
   const minute = Math.floor(diff / 60)
 
   if (day > 7) {
-    return time.split(' ')[0].replace(/-/g, '/')
+    return time.split(' ')[0]!.replace(/-/g, '/')
   }
   else if (day > 0) {
     return $t('{day}天前', { day })
@@ -310,36 +310,6 @@ export function getExtname(filename: string) {
   return parts.pop();
 }
 
-export function startCountdown(
-  endTime: number | string | Date,
-  callback: (time: { timestamp: number, hours: number, minutes: number, seconds: number, done: boolean }) => void
-) {
-  const endTimestamp = new Date(endTime).getTime()
-  let remainingTime = endTimestamp - Date.now();
-  let timer: number | null = null
-
-  function updateCountdown(): void {
-    if (remainingTime <= 0) {
-      callback({ timestamp: 0, hours: 0, minutes: 0, seconds: 0, done: true });
-      return;
-    }
-    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-    callback({ timestamp: remainingTime, hours, minutes, seconds, done: false });
-
-    remainingTime = endTimestamp - Date.now();
-    requestAnimationFrame(updateCountdown);
-  }
-
-  function stop() {
-    timer && cancelAnimationFrame(timer)
-  }
-
-  updateCountdown();
-  return stop
-}
-
 export function safeParseJSON(data: any, fallback?: any) {
   try {
     return JSON.parse(data)
@@ -356,7 +326,7 @@ export function formatNumberToKMB(num: number, precision = 0): string {
     { threshold: 1e3, suffix: 'K' },
   ]
 
-  if (num >= formats[formats.length - 1].threshold) {
+  if (num >= formats[formats.length - 1]!.threshold) {
     for (const { threshold, suffix } of formats) {
       if (num >= threshold) {
         return `${currency(num, { symbol: '', precision }).divide(threshold).format()}${suffix}`
@@ -398,4 +368,208 @@ export function getSortIcon(sortOrder: SortOrderNumber) {
     '1': 'base/rx_ic_chevron_2_up',
   }
   return map[sortOrder.toString() as keyof typeof map] as SvgNames
+}
+
+export interface CountdownOptions {
+  lessThan24Interval?: number; // 不足 1天倒计时的间隔（分钟），默认 1 (minute)
+  alwaysSecondLevel?: boolean; // 是否始终按秒级倒计时，默认 false
+  onEnd?: () => void;          // 倒计时结束回调
+}
+
+export function enhanceCountdown(
+  endTime: number | string | Date,
+  callback: (data: {
+    timestamp: number;
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    milliseconds: number;
+    done: boolean;
+  }) => void,
+  options: CountdownOptions = {}
+) {
+  // 常量
+  const minuteIntervalMs = (options.lessThan24Interval ?? 1) * 60 * 1000; // 分钟级间隔
+  const HOUR_MS = 3600_000;
+  const DAY_MS = 24 * HOUR_MS;
+
+  // 倒计时结束的时间戳
+  let endTimestamp = new Date(endTime).getTime();
+
+  // 内部状态
+  let timerId: number | null = null; // setTimeout ID
+  let rafId: number | null = null;   // requestAnimationFrame ID
+  let isRafRunning = false;
+  let paused = false;
+  let ended = false;
+  let remainingOnPause: number | null = null; // 暂停时保存剩余时间
+
+  // 清理所有定时器/RAF
+  function clearAll() {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    isRafRunning = false;
+  }
+
+  // 保证剩余时间不为负
+  function clampZero(n: number) {
+    return n <= 0 ? 0 : n;
+  }
+
+  // 格式化剩余时间为天/小时/分钟/秒/毫秒
+  function format(remaining: number) {
+    const r = Math.max(0, remaining);
+    const days = Math.floor(r / DAY_MS);
+    const hours = Math.floor((r % DAY_MS) / HOUR_MS);
+    const minutes = Math.floor((r % HOUR_MS) / 60000);
+    const seconds = Math.floor((r % 60000) / 1000);
+    const milliseconds = Math.floor(r % 1000);
+    return { days, hours, minutes, seconds, milliseconds };
+  }
+
+  // 计算下一次触发的延迟（基于剩余时间对齐）
+  function nextDelayForUnit(remaining: number, unitMs: number) {
+    const rem = remaining % unitMs;
+    return rem === 0 ? unitMs : rem;
+  }
+
+  // 使用 setTimeout 安排下一次 tick
+  function scheduleTimeout(delayMs: number) {
+    clearAll();
+    timerId = window.setTimeout(() => {
+      timerId = null;
+      tick();
+    }, delayMs);
+  }
+
+  // 秒级倒计时（使用 RAF）
+  function startRAFCountdown() {
+    if (isRafRunning) return;
+    clearAll();
+    isRafRunning = true;
+    let lastSecond: number | null = null; // 上一次触发的秒数
+
+    function rafTick() {
+      if (paused) {
+        isRafRunning = false;
+        rafId = null;
+        return;
+      }
+
+      const now = Date.now();
+      const remaining = endTimestamp - now;
+
+      // 倒计时结束
+      if (remaining <= 0) {
+        clearAll();
+        if (!ended && options.onEnd) {
+          ended = true;
+          options.onEnd();
+        }
+        callback({ timestamp: 0, days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0, done: true });
+        return;
+      }
+
+      const currentSecond = Math.floor(remaining / 1000);
+      // 首帧或秒数变化时触发回调
+      if (lastSecond === null || currentSecond !== lastSecond) {
+        lastSecond = currentSecond;
+        const data = format(remaining);
+        callback({ timestamp: clampZero(remaining), ...data, done: false });
+      }
+
+      rafId = window.requestAnimationFrame(rafTick);
+    }
+
+    rafId = window.requestAnimationFrame(rafTick);
+  }
+
+  // 主逻辑：决定使用小时/分钟/秒级倒计时
+  function tick() {
+    if (paused) return;
+
+    const now = Date.now();
+    let remaining = endTimestamp - now;
+
+    if (remaining <= 0) {
+      clearAll();
+      if (!ended && options.onEnd) {
+        ended = true;
+        options.onEnd();
+      }
+      callback({ timestamp: 0, days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0, done: true });
+      return;
+    }
+
+    // 立即触发回调
+    const data = format(remaining);
+    callback({ timestamp: clampZero(remaining), ...data, done: false });
+
+    if (options.alwaysSecondLevel) {
+      startRAFCountdown();
+      return;
+    }
+
+    if (remaining > DAY_MS) {
+      // 剩余 > 1天 → 小时级更新
+      const delay = nextDelayForUnit(remaining, HOUR_MS);
+      scheduleTimeout(delay);
+      return;
+    }
+
+    if (remaining > HOUR_MS) {
+      // 剩余 ≤1天且 >1小时 → 分钟级更新
+      const delay = nextDelayForUnit(remaining, minuteIntervalMs);
+      scheduleTimeout(delay);
+      return;
+    }
+
+    // 剩余 ≤1小时 → 秒级更新
+    startRAFCountdown();
+  }
+
+  // API：停止倒计时
+  function stop() {
+    clearAll();
+    paused = false;
+    remainingOnPause = null;
+  }
+
+  // API：暂停倒计时
+  function pause() {
+    if (paused) return;
+    paused = true;
+    const now = Date.now();
+    remainingOnPause = Math.max(0, endTimestamp - now);
+    clearAll();
+  }
+
+  // API：恢复倒计时
+  function resume() {
+    if (!paused) return;
+    paused = false;
+    if (remainingOnPause === null) {
+      tick();
+      return;
+    }
+    endTimestamp = Date.now() + remainingOnPause;
+    remainingOnPause = null;
+    tick();
+  }
+
+  // 启动倒计时
+  tick();
+
+  return {
+    stop,
+    pause,
+    resume
+  };
 }

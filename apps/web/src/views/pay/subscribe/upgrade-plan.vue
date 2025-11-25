@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
+import BlackFridaySubscribeInfo from '/@/views/campaign/black-friday-subscribe-info.vue';
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
@@ -314,6 +315,15 @@ function jumpToProfile() {
   getUserPayInfo()
   router.push({ name: 'browser-list' })
 }
+//=============================
+import { useCampaignStore } from '/@/stores/campaign';
+const { blackFridayPeriod } = storeToRefs(useCampaignStore())
+
+const subInfo = computed(() => ({
+  due: userPayInfo.value.isAuto ? $t('自动续订') : $t('有效期至 {date}', { date: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
+  days: userPayInfo.value.isAuto ? '' : $t('(剩余 {day} 天)', { day: Math.max(differenceInDays(userPayInfo.value.subEndDate, userPayInfo.value.subCurrentDate), 1), }),
+}))
+
 </script>
 
 <template>
@@ -324,16 +334,26 @@ function jumpToProfile() {
         <div class="flex-1 flex flex-col gap-8">
           <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :raw-list="dataList" :min="sliderMin"></Profile>
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
-          <div class="flex items-center justify-between" v-if="dataList?.length">
+
+          <RxAlert v-if="blackFridayPeriod && !userPayInfo.isBlackFriday" class="!w-full whitespace-pre-wrap" type="warn" :closable="false">
+            <template #content>
+              <i18n-t tag="div" class="whitespace-pre-wrap" scope="global" :keypath="$t('您需要先购买黑五套餐后，升级窗口数量才能享受黑五折扣优惠。{link}', { link: '{link}' })">
+                <template #link>
+                  <a class="cursor-pointer underline" @click="$showLiveChat">{{ $t('联系技术支持') }}</a>
+                </template>
+              </i18n-t>
+            </template>
+          </RxAlert>
+
+          <BlackFridaySubscribeInfo v-if="blackFridayPeriod && userPayInfo.isBlackFriday"></BlackFridaySubscribeInfo>
+          <div v-else class="flex items-center justify-between">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
-            <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
-            <div v-else class="due">
-              <span>{{ $t('截止至 {date}', { date: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
-              <span class="ml-2 due-day">{{ $t('(剩余 {day} 天)', {
-                day: Math.max(differenceInDays(userPayInfo.subEndDate, userPayInfo.subCurrentDate), 1)
-              }) }}</span>
+            <div class="due">
+              <span>{{ subInfo.due }}</span>
+              <span class="ml-2 due-day">{{ subInfo.days }}</span>
             </div>
           </div>
+
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
           <AdvancedFeat :plan="selectedPlan"></AdvancedFeat>
         </div>

@@ -125,7 +125,7 @@ export async function intoMainPage() {
   if (!isPackaged) {
     mainWin?.webContents.openDevTools({ mode: 'detach' })
   }
-  console.log('进入主应用')
+  console.log('Entering main application')
 }
 
 /** 更新主窗口页面标题 */
