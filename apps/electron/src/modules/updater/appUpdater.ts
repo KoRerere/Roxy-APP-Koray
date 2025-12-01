@@ -2,17 +2,16 @@ import type { UserGetAppUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
-import { MacUpdater, NsisUpdater } from 'electron-updater'
+import electronUpdater, { DebUpdater } from 'electron-updater'
 import { join } from 'node:path'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged } from '/@/constants/common'
+import { isPackaged } from '/@/constants/common'
 import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { forceSaveConfig, store } from '/@/modules/store'
-
-export type { UpdateInfo } from 'electron-updater'
+import { CustomDebUpdater } from './CustomDebUpdater'
 
 const isDevelopment = !app.isPackaged
 
@@ -23,7 +22,11 @@ export const appUpdater = new class AppUpdater {
   checkForUpdatesOptions?: CheckForUpdatesOptions
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   isQuittingForUpdate = false
-  #autoUpdater!: MacUpdater | NsisUpdater
+  #autoUpdater: DebUpdater | typeof electronUpdater.autoUpdater = process.platform === 'linux'
+    ? new CustomDebUpdater()
+    : electronUpdater.autoUpdater
+  /** 是否已初始化事件监听 */
+  #isInitialized = false
   /** 更新信息消息体 */
   #updateMessageData: ResourceUpdateMessage = {
     type: 'app',
@@ -70,9 +73,11 @@ export const appUpdater = new class AppUpdater {
 
     console.debug(`autoUpdater options`, publishOptions)
 
-    if (this.#autoUpdater) {
-      // 动态更新autoUpdater的配置
-      this.#autoUpdater.setFeedURL(publishOptions)
+    // 设置更新源
+    this.#autoUpdater.setFeedURL(publishOptions)
+
+    // 如果已经初始化过，只需要重新检查更新
+    if (this.#isInitialized) {
       console.log('APP remote version:', version)
       console.log('APP local version:', app.getVersion())
       console.log('Is remote version greater than local version:', compare(version, app.getVersion(), '>'))
@@ -83,12 +88,13 @@ export const appUpdater = new class AppUpdater {
       return waitForDownload ? this.downloadPromiser?.promise : result
     }
 
-    this.#autoUpdater = isMac ? new MacUpdater(publishOptions) : new NsisUpdater(publishOptions)
+    // 首次初始化，设置配置和事件监听
+    this.#isInitialized = true
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
       this.#autoUpdater.forceDevUpdateConfig = true
-      this.#autoUpdater.updateConfigPath = join(__dirname, '../dev-app-update.yml')
+      this.#autoUpdater.updateConfigPath = join(import.meta.dirname, '../dev-app-update.yml')
     }
 
     this.#autoUpdater.autoInstallOnAppQuit = true
@@ -164,8 +170,8 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
-    if (!this.#autoUpdater) {
-      // await this.init()
+    if (!this.#isInitialized) {
+      console.warn('autoUpdater not initialized yet')
       return
     }
 

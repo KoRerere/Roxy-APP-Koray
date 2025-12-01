@@ -1,7 +1,7 @@
 import { BrowserWindow, BrowserWindowConstructorOptions, net, Protocol, Session, session } from "electron"
 import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from "/@/constants"
 import { encryptAESGCM, getCommonRequestHeaders, getDeviceId, getInviteCode } from "/@/utils"
-import { isPackaged } from "/@/constants/common"
+import { isLinux, isPackaged } from "/@/constants/common"
 import { store } from "/@/modules/store"
 import { getBaseUrl } from "/@/api/getGatewayConfig"
 import { getRemoteConfig } from "/@/modules/browser/browser-manager/utils"
@@ -28,6 +28,7 @@ export function createWindow(options: BrowserWindowConstructorOptions & { roxyWi
       spellcheck: false,
       preload: appConfig.preloadFilePath,
       webviewTag: false,
+      sandbox: !isLinux,
       ...options.webPreferences,
     }
   })

@@ -10,6 +10,7 @@ import { fileExists } from '/@/utils'
 import { appConfig } from '/@/constants'
 import { intoLaunchPage } from '/@/modules/app/mainWindow'
 import { app } from 'electron'
+import { isLinux } from '/@/constants/common'
 
 // Sentry.init({
 //   dsn: import.meta.env.VITE_SENTRY_DSN,

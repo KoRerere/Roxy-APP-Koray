@@ -127,7 +127,7 @@ export async function startRoxynet() {
 
 export function stopRoxynet() {
   if (roxynetProcess) {
-    roxynetProcess.kill()
+    roxynetProcess.kill('SIGKILL')
     roxynetProcess = null
   }
 }

@@ -249,6 +249,7 @@ export class BeforeLaunchTask {
       `--user-data-dir=${this.browserItem.userDataDir}`,
       '--no-sandbox',
       '--disable-setuid-sandbox',
+      '--password-store=basic',
       '--disable-backgrounding-occluded-windows',
       // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]

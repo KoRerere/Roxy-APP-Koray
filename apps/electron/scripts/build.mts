@@ -48,6 +48,13 @@ const config = isDev
     APP_NAME: 'RoxyBrowser'
   }
 
+const extraResources: NonNullable<Configuration['extraResources']> = [
+  {
+    from: 'node_modules/font-list',
+    to: 'node_modules/font-list',
+  },
+]
+
 // 处理 macOS PKG 脚本
 if (platform === 'darwin') {
   const templatePath = path.join(workDir, 'buildResources/postinstall.template')
@@ -81,6 +88,70 @@ if (platform === 'win32') {
   console.log(`✅ 已生成 Windows 安装脚本 (${isDev ? '开发' : '生产'}环境)`)
 }
 
+// 处理 Linux deb 脚本
+if (platform === 'linux') {
+  const linuxDir = path.join(workDir, 'buildResources/linux')
+  const outputLinuxDir = path.join(workDir, 'buildResources/linux-scripts')
+  mkdirSync(outputLinuxDir, { recursive: true })
+  const linuxGeneratedDir = path.join(linuxDir, 'generated')
+  mkdirSync(linuxGeneratedDir, { recursive: true })
+
+  // 配置变量
+  const wrapperFileName = 'roxybrowser-update-wrapper.sh'
+  const linuxConfig = {
+    APP_NAME: appName,
+    VENDOR_NAME: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
+    ICON_NAME: appName.toLowerCase(),
+    POLICY_FILENAME: isDev ? 'com.roxybrowser.dev.policy' : 'com.roxybrowser.policy',
+    WRAPPER_FILENAME: wrapperFileName,
+    WRAPPER_POLICY_PATH: `/opt/${appName}/resources/${wrapperFileName}`,
+    WRAPPER_LOG_PATH: `/var/log/${appName.toLowerCase()}-update-wrapper.log`,
+  }
+
+  // 生成 policy 文件
+  const policyTemplatePath = path.join(linuxDir, 'com.roxybrowser.policy.template')
+  const policyTemplate = readFileSync(policyTemplatePath, 'utf-8')
+  const policyContent = policyTemplate
+    .replaceAll('{{APP_NAME}}', linuxConfig.APP_NAME)
+    .replaceAll('{{VENDOR_NAME}}', linuxConfig.VENDOR_NAME)
+    .replaceAll('{{ICON_NAME}}', linuxConfig.ICON_NAME)
+    .replaceAll('{{WRAPPER_PATH}}', linuxConfig.WRAPPER_POLICY_PATH)
+
+  // 将 policy 文件写入生成目录，稍后通过 extraResources 打包到 resources 根目录
+  const policyOutputPath = path.join(linuxGeneratedDir, 'com.roxybrowser.policy')
+  writeFileSync(policyOutputPath, policyContent)
+
+  extraResources.push({
+    from: policyOutputPath,
+    to: 'com.roxybrowser.policy',
+  })
+
+  // 生成 pkexec wrapper
+  const wrapperTemplatePath = path.join(linuxDir, 'update-wrapper.sh')
+  const wrapperTemplate = readFileSync(wrapperTemplatePath, 'utf-8')
+  const wrapperContent = wrapperTemplate
+    .replaceAll('{{APP_NAME}}', linuxConfig.APP_NAME)
+    .replaceAll('{{WRAPPER_LOG_PATH}}', linuxConfig.WRAPPER_LOG_PATH)
+  const wrapperOutputPath = path.join(linuxGeneratedDir, linuxConfig.WRAPPER_FILENAME)
+  writeFileSync(wrapperOutputPath, wrapperContent)
+  chmodSync(wrapperOutputPath, 0o755)
+
+  extraResources.push({
+    from: wrapperOutputPath,
+    to: linuxConfig.WRAPPER_FILENAME,
+  })
+
+  // 生成 afterInstall 脚本
+  const afterInstallTemplate = readFileSync(path.join(linuxDir, 'afterInstall.sh'), 'utf-8')
+  const afterInstallContent = afterInstallTemplate
+    .replaceAll('{{APP_NAME}}', linuxConfig.APP_NAME)
+    .replaceAll('{{POLICY_FILENAME}}', linuxConfig.POLICY_FILENAME)
+  writeFileSync(path.join(outputLinuxDir, 'afterInstall.sh'), afterInstallContent)
+  chmodSync(path.join(outputLinuxDir, 'afterInstall.sh'), 0o755)
+
+  console.log(`✅ 已生成 Linux deb 脚本和 policy 文件 (${isDev ? '开发' : '生产'}环境)`)
+}
+
 console.log(`📡 上报域名: ${config.REPORT_DOMAINS}`)
 console.log(`📡 API 路径: ${config.REPORT_API_PATH}`)
 
@@ -97,18 +168,13 @@ const options: Configuration = {
   extraMetadata: {
     version,
     name: appName,
-    main: 'dist/main.cjs',
+    main: 'dist/main.mjs',
   },
   directories: {
     output: '../../out',
     buildResources: 'buildResources',
   },
-  extraResources: [
-    {
-      from: 'node_modules/font-list',
-      to: 'node_modules/font-list',
-    },
-  ],
+  extraResources,
   files: [
     'dist',
     'resources',
@@ -191,26 +257,36 @@ const options: Configuration = {
   },
   linux: {
     icon: 'logo.icns',
-    target: [
-      {
-        target: 'AppImage',
-        arch: ['x64',],
-      },
-      {
-        target: 'deb',
-        arch: ['x64',],
-      },
-    ],
+    target: 'deb',
     category: 'Network',
-    synopsis: isDev ? 'Roxy Browser Dev - 开发版浏览器' : 'Roxy Browser - 现代化浏览器',
-    description: isDev ? 'RoxyBrowser 开发版本' : 'RoxyBrowser 是一款现代化的浏览器应用',
+    synopsis: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
+    description: 'Premier Antidetect Browser Streamline Your Workflow Effortlessly',
     // Linux 启动参数（会添加到 .desktop 文件的 Exec 字段中）
-    executableArgs: ['--no-sandbox'],
+    executableArgs: ['--no-sandbox --disable-setuid-sandbox'],
     desktop: {
-      Name: shortcutName,
-      Comment: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
-      Categories: 'Network;WebBrowser;',
+      entry: {
+        Name: shortcutName,
+        Comment: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
+        Categories: 'Network;WebBrowser;',
+        MimeType: 'x-scheme-handler/roxybrowser;',
+      }
     },
+  },
+  deb: {
+    // 安装后执行的脚本（用于安装 polkit policy 文件）
+    afterInstall: 'buildResources/linux-scripts/afterInstall.sh',
+    // 依赖项
+    depends: [
+      'libgtk-3-0',
+      'libnotify4',
+      'libnss3',
+      'libxss1',
+      'libxtst6',
+      'xdg-utils',
+      'libatspi2.0-0',
+      'libuuid1',
+      'libsecret-1-0',
+    ],
   },
   // publish: [
   //   {

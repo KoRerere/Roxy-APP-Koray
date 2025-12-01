@@ -13,7 +13,7 @@ export async function createTray() {
     return tray
   }
 
-  const iconPath = path.join(__dirname, '..', 'resources/roxy-tray.png')
+  const iconPath = path.join(import.meta.dirname, '..', 'resources/roxy-tray.png')
   // 新建托盘
   tray = new Tray(iconPath)
   // 托盘名称

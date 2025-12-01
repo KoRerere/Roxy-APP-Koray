@@ -38,7 +38,7 @@ export const appConfig = {
   defaultBrowserCacheRootDir: join(sessionDir, 'browser-cache'),
   /** 预加载文件路径 */
   get preloadFilePath() {
-    return isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs')
+    return isPackaged ? join(import.meta.dirname, './preload/index.cjs') : join(import.meta.dirname, '../../preload/dist/index.cjs')
   },
   /** asar 解压后的文件路径 */
   unpackedFilePath: join(process.resourcesPath, 'app.asar.unpacked'),
@@ -50,7 +50,7 @@ export const appConfig = {
   },
   /** 查找占用某个句柄的进程， handle.exe（微软工具） */
   get handleExePath() {
-    return isPackaged ? join(appConfig.unpackedFilePath, './dist/bin/handle.exe') : join(__dirname, '../bin', 'handle.exe')
+    return isPackaged ? join(appConfig.unpackedFilePath, './dist/bin/handle.exe') : join(import.meta.dirname, '../bin', 'handle.exe')
   },
   /** html-template 目录 */
   get htmlTemplateDir() {
@@ -59,7 +59,7 @@ export const appConfig = {
   /** 当前使用的 web 资源目录 */
   get currentWebDir() {
     if (!isPackaged) {
-      return join(__dirname, '../../web/public')
+      return join(import.meta.dirname, '../../web/public')
     }
     return store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
   },

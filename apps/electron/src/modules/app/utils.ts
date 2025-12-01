@@ -1,10 +1,11 @@
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, BrowserWindow, dialog, globalShortcut } from 'electron'
 import { API } from '/@/api'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { killProcessByName } from '/@/utils'
+import { stopRoxynet } from '/@/modules/roxynet'
 
 const closeSoftMap = {
   0: 'min',
@@ -79,4 +80,20 @@ export function killAllBrowserProcess() {
   killProcessByName('RoxyChrome')
   killProcessByName('chromedriver')
   killProcessByName('chrome_proxy')
+}
+
+/** 清理和释放资源 */
+export function cleanupAndExit() {
+  try {
+    globalShortcut.unregisterAll()
+    killAllBrowserProcess()
+    BrowserWindow.getAllWindows().forEach((win) => win.destroy())
+    getTray()?.destroy()
+    stopRoxynet()
+    // 杀死整个进程组（包括 zygote、roxynet 等子进程）
+    process.kill(-process.pid, 'SIGKILL')
+  } catch {
+    // 如果失败（比如不是进程组领导者），直接退出
+    app.exit(0)
+  }
 }

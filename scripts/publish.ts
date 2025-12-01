@@ -25,7 +25,7 @@ const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'UJ4UKYUU3UKGfAmo174359
 /** 安装包输出路径 */
 const outDir = join(import.meta.dirname, "../out");
 /** YAML 文件路径 */
-const ymlFilePath = join(outDir, `latest${isMac ? "-mac" : ""}.yml`);
+const ymlFilePath = join(outDir, `latest${{ darwin: "-mac", win32: "", linux: "-linux" }[process.platform]}.yml`);
 // 读取 YAML 文件
 const fileContents = fs.readFileSync(ymlFilePath, "utf8");
 // 解析 YAML 文件
@@ -65,6 +65,14 @@ function genYamlContent(osBit: string, extName: string) {
     targetFile.url = targetFile.url.replace(".dmg", ".pkg")
   }
 
+  if (isLinux && extName === "deb") {
+    const newFileName = targetFile.url.replace("amd64", "x64")
+    try {
+      renameSync(join(outDir, targetFile.url), join(outDir, newFileName));
+    } catch (error) { }
+    targetFile.url = newFileName;
+  }
+
   if (osBit === "ia32" || isMac) {
     const newFileName = targetFile.url.replace(osBit, osBitMap[osBit]);
     try {
@@ -95,10 +103,16 @@ async function getOssCredentials() {
   return data;
 }
 
+const os = {
+  darwin: "macOS",
+  win32: "Windows",
+  linux: "Linux",
+}[process.platform]
+
 /** 获取后台目标版本，有则为更新，无则为新增 */
 async function getTargetVersion(params: { osBit: string; cpu: string }) {
   const { osBit, cpu } = params;
-  const os = isMac ? "macOS" : "Windows";
+
   return fetch(
     `${apiBaseUrl}/admin_version_list?page_index=1&page_size=15&versionType=app&os=${os}&dataType=new`,
     {
@@ -121,7 +135,7 @@ async function getTargetVersion(params: { osBit: string; cpu: string }) {
 /** 发布版本 */
 async function publishVersion({ osBit, cpu, downloadUrl }) {
   const defaultParams = {
-    os: isMac ? "macOS" : "Windows",
+    os,
     osVersion: "",
     osBit: isMac ? "64" : osBit,
     cpu: isMac ? cpu : "",
@@ -160,8 +174,9 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
     cpu: defaultParams.cpu,
   });
   Object.assign(defaultParams, { ...targetVersion });
+  const action = defaultParams.id ? `/admin_mdf_version` : `/admin_add_version`
   fetch(
-    `${apiBaseUrl}/${defaultParams.id ? `/admin_mdf_version` : `/admin_add_version`}`,
+    `${apiBaseUrl}/${action}`,
     {
       method: "POST",
       headers: {
@@ -173,8 +188,10 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
   )
     .then((res) => res.json())
     .then((res) => {
-      console.log(res);
-    });
+      console.log('action', res);
+    }).catch((err) => {
+      console.error('action', err)
+    })
 }
 
 /** 上传文件 */
@@ -188,8 +205,8 @@ async function uploadFile() {
     timeout: "120s",
   });
 
-  const extNames = isMac ? ["dmg", "zip"] : ["exe"];
-  const osBits = isMac ? ["arm64", "x64"] : ["ia32", "x64"];
+  const extNames = isMac ? ["dmg", "zip"] : (isLinux ? ['deb'] : ["exe"]);
+  const osBits = isMac ? ["arm64", "x64"] : (isLinux ? ['amd64'] : ["ia32", "x64"]);
 
   for (const osBit of osBits) {
     for (const extName of extNames) {
@@ -199,7 +216,7 @@ async function uploadFile() {
       const uploadPath = genUploadPath(osBit, fileName);
       console.log("上传路径：", uploadPath);
       console.log("文件路径：", filePath);
-      if (fileName.endsWith(".exe") || fileName.endsWith(".zip")) {
+      if (fileName.endsWith(".exe") || fileName.endsWith(".zip") || fileName.endsWith('.deb')) {
         const { url: ymlUrl } = await client.put(
           `${dirname(uploadPath)}/${basename(ymlFilePath)}`,
           Buffer.from(yaml.dump(yamlContent, { lineWidth: 1000 })),
@@ -223,7 +240,7 @@ async function uploadFile() {
             .replace("http://", "https://");
           console.log(`${fileName} 上传成功: `, url);
           console.log('++++++++++++++++++++++++++++++++++++')
-          if (url.endsWith(".exe") || url.endsWith(".pkg")) {
+          if (url.endsWith(".exe") || url.endsWith(".pkg") || url.endsWith('.deb')) {
             publishVersion({
               osBit: osBit === "ia32" ? "32" : "64",
               cpu: osBit === "arm64" ? "apple" : "intel",

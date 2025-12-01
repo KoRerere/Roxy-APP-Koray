@@ -3,10 +3,10 @@ import path from 'node:path'
 import { appProtocolName, mediaProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
 import { createTray } from '/@/modules/app/tray'
-import { killAllBrowserProcess } from '/@/modules/app/utils'
+import { cleanupAndExit, killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged, isWindows } from '/@/constants/common'
+import { isMac, isPackaged, isWindows, isLinux } from '/@/constants/common'
 import { getMainWindow, intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady } from '/@/utils'
@@ -27,9 +27,9 @@ if (!app.isPackaged) {
 app.commandLine.appendSwitch('experimental-network-inspection')
 app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=3072')
-app.commandLine.appendSwitch('--no-sandbox')
+app.commandLine.appendSwitch('no-sandbox')
 // 开发环境忽略 localhost 连接数限制
-!isPackaged && app.commandLine.appendSwitch('--ignore-connections-limit=localhost')
+!isPackaged && app.commandLine.appendSwitch('ignore-connections-limit', 'localhost')
 
 // macOS 的行为不同：当应用通过协议被启动时，系统不会把参数放在 process.argv，而是触发 open-url 事件，必须在 ready 之前监听
 app.on('open-url', async (event, url) => {
@@ -152,9 +152,7 @@ function initAppEvent() {
       }
     }
     else {
-      globalShortcut.unregisterAll()
-      // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
-      app.exit()
+      cleanupAndExit()
     }
   })
 }

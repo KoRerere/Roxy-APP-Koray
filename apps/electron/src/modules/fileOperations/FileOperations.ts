@@ -22,7 +22,7 @@ export class FileOperations {
   /**  创建 worker */
   private createWorker(): UtilityProcess {
     // 加 inspect 9230
-    const worker = utilityProcess.fork(path.join(__dirname, './fileWorker.cjs'), [], {
+    const worker = utilityProcess.fork(path.join(import.meta.dirname, './fileWorker.mjs'), [], {
       execArgv: appCliStartArgs['roxy-log-level'] === 'debug' || isDev ? [`--inspect=${inspectPort++}`] : [],
       serviceName: `roxyFileWorker${workerNo++}`,
     })

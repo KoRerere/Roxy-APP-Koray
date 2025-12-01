@@ -50,7 +50,7 @@ export function loadLocaleMessages(language: string) {
   try {
     const targetLanguageFilePath = isPackaged
       ? resolve(appConfig.unpackedFilePath, `./dist/web/locales/${language}.json`)
-      : resolve(__dirname, `../../web/src/locales/langs/${language}.json`)
+      : resolve(import.meta.dirname, `../../web/src/locales/langs/${language}.json`)
 
     console.debug('targetLanguageFilePath', targetLanguageFilePath)
 

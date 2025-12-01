@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Roxy Browser Dev</vendor>
+  <vendor_url>https://roxybrowser.com</vendor_url>
+  
+  <!-- 用于应用内自动更新时的权限提升 -->
+  <action id="com.roxybrowser.update">
+    <description>更新 RoxyBrowserDev</description>
+    <message>需要认证以更新 RoxyBrowserDev 浏览器</message>
+    <message xml:lang="en">Authentication is required to update RoxyBrowserDev browser</message>
+    <message xml:lang="zh_CN">需要认证以更新 RoxyBrowserDev 浏览器</message>
+    <icon_name>roxybrowserdev</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/opt/RoxyBrowserDev/RoxyBrowserDev</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>
+

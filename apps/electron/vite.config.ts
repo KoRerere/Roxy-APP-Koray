@@ -24,12 +24,12 @@ const config: UserConfig = {
         index: join(PACKAGE_ROOT, 'src/index.ts'),
         // logWorker: join(PACKAGE_ROOT, 'src/workers/log/index.ts'),
       },
-      formats: ['cjs'],
+      formats: ['es'],
     },
     rollupOptions: {
       output: {
-        entryFileNames: '[name].cjs',
-        chunkFileNames: '[name].cjs',
+        entryFileNames: '[name].mjs',
+        chunkFileNames: '[name].mjs',
       },
     },
     emptyOutDir: true,
