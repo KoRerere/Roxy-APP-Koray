@@ -153,7 +153,10 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
 
   mainWindow.setSkipTaskbar(false)
 
-  mainWindow.focus()
+  mainWindow.setAlwaysOnTop(true);
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.setAlwaysOnTop(false);
   return mainWindow
 }
 
