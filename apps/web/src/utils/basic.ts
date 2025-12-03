@@ -52,6 +52,11 @@ export function isInvalid(value: any) {
   return [null, undefined, ''].includes(value)
 }
 
+export function validateEmail(email: string) {
+  const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  return regex.test(email)
+}
+
 export function createDefaultObject<T extends string[], U>(keys: T, defaultValue: U) {
   return keys.reduce((res, key) => ({ ...res, [key]: defaultValue }), {} as { [K in T[number]]: U })
 }

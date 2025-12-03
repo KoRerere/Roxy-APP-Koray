@@ -147,8 +147,13 @@ function onSave(more: boolean) {
   formRef.value?.submit()
 }
 
-async function onFormSubmit({ intelligent, ...values }: Record<string, any>) {
-  const formData = { ...original.value, ...values }
+async function onFormSubmit({ intelligent, platformUserName, platformPassword, ...values }: Record<string, any>) {
+  const formData = {
+    ...original.value,
+    platformUserName: platformUserName?.trim(),
+    platformPassword: platformPassword?.trim(),
+    ...values
+  }
   loading.value = true
   await onConfirm?.(formData)
   loading.value = false

@@ -121,12 +121,16 @@ export const PaymentStatusStr = {
 export enum PayIdentity {
   /** 新用户 */
   new = "new",
-  /** 老用户 */
-  old = "old",
   /** 特邀用户 */
   invited = "invited",
-  /** 合作用户 */
+  /** 老用户 */
+  old = "old",
+  /** 高级合作伙伴 */
   agent = "agent",
+  /** 合作伙伴 */
+  partner = "partner",
+  /** 尊享会员 */
+  premium = "premium",
 }
 
 export enum PurchaseType {
@@ -142,18 +146,6 @@ export enum PurchaseType {
   Workspace_Staff = "workspace_staff",
   /** 代理 */
   Proxy = "proxy",
-}
-
-export const PayIdentityStr = {
-  get [PayIdentity.old]() {
-    return $t("创始用户")
-  },
-  get [PayIdentity.new]() {
-    return $t("新用户")
-  },
-  get [PayIdentity.invited]() {
-    return $t("特邀用户")
-  },
 }
 
 export enum SubLevelEnum {

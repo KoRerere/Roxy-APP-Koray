@@ -28,7 +28,7 @@ const info = computed(() => ({
         <div class="desc">{{ $t('黑色星期五优惠已生效，升级窗口数量仍可享受黑色星期五折扣。') }}</div>
       </div>
     </div>
-    <div class="mt-2 tip">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。') }}</div>
+    <div class="mt-2 tip">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。活动最终解释权归 RoxyBrowser 团队所有。') }}</div>
   </div>
 </template>
 

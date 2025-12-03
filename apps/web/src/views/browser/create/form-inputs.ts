@@ -80,10 +80,11 @@ function getResolutionBySystem(os: string, $dict_map: Record<string, any[]>) {
 }
 
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
-  const [$dict_map, userConfig, searchEngine] = await Promise.all([
+  const [$dict_map, userConfig, searchEngine, availableCoreVersion] = await Promise.all([
     getDictMap(),
     userStore.getUserConfig(),
-    API.platform.userGetSearchEnginesList()
+    API.platform.userGetSearchEnginesList(),
+    window.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion))
   ])
 
   const osIconMap = {
@@ -95,9 +96,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   } as const
 
   const getCoreVersionOptions = (os: string, version: string) => {
+    const coreVersion = $dict_map.coreVersion!.filter(item => availableCoreVersion.includes(item.value))
+
     return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
-      ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
-      : $dict_map.coreVersion
+      ? coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
+      : coreVersion
   }
 
   const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({

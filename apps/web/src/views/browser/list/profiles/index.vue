@@ -15,10 +15,11 @@ import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
 import { useSimpleDialog } from '/@/components/simplePopup'
-import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
-import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyType } from '/@/enums'
+import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
+import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyCheckStatus, ProxyType } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { format } from 'date-fns'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
@@ -82,6 +83,7 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+const hasTempProfile = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
@@ -197,6 +199,7 @@ async function tableRequest(params: any) {
     ...item,
     projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
   }))
+  hasTempProfile.value = rows.some(item => item.isTemporary)
   autoOpenBrowser(rows)
   data.data.rows = rows
   return data
@@ -502,14 +505,16 @@ async function onTransfer(datas: Data[], operate?: any) {
     },
     slots: {
       container: ({ hideModal }) => h(TransferModal, {
+        datas,
         ids: datas.map(item => item.id!),
         buyProxyType: datas.some(item => item.buyProxyType! === ProxyType.buy),
         onClose: () => {
           hideModal()
           reject()
         },
-        onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
+        onConfirm: async (params: Record<string, boolean>) => {
           hideModal()
+          const { isSelf, needRefresh } = params || {}
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
             // 如果在项目列表中投送，投送成功则跳到投送中 tab
@@ -665,6 +670,8 @@ function multipleProxyDelete(data: Data | Data[]) {
           moduleId: 0, // 为 0 表示解除关联
           proxyCategory: 'noproxy',
           proxyMethod: 'custom',
+          buyProxyType: ProxyType.resource,
+          checkStatus: ProxyCheckStatus.none,
           ...createDefaultObject(clearProxyKeys, ''),
         }
         datas.forEach(item => {
@@ -1040,6 +1047,23 @@ defineExpose({
         </template>
       </CustomNewEmpty>
     </template>
+    <template v-if="hasTempProfile" #column-before="{ ptProps }">
+      <Column :pt="{ ...ptProps, bodycell: `${ptProps.bodycell} !pr-0` }" headerStyle="width:0%" bodyStyle="width:0%">
+        <template #body="{ data }">
+          <RxTooltip v-if="data.isTemporary">
+            <template #default>
+              <SvgIcon class="pointer-events-none" name="base/rx_ic_sand_glass" color="var(--colors-icon-icon-warning)" />
+            </template>
+            <template #content>
+              <div class="flex flex-col gap-1 w-50">
+                <div class="temporary-title">{{ $t('过期时间: {expires}', { expires: format(data.expireTime, 'yyyy/MM/dd') }) }}</div>
+                <div class="temporary-desc">{{ $t('临时窗口在过期前不占用您的窗口用量，可以正常使用。过期后将会占用您的窗口用量。用量不足将无法打开窗口。') }}</div>
+              </div>
+            </template>
+          </RxTooltip>
+        </template>
+      </Column>
+    </template>
     <template #profile="{ data }">
       <template v-if="data.id">
         <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
@@ -1128,6 +1152,21 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+.temporary {
+  &-title {
+    color: var(--component-tooltip-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+
+  &-desc {
+    color: var(--component-tooltip-text-secondary);
+    font-size: 12px;
+    line-height: 16px;
+  }
+}
+
 .note-header {
   color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;

@@ -3,6 +3,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import OperationLog from './operation-log.vue'
 import TeamMember from './team-member.vue'
+import TransferHistory from '/@/views/browser/list/transfer/history.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +14,7 @@ const tabs = computed(() => {
   return [
     { title: $t('团队成员'), value: 'team-member', component: TeamMember, visible: true },
     { title: $t('操作日志'), value: 'operation-log', component: OperationLog, visible: role.isOwner || role.isManager },
+    { title: $t('投送历史'), value: 'transfer-record', component: TransferHistory, visible: role.isOwner },
   ].filter(tab => tab.visible !== false)
 })
 

@@ -13,7 +13,7 @@ import { ipcMain } from '/@/modules/ipc'
 // })
 
 export const httpClient = new HttpClient({
-  // baseURL: 'https://lumitest.lumibrowser.com/',
+  // baseURL: 'https://apitest.roxybrowser.co/',
   timeout: 15000,
   proxy: false,
   // httpsAgent: agent,

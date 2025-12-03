@@ -110,6 +110,16 @@ export function getColumns() {
         }
       },
       {
+        title: $t('投送方'),
+        key: 'transferUserName',
+        getText: (row: any) => row.transferUserName || '--',
+        _visible: false,
+        style: {
+          width: '10%',
+          minWidth: '120px',
+        },
+      },
+      {
         title: $t('其他'),
         key: 'actions',
         alignFrozen: 'right',

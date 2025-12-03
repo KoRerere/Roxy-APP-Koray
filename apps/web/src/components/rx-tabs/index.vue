@@ -20,15 +20,26 @@ interface Props extends /* @vue-ignore */ TabProps {
 const { tabs, onlyTabs = false, headTabs = false, ...props } = defineProps<Props>()
 
 const { tablist, tabpanels, ...slots }: any = useSlots()
+
+const listRef = useTemplateRef('list')
+
+defineExpose({
+  updateInkBar: () => {
+    nextTick(() => {
+      // @ts-ignore - updateInkBar 方法存在但类型定义中缺失
+      listRef.value?.updateInkBar()
+    })
+  }
+})
 </script>
 
 <template>
   <Tabs :class="{ 'head-tabs': headTabs }" v-bind="props">
     <slot name="tablist">
-      <TabList :pt="{ tablist: 'px-6 py-0 gap-4' }">
+      <TabList ref="list" :pt="{ tablist: 'px-6 py-0 gap-4' }">
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
           <slot name="tab" :data="tab">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-center gap-2">
               <SvgIcon v-if="tab.icon" :name="(tab.icon as SvgNames)" color="var(--colors-icon-icon-primary)" />
               <img v-if="tab.image" class="w-4 object-contain" :src="tab.image">
               <span>{{ tab.title }}</span>

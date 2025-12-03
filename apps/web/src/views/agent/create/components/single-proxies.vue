@@ -200,25 +200,36 @@ async function getInputs() {
 
   formRef.value?.setInputsProps({
     ipType: {
-      value: data.ipType || $dict_map.ipType[0]?.value,
+      value: data.ipType || $dict_map.ipType![0]?.value,
       options: $dict_map.ipType,
     },
     proxyCategory: {
-      value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory?.toLocaleUpperCase(),
+      value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol![0]?.value : proxyCategory?.toLocaleUpperCase(),
       options: $dict_map.protocol,
     },
     checkChannel: {
-      value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel[0]?.value,
+      value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel![0]?.value,
       options: $dict_map.checkChannel,
     }
   })
+}
+
+function getFormData() {
+  const { host, port, proxyUserName, proxyPassword, ...formData } = formRef.value?.getValues()!
+  return {
+    host: host?.trim(),
+    port: port?.trim(),
+    proxyUserName: proxyUserName?.trim(),
+    proxyPassword: proxyPassword?.trim(),
+    ...formData,
+  } as Record<string, any>
 }
 
 async function onCheckProxyStatus() {
   await formRef.value?.instance!.validate()
   if (!formRef.value?.instance!.valid) return
 
-  const formData = formRef.value?.getValues()
+  const formData = getFormData()
   alertVisible.value = false
   loading.value = true
   const result = await testProxy(formData!)
@@ -244,7 +255,7 @@ async function onSubmit() {
   }
 
   if (formRef.value?.instance!.valid) {
-    const formData = formRef.value?.getValues()
+    const formData = getFormData()
 
     await onConfirm?.([{
       ...original.value,

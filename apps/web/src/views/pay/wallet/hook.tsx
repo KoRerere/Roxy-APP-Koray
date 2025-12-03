@@ -42,15 +42,13 @@ export function usePay() {
   })
 
   async function checkOrderStatus(orderNo: string) {
-    if (isUnmounted.value) return
-    const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
-    onlyErrorToast(code, msg);
-    if (code !== 0) throw new Error(msg)
-    if (data === PaymentStatus.Success) {
-      return Promise.resolve();
-    } else {
+    while (!isUnmounted.value) {
+      const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
+      onlyErrorToast(code, msg)
+      if (code !== 0 || [PaymentStatus.Fail, PaymentStatus.Closed].includes(data as PaymentStatus)) throw new Error(msg)
+      if (data === PaymentStatus.Success) return
       await sleep(3000)
-      return await checkOrderStatus(orderNo);
+      if (isUnmounted.value) return
     }
   }
 

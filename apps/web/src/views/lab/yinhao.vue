@@ -265,19 +265,6 @@ function setInputsProps() {
 }
 
 //=========================================
-const countdown = ref()
-
-function testCountdown() {
-  const endTimestamp = 24 * 60 * 60 * 1000 + Date.now() + 3000
-  countdown.value = enhanceCountdown(endTimestamp, (data) => {
-    console.log(data)
-  }, { lessThan24Interval: 1 / 60 })
-}
-
-function stopTestCountdown() {
-  countdown.value?.stop()
-}
-
 </script>
 
 <template>
@@ -294,8 +281,6 @@ function stopTestCountdown() {
     <RxButton label="open1" @click="open1"></RxButton>
     <RxButton label="open2" @click="open2"></RxButton>
 
-    <RxButton severity="secondary" label="start" @click="testCountdown"></RxButton>
-    <RxButton severity="secondary" label="stop" @click="stopTestCountdown"></RxButton>
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
         <template #default="{ inputs }">

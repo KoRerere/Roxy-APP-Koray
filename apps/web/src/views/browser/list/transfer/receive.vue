@@ -31,8 +31,17 @@ const columns = [
     key: 'profile',
     slot: 'profile',
     style: {
-      width: '40%',
-    },
+      width: '0%',
+      minWidth: '180px',
+    }
+  },
+  {
+    title: $t('窗口名称'),
+    key: 'windowName',
+    style: {
+      width: '10%',
+      minWidth: '200px',
+    }
   },
   {
     title: $t('备注'),

@@ -67,7 +67,6 @@ async function tableFilters() {
     {
       type: 'select',
       name: 'withdraw_type',
-      size: "small",
       placeholder: $t('请选择提现类型'),
       showClear: true,
       options: [
@@ -79,7 +78,6 @@ async function tableFilters() {
     {
       type: 'select',
       name: 'withdraw_status',
-      size: "small",
       showClear: true,
       placeholder: $t('请选择状态'),
       options: [

@@ -15,10 +15,15 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  batchOperation: {
+    type: Function,
+    default: () => () => { },
+  }
 })
 
-const emit = defineEmits(['clearSelection', 'batchOperation', 'batchMore'])
+const emit = defineEmits(['clearSelection', 'batchMore'])
 
+const loadingMap = ref<Record<string, boolean>>({})
 const multipleOptions = computed<Record<string, any>>(() => {
   const { menu, group, count } = props.operation.reduce((acc, item) => {
     if (!item.multiple) return acc
@@ -41,11 +46,14 @@ const multipleOptions = computed<Record<string, any>>(() => {
   }
 })
 
-function batchOperation(event: MouseEvent, item: any) {
-  if (item.disabled) {
+async function _batchOperation(event: MouseEvent, item: any) {
+  if (item.disabled || loadingMap.value[item.name]) {
     return
   }
-  emit('batchOperation', { ...deepClone(toRaw(item)), _event: event, _type: 'batch_quick' })
+
+  loadingMap.value[item.name] = true
+  await props.batchOperation({ ...deepClone(toRaw(item)), _event: event, _type: 'batch_quick' })
+  loadingMap.value[item.name] = false
 }
 
 function onMore(event: Event) {
@@ -71,7 +79,7 @@ function onMore(event: Event) {
     <slot name="custom-operation">
       <div v-for="(list, index) in multipleOptions.group" :key="index" class="multiple-group">
         <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
-          @click="batchOperation($event, item._rawItem)">
+          @click="_batchOperation($event, item._rawItem)">
           <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
           <span class="icon-label" v-if="item.showLabel">{{ item.label }}</span>
         </div>

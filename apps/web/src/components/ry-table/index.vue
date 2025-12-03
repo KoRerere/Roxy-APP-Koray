@@ -385,9 +385,9 @@ function initBodyrow(options: any) {
           <slot name="table-empty" />
         </template>
 
-        <slot name="column-before"></slot>
+        <slot name="column-before" :ptProps="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"></slot>
 
-        <Column v-if="selectionMode" headerStyle="width:0%; min-width: 52px; max-width: 52px;" bodyStyle="width:0%; min-width: 52px; max-width: 52px;" :selection-mode="selectionMode"
+        <Column v-if="selectionMode" headerStyle="width:0%; " bodyStyle="width:0%; " :selection-mode="selectionMode"
           :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }">
           <template #headercheckboxicon="{ checked }">
             <SvgIcon v-if="checked" name="base/rx_ic_checkmark" color="#ffffff" />
@@ -460,7 +460,7 @@ function initBodyrow(options: any) {
 
     <Transition>
       <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && realUseSelection?.length > 0" :selection="realUseSelection" :total="tableList.length"
-        :operation="_getOperation(realUseSelection)" @clear-selection="_clearSelection" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, realUseSelection, 'batch')">
+        :operation="_getOperation(realUseSelection)" @clear-selection="_clearSelection" :batch-operation="batchOperation" @batch-more="showOperationMenu($event, realUseSelection, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="realUseSelection" :clear-selection="_clearSelection" />
         </template>

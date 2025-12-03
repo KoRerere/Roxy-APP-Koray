@@ -19,6 +19,8 @@ import {
   UserAddWindowInfoV2CreatePayload,
   UserAddWindowTemplateInfoCreateData,
   UserAddWindowTemplateInfoCreatePayload,
+  UserAgentTransferWindowCreateData,
+  UserAgentTransferWindowCreatePayload,
   UserAgreeTransferWindowCreateData,
   UserAgreeTransferWindowCreatePayload,
   UserAnalysisWindowInfoCreateData,
@@ -41,6 +43,8 @@ import {
   UserDelWindowInfoCreatePayload,
   UserDelWindowInfoRecycleCreateData,
   UserDelWindowInfoRecycleCreatePayload,
+  UserGetAgentDeliveryDurationListListData,
+  UserGetAgentTransferWindowStatusListData,
   UserGetBrowserVersionInfoListData,
   UserGetBrowserVersionInfoListParams,
   UserGetDeviceNameV2ListData,
@@ -51,6 +55,10 @@ import {
   UserGetMacAddrV2ListParams,
   UserGetTransferReceiveWindowListListData,
   UserGetTransferReceiveWindowListListParams,
+  UserGetTransferRecordListListData,
+  UserGetTransferRecordListListParams,
+  UserGetTransferTaskDetailsListData,
+  UserGetTransferTaskDetailsListParams,
   UserGetTransferWorkspaceListListData,
   UserGetTransferWorkspaceListListParams,
   UserGetUaWebglV2ListData,
@@ -1044,6 +1052,99 @@ export class WindowApi<SecurityDataType = unknown> {
   userGetWindowPlatformAccountListList = (params: RequestParams = {}) =>
     this.http.request<UserGetWindowPlatformAccountListListData, any>({
       path: `/user_get_window_platform_account_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAgentTransferWindowCreate
+   * @summary 代理商投送窗口
+   * @request POST:/user_agent_transfer_window
+   * @response `200` `UserAgentTransferWindowCreateData`
+   */
+  userAgentTransferWindowCreate = (
+    data: UserAgentTransferWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAgentTransferWindowCreateData, any>({
+      path: `/user_agent_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetAgentTransferWindowStatusList
+   * @summary 代理商查询投送验证码状态
+   * @request GET:/user_get_agent_transfer_window_status
+   * @response `200` `UserGetAgentTransferWindowStatusListData`
+   */
+  userGetAgentTransferWindowStatusList = (params: RequestParams = {}) =>
+    this.http.request<UserGetAgentTransferWindowStatusListData, any>({
+      path: `/user_get_agent_transfer_window_status`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetTransferRecordListList
+   * @summary 查询投送记录列表
+   * @request GET:/user_get_transfer_record_list
+   * @response `200` `UserGetTransferRecordListListData`
+   */
+  userGetTransferRecordListList = (
+    query: UserGetTransferRecordListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTransferRecordListListData, any>({
+      path: `/user_get_transfer_record_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetTransferTaskDetailsList
+   * @summary 查询投送任务详情列表
+   * @request GET:/user_get_transfer_task_details
+   * @response `200` `UserGetTransferTaskDetailsListData`
+   */
+  userGetTransferTaskDetailsList = (
+    query: UserGetTransferTaskDetailsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTransferTaskDetailsListData, any>({
+      path: `/user_get_transfer_task_details`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetAgentDeliveryDurationListList
+   * @summary 代理商投送过期时长配置
+   * @request GET:/user_get_agent_delivery_duration_list
+   * @response `200` `UserGetAgentDeliveryDurationListListData`
+   */
+  userGetAgentDeliveryDurationListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetAgentDeliveryDurationListListData, any>({
+      path: `/user_get_agent_delivery_duration_list`,
       method: "GET",
       format: "json",
       ...params,

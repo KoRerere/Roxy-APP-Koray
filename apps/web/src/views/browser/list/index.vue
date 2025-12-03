@@ -9,16 +9,15 @@ import { debounce } from 'es-toolkit'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
-// import { useDialog } from 'primevue/usedialog'
 import { useDialog } from '/@/hooks/useDialog'
 import { VueDraggable } from 'vue-draggable-plus'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
-import { sleep } from '/@/utils'
+import { sleep, safeParseJSON } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
-import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 const confirm = useConfirm()
 const [showDialog] = useDialog()
@@ -36,14 +35,14 @@ type TabType = {
   [key: string]: any
 }
 
-const pinTabs = [
+const pinTabs: TabType[] = [
   { id: 'rx_1000', label: $t('全部窗口'), name: 'profiles' },
-]
+] as const
 
-const rawTabs = [
+const rawTabs: TabType[] = [
   { id: 'rx_1002', label: $t('收藏'), name: 'favorite', _params: { isOften: true } },
   { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
-]
+] as const
 
 const suffixTabs = computed(() => [
   { id: 'rx_1004', label: $t('投送中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), power: role.isOwner || role.isManager },
@@ -56,11 +55,11 @@ const tabIdLangMap = {
 } as Record<string, string>
 
 const localTabKey = `localTabs_${workspaceStore.currentWorkspace?.id}`
-const localTabs: TabType[] = JSON.parse(localStorage.getItem(localTabKey) || 'null') || rawTabs.map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
+const localTabs: TabType[] = safeParseJSON(localStorage.getItem(localTabKey)) || rawTabs.map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
 
 localTabs.forEach(item => {
   if (tabIdLangMap[item.id]) {
-    item.label = tabIdLangMap[item.id]
+    item.label = tabIdLangMap[item.id]!
   }
 })
 
@@ -76,7 +75,7 @@ const sortTabs = computed({
   },
 })
 const hasSort = ref(false)
-const active = ref(tabs.value[0].id)
+const active = ref(tabs.value[0]!.id)
 const currentSuffixTab = computed(() => {
   const component = suffixTabs.value.find(item => item.id === active.value)?.component
   return { component, visible: !!component }
@@ -84,6 +83,7 @@ const currentSuffixTab = computed(() => {
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 const updateInkBar = debounce(() => {
+  // @ts-ignore - updateInkBar 方法存在但类型定义中缺失
   tabListRef.value?.updateInkBar()
 }, 100)
 
@@ -141,6 +141,7 @@ async function getFilterTabs() {
 
     setTimeout(() => {
       // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310
+      // @ts-ignore - updateInkBar 方法存在但类型定义中缺失
       tabListRef.value?.updateInkBar()
     }, 1000)
   }
@@ -190,7 +191,7 @@ async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterTabs()
 
   if (!isEdit) {
-    active.value = tabs.value[tabs.value.length - 1].id
+    active.value = tabs.value[tabs.value.length - 1]!.id
   }
 }
 
@@ -246,7 +247,7 @@ async function deleteFilterItem(item: any) {
         if (code !== 0) return
 
         if (currentFilter.value?.label === item.label) {
-          active.value = tabs.value[tabs.value.length - 2].id
+          active.value = tabs.value[tabs.value.length - 2]!.id
           await sleep(300)// 等待 tab 切换动画执行完毕以解决塌陷问题
         }
         tabs.value = tabs.value.filter((tab: any) => tab.label !== item.label)

@@ -4295,11 +4295,15 @@ export interface UserGetWindowInfoListListData {
       platformUrlList?: string[];
       maxWindowSort?: number;
       buyProxyType?: number;
-      /** 0:已过期 1:使用中 2：快过期 */
-      proxyExpireStatus?: number;
-      /** 0:代理资源的，1：购买的 */
-      proxyType?: number;
       openTime?: string;
+      /** 是否临时窗口 false 不是 true 是 */
+      isTemporary?: boolean;
+      /** 是否投送 false 不是 true 是 */
+      isTransfer?: boolean;
+      /** 投送者头像 */
+      transferUserAvatar?: string;
+      /** 投送者名称 */
+      transferUserName?: string;
     }[];
   };
   msg: string;
@@ -4560,6 +4564,12 @@ export interface UserGetSearchEnginesListData {
 }
 
 export interface UserTransferWindowVerifyCodeListParams {
+  /**
+   * 代理商投送时传参
+   * @example "1095641967@qq.com"
+   */
+  targetEmail?: string;
+  /** 普通投送时传参 */
   targetWorkspaceId?: string;
 }
 
@@ -4780,6 +4790,106 @@ export interface UserGetWindowPlatformAccountListListData {
     }[];
     total: number;
   };
+  msg: string;
+}
+
+export interface UserAgentTransferWindowCreatePayload {
+  windowIds: number[];
+  expireDays: number;
+  emailCode: string;
+  /** 目标空间ID */
+  targetEmail: string;
+  transferParam: string[];
+}
+
+export interface UserAgentTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetAgentTransferWindowStatusListData {
+  code: number;
+  data: boolean;
+  msg: string;
+}
+
+export interface UserGetTransferRecordListListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+  /**
+   * Transfer, Receive, 或空（全部）
+   * @example "Receive"
+   */
+  type?: string;
+}
+
+export interface UserGetTransferRecordListListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      transferNo?: string;
+      type?: string;
+      transferor?: string;
+      receiver?: string;
+      detail?: string;
+      windowCount?: number;
+      status?: string;
+      createTime?: string;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserGetTransferTaskDetailsListParams {
+  /** @example "999" */
+  transferTaskId?: string;
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+}
+
+export interface UserGetTransferTaskDetailsListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      transferTaskId: number;
+      lastCountry: string;
+      lastCity: string;
+      lastIp: string;
+      port: string;
+      proxyUserName: string;
+      proxyPassword: string;
+      checkTime: string;
+      coreVersion: string;
+      os: string;
+      osVersion: string;
+      remark: string;
+      windowPlatformList: {
+        platformUrl: string;
+        platformUserName: string;
+        platformPassword: string;
+        platformEfa: string;
+        platformIconDark: string;
+        platformIcon: string;
+      }[];
+      name: string;
+      createTime: string;
+      updateTime: string;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserGetAgentDeliveryDurationListListData {
+  code: number;
+  data: number[];
   msg: string;
 }
 
@@ -6479,6 +6589,8 @@ export interface CheckAddUserByProjectInfoCreateData {
 }
 
 export interface UserMdfProjectSortCreatePayload {
+  page_index?: number;
+  page_size?: number;
   projectIds: number[];
   projectSortNumList: number[];
 }

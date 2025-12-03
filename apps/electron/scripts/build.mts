@@ -38,7 +38,7 @@ cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOp
 // 根据环境设置配置
 const config = isDev
   ? {
-    REPORT_DOMAINS: 'https://lumitest.lumibrowser.com',
+    REPORT_DOMAINS: 'https://apitest.roxybrowser.co',
     REPORT_API_PATH: '/app_tracking_event',
     APP_NAME: 'RoxyBrowserDev'
   }

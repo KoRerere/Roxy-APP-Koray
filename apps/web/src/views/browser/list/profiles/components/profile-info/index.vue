@@ -97,12 +97,6 @@ const list = computed(() => {
         beforeIp: data.beforeProxyInfo?.beforeIp || '--',
         beforeTime: data.beforeProxyInfo?.beforeTime ? formatProxyTime(data.beforeProxyInfo?.beforeTime) : '--',
       }
-      // tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
-      //   lastCountry: data.lastCountry || '--',
-      //   lastCity: strConcat('/', data.lastCity) || '',
-      //   lastIp: data.lastIp || '--',
-      //   checkTime: data.checkTime ? formatProxyTime(data.checkTime) : '--',
-      // }),
     },
     {
       key: 'account',
@@ -261,6 +255,7 @@ function getProxyModel() {
                 proxyCategory: 'noproxy',
                 proxyMethod: 'custom',
                 buyProxyType: ProxyType.resource,
+                checkStatus: ProxyCheckStatus.none,
                 ...createDefaultObject(clearProxyKeys, ''),
               }
               if (!data.openTime) {

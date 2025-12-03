@@ -25,6 +25,7 @@ const nextBillText = ref()
 const isFree = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Free)
 const isTrial = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Trial)
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
+const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent)
 
 const otherCards = computed(() => [
   {
@@ -61,59 +62,53 @@ const otherCards = computed(() => [
   }
 ])
 
-const planActions = computed(() => [
-  {
-    label: $t('启用自动续订'),
-    visible: !isFree.value && !isTrial.value && !isExpired.value && !userPayInfo.value.isAuto,
-    class: 'mx-auto ml-0',
-    command: enableAutoRenew
-  },
-  {
-    label: $t('购买套餐'),
-    visible: isFree.value || isTrial.value || isExpired.value,
-    command: () => {
-      router.push({ name: 'subscribe-plan' })
-    }
-  },
-  {
-    label: $t('更改套餐'),
-    visible: !isFree.value && !isTrial.value && !isExpired.value,
-    props: {
-      disabled: userPayInfo.value.autoRenewDowngrade
+const planActions = computed(() => {
+  return [
+    {
+      label: $t('启用自动续订'),
+      visible: !isFree.value && !isTrial.value && !isExpired.value && !userPayInfo.value.isAuto,
+      class: 'mx-auto ml-0',
+      command: enableAutoRenew
     },
-    command: () => {
-      router.push({ name: 'upgrade-plan' })
-    }
-  },
-  {
-    label: $t('续费'),
-    visible: (!isFree.value && !isTrial.value && !userPayInfo.value.isAuto) || (isExpired.value && userPayInfo.value.isAuto),
-    command: () => {
-      if (userPayInfo.value.isAuto) {
-        router.replace({ name: 'wallet', query: { name: 'billing' } })
-        return
+    {
+      label: $t('购买套餐'),
+      visible: isFree.value || isTrial.value || isExpired.value,
+      command: () => {
+        router.push({ name: 'subscribe-plan' })
       }
-
-      emitter.emit('showRenewalDialog', {
-        paySuccess: () => {
-          emitter.emit('updateBillList')
+    },
+    {
+      label: $t('更改套餐'),
+      visible: !isFree.value && !isTrial.value && !isExpired.value,
+      props: {
+        disabled: userPayInfo.value.autoRenewDowngrade
+      },
+      command: () => {
+        router.push({ name: 'upgrade-plan' })
+      }
+    },
+    {
+      label: $t('续费'),
+      visible: (!isFree.value && !isTrial.value && !userPayInfo.value.isAuto) || (isExpired.value && userPayInfo.value.isAuto),
+      command: () => {
+        if (userPayInfo.value.isAuto) {
+          router.replace({ name: 'wallet', query: { name: 'billing' } })
+          return
         }
-      })
-    }
-  },
-  {
-    label: $t('管理订阅'),
-    visible: !!userPayInfo.value.isAuto,
-    command: enableAutoRenew
-  }
-].filter(item => item.visible !== false))
 
-const dailyCount = computed(() => {
-  const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
-  return {
-    create: profileCount.multiply(30).format(),
-    open: profileCount.multiply(100).format(),
-  }
+        emitter.emit('showRenewalDialog', {
+          paySuccess: () => {
+            emitter.emit('updateBillList')
+          }
+        })
+      }
+    },
+    {
+      label: $t('管理订阅'),
+      visible: !!userPayInfo.value.isAuto,
+      command: enableAutoRenew
+    }
+  ].filter(item => item.visible !== false && !isPremiumPartner.value)// 高级合作伙伴享受特殊订阅
 })
 
 const planTextColor = computed(() => {
@@ -125,12 +120,19 @@ const planTextColor = computed(() => {
 const animationGradient = computed(() => {
   return (isFree.value || isExpired.value)
     ? ['var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)']
-    : {
-      [PayIdentity.old]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-      [PayIdentity.invited]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-      [PayIdentity.agent]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-      [PayIdentity.new]: ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)'],
-    }[userPayInfo.value.identity]
+    : ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']
+})
+
+const subscribeInfo = computed(() => {
+  const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
+  const create = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(30).format()
+  const open = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(100).format()
+
+  return {
+    expireTime: isPremiumPartner.value ? $t('永久免费') : $t('到期时间: {value}', { value: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
+    profileCount: isPremiumPartner.value ? $t('无限窗口') : $t('{count} 窗口', { count: profileCount.format() }),
+    dailyLimit: $t('每日可创建数: {create}; 每日可打开数: {open}', { create, open }),
+  }
 })
 
 onBeforeMount(() => {
@@ -198,16 +200,12 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
                     <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
                     <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12"></SvgIcon>
                   </div>
-                  <div v-else class="plan-expired">{{ $t('到期时间: {value}', {
-                    value: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
-                  }) }}</div>
+                  <div v-else class="plan-expired">{{ subscribeInfo.expireTime }}</div>
                 </template>
               </div>
               <div class="flex flex-col gap-1.5">
-                <div class="plan-value">{{ $t('{count} 窗口', {
-                  count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format()
-                }) }}</div>
-                <div class="plan-desc">{{ $t('每日可创建数: {create}; 每日可打开数: {open}', { create: dailyCount.create, open: dailyCount.open }) }}</div>
+                <div class="plan-value">{{ subscribeInfo.profileCount }}</div>
+                <div class="plan-desc">{{ subscribeInfo.dailyLimit }}</div>
               </div>
               <div class="flex justify-between items-center gap-2.5">
                 <div v-if="userPayInfo.isAuto" class="auto">{{ $t('自动续订') }}</div>
@@ -219,7 +217,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             </div>
           </div>
         </AnimationBorder>
-        <Identity v-if="identityInfo.icon || userPayInfo.discount" class="px-4"></Identity>
+        <Identity class="px-4"></Identity>
       </div>
       <div class="flex gap-2">
         <div class="h-26 flex flex-col justify-between flex-1 pa-4 rounded-xl others" v-for="item in otherCards">

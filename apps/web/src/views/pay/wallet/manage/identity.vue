@@ -8,7 +8,7 @@ const isVip = computed(() => [PayIdentity.old, PayIdentity.invited].includes(ide
 </script>
 
 <template>
-  <div class="flex items-center gap-3">
+  <div v-if="userPayInfo.discount || userPayInfo.proxyDiscount" class="flex items-center gap-3">
     <template v-if="isVip">
       <div class="flex items-center gap-0.5">
         <SvgIcon v-if="identityInfo.icon" :name="(identityInfo.icon as any)"></SvgIcon>

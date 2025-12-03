@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import InputDate from '/@/components/ry-form/input-date.vue'
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 
 defineProps({
   filters: {
@@ -55,15 +55,14 @@ function onFilterChange() {
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>
     </MultiSelect>
-    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" class="" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }"
-      @change="onFilterChange" />
+    <TsFormSelect v-else-if="item.type === 'select'" class="min-w-37.5" v-model="item.value" size="xxs" checkmark show-clear :highlight-on-select="false"
+      v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange"></TsFormSelect>
     <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="min-w-37.5 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
       :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange" @clear-click="onDateClear" />
   </div>
 </template>
 
 <style lang="scss" scoped>
-:deep(.p-select-label),
 :deep(.p-multiselect-label),
 :deep(.p-inputtext) {
   padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

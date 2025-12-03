@@ -11,8 +11,9 @@ import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
-const { ids: windowIds } = defineProps<{
+const { ids: windowIds, width = 'w-108' } = defineProps<{
   ids: number[]
+  width?: string
 }>()
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
@@ -51,7 +52,7 @@ async function getTransferHistory(event: MouseEvent) {
       acc.history.push(item)
     }
     return acc
-  }, { self: [], history: [] } as Record<string, Data[]>)
+  }, { self: [] as Data[], history: [] as Data[] })
 
   spaceList.value = [
     {
@@ -136,14 +137,14 @@ function getAvatarStyle(workspacePicture: string) {
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-full pa-2.5 pl-3 select-none cursor-pointer choose" @click="getTransferHistory">
-    <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
+  <div class="flex items-center justify-between w-full pa-2.5 pl-3 select-none cursor-pointer choose" :class="width" @click="getTransferHistory">
+    <span :class="{ 'choose-text': !!selectedWorkspace?.workspaceName }">{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
     <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />
     <div v-else class="relative px-3">
       <RxLoading :size="16" v-model="openLoading" />
     </div>
     <RyPopover ref="choose" @hide="clearSearch">
-      <div class="content relative flex flex-col gap-3 pa-3 overflow-hidden">
+      <div class="relative flex flex-col gap-3 pa-3 overflow-hidden" :class="width">
         <div class="flex justify-between items-center">
           <div class="header">{{ $t('选择空间') }}</div>
           <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
@@ -197,10 +198,6 @@ function getAvatarStyle(workspacePicture: string) {
 </template>
 
 <style scoped lang="scss">
-.content {
-  width: 432px;
-}
-
 .workspace-icon {
   width: 48px;
   height: 48px;
@@ -220,9 +217,13 @@ function getAvatarStyle(workspacePicture: string) {
   background: var(--colors-background-bg-action);
   border: 1px solid var(--colors-border-border-action);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  color: var(--colors-text-text-primary);
+  color: var(--colors-text-text-inactive);
   font-size: 14px;
-  line-height: var(--Line-Height-text-lg, 20px);
+  line-height: 20px;
+
+  &-text {
+    color: var(--colors-text-text-primary);
+  }
 }
 
 .header {

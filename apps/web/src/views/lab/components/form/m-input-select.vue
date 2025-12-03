@@ -52,7 +52,7 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <Select class="w-full" :optionLabel="optionLabel" :optionValue="optionValue" :options="options || _options" :pt="{ root: size, option: classes.option }" @change="_onChange">
+  <Select class="w-full" :class="size" :optionLabel="optionLabel" :optionValue="optionValue" :options="options || _options" :pt="{ option: classes.option }" @change="_onChange">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -71,6 +71,9 @@ function _onChange(event: any) {
         <div>{{ option.label }}</div>
         <slot name="option-extra" :option="option"></slot>
       </div>
+    </template>
+    <template #clearicon="{ clearCallback }">
+      <SvgIcon class="self-center" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click.stop="clearCallback" />
     </template>
   </Select>
 </template>

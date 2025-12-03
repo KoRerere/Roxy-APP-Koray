@@ -5,7 +5,7 @@ import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
+import TransferReceive from '/@/views/browser/list/transfer/receive.vue';
 
 const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
@@ -44,7 +44,7 @@ const readSet = ref<Set<number>>(new Set())
 onBeforeMount(() => {
   getMessageList().then(() => {
     const [_, teamsTab] = tabs.value
-    const target = teamsTab.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new' && item.status === NotifyStatus.unread)
+    const target = teamsTab!.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new' && item.status === NotifyStatus.unread)
     if (target) {
       showAcceptInvitationDialog(target)
     }
@@ -90,10 +90,10 @@ async function getMessageList(result?: UserGetNotifyListData) {
     return acc
   }, { teams: [] as any, sys: [] as any, teamsRead: 0, sysRead: 0 })
 
-  teamsTab.noRead = teams.length - teamsRead
-  sysTab.noRead = sys.length - sysRead
-  teamsTab.list = teams
-  sysTab.list = sys
+  teamsTab!.noRead = teams.length - teamsRead
+  sysTab!.noRead = sys.length - sysRead
+  teamsTab!.list = teams
+  sysTab!.list = sys
 }
 
 async function onRead(item: Message | Message[]) {
@@ -138,8 +138,8 @@ function checkTransfer(item: Message) {
       content: '!pa-0'
     },
     slots: {
-      container: ({ hideModal }) => h(CheckTransfer, {
-        windowTransferNo: item.windowTransferNo,
+      container: ({ hideModal }) => h(TransferReceive, {
+        windowTransferNo: item.windowTransferNo!,
         onClose: hideModal,
       })
     }
@@ -159,7 +159,7 @@ function showAcceptInvitationDialog(item: Message) {
     blockScroll: true,
     slots: {
       container: () => {
-        return <InviteIntoWorkspace inviteInfo={item.paramData} onClose={handleClose} />
+        return <InviteIntoWorkspace inviteInfo={item.paramData!} onClose={handleClose} />
       }
     }
   })

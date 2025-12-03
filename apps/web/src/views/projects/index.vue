@@ -55,7 +55,7 @@ const columns = [
         name: item.userName.slice(0, 2),
         color: item.avatarColor,
       }))
-      return <RxAvatar list={list} size={28} font-size={14} />
+      return <RxAvatar list={list} size={28} max={4} font-size={14} />
     },
   },
   {

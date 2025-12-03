@@ -202,7 +202,7 @@ function onUpgradePlan() {
           <div class="flex flex-col gap-2.5">
             <template v-if="blackFridayPeriod && !userPayInfo.isBlackFriday">
               <BlackFridayDuration v-model="selectedDuration"></BlackFridayDuration>
-              <div class="help">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。') }}</div>
+              <div class="help">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。活动最终解释权归 RoxyBrowser 团队所有。') }}</div>
             </template>
             <Duration v-else v-model="selectedDuration" :price="monthAmount"></Duration>
             <div v-if="!isExpired" class="help">{{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}</div>

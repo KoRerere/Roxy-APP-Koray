@@ -42,7 +42,7 @@ async function checkStatus(force = false) {
   if (data === PaymentStatus.Success) {
     confirm()
   } else {
-    if (force) {
+    if (force || data !== PaymentStatus.Wait) {
       close(true)
     } else {
       timer.value = setTimeout(checkStatus, 3000)

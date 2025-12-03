@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ProxyExpireStatus } from '/@/enums/proxy'
+import RxTooltip from '/@/components/rx-tooltip';
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
+import { useRoleStore } from "/@/stores/role"
+import { SubLevelEnum } from '/@/enums/pay';
+import { ProxyExpireStatus } from '/@/enums/proxy'
 
 const props = defineProps({
   disabled: {
@@ -33,10 +36,11 @@ const props = defineProps({
 const emits = defineEmits(['open'])
 
 const router = useRouter()
-const userStore = useUserStore()
+const { userInfo } = storeToRefs(useUserStore())
+const { isOwner } = storeToRefs(useRoleStore())
 
 const usePeoples = computed(() => {
-  const count = props.data.statusInfo.filter((item: any) => item.openUserId !== userStore.userInfo.id).length
+  const count = props.data.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).length
   if (count < 1) return ''
   return $t('{count} 人正在使用', { count })
 })
@@ -77,15 +81,38 @@ async function openBrowser() {
   }
   emits('open', props.data)
 }
+
+function onUpgradePlan() {
+  const { userPayInfo } = useUserStore()
+  const isFree = [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.subLevel as SubLevelEnum)
+  const isExpired = userPayInfo.subLevel === SubLevelEnum.Expired
+
+  if (isFree || isExpired) {
+    router.push({ name: 'subscribe-plan' })
+  } else {
+    router.push({ name: 'upgrade-plan' })
+  }
+}
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
-      <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-      <SvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" :name="(icon as any)" />
-      <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
-    </RxButton>
+    <component :is="isOwner && !data.openLimitStatus && data.isTransfer ? RxTooltip : 'div'">
+      <template #default>
+        <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
+          <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
+          <SvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" :name="(icon as any)" />
+          <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
+        </RxButton>
+      </template>
+      <template #content>
+        <i18n-t tag="div" scope="global" class="w-50 error" :keypath="$t('当前临时窗口已过期，请升级窗口用量后继续使用。{link}', { link: '{link}' })">
+          <template #link v-if="!isPublic">
+            <span class="cursor-pointer error-link" @click="onUpgradePlan">{{ $t('立即升级') }}</span>
+          </template>
+        </i18n-t>
+      </template>
+    </component>
     <RxTooltip v-if="browser?.error || browser?.warning">
       <template #default>
         <SvgIcon name="base/rx_ic_info_fill" :class="[browser?.error ? 'text-red' : 'text-orange']" />
@@ -129,8 +156,7 @@ async function openBrowser() {
 }
 
 .error {
-  color: var(--component-tooltip-text-primary, #FFF);
-  text-align: center;
+  color: var(--component-tooltip-text-primary);
   font-size: 12px;
   font-weight: 600;
   line-height: var(--Line-Height-text-xs, 16px);

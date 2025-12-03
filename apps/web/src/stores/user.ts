@@ -69,23 +69,35 @@ export const useUserStore = defineStore(
           text: $t("普通用户"),
           color: "var(--colors-text-text-primary)",
         },
-        [PayIdentity.old]: {
-          text: $t("创始用户"),
-          icon: "referral-program/golden",
-          iconSmall: "referral-program/golden-small",
-          color: "#DFAB65",
-        },
         [PayIdentity.invited]: {
           text: $t("特邀用户"),
           icon: "referral-program/diamond",
           iconSmall: "referral-program/diamond-small",
           color: "#7B88C2",
         },
+        [PayIdentity.old]: {
+          text: $t("创始用户"),
+          icon: "referral-program/golden",
+          iconSmall: "referral-program/golden-small",
+          color: "#DFAB65",
+        },
+        [PayIdentity.premium]: {
+          text: $t("尊享会员"),
+          icon: "referral-program/premium",
+          iconSmall: "referral-program/premium-small",
+          color: "var(--colors-text-text-primary)",
+        },
+        [PayIdentity.partner]: {
+          text: $t("合作伙伴"),
+          icon: "referral-program/partner",
+          iconSmall: "referral-program/partner-small",
+          color: "var(--colors-text-text-primary)",
+        },
         [PayIdentity.agent]: {
-          text: $t("合作用户"),
+          text: $t("高级合作伙伴"),
           icon: "referral-program/agent",
           iconSmall: "referral-program/agent-small",
-          color: "#12A3FC",
+          color: "var(--colors-text-text-primary)",
         },
       }
       return { identity, ...identityMap[identity] };

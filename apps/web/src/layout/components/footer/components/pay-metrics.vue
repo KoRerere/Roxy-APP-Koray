@@ -7,7 +7,7 @@ import { createReusableTemplate } from '@vueuse/core';
 import { $t } from '/@/locales';
 import { useUserStore } from '/@/stores/user';
 import { emitter } from '/@/utils/eventBus';
-import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
+import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
 
 const { collapsed } = defineProps<{
   collapsed: boolean
@@ -16,11 +16,12 @@ const { collapsed } = defineProps<{
 const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
 
 const router = useRouter()
-const { userPayInfo } = storeToRefs(useUserStore())
+const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 
 const opRef = useTemplateRef('op')
 const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value?.subLevel as SubLevelEnum))
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
+const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent)
 
 const blockCount = computed(() => {
   if (isFree.value || isExpired.value) {
@@ -46,7 +47,7 @@ const payMetricsItems = computed(() => {
   return [
     {
       label: $t('窗口用量'),
-      usage: `${useWindowCount} / ${maxWindowCount}`
+      usage: isPremiumPartner.value ? $t('无限窗口') : `${useWindowCount} / ${maxWindowCount}`
     },
   ]
 })
@@ -55,7 +56,7 @@ const actions = computed(() => {
   return [
     {
       label: $t('升级'),
-      visible: isFree.value,
+      visible: isFree.value && !isPremiumPartner.value,
       btnText: userPayInfo?.value.isTrial && $t('立即升级'),
       command: () => {
         router.push({ name: 'subscribe-plan' })
@@ -63,7 +64,7 @@ const actions = computed(() => {
     },
     {
       label: $t('续订'),
-      visible: !userPayInfo.value?.isAuto && !isFree.value,
+      visible: !userPayInfo.value?.isAuto && !isFree.value && !isPremiumPartner.value,
       btnText: isExpired.value && $t('立即续订'),
       command: () => {
         emitter.emit('showRenewalDialog', {
@@ -76,10 +77,17 @@ const actions = computed(() => {
     },
     {
       label: $t('详情'),
-      visible: !!userPayInfo.value?.isAuto,
+      visible: !!userPayInfo.value?.isAuto && !isPremiumPartner.value,
       btnText: isExpired.value && $t('前往支付'),
       command: () => {
         router.push({ name: 'wallet', query: { name: isExpired.value ? 'billing' : 'manage' } })
+      }
+    },
+    {
+      label: $t('详情'),
+      visible: isPremiumPartner.value,
+      command: () => {
+        router.push({ name: 'wallet', query: { name: 'manage' } })
       }
     }
   ].filter(item => item.visible !== false)
@@ -87,7 +95,11 @@ const actions = computed(() => {
 
 const infoValue = computed(() => {
   const { totalOpenWindowTimes, totalCreateWindowTimes, openWindowTimes, createWindowTimes } = userPayInfo.value
-  return $t('每日可创建数: {num1}\n每日可打开数: {num2}', { num1: `${createWindowTimes}/${totalCreateWindowTimes}`, num2: `${openWindowTimes}/${totalOpenWindowTimes}` })
+
+  const totalCreateStr = isPremiumPartner.value ? $t('无限用量') : totalCreateWindowTimes
+  const totalOpenStr = isPremiumPartner.value ? $t('无限用量') : totalOpenWindowTimes
+
+  return $t('每日可创建数: {num1}\n每日可打开数: {num2}', { num1: `${createWindowTimes}/${totalCreateStr}`, num2: `${openWindowTimes}/${totalOpenStr}` })
 })
 
 function getColorLevel(percent: number, blockCount: number) {

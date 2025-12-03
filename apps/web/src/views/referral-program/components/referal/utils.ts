@@ -1,4 +1,5 @@
 import { $t } from "/@/locales"
+import { validateEmail } from "/@/utils/basic"
 
 /**
  * 验证 USDT TRC20 地址
@@ -26,9 +27,7 @@ export function validateTRC20Address(address: string) {
 }
 
 export function validatePayPalAddress(address: string) {
-  const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-
-  if (!emailRegex.test(address)) {
+  if (!validateEmail(address)) {
     return { isValid: false, message: $t('请输入正确的邮箱地址') }
   }
 

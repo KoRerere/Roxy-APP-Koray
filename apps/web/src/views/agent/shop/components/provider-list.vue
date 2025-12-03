@@ -57,7 +57,7 @@ async function redeem() {
     </div>
     <div class="flex-1 flex flex-col px-8 gap-9 overflow-y-auto">
       <div class="flex flex-col gap-5">
-        <AnimationBorder class="-mb-2.5" v-if="identityInfo.icon || userPayInfo.proxyDiscount" :gradient="animationGradient" bg-color="var(--pattern-sidenav-metrics-btn)">
+        <AnimationBorder class="-mb-2.5" v-if="userPayInfo.proxyDiscount" :gradient="animationGradient" bg-color="var(--pattern-sidenav-metrics-btn)">
           <Identity class="px-3 py-2"></Identity>
         </AnimationBorder>
         <div class="grid grid-cols-2 gap-5">

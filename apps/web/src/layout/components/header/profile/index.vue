@@ -233,11 +233,8 @@ function toggle(event: Event) {
 <template>
   <div class="settings cursor-pointer" @click="toggle">
     <template v-if="userStore.userInfo">
-      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
-        :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
-        :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.iconSmall" :name="(userStore.identityInfo.iconSmall as any)"
-          class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
+        <RxSvgIcon v-if="userStore.identityInfo.iconSmall" :name="(userStore.identityInfo.iconSmall as any)" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
       </RxAvatar>
       <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     </template>
@@ -287,7 +284,7 @@ function toggle(event: Event) {
 .identity {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
 }
 

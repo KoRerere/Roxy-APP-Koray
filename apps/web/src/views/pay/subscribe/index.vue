@@ -220,7 +220,10 @@ async function trialSubscribe() {
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
           <div v-show="!isTrial">
             <div class="title">{{ $t('订阅时长') }}</div>
-            <BlackFridayDuration v-if="blackFridayPeriod && !userPayInfo.isBlackFriday" class="mt-1" v-model="selectedDuration"></BlackFridayDuration>
+            <template v-if="blackFridayPeriod && !userPayInfo.isBlackFriday">
+              <BlackFridayDuration class="mt-1" v-model="selectedDuration"></BlackFridayDuration>
+              <div class="pl-2 mt-2 terms">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。活动最终解释权归 RoxyBrowser 团队所有。') }}</div>
+            </template>
             <Duration v-else class="mt-4" v-model="selectedDuration" :price="monthlySubscribePrice"></Duration>
           </div>
           <div v-if="isTrial" class="flex items-center justify-between">

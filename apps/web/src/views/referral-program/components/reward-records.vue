@@ -79,7 +79,6 @@ async function tableFilters() {
     {
       type: 'select',
       name: 'source',
-      size: "small",
       placeholder: $t('请选择来源链接'),
       showClear: true,
       options: promotionInfo.promotionLinkList?.map(item => ({ label: item.linkType, value: item.linkType })),
@@ -87,7 +86,6 @@ async function tableFilters() {
     {
       type: 'select',
       name: 'reward_status',
-      size: "small",
       showClear: true,
       placeholder: $t('请选择状态'),
       options: [

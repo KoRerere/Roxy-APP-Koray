@@ -172,7 +172,7 @@ export async function getGatewayConfig(): Promise<string> {
   }
 
   openAPIUrl ||= 'https://hz.api.roxybrowser.cn'
-  baseUrl = isDev ? 'https://lumitest.lumibrowser.com' : 'https://hz.gate.roxybrowser.cn'
+  baseUrl = isDev ? 'https://apitest.roxybrowser.co' : 'https://hz.gate.roxybrowser.cn'
   ipcMain.send('app:backend-url-change', baseUrl)
   return baseUrl
 }

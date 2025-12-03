@@ -94,6 +94,7 @@ function openModal() {
     blockScroll: true,
     pt: {
       root: "!bg-transparent !border-none !shadow-none",
+      mask: "!z-1110"
     },
     slots: {
       container: ({ hideModal }) => h(BlackFridayModal, {
