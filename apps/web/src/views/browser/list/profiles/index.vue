@@ -1,33 +1,4 @@
-<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="tsx">
-import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
-import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef } from 'vue'
-import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import { RxAlert } from '/@/components/rx-alert/'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
-import ProxyQuick from '/@/views/agent/quick.vue'
-import AccountCreate from '/@/views/account/create/quick.vue'
-import AccountList from '/@/views/account/list/quick.vue'
-import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
-import { useSimpleDialog } from '/@/components/simplePopup'
-import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
-import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyCheckStatus, ProxyType } from '/@/enums'
-import useColumns from '/@/hooks/useColumns'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { format } from 'date-fns'
-import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
-import { useUserStore } from '/@/stores/user'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, filterFieldByValue, getFormData, isEmptyValue, deepClone, safeParseJSON, createDefaultObject } from '/@/utils'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import { useTagsActions } from '/@/views/browser/list/tags/hook'
-import { getColumns } from './columns'
 import BrowserControl from './components/browser-control.vue'
 import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
@@ -36,22 +7,50 @@ import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info/index.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
+import ProfileName from './components/profile-name.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
-import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from './components/util'
-import { getCustomFilters, getOperation, getSorts, getAdvancedSearch } from './operation'
-import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import GuideModal from '/@/views/tutorial/components/guide-modal.vue'
+import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import ProxyCreate from '/@/views/agent/create/quick.vue'
+import ProxyQuick from '/@/views/agent/quick.vue'
+import AccountCreate from '/@/views/account/create/quick.vue'
+import AccountList from '/@/views/account/list/quick.vue'
+import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
+import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxAlert } from '/@/components/rx-alert/'
+import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
+import { format } from 'date-fns'
+import { I18nT } from 'vue-i18n'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { useSimpleDialog } from '/@/components/simplePopup'
+import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { copyText, createDefaultObject, deepClone, filterFieldByValue, getFormData, isEmptyValue, safeParseJSON } from '/@/utils'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { useTagsActions } from '/@/views/browser/list/tags/hook'
+import { getColumns } from './columns'
+import { clearProxyKeys, silentUpdateAccount, silentUpdateProxy } from './components/util'
+import { getAdvancedSearch, getCustomFilters, getOperation, getSorts } from './operation'
+import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
-import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import useColumns from '/@/hooks/useColumns'
+
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
-import ProfileName from './components/profile-name.vue'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
 const props = withDefaults(defineProps<{
-  currentFilter?: Record<string, any>,
+  currentFilter?: Record<string, any>
   isProjectProfile?: boolean
 }>(), {
   isProjectProfile: false,
@@ -175,17 +174,17 @@ async function saveFilters(formData: any) {
 
   const { code, msg } = isEdit
     ? await API.window.userUpdateWindowFilterNameCreate({
-      sort,
-      filter_rule,
-      filter_condition,
-      old_filter_name: filter_name,
-      new_filter_name: filter_name,
-    })
+        sort,
+        filter_rule,
+        filter_condition,
+        old_filter_name: filter_name,
+        new_filter_name: filter_name,
+      })
     : await API.window.userAddWindowFilterNameCreate({
-      filter_name,
-      filter_condition,
-      filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
-    })
+        filter_name,
+        filter_condition,
+        filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
+      })
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
@@ -214,6 +213,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
 
   switch (operate.name) {
     case 'edit':
+    {
       const { page_index } = tableRef.value!.getParams()
       const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
         if (cur.value) {
@@ -228,10 +228,11 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
           id: data.id,
           page_index,
           activeTabId: props.currentFilter?.id,
-          customFilterParams: JSON.stringify(customFilterParams)
-        }
+          customFilterParams: JSON.stringify(customFilterParams),
+        },
       })
       break
+    }
     case 'copyId':
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
@@ -262,11 +263,13 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       multipleAccountChange(data, { operationType, isChoose: true })
       break
     case 'restart':
+    {
       const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
       if (dirIds.length) {
         window.electronAPI.send('browser:batchRelaunch', dirIds)
       }
       break
+    }
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
         console.log('browser:batchClose res', res)
@@ -275,12 +278,13 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
     case 'addTag':
       if (operationType === 'batch') {
         tagsIconRef.value?.openMenu(operate._event)
-      } else {
+      }
+      else {
         addTag({
           confirmNext: ({ params, res }: any) => {
             updateProfileMeta({
               labelInfo: [...data.labelInfo, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
-              labelIds: [...data.labelIds, res.data.id]
+              labelIds: [...data.labelIds, res.data.id],
             }, data)
           },
         })
@@ -327,10 +331,8 @@ function autoOpenBrowser(list: Data[]) {
 }
 
 async function openBrowserBefore(data: Data | Data[]) {
-  //过滤打开限制的 profile
-  const datas = ([] as Data[]).concat(data)
-    .filter(item => item.openLimitStatus)
-    .toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
+  // 过滤打开限制的 profile
+  const datas = ([] as Data[]).concat(data).filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
 
   if (!datas.length) {
     return
@@ -340,13 +342,13 @@ async function openBrowserBefore(data: Data | Data[]) {
     Reflect.set(openMessage, item.dirId!, {
       pending: true,
       data: {
-        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`
-      }
+        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
+      },
     })
   })
 
   const result = await checkProfileStatus(datas)
-  //过滤自身打开的窗口
+  // 过滤自身打开的窗口
   const openList = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
   // 1.如果没有其他人打开窗口，则直接打开
   if (!openList.length) {
@@ -367,14 +369,17 @@ async function openBrowserBefore(data: Data | Data[]) {
       label: $t('确认'),
       severity: 'info',
     },
-    accept: async () => {
+    accept: () => {
       onOpenBrowser(datas)
     },
-    reject: async () => {
-      datas.forEach(item => {
-        Reflect.deleteProperty(openMessage, item.dirId!)
-      })
-    },
+    reject: () => clearMessage(datas),
+    onHide: () => clearMessage(datas),
+  })
+}
+
+function clearMessage(datas: Data[]) {
+  datas.forEach((item) => {
+    Reflect.deleteProperty(openMessage, item.dirId!)
   })
 }
 
@@ -403,7 +408,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
         catch (error) {
           console.log(error)
         }
-      }
+      },
     })
     return
   }
@@ -414,15 +419,18 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
     blockScroll: true,
     handleCancel: () => updateOnboardingTaskStatus({ contextMenuGuideStatus: true }),
     slots: {
-      container: ({ hideModal }) => <GuideModal
-        title={$t('鼠标右键编辑')}
-        desc={({ class: className }) => {
-          return <div class={className}>{$t('绝大多数的 RoxyBrowser 列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
-        }}
-        video="/video/right-click.mp4"
-        onClose={hideModal}
-        onConfirm={hideModal}
-      ></GuideModal>
+      container: ({ hideModal }) => (
+        <GuideModal
+          title={$t('鼠标右键编辑')}
+          desc={({ class: className }) => {
+            return <div class={className}>{$t('绝大多数的 RoxyBrowser 列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
+          }}
+          video="/video/right-click.mp4"
+          onClose={hideModal}
+          onConfirm={hideModal}
+        >
+        </GuideModal>
+      ),
     },
   })
 }
@@ -430,7 +438,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
 async function updateProfileMeta(params: Record<string, any>, data: Data, type?: 'single' | 'batch') {
   const { projectId, labelIds } = params
   // why? 当标签关联人员的时候，需要调单个修改窗口的接口
-  const datas = ([] as Data[]).concat(data);
+  const datas = ([] as Data[]).concat(data)
   const ids = datas.map(item => item.id!);
 
   (type === 'single'
@@ -438,7 +446,7 @@ async function updateProfileMeta(params: Record<string, any>, data: Data, type?:
     : batchModifyWindow({ projectId, labelIds, ids }, true)
   ).then(() => {
     const updateParams = Object.entries(params).filter(([_, value]) => !!value)
-    datas.forEach(item => {
+    datas.forEach((item) => {
       updateParams.forEach(([key, value]) => {
         item[key as keyof Data] = value
       })
@@ -462,28 +470,33 @@ async function onTransfer(datas: Data[], operate?: any) {
         severity: 'warn',
         life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: <I18nT keypath={$t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
-        </I18nT>
+        detail: (
+          <I18nT keypath={$t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })}>
+            {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+          </I18nT>
+        ),
       })
       return
     }
 
     if (operate._event && ['quick', 'batch_quick'].includes(operate._type)) {
-      emitter.emit("showPayWall", {
+      emitter.emit('showPayWall', {
         event: operate._event,
         params: {
-          type: "transfer",
+          type: 'transfer',
         },
       })
-    } else {
+    }
+    else {
       emitter.emit('showToast', {
         severity: 'warn',
         life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
-        </I18nT>
+        detail: (
+          <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })}>
+            {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
+          </I18nT>
+        ),
       })
     }
     return
@@ -495,13 +508,13 @@ async function onTransfer(datas: Data[], operate?: any) {
     return
   }
 
-  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(TransferModal, {
@@ -520,10 +533,12 @@ async function onTransfer(datas: Data[], operate?: any) {
             // 如果在项目列表中投送，投送成功则跳到投送中 tab
             if (route.name === 'project-item') {
               router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
-            } else {
+            }
+            else {
               emit('switchTab', 'rx_1004')
             }
-          } else {
+          }
+          else {
             if (needRefresh) {
               onRefreshTable()
             }
@@ -531,8 +546,8 @@ async function onTransfer(datas: Data[], operate?: any) {
           }
           resolve()
         },
-      })
-    }
+      }),
+    },
   })
   return promise
 }
@@ -559,7 +574,7 @@ async function onMoveToProject(data: any) {
           },
           resolver: (z: any) => z.string({
             invalid_type_error: $t('请选择项目'),
-          }).min(1, $t('请选择项目'))
+          }).min(1, $t('请选择项目')),
         },
       ],
       onConfirm: async (formData: any) => {
@@ -572,7 +587,7 @@ async function onMoveToProject(data: any) {
           await batchModifyWindow({ ids, projectId: formData.projectId }, true)
             .then(() => {
               const projectName = options.find(item => item.value === formData.projectId)!.label
-              datas.forEach(item => {
+              datas.forEach((item) => {
                 item.projectName = projectName
                 item.projectId = Number(formData.projectId)
                 item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
@@ -598,28 +613,36 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     id: datas[0]!.moduleId,
     ...Object.fromEntries(
       ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
-        .map(key => [key, datas[0]![key as keyof Data]])
-    )
+        .map(key => [key, datas[0]![key as keyof Data]]),
+    ),
   }
 
   const containerRender = isChoose
-    ? () => <div class="h-full flex flex-col">
-      {isMulti && <div class="px-4 pt-4">
-        <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
-      </div>}
-      <ProxyQuick class="flex-1 overflow-hidden" {...{
-        data: isMulti ? undefined : _proxydata,
-        onConfirm,
-      }}></ProxyQuick>
-    </div>
+    ? () => (
+        <div class="h-full flex flex-col">
+          {isMulti && (
+            <div class="px-4 pt-4">
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
+            </div>
+          )}
+          <ProxyQuick
+            class="flex-1 overflow-hidden"
+            {...{
+              data: isMulti ? undefined : _proxydata,
+              onConfirm,
+            }}
+          >
+          </ProxyQuick>
+        </div>
+      )
     : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
 
   drawerInstance.showDrawer({
     title: isChoose ? $t('选择代理') : $t('添加代理'),
     dismissable: false,
     slots: {
-      container: containerRender
-    }
+      container: containerRender,
+    },
   })
 
   async function onConfirm({ id, ...formData }: any) {
@@ -629,12 +652,13 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       paramList: {
         moduleId: id ?? 0,
         proxyMethod,
-        ...formData
-      }
+        ...formData,
+      },
     })
     drawerInstance.hideDrawer()
     onlyErrorToast(code, msg)
-    if (code !== 0) return
+    if (code !== 0)
+      return
 
     const { protocol, proxyCategory, proxyType, ...rest } = formData
     const params = {
@@ -645,14 +669,14 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       proxyCategory: proxyCategory || protocol,
       buyProxyType: proxyType ?? ProxyType.resource,
     }
-    datas.forEach(item => {
+    datas.forEach((item) => {
       silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
     })
   }
 }
 
 function multipleProxyDelete(data: Data | Data[]) {
-  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
   const datas = ([] as Data[]).concat(data)
 
   confirm.require({
@@ -674,19 +698,19 @@ function multipleProxyDelete(data: Data | Data[]) {
           checkStatus: ProxyCheckStatus.none,
           ...createDefaultObject(clearProxyKeys, ''),
         }
-        datas.forEach(item => {
+        datas.forEach((item) => {
           if (!item.openTime) {
             Reflect.set(params, 'lastIp', '')
-          } else {
+          }
+          else {
             Reflect.deleteProperty(params, 'lastIp')
           }
           silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
         })
       }
     },
-    reject: () => {
-      reject()
-    }
+    reject,
+    onHide: reject,
   })
   return promise
 }
@@ -700,20 +724,24 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     : $t('添加平台账号')
 
   const containerRender = isChoose
-    ? () => <div class="h-full flex flex-col">
-      {isMulti && <div class="px-4 pt-4">
-        <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
-      </div>}
-      <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
-    </div>
+    ? () => (
+        <div class="h-full flex flex-col">
+          {isMulti && (
+            <div class="px-4 pt-4">
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
+            </div>
+          )}
+          <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
+        </div>
+      )
     : () => <AccountCreate showRemark={false} showCreateMore={false} onConfirm={onConfirm}></AccountCreate>
 
   drawerInstance.showDrawer({
     title,
     dismissable: false,
     slots: {
-      container: containerRender
-    }
+      container: containerRender,
+    },
   })
 
   async function onConfirm(formData: any) {
@@ -748,7 +776,8 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     const params: any = { id, dirId }
     if (isChoose) {
       params.platformUrlIds = (formData as any[]).filter(item => item.id).map(item => item.id)
-    } else {
+    }
+    else {
       params.windowPlatformList = windowPlatformList!.concat({ ...formData, _tempId: Date.now().toString(32) })
     }
     const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
@@ -769,16 +798,22 @@ async function onEditCookies(data: Data | Data[]) {
     title: $t('为 {names} 编辑 Cookies', { names: namesStr }),
     dismissable: false,
     slots: {
-      container: () => <div class="h-full flex flex-col">
-        {isMulti && <div class="px-4 pt-4">
-          <RxAlert class="min-w-full" type="warn" closable={false} title={$t('所选窗口的所有 Cookie 都将被覆盖，请谨慎操作。')}></RxAlert>
-        </div>}
-        <EditCookies class="flex-1"
-          data={datas.length > 1 ? undefined : datas[0]}
-          onConfirm={onConfirm}
-        ></EditCookies>
-      </div>
-    }
+      container: () => (
+        <div class="h-full flex flex-col">
+          {isMulti && (
+            <div class="px-4 pt-4">
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('所选窗口的所有 Cookie 都将被覆盖，请谨慎操作。')}></RxAlert>
+            </div>
+          )}
+          <EditCookies
+            class="flex-1"
+            data={datas.length > 1 ? undefined : datas[0]}
+            onConfirm={onConfirm}
+          >
+          </EditCookies>
+        </div>
+      ),
+    },
   })
 
   async function onConfirm(formData: any) {
@@ -786,13 +821,14 @@ async function onEditCookies(data: Data | Data[]) {
       type: ProfileModifyType.CookieEdit,
       ids: datas.map(item => item.id!),
       paramList: {
-        cookie: formData
-      }
+        cookie: formData,
+      },
     })
     drawerInstance.hideDrawer()
     onlyErrorToast(code, msg)
-    if (code !== 0) return
-    datas.forEach(item => {
+    if (code !== 0)
+      return
+    datas.forEach((item) => {
       Reflect.set(item, 'cookie', formData)
     })
   }
@@ -811,17 +847,18 @@ async function onRemark(data: Data | Data[]) {
           props: {
             placeholder: $t('请输入备注'),
             rows: 6,
-          }
+          },
         },
       ],
       onConfirm: async (formData: any) => {
         try {
           const ids = datas.map(item => item.id)
           await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
-          datas.forEach(item => {
+          datas.forEach((item) => {
             item.windowRemark = formData.windowRemark
           })
-        } finally {
+        }
+        finally {
           resolve(true)
         }
       },
@@ -877,7 +914,7 @@ async function exportProfile(data: any) {
       props: {
         data,
         workspaceName: workspaceName.value,
-      }
+      },
     },
   })
 }
@@ -923,15 +960,15 @@ async function deleteProfile(datas: any, ids: number[]) {
           await API.window.userDelWindowInfoCreate({ ids })
           onRefreshTable()
           electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
-        } else {
+        }
+        else {
           await batchModifyWindow({ ids, isDelete: true })
         }
 
         resolve(true)
       },
-      reject: () => {
-        reject($t('取消'))
-      },
+      reject,
+      onHide: reject,
     } as any)
   })
 }
@@ -944,7 +981,8 @@ async function singleModifyWindow(params: any, silent = false) {
       onRefreshTable()
     }
     return Promise.resolve()
-  } else {
+  }
+  else {
     return Promise.reject(msg)
   }
 }
@@ -957,7 +995,8 @@ async function batchModifyWindow(params: any, silent = false) {
       onRefreshTable()
     }
     return Promise.resolve()
-  } else {
+  }
+  else {
     return Promise.reject(msg)
   }
 }
@@ -969,13 +1008,13 @@ function showDiskSpaceModal() {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(DiskInsufficient, {
-        onClose: hideModal
-      })
-    }
+        onClose: hideModal,
+      }),
+    },
   })
 }
 
@@ -1013,7 +1052,8 @@ async function toCreateBrowser() {
   const { code, msg } = await API.window.userCheckWindowTotalCountList()
   if (code === 0) {
     router.push({ name: 'browser-create', query: { projectId: route.params.id } })
-  } else {
+  }
+  else {
     handleBusinessCode(code, () => {
       showToast(code, msg)
     })
@@ -1026,14 +1066,16 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
-    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table" removableSort>
+  <RyTable ref="windownTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+           :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
+  >
     <template #filter-after>
       <div class="w-full flex items-start gap-2">
-        <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
-        <RxDivider class="py-1" vertical line-only></RxDivider>
+        <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+        <RxDivider class="py-1" vertical line-only />
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
-          @filter-change="onRefreshTable" />
+                       @filter-change="onRefreshTable"
+        />
       </div>
     </template>
     <template #table-empty>
@@ -1048,7 +1090,7 @@ defineExpose({
       </CustomNewEmpty>
     </template>
     <template v-if="hasTempProfile" #column-before="{ ptProps }">
-      <Column :pt="{ ...ptProps, bodycell: `${ptProps.bodycell} !pr-0` }" headerStyle="width:0%" bodyStyle="width:0%">
+      <Column :pt="{ ...ptProps, bodycell: `${ptProps.bodycell} !pr-0` }" header-style="width:0%" body-style="width:0%">
         <template #body="{ data }">
           <RxTooltip v-if="data.isTemporary">
             <template #default>
@@ -1056,8 +1098,12 @@ defineExpose({
             </template>
             <template #content>
               <div class="flex flex-col gap-1 w-50">
-                <div class="temporary-title">{{ $t('过期时间: {expires}', { expires: format(data.expireTime, 'yyyy/MM/dd') }) }}</div>
-                <div class="temporary-desc">{{ $t('临时窗口在过期前不占用您的窗口用量，可以正常使用。过期后将会占用您的窗口用量。用量不足将无法打开窗口。') }}</div>
+                <div class="temporary-title">
+                  {{ $t('过期时间: {expires}', { expires: format(data.expireTime, 'yyyy/MM/dd') }) }}
+                </div>
+                <div class="temporary-desc">
+                  {{ $t('临时窗口在过期前不占用您的窗口用量，可以正常使用。过期后将会占用您的窗口用量。用量不足将无法打开窗口。') }}
+                </div>
               </div>
             </template>
           </RxTooltip>
@@ -1066,14 +1112,14 @@ defineExpose({
     </template>
     <template #profile="{ data }">
       <template v-if="data.id">
-        <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
+        <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
       </template>
       <div v-else class="flex items-center gap-[16px]">
-        <Skeleton width="44px" height="16px"></Skeleton>
+        <Skeleton width="44px" height="16px" />
         <div class="flex items-center gap-[1px]">
           <template v-for="i in 3" :key="i">
-            <div v-if="i > 1" class="dotted-line"></div>
-            <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+            <div v-if="i > 1" class="dotted-line" />
+            <Skeleton width="24px" height="24px" border-radius="4px" />
           </template>
         </div>
       </div>
@@ -1083,7 +1129,7 @@ defineExpose({
         <ProfileName :data="data" @refresh="onRefreshTable" />
       </template>
       <template v-else>
-        <Skeleton width="160px" height="24px" borderRadius="4px"></Skeleton>
+        <Skeleton width="160px" height="24px" border-radius="4px" />
       </template>
     </template>
     <template #open="{ data }">
@@ -1091,27 +1137,31 @@ defineExpose({
         <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
       </template>
       <template v-else>
-        <Skeleton width="70px" height="24px" borderRadius="4px"></Skeleton>
+        <Skeleton width="70px" height="24px" border-radius="4px" />
       </template>
     </template>
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
         <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-          @click.stop="toggleRemarkDisplayStatus(_cache)" />
+                   @click.stop="toggleRemarkDisplayStatus(_cache)"
+        />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
         <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
           <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
-            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-          <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
-            data.windowRemark }}</div>
+                    :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          />
+          <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">
+            {{
+              data.windowRemark }}
+          </div>
         </div>
       </template>
       <template v-else>
-        <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+        <Skeleton width="24px" height="24px" border-radius="4px" />
       </template>
     </template>
     <template #project="{ data }">
@@ -1119,7 +1169,7 @@ defineExpose({
         <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
       </template>
       <template v-else>
-        <Skeleton width="100px" height="20px" borderRadius="4px"></Skeleton>
+        <Skeleton width="100px" height="20px" border-radius="4px" />
       </template>
     </template>
     <template #tags="{ data }">
@@ -1127,20 +1177,21 @@ defineExpose({
         <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
       </template>
       <template v-else>
-        <Skeleton width="70px" height="24px" borderRadius="12px"></Skeleton>
+        <Skeleton width="70px" height="24px" border-radius="12px" />
       </template>
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
         <template v-if="!data.id">
           <template v-for="i in 3" :key="i">
-            <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+            <Skeleton width="24px" height="24px" border-radius="4px" />
           </template>
         </template>
         <template v-else>
           <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-            class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
-            @click.stop="operationHandler({ name: 'fav' }, data)">
+               class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
+               @click.stop="operationHandler({ name: 'fav' }, data)"
+          >
             <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
           </div>
           <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
@@ -1148,7 +1199,7 @@ defineExpose({
       </div>
     </template>
   </RyTable>
-  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateProfileMeta($event, tableRef?.selectionData)" />
+  <TagsIcon ref="tagsIcon" :labels="[]" :show-create-tag="false" @update="updateProfileMeta($event, tableRef?.selectionData)" />
 </template>
 
 <style lang="scss" scoped>
@@ -1168,7 +1219,7 @@ defineExpose({
 }
 
 .note-header {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;
@@ -1187,12 +1238,12 @@ defineExpose({
 
 .note-light {
   :deep(svg) {
-    color: var(--colors-text-text-brand, #11A3FD) !important;
+    color: var(--colors-text-text-brand, #11a3fd) !important;
   }
 }
 
 .quick-icon {
-  color: var(--colors-icon-icon-secondary, #575D60);
+  color: var(--colors-icon-icon-secondary, #575d60);
 
   &:active:not(.disabled) {
     color: orange;
@@ -1204,11 +1255,11 @@ defineExpose({
 }
 
 :deep(.window-table) {
-  tr:not([data-p-selected=true]):hover .direct-info {
+  tr:not([data-p-selected='true']):hover .direct-info {
     background-color: var(--component-table-bg-hover);
   }
 
-  tr:not([data-p-selected=true]):hover .edit-window-name-icon {
+  tr:not([data-p-selected='true']):hover .edit-window-name-icon {
     visibility: visible;
   }
 }
@@ -1216,6 +1267,6 @@ defineExpose({
 .dotted-line {
   width: 30px;
   height: 1px;
-  border-top: 1px dashed var(--colors-border-border-inactive, #C7D1D6);
+  border-top: 1px dashed var(--colors-border-border-inactive, #c7d1d6);
 }
 </style>

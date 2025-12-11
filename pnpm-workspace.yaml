@@ -1,3 +1,9 @@
+catalogMode: prefer
+cleanupUnusedCatalogs: true
+
+shellEmulator: true
+trustPolicy: no-downgrade
+
 packages:
   - 'apps/*'
   - 'packages/*'
@@ -6,5 +12,8 @@ packages:
 catalog:
   axios: ^1.13.2
   typescript: ^5.9.3
-  vite: ^7.2.6
+  vite: ^7.2.7
   vite-plugin-dts: 4.5.3
+
+peerDependencyRules:
+  allowedVersions: {}

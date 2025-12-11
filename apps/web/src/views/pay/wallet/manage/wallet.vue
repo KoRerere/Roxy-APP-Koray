@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import currency from 'currency.js'
-import { $t } from '/@/locales';
+import { $t } from '/@/locales'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
-import { useUserStore } from '/@/stores/user';
-import { OrderType } from '/@/enums/pay';
-import { emitter } from '/@/utils/eventBus';
+import { useUserStore } from '/@/stores/user'
+import { OrderType } from '/@/enums/pay'
+import { emitter } from '/@/utils/eventBus'
+
+defineEmits(['refresh'])
 
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -12,23 +14,32 @@ const { walletRecharge, openProcessing } = usePay()
 
 function onCharge() {
   walletRecharge({
-    next: data => {
+    next: (data) => {
       openProcessing(data, OrderType.Recharge)
         .finally(() => {
           emitter.emit('updateBillList')
         })
-    }
+    },
   })
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="title">{{ $t('钱包') }}</div>
+    <div class="flex justify-between items-center">
+      <div class="title">
+        {{ $t('钱包') }}
+      </div>
+      <RxButton variant="text" severity="secondary" size="xxs" icon="base/rx_ic_refresh" :label="$t('刷新')" @click="$emit('refresh')" />
+    </div>
     <div class="relative flex flex-col justify-between pa-4 h-55 overflow-hidden overview-item balance">
-      <div class="balance-title">{{ $t('Roxy 钱包') }}</div>
+      <div class="balance-title">
+        {{ $t('Roxy 钱包') }}
+      </div>
       <div>
-        <div class="balance-value">{{ currency(userPayInfo.balance).format() }}</div>
+        <div class="balance-value">
+          {{ currency(userPayInfo.balance).format() }}
+        </div>
         <i18n-t class="mt-1.5 balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
           <template #invite>
             <span class="cursor-pointer balance-desc-link" @click="router.push({ name: 'referral-program' })">{{
@@ -37,7 +48,7 @@ function onCharge() {
         </i18n-t>
       </div>
     </div>
-    <RxButton outlined severity="secondary" size="lg" icon="base/rx_ic_credit_card" :label="$t('充值')" @click="onCharge"></RxButton>
+    <RxButton outlined severity="secondary" size="lg" icon="base/rx_ic_credit_card" :label="$t('充值')" @click="onCharge" />
   </div>
 </template>
 
@@ -53,7 +64,10 @@ function onCharge() {
   border-radius: 12px;
   border: 0.5px solid var(--colors-border-border-base);
   background: var(--colors-background-bg-overlay);
-  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.07), 0 2px 5px 0 rgba(0, 0, 0, 0.07), 0 1px 1px 0 rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 3px 8px 0 rgba(0, 0, 0, 0.07),
+    0 2px 5px 0 rgba(0, 0, 0, 0.07),
+    0 1px 1px 0 rgba(0, 0, 0, 0.07);
   z-index: 1;
 
   &:after {
@@ -103,7 +117,7 @@ function onCharge() {
   }
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   .balance::after {
     background-image: url('/images/payments/gradient_dark.svg');
   }

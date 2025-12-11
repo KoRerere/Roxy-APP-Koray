@@ -75,13 +75,12 @@ function setI18nLanguage(locale: Locale) {
   document?.querySelector('html')?.setAttribute('lang', locale)
 }
 
-async function setupI18n(app: App, options: LocaleSetupOptions = {}) {
+async function setupI18n(options: LocaleSetupOptions = {}) {
   const { defaultLocale, missingWarn } = options
   /**
    * app可以自行扩展一些第三方库和组件库的国际化
    */
   loadMessages = options.loadMessages || (async () => ({}))
-  app.use(i18n)
   console.log('defaultLocale', defaultLocale)
   if (defaultLocale) {
     await loadLocaleMessages(defaultLocale)

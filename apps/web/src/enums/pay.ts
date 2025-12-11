@@ -51,21 +51,21 @@ export enum OrderType {
 }
 
 export const OrderTypeStr = {
-  get [OrderType.Renew]() { return $t("续费") },
-  get [OrderType.Subscribe]() { return $t("订阅") },
-  get [OrderType.Purchase]() { return $t("购买") },
-  get [OrderType.Change]() { return $t("变更") },
-  get [OrderType.Recharge]() { return $t("充值") },
-  get [OrderType.Withdraw]() { return $t("提现") },
-  get [OrderType.Refund]() { return $t("退款") },
-  get [OrderType.Exchange]() { return $t("兑换") },
-  get [OrderType.Gift]() { return $t("赠送") },
-  get [OrderType.ProxyPurchase]() { return $t("代理购买") },
-  get [OrderType.ProxyRefund]() { return $t("代理退款") },
-  get [OrderType.ProxyRenew]() { return $t("代理续费") },
-  get [OrderType.OfficialGift]() { return $t("官方赠送") },
-  get [OrderType.RewardRedeem]() { return $t("奖励兑换") },
-  get [OrderType.EventRewards]() { return $t("活动奖励") },
+  [OrderType.Renew]: $t("续费"),
+  [OrderType.Subscribe]: $t("订阅"),
+  [OrderType.Purchase]: $t("购买"),
+  [OrderType.Change]: $t("变更"),
+  [OrderType.Recharge]: $t("充值"),
+  [OrderType.Withdraw]: $t("提现"),
+  [OrderType.Refund]: $t("退款"),
+  [OrderType.Exchange]: $t("兑换"),
+  [OrderType.Gift]: $t("赠送"),
+  [OrderType.ProxyPurchase]: $t("代理购买"),
+  [OrderType.ProxyRefund]: $t("代理退款"),
+  [OrderType.ProxyRenew]: $t("代理续费"),
+  [OrderType.OfficialGift]: $t("官方赠送"),
+  [OrderType.RewardRedeem]: $t("奖励兑换"),
+  [OrderType.EventRewards]: $t("活动奖励"),
 };
 
 export enum SubOrderType {
@@ -104,18 +104,10 @@ export enum PaymentStatus {
 }
 
 export const PaymentStatusStr = {
-  get [PaymentStatus.Success]() {
-    return $t("支付成功")
-  },
-  get [PaymentStatus.Closed]() {
-    return $t("交易关闭")
-  },
-  get [PaymentStatus.Wait]() {
-    return $t("待支付")
-  },
-  get [PaymentStatus.Fail]() {
-    return $t("支付失败")
-  },
+  [PaymentStatus.Success]: $t("支付成功"),
+  [PaymentStatus.Closed]: $t("交易关闭"),
+  [PaymentStatus.Wait]: $t("待支付"),
+  [PaymentStatus.Fail]: $t("支付失败")
 }
 
 export enum PayIdentity {
@@ -159,27 +151,13 @@ export enum SubLevelEnum {
 }
 
 export const SubLevelEnumStr = {
-  get [SubLevelEnum.Free]() {
-    return $t('免费');
-  },
-  get [SubLevelEnum.Expired]() {
-    return $t('已过期');
-  },
-  get [SubLevelEnum.Trial]() {
-    return $t('免费试用');
-  },
-  get [SubLevelEnum.Basic]() {
-    return $t('基础版');
-  },
-  get [SubLevelEnum.Pro]() {
-    return $t('专业版');
-  },
-  get [SubLevelEnum.Business]() {
-    return $t('商业版');
-  },
-  get [SubLevelEnum.Enterprise]() {
-    return $t('企业版');
-  },
+  [SubLevelEnum.Free]: $t('免费'),
+  [SubLevelEnum.Expired]: $t('已过期'),
+  [SubLevelEnum.Trial]: $t('免费试用'),
+  [SubLevelEnum.Basic]: $t('基础版'),
+  [SubLevelEnum.Pro]: $t('专业版'),
+  [SubLevelEnum.Business]: $t('商业版'),
+  [SubLevelEnum.Enterprise]: $t('企业版'),
 };
 
 /** 日志保留天数 */

@@ -59,6 +59,8 @@ import {
   UserQueryOrderStatusListParams,
   UserRechargeSettlementCreateData,
   UserRechargeSettlementCreatePayload,
+  UserRedeemWindowCodeCreateData,
+  UserRedeemWindowCodeCreatePayload,
   UserSetAutoRechargeStatusCreateData,
   UserSetAutoRechargeStatusCreatePayload,
   UserSetAutoRenewalStatusCreateData,
@@ -763,6 +765,27 @@ export class PayApi<SecurityDataType = unknown> {
     this.http.request<UserGetStablecoinInfoListData, any>({
       path: `/user_get_stablecoin_info`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserRedeemWindowCodeCreate
+   * @summary 窗口兑换码兑换接口
+   * @request POST:/user_redeem_window_code
+   * @response `200` `UserRedeemWindowCodeCreateData`
+   */
+  userRedeemWindowCodeCreate = (
+    data: UserRedeemWindowCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRedeemWindowCodeCreateData, any>({
+      path: `/user_redeem_window_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

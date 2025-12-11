@@ -1,47 +1,52 @@
 <script setup lang="tsx">
-import { useDialog } from "primevue/usedialog";
+import RxAvatar from '/@/components/rx-avatar'
+import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
+import SettingsPopup from './components/settings-popup.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useDialog } from 'primevue/usedialog'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
-import { useToast } from "primevue/usetoast";
-import { API } from "/@/api";
-import RxAvatar from "/@/components/rx-avatar";
-import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
-import { ISO639List } from "/@/constants/iso-639";
-import { $t } from "/@/locales";
-import { useSimpleLocale } from "/@/stores/locale";
-import { useUserStore } from "/@/stores/user";
-import { copyText, showPageLoading } from "/@/utils";
-import { getSettings } from "./components/settings-popup";
-import SettingsPopup from "./components/settings-popup.vue";
-import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
+import { API } from '/@/api'
+import { ISO639List } from '/@/constants/iso-639'
+import { $t } from '/@/locales'
+import { useSimpleLocale } from '/@/stores/locale'
+import { useUserStore } from '/@/stores/user'
+import { copyText, showPageLoading } from '/@/utils'
+import { getSettings } from './components/settings-popup'
+import { getColorSchemeList, useThemeStore } from '/@/stores/theme'
 import { emitter } from '/@/utils/eventBus'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import type { SvgNames } from '/@/components/rx-icon/'
 
-const router = useRouter();
-const dialog = useDialog();
-const [showModal] = useDialogHook()
-const userStore = useUserStore();
-const simpleLocale = useSimpleLocale();
+const router = useRouter()
+const dialog = useDialog()
+const userStore = useUserStore()
+const simpleLocale = useSimpleLocale()
 const themeStore = useThemeStore()
-const styles = useCssModule();
-const toast = useToast();
+const styles = useCssModule()
+const { planSuccess } = usePay()
+const [showModal] = useDialogHook()
+const [showToast] = useResponseToast()
 
-const menuRef = useTemplateRef("menu");
+const menuRef = useTemplateRef('menu')
 
-const Identity = () => {
-  const { identityInfo } = userStore;
-  if (!identityInfo.icon) return null;
+function Identity() {
+  const { identityInfo } = userStore
+  if (!identityInfo.icon)
+    return null
 
   return (
     <div class={styles.identity}>
       <RxSvgIcon name={identityInfo.icon as any} />
       <span
-        class={styles["identity-name"]}
+        class={styles['identity-name']}
         style={{ color: identityInfo.color }}
       >
         {identityInfo.text}
       </span>
     </div>
-  );
-};
+  )
+}
 
 const items = computed(() => {
   return [
@@ -49,15 +54,15 @@ const items = computed(() => {
       render: () => {
         return (
           <div class="w-full">
-            <div class={styles["user-info"]}>
-              <div class={styles["user-name"]}>
+            <div class={styles['user-info']}>
+              <div class={styles['user-name']}>
                 {userStore.userInfo.userName}
               </div>
               <Identity />
             </div>
-            <div class={styles["user-email"]}>{userStore.userInfo.email}</div>
+            <div class={styles['user-email']}>{userStore.userInfo.email}</div>
           </div>
-        );
+        )
       },
       command: copyUserInfo,
     },
@@ -65,33 +70,44 @@ const items = computed(() => {
       separator: true,
       // vIf: () => userStore.userInfo.identity !== 'agent',
     },
-    ...getSettings().map((item) => ({
+    {
+      label: $t('兑换码'),
+      icon: 'base/rx_ic_medal',
+      command: openRedeemCode,
+    },
+    {
+      separator: true,
+    },
+    ...getSettings().map(item => ({
       ...item,
       command: () => openSettings(item.name),
     })),
     {
-      label: $t("语言"),
-      icon: "base/rx_ic_language",
+      separator: true,
+    },
+    {
+      label: $t('语言'),
+      icon: 'base/rx_ic_language',
       items: ISO639List.map((item) => {
         return {
           ...item,
           isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
-            simpleLocale.setSimpleLocale(item.locale);
-            electronAPI.send("app:saveSoftConfig", { language: item.locale });
+            simpleLocale.setSimpleLocale(item.locale)
+            electronAPI.send('app:saveSoftConfig', { language: item.locale })
           },
-        };
+        }
       }),
     },
     {
-      label: $t("主题模式"),
-      icon: "base/rx_ic_contrast",
+      label: $t('主题模式'),
+      icon: 'base/rx_ic_contrast',
       items: getColorSchemeList().map((item) => {
         return {
           ...item,
           isCheck: () => themeStore.theme === item.value,
           command: async () => {
-            themeStore.setTheme(item.value as any);
+            themeStore.setTheme(item.value as any)
             // 如果用户是第一次切换主题，则弹出提示框
             if (userStore.userConfig?.isFirstSwitchTheme) {
               showModal({
@@ -99,65 +115,66 @@ const items = computed(() => {
                 class: '!w-[480px]',
                 okText: $t('前往'),
                 slots: {
-                  default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>
+                  default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>,
                 },
                 async handleOk() {
                   openSettings('preferences')
                 },
                 async handleCancel() {
-                  await API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
+                  await API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false })
                   userStore.updateUserConfig()
                 },
               })
             }
           },
-        };
+        }
       }),
     },
     {
       separator: true,
     },
     {
-      label: "图标(仅开发)",
-      icon: "base/rx_ic_outlink",
+      label: '图标(仅开发)',
+      icon: 'base/rx_ic_outlink',
       vIf: () => import.meta.hot,
       command: () => {
-        window.open("/figma-icons");
+        window.open('/figma-icons')
       },
     },
     {
-      label: "多语言(仅开发)",
-      icon: "base/rx_ic_outlink",
+      label: '多语言(仅开发)',
+      icon: 'base/rx_ic_outlink',
       vIf: () => import.meta.hot,
       command: () => {
-        window.open("/__language-localization__");
+        window.open('/__language-localization__')
       },
     },
     {
-      label: "实验室(仅开发)",
-      icon: "base/rx_ic_doc_api",
+      label: '实验室(仅开发)',
+      icon: 'base/rx_ic_doc_api',
       vIf: () => import.meta.hot,
       command: () => {
-        router.push({ name: "cattle-slaughter" });
+        router.push({ name: 'cattle-slaughter' })
       },
     },
     {
-      label: $t("退出登录"),
-      icon: "base/rx_ic_logout",
+      label: $t('退出登录'),
+      icon: 'base/rx_ic_logout',
       command: async () => {
         const result = await electronAPI.send('browser:getOpenedBrowser')
         if (result?.length > 0) {
           const isConfirm = await showLogoutConfirm()
-          if (!isConfirm) return
+          if (!isConfirm)
+            return
         }
         showPageLoading()
         await API.base.userLogoutList()
         userStore.clearUserInfo()
-        router.push({ name: "login" })
+        router.push({ name: 'login' })
       },
     },
-  ].filter((item) => !item.vIf || item.vIf());
-});
+  ].filter(item => !item.vIf || item.vIf())
+})
 
 onMounted(() => {
   emitter.on('openSettings', ({ settingsKey, anchorPoint }) => {
@@ -169,8 +186,34 @@ onBeforeUnmount(() => {
   emitter.off('openSettings')
 })
 
+function openRedeemCode() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => (
+        <RedeemCodeModal
+          onClose={hideModal}
+          onConfirm={
+            async (redeemCode: string) => {
+              const { code, msg } = await API.pay.userRedeemWindowCodeCreate({ code: redeemCode })
+              showToast(code, msg)
+              if (code !== 0)
+                return
+              planSuccess()
+              hideModal()
+            }
+          }
+        >
+        </RedeemCodeModal>
+      ),
+    },
+  })
+}
+
 function showLogoutConfirm() {
-  const { promise, resolve, } = Promise.withResolvers<boolean>()
+  const { promise, resolve } = Promise.withResolvers<boolean>()
   showModal({
     header: $t('提示'),
     class: '!w-[380px]',
@@ -179,7 +222,7 @@ function showLogoutConfirm() {
       severity: 'danger',
     },
     slots: {
-      default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>
+      default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>,
     },
     async handleOk() {
       await electronAPI.send('browser:closeAll')
@@ -187,19 +230,14 @@ function showLogoutConfirm() {
     },
     handleCancel() {
       resolve(false)
-    }
+    },
   })
   return promise
 }
 
 function copyUserInfo() {
-  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`);
-  toast.add({
-    severity: "success",
-    summary: $t("提示"),
-    detail: $t("用户名与邮箱已复制到剪贴板"),
-    life: 2500,
-  });
+  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
+  showToast(0, $t('用户名与邮箱已复制到剪贴板'))
 }
 
 function openSettings(activeKey: string, anchorPoint?: string) {
@@ -210,10 +248,10 @@ function openSettings(activeKey: string, anchorPoint?: string) {
       blockScroll: true,
       dismissableMask: true,
       style: {
-        width: "var(--width-1_5xl, 960px)",
-        height: "640px",
+        width: 'var(--width-1_5xl, 960px)',
+        height: '640px',
       },
-      pt: { content: "!pa-0 !overflow-y-hidden" },
+      pt: { content: '!pa-0 !overflow-y-hidden' },
     },
     data: {
       props: {
@@ -221,12 +259,12 @@ function openSettings(activeKey: string, anchorPoint?: string) {
         anchorPoint,
       },
     },
-  });
+  })
 }
 
 function toggle(event: Event) {
-  menuRef.value?.toggle(event);
-  userStore.fetchUserInfo();
+  menuRef.value?.toggle(event)
+  userStore.fetchUserInfo()
 }
 </script>
 
@@ -289,7 +327,7 @@ function toggle(event: Event) {
 }
 
 .identity-name {
-  font-family: "DingTalk JinBuTi";
+  font-family: 'DingTalk JinBuTi';
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -312,15 +350,15 @@ function toggle(event: Event) {
   align-items: center;
   gap: var(--spacing-md, 6px);
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--colors-border-border-action, #AFB7BB);
-  background: var(--colors-background-bg-action, #FFF);
+  border: 1px solid var(--colors-border-border-action, #afb7bb);
+  background: var(--colors-background-bg-action, #fff);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   &:not(:disabled):hover {
     color: var(--colors-text-text-primary, #111213);
-    background: var(--colors-background-bg-action-hover, #F1F5F8);
+    background: var(--colors-background-bg-action-hover, #f1f5f8);
 
     svg {
       color: var(--colors-text-text-primary, #111213);

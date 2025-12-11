@@ -3,25 +3,25 @@
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <policyconfig>
-  <vendor>Roxy Browser Dev</vendor>
+  <vendor>Roxy Browser</vendor>
   <vendor_url>https://roxybrowser.com</vendor_url>
 
   <!-- 用于应用内自动更新时的权限提升 -->
   <action id="com.roxybrowser.update">
     <!-- 默认：英文，非中文语言环境都显示英文 -->
-    <description>Update RoxyBrowserDev</description>
-    <description xml:lang="zh_CN">更新 RoxyBrowserDev</description>
+    <description>Update RoxyBrowser</description>
+    <description xml:lang="zh_CN">更新 RoxyBrowser</description>
 
-    <message>Authentication is required to update RoxyBrowserDev browser</message>
+    <message>Authentication is required to update RoxyBrowser browser</message>
     <!-- 中文环境覆盖为中文 -->
-    <message xml:lang="zh_CN">需要认证以更新 RoxyBrowserDev</message>
-    <icon_name>roxybrowserdev</icon_name>
+    <message xml:lang="zh_CN">需要认证以更新 RoxyBrowser</message>
+    <icon_name>roxybrowser</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/opt/RoxyBrowserDev/resources/roxybrowser-update-wrapper.sh</annotate>
+    <annotate key="org.freedesktop.policykit.exec.path">/opt/RoxyBrowser/resources/roxybrowser-update-wrapper.sh</annotate>
     <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
   </action>
 </policyconfig>

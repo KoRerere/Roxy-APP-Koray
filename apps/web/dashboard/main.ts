@@ -7,17 +7,19 @@ import { setupPrimeVue } from '/@/primevue'
 import { createApp } from 'vue'
 import { setupI18n } from '/@/locales'
 import App from './App.vue'
+import { i18n } from '/@/locales'
 
 const app = createApp(App)
 
 setupPrimeVue(app)
+app.use(i18n)
 
 fetch(`/api/app/config`)
   .then(res => res.json())
   .then(({ code, data }) => {
     console.log('app config', data)
     globalThis.appConfig = data
-    setupI18n(app, { defaultLocale: data.language }).then(() => {
+    setupI18n({ defaultLocale: data.language }).then(() => {
       document.querySelector('html')?.setAttribute('lang', data.language)
     })
   })

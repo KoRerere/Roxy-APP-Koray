@@ -1,12 +1,12 @@
 #!/bin/bash
-# postinst script for RoxyBrowserDev
+# postinst script for RoxyBrowser
 # 安装 polkit policy 文件以自定义认证提示
 
 set -e
 
 POLKIT_DIR="/usr/share/polkit-1/actions"
-APP_POLICY_FILE="com.roxybrowser.dev.policy"
-POLICY_SOURCE="/opt/RoxyBrowserDev/resources/com.roxybrowser.policy"
+APP_POLICY_FILE="com.roxybrowser.policy"
+POLICY_SOURCE="/opt/RoxyBrowser/resources/com.roxybrowser.policy"
 
 # 确保 polkit 目录存在
 if [ -d "$POLKIT_DIR" ]; then

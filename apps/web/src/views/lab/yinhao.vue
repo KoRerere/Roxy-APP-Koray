@@ -1,15 +1,21 @@
 <script setup lang="tsx">
 import { $t } from '/@/locales'
-import { enhanceCountdown, isEmptyValue, safeParseJSON, sleep } from '/@/utils'
-import { useResponseToast } from '/@/hooks/useResponseToast';
+import { sleep } from '/@/utils'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
-import WechatPayModal from '/@/views/pay/wallet/components/payway-wechat-modal.vue';
-import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
-import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue';
-import VideoModal from '/@/views/tutorial/components/video-modal.vue';
-import CustomNewEmpty from '/@/components/custom-new-empty.vue'
-import HomeBackModal from '/@/views/browser/shared/home-back-modal.vue';
-import BlackFridayModal from '/@/views/campaign/black-friday-modal.vue';
+import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue'
+// ============ table ===================
+// import wcisTable from './components/table/table.vue'
+import { useUserStore } from '/@/stores/user'
+
+// import { differenceInDays, format, subDays } from 'date-fns'
+import type { SubLevelEnum } from '/@/enums/pay'
+import { LogRetentionDays } from '/@/enums/pay'
+// ============ form ========================
+// import TsForm from './components/form/index.vue'
+import Test from '/@/views/lab/components/test.vue'
+// import FormItem from '/@/views/lab/components/form/item.vue'
+import { API } from '/@/api'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -20,11 +26,11 @@ function open1() {
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!border-none !shadow-none rounded-lg",
+      root: '!border-none !shadow-none rounded-lg overflow-hidden',
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <HomeBackModal onClose={hideModal}></HomeBackModal>
+      container: ({ hideModal }) => <WelcomeModal onClose={hideModal}></WelcomeModal>,
     },
   })
 }
@@ -35,20 +41,14 @@ function open2() {
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!bg-transparent !border-none !shadow-none",
+      // root: "!bg-transparent !border-none !shadow-none",
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <BlackFridayModal onClose={hideModal}></BlackFridayModal>
+      container: ({ hideModal }) => <WelcomeModal></WelcomeModal>,
     },
   })
 }
-//============ table ===================
-import wcisTable from './components/table/table.vue'
-import { useUserStore } from '/@/stores/user'
-
-import { differenceInDays, format, subDays } from 'date-fns'
-import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
 const { userPayInfo } = storeToRefs(useUserStore())
 
 async function tableFilters() {
@@ -62,7 +62,7 @@ async function tableFilters() {
       props: {
         placeholder: $t('全部成员'),
         options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
-      }
+      },
     },
     {
       type: 'mselect',
@@ -77,7 +77,7 @@ async function tableFilters() {
           { label: $t('扩展'), value: 'Extensions' },
           { label: $t('团队'), value: 'Teams' },
         ],
-      }
+      },
     },
     {
       type: 'date',
@@ -86,7 +86,7 @@ async function tableFilters() {
         placeholder: $t('全部时间'),
         selectionMode: 'range',
         maxDate: new Date(),
-        minDate: subDays(new Date(), 60),// 只会保留 60 天内的数据
+        minDate: subDays(new Date(), 60), // 只会保留 60 天内的数据
       },
       // formatValue: (input: any, _: any, formData: any) => {
       //   // 如果用户是免费用户，则只能查询过去3天的数据， 3 天之前需要提示
@@ -115,10 +115,10 @@ async function tableFilters() {
 }
 
 const columns = [
-  { header: "Tomato 🍅", field: 'code' },
-  { header: "Lettuce 🥬", field: 'name' },
-  { header: "Cheese 🧀", field: 'category' },
-  { header: "Carrot 🥕", field: 'quantity' }
+  { header: 'Tomato 🍅', field: 'code', headerRender: h('div', '123') },
+  { header: 'Lettuce 🥬', field: 'name' },
+  { header: 'Cheese 🧀', field: 'category' },
+  { header: 'Carrot 🥕', field: 'quantity' },
 ]
 
 const originalModel = [
@@ -134,7 +134,7 @@ const originalModel = [
       name: 'G1',
       props: {
         label: 'Restart',
-      }
+      },
     },
   },
   {
@@ -167,8 +167,8 @@ const originalModel = [
     icon: 'base/rx_ic_download',
     command: (event: any) => {
       const data: any = [].concat(event.data)[0]
-      showToast(0, data.category + ': normal1')
-    }
+      showToast(0, `${data.category}: normal1`)
+    },
   },
   {
     label: 'normal2',
@@ -187,12 +187,6 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
 }))
 
 const selectedProducts = ref()
-
-//============ form ========================
-import TsForm from './components/form/index.vue';
-import Test from '/@/views/lab/components/test.vue';
-import FormItem from '/@/views/lab/components/form/item.vue'
-import { API } from '/@/api';
 
 const formRef = useTemplateRef<any>('wcisman')
 const inputs = [
@@ -226,8 +220,8 @@ const inputs = [
       filter: false,
       placeholder: '请选择',
       options: [
-      ]
-    }
+      ],
+    },
   },
   {
     name: 'mamba',
@@ -235,11 +229,11 @@ const inputs = [
     value: 'x',
     render: (props: any) => <Test {...props}></Test>,
     resolver: (z: any) => z.string({
-      invalid_type_error: 'must 5 string man!'
+      invalid_type_error: 'must 5 string man!',
     }).min(5, 'must 5 string man!'),
-  }
+  },
 ]
-const onFormWcis = (values: Record<string, any>) => {
+function onFormWcis(values: Record<string, any>) {
   console.log(values)
 }
 function noFormIdWcis() {
@@ -260,11 +254,11 @@ function setInputsProps() {
         { label: 'test6', value: 'test6' },
         { label: 'test7', value: 'test7' },
       ],
-    }
+    },
   })
 }
 
-//=========================================
+// =========================================
 </script>
 
 <template>
@@ -272,14 +266,8 @@ function setInputsProps() {
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" :columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple">
     </wcisTable> -->
 
-    <!-- RoxyBrowser 团队提供了对流媒体特别优化的代理服务，您可以前往代理中心进行<a href="#/resource/agent?name=shop&action=buy">购买与使用</a>。
-
-    RoxyBrowser Team provides proxy services specially optimized for streaming media. You can go to the Proxy Center to <a href="#/resource/agent?name=shop&action=buy">purchase and use</a>.
-
-    Команда RoxyBrowser предоставляет прокси для стриминга. Перейдите в Центр прокси для <a href="#/resource/agent?name=shop&action=buy">покупки и использования</a>. -->
-
-    <RxButton label="open1" @click="open1"></RxButton>
-    <RxButton label="open2" @click="open2"></RxButton>
+    <RxButton label="open1" @click="open1" />
+    <RxButton label="open2" @click="open2" />
 
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
@@ -303,19 +291,6 @@ function setInputsProps() {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.platform {
-  color: var(--colors-text-text-secondary);
-  font-size: 12px;
-  line-height: 20px;
-}
+<style scoped>
 
-.cmd {
-  border: 1px solid var(--primitives-netural-900);
-  background: var(--pattern-editor-bg);
-  color: var(--pattern-editor-code);
-  font-family: "JetBrains Mono";
-  font-size: 12px;
-  font-weight: 500;
-}
 </style>

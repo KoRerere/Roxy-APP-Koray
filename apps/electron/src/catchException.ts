@@ -56,6 +56,13 @@ process.on("unhandledRejection", (reason) => {
   } catch { }
 })
 
+app.on('render-process-gone', (event, webContents, details) => {
+  console.error('Render process gone:', details);
+  try {
+    captureException(new Error(`Render process gone: ${JSON.stringify(details)}`));
+  } catch { }
+});
+
 // 让 Sentry 管理 crashReporter，无需手动启动
 
 // 方便测试崩溃信息

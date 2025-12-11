@@ -1,53 +1,51 @@
 <script setup lang="ts">
 import RxAvatar from '/@/components/rx-avatar'
+import { useUserStore } from '/@/stores/user'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useFileDialog } from '@vueuse/core'
 import { $t } from '/@/locales'
 
-defineProps({
-  userName: String,
-  avatarColor: String,
-})
-
 const emit = defineEmits(['change'])
-const modelValue = defineModel<string>()
-const previewUrl = ref(modelValue.value)
+
+const { userInfo } = storeToRefs(useUserStore())
 const [showToast] = useResponseToast()
 const { open, onChange } = useFileDialog({
   accept: 'image/png, image/jpeg, image/jpg, image/bmp', // Set to accept only image files
   directory: false, // Select directories instead of files if set true
 })
 
+const modelValue = defineModel<string>()
+
 const color = defaultColors[getRandomInt(0, defaultColors.length - 1)]
 
 onChange(async (files) => {
-  if (!files?.length) return
+  if (!files?.length)
+    return
 
-  if (files[0].size > 2 * 1024 * 1024) {
+  if (files[0]!.size > 2 * 1024 * 1024) {
     showToast(-1, $t('推荐尺寸为 64*64，最大不超过 2MB'))
     return
   }
 
-  const localPath = await electronAPI.getPathForFile(files[0])
+  const localPath = await electronAPI.getPathForFile(files[0]!)
   if (localPath) {
-    previewUrl.value = await electronAPI.send('util:toMediaPath', localPath)
-    if (previewUrl.value) {
+    const roxyPath = await electronAPI.send('util:toMediaPath', localPath)
+
+    if (roxyPath) {
       try {
         modelValue.value = await electronAPI.send('user:uploadAvatar', localPath)
         emit('change')
       }
       catch (error) {
-        console.log('🚀 ~ uploadAvatar ~ error:', error)
-        showToast(-1, error)
+        showToast(-1, error as string)
       }
     }
   }
 })
 
 async function removeAvatar() {
-  previewUrl.value = ''
   modelValue.value = ''
   emit('change')
 }
@@ -55,11 +53,9 @@ async function removeAvatar() {
 
 <template>
   <div class="upload-area">
-    <RxAvatar :avatar="previewUrl" :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100"
-      :font-size="52" />
+    <RxAvatar :avatar="userInfo.avatar" :name="userInfo.userName?.slice(0, 2)" :color="userInfo.avatarColor || color" :size="100" :font-size="52" />
     <div class="upload-area-buttons">
-      <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')"
-        @click="removeAvatar" />
+      <RxButton v-if="userInfo.avatar" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')" @click="removeAvatar" />
       <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')" @click="open" />
     </div>
   </div>

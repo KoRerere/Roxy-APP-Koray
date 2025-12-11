@@ -50,17 +50,14 @@ const tableAttrs = {
 
 //============== 头部 ==============
 import Display from './display.vue'
-import { setDisplay } from './utils'
+import { setDisplay, saveDisplaySettings } from './utils'
 
 const rawColumns = ref(initColumns())
 
 const _tableColumns = computed(() => rawColumns.value.filter((item: any) => item._visible ?? true))
 
 onBeforeUnmount(() => {
-  if (displayKey) {
-    const _cache = rawColumns.value.map((item, index) => [item.field, { visible: item._visible, sort: index, cache: item._cache }])
-    localStorage.setItem(displayKey, JSON.stringify(_cache))
-  }
+  saveDisplaySettings(displayKey, rawColumns.value)
 })
 
 function initColumns() {
@@ -207,13 +204,14 @@ async function _request() {
 
 defineExpose({
   getParams: _getParams,
+  getColumns: () => rawColumns.value,
   refresh: (outerParams = {}, force = true) => {
     if (force) paginatorFirst.value = 0
     _outerParams.value = outerParams
     _request()
   },
-  updateDataList: (list: any[]) => {
-    _dataList.value = list || []
+  update: (dataList: any[]) => {
+    _dataList.value = dataList || []
   },
 })
 </script>
@@ -236,7 +234,7 @@ defineExpose({
 
     <div class="relative flex-1 overflow-hidden">
       <DataTable :value="_tableValue" v-bind="tableAttrs" v-model:selection="selectedProduct">
-        <Column v-if="!!tableAttrs.selectionMode" :selectionMode="tableAttrs.selectionMode" headerStyle="width: 0rem; min-width: 48px">
+        <Column v-if="!!tableAttrs.selectionMode" :selectionMode="tableAttrs.selectionMode" headerStyle="width:0%" bodyStyle="width:0%">
           <template #headercheckboxicon="{ checked }">
             <SvgIcon v-show="checked" name="base/rx_ic_checkmark" color="#ffffff" />
           </template>
@@ -244,7 +242,14 @@ defineExpose({
             <SvgIcon v-show="checked" name="base/rx_ic_checkmark" color="#ffffff" />
           </template>
         </Column>
-        <Column v-for="{ render, slot, ...col } of _tableColumns" :key="col.field" :field="col.field" :header="col.header" v-bind="col.props">
+
+        <Column v-for="{ headerRender, headerSlot, render, slot, ...col } of _tableColumns" :key="col.field" :field="col.field" v-bind="col.props">
+          <template #header>
+            <component v-if="headerRender" :is="headerRender"></component>
+            <slot v-else :name="headerSlot" :column="col">
+              <div>{{ col.header }}</div>
+            </slot>
+          </template>
           <template #body="{ data, index }">
             <component v-if="render" :is="render" :data="data" :index="index"></component>
             <slot v-else :name="slot" :column="col" :data="data" :index="index">

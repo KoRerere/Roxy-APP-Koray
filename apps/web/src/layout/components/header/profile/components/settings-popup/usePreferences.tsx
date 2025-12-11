@@ -582,6 +582,27 @@ export function usePreferencesPanel() {
                 );
               },
             },
+            {
+              label: $t("开机自启动"),
+              text: () => (
+                <div class="w-88">
+                  {$t(
+                    "开机时是否自动启动客户端",
+                  )}
+                </div>
+              ),
+              name: "autoStart",
+              value: data?.autoStart ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
           ]
         }
       ],

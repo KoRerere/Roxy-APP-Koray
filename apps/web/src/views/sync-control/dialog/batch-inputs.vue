@@ -1,38 +1,9 @@
-<template>
-  <BaseDialog :header="$t('批量输入')" @hide="handleHide">
-    <Tabs v-model:value="activeTab">
-      <TabList>
-        <template v-for="(tab) in tabs" :key="tab.id">
-          <Tab :value="tab.id">{{ tab.label }}</Tab>
-        </template>
-      </TabList>
-      <TabPanels>
-        <template v-for="(tab) in tabs" :key="tab.id">
-          <TabPanel :value="tab.id">
-            <component :ref="(ins) => tabRefMap[tab.id] = ins" :is="tab.component" :syncWindows="syncWindows" />
-            <div class="footer">
-              <div class="flex items-center gap-2">
-                <RxCheckbox v-model="append" inputId="append" binary size="small" :trueValue="false" :falseValue="true" />
-                <label for="append"> {{ $t('输入前清空内容') }} </label>
-              </div>
-              <RxButton class="save-button" @click="startBatchInputs(tab)">
-                {{ $t('输入') }}
-              </RxButton>
-            </div>
-          </TabPanel>
-        </template>
-      </TabPanels>
-    </Tabs>
-
-  </BaseDialog>
-</template>
-
 <script setup lang="ts">
-import BaseDialog from './base-dialog.vue';
+import BaseDialog from './base-dialog.vue'
 import SameText from './batch-inputs-components/same-text.vue'
 import DiffText from './batch-inputs-components/diff-text.vue'
 import RandomText from './batch-inputs-components/random-text.vue'
-import { $t } from '/@/locales';
+import { $t } from '/@/locales'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
@@ -53,10 +24,12 @@ const activeTab = ref(defaultActiveTabId)
 
 watch(activeTab, (val) => {
   if (val === 'diff') {
-    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: Math.min(60 * syncWindowCount + 210, 660) })
-  } else if (val === 'random') {
+    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: Math.min(60 * syncWindowCount + 220, 660) })
+  }
+  else if (val === 'random') {
     electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 340 })
-  } else {
+  }
+  else {
     electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 366 })
   }
 }, { immediate: true })
@@ -100,11 +73,42 @@ onMounted(() => {
 })
 </script>
 
+<template>
+  <BaseDialog :header="$t('批量输入')" @hide="handleHide">
+    <Tabs v-model:value="activeTab">
+      <TabList :pt="{ root: 'overflow-visible!' }">
+        <template v-for="(tab) in tabs" :key="tab.id">
+          <Tab :value="tab.id">
+            {{ tab.label }}
+          </Tab>
+        </template>
+      </TabList>
+      <TabPanels>
+        <template v-for="(tab) in tabs" :key="tab.id">
+          <TabPanel :value="tab.id">
+            <component :is="tab.component" :ref="(ins) => tabRefMap[tab.id] = ins" :sync-windows="syncWindows" />
+            <div class="footer">
+              <div class="flex items-center gap-2">
+                <RxCheckbox v-model="append" input-id="append" binary size="small" :true-value="false" :false-value="true" />
+                <label for="append"> {{ $t('输入前清空内容') }} </label>
+              </div>
+              <RxButton class="save-button" @click="startBatchInputs(tab)">
+                {{ $t('输入') }}
+              </RxButton>
+            </div>
+          </TabPanel>
+        </template>
+      </TabPanels>
+    </Tabs>
+  </BaseDialog>
+</template>
+
 <style lang="scss">
 .p-dialog-content {
   height: 100%;
 }
 </style>
+
 <style lang="scss" scoped>
 :deep(.p-tabpanels) {
   height: 100%;

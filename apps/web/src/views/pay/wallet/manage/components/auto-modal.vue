@@ -1,11 +1,11 @@
 <script setup lang="tsx">
-import currency from 'currency.js';
+import currency from 'currency.js'
 import { format } from 'date-fns'
-import { $t } from '/@/locales';
-import { AutoRenewalStatus } from '/@/enums/pay';
-import { useUserStore } from '/@/stores/user';
-import { API } from '/@/api';
-import { useResponseToast } from '/@/hooks/useResponseToast';
+import { $t } from '/@/locales'
+import { AutoRenewalStatus } from '/@/enums/pay'
+import { useUserStore } from '/@/stores/user'
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 interface CurrentPlan {
   label: string
@@ -29,7 +29,7 @@ const currentPlan = ref<CurrentPlan[]>([
   {
     label: $t('价格'),
     getText: (data: any) => currency(data.orderPrice).format(),
-    class: 'font-600'
+    class: 'font-600',
   },
   {
     label: $t('窗口数量'),
@@ -42,7 +42,7 @@ const currentPlan = ref<CurrentPlan[]>([
   {
     label: $t('下一次账单日期'),
     getText: (data: any) => format(data.nextTime, 'yyyy/MM/dd'),
-  }
+  },
 ])
 
 onBeforeMount(() => {
@@ -52,7 +52,8 @@ onBeforeMount(() => {
 async function getCurrentPlan() {
   const { code, data, msg } = await API.pay.userGetAutoSubscriptionInfoList({ queryType: 'profile' })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   currentPlan.value = currentPlan.value.map(item => ({ ...item, value: item.getText(data) }))
 }
 
@@ -82,18 +83,32 @@ function close() {
         <span class="title">{{ $t('自动续订') }}</span>
         <RxToggleSwitch v-model="isAuto" :true-value="autoRenewOpen" :false-value="autoRenewClose" @change="toggleAutoRenew" />
       </div>
-      <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('续订费用将在订阅到期当日从您的钱包中扣除。\n您可以提前向钱包储值，或{link}。', { link: '{link}' })" scope="global">
-        <template #link>
-          <span class="font-bold">{{ $t('启用自动续订组合支付') }}</span>
-        </template>
-      </i18n-t>
+      <div class="desc">
+        <div>{{ $t('续订费用将在订阅到期当日从您的钱包中扣除。') }}</div>
+        <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('您可以提前向钱包储值，或{link}。', { link: '{link}' })" scope="global">
+          <template #link>
+            <span class="font-bold">{{ $t('启用自动续订组合支付') }}</span>
+          </template>
+        </i18n-t>
+        <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('启用自动续订将享受 {discount}。', { discount: '{discount}' })" scope="global">
+          <template #discount>
+            <span class="discount">{{ $t('{discount}% Off', { discount: userPayInfo.autoRenewDiscount }) }}</span>
+          </template>
+        </i18n-t>
+      </div>
     </div>
-    <RxDivider line-only></RxDivider>
+    <RxDivider line-only />
     <div class="flex flex-col gap-2.5">
-      <div class="title">{{ $t('当前套餐') }}</div>
+      <div class="title">
+        {{ $t('当前套餐') }}
+      </div>
       <div v-for="item in currentPlan" :key="item.label" class="flex items-center justify-between">
-        <div class="text">{{ item.label }}</div>
-        <div class="text" :class="item.class">{{ item.value }}</div>
+        <div class="text">
+          {{ item.label }}
+        </div>
+        <div class="text" :class="item.class">
+          {{ item.value }}
+        </div>
       </div>
     </div>
   </div>
@@ -118,6 +133,11 @@ function close() {
   color: var(--colors-text-text-secondary);
   font-size: 12px;
   line-height: 18px;
+}
+
+.discount {
+  color: var(--colors-text-text-warning);
+  font-family: 'DingTalk JinBuTi';
 }
 
 .link {

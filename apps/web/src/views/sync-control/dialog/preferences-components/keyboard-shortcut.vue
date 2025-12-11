@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { ShortcutKeyRegisterResult } from '#roxybrowser/modules/sync-control/shortcutKey';
-import { upperFirst } from 'es-toolkit';
-import { $t } from '/@/locales';
-import { isWindows } from '/@/utils';
-import { type PreferenceSettings } from '/@/views/sync-control/model';
+import type { ShortcutKeyRegisterResult } from '#roxybrowser/modules/sync-control/shortcutKey'
+import { upperFirst } from 'es-toolkit'
+import { $t } from '/@/locales'
+import { isWindows } from '/@/utils'
+import type { PreferenceSettings } from '/@/views/sync-control/model'
 
-type ShortcutKey = PreferenceSettings['shortcutKey'];
+type ShortcutKey = PreferenceSettings['shortcutKey']
 
-type KeyboardItem = {
-  label: string;
-  key: keyof ShortcutKey['windows'];
-  onClear: (key: KeyboardItem['key']) => void;
-};
+interface KeyboardItem {
+  label: string
+  key: keyof ShortcutKey['windows']
+  onClear: (key: KeyboardItem['key']) => void
+}
 
 // 修饰键
-const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
+const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta']
 
 // https://github.com/electron/electron/blob/main/docs/api/accelerator.md
 // 只允许录入功能键、导航键、空格键、字母、数字、符号
@@ -22,18 +22,58 @@ const allowedKeys = [
   // 功能键
   ...Array.from({ length: 24 }, (_, i) => `F${i + 1}`),
   // 导航键
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
   // 空格键
   ' ',
   // 数字
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
   // A-Z 26个大写字母
   ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
-  '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+',
-  '[', ']', '{', '}', '\\', '|', ';', ':', "'", '"', ',', '<', '.', '>', '/', '?',
-];
+  '!',
+  '@',
+  '#',
+  '$',
+  '%',
+  '^',
+  '&',
+  '*',
+  '(',
+  ')',
+  '-',
+  '_',
+  '=',
+  '+',
+  '[',
+  ']',
+  '{',
+  '}',
+  '\\',
+  '|',
+  ';',
+  ':',
+  '\'',
+  '"',
+  ',',
+  '<',
+  '.',
+  '>',
+  '/',
+  '?',
+]
 
-const formData = defineModel<ShortcutKey>({ required: true });
+const formData = defineModel<ShortcutKey>({ required: true })
 
 const os = isWindows ? 'windows' : 'mac'
 
@@ -43,39 +83,43 @@ const checkOccupiedResult = ref<ShortcutKeyRegisterResult>()
 const tempFormData = computed({
   get: () => formData.value[os],
   set: (value) => {
-    Object.assign(formData.value[os], value);
+    Object.assign(formData.value[os], value)
   },
 })
 
 const duplicateKeys = computed(() => {
-  const keys = Object.values(tempFormData.value);
-  return keys.filter((key, index) => key && keys.indexOf(key) !== index);
-});
+  const keys = Object.values(tempFormData.value)
+  return keys.filter((key, index) => key && keys.indexOf(key) !== index)
+})
 
 function onClear(key: KeyboardItem['key']) {
-  tempFormData.value[key] = '';
-  checkOccupiedResult.value[key] = undefined;
+  tempFormData.value[key] = ''
+  checkOccupiedResult.value[key] = undefined
 }
 
 /** 录入快捷键组合 */
 async function handleKeydown(event: KeyboardEvent, key: KeyboardItem['key']) {
   // console.log('event', event);
-  event.preventDefault();
-  let keyCombination = '';
+  event.preventDefault()
+  let keyCombination = ''
 
-  if (event.metaKey) keyCombination += 'Cmd + ';
-  if (event.ctrlKey) keyCombination += 'Ctrl + ';
-  if (event.shiftKey) keyCombination += 'Shift + ';
-  if (event.altKey) keyCombination += 'Alt + ';
+  if (event.metaKey)
+    keyCombination += 'Cmd + '
+  if (event.ctrlKey)
+    keyCombination += 'Ctrl + '
+  if (event.shiftKey)
+    keyCombination += 'Shift + '
+  if (event.altKey)
+    keyCombination += 'Alt + '
 
   const keyName = event.key
-  console.log('keyName', keyName);
+  console.log('keyName', keyName)
   if (!modifierKeys.includes(keyName) && allowedKeys.includes(upperFirst(keyName))) {
-    keyCombination += keyName === ' ' ? 'Space' : upperFirst(keyName);
-    tempFormData.value[key] = keyCombination;
+    keyCombination += keyName === ' ' ? 'Space' : upperFirst(keyName)
+    tempFormData.value[key] = keyCombination
   };
 
-  console.log('keyCombination', keyCombination);
+  console.log('keyCombination', keyCombination)
 
   if (!keyCombination.endsWith(' + ')) {
     // 检查当前快捷键是否被占用
@@ -83,8 +127,8 @@ async function handleKeydown(event: KeyboardEvent, key: KeyboardItem['key']) {
       [os]: {
         [key]: keyCombination,
       },
-    });
-    console.log('checkShortcutKeysIsOccupied', result);
+    })
+    console.log('checkShortcutKeysIsOccupied', result)
     checkOccupiedResult.value = {
       ...checkOccupiedResult.value,
       ...result,
@@ -153,21 +197,21 @@ const keyboardItems = ref<KeyboardItem[]>([
     label: $t('同步偏好设置'),
     key: 'openPreferenceSettings',
   },
-].map((n) => ({ ...n, onClear }) as KeyboardItem))
+].map(n => ({ ...n, onClear }) as KeyboardItem))
 
 function isOccupied(item: KeyboardItem) {
   const target = checkOccupiedResult.value?.[item.key]
-  console.log('target', item, target);
+  console.debug('target', item, target)
   // console.log('checkOccupiedResult', checkOccupiedResult.value);
   return Boolean(target && target?.accelerator && target?.status === false)
 }
 
 async function checkShortcutKeysIsOccupied() {
-  const isValid = Object.values(tempFormData.value).every((key) => !key.endsWith(' + '));
-  console.log('isValid', isValid);
+  const isValid = Object.values(tempFormData.value).every(key => !key.endsWith(' + '))
+  console.log('isValid', isValid)
   if (isValid) {
-    const result = await electronAPI.send('syncControl:checkShortcutKeysIsOccupied', toRaw(formData.value));
-    console.log('checkShortcutKeysIsOccupied', result);
+    const result = await electronAPI.send('syncControl:checkShortcutKeysIsOccupied', toRaw(formData.value))
+    console.debug('checkShortcutKeysIsOccupied', result)
     checkOccupiedResult.value = {
       ...checkOccupiedResult.value,
       ...result,
@@ -181,8 +225,8 @@ onMounted(() => {
 
 defineExpose({
   valid() {
-    console.log('tempFormData', tempFormData.value);
-    return !duplicateKeys.value.length && !Object.values(checkOccupiedResult.value).some((item) => item.accelerator && item.status === false)
+    console.log('tempFormData', tempFormData.value)
+    return !duplicateKeys.value.length && !Object.values(checkOccupiedResult.value).some(item => item.accelerator && item.status === false)
   },
 })
 </script>
@@ -194,8 +238,9 @@ defineExpose({
         <label class="form-item-label">{{ item.label }}</label>
         <div class="form-item-content">
           <div class="form-item-content-input">
-            <InputText type="text" v-model="tempFormData[item.key]" :placeholder="$t('设置快捷键')" size="small"
-              :invalid="isOccupied(item)" @keydown="handleKeydown($event, item.key)" />
+            <InputText v-model="tempFormData[item.key]" type="text" :placeholder="$t('设置快捷键')" size="small"
+                       :invalid="isOccupied(item)" @keydown="handleKeydown($event, item.key)"
+            />
             <RxButton icon="base/rx_ic_delete" severity="secondary" size="xxs" outlined @click="onClear(item.key)" />
           </div>
           <template v-if="isOccupied(item)">
@@ -217,7 +262,7 @@ defineExpose({
 <style lang="scss" scoped>
 .form-item-label {
   width: 120px;
-  align-self: flex-start
+  align-self: flex-start;
 }
 
 .form-item-content {
@@ -233,8 +278,8 @@ defineExpose({
 }
 
 .error-message {
-  color: var(--colors-text-text-error, #F53838);
-  font-family: "PingFang SC";
+  color: var(--colors-text-text-error, #f53838);
+  font-family: 'PingFang SC';
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

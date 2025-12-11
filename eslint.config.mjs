@@ -20,6 +20,7 @@ export default antfu(
       'n/prefer-global/process': 'off',
       'vue/first-attribute-linebreak': 'off',
       'ts/no-unused-expressions': 'off',
+      'pnpm/json-enforce-catalog': 'off',
       'unused-imports/no-unused-vars': [
         'error',
         {
@@ -34,7 +35,7 @@ export default antfu(
           type: 'alphabetical',
           order: 'asc',
           ignoreCase: true,
-          internalPattern: ['~/**', '/@/**', '@/**'],
+          internalPattern: ['^~/', '^/@/', '^@/'],
           newlinesBetween: 'never',
           maxLineLength: undefined,
           groups: [
@@ -52,6 +53,13 @@ export default antfu(
           environment: 'node',
         },
       ],
+    },
+  },
+  {
+    // 排除 apps/web 目录的 sort-imports 规则
+    files: ['apps/web/**/*'],
+    rules: {
+      'perfectionist/sort-imports': 'off',
     },
   },
 ).override('antfu/regexp/rules', () => ({}))

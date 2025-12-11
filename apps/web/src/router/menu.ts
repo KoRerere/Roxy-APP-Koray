@@ -8,7 +8,7 @@ import { I18nT } from "vue-i18n"
 import { useRoleStore } from "/@/stores/role";
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 
-export const getMenuRoutes = (): RouteRecordRaw[] => [
+export const menuRoutes: RouteRecordRaw[] = [
   {
     path: "browser",
     name: "browser",

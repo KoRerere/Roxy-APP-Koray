@@ -3288,6 +3288,15 @@ export interface GetBlackFridayTimeListData {
   msg: string;
 }
 
+export interface UserSubmitSurveyAnswerCreatePayload {
+  source: string[];
+  plan: string[];
+  feature: string[];
+  about: string[];
+}
+
+export type UserSubmitSurveyAnswerCreateData = object;
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -7404,6 +7413,15 @@ export interface UserGetStablecoinInfoListData {
       alias: string;
     }[];
   };
+  msg: string;
+}
+
+export interface UserRedeemWindowCodeCreatePayload {
+  code: string;
+}
+
+export interface UserRedeemWindowCodeCreateData {
+  code: number;
   msg: string;
 }
 

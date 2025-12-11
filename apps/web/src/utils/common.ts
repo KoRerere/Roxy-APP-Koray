@@ -17,17 +17,13 @@ let pageLoadingTimer: any
 export function showPageLoading() {
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'flex')
   clearTimeout(pageLoadingTimer)
-  // 如果 10s 内没有加载完成，则跳转到 500 页面
+  // 如果 30s 内没有加载完成，则跳转到 500 页面
   pageLoadingTimer = setTimeout(async () => {
     console.log('Redirecting to 500 page')
     const { default: router } = await import('/@/router')
     router.push({ name: '500' })
     hidePageLoading()
-  }, 1000 * 10)
-}
-
-if (isMainWindow) {
-  showPageLoading()
+  }, 1000 * 30)
 }
 
 if (import.meta.hot) {
@@ -39,4 +35,11 @@ if (import.meta.hot) {
 export function hidePageLoading() {
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'none')
   clearTimeout(pageLoadingTimer)
+}
+
+if (isMainWindow) {
+  showPageLoading()
+}
+else {
+  hidePageLoading()
 }

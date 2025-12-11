@@ -1,16 +1,14 @@
-
-
-import path from "path"
-import { browserManager } from "/@/modules/browser"
-import { IPCMainInstance } from "/@/modules/ipc/types"
-import { openAPIServer } from "/@/modules/openapi"
-import { fetchUserConfig, store, } from "/@/modules/store"
-import { aliOSS } from "/@/utils"
-import { closeAllSyncDialogs } from "/@/modules/sync-control/common"
-import { getCurrentScope } from "@sentry/electron/main"
+import { getCurrentScope } from '@sentry/electron/main'
+import path from 'node:path'
+import type { IPCMainInstance } from '/@/modules/ipc/types'
+import { syncAutoStart } from '/@/modules/app/auto-start'
+import { browserManager } from '/@/modules/browser'
+import { openAPIServer } from '/@/modules/openapi'
+import { fetchUserConfig, store } from '/@/modules/store'
+import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
+import { aliOSS } from '/@/utils'
 
 export function setupUserIpc(ipcMain: IPCMainInstance) {
-
   /** 登录成功后，保存用户信息 */
   ipcMain.on('user:setUserInfo', async (event, userInfo) => {
     store.token = userInfo.token
@@ -22,12 +20,12 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
       email: userInfo.email,
     }
 
-    const scope = getCurrentScope();
+    const scope = getCurrentScope()
     scope.setUser({
       id: userInfo.userId,
       email: userInfo.email,
       username: userInfo.userName,
-    });
+    })
     scope.setTag('process', 'main')
 
     store.workspaceId = userInfo.workspaceId
@@ -37,10 +35,12 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     // 重新获取用户配置
     await fetchUserConfig()
     openAPIServer.start()
+    console.log('user:setUserInfo', store.autoStart)
+    syncAutoStart(Boolean(store.autoStart))
   })
 
   /** 退出登录 */
-  ipcMain.on('user:logout', async (event,) => {
+  ipcMain.on('user:logout', async (event) => {
     closeAllSyncDialogs()
     openAPIServer.stop()
     await browserManager.closeAll().finally(() => {

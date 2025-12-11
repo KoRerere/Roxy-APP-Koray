@@ -2,8 +2,9 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { getDictMap, setInputValueByFormData, transformSortOrder, type SortOrderNumber } from '/@/utils'
 import { getColumns } from './columns'
+import { getDictMap, setInputValueByFormData, transformSortOrder } from '/@/utils'
+import type { SortOrderNumber } from '/@/utils'
 
 const role = useRoleStore()
 
@@ -216,7 +217,7 @@ export async function getSorts() {
   const { data } = await API.window.userGetWindowTableSortOrderList()
 
   const onChange = (data: any) => {
-    const params: Record<string, any> = {};
+    const params: Record<string, any> = {}
     if (data.sortField && columns.data.find(item => item.key === data.sortField && item.sortable)) {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
@@ -237,7 +238,6 @@ export async function getSorts() {
 }
 
 export function getOperation(row: any = {}) {
-
   return [
     {
       name: 'edit',
@@ -309,7 +309,7 @@ export function getOperation(row: any = {}) {
           name: 'view',
           label: $t('查看窗口'),
           icon: 'base/rx_ic_browser',
-          multiple: false
+          multiple: false,
         },
         {
           name: 'restart',
@@ -323,7 +323,7 @@ export function getOperation(row: any = {}) {
           label: $t('复制窗口 ID'),
           power: !role.isViewer,
           icon: 'base/rx_ic_copy',
-          multiple: false
+          multiple: false,
         },
         {
           name: 'exportProfile',
@@ -331,7 +331,7 @@ export function getOperation(row: any = {}) {
           icon: 'base/rx_ic_export',
           power: !role.isViewer,
         },
-      ]
+      ],
     },
     {
       name: 'proxyActions',
@@ -374,7 +374,7 @@ export function getOperation(row: any = {}) {
           name: 'choosePlatformAccount',
           label: $t('选择已有平台账号'),
           icon: 'base/rx_ic_exchange',
-        }
+        },
       ],
     },
     {
@@ -438,55 +438,55 @@ export function getAdvancedSearch() {
       key: 'name',
       label: $t('窗口名称'),
       icon: 'base/rx_ic_browser',
-      syntax: 'name::'
+      syntax: 'name::',
     },
     {
       key: 'remark',
       label: $t('备注'),
       icon: 'base/rx_ic_doc_article',
-      syntax: 'note::'
+      syntax: 'note::',
     },
     {
       key: 'account',
       label: $t('平台账号'),
       icon: 'base/rx_ic_keys',
-      syntax: 'account::'
+      syntax: 'account::',
     },
     {
       key: 'proxy',
       label: $t('代理'),
       icon: 'base/rx_ic_internet',
-      syntax: 'proxy::'
+      syntax: 'proxy::',
     },
     {
       key: 'tag',
       label: $t('标签'),
       icon: 'base/rx_ic_tag',
-      syntax: 'tag::'
+      syntax: 'tag::',
     },
     {
       key: 'project_name',
       label: $t('项目'),
       icon: 'base/rx_ic_stack',
-      syntax: 'project::'
+      syntax: 'project::',
     },
     {
       key: 'sortNum',
       label: 'ID',
       icon: 'base/rx_ic_id',
-      syntax: 'id::'
+      syntax: 'id::',
     },
     {
       key: 'os',
       label: $t('操作系统'),
       icon: 'base/rx_ic_laptop',
-      syntax: 'system::'
+      syntax: 'system::',
     },
     {
       key: 'coreVersion',
       label: $t('内核版本'),
       icon: 'base/rx_ic_chrome',
-      syntax: 'kernel::'
+      syntax: 'kernel::',
     },
   ]
 }

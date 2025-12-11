@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { baseRoutes } from '/@/router/base'
 import { useUserStore } from '/@/stores/user'
-import { getMenuRoutes } from './menu'
+import { menuRoutes } from './menu'
 import { isEqual } from 'es-toolkit'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -19,7 +19,7 @@ const router = createRouter({
       component: () => import('/@/layout/index.vue'),
       redirect: { name: 'browser-list' },
       children: [
-        ...getMenuRoutes(),
+        ...menuRoutes,
         {
           name: 'referral-program',
           path: 'referral-program',
@@ -36,7 +36,6 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  await softConfigPromise.promise
   const userStore = useUserStore()
   const themeStore = useThemeStore()
   const { currentWorkspace } = useWorkspaceStore()
@@ -71,26 +70,9 @@ if (import.meta.hot) {
   window.router = router
 }
 
-const softConfigPromise = Promise.withResolvers<void>?.()
-
-async function getSoftConfig() {
-  return electronAPI.send("app:getSoftConfig").then((softConfig) => {
-    const { language, token } = softConfig;
-    const simpleLocale = useSimpleLocale();
-    const userStore = useUserStore()
-    simpleLocale.currentLocale = language;
-    userStore.setToken(token || '')
-    // console.log('getSoftConfig userStore.token', userStore.token)
-    setTimeout(softConfigPromise.resolve)
-    return softConfig
-  })
-
-}
 
 export async function setupRouter(app: App) {
   app.use(router);
-
-  return getSoftConfig()
 }
 
 export default router

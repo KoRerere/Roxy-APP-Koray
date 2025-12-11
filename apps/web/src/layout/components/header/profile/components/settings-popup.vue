@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import { isFunction } from "es-toolkit";
-import RxButton from "/@/components/rx-button";
-import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
-import { $t } from "/@/locales";
-import { useSettingsPopup } from "./settings-popup/";
+import { isFunction } from 'es-toolkit'
+import RxButton from '/@/components/rx-button'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
+import { useSettingsPopup } from './settings-popup/'
 
-const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup();
+const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup()
 
 function closePopup() {
-  dialogRef?.value.close();
+  dialogRef?.value.close()
 }
 
 onBeforeMount(async () => {
-  activePanel.key = dialogRef?.value?.data?.props?.activeKey;
-  await initPanels();
+  activePanel.key = dialogRef?.value?.data?.props?.activeKey
+  await initPanels()
   nextTick(() => {
-    const anchorPoint = dialogRef?.value?.data?.props?.anchorPoint;
+    const anchorPoint = dialogRef?.value?.data?.props?.anchorPoint
     if (anchorPoint) {
-      document.getElementById(anchorPoint)?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById(anchorPoint)?.scrollIntoView({ behavior: 'smooth' })
     }
   })
 })
@@ -35,21 +36,26 @@ onBeforeMount(async () => {
           <span>{{ item.label }}</span>
         </div>
       </div>
-      <RxButton icon="base/rx_ic_delete" text severity="secondary" size="lg" class="close-btn" @click="closePopup">
-      </RxButton>
+      <RxButton icon="base/rx_ic_delete" text severity="secondary" size="lg" class="close-btn" @click="closePopup" />
     </div>
     <div class="settings-content">
       <div class="mx-auto w-2/3 pt-6">
         <div v-if="activePanel.panel" class="w-full flex flex-col gap-6">
           <div>
-            <div class="panel-title">{{ activePanel.panel.title }}</div>
-            <div class="panel-description">{{ activePanel.panel.description }}</div>
+            <div class="panel-title">
+              {{ activePanel.panel.title }}
+            </div>
+            <div class="panel-description">
+              {{ activePanel.panel.description }}
+            </div>
           </div>
-          <div v-for="item in activePanel.panel.list" :key="item.subtitle" :id="item.subId || item.subtitle">
-            <div v-if="item.subtitle" class="pt-6 pb-3 panel-subtitle">{{ item.subtitle }}</div>
+          <div v-for="item in activePanel.panel.list" :id="item.subId || item.subtitle" :key="item.subtitle">
+            <div v-if="item.subtitle" class="pt-6 pb-3 panel-subtitle">
+              {{ item.subtitle }}
+            </div>
             <template v-for="subItem in item.items" :key="subItem.label">
               <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
-                <component v-if="subItem.renderComponent" :is="subItem.renderComponent" />
+                <component :is="subItem.renderComponent" v-if="subItem.renderComponent" />
                 <div v-else class="flex flex-1 items-center" :class="subItem.classes">
                   <div class="flex-1">
                     <div class="panel-item-label">
@@ -63,7 +69,7 @@ onBeforeMount(async () => {
                     <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
                   </div>
                 </div>
-                <component v-if="subItem.afterComponent" :is="subItem.afterComponent" :item="subItem" />
+                <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
               </div>
             </template>
           </div>
@@ -80,23 +86,22 @@ onBeforeMount(async () => {
   top: 16px;
 }
 
-
 .settings {
   &-menu {
     display: flex;
     width: 246px;
     height: 640px;
-    padding: var(--spacing-4xl, 24px) 0px 0px var(--spacing-4xl, 24px);
+    padding: 24px 0px 0px 24px;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-4xl, 24px);
+    gap: 24px;
     flex-shrink: 0;
 
     &-title {
       display: flex;
       padding-left: 24px;
       align-items: center;
-      gap: var(--spacing-xl, 12px);
+      gap: 12px;
       font-size: 16px;
       font-weight: 600;
       line-height: 24px;
@@ -105,30 +110,30 @@ onBeforeMount(async () => {
     &-list {
       display: flex;
       flex-direction: column;
-      padding: 0px var(--spacing-3xl, 20px);
-      gap: var(--spacing-sm, 4px);
+      padding: 0px 20px;
+      gap: 4px;
       width: 100%;
 
       &-item {
         display: flex;
         align-items: center;
         padding: 6px 8px;
-        gap: var(--spacing-xl, 12px);
-        color: var(--colors-text-text-primary, #FAFAFA);
-        font-size: var(--Font-Size-text-md, 14px);
+        gap: 12px;
+        color: var(--colors-text-text-primary);
+        font-size: 14px;
         font-weight: 500;
-        line-height: var(--Line-Height-text-lg, 20px);
+        line-height: 20px;
         border-radius: 4px;
         transition: all 0.15s ease;
 
         &:hover {
-          color: var(--colors-text-text-primary-hover, #FFF);
+          color: var(--colors-text-text-primary-hover);
           background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
         }
 
         &.active {
-          color: var(--pattern-sidenav-text-active, #3FB6FD);
-          background: var(--pattern-sidenav-bg-active, #013D65);
+          color: var(--pattern-sidenav-text-active);
+          background: var(--pattern-sidenav-bg-active);
         }
       }
     }
@@ -138,21 +143,20 @@ onBeforeMount(async () => {
     padding-right: 24px;
     width: 100%;
     overflow-y: auto;
-    margin: 8px 0;
-    margin-top: 0;
+    margin: 4px 0;
   }
 }
 
 .panel {
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary);
     font-size: 18px;
     font-weight: 600;
-    line-height: var(--Line-Height-text-xl, 24px);
+    line-height: 24px;
   }
 
   &-description {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary);
     font-size: 12px;
     line-height: normal;
   }
@@ -173,25 +177,23 @@ onBeforeMount(async () => {
     }
 
     &-label {
-      color: var(--colors-text-text-primary, #B2B6B8);
-      font-family: Inter;
+      color: var(--colors-text-text-primary);
       font-size: 14px;
       font-weight: 500;
       line-height: normal;
-      line-height: var(--Line-Height-text-xs, 20px);
+      line-height: 20px;
     }
 
     &-text {
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary);
       font-size: 12px;
-      font-family: Inter;
-      line-height: var(--Line-Height-text-xs, 20px);
+      line-height: 20px;
     }
 
     &-value {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary);
       font-size: 12px;
-      line-height: var(--Line-Height-text-lg, 20px);
+      line-height: 20px;
     }
   }
 }

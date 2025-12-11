@@ -274,19 +274,7 @@ const options: Configuration = {
   },
   deb: {
     // 安装后执行的脚本（用于安装 polkit policy 文件）
-    afterInstall: 'buildResources/linux-scripts/afterInstall.sh',
-    // 依赖项
-    depends: [
-      'libgtk-3-0',
-      'libnotify4',
-      'libnss3',
-      'libxss1',
-      'libxtst6',
-      'xdg-utils',
-      'libatspi2.0-0',
-      'libuuid1',
-      'libsecret-1-0',
-    ],
+    afterInstall: 'buildResources/linux-scripts/afterInstall.sh', 
   },
   // publish: [
   //   {
@@ -297,15 +285,8 @@ const options: Configuration = {
   // ],
 }
 
-// 要打包的目标平台
-const targetPlatform: Platform = {
-  darwin: Platform.MAC,
-  win32: Platform.WINDOWS,
-  linux: Platform.LINUX,
-}[platform]
-
 build({
-  targets: targetPlatform.createTarget(),
+  targets: Platform.current().createTarget(),
   config: options,
   publish: process.env.CI ? 'always' : 'never',
 })

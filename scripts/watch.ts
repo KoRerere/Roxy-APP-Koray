@@ -2,10 +2,10 @@
 
 import type { ChildProcess } from 'node:child_process'
 import type { LogLevel, ViteDevServer } from 'vite'
-import electronPath from '../apps/electron/node_modules/electron'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { build, createServer } from 'vite'
+import electronPath from '../apps/electron/node_modules/electron'
 
 /** @type 'production' | 'development'' */
 const mode = (process.env.MODE = process.env.MODE || 'development')
@@ -55,7 +55,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
 
           console.log('Reloading electron app...', String(electronPath))
           /** 启动新的electron进程 */
-          electronApp = spawn(String(electronPath), ['--inspect', '.', '--experimental-network-inspection', '--no-sandbox'], {
+          electronApp = spawn(String(electronPath), ['--inspect', '.', '--experimental-network-inspection', '--no-sandbox', '--disable-setuid-sandbox'], {
             // 设置工作目录
             cwd: path.resolve(import.meta.dirname, '../apps/electron'),
           })

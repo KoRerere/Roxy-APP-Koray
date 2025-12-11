@@ -1270,6 +1270,20 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('跟随软件设置'), value: 2 },
       ],
     },
+    {
+      type: 'textarea',
+      label: $t('网址访问黑名单'),
+      name: 'blockDomainList',
+      value: data.blockDomainList,
+      placeholder: $t('每行一个 URL，换行以添加多个'),
+    },
+    {
+      type: 'textarea',
+      label: $t('网址访问白名单'),
+      name: 'allowDomainList',
+      value: data.allowDomainList,
+      placeholder: $t('每行一个 URL，换行以添加多个'),
+    },
   ])
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])

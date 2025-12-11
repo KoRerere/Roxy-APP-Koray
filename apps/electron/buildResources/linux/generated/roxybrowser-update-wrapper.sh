@@ -3,7 +3,7 @@
 
 set -e
 
-LOG_FILE="/var/log/roxybrowserdev-update-wrapper.log"
+LOG_FILE="/var/log/roxybrowser-update-wrapper.log"
 
 log() {
   echo "[wrapper][$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"

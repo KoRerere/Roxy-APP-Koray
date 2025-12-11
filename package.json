@@ -23,8 +23,8 @@
     "pnpm": "10.18.3"
   },
   "scripts": {
-    "dev": "tsx scripts/watch.ts",
-    "dev:watch": "tsx scripts/watch.ts --watch",
+    "dev": "tsx scripts/watch.ts --watch",
+    "start": "tsx scripts/watch.ts",
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
     "build:pkg": "pnpm -F \"./packages/**\" build",
     "build": "turbo run build",
@@ -60,32 +60,27 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.2.0",
+    "@antfu/eslint-config": "^6.6.1",
     "@dotenvx/dotenvx": "^1.44.2",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.13",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",
-    "@unocss/eslint-plugin": "^66.5.9",
+    "@unocss/eslint-plugin": "^66.5.10",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.23.0",
     "axios": "^1.13.2",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "eslint": "9.39.1",
-    "eslint-plugin-format": "^1.0.2",
+    "eslint-plugin-format": "^1.1.0",
     "js-yaml": "^4.1.1",
     "lint-staged": "^16.2.7",
     "rimraf": "^6.1.2",
     "simple-git-hooks": "^2.13.1",
-    "tsx": "^4.20.6",
-    "turbo": "^2.6.1",
+    "tsx": "^4.21.0",
+    "turbo": "^2.6.3",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6",
+    "vite": "^7.2.7",
     "vite-plugin-dts": "^4.5.4"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowedVersions": {}
-    }
   }
 }

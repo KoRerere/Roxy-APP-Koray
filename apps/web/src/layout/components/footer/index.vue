@@ -17,7 +17,6 @@
         </a>
       </template>
     </TieredMenu>
-    <BlackFriday v-if="roleStore.isOwner" :collapsed></BlackFriday>
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">
       <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">
@@ -32,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-import BlackFriday from '/@/views/campaign/black-friday.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue';
 import { RxSvgIcon } from "/@/components/rx-icon";

@@ -1,12 +1,12 @@
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress, safeParseJSON } from '/@/utils'
-import { readFileSync } from 'node:fs'
 
 let language: any[]
 
@@ -70,7 +70,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     computerName: winInfo.computerName,
     macAddress: winInfo.macAddress,
     searchEngine: {
-      name: winInfo.searchEngine
+      name: winInfo.searchEngine,
     },
     /** 窗口名称 */
     get windowName() {
@@ -475,7 +475,23 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         return `${windowSortNum}`
       },
     },
-    blockDomainList: store.blockDomainList,
+    /** 仅允许访问特定的域名 */
+    get allowDomainList() {
+      const domainList = winInfo.allowDomainList?.split?.('\n')?.map((item) => {
+        const trimmed = item.trim()
+        return trimmed.replace(/^https?:\/\//, '')
+      })?.filter(Boolean)
+
+      return domainList?.length ? domainList : undefined
+    },
+    get blockDomainList() {
+      const domainList = winInfo.blockDomainList?.split?.('\n')?.map((item) => {
+        const trimmed = item.trim()
+        return trimmed.replace(/^https?:\/\//, '')
+      })?.filter(Boolean)
+
+      return domainList?.length ? domainList : store.blockDomainList?.filter?.(Boolean)
+    },
     /** 禁止域名的提示页面 */
     blockDomainPageFile: join(appConfig.buildInWebDir, 'blockDomain.html'),
     /** 禁止加载图片的大小，单位:KB, 0 表示为禁止加载所有图片，如果要禁止，建议设置为10 */
@@ -496,10 +512,5 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       ...getRemoteConfig()?.googleApi,
       enable: store.googleLoginEnable,
     },
-    /** 仅允许访问特定的域名 */
-    get allowDomainList() {
-      const domainList = winInfo.allowDomainList?.split?.(',')?.filter(Boolean)
-      return domainList?.length ? domainList : undefined
-    }
   }
 }

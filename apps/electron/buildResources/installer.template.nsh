@@ -62,9 +62,24 @@
   StrCpy $R0 "$APPDATA\${PRODUCT_NAME}\installer-path"
   CreateDirectory "$APPDATA\${PRODUCT_NAME}"
 
+  ; 写入失败时不要阻塞安装，失败则降级写到 TEMP
+  ClearErrors
   FileOpen $R1 $R0 w
+  IfErrors write_installer_path_fallback 0
   FileWrite $R1 "$EXEPATH"
   FileClose $R1
+  Goto write_installer_path_end
+
+  write_installer_path_fallback:
+    StrCpy $R0 "$TEMP\${PRODUCT_NAME}\installer-path"
+    CreateDirectory "$TEMP\${PRODUCT_NAME}"
+    ClearErrors
+    FileOpen $R1 $R0 w
+    IfErrors write_installer_path_end 0
+    FileWrite $R1 "$EXEPATH"
+    FileClose $R1
+
+  write_installer_path_end:
 
   ; ========================================================================
   ; 3. 遍历域名列表发送安装完成上报

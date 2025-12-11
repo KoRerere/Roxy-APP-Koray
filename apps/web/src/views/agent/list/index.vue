@@ -209,6 +209,7 @@ async function deleteProxy(datas: ProxyItem[]) {
         resolve(true)
       },
       reject: () => resolve(false),
+      onHide: () => resolve(false),
     })
   })
 }

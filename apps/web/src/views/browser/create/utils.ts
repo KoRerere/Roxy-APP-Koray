@@ -448,3 +448,21 @@ export async function parseTextFile(file: File) {
 export function getDefaultWindowName() {
   return $t('未命名窗口')
 }
+
+/**
+ * 生成开关选项数组
+ * @param options - 可选配置对象
+ * @param options.trueText - 开启状态的显示文本，默认为 '开启'
+ * @param options.falseText - 关闭状态的显示文本，默认为 '关闭'
+ * @param options.trueValue - 开启状态对应的值，默认为 true
+ * @param options.falseValue - 关闭状态对应的值，默认为 false
+ * @returns 包含两个选项的数组，每个选项包含 label 和 value 属性
+ */
+export function genSwitchOptions(options?: { trueText: string, falseText: string, trueValue: any, falseValue: any }) {
+  const defaultOptions = { trueText: $t('开启'), falseText: $t('关闭'), trueValue: true, falseValue: false }
+  const { trueText, falseText, trueValue, falseValue } = { ...defaultOptions, ...options }
+  return [
+    { label: trueText, value: trueValue },
+    { label: falseText, value: falseValue },
+  ]
+}

@@ -134,6 +134,8 @@ import {
   UserSetUserApiCreatePayload,
   UserSetUserConfigCreateData,
   UserSetUserConfigCreatePayload,
+  UserSubmitSurveyAnswerCreateData,
+  UserSubmitSurveyAnswerCreatePayload,
   UserUnbindEmailCreateData,
   UserUnbindEmailCreatePayload,
   UserUpdateDeviceNameCreateData,
@@ -1773,6 +1775,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<GetBlackFridayTimeListData, any>({
       path: `/get_black_friday_time`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSubmitSurveyAnswerCreate
+   * @summary 用户首次登录信息收集
+   * @request POST:/user_submit_survey_answer
+   * @response `200` `UserSubmitSurveyAnswerCreateData`
+   */
+  userSubmitSurveyAnswerCreate = (
+    data: UserSubmitSurveyAnswerCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSubmitSurveyAnswerCreateData, any>({
+      path: `/user_submit_survey_answer`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

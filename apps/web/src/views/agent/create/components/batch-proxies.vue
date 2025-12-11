@@ -329,6 +329,7 @@ async function onSave() {
       resolve()
     },
     reject: resolve,
+    onHide: resolve,
   })
   return promise
 }

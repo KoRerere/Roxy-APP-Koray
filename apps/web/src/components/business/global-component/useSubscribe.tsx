@@ -1,21 +1,22 @@
-import { useDialog } from "primevue/usedialog"
-import { useUserStore } from "/@/stores/user"
-import { usePay } from "/@/views/pay/wallet/hook.tsx"
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
-import { OrderType, PayWay, PurchaseType } from "/@/enums/pay";
-import { API } from "/@/api";
-import { emitter, type MittEvents } from "/@/utils/eventBus";
+import { useDialog } from 'primevue/usedialog'
+import { useUserStore } from '/@/stores/user'
+import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
+import { API } from '/@/api'
+import { emitter } from '/@/utils/eventBus'
+import type { MittEvents } from '/@/utils/eventBus'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
-import type { ToastMessageOptions } from "primevue/toast";
+import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { $t } from "/@/locales";
-import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
-import { isMainWindow } from "/@/utils";
-import { useFormDialog } from "/@/hooks/useFormDialog";
-import { getAccountSetupFormSchemas } from "/@/components/business/global-component/schemas";
-import { RxAlert } from "/@/components/rx-alert";
-import RxButton from "/@/components/rx-button";
+import { $t } from '/@/locales'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { isMainWindow } from '/@/utils'
+import { useFormDialog } from '/@/hooks/useFormDialog'
+import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
+import { RxAlert } from '/@/components/rx-alert'
+import RxButton from '/@/components/rx-button'
 import styles from './schemas.module.css'
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
@@ -29,7 +30,6 @@ let isSubscribe = false
 let lastFocusTime = Date.now()
 
 export function useSubscribe() {
-
   if (isSubscribe || !isMainWindow) {
     return
   }
@@ -37,7 +37,7 @@ export function useSubscribe() {
   isSubscribe = true
 
   const router = useRouter()
-  const [showFormDialog] = useFormDialog();
+  const [showFormDialog] = useFormDialog()
   const { purchaseSuccess, planSuccess, openProcessing } = usePay()
   const dialog = useDialog()
   const [showModal] = useDialogHook()
@@ -81,10 +81,8 @@ export function useSubscribe() {
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
 
-
   /** 初始化事件监听 */
   function initListener() {
-
     // 显示升级套餐弹窗
     emitter.on('showUpgradePlanDialog', showUpgradePlanDialog)
     // 显示订阅到期弹窗
@@ -122,14 +120,13 @@ export function useSubscribe() {
 
   /** 显示升级套餐弹窗 */
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
-
     showModal({
       header: 'showUpgradePlanDialog',
       slots: {
         container: ({ hideModal }) => {
           return <UpgradePayPlan hideFn={hideModal} alertType={alertType} />
         },
-      }
+      },
     })
   }
 
@@ -140,20 +137,20 @@ export function useSubscribe() {
       closable: false,
       pt: {
         content: '!overflow-unset',
-        title: '!text-[20px]'
+        title: '!text-[20px]',
       },
       slots: {
         default: ({ hideModal }) => {
           return <SubscriptionExpired hideFn={hideModal} />
         },
-        footer: undefined
-      }
+        footer: undefined,
+      },
     })
   }
 
   /** 显示 APP 新特性升级弹窗 */
   async function showAppUpgradeDialog(newFeatureTips: string[]) {
-    const appVersion = await electronAPI.send("app:getAppVersion")
+    const appVersion = await electronAPI.send('app:getAppVersion')
     showModal({
       header: $t('v{appVersion} 更新概览', { appVersion }),
       class: 'w-[500px] max-h-[90vh] !transform-none',
@@ -165,8 +162,8 @@ export function useSubscribe() {
         default: ({ hideModal }) => {
           return <AppUpgradeTips onSkip={hideModal} newFeatureTips={newFeatureTips} />
         },
-        footer: undefined
-      }
+        footer: undefined,
+      },
     })
   }
 
@@ -182,8 +179,8 @@ export function useSubscribe() {
         modal: true,
         blockScroll: true,
         pt: {
-          content: '!pa-0'
-        }
+          content: '!pa-0',
+        },
       },
       data: {
         onConfirm: async (params: { isAuto: boolean, payType: PayWay, orderNo: string, subscriptionMonths: number }) => {
@@ -197,7 +194,8 @@ export function useSubscribe() {
               .finally(() => {
                 options?.paySuccess?.({ code, data, msg })
               })
-          } else {
+          }
+          else {
             options?.payError?.({ code, data, msg })
           }
           options?.afterConfirm?.({ code, data, msg })
@@ -214,12 +212,12 @@ export function useSubscribe() {
         modal: true,
         blockScroll: true,
         pt: {
-          content: '!pa-0'
-        }
+          content: '!pa-0',
+        },
       },
       data: {
         props: {
-          defaultType: options?.defaultType
+          defaultType: options?.defaultType,
         },
         onConfirm: async ({ payType, ...purchaseMember }: { payType: PayWay, staff: number, workspace: number }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
@@ -232,24 +230,25 @@ export function useSubscribe() {
           if (code === 0) {
             if (payType === PayWay.Balance) {
               await purchaseSuccess()
-            } else {
+            }
+            else {
               openProcessing({ payType, ...data }, OrderType.Purchase)
                 .finally(() => {
                   options?.paySuccess?.({ code, data, msg })
                 })
             }
-          } else {
+          }
+          else {
             options?.payError?.({ code, data, msg })
           }
           options?.afterConfirm?.({ code, data, msg })
         },
-      }
+      },
     })
   }
 
   /** 显示账号设置弹窗 */
   async function showAccountSetupDialog() {
-
     function toLogin() {
       router.push({ name: 'login' })
       formInstance.handleCancel()
@@ -257,43 +256,49 @@ export function useSubscribe() {
     }
 
     const formInstance = await showFormDialog({
-      header: $t("账号设置"),
-      class: "w-[400px]",
+      header: $t('账号设置'),
+      class: 'w-[400px]',
       closable: false,
       schemas: getAccountSetupFormSchemas(),
       formProps: {
-        layout: "vertical",
+        layout: 'vertical',
       },
       dialogSlots: {
         beforeForm: () => (
           <RxAlert
             visible={true}
             type="info"
-            title={$t("为了提高账户安全性，请添加邮箱地址并设置密码。")}
+            title={$t('为了提高账户安全性，请添加邮箱地址并设置密码。')}
             closable={false}
             class="w-full"
           />
         ),
-        footer: () => <div class="w-full">
-          <RxButton class="w-full" onClick={() => formInstance.handleOk()}>{$t("确定")}</RxButton>
-          <div class={[styles.text, 'mt-[16px]']}>
-            {$t('已有账号？')}
-            <a onClick={toLogin} class={styles.link}> {$t('点击返回登录页面。')}</a>
+        footer: () => (
+          <div class="w-full">
+            <RxButton class="w-full" onClick={() => formInstance.handleOk()}>{$t('确定')}</RxButton>
+            <div class={[styles.text, 'mt-[16px]']}>
+              {$t('已有账号？')}
+              <a onClick={toLogin} class={styles.link}>
+                {' '}
+                {$t('点击返回登录页面。')}
+              </a>
+            </div>
           </div>
-        </div>
+        ),
       },
       handleOk: async (params: any) => {
-        const res = await API.base.userSettingAccountPasswordCreate({ ...params });
-        onlyErrorToast(res.code, res.msg);
+        const res = await API.base.userSettingAccountPasswordCreate({ ...params })
+        onlyErrorToast(res.code, res.msg)
         if (res.code === 0 && params.password) {
-          userStore.setPassword(params.password);
-          showResToast(0, $t("邮箱和密码设置成功"));
-          userStore.fetchUserInfo();
-        } else {
-          return Promise.reject(res.msg);
+          userStore.setPassword(params.password)
+          showResToast(0, $t('邮箱和密码设置成功'))
+          userStore.fetchUserInfo()
+        }
+        else {
+          return Promise.reject(res.msg)
         }
       },
-    });
+    })
   }
 
   function showUserGuideDialog() {
@@ -301,14 +306,14 @@ export function useSubscribe() {
       showHeader: false,
       modal: true,
       blockScroll: true,
+      closeOnEscape: false,
       pt: {
-        root: "!border-none !shadow-none rounded-lg",
+        root: '!border-none !shadow-none rounded-lg',
       },
       handleCancel: () => updateOnboardingTaskStatus({ firstRegisterGuideStatus: true }),
       slots: {
         container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
-      }
+      },
     })
   }
 }
-

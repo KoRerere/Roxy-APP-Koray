@@ -18,12 +18,19 @@ export function setDisplay<T extends ColumnCache>(displayKey: string | undefined
     }, {})
 
   return rawColumns.map((item, index) => {
-    const cache = cacheMap[item.field]
+    const { sort, visible, cache } = cacheMap[item.field] ?? {}
     return {
       ...item,
-      _sort: cache?.sort ?? item._sort ?? index,
-      _visible: cache?.visible ?? item._visible ?? true,
-      _cache: cache?.cache ?? item._cache,
+      _sort: sort ?? item._sort ?? index,
+      _visible: visible ?? item._visible ?? true,
+      _cache: cache ?? item._cache,
     }
   }).toSorted((a, b) => a._sort - b._sort)
+}
+
+export function saveDisplaySettings(displayKey: string | undefined, rawColumns: ColumnCache[]): void {
+  if (!displayKey) return
+
+  const _cache = rawColumns.map((item, index) => [item.field, { sort: index, visible: item._visible, cache: item._cache }])
+  localStorage.setItem(displayKey, JSON.stringify(_cache))
 }

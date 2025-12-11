@@ -23,7 +23,7 @@ export async function createTray() {
   tray.setContextMenu(createContextMenu())
   // 双击触发
   tray.on('click', () => {
-    getMainWindow()?.show()
+    getMainWindow()?.restore()
     getMainWindow()?.setSkipTaskbar(false)
   })
   return tray
@@ -35,7 +35,7 @@ function createContextMenu() {
     {
       label: $t('显示'),
       click: () => {
-        getMainWindow()?.show()
+        getMainWindow()?.restore()
       },
     },
     {

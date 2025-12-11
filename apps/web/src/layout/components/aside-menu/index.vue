@@ -3,7 +3,7 @@ import { cloneDeep } from 'es-toolkit'
 import type { RouteRecordRaw } from 'vue-router'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { getMenuRoutes } from '/@/router/menu'
+import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -22,7 +22,6 @@ const route = useRoute()
 const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
-const menuRoutes = getMenuRoutes()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 
 const projectList = computed(() => {
@@ -137,11 +136,13 @@ function handleScroll() {
 <template>
   <aside class="flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
-      <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
+      <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')"
+        @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">
       <!-- <div v-if="showTopMask" class="mask top-mask" /> -->
-      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu" @scroll="handleScroll">
+      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu"
+        @scroll="handleScroll">
         <SubMenuItem class="relative z-1" :items="menus" :collapsed />
       </nav>
       <!-- <div v-if="showBottomMask" class="mask bottom-mask" /> -->
