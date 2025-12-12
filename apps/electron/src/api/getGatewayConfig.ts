@@ -1,33 +1,34 @@
 import axios from 'axios'
-import { ProxyDetectionResult } from '/@/utils'
+import type { ProxyDetectionResult } from '/@/utils'
 import { isDev, isPackaged } from '/@/constants/common'
 import { ipcMain } from '/@/modules/ipc'
 
-type GateConf = {
-  "test": string,
-  "prod": string,
-  "prod_api": string,
-  "prod_apps": {
-    "hz": string[],
-    "hk": string[],
-    "sg": string[],
-    "us": string[]
-  },
-  "prod_apis": {
-    "hz": string[],
-    "hk": string[],
-    "sg": string[],
-    "us": string[]
+interface GateConf {
+  test: string
+  prod: string
+  prod_api: string
+  prod_apps: {
+    hz: string[]
+    hk: string[]
+    sg: string[]
+    us: string[]
+  }
+  prod_apis: {
+    hz: string[]
+    hk: string[]
+    sg: string[]
+    us: string[]
   }
 }
-
-
 
 const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']
 
 let openAPIUrl = ''
 let baseUrl = ''
-let userIp = ''//用户真实ip, 变动后重新获取网关配置
+/**
+ *用户真实ip, 变动后重新获取网关配置
+ */
+let userIp = ''
 
 /** 通过 API 调用的接口采用此域名 */
 export function getOpenAPIUrl(): string {
@@ -53,25 +54,43 @@ const IP_QUERY_URLS = [
   'http://www.travel-eye.org/ip.json',
 ]
 
-
-
 async function getMapKey() {
-  let result
+  const controllers: AbortController[] = []
+  const timeouts: NodeJS.Timeout[] = []
 
-  for await (const url of IP_QUERY_URLS) {
+  const requests = IP_QUERY_URLS.map((url) => {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000) // 5秒超时
-    try {
-      result = await fetch(url, { signal: controller.signal }).then(res => res.json())
-      result.continent_code ||= result.continentCode
-      result.country_code ||= result.countryCode
-      break
-    }
-    catch (error) {
-      console.debug(`getMapKey error`, error)
-    } finally {
-      clearTimeout(timeout)
-    }
+    controllers.push(controller)
+
+    // 单个源 10 秒超时，兼顾首启慢 DNS 的情况
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    timeouts.push(timeout)
+
+    return fetch(url, { signal: controller.signal, keepalive: true })
+      .then(res => res.json())
+      .then((data) => {
+        data.continent_code ||= data.continentCode
+        data.country_code ||= data.countryCode
+        return data as ProxyDetectionResult
+      })
+  })
+
+  // 整体 12 秒兜底超时，全部 abort
+  const globalTimeout = setTimeout(() => {
+    controllers.forEach(c => c.abort())
+  }, 12000)
+
+  let result: ProxyDetectionResult | null = null
+  try {
+    result = await Promise.any(requests)
+  }
+  catch (error) {
+    console.debug(`getMapKey error`, error)
+  }
+  finally {
+    timeouts.forEach(clearTimeout)
+    clearTimeout(globalTimeout)
+    controllers.forEach(c => c.abort())
   }
 
   // 如果获取不到，则默认走hz
@@ -95,7 +114,7 @@ async function getMapKey() {
   }
 
   // 北美洲，南美洲，欧洲
-  if (US_CONTINENT_CODES.some(code => code === continent_code)) {
+  if (US_CONTINENT_CODES.includes(continent_code)) {
     return 'us'
   }
 
@@ -104,7 +123,8 @@ async function getMapKey() {
 }
 
 export async function reGetGatewayConfigByIpChange(ip: string) {
-  if (!ip) return
+  if (!ip)
+    return
 
   // 初始化会获取一次网关，所以只存 ip 不重新获取网关
   if (!userIp) {
@@ -128,7 +148,7 @@ export async function getGatewayConfig(): Promise<string> {
   // return 'http://47.239.9.178'
   // }
 
-  let mapKey = await getMapKey()
+  const mapKey = await getMapKey()
   console.debug(`getGatewayConfig mapKey`, mapKey)
 
   for await (const url of gateConfUrls) {
@@ -211,10 +231,11 @@ async function testBackendUrl(urls: string[] = []) {
   for await (const url of urls) {
     try {
       await axios.get(url, {
-        validateStatus: () => true // 接受所有状态码
+        validateStatus: () => true, // 接受所有状态码
       })
       return url
-    } catch (error) {
+    }
+    catch (error) {
       console.debug(`getBackendUrl error`, error)
     }
   }
