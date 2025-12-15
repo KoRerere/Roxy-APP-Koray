@@ -7,7 +7,7 @@
   <vendor_url>https://roxybrowser.com</vendor_url>
 
   <!-- 用于应用内自动更新时的权限提升 -->
-  <action id="com.roxybrowser.update">
+  <action id="{{POLICY_ACTION_ID}}">
     <!-- 默认：英文，非中文语言环境都显示英文 -->
     <description>Update {{APP_NAME}}</description>
     <description xml:lang="zh_CN">更新 {{APP_NAME}}</description>

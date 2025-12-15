@@ -1,14 +1,17 @@
 import type { Configuration } from 'electron-builder'
 import type { CopySyncOptions } from 'node:fs'
 import { build, Platform } from 'electron-builder'
-import { cpSync, readFileSync, writeFileSync, chmodSync, mkdirSync } from 'node:fs'
+import { chmodSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
 
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV !== 'production'
-const skipCodeSigning = isDev && process.platform === 'win32' ? true : Boolean(process.env.SKIP_CODE_SIGNING) // 是否跳过代码签名
+/**
+ * 是否跳过代码签名
+ */
+const skipCodeSigning = isDev && process.platform === 'win32' ? true : Boolean(process.env.SKIP_CODE_SIGNING)
 const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
 const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
 
@@ -38,15 +41,15 @@ cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOp
 // 根据环境设置配置
 const config = isDev
   ? {
-    REPORT_DOMAINS: 'https://apitest.roxybrowser.co',
-    REPORT_API_PATH: '/app_tracking_event',
-    APP_NAME: 'RoxyBrowserDev'
-  }
+      REPORT_DOMAINS: 'https://apitest.roxybrowser.co',
+      REPORT_API_PATH: '/app_tracking_event',
+      APP_NAME: 'RoxyBrowserDev',
+    }
   : {
-    REPORT_DOMAINS: 'https://hz.gate.roxybrowser.cn|https://sg.gate.roxybrowser.net|https://us.gate.roxybrowser.net',
-    REPORT_API_PATH: '/app_tracking_event',
-    APP_NAME: 'RoxyBrowser'
-  }
+      REPORT_DOMAINS: 'https://hz.gate.roxybrowser.cn|https://sg.gate.roxybrowser.net|https://us.gate.roxybrowser.net',
+      REPORT_API_PATH: '/app_tracking_event',
+      APP_NAME: 'RoxyBrowser',
+    }
 
 const extraResources: NonNullable<Configuration['extraResources']> = [
   {
@@ -103,6 +106,7 @@ if (platform === 'linux') {
     VENDOR_NAME: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
     ICON_NAME: appName.toLowerCase(),
     POLICY_FILENAME: isDev ? 'com.roxybrowser.dev.policy' : 'com.roxybrowser.policy',
+    POLICY_ACTION_ID: isDev ? 'com.roxybrowser.dev.update' : 'com.roxybrowser.update',
     WRAPPER_FILENAME: wrapperFileName,
     WRAPPER_POLICY_PATH: `/opt/${appName}/resources/${wrapperFileName}`,
     WRAPPER_LOG_PATH: `/var/log/${appName.toLowerCase()}-update-wrapper.log`,
@@ -115,6 +119,7 @@ if (platform === 'linux') {
     .replaceAll('{{APP_NAME}}', linuxConfig.APP_NAME)
     .replaceAll('{{VENDOR_NAME}}', linuxConfig.VENDOR_NAME)
     .replaceAll('{{ICON_NAME}}', linuxConfig.ICON_NAME)
+    .replaceAll('{{POLICY_ACTION_ID}}', linuxConfig.POLICY_ACTION_ID)
     .replaceAll('{{WRAPPER_PATH}}', linuxConfig.WRAPPER_POLICY_PATH)
 
   // 将 policy 文件写入生成目录，稍后通过 extraResources 打包到 resources 根目录
@@ -162,8 +167,8 @@ const options: Configuration = {
   copyright: appName,
   asar: true,
   asarUnpack: [
-    "dist/web",
-    "dist/bin",
+    'dist/web',
+    'dist/bin',
   ],
   extraMetadata: {
     version,
@@ -190,10 +195,14 @@ const options: Configuration = {
   compression: 'normal',
   removePackageScripts: true,
 
-  // 根据环境变量决定是否跳过签名后的公证流程
-  afterSign: skipCodeSigning ? undefined : async (context) => {
-    await notarizeMac(context)
-  },
+  /**
+   * 根据环境变量决定是否跳过签名后的公证流程
+   */
+  afterSign: skipCodeSigning
+    ? undefined
+    : async (context) => {
+      await notarizeMac(context)
+    },
   nodeGypRebuild: false,
   buildDependenciesFromSource: false,
 
@@ -206,11 +215,13 @@ const options: Configuration = {
       },
     ],
     verifyUpdateCodeSignature: false,
-    signtoolOptions: skipCodeSigning ? undefined : {
-      rfc3161TimeStampServer: 'http://timestamp.digicert.com',
-      certificateFile: './pfx/linkv.pfx',
-      certificatePassword: '0000',
-    }
+    signtoolOptions: skipCodeSigning
+      ? undefined
+      : {
+          rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+          certificateFile: './pfx/linkv.pfx',
+          certificatePassword: '0000',
+        },
   },
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',
@@ -269,12 +280,12 @@ const options: Configuration = {
         Comment: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
         Categories: 'Network;WebBrowser;',
         MimeType: 'x-scheme-handler/roxybrowser;',
-      }
+      },
     },
   },
   deb: {
     // 安装后执行的脚本（用于安装 polkit policy 文件）
-    afterInstall: 'buildResources/linux-scripts/afterInstall.sh', 
+    afterInstall: 'buildResources/linux-scripts/afterInstall.sh',
   },
   // publish: [
   //   {

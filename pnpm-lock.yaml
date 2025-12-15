@@ -175,8 +175,8 @@ importers:
         specifier: 38.7.2
         version: 38.7.2
       electron-builder:
-        specifier: 26.3.5
-        version: 26.3.5(electron-builder-squirrel-windows@26.3.5)
+        specifier: 26.3.6
+        version: 26.3.6(electron-builder-squirrel-windows@26.3.5)
       electron-log:
         specifier: ^5.4.3
         version: 5.4.3
@@ -232,8 +232,8 @@ importers:
         specifier: ^5.27.13
         version: 5.27.13
       terser-webpack-plugin:
-        specifier: ^5.3.15
-        version: 5.3.15(webpack@5.103.0)
+        specifier: ^5.3.16
+        version: 5.3.16(webpack@5.103.0)
       ts-loader:
         specifier: ^9.5.4
         version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
@@ -308,7 +308,7 @@ importers:
         specifier: ^1.2.1
         version: 1.2.5
       '@primevue/forms':
-        specifier: ^4.3.6
+        specifier: ^4.5.3
         version: 4.5.3(vue@3.5.25(typescript@5.9.3))
       '@sentry/vue':
         specifier: ^10.28.0
@@ -377,7 +377,7 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       primevue:
-        specifier: ^4.3.6
+        specifier: ^4.5.3
         version: 4.5.3(vue@3.5.25(typescript@5.9.3))
       qrcode:
         specifier: ^1.5.4
@@ -405,7 +405,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@primevue/auto-import-resolver':
-        specifier: ^4.3.6
+        specifier: ^4.5.3
         version: 4.5.3
       '@roxy/backend-api':
         specifier: workspace:*
@@ -3128,6 +3128,13 @@ packages:
       dmg-builder: 26.3.5
       electron-builder-squirrel-windows: 26.3.5
 
+  app-builder-lib@26.3.6:
+    resolution: {integrity: sha512-PmABRmTJKEE4WC0Kan5q23iLpt6LFZ5MVxEYBLgi6ZGjoboGSE536ZO+iCsaoBo3+/hpwx0XK1Njts0/Y1Fe7w==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      dmg-builder: 26.3.6
+      electron-builder-squirrel-windows: 26.3.6
+
   archiver-utils@2.1.0:
     resolution: {integrity: sha512-bEL/yUb/fNNiNTuUz979Z0Yg5L+LzLxGJz8x79lYmR54fmTIb6ob/hNQgkQnIUDWIFjZVQwl9Xs356I6BAMHfw==}
     engines: {node: '>= 6'}
@@ -3946,8 +3953,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  dmg-builder@26.3.5:
-    resolution: {integrity: sha512-3qXWrP5zWswQi3EqFQyQWMkAHpwMdNDoVaJfqbfLPqX1umq7m+Fav30mQd6Sk7nXH+YvrrjjoeIfif/PH/l1mQ==}
+  dmg-builder@26.3.6:
+    resolution: {integrity: sha512-DFUJbtO6AQWZRZgMZnYd+/G1ehD1wncIKbu0fX5P0PJOnJ6K22GeYBESTjviFROsgTQCUtW1J5Lubx63ePt4Jw==}
 
   dmg-license@1.0.11:
     resolution: {integrity: sha512-ZdzmqwKmECOWJpqefloC5OJy1+WZBBse5+MR88z9g9Zn4VY+WYUkAyojmhzJckH5YbbZGcYIuGAkY5/Ys5OM2Q==}
@@ -4018,8 +4025,8 @@ packages:
   electron-builder-squirrel-windows@26.3.5:
     resolution: {integrity: sha512-FXreB4Ox47Gn4wWyMMyPgpWnZ1tSBnxACL+mqzrC1AAIs4pMtAQnYXqJwZ2x5BFi2FhIRLIzbLcnP/xfUegYww==}
 
-  electron-builder@26.3.5:
-    resolution: {integrity: sha512-I0HNjrWEGnCKDsQ9GkFa92E1hW/FmKe88bh75jucBoHRIcZUvTwbqJFGn9kKG6cFq9eOWCXOEVs+RvXT/Ma49Q==}
+  electron-builder@26.3.6:
+    resolution: {integrity: sha512-6pf4oKHq+yotN8N6D9dWJaGbRMgZMG4mVQJ6CyvG0Y+6Y8dqUShUA8I/cxMhY5uI5XfFM3CpOp2wYU5aVCn4cQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -7146,8 +7153,8 @@ packages:
     resolution: {integrity: sha512-yYrrsWnrXMcdsnu/7YMYAofM1ktpL5By7vZhf15CrXijWWrEYZks5AXBudalfSWJLlnen/QUJUB5aoB0kqZUGA==}
     engines: {node: '>=6.0.0'}
 
-  terser-webpack-plugin@5.3.15:
-    resolution: {integrity: sha512-PGkOdpRFK+rb1TzVz+msVhw4YMRT9txLF4kRqvJhGhCM324xuR3REBSHALN+l+sAhKUmz0aotnjp5D+P83mLhQ==}
+  terser-webpack-plugin@5.3.16:
+    resolution: {integrity: sha512-h9oBFCWrq78NyWWVcSwZarJkZ01c2AyGrzs1crmHZO3QUg9D61Wu4NPjBy69n7JqylFF5y+CsUZYmYEIZ3mR+Q==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       '@swc/core': '*'
@@ -10835,7 +10842,7 @@ snapshots:
 
   app-builder-bin@5.0.0-alpha.12: {}
 
-  app-builder-lib@26.3.5(dmg-builder@26.3.5)(electron-builder-squirrel-windows@26.3.5):
+  app-builder-lib@26.3.5(dmg-builder@26.3.6)(electron-builder-squirrel-windows@26.3.5):
     dependencies:
       '@develar/schema-utils': 2.6.5
       '@electron/asar': 3.4.1
@@ -10852,11 +10859,52 @@ snapshots:
       chromium-pickle-js: 0.2.0
       ci-info: 4.3.1
       debug: 4.4.3
-      dmg-builder: 26.3.5(electron-builder-squirrel-windows@26.3.5)
+      dmg-builder: 26.3.6(electron-builder-squirrel-windows@26.3.5)
       dotenv: 16.6.1
       dotenv-expand: 11.0.7
       ejs: 3.1.10
-      electron-builder-squirrel-windows: 26.3.5(dmg-builder@26.3.5)
+      electron-builder-squirrel-windows: 26.3.5(dmg-builder@26.3.6)
+      electron-publish: 26.3.4
+      fs-extra: 10.1.0
+      hosted-git-info: 4.1.0
+      isbinaryfile: 5.0.7
+      jiti: 2.6.1
+      js-yaml: 4.1.1
+      json5: 2.2.3
+      lazy-val: 1.0.5
+      minimatch: 10.1.1
+      plist: 3.1.0
+      resedit: 1.7.2
+      semver: 7.7.3
+      tar: 6.2.1
+      temp-file: 3.4.0
+      tiny-async-pool: 1.3.0
+      which: 5.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  app-builder-lib@26.3.6(dmg-builder@26.3.6)(electron-builder-squirrel-windows@26.3.5):
+    dependencies:
+      '@develar/schema-utils': 2.6.5
+      '@electron/asar': 3.4.1
+      '@electron/fuses': 1.8.0
+      '@electron/notarize': 2.5.0
+      '@electron/osx-sign': 1.3.3
+      '@electron/rebuild': 4.0.1
+      '@electron/universal': 2.0.3
+      '@malept/flatpak-bundler': 0.4.0
+      '@types/fs-extra': 9.0.13
+      async-exit-hook: 2.0.1
+      builder-util: 26.3.4
+      builder-util-runtime: 9.5.1
+      chromium-pickle-js: 0.2.0
+      ci-info: 4.3.1
+      debug: 4.4.3
+      dmg-builder: 26.3.6(electron-builder-squirrel-windows@26.3.5)
+      dotenv: 16.6.1
+      dotenv-expand: 11.0.7
+      ejs: 3.1.10
+      electron-builder-squirrel-windows: 26.3.5(dmg-builder@26.3.6)
       electron-publish: 26.3.4
       fs-extra: 10.1.0
       hosted-git-info: 4.1.0
@@ -11714,9 +11762,9 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  dmg-builder@26.3.5(electron-builder-squirrel-windows@26.3.5):
+  dmg-builder@26.3.6(electron-builder-squirrel-windows@26.3.5):
     dependencies:
-      app-builder-lib: 26.3.5(dmg-builder@26.3.5)(electron-builder-squirrel-windows@26.3.5)
+      app-builder-lib: 26.3.6(dmg-builder@26.3.6)(electron-builder-squirrel-windows@26.3.5)
       builder-util: 26.3.4
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
@@ -11800,23 +11848,23 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-  electron-builder-squirrel-windows@26.3.5(dmg-builder@26.3.5):
+  electron-builder-squirrel-windows@26.3.5(dmg-builder@26.3.6):
     dependencies:
-      app-builder-lib: 26.3.5(dmg-builder@26.3.5)(electron-builder-squirrel-windows@26.3.5)
+      app-builder-lib: 26.3.5(dmg-builder@26.3.6)(electron-builder-squirrel-windows@26.3.5)
       builder-util: 26.3.4
       electron-winstaller: 5.4.0
     transitivePeerDependencies:
       - dmg-builder
       - supports-color
 
-  electron-builder@26.3.5(electron-builder-squirrel-windows@26.3.5):
+  electron-builder@26.3.6(electron-builder-squirrel-windows@26.3.5):
     dependencies:
-      app-builder-lib: 26.3.5(dmg-builder@26.3.5)(electron-builder-squirrel-windows@26.3.5)
+      app-builder-lib: 26.3.6(dmg-builder@26.3.6)(electron-builder-squirrel-windows@26.3.5)
       builder-util: 26.3.4
       builder-util-runtime: 9.5.1
       chalk: 4.1.2
       ci-info: 4.3.1
-      dmg-builder: 26.3.5(electron-builder-squirrel-windows@26.3.5)
+      dmg-builder: 26.3.6(electron-builder-squirrel-windows@26.3.5)
       fs-extra: 10.1.0
       lazy-val: 1.0.5
       simple-update-notifier: 2.0.0
@@ -15468,7 +15516,7 @@ snapshots:
       mkdirp: 0.5.6
       rimraf: 2.6.3
 
-  terser-webpack-plugin@5.3.15(webpack@5.103.0):
+  terser-webpack-plugin@5.3.16(webpack@5.103.0):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -16173,7 +16221,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.15(webpack@5.103.0)
+      terser-webpack-plugin: 5.3.16(webpack@5.103.0)
       watchpack: 2.4.4
       webpack-sources: 3.3.3
     optionalDependencies:
