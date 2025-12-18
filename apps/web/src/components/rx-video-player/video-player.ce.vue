@@ -4,11 +4,12 @@ import { useEventListener } from '@vueuse/core'
 
 interface Props {
   src: string
+  scale?: boolean
   fullscreen?: boolean
   autoplay?: boolean
 }
 
-const { fullscreen = true, autoplay = true } = defineProps<Props>()
+const { scale = false, fullscreen = false, autoplay = true } = defineProps<Props>()
 
 const videoPlayerRef = useTemplateRef('videoPlayer')
 const videoRef = useTemplateRef('video')
@@ -17,7 +18,7 @@ const isPlaying = ref(false)
 const showControls = ref(!autoplay)
 const duration = ref(0)
 const currentTime = ref(0)
-const isFullscreen = ref(false)
+const isScale = ref(false)
 const isPlayError = ref(false)
 const isTryReLoading = ref(false)
 
@@ -36,6 +37,10 @@ function togglePlay() {
   else {
     video.pause()
   }
+}
+
+function onFullscreen() {
+  videoRef.value?.requestFullscreen?.()
 }
 
 function toggleVolume() {
@@ -84,25 +89,27 @@ function handleMouseLeave() {
 let animation: Animation | undefined
 let originalRect: DOMRect | undefined
 
-function toggleFullscreen() {
+function toggleScale() {
   const videoPlayer = videoPlayerRef.value
   if (!videoPlayer)
     return
 
-  isFullscreen.value = !isFullscreen.value
+  isScale.value = !isScale.value
 
-  if (isFullscreen.value) {
+  if (isScale.value) {
     // 进入全屏模式
-    enterFullscreen()
-  } else {
+    enterScale()
+  }
+  else {
     // 退出全屏模式
-    exitFullscreen()
+    exitScale()
   }
 }
 
-function enterFullscreen() {
+function enterScale() {
   const videoPlayer = videoPlayerRef.value
-  if (!videoPlayer) return
+  if (!videoPlayer)
+    return
 
   // 保存当前位置和尺寸
   originalRect = videoPlayer.getBoundingClientRect()
@@ -133,7 +140,7 @@ function enterFullscreen() {
       top: `${targetTop}px`,
       width: `${targetWidth}px`,
       height: `${targetHeight}px`,
-    }
+    },
   ], {
     duration: 400,
     easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -141,18 +148,20 @@ function enterFullscreen() {
   })
 }
 
-function exitFullscreen() {
-  if (!originalRect) return
+function exitScale() {
+  if (!originalRect)
+    return
 
   const videoPlayer = videoPlayerRef.value
-  if (!videoPlayer) return
+  if (!videoPlayer)
+    return
 
   // 获取当前的计算样式
   const currentStyles = window.getComputedStyle(videoPlayer)
-  const currentLeft = parseFloat(currentStyles.left) || 0
-  const currentTop = parseFloat(currentStyles.top) || 0
-  const currentWidth = parseFloat(currentStyles.width) || originalRect.width
-  const currentHeight = parseFloat(currentStyles.height) || originalRect.height
+  const currentLeft = Number.parseFloat(currentStyles.left) || 0
+  const currentTop = Number.parseFloat(currentStyles.top) || 0
+  const currentWidth = Number.parseFloat(currentStyles.width) || originalRect.width
+  const currentHeight = Number.parseFloat(currentStyles.height) || originalRect.height
 
   // 执行反向动画
   const reverseAnimation = videoPlayer.animate([
@@ -167,7 +176,7 @@ function exitFullscreen() {
       top: `${originalRect.top}px`,
       width: `${originalRect.width}px`,
       height: `${originalRect.height}px`,
-    }
+    },
   ], {
     duration: 400,
     easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -209,9 +218,9 @@ function onPlayError() {
 function reloadVideo() {
   isTryReLoading.value = true
   videoRef.value?.load()
-  videoRef.value?.play().catch(err => {
-    console.error('Failed to replay:', err);
-  });
+  videoRef.value?.play().catch((err) => {
+    console.error('Failed to replay:', err)
+  })
 }
 
 // 监听空格键
@@ -223,24 +232,24 @@ useEventListener(document, 'keydown', (e) => {
 
 // 监听窗口大小变化
 useEventListener(window, 'resize', () => {
-  if (isFullscreen.value && originalRect) {
+  if (isScale.value && originalRect) {
     // 如果在全屏状态下窗口大小发生变化，重新计算动画
-    exitFullscreen()
+    exitScale()
     // 延迟一帧后重新进入全屏，确保新的窗口尺寸已经生效
     nextTick(() => {
-      isFullscreen.value = true
-      enterFullscreen()
+      isScale.value = true
+      enterScale()
     })
   }
 })
-
 </script>
 
 <template>
   <div ref="videoPlayer" class="video-player">
     <div class="video-centent" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
       <video ref="video" class="video" :src="src" :autoplay="autoplay" :muted="autoplay" loop @timeupdate="updateTime" @pause="onPause" @play="onPlay" @loadedmetadata="onLoadedMetadata"
-        @click="togglePlay" @error="onPlayError" />
+             @click.stop.prevent="togglePlay" @error="onPlayError"
+      />
 
       <!-- 剩余播放时间 -->
       <div v-if="!showControls && !isPlayError" class="remaining-time">
@@ -264,12 +273,16 @@ useEventListener(window, 'resize', () => {
               {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
             </div>
             <div class="control-btn" @click="toggleVolume">
-              <roxy-svg-icon :name="isMuted ? 'base/rx_ic_volumn-mute' : 'base/rx_ic_volumn'" size="24" />
+              <roxy-svg-icon :name="isMuted ? 'base/rx_ic_mute' : 'base/rx_ic_sound'" size="24" />
             </div>
 
-            <!-- 全屏 -->
-            <div v-if="fullscreen" class="control-btn" @click="toggleFullscreen">
-              <roxy-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
+            <div v-if="fullscreen" class="control-btn" @click="onFullscreen">
+              <roxy-svg-icon name="base/rx_ic_expand" size="24" />
+            </div>
+
+            <!-- 放大，新特性里面的视频用 -->
+            <div v-if="scale" class="control-btn" @click="toggleScale">
+              <roxy-svg-icon :name="isScale ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
             </div>
           </div>
         </div>
@@ -285,13 +298,13 @@ useEventListener(window, 'resize', () => {
             {{ $t('网络连接已断开。') }}
           </div>
           <div class="play-error-mask-content-btn" @click="reloadVideo">
-            <roxy-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
+            <roxy-svg-icon name="base/rx_ic_refresh" size="16" :class="{ loading: isTryReLoading }" />
             {{ isTryReLoading ? $t('加载中...') : $t('重试') }}
           </div>
         </div>
       </div>
     </div>
-    <slot name="after"></slot>
+    <slot name="after" />
   </div>
 </template>
 
@@ -309,11 +322,13 @@ input[type='range'] {
   height: 4px;
   border-radius: 2px;
   appearance: none;
-  background: linear-gradient(to right,
-      #fff 0%,
-      #fff v-bind(percentage),
-      rgba(255, 255, 255, 0.5) v-bind(percentage),
-      rgba(234, 234, 234, 0.5) 100%);
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff v-bind(percentage),
+    rgba(255, 255, 255, 0.5) v-bind(percentage),
+    rgba(234, 234, 234, 0.5) 100%
+  );
   outline: none;
   cursor: pointer;
 
@@ -353,8 +368,8 @@ input[type='range'] {
   align-items: flex-end;
   gap: 10px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.80);
-  color: #FFF;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
   font-family: Inter;
   font-size: 14px;
   font-style: normal;
@@ -449,14 +464,14 @@ input[type='range'] {
   }
 
   .play-error-mask-content-title {
-    color: #FFF;
+    color: #fff;
     text-align: center;
     font-family: Inter;
     font-size: 24px;
   }
 
   .play-error-mask-content-text {
-    color: #FFF;
+    color: #fff;
     text-align: center;
     font-family: Inter;
     font-size: 16px;
@@ -470,10 +485,12 @@ input[type='range'] {
     align-items: center;
     gap: var(--spacing-lg, 8px);
     border-radius: var(--radius-lg, 8px);
-    border: 1px solid var(--colors-border-border-action, #C7D1D6);
-    background: var(--colors-background-bg-action, #FFF);
+    border: 1px solid var(--colors-border-border-action, #c7d1d6);
+    background: var(--colors-background-bg-action, #fff);
     /* shadow-sm */
-    box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
     cursor: pointer;
     color: #111213;
     text-align: center;

@@ -1,9 +1,10 @@
-<script setup lang="tsx">
+<script setup lang="ts">
 import currency from 'currency.js'
 import { format } from 'date-fns'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 import type { UnwrapRowType, UserGetPromotionInfoListData, UserGetRewardRecordListListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetRewardRecordListListData>
@@ -18,11 +19,11 @@ const rewardStatusMap = {
   rejected: $t('审核失败'),
 }
 
-const columns = ref([
+const columns = [
   {
     title: $t('用户'),
     key: 'userName',
-    getText: (data: Data) => `${data.email?.slice(0, 2)}****${data.email?.split('@')[1]}`,
+    getText: (data: Data) => data.email || data.phone,
   },
   {
     title: $t('来源链接'),
@@ -47,16 +48,14 @@ const columns = ref([
   {
     title: $t('状态'),
     key: 'rewardStatus',
-    getText: (data: Data) => {
-      return rewardStatusMap[data.rewardStatus! as keyof typeof rewardStatusMap]
-    },
+    getText: (data: Data) => rewardStatusMap[data.rewardStatus! as keyof typeof rewardStatusMap],
   },
   {
     title: $t('创建时间'),
     key: 'payTime',
     getText: (data: Data) => format(data.payTime! * 1000, 'yyyy-MM-dd HH:mm:ss'),
   },
-])
+]
 
 function tableRequest(params: any) {
   return API.base.userGetRewardRecordListList(params)
@@ -70,8 +69,8 @@ async function tableFilters() {
       placeholder: $t('请选择时间'),
       formatValue: (input: any, _: any, formData: any) => {
         if (Array.isArray(input.value) && input.value[0]) {
-          const [start_time, end_time] = (input.value || []).map((date: Date) => date / 1000)
-          Object.assign(formData, { start_time, end_time: end_time ? end_time : start_time + 86399 })
+          const [start_time, end_time] = (input.value || []).map((date: Date) => date.getTime() / 1000)
+          Object.assign(formData, { start_time, end_time: end_time || start_time + 86399 })
         }
         console.log('input.value ', input.value)
       },
@@ -99,7 +98,7 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cache-key="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无奖励明细')" />
     </template>
@@ -114,36 +113,15 @@ async function tableFilters() {
   </RyTable>
 </template>
 
-<style lang="scss" module>
-.user-email {
-  color: var(--colors-text-text-primary, #FAFAFA);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 16px;
-}
-
-.user-name {
-  color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
-  font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
-}
-</style>
-
 <style lang="scss" scoped>
 .description {
-  color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
+  color: var(--colors-text-text-tertiary);
   font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
   line-height: 16px;
 }
 
 .locationip {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-family: Inter;
+  color: var(--colors-text-text-primary);
   font-size: 12px;
   line-height: 16px;
 }

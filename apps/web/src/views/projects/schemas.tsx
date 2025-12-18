@@ -22,26 +22,32 @@ export const projectFormSchemas = defineFormSchema([
   },
 ])
 
-export const getInviteUsersFormSchemas = (projectIds = []) => {
+export function getInviteUsersFormSchemas(projectIds = []) {
   let allProjectIds: number[] = []
   return defineFormSchema([
     {
       field: 'email',
       component: ({ formModel, schema }) => {
-        return <InputWithRole v-model:role={formModel.value.role} onUpdate:role={(val) => {
-          if (val === 2) {
-            formModel.value.projectIds = allProjectIds
-          } else {
-            formModel.value.projectIds = projectIds
-          }
-        }}></InputWithRole>
+        return (
+          <InputWithRole
+            v-model:role={formModel.value.role}
+            onUpdate:role={(val) => {
+              if (val === 2) {
+                formModel.value.projectIds = allProjectIds
+              }
+              else {
+                formModel.value.projectIds = projectIds
+              }
+            }}
+          >
+          </InputWithRole>
+        )
       },
       rule: {
         trigger: 'blur',
         validator(zod) {
           return zod.string()
             .min(1, $t('请输入邮箱'))
-            .email($t('请输入正确的邮箱'))
         },
       },
     },
@@ -55,10 +61,10 @@ export const getInviteUsersFormSchemas = (projectIds = []) => {
         optionLabel: 'projectName',
         optionValue: 'project_id',
         display: 'chip',
-        emptyMessage:$t('暂无可加入项目，请先创建项目'),
+        emptyMessage: $t('暂无可加入项目，请先创建项目'),
         request: async () => {
-          const { data } = await API.limit.userGetProjectInfoByWorkspaceList({default: 2})
-          allProjectIds = data.rows.map((item) => item.project_id!)
+          const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+          allProjectIds = data.rows.map(item => item.project_id!)
           return data.rows
         },
       },

@@ -51,6 +51,8 @@ import {
   UserProxyRefundOrReplaceCreatePayload,
   UserRedeemProxyCodeCreateData,
   UserRedeemProxyCodeCreatePayload,
+  UserRegisterProxyProviderUserCreateData,
+  UserRegisterProxyProviderUserCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
   UserSetProxyAutoRenewalCreateData,
@@ -571,6 +573,27 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<UserGetProxyProvidersTypeListData, any>({
       path: `/user_get_proxy_providers_type`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserRegisterProxyProviderUserCreate
+   * @summary 注册代理供应商用户
+   * @request POST:/user_register_proxy_provider_user
+   * @response `200` `UserRegisterProxyProviderUserCreateData`
+   */
+  userRegisterProxyProviderUserCreate = (
+    data: UserRegisterProxyProviderUserCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRegisterProxyProviderUserCreateData, any>({
+      path: `/user_register_proxy_provider_user`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

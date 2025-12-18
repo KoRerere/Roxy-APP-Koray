@@ -1773,6 +1773,9 @@ export interface UserGetUserInfoListData {
     setPasswordStatus: boolean;
     /** 是否绑定邮箱 */
     isBindEmail: boolean;
+    /** 是否公共空间 */
+    workspaceType: number;
+    role: number;
     /** 列表备注状态 */
     remarkDisplayStatus: boolean;
   };
@@ -2300,15 +2303,31 @@ export interface UserGetInviteUserListV2ListData {
   data: {
     total: number;
     rows: {
-      /** 邮箱 */
+      /**
+       * 邮箱
+       * 邮箱
+       */
       email?: string;
-      /** 创建时间 */
-      createTime?: string;
-      /** 推广者返利(%) */
+      phone?: string;
+      /**
+       * 创建时间
+       * 创建时间
+       */
+      createTime?: number;
+      /**
+       * 推广者返利(%)
+       * 推广者返利(%)
+       */
       youGet?: number;
-      /** 用户折扣(%)(%) */
+      /**
+       * 用户折扣(%)(%)
+       * 用户折扣(%)
+       */
       theyGet?: number;
-      /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
+      /**
+       * 邀请来源：inviteCode：邀请码，inviteLink：邀请链接
+       * 邀请来源：inviteCode：邀请码，inviteLink：邀请链接
+       */
       source?: string;
     }[];
   };
@@ -2492,6 +2511,10 @@ export interface CheckOtherDeviceLoginListParams {
    * @example ""
    */
   login_token?: string;
+  /** 手机号 */
+  phone?: string;
+  /** 手机验证码 */
+  verCode?: string;
 }
 
 export interface CheckOtherDeviceLoginListData {
@@ -2573,6 +2596,8 @@ export interface UserGetRewardRecordListListData {
     rows: {
       /** 邮箱 */
       email?: string;
+      /** 手机号 */
+      phone?: string;
       /** 来源 A1,B,C,D */
       source?: string;
       /** 支付金额 */
@@ -3296,6 +3321,46 @@ export interface UserSubmitSurveyAnswerCreatePayload {
 }
 
 export type UserSubmitSurveyAnswerCreateData = object;
+
+export interface SendPhoneVerCodeCreatePayload {
+  phone: string;
+  /** old new */
+  source?: string;
+}
+
+export interface SendPhoneVerCodeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface LoginPhoneCreatePayload {
+  phone: string;
+  verCode: string;
+}
+
+export interface LoginPhoneCreateData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface UserBindPhoneCreatePayload {
+  phone: string;
+  verCode: string;
+}
+
+export interface UserBindPhoneCreateData {
+  code: number;
+  msg: string;
+}
 
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
@@ -5247,7 +5312,14 @@ export interface UserGetProxyProviderListListData {
     proxyPrice: number;
     createTime: string;
     proxyProviderDesc: null;
-    proxyProviderAdv: null;
+    proxyProviderAdv?: string[];
+    jumpInfo?: {
+      jumpUrl: string;
+      username: string;
+      password: string;
+      apiKey: string;
+    };
+    isJump: boolean;
   }[];
   msg: string;
 }
@@ -5586,6 +5658,18 @@ export interface UserSetProxyAutoRenewalCreateData {
 export interface UserGetProxyProvidersTypeListData {
   code: number;
   data: string[];
+  msg: string;
+}
+
+export interface UserRegisterProxyProviderUserCreatePayload {
+  /** 代理供应商 */
+  proxyProviderId: number;
+}
+
+export interface UserRegisterProxyProviderUserCreateData {
+  /** code:466（用户已经存在）就直接跳到对应的登录页面就行 */
+  code: number;
+  data: string;
   msg: string;
 }
 
@@ -6101,25 +6185,52 @@ export interface UserGetMemberInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
-      /** 用户ID */
+      /**
+       * 用户ID
+       * 用户ID
+       */
       user_id: number;
-      /** 权限 */
+      /** 用户ID */
+      userId?: number;
+      /**
+       * 权限
+       * 权限
+       */
       role: number;
-      /** 激活状态 0:没有激活,1:激活 */
+      /**
+       * 激活状态 0:没有激活,1:激活
+       * 激活状态 0:没有激活,1:激活
+       */
       status: number;
-      /** 用户邮箱 */
+      /**
+       * 用户邮箱
+       * 用户邮箱
+       */
       email: string;
-      /** 用户名 */
+      /** 手机号 */
+      phone: string;
+      /**
+       * 用户名
+       * 用户名
+       */
       userName: string;
-      /** 用户头像 */
+      /**
+       * 用户头像
+       * 用户头像
+       */
       avatar: string;
       project_info: {
-        /** 项目ID */
+        /**
+         * 项目ID
+         * 项目ID
+         */
         project_id: number;
-        /** 项目名称 */
+        /**
+         * 项目名称
+         * 项目名称
+         */
         projectName: string;
       }[];
-      userId?: number;
     }[];
   };
   msg: string;
@@ -6478,28 +6589,30 @@ export interface UserGetMemberInfoByProjectIdListData {
   code: number;
   data: {
     rows: {
+      userId: number;
       /**
        * 权限
        * 权限
        */
-      role?: number;
+      role: number;
       /**
        * 用户名字
        * 用户名字
        */
-      userName?: string;
+      userName: string;
       /**
        * 用户邮箱
        * 用户邮箱
        */
-      email?: string;
+      email: string;
+      /** 手机号 */
+      phone: string;
       /**
        * 用户头像
        * 用户头像
        */
-      avatar?: string;
-      userId?: number;
-      avatarColor?: string;
+      avatar: string;
+      avatarColor: string;
     }[];
   };
   msg: string;
@@ -7524,5 +7637,14 @@ export interface GetFaqHelpList2Data {
     wx_qrcode: string;
     tg_qrcode: string;
   };
+  msg: string;
+}
+
+export interface UserGetCheckPhoneVerCodeCreatePayload {
+  verCode: string;
+}
+
+export interface UserGetCheckPhoneVerCodeCreateData {
+  code: number;
   msg: string;
 }

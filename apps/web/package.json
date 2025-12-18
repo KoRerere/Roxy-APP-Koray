@@ -56,7 +56,7 @@
     "vue": "^3.5.25",
     "vue-draggable-plus": "^0.6.0",
     "vue-i18n": "^11.2.2",
-    "vue-router": "^4.6.3",
+    "vue-router": "^4.6.4",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -71,10 +71,10 @@
     "@types/node": "^22.13.9",
     "@types/qs": "^6.14.0",
     "@unocss/reset": "^66.5.4",
-    "@vitejs/plugin-vue": "^6.0.2",
+    "@vitejs/plugin-vue": "^6.0.3",
     "@vitejs/plugin-vue-jsx": "^5.1.2",
     "@vue/tsconfig": "^0.8.1",
-    "sass-embedded": "^1.93.3",
+    "sass-embedded": "^1.97.0",
     "typescript": "catalog:",
     "unocss": "^66.5.4",
     "unplugin-auto-import": "^20.3.0",
@@ -82,6 +82,6 @@
     "vite": "catalog:",
     "vite-plugin-vue-devtools": "^8.0.5",
     "vite-svg-loader": "^5.1.0",
-    "vue-tsc": "^3.1.5"
+    "vue-tsc": "^3.1.8"
   }
 }

@@ -19,6 +19,8 @@ createFormContext({
 const formMethods = useFormMethods({ emit })
 const { resetFields, handleSubmit } = formMethods
 
+const _innerFormSchemas = computed(() => innerFormSchemas.value.filter(item => !item.vIf || item.vIf({ formModel })))
+
 defineExpose({
   ...formState,
   ...formMethods,
@@ -28,7 +30,7 @@ defineExpose({
 
 <template>
   <form class="rx-form" @submit="handleSubmit">
-    <template v-for="item in innerFormSchemas" :key="item.field">
+    <template v-for="item in _innerFormSchemas" :key="item.field">
       <FormItem v-model="formModel[item.field]" v-model:errors="errors" :schema="item" :validation-schema />
     </template>
     <div v-if="footer" class="footer">

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
+import { currentOS } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress, safeParseJSON } from '/@/utils'
@@ -367,7 +368,12 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         availWidth: toNumber(winInfo.resolutionX) || 0,
         availHeight: availHeight < 0 ? 0 : availHeight,
         /** 设备像素比 */
-        devicePixelRatio: winInfo.devicePixelRatio,
+        get devicePixelRatio() {
+          // 如果操作系统不一致，则返回设备像素比，否则默认采用用户系统自带的设备像素比
+          if (currentOS !== winInfo.os.toLowerCase()) {
+            return winInfo.devicePixelRatio
+          }
+        },
       }
     },
 

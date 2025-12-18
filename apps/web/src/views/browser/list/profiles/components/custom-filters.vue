@@ -1,17 +1,18 @@
 <script lang="tsx" setup>
-import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
+import GuideModal from '/@/views/tutorial/components/guide-modal.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RxAvatar from '/@/components/rx-avatar'
 import Fuse from 'fuse.js'
 import { format } from 'date-fns'
 import { useDebounceFn } from '@vueuse/core'
 import { $t } from '/@/locales'
-import { useUserStore } from "/@/stores/user";
+import { useUserStore } from '/@/stores/user'
 import { useDialog } from '/@/hooks/useDialog'
-import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, findInputByName, setInputValueByFormData, sleep } from '/@/utils'
+import { deepClone, findInputByName, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import type { SvgNames } from '/@/components/rx-icon/'
+import { usePreventMask } from '/@/hooks/usePreventMask'
 
 interface Props {
   currentFilter?: Record<string, any>
@@ -28,6 +29,7 @@ const [showModal] = useDialog()
 const { showSimpleDialog } = useSimpleDialog()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const menuRef = useTemplateRef('tmenu')
 const fuse = ref()
@@ -113,13 +115,13 @@ function inputPopup(data: any) {
     onConfirm: (formData: any) => {
       setInputValueByFormData(filtersMenu, formData)
       onFilterChange()
-    }
+    },
   })
 }
 
 const onSearch = useDebounceFn(() => {
   const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
-  subMenuOptions.value = [subMenuOptions.value[0], ...(!!search.value ? list : fuse.value._docs)]
+  subMenuOptions.value = [subMenuOptions.value[0], ...(search.value ? list : fuse.value._docs)]
 }, 300)
 
 function onRadioChose(item: any) {
@@ -147,13 +149,14 @@ async function openCheckbox(item: any) {
     selectedCategories.value = item.value?.map((it: any) => it.value)
 
     if (isEmptyValue(options)) {
-      subMenuOptions.value = [{ empty: true, text: $t('暂无') + ' ' + item.label }]
+      subMenuOptions.value = [{ empty: true, text: `${$t('暂无')} ${item.label}` }]
       return
     }
 
     if (!item.search) {
       subMenuOptions.value = item._options
-    } else {
+    }
+    else {
       subMenuOptions.value = [{ search: true, placeholder: item.searchPlaceholder }, ...item._options]
       fuse.value = new Fuse(item._options, { threshold: 0.3, keys: item.searchKeys || ['label'] })
     }
@@ -179,6 +182,7 @@ function onHide() {
       }
     })
   }
+  hidePreventMask()
 }
 
 function deleteFilterItem(item: any) {
@@ -205,7 +209,6 @@ function resetFilters() {
 }
 
 function onFilterChange() {
-
   if (isAllProfiles.value) {
     isChanged.value = labels.value.length > 0
   }
@@ -223,15 +226,23 @@ function onShowGuideModal() {
     blockScroll: true,
     handleCancel: () => updateOnboardingTaskStatus({ saveFilterGuideStatus: true }),
     slots: {
-      container: ({ hideModal }) => <GuideModal
-        title={$t('高级筛选')}
-        desc={({ class: className }) => {
-          return <div class={className}>{$t('希望快速通过条件定位相应窗口？试试"高级筛选"功能，其亦可被保存为常驻"分组"！')} </div>
-        }}
-        video={videoUrl}
-        onClose={hideModal}
-        onConfirm={hideModal}
-      ></GuideModal>
+      container: ({ hideModal }) => (
+        <GuideModal
+          title={$t('高级筛选')}
+          desc={({ class: className }) => {
+            return (
+              <div class={className}>
+                {$t('希望快速通过条件定位相应窗口？试试"高级筛选"功能，其亦可被保存为常驻"分组"！')}
+                {' '}
+              </div>
+            )
+          }}
+          video={videoUrl}
+          onClose={hideModal}
+          onConfirm={hideModal}
+        >
+        </GuideModal>
+      ),
     },
   })
 }
@@ -248,7 +259,7 @@ function onSaveFilters() {
         },
         resolver: (z: any) => z.string({
           invalid_type_error: $t('请输入筛选器名称'),
-        }).min(1, $t('请输入筛选器名称'))
+        }).min(1, $t('请输入筛选器名称')),
       },
     ],
     onConfirm: (formData: any) => {
@@ -271,7 +282,7 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item._text || item.value }}</span>
       </div>
-      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu"></RxButton>
+      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu" />
     </div>
     <div v-show="enabledFilterSave && isChanged" class="flex items-start">
       <div class="labels-actions">
@@ -284,13 +295,15 @@ async function modifyFilter() {
       </div>
     </div>
   </div>
-  <TieredMenu ref="tmenu" popup :model="menuOptions" :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
+  <TieredMenu ref="tmenu" popup :model="menuOptions" :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide" @show="showPreventMask">
     <template #item="{ item, props }">
-      <div v-if="item.empty" class="max-w-60 cursor-pointer text-3.25" :class="classes.item">{{ item.text }}</div>
+      <div v-if="item.empty" class="max-w-60 cursor-pointer text-3.25" :class="classes.item">
+        {{ item.text }}
+      </div>
       <a v-else v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
         <template v-if="isChildren">
-          <div v-if="item.search" @click.stop class="w-full">
-            <TsFormInputText class="w-full" v-model="search" :placeholder="item.placeholder" @input="onSearch" />
+          <div v-if="item.search" class="w-full" @click.stop>
+            <TsFormInputText v-model="search" class="w-full" :placeholder="item.placeholder" @input="onSearch" />
           </div>
           <label v-else class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
             <RxCheckbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />

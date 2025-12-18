@@ -3,8 +3,8 @@ import { API } from '/@/api'
 import { UaStrictMode } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, safeParseJSON } from '/@/utils'
-import { z } from "zod";
+import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
 
 const userStore = useUserStore()
@@ -74,7 +74,7 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
 
 function getResolutionBySystem(os: string, $dict_map: Record<string, any[]>) {
   const isMobile = ['ios', 'android'].includes(os.toLocaleLowerCase())
-  const options = isMobile ? $dict_map.mobileResolution : $dict_map.resolution
+  const options = isMobile ? $dict_map.mobileResolution! : $dict_map.resolution!
   const defaultValue = isMobile ? options[0] : options.find(item => item.value === '1280 x 720')
   return { isMobile, options, defaultValue }
 }
@@ -84,7 +84,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     getDictMap(),
     userStore.getUserConfig(),
     API.platform.userGetSearchEnginesList(),
-    window.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion))
+    window.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion)),
   ])
 
   const osIconMap = {
@@ -98,16 +98,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const getCoreVersionOptions = (os: string, version: string) => {
     const coreVersion = $dict_map.coreVersion!.filter(item => availableCoreVersion.includes(item.value))
 
-    return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
+    return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0) ?? '')
       ? coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
       : coreVersion
   }
 
-  const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({
+  const osOptions = $dict_map.os!.map(({ label, ...item }: any) => ({
     ...item,
     label,
     icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
-    _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`].map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
+    _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`]!.map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
   }))
 
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
@@ -115,8 +115,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
 
   // TODO:(anbin)
-  const searchEngineOptions = searchEngine.code == 0 ?
-    (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon })) : []
+  const searchEngineOptions = searchEngine.code === 0
+    ? (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon }))
+    : []
 
   const searchEngineValue = data.searchEngine ?? userConfig?.searchEngine
 
@@ -126,24 +127,27 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
-  const encryptProxyKeys = ['isEncryptProxy', 'proxyEncryptInfo']// 代理加密相关字段
+  /**
+   * 代理加密相关字段
+   */
+  const encryptProxyKeys = ['isEncryptProxy', 'proxyEncryptInfo']
   const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
-      id: data.moduleId,
-      proxyCategory: data.proxyCategory,
-      checkChannel: data.checkChannel,
-      ...Object.fromEntries([...encryptProxyKeys, ...proxyInfoKeys].map(key => [key, data[key]])),
-    }]
+        id: data.moduleId,
+        proxyCategory: data.proxyCategory,
+        checkChannel: data.checkChannel,
+        ...Object.fromEntries([...encryptProxyKeys, ...proxyInfoKeys].map(key => [key, data[key]])),
+      }]
     : []
 
   const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(osValue?.value, $dict_map)
-  const resolutionValue = resolutionOptions.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
+  const resolutionValue = resolutionOptions!.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
   const inputsGroup = [] as any[]
 
   const original = reactive<any>({
     ...getDefaultValue(),
-    ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))),// 过滤掉加密字段
+    ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))), // 过滤掉加密字段
   })
 
   const windowInputs = reactive([
@@ -248,7 +252,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
                 : ''
             }
           },
-        }
+        },
       ],
       slot: 'system', // items 特殊实现
     },
@@ -373,7 +377,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'displayLanguage',
-      value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage) ?? $dict_map.language[0],
+      value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage) ?? $dict_map.language![0],
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isDisplayLanguageBaseIp, false, false),
@@ -396,7 +400,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'language',
-      value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
+      value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language![0],
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isLanguageBaseIp, false, false),
@@ -421,7 +425,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'timeZone',
-      value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone) ?? $dict_map.timeZone[0],
+      value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone) ?? $dict_map.timeZone![0],
       options: $dict_map.timeZone,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isTimeZone, false, false),
@@ -480,16 +484,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
       onBlur(event: any) {
-        let newValue = event.target.value;
-        const isValid = z.number().safeParse(Number(newValue));
-        if (isValid.success && newValue != '') {
+        let newValue = event.target.value
+        const isValid = z.number().safeParse(Number(newValue))
+        if (isValid.success && newValue !== '') {
           if (newValue > 180) {
             newValue = 180
           }
           if (newValue < -180) {
             newValue = -180
           }
-        } else {
+        }
+        else {
           newValue = ''
           setInputFieldByInputKey(basicInputs, 'longitude', 'invalid', true)
         }
@@ -505,16 +510,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
       onBlur(event: any) {
-        let newValue = event.target.value;
-        const isValid = z.number().safeParse(Number(newValue));
-        if (isValid.success && newValue != '') {
+        let newValue = event.target.value
+        const isValid = z.number().safeParse(Number(newValue))
+        if (isValid.success && newValue !== '') {
           if (newValue > 90) {
             newValue = 90
           }
           if (newValue < -90) {
             newValue = -90
           }
-        } else {
+        }
+        else {
           newValue = ''
           setInputFieldByInputKey(basicInputs, 'latitude', 'invalid', true)
         }
@@ -529,18 +535,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.precisionPos,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
       onBlur(event: any) {
-        let newValue = event.target.value;
+        let newValue = event.target.value
         // 输入的内容如果不是数字，就清空，如果是数字就走下边的校验
         // 不能为空字符
-        const isValid = z.number().safeParse(Number(newValue));
-        if (isValid.success && newValue != '') {
+        const isValid = z.number().safeParse(Number(newValue))
+        if (isValid.success && newValue !== '') {
           if (newValue < 10) {
             newValue = 10
           }
           if (newValue > 5000) {
             newValue = 5000
           }
-        } else {
+        }
+        else {
           newValue = ''
         }
         setInputFieldByInputKey(basicInputs, 'precisionPos', 'value', newValue)
@@ -686,7 +693,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
           Object.assign(original, {
             font: genRandomFonts.join(';'),
-            allowFontList: getAllowFontList
+            allowFontList: getAllowFontList,
           })
         }
         else {
@@ -946,8 +953,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         macAddrInput.visible = input.value === true
 
         if (macAddrInput.visible) {
-          macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data: [{ macAddr }] }) => macAddr)
-        } else {
+          macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data }) => data[0]?.macAddr)
+        }
+        else {
           const macAddr = await window.electronAPI.send('app:getMacAddress')
           Reflect.set(original, 'macAddr', macAddr)
         }
@@ -966,14 +974,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.macInfo, true, true),
       iconClick: async () => {
         const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
-        macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data: [{ macAddr }] }) => macAddr)
+        macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data }) => data[0]?.macAddr)
       },
     },
     {
       type: 'select',
       label: $t('硬件并发数'),
       name: 'hardwareConcurrent',
-      value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '12')),
+      value: $dict_map.hardwareConcurrent!.find((item: any) => item.value === (data.hardwareConcurrent ?? '12')),
       options: $dict_map.hardwareConcurrent,
       filter: false,
       preview: {
@@ -984,7 +992,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: $t('设备内存'),
       name: 'deviceMemory',
-      value: $dict_map.deviceMemory.find((item: any) => item.value === (data.deviceMemory ?? '8')),
+      value: $dict_map.deviceMemory!.find((item: any) => item.value === (data.deviceMemory ?? '8')),
       options: $dict_map.deviceMemory,
       filter: false,
       preview: {
@@ -1083,180 +1091,126 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('窗口名称'),
       name: 'isDisplayName',
       value: data.isDisplayName ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('自定义书签'),
       name: 'openBookmarks',
       value: data.openBookmarks ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步书签'),
       name: 'syncBookmark',
       value: data.syncBookmark ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步历史记录'),
       name: 'syncHistory',
       value: data.syncHistory ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步标签页'),
       name: 'syncTab',
       value: data.syncTab ?? true,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步Cookie'),
       name: 'syncCookie',
       value: data.syncCookie ?? true,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步扩展应用程序'),
       name: 'syncExtensions',
       value: data.syncExtensions ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步已保存的用户名密码'),
       name: 'syncPassword',
       value: data.syncPassword ?? true,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步IndexedDB'),
       name: 'syncIndexedDb',
       value: data.syncIndexedDb ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('同步Local Storage'),
       name: 'syncLocalStorage',
       value: data.syncLocalStorage ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('启动浏览器前删除缓存文件'),
       name: 'clearCacheFile',
       value: data.clearCacheFile ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('启动浏览器前删除Cookie'),
       name: 'clearCookie',
       value: data.clearCookie ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('启动浏览器前删除Local Storage'),
       name: 'clearLocalStorage',
       value: data.clearLocalStorage ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('启动浏览器时随机指纹'),
       name: 'randomFingerprint',
       value: data.randomFingerprint ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('弹出保存密码提示'),
       name: 'forbidSavePassword',
       value: data.forbidSavePassword ?? true,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('网络不通停止打开'),
       name: 'stopOpenNet',
       value: data.stopOpenNet ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('IP发生变化停止打开'),
       name: 'stopOpenIP',
       value: data.stopOpenIP ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     {
       type: 'selectButton',
       label: $t('IP对应国家/地区发生改变停止打开'),
       name: 'stopOpenPosition',
       value: data.stopOpenPosition ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
+      options: genSwitchOptions(),
     },
     // TODO:(anbin)
     {
@@ -1276,6 +1230,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'blockDomainList',
       value: data.blockDomainList,
       placeholder: $t('每行一个 URL，换行以添加多个'),
+      tooltip: $t('阻止访问列表中指定的网站或网络服务。'),
     },
     {
       type: 'textarea',
@@ -1283,12 +1238,22 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'allowDomainList',
       value: data.allowDomainList,
       placeholder: $t('每行一个 URL，换行以添加多个'),
+      tooltip: $t('仅允许访问列表中指定的网站或网络服务。'),
     },
   ])
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])
 
   return [inputsGroup, original]
+}
+
+export function genSwitchOptions(options?: { trueText: string, falseText: string, trueValue: any, falseValue: any }) {
+  const defaultOptions = { trueText: $t('开启'), falseText: $t('关闭'), trueValue: true, falseValue: false }
+  const { trueText, falseText, trueValue, falseValue } = { ...defaultOptions, ...options }
+  return [
+    { label: trueText, value: trueValue },
+    { label: falseText, value: falseValue },
+  ]
 }
 
 export function getDefaultValue() {

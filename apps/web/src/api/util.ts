@@ -18,15 +18,17 @@ const responseHandleUrls = [
 ]
 
 export const needDeviceIdApis = [
-  "/reg",
-  "/login",
-  "/login_google_v2",
-  "/login_github",
-  "/login_vk",
-  "/login_facebook",
-  "/send_email_register_verify_code",
-  "/check_other_device_login",
-  "/get_2fa_login_info"
+  '/reg',
+  '/login',
+  '/login_google_v2',
+  '/login_github',
+  '/login_vk',
+  '/login_facebook',
+  '/login_phone',
+  '/send_phone_ver_code',
+  '/send_email_register_verify_code',
+  '/check_other_device_login',
+  '/get_2fa_login_info',
 ]
 
 export async function handleRequest(config: InternalAxiosRequestConfig<any>) {

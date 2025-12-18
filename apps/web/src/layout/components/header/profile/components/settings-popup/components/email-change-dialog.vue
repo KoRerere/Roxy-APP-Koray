@@ -1,33 +1,36 @@
 <script setup lang="ts">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { z } from 'zod';
-import { zodResolver } from '@primevue/forms/resolvers/zod';
-import { Form, type FormInstance } from '@primevue/forms';
-import { API } from '/@/api';
-import { useResponseToast } from '/@/hooks/useResponseToast';
+import { z } from 'zod'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import { Form } from '@primevue/forms'
+import type { FormInstance } from '@primevue/forms'
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { onSuccess } = defineProps<{
   onSuccess: () => void
 }>()
 
-const steps = [
-  { label: $t("验证当前邮箱"), value: 'current' },
-  { label: $t("设置新邮箱"), value: 'new' },
-] as const
-
 const [showToast, onlyErrorToast] = useResponseToast()
-const userStore = useUserStore()
+const { userInfo } = storeToRefs(useUserStore())
+
 const formInstance = useTemplateRef<FormInstance>('form')
 const verificationCodeSenderRef = useTemplateRef('verificationCodeSender')
 
-const currentStep = ref<typeof steps[number]['value']>(steps[0].value)
+const steps = [
+  { label: $t('验证当前邮箱'), value: 'current' },
+  { label: $t('设置新邮箱'), value: 'new' },
+] as const
+
+const currentStep = ref<typeof steps[number]['value']>(userInfo.value?.email ? 'current' : 'new')
 const initialValues = ref({
   email: '',
   password: '',
-  ver_code: ''
-});
+  ver_code: '',
+})
 const usePasswordInstead = ref(false)
 const submitLoading = ref(false)
 
@@ -36,16 +39,18 @@ const resolver = computed(() => {
 
   if (currentStep.value === 'new') {
     obj = {
-      ver_code: z.string().min(1, { message: $t('请输入验证码') })
+      ver_code: z.string().min(1, { message: $t('请输入验证码') }),
     }
-  } else {
+  }
+  else {
     if (usePasswordInstead.value) {
       obj = {
-        password: z.string().min(1, { message: $t('请输入您的密码') })
+        password: z.string().min(1, { message: $t('请输入您的密码') }),
       }
-    } else {
+    }
+    else {
       obj = {
-        ver_code: z.string().min(1, { message: $t('请输入验证码') })
+        ver_code: z.string().min(1, { message: $t('请输入验证码') }),
       }
     }
   }
@@ -53,8 +58,8 @@ const resolver = computed(() => {
   return zodResolver(
     z.object({
       email: z.string().min(1, { message: $t('请输入您的邮箱') }).email({ message: $t('请输入正确的邮箱') }),
-      ...obj
-    })
+      ...obj,
+    }),
   )
 })
 
@@ -63,16 +68,17 @@ async function sendCode() {
   const isCurrent = currentStep.value === 'current'
   console.log('email', email)
   if (!isCurrent && !email)
-    return
+    return { code: -1, msg: $t('请输入您的邮箱') }
 
   const { code, msg } = await API.base.userVerifyEmailCreate({
     source: isCurrent ? 'old' : 'new',
-    email: isCurrent ? undefined : email
+    email: isCurrent ? undefined : email,
   })
 
   if (code === 0) {
     showToast(code, $t('验证码发送成功'))
-  } else {
+  }
+  else {
     showToast(code, msg)
   }
 
@@ -81,17 +87,23 @@ async function sendCode() {
 
 async function verifyCurrentEmail() {
   const field = usePasswordInstead.value ? 'password' : 'ver_code'
+  const value = formInstance.value?.getFieldState(field)?.value
+
+  if (!value?.trim()) {
+    throw onlyErrorToast(-1, $t('内容不能为空'))
+  }
+
   const { code, msg } = await API.base.userGetCheckOldEmailVerCodeList({
-    [field]: formInstance.value?.getFieldState(field)?.value,
+    [field]: value,
   })
 
   if (code !== 0) {
     showToast(code, msg)
-    return Promise.reject()
+    throw new Error(msg)
   }
 }
 
-async function onFormSubmit({ valid }) {
+async function onFormSubmit({ valid }: any) {
   if (!valid) {
     return
   }
@@ -102,7 +114,8 @@ async function onFormSubmit({ valid }) {
       currentStep.value = steps[1].value
       formInstance.value?.reset()
       verificationCodeSenderRef.value?.clearInterval()
-    } else if (currentStep.value === 'new') {
+    }
+    else if (currentStep.value === 'new') {
       const { code, msg } = await API.base.userChangeEmailCreate({
         email: formInstance.value?.getFieldState('email')?.value,
         ver_code: formInstance.value?.getFieldState('ver_code')?.value,
@@ -112,25 +125,28 @@ async function onFormSubmit({ valid }) {
         onSuccess()
       }
     }
-  } finally {
+  }
+  finally {
     submitLoading.value = false
   }
-
 }
 
-
 onMounted(() => {
-  formInstance.value?.setFieldValue('email', userStore.userInfo?.email)
+  formInstance.value?.setFieldValue('email', userInfo.value?.email)
 })
 </script>
 
 <template>
   <div class="email-change-dialog">
-    <div class="custom-steps">
+    <div v-if="userInfo?.email" class="custom-steps">
       <template v-for="(step, index) in steps" :key="step.value">
-        <div class="step-item" :class="{ 'active': step.value === currentStep }">
-          <div class="step-number">{{ index + 1 }}</div>
-          <div class="step-label">{{ step.label }}</div>
+        <div class="step-item" :class="{ active: step.value === currentStep }">
+          <div class="step-number">
+            {{ index + 1 }}
+          </div>
+          <div class="step-label">
+            {{ step.label }}
+          </div>
         </div>
         <div v-if="index < steps.length - 1" class="step-connector">
           <RxSvgIcon name="base/rx_ic_chevron_right" />
@@ -138,16 +154,16 @@ onMounted(() => {
       </template>
     </div>
 
-    <Form ref="form" v-slot="$form" :resolver="resolver" :initialValues @submit="onFormSubmit" class="form-container">
+    <Form ref="form" v-slot="$form" :resolver="resolver" :initial-values class="form-container" @submit="onFormSubmit">
       <div class="form-group">
         <label for="email">
           {{ $t('邮箱') }}
           <span class="required">*</span>
         </label>
-        <InputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'"
-          :placeholder="$t('请输入您的邮箱地址')" />
-        <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{
-          $form.email.error?.message }}
+        <TsFormInputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'" :placeholder="$t('请输入您的邮箱地址')" />
+        <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
+          {{
+            $form.email.error?.message }}
         </Message>
       </div>
 
@@ -184,12 +200,13 @@ onMounted(() => {
 
       <div v-if="currentStep === 'current'" class="alternative-option">
         <span v-if="!usePasswordInstead">{{ $t('邮箱无法使用？') }}</span>
-        <a href="#" @click.prevent="usePasswordInstead = !usePasswordInstead">{{ usePasswordInstead ? $t('使用邮箱验证') :
-          $t('使用密码验证') }}</a>
+        <a href="#" @click.prevent="usePasswordInstead = !usePasswordInstead">{{ usePasswordInstead ? $t('使用邮箱验证')
+          : $t('使用密码验证') }}</a>
       </div>
 
-      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')"
-        class="continue-btn w-full" :loading="submitLoading" :disabled="submitLoading || formInstance?.invalid" />
+      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')" class="continue-btn w-full" :loading="submitLoading"
+                :disabled="submitLoading || !formInstance?.valid"
+      />
     </Form>
   </div>
 </template>

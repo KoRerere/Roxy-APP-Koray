@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import RxButton from '/@/components/rx-button/index.vue'
-import VideoModal from '/@/views/tutorial/components/video-modal.vue';
+import VideoModal from '/@/views/tutorial/components/video-modal.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { useTutorialStore } from '/@/stores/tutorial'
 import type { UserGetGuideVideosByTypeListData } from '@roxy/backend-api'
@@ -13,9 +13,9 @@ interface Props extends /* @vue-ignore */ Omit<RxButtonProps, 'onClick' | 'type'
   autoplay?: boolean
 }
 
-const { videoType, videoUrl, externalLink, autoplay = true } = defineProps<Props>()
-
 defineOptions({ inheritAttrs: false })
+
+const { videoType, videoUrl, externalLink, autoplay = true } = defineProps<Props>()
 
 const attrs = useAttrs()
 const [showModal] = useDialog()
@@ -31,23 +31,23 @@ async function openVideoModal() {
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!bg-transparent !border-none !shadow-none",
-      mask: '!z-1200'
+      root: '!bg-transparent !border-none !shadow-none',
+      mask: '!z-1200',
     },
     slots: {
       container: ({ hideModal }) => h(VideoModal, {
         video: video!,
         external: external!,
         autoplay,
-        onClose: hideModal
-      })
-    }
+        onClose: hideModal,
+      }),
+    },
   })
 }
 </script>
 
 <template>
-  <slot :onPlay="openVideoModal">
+  <slot :on-play="openVideoModal">
     <RxButton severity="secondary" size="md" icon="base/rx_ic_video_play" variant="text" :label="$t('观看视频')" v-bind="attrs" @click.stop="openVideoModal" />
   </slot>
 </template>

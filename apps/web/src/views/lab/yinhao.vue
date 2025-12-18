@@ -3,7 +3,9 @@ import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
+import RxButton from '/@/components/rx-button'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
 import { useUserStore } from '/@/stores/user'
@@ -259,6 +261,36 @@ function setInputsProps() {
 }
 
 // =========================================
+
+function captcha() {
+  const code = ref()
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => {
+        return (
+          <div class="w-100">
+            <img class="block w-full" src="https://primefaces.org/cdn/primevue/images/galleria/galleria11.jpg" />
+            <TsFormInputText v-model={code.value}></TsFormInputText>
+            <RxButton
+              label="submit"
+              onClick={
+                async () => {
+                  console.log(code.value)
+                  hideModal()
+                }
+              }
+            >
+            </RxButton>
+          </div>
+        )
+      },
+    },
+  })
+}
 </script>
 
 <template>
@@ -268,6 +300,7 @@ function setInputsProps() {
 
     <RxButton label="open1" @click="open1" />
     <RxButton label="open2" @click="open2" />
+    <RxButton label="captcha" @click="captcha" />
 
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
@@ -291,6 +324,4 @@ function setInputsProps() {
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { PayIdentity } from '/@/enums/pay';
-import { useUserStore } from '/@/stores/user';
+import { PayIdentity } from '/@/enums/pay'
+import { useUserStore } from '/@/stores/user'
 
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 
 const isVip = computed(() => [PayIdentity.old, PayIdentity.invited].includes(identityInfo.value.identity))
+const isCustomDiscount = computed(() => userPayInfo.value.discount > 15)
 </script>
 
 <template>
   <div v-if="userPayInfo.discount || userPayInfo.proxyDiscount" class="flex items-center gap-3">
-    <template v-if="isVip">
-      <div class="flex items-center gap-0.5">
-        <SvgIcon v-if="identityInfo.icon" :name="(identityInfo.icon as any)"></SvgIcon>
-        <div class="identity-label">{{ identityInfo.text }}</div>
+    <template v-if="isCustomDiscount">
+      <div v-if="isVip" class="flex items-center gap-0.5">
+        <SvgIcon v-if="identityInfo.icon" :name="(identityInfo.icon as any)" />
+        <div class="identity-label">
+          {{ identityInfo.text }}
+        </div>
       </div>
       <i18n-t class="identity-value" tag="div" scope="global" :keypath="$t('永久享受 {profile} 订阅折扣(包含成员和空间), {proxy} 代理 IP 折扣。', { profile: '{profile}', proxy: '{proxy}' })">
         <template #profile>

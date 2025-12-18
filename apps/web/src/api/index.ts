@@ -1,16 +1,16 @@
 import {
   ApiApi,
+  AppTrackingEventApi,
   BaseApi,
   HttpClient,
   LimitApi,
   LoggingApi,
+  PayApi,
   PlatformApi,
   PluginsApi,
   ProxyApi,
   TeamApi,
   WindowApi,
-  PayApi,
-  AppTrackingEventApi
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, handleRequest, handleResponse, needDeviceIdApis } from '/@/api/util'
@@ -29,7 +29,9 @@ export const httpClient = new HttpClient({
   /**
    * baseURL: import.meta.env.VITE_BASE_URL,
    */
-  // baseURL: 'https://roxybrowser.app/api',
+  /**
+   * baseURL: 'https://roxybrowser.app/api',
+   */
   paramsSerializer(params) {
     return qs.stringify(params, { arrayFormat: 'comma' })
   },
@@ -107,7 +109,8 @@ httpClient.instance.interceptors.response.use(async (response) => {
     emitter.emit('kickedOut', response.data.data)
     closeOtherWindow()
     return response
-  } else if (code === 403) {
+  }
+  else if (code === 403) {
     closeOtherWindow()
     // 未登录
     useUserStore().clearUserInfo()

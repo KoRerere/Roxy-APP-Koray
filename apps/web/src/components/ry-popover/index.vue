@@ -1,21 +1,26 @@
 <script setup lang="ts">
+import { usePreventMask } from '/@/hooks/usePreventMask'
+
 const popoverRef = useTemplateRef('popover')
 
 const slots: any = useSlots()
+const { showPreventMask, hidePreventMask } = usePreventMask()
 
 defineExpose({
   instance: popoverRef,
   show(event: Event, target?: EventTarget) {
     popoverRef.value?.show(event, target)
+    showPreventMask()
   },
   hide() {
     popoverRef.value?.hide()
+    hidePreventMask()
   },
 })
 </script>
 
 <template>
-  <Popover ref="popover" :class="classes.popover">
+  <Popover ref="popover" :class="classes.popover" @show="showPreventMask" @hide="hidePreventMask">
     <div>
       <slot />
     </div>

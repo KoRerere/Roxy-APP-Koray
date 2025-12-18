@@ -118,5 +118,16 @@
   "i18n-ally.enabledFrameworks": [
     "vue",
     "react"
+  ],
+  "frontendDock.ossProfiles": [
+    {
+      "name": "socks5-io",
+      "region": "oss-cn-shenzhen",
+      "accessKeyId": "LTAI5t5yXNqb9bYuXN9E4ecC",
+      "accessKeySecret": "FPYbMZxc1jbPAP1byjoxpfYb9T1X7B",
+      "bucket": "socks5-io",
+      "defaultPrefix": "assets/",
+      "cdnDomain": ""
+    }
   ]
 }

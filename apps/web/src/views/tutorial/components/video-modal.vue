@@ -15,7 +15,7 @@ defineEmits<{
     <div class="absolute top-4 right-4 flex items-center pa-1.5 rounded-full z-1 cursor-pointer bg-black bg-opacity-20 hover:bg-opacity-35 transition-all duration-300" @click.stop="$emit('close')">
       <SvgIcon class="text-white" name="base/rx_ic_delete" />
     </div>
-    <roxy-video-player :fullscreen="false" :src="video" :autoplay="autoplay" />
+    <roxy-video-player fullscreen :src="video" :autoplay="autoplay" />
     <a v-if="external" class="self-end" :href="external" target="_blank">
       <RxButton severity="secondary" variant="outlined" size="lg" icon="base/rx_ic_outlink" :label="$t('Youtube 观看')" />
     </a>

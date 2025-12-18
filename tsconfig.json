@@ -15,6 +15,7 @@
   "include": [
     "scripts/**/*.ts",
     "**/*.d.ts",
-    "./apps/electron/node_modules/electron/**/*.d.ts"
+    "./apps/electron/node_modules/electron/**/*.d.ts",
+    "scripts/test.mjs"
   ]
 }

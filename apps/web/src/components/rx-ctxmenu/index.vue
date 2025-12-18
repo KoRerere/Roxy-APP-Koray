@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { MenuItem } from 'primevue/menuitem'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
+import { usePreventMask } from '/@/hooks/usePreventMask'
 
 const props = defineProps({
   type: {
@@ -29,6 +31,8 @@ const props = defineProps({
   },
 })
 
+const { showPreventMask, hidePreventMask } = usePreventMask()
+
 const selected = ref(props.selected)
 
 const ctxMenu = ref()
@@ -36,6 +40,7 @@ const ctxMenu = ref()
 function onHide() {
   props.onHide?.(toRaw(selected.value))
   selected.value = undefined
+  hidePreventMask()
 }
 
 function onChange() {
@@ -44,7 +49,7 @@ function onChange() {
 </script>
 
 <template>
-  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide">
+  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide" @show="showPreventMask">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'radio'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>

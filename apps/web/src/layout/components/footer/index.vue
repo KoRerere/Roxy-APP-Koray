@@ -1,44 +1,13 @@
-<template>
-  <div class="rx-layout-footer" :class="{ collapsed }">
-    <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }">
-      <template #item="{ item, props }">
-        <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
-            <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
-            <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
-              {{ item.label }}
-            </span>
-          </a>
-        </ShinyButton>
-        <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
-          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
-          <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">{{ item.label }}</span>
-          <component v-if="!collapsed && item.extra" :is="item.extra" />
-        </a>
-      </template>
-    </TieredMenu>
-    <PayMetrics v-if="roleStore.isOwner" :collapsed />
-    <div v-else-if="!collapsed" class="no-permission">
-      <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">
-        <template #role>
-          <span class="role-label">
-            {{ roleLabelMap[currentWorkspace?.role as keyof typeof roleLabelMap] }}
-          </span>
-        </template>
-      </i18n-t>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import PayMetrics from './components/pay-metrics.vue'
-import TaskCircle from '/@/views/tutorial/components/task-progress.vue';
-import { RxSvgIcon } from "/@/components/rx-icon";
-import { $t } from "/@/locales";
-import { useWorkspaceStore } from "/@/stores/workspace";
-import { useUserStore } from "/@/stores/user";
-import { useRoleStore } from "/@/stores/role";
-import { getRoleLabelMap, WorkspaceType } from "/@/enums";
+import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useUserStore } from '/@/stores/user'
+import { useRoleStore } from '/@/stores/role'
+import { getRoleLabelMap, WorkspaceType } from '/@/enums'
+import { usePreventMask } from '/@/hooks/usePreventMask'
 
 const collapsed = defineModel('collapsed', { default: false })
 
@@ -48,6 +17,7 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
+const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const items = computed(() => {
   if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
@@ -65,8 +35,8 @@ const items = computed(() => {
         router.push({ name: 'tutorial' })
       },
       extra: () => h(TaskCircle, {
-        class: 'mx-auto mr-0'
-      })
+        class: 'mx-auto mr-0',
+      }),
     },
     {
       label: $t('费用中心'),
@@ -76,7 +46,7 @@ const items = computed(() => {
       visible: roleStore.isOwner,
       command: () => {
         router.push({ name: 'wallet' })
-      }
+      },
     },
     {
       label: $t('推广计划'),
@@ -86,16 +56,46 @@ const items = computed(() => {
       shiny: true,
       command: () => {
         router.push({ name: 'referral-program' })
-      }
+      },
     },
   ].filter(item => item.visible !== false)
 })
-
 </script>
+
+<template>
+  <div class="rx-layout-footer" :class="{ collapsed }">
+    <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }" @hide="hidePreventMask" @show="showPreventMask">
+      <template #item="{ item, props }">
+        <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
+          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+            <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
+            <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
+              {{ item.label }}
+            </span>
+          </a>
+        </ShinyButton>
+        <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
+          <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">{{ item.label }}</span>
+          <component :is="item.extra" v-if="!collapsed && item.extra" />
+        </a>
+      </template>
+    </TieredMenu>
+    <PayMetrics v-if="roleStore.isOwner" :collapsed />
+    <div v-else-if="!collapsed" class="no-permission">
+      <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">
+        <template #role>
+          <span class="role-label">
+            {{ roleLabelMap[currentWorkspace?.role as keyof typeof roleLabelMap] }}
+          </span>
+        </template>
+      </i18n-t>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" module="menu">
 .rootlist {
-
   :global(.p-tieredmenu-item:not(.p-disabled) > .p-tieredmenu-item-content:hover),
   :global(.p-tieredmenu-item.p-focus > .p-tieredmenu-item-content) {
     background: transparent;
@@ -129,7 +129,7 @@ const items = computed(() => {
   .menu-item {
     display: flex;
     gap: var(--spacing-xl, 12px);
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     padding: var(--spacing-lg, 9px) var(--spacing-xl, 12px);
     align-items: center;
     align-self: stretch;
@@ -138,7 +138,7 @@ const items = computed(() => {
     white-space: nowrap;
 
     &:hover {
-      color: var(--colors-text-text-primary-hover, #FFF);
+      color: var(--colors-text-text-primary-hover, #fff);
       background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
 
       .menu-icon {
@@ -147,8 +147,8 @@ const items = computed(() => {
     }
 
     &.active {
-      color: var(--pattern-sidenav-text-active, #3FB6FD);
-      background: var(--pattern-sidenav-bg-active, #013D65);
+      color: var(--pattern-sidenav-text-active, #3fb6fd);
+      background: var(--pattern-sidenav-bg-active, #013d65);
 
       .menu-icon {
         color: currentColor;
@@ -160,7 +160,7 @@ const items = computed(() => {
     }
 
     .menu-icon {
-      transition: color .2s ease-in-out;
+      transition: color 0.2s ease-in-out;
     }
 
     .menu-title {
@@ -185,7 +185,7 @@ const items = computed(() => {
     border-radius: 6px;
     background: var(--pattern-sidenav-metrics);
     backdrop-filter: blur(5px);
-    color: var(--colors-text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -195,7 +195,7 @@ const items = computed(() => {
     overflow: hidden;
 
     .role-label {
-      color: var(--colors-text-text-secondary, #B2B6B8);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -206,7 +206,7 @@ const items = computed(() => {
 }
 
 .shared {
-  background: linear-gradient(90deg, #000 0%, #0063B4 138.74%);
+  background: linear-gradient(90deg, #000 0%, #0063b4 138.74%);
 
   &-text {
     color: #ffffff;

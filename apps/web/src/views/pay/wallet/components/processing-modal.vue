@@ -1,7 +1,6 @@
 <script setup lang="tsx">
-import { API } from '/@/api'
-import { PaymentStatus } from '/@/enums/pay'
 import { $t } from '/@/locales'
+import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils'
 
@@ -15,9 +14,10 @@ const { data: props, onConfirm, onCancel } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
+const { genCheckerOrderStatus } = usePay()
 const [showToast, onlyErrorToast] = useResponseToast()
-const timer = ref()
 const loading = ref(false)
+const checker = genCheckerOrderStatus()
 
 onMounted(() => {
   checkStatus()
@@ -25,34 +25,33 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearTimeout(timer.value)
+  checker.stop()
 })
 
 async function checkStatus(force = false) {
   if (force) {
-    clearTimeout(timer.value)
+    checker.stop()
   }
 
-  const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo: props.orderNo })
-  onlyErrorToast(code, msg)
-  if (code !== 0) {
-    close(true)
-    return
-  }
-  if (data === PaymentStatus.Success) {
-    confirm()
-  } else {
-    if (force || data !== PaymentStatus.Wait) {
-      close(true)
-    } else {
-      timer.value = setTimeout(checkStatus, 3000)
+  try {
+    const isOK = force ? await checker.checkOnce(props.orderNo) : await checker.check(props.orderNo)
+    if (isOK) {
+      confirm()
     }
+    else if (force) {
+      close(true)
+    }
+  }
+  catch (error) {
+    close(true)
+    onlyErrorToast(-1, (error as Error).message)
   }
 }
 
 async function openPayWeb() {
   const { orderNo, payUrl } = props || {}
-  if (!orderNo || !payUrl) return
+  if (!orderNo || !payUrl)
+    return
   window.open(payUrl)
 }
 
@@ -79,8 +78,12 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-12 pb-6 px-6 gap-6 select-none popup">
     <img class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
     <div class="flex flex-col">
-      <div class="title">{{ $t('正在处理支付...') }}</div>
-      <div class="mt-6 desc">{{ $t('请在 30 分钟内完成支付，确认前请保持此窗口开启。') }}</div>
+      <div class="title">
+        {{ $t('正在处理支付...') }}
+      </div>
+      <div class="mt-6 desc">
+        {{ $t('请在 30 分钟内完成支付，确认前请保持此窗口开启。') }}
+      </div>
       <i18n-t class="mt-2 desc" tag="div" :keypath="$t('若支付页面未加载，请 {link} 并在浏览器中打开。', { link: '{link}' })" scope="global">
         <template #link>
           <span class="cursor-pointer desc-link" @click="copyLink">{{ $t('复制链接') }}</span>
@@ -105,7 +108,7 @@ function close(isCancel: boolean) {
 }
 
 .title {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   text-align: center;
   font-size: 16px;
   font-weight: 600;
@@ -113,12 +116,12 @@ function close(isCancel: boolean) {
 }
 
 .desc {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-size: 14px;
   line-height: 20px;
 
   &-link {
-    color: var(--colors-text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;
@@ -129,12 +132,12 @@ function close(isCancel: boolean) {
 }
 
 .help {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--colors-text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;

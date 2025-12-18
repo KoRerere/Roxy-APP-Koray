@@ -502,6 +502,13 @@ async function onTransfer(datas: Data[], operate?: any) {
     return
   }
 
+  if (!userInfo.value.email) {
+    emitter.emit('openSettings', { settingsKey: 'authentication' })
+    await nextTick()
+    onlyErrorToast(-1, $t('请先设置邮箱，再进行投送'))
+    return
+  }
+
   const result = await getNotUsedProfiles(datas)
   if (result.length !== datas.length) {
     onlyErrorToast(-1, $t('当前已打开的窗口无法被投送'))

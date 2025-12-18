@@ -15,7 +15,7 @@ import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessC
 import { useUserStore } from '/@/stores/user'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDialog } from '/@/hooks/useDialog'
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
@@ -45,14 +45,14 @@ const columns = [
   },
   {
     title: $t('窗口数量'),
-    render: ({ data }: any) => data.windowCount ? data.windowCount : '--'
+    render: ({ data }: any) => data.windowCount ? data.windowCount : '--',
   },
   {
     title: $t('成员'),
     render: ({ data }: any) => {
       const list = data.user_info.map((item: any) => ({
         avatar: item.avatar,
-        name: item.userName.slice(0, 2),
+        name: item.userName?.slice(0, 2),
         color: item.avatarColor,
       }))
       return <RxAvatar list={list} size={28} max={4} font-size={14} />
@@ -82,10 +82,10 @@ function getOperation(data: Project) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: role.isOwner || role.isManager,
-      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
+      disabled: !!data.projectDefault || !!data.isTransfer,
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       name: 'pin',
@@ -96,7 +96,7 @@ function getOperation(data: Project) {
       quick: true,
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       name: 'invite',
@@ -107,7 +107,7 @@ function getOperation(data: Project) {
       quick: true,
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       separator: true,
@@ -118,18 +118,17 @@ function getOperation(data: Project) {
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       power: role.isOwner || role.isManager,
-      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
+      disabled: !!data.projectDefault || !!data.isTransfer,
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
   ]
 }
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
-    case 'create':
-
+    case 'create': {
       const { freeProjectCount, useProjectCount, subLevel } = userPayInfo.value
 
       if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(subLevel as SubLevelEnum) && useProjectCount >= freeProjectCount) {
@@ -143,6 +142,7 @@ function operationHandler(operate: any, data?: any) {
         },
       })
       break
+    }
     case 'pin':
       pinProject(data)
       break
@@ -180,7 +180,8 @@ async function onRowReorder({ value }: any) {
   })
 
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   tableRef.value?.updateDataList(value)
   getProjects()
 }
@@ -192,7 +193,8 @@ async function pinProject(data: Project) {
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })
   if (code === 0) {
     tableRef.value?.refresh()
-  } else {
+  }
+  else {
     onlyErrorToast(code, msg)
   }
 }
@@ -237,15 +239,17 @@ async function inviteUserInProject(project: Project) {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
-      container: ({ hideModal }) => <InviteUserModal
-        v-model:currentMembers={user_info}
-        allMembers={allMembers}
-        project={{ projectName, projectId: project_id }}
-        onClose={hideModal}
-      />
+      container: ({ hideModal }) => (
+        <InviteUserModal
+          v-model:currentMembers={user_info}
+          allMembers={allMembers}
+          project={{ projectName, projectId: project_id }}
+          onClose={hideModal}
+        />
+      ),
     },
   })
 }
@@ -257,8 +261,9 @@ async function inviteUserInProject(project: Project) {
       <RxButton v-if="role.isOwner || role.isManager" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex-1 flex overflow-hidden">
-      <RyTable ref="project" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
-        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" @rowReorder="onRowReorder">
+      <RyTable ref="project" v-model:columns="columns" data-key="project_id" cache-key="project-list" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
+               :show-gridlines="false" :show-actions-menu="false" :show-actions="false" @row-reorder="onRowReorder"
+      >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
@@ -269,15 +274,16 @@ async function inviteUserInProject(project: Project) {
           </CustomEmpty>
         </template>
         <template #column-before>
-          <Column headerStyle="width:44px" rowReorder>
+          <Column header-style="width:44px" row-reorder>
             <template #rowreordericon>
-              <SvgIcon class="cursor-grab drag-mark" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots_drag"></SvgIcon>
+              <SvgIcon class="cursor-grab drag-mark" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots_drag" />
             </template>
           </Column>
         </template>
         <template #projectName="{ data }">
           <RouterLink class="flex items-center gap-2 name text-[var(--colors-text-text-primary)]" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
-            @click.stop.prevent>
+                      @click.stop.prevent
+          >
             <RxSvgIcon name="base/rx_ic_stack" />
             <span>{{ data.projectName }}</span>
           </RouterLink>
@@ -298,6 +304,6 @@ async function inviteUserInProject(project: Project) {
 <style lang="scss" scoped>
 .name {
   font-size: 13px;
-  -webkit-user-drag: none
+  -webkit-user-drag: none;
 }
 </style>

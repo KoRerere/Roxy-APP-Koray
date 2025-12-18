@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { InputTextProps } from 'primevue/inputtext'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props extends /* @vue-ignore */ Omit<InputTextProps, 'size'> {
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   icon?: SvgNames
   preIcon?: SvgNames
   fluid?: boolean
-  fieldProps?: Record<string, any>,
+  fieldProps?: Record<string, any>
 }
 
 defineOptions({
@@ -29,19 +29,21 @@ defineExpose({
   },
   blur: () => {
     inputRef.value?.$el.blur()
-  }
+  },
 })
 </script>
 
 <template>
   <IconField class="w-full" :class="size" v-bind="fieldProps">
-    <InputIcon v-if="preIcon">
-      <RxSvgIcon class="cursor-pointer" :name="preIcon" @click="$emit('preIconClick')" />
+    <InputIcon v-if="preIcon || slots.preIcon">
+      <slot name="preIcon">
+        <SvgIcon class="cursor-pointer" :name="preIcon!" @click="$emit('preIconClick')" />
+      </slot>
     </InputIcon>
     <InputText ref="input" v-bind="{ ...attrs, ...props }" :fluid />
     <InputIcon v-if="icon || slots.icon">
       <slot name="icon">
-        <RxSvgIcon class="cursor-pointer" :name="icon!" @click="$emit('iconClick')" />
+        <SvgIcon class="cursor-pointer" :name="icon!" @click="$emit('iconClick')" />
       </slot>
     </InputIcon>
   </IconField>

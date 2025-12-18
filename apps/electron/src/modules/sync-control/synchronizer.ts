@@ -1,15 +1,15 @@
 import { BrowserWindow } from 'electron'
 import { ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { isPackaged } from '/@/constants/common'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { browserManager } from '/@/modules/browser'
+import { canUseSyncControl } from '/@/modules/store'
+import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
 import { createWindow } from '/@/utils/browser-window'
-import { browserManager } from "/@/modules/browser";
-import { canUseSyncControl } from '/@/modules/store'
 
 export function getSynchronizerWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_WINDOW_ID)
+  return BrowserWindow.getAllWindows().find(win => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_WINDOW_ID)
 }
 
 export async function createSynchronizerWindow() {
@@ -29,7 +29,7 @@ export async function createSynchronizerWindow() {
     roxyWindowId: ROXY_SYNC_CONTROL_WINDOW_ID,
     width: 640,
     height: 560,
-    maxWidth: 750,
+    // maxWidth: 750,
     resizable: false,
     frame: false,
     alwaysOnTop: true,

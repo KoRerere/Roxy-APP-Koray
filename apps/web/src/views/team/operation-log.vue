@@ -1,14 +1,14 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
-import { differenceInDays, format, subDays } from 'date-fns'
-import { API } from '/@/api'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
-import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from "/@/stores/role"
 import { I18nT } from 'vue-i18n'
+import { differenceInDays, format, subDays } from 'date-fns'
+import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useUserStore } from '/@/stores/user'
+import { useRoleStore } from '/@/stores/role'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
 import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
+import type { SvgNames } from '/@/components/rx-icon'
+import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
 
@@ -23,7 +23,7 @@ const columns = ref([
     key: 'userName',
     render: ({ data }: { data: Data }) => (
       <div>
-        <div class={styles['user-email']}>{data.email}</div>
+        <div class={styles['user-email']}>{data.email || data.phone}</div>
         <div class={styles['user-name']}>{data.userName}</div>
       </div>
     ),
@@ -59,15 +59,15 @@ function tableRequest(params: any) {
 
 async function tableFilters() {
   const { data } = await API.team.userGetMemberInfoByWorkspaceList({})
-
   const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
+
   return [
     {
       type: 'multiple',
       name: 'userNameIds',
       value: [],
       placeholder: $t('全部成员'),
-      options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
+      options: data.rows.map(user => ({ label: user.email || user.phone, value: user.user_id })),
     },
     {
       type: 'multiple',
@@ -80,7 +80,6 @@ async function tableFilters() {
         { label: $t('账号'), value: 'Accounts' },
         { label: $t('项目'), value: 'Projects' },
         { label: $t('扩展'), value: 'Extensions' },
-        // { label: $t('成员'), value: 'Members' },
         { label: $t('团队'), value: 'Teams' },
       ],
     },
@@ -102,10 +101,12 @@ async function tableFilters() {
                 ? $t('如需查看更多日志，请联系空间的拥有者进行升级。')
                 : userPayInfo.value.autoRenewDowngrade
                   ? ''// 特殊情况，如果用户是自动续费降级用户，则不显示升级提醒
-                  : <I18nT keypath={$t('如需查看更多历史日志，请{link}', { link: '{link}' })} >
-                    {{ link: () => <a class="cursor-pointer align-middle" onClick={upgradePlan}>{$t('单击此处升级')}</a> }}
-                  </I18nT>,
-              life: 5000
+                  : (
+                      <I18nT keypath={$t('如需查看更多历史日志，请{link}', { link: '{link}' })}>
+                        {{ link: () => <a class="cursor-pointer align-middle" onClick={upgradePlan}>{$t('单击此处升级')}</a> }}
+                      </I18nT>
+                    ),
+              life: 5000,
             })
             return
           }
@@ -125,34 +126,34 @@ function upgradePlan() {
 
   if (isFree || isExpired) {
     router.push({ name: 'subscribe-plan' })
-  } else {
+  }
+  else {
     router.push({ name: 'upgrade-plan' })
   }
 }
-
 </script>
 
 <template>
   <div class="flex flex-col w-full h-full operation-logs">
-
     <div class="flex flex-1 overflow-hidden">
-      <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+      <RyTable cache-key="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无匹配结果')" :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')" />
         </template>
 
         <template #operateDetail="{ data }">
-          <div class="operate-detail w-240px" v-tooltip.top="{ pt: { root: 'max-w-320px' }, value: data.operateDetail, showDelay: 200, hideDelay: 200 }">
+          <div v-tooltip.top="{ pt: { root: 'max-w-320px' }, value: data.operateDetail, showDelay: 200, hideDelay: 200 }" class="operate-detail w-240px">
             {{ data.operateDetail }}
           </div>
         </template>
 
         <template #location="{ data }">
           <div class="flex items-center gap-1 locationip ">
-            <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
+            <SvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
-            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info"
-              color="var(--colors-icon-icon-note)" :size="14" />
+            <SvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)"
+                     :size="14"
+            />
           </div>
         </template>
       </RyTable>
@@ -162,7 +163,7 @@ function upgradePlan() {
 
 <style lang="scss" module>
 .user-email {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;
@@ -170,17 +171,17 @@ function upgradePlan() {
 }
 
 .user-name {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
 }
 </style>
 
 <style lang="scss" scoped>
 .description {
   width: 100%;
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -201,7 +202,7 @@ function upgradePlan() {
 }
 
 .locationip {
-  color: var(--colors-text-text-primary, #fafafa);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

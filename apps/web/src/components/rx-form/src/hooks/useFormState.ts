@@ -64,7 +64,7 @@ export function useFormState({ props, emit }: useFormStateParams) {
     defaultFormValues,
     validationSchema,
     errors,
-    innerFormSchemas: computed(() => innerFormSchemas.value.filter((item) => !item.vIf || item.vIf({ formModel }))),
+    innerFormSchemas,
     originComponentPropsFnMap,
   }
 }

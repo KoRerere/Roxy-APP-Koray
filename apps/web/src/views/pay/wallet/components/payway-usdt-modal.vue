@@ -1,11 +1,10 @@
 <script setup lang="tsx">
 import QRCode from 'qrcode'
-import { API } from '/@/api'
-import { PaymentStatus } from '/@/enums/pay'
+import { RxAlert } from '/@/components/rx-alert/'
 import { $t } from '/@/locales'
+import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText, enhanceCountdown } from '/@/utils'
-import { RxAlert } from '/@/components/rx-alert/'
 
 interface Props {
   data: Record<string, any>
@@ -17,33 +16,36 @@ const { data: props, onConfirm, onCancel } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
+const { genCheckerOrderStatus } = usePay()
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const colorMap = {
-  ['TRC-20']: '#26A17B',
-  ['BEP-20']: '#FC9D12',
-  ['SPL']: '#CD51FE',
-  ['ERC-20']: '#293038',
+  'TRC-20': '#26A17B',
+  'BEP-20': '#FC9D12',
+  'SPL': '#CD51FE',
+  'ERC-20': '#293038',
 }
 
 const HOUR = 60 * 60 * 1000
-const timer = ref()
 const loading = ref(false)
 const qrcode = ref()
 const stopCountdown = ref()
 const countdown = ref()
+const checker = genCheckerOrderStatus()
 
 const bgColor = computed(() => {
   return colorMap[props.chainAlias as keyof typeof colorMap] || colorMap['TRC-20']
 })
 
 const progress = computed(() => {
-  if (!countdown.value) return 0
+  if (!countdown.value)
+    return 0
   return Number((countdown.value.timestamp / HOUR - 1).toFixed(2))
 })
 
 const countdownText = computed(() => {
-  if (!countdown.value) return '--:--:--'
+  if (!countdown.value)
+    return '--:--:--'
   const { hours, minutes, seconds } = countdown.value
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
@@ -53,7 +55,7 @@ const notes = computed(() => ({
   items: [
     $t('支付金额须准确为 {amount} USDT，否则可能导致无法到账', { amount: props.realAmount }),
     $t('转账时请再次确认地址是否与页面一致'),
-  ]
+  ],
 }))
 
 onMounted(() => {
@@ -65,7 +67,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearTimeout(timer.value)
+  checker.stop()
   stopCountdown.value?.stop()
 })
 
@@ -73,21 +75,15 @@ async function genProxyQrcode() {
   qrcode.value = await QRCode.toDataURL(props.payUrl, { margin: 2.5 })
 }
 
-async function checkStatus(force = false) {
-  if (force) {
-    clearTimeout(timer.value)
+async function checkStatus() {
+  try {
+    const isOK = await checker.check(props.orderNo)
+    if (isOK)
+      confirm()
   }
-
-  const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo: props.orderNo })
-  onlyErrorToast(code, msg)
-  if (data === PaymentStatus.Success) {
-    confirm()
-  } else {
-    if (force || data !== PaymentStatus.Wait) {
-      close(true)
-    } else {
-      timer.value = setTimeout(checkStatus, 3000)
-    }
+  catch (error) {
+    close(true)
+    onlyErrorToast(-1, (error as Error).message)
   }
 }
 
@@ -114,27 +110,36 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none min-w-130">
     <div class="relative flex items-center h-10 header">
       <span>{{ $t('{type} 支付', { type: props.payType }) }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)">
-      </SvgIcon>
+      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
 
     <div class="flex flex-col gap-3">
-      <div class="title">{{ $t('订单金额') }}</div>
+      <div class="title">
+        {{ $t('订单金额') }}
+      </div>
       <div class="flex items-center gap-4">
-        <div class="amount">{{ props.realAmount }} {{ props.payType }}</div>
-        <div class="py-1 px-2 tag">{{ props.chainAlias }}</div>
+        <div class="amount">
+          {{ props.realAmount }} {{ props.payType }}
+        </div>
+        <div class="py-1 px-2 tag">
+          {{ props.chainAlias }}
+        </div>
       </div>
     </div>
 
     <div class="flex flex-col gap-3">
-      <div class="title">{{ $t('支付地址') }}</div>
+      <div class="title">
+        {{ $t('支付地址') }}
+      </div>
       <div class="flex gap-2.5 pa-3 bg-[var(--colors-background-bg-block)] rounded-lg">
-        <img :src="qrcode" class="pointer-events-none w-26 h-26" />
+        <img :src="qrcode" class="pointer-events-none w-26 h-26">
         <div class="flex flex-col justify-center gap-2.5">
-          <div class="qrcode-desc">{{ $t('复制地址或扫描二维码进行支付') }}</div>
+          <div class="qrcode-desc">
+            {{ $t('复制地址或扫描二维码进行支付') }}
+          </div>
           <div class="flex items-center gap-2">
             <span class="chain">{{ props.payUrl }}</span>
-            <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" color="#7C8387" @click="copyLink"></SvgIcon>
+            <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" color="#7C8387" @click="copyLink" />
           </div>
         </div>
       </div>
@@ -147,21 +152,31 @@ function close(isCancel: boolean) {
             </svg>
           </div>
           <div>
-            <div class="remaining">{{ $t('支付剩余时间') }}</div>
-            <div class="countdown">{{ countdownText }}</div>
+            <div class="remaining">
+              {{ $t('支付剩余时间') }}
+            </div>
+            <div class="countdown">
+              {{ countdownText }}
+            </div>
           </div>
         </div>
         <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
           <img class="block loading-circle w-8 h-8" src="/@/assets/images/status/loading.png">
-          <div class="status">{{ $t('检查支付状态中...') }}</div>
+          <div class="status">
+            {{ $t('检查支付状态中...') }}
+          </div>
         </div>
       </div>
     </div>
     <div class="flex flex-col gap-3">
-      <div class="title">{{ notes.title }}</div>
+      <div class="title">
+        {{ notes.title }}
+      </div>
       <RxAlert class="w-full" :closable="false" type="warn">
         <template #content>
-          <div v-for="(item, index) in notes.items" :key="item" class="note">{{ `${index + 1}. ${item}` }}</div>
+          <div v-for="(item, index) in notes.items" :key="item" class="note">
+            {{ `${index + 1}. ${item}` }}
+          </div>
         </template>
       </RxAlert>
       <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
@@ -189,7 +204,7 @@ function close(isCancel: boolean) {
 }
 
 .amount {
-  color: #12A3FC;
+  color: #12a3fc;
   font-size: 32px;
   font-weight: 600;
   line-height: normal;
@@ -199,7 +214,7 @@ function close(isCancel: boolean) {
   border-radius: 4px;
   background: v-bind(bgColor);
   color: #ffffff;
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 20px;
   font-weight: 700;
   line-height: normal;
@@ -213,7 +228,7 @@ function close(isCancel: boolean) {
 
 .chain {
   color: var(--colors-text-text-primary);
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
@@ -271,7 +286,7 @@ function close(isCancel: boolean) {
     fill: none;
     stroke-width: 4.5;
     stroke-dasharray: calc(2 * 3.14159 * 14);
-    stroke: var(--stroke-color, #12A3FC);
+    stroke: var(--stroke-color, #12a3fc);
     stroke-linecap: round;
     stroke-dashoffset: calc(2 * 3.14159 * 14 * var(--progress));
   }
@@ -282,7 +297,7 @@ function close(isCancel: boolean) {
 
   &-bg {
     fill: none;
-    stroke: #E8F5FC;
+    stroke: #e8f5fc;
     stroke-width: 4.5;
   }
 }

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { useResponseToast } from '../hooks/useResponseToast';
+import { useResponseToast } from '../hooks/useResponseToast'
 
 const { interval = 60, email, request } = defineProps<{
   /** 发送验证码间隔时间 */
-  interval?: number,
-  email?: string,
-  request: ({ email }: { email?: string }) => Promise<{ code: number, msg: string, data: any }>,
+  interval?: number
+  email?: string
+  request: ({ email }: { email?: string }) => Promise<any>
 }>()
 
 const modelValue = defineModel<string>()
 
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 const countdown = ref(0)
 let timer: NodeJS.Timeout | string | number | undefined
@@ -34,12 +34,11 @@ async function handleSendCode() {
   }, 1000)
 }
 
-
 defineExpose({
   clearInterval() {
     clearInterval(timer)
     countdown.value = 0
-  }
+  },
 })
 </script>
 

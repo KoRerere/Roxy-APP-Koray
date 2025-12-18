@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
+import { $t } from '/@/locales'
 
 const props = defineProps<{
   newFeatureTips: Record<string, any>[]
@@ -16,13 +16,13 @@ const nextText = computed(() => {
 })
 
 const formatFeatures = computed(() => {
-  return features.value.map(item => {
+  return features.value.map((item) => {
     return {
       ...item,
       content: item.content.replace(
         /<video[^>]*>\s*<source\s+src="([^"]+)"[^>]*><\/video>/gi,
-        (_, src) => `<roxy-video-player src="${src}" />`
-      )
+        (_, src) => `<roxy-video-player scale="${true}" src="${src}" />`,
+      ),
     }
   })
 })
@@ -41,18 +41,17 @@ function handleNext() {
 function handlePrev() {
   page.value = Math.max(page.value - 1, 0)
 }
-
 </script>
 
 <template>
   <div ref="appUpgradeTips" class="app-upgrade-tips">
     <template v-for="(item, index) in formatFeatures" :key="index">
-      <div v-html="item.content" class="feature-content" :class="{ active: page === index }"></div>
+      <div class="feature-content" :class="{ active: page === index }" v-html="item.content" />
     </template>
 
     <div v-if="formatFeatures.length > 1" class="indicator-list">
       <template v-for="(_, index) in formatFeatures" :key="index">
-        <div class="indicator" :class="{ active: page === index }" @click="page = index"> </div>
+        <div class="indicator" :class="{ active: page === index }" @click="page = index" />
       </template>
     </div>
 
@@ -80,9 +79,9 @@ function handlePrev() {
   </div>
 </template>
 
-
 <style lang="scss" scoped>
-.app-upgrade-tips {}
+.app-upgrade-tips {
+}
 
 .feature-content {
   color: var(--colors-text-text-secondary, #34393d);

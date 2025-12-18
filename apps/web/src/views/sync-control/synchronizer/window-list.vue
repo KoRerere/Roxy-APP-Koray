@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue';
+import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { useToast } from 'primevue/usetoast'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
@@ -44,29 +43,34 @@ const columns = ref([
     key: 'profile',
     slot: 'profile',
     style: {
-      width: '35%'
-    }
+      width: '0%',
+      minWidth: '125px',
+    },
   },
   {
     title: $t('窗口名称'),
     key: 'windowName',
     slot: 'windowName',
+    style: {
+      width: '10%',
+      minWidth: '120px',
+    },
   },
   {
     title: $t('状态'),
     key: 'status',
     slot: 'status',
     style: {
-      width: '25%'
-    }
+      width: '25%',
+    },
   },
   {
     title: $t('操作'),
     key: 'actions',
     slot: 'actions',
     style: {
-      width: '25%'
-    }
+      width: '10%',
+    },
   },
 ])
 
@@ -87,8 +91,8 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
         const tableContainer = document.querySelector('.p-datatable-table-container')
         console.log('tableContainer scrollWidth', tableContainer?.scrollWidth)
         electronAPI.send('app:resizeWindow', {
-          width: window.innerWidth + tableContainer?.scrollWidth! - tableContainer?.clientWidth!,
-          height: window.innerHeight
+          width: window.innerWidth + (tableContainer?.scrollWidth ?? 0) - (tableContainer?.clientWidth ?? 0),
+          height: window.innerHeight,
         })
       }
     }, 60)
@@ -98,9 +102,9 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
   subtree: true,
 })
 
-
 const disabled = computed(() => {
-  if (!selectedRowsFilter.value?.length) return true
+  if (!selectedRowsFilter.value?.length)
+    return true
 
   return selectedRowsFilter.value?.length < 2 || !selectedRowsFilter.value?.some((n: any) => n.dirId === mainControlWindowDirId.value)
 })
@@ -115,7 +119,7 @@ const searchList = computed(() => {
           acc.push({ label: curr.projectName, value: curr.projectId })
         }
         return acc
-      }, [])
+      }, []),
     },
     {
       name: 'labelIds',
@@ -125,7 +129,7 @@ const searchList = computed(() => {
           acc.push({ ...curr, label: curr.labelName, value: curr.labelId })
         }
         return acc
-      }, [])
+      }, []),
     },
     {
       name: 'os',
@@ -135,28 +139,18 @@ const searchList = computed(() => {
           acc.push({ label: curr.os === 'IOS' ? 'iOS' : curr.os, value: curr.os })
         }
         return acc
-      }, [])
+      }, []),
     },
   ]
 })
 
 const tableFilterData = computed(() => {
   return tableData.value.filter((n: any) => {
-    return (!searchParams.value.projectIds.length || searchParams.value.projectIds.includes(n.projectId)) &&
-      (!searchParams.value.labelIds.length || n.labelInfo.some((m: any) => searchParams.value.labelIds.includes(m.labelId))) &&
-      (!searchParams.value.os.length || searchParams.value.os.includes(n.os)) &&
-      (!searchParams.value.windowName || n.windowName.includes(searchParams.value.windowName))
+    return (!searchParams.value.projectIds.length || searchParams.value.projectIds.includes(n.projectId))
+      && (!searchParams.value.labelIds.length || n.labelInfo.some((m: any) => searchParams.value.labelIds.includes(m.labelId)))
+      && (!searchParams.value.os.length || searchParams.value.os.includes(n.os))
+      && (!searchParams.value.windowName || n.windowName.includes(searchParams.value.windowName))
   })
-})
-
-watch(tableFilterData, (val) => {
-  if (val.length > 1) {
-    disabledRows()
-    if (!props.mainControlWindowDirId) {
-      const canUseWindows = val.filter(n => n.$canUseSyncControl)
-      mainControlWindowDirId.value = canUseWindows.some(n => n.dirId === mainControlWindowDirId.value) ? mainControlWindowDirId.value : canUseWindows[0].dirId
-    }
-  }
 })
 
 const disabledRows = debounce(() => {
@@ -173,6 +167,16 @@ const disabledRows = debounce(() => {
     }
   })
 }, 100)
+
+watch(tableFilterData, (val) => {
+  if (val.length > 1) {
+    disabledRows()
+    if (!props.mainControlWindowDirId) {
+      const canUseWindows = val.filter(n => n.$canUseSyncControl)
+      mainControlWindowDirId.value = canUseWindows.some(n => n.dirId === mainControlWindowDirId.value) ? mainControlWindowDirId.value : canUseWindows[0].dirId
+    }
+  }
+})
 
 window.electronAPI.on('browser:on-close', (dirIds) => {
   selectedRows.value = selectedRows.value?.filter((n: any) => !dirIds.includes(n.dirId))
@@ -204,7 +208,7 @@ async function startSync() {
     return
   }
 
-  const hasWindows = selectedRowsFilter.value.find((item: any) => ['Windows', 'macOS'].includes(item.platform))
+  const hasWindows = selectedRowsFilter.value.find((item: any) => ['Windows', 'macOS', 'Linux'].includes(item.platform))
   const hasMobile = selectedRowsFilter.value.find((item: any) => ['Android', 'IOS'].includes(item.platform))
   if (hasWindows && hasMobile) {
     toast.add({ severity: 'warn', summary: $t('同步窗口失败'), detail: $t('桌面系统的窗口暂时无法和手机系统的窗口进行同步操作') })
@@ -213,9 +217,8 @@ async function startSync() {
   console.log('startSync', selectedRowsFilter.value)
   const dirIds = [...new Set([
     mainControlWindowDirId.value,
-    ...selectedRowsFilter.value?.map((n: any) => n.dirId)
-  ])
-  ]
+    ...selectedRowsFilter.value?.map((n: any) => n.dirId),
+  ])]
   console.log('dirIds', dirIds)
   await window.electronAPI.send('syncControl:start', dirIds)
 }
@@ -223,7 +226,6 @@ async function startSync() {
 async function handleRowSelectAll() {
   await nextTick()
   document.querySelectorAll('.p-datatable-selectable-row:not(:has(.can-use-sync-control))').forEach((n) => {
-
     const checkboxChecked = n.querySelector<HTMLDivElement>('.p-checkbox-checked')
     if (checkboxChecked) {
       checkboxChecked.classList.remove('p-checkbox-checked')
@@ -236,17 +238,18 @@ async function handleRowSelectAll() {
 }
 
 electronAPI.on('syncControl:start', startSync)
-
 </script>
 
 <template>
-  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-    :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }"
-    @row-select-all="handleRowSelectAll" v-bind="$attrs">
+  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multiple-operation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
+           :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" class="sync-control-table" :class="{ 'syncing': isSyncing, 'no-data': tableFilterData.length === 0 }"
+           v-bind="$attrs" @row-select-all="handleRowSelectAll"
+  >
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex gap-2.5">
-        <TsFormMultiSelect v-for="{ name, ...props } in searchList" :key="name" class="flex-1 min-w-0" v-model="searchParams[name as keyof typeof searchParams]" v-bind="props" :maxSelectedLabels="1"
-          :showToggleAll="false" :filter="false">
+        <TsFormMultiSelect v-for="{ name, ...other } in searchList" :key="name" v-model="searchParams[name as keyof typeof searchParams]" class="flex-1 min-w-0" v-bind="other" size="xxs"
+                           :max-selected-labels="1" :show-toggle-all="false" :filter="false"
+        >
           <template #option="slotProps">
             <template v-if="name === 'labelIds'">
               <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
@@ -257,15 +260,19 @@ electronAPI.on('syncControl:start', startSync)
                 <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
                 </svg>
-                <div class="text-3.25 ellipsis-1">{{ slotProps.option.labelName }}</div>
+                <div class="text-3.25 ellipsis-1">
+                  {{ slotProps.option.labelName }}
+                </div>
               </div>
             </template>
             <div v-else class="flex items-center">
-              <div class="text-3.25">{{ slotProps.option.label }}</div>
+              <div class="text-3.25">
+                {{ slotProps.option.label }}
+              </div>
             </div>
           </template>
         </TsFormMultiSelect>
-        <TsFormInputText :field-props="{ class: 'flex-1 min-w-0' }" v-model="searchParams.windowName" preIcon="base/rx_ic_magnify" size="sm" :placeholder="$t('搜索窗口')" />
+        <TsFormInputText v-model="searchParams.windowName" :field-props="{ class: 'flex-1 min-w-0' }" pre-icon="base/rx_ic_magnify" size="xxs" :placeholder="$t('搜索窗口')" />
       </div>
     </template>
     <template #table-empty>
@@ -294,28 +301,28 @@ electronAPI.on('syncControl:start', startSync)
     <template #profile="{ data }">
       <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
+    <template #windowName="{ data }">
+      <div v-tooltip.top="{ value: data.windowName }" class="ellipsis-1 max-w-150px">
+        {{ data.windowName }}
+      </div>
+    </template>
     <template #status="{ data }">
-      <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">
+      <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status select-none">
         {{ $t('主控窗口') }}
       </div>
-      <template v-else>
-        --
-      </template>
-    </template>
-    <template #windowName="{ data }">
-      <div class="ellipsis-1 max-w-150px" v-tooltip.top="{ value: data.windowName }">{{ data.windowName }}</div>
+      <div v-else class="status" :class="{ action: !isSyncing }">
+        <span class="status-text">--</span>
+        <RxButton class="status-btn" size="xxs" severity="secondary" icon="base/rx_ic_cursor" :label="$t('设为主控')" @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
+      </div>
     </template>
     <template #actions="{ data }">
-      <div class="flex gap-2.5 cursor-pointer">
-        <RxSvgIcon v-tooltip="$t('预览')" color="var(--colors-icon-icon-secondary)" name="base/rx_ic_show_profile" @click.stop="viewBrowser(data.dirId)" />
-        <RxSvgIcon v-tooltip="$t('设为主控')" color="var(--colors-icon-icon-secondary)" name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }"
-          @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
-      </div>
+      <RxButton size="xxs" variant="text" severity="secondary" icon="base/rx_ic_show_profile" :label="$t('查看')" @click.stop="viewBrowser(data.dirId)" />
     </template>
   </RyTable>
   <RxButton v-if="showType === 'opened'" :disabled="disabled" :label="selectedRowsFilter?.length
     ? $t('开始同步 {count} 个窗口', { count: selectedRowsFilter.length })
-    : $t('开始同步')" class="start-sync-btn" @click.stop="startSync" />
+    : $t('开始同步')" class="start-sync-btn" @click.stop="startSync"
+  />
 </template>
 
 <style lang="scss">
@@ -344,9 +351,9 @@ electronAPI.on('syncControl:start', startSync)
 .p-datatable-table-container {
   border-radius: 8px;
   overflow: hidden;
-  background: var(--colors-background-bg-page, #05101A);
+  background: var(--colors-background-bg-page, #05101a);
 
-  td[data-pc-section="emptymessagecell"] {
+  td[data-pc-section='emptymessagecell'] {
     border: none;
   }
 }
@@ -355,19 +362,18 @@ electronAPI.on('syncControl:start', startSync)
   padding: 12px;
 
   .p-datatable-thead {
-
     &::before {
       content: '';
       position: absolute;
       width: 100%;
       height: 20px;
-      background: var(--colors-background-bg-page, #05101A);
+      background: var(--colors-background-bg-page, #05101a);
       top: -20px;
     }
 
     th.p-datatable-header-cell {
       border-top-width: 0.5px;
-      border-top-color: var(--colors-border-border-subtle, #E4E8EB);
+      border-top-color: var(--colors-border-border-subtle, #e4e8eb);
     }
 
     th.p-datatable-header-cell:first-of-type {
@@ -396,9 +402,8 @@ electronAPI.on('syncControl:start', startSync)
 <style lang="scss" scoped>
 .sync-control-table {
   overflow: hidden;
-  border: 0.5px solid var(--colors-border-border-inactive, #C7CDD1);
+  border: 0.5px solid var(--colors-border-border-inactive, #c7cdd1);
   border-radius: var(--radius-sm, 6px);
-
 
   &.syncing {
     :deep(.p-datatable-thead) {
@@ -410,7 +415,7 @@ electronAPI.on('syncControl:start', startSync)
     padding: 12px;
     padding-bottom: 0;
     border-bottom: 0;
-    background-color: var(--colors-background-bg-page, #05101A);
+    background-color: var(--colors-background-bg-page, #05101a);
 
     .p-multiselect-label {
       height: 100%;
@@ -429,11 +434,27 @@ electronAPI.on('syncControl:start', startSync)
   align-items: center;
   gap: 10px;
   border-radius: 4px;
-  background: var(--primitives-blue-400, #7ECCFC);
-  color: var(--primitives-blue-700, #015C94);
+  background: var(--primitives-blue-400, #7eccfc);
+  color: var(--primitives-blue-700, #015c94);
   font-size: 12px;
   font-weight: bold;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.status {
+  &.action:hover {
+    .status-text {
+      display: none;
+    }
+
+    .status-btn {
+      display: flex;
+    }
+  }
+
+  &-btn {
+    display: none;
+  }
 }
 
 .start-sync-btn {

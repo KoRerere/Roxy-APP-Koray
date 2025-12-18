@@ -9,13 +9,34 @@ import type { PageState } from 'primevue/paginator'
 import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { $t } from '/@/locales'
-import { getFormData, isEmptyValue, isFunction, isLikeFunction, operationPower, type Operation } from '/@/utils'
-import { deepClone, getSortIcon, transformSortOrder, type SortOrderNumber } from '/@/utils'
+import { deepClone, getFormData, getSortIcon, isEmptyValue, isFunction, isLikeFunction, operationPower, transformSortOrder } from '/@/utils'
+import type { Operation, SortOrderNumber } from '/@/utils'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { AnimatePresence, motion } from 'motion-v'
 
 defineOptions({
   inheritAttrs: false,
 })
+
+const props = withDefaults(defineProps<Props>(), {
+  dataKey: 'id',
+  cacheKey: '',
+  immediate: true,
+  multipleOperation: true,
+  paginator: true,
+  showTableHeader: true,
+  showDisplay: true,
+  showReload: true,
+  showActions: true,
+  showActionsMenu: true,
+  pageRows: 10,
+  tableRequest: () => ({}),
+  tableSort: () => [],
+  tableFilters: () => [],
+  tableOperation: () => [],
+})
+
+defineEmits(['update:columns'])
 
 interface Props {
   dataKey?: string
@@ -42,26 +63,6 @@ interface Props {
   operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
   beforeRefresh?: () => any | Promise<any>
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  dataKey: 'id',
-  cacheKey: '',
-  immediate: true,
-  multipleOperation: true,
-  paginator: true,
-  showTableHeader: true,
-  showDisplay: true,
-  showReload: true,
-  showActions: true,
-  showActionsMenu: true,
-  pageRows: 10,
-  tableRequest: () => ({}),
-  tableSort: () => [],
-  tableFilters: () => [],
-  tableOperation: () => [],
-})
-
-defineEmits(['update:columns'])
 
 const route = useRoute()
 const [showContextMenu] = useContextMenu()
@@ -102,7 +103,7 @@ const tableAttrs = reactive({
   onRowSelectAll: async () => {
     await nextTick()
     const disableds: any[] = []
-    document.querySelectorAll('.p-datatable-selectable-row.row-disabled').forEach(tr => {
+    document.querySelectorAll('.p-datatable-selectable-row.row-disabled').forEach((tr) => {
       disableds.push(tr.getAttribute('data-row-id'))
       const checkboxChecked = tr.querySelector<HTMLDivElement>('.p-checkbox-checked')
       if (checkboxChecked) {
@@ -190,9 +191,9 @@ function fmtColumnProps(column: Record<string, any>) {
     pt: {
       headercell: columnCss.headercell,
       bodycell: columnCss.bodycell,
-      ...pt
+      ...pt,
     },
-    ...props
+    ...props,
   }
 }
 
@@ -341,7 +342,7 @@ const ColumnCss_Module = useCssModule('ColumnCss_Module')
 
 function initBodyrow(options: any) {
   return {
-    class: ColumnCss_Module.bodyrow,
+    'class': ColumnCss_Module.bodyrow,
     'data-row-id': options.props.rowData[props.dataKey],
   }
 }
@@ -377,18 +378,20 @@ function initBodyrow(options: any) {
         tbody: ColumnCss_Module.tbody,
         headerrow: ColumnCss_Module.headerrow,
         bodyrow: initBodyrow,
-      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu">
+      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu"
+      >
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
-        <template #empty v-if="_firstLoad">
+        <template v-if="_firstLoad" #empty>
           <slot name="table-empty" />
         </template>
 
-        <slot name="column-before" :ptProps="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"></slot>
+        <slot name="column-before" :pt-props="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" />
 
-        <Column v-if="selectionMode" headerStyle="width:0%; " bodyStyle="width:0%; " :selection-mode="selectionMode"
-          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }">
+        <Column v-if="selectionMode" header-style="width:0%; " body-style="width:0%; " :selection-mode="selectionMode"
+                :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
+        >
           <template #headercheckboxicon="{ checked }">
             <SvgIcon v-if="checked" name="base/rx_ic_checkmark" color="#ffffff" />
           </template>
@@ -400,7 +403,7 @@ function initBodyrow(options: any) {
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
-              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
+              <component :is="headerRender" v-if="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
@@ -409,7 +412,7 @@ function initBodyrow(options: any) {
               <component :is="render" v-if="render" :data="data" :class="column.classes" />
               <template v-else>
                 <template v-if="column.skeleton && !data.id">
-                  <Skeleton v-bind="column.skeleton"></Skeleton>
+                  <Skeleton v-bind="column.skeleton" />
                 </template>
                 <template v-else>
                   <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
@@ -421,7 +424,7 @@ function initBodyrow(options: any) {
           </template>
           <template #sorticon="{ sorted, sortOrder, ...rest }">
             <div :class="rest.class">
-              <RxSvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)"></RxSvgIcon>
+              <RxSvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)" />
             </div>
           </template>
         </Column>
@@ -429,10 +432,11 @@ function initBodyrow(options: any) {
           columntitle: ColumnCss_Module.columntitle,
           headercell: ColumnCss_Module.headercell,
           bodycell: ColumnCss_Module.bodycell,
-        }">
+        }"
+        >
           <template #body="{ data }">
             <div class="flex items-center">
-              <slot name="actions-extra" :data="data"></slot>
+              <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
                 <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler?.($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
@@ -440,16 +444,18 @@ function initBodyrow(options: any) {
           </template>
         </Column>
       </DataTable>
-      <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9"></RxLoading>
+      <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9" />
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
-        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+                 :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage"
+      >
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
             <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
-              :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
+                           :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange"
+            />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
             </div>
@@ -458,14 +464,15 @@ function initBodyrow(options: any) {
       </Paginator>
     </div>
 
-    <Transition>
+    <AnimatePresence>
       <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && realUseSelection?.length > 0" :selection="realUseSelection" :total="tableList.length"
-        :operation="_getOperation(realUseSelection)" @clear-selection="_clearSelection" :batch-operation="batchOperation" @batch-more="showOperationMenu($event, realUseSelection, 'batch')">
+                          :operation="_getOperation(realUseSelection)" :batch-operation="batchOperation" @clear-selection="_clearSelection" @batch-more="showOperationMenu($event, realUseSelection, 'batch')"
+      >
         <template #custom-operation>
           <slot name="multiple-operation" :selection="realUseSelection" :clear-selection="_clearSelection" />
         </template>
       </SelectionOperation>
-    </Transition>
+    </AnimatePresence>
   </div>
 </template>
 
@@ -510,9 +517,9 @@ function initBodyrow(options: any) {
   }
 
   :deep(.p-paginator-page-selected) {
-    color: var(--colors-text-text-brand, #11A3FD);
-    border: 0.5px solid var(--colors-border-border-brand, #11A3FD);
-    background: var(--component-button-ghost-bg, #FFF);
+    color: var(--colors-text-text-brand, #11a3fd);
+    border: 0.5px solid var(--colors-border-border-brand, #11a3fd);
+    background: var(--component-button-ghost-bg, #fff);
     border-radius: var(--radius-sm, 4px);
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),
@@ -545,7 +552,7 @@ function initBodyrow(options: any) {
   &-jump {
     display: flex;
     gap: 8px;
-    color: var(--colors-text-text-secondary, #34393D);
+    color: var(--colors-text-text-secondary, #34393d);
     font-family: Inter;
     font-size: 12px;
     line-height: 16px;
@@ -611,10 +618,15 @@ function initBodyrow(options: any) {
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      background: var(--colors-background-bg-page, #FFF);
+      background: var(--colors-background-bg-page, #fff);
       border-left: 1px solid var(--component-table-border-cell);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
-      transition: background var(--datatable-transition-duration), color var(--datatable-transition-duration), border-color var(--datatable-transition-duration), outline-color var(--datatable-transition-duration), box-shadow var(--datatable-transition-duration)
+      transition:
+        background var(--datatable-transition-duration),
+        color var(--datatable-transition-duration),
+        border-color var(--datatable-transition-duration),
+        outline-color var(--datatable-transition-duration),
+        box-shadow var(--datatable-transition-duration);
     }
   }
 }

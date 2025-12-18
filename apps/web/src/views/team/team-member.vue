@@ -1,10 +1,9 @@
 <script setup lang="tsx">
-import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
+import MemberInfo from '/@/views/team/components/member-info.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
+import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
-import { Membership, Role, getRoleLabelMap } from '/@/enums'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -15,6 +14,8 @@ import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import useColumns from '/@/hooks/useColumns'
+import { getRoleLabelMap, Membership, Role } from '/@/enums'
+import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 
 const roleLabelMap = getRoleLabelMap()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
@@ -141,18 +142,18 @@ function operationHandler(operate: any, data: TableRow) {
 }
 
 function editMember(data: TableRow) {
-  const { email, project_info, role, user_id } = data || {}
+  const { email, phone, project_info, role, userId } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
-  const disableds = email ? ['email'] : []
   showInviteUserFormDialog({
-     email,
-     projectIds,
-     role,
-     user_id,
-     disableds,
-     handleOk: () => {
+    email,
+    phone,
+    projectIds,
+    role,
+    userId,
+    disableds: ['email'],
+    handleOk: () => {
       filters.onChange()
-    }
+    },
   })
 }
 
@@ -171,16 +172,18 @@ async function deleteMember(data: TableRow) {
     },
     accept: async () => {
       const projectIds = data.project_info.map(item => item.project_id)
-      const { code, msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
+      const { code, msg } = await API.team.userDelTeamInfoCreate({ userId: data.userId!, role: data.role, projectIds })
       onlyErrorToast(code, msg)
-      if (code !== 0) return
+      if (code !== 0)
+        return
       filters.onChange()
     },
   })
 }
 
 async function getAllProjects() {
-  if (allProjects.value) return allProjects.value
+  if (allProjects.value)
+    return allProjects.value
   const { code, data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
   if (code === 0) {
     allProjects.value = data.rows
@@ -203,31 +206,33 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
-      container: ({ hideModal }) => <InviteUserModal
-        v-model:currentMembers={members.value}
-        projects={projects}
-        projectValues={projectValues}
-        multiple={true}
-        inviteRole={role}
-        onClose={hideModal}
-        onBeforeClose={(refresh) => {
-          if (refresh) {
-            filters.onChange()
-          }
-        }}
-      />
-    }
+      container: ({ hideModal }) => (
+        <InviteUserModal
+          v-model:currentMembers={members.value}
+          projects={projects}
+          projectValues={projectValues}
+          multiple={true}
+          inviteRole={role}
+          onClose={hideModal}
+          onBeforeClose={(refresh) => {
+            if (refresh) {
+              filters.onChange()
+            }
+          }}
+        />
+      ),
+    },
   })
 }
-
 </script>
 
 <template>
   <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
-    :paginator="false" :show-actions-menu="false" :show-actions="false">
+           :paginator="false" :show-actions-menu="false" :show-actions="false"
+  >
     <template #display-before>
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
     </template>
@@ -241,25 +246,15 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
-              @click.stop="handleShowInviteUserFormDialog(filters.value)" />
+                      @click.stop="handleShowInviteUserFormDialog(filters.value)"
+            />
             <TutorialVideo video-type="team_management" :autoplay="false" />
           </div>
         </template>
       </CustomNewEmpty>
     </template>
     <template #member="{ data }">
-      <div class="member">
-        <RxAvatar :avatar="data.avatar" :name="data.user_id ? (data.userName as string)?.slice(0, 2) : ''" :color="data.avatarColor" :class="{ 'no-avatar': !data.avatarColor }" :size="28"
-          :font-size="14" />
-        <div class="member-info">
-          <div class="member-info-email w-full ellipsis-1">
-            {{ data.email }}
-          </div>
-          <div class="member-info-name">
-            {{ data.userName }}
-          </div>
-        </div>
-      </div>
+      <MemberInfo :avatar="data.avatar" :user-name="data.userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
     </template>
     <template #related="{ data }">
       <RelatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
@@ -279,41 +274,6 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     font-size: 12px;
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
-  }
-}
-
-.member {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xl, 12px);
-
-  .no-avatar {
-    border: 1px dashed var(--component-tag-border-hover, #C7CDD1);
-    border-radius: 50%;
-  }
-
-  &-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: var(--spacing-sm, 4px);
-    font-style: normal;
-    line-height: var(--Line-Height-text-xs, 16px);
-    font-weight: 500;
-    width: 240px;
-
-    &-email {
-      color: var(--colors-text-text-primary, #fafafa);
-      font-family: Inter;
-      font-size: 13px;
-    }
-
-    &-name {
-      color: var(--colors-text-text-tertiary, #575D60);
-      font-family: 'JetBrains Mono';
-      font-size: 12px;
-    }
   }
 }
 </style>

@@ -1,9 +1,10 @@
 <script lang="ts" setup>
+import MemberInfo from '/@/views/team/components/member-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap } from '/@/enums/'
 
 const { members = [] } = defineProps<{
-  members: any[]
+  members?: any[]
 }>()
 
 const roleLabelMap = getRoleLabelMap()
@@ -25,18 +26,18 @@ function toggle(event: Event) {
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
-            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor" :size="32" :font-size="16" />
-            <div class="flex flex-col gap-1">
-              <div class="member-name">{{ member.userName }}</div>
-              <div class="member-email">{{ member.email }}</div>
+            <MemberInfo :avatar="member.avatar" :user-name="member.userName" :avatar-color="member.avatarColor" :email="member.email" :phone="member.phone" />
+            <div class="flex items-center gap-2 ml-auto text-sm flex-shrink-0 member-role">
+              {{ roleLabelMap[member.role as keyof typeof roleLabelMap] }}
             </div>
-            <div class="flex items-center gap-2 ml-auto text-sm flex-shrink-0 member-role">{{ roleLabelMap[member.role as keyof typeof roleLabelMap] }}</div>
           </div>
         </div>
       </div>
     </div>
     <div class="manage-users">
-      <RouterLink :to="{ name: 'teams' }" @click.stop.prevent>{{ $t('管理成员') }}</RouterLink>
+      <RouterLink :to="{ name: 'teams' }" @click.stop.prevent>
+        {{ $t('管理成员') }}
+      </RouterLink>
     </div>
   </Popover>
 </template>
@@ -107,16 +108,8 @@ function toggle(event: Event) {
   border-radius: var(--radius-sm, 4px);
 }
 
-.member-name {
-  color: var(--colors-text-text-primary, #FAFAFA);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.member-email,
 .member-role {
-  color: var(--colors-text-text-secondary, #B2B6B8);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   font-size: 12px;
   line-height: 16px;
 }

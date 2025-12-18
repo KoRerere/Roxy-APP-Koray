@@ -1,49 +1,50 @@
-import type { UserGetBindCardListListData, UserGetUserConfigListData, UserGetUserInfoListData, UserGetUserPayInfoListData, UnwrapRowsType } from "@roxy/backend-api";
-import mixpanel from "mixpanel-browser";
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import { API } from "/@/api";
-import { $t } from "/@/locales";
-import { useSimpleLocale } from "/@/stores/locale";
-import { useWorkspaceStore } from "/@/stores/workspace";
-import { useTutorialStore } from "/@/stores/tutorial";
-import * as Sentry from "@sentry/vue";
-import { emitter } from "/@/utils/eventBus";
-import { useRoleStore } from "/@/stores/role";
-import { useToast } from "primevue/usetoast";
-import { PayIdentity, SubLevelEnum } from "/@/enums/pay";
-import { encryptAESGCM, hidePageLoading, isWindows, type OauthLoginType } from "/@/utils";
+import type { UnwrapRowsType, UserGetBindCardListListData, UserGetUserConfigListData, UserGetUserInfoListData, UserGetUserPayInfoListData } from '@roxy/backend-api'
+import mixpanel from 'mixpanel-browser'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { API } from '/@/api'
+import { $t } from '/@/locales'
+import { useSimpleLocale } from '/@/stores/locale'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useTutorialStore } from '/@/stores/tutorial'
+import * as Sentry from '@sentry/vue'
+import { emitter } from '/@/utils/eventBus'
+import { useRoleStore } from '/@/stores/role'
+import { useToast } from 'primevue/usetoast'
+import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
+import { encryptAESGCM, hidePageLoading, isWindows } from '/@/utils'
+import type { OauthLoginType } from '/@/utils'
 
-type UserInfo = Partial<UserGetUserInfoListData["data"]>;
-type UserConfig = Partial<UserGetUserConfigListData["data"]>;
+type UserInfo = Partial<UserGetUserInfoListData['data']>
+type UserConfig = Partial<UserGetUserConfigListData['data']>
 type UserCards = UnwrapRowsType<UserGetBindCardListListData>
-type UserPayInfo = UserGetUserPayInfoListData["data"];
+type UserPayInfo = UserGetUserPayInfoListData['data']
+type LoginWay = 'password' | 'phone' | OauthLoginType
 
 export const useUserStore = defineStore(
-  "user",
+  'user',
   () => {
     const router = useRouter()
     const toast = useToast()
-    const locale = useSimpleLocale();
-    const workspaceStore = useWorkspaceStore();
-    const tutorialStore = useTutorialStore();
-    const roleStore = useRoleStore();
+    const locale = useSimpleLocale()
+    const workspaceStore = useWorkspaceStore()
+    const tutorialStore = useTutorialStore()
+    const roleStore = useRoleStore()
 
     // 登录方式
-    const loginWay = ref<'password' | OauthLoginType>('password');
+    const loginWay = ref<LoginWay | undefined>()
     /** 用户信息 */
-    const userInfo = ref<UserInfo>({});
+    const userInfo = ref<UserInfo>({})
     /** 用户付费详情 */
-    const userPayInfo = ref<UserPayInfo>({} as UserPayInfo);
+    const userPayInfo = ref<UserPayInfo>({} as UserPayInfo)
     const userCards = ref<UserCards>()
 
-
-    const userConfig = ref<UserConfig>({});
-    const token = ref('');
-    const appVersion = ref("");
-    const rememberMe = ref(false);
+    const userConfig = ref<UserConfig>({})
+    const token = ref('')
+    const appVersion = ref('')
+    const rememberMe = ref(false)
     /** rememberMe 为 true 的时候有值 */
-    const password = ref("");
+    const password = ref('')
 
     /** 是否为过期用户 */
     const isExpiredUser = computed(() => {
@@ -57,7 +58,7 @@ export const useUserStore = defineStore(
 
     /** 用户身份 */
     const identityInfo = computed<{
-      identity: PayIdentity;
+      identity: PayIdentity
       text: string
       color: string
       icon?: string
@@ -66,56 +67,57 @@ export const useUserStore = defineStore(
       const identity = userInfo.value.identity as PayIdentity
       const identityMap = {
         [PayIdentity.new]: {
-          text: $t("普通用户"),
-          color: "var(--colors-text-text-primary)",
+          text: $t('普通用户'),
+          color: 'var(--colors-text-text-primary)',
         },
         [PayIdentity.invited]: {
-          text: $t("特邀用户"),
-          icon: "referral-program/diamond",
-          iconSmall: "referral-program/diamond-small",
-          color: "#7B88C2",
+          text: $t('特邀用户'),
+          icon: 'referral-program/diamond',
+          iconSmall: 'referral-program/diamond-small',
+          color: '#7B88C2',
         },
         [PayIdentity.old]: {
-          text: $t("创始用户"),
-          icon: "referral-program/golden",
-          iconSmall: "referral-program/golden-small",
-          color: "#DFAB65",
+          text: $t('创始用户'),
+          icon: 'referral-program/golden',
+          iconSmall: 'referral-program/golden-small',
+          color: '#DFAB65',
         },
         [PayIdentity.premium]: {
-          text: $t("尊享会员"),
-          icon: "referral-program/premium",
-          iconSmall: "referral-program/premium-small",
-          color: "var(--colors-text-text-primary)",
+          text: $t('尊享会员'),
+          icon: 'referral-program/premium',
+          iconSmall: 'referral-program/premium-small',
+          color: 'var(--colors-text-text-primary)',
         },
         [PayIdentity.partner]: {
-          text: $t("合作伙伴"),
-          icon: "referral-program/partner",
-          iconSmall: "referral-program/partner-small",
-          color: "var(--colors-text-text-primary)",
+          text: $t('合作伙伴'),
+          icon: 'referral-program/partner',
+          iconSmall: 'referral-program/partner-small',
+          color: 'var(--colors-text-text-primary)',
         },
         [PayIdentity.agent]: {
-          text: $t("高级合作伙伴"),
-          icon: "referral-program/agent",
-          iconSmall: "referral-program/agent-small",
-          color: "var(--colors-text-text-primary)",
+          text: $t('高级合作伙伴'),
+          icon: 'referral-program/agent',
+          iconSmall: 'referral-program/agent-small',
+          color: 'var(--colors-text-text-primary)',
         },
       }
-      return { identity, ...identityMap[identity] };
-    });
+      return { identity, ...identityMap[identity] }
+    })
 
     async function getUserInfo() {
-      const { code, data } = await fetchUserInfo();
+      const { code, data } = await fetchUserInfo()
 
       if (code === 0) {
-        setUserInfo(data);
-        workspaceStore.setCurrentWorkspace(data.workspaceId);
+        setUserInfo(data)
+        workspaceStore.setCurrentWorkspace(data.workspaceId)
         setTimeout(() => {
           hidePageLoading()
         }, 10000)
-      } else {
+      }
+      else {
         // 如果获取用户信息失败，则清除用户信息
-        clearUserInfo();
-        router.push({ name: "login" });
+        clearUserInfo()
+        router.push({ name: 'login' })
         toast.add({
           severity: 'error',
           summary: $t('提示'),
@@ -127,25 +129,25 @@ export const useUserStore = defineStore(
 
     /** 检查是否显示账号设置弹窗 */
     function checkShowAccountSetupDialog() {
-      if (userInfo.value.isBindEmail === false) {
+      if (userInfo.value.isBindEmail === false && !userInfo.value.phone) {
         emitter.emit('showAccountSetupDialog')
       }
     }
 
     async function fetchUserInfo() {
-      const result = await API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList());
+      const result = await API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
       if (result.code === 0) {
-        userInfo.value = result.data;
+        userInfo.value = result.data
         checkShowAccountSetupDialog()
       }
-      return result;
+      return result
     }
 
     async function setUserInfo(info: UserInfo) {
-      userInfo.value = info;
-      const appSoftConfig = await window.electronAPI.send("app:getSoftConfig");
+      userInfo.value = info
+      const appSoftConfig = await window.electronAPI.send('app:getSoftConfig')
 
-      const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000;
+      const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000
 
       // 如果是 5 分钟内的新用户，则记录新用户事件
       if (isNewUser && appSoftConfig.visitorId) {
@@ -165,32 +167,32 @@ export const useUserStore = defineStore(
 
       // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
       setTimeout(() => {
-        window.electronAPI.send("user:setUserInfo", {
+        window.electronAPI.send('user:setUserInfo', {
           token: token.value,
           userId: userInfo.value.id!,
           workspaceId: userInfo.value.workspaceId!,
           userName: userInfo.value.userName!,
           email: userInfo.value.email!,
-        });
+        })
         const openPageUrl = sessionStorage.getItem('openPageUrl')
         if (openPageUrl) {
           sessionStorage.removeItem('openPageUrl')
           router.push(openPageUrl)
         }
-      });
+      })
 
       requestIdleCallback(async () => {
-        const scope = Sentry.getCurrentScope();
+        const scope = Sentry.getCurrentScope()
         scope.setUser({
           id: userInfo.value.id,
           email: userInfo.value.email,
           username: userInfo.value.userName,
-        });
+        })
         scope.setTag('process', 'renderer')
 
-        mixpanel.identify(String(userInfo.value.id));
+        mixpanel.identify(String(userInfo.value.id))
 
-        const localNetwork = await window.electronAPI.send("proxy:detectNetwork", "local");
+        const localNetwork = await window.electronAPI.send('proxy:detectNetwork', 'local')
 
         mixpanel.people.set({
           $name: userInfo.value.userName,
@@ -200,8 +202,8 @@ export const useUserStore = defineStore(
           $city: localNetwork.city,
           $localNetwork: localNetwork,
           $appVersion: appVersion.value,
-        });
-      });
+        })
+      })
     }
 
     async function clearUserInfo() {
@@ -210,7 +212,8 @@ export const useUserStore = defineStore(
         userInfo.value = {
           email: userInfo.value.email,
         }
-      } else {
+      }
+      else {
         userInfo.value = {}
         password.value = ''
       }
@@ -224,31 +227,32 @@ export const useUserStore = defineStore(
 
     async function getUserConfig(force = false) {
       if (!force && Object.keys(userConfig.value).length > 0) {
-        return userConfig.value;
+        return userConfig.value
       }
-      return updateUserConfig();
+      return updateUserConfig()
     }
 
     async function updateUserConfig() {
-      const { code, data } = await API.base.userGetUserConfigList();
+      const { code, data } = await API.base.userGetUserConfigList()
       if (code === 0) {
-        userConfig.value = data;
+        userConfig.value = data
       }
-      return userConfig.value;
+      return userConfig.value
     }
 
     async function setUserConfig(config: UserConfig) {
       const { code } = await API.base.userSetUserConfigCreate(config)
-      if (code !== 0) return
+      if (code !== 0)
+        return
       updateUserConfig()
     }
 
     /** 获取用户付费详情 */
     async function getUserPayInfo() {
-      const { code, data } = await API.pay.userGetUserPayInfoList();
+      const { code, data } = await API.pay.userGetUserPayInfoList()
 
       if (code === 0) {
-        userPayInfo.value = data;
+        userPayInfo.value = data
         if (roleStore.isOwner) {
           // 如果用户付费信息过期，则显示弹窗
           if (data.showSubExpiredDlg) {
@@ -268,9 +272,9 @@ export const useUserStore = defineStore(
             // 免费用户或者过期用户，关闭窗口同步器
             console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
             if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
-              electronAPI.send('syncControl:close');
+              electronAPI.send('syncControl:close')
               setTimeout(() => {
-                electronAPI.send('syncControl:stop', false);
+                electronAPI.send('syncControl:stop', false)
               }, 500)
             }
           }
@@ -279,8 +283,10 @@ export const useUserStore = defineStore(
     }
 
     async function getUserCards(force = false) {
-      if (!roleStore.isOwner) return
-      if (!force && userCards.value) return userCards.value
+      if (!roleStore.isOwner)
+        return
+      if (!force && userCards.value)
+        return userCards.value
       const { code, data } = await API.pay.userGetBindCardListList({})
       if (code === 0) {
         userCards.value = data.rows
@@ -289,34 +295,34 @@ export const useUserStore = defineStore(
     }
 
     function setToken(_token: string) {
-      token.value = _token;
+      token.value = _token
     }
 
     /** 记住我的时候需要保存密码 */
     async function setPassword(pwd: string) {
-      password.value = await encryptAESGCM(pwd);
+      password.value = await encryptAESGCM(pwd)
     }
 
     const initUserInfo = async () => {
       if (token.value) {
-        await getUserInfo();
-        getUserConfig(true);
+        await getUserInfo()
+        getUserConfig(true)
       }
-    };
+    }
 
-    scheduler.postTask(initUserInfo, { priority: "background" });
+    scheduler.postTask(initUserInfo, { priority: 'background' })
 
     requestIdleCallback(async () => {
-      const version = await electronAPI.send("app:getAppVersion");
-      appVersion.value = version;
-    });
+      const version = await electronAPI.send('app:getAppVersion')
+      appVersion.value = version
+    })
 
     function clearRememberMe() {
       rememberMe.value = false
       password.value = ''
     }
 
-    function setLoginWay(way: 'password' | OauthLoginType) {
+    function setLoginWay(way: LoginWay) {
       loginWay.value = way
     }
 
@@ -345,12 +351,12 @@ export const useUserStore = defineStore(
       getUserCards,
       initUserInfo,
       clearRememberMe,
-      setLoginWay
-    };
+      setLoginWay,
+    }
   },
   {
     persist: {
       pick: ['token', 'rememberMe', 'password', 'userInfo.email', 'loginWay'],
     },
   },
-);
+)

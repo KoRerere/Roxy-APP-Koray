@@ -1,19 +1,20 @@
 <script setup lang="tsx">
-import type { CheckOtherDeviceLoginListParams, LoginCreateData, LoginCreatePayload } from '@roxy/backend-api'
-import { useToast } from 'primevue/usetoast'
+import type { CheckOtherDeviceLoginListParams, LoginCreateData, LoginCreatePayload, LoginPhoneCreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback, type OauthLoginType } from '/@/utils'
-import { EmailCodeInputOtp, ResetPassword, SignForm, Verify2fa, RecoveryCode, RecoveryEmail } from './components/'
+import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback } from '/@/utils'
+import type { OauthLoginType } from '/@/utils'
+import { EmailCodeInputOtp, RecoveryCode, RecoveryEmail, ResetPassword, SignForm, Verify2fa } from './components/'
 import MigrationTips from './components/migration-tips.vue'
-import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
+import { provideLoginContext } from './hooks/useLoginContext'
+import type { CurrentComp } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
 import AppUpdater from './components/app-updater.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { motion, AnimatePresence } from 'motion-v'
+import { AnimatePresence, motion } from 'motion-v'
 import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -22,39 +23,43 @@ import { Role, WorkspaceType } from '/@/enums'
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
-const { getOfficialWebsite, } = simpleLocaleStore
+const { getOfficialWebsite } = simpleLocaleStore
 const { setToken, setPassword, initUserInfo, setLoginWay } = useUserStore()
 
 const { rememberMe, password, userInfo } = storeToRefs(useUserStore())
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
+const [showModal] = useDialog()
 const router = useRouter()
-const toast = useToast()
-const signFormData = ref<LoginCreatePayload>({
+const signFormData = ref<LoginCreatePayload & LoginPhoneCreatePayload>({
   user_name: userInfo.value.email || '',
   password: '',
+  phone: '',
+  verCode: '',
 })
 const updateInfo = ref<ResourceUpdateMessage>()
 const signFormSwitchRegister = ref(false)
 const tempToken = ref()
 const recoverType = ref()
 const recoverEmail = ref()
+const loginWay = ref<'password' | 'phone' | OauthLoginType>('password')
+
+const currentComp = ref<CurrentComp>('signForm')
+const currentCompProps = ref<Recordable>()
 
 const showUpdaterMessage = computed(() => {
   return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
 })
 
-const currentComp = ref<CurrentComp>('signForm')
-const currentCompProps = ref<Recordable>()
-const [showModal] = useDialog()
-
 async function decryptPassword() {
   if (password.value) {
     try {
       signFormData.value.password = atob(password.value)
-    } catch (e) {
+    }
+    catch (e) {
       try {
         signFormData.value.password = await decryptAESGCM(password.value)
-      } catch (e) {
+      }
+      catch (e) {
         console.error('decrypt password error', e)
       }
     }
@@ -64,16 +69,20 @@ async function decryptPassword() {
 decryptPassword()
 
 async function handleSubmit() {
-  console.log(signFormData)
-  signFormData.value.user_name = signFormData.value.user_name.trim()
+  const { user_name, password } = signFormData.value
 
-  const isContinueLogin = await checkContinueLogin({ ...signFormData.value, login_type: 'login' })
-  console.log('isContinueLogin', isContinueLogin)
+  const params = {
+    user_name: user_name.trim(),
+    password: password.trim(),
+  }
+
+  const isContinueLogin = await checkContinueLogin({ ...params, login_type: 'login' })
   if (!isContinueLogin) {
     return
   }
 
-  const { code, data, msg } = await API.base.loginCreate(signFormData.value)
+  loginWay.value = 'password'
+  const { code, data, msg } = await API.base.loginCreate(params)
 
   if (code !== 0) {
     if (code === 420) {
@@ -82,7 +91,47 @@ async function handleSubmit() {
     }
 
     mixpanel.track('login', { method: 'password', success: false, error: msg })
-    toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
+    onlyErrorToast(code, msg || $t('登录失败'))
+    return
+  }
+  if (data.workspaceId === 0) {
+    showModal({
+      slots: {
+        container: ({ hideModal }) => (
+          <MigrationTips closeCallback={hideModal} token={data.token} onFinish={() => afterLogin(data)} />
+        ),
+      },
+    })
+    return
+  }
+
+  await afterLogin(data)
+}
+
+async function handleSubmitByPhone() {
+  const { phone, verCode } = signFormData.value
+
+  const params = {
+    phone: phone.trim(),
+    verCode: verCode.trim(),
+  }
+
+  const isContinueLogin = await checkContinueLogin({ ...params, login_type: 'login' })
+  if (!isContinueLogin) {
+    return
+  }
+
+  loginWay.value = 'phone'
+  const { code, data, msg } = await API.base.loginPhoneCreate(params)
+
+  if (code !== 0) {
+    if (code === 420) {
+      to2faVerify(data)
+      return
+    }
+
+    mixpanel.track('login', { method: 'password', success: false, error: msg })
+    onlyErrorToast(code, msg || $t('登录失败'))
     return
   }
   if (data.workspaceId === 0) {
@@ -116,23 +165,24 @@ async function handleSubmitBy2fa(faCode: string) {
 
   const { code: code2, data, msg: msg2 } = await API.base.get2FaLoginInfoList({ temp_token: tempToken.value, type: '2fa_code' })
   onlyErrorToast(code2, msg2)
-  if (code2 !== 0) return
+  if (code2 !== 0)
+    return
   afterLogin(data)
 }
 
-async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | OauthLoginType = 'password') {
+async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
   await initUserInfo()
   showPageLoading()
   setPassword(rememberMe.value ? signFormData.value.password : '')
-  setLoginWay(method)
+  setLoginWay(loginWay.value)
   API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
 
   const name = userInfo.value.workspaceType === WorkspaceType.Public && userInfo.value.role !== Role.OWNER ? 'shared' : 'home'
   await router.push({ name })
 
-  mixpanel.track('login', { method })
+  mixpanel.track('login', { method: loginWay.value })
 }
 
 /** 是否继续登录，true 为继续，false 停止 */
@@ -141,7 +191,7 @@ async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
   const { code, data, msg } = await API.base.checkOtherDeviceLoginList(params)
 
   if (code !== 0) {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
+    onlyErrorToast(code, msg || $t('登录失败'))
     resolve(false)
     return promise
   }
@@ -150,7 +200,8 @@ async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
 
   if (!has_other_login) {
     resolve(true)
-  } else {
+  }
+  else {
     showModal({
       header: $t('登录提醒'),
       style: {
@@ -158,9 +209,11 @@ async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
       },
       okText: $t('继续登录'),
       slots: {
-        default: () => <div>
-          <div>{$t('您的账号已在另一台设备登录，继续登录将使其下线')}</div>
-        </div>,
+        default: () => (
+          <div>
+            <div>{$t('您的账号已在另一台设备登录，继续登录将使其下线')}</div>
+          </div>
+        ),
       },
       handleOk() {
         resolve(true)
@@ -190,6 +243,7 @@ useOauth2Callback(async (params) => {
         return
       }
 
+      loginWay.value = source
       const { code, data, msg = $t('登录失败') } = await api()
 
       if (code !== 0) {
@@ -199,7 +253,7 @@ useOauth2Callback(async (params) => {
         }
 
         mixpanel.track('login', { method: source, success: false, error: msg })
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+        onlyErrorToast(code, msg)
         return
       }
 
@@ -214,11 +268,12 @@ useOauth2Callback(async (params) => {
         return
       }
       window.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
-      afterLogin(data, source)
+      afterLogin(data)
     }
     catch (e) {
       console.error('oauth2 error', e)
-    } finally {
+    }
+    finally {
       signFormRef.value?.setSubmitLoading(false)
     }
   }
@@ -228,7 +283,7 @@ useOauth2Callback(async (params) => {
 })
 
 electronAPI.send('app:getGPUFeatureStatus').then((res) => {
-  isSupportGPU.value = res['2d_canvas'] === 'enabled' && res['webgl'] === 'enabled'
+  isSupportGPU.value = res['2d_canvas'] === 'enabled' && res.webgl === 'enabled'
 })
 
 electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
@@ -236,7 +291,7 @@ electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
   if (res) {
     setPassword('')
     signFormData.value.password = ''
-    toast.add({ severity: 'info', summary: $t('您已长时间未登录，请重新登录'), life: 5000 })
+    showToast(0, '', { severity: 'info', summary: $t('您已长时间未登录，请重新登录'), life: 5000 })
     nextTick(() => {
       signFormRef.value?.clearValidateMessages()
     })
@@ -253,7 +308,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 electronAPI.send('app:checkForUpdates')
 
 requestIdleCallback(hidePageLoading)
-let timer = setInterval(hidePageLoading, 3000)
+const timer = setInterval(hidePageLoading, 3000)
 
 onBeforeUnmount(() => {
   clearInterval(timer)
@@ -268,6 +323,7 @@ provideLoginContext({
     return signFormData.value
   },
   toSignIn: handleSubmit,
+  toSignInByPhone: handleSubmitByPhone,
 })
 </script>
 
@@ -286,10 +342,10 @@ provideLoginContext({
         </div>
 
         <div class="sign-card">
-          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
+          <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
-          <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :onConfirm="handleSubmitBy2fa" />
+          <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :on-confirm="handleSubmitBy2fa" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
           <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
         </div>
@@ -307,7 +363,8 @@ provideLoginContext({
 
         <AnimatePresence>
           <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-            :transition="{ duration: 0.2 }" class="app-updater-motion">
+                      :transition="{ duration: 0.2 }" class="app-updater-motion"
+          >
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>
         </AnimatePresence>
@@ -320,7 +377,6 @@ provideLoginContext({
       <RightIntro />
     </div>
   </div>
-
 </template>
 
 <style lang="scss" scoped>
@@ -334,7 +390,10 @@ provideLoginContext({
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
-  box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0px 3px 8px 0px rgba(0, 0, 0, 0.07),
+    0px 2px 5px 0px rgba(0, 0, 0, 0.07),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.07);
   cursor: pointer;
 }
 
@@ -362,7 +421,7 @@ provideLoginContext({
   transform: translateX(-50%);
   bottom: 20px;
   z-index: 10;
-  color: var(--colors-text-text-tertiary, #FFF);
+  color: var(--colors-text-text-tertiary, #fff);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -419,12 +478,12 @@ provideLoginContext({
 }
 
 .right-panel {
-  background: linear-gradient(180deg, #12A3FC 0%, #CDEBFE 100%);
+  background: linear-gradient(180deg, #12a3fc 0%, #cdebfe 100%);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   .right-panel {
-    background: linear-gradient(180deg, #0A5D9D 0%, #5C8F9E 100%);
+    background: linear-gradient(180deg, #0a5d9d 0%, #5c8f9e 100%);
   }
 }
 </style>

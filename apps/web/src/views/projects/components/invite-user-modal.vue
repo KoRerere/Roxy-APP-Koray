@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import Fuse from 'fuse.js'
 import RoleSplit from './role-split.vue'
-import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue';
-import { API } from '/@/api';
-import { $t } from '/@/locales';
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
+import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
+import MemberInfo from '/@/views/team/components/member-info.vue'
+import Fuse from 'fuse.js'
+import { API } from '/@/api'
+import { $t } from '/@/locales'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { getRoleLabelMap, Role } from '/@/enums/'
-import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete';
+import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete'
 
 interface Props {
   project?: Record<string, any>
@@ -19,8 +20,17 @@ interface Props {
   onBeforeClose?: (refresh?: boolean) => void
 }
 
-const { project, projects, projectValues, allMembers = [], multiple = false, inviteRole = Role.VIEWER, onBeforeClose } = defineProps<Props>()
-const emit = defineEmits(['close'])
+const {
+  project,
+  projects,
+  projectValues,
+  allMembers = [],
+  multiple = false,
+  inviteRole = Role.VIEWER,
+  onBeforeClose,
+} = defineProps<Props>()
+
+defineEmits(['close'])
 
 const roleLabelMap = getRoleLabelMap()
 const [showToast] = useResponseToast()
@@ -37,17 +47,17 @@ const memberValue = ref()
 const isNewMember = computed(() => typeof memberValue.value === 'string')
 const otherMembers = computed(() => multiple
   ? currentMembers.value
-  : allMembers.filter(member => !!member.status && !currentMembers.value.some(m => m.userId === member.userId))
+  : allMembers.filter(member => !!member.status && !currentMembers.value.some(m => m.userId === member.userId)),
 )
 
 const fuse = computed(() => new Fuse(otherMembers.value, {
   threshold: 0.3,
-  keys: ['email'],
+  keys: ['email', 'phone'],
 }))
 
 watch(() => memberValue.value, (value) => {
   if (typeof value === 'string') {
-    const member = otherMembers.value.find(item => item.email === value.trim())
+    const member = otherMembers.value.find(item => item.email === value.trim() && !!item.userId)
     if (member) {
       roleValue.value = member.role
       memberValue.value = member
@@ -62,8 +72,9 @@ onBeforeUnmount(() => {
 function onSearch(event: AutoCompleteCompleteEvent) {
   if (!event.query.trim().length) {
     filteredMembers.value = [...otherMembers.value]
-  } else {
-    filteredMembers.value = fuse.value.search(event.query).map(member => member.item)
+  }
+  else {
+    filteredMembers.value = fuse.value.search(event.query).filter(member => !!member.item.userId).map(member => member.item)
   }
 }
 
@@ -78,7 +89,8 @@ async function joinProject() {
 
   const { code, msg } = await API.team.userMdfTeamInfoV2Create({ userId, role, projectIds })
   showToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   updateCurrentMembers(toRaw(memberValue.value))
 }
 
@@ -101,13 +113,15 @@ async function inviteNewMember() {
   })
 
   handleBusinessCode(code, () => {
-    if (code == 0) {
-      showToast(code, $t("邀请已发送"))
-    } else {
+    if (code === 0) {
+      showToast(code, $t('邀请已发送'))
+    }
+    else {
       showToast(code, msg)
     }
   })
-  if (code !== 0) return
+  if (code !== 0)
+    return
   updateCurrentMembers({
     userName: '--',
     email: memberValue.value,
@@ -124,54 +138,48 @@ function updateCurrentMembers(member: Record<string, any>) {
 </script>
 
 <template>
-  <div class="flex flex-col pa-6 pt-4 gap-6 max-h-[80vh] overflow-y-auto popup">
+  <div class="flex flex-col pa-6 pt-4 gap-6 max-h-[80vh] overflow-y-auto w-120">
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('邀请用户加入{project}', { project: project?.projectName }) }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary, #575D60)" @click="$emit('close')" />
     </div>
     <template v-if="projects?.length && roleValue !== Role.MANAGER">
       <div class="flex flex-col gap-2">
-        <div class="title">{{ $t('选择项目') }}</div>
-        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" optionValue="value" />
+        <div class="title">
+          {{ $t('选择项目') }}
+        </div>
+        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" option-value="value" />
       </div>
-      <div class="separator"></div>
+      <div class="separator" />
     </template>
     <div class="flex flex-col gap-2">
-      <div class="title">{{ $t('成员邮箱') }}</div>
+      <div class="title">
+        {{ $t('成员邮箱/手机号') }}
+      </div>
       <div class="w-full flex items-center gap-2">
         <div class="flex-1 relative">
           <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="!absolute right-2 position-y-center z-1" />
-          <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
-            :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }">
+          <RxAutoComplete v-model="memberValue" class="w-full" size="lg" option-label="email" :placeholder="$t('成员邮箱/手机号')" :suggestions="filteredMembers"
+                          :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }" @complete="onSearch" @option-select="onOptionSelect"
+          >
             <template #option="{ option }">
-              <div class="flex items-center gap-2">
-                <RxAvatar :avatar="option.avatar" :name="option.userName.slice(0, 2)" :color="option.avatarColor" :size="28" :font-size="14" />
-                <div>
-                  <div :class="member.name">{{ option.email }}</div>
-                  <div :class="member.email">{{ option.userName }}</div>
-                </div>
-              </div>
+              <MemberInfo :avatar="option.avatar" :user-name="option.userName" :avatar-color="option.avatarColor" :email="option.email" :phone="option.phone" />
             </template>
             <template #empty>
-              <span></span>
-              <!-- <div class="flex flex-row items-center gap-2">
-                <div class="text-sm">{{ $t('未找到已有成员') }}</div>
-              </div> -->
+              <span />
             </template>
           </RxAutoComplete>
         </div>
         <RxButton size="lg" :label="$t('邀请')" :disabled="!memberValue" @click="inviteNewMember" />
       </div>
     </div>
-    <div class="flex flex-col gap-2" v-if="!multiple && currentMembers?.length">
-      <div class="title">{{ $t('当前项目成员列表') }}</div>
+    <div v-if="!multiple && currentMembers?.length" class="flex flex-col gap-2">
+      <div class="title">
+        {{ $t('当前项目成员列表') }}
+      </div>
       <div class="member-list">
-        <div class="flex items-center gap-2 member-item" v-for="item in currentMembers" :key="item.id">
-          <RxAvatar :avatar="item.avatar" :name="item.userName.slice(0, 2)" :color="item.avatarColor" :size="28" :font-size="14" />
-          <div class="flex-1">
-            <div :class="member.email">{{ item.email }}</div>
-            <div :class="member.name">{{ item.userName }}</div>
-          </div>
+        <div v-for="item in currentMembers" :key="item.id" class="flex items-center gap-2 member-item">
+          <MemberInfo class="flex-1" :avatar="item.avatar" :user-name="item.userName" :avatar-color="item.avatarColor" :email="item.email" :phone="item.phone" />
           <RxTag disabled :label="roleLabelMap[item.role as keyof typeof roleLabelMap]" />
         </div>
       </div>
@@ -179,42 +187,23 @@ function updateCurrentMembers(member: Record<string, any>) {
   </div>
 </template>
 
-<style module="member">
-.email {
-  color: var(--colors-text-text-primary);
-  font-size: 13px;
-  line-height: 16px;
-}
-
-.name {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 16px;
-}
-</style>
-
 <style lang="scss" scoped>
 :deep(.p-inputtext) {
   padding-right: 100px !important;
 }
 
-.popup {
-  width: 480px;
-}
-
 .header {
-  color: var(--colors-text-text-primary, #111213);
-  font-family: Inter;
+  color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
 }
 
 .title {
-  color: var(--colors-text-text-primary, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
   font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
 }
 
 .separator {

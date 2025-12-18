@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { deepClone } from '/@/utils'
+import { motion } from 'motion-v'
 
 const props = defineProps({
   selection: {
@@ -18,7 +19,7 @@ const props = defineProps({
   batchOperation: {
     type: Function,
     default: () => () => { },
-  }
+  },
 })
 
 const emit = defineEmits(['clearSelection', 'batchMore'])
@@ -26,7 +27,8 @@ const emit = defineEmits(['clearSelection', 'batchMore'])
 const loadingMap = ref<Record<string, boolean>>({})
 const multipleOptions = computed<Record<string, any>>(() => {
   const { menu, group, count } = props.operation.reduce((acc, item) => {
-    if (!item.multiple) return acc
+    if (!item.multiple)
+      return acc
     const { items, ...rest } = toRaw(item)
     acc.menu.push({ ...rest, items: items?.filter((it: any) => it.multiple !== false) })
 
@@ -62,7 +64,13 @@ function onMore(event: Event) {
 </script>
 
 <template>
-  <div class="multiple">
+  <motion.div
+    class="multiple"
+    :initial="{ scale: 0.98, x: '-50%', opacity: 0 }"
+    :animate="{ scale: 1, x: '-50%', opacity: 1 }"
+    :exit="{ scale: 0.98, x: '-50%', opacity: 0 }"
+    :transition="{ duration: 0.32, ease: [0, 0.71, 0.2, 1.01] }"
+  >
     <div class="multiple-selected">
       <div>
         <i18n-t :keypath="$t('{selected} / {total} 已选中', { selected: '{selected}', total: '{total}' })" scope="global">
@@ -79,16 +87,17 @@ function onMore(event: Event) {
     <slot name="custom-operation">
       <div v-for="(list, index) in multipleOptions.group" :key="index" class="multiple-group">
         <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
-          @click="_batchOperation($event, item._rawItem)">
+             @click="_batchOperation($event, item._rawItem)"
+        >
           <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
-          <span class="icon-label" v-if="item.showLabel">{{ item.label }}</span>
+          <span v-if="item.showLabel" class="icon-label">{{ item.label }}</span>
         </div>
       </div>
       <div v-if="multipleOptions.showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
         <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" />
       </div>
     </slot>
-  </div>
+  </motion.div>
 </template>
 
 <style lang="scss" scoped>
@@ -96,8 +105,9 @@ function onMore(event: Event) {
   position: absolute;
   left: 50%;
   bottom: 15%;
-  transform: translateX(-50%);
+  // transform: translateX(-50%);
   z-index: 99;
+  min-height: 42px;
 
   display: inline-flex;
   padding: var(--spacing-sm, 4px);
@@ -109,6 +119,13 @@ function onMore(event: Event) {
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+
+  // 优化动画过程中的字体渲染
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   &-selected,
   &-group {

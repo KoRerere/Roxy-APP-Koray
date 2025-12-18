@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import TsForm from '/@/views/lab/components/form/index.vue'
-import RxVerificationCodeSender from '/@/components/rx-verification-code-sender.vue';
-import VerifyModal from '/@/views/login/components/recovery/verify-modal.vue';
-import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/setps-2fa.vue';
+import RxVerificationCodeSender from '/@/components/rx-verification-code-sender.vue'
+import VerifyModal from '/@/views/login/components/recovery/verify-modal.vue'
+import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/setps-2fa.vue'
 import { $t } from '/@/locales'
 import { useLoginContext } from '/@/views/login/hooks/useLoginContext'
 import { useThemeStore } from '/@/stores/theme'
 import { useDialog } from '/@/hooks/useDialog'
-import { API } from '/@/api';
-import { useResponseToast } from '/@/hooks/useResponseToast';
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 interface Props {
   tempToken: string
@@ -21,7 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const themeStore = useThemeStore()
-const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
+const { setCurrentComponent } = useLoginContext()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -49,8 +49,8 @@ const inputs = ref([
         if (res.code === 0) {
           showToast(res.code, $t('验证码已发送'))
         }
-        return res as any;
-      }
+        return res as any
+      },
     }),
   },
 ])
@@ -58,7 +58,8 @@ const inputs = ref([
 async function handleSubmit({ ver_code }: Record<string, any>) {
   const { code, data, msg } = await API.base.verifyValidatorEmailVerifyCodeCreate({ temp_token: tempToken, ver_code: ver_code.trim() })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   verifyPassword(data)
 }
 
@@ -69,7 +70,7 @@ function verifyPassword(email: string) {
     blockScroll: true,
     closeOnEscape: false,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(VerifyModal, {
@@ -77,7 +78,8 @@ function verifyPassword(email: string) {
         onConfirm: async (formData: any) => {
           const { code, msg } = await API.base.checkEmailPasswordCreate({ temp_token: tempToken, ...formData })
           onlyErrorToast(code, msg)
-          if (code !== 0) return
+          if (code !== 0)
+            return
           visible2FA.value = true
           hideModal()
         },
@@ -90,30 +92,35 @@ function verifyPassword(email: string) {
 }
 
 function hideDialog() {
-  visible2FA.value = false;
+  visible2FA.value = false
 }
 
 async function getLoginBy2FA() {
   const { code, data, msg } = await API.base.get2FaLoginInfoList({ temp_token: tempToken, type: 'recover_email' })
 
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
 
-  visible2FA.value = false;
+  visible2FA.value = false
   emit('success', data)
 }
 </script>
 
 <template>
   <div class="flex flex-col items-start gap-6">
-    <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回登录')" @click="setCurrentComponent('signForm')"></RxButton>
-    <img class="mx-auto w-32" :src="imgSrc"></img>
+    <RxButton class="-ml-3" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回登录')" @click="setCurrentComponent('signForm')" />
+    <img class="mx-auto w-32" :src="imgSrc">
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-3">
-        <div class="description">{{ $t('如果您无法访问您的身份验证器应用，请输入您的恢复邮箱 ({email}) 和代码来验证您的身份', { email: recoverEmail }) }}</div>
-        <TsForm ref="wcis" id="wcis" :inputs="inputs" @submit="handleSubmit" />
+        <div class="description">
+          {{ $t('如果您无法访问您的身份验证器应用，请输入您的恢复邮箱 ({email}) 和代码来验证您的身份', { email: recoverEmail }) }}
+        </div>
+        <TsForm id="wcis" ref="wcis" :inputs="inputs" @submit="handleSubmit" />
       </div>
-      <RxButton size="md" class="w-full" type="submit" form="wcis">{{ $t('确认') }}</RxButton>
+      <RxButton size="md" class="w-full" type="submit" form="wcis">
+        {{ $t('确认') }}
+      </RxButton>
       <i18n-t class="description" tag="div" :keypath="$t('无法使用您的身份验证器应用程序或恢复邮箱？请{recovery}。', { recovery: '{recovery}' })" scope="global">
         <template #recovery>
           <a class="description-link" @click="$showLiveChat">{{ $t('联系我们') }}</a>

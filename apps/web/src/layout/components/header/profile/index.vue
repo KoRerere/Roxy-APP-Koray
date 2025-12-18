@@ -17,6 +17,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import type { SvgNames } from '/@/components/rx-icon/'
+import { usePreventMask } from '/@/hooks/usePreventMask'
 
 const router = useRouter()
 const dialog = useDialog()
@@ -27,6 +28,7 @@ const styles = useCssModule()
 const { planSuccess } = usePay()
 const [showModal] = useDialogHook()
 const [showToast] = useResponseToast()
+const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const menuRef = useTemplateRef('menu')
 
@@ -60,7 +62,7 @@ const items = computed(() => {
               </div>
               <Identity />
             </div>
-            <div class={styles['user-email']}>{userStore.userInfo.email}</div>
+            <div class={styles['user-email']}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
           </div>
         )
       },
@@ -236,8 +238,9 @@ function showLogoutConfirm() {
 }
 
 function copyUserInfo() {
-  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
-  showToast(0, $t('用户名与邮箱已复制到剪贴板'))
+  const { userName, email, phone } = userStore.userInfo
+  copyText(`${userName}\n${email || phone || ''}`)
+  showToast(0, $t('复制成功'))
 }
 
 function openSettings(activeKey: string, anchorPoint?: string) {
@@ -280,7 +283,7 @@ function toggle(event: Event) {
   </div>
 
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="menu" :model="items" popup :pt="{ root: 'w-[240px]' }">
+  <TieredMenu ref="menu" :model="items" popup :pt="{ root: 'w-[240px]' }" @hide="hidePreventMask" @show="showPreventMask">
     <template #item="{ item, props, hasSubmenu }">
       <a v-ripple class="flex items-center" v-bind="props.action">
         <component :is="item.render" v-if="item.render" />

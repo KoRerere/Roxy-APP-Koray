@@ -46,6 +46,8 @@ import {
   LoginGithubCreatePayload,
   LoginGoogleV2CreateData,
   LoginGoogleV2CreatePayload,
+  LoginPhoneCreateData,
+  LoginPhoneCreatePayload,
   LoginVkCreateData,
   LoginVkCreatePayload,
   PostBaseData,
@@ -58,6 +60,8 @@ import {
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
   SendEmailRegisterVerifyCodeListParams,
+  SendPhoneVerCodeCreateData,
+  SendPhoneVerCodeCreatePayload,
   SendValidatorEmailVerifyCodeListData,
   SendValidatorEmailVerifyCodeListParams,
   UserBindEmailCreateData,
@@ -65,6 +69,8 @@ import {
   UserBindEmailListListData,
   UserBindEmailVerifyCodeListData,
   UserBindEmailVerifyCodeListParams,
+  UserBindPhoneCreateData,
+  UserBindPhoneCreatePayload,
   UserChangeAccountCreateData,
   UserChangeAccountCreatePayload,
   UserChangeEmailCreateData,
@@ -84,6 +90,8 @@ import {
   UserGetBannerPictureListV2ListParams,
   UserGetCheckOldEmailVerCodeListData,
   UserGetCheckOldEmailVerCodeListParams,
+  UserGetCheckPhoneVerCodeCreateData,
+  UserGetCheckPhoneVerCodeCreatePayload,
   UserGetCoreUpgradeCreateData,
   UserGetCoreUpgradeCreatePayload,
   UserGetDefConfigListData,
@@ -1803,6 +1811,69 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name SendPhoneVerCodeCreate
+   * @summary 发送手机验证码
+   * @request POST:/send_phone_ver_code
+   * @response `200` `SendPhoneVerCodeCreateData`
+   */
+  sendPhoneVerCodeCreate = (
+    data: SendPhoneVerCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<SendPhoneVerCodeCreateData, any>({
+      path: `/send_phone_ver_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginPhoneCreate
+   * @summary 手机号登录
+   * @request POST:/login_phone
+   * @response `200` `LoginPhoneCreateData`
+   */
+  loginPhoneCreate = (
+    data: LoginPhoneCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginPhoneCreateData, any>({
+      path: `/login_phone`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserBindPhoneCreate
+   * @summary 用户绑定手机号码
+   * @request POST:/user_bind_phone
+   * @response `200` `UserBindPhoneCreateData`
+   */
+  userBindPhoneCreate = (
+    data: UserBindPhoneCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBindPhoneCreateData, any>({
+      path: `/user_bind_phone`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -1814,6 +1885,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<GetFaqHelpList2Data, any>({
       path: `/app_statistics/get_faq_help`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetCheckPhoneVerCodeCreate
+   * @summary 用户验证手机验证码
+   * @request POST:/user_get_check_phone_ver_code
+   * @response `200` `UserGetCheckPhoneVerCodeCreateData`
+   */
+  userGetCheckPhoneVerCodeCreate = (
+    data: UserGetCheckPhoneVerCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCheckPhoneVerCodeCreateData, any>({
+      path: `/user_get_check_phone_ver_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

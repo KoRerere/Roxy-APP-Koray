@@ -1,8 +1,7 @@
 <script setup lang="tsx">
 import QRCode from 'qrcode'
-import { API } from '/@/api'
-import { PaymentStatus } from '/@/enums/pay'
 import { $t } from '/@/locales'
+import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { enhanceCountdown } from '/@/utils'
 
@@ -16,24 +15,25 @@ const { data: props, onConfirm, onCancel } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
+const { genCheckerOrderStatus } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
-const timer = ref()
 const loading = ref(false)
 const qrcode = ref()
 const stopCountdown = ref()
 const countdown = ref()
+const checker = genCheckerOrderStatus()
 
 onMounted(() => {
   checkStatus()
   genProxyQrcode()
   stopCountdown.value = enhanceCountdown(new Date(props.endTime), (time) => {
     const { minutes, seconds } = time
-    countdown.value = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0')
+    countdown.value = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }, { alwaysSecondLevel: true, onEnd: () => close(true) })
 })
 
 onBeforeUnmount(() => {
-  clearTimeout(timer.value)
+  checker.stop()
   stopCountdown.value?.stop()
 })
 
@@ -41,21 +41,15 @@ async function genProxyQrcode() {
   qrcode.value = await QRCode.toDataURL(props.payUrl, { margin: 0 })
 }
 
-async function checkStatus(force = false) {
-  if (force) {
-    clearTimeout(timer.value)
+async function checkStatus() {
+  try {
+    const isOK = await checker.check(props.orderNo)
+    if (isOK)
+      confirm()
   }
-
-  const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo: props.orderNo })
-  onlyErrorToast(code, msg)
-  if (data === PaymentStatus.Success) {
-    confirm()
-  } else {
-    if (force || data !== PaymentStatus.Wait) {
-      close(true)
-    } else {
-      timer.value = setTimeout(checkStatus, 3000)
-    }
+  catch (error) {
+    close(true)
+    onlyErrorToast(-1, (error as Error).message)
   }
 }
 
@@ -73,7 +67,6 @@ function close(isCancel: boolean) {
 }
 </script>
 
-
 <template>
   <div class="flex flex-col pt-4 pb-6 px-6 gap-4 select-none popup">
     <div class="relative flex items-center h-10 header">
@@ -88,7 +81,7 @@ function close(isCancel: boolean) {
       </i18n-t>
       <div class="flex flex-col items-center gap-2.5 pa-5 self-center sacn-area">
         <div class="pa-2 rounded-lg bg-white">
-          <img :src="qrcode" class="block pointer-events-none w-45 h-45" />
+          <img :src="qrcode" class="block pointer-events-none w-45 h-45">
         </div>
         <div class="h-9 flex items-center gap-1">
           <img class="block w-12" src="/images/payments/rx_pay_alipay_white.svg">
@@ -131,12 +124,12 @@ function close(isCancel: boolean) {
 
   &-area {
     border-radius: 16px;
-    background-color: #1677FF;
+    background-color: #1677ff;
   }
 
   &-text {
-    color: #FFF;
-    font-family: "Microsoft YaHei UI";
+    color: #fff;
+    font-family: 'Microsoft YaHei UI';
     font-size: 20px;
     line-height: 20px;
   }

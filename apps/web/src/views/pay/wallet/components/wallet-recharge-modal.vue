@@ -32,14 +32,22 @@ const max = 10 ** 5
 const step = 10
 const amount = ref(10)
 const loading = ref(false)
+const lockModal = ref(false)
 const minRechargeAmount = 1
 
-const rechargeAmount = computed(() => !!needAmount ? Math.max(needAmount, minRechargeAmount) : (amount.value ?? min))
+const rechargeAmount = computed(() => needAmount ? Math.max(needAmount, minRechargeAmount) : (amount.value ?? min))
+const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，请勿关闭。') : '')
 
 onBeforeMount(() => {
-  if (!!needAmount) {
+  if (needAmount) {
     querySupportPayway()
   }
+})
+
+provide('$rechargeModal', {
+  preventModalClose: (value = true) => {
+    lockModal.value = value
+  },
 })
 
 const delayQuery = debounce(querySupportPayway, 300)
@@ -49,7 +57,8 @@ async function querySupportPayway() {
   const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(rechargeAmount.value) })
   loading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   const payway = Object.values(data).flat() as PayWay[]
   disabledMethods.value = Object.values(PayWay).filter(item => !payway.includes(item))
 
@@ -76,10 +85,13 @@ async function confirm(extraData: any) {
     rechargeAmount: rechargeAmount.value,
     ...extraData,
   })
+  lockModal.value = false
   close(false)
 }
 
 function close(isCancel: boolean) {
+  if (lockModal.value)
+    return
   emit('close')
   if (isCancel)
     onCancel?.()
@@ -90,21 +102,25 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-4 gap-6 overflow-hidden popup">
     <div class="h-10 relative flex justify-between items-center px-6 header">
       <span>{{ $t('钱包充值') }}</span>
-      <SvgIcon class="cursor-pointer" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click="close(true)" />
+      <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click="close(true)" />
     </div>
     <div class="flex flex-col gap-6 px-6">
       <div v-if="needAmount">
         <div class="h-11 flex justify-between items-center need">
-          <div class="need-label">{{ $t('应充值金额') }}</div>
-          <div class="need-value">{{ currency(rechargeAmount).format() }}</div>
+          <div class="need-label">
+            {{ $t('应充值金额') }}
+          </div>
+          <div class="need-value">
+            {{ currency(rechargeAmount).format() }}
+          </div>
         </div>
-        <RxAlert v-if="needAmount < minRechargeAmount" class="w-full" type="info" :content="$t('根据支付平台的要求，最低充值金额为 {amount}。', { amount: currency(minRechargeAmount).format() })"></RxAlert>
+        <RxAlert v-if="needAmount < minRechargeAmount" class="w-full" type="info" :content="$t('根据支付平台的要求，最低充值金额为 {amount}。', { amount: currency(minRechargeAmount).format() })" />
       </div>
       <ItemBlock v-else :title="$t('请输入充值金额')">
         <div class="flex flex-col items-center gap-4">
-          <RxStepInput class="!w-60 !h-18" size="lg" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" mode="currency" currency="USD" locale="en-US"
-            :minFractionDigits="0" :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @change="delayQuery">
-          </RxStepInput>
+          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="max" :step="step" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
+                       :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
+          />
           <div class="flex gap-2">
             <RxAmountQuickCheck @select="quickSelect" />
           </div>
@@ -113,7 +129,7 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">
-        <WalletPaymentMethods v-model="selectedPayway" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods" :onConfirm="confirm"></WalletPaymentMethods>
+        <WalletPaymentMethods v-model="selectedPayway" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods" :on-confirm="confirm" />
       </ItemBlock>
     </div>
   </div>
@@ -126,7 +142,7 @@ function close(isCancel: boolean) {
 
 .header {
   color: var(--colors-text-text-primary);
-  font-family: "Microsoft YaHei UI";
+  font-family: 'Microsoft YaHei UI';
   font-size: 20px;
   font-weight: 700;
   line-height: normal;
@@ -141,7 +157,7 @@ function close(isCancel: boolean) {
   }
 
   &-value {
-    color: var(--color-blue-300, #12A3FC);
+    color: var(--color-blue-300, #12a3fc);
     font-size: 20px;
     font-weight: 600;
     line-height: normal;

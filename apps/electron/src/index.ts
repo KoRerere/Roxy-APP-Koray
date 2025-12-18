@@ -1,9 +1,9 @@
 import './catchException'
 import './polyfill'
 import './locales/'
-import { setupModules } from '/@/modules/'
-import { initDebug } from '/@/debug'
 import { app } from 'electron'
+import { initDebug } from '/@/debug'
+import { setupModules } from '/@/modules/'
 
 /**
  * 防止多实例

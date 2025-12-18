@@ -2164,9 +2164,9 @@ export const components = {
   },
   inputgroup: {
     addon: {
-      background: '{form.field.background}',
-      borderColor: '{form.field.border.color}',
-      color: '{form.field.icon.color}',
+      background: '{colors.background.bg-action}',
+      borderColor: '{colors.border.border-action}',
+      color: '{colors.text.text-primary}',
       borderRadius: '{form.field.border.radius}',
       padding: '0.5rem',
       minWidth: '2.5rem',

@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { loadStripe, type Stripe, type StripeElements, type StripeCardNumberElement, type StripeCardExpiryElement, type StripeCardCvcElement } from '@stripe/stripe-js'
+import { loadStripe } from '@stripe/stripe-js'
+import type { Stripe, StripeCardCvcElement, StripeCardExpiryElement, StripeCardNumberElement, StripeElements } from '@stripe/stripe-js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
-import { $t } from '/@/locales';
-import { PayWay } from '/@/enums/pay';
+import { $t } from '/@/locales'
+import { PayWay } from '/@/enums/pay'
 import { useThemeStore } from '/@/stores/theme'
 
 const { confirmText = $t('确认'), rechargeAmount = 0, onConfirm } = defineProps<{
-  rechargeAmount?: number,
+  rechargeAmount?: number
   confirmText?: string
   onConfirm: (stripeResult: any) => void | Promise<void>
 }>()
+
+const $rechargeModal = inject<{ preventModalClose: (value?: boolean) => void }>('$rechargeModal')
 
 const bindCard = defineModel<boolean>('bind', { default: false })
 
@@ -50,16 +53,20 @@ onBeforeUnmount(() => {
   cardCvc?.unmount()
 })
 
-const cssVar = (name: string) => {
+function cssVar(name: string) {
   return getComputedStyle(document.documentElement)
     .getPropertyValue(name)
-    .trim();
-};
+    .trim()
+}
 
 async function getStripeKey() {
-  const { code, data, msg } = await API.pay.userGetStripePkKeyList({ queryType: '0' })// 0 卡片绑定 1卡片支付, 1暂时没用到
+  /**
+   * 0 卡片绑定 1卡片支付, 1暂时没用到
+   */
+  const { code, data, msg } = await API.pay.userGetStripePkKeyList({ queryType: '0' })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   stripe.value = await loadStripe(data.stripe_pk_key)
   publishableKey.value = data.stripe_pk_key
   bindCardClientSecret.value = data.client_secret
@@ -121,6 +128,7 @@ function handleElementChange({ error }: any) {
 }
 
 async function handleSubmit(event: Event) {
+  $rechargeModal?.preventModalClose()
   event.preventDefault()
 
   if (!stripe.value || !cardNumber) {
@@ -141,9 +149,12 @@ async function handleSubmit(event: Event) {
     cardNumber.clear()
     cardExpiry?.clear()
     cardCvc?.clear()
-  } catch (error: any) {
+  }
+  catch (error: any) {
+    $rechargeModal?.preventModalClose(false)
     onlyErrorToast(-1, error)
-  } finally {
+  }
+  finally {
     isLoading.value = false
   }
 }
@@ -164,7 +175,8 @@ async function stripePayment() {
     payType: PayWay.Card,
     customerIdKey: customerIdKey.value,
   })
-  if (code !== 0) return { error: new Error(msg), result: undefined }
+  if (code !== 0)
+    return { error: new Error(msg), result: undefined }
 
   const { error, paymentIntent } = await stripe.value!.confirmCardPayment(data.clientSecret, {
     payment_method: {
@@ -178,23 +190,29 @@ async function stripePayment() {
 
 <template>
   <form class="relative flex flex-col gap-3" @submit="handleSubmit">
-    <RxLoading v-model="initLoading" :opacity="0.9"></RxLoading>
+    <RxLoading v-model="initLoading" :opacity="0.9" />
     <div class="flex flex-col gap-1.5">
       <label class="form-label" for="card-number-element">{{ $t('卡号') }}</label>
-      <div id="card-number-element" ref="cardNumberElement"><!-- Stripe Elements 卡号输入框 --></div>
+      <div id="card-number-element" ref="cardNumberElement">
+        <!-- Stripe Elements 卡号输入框 -->
+      </div>
     </div>
     <div class="flex items-end gap-3">
       <div class="flex-1 flex flex-col gap-1.5">
         <label class="form-label" for="card-expiry-element">{{ $t('有效期') }}</label>
-        <div id="card-expiry-element" ref="cardExpiryElement"><!-- Stripe Elements 有效期输入框 --></div>
+        <div id="card-expiry-element" ref="cardExpiryElement">
+          <!-- Stripe Elements 有效期输入框 -->
+        </div>
       </div>
       <div class="flex-1 flex flex-col gap-1.5">
         <label class="form-label" for="card-cvc-element">CVC</label>
-        <div id="card-cvc-element" ref="cardCvcElement"><!-- Stripe Elements CVC输入框 --></div>
+        <div id="card-cvc-element" ref="cardCvcElement">
+          <!-- Stripe Elements CVC输入框 -->
+        </div>
       </div>
     </div>
-    <RxButton class="mt-1 w-full" type="submit" size="lg" :loading="isLoading" :label="confirmText"></RxButton>
-    <slot name="after"></slot>
+    <RxButton class="mt-1 w-full" type="submit" size="lg" :loading="isLoading" :label="confirmText" />
+    <slot name="after" />
     <div class="flex items-center justify-between gap-2">
       <span class="tip">{{ $t('*我们不会存储您的完整卡号或敏感信息。') }}</span>
       <img v-if="realTheme === 'dark'" class="block h-5" src="/images/payments/stripe-blurple-dark.svg">

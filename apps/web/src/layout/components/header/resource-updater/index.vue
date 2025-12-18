@@ -10,12 +10,12 @@ import { debounce } from 'es-toolkit'
 import { I18nT } from 'vue-i18n'
 import { safeParseJSON } from '/@/utils'
 
-type KernelUpdateGroup = {
+interface KernelUpdateGroup {
   title: string
   list: (ResourceUpdateMessage & { _light?: boolean, _desc?: string })[]
 }
 
-const toast = useToast();
+const toast = useToast()
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
 const tabComponentRef = ref()
@@ -63,7 +63,7 @@ async function checkForUpdates() {
 function toggle(event: Event) {
   popoverRef.value?.instance?.toggle(event)
   if (popoverRef.value?.instance?.visible) {
-    tabs.value.some(tab => {
+    tabs.value.some((tab) => {
       if (tab.badge) {
         tabModel.value = tab.value
         return true
@@ -94,20 +94,22 @@ function genKernelGroup(list: ResourceUpdateMessage[]) {
   const defaults: KernelUpdateGroup[] = [
     {
       title: $t('新内容'),
-      list: []
+      list: [],
     },
     {
       title: $t('内核列表'),
-      list: []
-    }
+      list: [],
+    },
   ]
 
   kernelUpdateGroup.value = list.reduce((acc, item, index) => {
     if (index === 0 && !['update', 'downloaded'].includes(item.status!) && !readMap[item.coreVersion!]) {
       acc[0].list.push({ ...item, _light: true, _desc: $t('新版本') })
-    } else if (item.status === 'update' && !readMap[item.coreVersion!]) {
+    }
+    else if (item.status === 'update' && !readMap[item.coreVersion!]) {
       acc[0].list.push({ ...item, _light: true, _desc: $t('有新的更新可用') })
-    } else {
+    }
+    else {
       acc[1].list.push(item)
     }
     return acc
@@ -140,7 +142,7 @@ watch(isDownloadingKernel, () => {
     nextTick(() => {
       tabModel.value = tabs.value[1].value
       isDownloadingKernel.value = false
-      tabComponentRef.value?.[1].focusKernel()//内核过多，展开时滚动到下载中的位置
+      tabComponentRef.value?.[1].focusKernel()// 内核过多，展开时滚动到下载中的位置
     })
   }
 })
@@ -153,17 +155,17 @@ function onDownloadClick(item: ResourceUpdateMessage) {
 const showDownloadError = debounce((data: ResourceUpdateMessage) => {
   toast.add({
     severity: 'error',
-    summary: (() =>
+    summary: (() => (
       <I18nT keypath={data.description || $t('获取内核失败，{tech}', { tech: '{tech}' })}>
         {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('联系技术支持')}</a> }}
-      </I18nT>) as any
-  });
+      </I18nT>
+    )) as any,
+  })
 }, 100)
 
 window.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
-
     if (data.status === 'failed') {
       showDownloadError(data)
     }
@@ -173,7 +175,8 @@ window.electronAPI.on('app:resource-update', (data) => {
       kernelUpdates.value.push(data)
       kernelUpdates.value.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
       genKernelGroup(toRaw(kernelUpdates.value))
-    } else {
+    }
+    else {
       kernelUpdates.value[index] = data
       updateKernelStatus(data)
     }
@@ -226,7 +229,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="overflow-hidden">
-            <component ref="tabComponentRef" :is="tab.component" :upgrade-list="(tab.list as any)" @onDownloadClick="onDownloadClick" />
+            <component :is="tab.component" ref="tabComponentRef" :upgrade-list="(tab.list as any)" @on-download-click="onDownloadClick" />
           </TabPanel>
         </TabPanels>
       </Tabs>
