@@ -1,7 +1,7 @@
 import { app, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
-import { getMainWindow } from '/@/modules/app/mainWindow'
+import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 
 let tray: Tray
 /** 创建托盘 */
@@ -23,8 +23,7 @@ export async function createTray() {
   tray.setContextMenu(createContextMenu())
   // 双击触发
   tray.on('click', () => {
-    getMainWindow()?.restore()
-    getMainWindow()?.setSkipTaskbar(false)
+    restoreOrCreateWindow()
   })
   return tray
 }
@@ -35,7 +34,7 @@ function createContextMenu() {
     {
       label: $t('显示'),
       click: () => {
-        getMainWindow()?.restore()
+        restoreOrCreateWindow()
       },
     },
     {

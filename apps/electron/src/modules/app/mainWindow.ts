@@ -1,17 +1,17 @@
-import type { BrowserWindowConstructorOptions } from 'electron'
+import type { BrowserWindow, BrowserWindowConstructorOptions } from 'electron'
 import axios from 'axios'
 import { compare } from 'compare-versions'
-import { app, BrowserWindow, screen, } from 'electron'
+import { app, screen } from 'electron'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { appConfig, ROXY_MAIN_WINDOW_ID, } from '/@/constants'
-import { handleCloseWindow } from '/@/modules/app/utils'
-import { store } from '/@/modules/store'
+import { appConfig, ROXY_MAIN_WINDOW_ID } from '/@/constants'
 import { isDev, isPackaged, isProd, isWindows } from '/@/constants/common'
-import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { ipcMain } from '/@/modules/ipc'
-import { createWindow } from '/@/utils/browser-window'
 import { sendLaunchMessage } from '/@/modules/app/checkResource'
+import { handleCloseWindow } from '/@/modules/app/utils'
+import { ipcMain } from '/@/modules/ipc'
+import { store } from '/@/modules/store'
+import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { createWindow } from '/@/utils/browser-window'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
@@ -25,7 +25,8 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
         const buildInWebVersion = await readFile(join(appConfig.buildInWebDir, 'version'), 'utf-8')
         const externalWebVersion = await readFile(join(appConfig.externalWebDir, 'version'), 'utf-8')
         store.isExternalWeb = compare(externalWebVersion, buildInWebVersion, '>')
-      } else {
+      }
+      else {
         store.isExternalWeb = false
       }
     }
@@ -44,7 +45,6 @@ export async function getLocalWebVersion() {
 
 /** 创建窗口 */
 function createMainWindow(options?: BrowserWindowConstructorOptions) {
-
   const browserWindow = createWindow({
     // Use 'ready-to-show' event to show window
     roxyWindowId: ROXY_MAIN_WINDOW_ID,
@@ -153,10 +153,10 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
 
   mainWindow.setSkipTaskbar(false)
 
-  mainWindow.setAlwaysOnTop(true);
-  mainWindow.show();
-  mainWindow.focus();
-  mainWindow.setAlwaysOnTop(false);
+  mainWindow.setAlwaysOnTop(true)
+  mainWindow.show()
+  mainWindow.focus()
+  mainWindow.setAlwaysOnTop(false)
   return mainWindow
 }
 
