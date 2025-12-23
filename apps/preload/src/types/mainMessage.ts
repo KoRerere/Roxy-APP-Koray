@@ -1,4 +1,4 @@
-import type { WindowItemType } from "#roxybrowser/modules/browser/browser-manager/types";
+import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 
 export interface MainMessageResult<T = any> {
   code: number
@@ -43,7 +43,7 @@ export interface ResourceUpdateMessage {
   /** 发布时间 */
   releaseTime?: string
   /** 新功能提示 */
-  newFeatureTips?: string[]
+  newFeatureTips?: Record<string, any>
   /** 原始的更新数据 */
   originUpgradeData?: any
   /** 是否静默下载 */

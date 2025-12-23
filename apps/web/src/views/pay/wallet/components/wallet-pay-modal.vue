@@ -2,8 +2,8 @@
 import currency from 'currency.js'
 import { $t } from '/@/locales'
 import { RxAlert } from '/@/components/rx-alert'
-import { useUserStore } from '/@/stores/user';
-import { useResponseToast } from '/@/hooks/useResponseToast';
+import { useUserStore } from '/@/stores/user'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useThemeStore } from '/@/stores/theme'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
@@ -37,15 +37,18 @@ const imgSrc = computed(() => {
 
 const finalResult = computed(() => {
   const autoRenewDiscount = isAuto.value ? userPayInfo.value.autoRenewDiscount : 0
-  const _amount = currency(amount).multiply(discountCalculate([autoRenewDiscount])).value
-  const _discountAmount = currency(amount).subtract(_amount).add(discountAmount ?? 0).value
+  const _amount = currency(amount, { precision: 6 }).multiply(discountCalculate([autoRenewDiscount])).value
+  const _discountAmount = currency(amount, { precision: 6 }).subtract(_amount).add(discountAmount ?? 0).value
   const needAmount = currency(_amount).subtract(userPayInfo.value.balance).value
 
+  // 跟后台保持一致，2 位小数四舍五入
+  const __amount = currency(_amount).value
+  const __discountAmount = currency(_discountAmount).value
   return {
     originalAmount,
-    amount: _amount,
-    discountAmount: _discountAmount,
-    showDiscount: originalAmount && _discountAmount,
+    amount: __amount,
+    discountAmount: __discountAmount,
+    showDiscount: originalAmount && __discountAmount,
     needRecharge: needAmount > 0,
     needAmount,
   }
@@ -54,7 +57,7 @@ const finalResult = computed(() => {
 function onRecharge() {
   walletRecharge({
     needAmount: finalResult.value.needAmount,
-    next: data => {
+    next: (data) => {
       openProcessing(data, 'silent')
         .then(getUserPayInfo)
         .then(() => {
@@ -64,7 +67,7 @@ function onRecharge() {
           showToast(1, $t('充值失败'))
           close(false)
         })
-    }
+    },
   })
 }
 
@@ -92,32 +95,44 @@ function close(isCancel: boolean) {
 
     <div class="flex flex-col gap-5">
       <div class="flex flex-col items-center gap-4 py-8">
-        <div class="order-title">{{ $t('总价') }}</div>
+        <div class="order-title">
+          {{ $t('总价') }}
+        </div>
         <div class="flex flex-col gap-1">
-          <div class="order-price">{{ currency(finalResult.amount).format() }}</div>
+          <div class="order-price">
+            {{ currency(finalResult.amount).format() }}
+          </div>
           <div v-if="finalResult.showDiscount" class="flex justify-center items-baseline gap-2">
-            <span class="order-oldprice" v-if="finalResult.originalAmount">{{ currency(finalResult.originalAmount).format() }}</span>
-            <span class="order-discount" v-if="finalResult.discountAmount">{{ $t('节省 {value}', { value: currency(finalResult.discountAmount).format() }) }}</span>
+            <span v-if="finalResult.originalAmount" class="order-oldprice">{{ currency(finalResult.originalAmount).format() }}</span>
+            <span v-if="finalResult.discountAmount" class="order-discount">{{ $t('节省 {value}', { value: currency(finalResult.discountAmount).format() }) }}</span>
           </div>
         </div>
       </div>
-      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
       <RxAlert v-if="finalResult.needRecharge" class="w-full" type="warn" :title="$t('您当前的余额不足以支付此订单，请充值后继续。')" :closable="false" />
       <div class="flex flex-col gap-2.5">
         <div class="relative h-24 flex px-3 justify-end items-end overflow-hidden balance-bg">
           <img class="block absolute top-8 left-8" :src="imgSrc">
           <div class="flex items-baseline gap-4 py-4">
-            <div class="balance-text">{{ $t('当前钱包余额') }}</div>
-            <div class="balance-value">{{ currency(userPayInfo.balance).format() }}</div>
+            <div class="balance-text">
+              {{ $t('当前钱包余额') }}
+            </div>
+            <div class="balance-value">
+              {{ currency(userPayInfo.balance).format() }}
+            </div>
           </div>
         </div>
       </div>
       <div v-if="finalResult.needRecharge" class="h-11 flex justify-end items-center gap-2.5 pr-3 total">
-        <div class="total-title">{{ $t('应充值金额') }}</div>
-        <div class="total-price">{{ currency(finalResult.needAmount).format() }}</div>
+        <div class="total-title">
+          {{ $t('应充值金额') }}
+        </div>
+        <div class="total-price">
+          {{ currency(finalResult.needAmount).format() }}
+        </div>
       </div>
       <div v-if="showAutoRenew && !finalResult.needRecharge" class="flex flex-col gap-5">
-        <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+        <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
         <div class="flex flex-col">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -126,14 +141,16 @@ function close(isCancel: boolean) {
             </div>
             <RxToggleSwitch v-model="isAuto" />
           </div>
-          <div class="auto-desc">{{ $t('您可以在钱包中管理续订设置。') }}</div>
+          <div class="auto-desc">
+            {{ $t('您可以在钱包中管理续订设置。') }}
+          </div>
         </div>
       </div>
     </div>
 
     <div class="flex flex-col">
-      <RxButton v-if="finalResult.needRecharge" :disabled="loading" size="lg" :label="$t('前往充值')" @click="onRecharge"></RxButton>
-      <RxButton v-else :disabled="loading" size="lg" :label="$t('支付')" @click="confirm"></RxButton>
+      <RxButton v-if="finalResult.needRecharge" :disabled="loading" size="lg" :label="$t('前往充值')" @click="onRecharge" />
+      <RxButton v-else :disabled="loading" size="lg" :label="$t('支付')" @click="confirm" />
     </div>
   </div>
 </template>
@@ -145,7 +162,7 @@ function close(isCancel: boolean) {
 
 .header {
   color: var(--colors-text-text-primary);
-  font-family: "Microsoft YaHei UI";
+  font-family: 'Microsoft YaHei UI';
   font-size: 20px;
   font-weight: 700;
   line-height: normal;
@@ -154,7 +171,7 @@ function close(isCancel: boolean) {
 .order {
   &-title {
     color: var(--colors-text-text-primary);
-    font-family: "Microsoft YaHei UI";
+    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: normal;
   }
@@ -187,14 +204,18 @@ function close(isCancel: boolean) {
 .balance {
   &-danger {
     color: var(--colors-text-text-error);
-    font-family: "Microsoft YaHei UI";
+    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: normal;
   }
 
   &-bg {
     border-radius: 8px;
-    background: linear-gradient(180deg, var(--pattern-pay-wallet-bg-start) -115.43%, var(--pattern-pay-wallet-bg-end) 167.02%);
+    background: linear-gradient(
+      180deg,
+      var(--pattern-pay-wallet-bg-start) -115.43%,
+      var(--pattern-pay-wallet-bg-end) 167.02%
+    );
   }
 
   &-text {
@@ -216,7 +237,7 @@ function close(isCancel: boolean) {
 .total {
   &-title {
     color: var(--colors-text-text-primary);
-    font-family: "Microsoft YaHei UI";
+    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: 20px;
   }
@@ -239,7 +260,7 @@ function close(isCancel: boolean) {
 
   &-value {
     color: var(--colors-text-text-warning);
-    font-family: "DingTalk JinBuTi";
+    font-family: 'DingTalk JinBuTi';
     font-size: 14px;
   }
 

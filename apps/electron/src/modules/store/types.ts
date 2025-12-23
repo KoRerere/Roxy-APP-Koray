@@ -2,6 +2,8 @@ export interface StoreType {
   language: string
   /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
+  /** 默认浏览器 dirId */
+  defaultBrowserDirId: string
   /**
    * 软件关闭时
    * - pop: 弹出提示
@@ -39,6 +41,8 @@ export interface StoreType {
   v2raySwitch?: boolean
   /** APP 本地服务端口 */
   appPort: number
+  /** APP WebSocket 端口 */
+  appWsPort: number
   /** openapi key */
   apiKey?: string
   /** 用户传过来的 userApiToken */

@@ -247,6 +247,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
     case 'view':
       await openBrowserBefore(data)
       break
+    case 'setAsDefaultBrowser':
+      await setAsDefaultBrowser(data)
+      break
     case 'addProxy':
       multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
       break
@@ -375,6 +378,11 @@ async function openBrowserBefore(data: Data | Data[]) {
     reject: () => clearMessage(datas),
     onHide: () => clearMessage(datas),
   })
+}
+
+async function setAsDefaultBrowser(data: Data) {
+  await window.electronAPI.send('browser:setAsDefaultBrowser', data.dirId)
+  showToast(0, $t('设置成功'))
 }
 
 function clearMessage(datas: Data[]) {

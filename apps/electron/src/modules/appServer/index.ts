@@ -2,6 +2,7 @@ import express from 'express'
 import { getPortPromise } from 'portfinder'
 import { appConfig } from '/@/constants'
 import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
+import { setupWebSocketServer } from '/@/modules/appServer/ws'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { setupDashboardServer } from './dashboard'
@@ -39,11 +40,13 @@ export async function setupAppServer() {
       store.appPort = port
       resolve(app)
     })
+    // 启动 WebSocket 服务
+    await setupWebSocketServer()
   }
   catch (error) {
     console.error('setupAppServer', error)
     reject(error)
   }
+
   return promise
 }
-

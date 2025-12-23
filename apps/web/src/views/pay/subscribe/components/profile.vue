@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import NumberFlow from '@number-flow/vue'
-import currency from 'currency.js';
+import currency from 'currency.js'
 import TierSlider from '/@/views/pay/subscribe/components/tier-slider.vue'
 import SubscribePlans from '/@/views/pay/subscribe/components/subscribe-plans.vue'
 import Illustrate from '/@/views/pay/subscribe/components/illustrate.vue'
 import { $t } from '/@/locales'
-import { formatNumberToKMB } from '/@/utils/basic';
+import { formatNumberToKMB } from '/@/utils/basic'
 import { ceilByStep } from '../util'
-import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
-import { type Plan } from '../type'
+import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
+import { useCampaignStore } from '/@/stores/campaign'
+import type { Plan } from '../type'
+
+const { list, rawList } = defineProps<Props>()
 
 const popoverRef = useTemplateRef('popover')
 
@@ -25,7 +28,7 @@ interface Tier {
   step: number
 }
 
-const { list, rawList } = defineProps<Props>()
+const { seasonalActivity } = storeToRefs(useCampaignStore())
 
 const selectedPlan = defineModel<Plan>('plan')
 const selectedCount = defineModel<number>('count', { required: true })
@@ -36,7 +39,8 @@ const tiersData = computed(() => {
   const MAX_STEP = 100
   return (list || []).reduce((acc, { minWindows, maxWindows }) => {
     const step = Math.min(maxWindows - minWindows, MAX_STEP)
-    if (minWindows <= MAX_STEP) acc.steps.set(minWindows, step)
+    if (minWindows <= MAX_STEP)
+      acc.steps.set(minWindows, step)
     acc.tiers.push({ start: minWindows, end: maxWindows, step })
     return acc
   }, { tiers: [], steps: new Map() } as { tiers: Tier[], steps: Map<number, number> })
@@ -45,7 +49,8 @@ const tiersList = computed(() => tiersData.value.tiers)
 const tiersSteps = computed(() => [...tiersData.value.steps])
 
 const planInfo = computed(() => {
-  if (!selectedPlan.value) return
+  if (!selectedPlan.value)
+    return
 
   const { subLevel, windowPrice, minWindows, maxWindows } = selectedPlan.value
 
@@ -60,7 +65,7 @@ const planInfo = computed(() => {
 
 function tooltipFormatter(value: number) {
   if (selectedPlan.value?.subLevel === SubLevelEnum.Trial) {
-    return $t('{count} 个窗口', { count: 10 }) + ' ' + `(${SubLevelEnumStr[SubLevelEnum.Trial]})`
+    return `${$t('{count} 个窗口', { count: 10 })} ` + `(${SubLevelEnumStr[SubLevelEnum.Trial]})`
   }
   return $t('{count} 个窗口', { count: formatNumberToKMB(value) })
 }
@@ -85,7 +90,7 @@ function onChange(value: number) {
 
 function onUpdate(value: number) {
   const math = value > selectedCount.value! ? 'plus' : 'minus'
-  const _value = Math.max(currency(value).value, tiersList.value[1].start)
+  const _value = Math.max(currency(value).value, tiersList.value[1]!.start)
   const count = _value < 100
     ? tiersList.value.findLast(item => _value > item.start)!.end
     : ceilByStep(_value, getTiersStep(_value, math))
@@ -109,24 +114,31 @@ function onBeforeMinus(value: number) {
 function showIllustrate(event: Event) {
   popoverRef.value?.instance?.toggle(event)
 }
-
 </script>
 
 <template>
   <div>
-    <SubscribePlans :list="list" v-model="selectedPlan" @change="onPlanChange"></SubscribePlans>
+    <SubscribePlans v-model="selectedPlan" :list="list" @change="onPlanChange" />
     <div class="flex flex-col gap-3 mt-6 pb-18">
-      <div class="title">{{ $t('滑动以选择窗口数量') }}</div>
-      <TierSlider v-model="selectedCount" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :tiers="tiersList" :hideLabels="[5]" :tooltipFormatter="tooltipFormatter"
-        @change="onChange">
+      <div class="title">
+        {{ $t('滑动以选择窗口数量') }}
+      </div>
+      <TierSlider v-model="selectedCount" :min="min ?? tiersList[1]!.start" :max="max ?? tiersList[tiersList.length - 1]!.end" :tiers="tiersList" :hide-labels="[5]"
+                  :tooltip-formatter="tooltipFormatter" @change="onChange"
+      >
+        <template v-if="seasonalActivity.newYear" #thumb-icon>
+          <SvgIcon class="absolute inset-0 scale-200" name="other/flower" />
+        </template>
         <template #thumb-extra>
-          <div ref="current" class="flex flex-col gap-1 items-center whitespace-nowrap current" v-if="planInfo">
+          <div v-if="planInfo" class="flex flex-col gap-1 items-center whitespace-nowrap current">
             <div>
               <span class="current-unit">$</span>
-              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="planInfo.windowPrice"></NumberFlow>
+              <NumberFlow :spin-timing="{ duration: 550 }" :opacity-timing="{ duration: 250 }" will-change class="ml-1 current-price" :value="planInfo.windowPrice" />
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
-            <div class="current-desc">{{ planInfo.description }}</div>
+            <div class="current-desc">
+              {{ planInfo.description }}
+            </div>
           </div>
         </template>
       </TierSlider>
@@ -134,13 +146,14 @@ function showIllustrate(event: Event) {
     <div v-if="!planInfo?.isTrial" class="flex items-center justify-between pt-8">
       <div class="flex items-center gap-1.5">
         <span class="sub-title">{{ $t('窗口数量') }}</span>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate"></SvgIcon>
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate" />
       </div>
-      <RxStepInput size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? Math.max(tiersList[1].start, 10)" :max="max ?? tiersList[tiersList.length - 1].end" :step="step"
-        :beforePlus="onBeforePlus" :beforeMinus="onBeforeMinus" @change="onChange" @update:modelValue="onUpdate"></RxStepInput>
+      <RxStepInput v-model="selectedCount!" size="lg" class="!w-40" :min="min ?? Math.max(tiersList[1]!.start, 10)" :max="max ?? tiersList[tiersList.length - 1]!.end" :step="step"
+                   :before-plus="onBeforePlus" :before-minus="onBeforeMinus" @change="onChange" @update:model-value="onUpdate"
+      />
     </div>
     <RyPopover ref="popover">
-      <Illustrate :data="rawList"></Illustrate>
+      <Illustrate :data="rawList" />
     </RyPopover>
   </div>
 </template>
@@ -159,7 +172,7 @@ function showIllustrate(event: Event) {
 
 .current {
   &-price {
-    color: var(--primitives-yellow-500, #FC9D12);
+    color: var(--primitives-yellow-500, #fc9d12);
     font-family: Inter;
     font-size: 36px;
     font-weight: 600;
@@ -167,7 +180,7 @@ function showIllustrate(event: Event) {
   }
 
   &-unit {
-    color: var(--primitives-yellow-500, #FC9D12);
+    color: var(--primitives-yellow-500, #fc9d12);
     font-family: Inter;
     font-size: 24px;
     font-weight: 600;
@@ -175,7 +188,7 @@ function showIllustrate(event: Event) {
   }
 
   &-text {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
@@ -192,7 +205,7 @@ function showIllustrate(event: Event) {
 }
 
 .sub-title {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;

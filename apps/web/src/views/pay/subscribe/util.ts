@@ -1,9 +1,9 @@
-import currency from "currency.js";
+import currency from 'currency.js'
 
 interface Tier {
-  windowPrice: number;
-  minWindows: number;
-  [key: string]: any;
+  windowPrice: number
+  minWindows: number
+  [key: string]: any
 }
 
 export function tierCalculate(list: Tier[], count: number) {
@@ -12,7 +12,8 @@ export function tierCalculate(list: Tier[], count: number) {
   }
 
   const { sum, algorithm } = list.reduceRight((acc, { windowPrice, minWindows }) => {
-    if (count < minWindows) return acc
+    if (count < minWindows)
+      return acc
 
     const tiersCount = currency(count).subtract(minWindows).value
 
@@ -26,7 +27,7 @@ export function tierCalculate(list: Tier[], count: number) {
     return acc
   }, { sum: 0, algorithm: [] as string[] })
 
-  return { value: sum, algorithm: algorithm.join(' + ') + ` = $${sum.toFixed(2)}` }
+  return { value: sum, algorithm: `${algorithm.join(' + ')} = $${sum.toFixed(2)}` }
 }
 
 export function discountCalculate(discounts: number[]) {
@@ -34,7 +35,7 @@ export function discountCalculate(discounts: number[]) {
     Math.abs(currency(Number.isNaN(discount) ? 0 : discount, { precision: 6 })
       .divide(100)
       .add(-1)
-      .multiply(acc).value), 1);
+      .multiply(acc).value), 1)
 }
 
 export function ceilByStep(value: number, step: number) {
@@ -42,5 +43,6 @@ export function ceilByStep(value: number, step: number) {
     ? value
     : currency(Math.floor(currency(value).divide(step).value))
       .multiply(step)
-      .add(step).value
+      .add(step)
+      .value
 }

@@ -2,6 +2,7 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu(
   {
+    yaml: false,
     formatters: true,
     // unocss: true,
     vue: true,
@@ -62,4 +63,4 @@ export default antfu(
       'perfectionist/sort-imports': 'off',
     },
   },
-).override('antfu/regexp/rules', () => ({}))
+)

@@ -1,19 +1,21 @@
 <script setup lang="tsx">
+import SubMenuItem from './sub-menu-item.vue'
 import { cloneDeep } from 'es-toolkit'
-import type { RouteRecordRaw } from 'vue-router'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import SubMenuItem from './sub-menu-item.vue'
+import { useCampaignStore } from '/@/stores/campaign'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProjectPin, WorkspaceType } from '/@/enums'
+import type { RouteRecordRaw } from 'vue-router'
+import type { Role } from '/@/enums'
 
 const { collapsed = false } = defineProps<{
-  collapsed: boolean
+  collapsed?: boolean
 }>()
 
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -23,6 +25,7 @@ const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { seasonalActivity } = storeToRefs(useCampaignStore())
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
@@ -82,7 +85,7 @@ function filterMenus(menus: RouteRecordRaw[]) {
 
     let hasRole = true
     if (item.meta?.roles?.length) {
-      hasRole = item.meta.roles.includes(currentWorkspace.value?.role!)
+      hasRole = item.meta.roles.includes(currentWorkspace.value?.role as Role)
     }
 
     return !item.meta?.hideInMenu && hasRole
@@ -99,13 +102,14 @@ async function toCreateBrowser() {
   // 项目中创建窗口，方便自动关联项目选择
   if (route.name === 'project-item') {
     router.push({ name: 'browser-create', query: { projectId: route.params.id } })
-  } else {
+  }
+  else {
     router.push({ name: 'browser-create' })
   }
 }
-//======================
+// ======================
 
-// const asidemenusRef = useTemplateRef('asidemenus')
+const _asidemenusRef = useTemplateRef('asidemenus')
 // const showTopMask = ref(false)
 // const showBottomMask = ref(false)
 
@@ -130,19 +134,17 @@ async function toCreateBrowser() {
 function handleScroll() {
   // updateMask()
 }
-
 </script>
 
 <template>
-  <aside class="flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
+  <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
+    <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png">
     <template v-if="!roleStore.isViewer">
-      <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')"
-        @click="toCreateBrowser" />
+      <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">
       <!-- <div v-if="showTopMask" class="mask top-mask" /> -->
-      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu"
-        @scroll="handleScroll">
+      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu" @scroll="handleScroll">
         <SubMenuItem class="relative z-1" :items="menus" :collapsed />
       </nav>
       <!-- <div v-if="showBottomMask" class="mask bottom-mask" /> -->
@@ -161,7 +163,6 @@ function handleScroll() {
   // background-repeat: no-repeat;
 
   &.collapsed {
-
     .menu::-webkit-scrollbar {
       display: none;
     }
@@ -180,7 +181,6 @@ function handleScroll() {
 }
 
 .menu {
-
   &::-webkit-scrollbar-thumb,
   &::-webkit-scrollbar-track {
     background: transparent;

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "roxybrowser",
+  "mainBinaryName": "roxybrowser",
+  "version": "0.1.0",
+  "identifier": "com.roxybrowser.tauri",
+  "build": {
+    "beforeDevCommand": "pnpm dev:web",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "create": false,
+        "title": "roxybrowser",
+        "width": 480,
+        "height": 320,
+        "visible": false,
+        "resizable": false,
+        "minWidth": 480,
+        "maxWidth": 480,
+        "minHeight": 320,
+        "maxHeight": 320,
+        "decorations": false,
+        "transparent": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "macOS": {
+      "infoPlist": "Info.plist",
+      "signingIdentity": "-"
+    },
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

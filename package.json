@@ -54,13 +54,14 @@
     "clean:lib": "pnpx rimraf --glob node_modules **/node_modules",
     "reinstall": "pnpx rimraf pnpm-lock.yaml && pnpm clean:lib",
     "test": "cross-env NODE_ENV=development tsx scripts/test.ts",
-    "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js"
+    "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js",
+    "reset:main": "node scripts/confirm-reset.js"
   },
   "optionalDependencies": {
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.7.1",
+    "@antfu/eslint-config": "^6.7.3",
     "@dotenvx/dotenvx": "^1.44.2",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.13",
@@ -78,7 +79,7 @@
     "rimraf": "^6.1.2",
     "simple-git-hooks": "^2.13.1",
     "tsx": "^4.21.0",
-    "turbo": "^2.6.3",
+    "turbo": "^2.7.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
     "vite-plugin-dts": "^4.5.4"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Campaign from '/@/views/campaign/index.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -81,6 +82,7 @@ const items = computed(() => {
         </a>
       </template>
     </TieredMenu>
+    <Campaign v-if="roleStore.isOwner" :collapsed />
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">
       <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">

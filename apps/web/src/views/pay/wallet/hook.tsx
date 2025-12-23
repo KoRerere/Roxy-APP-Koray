@@ -42,12 +42,12 @@ export function usePay() {
   function openProcessing(data: Record<string, any>, type: OrderType | 'silent') {
     const { promise, resolve, reject } = Promise.withResolvers<void>()
 
-    if (data.payType === PayWay.Card) {
+    if (data.payType === PayWay.Card || data.payType === PayWay.Balance) {
       onConfirm()
       return promise
     }
 
-    const ModalComponent = modalMap[data.payType as keyof typeof modalMap](data) || markRaw(ProcessingModal)
+    const ModalComponent = modalMap[data.payType as keyof typeof modalMap]?.(data) || markRaw(ProcessingModal)
     showModal({
       showHeader: false,
       modal: true,

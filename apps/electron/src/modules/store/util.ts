@@ -1,6 +1,7 @@
 import { getCurrentScope } from '@sentry/electron/main'
 import { app } from 'electron'
 import { debounce } from 'es-toolkit'
+import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import type { StoreType } from '/@/modules/store/types'
@@ -8,6 +9,7 @@ import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { loadLocaleMessages } from '/@/locales'
 import { store } from '/@/modules/store'
+import { defaultValues } from '/@/modules/store/defaultConfig'
 import { fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
 
 /** 加密密钥，使用 PBKDF2 生成固定长度的密钥 */
@@ -26,48 +28,6 @@ const ITERATIONS = 10000
 // 使用固定的密码生成密钥，实际应用中应该使用更安全的方式
 const password = 'roxy-browser-default-password'
 const excludeKeys = ['bookText', 'allWorkspaceId']
-
-export const defaultValues: StoreType = {
-  lastLoginTime: Date.now(),
-  language: '',
-  closeSoft: 'pop',
-  memoryLimit: 95,
-  diskLimit: 8,
-  autoClearCache: false,
-  clearCachePeriod: 30,
-  clearCacheType: 'partial',
-  browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
-  systemProxySwitch: true,
-  v2raySwitch: true,
-  appPort: 45535,
-  ipBlackList: [],
-  blockDomainList: [],
-  ipChecker: '',
-  allWorkspaceId: [],
-  sharedWorkspaceList: [],
-  isExternalWeb: false,
-  openWorkbench: 1,
-  subLevel: '',
-  token: '',
-  userInfo: {
-    username: '',
-    email: '',
-  },
-  simulation: {
-    delay: 100,
-    enable: false,
-    shortcutKey: 'Shift E',
-  },
-  googleLoginEnable: false,
-  ipChangeModal: false,
-  showNewFeatureTips: true,
-  browserColorScheme: 'system',
-  ipv6CheckUrl: 'http://api.ip2location.io/?key=B47E6CE8266988810896AA77EED8CEA1',
-  bookText: {},
-  visitorId: '',
-  hasLoggedIn: false,
-  autoStart: false,
-}
 
 export const _store: StoreType = structuredClone(defaultValues)
 
@@ -119,6 +79,17 @@ function decryptData(encryptedData: string): string {
 }
 
 export async function forceSaveConfig() {
+  writeFile(appConfig.defaultBrowserConfig, JSON.stringify({
+    apiKey: store.apiKey,
+    apiPort: store.apiPort,
+    defaultBrowserDirId: store.defaultBrowserDirId,
+    workspaceId: store.workspaceId,
+    appWsPort: store.appWsPort,
+    appWsToken: 'roxybrowser',
+  }), 'utf-8').catch((error) => {
+    console.error('save defaultBrowserConfig error: ', error)
+  })
+
   const isExists = await fileExists(_store.browserCacheRootDir)
   if (!isExists) {
     _store.browserCacheRootDir = defaultValues.browserCacheRootDir

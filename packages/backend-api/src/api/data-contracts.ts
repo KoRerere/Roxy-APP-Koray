@@ -6364,38 +6364,38 @@ export interface UserGetWorkspaceListListData {
   data: {
     rows: {
       /** ID */
-      id?: number;
+      id: number;
       /** 创建人ID */
-      userId?: number;
+      userId: number;
       /** 工作空间名称 */
-      workspaceName?: string;
+      workspaceName: string;
       /** 总窗口数量 */
-      totalWindowCount?: number;
+      totalWindowCount: number;
       /** 总成员数量 */
-      totalMemberCount?: number;
+      totalMemberCount: number;
       /** 工作空间图片 */
-      workspacePicture?: string;
+      workspacePicture: string;
       /** 是否默认工作空间，1：是 0：不是，默认不是 */
-      workspaceDefault?: number;
+      workspaceDefault: number;
       /** 工作空间状态，1：启用 0：停用 */
-      workspaceStatus?: number;
+      workspaceStatus: number;
       /** 创建时间 */
-      createTime?: string;
+      createTime: string;
       /** 修改时间 */
-      updateTime?: string;
+      updateTime: string;
       /** 权限 */
-      role?: number;
+      role: number;
       /** 总窗口数量 */
-      maxWindowCount?: number;
+      maxWindowCount: number;
       /** 窗口使用数量 */
-      useWindowCount?: number;
+      useWindowCount: number;
       /** 窗口编号 */
-      workspaceNo?: number;
-      email?: string;
+      workspaceNo: number;
+      email: string;
       /** 0私有 1 公共的 */
-      workspaceType?: number;
+      workspaceType: number;
       /** 团队成员数量 */
-      useMemberCount?: number;
+      useMemberCount: number;
     }[];
   };
   msg: string;
@@ -6466,15 +6466,16 @@ export interface UserGetPublicWorkspaceListListData {
   code: number;
   data: {
     rows: {
-      id?: number;
-      workspaceName?: string;
-      workspaceNo?: string;
-      workspaceType?: number;
-      workspacePicture?: string;
-      workspaceDefault?: number;
-      workspaceStatus?: number;
-      createTime?: string;
-      updateTime?: string;
+      id: number;
+      workspaceName: string;
+      workspaceNo: string;
+      workspaceType: number;
+      workspacePicture: string;
+      workspaceDefault: number;
+      workspaceStatus: number;
+      createTime: string;
+      updateTime: string;
+      role: number;
     }[];
   };
   msg: string;
@@ -6559,6 +6560,8 @@ export interface UserGetProjectInfoByWorkspaceListData {
          * 邮箱
          */
         email: string;
+        /** 手机号 */
+        phone: string;
         pinStatus: number;
       }[];
       /**
@@ -7018,6 +7021,8 @@ export interface UserGetUserPayInfoListData {
     };
     /** 是否购买黑五套餐 */
     isBlackFriday: boolean;
+    /** 首次购买折扣 */
+    firstPurchaseDiscount: number;
   };
   msg: string;
 }
@@ -7472,7 +7477,12 @@ export interface UserCalculatePriceDifferenceV2ListParams {
 export interface UserCalculatePriceDifferenceV2ListData {
   code: number;
   /** 差价金额(美元) */
-  data: number;
+  data: {
+    /** 差价金额(美元) */
+    originalAmount: number;
+    /** 计算优惠后的实际差价金额 */
+    actualAmount: number;
+  };
   msg: string;
 }
 
@@ -7535,6 +7545,20 @@ export interface UserRedeemWindowCodeCreatePayload {
 
 export interface UserRedeemWindowCodeCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserQueryRedeemCodeListParams {
+  /** @example "5X8L-PVJQ-ERCX" */
+  code?: string;
+}
+
+export interface UserQueryRedeemCodeListData {
+  code: number;
+  data: {
+    activityName: string;
+    detail: string;
+  };
   msg: string;
 }
 
@@ -7640,11 +7664,48 @@ export interface GetFaqHelpList2Data {
   msg: string;
 }
 
+export interface GetPromotionLinkDiscountListParams {
+  /** @example "0324OOSA" */
+  code?: string;
+}
+
+export interface GetPromotionLinkDiscountListData {
+  code: number;
+  data: {
+    userDiscount: number;
+  };
+  msg: string;
+}
+
+export interface GetQrcodeInfoListData {
+  code: number;
+  data: {
+    /** 二维地址 */
+    qrcodeUrl?: string;
+    /** 状态，1:启用，0:停用 */
+    status?: number;
+    /** 类型,wechat:微信,qq:QQ,tg:Telegram' */
+    type?: string;
+  }[];
+  msg: string;
+}
+
 export interface UserGetCheckPhoneVerCodeCreatePayload {
   verCode: string;
 }
 
 export interface UserGetCheckPhoneVerCodeCreateData {
   code: number;
+  msg: string;
+}
+
+export interface GetActivityDiscountListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    discountPercentage: number;
+    type: number;
+  };
   msg: string;
 }

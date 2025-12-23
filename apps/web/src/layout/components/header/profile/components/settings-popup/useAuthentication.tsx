@@ -28,7 +28,7 @@ const EmailChangeDialog = defineAsyncComponent(() => import('./components/email-
 const PhoneChangeDialog = defineAsyncComponent(() => import('./components/phone-change-dialog.vue'))
 
 export function useAuthentication() {
-  const { userStore, dialogRef, showToast, showFormDialog, onlyErrorToast } = useCommonUtil()
+  const { userStore, simpleLocale, dialogRef, showToast, showFormDialog, onlyErrorToast } = useCommonUtil()
   const [showModal] = useDialog()
   const router = useRouter()
   const enabled = ref(false)
@@ -56,6 +56,7 @@ export function useAuthentication() {
               label: $t('手机号'),
               name: 'phone',
               value: userStore.userInfo?.phone ?? '',
+              visible: simpleLocale.currentLocale === 'zh-CN',
               component: () => {
                 return (
                   <div class="w-full flex gap-2 items-center justify-between">
@@ -121,7 +122,7 @@ export function useAuthentication() {
                 )
               },
             },
-          ],
+          ].filter(item => item.visible !== false),
         },
         {
           subtitle: $t('两步验证'),

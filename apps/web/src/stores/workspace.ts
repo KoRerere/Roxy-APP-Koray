@@ -1,4 +1,3 @@
-import type { UnwrapRowsType, UnwrapRowType, UserGetUserPayInfoListData, UserGetWorkspaceListListData, UserGetPublicWorkspaceListListData } from '@roxy/backend-api'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
@@ -9,12 +8,13 @@ import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
-import { emitter } from "/@/utils/eventBus";
+import { emitter } from '/@/utils/eventBus'
+import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
 type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
 type SharedWorkspace = UnwrapRowsType<UserGetPublicWorkspaceListListData>
 
-const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME);
+const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME)
 
 let hidePageLoadingTimeout: any
 
@@ -29,7 +29,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
   const maxCreateWindowCount = computed(() => {
-    return defaultWorkspace.value?.maxWindowCount! - defaultWorkspace.value?.useWindowCount!
+    return (defaultWorkspace.value?.maxWindowCount || 0) - (defaultWorkspace.value?.useWindowCount || 0)
   })
 
   const debounceGetPayInfo = debounce(() => {
@@ -37,6 +37,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     userStore.getUserPayInfo()
     userStore.getUserCards()
   }, 50)
+
+  /** 记住用户最后一次使用的工作空间 */
+  const rememberLastWorkspace = debounce(() => {
+    API.base.userSetUserConfigCreate({})
+  }, 1000)
 
   watch(currentWorkspace, (val, old) => {
     if (!val || val?.id === old?.id) {
@@ -54,7 +59,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ name: 'project-list' })
     }
     // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role!) && !isPublic) {
+    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role) && !isPublic) {
       router.replace({ name: 'home' })
     }
 
@@ -77,18 +82,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }, 1200)
   }, { flush: 'post' })
 
-  /** 记住用户最后一次使用的工作空间 */
-  const rememberLastWorkspace = debounce(() => {
-    API.base.userSetUserConfigCreate({})
-  }, 1000)
-
   async function fetchSharedWorkspaceList(force = false) {
     if (!sharedWorkspaceList.value?.length || force) {
       const { code, data } = await API.limit.userGetPublicWorkspaceListList()
-      if (code !== 0) return
+      if (code !== 0)
+        return
       sharedWorkspaceList.value = data.rows
       // 设置公共空间列表
-      electronAPI.send('user:setSharedWorkspaceList', data.rows.map(item => ({ workspaceId: item.id!, role: item.role! })))
+      electronAPI.send('user:setSharedWorkspaceList', data.rows.map(item => ({ workspaceId: item.id!, role: item.role })))
     }
     return sharedWorkspaceList.value
   }
@@ -96,7 +97,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   async function fetchWorkspaceList() {
     const [result, sharedWorkspace] = await Promise.all([
       API.limit.userGetWorkspaceListList(),
-      fetchSharedWorkspaceList()
+      fetchSharedWorkspaceList(),
     ])
 
     // 如果获取工作空间列表失败，则清除用户信息
@@ -113,7 +114,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     const list = [
       ...(result.data.rows || []),
-      ...toRaw(sharedWorkspace?.filter(item => item.role !== Role.OWNER) || []) as Workspace[]
+      ...toRaw(sharedWorkspace?.filter(item => item.role !== Role.OWNER) || []) as unknown as Workspace[],
     ]
 
     workspaceList.value = list
@@ -162,7 +163,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
     if (targetWorkspace) {
       currentWorkspace.value = targetWorkspace
-    } else {
+    }
+    else {
       currentWorkspace.value = defaultWorkspace.value
     }
     if (isMainWindow) {
@@ -173,11 +175,13 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  // 监听主窗口发来的消息
+  /**
+   * 监听主窗口发来的消息
+   */
   workspaceChangeChannel.onmessage = (event) => {
-    console.log('Received message:', event.data);
+    console.log('Received message:', event.data)
     setCurrentWorkspace(event.data.workspaceId)
-  };
+  }
 
   return {
     defaultWorkspace,
@@ -188,7 +192,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     resetWorkspace,
     getWorkspaceList,
     setCurrentWorkspace,
-    fetchWorkspaceList
+    fetchWorkspaceList,
   }
 }, {
   persist: false,

@@ -8,6 +8,7 @@ import { browserManager } from '/@/modules/browser'
 import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
 import { initLocalConfig, setupStore } from '/@/modules/store'
+import { resourceUpdater } from '/@/modules/updater'
 import { fileExists } from '/@/utils'
 import { setupApp } from './app/'
 
@@ -37,6 +38,8 @@ export async function setupModules() {
     await setupStore()
     // 启动 app
     await setupApp()
+    // 启动资源更新器
+    resourceUpdater.checkForUpdates()
   }
   catch (error) {
     console.error('setupModules', error)

@@ -25,6 +25,7 @@ import {
   GenerateValidatorRecoverCodeListParams,
   Get2FaLoginInfoListData,
   Get2FaLoginInfoListParams,
+  GetActivityDiscountListData,
   GetAppUpgradeCreateData,
   GetAppUpgradeCreatePayload,
   GetBlackFridayTimeListData,
@@ -36,6 +37,7 @@ import {
   GetFaqHelpListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
+  GetQrcodeInfoListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
   LoginCreateData,
@@ -1892,6 +1894,22 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name GetQrcodeInfoList
+   * @summary 官网获取二维码信息
+   * @request GET:/app_statistics/get_qrcode_info
+   * @response `200` `GetQrcodeInfoListData`
+   */
+  getQrcodeInfoList = (params: RequestParams = {}) =>
+    this.http.request<GetQrcodeInfoListData, any>({
+      path: `/app_statistics/get_qrcode_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserGetCheckPhoneVerCodeCreate
    * @summary 用户验证手机验证码
    * @request POST:/user_get_check_phone_ver_code
@@ -1906,6 +1924,22 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetActivityDiscountList
+   * @summary 获取活动折扣
+   * @request GET:/get_activity_discount
+   * @response `200` `GetActivityDiscountListData`
+   */
+  getActivityDiscountList = (params: RequestParams = {}) =>
+    this.http.request<GetActivityDiscountListData, any>({
+      path: `/get_activity_discount`,
+      method: "GET",
       format: "json",
       ...params,
     });

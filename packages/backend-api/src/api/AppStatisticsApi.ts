@@ -12,6 +12,8 @@
 
 import {
   CheckIpDownloadLimitListData,
+  GetPromotionLinkDiscountListData,
+  GetPromotionLinkDiscountListParams,
   GetVersionListListData,
   GetVersionListListParams,
 } from "./data-contracts";
@@ -53,6 +55,25 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<GetVersionListListData, any>({
       path: `/app_statistics/get_version_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetPromotionLinkDiscountList
+   * @summary 官网-查询邀请链接折扣
+   * @request GET:/app_statistics/get_promotion_link_discount
+   * @response `200` `GetPromotionLinkDiscountListData`
+   */
+  getPromotionLinkDiscountList = (
+    query: GetPromotionLinkDiscountListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetPromotionLinkDiscountListData, any>({
+      path: `/app_statistics/get_promotion_link_discount`,
       method: "GET",
       query: query,
       format: "json",

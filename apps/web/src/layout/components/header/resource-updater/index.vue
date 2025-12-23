@@ -9,12 +9,14 @@ import { useToast } from 'primevue/usetoast'
 import { debounce } from 'es-toolkit'
 import { I18nT } from 'vue-i18n'
 import { safeParseJSON } from '/@/utils'
+import { useSimpleLocale } from '/@/stores/locale'
 
 interface KernelUpdateGroup {
   title: string
   list: (ResourceUpdateMessage & { _light?: boolean, _desc?: string })[]
 }
 
+const simpleLocale = useSimpleLocale()
 const toast = useToast()
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
@@ -52,7 +54,15 @@ const isDownloading = computed(() => {
 
 // APP 是否强制升级
 const isForceUpgrade = computed(() => {
-  return clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
+  const isAppForceUpgrade = clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
+  const isWebForceUpgrade = clientUpdates.value.some(item => item.type === 'web' && item.status === 'downloaded' && item.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList?.length > 0 && item.newFeatureTips?.isActivity)
+  return isAppForceUpgrade || isWebForceUpgrade
+})
+
+// APP 更新信息
+const updateInfo = computed(() => {
+  // APP 升级优先级高于 web 升级
+  return clientUpdates.value.find(item => item.type === 'app') || clientUpdates.value.find(item => item.type === 'web')
 })
 
 async function checkForUpdates() {
@@ -204,10 +214,12 @@ window.electronAPI.on('app:resource-update', (data) => {
     }
   }
 })
+
+console.debug('clientUpdates', clientUpdates)
 </script>
 
 <template>
-  <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" />
+  <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" />
 
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">

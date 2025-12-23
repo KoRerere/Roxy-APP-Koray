@@ -1,19 +1,20 @@
-catalogMode: prefer
-cleanupUnusedCatalogs: true
-
-shellEmulator: true
-trustPolicy: no-downgrade
-
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/*
+  - packages/*
 
-# Define a catalog of version ranges.
 catalog:
   axios: ^1.13.2
   typescript: ^5.9.3
   vite: ^7.3.0
   vite-plugin-dts: 4.5.3
 
+catalogMode: prefer
+
+cleanupUnusedCatalogs: true
+
 peerDependencyRules:
   allowedVersions: {}
+
+shellEmulator: true
+
+trustPolicy: no-downgrade

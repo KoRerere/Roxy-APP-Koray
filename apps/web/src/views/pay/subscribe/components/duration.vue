@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import currency from 'currency.js';
-import { format, addDays } from 'date-fns'
+import currency from 'currency.js'
+import { addDays, format } from 'date-fns'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { useUserStore } from '/@/stores/user';
+import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import type { Duration } from '/@/views/pay/subscribe/type'
@@ -27,8 +27,8 @@ const loading = ref(false)
 const durationsDiscountPrice = computed(() =>
   Object.fromEntries(
     (durationList.value || []).map(({ key, discount, month }: any) =>
-      [key, Math.abs(currency(price).multiply(discountCalculate([discount])).subtract(price).multiply(month).value)])
-  )
+      [key, Math.abs(currency(price).multiply(discountCalculate([discount])).subtract(price).multiply(month).value)]),
+  ),
 )
 
 onBeforeMount(() => {
@@ -41,7 +41,8 @@ async function getDiscountByDuration() {
   loading.value = false
   onlyErrorToast(code, msg)
 
-  if (code !== 0) return
+  if (code !== 0)
+    return
 
   durationList.value = Object.entries(data).map(([month, discount]) => ({
     discount,
@@ -65,12 +66,19 @@ function onSelected(item: Duration) {
   <div class="flex gap-3">
     <img v-if="loading" class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
     <template v-else>
-      <div class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration" :class="{ active: selectedDuration?.key === item.key }" v-for="(item, index) in durationList" :key="index"
-        @click="onSelected(item)">
-        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount">{{ item.label }}</div>
-        <div class="duration-text">{{ item.title }}</div>
-        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{
-          currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
+      <div v-for="(item, index) in durationList" :key="index" class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration" :class="{ active: selectedDuration?.key === item.key }"
+           @click="onSelected(item)"
+      >
+        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount">
+          {{ item.label }}
+        </div>
+        <div class="duration-text">
+          {{ item.title }}
+        </div>
+        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">
+          {{
+            currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}
+        </div>
       </div>
     </template>
   </div>
@@ -85,13 +93,17 @@ function onSelected(item: Duration) {
   &:last-child {
     .duration-discount {
       font-size: 14px;
-      background: var(--primitives-red-500, #F53838);
+      background: var(--primitives-red-500, #f53838);
     }
   }
 
   &.active {
     border: 2px solid var(--colors-border-border-brand);
-    background: linear-gradient(180deg, var(--pattern-pay-gradient-selected-start, #013D65) 0%, var(--pattern-pay-gradient-selected-end, #293038) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--pattern-pay-gradient-selected-start, #013d65) 0%,
+      var(--pattern-pay-gradient-selected-end, #293038) 100%
+    );
     box-shadow: none;
 
     .duration-text {
@@ -100,23 +112,23 @@ function onSelected(item: Duration) {
   }
 
   &-discount {
-    background: #FC9D12;
-    color: #FFF;
-    font-family: "DingTalk JinBuTi", sans-serif;
+    background: #fc9d12;
+    color: #fff;
+    font-family: 'DingTalk JinBuTi', sans-serif;
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
   }
 
   &-text {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-size: 16px;
     font-weight: 600;
     line-height: normal;
   }
 
   &-desc {
-    color: var(--colors-text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;

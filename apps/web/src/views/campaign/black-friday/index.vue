@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import BlackFridayModal from '/@/views/campaign/black-friday-modal.vue';
-import { useUserStore } from '/@/stores/user';
-import { useCampaignStore } from '/@/stores/campaign';
+import BlackFridayModal from '/@/views/campaign/black-friday/black-friday-modal.vue'
+import { useUserStore } from '/@/stores/user'
+import { useCampaignStore } from '/@/stores/campaign'
 import { useDialog } from '/@/hooks/useDialog'
-import { emitter } from "/@/utils/eventBus"
+import { emitter } from '/@/utils/eventBus'
 import { enhanceCountdown, safeParseJSON } from '/@/utils/basic'
-import { SubLevelEnum } from '/@/enums/pay';
+import { SubLevelEnum } from '/@/enums/pay'
 
 const { collapsed } = defineProps<{
   collapsed: boolean
@@ -41,15 +41,15 @@ async function getTimeLeft() {
       onEnd: () => {
         stopCountdown.value.stop()
         getTimeLeft()
-      }
+      },
     })
     return
   }
 
-  if (!campaignStore.blackFridayPeriod || !campaignStore.blackFridayInfo) return
+  if (!campaignStore.blackFridayPeriod || !campaignStore.blackFridayInfo)
+    return
 
   stopCountdown.value = enhanceCountdown(campaignStore.blackFridayInfo.end_timestamp, (time) => {
-
     countdown.value = time
     if (time.done) {
       campaignStore.blackFridayPeriod = false
@@ -60,13 +60,14 @@ async function getTimeLeft() {
     const lessThan72Hours = (campaignStore.blackFridayInfo!.end_timestamp - Date.now()) < 72 * 60 * 60 * 1000
 
     if (
-      (lessThan24Hours && !modalStatus.value.lessThan24Hours) ||
-      (lessThan72Hours && !modalStatus.value.lessThan72Hours) ||
-      !modalStatus.value.openModal
+      (lessThan24Hours && !modalStatus.value.lessThan24Hours)
+      || (lessThan72Hours && !modalStatus.value.lessThan72Hours)
+      || !modalStatus.value.openModal
     ) {
       modalStatus.value = { lessThan24Hours, lessThan72Hours, openModal: true }
       localStorage.setItem('$BlackFridayModalStatus', JSON.stringify(modalStatus.value))
-      if (!userPayInfo.value.isBlackFriday) openModal()
+      if (!userPayInfo.value.isBlackFriday)
+        openModal()
     }
   }, { lessThan24Interval: 1 / 60, alwaysSecondLevel: modalStatus.value.lessThan24Hours })
 }
@@ -75,14 +76,16 @@ function goToSubscribePlan() {
   const isSubscribe = [SubLevelEnum.Free, SubLevelEnum.Trial, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum)
   if (isSubscribe) {
     router.push({ name: 'subscribe-plan' })
-  } else if (userPayInfo.value.isBlackFriday) {
+  }
+  else if (userPayInfo.value.isBlackFriday) {
     router.push({ name: 'upgrade-plan' })
-  } else {
+  }
+  else {
     emitter.emit('showRenewalDialog', {
       paySuccess: () => {
         router.replace({ name: 'wallet', query: { name: 'manage' } })
         emitter.emit('updateBillList')
-      }
+      },
     })
   }
 }
@@ -93,14 +96,14 @@ function openModal() {
     modal: true,
     blockScroll: true,
     pt: {
-      root: "!bg-transparent !border-none !shadow-none",
-      mask: "!z-1110"
+      root: '!bg-transparent !border-none !shadow-none',
+      mask: '!z-1110',
     },
     slots: {
       container: ({ hideModal }) => h(BlackFridayModal, {
         onClose: hideModal,
         onConfirm: goToSubscribePlan,
-      })
+      }),
     },
   })
 }
@@ -112,7 +115,7 @@ function openModal() {
     <div v-else class="flex flex-col py-2 px-2.5 gap-1.5 cursor-pointer friday">
       <div class="flex items-center justify-between">
         <span class="title">{{ $t('黑色星期五 3 折钜惠') }}</span>
-        <SvgIcon name="base/rx_ic_arrow_right" color="#fff"></SvgIcon>
+        <SvgIcon name="base/rx_ic_arrow_right" color="#fff" />
       </div>
       <template v-if="countdown">
         <i18n-t v-if="modalStatus.lessThan24Hours" class="desc" scope="global" tag="div" :keypath="$t('离促销结束 {count}', { count: '{count}' })">
@@ -144,20 +147,20 @@ function openModal() {
 }
 
 .title {
-  color: #FFF;
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
   line-height: normal;
 }
 
 .desc {
-  color: rgba(255, 255, 255, 0.80);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
   line-height: normal;
 }
 
 .time {
-  color: #FFF;
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
   line-height: normal;

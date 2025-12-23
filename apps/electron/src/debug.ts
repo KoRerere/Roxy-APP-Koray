@@ -1,7 +1,5 @@
-
-
-import { browserManager } from '/@/modules/browser'
 import axios from 'axios'
+import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import * as utils from '/@/utils'
 
@@ -13,10 +11,10 @@ let debugObj
 /** 主要用于调试 */
 export function initDebug() {
   class Test {
-    #password;
+    #password
 
     constructor(password) {
-      this.#password = atob(password);
+      this.#password = atob(password)
     }
 
     getSecret(pwd) {
@@ -32,13 +30,12 @@ export function initDebug() {
   }
 }
 
-
 function getDebugObj() {
   debugObj ||= {
     axios,
     store,
     browserManager,
-    utils
+    utils,
   }
 
   return debugObj

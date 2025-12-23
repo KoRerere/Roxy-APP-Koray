@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatNumberToKMB } from '/@/utils/basic';
+import { formatNumberToKMB } from '/@/utils/basic'
 
 interface Tier {
   start: number
@@ -155,7 +155,8 @@ const tooltipValue = computed(() => {
  * 获取值对应的位置（百分比）
  */
 function getPosition(value: number): number {
-  if (!sliderTrack.value) return 0
+  if (!sliderTrack.value)
+    return 0
 
   const trackWidth = sliderTrack.value.clientWidth
 
@@ -209,8 +210,8 @@ function pixelToPercent(pixels: number, trackWidth: number): number {
  */
 function calculateInterpolatedPosition(value: number, sortedValues: number[], segmentWidth: number): number {
   const index = sortedValues.findIndex(v => v > value)
-  const start = sortedValues[index - 1]
-  const end = sortedValues[index]
+  const start = sortedValues[index - 1]!
+  const end = sortedValues[index]!
   return VISUAL_PADDING_PX + ((index - 1) + (value - start) / (end - start)) * segmentWidth
 }
 
@@ -234,7 +235,7 @@ function findClosestValue(clientX: number): number {
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2)
-    const midValue = possibleValues[mid]
+    const midValue = possibleValues[mid]!
     const midPosition = ((getPosition(midValue) * trackWidth / 100 - VISUAL_PADDING_PX) / adjustedWidth) * 100
 
     if (midPosition === clickPosition)
@@ -242,7 +243,7 @@ function findClosestValue(clientX: number): number {
 
     // 检查相邻值，返回最接近的
     if (mid > 0) {
-      const prevValue = possibleValues[mid - 1]
+      const prevValue = possibleValues[mid - 1]!
       const prevPosition = ((getPosition(prevValue) * trackWidth / 100 - VISUAL_PADDING_PX) / adjustedWidth) * 100
       if (prevPosition <= clickPosition && clickPosition <= midPosition) {
         return Math.abs(clickPosition - prevPosition) < Math.abs(clickPosition - midPosition)
@@ -252,7 +253,7 @@ function findClosestValue(clientX: number): number {
     }
 
     if (mid < possibleValues.length - 1) {
-      const nextValue = possibleValues[mid + 1]
+      const nextValue = possibleValues[mid + 1]!
       const nextPosition = ((getPosition(nextValue) * trackWidth / 100 - VISUAL_PADDING_PX) / adjustedWidth) * 100
       if (midPosition <= clickPosition && clickPosition <= nextPosition) {
         return Math.abs(clickPosition - midPosition) < Math.abs(clickPosition - nextPosition)
@@ -268,7 +269,7 @@ function findClosestValue(clientX: number): number {
   }
 
   // 如果二分查找没有找到精确匹配，返回最接近的边界值
-  return possibleValues[left] || possibleValues[right]
+  return possibleValues[left]! || possibleValues[right]!
 }
 
 /**
@@ -363,13 +364,17 @@ onMounted(() => {
         position < currentPosition
           ? 'bg-white opacity-30'
           : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'track-dot',
-      ]" :style="{ left: `${position}%` }" />
+      ]" :style="{ left: `${position}%` }"
+      />
       <!-- 滑块 -->
-      <div class="absolute top-1/2 -translate-1/2 thumb" :class="{ 'tooltip': tooltip }" :style="{
+      <div class="absolute top-1/2 -translate-1/2 thumb" :class="{ tooltip }" :style="{
         left: `${currentPosition}%`,
         transition: isDragging ? 'none' : 'all 0.3s ease',
-      }" :data-tooltip="tooltipValue">
-        <div class="cursor-grab active:cursor-grabbing thumb-grabbing" />
+      }" :data-tooltip="tooltipValue"
+      >
+        <div class="relative cursor-grab active:cursor-grabbing thumb-grabbing">
+          <slot name="thumb-icon" />
+        </div>
         <!-- Thumb Extra -->
         <div ref="thumbex" class="absolute top-15" :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">
           <slot name="thumb-extra" />
@@ -379,7 +384,10 @@ onMounted(() => {
     <!-- 底部数值标签 -->
     <div class="relative h-5 mt-2">
       <div v-for="{ value, position, hide } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer track-marker"
-        :class="{ 'foucs font-semibold': value === selectedValue, 'hidden': hide }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">{{ formatter(value) }}</div>
+           :class="{ 'foucs font-semibold': value === selectedValue, 'hidden': hide }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)"
+      >
+        {{ formatter(value) }}
+      </div>
     </div>
   </div>
 </template>
@@ -401,7 +409,7 @@ onMounted(() => {
   }
 
   &:hover {
-    color: #EC51F7;
+    color: #ec51f7;
   }
 }
 

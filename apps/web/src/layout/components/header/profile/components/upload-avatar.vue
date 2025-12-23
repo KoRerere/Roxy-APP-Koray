@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import RxAvatar from '/@/components/rx-avatar'
 import { useUserStore } from '/@/stores/user'
-import { getRandomInt } from '/@/utils'
+import { getRandomIntByRange } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useFileDialog } from '@vueuse/core'
@@ -18,7 +18,7 @@ const { open, onChange } = useFileDialog({
 
 const modelValue = defineModel<string>()
 
-const color = defaultColors[getRandomInt(0, defaultColors.length - 1)]
+const color = defaultColors[getRandomIntByRange(0, defaultColors.length - 1)]
 
 onChange(async (files) => {
   if (!files?.length)

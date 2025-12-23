@@ -31,3 +31,10 @@ export enum WorkspaceType {
   /** 公共 */
   Public = 1,
 }
+
+export enum ActivityType {
+  /** 无活动 */
+  None = 0,
+  /** 新年活动 */
+  NewYear = 1,
+}

@@ -1,0 +1,39 @@
+# 签名/公证 env 示例（可直接填到 apps/tauri/tauri.signing.env）
+#
+# Tauri v2 macOS 签名/公证官方文档：
+# https://v2.tauri.app/distribute/sign/macos/
+#
+# 说明：
+# - 绿色版（bundle.targets=["app"]）在 macOS 上产出 .app
+# - 设置 APPLE_SIGNING_IDENTITY 会触发签名（也可以覆盖 tauri.conf.json 的 signingIdentity）
+# - 设置 notarize 相关变量会触发公证（notarization）
+
+########################################
+# 1) 签名
+########################################
+# 通过 `security find-identity -v -p codesigning` 查到的 identity 字符串
+# 例：Developer ID Application: XXX (GLM223L5MF)
+APPLE_SIGNING_IDENTITY=
+
+########################################
+# 2) 公证（Notarization）二选一
+########################################
+
+# 2.1 Apple ID 方式（最常用）
+APPLE_ID=
+# app-specific password（不是你的 Apple ID 登录密码）
+APPLE_PASSWORD=
+APPLE_TEAM_ID=
+
+# 2.2 App Store Connect API 方式（可选）
+# APPLE_API_ISSUER=
+# APPLE_API_KEY=
+# APPLE_API_KEY_PATH=
+
+########################################
+# 3) CI 才常用：把 .p12 证书注入环境变量（本地一般不需要）
+########################################
+# APPLE_CERTIFICATE=
+# APPLE_CERTIFICATE_PASSWORD=
+
+

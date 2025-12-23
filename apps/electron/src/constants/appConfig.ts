@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { join } from 'node:path'
+import { isDev, isPackaged, isWindows } from '/@/constants/common'
 import { store } from '/@/modules/store'
-import { isDev, isWindows, isPackaged } from '/@/constants/common'
 
 const sessionDir = app.getPath('sessionData')
 
@@ -32,6 +32,16 @@ export const appConfig = {
   get roxySyncBinPath() {
     return join(sessionDir, 'roxy-sync-bin', isWindows ? 'roxy-sync.exe' : 'roxy-sync')
   },
+  /** 默认浏览器执行文件所在文件夹 */
+  get defaultBrowserBinDir() {
+    return join(sessionDir, 'default-browser-bin')
+  },
+  /** 默认浏览器执行文件路径 */
+  get defaultBrowserBinPath() {
+    return join(this.defaultBrowserBinDir, isWindows ? 'roxybrowser.exe' : 'roxybrowser.app/Contents/MacOS/roxybrowser')
+  },
+  /** 默认浏览器配置文件 */
+  defaultBrowserConfig: join(sessionDir, 'default-browser-config.json'),
   /** 配置文件 */
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */
@@ -66,7 +76,7 @@ export const appConfig = {
   /** web 资源基础 url */
   get webBaseUrl() {
     return isPackaged ? `http://127.0.0.1:${store.appPort}` : import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')
-  }
+  },
 } as const
 
 console.debug('appConfig', appConfig)

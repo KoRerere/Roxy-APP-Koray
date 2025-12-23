@@ -3,7 +3,7 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { getColumns } from './columns'
-import { getDictMap, setInputValueByFormData, transformSortOrder } from '/@/utils'
+import { getDictMap, isDev, setInputValueByFormData, transformSortOrder } from '/@/utils'
 import type { SortOrderNumber } from '/@/utils'
 
 const role = useRoleStore()
@@ -283,6 +283,12 @@ export function getOperation(row: any = {}) {
           color: 'var(--pattern-actionbar-icon-open)',
         },
       },
+    },
+    {
+      name: 'setAsDefaultBrowser',
+      label: '设为默认浏览器(test)',
+      icon: 'base/rx_ic_chrome',
+      power: !role.isViewer && isDev,
     },
     {
       name: 'close',

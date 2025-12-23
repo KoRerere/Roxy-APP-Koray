@@ -56,7 +56,7 @@ export function handleCloseWindow(event: Electron.Event) {
       // 根据用户的选择执行相应的操作
       if (response === 0) {
         // 取消退出
-        win.minimize()
+        // win.minimize()
         win.setSkipTaskbar(true)
         win.hide()
       }
@@ -71,7 +71,7 @@ export function handleCloseWindow(event: Electron.Event) {
   }
   else if (closeSoft === 'min') {
     event.preventDefault()
-    win.minimize()
+    // win.minimize()
     win.setSkipTaskbar(true)
     win.hide()
   }

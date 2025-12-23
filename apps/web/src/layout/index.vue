@@ -1,20 +1,20 @@
 <script lang="ts" setup>
+import AsideMenu from './components/aside-menu/index.vue'
+import RxLayoutFooter from './components/footer/index.vue'
+import RxLayoutHeader from './components/header/index.vue'
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '../stores/user'
-import AsideMenu from './components/aside-menu/index.vue'
-import RxLayoutFooter from './components/footer/index.vue'
-import RxLayoutHeader from './components/header/index.vue'
-import { emitter } from '/@/utils/eventBus';
+import { emitter } from '/@/utils/eventBus'
 import { MENU_COLLAPSED } from '../constants/storage-key'
 import { SubLevelEnum } from '/@/enums/pay'
-import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
+import { WorkspaceType } from '/@/enums/base'
 import { useRoleStore } from '/@/stores/role'
 import { useThemeStore } from '../stores/theme'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useProxy } from '/@/views/agent/hooks'
-import { WorkspaceType } from '../enums'
+import type { UnwrapRowsType, UserGetAnntListListData } from '@roxy/backend-api'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
@@ -49,7 +49,6 @@ watchEffect(() => {
   localStorage.setItem(MENU_COLLAPSED, collapsed.value ? '1' : '0')
 })
 
-
 async function getAnntList() {
   const { data } = await API.base.userGetAnntListList()
   anntList.value = data?.rows || []
@@ -83,14 +82,16 @@ function calcSubscriptionExpired() {
     // console.log('diffDays', diffDays)
     if (diffDays <= 3 && diffDays >= 0) {
       remainTime.value = Math.max(diffDays, 1)
-    } else {
+    }
+    else {
       if (remainTime.value > 0) {
         userStore.fetchUserInfo()
         userStore.getUserPayInfo()
       }
       remainTime.value = 0
     }
-  } else {
+  }
+  else {
     remainTime.value = 0
   }
 }
@@ -114,12 +115,13 @@ function onRenewal() {
   // 如果是试用，则跳转到订阅页面
   if (userPayInfo.value.subLevel === SubLevelEnum.Trial) {
     router.push({ name: 'subscribe-plan' })
-  } else {
+  }
+  else {
     emitter.emit('showRenewalDialog', {
       paySuccess: () => {
         router.replace({ name: 'wallet', query: { name: 'manage' } })
         emitter.emit('updateBillList')
-      }
+      },
     })
   }
 }
@@ -128,7 +130,7 @@ function onRenewal() {
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
-      <div class="indicator" @click="collapsed = !collapsed" :title="collapsed ? $t('展开') : $t('收起')">
+      <div class="indicator" :title="collapsed ? $t('展开') : $t('收起')" @click="collapsed = !collapsed">
         <SvgIcon name="indicator/indicator_default" class="default" />
         <SvgIcon name="indicator/indicator_expand" class="expand" />
         <SvgIcon name="indicator/indicator_fold" class="fold" />
@@ -146,8 +148,9 @@ function onRenewal() {
       <RxLayoutHeader />
 
       <div class="mr-4 flex flex-col gap-2 rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" :class="{ 'campaing': !!annt.announceType }" closable
-          @close="handleCloseAnnt(annt.id!)">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" :class="{ campaing: !!annt.announceType }" closable
+                 @close="handleCloseAnnt(annt.id!)"
+        >
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -164,8 +167,7 @@ function onRenewal() {
                 </span>
               </template>
             </i18n-t>
-            <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global">
-            </i18n-t>
+            <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global" />
           </template>
         </RxAlert>
         <RxAlert v-if="userPayInfo.proxyExpireCount > 0 && isShowProxyExpired" class="w-full expired-alert" type="warn" announcement @close="handleCloseProxyExpired">
@@ -273,7 +275,7 @@ function onRenewal() {
     align-items: center;
     gap: var(--spacing-md, 6px);
     flex-wrap: nowrap;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: Archivo;
     font-size: 18px;

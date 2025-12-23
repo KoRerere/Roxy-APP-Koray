@@ -40,7 +40,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
 
 /** 获取本地 web 版本 */
 export async function getLocalWebVersion() {
-  return axios.get<string>(await getWebEntryUrl('version', true)).then(response => response.data).catch(() => '')
+  return axios.get<string>(await getWebEntryUrl('version', true)).then(response => response.data).catch(() => '0.0.0')
 }
 
 /** 创建窗口 */

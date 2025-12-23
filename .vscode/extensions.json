@@ -17,7 +17,9 @@
     // iconify 图标插件
     "antfu.iconify",
     // i18n 插件
-    "vunguyentuan.vscode-css-variables"
+    "vunguyentuan.vscode-css-variables",
+    "tauri-apps.tauri-vscode",
+    "rust-lang.rust-analyzer"
   ],
   "unwantedRecommendations": [
     // 和 volar 冲突

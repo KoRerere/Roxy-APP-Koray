@@ -1,3 +1,4 @@
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import axios from 'axios'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
@@ -5,13 +6,12 @@ import { createWriteStream } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
+import { isWindows } from '/@/constants/common'
 import { getLocalWebVersion, getMainWindow, getWebEntryUrl, updateMainWindowPageTitle } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
-import { fileExists } from '/@/utils'
-import { isWindows } from '/@/constants/common'
-import { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { ipcMain } from '/@/modules/ipc'
 import { store } from '/@/modules/store'
+import { fileExists } from '/@/utils'
 
 interface VersionInfo {
   /** 最新版本号 */
@@ -50,9 +50,15 @@ export const webUpdater = new class WebUpdater {
       return $t('UI 资源更新')
     },
   }
+
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
     return `${this.webDomain}/public/package/web/${app.getVersion()}/${os}/version.json`
+  }
+
+  /** 活动信息文件地址 */
+  get activityUrl() {
+    return `${this.webDomain}/public/package/web/${app.getVersion()}/${os}/activity.json`
   }
 
   /** web 资源包下载地址 */
@@ -141,6 +147,14 @@ export const webUpdater = new class WebUpdater {
           this.remoteVersionInfo = remoteVersionInfo
           this.#updateMessageData.percent = 100
           this.#updateMessageData.status = 'downloaded'
+
+          await axios.get<Record<string, any>>(this.activityUrl).then(response => response.data).then((result) => {
+            this.#updateMessageData.newFeatureTips = {
+              activityInfo: result.activityInfo,
+              isActivity: result.activityInfo.isActivity,
+            }
+          }).catch(() => { })
+
           this.sendSuccessMessage()
           await options?.onDownloadComplete?.()?.catch?.(() => { })
           resolve()
@@ -180,9 +194,11 @@ export const webUpdater = new class WebUpdater {
         store.isExternalWeb = await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
         getMainWindow()?.reload()
         await updateMainWindowPageTitle()
-      } catch (error) {
+      }
+      catch (error) {
         console.error('[WebUpdater] upgradeNow error', error)
-      } finally {
+      }
+      finally {
         this.isUpgrading = false
       }
     }

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- 作为“无 Dock 图标”的 agent app 启动（避免启动时 Dock 闪现）；需要时可在运行期切换为 Regular 并显示 Dock -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- 让系统识别该 App 可处理 http/https，从而出现在“默认网页浏览器”列表 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLName</key>
+        <string>HTTP</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>http</string>
+          <string>https</string>
+        </array>
+      </dict>
+    </array>
+
+    <!-- 可选：声明能查看 HTML/URL 文件（提高系统识别与关联能力） -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeName</key>
+        <string>Web Page</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+        <key>LSItemContentTypes</key>
+        <array>
+          <string>public.html</string>
+          <string>public.xhtml</string>
+          <string>public.url</string>
+        </array>
+      </dict>
+
+      <!-- 让“打开方式”里尽可能对所有文件类型都出现（不抢占默认，仍为 Alternate） -->
+      <dict>
+        <key>CFBundleTypeName</key>
+        <string>All Files</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+        <!-- 现代方式：UTI 覆盖所有数据文件 -->
+        <key>LSItemContentTypes</key>
+        <array>
+          <string>public.data</string>
+          <string>public.item</string>
+        </array>
+        <!-- 旧式兜底（某些场景 Finder 仍会参考扩展名/OSType） -->
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>*</string>
+        </array>
+        <key>CFBundleTypeOSTypes</key>
+        <array>
+          <string>****</string>
+        </array>
+      </dict>
+    </array>
+  </dict>
+</plist>
+
+

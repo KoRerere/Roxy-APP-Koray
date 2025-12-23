@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
-import { format } from 'date-fns';
-import { useCampaignStore } from '/@/stores/campaign';
+import { $t } from '/@/locales'
+import { format } from 'date-fns'
+import { useCampaignStore } from '/@/stores/campaign'
 import { useSimpleLocale } from '/@/stores/locale'
 import { enhanceCountdown } from '/@/utils/basic'
 
@@ -15,7 +15,7 @@ const countdown = ref()
 
 const imageUrls = computed(() => ({
   cover: `/images/campaing/black-friday/modal-${currentLocale.value}.svg`,
-  badge: `/images/campaing/black-friday/badge-${currentLocale.value}.svg`
+  badge: `/images/campaing/black-friday/badge-${currentLocale.value}.svg`,
 }))
 
 const lessThan24Hours = computed(() => {
@@ -27,7 +27,8 @@ const lessThan72Hours = computed(() => {
 })
 
 const countdownFormat = computed(() => {
-  if (!countdown.value || !lessThan72Hours.value) return {}
+  if (!countdown.value || !lessThan72Hours.value)
+    return {}
 
   const { days, hours, minutes, seconds } = countdown.value
 
@@ -79,34 +80,41 @@ function onClose() {
           <div><span class="deal-title">RoxyBrowser</span> {{ $t('超级优惠') }}</div>
           <div>{{ format(new Date(blackFridayInfo!.start_timestamp), 'yyyy/MM/dd') }} - {{ format(new Date(blackFridayInfo!.end_timestamp), 'yyyy/MM/dd') }}</div>
         </div>
-        <div class="flex-1 text-center" v-if="countdown">
-          <div class="deal-text">{{ $t('黑色星期五折扣剩余') }}</div>
-          <div class="deal-time" v-if="lessThan24Hours">{{ countdownFormat.hours }}:{{ countdownFormat.minutes }}:{{ countdownFormat.seconds }}</div>
-          <div class="flex items-baseline justify-center deal-time" v-else>
+        <div v-if="countdown" class="flex-1 text-center">
+          <div class="deal-text">
+            {{ $t('黑色星期五折扣剩余') }}
+          </div>
+          <div v-if="lessThan24Hours" class="deal-time">
+            {{ countdownFormat.hours }}:{{ countdownFormat.minutes }}:{{ countdownFormat.seconds }}
+          </div>
+          <div v-else class="flex items-baseline justify-center deal-time">
             <span>{{ countdownFormat.hours }}</span>
             <span class="deal-unit">&nbsp;{{ $t('小时') }}&nbsp;</span>
             <span>{{ countdownFormat.minutes }}</span>
             <span class="deal-unit">&nbsp;{{ $t('分钟') }}</span>
           </div>
-          <div class="deal-desc">{{ $t('3折优惠再赠送12个月') }}</div>
+          <div class="deal-desc">
+            {{ $t('3折优惠再赠送12个月') }}
+          </div>
         </div>
         <RxButton class="self-center shrink-0" size="lg" severity="secondary" @click="onSubscribe">
           <div class="flex items-center gap-2">
             <span>{{ $t('即刻订阅') }}</span>
-            <SvgIcon name="base/rx_ic_arrow_right"></SvgIcon>
+            <SvgIcon name="base/rx_ic_arrow_right" />
           </div>
         </RxButton>
       </div>
     </div>
     <div v-else class="relative">
       <img class="block w-140 rounded-5" :src="imageUrls.cover">
-      <div class="absolute top-6 right-6 text-white deal-head">{{ format(new Date(blackFridayInfo!.start_timestamp), 'yyyy/MM/dd') }} - {{ format(new Date(blackFridayInfo!.end_timestamp),
-        'yyyy/MM/dd') }}
+      <div class="absolute top-6 right-6 text-white deal-head">
+        {{ format(new Date(blackFridayInfo!.start_timestamp), 'yyyy/MM/dd') }} - {{ format(new Date(blackFridayInfo!.end_timestamp),
+                                                                                           'yyyy/MM/dd') }}
       </div>
       <RxButton class="!min-w-50 !absolute bottom-6 left-6 z-1" size="lg" severity="secondary" @click="onSubscribe">
         <div class="flex items-center gap-2">
           <span>{{ $t('即刻订阅') }}</span>
-          <SvgIcon name="base/rx_ic_arrow_right"></SvgIcon>
+          <SvgIcon name="base/rx_ic_arrow_right" />
         </div>
       </RxButton>
       <img class="!absolute -bottom-6.5 -right-7 block w-25.5 z-1" :src="imageUrls.badge">
@@ -133,13 +141,13 @@ function onClose() {
   }
 
   &-time {
-    font-family: "JetBrains Mono";
+    font-family: 'JetBrains Mono';
     font-size: 64px;
     font-weight: 700;
   }
 
   &-unit {
-    font-family: "IBM Plex Sans SC";
+    font-family: 'IBM Plex Sans SC';
     font-size: 40px;
     font-weight: 700;
   }

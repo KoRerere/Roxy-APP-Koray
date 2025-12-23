@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import { debounce } from 'es-toolkit'
 import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { onConfirm } = defineProps<{
   onConfirm: (code: string) => void | Promise<void>
@@ -8,7 +11,30 @@ const { onConfirm } = defineProps<{
 
 defineEmits(['close'])
 
+const [_, onlyErrorToast] = useResponseToast()
+
 const code = ref('')
+const loading = ref(false)
+const available = ref(false)
+const redeemMessage = ref()
+
+const checkCodeDebounce = debounce(checkCode, 500)
+
+async function checkCode(value: string) {
+  if (value.length !== 14) {
+    available.value = false
+    redeemMessage.value = undefined
+    return
+  }
+  loading.value = true
+  const { code, data, msg } = await API.pay.userQueryRedeemCodeList({ code: value })
+  loading.value = false
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return
+  available.value = true
+  redeemMessage.value = data
+}
 </script>
 
 <template>
@@ -21,14 +47,25 @@ const code = ref('')
     <img class="block w-full rounded-md" src="/images/redeem-banner.png">
     <div class="flex flex-col gap-1 pt-2">
       <div class="title">
-        {{ $t('请在下方输入兑换码') }}
+        {{ $t('请在下方输入礼品码') }}
       </div>
       <div class="desc">
-        {{ $t('兑换码是用于兑换订阅和其他福利的代码。') }}
+        {{ $t('礼品码是用于兑换 RoxyBrowser 订阅和其他福利的代码。') }}
       </div>
     </div>
-    <TsFormInputText v-model.trim="code" class="text-center" size="lg" :placeholder="$t('请输入兑换码')" />
-    <RxButton size="lg" :disabled="!code" :label="$t('兑换')" @click="onConfirm(code)" />
+    <TsFormInputText v-model.trim="code" class="text-center" size="lg" :placeholder="$t('请输入兑换码')" @update:model-value="checkCodeDebounce" />
+    <RxButton size="lg" :loading="loading" :disabled="!available" :label="loading ? $t('检测中...') : $t('兑换')" @click="onConfirm(code)" />
+    <div v-if="redeemMessage" class="flex flex-col gap-1">
+      <div class="flex items-center gap-1.5">
+        <SvgIcon name="other/gift" />
+        <span class="name">
+          {{ redeemMessage.activityName }}
+        </span>
+      </div>
+      <div class="gift">
+        {{ redeemMessage.detail }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -51,5 +88,16 @@ const code = ref('')
   color: var(--colors-text-text-secondary);
   font-size: 12px;
   line-height: normal;
+}
+
+.name {
+  color: var(--colors-text-text-warning);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gift {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
 }
 </style>

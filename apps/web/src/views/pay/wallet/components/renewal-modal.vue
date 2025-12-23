@@ -1,25 +1,24 @@
 <script setup lang="ts">
-import Detail from '/@/views/pay/subscribe/components/detail.vue';
-import Duration from '/@/views/pay/subscribe/components/duration.vue';
-import BlackFridayDuration from '/@/views/campaign/black-friday-duration.vue'
+import Detail from '/@/views/pay/subscribe/components/detail.vue'
+import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
-import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue';
-import { RxAlert } from '/@/components/rx-alert'
+import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
+import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import currency from 'currency.js'
-import { $t } from '/@/locales';
-import { API } from '/@/api';
+import { $t } from '/@/locales'
+import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useSimpleLocale } from '/@/stores/locale';
 import { useDialog } from '/@/hooks/useDialog'
-import { useUserStore } from '/@/stores/user';
-import { useCampaignStore } from '/@/stores/campaign';
+import { useUserStore } from '/@/stores/user'
+import { useSimpleLocale } from '/@/stores/locale'
+import { useCampaignStore } from '/@/stores/campaign'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
-import { SubLevelEnum } from '/@/enums/pay';
+import { SubLevelEnum } from '/@/enums/pay'
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
-const { blackFridayPeriod } = storeToRefs(useCampaignStore())
+const { currentActivity } = storeToRefs(useCampaignStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
@@ -31,10 +30,13 @@ const loading = ref(false)
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
 const allDiscount = computed(() => {
-  const { discount } = userPayInfo.value!
+  const { discountPercentage: activityDiscount } = currentActivity.value
+  const { firstPurchaseDiscount, discount } = userPayInfo.value!
   const { discount: durationDiscount } = selectedDuration.value || {}
 
   return Object.fromEntries([
+    ['activityDiscount', activityDiscount, true],
+    ['firstPurchaseDiscount', firstPurchaseDiscount, true],
     ['discount', discount, true],
     ['durationDiscount', durationDiscount, !!durationDiscount],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
@@ -48,7 +50,7 @@ const discountAmount = computed(() => currency(originalAmount.value).subtract(to
 
 const detail = computed(() => {
   const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
-  const { discount, durationDiscount } = allDiscount.value
+  const { discount, firstPurchaseDiscount, durationDiscount, activityDiscount } = allDiscount.value
 
   const profileCount = currency(purchaseWindowCount, { precision: 0, symbol: '' })
   const freeCount = currency(freeWindowCount, { precision: 0, symbol: '' })
@@ -59,41 +61,53 @@ const detail = computed(() => {
       items: [
         {
           label: $t('窗口数量'),
-          value: `${profileCount.format()} + ${freeCount.format()}`
+          value: `${profileCount.format()} + ${freeCount.format()}`,
         },
         {
           label: $t('每日可创建数'),
-          value: profileCount.add(freeCount.value).multiply(30).format()
+          value: profileCount.add(freeCount.value).multiply(30).format(),
         },
         {
           label: $t('每日可打开数'),
-          value: profileCount.add(freeCount.value).multiply(100).format()
+          value: profileCount.add(freeCount.value).multiply(100).format(),
         },
         {
           label: $t('续费时长'),
-          value: selectedDuration.value?.title
+          value: selectedDuration.value?.title,
         },
         {
           label: $t('到期时间'),
-          value: selectedDuration.value?.due
-        }
-      ]
+          value: selectedDuration.value?.due,
+        },
+      ],
     },
     {
       items: [
         {
-          label: $t('专属折扣'),
-          value: `-${discount}%`,
+          label: $t('节日折扣'),
           class: '!color-[#FC9D12]',
-          visible: !!discount
+          value: `-${activityDiscount}%`,
+          visible: !!activityDiscount,
+        },
+        {
+          label: $t('首购折扣'),
+          class: '!color-[#FC9D12]',
+          value: `-${firstPurchaseDiscount}%`,
+          visible: !!firstPurchaseDiscount,
+        },
+        {
+          label: $t('专属折扣'),
+          class: '!color-[#FC9D12]',
+          value: `-${discount}%`,
+          visible: !!discount,
         },
         {
           label: selectedDuration.value?.discountStr || $t('订阅折扣'),
-          value: `-${durationDiscount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!durationDiscount
+          value: `-${durationDiscount}%`,
+          visible: !!durationDiscount,
         },
-      ].filter(item => item.visible !== false)
+      ].filter(item => item.visible !== false),
     },
     {
       items: [
@@ -101,15 +115,15 @@ const detail = computed(() => {
           label: $t('套餐原价'),
           value: currency(originalAmount.value).format(),
           visible: originalAmount.value !== totalAmount.value,
-          slot: 'oldprice'
+          slot: 'oldprice',
         },
         {
           label: $t('实际价格'),
           value: currency(totalAmount.value).format(),
-          slot: 'price'
+          slot: 'price',
         },
-      ].filter(item => item.visible !== false)
-    }
+      ].filter(item => item.visible !== false),
+    },
   ].filter(item => item.items.length)
 })
 
@@ -149,10 +163,10 @@ async function confirm() {
             payType,
             isAuto,
             orderNo: userPayInfo.value!.orderNo,
-            subscriptionMonths: selectedDuration.value.month
+            subscriptionMonths: selectedDuration.value.month,
           })
           close()
-        }
+        },
       }),
     },
   })
@@ -167,7 +181,8 @@ function close(isCancel = false) {
 function onUpgradePlan() {
   if (isExpired.value) {
     router.push({ name: 'subscribe-plan' })
-  } else {
+  }
+  else {
     router.push({ name: 'upgrade-plan' })
   }
   close()
@@ -178,16 +193,17 @@ function onUpgradePlan() {
   <div class="pl-8 pr-6 pt-4 pb-6 popup">
     <div class="relative flex items-center h-10 header">
       <span>{{ $t('续费') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)">
-      </SvgIcon>
+      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
     <div class="flex mt-6 gap-6">
       <div class="flex-1 flex flex-col gap-8">
         <ItemBlock :title="$t('当前套餐')">
           <div>
-            <div class="plan">{{ $t('{count} 窗口', {
-              count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format()
-            }) }}</div>
+            <div class="plan">
+              {{ $t('{count} 窗口', {
+                count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format(),
+              }) }}
+            </div>
             <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="$t('若要增加窗口上限，请{terms}{text}新套餐。', { terms: '{terms}', text: '{text}' })" scope="global">
               <template #terms>
                 <a class="cursor-pointer terms-link" target="_blank" @click="onUpgradePlan">{{ $t('单击此处') }}</a>
@@ -200,38 +216,46 @@ function onUpgradePlan() {
         </ItemBlock>
         <ItemBlock :title="$t('选择续费时长')">
           <div class="flex flex-col gap-2.5">
-            <template v-if="blackFridayPeriod && !userPayInfo.isBlackFriday">
-              <BlackFridayDuration v-model="selectedDuration"></BlackFridayDuration>
-              <div class="help">{{ $t('* 黑色星期五优惠: 每个账户仅限购买一次。活动最终解释权归 RoxyBrowser 团队所有。') }}</div>
-            </template>
-            <Duration v-else v-model="selectedDuration" :price="monthAmount"></Duration>
-            <div v-if="!isExpired" class="help">{{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}</div>
+            <Duration v-model="selectedDuration" :price="monthAmount" />
+            <div v-if="!isExpired" class="help">
+              {{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}
+            </div>
           </div>
         </ItemBlock>
+        <ActivityInfo />
       </div>
       <div class="flex flex-col gap-2.5 w-80">
-        <RxAlert v-if="blackFridayPeriod && userPayInfo?.isAuto" class="w-full" type="info" :closable="false" :title="$t('注意：购买黑色星期五优惠后，自动续订功能将会关闭。')"></RxAlert>
         <Detail :list="detail">
           <template #oldprice="{ item }">
             <div class="flex justify-between">
-              <div class="details-label">{{ item.label }}</div>
-              <div class="details-oldprice">{{ item.value }}</div>
+              <div class="details-label">
+                {{ item.label }}
+              </div>
+              <div class="details-oldprice">
+                {{ item.value }}
+              </div>
             </div>
           </template>
           <template #price="{ item }">
             <div class="flex justify-between items-center">
-              <div class="details-label">{{ item.label }}</div>
+              <div class="details-label">
+                {{ item.label }}
+              </div>
               <div>
-                <div class="details-price">{{ item.value }}</div>
-                <div v-if="discountAmount > 0" class="details-diffprice">{{ $t('节省 {value}', {
-                  value: currency(discountAmount).format()
-                }) }}</div>
+                <div class="details-price">
+                  {{ item.value }}
+                </div>
+                <div v-if="discountAmount > 0" class="details-diffprice">
+                  {{ $t('节省 {value}', {
+                    value: currency(discountAmount).format(),
+                  }) }}
+                </div>
               </div>
             </div>
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-4">
-              <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm"></RxButton>
+              <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm" />
               <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
                   <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
@@ -251,7 +275,7 @@ function onUpgradePlan() {
 }
 
 .header {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
@@ -259,7 +283,7 @@ function onUpgradePlan() {
 
 .plan {
   color: var(--colors-text-text-primary);
-  font-family: "DingTalk JinBuTi", Inter, sans-serif;
+  font-family: 'DingTalk JinBuTi', Inter, sans-serif;
   font-size: 32px;
   line-height: 1;
 }
@@ -273,7 +297,7 @@ function onUpgradePlan() {
 
 .details {
   &-label {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -281,7 +305,7 @@ function onUpgradePlan() {
   }
 
   &-oldprice {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
@@ -289,7 +313,7 @@ function onUpgradePlan() {
   }
 
   &-price {
-    color: #12A3FC;
+    color: #12a3fc;
     text-align: right;
     font-family: Inter;
     font-size: 24px;
@@ -298,7 +322,7 @@ function onUpgradePlan() {
   }
 
   &-diffprice {
-    color: var(--primitives-yellow-500, #FC9D12);
+    color: var(--primitives-yellow-500, #fc9d12);
     text-align: right;
     font-family: Inter;
     font-size: 12px;
@@ -308,13 +332,13 @@ function onUpgradePlan() {
 }
 
 .terms {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;
 
   &-link {
-    color: var(--colors-text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
