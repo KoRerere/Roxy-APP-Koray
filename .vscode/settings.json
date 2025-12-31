@@ -1,4 +1,8 @@
 {
+  // rust-analyzer 在 monorepo 根目录下有时无法自动发现嵌套的 Cargo 工程；
+  // 通过 linkedProjects 显式指定 Cargo.toml 可避免 “Failed to discover workspace”。
+  "rust-analyzer.linkedProjects": ["apps/tauri/src-tauri/Cargo.toml"],
+  "rust-analyzer.workspace.discoverCargoProjects": true,
   "typescript.preferences.importModuleSpecifier": "non-relative",
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,

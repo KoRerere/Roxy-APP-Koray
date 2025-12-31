@@ -65,7 +65,7 @@ export function getDefaultBrowserCreateParams() {
     fontType: false,
     webRTC: 2,
     webGL: true,
-    webGLInfo: true,
+    webGLInfo: 1,
     webGpu: 'webgl',
     canvas: true,
     audioContext: true,

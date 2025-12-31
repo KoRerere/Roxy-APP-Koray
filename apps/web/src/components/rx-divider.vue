@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 
 interface Props {
   vertical?: boolean

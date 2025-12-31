@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeCardCvcElement, StripeCardExpiryElement, StripeCardNumberElement, StripeElements } from '@stripe/stripe-js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { PayWay } from '/@/enums/pay'
 import { useThemeStore } from '/@/stores/theme'
 

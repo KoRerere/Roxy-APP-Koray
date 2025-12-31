@@ -9,26 +9,6 @@ fn main() {
         let ctx: tauri::Context<tauri::Wry> = tauri::generate_context!();
         let bundle_id = &ctx.config().identifier;
 
-        // 如果传入了 --roxy-default-browser-config-path，把它持久化下来供后续真正启动时读取
-        if let Some(p) = {
-            let mut it = std::env::args();
-            let key = tauri_lib::ROXY_CONFIG_ARG_KEY;
-            let mut found: Option<String> = None;
-            while let Some(a) = it.next() {
-                if a == key {
-                    found = it.next();
-                    break;
-                }
-                if let Some(v) = a.strip_prefix(&(key.to_string() + "=")) {
-                    found = Some(v.to_string());
-                    break;
-                }
-            }
-            found
-        } {
-            let _ = tauri_lib::persist_config_path(bundle_id, &p);
-        }
-
         if let Err(e) = tauri_lib::default_browser::set_default_browser(bundle_id) {
             eprintln!("set default browser failed: {e}");
             std::process::exit(1);

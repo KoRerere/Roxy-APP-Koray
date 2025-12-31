@@ -2,7 +2,7 @@
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { formatProxyTime, strConcat } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums'
-import { $t } from '/@/locales'
+
 
 const props = defineProps({
   country: {

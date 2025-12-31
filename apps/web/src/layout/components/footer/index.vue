@@ -3,7 +3,7 @@ import Campaign from '/@/views/campaign/index.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'

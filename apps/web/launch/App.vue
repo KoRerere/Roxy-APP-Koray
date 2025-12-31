@@ -3,7 +3,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const message = ref('')
 const appVersion = ref('')
-const isShowTrafficLight = ref(false)
 
 electronAPI.on('app:launch-message', (msg) => {
   console.log('app:launch-message: ', msg)
@@ -13,15 +12,11 @@ electronAPI.on('app:launch-message', (msg) => {
 electronAPI.send('app:getAppVersion').then((version) => {
   appVersion.value = version
 })
-
-watch(isShowTrafficLight, (val) => {
-  electronAPI.send('app:showHideTrafficLight', val)
-})
 </script>
 
 <template>
   <div class="launch">
-    <div class="drag-bar" @mouseover="isShowTrafficLight = true" @mouseout="isShowTrafficLight = false" />
+    <div class="drag-bar" />
     <div class="copyright">
       <RxSvgIcon name="base/logo" class="logo" size="42px" />
       <div>

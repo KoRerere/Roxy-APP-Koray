@@ -1,5 +1,5 @@
 import { format, min } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 const skeleton = {

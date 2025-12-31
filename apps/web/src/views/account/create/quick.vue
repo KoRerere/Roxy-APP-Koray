@@ -2,7 +2,7 @@
 import TsForm from '/@/views/lab/components/form/index.vue';
 import RemarkIcon from '/@/components/remark-icon'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { deepClone, isEmptyValue } from '/@/utils'
 import { useThemeStore } from '/@/stores/theme'
 import { parseIntelligent } from '/@/views/account/create/utils'

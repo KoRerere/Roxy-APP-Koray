@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { ExtensionsSource } from '/@/enums'
 
 const dialogRef = inject<any>('dialogRef')

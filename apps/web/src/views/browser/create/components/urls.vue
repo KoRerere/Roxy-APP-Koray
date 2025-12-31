@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import rxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
 
 defineOptions({

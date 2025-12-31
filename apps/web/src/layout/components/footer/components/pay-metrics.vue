@@ -4,7 +4,7 @@ import PayMetricsList from './pay-metrics-list.vue'
 import Usage from '/@/components/usage.vue'
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { createReusableTemplate } from '@vueuse/core';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 import { emitter } from '/@/utils/eventBus';
 import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type Plan } from '../type'
-import { $t } from '/@/locales'
+
 import { tierCalculate } from '../util'
 import currency from 'currency.js';
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'

@@ -1,29 +1,17 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { openPath, openUrl } from '@tauri-apps/plugin-opener'
 import { computed, onMounted, ref } from 'vue'
+import type { RoxyConfig, WebSocketMessage, WebSocketMessageMap } from './types'
 import { isMacOS } from './utils'
 
-interface RoxyConfig {
-  apiKey: string
-  apiPort: number
-  defaultBrowserDirId: string
-  workspaceId: string
-  appWsPort: number
-  appWsToken: string
-}
-
-interface LaunchBrowserMessage {
-  dirId: string
-  percent: number
-  message: string
-  warningMessages: string[]
-}
-
+const isDev = import.meta.hot
 const isZh = navigator.language.includes('zh')
 const isMac = isMacOS()
 const roxyConfig = ref<RoxyConfig | null>(null)
-const launchBrowserMessage = ref<LaunchBrowserMessage>({
+const launchBrowserMessage = ref<WebSocketMessageMap['browser:launch-process-message']>({
+  type: 'browser:launch-process-message',
   dirId: '',
   percent: 0,
   message: 'Preparing to launch…',
@@ -77,19 +65,17 @@ async function loadRoxyDefaultBrowserConfig() {
     console.error('Failed to load Roxy default browser config:', e)
     launchBrowserMessage.value.message = getErrorMessage(e)
     isLaunching.value = false
-    showMainWindow()
+    await exitApp()
   }
 }
 
 loadRoxyDefaultBrowserConfig()
 
-onMounted(() => {
-  // macOS 走系统交通灯（Rust 端已确保关闭按钮可见），无需悬浮控制
-})
-
 async function showMainWindow() {
   try {
-    await invoke('show_main_window')
+    if (isDev) {
+      await invoke('show_main_window')
+    }
   }
   catch (e) {
     console.error('Failed to show main window:', e)
@@ -97,7 +83,7 @@ async function showMainWindow() {
 }
 
 async function exitApp() {
-  if (import.meta.env.DEV) {
+  if (isDev) {
     return
   }
 
@@ -110,30 +96,123 @@ async function exitApp() {
 }
 
 async function launchBrowser() {
-  if (!roxyConfig.value)
+  if (!roxyConfig.value) {
+    exitApp()
     return
+  }
 
-  const { apiKey, apiPort, defaultBrowserDirId, workspaceId, appWsPort, appWsToken } = roxyConfig.value
+  const {
+    defaultBrowserDirId,
+    defaultBrowserWorkspaceId,
+    currentDirId,
+    currentWorkspace,
+    appWsPort,
+    appWsToken,
+  } = roxyConfig.value
 
-  if (apiPort === -1) {
-    launchBrowserMessage.value.message = isZh ? '请先在 APP 中启用 OpenAPI 服务' : 'Please enable OpenAPI service in APP first'
-    isLaunching.value = false
+  const dirId = currentDirId || defaultBrowserDirId
+  const workspaceId = (typeof currentWorkspace === 'number' ? currentWorkspace : undefined) ?? defaultBrowserWorkspaceId
+
+  async function launchAPP() {
+    const searchParams = new URLSearchParams({
+      dirId,
+      workspaceId: String(workspaceId),
+    })
+    await openUrl(`roxybrowser${import.meta.env.DEV ? '-dev' : ''}://open-browser-failed?${searchParams}`)
+  }
+
+  if (isDev) {
     showMainWindow()
-    return
   }
 
   const wsUrl = `ws://127.0.0.1:${appWsPort}?token=${appWsToken}`
   const ws = new WebSocket(wsUrl)
 
-  ws.onmessage = (event) => {
+  const sendMessage = (message: Pick<WebSocketMessage, 'type' | 'dirId'> & Record<string, any>) => {
+    ws.send(JSON.stringify(message))
+  }
+
+  const openUrls = async () => {
     try {
-      const message = JSON.parse(event.data) as LaunchBrowserMessage
-      if (message.dirId === defaultBrowserDirId) {
-        launchBrowserMessage.value = message
-        if (message.percent >= 100) {
-          setTimeout(() => {
-            isLaunching.value = false
-          }, 1000)
+      const targets = await invoke<string[]>('get_open_targets')
+      console.debug('open targets', targets)
+      targets.filter(Boolean).forEach((target) => {
+        sendMessage({
+          type: 'browser:open-url',
+          dirId: defaultBrowserDirId,
+          url: target,
+        })
+      })
+    }
+    catch (error) {
+      console.error('Failed to open URLs:', error)
+    }
+    finally {
+      setTimeout(() => {
+        exitApp()
+      }, 3000)
+    }
+  }
+
+  setTimeout(async () => {
+    await openUrls().finally(() => {
+      exitApp()
+    })
+  }, 2 * 60 * 1000)
+
+  ws.onopen = () => {
+    console.debug('WebSocket connected')
+    sendMessage({
+      type: 'browser:is-opened',
+      dirId,
+    })
+  }
+
+  ws.onmessage = async (event) => {
+    try {
+      const message = JSON.parse(event.data) as WebSocketMessage
+      console.debug('ws:onmessage', message.type)
+      // 只处理当前窗口的消息
+      if (message.dirId === dirId) {
+        if (message.type === 'app:login-required') {
+          showMainWindow()
+          launchBrowserMessage.value.message = isZh ? '请先登录 RoxyBrowser 客户端' : 'Please login to RoxyBrowser client'
+          await exitApp()
+          return
+        }
+
+        // 浏览器拉起过程中的消息
+        if (message.type === 'browser:launch-process-message') {
+          launchBrowserMessage.value = message
+          if (message.percent >= 100) {
+            await openUrls()
+          }
+        }
+        // 浏览器是否已打开
+        if (message.type === 'browser:is-opened') {
+          if (message.opened) {
+            console.debug('browser already opened')
+            await openUrls()
+          }
+          else {
+            console.debug('browser not opened')
+            showMainWindow()
+            sendMessage({
+              type: 'browser:open-window',
+              dirId,
+              workspaceId,
+            })
+          }
+        }
+
+        // 浏览器拉起失败
+        if (message.type === 'browser:open-window') {
+          console.debug('browser:open-window failed', message)
+          launchBrowserMessage.value.message = message.message
+          isLaunching.value = false
+          if (!message.success) {
+            await exitApp()
+          }
         }
       }
     }
@@ -142,97 +221,14 @@ async function launchBrowser() {
     }
   }
 
-  ws.onerror = (event) => {
+  ws.onerror = async (event) => {
     console.error('Failed to connect to WebSocket:', event)
-  }
-
-  const openUrls = async () => {
-    try {
-      const targets = await invoke<string[]>('get_open_targets')
-      console.debug('open targets', targets)
-      targets.filter(Boolean).forEach((target) => {
-        ws.send(JSON.stringify({
-          type: 'browser:open-url',
-          dirId: defaultBrowserDirId,
-          url: target,
-        }))
-      })
-    }
-    catch (error) {
-      console.error('Failed to open URLs:', error)
-    }
-  }
-
-  try {
-    const timeout = setTimeout(() => {
-      showMainWindow()
-    }, 600)
-    // 获取所有已打开的窗口
-    const response = await fetch(`http://127.0.0.1:${apiPort}/browser/connection_info?dirIds=${defaultBrowserDirId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'token': apiKey,
-      },
-    }).then(res => res.json()).catch((e) => {
-      console.error('Failed to get connection info:', e)
-      launchBrowserMessage.value.message = isZh ? '请确保 APP 已启动并且已登录' : 'Please ensure the APP is started and logged in'
-      isLaunching.value = false
-      showMainWindow()
-      return Promise.reject(e)
-    })
-    clearTimeout(timeout)
-
-    console.debug('get connection info success', response)
-    if (response.code === 0 && response.data.length > 0) {
-      // 判断当前窗口是否已经打开
-      const isOpened = response.data.some((item: any) => item.dirId === defaultBrowserDirId)
-      if (isOpened) {
-        await openUrls()
-        console.debug('browser already opened')
-        await exitApp()
-        return
-      }
-    }
-    console.debug('browser not opened')
-    showMainWindow()
-  }
-  catch (e) {
-    console.error('Failed to take open targets:', e)
-    showMainWindow()
-    return
-  }
-
-  try {
-    const response = await fetch(`http://127.0.0.1:${apiPort}/browser/open`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'token': apiKey,
-      },
-      body: JSON.stringify({
-        dirId: defaultBrowserDirId,
-        workspaceId,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    if (data.code !== 0) {
-      console.error('Failed to launch browser:', data.msg)
-      throw new Error(data.msg)
-    }
-    console.debug('launch browser success', data)
-    await openUrls()
-    // 后端返回成功后，退出当前 Launcher App
-    await exitApp()
-  }
-  catch (e) {
-    console.error('Failed to launch browser:', e)
-    launchBrowserMessage.value.message = getErrorMessage(e)
+    launchBrowserMessage.value.message = isZh ? '请确保 APP 已启动并且已登录' : 'Please ensure the APP is started and logged in'
     isLaunching.value = false
+    showMainWindow()
+    await launchAPP().finally(() => {
+      exitApp()
+    })
   }
 }
 </script>

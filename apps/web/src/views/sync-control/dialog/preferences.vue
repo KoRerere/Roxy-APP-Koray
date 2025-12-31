@@ -30,7 +30,7 @@ import BaseSettings from './preferences-components/base-settings.vue'
 import Simulate from './preferences-components/simulate.vue';
 import KeyboardShortcut from './preferences-components/keyboard-shortcut.vue';
 import { useResponseToast } from '/@/hooks/useResponseToast';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 import { merge } from 'es-toolkit';
 

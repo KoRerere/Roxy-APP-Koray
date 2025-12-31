@@ -10,7 +10,7 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { Role } from '/@/enums'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, showPageLoading } from '/@/utils'

@@ -1,15 +1,14 @@
-import { BrowserWindow } from 'electron'
-import { ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { ROXY_SYNC_CONTROL_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
 import { canUseSyncControl } from '/@/modules/store'
 import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
-import { createWindow } from '/@/utils/browser-window'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getSynchronizerWindow() {
-  return BrowserWindow.getAllWindows().find(win => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_WINDOW_ID)
+  return getWindowById(ROXY_SYNC_CONTROL_WINDOW_ID)
 }
 
 export async function createSynchronizerWindow() {

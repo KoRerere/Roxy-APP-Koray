@@ -6,7 +6,7 @@ import { Role, WorkspaceType } from '/@/enums'
 import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
-import { $t } from '/@/locales'
+
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
 import { emitter } from '/@/utils/eventBus'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
@@ -44,6 +44,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }, 1000)
 
   watch(currentWorkspace, (val, old) => {
+    if (val && old && val.id !== old.id) {
+      // 空间切换
+      userStore.mixpanelTrack('workspace_switch')
+    }
     if (!val || val?.id === old?.id) {
       val?.id && hidePageLoading()
       return

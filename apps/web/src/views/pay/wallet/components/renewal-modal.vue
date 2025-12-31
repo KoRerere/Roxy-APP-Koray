@@ -5,7 +5,7 @@ import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
@@ -17,8 +17,9 @@ import { SubLevelEnum } from '/@/enums/pay'
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
-const { userPayInfo } = storeToRefs(useUserStore())
 const { currentActivity } = storeToRefs(useCampaignStore())
+const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
@@ -131,6 +132,7 @@ const _onConfirm = ref()
 const _onCancel = ref()
 
 onMounted(() => {
+  mixpanelTrack('subscription_renew_click')
   getMonthlyAmount()
   const { onConfirm, onCancel } = dialogRef.value.data
   _onConfirm.value = onConfirm
@@ -148,6 +150,7 @@ async function getMonthlyAmount() {
 }
 
 async function confirm() {
+  mixpanelTrack('click_confirm_renew_order')
   showModal({
     showHeader: false,
     modal: true,
@@ -159,6 +162,7 @@ async function confirm() {
         discountAmount: discountAmount.value,
         onClose: hideModal,
         onConfirm: async ({ payType, isAuto }) => {
+          mixpanelTrack('click_pay_renew_order')
           await _onConfirm.value?.({
             payType,
             isAuto,

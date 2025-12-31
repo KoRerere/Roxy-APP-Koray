@@ -98,7 +98,7 @@ export const browserListMapping = {
     fontType: true, // 字体指纹，随机：true，跟随系统：false，布尔类型
     canvas: true, // canvas，随机：true，真实：false，布尔类型
     webGL: true, // webGL图像， 随机：true，真实：false，布尔类型
-    webGLInfo: true, // webGLInfo开关，自定义：true，真实：false，布尔类型
+    webGLInfo: 1, // webGLInfo开关，自定义：2，随机：1，真实：0，int类型，非必传, 默认1
     webGLManufacturer: '', // webGLInfo为自定义时指定的webGL厂商值, str类型
     webGLRender: '', // webGLInfo为自定义时指定的webGL渲染值, str类型
     webGpu: 'webgl', // webGpu，基于webgl匹配：webgl，真实：real，禁用：block，str类型

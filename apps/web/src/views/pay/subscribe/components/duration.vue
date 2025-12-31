@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'

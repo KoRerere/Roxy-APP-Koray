@@ -2,7 +2,7 @@ import InputText from 'primevue/inputtext'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
-import { $t } from '/@/locales'
+
 import UploadAvatar from '../upload-avatar.vue'
 import ThirdAccount from './components/third-account.vue'
 import { oauth2LoginMap, useOauth2Callback } from '/@/utils'

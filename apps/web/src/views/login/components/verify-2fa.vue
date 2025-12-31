@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RxAlert } from '/@/components/rx-alert/'
-import { $t } from '/@/locales'
+
 import { useLoginContext } from '../hooks/useLoginContext'
 import { useThemeStore } from '/@/stores/theme'
 

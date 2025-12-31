@@ -14,6 +14,10 @@ interface ImportMetaEnv {
    * The value of the variable is set in scripts/watch.js and depend on layers/main/vite.config.js
    */
   readonly VITE_DEV_SERVER_URL: undefined | string
+  /**
+   * Mixpanel token for analytics
+   */
+  readonly VITE_MIXPANEL_TOKEN: string
 }
 
 interface ImportMeta {

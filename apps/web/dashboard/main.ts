@@ -5,9 +5,8 @@ import '/@/styles/index.scss'
 import '/@/styles/primevuePresets/theme/'
 import { setupPrimeVue } from '/@/primevue'
 import { createApp } from 'vue'
-import { setupI18n } from '/@/locales'
+import { i18n, setupI18n } from '/@/locales'
 import App from './App.vue'
-import { i18n } from '/@/locales'
 
 const app = createApp(App)
 
@@ -25,8 +24,7 @@ fetch(`/api/app/config`)
   })
   .catch((err) => {
     console.error(err)
-  }).finally(() => {
+  })
+  .finally(() => {
     app.mount('#app')
   })
-
-

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { API } from '/@/api';
-import { $t } from '/@/locales';
+;
 
 const { transferTaskId } = defineProps<{
   transferTaskId: number

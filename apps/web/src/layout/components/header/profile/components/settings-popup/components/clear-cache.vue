@@ -8,7 +8,7 @@ import RxDivider from '/@/components/rx-divider.vue';
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { useDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales'
+
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ClearType } from "/@/enums";
 

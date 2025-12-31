@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
-import { $t } from '/@/locales'
+
 
 type Point = {
   x: number

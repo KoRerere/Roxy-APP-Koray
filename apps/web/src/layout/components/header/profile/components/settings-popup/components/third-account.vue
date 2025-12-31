@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm';
 import { API } from '/@/api';
-import { $t } from '/@/locales';
+;
 
 const props = defineProps<{
   value: any

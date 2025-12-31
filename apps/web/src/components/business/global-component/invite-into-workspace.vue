@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data', string>

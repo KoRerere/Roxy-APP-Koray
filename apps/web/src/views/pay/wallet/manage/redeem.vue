@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { $t } from '/@/locales';
+;
 import { API } from '/@/api';
 import { useResponseToast } from '/@/hooks/useResponseToast';
 

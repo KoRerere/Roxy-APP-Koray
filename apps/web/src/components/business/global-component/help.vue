@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import QrcodeModal from '/@/components/qrcode-modal.vue'
-import { $t } from '/@/locales'
+
 import { useSimpleLocale } from '/@/stores/locale'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { getDictMap } from '/@/utils'
@@ -20,69 +20,60 @@ const showTooltip = ref(false)
 const faqList = ref()
 const qrcodeList = ref()
 
-const items = [
-  {
-    label: $t('官方网站'),
-    icon: 'base/rx_ic_link',
-    command: () => window.open(getOfficialWebsite(), '_blank'),
-  },
-  {
-    label: $t('用户社区'),
-    icon: 'base/rx_ic_user_group',
-    /**
-     * command: openTelegram
-     */
-    command: async () => {
-      const $dict_map = await getDictMap()
-      const tgLink = $dict_map.tgLink!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
-
-      const tg = qrcodeList.value.find((item: any) => item.name === 'Telegram')
-      if (tg) {
-        Reflect.set(tg, 'link', tgLink!.value)
-      }
-
-      showModal({
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-        slots: {
-          container: ({ hideModal }) => h(QrcodeModal, {
-            list: qrcodeList.value,
-            defaultActive: qrcodeList.value.find((item: any) => item.name === (currentLocale === 'zh-CN' ? 'WeChat' : 'Telegram')),
-            onClose: hideModal,
-          }),
-        },
-      })
+const items = computed(() => {
+  return [
+    {
+      label: $t('官方网站'),
+      icon: 'base/rx_ic_link',
+      command: () => window.open(getOfficialWebsite(), '_blank'),
     },
-  },
-  {
-    separator: true,
-  },
-  {
-    label: $t('意见反馈'),
-    icon: 'base/rx_ic_survy',
-    command: async () => {
-      const $dict_map = await getDictMap()
-      const tgLink = $dict_map.feedback!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
-      window.open(tgLink!.value, '_blank')
+    {
+      separator: true,
     },
-  },
-  {
-    label: $t('新手教程'),
-    icon: 'base/rx_ic_books',
-    command: openTutorial,
-  },
-  {
-    label: $t('帮助文档'),
-    icon: 'base/rx_ic_doc_article',
-    command: openHelpDocument,
-  },
-  {
-    label: $t('联系技术支持'),
-    icon: 'base/rx_ic_headphone_2',
-    command: showLiveChat,
-  },
-]
+    {
+      label: $t('微信客服与群组🎁'),
+      icon: 'base/rx_ic_wechat',
+      visible: currentLocale === 'zh-CN',
+      command: () => openCommunity('WeChat'),
+    },
+    {
+      visible: currentLocale === 'zh-CN',
+      separator: true,
+    },
+    {
+      label: $t('Telegram 群组'),
+      icon: 'base/rx_ic_telegram_2',
+      command: async () => openCommunity('Telegram'),
+    },
+    {
+      separator: true,
+    },
+    {
+      label: $t('意见反馈'),
+      icon: 'base/rx_ic_survy',
+      command: async () => {
+        const $dict_map = await getDictMap()
+        const tgLink = $dict_map.feedback!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
+        window.open(tgLink!.value, '_blank')
+      },
+    },
+    {
+      label: $t('新手教程'),
+      icon: 'base/rx_ic_books',
+      command: openTutorial,
+    },
+    {
+      label: $t('帮助文档'),
+      icon: 'base/rx_ic_doc_article',
+      command: openHelpDocument,
+    },
+    {
+      label: $t('联系技术支持'),
+      icon: 'base/rx_ic_headphone_2',
+      command: showLiveChat,
+    },
+  ].filter(item => item.visible !== false)
+})
 
 watch(() => route.path, () => {
   clearTimeout(timer)
@@ -112,8 +103,30 @@ async function getFaqList() {
 }
 
 function showHelp(event: MouseEvent) {
-  showMenu(event, { model: items })
+  showMenu(event, { model: items.value })
   showTooltip.value = false
+}
+
+async function openCommunity(name: string) {
+  const $dict_map = await getDictMap()
+  const tgLink = $dict_map.tgLink!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
+
+  const tg = qrcodeList.value.find((item: any) => item.name === 'Telegram')
+  if (tg) {
+    Reflect.set(tg, 'link', tgLink!.value)
+  }
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(QrcodeModal, {
+        list: qrcodeList.value,
+        defaultActive: qrcodeList.value.find((item: any) => item.name === name),
+        onClose: hideModal,
+      }),
+    },
+  })
 }
 
 function openTutorial() {

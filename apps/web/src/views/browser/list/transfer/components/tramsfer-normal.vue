@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import ChooseSpace from '/@/views/browser/list/transfer/components/choose-space.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { $t } from '/@/locales';
-import { API } from '/@/api';
-import { useRoleStore } from "/@/stores/role"
-import { useWorkspaceStore } from '/@/stores/workspace';
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import { enhanceCountdown } from '/@/utils';
+
+import { API } from '/@/api'
+import { useRoleStore } from '/@/stores/role'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { enhanceCountdown } from '/@/utils'
 
 interface OptionGorup {
   title: string
@@ -19,14 +19,14 @@ interface OptionGorup {
   }[]
 }
 
+defineOptions({ inheritAttrs: false })
+
 const { ids: windowIds, buyProxyType = false } = defineProps<{
   ids: number[]
   buyProxyType?: boolean
 }>()
 
 const emit = defineEmits(['confirm', 'resize'])
-
-defineOptions({ inheritAttrs: false })
 
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
@@ -44,17 +44,17 @@ const optionsGroup = computed<OptionGorup[]>(() => [
     options: [
       {
         label: $t('窗口名称'),
-        value: 'name'
+        value: 'name',
       },
       {
         label: $t('窗口备注'),
-        value: 'notes'
+        value: 'notes',
       },
       {
         label: $t('投送后彻底删除窗口（该操作无法撤销）'),
-        value: 'delete'
-      }
-    ]
+        value: 'delete',
+      },
+    ],
   },
   {
     title: $t('删除选项'),
@@ -64,14 +64,14 @@ const optionsGroup = computed<OptionGorup[]>(() => [
         label: $t('同时删除代理资源中仅与投送窗口有绑定关系的代理'),
         value: 'proxy',
         disabled: buyProxyType,
-        tooltip: buyProxyType ? $t('投送窗口中存在购买代理') : undefined
+        tooltip: buyProxyType ? $t('投送窗口中存在购买代理') : undefined,
       },
       {
         label: $t('同时删除平台账号中仅与投送窗口有绑定关系的账号'),
-        value: 'platform'
-      }
-    ]
-  }
+        value: 'platform',
+      },
+    ],
+  },
 ].filter(item => item.visible !== false))
 
 watch(isDelete, (value) => {
@@ -82,7 +82,7 @@ watch(isDelete, (value) => {
   }
 })
 
-//=================== step2 ============================
+// =================== step2 ============================
 const step2 = ref(false)
 const emailCode = ref()
 const countdown = ref()
@@ -93,14 +93,16 @@ onBeforeUnmount(() => {
 })
 
 async function sendCode() {
-  if (!selectedWorkspace.value) return
+  if (!selectedWorkspace.value)
+    return
   if (isOwner.value && selectedWorkspace.value.isWorkspace) {
     await onTransfer(true)
     return
   }
 
   const { code, msg } = await API.window.userTransferWindowVerifyCodeList({ targetWorkspaceId: selectedWorkspace.value.workspaceId })
-  if (code !== 0) return onlyErrorToast(code, msg)
+  if (code !== 0)
+    return onlyErrorToast(code, msg)
   nextStep(true)
   stopCountdown.value = enhanceCountdown(Date.now() + 1000 * 60, (time) => {
     countdown.value = time
@@ -113,18 +115,22 @@ function nextStep(value: boolean) {
 }
 
 async function onTransfer(isSelf: boolean) {
+  /**
+   * 未勾选删除，需要过滤掉删除的子项(解决勾选子项后，父项取消勾选导致的问题)
+   */
   const _transferParam = isDelete.value
     ? transferParam.value
-    : transferParam.value.filter(item => !['platform', 'proxy'].includes(item))// 未勾选删除，需要过滤掉删除的子项(解决勾选子项后，父项取消勾选导致的问题)
+    : transferParam.value.filter(item => !['platform', 'proxy'].includes(item))
 
   const { code, msg } = await API.window.userTransferWindowCreate({
     windowIds,
     targetWorkspaceId: selectedWorkspace.value.workspaceId,
     isDelete: isDelete.value,
     emailCode: emailCode.value,
-    transferParam: _transferParam
+    transferParam: _transferParam,
   })
-  if (code !== 0) return onlyErrorToast(code, msg)
+  if (code !== 0)
+    return onlyErrorToast(code, msg)
   emit('confirm', { isSelf, needRefresh: isDelete.value })
 }
 </script>
@@ -147,25 +153,39 @@ async function onTransfer(isSelf: boolean) {
     </div>
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
-        <div class="title">{{ $t('投送至') }}</div>
-        <ChooseSpace v-model="selectedWorkspace" :ids="windowIds"></ChooseSpace>
+        <div class="title">
+          {{ $t('投送至') }}
+        </div>
+        <ChooseSpace v-model="selectedWorkspace" :ids="windowIds" />
       </div>
-      <div class="flex flex-col gap-3" v-for="group of optionsGroup" :key="group.title">
-        <div class="title">{{ group.title }}</div>
+      <div v-for="group of optionsGroup" :key="group.title" class="flex flex-col gap-3">
+        <div class="title">
+          {{ group.title }}
+        </div>
         <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
+          <div v-for="option of group.options" :key="option.value" class="flex items-center gap-2 select-none checkboxitem">
             <RxCheckbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" :disabled="option.disabled" />
             <label :for="option.value">{{ option.label }}</label>
-            <SvgIcon v-if="option.tooltip" v-tooltip="option.tooltip" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)"></SvgIcon>
+            <SvgIcon v-if="option.tooltip" v-tooltip="option.tooltip" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
           </div>
         </div>
       </div>
-      <div ref="message" class="flex flex-col pa-3 pt-2 illustrate" v-if="isDelete">
-        <div class="illustrate-title mb-3">{{ $t('删除说明') }}</div>
-        <div class="checkboxitem">{{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}</div>
-        <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}</div>
-        <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 a 将从代理资源中删除') }}</div>
-        <div class="checkboxitem">{{ $t('(平台账号删除规则同代理)') }}</div>
+      <div v-if="isDelete" ref="message" class="flex flex-col pa-3 pt-2 illustrate">
+        <div class="illustrate-title mb-3">
+          {{ $t('删除说明') }}
+        </div>
+        <div class="checkboxitem">
+          {{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}
+        </div>
+        <div class="checkboxitem">
+          {{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}
+        </div>
+        <div class="checkboxitem">
+          {{ $t('若代理 a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 a 将从代理资源中删除') }}
+        </div>
+        <div class="checkboxitem">
+          {{ $t('(平台账号删除规则同代理)') }}
+        </div>
       </div>
     </div>
     <div class="flex flex-col gap-3">
@@ -193,20 +213,21 @@ async function onTransfer(isSelf: boolean) {
     </RxAlert>
     <div class="flex flex-col gap-4">
       <div class="code">
-        <div>{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
-        <div>{{ currentWorkspace?.email }} </div>
-        <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
-        <div class="mt-3">{{ $t('请检查邮件以获取验证码') }}</div>
+        <div>{{ $t('验证码已发送至您的验证方式：') }}</div>
+        <div>{{ currentWorkspace?.phone || currentWorkspace?.email }} </div>
+        <div>{{ $t("请在 5 分钟内完成验证。") }}</div>
       </div>
-      <InputOtp class="inputotp" v-model="emailCode" integer-only :length="6" size="large" />
+      <InputOtp v-model="emailCode" class="inputotp" integer-only :length="6" size="large" />
     </div>
     <div class="flex flex-col gap-3">
-      <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer(false)"></RxButton>
+      <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer(false)" />
       <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="sendCode">
         <span>{{ $t('重新发送') }}</span>
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>
-      <div class="cursor-pointer back" @click="nextStep(false)">{{ $t('返回') }}</div>
+      <div class="cursor-pointer back" @click="nextStep(false)">
+        {{ $t('返回') }}
+      </div>
     </div>
   </div>
 </template>
@@ -223,7 +244,7 @@ async function onTransfer(isSelf: boolean) {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;
@@ -234,7 +255,7 @@ async function onTransfer(isSelf: boolean) {
 
 .illustrate {
   border-radius: 4px;
-  background: var(--colors-background-bg-block, #F1F5F8);
+  background: var(--colors-background-bg-block, #f1f5f8);
 
   &-title {
     color: var(--colors-text-text-primary, #111213);
@@ -252,7 +273,7 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .checkboxitem {
-  color: var(--colors-text-text-secondary, #575D60);
+  color: var(--colors-text-text-secondary, #575d60);
   font-size: 12px;
   line-height: 19.2px;
 }
@@ -271,7 +292,7 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .back {
-  color: var(--colors-text-text-brand, #11A3FD);
+  color: var(--colors-text-text-brand, #11a3fd);
   font-size: 14px;
   line-height: 20px;
 }

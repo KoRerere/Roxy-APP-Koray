@@ -1,13 +1,13 @@
-import type { Browser, Protocol } from './chrome-wrapper/'
+import CDP from 'chrome-remote-interface'
+import ejs from 'ejs'
 import { readFile, rm, stat } from 'node:fs/promises'
-import type { BrowserItem } from './browserItem'
-import { SyncControlUtil } from '/@/modules/sync-control/util'
 import { join } from 'node:path'
-import ejs from "ejs";
 import { appConfig } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
-import CDP from 'chrome-remote-interface'
+import { SyncControlUtil } from '/@/modules/sync-control/util'
+import type { BrowserItem } from './browserItem'
+import type { Browser, Protocol } from './chrome-wrapper/'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
@@ -17,6 +17,7 @@ export class AfterLaunchTask {
   get isPhone() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
+
   /** 是否继续访问 */
   private continueAccess = false
   /** 检测 IP 变化定时器 */
@@ -48,7 +49,8 @@ export class AfterLaunchTask {
       console.log('Syncing tabs roxy_tabs', defaultOpenUrl)
       // 如果浏览器是由于关闭最后一个标签页而导致关闭的，这个时候龙哥会检测不到，所以每次读完 roxy_tabs，都要删除
       rm(this.browserItem.roxyTabsPath)
-    } catch (error) {
+    }
+    catch (error) {
       defaultOpenUrl = this.browserItem.winInfo.defaultOpenUrl || []
       console.log(`roxy_tabs file does not exist, skipping`, error)
     }
@@ -109,11 +111,12 @@ export class AfterLaunchTask {
       try {
         const targets = await CDP.List({ port: this.browser.actualPort })
         targets.forEach(async (target) => {
-          const client = await CDP({ target: target.webSocketDebuggerUrl });
+          const client = await CDP({ target: target.webSocketDebuggerUrl })
           await client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' })
           console.log('setTouchEmulationEnabled success')
         })
-      } catch (error) {
+      }
+      catch (error) {
         console.log('setTouchEmulationEnabled error', error)
       }
     }
@@ -137,7 +140,6 @@ export class AfterLaunchTask {
         await e.goto(url).catch((err) => {
           console.log(`goto ${url} failed`, err)
         })
-
       }
     })
 
@@ -148,13 +150,16 @@ export class AfterLaunchTask {
       this.browser.on('targetdestroyed', saveCookies)
       setTimeout(saveCookies, 1000)
     }
-
   }
 
   /** 定时检测浏览器网页 IP 变化 */
   async checkIpChange() {
+    const ipChangeRemind = this.browserItem.winInfo.ipChangeRemind === 2
+      ? store.ipChangeModal
+      : this.browserItem.winInfo.ipChangeRemind
+
     // 如果 IP 变化时弹窗提示关闭，则不检测 IP 变化
-    if (!store.ipChangeModal || this.continueAccess) {
+    if (!ipChangeRemind || this.continueAccess) {
       return
     }
 
@@ -175,7 +180,6 @@ export class AfterLaunchTask {
       console.debug('Current IP', latestProxyInfo.ip)
       console.debug('Previous IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
       if (latestProxyInfo.ip && this.browserItem.beforeLaunchTask.proxyInfo.ip && latestProxyInfo.ip !== this.browserItem.beforeLaunchTask.proxyInfo.ip) {
-
         const dialogHtmlString = await ejs.renderFile(join(appConfig.htmlTemplateDir, 'ip-change-modal.ejs'), {
           latestProxyInfo,
           beforeProxyInfo: this.browserItem.beforeLaunchTask.proxyInfo,
@@ -193,22 +197,21 @@ export class AfterLaunchTask {
         const result = await activePage.evaluate((html) => {
           const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal-container')
           if (!dialog) {
-            let resolve, reject;
+            let resolve, reject
             const promise = new Promise((res, rej) => {
-              resolve = res;
-              reject = rej;
-            });
-            const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.("myEscapePolicy", {
+              resolve = res
+              reject = rej
+            })
+            const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.('myEscapePolicy', {
               createHTML: (string: string) => string,
-            });
+            })
 
-            const escaped = escapeHTMLPolicy.createHTML(html);
+            const escaped = escapeHTMLPolicy.createHTML(html)
             document.body.insertAdjacentHTML('beforeend', escaped)
             const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal')
             const cancelBtn = document.querySelector('#roxy-modal #cancelBtn')
             const confirmBtn = document.querySelector('#roxy-modal #confirmBtn')
             const dialogContainer = document.querySelector<HTMLDivElement>('#roxy-modal-container')!
-
 
             cancelBtn?.addEventListener('click', () => {
               resolve('close-window')
@@ -224,18 +227,18 @@ export class AfterLaunchTask {
 
             return promise
           }
-
         }, dialogHtmlString)
 
         console.debug('checkIpChange modal result', result)
 
         if (result === 'close-window') {
           this.browserItem.close()
-        } else if (result === 'continue-access') {
+        }
+        else if (result === 'continue-access') {
           this.continueAccess = true
 
           const pages = await this.browser?.pages()
-          pages.forEach(page => {
+          pages.forEach((page) => {
             page.evaluate(() => {
               const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal-container')
               if (dialog) {

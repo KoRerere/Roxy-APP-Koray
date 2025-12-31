@@ -1,15 +1,20 @@
 import { app } from 'electron'
 import { join } from 'node:path'
-import { isDev, isPackaged, isWindows } from '/@/constants/common'
+import { isPackaged, isProd, isWindows } from '/@/constants/common'
 import { store } from '/@/modules/store'
 
 const sessionDir = app.getPath('sessionData')
+const roxyDataDirName = isProd ? '.roxybrowser' : '.roxybrowser-dev'
+const roxyDataDir = join(app.getPath('home'), roxyDataDirName)
 
 export const appConfig = {
-  /** 应用数据根目录 */
+  /** Electron 会话数据目录（sessionData），用于缓存/临时文件/运行期数据 */
   sessionDir,
+  /** Roxy 自定义持久化数据目录（用户 home 下的 .roxybrowser / .roxybrowser-dev；非 Electron 的 appData/userData） */
+  roxyDataDir,
   /** 系统语言 */
   lang: app.getLocale(),
+
   /** 内核缓存目录 */
   chromeBinDir: join(sessionDir, 'chrome-bin'),
   /** 浏览器缓存根目录 */
@@ -36,19 +41,13 @@ export const appConfig = {
   get defaultBrowserBinDir() {
     return join(sessionDir, 'default-browser-bin')
   },
-  /** 默认浏览器执行文件路径 */
-  get defaultBrowserBinPath() {
-    return join(this.defaultBrowserBinDir, isWindows ? 'roxybrowser.exe' : 'roxybrowser.app/Contents/MacOS/roxybrowser')
-  },
-  /** 默认浏览器配置文件 */
-  defaultBrowserConfig: join(sessionDir, 'default-browser-config.json'),
   /** 配置文件 */
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */
   defaultBrowserCacheRootDir: join(sessionDir, 'browser-cache'),
   /** 预加载文件路径 */
   get preloadFilePath() {
-    return isPackaged ? join(import.meta.dirname, './preload/index.cjs') : join(import.meta.dirname, '../../preload/dist/index.cjs')
+    return isPackaged ? join(import.meta.dirname, './preload/index.mjs') : join(import.meta.dirname, '../../preload/dist/index.mjs')
   },
   /** asar 解压后的文件路径 */
   unpackedFilePath: join(process.resourcesPath, 'app.asar.unpacked'),
@@ -76,6 +75,14 @@ export const appConfig = {
   /** web 资源基础 url */
   get webBaseUrl() {
     return isPackaged ? `http://127.0.0.1:${store.appPort}` : import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')
+  },
+  /** 快捷方式配置文件 */
+  get shortcutsConfigFile() {
+    return join(this.roxyDataDir, 'shortcuts.json')
+  },
+  /** roxy 配置文件 */
+  get roxyConfigFile() {
+    return join(this.roxyDataDir, 'config.json')
   },
 } as const
 

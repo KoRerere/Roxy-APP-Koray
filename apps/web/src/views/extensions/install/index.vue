@@ -13,7 +13,7 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType, ExtensionsSource } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { useDialog as useCustomDialog } from "/@/hooks/useDialog";
 import { usePopupMenu } from '/@/hooks/usePopupMenu';

@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import HistoryDetail from '/@/views/browser/list/transfer/components/history-detail.vue';
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 

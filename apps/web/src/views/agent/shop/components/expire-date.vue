@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { UserGetUserBuyProxyListListData, UnwrapRowType } from '@roxy/backend-api';
 import { ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
-import { $t } from '/@/locales';
+;
 import { format } from 'date-fns'
 
 type Data = UnwrapRowType<UserGetUserBuyProxyListListData>

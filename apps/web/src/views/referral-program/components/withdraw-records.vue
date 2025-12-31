@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { PayWay } from '/@/enums/pay'
 import type { UnwrapRowType, UserGetWithdrawRecordListListData } from '@roxy/backend-api'
 

@@ -76,6 +76,7 @@ export async function intoLaunchPage() {
     height: 384,
     resizable: false,
     frame: isWindows,
+    titleBarStyle: 'customButtonsOnHover',
   })
 
   const launchUrl = await getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`)

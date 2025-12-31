@@ -1,18 +1,19 @@
 <script setup lang="tsx">
-import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import RxButton from '/@/components/rx-button'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import EmailInput from '/@/views/projects/components/email-input.vue'
+import BatchInviteModal from '/@/views/projects/components/batch-invite-modal.vue'
 
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
-import { useUserStore } from '/@/stores/user'
+// import { useUserStore } from '/@/stores/user'
 // import { differenceInDays, format, subDays } from 'date-fns'
-import type { SubLevelEnum } from '/@/enums/pay'
-import { LogRetentionDays } from '/@/enums/pay'
+// import type { SubLevelEnum } from '/@/enums/pay'
+// import { LogRetentionDays } from '/@/enums/pay'
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
@@ -47,25 +48,15 @@ function open2() {
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: ({ hideModal }) => <WelcomeModal></WelcomeModal>,
+      container: () => <BatchInviteModal></BatchInviteModal>,
     },
   })
 }
-const { userPayInfo } = storeToRefs(useUserStore())
+// const { userPayInfo } = storeToRefs(useUserStore())
 
-async function tableFilters() {
-  const { data } = await API.team.userGetMemberInfoByWorkspaceList({})
-
-  const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
+async function _tableFilters() {
+  // const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
   return [
-    {
-      type: 'mselect',
-      name: 'userNameIds',
-      props: {
-        placeholder: $t('全部成员'),
-        options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
-      },
-    },
     {
       type: 'mselect',
       name: 'operateModule',
@@ -88,7 +79,7 @@ async function tableFilters() {
         placeholder: $t('全部时间'),
         selectionMode: 'range',
         maxDate: new Date(),
-        minDate: subDays(new Date(), 60), // 只会保留 60 天内的数据
+        // minDate: subDays(new Date(), 60), // 只会保留 60 天内的数据
       },
       // formatValue: (input: any, _: any, formData: any) => {
       //   // 如果用户是免费用户，则只能查询过去3天的数据， 3 天之前需要提示
@@ -116,14 +107,14 @@ async function tableFilters() {
   ]
 }
 
-const columns = [
+const _columns = [
   { header: 'Tomato 🍅', field: 'code', headerRender: h('div', '123') },
   { header: 'Lettuce 🥬', field: 'name' },
   { header: 'Cheese 🧀', field: 'category' },
   { header: 'Carrot 🥕', field: 'quantity' },
 ]
 
-const originalModel = [
+const _originalModel = [
   {
     label: 'only quick',
     icon: 'base/rx_ic_at',
@@ -179,7 +170,7 @@ const originalModel = [
   },
 ]
 
-const datalist = Array.from({ length: 50 }, (_, index) => ({
+const _datalist = Array.from({ length: 50 }, (_, index) => ({
   id: `${index}`,
   code: index,
   name: `mamba_${index}`,
@@ -188,7 +179,7 @@ const datalist = Array.from({ length: 50 }, (_, index) => ({
   quantity: 'actions',
 }))
 
-const selectedProducts = ref()
+// const selectedProducts = ref()
 
 const formRef = useTemplateRef<any>('wcisman')
 const inputs = [
@@ -291,17 +282,22 @@ function captcha() {
     },
   })
 }
+
+const receivers = ref([{ value: '31231', invalid: true }])
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
-    <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" :columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple">
+    <!-- <wcisTable displayKey="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple">
     </wcisTable> -->
 
     <RxButton label="open1" @click="open1" />
     <RxButton label="open2" @click="open2" />
     <RxButton label="captcha" @click="captcha" />
 
+    <div class="w-100">
+      <EmailInput v-model="receivers" validate-email placeholder="收件人" />
+    </div>
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
         <template #default="{ inputs }">

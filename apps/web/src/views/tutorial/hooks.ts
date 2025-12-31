@@ -1,5 +1,5 @@
 import GuideModal from '/@/views/tutorial/components/guide-modal.vue';
-import { $t } from '/@/locales';
+;
 import { API } from "/@/api";
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from "/@/stores/user";

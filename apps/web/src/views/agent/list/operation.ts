@@ -1,6 +1,6 @@
 import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { getDictMap } from '/@/utils'
 import { ProxyType } from '/@/enums/proxy'

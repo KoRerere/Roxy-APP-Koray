@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { $t } from '/@/locales';
+;
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()

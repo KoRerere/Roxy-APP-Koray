@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { useUserStore } from '/@/stores/user';
-import { $t } from '/@/locales';
+;
 import Usage from '/@/components/usage.vue'
 
 interface Props {

@@ -2,7 +2,7 @@
 import { RxAlert } from '/@/components/rx-alert'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import { ClearType } from '/@/enums'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 
 const role = useRoleStore()

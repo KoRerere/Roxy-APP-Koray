@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast';
-import { $t } from '/@/locales';
-import { copyText } from '/@/utils';
+import { useToast } from 'primevue/usetoast'
+import { copyText } from '/@/utils'
 
 const props = defineProps<{
-  text: string,
-  mask?: boolean,
-  maskText?: string,
+  text: string
+  mask?: boolean
+  maskText?: string
 }>()
 
-const emit = defineEmits(['onMaskTextClick'])
+const emit = defineEmits(['onMaskTextClick', 'copySuccess'])
 
 const toast = useToast()
 
 async function onCopy() {
   copyText(props.text)
   toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
+  emit('copySuccess')
 }
 </script>
 
@@ -38,7 +38,6 @@ async function onCopy() {
 
 <style scoped>
 :where(.rx-copy-content) {
-
   position: relative;
   width: 100%;
   display: flex;
@@ -47,7 +46,7 @@ async function onCopy() {
   padding: var(--spacing-xl, 12px);
   gap: var(--spacing-xl, 12px);
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--primitives-neutrals-900, #171C1F);
+  border: 1px solid var(--primitives-neutrals-900, #171c1f);
   background: var(--pattern-editor-bg, #293038);
   min-height: 30px;
   overflow: hidden;
@@ -73,7 +72,7 @@ async function onCopy() {
     position: absolute !important;
     right: 6px;
     top: 6px;
-    background: #575D61;
+    background: #575d61;
     border-color: transparent;
     color: white;
   }
@@ -81,7 +80,7 @@ async function onCopy() {
   .mask {
     position: absolute;
     inset: 0;
-    color: #FFF;
+    color: #fff;
     font-size: 14px;
     font-style: normal;
     font-weight: 500;
@@ -100,8 +99,10 @@ async function onCopy() {
       align-items: center;
       gap: var(--spacing-sm, 4px);
       border-radius: var(--radius-sm, 4px);
-      background: var(--Colors-Alpha-alpha-white-30, rgba(255, 255, 255, 0.30));
-      box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+      background: var(--Colors-Alpha-alpha-white-30, rgba(255, 255, 255, 0.3));
+      box-shadow:
+        0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+        0px 1px 1px 0px rgba(0, 0, 0, 0.06);
       cursor: pointer;
     }
   }

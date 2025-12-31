@@ -1,17 +1,17 @@
 <script setup lang="tsx">
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import CustomFilters from '/@/views/browser/list/profiles/components/custom-filters.vue'
-import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue';
+import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import ProfileName from '/@/views/browser/list/profiles/components/profile-name.vue'
 import BrowserControl from '/@/views/browser/list/profiles/components/browser-control.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import { getDictMap, filterFieldByValue, getFormData, isEmptyValue, isMacOS } from '/@/utils'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { filterFieldByValue, getDictMap, getFormData, isEmptyValue, isMacOS } from '/@/utils'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
@@ -35,27 +35,27 @@ const advancedSearchOptions = [
     key: 'name',
     label: $t('窗口名称'),
     icon: 'base/rx_ic_browser',
-    syntax: 'name::'
+    syntax: 'name::',
   },
   {
     key: 'remark',
     label: $t('备注'),
     icon: 'base/rx_ic_doc_article',
-    syntax: 'note::'
+    syntax: 'note::',
   },
   {
     key: 'tag',
     label: $t('标签'),
     icon: 'base/rx_ic_tag',
-    syntax: 'tag::'
+    syntax: 'tag::',
   },
 
   {
     key: 'sortNum',
     label: ' ID',
     icon: 'base/rx_ic_id',
-    syntax: 'id::'
-  }
+    syntax: 'id::',
+  },
 ]
 const filtersMenu = ref([
   {
@@ -124,7 +124,7 @@ const columns = [
     style: {
       width: '0%',
       minWidth: '180px',
-    }
+    },
   },
   {
     title: $t('窗口名称'),
@@ -135,7 +135,7 @@ const columns = [
     style: {
       width: '10%',
       minWidth: '240px',
-    }
+    },
   },
   {
     title: $t('操作'),
@@ -216,10 +216,8 @@ async function openBrowserBefore(item: Data) {
     return
   }
 
-  const isMac = isMacOS()
-
-  if ((isMac && item.os !== 'macOS') || (!isMac && item.os !== 'Windows')) {
-    onlyErrorToast(-1, $t('请选择与您当前设备匹配的窗口系统 ({os})', { os: isMac ? 'Mac' : 'Windows' }))
+  if ((isMacOS && item.os !== 'macOS') || (!isMacOS && item.os !== 'Windows')) {
+    onlyErrorToast(-1, $t('请选择与您当前设备匹配的窗口系统 ({os})', { os: isMacOS ? 'Mac' : 'Windows' }))
     return
   }
 
@@ -232,7 +230,8 @@ async function openBrowserBefore(item: Data) {
 
   const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ ids: [item.id!] })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   if (data[0]!.statusInfo?.length >= 4) {
     onlyErrorToast(-1, $t('当前窗口人数已达上限，请更换其他窗口'))
     Reflect.set(item, 'statusInfo', data[0]!.statusInfo)
@@ -281,24 +280,24 @@ function showDiskSpaceModal() {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
-      container: ({ hideModal }) => h(DiskInsufficient, { onClose: hideModal })
-    }
+      container: ({ hideModal }) => h(DiskInsufficient, { onClose: hideModal }),
+    },
   })
 }
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs v-model:value="activeKey" :tabs="tabs" head-tabs only-tabs @update:value="onRefreshTable({}, true)"></RxTabs>
+    <RxTabs v-model:value="activeKey" :tabs="tabs" head-tabs only-tabs @update:value="onRefreshTable({}, true)" />
     <div class="flex-1 overflow-hidden">
-      <RyTable ref="shared" v-model:columns="columns" removableSort :table-request="tableRequest" :page-rows="100" :show-actions="false" :show-display="false">
+      <RyTable ref="shared" v-model:columns="columns" removable-sort :table-request="tableRequest" :page-rows="100" :show-actions="false" :show-display="false">
         <template #filter-after>
           <div class="w-full flex items-start gap-2">
-            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
-            <RxDivider class="py-1" vertical line-only></RxDivider>
+            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+            <RxDivider class="py-1" vertical line-only />
             <CustomFilters :filters-menu="filtersMenu" :enabled-filter-save="false" @filter-change="onRefreshTable" />
           </div>
         </template>
@@ -310,11 +309,11 @@ function showDiskSpaceModal() {
             <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" readonly />
           </template>
           <div v-else class="flex items-center gap-[16px]">
-            <Skeleton width="44px" height="16px"></Skeleton>
+            <Skeleton width="44px" height="16px" />
             <div class="flex items-center gap-[1px]">
               <template v-for="i in 3" :key="i">
-                <div v-if="i > 1" class="dotted-line"></div>
-                <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+                <div v-if="i > 1" class="dotted-line" />
+                <Skeleton width="24px" height="24px" border-radius="4px" />
               </template>
             </div>
           </div>
@@ -324,28 +323,32 @@ function showDiskSpaceModal() {
             <ProfileName :data="data" readonly />
           </template>
           <template v-else>
-            <Skeleton width="160px" height="24px" borderRadius="4px"></Skeleton>
+            <Skeleton width="160px" height="24px" border-radius="4px" />
           </template>
         </template>
         <template #open="{ data }">
           <template v-if="data.id">
             <BrowserControl icon="base/rx_ic_play_full" :text="$t('播放')" :disabled="(openLimit && !openMessage[data.dirId]) || data.statusInfo?.length >= 4" :data="data" :open-message="openMessage"
-              is-public @open="openBrowserBefore" />
+                            is-public @open="openBrowserBefore"
+            />
           </template>
           <template v-else>
-            <Skeleton width="70px" height="24px" borderRadius="4px"></Skeleton>
+            <Skeleton width="70px" height="24px" border-radius="4px" />
           </template>
         </template>
         <template #note="{ data }">
           <template v-if="data.id">
             <div class="inline-flex items-center gap-1">
-              <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'light': data.windowRemark }" text size="xxs" severity="secondary"
-                :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-              <div class="select-none min-w-30 whitespace-pre-wrap note" :title="data.windowRemark">{{ data.windowRemark }}</div>
+              <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ light: data.windowRemark }" text size="xxs" severity="secondary"
+                        :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+              />
+              <div class="select-none min-w-30 whitespace-pre-wrap note" :title="data.windowRemark">
+                {{ data.windowRemark }}
+              </div>
             </div>
           </template>
           <template v-else>
-            <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+            <Skeleton width="24px" height="24px" border-radius="4px" />
           </template>
         </template>
         <template #tags="{ data }">
@@ -353,7 +356,7 @@ function showDiskSpaceModal() {
             <TagsIcon :labels="data.labelInfo" disabled />
           </template>
           <template v-else>
-            <Skeleton width="70px" height="24px" borderRadius="12px"></Skeleton>
+            <Skeleton width="70px" height="24px" border-radius="12px" />
           </template>
         </template>
       </RyTable>

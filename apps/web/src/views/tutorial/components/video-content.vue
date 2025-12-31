@@ -3,7 +3,7 @@ import RxButton from '/@/components/rx-button'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { I18nT } from 'vue-i18n'
-import { $t } from '/@/locales'
+
 import { sleep } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useTutorialStore } from '/@/stores/tutorial'
@@ -23,6 +23,7 @@ type VideoItem = BaseVideoItem & Partial<ApiVideoData>
 const route = useRoute()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { getVideoMaps } = useTutorialStore()
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
@@ -275,6 +276,7 @@ const taskList = computed<any[]>(() => {
 })
 
 onBeforeMount(async () => {
+  mixpanelTrack('tutorial_open')
   getVideoList()
   await sleep(100)
   nextTick(() => {
@@ -283,6 +285,10 @@ onBeforeMount(async () => {
       router.replace({ name: 'tutorial' })
     }
   })
+})
+
+onUnmounted(() => {
+  mixpanelTrack('tutorial_hide')
 })
 
 async function getVideoList() {

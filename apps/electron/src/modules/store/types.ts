@@ -4,6 +4,8 @@ export interface StoreType {
   browserCacheRootDir: string
   /** 默认浏览器 dirId */
   defaultBrowserDirId: string
+  /** 默认浏览器 workspaceId */
+  defaultBrowserWorkspaceId: number
   /**
    * 软件关闭时
    * - pop: 弹出提示
@@ -97,4 +99,6 @@ export interface StoreType {
   hasLoggedIn?: boolean
   /** 开机自启动 */
   autoStart?: boolean
+  /** 默认浏览器启动器进程 ID */
+  defaultBrowserLauncherPid?: number
 }

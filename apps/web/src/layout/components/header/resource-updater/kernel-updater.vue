@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { useConfirm } from 'primevue/useconfirm';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'

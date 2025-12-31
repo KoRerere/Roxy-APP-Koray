@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import BaseDialog from './base-dialog.vue';
-import { $t } from '/@/locales';
+;
 
 const formData = ref({
   urls: '',

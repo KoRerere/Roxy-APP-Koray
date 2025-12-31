@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Snow from '/@/views/campaign/new-year/snow.vue'
-import { $t } from '/@/locales'
+
 import { format } from 'date-fns'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useSimpleLocale } from '/@/stores/locale'

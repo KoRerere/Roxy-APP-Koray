@@ -3,7 +3,7 @@ import { RxAlert } from '/@/components/rx-alert/'
 import RxAvatar from "/@/components/rx-avatar";
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { API } from '/@/api';
-import { $t } from '/@/locales';
+;
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from "/@/hooks/useResponseToast";

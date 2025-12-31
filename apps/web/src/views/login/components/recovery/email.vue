@@ -3,7 +3,7 @@ import TsForm from '/@/views/lab/components/form/index.vue'
 import RxVerificationCodeSender from '/@/components/rx-verification-code-sender.vue'
 import VerifyModal from '/@/views/login/components/recovery/verify-modal.vue'
 import Auth2FA from '/@/layout/components/header/profile/components/auth-2fa/setps-2fa.vue'
-import { $t } from '/@/locales'
+
 import { useLoginContext } from '/@/views/login/hooks/useLoginContext'
 import { useThemeStore } from '/@/stores/theme'
 import { useDialog } from '/@/hooks/useDialog'

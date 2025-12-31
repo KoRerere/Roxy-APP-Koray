@@ -4,11 +4,8 @@
 
 // import '@sentry/electron/preload'
 import './polyfill'
-
 import { contextBridge, webFrame, webUtils } from 'electron'
-
 import type { MainMessage, RenderMessage } from './types/'
-
 import { IPCRenderer } from './ipcRenderer'
 
 export * from './types/'

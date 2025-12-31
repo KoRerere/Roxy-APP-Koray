@@ -6,7 +6,7 @@ import Transfer from '/@/views/browser/list/transfer'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { I18nT } from "vue-i18n"
 import { debounce } from 'es-toolkit'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from '/@/hooks/useDialog'

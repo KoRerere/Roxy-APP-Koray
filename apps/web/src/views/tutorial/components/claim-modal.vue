@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import { $t } from '/@/locales';
+;
 import { copyText } from '/@/utils/basic';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import SpecialSupportFor from '/@/views/agent/shop/components/special-support-for.vue';

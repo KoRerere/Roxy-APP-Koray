@@ -1,4 +1,4 @@
-import { $t } from '/@/locales'
+
 import { isFunction, isInvalid } from './basic'
 
 interface FormDataOptions {

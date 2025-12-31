@@ -516,7 +516,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     },
     googleApi: {
       ...getRemoteConfig()?.googleApi,
-      enable: store.googleLoginEnable,
+      enable: Boolean(winInfo.enableGoogleLogin === 2 ? store.googleLoginEnable : winInfo.enableGoogleLogin),
     },
   }
 }

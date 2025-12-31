@@ -1,4 +1,4 @@
-import { $t } from '/@/locales'
+
 import RxTag from '/@/components/rx-tag.vue'
 
 export const getColumns = () => {

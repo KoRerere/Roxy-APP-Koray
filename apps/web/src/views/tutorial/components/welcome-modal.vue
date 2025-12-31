@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import { shuffle } from 'es-toolkit'
+
 import { isEmptyValue } from '/@/utils'
+import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { useTutorialStore } from '/@/stores/tutorial'
 import { API } from '/@/api'
@@ -13,78 +16,72 @@ const emit = defineEmits<{
 const router = useRouter()
 const themeStore = useThemeStore()
 const { getVideoMaps } = useTutorialStore()
+const { mixpanelTrack } = useUserStore()
 
-const stepList = ref<any[]>([
+const stepList = ref<any[]>(shuffle([
   {
-    title: $t('嗨，欢迎加入！您的主要行业是？(可多选)'),
-    name: 'source',
-    options: [
+    title: $t('您所属的行业是？'),
+    type: 'single',
+    name: 'user_industry',
+    options: shuffle([
       {
-        label: $t('电商运营'),
-        value: 'E-Commerce',
-      },
-      {
-        label: $t('社交媒体'),
+        label: $t('社媒'),
         value: 'Social Media',
       },
       {
-        label: $t('广告营销'),
+        label: $t('爬虫'),
+        value: 'Web Scraping',
+      },
+      {
+        label: $t('电商'),
+        value: 'E-Commerce',
+      },
+      {
+        label: $t('广告'),
         value: 'Advertising Marketing',
       },
       {
-        label: $t('SEO 优化'),
+        label: 'SEO',
         value: 'SEO',
       },
       {
         label: $t('加密货币'),
         value: 'Crypto Trading',
       },
-      {
-        label: $t('数据爬取'),
-        value: 'Web Scraping',
-      },
-    ].toSorted(() => Math.random() - 0.5).concat({ label: $t('其他'), value: 'Other' }),
+    ]).concat({ label: $t('其他'), value: 'Other' }),
   },
   {
-    title: $t('您预计每月使用多少个浏览器窗口？'),
+    title: $t('您预计使用几个浏览器环境/窗口？'),
     type: 'single',
     name: 'plan',
-    options: ['1-50', '50+', '100+', '500+', '1000+', '5000+', '10000+'].map(label => ({ label, value: label })),
-  },
-  {
-    title: $t('您最看重的功能是？(可多选)'),
-    name: 'feature',
     options: [
       {
-        label: $t('环境隔离'),
-        value: 'Profile Isolation',
+        label: $t('1 个'),
+        value: '1',
       },
       {
-        label: $t('代理管理'),
-        value: 'Proxy Management',
+        label: $t('10 个以内'),
+        value: '1-10',
       },
       {
-        label: $t('团队协作'),
-        value: 'Teamwork',
+        label: $t('10 ~ 50个'),
+        value: '10-50',
       },
       {
-        label: $t('API 接口'),
-        value: 'API',
+        label: $t('50 个以上'),
+        value: '50+',
       },
       {
-        label: $t('自动化'),
-        value: 'Automation',
+        label: $t('我不确定'),
+        value: 'Unknown',
       },
-      {
-        label: $t('数据同步'),
-        value: 'Data Sync',
-      },
-    ].toSorted(() => Math.random() - 0.5),
+    ],
   },
   {
-    title: $t('您从哪里了解到我们？(可多选)'),
-    name: 'about',
-    options: [
+    title: $t('您从哪里了解到我们？'),
+    type: 'single',
+    name: 'source',
+    options: shuffle([
       {
         label: $t('朋友推荐'),
         value: 'Friend Referral',
@@ -94,20 +91,70 @@ const stepList = ref<any[]>([
         value: 'Search Engine',
       },
       {
-        label: $t('社交媒体'),
-        value: 'Social Media',
+        label: $t('社媒/视频'),
+        value: 'Media & Video',
       },
       {
-        label: $t('视频平台'),
-        value: 'Video Platform',
-      },
-      {
-        label: $t('论坛社区'),
+        label: $t('论坛/社区'),
         value: 'Forum & Community',
       },
-    ].toSorted(() => Math.random() - 0.5).concat({ label: $t('其他'), value: 'Other' }),
+    ]).concat({ label: $t('其他'), value: 'Other' }),
   },
-])
+  {
+    title: $t('您最在意哪一点？'),
+    type: 'single',
+    name: 'focus_on',
+    options: [
+      {
+        label: $t('IP/网络纯净'),
+        value: 'ip clean',
+      },
+      {
+        label: $t('价格'),
+        value: 'price',
+      },
+      {
+        label: $t('多开稳定'),
+        value: 'stable',
+      },
+      {
+        label: $t('团队管理'),
+        value: 'team',
+      },
+      {
+        label: $t('自动化/智能'),
+        value: 'automation',
+      },
+      {
+        label: $t('隐私/安全'),
+        value: 'privacy',
+      },
+    ],
+  },
+  {
+    title: $t('您之前用的最多的指纹浏览器？'),
+    type: 'single',
+    name: 'used_product',
+    options: shuffle([
+      {
+        label: 'AdsPower',
+        value: 'adspower',
+      },
+      {
+        label: $t('紫鸟'),
+        value: 'ziniao',
+      },
+      {
+        label: $t('比特'),
+        value: 'bitbrowser',
+      },
+      {
+        label: 'HubStudio',
+        value: 'hubstudio',
+      },
+    ]).concat([{ label: $t('我都没用过'), value: 'None' }, { label: $t('其他'), value: 'Other' }]),
+  },
+]).slice(0, 3))
 
 const page = ref(0)
 const showVideo = ref(false)
@@ -117,21 +164,44 @@ const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/information_bg.svg")' : 'url("/images/information_bg_dark.svg")'
 })
 
+const nextDisabled = computed(() => {
+  if (stepList.value[page.value].value === 'Other') {
+    return isEmptyValue(stepList.value[page.value].otherValue)
+  }
+  return isEmptyValue(stepList.value[page.value].value)
+})
+
+onMounted(() => {
+  mixpanelTrack('welcome_page_view')
+})
+
 function itemDisabled(group: any, item: any) {
   return group.type !== 'single' && !!group.limit && group.value?.length >= group.limit && !group.value?.includes(item.value)
+}
+
+function radioValueChange(value: any) {
+  if (value === 'Other') {
+    return
+  }
+  handleNext()
 }
 
 function onClose() {
   emit('close')
 }
 
+async function handleSkip() {
+  mixpanelTrack('welcome_skip_click')
+  await getVideoList()
+}
+
 async function handleNext() {
-  if (page.value === stepList.value?.length - 1) {
+  if (page.value === stepList.value.length - 1) {
     saveUserSurvey()
     await getVideoList()
     return
   }
-  page.value = Math.min(page.value + 1, stepList.value?.length - 1)
+  page.value = Math.min(page.value + 1, stepList.value.length - 1)
 }
 
 function handlePrev() {
@@ -139,11 +209,20 @@ function handlePrev() {
 }
 
 function saveUserSurvey() {
-  const datas = stepList.value.filter(item => !isEmptyValue(item.value)).map(item => [item.name, [].concat(item.value)])
+  const datas = stepList.value
+    .filter(item => !isEmptyValue(item.value))
+    .map((item) => {
+      if (item.value === 'Other') {
+        return [item.name, [`${item.value}_${item.otherValue}`]]
+      }
+      return [item.name, [item.value]]
+    })
+
   if (!datas.length) {
     return
   }
   API.base.userSubmitSurveyAnswerCreate(Object.fromEntries(datas))
+  mixpanelTrack('welcome_submit_success')
 }
 
 async function getVideoList() {
@@ -192,20 +271,24 @@ function toTutorial(item: any) {
               <div class="subtitle">
                 {{ stepList[page].title }}
               </div>
-              <div v-if="stepList[page].desc" class="mt-1.5 desc">
-                {{ stepList[page].desc }}
+              <div v-if="page === 0" class="mt-1.5 desc">
+                {{ $t('欢迎使用！占用您几秒钟，让产品更贴合您的使用习惯！') }}
               </div>
             </div>
             <div class="grid grid-cols-4 gap-4">
               <label v-for="item in stepList[page].options" :key="item.value" class="flex items-center justify-center text-center px-6 py-4 rounded-2 select-none item"
                      :class="{ disabled: itemDisabled(stepList[page], item), active: stepList[page].value?.includes(item.value) }" :for="item.value"
               >
-                <RadioButton v-if="stepList[page].type === 'single'" v-model="stepList[page].value" class="!hidden" :input-id="item.value" :value="item.value" />
+                <RadioButton v-if="stepList[page].type === 'single'" v-model="stepList[page].value" class="!hidden" :input-id="item.value" :value="item.value" @update:model-value="radioValueChange" />
                 <RxCheckbox v-else v-model="stepList[page].value" class="!hidden" :disabled="itemDisabled(stepList[page], item)" :input-id="item.value" :name="stepList[page].name"
                             :value="item.value"
                 />
                 {{ item.label }}
               </label>
+              <div v-if="stepList[page].value === 'Other'" class="col-span-4 flex flex-col gap-2">
+                <div>{{ $t('其他') }}</div>
+                <TsFormInputText v-model="stepList[page].otherValue" size="lg" :placeholder="stepList[page].title" />
+              </div>
             </div>
           </div>
         </motion.div>
@@ -233,7 +316,7 @@ function toTutorial(item: any) {
                   <img class="block w-88 rounded-2" :src="item.coverImage">
                 </div>
                 <div class="px-3 video-title">
-                  {{ `${index + 1}`.padStart(2, '0') }}.
+                  {{ `${Number(index) + 1}`.padStart(2, '0') }}.
                   {{ item.title }}
                 </div>
               </div>
@@ -245,11 +328,11 @@ function toTutorial(item: any) {
 
     <div class="mt-8 flex items-center justify-end gap-3 px-6">
       <template v-if="!showVideo">
-        <RxButton class="mx-auto ml-0" variant="text" severity="secondary" :label="$t('跳过')" @click="getVideoList" />
+        <RxButton class="mx-auto ml-0" variant="text" severity="secondary" :label="$t('跳过')" @click="handleSkip" />
         <RxButton variant="outlined" severity="secondary" :label="$t('上一个')" @click="handlePrev" />
-        <RxButton :label="$t('下一个')" :disabled="isEmptyValue(stepList[page].value)" @click="handleNext" />
+        <RxButton :label="page === stepList.length - 1 ? $t('完成') : $t('下一个')" :disabled="nextDisabled" @click="handleNext" />
       </template>
-      <RxButton v-else :label="$t('完成')" @click="onClose" />
+      <RxButton v-else :label="$t('了解')" @click="onClose" />
     </div>
   </div>
 </template>

@@ -7,7 +7,7 @@ import { savePreferenceSettings } from '/@/views/sync-control/util';
 import { useUserStore } from '/@/stores/user';
 import { merge } from 'es-toolkit';
 import { hidePageLoading, isWindows } from '/@/utils';
-import { $t } from '/@/locales';
+;
 import { useToast } from 'primevue/usetoast'
 
 const os = isWindows ? 'windows' : 'mac'

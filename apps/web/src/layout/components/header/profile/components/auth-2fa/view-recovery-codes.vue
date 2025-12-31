@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { useAuth2FA } from './useAuth2FA'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'

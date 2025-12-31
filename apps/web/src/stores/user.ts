@@ -3,7 +3,7 @@ import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useTutorialStore } from '/@/stores/tutorial'
@@ -14,6 +14,7 @@ import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
 import { encryptAESGCM, hidePageLoading, isWindows } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
+import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -42,6 +43,7 @@ export const useUserStore = defineStore(
     const userConfig = ref<UserConfig>({})
     const token = ref('')
     const appVersion = ref('')
+    const localNetwork = ref<ProxyDetectionResult>({} as ProxyDetectionResult)
     const rememberMe = ref(false)
     /** rememberMe 为 true 的时候有值 */
     const password = ref('')
@@ -192,14 +194,17 @@ export const useUserStore = defineStore(
 
         mixpanel.identify(String(userInfo.value.id))
 
-        const localNetwork = await window.electronAPI.send('proxy:detectNetwork', 'local')
+        localNetwork.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
 
         mixpanel.people.set({
           $name: userInfo.value.userName,
           $email: userInfo.value.email,
           $language: locale.currentLocale,
-          $region: localNetwork.region,
-          $city: localNetwork.city,
+          $city: localNetwork.value.city,
+          $geo_source: localNetwork.value.checkChannel,
+          $region: localNetwork.value.region,
+          $country_code: localNetwork.value.country_code,
+          $timezone: localNetwork.value.timezone,
           $localNetwork: localNetwork,
           $appVersion: appVersion.value,
         })
@@ -310,6 +315,21 @@ export const useUserStore = defineStore(
       }
     }
 
+    function mixpanelTrack(event_name: string, data?: Record<string, any>) {
+      mixpanel.track(event_name, {
+        event_name,
+        time: Date.now(),
+        $user_id: userInfo.value.id,
+        $city: localNetwork.value.city,
+        $geo_source: localNetwork.value.checkChannel,
+        $region: localNetwork.value.region,
+        $country_code: localNetwork.value.country_code,
+        $timezone: localNetwork.value.timezone,
+        $app_language: locale.currentLocale,
+        ...data,
+      })
+    }
+
     scheduler.postTask(initUserInfo, { priority: 'background' })
 
     requestIdleCallback(async () => {
@@ -352,6 +372,7 @@ export const useUserStore = defineStore(
       initUserInfo,
       clearRememberMe,
       setLoginWay,
+      mixpanelTrack,
     }
   },
   {

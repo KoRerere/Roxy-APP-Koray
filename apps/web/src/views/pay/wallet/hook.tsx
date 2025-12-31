@@ -8,7 +8,7 @@ import WalletRechargeModal from '/@/views/pay/wallet/components/wallet-recharge-
 import { useDialog } from 'primevue/usedialog'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'

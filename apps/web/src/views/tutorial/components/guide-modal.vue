@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isString } from 'es-toolkit';
-import { $t } from '/@/locales';
+;
 import type { JSX } from 'vue/jsx-runtime'
 
 const { desc } = defineProps<{

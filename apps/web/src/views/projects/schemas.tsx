@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { defineFormSchema } from '/@/components/rx-form'
-import { $t } from '/@/locales'
+
 import InputWithRole from './components/input-with-role.vue'
 
 export const projectFormSchemas = defineFormSchema([

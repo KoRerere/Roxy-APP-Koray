@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { motion, AnimatePresence } from "motion-v";
-import { $t } from '/@/locales';
+;
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 import { filterInputsByNames } from '/@/utils';
 import type { SvgNames } from '/@/components/rx-icon';

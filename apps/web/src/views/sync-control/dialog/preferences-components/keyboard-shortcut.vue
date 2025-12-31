@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ShortcutKeyRegisterResult } from '#roxybrowser/modules/sync-control/shortcutKey'
 import { upperFirst } from 'es-toolkit'
-import { $t } from '/@/locales'
+
 import { isWindows } from '/@/utils'
 import type { PreferenceSettings } from '/@/views/sync-control/model'
 

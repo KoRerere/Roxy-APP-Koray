@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
+;
 import { motion } from 'motion-v';
 import MultiAccounting from './MultiAccounting.vue';
 import ProfilesSyncing from './ProfilesSyncing.vue';

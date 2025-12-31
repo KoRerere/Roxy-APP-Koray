@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
-import { $t } from '/@/locales'
+
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import RxTooltip from '/@/components/rx-tooltip';
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from "/@/stores/role"
 import { SubLevelEnum } from '/@/enums/pay';

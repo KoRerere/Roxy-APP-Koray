@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import OperationLog from './operation-log.vue'
 import TeamMember from './team-member.vue'

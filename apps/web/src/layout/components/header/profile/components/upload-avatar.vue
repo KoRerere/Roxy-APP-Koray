@@ -5,7 +5,7 @@ import { getRandomIntByRange } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useFileDialog } from '@vueuse/core'
-import { $t } from '/@/locales'
+
 
 const emit = defineEmits(['change'])
 

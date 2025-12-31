@@ -1,12 +1,11 @@
-import { BrowserWindow, } from 'electron'
-import { ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { createWindow } from '/@/utils/browser-window'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getSyncingWindowListWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID)
+  return getWindowById(ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID)
 }
 
 export async function openSyncingWindowList() {
@@ -34,7 +33,6 @@ export async function openSyncingWindowList() {
   }
   handleWindowMove(win)
 }
-
 
 export function closeSyncingWindowListWindow() {
   const targetWin = getSyncingWindowListWindow()

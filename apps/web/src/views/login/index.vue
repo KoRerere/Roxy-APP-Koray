@@ -3,7 +3,7 @@ import type { CheckOtherDeviceLoginListParams, LoginCreateData, LoginCreatePaylo
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'

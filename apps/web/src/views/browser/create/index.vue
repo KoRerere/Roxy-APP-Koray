@@ -3,27 +3,29 @@ import MateGroup from './components/mate-group.vue'
 import AccordionInputs from './components/accordion-inputs.vue'
 import ImportWindow from './components/import-window.vue'
 import PreviewCard from './components/preview-card.vue'
-import RxButton from '/@/components/rx-button';
+import RxButton from '/@/components/rx-button'
 import RxLoading from '/@/components/rx-loading.vue'
-import { RxSvgIcon } from '/@/components/rx-icon';
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useConfirm } from 'primevue/useconfirm'
-import { I18nT } from "vue-i18n"
+import { I18nT } from 'vue-i18n'
+import { driver } from 'driver.js'
+import 'driver.js/dist/driver.css'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useDialog } from '/@/hooks/useDialog'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { useRoleStore } from "/@/stores/role"
+import { useRoleStore } from '/@/stores/role'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
-import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, filterInputsByNames, setInputValue } from '/@/utils'
+import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { deepClone, filterFieldByValue, filterInputsByNames, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
@@ -74,6 +76,24 @@ const accordions = ref({
     .map((title, index) => ({ title, value: index.toString() })),
 })
 
+const templateMap = ref<Record<string, any>>()
+const templateModel = ref<any[]>([])
+const profileTemplate = reactive({
+  value: 'default',
+  oldValue: 'default',
+  label: $t('不使用模板'),
+  select: () => {
+    if (profileTemplate.value === profileTemplate.oldValue)
+      return
+    profileTemplate.oldValue = profileTemplate.value
+    const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
+    initFormInputs(template)
+  },
+})
+
+const cachesMap = { proxyInfoList: [], windowPlatformList: [] }
+const tempCache = ref<Record<string, any[]>>({})
+
 const items = computed(() => [
   {
     label: $t('覆盖当前模板'),
@@ -99,23 +119,6 @@ const previewInputs = computed(() => {
     : [mainSetting.value, ...extraSettings.value]
 })
 
-const templateMap = ref<Record<string, any>>()
-const templateModel = ref<any[]>([])
-const profileTemplate = reactive({
-  value: 'default',
-  oldValue: 'default',
-  label: $t('不使用模板'),
-  select: () => {
-    if (profileTemplate.value === profileTemplate.oldValue) return
-    profileTemplate.oldValue = profileTemplate.value
-    const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
-    initFormInputs(template)
-  }
-})
-
-const cachesMap = { proxyInfoList: [], windowPlatformList: [] }
-const tempCache = ref<Record<string, any[]>>({})
-
 watch(() => tabsValue.value, (value, oldValue) => {
   isBatch.value = value === 'multiple'
 
@@ -125,8 +128,7 @@ watch(() => tabsValue.value, (value, oldValue) => {
   }
 
   if (value !== 'import') {
-    const data = tempCache.value[value] ?? Object.entries(cachesMap)
-    data.map(([name, value]) => {
+    (tempCache.value[value] ?? Object.entries(cachesMap)).forEach(([name, value]) => {
       setInputValue(inputsGroup.value[0]!, name, value)
     })
   }
@@ -162,7 +164,7 @@ async function getTemplateList() {
   }, defaultValue)
 
   templateMap.value = map
-  templateModel.value = options.map(item => {
+  templateModel.value = options.map((item) => {
     return {
       ...item,
       command: () => {
@@ -171,22 +173,26 @@ async function getTemplateList() {
         profileTemplate.select()
       },
       render: ({ item, btnPt }: any) => {
-        return <RxButton text severity="secondary" class="w-full" pt={btnPt}>
-          <div class="w-full flex items-center gap-2">
-            <div class="flex-1 text-left">{item.label}</div>
-            {
-              item.action && <>
-                <div onClick={withModifiers((event) => saveTemplatePopup(event, item), ['stop'])}>
-                  <RxSvgIcon name="base/rx_ic_edit" />
-                </div>
-                <div onClick={withModifiers(() => deleteTemplate(item), ['stop'])}>
-                  <RxSvgIcon name="base/rx_ic_bin_1" />
-                </div>
-              </>
-            }
-          </div>
-        </RxButton>
-      }
+        return (
+          <RxButton text severity="secondary" class="w-full" pt={btnPt}>
+            <div class="w-full flex items-center gap-2">
+              <div class="flex-1 text-left">{item.label}</div>
+              {
+                item.action && (
+                  <>
+                    <div onClick={withModifiers(event => saveTemplatePopup(event, item), ['stop'])}>
+                      <RxSvgIcon name="base/rx_ic_edit" />
+                    </div>
+                    <div onClick={withModifiers(() => deleteTemplate(item), ['stop'])}>
+                      <RxSvgIcon name="base/rx_ic_bin_1" />
+                    </div>
+                  </>
+                )
+              }
+            </div>
+          </RxButton>
+        )
+      },
     }
   })
 }
@@ -226,15 +232,18 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
         severity: 'warn',
         life: 5000,
         summary: $t('窗口模板不可用'),
-        detail: <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
-        </I18nT>
+        detail: (
+          <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })}>
+            {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+          </I18nT>
+        ),
       })
-    } else {
-      emitter.emit("showPayWall", {
+    }
+    else {
+      emitter.emit('showPayWall', {
         event,
         params: {
-          type: "createProfileTemplates",
+          type: 'createProfileTemplates',
         },
       })
     }
@@ -255,10 +264,12 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
         },
       },
     ],
-    afterRender: () => <ol class="pl-3.5 m-0 color-[var(--colors-text-text-secondary)]">
-      <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
-      <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
-    </ol>,
+    afterRender: () => (
+      <ol class="pl-3.5 m-0 color-[var(--colors-text-text-secondary)]">
+        <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
+        <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+      </ol>
+    ),
     onConfirm: async (data: any) => {
       onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
     },
@@ -279,7 +290,9 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
     return
   }
 
-  if (id && Number(profileTemplate.value) === id) profileTemplate.label = templateName
+  if (id && Number(profileTemplate.value) === id) {
+    profileTemplate.label = templateName
+  }
   getTemplateList()
 }
 
@@ -341,7 +354,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 async function batchCreateProfile(params: any) {
-  const { createCount, proxyInfoList, platformBindType, platformUrlIds, windowPlatformList } = params
+  const { createCount, proxyInfoList, platformBindType, windowPlatformList, platformUrlIds, _custom_ua } = params
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const proxyDiffCount = createCount - proxyInfoList.length
   if (proxyDiffCount < 0) {
@@ -357,7 +370,14 @@ async function batchCreateProfile(params: any) {
   loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
-  params.fingerDetail = fingerDetail
+  params.fingerDetail = fingerDetail.map(({ userAgent, webGLManufacturer, webGLRender, ...item }) => {
+    return {
+      ...item,
+      userAgent: _custom_ua ? params.userAgent : userAgent,
+      webGLManufacturer: params.webGLInfo === 2 ? params.webGLManufacturer : webGLManufacturer, // 2 表示自定义 webgl 信息
+      webGLRender: params.webGLInfo === 2 ? params.webGLRender : webGLRender,
+    }
+  })
   const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
   onlyErrorToast(code, msg)
@@ -380,7 +400,13 @@ async function importProfile(params: any) {
   loading.value = true
   const modal = showLoading()
   const fingerCount = fileAnalyzeData.value.excelData.length
-  const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
+  const fingerDetail = (await ceateRandomFinger(previewInputs.value, { count: fingerCount })).map(({ webGLManufacturer, webGLRender, ...item }) => {
+    return {
+      ...item,
+      webGLManufacturer: params.webGLInfo === 2 ? params.webGLManufacturer : webGLManufacturer, // 2 表示自定义 webgl 信息
+      webGLRender: params.webGLInfo === 2 ? params.webGLRender : webGLRender,
+    }
+  })
   const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
   loading.value = false
   modal.hideModal()
@@ -402,15 +428,17 @@ function showLoading() {
     blockScroll: true,
     closeOnEscape: false,
     pt: {
-      root: "!border-none !shadow-none rounded-lg",
+      root: '!border-none !shadow-none rounded-lg',
     },
     slots: {
-      container: () => <div class="flex flex-col justify-center items-center gap-6 w-60 h-37">
-        <div class="relative w-8 h-8">
-          <RxLoading modelValue={true} opacity={0.9}></RxLoading>
+      container: () => (
+        <div class="flex flex-col justify-center items-center gap-6 w-60 h-37">
+          <div class="relative w-8 h-8">
+            <RxLoading modelValue={true} opacity={0.9}></RxLoading>
+          </div>
+          <div>{$t('创建中...')}</div>
         </div>
-        <div>{$t('创建中...')}</div>
-      </div>,
+      ),
     },
   })
 }
@@ -424,14 +452,10 @@ function onBack(data?: any, openBrowser = false) {
     query: {
       ...query,
       title: metaData.value.projectName,
-      browser: JSON.stringify({ windowId: data?.windowId, openBrowser })
-    }
+      browser: JSON.stringify({ windowId: data?.windowId, openBrowser }),
+    },
   })
 }
-//=================================================
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
 
 const guideCss = useCssModule('guide')
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
@@ -439,7 +463,7 @@ const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const driverObj = driver({
   nextBtnText: $t('下一步'),
   doneBtnText: $t('完成'),
-  showButtons: ["next"],
+  showButtons: ['next'],
   overlayColor: 'var(--pattern-tour-mask-bg)',
   overlayOpacity: 1,
   progressText: '{{current}} / {{total}}',
@@ -456,7 +480,7 @@ const driverObj = driver({
   ],
   onDestroyed: () => {
     updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
-  }
+  },
 })
 
 function showGuide() {
@@ -468,25 +492,31 @@ function showGuide() {
 
 <template>
   <div class="relative flex flex-col h-full">
-    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')"></ViewsHeader>
-    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
+    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs />
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
           <div class="flex-1 flex flex-col">
             <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">
-                <div class="subtitle">{{ $t('窗口数量') }}</div>
-                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-30"></RxInputNumber>
+                <div class="subtitle">
+                  {{ $t('窗口数量') }}
+                </div>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-30" />
               </div>
-              <div class="select-none multiple-tip">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
+              <div class="select-none multiple-tip">
+                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+              </div>
             </div>
             <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
               <template #before>
-                <ImportWindow v-if="tabsValue === 'import'" class="pt-4" v-model:error="fileAnalyzeError" @import-success="importSuccess" />
+                <ImportWindow v-if="tabsValue === 'import'" v-model:error="fileAnalyzeError" class="pt-4" @import-success="importSuccess" />
                 <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
-                  <div class="subtitle">{{ $t('窗口信息') }}</div>
-                  <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)"></RxButton>
+                  <div class="subtitle">
+                    {{ $t('窗口信息') }}
+                  </div>
+                  <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)" />
                 </div>
               </template>
             </AccordionInputs>
@@ -494,13 +524,13 @@ function showGuide() {
           <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
         </div>
         <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
-          <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
+          <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
           <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
           <RxButton class="guide5" :label="$t('创建窗口')" @click.stop="createProfile(false)" />
         </div>
       </div>
     </div>
-    <div class="foot-separator"></div>
+    <div class="foot-separator" />
   </div>
 </template>
 
@@ -511,7 +541,10 @@ function showGuide() {
   padding: 12px;
   border-radius: 6px;
   background: var(--pattern-tour-tips-bg);
-  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.07), 0 2px 5px 0 rgba(0, 0, 0, 0.07), 0 1px 1px 0 rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 3px 8px 0 rgba(0, 0, 0, 0.07),
+    0 2px 5px 0 rgba(0, 0, 0, 0.07),
+    0 1px 1px 0 rgba(0, 0, 0, 0.07);
 
   :global(.driver-popover-description),
   :global(.driver-popover-progress-text) {

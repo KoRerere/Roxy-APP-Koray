@@ -2,7 +2,7 @@
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { ExcelAccept, TextAccept } from '/@/utils/constants'
 import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } from '../utils';
 import { useUserStore } from '/@/stores/user'

@@ -24,7 +24,14 @@ function onBuy(item: any) {
 }
 
 async function onJump(item: any) {
-  if (!item.jumpInfo?.apiKey) {
+  // 第三方的合作商（使用跳转的方式）
+  if (item.jumpInfo.thirdUuid) {
+    const url = new URL(item.jumpInfo?.jumpUrl)
+    url.searchParams.set('token', item.jumpInfo.thirdUuid)
+    window.open(url.toString(), '_blank')
+  }
+  // 内部品牌（当apiKey不存在时，需要先注册账号）
+  else if (!item.jumpInfo?.apiKey) {
     const result = await API.proxy.userRegisterProxyProviderUserCreate({ proxyProviderId: item.id })
 
     if (result.code === 0) {
@@ -41,6 +48,7 @@ async function onJump(item: any) {
       onlyErrorToast(result.code, result.msg)
     }
   }
+  // 内部品牌（apiKey 已存在，则直接跳转）
   else {
     const url = new URL(item.jumpInfo?.jumpUrl)
     url.searchParams.set('token', item.jumpInfo?.apiKey)
@@ -121,10 +129,10 @@ const showPassword = ref(false)
         </div>
       </div>
       <div class="mt-5 flex" :class="[userPayInfo.proxyDiscount && !item.isJump ? 'flex-col gap-3' : 'justify-end items-center']">
-        <div v-if="!item.isJump" class="flex-1 provider-price" :class="{ invisible: item.proxyProviderName === 'RoxyBrowser' }">
+        <div v-if="!item.isJump" class="flex-1 provider-price" :class="{ invisible: item.proxyProviderName === 'RoxyBrowser' || item.proxyPrice === 0 }">
           {{ $t('Roxy 独家特惠: 低至 {amount} / IP', { amount: currency(item.proxyPrice!).format() }) }}
         </div>
-        <div v-else class="flex-1 provider-price">
+        <div v-else class="flex-1 provider-price" :class="{ invisible: item.proxyPrice === 0 }">
           {{ $t('Roxy 独家折扣: {discount} 折', { discount: calcDiscount(item.proxyPrice!) }) }}
         </div>
         <div class="relative">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PageState } from 'primevue/paginator';
-import { $t } from '/@/locales';
+;
 import type { SelectChangeEvent } from 'primevue/select';
 
 const { cacheKey = '', totalRecords = 0 } = defineProps<{

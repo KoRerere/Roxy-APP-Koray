@@ -3,7 +3,7 @@ import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import ParseTextarea from '/@/views/agent/create/components/parse-textarea.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useConfirm } from 'primevue/useconfirm'

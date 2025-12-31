@@ -5,7 +5,7 @@ import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType, PluginSwitchType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 
 const [_, onlyErrorToast] = useResponseToast()

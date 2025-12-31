@@ -1,12 +1,13 @@
 <script setup lang="tsx">
 import { I18nT } from 'vue-i18n'
 import { differenceInDays, format, subDays } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
 import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useTeam } from '/@/views/team/hooks'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
 
@@ -16,6 +17,7 @@ const router = useRouter()
 const styles = useCssModule()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
+const { getTeamMembers } = useTeam()
 
 const columns = ref([
   {
@@ -23,8 +25,8 @@ const columns = ref([
     key: 'userName',
     render: ({ data }: { data: Data }) => (
       <div>
-        <div class={styles['user-email']}>{data.email || data.phone}</div>
-        <div class={styles['user-name']}>{data.userName}</div>
+        <div class={styles['user-email']}>{data.userName}</div>
+        <div class={styles['user-name']}>{data.email || data.phone}</div>
       </div>
     ),
   },
@@ -58,7 +60,7 @@ function tableRequest(params: any) {
 }
 
 async function tableFilters() {
-  const { data } = await API.team.userGetMemberInfoByWorkspaceList({})
+  const { data } = await getTeamMembers()
   const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
 
   return [
@@ -67,7 +69,7 @@ async function tableFilters() {
       name: 'userNameIds',
       value: [],
       placeholder: $t('全部成员'),
-      options: data.rows.map(user => ({ label: user.email || user.phone, value: user.user_id })),
+      options: data.rows.map(user => ({ label: user.userName, value: user.user_id })),
     },
     {
       type: 'multiple',

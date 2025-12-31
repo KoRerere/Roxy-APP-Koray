@@ -3,7 +3,7 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { strConcat } from '/@/utils'
-import { $t } from '/@/locales'
+
 import { useToast } from 'primevue/usetoast'
 import { downloadTemplate } from '/@/views/browser/create/utils'
 

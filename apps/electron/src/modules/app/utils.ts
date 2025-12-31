@@ -6,6 +6,7 @@ import { stopRoxynet } from '/@/modules/roxynet'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { killProcessByName } from '/@/utils'
+import { closeAllWindows } from '/@/utils/browser-window'
 
 const closeSoftMap = {
   0: 'min',
@@ -65,7 +66,7 @@ export function handleCloseWindow(event: Electron.Event) {
       }
       else {
         tray.destroy()
-        BrowserWindow.getAllWindows().forEach(win => win.destroy())
+        closeAllWindows()
       }
     })
   }
@@ -89,14 +90,18 @@ export function cleanupAndExit() {
   try {
     globalShortcut.unregisterAll()
     killAllBrowserProcess()
-    BrowserWindow.getAllWindows().forEach(win => win.destroy())
+    closeAllWindows()
     getTray()?.destroy()
     stopRoxynet()
     // 杀死整个进程组（包括 zygote、roxynet 等子进程）
     process.kill(-process.pid, 'SIGKILL')
   }
-  catch {
+  catch (error) {
+    console.error('cleanupAndExit error:', error)
+  }
+  finally {
     // 如果失败（比如不是进程组领导者），直接退出
+    console.log('cleanupAndExit finally')
     app.exit(0)
   }
 }

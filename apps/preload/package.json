@@ -1,18 +1,18 @@
 {
   "name": "@roxy/electron-preload",
-  "type": "commonjs",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "development": "./src/index.ts",
-      "default": "./dist/index.cjs"
+      "default": "./dist/index.mjs"
     },
     "./main": {
       "types": "./src/ipcMain.ts",
       "development": "./src/ipcMain.ts",
-      "default": "./dist/ipcMain.cjs"
+      "default": "./dist/ipcMain.mjs"
     },
     "./dist/*": "./dist/*"
   },
@@ -29,7 +29,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
-    "electron": "^38.7.1"
+    "electron": "^39.2.7"
   },
   "devDependencies": {
     "@roxy/backend-api": "workspace:*",

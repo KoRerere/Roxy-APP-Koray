@@ -1,6 +1,6 @@
 import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { $t } from '/@/locales'
+
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 export function useResponseToast() {

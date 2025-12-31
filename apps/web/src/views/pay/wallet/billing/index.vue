@@ -4,7 +4,7 @@ import currency from 'currency.js';
 import { format } from 'date-fns';
 import { API } from '/@/api'
 import { OrderType, OrderTypeStr, SubOrderType, PaymentStatus, PaymentStatusStr, PurchaseType, PayWay } from '/@/enums/pay'
-import { $t } from '/@/locales'
+
 import { usePay } from '/@/views/pay/wallet/hook.tsx';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { emitter } from '/@/utils/eventBus';

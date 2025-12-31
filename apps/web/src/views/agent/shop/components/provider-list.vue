@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Identity from '/@/views/pay/wallet/manage/identity.vue'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import ProviderCard from './provider-card.vue'
 

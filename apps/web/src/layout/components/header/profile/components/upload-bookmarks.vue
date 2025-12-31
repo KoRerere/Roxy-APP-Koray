@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
-import { $t } from '/@/locales';
+;
 import { useToast } from 'primevue/usetoast';
 import { MaximumLimitExceeded } from './settings-popup';
 import { cloneDeep } from 'es-toolkit';

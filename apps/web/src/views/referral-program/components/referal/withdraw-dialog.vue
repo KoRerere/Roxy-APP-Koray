@@ -5,7 +5,7 @@ import { API } from '/@/api';
 import RxPaymentMethods from '/@/components/rx-payment-methods.vue'
 import { PayWay } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast';
-import { $t } from '/@/locales';
+;
 import currency from 'currency.js'
 import { validatePayPalAddress, validateTRC20Address } from './utils'
 import { useDialog } from '/@/hooks/useDialog';

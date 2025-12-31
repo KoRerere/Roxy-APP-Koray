@@ -4,7 +4,7 @@ import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { useToast } from 'primevue/usetoast'
-import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 
@@ -28,6 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const syncControlTableRef = useTemplateRef('syncControlTable')
 const toast = useToast()
+const { mixpanelTrack } = useUserStore()
 
 const searchParams = ref<SearchParams>({
   projectIds: [],
@@ -221,6 +222,7 @@ async function startSync() {
   ])]
   console.log('dirIds', dirIds)
   await window.electronAPI.send('syncControl:start', dirIds)
+  mixpanelTrack('synchronizer_success')
 }
 
 async function handleRowSelectAll() {

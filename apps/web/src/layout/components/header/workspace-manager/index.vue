@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import WorkspaceManagerDialog from './workspace-manager-dialog.vue';
 import { useDialog } from '/@/hooks/useDialog';
-import { $t } from '/@/locales';
+;
 import { useRoleStore } from "/@/stores/role"
 import { useWorkspaceStore } from '/@/stores/workspace';
 import { WorkspaceType } from "/@/enums";

@@ -3,7 +3,7 @@ import CodeInput from '/@/views/login/components/phone-login/code.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormInputPassword from '/@/views/lab/components/form/m-input-password.vue'
 import { defineFormSchema } from '/@/components/rx-form/'
-import { $t } from '/@/locales'
+
 import type { z } from 'zod'
 
 export function getRegisterValidation(z: z.ZodString) {

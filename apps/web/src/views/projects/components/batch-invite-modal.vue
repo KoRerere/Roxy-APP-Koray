@@ -1,0 +1,144 @@
+<script setup lang="ts">
+import EmailInput from '/@/views/projects/components/email-input.vue'
+import RoleSplit from '/@/views/projects/components/role-split.vue'
+import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
+import { API } from '/@/api'
+import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { Role } from '/@/enums/'
+
+interface Props {
+  project?: Record<string, any>
+  projects?: any[]
+  projectValues?: number[]
+  multiple?: boolean
+  inviteRole?: Role
+  onBeforeClose?: (refresh?: boolean) => void
+}
+
+const {
+  project,
+  projects,
+  projectValues,
+  multiple = false,
+  inviteRole = Role.VIEWER,
+  onBeforeClose,
+} = defineProps<Props>()
+
+const emit = defineEmits(['close'])
+
+const [showToast] = useResponseToast()
+const { handleBusinessCode } = useHandleBusinessCode()
+const { mixpanelTrack } = useUserStore()
+
+const needRefresh = ref(false)
+const roleValue = ref(inviteRole)
+const selectedProjects = ref(projectValues)
+const emails = ref<any[]>([])
+
+onBeforeMount(() => {
+  mixpanelTrack('teammate_invite_open')
+})
+
+onBeforeUnmount(() => {
+  onBeforeClose?.(needRefresh.value)
+})
+
+async function inviteNewMember() {
+  if (multiple && !selectedProjects.value?.length) {
+    showToast(-1, $t('请选择至少一个项目'))
+    return
+  }
+
+  const emailList = emails.value.filter(item => !item.invalid).map(item => item.value)
+  if (!emailList.length) {
+    showToast(-1, $t('请至少输入一个有效的邮箱/手机号'))
+    return
+  }
+
+  const projectIds = (selectedProjects.value ?? []).concat(project?.projectId).filter(Boolean)
+  const { code, msg } = await API.limit.userBatchInviteCreate({
+    emailList,
+    role: roleValue.value,
+    projectIds,
+  })
+
+  handleBusinessCode(code, () => {
+    if (code === 0) {
+      showToast(code, $t('已向 {count} 人成功发送邀请', { count: emailList.length }))
+    }
+    else {
+      showToast(code, msg)
+    }
+  })
+
+  if (code === 0) {
+    needRefresh.value = true
+    emit('close')
+  }
+}
+</script>
+
+<template>
+  <div class="flex flex-col pa-6 pt-4 gap-6 max-h-[80vh] overflow-y-auto w-120">
+    <div class="flex justify-between items-center">
+      <span class="header">{{ $t('邀请用户加入{project}', { project: project?.projectName }) }}</span>
+      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary, #575D60)" @click="$emit('close')" />
+    </div>
+    <template v-if="projects?.length && roleValue !== Role.MANAGER">
+      <div class="flex flex-col gap-2">
+        <div class="title">
+          {{ $t('选择项目') }}
+        </div>
+        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" option-value="value" />
+      </div>
+      <div class="separator" />
+    </template>
+    <div class="flex flex-col gap-2">
+      <div class="title">
+        {{ $t('成员邮箱/手机号') }}
+      </div>
+      <div class="w-full flex items-start gap-2">
+        <div class="flex-1 flex items-start py-1 pr-1 content">
+          <EmailInput v-model="emails" class="min-h-8.25 flex-1 !py-0 !border-none " />
+          <RoleSplit v-model="roleValue" />
+        </div>
+        <RxButton size="lg" :label="$t('邀请')" @click="inviteNewMember" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+:deep(.p-inputtext) {
+  padding-right: 100px !important;
+}
+
+.header {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.separator {
+  background: var(--colors-border-divider);
+  height: 1px;
+  width: 100%;
+}
+
+.content {
+  border-radius: 6px;
+  border: 1px solid var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
+}
+</style>

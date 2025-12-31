@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { z } from 'zod'
 import { zodResolver } from '@primevue/forms/resolvers/zod'

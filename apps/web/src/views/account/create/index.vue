@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import SingleAccount from '/@/views/account/create/quick.vue'
 import BatchAccount from './batch-account.vue'
 

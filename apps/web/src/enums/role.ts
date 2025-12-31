@@ -1,4 +1,4 @@
-import { $t } from '/@/locales'
+
 
 export enum Role {
   /** 查看者 */

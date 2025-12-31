@@ -2,7 +2,7 @@
 import { API } from '/@/api'
 import RxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { checkCookieFormat, isEmptyValue } from '/@/utils'
 
 const props = defineProps<{

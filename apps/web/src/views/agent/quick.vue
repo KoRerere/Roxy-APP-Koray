@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
+;
 import ListSimple from './list/simple.vue'
 import ShopSimple from './shop/simple.vue'
 import { ProxyType } from '/@/enums/proxy';

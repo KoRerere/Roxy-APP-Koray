@@ -2,7 +2,7 @@
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
-import { $t } from '/@/locales'
+
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import TransferReceive from '/@/views/browser/list/transfer/receive.vue';

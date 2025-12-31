@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { $t } from '/@/locales'
+
 
 interface Props {
   value?: string

@@ -5,8 +5,7 @@ import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
-import currency from 'currency.js';
-import { $t } from '/@/locales'
+import currency from 'currency.js'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
@@ -16,11 +15,11 @@ import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
-import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getSorts, getAdvancedSearch } from './operation'
+import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { useUserStore } from '/@/stores/user'
-import { ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyAutoRenewalStatus } from '/@/enums'
+import { ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
-
+import type { ProxyItem } from './operation'
 
 const route = useRoute()
 const router = useRouter()
@@ -42,8 +41,8 @@ const newOrderNo = ref()
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const hideTypeConfig = reactive({
-  value: localStorage.getItem('ProxyShopHideType') || 'window_use',
-  trueValue: 'window_use',
+  value: localStorage.getItem('ProxyShopHideType') || 'available_list',
+  trueValue: 'available_list',
   falseValue: 'list_use',
 })
 
@@ -74,7 +73,7 @@ const filters = reactive({
   onChange() {
     localStorage.setItem('ProxyShopHideType', hideTypeConfig.value)
     tableRef.value?.refresh({ ...filters.getValues() })
-  }
+  },
 })
 
 onBeforeMount(async () => {
@@ -89,17 +88,18 @@ onBeforeMount(async () => {
 
 async function getProviderTypeFilter() {
   const { code, data } = await API.proxy.userGetProxyProvidersTypeList()
-  if (code !== 0) return
+  if (code !== 0)
+    return
   filters.list.push({
     name: 'providerType',
     value: undefined,
     options: [
       {
         name: $t('全部'),
-        value: undefined
+        value: undefined,
       },
-      ...data.map(name => ({ name, value: name } as any))
-    ]
+      ...data.map(name => ({ name, value: name } as any)),
+    ],
   })
 }
 
@@ -134,7 +134,7 @@ function onAdvancedSearch(search?: Record<string, any>) {
 }
 
 function onBuyProxy() {
-  buyProxy(orderInfo => {
+  buyProxy((orderInfo) => {
     onRefreshTable()
     setNewOrderNo(orderInfo?.orderNo)
   })
@@ -155,7 +155,7 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
       const checkResult = await checkProxy({ ...toRaw(item), apiCheck: true })
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
-      checkedMessage.value[item.id!] = checkResult.checkStatus;
+      checkedMessage.value[item.id!] = checkResult.checkStatus
       return { ...checkResult, id: item.id }
     }
   })
@@ -171,14 +171,14 @@ function onRenewProxy(datas: ProxyItem[]) {
 }
 
 function download(datas: ProxyItem[]) {
-  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
 
   const data = datas.map(({ host, port, proxyUserName, proxyPassword }) => ({ host, port, username: proxyUserName, password: proxyPassword }))
 
   downloadProxy({
     data,
     cancel: reject,
-    confirm: resolve
+    confirm: resolve,
   })
 
   return promise
@@ -187,7 +187,8 @@ function download(datas: ProxyItem[]) {
 async function openHelp(data: ProxyItem) {
   const { code, data: refundInfo, msg } = await API.proxy.userGetProxyRefundInfoList({ proxyBuyId: data.id! })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
 
   showModal({
     showHeader: false,
@@ -210,7 +211,7 @@ function onRemark(data: any) {
         props: {
           placeholder: $t('请输入备注'),
           rows: 6,
-        }
+        },
       },
     ],
     onConfirm: async ({ remark }: Record<string, any>) => {
@@ -222,7 +223,8 @@ function onRemark(data: any) {
 async function addRemark(proxyRemark: string, data: ProxyItem) {
   const { code, msg } = await API.proxy.userMdfUserBuyProxyRemarkCreate({ id: data.id!, proxyRemark })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   onRefreshTable()
 }
 
@@ -240,7 +242,7 @@ function tableBeforeRefresh() {
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
     ...tabParams,
-    ...filterFieldByValue(getFormData(filtersMenu.value))
+    ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   tableRef.value?.refresh(params, force)
 }
@@ -253,11 +255,12 @@ function rowClass(data: ProxyItem) {
 }
 
 function setNewOrderNo(value: string) {
-  if (!value) return
+  if (!value)
+    return
   newOrderNo.value = value
   setTimeout(() => {
     newOrderNo.value = ''
-    const { orderNo, ...query } = route.query
+    const { orderNo: _, ...query } = route.query
     router.replace({ name: 'agent-list', query })
   }, 3000)
 }
@@ -270,7 +273,7 @@ async function autoRenewChange(data: ProxyItem) {
     onlyErrorToast(-1, $t('到期前 {hour} 小时无法修改自动续费开关。', { hour: 1 }), {
       severity: 'warn',
       summary: $t('操作失败'),
-      life: 5000
+      life: 5000,
     })
     return false
   }
@@ -287,20 +290,23 @@ async function autoRenewChange(data: ProxyItem) {
     modal: true,
     blockScroll: true,
     slots: {
-      container: ({ hideModal }) => <AutoRenewModal
-        onClose={
-          () => {
-            hideModal()
-            resolve(false)
+      container: ({ hideModal }) => (
+        <AutoRenewModal
+          onClose={
+            () => {
+              hideModal()
+              resolve(false)
+            }
           }
-        }
-        onConfirm={
-          async () => {
-            const isOK = await toggleAutoRenew(data)
-            resolve(isOK)
-            hideModal()
+          onConfirm={
+            async () => {
+              const isOK = await toggleAutoRenew(data)
+              resolve(isOK)
+              hideModal()
+            }
           }
-        } />,
+        />
+      ),
     },
   })
   return promise
@@ -310,7 +316,8 @@ async function toggleAutoRenew(data: ProxyItem) {
   const status = data.autoRenew === ProxyAutoRenewalStatus.Enabled ? ProxyAutoRenewalStatus.Disabled : ProxyAutoRenewalStatus.Enabled
   const { code, msg } = await API.proxy.userSetProxyAutoRenewalCreate({ proxyId: data.id, status })
   onlyErrorToast(code, msg)
-  if (code !== 0) return false
+  if (code !== 0)
+    return false
   return true
 }
 </script>
@@ -319,32 +326,35 @@ async function toggleAutoRenew(data: ProxyItem) {
   <div class="flex flex-col w-full h-full">
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="shoptable" v-model:columns="columns" cacheKey="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removableSort
-        :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
+      <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removable-sort
+               :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false"
+      >
         <template #filter-after>
           <div class="w-full flex flex-col gap-3">
             <div class="flex justify-between items-center">
               <div class="flex gap-3">
-                <RxSelectButton v-for="item in filters.list" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
-                  @change="filters.onChange" />
+                <RxSelectButton v-for="item in filters.list" :key="item.name" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
+                                @change="filters.onChange"
+                />
                 <div class="flex items-center gap-1.5">
                   <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
-                    :false-value="hideTypeConfig.falseValue" @change="filters.onChange" />
+                              :false-value="hideTypeConfig.falseValue" @change="filters.onChange"
+                  />
                   <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                     $t('隐藏不可用代理 IP') }}</label>
                 </div>
               </div>
               <div class="flex items-center gap-1.5">
-                <div class="relative" v-if="isOwner">
-                  <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy"></RxButton>
-                  <div class="new-dot"></div>
+                <div v-if="isOwner" class="relative">
+                  <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy" />
+                  <div class="new-dot" />
                 </div>
                 <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
                 <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
               </div>
             </div>
             <div class="w-full flex gap-1.5 items-start">
-              <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+              <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
               <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             </div>
           </div>
@@ -362,11 +372,13 @@ async function toggleAutoRenew(data: ProxyItem) {
         <template #outbound="{ data }">
           <div class="flex items-center gap-2.5">
             <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
-              :is-loading="data.loadingOperationMap?.test" />
+                        :is-loading="data.loadingOperationMap?.test"
+            />
             <div v-if="data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired"
-              class="flex items-center gap-1.5">
-              <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-error)"></SvgIcon>
-              <RxButton v-if="isOwner" outlined severity="secondary" size="xxs" icon="base/rx_ic_fix" :label="$t('帮助')" @click.stop="openHelp(data)"></RxButton>
+                 class="flex items-center gap-1.5"
+            >
+              <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-error)" />
+              <RxButton v-if="isOwner" outlined severity="secondary" size="xxs" icon="base/rx_ic_fix" :label="$t('帮助')" @click.stop="openHelp(data)" />
             </div>
           </div>
         </template>
@@ -379,28 +391,34 @@ async function toggleAutoRenew(data: ProxyItem) {
         <template #renew="{ data }">
           <div class="scale-80" @click.stop>
             <RxToggleSwitch v-model="data.autoRenew" :disabled="data.orderStatus !== ProxyOrderStatus.done || data.proxyExpireStatus === ProxyExpireStatus.expired" :true-value="1" :false-value="0"
-              :before-change="() => autoRenewChange(data)">
-            </RxToggleSwitch>
+                            :before-change="() => autoRenewChange(data)"
+            />
           </div>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
             <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+                       :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)"
+            />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
-              :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{
-              data.remark }}</div>
+                      :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            />
+            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">
+              {{
+                data.remark }}
+            </div>
           </div>
         </template>
         <template #providerType="{ data }">
           <div class="flex items-center gap-2">
-            <div class="tag">{{ data.providerType }}</div>
+            <div class="tag">
+              {{ data.providerType }}
+            </div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -418,7 +436,7 @@ async function toggleAutoRenew(data: ProxyItem) {
   border-color: var(--component-table-border-updated);
   background: var(--colors-background-bg-success);
 
-  &>td {
+  & > td {
     border-color: var(--component-table-border-updated);
   }
 
@@ -474,7 +492,7 @@ async function toggleAutoRenew(data: ProxyItem) {
   border: 1px solid var(--component-tag-border);
   background: var(--component-tag-bg);
   color: var(--colors-text-text-secondary);
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 10px;
   font-weight: 800;
   line-height: 8px;

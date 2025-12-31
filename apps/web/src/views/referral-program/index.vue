@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { API } from '/@/api';
-import { $t } from '/@/locales';
+;
 import Referal from './components/referal/index.vue'
 import ReferralUsers from './components/referral-users.vue'
 import RewardRecords from './components/reward-records.vue'

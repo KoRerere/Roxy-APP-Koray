@@ -1,4 +1,3 @@
-import { $t } from '/@/locales'
 import currency from 'currency.js'
 import type { SvgNames } from '/@/components/rx-icon'
 
@@ -22,13 +21,13 @@ export function isLikeFunction(fn: any) {
   return ['function', 'asyncfunction'].includes(getRawType(fn))
 }
 
-export function isMacOS() {
-  if ('userAgentData' in navigator) {
-    const uaData = (navigator as any).userAgentData
+export const isMacOS = (() => {
+  if (navigator.userAgentData?.platform) {
+    const uaData = navigator.userAgentData
     return /mac\s?os/i.test(uaData.platform || '')
   }
   return /Macintosh|Mac OS X/.test(navigator.userAgent)
-}
+})()
 
 export function hasOwnProperty(data: any, key: any) {
   return Object.prototype.hasOwnProperty.call(data, key)
@@ -53,8 +52,13 @@ export function isInvalid(value: any) {
 }
 
 export function validateEmail(email: string) {
-  const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/i
   return regex.test(email)
+}
+
+export function validatePhone(phone: string) {
+  const regex = /^(?:(?:\+|00)86)?1[3-9]\d{9}$/
+  return regex.test(phone)
 }
 
 export function createDefaultObject<T extends string[], U>(keys: T, defaultValue: U) {
@@ -211,17 +215,10 @@ export enum IPType {
   IPV6 = 'IPV6',
 }
 
-export enum ParseMode {
-  one, // 主机:端口:账号:密码
-  two, // 账号:密码@主机:端口
-  three, // 主机:端口
-}
-
-export function parseProxyUrl(url: string, mode = ParseMode.one): ProxyObject {
-  const regex1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:\[\]\{\}]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
-  const regex2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port2>\d+):(?<user2>[^:\[\]\{\}]+):(?<pass2>[^:\[\]\{\}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
-  const regex = [ParseMode.one, ParseMode.two].includes(mode) ? regex1 : regex2
-
+export function parseProxyUrl(url: string): ProxyObject {
+  const regex1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+  const regex2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+  const regex = /^[^:/\s]+:[^:/\s]+@/.test(url) ? regex2 : regex1
   const match = url.match(regex)
   const data = match?.groups
   return {

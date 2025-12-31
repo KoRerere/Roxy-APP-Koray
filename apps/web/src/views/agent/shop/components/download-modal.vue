@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import TsForm from '/@/views/lab/components/form/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { $t } from '/@/locales';
+;
 
 interface Props {
   data: {

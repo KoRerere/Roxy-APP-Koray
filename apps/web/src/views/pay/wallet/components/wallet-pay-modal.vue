@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { RxAlert } from '/@/components/rx-alert'
 import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { VueDraggable } from 'vue-draggable-plus'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 
 const columns = defineModel<any[]>({ default: [] })
 

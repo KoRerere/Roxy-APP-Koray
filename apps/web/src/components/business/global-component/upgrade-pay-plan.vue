@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 import { RxAlert } from '/@/components/rx-alert/'
 import type { MittEvents } from '/@/utils/eventBus';

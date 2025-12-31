@@ -50,6 +50,8 @@ export interface ResourceUpdateMessage {
   silent?: boolean
 }
 
+export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error'
+
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
@@ -97,4 +99,7 @@ export interface MainMessage {
   'syncControl:pause': () => void
   /** 恢复同步 */
   'syncControl:resume': () => void
+
+  /** 通过外部打开浏览器失败错误弹窗 */
+  'dialog:open-browser-failed': (payload: { name: string, type: OpenBrowserFailureType, message?: string }) => void
 }

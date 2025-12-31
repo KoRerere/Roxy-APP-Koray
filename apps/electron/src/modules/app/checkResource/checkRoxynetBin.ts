@@ -4,9 +4,9 @@ import { createWriteStream } from 'node:fs'
 import { access, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { appConfig } from '/@/constants'
+import { currentArch, currentOS, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
 import { calculateFileHash, fileExists } from '/@/utils'
-import { isWindows, currentOS, currentArch } from '/@/constants/common'
 
 // roxynet 下载重试次数
 let roxynetDownloadRetry = 0
@@ -15,7 +15,6 @@ let roxynetDownloadRetry = 0
 const roxynetBinDir = dirname(appConfig.roxynetBinPath)
 
 const binFile = `roxynet${isWindows ? '.exe' : ''}`
-
 
 const config = {
   /** 资源服务器域名 */
@@ -71,7 +70,7 @@ export async function checkRoxynetBin(webDomain: string) {
       url: config.sha512Url,
       method: 'get',
       timeout: 5000,
-    }).then(async (response) => response.data.toString()).catch(() => '')
+    }).then(async response => response.data.toString()).catch(() => '')
 
     console.log('roxyNet remoteSha512', remoteSha512)
     // 如果远程 sha512 哈希值存在，则检查本地 sha512 哈希值
@@ -81,7 +80,8 @@ export async function checkRoxynetBin(webDomain: string) {
       if (remoteSha512 !== localSha512) {
         needDownload = true
       }
-    } else {
+    }
+    else {
       needDownload = true
     }
   }

@@ -1,6 +1,6 @@
 import type { UserConfig } from 'vite'
-import { join } from 'node:path'
 import { builtinModules } from 'node:module'
+import { join } from 'node:path'
 import dts from 'vite-plugin-dts'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
@@ -26,14 +26,14 @@ const config: UserConfig = {
     minify: process.env.MODE !== 'development',
     lib: {
       entry: ['src/index.ts', 'src/ipcMain.ts'],
-      formats: ['cjs'],
+      formats: ['es'],
     },
     rollupOptions: {
-      external: ['electron'],
+      external: [...builtinModules, 'electron'],
       output: {
         // ESM preload scripts must have the .mjs extension
         // https://www.electronjs.org/docs/latest/tutorial/esm#esm-preload-scripts-must-have-the-mjs-extension
-        entryFileNames: '[name].cjs',
+        entryFileNames: '[name].mjs',
       },
     },
     emptyOutDir: true,

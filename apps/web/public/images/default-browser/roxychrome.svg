@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="mask0_2344_2476" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+<path d="M256 0C397.385 5.91546e-06 512 114.615 512 256C512 397.385 397.385 512 256 512C114.615 512 6.18013e-06 397.385 0 256C-6.18013e-06 114.615 114.615 6.18013e-06 256 0ZM256 134.736C189.028 134.736 134.736 189.028 134.736 256C134.737 322.972 189.028 377.263 256 377.263C322.972 377.263 377.262 322.972 377.263 256C377.263 189.028 322.972 134.736 256 134.736Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_2344_2476)">
+<g clip-path="url(#paint0_angular_2344_2476_clip_path)" data-figma-skip-parse="true"><g transform="matrix(1.11533e-08 0.255158 -0.255158 1.11533e-08 256.842 256.842)"><foreignObject x="-1006.6" y="-1006.6" width="2013.2" height="2013.2"><div xmlns="http://www.w3.org/1999/xhtml" style="background:conic-gradient(from 90deg,rgba(180, 225, 253, 1) 0deg,rgba(220, 240, 252, 1) 291.6deg,rgba(180, 225, 253, 1) 360deg);height:100%;width:100%;opacity:1"></div></foreignObject></g></g><circle cx="256.842" cy="256.842" r="255.158" transform="rotate(-90 256.842 256.842)" data-figma-gradient-fill="{&#34;type&#34;:&#34;GRADIENT_ANGULAR&#34;,&#34;stops&#34;:[{&#34;color&#34;:{&#34;r&#34;:0.70588237047195435,&#34;g&#34;:0.88235294818878174,&#34;b&#34;:0.99215686321258545,&#34;a&#34;:1.0},&#34;position&#34;:0.0},{&#34;color&#34;:{&#34;r&#34;:0.86274510622024536,&#34;g&#34;:0.94117647409439087,&#34;b&#34;:0.98823529481887817,&#34;a&#34;:1.0},&#34;position&#34;:0.81000000238418579}],&#34;stopsVar&#34;:[{&#34;color&#34;:{&#34;r&#34;:0.70588237047195435,&#34;g&#34;:0.88235294818878174,&#34;b&#34;:0.99215686321258545,&#34;a&#34;:1.0},&#34;position&#34;:0.0},{&#34;color&#34;:{&#34;r&#34;:0.86274510622024536,&#34;g&#34;:0.94117647409439087,&#34;b&#34;:0.98823529481887817,&#34;a&#34;:1.0},&#34;position&#34;:0.81000000238418579}],&#34;transform&#34;:{&#34;m00&#34;:2.2306612663669512e-05,&#34;m01&#34;:-510.31579589843750,&#34;m02&#34;:511.99984741210938,&#34;m10&#34;:510.31579589843750,&#34;m11&#34;:2.2306612663669512e-05,&#34;m12&#34;:1.6841818094253540},&#34;opacity&#34;:1.0,&#34;blendMode&#34;:&#34;NORMAL&#34;,&#34;visible&#34;:true}"/>
+<mask id="mask1_2344_2476" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="256" y="256" width="256" height="265">
+<rect x="256" y="256" width="256" height="264.421" fill="#E4F4FF"/>
+</mask>
+<g mask="url(#mask1_2344_2476)">
+<circle cx="256.842" cy="256.842" r="255.158" transform="rotate(-90 256.842 256.842)" fill="#E4F4FF"/>
+</g>
+<g clip-path="url(#clip0_2344_2476)">
+<ellipse cx="323.368" cy="256" rx="188.632" ry="188.632" transform="rotate(90 323.368 256)" fill="#E4F4FF"/>
+</g>
+<g clip-path="url(#clip1_2344_2476)">
+<ellipse cx="256" cy="323.368" rx="188.632" ry="188.632" transform="rotate(-180 256 323.368)" fill="#B4E1FD"/>
+</g>
+</g>
+<defs>
+<clipPath id="paint0_angular_2344_2476_clip_path"><circle cx="256.842" cy="256.842" r="255.158" transform="rotate(-90 256.842 256.842)"/></clipPath><clipPath id="clip0_2344_2476">
+<rect width="188.632" height="377.263" fill="white" transform="translate(512 67.3682) rotate(90)"/>
+</clipPath>
+<clipPath id="clip1_2344_2476">
+<rect width="188.632" height="377.263" fill="white" transform="translate(444.631 512) rotate(-180)"/>
+</clipPath>
+</defs>
+</svg>

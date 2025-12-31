@@ -10,7 +10,7 @@ import type { MittEvents } from '/@/utils/eventBus'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { $t } from '/@/locales'
+
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { isMainWindow } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
@@ -18,6 +18,8 @@ import { getAccountSetupFormSchemas } from '/@/components/business/global-compon
 import { RxAlert } from '/@/components/rx-alert'
 import RxButton from '/@/components/rx-button'
 import styles from './schemas.module.css'
+import type { OpenBrowserFailureType } from '@roxy/electron-preload'
+import { useThemeStore } from '/@/stores/theme'
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
@@ -36,6 +38,7 @@ export function useSubscribe() {
 
   isSubscribe = true
 
+  const themeStore = useThemeStore()
   const router = useRouter()
   const [showFormDialog] = useFormDialog()
   const { purchaseSuccess, planSuccess, openProcessing } = usePay()
@@ -78,6 +81,37 @@ export function useSubscribe() {
       }
     }
   })
+
+  electronAPI.on('dialog:open-browser-failed', (payload) => {
+    console.log('dialog:open-browser-failed', payload)
+    const messageMap: Record<OpenBrowserFailureType, string> = {
+      not_login: $t('当前账号暂未登录，无法同步窗口信息。\n请登录后再打开窗口。'),
+      window_not_found: $t('当前窗口已经被删除，无法打开'),
+      no_permission: $t('当前账号无权限打开当前窗口。'),
+      other_error: payload?.message || '',
+    }
+    const message = messageMap[payload?.type] || $t('默认浏览器开启失败，请重新打开。')
+    const imageSrc = `/images/default-browser/launch-failed-${themeStore.realTheme}.svg`
+
+    showModal({
+      header: $t('{windowName} 开启失败', { windowName: payload?.name }),
+      class: '!w-384px',
+      slots: {
+        default: () => {
+          return (
+            <div class="flex flex-col items-center justify-center gap-4 py-6">
+              <img src={imageSrc}></img>
+              <div class="whitespace-pre-line text-center font-size-3.5 leading-normal">
+                {message}
+              </div>
+            </div>
+          )
+        },
+        footer: undefined,
+      },
+    })
+  })
+
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
 

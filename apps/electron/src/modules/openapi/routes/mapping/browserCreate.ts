@@ -74,7 +74,7 @@ export const browserCreateMapping = {
     fontType: false, // 字体指纹，随机：true，跟随系统：false，布尔类型，非必传, 默认false
     canvas: true, // canvas，随机：true，真实：false，布尔类型，非必传, 默认true
     webGL: true, // webGL图像， 随机：true，真实：false，布尔类型，非必传, 默认true
-    webGLInfo: true, // webGLInfo开关，自定义：true，真实：false，布尔类型，非必传, 默认true
+    webGLInfo: 1, // webGLInfo开关，自定义：2，随机：1，真实：0，int类型，非必传, 默认1
     webGLManufacturer: '', // webGLInfo为自定义时指定的webGL厂商值, str类型，非必传
     webGLRender: '', // webGLInfo为自定义时指定的webGL渲染值, str类型，非必传
     webGpu: 'webgl', // webGpu，基于webgl匹配：webgl，真实：real，禁用：block，str类型，非必传，默认值：webgl

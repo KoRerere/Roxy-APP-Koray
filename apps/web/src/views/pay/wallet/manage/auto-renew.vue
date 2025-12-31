@@ -3,7 +3,7 @@ import { RxAlert } from "/@/components/rx-alert";
 import currency from 'currency.js';
 import { format } from 'date-fns';
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { AutoRenewalPayStatus } from "/@/enums/pay";
 import { strConcat } from '/@/utils'
 import { emitter } from '/@/utils/eventBus';

@@ -2,7 +2,7 @@
 import MateGroup from './components/mate-group.vue'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import type { WindowMetaData } from './components/type'
 import AccordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'

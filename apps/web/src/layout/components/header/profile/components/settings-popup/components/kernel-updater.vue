@@ -3,7 +3,7 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 
 const { coreList } = defineProps<{
   coreList: ResourceUpdateMessage[]

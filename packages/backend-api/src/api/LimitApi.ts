@@ -19,6 +19,8 @@ import {
   UserAddUserByProjectInfoCreatePayload,
   UserAddWorkspaceInfoCreateData,
   UserAddWorkspaceInfoCreatePayload,
+  UserBatchInviteCreateData,
+  UserBatchInviteCreatePayload,
   UserDelProjectInfoCreateData,
   UserDelProjectInfoCreatePayload,
   UserDelWorkspaceInfoCreateData,
@@ -402,6 +404,27 @@ export class LimitApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserMdfProjectSortCreateData, any>({
       path: `/user_mdf_project_sort`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserBatchInviteCreate
+   * @summary 批量邀请用户
+   * @request POST:/user_batch_invite
+   * @response `200` `UserBatchInviteCreateData`
+   */
+  userBatchInviteCreate = (
+    data: UserBatchInviteCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchInviteCreateData, any>({
+      path: `/user_batch_invite`,
       method: "POST",
       body: data,
       type: ContentType.Json,

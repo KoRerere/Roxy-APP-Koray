@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { format } from 'date-fns'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useSimpleLocale } from '/@/stores/locale'

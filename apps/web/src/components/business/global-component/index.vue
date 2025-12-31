@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
 import RxToastHeadless from './rx-toast-headless.vue'
 import { useSubscribe } from './useSubscribe'

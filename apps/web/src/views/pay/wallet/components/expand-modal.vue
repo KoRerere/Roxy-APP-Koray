@@ -3,7 +3,7 @@ import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -15,8 +15,9 @@ const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 
-const { userPayInfo } = storeToRefs(useUserStore())
 const { currentActivity } = storeToRefs(useCampaignStore())
+const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
 
@@ -109,6 +110,7 @@ const detail = computed(() => {
 })
 
 onMounted(() => {
+  mixpanelTrack('click_enter_quota_expansion')
   const { props, onConfirm, onCancel } = dialogRef.value.data
   _props.value = props
   _onConfirm.value = onConfirm
@@ -128,6 +130,7 @@ function onUpdate(value: number, item: any) {
 }
 
 async function confirm() {
+  mixpanelTrack('click_confirm_quota_expansion')
   showModal({
     showHeader: false,
     modal: true,
@@ -139,6 +142,7 @@ async function confirm() {
         discountAmount: discountAmount.value,
         onClose: hideModal,
         onConfirm: async ({ payType }) => {
+          mixpanelTrack('click_pay_quota_expansion')
           await _onConfirm.value?.({
             payType,
             ...Object.fromEntries(buyList.value.map(item => [item.key, item.value])),

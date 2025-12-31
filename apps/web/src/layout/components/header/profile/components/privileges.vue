@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 

@@ -2,7 +2,7 @@
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { API } from '/@/api'
-import { $t } from '/@/locales';
+;
 import { debounce } from 'es-toolkit'
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { useWorkspaceStore } from "/@/stores/workspace";

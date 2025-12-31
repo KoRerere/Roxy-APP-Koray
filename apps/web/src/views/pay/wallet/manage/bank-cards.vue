@@ -3,7 +3,7 @@ import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue';
 import RxCheckbox from '/@/components/rx-checkbox/index.vue';
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user';
-import { $t } from '/@/locales';
+;
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { API } from '/@/api';
 import { useResponseToast } from '/@/hooks/useResponseToast';

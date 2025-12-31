@@ -1,15 +1,19 @@
-import { app, autoUpdater, globalShortcut, net, protocol, session, shell } from 'electron'
+import { app, autoUpdater, globalShortcut, shell } from 'electron'
 import path from 'node:path'
-import { appProtocolName, mediaProtocolName } from '/@/constants'
+import { parseArgs } from 'node:util'
+import { appProtocolName } from '/@/constants'
+import { isPackaged } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { createTray } from '/@/modules/app/tray'
 import { cleanupAndExit, killAllBrowserProcess } from '/@/modules/app/utils'
+import { openBrowserWindow } from '/@/modules/appServer/ws'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged, isWindows, isLinux } from '/@/constants/common'
-import { getMainWindow, intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
+import { initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { isWebReady } from '/@/utils'
+import { isWebReady, killProcessForce } from '/@/utils'
+import { closeAllWindows } from '/@/utils/browser-window'
+import { getMainWindow, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { proxyManager } from './proxy-manager'
 
 // 获取 GPU 信息
@@ -32,13 +36,63 @@ app.commandLine.appendSwitch('no-sandbox')
 !isPackaged && app.commandLine.appendSwitch('ignore-connections-limit', 'localhost')
 
 // macOS 的行为不同：当应用通过协议被启动时，系统不会把参数放在 process.argv，而是触发 open-url 事件，必须在 ready 之前监听
-app.on('open-url', async (event, url) => {
-  event.preventDefault()
-  await dispatchDeepLink(url, 'open-url')
+app.on('open-url', (event, url) => {
+  event?.preventDefault?.()
+  dispatchDeepLink(url, 'open-url')
 })
 
-export async function setupApp() {
+function getRoxyActionFromArgs(args: readonly string[]) {
+  const eq = args.find(a => a.startsWith('--roxy-action='))
+  if (eq)
+    return eq.split('=')[1]
 
+  const idx = args.findIndex(a => a === '--roxy-action')
+  if (idx !== -1)
+    return args[idx + 1]
+
+  return undefined
+}
+
+async function dispatchRoxyAction(argv: readonly string[], source: 'second-instance' | 'cold-start') {
+  try {
+    await initStorePromise.promise
+    const { values } = parseArgs({
+      args: argv,
+      options: {
+        'roxy-action': { type: 'string' },
+        'dir-id': { type: 'string' },
+        'workspace-id': { type: 'string' },
+      },
+      strict: false,
+      allowPositionals: true,
+    })
+
+    const action = values['roxy-action']
+    console.log(`roxy-action [${source}]:`, action, values)
+
+    if (action === 'launch-browser') {
+      const dirId = values['dir-id']
+      const workspaceId = values['workspace-id']
+      if (typeof dirId === 'string' && dirId && typeof workspaceId === 'string' && workspaceId) {
+        const wid = Number(workspaceId)
+        if (Number.isFinite(wid) && wid > 0) {
+          openBrowserWindow(dirId, wid)
+        }
+        else {
+          console.debug('launch-browser: workspace-id is not valid', { dirId, workspaceId, argv })
+        }
+      }
+      else {
+        console.debug('launch-browser: params is not valid', { dirId, workspaceId, argv })
+      }
+    }
+  }
+  catch (error) {
+    console.error('Failed to dispatch roxy-action:', source, argv, error)
+  }
+}
+
+export async function setupApp() {
   app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
@@ -52,7 +106,18 @@ export async function setupApp() {
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
-    await dispatchDeepLink(commandLine.at(-1) || '', 'second-instance')
+
+    // 优先处理 deep link（可能出现在任意 argv）
+    const deepLink = commandLine.find(arg => arg.startsWith(`${appProtocolName}://`)) || ''
+    if (deepLink) {
+      await dispatchDeepLink(deepLink, 'second-instance')
+      return
+    }
+
+    // 再处理任务栏/JumpList 的 action
+    const action = getRoxyActionFromArgs(commandLine)
+    if (action)
+      await dispatchRoxyAction(commandLine, 'second-instance')
   })
 
   //  系统自带浏览器打开
@@ -103,10 +168,6 @@ export async function setupApp() {
     console.log('setupApp done')
     // 初始化应用程序事件
     initAppEvent()
-
-    setTimeout(() => {
-      killAllBrowserProcess()
-    })
   }
   catch (error) {
     console.error('Failed create window:', error)
@@ -126,9 +187,14 @@ function initAppEvent() {
   })
 
   app.on('before-quit', async (event) => {
+    if (store.defaultBrowserLauncherPid) {
+      killProcessForce(store.defaultBrowserLauncherPid)
+    }
+
     if (!isSyncBrowserData) {
       event.preventDefault()
       try {
+        closeAllWindows()
         // 关闭所有浏览器进程，并同步数据
         await browserManager.closeAll()
         console.log('Application is quitting normally.')
@@ -144,28 +210,34 @@ function initAppEvent() {
       }
     }
 
-    if (isQuittingForUpdate) {
+    // 如果由于升级 APP 导致的退出
+    if (isQuittingForUpdate && !isSyncBrowserData) {
       console.log('Application is quitting for update.')
-      if (!isSyncBrowserData) {
-        isSyncBrowserData = true
-        appUpdater.upgradeNow()
-      }
+      isSyncBrowserData = true
+      appUpdater.upgradeNow()
     }
     else {
+      isSyncBrowserData = true
       cleanupAndExit()
     }
   })
 }
-
 
 async function handleColdStart() {
   // 冷启动通过自定义协议唤起时，从 argv 中获取参数
   // 注意：macOS 在应用未启动时通过自定义协议拉起应用，不会触发 open-url 事件
   // 而是会将协议 URL 作为启动参数传递，因此这里也需要处理 macOS 的情况
   try {
+    await initStorePromise.promise
     const startupUrl = process.argv.find(arg => arg.startsWith(`${appProtocolName}://`))
     if (startupUrl) {
       await dispatchDeepLink(startupUrl, 'cold-start')
+      return
+    }
+
+    const action = getRoxyActionFromArgs(process.argv)
+    if (action) {
+      await dispatchRoxyAction(process.argv, 'cold-start')
     }
   }
   catch (error) {
@@ -190,21 +262,43 @@ async function handleColdStart() {
  */
 async function dispatchDeepLink(url: string, source: 'second-instance' | 'open-url' | 'cold-start') {
   try {
-    if (!url || !url.startsWith(`${appProtocolName}://`)) return
+    if (!url || !url.startsWith(`${appProtocolName}://`))
+      return
+
+    await initStorePromise.promise
     console.log(`deep-link [${source}]:`, url)
-    const searchParams = url.split('?')[1]
+    const queryString = url.split('?')[1]
+    const searchParams = Object.fromEntries(new URLSearchParams(`?${queryString}`))
     await isWebReady()
     if (url.includes(`${appProtocolName}://oauth2callback`)) {
-      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
+      ipcMain.send('oauth2:google-callback', `?${queryString}`)
       console.log('oauth2callback:', source, url)
     }
     if (url.includes(`${appProtocolName}://inviteUser2project`)) {
-      ipcMain.send('invite:to-project', `?${searchParams}`)
+      ipcMain.send('invite:to-project', `?${queryString}`)
       console.log('inviteUser2project:', source, url)
     }
     if (url.includes(`${appProtocolName}://open-page`)) {
-      ipcMain.send('open:page', `?${searchParams}`)
+      ipcMain.send('open:page', `?${queryString}`)
       console.log('open-page:', source, url)
+    }
+    // 通过外部打开浏览器失败错误弹窗（默认浏览器中转器兜底入口）
+    if (url.includes(`${appProtocolName}://open-browser-failed`)) {
+      console.log('dialog:open-browser-failed:', searchParams)
+      const { dirId, workspaceId, url: targetUrl } = searchParams as any
+      if (dirId && workspaceId) {
+        const wid = Number(workspaceId)
+        if (targetUrl) {
+          console.log('dialog:open-browser-failed: resolved url', { dirId, workspaceId: wid, targetUrl })
+          openBrowserWindow(dirId, wid, String(targetUrl))
+        }
+        else {
+          openBrowserWindow(dirId, wid)
+        }
+      }
+      else {
+        console.debug('open-browser-failed: params is not valid', searchParams)
+      }
     }
     getMainWindow()?.show?.()
   }

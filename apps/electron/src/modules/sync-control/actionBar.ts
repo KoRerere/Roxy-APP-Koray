@@ -1,13 +1,13 @@
-import { BrowserWindow, } from 'electron'
-import { ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import type { BrowserWindow } from 'electron'
+import { ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
-import { closeCustomLayoutsDialogWindow } from '/@/modules/sync-control/dialog/custom-layout'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { closeBatchInputsDialogWindow } from '/@/modules/sync-control/dialog/batch-inputs'
-import { createWindow } from '/@/utils/browser-window'
+import { closeCustomLayoutsDialogWindow } from '/@/modules/sync-control/dialog/custom-layout'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getSynchronizerActionBarWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID)
+  return getWindowById(ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID)
 }
 
 export async function createSynchronizerActionBarWindow() {
@@ -23,7 +23,7 @@ export async function createSynchronizerActionBarWindow() {
     width: 1000,
     height: 600,
     show: false,
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     transparent: true,
     resizable: false,
     alwaysOnTop: true,
@@ -35,7 +35,7 @@ export async function createSynchronizerActionBarWindow() {
   })
 
   win.setBounds({
-    y: 20
+    y: 20,
   })
   // 默认鼠标事件穿透
   // win.setIgnoreMouseEvents(true, { forward: true })
@@ -58,7 +58,6 @@ export async function createSynchronizerActionBarWindow() {
   })
 }
 
-
 export function closeSynchronizerActionBarWindow() {
   const targetWin = getSynchronizerActionBarWindow()
 
@@ -66,7 +65,6 @@ export function closeSynchronizerActionBarWindow() {
     targetWin.close()
   }
 }
-
 
 export function handleWindowMove(win: BrowserWindow) {
   win.on('move', () => {

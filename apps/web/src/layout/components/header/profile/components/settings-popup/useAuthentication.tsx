@@ -5,7 +5,7 @@ import ViewRecoveryEmail from '../auth-2fa/view-recovery-email.vue'
 import Auth2fa from '../auth-2fa/index.vue'
 import RxButton from '/@/components/rx-button'
 import { RxAlert } from '/@/components/rx-alert'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 import { useDialog } from '/@/hooks/useDialog'

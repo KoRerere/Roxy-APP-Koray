@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import QRCode from 'qrcode'
-import { $t } from '/@/locales'
+
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { enhanceCountdown } from '/@/utils'

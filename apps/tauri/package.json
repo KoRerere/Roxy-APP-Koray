@@ -8,19 +8,25 @@
     "pnpm": "10.18.3"
   },
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "node -p \"require('fs').cpSync('.env.development', '.env')\" && tauri dev",
     "dev:web": "vite dev",
     "preview": "vite preview",
-    "build:web": "vite build --mode production",
-    "build:mac:adhoc": "pnpm run pack:app:dev -- --adhoc --skip-notarize",
-    "build:mac:sign-only": "pnpm run pack:app:dev -- --skip-notarize",
-    "pack:app:dev": "pnpm run build:web && node --env-file=.env.development scripts/tauri-build.ts",
-    "pack:app:prod": "pnpm run build:web && node --env-file=.env.production scripts/tauri-build.ts",
+    "build:web:dev": "vite build --mode development",
+    "build:web:prod": "vite build --mode production",
+    "build:mac": "pnpm run pack:app:dev -- --all-targets",
+    "build:win": "pnpm run pack:app:prod -- --all-targets",
+    "build:linux:appimage": "pnpm run pack:app:prod -- --all-targets",
+    "build:mac:adhoc": "pnpm run pack:app:dev -- --all-targets --adhoc --skip-notarize",
+    "build:mac:sign-only": "pnpm run pack:app:dev -- --all-targets --skip-notarize",
+    "pack:app:dev": "node --env-file=.env.development scripts/tauri-build.ts",
+    "pack:app:prod": "node --env-file=.env.production scripts/tauri-build.ts",
     "publish:app:dev": "pnpm run pack:app:dev && node --env-file=.env.development scripts/publish.ts",
     "publish:app:prod": "pnpm run pack:app:prod && node --env-file=.env.production scripts/publish.ts",
     "publish:app:dev:only": "node --env-file=.env.development scripts/publish.ts",
     "publish:app:prod:only": "node --env-file=.env.production scripts/publish.ts",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "gen:mac:icon": "tauri icon ./src-tauri/icons/app-icon-macos.png -o ./src-tauri/icons/macos",
+    "gen:win:icon": "tauri icon ./src-tauri/icons/app-icon-windows.png -o ./src-tauri/icons/windows"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",

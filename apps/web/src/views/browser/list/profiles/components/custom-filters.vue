@@ -5,7 +5,7 @@ import RxAvatar from '/@/components/rx-avatar'
 import Fuse from 'fuse.js'
 import { format } from 'date-fns'
 import { useDebounceFn } from '@vueuse/core'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { useDialog } from '/@/hooks/useDialog'
 import { deepClone, findInputByName, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'

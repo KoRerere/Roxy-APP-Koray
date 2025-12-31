@@ -6,7 +6,7 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -17,6 +17,7 @@ import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDialog } from '/@/hooks/useDialog'
+import { useTeam } from '/@/views/team/hooks'
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
@@ -31,6 +32,7 @@ const { currentWorkspace } = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo, userInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
+const { getTeamMembers } = useTeam()
 
 const columns = [
   {
@@ -232,7 +234,7 @@ function showOperationMenu({ event, operation }: { event: MouseEvent, operation:
 
 async function inviteUserInProject(project: Project) {
   const { user_info, projectName, project_id } = project
-  const { data: { rows: allMembers } } = await API.team.userGetMemberInfoByWorkspaceList({})
+  const { data: { rows: allMembers } } = await getTeamMembers()
 
   showModal({
     showHeader: false,

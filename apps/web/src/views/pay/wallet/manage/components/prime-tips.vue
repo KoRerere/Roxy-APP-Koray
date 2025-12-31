@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon';
 import { SubLevelEnum } from '/@/enums/pay';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user'
 
 const { userPayInfo } = storeToRefs(useUserStore())

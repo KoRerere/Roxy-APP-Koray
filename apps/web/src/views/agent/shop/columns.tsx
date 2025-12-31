@@ -2,7 +2,7 @@ import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
 import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { format } from 'date-fns'

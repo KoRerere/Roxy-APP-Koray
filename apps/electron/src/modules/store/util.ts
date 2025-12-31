@@ -79,11 +79,14 @@ function decryptData(encryptedData: string): string {
 }
 
 export async function forceSaveConfig() {
-  writeFile(appConfig.defaultBrowserConfig, JSON.stringify({
+  // 确保 ~/.roxybrowser(-dev) 目录存在
+  await fileExists(appConfig.roxyDataDir, true)
+
+  writeFile(appConfig.roxyConfigFile, JSON.stringify({
     apiKey: store.apiKey,
     apiPort: store.apiPort,
     defaultBrowserDirId: store.defaultBrowserDirId,
-    workspaceId: store.workspaceId,
+    defaultBrowserWorkspaceId: store.defaultBrowserWorkspaceId,
     appWsPort: store.appWsPort,
     appWsToken: 'roxybrowser',
   }), 'utf-8').catch((error) => {
@@ -117,6 +120,7 @@ export const initLocalConfigPromise = Promise.withResolvers<void>()
 
 export async function initLocalConfig() {
   try {
+    fileExists(appConfig.roxyDataDir, true)
     const encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
     // 解密数据
     const lastStore = safeParseJSON(encryptedConfig, () => {

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import NumberFlow from '@number-flow/vue'
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user';
 import { sleep } from '/@/utils'
 

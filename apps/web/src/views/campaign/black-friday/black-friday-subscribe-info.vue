@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { differenceInDays, format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 
 const { userPayInfo } = storeToRefs(useUserStore())

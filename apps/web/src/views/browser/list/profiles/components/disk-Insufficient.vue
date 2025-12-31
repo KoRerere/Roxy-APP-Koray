@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { $t } from '/@/locales'
+
 import { emitter } from '/@/utils/eventBus'
 import { useUserStore } from '/@/stores/user';
 

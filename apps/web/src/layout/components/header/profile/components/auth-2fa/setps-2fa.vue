@@ -3,7 +3,7 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import type { SetpsRef } from '/@/components/rx-steps'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import QRCode2FA from './qrcode-2fa.vue'
 import RecoveryCodes from './recovery-codes.vue'
 import RecoveryEmail from './recovery-email.vue'

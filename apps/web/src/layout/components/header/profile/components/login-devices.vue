@@ -3,7 +3,7 @@ import type { UserGetLoginInfoListData } from '@roxy/backend-api';
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useDialog } from '/@/hooks/useDialog'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
-import { $t } from '/@/locales'
+
 import Message from 'primevue/message';
 import { API } from "/@/api";
 import { useResponseToast } from "/@/hooks/useResponseToast";

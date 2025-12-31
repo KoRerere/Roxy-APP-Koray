@@ -1,15 +1,14 @@
-import { BrowserWindow, } from 'electron'
-import { ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { createWindow } from '/@/utils/browser-window'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getPreferencesDialogWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID)
+  return getWindowById(ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID)
 }
 
-export type OpenPreferencesDialogPayload = { tab: 'base' | 'customLayout' | 'simulate' }
+export interface OpenPreferencesDialogPayload { tab: 'base' | 'customLayout' | 'simulate' }
 
 export async function openPreferencesDialog(payload: OpenPreferencesDialogPayload = { tab: 'base' }) {
   const { tab } = payload
@@ -38,7 +37,6 @@ export async function openPreferencesDialog(payload: OpenPreferencesDialogPayloa
   handleWindowMove(win)
 }
 
-
 export function closePreferencesDialogWindowWindow() {
   const targetWin = getPreferencesDialogWindow()
 
@@ -47,17 +45,13 @@ export function closePreferencesDialogWindowWindow() {
   }
 }
 
-
-
 export function resizePreferencesDialog(payload: { width: number, height: number }) {
   const { width = 450, height = 380 } = payload
   const targetWin = getPreferencesDialogWindow()
-
 
   if (targetWin) {
     targetWin.resizable = true
     targetWin.setSize(width, height)
     targetWin.resizable = false
   }
-
 }

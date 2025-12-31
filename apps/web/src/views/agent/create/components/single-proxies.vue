@@ -1,16 +1,16 @@
 <script lang="tsx" setup>
 import TsForm from '/@/views/lab/components/form/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
-import RxButton from "/@/components/rx-button";
+import RxButton from '/@/components/rx-button'
 import RemarkIcon from '/@/components/remark-icon'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { $t } from '/@/locales'
-import { strConcat, getDictMap, isEmptyValue, parseProxyUrl, IPType, deepClone } from '/@/utils'
+
+import { deepClone, getDictMap, IPType, isEmptyValue, parseProxyUrl, strConcat } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 
 const {
   data = {},
@@ -40,14 +40,15 @@ const inputs = ref([
     label: $t('智能识别'),
     name: 'proxyRules',
     props: {
-      placeholder: $t('代理主机:端口:用户名:密码[刷新URL]'),
-      rows: 2,
+      placeholder: $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
+      rows: 3,
       size: 'md',
       onBlur: (event: Event) => {
         const result = parseProxyUrl((event.target as HTMLTextAreaElement).value)
-        if (isEmptyValue(Object.values(result).filter(Boolean))) return
+        if (isEmptyValue(Object.values(result).filter(Boolean)))
+          return
 
-        const { host, port, proxyUserName, proxyPassword, refreshUrl } = result
+        const { host, port, proxyUserName, proxyPassword, refreshUrl, remark } = result
 
         const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
 
@@ -58,16 +59,19 @@ const inputs = ref([
           proxyUserName,
           proxyPassword,
           refreshUrl,
-          proxyRules: ''
+          proxyRules: '',
         })
+
+        original.value.remark = remark
       },
     },
     resolver: (zod: any) => zod
       .string()
       .refine((value: string) => {
-        if (isEmptyValue(value)) return true
+        if (isEmptyValue(value))
+          return true
         return !isEmptyValue(Object.values(parseProxyUrl(value)).filter(Boolean))
-      }, { message: $t('解析错误,请检查格式：{text}', { text: $t('代理主机:端口:用户名:密码[刷新URL]') }) })
+      }, { message: $t('解析错误,请检查格式') }),
   },
   {
     separator: true,
@@ -79,7 +83,7 @@ const inputs = ref([
     props: {
       name: 'ipType',
       size: 'md',
-    }
+    },
   },
   {
     type: 'group',
@@ -92,7 +96,7 @@ const inputs = ref([
         props: {
           optionValue: 'value',
           size: 'md',
-        }
+        },
       },
       {
         type: 'text',
@@ -103,11 +107,11 @@ const inputs = ref([
         props: {
           placeholder: $t('主机'),
           size: 'md',
-        }
+        },
       },
       {
-        itemClass: `h-full justify-center ${cssModule.separator}`,
-        render: () => <span>:</span>
+        itemClass: `justify-center ${cssModule.separator}`,
+        render: () => <span>:</span>,
       },
       {
         type: 'text',
@@ -122,11 +126,12 @@ const inputs = ref([
         resolver: (zod: any) => zod
           .string()
           .refine((value: string) => {
-            if (isEmptyValue(value)) return false
-            return 1 <= Number(value) || Number(value) <= 65535
-          }, { message: $t('端口范围 1~65535') })
-      }
-    ]
+            if (isEmptyValue(value))
+              return false
+            return Number(value) >= 1 || Number(value) <= 65535
+          }, { message: $t('端口范围 1~65535') }),
+      },
+    ],
   },
   {
     type: 'text',
@@ -136,7 +141,7 @@ const inputs = ref([
     props: {
       placeholder: $t('请输入用户名'),
       size: 'md',
-    }
+    },
   },
   {
     type: 'text',
@@ -146,7 +151,7 @@ const inputs = ref([
     props: {
       placeholder: $t('请输入密码'),
       size: 'md',
-    }
+    },
   },
   {
     type: 'text',
@@ -164,8 +169,8 @@ const inputs = ref([
           const isOK = await window.electronAPI.send('proxy:refreshUrl', refreshUrl)
           showToast(isOK ? 0 : -1, refreshUrl)
         }
-      }
-    }
+      },
+    },
   },
   {
     separator: true,
@@ -178,10 +183,12 @@ const inputs = ref([
       optionValue: 'value',
     },
     render: (props: any) => {
-      return <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden" >
-        <TsFormSelect size="md" {...props} />
-        <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={$t('测试代理')} onClick={onCheckProxyStatus} />
-      </div>
+      return (
+        <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
+          <TsFormSelect size="md" {...props} />
+          <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={$t('测试代理')} onClick={onCheckProxyStatus} />
+        </div>
+      )
     },
   },
 ])
@@ -210,12 +217,12 @@ async function getInputs() {
     checkChannel: {
       value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel![0]?.value,
       options: $dict_map.checkChannel,
-    }
+    },
   })
 }
 
 function getFormData() {
-  const { host, port, proxyUserName, proxyPassword, ...formData } = formRef.value?.getValues()!
+  const { host, port, proxyUserName, proxyPassword, ...formData } = formRef.value?.getValues() ?? {}
   return {
     host: host?.trim(),
     port: port?.trim(),
@@ -227,7 +234,8 @@ function getFormData() {
 
 async function onCheckProxyStatus() {
   await formRef.value?.instance!.validate()
-  if (!formRef.value?.instance!.valid) return
+  if (!formRef.value?.instance!.valid)
+    return
 
   const formData = getFormData()
   alertVisible.value = false
@@ -276,25 +284,27 @@ defineExpose({
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
-            <SvgIcon name="base/rx_ic_play" color="var(--pattern-tutorial-video-bg-icon)"></SvgIcon>
+            <SvgIcon name="base/rx_ic_play" color="var(--pattern-tutorial-video-bg-icon)" />
           </div>
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
               <span class="video-title">{{ $t('代理教程') }}</span>
-              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProxyVideoEntryStatus')">
-              </SvgIcon>
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProxyVideoEntryStatus')" />
             </div>
-            <div class="video-desc">{{ $t('了解如何导入和配置代理 IP') }}</div>
+            <div class="video-desc">
+              {{ $t('了解如何导入和配置代理 IP') }}
+            </div>
           </div>
         </div>
       </template>
     </TutorialVideo>
     <div class="flex-1 flex flex-col gap-4 overflow-y-auto scrollbar">
-      <TsForm v-if="inputs" ref="form" :inputs="inputs"></TsForm>
+      <TsForm v-if="inputs" ref="form" :inputs="inputs" />
       <RxAlert ref="alert" v-model:visible="alertVisible" class="shrink-0 !w-full" type="success" :title="$t('测试成功')">
         <template #content>
           <i18n-t class="whitespace-pre-wrap" tag="div" scope="global"
-            :keypath="$t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkResult.lastCountry}${strConcat('/', checkResult.lastCity)}`, ip: checkResult.lastIp, timezone: checkResult.timezone })"></i18n-t>
+                  :keypath="$t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkResult.lastCountry}${strConcat('/', checkResult.lastCity)}`, ip: checkResult.lastIp, timezone: checkResult.timezone })"
+          />
         </template>
       </RxAlert>
     </div>
@@ -315,23 +325,27 @@ defineExpose({
 }
 
 .separator {
+  padding: 8px 0;
   border-left-width: 0px;
   border-right-width: 0px;
   border-top-width: 1px;
   border-bottom-width: 1px;
   border-style: solid;
   background: var(--inputtext-background);
-
   border-color: var(--inputtext-border-color);
   color: var(--colors-text-text-tertiary);
-  font-size: 15px;
-  line-height: 1;
+  font-size: 13px;
+  line-height: 20px;
 }
 </style>
 
 <style lang="scss" scoped>
 .video {
-  background: linear-gradient(90deg, var(--pattern-tutorial-video-bg-start) 0%, var(--pattern-tutorial-video-bg-end) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--pattern-tutorial-video-bg-start) 0%,
+    var(--pattern-tutorial-video-bg-end) 100%
+  );
 
   &-icon {
     background: var(--pattern-tutorial-video-bg-play);

@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import BaseDialog from './base-dialog.vue';
 import WindowList from '../synchronizer/window-list.vue';
-import { $t } from '/@/locales';
+;
 
 const mainControlWindowDirId = ref()
 

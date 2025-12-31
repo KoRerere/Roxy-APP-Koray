@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { $t } from '/@/locales';
-import { API } from '/@/api';
-import { useWorkspaceStore } from '/@/stores/workspace';
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import { enhanceCountdown, validateEmail } from '/@/utils';
-import { ProxyCheckStatus } from '/@/enums/proxy';
+import { API } from '/@/api'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { enhanceCountdown, validateEmail, validatePhone } from '/@/utils'
+import { ProxyCheckStatus } from '/@/enums/proxy'
+
+defineOptions({ inheritAttrs: false })
 
 const { ids: windowIds, datas } = defineProps<{
   ids: number[]
@@ -15,13 +16,15 @@ const { ids: windowIds, datas } = defineProps<{
 
 const emit = defineEmits(['confirm', 'resize'])
 
-defineOptions({ inheritAttrs: false })
-
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [_, onlyErrorToast] = useResponseToast()
 
 const expireDays = ref(0)
 const targetEmail = ref()
+const step2 = ref(false)
+const emailCode = ref()
+const countdown = ref()
+const stopCountdown = ref()
 
 const optionsGroup = [
   {
@@ -34,18 +37,18 @@ const optionsGroup = [
       },
       {
         label: $t('窗口备注'),
-        value: 'notes'
+        value: 'notes',
       },
       {
         label: $t('窗口代理'),
-        value: 'tradeProxy'
+        value: 'tradeProxy',
       },
       {
         label: $t('窗口平台账号'),
-        value: 'tradePlatform'
-      }
-    ]
-  }
+        value: 'tradePlatform',
+      },
+    ],
+  },
 ]
 const transferParam = ref<string[]>(['name', 'notes', 'tradeProxy', 'tradePlatform'])
 
@@ -61,25 +64,22 @@ onBeforeMount(() => {
   getPeriod()
 })
 
-async function getPeriod() {
-  const { code, data, msg } = await API.window.userGetAgentDeliveryDurationListList()
-  if (code !== 0) return onlyErrorToast(code, msg)
-  expireDays.value = data[0]!
-}
-
-//=================== step2 ============================
-const step2 = ref(false)
-const emailCode = ref()
-const countdown = ref()
-const stopCountdown = ref()
-
 onBeforeUnmount(() => {
   stopCountdown.value?.stop()
 })
 
+async function getPeriod() {
+  const { code, data, msg } = await API.window.userGetAgentDeliveryDurationListList()
+  if (code !== 0)
+    return onlyErrorToast(code, msg)
+  expireDays.value = data[0]!
+}
+
+// =================== step2 ============================
+
 async function checkTransferStatus() {
-  if (!validateEmail(targetEmail.value)) {
-    return onlyErrorToast(-1, $t('请输入正确的邮箱地址'))
+  if (!validateEmail(targetEmail.value) && !validatePhone(targetEmail.value)) {
+    return onlyErrorToast(-1, $t('请输入正确的邮箱地址/手机号'))
   }
 
   // 只要存在检测失败的代理 IP 就不准投送
@@ -108,7 +108,8 @@ async function checkTransferStatus() {
 
   const { code, data, msg } = await API.window.userGetAgentTransferWindowStatusList()
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
 
   if (data === true) {
     await onTransfer()
@@ -120,7 +121,8 @@ async function checkTransferStatus() {
 
 async function sendCode() {
   const { code, msg } = await API.window.userTransferWindowVerifyCodeList({ targetEmail: targetEmail.value })
-  if (code !== 0) return onlyErrorToast(code, msg)
+  if (code !== 0)
+    return onlyErrorToast(code, msg)
   nextStep(true)
   stopCountdown.value = enhanceCountdown(Date.now() + 1000 * 60, (time) => {
     countdown.value = time
@@ -138,9 +140,10 @@ async function onTransfer() {
     targetEmail: targetEmail.value,
     emailCode: emailCode.value,
     transferParam: transferParam.value,
-    expireDays: expireDays.value
+    expireDays: expireDays.value,
   })
-  if (code !== 0) return onlyErrorToast(code, msg)
+  if (code !== 0)
+    return onlyErrorToast(code, msg)
   emit('confirm', { isSelf: false, needRefresh: true })
 }
 </script>
@@ -149,7 +152,7 @@ async function onTransfer() {
   <div v-if="!step2" class="w-108 flex flex-col gap-6">
     <RxAlert v-if="!isReady" class="w-full" type="error" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('投送的窗口必须包含 {bold1} 或 {bold2}', { bold1: '{bold1}', bold2: '{bold2}', })">
+        <i18n-t scope="global" :keypath="$t('投送的窗口必须包含 {bold1} 或 {bold2}', { bold1: '{bold1}', bold2: '{bold2}' })">
           <template #bold1>
             <span class="font-bold"> {{ $t('代理 IP') }} </span>
           </template>
@@ -161,13 +164,17 @@ async function onTransfer() {
     </RxAlert>
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
-        <div class="title">{{ $t('投送至') }}</div>
-        <TsFormInputText v-model="targetEmail" size="lg" pre-icon="base/rx_ic_mail" :placeholder="$t('请输入邮箱')"></TsFormInputText>
+        <div class="title">
+          {{ $t('投送至') }}
+        </div>
+        <TsFormInputText v-model="targetEmail" size="lg" pre-icon="base/rx_ic_mail" :placeholder="$t('请输入邮箱/手机号')" />
       </div>
-      <div class="flex flex-col gap-3" v-for="group of optionsGroup" :key="group.title">
-        <div class="title">{{ group.title }}</div>
+      <div v-for="group of optionsGroup" :key="group.title" class="flex flex-col gap-3">
+        <div class="title">
+          {{ group.title }}
+        </div>
         <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-2 select-none " v-for="option of group.options" :key="option.value">
+          <div v-for="option of group.options" :key="option.value" class="flex items-center gap-2 select-none ">
             <RxCheckbox v-model="transferParam" size="small" name="trsparam" :disabled="option.disabled" :input-id="option.value" :value="option.value" />
             <label :for="option.value" class="description">{{ option.label }}</label>
           </div>
@@ -177,9 +184,11 @@ async function onTransfer() {
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-1.5 title">
           <span>{{ $t('临时窗口有效期') }}</span>
-          <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" v-tooltip.top="$t('临时窗口过期之前均可以正常使用，过期后如用量不足则无法打开，但窗口信息（账号、代理等）均能正常导出。')"></SvgIcon>
+          <SvgIcon v-tooltip.top="$t('临时窗口过期之前均可以正常使用，过期后如用量不足则无法打开，但窗口信息（账号、代理等）均能正常导出。')" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" />
         </div>
-        <div class="time">{{ $t('{day} 天', { day: expireDays }) }}</div>
+        <div class="time">
+          {{ $t('{day} 天', { day: expireDays }) }}
+        </div>
       </div>
     </div>
     <div class="flex flex-col gap-3">
@@ -187,7 +196,9 @@ async function onTransfer() {
         <span>{{ $t('下一步') }}</span>
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>
-      <div class="help">{{ $t('* 完成窗口投送后，窗口将被移至回收站。') }}</div>
+      <div class="help">
+        {{ $t('* 完成窗口投送后，窗口将被移至回收站。') }}
+      </div>
     </div>
   </div>
   <div v-if="step2" class="w-84 flex flex-col gap-6">
@@ -208,20 +219,21 @@ async function onTransfer() {
     </RxAlert>
     <div class="flex flex-col gap-4">
       <div class="self-stretch description">
-        <div>{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
-        <div>{{ currentWorkspace?.email }} </div>
-        <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
-        <div class="mt-3">{{ $t('请检查邮件以获取验证码') }}</div>
+        <div>{{ $t('验证码已发送至您的验证方式：') }}</div>
+        <div>{{ currentWorkspace?.phone || currentWorkspace?.email }} </div>
+        <div>{{ $t("请在 5 分钟内完成验证。") }}</div>
       </div>
-      <InputOtp class="inputotp" v-model="emailCode" integer-only :length="6" size="large" />
+      <InputOtp v-model="emailCode" class="inputotp" integer-only :length="6" size="large" />
     </div>
     <div class="flex flex-col gap-3">
-      <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer"></RxButton>
+      <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer" />
       <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="checkTransferStatus">
         <span>{{ $t('重新发送') }}</span>
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>
-      <div class="cursor-pointer back" @click="nextStep(false)">{{ $t('返回') }}</div>
+      <div class="cursor-pointer back" @click="nextStep(false)">
+        {{ $t('返回') }}
+      </div>
     </div>
   </div>
 </template>
@@ -238,7 +250,7 @@ async function onTransfer() {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import TsForm from '/@/views/lab/components/form/index.vue'
 
 interface Props {

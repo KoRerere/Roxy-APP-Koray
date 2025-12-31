@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import currency from 'currency.js'
 import { format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { AutoRenewalStatus } from '/@/enums/pay'
 import { useUserStore } from '/@/stores/user'
 import { API } from '/@/api'

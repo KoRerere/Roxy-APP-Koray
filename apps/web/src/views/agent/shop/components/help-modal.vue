@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
-import { API } from '/@/api';
-import { ProxyReplaceStatus, ProxyReplaceType } from '/@/enums/proxy';
+import { API } from '/@/api'
+import { ProxyReplaceStatus, ProxyReplaceType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyItem } from '../operation'
-import type { SvgNames } from '/@/components/rx-icon';
 
-const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'replace'): void
-}>()
+import type { SvgNames } from '/@/components/rx-icon'
 
 const { data, info } = defineProps<{
   data: ProxyItem
   info: Record<string, any>
+}>()
+
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'replace'): void
 }>()
 
 const [_, onlyErrorToast] = useResponseToast()
@@ -29,7 +29,7 @@ const helps = computed(() => [
     },
   },
   {
-    separator: true
+    separator: true,
   },
   {
     icon: 'base/rx_ic_refund',
@@ -38,7 +38,7 @@ const helps = computed(() => [
       amount: info.proxyAmount,
       days: info.totalDays,
       surplus: info.remainingDays,
-      refund: info.actualAmount
+      refund: info.actualAmount,
     }),
     description: $t('退款至 Roxy 钱包，预计在 {hours} 小时内处理完成。', { hours: info.refundHours }),
     class: 'help-item',
@@ -68,14 +68,14 @@ const helps = computed(() => [
 async function replaceProxy(replaceType: ProxyReplaceType) {
   const { code, msg } = await API.proxy.userProxyRefundOrReplaceCreate({
     proxyBuyId: data.id!,
-    replaceType
+    replaceType,
   })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   emit('replace')
   emit('close')
 }
-
 </script>
 
 <template>
@@ -97,7 +97,9 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
               <span>{{ help.title }}</span>
               <SvgIcon v-if="help.tooltip" v-tooltip="help.tooltip" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
             </div>
-            <div class="mt-1 pl-6 help-desc">{{ help.description }}</div>
+            <div class="mt-1 pl-6 help-desc">
+              {{ help.description }}
+            </div>
           </div>
           <RxButton v-bind="help.buttonProps" />
         </div>

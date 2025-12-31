@@ -7,7 +7,7 @@ import { useDialog } from 'primevue/usedialog'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 import { ISO639List } from '/@/constants/iso-639'
-import { $t } from '/@/locales'
+
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { copyText, showPageLoading } from '/@/utils'

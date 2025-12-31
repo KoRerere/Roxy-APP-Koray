@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'

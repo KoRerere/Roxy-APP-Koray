@@ -6,7 +6,7 @@ import { chmod, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
-import { isMac, isProd, isWindows } from '/@/constants/common'
+import { currentArch, currentOS, defaultBrowserExeName, isMac, isProd } from '/@/constants/common'
 import { fileOperations } from '/@/modules/fileOperations'
 import { fileExists } from '/@/utils'
 
@@ -16,9 +16,6 @@ interface VersionInfo {
   /** 发布时间 */
   releaseTime: string
 }
-
-const os = isWindows ? 'Windows' : 'macOS'
-
 export const resourceUpdater = new class ResourceUpdater {
   timer: NodeJS.Timeout | null = null
   /** web 资源包下载地址 */
@@ -28,18 +25,22 @@ export const resourceUpdater = new class ResourceUpdater {
   /** 远程 web 资源版本信息 */
   remoteVersionInfo: VersionInfo | null = null
 
-  resourceFileName = isMac ? 'roxybrowser.app.zip' : 'roxybrowser.exe'
+  resourceFileName = {
+    macos: `${defaultBrowserExeName}.app.zip`,
+    windows: `${defaultBrowserExeName}.exe`,
+    linux: `${defaultBrowserExeName}.AppImage`,
+  }[currentOS]
 
   localResourcePath = join(appConfig.defaultBrowserBinDir, this.resourceFileName)
 
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
-    return `${this.webDomain}/public/static/browser-launcher/${os}/version.json`
+    return `${this.webDomain}/public/static/browser-launcher/${currentOS}/${currentArch}/version.json`
   }
 
   /** web 资源包下载地址 */
   get downloadUrl() {
-    return `${this.webDomain}/public/static/browser-launcher/${os}/${this.resourceFileName}`
+    return `${this.webDomain}/public/static/browser-launcher/${currentOS}/${currentArch}/${this.resourceFileName}`
   }
 
   constructor() {
@@ -60,7 +61,7 @@ export const resourceUpdater = new class ResourceUpdater {
   }
 
   async checkForUpdates() {
-    if (this.isInProgress || isProd) {
+    if (this.isInProgress) {
       return
     }
 
@@ -97,7 +98,7 @@ export const resourceUpdater = new class ResourceUpdater {
             console.log(`[ResourceUpdater] Download progress: ${percentage}%`)
           },
         })
-        await fileExists(dirname(appConfig.defaultBrowserBinPath), true)
+        await fileExists(appConfig.defaultBrowserBinDir, true)
 
         const writer = createWriteStream(this.localResourcePath)
         const { promise, resolve, reject } = Promise.withResolvers<void>()
@@ -132,8 +133,8 @@ export const resourceUpdater = new class ResourceUpdater {
   /** 解压 mac 资源包 */
   async extractMac() {
     console.log('[ResourceUpdater] extract start')
-    const appPath = join(appConfig.defaultBrowserBinDir, 'roxybrowser.app')
-    const macosBinPath = join(appPath, 'Contents/MacOS/roxybrowser')
+    const appPath = join(appConfig.defaultBrowserBinDir, `${defaultBrowserExeName}.app`)
+    const macosBinPath = join(appPath, `Contents/MacOS/${defaultBrowserExeName}`)
 
     // 先清理旧的 app，避免覆盖时残留导致异常
     await rm(appPath, { recursive: true, force: true }).catch(() => {})
@@ -170,5 +171,6 @@ export const resourceUpdater = new class ResourceUpdater {
     spawnSync('xattr', ['-dr', 'com.apple.quarantine', appPath], { stdio: 'pipe' })
 
     console.log('[ResourceUpdater] extract done:', appPath)
+    rm(this.localResourcePath).catch(() => {})
   }
 }()

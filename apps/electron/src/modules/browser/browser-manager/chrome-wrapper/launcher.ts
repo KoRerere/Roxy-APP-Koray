@@ -1,10 +1,10 @@
-import CDP from 'chrome-remote-interface'
 import type { Client } from 'chrome-remote-interface'
+import CDP from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
-import { ChromeBrowser } from './browser'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getErrorMessage } from '/@/utils'
+import { ChromeBrowser } from './browser'
 
 /**
  * 启动选项接口
@@ -14,7 +14,7 @@ export interface PuppeteerLaunchOptions {
   args?: string[]
   headless?: boolean
   ignoreDefaultArgs?: boolean | string[]
-  defaultViewport?: { width: number; height: number } | null
+  defaultViewport?: { width: number, height: number } | null
 }
 
 /**
@@ -26,7 +26,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     args = [],
     headless = false,
     ignoreDefaultArgs = false,
-    defaultViewport = null
+    defaultViewport = null,
   } = options
 
   if (!executablePath) {
@@ -36,7 +36,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
   if (relaunch) {
     spawn(executablePath, args, {
       detached: false,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
     return
   }
@@ -45,8 +45,9 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
   let port = 0
   const portArg = args.find(arg => arg.startsWith('--remote-debugging-port='))
   if (portArg) {
-    port = parseInt(portArg.split('=')[1])
-  } else {
+    port = Number.parseInt(portArg.split('=')[1])
+  }
+  else {
     // 使用随机端口
     port = 0
     args.push('--remote-debugging-port=0')
@@ -58,7 +59,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
   // 启动 Chrome 进程
   const chromeProcess = spawn(executablePath, args, {
     detached: false,
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['ignore', 'pipe', 'pipe'],
   })
 
   // 等待获取调试端口
@@ -89,7 +90,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志
       // console.log('[chrome stdout]', data.toString());
-    });
+    })
 
     chromeProcess.stderr.on('data', (data: Buffer) => {
       const output = data.toString()
@@ -99,7 +100,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
         clearTimeout(timeout)
         clearTimeout(readDevToolsActivePortTimer)
         console.debug('chromeProcess match', match[1])
-        resolve(parseInt(match[1]))
+        resolve(Number.parseInt(match[1]))
       }
     })
 
@@ -121,7 +122,8 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     // 启用必要的域
     await client.Target.setDiscoverTargets({ discover: true })
     return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('connect error', error)
     chromeProcess.kill()
     if (getErrorMessage(error).startsWith('connect ')) {
@@ -129,7 +131,6 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     }
     throw error
   }
-
 }
 
 /**
@@ -140,7 +141,7 @@ export async function connect(options: { browserWSEndpoint: string }): Promise<C
 
   // 从 WebSocket URL 提取端口
   const url = new URL(browserWSEndpoint)
-  const port = parseInt(url.port)
+  const port = Number.parseInt(url.port)
 
   // 连接到 Chrome
   const client = await CDP({ port }) as Client

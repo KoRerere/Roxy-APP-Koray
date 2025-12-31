@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { I18nT } from 'vue-i18n'
 import { addDays, format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useCampaignStore } from '/@/stores/campaign'

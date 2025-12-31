@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { $t } from '/@/locales'
+
 
 const modelValue = defineModel<{ email: string, code: string }>({
   default: () => ({ email: '', emailError: false, code: '', codeError: false }),

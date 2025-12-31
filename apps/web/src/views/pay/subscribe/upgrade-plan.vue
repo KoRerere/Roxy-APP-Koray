@@ -10,7 +10,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import currency from 'currency.js'
 import { differenceInDays, format } from 'date-fns'
 import { debounce } from 'es-toolkit'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
@@ -27,7 +27,7 @@ const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccess } = usePay()
-const { getUserPayInfo } = useUserStore()
+const { getUserPayInfo, mixpanelTrack } = useUserStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentActivity } = storeToRefs(useCampaignStore())
 
@@ -190,6 +190,7 @@ watch(() => selectedCount.value, () => {
 
 onBeforeMount(() => {
   getTierPricingList()
+  mixpanelTrack('click_enter_change_plan')
 })
 
 async function getTierPricingList() {
@@ -246,6 +247,7 @@ async function onSubscribe() {
  * 普通套餐升级
  */
 async function planUpgrade() {
+  mixpanelTrack('click_confirm_change_plan')
   showModal({
     showHeader: false,
     modal: true,
@@ -257,6 +259,7 @@ async function planUpgrade() {
         discountAmount: discountAmount.value,
         onClose: hideModal,
         onConfirm: async ({ payType }) => {
+          mixpanelTrack('click_pay_change_plan')
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             payType,
             purchaseMember: { profile: selectedCount.value },

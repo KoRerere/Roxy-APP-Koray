@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { UnwrapRowType, UserGetInviteUserListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'

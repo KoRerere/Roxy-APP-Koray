@@ -9,16 +9,17 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { concurrentControl, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
-import { getCustomFilters, type ProxyItem, tableOperation, tableRequest, getAdvancedSearch } from './operation'
+import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
+import type { ProxyItem } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
-import { ProxyCheckStatus } from '/@/enums'
+import type { ProxyCheckStatus } from '/@/enums'
 
 const router = useRouter()
 const role = useRoleStore()
@@ -26,6 +27,7 @@ const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
@@ -85,9 +87,9 @@ function editProxy(data: ProxyItem) {
           onlyErrorToast(code, msg)
           tableRef.value?.refresh()
           drawerInstance.hideDrawer()
-        }
-      })
-    }
+        },
+      }),
+    },
   })
 }
 
@@ -125,7 +127,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
       const checkResult = await checkProxy(toRaw(item))
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
-      testStatus.value[item.id] = checkResult.checkStatus;
+      testStatus.value[item.id] = checkResult.checkStatus
       return { ...checkResult, id: item.id }
     }
   })
@@ -144,7 +146,8 @@ async function testAllProxy() {
 }
 
 function onRemark(data: any) {
-  if (role.isViewer || role.isEditor) return
+  if (role.isViewer || role.isEditor)
+    return
 
   showSimpleDialog({
     title: $t('为所选代理添加备注'),
@@ -156,7 +159,7 @@ function onRemark(data: any) {
         props: {
           placeholder: $t('请输入备注'),
           rows: 6,
-        }
+        },
       },
     ],
     onConfirm: async (formData: any) => {
@@ -183,6 +186,7 @@ async function onEdit(data: any) {
 }
 
 function createProxy() {
+  mixpanelTrack('proxy_create_click')
   router.push({ name: 'agent-create' })
 }
 
@@ -221,7 +225,7 @@ function tableBeforeRefresh() {
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
     ...tabParams,
-    ...filterFieldByValue(getFormData(filtersMenu.value))
+    ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   tableRef.value?.refresh(params, force)
 }
@@ -231,11 +235,12 @@ function onRefreshTable(tabParams = {}, force = false) {
   <div class="flex flex-col w-full h-full">
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="listtable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
-        :operation-handler="operationHandler" :beforeRefresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false">
+      <RyTable ref="listtable" v-model:columns="columns" cache-key="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
+               :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false"
+      >
         <template #filter-after>
           <div class="w-full flex gap-1.5 items-start">
-            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
             <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             <div class="flex items-center gap-1.5">
               <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
@@ -261,15 +266,19 @@ function onRefreshTable(tabParams = {}, force = false) {
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
             <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+                       :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)"
+            />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
-              :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{
-              data.remark }}</div>
+                      :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            />
+            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">
+              {{
+                data.remark }}
+            </div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -285,7 +294,7 @@ function onRefreshTable(tabParams = {}, force = false) {
 <style lang="scss" scoped>
 .note {
   &-header {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-size: 12px;
     line-height: 16px;
     font-weight: 600;
@@ -304,7 +313,7 @@ function onRefreshTable(tabParams = {}, force = false) {
 
   &-light {
     :deep(svg) {
-      color: var(--colors-text-text-brand, #11A3FD) !important;
+      color: var(--colors-text-text-brand, #11a3fd) !important;
     }
   }
 }

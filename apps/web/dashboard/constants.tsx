@@ -1,5 +1,5 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
-import { $t } from '/@/locales'
+
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 

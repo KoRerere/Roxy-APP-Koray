@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api';
 import { useResponseToast } from '/@/hooks/useResponseToast';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 
 const { onOk } = defineProps<{

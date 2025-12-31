@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import currency from 'currency.js'
 import { format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'

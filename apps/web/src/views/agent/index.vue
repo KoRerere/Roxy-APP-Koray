@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AgentList from '/@/views/agent/list/index.vue'
 import AgentShop from '/@/views/agent/shop/index.vue'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import type { SvgNames } from '/@/components/rx-icon'
 

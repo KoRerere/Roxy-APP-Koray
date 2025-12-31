@@ -5,7 +5,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { Form } from '@primevue/forms'
 import type { FormInstance } from '@primevue/forms'
 import { z } from 'zod'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'

@@ -1,10 +1,12 @@
 <script setup lang="tsx">
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import BatchInviteModal from '/@/views/projects/components/batch-invite-modal.vue'
 import MemberInfo from '/@/views/team/components/member-info.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
+import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
@@ -12,6 +14,7 @@ import { useUserStore } from '/@/stores/user'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useTeam } from '/@/views/team/hooks'
 import { useDialog } from '/@/hooks/useDialog'
 import useColumns from '/@/hooks/useColumns'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
@@ -26,10 +29,11 @@ const role = useRoleStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const [_, onlyErrorToast] = useResponseToast()
+const { getTeamMembers } = useTeam()
 
 const tableRef = useTemplateRef('team')
 
-type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
+type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData> & { _oldNickname: string }
 
 const { columns } = useColumns({
   key: 'team.list',
@@ -38,6 +42,15 @@ const { columns } = useColumns({
       title: $t('成员信息'),
       key: 'member',
       slot: 'member',
+      style: {
+        width: '10%',
+        minWidth: '240px',
+      },
+    },
+    {
+      title: $t('成员备注'),
+      key: 'nickname',
+      slot: 'nickname',
     },
     {
       title: $t('成员状态'),
@@ -82,7 +95,7 @@ const filters = reactive({
     },
   ],
   onChange() {
-    tableRef.value?.refresh({ role: filters.value })
+    onRefreshTable()
   },
   resetFilters() {
     filters.value = undefined
@@ -95,7 +108,7 @@ const allProjects = ref()
 const currentRole = computed(() => workspaceStore.currentWorkspace?.role ?? -1)
 
 async function tableRequest(params: any) {
-  const data = await API.team.userGetMemberInfoByWorkspaceList(params)
+  const data = await getTeamMembers(params)
   members.value = data.data.rows.filter((item: any) => item.role !== Role.OWNER)
   return data
 }
@@ -172,7 +185,12 @@ async function deleteMember(data: TableRow) {
     },
     accept: async () => {
       const projectIds = data.project_info.map(item => item.project_id)
-      const { code, msg } = await API.team.userDelTeamInfoCreate({ userId: data.userId!, role: data.role, projectIds })
+      const { code, msg } = await API.team.userDelTeamInfoCreate({
+        email: data.email || data.phone,
+        userId: data.userId!,
+        role: data.role,
+        projectIds,
+      })
       onlyErrorToast(code, msg)
       if (code !== 0)
         return
@@ -210,7 +228,7 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     },
     slots: {
       container: ({ hideModal }) => (
-        <InviteUserModal
+        <BatchInviteModal
           v-model:currentMembers={members.value}
           projects={projects}
           projectValues={projectValues}
@@ -227,6 +245,35 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     },
   })
 }
+
+async function saveNickname(data: TableRow, close: () => void) {
+  const { email, phone, userId, nickname, _oldNickname } = data
+  if (!nickname?.trim() && !_oldNickname?.trim()) {
+    data.nickname = ''
+    data._oldNickname = ''
+    close()
+    return
+  }
+  const { code, msg } = await API.team.userAddTeamNicknameCreate({
+    nickname,
+    emailOrPhone: email || phone,
+    targetUserId: userId,
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0) {
+    data.nickname = _oldNickname
+  }
+  close()
+}
+
+function onAdvancedSearch(search?: Record<string, any>) {
+  const { key, value } = search || {}
+  onRefreshTable({ queryKey: value && (key || 'name'), queryValue: value })
+}
+
+function onRefreshTable(params = {}) {
+  tableRef.value?.refresh({ role: filters.value, ...params })
+}
 </script>
 
 <template>
@@ -237,7 +284,8 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
     </template>
     <template #filter-after>
-      <div class="flex items-center justify-between w-full">
+      <div class="flex items-center w-full gap-3">
+        <AdvancedSearch :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
@@ -254,7 +302,21 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
       </CustomNewEmpty>
     </template>
     <template #member="{ data }">
-      <MemberInfo :avatar="data.avatar" :user-name="data.userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
+      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
+    </template>
+    <template #nickname="{ data }">
+      <Inplace v-focustrap :pt="{ display: '!border-none !pa-0' }">
+        <template #display>
+          <div class="w-50 rounded-1 text-ellipsis overflow-hidden nickname">
+            {{ data.nickname }}
+          </div>
+        </template>
+        <template #content="{ closeCallback }">
+          <TsFormInputText v-model="data.nickname" class="!w-50" autofocus size="xxs" @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
+                           @keydown.enter="saveNickname(data, closeCallback)"
+          />
+        </template>
+      </Inplace>
     </template>
     <template #related="{ data }">
       <RelatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
@@ -274,6 +336,19 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
     font-size: 12px;
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+
+.nickname {
+  min-height: 25px;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 4px;
+  border: 1px solid transparent;
+
+  &:hover {
+    border: 1px solid var(--pattern-profiles-input-border);
+    background: var(--pattern-profiles-input-bg);
   }
 }
 </style>

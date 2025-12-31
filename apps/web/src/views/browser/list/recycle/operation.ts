@@ -1,4 +1,4 @@
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 
 const { isViewer } = storeToRefs(useRoleStore())

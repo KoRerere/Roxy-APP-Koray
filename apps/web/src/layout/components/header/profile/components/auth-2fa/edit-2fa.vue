@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import QRCode2FA from './qrcode-2fa.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useAuth2FA } from './useAuth2FA'

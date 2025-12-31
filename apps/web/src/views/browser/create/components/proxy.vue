@@ -4,7 +4,7 @@ import ProxyQuick from '/@/views/agent/quick.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { $t } from '/@/locales'
+
 import { deepClone, isEmptyValue, strConcat } from '/@/utils'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'

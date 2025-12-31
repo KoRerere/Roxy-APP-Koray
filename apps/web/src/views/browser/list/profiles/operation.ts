@@ -1,12 +1,14 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
+import { useTeam } from '/@/views/team/hooks'
 import { getColumns } from './columns'
-import { getDictMap, isDev, setInputValueByFormData, transformSortOrder } from '/@/utils'
+import { getDictMap, setInputValueByFormData, transformSortOrder } from '/@/utils'
 import type { SortOrderNumber } from '/@/utils'
 
 const role = useRoleStore()
+const { getTeamMembers } = useTeam()
 
 export function tableFilters(_params: any = {}) {
   return [
@@ -110,7 +112,7 @@ export async function getCustomFilters(params: any = {}) {
       getOptions: async () => {
         const [{ data: labelList }, { data: memberList }] = await Promise.all([
           await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
-          await API.team.userGetMemberInfoByWorkspaceList({}),
+          await getTeamMembers(),
         ])
 
         const menbers = (memberList.rows || []).map((item: any) => ({
@@ -285,12 +287,6 @@ export function getOperation(row: any = {}) {
       },
     },
     {
-      name: 'setAsDefaultBrowser',
-      label: '设为默认浏览器(test)',
-      icon: 'base/rx_ic_chrome',
-      power: !role.isViewer && isDev,
-    },
-    {
       name: 'close',
       label: $t('关闭窗口'),
       icon: 'base/rx_ic_shut_down',
@@ -300,6 +296,20 @@ export function getOperation(row: any = {}) {
         name: 'G2',
         showLabel: true,
       },
+    },
+    {
+      separator: true,
+      multiple: true,
+    },
+    {
+      name: 'setAsDefaultBrowser',
+      label: $t('设为默认浏览器'),
+      icon: 'base/rx_ic_loptop_check',
+    },
+    {
+      name: 'createDesktopShortcut',
+      label: $t('创建桌面快捷方式'),
+      icon: 'base/rx_ic_show_profile_2',
     },
     {
       separator: true,

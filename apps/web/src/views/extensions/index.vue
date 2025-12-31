@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
-import { $t } from '/@/locales'
+
 import Hub from './hub/index.vue'
 import Install from './install/index.vue'
 

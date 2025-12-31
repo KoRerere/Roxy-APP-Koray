@@ -37,6 +37,7 @@
     "dashboard/**/*",
     "synchronizer/**/*",
     "launch/**/*",
+    "default-browser/**/*",
     "figma-icons/**/*",
     "types/*.d.ts",
     "./*.d.ts",

@@ -1,16 +1,15 @@
-import { app, } from 'electron'
-import { osConfig, } from '/@/constants'
-import { userInfo } from 'node:os'
-import { URL } from "node:url";
-import { createHash, randomUUID } from 'node:crypto'
-import { UserGetLoginInfoListData } from '@roxy/backend-api'
-import { detectNetwork } from '/@/utils'
+import type { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
+import { app } from 'electron'
+import { createHash, randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { userInfo } from 'node:os'
+import { URL } from 'node:url'
+import { osConfig } from '/@/constants'
+import { isLinux, isMac } from '/@/constants/common'
 import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
-import { readFile } from 'node:fs/promises'
-import { isLinux, isMac } from '/@/constants/common'
-import { execSync } from 'node:child_process'
+import { detectNetwork } from '/@/utils'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -18,7 +17,6 @@ const webReadyPromise = Promise.withResolvers<true>()
 export const isWebReady = () => webReadyPromise.promise
 /** 前端已经准备就绪 */
 export const setWebReady = () => webReadyPromise.resolve(true)
-
 
 export function safeStringify(obj) {
   const seen = new WeakSet()
@@ -36,7 +34,8 @@ export function safeStringify(obj) {
 export function safeParseJSON(str: string, fallback?: () => any) {
   try {
     return JSON.parse(str)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('safeParseJSON', error)
     return fallback?.() ?? null
   }
@@ -45,39 +44,40 @@ export function safeParseJSON(str: string, fallback?: () => any) {
 export function safeGetURL(url: string) {
   try {
     return new URL(url)
-  } catch (error) {
+  }
+  catch (error) {
     return null
   }
 }
 
 /** 2fa 剩余有效时间 */
-export const calculateRemainingTime = (timeStep = 30) => {
-  const currentTime = Math.floor(Date.now() / 1000);
-  const remainingTime = timeStep - (currentTime % timeStep);
-  return remainingTime;
-};
+export function calculateRemainingTime(timeStep = 30) {
+  const currentTime = Math.floor(Date.now() / 1000)
+  const remainingTime = timeStep - (currentTime % timeStep)
+  return remainingTime
+}
 
 export type CommonRequestHeaders = ReturnType<typeof getCommonRequestHeaders>
 export function getCommonRequestHeaders() {
   return {
-    source: 'app',
-    appVersion: app.getVersion(),
-    osVersion: osConfig.osVersion,
-    ['R-OS']: isMac ? 'mac' : (isLinux ? 'linux' : 'win'),
-    ['R-OSBIT']: isMac ? osConfig.cpu : osConfig.osBit,
+    'source': 'app',
+    'appVersion': app.getVersion(),
+    'osVersion': osConfig.osVersion,
+    'R-OS': isMac ? 'mac' : (isLinux ? 'linux' : 'win'),
+    'R-OSBIT': isMac ? osConfig.cpu : osConfig.osBit,
     // ['R-DEVICE-ID']: await getDeviceId(),
-    ['R-DEVICE-NAME']: encodeURIComponent(getSystemUserName()),
-    ['R-Local-Timezone-Offset']: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ['R-Local-System-Language']: app.getLocale(),
+    'R-DEVICE-NAME': encodeURIComponent(getSystemUserName()),
+    'R-Local-Timezone-Offset': Intl.DateTimeFormat().resolvedOptions().timeZone,
+    'R-Local-System-Language': app.getLocale(),
   }
 }
 
 /** 生成设备 ID */
-const genDeviceId = async () => {
+async function genDeviceId() {
   const deviceInfo = await fileOperations.executeTask('getDeviceInfo', undefined)
   store.mac ||= deviceInfo.macs[0]
   const uniqueString = `${deviceInfo.os}-${deviceInfo.hardware}-${store.mac}-${deviceInfo.serialNum}`
-  const deviceId = createHash("sha256").update(uniqueString).digest("hex");
+  const deviceId = createHash('sha256').update(uniqueString).digest('hex')
   return deviceId
 }
 
@@ -96,13 +96,14 @@ export const getDeviceId = (() => {
         resolve(store.deviceId)
       }, 1000 * 15)
 
-      console.time('获取设备 ID 耗时')
+      console.time('Time taken to obtain device ID')
       store.deviceId ||= await genDeviceId()
       resolve(store.deviceId)
-      console.timeEnd('获取设备 ID 耗时')
-      console.debug("Unique device ID:", store.deviceId)
+      console.timeEnd('Time taken to obtain device ID')
+      console.debug('Unique device ID:', store.deviceId)
       clearTimeout(timer)
-    } else {
+    }
+    else {
       console.debug('Device ID already exists', store.deviceId)
       if (!store.mac) {
         store.deviceId = await genDeviceId()
@@ -114,7 +115,7 @@ export const getDeviceId = (() => {
     if (store.deviceId) {
       return store.deviceId
     }
-    return promise;
+    return promise
   }
 })()
 
@@ -138,63 +139,68 @@ export async function getDeviceInfo(): Promise<UserGetLoginInfoListData['data'][
   }
 }
 
-
 /** 计算文件的 sha512 哈希值 */
 export async function calculateFileHash(filePath: string) {
-  const fileBuffer = await readFile(filePath);
-  const hashSum = await createHash('sha512');
-  hashSum.update(fileBuffer);
+  const fileBuffer = await readFile(filePath)
+  const hashSum = await createHash('sha512')
+  hashSum.update(fileBuffer)
 
-  return hashSum.digest('hex');
+  return hashSum.digest('hex')
 }
 
 export function getUTCOffsetHours() {
-  const offsetMinutes = -new Date().getTimezoneOffset(); // 负号，转换为正偏移
-  return offsetMinutes / 60;
+  /**
+   * 负号，转换为正偏移
+   */
+  const offsetMinutes = -new Date().getTimezoneOffset()
+  return offsetMinutes / 60
 }
 
 /** 异步的 debounce */
 export function asyncDebounce<T extends (...args: any[]) => Promise<any>>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => Promise<ReturnType<T>> {
-  let timer: NodeJS.Timeout | null = null;
+  let timer: NodeJS.Timeout | null = null
   let pendingResolvers: Array<{
-    resolve: (value: ReturnType<T>) => void;
-    reject: (error: any) => void;
-    args: Parameters<T>;
-  }> = [];
+    resolve: (value: ReturnType<T>) => void
+    reject: (error: any) => void
+    args: Parameters<T>
+  }> = []
 
   return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     return new Promise<ReturnType<T>>((resolve, reject) => {
       // 添加到待处理列表
-      pendingResolvers.push({ resolve, reject, args });
+      pendingResolvers.push({ resolve, reject, args })
 
       // 清除之前的 timer
       if (timer) {
-        clearTimeout(timer);
+        clearTimeout(timer)
       }
 
       // 设置新的 timer，使用最后一次调用的参数
       timer = setTimeout(async () => {
-        const lastCall = pendingResolvers[pendingResolvers.length - 1];
-        const allResolvers = [...pendingResolvers];
-        pendingResolvers = []; // 清空列表
+        const lastCall = pendingResolvers[pendingResolvers.length - 1]
+        const allResolvers = [...pendingResolvers]
+        pendingResolvers = [] // 清空列表
 
         try {
-          const result = await fn(...lastCall.args);
+          const result = await fn(...lastCall.args)
           // 所有等待的调用者都收到相同结果（使用最后的参数）
-          allResolvers.forEach(({ resolve }) => resolve(result));
-        } catch (error) {
-          // 所有等待的调用者都收到相同错误
-          allResolvers.forEach(({ reject }) => reject(error));
+          allResolvers.forEach(({ resolve }) => resolve(result))
         }
-      }, delay);
-    });
-  };
+        catch (error) {
+          // 所有等待的调用者都收到相同错误
+          allResolvers.forEach(({ reject }) => reject(error))
+        }
+      }, delay)
+    })
+  }
 }
 
-// 获取系统用户名
-export const getSystemUserName = () => {
-  return userInfo().username;
+/**
+ * 获取系统用户名
+ */
+export function getSystemUserName() {
+  return userInfo().username
 }

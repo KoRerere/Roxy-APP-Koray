@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
 import { RxAlert } from '/@/components/rx-alert/'
 import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
@@ -7,7 +6,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 
 const props = defineProps<{
   isForceUpgrade: boolean
-  updateInfo: ResourceUpdateMessage
+  updateInfo?: ResourceUpdateMessage
 }>()
 
 let timer: NodeJS.Timeout
@@ -26,12 +25,12 @@ watchEffect(() => {
 
 /** 立即重启 */
 async function upgradeNow() {
-  if (props.updateInfo.type === 'app') {
+  if (props.updateInfo?.type === 'app') {
     await window.electronAPI.send('app:quitAndInstall', {
       type: 'app',
     })
   }
-  else if (props.updateInfo.type === 'web') {
+  else if (props.updateInfo?.type === 'web') {
     await window.electronAPI.send('app:quitAndInstall', toRaw(props.updateInfo))
   }
 }
@@ -65,11 +64,11 @@ function remindMeLater() {
         </div>
         <div class="detail-body">
           <template v-if="isActivityUpgrade">
-            <template v-for="item in updateInfo.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList" :key="item.uid">
+            <template v-for="item in updateInfo?.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList" :key="item.uid">
               <img :src="item.url" :alt="item.name" class="w-full object-cover rounded-lg">
             </template>
             <RxAlert class="whitespace-pre-wrap w-full" :title="$t('有新的可用更新')"
-                     :content="`${$t('RoxyBrowser 新优惠上线！升级客户端版本即可享折扣。')}\n\n${updateInfo.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn"
+                     :content="`${$t('RoxyBrowser 新优惠上线！升级客户端版本即可享折扣。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn"
                      :closable="false"
             />
           </template>
@@ -81,7 +80,7 @@ function remindMeLater() {
           </template>
         </div>
         <RxButton class="w-full capitalize" @click="upgradeNow">
-          {{ updateInfo.type === 'app' ? $t('立即重启') : $t('立即更新') }}
+          {{ updateInfo?.type === 'app' ? $t('立即重启') : $t('立即更新') }}
         </RxButton>
         <rx-divider />
         <RxButton class="w-full" outlined @click="remindMeLater">

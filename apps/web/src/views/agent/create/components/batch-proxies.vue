@@ -9,9 +9,9 @@ import { RxAlert } from '/@/components/rx-alert/'
 import { useConfirm } from 'primevue/useconfirm'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
-import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep, IPType, ParseMode } from '/@/utils'
+import { concurrentControl, getDictMap, IPType, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getColumns } from './columns'
 
@@ -58,15 +58,9 @@ const showMessage = ref(false)
 const filterCount = ref(0)
 
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
-const protocolOptions = ref<any[]>([])
+const protocolOptions = ref()
 const protocolValue = ref()
-const parserTypeOptions = [
-  { label: $t('主机:端口'), value: ParseMode.one },
-  { label: $t('主机:端口:用户名:密码'), value: ParseMode.two },
-  { label: $t('用户名:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.three },
-]
-const parserType = ref(ParseMode.one)
-const ipTypeOptions = ref<any[]>([])
+const ipTypeOptions = ref()
 const ipType = ref()
 const columns = ref(getColumns())
 
@@ -115,12 +109,12 @@ const missMessage = computed(() => {
 
 onBeforeMount(async () => {
   const [$dict_map, userConfig] = await Promise.all([getDictMap(), getUserConfig()])
-  ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
+  ipCheckerConfig.value = $dict_map.checkChannel!.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
   protocolOptions.value = $dict_map.protocol
-  protocolValue.value = $dict_map.protocol[0].value
+  protocolValue.value = $dict_map.protocol![0]!.value
   ipTypeOptions.value = $dict_map.ipType
-  ipType.value = $dict_map.ipType[0].value
+  ipType.value = $dict_map.ipType![0]!.value
 })
 
 function parseValue() {
@@ -133,13 +127,13 @@ function parseValue() {
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
-      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, parserType.value)
+      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
-      const protocol = __protocol || protocolValue.value;
+      const protocol = __protocol || protocolValue.value
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
-      const __ipType = host?.startsWith('[') ? IPType.IPV6 : ipType.value;
+      const __ipType = host?.startsWith('[') ? IPType.IPV6 : ipType.value
 
       return {
         checkChannel: ipCheckerConfig.value?.value,
@@ -154,7 +148,7 @@ function parseValue() {
         remark,
         _missField,
         _missIndex: _missField.length ? index + 1 : 0,
-        _id: index
+        _id: index,
       }
     })
 
@@ -218,10 +212,11 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
         if (checkResult.checkStatus === ProxyCheckStatus.failure && !item._secondCheck) {
           Reflect.set(item, '_secondCheck', true)
           secondCheckMap.set(index, _task)
-        } else {
+        }
+        else {
           Reflect.deleteProperty(item, '_secondCheck')
           Object.assign(item, checkResult)
-          testStatus.value[item._id] = checkResult.checkStatus;
+          testStatus.value[item._id] = checkResult.checkStatus
           setOperationLoading(item, operateName, false)
         }
         return checkResult
@@ -258,7 +253,7 @@ function clearProxy() {
     accept: () => {
       dataList.value = []
       showMessage.value = false
-    }
+    },
   })
 }
 
@@ -301,16 +296,17 @@ async function onSave() {
     return
   }
 
-  const { promise, resolve } = Promise.withResolvers<void>();
+  const { promise, resolve } = Promise.withResolvers<void>()
 
   const { success, miss } = list.reduce((data, item) => {
     if (item._missIndex) {
       data.miss.push(item)
-    } else {
+    }
+    else {
       data.success.push(item)
     }
     return data
-  }, { success: [], miss: [] } as Record<string, ProxyItem[]>)
+  }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
 
   confirm.require({
     header: $t('警告'),
@@ -342,9 +338,9 @@ async function onSave() {
         <div class="panel-title flex justify-between items-start xl:items-center flex-col xl:flex-row gap-1">
           <div>{{ $t('代理信息') }}</div>
           <div class="flex gap-1.5">
-            <TsFormSelect class="flex-1" v-model="ipType" :options="ipTypeOptions" option-value="value" size="xs" />
-            <TsFormSelect class="!w-30" v-model="protocolValue" :options="protocolOptions" option-value="value" size="xs" />
-            <TsFormSelect class="!w-50" v-model="parserType" :options="parserTypeOptions" option-value="value" size="xs" />
+            <TsFormSelect v-model="ipType" class="flex-1" :options="ipTypeOptions" option-value="value" size="xs" />
+            <TsFormSelect v-model="protocolValue" class="!w-30" :options="protocolOptions" option-value="value" size="xs" />
+            <!-- <TsFormSelect v-model="parserType" class="!w-50" :options="parserTypeOptions" option-value="value" size="xs" /> -->
           </div>
         </div>
         <div class="information min-w-423px">
@@ -352,7 +348,7 @@ async function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <TsFormSelect class="!w-32" v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+                <TsFormSelect v-model="ipCheckerConfig.value" class="!w-32" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center gap-1.5">
                 <RxCheckbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
@@ -370,7 +366,8 @@ async function onSave() {
           {{ $t('导入规则') }}
         </div>
         <div class="rules flex-1 min-w-335px">
-          <Example :ip-type="ipType" :parser-type="parserType" class="relative z-10" />
+          <!-- :parser-type="parserType" -->
+          <Example :ip-type="ipType" class="relative z-10" />
           <ShadowDotGrid class="z-9" />
         </div>
       </div>
@@ -388,13 +385,14 @@ async function onSave() {
       </div>
       <div class="parse-result-message">
         <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
-          @close="messageClose">
-        </RxAlert>
-        <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
+                 @close="messageClose"
+        />
+        <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]" />
       </div>
       <div class="flex-1 overflow-x-auto">
         <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false"
-          :show-actions="false">
+                 :show-actions="false"
+        >
           <template #table-empty>
             <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" class="min-h-258px" />
           </template>
@@ -464,8 +462,8 @@ async function onSave() {
       justify-content: space-between;
       align-items: center;
       align-self: stretch;
-      border-top: 0.5px solid var(--colors-border-border-overlay, #34393D);
-      background: var(--colors-background-bg-overlay, #2C2E30);
+      border-top: 0.5px solid var(--colors-border-border-overlay, #34393d);
+      background: var(--colors-background-bg-overlay, #2c2e30);
     }
   }
 
@@ -475,7 +473,7 @@ async function onSave() {
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     // border: 1px solid var(--colors-border-border-action);
-    background: var(--colors-background-bg-overlay, #2C2E30);
+    background: var(--colors-background-bg-overlay, #2c2e30);
     // box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     position: relative;
     overflow: hidden;

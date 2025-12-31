@@ -6,7 +6,7 @@ import VerifyEmail from './verify-email.vue'
 import Verify2FA from './verify-2fa.vue'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import Setps2FA from './setps-2fa.vue'
 
 const props = defineProps<{

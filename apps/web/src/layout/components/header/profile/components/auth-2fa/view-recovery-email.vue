@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuth2FA } from './useAuth2FA'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import RecoveryEmail from './recovery-email.vue'
 import Action from './action.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'

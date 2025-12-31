@@ -1,6 +1,6 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 

@@ -1,9 +1,8 @@
 <script setup lang="tsx">
-import { ParseMode, IPType } from "/@/utils"
-import { $t } from '/@/locales'
+import { IPType } from '/@/utils'
+
 
 const props = defineProps<{
-  parserType: ParseMode
   ipType?: IPType
 }>()
 
@@ -14,10 +13,8 @@ function replaceRulesInto_UP(template: string) {
 }
 
 function replaceRulesInto_RN(template: string) {
-  return template.replace('{Notes}',
-    `<span class="text-blue whitespace-nowrap">{${$t('备注')}}</span>`
-  ).replace('[RefreshURL]',
-    `<span class="text-green whitespace-nowrap">[${$t('刷新 URL')}]</span>`
+  return template.replace('{Notes}', `<span class="text-blue whitespace-nowrap">{${$t('备注')}}</span>`,
+  ).replace('[RefreshURL]', `<span class="text-green whitespace-nowrap">[${$t('刷新 URL')}]</span>`,
   )
 }
 
@@ -26,50 +23,36 @@ function replaceRulesInto_IPV6(template: string) {
 }
 
 const rules = computed(() => {
-  if (props.parserType === ParseMode.one) {
-    const template_ipv4 = '192.168.0.1:8000[RefreshURL]{Notes}';
-    const template_ipv6 = '[ipv6]:8000[RefreshURL]{Notes}';
-    return [
-      { type: IPType.IPV4, content: template_ipv4.replace('[RefreshURL]{Notes}', "") },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(template_ipv4) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
-    ]
-  } else if (props.parserType === ParseMode.two) {
-    const template_ipv4 = '192.168.0.1:8000:{username}:{password}[RefreshURL]{Notes}';
-    const template_ipv6 = '[ipv6]:8000:{username}:{password}[RefreshURL]{Notes}';
-    return [
-      { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4).replace('[RefreshURL]{Notes}', "") },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4)) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
-    ]
-  } else if (props.parserType === ParseMode.three) {
-    const template_ipv4 = '{username}:{password}@192.168.0.1:8000[RefreshURL]{Notes}';
-    const template_ipv6 = '{username}:{password}@[ipv6]:8000[RefreshURL]{Notes}';
-    return [
-      { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4).replace('[RefreshURL]{Notes}', "") },
-      { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4)) },
-      { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6)) }
-    ]
-  } else {
-    return [];
-  }
+  const template_ipv4_a = '192.168.0.1:8000:{username}:{password}[RefreshURL]{Notes}'
+  const template_ipv6_a = '[ipv6]:8000:{username}:{password}[RefreshURL]{Notes}'
+  const template_ipv4_b = '{username}:{password}@192.168.0.1:8000[RefreshURL]{Notes}'
+  const template_ipv6_b = '{username}:{password}@[ipv6]:8000[RefreshURL]{Notes}'
+  return [
+    { type: IPType.IPV4, content: replaceRulesInto_RN('192.168.0.1:8000{Notes}') },
+    { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4_a).replace('[RefreshURL]{Notes}', '') },
+    { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4_a)) },
+    { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6_a)) },
+    { type: IPType.IPV4, content: replaceRulesInto_UP(template_ipv4_b).replace('[RefreshURL]{Notes}', '') },
+    { type: IPType.IPV4, content: replaceRulesInto_RN(replaceRulesInto_UP(template_ipv4_b)) },
+    { type: IPType.IPV6, content: replaceRulesInto_RN(replaceRulesInto_IPV6(template_ipv6_b)) },
+  ]
 })
 
 const contents = computed(() => {
   if (props.ipType === IPType.IPV4) {
-    return rules.value.filter(rule => rule.type === IPType.IPV4);
-  } else {
-    return rules.value;
+    return rules.value.filter(rule => rule.type === IPType.IPV4)
+  }
+  else {
+    return rules.value
   }
 })
-
 </script>
 
 <template>
   <div v-bind="$attrs" class="break-keep-all example">
     <div>{{ $t('示例') }}: </div>
-    <div v-for="rule in contents" v-html="rule.content" class="text-[var(--colors-text-text-primary)]"></div>
-    <br />
+    <div v-for="(rule, index) in contents" :key="index" v-html="rule.content" />
+    <br>
     <div class="help">
       <span v-if="ipType === IPType.IPV6">1. </span>{{ $t('一行一个代理，一次最多添加 500 个；') }}
     </div>
@@ -82,7 +65,6 @@ const contents = computed(() => {
 <style>
 .break-keep-all {
   overflow: hidden;
-  /* word-break: break-word; */
   word-break: break-word;
 }
 
@@ -92,15 +74,15 @@ const contents = computed(() => {
 
 .example {
   color: var(--colors-text-text-primary);
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 12px;
-  line-height: var(--Line-Height-text-lg, 20px);
+  line-height: 20px;
 }
 
 .help {
   font-family: Inter;
   color: var(--colors-text-text-inactive);
   font-size: 12px;
-  line-height: var(--Line-Height-text-lg, 20px);
+  line-height: 20px;
 }
 </style>

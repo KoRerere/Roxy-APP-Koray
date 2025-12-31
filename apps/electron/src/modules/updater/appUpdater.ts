@@ -1,15 +1,16 @@
 import type { UserGetAppUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { DebUpdater } from 'electron-updater'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
-import electronUpdater, { DebUpdater } from 'electron-updater'
+import electronUpdater from 'electron-updater'
 import { join } from 'node:path'
+import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
+import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
-import { isPackaged } from '/@/constants/common'
-import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { CustomDebUpdater } from './CustomDebUpdater'
 
@@ -25,6 +26,7 @@ export const appUpdater = new class AppUpdater {
   #autoUpdater: DebUpdater | typeof electronUpdater.autoUpdater = process.platform === 'linux'
     ? new CustomDebUpdater()
     : electronUpdater.autoUpdater
+
   /** 是否已初始化事件监听 */
   #isInitialized = false
   /** 更新信息消息体 */
@@ -33,6 +35,7 @@ export const appUpdater = new class AppUpdater {
     percent: 0,
     description: '',
   }
+
   /** 等待下载 */
   downloadPromiser: PromiseWithResolvers<void> | null = null
 
@@ -208,7 +211,8 @@ export const appUpdater = new class AppUpdater {
         this.downloadPromiser.promise.finally(() => {
           this.quitAndInstall()
         })
-      } else {
+      }
+      else {
         this.quitAndInstall()
       }
     }

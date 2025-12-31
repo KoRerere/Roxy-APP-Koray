@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useLoginContext } from '../hooks/useLoginContext'
 import SignCardHeader from './sign-card-header.vue'
 import { RxAlert } from '/@/components/rx-alert/'

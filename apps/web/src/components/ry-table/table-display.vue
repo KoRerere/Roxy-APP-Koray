@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { VueDraggable } from 'vue-draggable-plus'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { getSortIcon, type SortOrderNumber } from '/@/utils'
 const sortColumns = defineModel<any[]>('columns', { default: [] })
 

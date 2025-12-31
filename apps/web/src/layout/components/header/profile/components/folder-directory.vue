@@ -2,7 +2,7 @@
 import FolderHelp from '/@/layout/components/header/profile/components/folder-help.vue';
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import type { Items } from '../type'
 
 defineOptions({

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'

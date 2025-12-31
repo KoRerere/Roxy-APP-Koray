@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales';
+;
 
 defineEmits(['close', 'confirm'])
 

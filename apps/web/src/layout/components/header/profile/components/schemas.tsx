@@ -1,5 +1,5 @@
 import { defineFormSchema } from '/@/components/rx-form'
-import { $t } from '/@/locales'
+
 import styles from './schemas.module.css'
 import { getRegisterValidation, getResetPasswordSchemas } from '/@/views/login/components/schemas'
 import RxVerificationCodeSender from '/@/components/rx-verification-code-sender.vue'

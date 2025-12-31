@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs'
 import { format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { getDictMap, safeParseJSON } from '/@/utils'
 import { parseIntelligent } from '/@/views/account/create/utils'
@@ -42,7 +42,7 @@ export async function getDefaultTemplate() {
     fontType: false,
     webRTC: 2,
     webGL: true,
-    webGLInfo: true,
+    webGLInfo: 1,
     webGpu: 'webgl',
     canvas: true,
     audioContext: true,

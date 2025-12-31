@@ -1,17 +1,17 @@
-import { setupI18n, type SupportedLanguagesType } from "/@/locales";
+import { setupI18n } from '/@/locales'
+import type { SupportedLanguagesType } from '/@/locales'
 
-
-electronAPI.send("app:getSoftConfig").then((softConfig) => {
-  const { language, token } = softConfig;
+electronAPI.send('app:getSoftConfig').then((softConfig) => {
+  const { language, token } = softConfig
 
   setupI18n({ defaultLocale: language as SupportedLanguagesType }).finally(async () => {
     const { app } = await import('./app')
-    const { useSimpleLocale } = await import("/@/stores/locale")
-    const { useUserStore } = await import("/@/stores/user")
+    const { useSimpleLocale } = await import('/@/stores/locale')
+    const { useUserStore } = await import('/@/stores/user')
 
-    const simpleLocale = useSimpleLocale();
+    const simpleLocale = useSimpleLocale()
     const userStore = useUserStore()
-    simpleLocale.currentLocale = language;
+    simpleLocale.currentLocale = language
     userStore.setToken(token || '')
     app.mount('#app')
   })

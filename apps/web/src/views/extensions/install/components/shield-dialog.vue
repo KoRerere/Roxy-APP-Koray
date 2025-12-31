@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api';
-import { $t } from '/@/locales';
+;
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useToast } from 'primevue/usetoast';
 import { RxAlert } from '/@/components/rx-alert/'

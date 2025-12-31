@@ -1,7 +1,8 @@
-import { app, Menu, Tray } from 'electron'
+import { app, BrowserWindow, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
-import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
+import { restoreOrCreateWindow } from '/@/modules/app/mainWindow'
+import { closeAllWindows } from '/@/utils/browser-window'
 
 let tray: Tray
 /** 创建托盘 */
@@ -41,7 +42,8 @@ function createContextMenu() {
       label: $t('退出'),
       click: () => {
         tray.destroy()
-        getMainWindow()?.destroy()
+        closeAllWindows()
+        app.quit()
       },
     },
   ])

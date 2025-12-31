@@ -4,7 +4,7 @@ import WalletPaymentMethods from '/@/views/pay/wallet/components/wallet-payment-
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 import { debounce } from 'es-toolkit'
-import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { PayWay } from '/@/enums/pay'
 import { ceilByStep } from '/@/views/pay/subscribe/util'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -22,6 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const [_, onlyErrorToast] = useResponseToast()
+const { mixpanelTrack } = useUserStore()
 
 const selectedPayway = ref(PayWay.Card)
 const paywayList = [PayWay.Card, PayWay.Alipay, PayWay.Wechat, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
@@ -41,6 +42,10 @@ const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，�
 onBeforeMount(() => {
   if (needAmount) {
     querySupportPayway()
+    mixpanelTrack('click_enter_wallet_recharge_insufficient')
+  }
+  else {
+    mixpanelTrack('wallet_recharge_click')
   }
 })
 
@@ -85,6 +90,14 @@ async function confirm(extraData: any) {
     rechargeAmount: rechargeAmount.value,
     ...extraData,
   })
+
+  if (needAmount) {
+    mixpanelTrack('click_confirm_recharge_insufficient')
+  }
+  else {
+    mixpanelTrack('click_confirm_recharge')
+  }
+
   lockModal.value = false
   close(false)
 }
@@ -102,7 +115,9 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-4 gap-6 overflow-hidden popup">
     <div class="h-10 relative flex justify-between items-center px-6 header">
       <span>{{ $t('钱包充值') }}</span>
-      <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click="close(true)" />
+      <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)"
+               @click="close(true)"
+      />
     </div>
     <div class="flex flex-col gap-6 px-6">
       <div v-if="needAmount">

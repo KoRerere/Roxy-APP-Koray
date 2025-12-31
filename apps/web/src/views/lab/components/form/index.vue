@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import FormItem from './item.vue';
 import { z } from 'zod';
-import { $t } from '/@/locales';
+;
 import { genFormContext } from './useContext';
 import { isFunction } from 'es-toolkit';
 import { zodResolver } from '@primevue/forms/resolvers/zod';

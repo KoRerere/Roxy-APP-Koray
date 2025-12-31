@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import type { PreferenceSettings } from '../../model';
 import { RxSvgIcon } from '/@/components/rx-icon';
-import { $t } from '/@/locales';
+;
 
 const formData = defineModel<PreferenceSettings['customLayout']>({ required: true });
 

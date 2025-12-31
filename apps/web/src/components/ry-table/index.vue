@@ -8,11 +8,11 @@ import type { DataTableRowContextMenuEvent, DataTableSortEvent } from 'primevue/
 import type { PageState } from 'primevue/paginator'
 import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { $t } from '/@/locales'
+
 import { deepClone, getFormData, getSortIcon, isEmptyValue, isFunction, isLikeFunction, operationPower, transformSortOrder } from '/@/utils'
 import type { Operation, SortOrderNumber } from '/@/utils'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { AnimatePresence, motion } from 'motion-v'
+import { AnimatePresence } from 'motion-v'
 
 defineOptions({
   inheritAttrs: false,
@@ -36,12 +36,11 @@ const props = withDefaults(defineProps<Props>(), {
   tableOperation: () => [],
 })
 
-defineEmits(['update:columns'])
+const columns = defineModel<any[]>('columns', { required: true })
 
-interface Props {
+export interface Props {
   dataKey?: string
   cacheKey?: string
-  columns: any[]
   dataList?: any[]
   operation?: Operation[]
   tableParams?: Record<string, any>
@@ -72,7 +71,7 @@ const rootElRef = useTemplateRef('rootEl')
 let _getConditionPromise: Promise<any> | undefined
 const _firstLoad = ref(false)
 const _loading = ref(false)
-const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
+const _columns = computed(() => columns.value.filter((item: any) => item._visible ?? true))
 const _dataList = ref()
 const _filters = ref()
 const _outerParams = ref()
@@ -158,7 +157,7 @@ const paginatorConfig = reactive({
       paginatorConfig.rows = rows
     }
   },
-  onPage(event: PageState) {
+  onPage(_event: PageState) {
     _request()
   },
   onRowsChange(selectEvent: SelectChangeEvent) {
@@ -285,7 +284,7 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   }
 
   showContextMenu(event.originalEvent, {
-    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command, ...item }) => item) : operation,
+    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command: _command, ...item }) => item) : operation,
     operationHandler: async (operate: any) => {
       try {
         const _operate = { ...deepClone(toRaw(operate)), _event: event.originalEvent }
@@ -300,7 +299,7 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
 
 function showOperationMenu({ event, operation }: { event: Event, operation: any[] }, data: any, operationType: 'batch' | 'single') {
   showContextMenu(event, {
-    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command, ...item }) => item) : operation,
+    operation: isLikeFunction(props.operationHandler) ? operation.map(({ command: _command, ...item }) => item) : operation,
     operationHandler: async (operate: any) => {
       try {
         const _operate = { ...deepClone(toRaw(operate)), _event: event }
@@ -359,7 +358,7 @@ function initBodyrow(options: any) {
         </div>
         <div class="flex gap-2 items-center">
           <template v-if="showDisplay">
-            <TableDisplay :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder" :columns="columns" @update:columns="$emit('update:columns', $event)">
+            <TableDisplay v-model:columns="columns" :sort-field="_sorts.sortField" :sort-order="_sorts.sortOrder">
               <template #before>
                 <slot name="display-before" />
               </template>

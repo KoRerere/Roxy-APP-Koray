@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import RelatedInfo from '/@/components/related-info.vue'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { useConfirm } from 'primevue/useconfirm'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'

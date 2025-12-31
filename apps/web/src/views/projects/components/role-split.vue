@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
@@ -44,13 +44,16 @@ const selectedRoleLabel = computed(() => {
         </label>
       </div>
     </template>
+    <template #dropdownicon="props">
+      <SvgIcon v-bind="props" name="base/rx_ic_chevron_down" />
+    </template>
   </SplitButton>
 </template>
 
 <style lang="scss" scoped>
 :deep(.p-splitbutton-button),
 :deep(.p-splitbutton-dropdown) {
-  background: var(--component-tag-bg-strong)
+  background: var(--component-tag-bg-strong);
 }
 
 .item {

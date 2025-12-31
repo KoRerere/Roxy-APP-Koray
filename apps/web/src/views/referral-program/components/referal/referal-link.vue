@@ -1,16 +1,17 @@
 <script setup lang="tsx">
-import RxTooltip from '/@/components/rx-tooltip/index.vue';
-import { RxAlert } from '/@/components/rx-alert/'
-import { RxCopyContent } from '/@/components/rx-copy';
-import { RxSvgIcon } from '/@/components/rx-icon';
-import currency from 'currency.js';
-import { $t } from '/@/locales';
-import { API } from '/@/api';
-import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api';
+import RxTooltip from '/@/components/rx-tooltip/index.vue'
+import { RxCopyContent } from '/@/components/rx-copy'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { useUserStore } from '/@/stores/user'
+import currency from 'currency.js'
+import { API } from '/@/api'
+import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
 
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
+
+const { mixpanelTrack } = useUserStore()
 
 const activeMenu = ref(promotionInfo.promotionLinkList[0])
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
@@ -38,10 +39,12 @@ const dataPreformance = computed(() => {
     {
       title: $t('近 30 天名下用户消费金额'),
       total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, maxNumber),
-      // todayCount: 0,
+      /**
+       * todayCount: 0,
+       */
       format(val: number) {
         return currency(val).format()
-      }
+      },
     },
     {
       title: $t('审核中'),
@@ -50,7 +53,7 @@ const dataPreformance = computed(() => {
       tootip: $t('消费后 7 天内完成审核'),
       format(val: number) {
         return currency(val).format()
-      }
+      },
     },
     {
       title: $t('已审核奖励'),
@@ -61,7 +64,7 @@ const dataPreformance = computed(() => {
       },
       format(val: number) {
         return currency(val).format()
-      }
+      },
     },
   ]
 })
@@ -92,7 +95,7 @@ const bonusList = computed(() => {
       desc: $t('{ratio} 消费优惠', { ratio: '{ratio}' }),
       ratio: targetMenu?.userDiscount,
       class: 'give',
-    }
+    },
   ]
 })
 
@@ -101,23 +104,35 @@ watch(activeMenu, () => {
   getPromotionInfoByTypeList()
 }, { immediate: true })
 
-const DataPreformance = (props: any) => {
-  return <div class="flex justify-between items-center px-3 py-2.5 rounded-1 bg-[var(--colors-background-bg-page)] gap-2">
-    <RxTooltip class="ellipsis-1">
-      {{
-        default: () => <span class="text-14px text-[var(--colors-text-text-tertiary)] text-3.5 font-500 ellipsis-1">
-          {props.title}:
-        </span>, content: () => <span class="text-white">{props.title}</span>
-      }}
-    </RxTooltip>
-    <span class="flex items-center gap-2.5">
-      {props.todayCount > 0 ? <span class="text-[var(--colors-text-text-success)] text-3 font-500">
-        +{props.format ? props.format(props.todayCount) : props.todayCount}</span> : <></>}
-      <span class="text-[var(--colors-text-text-primary)] text-4 font-700" style={props.style}>
-        {props.format ? props.format(props.total) : props.total}
+function DataPreformance(props: any) {
+  return (
+    <div class="flex justify-between items-center px-3 py-2.5 rounded-1 bg-[var(--colors-background-bg-page)] gap-2">
+      <RxTooltip class="ellipsis-1">
+        {{
+          default: () => (
+            <span class="text-14px text-[var(--colors-text-text-tertiary)] text-3.5 font-500 ellipsis-1">
+              {props.title}
+              :
+            </span>
+          ),
+          content: () => <span class="text-white">{props.title}</span>,
+        }}
+      </RxTooltip>
+      <span class="flex items-center gap-2.5">
+        {props.todayCount > 0
+          ? (
+              <span class="text-[var(--colors-text-text-success)] text-3 font-500">
+                +
+                {props.format ? props.format(props.todayCount) : props.todayCount}
+              </span>
+            )
+          : <></>}
+        <span class="text-[var(--colors-text-text-primary)] text-4 font-700" style={props.style}>
+          {props.format ? props.format(props.total) : props.total}
+        </span>
       </span>
-    </span>
-  </div>
+    </div>
+  )
 }
 
 async function getBannerPictureList() {
@@ -130,7 +145,7 @@ async function getBannerPictureList() {
 
 async function getPromotionInfoByTypeList() {
   const { code, data } = await API.base.userGetPromotionInfoByTypeList({
-    linkType: activeMenu.value.linkType?.replace(' ', '_')
+    linkType: activeMenu.value.linkType?.replace(' ', '_'),
   })
   if (code === 0) {
     dataPreformanceValue.value = data
@@ -145,13 +160,18 @@ function isLocked(linkStatus: number) {
 <template>
   <div class="referal-link-container">
     <aside>
-      <div class="referal-title">{{ $t('选择推广链接') }}</div>
+      <div class="referal-title">
+        {{ $t('选择推广链接') }}
+      </div>
       <div class="flex flex-col items-start self-stretch gap-3">
-        <div class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item" :class="{ active: activeMenu.linkType === menu.linkType }"
-          v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType" @click="activeMenu = menu">
-          <RxSvgIcon :class="{ 'invisible': !isLocked(menu.linkStatus!) }" name="base/rx_ic_lock" color="var(--colors-icon-icon-note)" />
-          <div class="flex-1">{{ menu.linkType }}</div>
-          <CircleProgress v-if="isLocked(menu.linkStatus!)" :value="(menu.completed_count! / menu.total_count!) * 100" size="20" stroke-width="4"></CircleProgress>
+        <div v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType"
+             class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item" :class="{ active: activeMenu.linkType === menu.linkType }" @click="activeMenu = menu"
+        >
+          <RxSvgIcon :class="{ invisible: !isLocked(menu.linkStatus!) }" name="base/rx_ic_lock" color="var(--colors-icon-icon-note)" />
+          <div class="flex-1">
+            {{ menu.linkType }}
+          </div>
+          <CircleProgress v-if="isLocked(menu.linkStatus!)" :value="(menu.completed_count! / menu.total_count!) * 100" size="20" stroke-width="4" />
         </div>
       </div>
     </aside>
@@ -162,21 +182,28 @@ function isLocked(linkStatus: number) {
           <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人订阅后解锁', { count: activeMenu.total_count }) }})</span>
         </div>
         <div v-if="isLocked(activeMenu.linkStatus!)" class="w-full flex items-center gap-3">
-          <div class="referal-desc">{{ $t('用户邀请数据:') }}</div>
+          <div class="referal-desc">
+            {{ $t('用户邀请数据:') }}
+          </div>
           <Usage class="flex-1 gap-1.5 referal-progress" :ratio="(activeMenu.completed_count! / activeMenu.total_count!)" :block-count="Math.min(10, activeMenu.total_count!)"
-            defaultColor="var(--colors-border-border-inactive)"
-            :color-level="{ normal: 'var(--component-alert-announcement-border-success)', weak: 'var(--component-alert-announcement-border-success)' }" />
+                 default-color="var(--colors-border-border-inactive)"
+                 :color-level="{ normal: 'var(--component-alert-announcement-border-success)', weak: 'var(--component-alert-announcement-border-success)' }"
+          />
           <div class="flex items-baseline gap-1">
             <span class="referal-value">{{ activeMenu.completed_count }}</span>
             <span class="referal-need">/{{ activeMenu.total_count }}</span>
           </div>
         </div>
-        <RxCopyContent :text="referralLink!" :mask="isLocked(activeMenu.linkStatus!)" />
-        <div class="desc">{{ $t('受邀用户消费时:') }}</div>
+        <RxCopyContent :text="referralLink!" :mask="isLocked(activeMenu.linkStatus!)" @copy-success="mixpanelTrack('promotion_link_copy')" />
+        <div class="desc">
+          {{ $t('受邀用户消费时:') }}
+        </div>
         <div class="w-full flex gap-2.5">
-          <div class="relative flex-1 h-22 flex flex-col justify-center py-3 px-4 rounded-md bonus" :class="item.class" v-for="item in bonusList" :key="item.title">
-            <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88"></SvgIcon>
-            <div class="bonus-title">{{ item.title }}</div>
+          <div v-for="item in bonusList" :key="item.title" class="relative flex-1 h-22 flex flex-col justify-center py-3 px-4 rounded-md bonus" :class="item.class">
+            <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88" />
+            <div class="bonus-title">
+              {{ item.title }}
+            </div>
             <i18n-t class="bonus-desc" tag="div" scope="global" :keypath="item.desc">
               <template #ratio>
                 <span class="bonus-ratio">{{ item.ratio }}%</span>
@@ -187,7 +214,9 @@ function isLocked(linkStatus: number) {
       </div>
       <template v-if="!isLocked(activeMenu.linkStatus!)">
         <div class="row">
-          <div class="title">{{ $t('数据统计') }}</div>
+          <div class="title">
+            {{ $t('数据统计') }}
+          </div>
           <div class="grid grid-cols-10 gap-3 w-full">
             <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
               <DataPreformance v-for="i in 3" v-bind="dataPreformance[i - 1]" />
@@ -199,18 +228,20 @@ function isLocked(linkStatus: number) {
         </div>
 
         <div class="row">
-          <div class="title">{{ $t('推广宣传图（建站用户专用）') }}</div>
+          <div class="title">
+            {{ $t('推广宣传图（建站用户专用）') }}
+          </div>
           <div class="banner-sizes">
             <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
-              <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
+              <RadioButton v-model="selectBannerSize" :input-id="item.size" name="dynamic" :value="item.size" />
               <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
             </div>
           </div>
           <div class="banner-preview-container">
-            <div class="banner-preview" v-if="currentBannerImage">
+            <div v-if="currentBannerImage" class="banner-preview">
               <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" class="p-3">
                 <template #original>
-                  <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" />
+                  <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview">
                 </template>
               </RxImage>
             </div>
@@ -254,7 +285,7 @@ function isLocked(linkStatus: number) {
       align-self: stretch;
 
       .title {
-        color: var(--colors-text-text-primary, #FAFAFA);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -393,12 +424,20 @@ function isLocked(linkStatus: number) {
 .bonus {
   &.get {
     border: 1px solid var(--pattern-dashboard-card-border-card-referral);
-    background: linear-gradient(90deg, var(--pattern-dashboard-card-bg-card-referral-1) 0%, var(--pattern-dashboard-card-bg-card-referral-2) 100%);
+    background: linear-gradient(
+      90deg,
+      var(--pattern-dashboard-card-bg-card-referral-1) 0%,
+      var(--pattern-dashboard-card-bg-card-referral-2) 100%
+    );
   }
 
   &.give {
     border: 1px solid var(--pattern-dashboard-card-border-card-bonus);
-    background: linear-gradient(90deg, var(--pattern-dashboard-card-bg-card-bonust-1) 0%, var(--pattern-dashboard-card-bg-card-bonus-2) 100%);
+    background: linear-gradient(
+      90deg,
+      var(--pattern-dashboard-card-bg-card-bonust-1) 0%,
+      var(--pattern-dashboard-card-bg-card-bonus-2) 100%
+    );
   }
 
   &-title {

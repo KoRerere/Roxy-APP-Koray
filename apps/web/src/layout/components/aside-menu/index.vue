@@ -2,12 +2,10 @@
 import SubMenuItem from './sub-menu-item.vue'
 import { cloneDeep } from 'es-toolkit'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
 import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { useCampaignStore } from '/@/stores/campaign'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProjectPin, WorkspaceType } from '/@/enums'
@@ -25,7 +23,6 @@ const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { seasonalActivity } = storeToRefs(useCampaignStore())
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
@@ -138,8 +135,8 @@ function handleScroll() {
 
 <template>
   <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png">
     <template v-if="!roleStore.isViewer">
+      <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png">
       <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">

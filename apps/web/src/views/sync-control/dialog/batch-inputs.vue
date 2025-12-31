@@ -3,7 +3,7 @@ import BaseDialog from './base-dialog.vue'
 import SameText from './batch-inputs-components/same-text.vue'
 import DiffText from './batch-inputs-components/diff-text.vue'
 import RandomText from './batch-inputs-components/random-text.vue'
-import { $t } from '/@/locales'
+
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()

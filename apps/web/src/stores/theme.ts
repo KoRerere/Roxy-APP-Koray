@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { isMainWindow, isProd } from '/@/utils'
 import { SWITCH_THEME_CHANNEL_NAME } from '/@/constants/channel'
 import { debounce } from 'es-toolkit'
-import { $t } from '/@/locales'
+
 
 type ColorScheme = 'light' | 'dark' | 'system'
 

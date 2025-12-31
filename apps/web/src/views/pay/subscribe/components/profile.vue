@@ -4,7 +4,7 @@ import currency from 'currency.js'
 import TierSlider from '/@/views/pay/subscribe/components/tier-slider.vue'
 import SubscribePlans from '/@/views/pay/subscribe/components/subscribe-plans.vue'
 import Illustrate from '/@/views/pay/subscribe/components/illustrate.vue'
-import { $t } from '/@/locales'
+
 import { formatNumberToKMB } from '/@/utils/basic'
 import { ceilByStep } from '../util'
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'

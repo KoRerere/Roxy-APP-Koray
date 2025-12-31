@@ -23,7 +23,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
 import { I18nT } from 'vue-i18n'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
@@ -250,6 +250,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
     case 'setAsDefaultBrowser':
       await setAsDefaultBrowser(data)
       break
+    case 'createDesktopShortcut':
+      await createDesktopShortcut(data)
+      break
     case 'addProxy':
       multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
       break
@@ -381,8 +384,21 @@ async function openBrowserBefore(data: Data | Data[]) {
 }
 
 async function setAsDefaultBrowser(data: Data) {
-  await window.electronAPI.send('browser:setAsDefaultBrowser', data.dirId)
-  showToast(0, $t('设置成功'))
+  const sortNum = `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0')
+  await window.electronAPI.send('browser:setAsDefaultBrowser', {
+    ...toRaw(data),
+    __orderName: `${workspaceName.value}-${sortNum}`,
+  })
+  showToast(0, $t('设为默认浏览器成功'))
+}
+
+async function createDesktopShortcut(data: Data) {
+  const sortNum = `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0')
+  await window.electronAPI.send('browser:createDesktopShortcut', {
+    ...toRaw(data),
+    __orderName: `${workspaceName.value}-${sortNum}`,
+  })
+  showToast(0, $t('创建桌面快捷方式成功'))
 }
 
 function clearMessage(datas: Data[]) {
@@ -507,13 +523,6 @@ async function onTransfer(datas: Data[], operate?: any) {
         ),
       })
     }
-    return
-  }
-
-  if (!userInfo.value.email) {
-    emitter.emit('openSettings', { settingsKey: 'authentication' })
-    await nextTick()
-    onlyErrorToast(-1, $t('请先设置邮箱，再进行投送'))
     return
   }
 

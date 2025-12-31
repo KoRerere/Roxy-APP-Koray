@@ -1,7 +1,7 @@
 import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { UaStrictMode } from '/@/enums'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { z } from 'zod'
@@ -14,6 +14,10 @@ async function setUaWebgl(inputsGroup: any) {
   const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, browserVersion, count: 1 })
   if (code === 0) {
     setInputValueByFormData(inputsGroup, data[0])
+    const ua = findInputByName(inputsGroup[0], 'userAgent')
+    if (ua) {
+      Reflect.set(ua, '_custom_ua', false)
+    }
   }
 }
 
@@ -67,6 +71,11 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
   if (preview) {
     const { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName } = fingerDetail[0]
     setInputValueByFormData(inupts, { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName })// 批量创建时用于界面显示
+  }
+
+  const ua = findInputByName(inupts[0], 'userAgent')
+  if (ua) {
+    Reflect.set(ua, '_custom_ua', false)// 自定义 UA 标记为 false
   }
 
   return fingerDetail
@@ -287,6 +296,13 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       iconClick: async () => {
         await setUaWebgl(inputsGroup)
         showToast(0, $t('UA刷新成功'))
+      },
+      change: (input: any) => {
+        Reflect.set(input, '_custom_ua', true)
+      },
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        Reflect.set(formData, '_custom_ua', input._custom_ua)
+        return input.value?.trim()
       },
       preview: {
         label: 'User Agent',
@@ -743,13 +759,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'selectButton',
       label: $t('WebGL Info'),
       name: 'webGLInfo',
-      value: data.webGLInfo ?? true,
+      value: data.webGLInfo ?? 1,
       options: [
-        { label: $t('真实'), value: false },
-        { label: $t('自定义'), value: true },
+        { label: $t('真实'), value: 0 },
+        { label: $t('随机'), value: 1 },
+        { label: $t('自定义'), value: 2 },
       ],
       change(input: any) {
-        setInputVisible(highLevelInputs, ['webGLManufacturer', 'webGLRender'], input.value === true)
+        input.value === 1 && setUaWebgl(inputsGroup)
+
+        filterInputsByNames(highLevelInputs, ['webGLManufacturer', 'webGLRender']).forEach((ipt) => {
+          ipt.visible = input.value !== 0
+          ipt.disabled = input.value !== 2
+        })
       },
       preview: {
         label: $t('WebGL Info'),
@@ -761,10 +783,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'webGLManufacturer',
       value: data.webGLManufacturer,
       icon: 'base/rx_ic_shuffle',
-      disabled: true,
-      visible: initInputVisible(data.webGLInfo, true, true),
-      iconClick: async () => {
-        await setUaWebgl(inputsGroup)
+      disabled: data.webGLInfo !== 2,
+      visible: !initInputVisible(data.webGLInfo, 0, false),
+      iconClick: () => {
+        setUaWebgl(inputsGroup)
       },
     },
     {
@@ -774,10 +796,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.webGLRender,
       rows: 3,
       icon: 'base/rx_ic_shuffle',
-      disabled: true,
-      visible: initInputVisible(data.webGLInfo, true, true),
-      iconClick: async () => {
-        await setUaWebgl(inputsGroup)
+      disabled: data.webGLInfo !== 2,
+      visible: !initInputVisible(data.webGLInfo, 0, false),
+      iconClick: () => {
+        setUaWebgl(inputsGroup)
       },
     },
     {
@@ -1218,6 +1240,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('打开工作台'),
       name: 'openWorkbench',
       value: data.openWorkbench ?? 1,
+      options: [
+        { label: $t('开启'), value: 1 },
+        { label: $t('关闭'), value: 0 },
+        { label: $t('跟随软件设置'), value: 2 },
+      ],
+    },
+    {
+      type: 'selectButton',
+      label: $t('IP 变化提醒'),
+      name: 'ipChangeRemind',
+      value: data.ipChangeRemind ?? 2,
+      options: [
+        { label: $t('开启'), value: 1 },
+        { label: $t('关闭'), value: 0 },
+        { label: $t('跟随软件设置'), value: 2 },
+      ],
+    },
+    {
+      type: 'selectButton',
+      label: $t('是否开启谷歌登录'),
+      name: 'enableGoogleLogin',
+      value: data.enableGoogleLogin ?? 2,
       options: [
         { label: $t('开启'), value: 1 },
         { label: $t('关闭'), value: 0 },

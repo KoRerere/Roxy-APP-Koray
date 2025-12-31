@@ -1,27 +1,39 @@
+import { shallowReactive, watch } from '@vue/reactivity'
+import { debounce } from 'es-toolkit'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readdir, rm } from 'node:fs/promises'
-import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setTimeout, scheduler } from 'node:timers/promises'
+import { scheduler, setTimeout } from 'node:timers/promises'
+import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
-import { BrowserItem, LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
+import { Role } from '/@/constants/common'
+import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
+import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
-import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
-import { asyncDebounce } from '/@/utils'
-import { shallowReactive, watch } from '@vue/reactivity';
+import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
-import { debounce } from 'es-toolkit'
-import { Role } from '/@/constants/common'
+import { asyncDebounce } from '/@/utils'
 
 const OpenErrorMessageMap = {
-  get 1() { return $t('您购买的代理检测到错误。{link}', { link: '{link}' }) },//IP检测不通
-  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) },//国家不一致
-  get 3() { return $t('您购买的代理已过期。请在打开窗口前更新代理信息') },//已过期
-  get 4() { return $t('您当前窗口的代理已退款，无法使用。请在打开窗口之前更新代理信息。') },//已退款
-  get 5() { return $t('您购买的代理正在退款中，无法使用。请在打开窗口之前更新代理信息。') },//退款中
-  get 6() { return $t('您购买的代理正在更换中，无法使用。请在打开窗口之前更新代理信息。') },//更换中
+  get 1() { return $t('您购买的代理检测到错误。{link}', { link: '{link}' }) }, /**
+                                                                    * IP检测不通
+                                                                    */
+  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) }, /**
+                                                                              * 国家不一致
+                                                                              */
+  get 3() { return $t('您购买的代理已过期。请在打开窗口前更新代理信息') }, /**
+                                                     * 已过期
+                                                     */
+  get 4() { return $t('您当前窗口的代理已退款，无法使用。请在打开窗口之前更新代理信息。') }, /**
+                                                              * 已退款
+                                                              */
+  get 5() { return $t('您购买的代理正在退款中，无法使用。请在打开窗口之前更新代理信息。') }, /**
+                                                              * 退款中
+                                                              */
+  get 6() { return $t('您购买的代理正在更换中，无法使用。请在打开窗口之前更新代理信息。') }, // 更换中
 }
 
 export class BrowserManager {
@@ -31,6 +43,7 @@ export class BrowserManager {
   get #needSyncWindowOpenStatusWorkspaceIds() {
     return Array.from(this.#openedWorkspaceIds).filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
   }
+
   /** 正在打开中的浏览器集合 */
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
@@ -39,7 +52,7 @@ export class BrowserManager {
   uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
   /** 获取已打开的浏览器列表 */
   get openedBrowserList() {
-    return Array.from(this.openedBrowserMap.values()).map(browserItem => {
+    return Array.from(this.openedBrowserMap.values()).map((browserItem) => {
       return {
         ...browserItem.winInfo,
         $pId: browserItem.launchInfo?.pid,
@@ -97,12 +110,13 @@ export class BrowserManager {
     if (this.openingBrowserMap.has(dirId)) {
       await this.openingBrowserMap.get(dirId)?.launchPromise
       return this.openedBrowserMap.get(dirId)?.launchInfo
-    } else {
+    }
+    else {
       const browserItem = new BrowserItem(winInfo, launchBy)
       // 则加入打开中的浏览器集合
       this.openingBrowserMap.set(dirId, {
         browserItem,
-        launchPromise: browserItem.launch()
+        launchPromise: browserItem.launch(),
       })
     }
 
@@ -138,14 +152,15 @@ export class BrowserManager {
       browserItem.on(`close-${dirId}`, onCloseHandler)
 
       return browserItem.launchInfo
-    } catch (error) {
+    }
+    catch (error) {
       console.error(`BrowserManager ${dirId} === Launch failed`, error)
       return Promise.reject(error)
-    } finally {
+    }
+    finally {
       this.openingBrowserMap.delete(dirId)
     }
   }
-
 
   /** 批量启动浏览器 */
   async batchLaunch(dirIds: string[]) {
@@ -186,7 +201,7 @@ export class BrowserManager {
 
   /** 批量关闭浏览器 */
   batchClose(dirIds: string[]) {
-    dirIds.forEach(dirId => {
+    dirIds.forEach((dirId) => {
       if (this.openedBrowserMap.has(dirId)) {
         this.uploadDataQueue.set(dirId, this.close(dirId))
       }
@@ -208,7 +223,7 @@ export class BrowserManager {
 
     const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
-    const uploadParamsObj = Object.groupBy(results, item => {
+    const uploadParamsObj = Object.groupBy(results, (item) => {
       if (item.status === 'fulfilled' && item.value?.requestHeaders) {
         return JSON.stringify(item.value.requestHeaders)
       }
@@ -225,7 +240,7 @@ export class BrowserManager {
     })
 
     return Promise.allSettled(uploadParamsList).finally(() => {
-      dirIds.forEach(dirId => {
+      dirIds.forEach((dirId) => {
         this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
       })
@@ -247,6 +262,7 @@ export class BrowserManager {
   async batchDelete(dirIds: string[]) {
     for (const dirId of dirIds) {
       this.removeLocalData(dirId)
+      shortcutStore.remove(dirId)
     }
   }
 
@@ -303,17 +319,17 @@ export class BrowserManager {
   }
 
   /** 清除超过指定时间的缓存 */
-  async clearCacheByTimestamp({ days, clearType }: { days: number, clearType: "partial" | "all" }) {
+  async clearCacheByTimestamp({ days, clearType }: { days: number, clearType: 'partial' | 'all' }) {
     const browserCacheRootDir = getUserDataDirPath('')
-    const dirIds: string[] = [];
+    const dirIds: string[] = []
 
     for (const dirent of readdirSync(browserCacheRootDir, { withFileTypes: true })) {
       if (dirent.isDirectory()) {
-        const targetFile = join(browserCacheRootDir, dirent.name, "close_timestamp");
+        const targetFile = join(browserCacheRootDir, dirent.name, 'close_timestamp')
         if (existsSync(targetFile)) {
-          const [timestamp, dirId] = readFileSync(targetFile, "utf-8").split('_')
+          const [timestamp, dirId] = readFileSync(targetFile, 'utf-8').split('_')
           if (Date.now() - Number(timestamp) > days * 24 * 60 * 60 * 1000) {
-            dirIds.push(dirId);
+            dirIds.push(dirId)
           }
         }
       }
@@ -323,7 +339,8 @@ export class BrowserManager {
 
   /** 自动清除超过指定时间的缓存 */
   autoClearByTimestamp() {
-    if (!store.autoClearCache) return
+    if (!store.autoClearCache)
+      return
     this.clearCacheByTimestamp({ days: store.clearCachePeriod, clearType: store.clearCacheType })
   }
 
@@ -331,7 +348,7 @@ export class BrowserManager {
   private async getWindowList(dirIds: string[]) {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
     const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
-      .then(res => {
+      .then((res) => {
         // 达到窗口打开次数限制
         if (res.code === 417) {
           ipcMain.send('browser:window-open-limit', res)
@@ -339,7 +356,7 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
-        dirIds.forEach(dirId => {
+        dirIds.forEach((dirId) => {
           if (!res.data.rows.some(item => item.dirId === dirId)) {
             sendErrorMessage($t('窗口不存在'), dirId)
           }
@@ -348,7 +365,8 @@ export class BrowserManager {
         return res.data.rows.reduce((acc, item) => {
           if (!item.buyProxyStatus || item.buyProxyStatus === 0) {
             acc.push(item)
-          } else {
+          }
+          else {
             const errorMessage = OpenErrorMessageMap[item.buyProxyStatus]
             sendErrorMessage(errorMessage, item.dirId!)
           }
@@ -358,7 +376,7 @@ export class BrowserManager {
       })
       .catch((error) => {
         console.error(`BrowserManager === Failed to get window info`, error)
-        dirIds.forEach(dirId => {
+        dirIds.forEach((dirId) => {
           sendErrorMessage($t('获取窗口信息失败'), dirId, error)
         })
         return Promise.reject(error)
@@ -397,7 +415,7 @@ export class BrowserManager {
   reportWindowOpenStatus = () => {
     const groupByWorkspaceId = Object.groupBy([...this.openedBrowserMap.values()], item => item.winInfo.workspaceId!)
     // 没有打开任何窗口，也做同步。只是参数ids为 空数组。
-    this.#needSyncWindowOpenStatusWorkspaceIds.forEach(wId => {
+    this.#needSyncWindowOpenStatusWorkspaceIds.forEach((wId) => {
       if (!groupByWorkspaceId[wId]) {
         groupByWorkspaceId[wId] = []
       }
@@ -429,7 +447,7 @@ export class BrowserManager {
       const params = browserItems!.map(item => ({ id: item.winInfo.id, openStatus: true }))
       API.window.userMdfWindowSyncV2Create(params, { headers: { workspaceId } }).then(() => {
         console.log(`Sync window open status on launch`, params)
-        browserItems?.forEach(item => {
+        browserItems?.forEach((item) => {
           item.isSyncedWindowOpenStatus = true
         })
       })

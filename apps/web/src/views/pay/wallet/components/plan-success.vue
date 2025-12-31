@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { format } from 'date-fns'
 import currency from 'currency.js'
 import { useUserStore } from '/@/stores/user';

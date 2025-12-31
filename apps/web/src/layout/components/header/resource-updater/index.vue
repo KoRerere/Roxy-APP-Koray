@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { onMounted, ref, useTemplateRef } from 'vue'
-import { $t } from '/@/locales'
+
 import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
@@ -221,7 +221,7 @@ console.debug('clientUpdates', clientUpdates)
 <template>
   <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" />
 
-  <div class="flex justify-center">
+  <div class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>

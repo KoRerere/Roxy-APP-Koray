@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user'
 import { OrderType } from '/@/enums/pay'

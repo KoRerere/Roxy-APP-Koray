@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import TransferTrade from '/@/views/browser/list/transfer/components/transfer-trade.vue';
-import TramsferNormal from '/@/views/browser/list/transfer/components/tramsfer-normal.vue';
-import { $t } from '/@/locales';
-import { useRoleStore } from "/@/stores/role"
-import { useUserStore } from '/@/stores/user';
-import { PayIdentity } from '/@/enums/pay';
+import TransferTrade from '/@/views/browser/list/transfer/components/transfer-trade.vue'
+import TramsferNormal from '/@/views/browser/list/transfer/components/tramsfer-normal.vue'
+import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
+import { PayIdentity } from '/@/enums/pay'
 
 const { ids: windowIds, buyProxyType = false } = defineProps<{
   datas: Record<string, any>[]
@@ -29,7 +28,8 @@ const activeKey = ref(tabs.value[0]!.value)
 const isAgentUser = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 
 const activeComponent = computed(() => {
-  if (!isAgentUser.value) return TramsferNormal
+  if (!isAgentUser.value)
+    return TramsferNormal
   return tabs.value.find(tab => tab.value === activeKey.value)!.component
 })
 
@@ -44,8 +44,8 @@ function updateInkBar() {
       <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
-    <RxTabs v-if="isAgentUser" ref="tabs" v-model:value="activeKey" :tabs="tabs" :showNavigators="false" head-tabs only-tabs></RxTabs>
-    <component :is="activeComponent" :ids="windowIds" :datas="datas" :buyProxyType="buyProxyType" @resize="updateInkBar" @confirm="$emit('confirm', $event)" />
+    <RxTabs v-if="isAgentUser" ref="tabs" v-model:value="activeKey" :tabs="tabs" :show-navigators="false" head-tabs only-tabs />
+    <component :is="activeComponent" :ids="windowIds" :datas="datas" :buy-proxy-type="buyProxyType" @resize="updateInkBar" @confirm="$emit('confirm', $event)" />
   </div>
 </template>
 

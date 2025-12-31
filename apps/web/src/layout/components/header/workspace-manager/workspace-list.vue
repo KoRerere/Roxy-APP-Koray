@@ -7,7 +7,7 @@ import { useWorkspaceStore } from '/@/stores/workspace';
 import { useDialog } from '/@/hooks/useDialog';
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import WorkspaceSetting from '/@/views/workspace-setting/index.vue'
-import { $t } from '/@/locales';
+;
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { copyText } from '/@/utils/'
 

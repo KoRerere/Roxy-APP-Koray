@@ -3,7 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
 import { RxForm } from '/@/components/rx-form'
-import { $t } from '/@/locales'
+
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import Verify2fa from './verify-2fa.vue'

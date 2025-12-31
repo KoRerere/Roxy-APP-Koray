@@ -5,7 +5,7 @@ import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-s
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
-import { $t } from '/@/locales'
+
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'

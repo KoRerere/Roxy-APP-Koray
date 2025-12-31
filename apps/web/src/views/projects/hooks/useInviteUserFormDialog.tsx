@@ -6,7 +6,7 @@ import RxButton from '/@/components/rx-button'
 import type RyTable from '/@/components/ry-table'
 import { Role } from '/@/enums'
 import { useFormDialog } from '/@/hooks/useFormDialog'
-import { $t } from '/@/locales'
+
 import { getInviteUsersFormSchemas } from '/@/views/projects/schemas'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 

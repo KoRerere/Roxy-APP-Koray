@@ -6,7 +6,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
 import { RxAlert } from '/@/components/rx-alert'
 import { AccountBindType } from '/@/enums/account'
-import { $t } from '/@/locales'
+
 
 interface Props {
   data?: Record<string, any>

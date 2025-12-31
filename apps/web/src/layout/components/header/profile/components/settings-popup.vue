@@ -3,7 +3,7 @@ import { isFunction } from 'es-toolkit'
 import RxButton from '/@/components/rx-button'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { useSettingsPopup } from './settings-popup/'
 
 const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup()

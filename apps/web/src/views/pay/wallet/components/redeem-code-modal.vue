@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import { debounce } from 'es-toolkit'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 

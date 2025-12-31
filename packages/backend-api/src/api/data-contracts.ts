@@ -5392,6 +5392,11 @@ export interface UserGetUserBuyProxyListListParams {
    * @example "ISP Proxies"
    */
   providerType?: string;
+  /**
+   * 0 不隐藏 1 隐藏
+   * @example "0"
+   */
+  hideUnavailableIp?: string;
 }
 
 export interface UserGetUserBuyProxyListListData {
@@ -6185,13 +6190,14 @@ export interface UserGetMemberInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
+      nickname: string;
       /**
        * 用户ID
        * 用户ID
        */
       user_id: number;
       /** 用户ID */
-      userId?: number;
+      userId: number;
       /**
        * 权限
        * 权限
@@ -6237,9 +6243,17 @@ export interface UserGetMemberInfoByWorkspaceListData {
 }
 
 export interface UserMdfTeamInfoV2CreatePayload {
-  /** 用户ID */
+  nickname: string;
+  email: string;
+  /**
+   * 用户ID
+   * 用户ID
+   */
   userId: number;
-  /** 权限 */
+  /**
+   * 权限
+   * 权限
+   */
   role: number;
   /** 项目ID列表 */
   projectIds: number[];
@@ -6251,15 +6265,36 @@ export interface UserMdfTeamInfoV2CreateData {
 }
 
 export interface UserDelTeamInfoCreatePayload {
-  /** 用户ID */
+  email: string;
+  /**
+   * 用户ID
+   * 用户ID
+   */
   userId: number;
-  /** 权限 */
+  /**
+   * 权限
+   * 权限
+   */
   role: number;
   /** 项目ID列表 */
   projectIds: number[];
 }
 
 export interface UserDelTeamInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserAddTeamNicknameCreatePayload {
+  /** 邮箱或者手机号 */
+  emailOrPhone: string;
+  /** 用户ID */
+  targetUserId: number;
+  /** 备注名称 */
+  nickname: string;
+}
+
+export interface UserAddTeamNicknameCreateData {
   code: number;
   msg: string;
 }
@@ -6302,20 +6337,21 @@ export interface UserGetOperateLogListData {
   data: {
     total: number;
     rows: {
-      id?: number;
-      userName?: string;
-      role?: string;
-      operateType?: string;
-      operateDetail?: string;
-      operateTime?: string;
-      operateModule?: string;
-      workspaceId?: number;
-      countryCode?: string;
-      status?: boolean;
-      location?: string;
-      country?: string;
-      code?: string;
-      email?: string;
+      id: number;
+      email: string;
+      userName: string;
+      role: string;
+      operateType: string;
+      operateDetail: string;
+      operateTime: string;
+      operateModule: string;
+      workspaceId: number;
+      countryCode: string;
+      status: boolean;
+      location: string;
+      country: string;
+      code: string;
+      phone: string;
     }[];
   };
   msg: string;
@@ -6364,38 +6400,39 @@ export interface UserGetWorkspaceListListData {
   data: {
     rows: {
       /** ID */
-      id: number;
+      id?: number;
       /** 创建人ID */
-      userId: number;
+      userId?: number;
       /** 工作空间名称 */
-      workspaceName: string;
+      workspaceName?: string;
       /** 总窗口数量 */
-      totalWindowCount: number;
+      totalWindowCount?: number;
       /** 总成员数量 */
-      totalMemberCount: number;
+      totalMemberCount?: number;
       /** 工作空间图片 */
-      workspacePicture: string;
+      workspacePicture?: string;
       /** 是否默认工作空间，1：是 0：不是，默认不是 */
-      workspaceDefault: number;
+      workspaceDefault?: number;
       /** 工作空间状态，1：启用 0：停用 */
-      workspaceStatus: number;
+      workspaceStatus?: number;
       /** 创建时间 */
-      createTime: string;
+      createTime?: string;
       /** 修改时间 */
-      updateTime: string;
+      updateTime?: string;
       /** 权限 */
-      role: number;
+      role?: number;
       /** 总窗口数量 */
-      maxWindowCount: number;
+      maxWindowCount?: number;
       /** 窗口使用数量 */
-      useWindowCount: number;
+      useWindowCount?: number;
       /** 窗口编号 */
-      workspaceNo: number;
-      email: string;
+      workspaceNo?: number;
+      email?: string;
       /** 0私有 1 公共的 */
-      workspaceType: number;
+      workspaceType?: number;
       /** 团队成员数量 */
-      useMemberCount: number;
+      useMemberCount?: number;
+      phone?: string;
     }[];
   };
   msg: string;
@@ -6721,6 +6758,18 @@ export interface UserMdfProjectSortCreatePayload {
 }
 
 export interface UserMdfProjectSortCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserBatchInviteCreatePayload {
+  emailList: string[];
+  /** 权限 */
+  role: number;
+  projectIds: number[];
+}
+
+export interface UserBatchInviteCreateData {
   code: number;
   msg: string;
 }

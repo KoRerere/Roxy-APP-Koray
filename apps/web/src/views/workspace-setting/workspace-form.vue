@@ -3,7 +3,7 @@ import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-
 import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { Role } from '/@/enums'
-import { $t } from '/@/locales'
+
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'

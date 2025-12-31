@@ -1,0 +1,440 @@
+import type { ChildProcess } from 'node:child_process'
+import { app, shell } from 'electron'
+import { spawn } from 'node:child_process'
+import { chmod, cp, mkdir, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path, { join, normalize } from 'node:path'
+import { appConfig } from '/@/constants'
+import { defaultBrowserExeName, isDev } from '/@/constants/common'
+import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
+import { store } from '/@/modules/store'
+import { resourceUpdater } from '/@/modules/updater'
+import { fileExists } from '/@/utils'
+
+function spawnWait(command: string, args: string[], options: Parameters<typeof spawn>[2] = {}) {
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn(command, args, options as any) as unknown as ChildProcess
+    let stdout = ''
+    let stderr = ''
+
+    if (child.stdout) {
+      child.stdout.on('data', (d) => {
+        stdout += d.toString()
+      })
+    }
+    if (child.stderr) {
+      child.stderr.on('data', (d) => {
+        stderr += d.toString()
+      })
+    }
+
+    child.once('error', reject)
+    child.once('exit', (code, signal) => {
+      if (code === 0) {
+        resolve()
+      }
+      else {
+        reject(new Error(
+          [
+            `[spawnWait] ${command} exited with code=${code} signal=${signal ?? ''}`.trim(),
+            stdout.trim() ? `stdout:\n${stdout.trim()}` : '',
+            stderr.trim() ? `stderr:\n${stderr.trim()}` : '',
+          ].filter(Boolean).join('\n'),
+        ))
+      }
+    })
+  })
+}
+
+function escapeForSingleQuotes(s: string) {
+  // for shell script string wrapped by single quotes
+  return s.replace(/'/g, `'\"'\"'`)
+}
+
+function sanitizeDesktopId(name: string) {
+  // .desktop filename/id should be stable and avoid problematic chars
+  return (name || 'app')
+    .replace(/[^\w.-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'app'
+}
+
+const defaultBrowserBinDir = join(appConfig.sessionDir, 'default-browser-bin')
+
+const sourceAppPath = {
+  darwin: join(defaultBrowserBinDir, `${defaultBrowserExeName}.app`),
+  win32: join(defaultBrowserBinDir, `${defaultBrowserExeName}.exe`),
+  linux: join(defaultBrowserBinDir, `${defaultBrowserExeName}.AppImage`),
+}[process.platform]
+
+interface InstallAndRegisterOptions {
+  dirId: string
+  workspaceId: number
+  execName: string
+  /** 是否设为默认浏览器 */
+  isSetAsDefaultBrowser?: boolean
+}
+
+export class DefaultBrowserInstaller {
+  /**
+   * macOS：通过 AppleScript applet 触发管理员授权。
+   *
+   * 说明：
+   * - 系统弹窗文案无法完全自定义，“想要进行更改”等是固定的；
+   * - 但弹窗里显示的“发起者名称”来自发起授权的 App（这里用临时编译出来的 applet），
+   *   这样就不会显示为 `osascript`。
+   */
+  private async runPrivilegedMacCopyWithApplet(options: {
+    sourceAppPath: string
+    targetAppPath: string
+    displayName: string
+  }) {
+    const { sourceAppPath, targetAppPath, displayName } = options
+
+    const sourceEsc = escapeForSingleQuotes(sourceAppPath)
+    const targetEsc = escapeForSingleQuotes(targetAppPath)
+
+    const scriptPath = path.join(os.tmpdir(), `roxy_privileged_copy_${Date.now()}.scpt`)
+    const appletPath = path.join(os.tmpdir(), `${displayName}.app`)
+
+    // 生成脚本：在管理员权限下复制到 /Applications
+    await writeFile(
+      scriptPath,
+      `do shell script "rm -rf '${targetEsc}' && ditto '${sourceEsc}' '${targetEsc}'" with administrator privileges`,
+    )
+
+    // osacompile -o 需要目标 app 路径不存在
+    await rm(appletPath, { recursive: true, force: true })
+    await spawnWait('osacompile', ['-o', appletPath, scriptPath])
+
+    // 设置图标（用于系统授权弹窗展示）
+    const iconPath = path.join(import.meta.dirname, '..', 'resources/launcher.icns')
+    await cp(iconPath, path.join(appletPath, 'Contents/Resources/applet.icns')).catch(() => undefined)
+    await cp(iconPath, path.join(appletPath, 'Contents/Resources/droplet.icns')).catch(() => undefined)
+    await rm(path.join(appletPath, 'Contents/Resources/Assets.car')).catch(() => undefined)
+
+    // 重新签名 app（ad-hoc 签名）
+    await spawnWait('codesign', [
+      '--force',
+      '--deep',
+      '-s',
+      '-',
+      appletPath,
+    ])
+
+    // 运行 applet，并等待其退出（这样能同步拿到复制完成的时机）
+    await spawnWait('open', ['-W', '-n', appletPath], { stdio: 'inherit' })
+
+    // 清理临时文件（失败不影响主流程）
+    await rm(scriptPath, { force: true }).catch(() => undefined)
+    await rm(appletPath, { recursive: true, force: true }).catch(() => undefined)
+  }
+
+  async installAndRegister(options: InstallAndRegisterOptions) {
+    if (!(await fileExists(sourceAppPath))) {
+      console.error(`[browser:setAsDefaultBrowser] source app path not found: ${sourceAppPath}`)
+      await resourceUpdater.checkForUpdates()
+      if (!(await fileExists(sourceAppPath))) {
+        console.debug(`[browser:setAsDefaultBrowser] checkForUpdates failed`)
+        throw new Error(`[browser:setAsDefaultBrowser] checkForUpdates failed`)
+      }
+    }
+
+    if (process.platform === 'darwin') {
+      await this.installAndRegisterOnMac(options)
+    }
+    else if (process.platform === 'win32') {
+      await this.installAndRegisterOnWindows(options)
+    }
+    else if (process.platform === 'linux') {
+      await this.installAndRegisterOnLinux(options)
+    }
+    else {
+      throw new Error(`[browser:setAsDefaultBrowser] unsupported platform: ${process.platform}`)
+    }
+  }
+
+  async installAndRegisterOnWindows(options: InstallAndRegisterOptions) {
+    // 在桌面创建快捷方式（.lnk）
+    try {
+      const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
+
+      const desktopShortcutPath = path.join(app.getPath('desktop'), `${execName}.lnk`)
+
+      // Windows 开始菜单「所有应用」入口：
+      // 把 .lnk 写到：%APPDATA%\Microsoft\Windows\Start Menu\Programs\<AppName>\xxx.lnk
+      // 注意：这只能让应用出现在「所有应用」，无法稳定实现“固定到开始菜单/任务栏”。
+      const startMenuDir = path.join(
+        app.getPath('appData'),
+        'Microsoft',
+        'Windows',
+        'Start Menu',
+        'Programs',
+        app.getName(),
+      )
+      const startMenuShortcutPath = path.join(startMenuDir, `${execName}.lnk`)
+
+      const oldShortcutItem = await shortcutStore.get(dirId)
+
+      // 如果该窗口已经存在快捷方式，但是路径不一致，则删除旧的快捷方式
+      if (oldShortcutItem?.launcherEntry && oldShortcutItem.launcherEntry !== desktopShortcutPath) {
+        console.debug('delete old shortcut', oldShortcutItem.launcherEntry)
+        await rm(normalize(oldShortcutItem.launcherEntry), { recursive: true, force: true }).catch((e) => {
+          console.error('delete old shortcut failed', e)
+        })
+      }
+
+      // 如果该窗口已经存在开始菜单快捷方式，但是路径不一致，则删除旧的快捷方式
+      if (oldShortcutItem?.startMenuEntry && oldShortcutItem.startMenuEntry !== startMenuShortcutPath) {
+        await rm(normalize(oldShortcutItem.startMenuEntry), { recursive: true, force: true }).catch(() => undefined)
+      }
+
+      const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
+      const isDesktopSuccess = shell.writeShortcutLink(desktopShortcutPath, {
+        target: sourceAppPath,
+        args,
+        description: execName,
+      })
+
+      // 开始菜单：确保目录存在，再写入 .lnk（失败不影响主流程）
+      await mkdir(startMenuDir, { recursive: true }).catch(() => undefined)
+      shell.writeShortcutLink(startMenuShortcutPath, {
+        target: sourceAppPath,
+        args,
+        description: execName,
+      })
+
+      if (isDesktopSuccess) {
+        if (isSetAsDefaultBrowser) {
+          store.defaultBrowserDirId = dirId
+          store.defaultBrowserWorkspaceId = workspaceId
+        }
+        await shortcutStore.set(dirId, {
+          // 仍以桌面快捷方式为主路径存储，便于旧逻辑清理/兼容
+          launcherEntry: desktopShortcutPath,
+          startMenuEntry: startMenuShortcutPath,
+          program: sourceAppPath,
+          arguments: args,
+          title: execName,
+        })
+      }
+      else {
+        throw new Error(`[browser:setAsDefaultBrowser] create shortcut failed: desktop=${desktopShortcutPath} startMenu=${startMenuShortcutPath}`)
+      }
+    }
+    catch {
+      // ignore: 创建快捷方式失败不影响后续注册逻辑
+    }
+
+    if (options.isSetAsDefaultBrowser) {
+      spawn(
+        sourceAppPath,
+        ['--set-default-browser'],
+        { detached: true, stdio: 'ignore', windowsHide: true },
+      ).unref()
+    }
+  }
+
+  /**
+   * macOS：复制 bundle 到 /Applications（需要管理员权限），然后调用 --set-default-browser
+   */
+  async installAndRegisterOnMac(options: InstallAndRegisterOptions) {
+    const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
+    const targetAppPath = `/Applications/${defaultBrowserExeName}.app`
+    const targetAppBinPath = `/Applications/${defaultBrowserExeName}.app/Contents/MacOS/${defaultBrowserExeName}`
+
+    if (isSetAsDefaultBrowser) {
+      // 通过 applet 触发管理员授权，弹窗将显示该 applet 的名称（而不是 osascript）
+      await this.runPrivilegedMacCopyWithApplet({
+        sourceAppPath,
+        targetAppPath,
+        // 使用固定名称以匹配期望的系统弹窗展示（系统后半句文案无法自定义）
+        displayName: 'RoxyBrowser',
+      })
+      spawn(
+        targetAppBinPath,
+        ['--set-default-browser'],
+        { detached: true, stdio: 'ignore' },
+      ).unref()
+      store.defaultBrowserDirId = dirId
+      store.defaultBrowserWorkspaceId = workspaceId
+    }
+
+    const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
+
+    const scriptPath = path.join(os.tmpdir(), 'launch_roxy_chrome.scpt')
+    const appOutPath = path.join(
+      os.homedir(),
+      'Applications',
+      $t('{appName} 应用', { appName: `RoxyBrowser${isDev ? 'Dev' : ''}` }),
+      `${execName}.app`,
+    )
+
+    const oldShortcutItem = await shortcutStore.get(dirId)
+
+    // 如果该窗口已经存在快捷方式，但是路径不一致，则删除旧的快捷方式
+    if (oldShortcutItem && oldShortcutItem.launcherEntry !== appOutPath) {
+      console.debug('delete old shortcut', oldShortcutItem.launcherEntry)
+      await rm(normalize(oldShortcutItem.launcherEntry)).catch((e) => {
+        console.error('delete old shortcut failed', e)
+      })
+    }
+
+    await shortcutStore.set(dirId, {
+      launcherEntry: appOutPath,
+      program: sourceAppPath,
+      arguments: args,
+      title: execName,
+    })
+
+    await writeFile(
+      scriptPath,
+      // macOS: `open <app>` 在 App 已运行时通常只会激活已有实例，不会把新的 --args 传给进程；
+      // 使用 `-n` 强制启动新实例，`-a` 允许传入 .app 路径。
+      `do shell script "open -na '${sourceAppPath}' --args ${args}"`,
+    )
+    console.debug('scriptPath', scriptPath)
+    console.debug('appOutPath', appOutPath)
+    // 注意：osacompile -o 需要目标 app 路径不存在；提前 mkdir(<xxx>.app) 会导致 osacompile 直接失败
+    await mkdir(path.dirname(appOutPath), { recursive: true })
+    await rm(appOutPath, { recursive: true, force: true })
+    await spawnWait('osacompile', [
+      '-o',
+      appOutPath,
+      scriptPath,
+    ])
+
+    const iconPath = path.join(import.meta.dirname, '..', 'resources/launcher.icns')
+    await cp(iconPath, path.join(appOutPath, 'Contents/Resources/applet.icns'))
+    await cp(iconPath, path.join(appOutPath, 'Contents/Resources/droplet.icns'))
+    await rm(path.join(appOutPath, 'Contents/Resources/Assets.car')).catch(() => undefined)
+    // 重新签名 app（ad-hoc 签名）
+    await spawnWait('codesign', [
+      '--force',
+      '--deep',
+      '-s',
+      '-',
+      appOutPath,
+    ])
+  }
+
+  async installAndRegisterOnLinux(options: InstallAndRegisterOptions) {
+    // 在桌面创建快捷方式（.desktop）
+    try {
+      const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
+
+      // 确保 AppImage 可执行（某些下载/解压场景可能丢失权限）
+      await chmod(sourceAppPath, 0o755).catch(() => undefined)
+
+      // .desktop 文件名尽量保持稳定且可写入（避免路径分隔符等非法字符）
+      const safeName = (execName || defaultBrowserExeName)
+        .replace(/[\\/\0]/g, '_')
+        .replace(/\s+/g, ' ')
+        .trim() || defaultBrowserExeName
+
+      const shortcutPath = path.join(app.getPath('desktop'), `${safeName}.desktop`)
+
+      const oldShortcutItem = await shortcutStore.get(dirId)
+      // 如果该窗口已经存在快捷方式，但是路径不一致，则删除旧的快捷方式
+      if (oldShortcutItem?.launcherEntry && oldShortcutItem.launcherEntry !== shortcutPath) {
+        console.debug('delete old shortcut', oldShortcutItem.launcherEntry)
+        await rm(normalize(oldShortcutItem.launcherEntry), { force: true }).catch((e) => {
+          console.error('delete old shortcut failed', e)
+        })
+      }
+
+      const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
+
+      const iconPath = path.join(defaultBrowserBinDir, 'launcher.png')
+      if (!(await fileExists(iconPath))) {
+        await cp(path.join(import.meta.dirname, '..', 'resources/launcher.png'), iconPath).catch(() => undefined)
+      }
+      const iconLine = (await fileExists(iconPath)) ? `Icon=${iconPath}\n` : ''
+
+      // 注意：Exec 行允许带参数；为了兼容空格路径，这里对可执行文件路径加双引号
+      const escapedExecPath = sourceAppPath.replace(/"/g, '\\"')
+      const desktopFileContent = `[Desktop Entry]
+Type=Application
+Name=${safeName}
+Comment=${safeName}
+    Exec="${escapedExecPath}" ${args} %U
+    MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
+${iconLine}Terminal=false
+Categories=Network;WebBrowser;
+`
+
+      // 桌面目录通常存在，但部分环境可能被用户移动/不存在；尽量保证不抛错影响后续逻辑
+      await mkdir(path.dirname(shortcutPath), { recursive: true }).catch(() => undefined)
+      await writeFile(shortcutPath, desktopFileContent, 'utf-8')
+      await chmod(shortcutPath, 0o755).catch(() => undefined)
+
+      // GNOME: 桌面上的 .desktop 需要显式标记 trusted，否则会提示 “Untrusted Desktop File”。
+      // best-effort：失败不影响后续注册逻辑。
+      await spawnWait('gio', ['set', shortcutPath, 'metadata::trusted', 'true']).catch(() => undefined)
+
+      // 写入到 XDG applications 目录，供系统默认浏览器设置使用
+      const xdgDataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')
+      const applicationsDir = path.join(xdgDataHome, 'applications')
+      const desktopId = `${sanitizeDesktopId(safeName)}-default.desktop`
+      const systemDesktopPath = path.join(applicationsDir, desktopId)
+
+      // 如果该窗口已经存在开始菜单快捷方式，但是路径不一致，则删除旧的快捷方式
+      if (oldShortcutItem?.startMenuEntry && oldShortcutItem.startMenuEntry !== systemDesktopPath) {
+        await rm(normalize(oldShortcutItem.startMenuEntry), { force: true }).catch((e) => {
+          console.error('delete old shortcut failed', e)
+        })
+      }
+
+      const systemDesktopContent = `[Desktop Entry]
+Type=Application
+Name=${safeName}
+Comment=${safeName}
+Exec="${escapedExecPath}" ${args} %U
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
+${iconLine}Terminal=false
+Categories=Network;WebBrowser;
+`
+      console.debug('systemDesktopPath', systemDesktopPath)
+      await mkdir(applicationsDir, { recursive: true }).catch(() => undefined)
+      await writeFile(systemDesktopPath, systemDesktopContent, 'utf-8').catch(() => undefined)
+      await chmod(systemDesktopPath, 0o644).catch(() => undefined)
+      await spawnWait('gio', ['set', systemDesktopPath, 'metadata::trusted', 'true']).catch(() => undefined)
+
+      // 尽量触发系统刷新并设置默认浏览器（失败不影响主流程）
+      await spawnWait('update-desktop-database', [applicationsDir]).catch(() => undefined)
+      await spawnWait('xdg-settings', ['set', 'default-web-browser', desktopId]).catch(() => undefined)
+      await spawnWait('xdg-mime', ['default', desktopId, 'x-scheme-handler/http']).catch(() => undefined)
+      await spawnWait('xdg-mime', ['default', desktopId, 'x-scheme-handler/https']).catch(() => undefined)
+      await spawnWait('xdg-mime', ['default', desktopId, 'text/html']).catch(() => undefined)
+      await spawnWait('xdg-mime', ['default', desktopId, 'application/xhtml+xml']).catch(() => undefined)
+      await spawnWait('gio', ['mime', 'x-scheme-handler/http', desktopId]).catch(() => undefined)
+      await spawnWait('gio', ['mime', 'x-scheme-handler/https', desktopId]).catch(() => undefined)
+      console.debug('shortcutPath', shortcutPath)
+
+      if (isSetAsDefaultBrowser) {
+        store.defaultBrowserDirId = dirId
+        store.defaultBrowserWorkspaceId = workspaceId
+      }
+
+      await shortcutStore.set(dirId, {
+        launcherEntry: shortcutPath,
+        startMenuEntry: systemDesktopPath,
+        program: sourceAppPath,
+        arguments: args,
+        title: execName,
+      })
+    }
+    catch (error) {
+      // ignore: 创建快捷方式失败不影响后续注册逻辑
+      console.error('[browser:setAsDefaultBrowser] create linux shortcut failed', error)
+    }
+
+    if (options.isSetAsDefaultBrowser) {
+      spawn(
+        sourceAppPath,
+        ['--set-default-browser'],
+        { detached: true, stdio: 'ignore' },
+      ).unref()
+    }
+  }
+}

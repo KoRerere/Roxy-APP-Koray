@@ -2,7 +2,7 @@ import type { AppContext, DefineComponent, FunctionalComponent, HTMLAttributes, 
 import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
 import { createVNode, render } from 'vue'
 import RxButton from '/@/components/rx-button/'
-import { $t } from '/@/locales'
+
 import { isEqualWith, isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
 import type { ButtonProps } from 'primevue/button'

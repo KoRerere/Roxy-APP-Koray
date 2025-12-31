@@ -11,7 +11,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { findInputByName, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
 import { useUserStore } from '/@/stores/user'
@@ -23,8 +23,9 @@ const router = useRouter()
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { openTelegram, getOfficialFaqWebsite } = useSimpleLocale()
-const { userPayInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
+const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 
 const cssModule = useCssModule('text')
 const original = ref()
@@ -35,6 +36,24 @@ const apiConfig = ref({
   apiRate: 50,
 })
 const hasOccupy = ref(false)
+
+const updateApiKeys = useDebounceFn(async () => {
+  const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
+  if (hasChange) {
+    const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
+    onlyErrorToast(code, msg)
+    if (code === 0) {
+      // 开关或端口改变时 重启 API 服务
+      const { apiKey, open, port } = apiConfig.value
+      const { apiKey: originalApiKey, open: originalOpen, port: originalPort } = original.value
+
+      if (originalApiKey !== apiKey || originalOpen !== open || originalPort !== port) {
+        electronAPI.send('app:restartAPIServer')
+      }
+      original.value = { ...apiConfig.value }
+    }
+  }
+}, 300)
 
 const inputs = ref([
   {
@@ -177,7 +196,7 @@ const mcpList = [
         <div class="flex flex-col gap-1.5">
           <div>{$t('标准配置适用于大多数工具')}</div>
           <div class={`relative w-full ${cssModule.copy}`}>
-            <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value)} />
+            <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => trackByCopy(mcpConfig.value, 'mco_config_copy')} />
             <JsonEditor class="min-h-75" modelValue={mcpConfig.value} editable={false}></JsonEditor>
           </div>
         </div>
@@ -327,26 +346,9 @@ const mcpList = [
   },
 ]
 
-const updateApiKeys = useDebounceFn(async () => {
-  const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
-  if (hasChange) {
-    const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
-    onlyErrorToast(code, msg)
-    if (code === 0) {
-      // 开关或端口改变时 重启 API 服务
-      const { apiKey, open, port } = apiConfig.value
-      const { apiKey: originalApiKey, open: originalOpen, port: originalPort } = original.value
-
-      if (originalApiKey !== apiKey || originalOpen !== open || originalPort !== port) {
-        electronAPI.send('app:restartAPIServer')
-      }
-      original.value = { ...apiConfig.value }
-    }
-  }
-}, 300)
-
 onBeforeMount(() => {
   getApiKeys()
+  mixpanelTrack('api_mcp_open')
 })
 
 async function getApiKeys() {
@@ -379,6 +381,11 @@ async function resetApiKey() {
       // window.electronAPI.send('app:saveSoftConfig', { apiKey: apiConfig.value.apiKey })
     },
   })
+}
+
+function trackByCopy(text: string, name: string) {
+  onCopy(text)
+  mixpanelTrack(name)
 }
 
 async function onCopy(text: string) {
@@ -417,7 +424,7 @@ async function onCopy(text: string) {
                     <div class="api-content-key-value">
                       {{ apiConfig.apiKey }}
                     </div>
-                    <RxButton :class="text['copy-btn']" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(apiConfig.apiKey)" />
+                    <RxButton :class="text['copy-btn']" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="trackByCopy(apiConfig.apiKey, 'api_key_copy')" />
                   </div>
                   <div class="api-content-key-desc">
                     {{ $t('* 请确保您的 API 密钥安全保存') }}

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Props {
-  userName: string
+  userName?: string
   avatarColor?: string
   avatar?: string
   hiddenAvatar?: boolean
@@ -23,10 +23,10 @@ const {
     <RxAvatar v-if="!hiddenAvatar" :avatar="avatar" :name="userName?.slice(0, 2)" :color="avatarColor" :class="{ 'no-avatar': !avatarColor }" :size="28" :font-size="14" />
     <div class="flex-1 flex flex-col items-start justify-center gap-0.5">
       <div class="ellipsis-1 email">
-        {{ email || phone }}
+        {{ userName }}
       </div>
       <div class="ellipsis-1 name">
-        {{ userName }}
+        {{ email || phone }}
       </div>
     </div>
   </div>

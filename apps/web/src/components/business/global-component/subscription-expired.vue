@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api';
 import { RxSvgIcon } from '/@/components/rx-icon';
-import { $t } from '/@/locales';
+;
 import { useUserStore } from '/@/stores/user';
 import { emitter } from '/@/utils/eventBus';
 import { getAdvancedFeature } from '/@/constants/advanced-feature';

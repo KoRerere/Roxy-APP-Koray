@@ -2,7 +2,7 @@
 import confetti from 'canvas-confetti'
 import { useUserStore } from '/@/stores/user';
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales';
+;
 import Privileges from './privileges.vue';
 
 const props = defineProps({

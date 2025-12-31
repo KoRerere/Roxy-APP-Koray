@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Manage from '/@/views/pay/wallet/manage/index.vue'
 import Billing from '/@/views/pay/wallet/billing/index.vue'
-import { $t } from '/@/locales'
+
 
 const route = useRoute()
 const router = useRouter()

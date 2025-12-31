@@ -1,11 +1,11 @@
 import express from 'express'
 import { API } from '/@/api'
+import { openAPICommonHeaders } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser'
 import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { getDefaultBrowserCreateParams } from './constants/'
-import { openAPICommonHeaders } from '/@/constants/common'
 
 const router = express.Router()
 
@@ -69,6 +69,12 @@ router.post('/create', async (req, res) => {
   try {
     const [data] = await genRandomFingerprint(params, 1, 'api')
 
+    // 如果是用户自定义
+    if (params.webGLInfo === 2) {
+      data.webGLRender = params.webGLRender || data.webGLRender
+      data.webGLManufacturer = params.webGLManufacturer || data.webGLManufacturer
+    }
+
     const result = await API.window.userAddWindowInfoV2Create({
       ...params,
       ...data,
@@ -121,8 +127,6 @@ router.get('/list', async (req, res) => {
   }
 })
 
-
-
 /* 获取浏览器窗口列表 新接口（已废弃，请用 list_v3） */
 router.get('/list_v2', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
@@ -139,7 +143,6 @@ router.get('/list_v2', async (req, res) => {
     res.error(error)
   }
 })
-
 
 router.get('/list_v3', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
@@ -220,13 +223,15 @@ router.post('/open', async (req, res) => {
 
   try {
     const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ dirIds: [dirId] }, { headers: { workspaceId, ...openAPICommonHeaders } })
-    if (code !== 0) return res.error(msg)
+    if (code !== 0) {
+      return res.error(msg)
+    }
     const opened = data.find(item => item.statusInfo.length > 0)
     if (opened) {
       const openUserNames = opened.statusInfo.map(item => item.openUserName).join(', ')
       return res.error(`[${openUserNames}] is using this browser\ndirId: ${dirId}`)
     }
-    const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: "open" }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: 'open' }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]
       if (!winInfo) {

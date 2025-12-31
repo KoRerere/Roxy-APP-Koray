@@ -1,12 +1,11 @@
-import { BrowserWindow, } from 'electron'
-import { ROXY_SYNC_CONTROL_CUSTOM_LAYOUTS_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { ROXY_SYNC_CONTROL_CUSTOM_LAYOUTS_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { createWindow } from '/@/utils/browser-window'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getCustomLayoutDialogWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_CUSTOM_LAYOUTS_WINDOW_ID)
+  return getWindowById(ROXY_SYNC_CONTROL_CUSTOM_LAYOUTS_WINDOW_ID)
 }
 
 export async function openCustomLayoutDialog() {
@@ -34,7 +33,6 @@ export async function openCustomLayoutDialog() {
   }
   handleWindowMove(win)
 }
-
 
 export function closeCustomLayoutsDialogWindow() {
   const targetWin = getCustomLayoutDialogWindow()

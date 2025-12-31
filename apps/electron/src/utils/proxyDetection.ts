@@ -31,6 +31,7 @@ export interface ProxyDetectionResult {
   region: string
   protocol?: string
   port?: string
+  checkChannel?: string
 }
 
 // 检测超时时间

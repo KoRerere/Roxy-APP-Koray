@@ -1,16 +1,14 @@
-import { BrowserWindow, } from 'electron'
-import { ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { createWindow } from '/@/utils/browser-window'
+import { createWindow, getWindowById } from '/@/utils/browser-window'
 
 export function getBatchInputsDialogWindow() {
-  return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID)
+  return getWindowById(ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID)
 }
 
-export type OpenBatchInputsDialogPayload = { tab: 'same' | 'diff' | 'random' }
-
+export interface OpenBatchInputsDialogPayload { tab: 'same' | 'diff' | 'random' }
 
 export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayload = { tab: 'same' }) {
   const targetWin = getBatchInputsDialogWindow()
@@ -38,7 +36,6 @@ export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayloa
   handleWindowMove(win)
 }
 
-
 export function closeBatchInputsDialogWindow() {
   const targetWin = getBatchInputsDialogWindow()
 
@@ -46,7 +43,6 @@ export function closeBatchInputsDialogWindow() {
     targetWin.close()
   }
 }
-
 
 export function resizeBatchInputsDialog(payload: { width: number, height: number }) {
   const targetWin = getBatchInputsDialogWindow()
@@ -56,5 +52,4 @@ export function resizeBatchInputsDialog(payload: { width: number, height: number
     targetWin.setSize(payload.width, payload.height)
     targetWin.resizable = false
   }
-
 }

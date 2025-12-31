@@ -2,7 +2,7 @@
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { PayWay } from '/@/enums/pay'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'

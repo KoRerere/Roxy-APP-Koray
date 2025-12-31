@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import QRCode from 'qrcode'
 import { RxAlert } from '/@/components/rx-alert/'
-import { $t } from '/@/locales'
+
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText, enhanceCountdown } from '/@/utils'

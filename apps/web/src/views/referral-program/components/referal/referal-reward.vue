@@ -4,7 +4,7 @@ import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
 import { RxSvgIcon } from '/@/components/rx-icon';
 import RxNumberFlow from '/@/components/rx-number-flow.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales';
+;
 import WithdrawDialog from './withdraw-dialog.vue'
 import currency from 'currency.js'
 import { useReferralProgram } from '../../useContext'

@@ -4,7 +4,7 @@ import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useSimpleDialog } from '/@/components/simplePopup'

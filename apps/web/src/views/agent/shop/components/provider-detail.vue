@@ -7,7 +7,7 @@ import RxStepInput from '/@/components/rx-step-input/index.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import currency from 'currency.js'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { addDays, format } from 'date-fns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -22,7 +22,7 @@ import { useThemeStore } from '/@/stores/theme'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
 
 const { data: provider = {} } = defineProps<{
-  data: Record<string, any>
+  data?: Record<string, any>
 }>()
 
 const emit = defineEmits(['back', 'close', 'success'])
@@ -35,6 +35,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 const { realTheme } = storeToRefs(useThemeStore())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 
 const ONE_BUY_MAX = 1000
 const configs = ref<any[]>([])
@@ -162,6 +163,7 @@ const details = computed(() => {
 })
 
 onMounted(async () => {
+  mixpanelTrack('click_buy_proxy_ip')
   configs.value = await initConfig()
 })
 
@@ -372,6 +374,7 @@ async function getPurchaseTimePriceList(proxyProviderId: string) {
 }
 
 async function onPay() {
+  mixpanelTrack('click_confirm_proxy_ip_order')
   showModal({
     showHeader: false,
     modal: true,
@@ -388,6 +391,7 @@ async function onPay() {
   })
 
   async function onConfirm({ payType }: any) {
+    mixpanelTrack('click_pay_proxy_ip')
     const { purchaseMember, subscriptionMonths, proxyProviderId, purchaseCountry, businessUse } = configValue.value
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
       purchaseMember,

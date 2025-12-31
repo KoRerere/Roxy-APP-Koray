@@ -2,7 +2,7 @@
 import { debounce } from 'es-toolkit';
 import AnimationBorder from '/@/components/animation-border.vue'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode';
-import { $t } from '/@/locales';
+;
 import { useSimpleLocale } from '/@/stores/locale';
 import { type MittEvents, type PayWallType, emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"

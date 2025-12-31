@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import IpChangeWarnMessage from './ip-change-warn-message.vue'

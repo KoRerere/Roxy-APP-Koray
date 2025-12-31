@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { $t } from '/@/locales'
+
 import { isMacOS } from '/@/utils/basic'
 
 interface Props {
@@ -19,11 +19,10 @@ const { options = [], search, clear } = defineProps<Props>()
 const suggestions = computed(() => {
   return options.map(item => ({
     ...item,
-    text: $t('搜索{label} {value}', { value: '{value}', label: item.label })
+    text: $t('搜索{label} {value}', { value: '{value}', label: item.label }),
   }))
 })
 
-const isMac = isMacOS()
 const inputRef = useTemplateRef('input')
 const searchQuery = ref('')
 const selectedAdvancedOption = ref<any>(null)
@@ -41,7 +40,7 @@ const cleanDisplayQuery = computed(() => {
 })
 
 const shortcutText = computed(() => {
-  return isMac ? '⌘ + F' : 'Ctrl + F'
+  return isMacOS ? '⌘ + F' : 'Ctrl + F'
 })
 
 // Watch for syntax changes - only update highlight, not selected option
@@ -54,7 +53,8 @@ watch(searchQuery, (newQuery) => {
     if (optionIndex !== -1) {
       highlightIndex.value = optionIndex + 1 // +1 because index 0 is basic search
     }
-  } else {
+  }
+  else {
     // Reset highlight to basic when no syntax is detected
     highlightIndex.value = 0
   }
@@ -69,7 +69,7 @@ onUnmounted(() => {
 })
 
 function handleKeyDown(event: KeyboardEvent) {
-  const isCorrectModifier = isMac ? event.metaKey : event.ctrlKey
+  const isCorrectModifier = isMacOS ? event.metaKey : event.ctrlKey
   if (isCorrectModifier && event.key.toLowerCase() === 'f') {
     event.preventDefault()
     inputRef.value?.focus()
@@ -79,7 +79,7 @@ function handleKeyDown(event: KeyboardEvent) {
 function detectAdvancedSyntax(query: any) {
   const syntaxMatch = query.match(/^(\w+)::(.*)$/)
   if (syntaxMatch) {
-    const syntax = syntaxMatch[1] + '::'
+    const syntax = `${syntaxMatch[1]}::`
     return suggestions.value.find(option => option.syntax === syntax)
   }
   return null
@@ -184,10 +184,11 @@ function handleBlur() {
 
 <template>
   <div class="relative transition-all duration-300 ease" :class="[searchQuery || isFocus ? 'w-50' : 'w-35']">
-    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" preIcon="base/rx_ic_magnify" :placeholder="$t('搜索 {shortcut}', { shortcut: shortcutText })" :disabled="loading" @focus="handleFocus"
-      @blur="handleBlur" @keydown="handleKeydown">
+    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索 {shortcut}', { shortcut: shortcutText })" :disabled="loading" @focus="handleFocus"
+                     @blur="handleBlur" @keydown="handleKeydown"
+    >
       <template v-if="searchQuery" #icon>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch" size="16" />
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="16" @click="clearSearch" />
       </template>
     </TsFormInputText>
     <!-- Dropdown -->
@@ -200,18 +201,23 @@ function handleBlur() {
         </i18n-t>
       </div>
       <template v-if="suggestions.length > 0">
-        <div class="py-2 px-2.5 header">{{ $t('高级搜索') }}</div>
-        <div class="flex justify-between py-2 pl-2.5 pr-1.5 option" :class="[selectedAdvancedOption?.key === option.key ? 'active' : highlightIndex === (idx + 1) ? 'hover' : '']"
-          v-for="(option, idx) in suggestions" :key="option.key" @mousedown="selectAdvancedSearch(option)" @mouseenter="highlightIndex = (idx + 1)">
+        <div class="py-2 px-2.5 header">
+          {{ $t('高级搜索') }}
+        </div>
+        <div v-for="(option, idx) in suggestions" :key="option.key"
+             class="flex justify-between py-2 pl-2.5 pr-1.5 option" :class="[selectedAdvancedOption?.key === option.key ? 'active' : highlightIndex === (idx + 1) ? 'hover' : '']" @mousedown="selectAdvancedSearch(option)" @mouseenter="highlightIndex = (idx + 1)"
+        >
           <div class="flex items-center gap-2">
-            <SvgIcon :name="(option.icon as any)" color="var(--colors-icon-icon-inactive)" size="14"></SvgIcon>
+            <SvgIcon :name="(option.icon as any)" color="var(--colors-icon-icon-inactive)" size="14" />
             <i18n-t tag="div" class="text select-none" scope="global" :keypath="option.text">
               <template #value>
                 <span class="primary">{{ `'${cleanDisplayQuery}'` }}</span>
               </template>
             </i18n-t>
           </div>
-          <div class="syntax">{{ option.syntax }}</div>
+          <div class="syntax">
+            {{ option.syntax }}
+          </div>
         </div>
       </template>
     </div>
@@ -223,7 +229,10 @@ function handleBlur() {
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-subtle);
   background: var(--component-dropdown-bg);
-  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.07), 0 2px 5px 0 rgba(0, 0, 0, 0.07), 0 1px 1px 0 rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 3px 8px 0 rgba(0, 0, 0, 0.07),
+    0 2px 5px 0 rgba(0, 0, 0, 0.07),
+    0 1px 1px 0 rgba(0, 0, 0, 0.07);
 }
 
 .header {
@@ -273,7 +282,7 @@ function handleBlur() {
 
 .syntax {
   color: var(--colors-text-text-inactive);
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 12px;
   line-height: 16px;
 }

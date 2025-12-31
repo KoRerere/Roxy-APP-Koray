@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import TsForm from '/@/views/lab/components/form/index.vue';
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+
 import { deepClone } from '/@/utils'
 import { isEqual } from 'es-toolkit';
 import { useConfirm } from 'primevue/useconfirm'

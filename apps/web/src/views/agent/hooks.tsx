@@ -4,7 +4,7 @@ import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
 import { format } from 'date-fns'
 import { ProxyCheckStatus, ProxyExpireStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { decryptAESGCM, strConcat, createDefaultObject } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'

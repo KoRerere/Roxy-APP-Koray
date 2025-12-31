@@ -4,7 +4,7 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import './rich-text/'
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { useUserStore } from '/@/stores/user'
 
 defineProps<{

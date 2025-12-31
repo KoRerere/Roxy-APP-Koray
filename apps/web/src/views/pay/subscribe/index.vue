@@ -8,7 +8,7 @@ import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useDialog } from '/@/hooks/useDialog'
@@ -24,6 +24,7 @@ import type { Plan } from './type'
 const route = useRoute()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
 const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccess } = usePay()
@@ -162,6 +163,7 @@ const details = computed(() => {
 
 onBeforeMount(() => {
   getTierPricingList()
+  mixpanelTrack('subscription_purchase_click')
 })
 
 async function getTierPricingList() {
@@ -199,6 +201,7 @@ async function onSubscribe() {
     return
   }
 
+  mixpanelTrack('click_confirm_subscribe')
   const { amount, originalAmount, discountAmount } = finalCalculate.value
 
   showModal({
@@ -213,6 +216,7 @@ async function onSubscribe() {
         showAutoRenew: true,
         onClose: hideModal,
         onConfirm: async ({ payType, isAuto }) => {
+          mixpanelTrack('click_pay_subscribe')
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             isAuto,
             payType,

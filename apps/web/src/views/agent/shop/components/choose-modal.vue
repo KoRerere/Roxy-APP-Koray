@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import ProviderList from '/@/views/agent/shop/components/provider-list.vue';
-import ProviderDetail from '/@/views/agent/shop/components/provider-detail.vue';
+import ProviderList from '/@/views/agent/shop/components/provider-list.vue'
+import ProviderDetail from '/@/views/agent/shop/components/provider-detail.vue'
 import { useThemeStore } from '/@/stores/theme'
-const themeStore = useThemeStore()
+import { useUserStore } from '/@/stores/user'
 
 defineOptions({
   inheritAttrs: false,
@@ -10,18 +10,23 @@ defineOptions({
 
 defineEmits(['close', 'success'])
 
+const { mixpanelTrack } = useUserStore()
+const themeStore = useThemeStore()
 const currentProvider = ref()
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/shop_dialog_bg.svg")' : 'url("/images/proxy/shop_dialog_bg_dark.svg")'
 })
 
+onMounted(() => {
+  mixpanelTrack('click_enter_proxy_ip_store')
+})
 </script>
 
 <template>
   <div class="flex flex-col rounded-lg popup">
-    <ProviderList v-show="!currentProvider" v-model="currentProvider" @close="$emit('close')" @success="$emit('success', $event)"></ProviderList>
-    <ProviderDetail v-if="currentProvider" :data="currentProvider" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)"></ProviderDetail>
+    <ProviderList v-show="!currentProvider" v-model="currentProvider" @close="$emit('close')" @success="$emit('success', $event)" />
+    <ProviderDetail v-if="currentProvider" :data="currentProvider" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)" />
   </div>
 </template>
 

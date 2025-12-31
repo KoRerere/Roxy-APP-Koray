@@ -1,10 +1,10 @@
-import { BrowserWindow, BrowserWindowConstructorOptions, net, Protocol, Session, session } from "electron"
-import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from "/@/constants"
-import { encryptAESGCM, getCommonRequestHeaders, getDeviceId, getInviteCode } from "/@/utils"
-import { isLinux, isPackaged } from "/@/constants/common"
-import { store } from "/@/modules/store"
-import { getBaseUrl } from "/@/api/getGatewayConfig"
-import { getRemoteConfig } from "/@/modules/browser/browser-manager/utils"
+import type { BrowserWindowConstructorOptions, Protocol } from 'electron'
+import { BrowserWindow, net, session } from 'electron'
+import { getBaseUrl } from '/@/api/getGatewayConfig'
+import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { isPackaged } from '/@/constants/common'
+import { getRemoteConfig } from '/@/modules/browser/browser-manager/utils'
+import { encryptAESGCM, getCommonRequestHeaders, getDeviceId, getInviteCode } from '/@/utils'
 
 /** 通用创建窗口 */
 export function createWindow(options: BrowserWindowConstructorOptions & { roxyWindowId: string }) {
@@ -28,14 +28,30 @@ export function createWindow(options: BrowserWindowConstructorOptions & { roxyWi
       spellcheck: false,
       preload: appConfig.preloadFilePath,
       webviewTag: false,
-      sandbox: !isLinux,
+      sandbox: false,
       ...options.webPreferences,
-    }
+    },
   })
 
   browserWindow[ROXY_WINDOW_ID_KEY] = roxyWindowId
 
   return browserWindow
+}
+
+/** 关闭所有窗口 */
+export function closeAllWindows() {
+  BrowserWindow.getAllWindows().forEach(win => win.destroy())
+}
+
+/** 根据窗口 ID 获取窗口 */
+export function getWindowById(id: string) {
+  return BrowserWindow.getAllWindows().find(win => win[ROXY_WINDOW_ID_KEY] === id)
+}
+
+/** 根据窗口 ID 关闭窗口 */
+export function closeWindowById(id: string) {
+  const win = getWindowById(id)
+  win?.destroy()
 }
 
 export function handleCustomProtocol(protocol: Protocol = session.defaultSession.protocol) {
@@ -50,7 +66,6 @@ export function handleCustomProtocol(protocol: Protocol = session.defaultSession
   })
 }
 
-
 function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
   const customProtocol = 'https'
   if (protocol.isProtocolHandled(customProtocol)) {
@@ -60,13 +75,15 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
   let deviceId = ''
   let inviteCode = ''
   // 原文为 https://roxybrowser.app/api
-  const localUrl = atob('aHR0cHM6Ly9yb3h5YnJvd3Nlci5hcHAvYXBp')// 拦截所有 URL
+  /**
+   * 拦截所有 URL
+   */
+  const localUrl = atob('aHR0cHM6Ly9yb3h5YnJvd3Nlci5hcHAvYXBp')
   const headers = getCommonRequestHeaders()
 
   protocol.handle(customProtocol, async (request) => {
     // 拦截所有 URL
     if (request.url.startsWith(localUrl)) {
-
       const remoteConfig = getRemoteConfig()
 
       if (Array.isArray(remoteConfig?.needDeviceIdApis)) {
@@ -81,7 +98,10 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
       for (const key in headers) {
         request.headers.set(key, headers[key])
       }
-      const targetUrl = request.url.replace(localUrl, getBaseUrl())//将web的虚拟地址替换为真实地址
+      /**
+       *将web的虚拟地址替换为真实地址
+       */
+      const targetUrl = request.url.replace(localUrl, getBaseUrl())
 
       if (isPackaged) {
         console.debug('request.url', targetUrl)
@@ -95,8 +115,7 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
         body: request.body, // 保留原始请求体
         redirect: 'follow',
         duplex: 'half',
-      });
-
+      })
     }
 
     if (request.url.includes('action/upload_file') && !request.headers.has('origin')) {
@@ -107,7 +126,7 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
     return net.fetch(request, {
       bypassCustomProtocolHandlers: true,
       duplex: 'half',
-    }).catch(err => {
+    }).catch((err) => {
       console.error('net.fetch error', {
         url: request.url,
         error: err,
@@ -115,5 +134,5 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
       })
       return Promise.reject(err)
     })
-  });
+  })
 }

@@ -3,7 +3,7 @@ import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
 import { format, addDays } from 'date-fns'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api';
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'

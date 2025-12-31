@@ -18,7 +18,7 @@ import { upperFirst } from 'es-toolkit';
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 import { useToast } from 'primevue/usetoast'
-import { $t } from '/@/locales'
+
 
 const emit = defineEmits(['change'])
 const invalid = ref(false)

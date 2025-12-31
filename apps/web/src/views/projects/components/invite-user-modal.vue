@@ -4,7 +4,7 @@ import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select
 import MemberInfo from '/@/views/team/components/member-info.vue'
 import Fuse from 'fuse.js'
 import { API } from '/@/api'
-import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { getRoleLabelMap, Role } from '/@/enums/'
@@ -35,6 +35,7 @@ defineEmits(['close'])
 const roleLabelMap = getRoleLabelMap()
 const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
+const { mixpanelTrack } = useUserStore()
 
 const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
@@ -63,6 +64,10 @@ watch(() => memberValue.value, (value) => {
       memberValue.value = member
     }
   }
+})
+
+onBeforeMount(() => {
+  mixpanelTrack('teammate_invite_open')
 })
 
 onBeforeUnmount(() => {

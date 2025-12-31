@@ -1,7 +1,7 @@
 <script lang="tsx" setup>
 import RxButton from '/@/components/rx-button'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { $t } from '/@/locales'
+
 import { useRoleStore } from '/@/stores/role'
 import { createDefaultObject, formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
 import CanvasLine from './canvas-line.vue';

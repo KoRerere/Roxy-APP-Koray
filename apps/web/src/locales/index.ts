@@ -2,6 +2,8 @@ import { i18n, loadLocaleMessages, setupI18n } from './i18n'
 
 const $t = i18n.global.t
 
+globalThis.$t = $t
+
 export { $t, i18n, loadLocaleMessages, setupI18n }
 export {
   type ImportLocaleFn,

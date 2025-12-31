@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import { $t } from '/@/locales'
+
 import { defaultColors } from '/@/utils/constants'
 
 const dialogRef = inject<any>('dialogRef')

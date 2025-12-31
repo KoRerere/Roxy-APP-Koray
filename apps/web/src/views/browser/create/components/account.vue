@@ -5,7 +5,7 @@ import AccountList from '/@/views/account/list/quick.vue'
 import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
+
 import { deepClone } from '/@/utils'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'

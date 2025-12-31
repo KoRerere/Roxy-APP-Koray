@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import rxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
-import { $t } from '/@/locales'
+
 import { checkCookieFormat, readCookiesFile } from '/@/utils'
 
 defineOptions({

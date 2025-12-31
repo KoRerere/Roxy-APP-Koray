@@ -2,7 +2,7 @@
 import { useUserStore } from '/@/stores/user';
 import currency from 'currency.js';
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
-import { $t } from '/@/locales';
+;
 import { formatNumberToKMB } from '/@/utils/basic';
 import type { Plan } from '../type';
 

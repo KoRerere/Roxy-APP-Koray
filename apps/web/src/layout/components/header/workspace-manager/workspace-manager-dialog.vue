@@ -8,7 +8,7 @@ import { useUserStore } from '/@/stores/user';
 import { useToast } from 'primevue/usetoast';
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode';
 import { BUSINESS_CODE } from '/@/constants/business-code';
-import { $t } from '/@/locales';
+;
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 import WorkspaceGuide from '../components/workspace-guide.vue'
 import { API } from '/@/api';

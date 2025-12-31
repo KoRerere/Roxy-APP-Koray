@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { $t } from '/@/locales'
+
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils'

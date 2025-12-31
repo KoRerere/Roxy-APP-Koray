@@ -196,6 +196,7 @@ mod windows {
 
   fn path_like_matches_current_exe(candidate: &str) -> bool {
     let cand = candidate.trim().to_lowercase();
+    let app_name_lc = default_browser_app_name().to_lowercase();
     let exe = match current_exe_path()
       .ok()
       .and_then(|p| p.file_name().map(|s| s.to_string_lossy().to_string()))
@@ -206,9 +207,29 @@ mod windows {
     };
 
     // 常见两种：返回完整路径或返回带参数的 command。
-    // - 先快速判断是否包含 roxybrowser（兜底）
+    // - 先快速判断是否包含 app_name（兜底）
     // - 再判断是否包含当前 exe 文件名
-    cand.contains("roxybrowser") || cand.contains(&exe)
+    cand.contains(&app_name_lc) || cand.contains(&exe)
+  }
+
+  fn default_browser_app_name() -> &'static str {
+    // build.rs 会把 apps/tauri/.env.* 注入为编译期常量；
+    // 若没有配置，则按 build.rs 的默认规则：development => RoxyChromeDev，production => RoxyChrome
+    option_env!("ROXY_DEFAULT_BROWSER_APP_NAME").unwrap_or_else(|| {
+      if cfg!(debug_assertions) {
+        "RoxyChromeDev"
+      } else {
+        "RoxyChrome"
+      }
+    })
+  }
+
+  fn default_browser_progid_url(app_name: &str) -> String {
+    format!("{app_name}URL")
+  }
+
+  fn default_browser_progid_html(app_name: &str) -> String {
+    format!("{app_name}HTML")
   }
 
   fn current_exe_path() -> Result<PathBuf, String> {
@@ -236,12 +257,12 @@ mod windows {
     let quoted_exe = format!("\"{exe_str}\"");
 
     // 约定 ProgId
-    let progid_url = "RoxyBrowserURL";
-    let progid_html = "RoxyBrowserHTML";
+    let progid_url = default_browser_progid_url(app_name);
+    let progid_html = default_browser_progid_html(app_name);
 
     // 1) ProgId: URL (http/https)
     let key_url = format!(r"Software\Classes\{progid_url}");
-    reg_set_sz(&hkcu(), &key_url, "", "Roxy Browser URL")?;
+    reg_set_sz(&hkcu(), &key_url, "", "Roxy Chrome URL")?;
     // URL Protocol 值存在且可为空字符串，表示这是一个 URL 协议处理器
     reg_set_sz(&hkcu(), &key_url, "URL Protocol", "")?;
     reg_set_sz(&hkcu(), &format!(r"{key_url}\DefaultIcon"), "", &format!("{quoted_exe},0"))?;
@@ -254,7 +275,7 @@ mod windows {
 
     // 2) ProgId: HTML files (.htm/.html 等)
     let key_html = format!(r"Software\Classes\{progid_html}");
-    reg_set_sz(&hkcu(), &key_html, "", "Roxy Browser HTML Document")?;
+    reg_set_sz(&hkcu(), &key_html, "", "Roxy Chrome HTML Document")?;
     reg_set_sz(
       &hkcu(),
       &format!(r"{key_html}\DefaultIcon"),
@@ -270,23 +291,23 @@ mod windows {
 
     // 3) RegisteredApplications + StartMenuInternet Capabilities
     let cap_root = format!(r"Software\Clients\StartMenuInternet\{app_name}\Capabilities");
-    reg_set_sz(&hkcu(), &cap_root, "ApplicationName", "Roxy Browser")?;
+    reg_set_sz(&hkcu(), &cap_root, "ApplicationName", "Roxy Chrome")?;
     reg_set_sz(
       &hkcu(),
       &cap_root,
       "ApplicationDescription",
-      "Roxy Browser - a minimal browser / URL handler.",
+      "Roxy Chrome - a minimal browser / URL handler.",
     )?;
 
     // URLAssociations: http/https -> ProgId
     let url_assoc = format!(r"{cap_root}\URLAssociations");
-    reg_set_sz(&hkcu(), &url_assoc, "http", progid_url)?;
-    reg_set_sz(&hkcu(), &url_assoc, "https", progid_url)?;
+    reg_set_sz(&hkcu(), &url_assoc, "http", &progid_url)?;
+    reg_set_sz(&hkcu(), &url_assoc, "https", &progid_url)?;
 
     // FileAssociations: 常见网页文件类型 -> ProgId
     let file_assoc = format!(r"{cap_root}\FileAssociations");
     for ext in [".htm", ".html", ".shtml", ".xhtml", ".webp", ".svg", ".xml"] {
-      reg_set_sz(&hkcu(), &file_assoc, ext, progid_html)?;
+      reg_set_sz(&hkcu(), &file_assoc, ext, &progid_html)?;
     }
 
     // 让 “默认应用” 能显示应用图标/打开命令（部分版本会读取）
@@ -371,11 +392,12 @@ mod windows {
 
     // 优先走“权威”判断：对比 UserChoice(http/https) 的 ProgId 是否等于我们注册的 ProgId。
     // 这能做到和 Chrome 一样：已经是默认浏览器就不再引导用户打开设置页。
-    let app_name = "RoxyBrowser";
+    let app_name = default_browser_app_name();
+    let fallback = default_browser_progid_url(app_name);
     let our_http = query_registered_progid_for_scheme(app_name, "http")
-      .unwrap_or_else(|| "RoxyBrowserURL".to_string());
+      .unwrap_or_else(|| fallback.clone());
     let our_https = query_registered_progid_for_scheme(app_name, "https")
-      .unwrap_or_else(|| "RoxyBrowserURL".to_string());
+      .unwrap_or_else(|| fallback.clone());
 
     let cur_http = query_userchoice_progid_for_scheme("http");
     let cur_https = query_userchoice_progid_for_scheme("https");
@@ -398,7 +420,7 @@ mod windows {
       Some(v) => v,
       None => return Ok(false),
     };
-    Ok(cmd.contains(&exe) || cmd.contains("roxybrowser"))
+    Ok(cmd.contains(&exe) || cmd.contains(&app_name.to_lowercase()))
   }
 
   pub fn set_default_browser(_bundle_id: &str) -> Result<(), String> {
@@ -409,7 +431,7 @@ mod windows {
 
     // 1) 先把应用注册成“可选默认浏览器”（出现在系统默认应用列表里）
     //    这里用 HKCU（无需管理员权限），对当前用户生效。
-    let app_name = "RoxyBrowser";
+    let app_name = default_browser_app_name();
     let _ = register_default_browser_capabilities(app_name);
 
     // 2) 再打开系统“默认应用”设置页，引导用户选择（Windows 不允许静默强制设置默认浏览器）
@@ -447,8 +469,10 @@ mod linux {
   }
 
   fn desktop_file_name(bundle_id: &str) -> String {
-    // 允许外部覆盖（不同打包方式 desktop 文件名可能不同）
-    if let Ok(v) = std::env::var("ROXY_DESKTOP_FILE") {
+    // 需求：运行时不依赖环境变量/环境变量文件；
+    // 若需要自定义 desktop 文件名，请在 apps/tauri/.env* 或 tauri.env* 中配置 ROXY_DESKTOP_FILE，
+    // build.rs 会在构建期注入为编译期常量。
+    if let Some(v) = option_env!("ROXY_DESKTOP_FILE") {
       if !v.trim().is_empty() {
         return v.trim().to_string();
       }

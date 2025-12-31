@@ -3,7 +3,7 @@ import RestoreReminderDialog from './restore-reminder-dialog.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-import { $t } from '/@/locales'
+
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { useConfirm } from 'primevue/useconfirm'

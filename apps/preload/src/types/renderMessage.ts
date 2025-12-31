@@ -81,9 +81,11 @@ export interface RenderMessage {
   /** 正在使用中的内核 */
   'browser:usingCores': () => string[]
   /** 设为默认浏览器 */
-  'browser:setAsDefaultBrowser': (dirId: string) => void
+  'browser:setAsDefaultBrowser': (windowItem: WindowItemType) => void
   /** 获取默认浏览器 */
   'browser:getDefaultBrowser': () => string
+  /** 创建桌面快捷方式 */
+  'browser:createDesktopShortcut': (windowItem: WindowItemType) => void
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult

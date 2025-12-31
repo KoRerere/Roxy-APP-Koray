@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { $t } from '/@/locales'
+
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 const emit = defineEmits(['click'])
