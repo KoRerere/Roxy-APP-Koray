@@ -288,7 +288,7 @@ async function dispatchDeepLink(url: string, source: 'second-instance' | 'open-u
         const wid = Number(workspaceId)
         if (targetUrl) {
           console.log('dialog:open-browser-failed: resolved url', { dirId, workspaceId: wid, targetUrl })
-          openBrowserWindow(dirId, wid, String(targetUrl))
+          openBrowserWindow(dirId, wid, [String(targetUrl)])
         }
         else {
           openBrowserWindow(dirId, wid)

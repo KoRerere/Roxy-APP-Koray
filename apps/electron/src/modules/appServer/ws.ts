@@ -192,7 +192,7 @@ export async function openBrowserWindow(dirId: string, workspaceId: number, urls
           browserManager.launch(winInfo as any)
             .then(() => {
               // 等浏览器真正打开后，再统一打开 URL（避免外部提前发 open-url 丢失）
-              const list = urls.filter(Boolean)
+              const list = Array.isArray(urls) ? urls.filter(Boolean) : []
               if (!list.length)
                 return
               const browser = browserManager.openedBrowserMap.get(dirId)?.getBrowser()
