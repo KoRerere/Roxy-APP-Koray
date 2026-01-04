@@ -51,6 +51,7 @@ function createMainWindow(options?: BrowserWindowConstructorOptions) {
     show: false,
     resizable: false,
     autoHideMenuBar: true, // 自动隐藏菜单栏
+    center: true,
     ...options,
   })
 
@@ -87,7 +88,6 @@ export async function intoLaunchPage() {
 
 /** 进入主页面 */
 export async function intoMainPage() {
-  mainWindow?.removeAllListeners?.()
   closeMainWindow()
   const defaultWidth = 1440
   const defaultHeight = 960
@@ -162,12 +162,9 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
 }
 
 function closeMainWindow() {
-  const win = mainWindow
+  mainWindow?.removeAllListeners?.()
   mainWindow?.close?.()
   mainWindow = undefined
-  setTimeout(() => {
-    win?.destroy()
-  }, 3000)
 }
 
 /** 获取主窗口实例 */

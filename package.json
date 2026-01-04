@@ -67,7 +67,7 @@
     "@types/ali-oss": "^6.16.13",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",
-    "@unocss/eslint-plugin": "^66.5.11",
+    "@unocss/eslint-plugin": "^66.5.12",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.23.0",
     "axios": "^1.13.2",

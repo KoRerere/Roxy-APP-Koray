@@ -157,6 +157,7 @@ export async function getGatewayConfig(): Promise<string> {
         headers: {
           token: '112233998877rrttyy',
         },
+        timeout: 15 * 1000,
       })
       console.debug(`getGatewayConfig response`, response.data)
 

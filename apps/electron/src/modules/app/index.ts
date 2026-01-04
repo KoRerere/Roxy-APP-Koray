@@ -160,8 +160,6 @@ export async function setupApp() {
     await checkResource()
     // 进入主页
     await intoMainPage()
-    // 创建托盘
-    createTray()
     // 处理冷启动
     await handleColdStart()
 

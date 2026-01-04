@@ -64,31 +64,20 @@ fn os_open_url(url: &str) -> Result<(), String> {
 
 #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
 fn os_open_url(url: &str) -> Result<(), String> {
-    // Linux：优先 xdg-open，失败再尝试 gio open
-    if let Ok(st) = std::process::Command::new("xdg-open").arg(url).status() {
-        if st.success() {
-            return Ok(());
+    // 使用跨平台 open crate（内部会按系统选择合适的 opener，例如 Linux 下通常会走 xdg-open）。
+    //
+    // 这里不等待结果：只负责“触发唤起”，唤起是否真正成功由后续 ws 连接（connect_electron_ws）来确认。
+    let url = url.to_string();
+    std::thread::spawn(move || {
+        if let Err(e) = open::that(url) {
+            logging::warn(&format!("open::that failed: {e}"));
         }
-        logging::warn(&format!("xdg-open exited with status={st}, fallback to gio"));
-    } else {
-        logging::warn("xdg-open spawn failed, fallback to gio");
-    }
-
-    if let Ok(st) = std::process::Command::new("gio").args(["open", url]).status() {
-        if st.success() {
-            return Ok(());
-        }
-        logging::warn(&format!("gio open exited with status={st}, fallback to desktop Exec"));
-    } else {
-        logging::warn("gio open spawn failed, fallback to desktop Exec");
-    }
-
-    // 兜底：某些 Linux 环境 xdg-open/gio 对自定义 scheme 会转交给系统默认浏览器或直接失败。
-    // 我们尝试通过 xdg-mime 找到 x-scheme-handler 对应的 .desktop，并执行 Exec 来拉起 Electron。
-    linux_launch_via_desktop_exec(url)
+    });
+    Ok(())
 }
 
 #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+#[allow(dead_code)]
 fn linux_launch_via_desktop_exec(url: &str) -> Result<(), String> {
     fn read_cmd_output(cmd: &mut std::process::Command) -> Option<String> {
         cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
@@ -321,6 +310,7 @@ fn ws_send_json(ws: &mut Ws, v: serde_json::Value) -> Result<(), String> {
         .map_err(|e| format!("ws send failed: {e}"))
 }
 
+#[allow(dead_code)]
 fn ws_read_json(ws: &mut Ws) -> Result<Option<serde_json::Value>, String> {
     match ws.read() {
         Ok(Message::Text(t)) => serde_json::from_str(&t)
@@ -347,6 +337,7 @@ fn ws_read_json(ws: &mut Ws) -> Result<Option<serde_json::Value>, String> {
     }
 }
 
+#[allow(dead_code)]
 fn ws_wait_for_type(ws: &mut Ws, ty: &str, max_wait: Duration) -> Result<serde_json::Value, String> {
     let start = std::time::Instant::now();
     loop {
@@ -404,61 +395,24 @@ fn forward_open_targets_to_electron_ws(
         }
     }
 
-    // 2) 对于携带 URL 的场景：先探测浏览器是否已打开，必要时再拉起并等待就绪
-    ws_send_json(
-        ws,
-        serde_json::json!({
-            "type": "browser:is-opened",
-            "dirId": dir_id,
-        }),
-    )?;
-    let v = ws_wait_for_type(ws, "browser:is-opened", Duration::from_secs(5))?;
-    let mut opened = v.get("opened").and_then(|x| x.as_bool()).unwrap_or(false);
-
-    // 3) 未打开则请求拉起
-    if !opened {
+    // 2) 对于携带 URL 的场景：不再轮询 browser:is-opened。
+    // 直接发送 browser:open-window 并附带 urls，由 Electron 侧在“真正 ready 后”统一打开（避免 open-url 提前发送丢失）。
+    let urls: Vec<String> = targets
+        .into_iter()
+        .filter(|s| !s.trim().is_empty())
+        .collect();
+    if !urls.is_empty() {
+        let first = urls.get(0).cloned().unwrap_or_default();
         ws_send_json(
             ws,
             serde_json::json!({
                 "type": "browser:open-window",
                 "dirId": dir_id,
                 "workspaceId": workspace_id,
-            }),
-        )?;
-    }
-
-    // 4) 轮询确认已打开（避免 open-url 过早发送导致丢失）
-    if !opened {
-        let start = std::time::Instant::now();
-        while start.elapsed() < Duration::from_secs(60) {
-            std::thread::sleep(Duration::from_millis(500));
-            ws_send_json(
-                ws,
-                serde_json::json!({
-                    "type": "browser:is-opened",
-                    "dirId": dir_id,
-                }),
-            )?;
-            let v = ws_wait_for_type(ws, "browser:is-opened", Duration::from_secs(5))?;
-            opened = v.get("opened").and_then(|x| x.as_bool()).unwrap_or(false);
-            if opened {
-                break;
-            }
-        }
-    }
-
-    if !opened {
-        return Err("等待 Electron 浏览器打开超时".to_string());
-    }
-
-    // 4) 转发 URL/文件路径
-    for t in targets.into_iter().filter(|s| !s.trim().is_empty()) {
-        ws_send_json(
-            ws,
-            serde_json::json!({
-                "type": "browser:open-url",
-                "dirId": dir_id,
-                "url": t,
+                // 兼容旧 Electron：仍然带一个 url 字段
+                "url": first,
+                // 新协议：一次性携带所有 urls
+                "urls": urls,
             }),
         )?;
     }

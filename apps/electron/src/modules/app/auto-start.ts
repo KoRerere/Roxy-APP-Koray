@@ -39,10 +39,7 @@ async function syncLinuxAutoStart(enable: boolean) {
       await unlink(desktopFile)
     }
     catch (error) {
-      console.error('[auto-start] failed to delete desktop file', error)
-      if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
-        throw error
-      }
+      console.debug('[auto-start] failed to delete desktop file', error)
     }
     return
   }

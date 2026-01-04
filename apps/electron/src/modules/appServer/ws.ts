@@ -5,7 +5,7 @@ import { basename, extname } from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { WebSocketServer } from 'ws'
 import { API } from '/@/api'
-import { ROXY_DEFAULT_BROWSER_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
@@ -62,11 +62,18 @@ export async function setupWebSocketServer() {
   wss.on('connection', (ws, req) => {
     console.debug('A new client connected to the WebSocket server', req.url ?? '')
 
-    ws.on('message', async (data, isBinary) => {
-      const message = isBinary ? data : data.toString()
-      console.debug('WebSocket message:', message)
+    ws.on('message', async (data, _isBinary) => {
+      // ws(v8) 的 data 可能是 Buffer/ArrayBuffer/Buffer[]；这里统一转成 string 再 JSON.parse
+      const raw = (() => {
+        if (typeof data === 'string')
+          return data
+        // Buffer | ArrayBuffer | Buffer[]
+        // eslint-disable-next-line node/prefer-global/buffer
+        return Buffer.isBuffer(data) ? data.toString() : Buffer.from(data as any).toString()
+      })()
+      console.debug('WebSocket message:', raw)
       try {
-        const msg = JSON.parse(message)
+        const msg = JSON.parse(raw)
         await handleMessage(ws, msg)
       }
       catch (e) {
@@ -110,6 +117,18 @@ async function handleMessage(ws: WebSocket, message: any) {
     ws.send(JSON.stringify(message))
   }
 
+  // 查询当前窗口是否已打开
+  if (message.type === 'browser:is-opened') {
+    console.debug('browser:is-opened', message)
+    const { dirId } = message
+    if (dirId) {
+      console.debug('browser:is-opened', dirId)
+      const browser = browserManager.openedBrowserMap.get(dirId)
+      sendMessage({ type: 'browser:is-opened', dirId, opened: Boolean(browser) })
+    }
+    return
+  }
+
   // 如果没有登录，则提示用户登录
   if (!store.token) {
     sendMessage({ type: 'app:login-required', dirId: message.dirId })
@@ -132,32 +151,27 @@ async function handleMessage(ws: WebSocket, message: any) {
     }
   }
 
-  // 查询当前窗口是否已打开
-  if (message.type === 'browser:is-opened') {
-    console.debug('browser:is-opened', message)
-    const { dirId } = message
-    if (dirId) {
-      console.debug('browser:is-opened', dirId)
-      const browser = browserManager.openedBrowserMap.get(dirId)
-      sendMessage({ type: 'browser:is-opened', dirId, opened: Boolean(browser) })
-    }
-  }
-
   // 打开指定的窗口
   if (message.type === 'browser:open-window') {
     console.debug('browser:open-window', message)
-    const { dirId, workspaceId, url } = message
+    const { dirId, workspaceId, url, urls } = message
     if (dirId && workspaceId) {
-      await openBrowserWindow(dirId, workspaceId, url, sendMessage)
+      // 兼容：url 为单个；urls 为批量
+      const list: string[] = Array.isArray(urls) ? urls.filter(Boolean) : []
+      const firstUrl = typeof url === 'string' ? url : ''
+      if (!list.length && firstUrl)
+        list.push(firstUrl)
+      await openBrowserWindow(dirId, workspaceId, list, sendMessage)
     }
   }
 }
 
 /** 打开浏览器窗口 */
-export async function openBrowserWindow(dirId: string, workspaceId: number, url = '', sendMessage = (_: any) => {}) {
+export async function openBrowserWindow(dirId: string, workspaceId: number, urls: string[] = [], sendMessage = (_: any) => {}) {
   try {
     console.debug('browser:open-window', dirId, workspaceId)
-    const result = await API.window.userGetWindowInfoV2List({ isDelete: 0, sourceType: 'open', dirIds: dirId }, {
+    // API 类型定义与后端字段可能不同步：这里按现有后端接口实参传递，必要时用 any 兜底
+    const result = await API.window.userGetWindowInfoV2List({ isDelete: 0, sourceType: 'open', dirIds: dirId } as any, {
       headers: {
         workspaceId,
       },
@@ -175,13 +189,20 @@ export async function openBrowserWindow(dirId: string, workspaceId: number, url 
               await showDefaultBrowserWindow(dirId)
             }
           }, 3000)
-          browserManager.launch(winInfo)
+          browserManager.launch(winInfo as any)
             .then(() => {
-              if (url) {
-                browserManager.openedBrowserMap.get(dirId)?.getBrowser()?.newPage().then((page) => {
-                  page.goto(url)
+              // 等浏览器真正打开后，再统一打开 URL（避免外部提前发 open-url 丢失）
+              const list = urls.filter(Boolean)
+              if (!list.length)
+                return
+              const browser = browserManager.openedBrowserMap.get(dirId)?.getBrowser()
+              if (!browser)
+                return
+              list.forEach((u) => {
+                browser.newPage().then((page) => {
+                  page.goto(u)
                 })
-              }
+              })
             })
             .catch((error) => {
               openBrowserFailedDialog(dirId, 'other_error', getErrorMessage(error))

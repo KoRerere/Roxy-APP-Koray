@@ -15,30 +15,6 @@ use tauri::RunEvent;
 #[cfg(target_os = "macos")]
 use tauri::ActivationPolicy;
 
-#[cfg(target_os = "macos")]
-fn macos_keep_only_close_button(window: &tauri::WebviewWindow) {
-    // 使用系统自带交通灯，但隐藏“最小化/缩放”两个按钮，只保留关闭按钮
-    // 依赖 tauri 的 macos-private-api 特性，拿到原生 NSWindow 指针
-    use objc2_app_kit::{NSWindow, NSWindowButton};
-
-    let ns_window = match window.ns_window() {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-
-    // SAFETY: Tauri 在 macOS 下返回的是 NSWindow 指针
-    let ns_window: &NSWindow = unsafe { &*ns_window.cast::<NSWindow>() };
-
-    if let Some(btn) = ns_window.standardWindowButton(NSWindowButton::MiniaturizeButton) {
-        btn.setHidden(true);
-        btn.setEnabled(false);
-    }
-    if let Some(btn) = ns_window.standardWindowButton(NSWindowButton::ZoomButton) {
-        btn.setHidden(true);
-        btn.setEnabled(false);
-    }
-}
-
 #[tauri::command]
 fn set_close_button_visible(app: tauri::AppHandle, visible: bool) {
     #[cfg(target_os = "macos")]
@@ -177,6 +153,15 @@ pub fn run() {
             // 默认：常驻后台服务（持续接收并转发）
             logging::info("mode=service: keep running");
 
+            // macOS：确保启动后不出现在 Dock（完全后台化）
+            // - Info.plist 已设置 LSUIElement=true
+            // - 运行时再兜底一次，避免某些环境/启动方式导致 Dock 闪现
+            #[cfg(target_os = "macos")]
+            {
+                let _ = app.handle().set_activation_policy(ActivationPolicy::Accessory);
+                let _ = app.handle().set_dock_visibility(false);
+            }
+
             // 无 UI 模式：不创建任何 Webview 窗口；作为默认浏览器中转器运行并尽快退出。
 
             // CLI: --set-default-browser（由 Electron 安装器触发）
@@ -206,7 +191,7 @@ pub fn run() {
             // （即使传入了其他 flag，也视为“无 open target”，应该拉起默认窗口）
             if args::collect_open_targets_from_args(std::env::args().skip(1)).is_empty() {
                 open_targets::mark_ensure_window(&app.handle());
-            }
+                }
 
             ws_forwarder::start_forwarder(app.handle().clone());
 

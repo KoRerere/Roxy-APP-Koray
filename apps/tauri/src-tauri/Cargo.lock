@@ -3526,11 +3526,12 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
 name = "tauri"
-version = "1.0.14"
+version = "1.0.17"
 dependencies = [
  "chrono",
  "core-foundation-sys",
  "objc2-app-kit",
+ "open",
  "serde",
  "serde_json",
  "tauri 2.9.5",
