@@ -273,9 +273,10 @@ export class DefaultBrowserInstaller {
     const oldShortcutItem = await shortcutStore.get(dirId)
 
     // 如果该窗口已经存在快捷方式，但是路径不一致，则删除旧的快捷方式
-    if (oldShortcutItem && oldShortcutItem.launcherEntry !== appOutPath) {
+    if (oldShortcutItem?.launcherEntry && oldShortcutItem.launcherEntry !== appOutPath) {
       console.debug('delete old shortcut', oldShortcutItem.launcherEntry)
-      await rm(normalize(oldShortcutItem.launcherEntry)).catch((e) => {
+      // macOS 的 .app 是目录包，需要 recursive；force 避免不存在时报错
+      await rm(normalize(oldShortcutItem.launcherEntry), { recursive: true, force: true }).catch((e) => {
         console.error('delete old shortcut failed', e)
       })
     }
@@ -380,7 +381,7 @@ Categories=Network;WebBrowser;
 
       // 如果该窗口已经存在开始菜单快捷方式，但是路径不一致，则删除旧的快捷方式
       if (oldShortcutItem?.startMenuEntry && oldShortcutItem.startMenuEntry !== systemDesktopPath) {
-        await rm(normalize(oldShortcutItem.startMenuEntry), { force: true }).catch((e) => {
+        await rm(normalize(oldShortcutItem.startMenuEntry), { recursive: true, force: true }).catch((e) => {
           console.error('delete old shortcut failed', e)
         })
       }
