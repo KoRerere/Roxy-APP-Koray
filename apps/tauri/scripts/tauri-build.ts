@@ -9,6 +9,15 @@ console.log('[tauri-build] NODE_ENV', nodeEnv)
 
 cpSync(join(import.meta.dirname, `../.env.${nodeEnv}`), '.env')
 
+function getTauriIdentifierForEnv(env: string) {
+  // 约定：
+  // - 测试/开发环境：com.roxybrowserdev.browser.launcher
+  // - 生产环境：com.roxybrowser.browser.launcher
+  return env === 'production'
+    ? 'com.roxybrowser.browser.launcher'
+    : 'com.roxybrowserdev.browser.launcher'
+}
+
 function normalizeSemverFromEnv(raw: string): string {
   const v = raw.trim().replace(/^v/i, '')
   const semverLike = /^\d+\.\d+\.\d+(?:-[0-9A-Z.-]+)?(?:\+[0-9A-Z.-]+)?$/i
@@ -24,16 +33,25 @@ function syncTauriVersionFromViteVersion() {
     return
 
   const version = normalizeSemverFromEnv(raw)
+  const identifier = getTauriIdentifierForEnv(nodeEnv)
 
   // 1) tauri.conf.json
   const tauriConfPath = join(import.meta.dirname, '../src-tauri/tauri.conf.json')
   const tauriConfRaw = readFileSync(tauriConfPath, 'utf8')
   const tauriConf = JSON.parse(tauriConfRaw) as Record<string, any>
+  let tauriConfChanged = false
   if (tauriConf.version !== version) {
     tauriConf.version = version
-    writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`, 'utf8')
+    tauriConfChanged = true
     console.log('[tauri-build] 已同步 tauri.conf.json version =', version)
   }
+  if (tauriConf.identifier !== identifier) {
+    tauriConf.identifier = identifier
+    tauriConfChanged = true
+    console.log('[tauri-build] 已同步 tauri.conf.json identifier =', identifier)
+  }
+  if (tauriConfChanged)
+    writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`, 'utf8')
 
   // 2) Cargo.toml（仅替换 [package] 下的 version 行）
   const cargoTomlPath = join(import.meta.dirname, '../src-tauri/Cargo.toml')

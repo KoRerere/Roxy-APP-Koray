@@ -2,8 +2,8 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "RoxyChrome",
   "mainBinaryName": "RoxyChrome",
-  "version": "1.0.17",
-  "identifier": "com.roxybrowser.browser.launcher",
+  "version": "1.0.18",
+  "identifier": "com.roxybrowserdev.browser.launcher",
   "build": {
     "frontendDist": "empty-dist"
   },
