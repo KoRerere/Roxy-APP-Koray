@@ -144,7 +144,7 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">
-        <WalletPaymentMethods v-model="selectedPayway" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods" :on-confirm="confirm" />
+        <WalletPaymentMethods v-model="selectedPayway" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods" :on-confirm="confirm" />
       </ItemBlock>
     </div>
   </div>

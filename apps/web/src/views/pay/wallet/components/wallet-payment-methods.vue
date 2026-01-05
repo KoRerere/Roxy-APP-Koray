@@ -23,10 +23,11 @@ interface AvailableMethods {
   [key: string]: any
 }
 
-const { rechargeAmount, methods, disabledMethods = [], onConfirm } = defineProps<{
+const { rechargeAmount, methods, disabledMethods = [], addFundsAndPay = false, onConfirm } = defineProps<{
   rechargeAmount: number
   methods: Methods[]
   disabledMethods?: PayWay[]
+  addFundsAndPay?: boolean
   onConfirm: (params?: any) => any | Promise<any>
 }>()
 
@@ -95,6 +96,8 @@ const defaultMethods = [
     },
   },
 ]
+
+const confirmText = computed(() => addFundsAndPay ? $t('充值并支付') : $t('确认'))
 
 const availableMethods = computed(() => {
   return methods.reduce((acc, { value: payway, discount, ...meta }) => {
@@ -268,7 +271,7 @@ async function payConfirm() {
       </div>
     </div>
     <div v-show="openOther" class="w-full grid gap-3 select-none payway">
-      <template v-for="item in availableMethods" :key="item.value">
+      <template v-for="item in availableMethods" :key="item.label">
         <div class="relative flex flex-col items-center justify-center gap-1.5 payway-item" :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }"
              @click="handleClick(item)"
         >
@@ -281,7 +284,7 @@ async function payConfirm() {
       </template>
     </div>
     <div v-if="genStripe" class="w-full">
-      <StripePay v-show="openOther && selectedPayway === PayWay.Card" v-model:bind="saveCard" class="w-full" :recharge-amount="rechargeAmount" :on-confirm="newCardConfirm">
+      <StripePay v-show="openOther && selectedPayway === PayWay.Card" v-model:bind="saveCard" class="w-full" :recharge-amount="rechargeAmount" :confirm-text="confirmText" :on-confirm="newCardConfirm">
         <template v-if="cardList.length < 4" #after>
           <div class="flex items-center gap-2.5">
             <RxCheckbox v-model="saveCard" input-id="wrap" binary />
@@ -316,7 +319,7 @@ async function payConfirm() {
         </div>
       </div>
     </div>
-    <RxButton v-if="!openOther || (openOther && selectedPayway !== PayWay.Card)" class="w-full" size="lg" :label="$t('确认')" @click="payConfirm" />
+    <RxButton v-if="!openOther || (openOther && selectedPayway !== PayWay.Card)" class="w-full" size="lg" :label="confirmText" @click="payConfirm" />
   </div>
 </template>
 

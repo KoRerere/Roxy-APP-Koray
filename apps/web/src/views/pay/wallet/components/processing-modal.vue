@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils'
@@ -91,7 +90,7 @@ function close(isCancel: boolean) {
       </i18n-t>
     </div>
     <div class="flex flex-col gap-2.5">
-      <RxButton v-model:loading="loading" size="lg" :label="$t('支付成功')" @click="checkStatus(true)" />
+      <!-- <RxButton v-model:loading="loading" size="lg" :label="$t('支付成功')" @click="checkStatus(true)" /> -->
       <RxButton size="lg" outlined severity="secondary" :label="$t('取消')" @click="close(true)" />
       <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
         <template #link>

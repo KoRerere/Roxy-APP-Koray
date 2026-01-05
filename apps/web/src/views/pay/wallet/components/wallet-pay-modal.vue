@@ -26,7 +26,6 @@ const emit = defineEmits<{
 const [showToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { realTheme } = storeToRefs(useThemeStore())
-const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
 const loading = ref(false)
 const isAuto = ref(showAutoRenew ? !!userPayInfo.value.isAuto : false)
@@ -57,14 +56,11 @@ const finalResult = computed(() => {
 function onRecharge() {
   walletRecharge({
     needAmount: finalResult.value.needAmount,
-    next: (data) => {
-      openProcessing(data, 'silent')
-        .then(getUserPayInfo)
-        .then(() => {
-          showToast(0, $t('您的钱包余额为: {value}', { value: currency(userPayInfo.value.balance).format() }))
-        })
+    next: async (data) => {
+      await openProcessing(data, 'silent')
+        .then(confirm)
         .catch(() => {
-          showToast(1, $t('充值失败'))
+          showToast(1, $t('支付失败'))
           close(false)
         })
     },

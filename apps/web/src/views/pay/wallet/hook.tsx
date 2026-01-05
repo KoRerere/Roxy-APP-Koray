@@ -187,7 +187,7 @@ export function usePay() {
             return
         }
 
-        settlementNext?.(data)
+        await settlementNext?.(data)
       }
       catch (error) {
         onlyErrorToast(code, (error as Error).message)
