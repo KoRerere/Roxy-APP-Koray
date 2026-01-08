@@ -288,7 +288,7 @@ defineExpose({
           </div>
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
-              <span class="video-title">{{ $t('代理教程') }}</span>
+              <span class="video-title">{{ $t('代理 IP 教程') }}</span>
               <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProxyVideoEntryStatus')" />
             </div>
             <div class="video-desc">

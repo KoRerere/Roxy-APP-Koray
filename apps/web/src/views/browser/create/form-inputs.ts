@@ -322,7 +322,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       separator: true,
     },
     {
-      label: $t('代理'),
+      label: $t('代理 IP'),
       name: 'proxyInfoList',
       value: proxyInfoList,
       formatValue: (input: any, _inputs: any, formData: any) => {
@@ -1178,6 +1178,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.syncLocalStorage ?? false,
       options: genSwitchOptions(),
     },
+    // todo 暂时注释，下版本 15号发布
+    // {
+    //   type: 'selectButton',
+    //   label: $t('同步Session Storage'),
+    //   name: 'syncSessionStorage',
+    //   value: data.syncSessionStorage ?? false,
+    //   options: genSwitchOptions(),
+    //   change(input: any) {
+    //     setInputVisible(otherInputs, 'sessionStorages', input.value === true)
+    //   },
+    // },
+    // {
+    //   type: 'textarea',
+    //   label: ' ',
+    //   name: 'sessionStorages',
+    //   placeholder: $t('请务必按以下格式填写，不输入则全部开启\n{example}', { example: '[\n\t{"domain": "www.example1.com", "key": ["key1", "key2"]}\n\t{"domain": "www.example2.com", "key": ["key1", "key2"]}\n]' }),
+    //   value: isEmptyValue(data?.sessionStorages) ? '' : JSON.stringify(data.sessionStorages, null, 2),
+    //   rows: 5,
+    //   formatValue: (input: any) => safeParseJSON(input.value, []),
+    //   help: $t('开启同步 Session Storage 可能存在风险，请谨慎操作!'),
+    //   visible: initInputVisible(data.syncSessionStorage, true, false),
+    // },
     {
       type: 'selectButton',
       label: $t('启动浏览器前删除缓存文件'),

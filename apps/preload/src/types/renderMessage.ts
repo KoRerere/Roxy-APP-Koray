@@ -147,6 +147,16 @@ export interface RenderMessage {
   'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
   'app:getAppVersion': () => string
+  /** 卸载反馈已提交 */
+  'app:uninstall-feedback-submitted': (payload: { reasons: string[], feedback: string }) => Promise<void>
+  /** 跳过卸载反馈 */
+  'app:uninstall-feedback-skipped': () => Promise<void>
+  /** 直接卸载，无需反馈 */
+  'app:uninstall-directly': () => Promise<void>
+  /** 打开外部链接 */
+  'app:open-external-url': (url: string) => Promise<void>
+  /** 取消卸载 */
+  'app:uninstall-cancelled': () => Promise<void>
   /** openapi 端口或开关变的时候，需要重启服务 */
   'app:restartAPIServer': () => void
   /** 安装并更新 */

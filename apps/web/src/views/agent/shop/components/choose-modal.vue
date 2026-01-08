@@ -8,11 +8,16 @@ defineOptions({
   inheritAttrs: false,
 })
 
+const { provider, focusProviderName } = defineProps<{
+  provider?: Record<string, any>
+  focusProviderName?: string
+}>()
+
 defineEmits(['close', 'success'])
 
 const { mixpanelTrack } = useUserStore()
 const themeStore = useThemeStore()
-const currentProvider = ref()
+const currentProvider = ref(provider)
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/shop_dialog_bg.svg")' : 'url("/images/proxy/shop_dialog_bg_dark.svg")'
@@ -25,7 +30,7 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col rounded-lg popup">
-    <ProviderList v-show="!currentProvider" v-model="currentProvider" @close="$emit('close')" @success="$emit('success', $event)" />
+    <ProviderList v-show="!currentProvider" v-model="currentProvider" :focus-provider-name="focusProviderName" @close="$emit('close')" @success="$emit('success', $event)" />
     <ProviderDetail v-if="currentProvider" :data="currentProvider" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)" />
   </div>
 </template>

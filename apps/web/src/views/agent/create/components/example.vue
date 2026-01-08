@@ -1,7 +1,6 @@
 <script setup lang="tsx">
 import { IPType } from '/@/utils'
 
-
 const props = defineProps<{
   ipType?: IPType
 }>()
@@ -50,7 +49,7 @@ const contents = computed(() => {
 
 <template>
   <div v-bind="$attrs" class="break-keep-all example">
-    <div>{{ $t('示例') }}: </div>
+    <div>{{ $t('示例（刷新 URL 与备注为选填）') }}: </div>
     <div v-for="(rule, index) in contents" :key="index" v-html="rule.content" />
     <br>
     <div class="help">

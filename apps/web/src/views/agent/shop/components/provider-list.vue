@@ -1,31 +1,52 @@
 <script setup lang="ts">
+import ProviderCard from './provider-card.vue'
 import Identity from '/@/views/pay/wallet/manage/identity.vue'
 import { API } from '/@/api'
-
 import { useUserStore } from '/@/stores/user'
-import ProviderCard from './provider-card.vue'
+import { sleep } from '/@/utils'
 
-const emit = defineEmits(['close', 'success'])
+const { focusProviderName } = defineProps<{
+  focusProviderName?: string
+}>()
 
-const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
+defineEmits<{
+  (e: 'close'): void
+  (e: 'success'): void
+}>()
+
+const { userPayInfo } = storeToRefs(useUserStore())
 
 const currentProvider = defineModel()
 
 const animationGradient = ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']
-const providers = ref<Record<string, any>[]>()
-
-async function getProviders() {
-  const { data } = await API.proxy.userGetProxyProviderListList()
-  providers.value = data || []
-}
-
-function onClose() {
-  emit('close')
-}
+const _focusProviderName = ref()
+const providers = ref()
+// const redeemCode = ref('')
 
 onBeforeMount(() => {
   getProviders()
 })
+
+async function getProviders() {
+  const { data } = await API.proxy.userGetProxyProviderListList()
+  providers.value = data || []
+  focusProvider()
+}
+
+function focusProvider() {
+  if (focusProviderName) {
+    _focusProviderName.value = focusProviderName
+
+    nextTick(async () => {
+      const targetElement = document.getElementById(focusProviderName)
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth' })
+      }
+      await sleep(1000)
+      _focusProviderName.value = undefined
+    })
+  }
+}
 
 function updateApiKey(id: number, apiKey: string) {
   if (providers.value) {
@@ -38,6 +59,15 @@ function updateApiKey(id: number, apiKey: string) {
     }
   }
 }
+
+// async function redeem() {
+//   const { code, msg } = await API.proxy.userRedeemProxyCodeCreate({ code: redeemCode.value })
+//   showToast(code, msg)
+//   if (code !== 0) return
+//   redeemCode.value = ''
+//   emit('close')
+//   emit('success')
+// }
 </script>
 
 <template>
@@ -45,7 +75,7 @@ function updateApiKey(id: number, apiKey: string) {
     <div class="px-8 header">
       <div class="flex items-center justify-between">
         <span class="header-title">{{ $t('代理 IP 商店') }}</span>
-        <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="onClose" />
+        <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="$emit('close')" />
       </div>
       <div class="mt-2.5 header-desc">
         {{ $t('RoxyBrowser 为您精选、验证、集成了来自不同可靠服务商的最优质代理 IP。') }}
@@ -74,13 +104,9 @@ function updateApiKey(id: number, apiKey: string) {
               <Skeleton :pt="{ root: skeleton.bg }" class="mt-5" width="154px" height="20px" />
             </div>
           </template>
-          <ProviderCard
-            v-for="item in providers"
-            v-else
-            :key="item.proxyProviderName"
-            v-model="currentProvider"
-            :item="item"
-            :update-api-key="updateApiKey"
+
+          <ProviderCard v-for="item in providers" v-else :id="item.proxyProviderName" :key="item.proxyProviderName" v-model="currentProvider" class="provider"
+                        :class="{ focus: _focusProviderName === item.proxyProviderName }" :item="item" :update-api-key="updateApiKey"
           />
 
           <div v-if="providers && providers.length % 2 !== 0" class="flex flex-col justify-center items-center gap-6 pa-6 connect">
@@ -150,64 +176,13 @@ function updateApiKey(id: number, apiKey: string) {
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
   background-color: var(--colors-background-bg-overlay);
+  transition: all 0.3s ease-in-out;
 
-  // &-name {
-  //   color: var(--colors-text-text-primary);
-  //   font-size: 16px;
-  //   font-weight: 600;
-  //   line-height: 20px;
-  // }
-
-  // &-tag {
-  //   padding: 5px 6px;
-  //   border-radius: 2px;
-  //   border: 1px solid var(--component-tag-border);
-  //   background: var(--component-tag-bg);
-  //   color: var(--colors-text-text-secondary);
-  //   font-family: 'JetBrains Mono';
-  //   font-size: 10px;
-  //   font-weight: 800;
-  //   line-height: 8px;
-  // }
-
-  // &-website {
-  //   color: var(--colors-text-text-tertiary);
-  //   font-size: 12px;
-  //   line-height: 16px;
-  // }
-
-  // &-desc {
-  //   color: var(--colors-text-text-secondary);
-  //   font-size: 13px;
-  //   line-height: 18px;
-  // }
-
-  // &-subtitle {
-  //   color: var(--colors-text-text-primary);
-  //   font-size: 13px;
-  //   font-weight: 500;
-  //   line-height: normal;
-  // }
-
-  // &-price {
-  //   font-family: 'DingTalk JinBuTi';
-  //   font-size: 13px;
-  //   line-height: 16px;
-  //   background: linear-gradient(90deg, #12a3fc 0%, #db54f9 100%);
-  //   background-clip: text;
-  //   -webkit-background-clip: text;
-  //   -webkit-text-fill-color: transparent;
-  // }
+  &.focus {
+    border-color: var(--colors-border-border-brand);
+    background-color: var(--colors-background-bg-info);
+  }
 }
-
-// .discount {
-//   background: #fc9d12;
-//   color: #fff;
-//   font-family: 'DingTalk JinBuTi', sans-serif;
-//   font-size: 12px;
-//   font-weight: 500;
-//   line-height: normal;
-// }
 
 .connect {
   border-radius: 8px;

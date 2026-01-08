@@ -11,6 +11,7 @@
  */
 
 import {
+  GetConsumptionGiftIpConfigListData,
   UserAddProxyModuleCreateData,
   UserAddProxyModuleCreatePayload,
   UserCheckProxyCreateData,
@@ -35,6 +36,7 @@ import {
   UserGetProxyRecommendInfoListData,
   UserGetProxyRefundInfoListData,
   UserGetProxyRefundInfoListParams,
+  UserGetProxyStoreListListData,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
   UserGetTimezoneByCoordinatesInfoListData,
@@ -594,6 +596,38 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyStoreListList
+   * @summary 获取代理商店列表（简化版）
+   * @request GET:/user_get_proxy_store_list
+   * @response `200` `UserGetProxyStoreListListData`
+   */
+  userGetProxyStoreListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyStoreListListData, any>({
+      path: `/user_get_proxy_store_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name GetConsumptionGiftIpConfigList
+   * @summary 获取消费赠送IP配置信息
+   * @request GET:/get_consumption_gift_ip_config
+   * @response `200` `GetConsumptionGiftIpConfigListData`
+   */
+  getConsumptionGiftIpConfigList = (params: RequestParams = {}) =>
+    this.http.request<GetConsumptionGiftIpConfigListData, any>({
+      path: `/get_consumption_gift_ip_config`,
+      method: "GET",
       format: "json",
       ...params,
     });

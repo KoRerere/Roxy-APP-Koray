@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { API } from '/@/api'
 import { ActivityType } from '/@/enums/base'
-import type { GetActivityDiscountListData, GetBlackFridayTimeListData } from '@roxy/backend-api'
+import type { GetActivityDiscountListData, GetBlackFridayTimeListData, GetConsumptionGiftIpConfigListData } from '@roxy/backend-api'
 
 type BlackFriday = GetBlackFridayTimeListData['data']
 
@@ -10,6 +10,7 @@ type Activity = GetActivityDiscountListData['data']
 export const useCampaignStore = defineStore('campaign', () => {
   const blackFridayPeriod = ref(false)
   const blackFridayInfo = ref<BlackFriday>()
+  const roxyGifts = ref<GetConsumptionGiftIpConfigListData['data']>()
 
   async function getBlackFridayInfo() {
     const { code, data } = await API.base.getBlackFridayTimeList()
@@ -39,6 +40,13 @@ export const useCampaignStore = defineStore('campaign', () => {
     currentActivity.value = data
   }
 
+  async function getRoxyGifts() {
+    const { code, data } = await API.proxy.getConsumptionGiftIpConfigList()
+    if (code !== 0)
+      return
+    roxyGifts.value = data
+  }
+
   return {
     blackFridayPeriod,
     blackFridayInfo,
@@ -46,6 +54,8 @@ export const useCampaignStore = defineStore('campaign', () => {
     currentActivity,
     seasonalActivity,
     getActivityInfo,
+    roxyGifts,
+    getRoxyGifts,
   }
 }, {
   persist: false,

@@ -394,7 +394,7 @@ async function onSave() {
                  :show-actions="false"
         >
           <template #table-empty>
-            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" class="min-h-258px" />
+            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理 IP')" class="min-h-258px" />
           </template>
           <template #outbound="{ data }">
             <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />

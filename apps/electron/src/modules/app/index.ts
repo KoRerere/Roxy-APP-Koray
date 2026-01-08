@@ -4,8 +4,7 @@ import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
-import { createTray } from '/@/modules/app/tray'
-import { cleanupAndExit, killAllBrowserProcess } from '/@/modules/app/utils'
+import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
@@ -105,6 +104,14 @@ export async function setupApp() {
 
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
+
+    // 卸载反馈由“卸载模式独立进程”处理。这里直接忽略，避免主实例抢焦点/重复弹窗。
+    if (commandLine.includes('--uninstall-feedback')) {
+      console.log('second-instance: uninstall-feedback')
+      showUninstallFeedback()
+      return
+    }
+
     await restoreOrCreateWindow()
 
     // 优先处理 deep link（可能出现在任意 argv）
@@ -116,8 +123,9 @@ export async function setupApp() {
 
     // 再处理任务栏/JumpList 的 action
     const action = getRoxyActionFromArgs(commandLine)
-    if (action)
+    if (action) {
       await dispatchRoxyAction(commandLine, 'second-instance')
+    }
   })
 
   //  系统自带浏览器打开

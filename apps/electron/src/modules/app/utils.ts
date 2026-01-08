@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, globalShortcut } from 'electron'
+import { app, dialog, globalShortcut } from 'electron'
 import { API } from '/@/api'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
@@ -7,6 +7,7 @@ import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { killProcessByName } from '/@/utils'
 import { closeAllWindows } from '/@/utils/browser-window'
+import { closeUninstallFeedbackWindow, createUninstallFeedbackWindow, isUninstallFeedbackMode } from './uninstallFeedback'
 
 const closeSoftMap = {
   0: 'min',
@@ -83,6 +84,91 @@ export function killAllBrowserProcess() {
   killProcessByName('RoxyChrome')
   killProcessByName('chromedriver')
   killProcessByName('chrome_proxy')
+}
+
+/** 是否正在显示卸载反馈窗口 */
+let isShowingUninstallFeedback = false
+
+/** 是否已确认退出 */
+let isQuitConfirmed = false
+
+/**
+ * 显示卸载反馈窗口并等待用户操作
+ */
+export async function showUninstallFeedback(): Promise<void> {
+  if (isShowingUninstallFeedback || isQuitConfirmed) {
+    return
+  }
+
+  isShowingUninstallFeedback = true
+
+  try {
+    // 关闭主窗口
+    const mainWindow = getMainWindow()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.hide()
+    }
+
+    // 显示卸载反馈窗口
+    await createUninstallFeedbackWindow()
+  }
+  catch (error) {
+    console.error('Failed to show uninstall feedback window:', error)
+    isShowingUninstallFeedback = false
+    // 如果显示失败，直接退出
+    confirmQuit()
+  }
+}
+
+/**
+ * 确认退出应用
+ */
+export function confirmQuit() {
+  if (isQuitConfirmed) {
+    return
+  }
+
+  isQuitConfirmed = true
+  isShowingUninstallFeedback = false
+
+  // 如果是卸载反馈模式，退出码为 0（表示继续卸载）
+  if (isUninstallFeedbackMode) {
+    console.log('User confirmed uninstall, exiting with code 0')
+    // 先关窗口，避免触发 closed 后又走 cancelQuit（由 cancelQuit 的保护兜底）
+    closeUninstallFeedbackWindow()
+    app.exit(0)
+    return
+  }
+
+  cleanupAndExit()
+}
+
+/**
+ * 取消退出（用户选择不卸载）
+ */
+export function cancelQuit() {
+  // 已经确认退出/正在退出时，不再重复触发取消逻辑
+  if (isQuitConfirmed) {
+    return
+  }
+  isShowingUninstallFeedback = false
+  closeUninstallFeedbackWindow()
+
+  // 如果是卸载反馈模式，退出应用并返回退出码 1（表示取消卸载）
+  if (isUninstallFeedbackMode) {
+    isQuitConfirmed = true
+    console.log('User cancelled uninstall, exiting with code 1')
+    // 直接退出，返回退出码 1
+    app.exit(1)
+    return
+  }
+
+  // 恢复主窗口（非卸载模式）
+  const mainWindow = getMainWindow()
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show()
+    mainWindow.focus()
+  }
 }
 
 /** 清理和释放资源 */

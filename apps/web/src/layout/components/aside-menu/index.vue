@@ -9,7 +9,9 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProjectPin, WorkspaceType } from '/@/enums'
-import type { RouteRecordRaw } from 'vue-router'
+import { safeParseJSON } from '/@/utils'
+import { emitter } from '/@/utils/eventBus'
+import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 import type { Role } from '/@/enums'
 
 const { collapsed = false } = defineProps<{
@@ -131,18 +133,26 @@ const _asidemenusRef = useTemplateRef('asidemenus')
 function handleScroll() {
   // updateMask()
 }
+
+const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
+
+emitter.on('badgeMap', (key) => {
+  if (!Reflect.has(badgeMap.value, key)) {
+    Reflect.set(badgeMap.value, key, true)
+  }
+})
 </script>
 
 <template>
   <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
-      <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png">
+      <!-- <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png"> -->
       <RxButton class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">
       <!-- <div v-if="showTopMask" class="mask top-mask" /> -->
       <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu" @scroll="handleScroll">
-        <SubMenuItem class="relative z-1" :items="menus" :collapsed />
+        <SubMenuItem v-model:badge-map="badgeMap" class="relative z-1" :items="menus" :collapsed />
       </nav>
       <!-- <div v-if="showBottomMask" class="mask bottom-mask" /> -->
     </div>

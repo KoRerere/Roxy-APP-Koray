@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
+// import type { SvgNames } from '/@/components/rx-icon'
 
 const props = defineProps<{
   item: RouteRecordRaw
   collapsed: boolean
 }>()
 
-const cacheKey = 'isShowBuyProxyNewBadge'
-const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
+// const cacheKey = 'isShowBuyProxyNewBadge'
+// const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
 
 const route = useRoute()
 const isCollapsed = defineModel('open', { default: false })
+const badgeMap = defineModel<Record<NonNullable<RouteRecordNameGeneric>, boolean>>('badgeMap', { default: () => ({}) })
+
 const canOpen = computed(() => props.item.children?.some(n => !n.meta?.hideInMenu))
 
 if (canOpen.value) {
@@ -40,9 +42,14 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     navigate()
   }
 
-  if (props.item.meta?.newBadge) {
-    localStorage.setItem(cacheKey, 'true')
-    isShowNewBadge.value = false
+  // if (props.item.meta?.newBadge) {
+  //   localStorage.setItem(cacheKey, 'true')
+  //   isShowNewBadge.value = false
+  // }
+
+  if (badgeMap.value[props.item.name!]) {
+    Reflect.set(badgeMap.value, props.item.name!, false)
+    localStorage.setItem('badgeMapCache', JSON.stringify(badgeMap.value))
   }
 }
 </script>
@@ -51,12 +58,17 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
       <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
-        @click.prevent="handleClickItem($event, navigate)">
+         @click.prevent="handleClickItem($event, navigate)"
+      >
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title" :title="item.meta?.title">
           <span>{{ item.meta?.title }}</span>
         </div>
-        <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" class="new-badge" size="25" :name="(item.meta?.newBadge as SvgNames)" />
+        <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->
+        <div v-if="badgeMap[item.name!]" class="flex items-center py-1 px-1.5 gap-2 rounded-1 sent">
+          <SvgIcon size="12" name="base/rx_ic_gift_2" color="#ffffff" />
+          <span class="sent-text">{{ $t('已发放') }}</span>
+        </div>
         <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
       </a>
     </RouterLink>
@@ -87,17 +99,16 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   }
 }
 
-
 .menu-item {
   display: flex;
   gap: var(--spacing-xl, 12px);
-  color: #575D61;
+  color: #575d61;
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   align-items: center;
   align-self: stretch;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   transition: all 0.15s ease-in-out;
 
   .menu-title {
@@ -111,15 +122,14 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     line-height: 20px;
   }
 
-
   &:hover {
-    color: var(--colors-text-text-primary-hover, #FFF);
+    color: var(--colors-text-text-primary-hover, #fff);
     background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
   }
 
   &.active {
-    color: var(--pattern-sidenav-text-active, #3FB6FD);
-    background: var(--pattern-sidenav-bg-active, #013D65);
+    color: var(--pattern-sidenav-text-active, #3fb6fd);
+    background: var(--pattern-sidenav-bg-active, #013d65);
     font-weight: bold;
 
     .menu-title {
@@ -131,14 +141,16 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   .menu-icon {
     color: currentColor;
   }
-
-
 }
 
-.new-badge {
-  position: absolute;
-  margin-left: 6px;
-  top: 0;
-  right: 3px;
+.sent {
+  background: #d15cec;
+
+  &-text {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
 }
 </style>

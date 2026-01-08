@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import RxTooltip from '/@/components/rx-tooltip';
+import RxTooltip from '/@/components/rx-tooltip'
 
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from "/@/stores/role"
-import { SubLevelEnum } from '/@/enums/pay';
+import { useRoleStore } from '/@/stores/role'
+import { SubLevelEnum } from '/@/enums/pay'
 import { ProxyExpireStatus } from '/@/enums/proxy'
 
 const props = defineProps({
@@ -30,7 +30,7 @@ const props = defineProps({
   icon: {
     type: String,
     default: 'base/rx_ic_chrome',
-  }
+  },
 })
 
 const emits = defineEmits(['open'])
@@ -40,9 +40,10 @@ const { userInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
 
 const usePeoples = computed(() => {
-  const count = props.data.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).length
-  if (count < 1) return ''
-  return $t('{count} 人正在使用', { count })
+  const users = props.data.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).map((item: any) => item.openUserName)
+  if (users.length < 1)
+    return ''
+  return `${$t('{count} 人正在使用', { count: users.length })}：${users.join(', ')}`
 })
 
 const browser = computed(() => {
@@ -52,7 +53,7 @@ const browser = computed(() => {
     return {
       msg: props.text,
       classes: 'cursor-pointer',
-      error: props.data.proxyExpireStatus === ProxyExpireStatus.expired ? $t('您购买的代理已过期。请在打开窗口前更新代理信息') : undefined
+      error: props.data.proxyExpireStatus === ProxyExpireStatus.expired ? $t('您购买的代理已过期。请在打开窗口前更新代理信息') : undefined,
     }
   }
 
@@ -89,7 +90,8 @@ function onUpgradePlan() {
 
   if (isFree || isExpired) {
     router.push({ name: 'subscribe-plan' })
-  } else {
+  }
+  else {
     router.push({ name: 'upgrade-plan' })
   }
 }
@@ -101,13 +103,13 @@ function onUpgradePlan() {
       <template #default>
         <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
           <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-          <SvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" :name="(icon as any)" />
+          <SvgIcon v-if="!browser.percent && !browser.pending" class="control-icon" :name="(icon as any)" />
           <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
         </RxButton>
       </template>
       <template #content>
         <i18n-t tag="div" scope="global" class="w-50 error" :keypath="$t('当前临时窗口已过期，请升级窗口用量后继续使用。{link}', { link: '{link}' })">
-          <template #link v-if="!isPublic">
+          <template v-if="!isPublic" #link>
             <span class="cursor-pointer error-link" @click="onUpgradePlan">{{ $t('立即升级') }}</span>
           </template>
         </i18n-t>
@@ -119,7 +121,7 @@ function onUpgradePlan() {
       </template>
       <template #content>
         <i18n-t class="error" tag="div" :keypath="browser.error || browser.warning" scope="global">
-          <template #link v-if="!isPublic">
+          <template v-if="!isPublic" #link>
             {{ $t('要解决此问题，请访问') }}
             <span class="cursor-pointer error-link" @click="router.push({ name: 'agent-list', query: { name: 'shop' } })">{{ $t('代理页面') }}</span>
           </template>
@@ -150,7 +152,7 @@ function onUpgradePlan() {
 
   &:not(:disabled) {
     .control-icon {
-      color: #12A3FC;
+      color: #12a3fc;
     }
   }
 }

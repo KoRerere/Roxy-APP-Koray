@@ -1,26 +1,17 @@
 <script setup lang="ts">
-;
-
-const roxyBrowserProviderFeature = {
-  label: $t('特别支持'),
-  icons: [
-    'rx_accounts_netflix',
-    'rx_accounts_hbo',
-    'rx_accounts_Disney',
-    'rx_accounts_Hulu',
-    'rx_accounts_spotify',
-    'rx_accounts_apple_tv'
-  ].map(n => `websites/${n}`)
-}
-
+defineProps<{
+  icons: string[]
+}>()
 </script>
 
 <template>
   <div class="flex items-center gap-2.5">
-    <div class="feature-label">{{ roxyBrowserProviderFeature.label }}: </div>
+    <div class="feature-label">
+      {{ $t('特别支持') }}:
+    </div>
     <div class="flex items-center gap-2.5">
-      <div v-for="icon in roxyBrowserProviderFeature.icons" class="feature-icon">
-        <SvgIcon :name="icon" size="14" />
+      <div v-for="imgUrl in icons" :key="imgUrl" class="feature-icon">
+        <img class="block w-3.5 h-3.5" :src="imgUrl">
       </div>
     </div>
   </div>
@@ -28,7 +19,7 @@ const roxyBrowserProviderFeature = {
 
 <style lang="scss" scoped>
 .feature-label {
-  color: var(--colors-text-text-secondary, #CDCFD0);
+  color: var(--colors-text-text-secondary, #cdcfd0);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -44,6 +35,6 @@ const roxyBrowserProviderFeature = {
   justify-content: center;
   align-items: center;
   border-radius: 4px;
-  border: 1px solid var(--colors-border-border-subtle, #48555B);
+  border: 1px solid var(--colors-border-border-subtle, #48555b);
 }
 </style>

@@ -3,6 +3,7 @@ import { useUserStore } from '/@/stores/user'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import type { RoxyGiftsType } from '/@/enums/pay'
 import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
 import { API } from '/@/api'
 import { emitter } from '/@/utils/eventBus'
@@ -188,6 +189,9 @@ export function useSubscribe() {
     showModal({
       header: $t('v{appVersion} 更新概览', { appVersion }),
       class: 'w-[500px] max-h-[90vh] !transform-none',
+      pt: {
+        root: '!will-change-auto',
+      },
       draggable: false,
       handleCancel: () => {
         electronAPI.send('app:hideNewFeatureTips')
@@ -217,7 +221,7 @@ export function useSubscribe() {
         },
       },
       data: {
-        onConfirm: async (params: { isAuto: boolean, payType: PayWay, orderNo: string, subscriptionMonths: number }) => {
+        onConfirm: async (params: { isAuto: boolean, payType: PayWay, giftType: RoxyGiftsType, orderNo: string, subscriptionMonths: number }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             ...params,
             orderType: OrderType.Renew,
@@ -253,12 +257,12 @@ export function useSubscribe() {
         props: {
           defaultType: options?.defaultType,
         },
-        onConfirm: async ({ payType, ...purchaseMember }: { payType: PayWay, staff: number, workspace: number }) => {
+        onConfirm: async ({ payType, ...params }: { payType: PayWay, giftType: RoxyGiftsType, purchaseMember: { staff: number, workspace: number } }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
-            payType,
-            purchaseMember,
             purchaseType: PurchaseType.Workspace_Staff,
             orderType: OrderType.Purchase,
+            payType,
+            ...params,
           })
           onlyErrorToast(code, msg)
           if (code === 0) {

@@ -76,3 +76,14 @@ export enum ProxyAutoRenewalStatus {
   /** 启用 */
   Enabled = 1,
 }
+
+export enum ProxyDescType {
+  /** 展示价格 */
+  Price = 1,
+  /** 展示 icon */
+  Icons = 2,
+  /** 展示折扣 */
+  Discount = 3,
+  /** 展示描述 */
+  Desc = 4,
+}

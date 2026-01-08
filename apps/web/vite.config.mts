@@ -123,6 +123,11 @@ const config: UserConfig = {
     warmup: {
       clientFiles: ['./index.html', './src/{views,components}/*'],
     },
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type'],
+    },
   },
 
   optimizeDeps: {
@@ -141,6 +146,7 @@ const config: UserConfig = {
         'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
         'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
         'default-browser': join(PACKAGE_ROOT, 'default-browser.html'),
+        'uninstall': join(PACKAGE_ROOT, 'uninstall.html'),
       },
       output: {
         chunkFileNames(chunkInfo) {

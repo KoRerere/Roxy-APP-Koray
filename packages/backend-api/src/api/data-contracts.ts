@@ -56,12 +56,12 @@ export interface UserGetPlatformInfoV2ListParams {
    * 分页索引
    * @example 1
    */
-  page_index: number;
+  page_index?: number;
   /**
    * 分页条数
    * @example 15
    */
-  page_size: number;
+  page_size?: number;
   /**
    * 平台URL
    * @example "https://www.facebook.com/"
@@ -5678,6 +5678,48 @@ export interface UserRegisterProxyProviderUserCreateData {
   msg: string;
 }
 
+export interface UserGetProxyStoreListListData {
+  code: number;
+  data: {
+    id?: number;
+    proxyProviderWebsite?: string;
+    proxyTypeList?: {
+      id?: number;
+      typeName?: string;
+    }[];
+    iconList?: string[];
+    /** 代理供应商折扣 */
+    proxyProviderDiscount?: number;
+    /** 描叙 */
+    description?: string;
+    /** 是否新增 */
+    isNew?: boolean;
+    /** 价格 */
+    proxyPrice?: number;
+    proxyProviderIcon?: string;
+    proxyProviderName?: string;
+    isJump?: number;
+    proxyProviderDesc?: string;
+    /** 类型 0 展示描叙 1 展示价格 */
+    storeType?: number;
+  }[];
+  msg: string;
+}
+
+export interface GetConsumptionGiftIpConfigListData {
+  code: number;
+  data: {
+    price: number;
+    staticDays: number;
+    ispCount: number;
+    country: string;
+    dynamicFlow: number;
+    dynamicDays: number;
+    isValid: boolean;
+  };
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -6813,7 +6855,11 @@ export interface UserPaySettlementCreatePayload {
    * 购买数量
    * 购买、订阅才有购买数量详细信息{"profile":100,"workspace":1,"staff":2}
    */
-  purchaseMember?: object;
+  purchaseMember?: {
+    profile?: number;
+    workspace?: number;
+    staff?: number;
+  };
   /**
    * 购买类型(wallet/workspace/staff/profile/workspace_staff)
    * 购买、订阅才有
@@ -6844,6 +6890,7 @@ export interface UserPaySettlementCreatePayload {
    * 都有
    */
   payType: string;
+  giftType?: string;
   /**
    * 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift)
    * 都有

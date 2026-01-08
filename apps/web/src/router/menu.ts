@@ -68,6 +68,22 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: $t('工具'), type: 'group' },
     children: [
       {
+        path: 'agent',
+        name: 'agent-list',
+        meta: {
+          title: $t('代理 IP'),
+          icon: 'base/rx_ic_internet',
+          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
+        },
+        component: () => import('/@/views/agent'),
+      },
+      {
+        path: 'create',
+        name: 'agent-create',
+        meta: { title: $t('新建代理'), hideInMenu: true },
+        component: () => import('/@/views/agent/create'),
+      },
+      {
         path: 'account',
         name: 'account-list',
         meta: {
@@ -82,23 +98,6 @@ export const menuRoutes: RouteRecordRaw[] = [
         name: 'account-create',
         meta: { title: $t('新建账号'), hideInMenu: true },
         component: () => import('/@/views/account/create'),
-      },
-      {
-        path: 'agent',
-        name: 'agent-list',
-        meta: {
-          title: $t('代理 IP'),
-          icon: 'base/rx_ic_internet',
-          newBadge: 'base/new_badge',
-          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
-        },
-        component: () => import('/@/views/agent'),
-      },
-      {
-        path: 'create',
-        name: 'agent-create',
-        meta: { title: $t('新建代理'), hideInMenu: true },
-        component: () => import('/@/views/agent/create'),
       },
       {
         path: 'cattle-slaughter',
@@ -179,7 +178,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'api-keys',
         name: 'api-keys',
         meta: {
-          title: 'API & MCP',
+          title: 'API & AI MCP',
           icon: 'base/rx_ic_doc_code',
           roles: [Role.OWNER, Role.MANAGER],
         },

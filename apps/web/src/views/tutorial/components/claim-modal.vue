@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-;
-import { copyText } from '/@/utils/basic';
-import { useResponseToast } from "/@/hooks/useResponseToast";
-import SpecialSupportFor from '/@/views/agent/shop/components/special-support-for.vue';
+
+import { copyText } from '/@/utils/basic'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { data } = defineProps<{
   data: Record<string, any>
@@ -17,7 +16,6 @@ function onCopy() {
   copyText(data.code)
   showToast(0, $t('复制成功'))
 }
-
 </script>
 
 <template>
@@ -25,27 +23,38 @@ function onCopy() {
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('领取成功') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-note)"
-        @click="$emit('close')" />
+               @click="$emit('close')"
+      />
     </div>
     <div class="h-45 flex flex-col justify-center items-center gap-3 self-stretch rounded-lg proxy">
-      <SvgIcon :name="(`country-code/${data.country?.toLocaleUpperCase()}` as any)" size="64"></SvgIcon>
-      <div class="proxy-text">{{ $t('{days} 天 {country} 代理 {count} 个', {
-        days: data.days, country:
-          data.country?.toLocaleUpperCase(), count: data.count
-      }) }}</div>
-      <div class="proxy-tag">{{ $t('数据中心代理') }}</div>
+      <SvgIcon :name="(`country-code/${data.country?.toLocaleUpperCase()}` as any)" size="64" />
+      <div class="proxy-text">
+        {{ $t('{days} 天 {country} 代理 {count} 个', {
+          days: data.days,
+          country:
+            data.country?.toLocaleUpperCase(),
+          count: data.count,
+        }) }}
+      </div>
+      <div class="proxy-tag">
+        {{ $t('数据中心代理') }}
+      </div>
     </div>
     <div class="flex flex-col gap-2">
-      <div class="title">{{ $t('您的兑换码') }}</div>
+      <div class="title">
+        {{ $t('您的兑换码') }}
+      </div>
       <div class="flex justify-center items-center py-4 gap-2.5 rounded-lg code">
         <span>{{ data.code }}</span>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" size="24" color="var(--colors-icon-icon-tertiary)"
-          @click="onCopy"></SvgIcon>
+                 @click="onCopy"
+        />
       </div>
     </div>
     <i18n-t tag="div" class="select-none desc"
-      :keypath="$t('请根据以下指引进行代理兑换：前往费用中心，点击代理卡片旁的购买按钮，在弹出的浮层窗口中完成代理的兑换即可。{video}', { video: '{video}' })"
-      scope="global">
+            :keypath="$t('请根据以下指引进行代理兑换：前往费用中心，点击代理卡片旁的购买按钮，在弹出的浮层窗口中完成代理的兑换即可。{video}', { video: '{video}' })"
+            scope="global"
+    >
       <template #video>
         <TutorialVideo video-url="/video/redeem_proxy.mp4">
           <template #default="{ onPlay }">
@@ -54,8 +63,9 @@ function onCopy() {
         </TutorialVideo>
       </template>
     </i18n-t>
-    <SpecialSupportFor />
-    <div class="tip">{{ $t('* 您可以在费用中心兑换代码。请注意，兑换码仅对当前登录的用户有效。') }}</div>
+    <div class="tip">
+      {{ $t('* 您可以在费用中心兑换代码。请注意，兑换码仅对当前登录的用户有效。') }}
+    </div>
     <RxButton size="lg" :label="$t('前往兑换')" @click="$emit('confirm')" />
   </div>
 </template>
@@ -69,7 +79,7 @@ function onCopy() {
 }
 
 .proxy {
-  background: linear-gradient(180deg, #FFF 0%, #EFF8FF 100%);
+  background: linear-gradient(180deg, #fff 0%, #eff8ff 100%);
   background-image: url('/images/claim-bg.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -91,10 +101,10 @@ function onCopy() {
     align-items: center;
     gap: 10px;
     border-radius: 2px;
-    border: 1px solid #3FB6FD;
-    background: #C8EBFE;
-    color: #11A3FD;
-    font-family: "JetBrains Mono";
+    border: 1px solid #3fb6fd;
+    background: #c8ebfe;
+    color: #11a3fd;
+    font-family: 'JetBrains Mono';
     font-size: 10px;
     font-weight: 800;
     line-height: 10px;
@@ -110,7 +120,7 @@ function onCopy() {
 .code {
   background: var(--colors-background-bg-block);
   color: var(--colors-text-text-primary);
-  font-family: "DM Mono";
+  font-family: 'DM Mono';
   font-size: 24px;
   font-weight: 500;
   line-height: 21px;

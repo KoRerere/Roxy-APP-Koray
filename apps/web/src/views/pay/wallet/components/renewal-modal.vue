@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
@@ -27,6 +28,7 @@ const [showModal] = useDialog()
 const selectedDuration = ref()
 const monthAmount = ref(0)
 const loading = ref(false)
+const giftType = ref()
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
@@ -166,6 +168,7 @@ async function confirm() {
           await _onConfirm.value?.({
             payType,
             isAuto,
+            giftType: giftType.value,
             orderNo: userPayInfo.value!.orderNo,
             subscriptionMonths: selectedDuration.value.month,
           })
@@ -228,7 +231,7 @@ function onUpgradePlan() {
         </ItemBlock>
         <ActivityInfo />
       </div>
-      <div class="flex flex-col gap-2.5 w-80">
+      <div class="flex flex-col gap-2.5 w-88">
         <Detail :list="detail">
           <template #oldprice="{ item }">
             <div class="flex justify-between">
@@ -258,9 +261,10 @@ function onUpgradePlan() {
             </div>
           </template>
           <template #after>
-            <div class="flex-1 flex flex-col justify-end mt-4">
+            <div class="flex-1 flex flex-col justify-end mt-4 gap-3">
+              <RoxyGifts v-model="giftType" :amount="totalAmount" />
               <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm" />
-              <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+              <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
                   <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                 </template>

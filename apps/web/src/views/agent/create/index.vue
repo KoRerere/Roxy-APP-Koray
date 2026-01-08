@@ -25,7 +25,7 @@ async function saveProxies(__proxies: any) {
   const proxies = __proxies.reverse()
   const { code, msg, data } = await API.proxy.userAddProxyModuleCreate(proxies)
   if (code === 0) {
-    router.replace({ name: 'agent-list' })
+    router.replace({ name: 'agent-list', query: { name: 'list' } })
   }
   else if (code === 101 && data) {
     const isAllExist = proxies.length === data?.length
@@ -82,7 +82,7 @@ function onTabsChange(value: any) {
 
 <template>
   <div class="flex flex-col h-full w-full overflow-hidden">
-    <ViewsHeader show-back :divider="false" :title="$t('添加代理')" />
+    <ViewsHeader show-back :divider="false" :title="$t('添加代理 IP')" />
     <div class="proxies-tabs">
       <Tabs v-model:value="tabsValue" @update:value="onTabsChange">
         <TabList>

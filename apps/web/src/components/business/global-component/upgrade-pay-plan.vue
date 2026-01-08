@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon';
-;
-import { useUserStore } from '/@/stores/user';
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { useUserStore } from '/@/stores/user'
 import { RxAlert } from '/@/components/rx-alert/'
-import type { MittEvents } from '/@/utils/eventBus';
-import { toUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode';
-import { API } from '/@/api';
-import { getAdvancedFeature } from '/@/constants/advanced-feature';
-import { SubLevelEnum } from '/@/enums/pay';
+
+import type { MittEvents } from '/@/utils/eventBus'
+import { toUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { API } from '/@/api'
+import { getAdvancedFeature } from '/@/constants/advanced-feature'
+import { SubLevelEnum } from '/@/enums/pay'
 
 const props = defineProps<{
-  hideFn: () => void,
+  hideFn: () => void
   alertType?: MittEvents['showUpgradePlanDialog']
 }>()
 
@@ -19,11 +19,11 @@ const { userPayInfo } = storeToRefs(useUserStore())
 const features = getAdvancedFeature()
 
 const alertTextMap = {
-  'subscriptionExpired': {
+  subscriptionExpired: {
     type: 'warn',
     content: $t('您已达到最大窗口创建限制'),
   },
-  'windowLimitReached': {
+  windowLimitReached: {
     type: 'warn',
     content: $t('您已达到最大窗口创建限制'),
   },
@@ -49,7 +49,7 @@ const images = ref([
     title: $t('更多 API 请求频率'),
     description: $t('API 功能可以配合 Selenium、Puppeteer 和 Playwright 等工具实现浏览器操作的自动化'),
   },
-]);
+])
 
 const currentImage = ref(images.value[0])
 
@@ -67,7 +67,7 @@ function hideDialog() {
   props.hideFn()
   if (userPayInfo.value.showPayWallDlg) {
     API.pay.userUpdatePayTipsList({
-      source: 'Wall'
+      source: 'Wall',
     })
   }
 }
@@ -96,14 +96,12 @@ onUnmounted(() => {
       <div class="upgrade-pay-plan-header">
         {{ $t('升级到') }} <span class="upgrade-pay-plan-header-plus">{{ $t('Roxy 会员') }}</span>
       </div>
-      <RxAlert v-if="alertInfo" class="w-full" :type="(alertInfo.type as any)" :content="alertInfo.content" :closable="false">
-      </RxAlert>
+      <RxAlert v-if="alertInfo" class="w-full" :type="(alertInfo.type as any)" :content="alertInfo.content" :closable="false" />
       <div class="upgrade-pay-plan-content">
         <div class="description">
-          <span>{{ $t('升级套餐以解锁更多') }}</span> <br />
+          <span>{{ $t('升级套餐以解锁更多') }}</span> <br>
           <span>{{ $t('付费计划还包含以下高级功能：') }}</span>
         </div>
-
       </div>
       <div class="features">
         <template v-for="feature in features" :key="feature">
@@ -115,8 +113,10 @@ onUnmounted(() => {
       </div>
       <div class="upgrade-pay-plan-btn-group">
         <div class="relative w-full">
-          <div class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">{{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}</div>
-          <RxButton :label="$t('升级')" class="w-full" @click="toUpgrade" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" />
+          <div v-if="userPayInfo.discount > 0" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
+            {{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}
+          </div>
+          <RxButton :label="$t('升级')" class="w-full" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" @click="toUpgrade" />
         </div>
         <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">
           <span>🎁</span>
@@ -139,12 +139,12 @@ onUnmounted(() => {
       </div>
       <div class="indicator-list">
         <template v-for="(image, index) in images" :key="image.itemImageSrc">
-          <div class="indicator-item" :class="{ active: image.itemImageSrc === currentImage.itemImageSrc }" @click="onIndicatorClick(index)"></div>
+          <div class="indicator-item" :class="{ active: image.itemImageSrc === currentImage.itemImageSrc }" @click="onIndicatorClick(index)" />
         </template>
       </div>
       <div class="picture-item">
         <Transition name="slide-up" mode="out-in">
-          <img :src="currentImage.itemImageSrc" :key="currentImage.itemImageSrc" />
+          <img :key="currentImage.itemImageSrc" :src="currentImage.itemImageSrc">
         </Transition>
       </div>
     </div>
@@ -168,7 +168,7 @@ onUnmounted(() => {
     gap: 22px;
 
     .upgrade-pay-plan-header {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Archivo, Inter, sans-serif;
       font-size: 24px;
       font-style: normal;
@@ -176,7 +176,7 @@ onUnmounted(() => {
       line-height: normal;
 
       .upgrade-pay-plan-header-plus {
-        background: linear-gradient(270deg, #C481FA 0%, #12A3FC 100%);
+        background: linear-gradient(270deg, #c481fa 0%, #12a3fc 100%);
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -189,14 +189,14 @@ onUnmounted(() => {
       font-style: normal;
       font-weight: 700;
       line-height: normal;
-      background: linear-gradient(270deg, #C481FA 0%, #12A3FC 100%);
+      background: linear-gradient(270deg, #c481fa 0%, #12a3fc 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .description {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -215,7 +215,7 @@ onUnmounted(() => {
         align-items: center;
         gap: var(--spacing-xl, 12px);
         align-self: stretch;
-        color: var(--colors-text-text-primary, #FAFAFA);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -261,7 +261,7 @@ onUnmounted(() => {
         border-radius: 50%;
         cursor: pointer;
         transition: background 0.15s;
-        color: #575D60;
+        color: #575d60;
 
         &:hover {
           background: #e3dcdc;
@@ -279,7 +279,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: #575D60;
+      color: #575d60;
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -305,7 +305,7 @@ onUnmounted(() => {
         height: 4px;
         flex: 1 0 0;
         border-radius: 4px;
-        background: var(--Colors-Alpha-alpha-black-10, rgba(0, 0, 0, 0.10));
+        background: var(--Colors-Alpha-alpha-black-10, rgba(0, 0, 0, 0.1));
         cursor: pointer;
 
         &.active {
@@ -313,7 +313,6 @@ onUnmounted(() => {
         }
       }
     }
-
 
     img {
       height: 333px;
@@ -338,9 +337,9 @@ onUnmounted(() => {
 }
 
 .discount {
-  background: #FC9D12;
-  color: #FFF;
-  font-family: "DingTalk JinBuTi", sans-serif;
+  background: #fc9d12;
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;

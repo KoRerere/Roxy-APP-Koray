@@ -1,25 +1,25 @@
 <script setup lang="tsx">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
-import { API } from '/@/api';
+import type { UserGetPromotionInfoListData } from '@roxy/backend-api'
+import { API } from '/@/api'
 import RxPaymentMethods from '/@/components/rx-payment-methods.vue'
 import { PayWay } from '/@/enums/pay'
-import { useResponseToast } from '/@/hooks/useResponseToast';
-;
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import currency from 'currency.js'
+
 import { validatePayPalAddress, validateTRC20Address } from './utils'
-import { useDialog } from '/@/hooks/useDialog';
-import IdentityVerification from './identity-verification.vue';
-import { ceilByStep } from '/@/views/pay/subscribe/util';
-import type { InputNumberBlurEvent } from 'primevue/inputnumber';
+import { useDialog } from '/@/hooks/useDialog'
+import IdentityVerification from './identity-verification.vue'
+import { ceilByStep } from '/@/views/pay/subscribe/util'
+import type { InputNumberBlurEvent } from 'primevue/inputnumber'
 
 const { promotionInfo, hideFn, onSuccess } = defineProps<{
-  promotionInfo: UserGetPromotionInfoListData['data'],
-  hideFn: () => any,
+  promotionInfo: UserGetPromotionInfoListData['data']
+  hideFn: () => any
   onSuccess: () => Promise<void>
 }>()
 
-const [showToast, onlyErrorToast] = useResponseToast();
+const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 
 const form = ref({
@@ -42,7 +42,6 @@ const isAmountLessThan50 = computed(() => {
 })
 
 const withdrawDisabled = computed(() => {
-
   switch (form.value.withdraw_method) {
     case PayWay.Balance:
       return promotionInfo.withdrawAmount <= 0 || form.value.amount <= 0
@@ -62,7 +61,7 @@ const minWithdrawAmountText = computed(() => {
   return $t('(最低 $50)')
 })
 
-watch(() => form.value.withdraw_method, (val) => {
+watch(() => form.value.withdraw_method, () => {
   handleWithdrawAmountChange(form.value.amount)
   withdrawAddressErrorText.value = ''
   form.value.withdraw_address = ''
@@ -70,12 +69,12 @@ watch(() => form.value.withdraw_method, (val) => {
 
 watch(() => form.value.withdraw_address, (val) => {
   if (val && [PayWay.USDT, PayWay.PayPal].includes(form.value.withdraw_method)) {
-
     const { isValid, message } = validateMap[form.value.withdraw_method as keyof typeof validateMap](val)
 
     if (!isValid) {
       withdrawAddressErrorText.value = message
-    } else {
+    }
+    else {
       withdrawAddressErrorText.value = ''
     }
   }
@@ -88,7 +87,8 @@ async function handleConfirmWithdrawal() {
   }
   if (form.value.withdraw_method === PayWay.Balance) {
     await handleWithdrawal()
-  } else {
+  }
+  else {
     await showIdentityVerificationModal()
   }
 }
@@ -105,7 +105,6 @@ async function handleWithdrawal() {
   return code
 }
 
-
 async function showIdentityVerificationModal() {
   const { code, msg } = await API.base.userWithdrawVerifyCodeList({ amount: form.value.amount.toString() })
 
@@ -115,22 +114,21 @@ async function showIdentityVerificationModal() {
   }
   showToast(0, $t('验证码已发送'))
 
-  const handleOk = async (code: string) => {
+  const dialogInstance = showModal({
+    header: $t('安全认证'),
+    slots: {
+      default: () => <IdentityVerification onOk={handleOk} />,
+      footer: undefined,
+    },
+  })
+
+  async function handleOk(code: string) {
     form.value.ver_code = code
     const resCode = await handleWithdrawal()
     if (resCode === 0) {
       dialogInstance.handleCancel()
     }
   }
-
-  const dialogInstance = showModal({
-    header: $t('请检查您的邮箱'),
-    class: 'w-[382px]',
-    slots: {
-      default: () => <IdentityVerification onOk={handleOk} />,
-      footer: undefined
-    }
-  })
 }
 
 function handleAmountQuickCheck(amount: number) {
@@ -159,8 +157,12 @@ function handleBlur(event: InputNumberBlurEvent) {
 <template>
   <div class="withdraw-dialog">
     <div class="row">
-      <div class="label">{{ $t('可提现余额') }}</div>
-      <div class="available-withdrawal-amount">${{ currency(promotionInfo.withdrawAmount) }}</div>
+      <div class="label">
+        {{ $t('可提现余额') }}
+      </div>
+      <div class="available-withdrawal-amount">
+        ${{ currency(promotionInfo.withdrawAmount) }}
+      </div>
     </div>
     <div class="row">
       <div class="label">
@@ -171,9 +173,12 @@ function handleBlur(event: InputNumberBlurEvent) {
       </div>
       <div class="withdrawal-input">
         <IconField>
-          <InputIcon class="text-[14px]">$</InputIcon>
-          <InputNumber v-model="form.amount" :minFractionDigits="0" :maxFractionDigits="5" :min="0" :max="promotionInfo.withdrawAmount" fluid :useGrouping="false" input-class="!w-[150px]"
-            @blur="handleBlur" />
+          <InputIcon class="text-[14px]">
+            $
+          </InputIcon>
+          <InputNumber v-model="form.amount" :min-fraction-digits="0" :max-fraction-digits="5" :min="0" :max="promotionInfo.withdrawAmount" fluid :use-grouping="false" input-class="!w-[150px]"
+                       @blur="handleBlur"
+          />
         </IconField>
         <template v-if="form.withdraw_method === PayWay.Balance">
           <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
@@ -184,26 +189,42 @@ function handleBlur(event: InputNumberBlurEvent) {
       </div>
     </div>
     <div class="row">
-      <div class="label">{{ $t('提现到') }}</div>
+      <div class="label">
+        {{ $t('提现到') }}
+      </div>
       <div class="desc">
         {{ $t('目前仅支持提现至 Roxy 钱包、USDT、PayPal 地址，更多选项即将推出。') }}
       </div>
       <RxPaymentMethods v-model="form.withdraw_method" :methods="paymentMethods" />
       <template v-if="form.withdraw_method === PayWay.USDT">
         <div class="usdt-info">
-          <div class="label">{{ $t('您的 USDT 钱包地址') }}</div>
+          <div class="label">
+            {{ $t('您的 USDT 钱包地址') }}
+          </div>
           <TsFormInputText v-model="form.withdraw_address" size="md" type="text" :placeholder="$t('USDT 钱包地址')" class="w-full" />
-          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{ withdrawAddressErrorText }}</Message>
-          <div class="desc">{{ $t('提现到账时间：5 个工作日内') }}</div>
+          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">
+            {{ withdrawAddressErrorText }}
+          </Message>
+          <div class="desc">
+            {{ $t('提现到账时间：5 个工作日内') }}
+          </div>
         </div>
       </template>
       <template v-if="form.withdraw_method === PayWay.PayPal">
         <div class="usdt-info">
-          <div class="label">{{ $t('您的 PayPal 地址') }}</div>
+          <div class="label">
+            {{ $t('您的 PayPal 地址') }}
+          </div>
           <TsFormInputText v-model="form.withdraw_address" size="md" type="text" :placeholder="$t('PayPal 邮箱')" class="w-full" />
-          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">{{ withdrawAddressErrorText }}</Message>
-          <div class="desc">{{ $t('处理时间：最长 7 个工作日') }}</div>
-          <div class="desc">{{ $t('正确输入您的 PayPal 电子邮件，以防钱款丢失。您将通过应用程序和电子邮件收到转账通知。') }}</div>
+          <Message v-if="withdrawAddressErrorText" severity="error" size="small" variant="simple">
+            {{ withdrawAddressErrorText }}
+          </Message>
+          <div class="desc">
+            {{ $t('处理时间：最长 7 个工作日') }}
+          </div>
+          <div class="desc">
+            {{ $t('正确输入您的 PayPal 电子邮件，以防钱款丢失。您将通过应用程序和电子邮件收到转账通知。') }}
+          </div>
         </div>
       </template>
     </div>
@@ -229,7 +250,7 @@ function handleBlur(event: InputNumberBlurEvent) {
   }
 
   .label {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -238,7 +259,7 @@ function handleBlur(event: InputNumberBlurEvent) {
   }
 
   .available-withdrawal-amount {
-    color: var(--primitives-yellow-500, #FC9D12);
+    color: var(--primitives-yellow-500, #fc9d12);
     font-family: Inter;
     font-size: 20px;
     font-style: normal;
@@ -251,8 +272,6 @@ function handleBlur(event: InputNumberBlurEvent) {
     justify-content: center;
     align-items: center;
     gap: 16px;
-
-
   }
 
   .usdt-info {
@@ -264,7 +283,7 @@ function handleBlur(event: InputNumberBlurEvent) {
     align-self: stretch;
 
     .label {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -274,7 +293,7 @@ function handleBlur(event: InputNumberBlurEvent) {
   }
 
   .desc {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

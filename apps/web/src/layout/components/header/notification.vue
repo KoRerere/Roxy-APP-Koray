@@ -2,10 +2,11 @@
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
+import { RoxyGiftsType } from '/@/enums/pay'
 
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import TransferReceive from '/@/views/browser/list/transfer/receive.vue';
+import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
 
 const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
@@ -58,7 +59,7 @@ function toggle(event: Event) {
   const popIns = pop.value?.instance
   popIns.toggle(event)
   if (popIns.visible) {
-    tabs.value.some(tab => {
+    tabs.value.some((tab) => {
       if (tab.noRead) {
         tabsValue.value = tab.value
         return true
@@ -124,8 +125,15 @@ async function markAllAsRead() {
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
     showAcceptInvitationDialog(item)
-  } else if (item.type === '代理奖励通知') {
+  }
+  else if (item.type === '代理奖励通知') {
     router.replace({ name: 'tutorial' })
+  }
+  else if (item.type === RoxyGiftsType.ISP) {
+    router.replace({ name: 'agent-list', query: { name: 'shop' } })
+  }
+  else if (item.type === RoxyGiftsType.Rotating) {
+    router.replace({ name: 'agent-list', query: { name: 'list' } })
   }
 }
 
@@ -135,23 +143,18 @@ function checkTransfer(item: Message) {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(TransferReceive, {
         windowTransferNo: item.windowTransferNo!,
         onClose: hideModal,
-      })
-    }
+      }),
+    },
   })
 }
 
 function showAcceptInvitationDialog(item: Message) {
-  function handleClose() {
-    hideModal()
-    onRead(item)
-  }
-
   const { hideModal } = showModal({
     showHeader: false,
     modal: true,
@@ -160,9 +163,13 @@ function showAcceptInvitationDialog(item: Message) {
     slots: {
       container: () => {
         return <InviteIntoWorkspace inviteInfo={item.paramData!} onClose={handleClose} />
-      }
-    }
+      },
+    },
   })
+  function handleClose() {
+    hideModal()
+    onRead(item)
+  }
 }
 </script>
 
@@ -192,13 +199,16 @@ function showAcceptInvitationDialog(item: Message) {
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
                     <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
-                      :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
+                              :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18"
+                    />
                   </div>
                   <div class="w-full">
-                    <div :class="message.value">{{ item.notify }}</div>
+                    <div :class="message.value">
+                      {{ item.notify }}
+                    </div>
                     <div :class="message.time" class="w-full flex justify-between">
                       <span>{{ item.createTime }}</span>
-                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{
+                      <span v-if="item.paramData || item.type === RoxyGiftsType.ISP || item.type === RoxyGiftsType.Rotating" :class="message['check-detail']" @click="checkDetail(item)">{{
                         $t('查看详情') }}</span>
                       <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
@@ -249,7 +259,7 @@ function showAcceptInvitationDialog(item: Message) {
   padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
   align-items: flex-start;
   gap: 10px;
-  border-bottom: 1px solid var(--component-dropdown-divider, #6A757C);
+  border-bottom: 1px solid var(--component-dropdown-divider, #6a757c);
   background: var(--colors-background-bg-overlay, #293038);
 
   &:last-of-type {

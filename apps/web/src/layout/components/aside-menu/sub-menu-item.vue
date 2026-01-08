@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 import MenuItemContent from './menu-item-content.vue'
-import { motion, AnimatePresence } from "motion-v";
+import { AnimatePresence, motion } from 'motion-v'
+import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 
 defineOptions({
   name: 'SubMenuItem',
-  inheritAttrs: false
+  inheritAttrs: false,
 })
 
 const { level = 0, collapsed, collapsedChildren } = defineProps<{
@@ -15,20 +15,23 @@ const { level = 0, collapsed, collapsedChildren } = defineProps<{
   level?: number
 }>()
 
-const d = "max-height calc(max(calc(var(--child-count) / 3), 1) * 0.25s) cubic-bezier(0.19, 0.56, 0.03, 1.01)"
+// const d = 'max-height calc(max(calc(var(--child-count) / 3), 1) * 0.25s) cubic-bezier(0.19, 0.56, 0.03, 1.01)'
 
 const collapsedMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>({})
+const badgeMap = defineModel<Record<NonNullable<RouteRecordNameGeneric>, boolean>>('badgeMap')
 
 const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
 
 <template>
   <AnimatePresence :initial="false">
-    <motion.div v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }" :animate="{ height: 'auto', opacity: 1, y: 0 }" :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
-      duration: 0.6,
-      ease: [0, 0.71, 0.2, 1.01],
-      opacity: { duration: 0.3, ease: 'backOut' },
-    }" v-if="items.length && !collapsedChildren" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }">
+    <motion.div v-if="items.length && !collapsedChildren" v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }" :animate="{ height: 'auto', opacity: 1, y: 0 }"
+                :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
+                  duration: 0.6,
+                  ease: [0, 0.71, 0.2, 1.01],
+                  opacity: { duration: 0.3, ease: 'backOut' },
+                }" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }"
+    >
       <template v-for="item in items" :key="item.name">
         <!-- 分组 -->
         <template v-if="isGroup(item)">
@@ -39,11 +42,11 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
           <div v-else class="line" />
         </template>
         <template v-else>
-          <MenuItemContent v-model:open="collapsedMap[item.name!]" :item="item" :collapsed />
+          <MenuItemContent v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :item="item" :collapsed />
         </template>
         <!-- 递归生成子菜单 -->
         <template v-if="item.children?.length">
-          <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed :collapsedChildren="collapsedMap[item.name!]" />
+          <SubMenuItem v-model:badge-map="badgeMap" :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed :collapsed-children="collapsedMap[item.name!]" />
         </template>
       </template>
     </motion.div>
@@ -51,7 +54,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </template>
 
 <style lang="scss" scoped>
-@use "sass:string";
+@use 'sass:string';
 
 .sub-menu {
   position: relative;

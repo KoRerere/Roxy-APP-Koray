@@ -5,6 +5,7 @@ import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import ProviderSimpleList from '/@/views/agent/shop/components/provider-simple-list.vue'
 import currency from 'currency.js'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -76,32 +77,22 @@ const filters = reactive({
   },
 })
 
+watch(
+  () => route.query._t,
+  (value) => {
+    if (value && route.query.action === 'buy') {
+      onBuyProxy()
+    }
+  },
+  {
+    immediate: true,
+  },
+)
+
 onBeforeMount(async () => {
-  getProviderTypeFilter()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
-  if (route.query.action === 'buy') {
-    await nextTick()
-    onBuyProxy()
-  }
 })
-
-async function getProviderTypeFilter() {
-  const { code, data } = await API.proxy.userGetProxyProvidersTypeList()
-  if (code !== 0)
-    return
-  filters.list.push({
-    name: 'providerType',
-    value: undefined,
-    options: [
-      {
-        name: $t('全部'),
-        value: undefined,
-      },
-      ...data.map(name => ({ name, value: name } as any)),
-    ],
-  })
-}
 
 async function getTableList(params: any) {
   const data = await tableRequest({ ...filters.getValues(), type: hideTypeConfig.value, ...params })
@@ -133,11 +124,22 @@ function onAdvancedSearch(search?: Record<string, any>) {
   onRefreshTable({ queryKey: value && (key || 'fuzzy'), queryValue: value }, true)
 }
 
-function onBuyProxy() {
+function onBuyProxy(props?: Record<string, any>) {
   buyProxy((orderInfo) => {
     onRefreshTable()
     setNewOrderNo(orderInfo?.orderNo)
-  })
+  }, toRaw(props))
+}
+
+function setNewOrderNo(value: string) {
+  if (!value)
+    return
+  newOrderNo.value = value
+  setTimeout(() => {
+    newOrderNo.value = ''
+    const { orderNo: _, ...query } = route.query
+    router.replace({ name: 'agent-list', query })
+  }, 3000)
 }
 
 async function testAllProxy() {
@@ -254,17 +256,6 @@ function rowClass(data: ProxyItem) {
   }
 }
 
-function setNewOrderNo(value: string) {
-  if (!value)
-    return
-  newOrderNo.value = value
-  setTimeout(() => {
-    newOrderNo.value = ''
-    const { orderNo: _, ...query } = route.query
-    router.replace({ name: 'agent-list', query })
-  }, 3000)
-}
-
 async function autoRenewChange(data: ProxyItem) {
   const expireDate = new Date(data.expireDate!).getTime()
   const isLimit = expireDate > Date.now() && (expireDate - Date.now()) < 1000 * 60 * 60
@@ -324,38 +315,29 @@ async function toggleAutoRenew(data: ProxyItem) {
 
 <template>
   <div class="flex flex-col w-full h-full">
+    <ProviderSimpleList :on-buy-proxy="onBuyProxy" />
     <div class="flex flex-1 overflow-hidden">
-      <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removable-sort
                :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false"
       >
         <template #filter-after>
-          <div class="w-full flex flex-col gap-3">
-            <div class="flex justify-between items-center">
-              <div class="flex gap-3">
-                <RxSelectButton v-for="item in filters.list" :key="item.name" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
-                                @change="filters.onChange"
-                />
-                <div class="flex items-center gap-1.5">
-                  <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
-                              :false-value="hideTypeConfig.falseValue" @change="filters.onChange"
-                  />
-                  <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
-                    $t('隐藏不可用代理 IP') }}</label>
-                </div>
-              </div>
+          <div class="w-full flex gap-1.5 items-start">
+            <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+            <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+            <div class="flex items-center gap-1.5">
               <div class="flex items-center gap-1.5">
-                <div v-if="isOwner" class="relative">
-                  <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy" />
-                  <div class="new-dot" />
-                </div>
-                <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
-                <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
+                <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
+                            :false-value="hideTypeConfig.falseValue" @change="filters.onChange"
+                />
+                <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
+                  $t('隐藏不可用代理 IP') }}</label>
               </div>
-            </div>
-            <div class="w-full flex gap-1.5 items-start">
-              <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-              <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+              <div v-if="isOwner" class="relative">
+                <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
+                <div class="new-dot" />
+              </div>
+              <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+              <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
             </div>
           </div>
         </template>
@@ -363,7 +345,7 @@ async function toggleAutoRenew(data: ProxyItem) {
           <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此购买代理 IP，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="isOwner" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy" />
+                <RxButton v-if="isOwner" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
                 <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>

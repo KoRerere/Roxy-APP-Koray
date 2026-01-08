@@ -1,10 +1,10 @@
 import type { UnwrapRowType, UserGetUserBuyProxyListListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-
-import { getDictMap, transformSortOrder, type SortOrderNumber } from '/@/utils'
+import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
 import { useRoleStore } from '/@/stores/role'
 import { useColumns } from './columns'
+import type { SortOrderNumber } from '/@/utils'
 
 const { isEditor, isOwner } = storeToRefs(useRoleStore())
 export interface ProxyItem extends UnwrapRowType<UserGetUserBuyProxyListListData> {
@@ -67,7 +67,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       name: 'remark',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
-    }
+    },
   ]
 }
 
@@ -76,8 +76,11 @@ export async function tableRequest(params: any) {
 }
 
 export async function getCustomFilters() {
-  const $dict_map = await getDictMap()
-  const { data: country } = await API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.buy.toString() })
+  const [$dict_map, { data: country }, { data: provider }] = await Promise.all([
+    getDictMap(),
+    API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.buy.toString() }),
+    API.proxy.userGetProxyProvidersTypeList(),
+  ])
 
   const inputs = [
     {
@@ -132,12 +135,18 @@ export async function getCustomFilters() {
         return ['PrivateProxy', 'RoxyBrowser'].map(label => ({
           parentName: 'proxyProvider',
           label,
-          value: label
+          value: label,
         }))
       },
       formatValue: (input: any) => {
         return input.value?.map((item: any) => item.value)
       },
+    },
+    {
+      type: 'switchGroup',
+      name: 'providerType',
+      label: $t('供应商类型'),
+      options: provider.map(label => ({ label, value: label, text: label })),
     },
     {
       type: 'switchGroup',
@@ -147,12 +156,12 @@ export async function getCustomFilters() {
         {
           label: $t('自动续费-开启'),
           value: '1',
-          text: $t('开启')
+          text: $t('开启'),
         },
         {
           label: $t('自动续费-关闭'),
           value: '0',
-          text: $t('关闭')
+          text: $t('关闭'),
         },
       ],
     },
@@ -166,7 +175,7 @@ export async function getSorts() {
   const { data } = await API.proxy.userGetProxyTableSortOrderList()
 
   const onChange = (data: any) => {
-    const params: Record<string, any> = {};
+    const params: Record<string, any> = {}
     if (data.sortField && columns.find(item => item.key === data.sortField && item.sortable)) {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
@@ -192,25 +201,25 @@ export function getAdvancedSearch() {
       key: 'proxyHost',
       label: $t('代理 IP'),
       icon: 'base/rx_ic_internet',
-      syntax: 'host::'
+      syntax: 'host::',
     },
     {
       key: 'proxyLastCountry',
       label: $t('国家/地区'),
       icon: 'base/rx_ic_earth',
-      syntax: 'region::'
+      syntax: 'region::',
     },
     {
       key: 'proxyRemark',
       label: $t('备注'),
       icon: 'base/rx_ic_doc_article',
-      syntax: 'note::'
+      syntax: 'note::',
     },
     {
       key: 'proxyProvider',
       label: $t('服务商'),
       icon: 'base/rx_ic_browser_proxy',
-      syntax: 'provider::'
+      syntax: 'provider::',
     },
   ]
 }

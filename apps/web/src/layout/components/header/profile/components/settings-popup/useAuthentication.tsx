@@ -46,7 +46,7 @@ export function useAuthentication() {
     }
 
     const items = reactive({
-      title: $t('两步验证'),
+      title: $t('账号安全'),
       description: $t('管理您的密码和身份验证。'),
       list: [
         {
@@ -136,11 +136,6 @@ export function useAuthentication() {
                   <Auth2fa
                     defaultValue={enabledDefault}
                     modelValue={item.value}
-                    enableBefore={() => {
-                      if (userStore.userInfo?.setPasswordStatus)
-                        return true
-                      return showSettingPasswordDialog()
-                    }}
                     onChange={(val: 'code' | 'email' | 'close') => {
                       enabledDefault = !(val === 'close')
                       recoverType.value = val

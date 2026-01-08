@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
+import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
@@ -24,6 +25,7 @@ const [showModal] = useDialog()
 const min = 0
 const max = 500
 
+const giftType = ref()
 const buyList = ref([
   {
     key: 'staff',
@@ -145,7 +147,8 @@ async function confirm() {
           mixpanelTrack('click_pay_quota_expansion')
           await _onConfirm.value?.({
             payType,
-            ...Object.fromEntries(buyList.value.map(item => [item.key, item.value])),
+            giftType: giftType.value,
+            purchaseMember: Object.fromEntries(buyList.value.map(item => [item.key, item.value])),
           })
           close(false)
         },
@@ -192,7 +195,7 @@ function close(isCancel: boolean) {
           </div>
         </div>
       </div>
-      <Detail class="w-80" :list="detail">
+      <Detail class="w-88" :list="detail">
         <template #oldprice="{ item }">
           <div class="flex justify-between">
             <div class="details-label">
@@ -222,6 +225,7 @@ function close(isCancel: boolean) {
         </template>
         <template #after>
           <div class="flex-1 flex flex-col justify-end gap-3">
+            <RoxyGifts v-model="giftType" :amount="finalAmount" />
             <RxButton :disabled="disabled" size="lg" :label="$t('确认付款')" @click="confirm" />
             <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>

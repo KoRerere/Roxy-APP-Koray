@@ -68,7 +68,7 @@ function remindMeLater() {
               <img :src="item.url" :alt="item.name" class="w-full object-cover rounded-lg">
             </template>
             <RxAlert class="whitespace-pre-wrap w-full" :title="$t('有新的可用更新')"
-                     :content="`${$t('RoxyBrowser 新优惠上线！升级客户端版本即可享折扣。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn"
+                     :content="`${$t('RoxyBrowser 新活动上线！升级客户端版本即可参与活动。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn"
                      :closable="false"
             />
           </template>

@@ -87,7 +87,7 @@ function handleSuccess(type: 'code' | 'email') {
 <template>
   <RxToggleSwitch v-model="modelValue" v-bind="$attrs" @change="handleChange" />
 
-  <Dialog v-model:visible="visibleEmail" class="w-384px fa-dialog" :header="$t('验证当前邮箱')" modal :draggable="false">
+  <Dialog v-model:visible="visibleEmail" class="w-384px fa-dialog" :header="$t('安全设备验证')" modal :draggable="false">
     <VerifyEmail v-model="emailCode" :request="API.base.userSendValidatorVerifyCodeList" />
     <template #footer>
       <RxButton :label="$t('下一步')" severity="primary" class="w-full" @click="verifyEmailCode" />

@@ -193,8 +193,8 @@ function createProxy() {
 async function deleteProxy(datas: ProxyItem[]) {
   return new Promise((resolve) => {
     confirm.require({
-      header: $t('删除代理'),
-      message: $t('您确认要删除所选代理吗？'),
+      header: $t('删除代理 IP'),
+      message: $t('您确认要删除所选代理 IP 吗？'),
       rejectProps: {
         label: $t('取消'),
         severity: 'secondary',
@@ -243,7 +243,7 @@ function onRefreshTable(tabParams = {}, force = false) {
             <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
             <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             <div class="flex items-center gap-1.5">
-              <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
+              <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
               <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
               <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
             </div>
@@ -253,7 +253,7 @@ function onRefreshTable(tabParams = {}, force = false) {
           <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理')" @click.stop="createProxy" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
                 <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>

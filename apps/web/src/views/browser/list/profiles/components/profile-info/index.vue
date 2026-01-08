@@ -4,8 +4,8 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 
 import { useRoleStore } from '/@/stores/role'
 import { createDefaultObject, formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
-import CanvasLine from './canvas-line.vue';
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import CanvasLine from './canvas-line.vue'
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -18,16 +18,16 @@ import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
 import { ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
-import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from '../util';
-import PlatformIcon from '/@/views/account/list/platform-icon.vue';
-import ProxyTooltip from './proxy-tooltip.vue';
-import AccountTooltip from './account-tooltip.vue';
+import { clearProxyKeys, silentUpdateAccount, silentUpdateProxy } from '../util'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
+import ProxyTooltip from './proxy-tooltip.vue'
+import AccountTooltip from './account-tooltip.vue'
 
 interface Props {
   workspaceName?: string
   data: Record<string, any>
   openMessage?: Record<string, any>
-  showSort?: boolean,
+  showSort?: boolean
   disabled?: boolean
   readonly?: boolean
   filterKeys?: string[]
@@ -40,7 +40,7 @@ const {
   showSort = true,
   disabled = false,
   readonly = false,
-  filterKeys = ['os', 'proxy', 'account']
+  filterKeys = ['os', 'proxy', 'account'],
 } = defineProps<Props>()
 
 const emits = defineEmits(['refresh'])
@@ -76,7 +76,7 @@ const list = computed(() => {
       tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', {
         os: data.os === 'IOS' ? 'iOS' : data.os,
         osVersion: data.osVersion,
-        coreVersion: data.coreVersion
+        coreVersion: data.coreVersion,
       }),
     },
     {
@@ -96,7 +96,7 @@ const list = computed(() => {
         beforeCity: strConcat('/', data.beforeProxyInfo?.beforeCity) || '',
         beforeIp: data.beforeProxyInfo?.beforeIp || '--',
         beforeTime: data.beforeProxyInfo?.beforeTime ? formatProxyTime(data.beforeProxyInfo?.beforeTime) : '--',
-      }
+      },
     },
     {
       key: 'account',
@@ -105,24 +105,27 @@ const list = computed(() => {
       showSub: windowPlatformList.length > 1,
       platformAccount: windowPlatformList[0],
       subPlatformAccount: windowPlatformList.length > 2 ? undefined : windowPlatformList[1],
-      data: windowPlatformList
+      data: windowPlatformList,
     },
   ].filter(item => filterKeys.includes(item.key))
 })
 
 function onClick(event: MouseEvent, key: string) {
-  if (disabled || readonly) return
+  if (disabled || readonly)
+    return
 
   switch (key) {
     case 'proxy': {
       const model = getProxyModel()
-      if (model.every(item => !item.visible)) return
+      if (model.every(item => !item.visible))
+        return
       showPopupMenu(event, { model })
       break
     }
     case 'account': {
       const model = getAccountModel()
-      if (model.every(item => !item.visible)) return
+      if (model.every(item => !item.visible))
+        return
       showPopupMenu(event, { model })
       break
     }
@@ -130,18 +133,17 @@ function onClick(event: MouseEvent, key: string) {
 }
 
 function getProxyModel() {
-
   const proxyData = {
     id: data.moduleId,
     ...Object.fromEntries(
       ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
-        .map(key => [key, data[key]])
-    )
+        .map(key => [key, data[key]]),
+    ),
   }
 
   return [
     {
-      label: $t('添加代理'),
+      label: $t('添加代理 IP'),
       icon: 'base/rx_ic_plus',
       visible: !hasProxy.value && !role.isViewer,
       command: () => {
@@ -149,7 +151,7 @@ function getProxyModel() {
       },
     },
     {
-      label: $t('选择已有代理'),
+      label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
       visible: !hasProxy.value && !role.isViewer,
       command: () => {
@@ -168,7 +170,7 @@ function getProxyModel() {
         }
         if (checkRes.checkStatus === ProxyCheckStatus.success) {
           updateProfile({ id: data.id, dirId: data.dirId, ...checkRes }, {
-            success: () => silentUpdateProxy(data, checkRes)
+            success: () => silentUpdateProxy(data, checkRes),
           })
         }
       },
@@ -200,7 +202,7 @@ function getProxyModel() {
       },
     },
     {
-      label: $t('选择已有代理'),
+      label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
@@ -216,34 +218,38 @@ function getProxyModel() {
       icon: 'base/rx_ic_cart',
       visible: role.isOwner,
       command: () => {
-        buyProxy(orderInfo => {
+        buyProxy((orderInfo) => {
           router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
         })
       },
       render: ({ item, btnPt }: any) => {
-        return <RxButton severity="secondary" text pt={btnPt}>
-          {{
-            default: () => <div class="flex items-center gap-2">
-              <RxSvgIcon name={item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
-              <span class="p-button-label">{item.label}</span>
-              <div class={`${proxyCss.dot}`}></div>
-            </div>
-          }}
-        </RxButton>
-      }
+        return (
+          <RxButton severity="secondary" text pt={btnPt}>
+            {{
+              default: () => (
+                <div class="flex items-center gap-2">
+                  <RxSvgIcon name={item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
+                  <span class="p-button-label">{item.label}</span>
+                  <div class={`${proxyCss.dot}`}></div>
+                </div>
+              ),
+            }}
+          </RxButton>
+        )
+      },
     },
     {
       visible: hasProxy.value && !role.isViewer,
       separator: true,
     },
     {
-      label: $t('删除代理'),
+      label: $t('删除代理 IP'),
       icon: 'base/rx_ic_bin_1',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
         confirm.require({
-          header: $t('删除代理'),
-          message: $t('您确认要删除代理吗？'),
+          header: $t('删除代理 IP'),
+          message: $t('您确认要删除代理 IP 吗？'),
           rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
           acceptProps: { label: $t('确认'), severity: 'danger' },
           accept: async () => {
@@ -260,12 +266,13 @@ function getProxyModel() {
               }
               if (!data.openTime) {
                 Reflect.set(params, 'lastIp', '')
-              } else {
+              }
+              else {
                 Reflect.deleteProperty(params, 'lastIp')
               }
               silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
             }
-          }
+          },
         })
       },
     },
@@ -291,19 +298,19 @@ function getAccountModel() {
                   ids: [data.id],
                   paramList: {
                     platformUrlIds,
-                    windowPlatformList
-                  }
+                    windowPlatformList,
+                  },
                 })
                 drawerInstance.hideDrawer()
                 onlyErrorToast(code, msg)
                 if (code === 0) {
                   silentUpdateAccount(data, windowPlatformList)
                 }
-              }
-            })
-          }
+              },
+            }),
+          },
         })
-      }
+      },
     },
     {
       separator: true,
@@ -328,16 +335,16 @@ function getAccountModel() {
                 const { id, dirId, windowPlatformList } = data
                 const _windowPlatformList = windowPlatformList.concat({
                   ...formData,
-                  _tempId: Date.now().toString(32)
+                  _tempId: Date.now().toString(32),
                 })
                 await updateProfile({ id, dirId, windowPlatformList: _windowPlatformList }, {
                   success: () => {
                     silentUpdateAccount(data, _windowPlatformList)
-                  }
+                  },
                 })
-              }
-            })
-          }
+              },
+            }),
+          },
         })
       },
     },
@@ -360,11 +367,11 @@ function getAccountModel() {
                   success: () => {
                     const _windowPlatformList = windowPlatformList.filter((item: any) => !item.id).concat(dataList)
                     silentUpdateAccount(data, _windowPlatformList)
-                  }
+                  },
                 })
-              }
-            })
-          }
+              },
+            }),
+          },
         })
       },
     },
@@ -384,12 +391,12 @@ function createProxy(proxyData?: Record<string, any>) {
           const { id, dirId } = data
           const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom' }
           updateProfile(params, {
-            success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+            success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo']),
           })
           drawerInstance.hideDrawer()
-        }
-      })
-    }
+        },
+      }),
+    },
   })
 }
 
@@ -410,12 +417,12 @@ function chooseProxy(proxyData: Record<string, any>) {
               proxyCategory: proxyCategory || protocol,
               proxyMethod: 'choose',
               buyProxyType: proxyType ?? ProxyType.resource,
-            }, ['isEncryptProxy', 'proxyEncryptInfo'])
+            }, ['isEncryptProxy', 'proxyEncryptInfo']),
           })
           drawerInstance.hideDrawer()
-        }
-      })
-    }
+        },
+      }),
+    },
   })
 }
 
@@ -428,7 +435,8 @@ async function updateProfile(params: any, options?: Record<string, any>) {
     if (isRefresh) {
       emits('refresh')
     }
-  } else {
+  }
+  else {
     isLikeFunction(fallback) && fallback()
   }
 }
@@ -441,9 +449,9 @@ async function updateProfile(params: any, options?: Record<string, any>) {
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }">
-      <div class="relative" v-for="item in list" :key="item.key" @click.stop="onClick($event, item.key)">
+      <div v-for="item in list" :key="item.key" class="relative" @click.stop="onClick($event, item.key)">
         <template v-if="item.key === 'os'">
-          <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }">
+          <div v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
             <RxSvgIcon class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
           </div>
         </template>
@@ -455,7 +463,7 @@ async function updateProfile(params: any, options?: Record<string, any>) {
                 <RxSvgIcon class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
               </div>
             </template>
-            <template #content v-if="item.data?.lastIp !== '--'">
+            <template v-if="item.data?.lastIp !== '--'" #content>
               <ProxyTooltip v-bind="item.data" />
             </template>
           </RxTooltip>
@@ -466,27 +474,28 @@ async function updateProfile(params: any, options?: Record<string, any>) {
             <template #default="{ hide }">
               <div @click="hide">
                 <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-                  <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon" :platformIconDark="item.platformAccount.platformIconDark"
-                    class="block w-4 h-4 pointer-events-none" />
+                  <PlatformIcon v-if="item.platformAccount?.platformIcon" :platform-icon="item.platformAccount.platformIcon" :platform-icon-dark="item.platformAccount.platformIconDark"
+                                class="block w-4 h-4 pointer-events-none"
+                  />
                   <RxSvgIcon v-else class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
                 </div>
                 <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
-                  <PlatformIcon v-if="item.subPlatformAccount?.platformIcon" :platformIcon="item.subPlatformAccount.platformIcon" :platformIconDark="item.subPlatformAccount.platformIconDark"
-                    class="block w-3 h-3 pointer-events-none">
-                  </PlatformIcon>
+                  <PlatformIcon v-if="item.subPlatformAccount?.platformIcon" :platform-icon="item.subPlatformAccount.platformIcon" :platform-icon-dark="item.subPlatformAccount.platformIconDark"
+                                class="block w-3 h-3 pointer-events-none"
+                  />
                   <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
                 </div>
               </div>
             </template>
-            <template #content v-if="item.data?.length > 0">
+            <template v-if="item.data?.length > 0" #content>
               <AccountTooltip :platform-list="item.data" />
             </template>
           </RxTooltip>
         </template>
       </div>
       <div v-if="list.length > 1" class="state-line">
-        <CanvasLine v-if="isOpenBrowser" :waveWidth="1.2" :blur="0" speed="fast" :waveOpacity="1"></CanvasLine>
-        <RxDivider v-else class="!w-25" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)"></RxDivider>
+        <CanvasLine v-if="isOpenBrowser" :wave-width="1.2" :blur="0" speed="fast" :wave-opacity="1" />
+        <RxDivider v-else class="!w-25" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
       </div>
     </div>
   </div>
@@ -502,7 +511,8 @@ async function updateProfile(params: any, options?: Record<string, any>) {
 </style>
 
 <style lang="scss" scoped>
-$box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+$box-shadow:
+  0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
 .disabled-mask {
@@ -517,7 +527,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-name {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: 'JetBrains Mono';
   }
 

@@ -2,6 +2,7 @@
 import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
+import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -40,6 +41,7 @@ const selectedCount = ref(userPayInfo.value.purchaseWindowCount)
 const originalAmount = ref(0)
 const needPayAmount = ref(0)
 const nextBill = ref()
+const giftType = ref()
 
 const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.value.purchaseWindowCount)
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
@@ -59,8 +61,9 @@ const discountAmount = computed(() => currency(originalAmount.value).subtract(ne
 
 const currentSubscribe = computed(() => {
   const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
-  return $t('当前权益: {subLevel} ({count} 窗口)\n窗口用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+  return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
+
 const details = computed(() => {
   const { activityDiscount, firstPurchaseDiscount, discount } = allDiscount.value
 
@@ -152,6 +155,7 @@ const details = computed(() => {
     },
   ].filter(item => item.items.length)
 })
+
 const subInfo = computed(() => ({
   due: userPayInfo.value.isAuto ? $t('自动续订') : $t('有效期至 {date}', { date: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
   days: userPayInfo.value.isAuto ? '' : $t('(剩余 {day} 天)', { day: Math.max(differenceInDays(userPayInfo.value.subEndDate, userPayInfo.value.subCurrentDate), 1) }),
@@ -264,10 +268,11 @@ async function planUpgrade() {
             payType,
             purchaseMember: { profile: selectedCount.value },
             subLevel: selectedPlan.value.subLevel,
+            isAuto: !!userPayInfo.value.isAuto,
+            giftType: giftType.value,
             purchaseType: PurchaseType.Profile,
             subOrderType: PaySubOrderType.Upgrade,
             orderType: OrderType.Subscribe,
-            isAuto: !!userPayInfo.value.isAuto,
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
@@ -396,7 +401,7 @@ function jumpToProfile() {
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <AdvancedFeat :plan="selectedPlan" />
         </div>
-        <div class="relative flex flex-col gap-3 w-80">
+        <div class="relative flex flex-col gap-3 w-88">
           <RxLoading v-model="loading" />
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
           <Detail :list="details">
@@ -429,6 +434,7 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
+                <RoxyGifts v-model="giftType" :amount="needPayAmount" />
                 <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

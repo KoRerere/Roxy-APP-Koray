@@ -221,7 +221,7 @@ async function onTransfer() {
       <div class="self-stretch description">
         <div>{{ $t('验证码已发送至您的验证方式：') }}</div>
         <div>{{ currentWorkspace?.phone || currentWorkspace?.email }} </div>
-        <div>{{ $t("请在 5 分钟内完成验证。") }}</div>
+        <div>{{ $t('请在 {minute} 分钟内完成验证。', { minute: 5 }) }}</div>
       </div>
       <InputOtp v-model="emailCode" class="inputotp" integer-only :length="6" size="large" />
     </div>

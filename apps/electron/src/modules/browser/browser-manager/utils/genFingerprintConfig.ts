@@ -518,5 +518,9 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       ...getRemoteConfig()?.googleApi,
       enable: Boolean(winInfo.enableGoogleLogin === 2 ? store.googleLoginEnable : winInfo.enableGoogleLogin),
     },
+    SessionStorageSyncConfig: {
+      enable: winInfo.syncSessionStorage,
+      list: winInfo.sessionStorages,
+    },
   }
 }

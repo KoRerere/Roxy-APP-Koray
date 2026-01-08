@@ -5,7 +5,7 @@ export interface StoreType {
   /** 默认浏览器 dirId */
   defaultBrowserDirId: string
   /** 默认浏览器 workspaceId */
-  defaultBrowserWorkspaceId: number
+  defaultBrowserWorkspaceId?: number
   /**
    * 软件关闭时
    * - pop: 弹出提示

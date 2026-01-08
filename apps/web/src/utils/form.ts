@@ -1,4 +1,3 @@
-
 import { isFunction, isInvalid } from './basic'
 
 interface FormDataOptions {
@@ -79,9 +78,9 @@ export function getFormDataByList(
 ): any {
   return Array.isArray(inputsGroup)
     ? inputsGroup.reduce((formData, inputs) => {
-      const _data = getFormData(inputs, formData, options)
-      return Object.assign(formData, _data)
-    }, original)
+        const _data = getFormData(inputs, formData, options)
+        return Object.assign(formData, _data)
+      }, original)
     : []
 }
 
@@ -172,8 +171,8 @@ export function filterFieldByValue(obj: object, filter: (value: any) => boolean 
   return Object.fromEntries(Object.entries(obj).filter(([_, v]) => filter(v)))
 }
 
-export function initInputVisible(value: any, assert: any, def: boolean) {
-  return value !== undefined ? value === assert : def
+export function initInputVisible(value: any, assertValue: any, defaultState: boolean) {
+  return value !== undefined ? value === assertValue : defaultState
 }
 
 // export function getValidByObject(

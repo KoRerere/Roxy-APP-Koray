@@ -358,17 +358,17 @@ export function getOperation(row: any = {}) {
       items: [
         {
           name: 'addProxy',
-          label: $t('添加代理'),
+          label: $t('添加代理 IP'),
           icon: 'base/rx_ic_plus',
         },
         {
           name: 'chooseProxy',
-          label: $t('选择已有代理'),
+          label: $t('选择已有代理 IP'),
           icon: 'base/rx_ic_exchange',
         },
         {
           name: 'deleteProxy',
-          label: $t('删除代理'),
+          label: $t('删除代理 IP'),
           icon: 'base/rx_ic_bin_1',
           disabled: !([].concat(row).some((item: any) => item.proxyCategory !== 'noproxy')),
         },

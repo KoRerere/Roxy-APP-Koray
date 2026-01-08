@@ -2,6 +2,7 @@
 import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
+import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -37,6 +38,7 @@ const dataList = ref<Plan[]>()
 const selectedPlan = ref()
 const selectedCount = ref()
 const selectedDuration = ref()
+const giftType = ref()
 
 const showAlert = computed(() => {
   return selectedCount.value && currency(selectedCount.value).add(userPayInfo.value.freeWindowCount).value < userPayInfo.value.useWindowCount
@@ -77,7 +79,7 @@ const isTrial = computed(() => selectedPlan.value?.subLevel === SubLevelEnum.Tri
 
 const currentSubscribe = computed(() => {
   const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
-  return $t('当前权益: {subLevel} ({count} 窗口)\n窗口用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+  return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
 
 const details = computed(() => {
@@ -225,6 +227,7 @@ async function onSubscribe() {
             },
             subLevel: selectedPlan.value.subLevel,
             subscriptionMonths: selectedDuration.value.month,
+            giftType: giftType.value,
             orderType: OrderType.Subscribe,
             purchaseType: PurchaseType.Profile,
             subOrderType: PaySubOrderType.Purchase,
@@ -288,7 +291,7 @@ async function trialSubscribe() {
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <AdvancedFeat :plan="selectedPlan" />
         </div>
-        <div class="flex flex-col gap-3 w-80">
+        <div class="flex flex-col gap-3 w-88">
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
           <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="$t('购买窗口数量少于当前窗口数')" :closable="false" />
           <Detail :list="details">
@@ -323,6 +326,7 @@ async function trialSubscribe() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
+                <RoxyGifts v-model="giftType" :amount="finalCalculate.amount" />
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

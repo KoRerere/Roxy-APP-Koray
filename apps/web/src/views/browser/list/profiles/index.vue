@@ -649,20 +649,15 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
               <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
             </div>
           )}
-          <ProxyQuick
-            class="flex-1 overflow-hidden"
-            {...{
-              data: isMulti ? undefined : _proxydata,
-              onConfirm,
-            }}
-          >
-          </ProxyQuick>
+          <div class="flex-1 overflow-hidden">
+            <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
+          </div>
         </div>
       )
     : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
 
   drawerInstance.showDrawer({
-    title: isChoose ? $t('选择代理') : $t('添加代理'),
+    title: isChoose ? $t('选择代理 IP') : $t('添加代理 IP'),
     dismissable: false,
     slots: {
       container: containerRender,
@@ -704,8 +699,8 @@ function multipleProxyDelete(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
 
   confirm.require({
-    header: $t('删除代理'),
-    message: $t('您确认要删除代理吗？'),
+    header: $t('删除代理 IP'),
+    message: $t('您确认要删除代理 IP 吗？'),
     rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
     acceptProps: { label: $t('确认'), severity: 'danger' },
     accept: async () => {

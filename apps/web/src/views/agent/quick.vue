@@ -1,8 +1,7 @@
 <script setup lang="ts">
-;
 import ListSimple from './list/simple.vue'
 import ShopSimple from './shop/simple.vue'
-import { ProxyType } from '/@/enums/proxy';
+import { ProxyType } from '/@/enums/proxy'
 
 defineOptions({ inheritAttrs: false })
 
@@ -17,23 +16,22 @@ const attrs = useAttrs()
 
 const tabs = ref([
   {
-    title: $t('代理 IP'),
-    value: 'list',
-    slot: 'list',
-  },
-  {
-    title: $t('已购代理'),
+    title: $t('已购代理 IP'),
     value: 'shop',
     total: 0,
     slot: 'shop',
   },
+  {
+    title: $t('代理 IP'),
+    value: 'list',
+    slot: 'list',
+  },
 ])
 
-const tabsValue = ref('list')
+const tabsValue = ref('shop')
 
 const listData = computed(() => !isBatch ? data : data?.filter((item: any) => item._type === ProxyType.resource))
 const shopData = computed(() => !isBatch ? data : data?.filter((item: any) => item._type === ProxyType.buy))
-
 
 function listConfirm(data: any) {
   emit('confirm', isBatch ? [...shopData.value, ...data] : data)
@@ -42,23 +40,24 @@ function listConfirm(data: any) {
 function shopConfirm(data: any) {
   emit('confirm', isBatch ? [...listData.value, ...data] : data)
 }
-
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" head-tabs>
-      <template #tab="{ data }">
+    <RxTabs v-model:value="tabsValue" class="flex-1 overflow-hidden" :tabs="tabs" head-tabs>
+      <template #tab="{ data: row }">
         <div class="flex items-center gap-1">
-          <div>{{ data.title }}</div>
-          <div v-if="data.total" class="flex items-center justify-center w-4 h-4 rounded-full mark">{{ data.total }}</div>
+          <div>{{ row.title }}</div>
+          <div v-if="row.total" class="flex items-center justify-center w-4 h-4 rounded-full mark">
+            {{ row.total }}
+          </div>
         </div>
       </template>
       <template #list>
         <ListSimple v-bind="attrs" :data="listData" :is-batch="isBatch" @confirm="listConfirm" />
       </template>
       <template #shop>
-        <ShopSimple v-bind="attrs" v-model:total="tabs[1].total" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
+        <ShopSimple v-bind="attrs" v-model:total="tabs[1]!.total" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
       </template>
     </RxTabs>
   </div>

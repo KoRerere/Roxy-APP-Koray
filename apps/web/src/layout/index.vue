@@ -34,7 +34,7 @@ const collapsed = ref<boolean>(Boolean(~~(localStorage.getItem(MENU_COLLAPSED) a
 const anntList = ref<AnntData>()
 
 const indicatorColor = computed(() => {
-  return themeStore.theme === 'dark' ? '#FFFFFF33' : 'rgba(0, 0, 0, 0.1)'
+  return themeStore.realTheme === 'dark' ? '#FFFFFF33' : 'rgba(0, 0, 0, 0.1)'
 })
 
 /** 订阅到期时间 */
@@ -125,6 +125,31 @@ function onRenewal() {
     })
   }
 }
+
+function onHtmlClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  const link = target.closest('a')
+
+  if (!link || link.target === '_blank')
+    return
+
+  const href = link.getAttribute('href')
+
+  // 只拦截站内路由
+  if (!href || href.startsWith('http'))
+    return
+  e.preventDefault()
+
+  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
+
+  router.replace({
+    path: url.pathname,
+    query: {
+      ...Object.fromEntries(url.searchParams),
+      _t: Date.now(),
+    },
+  })
+}
 </script>
 
 <template>
@@ -152,7 +177,7 @@ function onRenewal() {
                  @close="handleCloseAnnt(annt.id!)"
         >
           <template #default>
-            <div class="ellipsis-1" v-html="annt.announcement" />
+            <div class="ellipsis-1" @click="onHtmlClick" v-html="annt.announcement" />
           </template>
           <template #closeicon>
             <SvgIcon name="base/rx_ic_delete" />
