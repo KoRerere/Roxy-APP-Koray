@@ -41,12 +41,12 @@ const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，�
 
 onBeforeMount(() => {
   if (needAmount) {
-    querySupportPayway()
     mixpanelTrack('click_enter_wallet_recharge_insufficient')
   }
   else {
     mixpanelTrack('wallet_recharge_click')
   }
+  querySupportPayway()
 })
 
 provide('$rechargeModal', {
