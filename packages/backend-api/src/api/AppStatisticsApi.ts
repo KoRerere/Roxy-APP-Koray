@@ -11,13 +11,17 @@
  */
 
 import {
+  AddSystemTodoListData,
+  AddSystemTodoListParams,
   CheckIpDownloadLimitListData,
   GetPromotionLinkDiscountListData,
   GetPromotionLinkDiscountListParams,
   GetVersionListListData,
   GetVersionListListParams,
+  UpdateAuthStatisticsCreateData,
+  UpdateAuthStatisticsCreatePayload,
 } from "./data-contracts";
-import { HttpClient, RequestParams } from "./http-client";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class AppStatisticsApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
@@ -76,6 +80,45 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
       path: `/app_statistics/get_promotion_link_discount`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name AddSystemTodoList
+   * @summary 配额不足新增代办
+   * @request GET:/app_statistics/add_system_todo
+   * @response `200` `AddSystemTodoListData`
+   */
+  addSystemTodoList = (
+    query: AddSystemTodoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<AddSystemTodoListData, any>({
+      path: `/app_statistics/add_system_todo`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name UpdateAuthStatisticsCreate
+   * @summary 学生认证/美国军人统计
+   * @request POST:/app_statistics/update_auth_statistics
+   * @response `200` `UpdateAuthStatisticsCreateData`
+   */
+  updateAuthStatisticsCreate = (
+    data: UpdateAuthStatisticsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UpdateAuthStatisticsCreateData, any>({
+      path: `/app_statistics/update_auth_statistics`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

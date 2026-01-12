@@ -1336,6 +1336,7 @@
   "浏览器版本": "Browser Version",
   "浏览器窗口打开时地址栏使用的搜索引擎，留空则默认使用Google!": "The search engine used in the address bar when the browser profile opens, leave blank to use Google by default!",
   "消费后 7 天内完成审核": "Review completed within 7 days after consumption",
+  "消费完成后，对应赠品将会发放至代理 IP 页面中：静态住宅代理将会在发放至「代理 IP 商店」中，而动态住宅代理将会发放至「代理 IP 列表」中。": "Once your purchase is complete, the corresponding complimentary proxies will be allocated to your Proxies page as follows: ISP Proxies will appear in the \"Proxy Store\", whereas Rotating Residential Proxies will be added to your \"Proxy List\".",
   "消费每满 {amount} 即可获赠代理 IP，多买多送": "Get free proxy for every {amount} spent, more you buy more you get",
   "消费金额": "Consumption Amount",
   "深色模式": "Dark Mode",
@@ -2002,6 +2003,5 @@
   "默认项目": "Default project",
   "鼠标右键编辑": "Right-click to edit",
   "🎁 \"配齐\"计划：买窗口套餐，IP 免费领": "🎁 Roxy Limited-Time Gift Program",
-  "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
-  "消费完成后，对应赠品将会发放至代理 IP 页面中：静态住宅代理将会在发放至「代理 IP 商店」中，而动态住宅代理将会发放至「代理 IP 列表」中。": "Once your purchase is complete, the corresponding complimentary proxies will be allocated to your Proxies page as follows: ISP Proxies will appear in the \"Proxy Store\", whereas Rotating Residential Proxies will be added to your \"Proxy List\"."
+  "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)"
 }

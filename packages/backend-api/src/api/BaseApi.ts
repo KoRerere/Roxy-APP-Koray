@@ -134,6 +134,8 @@ import {
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
   UserSendValidatorVerifyCodeListData,
+  UserSetPromotionLinkShowCreateData,
+  UserSetPromotionLinkShowCreatePayload,
   UserSettingAccountPasswordCreateData,
   UserSettingAccountPasswordCreatePayload,
   UserSettingPasswordCreateData,
@@ -1866,6 +1868,27 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserBindPhoneCreateData, any>({
       path: `/user_bind_phone`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSetPromotionLinkShowCreate
+   * @summary 设置用户推广链接是否展示
+   * @request POST:/user_set_promotion_link_show
+   * @response `200` `UserSetPromotionLinkShowCreateData`
+   */
+  userSetPromotionLinkShowCreate = (
+    data: UserSetPromotionLinkShowCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSetPromotionLinkShowCreateData, any>({
+      path: `/user_set_promotion_link_show`,
       method: "POST",
       body: data,
       type: ContentType.Json,

@@ -18,6 +18,7 @@ const [showModal] = useDialog()
 
 const showTooltip = ref(false)
 const faqList = ref()
+const qrcodeMap = ref()
 const qrcodeList = ref()
 
 const items = computed(() => {
@@ -33,16 +34,17 @@ const items = computed(() => {
     {
       label: $t('微信客服与群组🎁'),
       icon: 'base/rx_ic_wechat',
-      visible: currentLocale === 'zh-CN',
+      visible: !!qrcodeMap.value.WeChat && currentLocale === 'zh-CN',
       command: () => openCommunity('WeChat'),
     },
     {
-      visible: currentLocale === 'zh-CN',
+      visible: !!qrcodeMap.value.WeChat && currentLocale === 'zh-CN',
       separator: true,
     },
     {
       label: $t('Telegram 群组'),
       icon: 'base/rx_ic_telegram_2',
+      visible: !!qrcodeMap.value.Telegram,
       command: async () => openCommunity('Telegram'),
     },
     {
@@ -95,11 +97,15 @@ onBeforeMount(() => {
 async function getFaqList() {
   const { data } = await API.base.getFaqHelpList()
   faqList.value = data.rows
-  qrcodeList.value = [
-    { name: 'Telegram', value: data.tg_qrcode },
-    { name: 'WeChat', value: data.wx_qrcode },
-    // { name: 'QQ', value: data.qq_qrcode },
-  ].filter(item => !!item.value)
+
+  qrcodeMap.value = {
+    Telegram: data.tg_qrcode,
+    WeChat: data.wx_qrcode,
+  }
+
+  qrcodeList.value = Object.entries(qrcodeMap.value)
+    .map(([key, value]) => ({ name: key, value }))
+    .filter(item => !!item.value)
 }
 
 function showHelp(event: MouseEvent) {

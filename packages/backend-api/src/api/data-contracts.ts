@@ -3362,6 +3362,13 @@ export interface UserBindPhoneCreateData {
   msg: string;
 }
 
+export type UserSetPromotionLinkShowCreatePayload = object;
+
+export interface UserSetPromotionLinkShowCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -4972,12 +4979,12 @@ export interface UserGetProxyModuleListParams {
    * 分页索引
    * @example 1
    */
-  page_index: number;
+  page_index?: number;
   /**
    * 分页条数
    * @example 15
    */
-  page_size: number;
+  page_size?: number;
   /**
    * 国家
    * @example "us"
@@ -5098,34 +5105,21 @@ export interface UserGetProxyModuleListData {
   msg: string;
 }
 
-export interface UserAddProxyModuleCreatePayload {
-  /** 网络协议 */
-  ipType: string;
-  /** 代理协议 */
-  protocol: string;
-  /** 代理主机 */
-  host: string;
-  /** 代理端口 */
-  port: string;
-  /** 代理账号 */
+export type UserAddProxyModuleCreatePayload = {
+  ipType?: string;
+  protocol?: string;
+  host?: string;
+  port?: string;
   proxyUserName?: string;
-  /** 代理密码 */
   proxyPassword?: string;
-  /** 刷新URL */
   refreshUrl?: string;
-  /** 查询渠道 */
+  /** ip123.in/ip.json， str, 非必传 */
   checkChannel?: string;
-  /**  出口IP */
-  lastIp?: string;
-  /** 出口国家 */
   lastCountry?: string;
-  /** 检测时间 */
   checkTime?: string;
-  /** 检测状态 */
-  checkStatus?: boolean;
-  /** 备注 */
   remark?: string;
-}
+  checkStatus?: boolean;
+}[];
 
 export interface UserAddProxyModuleCreateData {
   code: number;
@@ -7783,6 +7777,27 @@ export interface GetQrcodeInfoListData {
     /** 类型,wechat:微信,qq:QQ,tg:Telegram' */
     type?: string;
   }[];
+  msg: string;
+}
+
+export interface AddSystemTodoListParams {
+  /** @example "200" */
+  quota?: string;
+}
+
+export interface AddSystemTodoListData {
+  code: number;
+  msg: string;
+}
+
+export type UpdateAuthStatisticsCreatePayload = object;
+
+export interface UpdateAuthStatisticsCreateData {
+  code: number;
+  data: {
+    key: string;
+    value: number;
+  };
   msg: string;
 }
 

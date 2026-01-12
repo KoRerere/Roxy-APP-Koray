@@ -53,11 +53,11 @@ function shopConfirm(data: any) {
           </div>
         </div>
       </template>
+      <template #shop>
+        <ShopSimple v-bind="attrs" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
+      </template>
       <template #list>
         <ListSimple v-bind="attrs" :data="listData" :is-batch="isBatch" @confirm="listConfirm" />
-      </template>
-      <template #shop>
-        <ShopSimple v-bind="attrs" v-model:total="tabs[1]!.total" :data="shopData" :is-batch="isBatch" @confirm="shopConfirm" />
       </template>
     </RxTabs>
   </div>
