@@ -8,7 +8,7 @@ import { appConfig, ROXY_MAIN_WINDOW_ID } from '/@/constants'
 import { isDev, isPackaged, isProd, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { createWindow } from '/@/utils/browser-window'
@@ -120,7 +120,7 @@ export async function intoMainPage() {
   })
 
   mainWin.on('focus', (event) => {
-    ipcMain.send('window:on-focus')
+    ipcSender.window.onFocus()
   })
 
   if (!isPackaged) {

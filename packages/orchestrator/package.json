@@ -1,0 +1,60 @@
+{
+  "name": "orchestrator",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Minimal LangChain MVP CLI with OpenRouter - Interactive chat with thinking mode",
+  "author": "",
+  "license": "ISC",
+  "keywords": [
+    "langchain",
+    "openrouter",
+    "cli",
+    "chat",
+    "ai"
+  ],
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.test.ts",
+    "test:sse": "tsx scripts/test-sse-events.ts",
+    "build": "tsc || true",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.7",
+    "@langchain/langgraph": "^1.0.7",
+    "@langchain/langgraph-checkpoint-sqlite": "^1.0.0",
+    "@langchain/mcp-adapters": "^1.1.1",
+    "@langchain/openai": "^1.2.0",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "better-sqlite3": "catalog:",
+    "bindings": "catalog:",
+    "chalk": "^4.1.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "langchain": "^1.2.2",
+    "listr2": "^9.0.5",
+    "openai": "^6.15.0",
+    "ora": "^5.4.1",
+    "prompts": "^2.4.2",
+    "rxjs": "^7.8.2",
+    "uuid": "^13.0.0",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.9",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.0",
+    "patch-package": "^8.0.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "logs/**/*"
+    ]
+  }
+}

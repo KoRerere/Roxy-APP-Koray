@@ -36,7 +36,7 @@ export function safeParseJSON(str: string, fallback?: () => any) {
     return JSON.parse(str)
   }
   catch (error) {
-    console.error('safeParseJSON', error)
+    console.debug('safeParseJSON', error)
     return fallback?.() ?? null
   }
 }

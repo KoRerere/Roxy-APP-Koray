@@ -5,14 +5,15 @@ import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-s
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
-
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import { ProxyCheckStatus, ProxyType } from '/@/enums'
+import { BuyProxyListType, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
-import { type ProxyItem, getCustomFilters, tableOperation, tableRequest, getAdvancedSearch } from './operation'
+import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
+import type { ProxyCheckStatus } from '/@/enums'
+import type { ProxyItem } from './operation'
 
 interface Props {
   data?: any
@@ -21,7 +22,6 @@ interface Props {
 }
 
 const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>()
-
 const emit = defineEmits(['confirm'])
 
 const totalMark = defineModel<number>('total')
@@ -52,27 +52,28 @@ const tableProps = {
   ...(!isBatch
     ? {}
     : {
-      onRowSelect({ data }: any) {
-        Reflect.set(data, '_disabled', false)
-      },
-      onRowUnselect({ data }: any) {
-        Reflect.set(data, '_disabled', true)
-      },
-      onRowSelectAll() {
-        dataList.value.forEach((item: any) => {
-          Reflect.set(item, '_disabled', false)
-        })
-      },
-      onRowUnselectAll() {
-        dataList.value.forEach((item: any) => {
-          Reflect.set(item, '_disabled', true)
-        })
-      },
-    }),
+        onRowSelect({ data }: any) {
+          Reflect.set(data, '_disabled', false)
+        },
+        onRowUnselect({ data }: any) {
+          Reflect.set(data, '_disabled', true)
+        },
+        onRowSelectAll() {
+          dataList.value.forEach((item: any) => {
+            Reflect.set(item, '_disabled', false)
+          })
+        },
+        onRowUnselectAll() {
+          dataList.value.forEach((item: any) => {
+            Reflect.set(item, '_disabled', true)
+          })
+        },
+      }),
 }
 
 const sumProxyCount = computed(() => {
-  if (!isBatch) return 0
+  if (!isBatch)
+    return 0
   return (selection.value || []).reduce((sum: number, item: any) => sum += item._proxyCount, 0)
 })
 
@@ -83,16 +84,17 @@ onBeforeMount(async () => {
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
     ...tabParams,
-    ...filterFieldByValue(getFormData(filtersMenu.value))
+    ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   tableRef.value?.refresh(params, force)
 }
 
 async function getTableList(params: any) {
-  const { code, msg, data: { rows, total } } = await tableRequest({ ...params, type: 'window_use' })
+  const { code, msg, data: { rows, total } } = await tableRequest({ ...params, type: BuyProxyListType.Use })
 
-  const _rows = rows.map(item => {
-    if (!isBatch) return item
+  const _rows = rows.map((item) => {
+    if (!isBatch)
+      return item
     const target = selection.value?.find((it: any) => item.id === it.id)
     return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
   })
@@ -131,7 +133,7 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
       const checkResult = await testProxy(toRaw(item))
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
-      checkedMessage.value[item.id!] = checkResult.checkStatus;
+      checkedMessage.value[item.id!] = checkResult.checkStatus
       return { ...checkResult, id: item.id }
     }
   })
@@ -143,10 +145,10 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
 function saveSelected() {
   const selectProxy = !isBatch
     ? selection.value
-    : selection.value?.map(({ loadingOperationMap, _disabled, ...item }: any) => ({
-      ...item,
-      _type: ProxyType.buy
-    }))
+    : selection.value?.map(({ loadingOperationMap: _, _disabled, ...item }: any) => ({
+        ...item,
+        _type: ProxyType.buy,
+      }))
   emit('confirm', selectProxy)
 }
 
@@ -156,28 +158,31 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
 <template>
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
-      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false" />
+             :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false"
+    />
     <div class="flex-ovh-1">
       <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-        :show-actions="false" :show-table-header="false">
+               :show-actions="false" :show-table-header="false"
+      >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
         </template>
-        <template #outbound="{ data }">
-          <OutboundIp class="select-none" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
-            :is-loading="data.loadingOperationMap?.test" />
+        <template #outbound="{ data: row }">
+          <OutboundIp class="select-none" :country="row.lastCountry" :city="row.lastCity" :last-ip="row.lastIp" :time="row.checkTime" :status="checkedMessage[row.id]"
+                      :is-loading="row.loadingOperationMap?.test"
+          />
         </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
           <div class="bounded" @click.stop>
-            <RxInputNumber v-model="row._proxyCount" :disabled="row._disabled" :min="1" :step="1"></RxInputNumber>
+            <RxInputNumber v-model="row._proxyCount" :disabled="row._disabled" :min="1" :step="1" />
           </div>
         </template>
         <template #actions="{ data: row }">

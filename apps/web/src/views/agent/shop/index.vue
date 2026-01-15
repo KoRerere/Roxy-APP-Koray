@@ -18,7 +18,7 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { useUserStore } from '/@/stores/user'
-import { ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
+import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
 import type { ProxyItem } from './operation'
 
@@ -38,13 +38,14 @@ const tableRef = useTemplateRef('shoptable')
 const filtersMenu = ref()
 const dataList = ref()
 const newOrderNo = ref()
+const newOrderTimer = ref()
 
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const hideTypeConfig = reactive({
-  value: localStorage.getItem('ProxyShopHideType') || 'available_list',
-  trueValue: 'available_list',
-  falseValue: 'list_use',
+  value: localStorage.getItem('ProxyShopHideType') || BuyProxyListType.Available,
+  trueValue: BuyProxyListType.Available,
+  falseValue: BuyProxyListType.List,
 })
 
 const filters = reactive({
@@ -94,6 +95,10 @@ onBeforeMount(async () => {
   setNewOrderNo(route.query.orderNo as string)
 })
 
+onBeforeUnmount(() => {
+  clearTimeout(newOrderTimer.value)
+})
+
 async function getTableList(params: any) {
   const data = await tableRequest({ ...filters.getValues(), type: hideTypeConfig.value, ...params })
   dataList.value = (data.data?.rows || []).filter(item => item.proxyExpireStatus !== ProxyExpireStatus.expired && [ProxyOrderStatus.done, ProxyOrderStatus.refunding, ProxyOrderStatus.changing].includes(item.orderStatus!))
@@ -125,17 +130,17 @@ function onAdvancedSearch(search?: Record<string, any>) {
 }
 
 function onBuyProxy(props?: Record<string, any>) {
-  buyProxy((orderInfo) => {
+  buyProxy(toRaw(props)).then((orderInfo) => {
     onRefreshTable()
-    setNewOrderNo(orderInfo?.orderNo)
-  }, toRaw(props))
+    setNewOrderNo(orderInfo?.orderNo || '')
+  })
 }
 
 function setNewOrderNo(value: string) {
   if (!value)
     return
   newOrderNo.value = value
-  setTimeout(() => {
+  newOrderTimer.value = setTimeout(() => {
     newOrderNo.value = ''
     const { orderNo: _, ...query } = route.query
     router.replace({ name: 'agent-list', query })
@@ -315,7 +320,7 @@ async function toggleAutoRenew(data: ProxyItem) {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ProviderSimpleList :on-buy-proxy="onBuyProxy" />
+    <ProviderSimpleList v-if="isOwner" :on-buy-proxy="onBuyProxy" />
     <div class="flex flex-1 overflow-hidden">
       <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removable-sort
                :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :show-gridlines="false" :show-actions="false"

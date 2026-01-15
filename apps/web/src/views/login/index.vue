@@ -19,6 +19,7 @@ import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { Role, WorkspaceType } from '/@/enums'
+import { getInviteCode } from '/@/api/util'
 
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
@@ -42,6 +43,7 @@ const tempToken = ref()
 const recoverType = ref()
 const recoverEmail = ref()
 const loginWay = ref<'password' | 'phone' | OauthLoginType>('password')
+const inviteDiscountInfo = ref()
 
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
@@ -66,7 +68,20 @@ async function decryptPassword() {
   }
 }
 
+async function getInviteDiscount() {
+  const inviteCode = await getInviteCode()
+  if (!inviteCode)
+    return
+
+  const { code, data } = await API.base.getPromotionLinkDiscountAndUsernameList({})
+  if (code !== 0) {
+    return
+  }
+  inviteDiscountInfo.value = data
+}
+
 decryptPassword()
+getInviteDiscount()
 
 async function handleSubmit() {
   const { user_name, password } = signFormData.value
@@ -342,7 +357,9 @@ provideLoginContext({
         </div>
 
         <div class="sign-card">
-          <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
+          <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" :invite-discount-info="inviteDiscountInfo"
+                    @register="val => signFormSwitchRegister = val"
+          />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
           <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :on-confirm="handleSubmitBy2fa" />

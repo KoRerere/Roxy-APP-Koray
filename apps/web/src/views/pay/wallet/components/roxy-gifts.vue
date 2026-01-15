@@ -39,7 +39,7 @@ const options = computed(() => {
   return [
     {
       label: $t('动态住宅代理 IP ({value}GB，{days} 天)', { value, days: roxyGifts.value.dynamicDays }),
-      desc: $t('可设置任意国家地区，由 RolaIP 提供'),
+      desc: $t('可设置任意国家地区，由 ROLA-IP 提供'),
       value: RoxyGiftsType.Rotating,
     },
     {
@@ -122,7 +122,7 @@ function giftRule() {
             </div>
           </div>
           <div class="flex flex-col gap-3">
-            <div class={`font-700 ${ruleCss.desc}`}>{$t('即日起，消费满 {amount} 一次，即可在以下选项中选择一项作为赠品：', { amount })}</div>
+            <div class={`font-700 ${ruleCss.desc}`}>{$t('窗口每消费 {amount} 可选下面赠品，赠送无上限：', { amount })}</div>
             <div class={ruleCss.desc}>{$t('选项一： {country} 静态住宅代理，有效期 {days} 天。每满 {amount} 赠送 {count} 条，不设上限。', { country, days: staticDays, amount, count: ispCount })}</div>
             <div class={ruleCss.desc}>
               <I18nT keypath={$t('选项二： 动态住宅代理（由合作伙伴 {link} 提供），有效期 {days} 天。每满 {amount} 赠送 {value}GB，不设上限。', { link: '{link}', days: dynamicDays, amount, value: dynamicFlow })}>

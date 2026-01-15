@@ -1,13 +1,13 @@
 import { getWebDomain } from '/@/api/util'
 import { checkRoxynetBin } from '/@/modules/app/checkResource/checkRoxynetBin'
 import { checkRoxySyncBin } from '/@/modules/app/checkResource/checkRoxySyncBin'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { appUpdater } from '/@/modules/updater'
 import { webUpdater } from '/@/modules/updater/webUpdater'
 
 /** 发送启动消息 */
 export function sendLaunchMessage(message: string) {
-  ipcMain.send('app:launch-message', message)
+  ipcSender.app.launchMessage(message)
 }
 
 export async function checkResource() {

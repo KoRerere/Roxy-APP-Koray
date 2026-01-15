@@ -29,9 +29,18 @@ const [_, onlyErrorToast] = useResponseToast()
 
 let ro: ResizeObserver | null = null
 const contentRef = useTemplateRef<HTMLDivElement>('content')
-const shopList = ref<ShopList>([])
 const cols = ref(3)
-const showList = computed(() => [...shopList.value.slice(0, cols.value), ...shopList.value.slice(-1)])
+const shopList = ref<ShopList>([])
+
+const showList = computed(() => {
+  const moreItem: MoreItem = {
+    icon: 'base/rx_ic_more',
+    isMore: true,
+    proxyProviderName: $t('更多 IP 供应商'),
+    proxyProviderDesc: $t('Roxy 集成的高质量代理 IP'),
+  }
+  return [...shopList.value.slice(0, cols.value), moreItem]
+})
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/store_bg.png")' : 'url("/images/proxy/store_bg_dark.png")'
@@ -60,13 +69,7 @@ async function getShopList() {
   onlyErrorToast(code, msg)
   if (code !== 0)
     return
-  const moreItem: MoreItem = {
-    icon: 'base/rx_ic_more',
-    isMore: true,
-    proxyProviderName: $t('更多 IP 供应商'),
-    proxyProviderDesc: $t('Roxy 集成的高质量代理 IP'),
-  }
-  shopList.value = [...data.map((item) => {
+  shopList.value = data.map((item) => {
     return {
       ...item,
       proxyProviderTypeStr: item.proxyTypeList?.map(item => item.typeName).join(' / '),
@@ -84,7 +87,7 @@ async function getShopList() {
             },
       },
     }
-  }), moreItem]
+  })
 }
 </script>
 

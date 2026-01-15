@@ -58,12 +58,21 @@ router.get('/workspace', async (req, res) => {
 
 /* 创建窗口 */
 router.post('/create', async (req, res) => {
-  const { proxyInfo = {}, fingerInfo = {}, workspaceId } = req.body || {}
+  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId } = req.body || {}
+
+  const _platformUrlIds = windowPlatformList.map(item => item.id).filter(Boolean)
+  const _windowPlatformList = windowPlatformList.filter(item => !item.id)
+  if (Reflect.has(proxyInfo, 'moduleId')) {
+    proxyInfo.proxyMethod = proxyInfo.moduleId !== 0 ? 'choose' : 'custom'
+  }
+
   const params = {
     ...getDefaultBrowserCreateParams(),
     ...req.body,
     ...proxyInfo,
     ...fingerInfo,
+    platformUrlIds: _platformUrlIds,
+    windowPlatformList: _windowPlatformList,
   }
 
   try {
@@ -94,11 +103,19 @@ router.post('/create', async (req, res) => {
 
 // 修改窗口
 router.post('/mdf', async (req, res) => {
-  const { proxyInfo = {}, fingerInfo = {}, workspaceId } = req.body || {}
+  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId } = req.body || {}
+
+  const _platformUrlIds = windowPlatformList.map(item => item.id).filter(Boolean)
+  const _windowPlatformList = windowPlatformList.filter(item => !item.id)
+  if (Reflect.has(proxyInfo, 'moduleId')) {
+    proxyInfo.proxyMethod = proxyInfo.moduleId !== 0 ? 'choose' : 'custom'
+  }
   const params = {
     ...req.body,
     ...proxyInfo,
     ...fingerInfo,
+    platformUrlIds: _platformUrlIds,
+    windowPlatformList: _windowPlatformList,
   }
 
   const result = await API.window.userMdfWindowInfoSingleV2Create(params, {

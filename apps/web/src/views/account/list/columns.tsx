@@ -1,5 +1,6 @@
 import RelatedInfo from '/@/components/related-info.vue'
-import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
+import PlatformInfo from '/@/views/account/list/components/platform-info.vue'
+import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
@@ -11,7 +12,9 @@ export function getRawColumns(options?: any) {
       title: $t('账号信息'),
       key: 'status',
       disabledToggle: true,
-      slot: 'platform',
+      render: ({ data }: any) => {
+        return <PlatformInfo data={data}></PlatformInfo>
+      },
     },
     {
       title: $t('备注'),
@@ -23,7 +26,7 @@ export function getRawColumns(options?: any) {
       },
       _cache: {
         extend: false,
-      }
+      },
     },
     {
       title: $t('已关联窗口'),

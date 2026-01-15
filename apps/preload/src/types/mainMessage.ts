@@ -63,6 +63,8 @@ export interface MainMessage {
   'browser:on-close-syncing-data': (dirIds: string[]) => void
   /** 达到窗口打开次数限制 */
   'browser:window-open-limit': (result: { code: number, msg: string }) => void
+  /** 连接内核调试端口失败，127.0.0.1 被拦截，一般的都是所有网络都被第三方程序接管了，然后导致丢包了，在驱动层做的，只有这些 vpn会干这些事情 */
+  'browser:network-intercepted': () => void
   /** 用户被挤号 */
   'user:kicked-out': (params: { deviceName: string, createTime: string }) => void
   /** google 授权登录 */

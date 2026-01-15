@@ -49,7 +49,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           /** 如果进程已存在，则杀死electron */
           if (electronApp !== null) {
             electronApp.removeListener('exit', process.exit)
-            electronApp.kill('SIGINT')
+            electronApp.kill('SIGKILL')
             electronApp = null
           }
 

@@ -9,7 +9,7 @@ import { ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
 import { getErrorMessage } from '/@/utils'
@@ -276,6 +276,7 @@ export async function openBrowserFailedDialog(dirId: string, type: OpenBrowserFa
   console.debug('openBrowserFailedDialog shortcut', dirId, shortcut)
   const name = await Promise.try(() => basename(shortcut.launcherEntry, extname(shortcut.launcherEntry))).catch(() => $t('默认浏览器'))
   console.debug('openBrowserFailedDialog name', name)
-  ipcMain.send('dialog:open-browser-failed', { name, type, message })
+  ipcSender.dialog.openBrowserFailed({ name, type, message })
   restoreOrCreateWindow()
+  shortcutStore.remove(dirId)
 }

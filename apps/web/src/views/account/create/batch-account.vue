@@ -21,6 +21,11 @@ const columns = [
     title: $t('平台'),
     getText: (data: any) => data.platformUrl || '--',
   },
+  // {
+  //   key: 'platformName',
+  //   title: $t('平台名'),
+  //   slot: 'name',
+  // },
   {
     key: 'platformUserName',
     title: $t('用户名'),
@@ -122,6 +127,7 @@ function parseValue() {
     return {
       id: index,
       platformUrl: input.value.value,
+      // platformName: input.value.value.replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
       platformIcon,
       platformIconDark,
       platformUserName: username ?? '',
@@ -136,6 +142,25 @@ function parseValue() {
   }
 }
 
+// function onPlatformName(data: any) {
+//   showSimpleDialog({
+//     title: $t('修改平台名'),
+//     inputs: [
+//       {
+//         type: 'text',
+//         name: 'platformName',
+//         value: data.platformName,
+//         props: {
+//           placeholder: $t('请输入平台名'),
+//         },
+//       },
+//     ],
+//     onConfirm: (formData) => {
+//       data.platformName = formData.platformName
+//     },
+//   })
+// }
+
 function onRemark(data: any) {
   showSimpleDialog({
     title: $t('为所选账号添加备注'),
@@ -147,7 +172,7 @@ function onRemark(data: any) {
         props: {
           placeholder: $t('请输入备注'),
           rows: 6,
-        }
+        },
       },
     ],
     onConfirm: async (formData: any) => {
@@ -171,7 +196,7 @@ function clearAccount() {
     },
     accept: () => {
       dataList.value = []
-    }
+    },
   })
 }
 
@@ -181,7 +206,8 @@ async function onSave(needMore: boolean) {
   if (code === 0) {
     if (!needMore) {
       router.replace({ name: 'account-list' })
-    } else {
+    }
+    else {
       showToast(0, msg)
       proxiesText.value = ''
       input.value.value = ''
@@ -196,8 +222,10 @@ async function onSave(needMore: boolean) {
     <div class="grid grid-cols-10 gap-3 w-full mb-[1px]">
       <div class="col-span-6 flex flex-col gap-1">
         <div class="flex items-center justify-between">
-          <div class="subtitle">{{ $t('账号信息') }}</div>
-          <TsFormSelect class="!w-80" v-model="input.value" v-bind="input.props" />
+          <div class="subtitle">
+            {{ $t('账号信息') }}
+          </div>
+          <TsFormSelect v-model="input.value" class="!w-80" v-bind="input.props" />
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
@@ -212,11 +240,19 @@ async function onSave(needMore: boolean) {
         </div>
         <div class="relative overflow-hidden flex-1">
           <div class="rules relative z-10">
-            <div class="rules-example">USERNAME1:PASSWORD1</div>
-            <div class="rules-example">USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span class="text-blue break-all">{{ `\{${$t('备注')}\}` }}</span></div>
-            <br></br>
-            <div class="rules-help">{{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}</div>
-            <div class="rules-help">{{ $t('2.每行一个账号，一次最多添加{count}个账号。', { count: 500 }) }}</div>
+            <div class="rules-example">
+              USERNAME1:PASSWORD1
+            </div>
+            <div class="rules-example">
+              USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span class="text-blue break-all">{{ `\{${$t('备注')}\}` }}</span>
+            </div>
+            <br>
+            <div class="rules-help">
+              {{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}
+            </div>
+            <div class="rules-help">
+              {{ $t('2.每行一个账号，一次最多添加{count}个账号。', { count: 500 }) }}
+            </div>
           </div>
           <ShadowDotGrid class="z-9" />
         </div>
@@ -224,7 +260,9 @@ async function onSave(needMore: boolean) {
     </div>
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar ">
-        <div class="subtitle">{{ $t('已解析账号') }}</div>
+        <div class="subtitle">
+          {{ $t('已解析账号') }}
+        </div>
         <div class="flex gap-2">
           <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :label="$t('清空账号')" :disabled="!dataList?.length" @click.stop="clearAccount" />
         </div>
@@ -233,11 +271,21 @@ async function onSave(needMore: boolean) {
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" class="min-h-262px" />
         </template>
+
+        <!-- <template #name="{ data }">
+          <div class="flex items-center gap-2">
+            <span>{{ data.platformName }}</span>
+            <SvgIcon class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-icon-icon-secondary)" @click="onPlatformName(data)" />
+          </div>
+        </template> -->
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
-              :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks }}</div>
+                      :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            />
+            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">
+              {{ data.platformRemarks }}
+            </div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -287,8 +335,8 @@ async function onSave(needMore: boolean) {
 
   &-actions {
     padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
-    border-top: 0.5px solid var(--colors-border-border-overlay, #34393D);
-    background: var(--colors-background-bg-overlay, #2C2E30);
+    border-top: 0.5px solid var(--colors-border-border-overlay, #34393d);
+    background: var(--colors-background-bg-overlay, #2c2e30);
   }
 }
 
@@ -299,16 +347,15 @@ async function onSave(needMore: boolean) {
   border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
-
   &-example {
     color: var(--colors-text-text-primary);
-    font-family: "JetBrains Mono";
+    font-family: 'JetBrains Mono';
     font-size: 12px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
 
   &-help {
-    color: var(--colors-text-text-inactive, #7D8387);
+    color: var(--colors-text-text-inactive, #7d8387);
     font-size: 12px;
     line-height: var(--Line-Height-text-lg, 20px);
   }

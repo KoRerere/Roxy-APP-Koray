@@ -1,27 +1,27 @@
 <script lang="tsx" setup>
+import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
+import ProxyTooltip from './proxy-tooltip.vue'
+import AccountTooltip from './account-tooltip.vue'
 import RxButton from '/@/components/rx-button'
+import ProxyCreate from '/@/views/agent/create/quick.vue'
+import ProxyQuick from '/@/views/agent/quick.vue'
+import AccountCreate from '/@/views/account/create/quick.vue'
+import AccountEdit from '/@/views/account/create/batch-edit.vue'
+import AccountList from '/@/views/account/list/quick.vue'
+import CanvasLine from './canvas-line.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 import { useRoleStore } from '/@/stores/role'
 import { createDefaultObject, formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
-import CanvasLine from './canvas-line.vue'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 
-import ProxyCreate from '/@/views/agent/create/quick.vue'
-import ProxyQuick from '/@/views/agent/quick.vue'
-import AccountCreate from '/@/views/account/create/quick.vue'
-import AccountEdit from '/@/views/account/create/batch-edit.vue'
-import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
-import { ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { clearProxyKeys, silentUpdateAccount, silentUpdateProxy } from '../util'
-import PlatformIcon from '/@/views/account/list/platform-icon.vue'
-import ProxyTooltip from './proxy-tooltip.vue'
-import AccountTooltip from './account-tooltip.vue'
 
 interface Props {
   workspaceName?: string
@@ -63,6 +63,7 @@ const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { buyProxy } = useProxy()
 
 const proxyCss = useCssModule('proxy')
+const proxyProvider = ref()
 const hasProxy = computed(() => data.proxyCategory !== 'noproxy')
 const isOpenBrowser = computed(() => openMessage?.[data.dirId]?.data?.percent === 100)
 
@@ -155,7 +156,7 @@ function getProxyModel() {
       icon: 'base/rx_ic_exchange',
       visible: !hasProxy.value && !role.isViewer,
       command: () => {
-        chooseProxy(proxyData)
+        openProxyDrawer(proxyData)
       },
     },
     {
@@ -206,7 +207,7 @@ function getProxyModel() {
       icon: 'base/rx_ic_exchange',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
-        chooseProxy(proxyData)
+        openProxyDrawer(proxyData)
       },
     },
     {
@@ -217,19 +218,49 @@ function getProxyModel() {
       label: $t('购买代理 IP'),
       icon: 'base/rx_ic_cart',
       visible: role.isOwner,
-      command: () => {
-        buyProxy((orderInfo) => {
-          router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
-        })
+      command: async () => {
+        if (!proxyProvider.value) {
+          const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
+          onlyErrorToast(code, msg)
+          if (code !== 0)
+            return
+          proxyProvider.value = data.find((item: any) => item.proxyProviderName === 'RoxyBrowser')
+        }
+
+        const provider = {
+          proxyProviderWebsite: proxyProvider.value.proxyProviderWebsite,
+          proxyTypeList: proxyProvider.value.proxyTypeList,
+          proxyProviderIcon: proxyProvider.value.proxyProviderIcon,
+          proxyProviderName: proxyProvider.value.proxyProviderName,
+        }
+
+        try {
+          const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
+
+          if (!orderInfo?.immediate) {
+            router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
+            return
+          }
+
+          showToast(0, $t('代理已购买成功，正在为您配置中，请稍后。若长时间未加载代理，请刷新页面或联系技术支持。'))
+
+          const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
+          if (code !== 0 || !data.rows?.[0]) {
+            return
+          }
+
+          setChooseProxy(data.rows[0])
+        }
+        catch (error) { }
       },
-      render: ({ item, btnPt }: any) => {
+      render: (props: any) => {
         return (
-          <RxButton severity="secondary" text pt={btnPt}>
+          <RxButton class="!w-full !justify-start" severity="secondary" text pt={props['btn-pt']}>
             {{
               default: () => (
                 <div class="flex items-center gap-2">
-                  <RxSvgIcon name={item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
-                  <span class="p-button-label">{item.label}</span>
+                  <RxSvgIcon name={props.item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
+                  <span class="p-button-label">{props.item.label}</span>
                   <div class={`${proxyCss.dot}`}></div>
                 </div>
               ),
@@ -400,29 +431,34 @@ function createProxy(proxyData?: Record<string, any>) {
   })
 }
 
-function chooseProxy(proxyData: Record<string, any>) {
+function openProxyDrawer(proxyData: Record<string, any>) {
   drawerInstance.showDrawer({
     title: $t('为[{workspaceName}-{uid}]选择代理', { workspaceName, uid: data.windowSortNum }),
     dismissable: false,
     slots: {
       container: () => h(ProxyQuick, {
         data: proxyData,
-        onConfirm: ({ id: moduleId, proxyCategory, protocol, proxyType, ...formData }: any) => {
-          const { id, dirId } = data
-          updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
-            success: () => silentUpdateProxy(data, {
-              ...formData,
-              moduleId,
-              protocol,
-              proxyCategory: proxyCategory || protocol,
-              proxyMethod: 'choose',
-              buyProxyType: proxyType ?? ProxyType.resource,
-            }, ['isEncryptProxy', 'proxyEncryptInfo']),
-          })
+        onConfirm: (formData: any) => {
+          setChooseProxy(formData)
           drawerInstance.hideDrawer()
         },
       }),
     },
+  })
+}
+
+function setChooseProxy(formData: any) {
+  const { id: moduleId, proxyCategory, protocol, proxyType, ...rest } = formData
+  const { id, dirId } = data
+  updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
+    success: () => silentUpdateProxy(data, {
+      ...rest,
+      moduleId,
+      protocol,
+      proxyCategory: proxyCategory || protocol,
+      proxyMethod: 'choose',
+      buyProxyType: proxyType ?? ProxyType.resource,
+    }, ['isEncryptProxy', 'proxyEncryptInfo']),
   })
 }
 

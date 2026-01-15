@@ -5,6 +5,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path, { normalize } from 'node:path'
 import { appConfig } from '/@/constants'
 import { isMac, isWindows } from '/@/constants/common'
+import { dispatchRoxyAction } from '/@/modules/app'
 import { store } from '/@/modules/store'
 
 interface ShortcutItem {
@@ -69,11 +70,14 @@ class ShortcutStore {
     }
 
     if (isMac && app.dock) {
-      const dockMenu = Menu.buildFromTemplate(Object.values(this.data!).map((item) => {
+      const dockMenu = Menu.buildFromTemplate(Object.entries(this.data!).map(([key, item]) => {
         return {
+          id: key,
           label: item.title,
           click: () => {
-            app.emit('open-url', `${item.arguments} --roxy-action=launch-browser`)
+            console.debug('dock menu click', key, item)
+            const argv = `${item.arguments} --roxy-action=launch-browser`.trim().split(/\s+/)
+            dispatchRoxyAction(argv, 'dock-menu')
           },
         }
       }))
@@ -123,19 +127,23 @@ class ShortcutStore {
     await this.ensureLoaded()
     this.data![dirId] = shortcutItem
     await this.save()
+    this.initTaskbar()
   }
 
   async remove(id: string) {
     await this.ensureLoaded()
     const oldShortcutItem = this.data![id]
-    delete this.data![id]
-    rm(normalize(oldShortcutItem.launcherEntry), { recursive: true, force: true }).catch((e) => {
-      console.error('delete old shortcut failed', e)
-    })
-    if (oldShortcutItem?.startMenuEntry) {
-      rm(normalize(oldShortcutItem.startMenuEntry), { recursive: true, force: true }).catch(() => undefined)
+    Reflect.deleteProperty(this.data, id)
+    if (oldShortcutItem) {
+      rm(normalize(oldShortcutItem.launcherEntry), { recursive: true, force: true }).catch((e) => {
+        console.error('delete old shortcut failed', e)
+      })
+      if (oldShortcutItem?.startMenuEntry) {
+        rm(normalize(oldShortcutItem.startMenuEntry), { recursive: true, force: true }).catch(() => undefined)
+      }
     }
     await this.save()
+    this.initTaskbar()
   }
 
   async shortcuts() {

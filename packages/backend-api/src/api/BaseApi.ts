@@ -37,6 +37,7 @@ import {
   GetFaqHelpListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
+  GetPromotionLinkDiscountAndUsernameListData,
   GetQrcodeInfoListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
@@ -104,6 +105,7 @@ import {
   UserGetInviteLinkListData,
   UserGetInviteUserListV2ListData,
   UserGetInviteUserListV2ListParams,
+  UserGetLlmInfoListData,
   UserGetLoginInfoListData,
   UserGetNotifyListData,
   UserGetOssCredentialV2ListData,
@@ -129,6 +131,8 @@ import {
   UserModifyRemarkDisplayStatusCreatePayload,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
+  UserSaveLlmDataCreateData,
+  UserSaveLlmDataCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
   UserSendAccountPasswordVerifyCodeListParams,
   UserSendEmailVerifyCodeListData,
@@ -1889,6 +1893,59 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserSetPromotionLinkShowCreateData, any>({
       path: `/user_set_promotion_link_show`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetPromotionLinkDiscountAndUsernameList
+   * @summary 查询用户邀请链接折扣和用户名
+   * @request GET:/get_promotion_link_discount_and_username
+   * @response `200` `GetPromotionLinkDiscountAndUsernameListData`
+   */
+  getPromotionLinkDiscountAndUsernameList = (params: RequestParams = {}) =>
+    this.http.request<GetPromotionLinkDiscountAndUsernameListData, any>({
+      path: `/get_promotion_link_discount_and_username`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetLlmInfoList
+   * @summary 获取数字员工内测权限
+   * @request GET:/user_get_llm_info
+   * @response `200` `UserGetLlmInfoListData`
+   */
+  userGetLlmInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetLlmInfoListData, any>({
+      path: `/user_get_llm_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSaveLlmDataCreate
+   * @summary 存储用户数字员工数据
+   * @request POST:/user_save_llm_data
+   * @response `200` `UserSaveLlmDataCreateData`
+   */
+  userSaveLlmDataCreate = (
+    data: UserSaveLlmDataCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSaveLlmDataCreateData, any>({
+      path: `/user_save_llm_data`,
       method: "POST",
       body: data,
       type: ContentType.Json,

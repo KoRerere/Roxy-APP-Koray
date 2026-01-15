@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
-
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -14,6 +13,10 @@ const props = defineProps({
   type: {
     type: String as PropType<'signUp' | 'signIn'>,
     default: 'signIn',
+  },
+  inviteDiscountInfo: {
+    type: Object as PropType<Recordable>,
+    default: () => ({}),
   },
 })
 
@@ -97,6 +100,13 @@ defineExpose({
 </script>
 
 <template>
+  <i18n-t v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
+          :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global"
+  >
+    <template #discount>
+      <span class="discount-value">{{ inviteDiscountInfo.userDiscount }}%</span>
+    </template>
+  </i18n-t>
   <div class="self-stretch flex items-center justify-between">
     <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')" />
     <RxSelectButton v-if="!isRegister && isZh" v-model="loginType" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
@@ -217,5 +227,22 @@ defineExpose({
   font-style: normal;
   font-weight: 400;
   line-height: normal;
+}
+
+.discount {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  line-height: 20px;
+
+  background:
+    linear-gradient(0deg, var(--colors-background-bg-warning) 0%, var(--colors-background-bg-warning) 100%),
+    var(--colors-background-bg-block);
+
+  &-value {
+    color: var(--colors-text-text-warning);
+    font-family: 'DingTalk JinBuTi', Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+  }
 }
 </style>

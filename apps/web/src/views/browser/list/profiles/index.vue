@@ -854,6 +854,10 @@ async function onEditCookies(data: Data | Data[]) {
 }
 
 async function onRemark(data: Data | Data[]) {
+  if (role.isViewer) {
+    return
+  }
+
   const datas = ([] as Data[]).concat(data)
   return new Promise((resolve, reject) => {
     showSimpleDialog({
@@ -1145,7 +1149,7 @@ defineExpose({
     </template>
     <template #profileName="{ data }">
       <template v-if="data.id">
-        <ProfileName :data="data" @refresh="onRefreshTable" />
+        <ProfileName :data="data" :readonly="role.isViewer" @refresh="onRefreshTable" />
       </template>
       <template v-else>
         <Skeleton width="160px" height="24px" border-radius="4px" />

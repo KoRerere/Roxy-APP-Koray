@@ -7,7 +7,7 @@ import { checkResource } from '/@/modules/app/checkResource'
 import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
 import { browserManager } from '/@/modules/browser'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady, killProcessForce } from '/@/utils'
@@ -36,6 +36,7 @@ app.commandLine.appendSwitch('no-sandbox')
 
 // macOS 的行为不同：当应用通过协议被启动时，系统不会把参数放在 process.argv，而是触发 open-url 事件，必须在 ready 之前监听
 app.on('open-url', (event, url) => {
+  console.log('open-url', url)
   event?.preventDefault?.()
   dispatchDeepLink(url, 'open-url')
 })
@@ -52,7 +53,7 @@ function getRoxyActionFromArgs(args: readonly string[]) {
   return undefined
 }
 
-async function dispatchRoxyAction(argv: readonly string[], source: 'second-instance' | 'cold-start') {
+export async function dispatchRoxyAction(argv: readonly string[], source: 'second-instance' | 'cold-start' | 'dock-menu') {
   try {
     await initStorePromise.promise
     const { values } = parseArgs({
@@ -277,15 +278,15 @@ async function dispatchDeepLink(url: string, source: 'second-instance' | 'open-u
     const searchParams = Object.fromEntries(new URLSearchParams(`?${queryString}`))
     await isWebReady()
     if (url.includes(`${appProtocolName}://oauth2callback`)) {
-      ipcMain.send('oauth2:google-callback', `?${queryString}`)
+      ipcSender.oauth2.googleCallback(`?${queryString}`)
       console.log('oauth2callback:', source, url)
     }
     if (url.includes(`${appProtocolName}://inviteUser2project`)) {
-      ipcMain.send('invite:to-project', `?${queryString}`)
+      ipcSender.invite.toProject(`?${queryString}`)
       console.log('inviteUser2project:', source, url)
     }
     if (url.includes(`${appProtocolName}://open-page`)) {
-      ipcMain.send('open:page', `?${queryString}`)
+      ipcSender.open.page(`?${queryString}`)
       console.log('open-page:', source, url)
     }
     // 通过外部打开浏览器失败错误弹窗（默认浏览器中转器兜底入口）

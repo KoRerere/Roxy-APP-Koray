@@ -1,22 +1,23 @@
+import { get } from 'es-toolkit/compat'
+import { EventEmitter } from 'node:events'
 import { createReadStream } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { EventEmitter } from 'node:events'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
+import { openAPICommonHeaders } from '/@/constants/common'
 import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
 import { delRoxynetProxy } from '/@/modules/roxynet'
+import { canUseSyncControl } from '/@/modules/store'
+import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { aliOSS, decryptAESGCM, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
-import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
-import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
-import { openAPICommonHeaders } from '/@/constants/common'
-import { canUseSyncControl } from '/@/modules/store'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -36,6 +37,7 @@ export class BrowserItem {
     emitter.off(event, listener)
     return this
   }
+
   /** 启动后是否已经同步过窗口打开状态 */
   isSyncedWindowOpenStatus = false
   /** 通过哪种方式启动的浏览器 */
@@ -47,6 +49,7 @@ export class BrowserItem {
       workspaceId: this.winInfo.workspaceId,
     }
   }
+
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
   /** 浏览器关闭后，上传数据 promise */
@@ -78,7 +81,6 @@ export class BrowserItem {
     return join(this.userDataDir, 'roxy_tabs')
   }
 
-
   /** 浏览器本地状态设置 */
   get roxyLocalStatePath() {
     return join(this.userDataDir, 'Local State')
@@ -94,7 +96,6 @@ export class BrowserItem {
     return join(this.userDataDir, 'Default', 'Preferences')
   }
 
-
   /** 本地 OSS 缓存目录 */
   get ossCacheDir() {
     return join(this.userDataDir, 'oss-session')
@@ -107,7 +108,7 @@ export class BrowserItem {
 
   /** 需要同步到 OSS 的文件 */
   get needSyncFiles() {
-    return needSyncLocalFileMap.filter(item => this.winInfo[item.key]).map(item => item.path)
+    return needSyncLocalFileMap.filter(item => get(this.winInfo, item.key)).map(item => item.path)
   }
 
   /** 最后一次发送的消息 */
@@ -205,7 +206,8 @@ export class BrowserItem {
     }
     catch (error) {
       this.uploadDataPromiser.reject(error)
-    } finally {
+    }
+    finally {
       delRoxynetProxy(dirId)
     }
   }
@@ -302,7 +304,8 @@ export class BrowserItem {
             Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
           }
         }
-      } catch (error) {
+      }
+      catch (error) {
         console.error('userMdfWindowInfoSingleV2Create error: ', error)
       }
     }
@@ -337,5 +340,4 @@ export class BrowserItem {
   isValidURL(url: string) {
     return !getInvalidUrls().some(n => url.startsWith(n!))
   }
-
 }

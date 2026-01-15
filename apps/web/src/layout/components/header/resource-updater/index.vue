@@ -41,11 +41,11 @@ const tabs = ref([
     component: markRaw(KernelUpdater),
   },
 ])
-const tabModel = ref(tabs.value[0].value)
+const tabModel = ref(tabs.value[0]!.value)
 const isDownloadingKernel = ref(false)
 
 const noticeNum = computed(() => {
-  return clientUpdates.value.length + kernelUpdateGroup.value[0]?.list.filter(item => item._light).length
+  return clientUpdates.value.length + (kernelUpdateGroup.value[0]?.list.filter(item => item._light).length ?? 0)
 })
 
 const isDownloading = computed(() => {
@@ -114,13 +114,13 @@ function genKernelGroup(list: ResourceUpdateMessage[]) {
 
   kernelUpdateGroup.value = list.reduce((acc, item, index) => {
     if (index === 0 && !['update', 'downloaded'].includes(item.status!) && !readMap[item.coreVersion!]) {
-      acc[0].list.push({ ...item, _light: true, _desc: $t('新版本') })
+      acc[0]!.list.push({ ...item, _light: true, _desc: $t('新版本') })
     }
     else if (item.status === 'update' && !readMap[item.coreVersion!]) {
-      acc[0].list.push({ ...item, _light: true, _desc: $t('有新的更新可用') })
+      acc[0]!.list.push({ ...item, _light: true, _desc: $t('有新的更新可用') })
     }
     else {
-      acc[1].list.push(item)
+      acc[1]!.list.push(item)
     }
     return acc
   }, defaults).filter(item => item.list.length > 0)
@@ -150,7 +150,7 @@ watch(isDownloadingKernel, () => {
     btnRef.value?.btnEl.click()
     lastTime = Date.now()
     nextTick(() => {
-      tabModel.value = tabs.value[1].value
+      tabModel.value = tabs.value[1]!.value
       isDownloadingKernel.value = false
       tabComponentRef.value?.[1].focusKernel()// 内核过多，展开时滚动到下载中的位置
     })

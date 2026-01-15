@@ -65,8 +65,8 @@ function updateApiKey(id: number, apiKey: string) {
 //   showToast(code, msg)
 //   if (code !== 0) return
 //   redeemCode.value = ''
-//   emit('close')
 //   emit('success')
+//   emit('close')
 // }
 </script>
 

@@ -16,12 +16,13 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useNetworkStore } from '/@/stores/network'
 import { useUserStore } from '/@/stores/user'
 import { PayWay } from '/@/enums/pay'
-import { ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
+import { BuyEntryType, ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useThemeStore } from '/@/stores/theme'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
 
-const { data: provider = {} } = defineProps<{
+const { data: provider = {}, entryType = BuyEntryType.Normal } = defineProps<{
+  entryType?: BuyEntryType
   data?: Record<string, any>
 }>()
 
@@ -394,6 +395,7 @@ async function onPay() {
     mixpanelTrack('click_pay_proxy_ip')
     const { purchaseMember, subscriptionMonths, proxyProviderId, purchaseCountry, businessUse } = configValue.value
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
+      entryType,
       purchaseMember,
       subscriptionMonths: subscriptionMonths.value,
       payType,
@@ -409,8 +411,8 @@ async function onPay() {
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
-        emit('close')
         emit('success', data)
+        emit('close')
       })
   }
 }
@@ -419,7 +421,7 @@ async function onPay() {
 <template>
   <div class="flex-1 flex flex-col gap-9 py-8 w-256 overflow-hidden">
     <div class="relative flex items-center gap-6 px-8">
-      <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_arrow_left" @click="$emit('back')" />
+      <SvgIcon v-if="entryType !== BuyEntryType.Immediate" class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_arrow_left" @click="$emit('back')" />
       <div class="flex items-center gap-4">
         <img class="block w-14 h-14 rounded-lg border-1 border-solid border-color-[var(--colors-border-border-action)]" :src="provider.proxyProviderIcon">
         <div class="flex flex-col gap-1.5">

@@ -10,9 +10,11 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { useBackRoute } from '/@/router/utils'
 import { getFormDataByList } from '/@/utils'
+import { useUserStore } from '/@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
+const { mixpanelTrack } = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { path, query } = useBackRoute()
 
@@ -37,16 +39,16 @@ onBeforeMount(async () => {
     return
   }
 
-  windowInfo.value = data
+  windowInfo.value = data!
   const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
   inputsGroup.value = _inputsGroup
   original.value = _original
   oldFieldsFormat()
   metaData.value = {
-    projectName: data.projectName,
-    projectId: data.projectId as number | undefined,
-    labelIds: data.labelIds,
-    windowRemark: data.windowRemark,
+    projectName: data!.projectName,
+    projectId: Number(data!.projectId),
+    labelIds: data!.labelIds,
+    windowRemark: data!.windowRemark,
   }
 })
 
@@ -64,15 +66,17 @@ async function createProfile() {
   }
   loading.value = true
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
+  loading.value = false
   onlyErrorToast(code, msg)
   if (code === 0) {
+    mixpanelTrack('profile_edit')
     if (path === '/browser/edit') {
       router.replace({ path: '/browser' })
-    } else {
+    }
+    else {
       router.replace({ path, query })
     }
   }
-  loading.value = false
 }
 
 function oldFieldsFormat() {
@@ -90,21 +94,23 @@ function oldFieldsFormat() {
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
         <div class="flex-1 flex gap-8 overflow-hidden">
-          <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
+          <AccordionInputs :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>
-              <div class="flex items-center justify-between px-4 py-4 subtitle">{{ $t('窗口信息') }}</div>
+              <div class="flex items-center justify-between px-4 py-4 subtitle">
+                {{ $t('窗口信息') }}
+              </div>
             </template>
           </AccordionInputs>
           <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
         </div>
         <div class="relative flex items-center gap-2 py-4 min-h-16 overflow-hidden footer">
-          <div class="footer-separator"></div>
-          <MateGroup class="flex-1" v-model="metaData" is-edit />
+          <div class="footer-separator" />
+          <MateGroup v-model="metaData" class="flex-1" is-edit />
           <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
         </div>
       </div>
     </div>
-    <div class="foot-separator"></div>
+    <div class="foot-separator" />
   </div>
 </template>
 

@@ -3,6 +3,7 @@ import RxTooltip from '/@/components/rx-tooltip/index.vue'
 import { RxCopyContent } from '/@/components/rx-copy'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import currency from 'currency.js'
 import { API } from '/@/api'
 import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
@@ -12,12 +13,15 @@ const { promotionInfo } = defineProps<{
 }>()
 
 const { mixpanelTrack } = useUserStore()
+const [_, onlyErrorToast] = useResponseToast()
 
-const activeMenu = ref(promotionInfo.promotionLinkList[0])
+const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
 const selectBannerSize = ref('')
 const dataPreformanceValue = ref()
 const maxNumber = 999999
+
+const detailPopover = useTemplateRef('detail')
 
 const dataPreformance = computed(() => {
   return [
@@ -139,7 +143,7 @@ async function getBannerPictureList() {
   const { code, data } = await API.base.userGetBannerPictureListV2List({ linkType: activeMenu.value.linkType?.replace(' ', '_') })
   if (code === 0) {
     bannerList.value = data
-    selectBannerSize.value = bannerList.value[0].size
+    selectBannerSize.value = bannerList.value[0]?.size || ''
   }
 }
 
@@ -150,6 +154,19 @@ async function getPromotionInfoByTypeList() {
   if (code === 0) {
     dataPreformanceValue.value = data
   }
+}
+
+async function toggleInviteDetail() {
+  const { code, msg } = await API.base.userSetPromotionLinkShowCreate({
+    promotionCode: activeMenu.value.promotionCode,
+    isShow: activeMenu.value.isShow === 1 ? 0 : 1,
+  })
+  onlyErrorToast(code, msg)
+  return code === 0
+}
+
+function showDetail(event: Event) {
+  detailPopover.value?.instance?.toggle(event)
 }
 
 function isLocked(linkStatus: number) {
@@ -164,8 +181,8 @@ function isLocked(linkStatus: number) {
         {{ $t('选择推广链接') }}
       </div>
       <div class="flex flex-col items-start self-stretch gap-3">
-        <div v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType"
-             class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item" :class="{ active: activeMenu.linkType === menu.linkType }" @click="activeMenu = menu"
+        <div v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType" class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item"
+             :class="{ active: activeMenu.linkType === menu.linkType }" @click="activeMenu = menu"
         >
           <RxSvgIcon :class="{ invisible: !isLocked(menu.linkStatus!) }" name="base/rx_ic_lock" color="var(--colors-icon-icon-note)" />
           <div class="flex-1">
@@ -177,9 +194,20 @@ function isLocked(linkStatus: number) {
     </aside>
     <div class="content">
       <div class="row">
-        <div class="flex items-center gap-3">
-          <span class="referal-title">{{ activeMenu.linkType }}</span>
-          <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人订阅后解锁', { count: activeMenu.total_count }) }})</span>
+        <div class="self-stretch flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="referal-title">{{ activeMenu.linkType }}</span>
+            <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人订阅后解锁', { count: activeMenu.total_count }) }})</span>
+          </div>
+          <div v-if="!isLocked(activeMenu.linkStatus!)" class="inline-flex items-center gap-2">
+            <RxToggleSwitch v-model="activeMenu.isShow" :true-value="1" :false-value="0" :before-change="toggleInviteDetail" />
+            <div class="detail-invite">
+              {{ $t('显示邀请详情') }}
+            </div>
+            <span class="flex items-center justify-center cursor-pointer" @click="showDetail">
+              <SvgIcon class="pointer-events-none" name="base/rx_ic_info" color="var(--colors-icon-icon-tertiary)" />
+            </span>
+          </div>
         </div>
         <div v-if="isLocked(activeMenu.linkStatus!)" class="w-full flex items-center gap-3">
           <div class="referal-desc">
@@ -211,6 +239,9 @@ function isLocked(linkStatus: number) {
             </i18n-t>
           </div>
         </div>
+        <div class="tips">
+          {{ $t('受邀用户购买代理 IP 不参与消费金额奖励') }}
+        </div>
       </div>
       <template v-if="!isLocked(activeMenu.linkStatus!)">
         <div class="row">
@@ -219,10 +250,10 @@ function isLocked(linkStatus: number) {
           </div>
           <div class="grid grid-cols-10 gap-3 w-full">
             <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
-              <DataPreformance v-for="i in 3" v-bind="dataPreformance[i - 1]" />
+              <DataPreformance v-for="i in 3" :key="i" v-bind="dataPreformance[i - 1]" />
             </div>
             <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-6">
-              <DataPreformance v-for="i in 3" v-bind="dataPreformance[i + 2]" />
+              <DataPreformance v-for="i in 3" :key="i" v-bind="dataPreformance[i + 2]" />
             </div>
           </div>
         </div>
@@ -250,6 +281,20 @@ function isLocked(linkStatus: number) {
         </div>
       </template>
     </div>
+
+    <RyPopover ref="detail">
+      <div class="w-120 flex flex-col gap-1 pa-3">
+        <div class="detail-title">
+          {{ $t('邀请详情') }}
+        </div>
+        <div class="detail-desc">
+          {{ $t('在注册或登录页面上显示邀请者和适用的折扣。') }}
+        </div>
+        <video class="block w-full mt-1 rounded-md" autoplay muted loop playsinline>
+          <source src="/video/invite_tips_guide.mp4" type="video/webm">
+        </video>
+      </div>
+    </RyPopover>
   </div>
 </template>
 
@@ -415,10 +460,39 @@ function isLocked(linkStatus: number) {
   }
 }
 
+.detail {
+  &-invite {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  &-title {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  &-desc {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
 .desc {
-  color: var(--colors-text-text-secondary);
-  font-size: 12px;
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  font-weight: 500;
   line-height: 20px;
+}
+
+.tips {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .bonus {

@@ -57,6 +57,11 @@ export const needSyncLocalFileMap = [
     type: 'dir',
     key: 'syncExtensions',
   },
+  {
+    path: `/Default/sessionstorage.sqlite`,
+    type: 'file',
+    key: 'syncSessionStorage',
+  },
   // {
   //   // 同步密码
   //   url: `/Default/Login Data`,
@@ -73,7 +78,7 @@ export const cacheToClear = [
   'Extensions',
   'Preferences',
   'Secure Preferences',
-]
+] as const
 
 /** 无效的 URL, 无须同步 */
 export function getInvalidUrls() {
@@ -81,10 +86,9 @@ export function getInvalidUrls() {
     'chrome://newtab/',
     'chrome-extension://',
     'about:blank',
-    ...getLocalWebServerURL()
+    ...getLocalWebServerURL(),
   ]
 }
-
 
 /** 本地 web 服务 URL */
 export function getLocalWebServerURL() {

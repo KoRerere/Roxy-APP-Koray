@@ -2,6 +2,7 @@
 // import { AnimatePresence, motion } from 'motion-v'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
+import { useSimpleLocale } from '/@/stores/locale'
 import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 
@@ -12,9 +13,11 @@ const { collapsed = false } = defineProps<{
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { realTheme } = storeToRefs(useThemeStore())
+const { currentLocale } = storeToRefs(useSimpleLocale())
 
 const imgSrc = computed(() => {
-  return `/images/campaing/gifts-en-${realTheme.value}.png`
+  const locale = currentLocale.value === 'ru' ? 'en' : currentLocale.value
+  return `/images/campaing/gifts-${locale}-${realTheme.value}.png`
 })
 
 function goToSubscribePlan() {
@@ -42,7 +45,7 @@ function goToSubscribePlan() {
       <SvgIcon v-if="collapsed" name="base/rx_ic_gift_2" size="16" color="var(--campaign-giftcard-icon-giftcard)" />
       <div v-else class="flex items-center justify-between w-full">
         <SvgIcon class="absolute -top-3 left-6 opacity-5 -rotate-15" name="base/rx_ic_gift_2" size="48" color="var(--campaign-giftcard-icon-giftcard)" />
-        <img class="h-4 block" :src="imgSrc">
+        <img class="h-3.75 block" :src="imgSrc">
         <SvgIcon name="base/rx_ic_arrow_right_2" color="var(--colors-icon-icon-primary)" />
       </div>
     </div>
@@ -51,19 +54,6 @@ function goToSubscribePlan() {
 
 <style lang="scss" scoped>
 .holiday {
-  // width: 190px;
   background: var(--campaign-giftcard-bg-giftcard);
 }
-
-// .content {
-//   display: flex;
-//   justify-content: space-between;
-//   align-items: center;
-//   padding: 0 12px;
-//   width: 100%;
-//   height: 100%;
-//   color: #fff;
-//   font-size: 14px;
-//   font-weight: 700;
-// }
 </style>

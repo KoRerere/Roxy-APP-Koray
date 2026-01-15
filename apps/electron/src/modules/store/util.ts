@@ -120,7 +120,7 @@ export const initLocalConfigPromise = Promise.withResolvers<void>()
 
 export async function initLocalConfig() {
   try {
-    fileExists(appConfig.roxyDataDir, true)
+    await fileExists(appConfig.roxyDataDir, true)
     const encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
     // 解密数据
     const lastStore = safeParseJSON(encryptedConfig, () => {

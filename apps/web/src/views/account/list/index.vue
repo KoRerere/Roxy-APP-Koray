@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AccountEdit from '/@/views/account/create/quick.vue'
-import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -69,20 +68,20 @@ const advancedSearchOptions = [
     key: 'platform',
     label: $t('平台名称'),
     icon: 'base/rx_ic_keys',
-    syntax: 'platform::'
+    syntax: 'platform::',
   },
   {
     key: 'account',
     label: $t('账号名称'),
     icon: 'base/rx_ic_user_key',
-    syntax: 'account::'
+    syntax: 'account::',
   },
   {
     key: 'remark',
     label: $t('备注'),
     icon: 'base/rx_ic_doc_article',
-    syntax: 'note::'
-  }
+    syntax: 'note::',
+  },
 ]
 
 function operationHandler(operate: any, data?: any) {
@@ -130,14 +129,15 @@ function editAccount(data?: Data) {
           if (code === 0) {
             tableRef.value?.refresh()
           }
-        }
-      })
-    }
+        },
+      }),
+    },
   })
 }
 
 function onRemark(data: Data) {
-  if (role.isViewer || role.isEditor) return
+  if (role.isViewer || role.isEditor)
+    return
   showSimpleDialog({
     title: $t('为所选账号添加备注'),
     inputs: [
@@ -148,7 +148,7 @@ function onRemark(data: Data) {
         props: {
           placeholder: $t('请输入备注'),
           rows: 6,
-        }
+        },
       },
     ],
     onConfirm: async (formData: any) => {
@@ -194,22 +194,24 @@ function deletePopup(data: any) {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full account">
+  <div class="flex flex-col w-full h-full">
     <ViewsHeader :title="($route.meta.title as string)">
       <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-        :show-gridlines="false" :show-actions="false">
+      <RyTable ref="account" v-model:columns="columns" cache-key="account-list" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+               :show-gridlines="false" :show-actions="false"
+      >
         <template #filter-after>
-          <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+          <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         </template>
         <template #table-empty>
           <CustomNewEmpty icon="base/rx_ic_keys" img="empty-accounts.png" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
                 <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
-                  @click.stop="operationHandler({ name: 'create' })" />
+                          @click.stop="operationHandler({ name: 'create' })"
+                />
                 <TutorialVideo video-type="account_management" :autoplay="false" />
               </div>
             </template>
@@ -219,31 +221,18 @@ function deletePopup(data: any) {
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
             <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+                       :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)"
+            />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
-              :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{
-              data.platformRemarks }}</div>
-          </div>
-        </template>
-        <template #platform="{ data }">
-          <div class="flex gap-2 account">
-            <div>
-              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark" :platform-icon="data.platformIcon" class="w-4 h-4" />
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
-            </div>
-            <div class="flex flex-col flex-1 gap-1">
-              <div class="flex items-center account-title">
-                {{ data.platformUrl }}
-              </div>
-              <div class="flex items-center gap-1.5 account-subtitle">
-                <span>{{ data.platformUserName }}</span>
-                <RxSvgIcon v-if="data.platformEfa" class="text-blue" name="base/rx_ic_2fa" :size="16" />
-              </div>
+                      :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            />
+            <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">
+              {{
+                data.platformRemarks }}
             </div>
           </div>
         </template>
@@ -258,24 +247,9 @@ function deletePopup(data: any) {
 </template>
 
 <style lang="scss" scoped>
-.account {
-  font-family: Inter;
-  font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
-
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-weight: 500;
-  }
-
-  &-subtitle {
-    color: var(--colors-text-text-tertiary);
-  }
-}
-
 .note {
   &-header {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-size: 12px;
     line-height: 16px;
     font-weight: 600;
@@ -294,7 +268,7 @@ function deletePopup(data: any) {
 
   &-light {
     :deep(svg) {
-      color: var(--colors-text-text-brand, #11A3FD) !important;
+      color: var(--colors-text-text-brand, #11a3fd) !important;
     }
   }
 }

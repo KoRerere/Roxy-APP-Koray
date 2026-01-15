@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import TsForm from '/@/views/lab/components/form/index.vue';
-import RemarkIcon from '/@/components/remark-icon'
+import TsForm from '/@/views/lab/components/form/index.vue'
 import { API } from '/@/api'
 
 import { deepClone, isEmptyValue } from '/@/utils'
@@ -18,7 +17,7 @@ const {
   data = {},
   showRemark = true,
   showCreateMore = true,
-  onConfirm
+  onConfirm,
 } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
@@ -41,24 +40,26 @@ const inputs = [
       rows: 2,
       onBlur: (event: Event) => {
         const result = parseIntelligent((event.target as HTMLTextAreaElement).value)
-        if (isEmptyValue(Object.values(result).filter(Boolean))) return
+        if (isEmptyValue(Object.values(result).filter(Boolean)))
+          return
 
         const { username, password, twoFactor, remark } = result
         formRef.value?.setValues({
           platformUserName: username ?? '',
           platformPassword: password ?? '',
           platformEfa: twoFactor ?? '',
+          platformRemarks: remark ?? '',
           intelligent: '',
         })
-        Reflect.set(original.value, 'platformRemarks', remark ?? '')
       },
     },
     resolver: (zod: any) => zod
       .string()
       .refine((value: string) => {
-        if (isEmptyValue(value)) return true
+        if (isEmptyValue(value))
+          return true
         return !isEmptyValue(Object.values(parseIntelligent(value)).filter(Boolean))
-      }, { message: $t('解析错误,请检查格式：{text}', { text: parseFormat }) })
+      }, { message: $t('解析错误,请检查格式：{text}', { text: parseFormat }) }),
   },
   {
     separator: true,
@@ -76,12 +77,24 @@ const inputs = [
       darkMode: realTheme.value === 'dark',
       onChange: ({ value, props }: any) => {
         const platform = props.options.find((item: any) => item.value === value)
-        Reflect.set(original.value, 'platformIcon', platform?.image || "")
-        Reflect.set(original.value, 'platformIconDark', platform?.darkImage || "")
-      }
+        Reflect.set(original.value, 'platformIcon', platform?.image || '')
+        Reflect.set(original.value, 'platformIconDark', platform?.darkImage || '')
+        // formRef.value?.setValues({
+        //   platformName: platform.value.replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
+        // })
+      },
     },
-    resolver: (zod: any) => zod.string().url($t('请输入正确的平台网址'))
+    resolver: (zod: any) => zod.string().url($t('请输入正确的平台网址')),
   },
+  // {
+  //   type: 'text',
+  //   label: $t('平台名'),
+  //   name: 'platformName',
+  //   value: data.platformName,
+  //   props: {
+  //     placeholder: $t('请输入平台名'),
+  //   },
+  // },
   {
     type: 'text',
     label: $t('账号'),
@@ -89,7 +102,7 @@ const inputs = [
     value: data.platformUserName,
     props: {
       placeholder: $t('请输入账号'),
-    }
+    },
   },
   {
     type: 'password',
@@ -98,7 +111,7 @@ const inputs = [
     value: data.platformPassword,
     props: {
       placeholder: $t('请输入密码'),
-    }
+    },
   },
   {
     type: 'text',
@@ -107,15 +120,26 @@ const inputs = [
     value: data.platformEfa,
     props: {
       placeholder: $t('请输入 2FA 密钥'),
-    }
-  }
-]
+    },
+  },
+  {
+    type: 'textarea',
+    label: $t('备注'),
+    name: 'platformRemarks',
+    value: data.platformRemarks,
+    visible: showRemark,
+    props: {
+      placeholder: $t('请输入备注'),
+      rows: 3,
+    },
+  },
+].filter(item => item.visible !== false)
 
 watch(() => realTheme.value, () => {
   formRef.value?.setInputsProps({
     platformUrl: {
       darkMode: realTheme.value === 'dark',
-    }
+    },
   })
 })
 
@@ -133,13 +157,9 @@ async function getPlatformOptions() {
         darkImage: item.platformIconDark,
         label: item.platformUrl,
         value: item.platformUrl,
-      }))
-    }
+      })),
+    },
   })
-}
-
-function addRemark(platformRemarks: string) {
-  Reflect.set(original.value, 'platformRemarks', platformRemarks)
 }
 
 function onSave(more: boolean) {
@@ -147,12 +167,12 @@ function onSave(more: boolean) {
   formRef.value?.submit()
 }
 
-async function onFormSubmit({ intelligent, platformUserName, platformPassword, ...values }: Record<string, any>) {
+async function onFormSubmit({ intelligent: _, platformUserName, platformPassword, ...values }: Record<string, any>) {
   const formData = {
     ...original.value,
     platformUserName: platformUserName?.trim(),
     platformPassword: platformPassword?.trim(),
-    ...values
+    ...values,
   }
   loading.value = true
   await onConfirm?.(formData)
@@ -166,10 +186,9 @@ async function onFormSubmit({ intelligent, platformUserName, platformPassword, .
 
 <template>
   <div class="flex flex-col h-full pt-4 px-4 content">
-    <TsForm ref="tsform" id="account" :validate-on-value-update="false" validate-on-blur :inputs="inputs" @submit="onFormSubmit"></TsForm>
+    <TsForm id="account" ref="tsform" :validate-on-value-update="false" validate-on-blur :inputs="inputs" @submit="onFormSubmit" />
     <div class="flex flex-1 items-end">
       <div class="w-full flex justify-end gap-3 pt-4 pb-5">
-        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RxButton v-if="!data.id && showCreateMore" :label="$t('保存 & 继续添加')" severity="secondary" outlined :loading="loading" @click="onSave(true)" />
         <RxButton :label="$t('保存')" :loading="loading" @click="onSave(false)" />
       </div>

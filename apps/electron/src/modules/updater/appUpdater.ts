@@ -10,7 +10,7 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { CustomDebUpdater } from './CustomDebUpdater'
 
@@ -224,11 +224,11 @@ export const appUpdater = new class AppUpdater {
   }
 
   private sendSuccessMessage() {
-    ipcMain.send('app:resource-update', this.#updateMessageData)
+    ipcSender.app.resourceUpdate(this.#updateMessageData)
   }
 
   private sendErrorMessage() {
     this.#updateMessageData.status = 'failed'
-    ipcMain.send('app:resource-update', this.#updateMessageData)
+    ipcSender.app.resourceUpdate(this.#updateMessageData)
   }
 }()

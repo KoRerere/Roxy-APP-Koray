@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
 import { RxAlert } from '/@/components/rx-alert'
 import { AccountBindType } from '/@/enums/account'
-
 
 interface Props {
   data?: Record<string, any>
@@ -29,20 +27,20 @@ const advancedSearchOptions = [
     key: 'platform',
     label: $t('平台名称'),
     icon: 'base/rx_ic_keys',
-    syntax: 'platform::'
+    syntax: 'platform::',
   },
   {
     key: 'account',
     label: $t('账号名称'),
     icon: 'base/rx_ic_user_key',
-    syntax: 'account::'
+    syntax: 'account::',
   },
   {
     key: 'remark',
     label: $t('备注'),
     icon: 'base/rx_ic_doc_article',
-    syntax: 'note::'
-  }
+    syntax: 'note::',
+  },
 ]
 
 const selection = ref(data?.windowPlatformList.filter((item: any) => item.id))
@@ -66,34 +64,20 @@ function handleSave() {
 <template>
   <div class="flex flex-col gap-3 h-full account-content">
     <RxAlert class="w-full" :visible="isBatch && accountType === AccountBindType.Order" :closable="false" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? $t('当前选择绑定的账号数量已超过创建窗口数。') : '' })" />
-    <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+             :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? $t('当前选择绑定的账号数量已超过创建窗口数。') : '' })"
+    />
+    <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
     <div class="flex-ovh-1">
       <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false"
-        :show-display="false" :context-menu="false" :show-actions="false">
+               :show-display="false" :context-menu="false" :show-actions="false"
+      >
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')"></CustomEmpty>
+          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" />
         </template>
-        <template #platform="{ data: row }">
-          <div class="flex gap-2 select-none account">
-            <div>
-              <platformIcon v-if="row.platformIcon" :platformIcon="row.platformIcon" :platformIconDark="row.platformIconDark" class="w-4 h-4" />
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
-            </div>
-            <div class="flex flex-col flex-1 gap-1">
-              <div class="flex items-center account-title">
-                {{ row.platformUrl }}
-              </div>
-              <div class="flex items-center gap-1.5 account-subtitle">
-                <span>{{ row.platformUserName }}</span>
-                <RxSvgIcon v-if="row.platformEfa" class="text-blue" name="base/rx_ic_2fa" :size="16" />
-              </div>
-            </div>
-          </div>
-        </template>
-        <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-            :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
+        <template #remark="{ data: row }">
+          <RxSvgIcon v-tooltip.top="{ value: row.platformRemarks, showDelay: 500 }" :name="row.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+                     :class="{ 'color-[#12A3FC]': row.platformRemarks }"
+          />
         </template>
       </RyTable>
     </div>
@@ -107,21 +91,6 @@ function handleSave() {
 .account-content {
   padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
   min-width: var(--width-xl, 768px);
-}
-
-.account {
-  font-family: Inter;
-  font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
-
-  &-title {
-    color: var(--colors-text-text-primary, #fafafa);
-    font-weight: 500;
-  }
-
-  &-subtitle {
-    color: var(--colors-text-text-tertiary);
-  }
 }
 
 .button-group {

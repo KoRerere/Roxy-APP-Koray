@@ -1,6 +1,10 @@
 import type { IpcMainInvokeEvent } from 'electron'
 import { BrowserWindow, ipcMain } from 'electron'
 import type { MessageObj } from './types/'
+import { deepSerialize } from './utils/serialize'
+
+// 导出序列化工具供外部使用
+export { deepSerialize, serializeIPCArgs } from './utils/serialize'
 
 export class IPCMain<
   MessageType extends MessageObj<MessageType>,
@@ -37,12 +41,20 @@ export class IPCMain<
     // 获取所有打开的窗口
     const windows = BrowserWindow.getAllWindows()
 
+    // 序列化 payload，确保可以安全传输
+    const serializedPayload = deepSerialize(payload)
+
     // 向每个窗口发送消息
     windows.forEach((window) => {
-      window.webContents.send(this.channel, {
-        name,
-        payload,
-      })
+      try {
+        window.webContents.send(this.channel, {
+          name,
+          payload: serializedPayload,
+        })
+      }
+      catch (error) {
+        console.error(`[IPC] 发送消息失败 ${String(name)}:`, error)
+      }
     })
   }
 
@@ -58,20 +70,22 @@ export class IPCMain<
       // console.log("handleReceivingMessage", payload);
       if (this.listeners[payload.name]) {
         const res = await this.listeners[payload.name](event, ...payload.payload)
-        return {
+        // 序列化返回结果，确保可以安全传输
+        return deepSerialize({
           type: 'success',
           result: res,
-        }
+        })
       }
       else {
         throw new Error(`未知的 IPC 消息 ${String(payload.name)}`)
       }
     }
     catch (e: any) {
-      return {
+      // 序列化错误对象
+      return deepSerialize({
         type: 'error',
-        error: e.toString(),
-      }
+        error: e,
+      })
     }
   }
 }

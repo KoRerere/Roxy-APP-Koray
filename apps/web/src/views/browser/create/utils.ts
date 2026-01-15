@@ -6,6 +6,7 @@ import { getDictMap, safeParseJSON } from '/@/utils'
 import { parseIntelligent } from '/@/views/account/create/utils'
 
 interface DownloadTemplateOptions {
+  afterAddColumns?: (columns: any[]) => any[]
   afterAddExplain?: (worksheet: ExcelJS.Worksheet) => any
 }
 
@@ -228,8 +229,9 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   const worksheet = workbook.addWorksheet('Sheet1')
   worksheet.properties.defaultRowHeight = 30
   const columns = await getExportColumns()
+  const _columns = options.afterAddColumns?.(columns) || columns
 
-  worksheet.columns = columns.map((column) => {
+  worksheet.columns = _columns.map((column) => {
     const { key, header, width } = column
     return {
       key,
@@ -244,7 +246,7 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   const row = worksheet.getRow(1)
   row.height = 30
   row.eachCell((cell, colIndex) => {
-    const col = columns[colIndex - 1]!
+    const col = _columns[colIndex - 1]!
     cell.style = {
       font: {
         bold: true,

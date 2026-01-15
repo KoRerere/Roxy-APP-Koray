@@ -31,16 +31,19 @@ const search = ref('')
 const searchResult = ref()
 const isInit = ref(false)
 const loading = ref(false)
-const extensionList = computed(() => searchResult.value?.length > 0 ? searchResult.value : pluginList.value)
+const extensionList = computed(() => search.value ? searchResult.value : pluginList.value)
 
-const listContainerRef = useTemplateRef('listContainer')
+const listContainerRef = useTemplateRef<any>('listContainer')
 const observer = ref<IntersectionObserver>()
-const isNavScrolling = ref(false) // 点击导航滚动标记
+/**
+ * 点击导航滚动标记
+ */
+const isNavScrolling = ref(false)
 
 const searchPlugins = useDebounceFn(() => {
   const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
   searchResult.value = formatPluginList(list)
-}, 700)
+}, 200)
 
 function formatPluginList(list: PluginItem[]) {
   return Object.values(list.reduce((map: PluginMap, item) => {
@@ -50,23 +53,25 @@ function formatPluginList(list: PluginItem[]) {
       categoryName: item.categoryName,
       items: [],
     }
-    map[item.categoryName].items.push(item)
+    map[item.categoryName]!.items.push(item)
     return map
   }, {}))
 }
 
 function setupIntersectionObserver() {
-  if (!listContainerRef.value) return
+  if (!listContainerRef.value)
+    return
 
   cleanupObserver()
 
   observer.value = new IntersectionObserver(
     (entries) => {
-      if (isNavScrolling.value) return
+      if (isNavScrolling.value)
+        return
 
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const categoryId = parseInt(entry.target.id.replace('category_', ''))
+          const categoryId = Number.parseInt(entry.target.id.replace('category_', ''))
           activeCategory.value = categoryId
         }
       })
@@ -74,22 +79,26 @@ function setupIntersectionObserver() {
     {
       root: listContainerRef.value,
       rootMargin: '-20% 0px -70% 0px', // 触发区域
-      threshold: 0
-    }
+      threshold: 0,
+    },
   )
 
-  // 添加滚动监听来处理边界情况
+  /**
+   * 添加滚动监听来处理边界情况
+   */
   const handleScroll = () => {
-    if (isNavScrolling.value) return
+    if (isNavScrolling.value)
+      return
 
     const container = listContainerRef.value
-    if (!container) return
+    if (!container)
+      return
 
     const scrollTop = container.scrollTop
 
     // 如果滚动到顶部，高亮第一个分类
     if (scrollTop <= 0 && categories.value.length > 0) {
-      activeCategory.value = categories.value[0].id
+      activeCategory.value = categories.value[0]!.id
       return
     }
 
@@ -97,16 +106,15 @@ function setupIntersectionObserver() {
     const scrollHeight = container.scrollHeight
     const clientHeight = container.clientHeight
     if (scrollTop + clientHeight >= scrollHeight - 10 && categories.value.length > 0) {
-      activeCategory.value = categories.value[categories.value.length - 1].id
-      return
+      activeCategory.value = categories.value[categories.value.length - 1]!.id
     }
   }
 
   // 添加滚动事件监听
   listContainerRef.value.addEventListener('scroll', handleScroll, { passive: true })
 
-    // 保存handleScroll引用以便清理时使用
-    ; (listContainerRef.value as any)._handleScroll = handleScroll
+  // 保存handleScroll引用以便清理时使用
+  listContainerRef.value._handleScroll = handleScroll
 
   nextTick(() => {
     const categoryElements = document.querySelectorAll('[id^="category_"]')
@@ -124,16 +132,17 @@ function cleanupObserver() {
 
   // 移除滚动事件监听器
   if (listContainerRef.value) {
-    const handleScroll = (listContainerRef.value as any)._handleScroll
+    const handleScroll = listContainerRef.value._handleScroll
     if (handleScroll) {
       listContainerRef.value.removeEventListener('scroll', handleScroll)
-      delete (listContainerRef.value as any)._handleScroll
+      delete listContainerRef.value._handleScroll
     }
   }
 }
 
 async function getRecommendPluginList() {
-  if (isInit.value) return
+  if (isInit.value)
+    return
   isInit.value = true
   loading.value = true
   await getCategoryList()
@@ -147,7 +156,7 @@ async function getRecommendPluginList() {
 async function getCategoryList() {
   const { data } = await API.plugins.userGetPluginCategoryList()
   categories.value = data.rows
-  activeCategory.value = data.rows[0].id
+  activeCategory.value = data.rows[0]!.id
 }
 
 async function getPluginList() {
@@ -186,7 +195,8 @@ function jumpToCategory(item: CategoryItem) {
           scrollEndTimer = setTimeout(() => {
             isNavScrolling.value = false
           }, 150) // 等待滚动动画完全结束
-        } else {
+        }
+        else {
           lastScrollTop = currentScrollTop
           requestAnimationFrame(checkScrollComplete)
         }
@@ -197,7 +207,8 @@ function jumpToCategory(item: CategoryItem) {
     setTimeout(() => {
       checkScrollComplete()
     }, 50)
-  } else {
+  }
+  else {
     // 如果找不到目标元素，直接重置标记
     setTimeout(() => {
       isNavScrolling.value = false
@@ -277,6 +288,11 @@ defineExpose({
         <TsFormInputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
       <div ref="listContainer" class="relative flex-1 overflow-y-auto list-container dynamic-padding">
+        <i18n-t v-if="search && !extensionList?.length" tag="div" class="h-full flex items-center justify-center google" :keypath="$t('暂未找到相关扩展，请前往 {link} 查看更多扩展', { link: '{link}' })" scope="global">
+          <template #link>
+            <a href="https://chromewebstore.google.com" target="_blank">Google Store</a>
+          </template>
+        </i18n-t>
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
           <div :id="`category_${item.categoryId}`" class="list-group-title">
             {{ item.categoryName }}
@@ -297,7 +313,7 @@ defineExpose({
               </div>
               <div class="flex items-center justify-between extension-provider">
                 <div>
-                  By <span class="decoration-underline">{{ plugin.provider }}</span>
+                  By <a class="decoration-underline" :href="`https://chromewebstore.google.com/detail/${plugin.pluginDir}`" target="_blank">{{ plugin.provider }}</a>
                 </div>
                 <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check" :label="$t('已下载')" disabled />
                 <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
@@ -305,7 +321,7 @@ defineExpose({
             </div>
           </div>
         </div>
-        <RxLoading v-model="loading" :opacity="0.6"></RxLoading>
+        <RxLoading v-model="loading" :opacity="0.8" />
       </div>
     </div>
   </div>
@@ -385,7 +401,7 @@ defineExpose({
     }
 
     &-title {
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary, #575d60);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -401,6 +417,11 @@ defineExpose({
       margin-top: var(--spacing-lg, 8px);
     }
   }
+}
+
+.google {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
 }
 
 @media (min-width: 768px) {
@@ -460,7 +481,7 @@ defineExpose({
 
   &-version {
     margin-top: var(--spacing-sm, 4px);
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -478,7 +499,7 @@ defineExpose({
   }
 
   &-provider {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

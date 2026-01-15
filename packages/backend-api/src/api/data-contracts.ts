@@ -2547,6 +2547,9 @@ export interface UserGetPromotionInfoListData {
       promotionLink?: string;
       purchaseTotalAmount?: number;
       userDiscount?: number;
+      promotionCode?: string;
+      /** 是否展示 */
+      isShow?: number;
       /** 已经邀请人数 */
       completed_count?: number;
       /** 解锁需要总邀请人数 */
@@ -3365,6 +3368,37 @@ export interface UserBindPhoneCreateData {
 export type UserSetPromotionLinkShowCreatePayload = object;
 
 export interface UserSetPromotionLinkShowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface GetPromotionLinkDiscountAndUsernameListData {
+  code: number;
+  data: {
+    /** TRUE 展示 false 不展示 */
+    isShow: boolean;
+    /** 用户消费折扣 */
+    userDiscount: number;
+    /** 用户名 */
+    userName: string;
+  };
+  msg: string;
+}
+
+export interface UserGetLlmInfoListData {
+  code: number;
+  data: {
+    SILICONFLOW_API_KEY: string;
+  };
+  msg: string;
+}
+
+export interface UserSaveLlmDataCreatePayload {
+  /** 内容 */
+  content: string;
+}
+
+export interface UserSaveLlmDataCreateData {
   code: number;
   msg: string;
 }
@@ -7338,6 +7372,7 @@ export interface UserCheckTeamUserRightsListData {
 }
 
 export interface UserBuyProxySettlementCreatePayload {
+  entryType?: number;
   /** 购买数量 */
   purchaseMember?: number;
   /** 购买月数(1) */
@@ -7358,6 +7393,8 @@ export interface UserBuyProxySettlementCreatePayload {
 export interface UserBuyProxySettlementCreateData {
   code: number;
   data: {
+    immediate: boolean;
+    orderNo: string;
     /**
      * 订单号
      * 订单号

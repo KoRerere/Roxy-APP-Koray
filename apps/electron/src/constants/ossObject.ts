@@ -1,7 +1,7 @@
 import { join } from 'node:path'
-import { store } from '/@/modules/store'
-import { isPackaged } from '/@/constants/common'
 import { appConfig } from '/@/constants'
+import { isPackaged } from '/@/constants/common'
+import { store } from '/@/modules/store'
 
 /**
  * 在各语言SDK中，ObjectKey、Key以及ObjectName是同一概念，均表示对Object执行相关操作时需要填写的Object名称。

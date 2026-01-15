@@ -10,7 +10,7 @@ export const baseRoutes: RouteRecordRaw[] = [
   {
     name: '500',
     path: '/500',
-    component: () => import('/@/views/500.vue')
+    component: () => import('/@/views/500.vue'),
   },
   {
     name: 'rx-form',
@@ -59,5 +59,11 @@ export const baseRoutes: RouteRecordRaw[] = [
     path: '/syncing-window-list-dialog',
     meta: { title: '打开网址弹窗' },
     component: () => import('/@/views/sync-control/dialog/syncing-window-list.vue'),
+  },
+  {
+    name: 'mcp',
+    path: '/mcp',
+    meta: { title: 'MCP' },
+    component: () => import('/@/views/mcp/index.vue'),
   },
 ]

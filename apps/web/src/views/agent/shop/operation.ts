@@ -6,7 +6,7 @@ import { useRoleStore } from '/@/stores/role'
 import { useColumns } from './columns'
 import type { SortOrderNumber } from '/@/utils'
 
-const { isEditor, isOwner } = storeToRefs(useRoleStore())
+const { isViewer, isEditor, isOwner } = storeToRefs(useRoleStore())
 export interface ProxyItem extends UnwrapRowType<UserGetUserBuyProxyListListData> {
   loadingOperationMap: {
     [key: string]: boolean
@@ -41,7 +41,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('下载'),
       icon: 'base/rx_ic_download',
       tooltip: $t('下载'),
-      disabled: hasExpired || hasPending || hasRefunded || isEditor.value || isGift,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || isViewer.value || isEditor.value,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -67,6 +67,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       name: 'remark',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
+      disabled: isViewer.value || isEditor.value,
     },
   ]
 }

@@ -1,8 +1,8 @@
-import { createVNode, getCurrentInstance, render, nextTick } from 'vue'
+import { createVNode, getCurrentInstance, nextTick, render } from 'vue'
 import type { VNode } from 'vue'
 
-import Menu from './components/menu.vue';
-import type { MenuProps } from './type';
+import Menu from './components/menu.vue'
+import type { MenuProps } from './type'
 
 export function usePopupMenu() {
   const appContext = getCurrentInstance()?.appContext
@@ -36,13 +36,14 @@ export function usePopupMenu() {
       // 使用容器元素进行渲染
       render(vnode, domContainer)
       await nextTick()
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to render popup menu:', error)
       destroy()
     }
   }
 
-  const showMenu = async (event: MouseEvent, props: MenuProps) => {
+  async function showMenu(event: MouseEvent, props: MenuProps) {
     try {
       innerProps.value = props
       await renderCmp()
@@ -58,17 +59,18 @@ export function usePopupMenu() {
           return prop === 'currentTarget' && !Reflect.get(target, 'currentTarget')
             ? Reflect.get(target, 'target')
             : Reflect.get(target, prop)
-        }
+        },
       })
 
       opRef.value?.toggle(_event)
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to show popup menu:', error)
       destroy()
     }
   }
 
-  const destroy = () => {
+  function destroy() {
     if (currentVNode && domContainer) {
       render(null, domContainer)
       currentVNode = null

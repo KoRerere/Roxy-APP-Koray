@@ -3,6 +3,7 @@ import CDP from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { getErrorMessage } from '/@/utils'
 import { ChromeBrowser } from './browser'
 
@@ -72,6 +73,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     const readDevToolsActivePort = async () => {
       try {
         const devToolsActivePort = await readFile(join(userDataDir!, 'DevToolsActivePort'), 'utf8')
+        console.debug('devToolsActivePort', devToolsActivePort)
         const port = Number(devToolsActivePort.split('\n')[0])
         console.log('devToolsActivePort', port)
         if (port) {
@@ -80,6 +82,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
         }
       }
       catch (error) {
+        console.debug('readDevToolsActivePort error', error)
         if (tryCount++ < 5) {
           readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
         }
@@ -89,12 +92,12 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
 
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志
-      // console.log('[chrome stdout]', data.toString());
+      console.debug('[chrome stdout]', data.toString())
     })
 
     chromeProcess.stderr.on('data', (data: Buffer) => {
       const output = data.toString()
-      // console.debug('chromeProcess.stderr.on', output)
+      console.debug('chromeProcess.stderr.on', output)
       const match = output.match(/DevTools listening on ws:\/\/[^:]+:(\d+)/)
       if (match) {
         clearTimeout(timeout)
@@ -127,6 +130,9 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
     console.error('connect error', error)
     chromeProcess.kill()
     if (getErrorMessage(error).startsWith('connect ')) {
+      if (actualPort) {
+        ipcSender.browser.networkIntercepted()
+      }
       throw new Error($t('内核连接失败，请重试'))
     }
     throw error

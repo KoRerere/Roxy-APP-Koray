@@ -36,7 +36,7 @@ const otherCards = computed(() => [
     textClass: userPayInfo.value.proxyExpireCount > 0 ? 'warning' : '',
     visibleJump: userPayInfo.value.proxyExpireCount > 0,
     addClick: () => {
-      buyProxy((orderInfo) => {
+      buyProxy().then((orderInfo) => {
         router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
       })
     },

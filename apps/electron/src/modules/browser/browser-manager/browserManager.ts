@@ -1,3 +1,4 @@
+import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { shallowReactive, watch } from '@vue/reactivity'
 import { debounce } from 'es-toolkit'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
@@ -12,7 +13,7 @@ import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
 import { asyncDebounce } from '/@/utils'
@@ -66,7 +67,7 @@ export class BrowserManager {
     })
 
     watch(this.openedBrowserMap, () => {
-      ipcMain.send('browser:opened-browser-list-change', this.openedBrowserList)
+      ipcSender.browser.openedBrowserListChange(this.openedBrowserList)
     })
   }
 
@@ -133,7 +134,7 @@ export class BrowserManager {
         browserItem.off(`close-${dirId}`, onCloseHandler)
         if (uploadDataPromise) {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
-          ipcMain.send('browser:on-close-syncing-data', [dirId])
+          ipcSender.browser.onCloseSyncingData([dirId])
         }
         this.openedBrowserMap.delete(dirId)
 
@@ -219,7 +220,7 @@ export class BrowserManager {
     const dirIds = [...this.uploadDataQueue.keys()]
     const uploadDataQueue = [...this.uploadDataQueue.values()]
 
-    ipcMain.send('browser:on-close-syncing-data', dirIds)
+    ipcSender.browser.onCloseSyncingData(dirIds)
 
     const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
@@ -244,7 +245,7 @@ export class BrowserManager {
         this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
       })
-      ipcMain.send('browser:on-close', dirIds)
+      ipcSender.browser.onClose(dirIds)
     })
   }, 300)
 
@@ -351,7 +352,7 @@ export class BrowserManager {
       .then((res) => {
         // 达到窗口打开次数限制
         if (res.code === 417) {
-          ipcMain.send('browser:window-open-limit', res)
+          ipcSender.browser.windowOpenLimit(res)
         }
         if (res.code !== 0) {
           throw new Error(res.msg)
@@ -371,11 +372,11 @@ export class BrowserManager {
             sendErrorMessage(errorMessage, item.dirId!)
           }
           return acc
-        }, [] as typeof res.data.rows)
+        }, [] as UnwrapRowsType<UserGetWindowInfoV2ListData>)
           .sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {
-        console.error(`BrowserManager === Failed to get window info`, error)
+        console.error(`BrowserManager === Failed to get window info`, dirIds, error)
         dirIds.forEach((dirId) => {
           sendErrorMessage($t('获取窗口信息失败'), dirId, error)
         })

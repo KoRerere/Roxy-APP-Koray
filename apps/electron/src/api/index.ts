@@ -1,13 +1,12 @@
-import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi, AppTrackingEventApi } from '@roxy/backend-api'
-import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByIpChange, getOpenAPIUrl } from '/@/api/getGatewayConfig'
-import { handleRequest, handleResponse } from '/@/api/util'
-import { osConfig } from '/@/constants/osConfig'
+import { ApiApi, AppTrackingEventApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
+import { getBaseUrl, getGatewayConfig, getOpenAPIUrl, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
+import { handleResponse } from '/@/api/util'
+import { appCliStartArgs } from '/@/constants/common'
+import { browserManager } from '/@/modules/browser'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { getCommonRequestHeaders } from '/@/utils'
-import { appCliStartArgs, isDev, isPackaged } from '/@/constants/common'
 import { attachAxiosLogger } from './axiosLogger'
-import { browserManager } from '/@/modules/browser'
-import { ipcMain } from '/@/modules/ipc'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
 // })
@@ -61,9 +60,10 @@ httpClient.instance.interceptors.response.use((response) => {
   reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
   const code = response.data.code
   if (code === 405) {
-    ipcMain.send('user:kicked-out', response.data.data)
+    ipcSender.user.kickedOut(response.data.data)
     browserManager.closeAll()
   }
+  handleResponse(response)
   return response
 })
 

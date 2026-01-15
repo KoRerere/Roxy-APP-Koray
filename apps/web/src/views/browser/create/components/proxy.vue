@@ -2,8 +2,6 @@
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import type { SvgNames } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 
 import { deepClone, isEmptyValue, strConcat } from '/@/utils'
@@ -12,13 +10,16 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
 import { useNetworkStore } from '/@/stores/network'
+import { API } from '/@/api'
+import { BuyEntryType, BuyProxyListType, ProxyType } from '/@/enums/proxy'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 defineOptions({
   inheritAttrs: false,
 })
 
 const router = useRouter()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const drawerInstance = useDrawer()
 const { showSimpleDialog } = useSimpleDialog()
 
@@ -34,10 +35,52 @@ const checkIndex = reactive<Record<string, boolean>>({})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 
-function onBuyProxy() {
-  buyProxy((orderInfo) => {
+const proxyProvider = ref()
+
+async function onBuyProxy() {
+  if (!proxyProvider.value) {
+    const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
+    onlyErrorToast(code, msg)
+    if (code !== 0)
+      return
+    proxyProvider.value = data.find((item: any) => item.proxyProviderName === 'RoxyBrowser')
+  }
+
+  const provider = {
+    proxyProviderWebsite: proxyProvider.value.proxyProviderWebsite,
+    proxyTypeList: proxyProvider.value.proxyTypeList,
+    proxyProviderIcon: proxyProvider.value.proxyProviderIcon,
+    proxyProviderName: proxyProvider.value.proxyProviderName,
+  }
+
+  try {
+    const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
+    await buySuccessNext(orderInfo)
+  }
+  catch { }
+}
+
+async function buySuccessNext(orderInfo: any) {
+  if (!orderInfo?.immediate) {
     router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
-  })
+    return
+  }
+
+  const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
+  if (code !== 0 || !data.rows?.[0]) {
+    router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
+    return
+  }
+
+  if (isBatch.value) {
+    data.rows.forEach((item) => {
+      const _data = { ...item, _type: ProxyType.buy }
+      addProxy(_data)
+    })
+  }
+  else {
+    onChoose(data.rows[0])
+  }
 }
 
 function onEdit(item: any) {
@@ -194,11 +237,11 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
     />
     <div v-if="proxyList.length" class="grid gap-2 list">
       <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
-        <RxSvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
+        <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
         <div class="flex-1 flex flex-col gap-1 overflow-hidden">
           <div class="flex items-center gap-2 region">
             <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-            <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
+            <SvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
           </div>
           <div v-if="isBatch" class="flex items-center gap-1.5 info">
             <span>{{ $t('绑定窗口数:') }}</span>
@@ -216,10 +259,10 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
           </div>
         </div>
         <div class="mt-0.5 flex gap-2">
-          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-                     color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, index)"
+          <SvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+                   color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
           />
-          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(index)" />
+          <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
         </div>
       </RxCard>
     </div>

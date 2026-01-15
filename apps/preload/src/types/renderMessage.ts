@@ -399,4 +399,9 @@ export interface RenderMessage {
   'syncControl:pause': () => void
   /** 恢复同步 */
   'syncControl:resume': () => void
+
+  /** 打开 MCP */
+  'mcp:open': () => void
+  /** 获取 MCP 配置 */
+  'mcp:config': () => Promise<{ port: number }>
 }

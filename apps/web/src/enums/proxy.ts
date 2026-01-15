@@ -87,3 +87,19 @@ export enum ProxyDescType {
   /** 展示描述 */
   Desc = 4,
 }
+
+export enum BuyProxyListType {
+  /** 全部代理 IP */
+  List = 'list_use',
+  /** 有效代理 IP */
+  Available = 'available_list',
+  /** 可用的代理 IP */
+  Use = 'window_use',
+}
+
+export enum BuyEntryType {
+  /** 正常购买 */
+  Normal = 0,
+  /** 购买并使用 */
+  Immediate = 1,
+}

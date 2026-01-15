@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
   stopCountdown.value?.stop()
 })
 
-async function sendCode() {
+async function checkTransferStatus() {
   if (!selectedWorkspace.value)
     return
   if (isOwner.value && selectedWorkspace.value.isWorkspace) {
@@ -100,6 +100,20 @@ async function sendCode() {
     return
   }
 
+  const { code, data, msg } = await API.window.userGetAgentTransferWindowStatusList()
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return
+
+  if (data === true) {
+    await onTransfer(false)
+    return
+  }
+
+  sendCode()
+}
+
+async function sendCode() {
   const { code, msg } = await API.window.userTransferWindowVerifyCodeList({ targetWorkspaceId: selectedWorkspace.value.workspaceId })
   if (code !== 0)
     return onlyErrorToast(code, msg)
@@ -189,7 +203,7 @@ async function onTransfer(isSelf: boolean) {
       </div>
     </div>
     <div class="flex flex-col gap-3">
-      <RxButton size="lg" :disabled="!selectedWorkspace || countdown?.done === false" @click="sendCode">
+      <RxButton size="lg" :disabled="!selectedWorkspace || countdown?.done === false" @click="checkTransferStatus">
         <span>{{ $t('下一步') }}</span>
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>

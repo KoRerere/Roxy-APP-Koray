@@ -1,13 +1,12 @@
 import { IntlMessageFormat } from 'intl-messageformat'
-import { store } from '/@/modules/store'
-import { isDev, isPackaged } from '/@/constants/common'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { appConfig } from '/@/constants'
-import { createRequire } from 'node:module'
+import { isDev, isPackaged } from '/@/constants/common'
+import { store } from '/@/modules/store'
 
-
-const require = createRequire(import.meta.url);
+const require = createRequire(import.meta.url)
 /** Intl.DateTimeFormat 依赖于系统的 ICU 数据。输出的格式是标准的 IETF BCP 47 language tag（如 en-US 或 zh-CN），不包含编码信息 */
 // export const systemLanguage = Intl.DateTimeFormat().resolvedOptions().locale
 
@@ -56,7 +55,8 @@ export function loadLocaleMessages(language: string) {
 
     messages[language] = require(targetLanguageFilePath)
     return true
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to load language file:', error)
     messages[language] = {}
     return false

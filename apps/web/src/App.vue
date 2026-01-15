@@ -12,7 +12,6 @@ import LockScreen from '/@/components/lock-screen/index.vue'
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME)
 const router = useRouter()
 const [showModal] = useDialog()
-const { mixpanelTrack } = useUserStore()
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
@@ -78,10 +77,6 @@ function onKickedOut(params: MittEvents['kickedOut']) {
 
 emitter.on('kickedOut', onKickedOut)
 electronAPI.on('user:kicked-out', onKickedOut)
-
-onBeforeMount(() => {
-  mixpanelTrack('app_page_view')
-})
 </script>
 
 <template>

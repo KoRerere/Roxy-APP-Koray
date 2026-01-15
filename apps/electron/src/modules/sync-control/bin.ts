@@ -3,7 +3,7 @@ import { appConfig } from "/@/constants";
 import { Buffer } from "node:buffer";
 import { defaultSyncSettings, preferenceSettings, SyncControlSettings, type PreferenceSettings } from "/@/modules/sync-control/model";
 import { API } from "/@/api";
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { browserManager } from "/@/modules/browser";
 import { closeAllSyncDialogs, defaultMainControlWindowColor } from "/@/modules/sync-control/common";
 import { createSynchronizerWindow } from "/@/modules/sync-control/synchronizer";
@@ -145,7 +145,7 @@ export async function startRoxySync(pIds: number[] = []) {
 /** 关闭非主控窗口时，移除 pid */
 export function removeSyncWindowByPid(pIds: number) {
   syncWindowPIds = syncWindowPIds.filter(pid => pid !== pIds)
-  ipcMain.send('syncControl:syncWindowCountChange', getSyncWindowCount())
+  ipcSender.syncControl.syncWindowCountChange(getSyncWindowCount())
 }
 
 export function stopRoxySync() {

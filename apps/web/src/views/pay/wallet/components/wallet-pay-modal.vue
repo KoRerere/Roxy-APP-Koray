@@ -1,10 +1,10 @@
 <script setup lang="tsx">
 import currency from 'currency.js'
-
 import { RxAlert } from '/@/components/rx-alert'
 import { useUserStore } from '/@/stores/user'
-import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useThemeStore } from '/@/stores/theme'
+import { useCampaignStore } from '/@/stores/campaign'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
@@ -25,6 +25,7 @@ const emit = defineEmits<{
 
 const [showToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { roxyGifts } = storeToRefs(useCampaignStore())
 const { realTheme } = storeToRefs(useThemeStore())
 const { walletRecharge, openProcessing } = usePay()
 const loading = ref(false)
@@ -35,6 +36,7 @@ const imgSrc = computed(() => {
 })
 
 const finalResult = computed(() => {
+  // 开启自动续费后，需要包含自动续费折扣
   const autoRenewDiscount = isAuto.value ? userPayInfo.value.autoRenewDiscount : 0
   const _amount = currency(amount, { precision: 6 }).multiply(discountCalculate([autoRenewDiscount])).value
   const _discountAmount = currency(amount, { precision: 6 }).subtract(_amount).add(discountAmount ?? 0).value
@@ -51,6 +53,14 @@ const finalResult = computed(() => {
     needRecharge: needAmount > 0,
     needAmount,
   }
+})
+
+const showGiftAlert = computed(() => {
+  if (!showAutoRenew || !roxyGifts.value)
+    return false
+  const count = Math.floor(currency(amount, { precision: 6 }).divide(roxyGifts.value.price).value)
+  const finalCount = Math.floor(currency(finalResult.value.amount, { precision: 6 }).divide(roxyGifts.value.price).value)
+  return count !== finalCount
 })
 
 function onRecharge() {
@@ -129,6 +139,9 @@ function close(isCancel: boolean) {
       </div>
       <div v-if="showAutoRenew && !finalResult.needRecharge" class="flex flex-col gap-5">
         <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
+        <RxAlert v-if="showGiftAlert && roxyGifts" class="w-full" type="warn" :title="$t('折扣后实付不满 {value} 倍数将减少赠送奖励。如需满赠，请保持实付金额达标。', { value: currency(roxyGifts.price).format() })"
+                 :closable="false"
+        />
         <div class="flex flex-col">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">

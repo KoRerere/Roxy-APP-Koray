@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { ProxyDetectionResult } from '/@/utils'
 import { isDev, isPackaged } from '/@/constants/common'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 
 interface GateConf {
   test: string
@@ -172,7 +172,7 @@ export async function getGatewayConfig(): Promise<string> {
       console.debug(`getAvailableUrl domain`, domain)
 
       if (baseUrl !== domain) {
-        ipcMain.send('app:backend-url-change', domain)
+        ipcSender.app.backendUrlChange(domain)
       }
 
       baseUrl = domain || baseUrl || data.prod_apps?.hz?.[0] || 'https://hz.gate.roxybrowser.cn'
@@ -194,7 +194,7 @@ export async function getGatewayConfig(): Promise<string> {
 
   openAPIUrl ||= 'https://hz.api.roxybrowser.cn'
   baseUrl = isDev ? 'https://apitest.roxybrowser.co' : 'https://hz.gate.roxybrowser.cn'
-  ipcMain.send('app:backend-url-change', baseUrl)
+  ipcSender.app.backendUrlChange(baseUrl)
   return baseUrl
 }
 

@@ -14,7 +14,7 @@ const menuRef = useTemplateRef('menu')
 const _model = mode?.options || model
 const _selected = ref(mode?.value)
 
-const { onHide, ...props } = menuProps
+const { onHide, ...otherProps } = menuProps
 
 function _onHide() {
   onHide?.({
@@ -37,10 +37,10 @@ defineExpose({
 </script>
 
 <template>
-  <Menu ref="menu" v-bind="props" :model="_model" popup :pt="{ root: menuClass.root, item: menuClass.item, list: 'overflow-y-auto max-h-80' }" @hide="_onHide" @show="showPreventMask">
+  <Menu ref="menu" v-bind="otherProps" :model="_model" popup :pt="{ root: menuClass.root, item: menuClass.item, list: 'overflow-y-auto max-h-80' }" @hide="_onHide" @show="showPreventMask">
     <template #item="{ item: { render, ...item }, props }">
       <a v-if="!mode" v-bind="props.action" class="max-w-80 !pa-0">
-        <component :is="render" v-if="render" :item="item" :props="props" :btn-pt="{ root: menuClass.button }" />
+        <component :is="render" v-if="render" :item="item" :props="props" :btn-pt="{ root: menuClass.button }" @click.stop="onMenuCommand($event, item)" />
         <RxButton v-else class="w-full !justify-start" :disabled="(item.disabled as boolean)" :icon="(item.icon as SvgNames)" :label="(item.label as string)" severity="secondary" text
                   :pt="{ root: menuClass.button }" @click.stop="onMenuCommand($event, item)"
         />
@@ -74,7 +74,7 @@ defineExpose({
 
 .button {
   &:not(:disabled):hover {
-    background: var(--component-dropdown-bg-hover) !important;
+    background: transparent !important;
   }
 
   &:disabled {

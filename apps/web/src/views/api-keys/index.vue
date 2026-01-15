@@ -392,6 +392,19 @@ async function onCopy(text: string) {
   copyText(text)
   showToast(0, $t('复制成功'))
 }
+
+function openMcpWindow() {
+  electronAPI.send('mcp:open')
+}
+
+const isLLM = ref(false)
+onMounted(() => {
+  API.base.userGetLlmInfoList({}).then((result) => {
+    if (result.code === 0 && result.data) {
+      isLLM.value = true
+    }
+  })
+})
 </script>
 
 <template>
@@ -437,6 +450,13 @@ async function onCopy(text: string) {
                 <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
                          :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })"
                 />
+                <!-- 数据员工 -->
+                <div v-if="isLLM" class="flex items-center justify-between mt-6 px-3 api-content-proxy">
+                  <div>{{ $t('数字员工') }}</div>
+                  <RxButton severity="secondary" outlined size="xxs" @click="openMcpWindow">
+                    {{ $t('打开') }}
+                  </RxButton>
+                </div>
               </div>
             </template>
 

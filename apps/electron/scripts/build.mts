@@ -1,13 +1,14 @@
 import type { Configuration } from 'electron-builder'
 import type { CopySyncOptions } from 'node:fs'
 import { build, Platform } from 'electron-builder'
-import { chmodSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { accessSync, chmodSync, cpSync, constants as fsConstants, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
 
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV !== 'production'
+const isWindows = process.platform === 'win32'
 /**
  * 是否跳过代码签名
  */
@@ -32,7 +33,7 @@ const copySyncOptions: CopySyncOptions = {
 cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
 cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dist/web/locales'), copySyncOptions)
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
-cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
+isWindows && cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
 
 // ============================================================================
 // 根据环境动态生成安装脚本
@@ -51,10 +52,26 @@ const config = isDev
       APP_NAME: 'RoxyBrowser',
     }
 
+// 构建 extraResources 配置
 const extraResources: NonNullable<Configuration['extraResources']> = [
   {
     from: 'node_modules/font-list',
     to: 'node_modules/font-list',
+  },
+  {
+    from: '../../node_modules/better-sqlite3',
+    to: 'node_modules/better-sqlite3',
+    filter: ['**/*'],
+  },
+  {
+    from: '../../node_modules/bindings',
+    to: 'node_modules/bindings',
+    filter: ['**/*'],
+  },
+  {
+    from: '../../node_modules/file-uri-to-path',
+    to: 'node_modules/file-uri-to-path',
+    filter: ['**/*'],
   },
 ]
 
@@ -169,6 +186,9 @@ const options: Configuration = {
   asarUnpack: [
     'dist/web',
     'dist/bin',
+    'dist/openapiMcp.mjs',
+    'dist/playwrightMcp.mjs',
+    'dist/common.mjs',
   ],
   extraMetadata: {
     version,
@@ -203,6 +223,8 @@ const options: Configuration = {
     : async (context) => {
       await notarizeMac(context)
     },
+  // 完全禁用 native 模块的重新编译
+  // 使用已编译好的 native 模块（在 postinstall 中已通过 electron-rebuild 重新编译）
   nodeGypRebuild: false,
   buildDependenciesFromSource: false,
 

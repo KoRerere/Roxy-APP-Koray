@@ -52,16 +52,16 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
     update(_list.value)
   }
 
-  const updateRemarkDisplayStatus = debounce(async function (remarkDisplayStatus: boolean) {
+  const updateRemarkDisplayStatus = debounce(async (remarkDisplayStatus: boolean) => {
     const { code, msg } = await API.base.userSetUserConfigCreate({
-      remarkDisplayStatus
+      remarkDisplayStatus,
     })
     onlyErrorToast(code, msg)
-    if (code !== 0) return
+    if (code !== 0)
+      return
     fetchUserInfo()
     updateUserConfig()
   }, 500)
-
 
   onUnmounted(() => {
     const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, cache: item._cache }])
@@ -71,7 +71,7 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
   return {
     columns: _list,
     updateColumns,
-    updateRemarkDisplayStatus
+    updateRemarkDisplayStatus,
   }
 }
 
@@ -82,7 +82,7 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
 //   "status": 1
 // }
 
-export function setColumns(columns: any, options?: Options) {
+export function setColumns(columns: any, options?: Options): any[] {
   const _columns = deepClone(columns)
   const { filters, inserts }: Options = Object.assign({ filters: [], inserts: [] }, options)
   if (Array.isArray(inserts)) {

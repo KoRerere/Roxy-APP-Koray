@@ -5,6 +5,7 @@ export const defaultValues: StoreType = {
   lastLoginTime: Date.now(),
   language: '',
   closeSoft: 'pop',
+  autoUpdateKernel: false,
   memoryLimit: 95,
   diskLimit: 8,
   autoClearCache: false,

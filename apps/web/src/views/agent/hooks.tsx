@@ -9,6 +9,8 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
 
+import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
+
 export interface CheckResult {
   loading: boolean
   error?: any
@@ -134,15 +136,26 @@ export function useProxy() {
   const [showModal] = useDialog()
   const router = useRouter()
 
-  function buyProxy(next: (orderInfo: Record<string, any>) => void, props = {}) {
+  function buyProxy(props = {}) {
+    const { promise, resolve, reject } = Promise.withResolvers<UserBuyProxySettlementCreateData['data'] | undefined>()
     showModal({
       showHeader: false,
       modal: true,
       blockScroll: true,
       slots: {
-        container: ({ hideModal }) => <ChooseModal {...props} onSuccess={next} onClose={hideModal} />,
+        container: ({ hideModal }) => (
+          <ChooseModal
+            {...props}
+            onSuccess={resolve}
+            onClose={() => {
+              hideModal()
+              reject()
+            }}
+          />
+        ),
       },
     })
+    return promise
   }
 
   function downloadProxy({ data, cancel, confirm }: DownloadProxyParams) {

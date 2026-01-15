@@ -3,15 +3,16 @@ import axios from 'axios'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import { createWriteStream } from 'node:fs'
+import { rename, rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
 import { isWindows } from '/@/constants/common'
 import { getLocalWebVersion, getMainWindow, getWebEntryUrl, updateMainWindowPageTitle } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
-import { fileExists } from '/@/utils'
+import { fileExists, getErrorMessage } from '/@/utils'
 
 interface VersionInfo {
   /** 最新版本号 */
@@ -35,6 +36,8 @@ export const webUpdater = new class WebUpdater {
   webDomain = ''
   /** web zip 资源包路径 */
   webZipPath = join(appConfig.tempDir, 'web.zip')
+  /** 临时解压目录 */
+  tempExtractDir = join(appConfig.sessionDir, 'web_extract')
   /** 是否在下载中 */
   isInProgress = false
   /** 是否正在升级中 */
@@ -166,7 +169,7 @@ export const webUpdater = new class WebUpdater {
       }
     }
     catch (error) {
-      console.error('[WebUpdater] checkForUpdates error', error)
+      console.error('[WebUpdater] checkForUpdates error', getErrorMessage(error))
     }
     finally {
       this.isInProgress = false
@@ -179,11 +182,21 @@ export const webUpdater = new class WebUpdater {
     console.log('[WebUpdater] extract start')
     const extractDir = await fileOperations.executeTask('decompress', {
       src: this.webZipPath,
-      dest: appConfig.externalWebDir,
+      dest: this.tempExtractDir,
     }).finally(() => {
       this.remoteVersionInfo = null
     })
     console.log('extractPlugin dir', extractDir)
+    const bakDir = join(appConfig.sessionDir, `web-bak`)
+    await rename(appConfig.externalWebDir, bakDir).catch((error) => {
+      console.warn('[WebUpdater] extract rename to bakDir failed, maybe first time update', error)
+      return Promise.resolve()
+    })
+    await rename(this.tempExtractDir, appConfig.externalWebDir).catch((error) => {
+      console.error('[WebUpdater] extract rename error', error)
+      store.isExternalWeb = false
+    })
+    rm(bakDir, { recursive: true, force: true })
   }
 
   async upgradeNow() {
@@ -205,11 +218,11 @@ export const webUpdater = new class WebUpdater {
   }
 
   private sendSuccessMessage() {
-    ipcMain.send('app:resource-update', this.#updateMessageData)
+    ipcSender.app.resourceUpdate(this.#updateMessageData)
   }
 
   private sendErrorMessage() {
     this.#updateMessageData.status = 'failed'
-    ipcMain.send('app:resource-update', this.#updateMessageData)
+    ipcSender.app.resourceUpdate(this.#updateMessageData)
   }
 }()

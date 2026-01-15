@@ -76,18 +76,18 @@ export function killProcessByName(processName: string) {
   try {
     exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error killing process ${processName}:`, error)
+        console.debug(`Error killing process ${processName}:`, error)
         return
       }
       if (stderr) {
-        console.error(`Error output:`, stderr)
+        console.debug(`Error output:`, stderr)
         return
       }
-      console.log(`Process ${processName} killed successfully.`)
+      console.debug(`Process ${processName} killed successfully.`)
     })
   }
   catch (error) {
-    console.error(`Error killing process ${processName}:`, error)
+    console.debug(`Error killing process ${processName}:`, error)
   }
 }
 /** 根据执行路径获取进程 IDs */

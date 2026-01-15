@@ -19,6 +19,7 @@ import { emitter } from '/@/utils/eventBus'
 import Test from '/@/views/lab/components/test.vue'
 // import FormItem from '/@/views/lab/components/form/item.vue'
 import { API } from '/@/api'
+import { getInviteCode } from '/@/api/util'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -282,6 +283,17 @@ function captcha() {
     },
   })
 }
+
+getInviteCode().then(code => console.log('🚀 ~ getInviteCode().then ~ code:', code))
+
+const selectedCity = ref()
+const cities = ref([
+  { name: 'New York', code: 'NY' },
+  { name: 'Rome', code: 'RM' },
+  { name: 'London', code: 'LDN' },
+  { name: 'Istanbul', code: 'IST' },
+  { name: 'Paris', code: 'PRS' },
+])
 </script>
 
 <template>
@@ -293,6 +305,7 @@ function captcha() {
     <RxButton label="open2" @click="open2" />
     <RxButton label="captcha" @click="captcha" />
 
+    <Select v-model="selectedCity" editable :options="cities" filter option-label="name" placeholder="Select a City" class="w-full md:w-56" />
     <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris

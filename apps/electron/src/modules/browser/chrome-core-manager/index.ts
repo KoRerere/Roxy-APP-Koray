@@ -13,10 +13,13 @@ import { osConfig } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
 import { isMac, isWindows } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser/browser-manager'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new (class ChromeCoreManager {
+  /** 上一次的内核版本信息 */
+  lastCoreVersionList: Record<string, string> = {}
+
   /** 拉取内核 promise */
   private fetchAvailableCoreListPromise: Promise<UserGetCoreUpgradeCreateData> | null
     = null
@@ -54,7 +57,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
         if (isNotExistsCore) {
           const [latestCore] = this.availableCoreList.toSorted((a, b) => b.coreVersion - a.coreVersion)
           if (latestCore?.coreVersion) {
-            this.downloadCore(latestCore.coreVersion, undefined, true)
+            this.downloadCore({ coreVersion: latestCore.coreVersion, silent: true })
           }
         }
       })
@@ -143,11 +146,19 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       .finally(() => {
         this.fetchAvailableCoreListPromise = null
       })
-    console.debug('user_get_core_upgrade', result)
+    console.debug('user_get_core_upgrade', result.data)
     this.availableCoreList = result.data?.rows || []
 
     if (this.availableCoreList.length) {
-      ipcMain.send('app:core-list-update', await this.getCoreList())
+      this.lastCoreVersionList = result.data?.rows?.reduce((acc, core) => {
+        acc[core.coreVersion!] = core.version!
+        return acc
+      }, {} as Record<string, string>) || {}
+      console.debug('chromeCoreManager.lastCoreVersionList', this.lastCoreVersionList)
+    }
+
+    if (this.availableCoreList.length) {
+      ipcSender.app.coreListUpdate(await this.getCoreList())
     }
 
     return result
@@ -186,12 +197,12 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     // 如果本地不存在该内核或版本文件不存在，则下载
     if (!isExeExists || !isVersionFileExists) {
       // 等待下载完成
-      await this.downloadCore(coreVersion, msgCallback, silent)
+      await this.downloadCore({ coreVersion, msgCallback, silent })
     }
 
     const status = await this.checkCoreVersion(availableCore)
     if (status === 'update') {
-      ipcMain.send('app:resource-update', {
+      ipcSender.app.resourceUpdate({
         ...availableCore,
         type: 'kernel',
         version: availableCore.version,
@@ -206,7 +217,13 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   }
 
   /** 下载内核 */
-  async downloadCore(coreVersion: string, msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void, silent = false) {
+  async downloadCore(options: {
+    coreVersion: string
+    msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void
+    silent?: boolean
+    unzipAfterDownload?: boolean
+  }) {
+    const { coreVersion, msgCallback, silent, unzipAfterDownload = true } = options
     if (this.downloadingMap.has(coreVersion)) {
       if (msgCallback) {
         if (this.msgCallbackTaskMap.has(coreVersion)) {
@@ -228,6 +245,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     }
 
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
+    // getter 里的 this，永远指向“访问这个属性的对象”
     const that = this
     const payload: ResourceUpdateMessage = {
       type: 'kernel',
@@ -242,7 +260,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     }
 
     const doMsgCallbacks = () => {
-      ipcMain.send('app:resource-update', payload)
+      ipcSender.app.resourceUpdate(payload)
       msgCallback?.(payload)
       if (this.msgCallbackTaskMap.has(coreVersion)) {
         this.msgCallbackTaskMap.get(coreVersion)?.forEach((callback) => {

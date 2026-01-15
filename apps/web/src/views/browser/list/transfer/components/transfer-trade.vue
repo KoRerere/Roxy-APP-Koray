@@ -227,7 +227,7 @@ async function onTransfer() {
     </div>
     <div class="flex flex-col gap-3">
       <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer" />
-      <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="checkTransferStatus">
+      <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="sendCode">
         <span>{{ $t('重新发送') }}</span>
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>

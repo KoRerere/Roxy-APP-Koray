@@ -1,15 +1,19 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
-import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
+import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { format } from 'date-fns'
 
 export function getRawColumns(options?: any) {
-  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
-  return setColumns([
+  const { isOwner } = storeToRefs(useRoleStore())
+  const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+  const workspaceName = currentWorkspace.value?.workspaceName!.slice(0, 3).toLocaleUpperCase()
+
+  const columns = [
     {
       title: $t('代理信息'),
       key: 'proxy',
@@ -20,7 +24,7 @@ export function getRawColumns(options?: any) {
       title: $t('出口 IP'),
       key: 'lastCountry',
       sortable: true,
-      slot: 'outbound'
+      slot: 'outbound',
     },
     {
       title: $t('到期时间'),
@@ -37,6 +41,7 @@ export function getRawColumns(options?: any) {
       title: $t('自动续费'),
       key: 'autoRenew',
       slot: 'renew',
+      power: isOwner.value,
     },
     {
       title: $t('订单号'),
@@ -65,7 +70,7 @@ export function getRawColumns(options?: any) {
       },
       _cache: {
         extend: false,
-      }
+      },
     },
     {
       title: $t('IP 查询渠道'),
@@ -102,7 +107,9 @@ export function getRawColumns(options?: any) {
       slot: 'actions',
       alignFrozen: 'right',
     },
-  ], options)
+  ].filter(column => column.power !== false)
+
+  return setColumns(columns, options)
 }
 
 export function useColumns(options?: any) {

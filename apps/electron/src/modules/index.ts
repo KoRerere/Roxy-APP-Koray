@@ -1,4 +1,4 @@
-import './ipc'
+import './ipc/receiver'
 import { app } from 'electron'
 import { appConfig } from '/@/constants'
 import { intoLaunchPage } from '/@/modules/app/mainWindow'

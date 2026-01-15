@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import PlatformIcon from '/@/views/account/list/platform-icon.vue';
-import { RxSvgIcon } from '/@/components/rx-icon'
+import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
 
 defineProps({
   platformList: {
@@ -8,25 +7,29 @@ defineProps({
     required: true,
   },
 })
-
 </script>
 
 <template>
   <div class="flex flex-col gap-2">
-    <div class="flex gap-1.5" v-for="item in platformList" :key="item.platformUrl">
-      <PlatformIcon class="w-4 h-4" v-if="item.platformIcon" :platform-icon="item.platformIconDark" :platform-icon-dark="item.platformIconDark" />
-      <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--component-tooltip-text-primary)" />
+    <div v-for="item in platformList" :key="item.platformUrl" class="flex gap-1.5">
+      <PlatformIcon v-if="item.platformIcon" class="w-4 h-4" :platform-icon="item.platformIconDark" :platform-icon-dark="item.platformIconDark" />
+      <SvgIcon v-else name="base/rx_ic_user_key" color="var(--component-tooltip-text-primary)" />
       <div class="flex flex-col gap-1">
-        <div class="primary" v-if="platformList.length !== 1">{{ item.platformUserName || '--' }}</div>
+        <div v-if="platformList.length !== 1" class="primary">
+          {{ item.platformUserName || '--' }}
+        </div>
         <template v-else>
-          <div class="primary">{{ item.platformUrl }}</div>
-          <div v-if="item.platformUserName" class="secondary">{{ item.platformUserName }}</div>
+          <div class="primary">
+            {{ item.platformUrl }}
+          </div>
+          <div v-if="item.platformUserName" class="secondary">
+            {{ item.platformUserName }}
+          </div>
         </template>
       </div>
     </div>
   </div>
 </template>
-
 
 <style lang="scss" scoped>
 .primary {

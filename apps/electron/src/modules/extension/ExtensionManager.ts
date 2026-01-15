@@ -15,7 +15,7 @@ import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from 
 import { isWindows } from '/@/constants/common'
 import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 import { store } from '/@/modules/store'
-import { ipcMain } from '/@/modules/ipc'
+import { ipcSender } from '/@/modules/ipc/sender'
 import { ExtensionValidationError } from '/@/modules/extension/errors'
 
 export interface UserSelectedExtensionInfo {
@@ -126,7 +126,7 @@ export class ExtensionManager {
       const startDownload = async () => {
         try {
           await downloadZipFile(item.pluginRoute!, zipPath, (progress) => {
-            ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: Math.min(progress, 99) })
+            ipcSender.extension.downloadProgress({ extID: item.pluginDir!, percent: Math.min(progress, 99) })
           })
           if (item.hashValue) {
             const hash = crypto.createHash('sha512')
@@ -142,7 +142,7 @@ export class ExtensionManager {
             }
           }
           await unzipFile(zipPath)
-          ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: 100 })
+          ipcSender.extension.downloadProgress({ extID: item.pluginDir!, percent: 100 })
           rm(zipPath)
           return localPath
         }
@@ -152,7 +152,7 @@ export class ExtensionManager {
           if (error instanceof ExtensionValidationError) {
             errorTips = error.message
           }
-          ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: -1, errorTips })
+          ipcSender.extension.downloadProgress({ extID: item.pluginDir!, percent: -1, errorTips })
           return Promise.reject(new Error(errorTips, { cause: error }))
         } finally {
           downloadingExtensions.delete(localPath)

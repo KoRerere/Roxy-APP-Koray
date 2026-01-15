@@ -3,12 +3,14 @@ import ProviderList from '/@/views/agent/shop/components/provider-list.vue'
 import ProviderDetail from '/@/views/agent/shop/components/provider-detail.vue'
 import { useThemeStore } from '/@/stores/theme'
 import { useUserStore } from '/@/stores/user'
+import type { BuyEntryType } from '/@/enums/proxy'
 
 defineOptions({
   inheritAttrs: false,
 })
 
 const { provider, focusProviderName } = defineProps<{
+  entryType?: BuyEntryType
   provider?: Record<string, any>
   focusProviderName?: string
 }>()
@@ -31,7 +33,7 @@ onMounted(() => {
 <template>
   <div class="flex flex-col rounded-lg popup">
     <ProviderList v-show="!currentProvider" v-model="currentProvider" :focus-provider-name="focusProviderName" @close="$emit('close')" @success="$emit('success', $event)" />
-    <ProviderDetail v-if="currentProvider" :data="currentProvider" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)" />
+    <ProviderDetail v-if="currentProvider" :data="currentProvider" :entry-type="entryType" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)" />
   </div>
 </template>
 

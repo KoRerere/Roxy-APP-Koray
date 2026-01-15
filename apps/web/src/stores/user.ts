@@ -197,17 +197,35 @@ export const useUserStore = defineStore(
         localNetwork.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
 
         mixpanel.people.set({
+          screen_resolution: `${screen.width}x${screen.height}`,
+          country_code: localNetwork.value.country_code,
           $name: userInfo.value.userName,
           $email: userInfo.value.email,
           $language: locale.currentLocale,
           $city: localNetwork.value.city,
-          $geo_source: localNetwork.value.checkChannel,
           $region: localNetwork.value.region,
           $country_code: localNetwork.value.country_code,
           $timezone: localNetwork.value.timezone,
           $localNetwork: localNetwork,
           $appVersion: appVersion.value,
         })
+      })
+    }
+
+    function mixpanelTrack(event_name: string, data?: Record<string, any>) {
+      mixpanel.track(event_name, {
+        event_name,
+        time: Date.now(),
+        screen_resolution: `${screen.width}x${screen.height}`,
+        country_code: localNetwork.value.country_code,
+        $user_id: userInfo.value.id,
+        $city: localNetwork.value.city,
+        $region: localNetwork.value.region,
+        $country_code: localNetwork.value.country_code,
+        $timezone: localNetwork.value.timezone,
+        $app_language: locale.currentLocale,
+        $appVersion: appVersion.value,
+        ...data,
       })
     }
 
@@ -313,21 +331,6 @@ export const useUserStore = defineStore(
         await getUserInfo()
         getUserConfig(true)
       }
-    }
-
-    function mixpanelTrack(event_name: string, data?: Record<string, any>) {
-      mixpanel.track(event_name, {
-        event_name,
-        time: Date.now(),
-        $user_id: userInfo.value.id,
-        $city: localNetwork.value.city,
-        $geo_source: localNetwork.value.checkChannel,
-        $region: localNetwork.value.region,
-        $country_code: localNetwork.value.country_code,
-        $timezone: localNetwork.value.timezone,
-        $app_language: locale.currentLocale,
-        ...data,
-      })
     }
 
     scheduler.postTask(initUserInfo, { priority: 'background' })

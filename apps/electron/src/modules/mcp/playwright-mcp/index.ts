@@ -1,0 +1,1 @@
+import '@roxybrowser/playwright-mcp'

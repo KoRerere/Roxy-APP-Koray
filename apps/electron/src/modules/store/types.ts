@@ -101,4 +101,6 @@ export interface StoreType {
   autoStart?: boolean
   /** 默认浏览器启动器进程 ID */
   defaultBrowserLauncherPid?: number
+  /** 是否自动更新内核，已下载的内核并未使用时将会自动更新 */
+  autoUpdateKernel?: false
 }

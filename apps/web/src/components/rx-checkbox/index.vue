@@ -5,9 +5,9 @@ interface Props extends Omit<CheckboxProps, 'size'> {
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
 }
 
-const { size = 'sm', ...props } = defineProps<Props>()
-
 defineOptions({ inheritAttrs: false })
+
+const { size = 'sm', ...props } = defineProps<Props>()
 
 const attrs = useAttrs()
 </script>

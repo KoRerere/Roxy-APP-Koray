@@ -1,6 +1,6 @@
+const { sentryWebpackPlugin } = require('@sentry/webpack-plugin')
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
-const { sentryWebpackPlugin } = require("@sentry/webpack-plugin");
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
 
 console.log('process.env.NODE_ENV', process.env.NODE_ENV)
@@ -13,6 +13,14 @@ module.exports = {
   entry: {
     main: './dist-vite/index.mjs',
     fileWorker: './dist-vite/fileWorker.mjs',
+    openapiMcp: './dist-vite/openapiMcp.mjs',
+    playwrightMcp: './dist-vite/playwrightMcp.mjs',
+    orchestrator: './dist-vite/orchestrator.mjs',
+  },
+  resolve: {
+    alias: {
+      'better_sqlite3.node': path.resolve(__dirname, 'node_modules/better-sqlite3/build/Release/better_sqlite3.node'),
+    },
   },
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录
@@ -28,14 +36,19 @@ module.exports = {
   },
   // 将某些库作为外部依赖，不参与打包，由运行时从 node_modules 加载
   // 在 ESM 模式下，externals 应该使用 'module' 或 'node-commonjs' 类型
+  // better-sqlite3 是 native 模块，不能被打包，必须从 node_modules 加载
+  // bindings 是 better-sqlite3 的依赖，用于加载 native 模块
   externals: {
     'font-list': 'node-commonjs font-list',
     'http-proxy-middleware': 'node-commonjs http-proxy-middleware',
+    'better-sqlite3': 'node-commonjs better-sqlite3',
+    'bindings': 'node-commonjs bindings',
+    'file-uri-to-path': 'node-commonjs file-uri-to-path',
   },
   externalsType: 'node-commonjs', // 指定外部依赖的类型为 Node.js CommonJS
   optimization: {
-    moduleIds: 'deterministic',  // 确定性模块 ID
-    chunkIds: 'deterministic',  // 确定性 chunk ID
+    moduleIds: 'deterministic', // 确定性模块 ID
+    chunkIds: 'deterministic', // 确定性 chunk ID
     minimize: true, // 启用代码压缩和混淆
     minimizer: [
       new TerserPlugin({
@@ -99,7 +112,7 @@ module.exports = {
       release: {
         name: process.env.VITE_APP_VERSION,
         dist: process.env.VITE_APP_VERSION,
-      }
+      },
     }),
     // new JavascriptObfuscatorPlugin({
     //   include: ['**/*.cjs'],       // 匹配所有 JS 文件
@@ -109,5 +122,5 @@ module.exports = {
     //     controlFlowFlattening: true
     //   }
     // })
-  ]
+  ],
 }

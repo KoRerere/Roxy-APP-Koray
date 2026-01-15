@@ -1,11 +1,18 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { isPackaged, isProd, isWindows } from '/@/constants/common'
-import { store } from '/@/modules/store'
+// import { store } from '/@/modules/store'
 
 const sessionDir = app.getPath('sessionData')
 const roxyDataDirName = isProd ? '.roxybrowser' : '.roxybrowser-dev'
 const roxyDataDir = join(app.getPath('home'), roxyDataDirName)
+
+let store
+
+// 延迟获取 store，避免循环依赖问题
+import('/@/modules/store').then((mod) => {
+  store = mod.store
+})
 
 export const appConfig = {
   /** Electron 会话数据目录（sessionData），用于缓存/临时文件/运行期数据 */

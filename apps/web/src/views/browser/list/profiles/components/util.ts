@@ -3,7 +3,7 @@ export function silentUpdateProxy(origin: Record<string, any>, params: Record<st
   const beforeProxyInfoKeys = ['beforeIp', 'beforeCity', 'beforeCountry', 'beforeTime'];
   ['lastIp', 'lastCity', 'lastCountry', 'checkTime'].forEach((key, index) => {
     if (Object.prototype.hasOwnProperty.call(params, key)) {
-      beforeProxyInfo[beforeProxyInfoKeys[index]] = origin[key]
+      beforeProxyInfo[beforeProxyInfoKeys[index]!] = origin[key]
     }
   })
   origin.beforeProxyInfo = beforeProxyInfo;
@@ -26,7 +26,7 @@ export function silentUpdateAccount(
   targetKey = 'windowPlatformList',
 ) {
   Reflect.set(origin, targetKey, list.map((item) => {
-    return ['id', '_tempId', 'platformEfa', 'platformIcon', 'platformIconDark', 'platformPassword', 'platformUrl', 'platformUserName', 'platformRemarks']
+    return ['id', '_tempId', 'platformEfa', 'platformName', 'platformIcon', 'platformIconDark', 'platformPassword', 'platformUrl', 'platformUserName', 'platformRemarks']
       .reduce((acc, key) => {
         if (Object.prototype.hasOwnProperty.call(item, key)) {
           acc[key] = item[key]

@@ -1,7 +1,9 @@
 import type { Application } from 'express'
-import { store } from '/@/modules/store'
-import browserRouter from './browser'
 import { API } from '/@/api'
+import { store } from '/@/modules/store'
+import accountRouter from './account'
+import browserRouter from './browser'
+import proxyRouter from './proxy'
 
 const notNeedTokenRoutes = [
   '/health',
@@ -58,7 +60,9 @@ export function setupRoutes(app: Application) {
     res.json(await API.base.userSetUserConfigCreate(req.body))
   })
 
+  app.use('/account', accountRouter)
   app.use('/browser', browserRouter)
+  app.use('/proxy', proxyRouter)
 
   app.use((req, res) => {
     res.status(404).send('Not Found')
