@@ -50,27 +50,28 @@ export class McpManager {
     // 创建 openapi 的 mcp 服务
     const openapi: Connection = {
       transport: 'stdio',
-      command: 'node',
+      command: process.execPath,
       args: [process.env.OPENAPI_SCRIPT_PATH!],
       env: {
         ...process.env,
         ROXY_API_KEY: process.env.ROXY_API_KEY!,
         ROXY_API_HOST: process.env.ROXY_API_HOST!,
+        ELECTRON_RUN_AS_NODE: '1', // 让 Electron 可执行文件作为 Node.js 运行
       },
     }
     servers.roxybrowser_openapi = openapi
 
     // const port = await this.getPort()
-
     // 创建 playwright 的 mcp 服务
     const playwright: Connection = {
       transport: 'stdio',
-      command: 'node',
+      command: process.execPath,
       args: [process.env.PLAYWRIGHT_SCRIPT_PATH!],
       env: {
         ...process.env,
         PLAYWRIGHT_MCP_SNAPSHOT_MODE: 'optimized',
         PLAYWRIGHT_MCP_ROXY_MODE: 'true',
+        ELECTRON_RUN_AS_NODE: '1', // 让 Electron 可执行文件作为 Node.js 运行
       },
     }
     servers[`roxybrowser_playwright_${workerId}`] = playwright
