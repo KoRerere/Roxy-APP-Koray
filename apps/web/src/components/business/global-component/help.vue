@@ -31,7 +31,7 @@ const qrcodeMap = ref<Record<string, any>>({})
 const qrcodeList = ref<any[]>([])
 
 const showMcp = ref(false)
-const driverStatus = safeParseJSON(localStorage.getItem('driverStatus'))
+const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
 
 const items = computed(() => {
   return [
@@ -131,6 +131,7 @@ async function getMcpInfo() {
   }
   else {
     showMcp.value = false
+    updateDriverStatus()
   }
 }
 
@@ -164,11 +165,16 @@ async function driverHighlight() {
 
     ],
     onDestroyed: () => {
-      localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
+      updateDriverStatus()
     },
   })
 
   driverObj.drive()
+}
+
+function updateDriverStatus() {
+  driverStatus.mcpGuide = true
+  localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
 }
 
 async function getFaqList() {
