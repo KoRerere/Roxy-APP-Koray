@@ -91,7 +91,7 @@ export function getDefaultBrowserCreateParams() {
     syncExtensions: false,
     syncPassword: true,
     syncIndexedDb: false,
-    syncLocalStorage: false,
+    syncLocalStorage: true,
     clearCacheFile: false,
     clearCookie: false,
     clearLocalStorage: false,

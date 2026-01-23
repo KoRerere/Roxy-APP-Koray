@@ -2,12 +2,11 @@
 import PayMetricsCard from './pay-metrics-card.vue'
 import PayMetricsList from './pay-metrics-list.vue'
 import Usage from '/@/components/usage.vue'
-import { RxSvgIcon } from '/@/components/rx-icon';
-import { createReusableTemplate } from '@vueuse/core';
-;
-import { useUserStore } from '/@/stores/user';
-import { emitter } from '/@/utils/eventBus';
-import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay';
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { createReusableTemplate } from '@vueuse/core'
+import { useUserStore } from '/@/stores/user'
+import { emitter } from '/@/utils/eventBus'
+import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 
 const { collapsed } = defineProps<{
   collapsed: boolean
@@ -47,7 +46,7 @@ const payMetricsItems = computed(() => {
   return [
     {
       label: $t('窗口用量'),
-      usage: isPremiumPartner.value ? $t('无限窗口') : `${useWindowCount} / ${maxWindowCount}`
+      usage: isPremiumPartner.value ? $t('无限窗口') : `${useWindowCount} / ${maxWindowCount}`,
     },
   ]
 })
@@ -60,7 +59,7 @@ const actions = computed(() => {
       btnText: userPayInfo?.value.isTrial && $t('立即升级'),
       command: () => {
         router.push({ name: 'subscribe-plan' })
-      }
+      },
     },
     {
       label: $t('续订'),
@@ -71,9 +70,9 @@ const actions = computed(() => {
           paySuccess: () => {
             router.replace({ name: 'wallet', query: { name: 'manage' } })
             emitter.emit('updateBillList')
-          }
+          },
         })
-      }
+      },
     },
     {
       label: $t('详情'),
@@ -81,15 +80,15 @@ const actions = computed(() => {
       btnText: isExpired.value && $t('前往支付'),
       command: () => {
         router.push({ name: 'wallet', query: { name: isExpired.value ? 'billing' : 'manage' } })
-      }
+      },
     },
     {
       label: $t('详情'),
       visible: isPremiumPartner.value,
       command: () => {
         router.push({ name: 'wallet', query: { name: 'manage' } })
-      }
-    }
+      },
+    },
   ].filter(item => item.visible !== false)
 })
 
@@ -105,22 +104,24 @@ const infoValue = computed(() => {
 function getColorLevel(percent: number, blockCount: number) {
   return {
     normal: percent > blockCount ? '#EF4444' : '#12A3FC',
-    weak: '#7ECCFC'
+    weak: '#7ECCFC',
   }
 }
 
 function toggle(event: Event) {
-  opRef.value?.toggle(event);
+  opRef.value?.toggle(event)
 }
 </script>
 
 <template>
   <DefineTemplate>
     <div class="pay-metrics" :class="{ collapsed }">
-      <PayMetricsCard class="cursor-pointer" v-for="item in actions" :key="item.label" @click="item.command">
+      <PayMetricsCard v-for="item in actions" :key="item.label" class="cursor-pointer" @click="item.command">
         <div class="pay-metrics-title">
-          <div class="pay-metrics-title-badge">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-          <div class="pay-metrics-title-upgrade" v-if="!item.btnText">
+          <div class="pay-metrics-title-badge">
+            {{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}
+          </div>
+          <div v-if="!item.btnText" class="pay-metrics-title-upgrade">
             <span>{{ item.label }}</span>
             <RxSvgIcon name="base/rx_ic_arrow_right_2" size="12" />
           </div>
@@ -131,18 +132,21 @@ function toggle(event: Event) {
         <div class="inline-flex items-center self-stretch gap-1">
           <PayMetricsList :items="payMetricsItems" />
           <SvgIcon v-tooltip="{ value: infoValue, pt: { root: '!max-w-[fit-content]', text: '!whitespace-pre' } }" class="cursor-pointer" size="14" name="base/rx_ic_info"
-            color="var(--colors-icon-icon-note)"></SvgIcon>
+                   color="var(--colors-icon-icon-note)"
+          />
         </div>
 
-        <AnimationBorder class="w-full" v-if="item.btnText" bg-color="var(--pattern-sidenav-metrics-btn)"
-          :gradient="['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']">
-          <RxButton class="w-full" severity="secondary" variant="text" size="xs" :label="item.btnText" @click.stop="item.command"></RxButton>
+        <AnimationBorder v-if="item.btnText" class="w-full" bg-color="var(--pattern-sidenav-metrics-btn)"
+                         :gradient="['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']"
+        >
+          <RxButton class="w-full" severity="secondary" variant="text" size="xs" :label="item.btnText" @click.stop="item.command" />
         </AnimationBorder>
 
         <RxButton v-if="userPayInfo?.isTrial === 0" class="w-full" severity="secondary" variant="outlined" size="xs"
-          @click.stop="$router.push({ name: 'subscribe-plan', query: { type: SubLevelEnum.Trial } })">
+                  @click.stop="$router.push({ name: 'subscribe-plan', query: { type: SubLevelEnum.Trial } })"
+        >
           <span>🎁</span>
-          <span>{{ $t('{day} 天免费试用', { day: 7 }) }}</span>
+          <span>{{ $t('{day} 天免费试用', { day: userPayInfo?.trialDays }) }}</span>
         </RxButton>
       </PayMetricsCard>
     </div>
@@ -156,8 +160,8 @@ function toggle(event: Event) {
     <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, 5)" :block-count="5" shape="circle" />
   </div>
 
-  <Popover ref="op" unstyled appendTo="self">
-    <animation-border class="pay-metrics-popover" bgColor="var(--colors-background-bg-overlay)">
+  <Popover ref="op" unstyled append-to="self">
+    <animation-border class="pay-metrics-popover" bg-color="var(--colors-background-bg-overlay)">
       <ReuseTemplate />
     </animation-border>
   </Popover>
@@ -177,7 +181,7 @@ function toggle(event: Event) {
 
   .pay-metrics-divider {
     margin: 0 10px;
-    border-top: 1px dashed var(--colors-border-border-base, #C7CDD1);
+    border-top: 1px dashed var(--colors-border-border-base, #c7cdd1);
   }
 
   .pay-metrics-title {
@@ -194,8 +198,8 @@ function toggle(event: Event) {
       gap: 10px;
       border-radius: var(--radius-full, 9999px);
       background: v-bind(badgeBgColor);
-      color: #FFF;
-      font-family: "DingTalk JinBuTi";
+      color: #fff;
+      font-family: 'DingTalk JinBuTi';
       font-size: 12px;
       line-height: normal;
     }
@@ -205,7 +209,7 @@ function toggle(event: Event) {
       padding: 2px 0px 2px 4px;
       align-items: center;
       gap: 4px;
-      color: var(--colors-text-text-brand, #12A3FC);
+      color: var(--colors-text-text-brand, #12a3fc);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -220,7 +224,7 @@ function toggle(event: Event) {
   cursor: pointer;
 
   .pay-metrics-collapsed-text {
-    color: var(--pattern-sidenav-text-active, #3FB6FD);
+    color: var(--pattern-sidenav-text-active, #3fb6fd);
     text-align: center;
     font-family: Inter;
     font-size: 12px;
@@ -244,4 +248,5 @@ function toggle(event: Event) {
 //   :deep(.pay-metrics-item-usage) {
 //     color: #12A3FC;
 //   }
-// }</style>
+// }
+</style>

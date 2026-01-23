@@ -195,7 +195,7 @@ router.get('/detail', async (req, res) => {
 
 /* 删除窗口 */
 router.post('/delete', async (req, res) => {
-  const { dirIds, workspaceId } = req.body
+  const { dirIds, workspaceId, isSoftDelete = false } = req.body
 
   if (!Array.isArray(dirIds)) {
     return res.error('dirIds is required')
@@ -211,7 +211,15 @@ router.post('/delete', async (req, res) => {
     const windowStatus = dirIds.map(dirId => ({ dirId, openStatus: false }))
     await API.window.userMdfWindowSyncV2Create(windowStatus)
 
-    const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    let result
+
+    // 如果是软删除
+    if (isSoftDelete) {
+      result = await API.window.userMdfWindowInfoBatchV2Create({ dirIds, isDelete: true }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    }
+    else {
+      result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    }
     await Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
 
     res.json(result)
@@ -223,7 +231,7 @@ router.post('/delete', async (req, res) => {
 
 /** 打开浏览器窗口 */
 router.post('/open', async (req, res) => {
-  const { dirId, workspaceId, args = [] } = req.body
+  const { dirId, workspaceId, args = [], forceOpen = false } = req.body
 
   if (!dirId) {
     return res.error('dirId is required')
@@ -239,14 +247,17 @@ router.post('/open', async (req, res) => {
   }
 
   try {
-    const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ dirIds: [dirId] }, { headers: { workspaceId, ...openAPICommonHeaders } })
-    if (code !== 0) {
-      return res.error(msg)
-    }
-    const opened = data.find(item => item.statusInfo.length > 0)
-    if (opened) {
-      const openUserNames = opened.statusInfo.map(item => item.openUserName).join(', ')
-      return res.error(`[${openUserNames}] is using this browser\ndirId: ${dirId}`)
+    // 如果不强制打开，先检查窗口是否被其他用户占用
+    if (!forceOpen) {
+      const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ dirIds: [dirId] }, { headers: { workspaceId, ...openAPICommonHeaders } })
+      if (code !== 0) {
+        return res.error(msg)
+      }
+      const opened = data.find(item => item.statusInfo.length > 0)
+      if (opened) {
+        const openUserNames = opened.statusInfo.map(item => item.openUserName).join(', ')
+        return res.error(`[${openUserNames}] is using this browser\ndirId: ${dirId}`)
+      }
     }
     const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: 'open' }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0) {

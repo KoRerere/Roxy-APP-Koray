@@ -1,6 +1,6 @@
-import { globalShortcut } from 'electron'
 import type { IPCMainInstance } from '/@/modules/ipc/types'
-import { createMcpWindow, mcpManager } from '/@/modules/mcp'
+import { globalShortcut } from 'electron'
+import { closeMcpWindow, createMcpWindow, mcpManager } from '/@/modules/mcp'
 
 export function closeSyncControl() {
   globalShortcut.unregisterAll()
@@ -21,7 +21,8 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 关闭mcp */
-  ipcMain.on('mcp:close', (event) => {
+  ipcMain.on('mcp:close', async (event) => {
     mcpManager.closeMcpServer()
+    await closeMcpWindow()
   })
 }

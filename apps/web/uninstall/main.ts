@@ -1,7 +1,27 @@
+import { setupGlobalMethods } from '/@/globalMethods'
+import { setupI18n } from '/@/locales'
+import type { SupportedLanguagesType } from '/@/locales'
+import { setupPrimeVue } from '/@/primevue'
 import '/@/styles/index.scss'
-import { createApp } from 'vue'
 import App from './App.vue'
+import log from 'electron-log/renderer'
 
-const app = createApp(App)
+Object.assign(console, log.functions)
 
-app.mount('#app')
+electronAPI.send('app:getSoftConfig').then((softConfig) => {
+  globalThis.$softConfig = softConfig
+  const { language, token } = softConfig
+  console.log('softConfig', softConfig)
+  if (!token) {
+    window.electronAPI.send('app:uninstall-directly')
+    return
+  }
+
+  setupI18n({ defaultLocale: language as SupportedLanguagesType }).finally(async () => {
+    const app = createApp(App)
+
+    setupGlobalMethods(app)
+    setupPrimeVue(app)
+    app.mount('#app')
+  })
+})

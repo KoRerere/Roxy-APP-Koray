@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { access, mkdir, rm, stat } from 'node:fs/promises'
+import { access, cp, mkdir, rename, rm, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { fileOperations } from '/@/modules/fileOperations'
 
@@ -109,4 +109,26 @@ export async function getFolderSize(folderPath: string) {
   const _getFolderSize = (await import("get-folder-size")).default;
 
   return _getFolderSize.loose(folderPath)
+}
+
+/**
+ * 移动目录
+ *
+ * 如果源目录和目标目录在同一分区，则直接使用 rename 移动
+ * 如果源目录和目标目录不在同一分区，则先 copy 再 delete
+ * @param src 源目录
+ * @param dest 目标目录
+ */
+export async function moveDir(src: string, dest: string) {
+  try {
+    await rename(src, dest) // 同分区：几乎瞬间
+  } catch (e: any) {
+    console.error('moveDir error', e)
+    if (e.code !== 'EXDEV') {
+      throw e
+    }
+    // 跨盘：只能 copy + delete
+    await cp(src, dest, { recursive: true })
+    await rm(src, { recursive: true })
+  }
 }

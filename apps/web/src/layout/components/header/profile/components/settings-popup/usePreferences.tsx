@@ -600,7 +600,7 @@ export function usePreferencesPanel() {
                 </div>
               ),
               name: 'autoStart',
-              value: data?.autoStart ?? false,
+              value: data?.autoStart ?? true,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch
@@ -611,21 +611,21 @@ export function usePreferencesPanel() {
                 )
               },
             },
-            // {
-            //   label: $t('自动更新内核'),
-            //   text: () => (<div class="w-88">{$t('已下载的内核在未使用时将会自动更新')}</div>),
-            //   name: 'autoUpdateKernel',
-            //   value: data?.autoUpdateKernel ?? false,
-            //   component: ({ item, ...props }: { item: Items, props: any }) => {
-            //     return (
-            //       <RxToggleSwitch
-            //         {...item.props}
-            //         {...props}
-            //         onChange={() => saveUserConfig(item)}
-            //       />
-            //     )
-            //   },
-            // },
+            {
+              label: $t('自动更新内核'),
+              text: () => (<div class="w-88">{$t('已下载的内核在未使用时将会自动更新')}</div>),
+              name: 'autoUpdateKernel',
+              value: data?.autoUpdateKernel ?? false,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
           ],
         },
       ],

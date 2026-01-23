@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
-import { RxSvgIcon, svgIcons, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon, svgIcons } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 import { copyText } from '/@/utils/'
 import UploadIcons from './upload-icons.vue'
 
@@ -14,6 +15,7 @@ if (import.meta.hot) {
 
 const toast = useToast()
 const currentIcon = ref<SvgNames>()
+const colorTest = ref(false)
 
 const svgModules = Object.keys(svgIcons).reduce((acc, key) => {
   const path = key.split('assets/images/').at(1)!.replace('.svg', '') as SvgNames
@@ -55,7 +57,7 @@ function handleCopyText(text: SvgNames) {
 
 <template>
   <div class="h-[100vh] flex flex-col">
-    <Card class="mx-12 my-5">
+    <Card class="mx-12 my-5 card">
       <template #title>
         使用说明
       </template>
@@ -86,17 +88,19 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
     </Card>
     <div class="translate-z-0 overflow-auto">
       <template v-for="(list, key) in svgModules" :key="key">
-        <Card class="mx-12 my-5">
+        <Card class="mx-12 my-5 card">
           <template #title>
-            <div class="flex items-start  mb-2">
-              {{ key }}（{{ list.length }}）<UploadIcons :dir-name="key" />
+            <div class="flex items-center mb-2 gap-2">
+              <div>{{ key }}（{{ list.length }}）</div>
+              <UploadIcons :dir-name="key" />
+              <Button variant="outlined" severity="contrast" label="颜色测试" @click="colorTest = !colorTest" />
             </div>
           </template>
           <template #content>
             <div class="flex flex-wrap gap-4 text-center">
               <template v-for="item in list" :key="item.path">
                 <div class="icon-item" :title="item.filename" @click="handleCopyText(item.path)">
-                  <RxSvgIcon :name="item.path" :size="48" />
+                  <RxSvgIcon :name="item.path" :size="48" :class="{ 'color-orange': colorTest }" />
                   <!-- <div>{{ item.filename }}</div> -->
                 </div>
               </template>
@@ -118,5 +122,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
   &:hover {
     transform: scale(1.2);
   }
+}
+
+.card {
+  background-color: #f1f5f8;
 }
 </style>

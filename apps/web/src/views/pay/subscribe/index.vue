@@ -275,10 +275,10 @@ async function trialSubscribe() {
             </div>
             <div class="due">
               <div class="due-title">
-                {{ $t('{day} 天', { day: 7 }) }}
+                {{ $t('{day} 天', { day: userPayInfo?.trialDays }) }}
               </div>
               <div class="due-date">
-                {{ format(addDays(Date.now(), 7), 'yyyy/MM/dd') }}
+                {{ format(addDays(Date.now(), userPayInfo?.trialDays), 'yyyy/MM/dd') }}
               </div>
             </div>
           </div>

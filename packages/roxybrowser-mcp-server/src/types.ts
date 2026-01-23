@@ -1587,3 +1587,28 @@ export interface DetectChannelItem {
 export interface DetectChannelResponse {
   checkChannel: DetectChannelItem[]
 }
+
+export interface BoughtProxyListItem {
+  id: number
+  orderNo: string
+  checkStatus: number
+  proxyCheckChannel: string
+  checkChannelValue: string
+  lastIp: string
+  lastCountry: string
+  lastState: string
+  lastCity: string
+  proxyProviderName: string
+  providerType: string
+  ipType: string
+  protocol: string
+  host: string
+  port: string
+  proxyUserName: string
+  proxyPassword: string
+  remark: string
+  checkTime: string
+  createTime: string
+  updateTime: string
+  expireDate: string
+}

@@ -1,21 +1,20 @@
+import type { BrowserItem } from './browserItem'
 import type { Browser, PuppeteerLaunchOptions } from './chrome-wrapper/'
+import type { proxyDetection } from '/@/utils'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import puppeteer from './chrome-wrapper/'
-import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ExtensionManager } from '/@/modules/extension'
+import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
-import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
-import type { BrowserItem } from './browserItem'
-import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks, getTimezoneByCity } from './utils'
-import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
-import { getDiskInfoByPath } from '/@/utils'
+import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
+import puppeteer from './chrome-wrapper/'
+import { encryptFingerprintConfig, genFingerprintConfig, getTimezoneByCity, importBookmarks } from './utils'
 
 /** 最后一次发送的消息 */
 export interface LastMessage {
@@ -26,7 +25,6 @@ export interface LastMessage {
 }
 
 interface LaunchTask { handler: () => Promise<void>, start: number, end: number }
-
 
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
@@ -55,11 +53,21 @@ export class BeforeLaunchTask {
   get isMobile() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
+
   /** 最后一次的 token，用于退出登录后中断浏览器打开 */
   #lastToken = ''
 
   /** 用于重新拉起浏览器 */
   makeBrowserActive!: () => Promise<Browser>
+
+  /** 磁盘检测缓存：记录上次检测时间和可用空间 */
+  static #lastDiskCheck: { time: number, available: number } | null = null
+  /** 磁盘检测计数器：记录距离上次实际检测后的启动次数 */
+  static #diskCheckCounter = 0
+  /** 上一次的缓存路径 */
+  static #lastBrowserCacheRootDir = ''
+  /** 上一次的磁盘限制 */
+  static #lastDiskLimit = 0
 
   constructor(private browserItem: BrowserItem) {
     this.#lastToken = store.token!
@@ -142,7 +150,6 @@ export class BeforeLaunchTask {
     }, 30.1 * 1000)
 
     this.makeBrowserActive = async () => {
-
       const launchOptions: PuppeteerLaunchOptions = {
         args: launchArgs,
         executablePath: this.exePath,
@@ -166,7 +173,8 @@ export class BeforeLaunchTask {
 
         this.wsEndpoint = this.browser.wsEndpoint()
         console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
-      } else {
+      }
+      else {
         await puppeteer.launch(launchOptions, true).finally(() => {
           clearInterval(timer)
         })
@@ -241,7 +249,7 @@ export class BeforeLaunchTask {
       workspaceId,
       openWorkbench,
       windowRatioPosition,
-      positionSwitch
+      positionSwitch,
     } = this.browserItem.winInfo
 
     const args = [
@@ -278,7 +286,7 @@ export class BeforeLaunchTask {
         clearInterval(timer)
       })
       if (plugins.length) {
-        await Promise.allSettled(plugins.map(async plugin => {
+        await Promise.allSettled(plugins.map(async (plugin) => {
           const localPath = join(plugin, '_metadata', 'generated_indexed_rulesets')
           console.log('delete plugin', localPath)
           await rm(localPath, { recursive: true, force: true })
@@ -306,15 +314,15 @@ export class BeforeLaunchTask {
       args.push(...userCustomArgs)
     }
 
-
     // 如果是全屏，则不设置窗口大小
     if (!positionSwitch) {
       args.push('--start-maximized')
-    } else {
+    }
+    else {
       args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
 
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
 
       const [x = 0, y = 0, direction = 'tl'] = windowRatioPosition?.split(',') || []
       const xx = Math.floor(screenWidth * x)
@@ -327,9 +335,11 @@ export class BeforeLaunchTask {
 
       if (direction === 'tr') {
         positions = [xx - winWidth, yy]
-      } else if (direction === 'br') {
+      }
+      else if (direction === 'br') {
         positions = [xx - winWidth, yy - winHeight]
-      } else if (direction === 'bl') {
+      }
+      else if (direction === 'bl') {
         positions = [xx, yy - winHeight]
       }
       console.log('positions', positions)
@@ -389,7 +399,8 @@ export class BeforeLaunchTask {
             if (index !== -1) {
               pinnedExtensions.splice(index, 1)
             }
-          } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
+          }
+          else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
             pinnedExtensions.push(extID)
           }
         }
@@ -407,7 +418,8 @@ export class BeforeLaunchTask {
       }[store.browserColorScheme || 'system']
       preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
       await writeFile(preferencesPath, JSON.stringify(preferences))
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to update browser preferences', error)
     }
   }
@@ -562,7 +574,8 @@ export class BeforeLaunchTask {
       if (isExist) {
         const content = await readFile(roxyLocalStatePath, 'utf-8')
         localState = JSON.parse(content)
-      } else {
+      }
+      else {
         await fileExists(dirname(roxyLocalStatePath), true)
       }
       // 不允许 Chrome 在窗口全部关闭后仍保持后台运行（比如某些扩展或服务）
@@ -574,14 +587,15 @@ export class BeforeLaunchTask {
         const experiments = isDark ? ['enable-force-dark@1'] : []
         localState.browser = {
           ...localState.browser,
-          enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments]
+          enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments],
         }
         if (!isDark) {
           localState.browser.enabled_labs_experiments = localState.browser.enabled_labs_experiments?.filter(item => item !== 'enable-force-dark@1')
         }
       }
       await writeFile(roxyLocalStatePath, JSON.stringify(localState))
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to modify Local State file', error)
     }
   }
@@ -673,12 +687,72 @@ export class BeforeLaunchTask {
   }
 
   private async diskSizeDetection() {
+    const now = Date.now()
+    /**
+     * 每次启动预估占用 100MB
+     */
+    const estimatedUsagePerLaunch = 100 * 1024 * 1024
+
+    // 如果有缓存的检测结果，判断是否需要跳过本次检测
+    if (BeforeLaunchTask.#lastDiskCheck && BeforeLaunchTask.#lastBrowserCacheRootDir === store.browserCacheRootDir && BeforeLaunchTask.#lastDiskLimit === store.diskLimit) {
+      const { time, available } = BeforeLaunchTask.#lastDiskCheck
+      const timeSinceLastCheck = now - time
+      // 预估当前可用空间 = 上次检测的可用空间 - (启动次数 × 单次占用)
+      const estimatedAvailable = available - (BeforeLaunchTask.#diskCheckCounter * estimatedUsagePerLaunch)
+      // 根据剩余空间决定检测策略（空间越充足，检测越不频繁）
+      /**
+       * 时间间隔（毫秒）
+       */
+      let checkInterval = 0
+      /**
+       * 启动次数阈值
+       */
+      let checkCounterThreshold = 1
+
+      if (estimatedAvailable > 50 * 1024 ** 3) { // > 50GB
+        checkInterval = 30 * 60 * 1000 // 30 分钟检测一次
+        checkCounterThreshold = 20 // 或每20次启动检测一次
+      }
+      else if (estimatedAvailable > 20 * 1024 ** 3) { // > 20GB
+        checkInterval = 10 * 60 * 1000 // 10 分钟检测一次
+        checkCounterThreshold = 12 // 或每 12 次启动检测一次
+      }
+      else if (estimatedAvailable > 10 * 1024 ** 3) { // > 10GB
+        checkInterval = 5 * 60 * 1000 // 5 分钟检测一次
+        checkCounterThreshold = 8 // 或每 8 次启动检测一次
+      }
+      // <= 10GB 时每次都检测（checkInterval = 0, checkCounterThreshold = 1）
+
+      // 如果时间和次数都未达到阈值，且预估空间仍然充足，跳过实际检测
+      if (timeSinceLastCheck < checkInterval && BeforeLaunchTask.#diskCheckCounter < checkCounterThreshold) {
+        BeforeLaunchTask.#diskCheckCounter++
+
+        // 预估的可用空间仍然满足要求
+        if (estimatedAvailable / (1024 ** 3) >= store.diskLimit) {
+          console.log(`Skipping disk check (counter: ${BeforeLaunchTask.#diskCheckCounter}, estimated: ${(estimatedAvailable / (1024 ** 3)).toFixed(2)}GB)`)
+          return Promise.resolve()
+        }
+      }
+    }
+
+    // 执行实际的磁盘检测
     const disk = await getDiskInfoByPath(store.browserCacheRootDir)
+
+    // 更新检测缓存和计数器
+    BeforeLaunchTask.#lastDiskCheck = {
+      time: now,
+      available: disk?.available || 0,
+    }
+    BeforeLaunchTask.#diskCheckCounter = 0
+    BeforeLaunchTask.#lastBrowserCacheRootDir = store.browserCacheRootDir
+    BeforeLaunchTask.#lastDiskLimit = store.diskLimit
 
     if (disk?.available && disk?.available / (1024 ** 3) < store.diskLimit) {
       const tips = $t('启动失败，磁盘空间不足，请清理磁盘空间')
       return Promise.reject(new Error(`ERR101: ${tips}`))
     }
+
+    console.log(`Disk check completed (available: ${(disk?.available / (1024 ** 3)).toFixed(2)}GB)`)
     return Promise.resolve()
   }
 
@@ -687,7 +761,8 @@ export class BeforeLaunchTask {
     if (this.#lastToken !== store.token) {
       browserManager.openingBrowserMap.delete(this.browserItem.winInfo.dirId!)
       this.taskMap.clear()
-    } else {
+    }
+    else {
       this.lastMessage = {
         dirId: this.browserItem.winInfo.dirId!,
         percent,

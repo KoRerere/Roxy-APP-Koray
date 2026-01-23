@@ -36,7 +36,7 @@ const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
 const backRoute = useBackRoute()
-const { userPayInfo } = storeToRefs(userStore)
+const { userInfo, userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const { isOwner } = storeToRefs(useRoleStore())
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -484,7 +484,7 @@ const driverObj = driver({
 })
 
 function showGuide() {
-  if (userPayInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
+  if (userInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
     driverObj.drive()
   }
 }

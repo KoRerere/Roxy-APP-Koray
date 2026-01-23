@@ -3,7 +3,7 @@ import axios from 'axios'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import { createWriteStream } from 'node:fs'
-import { rename, rm } from 'node:fs/promises'
+import { rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
@@ -36,8 +36,14 @@ export const webUpdater = new class WebUpdater {
   webDomain = ''
   /** web zip 资源包路径 */
   webZipPath = join(appConfig.tempDir, 'web.zip')
+  /** 是否正在解压中 */
+  extractPromiser: PromiseWithResolvers<void> | null = null
   /** 临时解压目录 */
   tempExtractDir = join(appConfig.sessionDir, 'web_extract')
+  /** 临时解压目录，解压成功后标记文件 */
+  tempExtractSuccessFlagFile = join(this.tempExtractDir, 'web_extract_success.flag')
+  /** 解压成功标记文件 */
+  extractSuccessFlagFile = join(appConfig.externalWebDir, 'web_extract_success.flag')
   /** 是否在下载中 */
   isInProgress = false
   /** 是否正在升级中 */
@@ -159,10 +165,15 @@ export const webUpdater = new class WebUpdater {
           }).catch(() => { })
 
           this.sendSuccessMessage()
+          // 下载完成，自动解压
+          this.extractToPending()
           await options?.onDownloadComplete?.()?.catch?.(() => { })
           resolve()
         })
-        writer.on('error', reject)
+        writer.on('error', (error) => {
+          this.remoteVersionInfo = null
+          reject(error)
+        })
 
         await promise
         console.log('[WebUpdater] downloaded')
@@ -178,15 +189,48 @@ export const webUpdater = new class WebUpdater {
   }
 
   /** 解压 web 资源包 */
-  async extract() {
+  async extractToPending() {
     console.log('[WebUpdater] extract start')
-    const extractDir = await fileOperations.executeTask('decompress', {
-      src: this.webZipPath,
-      dest: this.tempExtractDir,
-    }).finally(() => {
-      this.remoteVersionInfo = null
-    })
-    console.log('extractPlugin dir', extractDir)
+    if (this.extractPromiser) {
+      console.log('[WebUpdater] extract already in progress')
+      return this.extractPromiser.promise
+    }
+    this.extractPromiser = Promise.withResolvers<void>()
+
+    const timer = setTimeout(() => {
+      console.warn('[WebUpdater] extract timeout')
+      this.extractPromiser?.resolve()
+      this.extractPromiser = null
+    }, 15 * 1000)
+
+    try {
+      const extractDir = await fileOperations.executeTask('decompress', {
+        src: this.webZipPath,
+        dest: this.tempExtractDir,
+      })
+      await writeFile(this.tempExtractSuccessFlagFile, 'true', 'utf-8')
+      console.log('extractPlugin dir', extractDir)
+    }
+    catch (error) {
+      console.error('[WebUpdater] extract error', error)
+    }
+    finally {
+      clearTimeout(timer)
+      this.extractPromiser?.resolve()
+      this.extractPromiser = null
+      console.log('[WebUpdater] extract end')
+    }
+  }
+
+  async extract() {
+    await this.extractPromiser?.promise
+
+    const isExtractSuccess = await fileExists(this.tempExtractSuccessFlagFile)
+    if (!isExtractSuccess) {
+      console.error('[WebUpdater] extract failed, success flag file not found')
+      throw new Error('Web extract failed')
+    }
+
     const bakDir = join(appConfig.sessionDir, `web-bak`)
     await rename(appConfig.externalWebDir, bakDir).catch((error) => {
       console.warn('[WebUpdater] extract rename to bakDir failed, maybe first time update', error)
@@ -197,16 +241,20 @@ export const webUpdater = new class WebUpdater {
       store.isExternalWeb = false
     })
     rm(bakDir, { recursive: true, force: true })
+    this.remoteVersionInfo = null
   }
 
   async upgradeNow() {
+    console.debug('[WebUpdater] upgradeNow start', this.remoteVersionInfo?.version, this.isUpgrading)
     if (this.remoteVersionInfo && !this.isUpgrading) {
       this.isUpgrading = true
       try {
         await this.extract()
-        store.isExternalWeb = await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
+        store.isExternalWeb = await fileExists(this.extractSuccessFlagFile)
+        console.debug('[WebUpdater] upgradeNow store.isExternalWeb', store.isExternalWeb)
         getMainWindow()?.reload()
         await updateMainWindowPageTitle()
+        return true
       }
       catch (error) {
         console.error('[WebUpdater] upgradeNow error', error)
@@ -214,7 +262,9 @@ export const webUpdater = new class WebUpdater {
       finally {
         this.isUpgrading = false
       }
+      return true
     }
+    return false
   }
 
   private sendSuccessMessage() {

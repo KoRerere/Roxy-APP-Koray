@@ -11,6 +11,7 @@ import type {
   AccountListParams,
   AccountListResponse,
   AccountModifyParams,
+  BoughtProxyListItem,
   BrowserCloseParams,
   BrowserCreateBatchResult,
   BrowserCreateConfig,
@@ -66,7 +67,7 @@ export class RoxyClient {
   /**
    * Make authenticated HTTP request to RoxyBrowser API
    */
-  private async makeRequest<T>(
+  async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
@@ -326,6 +327,10 @@ export class RoxyClient {
     return { successes, failures }
   }
 
+  async openBrowsersSimple(workspaceId: number, dirId: string, args?: string[]): Promise<any> {
+    return await this.openBrowser({ workspaceId, dirId, args })
+  }
+
   /**
    * Close a single browser
    */
@@ -468,12 +473,12 @@ export class RoxyClient {
   }
 
   /**
-   * Delete browsers
+   * Delete browsers (only soft deleted)
    */
   async deleteBrowsers(workspaceId: number, dirIds: string[]): Promise<void> {
     await this.makeRequest<void>('/browser/delete', {
       method: 'POST',
-      body: JSON.stringify({ workspaceId, dirIds }),
+      body: JSON.stringify({ workspaceId, dirIds, isSoftDelete: true }),
     })
   }
 
@@ -812,6 +817,22 @@ export class RoxyClient {
       {
         method: 'GET',
       },
+    )
+  }
+
+  async getBoughtProxies(params: any): Promise<BoughtProxyListItem[]> {
+    const searchParams = new URLSearchParams()
+    searchParams.append('workspaceId', params.workspaceId.toString())
+    if (params.page_index)
+      searchParams.append('page_index', params.page_index.toString())
+    if (params.page_size)
+      searchParams.append('page_size', params.page_size.toString())
+    if (params.type)
+      searchParams.append('type', params.type.toString())
+
+    return this.makeRequest<BoughtProxyListItem[]>(
+      `/proxy/bought_list?${searchParams.toString()}`,
+      { method: 'GET' },
     )
   }
 }

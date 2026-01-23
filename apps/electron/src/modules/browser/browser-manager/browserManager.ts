@@ -1,18 +1,19 @@
 import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { shallowReactive, watch } from '@vue/reactivity'
 import { debounce } from 'es-toolkit'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { scheduler, setTimeout } from 'node:timers/promises'
-import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { Role } from '/@/constants/common'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
+import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
@@ -148,6 +149,16 @@ export class BrowserManager {
         }
 
         await this.#batchUploadData()
+
+        const coreVersion = browserItem.winInfo.coreVersion
+        // 如果没有任何浏览器在使用该内核，则尝试解压内核
+        if (!chromeCoreManager.usingCores.has(coreVersion)) {
+          const fn = chromeCoreManager.pendingUnzipCoreMap.get(coreVersion)
+          if (!chromeCoreManager.usingCores.has(coreVersion) && fn) {
+            await Promise.try(fn).catch(() => {})
+          }
+        }
+        await rm(chromeCoreManager.oldCoreDir, { recursive: true, force: true }).catch(() => {})
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
       browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -251,7 +262,20 @@ export class BrowserManager {
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
-    return this.batchClose([...this.openedBrowserMap.keys()])
+    const cores = structuredClone(chromeCoreManager.usingCores)
+    try {
+      const result = await this.batchClose([...this.openedBrowserMap.keys()])
+      return result
+    }
+    finally {
+      // 等所有浏览器都关闭之后，尝试解压内核
+      for (const coreVersion of cores) {
+        const fn = chromeCoreManager.pendingUnzipCoreMap.get(coreVersion!)
+        if (!chromeCoreManager.usingCores.has(coreVersion) && fn) {
+          await Promise.try(fn).catch(() => {})
+        }
+      }
+    }
   }
 
   /** 停止打开后续窗口 */

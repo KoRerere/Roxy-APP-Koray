@@ -14,10 +14,8 @@
   ],
   "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx src/index.test.ts",
-    "test:sse": "tsx scripts/test-sse-events.ts",
-    "build": "tsc || true",
-    "postinstall": "patch-package"
+    "dev": "tsx src/cli.ts",
+    "build": "tsc || true"
   },
   "dependencies": {
     "@langchain/core": "^1.1.7",
@@ -36,6 +34,7 @@
     "listr2": "^9.0.5",
     "openai": "^6.15.0",
     "ora": "^5.4.1",
+    "otplib": "^13.1.1",
     "prompts": "^2.4.2",
     "rxjs": "^7.8.2",
     "uuid": "^13.0.0",

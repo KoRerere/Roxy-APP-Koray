@@ -22,11 +22,10 @@ type VideoItem = BaseVideoItem & Partial<ApiVideoData>
 
 const route = useRoute()
 const router = useRouter()
-const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getVideoMaps } = useTutorialStore()
 const { getOfficialFaqWebsite } = useSimpleLocale()
-const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 
 const cssModule = useCssModule()
 
@@ -35,7 +34,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'create_profile',
     type: 'basic',
     get extraTask() {
-      const complete = userPayInfo.value.onboardingTaskStatus?.createProfileStatus
+      const complete = onboardingTaskStatus.value?.createProfileStatus
       return {
         icon: complete ? 'status/rx_ic_check_fill' : 'base/rx_ic_uncheck',
         complete,
@@ -56,7 +55,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'bind_proxy',
     type: 'basic',
     get extraTask() {
-      const complete = userPayInfo.value.onboardingTaskStatus?.createProxyStatus
+      const complete = onboardingTaskStatus.value?.createProxyStatus
       return {
         icon: complete ? 'status/rx_ic_check_fill' : 'base/rx_ic_uncheck',
         complete,
@@ -77,7 +76,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'invite_user_register',
     type: 'basic',
     get extraTask() {
-      const complete = userPayInfo.value.onboardingTaskStatus?.inviteMemberStatus
+      const complete = onboardingTaskStatus.value?.inviteMemberStatus
       return {
         icon: complete ? 'status/rx_ic_check_fill' : 'base/rx_ic_uncheck',
         complete,
@@ -116,7 +115,7 @@ const videoMap = ref<Record<string, VideoItem>>({
             label={$t('前往尝试')}
             onClick={() => {
               router.push({ name: 'browser-list' })
-              if (userPayInfo.value.onboardingTaskStatus?.contextMenuGuideStatus === false) {
+              if (onboardingTaskStatus.value?.contextMenuGuideStatus === false) {
                 updateOnboardingTaskStatus({ contextMenuGuideStatus: true })
               }
             }}
@@ -155,7 +154,7 @@ const videoMap = ref<Record<string, VideoItem>>({
             label={$t('前往尝试')}
             onClick={() => {
               router.push({ name: 'browser-list' })
-              if (userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus === false) {
+              if (onboardingTaskStatus.value?.saveFilterGuideStatus === false) {
                 updateOnboardingTaskStatus({ saveFilterGuideStatus: true })
               }
             }}

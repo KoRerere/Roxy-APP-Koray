@@ -3,8 +3,9 @@ import CodeInput from '/@/views/login/components/phone-login/code.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormInputPassword from '/@/views/lab/components/form/m-input-password.vue'
 import { defineFormSchema } from '/@/components/rx-form/'
+import type { Ref } from 'vue'
 
-import type { z } from 'zod'
+import { z } from 'zod'
 
 export function getRegisterValidation(z: z.ZodString) {
   const tip = $t('必须包含数字和字母，6-20位')
@@ -21,7 +22,10 @@ export function getEmailSchemas(isRegister = false) {
     {
       field: 'user_name',
       component: ({ formModel }) => {
-        return <TsFormInputText v-model={formModel.value.user_name}></TsFormInputText>
+        return (
+          <TsFormInputText v-model={formModel.value.user_name}>
+          </TsFormInputText>
+        )
       },
       componentProps: {
         size: 'lg',
@@ -42,6 +46,18 @@ export function getEmailSchemas(isRegister = false) {
   ])
 }
 
+export const EmailSchema = z.string().min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
+export const emailValidateLoading = ref(false)
+export function checkEmailValid(email: string) {
+  try {
+    EmailSchema.parse(email)
+    return true
+  }
+  catch (error) {
+    return false
+  }
+}
+
 export function getFormSchemas(isRegister = false) {
   return defineFormSchema([
     ...getEmailSchemas(isRegister),
@@ -49,6 +65,9 @@ export function getFormSchemas(isRegister = false) {
       field: 'password',
       component: ({ formModel }) => {
         return <TsFormInputPassword v-model={formModel.value.password}></TsFormInputPassword>
+      },
+      vIf: ({ formModel }) => {
+        return checkEmailValid(formModel.value.user_name) && !emailValidateLoading.value
       },
       componentProps: {
         size: 'lg',

@@ -65,7 +65,7 @@ const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, userPayInfo, userConfig } = storeToRefs(useUserStore())
+const { userInfo, userConfig } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const { getProjects } = useMateGroup()
@@ -421,7 +421,7 @@ function onOpenBrowser(datas: Data[]) {
 }
 
 function showOperationMenu(props: { event: Event, operation: any[] }, data: any) {
-  if (userPayInfo.value.onboardingTaskStatus?.contextMenuGuideStatus) {
+  if (userInfo.value.onboardingTaskStatus?.contextMenuGuideStatus) {
     show(props.event, {
       operation: props.operation,
       operationHandler: async (operate: any) => {

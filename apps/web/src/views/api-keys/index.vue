@@ -36,6 +36,7 @@ const apiConfig = ref({
   apiRate: 50,
 })
 const hasOccupy = ref(false)
+const isLLM = ref(false)
 
 const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
@@ -348,6 +349,7 @@ const mcpList = [
 
 onBeforeMount(() => {
   getApiKeys()
+  checkMcpUser()
   mixpanelTrack('api_mcp_open')
 })
 
@@ -360,6 +362,13 @@ async function getApiKeys() {
   const port = await electronAPI.send('util:checkPort', _port)
   console.log(port, _port)
   hasOccupy.value = port !== _port
+}
+
+async function checkMcpUser() {
+  const { code, data } = await API.base.userGetLlmInfoList()
+  if (code !== 0)
+    return
+  isLLM.value = data.available
 }
 
 async function resetApiKey() {
@@ -392,19 +401,6 @@ async function onCopy(text: string) {
   copyText(text)
   showToast(0, $t('复制成功'))
 }
-
-function openMcpWindow() {
-  electronAPI.send('mcp:open')
-}
-
-const isLLM = ref(false)
-onMounted(() => {
-  API.base.userGetLlmInfoList({}).then((result) => {
-    if (result.code === 0 && result.data) {
-      isLLM.value = true
-    }
-  })
-})
 </script>
 
 <template>
@@ -450,13 +446,6 @@ onMounted(() => {
                 <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
                          :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })"
                 />
-                <!-- 数据员工 -->
-                <div v-if="isLLM" class="flex items-center justify-between mt-6 px-3 api-content-proxy">
-                  <div>{{ $t('数字员工') }}</div>
-                  <RxButton severity="secondary" outlined size="xxs" @click="openMcpWindow">
-                    {{ $t('打开') }}
-                  </RxButton>
-                </div>
               </div>
             </template>
 

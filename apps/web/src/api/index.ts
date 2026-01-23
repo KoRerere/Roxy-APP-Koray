@@ -10,6 +10,7 @@ import {
   PluginsApi,
   ProxyApi,
   TeamApi,
+  UserAddUninstallReasonAnswerApi,
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
@@ -123,6 +124,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     const { defaultWorkspace, setCurrentWorkspace, fetchWorkspaceList } = useWorkspaceStore()
     setCurrentWorkspace(defaultWorkspace!.id!)
     fetchWorkspaceList()
+    electronAPI.send('mcp:close')
     return response
   }
   const { config } = response
@@ -145,4 +147,5 @@ export const API = {
   api: new ApiApi(httpClient),
   pay: new PayApi(httpClient),
   appTrackingEvent: new AppTrackingEventApi(httpClient),
+  userAddUninstallReasonAnswer: new UserAddUninstallReasonAnswerApi(httpClient),
 }

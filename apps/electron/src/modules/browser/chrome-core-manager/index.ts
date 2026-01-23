@@ -5,18 +5,21 @@ import type {
 } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { compare } from 'compare-versions'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { setTimeout } from 'node:timers/promises'
+import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
-import { isMac, isWindows } from '/@/constants/common'
+import { isDev, isMac, isWindows } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser/browser-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
-import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, unzipFile } from '/@/utils'
+import { store } from '/@/modules/store'
+import { downloadZipFile, fileExists, findProcessByHandle, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new (class ChromeCoreManager {
+  pendingCoreDir = join(appConfig.chromeBinDir, 'pending')
+  oldCoreDir = join(appConfig.chromeBinDir, 'old')
   /** 上一次的内核版本信息 */
   lastCoreVersionList: Record<string, string> = {}
 
@@ -29,6 +32,10 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     ? 'RoxyChrome.app/Contents/MacOS/RoxyChrome'
     : `RoxyChrome${isWindows ? '.exe' : ''}`
 
+  /** 是否有内核正在解压中 */
+  private unzippingPromiser: PromiseWithResolvers<void> | null = null
+  /** 等待解压的内核 */
+  pendingUnzipCoreMap = new Map<string, () => Promise<any>>()
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>()
   /** msgCallback task map */
@@ -62,6 +69,12 @@ export const chromeCoreManager = new (class ChromeCoreManager {
         }
       })
     })
+
+    if (isDev) {
+      setInterval(() => {
+        this.autoDownloadCore()
+      }, 5 * 60 * 1000)
+    }
   }
 
   /** 获取内核列表（供前端展示用） */
@@ -94,10 +107,19 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   private async checkCoreVersion(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
     try {
       const coreDir = this.genCoreDir(core.coreVersion!)
-      const localCoreVersion = await readFile(join(coreDir, 'version'), 'utf-8')
+      const localCoreVersion = await readFile(join(coreDir, 'version'), 'utf-8').catch(() => '0.0.0')
+      const isPendingUnzip = await this.checkCoreIsPendingUnzip(core)
+
+      // 如果等待解压的内核存在，并且版本大于等于远程版本，则返回下载完成
+      if (isPendingUnzip) {
+        return 'downloaded'
+      }
+
+      // 如果本地内核版本小于远程版本，则返回需要更新
       if (compare(localCoreVersion.trim(), core.version!, '<')) {
         return 'update'
       }
+      // 如果本地内核版本大于等于远程版本，则返回下载完成
       return 'downloaded'
     }
     catch (error) {
@@ -106,10 +128,26 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     }
   }
 
+  /** 检查内核是否在等待解压 */
+  private async checkCoreIsPendingUnzip(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
+    const pendingCoreVersion = await readFile(join(this.genPendingCoreDir(core.coreVersion!), 'version'), 'utf-8').catch(() => '0.0.0')
+    const pendingExeExists = await fileExists(join(this.genPendingCoreDir(core.coreVersion!), this.chromeBinName))
+    // 如果等待解压的内核存在，并且版本大于等于远程版本，则返回下载完成
+    return pendingExeExists && compare(pendingCoreVersion.trim(), core.version!, '>=')
+  }
+
   /** 根据内核版本获取内核所在目录 */
   private genCoreDir(coreVersion: string) {
     const { chromeBinDir } = appConfig
     return join(chromeBinDir, coreVersion)
+  }
+
+  private genPendingCoreDir(coreVersion?: string) {
+    return join(this.pendingCoreDir, coreVersion ?? '')
+  }
+
+  private genOldCoreDir(coreVersion?: string) {
+    return join(this.oldCoreDir, coreVersion ?? '')
   }
 
   /** 根据内核版本组成内核执行文件路径 */
@@ -161,7 +199,34 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       ipcSender.app.coreListUpdate(await this.getCoreList())
     }
 
+    this.autoDownloadCore()
+
     return result
+  }
+
+  /** 自动静默下载内核 */
+  async autoDownloadCore() {
+    if (!store.autoUpdateKernel) {
+      return
+    }
+
+    for (const core of this.availableCoreList) {
+      if (core.coreVersion) {
+        const isPendingUnzip = await this.checkCoreIsPendingUnzip(core)
+        if (isPendingUnzip) {
+          // 如果内核不在使用中，则立即执行解压任务
+          if (!this.usingCores.has(core.coreVersion)) {
+            await this.unzipToCoreDirTask(core.coreVersion)
+          }
+          continue
+        }
+        const status = await this.getCoreStatus(core)
+        if (status !== 'update') {
+          continue
+        }
+        await this.downloadCore({ coreVersion: core.coreVersion, silent: true, unzipAfterDownload: false })
+      }
+    }
   }
 
   /** 根据内核版本获取对应的内核执行文件 */
@@ -190,6 +255,9 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       return exePath
     }
 
+    // 如果该内核正在等待解压，则先执行解压任务
+    await this.pendingUnzipCoreMap.get(coreVersion)?.()?.catch?.(() => {})
+
     const coreDir = this.genCoreDir(coreVersion)
     const isExeExists = await fileExists(exePath)
     const isVersionFileExists = await fileExists(join(coreDir, 'version'))
@@ -209,11 +277,35 @@ export const chromeCoreManager = new (class ChromeCoreManager {
         coreVersion: availableCore.coreVersion,
         status: 'update',
       })
+
+      if (store.autoUpdateKernel && availableCore.coreVersion) {
+        this.downloadCore({ coreVersion: availableCore.coreVersion, silent: true, unzipAfterDownload: false })
+      }
     }
 
     console.log('getCoreExePath', exePath)
 
     return exePath
+  }
+
+  /** 将解压后的内核移动到内核目录 */
+  private unzipToCoreDirTask = async (coreVersion: string) => {
+    await fileExists(this.pendingCoreDir, true)
+    await fileExists(this.oldCoreDir, true)
+    console.log('unzipToCoreDirTask start', coreVersion)
+    // 将本地内核移动到旧内核目录
+    await rename(this.genCoreDir(coreVersion), this.genOldCoreDir(coreVersion)).catch((error) => {
+      console.error('rename to oldCoreDir error', error)
+    })
+    // 将解压后的内核移动到内核目录
+    await rename(this.genPendingCoreDir(coreVersion), this.genCoreDir(coreVersion)).catch((error) => {
+      console.error('rename pendingCoreDir to coreDir error', error)
+    })
+    // 删除旧内核目录
+    await rm(this.genOldCoreDir(coreVersion), { recursive: true, force: true }).catch((error) => {
+      console.error('rm oldCoreDir error', error)
+    })
+    this.pendingUnzipCoreMap.delete(coreVersion)
   }
 
   /** 下载内核 */
@@ -269,21 +361,50 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       }
     }
 
-    const unzipTask = async () => {
-      // 删除本地内核
-      await rm(this.genCoreDir(coreVersion), {
-        recursive: true,
-        force: true,
-      })
-      payload.description = $t('正在解压内核')
-      doMsgCallbacks()
-      // 解压缩内核
-      await unzipFile(outputZipPath, appConfig.chromeBinDir)
-      payload.description = $t('内核解压完成')
-      payload.percent = 100
-      doMsgCallbacks()
-      // 异步删除下载的 zip 文件，不需要等待
-      rm(outputZipPath)
+    const unzipToPendingCoreDirTask = async () => {
+      console.log('unzipToPendingCoreDirTask start', coreVersion)
+      // 如果已经有内核在解压，等待解压完成后再执行解压任务
+      if (this.unzippingPromiser) {
+        await this.unzippingPromiser.promise
+        return unzipToPendingCoreDirTask()
+      }
+
+      this.unzippingPromiser = Promise.withResolvers<void>()
+
+      const timer = setTimeout(() => {
+        this.unzippingPromiser?.resolve()
+        this.unzippingPromiser = null
+      }, 15 * 1000)
+
+      try {
+        await fileExists(this.pendingCoreDir, true)
+        await fileExists(this.oldCoreDir, true)
+        payload.description = $t('正在解压内核')
+        doMsgCallbacks()
+        // 解压缩内核
+        await unzipFile(outputZipPath, this.genPendingCoreDir())
+        // 如果内核不在使用中，则立即执行解压任务
+        if (!this.usingCores.has(coreVersion)) {
+          await this.unzipToCoreDirTask(coreVersion)
+        }
+        else {
+          this.pendingUnzipCoreMap.set(coreVersion, () => this.unzipToCoreDirTask(coreVersion))
+        }
+        payload.description = $t('内核解压完成')
+        payload.percent = 100
+        doMsgCallbacks()
+        // 异步删除下载的 zip 文件，不需要等待
+        rm(outputZipPath)
+      }
+      catch (error) {
+        console.error('unzipTask error', error)
+        return Promise.reject(error)
+      }
+      finally {
+        clearTimeout(timer)
+        this.unzippingPromiser?.resolve()
+        this.unzippingPromiser = null
+      }
     }
 
     const downloadTask = async () => {
@@ -307,7 +428,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           doMsgCallbacks()
           return Promise.reject(new Error(payload.description))
         })
-        await unzipTask()
+        await unzipToPendingCoreDirTask()
         payload.status = 'downloaded'
         payload.description = $t('内核下载完成')
         doMsgCallbacks()
@@ -330,10 +451,10 @@ export const chromeCoreManager = new (class ChromeCoreManager {
             }
 
             if (payload.status === 'downloaded' && await fileExists(outputZipPath)) {
-              await setTimeout(3000)
+              await setTimeoutPromise(3000)
               try {
                 console.log('unzipTask start')
-                await unzipTask()
+                await this.unzipToCoreDirTask(coreVersion)
                 console.log('unzipTask end')
                 return
               }

@@ -10,6 +10,9 @@
 !define REPORT_DOMAINS "{{REPORT_DOMAINS}}"
 !define REPORT_API_PATH "{{REPORT_API_PATH}}"
 
+!include "FileFunc.nsh"
+!include "FileFunc.nsh"
+
 ; ============================================================================
 ; 自定义宏定义
 ; ============================================================================
@@ -25,6 +28,54 @@
 !macroend
 
 !macro customInstall
+  ; ========================================================================
+  ; 0. 安装目录自动调整
+  ; ========================================================================
+  ; 如果用户选择的目录末尾不是应用名称，自动创建应用名称子目录
+  Push $0
+  Push $1
+  Push $2
+
+  ; 提取最后一级目录名
+  StrCpy $0 $INSTDIR
+  StrCpy $2 $0 1 -1
+  StrCmp $2 "\" 0 +2
+    StrCpy $0 $0 -1
+
+  StrLen $2 $0
+  IntOp $2 $2 - 1
+
+  customInstall_find_slash:
+    IntCmp $2 0 customInstall_start 0 0
+    StrCpy $1 $0 1 $2
+    StrCmp $1 "\" customInstall_found 0
+    IntOp $2 $2 - 1
+    Goto customInstall_find_slash
+
+  customInstall_found:
+    IntOp $2 $2 + 1
+    StrCpy $1 $0 "" $2
+    Goto customInstall_check
+
+  customInstall_start:
+    StrCpy $1 $0
+
+  customInstall_check:
+    ; 检查目录名是否为应用名称
+    StrCmp $1 "${PRODUCT_NAME}" customInstall_ok 0
+
+    ; 不匹配，调整安装目录
+    StrCpy $0 $INSTDIR
+    StrCpy $2 $0 1 -1
+    StrCmp $2 "\" +2
+      StrCpy $0 "$0\"
+    StrCpy $INSTDIR "$0${PRODUCT_NAME}"
+
+  customInstall_ok:
+    Pop $2
+    Pop $1
+    Pop $0
+
   ; ========================================================================
   ; 1. 从安装程序文件名中提取 UUID
   ; ========================================================================
@@ -173,5 +224,45 @@
 
   report_done:
 !macroend
+
+!macro customUnInit
+  ; ========================================================================
+  ; 卸载流程控制（由应用 executeUninstall() 函数统一管理）
+  ; ========================================================================
+  ; 流程：
+  ; 1. 用户点击卸载 -> NSIS 启动应用显示反馈窗口 -> 立即 Abort
+  ; 2. 用户确认 -> 应用调用 executeUninstall() 带 /roxy-force-uninstall -> 真正卸载
+  ; 3. 用户取消 -> 应用直接退出，卸载已中断
+  ; ========================================================================
+
+  ; 检查是否带 /roxy-force-uninstall 参数（由应用传递）
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/roxy-force-uninstall" $1
+  IfErrors no_force_uninstall uninit_done
+
+  no_force_uninstall:
+    ; 隐藏卸载器窗口，避免与反馈窗口冲突
+    HideWindow
+
+    ; 覆盖安装/静默卸载时不弹出反馈窗口
+    IfSilent uninit_done
+
+    ; 如果主程序不存在，直接继续卸载
+    IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 uninit_done
+
+    ; 启动应用显示卸载反馈窗口（使用 Exec 非阻塞模式）
+    ClearErrors
+    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --uninstall-feedback'
+
+    ; 立即中断卸载，交由应用 executeUninstall() 控制后续流程
+    Abort
+
+  uninit_done:
+    ; 带参数时直接继续卸载，无需任何额外判断
+!macroend
+
+
+
 
 

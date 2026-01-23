@@ -1,7 +1,8 @@
 import type { Configuration } from 'electron-builder'
 import type { CopySyncOptions } from 'node:fs'
+import { rebuild } from '@electron/rebuild'
 import { build, Platform } from 'electron-builder'
-import { accessSync, chmodSync, cpSync, constants as fsConstants, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
@@ -214,6 +215,21 @@ const options: Configuration = {
   // "store" | "normal" | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: 'normal',
   removePackageScripts: true,
+  beforeBuild: async (context) => {
+    if (!context.electronVersion) {
+      console.warn('⚠️ 未检测到 Electron 版本，跳过 native 模块重建')
+      return
+    }
+    console.log('🔧 正在重新编译 native 模块...', context.arch)
+    await rebuild({
+      buildPath: context.appDir,
+      electronVersion: context.electronVersion,
+      arch: context.arch,
+      force: true,
+      onlyModules: ['better-sqlite3'],
+    })
+    console.log('✅ Native 模块重新编译完成')
+  },
 
   /**
    * 根据环境变量决定是否跳过签名后的公证流程
@@ -233,6 +249,7 @@ const options: Configuration = {
     target: [
       {
         target: 'nsis',
+        // arch: ['x64'],
         arch: ['ia32', 'x64'],
       },
     ],

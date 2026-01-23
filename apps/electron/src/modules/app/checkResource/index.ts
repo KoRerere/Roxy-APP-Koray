@@ -17,25 +17,25 @@ export async function checkResource() {
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
     // 检测更新 app
-    await appUpdater.init(true, {
-      onDownloadProgress: (percentage) => {
-        if (percentage === 100) {
-          sendLaunchMessage($t('下载完成，准备重启...'))
-          setTimeout(() => {
-            appUpdater.upgradeNow()
-            // 超时后强制退出
-            setTimeout(() => {
-              appUpdater.quitAndInstall()
-            }, 1500)
-          }, 500)
-          reject('下载完成，准备重启...')
-        } else {
-          sendLaunchMessage($t('正在更新中... {percentage}%', { percentage }))
-        }
-      },
-    }).catch((error) => {
-      console.log('appUpdater init error', error)
-    })
+    // await appUpdater.init(true, {
+    //   onDownloadProgress: (percentage) => {
+    //     if (percentage === 100) {
+    //       sendLaunchMessage($t('下载完成，准备重启...'))
+    //       setTimeout(() => {
+    //         appUpdater.upgradeNow()
+    //         // 超时后强制退出
+    //         setTimeout(() => {
+    //           appUpdater.quitAndInstall()
+    //         }, 1500)
+    //       }, 500)
+    //       reject('下载完成，准备重启...')
+    //     } else {
+    //       sendLaunchMessage($t('正在更新中... {percentage}%', { percentage }))
+    //     }
+    //   },
+    // }).catch((error) => {
+    //   console.log('appUpdater init error', error)
+    // })
     const webDomain = await getWebDomain()
     // 检测更新 roxynet
     await checkRoxynetBin(webDomain).catch((error) => {

@@ -56,13 +56,14 @@ async function checkCode(value: string) {
     <TsFormInputText v-model.trim="code" class="text-center" size="lg" :placeholder="$t('请输入兑换码')" @update:model-value="checkCodeDebounce" />
     <RxButton size="lg" :loading="loading" :disabled="!available" :label="loading ? $t('检测中...') : $t('兑换')" @click="onConfirm(code)" />
     <div v-if="redeemMessage" class="flex flex-col gap-1">
-      <div class="flex items-center gap-1.5">
+      <div v-if="redeemMessage.activityName" class="flex items-center gap-1.5">
         <SvgIcon name="other/gift" />
         <span class="name">
           {{ redeemMessage.activityName }}
         </span>
       </div>
       <div class="gift">
+        <SvgIcon v-if="!redeemMessage.activityName" name="other/gift" />
         {{ redeemMessage.detail }}
       </div>
     </div>
@@ -99,5 +100,7 @@ async function checkCode(value: string) {
 .gift {
   color: var(--colors-text-text-tertiary);
   font-size: 12px;
+  display: flex;
+  gap: 3px;
 }
 </style>

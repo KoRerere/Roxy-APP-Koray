@@ -120,7 +120,7 @@ onUnmounted(() => {
         </div>
         <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">
           <span>🎁</span>
-          <span>{{ $t('{day} 天免费试用', { day: 7 }) }}</span>
+          <span>{{ $t('{day} 天免费试用', { day: userPayInfo?.trialDays }) }}</span>
         </RxButton>
       </div>
     </div>

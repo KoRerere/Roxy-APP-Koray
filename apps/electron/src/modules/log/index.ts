@@ -1,16 +1,16 @@
+import type { LevelOption } from 'electron-log'
 import { format } from 'date-fns'
+import { app } from 'electron'
 import log from 'electron-log/main'
 import { readdirSync, renameSync } from 'node:fs'
 import { readdir, rm, stat } from 'node:fs/promises'
 import { join, parse } from 'node:path'
 import { appConfig } from '/@/constants'
 import { appCliStartArgs, isPackaged } from '/@/constants/common'
-import { app } from 'electron'
-import { LevelOption } from 'electron-log'
 
 export function setupLog() {
   // 记录渲染进程的日志
-  // log.initialize()
+  log.initialize()
   log.transports.console.format = `[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}`
   log.transports.file.format = `[{y}-{m}-{d} {h}:{i}:{s}] [{level}][${app.getVersion()}] {text}`
   log.transports.console.useStyles = true

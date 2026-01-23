@@ -1,4 +1,6 @@
 import { app, dialog, globalShortcut } from 'electron'
+import { execFile, spawn } from 'node:child_process'
+import { basename, dirname, join } from 'node:path'
 import { API } from '/@/api'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
@@ -96,6 +98,13 @@ let isQuitConfirmed = false
  * 显示卸载反馈窗口并等待用户操作
  */
 export async function showUninstallFeedback(): Promise<void> {
+  console.log('showUninstallFeedback called', isShowingUninstallFeedback, isQuitConfirmed)
+  if (!store.token) {
+    executeUninstall()
+    return
+  }
+
+  console.log('showUninstallFeedback called', isShowingUninstallFeedback, isQuitConfirmed)
   if (isShowingUninstallFeedback || isQuitConfirmed) {
     return
   }
@@ -103,12 +112,6 @@ export async function showUninstallFeedback(): Promise<void> {
   isShowingUninstallFeedback = true
 
   try {
-    // 关闭主窗口
-    const mainWindow = getMainWindow()
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.hide()
-    }
-
     // 显示卸载反馈窗口
     await createUninstallFeedbackWindow()
   }
@@ -132,17 +135,36 @@ export function confirmQuit() {
   isShowingUninstallFeedback = false
 
   // 如果是卸载反馈模式，退出码为 0（表示继续卸载）
-  if (isUninstallFeedbackMode) {
-    console.log('User confirmed uninstall, exiting with code 0')
-    // 先关窗口，避免触发 closed 后又走 cancelQuit（由 cancelQuit 的保护兜底）
-    closeUninstallFeedbackWindow()
-    app.exit(0)
-    return
-  }
-
-  cleanupAndExit()
+  console.log('User confirmed uninstall, exiting with code 0')
+  // 先关窗口，避免触发 closed 后又走 cancelQuit（由 cancelQuit 的保护兜底）
+  closeUninstallFeedbackWindow()
+  executeUninstall()
 }
 
+let executeUninstalling = false
+/** 执行卸载程序 */
+export function executeUninstall() {
+  console.log('executeUninstall called', executeUninstalling)
+  if (executeUninstalling) {
+    return
+  }
+  executeUninstalling = true
+
+  const uninstallPath = join(
+    dirname(app.getPath('exe')),
+    `Uninstall ${basename(app.getPath('exe'))}`,
+  )
+  console.log('Executing uninstall at path:', uninstallPath)
+
+  const child = spawn(uninstallPath, ['/roxy-force-uninstall'], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  })
+
+  child.unref()
+  app.exit(0)
+}
 /**
  * 取消退出（用户选择不卸载）
  */
@@ -154,21 +176,22 @@ export function cancelQuit() {
   isShowingUninstallFeedback = false
   closeUninstallFeedbackWindow()
 
-  // 如果是卸载反馈模式，退出应用并返回退出码 1（表示取消卸载）
+  // 如果是卸载反馈模式，直接退出应用（用户取消卸载）
   if (isUninstallFeedbackMode) {
     isQuitConfirmed = true
-    console.log('User cancelled uninstall, exiting with code 1')
-    // 直接退出，返回退出码 1
-    app.exit(1)
+    console.log('User cancelled uninstall, exiting app')
+    app.exit(0)
     return
   }
 
   // 恢复主窗口（非卸载模式）
   const mainWindow = getMainWindow()
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.show()
-    mainWindow.focus()
+    return
   }
+  // 如果主窗口不存在，退出应用
+  console.log('No main window, exiting app')
+  app.exit(0)
 }
 
 /** 清理和释放资源 */

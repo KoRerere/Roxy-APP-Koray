@@ -1,7 +1,7 @@
 import type { BrowserWindow } from 'electron'
-import { screen } from 'electron'
+import { screen, session } from 'electron'
 import { isPackaged, isWindows } from '/@/constants/common'
-import { cancelQuit } from '/@/modules/app/utils'
+import { cancelQuit, executeUninstall } from '/@/modules/app/utils'
 import { createWindow } from '/@/utils/browser-window'
 import { getMainWindow, getWebEntryUrl } from './mainWindow'
 
@@ -20,17 +20,17 @@ export async function createUninstallFeedbackWindow(): Promise<BrowserWindow> {
     return uninstallFeedbackWindow
   }
   console.log('createUninstallFeedbackWindow 2')
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
-  const windowWidth = Math.min(640, width - 40)
-  const windowHeight = Math.min(800, height - 40)
   const mainWindow = getMainWindow()
 
   uninstallFeedbackWindow = createWindow({
     roxyWindowId: 'uninstall-feedback',
-    width: windowWidth,
-    height: windowHeight,
+    width: 480,
+    height: 770,
     resizable: false,
-    frame: isWindows,
+    frame: false,
+    transparent: true,
+    hasShadow: true,
+    roundedCorners: false,
     autoHideMenuBar: true,
     show: false,
     modal: true,
@@ -42,27 +42,44 @@ export async function createUninstallFeedbackWindow(): Promise<BrowserWindow> {
     },
   })
 
+  const targetId = uninstallFeedbackWindow.webContents.id
+
+  console.log('createUninstallFeedbackWindow 3')
   const uninstallUrl = await getWebEntryUrl(`uninstall${isPackaged ? '.html' : ''}`)
-  await uninstallFeedbackWindow.loadURL(uninstallUrl)
+  console.log('Uninstall feedback URL:', uninstallUrl)
+  session.defaultSession.webRequest.onCompleted((details) => {
+    if (
+      details.webContentsId === targetId // 只关心这个窗口
+      && details.resourceType === 'mainFrame'
+      && details.statusCode === 404
+    ) {
+      console.log('该窗口主页面 404:', details.url)
+      // 兜底处理
+      executeUninstall()
+    }
+  })
+  uninstallFeedbackWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
+    console.error('Load failed:', code, desc, url)
+    executeUninstall()
+  })
+  await uninstallFeedbackWindow.loadURL(uninstallUrl).catch((error) => {
+    console.error('Failed to load uninstall feedback URL:', error)
+    executeUninstall()
+  })
+  console.log('createUninstallFeedbackWindow 4')
   uninstallFeedbackWindow.setTitle($t('卸载反馈'))
 
-  uninstallFeedbackWindow.on('ready-to-show', () => {
-    uninstallFeedbackWindow?.show()
-    uninstallFeedbackWindow?.focus()
-
-    // 通知前端是否是卸载反馈模式
-    if (isUninstallFeedbackMode) {
-      uninstallFeedbackWindow?.webContents.send('app:uninstall-feedback-mode', true)
-    }
-  })
+  uninstallFeedbackWindow?.show()
+  uninstallFeedbackWindow?.focus()
 
   uninstallFeedbackWindow.on('closed', () => {
+    uninstallFeedbackWindow?.isDestroyed()
+    console.log('Uninstall feedback window closed')
     // 如果是卸载反馈模式且窗口被关闭，视为用户取消卸载
-    if (isUninstallFeedbackMode) {
-      cancelQuit()
-    }
+    cancelQuit()
     uninstallFeedbackWindow = undefined
   })
+  console.log('createUninstallFeedbackWindow 5')
 
   return uninstallFeedbackWindow
 }

@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import QrcodeModal from '/@/components/qrcode-modal.vue'
-
+import { driver } from 'driver.js'
+import 'driver.js/dist/driver.css'
+import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
-import { getDictMap } from '/@/utils'
+import { getDictMap, safeParseJSON, sleep } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { emitter } from '/@/utils/eventBus'
+import { Role } from '/@/enums/role'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
@@ -15,11 +21,17 @@ const router = useRouter()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
+const [, onlyErrorToast] = useResponseToast()
+const { token } = storeToRefs(useUserStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 
 const showTooltip = ref(false)
 const faqList = ref()
-const qrcodeMap = ref()
-const qrcodeList = ref()
+const qrcodeMap = ref<Record<string, any>>({})
+const qrcodeList = ref<any[]>([])
+
+const showMcp = ref(false)
+const driverStatus = safeParseJSON(localStorage.getItem('driverStatus'))
 
 const items = computed(() => {
   return [
@@ -90,12 +102,79 @@ watch(() => route.path, () => {
   }
 }, { immediate: true })
 
+watch([token, () => currentWorkspace.value?.id], ([token, currentWorkspaceId]) => {
+  if (token && currentWorkspaceId) {
+    getMcpInfo()
+  }
+}, { immediate: true })
+
 onBeforeMount(() => {
   getFaqList()
 })
 
+const guideCss = useCssModule('guide')
+
+emitter.on('focusMcp', () => {
+  driverHighlight()
+})
+
+async function getMcpInfo() {
+  if (!currentWorkspace.value || ![Role.OWNER, Role.MANAGER].includes(currentWorkspace.value.role!)) {
+    showMcp.value = false
+    return
+  }
+
+  const { code, data } = await API.base.userGetLlmInfoList()
+  const apiResult = await API.base.userGetUserApiList()
+  if (code === 0 && !!data?.apikey && apiResult.code === 0) {
+    showMcp.value = true
+  }
+  else {
+    showMcp.value = false
+  }
+}
+
+async function driverHighlight() {
+  if (driverStatus?.mcpGuide)
+    return
+
+  await Promise.all([
+    sleep(50), // 延迟 50ms 让外部元素加载完成
+    nextTick(),
+  ])
+
+  const driverObj = driver({
+    nextBtnText: $t('下一步'),
+    doneBtnText: $t('完成'),
+    showButtons: ['next'],
+    overlayColor: 'var(--pattern-tour-mask-bg)',
+    overlayOpacity: 1,
+    allowClose: false,
+    disableActiveInteraction: true,
+    popoverClass: guideCss.popover,
+    steps: [
+      {
+        element: '#mcp',
+        popover: {
+          description: $t('Roxy AI Agent 可以帮你管理浏览器窗口、平台账号还有代理，并帮助您实现浏览器的自动化操作'),
+          side: 'left',
+          align: 'center',
+        },
+      },
+
+    ],
+    onDestroyed: () => {
+      localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
+    },
+  })
+
+  driverObj.drive()
+}
+
 async function getFaqList() {
-  const { data } = await API.base.getFaqHelpList()
+  const { code, data } = await API.base.getFaqHelpList()
+  if (code !== 0)
+    return
   faqList.value = data.rows
 
   qrcodeMap.value = {
@@ -142,14 +221,35 @@ function openTutorial() {
 function openHelpDocument() {
   window.open(`https://faq.roxybrowser.com/${currentLocale!.split('-')[0]}`, '_blank')
 }
+
+async function openMCP() {
+  const { code, data, msg } = await API.base.userGetUserApiList()
+  onlyErrorToast(code, msg)
+  if (code === 0) {
+    if (!data.open) {
+      const { code, msg } = await API.base.userSetUserApiCreate({
+        ...data,
+        open: true,
+      })
+      onlyErrorToast(code, msg)
+      if (code === 0) {
+        await electronAPI.send('app:restartAPIServer')
+      }
+    }
+    await electronAPI.send('mcp:open')
+  }
+}
 </script>
 
 <template>
-  <div class="help" @click="showHelp">
+  <div class="help">
     <div v-show="showTooltip" class="tooltip">
       {{ $t('有疑问吗？欢迎随时与我们联系！') }}
     </div>
-    <div class="icon-box">
+    <div v-if="showMcp" id="mcp" class="flex cursor-pointer" @click="openMCP">
+      <img draggable="false" src="/images/mcp/roxy_ai_agent.svg">
+    </div>
+    <div class="icon-box" @click="showHelp">
       <SvgIcon class="pointer-events-none mt-0.5" name="base/rx_ic_bubble" size="24" color="#FFF" />
     </div>
   </div>
@@ -159,13 +259,17 @@ function openHelpDocument() {
 <style lang="scss" scoped>
 .help {
   position: fixed;
-  bottom: 48px;
+  bottom: 72px;
   right: 16px;
   z-index: 100;
   filter: drop-shadow(0px 0px 5.333px rgba(0, 0, 0, 0.05));
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  // justify-content: center;
+  gap: 10px;
 
   .icon-box {
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -272,5 +376,68 @@ function openHelpDocument() {
 .slide-right-leave-to {
   transform: translateX(100%);
   opacity: 0;
+}
+</style>
+
+<style module="guide">
+.popover {
+  min-width: 220px;
+  max-width: 220px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--pattern-tour-tips-bg);
+  box-shadow:
+    0 3px 8px 0 rgba(0, 0, 0, 0.07),
+    0 2px 5px 0 rgba(0, 0, 0, 0.07),
+    0 1px 1px 0 rgba(0, 0, 0, 0.07);
+
+  :global(.driver-popover-description),
+  :global(.driver-popover-progress-text) {
+    color: var(--component-tooltip-text-primary);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
+  :global(.driver-popover-footer) {
+    margin-top: 6px;
+  }
+
+  :global(.driver-popover-arrow-side-left.driver-popover-arrow) {
+    border-left-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-right.driver-popover-arrow) {
+    border-right-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-top.driver-popover-arrow) {
+    border-top-color: var(--pattern-tour-tips-bg);
+  }
+
+  :global(.driver-popover-arrow-side-bottom.driver-popover-arrow) {
+    border-bottom-color: var(--pattern-tour-tips-bg);
+  }
+
+  button {
+    min-width: 60px;
+    padding: 4px 8px;
+    text-align: center;
+    border-radius: 4px;
+    background: var(--colors-alpha-alpha-white-20);
+    color: var(--component-tooltip-text-primary);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    border: none;
+    text-shadow: none;
+
+    &:focus,
+    &:hover {
+      background: var(--colors-alpha-alpha-white-20);
+    }
+  }
 }
 </style>

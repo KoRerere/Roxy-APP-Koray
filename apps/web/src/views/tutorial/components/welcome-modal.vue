@@ -58,20 +58,20 @@ const stepList = ref<any[]>(shuffle([
     name: 'plan',
     options: [
       {
-        label: $t('1 个'),
-        value: '1',
+        label: $t('1 ~ 2个'),
+        value: '1-2',
       },
       {
-        label: $t('10 个以内'),
-        value: '1-10',
+        label: $t('2 ~ 5个'),
+        value: '2-5',
       },
       {
-        label: $t('10 ~ 50个'),
-        value: '10-50',
+        label: $t('5 ~ 20个'),
+        value: '5-20',
       },
       {
-        label: $t('50 个以上'),
-        value: '50+',
+        label: $t('20 个以上'),
+        value: '20+',
       },
       {
         label: $t('我不确定'),

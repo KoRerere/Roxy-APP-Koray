@@ -171,6 +171,7 @@ const items = computed(() => {
         }
         showPageLoading()
         await API.base.userLogoutList()
+        await electronAPI.send('mcp:close')
         userStore.clearUserInfo()
         router.push({ name: 'login' })
       },

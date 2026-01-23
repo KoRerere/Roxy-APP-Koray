@@ -1,11 +1,11 @@
 import type { UserGetAppUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import type { DebUpdater } from 'electron-updater'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import electronUpdater from 'electron-updater'
 import { join } from 'node:path'
-import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
@@ -38,6 +38,7 @@ export const appUpdater = new class AppUpdater {
 
   /** 等待下载 */
   downloadPromiser: PromiseWithResolvers<void> | null = null
+  quitAndInstallPromiser: PromiseWithResolvers<void> | null = null
 
   constructor() { }
 
@@ -103,6 +104,7 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.autoInstallOnAppQuit = true
 
     this.#autoUpdater.on(`error`, (error) => {
+      console.error(`autoUpdater error occurred`, error)
       this.isInProgress = false
 
       if (this.#updateMessageData.version && compare(this.#updateMessageData.version, app.getVersion(), '>')) {
@@ -113,7 +115,6 @@ export const appUpdater = new class AppUpdater {
       }
 
       this.downloadPromiser?.reject(error)
-      console.error(`autoUpdater error occurred`, error)
     })
 
     this.#autoUpdater.on(`checking-for-update`, () => {
@@ -175,6 +176,7 @@ export const appUpdater = new class AppUpdater {
 
     if (!this.#isInitialized) {
       console.warn('autoUpdater not initialized yet')
+      this.init()
       return
     }
 
@@ -219,8 +221,10 @@ export const appUpdater = new class AppUpdater {
   }
 
   quitAndInstall() {
+    this.quitAndInstallPromiser = Promise.withResolvers<void>()
     this.isQuittingForUpdate = true
     this.#autoUpdater.quitAndInstall(true, true)
+    // return this.quitAndInstallPromiser.promise
   }
 
   private sendSuccessMessage() {

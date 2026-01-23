@@ -19,7 +19,6 @@ updatePrimeVueLocale()
 setTimeout(() => {
   isShowLiveChat.value = true
 }, 600)
-
 </script>
 
 <template>
@@ -28,14 +27,16 @@ setTimeout(() => {
     root: 'min-w-45',
     message: 'text-3',
     pcAcceptButton: { root: '!text-3.25 line-height-none' },
-    pcRejectButton: { root: '!text-3.25 line-height-none' }
-  }"></ConfirmPopup>
+    pcRejectButton: { root: '!text-3.25 line-height-none' },
+  }"
+  />
   <RxToastHeadless />
   <ConfirmDialog :pt="{
     root: global.dialog,
     pcAcceptButton: { root: '!text-3.25 line-height-none' },
-    pcRejectButton: { root: '!text-3.25 line-height-none' }
-  }" />
+    pcRejectButton: { root: '!text-3.25 line-height-none' },
+  }"
+  />
   <!-- 删除确认弹窗 -->
   <ConfirmDialog group="deleteConfirmDialog" :pt="{ root: global.dialog }">
     <template #container="{ message, acceptCallback, rejectCallback }">
@@ -47,7 +48,7 @@ setTimeout(() => {
           <span class="p-confirmdialog-message"> {{ message.message }}</span>
         </div>
         <div class="p-dialog-footer">
-          <div class="flex flex-1 items-center" v-if="message.checkboxProps">
+          <div v-if="message.checkboxProps" class="flex flex-1 items-center">
             <RxCheckbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="double" binary />
             <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">
               {{ message.checkboxProps.label }}

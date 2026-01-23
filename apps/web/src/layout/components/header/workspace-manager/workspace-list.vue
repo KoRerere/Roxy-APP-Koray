@@ -1,20 +1,20 @@
 <script setup lang="tsx">
-import RxAvatar from "/@/components/rx-avatar";
-import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api';
+import RxAvatar from '/@/components/rx-avatar'
+import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { getRoleLabelMap, Role } from '/@/enums';
-import { useWorkspaceStore } from '/@/stores/workspace';
-import { useDialog } from '/@/hooks/useDialog';
+import { getRoleLabelMap, Role } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import WorkspaceSetting from '/@/views/workspace-setting/index.vue'
-;
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { copyText } from '/@/utils/'
 
 type Data = UnwrapRowType<UserGetWorkspaceListListData>
 
 const { list = [] } = defineProps<{
-  list: UnwrapRowsType<UserGetWorkspaceListListData>,
+  list: UnwrapRowsType<UserGetWorkspaceListListData>
   type?: 'owner' | 'member'
 }>()
 
@@ -51,19 +51,24 @@ function showEditWorkspaceDialog(workspaceInfo: Data) {
           }
         }
 
-        return <WorkspaceSetting
-          workspaceInfo={workspaceInfo}
-          onDelete={handleLeaveWorkspace}
-          onSave={handleCancel}
-          onLeave={handleLeaveWorkspace} />
+        return (
+          <WorkspaceSetting
+            workspaceInfo={workspaceInfo}
+            onDelete={handleLeaveWorkspace}
+            onSave={handleCancel}
+            onLeave={handleLeaveWorkspace}
+          />
+        )
       },
-      footer: undefined
+      footer: undefined,
     },
   })
 }
 
 async function enterWorkspace(item: Data) {
   item.id && workspaceStore.setCurrentWorkspace(item.id)
+  // 关闭mcp的窗口
+  electronAPI.send('mcp:close')
   emit('enterWorkspace')
 }
 
@@ -85,7 +90,7 @@ function onConfig(event: MouseEvent, item: Data) {
           showEditWorkspaceDialog(item)
         },
       },
-    ]
+    ],
   })
 }
 </script>
@@ -98,7 +103,7 @@ function onConfig(event: MouseEvent, item: Data) {
           <RxAvatar v-bind="getAvatarProps(item)" />
           <div class="workspace-item-detail">
             <div class="detail-header">
-              <div class="workspace-name" v-tooltip.top="item.workspaceName">
+              <div v-tooltip.top="item.workspaceName" class="workspace-name">
                 {{ item.workspaceName }}
               </div>
               <div v-if="item.workspaceDefault && item.role === Role.OWNER" class="default-workspace">
@@ -111,7 +116,7 @@ function onConfig(event: MouseEvent, item: Data) {
             </div>
             <div v-if="type !== 'member'" class="detail-footer">
               {{ $t('窗口已用量: ') }} {{ item.useWindowCount }}
-              <div class="divide"></div>
+              <div class="divide" />
               {{ $t('成员: ') }} {{ item.useMemberCount }}
             </div>
           </div>
@@ -179,9 +184,9 @@ function onConfig(event: MouseEvent, item: Data) {
           align-items: center;
           gap: var(--spacing-none, 0px);
           border-radius: 40px;
-          border: 0.5px solid var(--component-tag-border, #E4E8EB);
-          background: var(--component-tag-bg, #F0F3F5);
-          color: var(--component-tag-text, #575D61);
+          border: 0.5px solid var(--component-tag-border, #e4e8eb);
+          background: var(--component-tag-bg, #f0f3f5);
+          color: var(--component-tag-text, #575d61);
           font-family: Inter;
           font-size: 12px;
           font-style: normal;
@@ -191,7 +196,7 @@ function onConfig(event: MouseEvent, item: Data) {
       }
 
       .workspace-name {
-        color: var(--colors-text-text-primary, #FAFAFA);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 16px;
         font-style: normal;
@@ -208,7 +213,7 @@ function onConfig(event: MouseEvent, item: Data) {
         padding: var(--spacing-xs, 2px) var(--spacing-none, 0px);
         align-items: center;
         gap: var(--spacing-sm, 4px);
-        color: var(--color-yellow-400, #DB8D1A);
+        color: var(--color-yellow-400, #db8d1a);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -226,7 +231,7 @@ function onConfig(event: MouseEvent, item: Data) {
         display: flex;
         align-items: center;
         gap: var(--spacing-lg, 8px);
-        color: var(--colors-text-text-tertiary, #A3A9AD);
+        color: var(--colors-text-text-tertiary, #a3a9ad);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -249,7 +254,7 @@ function onConfig(event: MouseEvent, item: Data) {
   justify-content: center;
   align-items: center;
   align-self: stretch;
-  color: var(--colors-text-text-inactive, #A3A9AD);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   text-align: center;
   font-size: 14px;
   font-style: normal;

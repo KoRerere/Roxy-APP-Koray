@@ -16,7 +16,7 @@ const active = ref(defaultActive || list[0])
       <span class="header">{{ $t('加入用户社区') }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
-    <RxSelectButton v-model="active" :options="list" size="lg" option-label="name" data-key="name" />
+    <RxSelectButton v-if="list.length > 1" v-model="active" :options="list" size="lg" option-label="name" data-key="name" />
     <div v-if="active" class="flex flex-col items-center w-full rounded-xl">
       <div class="pa-3 rounded-2 border-1 border-solid border-[var(--colors-border-border-base)] bg-white">
         <img class="mx-auto block w-46 object-cover" :src="active.value">

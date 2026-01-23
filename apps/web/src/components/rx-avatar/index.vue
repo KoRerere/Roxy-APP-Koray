@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import RxTooltip from '/@/components/rx-tooltip';
-import { chunk } from 'es-toolkit';
+import RxTooltip from '/@/components/rx-tooltip'
+import { chunk } from 'es-toolkit'
 
 interface Avatar {
   avatar?: string
@@ -24,13 +24,13 @@ const avatars = computed(() => {
 
   return max && _list.length > max
     ? {
-      icons: _list.slice(0, max).concat({ name: `+${_list.length - max}`, color: '#7ECCFC', more: true }),
-      surplus: chunk(_list.slice(max), 6),
-    }
+        icons: _list.slice(0, max).concat({ name: `+${_list.length - max}`, color: '#7ECCFC', more: true }),
+        surplus: chunk(_list.slice(max), 6),
+      }
     : {
-      icons: _list,
-      surplus: [],
-    }
+        icons: _list,
+        surplus: [],
+      }
 })
 
 const _style = computed(() => {
@@ -49,24 +49,26 @@ const _style = computed(() => {
 <template>
   <div class="relative flex items-center cursor-default">
     <template v-for="item in avatars.icons" :key="item.name">
-      <img v-if="item.avatar" :class="classes.image" :style="_style" :src="item.avatar">
-      <component v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: item.color }" :is="item.more ? RxTooltip : 'div'">
+      <img v-if="item.avatar" draggable="false" :class="classes.image" :style="_style" :src="item.avatar">
+      <component :is="item.more ? RxTooltip : 'div'" v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: item.color }">
         <template #default>
           {{ item.name?.toLocaleUpperCase() }}
         </template>
         <template #content>
           <div class="flex flex-col gap-2">
-            <div class="relative flex items-center cursor-default" v-for="(surplus, index) in avatars.surplus" :key="index">
+            <div v-for="(surplus, index) in avatars.surplus" :key="index" class="relative flex items-center cursor-default">
               <template v-for="sub in surplus" :key="sub.name">
                 <img v-if="sub.avatar" :class="classes.image" :style="_style" :src="sub.avatar">
-                <div v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: sub.color }">{{ sub.name?.toLocaleUpperCase() }}</div>
+                <div v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: sub.color }">
+                  {{ sub.name?.toLocaleUpperCase() }}
+                </div>
               </template>
             </div>
           </div>
         </template>
       </component>
     </template>
-    <slot></slot>
+    <slot />
   </div>
 </template>
 
@@ -75,7 +77,7 @@ const _style = computed(() => {
   object-fit: cover;
 }
 
-.image+.image {
+.image + .image {
   margin-left: -4px;
 }
 

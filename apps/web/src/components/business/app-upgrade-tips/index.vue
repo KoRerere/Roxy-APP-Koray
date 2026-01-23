@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+import { emitter } from '/@/utils/eventBus'
 
 const props = defineProps<{
   newFeatureTips: Record<string, any>[]
@@ -27,7 +27,8 @@ const formatFeatures = computed(() => {
   })
 })
 
-function handleSkip() {
+async function handleSkip() {
+  emitter.emit('focusMcp')
   emit('skip')
 }
 

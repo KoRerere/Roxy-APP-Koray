@@ -28,7 +28,7 @@ const emit = defineEmits(['filterChange'])
 const [showModal] = useDialog()
 const { showSimpleDialog } = useSimpleDialog()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-const { userPayInfo } = storeToRefs(useUserStore())
+const { userInfo } = storeToRefs(useUserStore())
 const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const menuRef = useTemplateRef('tmenu')
@@ -79,7 +79,7 @@ watch(() => currentFilter?.id, (value) => {
 })
 
 function showMenu(event: any) {
-  if (videoUrl && userPayInfo.value.onboardingTaskStatus?.saveFilterGuideStatus === false) {
+  if (videoUrl && userInfo.value.onboardingTaskStatus?.saveFilterGuideStatus === false) {
     onShowGuideModal()
     return
   }
@@ -109,7 +109,7 @@ function operationHandler(item: any) {
 
 function inputPopup(data: any) {
   menuRef.value?.hide()
-  const { type, name, label, value, icon, ...props } = deepClone(data)
+  const { type, name, label, value, icon: _, ...props } = deepClone(data)
   showSimpleDialog({
     inputs: [{ type, name, label, value, props }],
     onConfirm: (formData: any) => {

@@ -5,7 +5,6 @@ import { intoLaunchPage } from '/@/modules/app/mainWindow'
 // import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { browserManager } from '/@/modules/browser'
-import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
 import { initLocalConfig, setupStore } from '/@/modules/store'
 import { resourceUpdater } from '/@/modules/updater'
@@ -25,8 +24,6 @@ export async function setupModules() {
     // 启动时清理临时目录
     fileExists(appConfig.tempDir, true, true)
     // if (isPackaged) {
-    // 设置日志
-    setupLog()
     await app.whenReady()
     // 初始化本地配置
     await initLocalConfig()

@@ -1,7 +1,10 @@
 import { ApiApi, AppTrackingEventApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
+import { app } from 'electron'
 import { getBaseUrl, getGatewayConfig, getOpenAPIUrl, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
 import { handleResponse } from '/@/api/util'
 import { appCliStartArgs } from '/@/constants/common'
+import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
+import { executeUninstall } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
@@ -62,6 +65,9 @@ httpClient.instance.interceptors.response.use((response) => {
   if (code === 405) {
     ipcSender.user.kickedOut(response.data.data)
     browserManager.closeAll()
+    if (isUninstallFeedbackMode) {
+      executeUninstall()
+    }
   }
   handleResponse(response)
   return response

@@ -1,12 +1,14 @@
 import { app, autoUpdater, globalShortcut, shell } from 'electron'
+import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
+import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
-import { browserManager } from '/@/modules/browser'
+import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
@@ -109,7 +111,9 @@ export async function setupApp() {
     // 卸载反馈由“卸载模式独立进程”处理。这里直接忽略，避免主实例抢焦点/重复弹窗。
     if (commandLine.includes('--uninstall-feedback')) {
       console.log('second-instance: uninstall-feedback')
-      showUninstallFeedback()
+      setTimeout(() => {
+        showUninstallFeedback()
+      }, 100)
       return
     }
 
@@ -150,7 +154,12 @@ export async function setupApp() {
   /**
    * @see https://www.electronjs.org/docs/v14-x-y/api/app#event-activate-macos Event: 'activate'
    */
-  app.on('activate', () => restoreOrCreateWindow())
+  app.on('activate', () => {
+    console.debug('App activate event')
+    if (!isUninstallFeedbackMode) {
+      restoreOrCreateWindow()
+    }
+  })
 
   /**
    * Create app window when background process will be ready
@@ -175,16 +184,22 @@ export async function setupApp() {
     console.log('setupApp done')
     // 初始化应用程序事件
     initAppEvent()
+    // showUninstallFeedback()
   }
   catch (error) {
     console.error('Failed create window:', error)
   }
 }
 
+/** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
+let isQuittingForUpdate = false
+
+export function isAppQuittingForUpdate() {
+  return isQuittingForUpdate
+}
+
 /** 初始化应用程序事件 */
 function initAppEvent() {
-  /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
-  let isQuittingForUpdate = false
   /** 是否已经在 APP 退出前同步过浏览器数据了 */
   let isSyncBrowserData = false
 
@@ -192,6 +207,10 @@ function initAppEvent() {
     isQuittingForUpdate = true
     console.log('Application is quitting for update.')
   })
+
+  // autoUpdater.on('error', (error) => {
+  //   console.log('[autoUpdater] error', error)
+  // })
 
   app.on('before-quit', async (event) => {
     if (store.defaultBrowserLauncherPid) {
@@ -216,6 +235,8 @@ function initAppEvent() {
         killAllBrowserProcess()
       }
     }
+
+    await rm(chromeCoreManager.oldCoreDir, { recursive: true, force: true }).catch(() => {})
 
     // 如果由于升级 APP 导致的退出
     if (isQuittingForUpdate && !isSyncBrowserData) {

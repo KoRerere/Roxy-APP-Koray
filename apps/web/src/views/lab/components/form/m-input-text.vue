@@ -5,6 +5,7 @@ import type { SvgNames } from '/@/components/rx-icon/'
 interface Props extends /* @vue-ignore */ Omit<InputTextProps, 'size'> {
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   icon?: SvgNames
+  iconClass?: any
   preIcon?: SvgNames
   fluid?: boolean
   fieldProps?: Record<string, any>
@@ -43,7 +44,7 @@ defineExpose({
     <InputText ref="input" v-bind="{ ...attrs, ...props }" :fluid />
     <InputIcon v-if="icon || slots.icon">
       <slot name="icon">
-        <SvgIcon class="cursor-pointer" :name="icon!" @click="$emit('iconClick')" />
+        <SvgIcon class="cursor-pointer" :class="iconClass" :name="icon!" @click="$emit('iconClick')" />
       </slot>
     </InputIcon>
   </IconField>

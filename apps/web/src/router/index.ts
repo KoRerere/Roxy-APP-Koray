@@ -42,11 +42,12 @@ router.beforeEach(async (to, from, next) => {
   const simpleLocale = useSimpleLocale()
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
-  const query = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' };
+  const query = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }
 
   if (currentWorkspace?.workspaceType === WorkspaceType.Private && to.name === 'shared') {
     return next({ name: 'home', query })
-  } else if (currentWorkspace?.workspaceType === WorkspaceType.Public && to.name === 'home') {
+  }
+  else if (currentWorkspace?.workspaceType === WorkspaceType.Public && to.name === 'home') {
     return next({ name: 'shared', query })
   }
 
@@ -61,7 +62,8 @@ router.beforeEach(async (to, from, next) => {
   }
   if (isEqual(to.query, query)) {
     return next()
-  } else {
+  }
+  else {
     return next({ ...to, query })
   }
 })
@@ -70,9 +72,8 @@ if (import.meta.hot) {
   window.router = router
 }
 
-
 export async function setupRouter(app: App) {
-  app.use(router);
+  app.use(router)
 }
 
 export default router

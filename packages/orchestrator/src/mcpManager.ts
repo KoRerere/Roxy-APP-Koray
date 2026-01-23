@@ -1,77 +1,55 @@
-// 这里管理外部的一些 mcp 服务，这些 mcp 服务将 roxybrowser 的能力提供出来，让 llm 能够理解用户的需求。
-
 import type { StructuredTool } from '@langchain/core/tools'
 import type { Connection } from '@langchain/mcp-adapters'
+// 这里管理外部的一些 mcp 服务，这些 mcp 服务将 roxybrowser 的能力提供出来，让 llm 能够理解用户的需求。
 import { MultiServerMCPClient } from '@langchain/mcp-adapters'
+import path from 'node:path'
+import { env } from './config'
+
+function isElectron() {
+  return 'type' in process
+}
 
 export class McpManager {
   private workerClients: Map<string, MultiServerMCPClient> = new Map()
   private workerTools: Map<string, StructuredTool[]> = new Map()
-  /**
-   * 起始端口，多个 worker 的时候，它是自增的。
-   */
-  private basePort: number = 24567
+  count = 0
 
-  /**
-   * 检查端口是否被占用。
-   */
-  private async isPortAvailable(port: number): Promise<boolean> {
-    try {
-      await fetch(`http://localhost:${port}/mcp`, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(1000),
-      })
-      return false
-    }
-    catch (error) {
-      return true
-    }
-  }
+  command = isElectron() ? process.execPath : 'node'
 
-  async getPort() {
-    let _port = this.basePort
-    let available = await this.isPortAvailable(_port)
-    while (!available) {
-      _port += 1
-      available = await this.isPortAvailable(_port)
-    }
-    this.basePort = _port + 1
-    return this.basePort
+  constructor() {
+    console.log('command', this.command)
   }
 
   async createMcpClient(workerId: string) {
-    if (this.workerClients.size >= 8) {
-      console.warn(`[MCP] Too many workers, cannot create more clients`)
-      throw new Error(`[MCP] Too many workers, cannot create more clients. `)
-    }
-
     const servers: Record<string, Connection> = {}
+    const command = this.command
 
     // 创建 openapi 的 mcp 服务
     const openapi: Connection = {
       transport: 'stdio',
-      command: process.execPath,
-      args: [process.env.OPENAPI_SCRIPT_PATH!],
+      command,
+      args: [env.OPENAPI_SCRIPT_PATH!],
       env: {
         ...process.env,
-        ROXY_API_KEY: process.env.ROXY_API_KEY!,
-        ROXY_API_HOST: process.env.ROXY_API_HOST!,
-        ELECTRON_RUN_AS_NODE: '1', // 让 Electron 可执行文件作为 Node.js 运行
+        ROXY_API_KEY: env.ROXY_API_KEY!,
+        ROXY_API_HOST: env.ROXY_API_HOST!,
+        ELECTRON_RUN_AS_NODE: isElectron() ? '1' : '0',
+
       },
     }
     servers.roxybrowser_openapi = openapi
 
-    // const port = await this.getPort()
     // 创建 playwright 的 mcp 服务
     const playwright: Connection = {
       transport: 'stdio',
-      command: process.execPath,
-      args: [process.env.PLAYWRIGHT_SCRIPT_PATH!],
+      command,
+      args: [env.PLAYWRIGHT_SCRIPT_PATH!],
       env: {
         ...process.env,
         PLAYWRIGHT_MCP_SNAPSHOT_MODE: 'optimized',
         PLAYWRIGHT_MCP_ROXY_MODE: 'true',
-        ELECTRON_RUN_AS_NODE: '1', // 让 Electron 可执行文件作为 Node.js 运行
+        ELECTRON_RUN_AS_NODE: isElectron() ? '1' : '0',
+        STATIC_FILE_PATH: path.join(env.CHECKPOINT_DIR!, 'static'),
       },
     }
     servers[`roxybrowser_playwright_${workerId}`] = playwright
@@ -84,6 +62,7 @@ export class McpManager {
 
     this.workerClients.set(workerId, client)
     this.workerTools.set(workerId, tools)
+    this.count++
   }
 
   async destroyWorkerClient(workerId: string): Promise<void> {
@@ -97,6 +76,7 @@ export class McpManager {
       }
       this.workerClients.delete(workerId)
       this.workerTools.delete(workerId)
+      this.count--
     }
   }
 
@@ -112,6 +92,7 @@ export class McpManager {
   async shutdown() {
     const workerIds = Array.from(this.workerClients.keys())
     await Promise.all(workerIds.map(id => this.destroyWorkerClient(id)))
+    this.count = 0
   }
 }
 

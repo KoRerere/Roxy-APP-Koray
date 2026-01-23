@@ -68,7 +68,7 @@ Add both RoxyBrowser OpenAPI and PlayRoxy MCP to your MCP client configuration:
 ### Browser Management
 - `roxy_list_browsers` - List browsers in a workspace/project with filtering
 - `roxy_get_browser_detail` - Get detailed browser information and configuration
-- `roxy_open_browsers` - Open browsers and get CDP WebSocket endpoints for automation
+- `roxy_open_browser` - Open browsers and get CDP WebSocket endpoints for automation
 - `roxy_close_browsers` - Close running browsers (does NOT free quota)
 - `roxy_delete_browsers` - Delete browser profiles permanently (frees quota)
 - `roxy_get_connection_info` - Get CDP endpoints and PIDs for opened browsers
@@ -98,7 +98,7 @@ Add both RoxyBrowser OpenAPI and PlayRoxy MCP to your MCP client configuration:
    → Returns browser ID ready for use
 
 2. AI: "Open the browser I just created"
-   → Uses roxy_open_browsers with the returned ID
+   → Uses roxy_open_browser with the returned ID
    → Returns CDP WebSocket URL like: ws://127.0.0.1:52314/devtools/browser/xxx
 
 3. AI: "Navigate to gmail.com, login, and send emails"
@@ -121,7 +121,7 @@ Add both RoxyBrowser OpenAPI and PlayRoxy MCP to your MCP client configuration:
    → Returns configured browser ID
 
 3. AI: "Open the browser and start automation"
-   → Uses roxy_open_browsers → gets CDP endpoint
+   → Uses roxy_open_browser → gets CDP endpoint
    → PlayRoxy MCP automatically connects and begins automation tasks
 ```
 

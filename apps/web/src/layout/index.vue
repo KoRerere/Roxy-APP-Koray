@@ -173,11 +173,9 @@ function onHtmlClick(e: MouseEvent) {
       <RxLayoutHeader />
 
       <div class="mr-4 flex flex-col gap-2 rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" :class="{ campaing: !!annt.announceType }" closable
-                 @close="handleCloseAnnt(annt.id!)"
-        >
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rounded-1 rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
           <template #default>
-            <div class="ellipsis-1" @click="onHtmlClick" v-html="annt.announcement" />
+            <div class="break-all" @click="onHtmlClick" v-html="annt.announcement" />
           </template>
           <template #closeicon>
             <SvgIcon name="base/rx_ic_delete" />
@@ -341,18 +339,9 @@ function onHtmlClick(e: MouseEvent) {
   }
 
   &__content {
-    border-radius: 4px;
     background: #303256;
     outline-style: none;
     outline-width: 0;
-
-    &.campaing {
-      background: var(--campaign-netflix-bg-announcement);
-    }
-
-    &:first-of-type {
-      margin-top: 0;
-    }
   }
 
   :deep(a) {

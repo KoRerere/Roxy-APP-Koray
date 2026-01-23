@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { useUserStore } from "/@/stores/user";
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 
-const { userPayInfo } = storeToRefs(useUserStore())
-
+const { onboardingTaskStatus } = useOnboardingTaskStatus()
 const progress = computed(() => {
-  const { onboardingTaskStatus } = userPayInfo.value
   const task = [
-    onboardingTaskStatus?.createProfileStatus,
-    onboardingTaskStatus?.createProxyStatus,
-    onboardingTaskStatus?.inviteMemberStatus,
+    onboardingTaskStatus.value?.createProfileStatus,
+    onboardingTaskStatus.value?.createProxyStatus,
+    onboardingTaskStatus.value?.inviteMemberStatus,
   ]
   return 1 - task.filter(Boolean).length / task.length
 })
-
 </script>
 
 <template>

@@ -139,19 +139,22 @@ onMounted(async () => {
 
 <template>
   <div class="field">
+    <slot :name="`before-field-${props.schema.field}`" />
     <div class="form-item-row" :class="formProps.layout">
       <label v-if="schema.label" :for="compId" :class="{ colon: formProps.colon }">
         <component :is="LabelComponent" />
       </label>
       <div class="form-item-control">
         <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue" :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
-          @[triggerEventName]="validateField" />
+                   @[triggerEventName]="validateField"
+        />
         <Message v-if="errors[schema.field] || !schema.label" severity="error" size="small" variant="simple" class="error-message">
           {{ errors[schema.field] }}
         </Message>
-        <component v-if="schema.description" :is="schema.description" />
+        <component :is="schema.description" v-if="schema.description" />
       </div>
     </div>
+    <slot :name="`after-field-${props.schema.field}`" />
   </div>
 </template>
 

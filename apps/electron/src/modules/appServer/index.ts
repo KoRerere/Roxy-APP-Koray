@@ -1,4 +1,6 @@
 import express from 'express'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { appConfig } from '/@/constants'
 import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
@@ -24,7 +26,7 @@ export async function setupAppServer() {
   // APP 外置 web 服务中间件
   const externalWebMid = express.static(appConfig.externalWebDir)
   // APP web 服务中间件
-  app.use((req, res, next) => {
+  app.use(async (req, res, next) => {
     if (store.isExternalWeb) {
       externalWebMid(req, res, next)
     }
@@ -35,7 +37,11 @@ export async function setupAppServer() {
 
   try {
     const port = await getPortPromise({ port: store.appPort })
-    app.listen(port, () => {
+    app.listen(port, (error) => {
+      if (error) {
+        reject(error)
+        return
+      }
       console.log(`App server is running at http://127.0.0.1:${port}`)
       store.appPort = port
       resolve(app)

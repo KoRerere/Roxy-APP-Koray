@@ -4,9 +4,9 @@ import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
-import { accessSync } from 'node:fs'
+import { accessSync, writeFileSync } from 'node:fs'
 import { access, readdir, writeFile } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
@@ -135,8 +135,9 @@ const config: UserConfig = {
   },
 
   build: {
-    sourcemap: true,
+    // sourcemap: true,
     target: `chrome${chrome}`,
+    // outDir: String.raw`C:/Users/Administrator/AppData/Local/Programs/RoxyBrowserDev/resources/app.asar.unpacked/dist/web`,
     outDir: 'dist',
     assetsDir: '.',
     rollupOptions: {
@@ -149,12 +150,21 @@ const config: UserConfig = {
         'uninstall': join(PACKAGE_ROOT, 'uninstall.html'),
       },
       output: {
-        chunkFileNames(chunkInfo) {
-          // 语言文件不生成哈希
-          // if (chunkInfo.moduleIds.at(-1)?.includes('/locales/langs/')) {
-          //   return "[name].js"
-          // }
-          return '[name]-[hash].js'
+        manualChunks(id) {
+          // 基础依赖需要独立，避免循环引用
+          if (id.includes('src/locales')) {
+            return 'locales'
+          }
+          if (id.includes('src/stores')) {
+            return 'stores'
+          }
+          // 不要单独分割 router，让它留在主应用中
+
+          if (!id.includes('node_modules'))
+            return
+
+          // 所有第三方依赖统一进 vendor
+          return 'vendor'
         },
       },
     },
@@ -163,6 +173,15 @@ const config: UserConfig = {
   },
 
   plugins: [
+    // {
+    //   name: 'generate-manifest-like-file',
+    //   writeBundle(options, bundle) {
+    //     const distPath = options.dir || dirname(options.file!)
+    //     const filePath = join(distPath, 'web_extract_success.flag')
+
+    //     writeFileSync(filePath, '')
+    //   },
+    // },
     genWebVersionPlugin(),
     replaceRootInScss(),
     vue({
@@ -245,15 +264,15 @@ export type SvgNames = ${typeDefine}`
         }),
       ],
     }),
-    sentryVitePlugin({
-      org: process.env.VITE_SENTRY_ORG,
-      project: process.env.VITE_SENTRY_PROJECT,
-      authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
-      release: {
-        name: process.env.VITE_VERSION,
-        dist: process.env.VITE_VERSION,
-      },
-    }),
+    // sentryVitePlugin({
+    //   org: process.env.VITE_SENTRY_ORG,
+    //   project: process.env.VITE_SENTRY_PROJECT,
+    //   authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+    //   release: {
+    //     name: process.env.VITE_VERSION,
+    //     dist: process.env.VITE_VERSION,
+    //   },
+    // }),
   ],
 }
 

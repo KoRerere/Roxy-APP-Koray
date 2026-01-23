@@ -6,8 +6,9 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { oauth2LoginMap } from '/@/utils'
 import { useLoginContext } from '../hooks/useLoginContext'
-import { getFormSchemas, getPhoneSchemas } from './schemas'
+import { checkEmailValid, emailValidateLoading, getFormSchemas, getPhoneSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
+import { debounce, isBoolean } from 'es-toolkit'
 
 const props = defineProps({
   type: {
@@ -22,19 +23,24 @@ const props = defineProps({
 
 const emit = defineEmits(['register'])
 const signFormData = defineModel({ type: Object, default: {} })
-const { rememberMe, loginWay } = storeToRefs(useUserStore())
+const { rememberMe, loginWay, userInfo } = storeToRefs(useUserStore())
 const { currentLocale } = storeToRefs(useSimpleLocale())
 
 const { setSignFormData, setCurrentComponent, toSignIn, toSignInByPhone } = useLoginContext()
 const [_, onlyErrorToast] = useResponseToast()
 
 const isZh = currentLocale.value === 'zh-CN'
+const lastLoginEmail = userInfo.value.email
+const emailLoginMap = ref<Record<string, boolean>>({})
+
+if (lastLoginEmail) {
+  emailLoginMap.value[lastLoginEmail] = true
+}
 
 const submitLoading = ref(false)
 const formSchemas = ref(getFormSchemas())
-const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
-const loginType = ref((!isZh || (loginWay.value && loginWay.value !== 'phone')) ? 'password' : 'phone')
+const loginType = ref<'password' | 'phone'>((!isZh || (loginWay.value && loginWay.value !== 'phone')) ? 'password' : 'phone')
 const loginTypeOptions = [
   {
     name: $t('手机号'),
@@ -46,19 +52,54 @@ const loginTypeOptions = [
   },
 ]
 
-watch([isRegister, loginType], ([val]) => {
-  switchFormMode(val)
-}, { immediate: true, flush: 'post' })
+const isEmailLogin = computed(() => {
+  return loginType.value === 'password'
+})
 
-function switchFormMode(val: boolean) {
-  const getSchemas = !isRegister.value && loginType.value === 'phone' ? getPhoneSchemas : getFormSchemas
-  isRegister.value = val
-  formSchemas.value = getSchemas(val)
-  formInstance.value?.resetSchema(getSchemas(val))
+const isEmailRegistered = computed(() => {
+  return emailLoginMap.value[signFormData.value.user_name] === true
+})
+
+const isValidEmail = computed(() => {
+  const username = signFormData.value.user_name
+  return isEmailLogin.value && emailLoginMap.value[username] !== true && checkEmailValid(username)
+})
+
+const checkEmailRegistered = debounce(async () => {
+  const username = signFormData.value.user_name
+  if (isValidEmail.value) {
+    emailValidateLoading.value = true
+    const { code, data } = await API.base.checkEmailRegisteredList({ email: username }).finally(() => {
+      emailValidateLoading.value = false
+    })
+    if (code === 0) {
+      if (isBoolean(data.is_registered)) {
+        emailLoginMap.value[username] = data.is_registered
+      }
+      formSchemas.value = getFormSchemas(!data.is_registered)
+      formInstance.value?.resetSchema(getFormSchemas(!data.is_registered))
+      formInstance.value?.clearValidateMessages()
+    }
+  }
+}, 300)
+
+function switchFormMode() {
+  const getSchemas = isEmailLogin.value ? getFormSchemas : getPhoneSchemas
+
+  const isRegister = !isBoolean(emailLoginMap.value[signFormData.value.user_name])
+
+  formSchemas.value = getSchemas(isRegister)
+  formInstance.value?.resetSchema(getSchemas(isRegister))
   // formInstance.value?.resetFields()
   formInstance.value?.clearValidateMessages()
-  emit('register', val)
+  emit('register', emailLoginMap.value[signFormData.value.user_name] === false)
 }
+
+watch([() => signFormData.value.user_name, loginType], () => {
+  switchFormMode()
+  emailValidateLoading.value = isValidEmail.value
+  checkEmailRegistered()
+}, { immediate: true })
 
 async function handleSubmit() {
   if (submitLoading.value)
@@ -69,8 +110,9 @@ async function handleSubmit() {
     // const params = getFormData(inputs.value)
     setSignFormData(formData)
     console.log(formData)
-    // if sign up, switch to emailCodeInputOtp component
-    if (isRegister.value) {
+
+    // 如果邮箱未注册，发送验证码
+    if (isEmailLogin.value && emailLoginMap.value[formData.user_name] === false) {
       const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: formData.user_name })
       if (code === 0) {
         setCurrentComponent('emailCodeInputOtp')
@@ -79,9 +121,35 @@ async function handleSubmit() {
         mixpanel.track('signUp', { method: 'email', success: false, error: msg })
         onlyErrorToast(-1, msg || $t('发生错误'))
       }
+      return
+    }
+
+    // 如果邮箱在本机上首次登录，检查是否已注册
+    if (isEmailLogin.value && emailLoginMap.value[formData.user_name] === undefined) {
+      emailValidateLoading.value = true
+      const { code, data, msg } = await API.base.checkEmailRegisteredList({ email: formData.user_name }).finally(() => {
+        emailValidateLoading.value = false
+      })
+      onlyErrorToast(code, msg)
+      if (code !== 0) {
+        onlyErrorToast(-1, msg || $t('发生错误'))
+        return
+      }
+
+      if (isBoolean(data.is_registered)) {
+        emailLoginMap.value[formData.user_name] = data.is_registered
+      }
+
+      formSchemas.value = getFormSchemas(!data.is_registered)
+      formInstance.value?.resetSchema(getFormSchemas(!data.is_registered))
+      formInstance.value?.clearValidateMessages()
+      return
+    }
+    if (isEmailLogin.value) {
+      await toSignIn()
     }
     else {
-      loginType.value === 'phone' ? await toSignInByPhone() : await toSignIn()
+      await toSignInByPhone()
     }
   }
   finally {
@@ -100,32 +168,46 @@ defineExpose({
 </script>
 
 <template>
-  <i18n-t v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
-          :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global"
+  <i18n-t
+    v-if="inviteDiscountInfo && inviteDiscountInfo.isShow"
+    class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
+    :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })"
+    scope="global"
   >
     <template #discount>
       <span class="discount-value">{{ inviteDiscountInfo.userDiscount }}%</span>
     </template>
   </i18n-t>
   <div class="self-stretch flex items-center justify-between">
-    <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')" />
-    <RxSelectButton v-if="!isRegister && isZh" v-model="loginType" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
+    <SignCardHeader :title="$t('欢迎使用')" />
+    <RxSelectButton v-if="isZh" v-model="loginType" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
   </div>
-  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
-  <div v-if="!isRegister && loginType !== 'phone'" class="remember-me">
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit">
+    <template #before-field-password>
+      <div v-if="checkEmailValid(signFormData.user_name) && isEmailLogin && !isEmailRegistered && !emailValidateLoading" class="setup-password-tips">
+        {{ $t('邮箱尚未注册，请设置您的密码：') }}
+      </div>
+    </template>
+  </RxForm>
+  <div v-if="loginType !== 'phone' && isEmailRegistered" class="remember-me">
     <div class="flex items-center text-[12px]">
       <RxCheckbox v-model="rememberMe" input-id="remember-me" :binary="true" />
-      <label for="remember-me" class="ml-2"> {{ $t('记住登录状态') }} </label>
+      <label for="remember-me" class="ml-2"> {{ $t('记住密码') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">
       {{ $t('忘记密码？') }}
     </div>
   </div>
   <div class="login-ways">
-    <RxButton :loading="submitLoading" type="button" size="lg" class="w-full" @click="handleSubmit">
-      {{ isRegister ? $t('注册') : $t('登录') }}
+    <RxButton :loading="submitLoading || emailValidateLoading" type="button" size="lg" class="w-full" @click="handleSubmit">
+      <template v-if="isBoolean(emailLoginMap[signFormData.user_name]) && !emailValidateLoading">
+        {{ emailLoginMap[signFormData.user_name] ? $t('登录') : $t('注册') }}
+      </template>
+      <template v-else>
+        {{ isEmailLogin ? $t('登录/注册') : $t('登录') }}
+      </template>
     </RxButton>
-    <div v-if="!isRegister && loginType === 'phone'" class="-mt-1 auto-register">
+    <div v-if="loginType === 'phone'" class="-mt-1 auto-register">
       {{ $t('新手机号将自动注册 RoxyBrowser 账号') }}
     </div>
     <div class="divider">
@@ -135,18 +217,6 @@ defineExpose({
     <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook" />
     <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github" />
     <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk" />
-    <div v-if="isRegister" class="signup-tips">
-      {{ $t('已有账号？') }}
-      <a class="cursor-pointer" @click="switchFormMode(false)">
-        {{ $t('前往登录') }}
-      </a>
-    </div>
-    <div v-else-if="loginType !== 'phone'" class="signup-tips">
-      {{ $t("没有RoxyBrowser账户？") }}
-      <a class="cursor-pointer" @click="switchFormMode(true)">
-        {{ $t('创建账号') }}
-      </a>
-    </div>
   </div>
 </template>
 
@@ -227,6 +297,16 @@ defineExpose({
   font-style: normal;
   font-weight: 400;
   line-height: normal;
+}
+
+.setup-password-tips {
+  color: var(--colors-text-text-primary, #111213);
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px; /* 142.857% */
+  margin-bottom: 8px;
 }
 
 .discount {

@@ -4,6 +4,7 @@ import { createBrowserSender } from './browser'
 import { createDialogSender } from './dialog'
 import { createExtensionSender } from './extension'
 import { createInviteSender } from './invite'
+import { createMcpSender } from './mcp'
 import { createOauth2Sender } from './oauth2'
 import { createOpenSender } from './open'
 import { createSyncControlSender } from './syncControl'
@@ -22,6 +23,7 @@ export function createSenderModules(ipcMain: IPCMainInstance) {
     syncControl: createSyncControlSender(ipcMain),
     user: createUserSender(ipcMain),
     window: createWindowSender(ipcMain),
+    mcp: createMcpSender(ipcMain),
   } as const
 }
 
@@ -30,6 +32,7 @@ export * from './browser'
 export * from './dialog'
 export * from './extension'
 export * from './invite'
+export * from './mcp'
 export * from './oauth2'
 export * from './open'
 export * from './syncControl'

@@ -63,7 +63,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ name: 'project-list' })
     }
     // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role) && !isPublic) {
+    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role as Role) && !isPublic) {
       router.replace({ name: 'home' })
     }
 
@@ -80,7 +80,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
       electronAPI.send('app:restartAPIServer')
-      if (userStore?.userPayInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
+      if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
         emitter.emit('showUserGuideDialog')
       }
     }, 1200)

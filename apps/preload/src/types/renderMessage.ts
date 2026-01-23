@@ -1,3 +1,4 @@
+import type { ResourceUpdateMessage } from './mainMessage'
 import type {
   UnwrapRowsType,
   UnwrapRowType,
@@ -42,7 +43,6 @@ import type {
   RandomFingerprintFuncReturnTypes,
 } from '#roxybrowser/utils/randomFingerprint'
 import type { FileFilter, GPUFeatureStatus, NativeTheme } from 'electron'
-import type { ResourceUpdateMessage } from './mainMessage'
 
 interface ReGetUpdateInfoType {
   app: UserGetAppUpgradeCreateData
@@ -148,7 +148,7 @@ export interface RenderMessage {
   /** 获取应用版本号 */
   'app:getAppVersion': () => string
   /** 卸载反馈已提交 */
-  'app:uninstall-feedback-submitted': (payload: { reasons: string[], feedback: string }) => Promise<void>
+  'app:uninstall-feedback-submitted': (payload: { reasons: number[], feedback: string }) => Promise<void>
   /** 跳过卸载反馈 */
   'app:uninstall-feedback-skipped': () => Promise<void>
   /** 直接卸载，无需反馈 */
@@ -404,4 +404,6 @@ export interface RenderMessage {
   'mcp:open': () => void
   /** 获取 MCP 配置 */
   'mcp:config': () => Promise<{ port: number }>
+  /** 关闭 MCP */
+  'mcp:close': () => void
 }

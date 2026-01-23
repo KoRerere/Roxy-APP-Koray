@@ -318,6 +318,8 @@ export function safeParseJSON(data: any, fallback?: any) {
     return JSON.parse(data)
   }
   catch (error) {
+    if (fallback === null)
+      return null
     return fallback ?? data
   }
 }

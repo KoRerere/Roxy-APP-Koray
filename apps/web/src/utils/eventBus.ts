@@ -57,6 +57,7 @@ export interface MittEvents {
     anchorPoint?: string
   }
   badgeMap: string
+  focusMcp: void
 }
 
 export const emitter = mitt<MittEvents>()

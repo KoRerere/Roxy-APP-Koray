@@ -1,6 +1,6 @@
-import { compare } from 'compare-versions'
-import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import type { IPCMainInstance } from '/@/modules/ipc/types'
+import { compare } from 'compare-versions'
+import { app, BrowserWindow, nativeTheme, screen, shell } from 'electron'
 import { appConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
@@ -32,14 +32,20 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
       'app:restartAPIServer',
       'OpenAPI port or switch changed, restarting service...',
     )
-    openAPIServer.start()
+    return openAPIServer.start()
   })
 
   /** 保存软件设置 */
   ipcMain.on('app:saveSoftConfig', (event, config) => {
+    const originAutoUpdateKernel = store.autoUpdateKernel
     const originSystemProxySwitch = store.systemProxySwitch
     const originV2raySwitch = store.v2raySwitch
     setUserConfig(config)
+
+    // 如果自动更新内核设置变了，则重新检查内核更新
+    if (store.autoUpdateKernel !== originAutoUpdateKernel) {
+      chromeCoreManager.autoDownloadCore()
+    }
 
     if (store.systemProxySwitch !== originSystemProxySwitch) {
       if (store.systemProxySwitch) {
@@ -188,10 +194,23 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 动态设置窗口大小 */
   ipcMain.on('app:resizeWindow', (event, payload) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    const { x, y, width, height } = win?.getBounds()!
-    payload.width ||= width
-    payload.height ||= height
-    win?.setBounds({ ...payload, x, y })
+
+    if (!win) {
+      return
+    }
+
+    const [width, height] = win.getContentSize()
+
+    // 当前窗口所在屏幕的可用工作区高度（不含任务栏）
+    const display = screen.getDisplayMatching(win.getBounds())
+    const { width: maxWidth, height: maxHeight } = display.workAreaSize
+
+    const minHeight = 200
+    const minWidth = 200
+    const finalHeight = Math.min(Math.max(payload.height || height, minHeight), maxHeight)
+    const finalWidth = Math.min(Math.max(payload.width || width, minWidth), maxWidth)
+
+    win!.setContentSize(finalWidth, finalHeight, true) // true = 带动画（Windows11 有效果）
   })
 
   /** 获取新功能提示 */

@@ -1175,19 +1175,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'selectButton',
       label: $t('同步Local Storage'),
       name: 'syncLocalStorage',
-      value: data.syncLocalStorage ?? false,
+      value: data.syncLocalStorage ?? true,
       options: genSwitchOptions(),
     },
-    // {
-    //   type: 'selectButton',
-    //   label: $t('同步Session Storage'),
-    //   name: 'syncSessionStorage',
-    //   value: data.syncSessionStorage ?? false,
-    //   options: genSwitchOptions(),
-    //   change(input: any) {
-    //     setInputVisible(otherInputs, 'sessionStorages', input.value === true)
-    //   },
-    // },
+    {
+      type: 'selectButton',
+      label: $t('同步Session Storage'),
+      name: 'syncSessionStorage',
+      value: data.syncSessionStorage ?? false,
+      options: genSwitchOptions(),
+      change(input: any) {
+        setInputVisible(otherInputs, 'sessionStorages', input.value === true)
+      },
+    },
     {
       type: 'textarea',
       label: ' ',

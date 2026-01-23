@@ -1,4 +1,22 @@
+import { closeDatabase as closeConversationsDatabase } from './database/conversations'
+import { closeDatabase } from './database/summary'
+
 export { startServer } from './server'
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...')
+  closeDatabase()
+  closeConversationsDatabase()
+  process.exit(0)
+})
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully...')
+  closeDatabase()
+  closeConversationsDatabase()
+  process.exit(0)
+})
 
 // // 全局异常处理 - 除了手动关闭外的各种异常情况都不让进程退出
 // process.on('uncaughtException', (error) => {

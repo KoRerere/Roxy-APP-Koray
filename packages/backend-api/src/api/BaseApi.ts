@@ -15,6 +15,8 @@ import {
   CheckEmailOr2FaVerifyListParams,
   CheckEmailPasswordCreateData,
   CheckEmailPasswordCreatePayload,
+  CheckEmailRegisteredListData,
+  CheckEmailRegisteredListParams,
   CheckOtherDeviceLoginListData,
   CheckOtherDeviceLoginListParams,
   CheckRecoverCodeCreateData,
@@ -74,6 +76,8 @@ import {
   UserBindEmailVerifyCodeListParams,
   UserBindPhoneCreateData,
   UserBindPhoneCreatePayload,
+  UserCalcLlmTokenCostCreateData,
+  UserCalcLlmTokenCostCreatePayload,
   UserChangeAccountCreateData,
   UserChangeAccountCreatePayload,
   UserChangeEmailCreateData,
@@ -112,10 +116,12 @@ import {
   UserGetPromotionInfoByTypeListData,
   UserGetPromotionInfoByTypeListParams,
   UserGetPromotionInfoListData,
+  UserGetPromptTemplateListListData,
   UserGetRewardRecordListListData,
   UserGetRewardRecordListListParams,
   UserGetSystemDictV2CreateData,
   UserGetSystemDictV2CreatePayload,
+  UserGetUninstallReasonQuestionListListData,
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
@@ -1956,6 +1962,58 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserGetUninstallReasonQuestionListList
+   * @summary 查询卸载原因列表
+   * @request GET:/user_get_uninstall_reason_question_list
+   * @response `200` `UserGetUninstallReasonQuestionListListData`
+   */
+  userGetUninstallReasonQuestionListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetUninstallReasonQuestionListListData, any>({
+      path: `/user_get_uninstall_reason_question_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckEmailRegisteredList
+   * @summary 检测邮箱是否已注册
+   * @request GET:/check_email_registered
+   * @response `200` `CheckEmailRegisteredListData`
+   */
+  checkEmailRegisteredList = (
+    query: CheckEmailRegisteredListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckEmailRegisteredListData, any>({
+      path: `/check_email_registered`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetPromptTemplateListList
+   * @summary 查询提示模板列表
+   * @request GET:/user_get_prompt_template_list
+   * @response `200` `UserGetPromptTemplateListListData`
+   */
+  userGetPromptTemplateListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPromptTemplateListListData, any>({
+      path: `/user_get_prompt_template_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -2020,6 +2078,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<GetActivityDiscountListData, any>({
       path: `/get_activity_discount`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserCalcLlmTokenCostCreate
+   * @summary MCPToken结算
+   * @request POST:/user_calc_llm_token_cost
+   * @response `200` `UserCalcLlmTokenCostCreateData`
+   */
+  userCalcLlmTokenCostCreate = (
+    data: UserCalcLlmTokenCostCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCalcLlmTokenCostCreateData, any>({
+      path: `/user_calc_llm_token_cost`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

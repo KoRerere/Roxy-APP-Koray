@@ -12,7 +12,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, hidePageLoading, isWindows } from '/@/utils'
+import { encryptAESGCM, hidePageLoading, isMainWindow, isWindows } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
@@ -167,49 +167,51 @@ export const useUserStore = defineStore(
         })
       }
 
-      // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
-      setTimeout(() => {
-        window.electronAPI.send('user:setUserInfo', {
-          token: token.value,
-          userId: userInfo.value.id!,
-          workspaceId: userInfo.value.workspaceId!,
-          userName: userInfo.value.userName!,
-          email: userInfo.value.email!,
+      if (isMainWindow) {
+        // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
+        setTimeout(() => {
+          window.electronAPI.send('user:setUserInfo', {
+            token: token.value,
+            userId: userInfo.value.id!,
+            workspaceId: userInfo.value.workspaceId!,
+            userName: userInfo.value.userName!,
+            email: userInfo.value.email!,
+          })
+          const openPageUrl = sessionStorage.getItem('openPageUrl')
+          if (openPageUrl) {
+            sessionStorage.removeItem('openPageUrl')
+            router.push(openPageUrl)
+          }
         })
-        const openPageUrl = sessionStorage.getItem('openPageUrl')
-        if (openPageUrl) {
-          sessionStorage.removeItem('openPageUrl')
-          router.push(openPageUrl)
-        }
-      })
 
-      requestIdleCallback(async () => {
-        const scope = Sentry.getCurrentScope()
-        scope.setUser({
-          id: userInfo.value.id,
-          email: userInfo.value.email,
-          username: userInfo.value.userName,
+        requestIdleCallback(async () => {
+          const scope = Sentry.getCurrentScope()
+          scope.setUser({
+            id: userInfo.value.id,
+            email: userInfo.value.email,
+            username: userInfo.value.userName,
+          })
+          scope.setTag('process', 'renderer')
+
+          mixpanel.identify(String(userInfo.value.id))
+
+          localNetwork.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
+
+          mixpanel.people.set({
+            screen_resolution: `${screen.width}x${screen.height}`,
+            country_code: localNetwork.value.country_code,
+            $name: userInfo.value.userName,
+            $email: userInfo.value.email,
+            $language: locale.currentLocale,
+            $city: localNetwork.value.city,
+            $region: localNetwork.value.region,
+            $country_code: localNetwork.value.country_code,
+            $timezone: localNetwork.value.timezone,
+            $localNetwork: localNetwork,
+            $appVersion: appVersion.value,
+          })
         })
-        scope.setTag('process', 'renderer')
-
-        mixpanel.identify(String(userInfo.value.id))
-
-        localNetwork.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
-
-        mixpanel.people.set({
-          screen_resolution: `${screen.width}x${screen.height}`,
-          country_code: localNetwork.value.country_code,
-          $name: userInfo.value.userName,
-          $email: userInfo.value.email,
-          $language: locale.currentLocale,
-          $city: localNetwork.value.city,
-          $region: localNetwork.value.region,
-          $country_code: localNetwork.value.country_code,
-          $timezone: localNetwork.value.timezone,
-          $localNetwork: localNetwork,
-          $appVersion: appVersion.value,
-        })
-      })
+      }
     }
 
     function mixpanelTrack(event_name: string, data?: Record<string, any>) {

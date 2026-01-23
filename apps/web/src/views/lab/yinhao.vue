@@ -284,7 +284,7 @@ function captcha() {
   })
 }
 
-getInviteCode().then(code => console.log('🚀 ~ getInviteCode().then ~ code:', code))
+// getInviteCode().then(code => console.log('🚀 ~ getInviteCode().then ~ code:', code))
 
 const selectedCity = ref()
 const cities = ref([
@@ -294,6 +294,10 @@ const cities = ref([
   { name: 'Istanbul', code: 'IST' },
   { name: 'Paris', code: 'PRS' },
 ])
+
+function showMcp() {
+  emitter.emit('mcpOpen')
+}
 </script>
 
 <template>
@@ -304,9 +308,24 @@ const cities = ref([
     <RxButton label="open1" @click="open1" />
     <RxButton label="open2" @click="open2" />
     <RxButton label="captcha" @click="captcha" />
+    <RxButton label="show mcp" @click="showMcp" />
 
     <Select v-model="selectedCity" editable :options="cities" filter option-label="name" placeholder="Select a City" class="w-full md:w-56" />
-    <ScrollPanel class="w-100 h-100">
+
+    <div class="inline-flex items-center gap-2">
+      <!-- <SvgIcon name="mcp/rx_ic_browser_branches" color="orange" size="24" />
+      <SvgIcon name="mcp/rx_ic_browser_speed" color="orange" size="24" />
+      <SvgIcon name="mcp/rx_ic_browser_stop" color="orange" size="24" /> -->
+
+      <SvgIcon name="base/rx_ic_browser_dialog" color="orange" size="24" />
+      <SvgIcon name="base/rx_ic_browser_hammer" color="orange" size="24" />
+      <SvgIcon name="base/rx_ic_browser_history" color="orange" size="24" />
+      <SvgIcon name="base/rx_ic_browser_pause" color="orange" size="24" />
+      <SvgIcon name="base/rx_ic_browser_send" color="orange" size="24" />
+      <SvgIcon name="base/rx_ic_browser_talk" color="orange" size="24" />
+    </div>
+
+    <!-- <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
         nisi ut aliquip ex ea commodo consequat.
@@ -330,7 +349,7 @@ const cities = ref([
         voluptates repudiandae sint et molestiae non
         recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat
       </p>
-    </ScrollPanel>
+    </ScrollPanel> -->
 
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">

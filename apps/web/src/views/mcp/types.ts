@@ -1,195 +1,165 @@
-/**
- * SSE 事件类型定义
- * 与后端保持一致
- */
-export type StreamEventType
-  = | 'session'
-    | 'user_message_id' // 用户消息 ID（用于绑定 AI 回复）
-    | 'thinking' // Simple 模式
-    | 'content' // Simple 模式
-    | 'planning_thinking'
-    | 'planning_content'
-    | 'plan_status'
-    | 'plan'
-    | 'worker_start'
-    | 'worker_thinking'
-    | 'worker_content'
-    | 'worker_status'
-    | 'worker_complete'
-    | 'synthesis_thinking'
-    | 'synthesis_content'
-    | 'synthesis_status'
-    | 'tool_call'
-    | 'tool_result'
-    | 'token_usage'
-    | 'error'
-    | 'done'
-
-/**
- * SSE 事件接口
- */
-export interface StreamEvent {
-  phase?: 'planning' | 'worker' | 'synthesis' | 'simple'
-  type: StreamEventType
-  data: any
+// SSE 事件数据类型
+export interface SSEEventData {
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt'
+  data?: {
+    sessionId?: string
+    toolId?: string
+    toolName?: string
+    args?: Record<string, any>
+    result?: string
+    et?: number
+    status?: ToolCallStatus | WorkerStatus
+    text?: string
+    taskId?: string
+    thinkingId?: string
+    contentId?: string
+    message?: string
+  }
   timestamp?: number
 }
 
-export interface TokenUsage {
-  input?: number
-  output?: number
-  total?: number
-  cost?: number
-}
+// 回复结束状态
+export type ReplyEndStatus = 'done' | 'error' | 'interrupt'
 
-/**
- * 计划任务接口
- */
-export interface PlanTask {
-  taskId: string
-  task: string
-  dependencies?: string[]
-  status?: 'pending' | 'running' | 'completed'
-}
+// 工具调用状态
+export type ToolCallStatus = 'pending' | 'success' | 'failed'
 
-/**
- * Worker 状态接口
- */
-export interface WorkerState {
-  taskId: string
-  task: string
-  status: 'pending' | 'running' | 'completed' | 'error'
-  /**
-   * 流式累加
-   */
-  thinking: string
-  content: string /**
-                   * 流式累加
-                   */
-  toolCalls?: Array<{
-    toolName: string
-    args: any
-    result?: any
-    executionTime?: number
-    taskId?: string
-  }>
-}
+// Worker 任务状态
+export type WorkerStatus = 'pending' | 'success' | 'failed'
 
-/**
- * 工具调用接口
- */
-export interface ToolCall {
-  toolName: string
-  args: any
-  result?: any
-  executionTime?: number
+// 消息块类型
+export type MessageBlockType = 'thinking' | 'content' | 'tool_call'
+
+// Thinking 消息块
+export interface ThinkingBlock {
+  type: 'thinking'
+  thinkingId: string
+  text: string
+  isThinking: boolean
+  startTimestamp?: number
+  endTimestamp?: number
   taskId?: string
 }
 
-/**
- * 消息接口
- */
-export interface Message {
-  /**
-   * 唯一标识
-   */
-  id: string
-  type: 'user' | 'ai'
-  content: string
-  /**
-   * 原始文本（用于 markdown 渲染）
-   */
-  rawText?: string
+// Content 消息块
+export interface ContentBlock {
+  type: 'content'
+  contentId: string
+  text: string
+  startTimestamp?: number
+  taskId?: string
+}
 
-  /**
-   * 关联的用户消息ID（AI消息使用，用于绑定用户消息和AI回复）
-   */
-  userMessageId?: string
+// Tool Call 消息块
+export interface ToolCallBlock {
+  type: 'tool_call'
+  toolId: string
+  toolName: string
+  args: Record<string, any>
+  status: ToolCallStatus
+  result?: string
+  elapsedTime?: number
+  taskId?: string
+}
 
-  /**
-   * Token 使用信息（可选）
-   */
-  tokenUsage?: TokenUsage
+// 消息块联合类型
+export type MessageBlock = ThinkingBlock | ContentBlock | ToolCallBlock
 
-  /**
-   * 阶段信息
-   */
-  phase?: 'planning' | 'worker' | 'synthesis' | 'simple'
-  /**
-   * 新的事件类型
-   */
-  eventType?: StreamEventType
+// 工具调用 (保留用于 WorkerTask 内部)
+export interface ToolCall {
+  toolId: string
+  toolName: string
+  args: Record<string, any>
+  status: ToolCallStatus
+  result?: string
+  elapsedTime?: number
+  taskId?: string
+  /** 事件到达顺序，用于保持 SSE 流顺序 */
+  order?: number
+}
 
-  /**
-   * Planning 阶段数据
-   */
-  planningData?: {
-    status?: 'analyzing' | 'drafting' | 'generated' | 'started' | 'generating' | 'completed'
-    plan?: PlanTask[]
-    thinking?: string /**
-                       * 流式累加
-                       */
-    /**
-     * 流式累加
-     */
-    content?: string
-  }
+// Worker Thinking (用于 WorkerTask 内部)
+export interface WorkerThinking {
+  thinkingId: string
+  text: string
+  isThinking: boolean
+  startTimestamp?: number
+  endTimestamp?: number
+  /** 事件到达顺序，用于保持 SSE 流顺序 */
+  order?: number
+}
 
-  /**
-   * Worker 阶段数据（单个 worker，用于向后兼容）
-   * @deprecated 使用 workers 数组代替
-   */
-  workerData?: {
-    taskId: string
-    task: string
-    status: 'pending' | 'running' | 'completed' | 'error'
-    /**
-     * 流式累加
-     */
-    thinking?: string
-    /**
-     * 流式累加
-     */
-    content?: string
-  }
+// Worker Content (用于 WorkerTask 内部)
+export interface WorkerContent {
+  contentId: string
+  text: string
+  /** 事件到达顺序，用于保持 SSE 流顺序 */
+  order?: number
+}
 
-  /**
-   * Worker 阶段数据（多个 worker）
-   */
-  workers?: Array<{
-    taskId: string
-    task: string
-    status: 'pending' | 'running' | 'completed' | 'error'
-    /**
-     * 流式累加
-     */
-    thinking?: string
-    /**
-     * 流式累加
-     */
-    content?: string
-    toolCalls?: ToolCall[]
-  }>
+// Worker 任务
+export interface WorkerTask {
+  taskId: string
+  thinkings: WorkerThinking[]
+  toolCalls: ToolCall[]
+  contents: WorkerContent[]
+  status: WorkerStatus
+}
 
-  /**
-   * Synthesis 阶段数据
-   */
-  synthesisData?: {
-    status?: 'started' | 'thinking' | 'generating' | 'completed'
-    /**
-     * 流式累加
-     */
-    thinking?: string
-    /**
-     * 流式累加
-     */
-    content?: string
-  }
+// 规划状态
+export interface PlanningState {
+  /** 是否正在规划中 */
+  isPlanning: boolean
+  /** 规划开始时间（session 事件的时间戳） */
+  startTimestamp?: number
+  /** 规划结束时间（planning 结束或其他事件开始的时间戳） */
+  endTimestamp?: number
+}
 
-  /**
-   * 工具调用（Simple 模式或通用）
-   */
-  toolCalls?: ToolCall[]
+// 当前正在构建的回复
+export interface CurrentReply {
+  sessionId?: string
+  mode: 'orchestrator' | 'simple'
+  messageBlocks: MessageBlock[]
+  workerTasks: WorkerTask[]
+  planningText: string
+  planningState: PlanningState
+  synthesisText: string
+  isComplete: boolean
+  endStatus?: ReplyEndStatus
+  errorMessage?: string
+  startTime: number
+}
 
-  timestamp: number
+// 头像信息
+export interface AvatarInfo {
+  name: string
+  userName: string
+  avatar: string
+  color: string
+  role: 'user' | 'assistant'
+}
+
+// 格式化后的消息
+export interface FormattedMessage extends AvatarInfo {
+  date: string
+  synthesisText?: string
+  mode?: string
+  messageBlocks?: MessageBlock[]
+  workerTasks?: WorkerTask[]
+  planningText?: string
+  planningState?: PlanningState
+  isStreaming?: boolean
+  endStatus?: ReplyEndStatus
+  errorMessage?: string
+}
+
+// SSE 解析结果
+export interface SSEParseResult {
+  messageBlocks: MessageBlock[]
+  workerTasks: WorkerTask[]
+  planningText: string
+  synthesisText: string
+  endStatus?: ReplyEndStatus
+  errorMessage?: string
 }

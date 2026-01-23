@@ -1,7 +1,8 @@
-import systeminformation, { Systeminformation } from 'systeminformation'
+import type { Systeminformation } from 'systeminformation'
 import { exec, execSync } from 'node:child_process'
 import { networkInterfaces, platform } from 'node:os'
 import { parse } from 'node:path'
+import systeminformation from 'systeminformation'
 
 /** 获取操作系统版本 */
 export function getOSVersion(): string {
@@ -45,7 +46,7 @@ function getSystemDisks() {
 }
 
 function getMacDiskInfo(filePath: string) {
-  return new Promise((resolve) => {
+  return new Promise<Partial<Systeminformation.FsSizeData>>((resolve) => {
     exec(`df -P "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
         console.error(`Failed to execute df command: ${error}`)
@@ -58,9 +59,9 @@ function getMacDiskInfo(filePath: string) {
       }
 
       const data = lines[1].trim().split(/\s+/)
-      const totalBlocks = parseInt(data[1])
-      const usedBlocks = parseInt(data[2])
-      const availableBlocks = parseInt(data[3])
+      const totalBlocks = Number.parseInt(data[1])
+      const usedBlocks = Number.parseInt(data[2])
+      const availableBlocks = Number.parseInt(data[3])
       const totalBytes = totalBlocks * 512
       const usedBytes = usedBlocks * 512
       const availableBytes = availableBlocks * 512
@@ -72,7 +73,6 @@ function getMacDiskInfo(filePath: string) {
         available: availableBytes,
         use: usageRatio,
       })
-
     })
   })
 }

@@ -1,6 +1,6 @@
+import { app } from 'electron'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, join, parse } from 'node:path'
-import { app } from 'electron'
 import { store } from '/@/modules/store'
 
 /**
@@ -20,8 +20,9 @@ export async function getInstallerPath(): Promise<string | null> {
 
     // 去除可能的换行符和空格
     return content.trim()
-  } catch (error) {
-    console.warn('Failed to read installer path file:', error)
+  }
+  catch (error) {
+    console.debug('Failed to read installer path file:', error)
     return null
   }
 }
@@ -41,7 +42,8 @@ export async function isInstalledViaInstaller(): Promise<boolean> {
  */
 export async function getInstallerParams() {
   const installerPath = await getInstallerPath()
-  if (!installerPath) return null
+  if (!installerPath)
+    return null
 
   try {
     const fileName = parse(installerPath).name.split('-H-')[1] || ''
@@ -55,7 +57,8 @@ export async function getInstallerParams() {
       inviteCode,
       visitorId,
     }
-  } catch {
+  }
+  catch {
     return null
   }
 }
@@ -83,7 +86,8 @@ export async function clearInstallerPath(): Promise<boolean> {
 
     console.log('installer-path file content cleared')
     return true
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to clear installer-path file:', error)
     return false
   }

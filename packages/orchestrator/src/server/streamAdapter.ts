@@ -1,13 +1,36 @@
-import type { StreamEvent } from './types'
+/**
+ * Event types for SSE stream
+ */
+export type StreamEventType
+  = | 'session'
+    | 'thinking' // Simple 模式
+    | 'planning'
+    | 'worker_content'
+    | 'worker_thinking'
+    | 'worker_result'
+    | 'synthesis'
+    | 'tool_call'
+    | 'tool_result'
+    | 'token_usage' // Token 使用信息
+    | 'error'
+    | 'done'
+    | 'interrupt'
+    | 'content'
+
+export interface StreamEvent {
+  type: StreamEventType
+  data: any
+  timestamp?: number
+}
 
 /**
  * Adapter to convert internal events to SSE format
  */
-export class StreamAdapter {
+class StreamAdapter {
   /**
    * Format event as SSE message
    */
-  static formatSSE(event: StreamEvent): string {
+  formatSSE(event: StreamEvent): string {
     const data = JSON.stringify(event)
     const timestamp = event.timestamp || Date.now()
 
@@ -19,7 +42,7 @@ export class StreamAdapter {
   /**
    * Create session event
    */
-  static session(sessionId: string): string {
+  session(sessionId: string): string {
     return this.formatSSE({
       type: 'session',
       data: { sessionId },
@@ -32,10 +55,23 @@ export class StreamAdapter {
   /**
    * Create planning thinking event (流式)
    */
-  static planningThinking(text: string): string {
+  thinking(text: string, thinkingId: string): string {
     return this.formatSSE({
-      type: 'planning_thinking',
-      data: { text },
+      type: 'thinking',
+      data: { text, thinkingId },
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create content event (流式)
+   * @param text
+   * @returns
+   */
+  content(text: string, contentId: string): string {
+    return this.formatSSE({
+      type: 'content',
+      data: { text, contentId },
       timestamp: Date.now(),
     })
   }
@@ -43,32 +79,10 @@ export class StreamAdapter {
   /**
    * Create planning content event (流式)
    */
-  static planningContent(text: string): string {
+  planning(text: string): string {
     return this.formatSSE({
-      type: 'planning_content',
+      type: 'planning',
       data: { text },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
-   * Create plan status event
-   */
-  static planStatus(status: 'analyzing' | 'drafting' | 'generated'): string {
-    return this.formatSSE({
-      type: 'plan_status',
-      data: { status },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
-   * Create plan event (流式 - 单个任务项)
-   */
-  static plan(task: { taskId: string, task: string, dependencies?: string[] }): string {
-    return this.formatSSE({
-      type: 'plan',
-      data: { task },
       timestamp: Date.now(),
     })
   }
@@ -76,56 +90,28 @@ export class StreamAdapter {
   // ==================== Worker 阶段 (Worker Phase) ====================
 
   /**
-   * Create worker start event
-   */
-  static workerStart(taskId: string, task: string): string {
-    return this.formatSSE({
-      type: 'worker_start',
-      data: { taskId, task },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
    * Create worker thinking event (流式)
    */
-  static workerThinking(taskId: string, text: string): string {
+  workerThinking(taskId: string, text: string, thinkingId: string): string {
     return this.formatSSE({
       type: 'worker_thinking',
-      data: { taskId, text },
+      data: { taskId, text, thinkingId },
       timestamp: Date.now(),
     })
   }
 
-  /**
-   * Create worker content event (流式)
-   */
-  static workerContent(taskId: string, text: string): string {
+  workerContent(taskId: string, text: string, contentId: string): string {
     return this.formatSSE({
       type: 'worker_content',
-      data: { taskId, text },
+      data: { taskId, text, contentId },
       timestamp: Date.now(),
     })
   }
 
-  /**
-   * Create worker status event
-   */
-  static workerStatus(taskId: string, status: 'running' | 'completed' | 'error', message?: string): string {
+  workerResult(data: { taskId: string, status: 'success' | 'failed', error?: any }): string {
     return this.formatSSE({
-      type: 'worker_status',
-      data: { taskId, status, message },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
-   * Create worker complete event
-   */
-  static workerComplete(taskId: string, result?: any): string {
-    return this.formatSSE({
-      type: 'worker_complete',
-      data: { taskId, result },
+      type: 'worker_result',
+      data,
       timestamp: Date.now(),
     })
   }
@@ -135,32 +121,10 @@ export class StreamAdapter {
   /**
    * Create synthesis thinking event (流式)
    */
-  static synthesisThinking(text: string): string {
+  synthesis(text: string): string {
     return this.formatSSE({
-      type: 'synthesis_thinking',
+      type: 'synthesis',
       data: { text },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
-   * Create synthesis content event (流式)
-   */
-  static synthesisContent(text: string): string {
-    return this.formatSSE({
-      type: 'synthesis_content',
-      data: { text },
-      timestamp: Date.now(),
-    })
-  }
-
-  /**
-   * Create synthesis status event
-   */
-  static synthesisStatus(status: 'started' | 'thinking' | 'generating' | 'completed'): string {
-    return this.formatSSE({
-      type: 'synthesis_status',
-      data: { status },
       timestamp: Date.now(),
     })
   }
@@ -170,7 +134,7 @@ export class StreamAdapter {
   /**
    * Create error event
    */
-  static error(message: string, details?: any, taskId?: string): string {
+  error(message: string, details?: any, taskId?: string): string {
     return this.formatSSE({
       type: 'error',
       data: { message, details, taskId },
@@ -179,9 +143,20 @@ export class StreamAdapter {
   }
 
   /**
+   * Create interrupt event
+   */
+  interrupt(message: string): string {
+    return this.formatSSE({
+      type: 'interrupt',
+      data: { message },
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
    * Create done event
    */
-  static done(finalAnswer?: string): string {
+  done(finalAnswer?: string): string {
     return this.formatSSE({
       type: 'done',
       data: { finalAnswer },
@@ -194,10 +169,10 @@ export class StreamAdapter {
   /**
    * Create tool call event
    */
-  static toolCall(toolName: string, args: any, taskId?: string): string {
+  toolCall(data: { toolName: string, args: any, taskId?: string, toolId?: string }): string {
     return this.formatSSE({
       type: 'tool_call',
-      data: { toolName, args, taskId },
+      data,
       timestamp: Date.now(),
     })
   }
@@ -205,53 +180,25 @@ export class StreamAdapter {
   /**
    * Create tool result event
    */
-  static toolResult(toolName: string, result: any, executionTime?: number, taskId?: string): string {
+  toolResult(data: { toolName: string, result: any, et?: number, taskId?: string, toolId?: string, status?: 'success' | 'failed' }): string {
     return this.formatSSE({
       type: 'tool_result',
-      data: { toolName, result, executionTime, taskId },
+      data: { ...data },
+      timestamp: Date.now(),
+    })
+  }
+  // ==================== Token Usage 类 ====================
+
+  /**
+   * Create token usage event
+   */
+  tokenUsage(data: { current: any, delta: any }): string {
+    return this.formatSSE({
+      type: 'token_usage',
+      data,
       timestamp: Date.now(),
     })
   }
 }
 
-
-type LangGraphStreamEvent = {
-  event: string;
-  name: string;
-  run_id: string;
-  tags?: string[];
-  metadata: Record<string, any>;
-  data: any;
-};
-
-// 只保留你关心的事件类型
-const KEEP = new Set([
-  "on_chat_model_stream",
-  "on_chat_model_end",
-  "on_tool_start",
-  "on_tool_end",
-  "on_chain_start",
-  "on_chain_end",
-]);
-
-export function parseEvent(e: LangGraphStreamEvent) {
-  if (!KEEP.has(e.event)) return null;
-
-  switch (e.event) {
-    case "on_chat_model_stream": {
-      const delta = e.data?.chunk?.content ?? "";
-      return { type: "delta", runId: e.run_id, node: e.metadata?.langgraph_node ?? e.name, delta, tags: e.tags };
-    }
-    case "on_chat_model_end": {
-      // end 时可能拿 usage/完整 message
-      const output = e.data?.output ?? e.data;
-      return { type: "end", runId: e.run_id, node: e.metadata?.langgraph_node ?? e.name, output, tags: e.tags };
-    }
-    case "on_tool_start":
-      return { type: "tool_start", runId: e.run_id, tool: e.name, input: e.data?.input, tags: e.tags };
-    case "on_tool_end":
-      return { type: "tool_end", runId: e.run_id, tool: e.name, output: e.data?.output , tags: e.tags};
-    default:
-      return { type: "event", raw: e, tags: e.tags };
-  }
-}
+export const streamAdapter = new StreamAdapter()

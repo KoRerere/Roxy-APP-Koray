@@ -31,7 +31,15 @@ defineExpose({
 <template>
   <form class="rx-form" @submit="handleSubmit">
     <template v-for="item in _innerFormSchemas" :key="item.field">
-      <FormItem v-model="formModel[item.field]" v-model:errors="errors" :schema="item" :validation-schema />
+      <FormItem v-model="formModel[item.field]" v-model:errors="errors" :schema="item" :validation-schema>
+        <template
+          v-for="(_, name) in $slots"
+          :key="name"
+          #[name]
+        >
+          <slot :name="name" />
+        </template>
+      </FormItem>
     </template>
     <div v-if="footer" class="footer">
       <slot name="footer">

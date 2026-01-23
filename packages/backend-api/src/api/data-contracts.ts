@@ -1776,6 +1776,18 @@ export interface UserGetUserInfoListData {
     /** 是否公共空间 */
     workspaceType: number;
     role: number;
+    onboardingTaskStatus: {
+      createProfileStatus: boolean;
+      createProxyStatus: boolean;
+      inviteMemberStatus: boolean;
+      firstRegisterGuideStatus: boolean;
+      hideSidebarEntryStatus: boolean;
+      contextMenuGuideStatus: boolean;
+      saveFilterGuideStatus: boolean;
+      createProfileVideoEntryStatus: boolean;
+      createProfileTourGuideStatus: boolean;
+      createProxyVideoEntryStatus: boolean;
+    };
     /** 列表备注状态 */
     remarkDisplayStatus: boolean;
   };
@@ -3388,18 +3400,85 @@ export interface GetPromotionLinkDiscountAndUsernameListData {
 export interface UserGetLlmInfoListData {
   code: number;
   data: {
-    SILICONFLOW_API_KEY: string;
+    chatLimit: number;
+    apikey: string;
+    available: boolean;
+    balance: string;
+    totalBalance: string;
+    provider: string;
+    model: string;
+    baseUrl: string;
   };
   msg: string;
 }
 
 export interface UserSaveLlmDataCreatePayload {
-  /** 内容 */
   content: string;
+  /** 回复内容（阿里云地址） */
+  resultUrl: string;
 }
 
 export interface UserSaveLlmDataCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetUninstallReasonQuestionListListData {
+  code: number;
+  data: {
+    code: string;
+    id: number;
+    sortNum: number;
+    title: string;
+  }[];
+  msg: string;
+}
+
+export interface UserAddUninstallReasonAnswerCreatePayload {
+  selectedReasonIds: number[];
+  /** 其他原因详细说明 */
+  otherReasonText: string;
+}
+
+export interface UserAddUninstallReasonAnswerCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface CheckEmailRegisteredListParams {
+  /** 邮箱 */
+  email: string;
+}
+
+export interface CheckEmailRegisteredListData {
+  code: number;
+  data: {
+    /** true:已注册，false:未注册 */
+    is_registered: boolean;
+  };
+  msg: string;
+}
+
+export interface UserGetPromptTemplateListListData {
+  code: number;
+  data: {
+    /** 创建时间 */
+    createTime?: string;
+    /** ID */
+    id?: number;
+    /** 提示模板内容 */
+    promptTemplateContent?: string;
+    /** 深色ICON */
+    promptTemplateIconDark?: string;
+    /** 亮色ICON */
+    promptTemplateIconLight?: string;
+    /** 提示模板标题 */
+    promptTemplateTitle?: string;
+    /** 状态：1启用，0：停用 */
+    status?: number;
+    /** 修改时间 */
+    updateTime?: string;
+  }[];
   msg: string;
 }
 
@@ -5357,12 +5436,12 @@ export interface UserGetUserBuyProxyListListParams {
    * 分页索引
    * @example 1
    */
-  page_index: number;
+  page_index?: number;
   /**
    * 分页条数
    * @example 15
    */
-  page_size: number;
+  page_size?: number;
   /**
    * 排序字段
    * @example "createTime"
@@ -7854,6 +7933,19 @@ export interface GetActivityDiscountListData {
     end_timestamp: number;
     discountPercentage: number;
     type: number;
+  };
+  msg: string;
+}
+
+export type UserCalcLlmTokenCostCreatePayload = object;
+
+export interface UserCalcLlmTokenCostCreateData {
+  code: number;
+  data: {
+    cost: string;
+    balance: string;
+    totalBalance: string;
+    available: boolean;
   };
   msg: string;
 }

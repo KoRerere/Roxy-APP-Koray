@@ -1,10 +1,10 @@
+import type { ProxyDetectionParams } from '/@/utils'
 import { format } from 'date-fns'
 import express from 'express'
 import { randomUUID } from 'node:crypto'
-import type { ProxyDetectionParams } from '/@/utils'
 import { API } from '/@/api'
 import { openAPICommonHeaders } from '/@/constants/common'
-import { proxyMapping } from '/@/modules/openapi/routes/mapping/'
+import { boughtProxyMapping, proxyMapping } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { delRoxynetProxy } from '/@/modules/roxynet'
 import { proxyDetection } from '/@/utils'
@@ -88,6 +88,22 @@ router.get('/list', async (req, res) => {
     const result = await API.proxy.userGetProxyModuleList(params, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = mappingKeys(proxyMapping, result.data.rows)
+    }
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+/* 已购代理 IP 列表 */
+router.get('/bought_list', async (req, res) => {
+  const { workspaceId, type, ...params } = req.query as Record<string, any>
+  const _type = ['list_use', 'available_list'][type] || 'list_use'
+  try {
+    const result = await API.proxy.userGetUserBuyProxyListList({ ...params, type: _type }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    if (result.code === 0 && result.data?.rows) {
+      result.data.rows = mappingKeys(boughtProxyMapping, result.data.rows)
     }
     res.json(result)
   }
