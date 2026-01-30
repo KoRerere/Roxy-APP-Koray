@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import currency from 'currency.js'
+import PayGift from '/@/views/tutorial/components/welcome-modal/pay-gift.vue'
+import FirstGift from '/@/views/tutorial/components/welcome-modal/first-gift.vue'
 import { shuffle } from 'es-toolkit'
 import { isEmptyValue } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
-import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { API } from '/@/api'
 import { AnimatePresence, motion } from 'motion-v'
+import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
+import { emitter } from '/@/utils/eventBus'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -17,7 +19,6 @@ const emit = defineEmits<{
 const themeStore = useThemeStore()
 const { mixpanelTrack } = useUserStore()
 const { roxyGifts } = storeToRefs(useCampaignStore())
-const { currentLocale } = storeToRefs(useSimpleLocale())
 const { getRoxyGifts } = useCampaignStore()
 
 const stepList = ref<any[]>(shuffle([
@@ -157,17 +158,13 @@ const stepList = ref<any[]>(shuffle([
     ]).concat([{ label: $t('我都没用过'), value: 'None' }, { label: $t('其他'), value: 'Other' }]),
   },
 ]).slice(0, 3))
-
+const step = ref<'survey' | 'info' | 'new'>('survey')
 const page = ref(0)
-const showVideo = ref(false)
+const firstGift = ref()
+const chooseGift = ref()
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/information_bg.svg")' : 'url("/images/information_bg_dark.svg")'
-})
-
-const giftImgSrc = computed(() => {
-  const suffix = currentLocale.value === 'ru' ? 'en' : currentLocale.value
-  return `/images/campaing/gifts-card-${suffix}-${themeStore.realTheme}.svg`
 })
 
 const nextDisabled = computed(() => {
@@ -232,12 +229,40 @@ function saveUserSurvey() {
 }
 
 async function getRoxyGiftsInfo() {
-  await getRoxyGifts()
-  if (!roxyGifts.value || roxyGifts.value.isValid === false) {
-    onClose()
-    return
+  try {
+    await getRoxyGifts()
+    if (!roxyGifts.value || roxyGifts.value.isValid === false) {
+      await getNewUserGift()
+      return
+    }
+    step.value = 'info'
   }
-  showVideo.value = true
+  catch (error) {
+    onClose()
+  }
+}
+
+async function getNewUserGift() {
+  try {
+    const { code, data } = await API.base.userRegisterGiftConfigList()
+    if (code !== 0 || !data?.enable) {
+      onClose()
+      return
+    }
+    firstGift.value = data
+    step.value = 'new'
+  }
+  catch (error) {
+    onClose()
+  }
+}
+
+async function onConfirm() {
+  const windowIds = await genDefaultProfileByCount(firstGift.value.count)
+  await API.base.userRegGiftCreate({ windowIds, giftType: chooseGift.value })
+
+  emitter.emit('firstRegisterGuide')
+  onClose()
 }
 </script>
 
@@ -252,7 +277,8 @@ async function getRoxyGiftsInfo() {
         {{ $t('欢迎加入') }}
       </div>
     </div>
-    <template v-if="!showVideo">
+
+    <template v-if="step === 'survey'">
       <AnimatePresence mode="wait">
         <motion.div v-if="stepList[page]" :key="page" class="px-24" :initial="{ x: 50, opacity: 0 }" :animate="{ x: 0, opacity: 1 }" :exit="{ x: -50, opacity: 0 }" :transition="{ duration: 0.3 }">
           <div class="h-110 flex flex-col justify-center gap-6">
@@ -286,64 +312,23 @@ async function getRoxyGiftsInfo() {
         <div v-for="(_, index) in stepList" :key="index" class="flex-1 h-2 rounded-3 dot" :class="{ active: index <= page }" />
       </div>
     </template>
-    <!-- && videoList?.length > 0 -->
-    <motion.div v-else-if="showVideo && roxyGifts" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
-      <!-- <div class="h-110 flex flex-col justify-center gap-6">
-        <motion.div :initial="{ y: -20, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.35, delay: 0.1 }" class="px-14">
-          <div class="subtitle">
-            {{ $t('学习关于 RoxyBrowser 的一切') }}
-          </div>
-          <div class="mt-1.5 desc">
-            {{ $t('在此之前，您可以学习一些简单的新手教程，助您快速掌握使用技巧！') }}
-          </div>
-        </motion.div>
-        <motion.div :initial="{ y: -20, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.35, delay: 0.2 }">
-          <RxCarousel>
-            <template #default="{ itemClass }">
-              <div v-for="(item, index) in videoList" :key="item.title" :class="itemClass" class="flex flex-col gap-2.5 cursor-pointer first:pl-14 last:pr-14" @click="toTutorial(item)">
-                <div class="pa-2.5 rounded-3 video-image">
-                  <img class="block w-88 rounded-2" :src="item.coverImage">
-                </div>
-                <div class="px-3 video-title">
-                  {{ `${Number(index) + 1}`.padStart(2, '0') }}.
-                  {{ item.title }}
-                </div>
-              </div>
-            </template>
-          </RxCarousel>
-        </motion.div>
-      </div> -->
 
-      <div class="h-110 flex items-center gap-9 px-24 gift">
-        <img class="block w-90" :src="giftImgSrc">
-        <div class="flex flex-col gap-5">
-          <div class="gift-title">
-            {{ $t('🎁 "配齐"计划：买窗口套餐，IP 免费领') }}
-          </div>
-          <div class="gift-desc">
-            {{ $t('限时活动：窗口套餐消费满 {amount} 一次，即可在以下选项中选择一项作为赠品，多买多送：', { amount: currency(roxyGifts.price).format() }) }}
-          </div>
-          <div class="gift-desc">
-            {{ $t('{country} 静态住宅代理。每满 {amount} 赠送 {count} 条，不设上限。', { country: roxyGifts.country, amount: currency(roxyGifts.price).format(), count: roxyGifts.ispCount }) }}
-          </div>
-          <i18n-t tag="div" class="gift-desc"
-                  :keypath="$t('动态住宅代理（由合作伙伴 {link} 提供）。每满 {amount} 赠送 {value}GB，不设上限。', { link: '{link}', amount: currency(roxyGifts.price).format(), value: roxyGifts.dynamicFlow })" scope="global"
-          >
-            <template #link>
-              <a class="gift-link" href="https://rola-ip.co" target="_blank">rola-ip.co</a>
-            </template>
-          </i18n-t>
-        </div>
-      </div>
+    <motion.div v-else-if="step === 'info' && roxyGifts" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
+      <PayGift :roxy-gifts="roxyGifts" />
+    </motion.div>
+
+    <motion.div v-else-if="step === 'new' && firstGift" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
+      <FirstGift v-model="chooseGift" :data="firstGift" />
     </motion.div>
 
     <div class="mt-8 flex items-center justify-end gap-3 px-6">
-      <template v-if="!showVideo">
+      <template v-if="step === 'survey'">
         <RxButton class="mx-auto ml-0" variant="text" severity="secondary" :label="$t('跳过')" @click="handleSkip" />
         <RxButton variant="outlined" severity="secondary" :label="$t('上一个')" @click="handlePrev" />
         <RxButton :label="page === stepList.length - 1 ? $t('完成') : $t('下一个')" :disabled="nextDisabled" @click="handleNext" />
       </template>
-      <RxButton v-else :label="$t('了解')" @click="onClose" />
+      <RxButton v-else-if="step === 'info'" :label="$t('下一步')" @click="getNewUserGift" />
+      <RxButton v-else :label="$t('确认')" :disabled="!chooseGift" @click="onConfirm" />
     </div>
   </div>
 </template>
@@ -411,31 +396,6 @@ async function getRoxyGiftsInfo() {
 
   &.active {
     background: var(--colors-background-bg-brand);
-  }
-}
-
-.gift {
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  &-desc {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  &-link {
-    color: var(--colors-text-text-link);
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-decoration-skip-ink: auto;
-    text-decoration-thickness: auto;
-    text-underline-offset: auto;
-    text-underline-position: from-font;
   }
 }
 </style>

@@ -87,12 +87,12 @@ const list = computed(() => {
       svgColor: 'var(--colors-icon-icon-tertiary)',
       data: {
         hasProxy: hasProxy.value,
-        // 最近一次检测的代理信息
+        // 最近一次检测的代理 IP 信息
         lastCountry: data.lastCountry || '--',
         lastCity: strConcat('/', data.lastCity) || '',
         lastIp: data.lastIp || '--',
         checkTime: data.checkTime ? formatProxyTime(data.checkTime) : '--',
-        // 上一次检测的代理信息
+        // 上一次检测的代理 IP 信息
         beforeCountry: data.beforeProxyInfo?.beforeCountry || '--',
         beforeCity: strConcat('/', data.beforeProxyInfo?.beforeCity) || '',
         beforeIp: data.beforeProxyInfo?.beforeIp || '--',
@@ -160,7 +160,7 @@ function getProxyModel() {
       },
     },
     {
-      label: $t('测试代理'),
+      label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
       visible: hasProxy.value,
       command: async () => {
@@ -177,7 +177,7 @@ function getProxyModel() {
       },
     },
     {
-      label: $t('刷新代理'),
+      label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
       visible: hasProxy.value,
       disabled: !data.refreshUrl,
@@ -191,12 +191,12 @@ function getProxyModel() {
       separator: true,
     },
     {
-      label: $t('编辑代理'),
+      label: $t('编辑代理 IP'),
       icon: 'base/rx_ic_edit',
       visible: data.buyProxyType === ProxyType.resource && hasProxy.value && !role.isViewer,
       command: () => {
         if (data.isEncryptProxy) {
-          showToast(-1, $t('该代理已加密无法编辑，如需更换，请先删除此代理或选择其他代理'))
+          showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
           return
         }
         createProxy(proxyData)
@@ -242,7 +242,7 @@ function getProxyModel() {
             return
           }
 
-          showToast(0, $t('代理已购买成功，正在为您配置中，请稍后。若长时间未加载代理，请刷新页面或联系技术支持。'))
+          showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
 
           const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
           if (code !== 0 || !data.rows?.[0]) {
@@ -412,8 +412,8 @@ function getAccountModel() {
 function createProxy(proxyData?: Record<string, any>) {
   drawerInstance.showDrawer({
     title: proxyData
-      ? $t('为[{workspaceName}-{uid}]编辑代理', { workspaceName, uid: data.windowSortNum })
-      : $t('为[{workspaceName}-{uid}]添加代理', { workspaceName, uid: data.windowSortNum }),
+      ? $t('为[{workspaceName}-{uid}]编辑代理 IP', { workspaceName, uid: data.windowSortNum })
+      : $t('为[{workspaceName}-{uid}]添加代理 IP', { workspaceName, uid: data.windowSortNum }),
     dismissable: false,
     slots: {
       container: () => h(ProxyCreate, {
@@ -433,7 +433,7 @@ function createProxy(proxyData?: Record<string, any>) {
 
 function openProxyDrawer(proxyData: Record<string, any>) {
   drawerInstance.showDrawer({
-    title: $t('为[{workspaceName}-{uid}]选择代理', { workspaceName, uid: data.windowSortNum }),
+    title: $t('为[{workspaceName}-{uid}]选择代理 IP', { workspaceName, uid: data.windowSortNum }),
     dismissable: false,
     slots: {
       container: () => h(ProxyQuick, {

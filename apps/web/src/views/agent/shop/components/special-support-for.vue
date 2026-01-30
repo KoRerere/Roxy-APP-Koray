@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  icons: string[]
+  icons: any[]
 }>()
 </script>
 
@@ -10,8 +10,8 @@ defineProps<{
       {{ $t('特别支持') }}:
     </div>
     <div class="flex items-center gap-2.5">
-      <div v-for="imgUrl in icons" :key="imgUrl" class="feature-icon">
-        <img class="block w-3.5 h-3.5" :src="imgUrl">
+      <div v-for="item in icons" :key="item.url" class="feature-icon">
+        <img v-tooltip.top="item.desc" class="block w-3.5 h-3.5" :src="item.url">
       </div>
     </div>
   </div>

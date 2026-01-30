@@ -303,8 +303,8 @@ async function inviteUserInProject(project: Project) {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.name {
+  <style lang="scss" scoped>
+  .name {
   font-size: 13px;
   -webkit-user-drag: none;
 }

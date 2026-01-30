@@ -60,6 +60,7 @@ async function inviteNewMember() {
 
   const projectIds = (selectedProjects.value ?? []).concat(project?.projectId).filter(Boolean)
   const { code, msg } = await API.limit.userBatchInviteCreate({
+    inviteType: 'team',
     emailList,
     role: roleValue.value,
     projectIds,
@@ -97,8 +98,9 @@ async function inviteNewMember() {
       <div class="separator" />
     </template>
     <div class="flex flex-col gap-2">
-      <div class="title">
-        {{ $t('成员邮箱/手机号') }}
+      <div class="flex items-center gap-1">
+        <span class="title">{{ $t('成员邮箱/手机号') }}</span>
+        <SvgIcon v-tooltip.top="$t('被邀请的用户若已在其他项目中，将不会修改身份')" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
       </div>
       <div class="w-full flex items-start gap-2">
         <div class="flex-1 flex items-start py-1 pr-1 content">

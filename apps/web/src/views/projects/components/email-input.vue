@@ -21,26 +21,17 @@ const inputRef = useTemplateRef('input')
 const isFocused = ref(false)
 const inputValue = ref('')
 
-function addTag(raw: string) {
-  const value = raw.trim()
-  if (!value)
-    return
-  if (!allowDuplicate && emailList.value.some(tag => tag.value.includes(value)))
-    return
-  const invalid = !validateEmail(value) && !validatePhone(value)
-  emailList.value.push({ value, invalid })
-}
-
-function confirmInput() {
-  if (!inputValue.value)
-    return
-  addTag(inputValue.value)
-  inputValue.value = ''
+function focusInput() {
+  isFocused.value = true
   nextTick(() => inputRef.value?.focus())
 }
 
-function removeTag(index: number) {
-  emailList.value.splice(index, 1)
+function onBlur() {
+  // 有未确认内容时不隐藏
+  if (inputValue.value) {
+    confirmInput()
+  }
+  isFocused.value = false
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -54,39 +45,53 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+function confirmInput() {
+  if (!inputValue.value || emailList.value.some(item => item.value === inputValue.value)) {
+    inputValue.value = ''
+    return
+  }
+  addTag(inputValue.value)
+  inputValue.value = ''
+  nextTick(() => inputRef.value?.focus())
+}
+
 function onPaste(e: ClipboardEvent) {
   const text = e.clipboardData?.getData('text')
   if (!text)
     return
 
-  e.preventDefault()
-  text.split(/[,;\s]+/).forEach(addTag)
+  e.preventDefault();
+
+  [...new Set(text.split(/[,;\s]+/))]
+    .filter(str => !emailList.value.some(item => item.value === str))
+    .forEach(addTag)
 
   nextTick(() => inputRef.value?.focus())
 }
 
-function focusInput() {
-  isFocused.value = true
-  nextTick(() => inputRef.value?.focus())
+function addTag(raw: string) {
+  const value = raw.trim()
+  if (!value)
+    return
+  if (!allowDuplicate && emailList.value.some(tag => tag.value.includes(value)))
+    return
+  const invalid = !validateEmail(value) && !validatePhone(value)
+  emailList.value.push({ value, invalid })
 }
 
-function onBlur() {
-  // 有未确认内容时不隐藏
-  if (inputValue.value) {
-    confirmInput()
-  }
-  isFocused.value = false
+function removeTag(index: number) {
+  emailList.value.splice(index, 1)
 }
 </script>
 
 <template>
   <div class="flex flex-wrap items-center gap-2 px-2 py-1.5 cursor-text rounded-1.5 input" @click="focusInput">
-    <div v-for="(item, index) in emailList" :key="`${index}_${item.value}`" class="flex items-center h-5.5 gap-1 px-2.5 rounded-full tag" :class="{ error: item.invalid }" @click.stop>
-      <span class="select-none cursor-default">{{ item.value }}</span>
+    <div v-for="(item, index) in emailList" :key="`${index}_${item.value}`" class="flex items-center min-h-5.5 gap-1 px-2.5 rounded-full tag" :class="{ error: item.invalid }" @click.stop>
+      <span class="select-none cursor-default break-all">{{ item.value }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="14" @mousedown.prevent @click="removeTag(index)" />
     </div>
-    <input v-show="isFocused" ref="input" v-model.trim="inputValue" class="flex-1 min-w-30 border-none outline-none bg-transparent ipt" :placeholder="placeholder" @focus="isFocused = true" @blur="onBlur"
-           @keydown="onKeydown" @paste="onPaste"
+    <input v-show="isFocused" ref="input" v-model.trim="inputValue" class="flex-1 min-w-30 border-none outline-none bg-transparent ipt" :placeholder="placeholder" @focus="isFocused = true"
+           @blur="onBlur" @keydown="onKeydown" @paste="onPaste"
     >
     <span v-if="!isFocused && !emailList.length" class="pl-0.5 ipt placeholder">
       {{ placeholder }}

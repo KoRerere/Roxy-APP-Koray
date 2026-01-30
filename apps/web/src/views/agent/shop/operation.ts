@@ -21,6 +21,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
 
   const isDone = datas.every(item => item.orderStatus === ProxyOrderStatus.done)
   const isGift = datas.some(item => !item.proxyProviderId && !item.renewalTime)
+  const canRenew = datas.every(item => item.canRenew)
 
   return [
     {
@@ -55,7 +56,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('续费'),
       icon: 'base/rx_ic_renew2',
       tooltip: $t('续费'),
-      disabled: hasExpired || !isDone || !isOwner.value,
+      disabled: hasExpired || !isDone || !isOwner.value || !canRenew,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -105,7 +106,7 @@ export async function getCustomFilters() {
     },
     {
       type: 'Checkbox',
-      label: $t('代理类型'),
+      label: $t('代理 IP 类型'),
       name: 'proxyProtocol',
       getOptions: () => {
         return ($dict_map.protocol || []).map((item: any) => ({
@@ -120,7 +121,7 @@ export async function getCustomFilters() {
     },
     {
       type: 'text',
-      label: $t('代理主机'),
+      label: $t('代理 IP 主机'),
       name: 'proxyHost',
     },
     {

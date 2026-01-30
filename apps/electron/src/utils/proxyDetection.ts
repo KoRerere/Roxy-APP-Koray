@@ -1,10 +1,10 @@
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import type { AxiosProxyConfig } from 'axios'
 import axios from 'axios'
 import { HttpProxyAgent } from 'http-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import http from 'node:http'
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import {
   delRoxynetProxy,
@@ -126,7 +126,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     }
     console.log('systemProxySwitch', store.systemProxySwitch)
     console.log(`dirId && proxyUserName`, dirId, proxyUserName)
-    const systemProxyAddress = await getSystemProxy()
+    const { addr: systemProxyAddress } = await getSystemProxy()
     await startRoxynet().catch(() => { })
 
     const isUseSystemProxy
@@ -187,7 +187,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     const result = await checkMode(params, !!isUseSystemProxy).catch((error) => {
       Reflect.deleteProperty(error, 'config')
       console.error('proxyDetection error', error)
-      return Promise.reject($t('代理检测失败'))
+      return Promise.reject($t('代理 IP 检测失败'))
     })
 
     console.log('proxyDetection original result', result)
@@ -390,12 +390,12 @@ export async function detectNetwork(type?: 'local' | 'system') {
   type ||= store.systemProxySwitch ? 'system' : 'local'
   if (type === 'system') {
     const systemProxy = await getSystemProxy()
-    console.log('systemProxy', systemProxy)
-    const [host, port] = systemProxy.split(':')
+    console.log('detectNetwork systemProxy', systemProxy)
+    const [host, port] = systemProxy.addr.split(':')
     return proxyDetection({
       host,
       port,
-      proxyCategory: 'HTTP',
+      proxyCategory: systemProxy.protocol.toUpperCase(),
       systemProxySwitch: false,
     })
   }

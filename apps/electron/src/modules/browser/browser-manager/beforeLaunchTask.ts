@@ -40,6 +40,8 @@ export class BeforeLaunchTask {
   lastMessage?: LastMessage
   /** 启动浏览器超时 */
   launchTimer?: NodeJS.Timeout
+  /** 启动浏览器命令行参数 */
+  launchArgs: string[] = []
   /** 当前任务 */
   private currentTask: LaunchTask | null = null
   /** 任务队列 */
@@ -77,7 +79,7 @@ export class BeforeLaunchTask {
   async run() {
     this.taskMap.set($t('内存检测中'), { handler: this.memoryDetection, start: 0, end: 3 })
     this.taskMap.set($t('可用磁盘大小检测中'), { handler: this.diskSizeDetection, start: 3, end: 6 })
-    this.taskMap.set($t('代理检测中'), { handler: this.handleProxyDetection, start: 6, end: 10 })
+    this.taskMap.set($t('代理 IP 检测中'), { handler: this.handleProxyDetection, start: 6, end: 10 })
     this.taskMap.set($t('判断是否需要清理浏览器缓存'), { handler: this.clearBrowserCache, start: 10, end: 15 })
     this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 25 })
     this.taskMap.set($t('生成指纹配置文件'), { handler: this.createFingerprintConfigFile, start: 25, end: 30 })
@@ -128,8 +130,8 @@ export class BeforeLaunchTask {
     clearTimeout(this.launchTimer)
 
     // 生成内核启动的命令行参数
-    const launchArgs = await this.genLaunchCLIArgs()
-    console.log('launchArgs', launchArgs)
+    this.launchArgs = await this.genLaunchCLIArgs()
+    console.log('launchArgs', this.launchArgs)
 
     // 更新浏览器偏好设置
     await this.updateBrowserPreferences()
@@ -151,7 +153,7 @@ export class BeforeLaunchTask {
 
     this.makeBrowserActive = async () => {
       const launchOptions: PuppeteerLaunchOptions = {
-        args: launchArgs,
+        args: this.launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
@@ -442,7 +444,7 @@ export class BeforeLaunchTask {
         return Promise.reject(new Error($t('网络不通停止打开')))
       }
 
-      const message = this.browserItem.winInfo.buyProxyType === 1 ? $t('无法连接至代理，请检查您当前的网络环境并重试。') : $t('代理检测失败')
+      const message = this.browserItem.winInfo.buyProxyType === 1 ? $t('无法连接至代理 IP，请检查您当前的网络环境并重试。') : $t('代理 IP 检测失败')
       this.warningMessages.push(message)
     }
 

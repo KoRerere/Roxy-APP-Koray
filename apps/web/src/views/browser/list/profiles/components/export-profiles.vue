@@ -33,12 +33,12 @@ const excelSchema = [
   },
   {
     key: 'proxyCategory',
-    name: $t('代理类型'),
+    name: $t('代理 IP 类型'),
     getText: (item: Data) => item.proxyCategory === 'noproxy' ? '直连' : item.proxyCategory?.toLocaleUpperCase(),
   },
   {
     key: 'proxyInfo',
-    name: $t('代理信息'),
+    name: $t('代理 IP 信息'),
     getText: (item: Data) => {
       if (!item.host)
         return ''

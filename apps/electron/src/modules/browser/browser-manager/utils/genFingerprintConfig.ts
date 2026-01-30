@@ -1,10 +1,10 @@
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
-import { currentOS } from '/@/constants/common'
+import { currentOS, isDev } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress, safeParseJSON } from '/@/utils'
@@ -521,6 +521,13 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     SessionStorageSyncConfig: {
       enable: winInfo.syncSessionStorage,
       list: winInfo.sessionStorages,
+    },
+    get virtualCameraInfo() {
+      return {
+        enable: isDev,
+        uploadToolTipText: $t('上传视频'),
+        selectFileDialogTitle: $t('选择视频'),
+      }
     },
   }
 }

@@ -53,7 +53,7 @@ const browser = computed(() => {
     return {
       msg: props.text,
       classes: 'cursor-pointer',
-      error: props.data.proxyExpireStatus === ProxyExpireStatus.expired ? $t('您购买的代理已过期。请在打开窗口前更新代理信息') : undefined,
+      error: props.data.proxyExpireStatus === ProxyExpireStatus.expired ? $t('您购买的代理 IP 已过期。请在打开窗口前更新代理 IP 信息') : undefined,
     }
   }
 
@@ -123,7 +123,7 @@ function onUpgradePlan() {
         <i18n-t class="error" tag="div" :keypath="browser.error || browser.warning" scope="global">
           <template v-if="!isPublic" #link>
             {{ $t('要解决此问题，请访问') }}
-            <span class="cursor-pointer error-link" @click="router.push({ name: 'agent-list', query: { name: 'shop' } })">{{ $t('代理页面') }}</span>
+            <span class="cursor-pointer error-link" @click="router.push({ name: 'agent-list', query: { name: 'shop' } })">{{ $t('代理 IP 页面') }}</span>
           </template>
         </i18n-t>
       </template>

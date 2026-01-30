@@ -1,21 +1,21 @@
 <script setup lang="ts">
+import EmailInput from '/@/views/projects/components/email-input.vue'
 import RoleSplit from './role-split.vue'
 import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
 import MemberInfo from '/@/views/team/components/member-info.vue'
-import Fuse from 'fuse.js'
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { getRoleLabelMap, Role } from '/@/enums/'
-import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete'
+import { validatePhone } from '/@/utils'
 
 interface Props {
   project?: Record<string, any>
   projects?: any[]
   projectValues?: number[]
   allMembers?: any[]
-  multiple?: boolean
+  onlyInvite?: boolean
   inviteRole?: Role
   onBeforeClose?: (refresh?: boolean) => void
 }
@@ -25,7 +25,7 @@ const {
   projects,
   projectValues,
   allMembers = [],
-  multiple = false,
+  onlyInvite = false,
   inviteRole = Role.VIEWER,
   onBeforeClose,
 } = defineProps<Props>()
@@ -40,31 +40,9 @@ const { mixpanelTrack } = useUserStore()
 const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
 const needRefresh = ref(false)
-const filteredMembers = ref<any[]>([])
 const roleValue = ref(inviteRole)
 const selectedProjects = ref(projectValues)
-const memberValue = ref()
-
-const isNewMember = computed(() => typeof memberValue.value === 'string')
-const otherMembers = computed(() => multiple
-  ? currentMembers.value
-  : allMembers.filter(member => !!member.status && !currentMembers.value.some(m => m.userId === member.userId)),
-)
-
-const fuse = computed(() => new Fuse(otherMembers.value, {
-  threshold: 0.3,
-  keys: ['email', 'phone'],
-}))
-
-watch(() => memberValue.value, (value) => {
-  if (typeof value === 'string') {
-    const member = otherMembers.value.find(item => item.email === value.trim() && !!item.userId)
-    if (member) {
-      roleValue.value = member.role
-      memberValue.value = member
-    }
-  }
-})
+const emails = ref<any[]>([])
 
 onBeforeMount(() => {
   mixpanelTrack('teammate_invite_open')
@@ -74,45 +52,22 @@ onBeforeUnmount(() => {
   onBeforeClose?.(needRefresh.value)
 })
 
-function onSearch(event: AutoCompleteCompleteEvent) {
-  if (!event.query.trim().length) {
-    filteredMembers.value = [...otherMembers.value]
-  }
-  else {
-    filteredMembers.value = fuse.value.search(event.query).filter(member => !!member.item.userId).map(member => member.item)
-  }
-}
-
-function onOptionSelect({ value }: AutoCompleteOptionSelectEvent) {
-  roleValue.value = value.role
-}
-
-async function joinProject() {
-  const { userId, role, project_info } = memberValue.value
-  const memberProjectIds = project_info.map((item: any) => item.project_id).concat(project?.projectId).filter(Boolean)
-  const projectIds = [...new Set([...memberProjectIds, ...(selectedProjects.value ?? [])])]
-
-  const { code, msg } = await API.team.userMdfTeamInfoV2Create({ userId, role, projectIds })
-  showToast(code, msg)
-  if (code !== 0)
-    return
-  updateCurrentMembers(toRaw(memberValue.value))
-}
-
 async function inviteNewMember() {
-  if (multiple && !selectedProjects.value?.length) {
+  if (onlyInvite && !selectedProjects.value?.length) {
     showToast(-1, $t('请选择至少一个项目'))
     return
   }
 
-  if (!isNewMember.value) {
-    await joinProject()
+  const emailList = emails.value.filter(item => !item.invalid && !currentMembers.value.some(member => member.email === item.value || member.phone === item.value)).map(item => item.value)
+  if (!emailList.length) {
+    showToast(-1, $t('请至少输入一个有效的邮箱/手机号'))
     return
   }
 
   const projectIds = (selectedProjects.value ?? []).concat(project?.projectId).filter(Boolean)
-  const { code, msg } = await API.limit.userInviteCreate({
-    email: memberValue.value.trim(),
+  const { code, msg } = await API.limit.userBatchInviteCreate({
+    inviteType: 'project',
+    emailList,
     role: roleValue.value,
     projectIds,
   })
@@ -127,17 +82,24 @@ async function inviteNewMember() {
   })
   if (code !== 0)
     return
-  updateCurrentMembers({
-    userName: '--',
-    email: memberValue.value,
-    role: roleValue.value,
-    avatarColor: '#FF9191',
-  })
+  updateCurrentMembers(emailList)
 }
 
-function updateCurrentMembers(member: Record<string, any>) {
-  currentMembers.value.unshift(member)
-  memberValue.value = undefined
+function updateCurrentMembers(emailList: string[]) {
+  const newMembers = emailList.map((str) => {
+    const member = allMembers.find(item => item.email === str || item.phone === str)
+    if (member)
+      return { ...member }
+    return {
+      userName: '--',
+      role: roleValue.value,
+      avatarColor: '#FF9191',
+      ...(validatePhone(str) ? { phone: str, email: '' } : { phone: '', email: str }),
+    }
+  })
+
+  emails.value = []
+  currentMembers.value.push(...newMembers)
   needRefresh.value = true
 }
 </script>
@@ -157,28 +119,22 @@ function updateCurrentMembers(member: Record<string, any>) {
       </div>
       <div class="separator" />
     </template>
+
     <div class="flex flex-col gap-2">
-      <div class="title">
-        {{ $t('成员邮箱/手机号') }}
+      <div class="flex items-center gap-1">
+        <span class="title">{{ $t('成员邮箱/手机号') }}</span>
+        <SvgIcon v-tooltip.top="$t('被邀请的用户若已在其他项目中，将不会修改身份')" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
       </div>
-      <div class="w-full flex items-center gap-2">
-        <div class="flex-1 relative">
-          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="!absolute right-2 position-y-center z-1" />
-          <RxAutoComplete v-model="memberValue" class="w-full" size="lg" option-label="email" :placeholder="$t('成员邮箱/手机号')" :suggestions="filteredMembers"
-                          :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }" @complete="onSearch" @option-select="onOptionSelect"
-          >
-            <template #option="{ option }">
-              <MemberInfo :avatar="option.avatar" :user-name="option.userName" :avatar-color="option.avatarColor" :email="option.email" :phone="option.phone" />
-            </template>
-            <template #empty>
-              <span />
-            </template>
-          </RxAutoComplete>
+      <div class="w-full flex items-start gap-2">
+        <div class="flex-1 flex items-start py-1 pr-1 content">
+          <EmailInput v-model="emails" class="min-h-8.25 flex-1 !py-0 !border-none " />
+          <RoleSplit v-model="roleValue" />
         </div>
-        <RxButton size="lg" :label="$t('邀请')" :disabled="!memberValue" @click="inviteNewMember" />
+        <RxButton class="mt-0.25" size="lg" :label="$t('邀请')" @click="inviteNewMember" />
       </div>
     </div>
-    <div v-if="!multiple && currentMembers?.length" class="flex flex-col gap-2">
+
+    <div v-if="!onlyInvite && currentMembers?.length" class="flex flex-col gap-2">
       <div class="title">
         {{ $t('当前项目成员列表') }}
       </div>
@@ -226,5 +182,11 @@ function updateCurrentMembers(member: Record<string, any>) {
       border-bottom: none;
     }
   }
+}
+
+.content {
+  border-radius: 6px;
+  border: 1px solid var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
 }
 </style>

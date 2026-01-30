@@ -29,6 +29,8 @@ export const needDeviceIdApis = [
   '/send_email_register_verify_code',
   '/check_other_device_login',
   '/get_2fa_login_info',
+  '/user_reg_gift',
+  '/user_register_gift_config',
 ]
 
 export async function handleRequest(config: InternalAxiosRequestConfig<any>) {

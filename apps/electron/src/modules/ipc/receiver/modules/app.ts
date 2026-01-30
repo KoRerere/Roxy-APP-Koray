@@ -214,13 +214,25 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 获取新功能提示 */
-  ipcMain.on('app:getNewFeatureTips', (event) => {
-    const { version, newFeatureTips } = appUpdater.getUpdateMessageData()
-    // return newFeatureTips?.[store.language] || []
+  ipcMain.on('app:getNewFeatureTips', async (event) => {
+    console.log('showNewFeatureTips', store.showNewFeatureTips)
+    if (!store.showNewFeatureTips) {
+      return []
+    }
 
-    if ((store.showNewFeatureTips || !isPackaged) && version && compare(app.getVersion(), version, '>=')) {
+    {
+      const { version } = appUpdater.getUpdateMessageData()
+      // return newFeatureTips?.[store.language] || []
+      if (!version) {
+        await appUpdater.init()
+      }
+    }
+
+    const { version, newFeatureTips } = appUpdater.getUpdateMessageData()
+    if (version && compare(app.getVersion(), version, '>=')) {
       return newFeatureTips?.[store.language]?.[0]?.content ? newFeatureTips?.[store.language] : []
     }
+
     return []
   })
 

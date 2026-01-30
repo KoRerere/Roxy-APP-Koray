@@ -20,22 +20,22 @@ import { store } from '/@/modules/store'
 import { asyncDebounce } from '/@/utils'
 
 const OpenErrorMessageMap = {
-  get 1() { return $t('您购买的代理检测到错误。{link}', { link: '{link}' }) }, /**
+  get 1() { return $t('您购买的代理 IP 检测到错误。{link}', { link: '{link}' }) }, /**
                                                                     * IP检测不通
                                                                     */
-  get 2() { return $t('您购买的代理检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) }, /**
+  get 2() { return $t('您购买的代理 IP 检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) }, /**
                                                                               * 国家不一致
                                                                               */
-  get 3() { return $t('您购买的代理已过期。请在打开窗口前更新代理信息') }, /**
+  get 3() { return $t('您购买的代理 IP 已过期。请在打开窗口前更新代理 IP 信息') }, /**
                                                      * 已过期
                                                      */
-  get 4() { return $t('您当前窗口的代理已退款，无法使用。请在打开窗口之前更新代理信息。') }, /**
+  get 4() { return $t('您当前窗口的代理 IP 已退款，无法使用。请在打开窗口之前更新代理 IP 信息。') }, /**
                                                               * 已退款
                                                               */
-  get 5() { return $t('您购买的代理正在退款中，无法使用。请在打开窗口之前更新代理信息。') }, /**
+  get 5() { return $t('您购买的代理 IP 正在退款中，无法使用。请在打开窗口之前更新代理 IP 信息。') }, /**
                                                               * 退款中
                                                               */
-  get 6() { return $t('您购买的代理正在更换中，无法使用。请在打开窗口之前更新代理信息。') }, // 更换中
+  get 6() { return $t('您购买的代理 IP 正在更换中，无法使用。请在打开窗口之前更新代理 IP 信息。') }, // 更换中
 }
 
 export class BrowserManager {

@@ -1,8 +1,6 @@
 <script setup lang="tsx">
 import { I18nT } from 'vue-i18n'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { driver } from 'driver.js'
-import 'driver.js/dist/driver.css'
 import currency from 'currency.js'
 import { $t } from '/@/locales'
 import { useThemeStore } from '/@/stores/theme'
@@ -10,7 +8,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useDialog } from '/@/hooks/useDialog'
 import { RoxyGiftsType } from '/@/enums/pay'
-import { safeParseJSON, sleep } from '/@/utils'
+import { genDriver, safeParseJSON, sleep } from '/@/utils'
 
 const { amount } = defineProps<{
   amount: number
@@ -27,7 +25,6 @@ const giftType = defineModel()
 
 const driverStatus = safeParseJSON(localStorage.getItem('driverStatus'))
 const ruleCss = useCssModule('rule')
-const guideCss = useCssModule('guide')
 
 const options = computed(() => {
   if (!roxyGifts.value)
@@ -81,15 +78,7 @@ async function driverHighlight() {
     nextTick(),
   ])
 
-  const driverObj = driver({
-    nextBtnText: $t('下一步'),
-    doneBtnText: $t('完成'),
-    showButtons: ['next'],
-    overlayColor: 'var(--pattern-tour-mask-bg)',
-    overlayOpacity: 1,
-    allowClose: false,
-    disableActiveInteraction: true,
-    popoverClass: guideCss.popover,
+  const driverObj = genDriver({
     steps: [
       { element: '#gifts', popover: { description: $t('您现在每消费满 {amount}，即可获得我们提供的代理 IP 作为赠品，多买多送。点击「详情」了解更多。', { amount: currency(roxyGifts.value.price).format() }), side: 'left', align: 'center' } },
     ],
@@ -123,14 +112,14 @@ function giftRule() {
           </div>
           <div class="flex flex-col gap-3">
             <div class={`font-700 ${ruleCss.desc}`}>{$t('窗口每消费 {amount} 可选下面赠品，赠送无上限：', { amount })}</div>
-            <div class={ruleCss.desc}>{$t('选项一： {country} 静态住宅代理，有效期 {days} 天。每满 {amount} 赠送 {count} 条，不设上限。', { country, days: staticDays, amount, count: ispCount })}</div>
+            <div class={ruleCss.desc}>{$t('选项一： {country} 静态住宅代理 IP，有效期 {days} 天。每满 {amount} 赠送 {count} 条，不设上限。', { country, days: staticDays, amount, count: ispCount })}</div>
             <div class={ruleCss.desc}>
-              <I18nT keypath={$t('选项二： 动态住宅代理（由合作伙伴 {link} 提供），有效期 {days} 天。每满 {amount} 赠送 {value}GB，不设上限。', { link: '{link}', days: dynamicDays, amount, value: dynamicFlow })}>
+              <I18nT keypath={$t('选项二： 动态住宅代理 IP（由合作伙伴 {link} 提供），有效期 {days} 天。每满 {amount} 赠送 {value}GB，不设上限。', { link: '{link}', days: dynamicDays, amount, value: dynamicFlow })}>
                 {{ link: () => <a class={ruleCss.link} href="https://rola-ip.co" target="_blank">rola-ip.co</a> }}
               </I18nT>
             </div>
             <div class={`font-700 ${ruleCss.desc}`}>{$t('活动范围： 仅限于窗口订阅（含升级与续费）、成员购买及空间购买。')}</div>
-            <div class={ruleCss.desc}>{$t('消费完成后，对应赠品将会发放至代理 IP 页面中：静态住宅代理将会在发放至「代理 IP 商店」中，而动态住宅代理将会发放至「代理 IP 列表」中。')}</div>
+            <div class={ruleCss.desc}>{$t('消费完成后，对应赠品将会发放至代理 IP 页面中：静态住宅代理 IP 将会在发放至「代理 IP 商店」中，而动态住宅代理 IP 将会发放至「代理 IP 列表」中。')}</div>
             <div class={ruleCss.desc}>{$t('本活动最终解释权归 RoxyBrowser 团队所有。')}</div>
           </div>
         </div>
@@ -182,75 +171,6 @@ function giftRule() {
 
 .link {
   color: var(--colors-text-text-link);
-  text-decoration-line: underline;
-  text-decoration-style: solid;
-  text-decoration-skip-ink: auto;
-  text-decoration-thickness: auto;
-  text-underline-offset: auto;
-  text-underline-position: from-font;
-}
-</style>
-
-<style module="guide">
-.popover {
-  min-width: 220px;
-  max-width: 220px;
-  padding: 12px;
-  border-radius: 6px;
-  background: var(--pattern-tour-tips-bg);
-  box-shadow:
-    0 3px 8px 0 rgba(0, 0, 0, 0.07),
-    0 2px 5px 0 rgba(0, 0, 0, 0.07),
-    0 1px 1px 0 rgba(0, 0, 0, 0.07);
-
-  :global(.driver-popover-description),
-  :global(.driver-popover-progress-text) {
-    color: var(--component-tooltip-text-primary);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 16px;
-  }
-
-  :global(.driver-popover-footer) {
-    margin-top: 6px;
-  }
-
-  :global(.driver-popover-arrow-side-left.driver-popover-arrow) {
-    border-left-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-right.driver-popover-arrow) {
-    border-right-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-top.driver-popover-arrow) {
-    border-top-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-bottom.driver-popover-arrow) {
-    border-bottom-color: var(--pattern-tour-tips-bg);
-  }
-
-  button {
-    min-width: 60px;
-    padding: 4px 8px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--colors-alpha-alpha-white-20);
-    color: var(--component-tooltip-text-primary);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 16px;
-    border: none;
-    text-shadow: none;
-
-    &:focus,
-    &:hover {
-      background: var(--colors-alpha-alpha-white-20);
-    }
-  }
 }
 </style>
 

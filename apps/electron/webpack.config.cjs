@@ -105,15 +105,15 @@ module.exports = {
     },
   },
   plugins: [
-    // sentryWebpackPlugin({
-    //   org: process.env.VITE_SENTRY_ORG,
-    //   project: process.env.VITE_SENTRY_PROJECT,
-    //   authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
-    //   release: {
-    //     name: process.env.VITE_APP_VERSION,
-    //     dist: process.env.VITE_APP_VERSION,
-    //   },
-    // }),
+    sentryWebpackPlugin({
+      org: process.env.VITE_SENTRY_ORG,
+      project: process.env.VITE_SENTRY_PROJECT,
+      authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_APP_VERSION,
+        dist: process.env.VITE_APP_VERSION,
+      },
+    }),
     // new JavascriptObfuscatorPlugin({
     //   include: ['**/*.cjs'],       // 匹配所有 JS 文件
     //   exclude: ['vendors.cjs'],     // 排除特定文件

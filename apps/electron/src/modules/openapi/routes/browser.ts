@@ -231,7 +231,7 @@ router.post('/delete', async (req, res) => {
 
 /** 打开浏览器窗口 */
 router.post('/open', async (req, res) => {
-  const { dirId, workspaceId, args = [], forceOpen = false } = req.body
+  const { dirId, workspaceId, args = [], forceOpen = false, headless = false } = req.body
 
   if (!dirId) {
     return res.error('dirId is required')
@@ -244,6 +244,10 @@ router.post('/open', async (req, res) => {
   if (browserManager.openedBrowserMap.has(dirId)) {
     res.success(browserManager.openedBrowserMap.get(dirId)?.launchInfo, 'browser is already opened')
     return
+  }
+
+  if (headless && !args.includes('--headless=new')) {
+    args.push('--headless=new')
   }
 
   try {

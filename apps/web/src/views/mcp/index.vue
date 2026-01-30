@@ -416,6 +416,7 @@ function showHistory(event: MouseEvent) {
 
 async function onSwitchConversation(id: string) {
   await switchConversation(id)
+  newChatList.value = []
   historyRef.value?.hide()
 }
 </script>

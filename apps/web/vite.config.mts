@@ -264,15 +264,15 @@ export type SvgNames = ${typeDefine}`
         }),
       ],
     }),
-    // sentryVitePlugin({
-    //   org: process.env.VITE_SENTRY_ORG,
-    //   project: process.env.VITE_SENTRY_PROJECT,
-    //   authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
-    //   release: {
-    //     name: process.env.VITE_VERSION,
-    //     dist: process.env.VITE_VERSION,
-    //   },
-    // }),
+    sentryVitePlugin({
+      org: process.env.VITE_SENTRY_ORG,
+      project: process.env.VITE_SENTRY_PROJECT,
+      authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_VERSION,
+        dist: process.env.VITE_VERSION,
+      },
+    }),
   ],
 }
 

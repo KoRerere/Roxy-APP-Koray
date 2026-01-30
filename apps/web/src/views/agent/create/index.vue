@@ -17,7 +17,6 @@ const [showModal] = useDialog()
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
   { title: $t('批量添加'), value: 'batch' },
-  // { title: $t('代理推荐'), value: 'recommended' },// 第一版不上推荐功能
 ])
 const tabsValue = ref('single')
 
@@ -35,13 +34,13 @@ async function saveProxies(__proxies: any) {
     const dataList = (isAllExist ? proxies : proxies.filter((_item: any, index: number) => data.some((d: any) => d.index === index))).reverse()
 
     const modal = showModal({
-      header: isAllExist ? $t('代理已存在') : $t('部分代理已存在'),
+      header: isAllExist ? $t('代理 IP 已存在') : $t('部分代理 IP 已存在'),
       class: '!w-[960px]',
       slots: {
         default: () => {
           return (
             <div class="flex flex-col gap-24px">
-              <p class="text-[var(--colors-text-text-error)] text-14px font-400 leading-14px">{$t('以下代理已存在于当前代理存储库中，因此不会被添加。')}</p>
+              <p class="text-[var(--colors-text-text-error)] text-14px font-400 leading-14px">{$t('以下代理 IP 已存在于当前代理 IP 存储库中，因此不会被添加。')}</p>
               <RyTable columns={columns} dataList={dataList} paginator={false} showTableHeader={false} showActions={false}></RyTable>
             </div>
           )

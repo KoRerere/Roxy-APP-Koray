@@ -85,7 +85,7 @@ async function buySuccessNext(orderInfo: any) {
 
 function onEdit(item: any) {
   if (item.isEncryptProxy) {
-    showToast(-1, $t('该代理已加密无法编辑，如需更换，请先删除此代理或选择其他代理'))
+    showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
     return
   }
   if (item.id) {
@@ -98,7 +98,7 @@ function onEdit(item: any) {
 
 function toggleDrawer(type: 'create' | 'list', item?: any) {
   const dismissable = type === 'list'
-  const title = dismissable ? $t('代理列表') : $t('添加代理 IP')
+  const title = dismissable ? $t('代理 IP 列表') : $t('添加代理 IP')
   const data = dismissable
     ? isBatch.value ? selectedPorxys.value : selectedPorxys.value[0]
     : deepClone(item)
@@ -195,7 +195,7 @@ function modifyProxyCount(item: any) {
 
 function tooltipValue(item: any) {
   const value = [
-    $t('代理信息'),
+    $t('代理 IP 信息'),
     item.ipType,
     `${item.protocol}${strConcat('://', item.host)}${strConcat(':', item.port)}`,
     `${$t('刷新 URL')}: ${item.refreshUrl}`,
@@ -209,7 +209,7 @@ function tooltipValue(item: any) {
   }
 }
 
-const message = $t('当前选择绑定的代理数量已超过创建窗口数。')
+const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
 </script>
 
 <template>
@@ -224,7 +224,7 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
             value: strConcat(network.info?.country_code, strConcat('/', network.info?.city)),
             ip: network.info?.ip,
           }) }}</span>
-          <SvgIcon v-tooltip.top="{ value: $t('无代理的情况下该窗口将使用当前 ip 作为出口 ip') }" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+          <SvgIcon v-tooltip.top="{ value: $t('无代理 IP 的情况下该窗口将使用当前 IP 作为出口 IP') }" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
         </div>
       </div>
 
@@ -232,7 +232,7 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
       <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
       <RxButton v-if="isBatch || !proxyList?.length" class="guide3" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
+    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
              :closable="false"
     />
     <div v-if="proxyList.length" class="grid gap-2 list">

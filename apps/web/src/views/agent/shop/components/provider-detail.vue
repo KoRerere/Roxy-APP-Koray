@@ -44,32 +44,32 @@ const loading = ref(false)
 
 const notes = [
   {
-    text: $t('所有代理都 {bold0}。', { bold0: '{bold0}' }),
+    text: $t('所有代理 IP 都 {bold0}。', { bold0: '{bold0}' }),
     bolds: [$t('同时支持 SOCKS5 和 HTTP 协议')],
   },
   {
-    text: $t('您购买的所有代理都是 {bold0}，不会与他人共享。', { bold0: '{bold0}' }),
+    text: $t('您购买的所有代理 IP 都是 {bold0}，不会与他人共享。', { bold0: '{bold0}' }),
     bolds: [$t('独享专用 IP')],
   },
   {
-    text: $t('订阅期间所有代理 {bold0}。', { bold0: '{bold0}' }),
+    text: $t('订阅期间所有代理 IP {bold0}。', { bold0: '{bold0}' }),
     bolds: [$t('不限流量')],
   },
   {
-    text: $t('若购买的代理出现 {bold0} 的问题，支持 {bold1}。', { bold0: '{bold0}', bold1: '{bold1}' }),
+    text: $t('若购买的代理 IP 出现 {bold0} 的问题，支持 {bold1}。', { bold0: '{bold0}', bold1: '{bold1}' }),
     bolds: [$t('无法连接'), $t('免费更换或退款')],
   },
   {
-    text: $t('您可以在代理列表中延长代理的使用期限，{bold0}。', { bold0: '{bold0}' }),
+    text: $t('您可以在代理 IP 列表中延长代理 IP 的使用期限，{bold0}。', { bold0: '{bold0}' }),
     bolds: [$t('价格与购买时相同')],
   },
   {
     text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('代理过期后将被停用，无法找回或再次续费。')],
+    bolds: [$t('代理 IP 过期后将被停用，无法找回或再次续费。')],
   },
   {
     text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('所有代理均由 RoxyBrowser 从 {name} 特挑。', { name: provider.proxyProviderName })],
+    bolds: [$t('所有代理 IP 均由 RoxyBrowser 从 {name} 特挑。', { name: provider.proxyProviderName })],
   },
 ].slice(0, provider.proxyProviderName === 'RoxyBrowser' ? 6 : 7)
 

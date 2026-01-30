@@ -1336,3 +1336,21 @@ export function getDefaultValue() {
     isPositionBaseIp: true,
   }
 }
+
+/**
+ * 仅新用户注册礼物选择 ip 时使用
+ */
+export async function genDefaultProfileByCount(count: number) {
+  const [inputsGroup, original] = await getInputsGroup()
+  const defaultParams = getFormDataByList(inputsGroup)
+  const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion']
+  const fingerParams = Object.fromEntries(fingerKeys.map(key => [key, defaultParams[key]]))
+  const fingerData = await electronAPI.send('util:genRandomFingerprint', fingerParams, count)
+  try {
+    const datas = await Promise.all(fingerData.map(data => API.window.userAddWindowInfoV2Create({ ...toRaw(defaultParams), ...toRaw(original), ...data })))
+    return datas.map(item => item.data.windowId)
+  }
+  catch {
+    return []
+  }
+}

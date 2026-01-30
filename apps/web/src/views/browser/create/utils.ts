@@ -70,7 +70,7 @@ export async function getDefaultTemplate() {
     syncExtensions: false,
     syncPassword: true,
     syncIndexedDb: false,
-    syncLocalStorage: false,
+    syncLocalStorage: true,
     clearCacheFile: false,
     clearCookie: false,
     clearLocalStorage: false,
@@ -82,6 +82,11 @@ export async function getDefaultTemplate() {
     openWorkbench: 1,
     searchEngine: 'Google',
     openBookmarks: false,
+    syncSessionStorage: false,
+    ipChangeRemind: 2,
+    enableGoogleLogin: 2,
+    blockDomainList: '',
+    allowDomainList: '',
   }
 }
 
@@ -98,7 +103,7 @@ async function getExportColumns() {
     const version = $dict_map[`osversion_${item.value.toLocaleLowerCase()}`]!.map(item => item.value).join('、')
 
     acc.os.push(os)
-    acc.version.push(`${os}: ${version}`)
+    acc.version.push(`${item.label}: ${version}`)
 
     return acc
   }, { os: [] as string[], version: [] as string[] })
@@ -128,25 +133,25 @@ async function getExportColumns() {
       key: 'osVersion',
       width: 50,
       placeholder: $t('操作系统版本, 如: 11\n每行只能填写一个, 留空则自动使用对应操作系统最新版本'),
-      example: version.join('\n'),
+      example: `${$t('可用的系统版本:')}\n${version.join('\n')}`,
     },
     {
-      header: $t('代理类型'),
+      header: $t('代理 IP 类型'),
       key: 'proxyCategory',
-      placeholder: $t('代理类型, 如: SOCKS5, 留空则自动使用 "直连"'),
+      placeholder: $t('代理 IP 类型, 如: SOCKS5, 留空则自动使用 "直连"'),
       example: `${exampleText}1: SOCKS5\n${exampleText}2: HTTP\n${exampleText}3: HTTPS\n${exampleText}4: SSH`,
     },
     {
-      header: $t('代理信息'),
+      header: $t('代理 IP 信息'),
       key: 'proxyInfo',
       width: 70,
       placeholder: 'richText',
       example: `${exampleText}1: 192.168.0.1:8800\n${exampleText}2: 192.168.0.1:8800:roxytest:roxypass\n${exampleText}3: 192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]\n${exampleText}4: ipv6:192.168.0.1:8800:roxytest:roxypass`,
       richText: [
         { text: `${$t('请务必按照此顺序格式填写:')}\n` },
-        { font: { color: { argb: 'EF4444' } }, text: `${$t('【代理主机:代理端口:代理用户名:代理密码[刷新URL]】')}\n` },
-        { font: { color: { argb: 'EF4444' } }, text: `${$t('其中 代理用户名、代理密码、[刷新URL] 为选填')}\n` },
-        { text: $t('若网络协议为ipv6, 请在代理信息最前端添加 ipv6:') },
+        { font: { color: { argb: 'EF4444' } }, text: `${$t('【主机:端口:用户名:密码[刷新URL]】')}\n` },
+        { font: { color: { argb: 'EF4444' } }, text: `${$t('其中 用户名、密码、[刷新URL] 为选填')}\n` },
+        { text: $t('若网络协议为ipv6, 请在代理 IP 信息最前端添加 ipv6:') },
       ],
     },
     {

@@ -3,10 +3,11 @@ import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import RxButton from '/@/components/rx-button'
-import WelcomeModal from '/@/views/tutorial/components/welcome-modal.vue'
+import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import BatchInviteModal from '/@/views/projects/components/batch-invite-modal.vue'
-import { emitter } from '/@/utils/eventBus'
+import Demo from './demo.vue'
+// import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
@@ -18,8 +19,8 @@ import { emitter } from '/@/utils/eventBus'
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
 // import FormItem from '/@/views/lab/components/form/item.vue'
-import { API } from '/@/api'
-import { getInviteCode } from '/@/api/util'
+// import { API } from '/@/api'
+// import { getInviteCode } from '/@/api/util'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -65,7 +66,7 @@ async function _tableFilters() {
         placeholder: $t('全部操作'),
         options: [
           { label: $t('窗口'), value: 'Profiles' },
-          { label: $t('代理'), value: 'Proxies' },
+          { label: $t('代理 IP'), value: 'Proxies' },
           { label: $t('账号'), value: 'Accounts' },
           { label: $t('项目'), value: 'Projects' },
           { label: $t('扩展'), value: 'Extensions' },
@@ -294,10 +295,6 @@ const cities = ref([
   { name: 'Istanbul', code: 'IST' },
   { name: 'Paris', code: 'PRS' },
 ])
-
-function showMcp() {
-  emitter.emit('mcpOpen')
-}
 </script>
 
 <template>
@@ -308,22 +305,10 @@ function showMcp() {
     <RxButton label="open1" @click="open1" />
     <RxButton label="open2" @click="open2" />
     <RxButton label="captcha" @click="captcha" />
-    <RxButton label="show mcp" @click="showMcp" />
 
     <Select v-model="selectedCity" editable :options="cities" filter option-label="name" placeholder="Select a City" class="w-full md:w-56" />
 
-    <div class="inline-flex items-center gap-2">
-      <!-- <SvgIcon name="mcp/rx_ic_browser_branches" color="orange" size="24" />
-      <SvgIcon name="mcp/rx_ic_browser_speed" color="orange" size="24" />
-      <SvgIcon name="mcp/rx_ic_browser_stop" color="orange" size="24" /> -->
-
-      <SvgIcon name="base/rx_ic_browser_dialog" color="orange" size="24" />
-      <SvgIcon name="base/rx_ic_browser_hammer" color="orange" size="24" />
-      <SvgIcon name="base/rx_ic_browser_history" color="orange" size="24" />
-      <SvgIcon name="base/rx_ic_browser_pause" color="orange" size="24" />
-      <SvgIcon name="base/rx_ic_browser_send" color="orange" size="24" />
-      <SvgIcon name="base/rx_ic_browser_talk" color="orange" size="24" />
-    </div>
+    <Demo />
 
     <!-- <ScrollPanel class="w-100 h-100">
       <p>

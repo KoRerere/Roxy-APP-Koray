@@ -48,6 +48,10 @@ export interface MittEvents {
   showAccountSetupDialog?: void
   /** 显示用户引导 */
   showUserGuideDialog?: void
+  /** 显示第一次注册引导 */
+  firstRegisterGuide?: void
+  /** 显示侧边栏引导 */
+  asideMenuGuide?: void
   /** 更新项目列表 */
   updateProjectList?: void
   /** 更新自动续费列表 */

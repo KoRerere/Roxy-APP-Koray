@@ -1,10 +1,10 @@
 import axios from 'axios'
+import { Buffer } from 'node:buffer'
 import { createCipheriv, createDecipheriv } from 'node:crypto'
 import { browserManager } from '/@/modules/browser'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils'
-import { Buffer } from 'node:buffer'
 
 const key = '098otIp!'
 
@@ -76,9 +76,10 @@ export async function setSystemProxy() {
   if (!getRoxynetProcess()) {
     return
   }
+  const systemProxy = await getSystemProxy(true)
   const params = {
-    addr: await getSystemProxy(true),
-    protocal: 'http',
+    addr: systemProxy.addr,
+    protocal: systemProxy.protocol,
     v2: store.v2raySwitch,
   }
   console.log('roxynet set_sysproxy modifying system proxy', params)

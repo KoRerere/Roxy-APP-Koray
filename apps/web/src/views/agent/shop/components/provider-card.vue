@@ -117,7 +117,7 @@ function calcDiscount(discount: number) {
       <RxDivider class="my-4" line-only line-color="var(--component-dropdown-divider)" />
 
       <template v-if="item.proxyProviderName === 'RoxyBrowser'">
-        <SpecialSupportFor :icons="item.iconList" />
+        <SpecialSupportFor :icons="item.newIconList" />
         <RxDivider class="my-4" line-only line-color="var(--component-dropdown-divider)" />
       </template>
 
@@ -143,7 +143,7 @@ function calcDiscount(discount: number) {
           <div v-if="userPayInfo.proxyDiscount && !item.isJump" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
             {{ $t('额外 {discount}% Off', { discount: userPayInfo.proxyDiscount }) }}
           </div>
-          <RxButton v-if="item.isJump" size="sm" icon="base/rx_ic_arrow_top_right" severity="secondary" outlined :label="$t('前往 {home}', { home: getProviderHome(item.proxyProviderWebsite) })"
+          <RxButton v-if="item.isJump" size="sm" icon="base/rx_ic_arrow_top_right" :label="$t('前往 {home}', { home: getProviderHome(item.proxyProviderWebsite) })"
                     @click="onJump(item)"
           />
           <RxButton v-else class="w-full" :size="userPayInfo.proxyDiscount ? 'md' : 'sm'" icon="base/rx_ic_cart" :label="$t('购买代理 IP')" @click="onBuy(item)" />

@@ -80,7 +80,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'create',
         name: 'agent-create',
-        meta: { title: $t('新建代理'), hideInMenu: true },
+        meta: { title: $t('新建代理 IP'), hideInMenu: true },
         component: () => import('/@/views/agent/create'),
       },
       {

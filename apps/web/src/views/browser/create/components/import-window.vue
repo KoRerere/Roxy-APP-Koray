@@ -4,9 +4,9 @@ import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import { ExcelAccept, TextAccept } from '/@/utils/constants'
-import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } from '../utils';
+import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } from '../utils'
 import { useUserStore } from '/@/stores/user'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { getExtname } from '/@/utils'
 import type { SvgNames } from '/@/components/rx-icon'
 
@@ -22,8 +22,8 @@ const FILE_ACCEPT = Object.freeze({ ...ExcelAccept, ...TextAccept })
 const fileAnalyzeError = defineModel<any>('error')
 
 const fileIcons = {
-  'xlsx': 'base/rx_ic_file_xls',
-  'txt': 'base/rx_ic_file_txt',
+  xlsx: 'base/rx_ic_file_xls',
+  txt: 'base/rx_ic_file_txt',
 }
 
 const fileData = reactive({
@@ -60,7 +60,7 @@ async function chooseFile() {
     ],
     excludeAcceptAllOption: true,
     multiple: false,
-  }).then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
+  }).then((handleFile: FileSystemFileHandle[]) => handleFile[0]?.getFile())
 
   handleBeforeUpload(file)
 }
@@ -114,15 +114,15 @@ function openTemplates(event: MouseEvent) {
         label: $t('{type} 模板', { type: 'excel' }),
         command: () => {
           downloadTemplate()
-        }
+        },
       },
       {
         label: $t('{type} 模板', { type: 'txt' }),
         command: () => {
           downloadTextTemplate()
-        }
-      }
-    ]
+        },
+      },
+    ],
   })
 }
 </script>
@@ -132,7 +132,9 @@ function openTemplates(event: MouseEvent) {
     <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full" type="success" :title="$t('{count} 个窗口已成功导入', { count: fileData.successCount })" :closable="false" />
     <RxAlert v-if="fileAnalyzeError" class="w-full" type="error" @close="fileAnalyzeError = null">
       <template #content>
-        <div class="whitespace-pre-wrap">{{ fileAnalyzeError }}</div>
+        <div class="whitespace-pre-wrap">
+          {{ fileAnalyzeError }}
+        </div>
       </template>
     </RxAlert>
     <div v-if="fileData.name" class="pa-4 rounded-xl file">
@@ -141,7 +143,9 @@ function openTemplates(event: MouseEvent) {
         <span class="flex-1 file-name">{{ fileData.name }}</span>
         <SvgIcon class="font-size-6" name="base/rx_ic_check_fill" color="var(--colors-icon-icon-success)" />
       </div>
-      <div class="px-9 file-size">{{ fileData.size }}</div>
+      <div class="px-9 file-size">
+        {{ fileData.size }}
+      </div>
     </div>
     <div class="pa-4 rounded-xl upload">
       <div class="flex flex-col items-center gap-4 py-8 rounded-lg upload-area" @dragover="fileDragover" @drop="fileDrop">

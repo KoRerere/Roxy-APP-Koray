@@ -10,7 +10,7 @@ export function getRawColumns(options?: any) {
   const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return setColumns([
     {
-      title: $t('代理信息'),
+      title: $t('代理 IP 信息'),
       key: 'proxy',
       render: ({ data }: any) => <BasicInfo data={data}></BasicInfo>,
     },

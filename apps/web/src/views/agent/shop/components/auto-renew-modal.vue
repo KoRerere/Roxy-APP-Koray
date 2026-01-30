@@ -28,7 +28,7 @@ async function _confirm() {
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="flex flex-col gap-2">
-      <i18n-t class="desc" tag="div" scope="global" :keypath="$t('开启自动续费后，系统会在代理到期时自动尝试从 {bold} 扣费。', { bold: '{bold}' })">
+      <i18n-t class="desc" tag="div" scope="global" :keypath="$t('开启自动续费后，系统会在代理 IP 到期时自动尝试从 {bold} 扣费。', { bold: '{bold}' })">
         <template #bold>
           <span class="desc-bold">{{ $t('Roxy 钱包') }}</span>
         </template>

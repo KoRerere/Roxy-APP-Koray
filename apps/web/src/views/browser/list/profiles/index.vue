@@ -23,7 +23,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
 import { I18nT } from 'vue-i18n'
-
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
@@ -44,6 +43,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import useColumns from '/@/hooks/useColumns'
+import { useDriverDataTableTour } from '/@/views/lab/useDriverDataTableTour'
 
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
@@ -74,6 +74,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
+const { drive } = useDriverDataTableTour()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const userStore = useUserStore()
@@ -115,6 +116,8 @@ onBeforeMount(() => {
   canceCloselListener = listenCloseMessage()
   canceCloseSyncingDataListener = listenCloseSyncingDataMessage()
 
+  firstRegisterGuideTour()
+
   // 列表备注显示状态现在保存到后台
   updateColumns((columns) => {
     const column = columns.find(column => column.key === 'note')
@@ -134,11 +137,13 @@ onBeforeMount(() => {
 
   const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
 
-  getCustomFilters(customFilterParams).then((data) => {
-    filtersMenu.value ??= data
-  }).finally(() => {
-    onRefreshTable(customFilterParams, false)
-  })
+  getCustomFilters(customFilterParams)
+    .then((data) => {
+      filtersMenu.value ??= data
+    })
+    .finally(() => {
+      onRefreshTable(customFilterParams, false)
+    })
 })
 
 onBeforeUnmount(() => {
@@ -202,6 +207,34 @@ async function tableRequest(params: any) {
   autoOpenBrowser(rows)
   data.data.rows = rows
   return data
+}
+
+function firstRegisterGuideTour() {
+  if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
+    emitter.on('firstRegisterGuide', async () => {
+      await tableRef.value?.refresh({}, true)
+      nextTick(() => {
+        drive({
+          el: tableRef.value?.$el,
+          steps: [
+            {
+              pick: { rect: { rows: [0, 1], cols: [1, 1], mode: 'data' } },
+              popover: { description: $t('代理 IP 已绑定。您现在有 2 个绑定了美国 IP 的窗口。'), side: 'bottom', align: 'center' },
+            },
+            {
+              pick: { selector: '.p-datatable-tbody > tr:nth-child(-n+2) > td:nth-child(4)' },
+              popover: { description: $t('点击"打开"按钮以启动您的窗口。'), side: 'bottom', align: 'center' },
+            },
+          ],
+          options: {
+            onDestroyed: () => {
+              emitter.emit('asideMenuGuide')
+            },
+          },
+        })
+      })
+    })
+  }
 }
 
 async function operationHandler(operate: any, data: any, operationType: 'single' | 'batch' = 'single') {
@@ -388,7 +421,7 @@ async function setAsDefaultBrowser(data: Data) {
   await window.electronAPI.send('browser:setAsDefaultBrowser', {
     ...toRaw(data),
     __orderName: `${workspaceName.value}-${sortNum}`,
-  })
+  } as any)
   showToast(0, $t('设为默认浏览器成功'))
 }
 
@@ -397,7 +430,7 @@ async function createDesktopShortcut(data: Data) {
   await window.electronAPI.send('browser:createDesktopShortcut', {
     ...toRaw(data),
     __orderName: `${workspaceName.value}-${sortNum}`,
-  })
+  } as any)
   showToast(0, $t('创建桌面快捷方式成功'))
 }
 
@@ -646,7 +679,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
         <div class="h-full flex flex-col">
           {isMulti && (
             <div class="px-4 pt-4">
-              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
             </div>
           )}
           <div class="flex-1 overflow-hidden">
@@ -1103,7 +1136,7 @@ defineExpose({
     </template>
     <template #table-empty>
       <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
-      <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
+      <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="!role.isViewer" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />

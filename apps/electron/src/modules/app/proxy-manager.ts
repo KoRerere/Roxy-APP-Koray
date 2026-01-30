@@ -9,7 +9,7 @@ export interface ProxyConfig {
 class ProxyManager {
   private defaultConfig: ProxyConfig = {
     proxyRules: '', // 将从系统代理获取
-    proxyBypassRules: '*.lumibrowser.*;*.roxybrowser.*;localhost;127.0.0.1'
+    proxyBypassRules: '*.lumibrowser.*;*.roxybrowser.*;localhost;127.0.0.1',
   }
 
   private isEnabled = false
@@ -19,14 +19,17 @@ class ProxyManager {
    */
   private async getSystemProxyRules(): Promise<string> {
     try {
-      const systemProxy = await getSystemProxy(true) // 强制获取最新系统代理
+      /**
+       * 强制获取最新系统代理
+       */
+      const systemProxy = await getSystemProxy(true)
 
-      if (!systemProxy) {
+      if (!systemProxy.addr) {
         return 'direct://'
       }
 
       // 解析系统代理地址
-      const [host, port] = systemProxy.split(':')
+      const [host, port] = systemProxy.addr.split(':')
       if (!host || !port) {
         return 'direct://'
       }
@@ -34,8 +37,8 @@ class ProxyManager {
       // 构建 proxyRules 格式
       const proxyRules = `http=${host}:${port};https=${host}:${port}`
       return proxyRules
-
-    } catch (error) {
+    }
+    catch (error) {
       return 'direct://'
     }
   }
@@ -58,7 +61,8 @@ class ProxyManager {
       console.log('Proxy verification result:', proxyInfo)
 
       return true
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to set default proxy:', error)
       return false
     }
@@ -73,7 +77,8 @@ class ProxyManager {
       this.isEnabled = false
       console.log('Proxy disabled')
       return true
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to disable proxy:', error)
       return false
     }
@@ -132,18 +137,19 @@ class ProxyManager {
    */
   async getSystemProxyInfo() {
     try {
-      const systemProxy = await getSystemProxy(true)
+      const { addr } = await getSystemProxy(true)
       return {
-        address: systemProxy,
-        isEnabled: !!systemProxy,
-        proxyRules: this.defaultConfig.proxyRules
+        address: addr,
+        isEnabled: !!addr,
+        proxyRules: this.defaultConfig.proxyRules,
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to get system proxy info:', error)
       return {
         address: '',
         isEnabled: false,
-        proxyRules: this.defaultConfig.proxyRules
+        proxyRules: this.defaultConfig.proxyRules,
       }
     }
   }

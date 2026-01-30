@@ -13,7 +13,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { isMainWindow } from '/@/utils'
+import { genDriver, isMainWindow } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -27,7 +27,7 @@ const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-ex
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
-const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal.vue'))
+const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
@@ -53,10 +53,10 @@ export function useSubscribe() {
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 
   watchEffect(() => {
-    if (userStore.token) {
+    if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
       // 检查是否显示新功能提示
       electronAPI.send('app:getNewFeatureTips').then((result) => {
-        console.log('app:getNewFeatureTips', result)
+        console.log('app:getNewFeatureTips', userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus, result)
         const newFeatureTips = result?.filter(item => item.content?.length)
         if (newFeatureTips?.length) {
           showAppUpgradeDialog(newFeatureTips)
@@ -130,6 +130,8 @@ export function useSubscribe() {
     emitter.on('showAccountSetupDialog', showAccountSetupDialog)
     // 显示用户引导
     emitter.on('showUserGuideDialog', showUserGuideDialog)
+    // 显示侧边栏引导
+    emitter.on('asideMenuGuide', showAsideMenuGuideTour)
 
     // 达到窗口打开次数限制
     electronAPI.on('browser:window-open-limit', (result) => {
@@ -353,5 +355,20 @@ export function useSubscribe() {
         container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
       },
     })
+  }
+
+  function showAsideMenuGuideTour() {
+    const driverObj = genDriver({
+      steps: [
+        { element: '#new_profile', popover: { description: $t('如果您有更多自定义窗口需求，点击"创建窗口"按钮即可快速设置。'), side: 'right', align: 'center' } },
+        { element: '.menu_agent-list', popover: { description: $t('RoxyBrowser 不仅支持自定义代理 IP，也为您准备了代理 IP 商店，欢迎选购！'), side: 'right', align: 'center' } },
+        { element: '.menu_tutorial', popover: { description: $t('最后，您可以探索新手教程来了解更多 RoxyBrowser 产品功能和使用技巧，以提升您的操作效率。'), side: 'right', align: 'center' } },
+      ],
+      onDestroyed: () => {
+        console.log('wcis man!')
+      },
+    })
+
+    driverObj.drive()
   }
 }

@@ -195,7 +195,7 @@ function onHtmlClick(e: MouseEvent) {
         </RxAlert>
         <RxAlert v-if="userPayInfo.proxyExpireCount > 0 && isShowProxyExpired" class="w-full expired-alert" type="warn" announcement @close="handleCloseProxyExpired">
           <template #title>
-            <i18n-t scope="global" :keypath="$t('您的一些代理即将过期。为避免您使用受到任何干扰，请{link}。', { link: '{link}' })">
+            <i18n-t scope="global" :keypath="$t('您的一些代理 IP 即将过期。为避免您使用受到任何干扰，请{link}。', { link: '{link}' })">
               <template #link>
                 <span v-if="roleStore.isOwner" class="font-bold underline cursor-pointer" @click="viewExpiresSoonProxy">{{ $t('点击查看') }}</span>
                 <span v-else>{{ $t('联系空间拥有者续费') }}</span>

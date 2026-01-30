@@ -15,7 +15,7 @@ export function getRawColumns(options?: any) {
 
   const columns = [
     {
-      title: $t('代理信息'),
+      title: $t('代理 IP 信息'),
       key: 'proxy',
       _visible: false,
       render: ({ data }: any) => <div class="text-3 font-[JetBrains_Mono]">{data.host ? `${data.host}:${data.port}:${data.proxyUserName}:${data.proxyPassword}` : '--'}</div>,
@@ -96,7 +96,7 @@ export function getRawColumns(options?: any) {
       sortable: true,
     },
     {
-      title: $t('代理类型'),
+      title: $t('代理 IP 类型'),
       key: 'providerType',
       slot: 'providerType',
       _visible: false,

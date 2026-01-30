@@ -3,24 +3,24 @@ import '/@/styles/primevuePresets/theme/'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
+import 'driver.js/dist/driver.css'
 import { setupGlobalMethods } from '/@/globalMethods'
 import VideoPlayer from './components/rx-video-player'
 import RxSvgIcon from './components/rx-icon'
 
 // import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
-import { init as initSentryVue, browserTracingIntegration, replayIntegration, feedbackIntegration, consoleLoggingIntegration } from "@sentry/vue";
-import mixpanel from "mixpanel-browser";
+import { browserTracingIntegration, consoleLoggingIntegration, init as initSentryVue, replayIntegration } from '@sentry/vue'
+import mixpanel from 'mixpanel-browser'
 
-import { createApp } from "vue";
-import { setupStore } from "/@/stores";
-import router from '/@/router'
+import { createApp } from 'vue'
+import { setupStore } from '/@/stores'
+import router, { setupRouter } from '/@/router'
 
-import App from "./App.vue";
-import { setupRouter } from '/@/router'
+import App from './App.vue'
 import { setupPrimeVue } from '/@/primevue'
 import { i18n } from '/@/locales'
 
-export const app = createApp(App);
+export const app = createApp(App)
 app.use(i18n)
 app.use(VideoPlayer)
 app.use(RxSvgIcon)
@@ -39,19 +39,19 @@ initSentryVue({
   integrations: [
     browserTracingIntegration({ router }),
     replayIntegration(),
-    consoleLoggingIntegration()
+    consoleLoggingIntegration(),
   ],
 })
 
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,
-  track_pageview: "full-url",
-  persistence: "localStorage",
+  track_pageview: 'full-url',
+  persistence: 'localStorage',
   // https://documentation.freshpaint.io/integrations/destinations/apps/mixpanel
   // autotrack: true,
-});
-globalThis.mixpanel = mixpanel;
+})
+globalThis.mixpanel = mixpanel
 
-setupStore(app);
-setupPrimeVue(app);
+setupStore(app)
+setupPrimeVue(app)
 setupRouter(app)

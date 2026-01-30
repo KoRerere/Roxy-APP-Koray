@@ -81,14 +81,14 @@ async function proxyDetection(event?: MouseEvent) {
     }
     else {
       console.error('代理检查失败')
-      toast.add({ severity: 'error', summary: result.msg || $t('代理检测失败'), life: 3000 })
+      toast.add({ severity: 'error', summary: result.msg || $t('代理 IP 检测失败'), life: 3000 })
       proxyInfo.value = {}
       isTestSuccess.value = false
     }
   }
   catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: $t('代理检测失败'), life: 3000 })
+    toast.add({ severity: 'error', summary: $t('代理 IP 检测失败'), life: 3000 })
   }
   finally {
     testProxyLoading.value = false
@@ -178,7 +178,7 @@ onBeforeMount(() => {
             <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew"
               class="btn" :label="$t('刷新 URL')" outlined :disabled="refreshUrlLoading || testProxyLoading"
               @click="refreshURL" />
-            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')"
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理 IP')"
               outlined :disabled="refreshUrlLoading || testProxyLoading" @click="proxyDetection" />
           </div>
         </Teleport>

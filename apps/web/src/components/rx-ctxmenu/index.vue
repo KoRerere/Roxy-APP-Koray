@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { MenuItem } from 'primevue/menuitem'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 
@@ -63,9 +62,10 @@ function onChange() {
         </label>
 
         <div v-if="type === 'default'" :class="menu.item" @click="operationHandler(item)">
-          <RxSvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
+          <SvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
           <span class="flex-1">{{ item.label }}</span>
-          <RxSvgIcon v-if="item.items" :class="item.iconClass" name="base/rx_ic_chevron_right" />
+          <SvgIcon v-if="item.suffixIcon" :class="item.iconClass" :name="(item.suffixIcon as SvgNames)" />
+          <SvgIcon v-if="item.items" :class="item.iconClass" name="base/rx_ic_chevron_right" />
         </div>
       </a>
     </template>

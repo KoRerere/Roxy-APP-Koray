@@ -78,7 +78,7 @@ const inputs = ref([
   },
   {
     type: 'radio',
-    label: $t('代理类型'),
+    label: $t('代理 IP 类型'),
     name: 'ipType',
     props: {
       name: 'ipType',
@@ -87,7 +87,7 @@ const inputs = ref([
   },
   {
     type: 'group',
-    label: $t('代理信息'),
+    label: $t('代理 IP 信息'),
     items: [
       {
         type: 'select',
@@ -186,7 +186,7 @@ const inputs = ref([
       return (
         <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
           <TsFormSelect size="md" {...props} />
-          <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={$t('测试代理')} onClick={onCheckProxyStatus} />
+          <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={$t('测试代理 IP')} onClick={onCheckProxyStatus} />
         </div>
       )
     },
@@ -311,7 +311,7 @@ defineExpose({
     <slot name="footer" :submit="onSubmit">
       <div class="inline-flex flex-row-reverse justify-between w-full">
         <RxButton size="sm" :label="$t('保存')" @click="onSubmit" />
-        <RemarkIcon v-if="showRemark" :title="$t('请为代理添加备注')" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
+        <RemarkIcon v-if="showRemark" :title="$t('请为代理 IP 添加备注')" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
       </div>
     </slot>
   </div>

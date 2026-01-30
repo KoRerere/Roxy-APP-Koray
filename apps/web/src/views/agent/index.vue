@@ -2,30 +2,27 @@
 import AgentList from '/@/views/agent/list/index.vue'
 import AgentShop from '/@/views/agent/shop/index.vue'
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
-import type { SvgNames } from '/@/components/rx-icon'
+import { safeParseJSON } from '/@/utils/basic'
 
 const route = useRoute()
 const router = useRouter()
-const { isViewer } = storeToRefs(useRoleStore())
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 
-const activeTabValue = ref((route.query.name as string) || 'shop')
+const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
+const activeTabValue = ref((route.query.name as string) || localStatus.proxyTab || 'shop')
 
-const tabs = computed(() => {
-  return [
-    { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', suffixIcon: 'base/new_badge', value: 'shop', component: markRaw(AgentShop), visible: !isViewer.value },
-    { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList) },
-  ].filter(tab => tab.visible !== false)
-})
+const tabs = [
+  { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', value: 'shop', component: markRaw(AgentShop) },
+  { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList) },
+]
 
-const activeTab = computed(() => tabs.value.find(tab => tab.value === activeTabValue.value))
+const activeTab = computed(() => tabs.find(tab => tab.value === activeTabValue.value))
 
 watch(
   () => route.query.name,
   (value) => {
-    // 在代理列表页点击顶部提醒跳转商店，同步 activeTabValue
-    if (!!value && tabs.value.some(tab => tab.value === value) && value !== activeTabValue.value) {
+    // 在代理 IP 列表页点击顶部提醒跳转商店，同步 activeTabValue
+    if (!!value && tabs.some(tab => tab.value === value) && value !== activeTabValue.value) {
       activeTabValue.value = value as string
     }
   },
@@ -33,6 +30,7 @@ watch(
 
 function onChange(value: any) {
   router.replace({ name: 'agent-list', query: { name: value } })
+  localStorage.setItem('localStatus', JSON.stringify({ ...localStatus, proxyTab: value }))
 }
 </script>
 
@@ -42,7 +40,7 @@ function onChange(value: any) {
       <RxTabs v-model:value="activeTabValue" class="flex-1" :tabs="tabs" head-tabs only-tabs @update:value="onChange">
         <template #tab="{ data }">
           <div class="flex items-center gap-2">
-            <SvgIcon v-if="data.icon" :name="(data.icon as SvgNames)" color="var(--colors-icon-icon-note)" />
+            <SvgIcon v-if="data.icon" :name="(data.icon as any)" color="var(--colors-icon-icon-note)" />
             <div class="relative flex items-center gap-1">
               <span>{{ data.title }}</span>
             </div>
@@ -63,7 +61,7 @@ function onChange(value: any) {
         </i18n-t>
       </div>
     </div>
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1 overflow-hidden min-w-240">
       <component :is="activeTab?.component" />
     </div>
   </div>

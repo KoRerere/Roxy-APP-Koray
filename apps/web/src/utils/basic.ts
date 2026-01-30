@@ -1,4 +1,6 @@
 import currency from 'currency.js'
+import { driver } from 'driver.js'
+import type { Config } from 'driver.js'
 import type { SvgNames } from '/@/components/rx-icon'
 
 export function getRawType(data: any) {
@@ -625,4 +627,18 @@ export function enhanceCountdown(
     pause,
     resume,
   }
+}
+
+export function genDriver(config: Config) {
+  return driver({
+    nextBtnText: $t('下一步'),
+    doneBtnText: $t('完成'),
+    showButtons: ['next'],
+    overlayColor: 'var(--pattern-tour-mask-bg)',
+    overlayOpacity: 1,
+    allowClose: false,
+    disableActiveInteraction: true,
+    popoverClass: 'global_driver_class',
+    ...config,
+  })
 }

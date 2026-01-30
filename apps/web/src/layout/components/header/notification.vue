@@ -43,15 +43,10 @@ const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 
 const readSet = ref<Set<number>>(new Set())
 
 onBeforeMount(() => {
-  getMessageList().then(() => {
-    const [_, teamsTab] = tabs.value
-    const target = teamsTab!.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new' && item.status === NotifyStatus.unread)
-    if (target) {
-      showAcceptInvitationDialog(target)
-    }
-  }).finally(() => {
-    emitter.on('notifyUpdateData', getMessageList)
-  })
+  getMessageList()
+    .finally(() => {
+      emitter.on('notifyUpdateData', getMessageList)
+    })
 })
 
 function toggle(event: Event) {

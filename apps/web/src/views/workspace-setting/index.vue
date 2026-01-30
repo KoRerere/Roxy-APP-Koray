@@ -87,7 +87,7 @@ function handleDeleteConfirm() {
           </I18nT>
         </div>
         <div class={styles['delete-confirm-content']}>
-          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该空间的相关内容（窗口/项目/平台账号/代理/团队成员/ API 等）{br}要确认删除，请在下方输入空间名称', { br: '{br}' })}>
+          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该空间的相关内容（窗口/项目/平台账号/代理 IP/团队成员/ API 等）{br}要确认删除，请在下方输入空间名称', { br: '{br}' })}>
             {{ br: () => <br /> }}
           </I18nT>
         </div>

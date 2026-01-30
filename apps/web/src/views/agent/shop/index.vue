@@ -209,7 +209,7 @@ async function openHelp(data: ProxyItem) {
 
 function onRemark(data: any) {
   showSimpleDialog({
-    title: $t('为所选代理添加备注'),
+    title: $t('为所选代理 IP 添加备注'),
     inputs: [
       {
         type: 'textarea',
@@ -370,16 +370,22 @@ async function toggleAutoRenew(data: ProxyItem) {
           </div>
         </template>
         <template #price="{ data }">
-          <div>
+          <div v-if="data.canRenew">
             <span>{{ currency(data.proxyProviderDiscountPrice).format() }}</span>
             <span class="days"> / {{ $t('{day} 天', { day: 30 }) }}</span>
           </div>
+          <div v-else>
+            --
+          </div>
         </template>
         <template #renew="{ data }">
-          <div class="scale-80" @click.stop>
+          <div v-if="data.canRenew" class="scale-80" @click.stop>
             <RxToggleSwitch v-model="data.autoRenew" :disabled="data.orderStatus !== ProxyOrderStatus.done || data.proxyExpireStatus === ProxyExpireStatus.expired" :true-value="1" :false-value="0"
                             :before-change="() => autoRenewChange(data)"
             />
+          </div>
+          <div v-else>
+            --
           </div>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">

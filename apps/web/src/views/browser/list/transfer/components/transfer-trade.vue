@@ -40,7 +40,7 @@ const optionsGroup = [
         value: 'notes',
       },
       {
-        label: $t('窗口代理'),
+        label: $t('窗口代理 IP'),
         value: 'tradeProxy',
       },
       {
@@ -184,7 +184,7 @@ async function onTransfer() {
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-1.5 title">
           <span>{{ $t('临时窗口有效期') }}</span>
-          <SvgIcon v-tooltip.top="$t('临时窗口过期之前均可以正常使用，过期后如用量不足则无法打开，但窗口信息（账号、代理等）均能正常导出。')" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" />
+          <SvgIcon v-tooltip.top="$t('临时窗口过期之前均可以正常使用，过期后如用量不足则无法打开，但窗口信息（账号、代理 IP 等）均能正常导出。')" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" />
         </div>
         <div class="time">
           {{ $t('{day} 天', { day: expireDays }) }}

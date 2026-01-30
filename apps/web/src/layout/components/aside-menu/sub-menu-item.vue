@@ -42,7 +42,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
           <div v-else class="line" />
         </template>
         <template v-else>
-          <MenuItemContent v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :item="item" :collapsed />
+          <MenuItemContent v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :class="`menu_${item.name?.toString()}`" :item="item" :collapsed />
         </template>
         <!-- 递归生成子菜单 -->
         <template v-if="item.children?.length">

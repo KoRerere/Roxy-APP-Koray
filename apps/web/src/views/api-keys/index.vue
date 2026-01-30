@@ -465,7 +465,7 @@ async function onCopy(text: string) {
         <div class="w-full grid grid-cols-18">
           <div class="col-span-6">
             <div class="pt-6 pb-2 api-title">
-              MCP [Beta]
+              AI MCP
             </div>
             <div class="api-desc">
               {{ $t('模型上下文协议（MCP）就像一个通用的 AI 插件系统——它让 AI 助手可以轻松连接和使用不同的应用程序、工具和数据，就像给你的浏览器添加扩展程序一样。') }}

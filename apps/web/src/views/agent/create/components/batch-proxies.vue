@@ -104,7 +104,7 @@ const missMessage = computed(() => {
     return data
   }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
 
-  return $t('第 [{miss}] 条代理缺少信息，将不会被保存。', { miss: miss.map(item => item._missIndex).join(', ') })
+  return $t('第 [{miss}] 条代理 IP 缺少信息，将不会被保存。', { miss: miss.map(item => item._missIndex).join(', ') })
 })
 
 onBeforeMount(async () => {
@@ -121,7 +121,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.replace(/\s/g, '').replace(/：/g, ':')).filter(Boolean)
 
   if (!list.length) {
-    onlyErrorToast(-1, $t('请先输入代理信息'))
+    onlyErrorToast(-1, $t('请先输入代理 IP 信息'))
     return
   }
 
@@ -168,7 +168,7 @@ function tableOperation(data: any) {
   return [
     {
       name: 'refresh',
-      label: $t('刷新代理'),
+      label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
       quick: true,
       disabled: !data.refreshUrl,
@@ -176,7 +176,7 @@ function tableOperation(data: any) {
     },
     {
       name: 'test',
-      label: $t('测试代理'),
+      label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
       quick: true,
     },
@@ -239,8 +239,8 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
 
 function clearProxy() {
   confirm.require({
-    header: $t('清空代理'),
-    message: $t('您确认清空所有代理吗?'),
+    header: $t('清空代理 IP'),
+    message: $t('您确认清空所有代理 IP 吗?'),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -268,8 +268,8 @@ async function testAllProxy() {
 function deleteFailProxy() {
   const list = dataList.value.filter((item: any) => item.checkStatus !== ProxyCheckStatus.failure)
   confirm.require({
-    header: $t('删除失败代理'),
-    message: $t('您确认删除所有测速失败的代理吗?共 {count} 个', { count: dataList.value.length - list.length }),
+    header: $t('删除失败代理 IP'),
+    message: $t('您确认删除所有测速失败的代理 IP 吗?共 {count} 个', { count: dataList.value.length - list.length }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -310,7 +310,7 @@ async function onSave() {
 
   confirm.require({
     header: $t('警告'),
-    message: $t('第 [{miss}] 条代理缺少信息，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
+    message: $t('第 [{miss}] 条代理 IP 缺少信息，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -336,7 +336,7 @@ async function onSave() {
     <div class="parse-input w-full">
       <div class="flex flex-col gap-1.5 xl:w-60%">
         <div class="panel-title flex justify-between items-start xl:items-center flex-col xl:flex-row gap-1">
-          <div>{{ $t('代理信息') }}</div>
+          <div>{{ $t('代理 IP 信息') }}</div>
           <div class="flex gap-1.5">
             <TsFormSelect v-model="ipType" class="flex-1" :options="ipTypeOptions" option-value="value" size="xs" />
             <TsFormSelect v-model="protocolValue" class="!w-30" :options="protocolOptions" option-value="value" size="xs" />
@@ -344,7 +344,7 @@ async function onSave() {
           </div>
         </div>
         <div class="information min-w-423px">
-          <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理信息')" />
+          <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理 IP 信息')" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
@@ -354,7 +354,7 @@ async function onSave() {
                 <RxCheckbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
                 <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理 IP 信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
               </div>
             </div>
             <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
@@ -375,16 +375,16 @@ async function onSave() {
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar">
         <div class="panel-title">
-          {{ $t('已解析代理') }}
+          {{ $t('已解析代理 IP') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('清空代理')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click.stop="clearProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('清空代理 IP')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click.stop="clearProxy" />
           <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_internet_error" :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
           <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click.stop="testAllProxy" />
         </div>
       </div>
       <div class="parse-result-message">
-        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理 IP。{filterCount} 重复代理 IP 已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
                  @close="messageClose"
         />
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]" />

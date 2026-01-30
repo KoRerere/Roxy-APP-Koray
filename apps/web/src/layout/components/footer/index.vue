@@ -76,7 +76,7 @@ const items = computed(() => {
             </span>
           </a>
         </ShinyButton>
-        <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+        <a v-else v-ripple class="menu-item" :class="[`menu_${item.routeName}`, { 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }]" v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
           <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">{{ item.label }}</span>
           <component :is="item.extra" v-if="!collapsed && item.extra" />

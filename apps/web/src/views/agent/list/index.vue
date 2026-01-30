@@ -77,7 +77,7 @@ function onAdvancedSearch(search?: Record<string, any>) {
 
 function editProxy(data: ProxyItem) {
   drawerInstance.showDrawer({
-    title: $t('编辑代理'),
+    title: $t('编辑代理 IP'),
     slots: {
       container: () => h(EditProxy, {
         data,
@@ -102,8 +102,8 @@ async function refreshUrl(data: ProxyItem) {
   }
 
   confirm.require({
-    header: $t('刷新代理'),
-    message: $t('此代理已关联 {count} 个窗口，您确认要刷新代理吗？', { count: _data.bindList!.length }),
+    header: $t('刷新代理 IP'),
+    message: $t('此代理 IP 已关联 {count} 个窗口，您确认要刷新代理 IP 吗？', { count: _data.bindList!.length }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -150,7 +150,7 @@ function onRemark(data: any) {
     return
 
   showSimpleDialog({
-    title: $t('为所选代理添加备注'),
+    title: $t('为所选代理 IP 添加备注'),
     inputs: [
       {
         type: 'textarea',
@@ -250,7 +250,7 @@ function onRefreshTable(tabParams = {}, force = false) {
           </div>
         </template>
         <template #table-empty>
-          <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
+          <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此添加代理 IP 信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
                 <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />

@@ -3416,6 +3416,12 @@ export interface UserSaveLlmDataCreatePayload {
   content: string;
   /** 回复内容（阿里云地址） */
   resultUrl: string;
+  /** 对话id */
+  conversationId: string;
+  /** 输入token */
+  inputToken: number;
+  /** 输出token */
+  outputToken: number;
 }
 
 export interface UserSaveLlmDataCreateData {
@@ -3479,6 +3485,40 @@ export interface UserGetPromptTemplateListListData {
     /** 修改时间 */
     updateTime?: string;
   }[];
+  msg: string;
+}
+
+export interface UserRegisterGiftConfigListData {
+  code: number;
+  data: {
+    enable: boolean;
+    create_count: number;
+    static: {
+      enable: boolean;
+      ispCount: number;
+      ispCountry: string;
+      dcCount: number;
+      dcCountry: string;
+      day: number;
+    };
+    dynamic: {
+      enable: boolean;
+      count: number;
+      value: number;
+      day: number;
+    };
+    discount: {
+      enable: boolean;
+      value: number;
+    };
+  };
+  msg: string;
+}
+
+export type UserRegGiftCreatePayload = object;
+
+export interface UserRegGiftCreateData {
+  code: number;
   msg: string;
 }
 
@@ -6913,6 +6953,8 @@ export interface UserMdfProjectSortCreateData {
 
 export interface UserBatchInviteCreatePayload {
   emailList: string[];
+  /** project: 项目  team: 团队 */
+  inviteType: string;
   /** 权限 */
   role: number;
   projectIds: number[];

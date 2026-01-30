@@ -1,9 +1,9 @@
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { get } from 'es-toolkit/compat'
 import { EventEmitter } from 'node:events'
 import { createReadStream } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
+import { rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
@@ -11,6 +11,7 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
+import { ipcSender } from '/@/modules/ipc'
 import { delRoxynetProxy } from '/@/modules/roxynet'
 import { canUseSyncControl } from '/@/modules/store'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
@@ -116,6 +117,11 @@ export class BrowserItem {
     return this.beforeLaunchTask.lastMessage
   }
 
+  /** 虚拟摄像头 fake 视频目录 */
+  get fakeVideoDir() {
+    return join(this.userDataDir, 'fakevideo')
+  }
+
   /** 启动成功后的信息 */
   get launchInfo() {
     return {
@@ -191,6 +197,12 @@ export class BrowserItem {
       this.browserPid = this.#browser!.process()?.pid
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
+
+      ipcSender.user.mixpanelTrack('profile_start', {
+        coreVersion: this.coreVersion.coreVersion,
+        browserType: 'chrome',
+        headless: this.beforeLaunchTask.launchArgs.includes('--headless'),
+      })
     }
   }
 
@@ -209,6 +221,11 @@ export class BrowserItem {
     }
     finally {
       delRoxynetProxy(dirId)
+      rm(this.fakeVideoDir, { recursive: true, force: true }).catch(() => {})
+      ipcSender.user.mixpanelTrack('profile_end', {
+        coreVersion: this.coreVersion.coreVersion,
+        browserType: 'chrome',
+      })
     }
   }
 

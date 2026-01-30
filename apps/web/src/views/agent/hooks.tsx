@@ -114,7 +114,7 @@ export function useCheckProxy(): useCheckProxyResult {
     if (results.length === 1) {
       const checkRes = results[0]!
       const [code, msg] = checkRes.checkStatus === ProxyCheckStatus.failure
-        ? [-1, checkRes.error || $t('测试代理失败')]
+        ? [-1, checkRes.error || $t('测试代理 IP 失败')]
         : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
       showToast(code, msg)
     }
@@ -147,13 +147,11 @@ export function useProxy() {
           <ChooseModal
             {...props}
             onSuccess={resolve}
-            onClose={() => {
-              hideModal()
-              reject()
-            }}
+            onClose={hideModal}
           />
         ),
       },
+      handleCancel: reject,
     })
     return promise
   }

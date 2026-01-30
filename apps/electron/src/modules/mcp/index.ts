@@ -33,7 +33,7 @@ export const mcpManager = new (class McpManager {
   async startMcpServer() {
     const llmInfo = await API.base.userGetLlmInfoList({})
 
-    if (llmInfo.code !== 0 || !llmInfo.data || !llmInfo.data.available) {
+    if (llmInfo.code !== 0 || !llmInfo.data) {
       return
     }
 

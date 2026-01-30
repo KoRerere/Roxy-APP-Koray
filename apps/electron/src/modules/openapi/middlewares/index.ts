@@ -16,16 +16,6 @@ export function setupMiddlewares(app: express.Application) {
     res.header('Access-Control-Allow-Headers', '*')
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE')
     res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE')
-    const accept = req.header('accept') || ''
-    const isHtmlRequest = req.path.includes('.html') || accept.includes('text/html')
-
-    // 仅对 HTML 禁止缓存
-    if (isHtmlRequest) {
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-      res.setHeader('Pragma', 'no-cache')
-      res.setHeader('Expires', '0')
-      res.setHeader('Surrogate-Control', 'no-store')
-    }
 
     // if (this.intercept(req)) {
     //   return res.json({

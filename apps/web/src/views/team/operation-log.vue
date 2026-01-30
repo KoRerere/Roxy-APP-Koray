@@ -78,7 +78,7 @@ async function tableFilters() {
       placeholder: $t('全部操作'),
       options: [
         { label: $t('窗口'), value: 'Profiles' },
-        { label: $t('代理'), value: 'Proxies' },
+        { label: $t('代理 IP'), value: 'Proxies' },
         { label: $t('账号'), value: 'Accounts' },
         { label: $t('项目'), value: 'Projects' },
         { label: $t('扩展'), value: 'Extensions' },

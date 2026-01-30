@@ -61,6 +61,7 @@ export interface Props {
   tableOperation?: (data: any) => Operation[]
   operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
   beforeRefresh?: () => any | Promise<any>
+  afterRefresh?: () => any | Promise<any>
 }
 
 const route = useRoute()
@@ -318,18 +319,19 @@ function _updateDataList(list: any[]) {
 
 async function _onRefresh() {
   await props.beforeRefresh?.()
-  _request()
+  await _request()
+  await props.afterRefresh?.()
 }
 
 defineExpose({
   rootElRef,
   selectionData: realUseSelection,
-  refresh: (outerParams = {}, force = true) => {
+  refresh: async (outerParams = {}, force = true) => {
     _outerParams.value = outerParams
     if (force) {
       paginatorConfig.first = 0
     }
-    _onRefresh()
+    await _onRefresh()
   },
   clearSelection: _clearSelection,
   updateDataList: _updateDataList,

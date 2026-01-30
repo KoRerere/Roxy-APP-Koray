@@ -111,8 +111,8 @@ function editProject() {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.title {
+  <style lang="scss" scoped>
+  .title {
   color: var(--colors-text-text-secondary);
 
   &:hover {

@@ -305,6 +305,7 @@ export function getOperation(row: any = {}) {
       name: 'setAsDefaultBrowser',
       label: $t('设为默认浏览器'),
       icon: 'base/rx_ic_loptop_check',
+      suffixIcon: 'base/fire',
     },
     {
       name: 'createDesktopShortcut',
@@ -351,7 +352,7 @@ export function getOperation(row: any = {}) {
     },
     {
       name: 'proxyActions',
-      label: $t('代理操作'),
+      label: $t('代理 IP 操作'),
       icon: 'base/rx_ic_internet',
       multiple: true,
       power: !role.isViewer,
@@ -470,7 +471,7 @@ export function getAdvancedSearch() {
     },
     {
       key: 'proxy',
-      label: $t('代理'),
+      label: $t('代理 IP'),
       icon: 'base/rx_ic_internet',
       syntax: 'proxy::',
     },

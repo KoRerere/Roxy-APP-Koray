@@ -103,9 +103,10 @@ export interface MainMessage {
   'syncControl:pause': () => void
   /** 恢复同步 */
   'syncControl:resume': () => void
-
   /** 通过外部打开浏览器失败错误弹窗 */
   'dialog:open-browser-failed': (payload: { name: string, type: OpenBrowserFailureType, message?: string }) => void
   /** 卸载反馈模式（由卸载程序启动） */
   'app:uninstall-feedback-mode': (isUninstallMode: boolean) => void
+  /** 埋点上报事件 */
+  'mixpanel:track': (event_name: string, data?: Record<string, any>) => void
 }

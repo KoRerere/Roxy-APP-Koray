@@ -29,7 +29,7 @@ function onCopy() {
     <div class="h-45 flex flex-col justify-center items-center gap-3 self-stretch rounded-lg proxy">
       <SvgIcon :name="(`country-code/${data.country?.toLocaleUpperCase()}` as any)" size="64" />
       <div class="proxy-text">
-        {{ $t('{days} 天 {country} 代理 {count} 个', {
+        {{ $t('{days} 天 {country} 代理 IP {count} 个', {
           days: data.days,
           country:
             data.country?.toLocaleUpperCase(),
@@ -37,7 +37,7 @@ function onCopy() {
         }) }}
       </div>
       <div class="proxy-tag">
-        {{ $t('数据中心代理') }}
+        {{ $t('数据中心代理 IP') }}
       </div>
     </div>
     <div class="flex flex-col gap-2">
@@ -52,7 +52,7 @@ function onCopy() {
       </div>
     </div>
     <i18n-t tag="div" class="select-none desc"
-            :keypath="$t('请根据以下指引进行代理兑换：前往费用中心，点击代理卡片旁的购买按钮，在弹出的浮层窗口中完成代理的兑换即可。{video}', { video: '{video}' })"
+            :keypath="$t('请根据以下指引进行代理 IP 兑换：前往费用中心，点击代理 IP 卡片旁的购买按钮，在弹出的浮层窗口中完成代理 IP 的兑换即可。{video}', { video: '{video}' })"
             scope="global"
     >
       <template #video>

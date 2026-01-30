@@ -61,10 +61,10 @@ const optionsGroup = computed<OptionGorup[]>(() => [
     visible: isDelete.value,
     options: [
       {
-        label: $t('同时删除代理资源中仅与投送窗口有绑定关系的代理'),
+        label: $t('同时删除代理 IP 资源中仅与投送窗口有绑定关系的代理 IP'),
         value: 'proxy',
         disabled: buyProxyType,
-        tooltip: buyProxyType ? $t('投送窗口中存在购买代理') : undefined,
+        tooltip: buyProxyType ? $t('投送窗口中存在购买代理 IP') : undefined,
       },
       {
         label: $t('同时删除平台账号中仅与投送窗口有绑定关系的账号'),
@@ -156,7 +156,7 @@ async function onTransfer(isSelf: boolean) {
         <template #content>
           <i18n-t scope="global" :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
             <template #bold>
-              <span class="font-bold"> {{ $t('已同步过的云端数据、代理信息、平台账号、Cookies 和指纹参数等') }} </span>
+              <span class="font-bold"> {{ $t('已同步过的云端数据、代理 IP 信息、平台账号、Cookies 和指纹参数等') }} </span>
             </template>
             <template #bold2>
               <span class="font-bold"> {{ $t('扩展应用，需要接收方手动安装') }} </span>
@@ -189,16 +189,16 @@ async function onTransfer(isSelf: boolean) {
           {{ $t('删除说明') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}
+          {{ $t('若代理 IP a 仅与窗口 A 绑定，窗口 A 被投送，则代理 IP a 将从代理 IP 资源中删除') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}
+          {{ $t('若代理 IP a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 IP a 不会被删除') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 a 将从代理资源中删除') }}
+          {{ $t('若代理 IP a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 IP a 将从代理 IP 资源中删除') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('(平台账号删除规则同代理)') }}
+          {{ $t('(平台账号删除规则同代理 IP)') }}
         </div>
       </div>
     </div>

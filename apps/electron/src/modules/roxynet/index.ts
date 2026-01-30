@@ -1,13 +1,13 @@
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
+import { chmod } from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
 import { appConfig } from '/@/constants'
+import { isWindows } from '/@/constants/common'
+import { checkResource } from '/@/modules/app/checkResource'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { fileExists, getSystemProxy, isProcessExists } from '/@/utils'
-import { isWindows } from '/@/constants/common'
-import { checkResource } from '/@/modules/app/checkResource'
-import { chmod } from 'node:fs/promises'
 
 export * from './util'
 
@@ -62,8 +62,8 @@ export async function startRoxynet() {
 
   const launchParams = {
     system_proxy: {
-      addr: systemProxy,
-      protocal: 'http',
+      addr: systemProxy.addr,
+      protocal: systemProxy.protocol,
       v2: store.v2raySwitch, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,

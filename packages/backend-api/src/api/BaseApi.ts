@@ -137,6 +137,9 @@ import {
   UserModifyRemarkDisplayStatusCreatePayload,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
+  UserRegGiftCreateData,
+  UserRegGiftCreatePayload,
+  UserRegisterGiftConfigListData,
   UserSaveLlmDataCreateData,
   UserSaveLlmDataCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
@@ -2007,6 +2010,43 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetPromptTemplateListListData, any>({
       path: `/user_get_prompt_template_list`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserRegisterGiftConfigList
+   * @summary 获取注册赠送代理配置信息
+   * @request GET:/user_register_gift_config
+   * @response `200` `UserRegisterGiftConfigListData`
+   */
+  userRegisterGiftConfigList = (params: RequestParams = {}) =>
+    this.http.request<UserRegisterGiftConfigListData, any>({
+      path: `/user_register_gift_config`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserRegGiftCreate
+   * @summary 新用户注册赠送代理相关礼物
+   * @request POST:/user_reg_gift
+   * @response `200` `UserRegGiftCreateData`
+   */
+  userRegGiftCreate = (
+    data: UserRegGiftCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRegGiftCreateData, any>({
+      path: `/user_reg_gift`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

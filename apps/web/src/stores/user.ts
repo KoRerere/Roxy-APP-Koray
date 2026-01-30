@@ -231,6 +231,11 @@ export const useUserStore = defineStore(
       })
     }
 
+    // 收集来自 electron 的埋点事件
+    electronAPI.on('mixpanel:track', (event_name: string, data?: Record<string, any>) => {
+      mixpanelTrack(event_name, data)
+    })
+
     async function clearUserInfo() {
       const logoutPromise = electronAPI.send('user:logout')
       if (loginWay.value === 'password') {
@@ -382,7 +387,7 @@ export const useUserStore = defineStore(
   },
   {
     persist: {
-      pick: ['token', 'rememberMe', 'password', 'userInfo.email', 'loginWay'],
+      pick: ['token', 'rememberMe', 'password', 'userInfo.email', 'loginWay', 'userInfo.onboardingTaskStatus'],
     },
   },
 )

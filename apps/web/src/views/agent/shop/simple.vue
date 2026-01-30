@@ -152,7 +152,7 @@ function saveSelected() {
   emit('confirm', selectProxy)
 }
 
-const message = $t('当前选择绑定的代理数量已超过创建窗口数。')
+const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
 </script>
 
 <template>
@@ -163,7 +163,7 @@ const message = $t('当前选择绑定的代理数量已超过创建窗口数。
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-             :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false"
+             :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false"
     />
     <div class="flex-ovh-1">
       <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"

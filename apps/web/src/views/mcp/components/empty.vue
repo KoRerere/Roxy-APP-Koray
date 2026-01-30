@@ -20,7 +20,7 @@ function setMesage(item: any) {
         {{ $t('Roxy AI Agent, 您的数字员工') }}
       </div>
       <div class="subtitle">
-        {{ $t('Roxy AI Agent 可以帮你管理浏览器窗口、平台账号还有代理，并帮助您实现浏览器的自动化操作') }}
+        {{ $t('我可以帮您完成养号、创建窗口、配置代理IP等各类自动化操作。试试以下指令模板：') }}
       </div>
       <div class="flex items-center flex-wrap pt-1.5 gap-2 select-none cursor-pointer">
         <RxButton v-for="item in preset" :key="item.id" severity="secondary" variant="outlined" :label="item.promptTemplateTitle" @click="setMesage(item)">

@@ -53,7 +53,7 @@ const contents = computed(() => {
     <div v-for="(rule, index) in contents" :key="index" v-html="rule.content" />
     <br>
     <div class="help">
-      <span v-if="ipType === IPType.IPV6">1. </span>{{ $t('一行一个代理，一次最多添加 500 个；') }}
+      <span v-if="ipType === IPType.IPV6">1. </span>{{ $t('一行一个代理 IP，一次最多添加 500 个；') }}
     </div>
     <div v-if="ipType === IPType.IPV6" class="help">
       {{ $t('2. IPV6 的主机需填写在 [ ] 内；') }}

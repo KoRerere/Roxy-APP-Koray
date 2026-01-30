@@ -9,8 +9,6 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useConfirm } from 'primevue/useconfirm'
 import { I18nT } from 'vue-i18n'
-import { driver } from 'driver.js'
-import 'driver.js/dist/driver.css'
 import { API } from '/@/api'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
@@ -25,7 +23,7 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, filterInputsByNames, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
+import { deepClone, filterFieldByValue, filterInputsByNames, genDriver, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
@@ -44,6 +42,7 @@ const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -210,6 +209,26 @@ async function initFormInputs(template: Record<string, any> = {}) {
   })
 }
 
+function showGuide() {
+  if (userInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
+    const driverObj = genDriver({
+      progressText: '{{current}} / {{total}}',
+      showProgress: true,
+      steps: [
+        { element: '.guide1', disableActiveInteraction: false, popover: { description: $t('请为您的第一个窗口命名。'), side: 'top', align: 'start' } },
+        { element: '.guide2', popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'start' } },
+        { element: '.guide3', popover: { description: $t('配置代理 IP 可以让您改变出口 IP 地址，从而为该窗口的所有行动提供匿名性。'), side: 'top', align: 'center' } },
+        { element: '.guide4', popover: { description: $t('此处展示的是当前窗口的指纹信息预览，您可以根据业务需求继续自定义配置。'), side: 'left', align: 'center' } },
+        { element: '.guide5', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
+      ],
+      onDestroyed: () => {
+        updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
+      },
+    })
+    driverObj.drive()
+  }
+}
+
 async function onShuffle() {
   await onUpdateFinger()
   showToast(0, $t('指纹刷新成功'))
@@ -267,7 +286,7 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
     afterRender: () => (
       <ol class="pl-3.5 m-0 color-[var(--colors-text-text-secondary)]">
         <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
-        <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+        <li>{$t('代理 IP，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
       </ol>
     ),
     onConfirm: async (data: any) => {
@@ -358,7 +377,7 @@ async function batchCreateProfile(params: any) {
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const proxyDiffCount = createCount - proxyInfoList.length
   if (proxyDiffCount < 0) {
-    onlyErrorToast(-1, $t('代理数量不能大于窗口'))
+    onlyErrorToast(-1, $t('代理 IP 数量不能大于窗口'))
     return
   }
   const accountDiffCount = createCount - windowPlatformList.length - platformUrlIds.length
@@ -407,7 +426,12 @@ async function importProfile(params: any) {
       webGLRender: params.webGLInfo === 2 ? params.webGLRender : webGLRender,
     }
   })
-  const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
+  const { code, msg } = await API.window.userImportWindowInfoV2Create({
+    ...params,
+    ...fileAnalyzeData.value,
+    workspaceId: currentWorkspace.value?.id,
+    fingerDetail,
+  })
   loading.value = false
   modal.hideModal()
   if (code === 0) {
@@ -456,38 +480,6 @@ function onBack(data?: any, openBrowser = false) {
     },
   })
 }
-
-const guideCss = useCssModule('guide')
-const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-
-const driverObj = driver({
-  nextBtnText: $t('下一步'),
-  doneBtnText: $t('完成'),
-  showButtons: ['next'],
-  overlayColor: 'var(--pattern-tour-mask-bg)',
-  overlayOpacity: 1,
-  progressText: '{{current}} / {{total}}',
-  showProgress: true,
-  allowClose: false,
-  disableActiveInteraction: true,
-  popoverClass: guideCss.popover,
-  steps: [
-    { element: '.guide1', disableActiveInteraction: false, popover: { description: $t('请为您的第一个窗口命名。'), side: 'top', align: 'start' } },
-    { element: '.guide2', popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'start' } },
-    { element: '.guide3', popover: { description: $t('配置代理可以让您改变出口 IP 地址，从而为该窗口的所有行动提供匿名性。'), side: 'top', align: 'center' } },
-    { element: '.guide4', popover: { description: $t('此处展示的是当前窗口的指纹信息预览，您可以根据业务需求继续自定义配置。'), side: 'left', align: 'center' } },
-    { element: '.guide5', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
-  ],
-  onDestroyed: () => {
-    updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
-  },
-})
-
-function showGuide() {
-  if (userInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
-    driverObj.drive()
-  }
-}
 </script>
 
 <template>
@@ -533,69 +525,6 @@ function showGuide() {
     <div class="foot-separator" />
   </div>
 </template>
-
-<style module="guide">
-.popover {
-  min-width: 220px;
-  max-width: 220px;
-  padding: 12px;
-  border-radius: 6px;
-  background: var(--pattern-tour-tips-bg);
-  box-shadow:
-    0 3px 8px 0 rgba(0, 0, 0, 0.07),
-    0 2px 5px 0 rgba(0, 0, 0, 0.07),
-    0 1px 1px 0 rgba(0, 0, 0, 0.07);
-
-  :global(.driver-popover-description),
-  :global(.driver-popover-progress-text) {
-    color: var(--component-tooltip-text-primary);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 16px;
-  }
-
-  :global(.driver-popover-footer) {
-    margin-top: 6px;
-  }
-
-  :global(.driver-popover-arrow-side-left.driver-popover-arrow) {
-    border-left-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-right.driver-popover-arrow) {
-    border-right-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-top.driver-popover-arrow) {
-    border-top-color: var(--pattern-tour-tips-bg);
-  }
-
-  :global(.driver-popover-arrow-side-bottom.driver-popover-arrow) {
-    border-bottom-color: var(--pattern-tour-tips-bg);
-  }
-
-  button {
-    min-width: 60px;
-    padding: 4px 8px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--colors-alpha-alpha-white-20);
-    color: var(--component-tooltip-text-primary);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 16px;
-    border: none;
-    text-shadow: none;
-
-    &:focus,
-    &:hover {
-      background: var(--colors-alpha-alpha-white-20);
-    }
-  }
-}
-</style>
 
 <style lang="scss" scoped>
 :deep(.p-splitbutton) {

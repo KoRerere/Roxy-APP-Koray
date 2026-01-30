@@ -5,7 +5,7 @@ export const getColumns = () => {
   return [
     {
       key: 'protocol',
-      title: $t('代理类型'),
+      title: $t('代理 IP 类型'),
       getText: (data: any) => data.protocol || '--',
     },
     {

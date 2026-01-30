@@ -62,7 +62,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 2: 导入一个代理 IP 至 Roxy'),
-    descriptions: [$t('代理是确保窗口安全性、匿名性的重要工具，其同时决定了部分指纹参数的生成，对您的"身份"真实性至关重要，根据教程导入您的代理 IP，从而不再因网络环境而被限制。')],
+    descriptions: [$t('代理 IP 是确保窗口安全性、匿名性的重要工具，其同时决定了部分指纹参数的生成，对您的"身份"真实性至关重要，根据教程导入您的代理 IP，从而不再因网络环境而被限制。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">

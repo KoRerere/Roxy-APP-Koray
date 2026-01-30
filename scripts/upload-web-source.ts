@@ -48,10 +48,7 @@ const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo174359
 
 const webPath = path.join(import.meta.dirname, '../apps/web/dist')
 
-const platformList = process.env.PLATFORM
-  ? [process.env.PLATFORM === 'mac' ? 'macOS' : 'Windows']
-  : ['Windows', 'macOS']
-console.log('平台：', process.env.PLATFORM, platformList)
+console.log('平台：', process.env.PLATFORM)
 const version = fs.readFileSync(path.join(webPath, 'version'), 'utf-8')
 const minimumAppVersion = fs.readFileSync(
   path.join(webPath, 'minimum_app_version'),
@@ -112,38 +109,36 @@ async function startUpload() {
   console.log('上传 web 资源包中...')
   const versions = [currentAppVersion, minimumAppVersion]
   for (const appVersion of versions) {
-    for (const platform of platformList) {
-      const uploadZip = await ossClient.put(
-        `/public/package/web/${appVersion}/${platform}/dist.zip`,
-        zip.toBuffer(),
-      )
-      console.log('上传 web 资源包成功：', uploadZip.url)
-      const data = Buffer.from(
+    const uploadZip = await ossClient.put(
+      `/public/package/web/${appVersion}/dist.zip`,
+      zip.toBuffer(),
+    )
+    console.log('上传 web 资源包成功：', uploadZip.url)
+    const data = Buffer.from(
+      JSON.stringify({
+        version,
+        latest_app_version: currentAppVersion,
+        minimum_app_version: minimumAppVersion,
+        releaseTime: getCurrentFormattedTime(),
+      }),
+    )
+    const uploadVersionRes = await ossClient.put(
+      `/public/package/web/${appVersion}/version.json`,
+      data,
+    )
+    console.log('上传版本号成功：', uploadVersionRes.url)
+    // 有活动的时候，上传活动信息
+    if (activityInfo.isActivity) {
+      const activityData = Buffer.from(
         JSON.stringify({
-          version,
-          latest_app_version: currentAppVersion,
-          minimum_app_version: minimumAppVersion,
-          releaseTime: getCurrentFormattedTime(),
+          activityInfo,
         }),
       )
-      const uploadVersionRes = await ossClient.put(
-        `/public/package/web/${appVersion}/${platform}/version.json`,
-        data,
+      const uploadActivityRes = await ossClient.put(
+        `/public/package/web/${appVersion}/activity.json`,
+        activityData,
       )
-      console.log('上传版本号成功：', uploadVersionRes.url)
-      // 有活动的时候，上传活动信息
-      if (activityInfo.isActivity) {
-        const activityData = Buffer.from(
-          JSON.stringify({
-            activityInfo,
-          }),
-        )
-        const uploadActivityRes = await ossClient.put(
-          `/public/package/web/${appVersion}/${platform}/activity.json`,
-          activityData,
-        )
-        console.log('上传活动信息成功：', uploadActivityRes.url)
-      }
+      console.log('上传活动信息成功：', uploadActivityRes.url)
     }
   }
 }

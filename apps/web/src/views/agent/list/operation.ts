@@ -36,9 +36,9 @@ export function tableOperation(data?: ProxyItem) {
     },
     {
       name: 'refresh',
-      label: $t('刷新代理'),
+      label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
-      tooltip: $t('刷新代理'),
+      tooltip: $t('刷新代理 IP'),
       quick: true,
       disabled: !data?.refreshUrl,
       disabledTooltip: $t('未配置刷新URL'),
@@ -98,7 +98,7 @@ export async function getCustomFilters() {
     },
     {
       type: 'Checkbox',
-      label: $t('代理类型'),
+      label: $t('代理 IP 类型'),
       name: 'protocol',
       getOptions: () => {
         return ($dict_map.protocol || []).map((item: any) => ({
@@ -113,7 +113,7 @@ export async function getCustomFilters() {
     },
     {
       type: 'text',
-      label: $t('代理主机'),
+      label: $t('代理 IP 主机'),
       name: 'host',
     },
     {
@@ -131,25 +131,25 @@ export function getAdvancedSearch() {
       key: 'host',
       label: $t('代理 IP'),
       icon: 'base/rx_ic_internet',
-      syntax: 'host::'
+      syntax: 'host::',
     },
     {
       key: 'username',
       label: $t('用户名'),
       icon: 'base/rx_ic_user_sm',
-      syntax: 'name::'
+      syntax: 'name::',
     },
     {
       key: 'lastCountry',
       label: $t('国家/地区'),
       icon: 'base/rx_ic_earth',
-      syntax: 'region::'
+      syntax: 'region::',
     },
     {
       key: 'remark',
       label: $t('备注'),
       icon: 'base/rx_ic_doc_article',
-      syntax: 'note::'
+      syntax: 'note::',
     },
   ]
 }

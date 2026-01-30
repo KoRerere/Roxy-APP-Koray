@@ -113,7 +113,7 @@ async function getShopList() {
             <span class="description">
               {{ $t('专为 AI 优化:') }}
             </span>
-            <img v-for="imgUrl in item.iconList?.slice(0, 3)" :key="imgUrl" class="block w-4 h-4" :src="imgUrl">
+            <img v-for="data in item.newIconList?.slice(0, 3)" :key="data.url" class="block w-4 h-4" :src="data.url">
           </div>
           <i18n-t v-else-if="item.storeType === ProxyDescType.Discount" class="description" tag="div" :keypath="$t('Roxy 用户专享: {discount}', { discount: '{discount}' })" scope="global">
             <template #discount>

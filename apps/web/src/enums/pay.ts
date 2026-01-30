@@ -36,11 +36,11 @@ export enum OrderType {
   Exchange = 'exchange',
   /** 赠送 */
   Gift = 'gift',
-  /** 代理购买 */
+  /** 代理 IP 购买 */
   ProxyPurchase = 'proxy_purchase',
-  /** 代理退款 */
+  /** 代理 IP 退款 */
   ProxyRefund = 'proxy_refund',
-  /** 代理续费 */
+  /** 代理 IP 续费 */
   ProxyRenew = 'proxy_renew',
   /** 官方赠送 */
   OfficialGift = 'official_gift',
@@ -60,9 +60,9 @@ export const OrderTypeStr = {
   [OrderType.Refund]: $t('退款'),
   [OrderType.Exchange]: $t('兑换'),
   [OrderType.Gift]: $t('赠送'),
-  [OrderType.ProxyPurchase]: $t('代理购买'),
-  [OrderType.ProxyRefund]: $t('代理退款'),
-  [OrderType.ProxyRenew]: $t('代理续费'),
+  [OrderType.ProxyPurchase]: $t('代理 IP 购买'),
+  [OrderType.ProxyRefund]: $t('代理 IP 退款'),
+  [OrderType.ProxyRenew]: $t('代理 IP 续费'),
   [OrderType.OfficialGift]: $t('官方赠送'),
   [OrderType.RewardRedeem]: $t('奖励兑换'),
   [OrderType.EventRewards]: $t('活动奖励'),
@@ -197,4 +197,10 @@ export enum AutoRenewalPayStatus {
 export enum RoxyGiftsType {
   ISP = 'ISP',
   Rotating = 'ROTATING_RESIDENTIA',
+}
+
+export enum FirstGiftType {
+  Static = 'static',
+  Dynamic = 'dynamic',
+  Discount = 'discount',
 }
