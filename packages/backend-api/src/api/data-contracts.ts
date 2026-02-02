@@ -3500,16 +3500,22 @@ export interface UserRegisterGiftConfigListData {
       dcCount: number;
       dcCountry: string;
       day: number;
+      imgUrl: string;
+      windowCount: number;
     };
     dynamic: {
+      windowCount: number;
       enable: boolean;
       count: number;
       value: number;
       day: number;
+      imgUrl: string;
     };
     discount: {
+      windowCount: number;
       enable: boolean;
       value: number;
+      imgUrl: string;
     };
   };
   msg: string;
@@ -3990,6 +3996,10 @@ export interface UserBatchWindowInfoV2CreatePayload {
 
 export interface UserBatchWindowInfoV2CreateData {
   code: number;
+  data: {
+    count: number;
+    windowIds: number[];
+  };
   msg: string;
 }
 
@@ -5459,14 +5469,21 @@ export interface UserGetProxyProviderListListData {
     proxyPrice: number;
     createTime: string;
     proxyProviderDesc: null;
-    proxyProviderAdv?: string[];
+    proxyProviderAdv: string[];
+    iconList?: string[];
+    newIconList?: {
+      desc: string;
+      url: string;
+    }[];
+    /** 代理供应商折扣 */
+    proxyProviderDiscount?: number;
     jumpInfo?: {
       jumpUrl: string;
       username: string;
       password: string;
       apiKey: string;
     };
-    isJump: boolean;
+    isJump?: boolean;
   }[];
   msg: string;
 }
@@ -5835,19 +5852,18 @@ export interface UserGetProxyStoreListListData {
       typeName?: string;
     }[];
     iconList?: string[];
-    /** 代理供应商折扣 */
+    newIconList?: {
+      desc: string;
+      url: string;
+    }[];
     proxyProviderDiscount?: number;
-    /** 描叙 */
     description?: string;
-    /** 是否新增 */
     isNew?: boolean;
-    /** 价格 */
     proxyPrice?: number;
     proxyProviderIcon?: string;
     proxyProviderName?: string;
     isJump?: number;
     proxyProviderDesc?: string;
-    /** 类型 0 展示描叙 1 展示价格 */
     storeType?: number;
   }[];
   msg: string;

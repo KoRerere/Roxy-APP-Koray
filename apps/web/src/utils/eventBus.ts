@@ -49,7 +49,7 @@ export interface MittEvents {
   /** 显示用户引导 */
   showUserGuideDialog?: void
   /** 显示第一次注册引导 */
-  firstRegisterGuide?: void
+  firstRegisterGuide: string
   /** 显示侧边栏引导 */
   asideMenuGuide?: void
   /** 更新项目列表 */

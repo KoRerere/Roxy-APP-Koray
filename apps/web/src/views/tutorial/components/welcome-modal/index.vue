@@ -161,7 +161,7 @@ const stepList = ref<any[]>(shuffle([
 const step = ref<'survey' | 'info' | 'new'>('survey')
 const page = ref(0)
 const firstGift = ref()
-const chooseGift = ref()
+const chooseType = ref()
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/information_bg.svg")' : 'url("/images/information_bg_dark.svg")'
@@ -258,10 +258,11 @@ async function getNewUserGift() {
 }
 
 async function onConfirm() {
-  const windowIds = await genDefaultProfileByCount(firstGift.value.count)
-  await API.base.userRegGiftCreate({ windowIds, giftType: chooseGift.value })
+  const chooseData = firstGift.value[chooseType.value]
+  const windowIds = await genDefaultProfileByCount(chooseData.windowCount)
+  await API.base.userRegGiftCreate({ windowIds, giftType: chooseType.value })
 
-  emitter.emit('firstRegisterGuide')
+  emitter.emit('firstRegisterGuide', chooseType.value)
   onClose()
 }
 </script>
@@ -318,7 +319,7 @@ async function onConfirm() {
     </motion.div>
 
     <motion.div v-else-if="step === 'new' && firstGift" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
-      <FirstGift v-model="chooseGift" :data="firstGift" />
+      <FirstGift v-model="chooseType" :data="firstGift" />
     </motion.div>
 
     <div class="mt-8 flex items-center justify-end gap-3 px-6">
@@ -328,7 +329,7 @@ async function onConfirm() {
         <RxButton :label="page === stepList.length - 1 ? $t('完成') : $t('下一个')" :disabled="nextDisabled" @click="handleNext" />
       </template>
       <RxButton v-else-if="step === 'info'" :label="$t('下一步')" @click="getNewUserGift" />
-      <RxButton v-else :label="$t('确认')" :disabled="!chooseGift" @click="onConfirm" />
+      <RxButton v-else :label="$t('确认')" :disabled="!chooseType" @click="onConfirm" />
     </div>
   </div>
 </template>

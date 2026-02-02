@@ -1345,10 +1345,19 @@ export async function genDefaultProfileByCount(count: number) {
   const defaultParams = getFormDataByList(inputsGroup)
   const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion']
   const fingerParams = Object.fromEntries(fingerKeys.map(key => [key, defaultParams[key]]))
-  const fingerData = await electronAPI.send('util:genRandomFingerprint', fingerParams, count)
+  const fingerDetail = await electronAPI.send('util:genRandomFingerprint', fingerParams, count)
+
   try {
-    const datas = await Promise.all(fingerData.map(data => API.window.userAddWindowInfoV2Create({ ...toRaw(defaultParams), ...toRaw(original), ...data })))
-    return datas.map(item => item.data.windowId)
+    const { data } = await API.window.userBatchWindowInfoV2Create({
+      createCount: count,
+      ...toRaw(original),
+      ...fingerDetail[0],
+      ...toRaw(defaultParams),
+      fingerDetail,
+      proxyInfoList: Array.from({ length: count }, () => ({ id: 0, proxyCategory: 'noproxy' })),
+    })
+
+    return data.windowIds
   }
   catch {
     return []

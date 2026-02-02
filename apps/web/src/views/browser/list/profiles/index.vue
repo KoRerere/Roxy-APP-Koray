@@ -27,6 +27,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { FirstGiftType } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
@@ -211,7 +212,7 @@ async function tableRequest(params: any) {
 
 function firstRegisterGuideTour() {
   if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
-    emitter.on('firstRegisterGuide', async () => {
+    emitter.on('firstRegisterGuide', async (type: string) => {
       await tableRef.value?.refresh({}, true)
       nextTick(() => {
         drive({
@@ -219,7 +220,11 @@ function firstRegisterGuideTour() {
           steps: [
             {
               pick: { rect: { rows: [0, 1], cols: [1, 1], mode: 'data' } },
-              popover: { description: $t('代理 IP 已绑定。您现在有 2 个绑定了美国 IP 的窗口。'), side: 'bottom', align: 'center' },
+              popover: {
+                description: FirstGiftType.Discount === type ? $t('我们已为您创建好一些独立窗口。现在，只需为每个窗口绑定对应的平台账号与代理 IP，就能实现完全隔离的多账号操作。') : $t('赠送的代理 IP 已自动绑定至新窗口。无需复杂设置，即可开始完全隔离的多账号操作。'),
+                side: 'bottom',
+                align: 'center',
+              },
             },
             {
               pick: { selector: '.p-datatable-tbody > tr:nth-child(-n+2) > td:nth-child(4)' },

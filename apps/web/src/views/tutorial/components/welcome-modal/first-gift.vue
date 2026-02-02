@@ -12,7 +12,10 @@ const list = computed(() => {
     {
       value: FirstGiftType.Static,
       img: staticData.imgUrl,
-      text: $t('{ispCount} 条 {ispCountry} 静态住宅代理 IP\n+ {dcCount} 条 {dcCountry} 静态机房代理 IP', { ispCount: staticData.ispCount, dcCount: staticData.dcCount, ispCountry: staticData.ispCountry, dcCountry: staticData.dcCountry }),
+      text: [
+        !!staticData.ispCount && $t('{ispCount} 条 {ispCountry} 静态住宅代理 IP', { ispCount: staticData.ispCount, ispCountry: staticData.ispCountry }),
+        !!staticData.dcCount && $t('{dcCount} 条 {dcCountry} 静态机房代理 IP', { dcCount: staticData.dcCount, dcCountry: staticData.dcCountry }),
+      ].join('\n+ '),
       desc: $t('有效期 {day} 天，由 RoxyBrowser 精选', { day: staticData.day }),
       visible: staticData.enable,
     },
