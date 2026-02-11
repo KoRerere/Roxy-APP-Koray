@@ -1,10 +1,10 @@
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
+import { defaultLanguage } from '/@/locales'
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
-  const defaultLanguage = navigator.language === 'zh-CN' ? navigator.language : navigator.language.split('-')[0]
   const currentLocale = ref(defaultLanguage)
 
   const siteLocale = computed(() => {
@@ -20,7 +20,7 @@ export const useSimpleLocale = defineStore('locale', () => {
     await API.base.userSetUserConfigCreate({ language: locale }).finally(() => {
       clearDictCache()
       currentLocale.value = locale
-      electronAPI.send('app:saveSoftConfig', { language: locale })
+      globalThis.electronAPI.send('app:saveSoftConfig', { language: locale })
       location.reload()
     })
   }
@@ -49,11 +49,10 @@ export const useSimpleLocale = defineStore('locale', () => {
     openTelegram,
     setSimpleLocale,
     getOfficialWebsite,
-    getOfficialFaqWebsite
+    getOfficialFaqWebsite,
   }
 }, {
   persist: {
-    storage: sessionStorage,
     pick: ['currentLocale'],
   },
 })

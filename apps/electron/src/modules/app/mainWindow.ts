@@ -40,7 +40,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
       store.isExternalWeb = false
     }
   }
-  console.log('[getWebEntryUrl] store.isExternalWeb', store.isExternalWeb, skipCompare)
+  console.log('[getWebEntryUrl] store.isExternalWeb', store.isExternalWeb, skipCompare, `${appConfig.webBaseUrl}/${path}`)
   return `${appConfig.webBaseUrl}/${path}`
 }
 

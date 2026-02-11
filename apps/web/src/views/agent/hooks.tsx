@@ -70,7 +70,7 @@ export function useCheckProxy(): useCheckProxyResult {
     data.dirId ||= Math.random().toString(36).slice(2)
 
     try {
-      const checkRes = await window.electronAPI.send('proxy:detect', data as ProxyDetectionParams)
+      const checkRes = await globalThis.electronAPI.send('proxy:detect', data as ProxyDetectionParams)
       checkResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkResult.lastIp = checkRes.ip ?? ''
       checkResult.lastCity = checkRes.city ?? ''
@@ -87,7 +87,7 @@ export function useCheckProxy(): useCheckProxyResult {
     finally {
       checkResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       checkResult.loading = false
-      data.dirId && window.electronAPI.send('proxy:delRoxynetProxy', data.dirId)
+      data.dirId && globalThis.electronAPI.send('proxy:delRoxynetProxy', data.dirId)
     }
     return { ...toRaw(checkResult) }
   }

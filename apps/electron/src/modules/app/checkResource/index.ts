@@ -3,6 +3,7 @@ import { checkRoxynetBin } from '/@/modules/app/checkResource/checkRoxynetBin'
 import { checkRoxySyncBin } from '/@/modules/app/checkResource/checkRoxySyncBin'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { appUpdater } from '/@/modules/updater'
+import { agentUpdater } from '/@/modules/updater/agentUpdater'
 import { webUpdater } from '/@/modules/updater/webUpdater'
 
 /** 发送启动消息 */
@@ -44,6 +45,9 @@ export async function checkResource() {
     // 检测更新 roxySync
     await checkRoxySyncBin(webDomain).catch((error) => {
       console.log('checkRoxySyncBin error', error)
+    })
+    await agentUpdater.checkForUpdates().catch((error) => {
+      console.log('checkRoxyagent scripts error', error)
     })
     // 检测更新 web
     await webUpdater.checkForUpdates({

@@ -4,12 +4,12 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 const message = ref('')
 const appVersion = ref('')
 
-electronAPI.on('app:launch-message', (msg) => {
+globalThis.electronAPI.on('app:launch-message', (msg) => {
   console.log('app:launch-message: ', msg)
   message.value = msg
 })
 
-electronAPI.send('app:getAppVersion').then((version) => {
+globalThis.electronAPI.send('app:getAppVersion').then((version) => {
   appVersion.value = version
 })
 </script>

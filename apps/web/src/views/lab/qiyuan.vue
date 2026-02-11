@@ -4,7 +4,7 @@
 //   class: 'w-[500px] max-h-[90vh]',
 //   draggable: false,
 //   handleCancel: () => {
-//     electronAPI.send('app:hideNewFeatureTips')
+//     globalThis.electronAPI.send('app:hideNewFeatureTips')
 //   },
 //   slots: {
 //     default: ({ hideModal }) => {

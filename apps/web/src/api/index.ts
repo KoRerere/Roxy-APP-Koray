@@ -41,9 +41,9 @@ export const httpClient = new HttpClient({
 let baseURL = ''
 let commonHeaders
 let deviceId = ''
-let inviteCode = ''
+let inviteCode: string
 
-globalThis?.electronAPI?.on('app:backend-url-change', (url) => {
+globalThis?.globalThis.electronAPI?.on('app:backend-url-change', (url) => {
   console.log('app:backend-url-change', url)
   baseURL = url
 })
@@ -51,7 +51,7 @@ globalThis?.electronAPI?.on('app:backend-url-change', (url) => {
 httpClient.instance.interceptors.request.use(async (config) => {
   baseURL ||= await getGatewayConfig()
   commonHeaders ||= await getCommonHeaders()
-  inviteCode ||= await getInviteCode()
+  inviteCode ??= await getInviteCode()
 
   if (needDeviceIdApis.some(api => config.url?.includes(api))) {
     deviceId ||= await getDeviceId()
@@ -70,8 +70,8 @@ httpClient.instance.interceptors.request.use(async (config) => {
   const { currentWorkspace } = useWorkspaceStore()
   const { currentLocale } = useSimpleLocale()
   config.headers.token ||= token
+  config.headers.source = globalThis.isElectron ? 'app' : 'web'
   config.headers.language = currentLocale
-  config.headers.source = 'app'
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
   config.headers['R-INVITE-CODE'] = inviteCode
@@ -82,6 +82,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
 
   return config
 }, (error) => {
+  console.error('request error', error)
   if (error?.message?.includes('ERR_CONNECTION_RESET')) {
     reGetGatewayConfig()
   }
@@ -95,11 +96,11 @@ const closeOtherWindow = debounce(() => {
 }, 200)
 
 const reGetGatewayConfig = debounce(() => {
-  electronAPI.send('util:getGatewayConfig')
+  globalThis.electronAPI.send('util:getGatewayConfig')
 }, 200)
 
 const reGetGatewayConfigByIpChange = debounce((ip: string) => {
-  electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
+  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
 }, 200)
 
 httpClient.instance.interceptors.response.use(async (response) => {
@@ -124,7 +125,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     const { defaultWorkspace, setCurrentWorkspace, fetchWorkspaceList } = useWorkspaceStore()
     setCurrentWorkspace(defaultWorkspace!.id!)
     fetchWorkspaceList()
-    electronAPI.send('mcp:close')
+    globalThis.electronAPI.send('mcp:close')
     return response
   }
   const { config } = response

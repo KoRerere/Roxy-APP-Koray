@@ -29,7 +29,7 @@ const kernelDownloadPercent = computed(() => {
   return Math.min(100, Math.max(0, Math.round(percent)))
 })
 
-window.electronAPI.send('browser:getOpenedBrowserMessage').then((state) => {
+globalThis.electronAPI.send('browser:getOpenedBrowserMessage').then((state) => {
   console.log('browser:getOpenedBrowserMessage state', state)
   const target = state.find(item => item.dirId === dirId)
   if (target) {
@@ -40,7 +40,7 @@ window.electronAPI.send('browser:getOpenedBrowserMessage').then((state) => {
   }
 })
 
-const cancelListenOpenMessage = window.electronAPI.on('browser:launch-process-message', (event) => {
+const cancelListenOpenMessage = globalThis.electronAPI.on('browser:launch-process-message', (event) => {
   console.log('browser:launch-process-message event', event)
   launchProcessMessage.value = event.data
   const id = event.data?.dirId

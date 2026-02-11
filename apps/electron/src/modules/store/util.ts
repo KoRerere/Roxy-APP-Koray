@@ -1,16 +1,16 @@
+import type { StoreType } from '/@/modules/store/types'
 import { getCurrentScope } from '@sentry/electron/main'
 import { app } from 'electron'
 import { debounce } from 'es-toolkit'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
-import type { StoreType } from '/@/modules/store/types'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { loadLocaleMessages } from '/@/locales'
 import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
-import { fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
+import { fileExists, getInstallerParams, killProcessByName, killProcessForce, safeParseJSON } from '/@/utils'
 
 /** 加密密钥，使用 PBKDF2 生成固定长度的密钥 */
 /**
@@ -161,6 +161,12 @@ export async function initLocalConfig() {
   if (!store.deviceId) {
     recordFirstLaunchAppEvent()
   }
+  // 如果有更新器进程 ID，则杀掉更新器进程
+  console.log('updaterExePid', store.updaterExePid)
+  if (store.updaterExePid) {
+    killProcessForce(store.updaterExePid)
+    store.updaterExePid = undefined
+  }
   initLocalConfigPromise.resolve()
 }
 
@@ -169,6 +175,7 @@ export async function fetchUserConfig() {
   if (!store.token) {
     return
   }
+
   try {
     // 启动时，获取用户配置
     const { code, data } = await API.base.userGetUserConfigList()
@@ -183,6 +190,17 @@ export async function fetchUserConfig() {
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
+  }
+}
+
+export async function fetchCheckChannelList() {
+  const { code, data } = await API.base.userGetSystemDictV2Create({ type: ['checkChannel'] })
+  if (code === 0) {
+    store.checkChannelList = data.reduce((map, item) => {
+      const hostname = new URL(item.value).hostname
+      map[hostname] = item.label.toLowerCase()
+      return map
+    }, {})
   }
 }
 

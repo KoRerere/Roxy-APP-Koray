@@ -10,7 +10,7 @@ import { checkEmailValid, emailValidateLoading, getFormSchemas, getPhoneSchemas 
 import SignCardHeader from './sign-card-header.vue'
 import { debounce, isBoolean } from 'es-toolkit'
 
-const props = defineProps({
+defineProps({
   type: {
     type: String as PropType<'signUp' | 'signIn'>,
     default: 'signIn',
@@ -118,7 +118,6 @@ async function handleSubmit() {
         setCurrentComponent('emailCodeInputOtp')
       }
       else {
-        mixpanel.track('signUp', { method: 'email', success: false, error: msg })
         onlyErrorToast(-1, msg || $t('发生错误'))
       }
       return

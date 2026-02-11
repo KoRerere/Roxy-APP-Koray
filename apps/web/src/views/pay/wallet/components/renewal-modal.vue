@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
+import SpringActivity from '/@/views/campaign/spring-festival/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
-import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import currency from 'currency.js'
 
 import { API } from '/@/api'
@@ -130,6 +129,13 @@ const detail = computed(() => {
   ].filter(item => item.items.length)
 })
 
+const giftProfile = computed(() => {
+  return {
+    count: userPayInfo.value.purchaseWindowCount,
+    month: selectedDuration.value?.month ?? 1,
+  }
+})
+
 const _onConfirm = ref()
 const _onCancel = ref()
 
@@ -229,7 +235,6 @@ function onUpgradePlan() {
             </div>
           </div>
         </ItemBlock>
-        <ActivityInfo />
       </div>
       <div class="flex flex-col gap-2.5 w-88">
         <Detail :list="detail">
@@ -262,7 +267,7 @@ function onUpgradePlan() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-4 gap-3">
-              <RoxyGifts v-model="giftType" :amount="totalAmount" />
+              <SpringActivity v-model="giftType" :amount="totalAmount" :gift-profile="giftProfile" />
               <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm" />
               <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>

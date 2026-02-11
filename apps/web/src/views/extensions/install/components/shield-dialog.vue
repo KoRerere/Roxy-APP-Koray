@@ -37,21 +37,21 @@ const checkList = [
 
 async function checkExtensionInfo() {
   try {
-    const result = await electronAPI.send('extension:getExtensionInfo', props.extensionInfo.pluginDir!)
+    const result = await globalThis.electronAPI.send('extension:getExtensionInfo', props.extensionInfo.pluginDir!)
     console.log('checkExtensionInfo', result)
     extensionExist.value = true
   } catch (error) {
     console.error(`checkExtensionInfo error: ${error}`)
     extensionExist.value = false
-    electronAPI.send('extension:download', [toRaw(props.extensionInfo)])
+    globalThis.electronAPI.send('extension:download', [toRaw(props.extensionInfo)])
   }
 }
 
 function showExtensionDir() {
-  electronAPI.send('extension:showExtensionDir', props.extensionInfo.pluginDir!)
+  globalThis.electronAPI.send('extension:showExtensionDir', props.extensionInfo.pluginDir!)
 }
 
-const cancelListener = electronAPI.on('extension:download-progress', (payload) => {
+const cancelListener = globalThis.electronAPI.on('extension:download-progress', (payload) => {
   console.log('extension:download-progress', payload)
 
   if (payload.extID === props.extensionInfo.pluginDir) {

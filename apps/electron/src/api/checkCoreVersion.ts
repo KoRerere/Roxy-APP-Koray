@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios'
 import { isEqual } from 'es-toolkit'
-import { chromeCoreManager } from '/@/modules/browser'
+import { coreManager } from '/@/modules/browser'
 import { parseHeaderParams } from './util'
 
 /** 上一次版本 */
@@ -17,14 +17,14 @@ export async function checkCoreVersion(response: AxiosResponse<any, any>) {
 
   }
 
-  if (isEqual(core_last_version_list, chromeCoreManager.lastCoreVersionList) || isCheckingCoreVersion) {
+  if (isEqual(core_last_version_list, coreManager.lastChromeCoreVersionList) || isCheckingCoreVersion) {
     return
   }
 
   isCheckingCoreVersion = true
 
-  console.info('checkCoreVersion', core_last_version_list, chromeCoreManager.lastCoreVersionList)
-  chromeCoreManager.fetchAvailableCoreList().finally(() => {
+  console.info('checkCoreVersion', core_last_version_list, coreManager.lastChromeCoreVersionList)
+  coreManager.fetchAvailableCoreList().finally(() => {
     isCheckingCoreVersion = false
   })
 }

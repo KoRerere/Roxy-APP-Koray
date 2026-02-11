@@ -33,7 +33,7 @@ let isSubscribe = false
 let lastFocusTime = Date.now()
 
 export function useSubscribe() {
-  if (isSubscribe || !isMainWindow) {
+  if (globalThis.isElectron && (isSubscribe || !isMainWindow)) {
     return
   }
 
@@ -55,8 +55,8 @@ export function useSubscribe() {
   watchEffect(() => {
     if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
       // 检查是否显示新功能提示
-      electronAPI.send('app:getNewFeatureTips').then((result) => {
-        console.log('app:getNewFeatureTips', userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus, result)
+      globalThis.electronAPI.send('app:getNewFeatureTips').then((result) => {
+        console.log('app:getNewFeatureTips', result)
         const newFeatureTips = result?.filter(item => item.content?.length)
         if (newFeatureTips?.length) {
           showAppUpgradeDialog(newFeatureTips)
@@ -68,7 +68,7 @@ export function useSubscribe() {
   // 显示toast
   emitter.on('showToast', showToast)
   // 打开页面
-  electronAPI.on('open:page', (query) => {
+  globalThis.electronAPI.on('open:page', (query) => {
     console.log('open:page', query)
     if (query) {
       const searchParams = new URLSearchParams(query)
@@ -83,7 +83,7 @@ export function useSubscribe() {
     }
   })
 
-  electronAPI.on('dialog:open-browser-failed', (payload) => {
+  globalThis.electronAPI.on('dialog:open-browser-failed', (payload) => {
     console.log('dialog:open-browser-failed', payload)
     const messageMap: Record<OpenBrowserFailureType, string> = {
       not_login: $t('当前账号暂未登录，无法同步窗口信息。\n请登录后再打开窗口。'),
@@ -118,6 +118,8 @@ export function useSubscribe() {
 
   /** 初始化事件监听 */
   function initListener() {
+    // 显示最后一次跟新特性
+    emitter.on('showAppUpgradeDialog', showAppUpgradeDialog)
     // 显示升级套餐弹窗
     emitter.on('showUpgradePlanDialog', showUpgradePlanDialog)
     // 显示订阅到期弹窗
@@ -132,14 +134,13 @@ export function useSubscribe() {
     emitter.on('showUserGuideDialog', showUserGuideDialog)
     // 显示侧边栏引导
     emitter.on('asideMenuGuide', showAsideMenuGuideTour)
-
     // 达到窗口打开次数限制
-    electronAPI.on('browser:window-open-limit', (result) => {
+    globalThis.electronAPI.on('browser:window-open-limit', (result) => {
       console.log('browser:window-open-limit', result)
       handleBusinessCode(result.code)
     })
     /** 当主窗口聚焦时 */
-    electronAPI.on('window:on-focus', () => {
+    globalThis.electronAPI.on('window:on-focus', () => {
       console.log('window:on-focus')
       // 如果距离上一次聚焦时间超过 15 分钟，则刷新一下用户支付信息
       if (Date.now() - lastFocusTime > 1000 * 60 * 15) {
@@ -150,7 +151,7 @@ export function useSubscribe() {
   }
 
   requestIdleCallback(async () => {
-    electronAPI.send('web:ready')
+    globalThis.electronAPI.send('web:ready')
     console.log('web:ready')
     initListener()
   })
@@ -186,17 +187,18 @@ export function useSubscribe() {
   }
 
   /** 显示 APP 新特性升级弹窗 */
-  async function showAppUpgradeDialog(newFeatureTips: string[]) {
-    const appVersion = await electronAPI.send('app:getAppVersion')
+  async function showAppUpgradeDialog(newFeatureTips: any[]) {
+    const appVersion = await globalThis.electronAPI.send('app:getAppVersion')
     showModal({
       header: $t('v{appVersion} 更新概览', { appVersion }),
-      class: 'w-[500px] max-h-[90vh] !transform-none',
+      class: 'w-125 max-h-[90vh] !transform-none',
       pt: {
         root: '!will-change-auto',
+        mask: 'z-1002',
       },
       draggable: false,
       handleCancel: () => {
-        electronAPI.send('app:hideNewFeatureTips')
+        globalThis.electronAPI.send('app:hideNewFeatureTips')
       },
       slots: {
         default: ({ hideModal }) => {
@@ -289,12 +291,6 @@ export function useSubscribe() {
 
   /** 显示账号设置弹窗 */
   async function showAccountSetupDialog() {
-    function toLogin() {
-      router.push({ name: 'login' })
-      formInstance.handleCancel()
-      clearUserInfo()
-    }
-
     const formInstance = await showFormDialog({
       header: $t('账号设置'),
       class: 'w-[400px]',
@@ -339,6 +335,12 @@ export function useSubscribe() {
         }
       },
     })
+
+    function toLogin() {
+      router.push({ name: 'login' })
+      formInstance.handleCancel()
+      clearUserInfo()
+    }
   }
 
   function showUserGuideDialog() {
@@ -364,9 +366,6 @@ export function useSubscribe() {
         { element: '.menu_agent-list', popover: { description: $t('RoxyBrowser 不仅支持自定义代理 IP，也为您准备了代理 IP 商店，欢迎选购！'), side: 'right', align: 'center' } },
         { element: '.menu_tutorial', popover: { description: $t('最后，您可以探索新手教程来了解更多 RoxyBrowser 产品功能和使用技巧，以提升您的操作效率。'), side: 'right', align: 'center' } },
       ],
-      onDestroyed: () => {
-        console.log('wcis man!')
-      },
     })
 
     driverObj.drive()

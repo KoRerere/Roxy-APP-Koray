@@ -529,5 +529,25 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         selectFileDialogTitle: $t('选择视频'),
       }
     },
+    battery: {
+      enable: winInfo.openBattery ?? false,
+      charging: winInfo.openCharging ?? false,
+      chargingTime: winInfo.chargingTime ?? '', // (单位：秒，参数不传时间单位)
+      dischargingTime: winInfo.dischargingTime ?? '', // (单位：秒，参数不传时间单位)
+      level: winInfo.level ?? '', // (0-1)
+    },
+    network: {
+      enable: winInfo.openNetwork ?? false,
+      nettype: winInfo.networkType === 'cellular' ? winInfo.networkSpeed!.replace(/slow-2G/i, '2G') : winInfo.networkType, // wifi，cellular，ethernet，bluetooth，wimax，other，unknown
+      effectiveType: winInfo.networkSpeed, // slow-2G/2G/3G/4G
+      downlink: winInfo.downloadSpeed ?? '', // 单位Mbps
+      downlinkMax: winInfo.maxDownloadSpeed ?? '', // 单位Mbps
+      rtt: winInfo.latency ?? '', // 单位毫秒ms
+      saveData: winInfo.saveFlowMode ?? false,
+    },
+    bluetooth: {
+      enable: winInfo.openBluetooth ?? false,
+      bluetoothAdapter: winInfo.bluetoothAdapter ?? false,
+    },
   }
 }

@@ -4,11 +4,11 @@ import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
-import { browserManager } from '/@/modules/browser'
-import { store } from '/@/modules/store'
-import { calculateRemainingTime, fileExists, tryRefreshUrl } from '/@/utils'
 import { appConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
+import { browserManager } from '/@/modules/browser'
+import { setUserConfig, store } from '/@/modules/store'
+import { calculateRemainingTime, fileExists, tryRefreshUrl } from '/@/utils'
 
 export async function setupDashboardServer(app: express.Application) {
   // 工作台
@@ -42,10 +42,24 @@ export async function setupDashboardServer(app: express.Application) {
 
   /* 获取 app 设置 */
   app.get('/api/app/config', async (req, res) => {
+    const { dirId } = req.query
+    const browserItem = await browserManager.getOpenedBrowser(dirId as string)
+
+    const isIPV6 = browserItem?.winInfo.ipType === 'IPV6'
+
     res.success({
       appPort: store.appPort,
       language: store.language,
-      ipChecker: store.ipChecker
+      ipChecker: isIPV6 ? store.lastUseIp2locationUrl : store.ipChecker,
+      dashboardTourGuide: store.dashboardTourGuide,
+    })
+  })
+
+  app.post('/api/dashboard/close-tour-guide', async (req, res) => {
+    setUserConfig({ dashboardTourGuide: true })
+    res.success({
+      code: 0,
+      msg: 'success',
     })
   })
 
@@ -166,12 +180,12 @@ export async function setupDashboardServer(app: express.Application) {
             if (contentType?.includes('text/html')) {
               const { id = '' } = req.query
               let bodyString = body.toString()
-              browserManager.getOpenedBrowser(id as string).then(browserItem => {
+              browserManager.getOpenedBrowser(id as string).then((browserItem) => {
                 // const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
                 // 修改 HTML 响应体中的 <title> 标签
                 bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
                 // 确保响应内容完整
-                proxyRes.headers['content-length'] = String(Buffer.byteLength(bodyString));
+                proxyRes.headers['content-length'] = String(Buffer.byteLength(bodyString))
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
                 res.end(bodyString)
               })

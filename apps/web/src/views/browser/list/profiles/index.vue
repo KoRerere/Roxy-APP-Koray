@@ -127,7 +127,7 @@ onBeforeMount(() => {
     }
   })
 
-  window.electronAPI
+  globalThis.electronAPI
     .send('browser:getOpenedBrowserMessage')
     .then((state) => {
       console.log('browser:getOpenedBrowserMessage state', state)
@@ -292,30 +292,30 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await createDesktopShortcut(data)
       break
     case 'addProxy':
-      multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
+      await multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
       break
     case 'chooseProxy':
-      multipleProxyChange(data, { operationType, proxyMethod: 'choose' })
+      await multipleProxyChange(data, { operationType, proxyMethod: 'choose' })
       break
     case 'deleteProxy':
       await multipleProxyDelete(data)
       break
     case 'addPlatformAccount':
-      multipleAccountChange(data, { operationType, isChoose: false })
+      await multipleAccountChange(data, { operationType, isChoose: false })
       break
     case 'choosePlatformAccount':
-      multipleAccountChange(data, { operationType, isChoose: true })
+      await multipleAccountChange(data, { operationType, isChoose: true })
       break
     case 'restart':
     {
       const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
       if (dirIds.length) {
-        window.electronAPI.send('browser:batchRelaunch', dirIds)
+        globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
       }
       break
     }
     case 'close':
-      window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
+      globalThis.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
         console.log('browser:batchClose res', res)
       })
       break
@@ -375,6 +375,10 @@ function autoOpenBrowser(list: Data[]) {
 }
 
 async function openBrowserBefore(data: Data | Data[]) {
+  if (!globalThis.isElectron) {
+    globalThis.electronAPI.send('browser:batchRelaunch', [])
+    return
+  }
   // 过滤打开限制的 profile
   const datas = ([] as Data[]).concat(data).filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
 
@@ -423,7 +427,7 @@ async function openBrowserBefore(data: Data | Data[]) {
 
 async function setAsDefaultBrowser(data: Data) {
   const sortNum = `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0')
-  await window.electronAPI.send('browser:setAsDefaultBrowser', {
+  await globalThis.electronAPI.send('browser:setAsDefaultBrowser', {
     ...toRaw(data),
     __orderName: `${workspaceName.value}-${sortNum}`,
   } as any)
@@ -432,7 +436,7 @@ async function setAsDefaultBrowser(data: Data) {
 
 async function createDesktopShortcut(data: Data) {
   const sortNum = `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0')
-  await window.electronAPI.send('browser:createDesktopShortcut', {
+  await globalThis.electronAPI.send('browser:createDesktopShortcut', {
     ...toRaw(data),
     __orderName: `${workspaceName.value}-${sortNum}`,
   } as any)
@@ -454,7 +458,7 @@ async function checkProfileStatus(datas: Data[]) {
 function onOpenBrowser(datas: Data[]) {
   const dirIds = datas.map(item => item.dirId!)
   if (dirIds.length) {
-    window.electronAPI.send('browser:batchLaunch', dirIds)
+    globalThis.electronAPI.send('browser:batchLaunch', dirIds)
   }
 }
 
@@ -520,7 +524,7 @@ async function getNotUsedProfiles(datas: Data[]) {
   if (!datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
     return datas
   }
-  const result = await electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
+  const result = await globalThis.electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
   return datas.filter((_, index) => !result[index])
 }
 
@@ -667,6 +671,8 @@ async function onMoveToProject(data: any) {
 }
 
 function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }: any) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
   const datas = ([] as Data[]).concat(data)
   const isMulti = operationType === 'batch'
   const isChoose = proxyMethod === 'choose'
@@ -700,6 +706,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     slots: {
       container: containerRender,
     },
+    onHide: resolve,
   })
 
   async function onConfirm({ id, ...formData }: any) {
@@ -730,6 +737,8 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
     })
   }
+
+  return promise
 }
 
 function multipleProxyDelete(data: Data | Data[]) {
@@ -773,12 +782,12 @@ function multipleProxyDelete(data: Data | Data[]) {
 }
 
 function multipleAccountChange(data: Data | Data[], { operationType, isChoose = false }: any) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
   const datas = ([] as Data[]).concat(data)
   const isMulti = operationType === 'batch'
 
-  const title = isChoose
-    ? $t('选择平台账号')
-    : $t('添加平台账号')
+  const title = isChoose ? $t('选择平台账号') : $t('添加平台账号')
 
   const containerRender = isChoose
     ? () => (
@@ -799,6 +808,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     slots: {
       container: containerRender,
     },
+    onHide: resolve,
   })
 
   async function onConfirm(formData: any) {
@@ -844,6 +854,8 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     }
     return { code, msg }
   }
+
+  return promise
 }
 
 async function onEditCookies(data: Data | Data[]) {
@@ -895,39 +907,34 @@ async function onRemark(data: Data | Data[]) {
   if (role.isViewer) {
     return
   }
+  const { promise, resolve } = Promise.withResolvers<void>()
 
   const datas = ([] as Data[]).concat(data)
-  return new Promise((resolve, reject) => {
-    showSimpleDialog({
-      title: $t('为所选窗口添加备注'),
-      inputs: [
-        {
-          type: 'textarea',
-          name: 'windowRemark',
-          value: datas[0]!.windowRemark,
-          props: {
-            placeholder: $t('请输入备注'),
-            rows: 6,
-          },
+
+  showSimpleDialog({
+    title: $t('为所选窗口添加备注'),
+    inputs: [
+      {
+        type: 'textarea',
+        name: 'windowRemark',
+        value: datas[0]!.windowRemark,
+        props: {
+          placeholder: $t('请输入备注'),
+          rows: 6,
         },
-      ],
-      onConfirm: async (formData: any) => {
-        try {
-          const ids = datas.map(item => item.id)
-          await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
-          datas.forEach((item) => {
-            item.windowRemark = formData.windowRemark
-          })
-        }
-        finally {
-          resolve(true)
-        }
       },
-      onCancel: () => {
-        reject($t('取消'))
-      },
-    })
+    ],
+    onConfirm: async (formData: any) => {
+      const ids = datas.map(item => item.id)
+      await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
+      datas.forEach((item) => {
+        item.windowRemark = formData.windowRemark
+      })
+    },
+    onHide: resolve,
   })
+
+  return promise
 }
 
 function toggleRemarkDisplayStatus(cache: Record<string, any>) {
@@ -952,12 +959,12 @@ async function onClearCache(datas: any[]) {
       onConfirm: async (result: ClearType) => {
         const dirIds = datas.map(item => item.dirId)
         if (result === ClearType.cloud) {
-          await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirIds }).finally(() => {
+          await globalThis.electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirIds }).finally(() => {
             return API.window.userClearWindowCacheCreate({ ids: datas.map(item => item.id) })
           })
         }
         else {
-          await electronAPI.send('browser:clearCache', { clearType: result, dirIds })
+          await globalThis.electronAPI.send('browser:clearCache', { clearType: result, dirIds })
         }
       },
     },
@@ -1020,7 +1027,7 @@ async function deleteProfile(datas: any, ids: number[]) {
         if (this.checkboxProps.value) {
           await API.window.userDelWindowInfoCreate({ ids })
           onRefreshTable()
-          electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
+          globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
         }
         else {
           await batchModifyWindow({ ids, isDelete: true })
@@ -1080,7 +1087,7 @@ function showDiskSpaceModal() {
 }
 
 function listenOpenMessage() {
-  return window.electronAPI.on('browser:launch-process-message', (event) => {
+  return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
     if (event.code === 1 && event.message.includes('ERR101')) {
       showDiskSpaceModal()
     }
@@ -1090,7 +1097,7 @@ function listenOpenMessage() {
 }
 
 function listenCloseMessage() {
-  return window.electronAPI.on('browser:on-close', (dirIds) => {
+  return globalThis.electronAPI.on('browser:on-close', (dirIds) => {
     dirIds.forEach((dirId) => {
       Reflect.deleteProperty(openMessage, dirId)
     })
@@ -1098,7 +1105,7 @@ function listenCloseMessage() {
 }
 
 function listenCloseSyncingDataMessage() {
-  return window.electronAPI.on('browser:on-close-syncing-data', (dirIds) => {
+  return globalThis.electronAPI.on('browser:on-close-syncing-data', (dirIds) => {
     dirIds.forEach((dirId) => {
       const message = Reflect.get(openMessage, dirId)
       if (message?.data) {

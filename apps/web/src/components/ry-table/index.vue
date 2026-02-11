@@ -273,6 +273,8 @@ function _clearSelection() {
   }
 }
 
+const contextMenuSelected = ref()
+
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   if (!tableAttrs.contextMenu) {
     return
@@ -284,16 +286,27 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
     return
   }
 
+  let _executing = false
+
   showContextMenu(event.originalEvent, {
     operation: isLikeFunction(props.operationHandler) ? operation.map(({ command: _command, ...item }) => item) : operation,
     operationHandler: async (operate: any) => {
       try {
+        _executing = true
         const _operate = { ...deepClone(toRaw(operate)), _event: event.originalEvent }
         await props.operationHandler?.(_operate, event.data, 'single')
       }
       catch (error) {
         console.log(error)
       }
+      finally {
+        _executing = false
+        contextMenuSelected.value = undefined
+      }
+    },
+    onHide: () => {
+      if (!_executing)
+        contextMenuSelected.value = undefined
     },
   })
 }
@@ -372,14 +385,15 @@ function initBodyrow(options: any) {
       </slot>
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder" :sort-field="_sorts.sortField" :pt="{
-        root: ColumnCss_Module.tableroot,
-        table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
-        emptymessagecell: '!whitespace-normal !text-center',
-        tbody: ColumnCss_Module.tbody,
-        headerrow: ColumnCss_Module.headerrow,
-        bodyrow: initBodyrow,
-      }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu"
+      <DataTable v-model:context-menu-selection="contextMenuSelected" v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder"
+                 :sort-field="_sorts.sortField" :pt="{
+                   root: ColumnCss_Module.tableroot,
+                   table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
+                   emptymessagecell: '!whitespace-normal !text-center',
+                   tbody: ColumnCss_Module.tbody,
+                   headerrow: ColumnCss_Module.headerrow,
+                   bodyrow: initBodyrow,
+                 }" @sort="_onSortChange" @row-contextmenu="onRowContextMenu"
       >
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
@@ -403,7 +417,7 @@ function initBodyrow(options: any) {
 
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
-            <slot :name="headerSlot" :column="column">
+            <slot :name="headerSlot" :column="column" :class="ColumnCss_Module.columntitle">
               <component :is="headerRender" v-if="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
@@ -660,6 +674,19 @@ function initBodyrow(options: any) {
     }
 
     &:global(:not(.row-disabled):not([data-p-selected='true']):hover) {
+      background: var(--component-table-bg-hover);
+
+      .bodycell {
+        border-color: var(--component-table-border-hover);
+
+        &:global(.p-datatable-frozen-column) {
+          background: var(--component-table-bg-hover);
+        }
+      }
+    }
+
+    &:global(.p-datatable-contextmenu-row-selected:not(.row-disabled):not([data-p-selected='true'])) {
+      outline: none;
       background: var(--component-table-bg-hover);
 
       .bodycell {

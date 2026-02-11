@@ -61,6 +61,7 @@ import {
   UserQueryRedeemCodeListParams,
   UserRechargeSettlementCreateData,
   UserRechargeSettlementCreatePayload,
+  UserRedeemCodeListListData,
   UserRedeemWindowCodeCreateData,
   UserRedeemWindowCodeCreatePayload,
   UserSetAutoRechargeStatusCreateData,
@@ -808,6 +809,22 @@ export class PayApi<SecurityDataType = unknown> {
       path: `/user_query_redeem_code`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserRedeemCodeListList
+   * @summary 兑换码列表查询接口
+   * @request GET:/user_redeem_code_list
+   * @response `200` `UserRedeemCodeListListData`
+   */
+  userRedeemCodeListList = (params: RequestParams = {}) =>
+    this.http.request<UserRedeemCodeListListData, any>({
+      path: `/user_redeem_code_list`,
+      method: "GET",
       format: "json",
       ...params,
     });

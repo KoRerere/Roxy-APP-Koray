@@ -8,12 +8,12 @@ import log from 'electron-log/renderer'
 
 Object.assign(console, log.functions)
 
-electronAPI.send('app:getSoftConfig').then((softConfig) => {
+globalThis.electronAPI.send('app:getSoftConfig').then((softConfig) => {
   globalThis.$softConfig = softConfig
   const { language, token } = softConfig
   console.log('softConfig', softConfig)
   if (!token) {
-    window.electronAPI.send('app:uninstall-directly')
+    globalThis.electronAPI.send('app:uninstall-directly')
     return
   }
 

@@ -46,7 +46,7 @@ async function handleMigration() {
                 scope="global"
         >
           <template #link>
-            <a href="https://roxybrowser.com/" target="_blank">roxybrowser.com</a>
+            <a href="https://roxybrowser.com/" target="_blank" rel="noopener noreferrer">roxybrowser.com</a>
           </template>
         </i18n-t>
       </span>

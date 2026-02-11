@@ -24,18 +24,18 @@ const activeTab = ref(defaultActiveTabId)
 
 watch(activeTab, (val) => {
   if (val === 'diff') {
-    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: Math.min(60 * syncWindowCount + 220, 660) })
+    globalThis.electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: Math.min(60 * syncWindowCount + 220, 660) })
   }
   else if (val === 'random') {
-    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 340 })
+    globalThis.electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 340 })
   }
   else {
-    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 366 })
+    globalThis.electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: 366 })
   }
 }, { immediate: true })
 
 function handleHide() {
-  electronAPI.send('syncControl:closeBatchInputsDialog')
+  globalThis.electronAPI.send('syncControl:closeBatchInputsDialog')
 }
 
 async function startBatchInputs(tab) {
@@ -54,17 +54,17 @@ async function startBatchInputs(tab) {
   }
 
   console.log('startBatchInputs params', params)
-  const result = await electronAPI.send('syncControl:batchInputText', params)
+  const result = await globalThis.electronAPI.send('syncControl:batchInputText', params)
   console.log('startBatchInputs result', result)
 }
 
 async function getOpenedBrowser() {
-  syncWindows.value = await window.electronAPI.send('syncControl:getAllSyncingWindows')
+  syncWindows.value = await globalThis.electronAPI.send('syncControl:getAllSyncingWindows')
   syncWindowCount = syncWindows.value.length
   console.log('syncWindows.value', syncWindows.value)
 }
 
-window.electronAPI.on('browser:on-close', (dirId) => {
+globalThis.electronAPI.on('browser:on-close', (dirId) => {
   getOpenedBrowser()
 })
 

@@ -44,6 +44,9 @@ const rl = readline.createInterface({
 const zip = new Zip()
 
 const isProd = process.env.NODE_ENV === 'production'
+// const { deployWeb } = await import('../apps/web/scripts/deploy')
+// await deployWeb(isProd)
+// throw new Error('test')
 const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo1743595549211'
 
 const webPath = path.join(import.meta.dirname, '../apps/web/dist')
@@ -141,6 +144,8 @@ async function startUpload() {
       console.log('上传活动信息成功：', uploadActivityRes.url)
     }
   }
+  const { deployWeb } = await import('../apps/web/scripts/deploy')
+  await deployWeb(isProd)
 }
 
 function getCurrentFormattedTime() {

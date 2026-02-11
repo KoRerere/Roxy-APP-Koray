@@ -25,7 +25,7 @@ const formData = ref({
 });
 
 function handleHide() {
-  electronAPI.send('syncControl:closeOpenSitesDialog');
+  globalThis.electronAPI.send('syncControl:closeOpenSitesDialog');
 }
 
 function openSites() {
@@ -45,7 +45,7 @@ function openSites() {
     replaceCurrentTab: formData.value.replaceCurrentTab
   };
   console.log('openSites', params);
-  electronAPI.send('syncControl:openSites', params);
+  globalThis.electronAPI.send('syncControl:openSites', params);
 }
 </script>
 

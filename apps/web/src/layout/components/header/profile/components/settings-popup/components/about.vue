@@ -49,15 +49,15 @@ function showAppUpdaterDialog(item: ResourceUpdateMessage) {
         label: $t('重启'),
       },
       accept: () => {
-        window.electronAPI.send('app:quitAndInstall', item)
+        globalThis.electronAPI.send('app:quitAndInstall', item)
       },
     })
   }
   else if (item.status === 'failed') {
-    window.electronAPI.send('app:checkForUpdates')
+    globalThis.electronAPI.send('app:checkForUpdates')
   }
   else {
-    // window.electronAPI.send('app:download-update', info)
+    // globalThis.electronAPI.send('app:download-update', info)
   }
 }
 
@@ -68,13 +68,13 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     showAppUpdaterDialog(info)
   }
   else if (info.type === 'web') {
-    window.electronAPI.send('app:quitAndInstall', info)
+    globalThis.electronAPI.send('app:quitAndInstall', info)
   }
 }
 
 async function handleCheckUpdate(item: ResourceUpdateMessage) {
   if (item.type === 'app') {
-    const result = await electronAPI.send('app:checkForUpdates')
+    const result = await globalThis.electronAPI.send('app:checkForUpdates')
     console.log('handleCheckUpdate app', result)
     if (result) {
       if (result.version === item.currentVersion) {
@@ -93,7 +93,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
     }
   }
   else if (item.type === 'web') {
-    const result = await electronAPI.send('app:checkWebForUpdates')
+    const result = await globalThis.electronAPI.send('app:checkWebForUpdates')
     console.log('handleCheckUpdate web', result)
   }
 }

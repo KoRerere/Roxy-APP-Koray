@@ -29,13 +29,13 @@ onChange(async (files) => {
     return
   }
 
-  const localPath = await electronAPI.getPathForFile(files[0]!)
+  const localPath = await globalThis.electronAPI.getPathForFile(files[0]!)
   if (localPath) {
-    const roxyPath = await electronAPI.send('util:toMediaPath', localPath)
+    const roxyPath = await globalThis.electronAPI.send('util:toMediaPath', localPath)
 
     if (roxyPath) {
       try {
-        modelValue.value = await electronAPI.send('user:uploadAvatar', localPath)
+        modelValue.value = await globalThis.electronAPI.send('user:uploadAvatar', localPath)
         emit('change')
       }
       catch (error) {

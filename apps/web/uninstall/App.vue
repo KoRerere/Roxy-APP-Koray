@@ -5,7 +5,6 @@ import { API } from './api'
 import { useElementBounding } from '@vueuse/core'
 import type { UserGetUninstallReasonQuestionListListData } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
-import GlobalComponent from '/@/components/business/global-component/index.vue'
 import LiveChat from './live-chat.vue'
 
 const selectedReasons = ref<number[]>([])
@@ -25,7 +24,7 @@ const otherReasonId = computed(() => {
 // 监听窗口高度变化，调整窗口大小
 watch(height, (height) => {
   console.log('Adjust window height to:', Math.ceil(height))
-  window.electronAPI.send('app:resizeWindow', { height: Math.ceil(height) })
+  globalThis.electronAPI.send('app:resizeWindow', { height: Math.ceil(height) })
 })
 
 /**
@@ -61,7 +60,7 @@ async function submitFeedback() {
     })
 
     // 通知主进程可以退出
-    await window.electronAPI.send('app:uninstall-feedback-submitted', {
+    await globalThis.electronAPI.send('app:uninstall-feedback-submitted', {
       reasons: [...selectedReasons.value],
       feedback: feedbackText.value.trim(),
     })
@@ -78,14 +77,14 @@ async function submitFeedback() {
  * 直接卸载
  */
 async function uninstallDirectly() {
-  await window.electronAPI.send('app:uninstall-directly')
+  await globalThis.electronAPI.send('app:uninstall-directly')
 }
 
 /**
  * 取消卸载（仅在卸载模式下显示）
  */
 async function cancelUninstall() {
-  await window.electronAPI.send('app:uninstall-cancelled')
+  await globalThis.electronAPI.send('app:uninstall-cancelled')
 }
 
 /**
@@ -195,7 +194,7 @@ getUninstallReasonQuestionList()
       </div>
     </div>
   </div>
-  <GlobalComponent />
+  <Toast group="tr" />
   <LiveChat />
 </template>
 

@@ -1,4 +1,5 @@
 import '@unocss/reset/normalize.css'
+import 'driver.js/dist/driver.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
 import '/@/styles/index.scss'
@@ -13,11 +14,13 @@ const app = createApp(App)
 setupPrimeVue(app)
 app.use(i18n)
 
-fetch(`/api/app/config`)
+const dirId = new URLSearchParams(window.location.search).get('id')
+
+fetch(`/api/app/config?dirId=${dirId}`)
   .then(res => res.json())
-  .then(({ code, data }) => {
-    console.log('app config', data)
-    globalThis.appConfig = data
+  .then(({ data }) => {
+    console.log('app config', data);
+    (globalThis as any).appConfig = data
     setupI18n({ defaultLocale: data.language }).then(() => {
       document.querySelector('html')?.setAttribute('lang', data.language)
     })

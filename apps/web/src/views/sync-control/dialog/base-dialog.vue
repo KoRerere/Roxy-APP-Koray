@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const visible = ref(true)
 
-electronAPI.send('app:showCurrentWebviewWindow')
+globalThis.electronAPI.send('app:showCurrentWebviewWindow')
 </script>
 
 <template>

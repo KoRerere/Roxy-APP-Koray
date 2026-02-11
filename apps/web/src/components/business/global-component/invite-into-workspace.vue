@@ -19,7 +19,7 @@ const { getWorkspaceList, setCurrentWorkspace } = workspaceStore
 
 const isInWorkspace = computed(() => workspaceStore.workspaceList.some(item => item.id === props.inviteInfo?.workspaceId))
 
-// window.electronAPI.on('invite:to-project', async (searchStr) => {
+// globalThis.electronAPI.on('invite:to-project', async (searchStr) => {
 //   console.log('invite:to-project', searchStr)
 //   // 替换加号为 %2B，避免 URLSearchParams 将加号（+）解释为空格
 //   const queryString = searchStr.replace(/\+/g, '%2B')

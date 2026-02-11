@@ -6,7 +6,7 @@ import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { proxyManager } from '/@/modules/app/proxy-manager'
 import { cancelQuit, confirmQuit } from '/@/modules/app/utils'
-import { chromeCoreManager } from '/@/modules/browser'
+import { coreManager } from '/@/modules/browser'
 import { startMoveWindow, stopMoveWindow } from '/@/modules/ipc/utils'
 import { openAPIServer } from '/@/modules/openapi'
 import { setSystemProxy } from '/@/modules/roxynet'
@@ -44,7 +44,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
 
     // 如果自动更新内核设置变了，则重新检查内核更新
     if (store.autoUpdateKernel !== originAutoUpdateKernel) {
-      chromeCoreManager.autoDownloadCore()
+      coreManager.autoDownloadCore()
     }
 
     if (store.systemProxySwitch !== originSystemProxySwitch) {
@@ -87,7 +87,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
       return appUpdater.init()
     }
     else if (type === 'kernel') {
-      return chromeCoreManager.fetchAvailableCoreList()
+      return coreManager.fetchAvailableCoreList()
     }
   })
 
@@ -118,17 +118,17 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
 
   /** 获取所有可用的内核列表 */
   ipcMain.on('app:getCoreList', (event) => {
-    return chromeCoreManager.getCoreList()
+    return coreManager.getCoreList()
   })
 
   /** 下载指定的内核 */
   ipcMain.on('app:download-chrome-core', (event, coreVersion) => {
-    return chromeCoreManager.downloadCore({ coreVersion })
+    return coreManager.getCoreManager('chrome').downloadCore({ coreVersion })
   })
 
   /** 删除指定内核 */
   ipcMain.on('app:delete-chrome-core', (event, coreVersion) => {
-    return chromeCoreManager.deleteCore(coreVersion)
+    return coreManager.getCoreManager('chrome').deleteCore(coreVersion)
   })
 
   /** 获取本机 mac address */
@@ -234,6 +234,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     }
 
     return []
+  })
+
+  /** 获取最后一次跟新特性 */
+  ipcMain.on('app:getLastUpdateFeature', () => {
+    return appUpdater.getLastUpdateFeature()
   })
 
   /** 用户已读新功能提示 */

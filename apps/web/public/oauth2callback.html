@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RoxyBrowser Oauth</title>
+  </head>
+  <script>
+    const channel = new BroadcastChannel('oauth2:callback')
+    channel.postMessage(location.search)
+    setTimeout(() => {
+      window.close()
+    })
+  </script>
+  <body></body>
+</html>

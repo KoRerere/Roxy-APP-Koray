@@ -1,25 +1,11 @@
 import { defineStore } from 'pinia'
 import { API } from '/@/api'
 import { ActivityType } from '/@/enums/base'
-import type { GetActivityDiscountListData, GetBlackFridayTimeListData, GetConsumptionGiftIpConfigListData } from '@roxy/backend-api'
+import type { GetSpringFestivalTimeListData } from '@roxy/backend-api'
 
-type BlackFriday = GetBlackFridayTimeListData['data']
-
-type Activity = GetActivityDiscountListData['data']
+type Activity = GetSpringFestivalTimeListData['data'] & { type: ActivityType, discountPercentage?: number }
 
 export const useCampaignStore = defineStore('campaign', () => {
-  const blackFridayPeriod = ref(false)
-  const blackFridayInfo = ref<BlackFriday>()
-  const roxyGifts = ref<GetConsumptionGiftIpConfigListData['data']>()
-
-  async function getBlackFridayInfo() {
-    const { code, data } = await API.base.getBlackFridayTimeList()
-    if (code !== 0)
-      return
-    blackFridayPeriod.value = data.start_timestamp <= Date.now() && data.end_timestamp >= Date.now()
-    blackFridayInfo.value = data
-  }
-
   const currentActivity = ref<Activity>({} as Activity)
 
   const seasonalActivity = computed(() => {
@@ -30,32 +16,21 @@ export const useCampaignStore = defineStore('campaign', () => {
       active,
       none: type === ActivityType.None,
       newYear: active && type === ActivityType.NewYear,
+      springFestival: active && type === ActivityType.SpringFestival,
     }
   })
 
   async function getActivityInfo() {
-    const { code, data } = await API.base.getActivityDiscountList()
+    const { code, data } = await API.base.getSpringFestivalTimeList()
     if (code !== 0)
       return
-    currentActivity.value = data
-  }
-
-  async function getRoxyGifts() {
-    const { code, data } = await API.proxy.getConsumptionGiftIpConfigList()
-    if (code !== 0)
-      return
-    roxyGifts.value = data
+    currentActivity.value = { ...data, type: ActivityType.SpringFestival }
   }
 
   return {
-    blackFridayPeriod,
-    blackFridayInfo,
-    getBlackFridayInfo,
     currentActivity,
     seasonalActivity,
     getActivityInfo,
-    roxyGifts,
-    getRoxyGifts,
   }
 }, {
   persist: false,

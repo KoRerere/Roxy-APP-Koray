@@ -10,7 +10,7 @@ export async function savePreferenceSettings(preferenceSettings: PreferenceSetti
       ...preferenceSettings.base,
       ...preferenceSettings.simulate,
     })
-    electronAPI.send('syncControl:changeSyncSettings', payload)
+    globalThis.electronAPI.send('syncControl:changeSyncSettings', payload)
   }
   return { code, msg }
 }

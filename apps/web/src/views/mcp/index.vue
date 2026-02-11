@@ -14,6 +14,7 @@ import type { SSEProcessContext } from '/@/views/mcp/util'
 import type { AvatarInfo, CurrentReply, FormattedMessage, SSEEventData } from '/@/views/mcp/types'
 
 const { userInfo } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { serverUrl, health, conversationList, currentConversation, currentConversationDetail, fetchConversations, genConversation, stopConversation, deleteConversation, switchConversation } = useMcp()
 const { showMenu } = usePopupMenu()
 const [, onlyErrorToast] = useResponseToast()
@@ -80,7 +81,7 @@ watch(
   { immediate: true },
 )
 
-electronAPI.on('mcp:token-usage', calculateTokenValue)
+globalThis.electronAPI.on('mcp:token-usage', calculateTokenValue)
 
 onBeforeMount(() => {
   fetchTokenCost()
@@ -310,6 +311,12 @@ function handleSSEEvent(event: any) {
   }
 }
 
+function onChangeMode(value: 'orchestrator' | 'simple') {
+  if (value === 'orchestrator') {
+    mixpanelTrack('click_agent_multitask')
+  }
+}
+
 async function onSendMessage() {
   if (!tokenInfo.value.ok || !tokenInfo.value.available) {
     onlyErrorToast(-1, $t('当前可用额度不足，请联系客服'))
@@ -319,6 +326,7 @@ async function onSendMessage() {
   if (isChatting.value || !message.value.trim())
     return
 
+  mixpanelTrack('click_agent_send_message')
   const msg = message.value
   message.value = ''
   userScrolledUp.value = false
@@ -382,6 +390,8 @@ function onShowMoreMenu(event: MouseEvent) {
 }
 
 async function genNewConversation() {
+  console.log('🚀 ~ genNewConversation ~ messageList.value:', messageList.value)
+  console.log('🚀 ~ genNewConversation ~ isChatting.value:', isChatting.value)
   if (!messageList.value.length || isChatting.value)
     return
 
@@ -457,15 +467,15 @@ async function onSwitchConversation(id: string) {
       />
       <div class="flex items-center gap-4 select-none">
         <div class="flex items-center gap-1">
-          <RxToggleSwitch v-model="mode" :disabled="!health.isOk" class="-ml-2 -mr-1 scale-70" true-value="orchestrator" false-value="simple" />
+          <RxToggleSwitch v-model="mode" :disabled="!health.isOk" class="-ml-2 -mr-1 scale-70" true-value="orchestrator" false-value="simple" @change="onChangeMode" />
           <span v-tooltip.top="{ value: $t('打开该选项后，可以让数字员工同时并行操作多个窗口执行任务。同时您的 Token 会消耗地更快。'), showDelay: 300 }" class="cursor-pointer send-text">{{ $t('多窗口并行') }}</span>
         </div>
 
-        <div v-if="tokenInfo.ok" class="flex items-center gap-1">
+        <!-- <div v-if="tokenInfo.ok" class="flex items-center gap-1">
           <CircleProgress :value="tokenInfo.value" size="18" stroke-width="3" />
           <span v-tooltip.top="{ value: $t('Roxy AI Agent 执行任务将消耗对应的额度，额度归零则无法继续执行。如需您的业务需要更多额度，请联系技术支持。'), showDelay: 300 }" class="send-text">{{ $t('剩余额度: {value}%', { value: tokenInfo.value })
           }}</span>
-        </div>
+        </div> -->
         <SvgIcon v-if="!isChatting" class="cursor-pointer mx-auto mr-0" :class="{ 'p-disabled send-inactive': !message }" name="base/rx_ic_browser_send" size="24" color="var(--colors-icon-icon-brand)"
                  @click.stop="onSendMessage"
         />

@@ -9,17 +9,17 @@ import About from "./components/about.vue";
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 
 async function checkForUpdates() {
-  const result = await electronAPI.send('app:checkForUpdates')
+  const result = await globalThis.electronAPI.send('app:checkForUpdates')
   if (result && !clientUpdates.value.some(item => item.type === 'app')) {
     clientUpdates.value.push(result)
   }
 }
 
 async function checkWebForUpdates() {
-  electronAPI.send('app:checkWebForUpdates')
+  globalThis.electronAPI.send('app:checkWebForUpdates')
 }
 
-window.electronAPI.on("app:resource-update", (data) => {
+globalThis.electronAPI.on("app:resource-update", (data) => {
   // 内核升级
   if (data.type !== "kernel") {
     const index = clientUpdates.value.findIndex(item => data.type === item.type)

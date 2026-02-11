@@ -164,7 +164,7 @@ async function deleteHandler(datas: any) {
       if (code === 0) {
         tableRef.value?.refresh()
         userStore.fetchUserInfo()
-        electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
+        globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }
     },
   })

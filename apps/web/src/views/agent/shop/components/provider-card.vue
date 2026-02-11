@@ -117,7 +117,7 @@ function calcDiscount(discount: number) {
       <RxDivider class="my-4" line-only line-color="var(--component-dropdown-divider)" />
 
       <template v-if="item.proxyProviderName === 'RoxyBrowser'">
-        <SpecialSupportFor :icons="item.newIconList" />
+        <SpecialSupportFor :icons="item.newIconList!" />
         <RxDivider class="my-4" line-only line-color="var(--component-dropdown-divider)" />
       </template>
 

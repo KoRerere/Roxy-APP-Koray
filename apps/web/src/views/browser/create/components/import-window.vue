@@ -34,7 +34,7 @@ const fileData = reactive({
   successCount: 0,
 })
 
-const maxWindowCount = computed(() => Math.min(userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount, 500))
+const maxWindowCount = computed(() => Math.min(userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount, 200))
 
 function fileDragover(event: Event) {
   event.preventDefault()

@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
+import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
 import SettingsPopup from './components/settings-popup.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from 'primevue/usedialog'
@@ -78,6 +79,11 @@ const items = computed(() => {
       command: openRedeemCode,
     },
     {
+      label: $t('我的兑换码'),
+      icon: 'base/rx_ic_red-envelope',
+      command: openMyRedeemCodeList,
+    },
+    {
       separator: true,
     },
     ...getSettings().map(item => ({
@@ -96,7 +102,7 @@ const items = computed(() => {
           isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
             simpleLocale.setSimpleLocale(item.locale)
-            electronAPI.send('app:saveSoftConfig', { language: item.locale })
+            globalThis.electronAPI.send('app:saveSoftConfig', { language: item.locale })
           },
         }
       }),
@@ -163,7 +169,7 @@ const items = computed(() => {
       label: $t('退出登录'),
       icon: 'base/rx_ic_logout',
       command: async () => {
-        const result = await electronAPI.send('browser:getOpenedBrowser')
+        const result = await globalThis.electronAPI.send('browser:getOpenedBrowser')
         if (result?.length > 0) {
           const isConfirm = await showLogoutConfirm()
           if (!isConfirm)
@@ -171,7 +177,7 @@ const items = computed(() => {
         }
         showPageLoading()
         await API.base.userLogoutList()
-        await electronAPI.send('mcp:close')
+        await globalThis.electronAPI.send('mcp:close')
         userStore.clearUserInfo()
         router.push({ name: 'login' })
       },
@@ -215,6 +221,17 @@ function openRedeemCode() {
   })
 }
 
+function openMyRedeemCodeList() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => <RedeemCodeRecord onClose={hideModal}></RedeemCodeRecord>,
+    },
+  })
+}
+
 function showLogoutConfirm() {
   const { promise, resolve } = Promise.withResolvers<boolean>()
   showModal({
@@ -228,7 +245,7 @@ function showLogoutConfirm() {
       default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>,
     },
     async handleOk() {
-      await electronAPI.send('browser:closeAll')
+      await globalThis.electronAPI.send('browser:closeAll')
       resolve(true)
     },
     handleCancel() {

@@ -69,7 +69,14 @@ export async function getInstallerParams() {
  */
 export async function getInviteCode(): Promise<string> {
   const params = await getInstallerParams()
-  return params?.inviteCode || ''
+  const inviteCode = params?.inviteCode || ''
+
+  if (inviteCode && !/^[a-z0-9]+$/i.test(inviteCode)) {
+    await clearInstallerPath()
+    return ''
+  }
+
+  return inviteCode
 }
 
 /**

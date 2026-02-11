@@ -26,12 +26,12 @@ watchEffect(() => {
 /** 立即重启 */
 async function upgradeNow() {
   if (props.updateInfo?.type === 'app') {
-    await window.electronAPI.send('app:quitAndInstall', {
+    await globalThis.electronAPI.send('app:quitAndInstall', {
       type: 'app',
     })
   }
   else if (props.updateInfo?.type === 'web') {
-    await window.electronAPI.send('app:quitAndInstall', toRaw(props.updateInfo))
+    await globalThis.electronAPI.send('app:quitAndInstall', toRaw(props.updateInfo))
   }
 }
 

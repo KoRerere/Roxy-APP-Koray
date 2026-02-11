@@ -1,22 +1,23 @@
+import type { BrowserType } from '/@/modules/browser/browser-manager/adapter'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { genRandomFingerprint } from '@roxy/shared'
 import { get } from 'es-toolkit/compat'
 import { EventEmitter } from 'node:events'
 import { createReadStream } from 'node:fs'
 import { rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
-import { openAPICommonHeaders } from '/@/constants/common'
-import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { isDev, openAPICommonHeaders } from '/@/constants/common'
+import { getInvalidUrls, getNeedSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
-import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
+import { coreManager } from '/@/modules/browser/core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
 import { ipcSender } from '/@/modules/ipc'
 import { delRoxynetProxy } from '/@/modules/roxynet'
 import { canUseSyncControl } from '/@/modules/store'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
-import { aliOSS, decryptAESGCM, proxyDetection } from '/@/utils'
-import { genRandomFingerprint } from '/@/utils/randomFingerprint'
+import { aliOSS, decryptAESGCM, getLocalFonts, getMacAddress, proxyDetection } from '/@/utils'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 
@@ -68,6 +69,11 @@ export class BrowserItem {
     return this.beforeLaunchTask?.browser
   }
 
+  /** 浏览器类型 */
+  get browserType() {
+    return this.winInfo.browserType as BrowserType
+  }
+
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
     return join(this.userDataDir, 'lumi.conf')
@@ -109,7 +115,7 @@ export class BrowserItem {
 
   /** 需要同步到 OSS 的文件 */
   get needSyncFiles() {
-    return needSyncLocalFileMap.filter(item => get(this.winInfo, item.key)).map(item => item.path)
+    return Object.entries(getNeedSyncLocalFileMap(this.winInfo.browserType)).filter(([key]) => get(this.winInfo, key)).flatMap(([_, value]) => value)
   }
 
   /** 最后一次发送的消息 */
@@ -133,7 +139,7 @@ export class BrowserItem {
       /** 内核版本 */
       coreVersion: this.winInfo.coreVersion,
       /** 用于自动化工具的 webdriver */
-      driver: chromeCoreManager.genCoreDriverPath(this.winInfo.coreVersion),
+      driver: coreManager.getCoreManager(this.winInfo.browserType).genCoreDriverPath(this.winInfo.coreVersion),
       /** 窗口排序号 */
       sortNum: this.winInfo.windowSortNum,
       /** 窗口名称 */
@@ -147,7 +153,7 @@ export class BrowserItem {
 
   /** 当前内核信息 */
   get coreVersion() {
-    const { version, coreVersion, releaseTime } = chromeCoreManager.getAvailableCore(this.winInfo.coreVersion)
+    const { version, coreVersion, releaseTime } = coreManager.getCoreManager(this.winInfo.browserType).getAvailableCore(this.winInfo.coreVersion)
     return {
       version,
       coreVersion,
@@ -160,6 +166,7 @@ export class BrowserItem {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
+    this.winInfo.browserType = isDev && winItem.windowName === 'firefox' ? 'firefox' : 'chrome'
   }
 
   /** 获取浏览器实例 */
@@ -201,7 +208,7 @@ export class BrowserItem {
       ipcSender.user.mixpanelTrack('profile_start', {
         coreVersion: this.coreVersion.coreVersion,
         browserType: 'chrome',
-        headless: this.beforeLaunchTask.launchArgs.includes('--headless'),
+        headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
       })
     }
   }
@@ -225,6 +232,7 @@ export class BrowserItem {
       ipcSender.user.mixpanelTrack('profile_end', {
         coreVersion: this.coreVersion.coreVersion,
         browserType: 'chrome',
+        headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
       })
     }
   }
@@ -262,8 +270,15 @@ export class BrowserItem {
 
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     let newVersion = syncValue?.version || 1
+    const lastFileCount = syncValue?.fileCount
+    let isUploadSuccess = false
     console.log('Files to sync:', needSyncFiles)
     try {
+      if (needSyncFiles.length === 0 && lastFileCount === 0) {
+        console.log('No files to sync')
+        return
+      }
+
       const outputDist = await fileOperations.executeTask('compressFiles', { files: needSyncFiles, dest: outputZipPath })
       console.log('Cache files compressed successfully:', outputDist)
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
@@ -271,6 +286,7 @@ export class BrowserItem {
       console.log('Starting to upload cache files', remoteOssPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
+      isUploadSuccess = true
       writeFile(this.ossCacheVersionPath, String(newVersion))
       writeFile(this.closeTimestampPath, `${Date.now().toString()}_${dirId}`)
       console.log(`OSS cache files uploaded successfully`)
@@ -286,6 +302,7 @@ export class BrowserItem {
         lumiLogin: params.lumiLogin,
         syncValue: {
           version: newVersion,
+          fileCount: isUploadSuccess ? needSyncFiles.length : syncValue?.fileCount,
         },
         openStatus: false,
       }
@@ -303,28 +320,37 @@ export class BrowserItem {
 
   /** 启动时生成随机指纹 */
   async handleRandomFingerprint() {
-    if (this.winInfo.randomFingerprint) {
-      try {
-        const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
-          console.error('genRandomFingerprint error: ', error)
-          sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
-          return Promise.reject(new Error($t('启动时生成随机指纹失败')))
-        })
+    if (!this.winInfo.randomFingerprint) {
+      return
+    }
 
-        const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
-        if (code === 0) {
-          console.log('Fingerprint modified successfully', fingerprint)
-          const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
-          if (code === 0 && data.rows[0]) {
-            // console.log('获取窗口信息成功', data.rows[0])
-            this.winInfo = data.rows[0]
-            Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
-          }
+    try {
+      const [fingerprint] = await genRandomFingerprint({
+        payload: this.winInfo,
+        count: 1,
+        genType: this.launchBy,
+        API,
+        getMacAddress,
+        local_fonts: getLocalFonts(),
+      }).catch((error) => {
+        console.error('genRandomFingerprint error: ', error)
+        sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
+        return Promise.reject(new Error($t('启动时生成随机指纹失败')))
+      })
+
+      const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
+      if (code === 0) {
+        console.log('Fingerprint modified successfully', fingerprint)
+        const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
+        if (code === 0 && data.rows[0]) {
+          // console.log('获取窗口信息成功', data.rows[0])
+          Object.assign(this.winInfo, data.rows[0])
+          Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
         }
       }
-      catch (error) {
-        console.error('userMdfWindowInfoSingleV2Create error: ', error)
-      }
+    }
+    catch (error) {
+      console.error('userMdfWindowInfoSingleV2Create error: ', error)
     }
   }
 

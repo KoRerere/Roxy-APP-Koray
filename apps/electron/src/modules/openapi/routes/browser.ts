@@ -1,10 +1,11 @@
+import { genRandomFingerprint } from '@roxy/shared'
 import express from 'express'
 import { API } from '/@/api'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser'
 import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
-import { genRandomFingerprint } from '/@/utils/randomFingerprint'
+import { getLocalFonts, getMacAddress } from '/@/utils'
 import { getDefaultBrowserCreateParams } from './constants/'
 
 const router = express.Router()
@@ -42,7 +43,9 @@ router.get('/label', async (req, res) => {
 router.get('/workspace', async (req, res) => {
   const { ...rest } = req.query as Record<string, any>
   try {
+    console.debug('get workspace list with params', rest)
     const result = await API.api.userGetWorkspaceListApiList({ ...rest }, { headers: { ...openAPICommonHeaders } })
+    console.debug('workspace list', result)
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = result.data.rows.map((item) => {
         Reflect.deleteProperty(item, 'userId')
@@ -76,7 +79,14 @@ router.post('/create', async (req, res) => {
   }
 
   try {
-    const [data] = await genRandomFingerprint(params, 1, 'api')
+    const [data] = await genRandomFingerprint({
+      payload: params,
+      count: 1,
+      API,
+      genType: 'api',
+      getMacAddress,
+      local_fonts: getLocalFonts(),
+    })
 
     // 如果是用户自定义
     if (params.webGLInfo === 2) {
@@ -166,7 +176,6 @@ router.get('/list_v3', async (req, res) => {
   try {
     const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
-      // console.log('browserListV2Mapping', result.data.rows)
       result.data.rows = mapping2List(result.data.rows, browserListMappingV3)
     }
     res.json(result)

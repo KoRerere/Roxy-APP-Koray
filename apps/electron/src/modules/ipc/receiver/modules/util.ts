@@ -1,21 +1,19 @@
-
-import crypto from 'node:crypto'
-import { IPCMainInstance } from "/@/modules/ipc/types"
-import url from 'node:url'
-import { mediaProtocolName } from '/@/constants'
-import { API } from '/@/api'
-import { browserManager } from '/@/modules/browser'
-import { clearInstallerPath, decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getInviteCode, getUTCOffsetHours } from '/@/utils'
-import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
-import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
-import { store } from '/@/modules/store'
-import { getPortPromise } from 'portfinder'
+import type { IPCMainInstance } from '/@/modules/ipc/types'
+import { genRandomFingerprint, genRandomFonts, randomFingerprintFuncMap } from '@roxy/shared'
 import { app, globalShortcut } from 'electron'
+import crypto from 'node:crypto'
+import url from 'node:url'
+import { getPortPromise } from 'portfinder'
+import { API } from '/@/api'
+import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
+import { mediaProtocolName } from '/@/constants'
+import { browserManager } from '/@/modules/browser'
+import { store } from '/@/modules/store'
+import { clearInstallerPath, decryptAESGCM, encryptAESGCM, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getInviteCode, getLocalFonts, getMacAddress, getUTCOffsetHours } from '/@/utils'
 
 export function setupUtilIpc(ipcMain: IPCMainInstance) {
-
   /** 获取系统信息 */
-  ipcMain.on('util:getSystemInfo', (event,) => {
+  ipcMain.on('util:getSystemInfo', (event) => {
     return {
       language: app.getLocale(),
       UTCOffsetHours: getUTCOffsetHours(),
@@ -23,7 +21,7 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 生成 api key */
-  ipcMain.on('util:genApiKey', (event,) => {
+  ipcMain.on('util:genApiKey', (event) => {
     return crypto.createHash('md5').update(String(Date.now()), 'utf8').digest('hex')
   })
 
@@ -61,13 +59,19 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 随机生成字体 */
-  ipcMain.on('util:genRandomFonts', (event,) => {
-    return genRandomFonts()
+  ipcMain.on('util:genRandomFonts', (event) => {
+    return genRandomFonts(getLocalFonts())
   })
 
   /** 生成随机指纹 */
   ipcMain.on('util:genRandomFingerprint', (event, payload, count = 1) => {
-    return genRandomFingerprint(payload, count)
+    return genRandomFingerprint({
+      payload,
+      count,
+      API,
+      getMacAddress,
+      local_fonts: getLocalFonts(),
+    })
   })
 
   /** 按需调用生成指纹函数 */
@@ -92,7 +96,7 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 获取网关配置 */
-  ipcMain.on('util:getGatewayConfig', (event,) => {
+  ipcMain.on('util:getGatewayConfig', (event) => {
     return getGatewayConfig()
   })
 
@@ -119,23 +123,27 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
     }
   })
 
+  ipcMain.on('util:getApiPort', () => {
+    return store.apiPort ?? -1
+  })
+
   /** 获取公共请求头部 */
-  ipcMain.on('util:getCommonRequestHeaders', (event,) => {
+  ipcMain.on('util:getCommonRequestHeaders', (event) => {
     return getCommonRequestHeaders()
   })
 
   /** 获取设备唯一 ID */
-  ipcMain.on('util:getDeviceId', async (event,) => {
+  ipcMain.on('util:getDeviceId', async (event) => {
     return encryptAESGCM(await getDeviceId())
   })
 
   /** 获取推广计划进来的用户的邀请码 */
-  ipcMain.on('util:getInviteCode', (event,) => {
+  ipcMain.on('util:getInviteCode', (event) => {
     return getInviteCode()
   })
 
   /** 获取设备信息 */
-  ipcMain.on('util:getDeviceInfo', async (event,) => {
+  ipcMain.on('util:getDeviceInfo', async (event) => {
     return getDeviceInfo()
   })
 

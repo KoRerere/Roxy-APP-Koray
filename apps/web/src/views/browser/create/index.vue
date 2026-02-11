@@ -19,11 +19,11 @@ import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
-import { ceateRandomFinger, getInputsGroup } from './form-inputs'
+import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, filterInputsByNames, genDriver, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
+import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
@@ -131,7 +131,7 @@ watch(() => tabsValue.value, (value, oldValue) => {
       setInputValue(inputsGroup.value[0]!, name, value)
     })
   }
-
+  showMobileExtraSettings()
   onUpdateFinger()
 })
 
@@ -226,6 +226,17 @@ function showGuide() {
       },
     })
     driverObj.drive()
+  }
+}
+
+function showMobileExtraSettings() {
+  if (tabsValue.value === 'import') {
+    switchMoblieInputVisible(extraSettings.value, true)
+  }
+  else {
+    const input = findInputByName(mainSetting.value, 'os')
+    const moblieVisible = ['Android', 'IOS'].includes(input.value.value)
+    switchMoblieInputVisible(extraSettings.value, moblieVisible)
   }
 }
 
@@ -389,7 +400,7 @@ async function batchCreateProfile(params: any) {
   loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
-  params.fingerDetail = fingerDetail.map(({ userAgent, webGLManufacturer, webGLRender, ...item }) => {
+  params.fingerDetail = fingerDetail.map(({ userAgent, webGLManufacturer, webGLRender, ...item }: any) => {
     return {
       ...item,
       userAgent: _custom_ua ? params.userAgent : userAgent,
@@ -419,7 +430,7 @@ async function importProfile(params: any) {
   loading.value = true
   const modal = showLoading()
   const fingerCount = fileAnalyzeData.value.excelData.length
-  const fingerDetail = (await ceateRandomFinger(previewInputs.value, { count: fingerCount })).map(({ webGLManufacturer, webGLRender, ...item }) => {
+  const fingerDetail = (await ceateRandomFinger(previewInputs.value, { count: fingerCount })).map(({ webGLManufacturer, webGLRender, ...item }: any) => {
     return {
       ...item,
       webGLManufacturer: params.webGLInfo === 2 ? params.webGLManufacturer : webGLManufacturer, // 2 表示自定义 webgl 信息

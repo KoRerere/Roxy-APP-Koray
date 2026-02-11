@@ -27,7 +27,7 @@ export async function openCustomLayoutDialog() {
     skipTaskbar: true,
     hasShadow: true,
   })
-  win.loadURL(await getWebEntryUrl('#/sync-control-custom-layout-dialog'))
+  win.loadURL(await getWebEntryUrl('sync-control-custom-layout-dialog'))
   if (!isPackaged) {
     win.webContents.openDevTools()
   }

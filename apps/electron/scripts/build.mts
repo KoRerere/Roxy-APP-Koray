@@ -16,6 +16,7 @@ const isWindows = process.platform === 'win32'
 const skipCodeSigning = isDev && process.platform === 'win32' ? true : Boolean(process.env.SKIP_CODE_SIGNING)
 const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
 const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
+const appProtocol = isDev ? 'roxybrowser-dev' : 'roxybrowser'
 
 console.log('是否是测试环境：', isDev, appName)
 console.log('是否跳过代码签名：', skipCodeSigning)
@@ -60,18 +61,16 @@ const extraResources: NonNullable<Configuration['extraResources']> = [
     to: 'node_modules/font-list',
   },
   {
-    from: '../../node_modules/better-sqlite3',
-    to: 'node_modules/better-sqlite3',
-    filter: ['**/*'],
+    from: 'node_modules/@roxy/diskspace-native',
+    to: 'node_modules/@roxy/diskspace-native',
+    filter: [
+      'package.json',
+      'diskspace-native.win32-x64-msvc.node',
+    ],
   },
   {
-    from: '../../node_modules/bindings',
-    to: 'node_modules/bindings',
-    filter: ['**/*'],
-  },
-  {
-    from: '../../node_modules/file-uri-to-path',
-    to: 'node_modules/file-uri-to-path',
+    from: '../../node_modules/bytenode',
+    to: 'node_modules/bytenode',
     filter: ['**/*'],
   },
 ]
@@ -102,6 +101,7 @@ if (platform === 'win32') {
   const script = template
     .replaceAll('{{REPORT_DOMAINS}}', config.REPORT_DOMAINS)
     .replaceAll('{{REPORT_API_PATH}}', config.REPORT_API_PATH)
+    .replaceAll('{{APP_PROTOCOL}}', appProtocol)
 
   const outputPath = path.join(workDir, 'buildResources/installer.nsh')
   writeFileSync(outputPath, script)
@@ -187,9 +187,7 @@ const options: Configuration = {
   asarUnpack: [
     'dist/web',
     'dist/bin',
-    'dist/openapiMcp.mjs',
-    'dist/playwrightMcp.mjs',
-    'dist/common.mjs',
+    'dist/starter.js',
   ],
   extraMetadata: {
     version,
@@ -207,29 +205,29 @@ const options: Configuration = {
   ],
   protocols: [
     {
-      name: 'roxybrowser',
-      schemes: ['roxybrowser'],
+      name: appProtocol,
+      schemes: [appProtocol],
     },
   ],
 
   // "store" | "normal" | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: 'normal',
   removePackageScripts: true,
-  beforeBuild: async (context) => {
-    if (!context.electronVersion) {
-      console.warn('⚠️ 未检测到 Electron 版本，跳过 native 模块重建')
-      return
-    }
-    console.log('🔧 正在重新编译 native 模块...', context.arch)
-    await rebuild({
-      buildPath: context.appDir,
-      electronVersion: context.electronVersion,
-      arch: context.arch,
-      force: true,
-      onlyModules: ['better-sqlite3'],
-    })
-    console.log('✅ Native 模块重新编译完成')
-  },
+  // beforeBuild: async (context) => {
+  //   if (!context.electronVersion) {
+  //     console.warn('⚠️ 未检测到 Electron 版本，跳过 native 模块重建')
+  //     return
+  //   }
+  //   console.log('🔧 正在重新编译 native 模块...', context.arch)
+  //   await rebuild({
+  //     buildPath: context.appDir,
+  //     electronVersion: context.electronVersion,
+  //     arch: context.arch,
+  //     force: true,
+  //     onlyModules: ['better-sqlite3'],
+  //   })
+  //   console.log('✅ Native 模块重新编译完成')
+  // },
 
   /**
    * 根据环境变量决定是否跳过签名后的公证流程
@@ -246,6 +244,7 @@ const options: Configuration = {
 
   win: {
     icon: 'logo.ico',
+    signExts: ['RoxyBrowserUpdater.exe'],
     target: [
       {
         target: 'nsis',
@@ -262,6 +261,18 @@ const options: Configuration = {
           certificatePassword: '0000',
         },
   },
+  extraFiles: isWindows
+    ? [
+        {
+          from: 'build/updater/RoxyBrowserUpdater.exe',
+          to: 'RoxyBrowserUpdater.exe',
+        },
+        {
+          from: 'build/updater/RoxyBrowserUpdater.exe.manifest',
+          to: 'RoxyBrowserUpdater.exe.manifest',
+        },
+      ]
+    : [],
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',
     uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',

@@ -2,11 +2,11 @@
 import { RxSvgIcon } from '/@/components/rx-icon';
 
 function closeWindow() {
-  electronAPI.send('syncControl:close');
+  globalThis.electronAPI.send('syncControl:close');
 }
 
 function showPreferences() {
-  electronAPI.send('syncControl:openPreferencesDialog');
+  globalThis.electronAPI.send('syncControl:openPreferencesDialog');
 }
 </script>
 

@@ -59,7 +59,7 @@ function handleDeleteConfirm() {
     async function confirmDelete() {
       const workspaceId = workspaceInfo.value.id!
       // 先删除本地空间的浏览器数据
-      await electronAPI.send('util:removeWorkspace', workspaceId)
+      await globalThis.electronAPI.send('util:removeWorkspace', workspaceId)
       const { code, data, msg } = await API.limit.userDelWorkspaceInfoCreate({
         workspaceName: workspaceName.value,
         workspaceId,

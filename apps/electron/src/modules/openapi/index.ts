@@ -6,7 +6,7 @@ import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
 
 export const openAPIServer = new class OpenAPIServer {
-  #server?: Server
+  #server: Server | null = null
 
   constructor(private app = express()) {
     // 注册中间件
@@ -19,17 +19,24 @@ export const openAPIServer = new class OpenAPIServer {
 
   async start() {
     console.log('Starting OpenAPI server...')
-    this.stop()
     const { code, data, msg } = await API.base.userGetUserApiList()
     console.log('userGetUserApiList:', code, data, msg)
     if (code === 0) {
       if (data.open) {
-        this.#server = this.app.listen(data.port, () => {
-          const port = this.app.get('port') || this.#server?.address()?.port
-          if (port) {
-            store.apiPort = port
+        await this.stop()
+
+        this.#server = this.app.listen(data.port, '0.0.0.0', (error: any) => {
+          if (error) {
+            console.error('OpenAPI server start error:', error)
+            store.apiPort = -1
           }
-          console.log(`OpenAPI server is running on ${port}`)
+          else {
+            const port = this.app.get('port') || (this.#server?.address() as any)?.port
+            if (port) {
+              store.apiPort = port
+            }
+            console.log(`OpenAPI server is running on ${port}`)
+          }
         })
         store.apiKey = data.apiKey
       }
@@ -43,8 +50,29 @@ export const openAPIServer = new class OpenAPIServer {
     }
   }
 
-  stop() {
-    this.#server?.close()
+  async stop() {
+    const { promise, resolve } = Promise.withResolvers<void>()
+
+    setTimeout(() => {
+      resolve()
+    }, 2000)
+
+    console.log('Stopping OpenAPI server...')
+    if (this.#server) {
+      this.#server?.closeAllConnections()
+      this.#server?.close((err) => {
+        if (err) {
+          console.error('OpenAPI server stop error:', err)
+        }
+        console.log('OpenAPI server stopped')
+        this.#server = null
+        resolve()
+      })
+    }
+    else {
+      resolve()
+    }
+    await promise
   }
 
   private printRoutes() {

@@ -21,13 +21,13 @@ let commonHeaders
 let deviceId = ''
 let appVersion = ''
 
-globalThis?.electronAPI?.on('app:backend-url-change', (url) => {
+globalThis?.globalThis.electronAPI?.on('app:backend-url-change', (url) => {
   console.log('app:backend-url-change', url)
   baseURL = url
 })
 
 httpClient.instance.interceptors.request.use(async (config) => {
-  appVersion ||= await electronAPI.send('app:getAppVersion')
+  appVersion ||= await globalThis.electronAPI.send('app:getAppVersion')
   baseURL ||= await getGatewayConfig()
   commonHeaders ||= await getCommonHeaders()
 
@@ -63,15 +63,15 @@ httpClient.instance.interceptors.request.use(async (config) => {
 })
 
 const closeOtherWindow = debounce(() => {
-  window.electronAPI.send('app:uninstall-directly')
+  globalThis.electronAPI.send('app:uninstall-directly')
 }, 200)
 
 const reGetGatewayConfig = debounce(() => {
-  electronAPI.send('util:getGatewayConfig')
+  globalThis.electronAPI.send('util:getGatewayConfig')
 }, 200)
 
 const reGetGatewayConfigByIpChange = debounce((ip: string) => {
-  electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
+  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
 }, 200)
 
 httpClient.instance.interceptors.response.use(async (response) => {

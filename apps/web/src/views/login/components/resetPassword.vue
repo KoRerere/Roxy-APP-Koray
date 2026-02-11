@@ -7,7 +7,7 @@ import { RxForm } from '/@/components/rx-form'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import Verify2fa from './verify-2fa.vue'
-import { getResetPasswordSchemas, getEmailSchemas } from './schemas'
+import { getEmailSchemas, getResetPasswordSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
@@ -19,6 +19,11 @@ const rxFormRef = useTemplateRef('rxForm')
 const emailFormData = ref({
   user_name: '',
 })
+
+const resetPasswordEventCommonParams = {
+  reset_password_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
+}
+
 const emailCode = ref('')
 const resetPwdFormData = ref({ email: '', newPassword: '', confirmPassword: '' })
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
@@ -31,13 +36,15 @@ async function handleSubmit() {
   if (currentStep.value === 'step1') {
     const { code, data, msg } = await API.base.checkEmailOr2FaVerifyList({ email: emailFormData.value.user_name })
     onlyErrorToast(code, msg)
-    if (code !== 0) return
+    if (code !== 0)
+      return
 
     step2Type.value = data.verify_type as 'email' | '2fa'
 
     if (step2Type.value === '2fa') {
       currentStep.value = 'step2'
-    } else {
+    }
+    else {
       sendEmailCode()
     }
   }
@@ -49,13 +56,13 @@ async function handleSubmit() {
       ver_code: emailCode.value,
     })
     if (code === 0) {
-      mixpanel.track('resetPassword', { method: 'email', success: true })
+      mixpanel.track('resetPassword', { method: 'email', success: true, ...resetPasswordEventCommonParams })
       toast.add({ severity: 'success', summary: $t('密码重置成功'), life: 2500 })
       setSignFormData({ user_name: emailFormData.value.user_name, password: '' })
       setCurrentComponent('signForm')
     }
     else {
-      mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
+      mixpanel.track('resetPassword', { method: 'email', success: false, error: msg, ...resetPasswordEventCommonParams })
       toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     }
   }
@@ -71,10 +78,11 @@ async function sendEmailCode() {
     currentStep.value = 'step2'
   }
   else {
-    mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
+    mixpanel.track('resetPassword', { method: 'email', success: false, error: msg, ...resetPasswordEventCommonParams })
     if (code === 102) {
       isShowAlert.value = true
-    } else {
+    }
+    else {
       isShowAlert.value = false
       showToast(code, msg)
     }
@@ -91,7 +99,8 @@ async function receive2faCode(ver_code: string) {
     ver_code,
   })
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
   receiveEmailCode(ver_code)
 }
 
@@ -105,7 +114,7 @@ function receiveEmailCode(code: string) {
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
       <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')" class="w-full" />
-      <SignCardHeader :subTitle="$t('重置密码')" :description="currentStep === 'step1' ? $t('请输入您的邮箱，我们将向您发送验证码') : $t('请在下方设置您的新密码')" />
+      <SignCardHeader :sub-title="$t('重置密码')" :description="currentStep === 'step1' ? $t('请输入您的邮箱，我们将向您发送验证码') : $t('请在下方设置您的新密码')" />
       <div class="box">
         <div class="flex flex-col gap-2 w-full">
           <template v-if="currentStep === 'step1'">
@@ -126,7 +135,7 @@ function receiveEmailCode(code: string) {
   </template>
   <template v-else>
     <EmailCodeInputOtp v-if="step2Type === 'email'" type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode" @back="currentStep = 'step1'" />
-    <Verify2fa v-if="step2Type === '2fa'" recoverType="code" :recover="false" :onConfirm="receive2faCode"></Verify2fa>
+    <Verify2fa v-if="step2Type === '2fa'" recover-type="code" :recover="false" :on-confirm="receive2faCode" />
   </template>
 </template>
 
@@ -192,7 +201,7 @@ function receiveEmailCode(code: string) {
   }
 
   .description {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

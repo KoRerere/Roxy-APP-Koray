@@ -216,7 +216,7 @@ function deletePopup(item: Project) {
     },
     accept: async () => {
       // 先删除本地项目
-      await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id as number, projectId: item.project_id as number })
+      await globalThis.electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id as number, projectId: item.project_id as number })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       onlyErrorToast(code, msg || $t('删除失败'))
       if (code === 0) {

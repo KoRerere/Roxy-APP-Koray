@@ -1,8 +1,7 @@
 <script setup lang="tsx">
-import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
+import SpringActivity from '/@/views/campaign/spring-festival/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -163,6 +162,13 @@ const details = computed(() => {
   ].filter(item => item.items.length)
 })
 
+const giftProfile = computed(() => {
+  return {
+    count: selectedCount.value,
+    month: selectedDuration.value?.month ?? 1,
+  }
+})
+
 onBeforeMount(() => {
   getTierPricingList()
   mixpanelTrack('subscription_purchase_click')
@@ -286,7 +292,6 @@ async function trialSubscribe() {
             <div class="title">
               {{ $t('选择优惠') }}
             </div>
-            <ActivityInfo />
           </div>
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <AdvancedFeat :plan="selectedPlan" />
@@ -326,7 +331,7 @@ async function trialSubscribe() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <RoxyGifts v-model="giftType" :amount="finalCalculate.amount" />
+                <SpringActivity v-if="!isTrial" v-model="giftType" :amount="finalCalculate.amount" :gift-profile="giftProfile" />
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

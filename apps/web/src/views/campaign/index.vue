@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import NewYear from '/@/views/campaign/new-year/index.vue'
+import SpringFestival from '/@/views/campaign/spring-festival/index.vue'
 import { useCampaignStore } from '/@/stores/campaign'
 import { enhanceCountdown, sleep } from '/@/utils'
 import { ActivityType } from '/@/enums/base'
@@ -12,6 +13,10 @@ const activityMap = {
   [ActivityType.NewYear]: {
     component: markRaw(NewYear),
     localStorageKey: '$NewYearModalStatus',
+  },
+  [ActivityType.SpringFestival]: {
+    component: markRaw(SpringFestival),
+    localStorageKey: '$SpringFestivalModalStatus',
   },
 }
 

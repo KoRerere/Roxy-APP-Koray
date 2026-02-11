@@ -21,7 +21,7 @@ export interface BrowserProcessMessage {
 /** 资源更新消息体 */
 export interface ResourceUpdateMessage {
   /** 更新类型 */
-  type: 'app' | 'patch' | 'web' | 'kernel'
+  type: 'app' | 'patch' | 'web' | 'kernel' | 'agent'
   /** 状态 */
   status?: 'downloading' | 'downloaded' | 'uninstalled' | 'failed' | 'update'
   /** 下载进度 */

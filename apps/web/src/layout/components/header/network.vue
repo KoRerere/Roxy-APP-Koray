@@ -17,8 +17,8 @@ const proxyInfo = ref(defaultProxyInfo)
 async function detectNetwork() {
   loading.value = true
   try {
-    await electronAPI.send('proxy:getSystemProxy')
-    const result = await electronAPI.send('proxy:detectNetwork')
+    await globalThis.electronAPI.send('proxy:getSystemProxy')
+    const result = await globalThis.electronAPI.send('proxy:detectNetwork')
     proxyInfo.value.city = `${result.country_code}/${result.city}`
     proxyInfo.value.ip = result.ip
     console.log('detectNetwork result', result, proxyInfo)

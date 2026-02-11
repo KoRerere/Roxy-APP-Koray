@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { baseRoutes } from '/@/router/base'
 import { useUserStore } from '/@/stores/user'
 import { menuRoutes } from './menu'
@@ -10,7 +10,7 @@ import type { App } from 'vue'
 import { useThemeStore } from '/@/stores/theme'
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     ...baseRoutes,
     {
@@ -35,6 +35,10 @@ const router = createRouter({
   ],
 })
 
+const whiteList = ['oauth2callback']
+// 不需要携带的查询参数
+const noTakeQueryList = ['official-site-lang', 'official-site-invite-code']
+
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const themeStore = useThemeStore()
@@ -43,6 +47,10 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
   const query = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }
+
+  noTakeQueryList.forEach((key) => {
+    delete query[key]
+  })
 
   if (currentWorkspace?.workspaceType === WorkspaceType.Private && to.name === 'shared') {
     return next({ name: 'home', query })
@@ -57,8 +65,10 @@ router.beforeEach(async (to, from, next) => {
     return next({ name, query })
   }
 
-  if (to.name !== 'login' && !userStore.token) {
-    return next({ name: 'login', query })
+  if (!whiteList.includes(to.name as string)) {
+    if (to.name !== 'login' && !userStore.token) {
+      return next({ name: 'login', query })
+    }
   }
   if (isEqual(to.query, query)) {
     return next()

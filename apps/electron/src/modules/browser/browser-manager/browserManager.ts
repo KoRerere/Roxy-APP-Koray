@@ -13,29 +13,37 @@ import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
-import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
+import { coreManager } from '/@/modules/browser/core-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
 import { asyncDebounce } from '/@/utils'
 
 const OpenErrorMessageMap = {
-  get 1() { return $t('您购买的代理 IP 检测到错误。{link}', { link: '{link}' }) }, /**
-                                                                    * IP检测不通
-                                                                    */
-  get 2() { return $t('您购买的代理 IP 检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) }, /**
-                                                                              * 国家不一致
-                                                                              */
-  get 3() { return $t('您购买的代理 IP 已过期。请在打开窗口前更新代理 IP 信息') }, /**
-                                                     * 已过期
-                                                     */
-  get 4() { return $t('您当前窗口的代理 IP 已退款，无法使用。请在打开窗口之前更新代理 IP 信息。') }, /**
-                                                              * 已退款
-                                                              */
-  get 5() { return $t('您购买的代理 IP 正在退款中，无法使用。请在打开窗口之前更新代理 IP 信息。') }, /**
-                                                              * 退款中
-                                                              */
-  get 6() { return $t('您购买的代理 IP 正在更换中，无法使用。请在打开窗口之前更新代理 IP 信息。') }, // 更换中
+  /**
+   * IP检测不通
+   */
+  get 1() { return $t('您购买的代理 IP 检测到错误。{link}', { link: '{link}' }) },
+  /**
+   * 国家不一致
+   */
+  get 2() { return $t('您购买的代理 IP 检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) },
+  /**
+   * 已过期
+   */
+  get 3() { return $t('您购买的代理 IP 已过期。请在打开窗口前更新代理 IP 信息') },
+  /**
+   * 已退款
+   */
+  get 4() { return $t('您当前窗口的代理 IP 已退款，无法使用。请在打开窗口之前更新代理 IP 信息。') },
+  /**
+   * 退款中
+   */
+  get 5() { return $t('您购买的代理 IP 正在退款中，无法使用。请在打开窗口之前更新代理 IP 信息。') },
+  /**
+   * 更换中
+   */
+  get 6() { return $t('您购买的代理 IP 正在更换中，无法使用。请在打开窗口之前更新代理 IP 信息。') },
 }
 
 export class BrowserManager {
@@ -150,15 +158,9 @@ export class BrowserManager {
 
         await this.#batchUploadData()
 
-        const coreVersion = browserItem.winInfo.coreVersion
+        const { coreVersion, browserType } = browserItem.winInfo
         // 如果没有任何浏览器在使用该内核，则尝试解压内核
-        if (!chromeCoreManager.usingCores.has(coreVersion)) {
-          const fn = chromeCoreManager.pendingUnzipCoreMap.get(coreVersion)
-          if (!chromeCoreManager.usingCores.has(coreVersion) && fn) {
-            await Promise.try(fn).catch(() => {})
-          }
-        }
-        await rm(chromeCoreManager.oldCoreDir, { recursive: true, force: true }).catch(() => {})
+        coreManager.getCoreManager(browserType).tryUpzipCore(coreVersion)
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
       browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -262,18 +264,18 @@ export class BrowserManager {
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
-    const cores = structuredClone(chromeCoreManager.usingCores)
+    const cores = this.openedBrowserMap.values().map((n) => {
+      const { coreType, coreVersion } = n.winInfo
+      return { coreType, coreVersion }
+    })
     try {
       const result = await this.batchClose([...this.openedBrowserMap.keys()])
       return result
     }
     finally {
       // 等所有浏览器都关闭之后，尝试解压内核
-      for (const coreVersion of cores) {
-        const fn = chromeCoreManager.pendingUnzipCoreMap.get(coreVersion!)
-        if (!chromeCoreManager.usingCores.has(coreVersion) && fn) {
-          await Promise.try(fn).catch(() => {})
-        }
+      for (const { browserType, coreVersion } of cores) {
+        await coreManager.getCoreManager(browserType).tryUpzipCore(coreVersion)
       }
     }
   }

@@ -21,6 +21,10 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { Role, WorkspaceType } from '/@/enums'
 import { getInviteCode } from '/@/api/util'
 
+const loginEventCommonParams = {
+  login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
+}
+
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
@@ -105,7 +109,7 @@ async function handleSubmit() {
       return
     }
 
-    mixpanel.track('login', { method: 'password', success: false, error: msg })
+    mixpanel.track('login', { method: 'password', success: false, error: msg, ...loginEventCommonParams })
     onlyErrorToast(code, msg || $t('登录失败'))
     return
   }
@@ -145,7 +149,7 @@ async function handleSubmitByPhone() {
       return
     }
 
-    mixpanel.track('login', { method: 'password', success: false, error: msg })
+    mixpanel.track('login', { method: 'password', success: false, error: msg, ...loginEventCommonParams })
     onlyErrorToast(code, msg || $t('登录失败'))
     return
   }
@@ -174,7 +178,7 @@ async function handleSubmitBy2fa(faCode: string) {
   const { code, msg } = await API.base.getPersonalVerifyValidatorCodeList({ temp_token: tempToken.value, code: faCode, type: 'login_2fa' })
   onlyErrorToast(code, msg)
   if (code !== 0) {
-    mixpanel.track('login', { method: '2fa', success: false, error: msg })
+    mixpanel.track('login', { method: '2fa', success: false, error: msg, ...loginEventCommonParams })
     return
   }
 
@@ -197,7 +201,7 @@ async function afterLogin(loginData: LoginCreateData['data']) {
   const name = userInfo.value.workspaceType === WorkspaceType.Public && userInfo.value.role !== Role.OWNER ? 'shared' : 'home'
   await router.push({ name })
 
-  mixpanel.track('login', { method: loginWay.value })
+  mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })
 }
 
 /** 是否继续登录，true 为继续，false 停止 */
@@ -267,7 +271,12 @@ useOauth2Callback(async (params) => {
           return
         }
 
-        mixpanel.track('login', { method: source, success: false, error: msg })
+        mixpanel.track('login', {
+          method: source,
+          success: false,
+          error: msg,
+          ...loginEventCommonParams,
+        })
         onlyErrorToast(code, msg)
         return
       }
@@ -282,7 +291,7 @@ useOauth2Callback(async (params) => {
         })
         return
       }
-      window.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
+      globalThis.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
       afterLogin(data)
     }
     catch (e) {
@@ -297,11 +306,11 @@ useOauth2Callback(async (params) => {
   }
 })
 
-electronAPI.send('app:getGPUFeatureStatus').then((res) => {
-  isSupportGPU.value = res['2d_canvas'] === 'enabled' && res.webgl === 'enabled'
+globalThis.electronAPI.send('app:getGPUFeatureStatus').then((res) => {
+  isSupportGPU.value = globalThis.isElectron ? res?.['2d_canvas'] === 'enabled' && res.webgl === 'enabled' : true
 })
 
-electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
+globalThis.electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
   console.log('isShowLongTimeNotLoginTips', res)
   if (res) {
     setPassword('')
@@ -314,13 +323,13 @@ electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
 })
 
 // 如果app有更新
-window.electronAPI.on('app:resource-update', (data) => {
+globalThis.electronAPI.on('app:resource-update', (data) => {
   if (data.type === 'app') {
     updateInfo.value = data
   }
 })
 
-electronAPI.send('app:checkForUpdates')
+globalThis.electronAPI.send('app:checkForUpdates')
 
 requestIdleCallback(hidePageLoading)
 const timer = setInterval(hidePageLoading, 3000)

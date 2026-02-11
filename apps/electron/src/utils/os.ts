@@ -3,6 +3,7 @@ import { exec, execSync } from 'node:child_process'
 import { networkInterfaces, platform } from 'node:os'
 import { parse } from 'node:path'
 import systeminformation from 'systeminformation'
+import { getDiskSpace } from './win32-disk'
 
 /** 获取操作系统版本 */
 export function getOSVersion(): string {
@@ -79,10 +80,27 @@ function getMacDiskInfo(filePath: string) {
 
 /** 获取本机系统磁盘信息 by path */
 export async function getDiskInfoByPath(filePath: string) {
+  if (process.platform === 'win32') {
+    try {
+      const diskInfo = getDiskSpace(filePath)
+      console.debug('win32 diskInfo', diskInfo)
+      return {
+        ...diskInfo,
+        fs: filePath.substring(0, 2).toUpperCase(), // Drive letter e.g. "C:"
+        type: 'NTFS', // Assumption or need another API, but usually sufficient
+        mount: filePath.substring(0, 2).toUpperCase(),
+      }
+    }
+    catch (e) {
+      console.error(e)
+    }
+  }
+
   if (process.platform === 'darwin') {
     return getMacDiskInfo(filePath)
   }
 
+  // Linux or others fallback
   const diskId = parse(filePath).root.replace(/\\/g, '')
   const disks = await getSystemDisks()
   return disks.find(disk => disk.fs.toUpperCase().startsWith(diskId.toUpperCase()))

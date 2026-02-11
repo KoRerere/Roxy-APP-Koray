@@ -19,14 +19,14 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           label: $t('宫格布局'),
           shortcutKey: shortcutKey.gridLayout,
           command: () => {
-            electronAPI.send('syncControl:doLayout', { type: 'grid' })
+            globalThis.electronAPI.send('syncControl:doLayout', { type: 'grid' })
           }
         },
         {
           label: $t('堆叠布局'),
           shortcutKey: shortcutKey.stackLayout,
           command: () => {
-            electronAPI.send('syncControl:doLayout', { type: 'stack' })
+            globalThis.electronAPI.send('syncControl:doLayout', { type: 'stack' })
           }
         },
         {
@@ -35,7 +35,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
         {
           label: $t('自定义'),
           command: () => {
-            electronAPI.send('syncControl:openPreferencesDialog', { tab: 'customLayout' });
+            globalThis.electronAPI.send('syncControl:openPreferencesDialog', { tab: 'customLayout' });
           }
         },
       ]
@@ -44,7 +44,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
       label: $t('批量输入'),
       icon: 'base/rx_ic_keyboard',
       command: () => {
-        electronAPI.send('syncControl:openBatchInputsDialog');
+        globalThis.electronAPI.send('syncControl:openBatchInputsDialog');
       }
     },
     {
@@ -57,21 +57,21 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           hidden: isProd,
           shortcutKey: shortcutKey.unifiedTabs,
           command: () => {
-            electronAPI.send('syncControl:unifyTabs')
+            globalThis.electronAPI.send('syncControl:unifyTabs')
           }
         },
         {
           label: $t('关闭其他标签页'),
           shortcutKey: shortcutKey.closeOtherTabs,
           command: () => {
-            electronAPI.send('syncControl:closeOtherTabs')
+            globalThis.electronAPI.send('syncControl:closeOtherTabs')
           }
         },
         {
           label: $t('关闭当前标签页'),
           shortcutKey: shortcutKey.closeCurrentTab,
           command: () => {
-            electronAPI.send('syncControl:closeCurrentTab')
+            globalThis.electronAPI.send('syncControl:closeCurrentTab')
           }
         },
         {
@@ -79,7 +79,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           label: $t('关闭空白页签'),
           shortcutKey: shortcutKey.closeBlankTabs,
           command: () => {
-            electronAPI.send('syncControl:closeBlankTabs')
+            globalThis.electronAPI.send('syncControl:closeBlankTabs')
           }
         },
         {
@@ -90,7 +90,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           label: $t('打开网址'),
           shortcutKey: shortcutKey.openSites,
           command: () => {
-            electronAPI.send('syncControl:openOpenSitesDialog')
+            globalThis.electronAPI.send('syncControl:openOpenSitesDialog')
           }
         },
       ]
@@ -114,7 +114,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
         {
           label: $t('仿真参数设置'),
           command: () => {
-            electronAPI.send('syncControl:openPreferencesDialog', { tab: 'simulate' });
+            globalThis.electronAPI.send('syncControl:openPreferencesDialog', { tab: 'simulate' });
           }
         },
       ]

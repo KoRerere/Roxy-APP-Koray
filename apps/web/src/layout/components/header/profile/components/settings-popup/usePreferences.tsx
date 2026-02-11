@@ -26,8 +26,8 @@ export function usePreferencesPanel() {
 
   const getPreferencesPanels = async (data?: any) => {
     const [softConfig, disk, searchEngineResult] = await Promise.all([
-      electronAPI.send('app:getSoftConfig'),
-      electronAPI.send('app:getRoxyCacheDiskInfo'),
+      globalThis.electronAPI.send('app:getSoftConfig'),
+      globalThis.electronAPI.send('app:getRoxyCacheDiskInfo'),
       API.platform.userGetSearchEnginesList(),
     ])
 
@@ -504,7 +504,7 @@ export function usePreferencesPanel() {
                   <RxButton
                     severity="secondary"
                     outlined
-                    onClick={() => electronAPI.send('app:showLogDir')}
+                    onClick={() => globalThis.electronAPI.send('app:showLogDir')}
                   >
                     {$t('查看详情')}
                   </RxButton>

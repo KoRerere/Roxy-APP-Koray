@@ -1,12 +1,12 @@
 <script lang="tsx" setup>
-import type { UserGetNotifyListData } from '@roxy/backend-api'
+import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
+import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
-
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
+import type { UserGetNotifyListData } from '@roxy/backend-api'
 
 const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
@@ -21,6 +21,8 @@ interface Tab {
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
+
+const ROXY_GIFTS_TYPE = ref(new Set(Object.values(RoxyGiftsType)))
 
 const pop = ref()
 const tabs = ref<Tab[]>([
@@ -118,17 +120,25 @@ async function markAllAsRead() {
 }
 
 function checkDetail(item: Message) {
-  if (item.type === '邀请用户通知') {
-    showAcceptInvitationDialog(item)
-  }
-  else if (item.type === '代理奖励通知') {
-    router.replace({ name: 'tutorial' })
-  }
-  else if (item.type === RoxyGiftsType.ISP) {
-    router.replace({ name: 'agent-list', query: { name: 'shop' } })
-  }
-  else if (item.type === RoxyGiftsType.Rotating) {
-    router.replace({ name: 'agent-list', query: { name: 'list' } })
+  switch (item.type) {
+    case '邀请用户通知':
+      showAcceptInvitationDialog(item)
+      break
+    case '代理奖励通知':
+      router.replace({ name: 'tutorial' })
+      break
+    case RoxyGiftsType.ISP:
+      router.replace({ name: 'agent-list', query: { name: 'shop' } })
+      break
+    case RoxyGiftsType.Rotating:
+      router.replace({ name: 'agent-list', query: { name: 'list' } })
+      break
+    case RoxyGiftsType.Profile:
+      showRedeemCodeRecord()
+      break
+    case RoxyGiftsType.Staff:
+      router.replace({ name: 'wallet' })
+      break
   }
 }
 
@@ -165,6 +175,17 @@ function showAcceptInvitationDialog(item: Message) {
     hideModal()
     onRead(item)
   }
+}
+
+function showRedeemCodeRecord() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => <RedeemCodeRecord onClose={hideModal}></RedeemCodeRecord>,
+    },
+  })
 }
 </script>
 
@@ -203,7 +224,7 @@ function showAcceptInvitationDialog(item: Message) {
                     </div>
                     <div :class="message.time" class="w-full flex justify-between">
                       <span>{{ item.createTime }}</span>
-                      <span v-if="item.paramData || item.type === RoxyGiftsType.ISP || item.type === RoxyGiftsType.Rotating" :class="message['check-detail']" @click="checkDetail(item)">{{
+                      <span v-if="item.paramData || ROXY_GIFTS_TYPE.has(item.type as RoxyGiftsType)" class="select-none" :class="message['check-detail']" @click="checkDetail(item)">{{
                         $t('查看详情') }}</span>
                       <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>

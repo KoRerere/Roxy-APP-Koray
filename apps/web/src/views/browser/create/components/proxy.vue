@@ -220,7 +220,7 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           {{ attrs.label }}
         </div>
         <div class="flex items-center gap-1 tips">
-          <span>{{ $t('当前: {value}({ip})', {
+          <span>{{ $t('本机网络环境: {value}({ip})', {
             value: strConcat(network.info?.country_code, strConcat('/', network.info?.city)),
             ip: network.info?.ip,
           }) }}</span>

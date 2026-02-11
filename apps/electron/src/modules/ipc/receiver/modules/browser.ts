@@ -1,10 +1,10 @@
+import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { app } from 'electron'
 import { spawn } from 'node:child_process'
 import { access } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { appConfig } from '/@/constants'
-import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { browserManager, coreManager } from '/@/modules/browser'
 import { DefaultBrowserInstaller } from '/@/modules/shortcut-manager/DefaultBrowserInstaller'
 import { ShortcutManager } from '/@/modules/shortcut-manager/ShortcutManager'
 import { store } from '/@/modules/store'
@@ -60,7 +60,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
 
   /** 获取正在使用中的内核 */
   ipcMain.on('browser:usingCores', (_event) => {
-    return [...chromeCoreManager.usingCores]
+    return [...coreManager.getCoreManager('chrome').usingCores]
   })
 
   /** 获取所有已打开的窗口 */

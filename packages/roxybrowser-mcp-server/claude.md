@@ -295,7 +295,7 @@ const batchFormatted = ErrorAnalyzer.formatBatchAnalysisForDisplay(batchAnalysis
 - `roxy_delete_browsers` - Delete browsers permanently
 
 **Browser Operations:**
-- `roxy_open_browser` - Open browsers and get CDP endpoints
+- `roxy_open_browsers` - Open browsers and get CDP endpoints
 - `roxy_close_browsers` - Close opened browsers
 - `roxy_get_connection_info` - Get CDP endpoints and PIDs for opened browsers
 

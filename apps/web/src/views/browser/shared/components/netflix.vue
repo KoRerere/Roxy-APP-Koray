@@ -172,7 +172,7 @@ onBeforeMount(() => {
   canceCloselListener = listenCloseMessage()
   canceCloseSyncingDataListener = listenCloseSyncingDataMessage()
 
-  window.electronAPI
+  globalThis.electronAPI
     .send('browser:getOpenedBrowserMessage')
     .then((state) => {
       console.log('browser:getOpenedBrowserMessage state', state)
@@ -183,7 +183,7 @@ onBeforeMount(() => {
 })
 
 function listenOpenMessage() {
-  return window.electronAPI.on('browser:launch-process-message', (event) => {
+  return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
     if (event.code === 1) {
       openLimit.value = false
     }
@@ -197,7 +197,7 @@ function listenOpenMessage() {
 }
 
 function listenCloseMessage() {
-  return window.electronAPI.on('browser:on-close', (dirIds) => {
+  return globalThis.electronAPI.on('browser:on-close', (dirIds) => {
     openLimit.value = false
     dirIds.forEach((dirId) => {
       Reflect.deleteProperty(openMessage, dirId)
@@ -206,13 +206,13 @@ function listenCloseMessage() {
 }
 
 async function checkOpenLimit() {
-  const count = await window.electronAPI.send('browser:getOpenedBrowserCount', workspaceStore.currentWorkspace?.id)
+  const count = await globalThis.electronAPI.send('browser:getOpenedBrowserCount', workspaceStore.currentWorkspace?.id)
   openLimit.value = count > 0
 }
 
 async function openBrowserBefore(item: Data) {
   if (Reflect.get(openMessage, item.dirId!)) {
-    window.electronAPI.send('browser:batchLaunch', [item.dirId!])
+    globalThis.electronAPI.send('browser:batchLaunch', [item.dirId!])
     return
   }
 
@@ -239,11 +239,11 @@ async function openBrowserBefore(item: Data) {
   }
   openLimit.value = true
   Reflect.set(openMessage, item.dirId!, { pending: true, data: { message: $t('启动中...') } })
-  window.electronAPI.send('browser:batchLaunch', [item.dirId!])
+  globalThis.electronAPI.send('browser:batchLaunch', [item.dirId!])
 }
 
 function listenCloseSyncingDataMessage() {
-  return window.electronAPI.on('browser:on-close-syncing-data', (dirIds) => {
+  return globalThis.electronAPI.on('browser:on-close-syncing-data', (dirIds) => {
     dirIds.forEach((dirId) => {
       const message = Reflect.get(openMessage, dirId)
       if (message?.data) {

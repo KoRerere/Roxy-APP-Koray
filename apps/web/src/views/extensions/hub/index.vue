@@ -231,7 +231,7 @@ async function onInstall(plugin: PluginItem) {
       onConfirm: async (params: any) => {
         try {
           // 下载并校验插件 sha512 值
-          const [result] = await window.electronAPI.send('extension:download', [toRaw(plugin)])
+          const [result] = await globalThis.electronAPI.send('extension:download', [toRaw(plugin)])
           console.log('extension:download', result)
           if (result?.status === 'rejected' && result.reason?.message) {
             return showToast(-1, result.reason.message)
@@ -290,7 +290,7 @@ defineExpose({
       <div ref="listContainer" class="relative flex-1 overflow-y-auto list-container dynamic-padding">
         <i18n-t v-if="search && !extensionList?.length" tag="div" class="h-full flex items-center justify-center google" :keypath="$t('暂未找到相关扩展，请前往 {link} 查看更多扩展', { link: '{link}' })" scope="global">
           <template #link>
-            <a href="https://chromewebstore.google.com" target="_blank">Google Store</a>
+            <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer">Google Store</a>
           </template>
         </i18n-t>
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">

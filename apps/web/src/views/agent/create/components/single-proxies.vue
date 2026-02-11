@@ -166,7 +166,7 @@ const inputs = ref([
       onIconClick: async () => {
         const refreshUrl = formRef.value?.getFieldState('refreshUrl')?.value
         if (refreshUrl) {
-          const isOK = await window.electronAPI.send('proxy:refreshUrl', refreshUrl)
+          const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', refreshUrl)
           showToast(isOK ? 0 : -1, refreshUrl)
         }
       },
@@ -233,6 +233,10 @@ function getFormData() {
 }
 
 async function onCheckProxyStatus() {
+  if (!globalThis.isElectron) {
+    return globalThis.electronAPI.send('proxy:detect', {} as any)
+  }
+
   await formRef.value?.instance!.validate()
   if (!formRef.value?.instance!.valid)
     return

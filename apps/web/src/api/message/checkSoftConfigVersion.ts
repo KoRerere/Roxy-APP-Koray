@@ -16,7 +16,7 @@ export async function checkSoftConfigVersion(response: AxiosResponse<any, any>) 
 
   if (remoteVersion > lastVersion) {
     console.info('checkDictVersion', remoteVersion, lastVersion)
-    await electronAPI.send('app:fetchSoftConfig').finally(() => {
+    await globalThis.electronAPI.send('app:fetchSoftConfig').finally(() => {
       isCheckingVersion = false
     })
     lastVersion = remoteVersion

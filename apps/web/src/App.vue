@@ -16,6 +16,7 @@ const [showModal] = useDialog()
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
 function handleKickedOut(params: MittEvents['kickedOut']) {
+  console.log('handleKickedOut', params)
   hidePageLoading()
   showModal({
     header: $t('登录提醒'),
@@ -49,7 +50,7 @@ function handleKickedOut(params: MittEvents['kickedOut']) {
       router.push({ name: 'login' })
     },
   })
-  electronAPI.send('browser:closeAll')
+  globalThis.electronAPI.send('browser:closeAll')
 }
 
 /**
@@ -76,7 +77,7 @@ function onKickedOut(params: MittEvents['kickedOut']) {
 }
 
 emitter.on('kickedOut', onKickedOut)
-electronAPI.on('user:kicked-out', onKickedOut)
+globalThis.electronAPI.on('user:kicked-out', onKickedOut)
 </script>
 
 <template>

@@ -1,14 +1,32 @@
-import { useToast } from "primevue/usetoast"
-import { isDev } from "/@/utils"
-import { API } from "/@/api"
-import type { LoginGoogleV2CreateData } from "@roxy/backend-api"
-
+import { useToast } from 'primevue/usetoast'
+import { isDev } from '/@/utils'
+import { API } from '/@/api'
+import type { LoginGoogleV2CreateData } from '@roxy/backend-api'
+import { OAUTH2_CALLBACK_CHANNEL_NAME } from '/@/constants/channel'
 
 function getRedirectUrl(source: string) {
   if (source === 'vk') {
     return `https://${isDev ? 'gatetest.roxybrowser.co' : 'roxybrowser.com'}/auth/app_${source}`
   }
   return `https://${isDev ? 'gatetest.roxybrowser.co' : 'roxybrowser.com'}/auth?source=${source}`
+}
+
+function openWindow(url: string, title: string) {
+  console.log('openWindow', url, title)
+  const width = 800
+  const height = 600
+  const left = (screen.width - width) / 2
+  const top = (screen.height - height) / 2
+  window.open(url, title, `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`)
+}
+
+function toAuth(url: string, title: string) {
+  if (globalThis.isElectron) {
+    window.open(url)
+  }
+  else {
+    openWindow(url, title)
+  }
 }
 
 function openGoogleAuth2Login() {
@@ -20,7 +38,8 @@ function openGoogleAuth2Login() {
   }
   const params = new URLSearchParams(paramsObj)
   const url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
-  window.open(url)
+
+  toAuth(url, 'Google Auth')
 }
 
 function openGithubAuth2Login() {
@@ -31,7 +50,8 @@ function openGithubAuth2Login() {
   }
   const params = new URLSearchParams(paramsObj)
   const url = `https://github.com/login/oauth/authorize?${params.toString()}`
-  window.open(url)
+
+  toAuth(url, 'Github Auth')
 }
 
 function openFacebookAuth2Login() {
@@ -42,12 +62,15 @@ function openFacebookAuth2Login() {
   }
   const params = new URLSearchParams(paramsObj)
   const url = `https://www.facebook.com/v22.0/dialog/oauth?${params.toString()}`
-  window.open(url)
+
+  toAuth(url, 'Facebook Auth')
 }
 
+// ... existing code ...
 
-
-// 生成符合要求的随机字符串
+/**
+ * 生成符合要求的随机字符串
+ */
 function generateCodeVerifier(length = 43) {
   const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
   return Array.from(crypto.getRandomValues(new Uint8Array(length)))
@@ -55,7 +78,9 @@ function generateCodeVerifier(length = 43) {
     .join('')
 }
 
-// 生成 code_challenge
+/**
+ * 生成 code_challenge
+ */
 async function generateCodeChallenge(codeVerifier: string) {
   const encoder = new TextEncoder()
   const data = encoder.encode(codeVerifier)
@@ -82,12 +107,13 @@ async function openVkAuth2Login() {
     redirect_uri: getRedirectUrl('vk'),
     state: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     code_challenge: codeChallenge,
-    code_challenge_method: 'S256'
+    code_challenge_method: 'S256',
   }
 
   const params = new URLSearchParams(paramsObj)
   const url = `https://id.vk.com/authorize?${params.toString()}`
-  window.open(url)
+
+  toAuth(url, 'Vk Auth')
 
   return codeVerifier
 }
@@ -105,7 +131,7 @@ export function openOAuth2Login(type: OauthLoginType) {
   return oauth2LoginMap[type]()
 }
 
-type Oauth2CallbackParams = {
+interface Oauth2CallbackParams {
   oauthCode: string
   source: OauthLoginType
   searchParams: URLSearchParams
@@ -117,8 +143,9 @@ type Oauth2CallbackParams = {
  * @param callback 回调函数
  */
 export function useOauth2Callback(callback: (params: Oauth2CallbackParams) => void) {
+  const channel = new BroadcastChannel(OAUTH2_CALLBACK_CHANNEL_NAME)
 
-  const cancelCallback = window.electronAPI.on('oauth2:google-callback', (searchStr) => {
+  const handleSearchStr = (searchStr: string) => {
     console.log('oauth2:google-callback', searchStr)
     const searchParams = new URLSearchParams(searchStr)
     const oauthCode = searchParams.get('code')!
@@ -140,11 +167,20 @@ export function useOauth2Callback(callback: (params: Oauth2CallbackParams) => vo
       oauthCode,
       source,
       searchParams,
-      api: oauth2LoginAPIMap[source as OauthLoginType]
+      api: oauth2LoginAPIMap[source as OauthLoginType],
     })
-  })
+  }
+
+  const cancelCallback = globalThis.electronAPI.on('oauth2:google-callback', handleSearchStr)
+
+  channel.onmessage = (event) => {
+    console.log('channel.onmessage oauth2:callback', event)
+    const { data } = event
+    handleSearchStr(data)
+  }
 
   onBeforeUnmount(() => {
     cancelCallback?.()
+    channel.close()
   })
 }

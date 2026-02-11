@@ -97,14 +97,14 @@ function formatKernelIcon(item: KernelUpdateItem) {
 }
 
 async function updateAllKernel(event: MouseEvent) {
-  const usingCores = await window.electronAPI.send('browser:usingCores')
+  const usingCores = await globalThis.electronAPI.send('browser:usingCores')
 
   const _usingCores: string[] = []
 
   currentKernel.value.updateList.forEach((item) => {
     if (item.coreVersion) {
       if (!usingCores.includes(item.coreVersion!)) {
-        window.electronAPI.send('app:download-chrome-core', item.coreVersion)
+        globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
         emit('onDownloadClick', item)
       }
       else {
@@ -120,7 +120,7 @@ async function updateAllKernel(event: MouseEvent) {
 }
 
 async function handleKernelItemClick(event: MouseEvent, item: KernelUpdateItem) {
-  const usingCores = await window.electronAPI.send('browser:usingCores')
+  const usingCores = await globalThis.electronAPI.send('browser:usingCores')
 
   if (usingCores.includes(item.coreVersion!)) {
     usingVersion.value = usingCores.join(',')
@@ -133,7 +133,7 @@ async function handleKernelItemClick(event: MouseEvent, item: KernelUpdateItem) 
   }
 
   if (item.coreVersion) {
-    window.electronAPI.send('app:download-chrome-core', item.coreVersion)
+    globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
     emit('onDownloadClick', item)
   }
 }
@@ -156,7 +156,7 @@ function handleRemove(event: MouseEvent, item: KernelUpdateItem) {
     },
     accept: async () => {
       try {
-        await window.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
+        await globalThis.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
         item.status = 'uninstalled'
       }
       catch (error) {
@@ -202,7 +202,7 @@ defineExpose({
       <div v-if="currentKernel.available.length > 1" class="py-2 px-4 title">
         {{ upgrade.title }}
       </div>
-      <div v-for="item in upgrade.list" :id="`kernel_${item.coreVersion}`" :key="item.releaseTime" class="w-full flex flex-col items-start item" :class="{ light: item._light }">
+      <div v-for="item in upgrade.list" :id="`kernel_${item.coreVersion}`" :key="item.releaseTime" class="w-full flex flex-col items-start item" :class="{ 'cursor-pointer light': item._light }">
         <div class="w-full flex justify-between items-center self-stretch">
           <div class="flex-1 flex items-center gap-1.5 py-3 pl-4" @click="onRead(item)">
             <div class="relative">

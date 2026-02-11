@@ -27,7 +27,7 @@ export async function openOpenSitesDialog() {
     skipTaskbar: true,
     hasShadow: true,
   })
-  win.loadURL(await getWebEntryUrl('#/sync-control-open-sites-dialog'))
+  win.loadURL(await getWebEntryUrl('sync-control-open-sites-dialog'))
   if (!isPackaged) {
     win.webContents.openDevTools()
   }

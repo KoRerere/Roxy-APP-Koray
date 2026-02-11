@@ -29,7 +29,7 @@ export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayloa
     skipTaskbar: true,
     hasShadow: true,
   })
-  win.loadURL(await getWebEntryUrl(`#/sync-control-batch-inputs-dialog?tab=${payload.tab}`))
+  win.loadURL(await getWebEntryUrl(`sync-control-batch-inputs-dialog?tab=${payload.tab}`))
   if (!isPackaged) {
     win.webContents.openDevTools()
   }

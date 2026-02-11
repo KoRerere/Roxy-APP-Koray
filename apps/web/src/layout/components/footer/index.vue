@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Campaign from '/@/views/campaign/index.vue'
-import OtherGifts from '/@/views/campaign/other/index.vue'
+// import OtherGifts from '/@/views/campaign/spring-festival/index.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -83,7 +83,7 @@ const items = computed(() => {
         </a>
       </template>
     </TieredMenu>
-    <OtherGifts v-if="roleStore.isOwner" :collapsed />
+    <!-- <OtherGifts v-if="roleStore.isOwner" :collapsed /> -->
     <Campaign v-if="roleStore.isOwner" :collapsed />
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">

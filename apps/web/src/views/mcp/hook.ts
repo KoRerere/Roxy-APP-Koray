@@ -27,7 +27,7 @@ export function useMcp() {
   })
 
   async function initMcp() {
-    const softConfig = await electronAPI.send('mcp:config')
+    const softConfig = await globalThis.electronAPI.send('mcp:config')
     mcpPort.value = softConfig.port
     checkConnection()
   }
@@ -44,10 +44,20 @@ export function useMcp() {
           ? AbortSignal.any([health.controller.signal, timeoutCtrl.signal])
           : health.controller.signal
 
-        const data = await fetch(`${serverUrl.value}/health`, { signal, cache: 'no-store' }).then(res => res.json())
+        const response = await fetch(`${serverUrl.value}/health`, { signal, cache: 'no-store' })
         cleanup?.()
 
-        const ok = data?.status === 'ok'
+        if (!response.ok) {
+          onlyErrorToast(response.status, $t('Roxy Agent 服务异常，请尝试重启服务'))
+        }
+
+        const data = await response.json()
+
+        const ok = data?.code === 0
+        if (!ok) {
+          onlyErrorToast(data?.code, $t('API 服务异常，请检查端口是否被占用'))
+        }
+
         health.isOk = ok
         health.loading = false
       }

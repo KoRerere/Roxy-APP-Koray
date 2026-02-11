@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue';
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue'
 import './rich-text/'
-import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-
+import { useConfirm } from 'primevue/useconfirm'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
+import { emitter } from '/@/utils/eventBus'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
@@ -13,6 +14,7 @@ defineProps<{
 
 const confirm = useConfirm()
 const userStore = useUserStore()
+const { getOfficialWebsite } = useSimpleLocale()
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -51,15 +53,15 @@ function showAppUpdaterDialog(item: ResourceUpdateMessage) {
         label: $t('重启'),
       },
       accept: () => {
-        window.electronAPI.send('app:quitAndInstall', item)
+        globalThis.electronAPI.send('app:quitAndInstall', item)
       },
     })
   }
   else if (item.status === 'failed') {
-    window.electronAPI.send('app:checkForUpdates')
+    globalThis.electronAPI.send('app:checkForUpdates')
   }
   else {
-    // window.electronAPI.send('app:download-update', info)
+    // globalThis.electronAPI.send('app:download-update', info)
   }
 }
 
@@ -70,7 +72,15 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
     showAppUpdaterDialog(info)
   }
   else if (info.type === 'web') {
-    await window.electronAPI.send('app:quitAndInstall', info)
+    await globalThis.electronAPI.send('app:quitAndInstall', info)
+  }
+}
+
+async function showLastUpdateLog() {
+  const result = await electronAPI.send('app:getLastUpdateFeature')
+  const newFeatureTips = result?.filter((item: any) => item.content?.length)
+  if (newFeatureTips?.length) {
+    emitter.emit('showAppUpgradeDialog', newFeatureTips)
   }
 }
 </script>
@@ -80,37 +90,52 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
     <template v-if="upgradeList.length">
       <template v-for="item in upgradeList" :key="item.releaseTime">
         <div v-if="item.type === 'app'" class="w-full flex flex-col items-center gap-6 pa-6 app">
-          <MotionArrow class="mx-auto"></MotionArrow>
+          <MotionArrow class="mx-auto" />
           <div class="flex flex-col gap-1.5">
-            <div class="app-title">{{ $t('有新的更新可用') }}</div>
-            <div class="app-desc">{{ $t('最新版本 v{version} 已发布，请更新客户端以保持稳定性并享受最新功能。', { version: item.version }) }}</div>
+            <div class="app-title">
+              {{ $t('有新的更新可用') }}
+            </div>
+            <div class="app-desc">
+              {{ $t('最新版本 v{version} 已发布，请更新客户端以保持稳定性并享受最新功能。', { version: item.version }) }}
+            </div>
           </div>
-          <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)"></RxButton>
+          <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)" />
           <RxButton v-else class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
-            @click="handleClientItemClick(item)"></RxButton>
+                    @click="handleClientItemClick(item)"
+          />
         </div>
         <div v-if="item.type === 'web'" class="w-full flex items-start gap-2.5 px-4 py-3 patch">
           <RxSvgIcon class="flex-shrink-0" name="base/rx_ic_patch" color="var(--colors-icon-icon-brand)" />
           <div class="flex-1 flex flex-col gap-1">
-            <div class="patch-title">{{ $t('v{version} 补丁', { version: item.version }) }}</div>
-            <div class="patch-version">{{ $t('点击刷新以应用更新补丁') }}</div>
+            <div class="patch-title">
+              {{ $t('v{version} 补丁', { version: item.version }) }}
+            </div>
+            <div class="patch-version">
+              {{ $t('点击刷新以应用更新补丁') }}
+            </div>
           </div>
           <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_refresh" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
-            @click="handleClientItemClick(item)"></RxButton>
+                    @click="handleClientItemClick(item)"
+          />
         </div>
       </template>
     </template>
     <template v-else>
       <div class="client-no-data">
         <div class="box">
-          <RxSvgIcon name="base/logo" class="w-[48px] h-[48px]" />
-          <div class="content">
+          <RxSvgIcon name="base/logo" class="w-12 h-12" />
+          <div class="flex flex-col items-center gap-1 self-stretch">
             <div class="version">
               v{{ userStore.appVersion }}
             </div>
-            <div class="tips">
+            <div class="text-center tips">
               {{ $t('您的客户端已是最新版本') }}
             </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <a class="log" href="#" @click.prevent="showLastUpdateLog">{{ $t('上次更新') }}</a>
+            <span class="color-[var(--component-dropdown-divider)]">|</span>
+            <a class="log" :href="getOfficialWebsite('changelog')" target="_blank" rel="noopener noreferrer">{{ $t('更新日志') }}</a>
           </div>
         </div>
       </div>
@@ -135,7 +160,7 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 }
 
 .patch {
-  border-bottom: 1px solid var(--component-dropdown-divider, #E2E9EE);
+  border-bottom: 1px solid var(--component-dropdown-divider, #e2e9ee);
 
   &-title {
     color: var(--colors-text-text-primary);
@@ -154,46 +179,39 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 .client-no-data {
   display: flex;
   height: 270px;
-  padding: var(--spacing-xl, 96px) 112px var(--spacing-4xl, 96px) 112px;
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-xl, 0px);
   align-self: stretch;
 
   .box {
     display: flex;
-    width: 160px;
+    width: 240px;
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-2xl, 16px);
-
-    .content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--spacing-sm, 4px);
-      align-self: stretch;
-
-      .version {
-        color: var(--colors-text-text-primary, #FAFAFA);
-        text-align: center;
-        font-family: 'JetBrains Mono';
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: normal;
-      }
-
-      .tips {
-        color: var(--colors-text-text-tertiary, #575D60);
-        text-align: center;
-        font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px;
-      }
-    }
   }
+}
+
+.version {
+  color: var(--colors-text-text-primary);
+  font-family: 'JetBrains Mono';
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tips {
+  color: var(--colors-text-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.log {
+  color: var(--colors-text-text-inactive);
+  text-align: center;
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>

@@ -39,7 +39,7 @@ export async function createSynchronizerActionBarWindow() {
   })
   // 默认鼠标事件穿透
   // win.setIgnoreMouseEvents(true, { forward: true })
-  win.loadURL(await getWebEntryUrl('#/sync-control-action-bar'))
+  win.loadURL(await getWebEntryUrl('sync-control-action-bar'))
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);

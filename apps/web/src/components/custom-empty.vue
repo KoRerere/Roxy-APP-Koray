@@ -20,8 +20,8 @@ const imgSrc = computed(() => {
   <div v-bind="$attrs" class="flex justify-center items-center w-full">
     <div class="empty-content">
       <img v-if="icon" class="empty-img" :src="imgSrc">
-      <div class="empty-info">
-        <div class="empty-info-title" v-if="title">
+      <div class="empty-info" :class="[icon ? 'pl-5' : '']">
+        <div v-if="title" class="empty-info-title">
           {{ title }}
         </div>
         <slot name="desc">
@@ -54,7 +54,6 @@ const imgSrc = computed(() => {
 
 .empty-info {
   display: flex;
-  padding-left: var(--spacing-3xl, 20px);
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);

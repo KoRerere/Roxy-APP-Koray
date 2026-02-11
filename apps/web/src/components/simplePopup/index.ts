@@ -1,5 +1,6 @@
-import popup from './index.vue';
+import popup from './index.vue'
 import { useDialog } from '/@/hooks/useDialog'
+
 interface SimpleDialogData {
   inputs: any[]
   title?: string
@@ -9,31 +10,24 @@ interface SimpleDialogData {
   afterRender?: any
   onConfirm?: (formData: any) => Promise<void> | void
   onCancel?: () => void
+  onHide?: () => void
 }
 
 export function useSimpleDialog() {
   const [showModal] = useDialog()
 
-  function showSimpleDialog(props: SimpleDialogData) {
-    const { onConfirm, onCancel, ...rest } = props
-
+  function showSimpleDialog({ onHide, ...props }: SimpleDialogData) {
     showModal({
       showHeader: false,
       modal: true,
       blockScroll: true,
       slots: {
-        container: ({ handleCancel }) => h(popup, {
-          ...rest,
-          onConfirm: async (formData: any) => {
-            await onConfirm?.(formData)
-            handleCancel()
-          },
-          onCancel: () => {
-            onCancel?.()
-            handleCancel()
-          },
-        })
+        container: ({ hideModal }) => h(popup, {
+          ...props,
+          onClose: hideModal,
+        }),
       },
+      handleCancel: onHide,
     })
   }
 

@@ -1,0 +1,13 @@
+书签、历史记录，同步：
+places.sqlite   -这个一定有
+places.sqlite-wal -可能有
+places.sqlite-shm -可能有
+
+
+LocalStorage 同步
+storage/default/*/ls/data.sqlite
+IndexedDB 同步
+storage/default/*/idb/*.sqlite
+
+Cookie同步 （与chrome同步类似）
+用bidi协议

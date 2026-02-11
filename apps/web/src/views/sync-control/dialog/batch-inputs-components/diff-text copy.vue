@@ -62,7 +62,7 @@ useResizeObserver(diffTextRef, (entries) => {
   const target = entry.target as HTMLElement
   const scrollHeight = target.scrollHeight - target.clientHeight
   if (scrollHeight > 0) {
-    electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: window.innerHeight + scrollHeight })
+    globalThis.electronAPI.send('syncControl:resizeBatchInputsDialog', { width: 480, height: window.innerHeight + scrollHeight })
   }
 })
 

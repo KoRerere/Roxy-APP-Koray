@@ -49,7 +49,7 @@ const updateApiKeys = useDebounceFn(async () => {
       const { apiKey: originalApiKey, open: originalOpen, port: originalPort } = original.value
 
       if (originalApiKey !== apiKey || originalOpen !== open || originalPort !== port) {
-        electronAPI.send('app:restartAPIServer')
+        globalThis.electronAPI.send('app:restartAPIServer')
       }
       original.value = { ...apiConfig.value }
     }
@@ -76,7 +76,7 @@ const inputs = ref([
         return
       }
 
-      const port = await electronAPI.send('util:checkPort', input.value)
+      const port = await globalThis.electronAPI.send('util:checkPort', input.value)
       console.log(port, input.value)
       if (port !== Number(input.value)) {
         input.invalid = true
@@ -96,22 +96,43 @@ const apiDocUrl = computed(() => {
 })
 
 const mcpConfig = computed(() => {
-  return JSON.stringify({
-    mcpServers: {
-      'roxybrowser-openapi': {
-        command: 'npx',
-        args: ['@roxybrowser/openapi@beta'],
-        env: {
-          ROXY_API_KEY: apiConfig.value.apiKey,
-          ROXY_API_HOST: `http://127.0.0.1:${apiConfig.value.port}`,
+  return {
+    standard: JSON.stringify({
+      mcpServers: {
+        'roxybrowser-openapi': {
+          command: 'npx',
+          args: ['@roxybrowser/openapi@latest'],
+          env: {
+            ROXY_API_KEY: apiConfig.value.apiKey,
+            ROXY_API_HOST: `http://127.0.0.1:${apiConfig.value.port}`,
+          },
+        },
+        'roxybrowser-playwright-mcp': {
+          command: 'npx',
+          args: ['@roxybrowser/playwright-mcp@latest'],
         },
       },
-      'roxybrowser-playwright-mcp': {
-        command: 'npx',
-        args: ['@roxybrowser/playwright-mcp@latest'],
+    }, null, 2),
+    openCode: JSON.stringify({
+      $schema: 'https://opencode.ai/config.json',
+      mcp: {
+        'roxybrowser-openapi': {
+          type: 'local',
+          command: ['npx', '-y', '@roxybrowser/openapi@latest'],
+          enabled: true,
+          environment: {
+            ROXY_API_KEY: apiConfig.value.apiKey,
+            ROXY_API_HOST: `http://127.0.0.1:${apiConfig.value.port}`,
+          },
+        },
+        'roxybrowser-playwright-mcp': {
+          type: 'local',
+          command: ['npx', '-y', '@roxybrowser/playwright-mcp@latest'],
+          enabled: true,
+        },
       },
-    },
-  }, null, 2)
+    }, null, 2),
+  }
 })
 
 const apiList = computed(() => [
@@ -187,6 +208,17 @@ const apiList = computed(() => [
       )
     },
   },
+  {
+    title: $t('无头模式'),
+    content: () => (
+      <I18nT tag="div" scope="global" keypath={$t('RoxyBrowser 现在支持以 "无头模式" 打开浏览器。只需在打开窗口的 API 请求中加入参数 {params} 即可。{link}。', { params: '{params}', link: '{link}' })}>
+        {{
+          params: () => <span class={`!no-underline ${cssModule.link}`}>{JSON.stringify({ headless: true })}</span>,
+          link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href={getOfficialFaqWebsite('/api-documentation/api-endpoint.html#open-browser')} rel="noopener noreferrer">{$t('查看详情')}</a>,
+        }}
+      </I18nT>
+    ),
+  },
 ])
 
 const mcpList = [
@@ -197,8 +229,8 @@ const mcpList = [
         <div class="flex flex-col gap-1.5">
           <div>{$t('标准配置适用于大多数工具')}</div>
           <div class={`relative w-full ${cssModule.copy}`}>
-            <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => trackByCopy(mcpConfig.value, 'mco_config_copy')} />
-            <JsonEditor class="min-h-75" modelValue={mcpConfig.value} editable={false}></JsonEditor>
+            <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => trackByCopy(mcpConfig.value.standard, 'mco_config_copy')} />
+            <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
           </div>
         </div>
       )
@@ -226,14 +258,14 @@ const mcpList = [
             <div class="w-full flex flex-col">
               <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 RoxyBrowser MCP 服务器来控制 Roxy 客户端:')}</div>
               <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
-                claude mcp add roxybrowser-openapi --env ROXY_API_KEY="
+                claude mcp add roxybrowser-openapi --scope local -e ROXY_API_KEY="
                 {apiConfig.value.apiKey}
-                " --env ROXY_API_HOST="http://127.0.0.1:
+                " -e ROXY_API_HOST="http://127.0.0.1:
                 {apiConfig.value.port}
-                " -- npx @roxybrowser/openapi@beta
+                " -- npx @roxybrowser/openapi@latest
               </div>
               <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
-              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>claude mcp add roxybrowser-playwright-mcp npx @roxybrowser/playwright-mcp@latest</div>
+              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>claude mcp add roxybrowser-playwright-mcp --scope local --transport stdio -- npx @roxybrowser/playwright-mcp@latest</div>
             </div>
           ),
         },
@@ -245,11 +277,11 @@ const mcpList = [
             <div class="w-full flex flex-col">
               <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 RoxyBrowser MCP 服务器来控制 Roxy 客户端:')}</div>
               <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
-                codex mcp add roxybrowser-openapi --env ROXY_API_KEY="
+                codex mcp add --env ROXY_API_KEY="
                 {apiConfig.value.apiKey}
                 " --env ROXY_API_HOST="http://127.0.0.1:
                 {apiConfig.value.port}
-                " -- npx @roxybrowser/openapi@beta
+                " roxybrowser-openapi -- npx @roxybrowser/openapi@latest
               </div>
               <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
               <div class={`pa-3 rounded-md ${cssModule.cmd}`}>codex mcp add roxybrowser-playwright-mcp -- npx @roxybrowser/playwright-mcp@latest</div>
@@ -264,8 +296,22 @@ const mcpList = [
             <div class="w-full flex flex-col">
               <div class="pa-3">{$t('前往 Cursor 设置 -> MCP -> 添加新的 MCP 服务器，然后粘贴以下内容:')}</div>
               <div class={`relative w-full ${cssModule.copy}`}>
-                <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value)} />
-                <JsonEditor class="min-h-75" modelValue={mcpConfig.value} editable={false}></JsonEditor>
+                <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.standard)} />
+                <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
+              </div>
+            </div>
+          ),
+        },
+        {
+          icon: 'websites/rx_site_opencode',
+          title: 'OpenCode',
+          value: '5',
+          render: () => (
+            <div class="w-full flex flex-col">
+              <div class="pa-3">{$t('更新您的 ~/.config/opencode/opencode.json')}</div>
+              <div class={`relative w-full ${cssModule.copy}`}>
+                <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.openCode)} />
+                <JsonEditor class="min-h-75" modelValue={mcpConfig.value.openCode} editable={false}></JsonEditor>
               </div>
             </div>
           ),
@@ -359,9 +405,9 @@ async function getApiKeys() {
   apiConfig.value = { ...data }
   const _port = Number(apiConfig.value.port)
   setInputValue(inputs.value, 'port', _port)
-  const port = await electronAPI.send('util:checkPort', _port)
+  const port = await globalThis.electronAPI.send('util:checkPort', _port)
   console.log(port, _port)
-  hasOccupy.value = port !== _port
+  hasOccupy.value = globalThis.isElectron && port !== _port
 }
 
 async function checkMcpUser() {
@@ -372,6 +418,10 @@ async function checkMcpUser() {
 }
 
 async function resetApiKey() {
+  if (!globalThis.isElectron) {
+    return globalThis.electronAPI.send('util:genApiKey')
+  }
+
   confirm.require({
     header: $t('重置 API 密钥'),
     message: $t('您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作'),
@@ -385,9 +435,9 @@ async function resetApiKey() {
       severity: 'danger',
     },
     accept: async () => {
-      apiConfig.value.apiKey = await window.electronAPI.send('util:genApiKey')
+      apiConfig.value.apiKey = await globalThis.electronAPI.send('util:genApiKey')
       updateApiKeys()
-      // window.electronAPI.send('app:saveSoftConfig', { apiKey: apiConfig.value.apiKey })
+      // globalThis.electronAPI.send('app:saveSoftConfig', { apiKey: apiConfig.value.apiKey })
     },
   })
 }

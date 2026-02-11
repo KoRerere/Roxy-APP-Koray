@@ -41,6 +41,7 @@ import {
   GetPersonalVerifyValidatorCodeListParams,
   GetPromotionLinkDiscountAndUsernameListData,
   GetQrcodeInfoListData,
+  GetSpringFestivalTimeListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
   LoginCreateData,
@@ -1891,6 +1892,43 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserGetCheckPhoneVerCodeCreate
+   * @summary 用户验证手机验证码
+   * @request POST:/user_get_check_phone_ver_code
+   * @response `200` `UserGetCheckPhoneVerCodeCreateData`
+   */
+  userGetCheckPhoneVerCodeCreate = (
+    data: UserGetCheckPhoneVerCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCheckPhoneVerCodeCreateData, any>({
+      path: `/user_get_check_phone_ver_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetActivityDiscountList
+   * @summary 获取活动折扣
+   * @request GET:/get_activity_discount
+   * @response `200` `GetActivityDiscountListData`
+   */
+  getActivityDiscountList = (params: RequestParams = {}) =>
+    this.http.request<GetActivityDiscountListData, any>({
+      path: `/get_activity_discount`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserSetPromotionLinkShowCreate
    * @summary 设置用户推广链接是否展示
    * @request POST:/user_set_promotion_link_show
@@ -2001,6 +2039,27 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserCalcLlmTokenCostCreate
+   * @summary MCPToken结算
+   * @request POST:/user_calc_llm_token_cost
+   * @response `200` `UserCalcLlmTokenCostCreateData`
+   */
+  userCalcLlmTokenCostCreate = (
+    data: UserCalcLlmTokenCostCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCalcLlmTokenCostCreateData, any>({
+      path: `/user_calc_llm_token_cost`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserGetPromptTemplateListList
    * @summary 查询提示模板列表
    * @request GET:/user_get_prompt_template_list
@@ -2054,6 +2113,22 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name GetSpringFestivalTimeList
+   * @summary 获取春节活动时间
+   * @request GET:/get_spring_festival_time
+   * @response `200` `GetSpringFestivalTimeListData`
+   */
+  getSpringFestivalTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetSpringFestivalTimeListData, any>({
+      path: `/get_spring_festival_time`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -2081,64 +2156,6 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<GetQrcodeInfoListData, any>({
       path: `/app_statistics/get_qrcode_info`,
       method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserGetCheckPhoneVerCodeCreate
-   * @summary 用户验证手机验证码
-   * @request POST:/user_get_check_phone_ver_code
-   * @response `200` `UserGetCheckPhoneVerCodeCreateData`
-   */
-  userGetCheckPhoneVerCodeCreate = (
-    data: UserGetCheckPhoneVerCodeCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetCheckPhoneVerCodeCreateData, any>({
-      path: `/user_get_check_phone_ver_code`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name GetActivityDiscountList
-   * @summary 获取活动折扣
-   * @request GET:/get_activity_discount
-   * @response `200` `GetActivityDiscountListData`
-   */
-  getActivityDiscountList = (params: RequestParams = {}) =>
-    this.http.request<GetActivityDiscountListData, any>({
-      path: `/get_activity_discount`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserCalcLlmTokenCostCreate
-   * @summary MCPToken结算
-   * @request POST:/user_calc_llm_token_cost
-   * @response `200` `UserCalcLlmTokenCostCreateData`
-   */
-  userCalcLlmTokenCostCreate = (
-    data: UserCalcLlmTokenCostCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserCalcLlmTokenCostCreateData, any>({
-      path: `/user_calc_llm_token_cost`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });

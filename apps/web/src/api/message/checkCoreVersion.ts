@@ -1,7 +1,7 @@
-import type { AxiosResponse } from "axios"
-import { parseHeaderParams } from "/@/api/message/util"
-import { isEqual } from "es-toolkit"
-import type { UserGetCoreUpgradeCreateData } from "@roxy/backend-api"
+import type { AxiosResponse } from 'axios'
+import { parseHeaderParams } from '/@/api/message/util'
+import { isEqual } from 'es-toolkit'
+import type { UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
 
 /** 上一次版本 */
 let lastCoreVersionList = {}
@@ -24,11 +24,11 @@ export async function checkCoreVersion(response: AxiosResponse<any, any>) {
 
   isCheckingCoreVersion = true
 
-  console.info('checkCoreVersion', core_last_version_list, lastCoreVersionList)
-  const result = await electronAPI.send('app:reGetUpdateInfo', 'kernel').finally(() => {
+  console.debug('checkCoreVersion', core_last_version_list, lastCoreVersionList)
+  const result = await globalThis.electronAPI.send('app:reGetUpdateInfo', 'kernel').finally(() => {
     isCheckingCoreVersion = false
   }) as UserGetCoreUpgradeCreateData
-  console.info('userGetCoreUpgradeCreate result', result.data)
+  console.debug('userGetCoreUpgradeCreate result', result.data)
   if (result.code === 0) {
     lastCoreVersionList = core_last_version_list
   }

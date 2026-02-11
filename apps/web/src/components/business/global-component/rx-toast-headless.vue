@@ -31,6 +31,7 @@ function handleMouseleave(slotData: Recordable) {
 
 function cacheToast(slotData: Recordable) {
   const { message, closeCallback } = slotData
+  // console.log('cacheToast', slotData)
 
   // default life
   if (!Reflect.has(message, 'life')) {
@@ -38,8 +39,10 @@ function cacheToast(slotData: Recordable) {
   }
 
   const duplicateItem = Object.values(messageMap).find((item) => {
-    const { message: { id, summary, detail, severity } } = item
-    return id !== message.id && summary === message.summary && detail === message.detail && severity === message.severity
+    const { message: { id, groupId, summary, detail, severity } } = item
+    return id !== message.id
+      && (groupId === message.groupId
+        || (summary === message.summary && detail === message.detail && severity === message.severity))
   })
 
   if (duplicateItem) {
@@ -74,8 +77,9 @@ function cacheToast(slotData: Recordable) {
     <template #container="{ message, closeCallback }">
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
         <section class="alert" :data-life="cacheToast({ message, closeCallback })"
-          @mouseenter="handleMouseenter({ message, closeCallback })"
-          @mouseleave="handleMouseleave({ message, closeCallback })">
+                 @mouseenter="handleMouseenter({ message, closeCallback })"
+                 @mouseleave="handleMouseleave({ message, closeCallback })"
+        >
           <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
           </div>
@@ -84,13 +88,13 @@ function cacheToast(slotData: Recordable) {
               <template v-if="isString(message.summary)">
                 {{ message.summary }}
               </template>
-              <component v-else :is="message.summary" />
+              <component :is="message.summary" v-else />
             </div>
             <div v-if="message.detail" class="alert-message">
               <template v-if="isString(message.detail)">
                 {{ message.detail }}
               </template>
-              <component v-else :is="message.detail" />
+              <component :is="message.detail" v-else />
             </div>
           </div>
           <div class="alert-close">

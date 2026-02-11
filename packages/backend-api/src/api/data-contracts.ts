@@ -693,6 +693,32 @@ export interface UserGetWindowInfoV2ListData {
         ljdobmomdgdljniojadhoplhkpialdid?: string;
         "7c1590125f8da994f96918b2bcf03d12"?: string;
       }[];
+      /** 电池模拟 */
+      openBattery?: boolean;
+      /** 模拟充电状态 */
+      openCharging?: boolean;
+      /** 充电时长（秒） */
+      chargingTime?: string;
+      /** 放电时长（秒） */
+      dischargingTime?: string;
+      /** 电量（%）0-1 */
+      level?: string;
+      /** 网络模拟 */
+      openNetwork?: boolean;
+      /** 网络速度 slow-2g/2g/3g/4g */
+      networkSpeed?: string;
+      /** 下载速度（Mbps） */
+      downloadSpeed?: string;
+      /** 最大下载速度（Mbps) */
+      maxDownloadSpeed?: string;
+      /** 延迟（ms） */
+      latency?: number;
+      /** 省流模式 */
+      saveFlowMode?: boolean;
+      /** 打开蓝牙 */
+      openBluetooth?: boolean;
+      /** 蓝牙适配器 */
+      bluetoothAdapter?: boolean;
       /** 今日打开窗口次数 */
       todayOpenCount?: number;
     }[];
@@ -2246,28 +2272,48 @@ export interface GetAppUpgradeCreatePayload {
 export interface GetAppUpgradeCreateData {
   code: number;
   data: {
-    /** 下载地址 */
+    /**
+     * 下载地址
+     * 下载地址
+     */
     downloadUrl: string;
-    /** 版本号，我们自己定义的版本号，用来和客户端的比对 */
+    /**
+     * 版本号，我们自己定义的版本号，用来和客户端的比对
+     * 版本号，我们自己定义的版本号，用来和客户端的比对
+     */
     version: string;
-    /** 升级标题 */
+    /**
+     * 升级标题
+     * 升级标题
+     */
     upgradeTitle: string;
-    /** 升级描述 */
+    /**
+     * 升级描述
+     * 升级描述
+     */
     upgradeDesc: string;
+    /** 新版升级内容描述 */
     upgradeContent: {
       new_function: string;
       optimize: string;
       resolve_bug: string;
     };
-    /** 发布时间 */
-    releaseTime: string;
     upgradeContentEn: {
       new_function: string;
       optimize: string;
       resolve_bug: string;
     };
-    /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
+    /**
+     * 发布时间
+     * 发布时间
+     */
+    releaseTime: string;
+    /**
+     * 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港
+     * 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港
+     */
     webDomain: string;
+    newFeatureTips: string[];
   };
   msg: string;
 }
@@ -3377,6 +3423,26 @@ export interface UserBindPhoneCreateData {
   msg: string;
 }
 
+export interface UserGetCheckPhoneVerCodeCreatePayload {
+  verCode: string;
+}
+
+export interface UserGetCheckPhoneVerCodeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface GetActivityDiscountListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    discountPercentage: number;
+    type: number;
+  };
+  msg: string;
+}
+
 export type UserSetPromotionLinkShowCreatePayload = object;
 
 export interface UserSetPromotionLinkShowCreateData {
@@ -3465,6 +3531,19 @@ export interface CheckEmailRegisteredListData {
   msg: string;
 }
 
+export type UserCalcLlmTokenCostCreatePayload = object;
+
+export interface UserCalcLlmTokenCostCreateData {
+  code: number;
+  data: {
+    cost: string;
+    balance: string;
+    totalBalance: string;
+    available: boolean;
+  };
+  msg: string;
+}
+
 export interface UserGetPromptTemplateListListData {
   code: number;
   data: {
@@ -3525,6 +3604,24 @@ export type UserRegGiftCreatePayload = object;
 
 export interface UserRegGiftCreateData {
   code: number;
+  msg: string;
+}
+
+export interface GetSpringFestivalTimeListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    amount: number;
+    staff: {
+      count: number;
+      enable: boolean;
+    };
+    profile: {
+      enable: boolean;
+      expireDays: number;
+    };
+  };
   msg: string;
 }
 
@@ -7284,6 +7381,7 @@ export interface UserGetUserPayInfoListData {
     isBlackFriday: boolean;
     /** 首次购买折扣 */
     firstPurchaseDiscount: number;
+    trialDays: number;
   };
   msg: string;
 }
@@ -7826,6 +7924,17 @@ export interface UserQueryRedeemCodeListData {
   msg: string;
 }
 
+export interface UserRedeemCodeListListData {
+  code: number;
+  data: {
+    code: string;
+    expireDate: string;
+    rewardType: string;
+    status: number;
+  }[];
+  msg: string;
+}
+
 export interface CheckIpDownloadLimitListData {
   code: number;
   msg: string;
@@ -7971,39 +8080,6 @@ export interface UpdateAuthStatisticsCreateData {
   data: {
     key: string;
     value: number;
-  };
-  msg: string;
-}
-
-export interface UserGetCheckPhoneVerCodeCreatePayload {
-  verCode: string;
-}
-
-export interface UserGetCheckPhoneVerCodeCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface GetActivityDiscountListData {
-  code: number;
-  data: {
-    start_timestamp: number;
-    end_timestamp: number;
-    discountPercentage: number;
-    type: number;
-  };
-  msg: string;
-}
-
-export type UserCalcLlmTokenCostCreatePayload = object;
-
-export interface UserCalcLlmTokenCostCreateData {
-  code: number;
-  data: {
-    cost: string;
-    balance: string;
-    totalBalance: string;
-    available: boolean;
   };
   msg: string;
 }

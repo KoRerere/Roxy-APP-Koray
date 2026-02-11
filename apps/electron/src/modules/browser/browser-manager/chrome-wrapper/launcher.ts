@@ -16,18 +16,20 @@ export interface PuppeteerLaunchOptions {
   headless?: boolean
   ignoreDefaultArgs?: boolean | string[]
   defaultViewport?: { width: number, height: number } | null
+  relaunch?: boolean
 }
 
 /**
  * 启动浏览器
  */
-export async function launch(options: PuppeteerLaunchOptions, relaunch = false): Promise<ChromeBrowser> {
+export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBrowser> {
   const {
     executablePath,
     args = [],
     headless = false,
     ignoreDefaultArgs = false,
     defaultViewport = null,
+    relaunch = false,
   } = options
 
   if (!executablePath) {

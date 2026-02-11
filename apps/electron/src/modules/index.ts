@@ -1,6 +1,7 @@
 import './ipc/receiver'
 import { app } from 'electron'
 import { appConfig } from '/@/constants'
+import { isWindows } from '/@/constants/common'
 import { intoLaunchPage } from '/@/modules/app/mainWindow'
 // import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
@@ -8,7 +9,7 @@ import { browserManager } from '/@/modules/browser'
 import { startRoxynet } from '/@/modules/roxynet'
 import { initLocalConfig, setupStore } from '/@/modules/store'
 import { resourceUpdater } from '/@/modules/updater'
-import { fileExists } from '/@/utils'
+import { fileExists, killProcessByName } from '/@/utils'
 import { setupApp } from './app/'
 
 // Sentry.init({
@@ -29,6 +30,9 @@ export async function setupModules() {
     await initLocalConfig()
     // 启动 app 内置服务
     await setupAppServer()
+    if (isWindows) {
+      killProcessByName('RoxyBrowserUpdater')
+    }
     // 进入启动页
     await intoLaunchPage()
     // 设置 store

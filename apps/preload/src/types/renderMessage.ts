@@ -198,6 +198,8 @@ export interface RenderMessage {
   'app:resizeWindow': (payload: { width?: number, height?: number }) => void
   /** 获取新功能提示，不为空数组表示有新功能提示 */
   'app:getNewFeatureTips': () => string[]
+  /** 获取最后一次跟新特性 */
+  'app:getLastUpdateFeature': () => any
   /** 用户已读新功能提示 */
   'app:hideNewFeatureTips': () => void
   /** 设置系统主题 */
@@ -279,6 +281,8 @@ export interface RenderMessage {
   }
   /** 清空安装程序路径 */
   'util:clearInstallerPath': () => Promise<boolean>
+  /** 获取 openapi 端口 */
+  'util:getApiPort': () => number
 
   /** 前端已准备就绪 */
   'web:ready': () => void

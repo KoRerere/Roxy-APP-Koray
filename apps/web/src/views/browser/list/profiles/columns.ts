@@ -1,6 +1,4 @@
-import { format, min } from 'date-fns'
-
-import { RxSvgIcon } from '/@/components/rx-icon'
+import { format } from 'date-fns'
 
 const skeleton = {
   width: '120px',
@@ -13,7 +11,7 @@ export function getColumns() {
     key: 'browser.list',
     data: [
       {
-        title: 'ID',
+        title: $t('编号'),
         key: 'windowSortNum',
         disabledToggle: true,
         sortable: true,
@@ -21,7 +19,7 @@ export function getColumns() {
         style: {
           width: '0%',
           minWidth: '180px',
-        }
+        },
       },
       {
         title: $t('窗口名称'),
@@ -32,7 +30,7 @@ export function getColumns() {
         style: {
           width: '10%',
           minWidth: '160px',
-        }
+        },
       },
       {
         title: $t('操作'),
@@ -42,7 +40,7 @@ export function getColumns() {
         style: {
           width: '12%',
           minWidth: '120px',
-        }
+        },
       },
       {
         title: $t('备注'),
@@ -54,7 +52,7 @@ export function getColumns() {
         },
         _cache: {
           extend: false,
-        }
+        },
       },
       {
         title: $t('标签'),
@@ -63,7 +61,7 @@ export function getColumns() {
         style: {
           width: '10%',
           minWidth: '95px',
-        }
+        },
       },
       {
         title: $t('项目'),
@@ -72,7 +70,7 @@ export function getColumns() {
         style: {
           width: '10%',
           minWidth: '95px',
-        }
+        },
       },
       {
         title: $t('创建时间'),
@@ -84,7 +82,7 @@ export function getColumns() {
         style: {
           width: '13%',
           minWidth: '140px',
-        }
+        },
       },
       {
         title: $t('更新时间'),
@@ -96,7 +94,7 @@ export function getColumns() {
         style: {
           width: '13%',
           minWidth: '140px',
-        }
+        },
       },
       {
         title: $t('最后打开'),
@@ -107,7 +105,7 @@ export function getColumns() {
         style: {
           width: '13%',
           minWidth: '140px',
-        }
+        },
       },
       {
         title: $t('投送方'),
@@ -128,9 +126,8 @@ export function getColumns() {
           width: '0%',
           minWidth: '120px',
           maxWidth: '120px',
-        }
+        },
       },
     ],
   }
 }
-

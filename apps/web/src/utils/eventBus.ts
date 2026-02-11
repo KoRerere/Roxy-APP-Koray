@@ -62,6 +62,7 @@ export interface MittEvents {
   }
   badgeMap: string
   focusMcp: void
+  showAppUpgradeDialog: any
 }
 
 export const emitter = mitt<MittEvents>()

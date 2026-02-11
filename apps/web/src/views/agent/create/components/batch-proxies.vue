@@ -189,13 +189,16 @@ function operationHandler(operate: any, data: any) {
       refreshUrl(data, operate.name)
       break
     case 'test':
+      if (!globalThis.isElectron) {
+        return globalThis.electronAPI.send('proxy:detect', {} as any)
+      }
       testProxy(data, operate.name)
       break
   }
 }
 
 async function refreshUrl(data: any, operateName: string) {
-  const isOK = await setRowsLoading(data, operateName, () => window.electronAPI.send('proxy:refreshUrl', data.refreshUrl!))
+  const isOK = await setRowsLoading(data, operateName, () => globalThis.electronAPI.send('proxy:refreshUrl', data.refreshUrl!))
   showToast(isOK ? 0 : -1, data.refreshUrl as string)
 }
 
@@ -261,6 +264,9 @@ async function testAllProxy() {
   if (!dataList.value?.length) {
     onlyErrorToast(-1, $t('暂无代理 IP'))
     return
+  }
+  if (!globalThis.isElectron) {
+    return globalThis.electronAPI.send('proxy:detect', {} as any)
   }
   await testProxy(dataList.value, 'test')
 }

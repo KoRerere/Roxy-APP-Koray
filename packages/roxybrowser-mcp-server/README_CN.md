@@ -68,7 +68,7 @@
 ### 浏览器管理
 - `roxy_list_browsers` - 列出工作区/项目中的浏览器并支持筛选
 - `roxy_get_browser_detail` - 获取详细的浏览器信息和配置
-- `roxy_open_browser` - 打开浏览器并获取用于自动化的 CDP WebSocket 端点
+- `roxy_open_browsers` - 打开浏览器并获取用于自动化的 CDP WebSocket 端点
 - `roxy_close_browsers` - 关闭运行中的浏览器（不释放额度）
 - `roxy_delete_browsers` - 永久删除浏览器配置文件（释放额度）
 - `roxy_get_connection_info` - 获取已打开浏览器的 CDP 端点和进程 ID
@@ -98,7 +98,7 @@
    → 返回可供使用的浏览器 ID
 
 2. AI："打开我刚创建的浏览器"
-   → 使用 roxy_open_browser 及返回的 ID
+   → 使用 roxy_open_browsers 及返回的 ID
    → 返回 CDP WebSocket URL，例如：ws://127.0.0.1:52314/devtools/browser/xxx
 
 3. AI："导航到 gmail.com，登录并发送邮件"
@@ -121,7 +121,7 @@
    → 返回配置好的浏览器 ID
 
 3. AI："打开浏览器并开始自动化"
-   → 使用 roxy_open_browser → 获取 CDP 端点
+   → 使用 roxy_open_browsers → 获取 CDP 端点
    → PlayRoxy MCP 自动连接并开始自动化任务
 ```
 

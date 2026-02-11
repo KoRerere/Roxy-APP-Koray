@@ -169,7 +169,7 @@ export const menuRoutes: RouteRecordRaw[] = [
 
             mixpanelTrack('synchronizer_open')
             console.log('sync-control')
-            electronAPI.send('syncControl:open', isOwner)
+            globalThis.electronAPI.send('syncControl:open', isOwner)
           },
         },
         component: () => import('/@/views/api-keys'),

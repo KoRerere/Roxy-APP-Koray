@@ -7,8 +7,6 @@ import SignCardHeader from './sign-card-header.vue'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useThemeStore } from '/@/stores/theme'
 
-const themeStore = useThemeStore()
-
 const props = defineProps({
   type: {
     type: String as PropType<'signUp' | 'resetPassword'>,
@@ -20,6 +18,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['ok', 'back'])
+
+const registrationEventCommonParams = {
+  registration_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
+}
+
+const themeStore = useThemeStore()
 
 const emailCode = defineModel('emailCode', { default: '' })
 
@@ -59,10 +63,9 @@ async function handleSendCode() {
     toast.add({ severity: 'success', summary: $t('验证码已发送'), detail: $t('请检查您的邮箱。'), life: 2500 })
   }
   else {
-    mixpanel.track(props.type, { method: 'email', success: false, error: msg })
+    mixpanel.track(props.type, { method: 'email', success: false, error: msg, ...registrationEventCommonParams })
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
   }
-
 }
 
 async function handleSubmit() {
@@ -76,7 +79,7 @@ async function handleSubmit() {
   })
 
   if (!verifyCodeRes.data) {
-    mixpanel.track(props.type, { method: 'email', success: false, error: 'invalid verify code' })
+    mixpanel.track(props.type, { method: 'email', success: false, error: 'invalid verify code', ...registrationEventCommonParams })
     isShowAlert.value = true
     return
   }
@@ -95,13 +98,17 @@ async function handleSubmit() {
     ver_code: emailCode.value,
   })
   if (code === 0) {
-    window.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
+    globalThis.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
     await toSignIn()
-    mixpanel.track('signUp', { method: 'email', success: true })
+    mixpanel.track('signUp', {
+      method: 'email',
+      success: true,
+      ...registrationEventCommonParams,
+    })
     emit('ok', emailCode.value)
   }
   else {
-    mixpanel.track(props.type, { method: 'email', success: false, error: msg })
+    mixpanel.track(props.type, { method: 'email', success: false, error: msg, ...registrationEventCommonParams })
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
   }
 }
@@ -116,13 +123,17 @@ onBeforeMount(() => {
 <template>
   <div class="container">
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
-    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter"></RxButton>
+    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter" />
 
     <img :src="imgSrc" class="mx-auto w-22.5">
     <SignCardHeader>
       <template #description>
-        <div class="description-item">{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
-        <div class="email-text">{{ getEmail }} </div>
+        <div class="description-item">
+          {{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}
+        </div>
+        <div class="email-text">
+          {{ getEmail }}
+        </div>
         <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
         <div class="description-item mt-[12px]">
           {{ $t('请检查邮件以获取验证码') }}
@@ -173,7 +184,7 @@ onBeforeMount(() => {
 
   .description {
     align-self: stretch;
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -181,7 +192,7 @@ onBeforeMount(() => {
     line-height: var(--Line-Height-text-lg, 20px);
 
     .description-item {
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary, #575d60);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -206,7 +217,7 @@ onBeforeMount(() => {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;
@@ -218,7 +229,7 @@ onBeforeMount(() => {
 }
 
 .email-text {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -235,7 +246,7 @@ onBeforeMount(() => {
 
 .tips {
   align-self: stretch;
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -256,7 +267,7 @@ onBeforeMount(() => {
 }
 
 .divider-text {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   text-align: center;
   font-family: Inter;
   font-size: 10px;

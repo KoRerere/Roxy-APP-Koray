@@ -1,15 +1,17 @@
-import { browserManager } from "/@/modules/browser"
-import { createSynchronizerActionBarWindow } from "/@/modules/sync-control/actionBar"
-import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser, startRoxySync, stopRoxySync } from "/@/modules/sync-control/bin"
-import { closeSynchronizerWindow, createSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
-import { showAllWindows, windowArrange, startSyncControl, stopSyncControl } from "/@/modules/sync-control/api"
-import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constants"
-import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
-import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
-import axios from "axios"
-import type { Page } from "/@/modules/browser/browser-manager/chrome-wrapper"
-import { safeParseJSON } from "/@/utils"
-import { setTimeout } from "timers/promises"
+import type { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
+// 注意：此文件使用了 Chrome 特定的 CDP 功能（createCDPSession）
+// 如需支持 Firefox，需要创建对应的实现
+import type { Page } from '/@/modules/browser/browser-manager/chrome-wrapper'
+import axios from 'axios'
+import { setTimeout } from 'node:timers/promises'
+import { browserManager } from '/@/modules/browser'
+import { isLocalWebServerURL } from '/@/modules/browser/browser-manager/constants'
+import { createSynchronizerActionBarWindow } from '/@/modules/sync-control/actionBar'
+import { showAllWindows, startSyncControl, stopSyncControl, windowArrange } from '/@/modules/sync-control/api'
+import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser, startRoxySync, stopRoxySync } from '/@/modules/sync-control/bin'
+import { closeOpenSitesDialogWindow } from '/@/modules/sync-control/dialog/open-sites'
+import { closeSynchronizerWindow, createSynchronizerWindow } from '/@/modules/sync-control/synchronizer'
+import { safeParseJSON } from '/@/utils'
 
 /** 同步控制工具 */
 export class SyncControlUtil {
@@ -63,7 +65,7 @@ export class SyncControlUtil {
       const mainBrowserPages = safeParseJSON(tabs)
       console.debug('mainBrowserPages', mainBrowserPages)
       // 关闭被控窗口的所有标签页
-      const controlledBrowserPages = await Promise.all(controlledBrowsers.map(async browser => {
+      const controlledBrowserPages = await Promise.all(controlledBrowsers.map(async (browser) => {
         const pages = await browser.getBrowser()?.pages() || []
         pages.slice(mainBrowserPages.length).forEach(page => page.close())
         return pages.slice(0, mainBrowserPages.length)
@@ -93,7 +95,8 @@ export class SyncControlUtil {
             if (page.url() !== finalURL) {
               await page.goto(finalURL)
             }
-          } else {
+          }
+          else {
             await browser?.newPage(finalURL)
           }
         })
@@ -111,7 +114,7 @@ export class SyncControlUtil {
     allSyncControlBrowsers.forEach(async (browser) => {
       const activeTargetId = await this.getActivePageTargetId(browser)
       const pages = await browser?.getBrowser()?.pages()
-      pages?.forEach(async page => {
+      pages?.forEach(async (page) => {
         const { targetId } = await this.getPageTargetInfo(page)
         if (targetId !== activeTargetId) {
           await page.close()
@@ -132,7 +135,7 @@ export class SyncControlUtil {
         console.log('Only one tab, not closing')
         return
       }
-      pages?.forEach(async page => {
+      pages?.forEach(async (page) => {
         const { targetId } = await this.getPageTargetInfo(page)
         if (targetId === activeTargetId) {
           await page.close()
@@ -183,14 +186,14 @@ export class SyncControlUtil {
       const pages = await browser?.getBrowser()?.pages()
       // 如果是替换当前标签页
       if (replaceCurrentTab) {
-        pages?.forEach(async page => {
+        pages?.forEach(async (page) => {
           const pageId = page.target()._targetId
           if (pageId === activeTargetId) {
             await page.goto(urls[0])
           }
         })
       }
-      urls.slice(Number(replaceCurrentTab)).forEach(async url => {
+      urls.slice(Number(replaceCurrentTab)).forEach(async (url) => {
         const page = await browser?.getBrowser()?.newPage()
         await page?.goto(url)
       })
@@ -201,10 +204,10 @@ export class SyncControlUtil {
   /** 获取某个页面的 targetInfo */
   static getPageTargetInfo = async (page: Page) => {
     // 创建 CDP 会话
-    const client = await page.createCDPSession();
+    const client = await page.createCDPSession()
     // 获取目标信息
-    const targetInfo = await client.send('Target.getTargetInfo');
-    return targetInfo.targetInfo;
+    const targetInfo = await client.send('Target.getTargetInfo')
+    return targetInfo.targetInfo
   }
 
   /** 获取浏览器当前被激活的标签页的 targetId */
@@ -222,7 +225,8 @@ export class SyncControlUtil {
       // 过滤掉 devtools:// 开头的标签页（针对移动端）
       const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
       return currentActivePage
-    } else {
+    }
+    else {
       console.log(`${browser.winInfo.dirId} === Failed to get browser's currently active tab:`, result)
     }
   }

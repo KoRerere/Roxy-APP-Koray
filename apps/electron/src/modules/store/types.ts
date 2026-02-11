@@ -1,4 +1,7 @@
 export interface StoreType {
+  /** 工作台新手引导 */
+  dashboardTourGuide?: boolean
+  /** 语言 */
   language: string
   /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
@@ -103,4 +106,12 @@ export interface StoreType {
   defaultBrowserLauncherPid?: number
   /** 是否自动更新内核，已下载的内核并未使用时将会自动更新 */
   autoUpdateKernel?: false
+  /** IP 检测渠道字典列表 */
+  checkChannelList?: Record<string, string>
+  /** ip2location keys */
+  ip2locationKeys?: string[]
+  /** 最后一次使用的 ip2location url */
+  lastUseIp2locationUrl?: string
+  /** 更新器进程 ID */
+  updaterExePid?: number
 }

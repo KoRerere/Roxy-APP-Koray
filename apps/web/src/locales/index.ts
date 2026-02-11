@@ -15,3 +15,5 @@ export {
 export { useI18n } from 'vue-i18n'
 
 export type { Locale } from 'vue-i18n'
+
+export const defaultLanguage = navigator.language === 'zh-CN' ? navigator.language : navigator.language.split('-')[0]

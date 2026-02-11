@@ -62,7 +62,7 @@ onMounted(() => {
 
 async function getBrowserCacheSize() {
   if (browserCacheSize.value !== undefined) return
-  const size = await electronAPI.send("app:getRoxyCacheSize")
+  const size = await globalThis.electronAPI.send("app:getRoxyCacheSize")
   browserCacheSize.value = size
 }
 

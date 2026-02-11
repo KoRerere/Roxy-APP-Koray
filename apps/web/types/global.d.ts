@@ -11,12 +11,15 @@ declare global {
   var LiveChatWidget: ExtendedWindow['LiveChatWidget']
   var showLiveChat: () => void
   var $t: (...args: any[]) => string
+  /** 是否为 electron 环境 */
+  var isElectron: boolean
 }
 
 declare module 'vue' {
   interface ComponentCustomProperties {
     $showLiveChat: () => void
     $t: (...args: any[]) => string
+    $isElectron: boolean
   }
   interface GlobalComponents {
     // 请务必在此处输入 Vue 组件类型

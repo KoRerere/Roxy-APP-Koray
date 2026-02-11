@@ -5,7 +5,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import RxButton from '/@/components/rx-button'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import BatchInviteModal from '/@/views/projects/components/batch-invite-modal.vue'
+import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
 import Demo from './demo.vue'
 // import { emitter } from '/@/utils/eventBus'
 
@@ -50,7 +50,7 @@ function open2() {
       // mask: "!backdrop-blur-md",
     },
     slots: {
-      container: () => <BatchInviteModal></BatchInviteModal>,
+      container: () => <RedeemCodeRecord></RedeemCodeRecord>,
     },
   })
 }

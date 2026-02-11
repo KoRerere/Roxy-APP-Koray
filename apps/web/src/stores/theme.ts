@@ -68,7 +68,7 @@ export const useThemeStore = defineStore('theme', () => {
     channel.postMessage({ theme: theme.value })
 
     if (isMainWindow) {
-      electronAPI.send('app:setSystemTheme', theme.value)
+      globalThis.electronAPI.send('app:setSystemTheme', theme.value)
     }
   }, 0)
 

@@ -1,8 +1,7 @@
 <script setup lang="tsx">
-import ActivityInfo from '/@/views/campaign/new-year/activity-info.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import RoxyGifts from '/@/views/pay/wallet/components/roxy-gifts.vue'
+import SpringActivity from '/@/views/campaign/spring-festival/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -397,7 +396,6 @@ function jumpToProfile() {
               <span class="ml-2 due-day">{{ subInfo.days }}</span>
             </div>
           </div>
-          <ActivityInfo />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <AdvancedFeat :plan="selectedPlan" />
         </div>
@@ -434,7 +432,7 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <RoxyGifts v-model="giftType" :amount="needPayAmount" />
+                <SpringActivity v-model="giftType" :amount="needPayAmount" />
                 <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

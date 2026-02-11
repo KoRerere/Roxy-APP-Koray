@@ -2,7 +2,7 @@
 import Header from './header.vue'
 import WindowList from './window-list.vue'
 
-electronAPI.send('app:showCurrentWebviewWindow')
+globalThis.electronAPI.send('app:showCurrentWebviewWindow')
 </script>
 
 <template>

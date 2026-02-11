@@ -55,7 +55,7 @@ export async function getCommonHeaders() {
   if (commonHeadersPromise) {
     return commonHeadersPromise
   }
-  commonHeadersPromise = electronAPI.send('util:getCommonRequestHeaders')
+  commonHeadersPromise = globalThis.electronAPI.send('util:getCommonRequestHeaders')
     .catch(() => ({}))
     .finally(() => {
       commonHeadersPromise = null
@@ -67,7 +67,7 @@ export async function getGatewayConfig() {
   if (getGatewayConfigPromise) {
     return getGatewayConfigPromise
   }
-  getGatewayConfigPromise = electronAPI.send('util:getGatewayConfig')
+  getGatewayConfigPromise = globalThis.electronAPI.send('util:getGatewayConfig')
   return getGatewayConfigPromise.finally(() => {
     getGatewayConfigPromise = null
   })
@@ -78,7 +78,7 @@ export async function getInviteCode() {
   if (getInviteCodePromise) {
     return getInviteCodePromise
   }
-  getInviteCodePromise = electronAPI.send('util:getInviteCode')
+  getInviteCodePromise = globalThis.electronAPI.send('util:getInviteCode')
     .catch(() => '')
   return getInviteCodePromise.finally(() => {
     getInviteCodePromise = null
@@ -90,7 +90,7 @@ export async function getDeviceId() {
   if (getDeviceIdPromise) {
     return getDeviceIdPromise
   }
-  getDeviceIdPromise = electronAPI.send('util:getDeviceId')
+  getDeviceIdPromise = globalThis.electronAPI.send('util:getDeviceId')
     .catch(() => '')
   return getDeviceIdPromise.finally(() => {
     getDeviceIdPromise = null

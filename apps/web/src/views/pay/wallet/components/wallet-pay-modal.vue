@@ -25,7 +25,7 @@ const emit = defineEmits<{
 
 const [showToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
-const { roxyGifts } = storeToRefs(useCampaignStore())
+const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
 const { realTheme } = storeToRefs(useThemeStore())
 const { walletRecharge, openProcessing } = usePay()
 const loading = ref(false)
@@ -56,10 +56,12 @@ const finalResult = computed(() => {
 })
 
 const showGiftAlert = computed(() => {
-  if (!showAutoRenew || !roxyGifts.value)
+  if (!showAutoRenew || seasonalActivity.value.none)
     return false
-  const count = Math.floor(currency(amount, { precision: 6 }).divide(roxyGifts.value.price).value)
-  const finalCount = Math.floor(currency(finalResult.value.amount, { precision: 6 }).divide(roxyGifts.value.price).value)
+
+  const { amount } = currentActivity.value
+  const count = Math.floor(currency(amount, { precision: 6 }).divide(amount).value)
+  const finalCount = Math.floor(currency(finalResult.value.amount, { precision: 6 }).divide(amount).value)
   return count !== finalCount
 })
 
@@ -139,7 +141,7 @@ function close(isCancel: boolean) {
       </div>
       <div v-if="showAutoRenew && !finalResult.needRecharge" class="flex flex-col gap-5">
         <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
-        <RxAlert v-if="showGiftAlert && roxyGifts" class="w-full" type="warn" :title="$t('折扣后实付不满 {value} 倍数将减少赠送奖励。如需满赠，请保持实付金额达标。', { value: currency(roxyGifts.price).format() })"
+        <RxAlert v-if="showGiftAlert && seasonalActivity.springFestival" class="w-full" type="warn" :title="$t('折扣后实付不满 {value} 倍数将减少赠送奖励。如需满赠，请保持实付金额达标。', { value: currency(currentActivity.amount).format() })"
                  :closable="false"
         />
         <div class="flex flex-col">

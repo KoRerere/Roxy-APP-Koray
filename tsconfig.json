@@ -17,5 +17,5 @@
     "**/*.d.ts",
     "./apps/electron/node_modules/electron/**/*.d.ts",
     "scripts/test.mjs"
-  ]
+, "apps/web/scripts/deploy.ts", "apps/web/scripts/deploy-web-dev.ts"  ]
 }

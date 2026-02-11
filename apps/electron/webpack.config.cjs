@@ -1,7 +1,20 @@
 const { sentryWebpackPlugin } = require('@sentry/webpack-plugin')
+const { writeFile } = require('node:fs/promises')
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
+
+// 自定义插件：在构建后生成 agent.js 文件
+class AfterEmitPlugin {
+  apply(compiler) {
+    compiler.hooks.afterEmit.tapPromise('AfterEmitPlugin', async (compilation) => {
+      if (compilation.errors?.length)
+        return
+      await writeFile(path.resolve(__dirname, 'dist/starter.js'), `process.on('uncaughtException', err => process.parentPort.postMessage(err));
+process.on('unhandledRejection', err => process.parentPort.postMessage(err)); require("bytenode"); require(process.env.BYTENODE_SCRIPT);`, 'utf8')
+    })
+  }
+}
 
 console.log('process.env.NODE_ENV', process.env.NODE_ENV)
 
@@ -13,14 +26,9 @@ module.exports = {
   entry: {
     main: './dist-vite/index.mjs',
     fileWorker: './dist-vite/fileWorker.mjs',
-    openapiMcp: './dist-vite/openapiMcp.mjs',
-    playwrightMcp: './dist-vite/playwrightMcp.mjs',
-    orchestrator: './dist-vite/orchestrator.mjs',
-  },
-  resolve: {
-    alias: {
-      'better_sqlite3.node': path.resolve(__dirname, 'node_modules/better-sqlite3/build/Release/better_sqlite3.node'),
-    },
+    // openapiMcp: './dist-vite/openapiMcp.mjs',
+    // playwrightMcp: './dist-vite/playwrightMcp.mjs',
+    // orchestrator: './dist-vite/orchestrator.mjs',
   },
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录
@@ -41,9 +49,10 @@ module.exports = {
   externals: {
     'font-list': 'node-commonjs font-list',
     'http-proxy-middleware': 'node-commonjs http-proxy-middleware',
-    'better-sqlite3': 'node-commonjs better-sqlite3',
-    'bindings': 'node-commonjs bindings',
-    'file-uri-to-path': 'node-commonjs file-uri-to-path',
+    '@roxy/diskspace-native': 'node-commonjs @roxy/diskspace-native',
+    // 'better-sqlite3': 'node-commonjs better-sqlite3',
+    // 'bindings': 'node-commonjs bindings',
+    // 'file-uri-to-path': 'node-commonjs file-uri-to-path',
   },
   externalsType: 'node-commonjs', // 指定外部依赖的类型为 Node.js CommonJS
   optimization: {
@@ -122,5 +131,6 @@ module.exports = {
     //     controlFlowFlattening: true
     //   }
     // })
+    new AfterEmitPlugin(),
   ],
 }

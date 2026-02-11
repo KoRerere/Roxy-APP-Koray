@@ -363,7 +363,7 @@ async function addExplain(worksheet: ExcelJS.Worksheet) {
   worksheet.mergeCells(mergeIndex, 1, mergeIndex, columns.length)
   worksheet.getRow(mergeIndex).height = 80
   const mergedCell = worksheet.getCell(mergeIndex, 1)
-  mergedCell.value = $t('说明: \n1. 数据请从第 5 行开始录入, 前 4 行不要删除和处理, 系统会默认从第 5 行开始导入, 务必严格按照说明规范录入, 否则无法导入成功! \n2. 红色列为必填项, 其他为选填项, 每次导入不可超过 500 条, 数据过多, 请分次导入!\n3. 请勿在文本中添加超链接, 这可能会导致解析数据失败。')
+  mergedCell.value = $t('说明: \n1. 数据请从第 5 行开始录入, 前 4 行不要删除和处理, 系统会默认从第 5 行开始导入, 务必严格按照说明规范录入, 否则无法导入成功! \n2. 红色列为必填项, 其他为选填项, 每次导入不可超过 {count} 条, 数据过多, 请分次导入!\n3. 请勿在文本中添加超链接, 这可能会导致解析数据失败。', { count: 200 })
   mergedCell.alignment = {
     wrapText: true,
     horizontal: 'left',

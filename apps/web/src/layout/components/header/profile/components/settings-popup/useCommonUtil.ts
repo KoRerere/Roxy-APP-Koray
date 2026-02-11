@@ -37,7 +37,7 @@ export function useCommonUtil() {
       })
       onlyErrorToast(code, msg)
       if (code === 0) {
-        electronAPI.send('app:saveSoftConfig', { [item.name as any]: isProxy(value) ? toRaw(value) : value })
+        globalThis.electronAPI.send('app:saveSoftConfig', { [item.name as any]: isProxy(value) ? toRaw(value) : value })
         console.log('saveUserConfig', item.name, value)
         updateUserConfig()
       }
@@ -46,7 +46,7 @@ export function useCommonUtil() {
 
   async function detectLocalNetwork(item: Items) {
     try {
-      item.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
+      item.value = await globalThis.electronAPI.send('proxy:detectNetwork', 'local')
     }
     catch (error) {
       item.value = null
@@ -56,7 +56,7 @@ export function useCommonUtil() {
 
   async function detectSystemNetwork(item: Items) {
     try {
-      item.value = await window.electronAPI.send('proxy:detectNetwork', 'system')
+      item.value = await globalThis.electronAPI.send('proxy:detectNetwork', 'system')
     }
     catch (error) {
       item.value = null

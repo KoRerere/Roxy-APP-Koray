@@ -1,7 +1,9 @@
-import axios from 'axios'
 import type { ProxyDetectionResult } from '/@/utils'
+import axios from 'axios'
 import { isDev, isPackaged } from '/@/constants/common'
+import { coreManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
+import { appUpdater } from '/@/modules/updater'
 
 interface GateConf {
   test: string
@@ -136,6 +138,8 @@ export async function reGetGatewayConfigByIpChange(ip: string) {
     console.log(`🚀 ~ IP changed, previous IP: ${userIp}, current IP: ${ip}`)
     userIp = ip
     getGatewayConfig()
+    appUpdater.init()
+    coreManager.fetchAvailableCoreList()
   }
 }
 

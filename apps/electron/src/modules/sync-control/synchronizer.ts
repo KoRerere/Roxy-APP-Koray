@@ -37,7 +37,7 @@ export async function createSynchronizerWindow() {
     show: false,
   })
 
-  win.loadURL(await getWebEntryUrl('#/sync-control-synchronizer'))
+  win.loadURL(await getWebEntryUrl('sync-control-synchronizer'))
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);

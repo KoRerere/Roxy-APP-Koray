@@ -1,5 +1,438 @@
-import { request } from '../utils'
-import { proxyList, proxyStore } from './proxy'
+import { request } from '../utils/index.js'
+import { proxyList, proxyStore } from './proxy.js'
+
+const osversion_windows = [
+  {
+    label: '11',
+    type: 'osVersion-Windows',
+    value: '11',
+  },
+  {
+    label: '10',
+    type: 'osVersion-Windows',
+    value: '10',
+  },
+  {
+    label: '8',
+    type: 'osVersion-Windows',
+    value: '8',
+  },
+  {
+    label: '7',
+    type: 'osVersion-Windows',
+    value: '7',
+  },
+]
+
+const osversion_macos = [
+  {
+    label: '15.3.2',
+    type: 'osVersion-macOS',
+    value: '15.3.2',
+  },
+  {
+    label: '15.3.1',
+    type: 'osVersion-macOS',
+    value: '15.3.1',
+  },
+  {
+    label: '15.3',
+    type: 'osVersion-macOS',
+    value: '15.3',
+  },
+  {
+    label: '15.2',
+    type: 'osVersion-macOS',
+    value: '15.2',
+  },
+  {
+    label: '15.1',
+    type: 'osVersion-macOS',
+    value: '15.1',
+  },
+  {
+    label: '15.0.1',
+    type: 'osVersion-macOS',
+    value: '15.0.1',
+  },
+  {
+    label: '15.0',
+    type: 'osVersion-macOS',
+    value: '15.0',
+  },
+  {
+    label: '14.7.4',
+    type: 'osVersion-macOS',
+    value: '14.7.4',
+  },
+  {
+    label: '14.7.3',
+    type: 'osVersion-macOS',
+    value: '14.7.3',
+  },
+  {
+    label: '14.7.2',
+    type: 'osVersion-macOS',
+    value: '14.7.2',
+  },
+  {
+    label: '14.7.1',
+    type: 'osVersion-macOS',
+    value: '14.7.1',
+  },
+  {
+    label: '14.7',
+    type: 'osVersion-macOS',
+    value: '14.7',
+  },
+  {
+    label: '14.6.1',
+    type: 'osVersion-macOS',
+    value: '14.6.1',
+  },
+  {
+    label: '14.6',
+    type: 'osVersion-macOS',
+    value: '14.6',
+  },
+  {
+    label: '14.5',
+    type: 'osVersion-macOS',
+    value: '14.5',
+  },
+  {
+    label: '14.4.1',
+    type: 'osVersion-macOS',
+    value: '14.4.1',
+  },
+  {
+    label: '14.4',
+    type: 'osVersion-macOS',
+    value: '14.4',
+  },
+  {
+    label: '14.3.1',
+    type: 'osVersion-macOS',
+    value: '14.3.1',
+  },
+  {
+    label: '14.3',
+    type: 'osVersion-macOS',
+    value: '14.3',
+  },
+  {
+    label: '14.2.1',
+    type: 'osVersion-macOS',
+    value: '14.2.1',
+  },
+  {
+    label: '14.2',
+    type: 'osVersion-macOS',
+    value: '14.2',
+  },
+  {
+    label: '14.1',
+    type: 'osVersion-macOS',
+    value: '14.1',
+  },
+  {
+    label: '13.7.4',
+    type: 'osVersion-macOS',
+    value: '13.7.4',
+  },
+  {
+    label: '13.7.3',
+    type: 'osVersion-macOS',
+    value: '13.7.3',
+  },
+  {
+    label: '13.7.2',
+    type: 'osVersion-macOS',
+    value: '13.7.2',
+  },
+  {
+    label: '13.7.1',
+    type: 'osVersion-macOS',
+    value: '13.7.1',
+  },
+  {
+    label: '13.7',
+    type: 'osVersion-macOS',
+    value: '13.7',
+  },
+  {
+    label: 'ALL',
+    type: 'osVersion-macOS',
+    value: 'ALL',
+  },
+]
+
+const osversion_linux = [
+  {
+    label: 'ALL',
+    type: 'osVersion-Linux',
+    value: 'ALL',
+  },
+]
+
+const osversion_android = [
+  {
+    label: '15',
+    type: 'osVersion-Android',
+    value: '15',
+  },
+  {
+    label: '14',
+    type: 'osVersion-Android',
+    value: '14',
+  },
+  {
+    label: '13',
+    type: 'osVersion-Android',
+    value: '13',
+  },
+  {
+    label: '12',
+    type: 'osVersion-Android',
+    value: '12',
+  },
+  {
+    label: '11',
+    type: 'osVersion-Android',
+    value: '11',
+  },
+  {
+    label: '10',
+    type: 'osVersion-Android',
+    value: '10',
+  },
+  {
+    label: '9',
+    type: 'osVersion-Android',
+    value: '9',
+  },
+]
+
+const osversion_ios = [
+  {
+    label: '18.2',
+    type: 'osVersion-IOS',
+    value: '18.2',
+  },
+  {
+    label: '18.1',
+    type: 'osVersion-IOS',
+    value: '18.1',
+  },
+  {
+    label: '18.0',
+    type: 'osVersion-IOS',
+    value: '18.0',
+  },
+  {
+    label: '17.0',
+    type: 'osVersion-IOS',
+    value: '17.0',
+  },
+  {
+    label: '16.6',
+    type: 'osVersion-IOS',
+    value: '16.6',
+  },
+  {
+    label: '16.5',
+    type: 'osVersion-IOS',
+    value: '16.5',
+  },
+  {
+    label: '16.4',
+    type: 'osVersion-IOS',
+    value: '16.4',
+  },
+  {
+    label: '16.3',
+    type: 'osVersion-IOS',
+    value: '16.3',
+  },
+  {
+    label: '16.2',
+    type: 'osVersion-IOS',
+    value: '16.2',
+  },
+  {
+    label: '16.1',
+    type: 'osVersion-IOS',
+    value: '16.1',
+  },
+  {
+    label: '16.0',
+    type: 'osVersion-IOS',
+    value: '16.0',
+  },
+  {
+    label: '15.7',
+    type: 'osVersion-IOS',
+    value: '15.7',
+  },
+  {
+    label: '15.6',
+    type: 'osVersion-IOS',
+    value: '15.6',
+  },
+  {
+    label: '15.5',
+    type: 'osVersion-IOS',
+    value: '15.5',
+  },
+  {
+    label: '15.4',
+    type: 'osVersion-IOS',
+    value: '15.4',
+  },
+  {
+    label: '15.3',
+    type: 'osVersion-IOS',
+    value: '15.3',
+  },
+  {
+    label: '15.2',
+    type: 'osVersion-IOS',
+    value: '15.2',
+  },
+  {
+    label: '15.1',
+    type: 'osVersion-IOS',
+    value: '15.1',
+  },
+  {
+    label: '15.0',
+    type: 'osVersion-IOS',
+    value: '15.0',
+  },
+  {
+    label: '14.7',
+    type: 'osVersion-IOS',
+    value: '14.7',
+  },
+  {
+    label: '14.6',
+    type: 'osVersion-IOS',
+    value: '14.6',
+  },
+  {
+    label: '14.5',
+    type: 'osVersion-IOS',
+    value: '14.5',
+  },
+  {
+    label: '14.4',
+    type: 'osVersion-IOS',
+    value: '14.4',
+  },
+  {
+    label: '14.3',
+    type: 'osVersion-IOS',
+    value: '14.3',
+  },
+  {
+    label: '14.2',
+    type: 'osVersion-IOS',
+    value: '14.2',
+  },
+  {
+    label: '14.1',
+    type: 'osVersion-IOS',
+    value: '14.1',
+  },
+  {
+    label: '14.0',
+    type: 'osVersion-IOS',
+    value: '14.0',
+  },
+]
+
+const coreVersion = [
+  {
+    label: 'RoxyChrome 144',
+    type: 'coreVersion',
+    value: '144',
+  },
+  {
+    label: 'RoxyChrome 143',
+    type: 'coreVersion',
+    value: '143',
+  },
+  {
+    label: 'RoxyChrome 142',
+    type: 'coreVersion',
+    value: '142',
+  },
+  {
+    label: 'RoxyChrome 141',
+    type: 'coreVersion',
+    value: '141',
+  },
+  {
+    label: 'RoxyChrome 140',
+    type: 'coreVersion',
+    value: '140',
+  },
+  {
+    label: 'RoxyChrome 139',
+    type: 'coreVersion',
+    value: '139',
+  },
+  {
+    label: 'RoxyChrome 138',
+    type: 'coreVersion',
+    value: '138',
+  },
+  {
+    label: 'RoxyChrome 137',
+    type: 'coreVersion',
+    value: '137',
+  },
+  {
+    label: 'RoxyChrome 136',
+    type: 'coreVersion',
+    value: '136',
+  },
+  {
+    label: 'RoxyChrome 135',
+    type: 'coreVersion',
+    value: '135',
+  },
+  {
+    label: 'RoxyChrome 133',
+    type: 'coreVersion',
+    value: '133',
+  },
+  {
+    label: 'RoxyChrome 130',
+    type: 'coreVersion',
+    value: '130',
+  },
+  {
+    label: 'RoxyChrome 125',
+    type: 'coreVersion',
+    value: '125',
+  },
+  {
+    label: 'RoxyChrome 117',
+    type: 'coreVersion',
+    value: '117',
+  },
+  {
+    label: 'RoxyChrome 109',
+    type: 'coreVersion',
+    value: '109',
+  },
+]
+
+function osVersionString() {
+  return `Windows: ${osversion_windows.map(item => item.value).join(',')}; macOS: ${osversion_macos.map(item => item.value).join(',')}; Linux: ${osversion_linux.map(item => item.value).join(',')}; Android: ${osversion_android.map(item => item.value).join(',')}; IOS: ${osversion_ios.map(item => item.value).join(',')}`
+}
+
 class CreateBrowser {
   name = 'roxy_create_browser'
   description = 'Create a browser with complete configuration control - for expert users needing full parameter access'
@@ -8,56 +441,56 @@ class CreateBrowser {
     properties: {
       workspaceId: {
         type: 'number',
-        description: 'Workspace ID (required)',
+        description: 'Workspace ID',
       },
       windowName: {
         type: 'string',
-        description: 'Browser window name (optional)',
+        description: 'Browser window name',
       },
       coreVersion: {
         type: 'string',
-        enum: ['143', '142', '141', '140', '138', '137', '136', '135', '133', '130', '125', '117', '109'],
-        description: 'Browser core version (optional, default: 143)',
+        enum: coreVersion.map(item => item.value),
+        description: 'Browser core version. If not provided, the latest available core version will be used.',
       },
       os: {
         type: 'string',
         enum: ['Windows', 'macOS', 'Linux', 'IOS', 'Android'],
-        description: 'Operating system (optional, default: Windows)',
+        description: 'Operating system (default: Windows)',
       },
       osVersion: {
         type: 'string',
-        description: `Windows: 11,10,8,7; macOS: 15.3.2,15.3.1,15.3,15.2,15.1,15.0.1,15.0,14.7.4,14.7.3,14.7.2,14.7.1,14.7,14.6.1,14.6,14.5,14.4.1,14.4,14.3.1,14.3,14.2.1,14.2,14.1,13.7.4,13.7.3,13.7.2,13.7.1,13.7; Linux: ALL; Android: 14,13,12,11,10,9; IOS: 18.2,18.1,18.0,17.0,16.6,16.5,16.4,16.3,16.2,16.1,16.0,15.7,15.6,15.5,15.4,15.3,15.2,15.1,15.0,14.7,14.6,14.5,14.4,14.3,14.2,14.1,14.0 (optional)`,
+        description: osVersionString(),
       },
       userAgent: {
         type: 'string',
-        description: 'Custom user agent (optional)',
+        description: 'Custom user agent',
       },
       cookie: {
         type: 'array',
-        description: 'Cookie list (optional)',
+        description: 'Cookie list',
       },
       searchEngine: {
         type: 'string',
         enum: ['Google', 'Microsoft Bing', 'Yahoo', 'Yandex', 'DuckDuckGo'],
-        description: 'Default search engine (optional)',
+        description: 'Default search engine',
       },
       labelIds: {
         type: 'array',
         items: { type: 'number' },
-        description: 'Label IDs to assign (optional)',
+        description: 'Label IDs to assign',
       },
       defaultOpenUrl: {
         type: 'array',
         items: { type: 'string' },
-        description: 'URLs to open by default (optional)',
+        description: 'URLs to open by default',
       },
       windowRemark: {
         type: 'string',
-        description: 'Window remarks/notes (optional)',
+        description: 'Window remarks/notes',
       },
       projectId: {
         type: 'number',
-        description: 'Project ID (optional)',
+        description: 'Project ID',
       },
       windowPlatformList: {
         type: 'array',
@@ -73,11 +506,11 @@ class CreateBrowser {
             platformRemarks: { type: 'string', description: 'Platform remarks' },
           },
         },
-        description: 'Platform account information (optional)',
+        description: 'Platform account information',
       },
       proxyInfo: {
         type: 'object',
-        description: 'Complete proxy configuration object (optional)',
+        description: 'Complete proxy configuration object',
         properties: {
           // 如果有 moduleId ，则其他参数不可传递 (moduleId 可通过 roxy_list_proxies 或 roxy_store_proxies 获取) 优先使用该参数来绑定代理IP
           moduleId: { type: 'number', description: `If moduleId is provided, no other parameters may be passed. (moduleId can be obtained via ${proxyList.name} or ${proxyStore.name}. field: id) Priority to use this parameter to bind proxy IP` },
@@ -95,7 +528,7 @@ class CreateBrowser {
       },
       fingerInfo: {
         type: 'object',
-        description: 'Complete fingerprint configuration (optional)',
+        description: 'Complete fingerprint configuration',
         properties: {
           // Language and timezone
           isLanguageBaseIp: { type: 'boolean', description: 'Follow IP for browser language' },
@@ -188,7 +621,7 @@ class CreateBrowser {
     required: ['workspaceId'],
   }
 
-  get toolSchema() {
+  get schema() {
     return {
       name: this.name,
       description: this.description,
@@ -211,7 +644,7 @@ class CreateBrowser {
     else {
       text = `✅ **Simple Browser Created**\n\n`
         + `**Browser ID:** \`${data.dirId}\`\n`
-        + `*Use this browser ID with \`roxy_open_browser\` to start the browser and get CDP endpoints for automation.*`
+        + `*Use this browser ID with \`roxy_open_browsers\` to start the browser and get CDP endpoints for automation.*`
     }
 
     return {
@@ -227,6 +660,125 @@ class CreateBrowser {
 
 export const createBrowser = new CreateBrowser()
 
+class BatchCreateBrowsers {
+  name = 'roxy_batch_create_browsers'
+  description = 'Create multiple browsers in batch by passing an array of browser configurations'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      browsers: {
+        type: 'array',
+        description: 'Array of browser configuration objects to create',
+        items: {
+          type: 'object',
+          properties: createBrowser.inputSchema.properties,
+          required: ['workspaceId'],
+        },
+      },
+    },
+    required: ['browsers'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!Array.isArray(params.browsers) || params.browsers.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to create browsers:**\n\n browsers array is required and must not be empty',
+          },
+        ],
+      }
+    }
+
+    const results: Array<{
+      index: number
+      success: boolean
+      dirId?: string
+      error?: string
+    }> = []
+
+    const createPromises = params.browsers.map(async (browserParams: any, index: number) => {
+      try {
+        const result = await request('/browser/create', {
+          method: 'POST',
+          body: JSON.stringify(browserParams),
+        })
+
+        if (result.code !== 0) {
+          return {
+            index,
+            success: false,
+            error: result.msg,
+          }
+        }
+
+        return {
+          index,
+          success: true,
+          dirId: result.data?.dirId,
+        }
+      }
+      catch (error: any) {
+        return {
+          index,
+          success: false,
+          error: error.message || 'Unknown error',
+        }
+      }
+    })
+
+    const createResults = await Promise.all(createPromises)
+    results.push(...createResults)
+
+    const successResults = results.filter(r => r.success)
+    const failureResults = results.filter(r => !r.success)
+
+    const successText = successResults.length > 0
+      ? `✅ **Successfully created ${successResults.length} browsers**\n\n${
+        successResults.map(r =>
+          `  - #${r.index + 1}${r.dirId ? ` (ID: \`${r.dirId}\`)` : ''}`,
+        ).join('\n')}`
+      : ''
+
+    const failureText = failureResults.length > 0
+      ? `❌ **Failed to create ${failureResults.length} browsers:**\n\n${
+        failureResults.map(r =>
+          `  - #${r.index + 1}: ${r.error}`,
+        ).join('\n')}`
+      : ''
+
+    const summaryLines = [
+      `**Total Requests:** ${results.length}`,
+      `**Success:** ${successResults.length}`,
+      `**Failed:** ${failureResults.length}`,
+      '',
+      ...[successText, failureText].filter(Boolean),
+    ]
+
+    const summaryText = summaryLines.join('\n')
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: summaryText,
+        },
+      ],
+    }
+  }
+}
+
+export const batchCreateBrowsers = new BatchCreateBrowsers()
+
 class UpdateBrowser {
   name = 'roxy_update_browser'
   description = 'Update a browser with complete configuration control - for expert users needing full parameter access'
@@ -238,7 +790,7 @@ class UpdateBrowser {
     required: ['workspaceId', 'dirId'],
   }
 
-  get toolSchema() {
+  get schema() {
     return {
       name: this.name,
       description: this.description,
@@ -272,19 +824,20 @@ class UpdateBrowser {
 }
 
 class OpenBrowser {
-  name = 'roxy_open_browser'
-  description = 'Open a browser and return its CDP WebSocket endpoint for automation'
+  name = 'roxy_open_browsers'
+  description = 'Open one or multiple browsers and return their CDP WebSocket endpoints for automation'
 
   inputSchema = {
     type: 'object',
     properties: {
       workspaceId: {
         type: 'number',
-        description: 'Workspace ID (required)',
+        description: 'Workspace ID',
       },
-      dirId: {
-        type: 'string',
-        description: 'Browser directory ID to open (required)',
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs to open',
       },
       forceOpen: {
         type: 'boolean',
@@ -298,10 +851,10 @@ class OpenBrowser {
         description: 'Optional browser startup arguments (--headless=new startup headless)',
       },
     },
-    required: ['workspaceId', 'dirId'],
+    required: ['workspaceId', 'dirIds'],
   }
 
-  get toolSchema() {
+  get schema() {
     return {
       name: this.name,
       description: this.description,
@@ -310,23 +863,818 @@ class OpenBrowser {
   }
 
   async handle(params: any) {
-    const result = await request('/browser/open', {
-      method: 'POST',
-      body: JSON.stringify(params),
+    const { workspaceId, dirIds, forceOpen = true, args } = params
+
+    if (!workspaceId || !Array.isArray(dirIds) || dirIds.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to open browsers:**\n\n workspaceId and dirIds are required, and dirIds must not be empty',
+          },
+        ],
+      }
+    }
+
+    const results: Array<{
+      dirId: string
+      success: boolean
+      data?: any
+      error?: string
+    }> = []
+
+    const openPromises = dirIds.map(async (dirId: string) => {
+      try {
+        const result = await request('/browser/open', {
+          method: 'POST',
+          body: JSON.stringify({
+            workspaceId,
+            dirId,
+            forceOpen,
+            args,
+          }),
+        })
+
+        if (result.code !== 0) {
+          return {
+            dirId,
+            success: false,
+            error: result.msg,
+          }
+        }
+
+        return {
+          dirId,
+          success: true,
+          data: result.data,
+        }
+      }
+      catch (error: any) {
+        return {
+          dirId,
+          success: false,
+          error: error.message || 'Unknown error',
+        }
+      }
+    })
+
+    const openResults = await Promise.all(openPromises)
+    results.push(...openResults)
+
+    const successResults = results.filter(r => r.success)
+    const failureResults = results.filter(r => !r.success)
+
+    const successText = successResults.length > 0
+      ? [
+          `✅ **Successfully opened ${successResults.length} browser(s):**`,
+          '',
+          ...successResults.map((r) => {
+            const data = r.data || {}
+            return [
+              `**Browser ${data.dirId || r.dirId || 'Unknown'}** (PID:${data.pid ?? 'Unknown'})`,
+              `  - CDP WebSocket: \`${data.ws ?? 'N/A'}\``,
+              `  - HTTP Endpoint: \`${data.http ?? 'N/A'}\``,
+              `  - Core Version: ${data.coreVersion ?? 'Unknown'}`,
+            ].join('\n')
+          }),
+        ].join('\n')
+      : ''
+
+    const failureText = failureResults.length > 0
+      ? [
+          `❌ **Failed to open ${failureResults.length} browser(s):**`,
+          '',
+          ...failureResults.map(r =>
+            `  - ${r.dirId}: ${r.error}`,
+          ),
+        ].join('\n')
+      : ''
+
+    const summaryLines = [
+      `**Workspace:** ${workspaceId}`,
+      `**Total Requests:** ${results.length}`,
+      `**Success:** ${successResults.length}`,
+      `**Failed:** ${failureResults.length}`,
+      '',
+      ...[successText, failureText].filter(Boolean),
+    ]
+
+    const summaryText = summaryLines.join('\n')
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: summaryText,
+        },
+      ],
+    }
+  }
+}
+
+/**
+ * Format browser open status for display.
+ * Three states: not opened (openStatus false), opened by self (openStatus true, no statusInfo),
+ * opened by others (openStatus true, statusInfo has entries; use forceOpen: true to open anyway).
+ */
+function formatBrowserOpenStatus(browser: { openStatus?: boolean | number | string, status?: boolean | number | string, statusInfo?: Array<{ openTime?: string, openUserId?: number, openUserName?: string }> }): string {
+  const openStatus = browser.openStatus ?? browser.status
+  const isOpen = openStatus === 1 || openStatus === '1' || openStatus === true || openStatus === 'opened'
+  if (!isOpen)
+    return '❌ Closed'
+  const statusInfo = browser.statusInfo
+  if (!statusInfo || !Array.isArray(statusInfo) || statusInfo.length === 0)
+    return '✅ Opened'
+  const whoList = statusInfo.map((info: { openTime?: string, openUserId?: number, openUserName?: string }) => {
+    const who = info?.openUserName ?? info?.openUserId ?? 'others'
+    const when = info?.openTime ? ` at ${info.openTime}` : ''
+    return `${who}${when}`
+  })
+  return `⚠️ Opened by others (${whoList.join('; ')}). Use roxy_open_browsers with forceOpen: true to open anyway.`
+}
+
+class ListBrowsers {
+  name = 'roxy_list_browsers'
+  description = 'Get list of browsers in specified workspace/project'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+      projectIds: {
+        type: 'string',
+        description: 'Comma-separated project IDs',
+      },
+      windowName: {
+        type: 'string',
+        description: 'Filter by profile name',
+      },
+      sortNums: {
+        type: 'string',
+        description: 'Comma-separated SerialNo',
+      },
+      pageIndex: {
+        type: 'number',
+        description: 'Page index for pagination',
+        default: 1,
+      },
+      pageSize: {
+        type: 'number',
+        description: 'Number of items per page',
+        default: 15,
+      },
+    },
+    required: ['workspaceId'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    const searchParams = new URLSearchParams()
+    searchParams.append('workspaceId', params.workspaceId.toString())
+    if (params.projectIds)
+      searchParams.append('projectIds', params.projectIds)
+    if (params.windowName)
+      searchParams.append('windowName', params.windowName)
+    if (params.pageIndex)
+      searchParams.append('page_index', params.pageIndex.toString())
+    if (params.pageSize)
+      searchParams.append('page_size', params.pageSize.toString())
+    if (params.sortNums) {
+      // 支持 "BOS-23" 等形式，只取数字部分（如 23）；多个时用逗号分隔则逐段提取
+      const raw = String(params.sortNums).trim()
+      const sortNumsValue = raw
+        .split(',')
+        .map((s) => {
+          const numMatch = s.trim().match(/(\d+)$/)
+          return numMatch ? numMatch[1] : s.trim()
+        })
+        .filter(Boolean)
+        .join(',')
+      if (sortNumsValue)
+        searchParams.append('sortNums', sortNumsValue)
+    }
+
+    const result = await request(`/browser/list_v3?${searchParams}`, {
+      method: 'GET',
     })
 
     const data = result.data
 
     let text = ''
     if (result.code !== 0) {
-      text = `❌ **Failed to open browser:**\n\n error message: ${result.msg}`
+      text = `❌ **Failed to list browsers:**\n\n error message: ${result.msg}`
     }
     else {
-      text = `✅ **Successfully opened browser:**
-          **Browser ${data.dirId || 'Unknown'}** (PID:${data.pid})
-          - CDP WebSocket: \`${data.ws}\`
-          - HTTP Endpoint: \`${data.http}\`
-          - Core Version: ${data.coreVersion}`
+      text = `Found ${data.total} browsers in workspace ${params.workspaceId}:\n\n${
+        data.rows.map((browser: any) => {
+          const openStatusText = formatBrowserOpenStatus(browser)
+          return `**${browser.windowName || 'Unnamed'}** (ID: \`${browser.dirId}\`)\n`
+            + `  - **SerialNo:** ${String(browser.workspaceName).slice(0, 3).toLocaleUpperCase()}-${browser.windowSortNum}\n`
+            + `  - **Project:** ${browser.projectName ?? '—'} (ID: ${browser.projectId ?? '—'})\n`
+            + `  - **OS:** ${[browser.os, browser.osVersion].filter(Boolean).join(' ') || '—'}\n`
+            + `  - **Core Version:** ${browser.coreVersion ?? '—'}\n`
+            + `  - **Search Engine:** ${browser.searchEngine ?? '—'}\n`
+            + `  - **Open Status:** ${openStatusText}`
+        }).join('\n\n')}`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class CloseBrowsers {
+  name = 'roxy_close_browsers'
+  description = 'Close multiple browsers by their directory IDs'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs to close',
+      },
+    },
+    required: ['dirIds'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.dirIds || params.dirIds.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to close browsers:**\n\n dirIds are required',
+          },
+        ],
+      }
+    }
+
+    const results: Array<{ dirId: string, success: boolean, error?: string }> = []
+
+    // Close browsers in parallel
+    const closePromises = params.dirIds.map(async (dirId: string) => {
+      try {
+        const result = await request('/browser/close', {
+          method: 'POST',
+          body: JSON.stringify({ dirId }),
+        })
+
+        if (result.code !== 0) {
+          return { dirId, success: false, error: result.msg }
+        }
+        return { dirId, success: true }
+      }
+      catch (error: any) {
+        return { dirId, success: false, error: error.message || 'Unknown error' }
+      }
+    })
+
+    const closeResults = await Promise.all(closePromises)
+    results.push(...closeResults)
+
+    const successCount = results.filter(r => r.success).length
+    const failureCount = results.filter(r => !r.success).length
+
+    const successText = successCount > 0
+      ? `✅ Successfully closed ${successCount} browsers`
+      : ''
+
+    const failureText = failureCount > 0
+      ? `❌ Failed to close ${failureCount} browsers:\n${
+        results.filter(r => !r.success).map(r =>
+          `  - ${r.dirId}: ${r.error}`,
+        ).join('\n')}`
+      : ''
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: [successText, failureText].filter(Boolean).join('\n\n'),
+        },
+      ],
+    }
+  }
+}
+
+class DeleteBrowsers {
+  name = 'roxy_delete_browsers'
+  description = 'Delete multiple browsers permanently by their directory IDs'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs to delete',
+      },
+    },
+    required: ['workspaceId', 'dirIds'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.workspaceId || !params.dirIds || params.dirIds.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to delete browsers:**\n\n workspaceId and dirIds are required',
+          },
+        ],
+      }
+    }
+
+    const result = await request('/browser/delete', {
+      method: 'POST',
+      body: JSON.stringify({
+        workspaceId: params.workspaceId,
+        dirIds: params.dirIds,
+        isSoftDelete: true,
+      }),
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Browser Deletion Failed**\n\n`
+        + `**Error:** ${result.msg}\n`
+        + `**Workspace:** ${params.workspaceId}\n`
+        + `**Failed Browsers:** ${params.dirIds.length}\n\n`
+        + `**Browser IDs:**\n${
+          params.dirIds.map((dirId: string, index: number) => `  ${index + 1}. \`${dirId}\``).join('\n')}`
+    }
+    else {
+      text = `✅ **Browsers Deleted Successfully**\n\n`
+        + `**Count:** ${params.dirIds.length} browser(s)\n`
+        + `**Workspace:** ${params.workspaceId}\n\n`
+        + `**Deleted Browsers:**\n${
+          params.dirIds.map((dirId: string, index: number) => `  ${index + 1}. \`${dirId}\``).join('\n')
+        }`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class GetBrowserDetail {
+  name = 'roxy_get_browser_detail'
+  description = 'Get detailed information for a specific browser window'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+      dirId: {
+        type: 'string',
+        description: 'Browser directory ID',
+      },
+    },
+    required: ['workspaceId', 'dirId'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.workspaceId || !params.dirId) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to get browser detail:**\n\n workspaceId and dirId are required',
+          },
+        ],
+      }
+    }
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('workspaceId', params.workspaceId.toString())
+    searchParams.append('dirId', params.dirId)
+
+    const result = await request(`/browser/detail?${searchParams}`, {
+      method: 'GET',
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to get browser detail:**\n\n error message: ${result.msg}`
+    }
+    else {
+      const detail = result.data.rows && result.data.rows.length > 0 ? result.data.rows[0] : null
+
+      if (!detail) {
+        text = '❌ **Browser not found or no data returned**'
+      }
+      else {
+        // Create a copy without cookies (cookies can be very large)
+        const { cookie: _cookie, ...detailWithoutCookies } = detail
+
+        // Create summary
+        text = `**Browser Details Summary**\n\n`
+          + `**ID:** \`${detail.dirId}\`\n`
+          + `**Name:** ${detail.windowName}\n`
+          + `**SerialNo:** ${detail.workspaceName?.slice(0, 3).toLocaleUpperCase()}-${detail.windowSortNum}\n`
+          + `**Project:** ${detail.projectName} (ID: ${detail.projectId})\n`
+          + `**OS:** ${detail.os} ${detail.osVersion}\n`
+          + `**Core Version:** ${detail.coreVersion}\n`
+          + `**Search Engine:** ${detail.searchEngine}\n`
+          + `**Open Status:** ${formatBrowserOpenStatus(detail)}\n`
+          + `**Full Details (JSON):**\n`
+          + `\`\`\`json\n${
+            JSON.stringify(detailWithoutCookies, null, 2)
+          }\n\`\`\``
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class ClearLocalCache {
+  name = 'roxy_clear_local_cache'
+  description = 'Clear local cache for specified browsers'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs',
+      },
+    },
+    required: ['dirIds'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.dirIds || params.dirIds.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to clear local cache:**\n\n dirIds are required',
+          },
+        ],
+      }
+    }
+
+    const result = await request('/browser/clear_local_cache', {
+      method: 'POST',
+      body: JSON.stringify({ dirIds: params.dirIds }),
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to clear local cache:**\n\n error message: ${result.msg}`
+    }
+    else {
+      text = `✅ **Local Cache Cleared**
+
+**Browser Count:** ${params.dirIds.length}
+
+**Browser IDs:**
+${params.dirIds.map((id: string, index: number) => `  ${index + 1}. \`${id}\``).join('\n')}`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class ClearServerCache {
+  name = 'roxy_clear_server_cache'
+  description = 'Clear server-side cache for specified browsers'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs',
+      },
+    },
+    required: ['workspaceId', 'dirIds'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.workspaceId || !params.dirIds || params.dirIds.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to clear server cache:**\n\n workspaceId and dirIds are required',
+          },
+        ],
+      }
+    }
+
+    const result = await request('/browser/clear_server_cache', {
+      method: 'POST',
+      body: JSON.stringify({
+        workspaceId: params.workspaceId,
+        dirIds: params.dirIds,
+      }),
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to clear server cache:**\n\n error message: ${result.msg}`
+    }
+    else {
+      text = `✅ **Server Cache Cleared**
+
+**Workspace:** ${params.workspaceId}
+**Browser Count:** ${params.dirIds.length}
+
+**Browser IDs:**
+${params.dirIds.map((id: string, index: number) => `  ${index + 1}. \`${id}\``).join('\n')}`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class RandomFingerprint {
+  name = 'roxy_random_fingerprint'
+  description = 'Randomize browser fingerprint for a specific browser'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+      dirId: {
+        type: 'string',
+        description: 'Browser directory ID',
+      },
+    },
+    required: ['workspaceId', 'dirId'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.workspaceId || !params.dirId) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to randomize fingerprint:**\n\n workspaceId and dirId are required',
+          },
+        ],
+      }
+    }
+
+    const result = await request('/browser/random_env', {
+      method: 'POST',
+      body: JSON.stringify({
+        workspaceId: params.workspaceId,
+        dirId: params.dirId,
+      }),
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to randomize fingerprint:**\n\n error message: ${result.msg}`
+    }
+    else {
+      text = `✅ **Browser Fingerprint Randomized**
+
+**Browser ID:** \`${params.dirId}\`
+**Workspace:** ${params.workspaceId}
+
+*Browser fingerprint has been randomized. Restart the browser to apply changes.*`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class ListLabels {
+  name = 'roxy_list_labels'
+  description = 'Get list of labels in specified workspace'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      workspaceId: {
+        type: 'number',
+        description: 'Workspace ID',
+      },
+    },
+    required: ['workspaceId'],
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    if (!params.workspaceId) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: '❌ **Failed to list labels:**\n\n workspaceId is required',
+          },
+        ],
+      }
+    }
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('workspaceId', params.workspaceId.toString())
+
+    const result = await request(`/browser/label?${searchParams}`, {
+      method: 'GET',
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to list labels:**\n\n error message: ${result.msg}`
+    }
+    else {
+      const labels = result.data || []
+      text = `Found ${labels.length} labels in workspace ${params.workspaceId}:\n\n${
+        labels.map((label: any) =>
+          `**${label.name}** (ID: ${label.id})\n`
+          + `  - Color: ${label.color}`,
+        ).join('\n\n')}`
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    }
+  }
+}
+
+class GetConnectionInfo {
+  name = 'roxy_get_connection_info'
+  description = 'Get connection information (CDP endpoints, PIDs) for currently opened browsers'
+  inputSchema = {
+    type: 'object',
+    properties: {
+      dirIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Array of browser directory IDs to query (optional, returns all if not specified)',
+      },
+    },
+  }
+
+  get schema() {
+    return {
+      name: this.name,
+      description: this.description,
+      inputSchema: this.inputSchema,
+    }
+  }
+
+  async handle(params: any) {
+    const searchParams = new URLSearchParams()
+    if (params.dirIds && params.dirIds.length > 0) {
+      searchParams.append('dirIds', params.dirIds.join(','))
+    }
+
+    const queryString = searchParams.toString()
+    const endpoint = queryString
+      ? `/browser/connection_info?${queryString}`
+      : '/browser/connection_info'
+
+    const result = await request(endpoint, {
+      method: 'GET',
+    })
+
+    let text = ''
+    if (result.code !== 0) {
+      text = `❌ **Failed to get connection info:**\n\n error message: ${result.msg}`
+    }
+    else {
+      const connections = result.data || []
+
+      if (connections.length === 0) {
+        text = '⚠️ No opened browsers found.\n\nUse `roxy_open_browsers` to open browsers first.'
+      }
+      else {
+        text = `Found ${connections.length} opened browser(s):\n\n${
+          connections.map((conn: any) =>
+            `**${conn.windowName || 'Unnamed'}** (${conn.dirId})\n`
+            + `  - PID: ${conn.pid}\n`
+            + `  - CDP WebSocket: \`${conn.ws}\`\n`
+            + `  - HTTP Endpoint: \`${conn.http}\`\n`
+            + `  - Core Version: ${conn.coreVersion}\n`
+            + `  - Driver: ${conn.driver}`,
+          ).join('\n\n')}`
+      }
     }
 
     return {
@@ -342,3 +1690,12 @@ class OpenBrowser {
 
 export const openBrowser = new OpenBrowser()
 export const updateBrowser = new UpdateBrowser()
+export const listBrowsers = new ListBrowsers()
+export const closeBrowsers = new CloseBrowsers()
+export const deleteBrowsers = new DeleteBrowsers()
+export const getBrowserDetail = new GetBrowserDetail()
+export const clearLocalCache = new ClearLocalCache()
+export const clearServerCache = new ClearServerCache()
+export const randomFingerprint = new RandomFingerprint()
+export const listLabels = new ListLabels()
+export const getConnectionInfo = new GetConnectionInfo()

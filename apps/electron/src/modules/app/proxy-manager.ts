@@ -13,6 +13,7 @@ class ProxyManager {
   }
 
   private isEnabled = false
+  private watcherTimer: ReturnType<typeof setInterval> | null = null
 
   /**
    * 从系统代理获取代理规则
@@ -97,18 +98,41 @@ class ProxyManager {
   /**
    * 监听系统代理变化并自动更新
    */
+  /**
+   * 监听系统代理变化并自动更新
+   */
   startSystemProxyWatcher() {
+    // 防止重复启动
+    if (this.watcherTimer) {
+      return
+    }
+
+    console.log('Starting system proxy watcher...')
     // 每15秒检查一次系统代理变化
-    setInterval(async () => {
-      if (this.isEnabled) {
-        const newSystemProxyRules = await this.getSystemProxyRules()
-        if (newSystemProxyRules !== this.defaultConfig.proxyRules) {
-          console.log('System proxy change detected, updating...')
-          this.defaultConfig.proxyRules = newSystemProxyRules
-          await this.enableDefaultProxy()
-        }
+    this.watcherTimer = setInterval(async () => {
+      // 只有在代理开启时才检测，减少不必要的系统调用
+      if (!this.isEnabled) {
+        return
+      }
+
+      const newSystemProxyRules = await this.getSystemProxyRules()
+      if (newSystemProxyRules !== this.defaultConfig.proxyRules) {
+        console.log('System proxy change detected, updating...')
+        this.defaultConfig.proxyRules = newSystemProxyRules
+        await this.enableDefaultProxy()
       }
     }, 15 * 1000) // 15秒检查一次
+  }
+
+  /**
+   * 停止监听系统代理变化
+   */
+  stopSystemProxyWatcher() {
+    if (this.watcherTimer) {
+      clearInterval(this.watcherTimer)
+      this.watcherTimer = null
+      console.log('System proxy watcher stopped')
+    }
   }
 
   /**

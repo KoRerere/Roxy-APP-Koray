@@ -2,72 +2,51 @@ import { store } from '/@/modules/store'
 
 /** 默认的浏览器启动参数 */
 export const defaultCLIArgs = [
-  `--disable-background-mode`,
+  '--disable-background-mode',
   '--disable-popup-blocking',
   '--no-first-run',
   '--no-default-browser-check',
-  `--remote-debugging-port=0`,
-  `--use-mock-keychain`,
+  '--remote-debugging-port=0',
+  '--use-mock-keychain',
 ]
 
 /** 需要同步的本地数据 */
-export const needSyncLocalFileMap = [
-  {
-    // IndexedDB同步
-    path: `/Default/IndexedDB`,
-    type: 'dir',
-    key: 'syncIndexedDb',
-  },
-  {
-    // Local Storage同步
-    path: `/Default/Local Storage`,
-    type: 'dir',
-    key: 'syncLocalStorage',
-  },
-  {
-    // 书签同步
-    path: `/Default/Bookmarks`,
-    type: 'file',
-    key: 'syncBookmark',
-  },
-  {
-    // 历史记录同步
-    path: `/Default/History`,
-    type: 'file',
-    key: 'syncHistory',
-  },
-  // 扩展应用数据同步
-  {
-    path: `/Default/Local Extension Settings`,
-    type: 'dir',
-    key: 'syncExtensions',
-  },
-  {
-    path: `/Default/databases`,
-    type: 'dir',
-    key: 'syncExtensions',
-  },
-  {
-    path: `/Default/Managed Extension Settings`,
-    type: 'dir',
-    key: 'syncExtensions',
-  },
-  {
-    path: `/Default/Sync Extension Settings`,
-    type: 'dir',
-    key: 'syncExtensions',
-  },
-  {
-    path: `/Default/sessionstorage.sqlite`,
-    type: 'file',
-    key: 'syncSessionStorage',
-  },
-  // {
-  //   // 同步密码
-  //   url: `/Default/Login Data`,
-  //   type: "file"
-  // }
-] as const
+export function getNeedSyncLocalFileMap(coreType: 'firefox' | 'chrome'): Record<string, string | string[]> {
+  if (coreType === 'firefox') {
+    return {
+      /** IndexedDB同步 */
+      syncIndexedDb: '',
+      /** Local Storage同步 */
+      syncLocalStorage: '/Default/Local Storage',
+      /** 书签同步 */
+      syncBookmark: '/Default/Bookmarks',
+      /** 历史记录同步 */
+      syncHistory: ['places.sqlite', 'places.sqlite-wal', 'places.sqlite-shm'],
+      /** Session Storage同步 */
+      syncSessionStorage: '/Default/sessionstorage.sqlite',
+    }
+  }
+
+  return {
+    /** IndexedDb 同步 */
+    syncIndexedDb: '/Default/IndexedDB',
+    /** Local Storage同步 */
+    syncLocalStorage: '/Default/Local Storage',
+    /** 书签同步 */
+    syncBookmark: '/Default/Bookmarks',
+    /** 历史记录同步 */
+    syncHistory: '/Default/History',
+    /** Session Storage 同步 */
+    syncSessionStorage: '/Default/sessionstorage.sqlite',
+    /** 扩展应用数据同步 */
+    syncExtensions: [
+      '/Default/Local Extension Settings',
+      '/Default/databases',
+      '/Default/Managed Extension Settings',
+      '/Default/Sync Extension Settings',
+    ],
+  }
+}
 
 /** 清除本地缓存（扩展数据除外） */
 export const cacheToClear = [

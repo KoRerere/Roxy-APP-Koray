@@ -1,3 +1,6 @@
+import type { IBrowser } from './adapter'
+import type { BrowserItem } from './browserItem'
+import type { Protocol } from './chrome-wrapper/'
 import CDP from 'chrome-remote-interface'
 import ejs from 'ejs'
 import { readFile, rm, stat } from 'node:fs/promises'
@@ -6,8 +9,6 @@ import { appConfig } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
-import type { BrowserItem } from './browserItem'
-import type { Browser, Protocol } from './chrome-wrapper/'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
@@ -23,7 +24,7 @@ export class AfterLaunchTask {
   /** 检测 IP 变化定时器 */
   private checkIpChangeTimer: NodeJS.Timeout | null = null
 
-  constructor(private browserItem: BrowserItem, public browser: Browser) { }
+  constructor(private browserItem: BrowserItem, public browser: IBrowser) { }
 
   async run() {
     this.checkIpChangeTimer = setTimeout(() => {
@@ -98,16 +99,26 @@ export class AfterLaunchTask {
   async handleBrowserEvent() {
     const { cookie, syncCookie, clearCookie } = this.browserItem.winInfo
 
-    if (!this.browser) {
+    if (!this.browser || !this.browser.client) {
+      console.warn('Browser or browser.client is not available')
       return
     }
 
     const saveCookies = async () => {
-      const { cookies } = await this.browser.client.Storage.getCookies()
-      this.cookies = cookies
+      if (!this.browser.client)
+        return
+
+      try {
+        const { cookies } = await this.browser.client.Storage.getCookies()
+        this.cookies = cookies as Protocol.Network.Cookie[]
+      }
+      catch (error) {
+        console.error('Failed to save cookies:', error)
+      }
     }
 
-    if (this.isPhone) {
+    // Chrome 特定功能：移动端触摸模拟
+    if (this.isPhone && this.browser.actualPort) {
       try {
         const targets = await CDP.List({ port: this.browser.actualPort })
         targets.forEach(async (target) => {
@@ -117,18 +128,21 @@ export class AfterLaunchTask {
         })
       }
       catch (error) {
-        console.log('setTouchEmulationEnabled error', error)
+        console.log('setTouchEmulationEnabled error (may not be supported by this browser):', error)
       }
     }
 
     const startTime = Date.now()
     // 导入 cookie
     if (cookie && !clearCookie) {
-      await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
-        console.log('Failed to import cookies', err)
-      })
-      console.log('Storage.setCookies success')
-      console.log('Cookie import time:', Date.now() - startTime, 'ms')
+      try {
+        await this.browser.client.Storage.setCookies({ cookies: cookie })
+        console.log('Storage.setCookies success')
+        console.log('Cookie import time:', Date.now() - startTime, 'ms')
+      }
+      catch (err) {
+        console.log('Failed to import cookies:', err)
+      }
     }
 
     const pages = await this.browser?.pages()

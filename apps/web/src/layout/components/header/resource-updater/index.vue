@@ -66,8 +66,8 @@ const updateInfo = computed(() => {
 })
 
 async function checkForUpdates() {
-  electronAPI.send('app:checkForUpdates')
-  electronAPI.send('app:checkWebForUpdates')
+  globalThis.electronAPI.send('app:checkForUpdates')
+  globalThis.electronAPI.send('app:checkWebForUpdates')
 }
 
 function toggle(event: Event) {
@@ -89,10 +89,10 @@ onMounted(() => {
   checkForUpdates()
 })
 
-electronAPI.on('app:core-list-update', getKernelList)
+globalThis.electronAPI.on('app:core-list-update', getKernelList)
 
 async function getKernelList() {
-  const list = await window.electronAPI.send('app:getCoreList')
+  const list = await globalThis.electronAPI.send('app:getCoreList')
   console.log('getKernelList', list)
   kernelUpdates.value = list.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
   genKernelGroup(toRaw(kernelUpdates.value))
@@ -173,7 +173,7 @@ const showDownloadError = debounce((data: ResourceUpdateMessage) => {
   })
 }, 100)
 
-window.electronAPI.on('app:resource-update', (data) => {
+globalThis.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
     if (data.status === 'failed') {

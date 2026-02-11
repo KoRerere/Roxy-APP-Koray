@@ -122,7 +122,7 @@ const checkShortcutKey = async () => {
       invalid.value = true;
       return false
     }
-    const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
+    const isKeyboard = await globalThis.electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
     invalid.value = !isKeyboard
     return isKeyboard
   } catch (error) {

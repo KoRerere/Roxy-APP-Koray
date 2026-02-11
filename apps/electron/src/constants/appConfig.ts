@@ -22,8 +22,10 @@ export const appConfig = {
   /** 系统语言 */
   lang: app.getLocale(),
 
-  /** 内核缓存目录 */
+  /** chrome 内核缓存目录 */
   chromeBinDir: join(sessionDir, 'chrome-bin'),
+  /** firefox 内核缓存目录 */
+  firefoxBinDir: join(sessionDir, 'firefox-bin'),
   /** 浏览器缓存根目录 */
   get browserCacheRootDir() {
     return store.browserCacheRootDir
@@ -43,6 +45,18 @@ export const appConfig = {
   /** roxysync 执行文件路径 */
   get roxySyncBinPath() {
     return join(sessionDir, 'roxy-sync-bin', isWindows ? 'roxy-sync.exe' : 'roxy-sync')
+  },
+  /** agent 脚本文件 */
+  get agentBinPath() {
+    return join(sessionDir, 'agent-bin', 'agent-worker.jsc')
+  },
+  /**  */
+  get openapiMcpBinPath() {
+    return join(sessionDir, 'agent-bin', 'roxybrowser-openapi-mcp.jsc')
+  },
+  /** playwright mcp 脚本文件 */
+  get playwrightMcpBinPath() {
+    return join(sessionDir, 'agent-bin', 'roxybrowser-playwright-mcp.cjs')
   },
   /** 默认浏览器执行文件所在文件夹 */
   get defaultBrowserBinDir() {

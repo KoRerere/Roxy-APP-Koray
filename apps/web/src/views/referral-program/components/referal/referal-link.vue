@@ -81,7 +81,7 @@ const currentBannerImage = computed(() => {
 const bannerImagePreviewHtmlCode = computed(() => {
   const { image_1x, image_2x } = currentBannerImage.value || {}
   const srcset = `${image_1x} 1x, ${image_2x} 2x`
-  return `<a href="${referralLink.value}" target="_blank"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
+  return `<a href="${referralLink.value}" target="_blank" rel="noopener noreferrer"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
 })
 const bonusList = computed(() => {
   const targetMenu = promotionInfo.promotionLinkList.find(item => item.linkType === activeMenu.value.linkType)

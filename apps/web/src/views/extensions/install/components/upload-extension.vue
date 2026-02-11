@@ -16,7 +16,7 @@ const extensionOss = ref()
 
 async function selectExtension(selectType: 'dir' | 'file') {
   try {
-    const { type, data, message: msg } = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
+    const { type, data, message: msg } = await globalThis.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
     console.log('selectExtension ~ type, data, msg:', type, data, msg)
     const isSuccess = type === 'success'
     if (isSuccess) {
@@ -38,7 +38,7 @@ async function selectExtension(selectType: 'dir' | 'file') {
 async function uploadToOSS() {
   const { pluginPath, pluginIconPath } = extension.value
   const { localKey, pluginDir } = dialogRef.value.data
-  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginPath, pluginIconPath, localKey })
+  extensionOss.value = await globalThis.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginPath, pluginIconPath, localKey })
 }
 
 async function confirm() {
@@ -116,8 +116,9 @@ onMounted(() => {
     <div class="guide">
       <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
-          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
-            class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
+          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank" rel="noopener noreferrer"
+             class="text-blue decoration-underline cursor-pointer"
+          >{{ $t('Google 扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>
@@ -139,7 +140,7 @@ onMounted(() => {
   gap: var(--spacing-2xl, 16px);
 
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;
@@ -157,7 +158,7 @@ onMounted(() => {
   }
 
   &-or {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: Inter;
     font-size: 13px;
@@ -167,7 +168,7 @@ onMounted(() => {
 
   &-tip {
     margin-top: 4px;
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     font-weight: 400;

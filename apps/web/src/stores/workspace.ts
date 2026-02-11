@@ -74,12 +74,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     // 如果当前工作空间有 ID 且是主窗口，则发送消息给主进程
     if (val?.id && isMainWindow) {
-      window.electronAPI.send('user:setWorkspaceId', val.id)
+      globalThis.electronAPI.send('user:setWorkspaceId', val.id)
       rememberLastWorkspace()
     }
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
-      electronAPI.send('app:restartAPIServer')
+      globalThis.electronAPI.send('app:restartAPIServer')
       if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
         emitter.emit('showUserGuideDialog')
       }
@@ -93,7 +93,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         return
       sharedWorkspaceList.value = data.rows
       // 设置公共空间列表
-      electronAPI.send('user:setSharedWorkspaceList', data.rows.map(item => ({ workspaceId: item.id!, role: item.role })))
+      globalThis.electronAPI.send('user:setSharedWorkspaceList', data.rows.map(item => ({ workspaceId: item.id!, role: item.role })))
     }
     return sharedWorkspaceList.value
   }
@@ -125,7 +125,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     result.data.rows = list
 
     if (workspaceList.value.length) {
-      window.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
+      globalThis.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
     }
 
     return result
@@ -154,7 +154,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     currentWorkspace.value = undefined
     workspaceList.value = []
     sharedWorkspaceList.value = []
-    electronAPI.send('user:setSharedWorkspaceList', [])
+    globalThis.electronAPI.send('user:setSharedWorkspaceList', [])
   }
 
   /** 登录成功后，设置当前工作区 */
@@ -184,7 +184,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
    */
   workspaceChangeChannel.onmessage = (event) => {
     console.log('Received message:', event.data)
-    setCurrentWorkspace(event.data.workspaceId)
+    if (event.data.workspaceId !== currentWorkspace.value?.id) {
+      setCurrentWorkspace(event.data.workspaceId)
+    }
   }
 
   return {

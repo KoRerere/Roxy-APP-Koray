@@ -32,6 +32,7 @@ export const useUserStore = defineStore(
     const tutorialStore = useTutorialStore()
     const roleStore = useRoleStore()
 
+    const lastLoginTime = ref<number>(0)
     // 登录方式
     const loginWay = ref<LoginWay | undefined>()
     /** 用户信息 */
@@ -139,6 +140,7 @@ export const useUserStore = defineStore(
     async function fetchUserInfo() {
       const result = await API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
       if (result.code === 0) {
+        lastLoginTime.value = Date.now()
         userInfo.value = result.data
         checkShowAccountSetupDialog()
       }
@@ -147,7 +149,7 @@ export const useUserStore = defineStore(
 
     async function setUserInfo(info: UserInfo) {
       userInfo.value = info
-      const appSoftConfig = await window.electronAPI.send('app:getSoftConfig')
+      const appSoftConfig = await globalThis.electronAPI.send('app:getSoftConfig')
 
       const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000
 
@@ -170,7 +172,7 @@ export const useUserStore = defineStore(
       if (isMainWindow) {
         // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
         setTimeout(() => {
-          window.electronAPI.send('user:setUserInfo', {
+          globalThis.electronAPI.send('user:setUserInfo', {
             token: token.value,
             userId: userInfo.value.id!,
             workspaceId: userInfo.value.workspaceId!,
@@ -195,7 +197,7 @@ export const useUserStore = defineStore(
 
           mixpanel.identify(String(userInfo.value.id))
 
-          localNetwork.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
+          localNetwork.value = await globalThis.electronAPI.send('proxy:detectNetwork', 'local')
 
           mixpanel.people.set({
             screen_resolution: `${screen.width}x${screen.height}`,
@@ -232,12 +234,12 @@ export const useUserStore = defineStore(
     }
 
     // 收集来自 electron 的埋点事件
-    electronAPI.on('mixpanel:track', (event_name: string, data?: Record<string, any>) => {
+    globalThis.electronAPI.on('mixpanel:track', (event_name: string, data?: Record<string, any>) => {
       mixpanelTrack(event_name, data)
     })
 
     async function clearUserInfo() {
-      const logoutPromise = electronAPI.send('user:logout')
+      const logoutPromise = globalThis.electronAPI.send('user:logout')
       if (loginWay.value === 'password') {
         userInfo.value = {
           email: userInfo.value.email,
@@ -294,7 +296,7 @@ export const useUserStore = defineStore(
           }
         }
 
-        electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
+        globalThis.electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
 
         if (isWindows) {
           const { code } = await API.pay.userCheckTeamUserRightsList()
@@ -302,9 +304,9 @@ export const useUserStore = defineStore(
             // 免费用户或者过期用户，关闭窗口同步器
             console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
             if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
-              electronAPI.send('syncControl:close')
+              globalThis.electronAPI.send('syncControl:close')
               setTimeout(() => {
-                electronAPI.send('syncControl:stop', false)
+                globalThis.electronAPI.send('syncControl:stop', false)
               }, 500)
             }
           }
@@ -340,10 +342,8 @@ export const useUserStore = defineStore(
       }
     }
 
-    scheduler.postTask(initUserInfo, { priority: 'background' })
-
     requestIdleCallback(async () => {
-      const version = await electronAPI.send('app:getAppVersion')
+      const version = await globalThis.electronAPI.send('app:getAppVersion')
       appVersion.value = version
     })
 
@@ -369,6 +369,7 @@ export const useUserStore = defineStore(
       identityInfo,
       isExpiredUser,
       isNoPayUser,
+      lastLoginTime,
       setPassword,
       clearUserInfo,
       setToken,

@@ -45,13 +45,13 @@ initSentryVue({
 
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,
-  track_pageview: 'full-url',
+  track_pageview: false,
   persistence: 'localStorage',
   // https://documentation.freshpaint.io/integrations/destinations/apps/mixpanel
   // autotrack: true,
 })
 globalThis.mixpanel = mixpanel
 
-setupStore(app)
 setupPrimeVue(app)
 setupRouter(app)
+setupStore(app)

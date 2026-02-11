@@ -20,7 +20,7 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 
 async function hasOpenProfiles() {
-  const result = await electronAPI.send('browser:getOpenedBrowser')
+  const result = await globalThis.electronAPI.send('browser:getOpenedBrowser')
   return result?.length > 0
 }
 
@@ -53,7 +53,7 @@ async function showEditDirModal(item: Items) {
 }
 
 async function selectDir(item: Items) {
-  const dirPath = await window.electronAPI.send('dialog:selectDir', item.value)
+  const dirPath = await globalThis.electronAPI.send('dialog:selectDir', item.value)
   if (dirPath) {
     item.value = dirPath
     await onChange(item)
@@ -62,7 +62,7 @@ async function selectDir(item: Items) {
 }
 
 function showCacheDir() {
-  electronAPI.send("app:showCacheDir")
+  globalThis.electronAPI.send("app:showCacheDir")
 }
 </script>
 

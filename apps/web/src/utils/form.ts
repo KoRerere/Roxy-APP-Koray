@@ -43,7 +43,7 @@ export function getFormData(
 
   const formData = (inputs || []).reduce(
     (formData, input) => {
-      if (input.visible === false) {
+      if (input.visible === false || input.separator) {
         return formData
       }
 

@@ -68,7 +68,7 @@ function showEditWorkspaceDialog(workspaceInfo: Data) {
 async function enterWorkspace(item: Data) {
   item.id && workspaceStore.setCurrentWorkspace(item.id)
   // 关闭mcp的窗口
-  electronAPI.send('mcp:close')
+  globalThis.electronAPI.send('mcp:close')
   emit('enterWorkspace')
 }
 

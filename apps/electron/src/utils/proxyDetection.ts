@@ -1,5 +1,5 @@
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import type { AxiosProxyConfig } from 'axios'
+import type { AxiosProxyConfig, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import { HttpProxyAgent } from 'http-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'
@@ -12,7 +12,7 @@ import {
   setRoxynetProxy,
   startRoxynet,
 } from '/@/modules/roxynet'
-import { store } from '/@/modules/store'
+import { fetchCheckChannelList, store } from '/@/modules/store'
 import { safeGetURL } from '/@/utils/common'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 
@@ -34,16 +34,54 @@ export interface ProxyDetectionResult {
   checkChannel?: string
 }
 
+// curl -x "http://roxy-ip-107.205.24.175:mk7chZxJWB0i@pr.roxybrowser.co:5782"   -X POST "https://ipcheck.roxybrowser.com/api/query"   -H "Content-Type: application/json"   -d '{"channel": "ip-api"}'
+
+// {"code":200,"message":"success","data":{"ip":"107.205.24.175","city":"Villa Rica","region":"Georgia","country":"United States","latitude":33.7295,"longitude":-84.9298,"time_zone":"America/New_York","postal":"30180"}}
+
 // 检测超时时间
 const TIMEOUT = 20000
+/** 默认检测渠道 */
+const CHECK_CHANNEL_DEFAULT = 'ip-api'
+/** 查询渠道地址 */
+const CHECK_CHANNEL_URL = 'https://ipcheck.roxybrowser.com/api/query'
 
-const commonAxiosConfig = {
+const commonAxiosConfig: AxiosRequestConfig = {
   timeout: TIMEOUT,
   adapter: 'http',
+  // 让 Node.js 的 HTTP 解析器“别那么严格”，遇到不完全符合 HTTP 规范的响应也尽量别直接报错
+  insecureHTTPParser: true,
+  // 不复用连接
+  keepAlive: false,
+  // 限制并发连接数
+  maxSockets: 10,
 }
 
-function getDefaultCheckChannel() {
-  return store.ipChecker || 'http://iprust.io/ip.json'
+function getCheckChannelByUrl(url = store.ipChecker) {
+  try {
+    return store.checkChannelList?.[new URL(url).hostname] || CHECK_CHANNEL_DEFAULT
+  }
+  catch (error) {
+    return CHECK_CHANNEL_DEFAULT
+  }
+}
+
+/** 获取 ipv6 检测地址 */
+async function getIPV6CheckUrl() {
+  const { origin, pathname } = new URL(store.ipv6CheckUrl)
+  const urls = store.ip2locationKeys?.map(key => `${origin}${pathname}?key=${key}`)
+  console.debug('getIPV6CheckUrl urls', urls)
+  const checkUrl = (url: string) => {
+    return fetch(url)
+      .then(res => res.json())
+      .then(res => res.error ? Promise.reject(res.error) : url)
+  }
+  const finalUrl = await Promise.any(urls.map(checkUrl)).catch((err) => {
+    console.error('getIPV6CheckUrl error', err)
+    return store.ipv6CheckUrl
+  })
+  store.lastUseIp2locationUrl = finalUrl
+  console.debug('getIPV6CheckUrl finalUrl', finalUrl)
+  return finalUrl
 }
 
 const protocolCheckMap = {
@@ -79,15 +117,6 @@ function getCheckFunction(protocol: ProtocolMapType) {
   return protocolCheckMap[protocol] || noProxy
 }
 
-/** 获取检测渠道 url */
-function getCheckUrl(url = getDefaultCheckChannel(), ipType: string) {
-  // console.log(`transIpUrl`, url, ipType)
-  if (ipType === `IPV6`) {
-    return store.ipv6CheckUrl
-  }
-  return url
-}
-
 /** 代理 => 刷新 URL */
 export function tryRefreshUrl(refreshUrl: string) {
   return axios
@@ -102,6 +131,10 @@ export function tryRefreshUrl(refreshUrl: string) {
 
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
+  if (!store.checkChannelList || Object.keys(store.checkChannelList).length === 0) {
+    await fetchCheckChannelList().catch(() => { })
+  }
+
   async function __proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
     const {
       dirId,
@@ -173,12 +206,13 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       ? store.ipChecker
       : proxyDetectionParams.checkChannel
     const params: ProxyDetectionParams = {
+      ipType,
       proxyCategory: __protocol,
       host: isUseSystemProxy ? '127.0.0.1' : host,
       port: isUseSystemProxy ? store.roxynetProxyPort : port,
       proxyUserName: isUseSystemProxy ? dirId! : proxyUserName,
       proxyPassword: isUseSystemProxy ? dirId! : proxyPassword,
-      checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
+      checkChannel: getCheckChannelByUrl(checkChannel),
     }
 
     // console.log('proxyDetectionParams', proxyDetectionParams)
@@ -201,17 +235,15 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       if (!result.country || typeof result.country !== 'string')
         result.country = result.country_name || result.country_long
 
-      const [latitude, longitude] = result.loc?.split(',').map(item => Number(item)) || []
-
-      result.checkChannel = params.checkChannel
+      result.checkChannel = ipType === 'IPV6' ? store.lastUseIp2locationUrl : checkChannel
       result.ip ||= result.query
       result.country_code ||= result.country_short || result.countryCode || result.country
       result.timezone ||= result.time_zone
-      result.latitude ||= result.lat || latitude
-      result.longitude ||= result.lon || longitude
+      result.latitude ||= result.lat
+      result.longitude ||= result.lon
 
       // 如果检测渠道不是 ip-api，则获取时区
-      if (!safeGetURL(result.checkChannel)?.host.toLocaleLowerCase().includes('ip-api')) {
+      if (ipType === 'IPV6') {
         const { code, data } = await API.proxy
           .userGetTimezoneByIpList({ ip: result.ip })
           .catch((error) => {
@@ -281,13 +313,18 @@ function logProxyConfig(params: ProxyDetectionParams, name = ``) {
  * 无代理
  */
 async function noProxy(winInfo: ProxyDetectionParams) {
-  const { checkChannel = getDefaultCheckChannel() } = winInfo
-  const response = await axios.get(checkChannel, commonAxiosConfig)
-  response.data.country
-    ||= response.data.country_name || response.data.country_long
-  response.data.country_code ||= response.data.country_short
-
-  return response.data
+  const { checkChannel = getCheckChannelByUrl() } = winInfo
+  const response = await axios({
+    url: CHECK_CHANNEL_URL,
+    method: 'POST',
+    data: {
+      channel: checkChannel,
+    },
+    ...commonAxiosConfig,
+    maxRedirects: 0,
+    proxy: false,
+  })
+  return response.data.data
 }
 
 /**
@@ -296,6 +333,7 @@ async function noProxy(winInfo: ProxyDetectionParams) {
 async function checkHttpProxy(
   winInfo: ProxyDetectionParams,
   isUseSystemProxy: boolean,
+  tryCount = 0,
 ) {
   const {
     proxyUserName,
@@ -304,17 +342,23 @@ async function checkHttpProxy(
     port,
     checkChannel,
     proxyCategory,
+    ipType,
   } = winInfo
   logProxyConfig(winInfo, `checkHttpProxy`)
   const protocol = isUseSystemProxy
     ? 'http'
     : proxyCategory.toLocaleLowerCase()
 
-  const checkChannelIsHttp = checkChannel.startsWith('http://')
-
   let auth: AxiosProxyConfig['auth']
+  const isIPV6 = ipType === 'IPV6'
+
+  let ipv6CheckUrl = store.lastUseIp2locationUrl
+  if (isIPV6 && !ipv6CheckUrl) {
+    ipv6CheckUrl = await getIPV6CheckUrl()
+  }
 
   if (proxyUserName && proxyPassword) {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     auth = {
       username: proxyUserName,
       password: proxyPassword,
@@ -322,13 +366,14 @@ async function checkHttpProxy(
   }
 
   let proxyConfig
+  const checkChannelIsHttp = ipv6CheckUrl?.startsWith('http://')
 
   if (host) {
     const auth = encodeAuth(proxyUserName, proxyPassword)
     const httpUrl = `${protocol}://${auth}${host}:${port}`
-    const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
+    const Agent = checkChannelIsHttp && isIPV6 ? HttpProxyAgent : HttpsProxyAgent
     proxyConfig = {
-      [checkChannelIsHttp ? 'httpAgent' : 'httpsAgent']: new Agent(
+      [checkChannelIsHttp && isIPV6 ? 'httpAgent' : 'httpsAgent']: new Agent(
         httpUrl,
         {
           ...commonAxiosConfig,
@@ -339,41 +384,92 @@ async function checkHttpProxy(
     console.log(`checkHttpProxy proxyConfig`, httpUrl)
   }
 
-  const response = await axios({
-    url: checkChannel,
-    ...commonAxiosConfig,
-    maxRedirects: 0,
-    proxy: false,
-    ...proxyConfig,
-  })
+  try {
+    const response = await axios({
+      url: isIPV6 ? ipv6CheckUrl : CHECK_CHANNEL_URL,
+      method: isIPV6 ? 'GET' : 'POST',
+      data: {
+        channel: checkChannel,
+      },
+      ...commonAxiosConfig,
+      maxRedirects: 0,
+      proxy: false,
+      ...proxyConfig,
+    })
 
-  console.log(`HTTP detection successful url:${checkChannel}`, response.data)
+    console.log(`HTTP detection successful url:${checkChannel}`, response.data)
 
-  return response.data
+    return isIPV6 ? response.data : response.data.data
+  }
+  catch (error: any) {
+    console.error(`checkHttpProxy error`, error)
+    console.error(`checkSocks5Proxy error.response?.data`, error.response?.data)
+    // 现在ipv6的检测用的免费key，一个月只有5w额度，用完就得重新配新key。前端做成自动切吧
+    // {"error":{"error_code":10000,"error_message":"Invalid API key or insufficient credit."}}
+    if (error.response?.data?.error?.error_code !== undefined) {
+      console.log('try getIPV6CheckUrl', tryCount)
+      if (tryCount < 1) {
+        await getIPV6CheckUrl()
+        return checkHttpProxy(winInfo, isUseSystemProxy, tryCount + 1)
+      }
+      else {
+        throw new Error(error.response?.data?.error?.error_message || 'IP2Location API key is invalid or out of credit')
+      }
+    }
+    throw error
+  }
 }
 
 /**
  * socket5 代理
  */
-async function checkSocks5Proxy(parmes: any) {
-  const { proxyUserName, proxyPassword, host, port, checkChannel } = parmes
-  logProxyConfig(parmes, `socket5`)
+async function checkSocks5Proxy(params: any, isUseSystemProxy: boolean, tryCount = 0) {
+  const { proxyUserName, proxyPassword, host, port, checkChannel, ipType = 'IPV4' } = params
+  logProxyConfig(params, `socket5`)
 
+  const isIPV6 = ipType === 'IPV6'
+
+  let ipv6CheckUrl = store.lastUseIp2locationUrl
+  if (isIPV6 && !ipv6CheckUrl) {
+    ipv6CheckUrl = await getIPV6CheckUrl()
+  }
+
+  const checkChannelIsHttp = ipv6CheckUrl?.startsWith('http://')
   const auth = encodeAuth(proxyUserName, proxyPassword)
   const url = `socks5h://${auth}${host}:${port}`
-  console.log(`SocksProxyAgent url`, url)
-  const agent = new SocksProxyAgent(url, commonAxiosConfig)
+  console.log(`SocksProxyAgent url`, url, checkChannel)
 
-  const response = await axios.get(checkChannel, {
-    // headers: {
-    //   Host: new URL(checkChannel).host
-    // },
-    ...commonAxiosConfig,
-    proxy: false,
-    [checkChannel.startsWith('https') ? 'httpsAgent' : 'httpAgent']: agent,
-  })
+  try {
+    const response = await axios({
+      url: isIPV6 ? ipv6CheckUrl : CHECK_CHANNEL_URL,
+      method: isIPV6 ? 'GET' : 'POST',
+      ...commonAxiosConfig,
+      data: {
+        channel: checkChannel,
+      },
+      proxy: false,
+      [checkChannelIsHttp && isIPV6 ? 'httpAgent' : 'httpsAgent']: new SocksProxyAgent(url, commonAxiosConfig),
+    })
 
-  return response.data
+    return isIPV6 ? response.data : response.data.data
+  }
+  catch (error: any) {
+    console.error(`checkSocks5Proxy error`, error)
+    console.error(`checkSocks5Proxy error.response?.data`, error.response?.data)
+    // 现在ipv6的检测用的免费key，一个月只有5w额度，用完就得重新配新key。前端做成自动切吧
+    // {"error":{"error_code":10000,"error_message":"Invalid API key or insufficient credit."}}
+    if (error.response?.data?.error?.error_code !== undefined) {
+      console.log('try getIPV6CheckUrl', tryCount)
+      if (tryCount < 1) {
+        await getIPV6CheckUrl()
+        return checkSocks5Proxy(params, tryCount + 1)
+      }
+      else {
+        throw new Error(error.response?.data?.error?.error_message || 'IP2Location API key is invalid or out of credit')
+      }
+    }
+    throw error
+  }
 }
 
 function encodeAuth(proxyUserName: string, proxyPassword: string) {

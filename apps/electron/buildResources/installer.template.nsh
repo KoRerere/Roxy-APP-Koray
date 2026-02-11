@@ -9,6 +9,7 @@
 ; 定义上报域名（构建时替换）
 !define REPORT_DOMAINS "{{REPORT_DOMAINS}}"
 !define REPORT_API_PATH "{{REPORT_API_PATH}}"
+!define APP_PROTOCOL "{{APP_PROTOCOL}}"
 
 !include "FileFunc.nsh"
 !include "FileFunc.nsh"
@@ -260,6 +261,11 @@
 
   uninit_done:
     ; 带参数时直接继续卸载，无需任何额外判断
+!macroend
+
+!macro customUnInstall
+  DeleteRegKey HKCR "${APP_PROTOCOL}"
+  DeleteRegKey HKCU "Software\Classes\${APP_PROTOCOL}"
 !macroend
 
 

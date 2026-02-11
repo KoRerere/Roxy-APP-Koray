@@ -13,10 +13,10 @@ const mainControlWindowDirId = ref()
 
 
 function handleHide() {
-  electronAPI.send('syncControl:closeSyncingWindowListDialog');
+  globalThis.electronAPI.send('syncControl:closeSyncingWindowListDialog');
 }
 
-electronAPI.send('syncControl:getMainControlDirId').then((dirId) => {
+globalThis.electronAPI.send('syncControl:getMainControlDirId').then((dirId) => {
   mainControlWindowDirId.value = dirId
 })
 </script>

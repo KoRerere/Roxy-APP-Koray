@@ -123,7 +123,7 @@ async function handleKeydown(event: KeyboardEvent, key: KeyboardItem['key']) {
 
   if (!keyCombination.endsWith(' + ')) {
     // 检查当前快捷键是否被占用
-    const result = await electronAPI.send('syncControl:checkShortcutKeysIsOccupied', {
+    const result = await globalThis.electronAPI.send('syncControl:checkShortcutKeysIsOccupied', {
       [os]: {
         [key]: keyCombination,
       },
@@ -210,7 +210,7 @@ async function checkShortcutKeysIsOccupied() {
   const isValid = Object.values(tempFormData.value).every(key => !key.endsWith(' + '))
   console.log('isValid', isValid)
   if (isValid) {
-    const result = await electronAPI.send('syncControl:checkShortcutKeysIsOccupied', toRaw(formData.value))
+    const result = await globalThis.electronAPI.send('syncControl:checkShortcutKeysIsOccupied', toRaw(formData.value))
     console.debug('checkShortcutKeysIsOccupied', result)
     checkOccupiedResult.value = {
       ...checkOccupiedResult.value,

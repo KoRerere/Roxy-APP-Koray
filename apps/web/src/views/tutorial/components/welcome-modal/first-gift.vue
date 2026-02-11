@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import type { UserRegisterGiftConfigListData } from '@roxy/backend-api'
+import { API } from '/@/api'
+import { motion } from 'motion-v'
+import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
 import { FirstGiftType } from '/@/enums/pay'
 
-const { data } = defineProps<{
-  data: UserRegisterGiftConfigListData['data']
+const { next } = defineProps<{
+  next: (type?: FirstGiftType) => void | Promise<void>
 }>()
 
+const firstGift = ref()
+const chooseType = ref()
+const showGuide = ref(false)
+
 const list = computed(() => {
-  const { static: staticData, dynamic, discount } = data
+  const { static: staticData, dynamic, discount } = firstGift.value
   return [
     {
       value: FirstGiftType.Static,
@@ -36,33 +42,84 @@ const list = computed(() => {
   ].filter(item => item.visible !== false)
 })
 
-const chooseValue = defineModel({ required: true })
+onMounted(() => {
+  getNewUserGift()
+})
+
+async function getNewUserGift() {
+  try {
+    const { code, data } = await API.base.userRegisterGiftConfigList()
+    if (code !== 0 || !data?.enable) {
+      // await next()
+      showGuide.value = true
+      return
+    }
+    firstGift.value = data
+  }
+  catch (error) {
+    await next()
+  }
+}
+
+async function onConfirm() {
+  const chooseData = firstGift.value[chooseType.value]
+  const windowIds = await genDefaultProfileByCount(chooseData.windowCount)
+  await API.base.userRegGiftCreate({ windowIds, giftType: chooseType.value })
+
+  await next(chooseType.value)
+}
 </script>
 
 <template>
-  <div class="h-110 flex flex-col justify-center gap-9 px-13.5">
-    <div class="title">
-      {{ $t('🎁 RoxyBrowser 为您准备了一份礼物，快选一个吧！') }}
-    </div>
-    <div class="flex gap-3.5">
-      <div v-for="item in list" :key="item.value" class="flex-1 flex flex-col gap-2.5">
-        <label :for="item.value" class="h-60 flex flex-col items-center justify-between pa-4 pb-12 rounded-3 cursor-pointer select-none item" :class="{ checked: chooseValue === item.value }">
-          <RadioButton v-model="chooseValue" class="!hidden" :input-id="item.value" :value="item.value" name="choose" />
-          <div class="relative w-6 h-6 self-start rounded-full shrink-0 radio" />
-          <img :src="item.img" class="block w-24 h-24">
-          <div class="whitespace-pre-wrap text-center text">
-            {{ item.text }}
+  <div>
+    <div v-if="!firstGift && !showGuide" class="min-h-110" />
+    <motion.div v-if="firstGift" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
+      <div class="h-110 flex flex-col justify-center gap-9 px-13.5">
+        <div class="title">
+          {{ $t('🎁 RoxyBrowser 为您准备了一份礼物，快选一个吧！') }}
+        </div>
+        <div class="flex gap-3.5">
+          <div v-for="item in list" :key="item.value" class="flex-1 flex flex-col gap-2.5">
+            <label :for="item.value" class="h-60 flex flex-col items-center justify-between pa-4 pb-12 rounded-3 cursor-pointer select-none item" :class="{ checked: chooseType === item.value }">
+              <RadioButton v-model="chooseType" class="!hidden" :input-id="item.value" :value="item.value" name="choose" />
+              <div class="relative w-6 h-6 self-start rounded-full shrink-0 radio" />
+              <img :src="item.img" class="block w-24 h-24">
+              <div class="whitespace-pre-wrap text-center text">
+                {{ item.text }}
+              </div>
+            </label>
+            <i18n-t class="pl-2 help" tag="div" :keypath="item.desc" scope="global">
+              <template #sponsor>
+                <span class="inline-flex items-center gap-1">
+                  <a class="link" href="https://rola-ip.co" target="_blank">rola-ip.co</a>
+                  <SvgIcon name="websites/rx_site_rolaip" size="12" />
+                </span>
+              </template>
+            </i18n-t>
           </div>
-        </label>
-        <i18n-t class="pl-2 desc" tag="div" :keypath="item.desc" scope="global">
-          <template #sponsor>
-            <span class="inline-flex items-center gap-1">
-              <a class="link" href="https://rola-ip.co" target="_blank">rola-ip.co</a>
-              <SvgIcon name="websites/rx_site_rolaip" size="12" />
-            </span>
-          </template>
-        </i18n-t>
+        </div>
       </div>
+    </motion.div>
+
+    <motion.div v-if="showGuide" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
+      <div class="h-110 flex justify-center items-center gap-12">
+        <video class="block w-100 rounded-md" autoplay muted loop playsinline>
+          <source src="/video/tour-hide-guide.mp4" type="video/webm">
+        </video>
+        <div class="flex flex-col gap-2 w-90">
+          <div class="title">
+            {{ $t('快速上手 RoxyBrowser') }}
+          </div>
+          <div class="desc">
+            {{ $t('我们为您设计了从入门到精通的完整「新手教程」。无论是名词概念、快捷菜单还是个性化设置，所有内容均在侧边栏或右下角帮助中心随时可得。助力您充分发挥 RoxyBrowser 的功能价值。') }}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <div class="mt-8 flex items-center justify-end gap-3 px-6">
+      <RxButton v-if="showGuide" :label="$t('开始使用')" @click="next()" />
+      <RxButton v-else :label="$t('确认')" :disabled="!chooseType" @click="onConfirm" />
     </div>
   </div>
 </template>
@@ -72,6 +129,12 @@ const chooseValue = defineModel({ required: true })
   color: var(--colors-text-text-primary);
   font-size: 24px;
   font-weight: 600;
+  line-height: normal;
+}
+
+.desc {
+  color: var(--colors-text-text-inactive);
+  font-size: 14px;
   line-height: normal;
 }
 
@@ -111,7 +174,7 @@ const chooseValue = defineModel({ required: true })
   line-height: normal;
 }
 
-.desc {
+.help {
   color: var(--colors-text-text-inactive);
   font-size: 12px;
   line-height: normal;

@@ -1,16 +1,17 @@
 import { app, autoUpdater, globalShortcut, shell } from 'electron'
+import { spawn } from 'node:child_process'
 import { rm } from 'node:fs/promises'
-import path from 'node:path'
+import path, { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
+import { isPackaged, isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
-import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { browserManager, coreManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
-import { initStorePromise, store } from '/@/modules/store'
+import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady, killProcessForce } from '/@/utils'
 import { closeAllWindows } from '/@/utils/browser-window'
@@ -236,12 +237,34 @@ function initAppEvent() {
       }
     }
 
-    await rm(chromeCoreManager.oldCoreDir, { recursive: true, force: true }).catch(() => {})
+    await coreManager.cleanOldCore()
 
     // 如果由于升级 APP 导致的退出
     if (isQuittingForUpdate && !isSyncBrowserData) {
       console.log('Application is quitting for update.')
       isSyncBrowserData = true
+      if (isWindows) {
+        try {
+          if (store.updaterExePid) {
+            killProcessForce(store.updaterExePid)
+          }
+          // 构造 updaterExe 路径并脱离主进程执行
+          const updaterExe = join(dirname(process.execPath), 'RoxyBrowserUpdater.exe')
+          console.log('Spawning updater detached:', updaterExe)
+
+          const child = spawn(updaterExe, [], {
+            detached: true,
+            stdio: 'ignore',
+          })
+          store.updaterExePid = child.pid
+          console.log('(`[AppUpdater] updaterExePid', store.updaterExePid)
+          child.unref()
+          await forceSaveConfig()
+        }
+        catch (e) {
+          console.error(`[AppUpdater] Failed to spawn updater UI`, e)
+        }
+      }
       appUpdater.upgradeNow()
     }
     else {

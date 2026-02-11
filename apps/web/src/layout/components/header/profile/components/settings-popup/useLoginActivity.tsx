@@ -9,14 +9,14 @@ import type { UserGetLoginInfoListData } from "@roxy/backend-api";
 const deviceInfo: Recordable = ref({});
 
 requestIdleCallback(() => {
-  electronAPI.send("util:getDeviceInfo").then(async (info) => {
+  globalThis.electronAPI.send("util:getDeviceInfo").then(async (info) => {
     Object.assign(deviceInfo.value, info);
     console.debug("deviceInfo", deviceInfo.value);
 
     info.createTime = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
     if (!info.address) {
-      const result = await electronAPI.send("proxy:detectNetwork");
+      const result = await globalThis.electronAPI.send("proxy:detectNetwork");
       deviceInfo.value.address = result.ip;
       deviceInfo.value.location = result.city;
       deviceInfo.value.platform = isWindows ? "win" : "mac";

@@ -86,7 +86,7 @@ const layoutRadioOptions = ref([
 
 const monitorOptions = ref([]);
 
-// electronAPI.send('syncControl:getSyncStartResult').then((result) => {
+// globalThis.electronAPI.send('syncControl:getSyncStartResult').then((result) => {
 //   if (result.monitors) {
 //     // 扩展屏幕 (3840 x 2160)
 //     monitorOptions.value = result.monitors.map((monitor) => ({
@@ -96,7 +96,7 @@ const monitorOptions = ref([]);
 //   }
 // });
 
-electronAPI.send('syncControl:getMainControlBrowserSize').then((result) => {
+globalThis.electronAPI.send('syncControl:getMainControlBrowserSize').then((result) => {
   formData.value.w ||= result?.width || 0;
   formData.value.h ||= result?.height || 0;
 });

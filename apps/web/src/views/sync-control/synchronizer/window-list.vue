@@ -91,7 +91,7 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
       if (tableData.value.length > 1) {
         const tableContainer = document.querySelector('.p-datatable-table-container')
         console.log('tableContainer scrollWidth', tableContainer?.scrollWidth)
-        electronAPI.send('app:resizeWindow', {
+        globalThis.electronAPI.send('app:resizeWindow', {
           width: window.innerWidth + (tableContainer?.scrollWidth ?? 0) - (tableContainer?.clientWidth ?? 0),
           height: window.innerHeight,
         })
@@ -179,11 +179,11 @@ watch(tableFilterData, (val) => {
   }
 })
 
-window.electronAPI.on('browser:on-close', (dirIds) => {
+globalThis.electronAPI.on('browser:on-close', (dirIds) => {
   selectedRows.value = selectedRows.value?.filter((n: any) => !dirIds.includes(n.dirId))
   getOpenedBrowser()
 })
-window.electronAPI.on('browser:opened-browser-list-change', (data) => {
+globalThis.electronAPI.on('browser:opened-browser-list-change', (data) => {
   console.log('browser:opened-browser-list-change', data)
   if (!isSyncing.value) {
     tableData.value = data
@@ -191,12 +191,12 @@ window.electronAPI.on('browser:opened-browser-list-change', (data) => {
 })
 
 async function getOpenedBrowser() {
-  tableData.value = await window.electronAPI.send(isSyncing.value ? 'syncControl:getAllSyncingWindows' : 'browser:getOpenedBrowser')
+  tableData.value = await globalThis.electronAPI.send(isSyncing.value ? 'syncControl:getAllSyncingWindows' : 'browser:getOpenedBrowser')
   console.log('tableData.value', tableData.value)
 }
 
 function viewBrowser(dirId: string) {
-  window.electronAPI.send('browser:batchLaunch', [dirId])
+  globalThis.electronAPI.send('browser:batchLaunch', [dirId])
 }
 
 onMounted(() => {
@@ -221,7 +221,7 @@ async function startSync() {
     ...selectedRowsFilter.value?.map((n: any) => n.dirId),
   ])]
   console.log('dirIds', dirIds)
-  await window.electronAPI.send('syncControl:start', dirIds)
+  await globalThis.electronAPI.send('syncControl:start', dirIds)
   mixpanelTrack('synchronizer_success')
 }
 
@@ -239,7 +239,7 @@ async function handleRowSelectAll() {
   })
 }
 
-electronAPI.on('syncControl:start', startSync)
+globalThis.electronAPI.on('syncControl:start', startSync)
 </script>
 
 <template>
@@ -290,7 +290,7 @@ electronAPI.on('syncControl:start', startSync)
           <div v-if="false" class="mt-3">
             <i18n-t :keypath="$t('更多的文档说明，请访问：{link}', { link: '{link}' })" scope="global">
               <template #link>
-                <a href="https://faq.roxybrowser.com/" target="_blank">{{ $t('窗口同步器') }}</a>
+                <a href="https://faq.roxybrowser.com/" target="_blank" rel="noopener noreferrer">{{ $t('窗口同步器') }}</a>
               </template>
             </i18n-t>
           </div>

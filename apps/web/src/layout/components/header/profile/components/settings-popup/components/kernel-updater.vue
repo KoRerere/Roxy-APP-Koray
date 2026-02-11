@@ -33,7 +33,7 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
     return $t('正在下载')
   } else if (item.coreVersion) {
-    window.electronAPI.send('app:download-chrome-core', item.coreVersion)
+    globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
   }
 }
 
@@ -62,7 +62,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
     },
     accept: async () => {
       try {
-        await window.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
+        await globalThis.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
         item.status = 'uninstalled'
         toast.add({ severity: 'success', summary: $t('删除成功'), life: 2500 });
       } catch (error: any) {

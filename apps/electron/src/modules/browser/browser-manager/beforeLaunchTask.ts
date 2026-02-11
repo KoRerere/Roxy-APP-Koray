@@ -1,11 +1,13 @@
 import type { BrowserItem } from './browserItem'
-import type { Browser, PuppeteerLaunchOptions } from './chrome-wrapper/'
+import type { BrowserLaunchOptions, IBrowser } from '/@/modules/browser/browser-manager/adapter'
 import type { proxyDetection } from '/@/utils'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
-import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { isMac } from '/@/constants/common'
+import { browserManager, coreManager } from '/@/modules/browser'
+import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ExtensionManager } from '/@/modules/extension'
@@ -13,7 +15,6 @@ import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helpe
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
-import puppeteer from './chrome-wrapper/'
 import { encryptFingerprintConfig, genFingerprintConfig, getTimezoneByCity, importBookmarks } from './utils'
 
 /** 最后一次发送的消息 */
@@ -28,7 +29,7 @@ interface LaunchTask { handler: () => Promise<void>, start: number, end: number 
 
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
-  browser: Browser | null = null
+  browser: IBrowser | null = null
   wsEndpoint: string | null = null
   /** 代理检测结果 */
   proxyInfo = {} as Awaited<ReturnType<typeof proxyDetection>>
@@ -60,7 +61,7 @@ export class BeforeLaunchTask {
   #lastToken = ''
 
   /** 用于重新拉起浏览器 */
-  makeBrowserActive!: () => Promise<Browser>
+  makeBrowserActive!: () => Promise<IBrowser>
 
   /** 磁盘检测缓存：记录上次检测时间和可用空间 */
   static #lastDiskCheck: { time: number, available: number } | null = null
@@ -152,12 +153,13 @@ export class BeforeLaunchTask {
     }, 30.1 * 1000)
 
     this.makeBrowserActive = async () => {
-      const launchOptions: PuppeteerLaunchOptions = {
+      const launchOptions: BrowserLaunchOptions = {
         args: this.launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
+        browserType: this.browserItem.winInfo.browserType,
       }
       console.log('launchOptions', launchOptions)
       let timer
@@ -169,7 +171,7 @@ export class BeforeLaunchTask {
           this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
         }, 60)
 
-        this.browser = await puppeteer.launch(launchOptions).finally(() => {
+        this.browser = await launchBrowser(launchOptions).finally(() => {
           clearInterval(timer)
         })
 
@@ -177,7 +179,10 @@ export class BeforeLaunchTask {
         console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       }
       else {
-        await puppeteer.launch(launchOptions, true).finally(() => {
+        await launchBrowser({
+          ...launchOptions,
+          relaunch: true,
+        }).finally(() => {
           clearInterval(timer)
         })
       }
@@ -201,7 +206,7 @@ export class BeforeLaunchTask {
   async reconnectBrowser() {
     if (this.wsEndpoint) {
       try {
-        this.browser = await puppeteer.connect({ browserWSEndpoint: this.wsEndpoint })
+        this.browser = await connectBrowser({ browserType: 'chrome', browserWSEndpoint: this.wsEndpoint })
         console.log('Reconnected to browser successfully')
         return true
       }
@@ -214,7 +219,7 @@ export class BeforeLaunchTask {
 
   /** 检测内核是否可用 */
   private async checkKernelAvailability() {
-    const { coreVersion } = this.browserItem.winInfo
+    const { coreVersion, browserType } = this.browserItem.winInfo
 
     if (!coreVersion) {
       this.sendErrorMessage($t('没有指定内核版本'))
@@ -222,18 +227,17 @@ export class BeforeLaunchTask {
     }
 
     // 获取内核执行程序路径
-    this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (payload) => {
+    this.exePath = await coreManager.getCoreManager(browserType).getCoreExePath(coreVersion, (payload) => {
       if (payload.description && this.currentTask) {
         if (payload.percent) {
           this.progress = this.currentTask.start + ((this.currentTask.end - this.currentTask.start) * (payload.percent / 100))
         }
         this.sendSuccessMessage(payload.description)
       }
+    }).catch((error) => {
+      this.sendErrorMessage(error.message, error)
+      return Promise.reject(error)
     })
-      .catch((error) => {
-        this.sendErrorMessage(error.message, error)
-        return Promise.reject(error)
-      })
   }
 
   /** 生成内核启动的命令行参数 */
@@ -263,6 +267,11 @@ export class BeforeLaunchTask {
       '--disable-backgrounding-occluded-windows',
       // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]
+
+    // 临时解决 macOS code_sign_clone 问题
+    if (isMac) {
+      args.push('--disable-features=MacAppCodeSignClone')
+    }
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
       args.push(`http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`)
@@ -500,11 +509,17 @@ export class BeforeLaunchTask {
 
   /** 拉取远程缓存文件 */
   private async pullRemoteCacheFiles() {
-    const { version: remoteVersion } = this.browserItem.winInfo.syncValue as Record<string, any>
+    const { version: remoteVersion, fileCount } = this.browserItem.winInfo.syncValue as Record<string, any>
 
     //  如果没有远程版本号，不拉取
     if (!remoteVersion) {
       console.log('No remote version, skipping pull')
+      return
+    }
+
+    // 如果文件数量为零，不拉取
+    if (fileCount === 0) {
+      console.log('No remote file count, skipping pull')
       return
     }
 

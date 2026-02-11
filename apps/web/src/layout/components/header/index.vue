@@ -5,6 +5,7 @@ import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
 import WorkspaceManager from './workspace-manager/index.vue'
 import LockButton from './lock-button.vue'
+import DownloadAppButton from './download-app-button.vue'
 </script>
 
 <template>
@@ -13,7 +14,8 @@ import LockButton from './lock-button.vue'
     <div class="top-bar-items">
       <Network />
       <Divider class="!ma-0" layout="vertical" />
-      <ResourceUpdater />
+      <ResourceUpdater v-if="$isElectron" />
+      <DownloadAppButton v-else />
       <Notification />
       <LockButton />
       <Profile />

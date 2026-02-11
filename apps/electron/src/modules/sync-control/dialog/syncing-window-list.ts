@@ -27,7 +27,7 @@ export async function openSyncingWindowList() {
     skipTaskbar: true,
     hasShadow: true,
   })
-  win.loadURL(await getWebEntryUrl('#/syncing-window-list-dialog'))
+  win.loadURL(await getWebEntryUrl('syncing-window-list-dialog'))
   if (!isPackaged) {
     win.webContents.openDevTools()
   }

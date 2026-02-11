@@ -164,6 +164,10 @@ function getProxyModel() {
       icon: 'base/rx_ic_speed_test',
       visible: hasProxy.value,
       command: async () => {
+        if (!globalThis.isElectron) {
+          return globalThis.electronAPI.send('proxy:detect', {} as any)
+        }
+
         const checkRes = await checkProxy(toRaw(data))
         batchTestShowToast(checkRes)
         if (data.moduleId && data.buyProxyType === ProxyType.resource) {
@@ -182,7 +186,7 @@ function getProxyModel() {
       visible: hasProxy.value,
       disabled: !data.refreshUrl,
       command: async () => {
-        const isOK = await window.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
+        const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
         showToast(isOK ? 0 : -1, data.refreshUrl)
       },
     },

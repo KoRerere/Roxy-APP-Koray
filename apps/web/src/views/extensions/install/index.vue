@@ -339,7 +339,7 @@ async function onInstall(data?: Data) {
         try {
           const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.id })
           if (code === 0) {
-            window.electronAPI.send('extension:download', [toRaw(data) as any])
+            globalThis.electronAPI.send('extension:download', [toRaw(data) as any])
           }
           onlyErrorToast(code, msg)
           tableRef.value?.refresh({ pluginSwitchType: filters.value })
@@ -427,7 +427,7 @@ async function deleteExtension(datas: Data[]) {
         onlyErrorToast(code, msg)
         if (code === 0) {
           filters.resetFilters()
-          electronAPI.send('extension:remove', datas.map(item => item.pluginDir!))
+          globalThis.electronAPI.send('extension:remove', datas.map(item => item.pluginDir!))
         }
       }
       catch (error) {

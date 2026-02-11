@@ -57,7 +57,7 @@ const tabs = ref([
     component: markRaw(CustomLayout),
     onSave() {
       console.log(formData.value);
-      electronAPI.send('syncControl:doLayout', toRaw(formData.value.customLayout));
+      globalThis.electronAPI.send('syncControl:doLayout', toRaw(formData.value.customLayout));
       saveSettings();
     }
   },
@@ -79,7 +79,7 @@ const tabs = ref([
         return
       }
 
-      const registerResult = await electronAPI.send('syncControl:registerShortcut', toRaw(formData.value.shortcutKey));
+      const registerResult = await globalThis.electronAPI.send('syncControl:registerShortcut', toRaw(formData.value.shortcutKey));
       console.log('registerResult', registerResult);
       saveSettings()
     }
@@ -90,7 +90,7 @@ const defaultActiveTabId = tabs.value.find(tab => tab.id === route.query.tab)?.i
 const activeTab = ref(defaultActiveTabId)
 
 function handleHide() {
-  electronAPI.send('syncControl:closePreferencesDialog')
+  globalThis.electronAPI.send('syncControl:closePreferencesDialog')
 }
 
 function saveSettings() {
@@ -98,7 +98,7 @@ function saveSettings() {
     const { code, msg } = await savePreferenceSettings(formData.value);
     console.log('saveSettings', formData.value)
     showToast(code, msg, { life: 1200 })
-    electronAPI.send('syncControl:closePreferencesDialog')
+    globalThis.electronAPI.send('syncControl:closePreferencesDialog')
   })
 }
 
@@ -115,7 +115,7 @@ onMounted(async () => {
   setTimeout(() => {
     const tablistEl = document.querySelector('.p-tablist')
     console.log('tablistEl scrollWidth', tablistEl?.scrollWidth, 'clientWidth', tablistEl?.clientWidth)
-    electronAPI.send('app:resizeWindow', {
+    globalThis.electronAPI.send('app:resizeWindow', {
       width: window.innerWidth + tablistEl?.scrollWidth - tablistEl?.clientWidth,
       height: window.innerHeight
     })

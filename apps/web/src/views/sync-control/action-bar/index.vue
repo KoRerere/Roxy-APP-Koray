@@ -63,22 +63,22 @@ const settingsTooltip = computed(() => {
 
 watch(isDragging, (newVal) => {
   if (newVal) {
-    electronAPI.send('app:startMoveWindow')
+    globalThis.electronAPI.send('app:startMoveWindow')
   } else {
-    electronAPI.send('app:stopMoveWindow')
+    globalThis.electronAPI.send('app:stopMoveWindow')
   }
 })
 
 function handleMouseenter() {
   clearTimeout(removeHoverTimer)
   console.log('handleMouseenter')
-  electronAPI.send('app:set-ignore-mouse-events', false)
+  globalThis.electronAPI.send('app:set-ignore-mouse-events', false)
   initUserConfig()
 }
 function handleMouseleave() {
   clearTimeout(removeHoverTimer)
   console.log('handleMouseleave')
-  electronAPI.send('app:set-ignore-mouse-events', true, { forward: true })
+  globalThis.electronAPI.send('app:set-ignore-mouse-events', true, { forward: true })
   removeHoverTimer = setTimeout(() => {
     actionBarRef.value?.classList.remove('hover')
   }, 1900)
@@ -107,14 +107,14 @@ function handleMouseenterSyncText() {
 }
 
 function showAllWindows() {
-  electronAPI.send('syncControl:showAll')
+  globalThis.electronAPI.send('syncControl:showAll')
   setTimeout(() => {
-    electronAPI.send('app:set-ignore-mouse-events', false)
+    globalThis.electronAPI.send('app:set-ignore-mouse-events', false)
   }, 100)
 }
 
 function stopSync() {
-  electronAPI.send('syncControl:stop')
+  globalThis.electronAPI.send('syncControl:stop')
 }
 
 async function pauseAndResumeSync() {
@@ -123,11 +123,11 @@ async function pauseAndResumeSync() {
   pauseAndPlayLoading.value = true
   try {
     if (isPlaying.value) {
-      await electronAPI.send('syncControl:pause')
+      await globalThis.electronAPI.send('syncControl:pause')
       actionBarRef.value?.classList.remove('hover')
       bottomBarRef.value?.click()
     } else {
-      await electronAPI.send('syncControl:resume')
+      await globalThis.electronAPI.send('syncControl:resume')
     }
     isPlaying.value = !isPlaying.value
   } catch (error) {
@@ -138,19 +138,19 @@ async function pauseAndResumeSync() {
 }
 
 function showPreferences() {
-  electronAPI.send('syncControl:openPreferencesDialog');
+  globalThis.electronAPI.send('syncControl:openPreferencesDialog');
 }
 
 function showSyncingWindowListDialog() {
-  electronAPI.send('syncControl:openSyncingWindowListDialog');
+  globalThis.electronAPI.send('syncControl:openSyncingWindowListDialog');
 }
 
-window.electronAPI.on('browser:on-close', (dirId) => {
+globalThis.electronAPI.on('browser:on-close', (dirId) => {
   getAllSyncingWindows()
 })
 
 async function getAllSyncingWindows() {
-  const windowList = await window.electronAPI.send('syncControl:getAllSyncingWindows')
+  const windowList = await globalThis.electronAPI.send('syncControl:getAllSyncingWindows')
   console.log('windowList', windowList)
   kernelNoSame.value = windowList.some((item) => item.coreVersion !== windowList[0].coreVersion)
 }
@@ -180,22 +180,22 @@ onMounted(async () => {
   }, { deep: true })
 })
 
-electronAPI.on('syncControl:toggleClickDelay', () => {
+globalThis.electronAPI.on('syncControl:toggleClickDelay', () => {
   formData.value.simulate.enableClickDelay = !formData.value.simulate.enableClickDelay
   savePreferenceSettings(toRaw(formData.value))
 })
 
-electronAPI.on('syncControl:toggleInputDelay', () => {
+globalThis.electronAPI.on('syncControl:toggleInputDelay', () => {
   formData.value.simulate.enableInputDelay = !formData.value.simulate.enableInputDelay
   savePreferenceSettings(toRaw(formData.value))
 })
 
-electronAPI.send('syncControl:getSyncWindowCount').then((count) => {
+globalThis.electronAPI.send('syncControl:getSyncWindowCount').then((count) => {
   syncWindowCount.value = count
 })
-electronAPI.send('app:showCurrentWebviewWindow')
+globalThis.electronAPI.send('app:showCurrentWebviewWindow')
 
-const cancelListener = electronAPI.on('syncControl:syncWindowCountChange', (count) => {
+const cancelListener = globalThis.electronAPI.on('syncControl:syncWindowCountChange', (count) => {
   syncWindowCount.value = count
 })
 

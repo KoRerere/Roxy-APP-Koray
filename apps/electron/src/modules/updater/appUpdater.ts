@@ -1,4 +1,3 @@
-import type { UserGetAppUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import type { DebUpdater } from 'electron-updater'
@@ -194,6 +193,14 @@ export const appUpdater = new class AppUpdater {
   /** 获取更新内容 */
   getUpdateMessageData() {
     return this.#updateMessageData
+  }
+
+  async getLastUpdateFeature() {
+    const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
+    if (code !== 0 || !data) {
+      return []
+    }
+    return data.newFeatureTips[store.language]?.[0]?.content ? data.newFeatureTips[store.language] : []
   }
 
   /** 是否有更新 */

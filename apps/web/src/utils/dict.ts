@@ -30,7 +30,6 @@ export function clearDictCache() {
   localStorage.removeItem('lastDictVersion')
 }
 
-
 export async function getDictMap() {
   let dictMap = localStorage.getItem('$dict_map')
   if (!dictMap) {
@@ -76,7 +75,26 @@ async function fetchDictData(type: any) {
   }, {} as Record<string, DictItem[]>)
 
   if (dictMap?.ipv6Check?.[0]?.value) {
-    window.electronAPI.send('app:saveSoftConfig', { ipv6CheckUrl: dictMap.ipv6Check?.[0]?.value })
+    globalThis.electronAPI.send('app:saveSoftConfig', { ipv6CheckUrl: dictMap.ipv6Check?.[0]?.value })
+  }
+
+  if (dictMap?.['ip2location-key']?.length) {
+    globalThis.electronAPI.send('app:saveSoftConfig', { ip2locationKeys: dictMap['ip2location-key']?.map(item => item.value) })
+  }
+
+  try {
+    if (dictMap?.checkChannel?.length) {
+      globalThis.electronAPI.send('app:saveSoftConfig', {
+        checkChannelList: dictMap.checkChannel.reduce((map, item) => {
+          const hostname = new URL(item.value).hostname
+          map[hostname] = item.label.toLowerCase()
+          return map
+        }, {} as Record<string, string>),
+      })
+    }
+  }
+  catch (error) {
+    console.error(error)
   }
 
   const oldDict = JSON.parse(localStorage.getItem('$dict_map') || '{}')

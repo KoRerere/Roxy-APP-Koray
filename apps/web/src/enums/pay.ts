@@ -195,8 +195,14 @@ export enum AutoRenewalPayStatus {
 }
 
 export enum RoxyGiftsType {
+  /** 静态住宅代理 IP */
   ISP = 'ISP',
+  /** 动态住宅代理 IP */
   Rotating = 'ROTATING_RESIDENTIA',
+  /** 窗口兑换码 */
+  Profile = 'PROFILE',
+  /** 团队成员 */
+  Staff = 'STAFF',
 }
 
 export enum FirstGiftType {

@@ -26,7 +26,7 @@ const settings = computed(() => {
   const [basic, ...others] = inputsGroup
   return {
     basic,
-    others
+    others,
   }
 })
 
@@ -39,13 +39,13 @@ function onCopy(dirId: string) {
 <template>
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto pb-4 content">
-      <slot name="before"></slot>
-      <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
+      <slot name="before" />
+      <RyForm v-if="settings.basic?.length" class="profile-info" :inputs="settings.basic">
         <template #name="{ input }">
           <div class="flex flex-col px-4 guide1">
             <div class="flex items-center justify-between">
               <InputLabel v-bind="input" />
-              <div class="flex items-center gap-2.5 mb-2 dir-id" v-if="!!input.dirId">
+              <div v-if="!!input.dirId" class="flex items-center gap-2.5 mb-2 dir-id">
                 <span>ID:{{ input.dirId }}</span>
                 <span class="color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
               </div>
@@ -64,7 +64,9 @@ function onCopy(dirId: string) {
                 </InputGroup>
                 <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
               </div>
-              <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">{{ input.items[2].help }}</Message>
+              <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
+                {{ input.items[2].help }}
+              </Message>
             </div>
           </div>
         </template>
@@ -79,17 +81,17 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #urls="{ input }">
-          <UrlsItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <UrlsItem v-model="input.value" v-model:invalid="input.invalid" class="-mt-5" v-bind="input" />
         </template>
         <template #cookies="{ input }">
-          <CookiesItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" class="-mt-5" v-bind="input" />
         </template>
       </RyForm>
       <RxAccordion :value="accordions.value" multiple>
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-dashed' }">
-          <AccordionHeader as="div" #default="{ active }">
+          <AccordionHeader v-slot="{ active }" as="div">
             <div class="flex items-center gap-3 header">
-              <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
+              <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20" />
               <span>{{ panels.title }}</span>
             </div>
           </AccordionHeader>
@@ -99,9 +101,11 @@ function onCopy(dirId: string) {
                 <div class="flex">
                   <InputLabel v-bind="input" />
                   <div class="flex gap-2">
-                    <InputGroup v-for="(item, index) in input.items" :key="item.name">
-                      <InputGroupAddon class="text-3.5">{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
-                      <RxInputText class="!w-25" v-bind="item" v-model="item.value" />
+                    <InputGroup v-for="(item, idx) in input.items" :key="item.name">
+                      <InputGroupAddon class="text-3.5">
+                        {{ idx === 0 ? $t('宽') : $t('高') }}
+                      </InputGroupAddon>
+                      <RxInputText v-bind="item" v-model="item.value" class="!w-25" />
                     </InputGroup>
                   </div>
                 </div>
@@ -121,8 +125,10 @@ function onCopy(dirId: string) {
                     </div>
                     <div class="w-[105px] mt-2">
                       <IconField>
-                        <InputNumber v-model="input.value" inputClass="w-full !pr-[28px]" size="small" />
-                        <InputIcon class="tip-text">KB</InputIcon>
+                        <InputNumber v-model="input.value" input-class="w-full !pr-[28px]" size="small" />
+                        <InputIcon class="tip-text">
+                          KB
+                        </InputIcon>
                       </IconField>
                     </div>
                   </div>
@@ -142,9 +148,8 @@ function onCopy(dirId: string) {
 }
 
 :deep(.p-inputgroup) {
-
-  .p-select+.p-select,
-  .p-inputtext+.p-inputtext {
+  .p-select + .p-select,
+  .p-inputtext + .p-inputtext {
     border-left: none;
   }
 }
@@ -154,7 +159,6 @@ function onCopy(dirId: string) {
 }
 
 .content {
-
   &::-webkit-scrollbar {
     display: none;
   }
@@ -201,7 +205,7 @@ function onCopy(dirId: string) {
 }
 
 .tip-text {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-size: 12px;
   line-height: 16px;
 }

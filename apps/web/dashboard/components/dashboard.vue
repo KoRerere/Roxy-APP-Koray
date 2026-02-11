@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import IpChangeWarnMessage from './ip-change-warn-message.vue'
+import TwoFactorAuth from './two-factor-auth.vue'
+import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
-import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-
 import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
-import IpChangeWarnMessage from './ip-change-warn-message.vue'
-import TwoFactorAuth from './two-factor-auth.vue'
+import { genDriver } from '/@/utils'
+
+import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
@@ -137,10 +138,33 @@ function getCoreInfo() {
     .catch(error => console.error(error))
 }
 
+async function showTourGuide() {
+  await nextTick()
+
+  if (globalThis.appConfig?.dashboardTourGuide === false) {
+    const driverObj = genDriver({
+      steps: [
+        { element: '#dashboard_tour_1', popover: { description: $t('这里显示窗口当前代理 IP 信息。'), side: 'top', align: 'center' } },
+        { element: '#dashboard_tour_2', popover: { description: $t('这里显示窗口备注和指纹等信息。'), side: 'top', align: 'center' } },
+      ],
+    })
+
+    driverObj.drive()
+    fetch('/api/dashboard/close-tour-guide', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    globalThis.appConfig = { ...(globalThis as any).appConfig, dashboardTourGuide: true }
+  }
+}
+
 onBeforeMount(() => {
   getWindowInfo()
   proxyDetection()
   getCoreInfo()
+  showTourGuide()
 })
 </script>
 
@@ -156,7 +180,9 @@ onBeforeMount(() => {
             {{ windowInfo.windowName }}
           </div>
           <template #content>
-            <div class="text-white max-w-200px">{{ windowInfo.windowName }}</div>
+            <div class="text-white max-w-200px">
+              {{ windowInfo.windowName }}
+            </div>
           </template>
         </RxTooltip>
       </div>
@@ -165,21 +191,20 @@ onBeforeMount(() => {
       </div>
     </div>
 
-    <IpChangeWarnMessage
-      v-if="!testProxyLoading && windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
+    <IpChangeWarnMessage v-if="!testProxyLoading && windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
 
-    <div class="card base-info">
+    <div id="dashboard_tour_1" class="card base-info">
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
-        <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }"
-          :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
+        <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew"
-              class="btn" :label="$t('刷新 URL')" outlined :disabled="refreshUrlLoading || testProxyLoading"
-              @click="refreshURL" />
-            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理 IP')"
-              outlined :disabled="refreshUrlLoading || testProxyLoading" @click="proxyDetection" />
+            <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
+                      :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL"
+            />
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理 IP')" outlined :disabled="refreshUrlLoading || testProxyLoading"
+                       @click="proxyDetection"
+            />
           </div>
         </Teleport>
       </div>
@@ -193,8 +218,7 @@ onBeforeMount(() => {
         <div class="ip">
           <Skeleton v-if="testProxyLoading" class="mt-2" height="2rem" />
           <template v-else>
-            <span
-              :class="{ 'is-ip-changed': windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP:
+            <span :class="{ 'is-ip-changed': windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP:
               {{ proxyInfo.ip || '--' }}</span>
           </template>
         </div>
@@ -204,7 +228,7 @@ onBeforeMount(() => {
     </div>
 
     <div class="card-horizontal">
-      <div class="card more-info profile">
+      <div id="dashboard_tour_2" class="card more-info profile">
         <div class="list">
           <div class="title">
             {{ $t('窗口信息') }}
@@ -243,8 +267,7 @@ onBeforeMount(() => {
         </div>
       </div>
 
-      <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length"
-        class="card more-info account">
+      <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
         <div class="list">
           <div class="title">
             {{ $t('平台账号') }}
@@ -266,7 +289,6 @@ onBeforeMount(() => {
         version {{ coreVersion }}
       </div>
     </div>
-
   </div>
 </template>
 
@@ -322,7 +344,7 @@ onBeforeMount(() => {
     }
 
     .window-name {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -356,7 +378,7 @@ onBeforeMount(() => {
 .card {
   background-color: var(--colors-background-bg-overlay);
   border-radius: var(--radius-2xl, 12px);
-  border: 0.5px solid var(--colors-border-border-overlay, #48555B);
+  border: 0.5px solid var(--colors-border-border-overlay, #48555b);
   padding: var(--spacing-4xl, 24px);
   /* shadow-xs */
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
@@ -396,24 +418,19 @@ onBeforeMount(() => {
         width: 92px;
         color: var(--colors-text-text-secondary, #b2b6b8);
         font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
+        font-size: 14px;
         font-weight: 500;
-        line-height: var(--Line-Height-text-xs, 16px);
-        /* 133.333% */
+        line-height: 1.5;
       }
 
       .value {
         flex: 1 0 0;
         color: var(--colors-text-text-tertiary, #7c8387);
         font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: var(--Line-Height-text-xs, 16px);
+        font-size: 14px;
+        line-height: 1.5;
         word-break: break-all;
         white-space: wrap;
-        /* 133.333% */
 
         .tag-wrap {
           display: flex;
@@ -462,7 +479,7 @@ onBeforeMount(() => {
     }
   }
 
-  >* {
+  > * {
     z-index: 1;
   }
 

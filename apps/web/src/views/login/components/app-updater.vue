@@ -9,7 +9,7 @@ const props = defineProps<{
 const { version, currentVersion } = toRefs(props)
 
 function handleClientItemClick() {
-  window.electronAPI.send('app:quitAndInstall', { type: 'app' })
+  globalThis.electronAPI.send('app:quitAndInstall', { type: 'app' })
 }
 </script>
 

@@ -2,3 +2,5 @@
 export const RESTORE_WINDOW_NOT_REMIND = 'restoreWindowNotRemind'
 /** 菜单栏是否折叠，0：折叠，1：展开 */
 export const MENU_COLLAPSED = 'menuCollapsed'
+/** 邀请码 */
+export const OFFICIAL_SITE_INVITE_CODE = 'official-site-invite-code'

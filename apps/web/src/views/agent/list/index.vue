@@ -59,6 +59,9 @@ async function operationHandler(operate: any, data: ProxyItem) {
       refreshUrl(data)
       break
     case 'test':
+      if (!globalThis.isElectron) {
+        return globalThis.electronAPI.send('proxy:detect', {} as any)
+      }
       testProxy(datas, operate.name)
       break
     case 'remark':
@@ -96,7 +99,7 @@ function editProxy(data: ProxyItem) {
 async function refreshUrl(data: ProxyItem) {
   const _data = toRaw(data)
   if (!_data.bindList!.length) {
-    const isOK = await setRowsLoading(_data, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
+    const isOK = await setRowsLoading(_data, 'refresh', () => globalThis.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
     showToast(isOK ? 0 : -1, _data.refreshUrl as string)
     return
   }
@@ -114,7 +117,7 @@ async function refreshUrl(data: ProxyItem) {
       severity: 'danger',
     },
     accept: async () => {
-      const isOK = await setRowsLoading(_data, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
+      const isOK = await setRowsLoading(_data, 'refresh', () => globalThis.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
       showToast(isOK ? 0 : -1, _data.refreshUrl as string)
     },
   })
@@ -141,6 +144,9 @@ async function testAllProxy() {
   if (!dataList.value?.length) {
     onlyErrorToast(-1, $t('暂无代理 IP'))
     return
+  }
+  if (!globalThis.isElectron) {
+    return globalThis.electronAPI.send('proxy:detect', {} as any)
   }
   await testProxy(dataList.value, 'test')
 }

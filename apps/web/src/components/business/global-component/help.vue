@@ -18,8 +18,9 @@ const showTooltipDelay = 60 * 1000
 const route = useRoute()
 const router = useRouter()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
-const { token } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { token } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const [, onlyErrorToast] = useResponseToast()
@@ -27,6 +28,7 @@ const [, onlyErrorToast] = useResponseToast()
 const showTooltip = ref(false)
 const qrcodeMap = ref<Record<string, any>>({})
 const qrcodeList = ref<any[]>([])
+const opening = ref(false)
 
 const supportCss = useCssModule('support')
 
@@ -170,6 +172,19 @@ function openHelpDocument() {
 }
 
 async function openMCP() {
+  console.log('🚀 ~ openMCP ~ opening.value:', opening.value)
+  if (opening.value)
+    return
+  mixpanelTrack('click_enter_agent')
+  opening.value = true
+
+  const apiPort = await globalThis.electronAPI.send('util:getApiPort')
+  if (apiPort === -1) {
+    onlyErrorToast(-1, $t('API 服务未启动，请检查端口是否被占用'))
+    opening.value = false
+    return
+  }
+
   const { code, data, msg } = await API.base.userGetUserApiList()
   onlyErrorToast(code, msg)
   if (code === 0) {
@@ -180,11 +195,12 @@ async function openMCP() {
       })
       onlyErrorToast(code, msg)
       if (code === 0) {
-        await electronAPI.send('app:restartAPIServer')
+        await globalThis.electronAPI.send('app:restartAPIServer')
       }
     }
-    await electronAPI.send('mcp:open')
+    await globalThis.electronAPI.send('mcp:open').catch(() => {})
   }
+  opening.value = false
 }
 
 // ============= 仅内测版本使用，后续版本删除所有相关逻辑 =============
@@ -264,7 +280,7 @@ function updateDriverStatus() {
       <img draggable="false" src="/images/mcp/roxy_ai_agent.svg">
     </div>
     <div class="w-12 h-12 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">
-      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="24" color="#FFF" />
+      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="24" color="#FFD682" />
     </div>
   </div>
   <LiveChat v-show="false" />
@@ -289,7 +305,7 @@ function updateDriverStatus() {
 }
 
 .icon {
-  background-color: #12a3fc;
+  background-color: #dc3910;
 }
 
 .tooltip {

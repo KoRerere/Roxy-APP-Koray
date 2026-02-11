@@ -1,4 +1,5 @@
 import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
+import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
 import { unzip } from '@tomjs/unzip-crx'
 import AdmZip from 'adm-zip'
 import { compare } from 'compare-versions'
@@ -6,17 +7,16 @@ import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import { readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { join } from 'node:path'
-import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
 import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
-import { getMainWindow } from '/@/modules/app/mainWindow'
-import { fileOperations } from '/@/modules/fileOperations'
-import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
 import { isWindows } from '/@/constants/common'
-import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
-import { store } from '/@/modules/store'
-import { ipcSender } from '/@/modules/ipc/sender'
+import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ExtensionValidationError } from '/@/modules/extension/errors'
+import { fileOperations } from '/@/modules/fileOperations'
+import { ipcSender } from '/@/modules/ipc/sender'
+import { store } from '/@/modules/store'
+import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 
 export interface UserSelectedExtensionInfo {
   type: 'warn' | 'success' | 'error'
@@ -154,7 +154,8 @@ export class ExtensionManager {
           }
           ipcSender.extension.downloadProgress({ extID: item.pluginDir!, percent: -1, errorTips })
           return Promise.reject(new Error(errorTips, { cause: error }))
-        } finally {
+        }
+        finally {
           downloadingExtensions.delete(localPath)
         }
       }
@@ -199,7 +200,8 @@ export class ExtensionManager {
         await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
       }
       localKey = manifestInfo.key
-    } catch (error) {
+    }
+    catch (error) {
       console.error('parse manifestFile error', error)
     }
 

@@ -89,7 +89,7 @@ function clearCache() {
           </i18n-t>
           <RxButton class="mt-1.5" size="md" label={$t('执行清除')} onClick={
             async () => {
-              const data = await electronAPI.send('browser:clearCacheByTimestamp', { days: days.value, clearType: clearType.value as "partial" | "all" })
+              const data = await globalThis.electronAPI.send('browser:clearCacheByTimestamp', { days: days.value, clearType: clearType.value as "partial" | "all" })
               showToast(0, $t('清除缓存数据成功'))
               hideModal()
             }

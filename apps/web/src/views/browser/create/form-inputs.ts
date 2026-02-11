@@ -55,7 +55,7 @@ const defaultFingerOptions = {
 export async function ceateRandomFinger(inupts: any, options?: { count?: number, preview?: boolean }) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
   const { count, preview } = { ...defaultFingerOptions, ...options }
-  const fingerDetail = await electronAPI.send('util:genRandomFingerprint', {
+  const fingerDetail = await globalThis.electronAPI.send('util:genRandomFingerprint', {
     fontType,
     canvas,
     webGL,
@@ -93,7 +93,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     getDictMap(),
     userStore.getUserConfig(),
     API.platform.userGetSearchEnginesList(),
-    window.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion)),
+    globalThis.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion)),
   ])
 
   const osIconMap = {
@@ -111,7 +111,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ? coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
       : coreVersion
   }
-
   const osOptions = $dict_map.os!.map(({ label, ...item }: any) => ({
     ...item,
     label,
@@ -122,7 +121,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
   const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
-
   // TODO:(anbin)
   const searchEngineOptions = searchEngine.code === 0
     ? (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon }))
@@ -152,6 +150,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(osValue?.value, $dict_map)
   const resolutionValue = resolutionOptions!.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
+
+  const extraMoblieVisible = initInputVisible(osValue.value, 'Android', false) || initInputVisible(osValue.value, 'IOS', false)
+
   const inputsGroup = [] as any[]
 
   const original = reactive<any>({
@@ -204,6 +205,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
                 resolutionInput.value = defaultValue
                 resolutionInput.options = resolutionOptions
               }
+
+              const moblieVisible = ['Android', 'IOS'].includes(item.value.value)
+              switchMoblieInputVisible(highLevelInputs, moblieVisible)
             }
           },
           preview: {
@@ -393,7 +397,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'displayLanguage',
-      value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage) ?? $dict_map.language![0],
+      value: $dict_map.language!.find((item: any) => item.value === data.displayLanguage) ?? $dict_map.language![0],
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isDisplayLanguageBaseIp, false, false),
@@ -416,7 +420,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'language',
-      value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language![0],
+      value: $dict_map.language!.find((item: any) => item.value === data.language) ?? $dict_map.language![0],
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isLanguageBaseIp, false, false),
@@ -441,7 +445,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: ' ',
       name: 'timeZone',
-      value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone) ?? $dict_map.timeZone![0],
+      value: $dict_map.timeZone!.find((item: any) => item.value === data.timeZone) ?? $dict_map.timeZone![0],
       options: $dict_map.timeZone,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isTimeZone, false, false),
@@ -702,7 +706,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { genRandomFonts, getAllowFontList } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { genRandomFonts, getAllowFontList } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
             genRandomFonts: [],
             getAllowFontList: [],
           })
@@ -745,7 +749,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { getwebGLNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { getwebGLNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
             getwebGLNoiseValue: [],
           })
           Object.assign(original, { webGLValue: getwebGLNoiseValue })
@@ -827,7 +831,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { getCanvasContextNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { getCanvasContextNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
             getCanvasContextNoiseValue: [],
           })
           Object.assign(original, { canvasValue: getCanvasContextNoiseValue })
@@ -873,7 +877,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       change: async (input: any) => {
         if (input.value) {
           const osInput = findInputByName(windowInputs, 'os')
-          const { getSpeechSynthesis } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { getSpeechSynthesis } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
             getSpeechSynthesis: [original.os || osInput?.value?.value],
           })
           Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
@@ -910,7 +914,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { getClientRectsValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+          const { getClientRectsValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
             getClientRectsValue: [],
           })
           Object.assign(original, { clientRectsValue: { enable: true, ...getClientRectsValue } })
@@ -978,7 +982,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data }) => data[0]?.macAddr)
         }
         else {
-          const macAddr = await window.electronAPI.send('app:getMacAddress')
+          const macAddr = await globalThis.electronAPI.send('app:getMacAddress')
           Reflect.set(original, 'macAddr', macAddr)
         }
       },
@@ -1104,6 +1108,185 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'startupParam',
       value: data.startupParam,
       placeholder: $t('浏览器启动参数,如 --mute,多个参数以英文分号分隔'),
+    },
+    {
+      name: 'BatterySeparator',
+      separatorTitle: $t('电池'),
+      separatorIcon: {
+        name: 'base/rx_ic_battery',
+        color: 'var(--colors-icon-icon-warning)',
+      },
+      separator: true,
+      visible: extraMoblieVisible,
+    },
+    {
+      type: 'selectButton',
+      label: $t('电池模拟'),
+      name: 'openBattery',
+      value: data.openBattery ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible,
+      change(input: any) {
+        const keys = ['openCharging', 'chargingTime', 'dischargingTime', 'level']
+        filterInputsByNames(highLevelInputs, keys).forEach((ipt) => {
+          ipt.visible = input.visible && input.value === true
+        })
+      },
+    },
+    {
+      type: 'selectButton',
+      label: $t('充电状态'),
+      name: 'openCharging',
+      value: data.openCharging ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible && initInputVisible(data.openBattery, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('充电时长（秒）'),
+      placeholder: $t('请填写充电时长，示例: {value}', { value: 100 }),
+      name: 'chargingTime',
+      value: data.chargingTime,
+      visible: extraMoblieVisible && initInputVisible(data.openBattery, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('放电时长（秒）'),
+      placeholder: $t('请填写放电时长，示例: {value}', { value: 100 }),
+      name: 'dischargingTime',
+      value: data.dischargingTime,
+      visible: extraMoblieVisible && initInputVisible(data.openBattery, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('电量'),
+      placeholder: $t('请填写电池电量(0-1)，示例: {value}', { value: 0.75 }),
+      name: 'level',
+      value: data.level,
+      visible: extraMoblieVisible && initInputVisible(data.openBattery, true, false),
+      onBlur(event: any) {
+        let newValue = event.target.value
+        const isValid = z.number().safeParse(Number(newValue))
+        if (isValid.success && newValue !== '') {
+          if (newValue > 1) {
+            newValue = 1
+          }
+          if (newValue < 0) {
+            newValue = 0
+          }
+        }
+        else {
+          newValue = ''
+          setInputFieldByInputKey(highLevelInputs, 'level', 'invalid', true)
+        }
+        setInputFieldByInputKey(highLevelInputs, 'level', 'value', newValue)
+      },
+    },
+    {
+      name: 'NetworkSeparator',
+      separatorTitle: $t('网络'),
+      separatorIcon: {
+        name: 'base/rx_ic_network_m',
+        color: 'var(--colors-icon-icon-success)',
+      },
+      separator: true,
+      visible: extraMoblieVisible,
+    },
+    {
+      type: 'selectButton',
+      label: $t('网络模拟'),
+      name: 'openNetwork',
+      value: data.openNetwork ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible,
+      change(input: any) {
+        const keys = ['networkType', 'networkSpeed', 'downloadSpeed', 'maxDownloadSpeed', 'latency', 'saveFlowMode']
+        filterInputsByNames(highLevelInputs, keys).forEach((ipt) => {
+          ipt.visible = input.visible && input.value === true
+        })
+      },
+    },
+    {
+      type: 'select',
+      label: $t('网络类型'),
+      name: 'networkType',
+      value: $dict_map.nettype!.find((item: any) => item.value === data.networkType) ?? $dict_map.nettype![0],
+      options: $dict_map.nettype,
+      filter: false,
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      type: 'select',
+      label: $t('网络速度'),
+      name: 'networkSpeed',
+      value: $dict_map.effectiveType!.find((item: any) => item.value === data.networkSpeed) ?? $dict_map.effectiveType![0],
+      options: $dict_map.effectiveType,
+      filter: false,
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('下载速度（Mbps）'),
+      placeholder: $t('请填写下载速度，示例: {value}', { value: 3000 }),
+      name: 'downloadSpeed',
+      value: data.downloadSpeed,
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('最大下载速度（Mbps）'),
+      placeholder: $t('请填写最大下载速度，示例: {value}', { value: 3000 }),
+      name: 'maxDownloadSpeed',
+      value: data.maxDownloadSpeed,
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      type: 'text',
+      label: $t('延迟（ms）'),
+      placeholder: $t('请填写延迟，示例: {value}', { value: 200 }),
+      name: 'latency',
+      value: data.latency,
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      type: 'selectButton',
+      label: $t('省流模式'),
+      name: 'saveFlowMode',
+      value: data.saveFlowMode ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible && initInputVisible(data.openNetwork, true, false),
+    },
+    {
+      name: 'bluetoothSeparator',
+      separatorTitle: $t('蓝牙'),
+      separatorIcon: {
+        name: 'base/rx_ic_bluetooth',
+        color: 'var(--colors-icon-icon-brand)',
+      },
+      separator: true,
+      visible: extraMoblieVisible,
+    },
+    {
+      type: 'selectButton',
+      label: $t('蓝牙模拟'),
+      name: 'openBluetooth',
+      value: data.openBluetooth ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible,
+      change(input: any) {
+        const keys = ['bluetoothAdapter']
+        filterInputsByNames(highLevelInputs, keys).forEach((ipt) => {
+          ipt.visible = input.visible && input.value === true
+        })
+      },
+    },
+    {
+      type: 'selectButton',
+      label: $t('蓝牙适配器'),
+      name: 'bluetoothAdapter',
+      value: data.bluetoothAdapter ?? false,
+      options: genSwitchOptions(),
+      visible: extraMoblieVisible && initInputVisible(data.openBluetooth, true, false),
     },
   ])
 
@@ -1312,6 +1495,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   return [inputsGroup, original]
 }
 
+export function switchMoblieInputVisible(inputs: any[], value: boolean) {
+  const keys = ['BatterySeparator', 'NetworkSeparator', 'bluetoothSeparator', 'openBattery', 'openNetwork', 'openBluetooth']
+  const list = filterInputsByNames(inputs, keys)
+  if (isEmptyValue(list))
+    return
+
+  list.forEach((input) => {
+    Reflect.set(input, 'visible', value)
+    input.change?.(input)
+  })
+}
+
 export function genSwitchOptions(options?: { trueText: string, falseText: string, trueValue: any, falseValue: any }) {
   const defaultOptions = { trueText: $t('开启'), falseText: $t('关闭'), trueValue: true, falseValue: false }
   const { trueText, falseText, trueValue, falseValue } = { ...defaultOptions, ...options }
@@ -1345,7 +1540,7 @@ export async function genDefaultProfileByCount(count: number) {
   const defaultParams = getFormDataByList(inputsGroup)
   const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion']
   const fingerParams = Object.fromEntries(fingerKeys.map(key => [key, defaultParams[key]]))
-  const fingerDetail = await electronAPI.send('util:genRandomFingerprint', fingerParams, count)
+  const fingerDetail = await globalThis.electronAPI.send('util:genRandomFingerprint', fingerParams, count)
 
   try {
     const { data } = await API.window.userBatchWindowInfoV2Create({

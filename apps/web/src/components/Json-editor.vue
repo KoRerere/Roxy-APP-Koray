@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import { EditorState } from "@codemirror/state"
-import { EditorView, keymap, lineNumbers } from "@codemirror/view"
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands"
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
-import { lintGutter, linter, type Diagnostic } from "@codemirror/lint"
-import { json } from "@codemirror/lang-json"
-import { tags } from "@lezer/highlight"
-import { merge } from "es-toolkit"
+import { EditorState } from '@codemirror/state'
+import { EditorView, keymap, lineNumbers } from '@codemirror/view'
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { linter, lintGutter } from '@codemirror/lint'
+import type { Diagnostic } from '@codemirror/lint'
+import { json } from '@codemirror/lang-json'
+import { tags } from '@lezer/highlight'
+import { merge } from 'es-toolkit'
 
 defineOptions({ inheritAttrs: false })
-
-interface Props {
-  editable?: boolean
-  showLineNumbers?: boolean
-  theme?: object
-}
 
 const {
   editable = true,
@@ -22,9 +17,15 @@ const {
   theme = {},
 } = defineProps<Props>()
 
+interface Props {
+  editable?: boolean
+  showLineNumbers?: boolean
+  theme?: object
+}
+
 const modelValue = defineModel<string>()
 
-const editorRef = useTemplateRef("editor")
+const editorRef = useTemplateRef('editor')
 const editorInstance = ref<EditorView | null>(null)
 
 const jsonLinter = linter((view) => {
@@ -33,17 +34,18 @@ const jsonLinter = linter((view) => {
 
   try {
     JSON.parse(doc)
-  } catch (e: any) {
+  }
+  catch (e: any) {
     if (e instanceof SyntaxError) {
       const message = e.message
       const matchPos = /at position (\d+)/.exec(message)
-      const pos = matchPos ? parseInt(matchPos[1]!, 10) : 0
+      const pos = matchPos ? Number.parseInt(matchPos[1]!, 10) : 0
 
       diagnostics.push({
         from: pos,
         to: pos,
-        severity: "error",
-        message: `JSON语法错误: ${message}`
+        severity: 'error',
+        message: `JSON语法错误: ${message}`,
       })
     }
   }
@@ -52,50 +54,50 @@ const jsonLinter = linter((view) => {
 })
 
 const jsonHighlightStyle = HighlightStyle.define([
-  { tag: tags.propertyName, color: "#6EC3FF" },
-  { tag: tags.string, color: "#F57FFD" },
-  { tag: tags.number, color: "#9543de" },
-  { tag: tags.bool, color: "#D73A49" },
-  { tag: tags.null, color: "#D73A49" },
-  { tag: tags.punctuation, color: "rgba(255, 255, 255,0.4)" }
+  { tag: tags.propertyName, color: '#6EC3FF' },
+  { tag: tags.string, color: '#F57FFD' },
+  { tag: tags.number, color: '#9543de' },
+  { tag: tags.bool, color: '#F2994A' },
+  { tag: tags.null, color: '#D73A49' },
+  { tag: tags.punctuation, color: 'rgba(255, 255, 255,0.4)' },
 ])
 
 const defaultTheme = {
-  "&": {
-    height: "100%",
-    border: "1px solid var(--colors-border-border-subtle, #C7D1D6)",
-    borderRadius: "6px",
-    overflow: "hidden"
+  '&': {
+    height: '100%',
+    border: '1px solid var(--colors-border-border-subtle, #C7D1D6)',
+    borderRadius: '6px',
+    overflow: 'hidden',
   },
-  ".cm-scroller": {
-    overflow: "auto",
+  '.cm-scroller': {
+    overflow: 'auto',
   },
-  ".cm-gutters": {
-    backgroundColor: "var(--pattern-editor-bg, #2C2E30)",
-    borderRight: "1px solid var(--colors-border-border-subtle, #C7D1D6)"
+  '.cm-gutters': {
+    backgroundColor: 'var(--pattern-editor-bg, #2C2E30)',
+    borderRight: '1px solid var(--colors-border-border-subtle, #C7D1D6)',
   },
-  ".cm-gutter-lint": { width: "16px" },
-  ".cm-gutter-lint .cm-gutterElement": { padding: "1px 2px" },
-  ".cm-lint-marker": { fontSize: "12px" },
-  ".cm-lineNumbers .cm-gutterElement": {
-    paddingLeft: "12px",
-    color: "var(--colors-text-text-inactive, #7D8387)",
-    fontFamily: "JetBrains Mono",
-    fontSize: "12px",
-    lineHeight: "normal"
+  '.cm-gutter-lint': { width: '16px' },
+  '.cm-gutter-lint .cm-gutterElement': { padding: '1px 2px' },
+  '.cm-lint-marker': { fontSize: '12px' },
+  '.cm-lineNumbers .cm-gutterElement': {
+    paddingLeft: '12px',
+    color: 'var(--colors-text-text-inactive, #7D8387)',
+    fontFamily: 'JetBrains Mono',
+    fontSize: '12px',
+    lineHeight: 'normal',
   },
-  ".cm-content": {
-    backgroundColor: "var(--pattern-editor-bg, #2C2E30)",
-    padding: "12px",
-    color: "#24292E",
-    fontFamily: "JetBrains Mono",
-    fontSize: "12px",
-    fontWeight: "500",
-    lineHeight: "normal"
+  '.cm-content': {
+    backgroundColor: 'var(--pattern-editor-bg, #2C2E30)',
+    padding: '12px',
+    color: '#24292E',
+    fontFamily: 'JetBrains Mono',
+    fontSize: '12px',
+    fontWeight: '500',
+    lineHeight: 'normal',
   },
-  ".cm-line": {
-    padding: "0px",
-  }
+  '.cm-line': {
+    padding: '0px',
+  },
 }
 
 watch(() => modelValue.value, (newValue) => {
@@ -104,8 +106,8 @@ watch(() => modelValue.value, (newValue) => {
       changes: {
         from: 0,
         to: editorInstance.value.state.doc.length,
-        insert: newValue
-      }
+        insert: newValue,
+      },
     })
   }
 })
@@ -119,7 +121,8 @@ onBeforeUnmount(() => {
 })
 
 function initEditor() {
-  if (!editorRef.value) return
+  if (!editorRef.value)
+    return
 
   const state = EditorState.create({
     doc: modelValue.value,
@@ -139,18 +142,18 @@ function initEditor() {
       jsonLinter,
       syntaxHighlighting(jsonHighlightStyle),
       json(),
-    ]
+    ],
   })
 
   editorInstance.value = new EditorView({
     state,
-    parent: editorRef.value
+    parent: editorRef.value,
   })
 }
 </script>
 
 <template>
-  <div ref="editor" class="w-full h-full" :class="$attrs.class"></div>
+  <div ref="editor" class="w-full h-full" :class="$attrs.class" />
 </template>
 
 <style scoped></style>
