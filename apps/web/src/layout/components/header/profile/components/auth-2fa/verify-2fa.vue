@@ -9,31 +9,31 @@ const imgSrc = computed(() => {
 
 const modelValue = defineModel<string>('modelValue')
 
-const inputOtpRef = useTemplateRef<any>('inputOtpRef');
+const inputOtpRef = useTemplateRef<any>('inputOtpRef')
 
 onMounted(() => {
   nextTick(() => {
-    const inputs = inputOtpRef.value.$el.querySelectorAll('input');
+    const inputs = inputOtpRef.value.$el.querySelectorAll('input')
     if (inputs.length > 0) {
       setTimeout(() => {
-        inputs[0].focus();
+        inputs[0].focus()
       }, 200)
     }
-  });
+  })
 })
 </script>
 
 <template>
   <div>
     <div class="flex justify-center mb-38px">
-      <img :src="imgSrc" />
+      <img :src="imgSrc">
     </div>
 
     <div class="flex flex-col gap-12px">
       <div class="text-[var(--colors-text-text-tertiary)] font-12px font-400 font-[Inter]">
         {{ $t('请检查身份验证器应用以获取验证码。') }}
       </div>
-      <InputOtp ref="inputOtpRef" class="inputotp-auto" name="passcode" :length="6" v-model="modelValue" />
+      <InputOtp ref="inputOtpRef" v-model="modelValue" class="inputotp-auto" name="passcode" :length="6" />
     </div>
   </div>
 </template>
@@ -50,12 +50,18 @@ onMounted(() => {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;
     line-height: normal;
     text-transform: uppercase;
+
+    @media (max-width: 768px) {
+      width: calc(100% / 6 - 5px);
+      height: 64px;
+      font-size: 20px;
+    }
   }
 }
 </style>

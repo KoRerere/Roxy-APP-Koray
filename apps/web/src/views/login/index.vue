@@ -20,12 +20,14 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { Role, WorkspaceType } from '/@/enums'
 import { getInviteCode } from '/@/api/util'
+import { useWindowSize } from '@vueuse/core'
 
 const loginEventCommonParams = {
   login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
 }
 
 const signFormRef = useTemplateRef('signForm')
+const { width: windowWidth } = useWindowSize()
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite } = simpleLocaleStore
@@ -353,9 +355,9 @@ provideLoginContext({
 
 <template>
   <div class="flex w-full h-100vh">
-    <div class="w-47% h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
+    <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
       <div class="relative z-10 h-full">
-        <div class="flex justify-between p-5">
+        <div class="flex justify-between sm:p-5 p-3">
           <div class="logo">
             <SvgIcon name="base/logo" size="36" />
             <div class="logo-text">
@@ -399,7 +401,7 @@ provideLoginContext({
       <RxSvgIcon name="login/blob1" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -left-60%" />
       <RxSvgIcon name="login/blob2" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -right-50%" />
     </div>
-    <div class="w-53% h-full relative overflow-hidden right-panel">
+    <div v-if="windowWidth > 1024" class="w-53% h-full relative overflow-hidden right-panel">
       <RightIntro />
     </div>
   </div>
@@ -430,6 +432,10 @@ provideLoginContext({
   gap: 10px;
   color: white;
   z-index: 10;
+
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
 
   .logo-text {
     color: var(--colors-text-text-primary);
@@ -472,6 +478,7 @@ provideLoginContext({
 }
 
 .sign-card {
+  width: 100%;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -479,7 +486,6 @@ provideLoginContext({
   padding: var(--spacing-4xl, 24px);
   display: flex;
   max-width: var(--width-sm, 480px);
-  min-width: var(--width-sm, 424px);
   flex-direction: column;
   gap: 16px;
   align-items: center;

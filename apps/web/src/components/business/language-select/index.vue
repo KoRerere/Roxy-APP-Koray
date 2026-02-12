@@ -49,7 +49,7 @@ watch(() => currentLocale.value, (val) => {
     justify-content: center;
     align-items: center;
     gap: var(--spacing-md, 6px);
-    color: var(--colors-text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #171c1f);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

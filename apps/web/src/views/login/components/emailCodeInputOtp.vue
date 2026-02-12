@@ -225,6 +225,12 @@ onBeforeMount(() => {
     font-weight: 400;
     line-height: normal;
     text-transform: uppercase;
+
+    @media (max-width: 768px) {
+      width: calc(100% / 6 - 5px);
+      height: 64px;
+      font-size: 20px;
+    }
   }
 }
 
