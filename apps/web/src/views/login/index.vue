@@ -356,8 +356,8 @@ provideLoginContext({
 <template>
   <div class="flex w-full h-100vh">
     <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
-      <div class="relative z-10 h-full">
-        <div class="flex justify-between sm:p-5 p-3">
+      <div class="relative z-10 h-full flex-col flex-bc">
+        <div class="w-full flex justify-between sm:p-5 p-3">
           <div class="logo">
             <SvgIcon name="base/logo" size="36" />
             <div class="logo-text">
@@ -448,11 +448,7 @@ provideLoginContext({
 }
 
 .footer {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 20px;
-  z-index: 10;
+  margin-bottom: 20px;
   color: var(--colors-text-text-tertiary, #fff);
   text-align: center;
   font-family: Inter;
@@ -479,10 +475,6 @@ provideLoginContext({
 
 .sign-card {
   width: 100%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   padding: var(--spacing-4xl, 24px);
   display: flex;
   max-width: var(--width-sm, 480px);
