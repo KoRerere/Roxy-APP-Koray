@@ -12,7 +12,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, hidePageLoading, isMainWindow, isWindows } from '/@/utils'
+import { encryptAESGCM, hidePageLoading, isMainWindow, isMobile, isWindows } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
@@ -111,6 +111,11 @@ export const useUserStore = defineStore(
       const { code, data } = await fetchUserInfo()
 
       if (code === 0) {
+        if (!globalThis.isElectron && isMobile()) {
+          location.href = locale.getOfficialWebsite('login-success')
+          return
+        }
+
         setUserInfo(data)
         workspaceStore.setCurrentWorkspace(data.workspaceId)
         setTimeout(() => {

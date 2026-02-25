@@ -79,9 +79,9 @@ const baseOssConfig = {
   bucket: isProd ? 'lumibrowser' : 'lumibrowser-test',
 }
 
-// 将 web 资源包添加到 zip 中, 排除 .map 文件
+// 将 web 资源包添加到 zip 中, 排除 .map 和 .gz 文件
 zip.addLocalFolder(webPath, '', (filename) => {
-  return !filename.endsWith('.map')
+  return !filename.endsWith('.map') && !filename.endsWith('.gz')
 })
 
 async function getOssToken() {

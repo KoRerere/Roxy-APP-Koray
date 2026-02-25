@@ -43,3 +43,14 @@ if (isMainWindow) {
 else {
   hidePageLoading()
 }
+
+export function isMobile() {
+  const ua = navigator.userAgent || ''
+  const isMobileUA = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua)
+
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches
+
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  return isMobileUA || (isSmallScreen && isTouch)
+}

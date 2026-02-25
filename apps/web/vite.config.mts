@@ -17,6 +17,7 @@ import { loadEnv } from 'vite'
 import type { PluginOption, UserConfig } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
+import viteCompression from 'vite-plugin-compression'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -263,6 +264,13 @@ export type SvgNames = ${typeDefine}`
           importStyle: false, // css in js
         }),
       ],
+    }),
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 10240,
+      algorithm: 'gzip',
+      ext: '.gz',
     }),
     // sentryVitePlugin({
     //   org: process.env.VITE_SENTRY_ORG,

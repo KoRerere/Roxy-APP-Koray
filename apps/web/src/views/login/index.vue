@@ -355,7 +355,7 @@ provideLoginContext({
 
 <template>
   <div class="flex w-full h-100vh">
-    <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
+    <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)]">
       <div class="relative z-10 h-full flex-col flex-bc">
         <div class="w-full flex justify-between sm:p-5 p-3">
           <div class="logo">
