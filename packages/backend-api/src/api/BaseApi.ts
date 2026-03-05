@@ -108,6 +108,7 @@ import {
   UserGetGuideVideosByTypeListParams,
   UserGetInviteCodeListData,
   UserGetInviteLinkListData,
+  UserGetInviteNotifyListData,
   UserGetInviteUserListV2ListData,
   UserGetInviteUserListV2ListParams,
   UserGetLlmInfoListData,
@@ -2121,6 +2122,22 @@ export class BaseApi<SecurityDataType = unknown> {
   getSpringFestivalTimeList = (params: RequestParams = {}) =>
     this.http.request<GetSpringFestivalTimeListData, any>({
       path: `/get_spring_festival_time`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetInviteNotifyList
+   * @summary 用户获取邀请通知
+   * @request GET:/user_get_invite_notify
+   * @response `200` `UserGetInviteNotifyListData`
+   */
+  userGetInviteNotifyList = (params: RequestParams = {}) =>
+    this.http.request<UserGetInviteNotifyListData, any>({
+      path: `/user_get_invite_notify`,
       method: "GET",
       format: "json",
       ...params,

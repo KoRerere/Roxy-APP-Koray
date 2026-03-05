@@ -1,5 +1,5 @@
-import type { AxiosResponse } from "axios"
-import { getDictVersion } from "/@/utils"
+import type { AxiosResponse } from 'axios'
+import { getDictVersion } from '/@/utils'
 
 /** 上一次版本 */
 let lastVersion = localStorage.getItem('lastDictVersion') || ''
@@ -16,11 +16,13 @@ export async function checkDictVersion(response: AxiosResponse<any, any>) {
 
   if (remoteVersion > lastVersion) {
     console.info('checkDictVersion', remoteVersion, lastVersion)
-    await getDictVersion().finally(() => {
+    const result = await getDictVersion().finally(() => {
       isCheckingVersion = false
     })
-    lastVersion = remoteVersion
-    localStorage.setItem('lastDictVersion', remoteVersion)
+    if (result.code === 0) {
+      lastVersion = remoteVersion
+      localStorage.setItem('lastDictVersion', remoteVersion)
+    }
   }
   else {
     isCheckingVersion = false

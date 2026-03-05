@@ -210,11 +210,11 @@ function onUpgradePlan() {
     </div>
     <div class="flex mt-6 gap-6">
       <div class="flex-1 flex flex-col gap-8">
-        <ItemBlock :title="$t('当前套餐')">
+        <ItemBlock :title="isExpired ? $t('续费套餐') : $t('当前套餐')">
           <div>
             <div class="plan">
               {{ $t('{count} 窗口', {
-                count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format(),
+                count: currency(userPayInfo.purchaseWindowCount, { precision: 0, symbol: '' }).add(userPayInfo.freeWindowCount).format(),
               }) }}
             </div>
             <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="$t('若要增加窗口上限，请{terms}{text}新套餐。', { terms: '{terms}', text: '{text}' })" scope="global">
@@ -267,11 +267,11 @@ function onUpgradePlan() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-4 gap-3">
-              <SpringActivity v-model="giftType" :amount="totalAmount" :gift-profile="giftProfile" />
+              <SpringActivity v-if="selectedDuration" v-model="giftType" :amount="totalAmount" :gift-profile="giftProfile" />
               <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm" />
               <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
-                  <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+                  <a class="terms-link" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                 </template>
               </i18n-t>
             </div>

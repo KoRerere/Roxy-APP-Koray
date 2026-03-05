@@ -135,7 +135,7 @@ async function showLastUpdateLog() {
           <div class="flex items-center gap-3">
             <a class="log" href="#" @click.prevent="showLastUpdateLog">{{ $t('上次更新') }}</a>
             <span class="color-[var(--component-dropdown-divider)]">|</span>
-            <a class="log" :href="getOfficialWebsite('changelog')" target="_blank" rel="noopener noreferrer">{{ $t('更新日志') }}</a>
+            <a class="log" :href="getOfficialWebsite('/changelog')" target="_blank" rel="noopener noreferrer">{{ $t('更新日志') }}</a>
           </div>
         </div>
       </div>

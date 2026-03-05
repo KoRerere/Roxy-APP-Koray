@@ -3,7 +3,9 @@ import LiveChat from '/@/components/business/live-chat/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { ISO639List } from '/@/constants/iso-639'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useWindowSize } from '@vueuse/core'
 
+const { width } = useWindowSize()
 const simpleLocale = useSimpleLocale()
 
 const ISO639 = ref(ISO639List)
@@ -26,7 +28,7 @@ watch(() => currentLocale.value, (val) => {
 
     <TsFormSelect v-model="currentLocale" :options="ISO639" :filter="false" class="md:w-36" />
 
-    <component is="style">
+    <component is="style" v-if="width > 768">
       #chat-widget-container {
       left: unset!important;
       right: 30px;

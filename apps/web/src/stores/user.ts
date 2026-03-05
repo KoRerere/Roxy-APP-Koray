@@ -107,20 +107,25 @@ export const useUserStore = defineStore(
       return { identity, ...identityMap[identity] }
     })
 
-    async function getUserInfo() {
+    async function getUserInfo(intoWorkspaceId?: number) {
       const { code, data } = await fetchUserInfo()
 
       if (code === 0) {
-        if (!globalThis.isElectron && isMobile()) {
-          location.href = locale.getOfficialWebsite('login-success')
-          return
-        }
+        lastLoginTime.value = Date.now()
 
         setUserInfo(data)
-        workspaceStore.setCurrentWorkspace(data.workspaceId)
+        workspaceStore.setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
+
         setTimeout(() => {
           hidePageLoading()
         }, 10000)
+
+        if (!globalThis.isElectron && isMobile()) {
+          location.replace(locale.getOfficialWebsite(`/login-success?login-from-app`))
+          await new Promise(resolve => setTimeout(resolve, 10 * 1000))
+        }
+
+        checkShowAccountSetupDialog()
       }
       else {
         // 如果获取用户信息失败，则清除用户信息
@@ -143,13 +148,7 @@ export const useUserStore = defineStore(
     }
 
     async function fetchUserInfo() {
-      const result = await API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
-      if (result.code === 0) {
-        lastLoginTime.value = Date.now()
-        userInfo.value = result.data
-        checkShowAccountSetupDialog()
-      }
-      return result
+      return API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
     }
 
     async function setUserInfo(info: UserInfo) {
@@ -340,9 +339,9 @@ export const useUserStore = defineStore(
       password.value = await encryptAESGCM(pwd)
     }
 
-    const initUserInfo = async () => {
+    const initUserInfo = async (intoWorkspaceId?: number) => {
       if (token.value) {
-        await getUserInfo()
+        await getUserInfo(intoWorkspaceId)
         getUserConfig(true)
       }
     }

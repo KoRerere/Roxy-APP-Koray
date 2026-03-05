@@ -1,3 +1,5 @@
+import 'core-js/es/promise/with-resolvers'
+
 if (typeof window !== 'undefined' && (!window.CSS || !window.CSS.px)) {
   // @ts-ignore
   window.CSS = window.CSS || {}

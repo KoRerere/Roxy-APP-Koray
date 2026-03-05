@@ -181,6 +181,7 @@ function getTaskSummary(task: WorkerTask): string {
     font-size: 12px;
     font-family: JetBrains Mono;
     color: var(--colors-text-text-tertiary);
+    text-wrap: auto;
   }
 }
 </style>

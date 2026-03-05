@@ -63,6 +63,7 @@ const { toggleThinkingExpand, isThinkingExpanded } = useMessageItem()
     font-size: 12px;
     font-family: JetBrains Mono;
     color: var(--colors-text-text-tertiary);
+    text-wrap: auto;
   }
 }
 </style>

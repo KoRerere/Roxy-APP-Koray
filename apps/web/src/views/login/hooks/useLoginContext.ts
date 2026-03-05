@@ -10,7 +10,7 @@ export function useLoginContext() {
   return inject(injectKey) as LoginContext
 }
 
-export type CurrentComp = 'emailCodeInputOtp' | 'signForm' | 'resetPassword' | 'InviteIntoWorkspace' | 'verify2fa' | 'recoveryCode' | 'recoveryEmail'
+export type CurrentComp = 'emailCodeInputOtp' | 'signForm' | 'resetPassword' | 'inviteIntoWorkspace' | 'verify2fa' | 'recoveryCode' | 'recoveryEmail'
 
 export interface LoginContext {
   /** 登录 */

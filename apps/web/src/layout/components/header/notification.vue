@@ -2,6 +2,7 @@
 import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
 import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
 import { API } from '/@/api'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
@@ -21,6 +22,7 @@ interface Tab {
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
+const { setCurrentWorkspace } = useWorkspaceStore()
 
 const ROXY_GIFTS_TYPE = ref(new Set(Object.values(RoxyGiftsType)))
 
@@ -108,8 +110,10 @@ async function onRead(item: Message | Message[]) {
     ids.forEach(id => readSet.value.delete(id))
     return
   }
-  tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
-  items.forEach(item => item.status = NotifyStatus.read)
+  tabs.value.find(tab => tab.value === items[0]!.messageModule)!.noRead -= ids.length
+  items.forEach(item => {
+    Reflect.set(item, 'status', NotifyStatus.read)
+  })
 }
 
 async function markAllAsRead() {
@@ -160,21 +164,24 @@ function checkTransfer(item: Message) {
 }
 
 function showAcceptInvitationDialog(item: Message) {
-  const { hideModal } = showModal({
+  showModal({
     showHeader: false,
     modal: true,
     class: '!w-[380px] pa-6',
     blockScroll: true,
     slots: {
-      container: () => {
-        return <InviteIntoWorkspace inviteInfo={item.paramData!} onClose={handleClose} />
+      container: ({ hideModal }) => {
+        return <InviteIntoWorkspace inviteInfo={item.paramData!} onClose={async (intoWorkspaceId?: number) => {
+          if (intoWorkspaceId) {
+            setCurrentWorkspace(intoWorkspaceId)
+            router.push({ name: 'browser' })
+          }
+          hideModal()
+          onRead(item)
+        }} />
       },
     },
   })
-  function handleClose() {
-    hideModal()
-    onRead(item)
-  }
 }
 
 function showRedeemCodeRecord() {
@@ -215,8 +222,7 @@ function showRedeemCodeRecord() {
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
                     <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
-                              :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18"
-                    />
+                      :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div class="w-full">
                     <div :class="message.value">

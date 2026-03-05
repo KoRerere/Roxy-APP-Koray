@@ -327,6 +327,7 @@ async function modifyFilter() {
 .content {
   max-height: 500px;
   overflow-y: auto;
+  border-width: 0.5px;
 }
 
 .list {

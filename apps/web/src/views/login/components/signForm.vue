@@ -84,7 +84,7 @@ const checkEmailRegistered = debounce(async () => {
 }, 300)
 
 function switchFormMode() {
-  const getSchemas = isEmailLogin.value ? getFormSchemas : getPhoneSchemas
+  const getSchemas = isEmailLogin.value ? getFormSchemas : () => getPhoneSchemas(() => { loginType.value = 'password' })
 
   const isRegister = !isBoolean(emailLoginMap.value[signFormData.value.user_name])
 
@@ -167,12 +167,8 @@ defineExpose({
 </script>
 
 <template>
-  <i18n-t
-    v-if="inviteDiscountInfo && inviteDiscountInfo.isShow"
-    class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
-    :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })"
-    scope="global"
-  >
+  <i18n-t v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
+    :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global">
     <template #discount>
       <span class="discount-value">{{ inviteDiscountInfo.userDiscount }}%</span>
     </template>
@@ -302,9 +298,7 @@ defineExpose({
   color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px; /* 142.857% */
+  line-height: 20px;
   margin-bottom: 8px;
 }
 

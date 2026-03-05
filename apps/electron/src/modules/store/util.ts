@@ -37,7 +37,7 @@ function generateEncryptionKey(): Buffer {
 }
 
 /** 加密数据 */
-function encryptData(data: string): string {
+export function encryptData(data: string): string {
   try {
     const key = generateEncryptionKey()
     /**
@@ -60,7 +60,7 @@ function encryptData(data: string): string {
 }
 
 /** 解密数据 */
-function decryptData(encryptedData: string): string {
+export function decryptData(encryptedData: string): string {
   try {
     const key = generateEncryptionKey()
     // 分离 IV 和加密数据
@@ -190,17 +190,6 @@ export async function fetchUserConfig() {
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
-  }
-}
-
-export async function fetchCheckChannelList() {
-  const { code, data } = await API.base.userGetSystemDictV2Create({ type: ['checkChannel'] })
-  if (code === 0) {
-    store.checkChannelList = data.reduce((map, item) => {
-      const hostname = new URL(item.value).hostname
-      map[hostname] = item.label.toLowerCase()
-      return map
-    }, {})
   }
 }
 

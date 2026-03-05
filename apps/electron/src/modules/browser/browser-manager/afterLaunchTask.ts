@@ -1,8 +1,9 @@
 import type { IBrowser } from './adapter'
 import type { BrowserItem } from './browserItem'
-import type { Protocol } from './chrome-wrapper/'
+import type { ChromePage, ChromeTarget, Protocol } from './chrome-wrapper/'
 import CDP from 'chrome-remote-interface'
 import ejs from 'ejs'
+import { debounce } from 'es-toolkit'
 import { readFile, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
@@ -23,6 +24,8 @@ export class AfterLaunchTask {
   private continueAccess = false
   /** 检测 IP 变化定时器 */
   private checkIpChangeTimer: NodeJS.Timeout | null = null
+  /** cookie 定时同步定时器 */
+  private cookieTimer: NodeJS.Timeout | null = null
 
   constructor(private browserItem: BrowserItem, public browser: IBrowser) { }
 
@@ -35,6 +38,9 @@ export class AfterLaunchTask {
       this.continueAccess = true
       if (this.checkIpChangeTimer) {
         clearTimeout(this.checkIpChangeTimer)
+      }
+      if (this.cookieTimer) {
+        clearInterval(this.cookieTimer)
       }
     })
     await this.handleBrowserEvent()
@@ -162,7 +168,66 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
-      setTimeout(saveCookies, 1000)
+      this.cookieTimer = setInterval(() => {
+        saveCookies()
+      }, 3 * 1000)
+
+      // 监听真正的网络响应 (Network.responseReceived)
+
+      /**
+       * 节流处理，避免在一个页面有多个连续请求（均返回 set-cookie）时触发过度频繁的存储
+       */
+      const throttledSaveCookies = debounce(() => {
+        saveCookies()
+      }, 500)
+
+      /**
+       * 给页面创建并绑定独立的 CDP Session，监听网络层响应
+       */
+      const setupNetworkListener = async (page: ChromePage) => {
+        try {
+          if (typeof page.createCDPSession === 'function') {
+            const session = await page.createCDPSession()
+            await session.send('Network.enable').catch(() => {
+              // 忽略重复 enable 可能带来的报错
+            })
+            // 为了捕获原始的 Set-Cookie，必须监听 ExtraInfo 事件
+            session.on('Network.responseReceivedExtraInfo', (event: any) => {
+              const headers = event.headers || {}
+              // console.debug('responseReceivedExtraInfo', event)
+
+              // 匹配包含 set-cookie 的响应头（因为 ExtraInfo 返回的 key 可能大小写不一致）
+              const hasSetCookie = Object.keys(headers).some(k => k.toLowerCase() === 'set-cookie')
+              if (hasSetCookie) {
+                console.debug(`[CDP] Detected Set-Cookie via ExtraInfo`)
+                throttledSaveCookies()
+              }
+            })
+          }
+        }
+        catch (e) {
+          console.debug('setupNetworkListener error:', e)
+        }
+      }
+
+      // 1. 给浏览器刚打开时就存在的页面绑定底层监听
+      if (pages && pages.length) {
+        pages.forEach(p => setupNetworkListener(p as unknown as ChromePage))
+      }
+
+      // 2. 监听将来通过脚本或者点击 a 标签跳出的新标签页
+      this.browser.on('targetcreated', (target: ChromeTarget) => {
+        // target 刚弹出来时，内部的 ChromePage 实例通常还处于初始化中，稍微延迟下
+        setTimeout(async () => {
+          try {
+            const currentPages = await this.browser?.pages()
+            const newPage = currentPages?.find(p => p.target()._targetId === target._targetId) as ChromePage | undefined
+            if (newPage)
+              setupNetworkListener(newPage)
+          }
+          catch (e) {}
+        })
+      })
     }
   }
 

@@ -2139,23 +2139,39 @@ export interface UserGetNotifyListData {
     type?: string;
     notify?: string;
     status?: number;
-    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    /**
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     */
     userIdentity?: string;
-    /** 名下用户：true:有,false：没有 */
+    /**
+     * 名下用户：true:有,false：没有
+     * 名下用户：true:有,false：没有
+     */
     underName?: boolean;
-    /** 推荐用户：true:是,false：不是 */
+    /**
+     * 推荐用户：true:是,false：不是
+     * 推荐用户：true:是,false：不是
+     */
     recommendUser?: boolean;
     createTime?: string;
     messageModule?: string;
     userName?: string;
-    /** 窗口转移编号 */
+    /**
+     * 窗口转移编号
+     * 窗口转移编号
+     */
     windowTransferNo?: string;
-    /** 系统通知类型判断，1：系统通知， 0：用户通知 */
+    /**
+     * 系统通知类型判断，1：系统通知， 0：用户通知
+     * 系统通知类型判断，1：系统通知， 0：用户通知
+     */
     sysType?: number;
     avatar?: string;
     avatarColor?: string;
     paramData?: {
       data: string;
+      workspaceId: number;
       workspaceName: string;
       workspacePicture: string;
       endTime: string;
@@ -3620,6 +3636,22 @@ export interface GetSpringFestivalTimeListData {
     profile: {
       enable: boolean;
       expireDays: number;
+    };
+  };
+  msg: string;
+}
+
+export interface UserGetInviteNotifyListData {
+  code: number;
+  data: {
+    id: number;
+    paramData: {
+      data: string;
+      workspaceName: string;
+      workspaceId: number;
+      workspacePicture: string;
+      endTime: string;
+      identityType: string;
     };
   };
   msg: string;
@@ -6977,13 +7009,11 @@ export interface UserInviteCreateData {
   msg: string;
 }
 
-export interface UserAddUserByProjectInfoCreatePayload {
-  /** 加密数据 */
-  data: string;
-}
+export type UserAddUserByProjectInfoCreatePayload = string;
 
 export interface UserAddUserByProjectInfoCreateData {
   code: number;
+  data: number;
   msg: string;
 }
 
@@ -7262,6 +7292,7 @@ export interface UserGetPurchaseRecordsInfoListData {
         windowCount: number;
         /** 工作时间 */
         workspace: number;
+        content: string;
       };
       /** 订单创建时间 */
       createTime?: string;

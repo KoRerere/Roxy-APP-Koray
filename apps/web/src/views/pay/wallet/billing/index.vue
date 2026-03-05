@@ -3,17 +3,20 @@ import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { OrderType, OrderTypeStr, PaymentStatus, PaymentStatusStr, PayWay, PurchaseType, SubOrderType } from '/@/enums/pay'
-
+import { OrderType, OrderTypeStr, PaymentStatus, PaymentStatusStr, PayWay, PurchaseType, SubLevelEnum, SubOrderType } from '/@/enums/pay'
+import { useUserStore } from '/@/stores/user'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog } from '/@/hooks/useDialog'
 
 const router = useRouter()
+const { userPayInfo } = storeToRefs(useUserStore())
 const { openProcessing } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
+
+const tableRef = useTemplateRef('rxtable')
 
 const columns = [
   {
@@ -50,14 +53,6 @@ const columns = [
   },
 ]
 
-onMounted(() => {
-  emitter.on('updateBillList', () => {
-    tableRef.value?.refresh()
-  })
-})
-
-const tableRef = useTemplateRef('rxtable')
-
 const detailMapStr = {
   [SubOrderType.Subscribe]: (data: any) => $t('{count} 窗口, {day} 天', { count: data.windowCount, day: data.day }),
   [SubOrderType.Upgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
@@ -72,6 +67,14 @@ const detailMapStr = {
   [SubOrderType.Downgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
   [SubOrderType.Proxy]: (data: any) => data.proxyContent,
 }
+
+const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
+
+onMounted(() => {
+  emitter.on('updateBillList', () => {
+    tableRef.value?.refresh()
+  })
+})
 
 async function tableRequest(params: any) {
   const data = await API.pay.userGetPurchaseRecordsInfoList(params)
@@ -200,6 +203,9 @@ defineExpose({
       <div class="flex items-center gap-2.5 status" :class="{ red: data.payStatus === PaymentStatus.Wait }">
         <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] || '--' }}</div>
         <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)" />
+        <RxButton v-if="data.payStatus === PaymentStatus.Closed && data.orderType === OrderType.Renew && isExpired && !!Number(data.isAuto)" outlined severity="secondary" :label="$t('购买套餐')"
+                  icon="base/rx_ic_credit_card" size="xxs" @click="router.replace({ name: 'subscribe-plan' })"
+        />
       </div>
     </template>
   </RyTable>

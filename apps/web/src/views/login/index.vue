@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import IntoWorkspace from '/@/components/business/global-component/invite-into-workspace.vue';
 import type { CheckOtherDeviceLoginListParams, LoginCreateData, LoginCreatePayload, LoginPhoneCreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
@@ -194,8 +195,27 @@ async function handleSubmitBy2fa(faCode: string) {
 async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
-  await initUserInfo()
-  showPageLoading()
+
+  await checkWorkspaceInvitation()
+}
+
+async function checkWorkspaceInvitation() {
+  const { code, data } = await API.base.userGetInviteNotifyList()
+  if (code !== 0 || !data) return jumpHome()
+
+  setCurrentComponent('inviteIntoWorkspace', {
+    inviteInfo: data.paramData,
+    onClose: async (intoWorkspaceId: number) => {
+      if (intoWorkspaceId) {
+        API.base.userReadNotifyCreate({ ids: [data.id] })
+      }
+      await jumpHome(intoWorkspaceId)
+    }
+  })
+}
+
+async function jumpHome(intoWorkspaceId?: number) {
+  await initUserInfo(intoWorkspaceId)
   setPassword(rememberMe.value ? signFormData.value.password : '')
   setLoginWay(loginWay.value)
   API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
@@ -369,30 +389,29 @@ provideLoginContext({
 
         <div class="sign-card">
           <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" :invite-discount-info="inviteDiscountInfo"
-                    @register="val => signFormSwitchRegister = val"
-          />
+            @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
           <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :on-confirm="handleSubmitBy2fa" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
           <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
+          <IntoWorkspace v-else-if="currentComp === 'inviteIntoWorkspace'" v-bind="currentCompProps"></IntoWorkspace>
         </div>
 
         <div class="footer">
           <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
             <template #terms>
-              <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+              <a :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
             </template>
             <template #policy>
-              <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
+              <a :href="getOfficialWebsite('/copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
             </template>
           </i18n-t>
         </div>
 
         <AnimatePresence>
           <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-                      :transition="{ duration: 0.2 }" class="app-updater-motion"
-          >
+            :transition="{ duration: 0.2 }" class="app-updater-motion">
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>
         </AnimatePresence>

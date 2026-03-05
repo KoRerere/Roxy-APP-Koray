@@ -1,11 +1,11 @@
 <script setup lang="ts">
-
 import TsForm from '/@/views/lab/components/form/index.vue'
+import type { Input } from '/@/views/lab/components/form/type'
 
 interface Props {
   title?: string
   content?: string
-  inputs: any[]
+  inputs: Input[]
   cancelText?: string
   confirmText?: string
   afterRender?: any
@@ -20,6 +20,10 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
+
+onBeforeMount(() => {
+  inputs[0] && Reflect.set(inputs[0], 'props', { ...inputs[0].props, autofocus: true })
+})
 
 function close() {
   onCancel?.()
@@ -39,7 +43,7 @@ async function onSubmit(formData: any) {
   <div class="flex flex-col gap-3 pt-4 pb-6 px-6 w-120 popup">
     <div v-if="title" class="title">{{ title }}</div>
     <div v-if="content" class="content">{{ content }}</div>
-    <TsForm id="simpleform" :inputs="inputs" @submit="onSubmit" />
+    <TsForm id="simpleform" v-focustrap :inputs="inputs" @submit="onSubmit" />
     <component v-if="afterRender" :is="afterRender" />
     <slot name="footer">
       <div class="flex justify-end items-center self-stretch gap-3">

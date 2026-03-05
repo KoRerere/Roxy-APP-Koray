@@ -1388,7 +1388,7 @@ export const components = {
       hoverColor: '{content.hover.color}',
       selectedColor: '{highlight.color}',
       gap: '0.5rem',
-      padding: '0.75rem 1rem',
+      padding: '0.5rem 0.75rem',
       focusRing: {
         width: '{focus.ring.width}',
         style: '{focus.ring.style}',
@@ -1397,10 +1397,10 @@ export const components = {
         shadow: '{focus.ring.shadow}',
       },
       sm: {
-        padding: '0.375rem 0.5rem',
+        padding: '0.25rem 0.375rem',
       },
       lg: {
-        padding: '1rem 1.25rem',
+        padding: '0.75rem 1rem',
       },
     },
     columnTitle: {
@@ -1423,12 +1423,12 @@ export const components = {
     },
     bodyCell: {
       borderColor: '{component.table.border-cell}',
-      padding: '0.75rem 1rem',
+      padding: '0 0.75rem',
       sm: {
-        padding: '0.375rem 0.5rem',
+        padding: '0 0.375rem',
       },
       lg: {
-        padding: '1rem 1.25rem',
+        padding: '0 1rem',
       },
     },
     footerCell: {

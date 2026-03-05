@@ -57,6 +57,7 @@ defineExpose({
 
 <style lang="scss" module="menuClass">
 .root {
+  border-width: 0.5px;
   background: var(--component-dropdown-bg, #293038);
 }
 

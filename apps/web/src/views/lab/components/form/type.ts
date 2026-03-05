@@ -1,6 +1,6 @@
-import { z, type ZodFirstPartySchemaTypes } from 'zod';
+import type { z, ZodFirstPartySchemaTypes } from 'zod'
 
-type BaseInput = {
+interface BaseInput {
   label?: string
   tooltip?: string
   props?: Record<string, any>

@@ -301,7 +301,7 @@ function toggle(event: Event) {
   </div>
 
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="menu" :model="items" popup :pt="{ root: 'w-[240px]' }" @hide="hidePreventMask" @show="showPreventMask">
+  <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 w-[240px]' }" @hide="hidePreventMask" @show="showPreventMask">
     <template #item="{ item, props, hasSubmenu }">
       <a v-ripple class="flex items-center" v-bind="props.action">
         <component :is="item.render" v-if="item.render" />

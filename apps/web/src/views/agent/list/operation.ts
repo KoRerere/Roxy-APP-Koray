@@ -32,6 +32,7 @@ export function tableOperation(data?: ProxyItem) {
       multiple: true,
       multipleProps: {
         name: 'G1',
+        showLabel: true,
       },
     },
     {
@@ -62,7 +63,8 @@ export function tableOperation(data?: ProxyItem) {
       quick: true,
       multiple: true,
       multipleProps: {
-        name: 'G1',
+        name: 'G2',
+        showLabel: true,
       },
     },
   ]

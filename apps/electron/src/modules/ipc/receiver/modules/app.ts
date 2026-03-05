@@ -71,7 +71,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 重新拉起远程软件设置 */
   ipcMain.on('app:fetchSoftConfig', () => {
     console.log('Remote system configuration changed, fetching remote config')
-    fetchUserConfig()
+    return fetchUserConfig()
   })
 
   /** 设置窗口是否忽略鼠标事件 */

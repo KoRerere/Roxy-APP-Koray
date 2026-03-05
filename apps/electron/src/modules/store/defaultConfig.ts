@@ -39,12 +39,10 @@ export const defaultValues: StoreType = {
   ipChangeModal: false,
   showNewFeatureTips: true,
   browserColorScheme: 'system',
-  ipv6CheckUrl: 'http://api.ip2location.io/?key=C67DFE07AF4B75B505BE2B4B5A757900',
+  ipv6CheckUrl: 'https://api.ip2location.io/?key=C67DFE07AF4B75B505BE2B4B5A757900',
   bookText: {},
   visitorId: '',
   hasLoggedIn: false,
   autoStart: false,
-  checkChannelList: {},
   dashboardTourGuide: false,
-  ip2locationKeys: [],
 }

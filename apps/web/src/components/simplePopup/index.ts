@@ -1,8 +1,9 @@
 import popup from './index.vue'
 import { useDialog } from '/@/hooks/useDialog'
+import type { Input } from '/@/views/lab/components/form/type'
 
 interface SimpleDialogData {
-  inputs: any[]
+  inputs: Input[]
   title?: string
   content?: string
   cancelText?: string

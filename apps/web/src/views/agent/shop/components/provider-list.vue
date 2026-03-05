@@ -71,7 +71,7 @@ function updateApiKey(id: number, apiKey: string) {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col gap-9 py-8 w-240 overflow-hidden">
+  <div class="flex-1 flex flex-col gap-9 py-8 w-100vw max-w-240 overflow-hidden">
     <div class="px-8 header">
       <div class="flex items-center justify-between">
         <span class="header-title">{{ $t('代理 IP 商店') }}</span>

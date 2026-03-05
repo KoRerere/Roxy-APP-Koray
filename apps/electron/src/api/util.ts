@@ -1,10 +1,15 @@
 import type { AxiosResponse } from 'axios'
 import { API } from '/@/api'
 import { checkCoreVersion } from '/@/api/checkCoreVersion'
+import { checkDictVersion } from '/@/api/checkDictVersion'
 import { osConfig } from '/@/constants'
+import { store } from '/@/modules/store'
 
 export function handleResponse(response: AxiosResponse<any, any>) {
-  checkCoreVersion(response)
+  if (response.data?.code === 0 && store.token) {
+    checkCoreVersion(response)
+    checkDictVersion(response)
+  }
 }
 
 export function parseHeaderParams(headerValue: string) {

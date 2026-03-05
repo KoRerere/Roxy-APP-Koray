@@ -419,7 +419,7 @@ async function onPay() {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col gap-9 py-8 w-256 overflow-hidden">
+  <div class="flex-1 flex flex-col gap-9 py-8 w-100vw max-w-256 overflow-hidden">
     <div class="relative flex items-center gap-6 px-8">
       <SvgIcon v-if="entryType !== BuyEntryType.Immediate" class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_arrow_left" @click="$emit('back')" />
       <div class="flex items-center gap-4">
@@ -485,7 +485,7 @@ async function onPay() {
               <RxButton size="lg" :disabled="currentCountry.outOfStock" :label="$t('立即支付')" @click="onPay" />
               <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
-                  <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+                  <a class="terms-link" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                 </template>
               </i18n-t>
             </div>

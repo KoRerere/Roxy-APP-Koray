@@ -11,14 +11,14 @@ defineProps<{
 const { currentLocale, getOfficialWebsite } = useSimpleLocale();
 
 const bonusImage = computed(() => {
-  if (['zh-CN', 'en', 'ru'].includes(currentLocale)) {
+  if (['zh-CN', 'en', 'ru'].includes(currentLocale!)) {
     return `/images/invite-bonus-banner_${currentLocale}.png`
   }
   return '/images/invite-bonus-banner_en.png'
 })
 
 function viewDetail() {
-  window.open(getOfficialWebsite('blog/referral-power-up'), '_blank')
+  window.open(getOfficialWebsite('/blog/referral-power-up'), '_blank')
 }
 
 const hideBonus = computed(() => {

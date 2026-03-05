@@ -70,7 +70,7 @@ watch(() => amount, (value) => {
   else {
     giftType.value ??= RoxyGiftsType.Staff
   }
-})
+}, { immediate: true })
 
 onMounted(() => {
   driverHighlight()

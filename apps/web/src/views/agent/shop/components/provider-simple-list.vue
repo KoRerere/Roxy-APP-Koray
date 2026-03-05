@@ -80,11 +80,11 @@ async function getShopList() {
         provider: item.isJump
           ? undefined
           : {
-              proxyProviderWebsite: item.proxyProviderWebsite,
-              proxyTypeList: item.proxyTypeList,
-              proxyProviderIcon: item.proxyProviderIcon,
-              proxyProviderName: item.proxyProviderName,
-            },
+            proxyProviderWebsite: item.proxyProviderWebsite,
+            proxyTypeList: item.proxyTypeList,
+            proxyProviderIcon: item.proxyProviderIcon,
+            proxyProviderName: item.proxyProviderName,
+          },
       },
     }
   })
@@ -94,8 +94,8 @@ async function getShopList() {
 <template>
   <div v-show="showList.length" ref="content" class="flex pa-3 gap-3 overflow-x-auto content">
     <component :is="!item.isMore ? RxTooltip : 'div'" v-for="item in showList" :key="item.proxyProviderName" style="background: var(--colors-background-bg-action);"
-               class="shrink-0 relative flex items-center pa-3 gap-2.5 rounded-3 cursor-pointer" :class="{ 'min-w-70 flex-1': !item.isMore }" placement="bottom" :delay="500" @click="onBuyProxy(item.focus)"
-    >
+      class="shrink-0 relative flex items-center pa-3 gap-2.5 rounded-3 cursor-pointer" :class="{ 'min-w-70 flex-1': !item.isMore || showList.length < 4 }" placement="bottom" :delay="500"
+      @click="onBuyProxy(item.focus)">
       <template #default>
         <div v-if="item.isNew" class="absolute top-0 -right-1 -translate-y-1/2 new">
           NEW

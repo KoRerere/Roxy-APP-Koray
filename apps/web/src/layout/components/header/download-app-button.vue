@@ -4,7 +4,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 const { getOfficialWebsite } = useSimpleLocale()
 
 function toDownload() {
-  const url = getOfficialWebsite('download')
+  const url = getOfficialWebsite('/download')
   window.open(url, '_blank')
 }
 </script>

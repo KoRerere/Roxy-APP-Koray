@@ -43,6 +43,7 @@ const operation = ref([
     multiple: true,
     multipleProps: {
       name: 'G1',
+      showLabel: true,
     },
   },
   {
@@ -58,7 +59,8 @@ const operation = ref([
     tooltip: $t('删除'),
     multiple: true,
     multipleProps: {
-      name: 'G1',
+      name: 'G2',
+      showLabel: true,
     },
   },
 ])
@@ -84,16 +86,16 @@ const advancedSearchOptions = [
   },
 ]
 
-function operationHandler(operate: any, data?: any) {
+async function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'edit':
       editAccount(data)
       break
     case 'remark':
-      onRemark(data)
+      await onRemark(data)
       break
     case 'delete':
-      deletePopup(data)
+      await deletePopup(data)
       break
     case 'create':
       createAccount()
@@ -138,6 +140,9 @@ function editAccount(data?: Data) {
 function onRemark(data: Data) {
   if (role.isViewer || role.isEditor)
     return
+
+  const { promise, resolve } = Promise.withResolvers<void>()
+
   showSimpleDialog({
     title: $t('为所选账号添加备注'),
     inputs: [
@@ -157,7 +162,10 @@ function onRemark(data: Data) {
       onlyErrorToast(code, msg)
       tableRef.value?.refresh()
     },
+    onHide: resolve,
   })
+
+  return promise
 }
 
 function toggleRemarkDisplayStatus(cache: Record<string, any>) {
@@ -168,6 +176,7 @@ function toggleRemarkDisplayStatus(cache: Record<string, any>) {
 }
 
 function deletePopup(data: any) {
+  const { promise, resolve } = Promise.withResolvers<void>()
   const datas = [].concat(data)
   confirm.require({
     header: $t('删除平台账号'),
@@ -188,8 +197,12 @@ function deletePopup(data: any) {
       if (code === 0) {
         tableRef.value?.refresh()
       }
+      resolve()
     },
+    reject: resolve,
+    onHide: resolve,
   })
+  return promise
 }
 </script>
 

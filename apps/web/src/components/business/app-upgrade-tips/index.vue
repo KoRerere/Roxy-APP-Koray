@@ -10,22 +10,58 @@ const emit = defineEmits<{
 }>()
 const features = ref(props.newFeatureTips)
 const page = ref(0)
+const appUpgradeTips = ref<HTMLElement | null>(null)
 
 const nextText = computed(() => {
   return page.value === features.value.length - 1 ? $t('完成') : $t('下一个')
 })
 
 const formatFeatures = computed(() => {
-  return features.value.map((item) => {
+  return features.value.map((item, index) => {
     return {
       ...item,
       content: item.content.replace(
         /<video[^>]*>\s*<source\s+src="([^"]+)"[^>]*><\/video>/gi,
-        (_, src) => `<roxy-video-player scale src="${src}" />`,
+        (_: unknown, src: string) => `<roxy-video-player scale src="${src}" data-page="${index}" />`,
       ),
     }
   })
 })
+
+watch(page, () => {
+  nextTick(() => {
+    syncVideoPlayback()
+  })
+})
+
+onMounted(() => {
+  nextTick(() => {
+    syncVideoPlayback()
+  })
+})
+
+function syncVideoPlayback() {
+  const container = appUpgradeTips.value
+  if (!container)
+    return
+
+  const players = Array.from(container.querySelectorAll('roxy-video-player')) as HTMLElement[]
+
+  players.forEach((player) => {
+    const pageIndex = Number((player as HTMLElement).dataset.page)
+    const video = (player as any).shadowRoot?.querySelector('video') as HTMLVideoElement | null
+
+    if (!video || Number.isNaN(pageIndex))
+      return
+
+    if (pageIndex === page.value) {
+      video.play().catch(() => { })
+    }
+    else {
+      video.pause()
+    }
+  })
+}
 
 async function handleSkip() {
   emitter.emit('focusMcp')
@@ -37,10 +73,16 @@ function handleNext() {
     handleSkip()
   }
   page.value = Math.min(page.value + 1, features.value.length - 1)
+  nextTick(() => {
+    syncVideoPlayback()
+  })
 }
 
 function handlePrev() {
   page.value = Math.max(page.value - 1, 0)
+  nextTick(() => {
+    syncVideoPlayback()
+  })
 }
 </script>
 
@@ -81,9 +123,6 @@ function handlePrev() {
 </template>
 
 <style lang="scss" scoped>
-.app-upgrade-tips {
-}
-
 .feature-content {
   color: var(--colors-text-text-secondary, #34393d);
   font-family: Inter;

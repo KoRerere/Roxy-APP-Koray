@@ -147,9 +147,16 @@ export class BeforeLaunchTask {
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
+    let isTimedOut = false
+
     this.launchTimer = setTimeout(() => {
+      isTimedOut = true
       this.sendErrorMessage($t('浏览器启动超时'))
       reject(new Error($t('浏览器启动超时')))
+      if (this.browser) {
+        this.browser.close().catch(() => {})
+        this.browser = null
+      }
     }, 30.1 * 1000)
 
     this.makeBrowserActive = async () => {
@@ -175,7 +182,14 @@ export class BeforeLaunchTask {
           clearInterval(timer)
         })
 
-        this.wsEndpoint = this.browser.wsEndpoint()
+        if (isTimedOut && this.browser) {
+          console.warn('Browser launched successfully but timeout already occurred, closing it immediately to prevent zombie process.')
+          this.browser.close().catch(() => {})
+          this.browser = null
+          return Promise.reject(new Error($t('浏览器启动超时'))) as any
+        }
+
+        this.wsEndpoint = this.browser!.wsEndpoint()
         console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       }
       else {
@@ -188,13 +202,15 @@ export class BeforeLaunchTask {
       }
 
       resolve()
-      return this.browser
+      return this.browser!
     }
 
     // 拉起浏览器
     this.makeBrowserActive().catch((error) => {
-      this.sendErrorMessage($t('浏览器启动失败'), error)
-      return reject(error)
+      if (!isTimedOut) {
+        this.sendErrorMessage($t('浏览器启动失败'), error)
+        reject(error)
+      }
     }).finally(() => {
       clearTimeout(this.launchTimer)
     })

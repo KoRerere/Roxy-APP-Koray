@@ -225,7 +225,7 @@ function close(isCancel: boolean) {
             <RxButton :disabled="disabled" size="lg" :label="$t('确认付款')" @click="confirm" />
             <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>
-                <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+                <a class="terms-link" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
               </template>
             </i18n-t>
           </div>

@@ -17,8 +17,7 @@ import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
 import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import { RxAlert } from '/@/components/rx-alert/'
+import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
@@ -26,25 +25,26 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyType } from '/@/enums'
 import { FirstGiftType } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, deepClone, filterFieldByValue, getFormData, isEmptyValue, safeParseJSON } from '/@/utils'
+import { copyText, deepClone, filterFieldByValue, getFormData, isEmptyValue, safeParseJSON } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
-import { clearProxyKeys, silentUpdateAccount, silentUpdateProxy } from './components/util'
+import { silentUpdateAccount, silentUpdateProxy } from './components/util'
 import { getAdvancedSearch, getCustomFilters, getOperation, getSorts } from './operation'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
+import { useDriverDataTableTour } from '/@/hooks/useDriverDataTableTour'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import useColumns from '/@/hooks/useColumns'
-import { useDriverDataTableTour } from '/@/views/lab/useDriverDataTableTour'
 
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
@@ -77,6 +77,7 @@ const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { drive } = useDriverDataTableTour()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -180,17 +181,17 @@ async function saveFilters(formData: any) {
 
   const { code, msg } = isEdit
     ? await API.window.userUpdateWindowFilterNameCreate({
-        sort,
-        filter_rule,
-        filter_condition,
-        old_filter_name: filter_name,
-        new_filter_name: filter_name,
-      })
+      sort,
+      filter_rule,
+      filter_condition,
+      old_filter_name: filter_name,
+      new_filter_name: filter_name,
+    })
     : await API.window.userAddWindowFilterNameCreate({
-        filter_name,
-        filter_condition,
-        filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
-      })
+      filter_name,
+      filter_condition,
+      filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
+    })
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
@@ -251,26 +252,26 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
 
   switch (operate.name) {
     case 'edit':
-    {
-      const { page_index } = tableRef.value!.getParams()
-      const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
-        if (cur.value) {
-          acc[cur.name] = toRaw(cur.value)
-        }
-        return acc
-      }, {})
-      router.push({
-        name: 'browser-edit',
-        query: {
-          ...route.query,
-          id: data.id,
-          page_index,
-          activeTabId: props.currentFilter?.id,
-          customFilterParams: JSON.stringify(customFilterParams),
-        },
-      })
-      break
-    }
+      {
+        const { page_index } = tableRef.value!.getParams()
+        const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
+          if (cur.value) {
+            acc[cur.name] = toRaw(cur.value)
+          }
+          return acc
+        }, {})
+        router.push({
+          name: 'browser-edit',
+          query: {
+            ...route.query,
+            id: data.id,
+            page_index,
+            activeTabId: props.currentFilter?.id,
+            customFilterParams: JSON.stringify(customFilterParams),
+          },
+        })
+        break
+      }
     case 'copyId':
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
@@ -307,13 +308,13 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await multipleAccountChange(data, { operationType, isChoose: true })
       break
     case 'restart':
-    {
-      const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
-      if (dirIds.length) {
-        globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
+      {
+        const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
+        if (dirIds.length) {
+          globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
+        }
+        break
       }
-      break
-    }
     case 'close':
       globalThis.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
         console.log('browser:batchClose res', res)
@@ -677,27 +678,21 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
   const isMulti = operationType === 'batch'
   const isChoose = proxyMethod === 'choose'
 
-  const _proxydata = {
-    id: datas[0]!.moduleId,
-    ...Object.fromEntries(
-      ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
-        .map(key => [key, datas[0]![key as keyof Data]]),
-    ),
-  }
+  const _proxydata = buildProxyData(datas[0]!)
 
   const containerRender = isChoose
     ? () => (
-        <div class="h-full flex flex-col">
-          {isMulti && (
-            <div class="px-4 pt-4">
-              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
-            </div>
-          )}
-          <div class="flex-1 overflow-hidden">
-            <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
+      <div class="h-full flex flex-col">
+        {isMulti && (
+          <div class="px-4 pt-4">
+            <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
           </div>
+        )}
+        <div class="flex-1 overflow-hidden">
+          <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
         </div>
-      )
+      </div>
+    )
     : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
 
   drawerInstance.showDrawer({
@@ -742,43 +737,8 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
 }
 
 function multipleProxyDelete(data: Data | Data[]) {
-  const { promise, resolve, reject } = Promise.withResolvers<void>()
   const datas = ([] as Data[]).concat(data)
-
-  confirm.require({
-    header: $t('删除代理 IP'),
-    message: $t('您确认要删除代理 IP 吗？'),
-    rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
-    acceptProps: { label: $t('确认'), severity: 'danger' },
-    accept: async () => {
-      const ids = datas.map(item => item.id!)
-      const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete })
-      onlyErrorToast(code, msg)
-      resolve()
-      if (code === 0) {
-        const params = {
-          moduleId: 0, // 为 0 表示解除关联
-          proxyCategory: 'noproxy',
-          proxyMethod: 'custom',
-          buyProxyType: ProxyType.resource,
-          checkStatus: ProxyCheckStatus.none,
-          ...createDefaultObject(clearProxyKeys, ''),
-        }
-        datas.forEach((item) => {
-          if (!item.openTime) {
-            Reflect.set(params, 'lastIp', '')
-          }
-          else {
-            Reflect.deleteProperty(params, 'lastIp')
-          }
-          silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
-        })
-      }
-    },
-    reject,
-    onHide: reject,
-  })
-  return promise
+  return confirmDeleteProxy(datas)
 }
 
 function multipleAccountChange(data: Data | Data[], { operationType, isChoose = false }: any) {
@@ -791,15 +751,15 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
 
   const containerRender = isChoose
     ? () => (
-        <div class="h-full flex flex-col">
-          {isMulti && (
-            <div class="px-4 pt-4">
-              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
-            </div>
-          )}
-          <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
-        </div>
-      )
+      <div class="h-full flex flex-col">
+        {isMulti && (
+          <div class="px-4 pt-4">
+            <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
+          </div>
+        )}
+        <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
+      </div>
+    )
     : () => <AccountCreate showRemark={false} showCreateMore={false} onConfirm={onConfirm}></AccountCreate>
 
   drawerInstance.showDrawer({
@@ -1135,15 +1095,13 @@ defineExpose({
 
 <template>
   <RyTable ref="windownTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
-           :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
-  >
+    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort>
     <template #filter-after>
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
-                       @filter-change="onRefreshTable"
-        />
+          @filter-change="onRefreshTable" />
       </div>
     </template>
     <template #table-empty>
@@ -1211,17 +1169,15 @@ defineExpose({
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-                   @click.stop="toggleRemarkDisplayStatus(_cache)"
-        />
+        <SvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+          @click.stop="toggleRemarkDisplayStatus(_cache)" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
         <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
           <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
-                    :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-          />
+            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
           <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">
             {{
               data.windowRemark }}
@@ -1257,10 +1213,9 @@ defineExpose({
         </template>
         <template v-else>
           <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-               class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
-               @click.stop="operationHandler({ name: 'fav' }, data)"
-          >
-            <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
+            class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
+            @click.stop="operationHandler({ name: 'fav' }, data)">
+            <SvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
           </div>
           <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>

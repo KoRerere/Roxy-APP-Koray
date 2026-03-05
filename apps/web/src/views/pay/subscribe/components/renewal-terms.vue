@@ -29,7 +29,7 @@ const { getOfficialWebsite } = useSimpleLocale()
     </label>
     <i18n-t tag="div" class="mt-2.5 pl-7 terms" :keypath="$t('选择即代表您接受 RoxyBrowser {terms}', { terms: '{terms}' })" scope="global">
       <template #terms>
-        <a class="terms-link" :href="getOfficialWebsite('copyright/renewal')" target="_blank">{{ $t('自动续订协议') }}</a>
+        <a class="terms-link" :href="getOfficialWebsite('/copyright/renewal')" target="_blank">{{ $t('自动续订协议') }}</a>
       </template>
     </i18n-t>
   </div>

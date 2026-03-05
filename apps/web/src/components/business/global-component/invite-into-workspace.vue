@@ -4,40 +4,18 @@ import { API } from '/@/api'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
 
-type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data', string>
+type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data' | 'workspaceId', any>
 
 const props = defineProps<{
-  inviteInfo: InviteInfo
-  onClose: () => void
+  inviteInfo?: InviteInfo
+  onClose?: (intoWorkspaceId?: number) => void | Promise<void>
 }>()
 
-const router = useRouter()
 const toast = useToast()
 const workspaceStore = useWorkspaceStore()
-const { getWorkspaceList, setCurrentWorkspace } = workspaceStore
 
 
 const isInWorkspace = computed(() => workspaceStore.workspaceList.some(item => item.id === props.inviteInfo?.workspaceId))
-
-// globalThis.electronAPI.on('invite:to-project', async (searchStr) => {
-//   console.log('invite:to-project', searchStr)
-//   // 替换加号为 %2B，避免 URLSearchParams 将加号（+）解释为空格
-//   const queryString = searchStr.replace(/\+/g, '%2B')
-//   const params = new URLSearchParams(queryString)
-//   props.inviteInfo = Object.fromEntries(params) as InviteInfo
-
-//   console.log('inviteInfo: ', props.inviteInfo)
-
-//   if (props.inviteInfo.data) {
-//     console.log('invite:to-project code', props.inviteInfo.data)
-//     if (route.name !== 'login') {
-//       visible.value = true
-//     }
-//   }
-//   else {
-//     console.error('invite:to-project code is null')
-//   }
-// })
 
 /** 接受邀请 */
 async function acceptInvitation() {
@@ -48,11 +26,8 @@ async function acceptInvitation() {
   const { code, msg, data } = await API.limit.userAddUserByProjectInfoCreate(props.inviteInfo.data)
 
   if (code === 0) {
-    // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('加入成功'), life: 3000 })
-    await getWorkspaceList()
-    setCurrentWorkspace(Number(data))
-    skipInvitation()
-    router.push({ name: 'browser' })
+    await workspaceStore.fetchWorkspaceList()
+    skipInvitation(data)
   }
   else {
     toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
@@ -60,17 +35,17 @@ async function acceptInvitation() {
 }
 
 /** 跳过邀请 */
-function skipInvitation() {
-  props.onClose()
+async function skipInvitation(intoWorkspaceId?: number) {
+  await props.onClose?.(intoWorkspaceId)
 }
 </script>
 
 <template>
   <div class="invite-into-workspace">
     <div class="detail-box">
-      <div class="detail-body">
-        <Avatar class="workspace-icon" :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }"
-          :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)" size="xlarge" />
+      <div class="pb-1 detail-body">
+        <Avatar class="workspace-icon" :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }" :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)"
+          size="xlarge" />
         <div class="workspace-name">
           {{ inviteInfo?.workspaceName }}
         </div>
@@ -78,13 +53,9 @@ function skipInvitation() {
           {{ $t('您被邀请至工作空间 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
         </div>
       </div>
-      <RxButton class="w-full capitalize" :disabled="isInWorkspace" @click="acceptInvitation">
-        {{ isInWorkspace ? $t('已加入') : $t('加入工作空间') }}
-      </RxButton>
-      <rx-divider />
-      <RxButton class="w-full" outlined @click="skipInvitation">
-        {{ $t('忽略') }}
-      </RxButton>
+      <RxButton class="w-full capitalize" size="lg" :disabled="isInWorkspace" :label="isInWorkspace ? $t('已加入') : $t('加入工作空间')" @click="acceptInvitation"></RxButton>
+      <RxDivider />
+      <RxButton class="w-full" size="lg" outlined :label="$t('忽略')" @click="skipInvitation()"></RxButton>
     </div>
   </div>
 </template>
@@ -101,7 +72,7 @@ function skipInvitation() {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-2xl, 16px);
+    gap: var(--spacing-2xl, 12px);
     align-self: stretch;
 
     .detail-body {

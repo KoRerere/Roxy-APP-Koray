@@ -48,7 +48,7 @@ function onChange() {
 </script>
 
 <template>
-  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide" @show="showPreventMask">
+  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide" @show="showPreventMask" :pt="{root:'!border-0.5'}">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'radio'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>

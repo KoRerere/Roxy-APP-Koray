@@ -1,8 +1,9 @@
+import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { getCurrentScope } from '@sentry/electron/main'
 import path from 'node:path'
-import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { browserManager } from '/@/modules/browser'
+import { initDictCache } from '/@/modules/dict'
 import { openAPIServer } from '/@/modules/openapi'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
@@ -31,6 +32,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     store.workspaceId = userInfo.workspaceId
     browserManager.reportWindowOpenStatus()
     store.lastLoginTime = Date.now()
+    initDictCache()
     // aliOSS.init()
     // 重新获取用户配置
     await fetchUserConfig()

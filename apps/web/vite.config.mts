@@ -161,8 +161,9 @@ const config: UserConfig = {
           }
           // 不要单独分割 router，让它留在主应用中
 
-          if (!id.includes('node_modules'))
+          if (!id.includes('node_modules') || id.includes('primevue') || id.includes('core-js')) {
             return
+          }
 
           // 所有第三方依赖统一进 vendor
           return 'vendor'

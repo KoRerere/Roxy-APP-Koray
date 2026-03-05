@@ -20,7 +20,7 @@ import type {
   CheckLocalExtensionUpdatePayload,
   UploadExtensionToOSSResult,
 } from '#roxybrowser/modules/extension/types'
-import type { StoreType } from '#roxybrowser/modules/store'
+import type { StoreType } from '#roxybrowser/modules/store/types'
 import type { RoxySyncStartResult } from '#roxybrowser/modules/sync-control/bin'
 import type { OpenPreferencesDialogPayload } from '#roxybrowser/modules/sync-control/dialog/preferences'
 import type {
@@ -110,6 +110,9 @@ export interface RenderMessage {
   'user:setAllWorkspaceId': (workspaceIds: number[]) => void
   /** 设置公共空间列表 */
   'user:setSharedWorkspaceList': (workspaceList: { workspaceId: number, role: number }[]) => void
+
+  /** 通知主进程更新字典 */
+  'dict:update': (keys: string[]) => void
 
   /** 选择文件夹 */
   'dialog:selectDir': (defaultPath?: string) => Promise<string>

@@ -8,13 +8,15 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 defineOptions({ inheritAttrs: false })
 
 const { phone } = defineProps<{
-  phone: string
+  phone: string,
+  tipsClick?: () => void
 }>()
 
 const [showToast] = useResponseToast()
 
 const modelValue = defineModel<string>()
 
+const showTips = ref(false)
 const lock = ref(false)
 const seconds = ref(0)
 const countdown = ref()
@@ -37,6 +39,7 @@ async function getCode() {
     return
 
   lock.value = true
+  showTips.value = true
   countdown.value = enhanceCountdown(new Date(Date.now() + 60 * 1000), (data) => {
     seconds.value = data.seconds
   }, { onEnd: () => { lock.value = false } })
@@ -44,10 +47,34 @@ async function getCode() {
 </script>
 
 <template>
-  <div class="relative">
-    <TsFormInputText v-model="modelValue" v-bind="$attrs" />
-    <RxButton class="!absolute position-y-center right-2.5" :severity="lock ? 'secondary' : ''" size="xxs" variant="text" :disabled="lock" :label="btnText" @click="getCode" />
+  <div>
+    <div class="relative">
+      <TsFormInputText v-model="modelValue" v-bind="$attrs" />
+      <RxButton class="!absolute position-y-center right-2.5" :severity="lock ? 'secondary' : ''" size="xxs" variant="text" :disabled="lock" :label="btnText" @click="getCode" />
+    </div>
+    <i18n-t v-if="showTips" class="pt-2 text-right terms" tag="div" scope="global" :keypath="$t('未收到验证码？{link}', { link: '{link}' })" @click="tipsClick">
+      <template #link>
+        <span class="cursor-pointer terms-link">{{ $t('点击这里，切换到邮箱登录注册') }}</span>
+      </template>
+    </i18n-t>
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.terms {
+  color: var(--colors-text-text-tertiary, #575d60);
+  font-family: Inter;
+  font-size: 12px;
+  line-height: 18px;
+
+  &-link {
+    color: var(--colors-text-text-brand, #12a3fc);
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: auto;
+    text-underline-offset: auto;
+    text-underline-position: from-font;
+  }
+}
+</style>

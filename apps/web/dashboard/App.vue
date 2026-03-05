@@ -11,7 +11,7 @@ import BlobBg from '/@/components/blob-bg.vue'
 
 <style>
 body {
-  overflow: auto;
+  overflow: auto !important;
 }
 
 .global_driver_class {

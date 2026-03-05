@@ -188,7 +188,7 @@ export async function sendCallback(channel: string, ...args: any[]) {
         ),
       },
       handleOk() {
-        window.open(getOfficialWebsite('download'), '_blank')
+        window.open(getOfficialWebsite('/download'), '_blank')
       },
     })
 

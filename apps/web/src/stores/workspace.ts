@@ -80,7 +80,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
       globalThis.electronAPI.send('app:restartAPIServer')
-      if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
+      if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false && val.role === Role.OWNER) {
         emitter.emit('showUserGuideDialog')
       }
     }, 1200)

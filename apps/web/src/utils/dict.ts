@@ -45,22 +45,27 @@ export async function getDictMap() {
   return $dict_map
 }
 
-let getDictVersionPromise = null
+let getDictVersionPromise: Promise<UserGetDictVersionListData> | null = null
 export async function getDictVersion() {
   getDictVersionPromise ||= API.base.userGetDictVersionList()
-  const { data: newVersion } = await getDictVersionPromise.finally(() => {
+  const result = await getDictVersionPromise.finally(() => {
     getDictVersionPromise = null
   })
-  const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
 
-  const needUpdateDict = DICT_CONFIG.isDictLose()
-    ? newVersion
-    : Object.fromEntries(Object.entries(newVersion).filter(([key, value]) => oldVersion[key as keyof DictMap] !== value))
+  if (result.code === 0) {
+    const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
 
-  if (!isEmptyValue(needUpdateDict)) {
-    localStorage.setItem('$dict_version', JSON.stringify(newVersion))
-    await fetchDictData(Object.keys(needUpdateDict))
+    const needUpdateDict = DICT_CONFIG.isDictLose()
+      ? result.data
+      : Object.fromEntries(Object.entries(result.data).filter(([key, value]) => oldVersion[key as keyof DictMap] !== value))
+
+    if (!isEmptyValue(needUpdateDict)) {
+      localStorage.setItem('$dict_version', JSON.stringify(result.data))
+      globalThis.electronAPI.send('dict:update', Object.keys(needUpdateDict))
+      await fetchDictData(Object.keys(needUpdateDict))
+    }
   }
+  return result
 }
 
 async function fetchDictData(type: any) {
@@ -73,29 +78,6 @@ async function fetchDictData(type: any) {
     (map[type] || (map[type] = [])).push(item)
     return map
   }, {} as Record<string, DictItem[]>)
-
-  if (dictMap?.ipv6Check?.[0]?.value) {
-    globalThis.electronAPI.send('app:saveSoftConfig', { ipv6CheckUrl: dictMap.ipv6Check?.[0]?.value })
-  }
-
-  if (dictMap?.['ip2location-key']?.length) {
-    globalThis.electronAPI.send('app:saveSoftConfig', { ip2locationKeys: dictMap['ip2location-key']?.map(item => item.value) })
-  }
-
-  try {
-    if (dictMap?.checkChannel?.length) {
-      globalThis.electronAPI.send('app:saveSoftConfig', {
-        checkChannelList: dictMap.checkChannel.reduce((map, item) => {
-          const hostname = new URL(item.value).hostname
-          map[hostname] = item.label.toLowerCase()
-          return map
-        }, {} as Record<string, string>),
-      })
-    }
-  }
-  catch (error) {
-    console.error(error)
-  }
 
   const oldDict = JSON.parse(localStorage.getItem('$dict_map') || '{}')
   localStorage.setItem('$dict_map', JSON.stringify(Object.assign(oldDict, dictMap)))

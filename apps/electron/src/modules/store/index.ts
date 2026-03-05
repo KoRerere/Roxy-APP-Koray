@@ -1,6 +1,6 @@
+import type { StoreType } from './types'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { createTray } from '/@/modules/app/tray'
-import type { StoreType } from './types'
 import { _store, autoSaveConfig, fetchUserConfig, initLanguage, initLocalConfigPromise } from './util'
 
 export * from './util'

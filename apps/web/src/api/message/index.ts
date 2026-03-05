@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios'
-import { checkAppVersion, } from './checkAppVersion'
-import { checkCoreVersion, } from './checkCoreVersion'
+import { checkAppVersion } from './checkAppVersion'
+import { checkCoreVersion } from './checkCoreVersion'
 import { checkNotify } from './checkNotify'
 import { checkDictVersion } from './checkDictVersion'
 import { checkSoftConfigVersion } from './checkSoftConfigVersion'
@@ -9,10 +9,18 @@ import { checkPayInfoVersion } from './checkPayInfoVersion'
 
 const ignoreUrl = [
   '/login',
+  '/reg',
+  '/send_email_register_verify_code',
+  '/send_email_forget_verify_code',
+  '/forget_password',
 ]
 
 export function handleResponseHeaders(response: AxiosResponse) {
-  if (ignoreUrl.some((url) => response.config.url === url)) {
+  if (ignoreUrl.includes(response.config.url || '')) {
+    return
+  }
+
+  if (response.data?.code !== 0) {
     return
   }
 

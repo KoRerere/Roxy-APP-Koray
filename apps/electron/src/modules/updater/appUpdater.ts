@@ -196,11 +196,15 @@ export const appUpdater = new class AppUpdater {
   }
 
   async getLastUpdateFeature() {
+    if (!isDevelopment) {
+      return this.#updateMessageData.newFeatureTips?.[store.language]?.[0]?.content ? this.#updateMessageData.newFeatureTips[store.language] : []
+    }
+
     const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
     if (code !== 0 || !data) {
       return []
     }
-    return data.newFeatureTips[store.language]?.[0]?.content ? data.newFeatureTips[store.language] : []
+    return data.newFeatureTips?.[store.language]?.[0]?.content ? data.newFeatureTips[store.language] : []
   }
 
   /** 是否有更新 */

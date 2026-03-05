@@ -6,8 +6,8 @@ const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardin
 </script>
 
 <template>
-  <div class="flex justify-center banner">
-    <div class="rx-container relative w-full h-40 inline-flex justify-center px-12 gap-1 overflow-hidden">
+  <div class="min-w-285 flex justify-center banner">
+    <div class="rx-container relative h-40 inline-flex justify-center px-12 gap-1 overflow-hidden">
       <RxButton v-if="!onboardingTaskStatus?.hideSidebarEntryStatus" icon="base/rx_ic_hidden" class="!absolute top-6 right-19 z-1" severity="secondary" variant="outlined" size="xxs"
         :label="$t('隐藏教程入口')" @click="closeGuideTipsAndUpdateTaskStatus('hideSidebarEntryStatus')" />
       <i18n-t class="banner-title" tag="div" :keypath="$t('RoxyBrowser {text}', { text: '{text}' })" scope="global">

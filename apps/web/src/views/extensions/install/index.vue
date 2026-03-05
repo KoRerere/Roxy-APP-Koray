@@ -4,19 +4,16 @@ import uploadExtension from '/@/views/extensions/install/components/upload-exten
 import ShieldDialog from '/@/views/extensions/install/components/shield-dialog.vue'
 import HowToGet from '/@/views/extensions/install/components/how-to-get.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType, ExtensionsSource } from '/@/enums'
+import { ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
 import { useRoleStore } from '/@/stores/role'
-import { useDialog as useCustomDialog } from "/@/hooks/useDialog";
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { concurrentControl } from '/@/utils'
 
 import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
@@ -26,14 +23,12 @@ type Data = UnwrapRowType<UserGetPluginListListData>
 defineEmits(['search'])
 const confirm = useConfirm()
 const dialog = useDialog()
-const toast = useToast()
 const role = useRoleStore()
 
 const { showSimpleDialog } = useSimpleDialog()
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useCustomDialog()
 const { showMenu: showPopupMenu } = usePopupMenu()
-
 
 const needsync = defineModel('needsync')
 const tableRef = useTemplateRef('extable')
@@ -123,7 +118,7 @@ async function showPinMenu(event: any, data: any) {
           label: $t('始终不固定到工具栏'),
           name: 'unpin',
         },
-      ]
+      ],
     },
     menuProps: {
       onHide: async ({ value }: any) => {
@@ -131,13 +126,13 @@ async function showPinMenu(event: any, data: any) {
           await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin: value })
           data.fixedPlugin = value
         }
-      }
+      },
     },
     slots: {
       start: () => {
         return <div class="pl-4 pt-2">{$t('固定方式')}</div>
-      }
-    }
+      },
+    },
   })
 }
 
@@ -179,7 +174,7 @@ function tableOperation(data: any) {
       },
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       name: 'edit',
@@ -189,7 +184,7 @@ function tableOperation(data: any) {
       visible: data.source === 'local',
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       name: 'install',
@@ -197,7 +192,7 @@ function tableOperation(data: any) {
       icon: 'base/rx_ic_stack_install',
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
     {
       separator: true,
@@ -216,7 +211,7 @@ function tableOperation(data: any) {
       },
       command: ({ item }: any) => {
         operationHandler(item, data)
-      }
+      },
     },
   ]
 }
@@ -239,14 +234,15 @@ async function operationHandler(operate: any, data: any) {
       onUploadExtension(data)
       break
     case 'delete':
-      deleteExtension(datas)
+      await deleteExtension(datas)
       break
   }
 }
 
 async function uploadRecordCheck() {
   const { data } = await API.plugins.userRecordPluginUploadV2List()
-  if (!data) throw $t('您当日的扩展上传数量已达上限')
+  if (!data)
+    throw $t('您当日的扩展上传数量已达上限')
 }
 
 function installViaUrl() {
@@ -261,7 +257,7 @@ function installViaUrl() {
         props: {
           placeholder: $t('请输入 Google Store 中扩展的 URL'),
           preIcon: 'base/rx_ic_link',
-        }
+        },
       },
     ],
     onConfirm: async (formData: any) => {
@@ -286,7 +282,7 @@ function installViaUrl() {
         onlyErrorToast(-1, error as string)
       }
     },
-    afterRender: () => <HowToGet class="mt-2" />
+    afterRender: () => <HowToGet class="mt-2" />,
   })
 }
 
@@ -359,42 +355,41 @@ async function getExtensionDetail(pluginId: number) {
 
 async function checkUpdate(data: Data[]) {
   const detectable = data.filter(item => item.source !== ExtensionsSource.local || !checkUpdateExtension.value[item.pluginDir!])
-  detectable.forEach(item => {
-    checkUpdateExtension.value[item.pluginDir as string] = true;
+  detectable.forEach((item) => {
+    checkUpdateExtension.value[item.pluginDir as string] = true
   })
   const results = await concurrentControl(detectable.map(item => () => {
     return API.plugins.userCheckAllPluginsVersionList({ pluginDir: item.pluginDir!, pluginID: item.id! }).then((result) => {
       if (result.code === 0 && result.data) {
-        const newItem = result.data.pluginUpdateStates[0];
-        item.pluginUpdateState = newItem?.pluginUpdateState ?? item.pluginUpdateState;
-        item.pluginNewVersion = newItem?.pluginNewVersion ?? item.pluginNewVersion;
-        item.pluginVersion = newItem?.pluginVersion ?? item.pluginVersion;
+        const newItem = result.data.pluginUpdateStates[0]
+        item.pluginUpdateState = newItem?.pluginUpdateState ?? item.pluginUpdateState
+        item.pluginNewVersion = newItem?.pluginNewVersion ?? item.pluginNewVersion
+        item.pluginVersion = newItem?.pluginVersion ?? item.pluginVersion
       }
       return result
     }).finally(() => {
-      checkUpdateExtension.value[item.pluginDir as string] = false;
+      checkUpdateExtension.value[item.pluginDir as string] = false
     })
   }), 2)
-  const updateCount = results.filter(item => {
+  const updateCount = results.filter((item) => {
     if (item.code === 0 && item.data) {
       return item.data.pluginUpdateStates[0]?.pluginUpdateState === ExtensionsStatus.update
     }
+    return false
   }).length
-  if (detectable.length > 1) {
-    // 批量的
-    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成，{count}个扩展有更新', { count: updateCount }), life: 2500 })
-  } else {
-    // 单个的
-    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成'), life: 2500 })
-  }
+
+  const message = detectable.length > 1 ? $t('检查更新完成，{count}个扩展有更新', { count: updateCount }) : $t('检查更新完成')
+  showToast(0, message)
 }
 
-// !todo 优化交互体验
+/**
+ * !todo 优化交互体验
+ */
 async function updateExtension(data: Data | Data[]) {
   const task = ([] as Data[])
     .concat(data)
     .filter(item => item.pluginUpdateState === ExtensionsStatus.update)
-    .map(item => {
+    .map((item) => {
       Reflect.set(updatingMap.value, item.pluginDir!, true)
       return async () => {
         const { code, msg } = await API.plugins.userUpgradePluginsCreate({ pluginDir: item.pluginDir!, pluginName: item.pluginName!, pluginID: item.id! })
@@ -408,6 +403,8 @@ async function updateExtension(data: Data | Data[]) {
 }
 
 async function deleteExtension(datas: Data[]) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
   confirm.require({
     header: $t('删除扩展'),
     message: $t('您确认要删除所选扩展吗？删除后，所有已关联项目中的窗口扩展将被移除。'),
@@ -433,8 +430,15 @@ async function deleteExtension(datas: Data[]) {
       catch (error) {
         onlyErrorToast(-1, error as string)
       }
+      finally {
+        resolve()
+      }
     },
+    reject: resolve,
+    onHide: resolve,
   })
+
+  return promise
 }
 
 function showOperationMenu({ event, operation }: { event: MouseEvent, operation: any }) {
@@ -449,8 +453,8 @@ function showShieldDialog(data: any) {
     class: 'w-480px',
     slots: {
       default: () => <ShieldDialog extensionInfo={data} />,
-      footer: undefined
-    }
+      footer: undefined,
+    },
   })
 }
 
@@ -459,12 +463,12 @@ defineExpose({
     tableRef.value?.refresh({ pluginSwitchType: filters.value })
   },
 })
-
 </script>
 
 <template>
-  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
-    :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler">
+  <RyTable ref="extable" cache-key="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
+           :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler"
+  >
     <template #filter-after>
       <div class="flex items-start justify-between w-full">
         <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
@@ -504,7 +508,7 @@ defineExpose({
         <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
         <span v-else>
           <span>{{ $t('团队') }}</span>
-          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
+          <SvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
         </span>
       </div>
     </template>
@@ -530,13 +534,13 @@ defineExpose({
       <template v-if="checkUpdateExtension[data.pluginDir]">
         <span class="flex items-end gap-1">
           <span>{{ $t('检查中') }}</span>
-          <span class="dots"></span>
+          <span class="dots" />
         </span>
       </template>
       <template v-else>
         <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
           <RxButton severity="success" icon="base/rx_ic_renew" :loading="updatingMap[data.pluginDir]" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
-          <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
+          <SvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
         </div>
         <div v-else class="update-info">
           --
@@ -548,14 +552,15 @@ defineExpose({
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
         <RxButton v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" text severity="secondary" size="xxs" @click.stop="showPinMenu($event, data)">
           <template #icon>
-            <RxSvgIcon class="block pointer-events-none" :class="{ pinned: data.fixedPlugin === 'pin' }" :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
-              color="var(--colors-icon-icon-secondary)" />
+            <SvgIcon class="block pointer-events-none" :class="{ pinned: data.fixedPlugin === 'pin' }" :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
+                     color="var(--colors-icon-icon-secondary)"
+            />
           </template>
         </RxButton>
-        <RxButton v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_shield" text @click.stop="showShieldDialog(data)"></RxButton>
+        <RxButton v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_shield" text @click.stop="showShieldDialog(data)" />
         <RxButton v-tooltip.top="{ value: $t('检查更新'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_clock_rotate" text
-          @click.stop="operationHandler({ name: 'checkUpdate' }, [data])">
-        </RxButton>
+                  @click.stop="operationHandler({ name: 'checkUpdate' }, [data])"
+        />
         <Actions :operation="tableOperation(data).filter(item => item.visible !== false)" @more="showOperationMenu" />
       </div>
     </template>
@@ -600,7 +605,7 @@ defineExpose({
 
 .plugin-switch-type,
 .update-info {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
@@ -628,26 +633,26 @@ defineExpose({
 
 /* 动画效果 */
 .dots::after {
-  content: "";
+  content: '';
   animation: loadingDots 1.5s steps(5, end) infinite;
 }
 
 /* 动画关键帧 */
 @keyframes loadingDots {
   0% {
-    content: ".";
+    content: '.';
   }
 
   33% {
-    content: "..";
+    content: '..';
   }
 
   66% {
-    content: "...";
+    content: '...';
   }
 
   100% {
-    content: ".";
+    content: '.';
   }
 }
 </style>

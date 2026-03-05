@@ -1,4 +1,4 @@
-import { light, dark } from '/@/styles/primevuePresets/_1_Colors_tokens.json'
+import { dark, light } from '/@/styles/primevuePresets/_1_Colors_tokens.json'
 
 export const semantic = {
   transitionDuration: '0.2s',

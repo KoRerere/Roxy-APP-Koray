@@ -1,6 +1,7 @@
-import path from 'node:path'
-import { app, utilityProcess, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
+import type { UtilityProcess } from 'electron'
+import { app, utilityProcess } from 'electron'
+import path from 'node:path'
 import { appCliStartArgs, isDev } from '/@/constants/common'
 
 let inspectPort = 9230
@@ -10,6 +11,7 @@ export class FileOperations {
   private workers = new Set<UtilityProcess>()
   private availableWorkers = new Set<UtilityProcess>()
   private tasksQueue: Map<number, TaskQueueItem<keyof TaskMap>> = new Map()
+  private runningTasks: Map<number, TaskQueueItem<keyof TaskMap>> = new Map()
   private maxPoolSize: number
   private taskIdCounter = 1
 
@@ -51,11 +53,11 @@ export class FileOperations {
     if (!taskId)
       return
 
-    const task = this.tasksQueue.get(taskId)
+    const task = this.runningTasks.get(taskId)
     if (!task)
       return
 
-    this.tasksQueue.delete(taskId)
+    this.runningTasks.delete(taskId)
 
     if (message.status === 'success') {
       task.resolve(message.data as ReturnType<TaskMap[K]>)
@@ -94,6 +96,8 @@ export class FileOperations {
 
     if (worker) {
       const [taskId, task] = this.tasksQueue.entries().next().value!
+      this.tasksQueue.delete(taskId)
+      this.runningTasks.set(taskId, task)
       worker.postMessage({ taskId, task: task.task, payload: task.payload })
     }
   }
@@ -102,7 +106,7 @@ export class FileOperations {
   async executeTask<K extends keyof TaskMap>(task: K, payload: Parameters<TaskMap[K]>[0]) {
     const { promise, resolve, reject } = Promise.withResolvers<ReturnType<TaskMap[K]>>()
     const taskId = this.taskIdCounter++
-    this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject })
+    this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject } as any)
     await app.whenReady()
     this.processTaskQueue()
     return promise

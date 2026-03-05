@@ -12,7 +12,7 @@ import CanvasLine from './canvas-line.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 import { useRoleStore } from '/@/stores/role'
-import { createDefaultObject, formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
+import { formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -21,7 +21,8 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 
 import { API } from '/@/api'
 import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
-import { clearProxyKeys, silentUpdateAccount, silentUpdateProxy } from '../util'
+import { silentUpdateAccount, silentUpdateProxy } from '../util'
+import { useProfileProxy } from '../../hooks/useProfileProxy'
 
 interface Props {
   workspaceName?: string
@@ -61,6 +62,7 @@ const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { buyProxy } = useProxy()
+const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 
 const proxyCss = useCssModule('proxy')
 const proxyProvider = ref()
@@ -134,13 +136,7 @@ function onClick(event: MouseEvent, key: string) {
 }
 
 function getProxyModel() {
-  const proxyData = {
-    id: data.moduleId,
-    ...Object.fromEntries(
-      ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
-        .map(key => [key, data[key]]),
-    ),
-  }
+  const proxyData = buildProxyData(data)
 
   return [
     {
@@ -282,33 +278,7 @@ function getProxyModel() {
       icon: 'base/rx_ic_bin_1',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
-        confirm.require({
-          header: $t('删除代理 IP'),
-          message: $t('您确认要删除代理 IP 吗？'),
-          rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
-          acceptProps: { label: $t('确认'), severity: 'danger' },
-          accept: async () => {
-            const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids: [data.id], type: ProfileModifyType.ProxyDelete })
-            onlyErrorToast(code, msg)
-            if (code === 0) {
-              const params = {
-                moduleId: 0, // 为 0 表示解除关联
-                proxyCategory: 'noproxy',
-                proxyMethod: 'custom',
-                buyProxyType: ProxyType.resource,
-                checkStatus: ProxyCheckStatus.none,
-                ...createDefaultObject(clearProxyKeys, ''),
-              }
-              if (!data.openTime) {
-                Reflect.set(params, 'lastIp', '')
-              }
-              else {
-                Reflect.deleteProperty(params, 'lastIp')
-              }
-              silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
-            }
-          },
-        })
+        confirmDeleteProxy(data)
       },
     },
   ]

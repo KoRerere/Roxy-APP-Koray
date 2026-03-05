@@ -90,7 +90,7 @@ export function getFormSchemas(isRegister = false) {
   ])
 }
 
-export function getPhoneSchemas() {
+export function getPhoneSchemas(tipsClick?: () => void) {
   return defineFormSchema([
     {
       field: 'phone',
@@ -116,7 +116,7 @@ export function getPhoneSchemas() {
       field: 'verCode',
       component: ({ formModel }) => {
         return (
-          <CodeInput v-model={formModel.value.verCode} phone={formModel.value.phone}></CodeInput>
+          <CodeInput v-model={formModel.value.verCode} phone={formModel.value.phone} tipsClick={tipsClick}></CodeInput>
         )
       },
       componentProps: {

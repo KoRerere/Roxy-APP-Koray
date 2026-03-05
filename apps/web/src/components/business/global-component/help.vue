@@ -279,8 +279,8 @@ function updateDriverStatus() {
     <div v-if="showMcp" id="mcp" class="flex cursor-pointer" @click="openMCP">
       <img draggable="false" src="/images/mcp/roxy_ai_agent.svg">
     </div>
-    <div class="w-12 h-12 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">
-      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="24" color="#FFD682" />
+    <div class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">
+      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="22" color="#FFD682" />
     </div>
   </div>
   <LiveChat v-show="false" />

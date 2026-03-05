@@ -6,11 +6,11 @@ import RxButton from '/@/components/rx-button'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
-import Demo from './demo.vue'
+import Score from './score.vue';
 // import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
-// import wcisTable from './components/table/table.vue'
+import wcisTable from './components/table/table.vue'
 // import { useUserStore } from '/@/stores/user'
 // import { differenceInDays, format, subDays } from 'date-fns'
 // import type { SubLevelEnum } from '/@/enums/pay'
@@ -54,6 +54,22 @@ function open2() {
     },
   })
 }
+
+function onCcore() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      // root: "!bg-transparent !border-none !shadow-none",
+      // mask: "!backdrop-blur-md",
+    },
+    slots: {
+      container: () => <Score></Score>,
+    },
+  })
+}
+
 // const { userPayInfo } = storeToRefs(useUserStore())
 
 async function _tableFilters() {
@@ -253,62 +269,16 @@ function setInputsProps() {
   })
 }
 
-// =========================================
-
-function captcha() {
-  const code = ref()
-
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => {
-        return (
-          <div class="w-100">
-            <img class="block w-full" src="https://primefaces.org/cdn/primevue/images/galleria/galleria11.jpg" />
-            <TsFormInputText v-model={code.value}></TsFormInputText>
-            <RxButton
-              label="submit"
-              onClick={
-                async () => {
-                  console.log(code.value)
-                  hideModal()
-                }
-              }
-            >
-            </RxButton>
-          </div>
-        )
-      },
-    },
-  })
-}
-
-// getInviteCode().then(code => console.log('🚀 ~ getInviteCode().then ~ code:', code))
-
-const selectedCity = ref()
-const cities = ref([
-  { name: 'New York', code: 'NY' },
-  { name: 'Rome', code: 'RM' },
-  { name: 'London', code: 'LDN' },
-  { name: 'Istanbul', code: 'IST' },
-  { name: 'Paris', code: 'PRS' },
-])
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
-    <!-- <wcisTable displayKey="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple">
-    </wcisTable> -->
+    <wcisTable displayKey="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple">
+    </wcisTable>
 
-    <RxButton label="open1" @click="open1" />
+    <!-- <RxButton label="open1" @click="open1" />
     <RxButton label="open2" @click="open2" />
-    <RxButton label="captcha" @click="captcha" />
-
-    <Select v-model="selectedCity" editable :options="cities" filter option-label="name" placeholder="Select a City" class="w-full md:w-56" />
-
-    <Demo />
+    <RxButton label="score" @click="onCcore" /> -->
 
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
