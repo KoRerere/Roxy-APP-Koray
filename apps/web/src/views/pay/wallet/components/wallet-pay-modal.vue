@@ -56,7 +56,7 @@ const finalResult = computed(() => {
 })
 
 const showGiftAlert = computed(() => {
-  if (!showAutoRenew || seasonalActivity.value.none)
+  if (!showAutoRenew || !seasonalActivity.value.active)
     return false
 
   const { amount } = currentActivity.value

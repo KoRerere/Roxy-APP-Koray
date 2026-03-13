@@ -10,7 +10,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2 max-w-100">
     <div v-for="item in platformList" :key="item.platformUrl" class="flex gap-1.5">
       <PlatformIcon v-if="item.platformIcon" class="w-4 h-4" :platform-icon="item.platformIconDark" :platform-icon-dark="item.platformIconDark" />
       <SvgIcon v-else name="base/rx_ic_user_key" color="var(--component-tooltip-text-primary)" />

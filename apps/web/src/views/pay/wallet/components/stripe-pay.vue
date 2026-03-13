@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeCardCvcElement, StripeCardExpiryElement, StripeCardNumberElement, StripeElements } from '@stripe/stripe-js'
-import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
-
+import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { PayWay } from '/@/enums/pay'
 import { useThemeStore } from '/@/stores/theme'
 
@@ -17,6 +17,7 @@ const $rechargeModal = inject<{ preventModalClose: (value?: boolean) => void }>(
 
 const bindCard = defineModel<boolean>('bind', { default: false })
 
+const { genRechargeSettlement } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const { realTheme } = storeToRefs(useThemeStore())
 
@@ -152,7 +153,7 @@ async function handleSubmit(event: Event) {
   }
   catch (error: any) {
     $rechargeModal?.preventModalClose(false)
-    onlyErrorToast(-1, error)
+    error && onlyErrorToast(-1, error)
   }
   finally {
     isLoading.value = false
@@ -170,12 +171,12 @@ async function stripeBindCard() {
 }
 
 async function stripePayment() {
-  const { code, data, msg } = await API.pay.userRechargeSettlementCreate({
+  const { code, data, msg } = await genRechargeSettlement({
     rechargeAmount,
     payType: PayWay.Card,
     customerIdKey: customerIdKey.value,
   })
-  if (code !== 0)
+  if (code !== 0 || !data)
     return { error: new Error(msg), result: undefined }
 
   const { error, paymentIntent } = await stripe.value!.confirmCardPayment(data.clientSecret, {

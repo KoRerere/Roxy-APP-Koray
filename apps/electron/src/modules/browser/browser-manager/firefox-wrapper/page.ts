@@ -106,6 +106,23 @@ export class FirefoxPage extends EventEmitter {
   }
 
   /**
+   * 将页面带到前台 (激活该标签页)
+   */
+  async bringToFront(): Promise<void> {
+    try {
+      await this.bidiClient.sendCommand('browsingContext.activate', {
+        context: this.contextInfo.context,
+      })
+    }
+    catch (error) {
+      console.warn('Failed to bring page to front:', error)
+      try {
+        await this.evaluate(() => window.focus())
+      } catch (e) {}
+    }
+  }
+
+  /**
    * 获取页面 URL
    */
   url(): string {

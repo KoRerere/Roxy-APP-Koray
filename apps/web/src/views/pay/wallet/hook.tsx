@@ -12,8 +12,10 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
+import { useSimpleLocale } from '/@/stores/locale'
 import { OrderType, PaymentStatus, PayWay } from '/@/enums/pay'
 import { sleep } from '/@/utils/basic'
+import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
 import type { UserRechargeSettlementCreateData } from '@roxy/backend-api'
 
 type Data = UserRechargeSettlementCreateData['data']
@@ -36,6 +38,7 @@ export function usePay() {
   const [showToast, onlyErrorToast] = useResponseToast()
   const { userPayInfo } = storeToRefs(useUserStore())
   const { isOwner } = storeToRefs(useRoleStore())
+  const { currentLocale } = storeToRefs(useSimpleLocale())
 
   const { getUserPayInfo } = useUserStore()
 
@@ -167,16 +170,16 @@ export function usePay() {
 
     const onRecharge = async (params: any) => {
       const { _PRE_ORDER, payType, rechargeAmount, cardId, chainType } = params
-      // _PRE_ORDER 为 userRechargeSettlementCreate 的返回值，用于后续的支付。
+      // _PRE_ORDER 为 genRechargeSettlement 的返回值，用于后续的支付。
       // 仅卡片充值且不绑卡的情况下才会提前生成充值单。
-      const { code, data, msg } = _PRE_ORDER || await API.pay.userRechargeSettlementCreate({
+      const { code, data, msg } = _PRE_ORDER || await genRechargeSettlement({
         payType,
         rechargeAmount,
         cardId,
         chainType,
       })
 
-      onlyErrorToast(code, msg)
+      msg && onlyErrorToast(code, msg)
       if (code !== 0)
         return
 
@@ -258,5 +261,25 @@ export function usePay() {
     }
   }
 
-  return { genCheckerOrderStatus, openProcessing, planSuccess, balanceSuccess, purchaseSuccess, walletRecharge }
+  async function genRechargeSettlement(params: any) {
+    const { code, data, msg } = await API.pay.userPayCaptchaTriggerList()
+    if (code !== 0)
+      return { code, data: null, msg }
+
+    if (data.captcha) {
+      const captchaVerifyParam = await openAliyunCaptcha({
+        SceneId: data.sceneId,
+        EncryptedSceneId: data.EncryptedSceneId,
+        language: currentLocale.value === 'zh-CN' ? 'cn' : 'en',
+      })
+
+      if (!captchaVerifyParam)
+        return { code, data: null, msg: '' }
+      Reflect.set(params, 'captchaVerifyParam', captchaVerifyParam)
+    }
+
+    return await API.pay.userRechargeSettlementCreate(params)
+  }
+
+  return { genCheckerOrderStatus, genRechargeSettlement, openProcessing, planSuccess, balanceSuccess, purchaseSuccess, walletRecharge }
 }

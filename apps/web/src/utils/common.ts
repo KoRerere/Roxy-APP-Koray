@@ -23,7 +23,7 @@ export function showPageLoading() {
     const { default: router } = await import('/@/router')
     router.push({ name: '500' })
     hidePageLoading()
-  }, 1000 * 30)
+  }, 1000 * 60)
 }
 
 if (import.meta.hot) {

@@ -205,11 +205,11 @@ export class BrowserItem {
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
 
-      ipcSender.user.mixpanelTrack('profile_start', {
-        coreVersion: this.coreVersion.coreVersion,
-        browserType: 'chrome',
-        headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
-      })
+      // ipcSender.user.mixpanelTrack('profile_start', {
+      //   coreVersion: this.coreVersion.coreVersion,
+      //   browserType: 'chrome',
+      //   headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
+      // })
     }
   }
 
@@ -228,12 +228,12 @@ export class BrowserItem {
     }
     finally {
       delRoxynetProxy(dirId)
-      rm(this.fakeVideoDir, { recursive: true, force: true }).catch(() => {})
-      ipcSender.user.mixpanelTrack('profile_end', {
-        coreVersion: this.coreVersion.coreVersion,
-        browserType: 'chrome',
-        headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
-      })
+      rm(this.fakeVideoDir, { recursive: true, force: true }).catch(() => { })
+      // ipcSender.user.mixpanelTrack('profile_end', {
+      //   coreVersion: this.coreVersion.coreVersion,
+      //   browserType: 'chrome',
+      //   headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
+      // })
     }
   }
 
@@ -261,7 +261,7 @@ export class BrowserItem {
   async uploadData() {
     const params = await this.afterLaunchTask.getUploadData()
 
-    const { id, dirId, syncValue, ossDirPath, syncCookie } = this.winInfo
+    const { id, dirId, syncValue, ossDirPath, syncCookie, allOpenUrl, $keepOriginOpenUrl } = this.winInfo
 
     const needSyncFiles = this.needSyncFiles.map(url => ({
       src: join(this.userDataDir, url),
@@ -298,7 +298,7 @@ export class BrowserItem {
       const uploadParams = {
         id,
         cookie: syncCookie ? (Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie) : undefined,
-        defaultOpenUrl: params.defaultOpenUrl,
+        defaultOpenUrl: $keepOriginOpenUrl ? allOpenUrl : params.defaultOpenUrl,
         lumiLogin: params.lumiLogin,
         syncValue: {
           version: newVersion,
@@ -382,5 +382,9 @@ export class BrowserItem {
   /** 是否是有效的 URL */
   isValidURL(url: string) {
     return !getInvalidUrls().some(n => url.startsWith(n!))
+  }
+
+  async cookieRobot(params: any) {
+    this.afterLaunchTask.cookieRobot(params)
   }
 }

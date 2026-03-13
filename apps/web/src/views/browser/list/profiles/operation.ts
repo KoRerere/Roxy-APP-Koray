@@ -220,7 +220,7 @@ export async function getSorts() {
 
   const onChange = (data: any) => {
     const params: Record<string, any> = {}
-    if (data.sortField && columns.data.find(item => item.key === data.sortField && item.sortable)) {
+    if (data.sortField && columns.data.some(item => item.key === data.sortField && item.sortable)) {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
     }
@@ -305,7 +305,6 @@ export function getOperation(row: any = {}) {
       name: 'setAsDefaultBrowser',
       label: $t('设为默认浏览器'),
       icon: 'base/rx_ic_loptop_check',
-      suffixIcon: 'base/fire',
     },
     {
       name: 'createDesktopShortcut',
@@ -420,6 +419,14 @@ export function getOperation(row: any = {}) {
       name: 'editCookies',
       label: $t('编辑 Cookies'),
       icon: 'base/rx_ic_cookies',
+      power: !role.isViewer,
+      multiple: true,
+    },
+    {
+      name: 'cookieRobot',
+      label: $t('Cookie 机器人'),
+      icon: 'base/rx_ic_cookie_bot',
+      suffixIcon: 'base/fire',
       power: !role.isViewer,
       multiple: true,
     },

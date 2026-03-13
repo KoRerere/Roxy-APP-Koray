@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { emitter } from '/@/utils/eventBus'
-
 const props = defineProps<{
   newFeatureTips: Record<string, any>[]
 }>()
@@ -45,7 +43,7 @@ function syncVideoPlayback() {
   if (!container)
     return
 
-  const players = Array.from(container.querySelectorAll('roxy-video-player')) as HTMLElement[]
+  const players = [...container.querySelectorAll('roxy-video-player')] as HTMLElement[]
 
   players.forEach((player) => {
     const pageIndex = Number((player as HTMLElement).dataset.page)
@@ -64,7 +62,6 @@ function syncVideoPlayback() {
 }
 
 async function handleSkip() {
-  emitter.emit('focusMcp')
   emit('skip')
 }
 

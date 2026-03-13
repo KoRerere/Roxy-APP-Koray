@@ -61,7 +61,6 @@ export interface MittEvents {
     anchorPoint?: string
   }
   badgeMap: string
-  focusMcp: void
   showAppUpgradeDialog: any
 }
 

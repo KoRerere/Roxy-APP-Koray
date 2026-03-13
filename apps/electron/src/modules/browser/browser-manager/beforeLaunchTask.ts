@@ -324,6 +324,8 @@ export class BeforeLaunchTask {
 
     /** 内置命令行参数 keys */
     const builtInArgKeys = args.map(arg => arg.split('=')[0])
+    /** 允许覆盖的命令行参数 keys */
+    const overridableArgKeys = ['--remote-debugging-port']
 
     // 开启沙盒模式
     if (sandboxPermission) {
@@ -335,9 +337,20 @@ export class BeforeLaunchTask {
       const userCustomArgs = startupParam.split(';')
         .map((item: string) => item.trim())
         .filter((arg: string) => {
-          // 用户自定义启动参数优先级最低，不能覆盖内置参数
-          return !builtInArgKeys.includes(arg.split('=')[0])
+          // 用户自定义启动参数优先级最低，不能覆盖内置参数，但允许覆盖某些特定的参数（比如远程调试端口），以满足用户个性化需求
+          const key = arg.split('=')[0]
+          const allowOverride = !builtInArgKeys.includes(key) || overridableArgKeys.includes(key)
+
+          // 对于允许覆盖的参数，移除内置的同 key 参数，保留用户自定义的值
+          if (allowOverride) {
+            const existingIndex = args.findIndex(a => a.split('=')[0] === key)
+            if (existingIndex !== -1) {
+              args.splice(existingIndex, 1)
+            }
+          }
+          return allowOverride
         })
+
       args.push(...userCustomArgs)
     }
 

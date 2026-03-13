@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { isPackaged } from '/@/constants/common'
 
 const require = createRequire(import.meta.url)
-const fontList = require(`${isPackaged ? join(process.resourcesPath, 'node_modules', 'font-list', 'index.js') : 'font-list'}`)
+const fontList = require(`${isPackaged ? join(process.resourcesPath, 'node_modules', 'font-list', 'index.mjs') : 'font-list'}`)
 
 const local_fonts: string[] = []
 

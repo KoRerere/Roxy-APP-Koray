@@ -344,6 +344,8 @@ export interface UserGetWindowInfoV2ListData {
       platformUserName?: string;
       /** 平台密码，str */
       platformPassword?: string;
+      /** 浏览器内核类型，Chrome/Firefox */
+      coreType?: string;
       defaultOpenUrl?: string[];
       /** 内核版本，枚举值：117，109, str类型 */
       coreVersion?: string;
@@ -1685,121 +1687,31 @@ export interface UserChangeEmailCreateData {
 export interface UserGetUserInfoListData {
   code: number;
   data: {
-    /**
-     * 用户ID
-     * 用户ID
-     */
     id: number;
-    /**
-     * 用户名
-     * 用户名
-     */
     userName: string;
-    /**
-     * 真实姓名
-     * 真实姓名
-     */
     realName: string;
-    /**
-     * 手机号
-     * 手机号
-     */
     phone: string;
-    /**
-     * 邮箱
-     * 邮箱
-     */
     email: string;
-    /**
-     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
-     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
-     */
     userIdentity: string;
-    /**
-     * 名下用户：true:有,false：没有
-     * 名下用户：true:有,false：没有
-     */
     underName: boolean;
-    /**
-     * 推荐用户：true:是,false：不是
-     * 推荐用户：true:是,false：不是
-     */
     recommendUser: boolean;
-    /**
-     * 头像
-     * 头像
-     */
     avatar: string;
-    /**
-     * 头像颜色
-     * 头像颜色
-     */
     avatarColor: string;
-    /**
-     * 最大打开数量
-     * 最大打开数量
-     */
     maxOpenCount: number;
-    /**
-     * 创建时间
-     * 创建时间
-     */
     createTime: string;
-    /**
-     * 修改时间
-     * 修改时间
-     */
     updateTime: string;
-    /**
-     * 已打开次数
-     * 已打开次数
-     */
     useOpenCount: number;
-    /**
-     * 工作空间ID
-     * 工作空间ID
-     */
     workspaceId: number;
-    /**
-     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
-     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
-     */
     identity: string;
-    /**
-     * 最大窗口数量
-     * 最大窗口数量
-     */
     maxWindowCount: number;
-    /**
-     * 已使用窗口数量
-     * 已使用窗口数量
-     */
     useWindowCount: number;
-    /**
-     * 已使用空间数量
-     * 已使用空间数量
-     */
     useWorkspaceCount: number;
-    /**
-     * 获取用户总空间数量
-     * 获取用户总空间数量
-     */
     maxWorkspaceCount: number;
-    /**
-     * 邀请链接
-     * 邀请链接
-     */
     inviteLink: string;
-    /**
-     * 首次创建空间提示
-     * 首次创建空间提示
-     */
     firstCreateTip: boolean;
     clientId: string;
     setPasswordStatus: boolean;
-    /** 是否绑定邮箱 */
     isBindEmail: boolean;
-    /** 是否公共空间 */
     workspaceType: number;
     role: number;
     onboardingTaskStatus: {
@@ -1813,9 +1725,10 @@ export interface UserGetUserInfoListData {
       createProfileVideoEntryStatus: boolean;
       createProfileTourGuideStatus: boolean;
       createProxyVideoEntryStatus: boolean;
+      ratingStatus: boolean;
+      autoRatingStatus: boolean;
+      externalRatingStatus: boolean;
     };
-    /** 列表备注状态 */
-    remarkDisplayStatus: boolean;
   };
   msg: string;
 }
@@ -1870,26 +1783,12 @@ export interface UserGetAppUpgradeCreateData {
 }
 
 export interface UserGetCoreUpgradeCreatePayload {
-  /**
-   * 操作系统
-   * 如 "win32", "darwin"，str，必传
-   */
   os: string;
-  /**
-   * 操作系统版本
-   * 11，10，8，7
-   */
   osVersion: string;
-  /**
-   * 操作系统位数
-   * 32或64，str，非必传
-   */
-  osBit?: string;
-  /**
-   * cpu架构
-   * mac专用：intel/apple，str，非必传
-   */
-  cpu?: string;
+  osBit: string;
+  cpu: string;
+  /** 浏览器内核类型，Chrome/Firefox狐 */
+  coreType: string;
 }
 
 export interface UserGetCoreUpgradeCreateData {
@@ -2456,26 +2355,12 @@ export interface UserGetBannerPictureListListData {
 }
 
 export interface GetCoreUpgradeCreatePayload {
-  /**
-   * 操作系统
-   * 如 "win32", "darwin"，str，必传
-   */
   os: string;
-  /**
-   * 操作系统版本
-   * 11，10，8，7
-   */
   osVersion: string;
-  /**
-   * 操作系统位数
-   * 32或64，str，非必传
-   */
-  osBit?: string;
-  /**
-   * cpu架构
-   * mac专用：intel/apple，str，非必传
-   */
-  cpu?: string;
+  osBit: string;
+  cpu: string;
+  /** 浏览器内核类型，Chrome/Firefox */
+  coreType: string;
 }
 
 export interface GetCoreUpgradeCreateData {
@@ -3270,6 +3155,9 @@ export interface UserUpdateOnboardingTaskStatusCreatePayload {
   createProfileTourGuideStatus?: boolean;
   /** 创建代理视频入口：False未完成 True已完成 */
   createProxyVideoEntryStatus?: boolean;
+  autoRatingStatus?: boolean;
+  ratingStatus?: boolean;
+  externalRatingStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -3657,6 +3545,13 @@ export interface UserGetInviteNotifyListData {
   msg: string;
 }
 
+export type UserAppRatingCreatePayload = object;
+
+export interface UserAppRatingCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -3732,6 +3627,20 @@ export interface UserGetUaWebglV2ListParams {
    * @example 2
    */
   count: number;
+  /**
+   * 浏览器内核类型，Chrome/Firefox
+   * @example "Chrome"
+   */
+  coreType: CoreTypeEnum;
+}
+
+/**
+ * 浏览器内核类型，Chrome/Firefox
+ * @example "Chrome"
+ */
+export enum CoreTypeEnum {
+  Chrome = "Chrome",
+  Firefox = "Firefox",
 }
 
 export interface UserGetUaWebglV2ListData {
@@ -3742,6 +3651,15 @@ export interface UserGetUaWebglV2ListData {
     webGLManufacturer?: string;
   }[];
   msg: string;
+}
+
+/**
+ * 浏览器内核类型，Chrome/Firefox
+ * @example "Chrome"
+ */
+export enum UserGetUaWebglV2ListParams1CoreTypeEnum {
+  Chrome = "Chrome",
+  Firefox = "Firefox",
 }
 
 export interface UserGetDeviceNameV2ListParams {
@@ -4663,20 +4581,19 @@ export interface UserGetWindowInfoListListData {
       lastCity?: string;
       checkTime?: string;
       checkStatus?: number;
+      /** 浏览器内核类型，Chrome/Firefox */
+      coreType?: string;
       openLimitStatus?: boolean;
       labelInfo?: string[];
       platformUrlList?: string[];
       maxWindowSort?: number;
       buyProxyType?: number;
       openTime?: string;
-      /** 是否临时窗口 false 不是 true 是 */
       isTemporary?: boolean;
-      /** 是否投送 false 不是 true 是 */
       isTransfer?: boolean;
-      /** 投送者头像 */
       transferUserAvatar?: string;
-      /** 投送者名称 */
       transferUserName?: string;
+      workspaceName?: string;
     }[];
   };
   msg: string;
@@ -7966,6 +7883,16 @@ export interface UserRedeemCodeListListData {
   msg: string;
 }
 
+export interface UserPayCaptchaTriggerListData {
+  code: number;
+  data: {
+    captcha: boolean;
+    sceneId: string;
+    EncryptedSceneId: string;
+  };
+  msg: string;
+}
+
 export interface CheckIpDownloadLimitListData {
   code: number;
   msg: string;
@@ -8112,5 +8039,12 @@ export interface UpdateAuthStatisticsCreateData {
     key: string;
     value: number;
   };
+  msg: string;
+}
+
+export type UserGetRatingRewardCreatePayload = object;
+
+export interface UserGetRatingRewardCreateData {
+  code: number;
   msg: string;
 }

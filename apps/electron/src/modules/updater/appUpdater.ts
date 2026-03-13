@@ -3,8 +3,10 @@ import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import type { DebUpdater } from 'electron-updater'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
+import log from 'electron-log/main'
 import electronUpdater from 'electron-updater'
 import { join } from 'node:path'
+import { setTimeout } from 'node:timers/promises'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
@@ -39,7 +41,12 @@ export const appUpdater = new class AppUpdater {
   downloadPromiser: PromiseWithResolvers<void> | null = null
   quitAndInstallPromiser: PromiseWithResolvers<void> | null = null
 
-  constructor() { }
+  constructor() {
+    const appUpdaterLogger = log.create({ logId: 'app-updater' })
+    appUpdaterLogger.transports.file.level = 'debug'
+    appUpdaterLogger.transports.file.fileName = 'app-updater.log'
+    this.#autoUpdater.logger = appUpdaterLogger
+  }
 
   async init(waitForDownload = false, options?: CheckForUpdatesOptions) {
     this.downloadPromiser = Promise.withResolvers<void>()
@@ -105,6 +112,10 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.on(`error`, (error) => {
       console.error(`autoUpdater error occurred`, error)
       this.isInProgress = false
+
+      if (this.#updateMessageData.status === 'downloaded') {
+        return
+      }
 
       if (this.#updateMessageData.version && compare(this.#updateMessageData.version, app.getVersion(), '>')) {
         const ignoreList = ['.blockmap', 'com.github.Electron', 'disableWebInstaller is set to false']
@@ -179,6 +190,11 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
+    if (this.#updateMessageData.status === 'downloaded') {
+      this.sendSuccessMessage()
+      return this.#updateMessageData
+    }
+
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
       console.log(`checkForUpdates error`, error)
@@ -219,6 +235,21 @@ export const appUpdater = new class AppUpdater {
   async upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`Quitting app and updating immediately`)
+    console.debug('this.#autoUpdater', this.#autoUpdater)
+
+    if (this.#autoUpdater.squirrelDownloadedUpdate === false) {
+      // 解决用户取消系统授权弹窗后，无法再次调起更新的问题
+      const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
+        console.log(`quitAndInstall checkForUpdates error`, error)
+        this.isQuittingForUpdate = false
+      })
+      console.log('[appUpdater] quitAndInstall', checkResult)
+      await setTimeout(500)
+    }
+    else {
+      this.downloadPromiser?.resolve()
+    }
+
     if (isPackaged) {
       if (this.downloadPromiser?.promise) {
         this.downloadPromiser.promise.finally(() => {
@@ -231,9 +262,10 @@ export const appUpdater = new class AppUpdater {
     }
   }
 
-  quitAndInstall() {
+  async quitAndInstall() {
     this.quitAndInstallPromiser = Promise.withResolvers<void>()
     this.isQuittingForUpdate = true
+
     this.#autoUpdater.quitAndInstall(true, true)
     // return this.quitAndInstallPromiser.promise
   }

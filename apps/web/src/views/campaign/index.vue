@@ -41,7 +41,7 @@ async function getHolidaySeason() {
 }
 
 function stratHolidaySeasonCountdown() {
-  if (seasonalActivity.value.none)
+  if (!seasonalActivity.value.active)
     return
 
   const timeStamp = seasonalActivity.value.active

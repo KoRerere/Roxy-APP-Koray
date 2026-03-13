@@ -7,6 +7,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { scheduler, setTimeout } from 'node:timers/promises'
+import pLimit from 'p-limit'
 import { API } from '/@/api'
 import { Role } from '/@/constants/common'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
@@ -18,6 +19,8 @@ import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
 import { asyncDebounce } from '/@/utils'
+
+const batchLaunchLimit = pLimit(5)
 
 const OpenErrorMessageMap = {
   /**
@@ -51,7 +54,7 @@ export class BrowserManager {
   #openedWorkspaceIds = new Set<number>()
   /** 需要定时同步窗口打开状态的空间 ID */
   get #needSyncWindowOpenStatusWorkspaceIds() {
-    return Array.from(this.#openedWorkspaceIds).filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
+    return [...this.#openedWorkspaceIds].filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
   }
 
   /** 正在打开中的浏览器集合 */
@@ -62,7 +65,7 @@ export class BrowserManager {
   uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
   /** 获取已打开的浏览器列表 */
   get openedBrowserList() {
-    return Array.from(this.openedBrowserMap.values()).map((browserItem) => {
+    return Array.from(this.openedBrowserMap.values(), (browserItem) => {
       return {
         ...browserItem.winInfo,
         $pId: browserItem.launchInfo?.pid,
@@ -177,26 +180,32 @@ export class BrowserManager {
   }
 
   /** 批量启动浏览器 */
-  async batchLaunch(dirIds: string[]) {
+  async batchLaunch(dirIds: string[], customParams?: any) {
     console.log(`BrowserManager === Batch launching browsers`, dirIds)
-    const isNeedBatchReq = dirIds.length > 8
-    const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
-    const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
+
+    const firstBatch = dirIds.slice(0, 5)
+    const remainingIds = dirIds.slice(5)
 
     const winInfoList = await this.getWindowList(firstBatch).catch(() => [])
-    const secondPromise = secondBatch.length ? this.getWindowList(secondBatch) : []
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
-    for (const winInfo of winInfoList) {
-      await this.launch(winInfo).catch((error) => {
+
+    const launchTasks = winInfoList.map(winInfo => batchLaunchLimit(() => this.launch({ ...winInfo, ...customParams }).catch((error) => {
+      console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
+    })))
+
+    for (let i = 0; i < remainingIds.length; i += 15) {
+      const batchIds = remainingIds.slice(i, i + 15)
+      const batchWinInfoList = await this.getWindowList(batchIds).catch(() => [])
+
+      const batchTasks = batchWinInfoList.map(winInfo => batchLaunchLimit(() => this.launch({ ...winInfo, ...customParams }).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
-      })
+      })))
+
+      launchTasks.push(...batchTasks)
+      await setTimeout(1500)
     }
 
-    for (const winInfo of await secondPromise) {
-      await this.launch(winInfo).catch((error) => {
-        console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
-      })
-    }
+    await Promise.allSettled(launchTasks)
   }
 
   /** 批量重启浏览器 */
@@ -374,7 +383,7 @@ export class BrowserManager {
   /** 获取窗口列表 */
   private async getWindowList(dirIds: string[]) {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
-    const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
+    const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') }, { timeout: 20 * 1000 })
       .then((res) => {
         // 达到窗口打开次数限制
         if (res.code === 417) {

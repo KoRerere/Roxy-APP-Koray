@@ -1,12 +1,27 @@
 <script setup lang="ts">
-;
-import { motion } from 'motion-v';
-import MultiAccounting from './MultiAccounting.vue';
-import ProfilesSyncing from './ProfilesSyncing.vue';
-import SupportMorePlatform from './SupportMorePlatform.vue';
-import TeamSpace from './TeamSpace.vue';
+import { motion } from 'motion-v'
+import MultiAccounting from './MultiAccounting.vue'
+import ProfilesSyncing from './ProfilesSyncing.vue'
+import SupportMorePlatform from './SupportMorePlatform.vue'
+import TeamSpace from './TeamSpace.vue'
+// import Agent from './Agent.vue'
+import { useThemeStore } from '/@/stores/theme'
+
+const themeStore = useThemeStore()
+const agentBg = computed(() => themeStore.realTheme === 'dark' ? '/images/mcp/login-bg-dark.svg' : '/images/mcp/login-bg-light.svg')
+
+/** 默认 tab 停留时长（ms） */
+const DEFAULT_INTERVAL = 8000
 
 const tabs = [
+  // {
+  //   key: 'Agent',
+  //   title: 'Roxy AI Agent',
+  //   desc: $t('RoxyBrowser 的智能代理助手，帮助你自动执行各种任务，提高工作效率。'),
+  //   component: Agent,
+  //   /** Agent 动画较长，自定义 15 秒 */
+  //   intervalTime: 15000,
+  // },
   {
     key: 'SupportMorePlatform',
     title: $t('广泛业务平台支持'),
@@ -17,116 +32,157 @@ const tabs = [
     key: 'MultiAccounting',
     title: $t('集成式多账户管理'),
     desc: $t('同步 RoxyBrowser 核心研究成果，定义安全多账户协同标准。'),
-    component: MultiAccounting
+    component: MultiAccounting,
   },
   {
     key: 'ProfilesSyncing',
     title: $t('跨多窗口同步操作'),
     desc: $t('同时操作多个环境，大幅提升工作流程和生产效率，轻松应对多任务处理及重复操作。'),
-    component: ProfilesSyncing
+    component: ProfilesSyncing,
   },
   {
     key: 'TeamSpace',
     title: $t('释放团队协作潜力'),
     desc: $t('RoxyBrowser 支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
-    component: TeamSpace
-  }
+    component: TeamSpace,
+  },
 ]
 
-const currentTab = ref('SupportMorePlatform')
-const progressWidth = ref(100);
-const FULL_PROGRESS = 100; // 进度条最大值（100%）
-const intervalTime = 8000; // 8秒
-let animationFrameId: number | null = null; // 存储 RAF ID
-let progressStartTime: number | null = null; // 记录动画开始时间
+const currentTab = ref(tabs[0].key)
+const progressWidth = ref(100)
+/**
+ * 进度条最大值（100%）
+ */
+const FULL_PROGRESS = 100
+/**
+ * 存储 RAF ID
+ */
+let animationFrameId: number | null = null
+/**
+ * 记录动画开始时间
+ */
+let progressStartTime: number | null = null
 
-// 切换标签并重置倒计时
+/**
+ * 切换标签并重置倒计时
+ */
 function switchTab(tab: string) {
-  if (currentTab.value === tab) return;
-  currentTab.value = tab;
-  resetTimer();
+  if (currentTab.value === tab)
+    return
+  currentTab.value = tab
+  resetTimer()
 }
 
 function resetTimer() {
-  resetProgress();
-  startTimers();
+  resetProgress()
+  startTimers()
 }
 
 function switchToNextTab() {
-  const currentIndex = tabs.findIndex(item => item.key === currentTab.value);
+  const currentIndex = tabs.findIndex(item => item.key === currentTab.value)
   if (currentIndex === tabs.length - 1) {
-    currentTab.value = tabs[0].key;
-  } else {
+    currentTab.value = tabs[0].key
+  }
+  else {
     currentTab.value = tabs[currentIndex + 1].key
   }
-  resetProgress();
+  resetProgress()
 }
 
-// 重置进度条到100%
+/**
+ * 重置进度条到100%
+ */
 function resetProgress() {
-  progressWidth.value = FULL_PROGRESS;
+  progressWidth.value = FULL_PROGRESS
 }
 
-// 开始计时器
+/**
+ * 开始计时器
+ */
 function startTimers() {
   clearExistingTimers()
 
-  progressStartTime = performance.now(); // 记录开始时间
-  animateProgressBar();
+  progressStartTime = performance.now() // 记录开始时间
+  animateProgressBar()
 }
 
-// 进度条动画（RAF 实现）
+/**
+ * 当前 tab 的停留时长（ms），支持每 tab 自定义
+ */
+function getCurrentInterval(): number {
+  const tab = tabs.find(t => t.key === currentTab.value)
+  return (tab as { intervalTime?: number })?.intervalTime ?? DEFAULT_INTERVAL
+}
+
+/**
+ * 进度条动画（RAF 实现）
+ */
 function animateProgressBar() {
-  if (!progressStartTime) return;
+  if (!progressStartTime)
+    return
 
-  const elapsedTime = performance.now() - progressStartTime;
-  const progressPercentage = Math.max(0, FULL_PROGRESS - (elapsedTime / intervalTime) * FULL_PROGRESS);
+  const intervalTime = getCurrentInterval()
+  const elapsedTime = performance.now() - progressStartTime
+  const progressPercentage = Math.max(0, FULL_PROGRESS - (elapsedTime / intervalTime) * FULL_PROGRESS)
 
-  progressWidth.value = progressPercentage;
+  progressWidth.value = progressPercentage
 
   if (progressPercentage <= 0) {
-    progressStartTime = performance.now();
+    progressStartTime = performance.now()
     switchToNextTab()
   }
 
-  animationFrameId = requestAnimationFrame(animateProgressBar);
+  animationFrameId = requestAnimationFrame(animateProgressBar)
 }
 
-// 清除现有计时器和动画
+/**
+ * 清除现有计时器和动画
+ */
 function clearExistingTimers() {
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  progressStartTime = null; // 重置开始时间
+  if (animationFrameId)
+    cancelAnimationFrame(animationFrameId)
+  progressStartTime = null // 重置开始时间
 }
 
 // 组件挂载时启动计时器
 onMounted(() => {
-  startTimers();
-});
+  startTimers()
+})
 
 // 组件卸载时清除计时器
 onUnmounted(() => {
   clearExistingTimers()
-});
+})
 </script>
 
 <template>
-  <div class="mt-100px ml-100px">
-    <template v-for="tab in tabs">
-      <motion.div class="intro" v-if="currentTab === tab.key" :initial="{ opacity: 0, y: -30 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
-        <div class="intro-title">{{ tab.title }}</div>
-        <div class="intro-desc">{{ tab.desc }}</div>
-      </motion.div>
-    </template>
-    <ul class="indicator-bar">
-      <li v-for="tab in tabs" :class="{ active: currentTab === tab.key }" @click="switchTab(tab.key)">
-        <div class="indicator-bar-item" :style="currentTab === tab.key ? { width: progressWidth + '%' } : {}"></div>
-      </li>
-    </ul>
-  </div>
+  <div class="w-53% h-full relative overflow-hidden" :class="currentTab !== 'Agent' ? 'right-panel' : ''">
+    <div class="h-full relative z-1">
+      <div class="mt-100px ml-100px">
+        <template v-for="tab in tabs">
+          <motion.div v-if="currentTab === tab.key" :key="tab.key" class="intro" :initial="{ opacity: 0, y: -30 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
+            <div class="intro-title">
+              {{ tab.title }}
+            </div>
+            <div class="intro-desc">
+              {{ tab.desc }}
+            </div>
+          </motion.div>
+        </template>
+        <ul class="indicator-bar">
+          <li v-for="tab in tabs" :key="tab.key" :class="{ active: currentTab === tab.key }" @click="switchTab(tab.key)">
+            <div class="indicator-bar-item" :style="currentTab === tab.key ? { width: `${progressWidth}%` } : {}" />
+          </li>
+        </ul>
+      </div>
 
-  <template v-for="tab in tabs">
-    <component :is="tab.component" v-if="currentTab === tab.key" />
-  </template>
+      <template v-for="tab in tabs">
+        <component :is="tab.component" v-if="currentTab === tab.key" :key="tab.key" />
+      </template>
+    </div>
+
+    <img v-if="currentTab === 'Agent'" :src="agentBg" class="absolute top-0 left-0 w-full h-full">
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -134,7 +190,7 @@ onUnmounted(() => {
   .intro-title {
     display: inline-block;
     padding: 8px 12px;
-    background-color: #FFF;
+    background-color: #fff;
     color: var(--colors-text-text-brand);
     border-radius: 6px;
     font-family: Archivo;
@@ -145,17 +201,16 @@ onUnmounted(() => {
 
   .intro-desc {
     padding-right: 16px;
-    color: #FFF;
+    color: #fff;
     font-family: Inter;
     font-size: 16px;
     font-weight: 400;
     line-height: 25.6px;
     margin: 16px 0;
   }
-
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   .intro-title {
     background-color: var(--colors-alpha-alpha-black-60);
     color: var(--colors-text-text-primary);
@@ -205,4 +260,23 @@ onUnmounted(() => {
     }
   }
 }
+
+.right-panel {
+  background: linear-gradient(180deg, #12a3fc 0%, #cdebfe 100%);
+}
+
+[data-theme='dark'] {
+  .right-panel {
+    background: linear-gradient(180deg, #0a5d9d 0%, #5c8f9e 100%);
+  }
+}
+
+// .agent-gradient {
+//   position: absolute;
+//   top: 0;
+//   filter: blur(150px);
+//   border-radius: 100%;
+//   height: 100%;
+//   width: 760px;
+// }
 </style>

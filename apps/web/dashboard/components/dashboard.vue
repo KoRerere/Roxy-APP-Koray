@@ -385,10 +385,12 @@ onBeforeMount(() => {
 
   &.profile {
     flex: 2;
+    overflow: hidden;
   }
 
   &.account {
     flex: 1;
+    overflow: hidden;
   }
 
   .list {

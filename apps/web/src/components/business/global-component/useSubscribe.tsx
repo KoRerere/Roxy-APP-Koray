@@ -11,9 +11,9 @@ import type { MittEvents } from '/@/utils/eventBus'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-
+import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { genDriver, isMainWindow } from '/@/utils'
+import { enhanceCountdown, genDriver, isMainWindow, safeParseJSON, sleep } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -28,9 +28,11 @@ const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/comp
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
 const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal'))
+const Score = defineAsyncComponent(() => import('/@/views/tutorial/components/score'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
+let countdown: ReturnType<typeof enhanceCountdown>
 
 export function useSubscribe() {
   if (globalThis.isElectron && (isSubscribe || !isMainWindow)) {
@@ -51,6 +53,7 @@ export function useSubscribe() {
   const userStore = useUserStore()
   const { getUserPayInfo, clearUserInfo } = userStore
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+  const { isOwner, isManager } = storeToRefs(useRoleStore())
 
   watchEffect(() => {
     if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
@@ -60,6 +63,9 @@ export function useSubscribe() {
         const newFeatureTips = result?.filter(item => item.content?.length)
         if (newFeatureTips?.length) {
           showAppUpgradeDialog(newFeatureTips)
+        }
+        else {
+          checkScoreDialog()
         }
       })
     }
@@ -202,7 +208,15 @@ export function useSubscribe() {
       },
       slots: {
         default: ({ hideModal }) => {
-          return <AppUpgradeTips onSkip={hideModal} newFeatureTips={newFeatureTips} />
+          return (
+            <AppUpgradeTips
+              onSkip={() => {
+                hideModal()
+                showMcpDriver()
+              }}
+              newFeatureTips={newFeatureTips}
+            />
+          )
         },
         footer: undefined,
       },
@@ -352,7 +366,10 @@ export function useSubscribe() {
       pt: {
         root: '!border-none !shadow-none rounded-lg',
       },
-      handleCancel: () => updateOnboardingTaskStatus({ firstRegisterGuideStatus: true }),
+      handleCancel: async () => {
+        await globalThis.electronAPI.send('app:hideNewFeatureTips')
+        updateOnboardingTaskStatus({ firstRegisterGuideStatus: true })
+      },
       slots: {
         container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
       },
@@ -366,8 +383,68 @@ export function useSubscribe() {
         { element: '.menu_agent-list', popover: { description: $t('RoxyBrowser 不仅支持自定义代理 IP，也为您准备了代理 IP 商店，欢迎选购！'), side: 'right', align: 'center' } },
         { element: '.menu_tutorial', popover: { description: $t('最后，您可以探索新手教程来了解更多 RoxyBrowser 产品功能和使用技巧，以提升您的操作效率。'), side: 'right', align: 'center' } },
       ],
+      onDestroyed: async () => {
+        showMcpDriver()
+      },
     })
-
     driverObj.drive()
+  }
+
+  async function showMcpDriver() {
+    const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
+
+    if (driverStatus?.mcpGuide || !(isOwner.value || isManager.value))
+      return
+
+    await Promise.all([
+      sleep(50), // 延迟 50ms 让外部元素加载完成
+      nextTick(),
+    ])
+
+    const driverObj = genDriver({
+      steps: [
+        {
+          element: '#mcp',
+          popover: {
+            description: $t('Roxy AI Agent 可以帮你管理浏览器窗口、平台账号还有代理 IP，并帮助您实现浏览器的自动化操作'),
+            side: 'left',
+            align: 'center',
+          },
+        },
+      ],
+      onDestroyed: () => {
+        localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
+        checkScoreDialog()
+      },
+    })
+    driverObj.drive()
+  }
+
+  function checkScoreDialog() {
+    countdown?.stop()
+
+    if (userStore.userInfo.onboardingTaskStatus?.autoRatingStatus === false) {
+      const $score_timestamp = localStorage.getItem('$score_timestamp')
+      const default_timestamp = Date.now() + 3 * 60 * 60 * 1000
+
+      if (!$score_timestamp) {
+        localStorage.setItem('$score_timestamp', default_timestamp.toString())
+      }
+
+      countdown = enhanceCountdown(Number($score_timestamp || default_timestamp), () => { }, {
+        onEnd: () => {
+          localStorage.removeItem('$score_timestamp')
+          showModal({
+            showHeader: false,
+            modal: true,
+            blockScroll: true,
+            closeOnEscape: false,
+            slots: {
+              container: ({ hideModal }) => <Score onClose={hideModal}></Score>,
+            },
+          })
+        },
+      })
+    }
   }
 }

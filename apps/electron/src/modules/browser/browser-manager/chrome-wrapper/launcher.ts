@@ -44,18 +44,6 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
     return
   }
 
-  // 确保包含远程调试端口
-  let port = 0
-  const portArg = args.find(arg => arg.startsWith('--remote-debugging-port='))
-  if (portArg) {
-    port = Number.parseInt(portArg.split('=')[1])
-  }
-  else {
-    // 使用随机端口
-    port = 0
-    args.push('--remote-debugging-port=0')
-  }
-
   const userDataDir = args.find(n => n.startsWith('--user-data-dir='))?.split('=')[1]
   await rm(join(userDataDir!, 'DevToolsActivePort'), { force: true }).catch(() => { })
 

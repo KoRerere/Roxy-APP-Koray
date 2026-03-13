@@ -1,15 +1,16 @@
 <script setup lang="tsx">
+import Score from '/@/views/tutorial/components/score'
 import QrcodeModal from '/@/components/qrcode-modal.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
-import { genDriver, getDictMap, safeParseJSON, sleep } from '/@/utils'
+import { getDictMap, safeParseJSON } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { emitter } from '/@/utils/eventBus'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { Role } from '/@/enums/role'
 
 let timer: any = null
@@ -21,6 +22,7 @@ const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { token } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
+const { onboardingTaskStatus } = useOnboardingTaskStatus()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const [, onlyErrorToast] = useResponseToast()
@@ -90,6 +92,12 @@ const items = computed(() => {
       label: $t('官方网站'),
       icon: 'base/rx_ic_link',
       command: () => window.open(getOfficialWebsite(), '_blank'),
+    },
+    {
+      label: $t('评价我们'),
+      icon: 'base/rx_ic_star',
+      visible: currentWorkspace.value?.role === Role.OWNER && onboardingTaskStatus.value?.ratingStatus === false,
+      command: () => openScore(),
     },
     {
       label: $t('帮助文档'),
@@ -171,8 +179,19 @@ function openHelpDocument() {
   window.open(`https://faq.roxybrowser.com/${currentLocale!.split('-')[0]}`, '_blank')
 }
 
+function openScore() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    closeOnEscape: false,
+    slots: {
+      container: ({ hideModal }) => <Score onClose={hideModal}></Score>,
+    },
+  })
+}
+
 async function openMCP() {
-  console.log('🚀 ~ openMCP ~ opening.value:', opening.value)
   if (opening.value)
     return
   mixpanelTrack('click_enter_agent')
@@ -180,42 +199,23 @@ async function openMCP() {
 
   const apiPort = await globalThis.electronAPI.send('util:getApiPort')
   if (apiPort === -1) {
-    onlyErrorToast(-1, $t('API 服务未启动，请检查端口是否被占用'))
+    onlyErrorToast(-1, $t('请检查 API 启用状态或端口是否被占用'))
     opening.value = false
+    router.replace({ name: 'api-keys' })
     return
   }
-
-  const { code, data, msg } = await API.base.userGetUserApiList()
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    if (!data.open) {
-      const { code, msg } = await API.base.userSetUserApiCreate({
-        ...data,
-        open: true,
-      })
-      onlyErrorToast(code, msg)
-      if (code === 0) {
-        await globalThis.electronAPI.send('app:restartAPIServer')
-      }
-    }
-    await globalThis.electronAPI.send('mcp:open').catch(() => {})
-  }
+  await globalThis.electronAPI.send('mcp:open').catch(() => { })
   opening.value = false
 }
 
 // ============= 仅内测版本使用，后续版本删除所有相关逻辑 =============
 const showMcp = ref(false)
-const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
 
 watch([token, () => currentWorkspace.value?.id], ([token, currentWorkspaceId]) => {
   if (token && currentWorkspaceId) {
     getMcpInfo()
   }
 }, { immediate: true })
-
-emitter.on('focusMcp', () => {
-  driverHighlight()
-})
 
 async function getMcpInfo() {
   if (!currentWorkspace.value || ![Role.OWNER, Role.MANAGER].includes(currentWorkspace.value.role!)) {
@@ -230,45 +230,10 @@ async function getMcpInfo() {
   }
   else {
     showMcp.value = false
-    updateDriverStatus()
+    const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
+    localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
   }
 }
-
-async function driverHighlight() {
-  if (driverStatus?.mcpGuide || !currentWorkspace.value || ![Role.OWNER, Role.MANAGER].includes(currentWorkspace.value.role!))
-    return
-
-  await Promise.all([
-    sleep(50), // 延迟 50ms 让外部元素加载完成
-    nextTick(),
-  ])
-
-  const driverObj = genDriver({
-    steps: [
-      {
-        element: '#mcp',
-        popover: {
-          description: $t('Roxy AI Agent 可以帮你管理浏览器窗口、平台账号还有代理 IP，并帮助您实现浏览器的自动化操作'),
-          side: 'left',
-          align: 'center',
-        },
-      },
-
-    ],
-    onDestroyed: () => {
-      updateDriverStatus()
-    },
-  })
-
-  driverObj.drive()
-}
-
-function updateDriverStatus() {
-  driverStatus.mcpGuide = true
-  localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
-}
-
-// ==================================
 </script>
 
 <template>
@@ -280,7 +245,7 @@ function updateDriverStatus() {
       <img draggable="false" src="/images/mcp/roxy_ai_agent.svg">
     </div>
     <div class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">
-      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="22" color="#FFD682" />
+      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="22" color="#FFFFFF" />
     </div>
   </div>
   <LiveChat v-show="false" />
@@ -305,7 +270,7 @@ function updateDriverStatus() {
 }
 
 .icon {
-  background-color: #dc3910;
+  background-color: #12a3fc;
 }
 
 .tooltip {

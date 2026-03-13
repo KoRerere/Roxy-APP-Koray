@@ -77,7 +77,7 @@ onMounted(() => {
 })
 
 async function driverHighlight() {
-  if (seasonalActivity.value.none || driverStatus?.springFestival)
+  if (!seasonalActivity.value.active || driverStatus?.springFestival)
     return
 
   await Promise.all([

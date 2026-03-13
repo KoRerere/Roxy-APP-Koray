@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import Announcement from '/@/layout/components/header/announcement.vue'
-import Firework from '/@/views/campaign/spring-festival/firework.vue'
+// import Firework from '/@/views/campaign/spring-festival/firework.vue'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
@@ -36,7 +36,7 @@ watchEffect(() => {
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
           <span>RoxyBrowser</span>
-          <Firework />
+          <!-- <Firework /> -->
         </template>
       </div>
       <AsideMenu :collapsed />
@@ -141,7 +141,7 @@ watchEffect(() => {
     color: var(--colors-text-text-primary);
     text-align: center;
     font-family: Archivo;
-    font-size: 16px;
+    font-size: 18px;
     line-height: normal;
     user-select: none;
     overflow: hidden;
@@ -155,17 +155,17 @@ watchEffect(() => {
   background: var(--colors-background-bg-page);
   z-index: 0;
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url('/images/campaing/spring-festival/cloud_border.svg');
-    background-repeat: no-repeat;
-    background-position: right -120px bottom 80px;
-    background-size: 400px auto;
-    z-index: -1;
-    opacity: 0.15;
-  }
+  // &::before {
+  //   content: '';
+  //   position: absolute;
+  //   inset: 0;
+  //   background-image: url('/images/campaing/spring-festival/cloud_border.svg');
+  //   background-repeat: no-repeat;
+  //   background-position: right -120px bottom 80px;
+  //   background-size: 400px auto;
+  //   z-index: -1;
+  //   opacity: 0.15;
+  // }
 }
 
 .expired-alert {

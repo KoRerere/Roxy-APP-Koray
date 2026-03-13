@@ -22,8 +22,10 @@ export const useCampaignStore = defineStore('campaign', () => {
 
   async function getActivityInfo() {
     const { code, data } = await API.base.getSpringFestivalTimeList()
-    if (code !== 0)
+    if (code !== 0) {
+      currentActivity.value = {} as Activity
       return
+    }
     currentActivity.value = { ...data, type: ActivityType.SpringFestival }
   }
 

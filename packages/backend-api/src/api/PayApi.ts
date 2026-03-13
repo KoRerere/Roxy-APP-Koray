@@ -53,6 +53,7 @@ import {
   UserGetWindowSubscriptionUpgradeMessageListParams,
   UserManageSubscriptionListData,
   UserManageSubscriptionListParams,
+  UserPayCaptchaTriggerListData,
   UserPaySettlementCreateData,
   UserPaySettlementCreatePayload,
   UserQueryOrderStatusListData,
@@ -824,6 +825,22 @@ export class PayApi<SecurityDataType = unknown> {
   userRedeemCodeListList = (params: RequestParams = {}) =>
     this.http.request<UserRedeemCodeListListData, any>({
       path: `/user_redeem_code_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserPayCaptchaTriggerList
+   * @summary 获取用户支付风控验证码信息
+   * @request GET:/user_pay_captcha_trigger
+   * @response `200` `UserPayCaptchaTriggerListData`
+   */
+  userPayCaptchaTriggerList = (params: RequestParams = {}) =>
+    this.http.request<UserPayCaptchaTriggerListData, any>({
+      path: `/user_pay_captcha_trigger`,
       method: "GET",
       format: "json",
       ...params,

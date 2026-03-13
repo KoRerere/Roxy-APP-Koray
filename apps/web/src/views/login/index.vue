@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import IntoWorkspace from '/@/components/business/global-component/invite-into-workspace.vue';
+import IntoWorkspace from '/@/components/business/global-component/invite-into-workspace.vue'
 import type { CheckOtherDeviceLoginListParams, LoginCreateData, LoginCreatePayload, LoginPhoneCreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
@@ -201,7 +201,8 @@ async function afterLogin(loginData: LoginCreateData['data']) {
 
 async function checkWorkspaceInvitation() {
   const { code, data } = await API.base.userGetInviteNotifyList()
-  if (code !== 0 || !data) return jumpHome()
+  if (code !== 0 || !data)
+    return jumpHome()
 
   setCurrentComponent('inviteIntoWorkspace', {
     inviteInfo: data.paramData,
@@ -210,7 +211,7 @@ async function checkWorkspaceInvitation() {
         API.base.userReadNotifyCreate({ ids: [data.id] })
       }
       await jumpHome(intoWorkspaceId)
-    }
+    },
   })
 }
 
@@ -389,13 +390,14 @@ provideLoginContext({
 
         <div class="sign-card">
           <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" :invite-discount-info="inviteDiscountInfo"
-            @register="val => signFormSwitchRegister = val" />
+                    @register="val => signFormSwitchRegister = val"
+          />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
           <Verify2fa v-else-if="currentComp === 'verify2fa'" :recover-type="recoverType" :on-confirm="handleSubmitBy2fa" />
           <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
           <RecoveryEmail v-else-if="currentComp === 'recoveryEmail'" :temp-token="tempToken" :recover-email="recoverEmail" @success="afterLogin" />
-          <IntoWorkspace v-else-if="currentComp === 'inviteIntoWorkspace'" v-bind="currentCompProps"></IntoWorkspace>
+          <IntoWorkspace v-else-if="currentComp === 'inviteIntoWorkspace'" v-bind="currentCompProps" />
         </div>
 
         <div class="footer">
@@ -411,7 +413,8 @@ provideLoginContext({
 
         <AnimatePresence>
           <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-            :transition="{ duration: 0.2 }" class="app-updater-motion">
+                      :transition="{ duration: 0.2 }" class="app-updater-motion"
+          >
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>
         </AnimatePresence>
@@ -420,9 +423,7 @@ provideLoginContext({
       <RxSvgIcon name="login/blob1" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -left-60%" />
       <RxSvgIcon name="login/blob2" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -right-50%" />
     </div>
-    <div v-if="windowWidth > 1024" class="w-53% h-full relative overflow-hidden right-panel">
-      <RightIntro />
-    </div>
+    <RightIntro v-if="windowWidth > 1024" />
   </div>
 </template>
 
@@ -517,16 +518,6 @@ provideLoginContext({
     flex-direction: column;
     align-items: center;
     gap: 10px;
-  }
-}
-
-.right-panel {
-  background: linear-gradient(180deg, #12a3fc 0%, #cdebfe 100%);
-}
-
-[data-theme='dark'] {
-  .right-panel {
-    background: linear-gradient(180deg, #0a5d9d 0%, #5c8f9e 100%);
   }
 }
 </style>

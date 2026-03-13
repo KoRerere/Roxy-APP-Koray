@@ -157,4 +157,15 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
       console.error('[browser:createDesktopShortcut] failed:', err)
     }
   })
+
+  ipcMain.on('browser:startCookieRobot', async (_event, payload) => {
+    const { dirIds, customParams, robotParams } = payload
+
+    await browserManager.batchLaunch(dirIds, customParams)
+
+    for await (const dirId of dirIds) {
+      const openedBrowser = browserManager.openedBrowserMap.get(dirId)
+      openedBrowser?.cookieRobot(robotParams)
+    }
+  })
 }

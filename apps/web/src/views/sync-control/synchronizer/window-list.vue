@@ -7,6 +7,7 @@ import { useToast } from 'primevue/usetoast'
 import { useUserStore } from '/@/stores/user'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
+import type { SortOrderNumber } from '/@/utils'
 
 interface Props {
   selectionMode?: 'single' | 'multiple'
@@ -21,11 +22,17 @@ interface SearchParams {
   windowName: string
 }
 
+interface WindowListSortState {
+  sortField?: string
+  sortOrder?: SortOrderNumber
+}
+
 const props = withDefaults(defineProps<Props>(), {
   showType: 'opened',
   mainControlWindowDirId: '',
 })
 
+let useSetDefaulted = false
 const syncControlTableRef = useTemplateRef('syncControlTable')
 const toast = useToast()
 const { mixpanelTrack } = useUserStore()
@@ -38,10 +45,17 @@ const searchParams = ref<SearchParams>({
 })
 const tableData = ref<any[]>([])
 const mainControlWindowDirId = ref(props.mainControlWindowDirId)
+const WINDOW_LIST_SORT_STORAGE_KEY = 'sync-control:synchronizer:window-list:sort'
+const defaultSortState: WindowListSortState = {
+  sortField: 'windowSortNum',
+  sortOrder: 1,
+}
+
 const columns = ref([
   {
     title: $t('窗口信息'),
-    key: 'profile',
+    key: 'windowSortNum',
+    sortable: true,
     slot: 'profile',
     style: {
       width: '0%',
@@ -51,6 +65,7 @@ const columns = ref([
   {
     title: $t('窗口名称'),
     key: 'windowName',
+    sortable: true,
     slot: 'windowName',
     style: {
       width: '10%',
@@ -74,6 +89,42 @@ const columns = ref([
     },
   },
 ])
+
+function isValidSortState(sortState: WindowListSortState | null | undefined) {
+  return !!sortState?.sortField
+    && [1, -1].includes(sortState.sortOrder as number)
+    && columns.value.some(item => item.key === sortState.sortField && item.sortable)
+}
+
+function getSavedSortState(): WindowListSortState {
+  try {
+    const cachedSortState = JSON.parse(localStorage.getItem(WINDOW_LIST_SORT_STORAGE_KEY) || 'null') as WindowListSortState | null
+    if (isValidSortState(cachedSortState)) {
+      return { ...cachedSortState }
+    }
+  }
+  catch (error) {
+    console.warn('Failed to parse synchronizer sort cache', error)
+  }
+
+  return { ...defaultSortState }
+}
+
+function handleSortChange(sortState: { sortField: string, sortOrder: SortOrderNumber }) {
+  if (isValidSortState(sortState)) {
+    localStorage.setItem(WINDOW_LIST_SORT_STORAGE_KEY, JSON.stringify(sortState))
+    return
+  }
+
+  localStorage.removeItem(WINDOW_LIST_SORT_STORAGE_KEY)
+}
+
+function getSorts() {
+  return {
+    data: getSavedSortState(),
+    onChange: handleSortChange,
+  }
+}
 
 const selectedRows = ref()
 
@@ -116,7 +167,7 @@ const searchList = computed(() => {
       name: 'projectIds',
       placeholder: $t('全部项目'),
       options: tableData.value.reduce((acc, curr) => {
-        if (!acc.find((n: any) => n.value === curr.projectId)) {
+        if (!acc.some((n: any) => n.value === curr.projectId)) {
           acc.push({ label: curr.projectName, value: curr.projectId })
         }
         return acc
@@ -126,7 +177,7 @@ const searchList = computed(() => {
       name: 'labelIds',
       placeholder: $t('全部标签'),
       options: tableData.value.flatMap(n => n.labelInfo).reduce((acc, curr) => {
-        if (!acc.find((n: any) => n.value === curr.labelId)) {
+        if (!acc.some((n: any) => n.value === curr.labelId)) {
           acc.push({ ...curr, label: curr.labelName, value: curr.labelId })
         }
         return acc
@@ -136,7 +187,7 @@ const searchList = computed(() => {
       name: 'os',
       placeholder: $t('全部系统'),
       options: tableData.value.reduce((acc, curr) => {
-        if (!acc.find((n: any) => n.value === curr.os)) {
+        if (!acc.some((n: any) => n.value === curr.os)) {
           acc.push({ label: curr.os === 'IOS' ? 'iOS' : curr.os, value: curr.os })
         }
         return acc
@@ -239,13 +290,29 @@ async function handleRowSelectAll() {
   })
 }
 
+function setMainControlWindow(data: any) {
+// isSyncing.value || (mainControlWindowDirId.value = data.dirId)
+  if (!isSyncing.value) {
+    mainControlWindowDirId.value = data.dirId
+    useSetDefaulted = true
+  }
+}
+
 globalThis.electronAPI.on('syncControl:start', startSync)
+
+function handleValueChange(val: any[]) {
+  tableData.value = val
+  console.debug('handleValueChange', val)
+  if (val.length && !useSetDefaulted && !props.mainControlWindowDirId) {
+    mainControlWindowDirId.value = val[0].dirId
+  }
+}
 </script>
 
 <template>
   <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multiple-operation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-           :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" class="sync-control-table" :class="{ 'syncing': isSyncing, 'no-data': tableFilterData.length === 0 }"
-           v-bind="$attrs" @row-select-all="handleRowSelectAll"
+           :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" :table-sort="getSorts" class="sync-control-table" :class="{ 'syncing': isSyncing, 'no-data': tableFilterData.length === 0 }"
+           v-bind="$attrs" @row-select-all="handleRowSelectAll" @value-change="handleValueChange"
   >
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex gap-2.5">
@@ -314,7 +381,7 @@ globalThis.electronAPI.on('syncControl:start', startSync)
       </div>
       <div v-else class="status" :class="{ action: !isSyncing }">
         <span class="status-text">--</span>
-        <RxButton class="status-btn" size="xxs" severity="secondary" icon="base/rx_ic_cursor" :label="$t('设为主控')" @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
+        <RxButton class="status-btn" size="xxs" severity="secondary" icon="base/rx_ic_cursor" :label="$t('设为主控')" @click.stop="setMainControlWindow(data)" />
       </div>
     </template>
     <template #actions="{ data }">

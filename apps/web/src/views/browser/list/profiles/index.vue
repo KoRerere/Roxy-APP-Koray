@@ -2,7 +2,6 @@
 import BrowserControl from './components/browser-control.vue'
 import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
-import EditCookies from './components/edit-cookies.vue'
 import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info/index.vue'
 import ProjectIcon from './components/project-icon.vue'
@@ -44,6 +43,8 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { useDriverDataTableTour } from '/@/hooks/useDriverDataTableTour'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
+import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
+
 import useColumns from '/@/hooks/useColumns'
 
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
@@ -78,6 +79,7 @@ const { showSimpleDialog } = useSimpleDialog()
 const { drive } = useDriverDataTableTour()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
+const { editCookieByProfile, startCookieRobot } = useCookie()
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -181,17 +183,17 @@ async function saveFilters(formData: any) {
 
   const { code, msg } = isEdit
     ? await API.window.userUpdateWindowFilterNameCreate({
-      sort,
-      filter_rule,
-      filter_condition,
-      old_filter_name: filter_name,
-      new_filter_name: filter_name,
-    })
+        sort,
+        filter_rule,
+        filter_condition,
+        old_filter_name: filter_name,
+        new_filter_name: filter_name,
+      })
     : await API.window.userAddWindowFilterNameCreate({
-      filter_name,
-      filter_condition,
-      filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
-    })
+        filter_name,
+        filter_condition,
+        filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
+      })
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
@@ -252,26 +254,26 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
 
   switch (operate.name) {
     case 'edit':
-      {
-        const { page_index } = tableRef.value!.getParams()
-        const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
-          if (cur.value) {
-            acc[cur.name] = toRaw(cur.value)
-          }
-          return acc
-        }, {})
-        router.push({
-          name: 'browser-edit',
-          query: {
-            ...route.query,
-            id: data.id,
-            page_index,
-            activeTabId: props.currentFilter?.id,
-            customFilterParams: JSON.stringify(customFilterParams),
-          },
-        })
-        break
-      }
+    {
+      const { page_index } = tableRef.value!.getParams()
+      const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
+        if (cur.value) {
+          acc[cur.name] = toRaw(cur.value)
+        }
+        return acc
+      }, {})
+      router.push({
+        name: 'browser-edit',
+        query: {
+          ...route.query,
+          id: data.id,
+          page_index,
+          activeTabId: props.currentFilter?.id,
+          customFilterParams: JSON.stringify(customFilterParams),
+        },
+      })
+      break
+    }
     case 'copyId':
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
@@ -308,13 +310,13 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await multipleAccountChange(data, { operationType, isChoose: true })
       break
     case 'restart':
-      {
-        const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
-        if (dirIds.length) {
-          globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
-        }
-        break
+    {
+      const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
+      if (dirIds.length) {
+        globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
       }
+      break
+    }
     case 'close':
       globalThis.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
         console.log('browser:batchClose res', res)
@@ -346,6 +348,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       break
     case 'editCookies':
       onEditCookies(data)
+      break
+    case 'cookieRobot':
+      openCookieRobot(data)
       break
     case 'clearCache':
       onClearCache(datas)
@@ -682,17 +687,17 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
 
   const containerRender = isChoose
     ? () => (
-      <div class="h-full flex flex-col">
-        {isMulti && (
-          <div class="px-4 pt-4">
-            <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
+        <div class="h-full flex flex-col">
+          {isMulti && (
+            <div class="px-4 pt-4">
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
+            </div>
+          )}
+          <div class="flex-1 overflow-hidden">
+            <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
           </div>
-        )}
-        <div class="flex-1 overflow-hidden">
-          <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
         </div>
-      </div>
-    )
+      )
     : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
 
   drawerInstance.showDrawer({
@@ -751,15 +756,15 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
 
   const containerRender = isChoose
     ? () => (
-      <div class="h-full flex flex-col">
-        {isMulti && (
-          <div class="px-4 pt-4">
-            <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
-          </div>
-        )}
-        <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
-      </div>
-    )
+        <div class="h-full flex flex-col">
+          {isMulti && (
+            <div class="px-4 pt-4">
+              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
+            </div>
+          )}
+          <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
+        </div>
+      )
     : () => <AccountCreate showRemark={false} showCreateMore={false} onConfirm={onConfirm}></AccountCreate>
 
   drawerInstance.showDrawer({
@@ -820,47 +825,31 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
 
 async function onEditCookies(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
-  const names = datas.slice(0, length).map(item => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
-  const namesStr = `[${names}${datas.length > length ? '...' : ''}]`
-  const isMulti = datas.length > 1
-  drawerInstance.showDrawer({
-    title: $t('为 {names} 编辑 Cookies', { names: namesStr }),
-    dismissable: false,
-    slots: {
-      container: () => (
-        <div class="h-full flex flex-col">
-          {isMulti && (
-            <div class="px-4 pt-4">
-              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('所选窗口的所有 Cookie 都将被覆盖，请谨慎操作。')}></RxAlert>
-            </div>
-          )}
-          <EditCookies
-            class="flex-1"
-            data={datas.length > 1 ? undefined : datas[0]}
-            onConfirm={onConfirm}
-          >
-          </EditCookies>
-        </div>
-      ),
+
+  editCookieByProfile({
+    data: datas,
+    onConfirm: async (cookie: any) => {
+      const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+        type: ProfileModifyType.CookieEdit,
+        ids: datas.map(item => item.id!),
+        paramList: {
+          cookie,
+        },
+      })
+      drawerInstance.hideDrawer()
+      onlyErrorToast(code, msg)
+      if (code !== 0)
+        return
+      datas.forEach((item) => {
+        Reflect.set(item, 'cookie', cookie)
+      })
     },
   })
+}
 
-  async function onConfirm(formData: any) {
-    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
-      type: ProfileModifyType.CookieEdit,
-      ids: datas.map(item => item.id!),
-      paramList: {
-        cookie: formData,
-      },
-    })
-    drawerInstance.hideDrawer()
-    onlyErrorToast(code, msg)
-    if (code !== 0)
-      return
-    datas.forEach((item) => {
-      Reflect.set(item, 'cookie', formData)
-    })
-  }
+async function openCookieRobot(data: Data | Data[]) {
+  const datas = ([] as Data[]).concat(data)
+  startCookieRobot(datas)
 }
 
 async function onRemark(data: Data | Data[]) {
@@ -1095,13 +1084,15 @@ defineExpose({
 
 <template>
   <RyTable ref="windownTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
-    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort>
+           :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
+  >
     <template #filter-after>
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
-          @filter-change="onRefreshTable" />
+                       @filter-change="onRefreshTable"
+        />
       </div>
     </template>
     <template #table-empty>
@@ -1170,14 +1161,16 @@ defineExpose({
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
         <SvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-          @click.stop="toggleRemarkDisplayStatus(_cache)" />
+                 @click.stop="toggleRemarkDisplayStatus(_cache)"
+        />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
         <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
           <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
-            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
+                    :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          />
           <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">
             {{
               data.windowRemark }}
@@ -1213,8 +1206,9 @@ defineExpose({
         </template>
         <template v-else>
           <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-            class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
-            @click.stop="operationHandler({ name: 'fav' }, data)">
+               class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
+               @click.stop="operationHandler({ name: 'fav' }, data)"
+          >
             <SvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
           </div>
           <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />

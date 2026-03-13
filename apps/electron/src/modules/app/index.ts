@@ -1,6 +1,5 @@
 import { app, autoUpdater, globalShortcut, shell } from 'electron'
 import { spawn } from 'node:child_process'
-import { rm } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
@@ -199,6 +198,10 @@ export function isAppQuittingForUpdate() {
   return isQuittingForUpdate
 }
 
+export function resetAppQuittingForUpdate() {
+  isQuittingForUpdate = false
+}
+
 /** 初始化应用程序事件 */
 function initAppEvent() {
   /** 是否已经在 APP 退出前同步过浏览器数据了 */
@@ -240,32 +243,38 @@ function initAppEvent() {
     await coreManager.cleanOldCore()
 
     // 如果由于升级 APP 导致的退出
-    if (isQuittingForUpdate && !isSyncBrowserData) {
-      console.log('Application is quitting for update.')
-      isSyncBrowserData = true
-      if (isWindows) {
-        try {
-          if (store.updaterExePid) {
-            killProcessForce(store.updaterExePid)
-          }
-          // 构造 updaterExe 路径并脱离主进程执行
-          const updaterExe = join(dirname(process.execPath), 'RoxyBrowserUpdater.exe')
-          console.log('Spawning updater detached:', updaterExe)
+    if (isQuittingForUpdate) {
+      if (!isSyncBrowserData) {
+        console.log('Application is quitting for update. Triggering upgradeNow()')
+        isSyncBrowserData = true
+        if (isWindows) {
+          try {
+            if (store.updaterExePid) {
+              killProcessForce(store.updaterExePid)
+            }
+            // 构造 updaterExe 路径并脱离主进程执行
+            const updaterExe = join(dirname(process.execPath), 'RoxyBrowserUpdater.exe')
+            console.log('Spawning updater detached:', updaterExe)
 
-          const child = spawn(updaterExe, [], {
-            detached: true,
-            stdio: 'ignore',
-          })
-          store.updaterExePid = child.pid
-          console.log('(`[AppUpdater] updaterExePid', store.updaterExePid)
-          child.unref()
-          await forceSaveConfig()
+            const child = spawn(updaterExe, [], {
+              detached: true,
+              stdio: 'ignore',
+            })
+            store.updaterExePid = child.pid
+            console.log('(`[AppUpdater] updaterExePid', store.updaterExePid)
+            child.unref()
+            await forceSaveConfig()
+          }
+          catch (e) {
+            console.error(`[AppUpdater] Failed to spawn updater UI`, e)
+          }
         }
-        catch (e) {
-          console.error(`[AppUpdater] Failed to spawn updater UI`, e)
-        }
+        appUpdater.upgradeNow()
       }
-      appUpdater.upgradeNow()
+      else {
+        console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
+        // 当第二次回到 before-quit 时，什么都不做，让 Electron 正常完成退出生命周期，确保 ShipIt 或其它提权更新服务不会被 SIGKILL 所谋杀
+      }
     }
     else {
       isSyncBrowserData = true

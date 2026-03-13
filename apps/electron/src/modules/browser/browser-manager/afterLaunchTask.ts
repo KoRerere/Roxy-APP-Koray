@@ -199,7 +199,7 @@ export class AfterLaunchTask {
               // 匹配包含 set-cookie 的响应头（因为 ExtraInfo 返回的 key 可能大小写不一致）
               const hasSetCookie = Object.keys(headers).some(k => k.toLowerCase() === 'set-cookie')
               if (hasSetCookie) {
-                console.debug(`[CDP] Detected Set-Cookie via ExtraInfo`)
+                // console.debug(`[CDP] Detected Set-Cookie via ExtraInfo`)
                 throttledSaveCookies()
               }
             })
@@ -225,7 +225,7 @@ export class AfterLaunchTask {
             if (newPage)
               setupNetworkListener(newPage)
           }
-          catch (e) {}
+          catch (e) { }
         })
       })
     }
@@ -329,5 +329,301 @@ export class AfterLaunchTask {
         // }
       }
     })
+  }
+
+  /**
+   * Cookie 机器人：自动滚动所有标签页以触发 cookie 更新
+   * @param options 配置选项
+   * @param options.cookieRobotUrls cookie robot 目标 urls
+   * @param options.scrollRange 滚动距离范围（像素），默认 [0, 500]
+   * @param options.delayRange 标签页之间的延迟范围（毫秒），默认 [0, 3000]
+   * @param options.pageLoadTimeout 页面加载超时时间（毫秒），默认 60000 (60秒)
+   * @param options.closeProfile 执行完毕后自动关闭 cookie robot，默认 false
+   */
+  async cookieRobot(options?: {
+    cookieRobotUrls: string[]
+    scrollRange?: [number, number]
+    delayRange?: [number, number]
+    pageLoadTimeout?: number
+    closeProfile?: boolean
+  }) {
+    const cookieRobotUrls = options?.cookieRobotUrls
+    const scrollRange = options?.scrollRange || [100, 500]
+    const delayRange = options?.delayRange || [0, 500]
+    const pageLoadTimeout = options?.pageLoadTimeout || 60000
+    const closeProfile = options?.closeProfile || false
+
+    if (!this.browser || !cookieRobotUrls?.length) {
+      console.warn('Cookie robot: Browser is not available')
+      return
+    }
+
+    try {
+      console.log(`Cookie robot: Starting to process ${cookieRobotUrls.length} URLs`)
+
+      // 串行处理每个 URL
+      for (let i = 0; i < cookieRobotUrls.length; i++) {
+        const url = cookieRobotUrls[i]
+
+        // 跳过空白页和特殊协议页面
+        if (!url || url === 'about:blank' || url.startsWith('chrome://') || url.startsWith('devtools://')) {
+          console.log(`Cookie robot: Skipping URL ${i + 1} (${url})`)
+          continue
+        }
+
+        try {
+          console.log(`Cookie robot: Opening tab ${i + 1}/${cookieRobotUrls.length} (${url})`)
+
+          // 如果是第一个 tab，先记录用户之前的所有 tab，稍后关闭
+          const pagesToClose = await this.browser.pages()
+          // 打开新标签页
+          const page = await this.browser.newPage(url)
+          // 关闭之前记录的旧 tab
+          if (i === 0 && pagesToClose.length > 0) {
+            pagesToClose.forEach((p) => {
+              p.close().catch(() => { })
+            })
+          }
+
+          // 聚焦当前标签页
+          console.log(`Cookie robot: Bringing tab ${i + 1} to front`)
+          if (page.bringToFront) {
+            await page.bringToFront().catch((err: any) => {
+              console.warn(`Cookie robot: Failed to bring tab ${i + 1} to front:`, err)
+            })
+          }
+
+          // 等待一小段时间让标签页切换完成
+          await new Promise(resolve => setTimeout(resolve, 300))
+
+          console.log(`Cookie robot: Waiting for tab ${i + 1} to load...`)
+
+          // 等待页面加载完成
+          await page.evaluate((timeoutValue) => {
+            return new Promise<string>((resolve) => {
+              console.log('evaluate cookie robot: ', document.readyState)
+              if (document.readyState === 'complete') {
+                resolve('complete')
+                return
+              }
+
+              let resolved = false
+              const finish = (reason: string) => {
+                if (!resolved) {
+                  resolved = true
+                  resolve(reason)
+                }
+              }
+
+              window.addEventListener('load', () => finish('loadEvent'), { once: true })
+              setTimeout(finish, timeoutValue as number, 'timeout')
+            })
+          }, pageLoadTimeout).catch(() => { })
+
+          // 额外等待 500ms 确保页面完全渲染
+          await new Promise(resolve => setTimeout(resolve, 500))
+
+          // 等待图片开始加载，避免因图片未加载导致页面高度不足
+          console.log(`Cookie robot: Waiting for images to load on tab ${i + 1}`)
+          await page.evaluate(() => {
+            return new Promise<void>((resolve) => {
+              const images = Array.from(document.querySelectorAll('img'))
+              if (images.length === 0) {
+                resolve()
+                return
+              }
+
+              let loadedCount = 0
+              let timeoutId: NodeJS.Timeout
+
+              const checkComplete = () => {
+                loadedCount++
+                // 等待至少 30% 的图片加载完成，或者全部加载完成
+                if (loadedCount >= Math.ceil(images.length * 0.3) || loadedCount >= images.length) {
+                  clearTimeout(timeoutId)
+                  resolve()
+                }
+              }
+
+              // 为每个图片添加加载监听
+              images.forEach((img) => {
+                if (img.complete) {
+                  checkComplete()
+                } else {
+                  img.addEventListener('load', checkComplete, { once: true })
+                  img.addEventListener('error', checkComplete, { once: true })
+                }
+              })
+
+              // 最多等待 3 秒
+              timeoutId = setTimeout(() => {
+                resolve()
+              }, 3000)
+            })
+          }).catch(() => {
+            console.warn(`Cookie robot: Failed to wait for images on tab ${i + 1}`)
+          })
+
+          // 多次滚动直到到达页面底部
+          let scrollCount = 0
+          let hasReachedBottom = false
+          let notScrollableRetryCount = 0 // 记录页面不可滚动的重试次数
+          const maxNotScrollableRetries = 3 // 最多重试 3 次
+
+          console.log(`Cookie robot: Starting to scroll tab ${i + 1} until reaching bottom`)
+
+          while (!hasReachedBottom) {
+            scrollCount++
+
+            // 每次滚动前先聚焦到当前 tab，防止插件弹出的 tab 干扰
+            if (page.bringToFront) {
+              await page.bringToFront().catch((err: any) => {
+                console.warn(`Cookie robot: Failed to bring tab ${i + 1} to front before scroll ${scrollCount}:`, err)
+              })
+            }
+
+            // 生成随机滚动距离
+            const scrollDistance = Math.floor(
+              Math.random() * (scrollRange[1] - scrollRange[0]) + scrollRange[0],
+            )
+
+            console.log(`Cookie robot: Tab ${i + 1} - Scroll ${scrollCount}, distance: ${scrollDistance}px`)
+
+            const scrollResult = await page.evaluate((distance) => {
+              return new Promise((resolve) => {
+                console.log('[Cookie robot] evaluate: start scroll')
+
+                // 检查页面是否可滚动
+                const maxScrollY = Math.max(
+                  document.body.scrollHeight,
+                  document.documentElement.scrollHeight,
+                ) - window.innerHeight
+
+                if (maxScrollY <= 0) {
+                  // 页面不可滚动，返回特殊标记，让外层决定是否重试
+                  resolve({ scrolled: false, reachedBottom: false, notScrollable: true, reason: 'Page not scrollable' })
+                  return
+                }
+
+                const startPosition = window.scrollY
+
+                // 检查是否已经在底部
+                if (startPosition >= maxScrollY - 10) {
+                  resolve({ scrolled: false, reachedBottom: true, reason: 'Already at bottom', startPosition, maxScrollY })
+                  return
+                }
+
+                // 执行滚动
+                window.scrollBy({ top: distance as number, behavior: 'smooth' })
+
+                // 等待滚动完成
+                let lastPosition = startPosition
+                let samePositionCount = 0
+                const checkInterval = setInterval(() => {
+                  const currentPosition = window.scrollY
+                  const currentMaxScrollY = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                  ) - window.innerHeight
+
+                  if (Math.abs(currentPosition - lastPosition) < 1) {
+                    samePositionCount++
+                    if (samePositionCount >= 3) {
+                      clearInterval(checkInterval)
+                      // 检查是否到达底部（允许10px的误差）
+                      const reachedBottom = currentPosition >= currentMaxScrollY - 10
+                      resolve({
+                        scrolled: true,
+                        reachedBottom,
+                        startPosition,
+                        finalPosition: currentPosition,
+                        maxScrollY: currentMaxScrollY,
+                      })
+                    }
+                  }
+                  else {
+                    samePositionCount = 0
+                    lastPosition = currentPosition
+                  }
+                }, 100)
+
+                // 最多等待 2 秒
+                setTimeout(() => {
+                  clearInterval(checkInterval)
+                  const currentPosition = window.scrollY
+                  const currentMaxScrollY = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                  ) - window.innerHeight
+                  const reachedBottom = currentPosition >= currentMaxScrollY - 10
+                  resolve({
+                    scrolled: true,
+                    reachedBottom,
+                    timeout: true,
+                    startPosition,
+                    finalPosition: currentPosition,
+                    maxScrollY: currentMaxScrollY,
+                  })
+                }, 2000)
+              })
+            }, scrollDistance).catch((e: any) => {
+              console.error(`Cookie robot: Tab ${i + 1} scroll error:`, e)
+              return { scrolled: false, reachedBottom: true, error: true }
+            })
+
+            if (scrollResult) {
+              console.log(`Cookie robot: Tab ${i + 1} - Scroll ${scrollCount} completed`, scrollResult)
+
+              // 处理页面不可滚动的情况
+              if (scrollResult.notScrollable) {
+                notScrollableRetryCount++
+                console.log(`Cookie robot: Tab ${i + 1} - Page not scrollable, retry ${notScrollableRetryCount}/${maxNotScrollableRetries}`)
+
+                if (notScrollableRetryCount >= maxNotScrollableRetries) {
+                  // 重试次数用完，认为页面确实不可滚动
+                  console.log(`Cookie robot: Tab ${i + 1} - Page confirmed not scrollable after ${maxNotScrollableRetries} retries`)
+                  hasReachedBottom = true
+                } else {
+                  // 等待更长时间让图片加载
+                  console.log(`Cookie robot: Tab ${i + 1} - Waiting 2s for images to load before retry`)
+                  await new Promise(resolve => setTimeout(resolve, 2000))
+                  hasReachedBottom = false
+                }
+              } else {
+                // 页面可以滚动，重置重试计数
+                notScrollableRetryCount = 0
+                hasReachedBottom = scrollResult.reachedBottom || false
+              }
+            }
+            else {
+              // 如果滚动失败，退出循环
+              hasReachedBottom = true
+            }
+
+            // 如果还没到底部，等待一段时间再继续滚动
+            if (!hasReachedBottom) {
+              const delay = Math.floor(Math.random() * (delayRange[1] - delayRange[0]) + delayRange[0])
+              console.log(`Cookie robot: Tab ${i + 1} - Waiting ${delay}ms before next scroll`)
+              await new Promise(resolve => setTimeout(resolve, delay))
+            }
+          }
+
+          console.log(`Cookie robot: Tab ${i + 1} completed after ${scrollCount} scrolls`)
+        }
+        catch (error) {
+          console.error(`Cookie robot: Failed to process URL ${i + 1} (${url}):`, error)
+        }
+      }
+
+      console.log('Cookie robot: Completed processing all URLs')
+    }
+    catch (error) {
+      console.error('Cookie robot: Failed to execute:', error)
+    }
+    finally {
+      if (closeProfile) {
+        this.browser.close()
+      }
+    }
   }
 }

@@ -17,17 +17,14 @@ import { safeParseJSON } from '/@/utils'
 export class SyncControlUtil {
   /** 开始同步 */
   static start = async (dirIds: string[]) => {
-    const pIds = Array.from(browserManager.openedBrowserMap.values())
-      .reduce((acc, cur) => {
-        if (dirIds.includes(cur.winInfo.dirId!) && cur.launchInfo?.pid) {
-          acc.push(cur.launchInfo.pid)
-          // 第一个PID为主窗口
-          if (dirIds[0] === cur.winInfo.dirId) {
-            acc = [...new Set([cur.launchInfo.pid, ...acc])]
-          }
-        }
-        return acc
-      }, [] as number[])
+    // 按 dirIds 顺序获取 PID，第一个为主控窗口
+    const pIds = dirIds.reduce((acc, dirId) => {
+      const browser = browserManager.openedBrowserMap.get(dirId)
+      if (browser?.launchInfo?.pid) {
+        acc.push(browser.launchInfo.pid)
+      }
+      return acc
+    }, [] as number[])
     const isSuccess = await startRoxySync(pIds)
     console.log('syncControl:start isSuccess:', isSuccess)
     if (isSuccess) {

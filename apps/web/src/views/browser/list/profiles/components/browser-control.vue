@@ -67,7 +67,7 @@ const browser = computed(() => {
     pending,
     msg: isFailed ? props.text : data?.message,
     percent: data?.percent || 0,
-    error: error?.message || (isFailed ? message?.message : undefined),
+    error: isFailed ? (message?.message || error?.message) : undefined,
     warning: data?.warningMessages?.join('\n'),
     opening,
     uploading,

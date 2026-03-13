@@ -14,25 +14,25 @@ const toast = useToast()
 function startCountdown(item, remainingTime = 0) {
   const worker = new Worker(new URL('./countdown-worker.ts', import.meta.url), {
     type: 'module',
-  });
+  })
   const duration = 30
   const interval = 10
 
-  worker.postMessage({ duration, remainingTime, interval });
+  worker.postMessage({ duration, remainingTime, interval })
 
   worker.onmessage = (event) => {
-    const { progress, completed } = event.data;
+    const { progress, completed } = event.data
 
     if (progress !== undefined) {
-      item.progress = progress;
+      item.progress = progress
     }
 
     if (completed) {
-      item.progress = 0;
-      worker.terminate(); // 终止 Worker
-      getTwoFactorCode(item);
+      item.progress = 0
+      worker.terminate() // 终止 Worker
+      getTwoFactorCode(item)
     }
-  };
+  }
 }
 
 function initTwoFactorCodeList() {
@@ -103,8 +103,7 @@ initTwoFactorCodeList()
             </div>
             <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress" cx="18" cy="18" r="14"
-                :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+              <circle class="progress" cx="18" cy="18" r="14" :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </template>
         </div>
@@ -175,33 +174,33 @@ initTwoFactorCodeList()
     align-self: stretch;
 
     .platform-account {
+      flex: 1 0 0;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: var(--spacing-sm, 4px);
-      flex: 1 0 0;
+      overflow: hidden;
 
       .platform-url {
-        flex: 1 0 0;
-        color: var(--colors-text-text-primary, #fafafa);
-        font-family: Inter;
+        align-self: stretch;
+        color: var(--colors-text-text-primary);
         font-size: 14px;
-        font-style: normal;
         font-weight: 500;
-        line-height: var(--Line-Height-text-lg, 20px);
-        /* 142.857% */
+        line-height: 20px;
         text-decoration-line: underline;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .account-text {
         align-self: stretch;
-        color: var(--colors-text-text-primary, #fafafa);
-        font-family: Inter;
+        color: var(--colors-text-text-primary);
         font-size: 12px;
-        font-style: normal;
-        font-weight: 400;
         line-height: 16px;
-        /* 133.333% */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }

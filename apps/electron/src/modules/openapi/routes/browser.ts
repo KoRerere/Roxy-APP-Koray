@@ -224,7 +224,7 @@ router.post('/delete', async (req, res) => {
 
     // 如果是软删除
     if (isSoftDelete) {
-      result = await API.window.userMdfWindowInfoBatchV2Create({ dirIds, isDelete: true }, { headers: { workspaceId, ...openAPICommonHeaders } })
+      result = await API.window.userMdfWindowInfoBatchV2Create({ dirIds, isDelete: true } as any, { headers: { workspaceId, ...openAPICommonHeaders } })
     }
     else {
       result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
@@ -369,8 +369,7 @@ router.get('/connection_info', async (req, res) => {
   const dirIdArr = dirIds.split(',').filter(Boolean)
   console.log('connection_info dirIdArr', dirIdArr)
 
-  const result = [...browserManager.openedBrowserMap.values()]
-    .map(browserItem => browserItem.launchInfo)
+  const result = Array.from(browserManager.openedBrowserMap.values(), browserItem => browserItem.launchInfo)
     .filter(item => dirIdArr.length ? dirIdArr.includes(item.dirId) : true)
 
   res.success(result)

@@ -111,7 +111,7 @@ async function onRead(item: Message | Message[]) {
     return
   }
   tabs.value.find(tab => tab.value === items[0]!.messageModule)!.noRead -= ids.length
-  items.forEach(item => {
+  items.forEach((item) => {
     Reflect.set(item, 'status', NotifyStatus.read)
   })
 }
@@ -124,6 +124,11 @@ async function markAllAsRead() {
 }
 
 function checkDetail(item: Message) {
+  if (item.windowTransferNo) {
+    checkTransfer(item)
+    return
+  }
+
   switch (item.type) {
     case '邀请用户通知':
       showAcceptInvitationDialog(item)
@@ -171,14 +176,19 @@ function showAcceptInvitationDialog(item: Message) {
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => {
-        return <InviteIntoWorkspace inviteInfo={item.paramData!} onClose={async (intoWorkspaceId?: number) => {
-          if (intoWorkspaceId) {
-            setCurrentWorkspace(intoWorkspaceId)
-            router.push({ name: 'browser' })
-          }
-          hideModal()
-          onRead(item)
-        }} />
+        return (
+          <InviteIntoWorkspace
+            inviteInfo={item.paramData!}
+            onClose={async (intoWorkspaceId?: number) => {
+              if (intoWorkspaceId) {
+                setCurrentWorkspace(intoWorkspaceId)
+                router.push({ name: 'browser' })
+              }
+              hideModal()
+              onRead(item)
+            }}
+          />
+        )
       },
     },
   })
@@ -198,16 +208,16 @@ function showRedeemCodeRecord() {
 
 <template>
   <div class="flex justify-center">
-    <OverlayBadge :value="noRead" severity="danger" size="small" :class="noRead ? '' : message['no-message']">
+    <OverlayBadge :value="noRead" severity="danger" size="small" :class="noRead ? '' : message.empty">
       <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>
     <RyPopover ref="pop">
-      <div :class="message.wrapper">
-        <div :class="message.header">
+      <div class="w-95">
+        <div class="flex py-1 px-4 justify-between items-center gap-3.5">
           <div :class="message.title">
             {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
+          <RxButton severity="secondary" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px] !border-[var(--colors-border-border-subtle)]', activeBar: '!h-[2px]' }">
@@ -219,20 +229,26 @@ function showRedeemCodeRecord() {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
-                  <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
-                      :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
-                  </div>
-                  <div class="w-full">
-                    <div :class="message.value">
+                <div v-for="item in tab.list" :key="item.id" class="flex gap-2.5 py-3 px-4 items-start" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
+                  <RxAvatar class="relative cursor-pointer aspect-square" :class="{ [message.badge]: !item.status }"
+                            :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')" :name="item.userName?.slice(0, 2)" :color="item.avatarColor"
+                            :size="24" :font-size="12"
+                  />
+                  <div class="flex-1 flex flex-col gap-1.5">
+                    <div :class="message.text">
                       {{ item.notify }}
                     </div>
-                    <div :class="message.time" class="w-full flex justify-between">
-                      <span>{{ item.createTime }}</span>
-                      <span v-if="item.paramData || ROXY_GIFTS_TYPE.has(item.type as RoxyGiftsType)" class="select-none" :class="message['check-detail']" @click="checkDetail(item)">{{
-                        $t('查看详情') }}</span>
-                      <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
+                    <div class="flex justify-between items-center">
+                      <div :class="message.time">
+                        {{ item.createTime }}
+                      </div>
+
+                      <div v-if="item.paramData || ROXY_GIFTS_TYPE.has(item.type as RoxyGiftsType) || item.windowTransferNo" class="flex items-center gap-1 select-none cursor-pointer"
+                           :class="message.detail" @click="checkDetail(item)"
+                      >
+                        <span>{{ $t('查看详情') }}</span>
+                        <SvgIcon name="base/rx_ic_chevron_right" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -251,36 +267,12 @@ function showRedeemCodeRecord() {
 </template>
 
 <style lang="scss" module="message">
-.wrapper {
-  width: 380px;
-}
-
-.header {
-  display: flex;
-  padding: var(--spacing-md, 3px) 16px;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  line-height: 24px;
-}
-
 .title {
-  color: var(--colors-text-text-primary, #fafafa);
+  color: var(--colors-text-text-primary);
   font-weight: 600;
 }
 
-.read {
-  color: var(--colors-text-text-primary, #171c1f);
-  font-size: var(--Font-Size-text-sm, 12px);
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
-}
-
 .item {
-  display: flex;
-  padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
-  align-items: flex-start;
-  gap: 10px;
   border-bottom: 1px solid var(--component-dropdown-divider, #6a757c);
   background: var(--colors-background-bg-overlay, #293038);
 
@@ -289,61 +281,47 @@ function showRedeemCodeRecord() {
   }
 }
 
-.noRead {
-  background: var(--component-table-bg-selected, #002742);
-  border-color: var(--component-table-border-selected);
-}
-
-.no-message {
+.empty {
   :global(.p-badge) {
     display: none;
   }
 }
 
-.avatar {
-  position: relative;
-  aspect-ratio: 1;
-
-  &.badge {
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 8px;
-      height: 8px;
-      background-color: var(--component-rainbow-Red, #f53838);
-      border-radius: 50%;
-    }
-  }
+.badge::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--component-rainbow-Red, #f53838);
+  border-radius: 50%;
 }
 
-.value {
-  color: var(--colors-text-text-primary, #b2b6b8);
+.noRead {
+  background: var(--component-table-bg-selected);
+  border-color: var(--component-table-border-selected);
+
+  // .text {
+  //   color: var(--colors-text-text-brand);
+  //   font-weight: 700;
+  // }
+}
+
+.text {
+  color: var(--colors-text-text-secondary);
   font-size: 14px;
-  line-height: var(--Line-Height-text-md, 20px);
-}
-
-.check-detail {
-  color: var(--colors-text-text-brand, #12a3fc);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
-  /* 133.333% */
-  cursor: pointer;
-}
-
-.check-detail.disabled {
-  color: var(--colors-text-text-inactive, #a3a9ad);
-  cursor: not-allowed;
+  line-height: 20px;
 }
 
 .time {
-  margin-top: 4px;
-  color: var(--colors-text-text-secondary, #a3a9ad);
+  color: var(--colors-text-text-inactive);
   font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
+}
+
+.detail {
+  color: var(--colors-text-text-brand);
+  font-size: 12px;
 }
 </style>

@@ -70,6 +70,8 @@ import {
   SendPhoneVerCodeCreatePayload,
   SendValidatorEmailVerifyCodeListData,
   SendValidatorEmailVerifyCodeListParams,
+  UserAppRatingCreateData,
+  UserAppRatingCreatePayload,
   UserBindEmailCreateData,
   UserBindEmailCreatePayload,
   UserBindEmailListListData,
@@ -119,6 +121,8 @@ import {
   UserGetPromotionInfoByTypeListParams,
   UserGetPromotionInfoListData,
   UserGetPromptTemplateListListData,
+  UserGetRatingRewardCreateData,
+  UserGetRatingRewardCreatePayload,
   UserGetRewardRecordListListData,
   UserGetRewardRecordListListParams,
   UserGetSystemDictV2CreateData,
@@ -2146,6 +2150,27 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserAppRatingCreate
+   * @summary 用户APP评分
+   * @request POST:/user_app_rating
+   * @response `200` `UserAppRatingCreateData`
+   */
+  userAppRatingCreate = (
+    data: UserAppRatingCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAppRatingCreateData, any>({
+      path: `/user_app_rating`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -2173,6 +2198,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<GetQrcodeInfoListData, any>({
       path: `/app_statistics/get_qrcode_info`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetRatingRewardCreate
+   * @summary 用户领取评分IP奖励
+   * @request POST:/user_get_rating_reward
+   * @response `200` `UserGetRatingRewardCreateData`
+   */
+  userGetRatingRewardCreate = (
+    data: UserGetRatingRewardCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetRatingRewardCreateData, any>({
+      path: `/user_get_rating_reward`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

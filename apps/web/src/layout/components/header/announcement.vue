@@ -178,37 +178,37 @@ function handleCloseProxyExpired() {
 
   &_content {
     position: relative;
-    // background: #303256;
-    background:
-      radial-gradient(194.08% 50% at 50% 32px, rgba(250, 83, 25, 0.4) 0%, rgba(250, 83, 25, 0) 100%),
-      linear-gradient(0deg, #ac0f00 0%, #ac0f00 100%), #cc200f;
+    background: #303256;
+    // background:
+    //   radial-gradient(194.08% 50% at 50% 32px, rgba(250, 83, 25, 0.4) 0%, rgba(250, 83, 25, 0) 100%),
+    //   linear-gradient(0deg, #ac0f00 0%, #ac0f00 100%), #cc200f;
 
     outline-style: none;
     outline-width: 0;
     z-index: 0;
 
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: url('/images/campaing/spring-festival/cloud_full.svg');
-      background-repeat: no-repeat;
-      background-position: -28px -10px;
-      opacity: 0.3;
-      z-index: -1;
-    }
+    // &::before {
+    //   content: '';
+    //   position: absolute;
+    //   inset: 0;
+    //   background-image: url('/images/campaing/spring-festival/cloud_full.svg');
+    //   background-repeat: no-repeat;
+    //   background-position: -28px -10px;
+    //   opacity: 0.3;
+    //   z-index: -1;
+    // }
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: url('/images/campaing/spring-festival/cloud_full.svg');
-      background-repeat: no-repeat;
-      background-position: -28px -10px;
-      transform: scaleX(-1);
-      opacity: 0.8;
-      z-index: -2;
-    }
+    // &::after {
+    //   content: '';
+    //   position: absolute;
+    //   inset: 0;
+    //   background-image: url('/images/campaing/spring-festival/cloud_full.svg');
+    //   background-repeat: no-repeat;
+    //   background-position: -28px -10px;
+    //   transform: scaleX(-1);
+    //   opacity: 0.8;
+    //   z-index: -2;
+    // }
   }
 
   :deep(a) {

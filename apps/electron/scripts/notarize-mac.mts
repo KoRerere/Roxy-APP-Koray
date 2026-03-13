@@ -1,5 +1,5 @@
-import { notarize } from '@electron/notarize'
 import type { AfterPackContext } from 'electron-builder'
+import { notarize } from '@electron/notarize'
 
 /**
  * https://github.com/electron/notarize

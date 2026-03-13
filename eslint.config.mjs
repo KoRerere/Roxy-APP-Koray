@@ -22,6 +22,8 @@ export default antfu(
       'vue/first-attribute-linebreak': 'off',
       'ts/no-unused-expressions': 'off',
       'pnpm/json-enforce-catalog': 'off',
+      'e18e/ban-dependencies': 'off',
+      'e18e/prefer-spread-syntax': 'off',
       'unused-imports/no-unused-vars': [
         'error',
         {

@@ -86,7 +86,8 @@ export interface RenderMessage {
   'browser:getDefaultBrowser': () => string
   /** 创建桌面快捷方式 */
   'browser:createDesktopShortcut': (windowItem: WindowItemType) => void
-
+  /** cookie 机器人 */
+  'browser:startCookieRobot': (payload: { dirIds: string[], robotParams: any, customParams: any }) => void
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
   /** 删除 roxynet 代理 */

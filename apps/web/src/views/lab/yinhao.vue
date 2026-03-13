@@ -2,15 +2,14 @@
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
-import RxButton from '/@/components/rx-button'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
-import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+// import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
-import Score from './score.vue';
+
 // import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
-import wcisTable from './components/table/table.vue'
+// import wcisTable from './components/table/table.vue'
 // import { useUserStore } from '/@/stores/user'
 // import { differenceInDays, format, subDays } from 'date-fns'
 // import type { SubLevelEnum } from '/@/enums/pay'
@@ -25,7 +24,7 @@ import Test from '/@/views/lab/components/test.vue'
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 
-function open1() {
+function _open1() {
   showModal({
     showHeader: false,
     modal: true,
@@ -40,7 +39,7 @@ function open1() {
   })
 }
 
-function open2() {
+function _open2() {
   showModal({
     showHeader: false,
     modal: true,
@@ -51,21 +50,6 @@ function open2() {
     },
     slots: {
       container: () => <RedeemCodeRecord></RedeemCodeRecord>,
-    },
-  })
-}
-
-function onCcore() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    pt: {
-      // root: "!bg-transparent !border-none !shadow-none",
-      // mask: "!backdrop-blur-md",
-    },
-    slots: {
-      container: () => <Score></Score>,
     },
   })
 }
@@ -136,7 +120,7 @@ const _originalModel = [
   {
     label: 'only quick',
     icon: 'base/rx_ic_at',
-    command: (event: any) => {
+    command: () => {
       return false
     },
     quick: true,
@@ -151,7 +135,7 @@ const _originalModel = [
   {
     label: 'only multiple',
     icon: 'base/rx_ic_shut_down',
-    command: (event: any) => {
+    command: () => {
     },
     quick: true,
     onlyMultiple: true,
@@ -162,7 +146,7 @@ const _originalModel = [
   {
     label: 'quick, multiple, normal, async command',
     icon: 'base/rx_ic_2fa',
-    command: async (event: any) => {
+    command: async () => {
       await sleep(2000)
     },
     quick: true,
@@ -200,7 +184,7 @@ const _datalist = Array.from({ length: 50 }, (_, index) => ({
 // const selectedProducts = ref()
 
 const formRef = useTemplateRef<any>('wcisman')
-const inputs = [
+const _inputs = [
   {
     type: 'text',
     name: 'firstname',
@@ -244,13 +228,13 @@ const inputs = [
     }).min(5, 'must 5 string man!'),
   },
 ]
-function onFormWcis(values: Record<string, any>) {
+function _onFormWcis(values: Record<string, any>) {
   console.log(values)
 }
-function noFormIdWcis() {
+function _noFormIdWcis() {
   formRef.value?.instance.submit()
 }
-function setInputsProps() {
+function _setInputsProps() {
   formRef.value?.setInputsProps({
     firstname: {
       preIcon: 'base/rx_ic_portrait-spark-light',
@@ -269,16 +253,15 @@ function setInputsProps() {
   })
 }
 
+// ====================================
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
-    <wcisTable displayKey="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple">
-    </wcisTable>
+    <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <!-- <RxButton label="open1" @click="open1" />
-    <RxButton label="open2" @click="open2" />
-    <RxButton label="score" @click="onCcore" /> -->
+    <!-- <RxButton label="open1" @click="_open1" /> -->
+    <!-- <RxButton label="open2" @click="_open2" /> -->
 
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
@@ -307,7 +290,7 @@ function setInputsProps() {
     </ScrollPanel> -->
 
     <!-- <div class="mx-auto sm:w-80 flex flex-col justify-center items-center gap-2 w-full h-full">
-      <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="onFormWcis">
+      <TsForm ref="wcisman" position="left" id="wcis" :inputs="inputs" @submit="_onFormWcis">
         <template #default="{ inputs }">
           <Accordion :value="['0']" multiple>
             <AccordionPanel value="0">
@@ -322,8 +305,8 @@ function setInputsProps() {
         </template>
 </TsForm>
 <RxButton class="w-full" type="submit" label="normal submit" form="wcis" />
-<RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="noFormIdWcis"></RxButton>
-<RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="setInputsProps"></RxButton>
+<RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="_noFormIdWcis"></RxButton>
+<RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="_setInputsProps"></RxButton>
 </div> -->
   </div>
 </template>
