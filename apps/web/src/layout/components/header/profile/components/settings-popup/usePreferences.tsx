@@ -15,11 +15,14 @@ import { ClearType, UaStrictMode } from '/@/enums'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
+import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_HUMAN_NOISE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
 import { isWindows } from '/@/utils/common'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
+import { isObject } from '/@/utils'
+
+const SIMULATION_DELAY_RANGE_KEY = 'delayRange'
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil()
@@ -40,79 +43,24 @@ export function usePreferencesPanel() {
       }))
     }
 
-    const simulation: Record<string, any> = data?.simulation
-      ? data.simulation
-      : {
-          delay: DEFAULT_SIMULATION_DELAY,
-          enable: DEFAULT_SIMULATION_ENABLE,
-          shortcutKey: DEFAULT_SIMULATION_SHORTCUT_KEYS,
-        }
+    const simulation: Record<string, any> = {
+      enable: DEFAULT_SIMULATION_ENABLE,
+      humanNoise: DEFAULT_SIMULATION_HUMAN_NOISE,
+      delayRange: [...DEFAULT_SIMULATION_DELAY_RANGE],
+      shortcutKey: DEFAULT_SIMULATION_SHORTCUT_KEYS,
+      ...(isObject(data.simulation) ? data.simulation : {}),
+    }
+
+    if (!Array.isArray(simulation[SIMULATION_DELAY_RANGE_KEY]) || simulation[SIMULATION_DELAY_RANGE_KEY].length < 2) {
+      const fallbackMin = simulation.delay ?? DEFAULT_SIMULATION_DELAY
+      const fallbackMax = simulation.delay ?? DEFAULT_SIMULATION_DELAY_RANGE[1]
+      simulation[SIMULATION_DELAY_RANGE_KEY] = [fallbackMin, fallbackMax]
+    }
 
     const items = reactive<SettingsModule>({
       title: $t('软件设置'),
       description: $t('设置您的客户端使用偏好'),
       list: [
-        // !todo: 后台暂时没做，一期暂时隐藏
-        // {
-        //   subtitle: $t('界面'),
-        //   items: [
-        //     {
-        //       label: $t('语言'),
-        //       text: $t('没有您需要的语言? <span class="text-blue">联系我们</span>'),
-        //       name: 'language',
-        //       value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
-        //       props: {
-        //         filter: false,
-        //         optionValue: 'value',
-        //         options: $dict_map.language,
-        //         virtualScrollerOptions: { itemSize: 38 },
-        //       },
-        //       formatValue: (item: Items) => item.value.value,
-        //       component: ({ item, ...props }: { item: Items, props: any }) => {
-        //         return (
-        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
-        //         )
-        //       },
-        //     },
-        //     {
-        //       label: $t('时区'),
-        //       text: $t('#Some hints for you'),
-        //       name: 'timeZone',
-        //       value: data?.timeZone ?? '',
-        //       props: {
-        //         filter: false,
-        //         optionValue: 'value',
-        //         options: $dict_map.timeZone,
-        //       },
-        //       component: ({ item, ...props }: { item: Items, props: any }) => {
-        //         return (
-        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
-        //         )
-        //       },
-        //     },
-        //     {
-        //       label: $t('#Appearance'),
-        //       text: $t('#Themes for different mode'),
-        //       name: 'appearance',
-        //       value: data?.appearance?.toString() ?? '',
-        //       props: {
-        //         filter: false,
-        //         optionValue: 'value',
-        //         options: [
-        //           { label: $t('系统'), value: `${SettingAppearance.system}` },
-        //           { label: $t('#Light'), value: `${SettingAppearance.light}` },
-        //           { label: $t('#Dark'), value: `${SettingAppearance.dark}` },
-        //         ],
-        //       },
-        //       formatValue: (item: Items) => Number(item.value),
-        //       component: ({ item, ...props }: { item: Items, props: any }) => {
-        //         return (
-        //           <TsFormSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
-        //         )
-        //       },
-        //     },
-        //   ],
-        // },
         {
           subtitle: $t('窗口'),
           items: [
@@ -284,32 +232,90 @@ export function usePreferencesPanel() {
               },
             },
             {
-              // 默认值调整为100
-              label: $t('延迟时间'),
+              label: $t('人类噪音'),
+              text: $t('模拟人类输入时的随机停顿和错误（仅支持 145+ 内核）'),
               name: 'simulation',
-              value: simulation.delay,
-              text: $t('粘贴时每个字符键入的延迟时间'),
+              value: !!simulation.humanNoise,
+              props: {
+                trueValue: true,
+                falseValue: false,
+              },
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'simulation')?.value,
               formatValue: (item: Items) => {
-                simulation.delay = item.value
+                simulation.humanNoise = item.value
                 return simulation
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
-                const oldValue = item.value
                 return (
-                  <IconField class="w-full">
-                    <InputNumber
-                      {...item.props}
-                      {...props}
-                      onValueChange={() => {
-                        if (oldValue !== item.value) {
-                          saveUserConfig(item)
-                        }
-                      }}
-                      pt={{ root: { class: 'w-full' } }}
-                    />
-                    <InputIcon class="tip-text">ms</InputIcon>
-                  </IconField>
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item, items)}
+                  />
+                )
+              },
+            },
+            {
+              // 默认值调整为100
+              label: $t('输入延迟区间'),
+              name: 'simulation',
+              value: [...simulation[SIMULATION_DELAY_RANGE_KEY]],
+              text: $t('设置粘贴时每个字符键入的随机延迟区间'),
+              hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'simulation')?.value,
+              formatValue: (item: Items) => {
+                simulation[SIMULATION_DELAY_RANGE_KEY] = [...item.value]
+                delete simulation.delay
+                return simulation
+              },
+              component: ({ item }: { item: Items, props: any }) => {
+                const oldValue = [...item.value]
+
+                const saveDelayConfig = () => {
+                  if (oldValue[0] !== item.value[0] || oldValue[1] !== item.value[1]) {
+                    saveUserConfig(item)
+                  }
+                }
+
+                return (
+                  <div class="flex items-center gap-[8px] self-stretch">
+                    <IconField class="w-[92px]">
+                      <InputNumber
+                        modelValue={item.value[0]}
+                        min={0}
+                        useGrouping={false}
+                        fluid
+                        size="small"
+                        onValueChange={(val) => {
+                          console.debug('min value change: ', val, item.value) // debug log
+                          if (val >= item.value[1]) {
+                            item.value[1] = val + 1
+                          }
+                          item.value[0] = val
+                          saveDelayConfig()
+                        }}
+                      />
+                      <InputIcon>ms</InputIcon>
+                    </IconField>
+                    <div class="h-px w-[10px] bg-[var(--colors-border-border-base,#C7CDD1)]" />
+                    <IconField class="w-[92px]">
+                      <InputNumber
+                        modelValue={item.value[1]}
+                        min={1}
+                        useGrouping={false}
+                        fluid
+                        size="small"
+                        onValueChange={(val) => {
+                          console.debug('max value change: ', val, item.value) // debug log
+                          if (val <= item.value[0]) {
+                            item.value[0] = Math.max(2, val - 1)
+                          }
+                          item.value[1] = val
+                          saveDelayConfig()
+                        }}
+                      />
+                      <InputIcon>ms</InputIcon>
+                    </IconField>
+                  </div>
                 )
               },
             },

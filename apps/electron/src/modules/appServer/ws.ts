@@ -167,7 +167,7 @@ async function handleMessage(ws: WebSocket, message: any) {
 }
 
 /** 打开浏览器窗口 */
-export async function openBrowserWindow(dirId: string, workspaceId: number, urls: string[] = [], sendMessage = (_: any) => {}) {
+export async function openBrowserWindow(dirId: string, workspaceId: number, urls: string[] = [], sendMessage = (_: any) => { }) {
   try {
     console.debug('browser:open-window', dirId, workspaceId)
     // API 类型定义与后端字段可能不同步：这里按现有后端接口实参传递，必要时用 any 兜底
@@ -218,13 +218,16 @@ export async function openBrowserWindow(dirId: string, workspaceId: number, urls
       }
     }
     else {
-    // 未登录
+      // 未登录
       if (result.code === 403) {
         await openBrowserFailedDialog(dirId, 'not_login')
       }
       // 没有空间权限或被移出空间
       else if (result.code === 418) {
         await openBrowserFailedDialog(dirId, 'no_permission')
+      }
+      else if (result.code === 422) {
+        await openBrowserFailedDialog(dirId, 'workspace_suspended')
       }
       else {
         await openBrowserFailedDialog(dirId, 'other_error', result.msg)

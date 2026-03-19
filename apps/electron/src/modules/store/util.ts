@@ -12,6 +12,24 @@ import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
 import { fileExists, getInstallerParams, killProcessByName, killProcessForce, safeParseJSON } from '/@/utils'
 
+function normalizeSimulationConfig(simulation: Record<string, any> | undefined) {
+  if (!simulation || typeof simulation !== 'object') {
+    return defaultValues.simulation
+  }
+
+  const delayRange = Array.isArray(simulation.delayRange) && simulation.delayRange.length >= 2
+    ? simulation.delayRange
+    : [
+        simulation.delay ?? defaultValues.simulation.delayRange[0],
+        simulation.delay ?? defaultValues.simulation.delayRange[1],
+      ]
+
+  return {
+    ...simulation,
+    delayRange,
+  }
+}
+
 /** 加密密钥，使用 PBKDF2 生成固定长度的密钥 */
 /**
  * 盐值
@@ -127,6 +145,7 @@ export async function initLocalConfig() {
       const decryptedConfig = decryptData(encryptedConfig)
       return JSON.parse(decryptedConfig)
     })
+    lastStore.simulation = normalizeSimulationConfig(lastStore.simulation)
     Object.assign(store, lastStore)
     // 有用户信息，则认为有登录过
     if (store.token || store.userId || store.userInfo?.email) {
@@ -194,6 +213,10 @@ export async function fetchUserConfig() {
 }
 
 export function setUserConfig(data: Record<string, any>) {
+  if (Reflect.has(data, 'simulation')) {
+    data.simulation = normalizeSimulationConfig(data.simulation)
+  }
+
   Object.keys(data).forEach((key) => {
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(data, key))

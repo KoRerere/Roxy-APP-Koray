@@ -21,7 +21,7 @@ fetch(`/api/app/config?dirId=${dirId}`)
   .then(({ data }) => {
     console.log('app config', data);
     (globalThis as any).appConfig = data
-    setupI18n({ defaultLocale: data.language }).then(() => {
+    return setupI18n({ defaultLocale: data.language }).then(() => {
       document.querySelector('html')?.setAttribute('lang', data.language)
     })
   })

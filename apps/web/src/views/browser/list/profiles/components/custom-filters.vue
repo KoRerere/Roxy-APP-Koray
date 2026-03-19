@@ -278,9 +278,9 @@ async function modifyFilter() {
   <div class="flex flex-1 justify-between">
     <div class="flex flex-1 items-center flex-wrap mr-2 gap-2">
       <div v-for="(item, index) in labels" :key="index" class="labels-item">
-        <SvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
-        <span class="select-none">{{ item.label }}:</span>
-        <span class="cursor-pointer">{{ item._text || item.value }}</span>
+        <SvgIcon class="mr-1 cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
+        <span class="select-none">{{ item.label }}</span>
+        <span v-if="item.type !== 'switch'" class="cursor-pointer">: {{ item._text || item.value }}</span>
       </div>
       <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu" />
     </div>
@@ -353,7 +353,6 @@ async function modifyFilter() {
     display: flex;
     align-items: center;
     padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
-    gap: var(--spacing-sm, 4px);
     height: 24px;
     color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;

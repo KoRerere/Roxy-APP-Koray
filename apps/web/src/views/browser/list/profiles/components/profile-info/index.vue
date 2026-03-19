@@ -16,8 +16,8 @@ import { formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useConfirm } from 'primevue/useconfirm'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 
 import { API } from '/@/api'
 import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
@@ -55,7 +55,6 @@ const OS_ICON: any = {
 }
 
 const router = useRouter()
-const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
@@ -63,6 +62,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { buyProxy } = useProxy()
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
+const { saveLocalTrack } = useTrack()
 
 const proxyCss = useCssModule('proxy')
 const proxyProvider = ref()
@@ -140,6 +140,7 @@ function getProxyModel() {
 
   return [
     {
+      name: 'addProxy',
       label: $t('添加代理 IP'),
       icon: 'base/rx_ic_plus',
       visible: !hasProxy.value && !role.isViewer,
@@ -148,6 +149,7 @@ function getProxyModel() {
       },
     },
     {
+      name: 'chooseProxy',
       label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
       visible: !hasProxy.value && !role.isViewer,
@@ -156,6 +158,7 @@ function getProxyModel() {
       },
     },
     {
+      name: 'testProxy',
       label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
       visible: hasProxy.value,
@@ -177,6 +180,7 @@ function getProxyModel() {
       },
     },
     {
+      name: 'refreshProxy',
       label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
       visible: hasProxy.value,
@@ -191,6 +195,7 @@ function getProxyModel() {
       separator: true,
     },
     {
+      name: 'editProxy',
       label: $t('编辑代理 IP'),
       icon: 'base/rx_ic_edit',
       visible: data.buyProxyType === ProxyType.resource && hasProxy.value && !role.isViewer,
@@ -203,6 +208,7 @@ function getProxyModel() {
       },
     },
     {
+      name: 'chooseProxy',
       label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
       visible: hasProxy.value && !role.isViewer,
@@ -215,6 +221,7 @@ function getProxyModel() {
       separator: true,
     },
     {
+      name: 'buyProxy',
       label: $t('购买代理 IP'),
       icon: 'base/rx_ic_cart',
       visible: role.isOwner,
@@ -274,6 +281,7 @@ function getProxyModel() {
       separator: true,
     },
     {
+      name: 'deleteProxy',
       label: $t('删除代理 IP'),
       icon: 'base/rx_ic_bin_1',
       visible: hasProxy.value && !role.isViewer,
@@ -281,12 +289,24 @@ function getProxyModel() {
         confirmDeleteProxy(data)
       },
     },
-  ]
+  ].map((item) => {
+    if (typeof item.command === 'function') {
+      const original = item.command
+
+      item.command = async () => {
+        saveLocalTrack(item.name)
+        return original()
+      }
+    }
+
+    return item
+  })
 }
 
 function getAccountModel() {
   return [
     {
+      name: 'editPlatformAccount',
       label: $t('编辑账号'),
       icon: 'base/rx_ic_edit',
       visible: !role.isViewer && data.windowPlatformList.length > 0,
@@ -322,6 +342,7 @@ function getAccountModel() {
       visible: !role.isViewer && data.windowPlatformList.length > 0,
     },
     {
+      name: 'addPlatformAccount',
       label: $t('添加账号'),
       icon: 'base/rx_ic_plus',
       visible: !role.isViewer,
@@ -354,6 +375,7 @@ function getAccountModel() {
       },
     },
     {
+      name: 'choosePlatformAccount',
       label: $t('选择账号'),
       icon: 'base/rx_ic_exchange',
       visible: !role.isViewer,
@@ -380,7 +402,18 @@ function getAccountModel() {
         })
       },
     },
-  ]
+  ].map((item) => {
+    if (typeof item.command === 'function') {
+      const original = item.command
+
+      item.command = async () => {
+        saveLocalTrack(item.name)
+        return original()
+      }
+    }
+
+    return item
+  })
 }
 
 function createProxy(proxyData?: Record<string, any>) {

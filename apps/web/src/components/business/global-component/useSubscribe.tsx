@@ -5,6 +5,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import type { RoxyGiftsType } from '/@/enums/pay'
 import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
+import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { emitter } from '/@/utils/eventBus'
 import type { MittEvents } from '/@/utils/eventBus'
@@ -29,6 +30,7 @@ const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/compo
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
 const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal'))
 const Score = defineAsyncComponent(() => import('/@/views/tutorial/components/score'))
+const BackDefaultWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/back-default-workspace.vue'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
@@ -91,14 +93,20 @@ export function useSubscribe() {
 
   globalThis.electronAPI.on('dialog:open-browser-failed', (payload) => {
     console.log('dialog:open-browser-failed', payload)
-    const messageMap: Record<OpenBrowserFailureType, string> = {
+    const messageMap: Record<OpenBrowserFailureType, any> = {
       not_login: $t('当前账号暂未登录，无法同步窗口信息。\n请登录后再打开窗口。'),
       window_not_found: $t('当前窗口已经被删除，无法打开'),
       no_permission: $t('当前账号无权限打开当前窗口。'),
       other_error: payload?.message || '',
+      workspace_suspended: showDefaultWorkspaceDialog,
     }
     const message = messageMap[payload?.type] || $t('默认浏览器开启失败，请重新打开。')
     const imageSrc = `/images/default-browser/launch-failed-${themeStore.realTheme}.svg`
+
+    if (isFunction(message)) {
+      message()
+      return
+    }
 
     showModal({
       header: $t('{windowName} 开启失败', { windowName: payload?.name }),
@@ -140,6 +148,8 @@ export function useSubscribe() {
     emitter.on('showUserGuideDialog', showUserGuideDialog)
     // 显示侧边栏引导
     emitter.on('asideMenuGuide', showAsideMenuGuideTour)
+    // 回到默认空间
+    emitter.on('backDefaultWorkspace', showDefaultWorkspaceDialog)
     // 达到窗口打开次数限制
     globalThis.electronAPI.on('browser:window-open-limit', (result) => {
       console.log('browser:window-open-limit', result)
@@ -334,7 +344,7 @@ export function useSubscribe() {
               </a>
             </div>
           </div>
-        ),
+        ) as any,
       },
       handleOk: async (params: any) => {
         const res = await API.base.userSettingAccountPasswordCreate({ ...params })
@@ -438,13 +448,31 @@ export function useSubscribe() {
             showHeader: false,
             modal: true,
             blockScroll: true,
-            closeOnEscape: false,
             slots: {
-              container: ({ hideModal }) => <Score onClose={hideModal}></Score>,
+              container: ({ hideModal }) => <Score openType="system_pop" onClose={hideModal}></Score>,
             },
           })
         },
       })
     }
+  }
+
+  function showDefaultWorkspaceDialog() {
+    // 解决网络过慢时，用户已回到默认空间，封禁空间接口才返回结果导致误弹出
+    if (isOwner.value)
+      return
+    showModal({
+      header: 'key',
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      closeOnEscape: false,
+      pt: {
+        mask: '!backdrop-blur-md',
+      },
+      slots: {
+        container: ({ hideModal }) => <BackDefaultWorkspace onClose={hideModal}></BackDefaultWorkspace>,
+      },
+    })
   }
 }

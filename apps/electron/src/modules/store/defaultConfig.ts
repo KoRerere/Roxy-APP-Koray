@@ -31,8 +31,9 @@ export const defaultValues: StoreType = {
     email: '',
   },
   simulation: {
-    delay: 100,
+    delayRange: [100, 1000],
     enable: false,
+    humanNoise: true,
     shortcutKey: 'Shift E',
   },
   googleLoginEnable: false,

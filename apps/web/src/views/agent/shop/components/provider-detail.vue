@@ -16,7 +16,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useNetworkStore } from '/@/stores/network'
 import { useUserStore } from '/@/stores/user'
 import { PayWay } from '/@/enums/pay'
-import { BuyEntryType, ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
+import { BuyEntryType, ProxyIpType, ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useThemeStore } from '/@/stores/theme'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
@@ -72,8 +72,6 @@ const notes = [
     bolds: [$t('所有代理 IP 均由 RoxyBrowser 从 {name} 特挑。', { name: provider.proxyProviderName })],
   },
 ].slice(0, provider.proxyProviderName === 'RoxyBrowser' ? 6 : 7)
-
-const durationOptionsMap = new Map()
 
 const isCN = computed(() => networkInfo.value?.country_code === 'CN')
 const configValue = computed(() => {
@@ -175,17 +173,27 @@ async function initConfig() {
     value: item.id,
     label: item.typeName,
   }))
-  const [_countryOptions, _businessOptions, _durationOptions] = await Promise.all([
-    getCountryList(),
+
+  const [_countryOptions, _businessOptions] = await Promise.all([
+    getCountryAndDurationList(_typeOptions[0].value),
     getBusinessUseList(),
-    getPurchaseTimePriceList(_typeOptions[0].value),
   ])
+
+  const _durationOptions = _countryOptions[0]?.proxyPriceListFmt || []
   loading.value = false
 
   const updatePurchaseMember = (inventory: number) => {
     const purchaseMember = configs.value.find(item => item.name === 'purchaseMember')
     if (purchaseMember) {
       purchaseMember.value = Math.min(purchaseMember.value, inventory)
+    }
+  }
+
+  const updateSubscriptionMonths = (options: any[]) => {
+    const subscriptionMonths = configs.value.find(item => item.name === 'subscriptionMonths')
+    if (subscriptionMonths) {
+      subscriptionMonths.value = options[0]
+      subscriptionMonths.props.options = options
     }
   }
 
@@ -208,12 +216,16 @@ async function initConfig() {
             {...item.props}
             onUpdate:modelValue={
               async (opt: any) => {
-                const _durationOptions = await getPurchaseTimePriceList(opt.value)
-                const subscriptionMonths = configs.value.find(item => item.name === 'subscriptionMonths')
-                if (subscriptionMonths) {
-                  subscriptionMonths.value = _durationOptions[0]
-                  subscriptionMonths.props.options = _durationOptions
+                const _countryOptions = await getCountryAndDurationList(opt.value)
+                const purchaseCountry = configs.value.find(item => item.name === 'purchaseCountry')
+
+                if (purchaseCountry) {
+                  purchaseCountry.value = _countryOptions[0]
+                  purchaseCountry.props.options = _countryOptions
+                  purchaseCountry.props.disabled = _countryOptions.length === 1
                 }
+
+                updateSubscriptionMonths(_countryOptions[0]?.proxyPriceListFmt || [])
               }
             }
           />
@@ -236,9 +248,19 @@ async function initConfig() {
         return (
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-6">
-              <TsFormSelect class="!w-60" size="md" v-model={item.value} {...item.props} onUpdate:modelValue={(opt: any) => updatePurchaseMember(opt.inventory)}>
+              <TsFormSelect
+                class="!w-60"
+                size="md"
+                v-model={item.value}
+                {...item.props}
+                onUpdate:modelValue={(opt: any) => {
+                  updatePurchaseMember(opt.inventory)
+                  updateSubscriptionMonths(opt.proxyPriceListFmt)
+                }}
+              >
                 {{
-                  'option-extra': ({ option }: any) => <div class={`flex-1 text-right ${styles.stock}`}>{option.inventoryFmt}</div>,
+                  'value-extra': ({ value }: any) => <div class={`mx-auto -mr-2 ${styles.stock}`}>{value.proxyTpyeStr}</div>,
+                  'option-extra': ({ option }: any) => <div class={`mx-auto mr-0 ${styles.stock}`}>{option.proxyTpyeStr}</div>,
                 }}
               </TsFormSelect>
               {
@@ -252,6 +274,7 @@ async function initConfig() {
                           onClick={() => {
                             item.value = quick
                             updatePurchaseMember(quick.inventory)
+                            updateSubscriptionMonths(quick.proxyPriceListFmt)
                           }}
                         >
                           <RxSvgIcon name={quick.icon}></RxSvgIcon>
@@ -324,8 +347,8 @@ async function initConfig() {
   ]
 }
 
-async function getCountryList() {
-  const { code, data, msg } = await API.proxy.userGetProxyPurchaseCountryListList({ proxyProviderName: provider.proxyProviderName })
+async function getCountryAndDurationList(proxyProviderId: string) {
+  const { code, data, msg } = await API.proxy.userGetProxyCountryPriceListList({ proxyProviderId })
   onlyErrorToast(code, msg)
   if (code !== 0)
     return []
@@ -336,12 +359,11 @@ async function getCountryList() {
     label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
     name: item.country_name,
     value: item.country_code,
-    inventoryFmt:
-      item.inventory > ONE_BUY_MAX
-        ? $t('充足')
-        : item.inventory === 0
-          ? $t('库存不足')
-          : $t('剩余 {count}', { count: item.inventory }),
+    proxyPriceListFmt: item.proxyPriceList.map((item) => {
+      const day = item.proxyPurchaseMonths * 30
+      return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
+    }),
+    proxyTpyeStr: item.proxyTpye === ProxyIpType.Residential ? $t('原生 IP') : '',
   }))
 }
 
@@ -356,22 +378,6 @@ async function getBusinessUseList() {
     label: item.proxyBusinessKey,
     value: item.proxyBusinessValue,
   }))
-}
-
-async function getPurchaseTimePriceList(proxyProviderId: string) {
-  if (durationOptionsMap.has(proxyProviderId)) {
-    return durationOptionsMap.get(proxyProviderId)
-  }
-  const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({ proxyProviderId })
-  onlyErrorToast(code, msg)
-  if (code !== 0)
-    return []
-  const _data = data.map((item) => {
-    const day = item.proxyPurchaseMonths * 30
-    return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
-  })
-  durationOptionsMap.set(proxyProviderId, _data)
-  return _data
 }
 
 async function onPay() {
@@ -498,9 +504,13 @@ async function onPay() {
 
 <style lang="scss" module>
 .stock {
-  color: var(--colors-text-text-tertiary);
+  font-family: 'DingTalk JinBuTi';
   font-size: 12px;
   line-height: 16px;
+  background: linear-gradient(90deg, #11a3fd 0%, #f047ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .inventory {

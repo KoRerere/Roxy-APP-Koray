@@ -50,7 +50,7 @@ export interface ResourceUpdateMessage {
   silent?: boolean
 }
 
-export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error'
+export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error' | 'workspace_suspended'
 
 export interface MainMessage {
   /** 拉起内核过程中的信息 */

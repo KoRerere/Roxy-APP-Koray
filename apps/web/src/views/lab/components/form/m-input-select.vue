@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon'
 import { isLikeFunction } from '/@/utils'
 
 interface Props {
@@ -44,32 +44,35 @@ function _onChange(event: any) {
         options: options || _options.value,
         optionLabel,
         optionValue,
-        ...Object.fromEntries(Object.entries(attrs).filter(([_, value]) => !isLikeFunction(value)))
-      }
+        ...Object.fromEntries(Object.entries(attrs).filter(([_, value]) => !isLikeFunction(value))),
+      },
     })
   }
 }
 </script>
 
 <template>
-  <Select class="w-full" :class="size" :optionLabel="optionLabel" :optionValue="optionValue" :options="options || _options" :pt="{ option: classes.option }" @change="_onChange">
+  <Select class="w-full" :class="size" :option-label="optionLabel" :option-value="optionValue" :options="options || _options" :pt="{ option: classes.option }" @change="_onChange">
     <template #dropdownicon>
-      <RxSvgIcon name="base/rx_ic_chevron_down" />
+      <SvgIcon name="base/rx_ic_chevron_down" />
     </template>
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="selectitem">
-        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <SvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="value.image" class="selectitem__image" :src="darkMode ? value.darkImage : value.image">
         <div>{{ value.label }}</div>
+        <slot name="value-extra" :value="value" />
       </div>
-      <div v-else>{{ placeholder }}</div>
+      <div v-else>
+        {{ placeholder }}
+      </div>
     </template>
     <template #option="{ option }">
       <div class="selectitem">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <SvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="selectitem__image" :src="darkMode ? option.darkImage : option.image">
         <div>{{ option.label }}</div>
-        <slot name="option-extra" :option="option"></slot>
+        <slot name="option-extra" :option="option" />
       </div>
     </template>
     <template #clearicon="{ clearCallback }">

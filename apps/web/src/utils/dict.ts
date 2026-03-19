@@ -9,9 +9,9 @@ const DICT_CONFIG = {
   EXPIRY_TIME: 1000 * 60 * 60 * 4,
   EXPIRED_VALUE: 0,
   isExpired() {
-    const _isExpired = new Date().getTime() > DICT_CONFIG.EXPIRED_VALUE
+    const _isExpired = Date.now() > DICT_CONFIG.EXPIRED_VALUE
     if (_isExpired) {
-      DICT_CONFIG.EXPIRED_VALUE = new Date().getTime() + DICT_CONFIG.EXPIRY_TIME
+      DICT_CONFIG.EXPIRED_VALUE = Date.now() + DICT_CONFIG.EXPIRY_TIME
     }
     // return _isExpired || DICT_CONFIG.isDictLose()
     return DICT_CONFIG.isDictLose()
@@ -68,7 +68,7 @@ export async function getDictVersion() {
   return result
 }
 
-async function fetchDictData(type: any) {
+async function fetchDictData(type: string[]) {
   const { data } = await API.base.userGetSystemDictV2Create({ type })
   const dictMap = data.reduce((map, item) => {
     const type = item.type.includes('osVersion')

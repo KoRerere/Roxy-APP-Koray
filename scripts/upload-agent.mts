@@ -32,15 +32,15 @@ const baseOssConfig = {
 }
 
 // 正式环境版本
-const prodVersion = '1.0.2'
+const prodVersion = '1.0.3'
 
 // 开发环境版本
-const devVersion = '1.2.4'
+const devVersion = '1.2.5'
 
 // 当前agent的版本
 const version = isProd ? prodVersion : devVersion
 // app 最低支持版本
-const minAppVersion = isProd ? '3.7.4' : '7.0.0'
+const minAppVersion = isProd ? '3.7.6' : '7.0.0'
 
 async function getOssToken() {
   const response = await fetch(

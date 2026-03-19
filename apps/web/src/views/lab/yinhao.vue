@@ -5,7 +5,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
-
+import Permission from '/@/views/lab/permission/index.vue'
 // import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
@@ -29,6 +29,7 @@ function _open1() {
     showHeader: false,
     modal: true,
     blockScroll: true,
+    closeOnEscape: false,
     pt: {
       root: '!border-none !shadow-none rounded-lg overflow-hidden',
       // mask: "!backdrop-blur-md",
@@ -46,10 +47,10 @@ function _open2() {
     blockScroll: true,
     pt: {
       // root: "!bg-transparent !border-none !shadow-none",
-      // mask: "!backdrop-blur-md",
+      mask: '!backdrop-blur-md',
     },
     slots: {
-      container: () => <RedeemCodeRecord></RedeemCodeRecord>,
+      container: ({ hideModal }) => <Permission onClose={hideModal}></Permission>,
     },
   })
 }

@@ -14,7 +14,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
-import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, handleRequest, handleResponse, needDeviceIdApis } from '/@/api/util'
+import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, needDeviceIdApis } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -22,7 +22,7 @@ import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { isMainWindow } from '/@/utils'
-import { AxiosError } from 'axios'
+// import { AxiosError } from 'axios'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -47,6 +47,24 @@ globalThis?.globalThis.electronAPI?.on('app:backend-url-change', (url) => {
   console.log('app:backend-url-change', url)
   baseURL = url
 })
+
+const closeOtherWindow = debounce(() => {
+  if (!isMainWindow) {
+    window.close()
+  }
+}, 200)
+
+const reGetGatewayConfig = debounce(() => {
+  globalThis.electronAPI.send('util:getGatewayConfig')
+}, 200)
+
+const reGetGatewayConfigByIpChange = debounce((ip: string) => {
+  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
+}, 200)
+
+const showBackDefaultWorkspace = debounce(() => {
+  emitter.emit('backDefaultWorkspace')
+}, 200)
 
 httpClient.instance.interceptors.request.use(async (config) => {
   baseURL ||= await getGatewayConfig()
@@ -89,20 +107,6 @@ httpClient.instance.interceptors.request.use(async (config) => {
   return Promise.reject(error)
 })
 
-const closeOtherWindow = debounce(() => {
-  if (!isMainWindow) {
-    window.close()
-  }
-}, 200)
-
-const reGetGatewayConfig = debounce(() => {
-  globalThis.electronAPI.send('util:getGatewayConfig')
-}, 200)
-
-const reGetGatewayConfigByIpChange = debounce((ip: string) => {
-  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
-}, 200)
-
 httpClient.instance.interceptors.response.use(async (response) => {
   reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
   const code = response.data.code
@@ -127,6 +131,9 @@ httpClient.instance.interceptors.response.use(async (response) => {
     fetchWorkspaceList()
     globalThis.electronAPI.send('mcp:close')
     return response
+  }
+  else if (code === 422) {
+    showBackDefaultWorkspace()
   }
   const { config } = response
   if (config.headers.token) {

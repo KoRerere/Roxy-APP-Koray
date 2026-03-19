@@ -2,18 +2,16 @@
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RxButton from '/@/components/rx-button'
 import WorkspaceForm from './workspace-form.vue'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
-import { Role } from '/@/enums'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
-
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, showPageLoading } from '/@/utils'
+import { Role } from '/@/enums/role'
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 
@@ -22,25 +20,25 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  delete: [{ isCurrentWorkspace: boolean, id: number }],
-  save: [],
-  leave: [{ isCurrentWorkspace: boolean }],
+  delete: [{ isCurrentWorkspace: boolean, id: number }]
+  save: []
+  leave: [{ isCurrentWorkspace: boolean }]
 }>()
 
 const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
 const confirm = useConfirm()
-const [showModal] = useCustomDialog()
-const { getWorkspaceList, currentWorkspace } = useWorkspaceStore()
-
 const userStore = useUserStore()
+const { getWorkspaceList, currentWorkspace } = useWorkspaceStore()
+const [showModal] = useCustomDialog()
+
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
 
 const errorMessage = ref('')
-
 const workspaceInfo = ref({ ...props.workspaceInfo })
-const isOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
+
+const workspaceOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
 
 function showMoreActions(event: MouseEvent) {
   moreActionPopoverRef.value?.toggle(event)
@@ -116,16 +114,19 @@ async function handleSaveChange() {
     getWorkspaceList()
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })
     emit('save')
-  } else if (code === 409) {
+  }
+  else if (code === 409) {
     showModal({
       header: $t('各空间可创建总量大于账号本身的限额'),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
-        default: () => <div class={styles.description}>
-          <div>{$t('您在其他工作空间的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
-          <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
-        </div>,
+        default: () => (
+          <div class={styles.description}>
+            <div>{$t('您在其他工作空间的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
+            <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
+          </div>
+        ),
       },
     })
   }
@@ -172,11 +173,11 @@ function leaveWorkspace() {
     <WorkspaceForm v-model:workspace-info="workspaceInfo" v-model:error-message="errorMessage" />
 
     <div class="footer">
-      <template v-if="isOwner && !workspaceInfo?.workspaceDefault">
+      <template v-if="workspaceOwner && !workspaceInfo?.workspaceDefault">
         <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
       </template>
-      <div class="flex justify-end" :class="{ 'w-full': !(isOwner && !workspaceInfo?.workspaceDefault) }">
-        <RxButton v-if="isOwner" :label="$t('保存修改')" @click="handleSaveChange" />
+      <div class="flex justify-end" :class="{ 'w-full': !(workspaceOwner && !workspaceInfo?.workspaceDefault) }">
+        <RxButton v-if="workspaceOwner" :label="$t('保存修改')" @click="handleSaveChange" />
         <RxButton v-else :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
@@ -185,7 +186,7 @@ function leaveWorkspace() {
   <Popover ref="moreActionPopover" :class="$style['more-action-popover']">
     <div class="action-list">
       <div class="action-item danger" @click="handleDeleteConfirm">
-        <RxSvgIcon name="base/rx_ic_bin_1" />
+        <SvgIcon name="base/rx_ic_bin_1" />
         {{ $t('删除空间') }}
       </div>
     </div>
@@ -220,7 +221,7 @@ function leaveWorkspace() {
 }
 
 .delete-confirm-content {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #8a9093);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -239,15 +240,6 @@ function leaveWorkspace() {
   margin: 0 auto;
   height: 100%;
 }
-
-// .input-limit-text {
-//   color: var(--colors-text-text-inactive, #a3a9ad);
-//   text-align: right;
-//   font-family: Inter;
-//   font-size: 14px;
-//   font-style: normal;
-//   font-weight: 400;
-// }
 
 .emoji-picker-box {
   display: flex;

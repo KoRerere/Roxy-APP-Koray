@@ -103,3 +103,10 @@ export enum BuyEntryType {
   /** 购买并使用 */
   Immediate = 1,
 }
+
+export enum ProxyIpType {
+  /** 数据中心 */
+  Datacenter = 'datacenter',
+  /** 住宅 */
+  Residential = 'residential',
+}

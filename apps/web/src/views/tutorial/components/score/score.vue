@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import { API } from '/@/api'
+import { useUserStore } from '/@/stores/user'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+
+const { openType } = defineProps<{
+  openType: 'user_click' | 'system_pop'
+}>()
 
 const emit = defineEmits<{
   (e: 'submit', value: 'reward' | 'thanks'): void
   (e: 'close'): void
 }>()
 
+const { mixpanelTrack } = useUserStore()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const [_, onlyErrorToast] = useResponseToast()
 
 const star = ref(0)
-const stars = 5
+const STARS = 5
 
 onMounted(() => {
+  mixpanelTrack('review_popup_open', { review_open_type: openType })
   if (onboardingTaskStatus.value?.autoRatingStatus === false) {
     updateOnboardingTaskStatus({ autoRatingStatus: true })
   }
@@ -26,9 +33,11 @@ async function submitScore() {
   if (code !== 0)
     return
 
-  const [step, params] = star.value < stars
-    ? ['thanks', { ratingStatus: true, externalRatingStatus: true }]
-    : ['reward', { externalRatingStatus: true }]
+  const [scoreFmt, step, params] = star.value < STARS
+    ? ['1_4_star', 'thanks', { ratingStatus: true, externalRatingStatus: true }]
+    : ['5_star', 'reward', { externalRatingStatus: true }]
+
+  mixpanelTrack('review_submit_rating', { review_rating_score: scoreFmt })
 
   updateOnboardingTaskStatus(params)
   emit('submit', step as 'thanks' | 'reward')
@@ -46,7 +55,7 @@ async function submitScore() {
         {{ $t('请为我们的服务打分') }}
       </div>
     </div>
-    <Rating v-model="star" :stars="stars" :pt="{ root: '!gap-2.5', officon: '!w-8 !h-8', onicon: '!w-8 !h-8' }">
+    <Rating v-model="star" :stars="STARS" :pt="{ root: '!gap-2.5', officon: '!w-8 !h-8', onicon: '!w-8 !h-8' }">
       <template #officon>
         <div class="w-8 h-8 pa-1">
           <svg xmlns="http://www.w3.org/2000/svg" width="26" height="25" viewBox="0 0 26 25" fill="none">

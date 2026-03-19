@@ -204,6 +204,31 @@ function showRedeemCodeRecord() {
     },
   })
 }
+
+function onHtmlClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  const link = target.closest('a')
+
+  if (!link || link.target === '_blank')
+    return
+
+  const href = link.getAttribute('href')
+
+  // 只拦截站内路由
+  if (!href || href.startsWith('http'))
+    return
+  e.preventDefault()
+
+  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
+
+  router.replace({
+    path: url.pathname,
+    query: {
+      ...Object.fromEntries(url.searchParams),
+      _t: Date.now(),
+    },
+  })
+}
 </script>
 
 <template>
@@ -235,9 +260,7 @@ function showRedeemCodeRecord() {
                             :size="24" :font-size="12"
                   />
                   <div class="flex-1 flex flex-col gap-1.5">
-                    <div :class="message.text">
-                      {{ item.notify }}
-                    </div>
+                    <div :class="message.text" @click="onHtmlClick" v-html="item.notify" />
                     <div class="flex justify-between items-center">
                       <div :class="message.time">
                         {{ item.createTime }}

@@ -5,6 +5,7 @@ import Thanks from './thanks.vue'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 
 defineProps<{
+  openType: 'user_click' | 'system_pop'
   onClose: () => void | Promise<void>
 }>()
 
@@ -13,7 +14,7 @@ const step = ref<'score' | 'reward' | 'thanks'>(onboardingTaskStatus.value?.exte
 </script>
 
 <template>
-  <Score v-if="step === 'score'" @close="onClose" @submit="step = $event" />
+  <Score v-if="step === 'score'" :open-type="openType" @close="onClose" @submit="step = $event" />
   <Reward v-if="step === 'reward'" @close="onClose" />
   <Thanks v-if="step === 'thanks'" @close="onClose" />
 </template>

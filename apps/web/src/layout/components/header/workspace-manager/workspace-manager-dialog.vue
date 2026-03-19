@@ -1,21 +1,20 @@
 <script setup lang="tsx">
-import { Role, WorkspaceType } from '/@/enums';
-import { useWorkspaceStore } from '/@/stores/workspace';
-import WorkspaceList from './workspace-list.vue';
-import { RxSvgIcon } from '/@/components/rx-icon';
-import { useDialog } from '/@/hooks/useDialog';
-import { useUserStore } from '/@/stores/user';
-import { useToast } from 'primevue/usetoast';
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode';
-import { BUSINESS_CODE } from '/@/constants/business-code';
-;
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
+import WorkspaceList from './workspace-list.vue'
 import WorkspaceGuide from '../components/workspace-guide.vue'
-import { API } from '/@/api';
-import { sleep } from '/@/utils';
+import { Role, WorkspaceType } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useDialog } from '/@/hooks/useDialog'
+import { useUserStore } from '/@/stores/user'
+import { useToast } from 'primevue/usetoast'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { BUSINESS_CODE } from '/@/constants/business-code'
+
+import { API } from '/@/api'
+import { sleep } from '/@/utils'
 
 const { hideFn } = defineProps<{
-  hideFn: () => any,
+  hideFn: () => any
 }>()
 
 const workspaceStore = useWorkspaceStore()
@@ -43,17 +42,18 @@ const workspaceGroup = computed(() => {
 function showFirstCreateTipsDialog() {
   const { promise, resolve } = Promise.withResolvers<void>()
 
-  const hideFn = () => {
-    dialogInstance.handleCancel()
-    API.limit.userMdfWorkspaceTipInfoList()
-    userStore.userInfo.firstCreateTip = false
-    resolve()
-  }
-
   const dialogInstance = showModal({
-    class: 'w-[480px]',
+    class: 'w-120',
     slots: {
-      container: ( ) => <WorkspaceGuide hide-fn={hideFn} />,
+      container: () => (
+        <WorkspaceGuide hide-fn={() => {
+          dialogInstance.handleCancel()
+          API.limit.userMdfWorkspaceTipInfoList()
+          userStore.userInfo.firstCreateTip = false
+          resolve()
+        }}
+        />
+      ),
     },
   })
   return promise
@@ -68,7 +68,7 @@ async function showCreateWorkspaceDialog() {
   }
 
   if (userStore.userInfo.firstCreateTip) {
-   await showFirstCreateTipsDialog()
+    await showFirstCreateTipsDialog()
   }
 
   const resetWorkspaceForm = () => {
@@ -81,7 +81,7 @@ async function showCreateWorkspaceDialog() {
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
     slots: {
-      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value}  />,
+      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} />,
     },
     handleCancel: resetWorkspaceForm,
     async handleOk() {
@@ -100,8 +100,9 @@ async function showCreateWorkspaceDialog() {
         sleep(600).then(() => {
           router.replace({ name: 'home' })
         })
-      } else {
-       await handleBusinessCode(code, () => {
+      }
+      else {
+        await handleBusinessCode(code, () => {
           toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
           return Promise.reject(new Error(msg))
         })
@@ -119,9 +120,9 @@ async function showCreateWorkspaceDialog() {
     <div class="description">
       {{ $t('* 您在 Roxy 中的权益(如窗口用量，成员额度等)，于自己创建的工作空间内共用。') }}
     </div>
-    <WorkspaceList :list="workspaceGroup.owner" @enterWorkspace="hideFn" />
+    <WorkspaceList :list="workspaceGroup.owner" @enter-workspace="hideFn" />
     <RxButton severity="secondary" outlined class="w-full" size="md" @click="showCreateWorkspaceDialog">
-      <RxSvgIcon name="base/rx_ic_plus" :size="16" />
+      <SvgIcon name="base/rx_ic_plus" :size="16" />
       {{ $t('创建工作空间') }}
     </RxButton>
 
@@ -131,7 +132,7 @@ async function showCreateWorkspaceDialog() {
     <div class="description">
       {{ $t('* 您加入工作空间中的权益(如:窗口用量，成员额度等)，取决于空间拥有者的权益。') }}
     </div>
-    <WorkspaceList :list="workspaceGroup.member" type="member" @enterWorkspace="hideFn" />
+    <WorkspaceList :list="workspaceGroup.member" type="member" @enter-workspace="hideFn" />
   </div>
 </template>
 
@@ -140,7 +141,7 @@ async function showCreateWorkspaceDialog() {
   padding-top: 12px;
 
   .title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -150,13 +151,12 @@ async function showCreateWorkspaceDialog() {
 
   .description {
     margin-top: 6px;
-    color: var(--colors-text-text-secondary, #B2B6B8);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
     font-weight: 400;
     line-height: normal;
   }
-
 }
 </style>

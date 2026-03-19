@@ -62,6 +62,7 @@ export interface MittEvents {
   }
   badgeMap: string
   showAppUpgradeDialog: any
+  backDefaultWorkspace: void
 }
 
 export const emitter = mitt<MittEvents>()

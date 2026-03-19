@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 
-import { isMacOS } from '/@/utils/basic'
+import { isMacOS } from '/@/utils/'
 
 interface Props {
   options?: {

@@ -29,7 +29,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
-    "electron": "^40.8.0"
+    "electron": "^40.8.3"
   },
   "devDependencies": {
     "@roxy/backend-api": "workspace:*",

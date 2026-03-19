@@ -44,6 +44,7 @@ import { useDriverDataTableTour } from '/@/hooks/useDriverDataTableTour'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
+import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -80,6 +81,7 @@ const { drive } = useDriverDataTableTour()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 const { editCookieByProfile, startCookieRobot } = useCookie()
+const { saveLocalTrack } = useTrack()
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -203,6 +205,9 @@ async function saveFilters(formData: any) {
 async function tableRequest(params: any) {
   // 0: 未删除
   const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 })
+  if (data.code !== 0)
+    return []
+
   const rows = (data.data?.rows || []).map(item => ({
     ...item,
     projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
@@ -251,6 +256,8 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
    */
   const datas: Data[] = [].concat(data).map(item => toRaw(item))
   const ids = datas.map(item => item.id!)
+
+  saveLocalTrack(operate.name)
 
   switch (operate.name) {
     case 'edit':

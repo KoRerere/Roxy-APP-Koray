@@ -33,7 +33,10 @@ export function useUserProfilePanel() {
     })
     onlyErrorToast(code, msg)
     if (code === 0) {
-      fetchUserInfo()
+      const { code, data } = await fetchUserInfo()
+      if (code !== 0)
+        return
+      Reflect.set(userStore.userInfo, 'avatar', data.avatar)
     }
   }
 

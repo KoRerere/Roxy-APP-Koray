@@ -23,16 +23,8 @@ export function isLikeFunction(fn: any) {
   return ['function', 'asyncfunction'].includes(getRawType(fn))
 }
 
-export const isMacOS = (() => {
-  if (navigator.userAgentData?.platform) {
-    const uaData = navigator.userAgentData
-    return /mac\s?os/i.test(uaData.platform || '')
-  }
-  return /Macintosh|Mac OS X/.test(navigator.userAgent)
-})()
-
 export function hasOwnProperty(data: any, key: any) {
-  return Object.prototype.hasOwnProperty.call(data, key)
+  return Object.hasOwn(data, key)
 }
 
 export function sleep(ms: number): Promise<void> {
@@ -333,7 +325,7 @@ export function formatNumberToKMB(num: number, precision = 0): string {
     { threshold: 1e3, suffix: 'K' },
   ]
 
-  if (num >= formats[formats.length - 1]!.threshold) {
+  if (num >= formats.at(-1)!.threshold) {
     for (const { threshold, suffix } of formats) {
       if (num >= threshold) {
         return `${currency(num, { symbol: '', precision }).divide(threshold).format()}${suffix}`

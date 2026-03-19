@@ -5,13 +5,13 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useRoleStore } from '/@/stores/role'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { getDictMap, safeParseJSON } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import { Role } from '/@/enums/role'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
@@ -20,6 +20,7 @@ const route = useRoute()
 const router = useRouter()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { isOwner, isManager } = storeToRefs(useRoleStore())
 const { token } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { onboardingTaskStatus } = useOnboardingTaskStatus()
@@ -94,12 +95,6 @@ const items = computed(() => {
       command: () => window.open(getOfficialWebsite(), '_blank'),
     },
     {
-      label: $t('评价我们'),
-      icon: 'base/rx_ic_star',
-      visible: currentWorkspace.value?.role === Role.OWNER && onboardingTaskStatus.value?.ratingStatus === false,
-      command: () => openScore(),
-    },
-    {
       label: $t('帮助文档'),
       icon: 'base/rx_ic_doc_article',
       command: openHelpDocument,
@@ -108,6 +103,15 @@ const items = computed(() => {
       label: $t('新手教程'),
       icon: 'base/rx_ic_books',
       command: openTutorial,
+    },
+    {
+      separator: true,
+    },
+    {
+      label: $t('评价我们🎁'),
+      icon: 'base/rx_ic_star',
+      visible: isOwner.value && onboardingTaskStatus.value?.ratingStatus === false,
+      command: () => openScore(),
     },
   ].filter(item => item.visible !== false)
 })
@@ -184,9 +188,8 @@ function openScore() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    closeOnEscape: false,
     slots: {
-      container: ({ hideModal }) => <Score onClose={hideModal}></Score>,
+      container: ({ hideModal }) => <Score openType="user_click" onClose={hideModal}></Score>,
     },
   })
 }
@@ -218,7 +221,7 @@ watch([token, () => currentWorkspace.value?.id], ([token, currentWorkspaceId]) =
 }, { immediate: true })
 
 async function getMcpInfo() {
-  if (!currentWorkspace.value || ![Role.OWNER, Role.MANAGER].includes(currentWorkspace.value.role!)) {
+  if (!currentWorkspace.value || !(isOwner.value || isManager.value)) {
     showMcp.value = false
     return
   }

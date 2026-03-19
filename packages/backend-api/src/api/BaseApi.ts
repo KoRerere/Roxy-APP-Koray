@@ -153,6 +153,8 @@ import {
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
   UserSendValidatorVerifyCodeListData,
+  UserSentryClientCreateData,
+  UserSentryClientCreatePayload,
   UserSetPromotionLinkShowCreateData,
   UserSetPromotionLinkShowCreatePayload,
   UserSettingAccountPasswordCreateData,
@@ -2161,6 +2163,27 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserAppRatingCreateData, any>({
       path: `/user_app_rating`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSentryClientCreate
+   * @summary 窗口右键编辑数据收集
+   * @request POST:/user_sentry_client
+   * @response `200` `UserSentryClientCreateData`
+   */
+  userSentryClientCreate = (
+    data: UserSentryClientCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSentryClientCreateData, any>({
+      path: `/user_sentry_client`,
       method: "POST",
       body: data,
       type: ContentType.Json,

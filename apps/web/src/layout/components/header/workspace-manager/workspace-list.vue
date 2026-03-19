@@ -14,7 +14,7 @@ import { copyText } from '/@/utils/'
 type Data = UnwrapRowType<UserGetWorkspaceListListData>
 
 const { list = [] } = defineProps<{
-  list: UnwrapRowsType<UserGetWorkspaceListListData>
+  list?: UnwrapRowsType<UserGetWorkspaceListListData>
   type?: 'owner' | 'member'
 }>()
 
@@ -40,7 +40,7 @@ function getAvatarProps(item: Data) {
 function showEditWorkspaceDialog(workspaceInfo: Data) {
   showModal({
     header: $t('编辑工作空间'),
-    class: 'w-[520px]',
+    class: 'w-130',
     slots: {
       default: ({ handleCancel }) => {
         function handleLeaveWorkspace({ isCurrentWorkspace, id }: { isCurrentWorkspace: boolean, id?: number }) {

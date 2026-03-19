@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { Role } from '/@/enums'
 
 export const useRoleStore = defineStore('role', () => {
   const workspaceStore = useWorkspaceStore()

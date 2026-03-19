@@ -4,7 +4,7 @@ import crypto from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
-import { currentOS, isDev } from '/@/constants/common'
+import { currentOS, isDev, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress, safeParseJSON } from '/@/utils'
@@ -508,7 +508,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     },
     get simulation() {
       const { simulation } = store
-      const prefixKey = process.platform === 'win32' ? 'Ctrl' : 'Command'
+      const prefixKey = isMac ? 'Command' : 'Ctrl'
       return {
         ...simulation,
         shortcutKey: `${prefixKey} ${simulation.shortcutKey}`,

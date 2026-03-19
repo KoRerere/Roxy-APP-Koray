@@ -25,6 +25,8 @@ import {
   UserGetProxyAllCountriesListData,
   UserGetProxyAllCountriesListParams,
   UserGetProxyBusinessUseListListData,
+  UserGetProxyCountryPriceListListData,
+  UserGetProxyCountryPriceListListParams,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
   UserGetProxyProviderListListData,
@@ -628,6 +630,26 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<GetConsumptionGiftIpConfigListData, any>({
       path: `/get_consumption_gift_ip_config`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyCountryPriceListList
+   * @summary 获取代理国家价格信息
+   * @request GET:/user_get_proxy_country_price_list
+   * @response `200` `UserGetProxyCountryPriceListListData`
+   */
+  userGetProxyCountryPriceListList = (
+    query: UserGetProxyCountryPriceListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyCountryPriceListListData, any>({
+      path: `/user_get_proxy_country_price_list`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

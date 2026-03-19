@@ -2,12 +2,11 @@
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
-import { Role } from '/@/enums'
-
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
+import { Role } from '/@/enums/role'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
@@ -20,9 +19,7 @@ const exampleName = computed(() => {
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
 })
 
-const isOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
-
-const disabled = computed(() => !isOwner.value && Boolean(workspaceInfo.value.id))
+const disabled = computed(() => workspaceInfo.value.role !== Role.OWNER && Boolean(workspaceInfo.value.id))
 
 /** 剩余可创建窗口数量 */
 const remainWorkspaceCount = computed(() => {
@@ -74,12 +71,14 @@ defineExpose({
 
 <template>
   <div class="content">
-    <div class="row" v-if="workspaceInfo.workspaceNo">
+    <div v-if="workspaceInfo.workspaceNo" class="row">
       <div class="flex items-center gap-3">
-        <div class="title">{{ $t('空间 ID') }}:</div>
+        <div class="title">
+          {{ $t('空间 ID') }}:
+        </div>
         <div class="flex items-center !mt-0 gap-2 description">
           <span>{{ workspaceInfo.workspaceNo }}</span>
-          <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" @click="onCopy(workspaceInfo.workspaceNo!)"></SvgIcon>
+          <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" @click="onCopy(workspaceInfo.workspaceNo!)" />
         </div>
       </div>
     </div>
@@ -94,7 +93,8 @@ defineExpose({
       </div>
       <div class="emoji-picker-box">
         <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
-          :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+                       :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)"
+        />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
         </div>
@@ -113,7 +113,8 @@ defineExpose({
       <div class="w-full">
         <IconField>
           <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage"
-            :maxlength="20" class="w-full" @input="onInput" />
+                     :maxlength="20" class="w-full" @input="onInput"
+          />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/20
           </InputIcon>
@@ -152,7 +153,7 @@ defineExpose({
 
     .title {
       align-self: stretch;
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-weight: 500;
@@ -163,7 +164,7 @@ defineExpose({
     .description {
       margin-top: var(--spacing-xs, 4px);
       align-self: stretch;
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary, #575d60);
       font-family: Inter;
       font-size: 12px;
       line-height: var(--Line-Height-text-xs, 16px);
@@ -171,7 +172,7 @@ defineExpose({
     }
 
     .choose-icon-desc {
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary, #575d60);
       text-align: center;
       font-family: Inter;
       font-size: 12px;

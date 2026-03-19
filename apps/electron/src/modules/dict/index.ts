@@ -125,9 +125,11 @@ async function checkDictUpdate(remoteVersions: UserGetDictVersionListData['data'
 
 /** 更新字典 */
 export async function updateDict(keys: DictKey[]) {
-  const { code, data } = await API.base.userGetSystemDictV2Create({
-    type: keys.filter(key => dictKeys.includes(key)),
-  })
+  const type = keys.filter(key => dictKeys.includes(key))
+  if (!type.length)
+    return
+
+  const { code, data } = await API.base.userGetSystemDictV2Create({ type })
   if (code === 0) {
     const dictMap: Record<string, UserGetSystemDictV2CreateData['data']> = {}
     if (Array.isArray(data)) {

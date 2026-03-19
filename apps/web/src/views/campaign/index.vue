@@ -27,7 +27,7 @@ const activity = computed(() => {
 })
 
 onBeforeMount(() => {
-  getHolidaySeason()
+  // getHolidaySeason()
 })
 
 onBeforeUnmount(() => {

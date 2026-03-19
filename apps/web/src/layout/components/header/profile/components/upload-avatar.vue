@@ -6,7 +6,6 @@ import { defaultColors } from '/@/utils/constants'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useFileDialog } from '@vueuse/core'
 
-
 const emit = defineEmits(['change'])
 
 const { userInfo } = storeToRefs(useUserStore())

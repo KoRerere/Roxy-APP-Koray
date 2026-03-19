@@ -3,8 +3,9 @@ import Tags from '/@/views/browser/list/tags'
 import Profiles from '/@/views/browser/list/profiles'
 import Recycle from '/@/views/browser/list/recycle'
 import Transfer from '/@/views/browser/list/transfer'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { I18nT } from "vue-i18n"
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
+import { I18nT } from 'vue-i18n'
 import { debounce } from 'es-toolkit'
 
 import { API } from '/@/api'
@@ -16,7 +17,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
-import { sleep, safeParseJSON } from '/@/utils'
+import { safeParseJSON, sleep } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 
 const confirm = useConfirm()
@@ -27,7 +28,7 @@ const role = useRoleStore()
 const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 
-type TabType = {
+interface TabType {
   id: string
   label: string
   name: string
@@ -57,7 +58,7 @@ const tabIdLangMap = {
 const localTabKey = `localTabs_${workspaceStore.currentWorkspace?.id}`
 const localTabs: TabType[] = safeParseJSON(localStorage.getItem(localTabKey)) || rawTabs.map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
 
-localTabs.forEach(item => {
+localTabs.forEach((item) => {
   if (tabIdLangMap[item.id]) {
     item.label = tabIdLangMap[item.id]!
   }
@@ -83,7 +84,7 @@ const currentSuffixTab = computed(() => {
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 const updateInkBar = debounce(() => {
-  // @ts-ignore - updateInkBar 方法存在但类型定义中缺失
+  // @ts-expect-error - updateInkBar 方法存在但类型定义中缺失
   tabListRef.value?.updateInkBar()
 }, 100)
 
@@ -111,7 +112,7 @@ async function getFilterTabs() {
 
     setTimeout(() => {
       // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310
-      // @ts-ignore - updateInkBar 方法存在但类型定义中缺失
+      // @ts-expect-error - updateInkBar 方法存在但类型定义中缺失
       tabListRef.value?.updateInkBar()
     }, 1000)
   }
@@ -139,11 +140,12 @@ async function switchTab(tabId: string, event?: Event) {
             link: () => h('a', {
               class: 'cursor-pointer',
               onClick: switchWorkspaceAndToUpgradePlan,
-            }, $t('前往升级您的权益'))
+            }, $t('前往升级您的权益')),
           }),
-          life: 5000
+          life: 5000,
         })
-      } else {
+      }
+      else {
         emitter.emit('showPayWall', {
           event: event as Event,
           params: {
@@ -161,12 +163,11 @@ async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterTabs()
 
   if (!isEdit) {
-    active.value = tabs.value[tabs.value.length - 1]!.id
+    active.value = tabs.value.at(-1)!.id
   }
 }
 
 async function onEditFilter(item: any) {
-
   showSimpleDialog({
     title: $t('编辑筛选器名称'),
     inputs: [
@@ -179,7 +180,7 @@ async function onEditFilter(item: any) {
         },
         resolver: (z: any) => z.string({
           invalid_type_error: $t('请输入筛选器名称'),
-        }).min(1, $t('请输入筛选器名称'))
+        }).min(1, $t('请输入筛选器名称')),
       },
     ],
     onConfirm: async (formData: any) => {
@@ -214,7 +215,8 @@ async function deleteFilterItem(item: any) {
       try {
         const { code, msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name: item.label })
         onlyErrorToast(code, msg)
-        if (code !== 0) return
+        if (code !== 0)
+          return
 
         if (currentFilter.value?.label === item.label) {
           active.value = tabs.value[tabs.value.length - 2]!.id
@@ -235,13 +237,13 @@ async function openManageCategory() {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(Tags, {
         onClose: hideModal,
       }),
-    }
+    },
   })
 }
 
@@ -259,7 +261,8 @@ async function hidePopover() {
     const { locals, sort_data } = tabs.value.slice(pinTabs.length).reduce((acc, item, index) => {
       if (item.isLocal) {
         acc.locals.push({ ...item, sort: index })
-      } else {
+      }
+      else {
         acc.sort_data.push({ name: item.label, sort: index })
       }
       return acc
@@ -277,27 +280,29 @@ async function hidePopover() {
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList ref="tabList">
           <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
-            <div class="flex items-center text-inherit font-[Inter]">{{ item.label }}</div>
+            <div class="flex items-center text-inherit font-[Inter]">
+              {{ item.label }}
+            </div>
           </Tab>
-          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id">
-          </Tab>
+          <Tab v-for="suffixItem in suffixTabs" :key="suffixItem.id" class="!pa-0 opacity-0" :value="suffixItem.id" />
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1 suffix">
-        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
-          @click="switchTab(suffixItem.id, $event)">
+        <div v-for="suffixItem in suffixTabs" :key="suffixItem.id" class="flex items-center cursor-pointer break-keep suffix-tab" :class="{ active: suffixItem.id === active }"
+             @click="switchTab(suffixItem.id, $event)"
+        >
           <RxSvgIcon :name="(suffixItem.icon as SvgNames)" color="var(--colors-icon-icon-note)" />
           <span>{{ suffixItem.label }}</span>
         </div>
       </div>
-      <RxButton text severity="secondary" size="xs" icon="base/rx_ic_gear" @click="showPopover"></RxButton>
+      <RxButton text severity="secondary" size="xs" icon="base/rx_ic_gear" @click="showPopover" />
       <div v-if="!role.isViewer">
         <Divider layout="vertical" class="!mx-[4px] h-[16px]" />
       </div>
-      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
+      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory" />
     </div>
     <div class="flex flex-1 overflow-hidden">
-      <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
+      <component :is="currentSuffixTab.component" v-if="currentSuffixTab.visible" />
       <div v-show="!currentSuffixTab.visible" class="flex-1 overflow-hidden">
         <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" @switch-tab="switchTab" />
       </div>
@@ -319,7 +324,7 @@ async function hidePopover() {
         </template>
       </div>
     </VueDraggable>
-    <div class="sort-item" v-for="suffixItem in suffixTabs" :key="suffixItem.id">
+    <div v-for="suffixItem in suffixTabs" :key="suffixItem.id" class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots_drag" class="invisible" />
       <span>{{ suffixItem.label }}</span>
     </div>
@@ -365,7 +370,7 @@ async function hidePopover() {
     .p-tab-active {
       font-weight: 700;
       font-size: 14px;
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
     }
 
     .p-tablist-active-bar {
@@ -403,7 +408,7 @@ async function hidePopover() {
       position: relative;
       font-weight: 700;
       font-size: 14px;
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
 
       &::before {
         content: '';

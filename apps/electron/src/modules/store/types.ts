@@ -78,8 +78,9 @@ export interface StoreType {
     email: string
   }
   simulation: {
-    delay: 100
+    delayRange: [number, number]
     enable: false
+    humanNoise: true
     shortcutKey: 'Shift E'
   }
   /** 是否开启谷歌账号登录 */

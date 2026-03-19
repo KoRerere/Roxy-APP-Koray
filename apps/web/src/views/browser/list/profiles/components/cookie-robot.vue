@@ -326,7 +326,6 @@ async function genCookieRobot() {
 
 .more {
   color: var(--colors-text-text-primary);
-  font-family: 'IBM Plex Sans SC';
   font-size: 13px;
   font-weight: 500;
   line-height: 20px;

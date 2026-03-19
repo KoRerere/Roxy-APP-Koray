@@ -4,6 +4,16 @@ export const isDev = import.meta.env.DEV
 export const isProd = import.meta.env.PROD
 /** 是否是 Windows 系统 */
 export const isWindows = navigator.platform.includes('Win')
+/** 是否是 MacOS 系统 */
+export const isMacOS = (() => {
+  if (navigator.userAgentData?.platform) {
+    const uaData = navigator.userAgentData
+    return /mac\s?os/i.test(uaData.platform || '')
+  }
+  return /Macintosh|Mac OS X/.test(navigator.userAgent)
+})()
+/** 是否是 Linux 系统 */
+export const isLinux = navigator.platform.includes('Linux') && !isMacOS
 /** 是否为主窗口 */
 /* eslint-disable antfu/no-top-level-await */
 export const isMainWindow = await globalThis.electronAPI?.send('app:isMainWindow') ?? true
