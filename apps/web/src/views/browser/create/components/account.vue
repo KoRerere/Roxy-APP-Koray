@@ -5,6 +5,7 @@ import AccountList from '/@/views/account/list/quick.vue'
 import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
 import { RxAlert } from '/@/components/rx-alert'
 
+import { usePermission } from '/@/hooks/usePermission'
 import { deepClone } from '/@/utils'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
@@ -15,6 +16,7 @@ defineOptions({
 })
 
 const { isBatch, createCount } = useTableContext()
+const { check } = usePermission()
 const attrs = useAttrs()
 const drawerInstance = useDrawer()
 const windowPlatformList = defineModel<any[]>('modelValue')
@@ -80,6 +82,9 @@ function toggleDrawer(addType: 'create' | 'list', item?: any) {
 }
 
 function onEdit(item: any) {
+  if (!check('Profiles_edit_platform_outside'))
+    return
+
   if (item.id) {
     toggleDrawer('list')
   }
@@ -114,8 +119,8 @@ function replaceData(data: any) {
           />
         </div>
       </div>
-      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton v-if="check('Profiles_select_platform')" text size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
+      <RxButton v-if="check('Profiles_add_platform_outside')" text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
 
     <RxAlert v-if="isBatch && accountType === AccountBindType.Order && sumAccountCount > createCount" class="w-full" type="warn"
@@ -140,7 +145,7 @@ function replaceData(data: any) {
             </div>
           </div>
           <div class="mt-0.5 flex gap-2">
-            <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteAccount(item)" />
+            <SvgIcon v-if="check('Profiles_edit_platform_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteAccount(item)" />
           </div>
         </RxCard>
       </div>

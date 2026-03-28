@@ -90,18 +90,21 @@ function onRefreshTable(tabParams = {}, force = false) {
 }
 
 async function getTableList(params: any) {
-  const { code, msg, data: { rows, total } } = await tableRequest({ ...params, type: BuyProxyListType.Use })
+  const result = await tableRequest({ ...params, type: BuyProxyListType.Use })
 
-  const _rows = rows.map((item) => {
-    if (!isBatch)
-      return item
-    const target = selection.value?.find((it: any) => item.id === it.id)
-    return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
-  })
+  if (result.code === 0) {
+    const _rows = result.data.rows.map((item) => {
+      if (!isBatch)
+        return item
+      const target = selection.value?.find((it: any) => item.id === it.id)
+      return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
+    })
+    dataList.value = _rows
+    totalMark.value = result.data.total
+    Reflect.set(result.data, 'rows', _rows)
+  }
 
-  dataList.value = _rows
-  totalMark.value = total
-  return { code, msg, data: { rows: _rows, total } }
+  return result
 }
 
 function operationHandler(operate: any, data: ProxyItem) {

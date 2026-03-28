@@ -1,5 +1,4 @@
 import type { UserConfig } from 'vite'
-import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { node } from './.electron-vendors.cache.json'
 
@@ -41,16 +40,6 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
   plugins: [
-    {
-      name: 'post-build',
-      closeBundle() {
-        // 这里就是“打包结束后”
-        const marker = join(PACKAGE_ROOT, 'dist-vite')
-        writeFile(join(marker, 'agent.cjs'), `process.on('uncaughtException', err => process.parentPort.postMessage(err));
-process.on('unhandledRejection', err => process.parentPort.postMessage(err)); require("bytenode"); require(process.env.BYTENODE_SCRIPT);`, 'utf8')
-        // console.log("[post-build] build done:", marker);
-      },
-    },
   ],
 }
 

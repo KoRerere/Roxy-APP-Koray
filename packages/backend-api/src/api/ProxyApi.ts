@@ -139,6 +139,27 @@ export class ProxyApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Proxy
+   * @name UserDelProxyModuleV2Create
+   * @summary 批量删除代理
+   * @request POST:/user_del_proxy_module_v2
+   * @response `200` `UserDelProxyModuleV2CreateData`
+   */
+  userDelProxyModuleV2Create = (
+    data: UserDelProxyModuleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDelProxyModuleV2CreateData, any>({
+      path: `/user_del_proxy_module_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
    * @name UserGetProxyTableSortOrderList
    * @summary 获取代理列表排序规则
    * @request GET:/user_get_proxy_table_sort_order
@@ -176,6 +197,22 @@ export class ProxyApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Proxy
+   * @name UserGetProxyTableRowsList
+   * @summary 获取代理表格列顺序
+   * @request GET:/user_get_proxy_table_rows
+   * @response `200` `UserGetProxyTableRowsListData`
+   */
+  userGetProxyTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyTableRowsListData, any>({
+      path: `/user_get_proxy_table_rows`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
    * @name UserUpdateProxyTableRowsCreate
    * @summary 修改代理表格列顺序
    * @request POST:/user_update_proxy_table_rows
@@ -197,22 +234,6 @@ export class ProxyApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Proxy
-   * @name UserGetProxyTableRowsList
-   * @summary 获取代理表格列顺序
-   * @request GET:/user_get_proxy_table_rows
-   * @response `200` `UserGetProxyTableRowsListData`
-   */
-  userGetProxyTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<UserGetProxyTableRowsListData, any>({
-      path: `/user_get_proxy_table_rows`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
    * @name UserGetProxyRecommendInfoList
    * @summary 代理推荐列表
    * @request GET:/user_get_proxy_recommend_info
@@ -222,27 +243,6 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<UserGetProxyRecommendInfoListData, any>({
       path: `/user_get_proxy_recommend_info`,
       method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
-   * @name UserDelProxyModuleV2Create
-   * @summary 批量删除代理
-   * @request POST:/user_del_proxy_module_v2
-   * @response `200` `UserDelProxyModuleV2CreateData`
-   */
-  userDelProxyModuleV2Create = (
-    data: UserDelProxyModuleV2CreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserDelProxyModuleV2CreateData, any>({
-      path: `/user_del_proxy_module_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -270,22 +270,6 @@ export class ProxyApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Proxy
-   * @name UserGetProxyProviderListList
-   * @summary 获取代理供应商列表
-   * @request GET:/user_get_proxy_provider_list
-   * @response `200` `UserGetProxyProviderListListData`
-   */
-  userGetProxyProviderListList = (params: RequestParams = {}) =>
-    this.http.request<UserGetProxyProviderListListData, any>({
-      path: `/user_get_proxy_provider_list`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
    * @name UserGetUserBuyProxyListList
    * @summary 获取用户购买的代理列表
    * @request GET:/user_get_user_buy_proxy_list
@@ -306,20 +290,15 @@ export class ProxyApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Proxy
-   * @name UserMdfUserBuyProxyRemarkCreate
-   * @summary 修改用户购买的代理备注
-   * @request POST:/user_mdf_user_buy_proxy_remark
-   * @response `200` `UserMdfUserBuyProxyRemarkCreateData`
+   * @name UserGetProxyProviderListList
+   * @summary 获取代理供应商列表
+   * @request GET:/user_get_proxy_provider_list
+   * @response `200` `UserGetProxyProviderListListData`
    */
-  userMdfUserBuyProxyRemarkCreate = (
-    data: UserMdfUserBuyProxyRemarkCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserMdfUserBuyProxyRemarkCreateData, any>({
-      path: `/user_mdf_user_buy_proxy_remark`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
+  userGetProxyProviderListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyProviderListListData, any>({
+      path: `/user_get_proxy_provider_list`,
+      method: "GET",
       format: "json",
       ...params,
     });
@@ -376,6 +355,27 @@ export class ProxyApi<SecurityDataType = unknown> {
       path: `/user_get_proxy_purchase_time_price`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserMdfUserBuyProxyRemarkCreate
+   * @summary 修改用户购买的代理备注
+   * @request POST:/user_mdf_user_buy_proxy_remark
+   * @response `200` `UserMdfUserBuyProxyRemarkCreateData`
+   */
+  userMdfUserBuyProxyRemarkCreate = (
+    data: UserMdfUserBuyProxyRemarkCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfUserBuyProxyRemarkCreateData, any>({
+      path: `/user_mdf_user_buy_proxy_remark`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

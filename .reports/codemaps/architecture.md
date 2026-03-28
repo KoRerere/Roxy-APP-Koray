@@ -1,6 +1,6 @@
 # Architecture Overview
 
-<!-- Generated: 2026-03-09 | Files scanned: 150+ | Token estimate: ~900 -->
+<!-- Generated: 2026-03-26 | Files scanned: 150+ | Token estimate: ~900 -->
 
 ## Project Type
 Electron + Vue 3 monorepo with pnpm workspaces
@@ -56,8 +56,12 @@ Electron + Vue 3 monorepo with pnpm workspaces
 
 ### Packages
 - **roxy-agent**: AI agent orchestrator with LangGraph
-- **roxybrowser-playwright-mcp**: Playwright MCP server for browser automation
-- **roxybrowser-mcp-server**: OpenAPI MCP server
+- **roxy-playwright**: Playwright MCP wrapper (replaces roxybrowser-playwright-mcp)
+- **roxy-openapi**: OpenAPI MCP wrapper (replaces roxybrowser-mcp-server)
+- **roxy-skills**: Skills documentation (markdown-based)
+- **orchestrator**: Pre-built compiled orchestrator (dist only)
+- **roxybrowser-playwright-mcp**: Playwright MCP server (legacy)
+- **roxybrowser-mcp-server**: OpenAPI MCP server (legacy)
 - **backend-api**: OpenAPI client generation
 - **roxy-shared**: Shared types and utilities
 - **diskspace-native**: Native disk space monitoring

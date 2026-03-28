@@ -2,6 +2,7 @@
 import ListSimple from './list/simple.vue'
 import ShopSimple from './shop/simple.vue'
 import { ProxyType } from '/@/enums/proxy'
+import { usePermission } from '/@/hooks/usePermission'
 
 defineOptions({ inheritAttrs: false })
 
@@ -12,6 +13,7 @@ const { data, isBatch } = defineProps<{
 
 const emit = defineEmits(['confirm'])
 
+const { check } = usePermission()
 const attrs = useAttrs()
 
 const tabs = ref([
@@ -20,15 +22,17 @@ const tabs = ref([
     value: 'shop',
     total: 0,
     slot: 'shop',
+    visible: check('Proxy_Store_view_page'),
   },
   {
     title: $t('代理 IP'),
     value: 'list',
     slot: 'list',
+    visible: check('Proxy_List_view_page'),
   },
-])
+].filter(item => item.visible !== false))
 
-const tabsValue = ref('shop')
+const tabsValue = ref(tabs.value[0]?.value)
 
 const listData = computed(() => !isBatch ? data : data?.filter((item: any) => item._type === ProxyType.resource))
 const shopData = computed(() => !isBatch ? data : data?.filter((item: any) => item._type === ProxyType.buy))

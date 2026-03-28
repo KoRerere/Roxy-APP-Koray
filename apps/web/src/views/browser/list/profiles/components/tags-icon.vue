@@ -1,33 +1,29 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-
-import { useRoleStore } from '/@/stores/role'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
+import { ProfileReqType } from '/@/enums'
 import type { Operation } from '/@/utils'
 
 interface Props {
   labels: any[]
   projectId?: number
-  disabled?: boolean,
-  showCreateTag?: boolean
+  disabled?: boolean
+  genTag?: boolean
 }
 
-const { labels, projectId, disabled = false, showCreateTag = true } = defineProps<Props>()
+const { labels, projectId, disabled = false, genTag = true } = defineProps<Props>()
 
 const emit = defineEmits(['update'])
 
 const [addTag] = useTagsActions()
-const role = useRoleStore()
 const { getTags, getProjectMember } = useMateGroup()
 const { showMenu: showPopupMenu } = usePopupMenu()
 
 const loading = ref(false)
-// const styles = useCssModule()
 
-const _disabled = computed(() => disabled || role.isViewer)
 const _members = computed(() =>
   (labels || [])
     .filter((item: any) => `${item.labelId}`.startsWith('u_'))
@@ -36,7 +32,7 @@ const _members = computed(() =>
 const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
 
 async function openMenu(event: MouseEvent) {
-  if (_disabled.value || loading.value)
+  if (disabled || loading.value)
     return
 
   loading.value = true
@@ -67,20 +63,26 @@ async function openMenu(event: MouseEvent) {
 
         if (!isEq(value, toRaw(labelIds))) {
           // u_ 开头的表示人员 id
-          emit('update', { labelInfo, labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)) })
+          emit('update', {
+            labelInfo,
+            labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)),
+            requestType: ProfileReqType.SelectLabel,
+          })
         }
-      }
+      },
     },
     slots: {
-      end: showCreateTag ? () => {
-        return (
-          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-[var(--component-dropdown-divider)]" onClick={onAddTag}>
-            <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
-            <div class="text-3.25">{$t('新增标签')}</div>
-          </div>
-        )
-      } : undefined,
-    }
+      end: genTag
+        ? () => {
+            return (
+              <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-[var(--component-dropdown-divider)]" onClick={onAddTag}>
+                <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
+                <div class="text-3.25">{$t('新增标签')}</div>
+              </div>
+            )
+          }
+        : undefined,
+    },
   })
 }
 
@@ -94,7 +96,8 @@ function onAddTag() {
     confirmNext: ({ params, res }: any) => {
       emit('update', {
         labelInfo: [...labels, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
-        labelIds: [...oldIds, res.data.id]
+        labelIds: [...oldIds, res.data.id],
+        requestType: ProfileReqType.SelectLabel,
       })
     },
   })
@@ -108,8 +111,9 @@ defineExpose({ openMenu })
     <RxTag v-if="!labels?.length" class="cursor-pointer !rounded-full" icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
-      <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :title="label.labelName" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']"
-        @click.stop="openMenu">
+      <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :title="label.labelName" :class="[disabled ? 'cursor-not-allowed' : 'cursor-pointer']"
+           @click.stop="openMenu"
+      >
         <div class="label pointer-events-none">
           <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />

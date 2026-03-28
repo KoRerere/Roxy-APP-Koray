@@ -48,6 +48,7 @@ export const useUserStore = defineStore(
     const rememberMe = ref(false)
     /** rememberMe 为 true 的时候有值 */
     const password = ref('')
+    const userContact = ref<{ email?: string, phone?: string }>()
 
     /** 是否为过期用户 */
     const isExpiredUser = computed(() => {
@@ -360,6 +361,21 @@ export const useUserStore = defineStore(
       loginWay.value = way
     }
 
+    async function getUserContact(force = false) {
+      if (!force && userContact.value)
+        return userContact.value
+
+      const { email, phone } = userInfo.value
+      userContact.value = { email, phone }
+      if (phone?.includes('*')) {
+        const { code, data } = await API.base.userGetPhoneList()
+        if (code === 0) {
+          userContact.value.phone = data.phone
+        }
+      }
+      return userContact.value
+    }
+
     return {
       token,
       loginWay,
@@ -388,6 +404,7 @@ export const useUserStore = defineStore(
       clearRememberMe,
       setLoginWay,
       mixpanelTrack,
+      getUserContact,
     }
   },
   {

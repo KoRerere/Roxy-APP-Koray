@@ -12,6 +12,7 @@ import { ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitc
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { concurrentControl } from '/@/utils'
@@ -24,6 +25,7 @@ defineEmits(['search'])
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
+const { check } = usePermission()
 
 const { showSimpleDialog } = useSimpleDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -61,12 +63,6 @@ const columns = setColumns([
     title: $t('更新信息'),
     key: 'pluginUpdateState',
     slot: 'update',
-  },
-  {
-    title: $t('操作'),
-    style: 'width: 9rem',
-    slot: 'actions',
-    alignFrozen: 'right',
   },
 ])
 
@@ -146,7 +142,7 @@ function tableOperation(data: any) {
       name: 'checkUpdate',
       label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
-      power: isPersonal || role.isOwner || role.isManager,
+      power: isPersonal || check('Plugin_Installed_check_update'),
       multiple: true,
       multipleProps: {
         name: 'G1',
@@ -163,7 +159,7 @@ function tableOperation(data: any) {
       name: 'update',
       label: $t('更新'),
       icon: 'base/rx_ic_renew',
-      power: isPersonal || role.isOwner || role.isManager,
+      power: isPersonal || check('Plugin_Installed_check_update'),
       visible: canUpdate,
       disabled: !canUpdate,
       disabledTooltip: $t('暂无需要更新的扩展'),
@@ -180,7 +176,7 @@ function tableOperation(data: any) {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
-      power: isPersonal || role.isOwner || role.isManager,
+      power: isPersonal,
       visible: data.source === 'local',
       command: ({ item }: any) => {
         operationHandler(item, data)
@@ -190,11 +186,13 @@ function tableOperation(data: any) {
       name: 'install',
       label: $t('安装到项目'),
       icon: 'base/rx_ic_stack_install',
+      power: isPersonal || check('Plugin_Installed_modify_attribution'),
       command: ({ item }: any) => {
         operationHandler(item, data)
       },
     },
     {
+      power: isPersonal || check('Plugin_Installed_delete_plugin'),
       separator: true,
     },
     {
@@ -203,7 +201,7 @@ function tableOperation(data: any) {
       icon: 'base/rx_ic_bin_1',
       disabled: datas.some((data: any) => !data.canDelete),
       disabledTooltip: $t('选项中包含其他人的插件'),
-      power: isPersonal || role.isOwner || role.isManager,
+      power: isPersonal || check('Plugin_Installed_delete_plugin'),
       multiple: true,
       multipleProps: {
         name: 'G4',
@@ -240,9 +238,9 @@ async function operationHandler(operate: any, data: any) {
 }
 
 async function uploadRecordCheck() {
-  const { data } = await API.plugins.userRecordPluginUploadV2List()
+  const { data, msg } = await API.plugins.userRecordPluginUploadV2List()
   if (!data)
-    throw $t('您当日的扩展上传数量已达上限')
+    throw msg
 }
 
 function installViaUrl() {
@@ -354,7 +352,7 @@ async function getExtensionDetail(pluginId: number) {
 }
 
 async function checkUpdate(data: Data[]) {
-  const detectable = data.filter(item => item.source !== ExtensionsSource.local || !checkUpdateExtension.value[item.pluginDir!])
+  const detectable = ([] as Data[]).concat(data).filter(item => item.source !== ExtensionsSource.local || !checkUpdateExtension.value[item.pluginDir!])
   detectable.forEach((item) => {
     checkUpdateExtension.value[item.pluginDir as string] = true
   })
@@ -441,12 +439,6 @@ async function deleteExtension(datas: Data[]) {
   return promise
 }
 
-function showOperationMenu({ event, operation }: { event: MouseEvent, operation: any }) {
-  showPopupMenu(event, {
-    model: operation,
-  })
-}
-
 function showShieldDialog(data: any) {
   showModal({
     header: $t('扩展安全性检查'),
@@ -467,7 +459,7 @@ defineExpose({
 
 <template>
   <RyTable ref="extable" cache-key="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
-           :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler"
+           :show-gridlines="false" :operation-handler="operationHandler"
   >
     <template #filter-after>
       <div class="flex items-start justify-between w-full">
@@ -483,7 +475,7 @@ defineExpose({
       <CustomNewEmpty icon="base/rx_ic_extension_store" img="empty-extensions.png" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex gap-3">
-            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
+            <RxButton outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
             <TutorialVideo video-type="plugin_management" :autoplay="false" />
           </div>
         </template>
@@ -548,9 +540,11 @@ defineExpose({
       </template>
     </template>
 
-    <template #actions="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
-        <RxButton v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" text severity="secondary" size="xxs" @click.stop="showPinMenu($event, data)">
+    <template #actions-extra="{ data }">
+      <div class="flex items-center">
+        <RxButton v-if="data.pluginSwitchType === PluginSwitchType.personal || check('Plugin_Installed_pin_to_toolbar')" v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" text severity="secondary"
+                  size="xxs" @click.stop="showPinMenu($event, data)"
+        >
           <template #icon>
             <SvgIcon class="block pointer-events-none" :class="{ pinned: data.fixedPlugin === 'pin' }" :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
                      color="var(--colors-icon-icon-secondary)"
@@ -558,10 +552,6 @@ defineExpose({
           </template>
         </RxButton>
         <RxButton v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_shield" text @click.stop="showShieldDialog(data)" />
-        <RxButton v-tooltip.top="{ value: $t('检查更新'), showDelay: 500 }" severity="secondary" size="xxs" icon="base/rx_ic_clock_rotate" text
-                  @click.stop="operationHandler({ name: 'checkUpdate' }, [data])"
-        />
-        <Actions :operation="tableOperation(data).filter(item => item.visible !== false)" @more="showOperationMenu" />
       </div>
     </template>
   </RyTable>

@@ -1,13 +1,9 @@
-import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
+import editPopup from '/@/views/browser/list/tags/edit.vue'
 import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { isLikeFunction } from '/@/utils'
-import editPopup from '/@/views/browser/list/tags/edit.vue'
-
-interface TagActionsOptions {
-  toast?: boolean
-}
+import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
 
 export function useTagsActions() {
   const dialog = useDialog()

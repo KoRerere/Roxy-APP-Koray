@@ -3,13 +3,15 @@ import RelatedInfo from '/@/components/related-info.vue'
 import { API } from '/@/api'
 
 import { useConfirm } from 'primevue/useconfirm'
+import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const confirm = useConfirm()
+const { check } = usePermission()
 const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
@@ -38,17 +40,19 @@ const columns = ref([
   },
 ])
 
-const operation = ref([
+const operation = computed(() => [
   {
     label: $t('编辑'),
     name: 'edit',
     icon: 'base/rx_ic_edit',
+    power: check('Profiles_Label_edit'),
     quick: true,
   },
   {
     label: $t('删除'),
     name: 'delete',
     icon: 'base/rx_ic_bin_1',
+    power: check('Profiles_Label_delete'),
     quick: true,
     multiple: true,
     multipleProps: {
@@ -59,6 +63,11 @@ const operation = ref([
 
 async function tableRequest() {
   const data = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
+  if (data.code !== 0) {
+    onlyErrorToast(data.code, data.msg)
+    emit('close')
+    return
+  }
   totalNum.value = data.data.total
   return data
 }
@@ -112,16 +121,21 @@ async function deleteTag(data: any) {
 <template>
   <div class="w-180 h-50vh flex flex-col pa-6 pt-4">
     <div class="h-9 flex justify-between items-center">
-      <div class="header">{{ $t('标签管理') }}</div>
-      <RxButton class="!rounded-full" text size="md" severity="secondary" icon="base/rx_ic_delete" @click="$emit('close')"></RxButton>
+      <div class="header">
+        {{ $t('标签管理') }}
+      </div>
+      <RxButton class="!rounded-full" text size="md" severity="secondary" icon="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="flex justify-between items-center py-3 gap-2">
-      <div class="flex-1 total-tags">{{ $t('新增标签') }} ({{ totalNum }})</div>
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')" @click.stop="editTag()" />
+      <div class="flex-1 total-tags">
+        {{ $t('新增标签') }} ({{ totalNum }})
+      </div>
+      <RxButton v-if="check('Profiles_Label_add')" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')" @click.stop="editTag()" />
     </div>
     <div class="flex-ovh-1">
       <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
-        selection-mode="multiple" :show-actions="false">
+               selection-mode="multiple" :show-actions="false"
+      >
         <template #table-empty>
           <CustomEmpty :title="$t('暂无标签')" />
         </template>
@@ -150,7 +164,7 @@ async function deleteTag(data: any) {
 }
 
 .total-tags {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 13px;
   font-style: normal;

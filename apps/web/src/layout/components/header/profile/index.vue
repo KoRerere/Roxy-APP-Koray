@@ -63,7 +63,10 @@ const items = computed(() => {
               </div>
               <Identity />
             </div>
-            <div class={styles['user-email']}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
+            <div class="flex items-center gap-1">
+              <div class={`ellipsis-1 ${styles['user-email']}`}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
+              <RxSvgIcon name="base/rx_ic_copy" size="14" color="var(--colors-icon-icon-note)" />
+            </div>
           </div>
         )
       },
@@ -255,9 +258,9 @@ function showLogoutConfirm() {
   return promise
 }
 
-function copyUserInfo() {
-  const { userName, email, phone } = userStore.userInfo
-  copyText(`${userName}\n${email || phone || ''}`)
+async function copyUserInfo() {
+  const { email, phone } = await userStore.getUserContact()
+  copyText(email || phone || '')
   showToast(0, $t('复制成功'))
 }
 

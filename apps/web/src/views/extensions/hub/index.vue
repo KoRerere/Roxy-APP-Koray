@@ -106,7 +106,7 @@ function setupIntersectionObserver() {
     const scrollHeight = container.scrollHeight
     const clientHeight = container.clientHeight
     if (scrollTop + clientHeight >= scrollHeight - 10 && categories.value.length > 0) {
-      activeCategory.value = categories.value[categories.value.length - 1]!.id
+      activeCategory.value = categories.value.at(-1)!.id
     }
   }
 
@@ -238,10 +238,10 @@ async function onInstall(plugin: PluginItem) {
           }
 
           const { code, data, msg } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
-          plugin.addStatus = true
-          needsync.value = true
           onlyErrorToast(code, msg)
           if (code === 0) {
+            plugin.addStatus = true
+            needsync.value = true
             const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
             onlyErrorToast(code, msg)
           }

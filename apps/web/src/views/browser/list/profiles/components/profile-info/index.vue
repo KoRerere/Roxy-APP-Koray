@@ -10,7 +10,6 @@ import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import CanvasLine from './canvas-line.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
-
 import { useRoleStore } from '/@/stores/role'
 import { formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
@@ -20,9 +19,10 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 
 import { API } from '/@/api'
-import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { silentUpdateAccount, silentUpdateProxy } from '../util'
 import { useProfileProxy } from '../../hooks/useProfileProxy'
+import { usePermission } from '/@/hooks/usePermission'
 
 interface Props {
   workspaceName?: string
@@ -63,6 +63,7 @@ const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { buyProxy } = useProxy()
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 const { saveLocalTrack } = useTrack()
+const { check } = usePermission()
 
 const proxyCss = useCssModule('proxy')
 const proxyProvider = ref()
@@ -143,7 +144,7 @@ function getProxyModel() {
       name: 'addProxy',
       label: $t('添加代理 IP'),
       icon: 'base/rx_ic_plus',
-      visible: !hasProxy.value && !role.isViewer,
+      visible: !hasProxy.value && check('Profiles_add_proxy_outside'),
       command: () => {
         createProxy()
       },
@@ -152,7 +153,7 @@ function getProxyModel() {
       name: 'chooseProxy',
       label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
-      visible: !hasProxy.value && !role.isViewer,
+      visible: !hasProxy.value && check('Profiles_select_proxy'),
       command: () => {
         openProxyDrawer(proxyData)
       },
@@ -161,7 +162,7 @@ function getProxyModel() {
       name: 'testProxy',
       label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
-      visible: hasProxy.value,
+      visible: hasProxy.value && check('Profiles_speed_test_proxy'),
       command: async () => {
         if (!globalThis.isElectron) {
           return globalThis.electronAPI.send('proxy:detect', {} as any)
@@ -170,10 +171,13 @@ function getProxyModel() {
         const checkRes = await checkProxy(toRaw(data))
         batchTestShowToast(checkRes)
         if (data.moduleId && data.buyProxyType === ProxyType.resource) {
-          API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
+          API.proxy.userMdfProxyModuleCreate({
+            proxyList: [{ id: data.moduleId, ...checkRes }] as any,
+            requestType: ProfileReqType.SpeedTest,
+          })
         }
         if (checkRes.checkStatus === ProxyCheckStatus.success) {
-          updateProfile({ id: data.id, dirId: data.dirId, ...checkRes }, {
+          updateProfile({ id: data.id, dirId: data.dirId, ...checkRes, requestType: ProfileReqType.SpeedTest }, {
             success: () => silentUpdateProxy(data, checkRes),
           })
         }
@@ -183,7 +187,7 @@ function getProxyModel() {
       name: 'refreshProxy',
       label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
-      visible: hasProxy.value,
+      visible: hasProxy.value && check('Profiles_refresh_url'),
       disabled: !data.refreshUrl,
       command: async () => {
         const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
@@ -191,14 +195,14 @@ function getProxyModel() {
       },
     },
     {
-      visible: hasProxy.value && !role.isViewer,
+      visible: hasProxy.value && check('Profiles_edit_proxy_outside'),
       separator: true,
     },
     {
       name: 'editProxy',
       label: $t('编辑代理 IP'),
       icon: 'base/rx_ic_edit',
-      visible: data.buyProxyType === ProxyType.resource && hasProxy.value && !role.isViewer,
+      visible: data.buyProxyType === ProxyType.resource && hasProxy.value && check('Profiles_edit_proxy_outside'),
       command: () => {
         if (data.isEncryptProxy) {
           showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
@@ -211,7 +215,7 @@ function getProxyModel() {
       name: 'chooseProxy',
       label: $t('选择已有代理 IP'),
       icon: 'base/rx_ic_exchange',
-      visible: hasProxy.value && !role.isViewer,
+      visible: hasProxy.value && check('Profiles_select_proxy'),
       command: () => {
         openProxyDrawer(proxyData)
       },
@@ -224,7 +228,7 @@ function getProxyModel() {
       name: 'buyProxy',
       label: $t('购买代理 IP'),
       icon: 'base/rx_ic_cart',
-      visible: role.isOwner,
+      visible: check('Profiles_buy_proxy'),
       command: async () => {
         if (!proxyProvider.value) {
           const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
@@ -277,14 +281,14 @@ function getProxyModel() {
       },
     },
     {
-      visible: hasProxy.value && !role.isViewer,
+      visible: hasProxy.value && check('Profiles_delete_proxy_outside'),
       separator: true,
     },
     {
       name: 'deleteProxy',
       label: $t('删除代理 IP'),
       icon: 'base/rx_ic_bin_1',
-      visible: hasProxy.value && !role.isViewer,
+      visible: hasProxy.value && check('Profiles_delete_proxy_outside'),
       command: () => {
         confirmDeleteProxy(data)
       },
@@ -309,7 +313,7 @@ function getAccountModel() {
       name: 'editPlatformAccount',
       label: $t('编辑账号'),
       icon: 'base/rx_ic_edit',
-      visible: !role.isViewer && data.windowPlatformList.length > 0,
+      visible: check('Profiles_edit_platform_outside') && data.windowPlatformList.length > 0,
       command: () => {
         drawerInstance.showDrawer({
           title: $t('为[{workspaceName}-{uid}]编辑平台账号', { workspaceName, uid: data.windowSortNum }),
@@ -320,6 +324,7 @@ function getAccountModel() {
               onConfirm: async ({ platformUrlIds, windowPlatformList }: any) => {
                 const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
                   type: ProfileModifyType.PlatformEdit,
+                  requestType: ProfileReqType.EditPlatform,
                   ids: [data.id],
                   paramList: {
                     platformUrlIds,
@@ -339,13 +344,13 @@ function getAccountModel() {
     },
     {
       separator: true,
-      visible: !role.isViewer && data.windowPlatformList.length > 0,
+      visible: check('Profiles_add_platform_outside') && data.windowPlatformList.length > 0,
     },
     {
       name: 'addPlatformAccount',
       label: $t('添加账号'),
       icon: 'base/rx_ic_plus',
-      visible: !role.isViewer,
+      visible: check('Profiles_add_platform_outside'),
       command: () => {
         drawerInstance.showDrawer({
           title: $t('为[{workspaceName}-{uid}]添加平台账号', { workspaceName, uid: data.windowSortNum }),
@@ -363,7 +368,7 @@ function getAccountModel() {
                   ...formData,
                   _tempId: Date.now().toString(32),
                 })
-                await updateProfile({ id, dirId, windowPlatformList: _windowPlatformList }, {
+                await updateProfile({ id, dirId, windowPlatformList: _windowPlatformList, requestType: ProfileReqType.AddPlatform }, {
                   success: () => {
                     silentUpdateAccount(data, _windowPlatformList)
                   },
@@ -378,7 +383,7 @@ function getAccountModel() {
       name: 'choosePlatformAccount',
       label: $t('选择账号'),
       icon: 'base/rx_ic_exchange',
-      visible: !role.isViewer,
+      visible: check('Profiles_select_platform'),
       command: () => {
         drawerInstance.showDrawer({
           title: $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName, uid: data.windowSortNum }),
@@ -390,7 +395,7 @@ function getAccountModel() {
                 drawerInstance.hideDrawer()
                 const { id, dirId, windowPlatformList } = data
                 const platformUrlIds = dataList.filter(item => item.id).map(item => item.id)
-                await updateProfile({ id, dirId, platformUrlIds }, {
+                await updateProfile({ id, dirId, platformUrlIds, requestType: ProfileReqType.SelectPlatform }, {
                   success: () => {
                     const _windowPlatformList = windowPlatformList.filter((item: any) => !item.id).concat(dataList)
                     silentUpdateAccount(data, _windowPlatformList)
@@ -427,7 +432,7 @@ function createProxy(proxyData?: Record<string, any>) {
         data: proxyData,
         onConfirm: (formData: any) => {
           const { id, dirId } = data
-          const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom' }
+          const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: proxyData ? ProfileReqType.EditProxy : ProfileReqType.AddProxy }
           updateProfile(params, {
             success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo']),
           })
@@ -457,7 +462,7 @@ function openProxyDrawer(proxyData: Record<string, any>) {
 function setChooseProxy(formData: any) {
   const { id: moduleId, proxyCategory, protocol, proxyType, ...rest } = formData
   const { id, dirId } = data
-  updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
+  updateProfile({ id, dirId, moduleId, proxyMethod: 'choose', requestType: ProfileReqType.SelectProxy }, {
     success: () => silentUpdateProxy(data, {
       ...rest,
       moduleId,

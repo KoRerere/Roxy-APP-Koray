@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon';
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 const props = defineProps<{
   version?: string
@@ -21,9 +21,10 @@ function handleClientItemClick() {
     </div>
     <div class="flex items-center sub-title">
       <i18n-t
-        :keypath="$t('{click} v{version}（当前 v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })">
+        :keypath="$t('{click} v{version}（当前 v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })"
+      >
         <template #click>
-          <span @click="handleClientItemClick" class="text-[var(--colors-text-text-link)]">
+          <span class="text-[var(--colors-text-text-link)]" @click="handleClientItemClick">
             {{ $t('点击更新') }}&nbsp;
           </span>
         </template>
@@ -55,7 +56,7 @@ function handleClientItemClick() {
   }
 
   .sub-title {
-    color: var(--colors-text-text-secondary, #34393D);
+    color: var(--colors-text-text-secondary, #34393d);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

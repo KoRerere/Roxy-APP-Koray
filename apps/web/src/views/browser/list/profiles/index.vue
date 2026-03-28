@@ -24,11 +24,12 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ClearType, ProfileModifyType, ProfileOpenStatus, ProxyType } from '/@/enums'
+import { ClearType, ProfileModifyType, ProfileOpenStatus, ProfileReqType, ProxyType } from '/@/enums'
 import { FirstGiftType } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
+import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, deepClone, filterFieldByValue, getFormData, isEmptyValue, safeParseJSON } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
@@ -78,10 +79,11 @@ const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { drive } = useDriverDataTableTour()
-const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
+const { check } = usePermission()
+const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
@@ -339,6 +341,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
             updateProfileMeta({
               labelInfo: [...data.labelInfo, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
               labelIds: [...data.labelIds, res.data.id],
+              requestType: ProfileReqType.SelectLabel,
             }, data)
           },
         })
@@ -515,14 +518,14 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
 }
 
 async function updateProfileMeta(params: Record<string, any>, data: Data, type?: 'single' | 'batch') {
-  const { projectId, labelIds } = params
+  const { projectId, labelIds, requestType } = params
   // why? 当标签关联人员的时候，需要调单个修改窗口的接口
   const datas = ([] as Data[]).concat(data)
   const ids = datas.map(item => item.id!);
 
   (type === 'single'
-    ? singleModifyWindow({ projectId, labelIds, id: ids[0] }, true)
-    : batchModifyWindow({ projectId, labelIds, ids }, true)
+    ? singleModifyWindow({ id: ids[0], projectId, labelIds, requestType }, true)
+    : batchModifyWindow({ ids, projectId, labelIds, requestType }, true)
   ).then(() => {
     const updateParams = Object.entries(params).filter(([_, value]) => !!value)
     datas.forEach((item) => {
@@ -663,7 +666,7 @@ async function onMoveToProject(data: any) {
             onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
             return
           }
-          await batchModifyWindow({ ids, projectId: formData.projectId }, true)
+          await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, true)
             .then(() => {
               const projectName = options.find(item => item.value === formData.projectId)!.label
               datas.forEach((item) => {
@@ -719,6 +722,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
   async function onConfirm({ id, ...formData }: any) {
     const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
       type: isChoose ? ProfileModifyType.ProxySelect : ProfileModifyType.ProxyAdd,
+      requestType: isChoose ? ProfileReqType.SelectProxy : ProfileReqType.AddProxy,
       ids: datas.map(item => item.id!),
       paramList: {
         moduleId: id ?? 0,
@@ -795,9 +799,10 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     const platformUrlIds = ([] as any[]).concat(dataList).map(item => item.id)
     const paramList = isChoose ? { platformUrlIds } : { windowPlatformList: [dataList] }
     const type = isChoose ? ProfileModifyType.PlatformSelect : ProfileModifyType.PlatformAdd
+    const requestType = isChoose ? ProfileReqType.SelectPlatform : ProfileReqType.AddPlatform
     const ids = datas.map(item => item.id!)
 
-    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ paramList, type, ids })
+    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ paramList, type, requestType, ids } as any)
 
     if (code === 0) {
       datas.forEach((item, index) => {
@@ -815,9 +820,11 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
     const params: any = { id, dirId }
     if (isChoose) {
       params.platformUrlIds = (formData as any[]).filter(item => item.id).map(item => item.id)
+      params.requestType = ProfileReqType.SelectPlatform
     }
     else {
       params.windowPlatformList = windowPlatformList!.concat({ ...formData, _tempId: Date.now().toString(32) })
+      params.requestType = ProfileReqType.AddPlatform
     }
     const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
     if (code === 0) {
@@ -838,11 +845,12 @@ async function onEditCookies(data: Data | Data[]) {
     onConfirm: async (cookie: any) => {
       const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
         type: ProfileModifyType.CookieEdit,
+        requestType: ProfileReqType.EditCookie,
         ids: datas.map(item => item.id!),
         paramList: {
           cookie,
         },
-      })
+      } as any)
       drawerInstance.hideDrawer()
       onlyErrorToast(code, msg)
       if (code !== 0)
@@ -860,7 +868,7 @@ async function openCookieRobot(data: Data | Data[]) {
 }
 
 async function onRemark(data: Data | Data[]) {
-  if (role.isViewer) {
+  if (!check('Profiles_edit_remark')) {
     return
   }
   const { promise, resolve } = Promise.withResolvers<void>()
@@ -882,7 +890,7 @@ async function onRemark(data: Data | Data[]) {
     ],
     onConfirm: async (formData: any) => {
       const ids = datas.map(item => item.id)
-      await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
+      await batchModifyWindow({ ids, windowRemark: formData.windowRemark, requestType: ProfileReqType.EditRemark }, true)
       datas.forEach((item) => {
         item.windowRemark = formData.windowRemark
       })
@@ -975,18 +983,18 @@ async function deleteProfile(datas: any, ids: number[]) {
         label: $t('确认'),
         severity: 'danger',
       },
-      checkboxProps: {
-        label: $t('彻底删除'),
-        value: false,
-      },
+      checkboxProps: check('Profiles_permanent_delete') && { label: $t('彻底删除'), value: false },
       async accept() {
         if (this.checkboxProps.value) {
-          await API.window.userDelWindowInfoCreate({ ids })
+          const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
+          onlyErrorToast(code, msg)
+          if (code !== 0)
+            return reject(msg)
           onRefreshTable()
           globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
         }
         else {
-          await batchModifyWindow({ ids, isDelete: true })
+          await batchModifyWindow({ ids, isDelete: true, requestType: ProfileReqType.Delete })
         }
 
         resolve(true)
@@ -1107,7 +1115,7 @@ defineExpose({
       <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex gap-3">
-            <RxButton v-if="!role.isViewer" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
+            <RxButton v-if="check('Profiles_add')" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
             <TutorialVideo video-type="create_profile" :autoplay="false" />
           </div>
         </template>
@@ -1150,7 +1158,7 @@ defineExpose({
     </template>
     <template #profileName="{ data }">
       <template v-if="data.id">
-        <ProfileName :data="data" :readonly="role.isViewer" @refresh="onRefreshTable" />
+        <ProfileName :data="data" :readonly="!check('Profiles_edit')" @refresh="onRefreshTable" />
       </template>
       <template v-else>
         <Skeleton width="160px" height="24px" border-radius="4px" />
@@ -1190,7 +1198,7 @@ defineExpose({
     </template>
     <template #project="{ data }">
       <template v-if="data.id">
-        <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
+        <ProjectIcon :disabled="!check('Profiles_move_project')" :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
       </template>
       <template v-else>
         <Skeleton width="100px" height="20px" border-radius="4px" />
@@ -1198,7 +1206,9 @@ defineExpose({
     </template>
     <template #tags="{ data }">
       <template v-if="data.id">
-        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
+        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" :gen-tag="check('Profiles_Label_add')" :disabled="!check('Profiles_select_label')"
+                  @update="updateProfileMeta($event, data, 'single')"
+        />
       </template>
       <template v-else>
         <Skeleton width="70px" height="24px" border-radius="12px" />

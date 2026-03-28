@@ -14,6 +14,7 @@ import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
 import { aliOSS } from '/@/utils/oss'
+import { calculateFileHash } from '/@/utils'
 import { ipcSender } from '../ipc/sender'
 
 export function getMcpWindow() {
@@ -42,6 +43,14 @@ export const mcpManager = new (class McpManager {
       console.error('agentUpdaterPromise wait error:', error)
     }
 
+    // 主动触发一次更新检查，确保本地 agent 脚本与 sha512 期望值就绪
+    try {
+      await agentUpdater.checkForUpdates()
+    }
+    catch (error) {
+      console.error('[mcp] agentUpdater.checkForUpdates error:', error)
+    }
+
     const llmInfo = await API.base.userGetLlmInfoList({})
 
     if (llmInfo.code !== 0 || !llmInfo.data) {
@@ -61,12 +70,12 @@ export const mcpManager = new (class McpManager {
 
     const PLAYWRIGHT_SCRIPT_PATH = isDevelopment ? path.join(import.meta.dirname, './playwrightMcp.mjs') : appConfig.playwrightMcpBinPath
 
-    const AGENT_ENTRY_SCRIPT = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : path.join(appConfig.unpackedFilePath, './dist/starter.js')
+    const AGENT_ENTRY_SCRIPT = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : appConfig.agentBinPath
 
     // 开发时让 agent 能解析到 packages/roxy-agent/words（敏感词库）
     const ROXY_AGENT_PACKAGE_ROOT = isDevelopment ? path.resolve(import.meta.dirname, '..', '..', '..', 'packages', 'roxy-agent') : undefined
 
-    const CHECKPOINT_DIR = path.join(app.getPath('userData'), 'checkpoints')
+    const CHECKPOINT_DIR = path.join(agentUpdater.agentDir, 'checkpoints')
 
     const DOWNLOADS_DIR = app.getPath('downloads')
 
@@ -74,48 +83,58 @@ export const mcpManager = new (class McpManager {
     // 提供流式输出的服务需要的端口
     const port = await getPortPromise({ port: this.config.port })
 
+    // 启动前校验：阻止使用被篡改的本地脚本（尤其是从云端下载落地的 mjs）
+    const integrityRequired = process.env.ROXY_AGENT_INTEGRITY_REQUIRED !== 'false'
+    if (!isDevelopment && integrityRequired) {
+      const expectedAgentSha512 = agentUpdater.agentEntrySha512
+      const expectedOpenapiSha512 = agentUpdater.openapiEntrySha512
+      const expectedPlaywrightSha512 = agentUpdater.playwrightEntrySha512
+
+      if (!expectedAgentSha512 || !expectedOpenapiSha512 || !expectedPlaywrightSha512) {
+        throw new Error('[mcp] missing expected sha512 for agent scripts')
+      }
+
+      const localAgentSha512 = await calculateFileHash(AGENT_ENTRY_SCRIPT)
+      const localOpenapiSha512 = await calculateFileHash(OPENAPI_SCRIPT_PATH)
+      const localPlaywrightSha512 = await calculateFileHash(PLAYWRIGHT_SCRIPT_PATH)
+
+      if (localAgentSha512 !== expectedAgentSha512) {
+        throw new Error('[mcp] agent script sha512 mismatch')
+      }
+      if (localOpenapiSha512 !== expectedOpenapiSha512) {
+        throw new Error('[mcp] openapi script sha512 mismatch')
+      }
+      if (localPlaywrightSha512 !== expectedPlaywrightSha512) {
+        throw new Error('[mcp] playwright script sha512 mismatch')
+      }
+    }
+
     const env = {
       ...process.env,
-      START_SCRIPT: AGENT_ENTRY_SCRIPT,
       ...(ROXY_AGENT_PACKAGE_ROOT ? { ROXY_AGENT_PACKAGE_ROOT } : {}),
-      BYTENODE_SCRIPT: appConfig.agentBinPath,
       LLM_PROVIDER: llmInfo.data.provider,
       LLM_MODEL: llmInfo.data.model,
       LLM_API_KEY: llmInfo.data.apikey,
       LLM_BASE_URL: llmInfo.data.baseUrl,
       LLM_BALANCE: llmInfo.data.balance,
-
-      SILICONFLOW_THINKING_BUDGET: '4096',
-
-      MAX_TURNS: '30',
-      CONTEXT_MESSAGE_LIMIT: '15',
-      WORKER_CONTEXT_LIMIT: '6',
-      PROMPTS_LANGUAGE: 'zh',
-      MAX_MESSAGES_BEFORE_SUMMARY: '25',
-      KEEP_RECENT_MESSAGES: '6',
-      SIMPLE_SYNTHESIS_CONTEXT_LIMIT: '10',
-
       OPENAPI_SCRIPT_PATH,
-
       ROXY_API_KEY: store.apiKey,
       ROXY_API_HOST: `http://127.0.0.1:${store.apiPort}`,
-
       PLAYWRIGHT_SCRIPT_PATH,
-
       CHECKPOINT_DIR,
 
       ROXY_SERVER_PORT: String(port),
       ROXY_USER_ID: String(store.userId),
       ROXY_WORKSPACE_ID: String(store.workspaceId),
 
-      SITE_URL: 'http://localhost:3000',
-      SITE_NAME: 'Orchestrator',
       SYSTEM_LANGUAGE: store.language,
-      // 调试模式：设置为 'true' 或 '1' 开启调试日志，日志会保存到 CHECKPOINT_DIR/logs/{thread_id}.log
-      DEBUG: isDev ? 'true' : 'false',
       // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
       DEVELOPMENT: isDevelopment ? 'true' : 'false',
       DOWNLOADS_DIR,
+      SKILLS_DIR: agentUpdater.agentDir,
+      ...(agentUpdater.agentEntrySha512 && !isDevelopment ? { AGENT_ENTRY_SCRIPT_SHA512: agentUpdater.agentEntrySha512 } : {}),
+      ...(agentUpdater.openapiEntrySha512 && !isDevelopment ? { OPENAPI_SCRIPT_SHA512: agentUpdater.openapiEntrySha512 } : {}),
+      ...(agentUpdater.playwrightEntrySha512 && !isDevelopment ? { PLAYWRIGHT_SCRIPT_SHA512: agentUpdater.playwrightEntrySha512 } : {}),
     }
     Object.keys(env).forEach((key) => {
       env[key] = String(env[key])
@@ -161,11 +180,6 @@ export const mcpManager = new (class McpManager {
         conversationId: message.data.conversationId,
         inputToken: message.data.inputToken,
         outputToken: message.data.outputToken,
-        time: message.data.time,
-        taskType: {
-          orchestrator: 'multitask',
-          simple: 'singletask',
-        }[message.data.taskType],
       })
       if (result.code !== 0) {
         console.error('save chat message error:', result.msg)

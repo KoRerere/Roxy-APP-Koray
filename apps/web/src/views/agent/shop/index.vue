@@ -20,6 +20,7 @@ import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableReq
 import { useUserStore } from '/@/stores/user'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import type { ProxyItem } from './operation'
 
 const route = useRoute()
@@ -32,6 +33,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy } = useProxy()
 const [showModal] = useDialog()
+const { check } = usePermission()
 
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('shoptable')
@@ -337,11 +339,11 @@ async function toggleAutoRenew(data: ProxyItem) {
                 <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('隐藏不可用代理 IP') }}</label>
               </div>
-              <div v-if="isOwner" class="relative">
+              <div v-if="check('Proxy_Store_buy_proxy')" class="relative">
                 <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
                 <div class="new-dot" />
               </div>
-              <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+              <RxButton v-if="check('Proxy_Store_speed_test')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
               <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
             </div>
           </div>
@@ -350,7 +352,7 @@ async function toggleAutoRenew(data: ProxyItem) {
           <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此购买代理 IP，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="isOwner" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
+                <RxButton v-if="check('Proxy_Store_buy_proxy')" outlined severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
                 <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>

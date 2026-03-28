@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
@@ -12,19 +11,19 @@ const items = ref([
     label: $t('查看者'),
     value: Role.VIEWER,
     visible: role > Role.VIEWER,
-    description: $t('只能打开或查看权限内的窗口信息。'),
+    description: $t('只能打开或查看权限内的窗口信息'),
   },
   {
     label: $t('编辑者'),
     value: Role.EDITOR,
     visible: role > Role.EDITOR,
-    description: $t('可以管理所有窗口，并管理所有查看者权限。'),
+    description: $t('可以管理所有窗口，编辑所有查看者权限'),
   },
   {
     label: $t('管理者'),
     value: Role.MANAGER,
     visible: role > Role.MANAGER,
-    description: $t('可以管理所有窗口，包括所有查看者和编辑者权限。'),
+    description: $t('可以管理所有窗口，编辑所有查看者和编辑者权限'),
   },
 ].filter(item => item.visible))
 

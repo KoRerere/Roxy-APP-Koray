@@ -1,6 +1,16 @@
+// 附件信息类型
+export interface AttachmentInfo {
+  fileId: string
+  fileName: string
+  mimeType: string
+  size: number
+  /** 用于展示的 URL（图片预览或服务器文件地址） */
+  url?: string
+}
+
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo'
   data?: {
     sessionId?: string
     toolId?: string
@@ -116,19 +126,72 @@ export interface PlanningState {
   endTimestamp?: number
 }
 
+// SSE 解析结果（旧版，保留兼容）
+export interface SSEParseResult {
+  messageBlocks: MessageBlock[]
+  workerTasks: WorkerTask[]
+  planningText: string
+  synthesisText: string
+  endStatus?: ReplyEndStatus
+  errorMessage?: string
+}
+
+// ─── MessageViewer 展示类型 ───────────────────────────────────────────────────
+
+export type MessageType
+  = | 'thinking'
+    | 'content'
+    | 'tool_call'
+    | 'tool_result'
+    | 'worker'
+    | 'worker_content'
+    | 'worker_thinking'
+    | 'todo'
+    | 'error'
+    | 'interrupt'
+
+export type TodoStatus = 'pending' | 'in_progress' | 'completed'
+
+export interface Todo {
+  status: TodoStatus
+  content: string
+}
+
+/** MessageViewer 对外输出的消息条目基础结构 */
+export interface MessageEntry {
+  type: MessageType
+  text: string
+  meta: Record<string, unknown>
+  start?: number
+  end?: number
+  status?: WorkerStatus
+  /** 仅 thinking 类型使用：true 表示仍在思考中 */
+  isThinking?: boolean
+}
+
+/** Worker 子条目视图（worker 内部的 thinking / tool_call / content） */
+export interface WorkerEntryView extends MessageEntry {
+  id: string
+}
+
+/** 顶层消息条目视图 */
+export interface MessageEntryView extends MessageEntry {
+  id: string
+  workers: WorkerEntryView[]
+}
+
+// ─── 聊天核心类型 ─────────────────────────────────────────────────────────────
+
 // 当前正在构建的回复
 export interface CurrentReply {
   sessionId?: string
   mode: 'orchestrator' | 'simple'
-  messageBlocks: MessageBlock[]
-  workerTasks: WorkerTask[]
-  planningText: string
-  planningState: PlanningState
-  synthesisText: string
-  isComplete: boolean
+  messageBlocks: MessageEntryView[]
+  isComplete?: boolean
   endStatus?: ReplyEndStatus
   errorMessage?: string
   startTime: number
+  todo: Todo[]
 }
 
 // 头像信息
@@ -145,21 +208,10 @@ export interface FormattedMessage extends AvatarInfo {
   date: string
   synthesisText?: string
   mode?: string
-  messageBlocks?: MessageBlock[]
-  workerTasks?: WorkerTask[]
-  planningText?: string
-  planningState?: PlanningState
+  messageBlocks?: MessageEntryView[]
   isStreaming?: boolean
   endStatus?: ReplyEndStatus
   errorMessage?: string
-}
-
-// SSE 解析结果
-export interface SSEParseResult {
-  messageBlocks: MessageBlock[]
-  workerTasks: WorkerTask[]
-  planningText: string
-  synthesisText: string
-  endStatus?: ReplyEndStatus
-  errorMessage?: string
+  /** 用户消息中的附件列表 */
+  attachments?: AttachmentInfo[]
 }

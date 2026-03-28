@@ -5,7 +5,6 @@ packages:
 catalog:
   '@modelcontextprotocol/sdk': ^1.25.1
   axios: ^1.13.6
-  bytenode: ^1.5.7
   dompurify: ^3.3.1
   highlight.js: ^11.11.1
   marked: ^17.0.1

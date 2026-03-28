@@ -1,13 +1,25 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { Role } from '/@/enums'
-import { $t } from '/@/locales'
-// import { isWindows } from "/@/utils/common";
 import { emitter } from '/@/utils/eventBus'
 import { API } from '/@/api'
 import { I18nT } from 'vue-i18n'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import type { Permission, PermissionMode } from '/@/hooks/usePermission/type'
+import type { SvgNames } from '/@/components/rx-icon'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    permissions?: Permission[]
+    permissionMode?: PermissionMode
+    roles?: Role[]
+    hideInMenu?: boolean
+    shared?: boolean
+    type?: 'group' | 'button' | (string & {})
+    icon?: SvgNames | (string & {})
+  }
+}
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
@@ -25,13 +37,21 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'create',
         name: 'browser-create',
-        meta: { title: '新建窗口', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER], hideInMenu: true },
+        meta: {
+          title: '新建窗口',
+          permissions: ['Profiles_add'],
+          hideInMenu: true,
+        },
         component: () => import('/@/views/browser/create'),
       },
       {
         path: 'edit',
         name: 'browser-edit',
-        meta: { title: '编辑窗口', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER], hideInMenu: true },
+        meta: {
+          title: '编辑窗口',
+          permissions: ['Profiles_edit'],
+          hideInMenu: true,
+        },
         component: () => import('/@/views/browser/create/edit.vue'),
       },
     ],
@@ -45,19 +65,31 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'projects',
     name: 'projects',
-    meta: { title: $t('项目管理'), icon: 'base/rx_ic_stack' },
+    meta: {
+      title: $t('项目管理'),
+      icon: 'base/rx_ic_stack',
+      permissions: ['Projects_view_page'],
+    },
     redirect: { name: 'project-list' },
     children: [
       {
         path: 'list',
         name: 'project-list',
-        meta: { title: '项目列表', hideInMenu: true },
+        meta: {
+          title: '项目列表',
+          hideInMenu: true,
+          permissions: ['Projects_view_page'],
+        },
         component: () => import('/@/views/projects/index.vue'),
       },
       {
         path: ':id',
         name: 'project-item',
-        meta: { title: '项目', hideInMenu: true },
+        meta: {
+          title: '项目',
+          hideInMenu: true,
+          permissions: ['Projects_view_page'],
+        },
         component: () => import('/@/views/projects/project-item.vue'),
       },
     ],
@@ -73,14 +105,19 @@ export const menuRoutes: RouteRecordRaw[] = [
         meta: {
           title: $t('代理 IP'),
           icon: 'base/rx_ic_internet',
-          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
+          permissions: ['Proxy_List_view_page', 'Proxy_Store_view_page'],
+          permissionMode: 'any',
         },
         component: () => import('/@/views/agent'),
       },
       {
         path: 'create',
         name: 'agent-create',
-        meta: { title: $t('新建代理 IP'), hideInMenu: true },
+        meta: {
+          title: $t('新建代理 IP'),
+          hideInMenu: true,
+          permissions: ['Proxy_List_add'],
+        },
         component: () => import('/@/views/agent/create'),
       },
       {
@@ -89,14 +126,18 @@ export const menuRoutes: RouteRecordRaw[] = [
         meta: {
           title: $t('平台账号'),
           icon: 'base/rx_ic_keys',
-          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
+          permissions: ['Platform_view_page'],
         },
         component: () => import('/@/views/account/list'),
       },
       {
         path: 'accountcreate',
         name: 'account-create',
-        meta: { title: $t('新建账号'), hideInMenu: true },
+        meta: {
+          title: $t('新建账号'),
+          hideInMenu: true,
+          permissions: ['Platform_add'],
+        },
         component: () => import('/@/views/account/create'),
       },
       {
@@ -112,15 +153,13 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'extensions',
         name: 'extensions',
-        meta: { title: $t('扩展中心'), icon: 'base/rx_ic_extension_store' },
+        meta: {
+          title: $t('扩展中心'),
+          icon: 'base/rx_ic_extension_store',
+          permissions: ['Plugin_Installed_view_page'],
+        },
         component: () => import('/@/views/extensions'),
       },
-      // {
-      //   path: 'rpa',
-      //   name: 'rpa',
-      //   meta: { title: $t('#RPA'), icon: 'base/rx_ic_browser_smile' },
-      //   component: () => import('/@/views/agent/shop'),
-      // },
     ],
   },
   {
@@ -180,7 +219,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         meta: {
           title: 'API & AI MCP',
           icon: 'base/rx_ic_doc_code',
-          roles: [Role.OWNER, Role.MANAGER],
+          permissions: ['API_MCP_view_page'],
         },
         component: () => import('/@/views/api-keys'),
       },
@@ -195,7 +234,11 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'teams',
         name: 'teams',
-        meta: { title: $t('团队'), icon: 'base/rc_ic_user_referral' },
+        meta: {
+          title: $t('团队'),
+          icon: 'base/rc_ic_user_referral',
+          permissions: ['Team_Member_view_page'],
+        },
         component: () => import('/@/views/team'),
       },
     ],

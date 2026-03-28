@@ -1,5 +1,6 @@
 export * from './base'
 export * from './extensions'
+export * from './permission'
 export * from './profile'
 export * from './project'
 export * from './proxy'

@@ -1,6 +1,6 @@
 # Dependencies & Integrations
 
-<!-- Generated: 2026-03-09 | Files scanned: 60+ | Token estimate: ~800 -->
+<!-- Generated: 2026-03-26 | Files scanned: 60+ | Token estimate: ~800 -->
 
 ## External Services
 
@@ -32,14 +32,18 @@
 
 ### MCP Servers
 
-**Playwright MCP (packages/roxybrowser-playwright-mcp/)**
+**Playwright MCP (packages/roxy-playwright/)** — NEW wrapper
+- Bundles @roxybrowser/playwright-mcp
 - Browser automation via Playwright
 - Tools: navigate, click, fill, snapshot, extract
-- Multiple browser modes: persistent, isolated, CDP, remote
 
-**OpenAPI MCP (packages/roxybrowser-mcp-server/)**
+**OpenAPI MCP (packages/roxy-openapi/)** — NEW wrapper
+- Bundles @roxybrowser/openapi
 - RoxyBrowser API integration
-- Profile management, browser control
+
+**Legacy packages (still present):**
+- packages/roxybrowser-playwright-mcp/
+- packages/roxybrowser-mcp-server/
 
 ### MCP Integration Flow
 ```

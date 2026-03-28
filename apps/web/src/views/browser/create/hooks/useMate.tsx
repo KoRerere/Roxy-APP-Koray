@@ -1,5 +1,6 @@
-import { API } from '/@/api'
 import RxAvatar from '/@/components/rx-avatar'
+import { API } from '/@/api'
+import { ProfileReqType } from '/@/enums/permission'
 
 interface Operation {
   name?: string
@@ -11,7 +12,7 @@ interface Operation {
 
 export function useMateGroup() {
   async function getTags(): Promise<Operation[]> {
-    const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
+    const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999', requestType: ProfileReqType.SelectLabel })
     return data.rows.map(item => ({
       name: item.name,
       label: item.name,

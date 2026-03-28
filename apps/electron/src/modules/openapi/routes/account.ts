@@ -65,7 +65,7 @@ router.post('/batch_create', async (req, res) => {
 // 修改平台账号
 router.post('/modify', async (req, res) => {
   const { workspaceId, ...params } = req.body || {}
-  const result = await API.platform.userMdfPlatformInfoCreate([params], {
+  const result = await API.platform.userMdfPlatformInfoCreate({ platformList: [params] }, {
     headers: {
       workspaceId,
       ...openAPICommonHeaders,

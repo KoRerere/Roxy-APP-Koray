@@ -12,13 +12,14 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
-import { findInputByName, setInputValue } from '/@/utils'
+import { findInputByName, setInputValue, sleep } from '/@/utils'
 import { copyText } from '/@/utils/'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { useSimpleLocale } from '/@/stores/locale'
 import { SubLevelEnum } from '/@/enums/pay'
 
+const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -37,6 +38,7 @@ const apiConfig = ref({
 })
 const hasOccupy = ref(false)
 const isLLM = ref(false)
+const highlight = ref(false)
 
 const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
@@ -408,6 +410,13 @@ async function getApiKeys() {
   const port = await globalThis.electronAPI.send('util:checkPort', _port)
   console.log(port, _port)
   hasOccupy.value = globalThis.isElectron && port !== _port
+
+  if (route.query.highlight) {
+    highlight.value = true
+    await sleep(1500)
+    highlight.value = false
+    router.replace({ name: 'api-keys' })
+  }
 }
 
 async function checkMcpUser() {
@@ -456,10 +465,10 @@ async function onCopy(text: string) {
 <template>
   <div class="flex flex-col w-full h-full api">
     <ViewsHeader :title="($route.meta.title as string)" />
-    <div class="flex-1 w-full py-4 overflow-auto api-body">
+    <div class="flex-1 w-full pb-4 overflow-auto api-body">
       <div class="w-3/4 mx-auto">
         <div class="w-full grid grid-cols-18">
-          <div class="col-span-6">
+          <div class="pt-4 col-span-6">
             <div class="py-2 api-title">
               {{ $t('API 设置') }}
             </div>
@@ -468,7 +477,7 @@ async function onCopy(text: string) {
             </div>
           </div>
           <div class="col-span-11 col-start-8">
-            <div class="flex justify-between items-center px-3 pb-4 api-usage">
+            <div class="flex justify-between items-center px-3 py-4 api-usage " :class="{ foucs: highlight }">
               <div>{{ $t('API 启用状态') }}</div>
               <RxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
             </div>
@@ -621,8 +630,8 @@ async function onCopy(text: string) {
     font-size: 12px;
     font-weight: 500;
     line-height: 24px;
-
     border-bottom: 1px solid var(--colors-border-divider);
+    transition: all 0.3s ease-in-out;
   }
 
   &-content {
@@ -694,5 +703,9 @@ async function onCopy(text: string) {
       line-height: 20px;
     }
   }
+}
+
+.foucs {
+  background-color: var(--colors-background-bg-info);
 }
 </style>

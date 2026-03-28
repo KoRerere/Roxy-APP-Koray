@@ -1,7 +1,6 @@
+import { usePermission } from '/@/hooks/usePermission'
 
-import { useRoleStore } from '/@/stores/role'
-
-const { isViewer } = storeToRefs(useRoleStore())
+const { check } = usePermission()
 
 export function getOperation() {
   return [
@@ -11,7 +10,7 @@ export function getOperation() {
       tooltip: $t('恢复窗口'),
       icon: 'base/rx_ic_refresh',
       iconClass: 'text-gray-500',
-      power: !isViewer.value,
+      power: check('Profiles_restore'),
       quick: true,
       multiple: true,
       multipleProps: {
@@ -24,7 +23,7 @@ export function getOperation() {
       tooltip: $t('彻底删除'),
       icon: 'base/rx_ic_shredder',
       iconClass: 'text-red',
-      power: !isViewer.value,
+      power: check('Profiles_permanent_delete'),
       quick: true,
       multiple: true,
       multipleProps: {
@@ -40,30 +39,30 @@ export function getAdvancedSearch() {
       key: 'name',
       label: $t('窗口名称'),
       icon: 'base/rx_ic_browser',
-      syntax: 'name::'
+      syntax: 'name::',
     },
     {
       key: 'remark',
       label: $t('备注'),
       icon: 'base/rx_ic_doc_article',
-      syntax: 'note::'
+      syntax: 'note::',
     },
     {
       key: 'tag',
       label: $t('标签'),
       icon: 'base/rx_ic_tag',
-      syntax: 'tag::'
+      syntax: 'tag::',
     },
     {
       key: 'sortNum',
       label: ' ID',
       icon: 'base/rx_ic_id',
-      syntax: 'id::'
-    }
+      syntax: 'id::',
+    },
   ]
 }
 
 export default {
   getOperation,
-  getAdvancedSearch
+  getAdvancedSearch,
 }

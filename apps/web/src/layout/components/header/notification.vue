@@ -11,7 +11,7 @@ import type { UserGetNotifyListData } from '@roxy/backend-api'
 
 const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
-type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
+type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean, _icon?: string }
 
 interface Tab {
   value: string
@@ -25,8 +25,15 @@ const [showModal] = RxUseDialog()
 const { setCurrentWorkspace } = useWorkspaceStore()
 
 const ROXY_GIFTS_TYPE = ref(new Set(Object.values(RoxyGiftsType)))
+const SYS_ICON_MAP = {
+  success: 'status/success',
+  warning: 'status/warning',
+  gift: 'status/gift',
+  transfer: 'status/transfer',
+  speaker: 'status/speaker',
+} as const
 
-const pop = ref()
+const popRef = useTemplateRef<any>('pop')
 const tabs = ref<Tab[]>([
   {
     value: 'sys',
@@ -55,7 +62,7 @@ onBeforeMount(() => {
 
 function toggle(event: Event) {
   getMessageList()
-  const popIns = pop.value?.instance
+  const popIns = popRef.value.instance
   popIns.toggle(event)
   if (popIns.visible) {
     tabs.value.some((tab) => {
@@ -84,7 +91,10 @@ async function getMessageList(result?: UserGetNotifyListData) {
       acc.teamsRead += item.status!
     }
     else {
-      acc.sys.push(item)
+      acc.sys.push({
+        ...item,
+        _icon: SYS_ICON_MAP[item.notifyCategory as keyof typeof SYS_ICON_MAP],
+      })
       acc.sysRead += item.status!
     }
     return acc
@@ -255,12 +265,13 @@ function onHtmlClick(e: MouseEvent) {
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
                 <div v-for="item in tab.list" :key="item.id" class="flex gap-2.5 py-3 px-4 items-start" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
-                  <RxAvatar class="relative cursor-pointer aspect-square" :class="{ [message.badge]: !item.status }"
+                  <SvgIcon v-if="item._icon" class="w-5 h-5" :name="(item._icon as any)" />
+                  <RxAvatar v-else class="relative cursor-pointer aspect-square" :class="{ [message.badge]: !item.status }"
                             :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')" :name="item.userName?.slice(0, 2)" :color="item.avatarColor"
                             :size="24" :font-size="12"
                   />
                   <div class="flex-1 flex flex-col gap-1.5">
-                    <div :class="message.text" @click="onHtmlClick" v-html="item.notify" />
+                    <div :class="[tab.value, message.text]" @click="onHtmlClick" v-html="item.notify" />
                     <div class="flex justify-between items-center">
                       <div :class="message.time">
                         {{ item.createTime }}
@@ -325,10 +336,11 @@ function onHtmlClick(e: MouseEvent) {
   background: var(--component-table-bg-selected);
   border-color: var(--component-table-border-selected);
 
-  // .text {
-  //   color: var(--colors-text-text-brand);
-  //   font-weight: 700;
-  // }
+  :global(.sys.text),
+  :global(.teams strong) {
+    color: var(--colors-text-text-brand);
+    font-weight: 700;
+  }
 }
 
 .text {

@@ -13,22 +13,22 @@ interface DictStore {
   'versions': Record<string, string>
   /** 最新的字典版本号 */
   'latestVersion': number
-  /** IP 检测域名列表 */
+  /** IPV4 检测域名列表 */
   'ip-check-domains': string[]
-  /** 检测渠道字典列表 */
+  /** IPV4 检测渠道字典列表 */
   'checkChannel': Record<string, string>
-  /** ip2location keys */
-  'ip2location-key': string[]
-  /** ipv6 检测 */
-  'ipv6Check': string[]
+  /** IPV6 检测域名列表 */
+  'ipv6-check-domains': string[]
+  /** IPV6 检测渠道字典列表 */
+  'ipv6-query-channels': Record<string, string>
 }
 
 /** 主进程用到的字典，后续根据版本只更新这些字典 */
 const dictKeys = [
   'ip-check-domains',
   'checkChannel',
-  'ip2location-key',
-  'ipv6Check',
+  'ipv6-check-domains',
+  'ipv6-query-channels',
 ] as const
 
 export type DictKey = (typeof dictKeys)[number]
@@ -40,8 +40,8 @@ const _dictStore: DictStore = {
   'latestVersion': 0,
   'ip-check-domains': [],
   'checkChannel': {},
-  'ip2location-key': [],
-  'ipv6Check': [],
+  'ipv6-check-domains': [],
+  'ipv6-query-channels': {},
 }
 
 async function forceSaveDictCache() {
@@ -104,7 +104,7 @@ export async function getDictVersions() {
 /** 更新字典版本 */
 function updateDictVersions(remoteVersions: UserGetDictVersionListData['data']) {
   const versions = Object.entries(remoteVersions).reduce((result, [key, value]) => {
-    if (dictKeys.includes(key)) {
+    if (dictKeys.includes(key as DictKey)) {
       result[key] = value
     }
     return result
@@ -143,8 +143,8 @@ export async function updateDict(keys: DictKey[]) {
 
     for (const key of keys) {
       const items = dictMap[key] || []
-      if (key === 'checkChannel') {
-        dictStore.checkChannel = items.reduce((map, item) => {
+      if (key === 'checkChannel' || key === 'ipv6-query-channels') {
+        dictStore[key] = items.reduce((map, item) => {
           const hostname = new URL(item.value).hostname
           map[hostname] = item.label.toLowerCase()
           return map
@@ -152,9 +152,6 @@ export async function updateDict(keys: DictKey[]) {
       }
       else {
         dictStore[key] = items.map(n => n.value)
-        if (key === 'ipv6Check') {
-          store.ipv6CheckUrl = dictStore[key].at(0)
-        }
       }
     }
   }

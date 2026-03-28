@@ -24,6 +24,7 @@ export async function setupAppServer() {
   setupDashboardServer(app)
   // 静态资源配置：只禁用 html 缓存
   const staticOptions = {
+    dotfiles: 'allow' as const,
     setHeaders: (res: any, path: string) => {
       if (path.endsWith('.html')) {
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
@@ -61,7 +62,12 @@ export async function setupAppServer() {
 
         // 根据 store.isExternalWeb 选择正确的 index.html
         const webDir = store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
-        res.sendFile(join(webDir, 'index.html'))
+        res.sendFile(join(webDir, 'index.html'), { dotfiles: 'allow' }, (err) => {
+          if (err) {
+            console.error(`[App Server] Failed to serve index.html from ${webDir}:`, err)
+            res.status(500).send('Failed to load page')
+          }
+        })
       }
       else {
         next()

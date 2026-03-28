@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
+import { usePermission } from '/@/hooks/usePermission'
 import { debounce } from 'es-toolkit'
 import { Role, WorkspaceType } from '/@/enums'
 import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
-import { useToast } from 'primevue/usetoast'
-
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { usePermissionStore } from '/@/stores/permission'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
 import { emitter } from '/@/utils/eventBus'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
@@ -21,7 +22,9 @@ let hidePageLoadingTimeout: any
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
   const userStore = useUserStore()
-  const toast = useToast()
+  const permissionStore = usePermissionStore()
+  const { check } = usePermission()
+  const [_, onlyErrorToast] = useResponseToast()
 
   const currentWorkspace = ref<Workspace>()
   const workspaceList = ref<Workspace[]>([])
@@ -62,8 +65,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (currentRoute.name === 'project-item') {
       router.replace({ name: 'project-list' })
     }
-    // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role as Role) && !isPublic) {
+    // 如果当前路由有权限限制，且当前用户无权限，则跳转到首页
+    if (Array.isArray(currentRoute.meta?.permissions) && !check(currentRoute.meta?.permissions, currentRoute.meta?.permissionMode) && !isPublic) {
       router.replace({ name: 'home' })
     }
 
@@ -108,12 +111,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (result.code !== 0 || !result.data?.rows?.length) {
       userStore.clearUserInfo()
       router.push({ name: 'login' })
-      toast.add({
-        severity: 'error',
-        summary: $t('提示'),
-        detail: $t('获取工作空间列表失败，请重新登录'),
-        life: 5000,
-      })
+      onlyErrorToast(-1, $t('获取工作空间列表失败，请重新登录'), { summary: $t('提示'), life: 5000 })
     }
 
     const list = [
@@ -131,7 +129,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     return result
   }
 
-  function updateCurrentWorkspace(data: UserGetWorkspaceListListData['data']) {
+  async function updateCurrentWorkspace(data: UserGetWorkspaceListListData['data']) {
     currentWorkspace.value = data.rows.find((item) => {
       if (currentWorkspace.value) {
         return item.id === currentWorkspace.value?.id
@@ -140,7 +138,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     })
 
     if (!currentWorkspace.value) {
-      currentWorkspace.value = data.rows.find(item => item.workspaceDefault)
+      const workspaceDefault = data.rows.find(item => item.workspaceDefault)
+      await getPermissionByWorkspace(workspaceDefault!.id)
+      currentWorkspace.value = workspaceDefault
     }
   }
 
@@ -157,6 +157,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     globalThis.electronAPI.send('user:setSharedWorkspaceList', [])
   }
 
+  async function getPermissionByWorkspace(workspaceId: number) {
+    const { code, data, msg } = await API.team.userGetTeamPermissionsList({ workspaceId: workspaceId.toString() })
+    onlyErrorToast(code, msg)
+    if (code !== 0)
+      return
+
+    permissionStore.setPermissions(data.rows)
+  }
+
   /** 登录成功后，设置当前工作区 */
   async function setCurrentWorkspace(workspaceId: number) {
     isMainWindow && showPageLoading()
@@ -165,12 +174,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       await fetchWorkspaceList()
     }
     const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
-    if (targetWorkspace) {
-      currentWorkspace.value = targetWorkspace
-    }
-    else {
-      currentWorkspace.value = defaultWorkspace.value
-    }
+
+    const _currentWorkspace = targetWorkspace || defaultWorkspace.value
+    await getPermissionByWorkspace(_currentWorkspace!.id)
+
+    currentWorkspace.value = _currentWorkspace
+
     if (isMainWindow) {
       workspaceChangeChannel.postMessage({
         workspaceId,
@@ -199,6 +208,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     getWorkspaceList,
     setCurrentWorkspace,
     fetchWorkspaceList,
+    getPermissionByWorkspace,
   }
 }, {
   persist: false,

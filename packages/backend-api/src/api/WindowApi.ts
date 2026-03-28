@@ -179,6 +179,152 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
+   * @description 新版本回收站列表也用此接口，is_delete传1即可
+   *
+   * @tags Window
+   * @name UserGetWindowInfoListList
+   * @summary 窗口列表
+   * @request GET:/user_get_window_info_list
+   * @response `200` `UserGetWindowInfoListListData`
+   */
+  userGetWindowInfoListList = (
+    query: UserGetWindowInfoListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetWindowInfoListListData, any>({
+      path: `/user_get_window_info_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowStatusInfoCreate
+   * @summary 获取窗口状态信息
+   * @request POST:/user_get_window_status_info
+   * @response `200` `UserGetWindowStatusInfoCreateData`
+   */
+  userGetWindowStatusInfoCreate = (
+    data: UserGetWindowStatusInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetWindowStatusInfoCreateData, any>({
+      path: `/user_get_window_status_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserBatchWindowInfoV2Create
+   * @summary 批量创建窗口
+   * @request POST:/user_batch_window_info_v2
+   * @response `200` `UserBatchWindowInfoV2CreateData`
+   */
+  userBatchWindowInfoV2Create = (
+    data: UserBatchWindowInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchWindowInfoV2CreateData, any>({
+      path: `/user_batch_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserImportWindowInfoV2Create
+   * @summary 批量导入窗口
+   * @request POST:/user_import_window_info_v2
+   * @response `200` `UserImportWindowInfoV2CreateData`
+   */
+  userImportWindowInfoV2Create = (
+    data: UserImportWindowInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserImportWindowInfoV2CreateData, any>({
+      path: `/user_import_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAnalysisWindowInfoCreate
+   * @summary 解析窗口
+   * @request POST:/user_analysis_window_info
+   * @response `200` `UserAnalysisWindowInfoCreateData`
+   */
+  userAnalysisWindowInfoCreate = (
+    data: UserAnalysisWindowInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAnalysisWindowInfoCreateData, any>({
+      path: `/user_analysis_window_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowInfoBatchV2Create
+   * @summary 批量修改窗口
+   * @request POST:/user_mdf_window_info_batch_v2
+   * @response `200` `UserMdfWindowInfoBatchV2CreateData`
+   */
+  userMdfWindowInfoBatchV2Create = (
+    data: UserMdfWindowInfoBatchV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfWindowInfoBatchV2CreateData, any>({
+      path: `/user_mdf_window_info_batch_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowDataBatchCreate
+   * @summary 批量修改窗口数据（代理/平台/cookies）
+   * @request POST:/user_mdf_window_data_batch
+   * @response `200` `UserMdfWindowDataBatchCreateData`
+   */
+  userMdfWindowDataBatchCreate = (
+    data: UserMdfWindowDataBatchCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfWindowDataBatchCreateData, any>({
+      path: `/user_mdf_window_data_batch`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
    * No description
    *
    * @tags Window
@@ -276,6 +422,26 @@ export class WindowApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserGetUaWebglV2ListData, any>({
       path: `/user_get_ua_webgl_v2`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetBrowserVersionInfoList
+   * @summary 根据os和osVersion获取浏览器版本
+   * @request GET:/user_get_browserVersion_info
+   * @response `200` `UserGetBrowserVersionInfoListData`
+   */
+  userGetBrowserVersionInfoList = (
+    query: UserGetBrowserVersionInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetBrowserVersionInfoListData, any>({
+      path: `/user_get_browserVersion_info`,
       method: "GET",
       query: query,
       format: "json",
@@ -487,6 +653,27 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
+   * @name UserUpdateWindowFilterSortCreate
+   * @summary 修改窗口过滤器排序
+   * @request POST:/user_update_window_filter_sort
+   * @response `200` `UserUpdateWindowFilterSortCreateData`
+   */
+  userUpdateWindowFilterSortCreate = (
+    data: UserUpdateWindowFilterSortCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdateWindowFilterSortCreateData, any>({
+      path: `/user_update_window_filter_sort`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
    * @name UserSaveWindowTableSortOrderCreate
    * @summary 保存窗口表格排序规则
    * @request POST:/user_save_window_table_sort_order
@@ -524,27 +711,6 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserBatchWindowInfoV2Create
-   * @summary 批量创建窗口
-   * @request POST:/user_batch_window_info_v2
-   * @response `200` `UserBatchWindowInfoV2CreateData`
-   */
-  userBatchWindowInfoV2Create = (
-    data: UserBatchWindowInfoV2CreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserBatchWindowInfoV2CreateData, any>({
-      path: `/user_batch_window_info_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
    * @name UserGetWindowRowsSortList
    * @summary 获取窗口过滤器表格列排序
    * @request GET:/user_get_window_rows_sort
@@ -561,59 +727,17 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserImportWindowInfoV2Create
-   * @summary 批量导入窗口
-   * @request POST:/user_import_window_info_v2
-   * @response `200` `UserImportWindowInfoV2CreateData`
+   * @name UserSaveWindowRowsSortCreate
+   * @summary 保存窗口过滤器表格列排序
+   * @request POST:/user_save_window_rows_sort
+   * @response `200` `UserSaveWindowRowsSortCreateData`
    */
-  userImportWindowInfoV2Create = (
-    data: UserImportWindowInfoV2CreatePayload,
+  userSaveWindowRowsSortCreate = (
+    data: UserSaveWindowRowsSortCreatePayload,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserImportWindowInfoV2CreateData, any>({
-      path: `/user_import_window_info_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserUpdateWindowFilterSortCreate
-   * @summary 修改窗口过滤器排序
-   * @request POST:/user_update_window_filter_sort
-   * @response `200` `UserUpdateWindowFilterSortCreateData`
-   */
-  userUpdateWindowFilterSortCreate = (
-    data: UserUpdateWindowFilterSortCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserUpdateWindowFilterSortCreateData, any>({
-      path: `/user_update_window_filter_sort`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowInfoBatchV2Create
-   * @summary 批量修改窗口
-   * @request POST:/user_mdf_window_info_batch_v2
-   * @response `200` `UserMdfWindowInfoBatchV2CreateData`
-   */
-  userMdfWindowInfoBatchV2Create = (
-    data: UserMdfWindowInfoBatchV2CreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserMdfWindowInfoBatchV2CreateData, any>({
-      path: `/user_mdf_window_info_batch_v2`,
+    this.http.request<UserSaveWindowRowsSortCreateData, any>({
+      path: `/user_save_window_rows_sort`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -695,109 +819,6 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_delete_window_template_info`,
       method: "POST",
       body: data,
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description 新版本回收站列表也用此接口，is_delete传1即可
-   *
-   * @tags Window
-   * @name UserGetWindowInfoListList
-   * @summary 窗口列表
-   * @request GET:/user_get_window_info_list
-   * @response `200` `UserGetWindowInfoListListData`
-   */
-  userGetWindowInfoListList = (
-    query: UserGetWindowInfoListListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetWindowInfoListListData, any>({
-      path: `/user_get_window_info_list`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetWindowStatusInfoCreate
-   * @summary 获取窗口状态信息
-   * @request POST:/user_get_window_status_info
-   * @response `200` `UserGetWindowStatusInfoCreateData`
-   */
-  userGetWindowStatusInfoCreate = (
-    data: UserGetWindowStatusInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetWindowStatusInfoCreateData, any>({
-      path: `/user_get_window_status_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserAnalysisWindowInfoCreate
-   * @summary 解析窗口
-   * @request POST:/user_analysis_window_info
-   * @response `200` `UserAnalysisWindowInfoCreateData`
-   */
-  userAnalysisWindowInfoCreate = (
-    data: UserAnalysisWindowInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserAnalysisWindowInfoCreateData, any>({
-      path: `/user_analysis_window_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetBrowserVersionInfoList
-   * @summary 根据os和osVersion获取浏览器版本
-   * @request GET:/user_get_browserVersion_info
-   * @response `200` `UserGetBrowserVersionInfoListData`
-   */
-  userGetBrowserVersionInfoList = (
-    query: UserGetBrowserVersionInfoListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetBrowserVersionInfoListData, any>({
-      path: `/user_get_browserVersion_info`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserSaveWindowRowsSortCreate
-   * @summary 保存窗口过滤器表格列排序
-   * @request POST:/user_save_window_rows_sort
-   * @response `200` `UserSaveWindowRowsSortCreateData`
-   */
-  userSaveWindowRowsSortCreate = (
-    data: UserSaveWindowRowsSortCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserSaveWindowRowsSortCreateData, any>({
-      path: `/user_save_window_rows_sort`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -939,6 +960,27 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
+   * @name UserClearTransferWorkspaceCreate
+   * @summary 清除转移空间历史记录
+   * @request POST:/user_clear_transfer_workspace
+   * @response `200` `UserClearTransferWorkspaceCreateData`
+   */
+  userClearTransferWorkspaceCreate = (
+    data: UserClearTransferWorkspaceCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserClearTransferWorkspaceCreateData, any>({
+      path: `/user_clear_transfer_workspace`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
    * @name UserAgreeTransferWindowCreate
    * @summary 同意转移窗口
    * @request POST:/user_agree_transfer_window
@@ -971,48 +1013,6 @@ export class WindowApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserRejectTransferWindowCreateData, any>({
       path: `/user_reject_transfer_window`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserClearTransferWorkspaceCreate
-   * @summary 清除转移空间历史记录
-   * @request POST:/user_clear_transfer_workspace
-   * @response `200` `UserClearTransferWorkspaceCreateData`
-   */
-  userClearTransferWorkspaceCreate = (
-    data: UserClearTransferWorkspaceCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserClearTransferWorkspaceCreateData, any>({
-      path: `/user_clear_transfer_workspace`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowDataBatchCreate
-   * @summary 批量修改窗口数据（代理/平台/cookies）
-   * @request POST:/user_mdf_window_data_batch
-   * @response `200` `UserMdfWindowDataBatchCreateData`
-   */
-  userMdfWindowDataBatchCreate = (
-    data: UserMdfWindowDataBatchCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserMdfWindowDataBatchCreateData, any>({
-      path: `/user_mdf_window_data_batch`,
       method: "POST",
       body: data,
       type: ContentType.Json,

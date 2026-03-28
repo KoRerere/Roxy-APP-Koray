@@ -1,9 +1,6 @@
 import type { ContextData } from '../../database/context'
 import type { BaseMessage, SystemMessage } from '@langchain/core/messages'
 import type { StructuredTool } from '@langchain/core/tools'
-import { AIMessageChunk, HumanMessage, ToolMessage } from '@langchain/core/messages'
-import { v4 as uuidv4 } from 'uuid'
-import { ContextManager } from '../../database/context'
 import { allSkills } from '../skills'
 
 /**

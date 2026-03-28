@@ -12,7 +12,7 @@ import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import type { ProxyCheckStatus } from '/@/enums'
-import { ProxyType } from '/@/enums'
+import { ProxyReqType, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
 import type { ProxyItem } from './operation'
@@ -91,17 +91,20 @@ function onRefreshTable(tabParams = {}, force = false) {
 }
 
 async function getTableList(params: any) {
-  const { code, msg, data: { rows, ...rest } } = await tableRequest(params)
+  const result = await tableRequest(params)
 
-  const _rows = rows.map((item) => {
-    if (!isBatch)
-      return item
-    const target = selection.value?.find((it: any) => item.id === it.id)
-    return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
-  })
+  if (result.code === 0) {
+    const _rows = result.data.rows.map((item) => {
+      if (!isBatch)
+        return item
+      const target = selection.value?.find((it: any) => item.id === it.id)
+      return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
+    })
+    dataList.value = _rows
+    Reflect.set(result.data, 'rows', _rows)
+  }
 
-  dataList.value = _rows
-  return { code, msg, data: { rows: _rows, ...rest } }
+  return result
 }
 
 function operationHandler(operate: any, data: ProxyItem) {
@@ -140,7 +143,10 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
 
   const results = await concurrentControl(tasks, 5)
   batchTestShowToast(results)
-  API.proxy.userMdfProxyModuleCreate(results)
+  API.proxy.userMdfProxyModuleCreate({
+    proxyList: results,
+    requestType: ProxyReqType.SpeedTest,
+  })
 }
 
 function saveSelected() {

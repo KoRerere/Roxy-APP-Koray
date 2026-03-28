@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import Announcement from '/@/layout/components/header/announcement.vue'
 // import Firework from '/@/views/campaign/spring-festival/firework.vue'
+import RolesOverview from '/@/views/team/components/roles-overview.vue'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
@@ -45,6 +46,7 @@ watchEffect(() => {
     <main class="flex-1 flex flex-col overflow-hidden">
       <RxLayoutHeader />
       <Announcement />
+      <RolesOverview />
       <div class="flex-1 mr-4 mb-4 rounded overflow-hidden rx-main-content">
         <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
       </div>

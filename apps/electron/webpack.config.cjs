@@ -1,20 +1,7 @@
 const { sentryWebpackPlugin } = require('@sentry/webpack-plugin')
-const { writeFile } = require('node:fs/promises')
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
-
-// 自定义插件：在构建后生成 agent.js 文件
-class AfterEmitPlugin {
-  apply(compiler) {
-    compiler.hooks.afterEmit.tapPromise('AfterEmitPlugin', async (compilation) => {
-      if (compilation.errors?.length)
-        return
-      await writeFile(path.resolve(__dirname, 'dist/starter.js'), `process.on('uncaughtException', err => process.parentPort.postMessage(err));
-process.on('unhandledRejection', err => process.parentPort.postMessage(err)); require("bytenode"); require(process.env.BYTENODE_SCRIPT);`, 'utf8')
-    })
-  }
-}
 
 console.log('process.env.NODE_ENV', process.env.NODE_ENV)
 
@@ -138,6 +125,5 @@ module.exports = {
     //     controlFlowFlattening: true
     //   }
     // })
-    new AfterEmitPlugin(),
   ],
 }

@@ -2,23 +2,22 @@
 import Profiles from '/@/views/browser/list/profiles/index.vue'
 import MemberDropdownList from '/@/views/projects/components/member-dropdown-list.vue'
 import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums'
 import { useProjectStore } from '/@/stores/project'
-import { useRoleStore } from '/@/stores/role'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import { API } from '/@/api'
-import { useTeam } from '/@/views/team/hooks'
+import { useTeamStore } from '/@/stores/team'
+import { usePermission } from '/@/hooks/usePermission'
 import { useDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 
-const role = useRoleStore()
 const route = useRoute()
 const router = useRouter()
 const [showModal] = useDialog()
 const [projectModfiyDialog] = useProjectActions()
 const { getProjects } = useProjectStore()
-const { getTeamMembers } = useTeam()
+const { getTeamMembers } = useTeamStore()
+const { check } = usePermission()
 
 const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))
@@ -96,14 +95,14 @@ function editProject() {
         </div>
       </template>
       <template #title-after>
-        <RxSvgIcon name="base/rx_ic_play" :size="8" />
+        <SvgIcon name="base/rx_ic_play" :size="8" />
         <div class="subproject">
           {{ projectName }}
         </div>
-        <RxSvgIcon v-if="role.isOwner || role.isManager" class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-text-text-secondary)" @click="editProject" />
+        <SvgIcon v-if="check('Projects_edit')" class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-text-text-secondary)" @click="editProject" />
       </template>
-      <MemberDropdownList :members="members" />
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
+      <MemberDropdownList v-if="check('Team_Member_view_page')" :members="members" />
+      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
     </ViewsHeader>
     <div class="flex-1 overflow-hidden">
       <Profiles ref="project" is-project-profile />

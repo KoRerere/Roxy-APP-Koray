@@ -9,20 +9,19 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { concurrentControl, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
-import type { ProxyItem } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
+import { ProxyReqType } from '/@/enums'
 import type { ProxyCheckStatus } from '/@/enums'
+import type { ProxyItem } from './operation'
 
 const router = useRouter()
-const role = useRoleStore()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -31,6 +30,7 @@ const { mixpanelTrack } = useUserStore()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
+const { check } = usePermission()
 
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('listtable')
@@ -86,7 +86,9 @@ function editProxy(data: ProxyItem) {
         data,
         showRemark: true,
         onConfirm: async (formData: any) => {
-          const { code, msg } = await onEdit([formData])
+          const { code, msg } = await onEdit({
+            proxyList: [formData],
+          })
           onlyErrorToast(code, msg)
           tableRef.value?.refresh()
           drawerInstance.hideDrawer()
@@ -137,7 +139,10 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
 
   const results = await concurrentControl(tasks, 5)
   batchTestShowToast(results)
-  await onEdit(results)
+  await onEdit({
+    proxyList: results,
+    requestType: ProxyReqType.SpeedTest,
+  })
 }
 
 async function testAllProxy() {
@@ -152,9 +157,6 @@ async function testAllProxy() {
 }
 
 function onRemark(data: any) {
-  if (role.isViewer || role.isEditor)
-    return
-
   showSimpleDialog({
     title: $t('为所选代理 IP 添加备注'),
     inputs: [
@@ -175,7 +177,10 @@ function onRemark(data: any) {
 }
 
 async function addRemark(remark: string, data: any) {
-  const { code, msg } = await onEdit([{ ...data, remark }])
+  const { code, msg } = await onEdit({
+    proxyList: [{ ...data, remark }],
+    requestType: ProxyReqType.EditRemark,
+  })
   onlyErrorToast(code, msg)
   tableRef.value?.refresh()
 }
@@ -249,8 +254,8 @@ function onRefreshTable(tabParams = {}, force = false) {
             <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
             <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             <div class="flex items-center gap-1.5">
-              <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
-              <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+              <RxButton v-if="check('Proxy_List_add')" size="xxs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
+              <RxButton v-if="check('Proxy_List_speed_test')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
               <Divider layout="vertical" class="!ml-0 !mr-1.5 h-4" />
             </div>
           </div>
@@ -259,7 +264,7 @@ function onRefreshTable(tabParams = {}, force = false) {
           <CustomNewEmpty icon="base/rx_ic_internet" img="empty-proxies.png" :title="$t('暂无代理 IP')" :desc="$t('在此添加代理 IP 信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
+                <RxButton v-if="check('Proxy_List_add')" outlined severity="secondary" size="xs" icon="base/rx_ic_add_proxy" :label="$t('添加代理 IP')" @click.stop="createProxy" />
                 <TutorialVideo size="xs" video-type="proxy_management" :autoplay="false" />
               </div>
             </template>

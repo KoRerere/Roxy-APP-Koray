@@ -1,0 +1,38 @@
+{
+  "name": "@roxy/playwright",
+  "type": "commonjs",
+  "version": "0.0.5",
+  "description": "Playwright Tools for MCP",
+  "author": {
+    "name": "Roxybrowser"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://playwright.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roxybrowserlabs/roxybrowser-playwright-mcp"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "bundle": "pnpx rimraf ./dist && webpack --config webpack.config.cjs",
+    "build": "vite build && pnpm bundle"
+  },
+  "dependencies": {
+    "@roxybrowser/playwright-mcp": "0.0.6-beta.13"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:",
+    "webpack": "catalog:",
+    "webpack-cli": "catalog:"
+  }
+}

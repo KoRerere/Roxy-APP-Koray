@@ -1,3 +1,8 @@
+/**
+ * 废弃打包成字节码的形式
+ * @deprecated
+ */
+
 import bytenode from 'bytenode'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

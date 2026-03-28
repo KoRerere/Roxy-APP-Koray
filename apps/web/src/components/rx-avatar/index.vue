@@ -15,9 +15,14 @@ interface Props extends Avatar {
   size?: number
   fontSize?: number
   radius?: string
+  gap?: number
 }
 
-const { list, max, size = 32, fontSize = 16, radius = '50%', ...avatar } = defineProps<Props>()
+const { list, max, size = 32, fontSize = 16, gap = -4, radius = '50%', ...avatar } = defineProps<Props>()
+
+const _gap = computed(() => {
+  return CSS.px(gap as number).toString()
+})
 
 const avatars = computed(() => {
   const _list = list || [avatar]
@@ -78,7 +83,7 @@ const _style = computed(() => {
 }
 
 .image + .image {
-  margin-left: -4px;
+  margin-left: v-bind(_gap);
 }
 
 .text {

@@ -16,6 +16,7 @@ export type StreamEventType
     | 'done'
     | 'interrupt'
     | 'content'
+    | 'todo'
 
 export interface StreamEvent {
   type: StreamEventType
@@ -55,7 +56,10 @@ class StreamAdapter {
   /**
    * Create planning thinking event (流式)
    */
-  thinking(text: string, thinkingId: string): string {
+  thinking(text: string, thinkingId: string, taskId?: string): string {
+    if (taskId) {
+      return this.workerThinking(taskId, text, thinkingId)
+    }
     return this.formatSSE({
       type: 'thinking',
       data: { text, thinkingId },
@@ -68,7 +72,10 @@ class StreamAdapter {
    * @param text
    * @returns
    */
-  content(text: string, contentId: string): string {
+  content(text: string, contentId: string, taskId?: string): string {
+    if (taskId) {
+      return this.workerContent(taskId, text, contentId)
+    }
     return this.formatSSE({
       type: 'content',
       data: { text, contentId },
@@ -195,6 +202,14 @@ class StreamAdapter {
   tokenUsage(data: { current: any, delta: any }): string {
     return this.formatSSE({
       type: 'token_usage',
+      data,
+      timestamp: Date.now(),
+    })
+  }
+
+  todo(data: any[]): string {
+    return this.formatSSE({
+      type: 'todo',
       data,
       timestamp: Date.now(),
     })

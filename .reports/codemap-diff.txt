@@ -1,138 +1,46 @@
 # Codemap Update Report
 
-Generated: 2026-03-09 (Update Check)
+Generated: 2026-03-26
 
 ## Summary
 
-Codemaps are current and up-to-date. Recent changes since last generation are minimal and already reflected in existing documentation.
+Codemaps updated. Key changes since 2026-03-09: new permission system, route restructure,
+new MCP wrapper packages.
 
-## Recent Changes (4 commits since codemap generation)
+## Changes Since Last Scan
+
+### New Files
+- apps/web/src/api/message/checkPermissionVersion.ts — permission version sync
+- apps/web/src/stores/permission.ts — RBAC permission store
 
 ### Modified Files
-- `apps/electron/src/modules/browser/browser-manager/afterLaunchTask.ts`
-  - Cookie robot auto-close logic
-  - Type fixes
-  - Already documented in backend.md
+- apps/web/src/stores/workspace.ts — added getPermissionByWorkspace()
+- apps/web/src/stores/user.ts — payment info additions
+- apps/web/src/router/menu.ts — route group restructure
+- apps/electron/src/modules/openapi/routes/account.ts
+- apps/electron/src/modules/openapi/routes/proxy.ts
 
-- `apps/web/src/views/browser/list/profiles/components/cookie-robot.vue`
-  - Cookie robot UI enhancements
-  - Frontend component changes
+### New Packages
+- packages/roxy-playwright/ — Playwright MCP wrapper (replaces roxybrowser-playwright-mcp)
+- packages/roxy-openapi/ — OpenAPI MCP wrapper (replaces roxybrowser-mcp-server)
+- packages/roxy-skills/ — Skills documentation (markdown-based)
+- packages/orchestrator/ — Pre-built compiled orchestrator (dist only)
 
-### Change Impact
-- **Diff Percentage**: ~3% (minor implementation changes only)
-- **Architectural Changes**: None
-- **New Modules**: None
-- **New Dependencies**: None
+## Architecture Changes
+- Permission system: normalized allow/deny rules, usePermission() composable, route-level meta.permissions
+- Route structure reorganized into groups: /browser, /projects, /resource, /automation, /workspace
+- Additional stores: role.ts, team.ts, project.ts, lock.ts, network.ts
+- MCP packages migrating to roxy-playwright/roxy-openapi wrappers
 
-## Current Codemap Status
+## Diff Percentage: ~15% (moderate changes, updated in place)
 
-### architecture.md (~900 tokens)
-✓ Up-to-date
-- System diagram accurate
-- Service boundaries documented
-- Data flow current
+## Codemap Status
 
-### backend.md (~850 tokens)
-✓ Up-to-date
-- afterLaunchTask.ts documented
-- Browser management flow accurate
-- IPC patterns current
-
-### frontend.md (~900 tokens)
-✓ Up-to-date
-- Cookie management components documented
-- Page tree current
-- State management accurate
-
-### data.md (~700 tokens)
-✓ Up-to-date
-- Cookie storage documented
-- Profile structure current
-- Sync flow accurate
-
-### dependencies.md (~800 tokens)
-✓ Up-to-date
-- All external services documented
-- MCP integration current
-- Third-party libraries accurate
-
-## Project Structure Verification
-
-### Apps (4)
-✓ electron (roxybrowserdev)
-✓ web (Vue 3 renderer)
-✓ preload (IPC bridge)
-✓ tauri (experimental)
-
-### Packages (12)
-✓ roxy-agent
-✓ roxybrowser-playwright-mcp
-✓ roxybrowser-mcp-server
-✓ backend-api
-✓ roxy-shared
-✓ diskspace-native
-✓ puppeteer-google-translate
-✓ language-localization
-✓ vite-plugins
-✓ webpack-plugins
-✓ gen-primevue-preset
-✓ node-typesafe-worker-messages
-
-## Module Coverage
-
-### Documented Core Modules
-- app/ (main window, tray, auto-start)
-- browser/ (Puppeteer management)
-- ipc/ (IPC handlers)
-- appServer/ (internal web server)
-- mcp/ (MCP integration)
-- roxynet/ (proxy service)
-- sync-control/ (profile sync)
-- updater/ (auto-update)
-
-### Utility Modules (not explicitly listed - by design)
-- dict/ (dictionary/translation)
-- extension/ (browser extensions)
-- fileOperations/ (file utilities)
-- log/ (logging - documented in data.md)
-- openapi/ (OpenAPI integration)
-- shortcut-manager/ (keyboard shortcuts)
-- store/ (config storage - documented in data.md)
-
-## Token Efficiency
-
-- Total estimated tokens: ~4,150
-- Average per codemap: ~830 tokens
-- All codemaps under 1000 token target ✓
+- architecture.md: updated (new packages list)
+- backend.md: timestamp updated (no structural changes)
+- frontend.md: updated (new routes, stores, permission system, API)
+- data.md: timestamp updated (no structural changes)
+- dependencies.md: updated (new MCP wrapper packages)
 
 ## Staleness Check
-
-- architecture.md: 0 days old ✓
-- backend.md: 0 days old ✓
-- frontend.md: 0 days old ✓
-- data.md: 0 days old ✓
-- dependencies.md: 0 days old ✓
-
-All codemaps are fresh (< 1 day old).
-
-## Recommendations
-
-✓ No updates needed at this time
-✓ Codemaps accurately reflect current architecture
-✓ Recent changes are implementation details, not architectural
-
-## Next Update Trigger
-
-Update codemaps when:
-- New apps or packages added to monorepo
-- Major architectural refactoring (e.g., new IPC patterns)
-- New external service integrations
-- Significant module additions or removals
-- After 30+ days without update (staleness check)
-
-## Notes
-
-- Cookie robot feature is an enhancement to existing browser management
-- afterLaunchTask module was already documented in previous generation
-- No new dependencies or external services added
-- Monorepo structure remains stable (4 apps + 12 packages)
+- All codemaps: 0 days old ✓

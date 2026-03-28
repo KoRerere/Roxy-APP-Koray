@@ -7,7 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
 import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { useTeam } from '/@/views/team/hooks'
+import { useTeamStore } from '/@/stores/team'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
 
@@ -17,7 +17,7 @@ const router = useRouter()
 const styles = useCssModule()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
-const { getTeamMembers } = useTeam()
+const { members } = storeToRefs(useTeamStore())
 
 const columns = ref([
   {
@@ -60,7 +60,6 @@ function tableRequest(params: any) {
 }
 
 async function tableFilters() {
-  const { data } = await getTeamMembers()
   const days = LogRetentionDays[userPayInfo.value?.subLevel as SubLevelEnum]
 
   return [
@@ -69,7 +68,7 @@ async function tableFilters() {
       name: 'userNameIds',
       value: [],
       placeholder: $t('全部成员'),
-      options: data.rows.map(user => ({ label: user.userName, value: user.user_id })),
+      options: members.value.map(user => ({ label: user.userName, value: user.user_id })),
     },
     {
       type: 'multiple',

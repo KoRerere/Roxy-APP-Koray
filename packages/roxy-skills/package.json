@@ -1,0 +1,10 @@
+{
+  "name": "roxy-skills",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1"
+  }
+}

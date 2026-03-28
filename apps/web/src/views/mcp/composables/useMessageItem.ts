@@ -1,19 +1,19 @@
-import type { MessageBlock, PlanningState, ThinkingBlock, ToolCallStatus, WorkerThinking } from '../types'
+import type { MessageEntryView, PlanningState, ToolCallStatus } from '../types'
+import type { MessageEntry } from '../types'
 import type { SvgNames } from '/@/components/rx-icon'
 
 /**
  * 消息项组件共享逻辑
  */
 export function useMessageItem() {
-  // 记录已展开的 thinking blocks
   const expandedThinkingMap = ref<Record<string, boolean>>({})
 
-  function toggleThinkingExpand(thinkingId: string) {
-    expandedThinkingMap.value[thinkingId] = !expandedThinkingMap.value[thinkingId]
+  function toggleThinkingExpand(id: string) {
+    expandedThinkingMap.value[id] = !expandedThinkingMap.value[id]
   }
 
-  function isThinkingExpanded(thinkingId: string): boolean {
-    return !!expandedThinkingMap.value[thinkingId]
+  function isThinkingExpanded(id: string): boolean {
+    return !!expandedThinkingMap.value[id]
   }
 
   return {
@@ -35,10 +35,10 @@ export function formatDuration(startTimestamp?: number, endTimestamp?: number): 
 }
 
 /**
- * 格式化 ThinkingBlock 的持续时间
+ * 格式化消息条目的持续时间（使用 start/end 字段）
  */
-export function formatThinkingDuration(block: ThinkingBlock | WorkerThinking): string {
-  return formatDuration(block.startTimestamp, block.endTimestamp)
+export function formatThinkingDuration(block: MessageEntry): string {
+  return formatDuration(block.start, block.end)
 }
 
 /**
@@ -49,17 +49,10 @@ export function formatPlanningDuration(state: PlanningState): string {
 }
 
 /**
- * 获取消息块的唯一键
+ * 获取消息条目的唯一键
  */
-export function getBlockKey(block: MessageBlock): string {
-  switch (block.type) {
-    case 'thinking':
-      return `thinking:${block.thinkingId}`
-    case 'content':
-      return `content:${block.contentId}`
-    case 'tool_call':
-      return `tool_call:${block.toolId}`
-  }
+export function getBlockKey(block: MessageEntryView): string {
+  return `${block.type}:${block.id}`
 }
 
 /**
@@ -74,6 +67,6 @@ const STATUS_ICON_CONFIG: Record<ToolCallStatus, { class?: string, name: SvgName
 /**
  * 获取工具状态图标属性
  */
-export function getStatusIconProps(status: ToolCallStatus) {
-  return STATUS_ICON_CONFIG[status]
+export function getStatusIconProps(status: ToolCallStatus | string | undefined) {
+  return STATUS_ICON_CONFIG[(status as ToolCallStatus) ?? 'pending'] ?? STATUS_ICON_CONFIG.pending
 }

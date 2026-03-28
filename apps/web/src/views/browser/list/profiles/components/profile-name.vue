@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { getDefaultWindowName } from '/@/views/browser/create/utils'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { isLikeFunction } from '/@/utils'
+import { getDefaultWindowName } from '/@/views/browser/create/utils'
 
 interface Props {
   workspaceName?: string
   data: Record<string, any>
   openMessage?: Record<string, any>
-  showSort?: boolean,
+  showSort?: boolean
   disabled?: boolean
   readonly?: boolean
   filterKeys?: string[]
@@ -17,7 +17,7 @@ interface Props {
 const {
   data,
   disabled = false,
-  readonly = false
+  readonly = false,
 } = defineProps<Props>()
 
 const emits = defineEmits(['refresh'])
@@ -25,7 +25,7 @@ const emits = defineEmits(['refresh'])
 const defaultWindowName = getDefaultWindowName()
 const windowName = ref(data.windowName)
 
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 async function updateProfile(params: any, options?: Record<string, any>) {
   const { isRefresh, fallback, success } = { isRefresh: false, success: () => { }, fallback: () => { }, ...options }
@@ -36,7 +36,8 @@ async function updateProfile(params: any, options?: Record<string, any>) {
     if (isRefresh) {
       emits('refresh')
     }
-  } else {
+  }
+  else {
     isLikeFunction(fallback) && fallback()
   }
 }
@@ -45,14 +46,15 @@ function saveWindowName(closeCallback: () => void) {
   const name = windowName.value.trim()
   const oldName = data.windowName
   if (name !== oldName) {
-    data.windowName = name
+    Reflect.set(data, 'windowName', name)
     updateProfile({ id: data.id, windowName: name }, {
       fallback: () => {
         windowName.value = oldName
-        data.windowName = oldName
-      }
+        Reflect.set(data, 'windowName', oldName)
+      },
     })
-  } else {
+  }
+  else {
     windowName.value = data.windowName
   }
   closeCallback()
@@ -63,7 +65,8 @@ function handleFocusWindowName() {
 }
 
 function handleClickInplace(e: MouseEvent) {
-  if (disabled || readonly) return
+  if (disabled || readonly)
+    return
   e.stopPropagation()
 }
 </script>
@@ -72,11 +75,14 @@ function handleClickInplace(e: MouseEvent) {
   <div>
     <Inplace v-focustrap :disabled="disabled || readonly" @click="handleClickInplace">
       <template #display>
-        <div class="profile-name-content">{{ windowName }}</div>
+        <div class="profile-name-content">
+          {{ windowName }}
+        </div>
       </template>
       <template #content="{ closeCallback }">
         <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
-          @keydown.enter="saveWindowName(closeCallback)" />
+                   @keydown.enter="saveWindowName(closeCallback)"
+        />
       </template>
     </Inplace>
   </div>

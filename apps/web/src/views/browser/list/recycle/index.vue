@@ -9,9 +9,10 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { getOperation, getAdvancedSearch } from './operation'
+import { getAdvancedSearch, getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
+import { ProfileReqType } from '/@/enums'
 
 const columns = [
   {
@@ -21,7 +22,7 @@ const columns = [
     style: {
       width: '0%',
       minWidth: '180px',
-    }
+    },
   },
   {
     title: $t('窗口名称'),
@@ -29,7 +30,7 @@ const columns = [
     style: {
       width: '10%',
       minWidth: '160px',
-    }
+    },
   },
   {
     title: $t('备注'),
@@ -46,7 +47,7 @@ const columns = [
     style: {
       width: '10%',
       minWidth: '95px',
-    }
+    },
   },
   {
     title: $t('删除记录'),
@@ -64,7 +65,7 @@ const columns = [
       width: '0%',
       minWidth: '100px',
       maxWidth: '100px',
-    }
+    },
   },
 ]
 
@@ -81,7 +82,7 @@ const tableRef = useTemplateRef('recycleTable')
 
 async function tableRequest(params: any) {
   // 1: 已删除
-  return API.window.userGetWindowInfoListList({ ...params, isDelete: 1 })
+  return API.window.userGetWindowInfoListList({ ...params, isDelete: 1, requestType: ProfileReqType.Recycle })
 }
 
 function operationHandler(operate: any, data: any) {
@@ -113,9 +114,10 @@ async function recoverHandler(datas: any) {
 
   const onConfirm = async (isRemind: boolean) => {
     const ids = datas.map((item: any) => item.id)
-    const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
+    const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false, requestType: ProfileReqType.Restore } as any)
     onlyErrorToast(code, msg)
-    if (code !== 0) return
+    if (code !== 0)
+      return
 
     tableRef.value?.refresh()
     if (isRemind) {
@@ -139,8 +141,8 @@ async function recoverHandler(datas: any) {
         }
         return <RestoreReminderDialog onConfirm={handleConfirm} />
       },
-      footer: undefined
-    }
+      footer: undefined,
+    },
   })
 }
 
@@ -174,9 +176,10 @@ async function deleteHandler(datas: any) {
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    :show-gridlines="false" :show-actions="false" :show-display="false">
+           :show-gridlines="false" :show-actions="false" :show-display="false"
+  >
     <template #filter-after>
-      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch"></AdvancedSearch>
+      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
     </template>
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
@@ -187,15 +190,21 @@ async function deleteHandler(datas: any) {
     <template #note="{ data }">
       <div class="inline-flex items-center gap-2">
         <RemarkIcon :value="data.windowRemark" disabled />
-        <div :title="data.windowRemark" class="min-w-30 whitespace-pre-wrap note-content">{{ data.windowRemark }}</div>
+        <div :title="data.windowRemark" class="min-w-30 whitespace-pre-wrap note-content">
+          {{ data.windowRemark }}
+        </div>
       </div>
     </template>
     <template #tags="{ data }">
       <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />
     </template>
     <template #log="{ data }">
-      <div class="delete-name">{{ data.email }}</div>
-      <div class="delete-time">{{ data.updateTime }}</div>
+      <div class="delete-name">
+        {{ data.email }}
+      </div>
+      <div class="delete-time">
+        {{ data.updateTime }}
+      </div>
     </template>
     <template #actions="{ data }">
       <Actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
@@ -205,7 +214,7 @@ async function deleteHandler(datas: any) {
 
 <style lang="scss" scoped>
 .delete-name {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -213,7 +222,7 @@ async function deleteHandler(datas: any) {
 
 .delete-time {
   margin-top: 4px;
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);

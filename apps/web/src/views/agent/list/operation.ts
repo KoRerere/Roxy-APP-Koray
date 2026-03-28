@@ -1,7 +1,6 @@
 import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { getDictMap } from '/@/utils'
 import { ProxyType } from '/@/enums/proxy'
 
@@ -10,16 +9,15 @@ export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
     [key: string]: boolean
   }
 }
+const { check } = usePermission()
 
 export function tableOperation(data?: ProxyItem) {
-  const role = useRoleStore()
-
   return [
     {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
-      power: role.isManager || role.isOwner,
+      power: check('Proxy_List_edit'),
       tooltip: $t('编辑'),
       quick: true,
     },
@@ -27,6 +25,7 @@ export function tableOperation(data?: ProxyItem) {
       name: 'test',
       label: $t('测试'),
       icon: 'base/rx_ic_speed_test',
+      power: check('Proxy_List_speed_test'),
       tooltip: $t('测试'),
       quick: true,
       multiple: true,
@@ -39,6 +38,7 @@ export function tableOperation(data?: ProxyItem) {
       name: 'refresh',
       label: $t('刷新代理 IP'),
       icon: 'base/rx_ic_refresh',
+      power: check('Proxy_List_refresh_proxy'),
       tooltip: $t('刷新代理 IP'),
       quick: true,
       disabled: !data?.refreshUrl,
@@ -48,17 +48,15 @@ export function tableOperation(data?: ProxyItem) {
       name: 'remark',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
-      power: role.isManager || role.isOwner,
     },
     {
       separator: true,
-      power: role.isManager || role.isOwner,
     },
     {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
-      power: role.isManager || role.isOwner,
+      power: check('Proxy_List_delete'),
       tooltip: $t('删除'),
       quick: true,
       multiple: true,

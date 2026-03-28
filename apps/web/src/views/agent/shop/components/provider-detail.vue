@@ -37,6 +37,7 @@ const { realTheme } = storeToRefs(useThemeStore())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
+const simpleLocaleStore = useSimpleLocale()
 
 const ONE_BUY_MAX = 1000
 const configs = ref<any[]>([])
@@ -244,7 +245,8 @@ async function initConfig() {
         optionDisabled: (opt: any) => opt.inventory <= 0,
       },
       render: ({ item }: any) => {
-        const quicks = item.props.options.filter((item: any) => item.inventory > 0).slice(0, 3)
+        const isCN = simpleLocaleStore.currentLocale === 'zh-CN'
+        const quicks = item.props.options.filter((item: any) => item.inventory > 0).slice(0, 4)
         return (
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-6">
@@ -269,7 +271,7 @@ async function initConfig() {
                     {
                       quicks.map((quick: any) => (
                         <RxButton
-                          class="!shadow-none"
+                          class="relative !shadow-none !overflow-visible"
                           severity="secondary"
                           onClick={() => {
                             item.value = quick
@@ -278,7 +280,16 @@ async function initConfig() {
                           }}
                         >
                           <RxSvgIcon name={quick.icon}></RxSvgIcon>
-                          <div>{quick.name}</div>
+                          <div>{isCN ? quick.name : quick.country_code?.toLocaleUpperCase()}</div>
+                          {quick.isNew
+                            ? (
+                                <div
+                                  class="pointer-events-none absolute top-0 right-0 z-10 flex -translate-y-2/3 translate-x-2/5 items-center justify-center rounded-full bg-[#f53838] px-[6px] pt-[1px] text-[10px] font-bold leading-normal whitespace-nowrap text-white"
+                                >
+                                  NEW
+                                </div>
+                              )
+                            : null}
                         </RxButton>
                       ))
                     }
@@ -355,6 +366,7 @@ async function getCountryAndDurationList(proxyProviderId: string) {
 
   return data.map(item => ({
     ...item,
+    isNew: item.isNew ?? item.country_code === 'fr',
     icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
     label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
     name: item.country_name,

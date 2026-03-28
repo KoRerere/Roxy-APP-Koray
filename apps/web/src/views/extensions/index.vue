@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
-
 import Hub from './hub/index.vue'
 import Install from './install/index.vue'
 
@@ -15,8 +13,7 @@ const tabs = ref([
     value: 'hub',
     slot: 'hub',
   },
-]
-)
+])
 
 const tabsValue = ref('installed')
 
@@ -49,7 +46,7 @@ function onSearch() {
 
 <template>
   <div class="flex flex-col h-full w-full extensions">
-    <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" head-tabs @update:value="onChange">
+    <RxTabs v-model:value="tabsValue" class="flex-1 overflow-hidden" :tabs="tabs" head-tabs @update:value="onChange">
       <template #installed>
         <Install ref="listref" v-model:needsync="syncHub" @search="onSearch" />
       </template>

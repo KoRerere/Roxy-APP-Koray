@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RxAlert } from '/@/components/rx-alert'
 import { format } from 'date-fns'
-import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -9,9 +8,7 @@ import { useProxy } from '/@/views/agent/hooks'
 import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 
-import type { UnwrapRowsType, UserGetAnntListListData } from '@roxy/backend-api'
-
-type AnntData = UnwrapRowsType<UserGetAnntListListData>
+import { useCommonStore } from '/@/stores/common'
 
 const router = useRouter()
 const roleStore = useRoleStore()
@@ -24,7 +21,7 @@ const { viewExpiresSoonProxy } = useProxy()
 const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
 const isShowProxyExpired = ref(true)
-const anntList = ref<AnntData>()
+const { anntList } = storeToRefs(useCommonStore())
 
 const subEndDate = computed(() => {
   if (userPayInfo.value?.subEndDate) {
@@ -40,17 +37,11 @@ watch(() => currentWorkspace.value?.id, () => {
   remainTime.value = 0
   clearInterval(timer)
   timer = setInterval(calcSubscriptionExpired, 10 * 1000)
-  getAnntList()
 }, { immediate: true })
 
 onBeforeUnmount(() => {
   clearInterval(timer)
 })
-
-async function getAnntList() {
-  const { data } = await API.base.userGetAnntListList()
-  anntList.value = data?.rows || []
-}
 
 /** 定时计算订阅到期时间，如果订阅到期时间小于 3 天，则显示订阅到期提醒  */
 function calcSubscriptionExpired() {

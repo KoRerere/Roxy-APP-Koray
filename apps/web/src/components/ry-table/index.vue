@@ -250,7 +250,7 @@ function _getParams() {
 
 async function _request() {
   if (props.skeleton) {
-    _dataList.value = Array.from({ length: 6 }, () => ({}))
+    _dataList.value = Array.from({ length: 6 }).fill({})
   }
   _loading.value = true
   await _getConditionPromise
@@ -277,12 +277,14 @@ const contextMenuSelected = ref()
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   if (!tableAttrs.contextMenu) {
+    contextMenuSelected.value = undefined
     return
   }
 
   const operation = _getOperation(event.data)
 
-  if (!operation?.length) {
+  if (operation.filter(item => item.visible !== false).length === 0) {
+    contextMenuSelected.value = undefined
     return
   }
 

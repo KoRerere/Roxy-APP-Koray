@@ -54,6 +54,8 @@ export interface MittEvents {
   asideMenuGuide?: void
   /** 更新项目列表 */
   updateProjectList?: void
+  /** 更新团队成员列表 */
+  updateTeamMemberList?: void
   /** 更新自动续费列表 */
   updateAutoRenewList?: void
   openSettings: {

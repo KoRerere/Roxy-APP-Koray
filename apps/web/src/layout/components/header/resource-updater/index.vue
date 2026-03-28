@@ -223,7 +223,7 @@ console.debug('clientUpdates', clientUpdates)
 
   <div class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
-      <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
+      <RxButton ref="btn" :icon="isDownloading ? 'base/rx_ic_updates_app-animated' : 'base/rx_ic_updates_app'" severity="secondary" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <RyPopover ref="popover" :class="popup.content">

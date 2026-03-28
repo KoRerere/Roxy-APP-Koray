@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { RxAlert } from '/@/components/rx-alert'
+// import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType, PluginSwitchType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 
 const [_, onlyErrorToast] = useResponseToast()
+const { check } = usePermission()
 
 type DataItem = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const switchValuePersonal = PluginSwitchType.personal.toString()
 const switchValueTeam = PluginSwitchType.team.toString()
-const role = useRoleStore()
 
 const dialogRef = inject<any>('dialogRef')
 const _props = ref()
@@ -108,7 +107,8 @@ onMounted(() => {
       </div>
       <div class="project-table mt-2.5 h-60">
         <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
-          :multiple-operation="false" selection-mode="multiple" size="small">
+                 :multiple-operation="false" selection-mode="multiple" size="small"
+        >
           <template #project="{ data }">
             <div class="flex items-center gap-2">
               <RxSvgIcon name="base/rx_ic_stack" color="var(--colors-icon-icon-secondary, #575D61)" />
@@ -117,7 +117,7 @@ onMounted(() => {
           </template>
         </RyTable>
       </div>
-      <div v-if="role.isOwner || role.isManager">
+      <div v-if="check('Plugin_Installed_modify_attribution')">
         <div class="line" />
         <div class="flex justify-between items-center">
           <span class="title">
@@ -183,7 +183,7 @@ onMounted(() => {
 
   &-version {
     grid-area: right-bottom;
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     font-weight: 500;
@@ -198,7 +198,7 @@ onMounted(() => {
 }
 
 .project-name {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -222,7 +222,7 @@ onMounted(() => {
 
 .description {
   margin-top: var(--spacing-sm, 4px);
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;

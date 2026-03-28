@@ -8,6 +8,7 @@ import { deepClone, isEmptyValue, strConcat } from '/@/utils'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
+import { usePermission } from '/@/hooks/usePermission'
 import { useTableContext } from '../hooks/useContext'
 import { useNetworkStore } from '/@/stores/network'
 import { API } from '/@/api'
@@ -22,7 +23,7 @@ const router = useRouter()
 const [showToast, onlyErrorToast] = useResponseToast()
 const drawerInstance = useDrawer()
 const { showSimpleDialog } = useSimpleDialog()
-
+const { check } = usePermission()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
 const { buyProxy } = useProxy()
@@ -84,6 +85,10 @@ async function buySuccessNext(orderInfo: any) {
 }
 
 function onEdit(item: any) {
+  if (!check('Profiles_edit_proxy_outside')) {
+    return
+  }
+
   if (item.isEncryptProxy) {
     showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
     return
@@ -228,9 +233,9 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
         </div>
       </div>
 
-      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
-      <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton v-if="isBatch || !proxyList?.length" class="guide3" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton v-if="check('Profiles_buy_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
+      <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
+      <RxButton v-if="(isBatch || !proxyList?.length) && check('Profiles_add_proxy_outside')" class="guide3" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
              :closable="false"
@@ -259,10 +264,10 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           </div>
         </div>
         <div class="mt-0.5 flex gap-2">
-          <SvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+          <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
                    color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
           />
-          <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
+          <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
         </div>
       </RxCard>
     </div>

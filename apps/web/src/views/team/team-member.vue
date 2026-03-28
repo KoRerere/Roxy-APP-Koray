@@ -1,35 +1,34 @@
 <script setup lang="tsx">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import BatchInviteModal from '/@/views/projects/components/batch-invite-modal.vue'
 import MemberInfo from '/@/views/team/components/member-info.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import RolesDetail from '/@/views/team/components/roles-detail.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
-
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { usePermission } from '/@/hooks/usePermission'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
-import { useUserStore } from '/@/stores/user'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useTeam } from '/@/views/team/hooks'
+import { useTeamStore } from '/@/stores/team'
 import { useDialog } from '/@/hooks/useDialog'
-import useColumns from '/@/hooks/useColumns'
+import { useColumns } from '/@/hooks/useColumns'
+import { useTeam } from '/@/views/team/hook'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
+import { emitter } from '/@/utils/eventBus'
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 
+const confirm = useConfirm()
 const roleLabelMap = getRoleLabelMap()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const [showModal] = useDialog()
-const confirm = useConfirm()
-const workspaceStore = useWorkspaceStore()
-const role = useRoleStore()
-const { userPayInfo } = storeToRefs(useUserStore())
-const { handleBusinessCode } = useHandleBusinessCode()
 const [_, onlyErrorToast] = useResponseToast()
-const { getTeamMembers } = useTeam()
+const { isOwner, isManager } = storeToRefs(useRoleStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { check } = usePermission()
+const { getTeamMembers } = useTeamStore()
+const { inviteMembers } = useTeam()
 
 const tableRef = useTemplateRef('team')
 
@@ -72,7 +71,7 @@ const { columns } = useColumns({
       slot: 'actions',
     },
   ],
-}, (role.isOwner || role.isManager) ? undefined : ['relatedProjects'])
+}, (isOwner.value || isManager.value) ? undefined : ['relatedProjects'])
 
 const filters = reactive({
   value: undefined,
@@ -104,8 +103,12 @@ const filters = reactive({
 })
 
 const members = ref()
-const allProjects = ref()
-const currentRole = computed(() => workspaceStore.currentWorkspace?.role ?? -1)
+
+onMounted(() => {
+  emitter.on('updateTeamMemberList', () => {
+    filters.onChange()
+  })
+})
 
 async function tableRequest(params: any) {
   const data = await getTeamMembers(params)
@@ -115,19 +118,30 @@ async function tableRequest(params: any) {
 
 function tableOperation(data: TableRow) {
   // 只能修改比自己权限低的成员
-  const disabled = currentRole.value <= data.role
+  const disabled = currentWorkspace.value!.role <= data.role
   return [
+    {
+      name: 'permission',
+      label: $t('修改权限'),
+      icon: 'base/rx_ic_permission',
+      disabled,
+      disabledTooltip: $t('权限不足'),
+      power: check('Team_Member_Permission'),
+      quick: true,
+      tooltip: $t('修改权限'),
+    },
     {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       disabled,
       disabledTooltip: $t('权限不足'),
-      power: !role.isViewer,
+      power: check('Team_Member_edit'),
       quick: true,
       tooltip: $t('编辑'),
     },
     {
+      power: check('Team_Member_edit'),
       separator: true,
     },
     {
@@ -136,7 +150,7 @@ function tableOperation(data: TableRow) {
       icon: 'base/rx_ic_bin_1',
       disabled,
       disabledTooltip: $t('权限不足'),
-      power: !role.isViewer,
+      power: check('Team_Member_delete'),
       quick: true,
       tooltip: $t('删除'),
     },
@@ -147,6 +161,9 @@ function operationHandler(operate: any, data: TableRow) {
   switch (operate.name) {
     case 'edit':
       editMember(data)
+      break
+    case 'permission':
+      editPermission(data)
       break
     case 'delete':
       deleteMember(data)
@@ -199,49 +216,26 @@ async function deleteMember(data: TableRow) {
   })
 }
 
-async function getAllProjects() {
-  if (allProjects.value)
-    return allProjects.value
-  const { code, data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-  if (code === 0) {
-    allProjects.value = data.rows
-  }
-  return allProjects.value
-}
-
-async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
-  const { maxMemberCount, useMemberCount } = userPayInfo.value
-  if (useMemberCount >= maxMemberCount) {
-    handleBusinessCode(BUSINESS_CODE.MEMBER_MAX_LIMIT)
-    return
-  }
-
-  const projects: any[] = await getAllProjects().then(res => res.map((item: any) => ({ ...item, label: item.projectName, value: item.project_id })))
-  const projectValues = [projects.find(item => item.projectDefault && !item.isTransfer)?.value || projects[0].value]
-
+async function editPermission(row: TableRow) {
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
-    pt: {
-      content: '!pa-0',
-    },
     slots: {
       container: ({ hideModal }) => (
-        <BatchInviteModal
-          v-model:currentMembers={members.value}
-          projects={projects}
-          projectValues={projectValues}
-          multiple={true}
-          inviteRole={role}
-          onClose={hideModal}
-          onBeforeClose={(refresh) => {
-            if (refresh) {
-              filters.onChange()
-            }
-          }}
-        />
+        <RolesDetail userId={row.userId} onClose={hideModal} />
       ),
+    },
+  })
+}
+
+async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
+  inviteMembers({
+    inviteRole: role,
+    onBeforeClose: (refresh) => {
+      if (refresh) {
+        filters.onChange()
+      }
     },
   })
 }
@@ -281,7 +275,7 @@ function onRefreshTable(params = {}) {
            :paginator="false" :show-actions-menu="false" :show-actions="false"
   >
     <template #display-before>
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
+      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
     </template>
     <template #filter-after>
       <div class="flex items-center w-full gap-3">
@@ -293,7 +287,7 @@ function onRefreshTable(params = {}) {
       <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex gap-3">
-            <RxButton v-if="currentRole > filters.value!" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
+            <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
                       @click.stop="handleShowInviteUserFormDialog(filters.value)"
             />
             <TutorialVideo video-type="team_management" :autoplay="false" />

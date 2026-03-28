@@ -24,14 +24,13 @@ function normalizeUsage(usage: any): Partial<TokenUsage> | null {
   if (!usage)
     return null
 
-  // TODO: 暂时没有见过有这种格式，先注释掉。
-  // if (usage.input_tokens !== undefined || usage.output_tokens !== undefined) {
-  //   return {
-  //     input_tokens: usage.input_tokens ?? 0,
-  //     output_tokens: usage.output_tokens ?? 0,
-  //     total_tokens: usage.total_tokens ?? (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
-  //   };
-  // }
+  if (usage.input_tokens !== undefined || usage.output_tokens !== undefined) {
+    return {
+      input_tokens: usage.input_tokens ?? 0,
+      output_tokens: usage.output_tokens ?? 0,
+      total_tokens: usage.total_tokens ?? (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
+    }
+  }
 
   // 处理 OpenAI/OpenRouter 格式 (prompt_tokens/completion_tokens)
   if (usage.promptTokens !== undefined || usage.completionTokens !== undefined) {
@@ -109,13 +108,23 @@ export class TokenUsageChange extends BaseCallbackHandler {
   }
 
   handleLLMEnd(output: any) {
-    if (!output?.llmOutput) {
+    if (!output?.llmOutput && !output.generations) {
       return
     }
 
-    console.log('handleLLMEnd', output)
+    const message = output.generations?.[0]?.[0]?.message
+    let rawUsage = null
+    if (message) {
+      rawUsage = message?.usage_metadata ?? message?.kwargs?.usage_metadata ?? message?.lc_kwargs?.usage_metadata
+    }
+    else {
+      rawUsage = output?.llmOutput?.tokenUsage
+    }
 
-    const rawUsage = output?.llmOutput?.tokenUsage
+    if (!rawUsage) {
+      console.log('no rawUsage', output)
+      return
+    }
 
     const normalizedUsage = normalizeUsage(rawUsage)
 

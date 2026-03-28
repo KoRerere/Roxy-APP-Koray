@@ -8,29 +8,33 @@ import type { UnwrapRowType, UserGetWithdrawRecordListListData } from '@roxy/bac
 type Data = UnwrapRowType<UserGetWithdrawRecordListListData>
 
 const withdrawStatusMap = {
-  'Pending': $t('处理中...'),
-  'Success': $t('已到账'),
-  'Fail': $t('提现失败'),
-  'Reject': $t('未通过'),
+  Pending: $t('处理中...'),
+  Success: $t('已到账'),
+  Fail: $t('提现失败'),
+  Reject: $t('未通过'),
 }
 
 const withdrawStatusColorMap = {
-  'Pending': 'var(--colors-text-text-primary)',
-  'Success': 'var(--colors-text-text-success)',
-  'Fail': 'var(--colors-text-text-error)',
-  'Reject': 'var(--colors-text-text-error)',
+  Pending: 'var(--colors-text-text-primary)',
+  Success: 'var(--colors-text-text-success)',
+  Fail: 'var(--colors-text-text-error)',
+  Reject: 'var(--colors-text-text-error)',
 }
 
 const columns = ref([
   {
     title: $t('申请提现时间'),
     key: 'userName',
-    getText: (data: Data) => format(data.createTime * 1000, 'yyyy-MM-dd HH:mm:ss')
+    getText: (data: Data) => format(data.createTime * 1000, 'yyyy-MM-dd HH:mm:ss'),
+  },
+  {
+    title: $t('提现地址'),
+    key: 'withdrawAdd',
   },
   {
     title: $t('提现金额'),
     key: 'withdrawAmount',
-    getText: (data: Data) => `$${data.withdrawAmount}`
+    getText: (data: Data) => `$${data.withdrawAmount}`,
   },
   {
     title: $t('提现类型'),
@@ -60,7 +64,7 @@ async function tableFilters() {
       formatValue: (input: any, _: any, formData: any) => {
         if (Array.isArray(input.value) && input.value[0]) {
           const [start_time, end_time] = (input.value || []).map((date: Date) => date / 1000)
-          Object.assign(formData, { start_time, end_time: end_time ? end_time : start_time + 86399 })
+          Object.assign(formData, { start_time, end_time: end_time || start_time + 86399 })
         }
       },
     },
@@ -72,7 +76,7 @@ async function tableFilters() {
       options: [
         { label: $t('Roxy 钱包'), value: PayWay.Balance },
         { label: $t('加密货币'), value: PayWay.USDT },
-        { label: 'PayPal', value: PayWay.PayPal }
+        { label: 'PayPal', value: PayWay.PayPal },
       ],
     },
     {
@@ -91,7 +95,7 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cache-key="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无提现记录')" />
     </template>
@@ -100,7 +104,7 @@ async function tableFilters() {
 
 <style lang="scss" module>
 .user-email {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;
@@ -108,7 +112,7 @@ async function tableFilters() {
 }
 
 .user-name {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -117,7 +121,7 @@ async function tableFilters() {
 
 <style lang="scss" scoped>
 .description {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

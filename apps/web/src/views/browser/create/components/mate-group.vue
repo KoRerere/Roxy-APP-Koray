@@ -3,8 +3,9 @@ import RemarkIcon from '/@/components/remark-icon'
 import { $t } from '/@/locales/index.js'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
-import { useRoleStore } from "/@/stores/role"
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
+import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import type { WindowMetaData } from './type.ts'
 
 const { isEdit = false, showRemark = true } = defineProps<{
@@ -15,6 +16,7 @@ const { isEdit = false, showRemark = true } = defineProps<{
 const route = useRoute()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const { isOwner } = storeToRefs(useRoleStore())
+const { check } = usePermission()
 
 const { getTags, getProjects, getProjectMember } = useMateGroup()
 
@@ -61,8 +63,8 @@ async function selectProject(event: MouseEvent) {
           metaData.value.projectName = project?.label || $t('未指定项目')
           metaData.value.projectDefault = project?.projectDefault || 0
         }
-      }
-    }
+      },
+    },
   })
 }
 
@@ -85,7 +87,7 @@ async function selectTags(event: MouseEvent) {
         if (!isEq(value, toRaw(labelIds))) {
           metaData.value.labelIds = (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value))
         }
-      }
+      },
     },
   })
 }
@@ -101,11 +103,11 @@ function onConfirm(windowRemark: string) {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
+    <RxButton :disabled="!check('Profiles_move_project')" outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
     <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
+      <RxButton :disabled="!check('Profiles_select_label')" outlined severity="secondary" size="sm" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
     </div>
-    <RemarkIcon v-if="showRemark" :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
+    <RemarkIcon v-if="showRemark" :disabled="!check('Profiles_edit_remark')" :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 

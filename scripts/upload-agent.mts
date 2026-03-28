@@ -1,7 +1,8 @@
 import AliOss from 'ali-oss'
 import { Buffer } from 'node:buffer'
-// import fs from 'node:fs'
-// import path from 'node:path'
+import { createHash } from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 import readline from 'node:readline'
 
 // 忽略 SSL/TLS 证书验证
@@ -32,15 +33,15 @@ const baseOssConfig = {
 }
 
 // 正式环境版本
-const prodVersion = '1.0.3'
+const prodVersion = '1.0.4'
 
 // 开发环境版本
-const devVersion = '1.2.5'
+const devVersion = '2.0.8'
 
 // 当前agent的版本
 const version = isProd ? prodVersion : devVersion
 // app 最低支持版本
-const minAppVersion = isProd ? '3.7.6' : '7.0.0'
+const minAppVersion = isProd ? '3.7.7' : '7.6.6'
 
 async function getOssToken() {
   const response = await fetch(
@@ -68,32 +69,71 @@ async function startUpload() {
     stsToken: ossConfig.securityToken,
   })
   console.log('上传 agent worker 脚本中...')
+
+  function calculateFileSha512Hex(filePath: string) {
+    const hashSum = createHash('sha512')
+    hashSum.update(fs.readFileSync(filePath))
+    return hashSum.digest('hex')
+  }
+
+  // 读取 roxy-skills/dist 下所有压缩包并上传（不写死名称）
+  const skillsDistDir = path.join(process.cwd(), 'packages/roxy-skills/dist')
+  const skillNames: string[] = []
+  if (fs.existsSync(skillsDistDir)) {
+    const distFiles = fs.readdirSync(skillsDistDir)
+    const zipFiles = distFiles.filter(f => path.extname(f).toLowerCase() === '.zip')
+    for (const filename of zipFiles) {
+      const localPath = path.join(skillsDistDir, filename)
+      if (!fs.statSync(localPath).isFile())
+        continue
+      await ossClient.put(
+        `/public/package/agent/${version}/skills/${filename}`,
+        localPath,
+      )
+
+      skillNames.push(filename)
+      console.log('上传 skill 压缩包成功：', filename)
+    }
+  }
+  if (skillNames.length === 0) {
+    console.log('未发现 packages/roxy-skills/dist 下的压缩包，跳过 skills 上传')
+  }
+
   for (const platform of platformList) {
-    const agentWorkerZip = await ossClient.put(
-      `/public/package/agent/${version}/${platform}/agent-worker.jsc`,
-      'packages/roxy-agent/dist/agent-worker.jsc',
+    const agentLocalPath = 'packages/roxy-agent/dist/index.mjs'
+    const agentSha512 = calculateFileSha512Hex(agentLocalPath)
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-agent.mjs`,
+      agentLocalPath,
     )
-    console.log('上传 agent worker 脚本成功：', agentWorkerZip.url)
+    console.log('上传 agent worker 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-agent.mjs`)
 
-    const playwrightMcpZip = await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxybrowser-playwright-mcp.cjs`,
-      'packages/roxybrowser-playwright-mcp/dist/index.cjs',
+    const playwrightLocalPath = 'packages/roxy-playwright/dist/index.mjs'
+    const playwrightSha512 = calculateFileSha512Hex(playwrightLocalPath)
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-playwright.mjs`,
+      playwrightLocalPath,
     )
-    console.log('上传 playwright mcp 脚本成功：', playwrightMcpZip.url)
+    console.log('上传 playwright mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-playwright.mjs`)
 
-    const openapiMcpZip = await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxybrowser-openapi-mcp.jsc`,
-      'packages/roxybrowser-mcp-server/dist/roxybrowser-openapi-mcp.jsc',
+    const openapiLocalPath = 'packages/roxy-openapi/dist/index.mjs'
+    const openapiSha512 = calculateFileSha512Hex(openapiLocalPath)
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-openapi.mjs`,
+      openapiLocalPath,
     )
-    console.log('上传 openapi mcp 脚本成功：', openapiMcpZip.url)
+    console.log('上传 openapi mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-openapi.mjs`)
 
-    const data = Buffer.from(
-      JSON.stringify({
-        version,
-        minimum_app_version: minAppVersion,
-        releaseTime: getCurrentFormattedTime(),
-      }),
-    )
+    const versionPayload = {
+      version,
+      minimum_app_version: minAppVersion,
+      releaseTime: getCurrentFormattedTime(),
+      skills: skillNames,
+      agent_sha512: agentSha512,
+      openapi_sha512: openapiSha512,
+      playwright_sha512: playwrightSha512,
+    }
+    const data = Buffer.from(JSON.stringify(versionPayload))
     const uploadVersionRes = await ossClient.put(
       `/public/package/agent/${platform}/version.json`,
       data,

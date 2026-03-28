@@ -5,7 +5,6 @@ import { useDialog } from '/@/hooks/useDialog'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
-import Permission from '/@/views/lab/permission/index.vue'
 // import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
@@ -50,7 +49,7 @@ function _open2() {
       mask: '!backdrop-blur-md',
     },
     slots: {
-      container: ({ hideModal }) => <Permission onClose={hideModal}></Permission>,
+      // container: ({ hideModal }) => <Permission onClose={hideModal}></Permission>,
     },
   })
 }
@@ -259,6 +258,8 @@ function _setInputsProps() {
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
+    <!-- <a href="/workspace/teams">wcis man</a> -->
+
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
     <!-- <RxButton label="open1" @click="_open1" /> -->

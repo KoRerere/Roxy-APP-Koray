@@ -5,4 +5,6 @@ export const providerBaseURL = {
   custom: process.env.LLM_BASE_URL || '',
   roxybrowser: 'https://newapi.chatgpt-ai.pw',
   deepseek: 'https://api.deepseek.com',
+  kimi: 'https://api.kimi.com/coding/',
+  gptproto: 'https://gptproto.com',
 }

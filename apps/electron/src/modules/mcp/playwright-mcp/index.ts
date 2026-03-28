@@ -1,1 +1,1 @@
-import '@roxybrowser/playwright-mcp'
+import '@roxy/playwright'

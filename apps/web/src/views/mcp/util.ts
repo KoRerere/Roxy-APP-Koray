@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import { safeParseJSON } from '/@/utils'
-import type { ContentBlock, MessageBlock, SSEEventData, SSEParseResult, ThinkingBlock, ToolCallBlock, WorkerTask } from './types'
+import type { ContentBlock, MessageBlock, MessageEntry, MessageEntryView, MessageType, SSEEventData, SSEParseResult, ThinkingBlock, Todo, TodoStatus, ToolCallBlock, WorkerEntryView, WorkerStatus, WorkerTask } from './types'
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {
@@ -637,4 +637,237 @@ export function finalizeWorkerTasks(
 
 export function markedParse(text: string) {
   return DOMPurify.sanitize(marked.parse(text, { async: false }))
+}
+
+/** util.ts 内部存储结构（含 Map 字段，不对外暴露） */
+interface TopLevelEntry extends MessageEntry {
+  workerEntries?: Map<string, MessageEntry>
+  workerOrder?: Set<string>
+}
+
+export class MessageViewer {
+  private entries = new Map<string, TopLevelEntry>()
+  private order = new Set<string>()
+  private todos: Todo[][] = []
+  /** 当前正在进行的顶层 thinking 条目 id */
+  private currentThinkingId: string | null = null
+  /** 每个 worker 当前正在进行的 thinking id */
+  private currentWorkerThinkingMap = new Map<string, string>()
+
+  add(id: string, type: MessageType, data: unknown, timestamp?: number): void {
+    // 非 thinking 事件到来时，结束当前进行中的 thinking
+    if (type !== 'thinking' && this.currentThinkingId) {
+      const prev = this.entries.get(this.currentThinkingId)
+      if (prev)
+        prev.isThinking = false
+      this.currentThinkingId = null
+    }
+
+    if (!this.entries.has(id)) {
+      this.entries.set(id, {
+        text: '',
+        meta: {},
+        type,
+        isThinking: type === 'thinking' ? true : undefined,
+      })
+    }
+
+    const entry = this.entries.get(id)!
+
+    if (type === 'thinking' || type === 'content') {
+      entry.text += data as string
+    }
+    else if (type === 'tool_call' || type === 'tool_result') {
+      Object.assign(entry.meta, data)
+    }
+    else if (type === 'todo') {
+      this.todos.push(data?.todos as Todo[])
+    }
+    else if (type === 'error' || type === 'interrupt') {
+      entry.text = data as string
+    }
+
+    if (!entry.start) {
+      entry.start = timestamp
+    }
+    else {
+      entry.end = timestamp
+    }
+
+    if (type === 'thinking') {
+      this.currentThinkingId = id
+    }
+
+    this.order.add(id)
+  }
+
+  private formatType(type: MessageType): MessageType {
+    if (type === 'worker_content')
+      return 'content'
+    if (type === 'worker_thinking')
+      return 'thinking'
+    return type
+  }
+
+  addWorkerEntry(
+    workerId: string,
+    id: string,
+    type: MessageType,
+    data: unknown,
+    timestamp?: number,
+  ): void {
+    if (!this.entries.has(workerId)) {
+      this.entries.set(workerId, {
+        text: '',
+        meta: {},
+        type: 'worker',
+        workerEntries: new Map(),
+        workerOrder: new Set(),
+        status: 'pending',
+      })
+    }
+
+    const workerEntry = this.entries.get(workerId)!
+    const workerEntries = workerEntry.workerEntries!
+    const workerOrder = workerEntry.workerOrder!
+
+    const storedType = this.formatType(type)
+
+    // 非 thinking 事件到来时，结束该 worker 当前进行中的 thinking
+    if (storedType !== 'thinking' && this.currentWorkerThinkingMap.has(workerId)) {
+      const prevId = this.currentWorkerThinkingMap.get(workerId)!
+      const prevEntry = workerEntries.get(prevId)
+      if (prevEntry)
+        prevEntry.isThinking = false
+      this.currentWorkerThinkingMap.delete(workerId)
+    }
+
+    if (!workerEntries.has(id)) {
+      workerEntries.set(id, {
+        type: storedType,
+        text: '',
+        meta: {},
+        isThinking: storedType === 'thinking' ? true : undefined,
+      })
+    }
+
+    const entry = workerEntries.get(id)!
+
+    if (storedType === 'thinking' || storedType === 'content') {
+      entry.text += data as string
+    }
+    else if (storedType === 'tool_call' || storedType === 'tool_result') {
+      Object.assign(entry.meta, data)
+    }
+
+    if (!entry.start) {
+      entry.start = timestamp
+    }
+    else {
+      entry.end = timestamp
+    }
+
+    if (storedType === 'thinking') {
+      this.currentWorkerThinkingMap.set(workerId, id)
+    }
+
+    workerOrder.add(id)
+    this.order.add(workerId)
+  }
+
+  setWorkerStatus(workerId: string, status: WorkerStatus): void {
+    if (!this.entries.has(workerId)) {
+      this.entries.set(workerId, {
+        text: '',
+        meta: {},
+        type: 'worker',
+        workerEntries: new Map(),
+        workerOrder: new Set(),
+        status: 'pending',
+      })
+    }
+
+    this.entries.get(workerId)!.status = status
+  }
+
+  /** 结束所有进行中的 thinking，用于流结束时调用 */
+  finalize(): void {
+    this.currentThinkingId = null
+    this.currentWorkerThinkingMap.clear()
+    for (const entry of this.entries.values()) {
+      if (entry.isThinking)
+        entry.isThinking = false
+      if (entry.workerEntries) {
+        for (const we of entry.workerEntries.values()) {
+          if (we.isThinking)
+            we.isThinking = false
+        }
+      }
+    }
+  }
+
+  view(): MessageEntryView[] {
+    return Array.from(this.order, (id) => {
+      const { workerEntries, workerOrder, ...rest } = this.entries.get(id)!
+      const workers: WorkerEntryView[] = workerOrder && workerEntries
+        ? Array.from(workerOrder, wid => ({ id: wid, ...workerEntries.get(wid)! }))
+        : []
+      return { id, ...rest, workers }
+    })
+  }
+
+  viewTodo(): Todo[] {
+    return this.todos[this.todos.length - 1] as Todo[]
+  }
+}
+
+export function parseHistorySSE2(content: string) {
+  const events = parseSSEContentString<SSEEventData>(content).map(item => item.json)
+  const messageViewer = new MessageViewer()
+  events.forEach((block) => {
+    if (!block)
+      return
+    switch (block.type) {
+      case 'session':
+        break
+
+      case 'tool_call':
+      case 'tool_result':
+        if (block.data?.taskId) {
+          messageViewer.addWorkerEntry(block.data?.taskId || '', block.data?.toolId || '', block.type, block.data)
+        }
+        else {
+          messageViewer.add(block.data?.toolId || '', block.type, block.data)
+        }
+
+        break
+      case 'thinking':
+        messageViewer.add(block.data?.thinkingId || '', block.type, block.data?.text || '', block.timestamp)
+        break
+      case 'content':
+        if (!block.data?.contentId) {
+          console.log(block)
+        }
+        messageViewer.add(block.data?.contentId || '', block.type, block.data?.text || '', block.timestamp)
+        break
+      case 'worker_content':
+        messageViewer.addWorkerEntry(block.data?.taskId || '', block.data?.contentId || '', block.type, block.data?.text || '', block.timestamp)
+        break
+      case 'worker_thinking':
+        messageViewer.addWorkerEntry(block.data?.taskId || '', block.data?.thinkingId || '', block.type, block.data?.text || '', block.timestamp)
+        break
+      case 'worker_result':
+        messageViewer.setWorkerStatus(block.data?.taskId || '', block.data?.status)
+        break
+      case 'error':
+      case 'interrupt':
+        messageViewer.add(block.type, block.type, block.data?.message || '', block.timestamp)
+        break
+      // case 'done':
+      default:
+        console.log('unknown event', block)
+    }
+  })
+
+  return messageViewer.view()
 }

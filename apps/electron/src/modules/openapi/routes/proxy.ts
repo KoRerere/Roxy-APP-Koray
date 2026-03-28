@@ -157,7 +157,7 @@ router.post('/detect', async (req, res) => {
       res.error(checkResult.error)
     }
     else {
-      const result = await modifyProxy([{ ...params, ...checkResult }], workspaceId)
+      const result = await modifyProxy({ proxyList: [{ ...params, ...checkResult }] }, workspaceId)
       res.json({
         ...result,
         data: checkResult,
@@ -174,7 +174,7 @@ router.post('/modify', async (req, res) => {
   const { workspaceId, ...params } = req.body || {}
   try {
     const checkResult = await detect(params)
-    const result = await modifyProxy([{ ...params, ...checkResult }], workspaceId)
+    const result = await modifyProxy({ proxyList: [{ ...params, ...checkResult }] }, workspaceId)
     res.json(result)
   }
   catch (error) {

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-
-
 interface Props {
   vertical?: boolean
   lineOnly?: boolean
@@ -18,13 +16,12 @@ const {
   color = 'var(--colors-text-text-primary)',
   lineWidth = 1,
   lineStyle = 'solid',
-  lineColor = 'var(--colors-border-divider)',
+  lineColor = 'var(--divider-border-color)',
 } = defineProps<Props>()
 
 const _lineWidth = computed(() => {
   return Number.isNaN(Number(lineWidth)) ? lineWidth : CSS.px(lineWidth as number).toString()
 })
-
 </script>
 
 <template>

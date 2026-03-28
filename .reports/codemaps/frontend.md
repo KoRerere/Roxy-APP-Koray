@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-<!-- Generated: 2026-03-09 | Files scanned: 120+ | Token estimate: ~900 -->
+<!-- Generated: 2026-03-26 | Files scanned: 120+ | Token estimate: ~900 -->
 
 ## Entry Point
 apps/web/src/main.ts (72 lines)
@@ -12,23 +12,28 @@ apps/web/src/main.ts (72 lines)
 
 ```
 / (Layout)
-├── /browser-list (Browser Management)
-│   ├── /profiles (Profile CRUD)
-│   └── /cookie (Cookie Editor)
-├── /agent (AI Agent Dashboard)
-├── /mcp (MCP Server Management)
+├── /browser (Browser Management)
+│   ├── /list - All windows
+│   ├── /create - New window
+│   ├── /edit - Edit window
+│   └── /shared - Shared windows
 ├── /projects (Project Management)
-├── /extensions (Browser Extensions)
-├── /api-keys (API Key Management)
-├── /pay (Payment & Subscription)
-├── /team (Team Management)
-├── /workspace-setting (Workspace Config)
-├── /sync-control (Profile Sync)
-├── /campaign (Marketing Campaigns)
-├── /lab (Experimental Features)
-├── /account (User Account)
-├── /referral-program (Referral System)
-└── /tutorial (Onboarding)
+│   ├── /list - Project list
+│   └── /:id - Project detail
+├── /resource (Tools Group)
+│   ├── /agent - Proxy IP management
+│   ├── /account - Platform accounts
+│   ├── /extensions - Extension center
+│   └── /cattle-slaughter - Lab (experimental)
+├── /automation (Automation Group)
+│   ├── /sync-control - Window synchronization (Windows only)
+│   └── /api-keys - API & AI MCP
+├── /workspace (Team Collaboration)
+│   └── /teams - Team management
+├── /subscribe-plan - Plan selection (Owner only)
+├── /upgrade-plan - Plan upgrade (Owner only)
+├── /wallet - Cost center (Owner only)
+└── /tutorial - Onboarding
 ```
 
 ## Component Hierarchy
@@ -47,11 +52,24 @@ apps/web/src/main.ts (72 lines)
 ## State Management (Pinia)
 
 ### Core Stores (apps/web/src/stores/)
-- **user.ts**: Authentication, user info, token
-- **workspace.ts**: Current workspace, role, type (Private/Public)
+- **user.ts**: Authentication, user info, token, payment info
+- **workspace.ts**: Current workspace, role, type (Private/Public), getPermissionByWorkspace()
+- **permission.ts**: Permission rules (NEW) — allow/deny effects, can()/cannot()/canAny()/canAll()
 - **locale.ts**: i18n language selection
 - **theme.ts**: Dark/light theme
 - **browser.ts**: Browser instance state
+- **role.ts**: User role information
+- **team.ts**: Team data
+- **project.ts**: Project state
+- **lock.ts**: Lock screen state
+- **network.ts**: Network state
+
+### Permission System (NEW)
+- Route-level: `meta.permissions` array with `permissionMode` ('all' | 'any')
+- Component-level: `usePermission()` composable
+- Backend sync: `checkPermissionVersion.ts` monitors version header
+- Permission codes: Profiles_add, Profiles_edit, Projects_view_page, Proxy_List_view_page,
+  Platform_view_page, Plugin_Installed_view_page, API_MCP_view_page, Team_Member_view_page
 
 ### Store Flow
 ```
@@ -74,9 +92,11 @@ Component → useUserStore() → API call → Update state → Reactive UI
 
 ### API Structure (apps/web/src/api/)
 - index.ts: Axios instance configuration
-- message/: Message-based API calls
+- message/: Version-based sync checks
   - checkAppVersion, checkCoreVersion, checkDictVersion
   - checkNotify, checkPermission, checkSoftConfigVersion
+  - checkPermissionVersion (NEW): Permission version sync
+  - checkPayInfoVersion: Payment info sync
 
 ### Electron API Polyfill (apps/web/src/electron-api-polyfill/)
 - Provides electronAPI shim for web mode

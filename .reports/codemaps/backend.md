@@ -1,6 +1,6 @@
 # Backend Architecture
 
-<!-- Generated: 2026-03-09 | Files scanned: 80+ | Token estimate: ~850 -->
+<!-- Generated: 2026-03-26 | Files scanned: 80+ | Token estimate: ~850 -->
 
 ## Electron Main Process
 

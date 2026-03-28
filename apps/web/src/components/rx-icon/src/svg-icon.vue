@@ -2,23 +2,17 @@
 import type { SvgNames } from './svg-icon-types'
 import { svgIcons } from './svgIcons'
 
-const props = defineProps({
-  name: {
-    type: String as PropType<SvgNames>,
-    required: true,
-  },
-  size: {
-    type: [Number, String],
-    default: 16,
-  },
-  color: {
-    type: String,
-    default: 'inherit',
-  },
-  fallback: {
-    type: String,
-    default: '',
-  },
+interface Props {
+  name: SvgNames
+  size?: number | string
+  color?: string
+  fallback?: string
+  onClick?: (e: any) => Promise<any> | any
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  size: 16,
+  color: 'inherit',
 })
 
 const fontSize = computed(() => {
@@ -32,7 +26,7 @@ const SvgComponent = computed(() => {
 </script>
 
 <template>
-  <SvgComponent class="svg" :data-name="name" v-bind="$attrs" />
+  <SvgComponent class="svg" :data-name="props.name" v-bind="$attrs" @click="props.onClick" />
 </template>
 
 <style lang="scss" scoped>

@@ -2,15 +2,19 @@ import type { StreamMode } from '@langchain/langgraph'
 import type { Request, Response } from 'express'
 import { HumanMessage } from '@langchain/core/messages'
 import { Router } from 'express'
+import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
-import { orchestratorGraph, simpleGraph } from '../agent'
 import { AbortError, abortRun, createAbort } from '../agent/utils/abortRegistry'
-import { RequestTokenUsageAggregator } from '../agent/utils/usageAggregator'
+import { RequestTokenUsageAggregator, TokenUsageChange } from '../agent/utils/usageAggregator'
 import { env } from '../config'
-import { ContextManager } from '../database/context'
 import { ChatContextAPI } from '../database/conversations'
+import { createAgent, deleteCheckpoint } from '../deepagents'
+import { handleStream, StreamState } from '../deepagents/handle-stream'
+import { isWorkerStart } from '../deepagents/tools'
+import { mcpManager } from '../mcpManager'
 import { sseLoggerManager } from './sseLogger'
 import { streamAdapter } from './streamAdapter'
 
@@ -19,7 +23,115 @@ if (!fs.existsSync(path.join(env.CHECKPOINT_DIR!, 'sse'))) {
   fs.mkdirSync(path.join(env.CHECKPOINT_DIR!, 'sse'), { recursive: true })
 }
 
+// 附件文件存储目录
+const uploadsDir = path.join(env.CHECKPOINT_DIR!, 'uploads')
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'application/pdf',
+  'text/plain',
+])
+
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'image/avif': '.avif',
+  'application/pdf': '.pdf',
+  'text/plain': '.txt',
+}
+
+const EXT_TO_MIME: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.pdf': 'application/pdf',
+  '.txt': 'text/plain',
+}
+
+/**
+ * 5MB
+ */
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
 const router: Router = Router()
+
+// 上传附件文件
+router.post('/upload', (req: Request, res: Response) => {
+  try {
+    const { data, mimeType, fileName } = req.body
+
+    if (!data || !mimeType || !fileName) {
+      return res.json({ code: 1, msg: 'data, mimeType and fileName are required' })
+    }
+
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+      return res.json({ code: 1, msg: `Unsupported file type: ${mimeType}` })
+    }
+
+    const buffer = Buffer.from(data, 'base64')
+    if (buffer.length > MAX_FILE_SIZE) {
+      return res.json({ code: 1, msg: 'File size exceeds 5MB limit' })
+    }
+
+    const ext = MIME_TO_EXT[mimeType] || ''
+    const fileId = `${randomUUID()}${ext}`
+    const filePath = path.join(uploadsDir, fileId)
+    fs.writeFileSync(filePath, buffer)
+
+    res.json({
+      code: 0,
+      msg: 'File uploaded successfully',
+      data: {
+        fileId,
+        fileName,
+        mimeType,
+        size: buffer.length,
+      },
+    })
+  }
+  catch (error: any) {
+    console.error('Error uploading file:', error)
+    res.json({ code: 1, msg: 'Failed to upload file', error: error.message })
+  }
+})
+
+// 提供附件文件访问
+router.get('/files/:fileId', (req: Request, res: Response) => {
+  try {
+    const { fileId } = req.params
+    // 安全校验：只允许字母数字、连字符、点
+    if (!/^[\w\-.]+$/.test(fileId)) {
+      return res.status(400).json({ code: 1, msg: 'Invalid file ID' })
+    }
+
+    const filePath = path.join(uploadsDir, fileId)
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ code: 1, msg: 'File not found' })
+    }
+
+    const ext = path.extname(fileId).toLowerCase()
+    const mimeType = EXT_TO_MIME[ext] || 'application/octet-stream'
+    res.setHeader('Content-Type', mimeType)
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    res.sendFile(filePath)
+  }
+  catch (error: any) {
+    console.error('Error serving file:', error)
+    res.status(500).json({ code: 1, msg: 'Failed to serve file', error: error.message })
+  }
+})
 
 // 创建新对话
 router.post('/conversations', async (req: Request, res: Response) => {
@@ -200,10 +312,10 @@ router.put('/conversations/:conversationId', async (req: Request, res: Response)
 // 删除对话
 router.delete('/conversations/:conversationId', async (req: Request, res: Response) => {
   try {
-    const { conversationId } = req.params
+    const { conversationId } = req.params as { conversationId: string }
 
     // 获取对话信息，找到对应的thread_id
-    const conversation = ChatContextAPI.getConversation(conversationId as string)
+    const conversation = ChatContextAPI.getConversation(conversationId)
     if (!conversation) {
       return res.json({
         code: 1,
@@ -213,13 +325,13 @@ router.delete('/conversations/:conversationId', async (req: Request, res: Respon
     }
 
     // 删除对话相关的消息
-    ChatContextAPI.deleteMessagesByConversation(conversationId as string)
+    ChatContextAPI.deleteMessagesByConversation(conversationId)
 
     // 删除对话记录
-    ChatContextAPI.deleteConversation(conversationId as string)
+    ChatContextAPI.deleteConversation(conversationId)
 
-    // 删除对话上下文（记忆信息）
-    ContextManager.deleteContext(conversation.thread_id)
+    // 删除 LangGraph SQLite checkpoint 中该 thread 的数据
+    deleteCheckpoint(conversationId)
 
     res.json({
       code: 0,
@@ -293,9 +405,112 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 })
 
+// 附件类型定义
+interface AttachmentRef {
+  fileId: string
+  fileName: string
+  mimeType: string
+  size?: number
+}
+
+/**
+ * 构建 LangChain HumanMessage 的多模态内容数组
+ */
+function buildMessageContent(message: string, attachments: AttachmentRef[]): any[] | string {
+  const parts: any[] = []
+  const attachmentInfos: string[] = []
+
+  if (message?.trim()) {
+    parts.push({ type: 'text', text: message })
+  }
+
+  for (const att of attachments) {
+    const filePath = path.join(uploadsDir, att.fileId)
+    if (!fs.existsSync(filePath)) {
+      console.warn(`Attachment file not found: ${att.fileId}`)
+      continue
+    }
+
+    attachmentInfos.push(`- 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`)
+
+    if (att.mimeType.startsWith('image/')) {
+      const base64 = fs.readFileSync(filePath).toString('base64')
+      parts.push({
+        type: 'image_url',
+        image_url: { url: `data:${att.mimeType};base64,${base64}` },
+      })
+    }
+    else if (att.mimeType === 'text/plain') {
+      const text = fs.readFileSync(filePath, 'utf-8')
+      parts.push({ type: 'text', text: `[文件: ${att.fileName}]\n${text}` })
+    }
+    else if (att.mimeType === 'application/pdf') {
+      const base64 = fs.readFileSync(filePath).toString('base64')
+      // 使用 OpenAI 兼容格式，Claude 会自动处理
+      parts.push({
+        type: 'image_url',
+        image_url: { url: `data:application/pdf;base64,${base64}` },
+      })
+    }
+  }
+
+  if (attachmentInfos.length > 0) {
+    parts.push({
+      type: 'text',
+      text: `\n[附件信息 - 可用于文件操作的本地路径]\n${attachmentInfos.join('\n')}`,
+    })
+  }
+
+  if (parts.length === 0)
+    return ''
+  if (parts.length === 1 && parts[0].type === 'text')
+    return parts[0].text
+  return parts
+}
+
+/**
+ * 纯文本 HumanMessage：`text/plain` 内联全文，其余类型只写本地路径与元数据（兼容不支持多模态的模型）。
+ * 需要 base64 图片/PDF 等多模态时请用 `buildMessageContent`，并在请求中传 `multimodalAttachments: true`。
+ */
+function buildMessageContentAsPlainText(message: string, attachments: AttachmentRef[]): string {
+  const chunks: string[] = []
+
+  if (message?.trim()) {
+    chunks.push(message.trim())
+  }
+
+  for (const att of attachments) {
+    const filePath = path.join(uploadsDir, att.fileId)
+    if (!fs.existsSync(filePath)) {
+      console.warn(`Attachment file not found: ${att.fileId}`)
+      continue
+    }
+
+    if (att.mimeType === 'text/plain') {
+      const text = fs.readFileSync(filePath, 'utf-8')
+      chunks.push(`[文件: ${att.fileName}]\n${text}`)
+    }
+    else {
+      chunks.push(
+        `[附件] 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`,
+      )
+    }
+  }
+
+  return chunks.join('\n\n')
+}
+
 // 开始对话（流式聊天）
 router.post('/chat', async (req: Request, res: Response) => {
-  const { message, conversationId, enableThinking, mode } = req.body
+  const {
+    message,
+    conversationId,
+    enableThinking: _enableThinking,
+    mode,
+    attachments,
+    multimodalAttachments,
+  } = req.body
+  const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
 
   // 敏感词校验：使用全局挂载的 __SENSITIVE_WORDS__（build-words 注入）
   const sensitiveWords = (globalThis as any).__SENSITIVE_WORDS__ as string[] | undefined
@@ -313,11 +528,11 @@ router.post('/chat', async (req: Request, res: Response) => {
 
   const abortController = createAbort(conversationId)
 
-  if (!message || !conversationId) {
+  if ((!message && !attachmentList.length) || !conversationId) {
     return res.json({
       code: 1,
-      error: 'message and conversationId are required',
-      msg: 'message and conversationId are required',
+      error: 'message or attachments and conversationId are required',
+      msg: 'message or attachments and conversationId are required',
     })
   }
 
@@ -338,7 +553,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const userMessages = messages.filter(msg => msg.role === 'user')
     if (userMessages.length === 0) {
       // 这是第一条用户消息，更新标题
-      const titlePreview = message.trim().substring(0, 15) || 'New Chat'
+      const titlePreview = message?.trim().substring(0, 15) || attachmentList[0]?.fileName?.substring(0, 15) || 'New Chat'
       ChatContextAPI.updateConversation(conversationId, { title: titlePreview })
     }
   }
@@ -356,13 +571,14 @@ router.post('/chat', async (req: Request, res: Response) => {
     id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     conversation_id: conversationId,
     role: 'user',
-    content: message,
+    content: message || '',
     content_type: 'text',
     storage_type: 'inline',
     agent_mode: agentMode,
     metadata: {
       timestamp: Date.now(),
       source: 'api_chat',
+      attachments: attachmentList.length > 0 ? attachmentList : undefined,
     },
   })
 
@@ -407,24 +623,60 @@ router.post('/chat', async (req: Request, res: Response) => {
       configurable: {
         thread_id: conversation.thread_id,
       },
-      version: 'v2',
-      streamMode: ['custom'] as StreamMode[],
+      streamMode: ['messages', 'custom', 'tools'],
       signal: abortController.signal,
+      callbacks: [new TokenUsageChange(conversation.thread_id)],
+      // 供 parallel_dispatch 工具内将 worker 的 stream 写出到客户端，避免只依赖外层 stream 合并
+      writer: streamCallback,
     }
 
+    const useMultimodalAttachments = multimodalAttachments === true
+    const messageContent = useMultimodalAttachments
+      ? buildMessageContent(message, attachmentList)
+      : buildMessageContentAsPlainText(message, attachmentList)
     const input = {
-      messages: [new HumanMessage(message)],
-      enableThinking: enableThinking ?? false,
+      messages: [
+        Array.isArray(messageContent)
+          ? new HumanMessage({ content: messageContent })
+          : new HumanMessage(messageContent || message || ''),
+      ],
+      streamCallback,
     }
-
-    const graph = agentMode === 'orchestrator' ? orchestratorGraph : simpleGraph
 
     if (env.LLM_BALANCE >= 0) {
-      const stream = await graph.stream(input, config)
-      for await (const [mode, event] of stream) {
-        if (mode === 'custom') {
-          streamCallback(event)
+      await mcpManager.createMcpClient('simple')
+      const simpleTools = mcpManager.getToolsForWorker('simple')
+      const agent = await createAgent({
+        mode: agentMode,
+        tools: simpleTools,
+        name: agentMode,
+        conversationId,
+      })
+      const state = new StreamState()
+      const stream = await agent.stream(input, config)
+      // let worker_start = false
+      for await (const rawChunk of stream) {
+        console.log('rawChunk', rawChunk)
+        const [namespace, chunk] = rawChunk
+        // Worker 期间跳过非 custom，但必须保留主 agent 的 parallel_dispatch 的 tools 事件，否则 tool start 会丢失、agent 认为返回空
+        const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
+        if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
+          continue
         }
+
+        const result = handleStream(rawChunk, state)
+        if (Array.isArray(result)) {
+          result.forEach(event => streamCallback(event))
+        }
+        else if (result) {
+          streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
+        }
+      }
+
+      // 最后一个消息的特殊处理（针对 deepseek 模型）
+      const lastMessageIsThinking = state.theLastMessageIsThinking()
+      if (lastMessageIsThinking) {
+        streamCallback(streamAdapter.content(lastMessageIsThinking, `content:${state.getRandomId()}`))
       }
     }
     else {
@@ -447,6 +699,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
   }
   finally {
+    await mcpManager.destroyWorkerClient('simple')
+
     // 获取本次请求的 token 使用量统计
     const tokenUsage = tokenUsageAggregator.getUsage()
 
@@ -466,30 +720,6 @@ router.post('/chat', async (req: Request, res: Response) => {
         taskType: agentMode,
       },
     })
-
-    // 将本次请求的 token 使用量累计到数据库中（用于统计 thread_id 的总 token 消耗）
-    try {
-      // 获取当前上下文（如果存在）
-      const currentContext = ContextManager.getContext(conversation.thread_id)
-
-      // 累计 token 使用量
-      const totalInputTokens = (currentContext?.inputTokens ?? 0) + tokenUsage.input_tokens
-      const totalOutputTokens = (currentContext?.outputTokens ?? 0) + tokenUsage.output_tokens
-
-      // 保存累计后的 token 使用量到数据库
-      // 保持原有的 messages 和 allowedSkills，只更新 token 使用量
-      ContextManager.saveContext(conversation.thread_id, {
-        messages: currentContext?.messages ?? [],
-        allowedSkills: currentContext?.allowedSkills ?? [],
-        inputTokens: tokenUsage.input_tokens,
-        outputTokens: tokenUsage.output_tokens,
-      })
-
-      console.log(`✅ Token usage saved for thread ${conversation.thread_id}: +${tokenUsage.input_tokens} input, +${tokenUsage.output_tokens} output (total: ${totalInputTokens} input, ${totalOutputTokens} output)`)
-    }
-    catch (error) {
-      console.error(`Failed to save token usage for thread ${conversation.thread_id}:`, error)
-    }
 
     // 清理统计器资源
     tokenUsageAggregator.dispose()

@@ -1,14 +1,20 @@
 import { AIMessageChunk } from '@langchain/core/messages'
 import { ChatGenerationChunk } from '@langchain/core/outputs'
+import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatOpenAI } from '@langchain/openai'
 import OpenAI from 'openai'
 import { env } from '../../config.js'
 import { BaseLLMChat } from './baseLLMChart.js'
+
+export class SiliconFlowDeepSeek extends ChatDeepSeek {
+
+}
 
 /**
  * Custom SiliconFlow chat implementation
  * Extracts reasoning_content and maps to standard reasoning field for consistency
  */
-export class SiliconFlowDeepSeek extends BaseLLMChat {
+export class _SiliconFlowDeepSeek extends BaseLLMChat {
   protected extractReasoning(delta: any): string | undefined {
     // SiliconFlow uses delta.reasoning_content (not delta.reasoning)
     return delta.reasoning_content

@@ -57,10 +57,10 @@
     "test": "cross-env NODE_ENV=development tsx scripts/test.ts",
     "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js",
     "reset:main": "node scripts/confirm-reset.js",
-    "agent:build": "pnpm -F roxy-agent run build && pnpm -F @roxybrowser/playwright-mcp run build && pnpm -F @roxybrowser/openapi run build",
+    "agent:build": "pnpm -F roxy-agent run build && pnpm -F @roxybrowser/playwright-mcp run build && pnpm -F @roxybrowser/openapi run build && pnpm -F roxy-skills run build",
     "agent:compile": "pnpm agent:build && pnpm -C ./apps/electron exec electron ../../scripts/compile-bytenode.mjs",
-    "publish:agent:dev": "pnpm agent:compile && cross-env NODE_ENV=development pnpx tsx ./scripts/upload-agent.mts",
-    "publish:agent:prod": "pnpm agent:compile && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-agent.mts"
+    "publish:agent:dev": "pnpm agent:build && cross-env NODE_ENV=development pnpx tsx ./scripts/upload-agent.mts",
+    "publish:agent:prod": "pnpm agent:build && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-agent.mts"
   },
   "optionalDependencies": {
     "minidump": "^0.26.0"

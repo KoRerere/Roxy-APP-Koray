@@ -3,7 +3,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { createDefaultObject } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { ProfileModifyType, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 
 import { clearProxyKeys, silentUpdateProxy } from '../components/util'
 
@@ -60,7 +60,7 @@ export function useProfileProxy() {
       rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
       acceptProps: { label: $t('确认'), severity: 'danger' },
       accept: async () => {
-        const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete })
+        const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete, requestType: ProfileReqType.DeleteProxy })
         onlyErrorToast(code, msg)
         resolve()
         if (code !== 0)

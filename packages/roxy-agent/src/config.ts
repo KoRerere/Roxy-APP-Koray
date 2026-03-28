@@ -10,9 +10,11 @@ export const env = {
   WORKER_CONTEXT_LIMIT: Number(process.env.WORKER_CONTEXT_LIMIT) || 6,
   SYSTEM_LANGUAGE: process.env.SYSTEM_LANGUAGE,
   OPENAPI_SCRIPT_PATH: process.env.OPENAPI_SCRIPT_PATH,
+  OPENAPI_SCRIPT_SHA512: process.env.OPENAPI_SCRIPT_SHA512,
   ROXY_API_KEY: process.env.ROXY_API_KEY,
   ROXY_API_HOST: process.env.ROXY_API_HOST,
   PLAYWRIGHT_SCRIPT_PATH: process.env.PLAYWRIGHT_SCRIPT_PATH,
+  PLAYWRIGHT_SCRIPT_SHA512: process.env.PLAYWRIGHT_SCRIPT_SHA512,
   CHECKPOINT_DIR: process.env.CHECKPOINT_DIR,
   ROXY_SERVER_PORT: Number(process.env.ROXY_SERVER_PORT) || 3000,
   ROXY_USER_ID: process.env.ROXY_USER_ID,
@@ -32,6 +34,8 @@ export const env = {
   START_SCRIPT: process.env.START_SCRIPT!,
   // 下载目录：用于保存下载的文件
   DOWNLOADS_DIR: process.env.DOWNLOADS_DIR!,
+
+  SKILLS_DIR: process.env.SKILLS_DIR!,
 }
 
 console.log('env: ', env)

@@ -1,24 +1,24 @@
 <script setup lang="tsx">
-import { useRoleStore } from '/@/stores/role'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
+import { ProfileReqType } from '/@/enums'
 
 interface Props {
   labels: any[]
   projectId?: number
   projectName?: string
+  disabled?: boolean
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits(['update'])
 const { getProjects } = useMateGroup()
-const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 
 async function openMenu(event: any) {
-  if (!(role.isOwner || role.isManager))
+  if (props.disabled)
     return
 
   const operation = await getProjects()
@@ -37,11 +37,12 @@ async function openMenu(event: any) {
           emit('update', {
             projectName: operation.find(item => item.value === projectId)!.label,
             projectId: Number(projectId),
-            ...deleteMembers()
+            requestType: ProfileReqType.MoveProject,
+            ...deleteMembers(),
           })
         }
-      }
-    }
+      },
+    },
   })
 }
 

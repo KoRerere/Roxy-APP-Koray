@@ -48,15 +48,15 @@ export const appConfig = {
   },
   /** agent 脚本文件 */
   get agentBinPath() {
-    return join(sessionDir, 'agent-bin', 'agent-worker.jsc')
+    return join(sessionDir, 'agent-bin', 'roxy-agent.mjs')
   },
-  /**  */
+  /** openapi mcp 脚本文件 */
   get openapiMcpBinPath() {
-    return join(sessionDir, 'agent-bin', 'roxybrowser-openapi-mcp.jsc')
+    return join(sessionDir, 'agent-bin', 'roxy-openapi.mjs')
   },
   /** playwright mcp 脚本文件 */
   get playwrightMcpBinPath() {
-    return join(sessionDir, 'agent-bin', 'roxybrowser-playwright-mcp.cjs')
+    return join(sessionDir, 'agent-bin', 'roxy-playwright.mjs')
   },
   /** 默认浏览器执行文件所在文件夹 */
   get defaultBrowserBinDir() {

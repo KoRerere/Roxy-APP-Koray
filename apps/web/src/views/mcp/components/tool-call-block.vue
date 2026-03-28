@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ToolCall, ToolCallBlock } from '../types'
+import type { MessageEntry } from '../types'
 import { getStatusIconProps } from '../composables/useMessageItem'
 
 defineProps<{
-  tool: ToolCallBlock | ToolCall
+  tool: MessageEntry
   tooltip?: string
 }>()
 </script>
@@ -12,9 +12,9 @@ defineProps<{
   <div v-tooltip.top="tooltip ? { value: tooltip, showDelay: 500 } : undefined" class="flex items-center px-2 py-1.5 gap-2.5 rounded-1 tool">
     <SvgIcon name="base/rx_ic_browser_hammer" size="14" color="var(--colors-icon-icon-tertiary)" />
     <div class="flex-1 ellipsis-1 tool-name">
-      {{ tool.toolName }}
+      {{ tool.meta.toolName }}
     </div>
-    <SvgIcon v-bind="getStatusIconProps(tool.status)" />
+    <SvgIcon v-bind="getStatusIconProps(tool.meta.status)" />
   </div>
 </template>
 

@@ -1,13 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { baseRoutes } from '/@/router/base'
-import { useUserStore } from '/@/stores/user'
 import { menuRoutes } from './menu'
 import { isEqual } from 'es-toolkit'
+import { useUserStore } from '/@/stores/user'
+import { useThemeStore } from '/@/stores/theme'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { usePermissionStore } from '/@/stores/permission'
 import { WorkspaceType } from '/@/enums'
 import type { App } from 'vue'
-import { useThemeStore } from '/@/stores/theme'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -39,46 +40,46 @@ const whiteList = ['oauth2callback']
 // 不需要携带的查询参数
 const noTakeQueryList = ['official-site-lang', 'official-site-invite-code']
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to) => {
   const userStore = useUserStore()
   const themeStore = useThemeStore()
-  const { currentWorkspace } = useWorkspaceStore()
   const simpleLocale = useSimpleLocale()
+  const permissionStore = usePermissionStore()
+  const { currentWorkspace } = useWorkspaceStore()
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
-  const query = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }
+  const query: any = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }
+
+  if (Array.isArray(to.meta.permissions) && !permissionStore.check(to.meta.permissions, to.meta.permissionMode)) {
+    return { name: 'home', query }
+  }
 
   noTakeQueryList.forEach((key) => {
-    delete query[key]
+    delete query[key as keyof typeof query]
   })
 
   if (currentWorkspace?.workspaceType === WorkspaceType.Private && to.name === 'shared') {
-    return next({ name: 'home', query })
+    return { name: 'home', query }
   }
   else if (currentWorkspace?.workspaceType === WorkspaceType.Public && to.name === 'home') {
-    return next({ name: 'shared', query })
-  }
-
-  // 禁止当前用户访问非当前角色权限的页面
-  if (currentWorkspace?.role && to.meta?.roles && !to.meta?.roles?.includes(currentWorkspace?.role)) {
-    const name = currentWorkspace.workspaceType === WorkspaceType.Private ? 'home' : 'shared'
-    return next({ name, query })
+    return { name: 'shared', query }
   }
 
   if (!whiteList.includes(to.name as string)) {
     if (to.name !== 'login' && !userStore.token) {
-      return next({ name: 'login', query })
+      return { name: 'login', query }
     }
   }
   if (isEqual(to.query, query)) {
-    return next()
+    return true
   }
   else {
-    return next({ ...to, query })
+    return { ...to, query }
   }
 })
 
 if (import.meta.hot) {
+  // @ts-expect-error Window object is not typed
   window.router = router
 }
 

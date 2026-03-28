@@ -1,1 +1,1 @@
-import '@roxybrowser/openapi'
+import '@roxy/openapi'

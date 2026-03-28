@@ -6,13 +6,13 @@ import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProjectPin, WorkspaceType } from '/@/enums'
 import { safeParseJSON } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
-import type { Role } from '/@/enums'
 
 const { collapsed = false } = defineProps<{
   collapsed?: boolean
@@ -25,6 +25,7 @@ const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { check } = usePermission()
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
@@ -82,12 +83,9 @@ function filterMenus(menus: RouteRecordRaw[]) {
       return false
     }
 
-    let hasRole = true
-    if (item.meta?.roles?.length) {
-      hasRole = item.meta.roles.includes(currentWorkspace.value?.role as Role)
-    }
+    const hasPermission = !item.meta?.permissions?.length || check(item.meta.permissions, item.meta.permissionMode)
 
-    return !item.meta?.hideInMenu && hasRole
+    return !item.meta?.hideInMenu && hasPermission
   })
 }
 
@@ -145,7 +143,7 @@ emitter.on('badgeMap', (key) => {
 
 <template>
   <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <template v-if="!roleStore.isViewer">
+    <template v-if="check('Profiles_add')">
       <!-- <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png"> -->
       <RxButton id="new_profile" class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>

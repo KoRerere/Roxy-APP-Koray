@@ -2,16 +2,17 @@ import type { UnwrapRowType, UserGetUserBuyProxyListListData } from '@roxy/backe
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { useColumns } from './columns'
 import type { SortOrderNumber } from '/@/utils'
 
-const { isViewer, isEditor, isOwner } = storeToRefs(useRoleStore())
 export interface ProxyItem extends UnwrapRowType<UserGetUserBuyProxyListListData> {
   loadingOperationMap: {
     [key: string]: boolean
   }
 }
+
+const { check } = usePermission()
 
 export function tableOperation(data?: ProxyItem | ProxyItem[]) {
   const datas = ([] as ProxyItem[]).concat(data ?? [])
@@ -30,6 +31,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_speed_test',
       tooltip: $t('测试'),
       disabled: hasExpired || hasPending || hasRefunded,
+      power: check('Proxy_Store_speed_test'),
       quick: true,
       multiple: true,
       multipleProps: {
@@ -42,7 +44,8 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('下载'),
       icon: 'base/rx_ic_download',
       tooltip: $t('下载'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift || isViewer.value || isEditor.value,
+      power: check('Proxy_Store_download_proxy_info'),
+      disabled: hasExpired || hasPending || hasRefunded || isGift,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -56,7 +59,8 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('续费'),
       icon: 'base/rx_ic_renew2',
       tooltip: $t('续费'),
-      disabled: hasExpired || !isDone || !isOwner.value || !canRenew,
+      power: check('Proxy_Store_renew_proxy'),
+      disabled: hasExpired || !isDone || !canRenew,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -68,7 +72,6 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       name: 'remark',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
-      disabled: isViewer.value || isEditor.value,
     },
   ]
 }
@@ -178,7 +181,7 @@ export async function getSorts() {
 
   const onChange = (data: any) => {
     const params: Record<string, any> = {}
-    if (data.sortField && columns.find(item => item.key === data.sortField && item.sortable)) {
+    if (data.sortField && columns.some(item => item.key === data.sortField && item.sortable)) {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
     }

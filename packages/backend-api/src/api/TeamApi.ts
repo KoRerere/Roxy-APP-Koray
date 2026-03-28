@@ -17,8 +17,14 @@ import {
   UserDelTeamInfoCreatePayload,
   UserGetMemberInfoByWorkspaceListData,
   UserGetMemberInfoByWorkspaceListParams,
+  UserGetRolePermissionsListData,
+  UserGetRolePermissionsListParams,
+  UserGetTeamPermissionsListData,
+  UserGetTeamPermissionsListParams,
   UserMdfTeamInfoV2CreateData,
   UserMdfTeamInfoV2CreatePayload,
+  UserUpdateTeamPermissionsCreateData,
+  UserUpdateTeamPermissionsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -109,6 +115,67 @@ export class TeamApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserGetTeamPermissionsList
+   * @summary 团队成员权限信息获取
+   * @request GET:/user_get_team_permissions
+   * @response `200` `UserGetTeamPermissionsListData`
+   */
+  userGetTeamPermissionsList = (
+    query: UserGetTeamPermissionsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTeamPermissionsListData, any>({
+      path: `/user_get_team_permissions`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserUpdateTeamPermissionsCreate
+   * @summary 修改团队成员权限信息
+   * @request POST:/user_update_team_permissions
+   * @response `200` `UserUpdateTeamPermissionsCreateData`
+   */
+  userUpdateTeamPermissionsCreate = (
+    data: UserUpdateTeamPermissionsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdateTeamPermissionsCreateData, any>({
+      path: `/user_update_team_permissions`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserGetRolePermissionsList
+   * @summary 获取身份的默认权限列表
+   * @request GET:/user_get_role_permissions
+   * @response `200` `UserGetRolePermissionsListData`
+   */
+  userGetRolePermissionsList = (
+    query: UserGetRolePermissionsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetRolePermissionsListData, any>({
+      path: `/user_get_role_permissions`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

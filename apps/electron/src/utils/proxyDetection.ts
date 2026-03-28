@@ -3,21 +3,16 @@ import type { DictKey } from '/@/modules/dict'
 import type { AxiosProxyConfig, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import { isEmpty } from 'es-toolkit/compat'
-import { HttpProxyAgent } from 'http-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'
-import http from 'node:http'
 import pLimit from 'p-limit'
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import { API } from '/@/api'
 import { dictStore, updateDict } from '/@/modules/dict'
 import {
-  delRoxynetProxy,
   getRoxynetProcess,
   setRoxynetProxy,
   startRoxynet,
 } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
-import { safeGetURL } from '/@/utils/common'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 
 export interface ProxyDetectionResult {
@@ -44,8 +39,10 @@ export interface ProxyDetectionResult {
 
 // 检测超时时间
 const TIMEOUT = 20000
-/** 默认检测渠道 */
-const CHECK_CHANNEL_DEFAULT = 'ip-api'
+/** IPV4 默认检测渠道 */
+const CHECK_CHANNEL_DEFAULT_IPV4 = 'ip-api'
+/** IPV6 默认检测渠道 */
+const CHECK_CHANNEL_DEFAULT_IPV6 = 'ip2location'
 /** 查询渠道地址 */
 // const CHECK_CHANNEL_URL = 'https://ipcheck.roxybrowser.com/api/query'
 
@@ -60,47 +57,18 @@ const commonAxiosConfig: AxiosRequestConfig = {
   maxSockets: 10,
 }
 
-function getCheckChannelByUrl(url = store.ipChecker) {
+function getCheckChannelByUrl(url = store.ipChecker, ipType: ProxyDetectionParams['ipType'] = 'IPV4') {
+  const isIPV6 = ipType === 'IPV6'
+  const checkChannelDefault = isIPV6 ? CHECK_CHANNEL_DEFAULT_IPV6 : CHECK_CHANNEL_DEFAULT_IPV4
+  const checkChannel = isIPV6 ? dictStore['ipv6-query-channels'] : dictStore.checkChannel
+  const suffix = isIPV6 ? '-ipv6' : ''
+
   try {
-    return dictStore.checkChannel?.[new URL(url).hostname] || CHECK_CHANNEL_DEFAULT
+    return (checkChannel?.[new URL(url).hostname] || checkChannelDefault) + suffix
   }
   catch (error) {
-    return CHECK_CHANNEL_DEFAULT
+    return checkChannelDefault + suffix
   }
-}
-
-/** 获取 ipv6 检测地址 */
-async function getIPV6CheckUrl() {
-  const { origin, pathname } = new URL(store.ipv6CheckUrl)
-
-  if (isEmpty(dictStore['ip2location-key'])) {
-    await updateDict(['ip2location-key'])
-  }
-
-  const urls = dictStore['ip2location-key']?.map(key => `${origin}${pathname}?key=${key}`) || []
-  console.log('getIPV6CheckUrl urls', urls)
-
-  if (urls.length === 0) {
-    console.warn('No IP2Location keys found, falling back to default url')
-    return store.ipv6CheckUrl
-  }
-
-  const checkUrl = (url: string) => {
-    return fetch(url)
-      .then(res => res.json())
-      .then(res => res.error ? Promise.reject(res.error) : url)
-      .catch((err) => {
-        console.log('getIPV6CheckUrl checkUrl error', err)
-        return Promise.reject(err)
-      })
-  }
-  const finalUrl = await Promise.any(urls.map(checkUrl)).catch((err) => {
-    console.error('getIPV6CheckUrl error', err)
-    return store.ipv6CheckUrl
-  })
-  store.lastUseIp2locationUrl = finalUrl
-  console.log('getIPV6CheckUrl finalUrl', finalUrl)
-  return finalUrl
 }
 
 const protocolCheckMap = {
@@ -148,20 +116,34 @@ export function tryRefreshUrl(refreshUrl: string) {
     })
 }
 
+const dictKeys = ['checkChannel', 'ip-check-domains', 'ipv6-query-channels', 'ipv6-check-domains'] as const
+let checkDictUpdatePromiser: PromiseWithResolvers<void> | undefined
+
+async function checkDictUpdate() {
+  if (checkDictUpdatePromiser) {
+    return checkDictUpdatePromiser.promise
+  }
+
+  checkDictUpdatePromiser = Promise.withResolvers<void>()
+
+  const needUpdateDict = dictKeys.filter(key => isEmpty(dictStore[key]))
+  try {
+    if (needUpdateDict.length > 0) {
+      await updateDict(needUpdateDict)
+    }
+    checkDictUpdatePromiser.resolve()
+  }
+  catch (error) {
+    checkDictUpdatePromiser.reject(error)
+  }
+  finally {
+    checkDictUpdatePromiser = undefined
+  }
+}
+
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
-  const needUpdateDict: DictKey[] = []
-  if (isEmpty(dictStore.checkChannel)) {
-    needUpdateDict.push('checkChannel')
-  }
-
-  if (isEmpty(dictStore['ip-check-domains'])) {
-    needUpdateDict.push('ip-check-domains')
-  }
-
-  if (needUpdateDict.length > 0) {
-    await updateDict(needUpdateDict).catch(() => { })
-  }
+  await checkDictUpdate()
 
   async function __proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
     const {
@@ -240,7 +222,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       port: isUseSystemProxy ? store.roxynetProxyPort : port,
       proxyUserName: isUseSystemProxy ? dirId! : proxyUserName,
       proxyPassword: isUseSystemProxy ? dirId! : proxyPassword,
-      checkChannel: getCheckChannelByUrl(checkChannel),
+      checkChannel: getCheckChannelByUrl(checkChannel, ipType),
     }
 
     // console.log('proxyDetectionParams', proxyDetectionParams)
@@ -263,25 +245,11 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       if (!result.country || typeof result.country !== 'string')
         result.country = result.country_name || result.country_long
 
-      result.checkChannel = ipType === 'IPV6' ? store.lastUseIp2locationUrl : checkChannel
       result.ip ||= result.query
       result.country_code ||= result.country_short || result.countryCode || result.country
       result.timezone ||= result.time_zone
       result.latitude ||= result.lat
       result.longitude ||= result.lon
-
-      // 如果检测渠道不是 ip-api，则获取时区
-      if (ipType === 'IPV6') {
-        const { code, data } = await API.proxy
-          .userGetTimezoneByIpList({ ip: result.ip })
-          .catch((error) => {
-            console.log(`Failed to get timezone === user_get_timezone_by_ip`, error)
-            return { code: 1, data: { timezone: '' } }
-          })
-        if (code === 0) {
-          result.timezone = data.timezone
-        }
-      }
     }
 
     console.log('proxyDetection final result', result)
@@ -376,7 +344,6 @@ async function noProxy(winInfo: ProxyDetectionParams) {
 async function checkHttpProxy(
   winInfo: ProxyDetectionParams,
   isUseSystemProxy: boolean,
-  tryCount = 0,
 ) {
   const {
     proxyUserName,
@@ -395,11 +362,6 @@ async function checkHttpProxy(
   let auth: AxiosProxyConfig['auth']
   const isIPV6 = ipType === 'IPV6'
 
-  let ipv6CheckUrl = store.lastUseIp2locationUrl
-  if (isIPV6 && !ipv6CheckUrl) {
-    ipv6CheckUrl = await getIPV6CheckUrl()
-  }
-
   if (proxyUserName && proxyPassword) {
     // eslint-disable-next-line unused-imports/no-unused-vars
     auth = {
@@ -409,14 +371,12 @@ async function checkHttpProxy(
   }
 
   let proxyConfig
-  const checkChannelIsHttp = ipv6CheckUrl?.startsWith('http://')
 
   if (host) {
     const auth = encodeAuth(proxyUserName, proxyPassword)
     const httpUrl = `${protocol}://${auth}${host}:${port}`
-    const Agent = checkChannelIsHttp && isIPV6 ? HttpProxyAgent : HttpsProxyAgent
     proxyConfig = {
-      [checkChannelIsHttp && isIPV6 ? 'httpAgent' : 'httpsAgent']: new Agent(
+      httpsAgent: new HttpsProxyAgent(
         httpUrl,
         {
           ...commonAxiosConfig,
@@ -428,67 +388,40 @@ async function checkHttpProxy(
   }
 
   try {
-    if (isIPV6) {
-      const response = await axios({
-        url: ipv6CheckUrl,
-        method: 'GET',
-        ...commonAxiosConfig,
-        maxRedirects: 0,
-        proxy: false,
-        ...proxyConfig,
-      })
+    const ipCheckDomains = isIPV6 ? dictStore['ipv6-check-domains'] : dictStore['ip-check-domains']
+    const limit = pLimit(3)
 
-      console.log(`HTTP IPV6 detection successful url:${checkChannel}`, response.data)
-
-      return response.data
-    }
-    else {
-      const limit = pLimit(3)
-
-      const tasks = dictStore['ip-check-domains'].map((checkUrl) => {
-        return limit(async () => {
-          const response = await axios({
-            url: checkUrl,
-            method: 'POST',
-            data: {
-              channel: checkChannel,
-            },
-            ...commonAxiosConfig,
-            maxRedirects: 0,
-            proxy: false,
-            ...proxyConfig,
-          })
-
-          console.log(`HTTP detection successful url:${checkChannel}`, response.data)
-
-          // 只要有一个成功了，立刻清空剩下的排队任务
-          limit.clearQueue()
-          // 直接返回数据
-          return response.data.data
+    const tasks = ipCheckDomains.map((checkUrl) => {
+      return limit(async () => {
+        const response = await axios({
+          url: checkUrl,
+          method: 'POST',
+          data: {
+            channel: checkChannel,
+          },
+          ...commonAxiosConfig,
+          maxRedirects: 0,
+          proxy: false,
+          ...proxyConfig,
         })
-      })
 
-      // 直接返回 Promise.any 的结果：
-      // 若最快的一个成功，直接返回该值。
-      // 若全部失败（或 tasks 为空数组），将会自动抛出 AggregateError 从而触发外层的 catch
-      return Promise.any(tasks)
-    }
+        console.log(`HTTP detection successful url:${checkChannel}`, response.data)
+
+        // 只要有一个成功了，立刻清空剩下的排队任务
+        limit.clearQueue()
+        // 直接返回数据
+        return response.data.data
+      })
+    })
+
+    // 直接返回 Promise.any 的结果：
+    // 若最快的一个成功，直接返回该值。
+    // 若全部失败（或 tasks 为空数组），将会自动抛出 AggregateError 从而触发外层的 catch
+    return Promise.any(tasks)
   }
   catch (error: any) {
     console.error(`checkHttpProxy error`, error)
     console.error(`checkSocks5Proxy error.response?.data`, error.response?.data)
-    // 现在ipv6的检测用的免费key，一个月只有5w额度，用完就得重新配新key。前端做成自动切吧
-    // {"error":{"error_code":10000,"error_message":"Invalid API key or insufficient credit."}}
-    if (error.response?.data?.error?.error_code !== undefined) {
-      console.log('try getIPV6CheckUrl', tryCount)
-      if (tryCount < 1) {
-        await getIPV6CheckUrl()
-        return checkHttpProxy(winInfo, isUseSystemProxy, tryCount + 1)
-      }
-      else {
-        throw new Error(error.response?.data?.error?.error_message || 'IP2Location API key is invalid or out of credit')
-      }
-    }
     throw error
   }
 }
@@ -496,80 +429,50 @@ async function checkHttpProxy(
 /**
  * socket5 代理
  */
-async function checkSocks5Proxy(params: any, isUseSystemProxy: boolean, tryCount = 0) {
+async function checkSocks5Proxy(params: any, isUseSystemProxy: boolean) {
   const { proxyUserName, proxyPassword, host, port, checkChannel, ipType = 'IPV4' } = params
   logProxyConfig(params, `socket5`)
 
   const isIPV6 = ipType === 'IPV6'
 
-  let ipv6CheckUrl = store.lastUseIp2locationUrl
-  if (isIPV6 && !ipv6CheckUrl) {
-    ipv6CheckUrl = await getIPV6CheckUrl()
-  }
-
-  const checkChannelIsHttp = ipv6CheckUrl?.startsWith('http://')
   const auth = encodeAuth(proxyUserName, proxyPassword)
   const url = `socks5h://${auth}${host}:${port}`
   console.log(`SocksProxyAgent url`, url, checkChannel)
 
   try {
-    if (isIPV6) {
-      const response = await axios({
-        url: ipv6CheckUrl,
-        method: 'GET',
-        ...commonAxiosConfig,
-        proxy: false,
-        [checkChannelIsHttp ? 'httpAgent' : 'httpsAgent']: new SocksProxyAgent(url, commonAxiosConfig),
-      })
+    const checkDomains = isIPV6 ? dictStore['ipv6-check-domains'] : dictStore['ip-check-domains']
+    const limit = pLimit(3)
 
-      return response.data
-    }
-    else {
-      const limit = pLimit(3)
-
-      const tasks = dictStore['ip-check-domains'].map((checkUrl) => {
-        return limit(async () => {
-          const response = await axios({
-            url: checkUrl,
-            method: 'POST',
-            ...commonAxiosConfig,
-            data: {
-              channel: checkChannel,
-            },
-            proxy: false,
-            httpsAgent: new SocksProxyAgent(url, commonAxiosConfig),
-          })
-
-          console.log(`socket5 detection successful url:${checkChannel}`, response.data)
-
-          // 只要有一个成功了，立刻清空剩下的排队任务
-          limit.clearQueue()
-          // 直接返回数据
-          return response.data.data
+    const tasks = checkDomains.map((checkUrl) => {
+      return limit(async () => {
+        const response = await axios({
+          url: checkUrl,
+          method: 'POST',
+          ...commonAxiosConfig,
+          data: {
+            channel: checkChannel,
+          },
+          proxy: false,
+          httpsAgent: new SocksProxyAgent(url, commonAxiosConfig),
         })
-      })
 
-      // 直接返回 Promise.any 的结果：
-      // 若最快的一个成功，直接返回该值。
-      // 若全部失败（或 tasks 为空数组），将会自动抛出 AggregateError 从而触发外层的 catch
-      return Promise.any(tasks)
-    }
+        console.log(`socket5 detection successful url:${checkChannel}`, response.data)
+
+        // 只要有一个成功了，立刻清空剩下的排队任务
+        limit.clearQueue()
+        // 直接返回数据
+        return response.data.data
+      })
+    })
+
+    // 直接返回 Promise.any 的结果：
+    // 若最快的一个成功，直接返回该值。
+    // 若全部失败（或 tasks 为空数组），将会自动抛出 AggregateError 从而触发外层的 catch
+    return Promise.any(tasks)
   }
   catch (error: any) {
     console.error(`checkSocks5Proxy error`, error)
     console.error(`checkSocks5Proxy error.response?.data`, error.response?.data)
-    // 现在ipv6的检测用的免费key，一个月只有5w额度，用完就得重新配新key。前端做成自动切吧
-    // {"error":{"error_code":10000,"error_message":"Invalid API key or insufficient credit."}}
-    if (error.response?.data?.error?.error_code !== undefined) {
-      console.log('try getIPV6CheckUrl', tryCount)
-      if (tryCount < 1) {
-        await getIPV6CheckUrl()
-        return checkSocks5Proxy(params, tryCount + 1)
-      }
-      else {
-        throw new Error(error.response?.data?.error?.error_message || 'IP2Location API key is invalid or out of credit')
-      }
-    }
     throw error
   }
 }

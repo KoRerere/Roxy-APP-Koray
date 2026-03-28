@@ -1,6 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { env } from '../config'
-import { ChatGPT, Claude, DeepSeek, Gemini, Qwen, SiliconFlowDeepSeek } from './model'
+import { ChatGPT, Claude, DeepSeek, Gemini, Kimi, Qwen, SiliconFlowDeepSeek } from './model'
 import { providerBaseURL } from './provider'
 
 /**
@@ -67,12 +67,11 @@ export function createLLM(enableThinking = false) {
       apiKey,
       anthropicApiUrl: baseURL, // 使用 anthropicApiUrl 设置自定义 API 端点
       streaming: true,
-      temperature: 0.7,
-      clientOptions: {
-        defaultHeaders: {
-          'anthropic-version': '2023-06-01',
-        },
-      },
+      maxTokens: 4096 + 1024,
+      thinking: enableThinking
+        ? { type: 'enabled', budget_tokens: 4096 }
+        : undefined,
+      ...(enableThinking ? {} : { temperature: 0.5 }),
     }
     return new Claude(config)
   }
@@ -99,6 +98,15 @@ export function createLLM(enableThinking = false) {
       temperature: 0.7,
     }
     return new ChatGPT(config)
+  }
+  else if (model.includes('kimi')) {
+    return new Kimi({
+      model,
+      apiKey,
+      apiUrl: baseURL,
+      streaming: true,
+      temperature: 0.7,
+    })
   }
   else {
     return new ChatOpenAI({

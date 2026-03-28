@@ -20,10 +20,11 @@ type MoreItem = Partial<ShopItem> & {
 
 type ShopList = (ShopItem | MoreItem)[]
 
-defineProps<{
+const props = defineProps<{
   onBuyProxy: (props: any) => void
 }>()
 
+const route = useRoute()
 const themeStore = useThemeStore()
 const [_, onlyErrorToast] = useResponseToast()
 
@@ -80,22 +81,40 @@ async function getShopList() {
         provider: item.isJump
           ? undefined
           : {
-            proxyProviderWebsite: item.proxyProviderWebsite,
-            proxyTypeList: item.proxyTypeList,
-            proxyProviderIcon: item.proxyProviderIcon,
-            proxyProviderName: item.proxyProviderName,
-          },
+              proxyProviderWebsite: item.proxyProviderWebsite,
+              proxyTypeList: item.proxyTypeList,
+              proxyProviderIcon: item.proxyProviderIcon,
+              proxyProviderName: item.proxyProviderName,
+            },
       },
     }
   })
+
+  buyProxyFromAnnouncement()
+}
+
+watch(
+  () => route.query._t,
+  buyProxyFromAnnouncement,
+)
+
+function buyProxyFromAnnouncement() {
+  // 通过公告栏跳转购买
+  if (route.query.proxyProviderName) {
+    const provider = shopList.value.find(item => item.proxyProviderName === route.query.proxyProviderName)
+    if (provider) {
+      props.onBuyProxy(provider.props)
+    }
+  }
 }
 </script>
 
 <template>
   <div v-show="showList.length" ref="content" class="flex pa-3 gap-3 overflow-x-auto content">
     <component :is="!item.isMore ? RxTooltip : 'div'" v-for="item in showList" :key="item.proxyProviderName" style="background: var(--colors-background-bg-action);"
-      class="shrink-0 relative flex items-center pa-3 gap-2.5 rounded-3 cursor-pointer" :class="{ 'min-w-70 flex-1': !item.isMore || showList.length < 4 }" placement="bottom" :delay="500"
-      @click="onBuyProxy(item.focus)">
+               class="shrink-0 relative flex items-center pa-3 gap-2.5 rounded-3 cursor-pointer" :class="{ 'min-w-70 flex-1': !item.isMore || showList.length < 4 }" placement="bottom" :delay="500"
+               @click="onBuyProxy(item.focus)"
+    >
       <template #default>
         <div v-if="item.isNew" class="absolute top-0 -right-1 -translate-y-1/2 new">
           NEW

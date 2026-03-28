@@ -1,6 +1,6 @@
 # Data & Storage
 
-<!-- Generated: 2026-03-09 | Files scanned: 40+ | Token estimate: ~700 -->
+<!-- Generated: 2026-03-26 | Files scanned: 40+ | Token estimate: ~700 -->
 
 ## Electron Store
 

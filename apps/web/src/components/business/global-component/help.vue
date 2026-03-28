@@ -204,7 +204,7 @@ async function openMCP() {
   if (apiPort === -1) {
     onlyErrorToast(-1, $t('请检查 API 启用状态或端口是否被占用'))
     opening.value = false
-    router.replace({ name: 'api-keys' })
+    router.replace({ name: 'api-keys', query: { highlight: 'true' } })
     return
   }
   await globalThis.electronAPI.send('mcp:open').catch(() => { })

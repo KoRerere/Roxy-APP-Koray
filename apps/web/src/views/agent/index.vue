@@ -2,21 +2,23 @@
 import AgentList from '/@/views/agent/list/index.vue'
 import AgentShop from '/@/views/agent/shop/index.vue'
 import { useUserStore } from '/@/stores/user'
+import { usePermission } from '/@/hooks/usePermission'
 import { safeParseJSON } from '/@/utils/basic'
 
 const route = useRoute()
 const router = useRouter()
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
+const { check } = usePermission()
 
 const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
 const activeTabValue = ref((route.query.name as string) || localStatus.proxyTab || 'shop')
 
 const tabs = [
-  { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', value: 'shop', component: markRaw(AgentShop) },
-  { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList) },
-]
+  { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', value: 'shop', component: markRaw(AgentShop), visible: check('Proxy_Store_view_page') },
+  { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList), visible: check('Proxy_List_view_page') },
+].filter(tab => tab.visible !== false)
 
-const activeTab = computed(() => tabs.find(tab => tab.value === activeTabValue.value))
+const activeTab = computed(() => tabs.find(tab => tab.value === activeTabValue.value) ?? tabs[0])
 
 watch(
   () => route.query.name,

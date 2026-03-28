@@ -1,14 +1,13 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
-
-import { useRoleStore } from '/@/stores/role'
-import { useTeam } from '/@/views/team/hooks'
+import { useTeamStore } from '/@/stores/team'
+import { usePermission } from '/@/hooks/usePermission'
 import { getColumns } from './columns'
 import { getDictMap, setInputValueByFormData, transformSortOrder } from '/@/utils'
 import type { SortOrderNumber } from '/@/utils'
 
-const role = useRoleStore()
-const { getTeamMembers } = useTeam()
+const { getTeamMembers } = useTeamStore()
+const { check } = usePermission()
 
 export function tableFilters(_params: any = {}) {
   return [
@@ -71,6 +70,7 @@ export async function getCustomFilters(params: any = {}) {
       getOptions: async () => {
         const { data } = await API.window.userGetWindowPlatformAccountListList()
         return (data?.rows || []).map((item: any) => {
+          /* eslint-disable e18e/prefer-static-regex */
           const label = new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1')
           return {
             parentName: 'platformUrls',
@@ -243,7 +243,7 @@ export function getOperation(row: any = {}) {
       name: 'edit',
       label: $t('编辑窗口'),
       icon: 'base/rx_ic_edit',
-      power: !role.isViewer,
+      power: check('Profiles_edit'),
     },
     {
       name: 'transfer',
@@ -256,18 +256,17 @@ export function getOperation(row: any = {}) {
         name: 'G3',
         showLabel: true,
       },
-      disabled: !(role.isOwner || role.isManager),
-      disabledTooltip: $t('权限不足'),
+      power: check('Profiles_transfer_window'),
     },
     {
       name: 'moveToProject',
       label: $t('移动到项目'),
       icon: 'base/rx_ic_stack_move',
       multiple: true,
-      power: role.isOwner || role.isManager,
+      power: check('Profiles_move_project'),
     },
     {
-      power: !role.isViewer,
+      power: check(['Profiles_edit', 'Profiles_transfer_window', 'Profiles_move_project'], 'any'),
       multiple: true,
       separator: true,
     },
@@ -318,6 +317,7 @@ export function getOperation(row: any = {}) {
       label: $t('窗口操作'),
       icon: 'base/rx_ic_browser',
       multiple: true,
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window'], 'any'),
       items: [
         {
           name: 'view',
@@ -331,11 +331,10 @@ export function getOperation(row: any = {}) {
           icon: 'base/rx_ic_refresh',
           tooltip: $t('重启窗口'),
         },
-
         {
           name: 'copyId',
           label: $t('复制窗口 ID'),
-          power: !role.isViewer,
+          power: check('Profiles_copy_window_id'),
           icon: 'base/rx_ic_copy',
           multiple: false,
         },
@@ -343,7 +342,7 @@ export function getOperation(row: any = {}) {
           name: 'exportProfile',
           label: $t('导出窗口'),
           icon: 'base/rx_ic_export',
-          power: !role.isViewer,
+          power: check('Profiles_export_window'),
         },
       ],
     },
@@ -352,22 +351,25 @@ export function getOperation(row: any = {}) {
       label: $t('代理 IP 操作'),
       icon: 'base/rx_ic_internet',
       multiple: true,
-      power: !role.isViewer,
+      power: check(['Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside'], 'any'),
       items: [
         {
           name: 'addProxy',
           label: $t('添加代理 IP'),
           icon: 'base/rx_ic_plus',
+          power: check('Profiles_add_proxy_outside'),
         },
         {
           name: 'chooseProxy',
           label: $t('选择已有代理 IP'),
           icon: 'base/rx_ic_exchange',
+          power: check('Profiles_select_proxy'),
         },
         {
           name: 'deleteProxy',
           label: $t('删除代理 IP'),
           icon: 'base/rx_ic_bin_1',
+          power: check('Profiles_delete_proxy_outside'),
           disabled: !([].concat(row).some((item: any) => item.proxyCategory !== 'noproxy')),
         },
       ],
@@ -377,21 +379,24 @@ export function getOperation(row: any = {}) {
       label: $t('平台账号操作'),
       icon: 'base/rx_ic_keys',
       multiple: true,
-      power: !role.isViewer,
+      power: check(['Profiles_add_platform_outside', 'Profiles_select_platform'], 'any'),
       items: [
         {
           name: 'addPlatformAccount',
           label: $t('添加平台账号'),
           icon: 'base/rx_ic_plus',
+          power: check('Profiles_add_platform_outside'),
         },
         {
           name: 'choosePlatformAccount',
           label: $t('选择已有平台账号'),
           icon: 'base/rx_ic_exchange',
+          power: check('Profiles_select_platform'),
         },
       ],
     },
     {
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_add_platform_outside', 'Profiles_select_platform'], 'any'),
       separator: true,
       multiple: true,
     },
@@ -399,17 +404,18 @@ export function getOperation(row: any = {}) {
       name: 'addNotes',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
+      power: check('Profiles_edit_remark'),
       multiple: true,
     },
     {
       name: 'addTag',
       label: $t('添加标签'),
       icon: 'base/rx_ic_tag',
-      power: !role.isViewer,
+      power: check(['Profiles_Label_add', 'Profiles_select_label']),
       multiple: true,
     },
     {
-      power: !role.isViewer,
+      power: check(['Profiles_edit_remark', 'Profiles_select_label'], 'any'),
       separator: true,
       multiple: true,
     },
@@ -417,7 +423,7 @@ export function getOperation(row: any = {}) {
       name: 'editCookies',
       label: $t('编辑 Cookies'),
       icon: 'base/rx_ic_cookies',
-      power: !role.isViewer,
+      power: check('Profiles_edit_cookies'),
       multiple: true,
     },
     {
@@ -425,22 +431,21 @@ export function getOperation(row: any = {}) {
       label: $t('Cookie 机器人'),
       icon: 'base/rx_ic_cookie_bot',
       suffixIcon: 'base/fire',
-      power: !role.isViewer,
       multiple: true,
     },
     {
-      power: !role.isViewer,
+      power: check('Profiles_clear_cache'),
       separator: true,
     },
     {
       name: 'clearCache',
       label: $t('清除缓存'),
       icon: 'base/rx_ic_brush',
-      power: !role.isViewer,
+      power: check('Profiles_clear_cache'),
       multiple: true,
     },
     {
-      power: !role.isViewer,
+      power: check('Profiles_delete'),
       separator: true,
       multiple: true,
     },
@@ -448,7 +453,7 @@ export function getOperation(row: any = {}) {
       name: 'delete',
       label: $t('删除窗口'),
       icon: 'base/rx_ic_bin_1',
-      power: !role.isViewer,
+      power: check('Profiles_delete'),
       multiple: true,
     },
   ]

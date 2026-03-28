@@ -4,12 +4,12 @@ import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { ProjectPin } from '/@/enums'
+import { ProjectPin, ProjectReqType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import { useProjectStore } from '/@/stores/project'
-import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { usePermission } from '/@/hooks/usePermission'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
@@ -17,7 +17,7 @@ import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDialog } from '/@/hooks/useDialog'
-import { useTeam } from '/@/views/team/hooks'
+import { useTeamStore } from '/@/stores/team'
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
@@ -32,7 +32,8 @@ const { currentWorkspace } = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo, userInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
-const { getTeamMembers } = useTeam()
+const { getTeamMembers } = useTeamStore()
+const { check } = usePermission()
 
 const columns = [
   {
@@ -67,8 +68,6 @@ const columns = [
   },
 ]
 
-const role = useRoleStore()
-
 async function tableRequest(params: any) {
   getProjects()
   return API.limit.userGetProjectInfoByWorkspaceList({ ...params, default: 2 })
@@ -83,7 +82,7 @@ function getOperation(data: Project) {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
-      power: role.isOwner || role.isManager,
+      power: check('Projects_edit'),
       disabled: !!data.projectDefault || !!data.isTransfer,
       command: ({ item }: any) => {
         operationHandler(item, data)
@@ -104,7 +103,7 @@ function getOperation(data: Project) {
       name: 'invite',
       label: $t('邀请'),
       icon: 'base/rx_ic_user_add',
-      power: role.isOwner || role.isManager || role.isEditor,
+      power: check('Team_Member_invite'),
       tooltip: $t('邀请'),
       quick: true,
       command: ({ item }: any) => {
@@ -112,14 +111,14 @@ function getOperation(data: Project) {
       },
     },
     {
+      power: check(['Projects_edit', 'Team_Member_invite'], 'any'),
       separator: true,
-      power: role.isOwner || role.isManager,
     },
     {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
-      power: role.isOwner || role.isManager,
+      power: check('Projects_delete'),
       disabled: !!data.projectDefault || !!data.isTransfer,
       command: ({ item }: any) => {
         operationHandler(item, data)
@@ -192,7 +191,7 @@ async function pinProject(data: Project) {
   const oldPinStatus = data.user_info!.find(item => item.userId === userInfo.value.id)?.pinStatus
   const pinStatus = oldPinStatus === ProjectPin.pinned ? ProjectPin.none : ProjectPin.pinned
 
-  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })
+  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus, requestType: ProjectReqType.PinProject })
   if (code === 0) {
     tableRef.value?.refresh()
   }
@@ -260,7 +259,7 @@ async function inviteUserInProject(project: Project) {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader :divider="false" :title="$t('项目管理')">
-      <RxButton v-if="role.isOwner || role.isManager" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="check('Projects_add')" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex-1 flex overflow-hidden">
       <RyTable ref="project" v-model:columns="columns" data-key="project_id" cache-key="project-list" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
@@ -270,7 +269,7 @@ async function inviteUserInProject(project: Project) {
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="check('Projects_add')" outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
               </div>
             </template>
           </CustomEmpty>
@@ -303,8 +302,8 @@ async function inviteUserInProject(project: Project) {
   </div>
 </template>
 
-  <style lang="scss" scoped>
-  .name {
+<style lang="scss" scoped>
+.name {
   font-size: 13px;
   -webkit-user-drag: none;
 }

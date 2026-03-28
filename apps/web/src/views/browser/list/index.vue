@@ -17,6 +17,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { safeParseJSON, sleep } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 
@@ -27,6 +28,7 @@ const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
+const { check } = usePermission()
 
 interface TabType {
   id: string
@@ -46,9 +48,9 @@ const rawTabs: TabType[] = [
 ] as const
 
 const suffixTabs = computed(() => [
-  { id: 'rx_1004', label: $t('投送中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), power: role.isOwner || role.isManager },
-  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle) },
-].filter(item => item.power !== false))
+  { id: 'rx_1004', label: $t('投送中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), visible: role.isOwner || role.isManager },
+  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), visible: check('Profiles_view_recycle_bin') },
+].filter(item => item.visible !== false))
 
 const tabIdLangMap = {
   rx_1002: $t('收藏'),
@@ -296,10 +298,10 @@ async function hidePopover() {
         </div>
       </div>
       <RxButton text severity="secondary" size="xs" icon="base/rx_ic_gear" @click="showPopover" />
-      <div v-if="!role.isViewer">
-        <Divider layout="vertical" class="!mx-[4px] h-[16px]" />
-      </div>
-      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory" />
+      <template v-if="check('Profiles_Label_view_page')">
+        <RxDivider class="mx-1 !h-4" vertical line-only />
+        <RxButton v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory" />
+      </template>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <component :is="currentSuffixTab.component" v-if="currentSuffixTab.visible" />

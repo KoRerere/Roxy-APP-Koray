@@ -11,20 +11,39 @@ const iconMap: Record<string, SvgNames> = {
 
 const messageMap: Recordable = {}
 
+function toastCacheKey(message: Recordable) {
+  return `${String(message.id)}_${message.severity ?? ''}`
+}
+
+/** 从缓存移除并清除自动关闭定时器（手动关闭、自动关闭、鼠标移出后关闭均需调用，否则会残留 messageMap 导致无法再次弹出） */
+function disposeToastFromMap(key: string) {
+  const entry = messageMap[key]
+  if (entry) {
+    clearTimeout(entry.closeTimeout)
+    Reflect.deleteProperty(messageMap, key)
+  }
+}
+
+function closeToast(slotData: Recordable) {
+  const { message, closeCallback } = slotData
+  disposeToastFromMap(toastCacheKey(message))
+  closeCallback()
+}
+
 function handleMouseenter(slotData: Recordable) {
   const { message } = slotData
-  if (messageMap[message.id]) {
-    clearTimeout(messageMap[message.id].closeTimeout)
+  const key = toastCacheKey(message)
+  if (messageMap[key]) {
+    clearTimeout(messageMap[key].closeTimeout)
   }
 }
 
 function handleMouseleave(slotData: Recordable) {
   const { message, closeCallback } = slotData
-  console.log('handleMouseleave', slotData, messageMap)
-  if (messageMap[message.id]) {
-    messageMap[message.id].closeTimeout = setTimeout(() => {
-      closeCallback()
-      Reflect.deleteProperty(messageMap, message.id)
+  const key = toastCacheKey(message)
+  if (messageMap[key]) {
+    messageMap[key].closeTimeout = setTimeout(() => {
+      closeToast({ message, closeCallback })
     }, Math.max(1000, message.originLife - (Date.now() - message.startTimestamp)))
   }
 }
@@ -33,16 +52,24 @@ function cacheToast(slotData: Recordable) {
   const { message, closeCallback } = slotData
   // console.log('cacheToast', slotData)
 
-  // default life
-  if (!Reflect.has(message, 'life')) {
-    message.life = 2500
+  const cacheKey = toastCacheKey(message)
+
+  // 首次入队前：PrimeVue 可能复用 message，life/hide 仍保留上次状态，需恢复才能再次弹出
+  if (!messageMap[cacheKey]) {
+    if (!Reflect.has(message, 'life') || message.life === 0) {
+      message.life = 2500
+    }
+    if (message.hide) {
+      message.hide = false
+    }
   }
 
   const duplicateItem = Object.values(messageMap).find((item) => {
     const { message: { id, groupId, summary, detail, severity } } = item
     return id !== message.id
+      && severity === message.severity
       && (groupId === message.groupId
-        || (summary === message.summary && detail === message.detail && severity === message.severity))
+        || (summary === message.summary && detail === message.detail))
   })
 
   if (duplicateItem) {
@@ -52,22 +79,20 @@ function cacheToast(slotData: Recordable) {
     duplicateItem.message.count = (duplicateItem.message.count || 1) + 1
     clearTimeout(duplicateItem.closeTimeout)
     duplicateItem.closeTimeout = setTimeout(() => {
-      duplicateItem.closeCallback()
-      Reflect.deleteProperty(messageMap, duplicateItem.message.id)
+      closeToast({ message: duplicateItem.message, closeCallback: duplicateItem.closeCallback })
     }, duplicateItem.message.originLife)
     return
   }
 
-  if (!messageMap[message.id] && message.life) {
+  if (!messageMap[cacheKey] && message.life) {
     message.originLife = message.life
     message.startTimestamp = Date.now()
     message.life = 0
     const closeTimeout = setTimeout(() => {
-      closeCallback()
-      Reflect.deleteProperty(messageMap, message.id)
+      closeToast({ message, closeCallback })
     }, message.originLife)
 
-    messageMap[message.id] = { message, closeCallback, closeTimeout }
+    messageMap[cacheKey] = { message, closeCallback, closeTimeout }
   }
 }
 </script>
@@ -98,7 +123,7 @@ function cacheToast(slotData: Recordable) {
             </div>
           </div>
           <div class="alert-close">
-            <SvgIcon name="base/rx_ic_delete" size="16" class="cursor-pointer" @click="closeCallback" />
+            <SvgIcon name="base/rx_ic_delete" size="16" class="cursor-pointer" @click="closeToast({ message, closeCallback })" />
           </div>
         </section>
       </OverlayBadge>

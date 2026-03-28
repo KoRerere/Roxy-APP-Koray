@@ -48,6 +48,7 @@ const { onConfirm } = defineProps<{
 
 const confirm = useConfirm()
 const { getUserConfig } = useUserStore()
+const userStore = useUserStore()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -105,6 +106,13 @@ const missMessage = computed(() => {
   }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
 
   return $t('第 [{miss}] 条代理 IP 缺少信息，将不会被保存。', { miss: miss.map(item => item._missIndex).join(', ') })
+})
+
+watch(ipType, async (newVal) => {
+  const $dict_map = await getDictMap()
+  const dictKey = newVal === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
+  ipCheckerConfig.props.options = $dict_map[dictKey]
+  ipCheckerConfig.value = $dict_map[dictKey]!.find((item: any) => item.value === userStore.userConfig!.ipChecker) || $dict_map[dictKey]![0]
 })
 
 onBeforeMount(async () => {

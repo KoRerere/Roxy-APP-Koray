@@ -4,8 +4,10 @@ import { checkCoreVersion } from './checkCoreVersion'
 import { checkNotify } from './checkNotify'
 import { checkDictVersion } from './checkDictVersion'
 import { checkSoftConfigVersion } from './checkSoftConfigVersion'
+import { checkIdentity } from './checkIdentity'
 import { checkPermission } from './checkPermission'
 import { checkPayInfoVersion } from './checkPayInfoVersion'
+import { checkAnncVersion } from './checkAnncVersion'
 
 const ignoreUrl = [
   '/login',
@@ -29,6 +31,8 @@ export function handleResponseHeaders(response: AxiosResponse) {
   checkNotify(response)
   checkDictVersion(response)
   checkSoftConfigVersion(response)
+  checkIdentity(response)
   checkPermission(response)
   checkPayInfoVersion(response)
+  checkAnncVersion(response)
 }

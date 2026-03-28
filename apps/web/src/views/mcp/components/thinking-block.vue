@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ThinkingBlock, WorkerThinking } from '../types'
+import type { MessageEntry } from '../types'
 import { formatThinkingDuration } from '../composables/useMessageItem'
 
 const props = defineProps<{
-  thinking: ThinkingBlock | WorkerThinking
+  thinking: MessageEntry
   expanded: boolean
 }>()
 

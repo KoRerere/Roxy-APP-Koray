@@ -1,7 +1,8 @@
 import { abortAll } from './agent/utils/abortRegistry'
 import { env } from './config'
-import { closeDatabase } from './database/context'
+// import { closeDatabase } from './database/context'
 import { closeDatabase as closeConversationsDatabase } from './database/conversations'
+import { closeCheckpointer } from './deepagents/sqlite-checkpointer'
 import { initSensitiveWords } from './sensitiveWords'
 import { startServer } from './server'
 
@@ -15,7 +16,8 @@ if (env.DEVELOPMENT) {
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...')
   abortAll()
-  closeDatabase()
+  // closeDatabase()
+  closeCheckpointer()
   closeConversationsDatabase()
   process.exit(0)
 })
@@ -23,8 +25,9 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...')
   abortAll()
-  closeDatabase()
+  // closeDatabase()
   closeConversationsDatabase()
+  closeCheckpointer()
   process.exit(0)
 })
 

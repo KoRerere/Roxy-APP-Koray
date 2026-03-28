@@ -24,13 +24,14 @@ const {
 
 const [showToast] = useResponseToast()
 const { getUserConfig } = useUserStore()
+const userStore = useUserStore()
+
 const { testProxy, checkResult, batchTestShowToast } = useCheckProxy()
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
 const formRef = useTemplateRef('form')
 const alertRef = useTemplateRef('alert')
 const cssModule = useCssModule()
-
 const loading = ref(false)
 const alertVisible = ref(false)
 const original = ref(deepClone(data))
@@ -83,6 +84,29 @@ const inputs = ref([
     props: {
       name: 'ipType',
       size: 'md',
+      onValueChange: async (value: string) => {
+        const $dict_map = await getDictMap()
+        const dictKey = value === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
+        const isExist = $dict_map[dictKey]?.find(item => item.value === data.checkChannel)
+        const defaultCheckChannel = isExist ? data.checkChannel : $dict_map[dictKey]?.[0]?.value
+
+        if (value === IPType.IPV6) {
+          formRef.value?.setInputsProps({
+            checkChannel: {
+              value: defaultCheckChannel,
+              options: $dict_map['ipv6-query-channels'],
+            },
+          })
+        }
+        else {
+          formRef.value?.setInputsProps({
+            checkChannel: {
+              value: isExist ? defaultCheckChannel : (userStore.userConfig?.ipChecker || defaultCheckChannel),
+              options: $dict_map.checkChannel,
+            },
+          })
+        }
+      },
     },
   },
   {
@@ -203,6 +227,12 @@ async function getInputs() {
     getDictMap(),
   ])
 
+  const isIPV6 = data.ipType === IPType.IPV6
+  const dictKey = isIPV6 ? 'ipv6-query-channels' : 'checkChannel'
+  const isExist = $dict_map[dictKey]?.find(item => item.value === data.checkChannel)
+  let defaultCheckChannel: string = isExist ? data.checkChannel : $dict_map[dictKey]?.[0]?.value
+  defaultCheckChannel = isIPV6 ? defaultCheckChannel : (data.checkChannel || userConfig?.ipChecker || defaultCheckChannel)
+
   const proxyCategory = (data.proxyCategory || data.protocol)?.split('/')[0]
 
   formRef.value?.setInputsProps({
@@ -215,8 +245,8 @@ async function getInputs() {
       options: $dict_map.protocol,
     },
     checkChannel: {
-      value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel![0]?.value,
-      options: $dict_map.checkChannel,
+      value: defaultCheckChannel,
+      options: $dict_map[dictKey],
     },
   })
 }

@@ -53,6 +53,27 @@ export class PluginsApi<SecurityDataType = unknown> {
   }
 
   /**
+   * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar 一天一个空间最多上传5个（包括本地上传）
+   *
+   * @tags Plugins
+   * @name UserUploadChromePluginsV2Create
+   * @summary 谷歌商店上传谷歌插件
+   * @request POST:/user_upload_chrome_plugins_v2
+   * @response `200` `UserUploadChromePluginsV2CreateData`
+   */
+  userUploadChromePluginsV2Create = (
+    data: UserUploadChromePluginsV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUploadChromePluginsV2CreateData, any>({
+      path: `/user_upload_chrome_plugins_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
    * @description 一天一个空间最多上传5个（包括谷歌上传）
    *
    * @tags Plugins
@@ -70,6 +91,22 @@ export class PluginsApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserRecordPluginUploadV2List
+   * @summary 获取上传谷歌插件次数
+   * @request GET:/user_record_plugin_upload_v2
+   * @response `200` `UserRecordPluginUploadV2ListData`
+   */
+  userRecordPluginUploadV2List = (params: RequestParams = {}) =>
+    this.http.request<UserRecordPluginUploadV2ListData, any>({
+      path: `/user_record_plugin_upload_v2`,
+      method: "GET",
       format: "json",
       ...params,
     });
@@ -154,6 +191,26 @@ export class PluginsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Plugins
+   * @name UserGetPluginInfoByIdList
+   * @summary 根据插件ID获取插件详细信息
+   * @request GET:/user_get_plugin_info_by_id
+   * @response `200` `UserGetPluginInfoByIdListData`
+   */
+  userGetPluginInfoByIdList = (
+    query: UserGetPluginInfoByIdListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPluginInfoByIdListData, any>({
+      path: `/user_get_plugin_info_by_id`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
    * @name UserDelPluginInfoCreate
    * @summary 删除用户自己添加的插件
    * @request POST:/user_del_plugin_info
@@ -172,6 +229,27 @@ export class PluginsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserBatchDelPluginInfoCreate
+   * @summary 批量删除用户自己添加的插件
+   * @request POST:/user_batch_del_plugin_info
+   * @response `200` `UserBatchDelPluginInfoCreateData`
+   */
+  userBatchDelPluginInfoCreate = (
+    data: UserBatchDelPluginInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchDelPluginInfoCreateData, any>({
+      path: `/user_batch_del_plugin_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
    * @description 分两种情况检测：1.如果是单个检测，就传pluginDir="xxxxxxxxxxxxxxxxxxx" 2.如果是多个检测，就传pluginDir=""就行
    *
    * @tags Plugins
@@ -179,7 +257,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @summary 用户检查自己所有插件版本
    * @request GET:/user_check_all_plugins_version
    * @response `200` `UserCheckAllPluginsVersionListData`
-   * @response `x-200:成功` `object`
+   * @response `x-200-2` `object`
    */
   userCheckAllPluginsVersionList = (
     query: UserCheckAllPluginsVersionListParams,
@@ -210,48 +288,6 @@ export class PluginsApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserUpgradePluginsCreateData, any>({
       path: `/user_upgrade_plugins`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar 一天一个空间最多上传5个（包括本地上传）
-   *
-   * @tags Plugins
-   * @name UserUploadChromePluginsV2Create
-   * @summary 谷歌商店上传谷歌插件
-   * @request POST:/user_upload_chrome_plugins_v2
-   * @response `200` `UserUploadChromePluginsV2CreateData`
-   */
-  userUploadChromePluginsV2Create = (
-    data: UserUploadChromePluginsV2CreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserUploadChromePluginsV2CreateData, any>({
-      path: `/user_upload_chrome_plugins_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Plugins
-   * @name UserBatchDelPluginInfoCreate
-   * @summary 批量删除用户自己添加的插件
-   * @request POST:/user_batch_del_plugin_info
-   * @response `200` `UserBatchDelPluginInfoCreateData`
-   */
-  userBatchDelPluginInfoCreate = (
-    data: UserBatchDelPluginInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserBatchDelPluginInfoCreateData, any>({
-      path: `/user_batch_del_plugin_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -296,42 +332,6 @@ export class PluginsApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Plugins
-   * @name UserRecordPluginUploadV2List
-   * @summary 获取上传谷歌插件次数
-   * @request GET:/user_record_plugin_upload_v2
-   * @response `200` `UserRecordPluginUploadV2ListData`
-   */
-  userRecordPluginUploadV2List = (params: RequestParams = {}) =>
-    this.http.request<UserRecordPluginUploadV2ListData, any>({
-      path: `/user_record_plugin_upload_v2`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Plugins
-   * @name UserGetPluginInfoByIdList
-   * @summary 根据插件ID获取插件详细信息
-   * @request GET:/user_get_plugin_info_by_id
-   * @response `200` `UserGetPluginInfoByIdListData`
-   */
-  userGetPluginInfoByIdList = (
-    query: UserGetPluginInfoByIdListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetPluginInfoByIdListData, any>({
-      path: `/user_get_plugin_info_by_id`,
-      method: "GET",
-      query: query,
       format: "json",
       ...params,
     });

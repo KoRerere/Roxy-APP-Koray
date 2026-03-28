@@ -6,6 +6,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'skip'): void
 }>()
+
+const router = useRouter()
+
 const features = ref(props.newFeatureTips)
 const page = ref(0)
 const appUpgradeTips = ref<HTMLElement | null>(null)
@@ -81,12 +84,38 @@ function handlePrev() {
     syncVideoPlayback()
   })
 }
+
+function onHtmlClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  const link = target.closest('a')
+
+  if (!link)
+    return
+
+  const href = link.getAttribute('href')
+
+  // 只拦截站内路由；相对路径即使 target="_blank" 也走 SPA，避免打开外部浏览器
+  if (!href || href.startsWith('http'))
+    return
+  e.preventDefault()
+
+  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
+
+  router.replace({
+    path: url.pathname,
+    query: {
+      ...Object.fromEntries(url.searchParams),
+      _t: Date.now(),
+    },
+  })
+  handleSkip()
+}
 </script>
 
 <template>
   <div ref="appUpgradeTips" class="app-upgrade-tips">
     <template v-for="(item, index) in formatFeatures" :key="index">
-      <div class="feature-content" :class="{ active: page === index }" v-html="item.content" />
+      <div class="feature-content" :class="{ active: page === index }" @click="onHtmlClick" v-html="item.content" />
     </template>
 
     <div v-if="formatFeatures.length > 1" class="indicator-list">
