@@ -12,7 +12,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, hidePageLoading, isMainWindow, isMobile, isWindows } from '/@/utils'
+import { encryptAESGCM, hidePageLoading, isDev, isMainWindow, isMobile, isWindows } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
@@ -333,6 +333,11 @@ export const useUserStore = defineStore(
 
     function setToken(_token: string) {
       token.value = _token
+
+      if (!globalThis.isElectron) {
+        const domain = isDev ? '.roxybrowser.co' : '.roxybrowser.com'
+        document.cookie = `roxy_token=${_token}; domain=${domain}; path=/`
+      }
     }
 
     /** 记住我的时候需要保存密码 */
