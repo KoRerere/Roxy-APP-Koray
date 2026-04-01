@@ -196,6 +196,13 @@ async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
 
+  const searchParams = new URLSearchParams(window.location.search)
+  const officialSiteRedirect = searchParams.get('official-site-redirect')
+  if (officialSiteRedirect) {
+    window.location.replace(officialSiteRedirect)
+    return
+  }
+
   await checkWorkspaceInvitation()
 }
 
