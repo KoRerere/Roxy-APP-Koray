@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
-import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
+import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import SettingsPopup from './components/settings-popup.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from 'primevue/usedialog'
@@ -77,7 +77,7 @@ const items = computed(() => {
       // vIf: () => userStore.userInfo.identity !== 'agent',
     },
     {
-      label: $t('兑换码'),
+      label: $t('兑换'),
       icon: 'base/rx_ic_medal',
       command: openRedeemCode,
     },

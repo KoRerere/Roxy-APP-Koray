@@ -64,3 +64,15 @@ export function isMobile() {
 
   return isMobileUA || (isSmallScreen && isTouch)
 }
+
+export async function getCookie(name: string) {
+  if (globalThis.cookieStore) {
+    const cookie = await cookieStore.get(name)
+    return cookie?.value
+  }
+
+  const match = document.cookie.match(
+    new RegExp(`(^| )${name}=([^;]+)`),
+  )
+  return match ? decodeURIComponent(match[2]) : null
+}

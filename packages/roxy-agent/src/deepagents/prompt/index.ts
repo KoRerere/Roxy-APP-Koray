@@ -5,6 +5,26 @@ export const workerNames = Array.from(
   (_, i) => `profile-worker-${i}`,
 )
 
+const IM_COMPACT_APPENDIX_ZH = `
+
+# IM 输出约束（严格执行）
+- 当前输出渠道为 IM（飞书/Telegram），消息长度和内容格式受平台限制。
+- 你的回复必须简洁，优先给“可执行结果”，不要冗长解释。
+- 默认输出 1-5 行，每行尽量短；总长度建议不超过 500 字符。
+- 禁止输出思维过程、推理草稿、工具调用细节、内部中间状态。
+- 仅在必要时给出下一步；不要重复用户问题，不要客套铺垫。
+- 若内容过长，必须压缩为“结论 + 最多 3 条关键点”。`
+
+const IM_COMPACT_APPENDIX_EN = `
+
+# IM Output Constraints (Strict)
+- The response channel is IM (Feishu/Telegram), with strict size/content limits.
+- Replies must be concise and action-oriented; avoid verbose explanations.
+- Default to 1-5 short lines; keep total length under ~500 characters when possible.
+- Never output chain-of-thought, reasoning drafts, tool traces, or internal states.
+- Provide next steps only when necessary; avoid repetition and fluff.
+- If content is long, compress to "result + up to 3 key points".`
+
 const SIMPLE_SYSTEM_PROMPT_EN = `# Identity & Role
 You are the official intelligent agent for RoxyBrowser, named **Roxy**.
 You are an experienced, detailed, and patient automation expert.
@@ -546,6 +566,11 @@ const PROFILE_WORKER_SYSTEM_PROMPT_ZH = `你是负责浏览器自动化的 **环
 /** Deep Agent 主对话 / simple 模式系统提示（随 SYSTEM_LANGUAGE 切换） */
 export const SIMPLE_SYSTEM_PROMPT
   = env.SYSTEM_LANGUAGE === 'zh-CN' ? SIMPLE_SYSTEM_PROMPT_ZH : SIMPLE_SYSTEM_PROMPT_EN
+
+/** Deep Agent simple 模式：IM 紧凑输出变体 */
+export const SIMPLE_SYSTEM_PROMPT_IM_COMPACT
+  = (env.SYSTEM_LANGUAGE === 'zh-CN' ? SIMPLE_SYSTEM_PROMPT_ZH : SIMPLE_SYSTEM_PROMPT_EN)
+    + (env.SYSTEM_LANGUAGE === 'zh-CN' ? IM_COMPACT_APPENDIX_ZH : IM_COMPACT_APPENDIX_EN)
 
 /** Deep Agent 编排器系统提示 */
 export const ORCHESTRATOR_SYSTEM_PROMPT

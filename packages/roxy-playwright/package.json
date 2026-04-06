@@ -27,7 +27,7 @@
     "build": "vite build && pnpm bundle"
   },
   "dependencies": {
-    "@roxybrowser/playwright-mcp": "0.0.6-beta.13"
+    "@roxybrowser/playwright-mcp": "0.0.6"
   },
   "devDependencies": {
     "vite": "catalog:",

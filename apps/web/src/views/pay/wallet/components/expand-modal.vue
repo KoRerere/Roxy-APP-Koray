@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { RxAlert } from '/@/components/rx-alert'
@@ -15,6 +16,7 @@ const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 
+const { discountSpecialCalculate } = useCampaignStore()
 const { currentActivity } = storeToRefs(useCampaignStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
@@ -44,21 +46,25 @@ const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(it
 const disabled = computed(() => !buyList.value.some(item => item.value > 0))
 
 const allDiscount = computed(() => {
-  const { discountPercentage: activityDiscount } = currentActivity.value
   const { discount } = userPayInfo.value!
 
-  return Object.fromEntries([
-    ['activityDiscount', activityDiscount, true],
+  const discounts = Object.fromEntries([
     ['discount', discount, true],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
+
+  return {
+    ...discounts,
+    finalDiscount: discountSpecialCalculate(discountCalculate(Object.values(discounts))),
+  }
 })
 
-const finalAmount = computed(() => currency(allAmount.value).multiply(discountCalculate(Object.values(allDiscount.value))).value)
-
+const finalAmount = computed(() => currency(allAmount.value).multiply(allDiscount.value.finalDiscount).value)
 const discountAmount = computed(() => currency(allAmount.value).subtract(finalAmount.value).value)
 
+const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > allDiscount.value.finalDiscount)
+
 const detail = computed(() => {
-  const { discount, activityDiscount } = allDiscount.value
+  const { discount } = allDiscount.value
 
   const list = buyList.value.map(item => ({
     title: item.label,
@@ -76,18 +82,12 @@ const detail = computed(() => {
     {
       items: [
         {
-          label: $t('节日折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${activityDiscount}%`,
-          visible: !!activityDiscount,
-        },
-        {
           label: $t('专属折扣'),
           class: '!color-[#FC9D12]',
           value: `-${discount}%`,
           visible: !!discount,
         },
-      ].filter(item => item.visible !== false),
+      ].filter(item => item.visible !== false && beyondDiscount.value),
     },
     {
       items: [
@@ -222,6 +222,7 @@ function close(isCancel: boolean) {
         </template>
         <template #after>
           <div class="flex-1 flex flex-col justify-end gap-3">
+            <EasterActivity :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
             <RxButton :disabled="disabled" size="lg" :label="$t('确认付款')" @click="confirm" />
             <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>

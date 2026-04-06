@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
 import RxButton from '/@/components/rx-button'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
@@ -10,6 +11,7 @@ import currency from 'currency.js'
 
 import { API } from '/@/api'
 import { addDays, format } from 'date-fns'
+import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -33,11 +35,13 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
+const { discountSpecialCalculate } = useCampaignStore()
+const { currentActivity } = storeToRefs(useCampaignStore())
+const { currentLocale } = storeToRefs(useSimpleLocale())
 const { realTheme } = storeToRefs(useThemeStore())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
-const simpleLocaleStore = useSimpleLocale()
 
 const ONE_BUY_MAX = 1000
 const configs = ref<any[]>([])
@@ -101,8 +105,10 @@ const originalAmount = computed(() => {
 
 const finalAmount = computed(() => {
   const { proxyDiscount } = userPayInfo.value!
-  return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
+  return currency(originalAmount.value).multiply(discountSpecialCalculate(discountCalculate([proxyDiscount]), 'proxy')).value
 })
+
+const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.proxyDiscount]) > discountCalculate([userPayInfo.value.proxyDiscount]))
 
 const details = computed(() => {
   const { purchaseCountry, subscriptionMonths, purchaseMember } = configValue.value
@@ -149,7 +155,7 @@ const details = computed(() => {
           label: $t('专属折扣'),
           value: `-${proxyDiscount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!proxyDiscount,
+          visible: !!proxyDiscount && beyondDiscount.value,
         },
         {
           label: $t('Roxy 独家特惠'),
@@ -245,7 +251,6 @@ async function initConfig() {
         optionDisabled: (opt: any) => opt.inventory <= 0,
       },
       render: ({ item }: any) => {
-        const isCN = simpleLocaleStore.currentLocale === 'zh-CN'
         const quicks = item.props.options.filter((item: any) => item.inventory > 0).slice(0, 4)
         return (
           <div class="flex flex-col gap-1.5">
@@ -280,7 +285,7 @@ async function initConfig() {
                           }}
                         >
                           <RxSvgIcon name={quick.icon}></RxSvgIcon>
-                          <div>{isCN ? quick.name : quick.country_code?.toLocaleUpperCase()}</div>
+                          <div>{quick.name}</div>
                           {quick.isNew
                             ? (
                                 <div
@@ -364,12 +369,14 @@ async function getCountryAndDurationList(proxyProviderId: string) {
   if (code !== 0)
     return []
 
+  const isCN = currentLocale.value === 'zh-CN'
+
   return data.map(item => ({
     ...item,
-    isNew: item.isNew ?? item.country_code === 'fr',
+    isNew: item.isNew,
     icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
     label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
-    name: item.country_name,
+    name: isCN ? item.country_name : item.country_code?.toLocaleUpperCase(),
     value: item.country_code,
     proxyPriceListFmt: item.proxyPriceList.map((item) => {
       const day = item.proxyPurchaseMonths * 30
@@ -500,6 +507,7 @@ async function onPay() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
+              <EasterActivity :beyond-discount="beyondDiscount" :discount="currentActivity.proxyDiscount" />
               <RxButton size="lg" :disabled="currentCountry.outOfStock" :label="$t('立即支付')" @click="onPay" />
               <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>

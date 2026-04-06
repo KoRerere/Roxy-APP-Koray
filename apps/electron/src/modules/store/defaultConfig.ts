@@ -14,7 +14,7 @@ export const defaultValues: StoreType = {
   browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
   defaultBrowserDirId: '',
   systemProxySwitch: true,
-  v2raySwitch: true,
+  v2raySwitch: false,
   appPort: 45535,
   appWsPort: 45536,
   ipBlackList: [],

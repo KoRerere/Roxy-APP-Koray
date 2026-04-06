@@ -33,15 +33,15 @@ const baseOssConfig = {
 }
 
 // 正式环境版本
-const prodVersion = '1.0.4'
+const prodVersion = '1.0.5'
 
 // 开发环境版本
-const devVersion = '2.0.8'
+const devVersion = '2.1.7'
 
 // 当前agent的版本
 const version = isProd ? prodVersion : devVersion
 // app 最低支持版本
-const minAppVersion = isProd ? '3.7.7' : '7.6.6'
+const minAppVersion = isProd ? '3.7.8' : '7.6.6'
 
 async function getOssToken() {
   const response = await fetch(
@@ -106,7 +106,12 @@ async function startUpload() {
       `/public/package/agent/${version}/${platform}/roxy-agent.mjs`,
       agentLocalPath,
     )
-    console.log('上传 agent worker 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-agent.mjs`)
+    console.log('上传 agent mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-agent.mjs`)
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-agent-sha`,
+      Buffer.from(agentSha512),
+    )
+    console.log('上传 agent sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-agent-sha`)
 
     const playwrightLocalPath = 'packages/roxy-playwright/dist/index.mjs'
     const playwrightSha512 = calculateFileSha512Hex(playwrightLocalPath)
@@ -115,6 +120,11 @@ async function startUpload() {
       playwrightLocalPath,
     )
     console.log('上传 playwright mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-playwright.mjs`)
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-playwright-sha`,
+      Buffer.from(playwrightSha512),
+    )
+    console.log('上传 playwright sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-playwright-sha`)
 
     const openapiLocalPath = 'packages/roxy-openapi/dist/index.mjs'
     const openapiSha512 = calculateFileSha512Hex(openapiLocalPath)
@@ -124,14 +134,18 @@ async function startUpload() {
     )
     console.log('上传 openapi mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-openapi.mjs`)
 
+    await ossClient.put(
+      `/public/package/agent/${version}/${platform}/roxy-openapi-sha`,
+      Buffer.from(openapiSha512),
+    )
+    console.log('上传 openapi sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-openapi-sha`)
+
     const versionPayload = {
       version,
       minimum_app_version: minAppVersion,
       releaseTime: getCurrentFormattedTime(),
       skills: skillNames,
-      agent_sha512: agentSha512,
-      openapi_sha512: openapiSha512,
-      playwright_sha512: playwrightSha512,
+
     }
     const data = Buffer.from(JSON.stringify(versionPayload))
     const uploadVersionRes = await ossClient.put(

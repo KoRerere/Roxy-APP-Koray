@@ -110,7 +110,7 @@ const items = computed(() => {
     {
       label: $t('评价我们🎁'),
       icon: 'base/rx_ic_star',
-      visible: isOwner.value && onboardingTaskStatus.value?.ratingStatus === false,
+      visible: onboardingTaskStatus.value?.ratingStatus === false,
       command: () => openScore(),
     },
   ].filter(item => item.visible !== false)
@@ -194,21 +194,50 @@ function openScore() {
   })
 }
 
+async function getMcpStatus(): Promise<{ mcpWindowOpen: boolean, roxyClawEnabled: boolean, mcpServerRunning: boolean }> {
+  if (globalThis.electronAPI) {
+    try {
+      return await globalThis.electronAPI.send('mcp:getStatus')
+    }
+    catch (error) {
+      console.error('Failed to get MCP status:', error)
+      return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
+    }
+  }
+  return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
+}
+
 async function openMCP() {
   if (opening.value)
     return
   mixpanelTrack('click_enter_agent')
   opening.value = true
 
-  const apiPort = await globalThis.electronAPI.send('util:getApiPort')
-  if (apiPort === -1) {
-    onlyErrorToast(-1, $t('请检查 API 启用状态或端口是否被占用'))
-    opening.value = false
-    router.replace({ name: 'api-keys', query: { highlight: 'true' } })
-    return
+  try {
+    // 检查 RoxyClaw 是否正在运行
+    const mcpStatus = await getMcpStatus()
+    if (mcpStatus.roxyClawEnabled) {
+      onlyErrorToast(-1, $t('RoxyClaw 正在运行中，请先停止 RoxyClaw'))
+      opening.value = false
+      return
+    }
+
+    const apiPort = await globalThis.electronAPI.send('util:getApiPort')
+    if (apiPort === -1) {
+      onlyErrorToast(-1, $t('请检查 API 启用状态或端口是否被占用'))
+      opening.value = false
+      router.replace({ name: 'api-keys', query: { highlight: 'true' } })
+      return
+    }
+    await globalThis.electronAPI.send('mcp:open').catch(() => { })
   }
-  await globalThis.electronAPI.send('mcp:open').catch(() => { })
-  opening.value = false
+  catch (error) {
+    console.error('Failed to open MCP:', error)
+    onlyErrorToast(-1, error instanceof Error ? error.message : $t('MCP 启动失败'))
+  }
+  finally {
+    opening.value = false
+  }
 }
 
 // ============= 仅内测版本使用，后续版本删除所有相关逻辑 =============

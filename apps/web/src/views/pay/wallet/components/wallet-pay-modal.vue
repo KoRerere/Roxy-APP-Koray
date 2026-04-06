@@ -3,7 +3,6 @@ import currency from 'currency.js'
 import { RxAlert } from '/@/components/rx-alert'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
-import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
@@ -25,7 +24,6 @@ const emit = defineEmits<{
 
 const [showToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
-const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
 const { realTheme } = storeToRefs(useThemeStore())
 const { walletRecharge, openProcessing } = usePay()
 const loading = ref(false)
@@ -53,16 +51,6 @@ const finalResult = computed(() => {
     needRecharge: needAmount > 0,
     needAmount,
   }
-})
-
-const showGiftAlert = computed(() => {
-  if (!showAutoRenew || !seasonalActivity.value.active)
-    return false
-
-  const { amount } = currentActivity.value
-  const count = Math.floor(currency(amount, { precision: 6 }).divide(amount).value)
-  const finalCount = Math.floor(currency(finalResult.value.amount, { precision: 6 }).divide(amount).value)
-  return count !== finalCount
 })
 
 function onRecharge() {
@@ -141,9 +129,6 @@ function close(isCancel: boolean) {
       </div>
       <div v-if="showAutoRenew && !finalResult.needRecharge" class="flex flex-col gap-5">
         <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
-        <RxAlert v-if="showGiftAlert && seasonalActivity.springFestival" class="w-full" type="warn" :title="$t('折扣后实付不满 {value} 倍数将减少赠送奖励。如需满赠，请保持实付金额达标。', { value: currency(currentActivity.amount).format() })"
-                 :closable="false"
-        />
         <div class="flex flex-col">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">

@@ -36,9 +36,33 @@ export const env = {
   DOWNLOADS_DIR: process.env.DOWNLOADS_DIR!,
 
   SKILLS_DIR: process.env.SKILLS_DIR!,
+
+  // IM 功能开关
+  ENABLE_IM: process.env.ENABLE_IM === 'true' || process.env.ENABLE_IM === '1',
+
+  // Telegram
+  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+  TELEGRAM_ALLOWED_CHAT_IDS: process.env.TELEGRAM_ALLOWED_CHAT_IDS,
+
+  // 飞书
+  FEISHU_APP_ID: process.env.FEISHU_APP_ID,
+  FEISHU_APP_SECRET: process.env.FEISHU_APP_SECRET,
+  FEISHU_ALLOWED_USER_IDS: process.env.FEISHU_ALLOWED_USER_IDS,
+  FEISHU_ENVIRONMENT: process.env.FEISHU_ENVIRONMENT || 'feishu',
+}
+
+const proxyEnv = {
+  HTTP_PROXY: process.env.HTTP_PROXY,
+  http_proxy: process.env.http_proxy,
+  HTTPS_PROXY: process.env.HTTPS_PROXY,
+  https_proxy: process.env.https_proxy,
+  ALL_PROXY: process.env.ALL_PROXY,
+  all_proxy: process.env.all_proxy,
 }
 
 console.log('env: ', env)
+
+console.log('proxyEnv: ', proxyEnv)
 
 // 监听父进程的消息
 ;(process as any).parentPort?.on('message', (message: any) => {

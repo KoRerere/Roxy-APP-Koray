@@ -196,8 +196,8 @@ async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
 
-  const searchParams = new URLSearchParams(window.location.search)
-  const officialSiteRedirect = searchParams.get('official-site-redirect')
+  const officialSiteRedirect = sessionStorage.getItem('officialSiteRedirect')
+  sessionStorage.removeItem('officialSiteRedirect')
   if (officialSiteRedirect) {
     window.location.replace(officialSiteRedirect)
     return

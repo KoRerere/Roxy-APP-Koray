@@ -7,7 +7,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config'
 import { createLLM } from '../llm'
-import { ORCHESTRATOR_SYSTEM_PROMPT, SIMPLE_SYSTEM_PROMPT } from './prompt'
+import { ORCHESTRATOR_SYSTEM_PROMPT, SIMPLE_SYSTEM_PROMPT, SIMPLE_SYSTEM_PROMPT_IM_COMPACT } from './prompt'
 import { SqliteSaver } from './sqlite-checkpointer'
 import { workerTools } from './tools'
 
@@ -22,9 +22,12 @@ export interface AgentConfig {
   }
 }
 
-function getSystemPromptByMode(mode: AgentMode) {
+function getSystemPromptByMode(mode: AgentMode, variant?: 'default' | 'im-compact') {
   if (mode === 'orchestrator') {
     return ORCHESTRATOR_SYSTEM_PROMPT
+  }
+  if (variant === 'im-compact') {
+    return SIMPLE_SYSTEM_PROMPT_IM_COMPACT
   }
   return SIMPLE_SYSTEM_PROMPT
 }
@@ -37,6 +40,7 @@ export async function createAgent(options: {
   name?: string
   tools?: any[]
   conversationId?: string
+  promptVariant?: 'default' | 'im-compact'
 }) {
   const thinkingConfig = options.config?.thinking || true
 
@@ -69,7 +73,7 @@ export async function createAgent(options: {
     model,
     checkpointer,
     backend: fsBackendForList,
-    systemPrompt: getSystemPromptByMode(options.mode),
+    systemPrompt: getSystemPromptByMode(options.mode, options.promptVariant),
     tools,
     middleware: [skillsMiddleware],
     name: options.name,
@@ -78,5 +82,11 @@ export async function createAgent(options: {
 
 export async function deleteCheckpoint(conversationId: string): Promise<void> {
   const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${conversationId}.db`)
-  await fs.unlink(checkpointPath)
+  try {
+    await fs.unlink(checkpointPath)
+    console.log(`[deepagents] Deleted checkpoint for conversation ${conversationId}`)
+  }
+  catch (err) {
+    console.log(`[deepagents] Checkpoint not found for conversation ${conversationId}, skipping delete`)
+  }
 }

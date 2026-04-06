@@ -15,7 +15,8 @@
   "main": "src/index.ts",
   "scripts": {
     "bundle": "pnpx rimraf ./dist && webpack --config webpack.config.cjs",
-    "build": "vite build && pnpx tsx scripts/build-words.ts && pnpm bundle"
+    "build": "vite build && pnpx tsx scripts/build-words.ts && pnpm bundle",
+    "run:dist": "node scripts/run-dist.mjs"
   },
   "dependencies": {
     "@langchain/anthropic": "^1.3.25",
@@ -26,15 +27,20 @@
     "@langchain/langgraph-checkpoint": "^1.0.1",
     "@langchain/mcp-adapters": "^1.1.3",
     "@langchain/openai": "^1.3.0",
+    "@larksuiteoapi/node-sdk": "^1.5.0",
     "@modelcontextprotocol/sdk": "catalog:",
     "cors": "^2.8.5",
     "deepagents": "^1.8.4",
+    "discord.js": "^14.16.0",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
+    "grammy": "^1.30.0",
     "langchain": "^1.2.35",
     "openai": "^6.15.0",
     "ora": "^5.4.1",
     "otplib": "^13.1.1",
+    "protobufjs": "^7.2.6",
+    "undici": "^6.24.1",
     "uuid": "^13.0.0",
     "zod": "^4.2.1"
   },

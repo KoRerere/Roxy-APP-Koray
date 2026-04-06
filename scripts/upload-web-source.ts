@@ -46,7 +46,7 @@ const zip = new Zip()
 const isProd = process.env.NODE_ENV === 'production'
 // const { deployWeb } = await import('../apps/web/scripts/deploy')
 // await deployWeb(isProd)
-// throw new Error('test')
+// throw new Error('only deploy remote web')
 const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo1743595549211'
 
 const webPath = path.join(import.meta.dirname, '../apps/web/dist')

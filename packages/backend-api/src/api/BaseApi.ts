@@ -35,6 +35,7 @@ import {
   GetCheckBindEmailVerCodeListParams,
   GetCoreUpgradeCreateData,
   GetCoreUpgradeCreatePayload,
+  GetEasterPromoTimeListData,
   GetFaqHelpList2Data,
   GetFaqHelpListData,
   GetPersonalVerifyValidatorCodeListData,
@@ -126,6 +127,7 @@ import {
   UserGetRatingRewardCreatePayload,
   UserGetRewardRecordListListData,
   UserGetRewardRecordListListParams,
+  UserGetRoxyClawListData,
   UserGetSystemDictV2CreateData,
   UserGetSystemDictV2CreatePayload,
   UserGetUninstallReasonQuestionListListData,
@@ -158,6 +160,8 @@ import {
   UserSentryClientCreatePayload,
   UserSetPromotionLinkShowCreateData,
   UserSetPromotionLinkShowCreatePayload,
+  UserSetRoxyClawCreateData,
+  UserSetRoxyClawCreatePayload,
   UserSettingAccountPasswordCreateData,
   UserSettingAccountPasswordCreatePayload,
   UserSettingPasswordCreateData,
@@ -2211,6 +2215,43 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name GetEasterPromoTimeList
+   * @summary 复活节活动时间
+   * @request GET:/get_easter_promo_time
+   * @response `200` `GetEasterPromoTimeListData`
+   */
+  getEasterPromoTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetEasterPromoTimeListData, any>({
+      path: `/get_easter_promo_time`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSetRoxyClawCreate
+   * @summary Roxy Claw：设置
+   * @request POST:/user_set_roxy_claw
+   * @response `200` `UserSetRoxyClawCreateData`
+   */
+  userSetRoxyClawCreate = (
+    data: UserSetRoxyClawCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSetRoxyClawCreateData, any>({
+      path: `/user_set_roxy_claw`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -2259,6 +2300,22 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetRoxyClawList
+   * @summary Roxy Claw：获取配置
+   * @request GET:/user_get_roxy_claw
+   * @response `200` `UserGetRoxyClawListData`
+   */
+  userGetRoxyClawList = (params: RequestParams = {}) =>
+    this.http.request<UserGetRoxyClawListData, any>({
+      path: `/user_get_roxy_claw`,
+      method: "GET",
       format: "json",
       ...params,
     });

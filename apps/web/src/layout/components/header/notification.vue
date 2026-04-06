@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
-import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
+import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { NotifyModule, NotifyStatus } from '/@/enums'

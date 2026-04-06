@@ -1,12 +1,25 @@
 import { defineStore } from 'pinia'
 import { API } from '/@/api'
+import { safeParseJSON } from '/@/utils/basic'
 import type { UnwrapRowsType, UserGetAnntListListData } from '@roxy/backend-api'
 
 export const useCommonStore = defineStore('common', () => {
   const anntList = ref<UnwrapRowsType<UserGetAnntListListData>>([])
 
+  const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
+
+  const unReadAnnts = computed(() => {
+    return anntList.value.filter(annt => !localStatus.annt?.includes(annt.id))
+  })
+
   const setAnntList = (rows: UnwrapRowsType<UserGetAnntListListData>) => {
     anntList.value = rows
+  }
+
+  function setAnntRead(id: number) {
+    const annt = [...new Set([...(localStatus.annt || []), id])]
+    Reflect.set(localStatus, 'annt', annt)
+    localStorage.setItem('localStatus', JSON.stringify(localStatus))
   }
 
   async function fetchAnntList() {
@@ -37,6 +50,8 @@ export const useCommonStore = defineStore('common', () => {
 
   return {
     anntList,
+    unReadAnnts,
     setAnntList,
+    setAnntRead,
   }
 })

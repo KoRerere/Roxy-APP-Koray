@@ -10,6 +10,9 @@ import type {
 } from '/@/layout/components/header/profile/type'
 import { $t } from '/@/locales'
 import { getDictMap } from '/@/utils'
+import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
+import { withDirectives } from 'vue'
+import { TooltipHook } from '/@/layout/components/header/profile/components/settings-popup/useAuthentication'
 
 export function useNetworkPanel() {
   const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } = useCommonUtil()
@@ -48,7 +51,14 @@ export function useNetworkPanel() {
             },
             {
               label: $t('网络兼容模式'),
-              text: $t('当系统代理识别失败时尝试启用'),
+              text: () => (
+                <div class="flex items-center gap-1">
+                  <span>{$t('系统代理识别失败时，可尝试启用')}</span>
+                  { withDirectives(<SvgIcon name="base/rx_ic_question" class="w-4 h-4" />, [
+                    [TooltipHook, { value: $t('帮助客户端使用系统代理网络，但开启后可能影响 HTTP 代理检测') }, '', { top: true }],
+                  ])}
+                </div>
+              ),
               name: 'v2raySwitch',
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'systemProxySwitch')?.value,
               value: data?.v2raySwitch ?? false,

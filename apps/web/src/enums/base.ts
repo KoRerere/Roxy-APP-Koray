@@ -39,4 +39,6 @@ export enum ActivityType {
   NewYear = 1,
   /** 春节活动 */
   SpringFestival = 2,
+  /** 复活节活动 */
+  Easter = 3,
 }

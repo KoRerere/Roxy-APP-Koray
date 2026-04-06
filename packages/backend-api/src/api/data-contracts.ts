@@ -3210,6 +3210,37 @@ export interface UserGetPhoneListData {
   msg: string;
 }
 
+export interface GetEasterPromoTimeListData {
+  code: number;
+  data: {
+    /** 0 无活动 */
+    type: number;
+    start_timestamp: number;
+    end_timestamp: number;
+    server_utc_timestamp: number;
+    /** 窗口空间成员折扣 */
+    discount: number;
+    /** 代理折扣 */
+    proxyDiscount: number;
+  };
+  msg: string;
+}
+
+export interface UserSetRoxyClawCreatePayload {
+  tg_bot_token: string;
+  tg_allowed_chat_ids: string;
+  lark_app_id: string;
+  lark_app_secret: string;
+  lark_allowed_chat_ids: string;
+  enabled: number;
+  lark_environment: string;
+}
+
+export interface UserSetRoxyClawCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -5626,6 +5657,7 @@ export interface UserGetProxyCountryPriceListListData {
     inventory: number;
     status: string;
     proxyTpye?: string;
+    isNew?: boolean;
     proxyPriceList: {
       proxyPrice: number;
       proxyPurchaseMonths: number;
@@ -6798,113 +6830,61 @@ export interface UserMdfProjectSortCreateData {
 export interface UserGetUserPayInfoListData {
   code: number;
   data: {
-    /** 用户折扣 */
     discount: number;
-    /** 用户代理折扣 */
+    isEaster: boolean;
     proxyDiscount: number;
-    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
     identity: string;
-    /** 已用空间数量 */
     useWorkspaceCount: number;
-    /** 已用窗口数量 */
     useWindowCount: number;
-    /** 已用成员数量 */
     useMemberCount: number;
-    /** 最大窗口数量 */
     maxWindowCount: number;
-    /** 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise) */
     subLevel: string;
-    /** 订阅到期时间 */
     subEndDate: number;
-    /** 最大成员数量 */
     maxMemberCount: number;
-    /** 最大空间数量 */
     maxWorkspaceCount: number;
-    /** 免费项目数量 */
     freeProjectCount: number;
-    /** 已使用项目数量 */
     useProjectCount: number;
-    /** 余额 */
     balance: number;
-    /** 自动续费折扣 */
     autoRenewDiscount: number;
-    /** 7天是否试用，0：未试用 1：已试用 */
     isTrial: number;
-    /** '是否自动购买和续费,1:自动 0:人工', */
     isAuto: number;
-    /** 实际金额 */
     realAmount: string;
-    /** 订单号 */
     orderNo: string;
-    /** 成员价格(美元) */
     staffSinglePrice: number;
-    /** 空间价格(美元) */
     workspaceSinglePrice: number;
-    /** 单个价格(美元) */
     singlePrice: number;
-    /** 原始金额(美元) */
     originalAmount: number;
-    /** 钱包优惠余额 */
     walletDiscount: number;
-    /** 订阅到期 */
     showSubExpiredDlg: boolean;
-    /** 付费墙显示 */
     showPayWallDlg: boolean;
-    /** 自动续费降级接口状态判断 true:已降级，false：未降级 */
     autoRenewDowngrade: boolean;
-    /** 购买窗口数量 */
     purchaseWindowCount: number;
-    /** "免费窗口数量" */
     freeWindowCount: number;
-    /** 今日已创建次数 */
     createWindowTimes: number;
-    /** /今日总共可创建次数 */
     totalCreateWindowTimes: number;
-    /** 今日打开次数 */
     openWindowTimes: number;
-    /** 今日总共可打开次数 */
     totalOpenWindowTimes: number;
-    /** GIft显示,false: 不显示，true:显示 */
     showGiftDlg: boolean;
-    /** 服务器当前时间 */
     subCurrentDate: number;
-    /** 日志保留时长 */
     subscriptionLogDays: number;
-    /** 代理即将过期条数 */
     proxyExpireCount: number;
-    /** 代理使用中条数 */
     proxyUsingCount: number;
-    /** 自动充值到钱包 */
     autoRecharge: number;
-    /** 日志保留天数 */
     logDays: number;
-    /** api请求次数 */
     apiRate: number;
     onboardingTaskStatus: {
-      /** 创建窗口任务状态 False未完成 True已完成 */
       createProfileStatus: boolean;
-      /** 创建成员任务状态 False未完成 True已完成 */
       createProxyStatus: boolean;
-      /** 邀请成员任务 False未完成 True已完成 */
       inviteMemberStatus: boolean;
-      /** 首次注册指引弹窗：False未完成 True已完成 */
       firstRegisterGuideStatus: boolean;
-      /** 隐藏侧边栏入口：False未完成 True已完成 */
       hideSidebarEntryStatus: boolean;
-      /** 右键操作点击指引：False未完成 True已完成 */
       contextMenuGuideStatus: boolean;
-      /** 保存筛选条件：False未完成 True已完成 */
       saveFilterGuideStatus: boolean;
-      /** 创建窗口视频入口：False未完成 True已完成 */
       createProfileVideoEntryStatus: boolean;
-      /** False未完成 True已完成 */
       createProfileTourGuideStatus: boolean;
-      /** False未完成 True已完成 */
       createProxyVideoEntryStatus: boolean;
     };
-    /** 是否购买黑五套餐 */
     isBlackFriday: boolean;
-    /** 首次购买折扣 */
     firstPurchaseDiscount: number;
     trialDays: number;
   };
@@ -7812,9 +7792,61 @@ export interface UpdateAuthStatisticsCreateData {
   msg: string;
 }
 
+export interface UserGetBoundRedeemCodesListData {
+  code: number;
+  data: {
+    code: string;
+    codeType: string;
+  };
+  msg: string;
+}
+
+export interface GetEasterEggRemainingListData {
+  code: number;
+  data: {
+    common: {
+      remaining: number;
+      total: number;
+    };
+    rare: {
+      remaining: number;
+      total: number;
+    };
+    gold: {
+      remaining: number;
+      total: number;
+    };
+  };
+  msg: string;
+}
+
+export interface UserBindRedeemCodeCreatePayload {
+  code: string;
+}
+
+export interface UserBindRedeemCodeCreateData {
+  code: number;
+  msg: string;
+}
+
 export type UserGetRatingRewardCreatePayload = object;
 
 export interface UserGetRatingRewardCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetRoxyClawListData {
+  code: number;
+  data: {
+    userId: number;
+    tg_bot_token: string;
+    tg_allowed_chat_ids: string;
+    lark_app_id: string;
+    lark_app_secret: string;
+    lark_allowed_chat_ids: string;
+    enabled: number;
+    lark_environment: string;
+  };
   msg: string;
 }

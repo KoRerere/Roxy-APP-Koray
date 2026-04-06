@@ -1,4 +1,5 @@
 <script lang="tsx" setup>
+import { onMounted } from 'vue'
 import { KICKED_OUT_CHANNEL_NAME } from './constants/channel'
 import { useDialog } from './hooks/useDialog'
 import { $t } from './locales'
@@ -7,11 +8,48 @@ import { emitter } from './utils/eventBus'
 import type { MittEvents } from './utils/eventBus'
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 import { useUserStore } from '/@/stores/user'
+import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import LockScreen from '/@/components/lock-screen/index.vue'
 
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME)
 const router = useRouter()
 const [showModal] = useDialog()
+
+// RoxyClaw 自动启动
+onMounted(async () => {
+  if (globalThis.isElectron) {
+    const roxyClawStore = useRoxyClawStore()
+
+    // 确保配置加载完成
+    await roxyClawStore.fetchConfig()
+
+    if (roxyClawStore.isEnabled) {
+      try {
+        // 检查 MCP 窗口是否正在运行
+        const mcpStatus = await roxyClawStore.getMcpStatus()
+        if (mcpStatus.mcpWindowOpen) {
+          console.log('MCP window is open, skipping RoxyClaw auto-start')
+          // 重置状态为未启用，避免下次继续尝试
+          await roxyClawStore.updateConfig({ enabled: false })
+          return
+        }
+
+        const result = await roxyClawStore.startRoxyClaw()
+        if (result.success) {
+          console.log('RoxyClaw auto-started successfully')
+        } else {
+          console.error('Failed to auto-start RoxyClaw:', result.message)
+          // 自动启动失败时重置状态为未启用
+          await roxyClawStore.updateConfig({ enabled: false })
+        }
+      } catch (error) {
+        console.error('Failed to auto-start RoxyClaw:', error)
+        // 自动启动失败时重置状态为未启用
+        await roxyClawStore.updateConfig({ enabled: false })
+      }
+    }
+  }
+})
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 

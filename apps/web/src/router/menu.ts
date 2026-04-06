@@ -168,6 +168,52 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: $t('自动化'), type: 'group' },
     children: [
       {
+        path: 'roxy-claw',
+        name: 'roxy-claw',
+        meta: {
+          title: 'RoxyClaw',
+          icon: 'base/rx_ic_roxy_claw',
+          isRoxyClaw: true,
+          permissions: ['API_MCP_view_page'],
+        },
+        redirect: { name: 'roxy-claw-home' },
+        children: [
+          {
+            path: 'roxy-claw/home',
+            name: 'roxy-claw-home',
+            meta: {
+              title: 'Claw',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw'),
+          },
+          {
+            path: 'roxy-claw/telegram',
+            name: 'roxy-claw-telegram',
+            meta: {
+              title: 'Telegram Bot',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw/telegram-config.vue'),
+          },
+          {
+            path: 'roxy-claw/lark',
+            name: 'roxy-claw-lark',
+            meta: {
+              title: 'Lark / Feishu Bot',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw/lark-config.vue'),
+          },
+        ],
+      },
+      {
         path: 'sync-control',
         name: 'sync-control',
         meta: {

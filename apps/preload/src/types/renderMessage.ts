@@ -314,14 +314,14 @@ export interface RenderMessage {
       "mode":xx(string),
       "data":xxx(string)
     }
-
+   
     当mode为same的时候，表示所有窗口使用相同文本，data为文本内容
     当mode为diff的时候，表示每个窗口使用不同的内容，data为每个窗口的内容,用dict表示,可以为pid,value为文本内容，例如：
     {
       "10000":"aaaa",
       "10002":"bbbb"
     }
-
+   
     当mode为random的时候,表示随机生成，data为随机策略，格式为dict,
     {
       // 随机范围 -- 注意传入的是string类型
@@ -409,9 +409,30 @@ export interface RenderMessage {
   'syncControl:resume': () => void
 
   /** 打开 MCP */
-  'mcp:open': () => void
+  'mcp:open': () => Promise<void>
   /** 获取 MCP 配置 */
   'mcp:config': () => Promise<{ port: number }>
   /** 关闭 MCP */
-  'mcp:close': () => void
+  'mcp:close': () => Promise<void>
+  /** 获取 MCP 状态 */
+  'mcp:getStatus': () => Promise<{
+    mcpWindowOpen: boolean
+    roxyClawEnabled: boolean
+    mcpServerRunning: boolean
+  }>
+
+  /** 启动 RoxyClaw */
+  'mcp:startRoxyClaw': (payload?: {
+    enableIM?: boolean
+    larkAppId?: string
+    larkAppSecret?: string
+    larkEnvironment?: 'lark' | 'feishu'
+    larkAllowedChatIds?: string
+    tgBotToken?: string
+    tgAllowedChatIds?: string
+  }) => Promise<{ success: boolean, message?: string }>
+  /** 停止 RoxyClaw */
+  'mcp:stopRoxyClaw': () => Promise<{ success: boolean, message?: string }>
+  /** 获取 RoxyClaw 状态 */
+  'mcp:roxyClawStatus': () => Promise<{ enabled: boolean, connected: boolean }>
 }

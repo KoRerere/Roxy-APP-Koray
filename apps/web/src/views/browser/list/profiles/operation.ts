@@ -431,6 +431,7 @@ export function getOperation(row: any = {}) {
       label: $t('Cookie 机器人'),
       icon: 'base/rx_ic_cookie_bot',
       suffixIcon: 'base/fire',
+      menuTooltip: $t('自动模拟浏览行为，生成真实 Cookie，适用于养号、账号预热，降低账号风控风险'),
       multiple: true,
     },
     {

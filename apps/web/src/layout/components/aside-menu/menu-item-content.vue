@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon'
 import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
+import { useRoxyClawStore } from '/@/stores/roxy-claw'
 // import type { SvgNames } from '/@/components/rx-icon'
 
 const props = defineProps<{
   item: RouteRecordRaw
   collapsed: boolean
 }>()
-
+const roxyClawStore = useRoxyClawStore()
 // const cacheKey = 'isShowBuyProxyNewBadge'
 // const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
 
@@ -57,13 +58,38 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ 'active': isActive, 'roxy-claw': item.meta?.isRoxyClaw }"
          @click.prevent="handleClickItem($event, navigate)"
       >
-        <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
-        <div class="menu-title" :title="item.meta?.title">
-          <span>{{ item.meta?.title }}</span>
-        </div>
+        <!-- Roxy Claw 菜单样式 -->
+        <template v-if="item.meta?.isRoxyClaw">
+          <img :src="isActive
+                 ? '/images/roxy-claw/menu/sidenav-active.png'
+                 : '/images/roxy-claw/menu/sidenav-inactive.png'"
+               class="w-19px select-none"
+               draggable="false"
+          >
+          <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+            <div class="menu-title" :title="item.meta?.title">
+              <span>{{ item.meta?.title }}</span>
+            </div>
+
+            <svg v-if="roxyClawStore.isEnabled" v-tooltip="{ value: $t('RoxyClaw 已启动') }" class="text-3" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="6" fill="var(--colors-icon-icon-success)" />
+              <circle cx="10" cy="10" r="8" stroke="rgba(28, 201, 77, 0.40)" stroke-opacity="0.4" stroke-width="4" />
+            </svg>
+          </div>
+        </template>
+
+        <!-- 普通菜单样式 -->
+        <template v-else>
+          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+
+          <div class="menu-title" :title="item.meta?.title">
+            <span>{{ item.meta?.title }}</span>
+          </div>
+        </template>
+
         <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->
         <div v-if="badgeMap[item.name!]" class="flex items-center py-1 px-1.5 gap-2 rounded-1 sent">
           <SvgIcon size="12" name="base/rx_ic_gift_2" color="#ffffff" />
@@ -138,8 +164,24 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     }
   }
 
+  &.active.roxy-claw {
+    color: var(--pattern-roxyclaw-text, #eb5757);
+    background: color-mix(in srgb, var(--pattern-roxyclaw-sidenav, #ff9c7e), transparent 70%);
+  }
+
+  &.roxy-claw {
+    color: var(--pattern-roxyclaw-text, #eb5757);
+  }
+
   .menu-icon {
     color: currentColor;
+  }
+
+  .claw-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    margin-left: 4px;
   }
 }
 

@@ -80,18 +80,6 @@ const filters = reactive({
   },
 })
 
-watch(
-  () => route.query._t,
-  (value) => {
-    if (value && route.query.action === 'buy') {
-      onBuyProxy()
-    }
-  },
-  {
-    immediate: true,
-  },
-)
-
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NewYear from '/@/views/campaign/new-year/index.vue'
 import SpringFestival from '/@/views/campaign/spring-festival/index.vue'
+import Easter from '/@/views/campaign/easter/index.vue'
 import { useCampaignStore } from '/@/stores/campaign'
 import { enhanceCountdown, sleep } from '/@/utils'
 import { ActivityType } from '/@/enums/base'
@@ -18,6 +19,10 @@ const activityMap = {
     component: markRaw(SpringFestival),
     localStorageKey: '$SpringFestivalModalStatus',
   },
+  [ActivityType.Easter]: {
+    component: markRaw(Easter),
+    localStorageKey: '$EasterModalStatus',
+  },
 }
 
 const activity = computed(() => {
@@ -27,21 +32,21 @@ const activity = computed(() => {
 })
 
 onBeforeMount(() => {
-  // getHolidaySeason()
+  getActivityBySeason()
 })
 
 onBeforeUnmount(() => {
   stopCountdown.value?.stop()
 })
 
-async function getHolidaySeason() {
+async function getActivityBySeason() {
   await getActivityInfo()
   stratHolidaySeasonCountdown()
   clearExpiredLocalStorageKey()
 }
 
 function stratHolidaySeasonCountdown() {
-  if (!seasonalActivity.value.active)
+  if (seasonalActivity.value.none)
     return
 
   const timeStamp = seasonalActivity.value.active
@@ -51,7 +56,7 @@ function stratHolidaySeasonCountdown() {
   stopCountdown.value = enhanceCountdown(timeStamp, () => { }, {
     onEnd: async () => {
       await sleep(300)
-      await getHolidaySeason()
+      await getActivityBySeason()
     },
   })
 }

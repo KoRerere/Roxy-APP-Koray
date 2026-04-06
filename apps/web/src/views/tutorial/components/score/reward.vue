@@ -4,6 +4,7 @@ import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { executeSomethingByBackToSelfWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 const emit = defineEmits(['close'])
 
@@ -27,8 +28,10 @@ async function checkResult() {
 }
 
 function toProxyList() {
-  router.push({ name: 'agent-list', query: { name: 'shop' } })
   emit('close')
+  executeSomethingByBackToSelfWorkspace(() => {
+    router.push({ name: 'agent-list', query: { name: 'shop' } })
+  })()
 }
 </script>
 

@@ -108,6 +108,7 @@ export class TokenUsageChange extends BaseCallbackHandler {
   }
 
   handleLLMEnd(output: any) {
+    console.log('output', output)
     if (!output?.llmOutput && !output.generations) {
       return
     }
@@ -116,6 +117,10 @@ export class TokenUsageChange extends BaseCallbackHandler {
     let rawUsage = null
     if (message) {
       rawUsage = message?.usage_metadata ?? message?.kwargs?.usage_metadata ?? message?.lc_kwargs?.usage_metadata
+
+      if (!rawUsage) {
+        rawUsage = output?.llmOutput?.tokenUsage
+      }
     }
     else {
       rawUsage = output?.llmOutput?.tokenUsage
@@ -127,6 +132,7 @@ export class TokenUsageChange extends BaseCallbackHandler {
     }
 
     const normalizedUsage = normalizeUsage(rawUsage)
+    console.log('normalizedUsage', normalizedUsage)
 
     if (normalizedUsage) {
       // 发送给主进程用于扣钱

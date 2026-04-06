@@ -2,14 +2,14 @@ import type { AIMessageChunk } from '@langchain/core/messages'
 import { streamAdapter } from '../server/streamAdapter'
 
 export class StreamState {
-  arr: { type: 'thinking' | 'text', id: string }[] = []
+  arr: { type: 'text', id: string }[] = []
   map: Record<string, string> = {}
 
   getRandomId() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2, 15)
   }
 
-  setChunkContent(type: 'thinking' | 'text', content: string, id: string) {
+  setChunkContent(type: 'text', content: string, id: string) {
     if (!this.map[id]) {
       this.arr.push({ type, id })
     }
@@ -18,16 +18,13 @@ export class StreamState {
 
   getChunkContent() {
     return this.arr.map((item) => {
-      if (item.type === 'thinking') {
-        return `[thinking]: ${this.map[item.id]}\n`
-      }
       return `[assistant]: ${this.map[item.id]}\n`
     }).join('\n')
   }
 
   getLastChunkContent() {
-    const lastChunk = this.arr[this.arr.length - 1]
-    if (lastChunk && (lastChunk.type === 'text' || lastChunk.type === 'thinking')) {
+    const lastChunk = this.arr.at(-1)
+    if (lastChunk && lastChunk.type === 'text') {
       return this.map[lastChunk.id] ?? ''
     }
     return ''
@@ -38,16 +35,11 @@ export class StreamState {
     this.taskId = id
   }
 
-  theLastMessageIsThinking() {
-    const lastMessage = this.arr[this.arr.length - 1]
-    if (lastMessage && lastMessage.type === 'thinking') {
-      return this.map[lastMessage.id]
-    }
-  }
+  theLastMessageIsThinking() {}
 }
 
 function handleMessage(chunk: AIMessageChunk, state: StreamState) {
-  // ToolMessage(type: tool) 不透传给前端，避免无效 SSE 噪音
+  // ToolMessage(type: tool) 不透传
   if ((chunk as any)?.type === 'tool') {
     return
   }
@@ -55,12 +47,7 @@ function handleMessage(chunk: AIMessageChunk, state: StreamState) {
   if (chunk.content) {
     if (Array.isArray(chunk.content)) {
       return chunk.content.map((item: any) => {
-        if (item.type === 'thinking' && item.thinking) {
-          const thinkingId = `thinking:${chunk.id}`
-          state.setChunkContent('thinking', item.thinking as string, thinkingId)
-          return streamAdapter.thinking(item.thinking as string, thinkingId, state.taskId)
-        }
-        else if (item.type === 'text' && item.text) {
+        if (item.type === 'text' && item.text) {
           const contentId = `content:${chunk.id}`
           state.setChunkContent('text', item.text as string, contentId)
           return streamAdapter.content(item.text as string, contentId, state.taskId)
@@ -73,11 +60,6 @@ function handleMessage(chunk: AIMessageChunk, state: StreamState) {
       state.setChunkContent('text', chunk.content, contentId)
       return streamAdapter.content(chunk.content, contentId, state.taskId)
     }
-  }
-  else if (typeof chunk.additional_kwargs.reasoning_content === 'string') {
-    const thinkingId = `thinking:${chunk.id}`
-    state.setChunkContent('thinking', chunk.additional_kwargs.reasoning_content, thinkingId)
-    return streamAdapter.thinking(chunk.additional_kwargs.reasoning_content, thinkingId, state.taskId)
   }
 }
 
@@ -128,7 +110,5 @@ export function handleStream(rawChunk: any, state: StreamState) {
   else if (namespace === 'tools') {
     return handleTool(chunk, state)
   }
-  else if (namespace === 'custom') {
-    return chunk
-  }
+  // custom 也不透传，避免 thinking/tool 的衍生噪音
 }

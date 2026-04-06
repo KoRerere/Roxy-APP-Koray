@@ -53,6 +53,42 @@ export const agentUpdater = new class AgentUpdater {
   /** integrity 校验：roxy-playwright.mjs 远端 sha512 */
   playwrightEntrySha512: string | null = null
 
+  genAgentEntrySha512(version: string) {
+    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-agent-sha`
+  }
+
+  genOpenapiEntrySha512(version: string) {
+    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-openapi-sha`
+  }
+
+  genPlaywrightEntrySha512(version: string) {
+    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-playwright-sha`
+  }
+
+  async getHas512() {
+    const version = await this.getLocalVersion()
+    if (!this.agentEntrySha512) {
+      const agentSha512 = await axios.get<string>(this.genAgentEntrySha512(version)).then(response => response.data)
+      this.agentEntrySha512 = agentSha512
+    }
+
+    if (!this.openapiEntrySha512) {
+      const openapiSha512 = await axios.get<string>(this.genOpenapiEntrySha512(version)).then(response => response.data)
+      this.openapiEntrySha512 = openapiSha512
+    }
+
+    if (!this.playwrightEntrySha512) {
+      const playwrightSha512 = await axios.get<string>(this.genPlaywrightEntrySha512(version)).then(response => response.data)
+      this.playwrightEntrySha512 = playwrightSha512
+    }
+
+    return {
+      agentEntrySha512: this.agentEntrySha512,
+      openapiEntrySha512: this.openapiEntrySha512,
+      playwrightEntrySha512: this.playwrightEntrySha512,
+    }
+  }
+
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
     return `${this.agentDomain}/public/package/agent/${os}/version.json`
@@ -86,16 +122,6 @@ export const agentUpdater = new class AgentUpdater {
   }
 
   promise: Promise<void> | null = null
-
-  private async downloadFileAndVerify(url: string, outputPath: string, expectedSha512: string) {
-    await this.downloadFile(url, outputPath)
-    const localSha512 = await calculateFileHash(outputPath)
-    if (localSha512 !== expectedSha512.toLowerCase()) {
-      // 校验失败：删除脏文件，避免后续启动加载到被篡改内容
-      await import('node:fs/promises').then(fs => fs.rm(outputPath, { force: true })).catch(() => {})
-      throw new Error(`[AgentUpdater] sha512 mismatch: ${outputPath}`)
-    }
-  }
 
   async startInterval() {
     this.stopInterval()
@@ -165,8 +191,6 @@ export const agentUpdater = new class AgentUpdater {
         return
       }
 
-      const integrityRequired = process.env.ROXY_AGENT_INTEGRITY_REQUIRED !== 'false'
-
       // 获取本地版本信息
       const localVersion = await this.getLocalVersion()
       console.log('[AgentUpdater] localVersion', localVersion)
@@ -177,60 +201,19 @@ export const agentUpdater = new class AgentUpdater {
       const openapiUrl = this.genOpenapiDownloadUrl(agentVersion)
       const playwrightUrl = this.genPlaywrightDownloadUrl(agentVersion)
 
-      // 远端完整性信息直接来自 version.json
-      this.agentEntrySha512 = remoteVersionInfo.agent_sha512 ? String(remoteVersionInfo.agent_sha512).toLowerCase() : null
-      this.openapiEntrySha512 = remoteVersionInfo.openapi_sha512 ? String(remoteVersionInfo.openapi_sha512).toLowerCase() : null
-      this.playwrightEntrySha512 = remoteVersionInfo.playwright_sha512 ? String(remoteVersionInfo.playwright_sha512).toLowerCase() : null
-
-      if (integrityRequired) {
-        if (!this.agentEntrySha512 || !this.openapiEntrySha512 || !this.playwrightEntrySha512) {
-          throw new Error('[AgentUpdater] missing remote sha512 for agent scripts')
-        }
-      }
-
       // 检查是否需要更新（版本升级 或 本地 sha512 不匹配）
-      let needDownload = compare(agentVersion, localVersion, '>')
-
-      if (!needDownload && (this.agentEntrySha512 || this.openapiEntrySha512 || this.playwrightEntrySha512)) {
-        const localAgentSha = await calculateFileHash(appConfig.agentBinPath).catch(() => '')
-        const localOpenapiSha = await calculateFileHash(appConfig.openapiMcpBinPath).catch(() => '')
-        const localPlaywrightSha = await calculateFileHash(appConfig.playwrightMcpBinPath).catch(() => '')
-
-        if (integrityRequired && (!localAgentSha || !localOpenapiSha || !localPlaywrightSha)) {
-          // 本地脚本缺失：强制下载
-          needDownload = true
-        }
-
-        if (this.agentEntrySha512 && localAgentSha && localAgentSha !== this.agentEntrySha512) {
-          needDownload = true
-        }
-        if (this.openapiEntrySha512 && localOpenapiSha && localOpenapiSha !== this.openapiEntrySha512) {
-          needDownload = true
-        }
-        if (this.playwrightEntrySha512 && localPlaywrightSha && localPlaywrightSha !== this.playwrightEntrySha512) {
-          needDownload = true
-        }
-      }
+      const needDownload = compare(agentVersion, localVersion, '>')
 
       if (needDownload) {
         console.log('[AgentUpdater] downloading...')
         await fileExists(this.agentDir, true)
 
         const downloadTasks: Promise<void>[] = []
-        if (integrityRequired) {
-          downloadTasks.push(
-            this.downloadFileAndVerify(agentUrl, appConfig.agentBinPath, this.agentEntrySha512!),
-            this.downloadFileAndVerify(openapiUrl, appConfig.openapiMcpBinPath, this.openapiEntrySha512!),
-            this.downloadFileAndVerify(playwrightUrl, appConfig.playwrightMcpBinPath, this.playwrightEntrySha512!),
-          )
-        }
-        else {
-          downloadTasks.push(
-            this.downloadFile(agentUrl, appConfig.agentBinPath),
-            this.downloadFile(openapiUrl, appConfig.openapiMcpBinPath),
-            this.downloadFile(playwrightUrl, appConfig.playwrightMcpBinPath),
-          )
-        }
+        downloadTasks.push(
+          this.downloadFile(agentUrl, appConfig.agentBinPath),
+          this.downloadFile(openapiUrl, appConfig.openapiMcpBinPath),
+          this.downloadFile(playwrightUrl, appConfig.playwrightMcpBinPath),
+        )
 
         const skillNames = remoteVersionInfo.skills ?? []
         if (skillNames.length > 0) {

@@ -4,7 +4,6 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
-import RedeemCodeRecord from '/@/views/campaign/spring-festival/record.vue'
 // import { emitter } from '/@/utils/eventBus'
 
 // ============ table ===================
@@ -200,7 +199,6 @@ const _inputs = [
       invalid_type_error: $t('请输入空间名称'),
     })
       .min(1, $t('请输入空间名称'))
-      .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
       .max(20, $t('空间名称最多 20 个字符')),
   },
   {

@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import Announcement from '/@/layout/components/header/announcement.vue'
-// import Firework from '/@/views/campaign/spring-festival/firework.vue'
 import RolesOverview from '/@/views/team/components/roles-overview.vue'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
@@ -37,7 +36,6 @@ watchEffect(() => {
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
           <span>RoxyBrowser</span>
-          <!-- <Firework /> -->
         </template>
       </div>
       <AsideMenu :collapsed />

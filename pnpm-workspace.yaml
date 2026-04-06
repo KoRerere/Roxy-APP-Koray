@@ -19,6 +19,7 @@ catalogMode: manual
 cleanupUnusedCatalogs: true
 
 patchedDependencies:
+  '@larksuiteoapi/node-sdk@1.60.0': patches/@larksuiteoapi__node-sdk@1.60.0.patch
   '@modelcontextprotocol/sdk@1.25.1': patches/@modelcontextprotocol__sdk@1.25.1.patch
 
 peerDependencyRules:

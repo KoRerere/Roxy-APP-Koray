@@ -180,7 +180,7 @@ export function asyncDebounce<T extends (...args: any[]) => Promise<any>>(
 
       // 设置新的 timer，使用最后一次调用的参数
       timer = setTimeout(async () => {
-        const lastCall = pendingResolvers[pendingResolvers.length - 1]
+        const lastCall = pendingResolvers.at(-1)
         const allResolvers = [...pendingResolvers]
         pendingResolvers = [] // 清空列表
 

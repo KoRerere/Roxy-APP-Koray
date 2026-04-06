@@ -70,6 +70,7 @@ const drawerInstance = useDrawer()
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
 const { userInfo, userConfig } = storeToRefs(useUserStore())
+const { mixpanelTrack } = useUserStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const { getProjects } = useMateGroup()
@@ -85,7 +86,6 @@ const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
-const userStore = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
@@ -207,16 +207,17 @@ async function saveFilters(formData: any) {
 async function tableRequest(params: any) {
   // 0: 未删除
   const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 })
-  if (data.code !== 0)
-    return []
 
-  const rows = (data.data?.rows || []).map(item => ({
-    ...item,
-    projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
-  }))
-  hasTempProfile.value = rows.some(item => item.isTemporary)
-  autoOpenBrowser(rows)
-  data.data.rows = rows
+  if (data.code === 0 && data.data.rows.length > 0) {
+    const rows = data.data.rows.map(item => ({
+      ...item,
+      projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
+    }))
+    hasTempProfile.value = rows.some(item => item.isTemporary)
+    autoOpenBrowser(rows)
+    data.data.rows = rows
+  }
+
   return data
 }
 
@@ -962,7 +963,7 @@ async function deleteProfile(datas: any, ids: number[]) {
   const windowStatus = ids.map(id => ({ id, openStatus: false }))
   await API.window.userMdfWindowSyncV2Create(windowStatus)
 
-  const usePeoples = datas.some((item: any) => item.statusInfo.filter((item: any) => item.openUserId !== userStore.userInfo.id).length > 0)
+  const usePeoples = datas.some((item: any) => item.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).length > 0)
 
   if (usePeoples) {
     onlyErrorToast(-1, $t('无法删除正在被其他成员使用的窗口'))
@@ -1050,6 +1051,13 @@ function showDiskSpaceModal() {
   })
 }
 
+function sendFirstOpenRecord() {
+  if (userInfo.value.onboardingTaskStatus?.firstOpenWindowStatus === false) {
+    updateOnboardingTaskStatus({ firstOpenWindowStatus: true })
+    mixpanelTrack('open_profile_first')
+  }
+}
+
 function listenOpenMessage() {
   return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
     if (event.code === 1 && event.message.includes('ERR101')) {
@@ -1057,6 +1065,9 @@ function listenOpenMessage() {
     }
     const id = event.data?.dirId || event.data
     Reflect.set(openMessage, id as string, event)
+    if (event.code === 0 && event.data?.percent === 100) {
+      sendFirstOpenRecord()
+    }
   })
 }
 

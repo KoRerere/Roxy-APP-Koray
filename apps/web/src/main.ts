@@ -32,6 +32,11 @@ queueMicrotask(async () => {
     const officialSiteLang = searchParams.get('official-site-lang')
     const officialSiteInviteCode = searchParams.get('official-site-invite-code')
     const jumpReferer = searchParams.get('jump-referer')
+    const officialSiteRedirect = searchParams.get('official-site-redirect')
+
+    if (officialSiteRedirect) {
+      sessionStorage.setItem('officialSiteRedirect', officialSiteRedirect)
+    }
 
     if (officialSiteInviteCode) {
       localStorage.setItem(OFFICIAL_SITE_INVITE_CODE, officialSiteInviteCode)

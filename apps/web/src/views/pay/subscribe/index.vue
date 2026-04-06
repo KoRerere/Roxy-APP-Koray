@@ -1,14 +1,13 @@
 <script setup lang="tsx">
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import SpringActivity from '/@/views/campaign/spring-festival/activity-info.vue'
+import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
-
 import { API } from '/@/api'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useDialog } from '/@/hooks/useDialog'
@@ -25,7 +24,8 @@ const route = useRoute()
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
-const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
+const { currentActivity } = storeToRefs(useCampaignStore())
+const { discountSpecialCalculate } = useCampaignStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccess } = usePay()
 const [showModal] = useDialog()
@@ -50,12 +50,11 @@ const monthlySubscribePrice = computed(() => {
 })
 
 const finalDiscount = computed(() => {
-  return discountCalculate([
-    currentActivity.value.discountPercentage,
+  return discountSpecialCalculate(discountCalculate([
     userPayInfo.value?.firstPurchaseDiscount,
     userPayInfo.value?.discount,
     selectedDuration.value?.discount,
-  ])
+  ]))
 })
 
 const finalCalculate = computed(() => {
@@ -80,6 +79,8 @@ const currentSubscribe = computed(() => {
   const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
   return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
+
+const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > finalDiscount.value)
 
 const details = computed(() => {
   // 处理试用导致显示窗口数量小于 10 的情况
@@ -118,12 +119,6 @@ const details = computed(() => {
     {
       items: [
         {
-          label: $t('节日折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${currentActivity.value.discountPercentage}%`,
-          visible: !!currentActivity.value.discountPercentage,
-        },
-        {
           label: $t('首购折扣'),
           class: '!color-[#FC9D12]',
           value: `-${userPayInfo.value?.firstPurchaseDiscount}%`,
@@ -141,7 +136,7 @@ const details = computed(() => {
           value: `-${selectedDuration.value?.discount}%`,
           visible: !isTrial.value && !!selectedDuration.value?.discount,
         },
-      ].filter(item => item.visible !== false),
+      ].filter(item => item.visible !== false && beyondDiscount.value),
     },
     {
       items: [
@@ -160,13 +155,6 @@ const details = computed(() => {
       ].filter(item => item.visible !== false),
     },
   ].filter(item => item.items.length)
-})
-
-const giftProfile = computed(() => {
-  return {
-    count: selectedCount.value,
-    month: selectedDuration.value?.month ?? 1,
-  }
 })
 
 onBeforeMount(() => {
@@ -189,7 +177,7 @@ async function getTierPricingList() {
       }
       else {
         dataList.value = data.rows
-        selectedPlan.value = dataList.value[0]
+        selectedPlan.value = dataList.value![0]
       }
 
       selectedCount.value = selectedPlan.value.maxWindows
@@ -288,11 +276,6 @@ async function trialSubscribe() {
               </div>
             </div>
           </div>
-          <div v-if="seasonalActivity.active" class="flex flex-col gap-4">
-            <div class="title">
-              {{ $t('选择优惠') }}
-            </div>
-          </div>
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <AdvancedFeat :plan="selectedPlan" />
         </div>
@@ -331,7 +314,7 @@ async function trialSubscribe() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <SpringActivity v-if="!isTrial && selectedPlan" v-model="giftType" :amount="finalCalculate.amount" :gift-profile="giftProfile" />
+                <EasterActivity v-if="!isTrial && selectedPlan" v-model="giftType" :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

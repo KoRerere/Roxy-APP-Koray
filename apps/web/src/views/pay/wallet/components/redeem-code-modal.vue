@@ -40,7 +40,7 @@ async function checkCode(value: string) {
 <template>
   <div class="w-120 inline-flex flex-col pa-6 pt-4 gap-4">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('兑换码') }}</span>
+      <span class="header">{{ $t('兑换') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
 

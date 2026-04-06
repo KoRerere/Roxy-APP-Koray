@@ -170,10 +170,6 @@
       "collapse": {
         "bg": "{primitives.netural.100}"
       },
-      "skeleton": {
-        "bg": "#ebf1f5",
-        "bg-overlay": "#ebf1f5"
-      },
       "marquee": {
         "indicator": "{primitives.netural.100}",
         "indicator-active": "{colors.background.bg-brand}"
@@ -182,6 +178,10 @@
         "bg": "{primitives.netural.200}",
         "success": "{primitives.green.500}",
         "info": "{primitives.blue.500}"
+      },
+      "skeleton": {
+        "bg": "#ebf1f5",
+        "bg-overlay": "#ebf1f5"
       },
       "scrollbar": {
         "bg": "{primitives.netural.50}",
@@ -241,22 +241,6 @@
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{component.tag.bg}"
       },
-      "tooltip": {
-        "action": {
-          "bg": "{primitives.netural.0}"
-        },
-        "bg": "{primitives.netural.900}",
-        "text-primary": "{primitives.netural.0}",
-        "text-secondary": "{primitives.netural.200}",
-        "divider": "{primitives.netural.600}"
-      },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}",
-        "text": "{colors.text.text-secondary}"
-      },
       "table": {
         "bg-button-hover": "#d3dde4",
         "bg-header": "{primitives.netural.50}",
@@ -272,6 +256,22 @@
         "bg-updated-hover": "{primitives.green.100}",
         "border-updated": "{primitives.green.300}",
         "border-updated-hover": "{primitives.green.400}"
+      },
+      "tooltip": {
+        "action": {
+          "bg": "{primitives.netural.0}"
+        },
+        "bg": "{primitives.netural.900}",
+        "text-primary": "{primitives.netural.0}",
+        "text-secondary": "{primitives.netural.200}",
+        "divider": "{primitives.netural.600}"
+      },
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}",
+        "text": "{colors.text.text-secondary}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -291,19 +291,6 @@
         "bg-card-active": "{colors.background.bg-page}",
         "border-card-active": "{colors.border.border-inactive}"
       },
-      "empty": {
-        "bg-start": "rgba(17, 163, 253, 0.4000)",
-        "bg-end": "rgba(17, 163, 253, 0.0000)"
-      },
-      "tour": {
-        "tips": {
-          "bg": "{component.tooltip.bg}",
-          "border": "{component.tooltip.bg}"
-        },
-        "mask": {
-          "bg": "{colors.alpha.alpha-black-40}"
-        }
-      },
       "tutorial": {
         "banner": {
           "bg-start": "#faebf3",
@@ -319,6 +306,19 @@
           "bg-end": "#faedfb",
           "bg-icon": "#b617da",
           "bg-play": "#efbff6"
+        }
+      },
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.4000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      },
+      "tour": {
+        "tips": {
+          "bg": "{component.tooltip.bg}",
+          "border": "{component.tooltip.bg}"
+        },
+        "mask": {
+          "bg": "{colors.alpha.alpha-black-40}"
         }
       },
       "editor": {
@@ -495,8 +495,15 @@
           "purple": "#8780fe",
           "bg-store": "{colors.background.bg-page}"
         }
+      },
+      "roxyclaw": {
+        "bg": "#ff9c7e",
+        "border": "#ffd1d1",
+        "sidenav": "#ff9c7e",
+        "text": "#eb5757"
       }
     },
+    "bg": "#ffffff",
     "campaign": {
       "netflix": {
         "bg-announcement": "#000000",
@@ -687,10 +694,6 @@
       "collapse": {
         "bg": "{primitives.netural.800}"
       },
-      "skeleton": {
-        "bg-overlay": "#363d45",
-        "bg": "{primitives.netural.800}"
-      },
       "marquee": {
         "indicator": "{primitives.netural.700}",
         "indicator-active": "{colors.background.bg-brand}"
@@ -699,6 +702,10 @@
         "bg": "{primitives.netural.700}",
         "success": "{primitives.green.400}",
         "info": "{primitives.blue.400}"
+      },
+      "skeleton": {
+        "bg-overlay": "#363d45",
+        "bg": "{primitives.netural.800}"
       },
       "scrollbar": {
         "bg": "{primitives.netural.800}",
@@ -758,22 +765,6 @@
         "border-hover": "{colors.border.border-subtle-hover}",
         "bg-strong": "{primitives.netural.700}"
       },
-      "tooltip": {
-        "action": {
-          "bg": "{component.tooltip.bg}"
-        },
-        "bg": "{primitives.netural.700}",
-        "text-primary": "{primitives.netural.0}",
-        "text-secondary": "{primitives.netural.200}",
-        "divider": "{primitives.netural.600}"
-      },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.600}",
-        "text": "{colors.text.text-secondary}"
-      },
       "table": {
         "bg-header": "{primitives.netural.800}",
         "border-header": "{colors.border.border-subtle}",
@@ -789,6 +780,22 @@
         "bg-updated-hover": "{primitives.green.800}",
         "border-updated": "{primitives.green.700}",
         "border-updated-hover": "{primitives.green.600}"
+      },
+      "tooltip": {
+        "action": {
+          "bg": "{component.tooltip.bg}"
+        },
+        "bg": "{primitives.netural.700}",
+        "text-primary": "{primitives.netural.0}",
+        "text-secondary": "{primitives.netural.200}",
+        "divider": "{primitives.netural.600}"
+      },
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.600}",
+        "text": "{colors.text.text-secondary}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -808,19 +815,6 @@
         "bg-card-active": "{colors.background.bg-block}",
         "border-card-active": "{colors.border.border-inactive}"
       },
-      "empty": {
-        "bg-start": "rgba(17, 163, 253, 0.8000)",
-        "bg-end": "rgba(17, 163, 253, 0.0000)"
-      },
-      "tour": {
-        "tips": {
-          "bg": "{colors.background.bg-brand}",
-          "border": "{colors.border.border-brand}"
-        },
-        "mask": {
-          "bg": "rgba(36, 38, 41, 0.9000)"
-        }
-      },
       "tutorial": {
         "banner": {
           "bg-start": "#500745",
@@ -836,6 +830,19 @@
           "bg-end": "#3c0e3a",
           "bg-icon": "#efbff6",
           "bg-play": "#cb4fe7"
+        }
+      },
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.8000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      },
+      "tour": {
+        "tips": {
+          "bg": "{colors.background.bg-brand}",
+          "border": "{colors.border.border-brand}"
+        },
+        "mask": {
+          "bg": "rgba(36, 38, 41, 0.9000)"
         }
       },
       "editor": {
@@ -1012,8 +1019,15 @@
           "purple": "#6f47ff",
           "bg-store": "#223c53"
         }
+      },
+      "roxyclaw": {
+        "bg": "#5e1600",
+        "border": "#892802",
+        "sidenav": "#ee4f1f",
+        "text": "#ee4f1f"
       }
     },
+    "bg": "#ffffff",
     "campaign": {
       "netflix": {
         "text-announcement": "#ffffff",

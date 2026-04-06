@@ -69,6 +69,7 @@
     "@antfu/eslint-config": "^7.7.3",
     "@dotenvx/dotenvx": "^1.44.2",
     "@electron/rebuild": "^3.7.2",
+    "@larksuiteoapi/node-sdk": "^1.5.0",
     "@modelcontextprotocol/sdk": "1.25.1",
     "@napi-rs/cli": "^3.5.1",
     "@types/adm-zip": "^0.5.8",

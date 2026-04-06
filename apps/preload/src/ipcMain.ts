@@ -1,6 +1,6 @@
+import type { MessageObj } from './types/'
 import type { IpcMainInvokeEvent } from 'electron'
 import { BrowserWindow, ipcMain } from 'electron'
-import type { MessageObj } from './types/'
 import { deepSerialize } from './utils/serialize'
 
 // 导出序列化工具供外部使用

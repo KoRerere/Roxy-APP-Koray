@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import SpringActivity from '/@/views/campaign/spring-festival/activity-info.vue'
+import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -18,6 +18,7 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnumStr } from '/@/enums/pay'
 import type { SubLevelEnum } from '/@/enums/pay'
 import type { Plan } from './type'
@@ -46,11 +47,9 @@ const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.val
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
 
 const allDiscount = computed(() => {
-  const { discountPercentage: activityDiscount } = currentActivity.value
   const { firstPurchaseDiscount, discount } = userPayInfo.value!
 
   return Object.fromEntries([
-    ['activityDiscount', activityDiscount, true],
     ['firstPurchaseDiscount', firstPurchaseDiscount, true],
     ['discount', discount, true],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
@@ -63,8 +62,10 @@ const currentSubscribe = computed(() => {
   return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
 
+const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > discountCalculate(Object.values(allDiscount.value)))
+
 const details = computed(() => {
-  const { activityDiscount, firstPurchaseDiscount, discount } = allDiscount.value
+  const { firstPurchaseDiscount, discount } = allDiscount.value
 
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
@@ -89,22 +90,16 @@ const details = computed(() => {
           value: `${profileCount.add(freeWindowCount.value).multiply(100).format()}`,
         },
         {
-          label: $t('节日折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${activityDiscount}%`,
-          visible: !!activityDiscount && isUpgrade.value,
-        },
-        {
           label: $t('首购折扣'),
           class: '!color-[#FC9D12]',
           value: `-${firstPurchaseDiscount}%`,
-          visible: !!firstPurchaseDiscount,
+          visible: !!firstPurchaseDiscount && beyondDiscount.value,
         },
         {
           label: $t('专属折扣'),
           class: '!color-[#FC9D12]',
           value: `-${discount}%`,
-          visible: !!discount,
+          visible: !!discount && beyondDiscount.value,
         },
       ].filter(item => item.visible !== false),
     },
@@ -201,7 +196,7 @@ async function getTierPricingList() {
     const { code, data, msg } = await API.pay.userGetWindowPricingRulesListList()
     if (code === 0) {
       dataList.value = data.rows
-      selectedPlan.value = dataList.value.findLast(item => userPayInfo.value.purchaseWindowCount > item.minWindows)
+      selectedPlan.value = dataList.value!.findLast(item => userPayInfo.value.purchaseWindowCount > item.minWindows)
     }
     else {
       throw new Error(msg)
@@ -432,7 +427,7 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <SpringActivity v-if="selectedPlan" v-model="giftType" :amount="needPayAmount" />
+                <EasterActivity v-if="selectedPlan" v-model="giftType" :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
                 <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

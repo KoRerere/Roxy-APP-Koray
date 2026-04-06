@@ -105,7 +105,7 @@ export function createLLM(enableThinking = false) {
       apiKey,
       apiUrl: baseURL,
       streaming: true,
-      temperature: 0.7,
+      temperature: 0.5,
     })
   }
   else {

@@ -76,13 +76,10 @@ function giftRule() {
 </script>
 
 <template>
-  <div class="w-160 inline-flex flex-col pa-6 pt-4 gap-4">
+  <div class="w-200 inline-flex flex-col pa-6 pt-4 gap-4">
     <div class="h-9 flex justify-between items-center">
       <span class="header">{{ $t('🎁兑换码') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
-    </div>
-    <div class="pb-1 tips">
-      {{ $t('提示：兑换码仅限当前无生效中的订阅用户可用，可分享给好友一起使用 Roxy') }}
     </div>
     <div class="h-70 overflow-hidden">
       <RyTable :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
@@ -119,12 +116,6 @@ function giftRule() {
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-}
-
-.tips {
-  color: var(--colors-text-text-secondary);
-  font-size: 14px;
-  line-height: 18px;
 }
 
 .available {

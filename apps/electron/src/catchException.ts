@@ -1,12 +1,23 @@
-import { dialog, app } from "electron"
-import { init as initSentry, consoleLoggingIntegration, captureException } from "@sentry/electron/main"
+import { captureException, consoleLoggingIntegration, init as initSentry } from '@sentry/electron/main'
+import { app, dialog } from 'electron'
 
-delete process.env.HTTP_PROXY;
-delete process.env.HTTPS_PROXY;
-delete process.env.http_proxy;
-delete process.env.https_proxy;
-delete process.env.ALL_PROXY;
-delete process.env.all_proxy;
+// 保存代理配置（调试用）
+globalThis.__roxy_agent_proxy_env = {
+  HTTP_PROXY: process.env.HTTP_PROXY,
+  http_proxy: process.env.http_proxy,
+  HTTPS_PROXY: process.env.HTTPS_PROXY,
+  https_proxy: process.env.https_proxy,
+  ALL_PROXY: process.env.ALL_PROXY,
+  all_proxy: process.env.all_proxy,
+}
+
+// 删除进程环境变量中的代理配置，避免影响其他模块
+delete process.env.HTTP_PROXY
+delete process.env.HTTPS_PROXY
+delete process.env.http_proxy
+delete process.env.https_proxy
+delete process.env.ALL_PROXY
+delete process.env.all_proxy
 
 // Sentry 主进程初始化（尽早调用）
 // DSN 来自环境变量：SENTRY_DSN；环境：SENTRY_ENV 或 NODE_ENV；版本：app.getVersion()
@@ -30,38 +41,42 @@ initSentry({
   ],
 })
 
-
 // （不推荐）忽略 SSL 证书验证,让 axios 忽略 SSL 证书验证，绕过 UNABLE_TO_VERIFY_LEAF_SIGNATURE 错误
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-// 禁止弹出错误框
+/**
+ * 禁止弹出错误框
+ */
 dialog.showErrorBox = function (title, content) {
   // 只记录错误，不显示弹窗
-  console.error(`Error logged without system dialog: ${title}\n${content}`);
-};
+  console.error(`Error logged without system dialog: ${title}\n${content}`)
+}
 
 // 捕获未捕获的异常
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception:", error);
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error)
   try {
-    captureException(error);
-  } catch { }
+    captureException(error)
+  }
+  catch { }
 })
 
 // 捕获未处理的 Promise 拒绝
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled promise rejection:", reason);
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason)
   try {
-    captureException(reason instanceof Error ? reason : new Error(String(reason)));
-  } catch { }
+    captureException(reason instanceof Error ? reason : new Error(String(reason)))
+  }
+  catch { }
 })
 
 app.on('render-process-gone', (event, webContents, details) => {
-  console.error('Render process gone:', details);
+  console.error('Render process gone:', details)
   try {
-    captureException(new Error(`Render process gone: ${JSON.stringify(details)}`));
-  } catch { }
-});
+    captureException(new Error(`Render process gone: ${JSON.stringify(details)}`))
+  }
+  catch { }
+})
 
 // 让 Sentry 管理 crashReporter，无需手动启动
 

@@ -16,7 +16,7 @@ import type { Items, SettingsModule } from '/@/layout/components/header/profile/
 import { RecoveryType } from '/@/enums/account'
 
 // TODO 解决 options.instance 为 null 的问题，为 null 会报错
-const MyTooltip: ObjectDirective = {
+export const TooltipHook: ObjectDirective = {
   ...Tooltip,
   beforeMount(el, options, ...args) {
     options.instance ||= {}
@@ -83,7 +83,7 @@ export function useAuthentication() {
                   <div class="w-full flex gap-2 items-center justify-between">
                     {hasEmail
                       ? withDirectives(h('div', { class: 'truncate w-[152px]' }, userStore.userInfo?.email), [
-                          [MyTooltip, { value: userStore.userInfo?.email }, '', { top: true }],
+                          [TooltipHook, { value: userStore.userInfo?.email }, '', { top: true }],
                         ])
                       : <div>{$t('当前未设置邮箱')}</div>}
                     <RxButton

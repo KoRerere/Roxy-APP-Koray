@@ -48,9 +48,9 @@ function onChange() {
 </script>
 
 <template>
-  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide" @show="showPreventMask" :pt="{root:'!border-0.5'}">
+  <ContextMenu ref="ctxMenu" :model="operation" :pt="{ root: '!border-0.5' }" @before-hide="onHide" @show="showPreventMask">
     <template #item="{ item, props: ctxProps }">
-      <a v-ripple class="!pa-0" v-bind="ctxProps.action">
+      <a v-ripple v-tooltip="{ value: item.menuTooltip, delay: 300 }" class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'radio'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>
           <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop @change="onChange" />
           <span>{{ item.label }}</span>

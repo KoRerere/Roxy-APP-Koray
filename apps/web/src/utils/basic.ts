@@ -634,3 +634,11 @@ export function genDriver(config: Config) {
     ...config,
   })
 }
+
+export function localDiscountValue(locale: string, discount: number) {
+  if (locale === 'zh-CN') {
+    return currency(100).subtract(discount).divide(10).value
+  }
+
+  return discount
+}

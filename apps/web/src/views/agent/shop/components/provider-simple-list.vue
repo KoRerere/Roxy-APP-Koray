@@ -21,7 +21,7 @@ type MoreItem = Partial<ShopItem> & {
 type ShopList = (ShopItem | MoreItem)[]
 
 const props = defineProps<{
-  onBuyProxy: (props: any) => void
+  onBuyProxy: (props?: Record<string, any>) => void
 }>()
 
 const route = useRoute()
@@ -95,16 +95,20 @@ async function getShopList() {
 
 watch(
   () => route.query._t,
-  buyProxyFromAnnouncement,
+  value => value && buyProxyFromAnnouncement(),
+  {
+    immediate: true,
+  },
 )
 
 function buyProxyFromAnnouncement() {
   // 通过公告栏跳转购买
   if (route.query.proxyProviderName) {
     const provider = shopList.value.find(item => item.proxyProviderName === route.query.proxyProviderName)
-    if (provider) {
-      props.onBuyProxy(provider.props)
-    }
+    provider && props.onBuyProxy(provider.props)
+  }
+  else if (route.query.action === 'buy') {
+    props.onBuyProxy()
   }
 }
 </script>

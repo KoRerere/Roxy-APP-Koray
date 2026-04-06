@@ -140,7 +140,6 @@ const config: UserConfig = {
     target: `chrome${chrome}`,
     // outDir: String.raw`C:/Users/Administrator/AppData/Local/Programs/RoxyBrowserDev/resources/app.asar.unpacked/dist/web`,
     outDir: 'dist',
-    assetsDir: '.',
     rollupOptions: {
       input: {
         'main': join(PACKAGE_ROOT, 'index.html'),
@@ -212,8 +211,7 @@ const config: UserConfig = {
               const nameSet = new Set<string>()
 
               const genSvgTypes = debounce(() => {
-                const typeDefine = [...nameSet]
-                  .map(n => `'${n}'`)
+                const typeDefine = Array.from(nameSet, n => `'${n}'`)
                   .join(`
 | `)
                 const code = `

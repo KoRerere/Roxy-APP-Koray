@@ -7,8 +7,10 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProxy } from '/@/views/agent/hooks'
 import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
-
 import { useCommonStore } from '/@/stores/common'
+import { executeSomethingByBackToSelfWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { sleep } from '/@/utils'
+import { Role } from '/@/enums/role'
 
 const router = useRouter()
 const roleStore = useRoleStore()
@@ -21,7 +23,8 @@ const { viewExpiresSoonProxy } = useProxy()
 const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
 const isShowProxyExpired = ref(true)
-const { anntList } = storeToRefs(useCommonStore())
+const { unReadAnnts } = storeToRefs(useCommonStore())
+const { setAnntRead } = useCommonStore()
 
 const subEndDate = computed(() => {
   if (userPayInfo.value?.subEndDate) {
@@ -83,9 +86,7 @@ function onRenewal() {
 }
 
 function handleCloseAnnt(id: number) {
-  setTimeout(() => {
-    anntList.value = anntList.value?.filter(annt => annt.id !== id)
-  }, 400)
+  sleep(400).then(() => setAnntRead(id))
 }
 
 function onHtmlClick(e: MouseEvent) {
@@ -103,14 +104,24 @@ function onHtmlClick(e: MouseEvent) {
   e.preventDefault()
 
   const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
+  const query = Object.fromEntries(url.searchParams)
 
-  router.replace({
+  const replaceParams = {
     path: url.pathname,
     query: {
-      ...Object.fromEntries(url.searchParams),
+      ...query,
       _t: Date.now(),
     },
-  })
+  }
+
+  if (query.name === 'shop' || query.role === Role.OWNER.toString()) {
+    executeSomethingByBackToSelfWorkspace(() => {
+      router.replace(replaceParams)
+    })()
+  }
+  else {
+    router.replace(replaceParams)
+  }
 }
 
 function handleCloseSubscriptionExpired() {
@@ -128,7 +139,7 @@ function handleCloseProxyExpired() {
 
 <template>
   <div class="mr-4 flex flex-col gap-2 announcement">
-    <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rounded-1 announcement_content" closable @close="handleCloseAnnt(annt.id!)">
+    <Message v-for="annt in unReadAnnts" :key="annt.id" severity="success" class="w-full rounded-1 announcement_content" closable @close="handleCloseAnnt(annt.id!)">
       <template #default>
         <div class="break-all" @click="onHtmlClick" v-html="annt.announcement" />
       </template>

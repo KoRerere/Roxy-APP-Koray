@@ -390,7 +390,7 @@ function initBodyrow(options: any) {
       <DataTable v-model:context-menu-selection="contextMenuSelected" v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder"
                  :sort-field="_sorts.sortField" :pt="{
                    root: ColumnCss_Module.tableroot,
-                   table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
+                   table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : 'pb-15'],
                    emptymessagecell: '!whitespace-normal !text-center',
                    tbody: ColumnCss_Module.tbody,
                    headerrow: ColumnCss_Module.headerrow,

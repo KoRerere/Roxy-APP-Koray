@@ -1,10 +1,9 @@
 <script setup lang="tsx">
-import WorkspaceManagerDialog from './workspace-manager-dialog.vue';
-import { useDialog } from '/@/hooks/useDialog';
-;
-import { useRoleStore } from "/@/stores/role"
-import { useWorkspaceStore } from '/@/stores/workspace';
-import { WorkspaceType } from "/@/enums";
+import WorkspaceManagerDialog from './workspace-manager-dialog.vue'
+import { useDialog } from '/@/hooks/useDialog'
+import { useRoleStore } from '/@/stores/role'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { WorkspaceType } from '/@/enums'
 
 const [showModal] = useDialog()
 const { isOwner } = storeToRefs(useRoleStore())
@@ -29,26 +28,27 @@ async function showWorkspaceManager() {
   showModal({
     header: $t('工作空间管理'),
     pt: {
-      title: '!text-[20px]'
+      title: '!text-[20px]',
     },
     class: '!w-[570px]',
     slots: {
       default: ({ hideModal }) => <WorkspaceManagerDialog hideFn={hideModal} />,
-      footer: undefined
-    }
+      footer: undefined,
+    },
   })
 }
-
 </script>
 
 <template>
   <div class="flex items-center gap-1.5">
     <div class="workspace-manager" @click="showWorkspaceManager">
       <RxAvatar v-bind="avatarProps" />
-      <div class="text-3.5">{{ currentWorkspace?.workspaceName }}</div>
-      <SvgIcon name="base/rx_ic_chevron_right" :size="12" />
+      <div class="text-3.5">
+        {{ currentWorkspace?.workspaceName }}
+      </div>
+      <RxButton class="!shadow-none" size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('切换空间')" />
     </div>
-    <RxButton v-if="showBack" class="!shadow-none" size="xs" severity="secondary" icon="base/rx_ic_return" :label="$t('回到默认空间')" @click="setCurrentWorkspace(-1)"></RxButton>
+    <RxButton v-if="showBack" class="!shadow-none" size="xs" severity="secondary" icon="base/rx_ic_return" :label="$t('回到默认空间')" @click="setCurrentWorkspace(-1)" />
   </div>
 </template>
 

@@ -12,7 +12,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, hidePageLoading, isDev, isMainWindow, isMobile, isWindows } from '/@/utils'
+import { encryptAESGCM, getCookie, hidePageLoading, isDev, isMainWindow, isMobile, isWindows } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
@@ -346,6 +346,9 @@ export const useUserStore = defineStore(
     }
 
     const initUserInfo = async (intoWorkspaceId?: number) => {
+      // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
+      await checkCookie()
+
       if (token.value) {
         await getUserInfo(intoWorkspaceId)
         getUserConfig(true)
@@ -379,6 +382,24 @@ export const useUserStore = defineStore(
         }
       }
       return userContact.value
+    }
+
+    async function checkCookie() {
+      // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
+      if (!globalThis.isElectron) {
+        const roxyToken = await getCookie('roxy_token')
+        if (!roxyToken) {
+          token.value = ''
+          clearUserInfo()
+          router.push({ name: 'login' })
+          return Promise.reject(new Error('cookie expired'))
+        }
+      }
+      return Promise.resolve()
+    }
+
+    if (!globalThis.isElectron) {
+      setInterval(checkCookie, 3 * 1000)
     }
 
     return {

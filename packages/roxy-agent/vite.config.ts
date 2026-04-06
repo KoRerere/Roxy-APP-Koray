@@ -35,6 +35,9 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
   plugins: [],
+  optimizeDeps: {
+    include: ['protobufjs'],
+  },
 }
 
 export default config

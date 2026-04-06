@@ -14,6 +14,7 @@ import {
   AddSystemTodoListData,
   AddSystemTodoListParams,
   CheckIpDownloadLimitListData,
+  GetEasterEggRemainingListData,
   GetPromotionLinkDiscountListData,
   GetPromotionLinkDiscountListParams,
   GetVersionListListData,
@@ -119,6 +120,21 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetEasterEggRemainingList
+   * @summary 彩蛋剩余数量
+   * @request GET:/app_statistics/get_easter_egg_remaining
+   * @response `200` `GetEasterEggRemainingListData`
+   */
+  getEasterEggRemainingList = (params: RequestParams = {}) =>
+    this.http.request<GetEasterEggRemainingListData, any>({
+      path: `/app_statistics/get_easter_egg_remaining`,
+      method: "GET",
       format: "json",
       ...params,
     });

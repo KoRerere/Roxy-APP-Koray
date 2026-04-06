@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
-    "@roxybrowser/openapi": "1.0.10-beta.5"
+    "@roxybrowser/openapi": "1.0.10"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

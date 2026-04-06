@@ -26,13 +26,13 @@ export function toUpgradePlan() {
   }
 }
 
-export const switchWorkspaceAndToUpgradePlan = executeSomethingBySwitchWorkspace(toUpgradePlan)
+export const switchWorkspaceAndToUpgradePlan = executeSomethingByBackToSelfWorkspace(toUpgradePlan)
 
 function buyMoreExpand(defaultType: 'workspace' | 'staff') {
   emitter.emit('showExpandDialog', { defaultType })
 }
 
-function executeSomethingBySwitchWorkspace(next: (...args: any[]) => void) {
+export function executeSomethingByBackToSelfWorkspace(next: (...args: any[]) => void) {
   return async (...args: any[]) => {
     const workspaceStore = useWorkspaceStore()
     if (workspaceStore.workspaceList.length === 0) {
@@ -60,7 +60,7 @@ export function useHandleBusinessCode() {
   const { isOwner } = storeToRefs(useRoleStore())
 
   async function handleBusinessCode(code: number, next?: () => void) {
-    const privateMoreExpand = executeSomethingBySwitchWorkspace(buyMoreExpand)
+    const privateMoreExpand = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
 
     // 空间数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
