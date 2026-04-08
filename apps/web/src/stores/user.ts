@@ -386,7 +386,7 @@ export const useUserStore = defineStore(
 
     async function checkCookie() {
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
-      if (!globalThis.isElectron) {
+      if (!globalThis.isElectron && !import.meta.hot) {
         const roxyToken = await getCookie('roxy_token')
         if (!roxyToken) {
           token.value = ''
