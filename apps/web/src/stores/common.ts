@@ -6,10 +6,10 @@ import type { UnwrapRowsType, UserGetAnntListListData } from '@roxy/backend-api'
 export const useCommonStore = defineStore('common', () => {
   const anntList = ref<UnwrapRowsType<UserGetAnntListListData>>([])
 
-  const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
+  const localStatus = ref(safeParseJSON(localStorage.getItem('localStatus')) ?? {})
 
   const unReadAnnts = computed(() => {
-    return anntList.value.filter(annt => !localStatus.annt?.includes(annt.id))
+    return anntList.value.filter(annt => !localStatus.value.annt?.includes(annt.id))
   })
 
   const setAnntList = (rows: UnwrapRowsType<UserGetAnntListListData>) => {
@@ -17,9 +17,9 @@ export const useCommonStore = defineStore('common', () => {
   }
 
   function setAnntRead(id: number) {
-    const annt = [...new Set([...(localStatus.annt || []), id])]
-    Reflect.set(localStatus, 'annt', annt)
-    localStorage.setItem('localStatus', JSON.stringify(localStatus))
+    const annt = [...new Set([...(localStatus.value.annt || []), id])]
+    Reflect.set(localStatus.value, 'annt', annt)
+    localStorage.setItem('localStatus', JSON.stringify(localStatus.value))
   }
 
   async function fetchAnntList() {

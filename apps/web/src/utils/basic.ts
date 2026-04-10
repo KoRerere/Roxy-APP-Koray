@@ -642,3 +642,7 @@ export function localDiscountValue(locale: string, discount: number) {
 
   return discount
 }
+
+export function truncNumber2(number: number, precision: number = 2) {
+  return Math.trunc(number * 10 ** precision) / 10 ** precision
+}

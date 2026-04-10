@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import Campaign from '/@/views/campaign/index.vue'
-// import OtherGifts from '/@/views/campaign/spring-festival/index.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
-import { RxSvgIcon } from '/@/components/rx-icon'
-
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
@@ -69,21 +66,21 @@ const items = computed(() => {
     <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }" @hide="hidePreventMask" @show="showPreventMask">
       <template #item="{ item, props }">
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
-            <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
+          <a v-ripple class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+            <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
               {{ item.label }}
             </span>
+            <SvgIcon class="absolute -top-0.5 right-0.25" size="24" name="base/new_badge" />
           </a>
         </ShinyButton>
         <a v-else v-ripple class="menu-item" :class="[`menu_${item.routeName}`, { 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }]" v-bind="props.action">
-          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
+          <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
           <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">{{ item.label }}</span>
           <component :is="item.extra" v-if="!collapsed && item.extra" />
         </a>
       </template>
     </TieredMenu>
-    <!-- <OtherGifts v-if="roleStore.isOwner" :collapsed /> -->
     <Campaign v-if="roleStore.isOwner" :collapsed />
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">

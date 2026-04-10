@@ -22,15 +22,21 @@ const columns = [
     key: 'source',
   },
   {
-    title: $t('返利比例'),
+    title: $t('非代理返利比例'),
     key: 'youGet',
-    classes: 'text-[#FC9D12]',
+    classes: 'text-orange-400',
     getText: (data: Data) => `${data.youGet}%`,
+  },
+  {
+    title: $t('代理返利比例'),
+    key: 'proxyYouGet',
+    classes: 'text-orange-400',
+    getText: (data: Data) => `${data.proxyYouGet}%`,
   },
   {
     title: $t('用户优惠'),
     key: 'theyGet',
-    classes: 'text-[#FC9D12]',
+    classes: 'text-orange-400',
     getText: (data: Data) => `${data.theyGet}%`,
   },
   {

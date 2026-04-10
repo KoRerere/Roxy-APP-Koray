@@ -1574,6 +1574,7 @@ export interface UserGetUserInfoListData {
       ratingStatus: boolean;
       autoRatingStatus: boolean;
       externalRatingStatus: boolean;
+      firstOpenWindowStatus: boolean;
     };
   };
   msg: string;
@@ -2371,6 +2372,7 @@ export interface UserGetPromotionInfoListData {
       linkStatus?: number;
       linkType?: string;
       promotionDiscount?: number;
+      proxyPromotionDiscount?: number;
       promotionLink?: string;
       purchaseTotalAmount?: number;
       userDiscount?: number;
@@ -2896,6 +2898,7 @@ export interface UserUpdateOnboardingTaskStatusCreatePayload {
   autoRatingStatus?: boolean;
   ratingStatus?: boolean;
   externalRatingStatus?: boolean;
+  firstOpenWindowStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -3349,6 +3352,7 @@ export interface UserGetWindowInfoListListParams {
    * @example "true"
    */
   enableStatus?: string;
+  projectIds?: string;
 }
 
 export interface UserGetWindowInfoListListData {

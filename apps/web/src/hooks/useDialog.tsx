@@ -1,9 +1,9 @@
-import type { AppContext, DefineComponent, FunctionalComponent, HTMLAttributes, VNode } from 'vue'
-import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
 import { createVNode, render } from 'vue'
+import type { AppContext, FunctionalComponent, HTMLAttributes } from 'vue'
+import Dialog from 'primevue/dialog'
+import type { DialogProps, DialogSlots } from 'primevue/dialog'
 import RxButton from '/@/components/rx-button/'
-
-import { isEqualWith, isFunction } from 'es-toolkit'
+import { isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
 import type { ButtonProps } from 'primevue/button'
 
@@ -14,7 +14,7 @@ export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes
   okText?: string
   okProps?: ButtonProps
   cancelText?: string
-  slots?: {[key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element}
+  slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element }
 }
 
 export interface UseDialogInstance {
@@ -24,91 +24,92 @@ export interface UseDialogInstance {
 }
 
 // 弹窗队列，避免一次性显示多个弹窗
-const dialogQueue:UseDialogProps[] =  []
+// const dialogQueue: UseDialogProps[] = []
 // 根据 header 来判断是否是同一个弹窗
 const dialogMap = new Map<string, UseDialogInstance>()
 let appContext: AppContext | null = null
 
-const customizer = (a: any, b: any) => {
-  if (typeof a === 'function' && typeof b === 'function') {
-    return a.toString() === b.toString();
-  }
-};
+// function customizer(a: any, b: any) {
+//   if (typeof a === 'function' && typeof b === 'function') {
+//     return a.toString() === b.toString()
+//   }
+// }
 
-export function useDialog( ) {
+export function useDialog() {
   appContext ||= getCurrentInstance()!.appContext
 
-    function showModal(props: UseDialogProps) {
-      const dialog = dialogMap.get(props.header || '')
-      if (dialog) {
-        return dialog
-      }
+  function showModal(props: UseDialogProps) {
+    const dialog = dialogMap.get(props.header || '')
+    if (dialog) {
+      return dialog
+    }
 
-      const div = document.createElement('div')
+    const div = document.createElement('div')
+    const visible = ref(false)
 
-      function hideModal() {
-        visible.value = false
-        if (props.header) {
-          dialogMap.delete(props.header)
-        }
-      }
-
-      function onAfterHide() {
-        div.remove()
-      }
-
-      const innerProps = ref<UseDialogProps>({
-        draggable:false,
-        ...props,
-        handleCancel: () => {
-          hideModal()
-          props?.handleCancel?.()
-        },
-        handleOk: async () => {
-          await props?.handleOk?.()
-          hideModal()
-        },
-      })
-
-      const visible = ref(false)
-      const instance = {
-        dialogRef: ref<InstanceType<typeof Dialog> | null>(null),
-        hideModal,
-        handleOk: () => innerProps.value.handleOk?.(),
-        handleCancel: () => innerProps.value.handleCancel?.(),
-      }
-
+    function hideModal() {
+      visible.value = false
       if (props.header) {
-        dialogMap.set(props.header, instance)
+        dialogMap.delete(props.header)
+      }
+    }
+
+    function onAfterHide() {
+      div.remove()
+    }
+
+    const innerProps = ref<UseDialogProps>({
+      draggable: false,
+      ...props,
+      handleCancel: () => {
+        hideModal()
+        props?.handleCancel?.()
+      },
+      handleOk: async () => {
+        await props?.handleOk?.()
+        hideModal()
+      },
+    })
+
+    const instance = {
+      dialogRef: ref<InstanceType<typeof Dialog> | null>(null),
+      hideModal,
+      handleOk: () => innerProps.value.handleOk?.(),
+      handleCancel: () => innerProps.value.handleCancel?.(),
+    }
+
+    if (props.header) {
+      dialogMap.set(props.header, instance)
+    }
+
+    const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
+      const { handleCancel, handleOk, okText, cancelText, slots, okProps, ...dialogProps } = innerProps.value
+
+      const __dialogSlots = {
+        footer: () => (
+          <div class="flex justify-end gap-2">
+            {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
+            <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk}></RxButton>
+          </div>
+        ),
+        ...Object.entries(slots || {}).reduce((acc, [key, value]) => {
+          acc[key] = isFunction(value)
+            ? new Proxy(value, {
+                apply: (target, thisArg, argArray) => {
+                  return Reflect.apply(target, thisArg, [instance, ...argArray])
+                },
+              })
+            : value
+          return acc
+        }, {} as Record<string, (instance: UseDialogInstance) => JSX.Element>),
       }
 
-      const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
-        const { handleCancel, handleOk, okText, cancelText, slots, okProps, ...dialogProps } = innerProps.value
+      return (
+        <Dialog ref={instance.dialogRef} v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}></Dialog>
+      )
+    }
 
-        const __dialogSlots = {
-          footer: () => (
-            <div class="flex justify-end gap-2">
-              {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
-              <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk}></RxButton>
-            </div>
-          ),
-          ...Object.entries(slots || {}).reduce((acc, [key, value]) => {
-            acc[key] = isFunction(value) ? new Proxy(value, {
-              apply: (target, thisArg, argArray) => {
-                return Reflect.apply(target, thisArg, [instance, ...argArray])
-              }
-            }) : value
-            return acc
-          }, {} as Record<string, (instance: UseDialogInstance) => JSX.Element>)
-        }
-
-        return (
-          <Dialog ref={instance.dialogRef} v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
-          </Dialog>
-        )
-      }
-
-    const vnode = createVNode(DialogComponent )
+    const vnode = createVNode(DialogComponent)
     vnode.appContext = appContext
     render(vnode, div)
     visible.value = true
@@ -117,12 +118,13 @@ export function useDialog( ) {
       instance.dialogRef.value.close = () => {
         if (props.beforeClose) {
           props.beforeClose(originalClose)
-        } else {
+        }
+        else {
           originalClose()
         }
       }
     }
-      return instance
+    return instance
   }
 
   return [showModal] as const

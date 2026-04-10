@@ -14,7 +14,6 @@ import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
-import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
 import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
@@ -24,14 +23,13 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ClearType, ProfileModifyType, ProfileOpenStatus, ProfileReqType, ProxyType } from '/@/enums'
+import { ClearType, ProfileModifyType, ProfileReqType, ProxyType } from '/@/enums'
 import { FirstGiftType } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, deepClone, filterFieldByValue, getFormData, isEmptyValue, safeParseJSON } from '/@/utils'
+import { copyText, deepClone, safeParseJSON } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
@@ -46,6 +44,11 @@ import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
+import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/useProfileOpenState'
+import { useProfilesTable } from '/@/views/browser/list/profiles/hooks/useProfilesTable'
+import { useWindowModify } from '/@/views/browser/list/profiles/hooks/useWindowModify'
+import { createProfileOperationHandler } from '/@/views/browser/list/profiles/operationHandlers'
+import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/utils/filterParams'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -68,9 +71,7 @@ const confirm = useConfirm()
 const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
-const workspaceStore = useWorkspaceStore()
 const { userInfo, userConfig } = storeToRefs(useUserStore())
-const { mixpanelTrack } = useUserStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const { getProjects } = useMateGroup()
@@ -86,15 +87,63 @@ const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
-const tableRef = useTemplateRef('windownTable')
+const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
-const openMessage = reactive<any>({})
-const hasFiltered = ref(false)
-const hasTempProfile = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
 
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
+const {
+  openMessage,
+  workspaceName,
+  listenOpenMessage,
+  listenCloseMessage,
+  listenCloseSyncingDataMessage,
+  openBrowserBefore,
+  getNotUsedProfiles,
+  syncOpenedBrowserState,
+} = useProfileOpenState()
+
+const { hasFiltered, hasTempProfile, onRefreshTable, tableRequest } = useProfilesTable({
+  tableRef,
+  filtersMenu,
+  getCurrentFilterParams: () => props.currentFilter?._params,
+  route,
+  router,
+  openBrowserBefore,
+})
+
+const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowModify({
+  onlyErrorToast,
+  onRefreshTable,
+})
+
+async function onFirstRegisterGuide(type: string) {
+  await tableRef.value?.refresh({}, true)
+  nextTick(() => {
+    drive({
+      el: tableRef.value?.$el,
+      steps: [
+        {
+          pick: { rect: { rows: [0, 1], cols: [1, 1], mode: 'data' } },
+          popover: {
+            description: FirstGiftType.Discount === type ? $t('我们已为您创建好一些独立窗口。现在，只需为每个窗口绑定对应的平台账号与代理 IP，就能实现完全隔离的多账号操作。') : $t('赠送的代理 IP 已自动绑定至新窗口。无需复杂设置，即可开始完全隔离的多账号操作。'),
+            side: 'bottom',
+            align: 'center',
+          },
+        },
+        {
+          pick: { selector: '.p-datatable-tbody > tr:nth-child(-n+2) > td:nth-child(4)' },
+          popover: { description: $t('点击"打开"按钮以启动您的窗口。'), side: 'bottom', align: 'center' },
+        },
+      ],
+      options: {
+        onDestroyed: () => {
+          emitter.emit('asideMenuGuide')
+        },
+      },
+    })
+  })
+}
 
 watch(() => props.currentFilter, (value: any) => {
   if (value) {
@@ -115,16 +164,17 @@ watch(
   },
 )
 
-let canceOpenlListener: any
-let canceCloselListener: any
-let canceCloseSyncingDataListener: any
+let cancelOpenListener: (() => void) | undefined
+let cancelCloseListener: (() => void) | undefined
+let cancelCloseSyncingDataListener: (() => void) | undefined
 
 onBeforeMount(() => {
-  canceOpenlListener = listenOpenMessage()
-  canceCloselListener = listenCloseMessage()
-  canceCloseSyncingDataListener = listenCloseSyncingDataMessage()
+  cancelOpenListener = listenOpenMessage()
+  cancelCloseListener = listenCloseMessage()
+  cancelCloseSyncingDataListener = listenCloseSyncingDataMessage()
 
-  firstRegisterGuideTour()
+  if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false)
+    emitter.on('firstRegisterGuide', onFirstRegisterGuide)
 
   // 列表备注显示状态现在保存到后台
   updateColumns((columns) => {
@@ -134,14 +184,7 @@ onBeforeMount(() => {
     }
   })
 
-  globalThis.electronAPI
-    .send('browser:getOpenedBrowserMessage')
-    .then((state) => {
-      console.log('browser:getOpenedBrowserMessage state', state)
-      state.forEach((item: any) => {
-        Reflect.set(openMessage, item.dirId, { data: item })
-      })
-    })
+  void syncOpenedBrowserState()
 
   const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
 
@@ -155,20 +198,11 @@ onBeforeMount(() => {
 })
 
 onBeforeUnmount(() => {
-  canceOpenlListener?.()
-  canceCloselListener?.()
-  canceCloseSyncingDataListener?.()
+  emitter.off('firstRegisterGuide', onFirstRegisterGuide)
+  cancelOpenListener?.()
+  cancelCloseListener?.()
+  cancelCloseSyncingDataListener?.()
 })
-
-function onRefreshTable(tabParams = {}, force = false) {
-  const params = {
-    ...props.currentFilter?._params,
-    ...tabParams,
-    ...filterFieldByValue(getFormData(filtersMenu.value)),
-  }
-  hasFiltered.value = !isEmptyValue(params)
-  tableRef.value?.refresh(params, force)
-}
 
 async function saveFilters(formData: any) {
   if (!filtersMenu.value.some((item: any) => item.value)) {
@@ -176,12 +210,7 @@ async function saveFilters(formData: any) {
   }
   const { filter_name, filter_rule, sort } = formData
 
-  const filter_condition = filtersMenu.value.reduce((acc: any, cur: any) => {
-    if (cur.value) {
-      acc[cur.name] = toRaw(cur.value)
-    }
-    return acc
-  }, {})
+  const filter_condition = buildCustomFilterParamsFromMenu(filtersMenu.value)
 
   const isEdit = !!sort
 
@@ -204,243 +233,39 @@ async function saveFilters(formData: any) {
   onlyErrorToast(code, msg)
 }
 
-async function tableRequest(params: any) {
-  // 0: 未删除
-  const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 })
-
-  if (data.code === 0 && data.data.rows.length > 0) {
-    const rows = data.data.rows.map(item => ({
-      ...item,
-      projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
-    }))
-    hasTempProfile.value = rows.some(item => item.isTemporary)
-    autoOpenBrowser(rows)
-    data.data.rows = rows
-  }
-
-  return data
-}
-
-function firstRegisterGuideTour() {
-  if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
-    emitter.on('firstRegisterGuide', async (type: string) => {
-      await tableRef.value?.refresh({}, true)
-      nextTick(() => {
-        drive({
-          el: tableRef.value?.$el,
-          steps: [
-            {
-              pick: { rect: { rows: [0, 1], cols: [1, 1], mode: 'data' } },
-              popover: {
-                description: FirstGiftType.Discount === type ? $t('我们已为您创建好一些独立窗口。现在，只需为每个窗口绑定对应的平台账号与代理 IP，就能实现完全隔离的多账号操作。') : $t('赠送的代理 IP 已自动绑定至新窗口。无需复杂设置，即可开始完全隔离的多账号操作。'),
-                side: 'bottom',
-                align: 'center',
-              },
-            },
-            {
-              pick: { selector: '.p-datatable-tbody > tr:nth-child(-n+2) > td:nth-child(4)' },
-              popover: { description: $t('点击"打开"按钮以启动您的窗口。'), side: 'bottom', align: 'center' },
-            },
-          ],
-          options: {
-            onDestroyed: () => {
-              emitter.emit('asideMenuGuide')
-            },
-          },
-        })
-      })
-    })
-  }
-}
-
-async function operationHandler(operate: any, data: any, operationType: 'single' | 'batch' = 'single') {
-  /**
-   * 兼容批量操作
-   */
-  const datas: Data[] = [].concat(data).map(item => toRaw(item))
-  const ids = datas.map(item => item.id!)
-
-  saveLocalTrack(operate.name)
-
-  switch (operate.name) {
-    case 'edit':
-    {
-      const { page_index } = tableRef.value!.getParams()
-      const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
-        if (cur.value) {
-          acc[cur.name] = toRaw(cur.value)
-        }
-        return acc
-      }, {})
-      router.push({
-        name: 'browser-edit',
-        query: {
-          ...route.query,
-          id: data.id,
-          page_index,
-          activeTabId: props.currentFilter?.id,
-          customFilterParams: JSON.stringify(customFilterParams),
-        },
-      })
-      break
-    }
-    case 'copyId':
-      copyText(data.dirId)
-      showToast(0, $t('复制成功'))
-      break
-    case 'transfer':
-      await onTransfer(datas, operate)
-      break
-    case 'moveToProject':
-      await onMoveToProject(data)
-      break
-    case 'open':
-    case 'view':
-      await openBrowserBefore(data)
-      break
-    case 'setAsDefaultBrowser':
-      await setAsDefaultBrowser(data)
-      break
-    case 'createDesktopShortcut':
-      await createDesktopShortcut(data)
-      break
-    case 'addProxy':
-      await multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
-      break
-    case 'chooseProxy':
-      await multipleProxyChange(data, { operationType, proxyMethod: 'choose' })
-      break
-    case 'deleteProxy':
-      await multipleProxyDelete(data)
-      break
-    case 'addPlatformAccount':
-      await multipleAccountChange(data, { operationType, isChoose: false })
-      break
-    case 'choosePlatformAccount':
-      await multipleAccountChange(data, { operationType, isChoose: true })
-      break
-    case 'restart':
-    {
-      const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
-      if (dirIds.length) {
-        globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
-      }
-      break
-    }
-    case 'close':
-      globalThis.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
-        console.log('browser:batchClose res', res)
-      })
-      break
-    case 'addTag':
-      if (operationType === 'batch') {
-        tagsIconRef.value?.openMenu(operate._event)
-      }
-      else {
-        addTag({
-          confirmNext: ({ params, res }: any) => {
-            updateProfileMeta({
-              labelInfo: [...data.labelInfo, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
-              labelIds: [...data.labelIds, res.data.id],
-              requestType: ProfileReqType.SelectLabel,
-            }, data)
-          },
-        })
-      }
-      break
-    case 'fav':
-      singleModifyWindow({ id: data.id, isOften: !data.isOften }, true)
-        .then(() => {
-          data.isOften = !data.isOften
-        })
-      break
-    case 'addNotes':
-      await onRemark(data)
-      break
-    case 'editCookies':
-      onEditCookies(data)
-      break
-    case 'cookieRobot':
-      openCookieRobot(data)
-      break
-    case 'clearCache':
-      onClearCache(datas)
-      break
-    case 'exportProfile':
-      exportProfile(datas)
-      break
-    case 'delete':
-      await deleteProfile(datas, ids)
-      break
-  }
-}
-
 function onAdvancedSearch(search?: Record<string, any>) {
   const { key, value } = search || {}
   onRefreshTable({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
 }
 
-function autoOpenBrowser(list: Data[]) {
-  const query = route.query.browser && JSON.parse(route.query.browser as string)
-  if (query?.openBrowser) {
-    const data = list.find(item => item.id === query.windowId)
-    router.replace({ name: route.name })
-    if (data) {
-      openBrowserBefore(data)
-    }
-  }
-}
-
-async function openBrowserBefore(data: Data | Data[]) {
-  if (!globalThis.isElectron) {
-    globalThis.electronAPI.send('browser:batchRelaunch', [])
-    return
-  }
-  // 过滤打开限制的 profile
-  const datas = ([] as Data[]).concat(data).filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
-
-  if (!datas.length) {
-    return
-  }
-
-  datas.forEach((item, index) => {
-    Reflect.set(openMessage, item.dirId!, {
-      pending: true,
-      data: {
-        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
-      },
-    })
-  })
-
-  const result = await checkProfileStatus(datas)
-  // 过滤自身打开的窗口
-  const openList = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
-  // 1.如果没有其他人打开窗口，则直接打开
-  if (!openList.length) {
-    onOpenBrowser(datas)
-    return
-  }
-
-  // 2.如果窗口其他人打开了，那么就提示用户，让用户选择是否继续打开
-  confirm.require({
-    header: $t('警告'),
-    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: openList.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'info',
-    },
-    accept: () => {
-      onOpenBrowser(datas)
-    },
-    reject: () => clearMessage(datas),
-    onHide: () => clearMessage(datas),
-  })
-}
+const operationHandler = createProfileOperationHandler({
+  saveLocalTrack,
+  tableRef,
+  filtersMenu,
+  router,
+  route,
+  getCurrentFilter: () => props.currentFilter,
+  copyTextFn: copyText,
+  showToast,
+  onTransfer,
+  onMoveToProject,
+  openBrowserBefore,
+  setAsDefaultBrowser,
+  createDesktopShortcut,
+  multipleProxyChange,
+  multipleProxyDelete,
+  multipleAccountChange,
+  tagsIconRef,
+  addTag,
+  updateProfileMeta,
+  singleModifyWindow,
+  onRemark,
+  onEditCookies,
+  openCookieRobot,
+  onClearCache,
+  exportProfile,
+  deleteProfile,
+})
 
 async function setAsDefaultBrowser(data: Data) {
   const sortNum = `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0')
@@ -460,25 +285,6 @@ async function createDesktopShortcut(data: Data) {
   showToast(0, $t('创建桌面快捷方式成功'))
 }
 
-function clearMessage(datas: Data[]) {
-  datas.forEach((item) => {
-    Reflect.deleteProperty(openMessage, item.dirId!)
-  })
-}
-
-async function checkProfileStatus(datas: Data[]) {
-  const ids = datas.map(item => item.id!)
-  const { data } = await API.window.userGetWindowStatusInfoCreate({ ids })
-  return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
-}
-
-function onOpenBrowser(datas: Data[]) {
-  const dirIds = datas.map(item => item.dirId!)
-  if (dirIds.length) {
-    globalThis.electronAPI.send('browser:batchLaunch', dirIds)
-  }
-}
-
 function showOperationMenu(props: { event: Event, operation: any[] }, data: any) {
   if (userInfo.value.onboardingTaskStatus?.contextMenuGuideStatus) {
     show(props.event, {
@@ -489,7 +295,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
           await operationHandler(_operate, data)
         }
         catch (error) {
-          console.log(error)
+          console.error(error)
         }
       },
     })
@@ -516,33 +322,6 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
       ),
     },
   })
-}
-
-async function updateProfileMeta(params: Record<string, any>, data: Data, type?: 'single' | 'batch') {
-  const { projectId, labelIds, requestType } = params
-  // why? 当标签关联人员的时候，需要调单个修改窗口的接口
-  const datas = ([] as Data[]).concat(data)
-  const ids = datas.map(item => item.id!);
-
-  (type === 'single'
-    ? singleModifyWindow({ id: ids[0], projectId, labelIds, requestType }, true)
-    : batchModifyWindow({ ids, projectId, labelIds, requestType }, true)
-  ).then(() => {
-    const updateParams = Object.entries(params).filter(([_, value]) => !!value)
-    datas.forEach((item) => {
-      updateParams.forEach(([key, value]) => {
-        item[key as keyof Data] = value
-      })
-    })
-  })
-}
-
-async function getNotUsedProfiles(datas: Data[]) {
-  if (!datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    return datas
-  }
-  const result = await globalThis.electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
-  return datas.filter((_, index) => !result[index])
 }
 
 async function onTransfer(datas: Data[], operate?: any) {
@@ -1006,91 +785,6 @@ async function deleteProfile(datas: any, ids: number[]) {
   })
 }
 
-async function singleModifyWindow(params: any, silent = false) {
-  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    if (!silent) {
-      onRefreshTable()
-    }
-    return Promise.resolve()
-  }
-  else {
-    return Promise.reject(msg)
-  }
-}
-
-async function batchModifyWindow(params: any, silent = false) {
-  const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    if (!silent) {
-      onRefreshTable()
-    }
-    return Promise.resolve()
-  }
-  else {
-    return Promise.reject(msg)
-  }
-}
-
-function showDiskSpaceModal() {
-  showModal({
-    header: $t('磁盘空间不足'),
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    pt: {
-      content: '!pa-0',
-    },
-    slots: {
-      container: ({ hideModal }) => h(DiskInsufficient, {
-        onClose: hideModal,
-      }),
-    },
-  })
-}
-
-function sendFirstOpenRecord() {
-  if (userInfo.value.onboardingTaskStatus?.firstOpenWindowStatus === false) {
-    updateOnboardingTaskStatus({ firstOpenWindowStatus: true })
-    mixpanelTrack('open_profile_first')
-  }
-}
-
-function listenOpenMessage() {
-  return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
-    if (event.code === 1 && event.message.includes('ERR101')) {
-      showDiskSpaceModal()
-    }
-    const id = event.data?.dirId || event.data
-    Reflect.set(openMessage, id as string, event)
-    if (event.code === 0 && event.data?.percent === 100) {
-      sendFirstOpenRecord()
-    }
-  })
-}
-
-function listenCloseMessage() {
-  return globalThis.electronAPI.on('browser:on-close', (dirIds) => {
-    dirIds.forEach((dirId) => {
-      Reflect.deleteProperty(openMessage, dirId)
-    })
-  })
-}
-
-function listenCloseSyncingDataMessage() {
-  return globalThis.electronAPI.on('browser:on-close-syncing-data', (dirIds) => {
-    dirIds.forEach((dirId) => {
-      const message = Reflect.get(openMessage, dirId)
-      if (message?.data) {
-        message.uploading = true
-        message.data.message = $t('同步数据中...')
-      }
-    })
-  })
-}
-
 async function toCreateBrowser() {
   const { code, msg } = await API.window.userCheckWindowTotalCountList()
   if (code === 0) {
@@ -1109,7 +803,7 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
            :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
   >
     <template #filter-after>

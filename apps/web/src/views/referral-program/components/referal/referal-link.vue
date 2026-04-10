@@ -7,6 +7,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import currency from 'currency.js'
 import { API } from '/@/api'
 import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
+import { genDriver, safeParseJSON } from '/@/utils'
 
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
@@ -19,7 +20,7 @@ const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
 const selectBannerSize = ref('')
 const dataPreformanceValue = ref()
-const maxNumber = 999999
+const MAX_NUMBER = 999999
 
 const detailPopover = useTemplateRef('detail')
 
@@ -42,7 +43,7 @@ const dataPreformance = computed(() => {
     },
     {
       title: $t('近 30 天名下用户消费金额'),
-      total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, maxNumber),
+      total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, MAX_NUMBER),
       /**
        * todayCount: 0,
        */
@@ -61,7 +62,7 @@ const dataPreformance = computed(() => {
     },
     {
       title: $t('已审核奖励'),
-      total: Math.min(maxNumber, dataPreformanceValue.value?.awardsReviewed || 0),
+      total: Math.min(MAX_NUMBER, dataPreformanceValue.value?.awardsReviewed || 0),
       // todayCount: dataPreformanceValue.value?.todayAwardsReviewed || 0,
       style: {
         color: '#12A3FC',
@@ -72,33 +73,59 @@ const dataPreformance = computed(() => {
     },
   ]
 })
+
 const referralLink = computed(() => {
   return activeMenu.value.promotionLink
 })
+
 const currentBannerImage = computed(() => {
   return bannerList.value?.find(item => item.size === selectBannerSize.value)
 })
+
 const bannerImagePreviewHtmlCode = computed(() => {
   const { image_1x, image_2x } = currentBannerImage.value || {}
   const srcset = `${image_1x} 1x, ${image_2x} 2x`
   return `<a href="${referralLink.value}" target="_blank" rel="noopener noreferrer"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
 })
+
 const bonusList = computed(() => {
   const targetMenu = promotionInfo.promotionLinkList.find(item => item.linkType === activeMenu.value.linkType)
   return [
     {
-      icon: 'referral-program/rx_referral_coin',
+      id: 1,
+      icon: 'referral-program/rx_illustration_coin2',
       title: $t('您将获得'),
-      desc: $t('{ratio} 消费金额', { ratio: '{ratio}' }),
-      ratio: targetMenu?.promotionDiscount,
-      class: 'get',
+      class: 'flex-2/3 get',
+      isNew: true,
+      items: [
+        {
+          title: `${targetMenu?.promotionDiscount}%`,
+          desc: $t('窗口/空间/成员消费返利'),
+          class: '',
+        },
+        {
+          title: '+',
+          class: 'flex-none',
+        },
+        {
+          title: `${targetMenu?.proxyPromotionDiscount}%`,
+          desc: $t('代理 IP 消费返利'),
+          class: '',
+        },
+      ],
     },
     {
-      icon: 'referral-program/rx_referral_discount',
+      id: 2,
+      icon: 'referral-program/rx_illustration_discount',
       title: $t('他们得到'),
-      desc: $t('{ratio} 消费优惠', { ratio: '{ratio}' }),
-      ratio: targetMenu?.userDiscount,
-      class: 'give',
+      class: 'flex-1/3 give',
+      items: [
+        {
+          title: `${targetMenu?.userDiscount}%`,
+          desc: $t('消费优惠'),
+          class: '',
+        },
+      ],
     },
   ]
 })
@@ -107,6 +134,25 @@ watch(activeMenu, () => {
   getBannerPictureList()
   getPromotionInfoByTypeList()
 }, { immediate: true })
+
+onMounted(() => {
+  focusReward()
+})
+
+function focusReward() {
+  const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
+  if (driverStatus.referralProgram)
+    return
+
+  genDriver({
+    steps: [
+      { element: '.get', popover: { description: $t('您现在可以获得名下用户的代理 IP 消费返利了。'), side: 'top', align: 'center' } },
+    ],
+    onDestroyed: () => {
+      localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, referralProgram: true }))
+    },
+  }).drive()
+}
 
 function DataPreformance(props: any) {
   return (
@@ -223,24 +269,26 @@ function isLocked(linkStatus: number) {
           </div>
         </div>
         <RxCopyContent :text="referralLink!" :mask="isLocked(activeMenu.linkStatus!)" @copy-success="mixpanelTrack('promotion_link_copy')" />
-        <div class="desc">
-          {{ $t('受邀用户消费时:') }}
-        </div>
-        <div class="w-full flex gap-2.5">
-          <div v-for="item in bonusList" :key="item.title" class="relative flex-1 h-22 flex flex-col justify-center py-3 px-4 rounded-md bonus" :class="item.class">
-            <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88" />
+        <div class="w-full flex gap-2.5 bonus">
+          <div v-for="item in bonusList" :key="item.id" class="w-full flex flex-col gap-2" :class="item.class">
             <div class="bonus-title">
-              {{ item.title }}
+              {{ item.title }}:
             </div>
-            <i18n-t class="bonus-desc" tag="div" scope="global" :keypath="item.desc">
-              <template #ratio>
-                <span class="bonus-ratio">{{ item.ratio }}%</span>
-              </template>
-            </i18n-t>
+            <div class="relative flex-1 h-22 flex gap-5 py-3 px-4 rounded-md bonus-content">
+              <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88" />
+              <div v-if="item.isNew" class="absolute -right-2 position-y-center top-0 py-0.5 px-2 rounded-full bonus-new">
+                New
+              </div>
+              <div v-for="(it, idx) in item.items" :key="idx" class="relative flex-1 z-1" :class="it.class">
+                <div class="bonus-ratio">
+                  {{ it.title }}
+                </div>
+                <div v-if="it.desc" class="bonus-desc">
+                  {{ it.desc }}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="tips">
-          {{ $t('受邀用户购买代理 IP 不参与消费金额奖励') }}
         </div>
       </div>
       <template v-if="!isLocked(activeMenu.linkStatus!)">
@@ -320,7 +368,7 @@ function isLocked(linkStatus: number) {
     align-self: stretch;
     flex: 3;
     padding-left: 27px;
-    border-left: 1px solid var(--colors-border-border-inactive, #293038);
+    border-left: 1px solid var(--colors-border-border-inactive);
 
     .row {
       display: flex;
@@ -330,10 +378,8 @@ function isLocked(linkStatus: number) {
       align-self: stretch;
 
       .title {
-        color: var(--colors-text-text-primary, #fafafa);
-        font-family: Inter;
+        color: var(--colors-text-text-primary);
         font-size: 14px;
-        font-style: normal;
         font-weight: 600;
         line-height: 20px;
         margin-bottom: 4px;
@@ -360,10 +406,8 @@ function isLocked(linkStatus: number) {
     }
 
     .banner-size-label {
-      color: var(--colors-text-text-primary, #111213);
-      font-family: Inter;
+      color: var(--colors-text-text-primary);
       font-size: 13px;
-      font-style: normal;
       font-weight: 400;
       line-height: var(--Line-Height-text-xs, 16px);
       cursor: pointer;
@@ -379,7 +423,7 @@ function isLocked(linkStatus: number) {
       flex: 1;
       height: 100%;
       border-radius: 4px;
-      background: var(--colors-background-bg-block, #293038);
+      background: var(--colors-background-bg-block);
 
       :deep(.p-image) {
         width: 100%;
@@ -482,43 +526,42 @@ function isLocked(linkStatus: number) {
   }
 }
 
-.desc {
-  color: var(--colors-text-text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
+.get .bonus-content {
+  border: 1px solid var(--pattern-dashboard-card-border-card-referral);
+  background: linear-gradient(
+    90deg,
+    var(--pattern-dashboard-card-bg-card-referral-1) 0%,
+    var(--pattern-dashboard-card-bg-card-referral-2) 100%
+  );
 }
 
-.tips {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+.give .bonus-content {
+  border: 1px solid var(--pattern-dashboard-card-border-card-bonus);
+  background: linear-gradient(
+    90deg,
+    var(--pattern-dashboard-card-bg-card-bonust-1) 0%,
+    var(--pattern-dashboard-card-bg-card-bonus-2) 100%
+  );
+
+  .bonus-ratio {
+    color: var(--colors-text-text-brand);
+  }
 }
 
 .bonus {
-  &.get {
-    border: 1px solid var(--pattern-dashboard-card-border-card-referral);
-    background: linear-gradient(
-      90deg,
-      var(--pattern-dashboard-card-bg-card-referral-1) 0%,
-      var(--pattern-dashboard-card-bg-card-referral-2) 100%
-    );
-  }
-
-  &.give {
-    border: 1px solid var(--pattern-dashboard-card-border-card-bonus);
-    background: linear-gradient(
-      90deg,
-      var(--pattern-dashboard-card-bg-card-bonust-1) 0%,
-      var(--pattern-dashboard-card-bg-card-bonus-2) 100%
-    );
+  &-new {
+    color: #fff;
+    font-family: 'DingTalk JinBuTi';
+    font-size: 12px;
+    background: var(--colors-background-bg-error);
+    line-height: normal;
   }
 
   &-title {
     color: var(--colors-text-text-primary);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 20px;
+    line-height: 18px;
   }
 
   &-desc {

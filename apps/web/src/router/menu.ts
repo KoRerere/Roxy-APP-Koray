@@ -17,7 +17,7 @@ declare module 'vue-router' {
     hideInMenu?: boolean
     shared?: boolean
     type?: 'group' | 'button' | (string & {})
-    icon?: SvgNames | (string & {})
+    icon?: SvgNames
   }
 }
 

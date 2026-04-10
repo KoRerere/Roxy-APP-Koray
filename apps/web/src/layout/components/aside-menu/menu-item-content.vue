@@ -58,19 +58,17 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ 'active': isActive, 'roxy-claw': item.meta?.isRoxyClaw }"
-         @click.prevent="handleClickItem($event, navigate)"
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href"
+         :class="{ 'active': isActive, 'roxy-claw': item.meta?.isRoxyClaw }" @click.prevent="handleClickItem($event, navigate)"
       >
         <!-- Roxy Claw 菜单样式 -->
         <template v-if="item.meta?.isRoxyClaw">
           <img :src="isActive
-                 ? '/images/roxy-claw/menu/sidenav-active.png'
-                 : '/images/roxy-claw/menu/sidenav-inactive.png'"
-               class="w-19px select-none"
-               draggable="false"
+            ? '/images/roxy-claw/menu/sidenav-active.png'
+            : '/images/roxy-claw/menu/sidenav-inactive.png'" class="block w-4.5" draggable="false"
           >
-          <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-            <div class="menu-title" :title="item.meta?.title">
+          <div class="flex items-center justify-between w-full menu-title">
+            <div :title="item.meta?.title">
               <span>{{ item.meta?.title }}</span>
             </div>
 
