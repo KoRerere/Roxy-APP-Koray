@@ -168,7 +168,8 @@ defineExpose({
 
 <template>
   <i18n-t v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
-    :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global">
+          :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global"
+  >
     <template #discount>
       <span class="discount-value">{{ inviteDiscountInfo.userDiscount }}%</span>
     </template>
@@ -195,11 +196,14 @@ defineExpose({
   </div>
   <div class="login-ways">
     <RxButton :loading="submitLoading || emailValidateLoading" type="button" size="lg" class="w-full" @click="handleSubmit">
-      <template v-if="isBoolean(emailLoginMap[signFormData.user_name]) && !emailValidateLoading">
+      <template v-if="loginType === 'phone'">
+        {{ $t('登录/注册') }}
+      </template>
+      <template v-else-if="isBoolean(emailLoginMap[signFormData.user_name]) && !emailValidateLoading">
         {{ emailLoginMap[signFormData.user_name] ? $t('登录') : $t('注册') }}
       </template>
       <template v-else>
-        {{ isEmailLogin ? $t('登录/注册') : $t('登录') }}
+        {{ $t('登录/注册') }}
       </template>
     </RxButton>
     <div v-if="loginType === 'phone'" class="-mt-1 auto-register">
