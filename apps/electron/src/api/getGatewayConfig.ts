@@ -101,7 +101,7 @@ async function getMapKey() {
   }
 
   // 如果获取不到，则默认走hz
-  if (!result) {
+  if (!result?.continent_code || !result?.country_code) {
     return 'hz'
   }
 
