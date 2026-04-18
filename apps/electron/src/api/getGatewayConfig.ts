@@ -73,6 +73,11 @@ async function getMapKey() {
       .then((data) => {
         data.continent_code ||= data.continentCode
         data.country_code ||= data.countryCode
+
+        if (!data.continent_code || !data.country_code) {
+          throw new Error(`Invalid IP info from ${url}`)
+        }
+
         return data as ProxyDetectionResult
       })
   })
