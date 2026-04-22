@@ -1,3 +1,4 @@
+import './logger'
 import dotenv from 'dotenv'
 
 dotenv.config()

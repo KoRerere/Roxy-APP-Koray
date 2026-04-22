@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base href="<%= baseUrl %>" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access denied</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        width: var(--width-xs, 384px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      img {
+        width: 90px;
+        height: 90px;
+      }
+
+      div:nth-child(2) {
+        color: var(--colors-text-text-secondary, #b2b6b8);
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: normal;
+      }
+
+      div:nth-child(3) {
+        color: var(--Colors-Text-text-tertiary, #7c8387);
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        /* 166.667% */
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M54 15.3281C54 13.8525 52.8038 12.6562 51.3281 12.6562H14.543C13.1055 12.6562 11.8477 13.1953 10.7695 14.2734C9.69141 15.3516 9.15235 16.6094 9.15235 18.0469V62.9687C9.15235 64.4062 9.69141 65.6641 10.7695 66.7422C11.8477 67.8203 13.1055 68.3594 14.543 68.3594H6.07611C3.75591 68.3594 1.76569 70.4896 3.35743 72.1777C4.34571 73.2259 5.5586 73.75 6.9961 73.75H82.7344C84.2317 73.75 85.5046 73.2259 86.5527 72.1777C88.2103 70.5202 86.2247 68.3594 83.8805 68.3594H75.457C76.8945 68.3594 78.1523 67.8203 79.2305 66.7422C80.3086 65.6641 80.8477 64.4062 80.8477 62.9687V39.6738C80.8477 38.1971 79.6506 37 78.1738 37C76.6971 37 75.5 38.1971 75.5 39.6738V61C75.5 62.1046 74.6046 63 73.5 63H16.5C15.3954 63 14.5 62.1046 14.5 61V20C14.5 18.8954 15.3954 18 16.5 18H51.3281C52.8038 18 54 16.8038 54 15.3281ZM45 71.7734C45.8386 71.7734 46.5574 71.4739 47.1563 70.875C47.7552 70.2761 48.0547 69.5574 48.0547 68.7188C48.0547 67.8801 47.7552 67.1614 47.1563 66.5625C46.5574 65.9636 45.8386 65.6641 45 65.6641C44.1614 65.6641 43.4427 65.9636 42.8438 66.5625C42.2449 67.1614 41.9453 67.8801 41.9453 68.7188C41.9453 69.5574 42.2449 70.2761 42.8438 70.875C43.4427 71.4739 44.1614 71.7734 45 71.7734Z"
+          fill="url(#paint0_linear_55139_168476)"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M67.061 14.0811L78.9189 25.939C79.915 24.5465 80.5 22.8424 80.5 21C80.5 16.3056 76.6944 12.5 72 12.5C70.1576 12.5 68.4535 13.085 67.061 14.0811ZM76.7723 28.0351L64.9649 16.2277C64.0398 17.5883 63.5 19.2299 63.5 21C63.5 25.6944 67.3056 29.5 72 29.5C73.7701 29.5 75.4117 28.9602 76.7723 28.0351ZM63.7874 12.9499C65.8728 10.8226 68.7833 9.5 72 9.5C78.3513 9.5 83.5 14.6487 83.5 21C83.5 24.2167 82.1774 27.1272 80.0501 29.2126C79.9061 29.3537 79.7584 29.4911 79.6072 29.6246C77.5808 31.4131 74.9155 32.5 72 32.5C65.6487 32.5 60.5 27.3513 60.5 21C60.5 18.0845 61.5869 15.4192 63.3754 13.3928C63.5089 13.2416 63.6463 13.0939 63.7874 12.9499Z"
+          fill="#F53838"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_55139_168476"
+            x1="45"
+            y1="12.6563"
+            x2="45"
+            y2="73.75"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="#89D0FC" />
+            <stop offset="1" stop-color="#E2F1FB" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <div>Unable to access the URL.</div>
+      <div>Current is a demo window, only allowed to access the current site. Please understand!</div>
+      <div>无法访问该网址</div>
+      <div>当前为体验窗口，仅限访问当前站点。敬请谅解！</div>
+    </div>
+  </body>
+</html>

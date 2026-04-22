@@ -1,7 +1,7 @@
 <template>
   <RxButton class="shrink-0" icon="base/rx_ic_unlock2" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
 
-  <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('设置锁定密码')" :modal="true" :draggable="false" style="width: 384px;">
+  <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('设置应用打开密码')" :modal="true" :draggable="false" style="width: 384px;">
     <div class="flex flex-col gap-4">
       <span class="text-sm text-gray-500">
         {{ $t('密码格式：4-12 个字符（字母、数字或符号）') }}

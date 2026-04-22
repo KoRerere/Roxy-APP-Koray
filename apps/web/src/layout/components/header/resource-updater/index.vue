@@ -225,7 +225,7 @@ console.debug('clientUpdates', clientUpdates)
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton ref="btn" severity="secondary" outlined size="xs" @click="toggle">
         <template #icon>
-          <SvgIcon :name="isDownloading ? 'base/rx_ic_updates_app-animated' : 'base/rx_ic_updates_app'" size="17" color="var(--colors-icon-icon-secondary)" />
+          <SvgIcon :name="isDownloading ? 'base/rx_ic_upgrade' : 'base/rx_ic_upgrade'" size="17" color="var(--colors-icon-icon-secondary)" />
         </template>
       </RxButton>
     </OverlayBadge>

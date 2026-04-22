@@ -2,17 +2,18 @@
 import { RxSvgIcon } from '/@/components/rx-icon'
 import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
-// import type { SvgNames } from '/@/components/rx-icon'
+import { useThemeStore } from '/@/stores/theme'
+import { useProxy } from '/@/views/agent/hooks'
 
 const props = defineProps<{
   item: RouteRecordRaw
   collapsed: boolean
 }>()
-const roxyClawStore = useRoxyClawStore()
-// const cacheKey = 'isShowBuyProxyNewBadge'
-// const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
-
 const route = useRoute()
+const themeStore = useThemeStore()
+const roxyClawStore = useRoxyClawStore()
+const { buyProxy } = useProxy()
+
 const isCollapsed = defineModel('open', { default: false })
 const badgeMap = defineModel<Record<NonNullable<RouteRecordNameGeneric>, boolean>>('badgeMap', { default: () => ({}) })
 
@@ -63,9 +64,13 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
       >
         <!-- Roxy Claw 菜单样式 -->
         <template v-if="item.meta?.isRoxyClaw">
-          <img :src="isActive
-            ? '/images/roxy-claw/menu/sidenav-active.png'
-            : '/images/roxy-claw/menu/sidenav-inactive.png'" class="block w-4.5" draggable="false"
+          <img :src="themeStore.realTheme === 'light'
+            ? (isActive
+              ? '/images/roxy-claw/menu/sidenav-active.png'
+              : '/images/roxy-claw/menu/sidenav-inactive.png')
+            : (isActive
+              ? '/images/roxy-claw/menu/sidenav-active.png'
+              : '/images/roxy-claw/menu/sidenav-inactive-dark.png')" class="block w-4.5" draggable="false"
           >
           <div class="flex items-center justify-between w-full menu-title">
             <div :title="item.meta?.title">
@@ -83,9 +88,11 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
         <template v-else>
           <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
 
-          <div class="menu-title" :title="item.meta?.title">
-            <span>{{ item.meta?.title }}</span>
+          <div class="relative flex items-center gap-1.5 overflow-hidden menu-title" :title="item.meta?.title">
+            <span class="ellipsis-1">{{ item.meta?.title }}</span>
+            <SvgIcon v-if="item.meta?.slotName === 'proxy'" name="base/fire" />
           </div>
+          <RxButton v-if="item.meta?.slotName === 'proxy'" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="buyProxy()" />
         </template>
 
         <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->
@@ -136,13 +143,11 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   transition: all 0.15s ease-in-out;
 
   .menu-title {
-    position: relative;
     flex: auto;
     font-size: 14px;
     font-weight: 500;
     line-height: 16px;
     text-overflow: ellipsis;
-    overflow: hidden;
     line-height: 20px;
   }
 

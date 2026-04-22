@@ -7,13 +7,13 @@ import { useDialog } from '/@/hooks/useDialog'
 const [showModal] = useDialog()
 
 const typeMap = {
-  Transfer: $t('窗口投送'),
+  Transfer: $t('窗口转移'),
   Receive: $t('窗口接收'),
 }
 
 const statusMap = {
-  1: $t('投送中'),
-  2: $t('投送成功'),
+  1: $t('转移中'),
+  2: $t('转移成功'),
   3: $t('已拒绝'),
 }
 
@@ -28,7 +28,7 @@ const columns = [
     slot: 'type'
   },
   {
-    title: $t('投送者'),
+    title: $t('转移者'),
     key: 'transferor',
   },
   {
@@ -85,10 +85,10 @@ function viewDetail(item: any) {
   <div class="h-full flex overflow-hidden">
     <RyTable cacheKey="transfer-history" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
       <template #table-empty>
-        <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无投送窗口数据')">
+        <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无转移窗口数据')">
           <template #extra>
             <div class="flex flex-col gap-3 help">
-              <div>{{ $t('您可以直接将窗口投送到您拥有的其他工作空间。或者使用工作空间 ID 投送到他人的工作空间。') }}</div>
+              <div>{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。或者使用工作空间 ID 转移到他人的工作空间。') }}</div>
             </div>
           </template>
         </CustomEmpty>

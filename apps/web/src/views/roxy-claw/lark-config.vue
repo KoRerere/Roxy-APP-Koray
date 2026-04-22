@@ -1,19 +1,18 @@
 <script setup lang="tsx">
 import ConfigBase from './components/config-base.vue'
+import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const roxyClawStore = useRoxyClawStore()
 const [showToast] = useResponseToast()
+const router = useRouter()
 
 // 本地状态
 const testLoading = ref(false)
 const larkEnvironment = ref<'lark' | 'feishu'>('feishu')
 const appId = ref('')
 const appSecret = ref('')
-const whitelistString = ref('')
-
-// 环境选择选项
 const environmentOptions = [
   { label: 'Lark', value: 'lark' },
   { label: $t('飞书'), value: 'feishu' },
@@ -24,12 +23,12 @@ onMounted(() => {
   larkEnvironment.value = roxyClawStore.config.lark_environment || 'feishu'
   appId.value = roxyClawStore.config.lark_app_id
   appSecret.value = roxyClawStore.config.lark_app_secret
-  whitelistString.value = roxyClawStore.config.lark_allowed_chat_ids.join(', ')
 })
 
 // setupFields 响应式
 const setupFields = computed(() => [
   {
+    field: 'environment',
     label: $t('平台'),
     type: 'select',
     options: environmentOptions,
@@ -37,12 +36,14 @@ const setupFields = computed(() => [
     required: true,
   },
   {
+    field: 'appId',
     label: 'App ID',
     placeholder: '123456789',
     value: appId.value,
     required: true,
   },
   {
+    field: 'appSecret',
     label: 'App Secret',
     placeholder: '123456789:AaBbCcDdEe...',
     hasTestButton: true,
@@ -99,23 +100,41 @@ const steps = [
 /**
  * 处理字段值变化（只更新本地状态，不调用接口）
  */
-function handleFieldUpdate(index: number, value: string) {
-  if (index === 0) {
+function handleFieldUpdate(field: string, value: string) {
+  if (field === 'environment') {
     larkEnvironment.value = value as 'lark' | 'feishu'
   }
-  else if (index === 1) {
+  else if (field === 'appId') {
     appId.value = value
   }
-  else if (index === 2) {
+  else if (field === 'appSecret') {
     appSecret.value = value
   }
 }
 
 /**
- * 处理白名单值变化（只更新本地状态，不调用接口）
+ * 处理删除配置
  */
-function handleWhitelistUpdate(value: string) {
-  whitelistString.value = value
+async function handleDelete() {
+  try {
+    await roxyClawStore.updateConfig({
+      lark_app_id: '',
+      lark_app_secret: '',
+      lark_allowed_chat_ids: [],
+    })
+    roxyClawStore.connectionStatus.lark = { checked: false, status: null }
+
+    const msg = roxyClawStore.isEnabled
+      ? $t('配置已删除，RoxyClaw 正在重启中...')
+      : $t('配置已删除')
+    showToast(0, msg)
+
+    router.push({ name: 'roxy-claw-home' })
+  }
+  catch (error) {
+    console.error('Delete failed:', error)
+    showToast(1, $t('配置删除失败'))
+  }
 }
 
 /**
@@ -123,22 +142,19 @@ function handleWhitelistUpdate(value: string) {
  */
 async function handleSave() {
   try {
-    // 保存环境选择
     await roxyClawStore.updateConfig({
       lark_environment: larkEnvironment.value,
       lark_app_id: appId.value,
       lark_app_secret: appSecret.value,
     })
 
-    // 保存白名单
-    // const whitelistIds = whitelistString.value.split(',').map(id => id.trim()).filter(Boolean)
-    // await roxyClawStore.updateConfig({ lark_allowed_chat_ids: whitelistIds })
-
     // 重置连接状态，下次进入主页面时重新检测
     roxyClawStore.connectionStatus.lark = { checked: false, status: null }
 
-    // 显示保存成功的提示
-    showToast(0, $t('配置保存成功'))
+    const msg = roxyClawStore.isEnabled
+      ? $t('配置保存成功，RoxyClaw 正在重启中...')
+      : $t('配置保存成功')
+    showToast(0, msg)
   }
   catch (error) {
     console.error('Save failed:', error)
@@ -149,8 +165,8 @@ async function handleSave() {
 /**
  * 处理测试
  */
-async function handleTest(index: number) {
-  if (index === 2) {
+async function handleTest(field: string) {
+  if (field === 'appSecret') {
     testLoading.value = true
     try {
       const result = await roxyClawStore.testLark(appId.value, appSecret.value, larkEnvironment.value)
@@ -174,14 +190,9 @@ async function handleTest(index: number) {
     :steps="steps"
     :setup-fields="setupFields"
     :permissions="permissions"
-    hide-whitelist
     @update:field-value="handleFieldUpdate"
-    @update:whitelist="handleWhitelistUpdate"
     @test="handleTest"
     @save="handleSave"
+    @delete="handleDelete"
   />
 </template>
-
-<style scoped>
-/* Custom styles for Lark config */
-</style>

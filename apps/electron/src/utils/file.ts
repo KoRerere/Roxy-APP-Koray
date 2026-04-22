@@ -1,8 +1,10 @@
 import axios from 'axios'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { access, cp, mkdir, rename, rm, stat } from 'node:fs/promises'
+import { createWriteStream } from 'node:fs'
+import { access, cp, mkdir, rename, rm } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { fileOperations } from '/@/modules/fileOperations'
+
+const ZIP_FILE_PATTERN = /\.zip$/
 
 /**
  * 文件或目录是否存在
@@ -38,21 +40,20 @@ export async function fileExists(filePath: string, create = false, rebuild = fal
 /**
  * 流式下载 zip 文件
  */
-export async function downloadZipFile(url: string, outputZipPath: string, downloadProgress?: (progress: number) => void) {
-  const { promise, resolve, reject } = Promise.withResolvers()
+export async function downloadZipFile(
+  url: string,
+  outputZipPath: string,
+  downloadProgress?: (progress: number) => void,
+  options?: { signal?: AbortSignal },
+) {
   let timer: NodeJS.Timeout
-
-  const handleError = (error) => {
-    console.error('downloadZipFile writer error', error)
-    reject(error)
-    writer.close()
-    response.data.destroy()
-  }
+  let rejectDownload: ((error: Error) => void) | undefined
 
   const response = await axios({
     method: 'get',
     url,
     responseType: 'stream',
+    signal: options?.signal,
     onDownloadProgress: (progressEvent) => {
       clearTimeout(timer)
       const totalLength = progressEvent.total
@@ -61,7 +62,7 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
       downloadProgress?.(progress)
       if (progress < 100) {
         timer = setTimeout(() => {
-          handleError(new Error('download timeout'))
+          rejectDownload?.(new Error('download timeout'))
         }, 30000)
       }
     },
@@ -80,12 +81,66 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
 
   const writer = createWriteStream(outputZipPath)
 
-  response.data.pipe(writer)
+  return new Promise<void>((resolve, reject) => {
+    let settled = false
 
-  writer.on('finish', resolve)
-  writer.on('error', handleError)
+    const finish = (callback: (reason?: any) => void, reason?: any) => {
+      if (settled) {
+        return
+      }
 
-  return promise
+      settled = true
+      clearTimeout(timer)
+      options?.signal?.removeEventListener('abort', handleAbort)
+      writer.off('finish', handleFinish)
+      writer.off('error', handleError)
+      response.data.off('error', handleError)
+      callback(reason)
+    }
+
+    async function cleanupOutput() {
+      await rm(outputZipPath, { force: true }).catch(() => {})
+    }
+
+    function handleFinish() {
+      finish(() => resolve())
+    }
+
+    function handleReject(error: any) {
+      console.error('downloadZipFile writer error', error)
+      cleanupOutput().finally(() => {
+        finish(reject, error)
+      })
+    }
+
+    rejectDownload = handleReject
+
+    function handleError(error: any) {
+      handleReject(error)
+    }
+
+    function handleAbort() {
+      const abortError = options?.signal?.reason instanceof Error
+        ? options.signal.reason
+        : new Error('download aborted')
+
+      response.data.destroy(abortError)
+      writer.destroy(abortError)
+      handleReject(abortError)
+    }
+
+    writer.on('finish', handleFinish)
+    writer.on('error', handleError)
+    response.data.on('error', handleError)
+
+    if (options?.signal?.aborted) {
+      handleAbort()
+      return
+    }
+
+    options?.signal?.addEventListener('abort', handleAbort, { once: true })
+    response.data.pipe(writer)
+  })
 }
 
 /**
@@ -95,9 +150,9 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
  * @param zipFilePath zip 文件路径
  * @param outputDir 输出目录，默认为 zip 文件所在目录
  */
-export async function unzipFile(zipFilePath: string, outputDir?: string) {
-  outputDir ||= zipFilePath.replace(/\.zip$/, '')
-  return fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
+export async function unzipFile(zipFilePath: string, outputDir?: string, options?: { signal?: AbortSignal }) {
+  outputDir ||= zipFilePath.replace(ZIP_FILE_PATTERN, '')
+  return fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir }, { signal: options?.signal })
 }
 
 export async function getFolderSize(folderPath: string) {
@@ -106,7 +161,7 @@ export async function getFolderSize(folderPath: string) {
     return 0
   }
   // CommonJS 兼容处理
-  const _getFolderSize = (await import("get-folder-size")).default;
+  const _getFolderSize = (await import('get-folder-size')).default
 
   return _getFolderSize.loose(folderPath)
 }
@@ -122,7 +177,8 @@ export async function getFolderSize(folderPath: string) {
 export async function moveDir(src: string, dest: string) {
   try {
     await rename(src, dest) // 同分区：几乎瞬间
-  } catch (e: any) {
+  }
+  catch (e: any) {
     console.error('moveDir error', e)
     if (e.code !== 'EXDEV') {
       throw e

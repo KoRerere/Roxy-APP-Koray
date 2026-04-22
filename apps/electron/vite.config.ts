@@ -30,7 +30,7 @@ const config: UserConfig = {
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['@roxy/diskspace-native'],
+      external: ['@roxy/diskspace-native', 'electron'],
       output: {
         entryFileNames: '[name].mjs',
         chunkFileNames: '[name].mjs',

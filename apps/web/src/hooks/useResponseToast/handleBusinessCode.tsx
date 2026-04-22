@@ -3,8 +3,8 @@ import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
 import { I18nT } from 'vue-i18n'
 import { $t } from '/@/locales'
+import { usePermission } from '/@/hooks/usePermission'
 import { BUSINESS_CODE } from '/@/constants/business-code'
-import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { Role } from '/@/enums'
 import router from '/@/router'
@@ -57,7 +57,7 @@ export const showToast = (options: ToastMessageOptions) => emitter.emit('showToa
 
 export function useHandleBusinessCode() {
   const { userPayInfo } = storeToRefs(useUserStore())
-  const { isOwner } = storeToRefs(useRoleStore())
+  const { check } = usePermission()
 
   async function handleBusinessCode(code: number, next?: () => void) {
     const privateMoreExpand = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
@@ -76,7 +76,7 @@ export function useHandleBusinessCode() {
       })
     }
     else if (code === BUSINESS_CODE.MEMBER_MAX_LIMIT) {
-      if (!isOwner.value) {
+      if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
           summary: $t('团队成员用量不足'),
@@ -96,7 +96,7 @@ export function useHandleBusinessCode() {
       })
     }
     else if (code === BUSINESS_CODE.WINDOW_MAX_LIMIT) {
-      if (!isOwner.value) {
+      if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
           summary: $t('窗口用量不足'),
@@ -127,7 +127,7 @@ export function useHandleBusinessCode() {
       }
     }
     else if (code === BUSINESS_CODE.PROJECT_MAX_LIMIT) {
-      if (!isOwner.value) {
+      if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
           summary: $t('项目用量不足'),
@@ -147,7 +147,7 @@ export function useHandleBusinessCode() {
       })
     }
     else if (code === BUSINESS_CODE.DAILY_OPEN_LIMIT) {
-      if (!isOwner.value) {
+      if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
           summary: $t('窗口打开次数不足'),

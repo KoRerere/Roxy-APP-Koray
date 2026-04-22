@@ -10,34 +10,101 @@ export interface ProxyItem extends UnwrapRowType<UserGetUserBuyProxyListListData
   loadingOperationMap: {
     [key: string]: boolean
   }
+  /** 动态 IP 刷新 URL（与 list 对齐，后台列表补充） */
+  refreshUrl?: string
+  /** 后台将补充，与 ProxyType 对齐，用于测速分支 */
+  proxyType?: ProxyType
 }
 
 const { check } = usePermission()
 
-export function tableOperation(data?: ProxyItem | ProxyItem[]) {
-  const datas = ([] as ProxyItem[]).concat(data ?? [])
-  const hasExpired = datas.some(item => item?.proxyExpireStatus === ProxyExpireStatus.expired)
-  const hasPending = datas.some(item => item.orderStatus === ProxyOrderStatus.pending)
-  const hasRefunded = datas.some(item => item.orderStatus === ProxyOrderStatus.refunded)
+function getRowState(datas: ProxyItem[]) {
+  let hasExpired = false
+  let hasPending = false
+  let hasRefunded = false
+  let isDone = true
+  let isResource = true
+  let isGift = false
+  let canRenew = true
+  let canRefresh = true
 
-  const isDone = datas.every(item => item.orderStatus === ProxyOrderStatus.done)
-  const isGift = datas.some(item => !item.proxyProviderId && !item.renewalTime)
-  const canRenew = datas.every(item => item.canRenew)
+  for (const item of datas) {
+    if (item?.proxyExpireStatus === ProxyExpireStatus.expired)
+      hasExpired = true
+
+    if (item.orderStatus === ProxyOrderStatus.pending)
+      hasPending = true
+    if (item.orderStatus === ProxyOrderStatus.refunded)
+      hasRefunded = true
+    if (item.orderStatus !== ProxyOrderStatus.done)
+      isDone = false
+
+    if (item.proxyType !== ProxyType.resource)
+      isResource = false
+
+    if (!item.proxyProviderId && !item.renewalTime && item.proxyType === ProxyType.buy)
+      isGift = true
+    if (!item.canRenew)
+      canRenew = false
+    if (!item.refreshUrl)
+      canRefresh = false
+  }
+
+  return {
+    hasExpired,
+    hasPending,
+    hasRefunded,
+    isDone,
+    isResource,
+    isGift,
+    canRenew,
+    canRefresh,
+  }
+}
+
+export function tableOperation(data: ProxyItem | ProxyItem[]) {
+  const {
+    hasExpired,
+    hasPending,
+    hasRefunded,
+    isDone,
+    isResource,
+    isGift,
+    canRenew,
+    canRefresh,
+  } = getRowState(([] as ProxyItem[]).concat(data))
 
   return [
     {
+      name: 'edit',
+      label: $t('编辑'),
+      icon: 'base/rx_ic_edit',
+      power: check('Proxy_List_edit'),
+      tooltip: $t('编辑'),
+      disabled: !isResource,
+    },
+    {
       name: 'test',
-      label: $t('测试'),
+      label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
-      tooltip: $t('测试'),
+      tooltip: $t('测试代理 IP'),
       disabled: hasExpired || hasPending || hasRefunded,
-      power: check('Proxy_Store_speed_test'),
+      power: check('Proxy_List_speed_test'),
       quick: true,
       multiple: true,
       multipleProps: {
         name: 'G1',
         showLabel: true,
       },
+    },
+    {
+      name: 'refresh',
+      label: $t('刷新代理 IP'),
+      icon: 'base/rx_ic_refresh',
+      power: check('Proxy_List_refresh_proxy'),
+      tooltip: $t('刷新代理 IP'),
+      disabled: !canRefresh,
+      disabledTooltip: !canRefresh ? $t('未配置刷新URL') : undefined,
     },
     {
       name: 'download',
@@ -59,7 +126,7 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       label: $t('续费'),
       icon: 'base/rx_ic_renew2',
       tooltip: $t('续费'),
-      power: check('Proxy_Store_renew_proxy'),
+      power: check('Cost_Center_all'),
       disabled: hasExpired || !isDone || !canRenew,
       quick: true,
       multiple: true,
@@ -72,18 +139,37 @@ export function tableOperation(data?: ProxyItem | ProxyItem[]) {
       name: 'remark',
       label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
+      power: check('Proxy_List_notes'),
+    },
+    {
+      separator: true,
+      power: check('Proxy_List_delete'),
+    },
+    {
+      name: 'delete',
+      label: $t('删除'),
+      icon: 'base/rx_ic_bin_1',
+      power: check('Proxy_List_delete'),
+      tooltip: $t('删除'),
+      disabled: !isResource,
+      multiple: true,
+      multipleProps: {
+        disabledTooltip: $t('已购代理 IP 无法进行此操作'),
+        name: 'G4',
+        showLabel: true,
+      },
     },
   ]
 }
 
 export async function tableRequest(params: any) {
-  return API.proxy.userGetUserBuyProxyListList(params)
+  return API.proxy.userGetProxyListMergedList(params)
 }
 
 export async function getCustomFilters() {
   const [$dict_map, { data: country }, { data: provider }] = await Promise.all([
     getDictMap(),
-    API.proxy.userGetProxyAllCountriesList({ queryType: ProxyType.buy.toString() }),
+    API.proxy.userGetProxyAllCountriesList({}),
     API.proxy.userGetProxyProvidersTypeList(),
   ])
 
@@ -213,6 +299,12 @@ export function getAdvancedSearch() {
       label: $t('国家/地区'),
       icon: 'base/rx_ic_earth',
       syntax: 'region::',
+    },
+    {
+      key: 'username',
+      label: $t('用户名'),
+      icon: 'base/rx_ic_user_sm',
+      syntax: 'name::',
     },
     {
       key: 'proxyRemark',

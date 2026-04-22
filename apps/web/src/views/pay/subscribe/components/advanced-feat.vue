@@ -15,7 +15,7 @@ const advanced = computed(() => [
     $t('专属技术支持'),
   ],
   [
-    $t('窗口投送'),
+    $t('窗口转移'),
     $t('频道权限（即将推出）'),
     $t('API 请求次数（{value}次 / 分钟）', { value: plan?.apiRate }),
   ],

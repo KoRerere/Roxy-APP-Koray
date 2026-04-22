@@ -213,9 +213,11 @@ defineExpose({
       <span class="mx-2">{{ $t('或') }}</span>
     </div>
     <RxButton :label="$t('通过 {value} 账号登录', { value: 'Google' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_google" @click="oauth2LoginMap.google" />
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook" />
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github" />
-    <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk" />
+    <div class="w-full grid grid-cols-3 gap-3">
+      <RxButton label="Github" severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github" />
+      <RxButton label="Facebook" severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook" />
+      <RxButton label="VK" severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk" />
+    </div>
   </div>
 </template>
 

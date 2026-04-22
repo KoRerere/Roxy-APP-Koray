@@ -7,24 +7,26 @@ import { useWindowSize } from '@vueuse/core'
 
 const { width } = useWindowSize()
 const simpleLocale = useSimpleLocale()
-
 const ISO639 = ref(ISO639List)
-
 const currentLocale = ref(ISO639.value.find(item => item.locale === simpleLocale.currentLocale) || ISO639.value[0])
+const isWebClient = !globalThis.isElectron
 
 watch(() => currentLocale.value, (val) => {
   simpleLocale.setSimpleLocale(val.locale)
 })
+
+function toDownload() {
+  const url = simpleLocale.getOfficialWebsite('/download')
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
   <div class="card flex justify-center">
-    <div variant="text" class="help-btn">
-      <LiveChat class="live-chat">
-        <SvgIcon name="base/rx_ic_headphone_2" color="var(--colors-icon-icon-secondary)" />
-        <span class="help">{{ $t('帮助') }}</span>
-      </LiveChat>
-    </div>
+    <RxButton v-if="isWebClient" icon="base/rx_ic_download" size="xs" variant="text" severity="secondary" :label="$t('下载客户端')" @click="toDownload" />
+    <LiveChat class="live-chat">
+      <RxButton icon="base/rx_ic_headphone_2" size="xs" variant="text" severity="secondary" :label="$t('帮助')" />
+    </LiveChat>
 
     <TsFormSelect v-model="currentLocale" :options="ISO639" :filter="false" class="md:w-36" />
 

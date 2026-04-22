@@ -9,7 +9,6 @@ function handleCopy() {
   const children = slots.default?.() || []
   navigator.clipboard.writeText(getInnerText(children) || '')
   isCopied.value = true
-  console.log(' rxTooltipRef.value', rxTooltipRef.value?.align)
   rxTooltipRef.value?.align?.()
   setTimeout(() => {
     isCopied.value = false

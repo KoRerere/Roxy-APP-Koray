@@ -8,6 +8,7 @@ import { checkIdentity } from './checkIdentity'
 import { checkPermission } from './checkPermission'
 import { checkPayInfoVersion } from './checkPayInfoVersion'
 import { checkAnncVersion } from './checkAnncVersion'
+import { useUserStore } from '/@/stores/user'
 
 const ignoreUrl = [
   '/login',
@@ -26,13 +27,19 @@ export function handleResponseHeaders(response: AxiosResponse) {
     return
   }
 
+  const userStore = useUserStore()
+
   checkAppVersion(response)
   checkCoreVersion(response)
-  checkNotify(response)
   checkDictVersion(response)
   checkSoftConfigVersion(response)
-  checkIdentity(response)
-  checkPermission(response)
-  checkPayInfoVersion(response)
-  checkAnncVersion(response)
+
+  // 只有在用户已登录的情况下才检查身份和权限等信息
+  if (userStore.token) {
+    checkNotify(response)
+    checkIdentity(response)
+    checkAnncVersion(response)
+    checkPayInfoVersion(response)
+    checkPermission(response)
+  }
 }

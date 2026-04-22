@@ -38,7 +38,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const debounceGetPayInfo = debounce(() => {
     userStore.userPayInfo = {} as UserGetUserPayInfoListData['data']
     userStore.getUserPayInfo()
-    userStore.getUserCards()
+    userStore.getUserCards(true)
   }, 50)
 
   /** 记住用户最后一次使用的工作空间 */
@@ -83,8 +83,18 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
       globalThis.electronAPI.send('app:restartAPIServer')
-      if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false && val.role === Role.OWNER) {
-        emitter.emit('showUserGuideDialog')
+
+      if (val.role === Role.OWNER) {
+        if (globalThis.isElectron) {
+          if (userStore?.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
+            emitter.emit('showUserGuideDialog')
+          }
+        }
+        else {
+          if (userStore?.userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false) {
+            emitter.emit('showUserGuideDialog')
+          }
+        }
       }
     }, 1200)
   }, { flush: 'post' })

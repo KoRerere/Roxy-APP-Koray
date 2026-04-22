@@ -1,38 +1,38 @@
 import type { ContentBlock, IMBridge } from '../core/IMBridge.js'
 import * as lark from '@larksuiteoapi/node-sdk'
 import { Buffer } from 'node:buffer'
+import { env } from '../../config.js'
 import { normalizeImText } from '../core/outputGuard.js'
-// import { proxyFetch } from '../core/proxy.js'
+import { proxyFetch } from '../core/proxy.js'
 import { StreamSender } from '../core/StreamSender.js'
 
 /**
  * 支持代理的自定义 HTTP 客户端
  */
-// class ProxyHttpClient {
-//   async request(options: any): Promise<any> {
-//     console.log('[Feishu] ProxyHttpClient request:', options.url)
-//     const headers = new Headers(options.headers)
+class ProxyHttpClient {
+  async request(options: any): Promise<any> {
+    const headers = new Headers(options.headers)
 
-//     const response = await proxyFetch(options.url, {
-//       method: options.method,
-//       headers,
-//       body: options.body,
-//     })
+    const response = await proxyFetch(options.url, {
+      method: options.method,
+      headers,
+      body: options.body,
+    })
 
-//     const responseHeaders: Record<string, string> = {}
-//     response.headers.forEach((value, key) => {
-//       responseHeaders[key] = value
-//     })
+    const responseHeaders: Record<string, string> = {}
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value
+    })
 
-//     const data = await response.text()
+    const data = await response.text()
 
-//     return {
-//       status: response.status,
-//       headers: responseHeaders,
-//       data,
-//     }
-//   }
-// }
+    return {
+      status: response.status,
+      headers: responseHeaders,
+      data,
+    }
+  }
+}
 
 interface FeishuConfig {
   appId: string
@@ -72,7 +72,6 @@ export async function startFeishuAdapter(
   }
   const finalDomain = domain ?? 'https://open.feishu.cn'
 
-  console.log('[Feishu] Creating client with domain:', finalDomain, 'raw domain was:', rawDomain)
   const client = new lark.Client({
     appId,
     appSecret,
@@ -81,9 +80,8 @@ export async function startFeishuAdapter(
   })
 
   // 为所有域名应用代理配置（包括飞书和 Lark）
-  // ;(client as any).httpclient = new ProxyHttpClient()
+  ;(client as any).httpclient = new ProxyHttpClient()
 
-  console.log('[Feishu] Creating WSClient and starting WebSocket connection...')
   const wsClient = new lark.WSClient({
     appId,
     appSecret,
@@ -91,17 +89,15 @@ export async function startFeishuAdapter(
   })
 
   // 为 WSClient 也应用代理（主要用于建立连接前的 API 调用）
-  // ;(wsClient as any).httpclient = new ProxyHttpClient()
+  ;(wsClient as any).httpclient = new ProxyHttpClient()
 
   wsClient.start({
     eventDispatcher: new lark.EventDispatcher({}).register({
       'im.message.receive_v1': async (data: any) => {
         const messageId = data?.message?.message_id
         if (messageId && isDuplicate(messageId)) {
-          console.log('[Feishu] Duplicate event, skipping message_id:', messageId)
           return
         }
-        console.log('[Feishu] Received message event, sender:', data?.sender?.sender_id?.open_id, 'type:', data?.message?.message_type, 'id:', messageId)
         try {
           await handleFeishuMessage(data, client, bridge, allowedUserIds)
         }
@@ -112,7 +108,7 @@ export async function startFeishuAdapter(
     }),
   } as any)
 
-  console.log('[Feishu] Adapter started, waiting for messages via WebSocket.')
+  console.log('[Feishu] Adapter started.')
 }
 
 async function handleFeishuMessage(
@@ -135,7 +131,6 @@ async function handleFeishuMessage(
   const channelId = `fs:${msg.chat_id}`
   const msgContent = JSON.parse(msg.content ?? '{}')
   const text: string = msgContent.text ?? ''
-  console.log('[Feishu] channelId=%s, msgType=%s, text=%s', channelId, msg.message_type, text.slice(0, 100))
 
   if (text.trim() === '/clear' || text.trim() === '/new') {
     await bridge.clearSession(channelId)
@@ -175,14 +170,11 @@ async function handleFeishuMessage(
       ? [...imageBlocks, ...(text ? [{ type: 'text' as const, text }] : [])]
       : text || '（无内容）'
 
-  console.log('[Feishu] Sending thinking card to chat:', msg.chat_id)
   const cardMsgId = await sendCard(client, msg.chat_id, '⏳ 思考中...')
-  console.log('[Feishu] Card sent, messageId:', cardMsgId)
   const streamer = new StreamSender(800)
   let fullText = ''
 
   try {
-    console.log('[Feishu] Calling bridge.handleMessage for channel:', channelId)
     await bridge.handleMessage(channelId, content, async (chunk) => {
       fullText += chunk
       await streamer.onChunk(
@@ -194,7 +186,6 @@ async function handleFeishuMessage(
         async () => { await updateCard(client, cardMsgId, fullText) },
       )
     })
-    console.log('[Feishu] Stream complete, total length:', fullText.length)
     await updateCard(client, cardMsgId, fullText || '（无回复）')
   }
   catch (err) {

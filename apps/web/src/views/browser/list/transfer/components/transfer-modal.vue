@@ -19,8 +19,8 @@ const { identityInfo } = storeToRefs(useUserStore())
 const tabsRef = useTemplateRef('tabs')
 
 const tabs = computed(() => [
-  { title: $t('投送临时窗口'), value: 'trade', icon: identityInfo.value.icon, component: markRaw(TransferTrade) },
-  { title: $t('普通投送'), value: 'normal', component: markRaw(TramsferNormal) },
+  { title: $t('转移临时窗口'), value: 'trade', icon: identityInfo.value.icon, component: markRaw(TransferTrade) },
+  { title: $t('普通转移'), value: 'normal', component: markRaw(TramsferNormal) },
 ])
 
 const activeKey = ref(tabs.value[0]!.value)
@@ -41,7 +41,7 @@ function updateInkBar() {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 max-h-[80vh] overflow-y-auto transfer">
     <div class="flex justify-between items-center">
-      <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口') }}</span>
+      <span class="header">{{ windowIds.length > 1 ? $t('转移 {count} 个窗口', { count: windowIds.length }) : $t('转移窗口') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
     <RxTabs v-if="isAgentUser" ref="tabs" v-model:value="activeKey" :tabs="tabs" :show-navigators="false" head-tabs only-tabs />

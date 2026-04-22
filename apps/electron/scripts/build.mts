@@ -14,12 +14,14 @@ const isWindows = process.platform === 'win32'
  * 是否跳过代码签名
  */
 const skipCodeSigning = isDev && process.platform === 'win32' ? true : Boolean(process.env.SKIP_CODE_SIGNING)
+const isAppx = process.env.BUILD_APPX === 'true'
 const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
 const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
 const appProtocol = isDev ? 'roxybrowser-dev' : 'roxybrowser'
 
 console.log('是否是测试环境：', isDev, appName)
 console.log('是否跳过代码签名：', skipCodeSigning)
+console.log('是否构建 APPX (Microsoft Store)：', isAppx)
 console.log('APP 版本号：', version)
 
 const workDir = path.join(import.meta.dirname, '../')
@@ -213,6 +215,7 @@ const options: Configuration = {
   // "store" | "normal" | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: 'normal',
   removePackageScripts: true,
+  toolsets: isAppx ? { winCodeSign: '1.1.0' } : undefined,
   // beforeBuild: async (context) => {
   //   if (!context.electronVersion) {
   //     console.warn('⚠️ 未检测到 Electron 版本，跳过 native 模块重建')
@@ -244,24 +247,31 @@ const options: Configuration = {
 
   win: {
     icon: 'logo.ico',
-    signExts: ['RoxyBrowserUpdater.exe'],
-    target: [
-      {
-        target: 'nsis',
-        // arch: ['x64'],
-        arch: ['ia32', 'x64'],
-      },
-    ],
+    signExts: isAppx ? undefined : ['RoxyBrowserUpdater.exe'],
+    target: isAppx
+      ? [{ target: 'appx', arch: ['x64'] }]
+      : [
+          {
+            target: 'nsis',
+            arch: ['ia32', 'x64'],
+          },
+        ],
     verifyUpdateCodeSignature: false,
     signtoolOptions: skipCodeSigning
       ? undefined
-      : {
-          rfc3161TimeStampServer: 'http://timestamp.digicert.com',
-          certificateFile: './pfx/linkv.pfx',
-          certificatePassword: '0000',
-        },
+      : isAppx
+        ? {
+            rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+            certificateFile: './pfx/appx-store.pfx',
+            certificatePassword: 'roxybrowser',
+          }
+        : {
+            rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+            certificateFile: './pfx/linkv.pfx',
+            certificatePassword: '0000',
+          },
   },
-  extraFiles: isWindows
+  extraFiles: (isWindows && !isAppx)
     ? [
         {
           from: 'build/updater/RoxyBrowserUpdater.exe',
@@ -288,6 +298,15 @@ const options: Configuration = {
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
     shortcutName,
+  },
+  appx: {
+    identityName: isDev ? 'roxybrowser.RoxyBrowserDev' : 'roxybrowser.RoxyBrowser',
+    publisher: 'CN=A0B90AA1-95CE-4EE8-8187-3EFFD0A756B8',
+    publisherDisplayName: 'roxybrowser',
+    displayName: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
+    applicationId: 'RoxyBrowser',
+    languages: ['en-US', 'zh-Hans'],
+    showNameOnTiles: false,
   },
   dmg: {
     sign: !skipCodeSigning, // 根据环境变量决定是否签名

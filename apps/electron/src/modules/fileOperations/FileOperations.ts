@@ -77,6 +77,13 @@ export class FileOperations {
   private removeWorker(worker: UtilityProcess) {
     this.workers.delete(worker)
     this.availableWorkers.delete(worker)
+
+    for (const [taskId, task] of this.runningTasks.entries()) {
+      if ((task as TaskQueueItem<keyof TaskMap> & { worker?: UtilityProcess }).worker === worker) {
+        this.runningTasks.delete(taskId)
+        task.reject(new Error('file operation worker exited unexpectedly'))
+      }
+    }
   }
 
   /**  处理任务队列 */
@@ -97,17 +104,75 @@ export class FileOperations {
     if (worker) {
       const [taskId, task] = this.tasksQueue.entries().next().value!
       this.tasksQueue.delete(taskId)
+      ;(task as TaskQueueItem<keyof TaskMap> & { worker?: UtilityProcess }).worker = worker
       this.runningTasks.set(taskId, task)
       worker.postMessage({ taskId, task: task.task, payload: task.payload })
     }
   }
 
   /**  执行任务 */
-  async executeTask<K extends keyof TaskMap>(task: K, payload: Parameters<TaskMap[K]>[0]) {
+  async executeTask<K extends keyof TaskMap>(
+    task: K,
+    payload: Parameters<TaskMap[K]>[0],
+    options?: { signal?: AbortSignal },
+  ) {
+    if (options?.signal?.aborted) {
+      return Promise.reject(options.signal.reason ?? new Error('file operation aborted'))
+    }
+
     const { promise, resolve, reject } = Promise.withResolvers<ReturnType<TaskMap[K]>>()
     const taskId = this.taskIdCounter++
-    this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject } as any)
+    const handleAbort = () => {
+      const abortError = options?.signal?.reason ?? new Error('file operation aborted')
+
+      if (this.tasksQueue.has(taskId)) {
+        this.tasksQueue.delete(taskId)
+        reject(abortError)
+        if (this.tasksQueue.size > 0) {
+          this.processTaskQueue()
+        }
+        return
+      }
+
+      const runningTask = this.runningTasks.get(taskId) as (TaskQueueItem<keyof TaskMap> & { worker?: UtilityProcess }) | undefined
+      if (!runningTask) {
+        return
+      }
+
+      this.runningTasks.delete(taskId)
+      runningTask.worker?.kill()
+      reject(abortError)
+
+      if (this.tasksQueue.size > 0) {
+        this.processTaskQueue()
+      }
+    }
+
+    const cleanupAbortListener = () => {
+      options?.signal?.removeEventListener('abort', handleAbort)
+    }
+
+    this.tasksQueue.set(taskId, {
+      taskId,
+      task,
+      payload,
+      resolve: (value) => {
+        cleanupAbortListener()
+        resolve(value)
+      },
+      reject: (reason) => {
+        cleanupAbortListener()
+        reject(reason)
+      },
+    } as any)
+    options?.signal?.addEventListener('abort', handleAbort, { once: true })
     await app.whenReady()
+
+    if (options?.signal?.aborted) {
+      handleAbort()
+      return promise
+    }
+
     this.processTaskQueue()
     return promise
   }

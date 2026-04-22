@@ -1,4 +1,4 @@
-const CONTROL_CHARS_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
+const CONTROL_CHARS_RE = /[\u0000-\u0008\v\f\u000E-\u001F\u007F]/g
 
 export interface NormalizeOptions {
   maxChars: number
@@ -30,4 +30,3 @@ export function normalizeImText(raw: string, options: NormalizeOptions): string 
   }
   return text
 }
-

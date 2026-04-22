@@ -52,6 +52,17 @@ export interface ResourceUpdateMessage {
 
 export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error' | 'workspace_suspended'
 
+/** MCP 错误类型 */
+export type McpFailureType =
+  /** RoxyClaw 已在运行 */
+  | 'roxyclaw_already_running'
+  /** MCP 窗口已打开 */
+  | 'mcp_window_already_open'
+  /** 脚本完整性校验失败，修复后仍不通过 */
+  | 'script_repair_failed'
+  /** 未知错误 */
+  | 'unknown_error'
+
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void

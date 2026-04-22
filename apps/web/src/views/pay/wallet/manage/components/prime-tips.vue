@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { SvgNames } from '/@/components/rx-icon';
-import { SubLevelEnum } from '/@/enums/pay';
-;
+import type { SvgNames } from '/@/components/rx-icon'
+import { SubLevelEnum } from '/@/enums/pay'
 import { useUserStore } from '/@/stores/user'
 
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -11,61 +10,63 @@ const isLocked = computed(() => [SubLevelEnum.Free, SubLevelEnum.Expired].includ
 const advanced = computed(() => [
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('创建窗口模板')
+    text: $t('创建窗口模板'),
   },
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('窗口投送')
+    text: $t('窗口转移'),
   },
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('窗口同步')
+    text: $t('窗口同步'),
   },
   {
     icon: 'base/rx_ic_check',
-    text: $t('无限项目数量')
+    text: $t('无限项目数量'),
   },
   {
     icon: 'base/rx_ic_check',
-    text: $t('频道权限（即将推出）')
+    text: $t('频道权限（即将推出）'),
   },
   {
     icon: 'base/rx_ic_check',
     text: isLocked.value
       ? $t('更长的日志保留时长')
-      : $t('日志保留时长（{value} 天）', { value: userPayInfo.value?.logDays })
+      : $t('日志保留时长（{value} 天）', { value: userPayInfo.value?.logDays }),
   },
   {
     icon: 'base/rx_ic_check',
-    text: $t('专属技术支持')
+    text: $t('专属技术支持'),
   },
   {
     icon: 'base/rx_ic_check',
     text: isLocked.value
       ? $t('更多的 API 请求次数')
-      : $t('API 请求次数（{value}次 / 分钟）', { value: userPayInfo.value?.apiRate })
-  }
+      : $t('API 请求次数（{value}次 / 分钟）', { value: userPayInfo.value?.apiRate }),
+  },
 ])
 </script>
 
 <template>
   <div class="flex items-center gap-1.5">
-    <SvgIcon :name="isLocked ? 'base/rx_ic_portrait-spark' : 'base/rx_ic_portrait-spark-light'" color="var(--colors-icon-icon-note)"></SvgIcon>
-    <span class="desc">{{ isLocked ? $t('成为付费用户，解锁所有 Prime 会员功能') : $t('您已解锁所有会员功能') }}</span>
+    <!-- <SvgIcon v-if="props.showIcon" :name="isLocked ? 'base/rx_ic_portrait-spark' : 'base/rx_ic_portrait-spark-light'" color="var(--colors-icon-icon-note)"></SvgIcon>
+    <span v-if="props.showText" class="desc">{{ isLocked ? $t('成为付费用户，解锁所有 Prime 会员功能') : $t('您已解锁所有会员功能') }}</span> -->
     <RxTooltip class="flex items-center">
       <template #default>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14"></SvgIcon>
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="#fff" size="14" />
       </template>
       <template #content>
         <div class="w-75 flex flex-col gap-2">
-          <div class="flex items-center gap-2.5" v-for="item in advanced" :key="item.text">
-            <SvgIcon :name="isLocked ? 'base/rx_ic_lock' : (item.icon as SvgNames)" :color="isLocked ? 'var(--colors-icon-icon-note)' : 'var(--colors-icon-icon-success)'"></SvgIcon>
-            <div class="text">{{ item.text }}</div>
+          <div v-for="item in advanced" :key="item.text" class="flex items-center gap-2.5">
+            <SvgIcon :name="isLocked ? 'base/rx_ic_lock' : (item.icon as SvgNames)" :color="isLocked ? 'var(--colors-icon-icon-note)' : 'var(--colors-icon-icon-success)'" />
+            <div class="text">
+              {{ item.text }}
+            </div>
           </div>
           <template v-if="!isLocked">
-            <RxDivider line-color="var(--component-tooltip-divider)" line-only line-style="dashed"></RxDivider>
+            <RxDivider line-color="var(--component-tooltip-divider)" line-only line-style="dashed" />
             <div class="flex items-start gap-2.5 tip">
-              <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)"></SvgIcon>
+              <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)" />
               <span>{{ $t('带有此图标的功能可以在任何空间中使用，其他功能仅限在自己创建的空间使用。') }}</span>
             </div>
           </template>

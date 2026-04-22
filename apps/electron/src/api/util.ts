@@ -29,7 +29,7 @@ let lastWebDomain = ''
 /** 获取 webDomain, 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
 export async function getWebDomain(force = true) {
   // 如果 force 为 false，则不强制更新 webDomain
-  if (!force) {
+  if (!force && lastWebDomain) {
     return lastWebDomain
   }
 

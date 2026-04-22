@@ -21,8 +21,10 @@ import {
   UserGetRolePermissionsListParams,
   UserGetTeamPermissionsListData,
   UserGetTeamPermissionsListParams,
+  UserGetTeamPermissionVerifyStatusListData,
   UserMdfTeamInfoV2CreateData,
   UserMdfTeamInfoV2CreatePayload,
+  UserSendTeamPermissionVerifyCodeListData,
   UserUpdateTeamPermissionsCreateData,
   UserUpdateTeamPermissionsCreatePayload,
 } from "./data-contracts";
@@ -176,6 +178,38 @@ export class TeamApi<SecurityDataType = unknown> {
       path: `/user_get_role_permissions`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserGetTeamPermissionVerifyStatusList
+   * @summary 团队敏感权限是否发送验证码
+   * @request GET:/user_get_team_permission_verify_status
+   * @response `200` `UserGetTeamPermissionVerifyStatusListData`
+   */
+  userGetTeamPermissionVerifyStatusList = (params: RequestParams = {}) =>
+    this.http.request<UserGetTeamPermissionVerifyStatusListData, any>({
+      path: `/user_get_team_permission_verify_status`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserSendTeamPermissionVerifyCodeList
+   * @summary 开启敏感权限发送验证码
+   * @request GET:/user_send_team_permission_verify_code
+   * @response `200` `UserSendTeamPermissionVerifyCodeListData`
+   */
+  userSendTeamPermissionVerifyCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserSendTeamPermissionVerifyCodeListData, any>({
+      path: `/user_send_team_permission_verify_code`,
+      method: "GET",
       format: "json",
       ...params,
     });

@@ -3,6 +3,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
 import RxToastHeadless from './rx-toast-headless.vue'
+import DomSpotlightRing from './dom-spotlight-ring.vue'
 import { useSubscribe } from './useSubscribe'
 import { isMainWindow } from '/@/utils'
 
@@ -31,6 +32,7 @@ setTimeout(() => {
   }"
   />
   <RxToastHeadless />
+  <DomSpotlightRing />
   <ConfirmDialog :pt="{
     root: global.dialog,
     pcAcceptButton: { root: '!text-3.25 line-height-none' },

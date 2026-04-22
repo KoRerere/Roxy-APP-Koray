@@ -84,7 +84,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 3: 邀请一位好友加入 Roxy'),
-    descriptions: [$t('RoxyBrowser 支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口投送功能，还是加入同一工作空间共享窗口，在这里都能轻松实现。')],
+    descriptions: [$t('RoxyBrowser 支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一工作空间共享窗口，在这里都能轻松实现。')],
     reward: () => {
       return (
         <div class={cssModule.text}>

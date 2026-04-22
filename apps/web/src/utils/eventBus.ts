@@ -49,7 +49,7 @@ export interface MittEvents {
   /** 显示用户引导 */
   showUserGuideDialog?: void
   /** 显示第一次注册引导 */
-  firstRegisterGuide: string
+  firstRegisterGuide?: void
   /** 显示侧边栏引导 */
   asideMenuGuide?: void
   /** 更新项目列表 */
@@ -65,6 +65,8 @@ export interface MittEvents {
   badgeMap: string
   showAppUpgradeDialog: any
   backDefaultWorkspace: void
+  /** 刷新窗口列表 */
+  refreshProfileList?: void
 }
 
 export const emitter = mitt<MittEvents>()

@@ -108,7 +108,7 @@ export function getColumns() {
         },
       },
       {
-        title: $t('投送方'),
+        title: $t('转移方'),
         key: 'transferUserName',
         getText: (row: any) => row.transferUserName || '--',
         _visible: false,

@@ -14,25 +14,30 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useProxy } from '/@/views/agent/hooks'
 import { ProxyExpireStatus } from '/@/enums/proxy'
 import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { BUSINESS_CODE } from '/@/constants/business-code'
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 const { buyProxy } = useProxy()
+const { handleBusinessCode } = useHandleBusinessCode()
 
 const nextBillText = ref()
 const isFree = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Free)
 const isTrial = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Trial)
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent)
-
+const usedWindowCount = computed(() => userPayInfo.value.useWindowCount)
 const otherCards = computed(() => [
   {
     title: $t('代理 IP'),
     used: userPayInfo.value.proxyExpireCount || userPayInfo.value.proxyUsingCount,
-    text: userPayInfo.value.proxyExpireCount > 0 ? $t('即将过期') : $t('使用中'),
+    text: $t('IPs'),
+    extraText: userPayInfo.value.proxyExpireCount > 0 ? $t('即将过期') : '',
     addText: $t('购买'),
+    extraTextClass: userPayInfo.value.proxyExpireCount > 0 ? 'warning' : '',
     textClass: userPayInfo.value.proxyExpireCount > 0 ? 'warning' : '',
     visibleJump: userPayInfo.value.proxyExpireCount > 0,
     addClick: () => {
@@ -90,6 +95,9 @@ const planActions = computed(() => {
     {
       label: $t('续费'),
       visible: (!isFree.value && !isTrial.value && !userPayInfo.value.isAuto) || (isExpired.value && userPayInfo.value.isAuto),
+      severity: 'info',
+      outlined: false,
+      class: 'renew-btn',
       command: () => {
         if (userPayInfo.value.isAuto) {
           router.replace({ name: 'wallet', query: { name: 'billing' } })
@@ -116,11 +124,17 @@ const planTextColor = computed(() => {
     ? '#90AFC2'
     : 'linear-gradient(90deg, #12A3FC 0%, #DB54F9 100%)'
 })
+const freeOrExpired = computed(() => {
+  // return true
+  return isFree.value || isExpired.value
+})
 
 const animationGradient = computed(() => {
-  return (isFree.value || isExpired.value)
-    ? ['var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)', 'var(--colors-border-border-subtle)']
-    : ['var(--pattern-wallet-prime-border-blue)', 'var(--pattern-wallet-prime-border-orange)', 'var(--pattern-wallet-prime-border-purple)']
+  const freeBg = 'var(--pattern-wallet-free-bg)'
+  return (freeOrExpired.value)
+    // no linear-gradient for free or expired
+    ? [freeBg, freeBg, freeBg]
+    : ['#2CB8FE 14.71%', '#EC51F7 111.53%', '#EC51F7 111.53%']
 })
 
 const subscribeInfo = computed(() => {
@@ -131,7 +145,10 @@ const subscribeInfo = computed(() => {
   return {
     expireTime: isPremiumPartner.value ? $t('永久免费') : $t('到期时间: {value}', { value: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
     profileCount: isPremiumPartner.value ? $t('无限窗口') : $t('{count} 窗口', { count: profileCount.format() }),
-    dailyLimit: $t('每日可创建数: {create}; 每日可打开数: {open}', { create, open }),
+    // number type
+    profileNumber: isPremiumPartner.value ? Infinity : profileCount.value,
+    profileCreate: create,
+    profileOpen: open,
   }
 })
 
@@ -184,6 +201,13 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     },
   })
 }
+
+/**
+ * 始终展示付费墙
+ */
+async function openPrimeDialog() {
+  return handleBusinessCode(BUSINESS_CODE.WINDOW_MAX_LIMIT)
+}
 </script>
 
 <template>
@@ -192,13 +216,18 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
       <div class="title">
         {{ $t('服务') }}
       </div>
-      <PrimeTips />
+      <Identity />
+      <!-- <PrimeTips /> -->
     </div>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-2.5">
-        <AnimationBorder :border-width="(isFree || isExpired) ? 1 : 2" :animation-duration="12" class="rounded-xl" :gradient="animationGradient">
+        <AnimationBorder :animation="false" deg="110" :border-width="2"
+                         :animation-duration="12" class="rounded-xl" :gradient="animationGradient"
+        >
           <div class="rounded overflow-hidden">
-            <div class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan">
+            <div
+              class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan"
+            >
               <div class="flex justify-between items-center">
                 <div class="plan-title">
                   {{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}
@@ -206,19 +235,49 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
                 <template v-if="userPayInfo?.subEndDate">
                   <div v-if="userPayInfo.isAuto" class="flex items-center gap-1 plan-expired">
                     <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
-                    <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12" />
+                    <SvgIcon v-if="nextBillText"
+                             v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14"
+                             name="base/rx_ic_info" color="#FC9D12"
+                    />
                   </div>
-                  <div v-else class="plan-expired">
+                  <div v-else class="expire-time text-[14px] font-normal text-[var(--colors-text-text-secondary)]">
                     {{ subscribeInfo.expireTime }}
                   </div>
                 </template>
               </div>
               <div class="flex flex-col gap-1.5">
-                <div class="plan-value">
-                  {{ subscribeInfo.profileCount }}
+                <!-- keey text white space -->
+                <div class="flex flex-row plan-value whitespace-pre">
+                  <i18n-t :keypath="$t('{used} / {total}', { used: '{used}', total: '{total}' })">
+                    <template #used>
+                      <span class="used-count text-[32px] " :class="usedWindowCount === 0 ? '' : usedWindowCount <= subscribeInfo.profileNumber ? 'text-[var(--colors-text-text-brand)]' : 'text-[var(--colors-text-text-error)]'">
+                        {{ usedWindowCount }}
+                      </span>
+                    </template>
+                    <template #total>
+                      <span class="total-count">
+                        {{ subscribeInfo.profileCount }}
+                      </span>
+                    </template>
+                  </i18n-t>
                 </div>
                 <div class="plan-desc">
-                  {{ subscribeInfo.dailyLimit }}
+                  <!-- {{ subscribeInfo.dailyLimit }} -->
+                  <i18n-t :keypath="$t('每日可创建数: {create} {line} 每日可打开数: {open}', { create: '{create}', open: '{open}', line: '{line}' })">
+                    <template #line>
+                      <span class="line mx-[16px] inline-block w-[1px] h-[16px]" />
+                    </template>
+                    <template #create>
+                      <span class="create-count">
+                        {{ subscribeInfo.profileCreate }}
+                      </span>
+                    </template>
+                    <template #open>
+                      <span class="open-count">
+                        {{ subscribeInfo.profileOpen }}
+                      </span>
+                    </template>
+                  </i18n-t>
                 </div>
               </div>
               <div class="flex justify-between items-center gap-2.5">
@@ -226,24 +285,49 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
                   {{ $t('自动续订') }}
                 </div>
                 <div class="flex-1 flex justify-end items-center gap-2.5">
-                  <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" :class="item.class" outlined severity="secondary" :label="item.label" size="md" @click="item.command" />
+                  <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" :class="item.class"
+                            :outlined="item.outlined !== false" :severity="item.severity || 'secondary'" :label="item.label"
+                            size="md" @click="item.command"
+                  />
                 </div>
               </div>
             </div>
           </div>
+          <div v-if="freeOrExpired"
+               class="px-3 py-1 gap-[4px] flex flex-row text-[12px] text-[var(--colors-text-text-tertiary)]"
+          >
+            <i18n-t tag="div" scope="global" :keypath="$t('升级即可获取更多高级功能：窗口模板，窗口转移等等！{detail}', { detail: '{detail}' })">
+              <template #detail>
+                <span class="text-[var(--colors-text-text-link)] cursor-pointer select-none" @click="openPrimeDialog">{{ $t('查看详情') }}</span>
+              </template>
+            </i18n-t>
+          </div>
+          <div v-else class="px-3 py-1 gap-[2px] flex align-center items-center flex-row text-white text-[12px] font-medium">
+            <SvgIcon size="14" name="base/rx_ic_user_paid" />
+            {{ $t('窗口模板、窗口转移、窗口同步以及多项核心功能均已启用。') }}
+            <PrimeTips :show-text="false" />
+          </div>
         </AnimationBorder>
-        <Identity class="px-4" />
+        <!-- <Identity class="px-4" /> -->
+      </div>
+      <div class="title">
+        {{ $t('我的资源') }}
       </div>
       <div class="flex gap-2">
-        <div v-for="item in otherCards" :key="item.title" class="h-26 flex flex-col justify-between flex-1 pa-4 rounded-xl others">
+        <div v-for="item in otherCards" :key="item.title"
+             class="h-[105px] flex flex-col justify-between flex-1 pa-4 rounded-xl others"
+        >
           <div class="flex justify-between items-center">
             <span class="others-title">{{ item.title }}</span>
-            <span class="cursor-pointer others-add" @click="item.addClick">{{ strConcat('+ ', item.addText) }}</span>
+            <RxButton class="card-add-btn" variant="outlined" size="xxs"
+                      :label="strConcat('+ ', item.addText)" @click="item.addClick"
+            />
           </div>
           <div class="flex items-baseline">
             <span class="others-used" :class="item.textClass">{{ item.used }}</span>
             <span class="others-total">{{ strConcat('/', item.total?.toString()) }}</span>
             <span class="ml-1.5 others-text">{{ item.text }}</span>
+            <span class="ml-1.5 others-text" :class="item.extraTextClass">{{ item.extraText }}</span>
             <div v-if="item.visibleJump && item.jump" class="flex-1 flex justify-end">
               <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_arrow_right_2" @click="item.jump" />
             </div>
@@ -262,8 +346,26 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   line-height: 20px;
 }
 
+.card-add-btn {
+  --button-outlined-info-border-color: #11a3fd;
+  --spacing-md: 8px;
+  color: #11a3fd;
+}
+
+.renew-btn {
+  --button-info-border-color: #0282d4;
+  border-radius: var(--radius-lg, 8px);
+  // border: 1px solid var(--component-button-primary-border, #0282D4);
+  background: var(--component-button-primary-bg, #11a3fd);
+
+  box-shadow:
+    0 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0 1px 1px 0 rgba(0, 0, 0, 0.06);
+}
+
 .plan {
   z-index: 1;
+  border-radius: 10px;
 
   &:after {
     content: '';
@@ -287,15 +389,16 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   &-desc {
     color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
-    font-size: 12px;
-    line-height: normal;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 21px;
+    display: flex;
+    align-items: center;
   }
 
   &-expired {
-    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
-    font-size: 12px;
-    line-height: normal;
   }
 
   &-value {
@@ -325,11 +428,17 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   font-family: 'DingTalk JinBuTi', Inter, sans-serif;
   font-size: 14px;
   line-height: 20px;
+
+  // deep override
+  :deep(.p-button-label) {
+    font-size: 14px;
+  }
 }
 
 .others {
-  border: 0.5px solid var(--colors-border-border-action);
-  background: var(--colors-background-bg-overlay);
+  border-radius: 12px;
+  border: 0.5px solid var(--colors-border-border-base, #afb7bb);
+  background: var(--colors-background-bg-overlay, #fff);
 
   &-title {
     color: var(--colors-text-text-primary);
@@ -367,6 +476,13 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;
+    &.warning {
+      color: var(--colors-text-text-warning);
+    }
   }
+}
+
+.line {
+  background: var(--component-dropdown-divider, #e2e9ee);
 }
 </style>

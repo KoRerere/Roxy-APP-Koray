@@ -10,7 +10,7 @@ defineProps<{
 }>()
 
 const { onboardingTaskStatus } = useOnboardingTaskStatus()
-const step = ref<'score' | 'reward' | 'thanks'>(onboardingTaskStatus.value?.externalRatingStatus ? 'reward' : 'score')
+const step = ref<'score' | 'reward' | 'thanks'>(onboardingTaskStatus.value?.externalRatingStatus && !onboardingTaskStatus.value?.ratingStatus ? 'reward' : 'score')
 </script>
 
 <template>

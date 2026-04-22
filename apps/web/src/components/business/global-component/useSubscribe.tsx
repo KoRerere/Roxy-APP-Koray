@@ -146,8 +146,6 @@ export function useSubscribe() {
     emitter.on('showAccountSetupDialog', showAccountSetupDialog)
     // 显示用户引导
     emitter.on('showUserGuideDialog', showUserGuideDialog)
-    // 显示侧边栏引导
-    emitter.on('asideMenuGuide', showAsideMenuGuideTour)
     // 回到默认空间
     emitter.on('backDefaultWorkspace', showDefaultWorkspaceDialog)
     // 达到窗口打开次数限制
@@ -384,20 +382,6 @@ export function useSubscribe() {
         container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
       },
     })
-  }
-
-  function showAsideMenuGuideTour() {
-    const driverObj = genDriver({
-      steps: [
-        { element: '#new_profile', popover: { description: $t('如果您有更多自定义窗口需求，点击"创建窗口"按钮即可快速设置。'), side: 'right', align: 'center' } },
-        { element: '.menu_agent-list', popover: { description: $t('RoxyBrowser 不仅支持自定义代理 IP，也为您准备了代理 IP 商店，欢迎选购！'), side: 'right', align: 'center' } },
-        { element: '.menu_tutorial', popover: { description: $t('最后，您可以探索新手教程来了解更多 RoxyBrowser 产品功能和使用技巧，以提升您的操作效率。'), side: 'right', align: 'center' } },
-      ],
-      onDestroyed: async () => {
-        showMcpDriver()
-      },
-    })
-    driverObj.drive()
   }
 
   async function showMcpDriver() {

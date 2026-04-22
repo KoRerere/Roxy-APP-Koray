@@ -1,3 +1,37 @@
+<script setup lang="ts">
+import BaseDialog from './base-dialog.vue'
+
+const formData = ref({
+  urls: '',
+  replaceCurrentTab: false,
+})
+
+function handleHide() {
+  globalThis.electronAPI.send('syncControl:closeOpenSitesDialog')
+}
+
+function openSites() {
+  const params = {
+    urls: formData.value.urls.split('\n').map((url) => {
+      const trimmedUrl = url.trim()
+      if (!trimmedUrl) {
+        return null
+      }
+      try {
+        new URL(trimmedUrl)
+        return trimmedUrl
+      }
+      catch (error) {
+        return `http://${trimmedUrl}`
+      }
+    }).filter(url => url),
+    replaceCurrentTab: formData.value.replaceCurrentTab,
+  }
+  console.log('openSites', params)
+  globalThis.electronAPI.send('syncControl:openSites', params)
+}
+</script>
+
 <template>
   <BaseDialog :header="$t('打开网址')" @hide="handleHide">
     <div class="open-sites">
@@ -5,7 +39,7 @@
     </div>
     <div class="footer">
       <div class="flex items-center gap-2">
-        <RxCheckbox v-model="formData.replaceCurrentTab" inputId="ingredient1" binary size="small" />
+        <RxCheckbox v-model="formData.replaceCurrentTab" input-id="ingredient1" binary size="small" />
         <label for="ingredient1"> {{ $t('网址从当前标签页开始打开') }} </label>
       </div>
       <RxButton class="apply-button" @click="openSites">
@@ -15,40 +49,6 @@
   </BaseDialog>
 </template>
 
-<script setup lang="ts">
-import BaseDialog from './base-dialog.vue';
-;
-
-const formData = ref({
-  urls: '',
-  replaceCurrentTab: false
-});
-
-function handleHide() {
-  globalThis.electronAPI.send('syncControl:closeOpenSitesDialog');
-}
-
-function openSites() {
-  const params = {
-    urls: formData.value.urls.split('\n').map(url => {
-      const trimmedUrl = url.trim();
-      if (!trimmedUrl) {
-        return null;
-      }
-      try {
-        new URL(trimmedUrl)
-        return trimmedUrl
-      } catch (error) {
-        return `http://${trimmedUrl}`
-      }
-    }).filter(url => url),
-    replaceCurrentTab: formData.value.replaceCurrentTab
-  };
-  console.log('openSites', params);
-  globalThis.electronAPI.send('syncControl:openSites', params);
-}
-</script>
-
 <style lang="scss" scoped>
 .open-sites {
   display: flex;
@@ -56,13 +56,11 @@ function openSites() {
   align-items: flex-start;
   gap: 16px;
   align-self: stretch;
-
 }
 
 .footer {
   margin-top: 8px;
 }
-
 
 .apply-button {
   width: 100%;

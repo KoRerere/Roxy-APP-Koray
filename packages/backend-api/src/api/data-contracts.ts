@@ -1575,6 +1575,8 @@ export interface UserGetUserInfoListData {
       autoRatingStatus: boolean;
       externalRatingStatus: boolean;
       firstOpenWindowStatus: boolean;
+      onboardingTaskStatus: boolean;
+      firstWebRegisterGuideStatus: boolean;
     };
   };
   msg: string;
@@ -1755,6 +1757,7 @@ export interface UserGetUserConfigListData {
   data: {
     /** 语言 */
     language: string;
+    autoRestoreWindow: boolean;
     /** 时区 */
     timeZone: string;
     /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
@@ -1806,6 +1809,10 @@ export interface UserGetUserConfigListData {
     clearCacheType: string;
     /** 是否第一次切换主题 */
     isFirstSwitchTheme: boolean;
+    cloudBrowserActivateInfo: {
+      dirId: string;
+      remainingUsageMs: number;
+    };
   };
   msg: string;
 }
@@ -2899,6 +2906,7 @@ export interface UserUpdateOnboardingTaskStatusCreatePayload {
   ratingStatus?: boolean;
   externalRatingStatus?: boolean;
   firstOpenWindowStatus?: boolean;
+  firstWebRegisterGuideStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -3237,6 +3245,13 @@ export interface UserSetRoxyClawCreatePayload {
   lark_allowed_chat_ids: string;
   enabled: number;
   lark_environment: string;
+  slack_bot_token: string;
+  slack_signing_secret: string;
+  slack_app_token: string;
+  slack_allowed_user_ids: string;
+  slack_allowed_channel_ids: string;
+  discord_bot_token: string;
+  discord_allowed_user_ids: string;
 }
 
 export interface UserSetRoxyClawCreateData {
@@ -4897,6 +4912,62 @@ export interface UserGetAgentDeliveryDurationListListData {
   msg: string;
 }
 
+export interface UserActivateCloudBrowserCreatePayload {
+  windowId: number;
+}
+
+export interface UserActivateCloudBrowserCreateData {
+  code: number;
+  msg: string;
+}
+
+export type UserGetCloudBrowserInfoListPayload = object;
+
+export interface UserGetCloudBrowserInfoListData {
+  code: number;
+  data: {
+    connectUrl: string;
+  };
+  msg: string;
+}
+
+export interface UserMdfCloudBrowserActivateInfoCreatePayload {
+  /** 上报浏览器使用了多长时间（单位毫秒） */
+  usedMs: number;
+}
+
+export interface UserMdfCloudBrowserActivateInfoCreateData {
+  code: number;
+  data: {
+    remainingUsageMs: number;
+  };
+  msg: string;
+}
+
+export interface UserGetCloudBrowserRemainingUsageListData {
+  code: number;
+  data: {
+    remainingUsageMs: number;
+    dirId: string;
+  };
+  msg: string;
+}
+
+export type UserGetCloudBrowserExperienceProxyListPayload = object;
+
+export interface UserGetCloudBrowserExperienceProxyListData {
+  code: number;
+  data: {
+    host: string;
+    port: string;
+    protocol: string;
+    proxyUserName: string;
+    proxyPassword: string;
+    ipType: string;
+  };
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -5513,10 +5584,10 @@ export interface UserGetProxyRefundInfoListData {
 
 export interface UserGetProxyAllCountriesListParams {
   /**
-   * 0:代理列表 1：代理商店
+   * 0:代理列表 1：代理商店  不传查询全部
    * @example "0"
    */
-  queryType: string;
+  queryType?: string;
   /**
    * 代理过期状态 0:已过期 1:使用中 2：快过期
    * @example "1"
@@ -5667,6 +5738,203 @@ export interface UserGetProxyCountryPriceListListData {
       proxyPurchaseMonths: number;
     }[];
   }[];
+  msg: string;
+}
+
+export interface UserGetProxyListMergedListParams {
+  /** @example "available_list" */
+  type?: string;
+  /** @example "1" */
+  page_index?: string;
+  /** @example "100" */
+  page_size?: string;
+  /** @example "lastCountry" */
+  orderName?: string;
+  /** @example "asc" */
+  orderType?: string;
+  /** @example "0" */
+  proxyType?: string;
+}
+
+export interface UserGetProxyListMergedListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id: number;
+      userId: number;
+      workspaceId: number;
+      proxyProviderId: number | null;
+      orderNo: string | null;
+      orderStatus: number | null;
+      ipType: string;
+      host: string;
+      protocol: string;
+      country: string;
+      lastIp: string;
+      port: string;
+      proxyUserName: string;
+      proxyPassword: string;
+      proxyCheckChannel: string;
+      remark: string;
+      lastCountry: string;
+      lastState: string;
+      lastCity: string;
+      checkStatus: number;
+      proxyExpireStatus: number | null;
+      checkTime: string;
+      renewalTime: string | null;
+      createTime: string;
+      proxyMonths: number;
+      updateTime: string;
+      expireDate: string | null;
+      replaceStatus: number;
+      proxyProviderName: string | null;
+      proxyType: number;
+      providerType: string | null;
+      opName: string | null;
+      giftDays: number;
+      autoRenew: number;
+      canRenew: boolean;
+      modelParam: string;
+      refreshUrl: string;
+      dataType: string;
+      checkChannel: string;
+      checkChannelValue: string;
+      isBind: boolean;
+      bindCount: number;
+      bindList: number[];
+      proxyProviderPrice: number;
+      proxyProviderDiscountPrice: number;
+      canRefund: boolean;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetProxyVendorListListData {
+  code: number;
+  data: {
+    carouselList: string[];
+    createTime: string;
+    iconList: string[];
+    id: number;
+    isJump: number;
+    isNew: number;
+    isOfficial: boolean;
+    jumpInfo: {
+      apiKey: string;
+      isToken: boolean;
+      jumpUrl: string;
+      password: string;
+      thirdUuid: string;
+      username: string;
+    };
+    proxyTypeList: string[];
+    sort: number;
+    status: number;
+    updateTime: string;
+    vendorAdv: string[];
+    vendorDesc: string;
+    vendorDiscount: number | null;
+    vendorIcon: string;
+    vendorName: string;
+    vendorWebsite: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyBusinessSceneListListParams {
+  /** @example "1" */
+  vendorId?: string;
+}
+
+export interface UserGetProxyBusinessSceneListListData {
+  code: number;
+  data: {
+    id: number;
+    sceneKey: string;
+    sceneValue: string;
+    sceneDesc: string;
+    badgeType: string | null;
+    badgeTypeDesc: string | null;
+    sceneIcon: string;
+    sceneIconDark: string;
+    vendorId: number;
+    sort: number;
+    createTime: string;
+    updateTime: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyProvidersByBusinessSceneListParams {
+  /** @example "5" */
+  sceneId?: string;
+}
+
+export interface UserGetProxyProvidersByBusinessSceneListData {
+  code: number;
+  data: {
+    id?: number;
+    proxyProviderName?: string;
+    typeName?: string;
+    hoverText?: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyCountryListByContinentListParams {
+  /** @example "2" */
+  proxyProviderId?: string;
+}
+
+export interface UserGetProxyCountryListByContinentListData {
+  code: number;
+  data: {
+    continent: string;
+    continent_name: string;
+    country_code: string;
+    country_name: string;
+    inventory: number;
+    isHot: boolean;
+    isNew: boolean;
+    proxyPriceList: {
+      proxyPrice: number;
+      proxyPurchaseMonths: number;
+    }[];
+    proxyTpye: string;
+    status: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyVendorJumpInfoListParams {
+  /** @example "Rola-IP" */
+  vendorName?: string;
+}
+
+export interface UserGetProxyVendorJumpInfoListData {
+  code: number;
+  data: {
+    jumpUrl: string;
+    isToken: boolean;
+    username: string;
+    password: string;
+    apiKey: string;
+    thirdUuid: string;
+  };
+  msg: string;
+}
+
+export interface UserReportProxyOutOfStockCreatePayload {
+  sceneId: number;
+  proxyProviderId: number;
+  country: string;
+}
+
+export interface UserReportProxyOutOfStockCreateData {
+  code: number;
   msg: string;
 }
 
@@ -6311,13 +6579,21 @@ export interface UserGetTeamPermissionsListData {
         permissionName: string;
         configurable: boolean;
         hasPermission: boolean;
+        isSensitive: boolean;
       }[];
     }[];
   };
   msg: string;
 }
 
-export type UserUpdateTeamPermissionsCreatePayload = object;
+export interface UserUpdateTeamPermissionsCreatePayload {
+  userId?: number;
+  permissions: {
+    permissionCode?: string;
+    hasPermission?: boolean;
+  }[];
+  emailCode?: string;
+}
 
 export interface UserUpdateTeamPermissionsCreateData {
   code: number;
@@ -6325,7 +6601,7 @@ export interface UserUpdateTeamPermissionsCreateData {
 }
 
 export interface UserGetRolePermissionsListParams {
-  /** @example "0" */
+  /** @example "2" */
   role?: string;
   /** @example "37424" */
   userId?: string;
@@ -6340,9 +6616,23 @@ export interface UserGetRolePermissionsListData {
         permissionCode: string;
         permissionName: string;
         configurable: boolean;
+        isSensitive: boolean;
       }[];
     }[];
   };
+  msg: string;
+}
+
+export interface UserGetTeamPermissionVerifyStatusListData {
+  code: number;
+  data: {
+    verified: boolean;
+  };
+  msg: string;
+}
+
+export interface UserSendTeamPermissionVerifyCodeListData {
+  code: number;
   msg: string;
 }
 
@@ -7378,20 +7668,43 @@ export interface UserGetAutoSubscriptionInfoListData {
 
 export interface UserBuyProxySettlementCreatePayload {
   entryType?: number;
-  /** 购买数量 */
+  /**
+   * 购买数量
+   * 购买数量
+   */
   purchaseMember?: number;
-  /** 购买月数(1) */
+  /**
+   * 购买月数(1)
+   * 购买月数(1)
+   */
   subscriptionMonths: number;
-  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  /**
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   */
   payType: string;
-  /** 订单类型(续费//购买:renew/purchase) */
+  /**
+   * 订单类型(续费//购买:renew/purchase)
+   * 订单类型(续费//购买:renew/purchase)
+   */
   orderType: string;
-  /** 购买供应商ID */
+  /**
+   * 购买供应商ID
+   * 购买供应商ID
+   */
   proxyProviderId?: number;
-  /** 购买的城市 */
+  /**
+   * 购买的城市
+   * 购买的城市
+   */
   purchaseCountry?: string;
-  /** 商业用途 */
+  /**
+   * 商业用途
+   * 商业用途
+   */
   businessUse?: string;
+  /** 商业用途 */
+  businessId?: number;
   renewIdList?: number[];
 }
 
@@ -7851,6 +8164,51 @@ export interface UserGetRoxyClawListData {
     lark_allowed_chat_ids: string;
     enabled: number;
     lark_environment: string;
+    slack_bot_token: string;
+    slack_signing_secret: string;
+    slack_app_token: string;
+    slack_allowed_user_ids: string;
+    slack_allowed_channel_ids: string;
+    discord_bot_token: string;
+    discord_allowed_user_ids: string;
+  };
+  msg: string;
+}
+
+export interface GetCountryConfigListParams {
+  /** @example "hk" */
+  country?: string;
+}
+
+export interface GetCountryConfigListData {
+  code: number;
+  data: {
+    country: string;
+    config: {
+      outbounds: {
+        tag: string;
+        protocol: string;
+        settings: {
+          vnext: {
+            address: string;
+            port: number;
+            users: {
+              id: string;
+              alterId: number;
+              email: string;
+              security: string;
+            }[];
+          }[];
+        };
+        streamSettings: {
+          network: string;
+        };
+        mux: {
+          enabled: boolean;
+          concurrency: number;
+        };
+      }[];
+    }[];
   };
   msg: string;
 }

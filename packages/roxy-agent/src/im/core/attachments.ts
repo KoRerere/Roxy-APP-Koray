@@ -1,3 +1,6 @@
+import { Buffer } from 'node:buffer'
+import { proxyFetch } from './proxy.js'
+
 export type ContentBlock
   = | { type: 'text', text: string }
     | { type: 'image', data: string, mimeType: string }
@@ -8,7 +11,7 @@ export async function imageUrlToBlock(
   url: string,
   mimeType = 'image/jpeg',
 ): Promise<ContentBlock> {
-  const response = await fetch(url)
+  const response = await proxyFetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch image (${response.status}): ${url}`)
   }

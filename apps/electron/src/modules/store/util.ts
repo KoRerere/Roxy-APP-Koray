@@ -2,12 +2,14 @@ import type { StoreType } from '/@/modules/store/types'
 import { getCurrentScope } from '@sentry/electron/main'
 import { app } from 'electron'
 import { debounce } from 'es-toolkit'
+import { isEmpty } from 'es-toolkit/compat'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { loadLocaleMessages } from '/@/locales'
+import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
 import { fileExists, getInstallerParams, killProcessByName, killProcessForce, safeParseJSON } from '/@/utils'
@@ -147,6 +149,8 @@ export async function initLocalConfig() {
     })
     lastStore.simulation = normalizeSimulationConfig(lastStore.simulation)
     Object.assign(store, lastStore)
+    // 重置下次更新时间
+    store.nextUpdateTimestamp = 0
     // 有用户信息，则认为有登录过
     if (store.token || store.userId || store.userInfo?.email) {
       store.hasLoggedIn = true
@@ -264,5 +268,35 @@ async function recordFirstLaunchAppEvent() {
       uuid: store.visitorId,
       eventType: 'app_open',
     })
+  }
+}
+
+/** 恢复上次窗口打开状态 */
+export async function restoreLastWindowOpenStatus() {
+  const appNormalExit = store.appNormalExit
+  const needRestoreWindow = store.needRestoreWindow
+
+  store.appNormalExit = false
+  store.needRestoreWindow = false
+
+  console.log('restoreLastWindowOpenStatus', store.waitingRestoreWindow, needRestoreWindow, appNormalExit)
+  if (isEmpty(store.waitingRestoreWindow)) {
+    return
+  }
+
+  // 如果需要恢复窗口，或者应用正常退出，则恢复窗口
+  if (needRestoreWindow || appNormalExit === false) {
+    try {
+      const waitingRestoreWindow = structuredClone(store.waitingRestoreWindow)
+      store.waitingRestoreWindow = {}
+
+      for (const workspaceId in waitingRestoreWindow) {
+        const dirIds = waitingRestoreWindow[workspaceId]
+        await browserManager.batchLaunch(dirIds, undefined, Number(workspaceId))
+      }
+    }
+    catch (error) {
+
+    }
   }
 }

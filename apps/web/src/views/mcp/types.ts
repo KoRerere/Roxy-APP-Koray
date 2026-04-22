@@ -10,7 +10,7 @@ export interface AttachmentInfo {
 
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'title'
   data?: {
     sessionId?: string
     toolId?: string

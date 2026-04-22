@@ -11,6 +11,8 @@
  */
 
 import {
+  UserActivateCloudBrowserCreateData,
+  UserActivateCloudBrowserCreatePayload,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
   UserAddWindowFilterNameCreateData,
@@ -47,6 +49,10 @@ import {
   UserGetAgentTransferWindowStatusListData,
   UserGetBrowserVersionInfoListData,
   UserGetBrowserVersionInfoListParams,
+  UserGetCloudBrowserExperienceProxyListData,
+  UserGetCloudBrowserExperienceProxyListPayload,
+  UserGetCloudBrowserInfoListData,
+  UserGetCloudBrowserInfoListPayload,
   UserGetDeviceNameV2ListData,
   UserGetDeviceNameV2ListParams,
   UserGetLabelInfoListData,
@@ -76,6 +82,8 @@ import {
   UserGetWindowTemplateListListData,
   UserImportWindowInfoV2CreateData,
   UserImportWindowInfoV2CreatePayload,
+  UserMdfCloudBrowserActivateInfoCreateData,
+  UserMdfCloudBrowserActivateInfoCreatePayload,
   UserMdfLabelInfoCreateData,
   UserMdfLabelInfoCreatePayload,
   UserMdfWindowDataBatchCreateData,
@@ -1146,6 +1154,90 @@ export class WindowApi<SecurityDataType = unknown> {
     this.http.request<UserGetAgentDeliveryDurationListListData, any>({
       path: `/user_get_agent_delivery_duration_list`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserActivateCloudBrowserCreate
+   * @summary 激活云端浏览器
+   * @request POST:/user_activate_cloud_browser
+   * @response `200` `UserActivateCloudBrowserCreateData`
+   */
+  userActivateCloudBrowserCreate = (
+    data: UserActivateCloudBrowserCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserActivateCloudBrowserCreateData, any>({
+      path: `/user_activate_cloud_browser`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetCloudBrowserInfoList
+   * @summary 获取云端浏览器信息
+   * @request GET:/user_get_cloud_browser_info
+   * @response `200` `UserGetCloudBrowserInfoListData`
+   */
+  userGetCloudBrowserInfoList = (
+    data: UserGetCloudBrowserInfoListPayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCloudBrowserInfoListData, any>({
+      path: `/user_get_cloud_browser_info`,
+      method: "GET",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfCloudBrowserActivateInfoCreate
+   * @summary 修改云端浏览器激活信息
+   * @request POST:/user_mdf_cloud_browser_activate_info
+   * @response `200` `UserMdfCloudBrowserActivateInfoCreateData`
+   */
+  userMdfCloudBrowserActivateInfoCreate = (
+    data: UserMdfCloudBrowserActivateInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfCloudBrowserActivateInfoCreateData, any>({
+      path: `/user_mdf_cloud_browser_activate_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetCloudBrowserExperienceProxyList
+   * @summary 获取云端浏览器体验代理
+   * @request GET:/user_get_cloud_browser_experience_proxy
+   * @response `200` `UserGetCloudBrowserExperienceProxyListData`
+   */
+  userGetCloudBrowserExperienceProxyList = (
+    data: UserGetCloudBrowserExperienceProxyListPayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCloudBrowserExperienceProxyListData, any>({
+      path: `/user_get_cloud_browser_experience_proxy`,
+      method: "GET",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

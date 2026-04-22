@@ -11,7 +11,7 @@ defineEmits(['close'])
       <div class="title">
         {{ $t('感谢支持') }}
       </div>
-      <div class="desc">
+      <div class="desc text-center">
         {{ $t('感谢您的评分，我们会继续努力') }}
       </div>
     </div>

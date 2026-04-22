@@ -48,24 +48,18 @@ export async function createAgent(options: {
 
   /** 技能发现用 agent-bin：middleware 列 /skills/ 时能解析到 agent-bin/skills，AI 才能识别到技能并去调 read_file */
   const fsBackendForList = new FilesystemBackend({ rootDir: env.SKILLS_DIR, virtualMode: true })
-  /** read_file 时 Composite 剥掉 /skills/ 后只传 xxx/SKILL.md，需用 agent-bin/skills 做 root 才能拼对路径 */
-  // const fsBackendForRead = new FilesystemBackend({ rootDir: skillsDirForRead, virtualMode: true })
 
   const skillsMiddleware = createSkillsMiddleware({
     backend: fsBackendForList,
     sources: ['/skills/'],
   })
 
-  /** 把 /skills/* 的 read_file 路由到磁盘；不传则走默认 StateBackend（内存）会 not found */
-  // const backend = (rt: any) =>
-  //   new CompositeBackend(new StateBackend(rt), { '/skills/': fsBackendForRead })
-
   const tools = options.mode === 'orchestrator' ? workerTools : []
   tools.push(...(options.tools ?? []))
 
   let checkpointer
   if (options.conversationId) {
-    const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${options.conversationId}.db`)
+    const checkpointPath = path.join(env.CHECKPOINT_DIR, `checkpoint_${options.conversationId}.db`)
     checkpointer = SqliteSaver.fromConnString(checkpointPath)
   }
 
@@ -84,9 +78,9 @@ export async function deleteCheckpoint(conversationId: string): Promise<void> {
   const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${conversationId}.db`)
   try {
     await fs.unlink(checkpointPath)
-    console.log(`[deepagents] Deleted checkpoint for conversation ${conversationId}`)
+    console.log(`Deleted checkpoint for conversation ${conversationId}`)
   }
   catch (err) {
-    console.log(`[deepagents] Checkpoint not found for conversation ${conversationId}, skipping delete`)
+    console.log(`Checkpoint not found for conversation ${conversationId}, skipping delete`)
   }
 }

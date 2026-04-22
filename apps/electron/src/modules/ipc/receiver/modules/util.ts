@@ -9,7 +9,7 @@ import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewa
 import { mediaProtocolName } from '/@/constants'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
-import { clearInstallerPath, decryptAESGCM, encryptAESGCM, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getInviteCode, getLocalFonts, getMacAddress, getUTCOffsetHours } from '/@/utils'
+import { clearInstallerPath, decryptAESGCM, encryptAESGCM, fetchHiddenPageHtml, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getInviteCode, getLocalFonts, getMacAddress, getUTCOffsetHours } from '/@/utils'
 
 export function setupUtilIpc(ipcMain: IPCMainInstance) {
   /** 获取系统信息 */
@@ -125,6 +125,17 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
 
   ipcMain.on('util:getApiPort', () => {
     return store.apiPort ?? -1
+  })
+
+  /** 在隐藏的 WebContentsView 中加载页面并提取 body 内部的 HTML */
+  ipcMain.on('util:fetchHiddenPageHtml', async (event, payload: {
+    url: string
+    timeoutMs?: number
+    settleTimeMs?: number
+    userAgent?: string
+    partition?: string
+  }) => {
+    return fetchHiddenPageHtml(payload.url, payload)
   })
 
   /** 获取公共请求头部 */

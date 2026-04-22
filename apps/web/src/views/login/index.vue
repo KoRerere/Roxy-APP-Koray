@@ -6,7 +6,7 @@ import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
 
 import { useUserStore } from '/@/stores/user'
-import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback } from '/@/utils'
+import { decryptAESGCM, hidePageLoading, useOauth2Callback } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import { EmailCodeInputOtp, RecoveryCode, RecoveryEmail, ResetPassword, SignForm, Verify2fa } from './components/'
 import MigrationTips from './components/migration-tips.vue'
@@ -386,12 +386,12 @@ provideLoginContext({
     <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)]">
       <div class="relative z-10 h-full flex-col flex-bc">
         <div class="w-full flex justify-between sm:p-5 p-3">
-          <div class="logo">
+          <a class="logo" :href="getOfficialWebsite('/')" target="_blank" rel="noopener noreferrer">
             <SvgIcon name="base/logo" size="36" />
             <div class="logo-text">
               RoxyBrowser
             </div>
-          </div>
+          </a>
           <LanguageSelect />
         </div>
 

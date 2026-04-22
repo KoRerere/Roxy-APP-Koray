@@ -99,7 +99,7 @@ export const webUpdater = new class WebUpdater {
     try {
       this.webDomain = await getWebDomain(false)
       // 获取远程版本信息
-      const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl).then(response => response.data)
+      const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl, { timeout: 3 * 1000 }).then(response => response.data)
       console.log('[WebUpdater] remoteVersionInfo', remoteVersionInfo)
 
       if (this.remoteVersionInfo && compare(this.remoteVersionInfo.version, remoteVersionInfo.version, '>=')) {

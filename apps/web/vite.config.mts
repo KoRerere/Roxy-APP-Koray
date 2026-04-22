@@ -138,7 +138,7 @@ const config: UserConfig = {
   build: {
     // sourcemap: true,
     target: `chrome${chrome}`,
-    // outDir: String.raw`C:/Users/Administrator/AppData/Local/Programs/RoxyBrowserDev/resources/app.asar.unpacked/dist/web`,
+    // outDir: String.raw`C:\Users\Administrator\AppData\Roaming\RoxyBrowserDev\web`,
     outDir: 'dist',
     rollupOptions: {
       input: {

@@ -22,7 +22,11 @@ const safeUserId: string = userId
 const safeWorkspaceId: string = workspaceId
 
 // 数据库初始化
-const dbPath = path.join(env.CHECKPOINT_DIR!, 'conversations.db')
+const dbPath = path.join(env.CHECKPOINT_DIR, 'conversations.db')
+// 确保日志目录存在
+if (!fs.existsSync(env.CHECKPOINT_DIR)) {
+  fs.mkdirSync(env.CHECKPOINT_DIR, { recursive: true })
+}
 const db = new DatabaseSync(dbPath)
 
 // 启用 WAL 模式以提高并发性能
@@ -123,9 +127,6 @@ function initDatabase() {
     // 如果表不存在或其他错误，忽略（表会在上面创建）
     console.warn(`⚠️ Migration check for is_title_set failed:`, error)
   }
-
-  console.log(`✅ Chat context database initialized: ${dbPath}`)
-  console.log(`📋 Initialized for user: ${userId}, workspace: ${workspaceId}`)
 }
 
 // 类型定义
@@ -228,7 +229,7 @@ const statements = {
     LEFT JOIN messages m ON c.id = m.conversation_id
     WHERE c.workspace_id = ? AND c.user_id = ?
     GROUP BY c.id
-    ORDER BY c.updated_at DESC
+    ORDER BY c.is_active DESC, c.created_at DESC
   `),
 
   getConversation: db.prepare('SELECT * FROM conversations WHERE id = ? AND user_id = ? AND workspace_id = ?'),
@@ -433,11 +434,6 @@ export class MessageManager {
   }
 }
 
-// 清理任务
-export class CleanupManager {
-  // 目前没有需要清理的任务
-}
-
 // 导出便捷的组合函数
 export const ChatContextAPI = {
   // 对话相关
@@ -454,15 +450,6 @@ export const ChatContextAPI = {
   addMessage: MessageManager.add,
   getMessagesByConversation: MessageManager.getByConversation,
   deleteMessagesByConversation: MessageManager.deleteByConversation,
-
-  /**
-   * 获取当前上下文信息
-   */
-  getCurrentContext: () => ({
-    userId,
-    workspaceId,
-    dbPath,
-  }),
 }
 
 /**

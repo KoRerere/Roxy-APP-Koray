@@ -25,7 +25,7 @@ router.get('/list', async (req, res) => {
 router.post('/invite', async (req, res) => {
   const { workspaceId, ...params } = req.body || {}
   try {
-    const result = await API.platform.userAddPlatformInfoCreate(params, {
+    const result = await API.limit.userBatchInviteCreate(params, {
       headers: {
         workspaceId,
         ...openAPICommonHeaders,
@@ -41,14 +41,10 @@ router.post('/invite', async (req, res) => {
 
 /* 批量邀请团队成员 */
 router.post('/batch_invite', async (req, res) => {
-  const { workspaceId, platformList } = req.body || {}
-
-  if (!Array.isArray(platformList)) {
-    return res.error('platformList is required')
-  }
+  const { workspaceId, ...params } = req.body || {}
 
   try {
-    const result = await API.platform.userAddPlatformInfoBatchCreate(platformList, {
+    const result = await API.limit.userBatchInviteCreate(params, {
       headers: {
         workspaceId,
         ...openAPICommonHeaders,
@@ -65,7 +61,7 @@ router.post('/batch_invite', async (req, res) => {
 // 修改团队成员
 router.post('/modify', async (req, res) => {
   const { workspaceId, ...params } = req.body || {}
-  const result = await API.platform.userMdfPlatformInfoCreate(params, {
+  const result = await API.team.userMdfTeamInfoV2Create(params, {
     headers: {
       workspaceId,
       ...openAPICommonHeaders,
@@ -76,14 +72,10 @@ router.post('/modify', async (req, res) => {
 
 /* 删除团队成员 */
 router.post('/delete', async (req, res) => {
-  const { ids, workspaceId } = req.body
-
-  if (!Array.isArray(ids)) {
-    return res.error('ids is required')
-  }
+  const { workspaceId, ...params } = req.body
 
   try {
-    const result = await API.platform.userDelPlatformInfoCreate({ ids }, {
+    const result = await API.team.userDelTeamInfoCreate(params, {
       headers: {
         workspaceId,
         ...openAPICommonHeaders,

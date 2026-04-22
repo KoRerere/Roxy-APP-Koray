@@ -231,9 +231,32 @@ export function parseUrl(url: string) {
   return match && { protocol: match[1], domain: match[2] }
 }
 
-export function concurrentControl(tasks: (() => Promise<any>)[], limit: number = 5, notify?: (result: any) => void): Promise<any[]> {
+export interface ConcurrentControlOptions {
+  notify?: (result: any) => void
+  onProgress?: (p: { completed: number, total: number }) => void
+  signal?: AbortSignal
+}
+
+function normalizeConcurrentOptions(
+  third?: ((result: any) => void) | ConcurrentControlOptions,
+): ConcurrentControlOptions {
+  if (!third)
+    return {}
+  if (typeof third === 'function')
+    return { notify: third }
+  return third
+}
+
+export function concurrentControl(
+  tasks: (() => Promise<any>)[],
+  limit: number = 5,
+  third?: ((result: any) => void) | ConcurrentControlOptions,
+): Promise<any[]> {
+  const { notify, onProgress, signal } = normalizeConcurrentOptions(third)
   let activeCount = 0
   let taskIndex = 0
+  let completedCount = 0
+  const total = tasks.length
   const results: any[] = []
 
   return new Promise((resolve) => {
@@ -247,13 +270,15 @@ export function concurrentControl(tasks: (() => Promise<any>)[], limit: number =
       }
       finally {
         activeCount--
+        completedCount++
         notify?.(results[index])
+        onProgress?.({ completed: completedCount, total })
         runNext()
       }
     }
 
     function runNext() {
-      while (activeCount < limit && taskIndex < tasks.length) {
+      while (!signal?.aborted && activeCount < limit && taskIndex < tasks.length) {
         const currentTask = tasks[taskIndex]!
         const currentIndex = taskIndex
         taskIndex++
@@ -261,7 +286,7 @@ export function concurrentControl(tasks: (() => Promise<any>)[], limit: number =
         runTask(currentTask, currentIndex)
       }
 
-      if (taskIndex === tasks.length && activeCount === 0) {
+      if (activeCount === 0 && (taskIndex === tasks.length || !!signal?.aborted)) {
         resolve(results)
       }
     }

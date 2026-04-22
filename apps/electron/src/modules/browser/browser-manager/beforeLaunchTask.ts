@@ -5,7 +5,7 @@ import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
-import { isMac } from '/@/constants/common'
+import { isLinux, isMac } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
@@ -16,6 +16,9 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
 import { encryptFingerprintConfig, genFingerprintConfig, getTimezoneByCity, importBookmarks } from './utils'
+
+const RE_MEM_TOTAL = /MemTotal:\s+(\d+)/
+const RE_MEM_AVAILABLE = /MemAvailable:\s+(\d+)/
 
 /** 最后一次发送的消息 */
 export interface LastMessage {
@@ -399,7 +402,7 @@ export class BeforeLaunchTask {
     };
 
     // 开启同步标签页后，同步标签页
-    void (allOpenUrl || []).forEach((item) => {
+    void (allOpenUrl.slice(0, 1) || []).forEach((item) => {
       if (item && this.browserItem.isValidURL(item)) {
         args.push(item)
       }
@@ -707,27 +710,36 @@ export class BeforeLaunchTask {
   }
 
   /** 内存检测 */
-  private memoryDetection() {
-    if (process.platform === 'darwin') {
-      return Promise.resolve()
+  private async memoryDetection() {
+    let memoryUsageRate: number
+
+    if (isMac) {
+      return
     }
 
-    // 获取系统的总内存和空闲内存，单位是字节
-    const { free, total } = process.getSystemMemoryInfo()
+    if (isLinux) {
+      // Linux 上 process.getSystemMemoryInfo().free 对应 MemFree，
+      // 不包含可回收的 cache/buffer，会导致使用率虚高，需要用 MemAvailable
+      const meminfo = await readFile('/proc/meminfo', 'utf-8')
+      const totalMatch = meminfo.match(RE_MEM_TOTAL)
+      const availableMatch = meminfo.match(RE_MEM_AVAILABLE)
+      if (!totalMatch || !availableMatch) {
+        return
+      }
+      const total = Number(totalMatch[1])
+      const available = Number(availableMatch[1])
+      memoryUsageRate = ((total - available) / total) * 100
+    }
+    else {
+      // Windows 和 macOS 上 free 准确反映可用内存（单位 KB）
+      const { free, total } = process.getSystemMemoryInfo()
+      memoryUsageRate = ((total - free) / total) * 100
+    }
 
-    // 计算已使用的内存
-    const usedMemory = total - free
-
-    // 计算内存使用率
-    const memoryUsageRate = (usedMemory / total) * 100
-
-    // 判断内存使用率是否超过用户设置的阈值
     if (memoryUsageRate > store.memoryLimit) {
       const tips = $t('启动失败，内存使用率超出 {memoryLimit}%', { memoryLimit: store.memoryLimit })
-      // 停止打开后续窗口
-      return Promise.reject(new Error(tips))
+      throw new Error(tips)
     }
-    return Promise.resolve()
   }
 
   private async diskSizeDetection() {

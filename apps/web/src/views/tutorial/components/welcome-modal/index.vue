@@ -4,13 +4,15 @@ import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { emitter } from '/@/utils/eventBus'
 import type { FirstGiftType } from '/@/enums/pay'
+import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
+import { API } from '/@/api'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
 const themeStore = useThemeStore()
-const { mixpanelTrack } = useUserStore()
+const { mixpanelTrack, userInfo, updateUserConfig } = useUserStore()
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/information_bg.svg")' : 'url("/images/information_bg_dark.svg")'
@@ -24,9 +26,21 @@ function onClose() {
   emit('close')
 }
 
-function receiveSuccess(type?: FirstGiftType) {
+async function receiveSuccess(type?: FirstGiftType) {
   if (type) {
-    emitter.emit('firstRegisterGuide', type)
+    emitter.emit('firstRegisterGuide')
+  }
+  else if (!globalThis.isElectron && userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false) {
+    // 新用户 web 端自动创建一个窗口
+    const windowIds = await genDefaultProfileByCount(1)
+    if (windowIds.length) {
+      emitter.emit('refreshProfileList')
+      API.base.userUpdateOnboardingTaskStatusCreate({ firstWebRegisterGuideStatus: true })
+      await API.window.userActivateCloudBrowserCreate({ windowId: windowIds[0] }).then(() => {
+        updateUserConfig()
+      })
+    }
+    emitter.emit('firstRegisterGuide')
   }
   onClose()
 }

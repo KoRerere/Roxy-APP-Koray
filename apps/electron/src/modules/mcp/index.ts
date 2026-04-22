@@ -1,7 +1,6 @@
 import type { UserGetLlmInfoListData } from '@roxy/backend-api'
 import type { UtilityProcess } from 'electron'
-import { app, session, utilityProcess } from 'electron'
-import fs from 'node:fs/promises'
+import { app, utilityProcess } from 'electron'
 import path from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
@@ -13,26 +12,16 @@ import { mcpRuntimeState } from '/@/modules/mcp/state'
 import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
-import { calculateFileHash } from '/@/utils'
+import { getErrorMessage } from '/@/utils'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
 import { aliOSS } from '/@/utils/oss'
 import { ipcSender } from '../ipc/sender'
+import { createMcpError } from './errors'
 
 export function getMcpWindow() {
   return getWindowById(ROXY_MCP_WINDOW_ID)
 }
 
-async function getSystemProxy() {
-  // 尝试解析一个外部地址，Electron 会返回系统当前应用的代理字符串
-  const proxyString = await session.defaultSession.resolveProxy('https://www.google.com')
-
-  // proxyString 的格式通常是 "PROXY 127.0.0.1:7890; DIRECT"
-  if (proxyString && proxyString.includes('PROXY')) {
-    const match = proxyString.match(/PROXY\s+([^;]+)/)
-    return match ? `http://${match[1]}` : null
-  }
-  return null
-}
 export interface McpImConfigPayload {
   enableIM?: boolean
   larkAppId?: string
@@ -41,6 +30,15 @@ export interface McpImConfigPayload {
   larkAllowedChatIds?: string
   tgBotToken?: string
   tgAllowedChatIds?: string
+  slackBotToken?: string
+  slackSigningSecret?: string
+  slackAppToken?: string
+  slackAllowedUserIds?: string
+  slackAllowedChannelIds?: string
+  discordBotToken?: string
+  discordAllowedUserIds?: string
+  discordAllowedChannelIds?: string
+  discordAllowedGuildIds?: string
 }
 
 export const mcpManager = new (class McpManager {
@@ -64,9 +62,6 @@ export const mcpManager = new (class McpManager {
     catch (error) {
       console.error('agentUpdaterPromise wait error:', error)
     }
-
-    // 在 fork 之前调用这个函数获取动态端口
-    // const proxyHost = await getSystemProxy()
 
     // 主动触发一次更新检查，确保本地 agent 脚本与 sha512 期望值就绪
     try {
@@ -98,6 +93,13 @@ export const mcpManager = new (class McpManager {
           larkAllowedChatIds: data.lark_allowed_chat_ids,
           tgBotToken: data.tg_bot_token,
           tgAllowedChatIds: data.tg_allowed_chat_ids,
+          slackBotToken: data.slack_bot_token,
+          slackSigningSecret: data.slack_signing_secret,
+          slackAppToken: data.slack_app_token,
+          slackAllowedUserIds: data.slack_allowed_user_ids,
+          slackAllowedChannelIds: data.slack_allowed_channel_ids,
+          discordBotToken: data.discord_bot_token,
+          discordAllowedUserIds: data.discord_allowed_user_ids,
         }
         console.log('RoxyClaw config loaded from backend:', imConfigPayload)
       }
@@ -122,68 +124,72 @@ export const mcpManager = new (class McpManager {
     // 开发时让 agent 能解析到 packages/roxy-agent/words（敏感词库）
     const ROXY_AGENT_PACKAGE_ROOT = isDevelopment ? path.resolve(import.meta.dirname, '..', '..', '..', 'packages', 'roxy-agent') : undefined
 
-    const CHECKPOINT_DIR = path.join(agentUpdater.agentDir, 'checkpoints')
-
+    // 获取系统下载目录，提供给 agent 作为默认下载路径
     const DOWNLOADS_DIR = app.getPath('downloads')
 
-    await fs.mkdir(CHECKPOINT_DIR, { recursive: true })
+    const CHECKPOINT_DIR = path.join(agentUpdater.agentDir, 'checkpoints')
+
     // 提供流式输出的服务需要的端口
     const port = await getPortPromise({ port: this.config.port })
 
-    // 启动前校验：阻止使用被篡改的本地脚本（尤其是从云端下载落地的 mjs）
-    // if (!isDevelopment) {
-    //   const has512 = await agentUpdater.getHas512()
-    //   const expectedAgentSha512 = has512.agentEntrySha512
-    //   const expectedOpenapiSha512 = has512.openapiEntrySha512
-    //   const expectedPlaywrightSha512 = has512.playwrightEntrySha512
-
-    //   const localAgentSha512 = await calculateFileHash(AGENT_ENTRY_SCRIPT)
-    //   const localOpenapiSha512 = await calculateFileHash(OPENAPI_SCRIPT_PATH)
-    //   const localPlaywrightSha512 = await calculateFileHash(PLAYWRIGHT_SCRIPT_PATH)
-
-    //   if (localAgentSha512 !== expectedAgentSha512) {
-    //     console.log('local sha512', localAgentSha512, 'remote sha512', expectedAgentSha512)
-    //     throw new Error('[mcp] agent script sha512 mismatch')
-    //   }
-    //   if (localOpenapiSha512 !== expectedOpenapiSha512) {
-    //     console.log('local sha512', localOpenapiSha512, 'remote sha512', expectedOpenapiSha512)
-    //     throw new Error('[mcp] openapi script sha512 mismatch')
-    //   }
-    //   if (localPlaywrightSha512 !== expectedPlaywrightSha512) {
-    //     console.log('local sha512', localPlaywrightSha512, 'remote sha512', expectedPlaywrightSha512)
-    //     throw new Error('[mcp] playwright script sha512 mismatch')
-    //   }
-    // }
+    // 启动前校验：验证本地脚本与远端 sha512 是否匹配，不匹配则自动重新下载
+    if (!isDevelopment) {
+      try {
+        const corrupted = await agentUpdater.checkScriptIntegrity()
+        if (corrupted.length > 0) {
+          console.warn('[mcp] 检测到脚本异常，开始自动修复:', corrupted)
+          await agentUpdater.repairScripts(corrupted)
+          // 修复后再次校验，确保下载后的文件也正常
+          const stillCorrupted = await agentUpdater.checkScriptIntegrity()
+          if (stillCorrupted.length > 0) {
+            console.error('[mcp] 脚本修复后仍校验失败:', stillCorrupted)
+            throw createMcpError('script_repair_failed')
+          }
+        }
+      }
+      catch (error) {
+        // 已抛出的业务错误直接抛出，其余错误记录日志但不阻断启动
+        if (error instanceof Error && error.name === 'McpError') {
+          throw error
+        }
+        console.error('[mcp] 脚本完整性校验异常:', getErrorMessage(error))
+      }
+    }
 
     const env = {
       ...process.env,
-      // ...globalThis.__roxy_agent_proxy_env,
-      // HTTP_PROXY: globalThis.__roxy_agent_proxy_env.HTTP_PROXY || proxyHost,
-      // HTTPS_PROXY: globalThis.__roxy_agent_proxy_env.HTTPS_PROXY || proxyHost,
-      ...(ROXY_AGENT_PACKAGE_ROOT ? { ROXY_AGENT_PACKAGE_ROOT } : {}),
       LLM_PROVIDER: llmInfo.data.provider,
       LLM_MODEL: llmInfo.data.model,
       LLM_API_KEY: llmInfo.data.apikey,
       LLM_BASE_URL: llmInfo.data.baseUrl,
       LLM_BALANCE: llmInfo.data.balance,
+
+      // openapi 和 playwright mcp 执行脚本路径，已经相关参数。
       OPENAPI_SCRIPT_PATH,
       ROXY_API_KEY: store.apiKey,
       ROXY_API_HOST: `http://127.0.0.1:${store.apiPort}`,
       PLAYWRIGHT_SCRIPT_PATH,
+
       CHECKPOINT_DIR,
+
+      // agent 的工作目录
+      ROXY_AGENT_PACKAGE_ROOT,
 
       ROXY_SERVER_PORT: String(port),
       ROXY_USER_ID: String(store.userId),
       ROXY_WORKSPACE_ID: String(store.workspaceId),
 
+      // 语言
       SYSTEM_LANGUAGE: store.language,
+
       // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
       DEVELOPMENT: isDevelopment ? 'true' : 'false',
+
       DOWNLOADS_DIR,
       SKILLS_DIR: agentUpdater.agentDir,
-      ...(agentUpdater.agentEntrySha512 && !isDevelopment ? { AGENT_ENTRY_SCRIPT_SHA512: agentUpdater.agentEntrySha512 } : {}),
-      ...(agentUpdater.openapiEntrySha512 && !isDevelopment ? { OPENAPI_SCRIPT_SHA512: agentUpdater.openapiEntrySha512 } : {}),
-      ...(agentUpdater.playwrightEntrySha512 && !isDevelopment ? { PLAYWRIGHT_SCRIPT_SHA512: agentUpdater.playwrightEntrySha512 } : {}),
+
+      // 启动模式：启用 IM 时以 im 模式运行，否则以 agent 模式运行（两者互斥，只有一个进程）
+      ROXY_MODE: imConfigPayload?.enableIM ? 'im' : 'agent',
 
       ENABLE_IM: imConfigPayload?.enableIM,
       FEISHU_APP_ID: imConfigPayload?.larkAppId,
@@ -192,6 +198,14 @@ export const mcpManager = new (class McpManager {
       FEISHU_ALLOWED_USER_IDS: imConfigPayload?.larkAllowedChatIds,
       TELEGRAM_BOT_TOKEN: imConfigPayload?.tgBotToken,
       TELEGRAM_ALLOWED_CHAT_IDS: imConfigPayload?.tgAllowedChatIds,
+      SLACK_BOT_TOKEN: imConfigPayload?.slackBotToken,
+      SLACK_SIGNING_SECRET: imConfigPayload?.slackSigningSecret,
+      SLACK_APP_TOKEN: imConfigPayload?.slackAppToken,
+      SLACK_ALLOWED_USER_IDS: imConfigPayload?.slackAllowedUserIds,
+      SLACK_ALLOWED_CHANNEL_IDS: imConfigPayload?.slackAllowedChannelIds,
+      DISCORD_BOT_TOKEN: imConfigPayload?.discordBotToken,
+      DISCORD_ALLOWED_USER_IDS: imConfigPayload?.discordAllowedUserIds,
+      ROXY_DOCS_MCP_URL: import.meta.env.VITE_ROXY_DOCS_MCP_URL,
     }
 
     // 清理和验证环境变量 - 只保留有效的值
@@ -215,6 +229,12 @@ export const mcpManager = new (class McpManager {
 
     this.config.port = port
     this.mcpWorker = worker
+
+    // 无论开发/生产环境，worker 退出时都要清空引用，确保下次能重新启动
+    worker.once('exit', (code: number) => {
+      console.log(`[MCP Worker Exit] code=${code}`)
+      this.mcpWorker = null
+    })
 
     if (isDevelopment) {
       this.attachMcpWorkerDiagnostics(worker, AGENT_ENTRY_SCRIPT)
@@ -278,7 +298,7 @@ export const mcpManager = new (class McpManager {
       else {
         console.log('[MCP Worker Exit]', { code, script: agentEntryScript })
       }
-      this.mcpWorker = null
+      // mcpWorker 已由外层 once('exit') 清空，这里仅做日志
     })
   }
 
@@ -377,11 +397,10 @@ export async function createMcpWindow() {
   const win = createWindow({
     roxyWindowId: ROXY_MCP_WINDOW_ID,
     autoHideMenuBar: true,
-    width: 460,
-    height: 820,
-    maxWidth: 640,
-    minWidth: 375,
-    minHeight: 760,
+    width: 960,
+    height: 624,
+    minWidth: 960,
+    minHeight: 624,
     // resizable: false,
     // frame: false,
     // alwaysOnTop: false,

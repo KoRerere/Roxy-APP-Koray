@@ -98,6 +98,9 @@ async function onConfirm() {
             </i18n-t>
           </div>
         </div>
+        <div v-if="chooseType" class="tt-secondary text-3.25 leading-4.5">
+          {{ $t('本次发放的 IP 为限时体验资源，稳定性与网络质量为基础标准。如需长期、高质量的代理 IP，推荐您前往「代理 IP 商店」选购。') }}
+        </div>
       </div>
     </motion.div>
 

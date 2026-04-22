@@ -33,7 +33,7 @@ const columns = [
     slot: 'remark',
   },
   {
-    title: $t('投送时间'),
+    title: $t('转移时间'),
     key: 'createTime',
   }
 ]
@@ -46,7 +46,7 @@ function tableRequest(params: any) {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 w-240">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('投送详情') }}</span>
+      <span class="header">{{ $t('转移详情') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
     <div class="h-120">

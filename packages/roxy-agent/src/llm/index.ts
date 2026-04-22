@@ -1,7 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { env } from '../config'
 import { ChatGPT, Claude, DeepSeek, Gemini, Kimi, Qwen, SiliconFlowDeepSeek } from './model'
-import { providerBaseURL } from './provider'
 
 /**
  * 创建 LLM
@@ -10,9 +9,9 @@ import { providerBaseURL } from './provider'
  */
 export function createLLM(enableThinking = false) {
   const provider = env.LLM_PROVIDER
-  const baseURL = providerBaseURL[provider as keyof typeof providerBaseURL]
-  const apiKey = env.LLM_API_KEY
-  const model = env.LLM_MODEL.toLowerCase()
+  const baseURL = env.LLM_BASE_URL
+  const apiKey = env.ROXY_API_KEY
+  const model = env.LLM_MODEL
 
   if (provider === 'siliconflow' && model.includes('deepseek')) {
     const config = {
@@ -97,6 +96,7 @@ export function createLLM(enableThinking = false) {
       streaming: true,
       temperature: 0.7,
     }
+
     return new ChatGPT(config)
   }
   else if (model.includes('kimi')) {

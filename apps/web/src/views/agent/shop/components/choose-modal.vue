@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import ProviderList from '/@/views/agent/shop/components/provider-list.vue'
-import ProviderDetail from '/@/views/agent/shop/components/provider-detail.vue'
+import ProviderList from './provider-list.vue'
 import { useThemeStore } from '/@/stores/theme'
 import { useUserStore } from '/@/stores/user'
-import type { BuyEntryType } from '/@/enums/proxy'
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const { provider, focusProviderName } = defineProps<{
-  entryType?: BuyEntryType
-  provider?: Record<string, any>
-  focusProviderName?: string
-}>()
-
 defineEmits(['close', 'success'])
 
 const { mixpanelTrack } = useUserStore()
 const themeStore = useThemeStore()
-const currentProvider = ref(provider)
 
 const bgSrc = computed(() => {
   return themeStore.realTheme === 'light' ? 'url("/images/proxy/shop_dialog_bg.svg")' : 'url("/images/proxy/shop_dialog_bg_dark.svg")'
@@ -32,8 +23,7 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col rounded-lg popup">
-    <ProviderList v-show="!currentProvider" v-model="currentProvider" :focus-provider-name="focusProviderName" @close="$emit('close')" @success="$emit('success', $event)" />
-    <ProviderDetail v-if="currentProvider" :data="currentProvider" :entry-type="entryType" @back="currentProvider = undefined" @close="$emit('close')" @success="$emit('success', $event)" />
+    <ProviderList v-bind="$attrs" @close="$emit('close')" @success="$emit('success', $event)" />
   </div>
 </template>
 

@@ -1,8 +1,8 @@
 import type { ContentBlock } from './attachments.js'
 import { HumanMessage } from '@langchain/core/messages'
-import { TokenUsageChange } from '../../agent/utils/usageAggregator.js'
 import { createAgent, deleteCheckpoint } from '../../deepagents/index.js'
 import { mcpManager } from '../../mcpManager.js'
+import { ThreadManager } from './threadManager.js'
 
 export type { ContentBlock }
 
@@ -17,7 +17,6 @@ export interface BridgeConfig {
 
 interface SessionState {
   conversationId: string
-  threadId: string
   lastActivity: number
   isProcessing: boolean
 }
@@ -25,22 +24,25 @@ interface SessionState {
 export class IMBridge {
   private static readonly WORKER_ID = 'im-single-worker'
 
+  private readonly imName: string
   private config: Required<BridgeConfig>
   private sessions: Map<string, SessionState> = new Map()
+  private threadManager: ThreadManager
 
-  constructor(config: BridgeConfig = {}) {
+  constructor(imName: string, config: BridgeConfig = {}) {
+    this.imName = imName
     this.config = {
       maxHistory: 20,
       ...config,
     }
+    this.threadManager = ThreadManager.getInstance()
   }
 
   private getSession(channelId: string): SessionState {
     let session = this.sessions.get(channelId)
     if (!session) {
       session = {
-        conversationId: `im-conversation-${channelId}`,
-        threadId: `im-thread-${channelId}`,
+        conversationId: this.imName,
         lastActivity: Date.now(),
         isProcessing: false,
       }
@@ -55,6 +57,7 @@ export class IMBridge {
     onChunk?: (text: string) => Promise<void>,
   ): Promise<string> {
     const session = this.getSession(channelId)
+    const threadId = this.threadManager.getThreadId(this.imName, channelId)
 
     if (session.isProcessing) {
       return '⚠️ 上一条消息还在处理中，请稍候...'
@@ -67,8 +70,8 @@ export class IMBridge {
 
     try {
       // 单 worker 模式：固定 worker id
-      await mcpManager.createMcpClient(IMBridge.WORKER_ID)
-      const simpleTools = mcpManager.getToolsForWorker(IMBridge.WORKER_ID)
+      await mcpManager.createPlaywrightClientForWorker(IMBridge.WORKER_ID)
+      const simpleTools = await mcpManager.getToolsForWorker(IMBridge.WORKER_ID)
 
       // 创建 agent
       const agent = await createAgent({
@@ -89,10 +92,9 @@ export class IMBridge {
 
       const stream = await agent.stream(input, {
         configurable: {
-          thread_id: session.threadId,
+          thread_id: threadId,
         },
         streamMode: ['messages'],
-        callbacks: [new TokenUsageChange(session.threadId)],
       } as any)
 
       for await (const rawChunk of stream as any) {
@@ -125,11 +127,11 @@ export class IMBridge {
         }
       }
 
-      await mcpManager.destroyWorkerClient(IMBridge.WORKER_ID)
+      await mcpManager.destroyPlaywrightClientForWorker(IMBridge.WORKER_ID)
       return fullText
     }
     catch (err) {
-      await mcpManager.destroyWorkerClient(IMBridge.WORKER_ID).catch(() => {})
+      await mcpManager.destroyPlaywrightClientForWorker(IMBridge.WORKER_ID).catch(() => {})
       throw err
     }
     finally {
@@ -139,9 +141,14 @@ export class IMBridge {
 
   async clearSession(channelId: string): Promise<void> {
     const session = this.getSession(channelId)
-    await deleteCheckpoint(session.conversationId)
+    const oldThreadId = this.threadManager.getThreadId(this.imName, channelId)
+    const newThreadId = this.threadManager.regenerateThreadId(this.imName, channelId)
+
+    // 注意：不删除整个 checkpoint 数据库，因为多个 channel 共享同一个 conversationId（IM名称）
+    // 只需要生成新的 threadId 即可实现会话隔离
+
     session.lastActivity = Date.now()
-    console.log(`[IMBridge] Cleared session for channel: ${channelId}`)
+    console.log(`[IMBridge] Cleared session for channel: ${channelId}, oldThread: ${oldThreadId}, newThread: ${newThreadId}`)
   }
 
   getSessionLength(channelId: string): number {

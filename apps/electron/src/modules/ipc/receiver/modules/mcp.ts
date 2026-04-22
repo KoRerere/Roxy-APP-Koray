@@ -1,7 +1,18 @@
+import type { McpFailureType } from '@roxy/electron-preload'
 import type { IPCMainInstance } from '/@/modules/ipc/types'
-import { globalShortcut } from 'electron'
+import { globalShortcut, net } from 'electron'
 import { closeMcpWindow, createMcpWindow, mcpManager } from '/@/modules/mcp'
+import { isMcpError } from '/@/modules/mcp/errors'
 import { mcpRuntimeState } from '/@/modules/mcp/state'
+
+/** MCP IPC 响应结构 */
+interface McpResponse<T = any> {
+  success: boolean
+  data?: T
+  type?: McpFailureType
+  message?: string
+  details?: Record<string, any>
+}
 
 export function closeSyncControl() {
   globalShortcut.unregisterAll()
@@ -19,17 +30,38 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 打开mcp */
-  ipcMain.on('mcp:open', async (_event) => {
+  ipcMain.on('mcp:open', async (_event): Promise<McpResponse> => {
     console.log('Opening MCP')
 
     // 检查 RoxyClaw 是否正在运行
     if (mcpRuntimeState.getRoxyClawEnabled()) {
-      throw new Error('RoxyClaw is already running. Please stop RoxyClaw first.')
+      return {
+        success: false,
+        type: 'roxyclaw_already_running',
+      }
     }
 
-    await mcpManager.startMcpServer()
-    await createMcpWindow()
-    mcpRuntimeState.setMcpWindowOpen(true)
+    try {
+      await mcpManager.startMcpServer()
+      await createMcpWindow()
+      mcpRuntimeState.setMcpWindowOpen(true)
+      return { success: true }
+    }
+    catch (error) {
+      if (isMcpError(error)) {
+        return {
+          success: false,
+          type: error.type,
+          message: error.message,
+          details: error.details,
+        }
+      }
+      return {
+        success: false,
+        type: 'unknown_error',
+        message: error instanceof Error ? error.message : String(error),
+      }
+    }
   })
 
   /** 获取mcp配置 */
@@ -45,22 +77,37 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 启动 RoxyClaw */
-  ipcMain.on('mcp:startRoxyClaw', async (_event) => {
+  ipcMain.on('mcp:startRoxyClaw', async (_event): Promise<McpResponse<{ message: string }>> => {
     try {
       console.log('Starting RoxyClaw...')
 
       // 检查 MCP 窗口是否正在运行
       if (mcpRuntimeState.getMcpWindowOpen()) {
-        throw new Error('MCP window is already open. Please close MCP window first.')
+        return {
+          success: false,
+          type: 'mcp_window_already_open',
+        }
       }
 
       await mcpManager.startMcpServer()
       mcpRuntimeState.setRoxyClawEnabled(true)
-      return { success: true, message: 'RoxyClaw started successfully' }
+      return { success: true, data: { message: 'RoxyClaw started successfully' } }
     }
     catch (error) {
       console.error('Failed to start RoxyClaw:', error)
-      return { success: false, message: error instanceof Error ? error.message : 'Failed to start RoxyClaw' }
+      if (isMcpError(error)) {
+        return {
+          success: false,
+          type: error.type,
+          message: error.message,
+          details: error.details,
+        }
+      }
+      return {
+        success: false,
+        type: 'unknown_error',
+        message: error instanceof Error ? error.message : 'Failed to start RoxyClaw',
+      }
     }
   })
 
@@ -83,6 +130,100 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
     return {
       enabled: mcpRuntimeState.getRoxyClawEnabled(),
       connected: mcpManager.isWorkerConnected(),
+    }
+  })
+
+  /** 测试 Telegram 连接 */
+  ipcMain.on('mcp:testTelegram', async (_event, token: string) => {
+    try {
+      const response = await net.fetch(`https://api.telegram.org/bot${token}/getMe`)
+      const data: any = await response.json()
+
+      if (data.ok && data.result && data.result.is_bot) {
+        return { success: true, message: 'Telegram bot token 有效' }
+      }
+
+      return { success: false, message: 'Telegram bot token 无效' }
+    }
+    catch (error) {
+      console.error('Telegram test failed:', error)
+      return { success: false, message: '网络错误' }
+    }
+  })
+
+  /** 测试 Lark 连接 */
+  ipcMain.on('mcp:testLark', async (_event, appId: string, appSecret: string, environment: 'lark' | 'feishu') => {
+    try {
+      const domain = environment === 'lark' ? 'open.larksuite.com' : 'open.feishu.cn'
+      const response = await net.fetch(`https://${domain}/open-apis/auth/v3/tenant_access_token/internal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          app_id: appId,
+          app_secret: appSecret,
+        }),
+      })
+
+      const data: any = await response.json()
+
+      if (data.code === 0 && data.tenant_access_token) {
+        return { success: true, message: 'Lark / 飞书 app credentials 有效!' }
+      }
+
+      return { success: false, message: 'app credentials 无效' }
+    }
+    catch (error) {
+      console.error('Lark test failed:', error)
+      return { success: false, message: '网络错误' }
+    }
+  })
+
+  /** 测试 Slack 连接 */
+  ipcMain.on('mcp:testSlack', async (_event, botToken: string) => {
+    try {
+      const response = await net.fetch('https://slack.com/api/auth.test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${botToken}`,
+        },
+      })
+
+      const data: any = await response.json()
+
+      if (data.ok) {
+        return { success: true, message: 'Slack bot token 有效!' }
+      }
+
+      return { success: false, message: data.error || 'Slack bot token 无效' }
+    }
+    catch (error) {
+      console.error('Slack test failed:', error)
+      return { success: false, message: '网络错误' }
+    }
+  })
+
+  /** 测试 Discord 连接 */
+  ipcMain.on('mcp:testDiscord', async (_event, botToken: string) => {
+    try {
+      const response = await net.fetch('https://discord.com/api/v10/users/@me', {
+        headers: {
+          'Authorization': `Bot ${botToken}`,
+        },
+      })
+
+      if (response.ok) {
+        return { success: true, message: 'Discord bot token 有效!' }
+      }
+
+      const data: any = await response.json().catch(() => null)
+      return { success: false, message: data?.message || 'Discord bot token 无效' }
+    }
+    catch (error) {
+      console.error('Discord test failed:', error)
+      return { success: false, message: '网络错误' }
     }
   })
 }

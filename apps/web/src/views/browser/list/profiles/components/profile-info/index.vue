@@ -1,30 +1,22 @@
-<script lang="tsx" setup>
+<script lang="ts" setup>
 import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
 import ProxyTooltip from './proxy-tooltip.vue'
 import AccountTooltip from './account-tooltip.vue'
-import RxButton from '/@/components/rx-button'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
-import ProxyQuick from '/@/views/agent/quick.vue'
-import AccountCreate from '/@/views/account/create/quick.vue'
-import AccountEdit from '/@/views/account/create/batch-edit.vue'
-import AccountList from '/@/views/account/list/quick.vue'
 import CanvasLine from './canvas-line.vue'
-import { RxSvgIcon } from '/@/components/rx-icon'
-import { useRoleStore } from '/@/stores/role'
-import { formatProxyTime, isLikeFunction, strConcat } from '/@/utils'
+import Earth from './earth.vue'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
-
-import { API } from '/@/api'
-import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
-import { silentUpdateAccount, silentUpdateProxy } from '../util'
 import { useProfileProxy } from '../../hooks/useProfileProxy'
 import { usePermission } from '/@/hooks/usePermission'
+import { useProfileInfoAccountMenu } from './useProfileInfoAccountMenu'
+import { useProfileInfoList } from './useProfileInfoList'
+import { useProfileInfoMutations } from './useProfileInfoMutations'
+import { useProfileInfoProxyMenu } from './useProfileInfoProxyMenu'
 
-interface Props {
+interface ProfileInfoProps {
   workspaceName?: string
   data: Record<string, any>
   openMessage?: Record<string, any>
@@ -34,29 +26,25 @@ interface Props {
   filterKeys?: string[]
 }
 
-const {
-  workspaceName,
-  data,
-  openMessage,
-  showSort = true,
-  disabled = false,
-  readonly = false,
-  filterKeys = ['os', 'proxy', 'account'],
-} = defineProps<Props>()
+const props = withDefaults(defineProps<ProfileInfoProps>(), {
+  showSort: true,
+  disabled: false,
+  readonly: false,
+  filterKeys: () => ['os', 'proxy', 'account'],
+})
 
 const emits = defineEmits(['refresh'])
 
-const OS_ICON: any = {
-  windows: 'platforms/rx_os_windows',
-  linux: 'platforms/rx_os_linux',
-  macos: 'platforms/rx_os_macOS',
-  ios: 'platforms/rx_os_iOS',
-  android: 'platforms/rx_os_android',
-}
+const {
+  workspaceName,
+  data,
+  showSort,
+  disabled,
+  readonly,
+} = props
 
 const router = useRouter()
 const drawerInstance = useDrawer()
-const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -67,61 +55,61 @@ const { check } = usePermission()
 
 const proxyCss = useCssModule('proxy')
 const proxyProvider = ref()
-const hasProxy = computed(() => data.proxyCategory !== 'noproxy')
-const isOpenBrowser = computed(() => openMessage?.[data.dirId]?.data?.percent === 100)
 
-const list = computed(() => {
-  const proxyClass = hasProxy.value ? '' : data.lastIp ? 'direct-info' : 'direct'
-  const windowPlatformList = data.windowPlatformList || []
-  return [
-    {
-      key: 'os',
-      svg: OS_ICON[(data.os as string).toLocaleLowerCase()],
-      tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', {
-        os: data.os === 'IOS' ? 'iOS' : data.os,
-        osVersion: data.osVersion,
-        coreVersion: data.coreVersion,
-      }),
-    },
-    {
-      key: 'proxy',
-      classes: proxyClass,
-      svg: hasProxy.value ? `country-code/${data.lastCountry}` : data.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
-      svgColor: 'var(--colors-icon-icon-tertiary)',
-      data: {
-        hasProxy: hasProxy.value,
-        // 最近一次检测的代理 IP 信息
-        lastCountry: data.lastCountry || '--',
-        lastCity: strConcat('/', data.lastCity) || '',
-        lastIp: data.lastIp || '--',
-        checkTime: data.checkTime ? formatProxyTime(data.checkTime) : '--',
-        // 上一次检测的代理 IP 信息
-        beforeCountry: data.beforeProxyInfo?.beforeCountry || '--',
-        beforeCity: strConcat('/', data.beforeProxyInfo?.beforeCity) || '',
-        beforeIp: data.beforeProxyInfo?.beforeIp || '--',
-        beforeTime: data.beforeProxyInfo?.beforeTime ? formatProxyTime(data.beforeProxyInfo?.beforeTime) : '--',
-      },
-    },
-    {
-      key: 'account',
-      svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
-      svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary)' : 'var(--colors-icon-icon-secondary)',
-      showSub: windowPlatformList.length > 1,
-      platformAccount: windowPlatformList[0],
-      subPlatformAccount: windowPlatformList.length > 2 ? undefined : windowPlatformList[1],
-      data: windowPlatformList,
-    },
-  ].filter(item => filterKeys.includes(item.key))
+const { hasProxy, isOpenBrowser, list } = useProfileInfoList(
+  toRef(props, 'data'),
+  toRef(props, 'openMessage'),
+  toRef(props, 'filterKeys'),
+)
+
+const { updateProfile, setChooseProxy, createProxy, openProxyDrawer } = useProfileInfoMutations({
+  data: toRef(props, 'data'),
+  workspaceName: toRef(props, 'workspaceName'),
+  drawerInstance,
+  emit: emits,
+  onlyErrorToast,
 })
 
-function onClick(event: MouseEvent, key: string) {
+const { getProxyModel } = useProfileInfoProxyMenu({
+  data: toRef(props, 'data'),
+  hasProxy,
+  buildProxyData,
+  confirmDeleteProxy,
+  check,
+  router,
+  showToast: showToast as (code: number, ...rest: any[]) => void,
+  onlyErrorToast,
+  checkProxy,
+  batchTestShowToast,
+  buyProxy,
+  createProxy,
+  openProxyDrawer,
+  setChooseProxy,
+  saveLocalTrack,
+  proxyProvider,
+  proxyCss,
+})
+
+const { getAccountModel } = useProfileInfoAccountMenu({
+  data: toRef(props, 'data'),
+  workspaceName: toRef(props, 'workspaceName'),
+  drawerInstance,
+  onlyErrorToast,
+  check,
+  updateProfile,
+  saveLocalTrack,
+})
+
+const isCheckingProxy = computed(() => data.loadingOperationMap?.checkProxy)
+
+function openMenus(event: MouseEvent, key: string) {
   if (disabled || readonly)
     return
 
   switch (key) {
     case 'proxy': {
       const model = getProxyModel()
-      if (model.every(item => !item.visible))
+      if (model.every(item => !item.visible) || isCheckingProxy.value)
         return
       showPopupMenu(event, { model })
       break
@@ -135,380 +123,29 @@ function onClick(event: MouseEvent, key: string) {
     }
   }
 }
-
-function getProxyModel() {
-  const proxyData = buildProxyData(data)
-
-  return [
-    {
-      name: 'addProxy',
-      label: $t('添加代理 IP'),
-      icon: 'base/rx_ic_plus',
-      visible: !hasProxy.value && check('Profiles_add_proxy_outside'),
-      command: () => {
-        createProxy()
-      },
-    },
-    {
-      name: 'chooseProxy',
-      label: $t('选择已有代理 IP'),
-      icon: 'base/rx_ic_exchange',
-      visible: !hasProxy.value && check('Profiles_select_proxy'),
-      command: () => {
-        openProxyDrawer(proxyData)
-      },
-    },
-    {
-      name: 'testProxy',
-      label: $t('测试代理 IP'),
-      icon: 'base/rx_ic_speed_test',
-      visible: hasProxy.value && check('Profiles_speed_test_proxy'),
-      command: async () => {
-        if (!globalThis.isElectron) {
-          return globalThis.electronAPI.send('proxy:detect', {} as any)
-        }
-
-        const checkRes = await checkProxy(toRaw(data))
-        batchTestShowToast(checkRes)
-        if (data.moduleId && data.buyProxyType === ProxyType.resource) {
-          API.proxy.userMdfProxyModuleCreate({
-            proxyList: [{ id: data.moduleId, ...checkRes }] as any,
-            requestType: ProfileReqType.SpeedTest,
-          })
-        }
-        if (checkRes.checkStatus === ProxyCheckStatus.success) {
-          updateProfile({ id: data.id, dirId: data.dirId, ...checkRes, requestType: ProfileReqType.SpeedTest }, {
-            success: () => silentUpdateProxy(data, checkRes),
-          })
-        }
-      },
-    },
-    {
-      name: 'refreshProxy',
-      label: $t('刷新代理 IP'),
-      icon: 'base/rx_ic_refresh',
-      visible: hasProxy.value && check('Profiles_refresh_url'),
-      disabled: !data.refreshUrl,
-      command: async () => {
-        const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
-        showToast(isOK ? 0 : -1, data.refreshUrl)
-      },
-    },
-    {
-      visible: hasProxy.value && check('Profiles_edit_proxy_outside'),
-      separator: true,
-    },
-    {
-      name: 'editProxy',
-      label: $t('编辑代理 IP'),
-      icon: 'base/rx_ic_edit',
-      visible: data.buyProxyType === ProxyType.resource && hasProxy.value && check('Profiles_edit_proxy_outside'),
-      command: () => {
-        if (data.isEncryptProxy) {
-          showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
-          return
-        }
-        createProxy(proxyData)
-      },
-    },
-    {
-      name: 'chooseProxy',
-      label: $t('选择已有代理 IP'),
-      icon: 'base/rx_ic_exchange',
-      visible: hasProxy.value && check('Profiles_select_proxy'),
-      command: () => {
-        openProxyDrawer(proxyData)
-      },
-    },
-    {
-      visible: role.isOwner,
-      separator: true,
-    },
-    {
-      name: 'buyProxy',
-      label: $t('购买代理 IP'),
-      icon: 'base/rx_ic_cart',
-      visible: check('Profiles_buy_proxy'),
-      command: async () => {
-        if (!proxyProvider.value) {
-          const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
-          onlyErrorToast(code, msg)
-          if (code !== 0)
-            return
-          proxyProvider.value = data.find((item: any) => item.proxyProviderName === 'RoxyBrowser')
-        }
-
-        const provider = {
-          proxyProviderWebsite: proxyProvider.value.proxyProviderWebsite,
-          proxyTypeList: proxyProvider.value.proxyTypeList,
-          proxyProviderIcon: proxyProvider.value.proxyProviderIcon,
-          proxyProviderName: proxyProvider.value.proxyProviderName,
-        }
-
-        try {
-          const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
-
-          if (!orderInfo?.immediate) {
-            router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
-            return
-          }
-
-          showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
-
-          const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
-          if (code !== 0 || !data.rows?.[0]) {
-            return
-          }
-
-          setChooseProxy(data.rows[0])
-        }
-        catch (error) { }
-      },
-      render: (props: any) => {
-        return (
-          <RxButton class="!w-full !justify-start" severity="secondary" text pt={props['btn-pt']}>
-            {{
-              default: () => (
-                <div class="flex items-center gap-2">
-                  <RxSvgIcon name={props.item.icon} color="var(--colors-icon-icon-secondary)"></RxSvgIcon>
-                  <span class="p-button-label">{props.item.label}</span>
-                  <div class={`${proxyCss.dot}`}></div>
-                </div>
-              ),
-            }}
-          </RxButton>
-        )
-      },
-    },
-    {
-      visible: hasProxy.value && check('Profiles_delete_proxy_outside'),
-      separator: true,
-    },
-    {
-      name: 'deleteProxy',
-      label: $t('删除代理 IP'),
-      icon: 'base/rx_ic_bin_1',
-      visible: hasProxy.value && check('Profiles_delete_proxy_outside'),
-      command: () => {
-        confirmDeleteProxy(data)
-      },
-    },
-  ].map((item) => {
-    if (typeof item.command === 'function') {
-      const original = item.command
-
-      item.command = async () => {
-        saveLocalTrack(item.name)
-        return original()
-      }
-    }
-
-    return item
-  })
-}
-
-function getAccountModel() {
-  return [
-    {
-      name: 'editPlatformAccount',
-      label: $t('编辑账号'),
-      icon: 'base/rx_ic_edit',
-      visible: check('Profiles_edit_platform_outside') && data.windowPlatformList.length > 0,
-      command: () => {
-        drawerInstance.showDrawer({
-          title: $t('为[{workspaceName}-{uid}]编辑平台账号', { workspaceName, uid: data.windowSortNum }),
-          dismissable: false,
-          slots: {
-            container: () => h(AccountEdit, {
-              datas: data.windowPlatformList,
-              onConfirm: async ({ platformUrlIds, windowPlatformList }: any) => {
-                const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
-                  type: ProfileModifyType.PlatformEdit,
-                  requestType: ProfileReqType.EditPlatform,
-                  ids: [data.id],
-                  paramList: {
-                    platformUrlIds,
-                    windowPlatformList,
-                  },
-                })
-                drawerInstance.hideDrawer()
-                onlyErrorToast(code, msg)
-                if (code === 0) {
-                  silentUpdateAccount(data, windowPlatformList)
-                }
-              },
-            }),
-          },
-        })
-      },
-    },
-    {
-      separator: true,
-      visible: check('Profiles_add_platform_outside') && data.windowPlatformList.length > 0,
-    },
-    {
-      name: 'addPlatformAccount',
-      label: $t('添加账号'),
-      icon: 'base/rx_ic_plus',
-      visible: check('Profiles_add_platform_outside'),
-      command: () => {
-        drawerInstance.showDrawer({
-          title: $t('为[{workspaceName}-{uid}]添加平台账号', { workspaceName, uid: data.windowSortNum }),
-          dismissable: false,
-          slots: {
-            container: () => h(AccountCreate, {
-              showRemark: false,
-              showCreateMore: false,
-              onClose: () => {
-                drawerInstance.hideDrawer()
-              },
-              onConfirm: async (formData: any) => {
-                const { id, dirId, windowPlatformList } = data
-                const _windowPlatformList = windowPlatformList.concat({
-                  ...formData,
-                  _tempId: Date.now().toString(32),
-                })
-                await updateProfile({ id, dirId, windowPlatformList: _windowPlatformList, requestType: ProfileReqType.AddPlatform }, {
-                  success: () => {
-                    silentUpdateAccount(data, _windowPlatformList)
-                  },
-                })
-              },
-            }),
-          },
-        })
-      },
-    },
-    {
-      name: 'choosePlatformAccount',
-      label: $t('选择账号'),
-      icon: 'base/rx_ic_exchange',
-      visible: check('Profiles_select_platform'),
-      command: () => {
-        drawerInstance.showDrawer({
-          title: $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName, uid: data.windowSortNum }),
-          dismissable: false,
-          slots: {
-            container: () => h(AccountList, {
-              data,
-              onConfirm: async (dataList: any[]) => {
-                drawerInstance.hideDrawer()
-                const { id, dirId, windowPlatformList } = data
-                const platformUrlIds = dataList.filter(item => item.id).map(item => item.id)
-                await updateProfile({ id, dirId, platformUrlIds, requestType: ProfileReqType.SelectPlatform }, {
-                  success: () => {
-                    const _windowPlatformList = windowPlatformList.filter((item: any) => !item.id).concat(dataList)
-                    silentUpdateAccount(data, _windowPlatformList)
-                  },
-                })
-              },
-            }),
-          },
-        })
-      },
-    },
-  ].map((item) => {
-    if (typeof item.command === 'function') {
-      const original = item.command
-
-      item.command = async () => {
-        saveLocalTrack(item.name)
-        return original()
-      }
-    }
-
-    return item
-  })
-}
-
-function createProxy(proxyData?: Record<string, any>) {
-  drawerInstance.showDrawer({
-    title: proxyData
-      ? $t('为[{workspaceName}-{uid}]编辑代理 IP', { workspaceName, uid: data.windowSortNum })
-      : $t('为[{workspaceName}-{uid}]添加代理 IP', { workspaceName, uid: data.windowSortNum }),
-    dismissable: false,
-    slots: {
-      container: () => h(ProxyCreate, {
-        data: proxyData,
-        onConfirm: (formData: any) => {
-          const { id, dirId } = data
-          const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: proxyData ? ProfileReqType.EditProxy : ProfileReqType.AddProxy }
-          updateProfile(params, {
-            success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo']),
-          })
-          drawerInstance.hideDrawer()
-        },
-      }),
-    },
-  })
-}
-
-function openProxyDrawer(proxyData: Record<string, any>) {
-  drawerInstance.showDrawer({
-    title: $t('为[{workspaceName}-{uid}]选择代理 IP', { workspaceName, uid: data.windowSortNum }),
-    dismissable: false,
-    slots: {
-      container: () => h(ProxyQuick, {
-        data: proxyData,
-        onConfirm: (formData: any) => {
-          setChooseProxy(formData)
-          drawerInstance.hideDrawer()
-        },
-      }),
-    },
-  })
-}
-
-function setChooseProxy(formData: any) {
-  const { id: moduleId, proxyCategory, protocol, proxyType, ...rest } = formData
-  const { id, dirId } = data
-  updateProfile({ id, dirId, moduleId, proxyMethod: 'choose', requestType: ProfileReqType.SelectProxy }, {
-    success: () => silentUpdateProxy(data, {
-      ...rest,
-      moduleId,
-      protocol,
-      proxyCategory: proxyCategory || protocol,
-      proxyMethod: 'choose',
-      buyProxyType: proxyType ?? ProxyType.resource,
-    }, ['isEncryptProxy', 'proxyEncryptInfo']),
-  })
-}
-
-async function updateProfile(params: any, options?: Record<string, any>) {
-  const { isRefresh, fallback, success } = { isRefresh: false, success: () => { }, fallback: () => { }, ...options }
-  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    isLikeFunction(success) && success()
-    if (isRefresh) {
-      emits('refresh')
-    }
-  }
-  else {
-    isLikeFunction(fallback) && fallback()
-  }
-}
 </script>
 
 <template>
-  <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
-    <div v-if="showSort">
-      <span class="profile-name">{{ workspaceName }}-</span>
-      <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
+  <div class="position-relative flex h-full items-center gap-3" :class="{ grayscale: disabled }">
+    <div v-if="showSort" class="font-[JetBrains_Mono] text-3 font-500 leading-4">
+      <span class="tt-tertiary">{{ workspaceName }}-</span>
+      <span class="tt-primary">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
-    <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }">
-      <div v-for="item in list" :key="item.key" class="relative" @click.stop="onClick($event, item.key)">
+    <div class="position-relative flex justify-between state" :class="{ 'w-34': list.length > 1 }">
+      <div v-for="item in list" :key="item.key" class="relative" @click.stop="openMenus($event, item.key)">
         <template v-if="item.key === 'os'">
           <div v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-            <RxSvgIcon class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+            <SvgIcon class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="(item.svg as any)" :color="item.svgColor" />
           </div>
         </template>
 
         <template v-else-if="item.key === 'proxy'">
           <RxTooltip>
             <template #default="{ hide }">
-              <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes" @click="hide">
-                <RxSvgIcon class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+              <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="[item.classes, { checking: isCheckingProxy }]" @click="hide">
+                <Earth v-if="isCheckingProxy" :size="16" color="var(--colors-icon-icon-inactive)" />
+                <SvgIcon v-else class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="(item.svg as any)" :color="item.checkedColor || item.svgColor" />
+                <div v-if="item.checkedColor" class="absolute -top-1 -right-1 w-2 h-2 rounded-full" :style="{ background: item.checkedColor }" />
               </div>
             </template>
             <template v-if="item.data?.lastIp !== '--'" #content>
@@ -525,13 +162,13 @@ async function updateProfile(params: any, options?: Record<string, any>) {
                   <PlatformIcon v-if="item.platformAccount?.platformIcon" :platform-icon="item.platformAccount.platformIcon" :platform-icon-dark="item.platformAccount.platformIconDark"
                                 class="block w-4 h-4 pointer-events-none"
                   />
-                  <RxSvgIcon v-else class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+                  <SvgIcon v-else class="w-4 h-4 pointer-events-none" fallback="base/rx_ic_earth" :name="(item.svg as any)" :color="item.svgColor" />
                 </div>
                 <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
                   <PlatformIcon v-if="item.subPlatformAccount?.platformIcon" :platform-icon="item.subPlatformAccount.platformIcon" :platform-icon-dark="item.subPlatformAccount.platformIconDark"
                                 class="block w-3 h-3 pointer-events-none"
                   />
-                  <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
+                  <SvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
                 </div>
               </div>
             </template>
@@ -559,31 +196,6 @@ async function updateProfile(params: any, options?: Record<string, any>) {
 </style>
 
 <style lang="scss" scoped>
-$box-shadow:
-  0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-  0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-
-.disabled-mask {
-  filter: grayscale(100%);
-}
-
-.profile {
-  gap: var(--spacing-xl, 12px);
-  color: var(--colors-text-text-primary, #fafafa);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
-
-  &-name {
-    color: var(--colors-text-text-tertiary, #575d60);
-    font-family: 'JetBrains Mono';
-  }
-
-  &-num {
-    font-family: 'JetBrains Mono';
-  }
-}
-
 .state {
   z-index: 0;
 
@@ -608,8 +220,14 @@ $box-shadow:
     border-radius: 4px;
     border: 0.5px solid var(--colors-border-border-action);
     background: var(--colors-background-bg-action);
-    box-shadow: $box-shadow;
+    box-shadow:
+      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
     transition: all 0.15s ease;
+
+    &.checking {
+      background: var(--colors-background-bg-action-inactive);
+    }
   }
 }
 
@@ -627,44 +245,5 @@ $box-shadow:
   &:hover {
     color: #7c8387;
   }
-}
-
-.edit-window-name-icon {
-  visibility: hidden;
-}
-
-:deep(.p-inplace-display) {
-  display: flex;
-  justify-content: center;
-  border: 0 none;
-  padding: 0;
-
-  &:focus-visible {
-    outline-color: transparent;
-  }
-}
-
-.profile-name-content {
-  width: 160px;
-  height: 26px;
-  padding: 4px 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border: 1px solid transparent;
-  border-radius: 4px;
-
-  &:hover {
-    border: 1px solid var(--pattern-profiles-input-border);
-    background: var(--pattern-profiles-input-bg);
-  }
-}
-
-.window-name-input {
-  font-size: 12px;
-  border-radius: 4px;
-  box-shadow: none !important;
-  line-height: 16px;
-  padding: 4px 8px;
-  width: 160px;
 }
 </style>

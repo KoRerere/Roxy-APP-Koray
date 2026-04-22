@@ -1,0 +1,14 @@
+{
+  "name": "RoxyBrowser",
+  "short_name": "RoxyBrowser",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "theme_color": "#1A93EB",
+  "background_color": "#1A93EB",
+  "display": "standalone"
+}

@@ -3,7 +3,6 @@ import { HumanMessage } from '@langchain/core/messages'
 import { tool } from 'langchain'
 import { z } from 'zod'
 import { createAgent } from '..'
-import { TokenUsageChange } from '../../agent/utils/usageAggregator'
 import { mcpManager } from '../../mcpManager'
 import { streamAdapter } from '../../server/streamAdapter'
 import { handleStream, StreamState } from '../handle-stream'
@@ -48,8 +47,8 @@ export const workerTools = [
         input.assignments.map(async (assignment: parallelDispatchParam) => {
           const workerId = assignment.worker
           try {
-            await mcpManager.createMcpClient(workerId)
-            const simpleTools = mcpManager.getToolsForWorker(workerId)
+            await mcpManager.createPlaywrightClientForWorker(workerId)
+            const simpleTools = await mcpManager.getToolsForWorker(workerId)
 
             const state = {
               messages: [new HumanMessage({ content: assignment.task })],
@@ -68,7 +67,7 @@ export const workerTools = [
                 assignment.worker,
               ],
               streamMode: ['messages', 'custom', 'tools'],
-              callbacks: [new TokenUsageChange(config.configurable?.thread_id)],
+              // callbacks: [new TokenUsageChange(config.configurable?.thread_id)],
             })
 
             const streamState = new StreamState()
@@ -84,7 +83,7 @@ export const workerTools = [
               }
             }
 
-            await mcpManager.destroyWorkerClient(workerId)
+            await mcpManager.destroyPlaywrightClientForWorker(workerId)
 
             config.writer?.(streamAdapter.workerResult({
               taskId: workerId,

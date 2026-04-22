@@ -1,13 +1,17 @@
 <script setup lang="tsx">
 import ConfigBase from './components/config-base.vue'
+import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { I18nT } from 'vue-i18n'
 import { useSimpleLocale } from '/@/stores/locale'
+import RxTooltip from '/@/components/rx-tooltip'
+import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 
 const roxyClawStore = useRoxyClawStore()
 const [showToast] = useResponseToast()
 const locale = useSimpleLocale()
+const router = useRouter()
 
 // 本地状态
 const botToken = ref('')
@@ -20,9 +24,50 @@ onMounted(() => {
   whitelistString.value = roxyClawStore.config.tg_allowed_chat_ids.join(', ')
 })
 
+function WhitelistHelperText() {
+  return (
+    <I18nT tag="p" keypath={$t('如何获取您的 Chat ID：向您的 Bot 发送任何消息，然后在浏览器中打开 {link}，在响应中查找 message.chat.id。{icon}', { link: '{link}', icon: '{icon}' })} class="my-0">
+      {{
+        link: () => {
+          return botToken.value
+            ? (
+                <a class="decoration-solid text-[var(--colors-text-text-brand)] underline" href={`https://api.telegram.org/bot${botToken.value}/getUpdates`} target="_blank">
+                  https://api.telegram.org/bot
+                  {botToken.value}
+                  /getUpdates
+                </a>
+              )
+            : (
+                <span>
+                  https://api.telegram.org/bot
+                  {'{TOKEN}'}
+                  /getUpdates
+                </span>
+              )
+        },
+        icon: () => {
+          return (
+            <RxTooltip>
+              {{
+                content: () => <img src="/images/roxy-claw/bot.png" class="w-240px h-181px" />,
+                default: () => (
+                  <p class="my-0 translate-y-0.5">
+                    <SvgIcon name="base/rx_ic_info" size="12" />
+                  </p>
+                ),
+              }}
+            </RxTooltip>
+          )
+        },
+      }}
+    </I18nT>
+  )
+}
+
 // setupFields 响应式
 const setupFields = computed(() => [
   {
+    field: 'botToken',
     label: 'Bot token:',
     placeholder: '123456789:AaBbCcDdEe...',
     helperText: $t('通过发送 /newbot 到 {a}BotFather 获取', { a: '@' }),
@@ -31,6 +76,14 @@ const setupFields = computed(() => [
     value: botToken.value,
     loading: testLoading.value,
     type: 'password',
+    required: true,
+  },
+  {
+    field: 'whitelist',
+    label: $t('允许白名单连接'),
+    placeholder: $t('123456789, 987654321（用逗号分隔。留空表示拒绝所有。）'),
+    helperTextComponent: WhitelistHelperText,
+    value: whitelistString.value,
     required: true,
   },
 ])
@@ -78,17 +131,13 @@ const steps = [
 /**
  * 处理字段值变化（只更新本地状态，不调用接口）
  */
-function handleFieldUpdate(index: number, value: string) {
-  if (index === 0) {
+function handleFieldUpdate(field: string, value: string) {
+  if (field === 'botToken') {
     botToken.value = value
   }
-}
-
-/**
- * 处理白名单值变化（只更新本地状态，不调用接口）
- */
-function handleWhitelistUpdate(value: string) {
-  whitelistString.value = value
+  else if (field === 'whitelist') {
+    whitelistString.value = value
+  }
 }
 
 /**
@@ -96,21 +145,18 @@ function handleWhitelistUpdate(value: string) {
  */
 async function handleSave() {
   try {
-    // 保存 Bot Token
     await roxyClawStore.updateConfig({
       tg_bot_token: botToken.value,
       tg_allowed_chat_ids: whitelistString.value.split(',').map(id => id.trim()).filter(Boolean),
     })
 
-    // // 保存白名单
-    // const whitelistIds =
-    // await roxyClawStore.updateConfig({ tg_allowed_chat_ids: whitelistIds })
-
     // 重置连接状态，下次进入主页面时重新检测
     roxyClawStore.connectionStatus.telegram = { checked: false, status: null }
 
-    // 显示保存成功的提示
-    showToast(0, $t('配置保存成功'))
+    const msg = roxyClawStore.isEnabled
+      ? $t('配置保存成功，RoxyClaw 正在重启中...')
+      : $t('配置保存成功')
+    showToast(0, msg)
   }
   catch (error) {
     console.error('Save failed:', error)
@@ -119,10 +165,34 @@ async function handleSave() {
 }
 
 /**
+ * 处理删除配置
+ */
+async function handleDelete() {
+  try {
+    await roxyClawStore.updateConfig({
+      tg_bot_token: '',
+      tg_allowed_chat_ids: [],
+    })
+    roxyClawStore.connectionStatus.telegram = { checked: false, status: null }
+
+    const msg = roxyClawStore.isEnabled
+      ? $t('配置已删除，RoxyClaw 正在重启中...')
+      : $t('配置已删除')
+    showToast(0, msg)
+
+    router.push({ name: 'roxy-claw-home' })
+  }
+  catch (error) {
+    console.error('Delete failed:', error)
+    showToast(1, $t('配置删除失败'))
+  }
+}
+
+/**
  * 处理测试
  */
-async function handleTest(index: number) {
-  if (index === 0) {
+async function handleTest(field: string) {
+  if (field === 'botToken') {
     testLoading.value = true
     try {
       const result = await roxyClawStore.testTelegram(botToken.value)
@@ -145,32 +215,10 @@ async function handleTest(index: number) {
     bg-color="#44b6ef"
     :steps="steps"
     :setup-fields="setupFields"
-    :whitelist-required="true"
-    :whitelist-value="whitelistString"
     :is-integrate="locale.siteLocale === 'zh-CN'"
     @update:field-value="handleFieldUpdate"
-    @update:whitelist="handleWhitelistUpdate"
     @test="handleTest"
     @save="handleSave"
-  >
-    <template #whitelistHelperText>
-      <I18nT tag="p" :keypath="$t('如何获取您的 Chat ID：向您的 Bot 发送任何消息，然后在浏览器中打开 {link}，在响应中查找 message.chat.id。{icon}', { link: '{link}', icon: '{icon}' })" class="my-0 ">
-        <template #link>
-          <a v-if="botToken" class="decoration-solid text-[var(--colors-text-text-brand)] underline" :href="`https://api.telegram.org/bot${botToken}/getUpdates`" target="_blank">https://api.telegram.org/bot{{ botToken }}/getUpdates</a>
-          <span v-else>https://api.telegram.org/bot{TOKEN}/getUpdates</span>
-        </template>
-
-        <template #icon>
-          <RxTooltip>
-            <p class="my-0 translate-y-0.5">
-              <SvgIcon name="base/rx_ic_info" size="12" />
-            </p>
-            <template #content>
-              <img src="/images/roxy-claw/bot.png" class="w-240px h-181px">
-            </template>
-          </RxTooltip>
-        </template>
-      </I18nT>
-    </template>
-  </ConfigBase>
+    @delete="handleDelete"
+  />
 </template>

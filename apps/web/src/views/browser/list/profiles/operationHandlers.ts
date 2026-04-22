@@ -16,7 +16,7 @@ export interface ProfileOperationDeps {
   copyTextFn: (text: string) => void
   showToast: (code: number, msg: string) => void
   onTransfer: (datas: ProfileOpData[], operate?: any) => Promise<void>
-  onMoveToProject: (data: any) => void | Promise<unknown>
+  onMoveToProject: (data: any) => void | Promise<void>
   openBrowserBefore: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   setAsDefaultBrowser: (data: ProfileOpData) => Promise<void>
   createDesktopShortcut: (data: ProfileOpData) => Promise<void>
@@ -27,12 +27,13 @@ export interface ProfileOperationDeps {
   addTag: (opts: any) => void
   updateProfileMeta: (params: Record<string, any>, data: ProfileOpData, type?: 'single' | 'batch') => Promise<void>
   singleModifyWindow: (params: any, silent?: boolean) => Promise<any>
-  onRemark: (data: ProfileOpData | ProfileOpData[]) => void | Promise<unknown>
+  onRemark: (data: ProfileOpData | ProfileOpData[]) => void | Promise<void>
   onEditCookies: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   openCookieRobot: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   onClearCache: (datas: ProfileOpData[]) => Promise<void>
-  exportProfile: (data: any) => void | Promise<unknown>
-  deleteProfile: (datas: any, ids: number[]) => void | Promise<unknown>
+  exportProfile: (data: any) => void | Promise<void>
+  deleteProfile: (datas: any, ids: number[]) => void | Promise<void>
+  onTestProxy: (datas: ProfileOpData) => void | Promise<void>
 }
 
 type OpCtx = ProfileOperationDeps & {
@@ -109,6 +110,7 @@ const operationMap: Record<string, (ctx: OpCtx) => void | Promise<void>> = {
   addProxy: async ctx => ctx.multipleProxyChange(ctx.data, { operationType: ctx.operationType, proxyMethod: 'custom' }),
   chooseProxy: async ctx => ctx.multipleProxyChange(ctx.data, { operationType: ctx.operationType, proxyMethod: 'choose' }),
   deleteProxy: async ctx => ctx.multipleProxyDelete(ctx.data),
+  checkProxy: async ctx => ctx.onTestProxy(ctx.data),
   addPlatformAccount: async ctx => ctx.multipleAccountChange(ctx.data, { operationType: ctx.operationType, isChoose: false }),
   choosePlatformAccount: async ctx => ctx.multipleAccountChange(ctx.data, { operationType: ctx.operationType, isChoose: true }),
   restart: handleRestart,

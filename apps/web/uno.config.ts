@@ -3,9 +3,9 @@ import {
   defineConfig,
   presetAttributify,
   presetMini,
+  presetWind3,
   transformerDirectives,
   transformerVariantGroup,
-  presetWind3
 } from 'unocss'
 
 // https://github.com/unocss/unocss#readme
@@ -16,7 +16,7 @@ export default defineConfig({
     presetAttributify({ prefix: 'un-', prefixedOnly: true }),
     presetWind3({
       // important: 'body'
-    })
+    }),
   ],
   rules: [['loading-circle', {
     animation: 'loadingCircle 1s infinite linear',
@@ -31,6 +31,9 @@ export default defineConfig({
     'ellipsis-1': 'text-ellipsis overflow-hidden whitespace-nowrap',
     'position-y-center': 'absolute top-1/2 transform -translate-y-1/2',
     'rx-container': 'flex flex-col min-w-[1140px] max-w-[1340px] w-full h-full mx-auto',
+    'tt-primary': 'text-[var(--colors-text-text-primary)]',
+    'tt-secondary': 'text-[var(--colors-text-text-secondary)]',
+    'tt-tertiary': 'text-[var(--colors-text-text-tertiary)]',
   },
   theme: {
     colors: {

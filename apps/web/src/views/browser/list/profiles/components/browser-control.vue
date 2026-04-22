@@ -1,43 +1,63 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import RxTooltip from '/@/components/rx-tooltip'
-
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { SubLevelEnum } from '/@/enums/pay'
 import { ProxyExpireStatus } from '/@/enums/proxy'
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { windowManager } from '/@/utils/windowManager'
+import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
+import { useDialog } from '/@/hooks/useDialog'
+import { useSimpleLocale } from '/@/stores/locale'
+import type { Driver } from 'driver.js'
 
-const props = defineProps({
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  data: {
-    type: Object,
-    default: () => ({}),
-  },
-  openMessage: {
-    type: Object,
-    default: () => ({}),
-  },
-  isPublic: {
-    type: Boolean,
-    default: false,
-  },
-  text: {
-    type: String,
-    default: $t('打开'),
-  },
-  icon: {
-    type: String,
-    default: 'base/rx_ic_chrome',
-  },
+interface Props {
+  btnId?: string
+  disabled?: boolean
+  data?: Record<string, any>
+  openMessage?: Record<string, any>
+  isPublic?: boolean
+  text?: string
+  icon?: string
+  driverObj?: Driver
+  driverNext?: () => void
+  sendFirstOpenRecord?: () => void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
+  data: () => ({}),
+  openMessage: () => ({}),
+  isPublic: false,
+  text: $t('打开'),
+  icon: 'base/rx_ic_chrome',
 })
 
 const emits = defineEmits(['open'])
 
+const [showModal] = useDialog()
+const [_, onlyErrorToast] = useResponseToast()
 const router = useRouter()
-const { userInfo } = storeToRefs(useUserStore())
-const { isOwner } = storeToRefs(useRoleStore())
+const simpleLocale = useSimpleLocale()
+const { userInfo, userConfig } = storeToRefs(useUserStore())
+const { check } = usePermission()
+
+function setOpenMessage(message: Record<string, any>) {
+  Reflect.set(props.openMessage as Record<string, any>, props.data.dirId, message)
+}
+
+function getLocalizedConnectUrl(connectUrl: string) {
+  try {
+    const localizedConnectUrl = new URL(connectUrl)
+    // 云浏览器前端会优先读取地址栏里的 language 参数来确定文案语言。
+    localizedConnectUrl.searchParams.set('language', simpleLocale.currentLocale || 'en')
+    return localizedConnectUrl.toString()
+  }
+  catch {
+    return connectUrl
+  }
+}
 
 const usePeoples = computed(() => {
   const users = props.data.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).map((item: any) => item.openUserName)
@@ -80,6 +100,71 @@ async function openBrowser() {
   if (browser.value.pending || browser.value.opening || browser.value.uploading) {
     return
   }
+
+  const cloudBrowserDirId = userConfig.value.cloudBrowserActivateInfo?.dirId
+  const remainingUsageMs = userConfig.value.cloudBrowserActivateInfo?.remainingUsageMs || 0
+
+  props.driverObj?.destroy()
+
+  // 如果是云浏览器，则直接打开
+  // if (!globalThis.isElectron && cloudBrowserDirId) {
+  //   if (cloudBrowserDirId === props.data.dirId) {
+  //     if (remainingUsageMs <= 3000) {
+  //       showModal({
+  //         showHeader: false,
+  //         modal: true,
+  //         blockScroll: true,
+  //         slots: {
+  //           container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
+  //         },
+  //       })
+  //       return
+  //     }
+
+  //     if (windowManager.winMap.value.get(cloudBrowserDirId)) {
+  //       windowManager.open('', props.data.dirId)
+  //       return
+  //     }
+
+  //     setOpenMessage({
+  //       code: 0,
+  //       pending: false,
+  //       uploading: true,
+  //       data: {
+  //         dirId: props.data.dirId,
+  //         percent: 100,
+  //         message: $t('启动中...'),
+  //         warningMessages: [],
+  //       },
+  //     })
+
+  //     const { code, data, msg } = await API.window.userGetCloudBrowserInfoList({ windowId: props.data.id })
+
+  //     if (code === 0 && data.connectUrl) {
+  //       windowManager.open(getLocalizedConnectUrl(data.connectUrl), props.data.dirId)
+
+  //       // Cloud browser open state should match the launch-process message shape.
+  //       setOpenMessage({
+  //         code,
+  //         pending: false,
+  //         uploading: false,
+  //         data: {
+  //           dirId: props.data.dirId,
+  //           percent: 100,
+  //           message: $t('打开成功'),
+  //           warningMessages: [],
+  //         },
+  //       })
+  //       props.driverNext?.()
+  //       props.sendFirstOpenRecord?.()
+  //     }
+  //     else {
+  //       onlyErrorToast(-1, msg)
+  //     }
+  //     return
+  //   }
+  // }
+
   emits('open', props.data)
 }
 
@@ -95,13 +180,37 @@ function onUpgradePlan() {
     router.push({ name: 'upgrade-plan' })
   }
 }
+
+if (!globalThis.isElectron) {
+  watch(windowManager.winMap, () => {
+    const winMap = windowManager.winMap.value
+    const currentWindow = winMap.get(props.data.dirId)
+
+    if (currentWindow && !currentWindow.closed) {
+      setOpenMessage({
+        code: 0,
+        pending: false,
+        uploading: false,
+        data: {
+          dirId: props.data.dirId,
+          percent: 100,
+          message: $t('打开成功'),
+          warningMessages: [],
+        },
+      })
+    }
+    else {
+      Reflect.deleteProperty(props.openMessage, props.data.dirId)
+    }
+  }, { immediate: true })
+}
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <component :is="isOwner && !data.openLimitStatus && data.isTransfer ? RxTooltip : 'div'">
+    <component :is="check('Cost_Center_all') && !data.openLimitStatus && data.isTransfer ? RxTooltip : 'div'">
       <template #default>
-        <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
+        <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
           <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
           <SvgIcon v-if="!browser.percent && !browser.pending" class="control-icon" :name="(icon as any)" />
           <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>

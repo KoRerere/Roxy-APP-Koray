@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RxTooltip from '/@/components/rx-tooltip'
 import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue'
 import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -100,9 +101,18 @@ async function showLastUpdateLog() {
             </div>
           </div>
           <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)" />
-          <RxButton v-else class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
-                    @click="handleClientItemClick(item)"
-          />
+          <component :is="item.status === 'downloading' ? RxTooltip : 'div'" v-else class="w-full" tooltip-content-class="py-1 px-2">
+            <template #default>
+              <RxButton class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
+                        @click="handleClientItemClick(item)"
+              />
+            </template>
+            <template #content>
+              <div class="text-3 font-600 text-white w-fit">
+                {{ $t('取消') }}
+              </div>
+            </template>
+          </component>
         </div>
         <div v-if="item.type === 'web'" class="w-full flex items-start gap-2.5 px-4 py-3 patch">
           <RxSvgIcon class="flex-shrink-0" name="base/rx_ic_patch" color="var(--colors-icon-icon-brand)" />

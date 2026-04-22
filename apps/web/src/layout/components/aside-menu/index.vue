@@ -10,7 +10,8 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProjectPin, WorkspaceType } from '/@/enums'
-import { safeParseJSON } from '/@/utils'
+import { genDriver, safeParseJSON } from '/@/utils'
+import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
 import { emitter } from '/@/utils/eventBus'
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 
@@ -26,6 +27,9 @@ const roleStore = useRoleStore()
 const projectStore = useProjectStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { check } = usePermission()
+
+const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
+const driverObj = ref()
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
@@ -63,14 +67,47 @@ watch(currentWorkspace, (workspace, oldWorkspace) => {
   }
 }, { immediate: true })
 
-// watch([
-//   () => projectList.value.length,
-//   () => collapsed
-// ], () => {
-//   nextTick(() => {
-//     updateMask()
-//   })
-// })
+emitter.on('badgeMap', (key) => {
+  if (!Reflect.has(badgeMap.value, key)) {
+    Reflect.set(badgeMap.value, key, true)
+  }
+})
+
+emitter.on('asideMenuGuide', showAsideMenuGuideTour)
+
+function showAsideMenuGuideTour() {
+  driverObj.value = genDriver({
+    showProgress: false,
+    disableActiveInteraction: false,
+    allowClose: true,
+    overlayClickBehavior: 'close',
+    showButtons: ['close'],
+    stagePadding: 0,
+    popoverOffset: 20,
+    steps: [
+      {
+        element: '#NEW_PROFILE',
+        popover: {
+          description: $t('如果您有更多自定义窗口需求，点击"创建窗口"按钮即可快速设置。'),
+          side: 'right',
+          align: 'center',
+        },
+        onHighlightStarted: () => {
+          nextTick(() => {
+            requestAnimationFrame(() => {
+              focusDomSpotlight('#NEW_PROFILE')
+            })
+          })
+        },
+      },
+    ],
+    onDestroyed: () => {
+      blurDomSpotlight()
+    },
+  })
+
+  driverObj.value.drive()
+}
 
 /** 过滤菜单 */
 function filterMenus(menus: RouteRecordRaw[]) {
@@ -96,63 +133,28 @@ async function toCreateBrowser() {
     return
   }
 
-  // 项目中创建窗口，方便自动关联项目选择
-  if (route.name === 'project-item') {
-    router.push({ name: 'browser-create', query: { projectId: route.params.id } })
+  const query = route.name === 'project-item' ? { projectId: route.params.id } : {}
+
+  if (driverObj.value) {
+    driverObj.value.destroy()
+    driverObj.value = undefined
+    Reflect.set(query, 'driver', 1)
   }
-  else {
-    router.push({ name: 'browser-create' })
-  }
+
+  router.push({ name: 'browser-create', query })
 }
-// ======================
-
-const _asidemenusRef = useTemplateRef('asidemenus')
-// const showTopMask = ref(false)
-// const showBottomMask = ref(false)
-
-// function updateMask() {
-//   const el = asidemenusRef.value
-//   if (!el)
-//     return
-
-//   const { scrollTop, scrollHeight, clientHeight } = el
-
-//   const canScroll = scrollHeight > clientHeight + 1
-//   if (!canScroll) {
-//     showTopMask.value = false
-//     showBottomMask.value = false
-//     return
-//   }
-
-//   showTopMask.value = scrollTop > 0
-//   showBottomMask.value = scrollTop + clientHeight < scrollHeight - 1
-// }
-
-function handleScroll() {
-  // updateMask()
-}
-
-const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
-
-emitter.on('badgeMap', (key) => {
-  if (!Reflect.has(badgeMap.value, key)) {
-    Reflect.set(badgeMap.value, key, true)
-  }
-})
 </script>
 
 <template>
   <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <template v-if="check('Profiles_add')">
       <!-- <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png"> -->
-      <RxButton id="new_profile" class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
+      <RxButton id="NEW_PROFILE" class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">
-      <!-- <div v-if="showTopMask" class="mask top-mask" /> -->
-      <nav ref="asidemenus" class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu" @scroll="handleScroll">
+      <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">
         <SubMenuItem v-model:badge-map="badgeMap" class="relative z-1" :items="menus" :collapsed />
       </nav>
-      <!-- <div v-if="showBottomMask" class="mask bottom-mask" /> -->
     </div>
   </aside>
 </template>

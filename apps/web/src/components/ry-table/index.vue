@@ -424,8 +424,8 @@ function initBodyrow(options: any) {
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
-          <template #body="{ data }">
-            <slot :name="slot" :data="data" :column="column">
+          <template #body="{ data, index }">
+            <slot :name="slot" :data="data" :index="index" :column="column">
               <component :is="render" v-if="render" :data="data" :class="column.classes" />
               <template v-else>
                 <template v-if="column.skeleton && !data.id">
@@ -455,7 +455,9 @@ function initBodyrow(options: any) {
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler?.($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :loading-operation-map="data.loadingOperationMap" :operation="_getOperation(data)" @quick-click="operationHandler?.($event, data, 'single')"
+                         @more="showOperationMenu($event, data, 'single')"
+                />
               </slot>
             </div>
           </template>

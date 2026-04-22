@@ -10,11 +10,20 @@ import { readFile, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { appConfig } from '/@/constants/appConfig'
-import { isDev, isMac, isWindows } from '/@/constants/common'
+import { isMac, isWindows } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser/browser-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { downloadZipFile, fileExists, findProcessByHandle, unzipFile } from '/@/utils'
+
+const CORE_DOWNLOAD_CANCEL_CODE = 'ROXY_CORE_DOWNLOAD_CANCELED'
+
+interface CoreDownloadTask {
+  controller: AbortController
+  promise: Promise<any>
+  silent?: boolean
+  throwOnCancel?: boolean
+}
 
 export class CoreManagerUtils {
   pendingCoreDir = ''
@@ -30,13 +39,13 @@ export class CoreManagerUtils {
   /** 等待解压的内核 */
   pendingUnzipCoreMap = new Map<string, () => Promise<any>>()
   /** 正在下载中的内核 */
-  private downloadingMap = new Map<string, Promise<any>>()
+  private downloadingMap = new Map<string, CoreDownloadTask>()
   /** msgCallback task map */
   private msgCallbackTaskMap = new Map<string, ((payload: Partial<ResourceUpdateMessage>) => void)[]>()
   /** 正在使用中的内核 */
   get usingCores() {
     const cores = [...browserManager.openedBrowserMap.values()]
-      .filter(n => n.coreType === this.coreType)
+      .filter(browserItem => browserItem.winInfo.coreType === this.coreType)
       .map(browserItem => browserItem.winInfo.coreVersion)
     return new Set(cores)
   }
@@ -64,6 +73,14 @@ export class CoreManagerUtils {
   }
 
   async getCoreStatus(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
+    if (core.coreVersion && this.downloadingMap.has(core.coreVersion)) {
+      return 'downloading'
+    }
+
+    return this.getLocalCoreStatus(core)
+  }
+
+  private async getLocalCoreStatus(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
     const isExists = await fileExists(this.genCoreDir(core.coreVersion!))
     if (!isExists)
       return 'uninstalled'
@@ -135,7 +152,7 @@ export class CoreManagerUtils {
 
   /** 设置可用内核列表 */
   setAvailableCoreList(cores: UnwrapRowsType<UserGetCoreUpgradeCreateData>) {
-    this.availableCoreList = cores.filter(core => core.coreType === this.coreType)
+    this.availableCoreList = cores.filter(core => (core as typeof core & { coreType?: BrowserType }).coreType === this.coreType)
   }
 
   /** 获取指定的可用内核 */
@@ -143,6 +160,25 @@ export class CoreManagerUtils {
     return this.availableCoreList.find(
       core => core.coreVersion === coreVersion,
     )
+  }
+
+  private createCancelDownloadError() {
+    const error = new Error('core download cancelled')
+    Reflect.set(error, 'code', CORE_DOWNLOAD_CANCEL_CODE)
+    return error
+  }
+
+  private isDownloadCancelledError(error: any) {
+    return error?.code === CORE_DOWNLOAD_CANCEL_CODE
+      || error?.code === 'ERR_CANCELED'
+      || error?.name === 'AbortError'
+      || error?.name === 'CanceledError'
+      || error?.message === 'core download cancelled'
+  }
+
+  private async clearDownloadArtifacts(coreVersion: string, outputZipPath: string) {
+    await rm(outputZipPath, { force: true }).catch(() => {})
+    await rm(this.genPendingCoreDir(coreVersion), { recursive: true, force: true }).catch(() => {})
   }
 
   /** 自动静默下载内核 */
@@ -165,7 +201,11 @@ export class CoreManagerUtils {
         if (status !== 'update') {
           continue
         }
-        await this.downloadCore({ coreVersion: core.coreVersion, silent: true, unzipAfterDownload: false })
+        await this.downloadCore({ coreVersion: core.coreVersion, silent: true, unzipAfterDownload: false }).catch((error) => {
+          if (!this.isDownloadCancelledError(error)) {
+            return Promise.reject(error)
+          }
+        })
       }
     }
   }
@@ -199,7 +239,7 @@ export class CoreManagerUtils {
     // 如果本地不存在该内核或版本文件不存在，则下载
     if (!isExeExists || !isVersionFileExists) {
       // 等待下载完成
-      await this.downloadCore({ coreVersion, msgCallback, silent })
+      await this.downloadCore({ coreVersion, msgCallback, silent, throwOnCancel: true })
     }
 
     const status = await this.checkCoreVersion(availableCore)
@@ -213,7 +253,9 @@ export class CoreManagerUtils {
       })
 
       if (store.autoUpdateKernel && availableCore.coreVersion) {
-        this.downloadCore({ coreVersion: availableCore.coreVersion, silent: true, unzipAfterDownload: false })
+        this.downloadCore({ coreVersion: availableCore.coreVersion, silent: true, unzipAfterDownload: false }).catch((error) => {
+          console.error('download latest core error', error)
+        })
       }
     }
 
@@ -248,8 +290,9 @@ export class CoreManagerUtils {
     msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void
     silent?: boolean
     unzipAfterDownload?: boolean
+    throwOnCancel?: boolean
   }) {
-    const { coreVersion, msgCallback, silent, unzipAfterDownload = true } = options
+    const { coreVersion, msgCallback, silent, unzipAfterDownload: _unzipAfterDownload = true, throwOnCancel = false } = options
     if (this.downloadingMap.has(coreVersion)) {
       if (msgCallback) {
         if (this.msgCallbackTaskMap.has(coreVersion)) {
@@ -259,9 +302,14 @@ export class CoreManagerUtils {
           this.msgCallbackTaskMap.set(coreVersion, [msgCallback])
         }
       }
-      const promise = this.downloadingMap.get(coreVersion)
-      promise && Reflect.set(promise, 'silent', silent)
-      return promise
+      const task = this.downloadingMap.get(coreVersion)
+      if (task && typeof silent === 'boolean') {
+        task.silent = silent
+      }
+      if (task && throwOnCancel) {
+        task.throwOnCancel = true
+      }
+      return task?.promise
     }
 
     const availableCore = this.getAvailableCore(coreVersion)
@@ -271,8 +319,9 @@ export class CoreManagerUtils {
     }
 
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
-    // getter 里的 this，永远指向“访问这个属性的对象”
-    const that = this
+    const controller = new AbortController()
+    const getDownloadTask = () => this.downloadingMap.get(coreVersion)
+    const shouldThrowOnCancel = () => getDownloadTask()?.throwOnCancel ?? throwOnCancel
     const payload: ResourceUpdateMessage = {
       type: 'kernel',
       status: 'downloading',
@@ -281,7 +330,7 @@ export class CoreManagerUtils {
       version: availableCore.version,
       coreVersion,
       get silent() {
-        return Reflect.get(that.downloadingMap.get(coreVersion) || {}, 'silent') ?? silent
+        return getDownloadTask()?.silent ?? silent
       },
     }
 
@@ -316,7 +365,7 @@ export class CoreManagerUtils {
         payload.description = $t('正在解压内核')
         doMsgCallbacks()
         // 解压缩内核
-        await unzipFile(outputZipPath, this.genPendingCoreDir())
+        await unzipFile(outputZipPath, this.genPendingCoreDir(), { signal: controller.signal })
         // 如果内核不在使用中，则立即执行解压任务
         if (!this.usingCores.has(coreVersion)) {
           await this.unzipToCoreDirTask(coreVersion)
@@ -341,7 +390,7 @@ export class CoreManagerUtils {
       }
     }
 
-    const downloadTask = async () => {
+    const runDownloadTask = async () => {
       try {
         console.log('downloadCore start', coreVersion)
         // 下载内核
@@ -355,7 +404,11 @@ export class CoreManagerUtils {
             payload.description = $t('正在下载内核')
             doMsgCallbacks()
           },
+          { signal: controller.signal },
         ).catch((error) => {
+          if (this.isDownloadCancelledError(error)) {
+            return Promise.reject(error)
+          }
           console.error('downloadCore downloadZipFile error', error)
           payload.status = 'failed'
           payload.description = $t('下载内核失败')
@@ -370,6 +423,20 @@ export class CoreManagerUtils {
       catch (error: any) {
         console.dir(error, { depth: null })
         console.error('downloadCore error', error)
+        if (this.isDownloadCancelledError(error)) {
+          await this.clearDownloadArtifacts(coreVersion, outputZipPath)
+          payload.status = await this.getLocalCoreStatus(availableCore)
+          payload.percent = payload.status === 'downloaded' ? 100 : 0
+          payload.description = $t('已取消内核下载')
+          doMsgCallbacks()
+
+          if (shouldThrowOnCancel()) {
+            return Promise.reject(error)
+          }
+
+          return
+        }
+
         if (error?.code === 'EBUSY') {
           // const processIds = await getProcessIdsByExePath(this.genCoreDir(coreVersion));
           const processIds = await findProcessByHandle(this.genCoreDir(coreVersion))
@@ -423,8 +490,35 @@ export class CoreManagerUtils {
       }
     }
 
-    this.downloadingMap.set(coreVersion, downloadTask())
-    return this.downloadingMap.get(coreVersion)
+    const downloadEntry: CoreDownloadTask = {
+      controller,
+      promise: Promise.resolve().then(runDownloadTask),
+      silent,
+      throwOnCancel,
+    }
+
+    this.downloadingMap.set(coreVersion, downloadEntry)
+    return downloadEntry.promise
+  }
+
+  async cancelDownloadCore(coreVersion: string) {
+    const task = this.downloadingMap.get(coreVersion)
+    if (!task) {
+      return false
+    }
+
+    task.controller.abort(this.createCancelDownloadError())
+
+    try {
+      await task.promise
+    }
+    catch (error) {
+      if (!this.isDownloadCancelledError(error)) {
+        return Promise.reject(error)
+      }
+    }
+
+    return true
   }
 
   /** 删除指定内核 */

@@ -1,32 +1,38 @@
-import type { StreamMode } from '@langchain/langgraph'
 import type { Request, Response } from 'express'
-import { HumanMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { Router } from 'express'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
-import { AbortError, abortRun, createAbort } from '../agent/utils/abortRegistry'
-import { RequestTokenUsageAggregator, TokenUsageChange } from '../agent/utils/usageAggregator'
+import { z } from 'zod'
+import { AbortError, abortRun, createAbort } from '../abortRegistry'
 import { env } from '../config'
 import { ChatContextAPI } from '../database/conversations'
 import { createAgent, deleteCheckpoint } from '../deepagents'
 import { handleStream, StreamState } from '../deepagents/handle-stream'
 import { isWorkerStart } from '../deepagents/tools'
+import { createLLM } from '../llm'
 import { mcpManager } from '../mcpManager'
 import { sseLoggerManager } from './sseLogger'
 import { streamAdapter } from './streamAdapter'
 
-// sse 原始数据存储目录
-if (!fs.existsSync(path.join(env.CHECKPOINT_DIR!, 'sse'))) {
-  fs.mkdirSync(path.join(env.CHECKPOINT_DIR!, 'sse'), { recursive: true })
-}
-
 // 附件文件存储目录
-const uploadsDir = path.join(env.CHECKPOINT_DIR!, 'uploads')
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true })
+const uploadsDir = path.join(env.CHECKPOINT_DIR, 'uploads')
+
+let _dirsInitialized = false
+/**
+ * 初始化路由所需目录（sse、uploads），幂等，由 server/index.ts 的 createApp() 调用
+ */
+export function initChatRouteDirs() {
+  if (_dirsInitialized)
+    return
+  if (!fs.existsSync(path.join(env.CHECKPOINT_DIR, 'sse')))
+    fs.mkdirSync(path.join(env.CHECKPOINT_DIR, 'sse'), { recursive: true })
+  if (!fs.existsSync(uploadsDir))
+    fs.mkdirSync(uploadsDir, { recursive: true })
+  _dirsInitialized = true
 }
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -183,65 +189,6 @@ router.get('/conversations', async (req: Request, res: Response) => {
   }
 })
 
-// 获取当前活跃的对话
-router.get('/conversations/active', async (req: Request, res: Response) => {
-  try {
-    const activeConversation = ChatContextAPI.getActiveConversation()
-
-    res.json({
-      code: 0,
-      msg: 'Active conversation fetched successfully',
-      data: activeConversation,
-    })
-  }
-  catch (error: any) {
-    console.error('Error getting active conversation:', error)
-    res.json({
-      code: 1,
-      error: error.message,
-      msg: 'Failed to get active conversation',
-    })
-  }
-})
-
-// 设置指定对话为活跃状态
-router.put('/conversations/:conversationId/active', async (req: Request, res: Response) => {
-  try {
-    const { conversationId } = req.params
-
-    if (!conversationId || typeof conversationId !== 'string') {
-      return res.json({
-        code: 1,
-        error: 'Conversation ID is required',
-        msg: 'Conversation ID is required',
-      })
-    }
-
-    const success = ChatContextAPI.setActiveConversation(conversationId)
-
-    if (!success) {
-      return res.json({
-        code: 1,
-        error: 'Conversation not found',
-        msg: 'Conversation not found',
-      })
-    }
-
-    res.json({
-      code: 0,
-      msg: 'Conversation set as active successfully',
-    })
-  }
-  catch (error: any) {
-    console.error('Error setting active conversation:', error)
-    res.json({
-      code: 1,
-      error: error.message,
-      msg: 'Failed to set active conversation',
-    })
-  }
-})
-
 // 获取对话详情
 router.get('/conversations/:conversationId', async (req: Request, res: Response) => {
   try {
@@ -376,35 +323,6 @@ router.get('/conversations/readFileContent', async (req: Request, res: Response)
   }
 })
 
-// 获取对话统计信息
-router.get('/stats', async (req: Request, res: Response) => {
-  try {
-    const conversations = ChatContextAPI.getConversations()
-    const context = ChatContextAPI.getCurrentContext()
-
-    const stats = {
-      userId: context.userId,
-      workspaceId: context.workspaceId,
-      totalConversations: conversations.length,
-      totalMessages: conversations.reduce((sum, conv) => sum + (conv.message_count || 0), 0),
-    }
-
-    res.json({
-      code: 0,
-      msg: 'Stats fetched successfully',
-      data: stats,
-    })
-  }
-  catch (error: any) {
-    console.error('Error getting stats:', error)
-    res.json({
-      code: 1,
-      error: error.message,
-      msg: 'Failed to get stats',
-    })
-  }
-})
-
 // 附件类型定义
 interface AttachmentRef {
   fileId: string
@@ -500,6 +418,43 @@ function buildMessageContentAsPlainText(message: string, attachments: Attachment
   return chunks.join('\n\n')
 }
 
+// 标题输出的 Zod Schema
+const TitleOutputSchema = z.object({
+  title: z.string().max(20, '标题不能超过20个字符').describe('对话标题，简洁准确概括主题，不超过10个汉字或20个字符'),
+})
+
+/**
+ * 使用 LLM 生成对话标题（使用 withStructuredOutput 确保可控）
+ */
+async function generateConversationTitle(
+  userMessage: string,
+  attachments: AttachmentRef[],
+  streamCallback: (event: string) => void,
+): Promise<string> {
+  const llm = createLLM(false)
+  const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
+
+  // 使用 withStructuredOutput 确保返回结构化数据
+  const structuredLlm = llm.withStructuredOutput(TitleOutputSchema, {
+    name: 'generate_title',
+  })
+
+  const result = await structuredLlm.invoke([
+    new SystemMessage('你是一个专业的对话标题生成助手。'),
+    new HumanMessage(`请根据用户的第一条消息，为这个对话生成一个简洁、准确的标题。
+
+用户消息：
+${messageContent}`),
+  ])
+
+  const title = result.title.trim()
+
+  // 发送 SSE 事件更新前端
+  streamCallback(streamAdapter.title(title))
+
+  return title
+}
+
 // 开始对话（流式聊天）
 router.post('/chat', async (req: Request, res: Response) => {
   const {
@@ -546,17 +501,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     })
   }
 
-  // 如果是第一条消息且标题还没有被设置过，则使用消息的前15个字符更新标题
-  if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-    const messages = ChatContextAPI.getMessagesByConversation(conversationId)
-    // 检查是否只有系统消息或没有消息（用户消息是第一条）
-    const userMessages = messages.filter(msg => msg.role === 'user')
-    if (userMessages.length === 0) {
-      // 这是第一条用户消息，更新标题
-      const titlePreview = message?.trim().substring(0, 15) || attachmentList[0]?.fileName?.substring(0, 15) || 'New Chat'
-      ChatContextAPI.updateConversation(conversationId, { title: titlePreview })
-    }
-  }
+  // 自动设置为活跃对话
+  ChatContextAPI.setActiveConversation(conversationId)
 
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
@@ -614,8 +560,21 @@ router.post('/chat', async (req: Request, res: Response) => {
   // 先把会话开始标识写入
   streamCallback(streamAdapter.session(conversation.thread_id))
 
+  // 如果标题还没有设置，就异步生成标题（不阻塞主流程）
+  if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
+    generateConversationTitle(message || '', attachmentList, streamCallback)
+      .then((generatedTitle) => {
+        if (generatedTitle) {
+          ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate title:', err)
+      })
+  }
+
   // 创建 token 使用量统计器，用于统计本次请求的 token 消耗
-  const tokenUsageAggregator = new RequestTokenUsageAggregator(conversation.thread_id)
+  // const tokenUsageAggregator = new RequestTokenUsageAggregator(conversation.thread_id)
 
   const startTime = Date.now()
   try {
@@ -625,7 +584,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       },
       streamMode: ['messages', 'custom', 'tools'],
       signal: abortController.signal,
-      callbacks: [new TokenUsageChange(conversation.thread_id)],
+      // callbacks: [new TokenUsageChange(conversation.thread_id)],
       // 供 parallel_dispatch 工具内将 worker 的 stream 写出到客户端，避免只依赖外层 stream 合并
       writer: streamCallback,
     }
@@ -643,45 +602,39 @@ router.post('/chat', async (req: Request, res: Response) => {
       streamCallback,
     }
 
-    if (env.LLM_BALANCE >= 0) {
-      await mcpManager.createMcpClient('simple')
-      const simpleTools = mcpManager.getToolsForWorker('simple')
-      const agent = await createAgent({
-        mode: agentMode,
-        tools: simpleTools,
-        name: agentMode,
-        conversationId,
-      })
-      const state = new StreamState()
-      const stream = await agent.stream(input, config)
-      // let worker_start = false
-      for await (const rawChunk of stream) {
-        console.log('rawChunk', rawChunk)
-        const [namespace, chunk] = rawChunk
-        // Worker 期间跳过非 custom，但必须保留主 agent 的 parallel_dispatch 的 tools 事件，否则 tool start 会丢失、agent 认为返回空
-        const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
-        if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
-          continue
-        }
-
-        const result = handleStream(rawChunk, state)
-        if (Array.isArray(result)) {
-          result.forEach(event => streamCallback(event))
-        }
-        else if (result) {
-          streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
-        }
+    await mcpManager.createPlaywrightClientForWorker('simple')
+    const simpleTools = await mcpManager.getToolsForWorker('simple')
+    const agent = await createAgent({
+      mode: agentMode,
+      tools: simpleTools,
+      name: agentMode,
+      conversationId,
+    })
+    const state = new StreamState()
+    const stream = await agent.stream(input, config)
+    // let worker_start = false
+    for await (const rawChunk of stream) {
+      const [namespace, chunk] = rawChunk
+      // Worker 期间跳过非 custom，但必须保留主 agent 的 parallel_dispatch 的 tools 事件，否则 tool start 会丢失、agent 认为返回空
+      const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
+      if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
+        continue
       }
 
-      // 最后一个消息的特殊处理（针对 deepseek 模型）
-      const lastMessageIsThinking = state.theLastMessageIsThinking()
-      if (lastMessageIsThinking) {
-        streamCallback(streamAdapter.content(lastMessageIsThinking, `content:${state.getRandomId()}`))
+      const result = handleStream(rawChunk, state)
+      if (Array.isArray(result)) {
+        result.forEach(event => streamCallback(event))
+      }
+      else if (result) {
+        streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
       }
     }
-    else {
-      streamCallback(streamAdapter.error('Balance is not enough'))
-    }
+
+    // 最后一个消息的特殊处理（针对 deepseek 模型）
+    // const lastMessageIsThinking = state.theLastMessageIsThinking()
+    // if (lastMessageIsThinking) {
+    //   streamCallback(streamAdapter.content(lastMessageIsThinking, `content:${state.getRandomId()}`))
+    // }
 
     streamCallback(streamAdapter.done())
   }
@@ -695,14 +648,15 @@ router.post('/chat', async (req: Request, res: Response) => {
     else {
       // 其他错误，正常处理
       console.error('Error in chat:', error)
-      streamCallback(streamAdapter.error(error.message, error.stack))
+      const errorCode = extractHttpErrorCode(error.message)
+      streamCallback(streamAdapter.error(error.message, errorCode))
     }
   }
   finally {
-    await mcpManager.destroyWorkerClient('simple')
+    await mcpManager.destroyPlaywrightClientForWorker('simple')
 
     // 获取本次请求的 token 使用量统计
-    const tokenUsage = tokenUsageAggregator.getUsage()
+    // const tokenUsage = tokenUsageAggregator.getUsage()
 
     const endTime = Date.now()
     const duration = endTime - startTime
@@ -714,15 +668,15 @@ router.post('/chat', async (req: Request, res: Response) => {
         conversationId,
         file: sseFilePath,
         message,
-        inputToken: tokenUsage.input_tokens,
-        outputToken: tokenUsage.output_tokens,
+        inputToken: 0,
+        outputToken: 0,
         time: duration,
         taskType: agentMode,
       },
     })
 
     // 清理统计器资源
-    tokenUsageAggregator.dispose()
+    // tokenUsageAggregator.dispose()
     sseLoggerManager.closeLogger(sseFilePath)
   }
 
@@ -758,5 +712,11 @@ router.post('/chat/:conversationId/interrupt', async (req: Request, res: Respons
     })
   }
 })
+
+/** 从上游错误消息中提取 HTTP 状态码，如 "402 \"Insufficient balance\"" → 402 */
+function extractHttpErrorCode(message: string): number | undefined {
+  const match = message?.match(/\b([45]\d{2})\b/)
+  return match ? Number(match[1]) : undefined
+}
 
 export default router

@@ -1,6 +1,7 @@
 export * from './common'
 export * from './crypto-aes-256-gcm'
 export * from './file'
+export * from './fetchHiddenPageHtml'
 export * from './getErrorMessage'
 export * from './getLocalFonts'
 export * from './getSystemProxy'

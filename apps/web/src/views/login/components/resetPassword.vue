@@ -11,13 +11,13 @@ import { getEmailSchemas, getResetPasswordSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
-const { setCurrentComponent, setSignFormData } = useLoginContext()
+const { setCurrentComponent, setSignFormData, getSignFormData } = useLoginContext()
 const toast = useToast()
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const rxFormRef = useTemplateRef('rxForm')
 const emailFormData = ref({
-  user_name: '',
+  user_name: getSignFormData().user_name,
 })
 
 const resetPasswordEventCommonParams = {

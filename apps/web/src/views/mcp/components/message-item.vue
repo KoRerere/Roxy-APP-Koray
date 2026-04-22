@@ -6,7 +6,7 @@ import { getBlockKey, getStatusIconProps, useMessageItem } from '../composables/
 import { markedParse } from '/@/views/mcp/util'
 import StatusMessage from './status-message.vue'
 
-const props = defineProps<{
+defineProps<{
   item: FormattedMessage
 }>()
 
@@ -85,9 +85,8 @@ function getTaskSummary(block: MessageEntryView): string {
 
       <!-- Error/Interrupt 状态 -->
       <StatusMessage
-        v-else-if="block.type === 'error' || block.type === 'interrupt'"
-        :status="block.type"
-        :message="block.text"
+        v-else-if="block.type === 'error'"
+        :data="block.text"
       />
     </template>
   </div>

@@ -42,19 +42,23 @@ export function useProfileOpenState() {
   function sendFirstOpenRecord() {
     if (userInfo.value.onboardingTaskStatus?.firstOpenWindowStatus === false) {
       updateOnboardingTaskStatus({ firstOpenWindowStatus: true })
-      mixpanelTrack('open_profile_first')
+      mixpanelTrack('open_profile_first', {
+        profile_open_host: globalThis.isElectron ? 'user_client' : 'cloud_host',
+      })
     }
   }
 
-  function listenOpenMessage() {
+  function listenOpenMessage(options?: { openSuccessAfter?: () => void }) {
     return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
       if (event.code === 1 && event.message.includes('ERR101'))
         showDiskSpaceModal()
 
       const id = event.data?.dirId || event.data
       Reflect.set(openMessage, id as string, event)
-      if (event.code === 0 && event.data?.percent === 100)
+      if (event.code === 0 && event.data?.percent === 100) {
         sendFirstOpenRecord()
+        options?.openSuccessAfter?.()
+      }
     })
   }
 
@@ -171,5 +175,6 @@ export function useProfileOpenState() {
     onOpenBrowser,
     getNotUsedProfiles,
     syncOpenedBrowserState,
+    sendFirstOpenRecord,
   }
 }

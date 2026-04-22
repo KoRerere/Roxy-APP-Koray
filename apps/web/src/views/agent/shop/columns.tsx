@@ -1,30 +1,31 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
+import BasicInfo from '/@/views/agent/shop/components/basic-info.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
 import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
-
+import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { format } from 'date-fns'
+import { ProxyType } from '/@/enums/proxy'
 
 export function getRawColumns(options?: any) {
-  const { isOwner } = storeToRefs(useRoleStore())
+  const { check } = usePermission()
   const { currentWorkspace } = storeToRefs(useWorkspaceStore())
   const workspaceName = currentWorkspace.value?.workspaceName!.slice(0, 3).toLocaleUpperCase()
 
   const columns = [
     {
-      title: $t('代理 IP 信息'),
-      key: 'proxy',
-      _visible: false,
-      render: ({ data }: any) => <div class="text-3 font-[JetBrains_Mono]">{data.host ? `${data.host}:${data.port}:${data.proxyUserName}:${data.proxyPassword}` : '--'}</div>,
-    },
-    {
       title: $t('出口 IP'),
       key: 'lastCountry',
       sortable: true,
       slot: 'outbound',
+    },
+    {
+      title: $t('代理 IP 信息'),
+      key: 'proxy',
+      _visible: false,
+      render: ({ data }: any) => <BasicInfo data={data}></BasicInfo>,
     },
     {
       title: $t('到期时间'),
@@ -41,12 +42,13 @@ export function getRawColumns(options?: any) {
       title: $t('自动续费'),
       key: 'autoRenew',
       slot: 'renew',
-      power: isOwner.value,
+      power: check('Cost_Center_all'),
     },
     {
       title: $t('订单号'),
       key: 'orderNo',
       _visible: false,
+      getText: (data: any) => data.orderNo || '--',
     },
     {
       title: $t('创建时间'),
@@ -92,7 +94,7 @@ export function getRawColumns(options?: any) {
     {
       title: $t('服务商'),
       key: 'proxyProviderName',
-      getText: (data: any) => data.proxyProviderName || $t('官方赠送'),
+      getText: (data: any) => data.proxyType === ProxyType.buy ? (data.proxyProviderName || $t('官方赠送')) : '--',
       sortable: true,
     },
     {
@@ -102,10 +104,9 @@ export function getRawColumns(options?: any) {
       _visible: false,
     },
     {
-      title: $t('操作'),
-      style: 'width: 9rem',
-      slot: 'actions',
-      alignFrozen: 'right',
+      title: $t('来源'),
+      key: 'proxyType',
+      getText: (data: any) => data.proxyType === ProxyType.buy ? $t('购买') : $t('添加'),
     },
   ].filter(column => column.power !== false)
 

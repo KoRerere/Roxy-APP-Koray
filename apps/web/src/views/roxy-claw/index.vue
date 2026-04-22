@@ -39,14 +39,17 @@ const integrations = ref([
     id: 'discord',
     name: 'Discord',
     icon: '/images/roxy-claw/discord.svg',
-    status: IMStatus.Disconnected,
+    status: IMStatus.NotConfigured,
+    routeName: 'roxy-claw-discord',
+    isActive: false,
     isComingSoon: true,
   },
   {
     id: 'slack',
     name: 'Slack',
     icon: '/images/roxy-claw/slack.svg',
-    status: IMStatus.Disconnected,
+    status: IMStatus.NotConfigured,
+    routeName: 'roxy-claw-slack',
     isActive: false,
     isComingSoon: true,
   },
@@ -60,7 +63,7 @@ const integrations = ref([
   },
 ])
 
-// 页面加载时检测连接状态（只在第一次加载或软件重启时检测）
+// 页面加载时检测连接状态（每次进入页面都检测）
 onMounted(async () => {
   await roxyClawStore.fetchConfig()
 
@@ -75,94 +78,69 @@ onMounted(async () => {
     }
   }
 
-  // 恢复之前检测过的状态
-  restoreConnectionStatus()
+  // 先设置所有状态为 NotConfigured
+  integrations.value.forEach((integration) => {
+    if (!integration.isComingSoon) {
+      integration.status = IMStatus.NotConfigured
+    }
+  })
 
-  // 检测连接状态（只在第一次加载时）
-  if (!roxyClawStore.connectionStatus.telegram.checked && roxyClawStore.telegramConfigured) {
+  // 并行检测所有平台连接状态
+  const testPromises: Promise<void>[] = []
+
+  // 检测 Telegram
+  if (roxyClawStore.telegramConfigured) {
     const telegramIndex = integrations.value.findIndex(item => item.id === 'telegram')
     if (telegramIndex !== -1) {
       integrations.value[telegramIndex].status = IMStatus.Checking
-      const result = await roxyClawStore.testTelegram(roxyClawStore.config.tg_bot_token)
-      integrations.value[telegramIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
-      roxyClawStore.connectionStatus.telegram = {
-        checked: true,
-        status: result.success ? 'success' : 'failed',
-      }
+      testPromises.push((async () => {
+        const result = await roxyClawStore.testTelegram(roxyClawStore.config.tg_bot_token)
+        integrations.value[telegramIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
+      })())
     }
   }
 
-  if (!roxyClawStore.connectionStatus.lark.checked && roxyClawStore.larkConfigured) {
+  // 检测 Lark
+  if (roxyClawStore.larkConfigured) {
     const larkIndex = integrations.value.findIndex(item => item.id === 'lark')
     if (larkIndex !== -1) {
       integrations.value[larkIndex].status = IMStatus.Checking
-      const result = await roxyClawStore.testLark(
-        roxyClawStore.config.lark_app_id,
-        roxyClawStore.config.lark_app_secret,
-      )
-      integrations.value[larkIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
-      roxyClawStore.connectionStatus.lark = {
-        checked: true,
-        status: result.success ? 'success' : 'failed',
-      }
-    }
-  }
-})
-
-/**
- * 恢复之前检测过的连接状态（从 store 中恢复）
- */
-function restoreConnectionStatus() {
-  // 恢复 Telegram 状态
-  if (roxyClawStore.connectionStatus.telegram.checked) {
-    const telegramIndex = integrations.value.findIndex(item => item.id === 'telegram')
-    if (telegramIndex !== -1) {
-      if (roxyClawStore.telegramConfigured) {
-        integrations.value[telegramIndex].status = roxyClawStore.connectionStatus.telegram.status === 'success'
-          ? IMStatus.Connected
-          : IMStatus.Disconnected
-      }
-      else {
-        integrations.value[telegramIndex].status = IMStatus.NotConfigured
-      }
-    }
-  }
-  else if (roxyClawStore.telegramConfigured) {
-    // 还没检测过，但已配置
-    const telegramIndex = integrations.value.findIndex(item => item.id === 'telegram')
-    if (telegramIndex !== -1) {
-      integrations.value[telegramIndex].status = IMStatus.Disconnected
+      testPromises.push((async () => {
+        const result = await roxyClawStore.testLark(
+          roxyClawStore.config.lark_app_id,
+          roxyClawStore.config.lark_app_secret,
+        )
+        integrations.value[larkIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
+      })())
     }
   }
 
-  // 恢复 Lark 状态
-  if (roxyClawStore.connectionStatus.lark.checked) {
-    const larkIndex = integrations.value.findIndex(item => item.id === 'lark')
-    if (larkIndex !== -1) {
-      if (roxyClawStore.larkConfigured) {
-        integrations.value[larkIndex].status = roxyClawStore.connectionStatus.lark.status === 'success'
-          ? IMStatus.Connected
-          : IMStatus.Disconnected
-      }
-      else {
-        integrations.value[larkIndex].status = IMStatus.NotConfigured
-      }
+  // 检测 Slack
+  if (roxyClawStore.slackConfigured) {
+    const slackIndex = integrations.value.findIndex(item => item.id === 'slack')
+    if (slackIndex !== -1) {
+      integrations.value[slackIndex].status = IMStatus.Checking
+      testPromises.push((async () => {
+        const result = await roxyClawStore.testSlack(roxyClawStore.config.slack_bot_token)
+        integrations.value[slackIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
+      })())
     }
   }
-  else if (roxyClawStore.larkConfigured) {
-    // 还没检测过，但已配置
-    const larkIndex = integrations.value.findIndex(item => item.id === 'lark')
-    if (larkIndex !== -1) {
-      integrations.value[larkIndex].status = IMStatus.Disconnected
-    }
-  }
-}
 
-// 监听配置变更
-watch(() => roxyClawStore.isConfigChanged(), (newValue) => {
-  if (newValue) {
-    console.log('RoxyClaw configuration changed')
+  // 检测 Discord
+  if (roxyClawStore.discordConfigured) {
+    const discordIndex = integrations.value.findIndex(item => item.id === 'discord')
+    if (discordIndex !== -1) {
+      integrations.value[discordIndex].status = IMStatus.Checking
+      testPromises.push((async () => {
+        const result = await roxyClawStore.testDiscord(roxyClawStore.config.discord_bot_token)
+        integrations.value[discordIndex].status = result.success ? IMStatus.Connected : IMStatus.Disconnected
+      })())
+    }
   }
+
+  // 等待所有检测完成
+  await Promise.all(testPromises)
 })
 
 async function toggleRoxyClaw() {
@@ -177,9 +155,9 @@ async function toggleRoxyClaw() {
     }
   }
   else {
-    await roxyClawStore.updateConfig({ enabled: true })
     const { success, message } = await roxyClawStore.startRoxyClaw()
     if (success) {
+      await roxyClawStore.updateConfig({ enabled: true })
       showToast(0, message || 'RoxyClaw has been started successfully')
     }
     else {
@@ -295,6 +273,10 @@ function handleIntegrationClick(integration: any) {
             <!-- Checking 状态 -->
             <div v-if="!integration.isComingSoon && integration.status === IMStatus.Checking" class="flex items-center gap-1">
               <span class="text-[var(--colors-text-text-inactive)] text-3">{{ $t('连接中...') }}</span>
+            </div>
+            <!-- NotConfigured 状态 -->
+            <div v-if="!integration.isComingSoon && integration.status === IMStatus.NotConfigured" class="flex items-center gap-1">
+              <span class="text-[var(--colors-text-text-inactive)] text-3">{{ $t('未配置') }}</span>
             </div>
           </div>
 

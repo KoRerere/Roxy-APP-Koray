@@ -52,7 +52,7 @@ const columns = [
     },
   },
   {
-    title: $t('投送至'),
+    title: $t('转移至'),
     key: 'transfer',
     slot: 'transfer',
     style: {
@@ -124,7 +124,7 @@ async function toProject() {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 popup">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('接收投送') }}</span>
+      <span class="header">{{ $t('接收转移') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <RxAlert class="w-full" type="warn" :closable="false" :content="$t('注意：使用他人的窗口可能存在潜在风险，请确保来源可靠。')"></RxAlert>

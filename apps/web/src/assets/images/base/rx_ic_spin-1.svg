@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+  <path fill-rule="evenodd" d="M12 3.947A8.053 8.053 0 1 0 20.053 12a.947.947 0 0 1 1.895 0c0 5.494-4.454 9.947-9.948 9.947-5.494 0-9.947-4.453-9.947-9.947 0-5.494 4.453-9.947 9.947-9.947a.947.947 0 0 1 0 1.894Z" clip-rule="evenodd">
+    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+  </path>
+</svg>

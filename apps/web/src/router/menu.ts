@@ -1,10 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { Role } from '/@/enums'
+import type { Role } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
 import { API } from '/@/api'
 import { I18nT } from 'vue-i18n'
-import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
+import { usePermission } from '/@/hooks/usePermission'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { Permission, PermissionMode } from '/@/hooks/usePermission/type'
 import type { SvgNames } from '/@/components/rx-icon'
@@ -57,12 +57,6 @@ export const menuRoutes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: 'shared',
-    name: 'shared',
-    meta: { title: $t('共享窗口'), icon: 'base/rx_ic_browser', hideInMenu: true, shared: true },
-    component: () => import('/@/views/browser/shared'),
-  },
-  {
     path: 'projects',
     name: 'projects',
     meta: {
@@ -103,10 +97,11 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'agent',
         name: 'agent-list',
         meta: {
-          title: $t('代理 IP'),
+          title: $t('全球代理 IP'),
           icon: 'base/rx_ic_internet',
-          permissions: ['Proxy_List_view_page', 'Proxy_Store_view_page'],
+          permissions: ['Proxy_List_view_page'],
           permissionMode: 'any',
+          slotName: 'proxy',
         },
         component: () => import('/@/views/agent'),
       },
@@ -211,6 +206,28 @@ export const menuRoutes: RouteRecordRaw[] = [
             },
             component: () => import('/@/views/roxy-claw/lark-config.vue'),
           },
+          {
+            path: 'roxy-claw/slack',
+            name: 'roxy-claw-slack',
+            meta: {
+              title: 'Slack Bot',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw/slack-config.vue'),
+          },
+          {
+            path: 'roxy-claw/discord',
+            name: 'roxy-claw-discord',
+            meta: {
+              title: 'Discord Bot',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw/discord-config.vue'),
+          },
         ],
       },
       {
@@ -222,11 +239,11 @@ export const menuRoutes: RouteRecordRaw[] = [
           icon: 'base/rx_ic_frame_stack',
           hideInMenu: !navigator.platform.includes('Win'),
           onClick: async (event: Event) => {
-            const { isOwner } = useRoleStore()
             const { mixpanelTrack } = useUserStore()
+            const { check } = usePermission()
             const { code } = await API.pay.userCheckTeamUserRightsList()
             if (code !== 0) {
-              if (!isOwner) {
+              if (!check('Cost_Center_all')) {
                 emitter.emit('showToast', {
                   severity: 'warn',
                   summary: $t('窗口同步不可用'),
@@ -254,7 +271,7 @@ export const menuRoutes: RouteRecordRaw[] = [
 
             mixpanelTrack('synchronizer_open')
             console.log('sync-control')
-            globalThis.electronAPI.send('syncControl:open', isOwner)
+            globalThis.electronAPI.send('syncControl:open', check('Cost_Center_all'))
           },
         },
         component: () => import('/@/views/api-keys'),
@@ -296,7 +313,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       title: $t('选择套餐'),
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
-      roles: [Role.OWNER],
+      permissions: ['Cost_Center_all'],
     },
     component: () => import('/@/views/pay/subscribe'),
   },
@@ -307,7 +324,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       title: $t('更改套餐'),
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
-      roles: [Role.OWNER],
+      permissions: ['Cost_Center_all'],
     },
     component: () => import('/@/views/pay/subscribe/upgrade-plan.vue'),
   },
@@ -318,7 +335,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       title: $t('费用中心'),
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
-      roles: [Role.OWNER],
+      permissions: ['Cost_Center_all'],
     },
     component: () => import('/@/views/pay/wallet'),
   },

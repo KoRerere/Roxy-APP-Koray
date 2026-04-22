@@ -23,7 +23,7 @@ const isAgree = ref(false)
 
     <!-- <ol class="flex flex-col gap-1 ma-0 pa-0 pl-5">
       <li class="description">{{ $t('为了避免您已有窗口的本地缓存丢失，您需要确保在修改缓存路径后，优先将之前已有的所有缓存文件手动迁移至新的缓存路径下。') }}</li>
-      <li class="description">{{ $t('要投送窗口至其他人的工作空间，您需得知相应的空间 ID') }}</li>
+      <li class="description">{{ $t('要转移窗口至其他人的工作空间，您需得知相应的空间 ID') }}</li>
     </ol> -->
     <!-- <div class="description">{{ $t('您可以通过以下操作指引获取空间 ID') }}</div> -->
     <!-- <video class="block w-full rounded-md" autoplay muted loop playsinline>

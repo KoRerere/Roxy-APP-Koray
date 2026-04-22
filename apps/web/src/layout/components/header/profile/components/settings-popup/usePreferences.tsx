@@ -204,6 +204,28 @@ export function usePreferencesPanel() {
                 )
               },
             },
+            {
+              label: $t('显示窗口名称提示'),
+              text: () => (
+                <div class="w-88">
+                  {$t(
+                    '关闭后，浏览器图标提示将显示当前标签页名称',
+                  )}
+                </div>
+              ),
+              name: 'windowNameSwitch',
+              value: data?.windowNameSwitch ?? true,
+              hide: () => !isWindows,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
           ],
         },
         {
@@ -583,6 +605,37 @@ export function usePreferencesPanel() {
                   { label: $t('弹出提示'), value: 'pop' },
                   { label: $t('最小化到托盘'), value: 'min' },
                   { label: $t('退出程序'), value: 'exit' },
+                ],
+              },
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('窗口自动恢复'),
+              text: () => (
+                <div class="w-88">
+                  {
+                    $t('客户端重新打开时，恢复上次窗口打开状态')
+                  }
+                </div>
+              ),
+              name: 'autoRestoreWindow',
+              value: data?.autoRestoreWindow ?? 2,
+              props: {
+                filter: false,
+                optionValue: 'value',
+                options: [
+                  { label: $t('弹出提示'), value: 2 },
+                  { label: $t('开启'), value: 1 },
+                  { label: $t('关闭'), value: 0 },
                 ],
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {

@@ -12,9 +12,18 @@ import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { getMcpErrorMessage } from '/@/stores/roxy-claw'
+import AgentLabel from './agent-label.vue'
+import { I18nT } from 'vue-i18n'
+import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
+
+// 用于强制重新创建 AgentLabel 组件的 key
+const agentLabelKey = ref(0)
+// 每 30 分钟刷新一次组件
+const AGENT_LABEL_REFRESH_INTERVAL = 1 * 60 * 1000
 
 const route = useRoute()
 const router = useRouter()
@@ -110,7 +119,9 @@ const items = computed(() => {
     {
       label: $t('评价我们🎁'),
       icon: 'base/rx_ic_star',
-      visible: onboardingTaskStatus.value?.ratingStatus === false,
+      /**
+       * visible: onboardingTaskStatus.value?.ratingStatus === false,
+       */
       command: () => openScore(),
     },
   ].filter(item => item.visible !== false)
@@ -129,8 +140,22 @@ watch(() => route.path, () => {
   }
 }, { immediate: true })
 
+let agentLabelTimer: any = null
+
 onBeforeMount(() => {
   getFaqList()
+})
+
+onMounted(() => {
+  // 每 30 分钟更新一次 key，强制重新创建 AgentLabel
+  agentLabelTimer = setInterval(() => {
+    agentLabelKey.value++
+  }, AGENT_LABEL_REFRESH_INTERVAL)
+})
+
+onBeforeUnmount(() => {
+  if (agentLabelTimer)
+    clearInterval(agentLabelTimer)
 })
 
 async function getFaqList() {
@@ -207,63 +232,96 @@ async function getMcpStatus(): Promise<{ mcpWindowOpen: boolean, roxyClawEnabled
   return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
 }
 
-async function openMCP() {
-  if (opening.value)
-    return
-  mixpanelTrack('click_enter_agent')
-  opening.value = true
+async function openRoxyAIAgent() {
+  if (isOwner.value || isManager.value) {
+    if (opening.value)
+      return
 
-  try {
+    mixpanelTrack('click_enter_agent')
+    opening.value = true
+
+    try {
     // 检查 RoxyClaw 是否正在运行
-    const mcpStatus = await getMcpStatus()
-    if (mcpStatus.roxyClawEnabled) {
-      onlyErrorToast(-1, $t('RoxyClaw 正在运行中，请先停止 RoxyClaw'))
-      opening.value = false
-      return
+      const mcpStatus = await getMcpStatus()
+      if (mcpStatus.roxyClawEnabled) {
+        showToast({
+          severity: 'warn',
+          summary: $t('Agent 被占用'),
+          detail: (
+            <I18nT keypath={$t('RoxyClaw 正在运行中，使用 Roxy AI Agent 之前请先{RoxyClaw}。', { RoxyClaw: '{RoxyClaw}' })}>
+              {{ RoxyClaw: () => <a class="cursor-pointer" onClick={() => router.push({ name: 'roxy-claw-home' })}>{$t('关闭 RoxyClaw')}</a> }}
+            </I18nT>
+          ),
+          life: 5000,
+        })
+        opening.value = false
+        return
+      }
+
+      // 检查 API 是否开启
+      const ApiResult = await API.base.userGetUserApiList()
+      if (ApiResult.code === 0 && !ApiResult.data.open) {
+        let opened = false
+        async function openApiKeys() {
+          if (opened)
+            return
+          const { code, msg } = await API.base.userSetUserApiCreate({ ...ApiResult.data, open: true })
+          onlyErrorToast(code, msg)
+          if (code === 0) {
+          // 开关或端口改变时 重启 API 服务
+            await globalThis.electronAPI.send('app:restartAPIServer')
+          }
+          opened = true
+          router.push({ name: 'api-keys' })
+        }
+
+        showToast({
+          severity: 'warn',
+          summary: $t('未开启 API'),
+          detail: (
+            <I18nT keypath={$t('请先 {start} 状态后再使用 AI Agent。', { start: '{start}' })}>
+              {{ start: () => <a class="cursor-pointer" onClick={openApiKeys}>{ $t('开启 API') }</a> }}
+            </I18nT>
+          ),
+          life: 5000,
+        })
+        opening.value = false
+        return
+      }
+
+      // 检查 API 端口是否被占用
+      const apiPort = await globalThis.electronAPI.send('util:getApiPort')
+      if (apiPort === -1) {
+        showToast({
+          severity: 'warn',
+          summary: $t('端口已被占用'),
+          detail: $t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: ApiResult.data.port }),
+          life: 5000,
+        })
+        router.push({ name: 'api-keys' })
+        return
+      }
+
+      // 打开 Roxy AI Agent 窗口
+      const result = await globalThis.electronAPI.send('mcp:open')
+      console.log('Mcp open result:', result)
+      if (!result.success) {
+        const errorMessage = result.type
+          ? getMcpErrorMessage(result.type)
+          : result.message || $t('Roxy Agent 启动失败')
+        onlyErrorToast(-1, errorMessage)
+      }
     }
-
-    const apiPort = await globalThis.electronAPI.send('util:getApiPort')
-    if (apiPort === -1) {
-      onlyErrorToast(-1, $t('请检查 API 启用状态或端口是否被占用'))
-      opening.value = false
-      router.replace({ name: 'api-keys', query: { highlight: 'true' } })
-      return
+    catch (error) {
+      console.error('Failed to open MCP:', error)
+      onlyErrorToast(-1, error instanceof Error ? error.message : $t('Roxy Agent 启动失败'))
     }
-    await globalThis.electronAPI.send('mcp:open').catch(() => { })
-  }
-  catch (error) {
-    console.error('Failed to open MCP:', error)
-    onlyErrorToast(-1, error instanceof Error ? error.message : $t('MCP 启动失败'))
-  }
-  finally {
-    opening.value = false
-  }
-}
-
-// ============= 仅内测版本使用，后续版本删除所有相关逻辑 =============
-const showMcp = ref(false)
-
-watch([token, () => currentWorkspace.value?.id], ([token, currentWorkspaceId]) => {
-  if (token && currentWorkspaceId) {
-    getMcpInfo()
-  }
-}, { immediate: true })
-
-async function getMcpInfo() {
-  if (!currentWorkspace.value || !(isOwner.value || isManager.value)) {
-    showMcp.value = false
-    return
-  }
-
-  const { code, data } = await API.base.userGetLlmInfoList()
-  const apiResult = await API.base.userGetUserApiList()
-  if (code === 0 && !!data && apiResult.code === 0) {
-    showMcp.value = true
+    finally {
+      opening.value = false
+    }
   }
   else {
-    showMcp.value = false
-    const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
-    localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
+    onlyErrorToast(-1, $t('该功能暂时只开放给管理者使用。如需开通，请联系空间创建人。'))
   }
 }
 </script>
@@ -273,8 +331,8 @@ async function getMcpInfo() {
     <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip">
       {{ $t('有疑问吗？欢迎随时与我们联系！') }}
     </div>
-    <div v-if="showMcp" id="mcp" class="flex cursor-pointer" @click="openMCP">
-      <img draggable="false" src="/images/mcp/roxy_ai_agent.svg">
+    <div id="roxy-ai-agent" class="flex cursor-pointer" @click="openRoxyAIAgent">
+      <AgentLabel :key="agentLabelKey" />
     </div>
     <div class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">
       <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="22" color="#FFFFFF" />

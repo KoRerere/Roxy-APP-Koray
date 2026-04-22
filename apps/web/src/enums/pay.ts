@@ -115,7 +115,7 @@ export enum PayIdentity {
   new = 'new',
   /** 特邀用户 */
   invited = 'invited',
-  /** 老用户 */
+  /** 老用户 (创始用户) */
   old = 'old',
   /** 高级合作伙伴 */
   agent = 'agent',

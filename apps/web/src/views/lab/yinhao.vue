@@ -1,10 +1,11 @@
 <script setup lang="tsx">
-import { sleep } from '/@/utils'
+import { genDriver, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
-import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
+import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 // import { emitter } from '/@/utils/eventBus'
+import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
@@ -15,6 +16,9 @@ import WelcomeModal from '/@/views/tutorial/components/welcome-modal'
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
+
+// ====================================
+
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
 // import { getInviteCode } from '/@/api/util'
@@ -27,13 +31,13 @@ function _open1() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    closeOnEscape: false,
-    pt: {
-      root: '!border-none !shadow-none rounded-lg overflow-hidden',
-      // mask: "!backdrop-blur-md",
-    },
+    // closeOnEscape: false,
+    // pt: {
+    //   root: '!border-none !shadow-none rounded-lg overflow-hidden',
+    //   // mask: "!backdrop-blur-md",
+    // },
     slots: {
-      container: ({ hideModal }) => <WelcomeModal onClose={hideModal}></WelcomeModal>,
+      container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
     },
   })
 }
@@ -252,16 +256,164 @@ function _setInputsProps() {
 }
 
 // ====================================
+
+/** 聚光灯 Teleport 到 body，需高于 driver 遮罩（通常 z-index:10000） */
+const mambaRef = useTemplateRef<HTMLElement>('mamba')
+const mambaSpotlightOn = ref(false)
+const mambaSpotlightRect = reactive({
+  top: 0,
+  left: 0,
+  width: 0,
+  height: 0,
+  borderRadius: '0px',
+})
+
+function syncMambaSpotlightRect() {
+  const el = mambaRef.value
+  if (!el)
+    return
+  const r = el.getBoundingClientRect()
+  mambaSpotlightRect.top = r.top
+  mambaSpotlightRect.left = r.left
+  mambaSpotlightRect.width = r.width
+  mambaSpotlightRect.height = r.height
+  mambaSpotlightRect.borderRadius = getComputedStyle(el).borderRadius || '0px'
+}
+
+const _mambaSpotlightStyle = computed(() => ({
+  top: `${mambaSpotlightRect.top}px`,
+  left: `${mambaSpotlightRect.left}px`,
+  width: `${mambaSpotlightRect.width}px`,
+  height: `${mambaSpotlightRect.height}px`,
+  borderRadius: mambaSpotlightRect.borderRadius,
+}))
+
+let stopMambaSpotlightSync: (() => void) | undefined
+
+watch(mambaSpotlightOn, (on) => {
+  stopMambaSpotlightSync?.()
+  stopMambaSpotlightSync = undefined
+  if (!on)
+    return
+
+  const handler = () => syncMambaSpotlightRect()
+  handler()
+  window.addEventListener('scroll', handler, true)
+  window.addEventListener('resize', handler)
+  const ro = new ResizeObserver(handler)
+  if (mambaRef.value)
+    ro.observe(mambaRef.value)
+
+  stopMambaSpotlightSync = () => {
+    window.removeEventListener('scroll', handler, true)
+    window.removeEventListener('resize', handler)
+    ro.disconnect()
+  }
+})
+
+onScopeDispose(() => {
+  stopMambaSpotlightSync?.()
+})
+
+function _driverStart() {
+  genDriver({
+    showProgress: false,
+    disableActiveInteraction: false,
+    allowClose: true,
+    overlayClickBehavior: 'close',
+    showButtons: ['close'],
+    stagePadding: 0,
+    popoverOffset: 20,
+    onDestroyed: () => {
+      mambaSpotlightOn.value = false
+    },
+    steps: [
+      {
+        element: '#mamba',
+        popover: {
+          description: 'oooooooooooooout!',
+          side: 'right',
+          align: 'center',
+        },
+        onHighlightStarted: () => {
+          nextTick(() => {
+            requestAnimationFrame(() => {
+              mambaSpotlightOn.value = true
+            })
+          })
+        },
+        onDeselected: () => {
+          mambaSpotlightOn.value = false
+        },
+      },
+      {
+        element: '#group',
+        popover: {
+          description: '关注 1 和 3 这两个选项\n关注 1 和 3 这两个选项',
+          side: 'top',
+          align: 'center',
+        },
+        onHighlightStarted: () => {
+          highlightTargets([1, 2, 3]) // 1 和 3
+        },
+        onDeselected: () => {
+          clearHighlight()
+        },
+      },
+    ],
+  }).drive()
+}
+
+function highlightTargets(indexes: number[]) {
+  const items = document.querySelectorAll('.box')
+
+  items.forEach((el, i) => {
+    if (indexes.includes(i)) {
+      el.classList.add('fake-highlight')
+    }
+  })
+}
+
+function clearHighlight() {
+  document.querySelectorAll('.fake-highlight')
+    .forEach(el => el.classList.remove('fake-highlight'))
+}
 </script>
 
 <template>
-  <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-hidden">
+  <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
     <!-- <a href="/workspace/teams">wcis man</a> -->
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <!-- <RxButton label="open1" @click="_open1" /> -->
+    <RxButton label="open1" @click="_open1" />
     <!-- <RxButton label="open2" @click="_open2" /> -->
+    <RxButton label="GO!" @click="_driverStart" />
+
+    <Teleport to="body">
+      <div v-if="mambaSpotlightOn" class="mamba-spotlight-ring--body" :style="_mambaSpotlightStyle" aria-hidden="true" />
+    </Teleport>
+
+    <div id="mamba" ref="mamba" class="mamba-ripple-wrap relative inline-flex rounded-xl">
+      <RxButton class="relative z-1" label="close" />
+    </div>
+
+    <div id="group" class="flex gap-4 mt-10">
+      <div v-for="(value, index) in ['bg-orange', 'bg-blue', 'bg-green', 'bg-purple', 'bg-pink']" :key="value" :data-index="index"
+           class="box w-20 h-20 flex items-center justify-center rounded-2 text-6 font-bold select-none text-white" :class="value"
+      >
+        {{ index + 1 }}
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="hidden group-hover:block">
+        111
+      </div>
+      <div class="group-hover:hidden">
+        222
+      </div>
+    </div>
 
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
@@ -311,4 +463,74 @@ function _setInputsProps() {
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+/* 聚光灯已 Teleport 到 body（.mamba-spotlight-ring--body），#mamba 保留 .mamba-ripple-wrap 供 driver 选择器 */
+
+.mamba-spotlight-ring--body {
+  position: fixed;
+  z-index: 10001;
+  box-sizing: border-box;
+  pointer-events: none;
+  /* 与 Roxyweb3 guide-spotlight-ring / spotlight-ring-pulse 同源 */
+  box-shadow:
+    0 0 0 4px rgba(102, 126, 234, 0.8),
+    0 0 0 8px rgba(102, 126, 234, 0.4),
+    0 0 30px 15px rgba(102, 126, 234, 0.6);
+  animation: mamba-spotlight-ring-pulse 2s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+@keyframes mamba-spotlight-ring-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(102, 126, 234, 0.8),
+      0 0 0 8px rgba(102, 126, 234, 0.4),
+      0 0 30px 15px rgba(102, 126, 234, 0.6);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(102, 126, 234, 1),
+      0 0 0 12px rgba(102, 126, 234, 0.6),
+      0 0 50px 25px rgba(102, 126, 234, 0.8);
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+.fake-highlight {
+  position: relative;
+  z-index: 10001;
+}
+
+/* 外层光圈 */
+.fake-highlight::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  /* 控制光圈离元素的距离 */
+  border-radius: 14px;
+  pointer-events: none;
+
+  box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.9);
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.9);
+    opacity: 1;
+  }
+
+  70% {
+    box-shadow: 0 0 0 14px rgba(255, 200, 0, 0);
+    opacity: 0.6;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0);
+    opacity: 0;
+  }
+}
+</style>

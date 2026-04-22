@@ -20,6 +20,13 @@ export function useDrawer() {
     )
   }
 
+  const _destroy = () => {
+    if (_currentVNode) {
+      render(null, document.body)
+      _currentVNode = null
+    }
+  }
+
   const _renderCmp = async () => {
     _destroy()
     const vnode = createVNode(_DrawerComponent)
@@ -34,20 +41,14 @@ export function useDrawer() {
       _innerProps.value = props
       await _renderCmp()
       _visible.value = true
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to show drawer:', error)
     }
   }
 
   const hideDrawer = () => {
     _visible.value = false
-  }
-
-  const _destroy = () => {
-    if (_currentVNode) {
-      render(null, document.body)
-      _currentVNode = null
-    }
   }
 
   onUnmounted(() => {

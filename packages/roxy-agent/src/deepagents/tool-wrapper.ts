@@ -22,14 +22,8 @@ export function wrapToolWithErrorHandling(tool: StructuredTool, options?: ToolWr
   const workerId = getWorkerId(options)
   const maxErrorsPerWorker = options?.maxErrorsPerWorker ?? DEFAULT_MAX_ERRORS_PER_WORKER
 
-  // 创建一个新的工具对象，保留原有属性
-  const wrappedTool = Object.create(Object.getPrototypeOf(tool))
-  Object.assign(wrappedTool, tool)
-
-  /**
-   * 重写 invoke 方法
-   */
-  wrappedTool.invoke = async function (input: any, config?: any) {
+  // 直接在原对象上替换 invoke，保持实例引用（===）不变，避免 AgentNode 的 wrapModelCall 校验报错
+  tool.invoke = async function (input: any, config?: any) {
     try {
       return await originalInvoke(input, config)
     }
@@ -78,7 +72,7 @@ ${errorStack ? `**Stack Trace**:\n\`\`\`\n${errorStack}\n\`\`\`` : ''}
     }
   }
 
-  return wrappedTool
+  return tool
 }
 
 /**

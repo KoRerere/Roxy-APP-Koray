@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import RxTooltip from '/@/components/rx-tooltip'
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -19,7 +20,7 @@ const confirm = useConfirm();
 function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   switch (item.status) {
     case 'downloading':
-      return `${$t('正在下载')} ${Math.floor(item.percent)}%`
+      return `${$t('正在下载')} ${Math.floor(item.percent ?? 0)}%`
     case 'downloaded':
       return $t('升级完成')
     case 'failed':
@@ -29,10 +30,27 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   }
 }
 
-function handleKernelItemClick(item: ResourceUpdateMessage) {
+function formatKernelIcon(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return $t('正在下载')
-  } else if (item.coreVersion) {
+    return 'base/rx_ic_spin'
+  }
+
+  if (item.status === 'downloaded') {
+    return 'base/rx_ic_check'
+  }
+
+  return 'base/rx_ic_download'
+}
+
+async function handleKernelItemClick(item: ResourceUpdateMessage) {
+  if (item.status === 'downloading') {
+    if (item.coreVersion) {
+      await globalThis.electronAPI.send('app:cancel-download-chrome-core', item.coreVersion)
+    }
+    return
+  }
+
+  if (item.coreVersion) {
     globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
   }
 }
@@ -87,8 +105,17 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
+            <component :is="item.status === 'downloading' ? RxTooltip : 'div'" tooltip-content-class="py-1 px-2">
+              <template #default>
+                <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="formatKernelIcon(item)"
+                  :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
+              </template>
+              <template #content>
+                <div class="text-3 font-600 text-white w-fit">
+                  {{ $t('取消') }}
+                </div>
+              </template>
+            </component>
             <div class="flex-cc" @click="handleRemove($event, item)">
               <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon" :class="{ 'disabled': item.status !== 'downloaded' }" />
             </div>

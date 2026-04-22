@@ -7,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { getRoleLabelMap, WorkspaceType } from '/@/enums'
 import { usePreventMask } from '/@/hooks/usePreventMask'
+import { usePermission } from '/@/hooks/usePermission'
 
 const collapsed = defineModel('collapsed', { default: false })
 
@@ -17,6 +18,7 @@ const { userInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 const { showPreventMask, hidePreventMask } = usePreventMask()
+const { check } = usePermission()
 
 const items = computed(() => {
   if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
@@ -42,7 +44,7 @@ const items = computed(() => {
       icon: 'base/rx_ic_wallet',
       rootMenu: true,
       routeName: 'wallet',
-      visible: roleStore.isOwner,
+      visible: check('Cost_Center_all'),
       command: () => {
         router.push({ name: 'wallet' })
       },
@@ -71,7 +73,6 @@ const items = computed(() => {
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
               {{ item.label }}
             </span>
-            <SvgIcon class="absolute -top-0.5 right-0.25" size="24" name="base/new_badge" />
           </a>
         </ShinyButton>
         <a v-else v-ripple class="menu-item" :class="[`menu_${item.routeName}`, { 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }]" v-bind="props.action">
@@ -81,7 +82,7 @@ const items = computed(() => {
         </a>
       </template>
     </TieredMenu>
-    <Campaign v-if="roleStore.isOwner" :collapsed />
+    <Campaign v-if="check('Cost_Center_all')" :collapsed />
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">
       <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">

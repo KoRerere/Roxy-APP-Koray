@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import type { ReplyEndStatus } from '../types'
-
-const { status, message } = defineProps<{
-  status: ReplyEndStatus
-  message?: string
+const { data } = defineProps<{
+  data?: Record<string, any>
 }>()
 
-const data = computed(() => {
-  return {
-    class: status === 'error' ? 'status-error' : 'status-interrupt',
-    text: message || (status === 'error' ? $t('发生错误') : $t('已中断')),
+const message = computed(() => {
+  switch (data?.errorCode || 0) {
+    case 402:
+      return $t('您的 Roxy AI Agent 请求已达上限，如需调整体验额度，请与我们的技术支持联系。')
+    case 429:
+      return $t('您的 Roxy AI Agent 请求过于频繁，请稍后重试。')
+    case 400:
+      return $t('模型不支持，请尝试将 APP 更到最新版本，或者重启 Roxy AI Agent 窗口')
+    case 504:
+      return $t('额度限制，如需体验额度，请联系技术支持。')
+    default:
+      return $t('未知错误，请联系技术支持。')
   }
 })
 </script>
 
 <template>
-  <div class="flex items-center gap-1.5 px-3 py-2 rounded-1 status-message" :class="data.class">
+  <div class="flex items-center gap-1.5 px-3 py-2 rounded-1 status-message status-error">
     <SvgIcon name="base/rx_ic_delete" size="14" />
-    <span>{{ data.text }}</span>
+    <span>{{ message }}</span>
   </div>
 </template>
 

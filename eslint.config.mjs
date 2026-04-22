@@ -61,4 +61,11 @@ export default antfu(
       'perfectionist/sort-imports': 'off',
     },
   },
+  {
+    // 排除 apps/cloud-browser-gateway 目录的 consistent-type-imports 规则
+    files: ['apps/cloud-browser-gateway/**/*'],
+    rules: {
+      'ts/consistent-type-imports': 'off',
+    },
+  },
 )

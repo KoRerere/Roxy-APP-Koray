@@ -1,4 +1,4 @@
-import type { ResourceUpdateMessage } from './mainMessage'
+import type { McpFailureType, ResourceUpdateMessage } from './mainMessage'
 import type {
   UnwrapRowsType,
   UnwrapRowType,
@@ -119,6 +119,8 @@ export interface RenderMessage {
   'dialog:selectDir': (defaultPath?: string) => Promise<string>
   /** 选择文件 */
   'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
+  /** 选择文件或文件夹 */
+  'dialog:selectFileOrDir': (options?: { filters?: FileFilter[], defaultPath?: string }) => Promise<string>
 
   /** 开启系统代理 */
   'app:setProxy': (payload: { proxyRules?: string, proxyBypassRules?: string }) => void
@@ -169,6 +171,8 @@ export interface RenderMessage {
   'app:getCoreList': () => ResourceUpdateMessage[]
   /** 下载指定内核 */
   'app:download-chrome-core': (coreVersion: string) => void
+  /** 取消下载指定内核 */
+  'app:cancel-download-chrome-core': (coreVersion: string) => void
   /** 删除指定内核 */
   'app:delete-chrome-core': (coreVersion: string) => void
   /** 显示 RoxyBrowser 缓存所在目录 */
@@ -210,6 +214,8 @@ export interface RenderMessage {
   'app:setSystemTheme': (theme: NativeTheme['themeSource']) => void
   /** 是否显示长时间未登录提示 */
   'app:isShowLongTimeNotLoginTips': () => boolean
+  /** 设置下次更新时间 */
+  'app:setNextUpdateTime': (timestamp: number) => void
 
   /** 下载指定插件 */
   'extension:download': (
@@ -287,6 +293,14 @@ export interface RenderMessage {
   'util:clearInstallerPath': () => Promise<boolean>
   /** 获取 openapi 端口 */
   'util:getApiPort': () => number
+  /** 在隐藏的 WebContentsView 中加载页面并提取 body 内部的 HTML */
+  'util:fetchHiddenPageHtml': (payload: {
+    url: string
+    timeoutMs?: number
+    settleTimeMs?: number
+    userAgent?: string
+    partition?: string
+  }) => Promise<string>
 
   /** 前端已准备就绪 */
   'web:ready': () => void
@@ -314,14 +328,14 @@ export interface RenderMessage {
       "mode":xx(string),
       "data":xxx(string)
     }
-   
+
     当mode为same的时候，表示所有窗口使用相同文本，data为文本内容
     当mode为diff的时候，表示每个窗口使用不同的内容，data为每个窗口的内容,用dict表示,可以为pid,value为文本内容，例如：
     {
       "10000":"aaaa",
       "10002":"bbbb"
     }
-   
+
     当mode为random的时候,表示随机生成，data为随机策略，格式为dict,
     {
       // 随机范围 -- 注意传入的是string类型
@@ -409,7 +423,12 @@ export interface RenderMessage {
   'syncControl:resume': () => void
 
   /** 打开 MCP */
-  'mcp:open': () => Promise<void>
+  'mcp:open': () => Promise<{
+    success: boolean
+    type?: McpFailureType
+    message?: string
+    details?: Record<string, any>
+  }>
   /** 获取 MCP 配置 */
   'mcp:config': () => Promise<{ port: number }>
   /** 关闭 MCP */
@@ -430,9 +449,23 @@ export interface RenderMessage {
     larkAllowedChatIds?: string
     tgBotToken?: string
     tgAllowedChatIds?: string
-  }) => Promise<{ success: boolean, message?: string }>
+  }) => Promise<{
+    success: boolean
+    data?: { message: string }
+    type?: McpFailureType
+    message?: string
+    details?: Record<string, any>
+  }>
   /** 停止 RoxyClaw */
   'mcp:stopRoxyClaw': () => Promise<{ success: boolean, message?: string }>
   /** 获取 RoxyClaw 状态 */
   'mcp:roxyClawStatus': () => Promise<{ enabled: boolean, connected: boolean }>
+  /** 测试 Telegram 连接 */
+  'mcp:testTelegram': (token: string) => Promise<{ success: boolean, message?: string }>
+  /** 测试 Lark 连接 */
+  'mcp:testLark': (appId: string, appSecret: string, environment: 'lark' | 'feishu') => Promise<{ success: boolean, message?: string }>
+  /** 测试 Slack 连接 */
+  'mcp:testSlack': (botToken: string) => Promise<{ success: boolean, message?: string }>
+  /** 测试 Discord 连接 */
+  'mcp:testDiscord': (botToken: string) => Promise<{ success: boolean, message?: string }>
 }

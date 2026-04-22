@@ -2,22 +2,21 @@
 import { RxAlert } from '/@/components/rx-alert'
 import { format } from 'date-fns'
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProxy } from '/@/views/agent/hooks'
 import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 import { useCommonStore } from '/@/stores/common'
-import { executeSomethingByBackToSelfWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { usePermission } from '/@/hooks/usePermission'
+// import { executeSomethingByBackToSelfWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { sleep } from '/@/utils'
-import { Role } from '/@/enums/role'
+// import { Role } from '/@/enums/role'
 
 const router = useRouter()
-const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { fetchUserInfo, getUserPayInfo } = useUserStore()
-
+const { check } = usePermission()
 const { viewExpiresSoonProxy } = useProxy()
 
 const remainTime = ref(0)
@@ -114,14 +113,14 @@ function onHtmlClick(e: MouseEvent) {
     },
   }
 
-  if (query.name === 'shop' || query.role === Role.OWNER.toString()) {
-    executeSomethingByBackToSelfWorkspace(() => {
-      router.replace(replaceParams)
-    })()
-  }
-  else {
-    router.replace(replaceParams)
-  }
+  // if (query.name === 'shop' || query.role === Role.OWNER.toString()) {
+  //   executeSomethingByBackToSelfWorkspace(() => {
+  //     router.replace(replaceParams)
+  //   })()
+  // }
+  // else {
+  router.replace(replaceParams)
+  // }
 }
 
 function handleCloseSubscriptionExpired() {
@@ -149,7 +148,7 @@ function handleCloseProxyExpired() {
     </Message>
     <RxAlert v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" class="w-full expired-alert" type="warn" announcement @close="handleCloseSubscriptionExpired">
       <template #title>
-        <i18n-t v-if="roleStore.isOwner" :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
+        <i18n-t v-if="check('Cost_Center_all')" :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
           <template #link>
             <span class="font-bold underline cursor-pointer" @click="onRenewal">
               {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}
@@ -163,7 +162,7 @@ function handleCloseProxyExpired() {
       <template #title>
         <i18n-t scope="global" :keypath="$t('您的一些代理 IP 即将过期。为避免您使用受到任何干扰，请{link}。', { link: '{link}' })">
           <template #link>
-            <span v-if="roleStore.isOwner" class="font-bold underline cursor-pointer" @click="viewExpiresSoonProxy">{{ $t('点击查看') }}</span>
+            <span v-if="check('Cost_Center_all')" class="font-bold underline cursor-pointer" @click="viewExpiresSoonProxy">{{ $t('点击查看') }}</span>
             <span v-else>{{ $t('联系空间拥有者续费') }}</span>
           </template>
         </i18n-t>

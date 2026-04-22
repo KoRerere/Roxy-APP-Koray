@@ -11,7 +11,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { useSimpleLocale } from '/@/stores/locale'
 import { OrderType, PaymentStatus, PayWay } from '/@/enums/pay'
 import { sleep } from '/@/utils/basic'
@@ -37,7 +37,7 @@ export function usePay() {
   const [showModal] = RxUseDialog()
   const [showToast, onlyErrorToast] = useResponseToast()
   const { userPayInfo } = storeToRefs(useUserStore())
-  const { isOwner } = storeToRefs(useRoleStore())
+  const { check } = usePermission()
   const { currentLocale } = storeToRefs(useSimpleLocale())
 
   const { getUserPayInfo } = useUserStore()
@@ -103,7 +103,7 @@ export function usePay() {
   }
 
   async function planSuccess() {
-    if (!isOwner.value)
+    if (!check('Cost_Center_all'))
       return
 
     await getUserPayInfo()
@@ -129,7 +129,7 @@ export function usePay() {
   }
 
   async function balanceSuccess() {
-    if (!isOwner.value)
+    if (!check('Cost_Center_all'))
       return
     const { promise, resolve } = Promise.withResolvers<void>()
     dialog.open(BalanceSuccessModal, {
@@ -153,7 +153,7 @@ export function usePay() {
   }
 
   async function purchaseSuccess() {
-    if (!isOwner.value)
+    if (!check('Cost_Center_all'))
       return
     await getUserPayInfo()
     const { maxMemberCount, maxWorkspaceCount } = userPayInfo.value!

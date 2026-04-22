@@ -42,7 +42,7 @@ function onCopy(dirId: string) {
       <slot name="before" />
       <RyForm v-if="settings.basic?.length" class="profile-info" :inputs="settings.basic">
         <template #name="{ input }">
-          <div class="flex flex-col px-4 guide1">
+          <div class="flex flex-col px-4">
             <div class="flex items-center justify-between">
               <InputLabel v-bind="input" />
               <div v-if="!!input.dirId" class="flex items-center gap-2.5 mb-2 dir-id">
@@ -71,7 +71,7 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #proxy="{ input }">
-          <div class="-mt-5 px-4 py-6 w-full dashed-border guide2">
+          <div class="-mt-5 px-4 py-6 w-full dashed-border">
             <ProxyItem v-model="input.value" v-bind="input" />
           </div>
         </template>

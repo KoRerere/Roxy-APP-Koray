@@ -11,6 +11,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import type { CheckResult } from '/@/views/agent/hooks'
 
 const {
   data = {},
@@ -26,7 +27,8 @@ const [showToast] = useResponseToast()
 const { getUserConfig } = useUserStore()
 const userStore = useUserStore()
 
-const { testProxy, checkResult, batchTestShowToast } = useCheckProxy()
+const { testProxy, batchTestShowToast } = useCheckProxy()
+const lastTestResult = ref<CheckResult | null>(null)
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
 const formRef = useTemplateRef('form')
@@ -276,6 +278,7 @@ async function onCheckProxyStatus() {
   loading.value = true
   const result = await testProxy(formData!)
   loading.value = false
+  lastTestResult.value = result
   original.value = { ...original.value, ...result }
   batchTestShowToast([result])
 
@@ -337,7 +340,7 @@ defineExpose({
       <RxAlert ref="alert" v-model:visible="alertVisible" class="shrink-0 !w-full" type="success" :title="$t('测试成功')">
         <template #content>
           <i18n-t class="whitespace-pre-wrap" tag="div" scope="global"
-                  :keypath="$t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkResult.lastCountry}${strConcat('/', checkResult.lastCity)}`, ip: checkResult.lastIp, timezone: checkResult.timezone })"
+                  :keypath="$t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${lastTestResult?.lastCountry ?? ''}${strConcat('/', lastTestResult?.lastCity)}`, ip: lastTestResult?.lastIp, timezone: lastTestResult?.timezone })"
           />
         </template>
       </RxAlert>

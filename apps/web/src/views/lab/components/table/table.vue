@@ -1,6 +1,26 @@
 <script setup lang="ts">
-import { getFormData, isLikeFunction } from '/@/utils'
+import type { DataTableSortEvent } from 'primevue/datatable'
 import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem'
+import type { LabTableSortInit } from './type'
+import type { SortOrderNumber } from '/@/utils'
+import { getFormData, getSortIcon, isLikeFunction, transformSortOrder } from '/@/utils'
+import { RxSvgIcon } from '/@/components/rx-icon'
+
+// ============== 头部 ==============
+import Display from './display.vue'
+import { saveDisplaySettings, setDisplay } from './utils'
+
+// ============== 操作部分 ==============
+import Actions from './actions.vue'
+import SelectionActions from './selection-actions.vue'
+import { usePreventMask } from '/@/hooks/usePreventMask'
+
+// ========================= 分页 ==============
+import TablePaginator from './table-paginator.vue'
+
+// ======================= 生成数据 =======================
+import TableFilter from './table-filter.vue'
+import TableReload from './table-reload.vue'
 
 interface Props {
   dataKey?: string
@@ -14,6 +34,8 @@ interface Props {
   immediate?: boolean
   tableRequest?: (data: any) => any | Promise<any>
   tableFilters?: () => any | Promise<any>
+  /** 提供后启用服务端排序：与列表请求参数 orderName / orderType 联动 */
+  tableSort?: () => LabTableSortInit | Promise<LabTableSortInit | null | undefined> | null | undefined
   beforeRefresh?: () => any | Promise<any>
   afterRefresh?: () => any | Promise<any>
 }
@@ -32,6 +54,7 @@ const {
   immediate = true,
   tableRequest = () => ({}),
   tableFilters = () => [],
+  tableSort: tableSortProp,
   beforeRefresh,
   afterRefresh,
 } = defineProps<Props>()
@@ -47,16 +70,20 @@ const tableAttrs = {
   resizableColumns: true,
   columnResizeMode: 'expand',
   selectionMode,
-  onRowContextmenu: onRowContextmenu,
-  // sortOrder:'',
-  // sortField:'',
-  // onSort: () => { },
-  ...attrs
+  onRowContextmenu,
+  ...attrs,
 }
 
-//============== 头部 ==============
-import Display from './display.vue'
-import { setDisplay, saveDisplaySettings } from './utils'
+const serverSortEnabled = ref(false)
+const _sorts = reactive<{
+  sortField: string
+  sortOrder: SortOrderNumber
+  onChange?: LabTableSortInit['onChange']
+}>({
+  sortField: '',
+  sortOrder: 0,
+  onChange: undefined,
+})
 
 const rawColumns = ref(initColumns())
 
@@ -70,28 +97,23 @@ function initColumns() {
   const _columns = columns.some(item => item.field === 'actions')
     ? [...columns]
     : columns.concat({
-      header: 'Actions',
-      field: 'actions',
-      props: {
-        frozen: true,
-        alignFrozen: 'right',
-        headerStyle: 'width: 0rem; min-width: 120px',
-        pt: {},
-      },
-      render: ({ data, index }: { data: any, index: number }) => h(Actions, {
-        model: originalModel,
-        data,
-        onMore: (event: any) => onRowContextmenu({ originalEvent: event, data, index })
+        header: 'Actions',
+        field: 'actions',
+        props: {
+          frozen: true,
+          alignFrozen: 'right',
+          headerStyle: 'width: 0rem; min-width: 120px',
+          pt: {},
+        },
+        render: ({ data, index }: { data: any, index: number }) => h(Actions, {
+          model: originalModel,
+          data,
+          onMore: (event: any) => onRowContextmenu({ originalEvent: event, data, index }),
+        }),
       })
-    })
 
   return setDisplay(displayKey, _columns)
 }
-
-//============== 操作部分 ==============
-import Actions from './actions.vue'
-import SelectionActions from './selection-actions.vue'
-import { usePreventMask } from '/@/hooks/usePreventMask'
 
 const { showPreventMask, hidePreventMask } = usePreventMask()
 
@@ -102,20 +124,20 @@ const contextMenuSelection = ref()
 const isSelectionContextmenu = ref(false)
 
 const contextModel = originalModel.filter(item => !(item.onlyQuick || item.onlyMultiple)).map(item =>
-  item.hasOwnProperty('command') && isLikeFunction(item.command)
+  Object.hasOwn(item, 'command') && isLikeFunction(item.command)
     ? {
-      ...item,
-      command: async (event: MenuItemCommandEvent) => {
-        const result: unknown = await item.command!({ ...event, data: toRaw(contextMenuSelection.value) })
-        if (isSelectionContextmenu.value) {
-          isSelectionContextmenu.value = false
-          if (result !== false) {
-            selectedProduct.value = []
+        ...item,
+        command: async (event: MenuItemCommandEvent) => {
+          const result: unknown = await item.command!({ ...event, data: toRaw(contextMenuSelection.value) })
+          if (isSelectionContextmenu.value) {
+            isSelectionContextmenu.value = false
+            if (result !== false) {
+              selectedProduct.value = []
+            }
           }
-        }
+        },
       }
-    }
-    : item
+    : item,
 )
 
 function onRowContextmenu(event: any) {
@@ -135,7 +157,7 @@ function getMenuProps(item: any, extra: any = {}) {
     icon,
     label,
     disabled,
-    ...extra
+    ...extra,
   }
 }
 
@@ -143,9 +165,6 @@ async function onMenuCommand(event: Event, item: any) {
   await item.command?.({ originalEvent: event, item })
   ctxmenuRef.value?.hide()
 }
-
-//========================= 分页 ==============
-import TablePaginator from './table-paginator.vue'
 
 const route = useRoute()
 const cachedRows = Number(localStorage.getItem(`table:${cacheKey}`)) || 10
@@ -157,10 +176,6 @@ const totalRecords = ref(0)
 function onPaginatorUpdate() {
   _request()
 }
-
-// ======================= 生成数据 =======================
-import TableFilter from './table-filter.vue'
-import TableReload from './table-reload.vue'
 
 const _firstLoad = ref(false)
 const _loading = ref(false)
@@ -186,18 +201,45 @@ function onFilterChange() {
 }
 
 async function _getCondition() {
-  const filters = await tableFilters()
+  const [filters, sortInit] = await Promise.all([
+    tableFilters(),
+    tableSortProp ? tableSortProp() : Promise.resolve(null),
+  ])
   _filters.value = filters
+
+  if (sortInit) {
+    _sorts.sortField = sortInit.data?.sortField ?? ''
+    _sorts.sortOrder = (sortInit.data?.sortOrder ?? 0) as SortOrderNumber
+    _sorts.onChange = sortInit.onChange
+    serverSortEnabled.value = true
+  }
 }
 
 function _getParams() {
-  return {
+  const params: Record<string, any> = {
     page_index: Math.ceil(paginatorFirst.value / paginatorRows.value) + 1,
     page_size: paginatorRows.value,
     ...getFormData(_filters.value),
     ...tableParams,
     ..._outerParams.value,
   }
+  if (serverSortEnabled.value && _sorts.sortField) {
+    params.orderName = _sorts.sortField
+    const orderType = transformSortOrder(_sorts.sortOrder)
+    if (orderType)
+      params.orderType = orderType
+  }
+  return params
+}
+
+async function _onSortChange(event: DataTableSortEvent) {
+  if (!serverSortEnabled.value)
+    return
+  _sorts.sortField = (event.sortField as string) ?? ''
+  _sorts.sortOrder = (event.sortOrder ?? 0) as SortOrderNumber
+  paginatorFirst.value = 0
+  await _sorts.onChange?.({ sortField: _sorts.sortField, sortOrder: _sorts.sortOrder })
+  await _request()
 }
 
 async function _request() {
@@ -216,11 +258,17 @@ async function _onRefresh() {
   await afterRefresh?.()
 }
 
+function isSkeletonPlaceholder(row: any) {
+  const v = row?.[dataKey]
+  return v === undefined || v === null || v === ''
+}
+
 defineExpose({
   getParams: _getParams,
   getColumns: () => rawColumns.value,
   refresh: async (outerParams = {}, force = true) => {
-    if (force) paginatorFirst.value = 0
+    if (force)
+      paginatorFirst.value = 0
     _outerParams.value = outerParams
     await _onRefresh()
   },
@@ -232,31 +280,45 @@ defineExpose({
 
 <template>
   <div class="w-full h-full flex flex-col" :class="wrapClass">
-
     <div class="w-full h-10 px-6 flex justify-end items-center">
       <div class="flex-1 flex flex-wrap gap-2">
-        <slot name="filter-before"></slot>
+        <slot name="filter-before" />
         <TableFilter v-if="_filters" :filters="_filters" @change="onFilterChange" />
-        <slot name="filter-after"></slot>
+        <slot name="filter-after" />
       </div>
       <div class="flex items-center gap-2">
-        <Display v-if="displayKey" v-model="rawColumns"></Display>
+        <Display
+          v-if="displayKey"
+          v-model="rawColumns"
+          :sort-field="serverSortEnabled ? _sorts.sortField : ''"
+          :sort-order="serverSortEnabled ? _sorts.sortOrder : 0"
+        />
         <RxDivider class="!h-5" vertical line-only />
         <TableReload :loading="_loading" @click="_onRefresh" />
       </div>
     </div>
 
     <div class="relative flex-1 overflow-hidden">
-      <DataTable :value="_tableValue" v-bind="tableAttrs" v-model:selection="selectedProduct" :contextMenuSelection="contextMenuSelection" :pt="{
+      <DataTable
+        v-bind="tableAttrs"
+        v-model:selection="selectedProduct"
+        :value="_tableValue"
+        :context-menu-selection="contextMenuSelection"
+        :sort-field="serverSortEnabled ? _sorts.sortField : undefined"
+        :sort-order="serverSortEnabled ? _sorts.sortOrder : undefined"
+        :pt="{
         root: $style.tableroot,
         table: [$style.table, { 'flex-1 !h-full': _tableValue?.length }],
         emptymessagecell: '!whitespace-normal !text-center',
         tbody: $style.tbody,
         headerrow: $style.headerrow,
         bodyrow: (options: any) => ({ class: $style.bodyrow, dataRowId: options.props.rowData[dataKey] }),
-      }">
-        <Column v-if="!!tableAttrs.selectionMode" :selectionMode="tableAttrs.selectionMode" headerStyle="width:0%" bodyStyle="width:0%"
-          :pt="{ headercell: $style.headercell, bodycell: $style.bodycell }">
+      }"
+        @sort="_onSortChange"
+      >
+        <Column v-if="!!tableAttrs.selectionMode" :selection-mode="tableAttrs.selectionMode" header-style="width:0%" body-style="width:0%"
+                :pt="{ headercell: $style.headercell, bodycell: $style.bodycell }"
+        >
           <template #headercheckboxicon="{ checked }">
             <SvgIcon v-show="checked" name="base/rx_ic_checkmark" color="#ffffff" />
           </template>
@@ -268,30 +330,42 @@ defineExpose({
         <Column v-for="{ headerRender, headerSlot, render, slot, ...col } of _tableColumns" :key="col.field" v-bind="col.props" :field="col.field" :pt="{
           headercell: $style.headercell,
           columnheadercontent: $style.header_text,
-          bodycell: { class: [$style.bodycell, $style.body_text], ...col.cellProps }
-        }">
+          bodycell: { class: [$style.bodycell, $style.body_text], ...col.cellProps },
+        }"
+        >
           <template #header>
-            <component v-if="headerRender" :is="headerRender" :column="col"></component>
+            <component :is="headerRender" v-if="headerRender" :column="col" />
             <slot v-else :name="headerSlot" :column="col">
               {{ col.header }}
             </slot>
           </template>
+          <template v-if="serverSortEnabled && col.props?.sortable" #sorticon="{ sorted, sortOrder: colSortOrder, ...rest }">
+            <div :class="rest.class">
+              <RxSvgIcon :name="getSortIcon((sorted ? colSortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)" />
+            </div>
+          </template>
           <template #body="{ data, index }">
-            <component v-if="render" :is="render" :column="col" :data="data" :index="index"></component>
-            <slot v-else :name="slot" :column="col" :data="data" :index="index">
-              {{ col.getText?.(data) || data[col.field] }}
-            </slot>
+            <template v-if="col.skeleton && isSkeletonPlaceholder(data)">
+              <Skeleton v-bind="col.skeleton" />
+            </template>
+            <template v-else>
+              <component :is="render" v-if="render" :column="col" :data="data" :index="index" />
+              <slot v-else :name="slot" :column="col" :data="data" :index="index">
+                {{ col.getText?.(data) || data[col.field] }}
+              </slot>
+            </template>
           </template>
         </Column>
       </DataTable>
 
-      <SelectionActions v-if="tableAttrs.selectionMode === 'multiple' && selectedProduct?.length > 0" v-model:selection="selectedProduct" :total="10" :model="originalModel"
-        @more="onSelectionContextmenu({ originalEvent: $event, data: selectedProduct })"></SelectionActions>
+      <SelectionActions v-if="tableAttrs.selectionMode === 'multiple' && selectedProduct?.length > 0" v-model:selection="selectedProduct" :total="_tableValue?.length ?? 0" :model="originalModel"
+                        @more="onSelectionContextmenu({ originalEvent: $event, data: selectedProduct })"
+      />
 
-      <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
+      <RxLoading v-model="_loading" :opacity="0.9" />
     </div>
 
-    <TablePaginator v-model:first="paginatorFirst" v-model:rows="paginatorRows" :cacheKey="cacheKey" :totalRecords="totalRecords" @update="onPaginatorUpdate"></TablePaginator>
+    <TablePaginator v-model:first="paginatorFirst" v-model:rows="paginatorRows" :cache-key="cacheKey" :total-records="totalRecords" @update="onPaginatorUpdate" />
 
     <ContextMenu ref="ctxmenu" :model="contextModel" :pt="{ root: '!border-0.5' }" @show="showPreventMask" @before-hide="hidePreventMask" @hide="contextMenuSelection = null">
       <template #item="{ item, props }">

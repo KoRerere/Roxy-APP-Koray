@@ -24,12 +24,11 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ClearType, ProfileModifyType, ProfileReqType, ProxyType } from '/@/enums'
-import { FirstGiftType } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
-import { copyText, deepClone, safeParseJSON } from '/@/utils'
+import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
+import { copyText, deepClone, genDriver, safeParseJSON } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
@@ -39,9 +38,9 @@ import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
-import { useDriverDataTableTour } from '/@/hooks/useDriverDataTableTour'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
+import { useProfileProxySpeedTest } from '/@/views/browser/list/profiles/hooks/useProfileProxySpeedTest'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/useProfileOpenState'
@@ -70,7 +69,6 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const drawerInstance = useDrawer()
-const role = useRoleStore()
 const { userInfo, userConfig } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
@@ -80,8 +78,8 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
-const { drive } = useDriverDataTableTour()
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
+const { runProxySpeedTestForRows } = useProfileProxySpeedTest()
 const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
@@ -91,6 +89,8 @@ const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const advancedSearchOptions = getAdvancedSearch()
+const dataList = ref<Data[]>([])
+const driverObj = ref()
 
 const {
   openMessage,
@@ -101,49 +101,17 @@ const {
   openBrowserBefore,
   getNotUsedProfiles,
   syncOpenedBrowserState,
+  sendFirstOpenRecord,
 } = useProfileOpenState()
 
 const { hasFiltered, hasTempProfile, onRefreshTable, tableRequest } = useProfilesTable({
   tableRef,
   filtersMenu,
   getCurrentFilterParams: () => props.currentFilter?._params,
-  route,
-  router,
   openBrowserBefore,
 })
 
-const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowModify({
-  onlyErrorToast,
-  onRefreshTable,
-})
-
-async function onFirstRegisterGuide(type: string) {
-  await tableRef.value?.refresh({}, true)
-  nextTick(() => {
-    drive({
-      el: tableRef.value?.$el,
-      steps: [
-        {
-          pick: { rect: { rows: [0, 1], cols: [1, 1], mode: 'data' } },
-          popover: {
-            description: FirstGiftType.Discount === type ? $t('我们已为您创建好一些独立窗口。现在，只需为每个窗口绑定对应的平台账号与代理 IP，就能实现完全隔离的多账号操作。') : $t('赠送的代理 IP 已自动绑定至新窗口。无需复杂设置，即可开始完全隔离的多账号操作。'),
-            side: 'bottom',
-            align: 'center',
-          },
-        },
-        {
-          pick: { selector: '.p-datatable-tbody > tr:nth-child(-n+2) > td:nth-child(4)' },
-          popover: { description: $t('点击"打开"按钮以启动您的窗口。'), side: 'bottom', align: 'center' },
-        },
-      ],
-      options: {
-        onDestroyed: () => {
-          emitter.emit('asideMenuGuide')
-        },
-      },
-    })
-  })
-}
+const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowModify({ onlyErrorToast, onRefreshTable })
 
 watch(() => props.currentFilter, (value: any) => {
   if (value) {
@@ -169,9 +137,13 @@ let cancelCloseListener: (() => void) | undefined
 let cancelCloseSyncingDataListener: (() => void) | undefined
 
 onBeforeMount(() => {
-  cancelOpenListener = listenOpenMessage()
+  cancelOpenListener = listenOpenMessage({
+    openSuccessAfter: () => driverNext(),
+  })
   cancelCloseListener = listenCloseMessage()
   cancelCloseSyncingDataListener = listenCloseSyncingDataMessage()
+
+  emitter.on('refreshProfileList', () => onRefreshTable())
 
   if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false)
     emitter.on('firstRegisterGuide', onFirstRegisterGuide)
@@ -203,6 +175,84 @@ onBeforeUnmount(() => {
   cancelCloseListener?.()
   cancelCloseSyncingDataListener?.()
 })
+
+async function onFirstRegisterGuide() {
+  await tableRef.value?.refresh({}, true)
+  nextTick(() => {
+    driverObj.value = genDriver({
+      showProgress: false,
+      disableActiveInteraction: false,
+      allowClose: true,
+      overlayClickBehavior: 'close',
+      showButtons: ['close'],
+      stagePadding: 0,
+      popoverOffset: 20,
+      onDestroyed: () => {
+        blurDomSpotlight()
+      },
+      steps: [
+        {
+          element: '#OPEN_0',
+          popover: {
+            description: $t('点击「打开」按钮即可启动该浏览器环境。'),
+            side: 'right',
+            align: 'center',
+          },
+          onHighlightStarted: () => {
+            nextTick(() => {
+              requestAnimationFrame(() => {
+                focusDomSpotlight('#OPEN_0')
+              })
+            })
+          },
+          onDeselected: () => {
+            blurDomSpotlight()
+          },
+        },
+      ],
+    })
+
+    driverObj.value.drive()
+  })
+}
+
+function driverNext() {
+  if (driverObj.value) {
+    driverObj.value = undefined
+    emitter.emit('asideMenuGuide')
+  }
+}
+
+async function getTableList(params: Record<string, unknown>) {
+  const data = await tableRequest(params)
+  if (data.code === 0)
+    dataList.value = data.data?.rows ?? []
+  return data
+}
+
+async function testAllProxy() {
+  if (!dataList.value?.length) {
+    onlyErrorToast(-1, $t('暂无窗口'))
+    return
+  }
+  const targets = dataList.value.filter(row => row.proxyCategory !== 'noproxy')
+  if (!targets.length) {
+    onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
+    return
+  }
+  await runProxySpeedTestForRows(targets, { showConcurrentTaskTopBar: true })
+}
+
+async function onTestProxy(data: any) {
+  const datas: Data[] = [].concat(data)
+
+  const targets = datas.filter(row => row.proxyCategory !== 'noproxy')
+  if (!targets.length) {
+    onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
+    return
+  }
+  await runProxySpeedTestForRows(targets)
+}
 
 async function saveFilters(formData: any) {
   if (!filtersMenu.value.some((item: any) => item.value)) {
@@ -265,6 +315,7 @@ const operationHandler = createProfileOperationHandler({
   onClearCache,
   exportProfile,
   deleteProfile,
+  onTestProxy,
 })
 
 async function setAsDefaultBrowser(data: Data) {
@@ -327,13 +378,13 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
 async function onTransfer(datas: Data[], operate?: any) {
   const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
-    if (!role.isOwner) {
+    if (!check('Cost_Center_all')) {
       emitter.emit('showToast', {
         severity: 'warn',
         life: 5000,
-        summary: $t('窗口投送不可用'),
+        summary: $t('窗口转移不可用'),
         detail: (
-          <I18nT keypath={$t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })}>
+          <I18nT keypath={$t('窗口转移不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })}>
             {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
           </I18nT>
         ),
@@ -353,9 +404,9 @@ async function onTransfer(datas: Data[], operate?: any) {
       emitter.emit('showToast', {
         severity: 'warn',
         life: 5000,
-        summary: $t('窗口投送不可用'),
+        summary: $t('窗口转移不可用'),
         detail: (
-          <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })}>
+          <I18nT keypath={$t('窗口转移为 Roxy 会员功能，{link}以解锁', { link: '{link}' })}>
             {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
           </I18nT>
         ),
@@ -366,7 +417,7 @@ async function onTransfer(datas: Data[], operate?: any) {
 
   const result = await getNotUsedProfiles(datas)
   if (result.length !== datas.length) {
-    onlyErrorToast(-1, $t('当前已打开的窗口无法被投送'))
+    onlyErrorToast(-1, $t('当前已打开的窗口无法被转移'))
     return
   }
 
@@ -392,7 +443,7 @@ async function onTransfer(datas: Data[], operate?: any) {
           const { isSelf, needRefresh } = params || {}
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
-            // 如果在项目列表中投送，投送成功则跳到投送中 tab
+            // 如果在项目列表中转移，转移成功则跳到转移中 tab
             if (route.name === 'project-item') {
               router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
             }
@@ -404,7 +455,7 @@ async function onTransfer(datas: Data[], operate?: any) {
             if (needRefresh) {
               onRefreshTable()
             }
-            showToast(0, $t('投送成功'))
+            showToast(0, $t('转移成功'))
           }
           resolve()
         },
@@ -418,52 +469,52 @@ async function onMoveToProject(data: any) {
   const options = await getProjects()
   const datas: any[] = [].concat(data)
 
-  return new Promise((resolve, reject) => {
-    const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
-    const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
 
-    showSimpleDialog({
-      title: $t('移动项目'),
-      content: $t('将移动 {names} 到所选项目', { names: namesStr }),
-      inputs: [
-        {
-          type: 'select',
-          name: 'projectId',
-          props: {
-            placeholder: $t('请选择项目'),
-            options,
-            optionValue: 'value',
-          },
-          resolver: (z: any) => z.string({
-            invalid_type_error: $t('请选择项目'),
-          }).min(1, $t('请选择项目')),
+  const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
+  const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
+
+  showSimpleDialog({
+    title: $t('移动项目'),
+    content: $t('将移动 {names} 到所选项目', { names: namesStr }),
+    inputs: [
+      {
+        type: 'select',
+        name: 'projectId',
+        props: {
+          placeholder: $t('请选择项目'),
+          options,
+          optionValue: 'value',
         },
-      ],
-      onConfirm: async (formData: any) => {
-        if (formData.projectId) {
-          const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
-          if (!ids.length) {
-            onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
-            return
-          }
-          await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, true)
-            .then(() => {
-              const projectName = options.find(item => item.value === formData.projectId)!.label
-              datas.forEach((item) => {
-                item.projectName = projectName
-                item.projectId = Number(formData.projectId)
-                item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
-                item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
-              })
-            })
+        resolver: (z: any) => z.string({
+          invalid_type_error: $t('请选择项目'),
+        }).min(1, $t('请选择项目')),
+      },
+    ],
+    onConfirm: async (formData: any) => {
+      if (formData.projectId) {
+        const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+        if (!ids.length) {
+          onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
+          return
         }
-        resolve(true)
-      },
-      onCancel: () => {
-        reject($t('取消'))
-      },
-    })
+        await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, true)
+          .then(() => {
+            const projectName = options.find(item => item.value === formData.projectId)!.label
+            datas.forEach((item) => {
+              item.projectName = projectName
+              item.projectId = Number(formData.projectId)
+              item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+              item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
+            })
+          })
+      }
+      resolve()
+    },
+    onCancel: reject,
   })
+
+  return promise
 }
 
 function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }: any) {
@@ -698,7 +749,7 @@ async function onClearCache(datas: any[]) {
     data: {
       props: {
         title: $t('清空窗口缓存'),
-        content: $t('清除时系统会自动关闭窗口，且可能导致登录状态失效'),
+        content: $t('常用于解决未知原因的环境打开异常或缓慢等问题。'),
       },
       onConfirm: async (result: ClearType) => {
         const dirIds = datas.map(item => item.dirId)
@@ -749,40 +800,42 @@ async function deleteProfile(datas: any, ids: number[]) {
     return
   }
 
-  return new Promise((resolve, reject) => {
-    confirm.require({
-      group: 'deleteConfirmDialog',
-      header: $t('删除窗口'),
-      message: $t('您确认要将所选窗口移至回收站吗？'),
-      rejectProps: {
-        label: $t('取消'),
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptProps: {
-        label: $t('确认'),
-        severity: 'danger',
-      },
-      checkboxProps: check('Profiles_permanent_delete') && { label: $t('彻底删除'), value: false },
-      async accept() {
-        if (this.checkboxProps.value) {
-          const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
-          onlyErrorToast(code, msg)
-          if (code !== 0)
-            return reject(msg)
-          onRefreshTable()
-          globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
-        }
-        else {
-          await batchModifyWindow({ ids, isDelete: true, requestType: ProfileReqType.Delete })
-        }
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
 
-        resolve(true)
-      },
-      reject,
-      onHide: reject,
-    } as any)
-  })
+  confirm.require({
+    group: 'deleteConfirmDialog',
+    header: $t('删除窗口'),
+    message: $t('您确认要将所选窗口移至回收站吗？'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    checkboxProps: check('Profiles_permanent_delete') && { label: $t('彻底删除'), value: false },
+    async accept() {
+      if (this.checkboxProps.value) {
+        const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
+        onlyErrorToast(code, msg)
+        if (code !== 0)
+          return reject(msg)
+        onRefreshTable()
+        globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
+      }
+      else {
+        await batchModifyWindow({ ids, isDelete: true, requestType: ProfileReqType.Delete })
+      }
+
+      resolve()
+    },
+    reject,
+    onHide: reject,
+  } as any)
+
+  return promise
 }
 
 async function toCreateBrowser() {
@@ -803,7 +856,7 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="getTableList" :table-operation="getOperation"
            :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
   >
     <template #filter-after>
@@ -813,6 +866,7 @@ defineExpose({
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
                        @filter-change="onRefreshTable"
         />
+        <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy" />
       </div>
     </template>
     <template #table-empty>
@@ -869,9 +923,9 @@ defineExpose({
         <Skeleton width="160px" height="24px" border-radius="4px" />
       </template>
     </template>
-    <template #open="{ data }">
+    <template #open="{ data, index }">
       <template v-if="data.id">
-        <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
+        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord" @open="openBrowserBefore" />
       </template>
       <template v-else>
         <Skeleton width="70px" height="24px" border-radius="4px" />
@@ -933,7 +987,7 @@ defineExpose({
           >
             <SvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
           </div>
-          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+          <Actions :operation="getOperation(data)" :loading-operation-map="data.loadingOperationMap" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>
       </div>
     </template>

@@ -297,7 +297,7 @@ export function processSSEEvent(
         // 结束该 task 的 thinking
         finalizeTaskThinkings(task, timestamp)
         // 避免重复添加
-        if (!task.toolCalls.find(t => t.toolId === toolId)) {
+        if (!task.toolCalls.some(t => t.toolId === toolId)) {
           task.toolCalls.push({
             toolId: toolCallBlock.toolId,
             toolName: toolCallBlock.toolName,
@@ -861,7 +861,7 @@ export function parseHistorySSE2(content: string) {
         break
       case 'error':
       case 'interrupt':
-        messageViewer.add(block.type, block.type, block.data?.message || '', block.timestamp)
+        messageViewer.add(block.type, block.type, block.data, block.timestamp)
         break
       // case 'done':
       default:

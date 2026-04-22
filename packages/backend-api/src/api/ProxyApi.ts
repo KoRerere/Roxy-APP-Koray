@@ -24,12 +24,20 @@ import {
   UserGetPromotionRedeemCodeListListParams,
   UserGetProxyAllCountriesListData,
   UserGetProxyAllCountriesListParams,
+  UserGetProxyBusinessSceneListListData,
+  UserGetProxyBusinessSceneListListParams,
   UserGetProxyBusinessUseListListData,
+  UserGetProxyCountryListByContinentListData,
+  UserGetProxyCountryListByContinentListParams,
   UserGetProxyCountryPriceListListData,
   UserGetProxyCountryPriceListListParams,
+  UserGetProxyListMergedListData,
+  UserGetProxyListMergedListParams,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
   UserGetProxyProviderListListData,
+  UserGetProxyProvidersByBusinessSceneListData,
+  UserGetProxyProvidersByBusinessSceneListParams,
   UserGetProxyProvidersTypeListData,
   UserGetProxyPurchaseCountryListListData,
   UserGetProxyPurchaseCountryListListParams,
@@ -41,6 +49,9 @@ import {
   UserGetProxyStoreListListData,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
+  UserGetProxyVendorJumpInfoListData,
+  UserGetProxyVendorJumpInfoListParams,
+  UserGetProxyVendorListListData,
   UserGetTimezoneByCoordinatesInfoListData,
   UserGetTimezoneByCoordinatesInfoListParams,
   UserGetTimezoneByIpListData,
@@ -57,6 +68,8 @@ import {
   UserRedeemProxyCodeCreatePayload,
   UserRegisterProxyProviderUserCreateData,
   UserRegisterProxyProviderUserCreatePayload,
+  UserReportProxyOutOfStockCreateData,
+  UserReportProxyOutOfStockCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
   UserSetProxyAutoRenewalCreateData,
@@ -650,6 +663,143 @@ export class ProxyApi<SecurityDataType = unknown> {
       path: `/user_get_proxy_country_price_list`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyListMergedList
+   * @summary 获取代理列表(代理商店+代理列表)
+   * @request GET:/user_get_proxy_list_merged
+   * @response `200` `UserGetProxyListMergedListData`
+   */
+  userGetProxyListMergedList = (
+    query: UserGetProxyListMergedListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyListMergedListData, any>({
+      path: `/user_get_proxy_list_merged`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyVendorListList
+   * @summary 获取代理厂商列表
+   * @request GET:/user_get_proxy_vendor_list
+   * @response `200` `UserGetProxyVendorListListData`
+   */
+  userGetProxyVendorListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyVendorListListData, any>({
+      path: `/user_get_proxy_vendor_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyBusinessSceneListList
+   * @summary 获取代理业务用途场景列表
+   * @request GET:/user_get_proxy_business_scene_list
+   * @response `200` `UserGetProxyBusinessSceneListListData`
+   */
+  userGetProxyBusinessSceneListList = (
+    query: UserGetProxyBusinessSceneListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyBusinessSceneListListData, any>({
+      path: `/user_get_proxy_business_scene_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyProvidersByBusinessSceneList
+   * @summary 按业务场景ID获取关联代理供应商列表
+   * @request GET:/user_get_proxy_providers_by_business_scene
+   * @response `200` `UserGetProxyProvidersByBusinessSceneListData`
+   */
+  userGetProxyProvidersByBusinessSceneList = (
+    query: UserGetProxyProvidersByBusinessSceneListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyProvidersByBusinessSceneListData, any>({
+      path: `/user_get_proxy_providers_by_business_scene`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyCountryListByContinentList
+   * @summary 新版代理商店获取代理IP国家
+   * @request GET:/user_get_proxy_country_list_by_continent
+   * @response `200` `UserGetProxyCountryListByContinentListData`
+   */
+  userGetProxyCountryListByContinentList = (
+    query: UserGetProxyCountryListByContinentListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyCountryListByContinentListData, any>({
+      path: `/user_get_proxy_country_list_by_continent`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyVendorJumpInfoList
+   * @summary 获取代理厂商跳转信息
+   * @request GET:/user_get_proxy_vendor_jump_info
+   * @response `200` `UserGetProxyVendorJumpInfoListData`
+   */
+  userGetProxyVendorJumpInfoList = (
+    query: UserGetProxyVendorJumpInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyVendorJumpInfoListData, any>({
+      path: `/user_get_proxy_vendor_jump_info`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserReportProxyOutOfStockCreate
+   * @summary 代理IP购买缺货上报
+   * @request POST:/user_report_proxy_out_of_stock
+   * @response `200` `UserReportProxyOutOfStockCreateData`
+   */
+  userReportProxyOutOfStockCreate = (
+    data: UserReportProxyOutOfStockCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserReportProxyOutOfStockCreateData, any>({
+      path: `/user_report_proxy_out_of_stock`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

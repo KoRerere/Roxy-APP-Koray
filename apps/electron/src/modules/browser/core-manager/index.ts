@@ -40,7 +40,9 @@ export const coreManager = new (class CoreManager {
         if (isNotExistsCore) {
           const [latestCore] = this.availableCoreList.toSorted((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
           if (latestCore?.coreVersion) {
-            this.chromeCoreManager.downloadCore({ coreVersion: latestCore.coreVersion, silent: true })
+            this.chromeCoreManager.downloadCore({ coreVersion: latestCore.coreVersion, silent: true }).catch((error) => {
+              console.error('download latest core on startup error', error)
+            })
           }
         }
       })

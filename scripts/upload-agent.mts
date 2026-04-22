@@ -32,16 +32,21 @@ const baseOssConfig = {
   bucket: isProd ? 'lumibrowser' : 'lumibrowser-test',
 }
 
-// 正式环境版本
-const prodVersion = '1.0.5'
+// 正式环境 agent 版本
+const prodVersion = '1.0.8'
+// 开发环境 agent 版本
+const devVersion = '2.2.29'
 
-// 开发环境版本
-const devVersion = '2.1.7'
-
-// 当前agent的版本
+// 当前 agent 的版本
 const version = isProd ? prodVersion : devVersion
-// app 最低支持版本
-const minAppVersion = isProd ? '3.7.8' : '7.6.6'
+// 此 agent 兼容的最低 app 版本
+const minAppVersion = isProd ? '3.8.0' : '7.6.6'
+
+/** compat-index.json 在 OSS 上的路径（不区分平台，由 app 侧根据 os 自行拼接脚本地址） */
+const compatIndexOssPath = '/public/package/agent/compat-index.json'
+
+console.log('app 最低支持版本：', minAppVersion)
+console.log('agent 版本：', version)
 
 async function getOssToken() {
   const response = await fetch(
@@ -87,7 +92,7 @@ async function startUpload() {
       if (!fs.statSync(localPath).isFile())
         continue
       await ossClient.put(
-        `/public/package/agent/${version}/skills/${filename}`,
+        `/public/package/agent/scripts/${version}/skills/${filename}`,
         localPath,
       )
 
@@ -100,60 +105,67 @@ async function startUpload() {
   }
 
   for (const platform of platformList) {
-    const agentLocalPath = 'packages/roxy-agent/dist/index.mjs'
-    const agentSha512 = calculateFileSha512Hex(agentLocalPath)
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-agent.mjs`,
-      agentLocalPath,
-    )
-    console.log('上传 agent mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-agent.mjs`)
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-agent-sha`,
-      Buffer.from(agentSha512),
-    )
-    console.log('上传 agent sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-agent-sha`)
+    const scripts = [
+      { key: 'roxy-agent', localPath: 'packages/roxy-agent/dist/roxy-agent.mjs' },
+      { key: 'roxy-playwright', localPath: 'packages/roxy-playwright/dist/roxy-playwright.mjs' },
+      { key: 'roxy-openapi', localPath: 'packages/roxy-openapi/dist/roxy-openapi.mjs' },
+    ]
 
-    const playwrightLocalPath = 'packages/roxy-playwright/dist/index.mjs'
-    const playwrightSha512 = calculateFileSha512Hex(playwrightLocalPath)
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-playwright.mjs`,
-      playwrightLocalPath,
-    )
-    console.log('上传 playwright mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-playwright.mjs`)
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-playwright-sha`,
-      Buffer.from(playwrightSha512),
-    )
-    console.log('上传 playwright sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-playwright-sha`)
-
-    const openapiLocalPath = 'packages/roxy-openapi/dist/index.mjs'
-    const openapiSha512 = calculateFileSha512Hex(openapiLocalPath)
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-openapi.mjs`,
-      openapiLocalPath,
-    )
-    console.log('上传 openapi mcp 脚本成功：', `/public/package/agent/${version}/${platform}/roxy-openapi.mjs`)
-
-    await ossClient.put(
-      `/public/package/agent/${version}/${platform}/roxy-openapi-sha`,
-      Buffer.from(openapiSha512),
-    )
-    console.log('上传 openapi sha512 成功：', `/public/package/agent/${version}/${platform}/roxy-openapi-sha`)
-
-    const versionPayload = {
-      version,
-      minimum_app_version: minAppVersion,
-      releaseTime: getCurrentFormattedTime(),
-      skills: skillNames,
-
+    const checksums: Record<string, string> = {}
+    for (const { key, localPath } of scripts) {
+      const ossName = path.basename(localPath)
+      checksums[key] = calculateFileSha512Hex(localPath)
+      await ossClient.put(
+        `/public/package/agent/scripts/${version}/${platform}/${ossName}`,
+        localPath,
+      )
+      console.log(`上传 ${key} 脚本成功：`, `/public/package/agent/scripts/${version}/${platform}/${ossName}`)
     }
-    const data = Buffer.from(JSON.stringify(versionPayload))
-    const uploadVersionRes = await ossClient.put(
-      `/public/package/agent/${platform}/version.json`,
-      data,
-    )
-    console.log('上传版本号成功：', uploadVersionRes.url)
+
+    const checksumsOssPath = `/public/package/agent/scripts/${version}/${platform}/checksums.json`
+    await ossClient.put(checksumsOssPath, Buffer.from(JSON.stringify(checksums)))
+    console.log('上传 checksums.json 成功：', checksumsOssPath)
   }
+
+  // 更新兼容性索引：读取现有 compat-index.json，按 minimum_app_version 去重更新，回传
+  interface CompatEntry {
+    version: string
+    minimum_app_version: string
+    releaseTime: string
+    skills: string[]
+  }
+  let compatIndex: CompatEntry[] = []
+  try {
+    const res = await ossClient.get(compatIndexOssPath)
+    compatIndex = JSON.parse(res.content.toString())
+    console.log('读取现有 compat-index.json 成功，共', compatIndex.length, '条记录')
+  }
+  catch {
+    console.log('compat-index.json 不存在，将新建')
+  }
+
+  const newEntry: CompatEntry = {
+    version,
+    minimum_app_version: minAppVersion,
+    releaseTime: getCurrentFormattedTime(),
+    skills: skillNames,
+  }
+
+  const existingIndex = compatIndex.findIndex(e => e.minimum_app_version === minAppVersion)
+  if (existingIndex !== -1) {
+    // 已有相同 minimum_app_version 的记录，直接更新
+    compatIndex[existingIndex] = newEntry
+    console.log(`更新已有记录 [minimum_app_version: ${minAppVersion}] → agent ${version}`)
+  }
+  else {
+    // 新的 minimum_app_version，头部插入
+    compatIndex.unshift(newEntry)
+    console.log(`新增记录 [minimum_app_version: ${minAppVersion}] → agent ${version}`)
+  }
+
+  await ossClient.put(compatIndexOssPath, Buffer.from(JSON.stringify(compatIndex, null, 2)))
+  console.log('更新 compat-index.json 成功，当前记录：')
+  compatIndex.forEach(e => console.log(`  agent ${e.version}  ← app >= ${e.minimum_app_version}`))
 }
 
 function getCurrentFormattedTime() {
@@ -168,23 +180,36 @@ function getCurrentFormattedTime() {
 }
 
 if (isProd) {
-  rl.question('您正准备发正式环境，请输入 1234 确认（这只是简单的验证，防止不小心执行错命令）：', (answer) => {
-    if (answer === '1234') {
-      startUpload()
-        .catch((err) => {
-          console.error(err)
-          process.exit(1)
-        })
-        .finally(() => {
-          rl.close()
-          process.exit(0)
-        })
-    }
-    else {
-      console.log('输入错误，请重新输入')
-      rl.close()
-    }
-  })
+  if (process.env.SKIP_CONFIRM === '1') {
+    startUpload()
+      .catch((err) => {
+        console.error(err)
+        process.exit(1)
+      })
+      .finally(() => {
+        rl.close()
+        process.exit(0)
+      })
+  }
+  else {
+    rl.question('您正准备发正式环境，请输入 1234 确认（这只是简单的验证，防止不小心执行错命令）：', (answer) => {
+      if (answer === '1234') {
+        startUpload()
+          .catch((err) => {
+            console.error(err)
+            process.exit(1)
+          })
+          .finally(() => {
+            rl.close()
+            process.exit(0)
+          })
+      }
+      else {
+        console.log('输入错误，请重新输入')
+        rl.close()
+      }
+    })
+  }
 }
 else {
   startUpload()

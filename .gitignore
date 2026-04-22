@@ -5,6 +5,7 @@ node_modules
 .pnp
 .pnp.js
 dist/
+dist-lib/
 dist-vite/
 **/components.d.ts
 **/auto-imports.d.ts

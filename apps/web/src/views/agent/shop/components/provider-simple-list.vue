@@ -1,90 +1,56 @@
 <script setup lang="ts">
-import RxTooltip from '/@/components/rx-tooltip'
-import currency from 'currency.js'
-import { API } from '/@/api'
+import { useProxyStore } from '/@/stores/proxy'
 import { useThemeStore } from '/@/stores/theme'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { ProxyDescType } from '/@/enums'
-import type { UserGetProxyStoreListListData } from '@roxy/backend-api'
+import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
 
-type ShopItem = UserGetProxyStoreListListData['data'][number] & {
+type ShopItem = UserGetProxyVendorListListData['data'][number] & {
   props: Record<string, any>
-  focus: Record<string, any>
   isMore?: boolean
   proxyProviderTypeStr?: string
 }
-
-type MoreItem = Partial<ShopItem> & {
-  icon: string
-}
-
-type ShopList = (ShopItem | MoreItem)[]
 
 const props = defineProps<{
   onBuyProxy: (props?: Record<string, any>) => void
 }>()
 
 const route = useRoute()
-const themeStore = useThemeStore()
-const [_, onlyErrorToast] = useResponseToast()
+const router = useRouter()
+const { isDarkTheme } = storeToRefs(useThemeStore())
+const { getProxyVendors } = useProxyStore()
 
-let ro: ResizeObserver | null = null
-const contentRef = useTemplateRef<HTMLDivElement>('content')
-const cols = ref(3)
-const shopList = ref<ShopList>([])
+const shopList = ref<ShopItem[]>([])
+const roxybrowser = computed(() => shopList.value[0])
+const rolaip = computed(() => shopList.value[1])
 
-const showList = computed(() => {
-  const moreItem: MoreItem = {
-    icon: 'base/rx_ic_more',
-    isMore: true,
-    proxyProviderName: $t('更多 IP 供应商'),
-    proxyProviderDesc: $t('Roxy 集成的高质量代理 IP'),
-  }
-  return [...shopList.value.slice(0, cols.value), moreItem]
-})
+const imgSrc = computed(() => isDarkTheme.value ? 'url("/images/proxy/shop_card_bg_dark.svg")' : 'url("/images/proxy/shop_card_bg.svg")')
+const checkIcon = computed(() => isDarkTheme.value ? 'status/rx_ic_check_fill_dark' : 'status/rx_ic_check_fill_light')
 
-const bgSrc = computed(() => {
-  return themeStore.realTheme === 'light' ? 'url("/images/proxy/store_bg.png")' : 'url("/images/proxy/store_bg_dark.png")'
-})
+watch(
+  () => route.query._t,
+  value => value && buyProxyFromAnnouncement(),
+)
 
 onBeforeMount(() => {
   getShopList()
 })
 
-onMounted(() => {
-  if (!contentRef.value)
-    return
-  ro = new ResizeObserver(([entry]) => {
-    const width = entry!.contentRect.width
-    cols.value = width >= 1440 ? 4 : 3
-  })
-  ro.observe(contentRef.value)
-})
-
-onBeforeUnmount(() => {
-  ro?.disconnect()
-})
-
 async function getShopList() {
-  const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
-  onlyErrorToast(code, msg)
-  if (code !== 0)
+  const data = await getProxyVendors(true)
+  if (!data)
     return
   shopList.value = data.map((item) => {
     return {
       ...item,
-      proxyProviderTypeStr: item.proxyTypeList?.map(item => item.typeName).join(' / '),
-      focus: {
-        focusProviderName: item.proxyProviderName,
-      },
       props: {
         provider: item.isJump
-          ? undefined
+          ? {
+              proxyProviderId: item.id,
+            }
           : {
-              proxyProviderWebsite: item.proxyProviderWebsite,
-              proxyTypeList: item.proxyTypeList,
-              proxyProviderIcon: item.proxyProviderIcon,
-              proxyProviderName: item.proxyProviderName,
+              proxyProviderId: item.id,
+              proxyProviderWebsite: item.vendorWebsite,
+              proxyProviderIcon: item.vendorIcon,
+              proxyProviderName: item.vendorName,
             },
       },
     }
@@ -93,142 +59,154 @@ async function getShopList() {
   buyProxyFromAnnouncement()
 }
 
-watch(
-  () => route.query._t,
-  value => value && buyProxyFromAnnouncement(),
-  {
-    immediate: true,
-  },
-)
-
 function buyProxyFromAnnouncement() {
   // 通过公告栏跳转购买
-  if (route.query.proxyProviderName) {
-    const provider = shopList.value.find(item => item.proxyProviderName === route.query.proxyProviderName)
+  if (route.query.vendorName) {
+    const provider = shopList.value.find(item => item.vendorName === route.query.vendorName)
     provider && props.onBuyProxy(provider.props)
+    router.replace({ name: 'agent-list' })
   }
   else if (route.query.action === 'buy') {
     props.onBuyProxy()
+    router.replace({ name: 'agent-list' })
   }
 }
 </script>
 
 <template>
-  <div v-show="showList.length" ref="content" class="flex pa-3 gap-3 overflow-x-auto content">
-    <component :is="!item.isMore ? RxTooltip : 'div'" v-for="item in showList" :key="item.proxyProviderName" style="background: var(--colors-background-bg-action);"
-               class="shrink-0 relative flex items-center pa-3 gap-2.5 rounded-3 cursor-pointer" :class="{ 'min-w-70 flex-1': !item.isMore || showList.length < 4 }" placement="bottom" :delay="500"
-               @click="onBuyProxy(item.focus)"
-    >
-      <template #default>
-        <div v-if="item.isNew" class="absolute top-0 -right-1 -translate-y-1/2 new">
-          NEW
-        </div>
-        <SvgIcon v-if="item.isMore" name="other/proxy_cart" size="24" />
-        <img v-else draggable="false" class="block w-10 aspect-1 rounded-2 img" :src="item.proxyProviderIcon" :alt="item.proxyProviderName">
-        <div class="flex-1 flex flex-col justify-center self-stretch gap-0.5 select-none overflow-hidden">
-          <div class="title">
-            {{ item.proxyProviderName }}
+  <div v-if="shopList.length" class="flex py-3 px-4 gap-3 content">
+    <div class="flex-1 min-h-38 flex items-start pa-5 gap-3 rounded-2 col-span-2 cursor-pointer roxy" @click.stop="onBuyProxy(roxybrowser.props)">
+      <img draggable="false" class="block w-12 aspect-1 rounded-full roxy-image" :src="roxybrowser.vendorIcon" :alt="roxybrowser.vendorName">
+      <div class="h-full flex-1 flex flex-col gap-2 select-none overflow-hidden">
+        <div class="flex items-center gap-2">
+          <div class="font-[Archivo] text-5 leading-7 font-700 color-[#ae7407]">
+            {{ roxybrowser.vendorName }}
           </div>
-          <div v-if="item.storeType === ProxyDescType.Price" class="price">
-            {{ $t('独家特惠: {price} / IP', { price: currency(item.proxyPrice!).format() }) }}
-          </div>
-          <div v-else-if="item.storeType === ProxyDescType.Icons" class="flex items-center gap-2">
-            <span class="description">
-              {{ $t('专为 AI 优化:') }}
-            </span>
-            <img v-for="data in item.newIconList?.slice(0, 3)" :key="data.url" class="block w-4 h-4" :src="data.url">
-          </div>
-          <i18n-t v-else-if="item.storeType === ProxyDescType.Discount" class="description" tag="div" :keypath="$t('Roxy 用户专享: {discount}', { discount: '{discount}' })" scope="global">
-            <template #discount>
-              <span class="discount">{{ $t('{value}% 折扣', { value: item.proxyProviderDiscount }) }}</span>
-            </template>
-          </i18n-t>
-          <div v-else class="ellipsis-1 description">
-            {{ item.proxyProviderDesc }}
+          <div class="py-0.5 px-2 rounded-full roxy-tag">
+            {{ $t('超高质量 IP') }}
           </div>
         </div>
-        <RxButton v-if="item.isMore" severity="secondary" variant="text" size="xxs" icon="base/rx_ic_arrow_right_2" />
-        <RxButton v-else-if="item.isJump" class="shrink-0" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_arrow_top_right" />
-        <RxButton v-else class="shrink-0" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" @click.stop="onBuyProxy(item.props)" />
-      </template>
-      <template #content>
-        <div class="w-70 flex flex-col gap-1">
-          <div class="tooltip_title">
-            {{ item.proxyProviderTypeStr }}
-          </div>
-          <div class="tooltip_desc">
-            {{ item.proxyProviderDesc }}
+        <div class="flex-1 overflow-hidden">
+          <div class="flex flex-wrap items-start gap-col-8 gap-row-1.5">
+            <div v-for="item in roxybrowser.vendorAdv" :key="item" class="flex items-center gap-1.5">
+              <SvgIcon :name="checkIcon" />
+              <div class="color-[#111213] text-3 font-500 leading-4.5">
+                {{ item }}
+              </div>
+            </div>
           </div>
         </div>
-      </template>
-    </component>
+        <RxDivider line-only line-color="var(--pattern-proxystore-mood-button-border)" />
+        <div class="flex items-center gap-2.5">
+          <div class="color-[#111213] text-3 leading-4">
+            {{ $t('社媒 / 电商 / AI专线 IP :') }}
+          </div>
+          <div v-for="data in roxybrowser.iconList" :key="data" class="w-5 h-5 pa-0.75 rounded-1 bg-white">
+            <img class="block w-full h-full" :src="data">
+          </div>
+        </div>
+      </div>
+      <RxButton class="shrink-0 roxy-btn" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('购买')" />
+    </div>
+    <!--  -->
+    <div class="w-100 flex flex-col gap-3">
+      <div class="flex-1 flex flex-col pa-4 gap-1.5 rounded-2 cursor-pointer normal" @click.stop="onBuyProxy(rolaip.props)">
+        <div class="flex gap-3 items-center overflow-hidden">
+          <img draggable="false" class="block w-10 aspect-1 rounded-2 normal-image" :src="rolaip.vendorIcon" :alt="rolaip.vendorName">
+          <div class="flex-1 overflow-hidden">
+            <div class="tt-primary font-[Archivo] text-4 leading-5 font-600">
+              {{ rolaip.vendorName }}
+            </div>
+            <div class="tt-tertiary text-3 leading-4">
+              {{ rolaip.vendorWebsite }}
+            </div>
+          </div>
+          <RxButton class="shrink-0" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('购买')" />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-col-3 gap-row-1">
+          <template v-for="(item, index) in rolaip.vendorAdv" :key="item">
+            <div v-if="index !== 0" class="w-0.25 h-3 bg-[var(--colors-border-border-subtle)]" />
+            <div class="flex items-center gap-1">
+              <div class="w-1.5 h-1.5 bg-[var(--colors-icon-icon-success)] rounded-full" />
+              <div class="tt-primary text-3 font-500 leading-4.5">
+                {{ item }}
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="pa-4 rounded-2 tt-secondary text-3.5 leading-5 font-500 normal">
+        {{ $t('更多服务商即将到来 ...') }}
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .content {
-  background-image: v-bind(bgSrc);
-  background-color: var(--pattern-proxystore-mood-bg-store);
+  border-bottom: 1px solid var(--component-table-border-cell);
+  background: var(--colors-background-bg-page);
+}
+
+.roxy {
+  border: 1px solid var(--pattern-dashboard-card-border-card-referral, #fdebd3);
+  background-image: v-bind(imgSrc);
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center;
+
+  &-image {
+    border: 1px solid var(--pattern-proxystore-mood-button-avatar-border);
+  }
+
+  &-tag {
+    color: #ae7407;
+    font-family: 'DingTalk JinBuTi';
+    font-size: 12px;
+    line-height: normal;
+    border: 1px solid #efdfc1;
+    background: #f7f0dd;
+  }
 }
 
-.new {
-  padding: 2px 6px;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: normal;
-  background: #f53838;
-  border-radius: 100px;
+.content .roxy .roxy-btn {
+  color: var(--pattern-proxystore-mood-button-text, #97742f) !important;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(110deg, #ffd78c 4.54%, #ffe4b2 46.42%, #ffc96e 88.3%);
+  background: linear-gradient(
+    110deg,
+    var(--pattern-proxystore-mood-button-bg-1, #f8ab57) 4.54%,
+    var(--pattern-proxystore-mood-button-bg-2, #f1af5f) 46.42%,
+    var(--pattern-proxystore-mood-button-bg-3, #fb8f02) 88.3%
+  );
+
+  /* shadow-sm */
+
+  :deep(svg) {
+    color: var(--pattern-proxystore-mood-button-icon) !important;
+  }
+
+  &:not(:disabled):hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: linear-gradient(
+      110deg,
+      var(--pattern-proxystore-mood-button-bg-1-hover, #f79e3b) 4.54%,
+      var(--pattern-proxystore-mood-button-bg-2-hover, #efa143) 46.42%,
+      var(--pattern-proxystore-mood-button-bg-3-hover, #e28102) 88.3%
+    );
+    box-shadow:
+      0 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0 1px 1px 0 rgba(0, 0, 0, 0.06);
+  }
 }
 
-.img {
-  border: 1px solid var(--colors-border-border-inactive);
-}
+.normal {
+  background: var(--colors-background-bg-block);
 
-.title {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
-.price {
-  font-family: 'DingTalk JinBuTi';
-  font-size: 12px;
-  line-height: 16px;
-  background: linear-gradient(90deg, #12a3fc 0%, #db54f9 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.description {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.discount {
-  color: var(--colors-text-text-warning);
-  font-family: 'DingTalk JinBuTi';
-  font-size: 14px;
-  line-height: 16px;
-}
-
-.tooltip_title {
-  color: var(--component-tooltip-text-primary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 16px;
-}
-
-.tooltip_desc {
-  color: var(--component-tooltip-text-secondary);
-  font-size: 12px;
-  line-height: 16px;
+  &-image {
+    border: 1px solid var(--colors-border-border-inactive);
+  }
 }
 </style>

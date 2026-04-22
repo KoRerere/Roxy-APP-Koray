@@ -60,13 +60,15 @@
     "agent:build": "pnpm -F roxy-agent run build && pnpm -F @roxybrowser/playwright-mcp run build && pnpm -F @roxybrowser/openapi run build && pnpm -F roxy-skills run build",
     "agent:compile": "pnpm agent:build && pnpm -C ./apps/electron exec electron ../../scripts/compile-bytenode.mjs",
     "publish:agent:dev": "pnpm agent:build && cross-env NODE_ENV=development pnpx tsx ./scripts/upload-agent.mts",
-    "publish:agent:prod": "pnpm agent:build && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-agent.mts"
+    "publish:agent:prod": "pnpm agent:build && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-agent.mts",
+    "publish:agent:dev:only": "cross-env NODE_ENV=development pnpx tsx ./scripts/upload-agent.mts",
+    "publish:agent:prod:only": "cross-env NODE_ENV=production SKIP_CONFIRM=1 pnpx tsx ./scripts/upload-agent.mts"
   },
   "optionalDependencies": {
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^7.7.3",
+    "@antfu/eslint-config": "^8.1.1",
     "@dotenvx/dotenvx": "^1.44.2",
     "@electron/rebuild": "^3.7.2",
     "@larksuiteoapi/node-sdk": "^1.5.0",
@@ -82,7 +84,7 @@
     "axios": "^1.13.6",
     "bytenode": "^1.5.7",
     "cross-env": "^10.1.0",
-    "eslint": "10.0.3",
+    "eslint": "10.2.0",
     "eslint-plugin-format": "^2.0.1",
     "js-yaml": "^4.1.1",
     "lint-staged": "^16.2.7",

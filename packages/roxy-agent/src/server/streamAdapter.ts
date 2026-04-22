@@ -17,6 +17,7 @@ export type StreamEventType
     | 'interrupt'
     | 'content'
     | 'todo'
+    | 'title' // 对话标题更新
 
 export interface StreamEvent {
   type: StreamEventType
@@ -141,10 +142,10 @@ class StreamAdapter {
   /**
    * Create error event
    */
-  error(message: string, details?: any, taskId?: string): string {
+  error(message: string, errorCode?: number): string {
     return this.formatSSE({
       type: 'error',
-      data: { message, details, taskId },
+      data: { message, errorCode },
       timestamp: Date.now(),
     })
   }
@@ -211,6 +212,17 @@ class StreamAdapter {
     return this.formatSSE({
       type: 'todo',
       data,
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create title update event
+   */
+  title(title: string): string {
+    return this.formatSSE({
+      type: 'title',
+      data: { title },
       timestamp: Date.now(),
     })
   }

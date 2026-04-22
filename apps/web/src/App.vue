@@ -37,12 +37,14 @@ onMounted(async () => {
         const result = await roxyClawStore.startRoxyClaw()
         if (result.success) {
           console.log('RoxyClaw auto-started successfully')
-        } else {
+        }
+        else {
           console.error('Failed to auto-start RoxyClaw:', result.message)
           // 自动启动失败时重置状态为未启用
           await roxyClawStore.updateConfig({ enabled: false })
         }
-      } catch (error) {
+      }
+      catch (error) {
         console.error('Failed to auto-start RoxyClaw:', error)
         // 自动启动失败时重置状态为未启用
         await roxyClawStore.updateConfig({ enabled: false })
@@ -158,6 +160,10 @@ globalThis.electronAPI.on('user:kicked-out', onKickedOut)
     line-height: 16px;
   }
 
+  .driver-popover-description {
+    white-space: pre-wrap;
+  }
+
   .driver-popover-footer {
     margin-top: 6px;
   }
@@ -195,6 +201,10 @@ globalThis.electronAPI.on('user:kicked-out', onKickedOut)
     &:focus,
     &:hover {
       background: var(--colors-alpha-alpha-white-20);
+    }
+
+    &.driver-popover-close-btn {
+      display: none !important;
     }
   }
 }

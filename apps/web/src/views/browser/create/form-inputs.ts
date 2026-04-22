@@ -1291,13 +1291,13 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   ])
 
   const otherInputs = reactive([
-    {
-      type: 'selectButton',
-      label: $t('窗口名称'),
-      name: 'isDisplayName',
-      value: data.isDisplayName ?? false,
-      options: genSwitchOptions(),
-    },
+    // {
+    //   type: 'selectButton',
+    //   label: $t('窗口名称'),
+    //   name: 'isDisplayName',
+    //   value: data.isDisplayName ?? false,
+    //   options: genSwitchOptions(),
+    // },
     {
       type: 'selectButton',
       label: $t('自定义书签'),

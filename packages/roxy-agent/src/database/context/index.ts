@@ -1,12 +1,16 @@
 import type { BaseMessage } from '@langchain/core/messages'
 import { AIMessageChunk, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages'
+import fs from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-import { TokenUsageChange } from '../../agent/utils/usageAggregator'
 import { env } from '../../config'
 import { createLLM } from '../../llm'
 
-const dbPath = path.join(env.CHECKPOINT_DIR!, 'checkpoint.db')
+const dbPath = path.join(env.CHECKPOINT_DIR, 'checkpoint.db')
+// 确保日志目录存在
+if (!fs.existsSync(env.CHECKPOINT_DIR)) {
+  fs.mkdirSync(env.CHECKPOINT_DIR, { recursive: true })
+}
 const db = new DatabaseSync(dbPath)
 
 // 启用 WAL 模式以提高并发性能
@@ -154,9 +158,7 @@ export class ContextManager {
         const stream = await llm.stream([
           new SystemMessage('你是一个专业的对话摘要生成助手，生成简洁有用的摘要。'),
           new HumanMessage(prompt),
-        ], {
-          callbacks: [new TokenUsageChange()],
-        })
+        ])
 
         let summaryMessage = new AIMessageChunk({ content: '' })
         for await (const chunk of stream) {

@@ -9,11 +9,12 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import { BuyProxyListType, ProxyType } from '/@/enums'
+import { BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
 import { getRawColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
 import type { ProxyCheckStatus } from '/@/enums'
 import type { ProxyItem } from './operation'
+import { API } from '/@/api'
 
 interface Props {
   data?: any
@@ -32,10 +33,38 @@ const [_, onlyErrorToast] = useResponseToast()
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('agent')
 
+const filters = reactive({
+  list: [
+    {
+      name: 'proxyType',
+      value: undefined,
+      options: [
+        {
+          name: $t('全部'),
+          value: undefined,
+        },
+        {
+          name: $t('导入'),
+          value: ProxyType.resource.toString(),
+        },
+        {
+          name: $t('我购买的'),
+          value: ProxyType.buy.toString(),
+        },
+      ],
+    },
+  ],
+  getValues() {
+    return Object.fromEntries(filters.list.filter(item => item.value).map(item => [item.name, item.value]))
+  },
+  onChange() {
+    onRefreshTable()
+  },
+})
+
 const filtersMenu = ref()
 const dataList = ref()
 const selection = ref(toRaw(outerData))
-const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const columns = getRawColumns({
@@ -90,7 +119,7 @@ function onRefreshTable(tabParams = {}, force = false) {
 }
 
 async function getTableList(params: any) {
-  const result = await tableRequest({ ...params, type: BuyProxyListType.Use })
+  const result = await tableRequest({ ...filters.getValues(), ...params, type: BuyProxyListType.Use })
 
   if (result.code === 0) {
     const _rows = result.data.rows.map((item) => {
@@ -105,6 +134,10 @@ async function getTableList(params: any) {
   }
 
   return result
+}
+
+function testOnlyOperations(row: ProxyItem) {
+  return tableOperation(row).filter(item => item.name === 'test')
 }
 
 function operationHandler(operate: any, data: ProxyItem) {
@@ -137,12 +170,17 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
       checkedMessage.value[item.id!] = checkResult.checkStatus
-      return { ...checkResult, id: item.id }
+      return { ...checkResult, id: item.id, proxyType: item.proxyType }
     }
   })
 
   const results = await concurrentControl(tasks, 5)
   batchTestShowToast(results)
+
+  const proxyList = results.filter((item: any) => item.proxyType === ProxyType.resource)
+  if (!proxyList.length)
+    return
+  API.proxy.userMdfProxyModuleCreate({ proxyList: results, requestType: ProxyReqType.SpeedTest })
 }
 
 function saveSelected() {
@@ -160,17 +198,24 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
 
 <template>
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
-    <div class="flex justify-between proxy-header">
-      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-      <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
+    <div class="flex flex-wrap gap-1.5 items-center justify-between proxy-header">
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+        <RxSelectButton v-for="item in filters.list" :key="item.name" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
+                        @change="filters.onChange"
+        />
+      </div>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+        <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
+      </div>
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
              :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false"
     />
     <div class="flex-ovh-1">
       <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-               :show-actions="false" :show-table-header="false"
+               :show-table-header="false"
       >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
@@ -189,7 +234,7 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           </div>
         </template>
         <template #actions="{ data: row }">
-          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
+          <Actions :operation="testOnlyOperations(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>

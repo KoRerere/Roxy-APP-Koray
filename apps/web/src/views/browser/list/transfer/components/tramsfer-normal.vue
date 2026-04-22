@@ -40,7 +40,7 @@ const transferParam = ref<string[]>([])
 const isDelete = computed(() => !!transferParam.value?.includes('delete'))
 const optionsGroup = computed<OptionGorup[]>(() => [
   {
-    title: $t('投送选项'),
+    title: $t('转移选项'),
     options: [
       {
         label: $t('窗口名称'),
@@ -51,7 +51,7 @@ const optionsGroup = computed<OptionGorup[]>(() => [
         value: 'notes',
       },
       {
-        label: $t('投送后彻底删除窗口（该操作无法撤销）'),
+        label: $t('转移后彻底删除窗口（该操作无法撤销）'),
         value: 'delete',
       },
     ],
@@ -61,13 +61,13 @@ const optionsGroup = computed<OptionGorup[]>(() => [
     visible: isDelete.value,
     options: [
       {
-        label: $t('同时删除代理 IP 资源中仅与投送窗口有绑定关系的代理 IP'),
+        label: $t('同时删除代理 IP 资源中仅与转移窗口有绑定关系的代理 IP'),
         value: 'proxy',
         disabled: buyProxyType,
-        tooltip: buyProxyType ? $t('投送窗口中存在购买代理 IP') : undefined,
+        tooltip: buyProxyType ? $t('转移窗口中存在购买代理 IP') : undefined,
       },
       {
-        label: $t('同时删除平台账号中仅与投送窗口有绑定关系的账号'),
+        label: $t('同时删除平台账号中仅与转移窗口有绑定关系的账号'),
         value: 'platform',
       },
     ],
@@ -154,7 +154,7 @@ async function onTransfer(isSelf: boolean) {
     <div class="flex flex-col gap-2">
       <RxAlert class="w-full" type="info" :closable="false">
         <template #content>
-          <i18n-t scope="global" :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
+          <i18n-t scope="global" :keypath="$t('窗口转移将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
             <template #bold>
               <span class="font-bold"> {{ $t('已同步过的云端数据、代理 IP 信息、平台账号、Cookies 和指纹参数等') }} </span>
             </template>
@@ -168,7 +168,7 @@ async function onTransfer(isSelf: boolean) {
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
         <div class="title">
-          {{ $t('投送至') }}
+          {{ $t('转移至') }}
         </div>
         <ChooseSpace v-model="selectedWorkspace" :ids="windowIds" />
       </div>
@@ -189,13 +189,13 @@ async function onTransfer(isSelf: boolean) {
           {{ $t('删除说明') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 仅与窗口 A 绑定，窗口 A 被投送，则代理 IP a 将从代理 IP 资源中删除') }}
+          {{ $t('若代理 IP a 仅与窗口 A 绑定，窗口 A 被转移，则代理 IP a 将从代理 IP 资源中删除') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 IP a 不会被删除') }}
+          {{ $t('若代理 IP a 与窗口 A、B 绑定，仅窗口 A 被转移，则代理 IP a 不会被删除') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 IP a 将从代理 IP 资源中删除') }}
+          {{ $t('若代理 IP a 与窗口 A、B 绑定，窗口 A、B 均被转移，则代理 IP a 将从代理 IP 资源中删除') }}
         </div>
         <div class="checkboxitem">
           {{ $t('(平台账号删除规则同代理 IP)') }}
@@ -212,7 +212,7 @@ async function onTransfer(isSelf: boolean) {
   <div v-if="step2" class="w-84 flex flex-col gap-6">
     <RxAlert class="w-full" type="warn" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('投送无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
+        <i18n-t scope="global" :keypath="$t('转移无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
           <template #bold1>
             <span class="font-bold"> {{ $t('对方拒绝接收') }} </span>
           </template>
@@ -220,7 +220,7 @@ async function onTransfer(isSelf: boolean) {
             <span class="font-bold"> {{ $t('未在24小时内确认') }} </span>
           </template>
           <template #bold3>
-            <span class="font-bold"> {{ $t('投送过程中窗口无法被操作。') }} </span>
+            <span class="font-bold"> {{ $t('转移过程中窗口无法被操作。') }} </span>
           </template>
         </i18n-t>
       </template>

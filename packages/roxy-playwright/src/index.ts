@@ -1,5 +1,6 @@
 import { createConnection } from '@roxybrowser/playwright-mcp'
 
 createConnection({
-  allowUnrestrictedFileAccess: true
+  allowUnrestrictedFileAccess: true,
+  outputDir: process.env.ROXY_PLAYWRIGHT_OUTPUT_DIR,
 })

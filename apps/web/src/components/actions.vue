@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import type { SvgNames } from '/@/components/rx-icon/'
 import { deepClone, operationPower } from '/@/utils'
+import type { SvgNames } from '/@/components/rx-icon/'
 import type { Operation } from '/@/utils'
 
 interface Props {
@@ -16,7 +15,23 @@ const { operation, loadingOperationMap, showMenu = true, actionIcon = 'base/rx_i
 const emit = defineEmits(['quickClick', 'more'])
 
 const _operation = computed(() => operationPower(operation))
-const quickOperation = computed(() => _operation.value.filter(item => item.quick))
+
+const quickOperation = computed(() => {
+  const result: Operation[] = []
+  const stack = [..._operation.value]
+
+  while (stack.length) {
+    const item = stack.pop()!
+
+    if (item.quick)
+      result.unshift(item)
+    if (item.items?.length)
+      stack.unshift(...item.items)
+  }
+
+  return result
+})
+
 const hasMenu = computed(() => _operation.value.filter(item => item.visible !== false).length > 0)
 
 function quickClick(event: MouseEvent, item: Operation) {
@@ -39,16 +54,14 @@ function onMore(event: Event) {
         <div v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" class="flex items-center"
              @click.stop="quickClick($event, item)"
         >
-          <RxSvgIcon class="pointer-events-none quick-icon" :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-                     :class="[item.iconClass, { 'pi-spin': loadingOperationMap?.[item.name as string] }]"
+          <SvgIcon class="pointer-events-none quick-icon" :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon"
+                   :class="[item.iconClass, { 'pi-spin': loadingOperationMap?.[item.name as string] }]"
           />
         </div>
       </div>
-      <div v-if="showMenu && hasMenu" v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" class="quick-item"
-           @click.stop="onMore"
-      >
+      <div v-if="showMenu && hasMenu" v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" class="quick-item" @click.stop="onMore">
         <slot name="more-icon">
-          <RxSvgIcon :name="actionIcon" class="pointer-events-none quick-icon" />
+          <SvgIcon :name="actionIcon" class="pointer-events-none quick-icon" />
         </slot>
       </div>
     </div>

@@ -75,7 +75,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     },
     /** 窗口名称 */
     get windowName() {
-      if (winInfo.isDisplayName) {
+      if (store.windowNameSwitch) {
         return winInfo.windowName
       }
     },
@@ -361,8 +361,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     get screen() {
       const availHeight = toNumber(winInfo.resolutionY - (isMobile ? 0 : 38)) || 0
       return {
-        pixelDepth: 24,
-        colorDepth: 24,
+        pixelDepth: currentOS === winInfo.os.toLowerCase() ? 0 : 24,
+        colorDepth: currentOS === winInfo.os.toLowerCase() ? 0 : 24,
         width: toNumber(winInfo.resolutionX) || 0,
         height: toNumber(winInfo.resolutionY) || 0,
         availWidth: toNumber(winInfo.resolutionX) || 0,

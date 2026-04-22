@@ -61,20 +61,12 @@ export function initSensitiveWords(): void {
   }
   const candidates = getWordsDirCandidates()
   let words: string[] = []
-  let usedDir: string | null = null
   for (const dir of candidates) {
     words = readAllTxt(dir)
     if (words.length > 0) {
-      usedDir = dir
       break
     }
   }
   const uniq = Array.from(new Set(words))
   ;(globalThis as any).__SENSITIVE_WORDS__ = uniq
-  if (uniq.length > 0) {
-    console.log(`🛡️ [dev] Sensitive words loaded: ${uniq.length} from ${usedDir}`)
-  }
-  else if (process.env.DEVELOPMENT === 'true' || process.env.DEVELOPMENT === '1') {
-    console.warn(`🛡️ [dev] No sensitive words loaded. Tried:`, candidates)
-  }
 }

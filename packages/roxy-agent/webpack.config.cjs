@@ -15,6 +15,9 @@ const sharedConfig = {
     index: './dist-vite/index.mjs',
   },
   externalsType: 'node-commonjs', // 指定外部依赖的类型为 Node.js CommonJS
+  externals: {
+    electron: 'electron', // 把 electron 标记为外部模块，不打包进 bundle
+  },
   optimization: {
     moduleIds: 'named', // 确定性模块 ID
     chunkIds: 'named', // 确定性 chunk ID
@@ -57,6 +60,10 @@ module.exports = [
   // ES Module 配置
   {
     ...sharedConfig,
+    entry: {
+      index: './dist-vite/index.mjs',
+      'roxy-agent': './dist-vite/index.mjs',
+    },
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].mjs', // 输出为 ES Module 格式
@@ -69,5 +76,8 @@ module.exports = [
       outputModule: true, // 启用 ESM 输出
     },
     externalsType: 'module', // 指定外部依赖的类型为 ES Module
+    externals: {
+      electron: 'electron', // 把 electron 标记为外部模块，不打包进 bundle
+    },
   },
 ]

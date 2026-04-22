@@ -34,8 +34,9 @@ async function submitScore() {
     return
 
   const [scoreFmt, step, params] = star.value < STARS
-    ? ['1_4_star', 'thanks', { ratingStatus: true, externalRatingStatus: true }]
-    : ['5_star', 'reward', { externalRatingStatus: true }]
+  // 非五星评分允许重新评5星领取奖励
+    ? ['1_4_star', 'thanks', { ratingStatus: false, externalRatingStatus: false }]
+    : ['5_star', onboardingTaskStatus.value?.ratingStatus ? 'thanks' : 'reward', { externalRatingStatus: true, ratingStatus: !!onboardingTaskStatus.value?.ratingStatus }]
 
   mixpanelTrack('review_submit_rating', { review_rating_score: scoreFmt })
 
@@ -49,10 +50,10 @@ async function submitScore() {
     <div class="flex flex-col gap-2 items-center">
       <img draggable="false" class="w-20 aspect-square" src="/images/logo_3.svg">
       <div class="text-center title">
-        {{ $t('您对我们的体验满意吗？') }}
+        {{ $t('您对我们的产品满意吗？') }}
       </div>
       <div class="text-center desc">
-        {{ $t('请为我们的服务打分') }}
+        {{ $t('请为我们打分') }}
       </div>
     </div>
     <Rating v-model="star" :stars="STARS" :pt="{ root: '!gap-2.5', officon: '!w-8 !h-8', onicon: '!w-8 !h-8' }">

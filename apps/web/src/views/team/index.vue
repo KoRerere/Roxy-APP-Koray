@@ -13,7 +13,7 @@ const tabs = computed(() => {
   return [
     { title: $t('团队成员'), value: 'team-member', component: TeamMember, visible: true },
     { title: $t('操作日志'), value: 'operation-log', component: OperationLog, visible: check('Team_Log_view_page') },
-    { title: $t('投送历史'), value: 'transfer-record', component: TransferHistory, visible: check('Team_Transfer_view_page') },
+    { title: $t('转移历史'), value: 'transfer-record', component: TransferHistory, visible: check('Team_Transfer_view_page') },
   ].filter(tab => tab.visible !== false)
 })
 

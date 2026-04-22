@@ -82,6 +82,7 @@ function openRoleSettings(item: any) {
         role: item.value,
         readonly: true,
         onClose: hideModal,
+        title: $t('{role} - 权限详情', { role: item.role }),
       }),
     },
   })

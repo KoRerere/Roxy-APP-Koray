@@ -28,7 +28,7 @@ const stopCountdown = ref()
 
 const optionsGroup = [
   {
-    title: $t('投送选项'),
+    title: $t('转移选项'),
     options: [
       {
         label: $t('窗口名称'),
@@ -82,7 +82,7 @@ async function checkTransferStatus() {
     return onlyErrorToast(-1, $t('请输入正确的邮箱地址/手机号'))
   }
 
-  // 只要存在检测失败的代理 IP 就不准投送
+  // 只要存在检测失败的代理 IP 就不准转移
   if (datas.some(item => item.checkStatus === ProxyCheckStatus.failure)) {
     return onlyErrorToast(-1, $t('部分窗口代理 IP 检测失败，请确保代理 IP 测试均正常或删除检测失败的代理 IP 后再继续操作'))
   }
@@ -92,12 +92,12 @@ async function checkTransferStatus() {
   const hasEmptyProxy = datas.some(item => !item.host)
   const hasEmptyPlatform = datas.some(item => !item.windowPlatformList.length)
 
-  // 仅投送代理
+  // 仅转移代理
   if (isTradeProxy && !isTradePlatform && hasEmptyProxy) {
     return onlyErrorToast(-1, $t('部分窗口缺少代理 IP'))
   }
 
-  // 仅投送账号
+  // 仅转移账号
   if (!isTradeProxy && isTradePlatform && hasEmptyPlatform) {
     return onlyErrorToast(-1, $t('部分窗口缺少平台账号'))
   }
@@ -152,7 +152,7 @@ async function onTransfer() {
   <div v-if="!step2" class="w-108 flex flex-col gap-6">
     <RxAlert v-if="!isReady" class="w-full" type="error" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('投送的窗口必须包含 {bold1} 或 {bold2}', { bold1: '{bold1}', bold2: '{bold2}' })">
+        <i18n-t scope="global" :keypath="$t('转移的窗口必须包含 {bold1} 或 {bold2}', { bold1: '{bold1}', bold2: '{bold2}' })">
           <template #bold1>
             <span class="font-bold"> {{ $t('代理 IP') }} </span>
           </template>
@@ -165,7 +165,7 @@ async function onTransfer() {
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
         <div class="title">
-          {{ $t('投送至') }}
+          {{ $t('转移至') }}
         </div>
         <TsFormInputText v-model="targetEmail" size="lg" pre-icon="base/rx_ic_mail" :placeholder="$t('请输入邮箱/手机号')" />
       </div>
@@ -197,14 +197,14 @@ async function onTransfer() {
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>
       <div class="help">
-        {{ $t('* 完成窗口投送后，窗口将被移至回收站。') }}
+        {{ $t('* 完成窗口转移后，窗口将被移至回收站。') }}
       </div>
     </div>
   </div>
   <div v-if="step2" class="w-84 flex flex-col gap-6">
     <RxAlert class="w-full" type="warn" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('投送无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
+        <i18n-t scope="global" :keypath="$t('转移无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
           <template #bold1>
             <span class="font-bold"> {{ $t('对方拒绝接收') }} </span>
           </template>
@@ -212,7 +212,7 @@ async function onTransfer() {
             <span class="font-bold"> {{ $t('未在24小时内确认') }} </span>
           </template>
           <template #bold3>
-            <span class="font-bold"> {{ $t('投送过程中窗口无法被操作。') }} </span>
+            <span class="font-bold"> {{ $t('转移过程中窗口无法被操作。') }} </span>
           </template>
         </i18n-t>
       </template>

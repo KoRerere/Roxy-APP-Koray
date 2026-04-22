@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useIntervalFn } from '@vueuse/core';
-import { formatProxyTime } from '/@/utils';
+import { useIntervalFn } from '@vueuse/core'
+import { formatProxyTime } from '/@/utils'
 
 const props = defineProps<{
-  loading?: boolean,
+  loading?: boolean
 }>()
 
 // 最后一次刷新时间
@@ -22,14 +22,14 @@ function formatRefreshTimeText() {
 }
 
 useIntervalFn(formatRefreshTimeText, 1000 * 60)
-
 </script>
 
 <template>
   <div class="position-relative flex">
-    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_refresh" :label="$t('刷新')" v-tooltip.left="{
+    <RxButton v-tooltip.left="{
       value: $t('最后刷新: {time}', { time: refreshTimeText }),
-      pt: { text: '' }
-    }" :disabled="loading" />
+      pt: { text: '' },
+    }" severity="secondary" size="xxs" outlined icon="base/rx_ic_refresh" :disabled="loading"
+    />
   </div>
 </template>

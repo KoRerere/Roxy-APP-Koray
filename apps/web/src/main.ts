@@ -64,6 +64,19 @@ queueMicrotask(async () => {
       const simpleLocale = useSimpleLocale()
 
       simpleLocale.currentLocale = locale
+
+      if (globalThis.cookieStore) {
+        try {
+          const token = await globalThis.cookieStore.get('roxy_token')
+          if (token?.value) {
+            userStore.setToken(token.value)
+          }
+        }
+        catch (error) {
+          console.error('Failed to get token from cookie store:', error)
+        }
+      }
+
       userStore.initUserInfo()
       app.mount('#app')
 

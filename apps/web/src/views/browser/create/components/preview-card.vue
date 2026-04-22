@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import { motion, AnimatePresence } from "motion-v";
-;
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts';
-import { filterInputsByNames } from '/@/utils';
-import type { SvgNames } from '/@/components/rx-icon';
+import { AnimatePresence, motion } from 'motion-v'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { filterInputsByNames } from '/@/utils'
+import type { SvgNames } from '/@/components/rx-icon'
 
 interface Props {
   inputsGroup?: any[]
@@ -66,14 +65,14 @@ const bannerMap = {
   linux: '/images/systeam/linux.png',
 }
 
-const collapsed = defineModel<Boolean>('collapsed', { default: false })
+const collapsed = defineModel<boolean>('collapsed', { default: false })
 const previewData = computed(() => getPreview(inputsGroup.flat()))
 
 const systeam = computed(() => {
   const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
   const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
     image: item.platformIcon,
-    icon: 'base/rx_ic_user_key'
+    icon: 'base/rx_ic_user_key',
   }))
   const _os = os?.value?.value.toLowerCase()
 
@@ -94,7 +93,7 @@ const systeam = computed(() => {
         subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
         subImage: account?.value?.length > 2 ? '' : aItem2?.image,
       },
-    ]
+    ],
   }
 })
 
@@ -119,46 +118,55 @@ function getPreview(list: any[]) {
 <template>
   <div class="flex flex-col my-4 gap-2.5 preview" :class="[!collapsed ? '' : 'hide']">
     <TutorialVideo v-if="!collapsed && !onboardingTaskStatus?.createProfileVideoEntryStatus" video-type="create_profile"
-      :autoplay="false">
+                   :autoplay="false"
+    >
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
-            <SvgIcon name="base/rx_ic_play" color="var(--pattern-tutorial-video-bg-icon)"></SvgIcon>
+            <SvgIcon name="base/rx_ic_play" color="var(--pattern-tutorial-video-bg-icon)" />
           </div>
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
               <span class="video-title">{{ $t('窗口教程') }}</span>
               <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)"
-                @click.stop="closeGuideTipsAndUpdateTaskStatus('createProfileVideoEntryStatus')">
-              </SvgIcon>
+                       @click.stop="closeGuideTipsAndUpdateTaskStatus('createProfileVideoEntryStatus')"
+              />
             </div>
-            <div class="video-desc">{{ $t('了解窗口和窗口指纹') }}</div>
+            <div class="video-desc">
+              {{ $t('了解窗口和窗口指纹') }}
+            </div>
           </div>
         </div>
       </template>
     </TutorialVideo>
-    <div class="flex-1 flex flex-col items-start justify-start pa-4 gap-3 rounded-xl overflow-hidden content guide4">
+    <div class="flex-1 flex flex-col items-start justify-start pa-4 gap-3 rounded-xl overflow-hidden content">
       <div class="flex flex-row-reverse items-center justify-between self-stretch select-none header">
         <SvgIcon v-tooltip="!collapsed ? $t('收起') : $t('展开')" class="shrink-0 cursor-pointer"
-          :name="!collapsed ? 'base/rx_ic_hide_preview' : 'base/rx_ic_show_preview'" color="var(--colors-icon-primary)"
-          @click="collapsed = !collapsed" />
-        <div v-if="!collapsed">{{ $t('概要') }}</div>
+                 :name="!collapsed ? 'base/rx_ic_hide_preview' : 'base/rx_ic_show_preview'" color="var(--colors-icon-primary)"
+                 @click="collapsed = !collapsed"
+        />
+        <div v-if="!collapsed">
+          {{ $t('概要') }}
+        </div>
       </div>
       <div v-if="!collapsed" class="w-full infos">
         <div class="list">
           <div v-if="showOverview"
-            class="relative flex flex-col mb-2 pt-6 items-center overflow-hidden pointer-events-none select-none overview">
+               class="relative flex flex-col mb-2 pt-6 items-center overflow-hidden pointer-events-none select-none overview"
+          >
             <div class="flex items-center gap-3">
               <div class="w-34 flex items-center justify-between relative">
-                <div class="line"></div>
+                <div class="line" />
                 <template v-for="item in systeam.icons" :key="item.icon">
                   <div v-if="item.icon" class="relative icon">
-                    <img v-if="item.image" class="w-full h-full" :src="item.image" />
+                    <img v-if="item.image" class="w-full h-full" :src="item.image">
                     <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#7d8387"
-                      :fallback="item.fallback" />
+                             :fallback="item.fallback"
+                    />
                     <div v-if="item.subIcon || item.subImage"
-                      class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
-                      <img v-if="item.subImage" class="w-full h-full" :src="item.subImage" />
+                         class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon"
+                    >
+                      <img v-if="item.subImage" class="w-full h-full" :src="item.subImage">
                       <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" color="#7d8387" />
                     </div>
                   </div>
@@ -167,35 +175,44 @@ function getPreview(list: any[]) {
             </div>
             <div v-if="systeam.os" class="absolute top-20 left-1/2 -translate-x-1/2 flex gap-6">
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os"
-                  :variants="(variantsLeft as any)" initial="hidden" animate="visible" exit="hidden">
-                  <img :src="systeam.banner" class="block h-full object-contain" />
+                <motion.div :key="systeam.os" class="flex justify-end opacity-40 overview-banner"
+                            :variants="(variantsLeft as any)" initial="hidden" animate="visible" exit="hidden"
+                >
+                  <img :src="systeam.banner" class="block h-full object-contain">
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence :initial="false" mode="wait">
-                <motion.div class="overview-banner" :key="systeam.os" :variants="(variantsCenter as any)"
-                  initial="hidden" animate="visible" exit="hidden">
+                <motion.div :key="systeam.os" class="overview-banner" :variants="(variantsCenter as any)"
+                            initial="hidden" animate="visible" exit="hidden"
+                >
                   <img :src="systeam.banner" class="block h-full w-full object-contain">
                 </motion.div>
               </AnimatePresence>
               <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
-                <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os"
-                  :variants="(variantsRight as any)" initial="hidden" animate="visible" exit="hidden">
-                  <img :src="systeam.banner" class="block h-full object-contain" />
+                <motion.div :key="systeam.os" class="flex justify-start opacity-40 overview-banner"
+                            :variants="(variantsRight as any)" initial="hidden" animate="visible" exit="hidden"
+                >
+                  <img :src="systeam.banner" class="block h-full object-contain">
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
           <div v-for="(item, key) in previewData" :key="key"
-            class="flex items-start self-stretch py-1 px-3 gap-1 select-none">
-            <div class="label">{{ item.label }}</div>
-            <div class="value">{{ item.value }}</div>
+               class="flex items-start self-stretch py-1 px-3 gap-1 select-none"
+          >
+            <div class="label">
+              {{ item.label }}
+            </div>
+            <div class="value">
+              {{ item.value }}
+            </div>
           </div>
-          <div class="h-6 w-full invisible"></div>
+          <div class="h-6 w-full invisible" />
         </div>
       </div>
       <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined
-        @click="onShuffle" />
+                @click="onShuffle"
+      />
     </div>
   </div>
 </template>
@@ -214,7 +231,11 @@ function getPreview(list: any[]) {
 }
 
 .video {
-  background: linear-gradient(90deg, var(--pattern-tutorial-video-bg-start) 0%, var(--pattern-tutorial-video-bg-end) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--pattern-tutorial-video-bg-start) 0%,
+    var(--pattern-tutorial-video-bg-end) 100%
+  );
 
   &-icon {
     background: var(--pattern-tutorial-video-bg-play);
@@ -256,7 +277,7 @@ function getPreview(list: any[]) {
   background: linear-gradient(180deg, #ebf7ff 0%, #f6f6fd 100%);
 
   &-count {
-    color: #575D60;
+    color: #575d60;
     font-size: 13px;
   }
 
@@ -274,8 +295,8 @@ function getPreview(list: any[]) {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  border: 0.5px solid #C7D1D6;
-  background: #FFF;
+  border: 0.5px solid #c7d1d6;
+  background: #fff;
   z-index: 1;
 }
 
@@ -283,7 +304,7 @@ function getPreview(list: any[]) {
   position: absolute;
   width: 100%;
   height: 1px;
-  background: #C7E3F2;
+  background: #c7e3f2;
 }
 
 .infos {
@@ -315,7 +336,7 @@ function getPreview(list: any[]) {
 
 .label {
   width: 120px;
-  color: var(--pattern-editor-key, #79C0FF);
+  color: var(--pattern-editor-key, #79c0ff);
   font-family: 'DM Mono';
   font-size: 12px;
   font-weight: 500;
@@ -325,7 +346,7 @@ function getPreview(list: any[]) {
 
 .value {
   flex: 1;
-  color: var(--pattern-editor-value, #A5D6FF);
+  color: var(--pattern-editor-value, #a5d6ff);
   font-family: 'DM Mono';
   font-size: 12px;
   font-weight: 500;

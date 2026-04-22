@@ -4,13 +4,14 @@ import ProxyQuick from '/@/views/agent/quick.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useSimpleDialog } from '/@/components/simplePopup'
 
-import { deepClone, isEmptyValue, strConcat } from '/@/utils'
+import { deepClone, isEmptyValue, sleep, strConcat } from '/@/utils'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { usePermission } from '/@/hooks/usePermission'
 import { useTableContext } from '../hooks/useContext'
 import { useNetworkStore } from '/@/stores/network'
+import { useProxyStore } from '/@/stores/proxy'
 import { API } from '/@/api'
 import { BuyEntryType, BuyProxyListType, ProxyType } from '/@/enums/proxy'
 import type { SvgNames } from '/@/components/rx-icon/'
@@ -20,14 +21,15 @@ defineOptions({
 })
 
 const router = useRouter()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [showToast, _] = useResponseToast()
 const drawerInstance = useDrawer()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const { isBatch, createCount } = useTableContext()
+const { isBatch, createCount, driverObj } = useTableContext()
 const { buyProxy } = useProxy()
 const network = useNetworkStore()
+const { getProxyVendors } = useProxyStore()
 
 const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
@@ -38,27 +40,34 @@ const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item
 
 const proxyProvider = ref()
 
+function driverNext() {
+  sleep(300).then(() => driverObj.value?.drive(1))
+}
+
 async function onBuyProxy() {
+  driverObj?.value?.destroy()
+
   if (!proxyProvider.value) {
-    const { code, data, msg } = await API.proxy.userGetProxyStoreListList()
-    onlyErrorToast(code, msg)
-    if (code !== 0)
+    const data = await getProxyVendors()
+    if (!data)
       return
-    proxyProvider.value = data.find((item: any) => item.proxyProviderName === 'RoxyBrowser')
+    proxyProvider.value = data.find((item: any) => item.vendorName === 'Roxy IP')
   }
 
   const provider = {
-    proxyProviderWebsite: proxyProvider.value.proxyProviderWebsite,
-    proxyTypeList: proxyProvider.value.proxyTypeList,
-    proxyProviderIcon: proxyProvider.value.proxyProviderIcon,
-    proxyProviderName: proxyProvider.value.proxyProviderName,
+    proxyProviderId: proxyProvider.value.id,
+    proxyProviderWebsite: proxyProvider.value.vendorWebsite,
+    proxyProviderIcon: proxyProvider.value.vendorIcon,
+    proxyProviderName: proxyProvider.value.vendorName,
   }
 
   try {
     const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
     await buySuccessNext(orderInfo)
   }
-  catch { }
+  finally {
+    driverNext()
+  }
 }
 
 async function buySuccessNext(orderInfo: any) {
@@ -102,6 +111,8 @@ function onEdit(item: any) {
 }
 
 function toggleDrawer(type: 'create' | 'list', item?: any) {
+  driverObj?.value?.destroy()
+
   const dismissable = type === 'list'
   const title = dismissable ? $t('代理 IP 列表') : $t('添加代理 IP')
   const data = dismissable
@@ -112,6 +123,7 @@ function toggleDrawer(type: 'create' | 'list', item?: any) {
   drawerInstance.showDrawer({
     title,
     dismissable,
+    onHide: () => driverNext(),
     slots: {
       container: () => h(RenderComponent, {
         data,
@@ -233,9 +245,16 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
         </div>
       </div>
 
-      <RxButton v-if="check('Profiles_buy_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
+      <div class="flex items-center gap-2 guide1">
+        <!-- 外层 span 用于引导脉冲高亮：::after 不能挂在 .p-button 上，否则会被按钮 overflow 裁切 -->
+        <span v-if="check('Cost_Center_all')" class="guide1-pulse-target inline-flex rounded-md">
+          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
+        </span>
+        <span v-if="(isBatch || !proxyList?.length) && check('Profiles_add_proxy_outside')" class="guide1-pulse-target inline-flex rounded-md">
+          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+        </span>
+      </div>
       <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton v-if="(isBatch || !proxyList?.length) && check('Profiles_add_proxy_outside')" class="guide3" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
              :closable="false"
@@ -264,8 +283,8 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           </div>
         </div>
         <div class="mt-0.5 flex gap-2">
-          <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }" :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-                   color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
+          <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
+                   :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
           />
           <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
         </div>

@@ -4,6 +4,7 @@ packages:
 
 catalog:
   '@modelcontextprotocol/sdk': ^1.25.1
+  '@larksuiteoapi/node-sdk': "^1.60.0"
   axios: ^1.13.6
   dompurify: ^3.3.1
   highlight.js: ^11.11.1

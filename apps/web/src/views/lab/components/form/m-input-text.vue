@@ -38,7 +38,7 @@ defineExpose({
   <IconField class="w-full" :class="size" v-bind="fieldProps">
     <InputIcon v-if="preIcon || slots.preIcon">
       <slot name="preIcon">
-        <SvgIcon class="cursor-pointer" :name="preIcon!" @click="$emit('preIconClick')" />
+        <SvgIcon :name="preIcon!" @click="$emit('preIconClick')" />
       </slot>
     </InputIcon>
     <InputText ref="input" v-bind="{ ...attrs, ...props }" :fluid />

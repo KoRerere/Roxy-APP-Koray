@@ -2,8 +2,23 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef, toRaw } from 'vue'
 import { debounce } from 'es-toolkit'
 import type { UserGetRoxyClawListData, UserSetRoxyClawCreatePayload } from '@roxy/backend-api'
+import type { McpFailureType } from '@roxy/electron-preload'
 import { API } from '/@/api'
 import { useRouter } from 'vue-router'
+
+/**
+ * 获取 MCP 错误的 i18n 消息
+ */
+export function getMcpErrorMessage(type: McpFailureType): string {
+  const messageMap: Record<McpFailureType, string> = {
+    roxyclaw_already_running: $t('RoxyClaw 正在运行中，请先停止 RoxyClaw'),
+    mcp_window_already_open: $t('Roxy AI Agent 正在运行中，请先关闭 Roxy AI Agent 窗口'),
+    script_repair_failed: $t('Roxy AI Agent 文件修复失败，请重启应用后重试'),
+    unknown_error: $t('服务异常，请稍后重试'),
+  }
+
+  return messageMap[type] || messageMap.unknown_error
+}
 
 // RoxyClaw 配置接口
 export interface RoxyClawConfig {
@@ -14,6 +29,13 @@ export interface RoxyClawConfig {
   lark_app_secret: string
   lark_allowed_chat_ids: string[]
   lark_environment: 'lark' | 'feishu'
+  slack_bot_token: string
+  slack_signing_secret: string
+  slack_app_token: string
+  slack_allowed_user_ids: string[]
+  slack_allowed_channel_ids: string[]
+  discord_bot_token: string
+  discord_allowed_user_ids: string[]
 }
 
 // 默认配置
@@ -25,6 +47,13 @@ const defaultConfig: RoxyClawConfig = {
   lark_app_secret: '',
   lark_allowed_chat_ids: [],
   lark_environment: 'feishu',
+  slack_bot_token: '',
+  slack_signing_secret: '',
+  slack_app_token: '',
+  slack_allowed_user_ids: [],
+  slack_allowed_channel_ids: [],
+  discord_bot_token: '',
+  discord_allowed_user_ids: [],
 }
 
 export const useRoxyClawStore = defineStore('roxyClaw', () => {
@@ -36,9 +65,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   const connectionStatus = shallowRef<{
     telegram: { checked: boolean, status: 'success' | 'failed' | null }
     lark: { checked: boolean, status: 'success' | 'failed' | null }
+    slack: { checked: boolean, status: 'success' | 'failed' | null }
+    discord: { checked: boolean, status: 'success' | 'failed' | null }
   }>({
     telegram: { checked: false, status: null },
     lark: { checked: false, status: null },
+    slack: { checked: false, status: null },
+    discord: { checked: false, status: null },
   })
 
   /**
@@ -58,6 +91,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
           lark_app_secret: data.lark_app_secret || '',
           lark_allowed_chat_ids: data.lark_allowed_chat_ids ? data.lark_allowed_chat_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
           lark_environment: (data.lark_environment as 'lark' | 'feishu') || 'feishu',
+          slack_bot_token: data.slack_bot_token || '',
+          slack_signing_secret: data.slack_signing_secret || '',
+          slack_app_token: data.slack_app_token || '',
+          slack_allowed_user_ids: data.slack_allowed_user_ids ? data.slack_allowed_user_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
+          slack_allowed_channel_ids: data.slack_allowed_channel_ids ? data.slack_allowed_channel_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
+          discord_bot_token: data.discord_bot_token || '',
+          discord_allowed_user_ids: data.discord_allowed_user_ids ? data.discord_allowed_user_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
         }
         config.value = parsedConfig
         // 保存原始配置用于判断是否修改
@@ -123,6 +163,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
       lark_allowed_chat_ids: newConfig.lark_allowed_chat_ids.join(','),
       enabled: newConfig.enabled ? 1 : 0,
       lark_environment: newConfig.lark_environment,
+      slack_bot_token: newConfig.slack_bot_token,
+      slack_signing_secret: newConfig.slack_signing_secret,
+      slack_app_token: newConfig.slack_app_token,
+      slack_allowed_user_ids: newConfig.slack_allowed_user_ids.join(','),
+      slack_allowed_channel_ids: newConfig.slack_allowed_channel_ids.join(','),
+      discord_bot_token: newConfig.discord_bot_token,
+      discord_allowed_user_ids: newConfig.discord_allowed_user_ids.join(','),
     }
 
     try {
@@ -189,7 +236,7 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
       if (mcpStatus.mcpWindowOpen) {
         return {
           success: false,
-          message: $t('MCP 窗口正在运行中，请先关闭 MCP 窗口'),
+          message: $t('Roxy AI Agent 窗口正在运行中，请先关闭 Roxy AI Agent 窗口'),
         }
       }
 
@@ -198,6 +245,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
         return {
           success: false,
           message: $t('Telegram Bot 的 Allowed Chat IDs (白名单) 是必填项，请先填写'),
+        }
+      }
+      // 检查 Discord 配置
+      if (config.value.discord_bot_token && config.value.discord_allowed_user_ids.length === 0) {
+        return {
+          success: false,
+          message: $t('Discord Bot 的 Allowed User IDs (白名单) 是必填项，请先填写'),
         }
       }
 
@@ -210,22 +264,21 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
 
         if (!result.success) {
           config.value.enabled = false
-        }
-        else {
-          // 启动成功后更新原始配置
-          updateOriginalConfig()
-        }
-        if (result.success) {
-          return {
-            success: true,
-            message: $t('RoxyClaw 启动成功'),
-          }
-        }
-        else {
+          // 使用错误类型获取对应的 i18n 消息
+          const errorMessage = result.type
+            ? getMcpErrorMessage(result.type)
+            : result.message || $t('RoxyClaw 启动失败')
           return {
             success: false,
-            message: $t('RoxyClaw 启动失败'),
+            message: errorMessage,
           }
+        }
+
+        // 启动成功后更新原始配置
+        updateOriginalConfig()
+        return {
+          success: true,
+          message: $t('RoxyClaw 启动成功'),
         }
       }
 
@@ -310,17 +363,19 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   }
 
   /**
-   * 测试 Telegram 连接（调用 Telegram 官方接口）
+   * 测试 Telegram 连接（通过 Electron IPC 调用，使用系统代理）
    */
   async function testTelegram(token: string): Promise<{ success: boolean, message?: string }> {
     try {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:testTelegram', token)
+      }
+      // 浏览器环境降级处理
       const response = await fetch(`https://api.telegram.org/bot${token}/getMe`)
       const data = await response.json()
-
       if (data.ok && data.result && data.result.is_bot) {
         return { success: true, message: $t('Telegram bot token 有效') }
       }
-
       return { success: false, message: $t('Telegram bot token 无效') }
     }
     catch (error) {
@@ -330,28 +385,24 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   }
 
   /**
-   * 测试 Lark 连接（调用飞书官方接口）
+   * 测试 Lark 连接（通过 Electron IPC 调用，使用系统代理）
    */
   async function testLark(appId: string, appSecret: string, environment: 'lark' | 'feishu' = 'feishu'): Promise<{ success: boolean, message?: string }> {
     try {
-      // 反向代理 open.feishu.cn 或 open.larksuite.com，飞书有同源策略，不能直接访问
-      const response = await fetch(`https://apitest.roxybrowser.co/${environment}/open-apis/auth/v3/tenant_access_token/internal`, {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:testLark', appId, appSecret, environment)
+      }
+      // 浏览器环境降级处理
+      const domain = environment === 'lark' ? 'open.larksuite.com' : 'open.feishu.cn'
+      const response = await fetch(`https://${domain}/open-apis/auth/v3/tenant_access_token/internal`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          app_id: appId,
-          app_secret: appSecret,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
       })
-
       const data = await response.json()
-
       if (data.code === 0 && data.tenant_access_token) {
         return { success: true, message: $t('{lark} app credentials 有效!', { lark: $t('Lark / 飞书') }) }
       }
-
       return { success: false, message: $t('app credentials 无效') }
     }
     catch (error) {
@@ -360,10 +411,64 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     }
   }
 
+  /**
+   * 测试 Slack 连接（通过 Electron IPC 调用，使用系统代理）
+   */
+  async function testSlack(botToken: string): Promise<{ success: boolean, message?: string }> {
+    try {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:testSlack', botToken)
+      }
+      // 浏览器环境降级处理
+      const response = await fetch('https://slack.com/api/auth.test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${botToken}`,
+        },
+      })
+      const data = await response.json()
+      if (data.ok) {
+        return { success: true, message: $t('Slack bot token 有效!') }
+      }
+      return { success: false, message: data.error || $t('Slack bot token 无效') }
+    }
+    catch (error) {
+      console.error('Slack test failed:', error)
+      return { success: false, message: $t('网络错误') }
+    }
+  }
+
+  /**
+   * 测试 Discord 连接（通过 Electron IPC 调用，使用系统代理）
+   */
+  async function testDiscord(botToken: string): Promise<{ success: boolean, message?: string }> {
+    try {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:testDiscord', botToken)
+      }
+      // 浏览器环境降级处理
+      const response = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bot ${botToken}` },
+      })
+      if (response.ok) {
+        return { success: true, message: $t('Discord bot token 有效!') }
+      }
+      const data = await response.json().catch(() => null)
+      return { success: false, message: data?.message || $t('Discord bot token 无效') }
+    }
+    catch (error) {
+      console.error('Discord test failed:', error)
+      return { success: false, message: $t('网络错误') }
+    }
+  }
+
   // 辅助计算属性
   const isEnabled = computed(() => config.value.enabled)
   const telegramConfigured = computed(() => !!config.value.tg_bot_token && config.value.tg_allowed_chat_ids.length > 0)
   const larkConfigured = computed(() => !!config.value.lark_app_id && !!config.value.lark_app_secret)
+  const slackConfigured = computed(() => !!config.value.slack_bot_token && !!config.value.slack_signing_secret)
+  const discordConfigured = computed(() => !!config.value.discord_bot_token && config.value.discord_allowed_user_ids.length > 0)
 
   return {
     config,
@@ -374,9 +479,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     restartRoxyClaw,
     testTelegram,
     testLark,
+    testSlack,
+    testDiscord,
     isEnabled,
     telegramConfigured,
     larkConfigured,
+    slackConfigured,
+    discordConfigured,
     connectionStatus,
     isConfigChanged,
     updateOriginalConfig,

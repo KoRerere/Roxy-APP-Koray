@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RxTooltip from '/@/components/rx-tooltip'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -70,7 +71,7 @@ const kernelOptions = computed(() => {
 
 function formatKernelBtnLabel(item: KernelUpdateItem) {
   if (item.status === 'downloading') {
-    return `${$t('正在下载')} ${Math.floor(item.percent!)}%`
+    return `${$t('正在下载')} ${Math.floor(item.percent ?? 0)}%`
   }
   else if (item.status === 'downloaded') {
     return $t('下载完成')
@@ -88,7 +89,7 @@ function formatKernelBtnLabel(item: KernelUpdateItem) {
 
 function formatKernelIcon(item: KernelUpdateItem) {
   const iconMap: Recordable<SvgNames> = {
-    downloading: 'base/rx_ic_download',
+    downloading: 'base/rx_ic_spin',
     downloaded: 'base/rx_ic_check',
     update: 'base/rx_ic_renew',
   }
@@ -120,15 +121,18 @@ async function updateAllKernel(event: MouseEvent) {
 }
 
 async function handleKernelItemClick(event: MouseEvent, item: KernelUpdateItem) {
+  if (item.status === 'downloading') {
+    if (item.coreVersion) {
+      await globalThis.electronAPI.send('app:cancel-download-chrome-core', item.coreVersion)
+    }
+    return
+  }
+
   const usingCores = await globalThis.electronAPI.send('browser:usingCores')
 
   if (usingCores.includes(item.coreVersion!)) {
     usingVersion.value = usingCores.join(',')
     popoverRef.value?.instance?.show(event, event.target)
-    return
-  }
-
-  if (item.status === 'downloading') {
     return
   }
 
@@ -219,9 +223,23 @@ defineExpose({
             </div>
           </div>
           <div class="shrink-0 flex items-center gap-2 pr-4">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="formatKernelIcon(item)" :loading="item.status === 'downloading'"
-                      :disabled="item.status === 'downloaded'" @click="handleKernelItemClick($event, item)"
-            />
+            <component :is="item.status === 'downloading' ? RxTooltip : 'div'" tooltip-content-class="py-1 px-2">
+              <template #default>
+                <RxButton :class="{ group: item.status === 'downloading' }" severity="secondary" variant="outlined" size="xxs" :disabled="item.status === 'downloaded'"
+                          @click="handleKernelItemClick($event, item)"
+                >
+                  <SvgIcon class="group-hover:hidden" :class="{ 'loading-circle': item.status === 'downloading' }" :name="formatKernelIcon(item)" color="var(--colors-icon-icon-secondary)" />
+                  <SvgIcon class="hidden group-hover:block" name="base/rx_ic_pause" color="var(--colors-icon-icon-secondary)" />
+                  <span>{{ formatKernelBtnLabel(item) }}</span>
+                </RxButton>
+              </template>
+              <template #content>
+                <div class="text-3 font-600 text-white w-fit">
+                  {{ $t('取消') }}
+                </div>
+              </template>
+            </component>
+
             <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_bin_1" :disabled="!['downloaded', 'update'].includes(item.status!)" @click="handleRemove($event, item)" />
           </div>
         </div>

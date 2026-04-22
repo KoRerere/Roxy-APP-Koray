@@ -56,18 +56,18 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
       document: getOfficialFaqWebsite('/features/profile-configuration#template'),
     },
     transfer: {
-      title: $t('使用窗口投送提升资源分享效率'),
+      title: $t('使用窗口转移提升资源分享效率'),
       description: () => {
         return (
-          <I18nT scope="global" keypath={$t('窗口投送功能允许您向任意的工作空间投送窗口。{bold}', { bold: '{bold}' })}>
+          <I18nT scope="global" keypath={$t('窗口转移功能允许您向任意的工作空间转移窗口。{bold}', { bold: '{bold}' })}>
             {{
-              bold: () => <span class="font-bold">{$t('窗口投送不仅支持同步窗口云端数据，还包括代理 IP 设置、平台账号、Cookies 和指纹参数等相关信息')}</span>,
+              bold: () => <span class="font-bold">{$t('窗口转移不仅支持同步窗口云端数据，还包括代理 IP 设置、平台账号、Cookies 和指纹参数等相关信息')}</span>,
             }}
           </I18nT>
         )
       },
       image: '/images/payments/pay-wall-transfer.png',
-      about: $t('关于窗口投送'),
+      about: $t('关于窗口转移'),
       document: getOfficialFaqWebsite('/features/transfer-profile'),
     },
   }

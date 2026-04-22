@@ -238,6 +238,8 @@ export async function getSorts() {
 }
 
 export function getOperation(row: any = {}) {
+  const hasBindProxy = [].concat(row).some((item: any) => item.proxyCategory !== 'noproxy')
+
   return [
     {
       name: 'edit',
@@ -247,9 +249,9 @@ export function getOperation(row: any = {}) {
     },
     {
       name: 'transfer',
-      label: $t('投送窗口'),
+      label: $t('转移窗口'),
       icon: 'base/rx_ic_transfer',
-      tooltip: $t('投送窗口'),
+      tooltip: $t('转移窗口'),
       quick: true,
       multiple: true,
       multipleProps: {
@@ -351,7 +353,7 @@ export function getOperation(row: any = {}) {
       label: $t('代理 IP 操作'),
       icon: 'base/rx_ic_internet',
       multiple: true,
-      power: check(['Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside'], 'any'),
+      power: check(['Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy'], 'any'),
       items: [
         {
           name: 'addProxy',
@@ -366,11 +368,20 @@ export function getOperation(row: any = {}) {
           power: check('Profiles_select_proxy'),
         },
         {
+          name: 'checkProxy',
+          label: $t('测试代理 IP'),
+          icon: 'base/rx_ic_speed_test',
+          tooltip: hasBindProxy ? $t('测试代理 IP') : $t('未绑定代理 IP'),
+          power: check('Profiles_speed_test_proxy'),
+          quick: true,
+          disabled: !hasBindProxy,
+        },
+        {
           name: 'deleteProxy',
           label: $t('删除代理 IP'),
           icon: 'base/rx_ic_bin_1',
           power: check('Profiles_delete_proxy_outside'),
-          disabled: !([].concat(row).some((item: any) => item.proxyCategory !== 'noproxy')),
+          disabled: !hasBindProxy,
         },
       ],
     },
@@ -396,7 +407,7 @@ export function getOperation(row: any = {}) {
       ],
     },
     {
-      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_add_platform_outside', 'Profiles_select_platform'], 'any'),
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Profiles_add_platform_outside', 'Profiles_select_platform'], 'any'),
       separator: true,
       multiple: true,
     },

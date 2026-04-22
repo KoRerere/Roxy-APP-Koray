@@ -11,11 +11,10 @@ import { useConfirm } from 'primevue/useconfirm'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
+import { usePermission } from '/@/hooks/usePermission'
 import { findInputByName, setInputValue, sleep } from '/@/utils'
 import { copyText } from '/@/utils/'
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
 import { useSimpleLocale } from '/@/stores/locale'
 import { SubLevelEnum } from '/@/enums/pay'
 
@@ -24,9 +23,9 @@ const router = useRouter()
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { openTelegram, getOfficialFaqWebsite } = useSimpleLocale()
-const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
+const { check } = usePermission()
 
 const cssModule = useCssModule('text')
 const original = ref()
@@ -143,7 +142,7 @@ const apiList = computed(() => [
     content: () => (
       <I18nT tag="div" scope="global" keypath={$t('API 请求频率限制：{value} 次 / 分钟。{upgrade}', { value: apiConfig.value.apiRate, upgrade: '{upgrade}' })}>
         {{
-          upgrade: () => isOwner.value && (
+          upgrade: () => check('Cost_Center_all') && (
             <span
               class={`cursor-pointer ${cssModule.link}`}
               onClick={() => {

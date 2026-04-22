@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import currency from 'currency.js'
 import { API } from '/@/api'
 import { ProxyReplaceStatus, ProxyReplaceType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { usePermission } from '/@/hooks/usePermission'
 import type { ProxyItem } from '../operation'
 
 import type { SvgNames } from '/@/components/rx-icon'
@@ -17,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const [_, onlyErrorToast] = useResponseToast()
+const { check } = usePermission()
 
 const helps = computed(() => [
   {
@@ -30,15 +33,16 @@ const helps = computed(() => [
   },
   {
     separator: true,
+    visible: check('Cost_Center_all'),
   },
   {
     icon: 'base/rx_ic_refund',
-    title: $t('申请退款 (${amount})', { amount: info.actualAmount }),
-    tooltip: $t('退款金额=价格÷时长×剩余天数\n${refund} = (${amount} ÷ {days}天) × {surplus}天', {
-      amount: info.proxyAmount,
+    title: $t('申请退款 ({amount})', { amount: currency(info.actualAmount).format() }),
+    tooltip: $t('退款金额=价格÷时长×剩余天数\n{refund} = ({amount} ÷ {days}天) × {surplus}天', {
+      amount: currency(info.proxyAmount).format(),
       days: info.totalDays,
       surplus: info.remainingDays,
-      refund: info.actualAmount,
+      refund: currency(info.actualAmount).format(),
     }),
     description: $t('退款至 Roxy 钱包，预计在 {hours} 小时内处理完成。', { hours: info.refundHours }),
     class: 'help-item',
@@ -48,7 +52,7 @@ const helps = computed(() => [
       variant: 'outlined',
       onClick: () => replaceProxy(ProxyReplaceType.Refund),
     },
-    visible: data.canRefund,
+    visible: data.canRefund && check('Cost_Center_all'),
   },
   {
     icon: 'base/rx_ic_renew',
@@ -61,7 +65,7 @@ const helps = computed(() => [
       variant: 'outlined',
       onClick: () => replaceProxy(ProxyReplaceType.Replace),
     },
-    visible: data.replaceStatus !== ProxyReplaceStatus.replaced,
+    visible: data.replaceStatus !== ProxyReplaceStatus.replaced && check('Cost_Center_all'),
   },
 ].filter(item => item.visible !== false))
 

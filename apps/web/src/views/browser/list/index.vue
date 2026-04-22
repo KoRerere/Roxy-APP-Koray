@@ -48,7 +48,7 @@ const rawTabs: TabType[] = [
 ] as const
 
 const suffixTabs = computed(() => [
-  { id: 'rx_1004', label: $t('投送中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), visible: role.isOwner || role.isManager },
+  { id: 'rx_1004', label: $t('转移中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), visible: role.isOwner || role.isManager },
   { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), visible: check('Profiles_view_recycle_bin') },
 ].filter(item => item.visible !== false))
 
@@ -132,12 +132,12 @@ async function switchTab(tabId: string, event?: Event) {
   if (tabId === 'rx_1004') {
     const { code } = await API.pay.userCheckTeamUserRightsList()
     if (code !== 0) {
-      if (!role.isOwner) {
+      if (!check('Cost_Center_all')) {
         emitter.emit('showToast', {
           severity: 'warn',
-          summary: $t('窗口投送不可用'),
+          summary: $t('窗口转移不可用'),
           detail: h(I18nT, {
-            keypath: $t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
+            keypath: $t('窗口转移不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
           }, {
             link: () => h('a', {
               class: 'cursor-pointer',

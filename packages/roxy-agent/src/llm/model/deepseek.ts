@@ -1,9 +1,15 @@
 import { AIMessageChunk } from '@langchain/core/messages'
 import { ChatGenerationChunk } from '@langchain/core/outputs'
 import OpenAI from 'openai'
-import { getReasoningContent } from '../../agent/utils'
 import { env } from '../../config.js'
 import { BaseLLMChat } from './baseLLMChart.js'
+
+function getReasoningContent(message: any) {
+  const reasoning = message?.additional_kwargs?.reasoning
+    || (message?.additional_kwargs as any)?.reasoning_content
+    || (message as any).response_metadata?.reasoning
+  return reasoning
+}
 
 /**
  * Custom SiliconFlow chat implementation

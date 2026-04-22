@@ -13,12 +13,11 @@ import { API } from '/@/api'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useDialog } from '/@/hooks/useDialog'
+import { usePermission } from '/@/hooks/usePermission'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { useRoleStore } from '/@/stores/role'
 import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
@@ -29,24 +28,25 @@ import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 
+const route = useRoute()
 const confirm = useConfirm()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
 const backRoute = useBackRoute()
-const { userInfo, userPayInfo } = storeToRefs(userStore)
+const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
-const { isOwner } = storeToRefs(useRoleStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
-const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+const { check } = usePermission()
 
 const isBatch = ref(false)
 const createCount = ref(1)
-createTableContext({ isBatch, createCount })
+const driverObj = ref()
+createTableContext({ isBatch, createCount, driverObj })
 
 const tabs = [
   { title: $t('单个创建'), value: 'single' },
@@ -204,29 +204,72 @@ async function initFormInputs(template: Record<string, any> = {}) {
   extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
-  nextTick(() => {
-    showGuide()
-  })
+
+  if (route.query.driver) {
+    nextTick(() => {
+      showGuide()
+    })
+  }
 }
 
 function showGuide() {
-  if (userInfo.value.onboardingTaskStatus?.createProfileTourGuideStatus === false) {
-    const driverObj = genDriver({
-      progressText: '{{current}} / {{total}}',
-      showProgress: true,
-      steps: [
-        { element: '.guide1', disableActiveInteraction: false, popover: { description: $t('请为您的第一个窗口命名。'), side: 'top', align: 'start' } },
-        { element: '.guide2', popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'start' } },
-        { element: '.guide3', popover: { description: $t('配置代理 IP 可以让您改变出口 IP 地址，从而为该窗口的所有行动提供匿名性。'), side: 'top', align: 'center' } },
-        { element: '.guide4', popover: { description: $t('此处展示的是当前窗口的指纹信息预览，您可以根据业务需求继续自定义配置。'), side: 'left', align: 'center' } },
-        { element: '.guide5', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
-      ],
-      onDestroyed: () => {
-        updateOnboardingTaskStatus({ createProfileTourGuideStatus: true })
+  driverObj.value = genDriver({
+    showProgress: false,
+    disableActiveInteraction: false,
+    allowClose: true,
+    showButtons: ['close'],
+    overlayClickBehavior: (_, __, opts) => {
+      opts.driver.destroy()
+      driverObj.value = undefined
+    },
+    onDestroyed: () => {
+      clearGuide1Highlight()
+    },
+    steps: [
+      {
+        element: '.guide1',
+        popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'center' },
+        onHighlightStarted: () => {
+          nextTick(() => {
+            requestAnimationFrame(() => {
+              const root = document.querySelector('.guide1')
+              if (!root)
+                return
+              const n = root.querySelectorAll('.guide1-pulse-target').length
+              highlightGuide1Targets(Array.from({ length: n }, (_, i) => i))
+            })
+          })
+        },
+        onDeselected: () => {
+          clearGuide1Highlight()
+        },
       },
-    })
-    driverObj.drive()
+      { element: '.guide2', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
+    ],
+  })
+  driverObj.value.drive()
+}
+
+function clearDriver() {
+  if (driverObj.value) {
+    driverObj.value.destroy()
+    driverObj.value = undefined
   }
+}
+
+function highlightGuide1Targets(indexes: number[]) {
+  const root = document.querySelector('.guide1')
+  if (!root)
+    return
+  const targets = root.querySelectorAll('.guide1-pulse-target')
+  targets.forEach((el, i) => {
+    if (indexes.includes(i))
+      el.classList.add('guide1-pulse-active')
+  })
+}
+
+function clearGuide1Highlight() {
+  document.querySelectorAll('.guide1 .guide1-pulse-active').forEach(el => el.classList.remove('guide1-pulse-active'))
 }
 
 function showMobileExtraSettings() {
@@ -257,7 +300,7 @@ function showTemplates(event: MouseEvent) {
 async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
   const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
-    if (!isOwner.value) {
+    if (!check('Cost_Center_all')) {
       emitter.emit('showToast', {
         severity: 'warn',
         life: 5000,
@@ -354,6 +397,7 @@ function importSuccess(data: any) {
 }
 
 async function createProfile(openBrowser: boolean) {
+  clearDriver()
   const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
@@ -399,7 +443,7 @@ async function batchCreateProfile(params: any) {
 
   loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
-  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
+  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }).fill({ id: 0, proxyCategory: 'noproxy' }))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail.map(({ userAgent, webGLManufacturer, webGLRender, ...item }: any) => {
     return {
       ...item,
@@ -529,7 +573,7 @@ function onBack(data?: any, openBrowser = false) {
         <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
           <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
           <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-          <RxButton class="guide5" :label="$t('创建窗口')" @click.stop="createProfile(false)" />
+          <RxButton class="guide2" :label="$t('创建窗口')" @click.stop="createProfile(false)" />
         </div>
       </div>
     </div>
@@ -600,5 +644,38 @@ function onBack(data?: any, openBrowser = false) {
   width: 100%;
   height: 1px;
   background-color: var(--colors-border-divider);
+}
+
+/* 引导高亮：与目标同尺寸，呼吸灯（明暗循环，无缩放扩散） */
+:deep(.guide1-pulse-target.guide1-pulse-active) {
+  position: relative;
+  z-index: 10001;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 2px solid rgba(255, 200, 0, 0.85);
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0);
+    animation: guide1-breathe 2.3s ease-in-out infinite;
+  }
+}
+
+@keyframes guide1-breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    border-color: rgba(255, 200, 0, 0.45);
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0);
+  }
+
+  50% {
+    opacity: 1;
+    border-color: rgba(255, 200, 0, 0.95);
+    box-shadow: 0 0 2px 2px rgba(255, 200, 0, 0.42);
+  }
 }
 </style>

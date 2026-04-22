@@ -23,15 +23,18 @@ async function detectNetwork() {
     proxyInfo.value.ip = result.ip
     console.log('detectNetwork result', result, proxyInfo)
     setNetworkInfo(result)
-  } catch (error) {
+  }
+  catch (error) {
     proxyInfo.value = defaultProxyInfo
     retryCount++
     if (retryCount < 3) {
       detectNetwork()
-    } else {
+    }
+    else {
       proxyInfo.value.ip = ''
     }
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -49,7 +52,7 @@ setTimeout(detectNetwork, 2000)
 
 <template>
   <div class="flex items-center gap-1">
-    <RxButton class="shrink-0" :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" :loading="loading" severity="secondary" outlined size="xs" @click="detectNetwork" />
+    <RxButton class="shrink-0" :icon="proxyInfo.ip ? 'base/rx_ic_location' : 'base/rx_ic_location_error'" :loading="loading" severity="secondary" outlined size="xs" @click="detectNetwork" />
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />
@@ -67,7 +70,7 @@ setTimeout(detectNetwork, 2000)
 
 <style lang="scss" scoped>
 .city {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -75,7 +78,7 @@ setTimeout(detectNetwork, 2000)
 }
 
 .ip {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;

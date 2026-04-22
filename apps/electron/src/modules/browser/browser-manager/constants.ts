@@ -1,3 +1,4 @@
+import { isMac } from '/@/constants/common'
 import { store } from '/@/modules/store'
 
 /** 默认的浏览器启动参数 */
@@ -7,7 +8,7 @@ export const defaultCLIArgs = [
   '--no-first-run',
   '--no-default-browser-check',
   '--remote-debugging-port=0',
-  '--use-mock-keychain',
+  isMac ? '' : '--use-mock-keychain',
 ]
 
 /** 需要同步的本地数据 */

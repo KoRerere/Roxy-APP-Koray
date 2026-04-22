@@ -1,44 +1,44 @@
 <script setup lang="ts">
-import AgentList from '/@/views/agent/list/index.vue'
+// import AgentList from '/@/views/agent/list/index.vue'
 import AgentShop from '/@/views/agent/shop/index.vue'
-import { useUserStore } from '/@/stores/user'
-import { usePermission } from '/@/hooks/usePermission'
-import { safeParseJSON } from '/@/utils/basic'
+// import { useUserStore } from '/@/stores/user'
+// import { usePermission } from '/@/hooks/usePermission'
+// import { safeParseJSON } from '/@/utils/basic'
 
-const route = useRoute()
-const router = useRouter()
-const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
-const { check } = usePermission()
+// const route = useRoute()
+// const router = useRouter()
+// const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
+// const { check } = usePermission()
 
-const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
-const activeTabValue = ref((route.query.name as string) || localStatus.proxyTab || 'shop')
+// const localStatus = safeParseJSON(localStorage.getItem('localStatus')) ?? {}
+// const activeTabValue = ref((route.query.name as string) || localStatus.proxyTab || 'shop')
 
-const tabs = [
-  { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', value: 'shop', component: markRaw(AgentShop), visible: check('Proxy_Store_view_page') },
-  { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList), visible: check('Proxy_List_view_page') },
-].filter(tab => tab.visible !== false)
+// const tabs = [
+//   { title: $t('代理 IP 商店'), icon: 'base/rx_ic_cart_solid', value: 'shop', component: markRaw(AgentShop), visible: check('Proxy_List_view_page') },
+//   { title: $t('代理 IP 列表'), value: 'list', component: markRaw(AgentList), visible: check('Proxy_List_view_page') },
+// ].filter(tab => tab.visible !== false)
 
-const activeTab = computed(() => tabs.find(tab => tab.value === activeTabValue.value) ?? tabs[0])
+// const activeTab = computed(() => tabs.find(tab => tab.value === activeTabValue.value) ?? tabs[0])
 
-watch(
-  () => route.query.name,
-  (value) => {
-    // 在代理 IP 列表页点击顶部提醒跳转商店，同步 activeTabValue
-    if (!!value && tabs.some(tab => tab.value === value) && value !== activeTabValue.value) {
-      activeTabValue.value = value as string
-    }
-  },
-)
+// watch(
+//   () => route.query.name,
+//   (value) => {
+//     // 在代理 IP 列表页点击顶部提醒跳转商店，同步 activeTabValue
+//     if (!!value && tabs.some(tab => tab.value === value) && value !== activeTabValue.value) {
+//       activeTabValue.value = value as string
+//     }
+//   },
+// )
 
-function onChange(value: any) {
-  router.replace({ name: 'agent-list', query: { name: value } })
-  localStorage.setItem('localStatus', JSON.stringify({ ...localStatus, proxyTab: value }))
-}
+// function onChange(value: any) {
+//   router.replace({ name: 'agent-list', query: { name: value } })
+//   localStorage.setItem('localStatus', JSON.stringify({ ...localStatus, proxyTab: value }))
+// }
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <div class="flex items-center">
+    <!-- <div class="flex items-center">
       <RxTabs v-model:value="activeTabValue" class="flex-1" :tabs="tabs" head-tabs only-tabs @update:value="onChange">
         <template #tab="{ data }">
           <div class="flex items-center gap-2">
@@ -62,28 +62,29 @@ function onChange(value: any) {
           </template>
         </i18n-t>
       </div>
-    </div>
-    <div class="flex-1 overflow-hidden min-w-240">
-      <component :is="activeTab?.component" />
-    </div>
+    </div> -->
+    <!-- <div class="flex-1 overflow-hidden min-w-240"> -->
+    <!-- <component :is="activeTab?.component" /> -->
+    <AgentShop />
+    <!-- </div> -->
   </div>
 </template>
 
 <style lang="scss" scoped>
-.discount {
-  color: var(--colors-text-text-secondary);
-  font-size: 12px;
-  line-height: 20px;
-  border-bottom: 0.5px solid var(--tabs-tablist-border-color);
+// .discount {
+//   color: var(--colors-text-text-secondary);
+//   font-size: 12px;
+//   line-height: 20px;
+//   border-bottom: 0.5px solid var(--tabs-tablist-border-color);
 
-  &-identity {
-    color: var(--colors-text-text-primary);
-    font-family: 'DingTalk JinBuTi';
-  }
+//   &-identity {
+//     color: var(--colors-text-text-primary);
+//     font-family: 'DingTalk JinBuTi';
+//   }
 
-  &-value {
-    color: var(--colors-text-text-warning);
-    font-family: 'DingTalk JinBuTi';
-  }
-}
+//   &-value {
+//     color: var(--colors-text-text-warning);
+//     font-family: 'DingTalk JinBuTi';
+//   }
+// }
 </style>

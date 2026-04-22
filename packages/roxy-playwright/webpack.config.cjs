@@ -60,6 +60,10 @@ module.exports = [
   // ES Module 配置
   {
     ...sharedConfig,
+    entry: {
+      index: './dist-vite/index.mjs',
+      'roxy-playwright': './dist-vite/index.mjs',
+    },
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].mjs', // 输出为 ES Module 格式

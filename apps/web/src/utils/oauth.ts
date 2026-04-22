@@ -99,7 +99,7 @@ function toAuth(url: string, title: string, features?: string) {
 
 function openGoogleAuth2Login() {
   const paramsObj = {
-    client_id: '663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com',
+    client_id: '122184636659-onkerhuo2qe3vjjllg0gnqgp8pcujtci.apps.googleusercontent.com',
     redirect_uri: getRedirectUrl('google'),
     scope: 'https://www.googleapis.com/auth/userinfo.email',
     response_type: 'code',

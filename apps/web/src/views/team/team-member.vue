@@ -217,13 +217,14 @@ async function deleteMember(data: TableRow) {
 }
 
 async function editPermission(row: TableRow) {
+  console.log('row', row)
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => (
-        <RolesDetail userId={row.userId} onClose={hideModal} />
+        <RolesDetail userId={row.userId} onClose={hideModal} title={$t('{name} ({role}) - 权限详情', { name: row.nickname || row.userName, role: roleLabelMap[row.role as Role] })} />
       ),
     },
   })
@@ -271,23 +272,31 @@ function onRefreshTable(params = {}) {
 </script>
 
 <template>
-  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
-           :paginator="false" :show-actions-menu="false" :show-actions="false"
+  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation"
+           :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false" :paginator="false"
+           :show-actions-menu="false" :show-actions="false"
   >
     <template #display-before>
-      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
+      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
+                :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()"
+      />
     </template>
     <template #filter-after>
       <div class="flex items-center w-full gap-3">
         <AdvancedSearch :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name"
+                        option-value="value" data-key="value" @change="filters.onChange"
+        />
       </div>
     </template>
     <template #table-empty>
-      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
+      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')"
+                      :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')"
+      >
         <template #extra>
           <div class="flex gap-3">
-            <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
+            <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md"
+                      icon="base/rx_ic_user_add" :label="$t('邀请')"
                       @click.stop="handleShowInviteUserFormDialog(filters.value)"
             />
             <TutorialVideo video-type="team_management" :autoplay="false" />
@@ -296,7 +305,9 @@ function onRefreshTable(params = {}) {
       </CustomNewEmpty>
     </template>
     <template #member="{ data }">
-      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
+      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email"
+                  :phone="data.phone"
+      />
     </template>
     <template #nickname="{ data }">
       <Inplace v-focustrap :pt="{ display: '!border-none !pa-0' }">
@@ -306,7 +317,8 @@ function onRefreshTable(params = {}) {
           </div>
         </template>
         <template #content="{ closeCallback }">
-          <TsFormInputText v-model="data.nickname" class="!w-50" autofocus size="xxs" @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
+          <TsFormInputText v-model="data.nickname" class="!w-50" autofocus size="xxs"
+                           @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
                            @keydown.enter="saveNickname(data, closeCallback)"
           />
         </template>

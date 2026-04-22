@@ -32,6 +32,8 @@
     "pack:dev:noSign:noBuild": "cross-env SKIP_CODE_SIGNING=true dotenvx run -f .env.development -- pnpm pack:app",
     "pack:prod:noSign": "cross-env SKIP_CODE_SIGNING=true dotenvx run -f .env.production -- pnpm build:prod && pnpm pack:prod:noSign:noBuild",
     "pack:prod:noSign:noBuild": "cross-env SKIP_CODE_SIGNING=true dotenvx run -f .env.production -- pnpm pack:app",
+    "pack:appx:prod": "cross-env BUILD_APPX=true dotenvx run -f .env.production -- pnpm build:prod && pnpm pack:appx:prod:noBuild",
+    "pack:appx:prod:noBuild": "cross-env BUILD_APPX=true dotenvx run -f .env.production -- pnpm pack:app",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "postinstall": "cross-env ELECTRON_RUN_AS_NODE=1 electron ../../scripts/update-electron-vendors.js",
     "debug:dist": "electron . --experimental-network-inspection",

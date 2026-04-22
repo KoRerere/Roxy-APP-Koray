@@ -1,10 +1,13 @@
-import { app, Menu, Tray } from 'electron'
+import { app, dialog, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
+import { API } from '/@/api'
 import { isWindows } from '/@/constants/common'
 import { isAppQuittingForUpdate } from '/@/modules/app'
-import { restoreOrCreateWindow } from '/@/modules/app/mainWindow'
+import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
+import { browserManager } from '/@/modules/browser'
+import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { closeAllWindows } from '/@/utils/browser-window'
 
@@ -41,7 +44,16 @@ function createContextMenu() {
   return Menu.buildFromTemplate([
     {
       label: $t('重启客户端'),
-      click: () => {
+      click: async () => {
+        if (store.autoRestoreWindow === 2) {
+          await showAutoRestoreWindowDialog()
+        }
+
+        // 用户选择了下次启动时恢复窗口
+        store.needRestoreWindow = store.autoRestoreWindow === 1
+
+        await forceSaveConfig()
+
         appUpdater.quitAndInstall()
         setTimeout(() => {
           if (isAppQuittingForUpdate()) {
@@ -71,4 +83,39 @@ function createContextMenu() {
 
 export function getTray() {
   return tray
+}
+
+async function showAutoRestoreWindowDialog() {
+  // 如果当前没有打开的浏览器，则不显示对话框
+  if (browserManager.openedBrowserMap.size === 0) {
+    return
+  }
+
+  const win = getMainWindow()!
+
+  const { response, checkboxChecked } = await dialog.showMessageBox(
+    win,
+    {
+      type: 'warning',
+      buttons: [$t('是'), $t('否')],
+      title: $t('提示'),
+      message: $t('下一次打开时是否恢复窗口？'),
+      checkboxLabel: $t('记住我的选择'),
+      checkboxChecked: false,
+      defaultId: 0,
+    },
+  )
+
+  win.setEnabled(true)
+  win.focus()
+  console.log('showAutoRestoreWindowDialog', response, checkboxChecked)
+  const isAutoRestoreWindow = response === 0 ? 1 : 0
+  // 记住用户的选择
+  if (checkboxChecked) {
+    await API.base.userSetUserConfigCreate({
+      autoRestoreWindow: isAutoRestoreWindow,
+    }).catch(console.error)
+  }
+
+  store.autoRestoreWindow = isAutoRestoreWindow
 }

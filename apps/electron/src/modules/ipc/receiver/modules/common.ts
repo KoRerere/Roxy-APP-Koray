@@ -32,6 +32,22 @@ export function setupCommonIpc(ipcMain: IPCMainInstance) {
     }
   })
 
+  /** 选择文件或文件夹 */
+  ipcMain.on('dialog:selectFileOrDir', async (event, options?: { filters?: any[], defaultPath?: string }) => {
+    try {
+      const { filePaths } = await dialog.showOpenDialog({
+        properties: ['openFile', 'openDirectory'],
+        filters: options?.filters,
+        defaultPath: options?.defaultPath,
+      })
+      return filePaths[0]
+    }
+    catch (error) {
+      console.log(error)
+      return ''
+    }
+  })
+
   /** 更新字典 */
   ipcMain.on('dict:update', async (event, dictKeys) => {
     await updateDict(dictKeys)

@@ -10,7 +10,5 @@ function toDownload() {
 </script>
 
 <template>
-  <RxButton class="shrink-0 !aspect-auto" icon="base/rx_ic_download" size="xs" @click="toDownload">
-    {{ $t('下载客户端') }}
-  </RxButton>
+  <RxButton class="shrink-0" icon="base/rx_ic_download" size="xs" :label="$t('下载客户端')" @click="toDownload" />
 </template>

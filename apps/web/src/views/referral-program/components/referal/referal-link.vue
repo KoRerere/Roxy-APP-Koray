@@ -318,7 +318,7 @@ function isLocked(linkStatus: number) {
           </div>
           <div class="banner-preview-container">
             <div v-if="currentBannerImage" class="banner-preview">
-              <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" class="p-3">
+              <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" preview class="w-full h-full object-contain p-3">
                 <template #original>
                   <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview">
                 </template>

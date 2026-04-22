@@ -89,6 +89,8 @@ export interface StoreType {
   ipChangeModal?: boolean
   /** 是否显示新功能提示 */
   showNewFeatureTips?: boolean
+  /** 下次更新时间 */
+  nextUpdateTimestamp?: number
   /** 浏览器主题 */
   browserColorScheme?: 'light' | 'dark' | 'system'
   /** 书签 */
@@ -103,6 +105,12 @@ export interface StoreType {
   hasLoggedIn?: boolean
   /** 开机自启动 */
   autoStart?: boolean
+  /** 窗口自动恢复, 0: 关闭, 1: 开启, 2: 弹出提示 */
+  autoRestoreWindow?: 0 | 1 | 2
+  /** 等待恢复的窗口 { workspaceId: dirId[] } */
+  waitingRestoreWindow?: Record<string, string[]>
+  /** 下次启动时是否需要恢复窗口 */
+  needRestoreWindow?: boolean
   /** 默认浏览器启动器进程 ID */
   defaultBrowserLauncherPid?: number
   /** 是否自动更新内核，已下载的内核并未使用时将会自动更新 */
@@ -111,4 +119,8 @@ export interface StoreType {
   lastUseIp2locationUrl?: string
   /** 更新器进程 ID */
   updaterExePid?: number
+  /** 应用是否正常退出 */
+  appNormalExit?: boolean
+  /** 是否开启窗口名称 */
+  windowNameSwitch: boolean
 }

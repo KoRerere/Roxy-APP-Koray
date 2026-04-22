@@ -1,12 +1,11 @@
 <script setup lang="tsx">
 import { I18nT } from 'vue-i18n'
 import { differenceInDays, format, subDays } from 'date-fns'
-
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
-import { useRoleStore } from '/@/stores/role'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
 import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { usePermission } from '/@/hooks/usePermission'
 import { useTeamStore } from '/@/stores/team'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
@@ -16,8 +15,8 @@ type Data = UnwrapRowType<UserGetOperateLogListData>
 const router = useRouter()
 const styles = useCssModule()
 const { userPayInfo } = storeToRefs(useUserStore())
-const { isOwner } = storeToRefs(useRoleStore())
 const { members } = storeToRefs(useTeamStore())
+const { check } = usePermission()
 
 const columns = ref([
   {
@@ -98,7 +97,7 @@ async function tableFilters() {
             showToast({
               severity: 'warn',
               summary: $t('您只能查看{days}天内的日志', { days }),
-              detail: !isOwner.value
+              detail: !check('Cost_Center_all')
                 ? $t('如需查看更多日志，请联系空间的拥有者进行升级。')
                 : userPayInfo.value.autoRenewDowngrade
                   ? ''// 特殊情况，如果用户是自动续费降级用户，则不显示升级提醒

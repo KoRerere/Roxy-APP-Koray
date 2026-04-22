@@ -6,7 +6,7 @@ import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { proxyManager } from '/@/modules/app/proxy-manager'
 import { cancelQuit, confirmQuit } from '/@/modules/app/utils'
-import { coreManager } from '/@/modules/browser'
+import { browserManager, coreManager } from '/@/modules/browser'
 import { startMoveWindow, stopMoveWindow } from '/@/modules/ipc/utils'
 import { openAPIServer } from '/@/modules/openapi'
 import { setSystemProxy } from '/@/modules/roxynet'
@@ -109,6 +109,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 安装更新 */
   ipcMain.on('app:quitAndInstall', async (event, info) => {
     if (info.type === 'app') {
+      store.needRestoreWindow = true
       appUpdater.upgradeNow()
     }
     else if (info.type === 'web') {
@@ -123,7 +124,16 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
 
   /** 下载指定的内核 */
   ipcMain.on('app:download-chrome-core', (event, coreVersion) => {
-    return coreManager.getCoreManager('chrome').downloadCore({ coreVersion })
+    return coreManager.getCoreManager('chrome').downloadCore({ coreVersion }).catch((error) => {
+      console.error('app:download-chrome-core error', error)
+    })
+  })
+
+  /** 取消下载指定的内核 */
+  ipcMain.on('app:cancel-download-chrome-core', (event, coreVersion) => {
+    return coreManager.getCoreManager('chrome').cancelDownloadCore(coreVersion).catch((error) => {
+      console.error('app:cancel-download-chrome-core error', error)
+    })
   })
 
   /** 删除指定内核 */
@@ -251,6 +261,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     const isShow = store.showLongTimeNotLoginTips || false
     store.showLongTimeNotLoginTips = false
     return isShow
+  })
+
+  /** 设置下次更新时间 */
+  ipcMain.on('app:setNextUpdateTime', (event, timestamp) => {
+    store.nextUpdateTimestamp = timestamp
   })
 
   /** 开启系统代理 */

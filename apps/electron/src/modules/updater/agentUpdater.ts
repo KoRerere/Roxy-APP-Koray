@@ -10,20 +10,20 @@ import { isWindows } from '/@/constants/common'
 import { calculateFileHash, fileExists, getErrorMessage, unzipFile } from '/@/utils'
 
 interface VersionInfo {
-  /** 最新版本号 */
+  /** agent 版本号 */
   version: string
-  /** 最低支持版本号 */
+  /** 此 agent 兼容的最低 app 版本 */
   minimum_app_version: string
   /** 发布时间 */
   releaseTime: string
-  /** skills 压缩包文件名列表，用于遍历下载 */
+  /** skills 压缩包文件名列表 */
   skills?: string[]
-  /** roxy-agent.mjs sha512（hex） */
-  agent_sha512?: string
-  /** roxy-openapi.mjs sha512（hex） */
-  openapi_sha512?: string
-  /** roxy-playwright.mjs sha512（hex） */
-  playwright_sha512?: string
+}
+
+interface ChecksumsInfo {
+  'roxy-agent': string
+  'roxy-playwright': string
+  'roxy-openapi': string
 }
 
 export interface CheckForUpdatesOptions {
@@ -46,70 +46,60 @@ export const agentUpdater = new class AgentUpdater {
   /** agent 资源包目录 */
   agentDir = dirname(appConfig.agentBinPath)
 
-  /** integrity 校验：roxy-agent.mjs 远端 sha512（打包后下载的目标文件） */
-  agentEntrySha512: string | null = null
-  /** integrity 校验：roxy-openapi.mjs 远端 sha512 */
-  openapiEntrySha512: string | null = null
-  /** integrity 校验：roxy-playwright.mjs 远端 sha512 */
-  playwrightEntrySha512: string | null = null
+  /** integrity 校验：各脚本远端 sha512 缓存 */
+  checksums: ChecksumsInfo | null = null
 
-  genAgentEntrySha512(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-agent-sha`
+  genChecksumsUrl(version: string) {
+    return `${this.agentDomain}/public/package/agent/scripts/${version}/${os}/checksums.json`
   }
 
-  genOpenapiEntrySha512(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-openapi-sha`
-  }
-
-  genPlaywrightEntrySha512(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-playwright-sha`
-  }
-
-  async getHas512() {
+  async getChecksums() {
     const version = await this.getLocalVersion()
-    if (!this.agentEntrySha512) {
-      const agentSha512 = await axios.get<string>(this.genAgentEntrySha512(version)).then(response => response.data)
-      this.agentEntrySha512 = agentSha512
+    if (!this.checksums) {
+      this.checksums = await axios.get<ChecksumsInfo>(this.genChecksumsUrl(version)).then(r => r.data)
     }
-
-    if (!this.openapiEntrySha512) {
-      const openapiSha512 = await axios.get<string>(this.genOpenapiEntrySha512(version)).then(response => response.data)
-      this.openapiEntrySha512 = openapiSha512
-    }
-
-    if (!this.playwrightEntrySha512) {
-      const playwrightSha512 = await axios.get<string>(this.genPlaywrightEntrySha512(version)).then(response => response.data)
-      this.playwrightEntrySha512 = playwrightSha512
-    }
-
-    return {
-      agentEntrySha512: this.agentEntrySha512,
-      openapiEntrySha512: this.openapiEntrySha512,
-      playwrightEntrySha512: this.playwrightEntrySha512,
-    }
+    return this.checksums
   }
 
-  /** 最新 web 资源版本号文件地址 */
-  get versionUrl() {
-    return `${this.agentDomain}/public/package/agent/${os}/version.json`
+  /** compat-index.json 地址，记录所有 agent 版本及其兼容的最低 app 版本 */
+  get compatIndexUrl() {
+    return `${this.agentDomain}/public/package/agent/compat-index.json`
+  }
+
+  /**
+   * 从 compat-index.json 中找到当前 app 版本兼容的最新 agent 版本信息
+   * 返回 null：app 版本过低，低于所有记录的 minimum_app_version
+   * 抛异常：网络问题拉取失败，由外层 checkForUpdates 的 catch 兜底，继续使用本地已有版本
+   */
+  async resolveCompatibleVersion(): Promise<VersionInfo | null> {
+    const index = await axios.get<VersionInfo[]>(this.compatIndexUrl).then(r => r.data)
+    const appVersion = app.getVersion()
+    // 数组按发布时间降序排列（最新在前），找第一个 minimum_app_version <= appVersion 的记录
+    const entry = index.find(e => compare(appVersion, e.minimum_app_version, '>='))
+    if (!entry) {
+      console.log(`[AgentUpdater] 未找到兼容 app ${appVersion} 的 agent（app 版本过低，最低要求 ${index.at(-1)?.minimum_app_version}）`)
+      return null
+    }
+    console.log(`[AgentUpdater] app ${appVersion} 匹配到 agent ${entry.version}（minimum: ${entry.minimum_app_version}）`)
+    return entry
   }
 
   /** 生成 agent 资源包下载地址 */
   genAgentDownloadUrl(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-agent.mjs`
+    return `${this.agentDomain}/public/package/agent/scripts/${version}/${os}/roxy-agent.mjs`
   }
 
   genOpenapiDownloadUrl(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-openapi.mjs`
+    return `${this.agentDomain}/public/package/agent/scripts/${version}/${os}/roxy-openapi.mjs`
   }
 
   genPlaywrightDownloadUrl(version: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/${os}/roxy-playwright.mjs`
+    return `${this.agentDomain}/public/package/agent/scripts/${version}/${os}/roxy-playwright.mjs`
   }
 
   /** 生成 skill 压缩包下载地址（version.json 中的 skills 项） */
   genSkillDownloadUrl(version: string, filename: string) {
-    return `${this.agentDomain}/public/package/agent/${version}/skills/${filename}`
+    return `${this.agentDomain}/public/package/agent/scripts/${version}/skills/${filename}`
   }
 
   /** skills 压缩包存放目录 */
@@ -174,22 +164,14 @@ export const agentUpdater = new class AgentUpdater {
     console.log('[AgentUpdater] checkForUpdates start')
     try {
       this.agentDomain = await getWebDomain(false)
-      // 获取远程版本信息
-      const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl).then(response => response.data)
+
+      // 从 compat-index.json 找到当前 app 版本兼容的最新 agent
+      const remoteVersionInfo = await this.resolveCompatibleVersion()
+      if (!remoteVersionInfo) {
+        this.isInProgress = false
+        return
+      }
       console.log('[AgentUpdater] remoteVersionInfo', remoteVersionInfo)
-
-      if (this.remoteVersionInfo && compare(this.remoteVersionInfo.version, remoteVersionInfo.version, '>=')) {
-        this.isInProgress = false
-        console.log('[AgentUpdater] checkForUpdates already downloaded')
-        return
-      }
-
-      // 检查 app 版本是否过低
-      if (compare(remoteVersionInfo.minimum_app_version, app.getVersion(), '>')) {
-        console.log('[AgentUpdater] app version is too old')
-        this.isInProgress = false
-        return
-      }
 
       // 获取本地版本信息
       const localVersion = await this.getLocalVersion()
@@ -197,35 +179,28 @@ export const agentUpdater = new class AgentUpdater {
       console.log('[AgentUpdater] remoteVersion', remoteVersionInfo.version)
 
       const agentVersion = remoteVersionInfo.version
-      const agentUrl = this.genAgentDownloadUrl(agentVersion)
-      const openapiUrl = this.genOpenapiDownloadUrl(agentVersion)
-      const playwrightUrl = this.genPlaywrightDownloadUrl(agentVersion)
-
-      // 检查是否需要更新（版本升级 或 本地 sha512 不匹配）
       const needDownload = compare(agentVersion, localVersion, '>')
 
       if (needDownload) {
         console.log('[AgentUpdater] downloading...')
         await fileExists(this.agentDir, true)
 
-        const downloadTasks: Promise<void>[] = []
-        downloadTasks.push(
-          this.downloadFile(agentUrl, appConfig.agentBinPath),
-          this.downloadFile(openapiUrl, appConfig.openapiMcpBinPath),
-          this.downloadFile(playwrightUrl, appConfig.playwrightMcpBinPath),
-        )
+        const downloadTasks: Promise<void>[] = [
+          this.downloadFile(this.genAgentDownloadUrl(agentVersion), appConfig.agentBinPath),
+          this.downloadFile(this.genOpenapiDownloadUrl(agentVersion), appConfig.openapiMcpBinPath),
+          this.downloadFile(this.genPlaywrightDownloadUrl(agentVersion), appConfig.playwrightMcpBinPath),
+        ]
 
         const skillNames = remoteVersionInfo.skills ?? []
         if (skillNames.length > 0) {
           await fileExists(this.skillsDir, true)
           for (const name of skillNames) {
-            const skillUrl = this.genSkillDownloadUrl(agentVersion, name)
-            // skills 不做 sha512 校验：按版本下载/解压即可
-            downloadTasks.push(this.downloadFile(skillUrl, join(this.skillsDir, name)))
+            downloadTasks.push(this.downloadFile(this.genSkillDownloadUrl(agentVersion, name), join(this.skillsDir, name)))
           }
         }
 
         await Promise.all(downloadTasks)
+        this.checksums = null
         if (skillNames.length > 0) {
           await Promise.all(skillNames.map(name => unzipFile(join(this.skillsDir, name))))
           console.log('[AgentUpdater] skills 解压完成')
@@ -246,5 +221,60 @@ export const agentUpdater = new class AgentUpdater {
 
   async getLocalVersion(): Promise<string> {
     return readFile(join(this.agentDir, 'version'), 'utf8').then(data => data.toString()).catch(() => '0.0.1')
+  }
+
+  /** 校验本地脚本完整性，返回校验失败的脚本 key 列表 */
+  async checkScriptIntegrity(): Promise<(keyof ChecksumsInfo)[]> {
+    const checksums = await this.getChecksums()
+    if (!checksums) {
+      console.error('[AgentUpdater] checksums not available')
+      return []
+    }
+
+    const scripts: { key: keyof ChecksumsInfo, path: string }[] = [
+      { key: 'roxy-agent', path: appConfig.agentBinPath },
+      { key: 'roxy-openapi', path: appConfig.openapiMcpBinPath },
+      { key: 'roxy-playwright', path: appConfig.playwrightMcpBinPath },
+    ]
+
+    const corrupted: (keyof ChecksumsInfo)[] = []
+    for (const { key, path: localPath } of scripts) {
+      try {
+        const localHash = await calculateFileHash(localPath)
+        if (localHash !== checksums[key]) {
+          corrupted.push(key)
+          console.error(`[AgentUpdater] ${key} 校验失败`, { local: localHash, remote: checksums[key] })
+        }
+      }
+      catch {
+        corrupted.push(key)
+        console.error(`[AgentUpdater] ${key} 文件不存在或读取失败`)
+      }
+    }
+    return corrupted
+  }
+
+  /** 重新下载指定脚本，覆盖本地文件 */
+  async repairScripts(scripts: (keyof ChecksumsInfo)[]) {
+    if (scripts.length === 0)
+      return
+
+    console.log('[AgentUpdater] 开始修复脚本:', scripts)
+    const version = await this.getLocalVersion()
+    const downloadMap: Record<string, string> = {
+      'roxy-agent': appConfig.agentBinPath,
+      'roxy-openapi': appConfig.openapiMcpBinPath,
+      'roxy-playwright': appConfig.playwrightMcpBinPath,
+    }
+
+    const tasks: Promise<void>[] = []
+    for (const key of scripts) {
+      const url = `${this.agentDomain}/public/package/agent/scripts/${version}/${os}/${key}.mjs`
+      const outputPath = downloadMap[key]
+      tasks.push(this.downloadFile(url, outputPath))
+    }
+    await Promise.all(tasks)
+    this.checksums = null // 清除缓存，下次获取时重新拉取
+    console.log('[AgentUpdater] 脚本修复完成')
   }
 }()

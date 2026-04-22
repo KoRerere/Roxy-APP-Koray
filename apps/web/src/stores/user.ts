@@ -3,7 +3,7 @@ import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
-
+import { usePermission } from '/@/hooks/usePermission'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useTutorialStore } from '/@/stores/tutorial'
@@ -12,7 +12,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, getCookie, hidePageLoading, isDev, isMainWindow, isMobile, isWindows } from '/@/utils'
+import { encryptAESGCM, getCookie, hidePageLoading, isDev, isMainWindow, isMobile, isWindows, removeCookie } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 
@@ -31,6 +31,7 @@ export const useUserStore = defineStore(
     const workspaceStore = useWorkspaceStore()
     const tutorialStore = useTutorialStore()
     const roleStore = useRoleStore()
+    const { check } = usePermission()
 
     const lastLoginTime = ref<number>(0)
     // 登录方式
@@ -254,6 +255,8 @@ export const useUserStore = defineStore(
         userInfo.value = {}
         password.value = ''
       }
+
+      removeCookie('roxy_token', '/', isDev ? '.roxybrowser.co' : '.roxybrowser.com')
       userCards.value = undefined
       token.value = ''
       mixpanel.reset()
@@ -320,7 +323,7 @@ export const useUserStore = defineStore(
     }
 
     async function getUserCards(force = false) {
-      if (!roleStore.isOwner)
+      if (!check('Cost_Center_all'))
         return
       if (!force && userCards.value)
         return userCards.value
@@ -388,11 +391,16 @@ export const useUserStore = defineStore(
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
       if (!globalThis.isElectron && !import.meta.hot) {
         const roxyToken = await getCookie('roxy_token')
+        console.debug('checkCookie', roxyToken)
         if (!roxyToken) {
           token.value = ''
           clearUserInfo()
           router.push({ name: 'login' })
           return Promise.reject(new Error('cookie expired'))
+        }
+        else {
+          token.value = roxyToken
+          // router.push('/')
         }
       }
       return Promise.resolve()

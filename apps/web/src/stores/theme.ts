@@ -37,6 +37,8 @@ export const useThemeStore = defineStore('theme', () => {
   const theme = ref<ColorScheme>('system')
   const realTheme = ref<Omit<ColorScheme, 'system'>>('light')
 
+  const isDarkTheme = computed(() => realTheme.value === 'dark')
+
   async function setTheme(value: ColorScheme) {
     if (userStore.token && isMainWindow && theme.value !== value) {
       API.base.userSetUserConfigCreate({ colorScheme: value })
@@ -86,7 +88,7 @@ export const useThemeStore = defineStore('theme', () => {
     }
   }, 60)
 
-  return { theme, realTheme, setTheme }
+  return { theme, realTheme, isDarkTheme, setTheme }
 }, {
   persist: true,
 })

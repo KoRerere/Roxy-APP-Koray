@@ -1,15 +1,18 @@
+import { onBeforeUnmount, ref, shallowRef } from 'vue'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import DownloadModal from '/@/views/agent/shop/components/download-modal.vue'
 import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
+import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { ProxyCheckStatus, ProxyExpireStatus } from '/@/enums'
-import { createDefaultObject, decryptAESGCM, strConcat } from '/@/utils'
+import { concurrentControl, createDefaultObject, decryptAESGCM, strConcat } from '/@/utils'
+import { $t } from '/@/locales'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
-
 import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
+import type { ProxyType } from '/@/enums'
 
 export interface CheckResult {
   loading: boolean
@@ -29,10 +32,26 @@ interface ProxyCheckParams extends Partial<ProxyDetectionParams> {
   id?: number
 }
 
+/** 并发任务单条结果（filter(Boolean) 之后），含行 id / proxyType 供业务筛选 */
+export type ConcurrentProxyValidResult = CheckResult & { id?: number, proxyType?: ProxyType }
+
+/** concurrentControl 原始结果槽位，未执行到的为 undefined */
+export type ConcurrentProxyTestResults = Array<ConcurrentProxyValidResult | undefined>
+
+export type ConcurrentProxyTestNext = (results: ConcurrentProxyTestResults, cancelled: boolean) => void | Promise<void>
+
+/** 单次并发测速运行参数：tasks 由业务构造（含每条测速与 loading 等） */
+export interface ConcurrentProxyTestRun {
+  tasks: Array<() => Promise<any | undefined>>
+  tasksCompleted?: ConcurrentProxyTestNext
+  /** 是否展示顶部并发任务进度条，默认不展示 */
+  showConcurrentTaskTopBar?: boolean
+}
+
 interface useCheckProxyResult {
-  checkResult: CheckResult
   testProxy: (data: ProxyCheckParams) => Promise<CheckResult>
   batchTestShowToast: (results: CheckResult | CheckResult[]) => void
+  concurrentProxyTest: (run: ConcurrentProxyTestRun) => Promise<void>
 }
 
 interface DownloadProxyParams {
@@ -48,18 +67,33 @@ interface DownloadProxyParams {
 
 export function useCheckProxy(): useCheckProxyResult {
   const [showToast] = useResponseToast()
-  const checkResult = reactive<CheckResult>({
-    loading: false,
-    checkStatus: ProxyCheckStatus.failure,
-  })
 
-  async function testProxy({ isEncryptProxy, proxyEncryptInfo, apiCheck, id, ...data }: ProxyCheckParams) {
-    checkResult.loading = true
-    checkResult.error = null
+  async function testBuyProxy(proxyBuyId: number): Promise<CheckResult> {
+    const { code, data, msg } = await API.proxy.userCheckProxyCreate({ proxyBuyId })
+    if (code !== 0) {
+      return {
+        loading: false,
+        ...data,
+        ...createDefaultObject(['lastIp', 'lastCity', 'lastCountry', 'timezone'], ''),
+        checkStatus: ProxyCheckStatus.failure,
+        error: msg,
+      } as CheckResult
+    }
+    return {
+      loading: false,
+      ...data,
+    } as CheckResult
+  }
 
+  async function testProxy({ isEncryptProxy, proxyEncryptInfo, apiCheck, id, ...data }: ProxyCheckParams): Promise<CheckResult> {
     // 购买的代理需要后台检测可用性
     if (apiCheck && id) {
       return testBuyProxy(id)
+    }
+
+    const local: CheckResult = {
+      loading: true,
+      checkStatus: ProxyCheckStatus.failure,
     }
 
     if (isEncryptProxy && proxyEncryptInfo) {
@@ -71,42 +105,26 @@ export function useCheckProxy(): useCheckProxyResult {
 
     try {
       const checkRes = await globalThis.electronAPI.send('proxy:detect', data as ProxyDetectionParams)
-      checkResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
-      checkResult.lastIp = checkRes.ip ?? ''
-      checkResult.lastCity = checkRes.city ?? ''
-      checkResult.lastCountry = checkRes.country_code ?? ''
-      checkResult.timezone = checkRes.timezone ?? ''
+      local.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
+      local.lastIp = checkRes.ip ?? ''
+      local.lastCity = checkRes.city ?? ''
+      local.lastCountry = checkRes.country_code ?? ''
+      local.timezone = checkRes.timezone ?? ''
     }
     catch (error: any) {
-      checkResult.error = error
-      checkResult.checkStatus = ProxyCheckStatus.failure;
-      ['lastIp', 'lastCity', 'lastCountry', 'timezone'].forEach((key) => {
-        checkResult[key as keyof CheckResult] = ''
-      })
+      local.error = error
+      local.checkStatus = ProxyCheckStatus.failure
+      local.lastIp = ''
+      local.lastCity = ''
+      local.lastCountry = ''
+      local.timezone = ''
     }
     finally {
-      checkResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
-      checkResult.loading = false
+      local.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+      local.loading = false
       data.dirId && globalThis.electronAPI.send('proxy:delRoxynetProxy', data.dirId)
     }
-    return { ...toRaw(checkResult) }
-  }
-
-  async function testBuyProxy(proxyBuyId: number) {
-    const { code, data, msg } = await API.proxy.userCheckProxyCreate({ proxyBuyId })
-    checkResult.loading = false
-    if (code !== 0) {
-      Object.assign(checkResult, {
-        ...data,
-        ...createDefaultObject(['lastIp', 'lastCity', 'lastCountry', 'timezone'], ''),
-        checkStatus: ProxyCheckStatus.failure,
-        error: msg,
-      })
-    }
-    else {
-      Object.assign(checkResult, data)
-    }
-    return { ...toRaw(checkResult) }
+    return { ...local }
   }
 
   function batchTestShowToast(__results: CheckResult | CheckResult[]) {
@@ -125,10 +143,60 @@ export function useCheckProxy(): useCheckProxyResult {
     }
   }
 
+  const concurrentTaskTopBar = useConcurrentTaskTopBar()
+  const hostUnmounted = ref(false)
+  const speedTestAbort = shallowRef<AbortController | null>(null)
+  /** 并发测速互斥（不依赖顶栏 isOpen，顶栏关闭时仍需阻止重复进入） */
+  const concurrentProxyTestBusy = ref(false)
+
+  onBeforeUnmount(() => {
+    hostUnmounted.value = true
+    speedTestAbort.value?.abort()
+  })
+
+  async function concurrentProxyTest(run: ConcurrentProxyTestRun) {
+    if (!concurrentTaskTopBar)
+      return
+    const { tasks, tasksCompleted, showConcurrentTaskTopBar = false } = run
+
+    if (concurrentProxyTestBusy.value) {
+      throw new Error('测速进行中，请稍候')
+    }
+
+    const controller = new AbortController()
+    speedTestAbort.value = controller
+
+    try {
+      if (showConcurrentTaskTopBar) {
+        concurrentTaskTopBar.show({
+          total: tasks.length,
+        })
+        concurrentProxyTestBusy.value = true
+      }
+
+      const results = await concurrentControl(tasks, 5, {
+        signal: controller.signal,
+        onProgress: ({ completed, total }) => {
+          if (!hostUnmounted.value && showConcurrentTaskTopBar)
+            concurrentTaskTopBar.updateProgress({ completed, total })
+        },
+      })
+
+      await tasksCompleted?.(results, hostUnmounted.value)
+    }
+    finally {
+      if (showConcurrentTaskTopBar)
+        concurrentTaskTopBar.close()
+      concurrentProxyTestBusy.value = false
+      if (speedTestAbort.value === controller)
+        speedTestAbort.value = null
+    }
+  }
+
   return {
     testProxy,
-    checkResult,
     batchTestShowToast,
+    concurrentProxyTest,
   }
 }
 

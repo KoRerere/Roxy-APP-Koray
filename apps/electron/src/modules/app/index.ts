@@ -193,9 +193,15 @@ export async function setupApp() {
 
 /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
 let isQuittingForUpdate = false
+/** APP 是否处于退出中 */
+let $$isAppQuitting = false
 
 export function isAppQuittingForUpdate() {
   return isQuittingForUpdate
+}
+
+export function isAppQuitting() {
+  return $$isAppQuitting
 }
 
 export function resetAppQuittingForUpdate() {
@@ -217,6 +223,7 @@ function initAppEvent() {
   // })
 
   app.on('before-quit', async (event) => {
+    $$isAppQuitting = true
     if (store.defaultBrowserLauncherPid) {
       killProcessForce(store.defaultBrowserLauncherPid)
     }
@@ -263,21 +270,27 @@ function initAppEvent() {
             store.updaterExePid = child.pid
             console.log('(`[AppUpdater] updaterExePid', store.updaterExePid)
             child.unref()
-            await forceSaveConfig()
           }
           catch (e) {
             console.error(`[AppUpdater] Failed to spawn updater UI`, e)
           }
         }
+        store.appNormalExit = true
+        await forceSaveConfig()
         appUpdater.upgradeNow()
       }
       else {
+        store.appNormalExit = true
+        await forceSaveConfig()
+
         console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
         // 当第二次回到 before-quit 时，什么都不做，让 Electron 正常完成退出生命周期，确保 ShipIt 或其它提权更新服务不会被 SIGKILL 所谋杀
       }
     }
     else {
       isSyncBrowserData = true
+      store.appNormalExit = true
+      await forceSaveConfig()
       cleanupAndExit()
     }
   })

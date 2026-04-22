@@ -5,39 +5,35 @@ import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useThemeStore } from '/@/stores/theme'
 import StepGuide from './step-guide.vue'
 import MInputPassword from '/@/views/lab/components/form/m-input-password.vue'
+import { useDialog } from '/@/hooks/useDialog'
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]]
-  'update:fieldValue': [index: number, value: string]
-  'update:whitelist': [value: string]
-  'test': [index: number]
+  'update:fieldValue': [field: string, value: string]
+  'test': [field: string]
   'save': []
+  'delete': []
 }>()
 
 const themeStore = useThemeStore()
+const [showModal] = useDialog()
 
 // 验证状态
-const validationErrors = ref<number[]>([])
+const validationErrors = ref<string[]>([])
 
 /**
  * 检查必填字段是否已填写
  */
 function validateFields(): boolean {
-  const errors: number[] = []
+  const errors: string[] = []
 
-  // 检查 setupFields 中的必填字段
-  props.setupFields?.forEach((field, index) => {
+  props.setupFields?.forEach((field) => {
     if (field.required && (!field.value || field.value.trim() === '')) {
-      errors.push(index)
+      errors.push(field.field)
     }
   })
-
-  // 检查白名单
-  if (props.whitelistRequired && (!props.whitelistValue || props.whitelistValue.trim() === '')) {
-    errors.push(-1) // -1 表示白名单字段
-  }
 
   validationErrors.value = errors
   return errors.length === 0
@@ -51,9 +47,11 @@ interface Step {
 }
 
 interface SetupField {
+  field: string
   label: string
-  placeholder: string
+  placeholder?: string
   helperText?: string
+  helperTextComponent?: any
   hasTestButton?: boolean
   testButtonText?: string
   onTest?: () => void
@@ -70,35 +68,23 @@ interface Props {
   bgColor: string
   steps?: Step[]
   setupFields?: SetupField[]
-  whitelistHelperText?: string
-  whitelistRequired?: boolean
   permissions?: string[]
   step2?: Step[]
-  whitelistValue?: string
   modelValue?: string[]
-  hideWhitelist?: boolean
   isIntegrate?: boolean
 }
 
 const router = useRouter()
 
-function handleTest(index: number) {
-  emit('test', index)
+function handleTest(field: string) {
+  emit('test', field)
 }
 
-function handleFieldChange(index: number, value: string) {
-  emit('update:fieldValue', index, value)
+function handleFieldChange(field: string, value: string) {
+  emit('update:fieldValue', field, value)
   // 清除该字段的验证错误
-  if (validationErrors.value.includes(index)) {
-    validationErrors.value = validationErrors.value.filter(i => i !== index)
-  }
-}
-
-function handleWhitelistChange(value: string) {
-  emit('update:whitelist', value)
-  // 清除白名单字段的验证错误
-  if (validationErrors.value.includes(-1)) {
-    validationErrors.value = validationErrors.value.filter(i => i !== -1)
+  if (validationErrors.value.includes(field)) {
+    validationErrors.value = validationErrors.value.filter(f => f !== field)
   }
 }
 
@@ -109,6 +95,23 @@ function handleSave() {
   else {
     console.log('Required fields missing:', validationErrors.value)
   }
+}
+
+function handleDelete() {
+  showModal({
+    header: $t('删除配置'),
+    modal: true,
+    okText: $t('确认删除'),
+    okProps: { severity: 'danger' },
+    slots: {
+      default: () => h('p', {
+        class: 'text-[var(--colors-text-text-secondary)] text-[14px] leading-[1.6] my-0',
+      }, $t('此操作将清空 {title} 的所有配置，确认继续？', { title: props.title })),
+    },
+    handleOk: () => {
+      emit('delete')
+    },
+  })
 }
 </script>
 
@@ -166,8 +169,8 @@ function handleSave() {
             </div>
 
             <div
-              v-for="(field, index) in props.setupFields"
-              :key="index"
+              v-for="field in props.setupFields"
+              :key="field.field"
               class="content-stretch flex flex-col gap-2 items-start relative shrink-0 w-full"
             >
               <div class="flex relative text-[14px] text-[var(--colors-text-text-primary)] w-full gap-1">
@@ -182,8 +185,8 @@ function handleSave() {
                     :placeholder="field.placeholder"
                     :model-value="field.value"
                     class="flex-[1_0_0]"
-                    :invalid="validationErrors.includes(index)"
-                    @update:model-value="handleFieldChange(index, $event)"
+                    :invalid="validationErrors.includes(field.field)"
+                    @update:model-value="handleFieldChange(field.field, $event)"
                   />
                   <RxInputSelect
                     v-if="field.type === 'select'"
@@ -195,8 +198,8 @@ function handleSave() {
                     option-value="value"
                     class="!w-240px"
                     :filter="false"
-                    :invalid="validationErrors.includes(index)"
-                    @update:model-value="handleFieldChange(index, $event)"
+                    :invalid="validationErrors.includes(field.field)"
+                    @update:model-value="handleFieldChange(field.field, $event)"
                   />
                   <MInputPassword
                     v-if="field.type === 'password'"
@@ -204,8 +207,8 @@ function handleSave() {
                     :placeholder="field.placeholder"
                     :model-value="field.value"
                     class="flex-[1_0_0]"
-                    :invalid="validationErrors.includes(index)"
-                    @update:model-value="handleFieldChange(index, $event)"
+                    :invalid="validationErrors.includes(field.field)"
+                    @update:model-value="handleFieldChange(field.field, $event)"
                   />
                   <RxButton
                     v-if="field.hasTestButton"
@@ -215,41 +218,15 @@ function handleSave() {
                     outlined
                     icon="base/rx_ic_speed_test"
                     :label="$t('测试连接')"
-                    @click="handleTest(index)"
+                    @click="handleTest(field.field)"
                   />
                 </div>
-                <small v-if="validationErrors.includes(index)" class="text-[var(--colors-text-text-error)]">{{ $t('此字段为必填项') }}</small>
-                <div v-if="field.helperText" class="flex flex-col  font-normal justify-center  not-italic relative shrink-0 text-[12px] text-[var(--colors-text-text-inactive,#7d8387)] w-full">
-                  <p class="leading-[18px] my-0">
+                <small v-if="validationErrors.includes(field.field)" class="text-[var(--colors-text-text-error)]">{{ $t('此字段为必填项') }}</small>
+                <div v-if="field.helperText || field.helperTextComponent" class="flex flex-col  font-normal justify-center  not-italic relative shrink-0 text-[12px] text-[var(--colors-text-text-inactive,#7d8387)] w-full">
+                  <component :is="field.helperTextComponent" v-if="field.helperTextComponent" />
+                  <p v-else class="leading-[18px] my-0">
                     {{ field.helperText }}
                   </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Allowed Chat IDs -->
-            <div v-if="!hideWhitelist" class="content-stretch flex flex-col gap-[var(--spacing-lg,8px)] items-start relative shrink-0 w-full">
-              <div class="flex flex-col  font-normal justify-center  not-italic relative shrink-0 text-[14px] text-[var(--colors-text-text-primary,#111213)] w-full">
-                <p class="leading-[normal] my-0">
-                  <span v-if="props.whitelistRequired" class="text-[var(--colors-text-text-error)]">*</span> {{ $t('允许白名单连接') }}
-                </p>
-              </div>
-              <div class="content-stretch flex flex-col gap-[var(--spacing-sm,4px)] items-start relative shrink-0 w-full">
-                <RxInputText
-                  size="md"
-                  :placeholder="$t('123456789, 987654321（用逗号分隔。留空表示拒绝所有。）')"
-                  :model-value="props.whitelistValue"
-                  class="w-full"
-                  :invalid="validationErrors.includes(-1)"
-                  @update:model-value="handleWhitelistChange($event)"
-                />
-                <small v-if="validationErrors.includes(-1)" class="text-[var(--colors-text-text-error)]">{{ $t('此字段为必填项') }}</small>
-                <div class="flex flex-col  font-normal justify-center not-italic relative shrink-0 text-[12px] text-[var(--colors-text-text-inactive,#7d8387)] w-full relative">
-                  <slot name="whitelistHelperText">
-                    <p class="leading-[18px] my-0">
-                      {{ props.whitelistHelperText }}
-                    </p>
-                  </slot>
                 </div>
               </div>
             </div>
@@ -257,8 +234,14 @@ function handleSave() {
         </template>
         <slot />
 
-        <!-- Save button -->
-        <div class="content-stretch flex justify-end relative shrink-0 w-full mt-4">
+        <!-- Action buttons -->
+        <div class="content-stretch flex justify-end gap-2.5 relative shrink-0 w-full mt-4">
+          <RxButton
+            severity="danger"
+            size="md"
+            :label="$t('删除配置')"
+            @click="handleDelete"
+          />
           <RxButton
             severity="primary"
             size="md"

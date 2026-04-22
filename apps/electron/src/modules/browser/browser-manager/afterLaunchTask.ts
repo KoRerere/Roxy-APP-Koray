@@ -103,12 +103,19 @@ export class AfterLaunchTask {
 
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
-    const { cookie, syncCookie, clearCookie } = this.browserItem.winInfo
+    const { cookie, syncCookie, clearCookie, allOpenUrl } = this.browserItem.winInfo
 
     if (!this.browser || !this.browser.client) {
       console.warn('Browser or browser.client is not available')
       return
     }
+
+    // 开启同步标签页后，同步标签页
+    await Promise.allSettled((allOpenUrl.slice(1) || []).map(async (item) => {
+      if (item && this.browserItem.isValidURL(item)) {
+        return this.browser.newPage(item)
+      }
+    }))
 
     const saveCookies = async () => {
       if (!this.browser.client)
@@ -449,7 +456,8 @@ export class AfterLaunchTask {
               images.forEach((img) => {
                 if (img.complete) {
                   checkComplete()
-                } else {
+                }
+                else {
                   img.addEventListener('load', checkComplete, { once: true })
                   img.addEventListener('error', checkComplete, { once: true })
                 }
@@ -467,8 +475,14 @@ export class AfterLaunchTask {
           // 多次滚动直到到达页面底部
           let scrollCount = 0
           let hasReachedBottom = false
-          let notScrollableRetryCount = 0 // 记录页面不可滚动的重试次数
-          const maxNotScrollableRetries = 3 // 最多重试 3 次
+          /**
+           * 记录页面不可滚动的重试次数
+           */
+          let notScrollableRetryCount = 0
+          /**
+           * 最多重试 3 次
+           */
+          const maxNotScrollableRetries = 3
 
           console.log(`Cookie robot: Starting to scroll tab ${i + 1} until reaching bottom`)
 
@@ -583,13 +597,15 @@ export class AfterLaunchTask {
                   // 重试次数用完，认为页面确实不可滚动
                   console.log(`Cookie robot: Tab ${i + 1} - Page confirmed not scrollable after ${maxNotScrollableRetries} retries`)
                   hasReachedBottom = true
-                } else {
+                }
+                else {
                   // 等待更长时间让图片加载
                   console.log(`Cookie robot: Tab ${i + 1} - Waiting 2s for images to load before retry`)
                   await new Promise(resolve => setTimeout(resolve, 2000))
                   hasReachedBottom = false
                 }
-              } else {
+              }
+              else {
                 // 页面可以滚动，重置重试计数
                 notScrollableRetryCount = 0
                 hasReachedBottom = scrollResult.reachedBottom || false
