@@ -1,4 +1,5 @@
 import './logger'
+import fixPath from 'fix-path'
 import { env } from './config'
 import { runAgentMode } from './modes/agent'
 import { runIMMode } from './modes/im'
@@ -9,6 +10,9 @@ import { initSensitiveWords } from './sensitiveWords'
 if (env.DEVELOPMENT) {
   initSensitiveWords()
 }
+
+// 修复系统环境变量
+fixPath()
 
 type ShutdownFn = () => Promise<void>
 

@@ -59,7 +59,7 @@ export function createLLM(enableThinking = false) {
     }
     return new Qwen(config)
   }
-  else if (model.includes('claude')) {
+  else if (model.includes('claude') || model.includes('doubao-seed')) {
     // ChatAnthropic 需要使用 anthropicApiUrl 而不是 configuration.baseURL
     const config = {
       model,

@@ -35,7 +35,7 @@ const baseOssConfig = {
 // 正式环境 agent 版本
 const prodVersion = '1.0.8'
 // 开发环境 agent 版本
-const devVersion = '2.2.29'
+const devVersion = '2.2.31'
 
 // 当前 agent 的版本
 const version = isProd ? prodVersion : devVersion
