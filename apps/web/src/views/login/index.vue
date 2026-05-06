@@ -34,7 +34,7 @@ const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite } = simpleLocaleStore
 const { setToken, setPassword, initUserInfo, setLoginWay } = useUserStore()
 
-const { rememberMe, password, userInfo } = storeToRefs(useUserStore())
+const { rememberMe, password, userInfo, token } = storeToRefs(useUserStore())
 const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const router = useRouter()
@@ -57,6 +57,10 @@ const currentCompProps = ref<Recordable>()
 
 const showUpdaterMessage = computed(() => {
   return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
+})
+
+onMounted(() => {
+  token.value = ''
 })
 
 async function decryptPassword() {

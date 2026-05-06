@@ -1,52 +1,27 @@
 import type { BrowserWindow, BrowserWindowConstructorOptions } from 'electron'
-import axios from 'axios'
-import { compare } from 'compare-versions'
 import { app, screen } from 'electron'
-import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { appConfig, ROXY_MAIN_WINDOW_ID } from '/@/constants'
-import { isDev, isPackaged, isProd, isWindows } from '/@/constants/common'
+import { isPackaged, isProd, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { ipcSender } from '/@/modules/ipc/sender'
-import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
-import { webUpdater } from '/@/modules/updater/webUpdater'
-import { fileExists } from '/@/utils'
+import { request } from '/@/utils'
 import { createWindow } from '/@/utils/browser-window'
+import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 
 /** 获取 web 入口地址 */
-export async function getWebEntryUrl(path: string, skipCompare = false) {
-  if (isPackaged && !skipCompare) {
-    try {
-      const minimumAppVersion = await readFile(join(appConfig.externalWebDir, 'minimum_app_version'), 'utf-8').catch(() => '0.0.0')
-      // 比较当前版本是否大于等于 web 资源要求的最低版本
-      const isMinimumAppVersion = compare(app.getVersion(), minimumAppVersion, '>=')
-      console.log('isMinimumAppVersion', isMinimumAppVersion)
-      // 只有当前版本大于等于 web 资源要求的最低版本时才能使用外部 web 资源，否则使用内置 web 资源
-      if (isMinimumAppVersion) {
-        const buildInWebVersion = await readFile(join(appConfig.buildInWebDir, 'version'), 'utf-8')
-        const externalWebVersion = await readFile(join(appConfig.externalWebDir, 'version'), 'utf-8').catch(() => '0.0.0')
-        const isExtractSuccess = await fileExists(webUpdater.extractSuccessFlagFile)
-        console.log('externalWebVersion', externalWebVersion, buildInWebVersion, isExtractSuccess)
-        store.isExternalWeb = isExtractSuccess && compare(externalWebVersion, buildInWebVersion, '>')
-      }
-      else {
-        store.isExternalWeb = false
-      }
-    }
-    catch (error) {
-      console.error('getWebEntryUrl error', error)
-      store.isExternalWeb = false
-    }
-  }
-  console.log('[getWebEntryUrl] store.isExternalWeb', store.isExternalWeb, skipCompare, `${appConfig.webBaseUrl}/${path}`)
-  return `${appConfig.webBaseUrl}/${path}`
+export async function getWebEntryUrl(path: string) {
+  const prodWebDomain = await getProdWebDomain()
+
+  return `${isPackaged ? prodWebDomain : import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')}/${path}`
 }
 
 /** 获取本地 web 版本 */
 export async function getLocalWebVersion() {
-  return axios.get<string>(await getWebEntryUrl('version')).then(response => response.data).catch(() => '0.0.0')
+  return request.get<string>(await getWebEntryUrl('version')).then(response => response.data).catch(() => '0.0.0')
 }
 
 /** 创建窗口 */
@@ -58,6 +33,10 @@ function createMainWindow(options?: BrowserWindowConstructorOptions) {
     resizable: false,
     autoHideMenuBar: true, // 自动隐藏菜单栏
     center: true,
+    webPreferences: {
+      // 主窗口禁用节流
+      backgroundThrottling: false,
+    },
     ...options,
   })
 
@@ -88,7 +67,14 @@ export async function intoLaunchPage() {
 
   const launchUrl = await getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`)
   console.log('intoLaunchPage', launchUrl)
-  await launchWin.loadURL(launchUrl)
+  // loadURL 必须是带协议的 URL；裸文件路径会被判为非法，错误信息常体现为 loading ''
+  if (isPackaged) {
+    const localLaunch = join(appConfig.buildInWebDir, 'launch.html')
+    await launchWin.loadURL(pathToFileURL(localLaunch).href)
+  }
+  else {
+    await launchWin.loadURL(launchUrl)
+  }
   sendLaunchMessage($t('正在初始化应用...'))
 }
 
@@ -109,9 +95,28 @@ export async function intoMainPage() {
     minHeight: Math.min(minHeight, height),
     resizable: true,
   })
+
   const webUrl = await getWebEntryUrl(isPackaged ? 'index.html' : '')
   console.log('intoMainPage', webUrl)
-  await mainWin.loadURL(webUrl)
+
+  mainWin.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    if (!isMainFrame)
+      return
+
+    console.log('页面加载失败：', {
+      errorCode,
+      errorDescription,
+      url: validatedURL,
+    })
+
+    // 典型失败：DNS / 超时 / 断网 / SSL
+    mainWin.loadURL(pathToFileURL(join(appConfig.buildInWebDir, '500.html')).href)
+  })
+
+  await mainWin.loadURL(webUrl).catch((error) => {
+    console.error('intoMainPage error', error)
+    mainWin.loadURL(join(appConfig.buildInWebDir, '500.html'))
+  })
   await updateMainWindowPageTitle()
   // 禁用 document.title 的影响
   mainWin.on('page-title-updated', (event) => {
@@ -127,23 +132,6 @@ export async function intoMainPage() {
 
   mainWin.on('focus', (event) => {
     ipcSender.window.onFocus()
-  })
-
-  mainWin.webContents.on('before-input-event', async (event, input) => {
-    const isReload
-      = input.type === 'keyDown'
-        && (input.key === 'F5' || (input.key.toLowerCase() === 'r' && (input.control || input.meta)))
-
-    if (!isReload)
-      return
-    event.preventDefault()
-
-    // 尝试解压 web 资源包
-    const isUpgradeSuccess = await webUpdater.upgradeNow()
-    console.debug('[mainWin] isUpgradeSuccess', isUpgradeSuccess)
-    if (!isUpgradeSuccess) {
-      mainWin?.reload()
-    }
   })
 
   if (!isPackaged) {

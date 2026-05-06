@@ -1,16 +1,16 @@
 <script setup lang="tsx">
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
-import { format, addDays } from 'date-fns'
-
-import { API } from '/@/api';
+import { addDays, format } from 'date-fns'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePay } from '/@/views/pay/wallet/hook'
-import { PayWay } from '/@/enums/pay';
-import { ProxyOrderType } from '/@/enums/proxy';
+import { PayWay } from '/@/enums/pay'
+import { ProxyOrderType } from '/@/enums/proxy'
 
 interface Props {
   data: any[]
@@ -27,6 +27,7 @@ const themeStore = useThemeStore()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
+const { showFreedomActivityModal } = useFreedomActivity()
 
 const columns = [
   {
@@ -70,9 +71,10 @@ async function getPeriodList() {
   const { code, data, msg } = await API.proxy.userGetProxyPurchaseTimePriceList({})
   loading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0) return
+  if (code !== 0)
+    return
 
-  const purchaseTimePrice = data.map(item => {
+  const purchaseTimePrice = data.map((item) => {
     const day = item.proxyPurchaseMonths * 30
     return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
   })
@@ -87,11 +89,13 @@ async function onPay() {
     modal: true,
     blockScroll: true,
     slots: {
-      container: ({ hideModal }) => <WalletPayModal
-        amount={totalAmount.value}
-        onClose={hideModal}
-        onConfirm={onConfirm}
-      />,
+      container: ({ hideModal }) => (
+        <WalletPayModal
+          amount={totalAmount.value}
+          onClose={hideModal}
+          onConfirm={onConfirm}
+        />
+      ),
     },
   })
 
@@ -104,11 +108,13 @@ async function onPay() {
       subscriptionMonths: periodValue.value.value,
     })
     onlyErrorToast(code, msg)
-    if (code !== 0) return
+    if (code !== 0)
+      return
     (payType === PayWay.Balance
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
+        showFreedomActivityModal()
         emit('close')
         emit('success')
       })
@@ -118,36 +124,44 @@ async function onPay() {
 
 <template>
   <div class="relative flex flex-col gap-9 pa-8 rounded-lg w-240 popup">
-    <RxLoading v-model="loading" :opacity="0.9"></RxLoading>
+    <RxLoading v-model="loading" :opacity="0.9" />
     <div class="flex items-center justify-between">
       <span class="header">{{ $t('续费代理 IP') }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="flex flex-col gap-3 h-76">
-      <div class="subtitle">{{ $t('您将要续费 {count} 个代理 IP:', { count: dataList.length }) }}</div>
+      <div class="subtitle">
+        {{ $t('您将要续费 {count} 个代理 IP:', { count: dataList.length }) }}
+      </div>
       <RyTable class="proxies" :columns="columns" :data-list="dataList" :show-table-header="false" :paginator="false" :show-actions="false">
-        <template #expired="{ data }">
+        <template #expired="{ data: row }">
           <div class="flex items-center gap-3">
-            <span>{{ format(new Date(data.expireDate), "yyyy/MM/dd") }}</span>
-            <SvgIcon name="base/rx_ic_play" size="12"></SvgIcon>
-            <span class="color-[var(--colors-text-text-success)]">{{ format(addDays(new Date(data.expireDate), periodValue?.day ?? 0), 'yyyy/MM/dd') }}</span>
+            <span>{{ format(new Date(row.expireDate), "yyyy/MM/dd") }}</span>
+            <SvgIcon name="base/rx_ic_play" size="12" />
+            <span class="color-[var(--colors-text-text-success)]">{{ format(addDays(new Date(row.expireDate), periodValue?.day ?? 0), 'yyyy/MM/dd') }}</span>
           </div>
         </template>
       </RyTable>
     </div>
     <div class="flex items-center gap-6">
-      <div class="w-40 text-right subtitle">{{ $t('续费时长:') }}</div>
+      <div class="w-40 text-right subtitle">
+        {{ $t('续费时长:') }}
+      </div>
       <div class="flex gap-4">
         <div v-for="item in periods" :key="item.value" class="px-5 py-2 cursor-pointer select-none period" :class="{ active: item.value === periodValue.value }" @click="periodValue = item">
           {{ item.label }}
         </div>
       </div>
     </div>
-    <div class="separator"></div>
+    <div class="separator" />
     <div class="flex items-center justify-end">
-      <div class="mr-3 price-label">{{ $t('总价:') }}</div>
-      <div class="mr-6 price-value">{{ currency(totalAmount).format() }}</div>
-      <RxButton size="lg" :label="$t('确认并支付')" @click="onPay"></RxButton>
+      <div class="mr-3 price-label">
+        {{ $t('总价:') }}
+      </div>
+      <div class="mr-6 price-value">
+        {{ currency(totalAmount).format() }}
+      </div>
+      <RxButton size="lg" :label="$t('确认并支付')" @click="onPay" />
     </div>
   </div>
 </template>

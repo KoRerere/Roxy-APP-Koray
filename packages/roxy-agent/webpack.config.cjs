@@ -4,7 +4,7 @@ const webpack = require('webpack')
 // const { sentryWebpackPlugin } = require('@sentry/webpack-plugin')
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
 
-console.log('process.env.NODE_ENV', process.env.NODE_ENV)
+// console.log('process.env.NODE_ENV', process.env.NODE_ENV)
 
 // 共享的配置
 const sharedConfig = {
@@ -61,7 +61,7 @@ module.exports = [
   {
     ...sharedConfig,
     entry: {
-      index: './dist-vite/index.mjs',
+      'index': './dist-vite/index.mjs',
       'roxy-agent': './dist-vite/index.mjs',
     },
     output: {

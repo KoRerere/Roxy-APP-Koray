@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getGatewayConfig, reGetGatewayConfigByIpChange } from './getGatewayConfig'
 import { genRandomFingerprint, genRandomFonts, randomFingerprintFuncMap } from '@roxy/shared'
 import { getLocalFonts } from '/@/utils/getLocalFonts'
 import { API } from '/@/api'
@@ -58,14 +57,6 @@ export async function sendCallback(channel: string, ...args: any[]) {
     return result.data
   }
 
-  if (channel === 'util:getGatewayConfig') {
-    return getGatewayConfig()
-  }
-
-  if (channel === 'util:reGetGatewayConfigByIpChange') {
-    return reGetGatewayConfigByIpChange(args[0])
-  }
-
   if (channel === 'app:isMainWindow') {
     return true
   }
@@ -121,7 +112,7 @@ export async function sendCallback(channel: string, ...args: any[]) {
   if (channel === 'app:isShowLongTimeNotLoginTips') {
     const userStore = useUserStore()
     // 如果上次登录时间超过 15 天，则清除 token 和 userId
-    if (Date.now() - userStore.lastLoginTime > 1000 * 60 * 60 * 24 * 15) {
+    if (userStore.lastLoginTime && Date.now() - userStore.lastLoginTime > 1000 * 60 * 60 * 24 * 15) {
       const showLongTimeNotLoginTips = Boolean(userStore.token)
       userStore.token = ''
       console.log('Last login time exceeds 15 days, clearing token and userId')

@@ -3,6 +3,7 @@ import RxAvatar from '/@/components/rx-avatar'
 import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
 import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import SettingsPopup from './components/settings-popup.vue'
+import Badges from './components/badges.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from 'primevue/usedialog'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
@@ -33,38 +34,20 @@ const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const menuRef = useTemplateRef('menu')
 
-function Identity() {
-  const { identityInfo } = userStore
-  if (!identityInfo.icon)
-    return null
-
-  return (
-    <div class={styles.identity}>
-      <RxSvgIcon name={identityInfo.icon as any} />
-      <span
-        class={styles['identity-name']}
-        style={{ color: identityInfo.color }}
-      >
-        {identityInfo.text}
-      </span>
-    </div>
-  )
-}
-
 const items = computed(() => {
   return [
     {
       render: () => {
         return (
           <div class="w-full">
-            <div class={styles['user-info']}>
-              <div class={styles['user-name']}>
+            <div class="flex items-center gap-2.5">
+              <div class={styles.name}>
                 {userStore.userInfo.userName}
               </div>
-              <Identity />
+              <Badges />
             </div>
             <div class="flex items-center gap-1">
-              <div class={`ellipsis-1 ${styles['user-email']}`}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
+              <div class={`ellipsis-1 ${styles.email}`}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
               <RxSvgIcon name="base/rx_ic_copy" size="14" color="var(--colors-icon-icon-note)" />
             </div>
           </div>
@@ -74,7 +57,6 @@ const items = computed(() => {
     },
     {
       separator: true,
-      // vIf: () => userStore.userInfo.identity !== 'agent',
     },
     {
       label: $t('兑换'),
@@ -83,7 +65,15 @@ const items = computed(() => {
     },
     {
       label: $t('我的兑换码'),
-      icon: 'base/rx_ic_red-envelope',
+      icon: 'other/palm_tree',
+      render: ({ item }: any) => {
+        return (
+          <div class="flex items-center gap-2 w-full">
+            <RxSvgIcon name={item.icon as SvgNames} color="var(--colors-icon-icon-secondary)" />
+            <span class={styles.label}>{item.label}</span>
+          </div>
+        )
+      },
       command: openMyRedeemCodeList,
     },
     {
@@ -213,7 +203,7 @@ function openRedeemCode() {
               showToast(code, msg)
               if (code !== 0)
                 return
-              planSuccess()
+              planSuccess(true)
               hideModal()
             }
           }
@@ -307,10 +297,10 @@ function toggle(event: Event) {
   <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 w-[240px]' }" @hide="hidePreventMask" @show="showPreventMask">
     <template #item="{ item, props, hasSubmenu }">
       <a v-ripple class="flex items-center" v-bind="props.action">
-        <component :is="item.render" v-if="item.render" />
+        <component :is="item.render" v-if="item.render" :item="item" />
         <template v-else>
           <RxSvgIcon :name="(item.icon as SvgNames)" color="var(--colors-icon-icon-secondary)" />
-          <span class="menu-label">{{ item.label }}</span>
+          <span :class="styles.label">{{ item.label }}</span>
           <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
           <RxSvgIcon v-if="item.isCheck?.()" class="ml-auto" name="base/rx_ic_check" />
         </template>
@@ -320,50 +310,31 @@ function toggle(event: Event) {
 </template>
 
 <style lang="scss" module>
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-name {
+.name {
   color: var(--colors-text-text-primary);
-  font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.user-email {
+.email {
   margin-top: var(--spacing-sm, 4px);
   color: var(--colors-text-text-tertiary);
-  font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
-.identity {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.identity-name {
-  font-family: 'DingTalk JinBuTi';
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
+.label {
+  color: var(--colors-text-text-primary);
+  font-size: 13px;
+  line-height: 16px;
 }
 </style>
 
 <style lang="scss" scoped>
 .username {
-  font-family: Inter;
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
   line-height: normal;
 }
@@ -388,14 +359,5 @@ function toggle(event: Event) {
       color: var(--colors-text-text-primary, #111213);
     }
   }
-}
-
-.menu-label {
-  color: var(--colors-text-text-primary);
-  font-family: Inter;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

@@ -9,9 +9,18 @@ import { useRemoteStore, useSessionStore, useSettingsStore, useUserStore, useVid
 import GuacamoleKeyboard from '~/utils/guacamole-keyboard.ts'
 
 const MAC_OS_KEYBOARD_PATTERN = /Mac|iPhone|iPod|iPad/i
+// 与 neko 官方实现保持一致：首个 wheel 事件立即发送，100ms 内丢弃后续事件。
+// 过短的节流会导致滚轮每秒发送过多 delta（触控板可达 60 事件/s），累计增量过大，
+// 用户反馈「轻轻一滚就飘到底」，同时因为 delta 是丢弃不累加，轨迹跳跃、不跟手。
+const WHEEL_THROTTLE_MS = 100
 const WHEEL_LINE_HEIGHT = 19
 const PASTE_SHORTCUT_KEY_PATTERN = /^v$/i
 const INSERT_KEY = 'Insert'
+
+interface PointerPosition {
+  x: number
+  y: number
+}
 
 const client = getClient()
 const sessionStore = useSessionStore()
@@ -36,9 +45,21 @@ const focused = ref(false)
 const mutedOverlay = ref(true)
 const lastTextAreaValue = ref('')
 const wheelThrottle = ref(false)
+const wheelThrottleResetTimer = ref<number | null>(null)
+// mousemove 用 requestAnimationFrame 折叠到 ~60Hz：DOM mousemove 在高 DPI 鼠标/触控板
+// 上可达 200~1000 次/秒，而数据通道是默认的 ordered + reliable，任何包延迟/重传都会
+// 把后续 mousemove 堵在队列里，体感就是「鼠标不跟手、画面指针拖在真实鼠标后面」。
+// 只保留每帧最后一次坐标即可：旧位置是垃圾，覆盖比排队更跟手。
+const pendingMouseMoveEvent = ref<MouseEvent | null>(null)
+const mouseMoveRafId = ref<number | null>(null)
+const lastSentMouseX = ref<number | null>(null)
+const lastSentMouseY = ref<number | null>(null)
 const isMouseDown = ref(false)
 const reqMouseDown = ref<MouseEvent | null>(null)
 const reqMouseUp = ref<MouseEvent | null>(null)
+// 节流窗口内被丢弃的 wheel 增量：在窗口结束时补发，避免快速滚动丢失位移
+const pendingWheelDeltaX = ref(0)
+const pendingWheelDeltaY = ref(0)
 const videoReady = ref(false)
 
 const controlling = computed(() => remoteStore.controlling)
@@ -316,18 +337,58 @@ function unmute() {
   videoStore.setMuted(false)
 }
 
-function sendMousePos(event: MouseEvent) {
+function getPointerPosition(event: MouseEvent): PointerPosition | null {
   if (!overlay.value) {
-    return
+    return null
   }
 
   const { w, h } = videoStore.resolution
   const rect = overlay.value.getBoundingClientRect()
 
-  client.sendData('mousemove', {
+  return {
     x: Math.round((w / rect.width) * (event.clientX - rect.left)),
     y: Math.round((h / rect.height) * (event.clientY - rect.top)),
-  })
+  }
+}
+
+function sendMousePos(position: PointerPosition) {
+  // 同一坐标重复发送只会浪费数据通道带宽并加剧 head-of-line blocking。
+  if (lastSentMouseX.value === position.x && lastSentMouseY.value === position.y) {
+    return
+  }
+
+  lastSentMouseX.value = position.x
+  lastSentMouseY.value = position.y
+  client.sendData('mousemove', position)
+}
+
+function sendMousePosImmediate(event: MouseEvent) {
+  const position = getPointerPosition(event)
+  if (!position) {
+    return
+  }
+
+  sendMousePos(position)
+}
+
+function cancelPendingMouseMove() {
+  if (mouseMoveRafId.value !== null) {
+    cancelAnimationFrame(mouseMoveRafId.value)
+    mouseMoveRafId.value = null
+  }
+  pendingMouseMoveEvent.value = null
+}
+
+function flushPendingMouseMove() {
+  mouseMoveRafId.value = null
+  const event = pendingMouseMoveEvent.value
+  pendingMouseMoveEvent.value = null
+
+  if (!event || !hosting.value || locked.value) {
+    return
+  }
+
+  sendMousePosImmediate(event)
 }
 
 function onWheel(event: WheelEvent) {
@@ -351,15 +412,35 @@ function onWheel(event: WheelEvent) {
   x = Math.min(Math.max(x, -scroll.value), scroll.value)
   y = Math.min(Math.max(y, -scroll.value), scroll.value)
 
-  sendMousePos(event)
+  sendMousePosImmediate(event)
 
   if (!wheelThrottle.value) {
+    // 第一个事件：立即发送，启动节流窗口
     wheelThrottle.value = true
+    pendingWheelDeltaX.value = 0
+    pendingWheelDeltaY.value = 0
     client.sendData('wheel', { x, y })
 
-    window.setTimeout(() => {
+    wheelThrottleResetTimer.value = window.setTimeout(() => {
+      wheelThrottleResetTimer.value = null
       wheelThrottle.value = false
-    }, 100)
+      // 补发窗口内累积的增量，避免快速滚动被整段丢弃导致"滚了但没到位"
+      const accX = pendingWheelDeltaX.value
+      const accY = pendingWheelDeltaY.value
+      pendingWheelDeltaX.value = 0
+      pendingWheelDeltaY.value = 0
+      if ((accX !== 0 || accY !== 0) && hosting.value && !locked.value) {
+        client.sendData('wheel', {
+          x: Math.min(Math.max(Math.round(accX), -scroll.value), scroll.value),
+          y: Math.min(Math.max(Math.round(accY), -scroll.value), scroll.value),
+        })
+      }
+    }, WHEEL_THROTTLE_MS)
+  }
+  else {
+    // 窗口内的后续事件：只累积，窗口到期时统一补发
+    pendingWheelDeltaX.value += x
+    pendingWheelDeltaY.value += y
   }
 }
 
@@ -431,7 +512,9 @@ function onMouseDown(event: MouseEvent) {
     return
   }
 
-  sendMousePos(event)
+  // 取消挂起的 mousemove，否则点击后下一帧 RAF 还会发出旧坐标，覆盖刚才的精确落点。
+  cancelPendingMouseMove()
+  sendMousePosImmediate(event)
   client.sendData('mousedown', { key: event.button + 1 })
 }
 
@@ -451,7 +534,8 @@ function onMouseUp(event: MouseEvent) {
     return
   }
 
-  sendMousePos(event)
+  cancelPendingMouseMove()
+  sendMousePosImmediate(event)
   client.sendData('mouseup', { key: event.button + 1 })
 }
 
@@ -473,7 +557,12 @@ function onMouseMove(event: MouseEvent) {
     return
   }
 
-  sendMousePos(event)
+  // 仅记录最新事件，下一帧 RAF 触发时再发送；高频 mousemove 会被折叠为每帧 1 次，
+  // 旧位置直接被覆盖丢弃，避免在 ordered/reliable 数据通道上排队等重传。
+  pendingMouseMoveEvent.value = event
+  if (mouseMoveRafId.value === null) {
+    mouseMoveRafId.value = requestAnimationFrame(flushPendingMouseMove)
+  }
 }
 
 function onMouseEnter(event: MouseEvent) {
@@ -497,6 +586,7 @@ function onMouseLeave(event: MouseEvent) {
     })
   }
 
+  cancelPendingMouseMove()
   keyboard.reset()
   focused.value = false
 }
@@ -622,6 +712,19 @@ onBeforeUnmount(() => {
   observer.disconnect()
   videoReady.value = false
   videoStore.setPlayable(false)
+
+  if (wheelThrottleResetTimer.value !== null) {
+    clearTimeout(wheelThrottleResetTimer.value)
+    wheelThrottleResetTimer.value = null
+  }
+
+  wheelThrottle.value = false
+  pendingWheelDeltaX.value = 0
+  pendingWheelDeltaY.value = 0
+
+  cancelPendingMouseMove()
+  lastSentMouseX.value = null
+  lastSentMouseY.value = null
 
   if (countdownInterval.value !== null) {
     clearInterval(countdownInterval.value)

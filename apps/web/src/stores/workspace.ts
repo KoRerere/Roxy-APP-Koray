@@ -208,6 +208,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
+  /**
+   * 切换到默认空间
+   */
+  function switchDefaultWorkspace() {
+    if (defaultWorkspace.value?.id)
+      setCurrentWorkspace(defaultWorkspace.value?.id)
+  }
+
   return {
     defaultWorkspace,
     workspaceList,
@@ -219,6 +227,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     setCurrentWorkspace,
     fetchWorkspaceList,
     getPermissionByWorkspace,
+    switchDefaultWorkspace,
   }
 }, {
   persist: false,

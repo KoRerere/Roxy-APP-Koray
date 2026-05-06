@@ -132,6 +132,8 @@ export interface RenderMessage {
     isEnabled: boolean
     proxyRules: string
   }>
+  /** 测试 web 域名 */
+  'app:testWebDomain': () => Promise<void>
 
   /** 保存软件设置 */
   'app:saveSoftConfig': (
@@ -147,8 +149,6 @@ export interface RenderMessage {
   ) => ReGetUpdateInfoType[T]
   /** 检测 APP 更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
-  /** 检测 WEB 更新 */
-  'app:checkWebForUpdates': () => Promise<void>
   /** 检测是否有更新 */
   'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
@@ -270,10 +270,6 @@ export interface RenderMessage {
   'util:decryptAESGCM': (payload: string) => string
   /** 检查端口是否被占用, 返回值为可用的端口，返回的端口号与传入的端口号不一致的话，则可认为端口号被占用 */
   'util:checkPort': (port: number) => Promise<number>
-  /** 获取网关配置 */
-  'util:getGatewayConfig': () => Promise<string>
-  /** 根据 ip 变化重新获取网关配置 */
-  'util:reGetGatewayConfigByIpChange': (ip: string) => void
   /** 获取公共请求头部 */
   'util:getCommonRequestHeaders': () => CommonRequestHeaders
   /** 获取推广计划进来的用户的邀请码 */

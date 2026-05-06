@@ -15,6 +15,7 @@ import PendingAttachments from '/@/views/mcp/components/pending-attachments.vue'
 
 const props = defineProps<{
   conversationId?: string
+  uninitialized?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -192,14 +193,15 @@ async function sendMessage() {
   userMessage.value = ''
   isAtBottom.value = true
 
+  let isCreatedChat = false
   if (!currentConversation.value) {
     const result = await conversationCreate()
     if (result.code !== 0) {
       onlyErrorToast(-1, '创建会话失败，请重试')
       return
     }
+    isCreatedChat = true;
     currentConversation.value = result.data
-    emit('createConversation', result.data)
   }
 
   // 拿走当前附件并清空
@@ -259,6 +261,10 @@ async function sendMessage() {
       updateStream()
       isChatting.value = false
     },
+  }).finally(() => {
+    if (isCreatedChat) {
+      emit('createConversation', toRaw(currentConversation.value!))
+    }
   })
 }
 
@@ -499,6 +505,7 @@ watch([() => props.conversationId, userInfo], ([newId, _userInfo]) => {
           @stop="handleInterrupt"
           @upload-files="uploadFiles"
           @remove-attachment="removeAttachment"
+          :uninitialized
         />
       </div>
 

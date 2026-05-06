@@ -40,12 +40,14 @@ const whiteList = ['oauth2callback']
 // 不需要携带的查询参数
 const noTakeQueryList = ['official-site-lang', 'official-site-invite-code']
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const userStore = useUserStore()
   const themeStore = useThemeStore()
   const simpleLocale = useSimpleLocale()
   const permissionStore = usePermissionStore()
   const { currentWorkspace } = useWorkspaceStore()
+
+  await userStore.hasCallInitUserInfo.promise
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
   const query: any = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }

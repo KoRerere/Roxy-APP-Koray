@@ -1,9 +1,30 @@
-<script setup lang="ts">
+<script setup lang="tsx">
+import SlotMachine from '/@/views/campaign/freedom/SlotMachine/index.vue'
+import RxButton from '/@/components/rx-button'
+import { useDialog } from '/@/hooks/useDialog'
 
+const [showDialog] = useDialog()
+
+function openDialog() {
+  showDialog({
+    modal: true,
+    blockScroll: true,
+    style: {
+      width: '480px',
+    },
+    slots: {
+      container: ({ hideModal }) => (
+        <SlotMachine hideModal={hideModal} />
+      ),
+    },
+  })
+}
 </script>
 
 <template>
   <div class="w-300px">
-    <RxImage src="https://roxybrowser.com/banner_picture_new/link_c/zh/630_330_1x.png" />
+    <RxButton @click="openDialog">
+      老虎机
+    </RxButton>
   </div>
 </template>

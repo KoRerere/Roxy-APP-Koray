@@ -7,7 +7,7 @@ import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import { fingerprintInfoList, profileInfoList } from '../constants'
-import { getTimeOffset } from '../utils'
+import { getLocalWebServerURL, getTimeOffset } from '../utils'
 import { genDriver } from '/@/utils'
 
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
@@ -45,7 +45,7 @@ const ipchecker = computed(() => {
 /** 获取当前窗口信息 */
 function getWindowInfo() {
   fetchWindowInfoLoading.value = true
-  fetch(`/api/browser/list?dirId=${dirId}`)
+  fetch(`${getLocalWebServerURL()}/api/browser/list?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       console.log(result)
@@ -69,7 +69,7 @@ function getWindowInfo() {
 async function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
   try {
-    const response = await fetch(`/api/proxy/detection?dirId=${dirId}`)
+    const response = await fetch(`${getLocalWebServerURL()}/api/proxy/detection?dirId=${dirId}`)
     const result = await response.json()
     console.log(result)
     if (result.code === 0) {
@@ -100,7 +100,7 @@ async function proxyDetection(event?: MouseEvent) {
 async function refreshURL() {
   refreshUrlLoading.value = true
   try {
-    const response = await fetch(`/api/proxy/refresh-url`, {
+    const response = await fetch(`${getLocalWebServerURL()}/api/proxy/refresh-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ async function refreshURL() {
 }
 
 function getCoreInfo() {
-  fetch(`/api/browser/core-info?dirId=${dirId}`)
+  fetch(`${getLocalWebServerURL()}/api/browser/core-info?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       if (result.code === 0) {
@@ -150,7 +150,7 @@ async function showTourGuide() {
     })
 
     driverObj.drive()
-    fetch('/api/dashboard/close-tour-guide', {
+    fetch(`${getLocalWebServerURL()}/api/dashboard/close-tour-guide`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -365,7 +365,7 @@ onBeforeMount(() => {
     line-height: normal;
 
     .now {
-      color: var(#36373a, #36373a);
+      color: #36373a;
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

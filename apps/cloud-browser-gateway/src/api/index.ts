@@ -2,7 +2,7 @@ import { BaseApi, HttpClient, PluginsApi, UserGetCloudBrowserRemainingUsageApi, 
 import { commonRequestHeaders } from '~/constants/common'
 
 export const httpClient = new HttpClient({
-  baseURL: process.env.API_BASE_URL || 'https://apitest.roxybrowser.co',
+  baseURL: process.env.API_BASE_URL,
   timeout: 15000,
   proxy: false,
 })

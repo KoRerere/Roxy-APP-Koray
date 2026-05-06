@@ -14,9 +14,11 @@ import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { useSimpleLocale } from '/@/stores/locale'
 import { OrderType, PaymentStatus, PayWay } from '/@/enums/pay'
-import { sleep } from '/@/utils/basic'
+import { genPollingChecker } from '/@/utils/basic'
 import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
 import type { UserRechargeSettlementCreateData } from '@roxy/backend-api'
+
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 
 type Data = UserRechargeSettlementCreateData['data']
 interface ChargeParams {
@@ -39,12 +41,12 @@ export function usePay() {
   const { userPayInfo } = storeToRefs(useUserStore())
   const { check } = usePermission()
   const { currentLocale } = storeToRefs(useSimpleLocale())
-
   const { getUserPayInfo } = useUserStore()
+
+  const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
 
   function openProcessing(data: Record<string, any>, type: OrderType | 'silent') {
     const { promise, resolve, reject } = Promise.withResolvers<void>()
-
     if (data.payType === PayWay.Card || data.payType === PayWay.Balance) {
       onConfirm()
       return promise
@@ -76,10 +78,10 @@ export function usePay() {
       switch (type) {
         case OrderType.Subscribe:
         case OrderType.Renew:
-          planSuccess().then(resolve)
+          planSuccessFreedomActivity().then(resolve)
           break
         case OrderType.Recharge:
-          balanceSuccess().then(resolve)
+          balanceSuccessForFreedomActivity().then(resolve)
           break
         case OrderType.Purchase:
           purchaseSuccess()
@@ -102,7 +104,40 @@ export function usePay() {
     return promise
   }
 
-  async function planSuccess() {
+  /**
+   * 充值
+   */
+  async function planSuccessFreedomActivity() {
+    if (userPayInfo.value?.isFreedom) {
+      return showFreedomActivityModal()
+    }
+    else {
+      return planSuccess()
+    }
+  }
+
+  /**
+   * 充值+购买
+   */
+  async function planSuccessFreedomActivity2() {
+    if (userPayInfo.value?.isFreedom) {
+      return showFreedomActivityModal(true)
+    }
+    else {
+      return planSuccess()
+    }
+  }
+
+  /**
+   * 钱包直接购买（那就直接弹出老虎机）
+   */
+  async function planSuccessForSlotMachine() {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    showSlotMachine(resolve)
+    return promise
+  }
+
+  async function planSuccess(notSlotMachine?: boolean) {
     if (!check('Cost_Center_all'))
       return
 
@@ -121,11 +156,24 @@ export function usePay() {
       },
       emits: {
         onConfirm: () => {
-          resolve()
+          if (!notSlotMachine) {
+            showSlotMachine(resolve)
+          }
         },
       },
     })
     return promise
+  }
+
+  async function balanceSuccessForFreedomActivity() {
+    if (userPayInfo.value?.isFreedom) {
+      const { promise, resolve } = Promise.withResolvers<void>()
+      showFreedomActivityModal(false, resolve)
+      return promise
+    }
+    else {
+      return balanceSuccess()
+    }
   }
 
   async function balanceSuccess() {
@@ -215,50 +263,18 @@ export function usePay() {
   }
 
   function genCheckerOrderStatus() {
-    let stopped = false
-    let currentTaskId = 0
+    return genPollingChecker({
+      intervalMs: 3000,
+      async checkOnce(orderNo: string) {
+        const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
+        onlyErrorToast(code, msg)
 
-    function stop() {
-      stopped = true
-      currentTaskId++
-    }
+        if (code !== 0 || [PaymentStatus.Fail, PaymentStatus.Closed].includes(data as PaymentStatus))
+          throw new Error(msg)
 
-    async function checkOnce(orderNo: string) {
-      const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
-      onlyErrorToast(code, msg)
-
-      if (code !== 0 || [PaymentStatus.Fail, PaymentStatus.Closed].includes(data as PaymentStatus))
-        throw new Error(msg)
-
-      return data === PaymentStatus.Success
-    }
-
-    /** 轮询检查订单状态 */
-    async function check(orderNo: string) {
-      stopped = false
-      const taskId = ++currentTaskId
-
-      while (!stopped && taskId === currentTaskId) {
-        const isOk = await checkOnce(orderNo)
-
-        if (isOk) {
-          stop()
-          return isOk
-        }
-
-        await sleep(3000)
-
-        // 如果任务被新任务覆盖
-        if (taskId !== currentTaskId)
-          return
-      }
-    }
-
-    return {
-      checkOnce,
-      check,
-      stop,
-    }
+        return data === PaymentStatus.Success
+      },
+    })
   }
 
   async function genRechargeSettlement(params: any) {
@@ -281,5 +297,16 @@ export function usePay() {
     return await API.pay.userRechargeSettlementCreate(params)
   }
 
-  return { genCheckerOrderStatus, genRechargeSettlement, openProcessing, planSuccess, balanceSuccess, purchaseSuccess, walletRecharge }
+  return {
+    genCheckerOrderStatus,
+    genRechargeSettlement,
+    openProcessing,
+    planSuccess,
+    balanceSuccess,
+    purchaseSuccess,
+    walletRecharge,
+    planSuccessForSlotMachine,
+    planSuccessFreedomActivity,
+    planSuccessFreedomActivity2,
+  }
 }

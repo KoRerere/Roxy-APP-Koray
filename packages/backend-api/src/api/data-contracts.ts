@@ -1578,6 +1578,10 @@ export interface UserGetUserInfoListData {
       onboardingTaskStatus: boolean;
       firstWebRegisterGuideStatus: boolean;
     };
+    userBadgeList: {
+      des?: string;
+      icon?: string;
+    }[];
   };
   msg: string;
 }
@@ -3256,6 +3260,31 @@ export interface UserSetRoxyClawCreatePayload {
 
 export interface UserSetRoxyClawCreateData {
   code: number;
+  msg: string;
+}
+
+export interface GetMayFreedomSeasonPromoTimeListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    server_utc_timestamp: number;
+    type: number;
+    discount: number;
+    gift_members: number;
+  };
+  msg: string;
+}
+
+export interface UserMayFreedomResultListData {
+  code: number;
+  data: boolean;
+  msg: string;
+}
+
+export interface GetEcommerceWhitelistDomainsListData {
+  code: number;
+  data: string[];
   msg: string;
 }
 
@@ -5761,52 +5790,51 @@ export interface UserGetProxyListMergedListData {
   data: {
     total: number;
     rows: {
-      id: number;
-      userId: number;
-      workspaceId: number;
-      proxyProviderId: number | null;
-      orderNo: string | null;
-      orderStatus: number | null;
-      ipType: string;
-      host: string;
-      protocol: string;
-      country: string;
-      lastIp: string;
-      port: string;
-      proxyUserName: string;
-      proxyPassword: string;
-      proxyCheckChannel: string;
-      remark: string;
-      lastCountry: string;
-      lastState: string;
-      lastCity: string;
-      checkStatus: number;
-      proxyExpireStatus: number | null;
-      checkTime: string;
-      renewalTime: string | null;
-      createTime: string;
-      proxyMonths: number;
-      updateTime: string;
-      expireDate: string | null;
-      replaceStatus: number;
-      proxyProviderName: string | null;
-      proxyType: number;
-      providerType: string | null;
-      opName: string | null;
-      giftDays: number;
-      autoRenew: number;
-      canRenew: boolean;
-      modelParam: string;
-      refreshUrl: string;
-      dataType: string;
-      checkChannel: string;
-      checkChannelValue: string;
-      isBind: boolean;
-      bindCount: number;
-      bindList: number[];
-      proxyProviderPrice: number;
-      proxyProviderDiscountPrice: number;
-      canRefund: boolean;
+      id?: number;
+      userId?: number;
+      workspaceId?: number;
+      proxyProviderId?: null;
+      orderNo?: null;
+      orderStatus?: null;
+      ipType?: string;
+      host?: string;
+      protocol?: string;
+      country?: string;
+      lastIp?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyCheckChannel?: string;
+      remark?: string;
+      lastCountry?: string;
+      lastState?: string;
+      lastCity?: string;
+      checkStatus?: number;
+      proxyExpireStatus?: null;
+      checkTime?: string;
+      renewalTime?: null;
+      createTime?: string;
+      proxyMonths?: number;
+      updateTime?: string;
+      expireDate?: null;
+      replaceStatus?: number;
+      proxyProviderName?: null;
+      proxyType?: number;
+      providerType?: null;
+      opName?: null;
+      giftDays?: number;
+      autoRenew?: number;
+      canRenew?: boolean;
+      modelParam?: string;
+      refreshUrl?: string;
+      isDirect?: boolean;
+      dataType?: string;
+      checkChannel?: string;
+      checkChannelValue?: string;
+      isBind?: boolean;
+      bindCount?: number;
+      bindList?: number[];
+      canRefund?: boolean;
     }[];
   };
   msg: string;
@@ -6453,51 +6481,18 @@ export interface UserGetMemberInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
-      nickname: string;
-      /**
-       * 用户ID
-       * 用户ID
-       */
+      nickname?: string;
+      workspaceNickname?: string;
       user_id: number;
-      /** 用户ID */
-      userId: number;
-      /**
-       * 权限
-       * 权限
-       */
+      userId?: number;
       role: number;
-      /**
-       * 激活状态 0:没有激活,1:激活
-       * 激活状态 0:没有激活,1:激活
-       */
       status: number;
-      /**
-       * 用户邮箱
-       * 用户邮箱
-       */
       email: string;
-      /** 手机号 */
-      phone: string;
-      /**
-       * 用户名
-       * 用户名
-       */
+      phone?: string;
       userName: string;
-      /**
-       * 用户头像
-       * 用户头像
-       */
       avatar: string;
       project_info: {
-        /**
-         * 项目ID
-         * 项目ID
-         */
         project_id: number;
-        /**
-         * 项目名称
-         * 项目名称
-         */
         projectName: string;
       }[];
     }[];
@@ -6558,6 +6553,20 @@ export interface UserAddTeamNicknameCreatePayload {
 }
 
 export interface UserAddTeamNicknameCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserAddTeamWorkspaceNicknameCreatePayload {
+  /** 邮箱或者手机号 */
+  emailOrPhone: string;
+  /** 用户ID */
+  targetUserId: number;
+  /** 备注名称 */
+  workspaceNickname: string;
+}
+
+export interface UserAddTeamWorkspaceNicknameCreateData {
   code: number;
   msg: string;
 }
@@ -7124,63 +7133,70 @@ export interface UserMdfProjectSortCreateData {
 export interface UserGetUserPayInfoListData {
   code: number;
   data: {
-    discount: number;
-    isEaster: boolean;
-    proxyDiscount: number;
-    identity: string;
-    useWorkspaceCount: number;
-    useWindowCount: number;
-    useMemberCount: number;
-    maxWindowCount: number;
-    subLevel: string;
-    subEndDate: number;
-    maxMemberCount: number;
-    maxWorkspaceCount: number;
-    freeProjectCount: number;
-    useProjectCount: number;
-    balance: number;
+    apiRate: number;
+    autoRecharge: number;
     autoRenewDiscount: number;
-    isTrial: number;
-    isAuto: number;
-    realAmount: string;
-    orderNo: string;
-    staffSinglePrice: number;
-    workspaceSinglePrice: number;
-    singlePrice: number;
-    originalAmount: number;
-    walletDiscount: number;
-    showSubExpiredDlg: boolean;
-    showPayWallDlg: boolean;
     autoRenewDowngrade: boolean;
-    purchaseWindowCount: number;
-    freeWindowCount: number;
+    balance: number;
     createWindowTimes: number;
-    totalCreateWindowTimes: number;
+    discount: number;
+    firstPurchaseDiscount: number;
+    freeProjectCount: number;
+    freeWindowCount: number;
+    identity: string;
+    isAuto: number;
+    isBlackFriday: boolean;
+    isEaster: boolean;
+    isFreedom: boolean;
+    isTrial: number;
+    logDays: number;
+    maxMemberCount: number;
+    maxWindowCount: number;
+    maxWorkspaceCount: number;
+    onboardingTaskStatus: {
+      autoRatingStatus: boolean;
+      contextMenuGuideStatus: boolean;
+      createProfileStatus: boolean;
+      createProfileTourGuideStatus: boolean;
+      createProfileVideoEntryStatus: boolean;
+      createProxyStatus: boolean;
+      createProxyVideoEntryStatus: boolean;
+      externalRatingStatus: boolean;
+      firstOpenWindowStatus: boolean;
+      firstRegisterGuideStatus: boolean;
+      firstWebRegisterGuideStatus: boolean;
+      hideSidebarEntryStatus: boolean;
+      inviteMemberStatus: boolean;
+      ratingStatus: boolean;
+      saveFilterGuideStatus: boolean;
+    };
     openWindowTimes: number;
-    totalOpenWindowTimes: number;
-    showGiftDlg: boolean;
-    subCurrentDate: number;
-    subscriptionLogDays: number;
+    orderNo: string;
+    originalAmount: number;
+    proxyDiscount: number;
     proxyExpireCount: number;
     proxyUsingCount: number;
-    autoRecharge: number;
-    logDays: number;
-    apiRate: number;
-    onboardingTaskStatus: {
-      createProfileStatus: boolean;
-      createProxyStatus: boolean;
-      inviteMemberStatus: boolean;
-      firstRegisterGuideStatus: boolean;
-      hideSidebarEntryStatus: boolean;
-      contextMenuGuideStatus: boolean;
-      saveFilterGuideStatus: boolean;
-      createProfileVideoEntryStatus: boolean;
-      createProfileTourGuideStatus: boolean;
-      createProxyVideoEntryStatus: boolean;
-    };
-    isBlackFriday: boolean;
-    firstPurchaseDiscount: number;
+    purchaseWindowCount: number;
+    realAmount: number;
+    shouldShowAutoRenewal: boolean;
+    showGiftDlg: boolean;
+    showPayWallDlg: boolean;
+    showSubExpiredDlg: boolean;
+    singlePrice: number;
+    staffSinglePrice: number;
+    subCurrentDate: number;
+    subEndDate: number;
+    subLevel: string;
+    subscriptionLogDays: number;
+    totalCreateWindowTimes: number;
+    totalOpenWindowTimes: number;
     trialDays: number;
+    useMemberCount: number;
+    useProjectCount: number;
+    useWindowCount: number;
+    useWorkspaceCount: number;
+    walletDiscount: number;
+    workspaceSinglePrice: number;
   };
   msg: string;
 }
@@ -7957,6 +7973,23 @@ export interface UserPayCaptchaTriggerListData {
     sceneId: string;
     EncryptedSceneId: string;
   };
+  msg: string;
+}
+
+export interface UserGetPayChannelFeesListParams {
+  /** @example "10" */
+  amount?: string;
+}
+
+export interface UserGetPayChannelFeesListData {
+  code: number;
+  data: {
+    payType: string;
+    feeRate: number;
+    total: number;
+    fee: number;
+    isShow: boolean;
+  }[];
   msg: string;
 }
 

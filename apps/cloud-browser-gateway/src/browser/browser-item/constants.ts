@@ -7,6 +7,7 @@ export const defaultCLIArgs = [
   '--remote-debugging-port=0',
   '--remote-debugging-address=0.0.0.0',
   '--use-mock-keychain',
+  '--disable-features=DesktopPWAs,WebAppInstall,WebAppEnableLaunchHandler',
 ]
 
 /** 需要同步的本地数据 */

@@ -16,6 +16,7 @@ export function setupMiddlewares(app: express.Application) {
     res.header('Access-Control-Allow-Headers', '*')
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE')
     res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE')
+    res.setHeader('Access-Control-Allow-Private-Network', 'true')
 
     // if (this.intercept(req)) {
     //   return res.json({

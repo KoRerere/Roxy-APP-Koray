@@ -5,7 +5,6 @@ import crypto from 'node:crypto'
 import url from 'node:url'
 import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
-import { getGatewayConfig, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
 import { mediaProtocolName } from '/@/constants'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
@@ -93,16 +92,6 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   /** AES-GCM 解密 */
   ipcMain.on('util:decryptAESGCM', (event, msg) => {
     return decryptAESGCM(msg)
-  })
-
-  /** 获取网关配置 */
-  ipcMain.on('util:getGatewayConfig', (event) => {
-    return getGatewayConfig()
-  })
-
-  /** 根据 ip 变化重新获取网关配置 */
-  ipcMain.on('util:reGetGatewayConfigByIpChange', (event, ip: string) => {
-    return reGetGatewayConfigByIpChange(ip)
   })
 
   /** 检查端口是否被占用 */

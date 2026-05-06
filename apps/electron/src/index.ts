@@ -26,17 +26,19 @@ if (!isSingleInstance) {
 setupLog()
 console.log(`App starting in ${isUninstallFeedbackMode ? 'uninstall feedback' : 'normal'} mode`)
 console.log(`isSingleInstance: ${isSingleInstance}`)
-// 检查是否是卸载反馈模式
-if (isUninstallFeedbackMode) {
-  console.log('Uninstall feedback mode detected')
-  queueMicrotask(async () => {
-    await app.whenReady()
+
+app.whenReady().then(async () => {
+  console.log('App is ready')
+
+  // 检查是否是卸载反馈模式
+  if (isUninstallFeedbackMode) {
+    console.log('Uninstall feedback mode detected')
     // 如果是首次启动，需要初始化本地配置和启动 APP 内置 Web 服务
     if (isSingleInstance && !getUninstallFeedbackWindow()) {
       try {
       // 初始化本地配置
         await initLocalConfig()
-        // 启动 APP 内置 Web 服务（打包环境下 webBaseUrl 依赖它）
+        // 启动 APP 内置 Web 服务
         await setupAppServer()
         if (!store.token) {
           executeUninstall()
@@ -55,12 +57,13 @@ if (isUninstallFeedbackMode) {
     // 直接显示卸载反馈窗口
     showUninstallFeedback()
     initDebug()
-  })
-}
-else {
-  setTimeout(() => {
-    killAllBrowserProcess()
-  })
-
-  setupModules().finally(initDebug)
-}
+  }
+  else {
+    setTimeout(() => {
+      killAllBrowserProcess()
+    })
+    setupModules().finally(initDebug)
+  }
+}).catch((error) => {
+  console.error('App initialization failed:', error)
+})

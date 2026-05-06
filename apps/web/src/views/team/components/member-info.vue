@@ -19,7 +19,7 @@ const {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 min-w-70">
+  <div class="flex items-center gap-3 min-w-60">
     <RxAvatar v-if="!hiddenAvatar" :avatar="avatar" :name="userName?.slice(0, 2)" :color="avatarColor" :class="{ 'no-avatar': !avatarColor }" :size="28" :font-size="14" />
     <div class="flex-1 flex flex-col items-start justify-center gap-0.5">
       <div class="ellipsis-1 email">

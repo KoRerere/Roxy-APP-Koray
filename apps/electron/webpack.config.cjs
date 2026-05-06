@@ -42,7 +42,7 @@ module.exports = {
   // bindings 是 better-sqlite3 的依赖，用于加载 native 模块
   externals: {
     'font-list': 'node-commonjs font-list',
-    'http-proxy-middleware': 'node-commonjs http-proxy-middleware',
+    // 'http-proxy-middleware': 'node-commonjs http-proxy-middleware',
     '@roxy/diskspace-native': 'node-commonjs @roxy/diskspace-native',
     // 'better-sqlite3': 'node-commonjs better-sqlite3',
     // 'bindings': 'node-commonjs bindings',

@@ -3,7 +3,7 @@ import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import Example from '/@/views/agent/create/components/example.vue'
 import ShadowDotGrid from '/@/components/shadow-dot-grid.vue'
 import ParseTextarea from '/@/views/agent/create/components/parse-textarea.vue'
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useConfirm } from 'primevue/useconfirm'
@@ -377,7 +377,7 @@ async function onSave() {
       </div>
       <div class="flex flex-col gap-1.5 w-40%">
         <div class="panel-title h-30px flex items-center">
-          {{ $t('导入规则') }}
+          {{ $t('导入规则（支持动态/静态代理 IP）') }}
         </div>
         <div class="rules flex-1 min-w-335px">
           <!-- :parser-type="parserType" -->

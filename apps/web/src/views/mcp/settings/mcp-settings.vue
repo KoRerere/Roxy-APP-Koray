@@ -20,6 +20,7 @@ interface McpServer {
   enabled: boolean
   config: UserMcpServerConfig
   status?: { success?: boolean, error?: string }
+  builtin?: boolean
 }
 
 const { listMcpServers, enableMcpServer, disableMcpServer, deleteMcpServer, upsertMcpServer, testMcpServer, importMcpServers } = useAgentApi()
@@ -51,6 +52,7 @@ async function loadServers() {
         enabled: s.enabled,
         config: s.config,
         status: s.status,
+        builtin: s.builtin,
       }))
     }
   }
@@ -301,212 +303,248 @@ function showServerDialog() {
     modal: true,
     blockScroll: true,
     class: 'w-[524px]',
-    okText: $t('保存'),
-    cancelText: $t('取消'),
+    // okText: $t('保存'),
+    // cancelText: $t('取消'),
     slots: {
-      default: () => (
-        <div class="flex flex-col gap-4 pt-2.5 pb-5">
-          {/* Name */}
-          <div class="flex flex-col gap-3">
-            <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
-              {$t('名称（帮助你识别工具）')}
-            </label>
-            <RxInputText
-              modelValue={serverName.value}
-              onUpdate:modelValue={(val: string) => serverName.value = val}
-              size="md"
-              placeholder="Enter server name"
-              class="w-full"
-            />
+      default: (instance) => (
+        <div>
+          <div class="flex flex-col gap-4 pt-2.5 pb-10">
+            {/* Name */}
+            <div class="flex flex-col gap-3">
+              <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)] flex items-center gap-1">
+                <span class="text-[var(--colors-icon-icon-error)]">*</span>
+                {$t('名称（帮助你识别工具）')}
+              </label>
+              <RxInputText
+                modelValue={serverName.value}
+                onUpdate:modelValue={(val: string) => serverName.value = val}
+                size="md"
+                placeholder="Enter server name"
+                class="w-full"
+              />
+            </div>
+
+            {/* Command (for stdio) */}
+            {serverType.value === 'stdio' && (
+              <div class="flex flex-col gap-3">
+                <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)] flex items-center gap-1">
+                  <span class="text-[var(--colors-icon-icon-error)]">*</span>
+                  {$t('命令')}
+                </label>
+                <RxInputText
+                  modelValue={command.value}
+                  onUpdate:modelValue={(val: string) => command.value = val}
+                  size="md"
+                  placeholder="node /path/to/server.js"
+                  class="w-full"
+                />
+              </div>
+            )}
+
+            {/* URL (for http/sse) */}
+            {serverType.value !== 'stdio' && (
+              <div class="flex flex-col gap-3">
+                <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)] flex items-center gap-1">
+                  <span class="text-[var(--colors-icon-icon-error)]">*</span>
+                  URL
+                </label>
+                <RxInputText
+                  modelValue={url.value}
+                  onUpdate:modelValue={(val: string) => url.value = val}
+                  size="md"
+                  placeholder="https://..."
+                  class="w-full"
+                />
+              </div>
+            )}
+
+            {/* Environment Variables */}
+            {serverType.value === 'stdio' && (
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
+                    {$t('环境变量')}
+                  </label>
+                  <span
+                    onClick={addEnvVar}
+                    class="font-['Inter'] text-[14px] text-[#11a3fd] hover:underline cursor-pointer"
+                  >
+
+                    {$t('+ 添加')}
+                  </span>
+                </div>
+                {envVars.value.map((env, index) => (
+                  <div key={index} class="flex items-center gap-3">
+                    <RxInputText
+                      modelValue={env.key}
+                      onUpdate:modelValue={(val: string) => env.key = val}
+                      size="md"
+                      placeholder="Key"
+                      iconFieldClass="!w-[140px]"
+                    />
+                    <RxInputText
+                      modelValue={env.value}
+                      onUpdate:modelValue={(val: string) => env.value = val}
+                      size="md"
+                      placeholder="Value"
+                      iconFieldClass="!flex-1"
+                    />
+                    <div
+                      onClick={() => removeEnvVar(index)}
+                      class="size-6 p-1 flex items-center justify-center rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                    >
+                      <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-icon-icon-inactive)" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* HTTP Headers */}
+            {serverType.value !== 'stdio' && (
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
+                    {$t('HTTP 请求头')}
+                  </label>
+                  <span
+                    onClick={addHeader}
+                    class="font-['Inter'] text-[14px] text-[#11a3fd] hover:underline cursor-pointer"
+                  >
+
+                    {$t('+ 添加')}
+                  </span>
+                </div>
+                {headers.value.map((header, index) => (
+                  <div key={index} class="flex items-center gap-3">
+                    <RxInputText
+                      modelValue={header.key}
+                      onUpdate:modelValue={(val: string) => header.key = val}
+                      size="md"
+                      placeholder="Key"
+                      iconFieldClass="!w-[140px]"
+                    />
+                    <RxInputText
+                      modelValue={header.value}
+                      onUpdate:modelValue={(val: string) => header.value = val}
+                      size="md"
+                      placeholder="Value"
+                      iconFieldClass="!flex-1"
+                    />
+                    <div
+                      onClick={() => removeHeader(index)}
+                      class="size-6 p-1 flex items-center justify-center rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                    >
+                      <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-icon-icon-inactive)" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* Command (for stdio) */}
-          {serverType.value === 'stdio' && (
-            <div class="flex flex-col gap-3">
-              <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
-                {$t('命令')}
-              </label>
-              <RxInputText
-                modelValue={command.value}
-                onUpdate:modelValue={(val: string) => command.value = val}
-                size="md"
-                placeholder="node /path/to/server.js"
-                class="w-full"
-              />
-            </div>
-          )}
-
-          {/* URL (for http/sse) */}
-          {serverType.value !== 'stdio' && (
-            <div class="flex flex-col gap-3">
-              <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
-                URL
-              </label>
-              <RxInputText
-                modelValue={url.value}
-                onUpdate:modelValue={(val: string) => url.value = val}
-                size="md"
-                placeholder="https://..."
-                class="w-full"
-              />
-            </div>
-          )}
-
-          {/* Environment Variables */}
-          {serverType.value === 'stdio' && (
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center justify-between">
-                <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
-                  {$t('环境变量')}
-                </label>
-                <span
-                  onClick={addEnvVar}
-                  class="font-['Inter'] text-[14px] text-[#11a3fd] hover:underline cursor-pointer"
-                >
-
-                  {$t('+ 添加')}
-                </span>
-              </div>
-              {envVars.value.map((env, index) => (
-                <div key={index} class="flex items-center gap-3">
-                  <RxInputText
-                    modelValue={env.key}
-                    onUpdate:modelValue={(val: string) => env.key = val}
-                    size="md"
-                    placeholder="Key"
-                    iconFieldClass="!w-[140px]"
-                  />
-                  <RxInputText
-                    modelValue={env.value}
-                    onUpdate:modelValue={(val: string) => env.value = val}
-                    size="md"
-                    placeholder="Value"
-                    iconFieldClass="!flex-1"
-                  />
-                  <div
-                    onClick={() => removeEnvVar(index)}
-                    class="size-6 p-1 flex items-center justify-center rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
-                  >
-                    <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-icon-icon-inactive)" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* HTTP Headers */}
-          {serverType.value !== 'stdio' && (
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center justify-between">
-                <label class="font-['Inter'] font-medium text-[14px] text-[var(--colors-text-text-primary)]">
-                  {$t('HTTP 请求头')}
-                </label>
-                <span
-                  onClick={addHeader}
-                  class="font-['Inter'] text-[14px] text-[#11a3fd] hover:underline cursor-pointer"
-                >
-
-                  {$t('+ 添加')}
-                </span>
-              </div>
-              {headers.value.map((header, index) => (
-                <div key={index} class="flex items-center gap-3">
-                  <RxInputText
-                    modelValue={header.key}
-                    onUpdate:modelValue={(val: string) => header.key = val}
-                    size="md"
-                    placeholder="Key"
-                    iconFieldClass="!w-[140px]"
-                  />
-                  <RxInputText
-                    modelValue={header.value}
-                    onUpdate:modelValue={(val: string) => header.value = val}
-                    size="md"
-                    placeholder="Value"
-                    iconFieldClass="!flex-1"
-                  />
-                  <div
-                    onClick={() => removeHeader(index)}
-                    class="size-6 p-1 flex items-center justify-center rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
-                  >
-                    <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-icon-icon-inactive)" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-      footer: (instance: UseDialogInstance) => (
-        <div class="flex items-center justify-between w-full">
-          <RxButton
-            label={$t('取消')}
-            class="p-button-outlined p-button-secondary"
-            size="md"
-            onClick={() => instance.handleCancel()}
-          />
-          <div class="flex items-center gap-2">
+          <div class="flex items-center justify-between w-full">
             <RxButton
-              label={$t('验证')}
+              label={$t('取消')}
               class="p-button-outlined p-button-secondary"
               size="md"
-              onClick={async () => {
-                const config: UserMcpServerConfig = {
-                  type: serverType.value,
-                  ...(serverType.value === 'stdio'
-                    ? {
-                        command: command.value,
-                        env: Object.fromEntries(envVars.value.filter(e => e.key).map(e => [e.key, e.value])),
-                      }
-                    : {
-                        url: url.value,
-                        headers: Object.fromEntries(headers.value.filter(e => e.key).map(e => [e.key, e.value])),
-                      }),
-                }
-                try {
-                  const result = await testMcpServer(serverName.value, config)
-                  if (result.code === 0 && result.data.success) {
-                    showToast(0, $t('验证成功'))
-                  }
-                  else {
-                    onlyErrorToast(-1, $t('验证失败'))
-                  }
-                }
-                catch (e) {
-                  console.error('Validation failed:', e)
-                }
-              }}
+              onClick={() => instance.handleCancel()}
             />
+            <div class="flex items-center gap-2">
+              <RxButton
+                label={$t('验证')}
+                class="p-button-outlined p-button-secondary"
+                size="md"
+                onClick={async () => {
+                  if (!serverName.value) {
+                    return onlyErrorToast(-1, $t('名称必须填写'))
+                  }
 
-            <RxButton label={$t('保存')} size="md" onClick={() => instance.handleOk()}></RxButton>
+                  if (serverType.value === 'stdio' && !command.value) {
+                    return onlyErrorToast(-1, $t('命令必须填写'))
+                  }
+
+                  if (serverType.value === 'http' && !url.value) {
+                    return onlyErrorToast(-1, $t('URL 必须填写'))
+                  }
+
+                  const config: UserMcpServerConfig = {
+                    type: serverType.value,
+                    ...(serverType.value === 'stdio'
+                      ? {
+                          command: command.value,
+                          env: Object.fromEntries(envVars.value.filter(e => e.key).map(e => [e.key, e.value])),
+                        }
+                      : {
+                          url: url.value,
+                          headers: Object.fromEntries(headers.value.filter(e => e.key).map(e => [e.key, e.value])),
+                        }),
+                  }
+                  
+                  try {
+                    const result = await testMcpServer(serverName.value, config)
+                    if (result.code === 0 && result.data.success) {
+                      showToast(0, $t('验证成功'))
+                    }
+                    else {
+                      onlyErrorToast(-1, $t('验证失败'))
+                    }
+                  }
+                  catch (e) {
+                    console.error('Validation failed:', e)
+                  }
+                }}
+              />
+
+              <RxButton 
+                label={$t('保存')} 
+                size="md" 
+                onClick={async function handleOk() {
+                  const config: UserMcpServerConfig = {
+                    type: serverType.value,
+                    ...(serverType.value === 'stdio'
+                      ? {
+                          command: command.value,
+                          env: Object.fromEntries(envVars.value.filter(e => e.key).map(e => [e.key, e.value])),
+                        }
+                      : {
+                          url: url.value,
+                          headers: Object.fromEntries(headers.value.filter(e => e.key).map(e => [e.key, e.value])),
+                        }),
+                  }
+
+                  if (!serverName.value) {
+                    return onlyErrorToast(-1, $t('名称必须填写'))
+                  }
+
+                  if (serverType.value === 'stdio' && !command.value) {
+                    return onlyErrorToast(-1, $t('命令必须填写'))
+                  }
+
+                  if (serverType.value === 'http' && !url.value) {
+                    return onlyErrorToast(-1, $t('URL 必须填写'))
+                  }
+
+                  try {
+                    await upsertMcpServer(serverName.value, config, editMode.value ? editingServer.value?.name : undefined)
+                    resetForm()
+                    await loadServers()
+                    instance.handleCancel()
+                  }
+                  catch (e) {
+                    console.error('Failed to save server:', e)
+                    onlyErrorToast(-1, $t('服务错误，请联系技术支持'))
+                  }
+                }}
+              ></RxButton>
+            </div>
           </div>
         </div>
       ),
+      footer: undefined,
     },
     handleCancel: resetForm,
     async handleOk() {
-      const config: UserMcpServerConfig = {
-        type: serverType.value,
-        ...(serverType.value === 'stdio'
-          ? {
-              command: command.value,
-              env: Object.fromEntries(envVars.value.filter(e => e.key).map(e => [e.key, e.value])),
-            }
-          : {
-              url: url.value,
-              headers: Object.fromEntries(headers.value.filter(e => e.key).map(e => [e.key, e.value])),
-            }),
-      }
-
-      try {
-        await upsertMcpServer(serverName.value, config, editMode.value ? editingServer.value?.name : undefined)
-        resetForm()
-        await loadServers()
-      }
-      catch (e) {
-        console.error('Failed to save server:', e)
-        return Promise.reject(e)
-      }
+      
     },
   })
 }
@@ -549,6 +587,7 @@ onMounted(() => {
         <div class="flex items-center gap-2">
           <!-- Edit Button -->
           <button
+            v-if="!server.builtin"
             class="size-6 flex items-center justify-center rounded bg-transparent outline-none border-none  cursor-pointer"
             @click="showEditDialog(server)"
           >
@@ -557,6 +596,7 @@ onMounted(() => {
 
           <!-- Delete Button -->
           <button
+            v-if="!server.builtin"
             class="size-6 flex items-center justify-center rounded bg-transparent outline-none border-none  cursor-pointer"
             @click="handleDelete(server)"
           >
@@ -564,7 +604,10 @@ onMounted(() => {
           </button>
 
           <!-- Toggle Switch -->
-          <div :style="{ '--toggleswitch-height': '16px', '--toggleswitch-width': '22px', '--toggleswitch-handle-size': '10px', '--toggleswitch-gap': '3px' }">
+          <div
+            v-if="!server.builtin"
+            :style="{ '--toggleswitch-height': '16px', '--toggleswitch-width': '22px', '--toggleswitch-handle-size': '10px', '--toggleswitch-gap': '3px' }"
+          >
             <RxToggleSwitch
               :model-value="server.enabled"
               @update:model-value="handleToggle(server)"

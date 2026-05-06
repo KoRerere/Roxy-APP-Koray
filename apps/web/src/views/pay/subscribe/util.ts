@@ -1,12 +1,7 @@
 import currency from 'currency.js'
+import type { Plan } from './type'
 
-interface Tier {
-  windowPrice: number
-  minWindows: number
-  [key: string]: any
-}
-
-export function tierCalculate(list: Tier[], count: number) {
+export function tierCalculate(list: Plan[], count: number) {
   if (!list?.length || !count || count < 1) {
     return { value: 0, algorithm: '' }
   }
@@ -38,6 +33,17 @@ export function discountCalculate(discounts: number[]) {
       .multiply(acc).value), 1)
 }
 
+export function formatTierData(list: Plan[]) {
+  const MAX_STEP = 100
+  return (list || []).reduce((acc, { minWindows, maxWindows }) => {
+    const step = Math.min(maxWindows - minWindows, MAX_STEP)
+    if (minWindows <= MAX_STEP)
+      acc.steps.set(minWindows, step)
+    acc.tiers.push({ start: minWindows, end: maxWindows, step })
+    return acc
+  }, { tiers: [], steps: new Map() } as { tiers: { start: number, end: number, step: number }[], steps: Map<number, number> })
+}
+
 export function ceilByStep(value: number, step: number) {
   return value % step === 0
     ? value
@@ -46,3 +52,21 @@ export function ceilByStep(value: number, step: number) {
       .add(step)
       .value
 }
+
+export function alignSubscribeCount(value: number, tiers: { start: number, end: number }[], step: number) {
+  return value < 100
+    ? tiers.findLast(t => value > t.start)!.end
+    : ceilByStep(value, step)
+}
+
+// export function getNextTierCount(current: number, tiers: { start: number, end: number }[], tierSteps: [number, number][]) {
+//   if (tiers.length < 2)
+//     return current
+//   const minPaid = tiers[1]!.start
+//   const maxEnd = tiers[tiers.length - 1]!.end
+//   if (current >= maxEnd)
+//     return maxEnd
+//   const probe = Math.max(currency(current).add(1).value, minPaid)
+//   const step = tierSteps.findLast(([min]) => probe >= min)?.[1] ?? 10
+//   return alignSubscribeCount(probe, tiers, step)
+// }

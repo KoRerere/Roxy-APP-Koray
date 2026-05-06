@@ -1,6 +1,8 @@
 import type { Configuration } from '~/config/configuration'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import dgram from 'node:dgram'
+import net from 'node:net'
 import { RedisService } from '../redis/redis.service'
 
 /** Redis 中存储已分配 HTTP 端口的集合 key */
@@ -35,12 +37,12 @@ export class PortAllocatorService {
 
   /** 从 HTTP 端口池分配一个可用端口 */
   async allocateHttpPort(): Promise<number> {
-    return this.allocateFromRange(HTTP_PORTS_KEY, this.httpStart, this.httpEnd)
+    return this.allocateFromRange(HTTP_PORTS_KEY, this.httpStart, this.httpEnd, 'tcp')
   }
 
   /** 从 UDP 端口池分配一个可用端口（用于 WebRTC UDPMUX） */
   async allocateUdpPort(): Promise<number> {
-    return this.allocateFromRange(UDP_PORTS_KEY, this.udpStart, this.udpEnd)
+    return this.allocateFromRange(UDP_PORTS_KEY, this.udpStart, this.udpEnd, 'udp')
   }
 
   /** 释放 HTTP 端口，归还到端口池 */
@@ -69,21 +71,52 @@ export class PortAllocatorService {
 
   /**
    * 从指定范围中分配最小可用端口
-   * 直接利用 Redis SADD 的原子性，避免“先查再锁再写”带来的重复分配竞态
+   * 直接利用 Redis SADD 的原子性，避免"先查再锁再写"带来的重复分配竞态。
+   * 在 host 网络模式下，Redis 记录释放后 OS 端口立即归还；但若容器异常退出导致 Redis
+   * 记录残留，OS 实际已释放该端口，下次分配时 Redis 会正常跳过（已记录为占用）。
+   * 若 Redis 认为端口空闲而 OS 层面仍被占用（如外部进程碰撞），则额外做一次 OS 探测。
    */
   private async allocateFromRange(
     key: string,
     start: number,
     end: number,
+    protocol: 'tcp' | 'udp' = 'tcp',
   ): Promise<number> {
     for (let port = start; port <= end; port++) {
       const allocated = await this.redisService.saddNew(key, port)
-      if (allocated) {
+      if (!allocated) {
+        continue
+      }
+      // Redis 原子分配成功；在 host 网络模式下额外探测 OS 是否真实空闲
+      const free = await this.isHostPortFree(port, protocol)
+      if (free) {
         this.logger.log(`已从 ${key} 分配端口 ${port}`)
         return port
       }
+      // OS 端口被外部占用，回滚 Redis 记录并继续扫描
+      this.logger.warn(`端口 ${port} Redis 分配成功但 OS 层面已被占用（${protocol}），跳过`)
+      await this.redisService.srem(key, port)
     }
 
     throw new Error(`端口范围 ${start}-${end} 内没有可用端口`)
+  }
+
+  /**
+   * 探测宿主机 OS 层面端口是否真实空闲。
+   * 尝试临时绑定该端口：能绑定说明空闲，绑定失败说明已被占用。
+   */
+  private isHostPortFree(port: number, protocol: 'tcp' | 'udp'): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (protocol === 'tcp') {
+        const server = net.createServer()
+        server.once('error', () => resolve(false))
+        server.listen(port, '0.0.0.0', () => server.close(() => resolve(true)))
+      }
+      else {
+        const socket = dgram.createSocket('udp4')
+        socket.once('error', () => resolve(false))
+        socket.bind(port, '0.0.0.0', () => socket.close(() => resolve(true)))
+      }
+    })
   }
 }

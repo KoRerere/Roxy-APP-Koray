@@ -3,7 +3,6 @@ import RestoreReminderDialog from './restore-reminder-dialog.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { useConfirm } from 'primevue/useconfirm'
@@ -29,7 +28,7 @@ const columns = [
     key: 'windowName',
     style: {
       width: '10%',
-      minWidth: '160px',
+      minWidth: '200px',
     },
   },
   {
@@ -37,7 +36,6 @@ const columns = [
     key: 'note',
     slot: 'note',
     style: {
-      width: '10%',
       minWidth: '120px',
     },
   },
@@ -45,7 +43,6 @@ const columns = [
     title: $t('标签'),
     slot: 'tags',
     style: {
-      width: '10%',
       minWidth: '95px',
     },
   },
@@ -54,18 +51,16 @@ const columns = [
     key: 'group',
     slot: 'log',
     style: {
-      width: '10%',
       minWidth: '140px',
     },
   },
   {
-    title: $t('操作'),
-    slot: 'actions',
+    title: $t('剩余时间'),
+    key: 'remaining',
     style: {
-      width: '0%',
-      minWidth: '100px',
-      maxWidth: '100px',
+      minWidth: '140px',
     },
+    slot: 'remaining',
   },
 ]
 
@@ -74,6 +69,8 @@ const userStore = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 const [showModal] = useDialog()
+
+const styles = useCssModule()
 
 const operation = getOperation()
 const advancedSearchOptions = getAdvancedSearch()
@@ -171,56 +168,103 @@ async function deleteHandler(datas: any) {
     },
   })
 }
+
+function getRemainingStatus(day: number) {
+  if (day < 3)
+    return styles.error
+  if (day < 7)
+    return styles.warning
+}
 </script>
 
 <template>
-  <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-           :show-gridlines="false" :show-actions="false" :show-display="false"
-  >
-    <template #filter-after>
-      <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-    </template>
-    <template #table-empty>
-      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
-    </template>
-    <template #profile="{ data }">
-      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
-    </template>
-    <template #note="{ data }">
-      <div class="inline-flex items-center gap-2">
-        <RemarkIcon :value="data.windowRemark" disabled />
-        <div :title="data.windowRemark" class="min-w-30 whitespace-pre-wrap note-content">
-          {{ data.windowRemark }}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- <div class="h-10 flex items-center gap-2 px-6 info">
+      <SvgIcon name="base/rx_ic_info_fill" color="var(--colors-icon-icon-warning)" />
+      <i18n-t tag="div" scope="global"
+              :keypath="$t('Deleted Profiles will be displayed here and will be permanently removed after 30 days, with no possibility of recovery. {link}', { link: '{link}' })"
+      >
+        <template #link>
+          <span class="cursor-pointer info-link">{{ $t('Extend Expiration Time') }}</span>
+        </template>
+      </i18n-t>
+    </div> -->
+    <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+             :show-gridlines="false" :show-display="false" :show-actions-menu="false"
+    >
+      <template #filter-after>
+        <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+      </template>
+      <template #table-empty>
+        <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
+      </template>
+      <template #profile="{ data }">
+        <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
+      </template>
+      <template #note="{ data }">
+        <div class="inline-flex items-center gap-2">
+          <RemarkIcon :value="data.windowRemark" disabled />
+          <div :title="data.windowRemark" class="min-w-30 whitespace-pre-wrap note-content">
+            {{ data.windowRemark }}
+          </div>
         </div>
-      </div>
-    </template>
-    <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />
-    </template>
-    <template #log="{ data }">
-      <div class="delete-name">
-        {{ data.email }}
-      </div>
-      <div class="delete-time">
-        {{ data.updateTime }}
-      </div>
-    </template>
-    <template #actions="{ data }">
-      <Actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
-    </template>
-  </RyTable>
+      </template>
+      <template #tags="{ data }">
+        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />
+      </template>
+      <template #log="{ data }">
+        <div class="email">
+          {{ data.email }}
+        </div>
+        <div class="time">
+          {{ data.updateTime }}
+        </div>
+      </template>
+      <template #remaining="{ data }">
+        <div :class="getRemainingStatus(data.remaining)">
+          {{ data.remaining }}
+        </div>
+      </template>
+    </RyTable>
+  </div>
 </template>
 
+<style lang="scss" module>
+.error {
+  color: var(--colors-text-text-error);
+}
+
+.warning {
+  color: var(--colors-text-text-warning);
+}
+</style>
+
 <style lang="scss" scoped>
-.delete-name {
+.info {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--colors-background-bg-block);
+
+  &-link {
+    color: var(--colors-text-text-link);
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: auto;
+    text-underline-offset: auto;
+    text-underline-position: from-font;
+  }
+}
+
+.email {
   color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
-.delete-time {
+.time {
   margin-top: 4px;
   color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;

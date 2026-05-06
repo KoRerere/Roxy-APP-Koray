@@ -1,34 +1,29 @@
 <script setup lang="ts">
-import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
-
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useCampaignStore } from '/@/stores/campaign'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { SubLevelEnum } from '/@/enums/pay'
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
-const { discountSpecialCalculate } = useCampaignStore()
-const { currentActivity } = storeToRefs(useCampaignStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
-
+const { showFreedomActivityModal } = useFreedomActivity()
 const selectedDuration = ref()
 const monthAmount = ref(0)
 const loading = ref(false)
-const giftType = ref()
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
@@ -44,7 +39,7 @@ const allDiscount = computed(() => {
 
   return {
     ...discounts,
-    finalDiscount: discountSpecialCalculate(discountCalculate(Object.values(discounts))),
+    finalDiscount: discountCalculate(Object.values(discounts)),
   }
 })
 
@@ -53,8 +48,6 @@ const disabled = computed(() => loading.value || !selectedDuration.value)
 const totalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).multiply(allDiscount.value.finalDiscount).value)
 const originalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value)
 const discountAmount = computed(() => currency(originalAmount.value).subtract(totalAmount.value).value)
-
-const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > allDiscount.value.finalDiscount)
 
 const detail = computed(() => {
   const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
@@ -109,7 +102,7 @@ const detail = computed(() => {
           value: `-${durationDiscount}%`,
           visible: !!durationDiscount,
         },
-      ].filter(item => item.visible !== false && beyondDiscount.value),
+      ].filter(item => item.visible !== false),
     },
     {
       items: [
@@ -167,10 +160,10 @@ async function confirm() {
           await _onConfirm.value?.({
             payType,
             isAuto,
-            giftType: giftType.value,
             orderNo: userPayInfo.value!.orderNo,
             subscriptionMonths: selectedDuration.value.month,
           })
+          showFreedomActivityModal()
           close()
         },
       }),
@@ -260,7 +253,6 @@ function onUpgradePlan() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-4 gap-3">
-              <EasterActivity v-if="selectedDuration" v-model="giftType" :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
               <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm" />
               <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>

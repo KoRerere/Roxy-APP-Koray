@@ -2,7 +2,6 @@ import type { BrowserItem } from '/@/modules/browser/browser-manager/browserItem
 // 注意：此文件使用了 Chrome 特定的 CDP 功能（createCDPSession）
 // 如需支持 Firefox，需要创建对应的实现
 import type { Page } from '/@/modules/browser/browser-manager/chrome-wrapper'
-import axios from 'axios'
 import { setTimeout } from 'node:timers/promises'
 import { browserManager } from '/@/modules/browser'
 import { isLocalWebServerURL } from '/@/modules/browser/browser-manager/constants'
@@ -11,7 +10,7 @@ import { showAllWindows, startSyncControl, stopSyncControl, windowArrange } from
 import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser, startRoxySync, stopRoxySync } from '/@/modules/sync-control/bin'
 import { closeOpenSitesDialogWindow } from '/@/modules/sync-control/dialog/open-sites'
 import { closeSynchronizerWindow, createSynchronizerWindow } from '/@/modules/sync-control/synchronizer'
-import { safeParseJSON } from '/@/utils'
+import { request, safeParseJSON } from '/@/utils'
 
 /** 同步控制工具 */
 export class SyncControlUtil {
@@ -217,7 +216,7 @@ export class SyncControlUtil {
   /** 获取浏览器当前被激活的标签页 */
   static getCurrentActivePage = async (browser: BrowserItem) => {
     const baseUrl = browser?.launchInfo?.http
-    const result = await axios.get(`http://${baseUrl}/json/list`)
+    const result = await request.get(`http://${baseUrl}/json/list`)
     if (result.status === 200) {
       // 过滤掉 devtools:// 开头的标签页（针对移动端）
       const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]

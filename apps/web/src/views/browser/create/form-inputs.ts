@@ -88,6 +88,11 @@ function getResolutionBySystem(os: string, $dict_map: Record<string, any[]>) {
   return { isMobile, options, defaultValue }
 }
 
+function fixMacOsVersion(version: string) {
+  const list = version.split('.')
+  return list?.[0]
+}
+
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
   const [$dict_map, userConfig, searchEngine, availableCoreVersion] = await Promise.all([
     getDictMap(),
@@ -111,15 +116,26 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ? coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
       : coreVersion
   }
-  const osOptions = $dict_map.os!.map(({ label, ...item }: any) => ({
-    ...item,
-    label,
-    icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
-    _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`]!.map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
-  }))
+
+  const osOptions = $dict_map.os!.map(({ label, ...item }: any) => {
+    let _versionOptions = $dict_map[`osversion_${label.toLocaleLowerCase()}`]!.map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value }))
+    // fix: 小版本不显示
+    if (label.toLocaleLowerCase() === 'macos' || label.toLocaleLowerCase() === 'ios') {
+      _versionOptions = _versionOptions.filter(item => !item.value?.includes('.'))
+    }
+    return {
+      ...item,
+      label,
+      icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
+      _versionOptions,
+    }
+  })
+  console.log('osOptions', osOptions)
 
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
-  const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
+  // fix: 如果是 macos, ios 系统，就取大版本去做匹配。其他系统不需要处理
+  const osVersion = data.os?.toLocaleLowerCase() === 'macos' || data.ios?.toLocaleLowerCase() ? fixMacOsVersion(data.osVersion || '') : data.osVersion
+  const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === osVersion) ?? osValue?._versionOptions[0]
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
   // TODO:(anbin)
   const searchEngineOptions = searchEngine.code === 0

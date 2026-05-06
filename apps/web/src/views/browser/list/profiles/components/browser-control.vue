@@ -11,6 +11,7 @@ import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
 import type { Driver } from 'driver.js'
+import { isDev } from '/@/utils'
 
 interface Props {
   btnId?: string
@@ -107,63 +108,74 @@ async function openBrowser() {
   props.driverObj?.destroy()
 
   // 如果是云浏览器，则直接打开
-  // if (!globalThis.isElectron && cloudBrowserDirId) {
-  //   if (cloudBrowserDirId === props.data.dirId) {
-  //     if (remainingUsageMs <= 3000) {
-  //       showModal({
-  //         showHeader: false,
-  //         modal: true,
-  //         blockScroll: true,
-  //         slots: {
-  //           container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
-  //         },
-  //       })
-  //       return
-  //     }
+  if (!globalThis.isElectron && cloudBrowserDirId && isDev) {
+    if (cloudBrowserDirId === props.data.dirId) {
+      if (remainingUsageMs <= 3000) {
+        showModal({
+          showHeader: false,
+          modal: true,
+          blockScroll: true,
+          slots: {
+            container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
+          },
+        })
+        return
+      }
 
-  //     if (windowManager.winMap.value.get(cloudBrowserDirId)) {
-  //       windowManager.open('', props.data.dirId)
-  //       return
-  //     }
+      if (windowManager.winMap.value.get(cloudBrowserDirId)) {
+        windowManager.open('', props.data.dirId)
+        return
+      }
 
-  //     setOpenMessage({
-  //       code: 0,
-  //       pending: false,
-  //       uploading: true,
-  //       data: {
-  //         dirId: props.data.dirId,
-  //         percent: 100,
-  //         message: $t('启动中...'),
-  //         warningMessages: [],
-  //       },
-  //     })
+      setOpenMessage({
+        code: 0,
+        pending: false,
+        uploading: true,
+        data: {
+          dirId: props.data.dirId,
+          percent: 100,
+          message: $t('启动中...'),
+          warningMessages: [],
+        },
+      })
 
-  //     const { code, data, msg } = await API.window.userGetCloudBrowserInfoList({ windowId: props.data.id })
+      const { code, data, msg } = await API.window.userGetCloudBrowserInfoList({ windowId: props.data.id })
 
-  //     if (code === 0 && data.connectUrl) {
-  //       windowManager.open(getLocalizedConnectUrl(data.connectUrl), props.data.dirId)
+      if (code === 0 && data.connectUrl) {
+        windowManager.open(getLocalizedConnectUrl(data.connectUrl), props.data.dirId)
 
-  //       // Cloud browser open state should match the launch-process message shape.
-  //       setOpenMessage({
-  //         code,
-  //         pending: false,
-  //         uploading: false,
-  //         data: {
-  //           dirId: props.data.dirId,
-  //           percent: 100,
-  //           message: $t('打开成功'),
-  //           warningMessages: [],
-  //         },
-  //       })
-  //       props.driverNext?.()
-  //       props.sendFirstOpenRecord?.()
-  //     }
-  //     else {
-  //       onlyErrorToast(-1, msg)
-  //     }
-  //     return
-  //   }
-  // }
+        // Cloud browser open state should match the launch-process message shape.
+        setOpenMessage({
+          code,
+          pending: false,
+          uploading: false,
+          data: {
+            dirId: props.data.dirId,
+            percent: 100,
+            message: $t('打开成功'),
+            warningMessages: [],
+          },
+        })
+        props.driverNext?.()
+        props.sendFirstOpenRecord?.()
+      }
+      else if (code === 467) {
+        showModal({
+          showHeader: false,
+          modal: true,
+          blockScroll: true,
+          slots: {
+            container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
+          },
+        })
+        return
+      }
+      else {
+        onlyErrorToast(-1, msg)
+      }
+      return
+    }
+  }
 
   emits('open', props.data)
 }

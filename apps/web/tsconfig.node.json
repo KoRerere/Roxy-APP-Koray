@@ -10,6 +10,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "vite.config.mts"
+    "vite.config.mts",
+    "vite-plugins/**/*.ts"
   ]
 }

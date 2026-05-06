@@ -18,6 +18,7 @@ interface Props {
   pendingAttachments: (AttachmentInfo & { preview?: string })[]
   todo?: Todo[]
   class?: string
+  uninitialized: boolean
 }
 
 interface Emits {
@@ -174,7 +175,7 @@ function onKeydown(event: KeyboardEvent) {
 
       <Textarea
         v-model="message"
-        :disabled="!health.isOk"
+        :disabled="!health.isOk && !uninitialized"
         class="relative z-10 !pa-0 !shadow-none !border-none resize-none send-textarea"
         :placeholder="!health.isOk ? $t('MCP 服务异常，请稍后重试') : $t('请输入您的指令')"
         fluid

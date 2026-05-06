@@ -24,8 +24,8 @@
     "axios": "catalog:"
   },
   "devDependencies": {
-    "swagger-typescript-api": "13.2.2",
-    "vite": "catalog:",
-    "vite-plugin-dts": "catalog:"
+    "swagger-typescript-api": "13.7.2",
+    "unplugin-dts": "catalog:",
+    "vite": "catalog:"
   }
 }

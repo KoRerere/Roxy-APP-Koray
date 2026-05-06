@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { currentOS, isDev, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
@@ -61,11 +62,68 @@ export const getRemoteConfig = (() => {
   }
 })()
 
+const ECOMMERCE_DIRECT_WHITELIST_TTL_MS = 1000 * 60 * 5
+
+let ecommerceDirectWhiteListCache: { data: string[]; fetchedAt: number } | null = null
+/** 缓存未命中时并发合并：只发起一轮请求，其余调用共享同一 Promise */
+let ecommerceDirectWhiteListInflight: Promise<string[]> | null = null
+
+/** 获取电商直连白名单列表（内存缓存 5 分钟；并发 inflight 合并；失败自动重试 1 次；失败则沿用上次成功缓存） */
+async function getEcommerceDirectWhiteList(): Promise<string[]> {
+  const now = Date.now()
+  if (
+    ecommerceDirectWhiteListCache &&
+    now - ecommerceDirectWhiteListCache.fetchedAt < ECOMMERCE_DIRECT_WHITELIST_TTL_MS
+  ) {
+    return ecommerceDirectWhiteListCache.data
+  }
+
+  if (ecommerceDirectWhiteListInflight) {
+    return ecommerceDirectWhiteListInflight
+  }
+
+  ecommerceDirectWhiteListInflight = (async () => {
+    try {
+      let lastCode: number | undefined
+      let lastData: unknown
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const { code, data } = await API.base.getEcommerceWhitelistDomainsList()
+          if (code === 0 && data) {
+            ecommerceDirectWhiteListCache = { data, fetchedAt: Date.now() }
+            return data
+          }
+          lastCode = code
+          lastData = data
+        }
+        catch (err) {
+          console.error(
+            attempt === 0 ? 'getEcommerceDirectWhiteList request failed, retrying' : 'getEcommerceDirectWhiteList request failed',
+            err,
+          )
+        }
+      }
+      console.error('getEcommerceDirectWhiteList error (after retry)', lastCode, lastData)
+      return ecommerceDirectWhiteListCache?.data ?? []
+    }
+    finally {
+      ecommerceDirectWhiteListInflight = null
+    }
+  })()
+
+  return ecommerceDirectWhiteListInflight
+}
+
 /** 生成浏览器指纹配置 */
-export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
+export async function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
   const isMobile = [`Android`, `IOS`].includes(winInfo.os)
   const isWindows = winInfo.os === `Windows`
   const isMacOS = winInfo.os === `macOS`
+
+  let ecommerceDirectWhiteList: string[] = []
+  if (winInfo.isDirect) {
+    ecommerceDirectWhiteList = await getEcommerceDirectWhiteList()
+  }
 
   return {
     computerName: winInfo.computerName,
@@ -494,9 +552,9 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       const domainList = winInfo.blockDomainList?.split?.('\n')?.map((item) => {
         const trimmed = item.trim()
         return trimmed.replace(/^https?:\/\//, '')
-      })?.filter(Boolean)
+      })?.filter(Boolean) || []
 
-      return domainList?.length ? domainList : store.blockDomainList?.filter?.(Boolean)
+      return domainList?.length ? domainList.concat(ecommerceDirectWhiteList) : store.blockDomainList?.filter?.(Boolean)
     },
     /** 禁止域名的提示页面 */
     blockDomainPageFile: join(appConfig.buildInWebDir, 'blockDomain.html'),

@@ -12,8 +12,8 @@ import { openAPIServer } from '/@/modules/openapi'
 import { setSystemProxy } from '/@/modules/roxynet'
 import { fetchUserConfig, setUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { webUpdater } from '/@/modules/updater/webUpdater'
 import { fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
+import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 
 export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取应用版本号 */
@@ -96,11 +96,6 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     return appUpdater.checkForUpdates()
   })
 
-  /** WEB 检查更新 */
-  ipcMain.on('app:checkWebForUpdates', (event) => {
-    return webUpdater.checkForUpdates()
-  })
-
   /** 检查是否有更新 */
   ipcMain.on('app:hasUpdate', (event) => {
     return appUpdater.hasUpdate()
@@ -111,9 +106,6 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     if (info.type === 'app') {
       store.needRestoreWindow = true
       appUpdater.upgradeNow()
-    }
-    else if (info.type === 'web') {
-      await webUpdater.upgradeNow()
     }
   })
 
@@ -290,6 +282,14 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取系统代理信息 */
   ipcMain.on('app:getSystemProxyInfo', async (event) => {
     return await proxyManager.getSystemProxyInfo()
+  })
+
+  /** 测试 web 域名 */
+  ipcMain.on('app:testWebDomain', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const prodWebDomain = await getProdWebDomain(true)
+    console.log('testWebDomain', prodWebDomain)
+    win?.loadURL(prodWebDomain)
   })
 
   /** 卸载反馈已提交 */

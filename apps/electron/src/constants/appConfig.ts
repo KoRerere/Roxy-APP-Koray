@@ -91,11 +91,7 @@ export const appConfig = {
     if (!isPackaged) {
       return join(import.meta.dirname, '../../web/public')
     }
-    return store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
-  },
-  /** web 资源基础 url */
-  get webBaseUrl() {
-    return isPackaged ? `http://127.0.0.1:${store.appPort}` : import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')
+    return appConfig.buildInWebDir
   },
   /** 快捷方式配置文件 */
   get shortcutsConfigFile() {

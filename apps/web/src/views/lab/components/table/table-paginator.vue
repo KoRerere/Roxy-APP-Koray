@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { PageState } from 'primevue/paginator';
-;
-import type { SelectChangeEvent } from 'primevue/select';
+import type { PageState } from 'primevue/paginator'
+import type { SelectChangeEvent } from 'primevue/select'
 
 const { cacheKey = '', totalRecords = 0 } = defineProps<{
   cacheKey?: string
@@ -37,14 +36,18 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
 </script>
 
 <template>
-  <Paginator class="paginator" v-model:first="paginatorFirst" :rows="paginatorRows" :total-records="totalRecords"
-    :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" @page="onChangePage">
+  <Paginator v-model:first="paginatorFirst" class="paginator" :rows="paginatorRows" :total-records="totalRecords"
+             :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" @page="onChangePage"
+  >
     <template #start>
       <div class="flex flex-1 items-center paginator-jump">
         <div>{{ $t('总计 {total} 个', { total: totalRecords }) }}</div>
-        <RxInputSelect class="!w-fit" name="rowsPerPage" v-model="paginatorRows" :options="paginatorRowOptions"
-          optionValue="value" size="xxs" :filter="false" @change="onChangeRows" />
-        <div class="flex-1 flex items-center gap-2 justify-end">{{ $t('跳转页数至') }}</div>
+        <RxInputSelect v-model="paginatorRows" class="!w-fit" name="rowsPerPage" :options="paginatorRowOptions"
+                       option-value="value" size="xxs" :filter="false" @change="onChangeRows"
+        />
+        <div class="flex-1 flex items-center gap-2 justify-end">
+          {{ $t('跳转页数至') }}
+        </div>
       </div>
     </template>
   </Paginator>
@@ -90,7 +93,7 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
     background: none;
     color: var(--colors-text-text-brand, #12a3fc);
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(#12a3fc, #12a3fc);
+    border: 0.5px solid var(--colors-border-border-brand, #12a3fc);
     background: var(--component-button-ghost-bg, #fff);
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),

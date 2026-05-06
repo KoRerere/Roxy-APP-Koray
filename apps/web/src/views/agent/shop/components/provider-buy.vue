@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
+import RxLoading from '/@/components/rx-loading.vue'
 import RxTooltip from '/@/components/rx-tooltip'
 import RxButton from '/@/components/rx-button'
 import RxImg from '/@/components/rx-image'
@@ -10,10 +10,11 @@ import RxStepInput from '/@/components/rx-step-input/index.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import currency from 'currency.js'
+import RxInputText from '/@/components/ry-form/rx-input-text.vue'
+import Fuse from 'fuse.js'
 
 import { API } from '/@/api'
 import { addDays, format } from 'date-fns'
-import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -24,6 +25,8 @@ import { PayWay } from '/@/enums/pay'
 import { BuyEntryType, ProxyIpType, ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 
 const { data: provider = {}, entryType = BuyEntryType.Normal, toRola } = defineProps<{
   entryType?: BuyEntryType
@@ -33,22 +36,24 @@ const { data: provider = {}, entryType = BuyEntryType.Normal, toRola } = defineP
 
 const emit = defineEmits(['close', 'success'])
 
+const simpleLocale = useSimpleLocale()
 const styles = useCssModule()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
-const { discountSpecialCalculate } = useCampaignStore()
-const { currentActivity } = storeToRefs(useCampaignStore())
 const { currentLocale } = storeToRefs(useSimpleLocale())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { check } = usePermission()
+const { showFreedomActivityModal } = useFreedomActivity()
 
 const ONE_BUY_MAX = 1000
 const configs = ref<any[]>([])
 const loading = ref(false)
+const loadingProxyType = ref(false)
+const loadingPurchaseCountry = ref(false)
 const purchaseMember = ref(1)
 
 const notes = [
@@ -93,6 +98,7 @@ const configValue = computed(() => {
   }
 })
 
+const searchCountry = ref('')
 const currentCountry = computed(() => {
   const { purchaseCountry } = configValue.value
   return {
@@ -108,10 +114,8 @@ const originalAmount = computed(() => {
 
 const finalAmount = computed(() => {
   const { proxyDiscount } = userPayInfo.value!
-  return currency(originalAmount.value).multiply(discountSpecialCalculate(discountCalculate([proxyDiscount]), 'proxy')).value
+  return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
 })
-
-const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.proxyDiscount]) > discountCalculate([userPayInfo.value.proxyDiscount]))
 
 const details = computed(() => {
   const { purchaseCountry, subscriptionMonths } = configValue.value
@@ -158,7 +162,7 @@ const details = computed(() => {
           label: $t('专属折扣'),
           value: `-${proxyDiscount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!proxyDiscount && beyondDiscount.value,
+          visible: !!proxyDiscount,
         },
         {
           label: $t('Roxy 独家特惠'),
@@ -176,20 +180,128 @@ onMounted(async () => {
   configs.value = await initConfig()
 })
 
-/** 按「用途 sceneId」拉取类型与国家/地区（与 init 首屏链路一致） */
-async function loadProxyPurchaseCascade(sceneId: number) {
-  const typeOptions = await getProxyTypeList(sceneId)
-  const countryOptions = typeOptions[0]
-    ? await getCountryAndDurationList(typeOptions[0].value!)
-    : []
-  return { typeOptions, countryOptions }
+async function getBusinessUseList(vendorId: string) {
+  const { code, data, msg } = await API.proxy.userGetProxyBusinessSceneListList({ vendorId })
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return []
+
+  return data.map(item => ({
+    image: item.sceneIcon,
+    darkImage: item.sceneIconDark,
+    label: item.sceneKey,
+    value: item.id,
+    desc: item.sceneDesc,
+    badgeType: item.badgeType,
+    badgeDesc: item.badgeTypeDesc,
+    badgeClass: item.badgeType?.toLocaleLowerCase(),
+  })).filter((item) => {
+    // 只要中文环境下，才显示 Direct 类型的代理 IP 用途
+    if (item.badgeType === 'Direct') {
+      return simpleLocale.currentLocale === 'zh-CN'
+    }
+
+    return true
+  })
 }
+
+async function getProxyTypeList(sceneId: number) {
+  const { code, data, msg } = await API.proxy.userGetProxyProvidersByBusinessSceneList({ sceneId: sceneId.toString() })
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return []
+  return data.map(item => ({
+    ...item,
+    value: item.id,
+    label: item.typeName,
+    desc: item.hoverText,
+  }))
+}
+
+async function getCountryAndDurationList(proxyProviderId: number) {
+  const { code, data, msg } = await API.proxy.userGetProxyCountryListByContinentList({ proxyProviderId: proxyProviderId.toString() })
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return []
+
+  const isCN = currentLocale.value === 'zh-CN'
+
+  return data.map(item => ({
+    ...item,
+    isNew: item.isNew,
+    isHot: item.isHot,
+    icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
+    label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
+    name: isCN ? item.country_name : item.country_code?.toLocaleUpperCase(),
+    value: item.country_code,
+    proxyPriceListFmt: item.proxyPriceList.map((item) => {
+      const day = item.proxyPurchaseMonths * 30
+      return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
+    }),
+    proxyTpyeStr: item.proxyTpye === ProxyIpType.Residential ? $t('原生 IP') : '',
+  }))
+}
+
+interface ProxyPurchaseCascade {
+  typeOptions: any[]
+  countryOptions: any[]
+}
+
+/** 购买弹窗内：按供应商 + 用途/类型 缓存代理类型级联与地区列表，避免反复切换时重复请求 */
+function createProxyPurchaseDataCache(options: {
+  getProxyTypeList: (sceneId: number) => Promise<any[]>
+  fetchCountryList: (proxyProviderId: number) => Promise<any[]>
+  vendorId: () => string | number | undefined
+}) {
+  const cascadeByScene = new Map<string, ProxyPurchaseCascade>()
+  const countryBySceneType = new Map<string, any[]>()
+
+  const joinKey = (parts: (string | number)[]) => parts.join(':')
+
+  function snapshot<T>(v: T): T {
+    return structuredClone(v)
+  }
+
+  async function getCountryList(sceneId: number, proxyProviderId: number) {
+    const k = joinKey([options.vendorId() ?? '', sceneId, proxyProviderId])
+    const hit = countryBySceneType.get(k)
+    if (hit) {
+      return snapshot(hit)
+    }
+    const data = await options.fetchCountryList(proxyProviderId)
+    countryBySceneType.set(k, snapshot(data))
+    return snapshot(data)
+  }
+
+  async function getCascade(sceneId: number) {
+    const k = joinKey([options.vendorId() ?? '', sceneId])
+    const hit = cascadeByScene.get(k)
+    if (hit) {
+      return snapshot(hit)
+    }
+    const typeOptions = await options.getProxyTypeList(sceneId)
+    const countryOptions = typeOptions[0]
+      ? await getCountryList(sceneId, typeOptions[0].value as number)
+      : []
+    const row: ProxyPurchaseCascade = { typeOptions, countryOptions }
+    cascadeByScene.set(k, snapshot(row))
+    return snapshot(row)
+  }
+
+  return { getCascade, getCountryList }
+}
+
+const proxyPurchaseDataCache = createProxyPurchaseDataCache({
+  getProxyTypeList,
+  fetchCountryList: getCountryAndDurationList,
+  vendorId: () => provider.id,
+})
 
 async function initConfig() {
   loading.value = true
 
   const _businessOptions = await getBusinessUseList(provider.id)
-  const { typeOptions: _typeOptions, countryOptions: _countryOptions } = await loadProxyPurchaseCascade(_businessOptions[0].value)
+  const { typeOptions: _typeOptions, countryOptions: _countryOptions } = await proxyPurchaseDataCache.getCascade(_businessOptions[0].value)
   const _durationOptions = _countryOptions[0]?.proxyPriceListFmt || []
 
   loading.value = false
@@ -233,14 +345,32 @@ async function initConfig() {
   }
 
   async function refreshFromScene(sceneId: number) {
-    const { typeOptions, countryOptions } = await loadProxyPurchaseCascade(sceneId)
-    applyProxyTypeOptions(typeOptions)
-    applyPurchaseCountryList(countryOptions)
+    loadingProxyType.value = true
+    loadingPurchaseCountry.value = true
+    try {
+      const { typeOptions, countryOptions } = await proxyPurchaseDataCache.getCascade(sceneId)
+      applyProxyTypeOptions(typeOptions)
+      applyPurchaseCountryList(countryOptions)
+    }
+    finally {
+      loadingProxyType.value = false
+      loadingPurchaseCountry.value = false
+    }
   }
 
   async function refreshCountriesForProxyProvider(proxyProviderId: number) {
-    const countryOptions = await getCountryAndDurationList(proxyProviderId)
-    applyPurchaseCountryList(countryOptions)
+    loadingPurchaseCountry.value = true
+    try {
+      const sceneId = findCfg('businessUse')?.value?.value
+      const countryOptions
+        = sceneId != null
+          ? await proxyPurchaseDataCache.getCountryList(sceneId, proxyProviderId)
+          : await getCountryAndDurationList(proxyProviderId)
+      applyPurchaseCountryList(countryOptions)
+    }
+    finally {
+      loadingPurchaseCountry.value = false
+    }
   }
 
   function groupCountryOptionsByContinent(options: any[]): { title: string, items: any[] }[] {
@@ -307,35 +437,52 @@ async function initConfig() {
       },
       render: ({ item }: any) => {
         return (
-          <div class="flex gap-3 flex-wrap">
-            {
-              item.props.options.map((option: any) => (
+          <div class="relative min-h-12">
+            <RxLoading modelValue={loadingProxyType.value} opacity={0.9} />
+            <div class="flex gap-3 flex-wrap">
+              {
+                item.props.options.map((option: any) => (
 
-                <RxTooltip>
-                  {{
-                    default: () => (
-                      <div
-                        class={`h-12 flex items-center leading-none max-w-68 gap-1 px-4 cursor-pointer select-none ${styles.type_title} ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
-                        onClick={async () => {
-                          item.value = option
-                          await refreshCountriesForProxyProvider(option.value)
-                        }}
-                      >
-                        {option.label}
-                      </div>
-                    ),
-                    content: () => <div class="w-76 color-[var(--component-tooltip-text-secondary)] whitespace-pre-wrap text-3 leading-4">{option.desc}</div>,
-                  }}
-                </RxTooltip>
+                  <RxTooltip>
+                    {{
+                      default: () => (
+                        <div
+                          class={`h-12 flex items-center leading-none max-w-68 gap-1 px-4 cursor-pointer select-none ${styles.type_title} ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                          onClick={async () => {
+                            item.value = option
+                            await refreshCountriesForProxyProvider(option.value)
+                          }}
+                        >
+                          {option.label}
+                        </div>
+                      ),
+                      content: () => <div class="w-76 color-[var(--component-tooltip-text-secondary)] whitespace-pre-wrap text-3 leading-4">{option.desc}</div>,
+                    }}
+                  </RxTooltip>
 
-              ))
-            }
+                ))
+              }
+            </div>
           </div>
         )
       },
     },
     {
-      title: $t('选择代理 IP 国家/地区:'),
+      title: () => {
+        return <div class="flex gap-4 items-center">
+          <div class="subtitle whitespace-nowrap">
+            {$t('选择代理 IP 国家/地区:')}
+          </div>
+          <RxInputText 
+            placeholder={$t('搜索国家/地区名称或代码')} 
+            class="!w-200px" 
+            size="xs" 
+            leftIcon="base/rx_ic_magnify" 
+            modelValue={searchCountry.value}
+            onUpdate:modelValue={(val: string) => searchCountry.value = val}
+          />
+        </div>
+      },
       name: 'purchaseCountry',
       value: _countryOptions[0],
       fullWidth: true,
@@ -347,40 +494,83 @@ async function initConfig() {
       },
       render: ({ item }: any) => {
         const list = groupCountryOptionsByContinent(item.props.options)
-        return (
-          <div class="flex flex-col gap-3">
-            {
-              list.map(group => (
-                <div class="flex flex-col gap-2">
-                  <div class="tt-tertiary text-3.5 font-500 leading-5">{group.title}</div>
-                  <div class="flex gap-3 flex-wrap">
-                    {
-                      group.items.map(option => (
-                        <div
-                          class={`h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
-                          onClick={() => {
-                            item.value = option
-                            syncQuantityAndDurationFromCountry(option)
-                          }}
-                        >
-                          {option.isNew && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">NEW</div>}
-                          {option.isHot && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">HOT</div>}
-                          <RxSvgIcon name={option.icon} size="18"></RxSvgIcon>
-                          <div class={`${styles.purpose}`}>{option.name}</div>
-                        </div>
-                      ))
-                    }
-                  </div>
-                </div>
-              ))
-            }
+        const searchContent = searchCountry.value;
 
+        if (searchContent) {
+          const fuse = new Fuse(toRaw(item.props.options), {
+            keys: [
+              { name: 'country_name', weight: 2 }, // 权重更高，匹配成功排在前面
+              { name: 'country_code', weight: 1 },
+              { name: 'continent_name', weight: 0.5 }
+            ],
+            threshold: 0.3
+          })
+
+          const result = fuse.search(searchContent).map(item => item.item);
+
+          if (result.length > 0) {
+            return <div class="relative min-h-20 flex gap-3 flex-wrap">
+              { result.map((option: any) => {
+                return <div
+                  class={`h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                  onClick={() => {
+                    item.value = option
+                    syncQuantityAndDurationFromCountry(option)
+                  }}
+                >
+                  {option.isNew && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">NEW</div>}
+                  {option.isHot && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">HOT</div>}
+                  <RxSvgIcon name={option.icon} size="18"></RxSvgIcon>
+                  <div class={`${styles.purpose}`}>{option.name}</div>
+                </div>
+              }) }
+            </div>
+          } else {
+            return <div class="relative flex items-center flex-col justify-center gap-2.5 py-12 bg-[var(--colors-background-bg-block)] rounded-2">
+              <SvgIcon name={'base/rx_ic_earth'} size={32} color={"var(--colors-icon-icon-inactive)"}></SvgIcon>
+              <div class="text-[var(--colors-text-text-inactive)] text-3">
+                {$t('抱歉，没有找到匹配结果。')}
+              </div>
+            </div>
+          }
+        }
+
+        return (
+          <div class="relative min-h-20">
+            <RxLoading modelValue={loadingPurchaseCountry.value} opacity={0.9} />
+            <div class="flex flex-col gap-3">
+              {
+                list.map(group => (
+                  <div class="flex flex-col gap-2">
+                    <div class="tt-tertiary text-3.5 font-500 leading-5">{group.title}</div>
+                    <div class="flex gap-3 flex-wrap">
+                      {
+                        group.items.map(option => (
+                          <div
+                            class={`h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                            onClick={() => {
+                              item.value = option
+                              syncQuantityAndDurationFromCountry(option)
+                            }}
+                          >
+                            {option.isNew && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">NEW</div>}
+                            {option.isHot && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">HOT</div>}
+                            <RxSvgIcon name={option.icon} size="18"></RxSvgIcon>
+                            <div class={`${styles.purpose}`}>{option.name}</div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
           </div>
         )
       },
     },
     {
-      title: $t('选择时长:'),
+      title: $t('选择 IP 时长:'),
       name: 'subscriptionMonths',
       value: _durationOptions[0],
       fullWidth: true,
@@ -398,60 +588,6 @@ async function initConfig() {
   ]
 }
 
-async function getBusinessUseList(vendorId: string) {
-  const { code, data, msg } = await API.proxy.userGetProxyBusinessSceneListList({ vendorId })
-  onlyErrorToast(code, msg)
-  if (code !== 0)
-    return []
-
-  return data.map(item => ({
-    image: item.sceneIcon,
-    darkImage: item.sceneIconDark,
-    label: item.sceneKey,
-    value: item.id,
-    desc: item.sceneDesc,
-    badgeDesc: item.badgeTypeDesc,
-    badgeClass: item.badgeType?.toLocaleLowerCase(),
-  }))
-}
-
-async function getProxyTypeList(sceneId: number) {
-  const { code, data, msg } = await API.proxy.userGetProxyProvidersByBusinessSceneList({ sceneId: sceneId.toString() })
-  onlyErrorToast(code, msg)
-  if (code !== 0)
-    return []
-  return data.map(item => ({
-    ...item,
-    value: item.id,
-    label: item.typeName,
-    desc: item.hoverText,
-  }))
-}
-
-async function getCountryAndDurationList(proxyProviderId: number) {
-  const { code, data, msg } = await API.proxy.userGetProxyCountryListByContinentList({ proxyProviderId: proxyProviderId.toString() })
-  onlyErrorToast(code, msg)
-  if (code !== 0)
-    return []
-
-  const isCN = currentLocale.value === 'zh-CN'
-
-  return data.map(item => ({
-    ...item,
-    isNew: item.isNew,
-    isHot: item.isHot,
-    icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
-    label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
-    name: isCN ? item.country_name : item.country_code?.toLocaleUpperCase(),
-    value: item.country_code,
-    proxyPriceListFmt: item.proxyPriceList.map((item) => {
-      const day = item.proxyPurchaseMonths * 30
-      return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
-    }),
-    proxyTpyeStr: item.proxyTpye === ProxyIpType.Residential ? $t('原生 IP') : '',
-  }))
-}
-
 function inputPurchaseMember(value: number) {
   nextTick(() => {
     if (!value)
@@ -462,7 +598,7 @@ function inputPurchaseMember(value: number) {
 function checkStock() {
   const { purchaseCountry, businessUse } = configValue.value
   if (purchaseCountry.inventory > 0) {
-    onPay()
+    checkCommerceIP()
     return
   }
   showModal({
@@ -471,6 +607,46 @@ function checkStock() {
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => <SellOutModal proxyProviderId={provider.id} sceneId={businessUse.value} country={purchaseCountry.country_code.toLocaleUpperCase()} onClose={hideModal} onJump={toRola}></SellOutModal>,
+    },
+  })
+}
+
+async function checkCommerceIP() {
+  const { businessUse } = configValue.value
+  if (businessUse.badgeType !== 'Direct') {
+    onPay()
+    return
+  }
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => {
+        return (
+          <div class="flex flex-col pt-4 pb-6 px-6 gap-5 w-100">
+            <div class="relative flex items-center h-9">
+              <span class="tt-primary text-4 font-700">{$t('温馨提示')}</span>
+              <span class="absolute right-0 cursor-pointer" onClick={hideModal}>
+                <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
+              </span>
+            </div>
+            <div class="tt-primary text-3.5 leading-6 whitespace-pre-wrap">{$t('您当前选择的是电商专用 IP，该 IP 仅可访问 Amazon 等跨境电商网站，不支持访问 Google、社交平台等非跨境电商类境外网站。请确认用途后继续购买。')}</div>
+            <div class="flex justify-end gap-2">
+              <RxButton outlined severity="secondary" size="md" label={$t('取消')} onClick={hideModal}></RxButton>
+              <RxButton
+                size="md"
+                label={$t('确认购买')}
+                onClick={() => {
+                  hideModal()
+                  onPay()
+                }}
+              >
+              </RxButton>
+            </div>
+          </div>
+        )
+      },
     },
   })
 }
@@ -492,7 +668,7 @@ async function onPay() {
     },
   })
 
-  async function onConfirm({ payType }: any) {
+  async function onConfirm({ payType }: { payType: PayWay, isAuto: boolean }) {
     mixpanelTrack('click_pay_proxy_ip')
     const { subscriptionMonths, proxyProviderId, purchaseCountry, businessUse } = configValue.value
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
@@ -512,6 +688,7 @@ async function onPay() {
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
+        showFreedomActivityModal()
         emit('success', data)
         emit('close')
       })
@@ -525,7 +702,8 @@ async function onPay() {
     <div class="py-5 flex-1 flex flex-col pl-8 gap-9 overflow-hidden overflow-y-auto">
       <div class="grid grid-cols-2 gap-y-6">
         <div v-for="item in configs" :key="item.name" class="flex flex-col gap-2" :class="[item.fullWidth ? 'col-span-2' : 'col-span-1']">
-          <div class="subtitle">
+          <component :is="item.title" v-if="typeof item.title === 'function'"></component>
+          <div class="subtitle" v-else>
             {{ item.title }}
           </div>
           <component :is="item.render" v-if="item.render" :item="item" />
@@ -533,7 +711,7 @@ async function onPay() {
       </div>
     </div>
     <div class="py-5 w-88 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
-      <RxAlert v-if="isCN" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('您当前的网络环境属于中国大陆，无法直连代理 IP。请确保实际使用时的网络环境可正常连接至代理 IP，再进行下单购买。')" />
+      <RxAlert v-if="isCN" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('检测到中国大陆网络，暂不支持直连代理 IP，请切换至海外网络后使用。')" />
       <div class="flex flex-col gap-6">
         <div v-if="currentCountry" class="flex flex-col gap-1.5 pa-4 quantity">
           <div class="subtitle">
@@ -561,7 +739,6 @@ async function onPay() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-              <EasterActivity :beyond-discount="beyondDiscount" :discount="currentActivity.proxyDiscount" />
               <RxButton v-tooltip.top="!check('Cost_Center_all') && $t('暂无权限。如需开通，请联系工作空间拥有者，更改当前账号身份为管理者并开通‘费用中心’权限。')" size="lg" :disabled="!check('Cost_Center_all')" :label="$t('立即支付')"
                         @click="checkStock"
               />
@@ -621,6 +798,7 @@ async function onPay() {
 
   &.active {
     border-color: var(--colors-border-border-brand);
+    background: var(--pattern-pay-gradient-selected-start);
     box-shadow: none;
 
     .purpose,

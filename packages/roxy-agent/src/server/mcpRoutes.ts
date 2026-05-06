@@ -23,7 +23,7 @@ const router: Router = Router()
  */
 router.get('/servers', (_req: Request, res: Response) => {
   try {
-    const servers = mcpManager.listUserMcpServers()
+    const servers = mcpManager.listAllMcpServers()
     res.json({ code: 0, data: servers })
   }
   catch (err: any) {

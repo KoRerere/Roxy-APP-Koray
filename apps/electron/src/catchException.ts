@@ -1,15 +1,12 @@
 import { captureException, consoleLoggingIntegration, init as initSentry } from '@sentry/electron/main'
-import { app, dialog } from 'electron'
+import { app, dialog, net } from 'electron'
 
-// 保存代理配置（调试用）
-globalThis.__roxy_agent_proxy_env = {
-  HTTP_PROXY: process.env.HTTP_PROXY,
-  http_proxy: process.env.http_proxy,
-  HTTPS_PROXY: process.env.HTTPS_PROXY,
-  https_proxy: process.env.https_proxy,
-  ALL_PROXY: process.env.ALL_PROXY,
-  all_proxy: process.env.all_proxy,
-}
+// type NetFetchParams = Parameters<typeof net.fetch>
+
+// globalThis.fetch = async (input: NetFetchParams[0], init?: NetFetchParams[1]) => {
+//   await app.whenReady() // 确保 app 已准备好，避免在 app 未就绪时调用 fetch 导致的错误
+//   return net.fetch(input, init)
+// }
 
 // 删除进程环境变量中的代理配置，避免影响其他模块
 delete process.env.HTTP_PROXY

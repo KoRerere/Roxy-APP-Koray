@@ -1,5 +1,4 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import axios from 'axios'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import { createWriteStream } from 'node:fs'
@@ -11,7 +10,7 @@ import { getLocalWebVersion, getMainWindow, updateMainWindowPageTitle } from '/@
 import { fileOperations } from '/@/modules/fileOperations'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
-import { fileExists, getErrorMessage } from '/@/utils'
+import { fileExists, getErrorMessage, request } from '/@/utils'
 
 interface VersionInfo {
   /** 最新版本号 */
@@ -99,7 +98,7 @@ export const webUpdater = new class WebUpdater {
     try {
       this.webDomain = await getWebDomain(false)
       // 获取远程版本信息
-      const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl, { timeout: 3 * 1000 }).then(response => response.data)
+      const remoteVersionInfo = await request.get<VersionInfo>(this.versionUrl, { timeout: 3 * 1000 }).then(response => response.data)
       console.log('[WebUpdater] remoteVersionInfo', remoteVersionInfo)
 
       if (this.remoteVersionInfo && compare(this.remoteVersionInfo.version, remoteVersionInfo.version, '>=')) {
@@ -126,7 +125,7 @@ export const webUpdater = new class WebUpdater {
         this.#updateMessageData.releaseTime = remoteVersionInfo.releaseTime
         this.#updateMessageData.currentVersion = localVersion
         console.log('[WebUpdater] downloading...')
-        const response = await axios({
+        const response = await request({
           url: this.downloadUrl,
           method: 'get',
           responseType: 'stream',
@@ -154,7 +153,7 @@ export const webUpdater = new class WebUpdater {
           this.#updateMessageData.percent = 100
           this.#updateMessageData.status = 'downloaded'
 
-          await axios.get<Record<string, any>>(this.activityUrl).then(response => response.data).then((result) => {
+          await request.get<Record<string, any>>(this.activityUrl).then(response => response.data).then((result) => {
             this.#updateMessageData.newFeatureTips = {
               activityInfo: result.activityInfo,
               isActivity: result.activityInfo.isActivity,
@@ -235,7 +234,6 @@ export const webUpdater = new class WebUpdater {
     })
     await rename(this.tempExtractDir, appConfig.externalWebDir).catch((error) => {
       console.error('[WebUpdater] extract rename error', error)
-      store.isExternalWeb = false
     })
     rm(bakDir, { recursive: true, force: true })
     this.remoteVersionInfo = null
@@ -247,8 +245,6 @@ export const webUpdater = new class WebUpdater {
       this.isUpgrading = true
       try {
         await this.extract()
-        store.isExternalWeb = await fileExists(this.extractSuccessFlagFile)
-        console.debug('[WebUpdater] upgradeNow store.isExternalWeb', store.isExternalWeb)
         getMainWindow()?.reload()
         await updateMainWindowPageTitle()
         return true

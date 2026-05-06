@@ -2,6 +2,7 @@
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { PayWay } from '/@/enums/pay'
+import RxToolTip from '/@/components/rx-tooltip'
 
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -272,14 +273,25 @@ async function payConfirm() {
     </div>
     <div v-show="openOther" class="w-full grid gap-3 select-none payway">
       <template v-for="item in availableMethods" :key="item.label">
-        <div class="relative flex flex-col items-center justify-center gap-1.5 payway-item" :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }"
-             @click="handleClick(item)"
+        <div
+          class="payway-item flex items-center justify-center"
+          :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }"
         >
-          <div v-if="item.discount" class="payway-item-discount">
-            {{ item.discount }}
-          </div>
-          <img class="h-10" :src="item.image">
-          <div>{{ item.label }}</div>
+          <component
+            :is="item.disabled ? RxToolTip : 'div'"
+            class="relative flex flex-col items-center justify-center gap-1.5"
+            @click="handleClick(item)"
+          >
+            <div v-if="item.discount" class="payway-item-discount">
+              {{ item.discount }}
+            </div>
+            <img class="h-10" :src="item.image">
+            <div>{{ item.label }}</div>
+
+            <template #content>
+              {{ $t('该支付方式暂时无法使用') }}
+            </template>
+          </component>
         </div>
       </template>
     </div>

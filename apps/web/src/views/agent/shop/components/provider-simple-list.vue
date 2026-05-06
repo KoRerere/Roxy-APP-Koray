@@ -85,6 +85,9 @@ function buyProxyFromAnnouncement() {
           <div class="py-0.5 px-2 rounded-full roxy-tag">
             {{ $t('超高质量 IP') }}
           </div>
+          <div class="py-0.5 px-2 rounded-full roxy-tag">
+            {{ $t('无网包退') }}
+          </div>
         </div>
         <div class="flex-1 overflow-hidden">
           <div class="flex flex-wrap items-start gap-col-8 gap-row-1.5">

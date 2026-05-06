@@ -14,6 +14,7 @@ type ProfileRow = UserGetWindowInfoListListData['data']['rows'][number]
 export function useProfileProxySpeedTest() {
   const { testProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
   const [_, onlyErrorToast] = useResponseToast()
+
   async function runProxySpeedTestForRows(targets: ProfileRow[], options?: Record<string, unknown>) {
     if (!targets.length)
       return
@@ -21,7 +22,7 @@ export function useProfileProxySpeedTest() {
       return globalThis.electronAPI.send('proxy:detect', {} as any)
     }
 
-    const { operationName, showConcurrentTaskTopBar } = { operationName: 'checkProxy', showConcurrentTaskTopBar: false, ...options }
+    const { operationName, showConcurrentTaskTopBar, silent } = { operationName: 'checkProxy', showConcurrentTaskTopBar: false, silent: false, ...options }
 
     const tasks = targets.map((item) => {
       setOperationLoading(item, operationName, true)
@@ -38,7 +39,7 @@ export function useProfileProxySpeedTest() {
       }
     })
 
-    concurrentProxyTest({
+    await concurrentProxyTest({
       tasks,
       showConcurrentTaskTopBar,
       tasksCompleted: (results: any[], cancelled: boolean) => {
@@ -49,7 +50,7 @@ export function useProfileProxySpeedTest() {
 
         const validResults = results.filter(Boolean)
 
-        if (!cancelled) {
+        if (!cancelled && !silent) {
           batchTestShowToast(validResults.map(p => p.checkRes))
         }
 

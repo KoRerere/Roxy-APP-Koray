@@ -1,16 +1,11 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
-      "/@/*": [
-        "../electron/src/*"
-      ],
-      "#roxybrowser/*": [
-        "../electron/src/*"
-      ]
+      "/@/*": ["../electron/src/*"],
+      "#roxybrowser/*": ["../electron/src/*"]
     },
     "strict": true,
     "sourceMap": false,
@@ -19,15 +14,12 @@
     "skipLibCheck": true
   },
   "include": [
-    "types/*.d.ts",
     "src/**/*.ts",
     "../electron/node_modules/electron/**/*.d.ts",
-    "../electron/src/**/*.ts",
     "../electron/types"
   ],
   "exclude": [
     "**/*.spec.ts",
-    "**/*.test.ts",
-    "../electron/src/**/*.ts"
+    "**/*.test.ts"
   ]
 }

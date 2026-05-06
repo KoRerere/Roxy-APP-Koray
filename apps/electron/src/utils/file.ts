@@ -1,8 +1,8 @@
-import axios from 'axios'
 import { createWriteStream } from 'node:fs'
 import { access, cp, mkdir, rename, rm } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { fileOperations } from '/@/modules/fileOperations'
+import { request } from '/@/utils/request'
 
 const ZIP_FILE_PATTERN = /\.zip$/
 
@@ -49,7 +49,7 @@ export async function downloadZipFile(
   let timer: NodeJS.Timeout
   let rejectDownload: ((error: Error) => void) | undefined
 
-  const response = await axios({
+  const response = await request({
     method: 'get',
     url,
     responseType: 'stream',

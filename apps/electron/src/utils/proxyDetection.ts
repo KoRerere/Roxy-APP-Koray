@@ -1,5 +1,4 @@
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import type { DictKey } from '/@/modules/dict'
 import type { AxiosProxyConfig, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import { isEmpty } from 'es-toolkit/compat'
@@ -156,6 +155,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       port,
       proxyUserName,
       proxyPassword,
+      isDirect,
     } = proxyDetectionParams
     const systemProxySwitch = Reflect.has(
       proxyDetectionParams,
@@ -184,6 +184,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
         user_name: proxyUserName || '',
         password: proxyPassword || '',
         protocal,
+        v2ray_tunnel_enabled: isDirect || false,
       }
       console.log('roxynetParams', roxynetParams)
 

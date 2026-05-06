@@ -82,7 +82,7 @@ const items = computed(() => {
         </a>
       </template>
     </TieredMenu>
-    <Campaign v-if="check('Cost_Center_all')" :collapsed />
+    <Campaign :collapsed />
     <PayMetrics v-if="roleStore.isOwner" :collapsed />
     <div v-else-if="!collapsed" class="no-permission">
       <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">

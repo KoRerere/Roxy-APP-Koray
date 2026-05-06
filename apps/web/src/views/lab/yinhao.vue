@@ -6,6 +6,9 @@ import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 // import { emitter } from '/@/utils/eventBus'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
+import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
+import RaffleModal from '/@/views/campaign/freedom/raffle-modal.vue'
+// import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
@@ -37,24 +40,24 @@ function _open1() {
     //   // mask: "!backdrop-blur-md",
     // },
     slots: {
-      container: ({ hideModal }) => <TrialEnded onClose={hideModal}></TrialEnded>,
+      container: ({ hideModal }) => <ActivityRechangeModal onClose={hideModal}></ActivityRechangeModal>,
     },
   })
 }
 
 function _open2() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    pt: {
-      // root: "!bg-transparent !border-none !shadow-none",
-      mask: '!backdrop-blur-md',
-    },
-    slots: {
-      // container: ({ hideModal }) => <Permission onClose={hideModal}></Permission>,
-    },
-  })
+  // showModal({
+  //   showHeader: false,
+  //   modal: true,
+  //   blockScroll: true,
+  //   pt: {
+  //     // root: "!bg-transparent !border-none !shadow-none",
+  //     mask: '!backdrop-blur-md',
+  //   },
+  //   slots: {
+  //     container: ({ hideModal }) => <ActivityRechangeModal count={10} upshiftCount={40} onClose={hideModal}></ActivityRechangeModal>,
+  //   },
+  // })
 }
 
 // const { userPayInfo } = storeToRefs(useUserStore())
@@ -387,7 +390,7 @@ function clearHighlight() {
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
     <RxButton label="open1" @click="_open1" />
-    <!-- <RxButton label="open2" @click="_open2" /> -->
+    <RxButton label="open2" @click="_open2" />
     <RxButton label="GO!" @click="_driverStart" />
 
     <Teleport to="body">

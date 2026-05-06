@@ -24,7 +24,6 @@ export function getRawColumns(options?: any) {
     {
       title: $t('代理 IP 信息'),
       key: 'proxy',
-      _visible: false,
       render: ({ data }: any) => <BasicInfo data={data}></BasicInfo>,
     },
     {
@@ -45,24 +44,6 @@ export function getRawColumns(options?: any) {
       power: check('Cost_Center_all'),
     },
     {
-      title: $t('订单号'),
-      key: 'orderNo',
-      _visible: false,
-      getText: (data: any) => data.orderNo || '--',
-    },
-    {
-      title: $t('创建时间'),
-      key: 'createTime',
-      _visible: false,
-      getText: (data: any) => data.createTime ? format(data.createTime, 'yyyy-MM-dd') : '--',
-    },
-    {
-      title: $t('续费时间'),
-      key: 'renewalTime',
-      _visible: false,
-      getText: (data: any) => data.renewalTime ? format(data.renewalTime, 'yyyy-MM-dd') : '--',
-    },
-    {
       title: $t('备注'),
       key: 'proxyRemark',
       headerSlot: 'remarkHeader',
@@ -75,6 +56,14 @@ export function getRawColumns(options?: any) {
       },
     },
     {
+      title: $t('已关联窗口'),
+      key: 'bindList',
+      render: ({ data }: any) => {
+        const list = data.bindList.map((id: number) => `${workspaceName}-${id}`)
+        return <RelatedInfo list={list}></RelatedInfo>
+      },
+    },
+    {
       title: $t('IP 查询渠道'),
       key: 'ipChecker',
       render: ({ data }: any) => {
@@ -84,18 +73,10 @@ export function getRawColumns(options?: any) {
       },
     },
     {
-      title: $t('已关联窗口'),
-      key: 'bindList',
-      render: ({ data }: any) => {
-        const list = data.bindList.map((id: number) => `${workspaceName}-${id}`)
-        return <RelatedInfo list={list}></RelatedInfo>
-      },
-    },
-    {
-      title: $t('服务商'),
-      key: 'proxyProviderName',
-      getText: (data: any) => data.proxyType === ProxyType.buy ? (data.proxyProviderName || $t('官方赠送')) : '--',
+      title: $t('来源'),
+      key: 'proxyType',
       sortable: true,
+      getText: (data: any) => data.proxyType === ProxyType.buy ? $t('购买') : $t('添加'),
     },
     {
       title: $t('代理 IP 类型'),
@@ -104,10 +85,34 @@ export function getRawColumns(options?: any) {
       _visible: false,
     },
     {
-      title: $t('来源'),
-      key: 'proxyType',
-      getText: (data: any) => data.proxyType === ProxyType.buy ? $t('购买') : $t('添加'),
+      title: $t('订单号'),
+      key: 'orderNo',
+      _visible: false,
+      getText: (data: any) => data.orderNo || '--',
     },
+    {
+      title: $t('创建时间'),
+      key: 'createTime',
+      _visible: false,
+      sortable: true,
+      getText: (data: any) => data.createTime ? format(data.createTime, 'yyyy-MM-dd') : '--',
+    },
+    {
+      title: $t('续费时间'),
+      key: 'renewalTime',
+      _visible: false,
+      sortable: true,
+      getText: (data: any) => data.renewalTime ? format(data.renewalTime, 'yyyy-MM-dd') : '--',
+    },
+
+    {
+      title: $t('服务商'),
+      key: 'proxyProviderName',
+      getText: (data: any) => data.proxyType === ProxyType.buy ? (data.proxyProviderName || $t('官方赠送')) : '--',
+      _visible: false,
+      sortable: true,
+    },
+
   ].filter(column => column.power !== false)
 
   return setColumns(columns, options)
@@ -117,7 +122,7 @@ export function useColumns(options?: any) {
   const { userConfig } = storeToRefs(useUserStore())
 
   const { columns, updateColumns, updateRemarkDisplayStatus } = _useColumns({
-    key: 'agent.shop',
+    key: 'proxy.shop',
     data: getRawColumns(options),
   })
 

@@ -60,7 +60,7 @@ function toRola() {
                   {{ data.title }}
                 </div>
                 <div v-if="!data.isJump" class="desc">
-                  {{ $t('独家资源·超高质量') }}
+                  {{ $t('超高质量·无网包退') }}
                 </div>
               </div>
             </div>

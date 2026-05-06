@@ -6,7 +6,7 @@ import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { ROXY_MCP_WINDOW_ID } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
-import { appCliStartArgs, isDev, isPackaged } from '/@/constants/common'
+import { appCliStartArgs, isDev, isPackaged, isProd } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { mcpRuntimeState } from '/@/modules/mcp/state'
 import { store } from '/@/modules/store'
@@ -85,6 +85,7 @@ export const mcpManager = new (class McpManager {
       const roxyClawConfig = await API.base.userGetRoxyClawList()
       if (roxyClawConfig.code === 0 && roxyClawConfig.data) {
         const data = roxyClawConfig.data
+        console.log('roxyClawConfig', roxyClawConfig.data)
         imConfigPayload = {
           enableIM: data.enabled === 1,
           larkAppId: data.lark_app_id,
@@ -156,13 +157,14 @@ export const mcpManager = new (class McpManager {
       }
     }
 
+    console.info('isProd', isProd)
+
     const env = {
       ...process.env,
-      LLM_PROVIDER: llmInfo.data.provider,
-      LLM_MODEL: llmInfo.data.model,
-      LLM_API_KEY: llmInfo.data.apikey,
-      LLM_BASE_URL: llmInfo.data.baseUrl,
-      LLM_BALANCE: llmInfo.data.balance,
+      ENV_TYPE: isDevelopment ? 'development' : (isProd ? 'production' : 'staging'),
+      // LLM_BASE_URL: llmInfo.data.baseUrl,
+
+      ROXY_USER_TOKEN: store.token,
 
       // openapi 和 playwright mcp 执行脚本路径，已经相关参数。
       OPENAPI_SCRIPT_PATH,
@@ -183,7 +185,7 @@ export const mcpManager = new (class McpManager {
       SYSTEM_LANGUAGE: store.language,
 
       // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
-      DEVELOPMENT: isDevelopment ? 'true' : 'false',
+      // DEVELOPMENT: isDevelopment ? 'true' : 'false',
 
       DOWNLOADS_DIR,
       SKILLS_DIR: agentUpdater.agentDir,
@@ -205,7 +207,7 @@ export const mcpManager = new (class McpManager {
       SLACK_ALLOWED_CHANNEL_IDS: imConfigPayload?.slackAllowedChannelIds,
       DISCORD_BOT_TOKEN: imConfigPayload?.discordBotToken,
       DISCORD_ALLOWED_USER_IDS: imConfigPayload?.discordAllowedUserIds,
-      ROXY_DOCS_MCP_URL: import.meta.env.VITE_ROXY_DOCS_MCP_URL,
+      // ROXY_DOCS_MCP_URL: import.meta.env.VITE_ROXY_DOCS_MCP_URL,
     }
 
     // 清理和验证环境变量 - 只保留有效的值

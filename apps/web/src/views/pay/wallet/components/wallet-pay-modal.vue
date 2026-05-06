@@ -7,6 +7,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 
 interface Props {
   amount: number
@@ -26,6 +27,8 @@ const [showToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { realTheme } = storeToRefs(useThemeStore())
 const { walletRecharge, openProcessing } = usePay()
+const { setActivityModalOpenStatus } = useFreedomActivity()
+
 const loading = ref(false)
 const isAuto = ref(showAutoRenew ? !!userPayInfo.value.isAuto : false)
 
@@ -57,6 +60,7 @@ function onRecharge() {
   walletRecharge({
     needAmount: finalResult.value.needAmount,
     next: async (data) => {
+      setActivityModalOpenStatus()
       await openProcessing(data, 'silent')
         .then(confirm)
         .catch(() => {

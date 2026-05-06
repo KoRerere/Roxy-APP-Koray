@@ -18,11 +18,6 @@ export function createAppSender(ipcMain: IPCMainInstance) {
       return ipcMain.send('app:core-list-update', payload)
     },
 
-    /** 后端地址发生变化 */
-    backendUrlChange(payload: string) {
-      return ipcMain.send('app:backend-url-change', payload)
-    },
-
     /** 卸载反馈模式（由卸载程序启动） */
     uninstallFeedbackMode(isUninstallMode: boolean) {
       return ipcMain.send('app:uninstall-feedback-mode', isUninstallMode)

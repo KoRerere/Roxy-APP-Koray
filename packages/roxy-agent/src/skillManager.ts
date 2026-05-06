@@ -444,7 +444,7 @@ let _skillManager: SkillManager | null = null
 
 export function getSkillManager(): SkillManager {
   if (!_skillManager) {
-    _skillManager = new SkillManager(env.SKILLS_DIR, env.BUILTIN_SKILLS)
+    _skillManager = new SkillManager(env.SKILLS_DIR)
   }
   return _skillManager
 }

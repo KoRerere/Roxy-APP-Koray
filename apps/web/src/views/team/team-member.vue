@@ -24,7 +24,7 @@ const roleLabelMap = getRoleLabelMap()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
-const { isOwner, isManager } = storeToRefs(useRoleStore())
+const { isOwner, isManager, isViewer } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { check } = usePermission()
 const { getTeamMembers } = useTeamStore()
@@ -32,7 +32,7 @@ const { inviteMembers } = useTeam()
 
 const tableRef = useTemplateRef('team')
 
-type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData> & { _oldNickname: string }
+type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData> & { _oldNickname: string, _oldWorkspaceNickname: string }
 
 const { columns } = useColumns({
   key: 'team.list',
@@ -50,6 +50,18 @@ const { columns } = useColumns({
       title: $t('成员备注'),
       key: 'nickname',
       slot: 'nickname',
+      style: {
+        minWidth: '120px',
+      },
+    },
+    {
+      title: $t('成员昵称'),
+      key: 'workspaceNickname',
+      slot: 'workspaceNickname',
+      headerSlot: 'workspaceNicknameHeader', 
+      style: {
+        minWidth: '120px',
+      },
     },
     {
       title: $t('成员状态'),
@@ -203,7 +215,7 @@ async function deleteMember(data: TableRow) {
     accept: async () => {
       const projectIds = data.project_info.map(item => item.project_id)
       const { code, msg } = await API.team.userDelTeamInfoCreate({
-        email: data.email || data.phone,
+        email: data.email || data.phone || '',
         userId: data.userId!,
         role: data.role,
         projectIds,
@@ -224,7 +236,7 @@ async function editPermission(row: TableRow) {
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => (
-        <RolesDetail userId={row.userId} onClose={hideModal} title={$t('{name} ({role}) - 权限详情', { name: row.nickname || row.userName, role: roleLabelMap[row.role as Role] })} />
+        <RolesDetail userId={row.userId} onClose={hideModal} title={$t('{name} ({role}) - 权限详情', { name: row.nickname || row.workspaceNickname || row.userName, role: roleLabelMap[row.role as Role] })} />
       ),
     },
   })
@@ -250,13 +262,33 @@ async function saveNickname(data: TableRow, close: () => void) {
     return
   }
   const { code, msg } = await API.team.userAddTeamNicknameCreate({
-    nickname,
-    emailOrPhone: email || phone,
-    targetUserId: userId,
+    nickname: nickname || '',
+    emailOrPhone: email || phone || '',
+    targetUserId: userId!,
   })
   onlyErrorToast(code, msg)
   if (code !== 0) {
     data.nickname = _oldNickname
+  }
+  close()
+}
+
+async function saveWorkspaceNickname(data: TableRow, close: () => void) {
+  const { email, phone, userId, workspaceNickname, _oldWorkspaceNickname } = data
+  if (!workspaceNickname?.trim() && !_oldWorkspaceNickname?.trim()) {
+    data.workspaceNickname = ''
+    data._oldWorkspaceNickname = ''
+    close()
+    return
+  }
+  const { code, msg } = await API.team.userAddTeamWorkspaceNicknameCreate({
+    workspaceNickname: workspaceNickname || '',
+    emailOrPhone: email || phone || '',
+    targetUserId: userId!,
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0) {
+    data.workspaceNickname = _oldWorkspaceNickname
   }
   close()
 }
@@ -272,31 +304,23 @@ function onRefreshTable(params = {}) {
 </script>
 
 <template>
-  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation"
-           :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false" :paginator="false"
-           :show-actions-menu="false" :show-actions="false"
+  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
+           :paginator="false" :show-actions-menu="false" :show-actions="false"
   >
     <template #display-before>
-      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
-                :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()"
-      />
+      <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog()" />
     </template>
     <template #filter-after>
       <div class="flex items-center w-full gap-3">
         <AdvancedSearch :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name"
-                        option-value="value" data-key="value" @change="filters.onChange"
-        />
+        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>
-      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')"
-                      :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')"
-      >
+      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex gap-3">
-            <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md"
-                      icon="base/rx_ic_user_add" :label="$t('邀请')"
+            <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"
                       @click.stop="handleShowInviteUserFormDialog(filters.value)"
             />
             <TutorialVideo video-type="team_management" :autoplay="false" />
@@ -305,21 +329,47 @@ function onRefreshTable(params = {}) {
       </CustomNewEmpty>
     </template>
     <template #member="{ data }">
-      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email"
-                  :phone="data.phone"
-      />
+      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
     </template>
     <template #nickname="{ data }">
       <Inplace v-focustrap :pt="{ display: '!border-none !pa-0' }">
         <template #display>
-          <div class="w-50 rounded-1 text-ellipsis overflow-hidden nickname">
+          <div class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
             {{ data.nickname }}
           </div>
         </template>
         <template #content="{ closeCallback }">
-          <TsFormInputText v-model="data.nickname" class="!w-50" autofocus size="xxs"
-                           @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
+          <TsFormInputText v-model="data.nickname" class="!w-40" autofocus size="xxs" @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
                            @keydown.enter="saveNickname(data, closeCallback)"
+          />
+        </template>
+      </Inplace>
+    </template>
+    <template #workspaceNicknameHeader="{ column: { title } }">
+      <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">
+        <span>{{ title }}</span>
+        <SvgIcon
+          v-tooltip.top="{ value: $t('团队内展示名称，全员可见') }"
+          class="inline-flex shrink-0 cursor-pointer"
+          name="base/rx_ic_info"
+          size="12"
+          color="var(--colors-icon-icon-note)"
+        />
+      </div>
+    </template>
+    <template #workspaceNickname="{ data }">
+      <div v-if="isViewer" class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
+        {{ data.workspaceNickname }}
+      </div>
+      <Inplace v-else v-focustrap :pt="{ display: '!border-none !pa-0' }">
+        <template #display>
+          <div class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
+            {{ data.workspaceNickname }}
+          </div>
+        </template>
+        <template #content="{ closeCallback }">
+          <TsFormInputText v-model="data.workspaceNickname" class="!w-40" autofocus size="xxs" @focus="data._oldWorkspaceNickname = data.workspaceNickname"
+                           @blur="saveWorkspaceNickname(data, closeCallback)" @keydown.enter="saveWorkspaceNickname(data, closeCallback)"
           />
         </template>
       </Inplace>

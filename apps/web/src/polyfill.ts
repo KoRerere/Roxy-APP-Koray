@@ -1,4 +1,5 @@
 import 'core-js/es/promise/with-resolvers'
+import 'core-js/es/promise/any'
 
 if (typeof window !== 'undefined' && (!window.CSS || !window.CSS.px)) {
   // @ts-ignore

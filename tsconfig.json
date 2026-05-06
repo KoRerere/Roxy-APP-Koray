@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "baseUrl": ".",
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "types": [
       "node",
       "vite/client"
@@ -16,6 +15,8 @@
     "scripts/**/*.ts",
     "**/*.d.ts",
     "./apps/electron/node_modules/electron/**/*.d.ts",
-    "scripts/test.mjs"
-, "apps/web/scripts/deploy.ts", "apps/web/scripts/deploy-web-dev.ts"  ]
+    "scripts/test.mjs",
+    "apps/web/scripts/deploy.ts",
+    "apps/web/scripts/deploy-web-dev.ts"
+  ]
 }

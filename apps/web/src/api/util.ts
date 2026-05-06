@@ -62,17 +62,6 @@ export async function getCommonHeaders() {
     })
 }
 
-let getGatewayConfigPromise: Promise<string> | null = null
-export async function getGatewayConfig() {
-  if (getGatewayConfigPromise) {
-    return getGatewayConfigPromise
-  }
-  getGatewayConfigPromise = globalThis.electronAPI.send('util:getGatewayConfig')
-  return getGatewayConfigPromise.finally(() => {
-    getGatewayConfigPromise = null
-  })
-}
-
 let getInviteCodePromise: Promise<string> | null = null
 export async function getInviteCode() {
   if (getInviteCodePromise) {

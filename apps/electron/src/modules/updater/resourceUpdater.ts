@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { compare } from 'compare-versions'
 import { spawnSync } from 'node:child_process'
 import { createWriteStream } from 'node:fs'
@@ -8,7 +7,7 @@ import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
 import { currentArch, currentOS, defaultBrowserExeName, isMac, isProd } from '/@/constants/common'
 import { fileOperations } from '/@/modules/fileOperations'
-import { fileExists } from '/@/utils'
+import { fileExists, request } from '/@/utils'
 
 interface VersionInfo {
   /** 最新版本号 */
@@ -70,7 +69,7 @@ export const resourceUpdater = new class ResourceUpdater {
     try {
       this.webDomain = await getWebDomain(false)
       // 获取远程版本信息
-      const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl, { timeout: 3 * 1000 }).then(response => response.data)
+      const remoteVersionInfo = await request.get<VersionInfo>(this.versionUrl, { timeout: 3 * 1000 }).then(response => response.data)
       console.log('[ResourceUpdater] remoteVersionInfo', remoteVersionInfo)
 
       if (this.remoteVersionInfo && compare(this.remoteVersionInfo.version, remoteVersionInfo.version, '>=')) {
@@ -87,7 +86,7 @@ export const resourceUpdater = new class ResourceUpdater {
       // 检查是否需要更新
       if (compare(remoteVersionInfo.version, localVersion, '>')) {
         console.log('[ResourceUpdater] downloading...')
-        const response = await axios({
+        const response = await request({
           url: this.downloadUrl,
           method: 'get',
           responseType: 'stream',

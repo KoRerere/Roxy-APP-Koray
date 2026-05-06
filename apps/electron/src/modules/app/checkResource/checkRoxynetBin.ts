@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { compare } from 'compare-versions'
 import { createWriteStream } from 'node:fs'
 import { access, readFile, rm, writeFile } from 'node:fs/promises'
@@ -6,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { currentArch, currentOS, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
-import { calculateFileHash, fileExists } from '/@/utils'
+import { calculateFileHash, fileExists, request } from '/@/utils'
 
 // roxynet 下载重试次数
 let roxynetDownloadRetry = 0
@@ -49,10 +48,10 @@ export async function checkRoxynetBin(webDomain: string) {
     .catch(() => '')
 
   // 下载 roxynet 版本文件
-  const remoteVersion = await axios({
+  const remoteVersion = await request({
     url: config.versionUrl,
     method: 'get',
-    timeout: 5000,
+    timeout: 3000,
   }).then(async (response) => {
     const version = response.data.toString()
 
@@ -66,7 +65,7 @@ export async function checkRoxynetBin(webDomain: string) {
 
   // 如果 roxynet 执行文件存在，则检查 sha512 哈希值
   if (roxynetBinExist) {
-    const remoteSha512 = await axios({
+    const remoteSha512 = await request({
       url: config.sha512Url,
       method: 'get',
       timeout: 5000,
@@ -102,7 +101,7 @@ async function downloadRoxynetBin() {
   const { promise, resolve } = Promise.withResolvers()
   console.log('Downloading roxynet')
   // 下载 roxynet
-  const response = await axios({
+  const response = await request({
     url: config.downloadUrl,
     method: 'get',
     responseType: 'stream',

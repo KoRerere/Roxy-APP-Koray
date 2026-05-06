@@ -35,7 +35,7 @@ const { showMenu: showPopupMenu } = usePopupMenu()
 const { getTeamMembers } = useTeamStore()
 const { check } = usePermission()
 
-const columns = [
+const columns = ref([
   {
     title: $t('项目信息'),
     key: 'projectName',
@@ -66,7 +66,7 @@ const columns = [
     style: 'width: 9rem',
     slot: 'actions',
   },
-]
+])
 
 async function tableRequest(params: any) {
   getProjects()
@@ -232,7 +232,7 @@ function showOperationMenu({ event, operation }: { event: MouseEvent, operation:
 }
 
 async function inviteUserInProject(project: Project) {
-  const { user_info, projectName, project_id } = project
+  const { projectName, project_id } = project
   const { data: { rows: allMembers } } = await getTeamMembers()
 
   showModal({
@@ -245,7 +245,7 @@ async function inviteUserInProject(project: Project) {
     slots: {
       container: ({ hideModal }) => (
         <InviteUserModal
-          v-model:currentMembers={user_info}
+          v-model:currentMembers={project.user_info}
           allMembers={allMembers}
           project={{ projectName, projectId: project_id }}
           onClose={hideModal}

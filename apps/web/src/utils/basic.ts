@@ -31,6 +31,74 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+export interface GenPollingCheckerOptions<TArgs extends readonly unknown[]> {
+  /** 轮询间隔（毫秒），默认 3000 */
+  intervalMs?: number
+  /** 单次检查：`true` 表示达成目标并结束轮询；抛错则中断并由调用方处理 */
+  checkOnce: (...args: TArgs) => Promise<boolean>
+}
+
+/**
+ * 可取消、可覆盖任务的轮询检查器（新 `check` 会顶替仍在进行的旧任务）。
+ * `check` / `checkOnce` 参数列表与 `checkOnce` 定义一致（任意个数、类型由调用方推断）。
+ */
+export function genPollingChecker<TArgs extends readonly unknown[]>(
+  options: GenPollingCheckerOptions<TArgs>,
+) {
+  const { intervalMs = 3000, checkOnce } = options
+  let stopped = false
+  let currentTaskId = 0
+
+  function stop() {
+    stopped = true
+    currentTaskId++
+  }
+
+  /** 轮询直到 `checkOnce` 返回 `true`，或 `stop()` / 被新任务覆盖 */
+  async function check(...args: TArgs) {
+    stopped = false
+    const taskId = ++currentTaskId
+    const shouldEnd = () => stopped || taskId !== currentTaskId
+
+    while (!stopped && taskId === currentTaskId) {
+      const isOk = await checkOnce(...args)
+
+      if (isOk) {
+        stop()
+        return isOk
+      }
+
+      if (shouldEnd())
+        return
+
+      await sleepInterruptibleForPolling(intervalMs, shouldEnd)
+
+      if (taskId !== currentTaskId)
+        return
+    }
+  }
+
+  return {
+    checkOnce,
+    check,
+    stop,
+  }
+}
+
+/** 在 `shouldEnd` 为真时立即结束，否则最长等待 `ms`（用于轮询间隔可被 `stop` / 新任务顶替中断） */
+async function sleepInterruptibleForPolling(ms: number, shouldEnd: () => boolean): Promise<void> {
+  if (ms <= 0)
+    return
+  const start = performance.now()
+
+  while (!shouldEnd()) {
+    const left = ms - (performance.now() - start)
+    if (left <= 0)
+      return
+    await new Promise<void>(resolve => setTimeout(resolve, Math.min(200, left)))
+  }
+}
+
 export function isEmptyValue(value: any) {
   if (Array.isArray(value)) {
     return value.length === 0
@@ -45,14 +113,14 @@ export function isInvalid(value: any) {
   return [null, undefined, ''].includes(value)
 }
 
+const REGEX_EMAIL = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/i
 export function validateEmail(email: string) {
-  const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/i
-  return regex.test(email)
+  return REGEX_EMAIL.test(email)
 }
 
+const REGEX_PHONE = /^(?:(?:\+|00)86)?1[3-9]\d{9}$/
 export function validatePhone(phone: string) {
-  const regex = /^(?:(?:\+|00)86)?1[3-9]\d{9}$/
-  return regex.test(phone)
+  return REGEX_PHONE.test(phone)
 }
 
 export function createDefaultObject<T extends string[], U>(keys: T, defaultValue: U) {
@@ -177,9 +245,9 @@ export function strConcat(str1?: string, str2?: string) {
   return `${str1}${str2}`
 }
 
+const REGEX_URL = /^(https?:\/\/)/
 export function validateURL(url: string): boolean {
-  const regex = /^(https?:\/\/)/
-  if (regex.test(url)) {
+  if (REGEX_URL.test(url)) {
     try {
       // eslint-disable-next-line no-new
       new URL(url)
@@ -209,10 +277,12 @@ export enum IPType {
   IPV6 = 'IPV6',
 }
 
+const REGEX_PROXY_URL_1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+const REGEX_PROXY_URL_2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+const REGEX_PROXY_URL_TYPE = /^[^:/\s]+:[^:/\s]+@/
+
 export function parseProxyUrl(url: string): ProxyObject {
-  const regex1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
-  const regex2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
-  const regex = /^[^:/\s]+:[^:/\s]+@/.test(url) ? regex2 : regex1
+  const regex = REGEX_PROXY_URL_TYPE.test(url) ? REGEX_PROXY_URL_2 : REGEX_PROXY_URL_1
   const match = url.match(regex)
   const data = match?.groups
   return {
@@ -226,8 +296,9 @@ export function parseProxyUrl(url: string): ProxyObject {
   }
 }
 
+const REGEX_URL_DOMAIN = /^(https?):\/\/([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)\/?/
 export function parseUrl(url: string) {
-  const match = url?.match(/^(https?):\/\/([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)\/?/)
+  const match = url?.match(REGEX_URL_DOMAIN)
   return match && { protocol: match[1], domain: match[2] }
 }
 
@@ -561,6 +632,7 @@ export function enhanceCountdown(
 
     const now = Date.now()
     const remaining = endTimestamp - now
+    console.log('remaining', remaining)
 
     if (remaining <= 0) {
       clearAll()

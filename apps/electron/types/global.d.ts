@@ -1,4 +1,4 @@
-import { ROXY_WINDOW_ID_KEY } from "/@/constants";
+import type { ROXY_WINDOW_ID_KEY } from '/@/constants'
 
 declare global {
   var $t: (id: string, values?: Record<string, any>) => string
@@ -14,5 +14,13 @@ declare module 'electron' {
   interface BrowserWindow {
     /** 自定义窗口唯一标识 */
     [ROXY_WINDOW_ID_KEY]: string
+  }
+}
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    metadata?: {
+      reqTime?: number
+    }
   }
 }

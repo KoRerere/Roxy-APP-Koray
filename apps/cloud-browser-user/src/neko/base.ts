@@ -232,12 +232,25 @@ export abstract class BaseClient extends EventEmitter<BaseEvents> {
   }
 
   public sendMessage(event: WebSocketEvents, payload?: WebSocketPayloads) {
-    if (!this.connected) {
-      this.emit('warn', `attempting to send message while disconnected`)
+    if (!this.socketOpen) {
+      this.emit('warn', `attempting to send message while websocket is not open`)
       return
     }
     this.emit('debug', `sending event '${event}' ${payload ? `with payload: ` : ''}`, payload)
     this._ws!.send(JSON.stringify({ event, ...payload }))
+  }
+
+  /**
+   * 云浏览器不消费服务端音频，握手阶段立即关闭，避免服务端继续做音频采集和编码。
+   */
+  protected disableServerAudio() {
+    if (!this.socketOpen) {
+      this.emit('warn', 'attempting to disable server audio while websocket is not open')
+      return
+    }
+
+    this.emit('debug', 'disabling server audio for current session')
+    this._ws!.send(JSON.stringify({ event: SIGNAL_AUDIO_EVENT, disabled: true }))
   }
 
   public async createPeer(lite: boolean, servers: RTCIceServer[]) {
@@ -259,10 +272,16 @@ export abstract class BaseClient extends EventEmitter<BaseEvents> {
     if (lite !== true) {
       this._peer = new RTCPeerConnection({
         iceServers: servers,
+        // 强制所有 media/data 复用同一 ICE 通路（减少端口协商来回和 RTCP 报文开销）
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require',
       })
     }
     else {
-      this._peer = new RTCPeerConnection()
+      this._peer = new RTCPeerConnection({
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require',
+      })
     }
 
     this._peer.onconnectionstatechange = () => {

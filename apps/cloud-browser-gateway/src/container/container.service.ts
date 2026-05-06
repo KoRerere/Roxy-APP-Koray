@@ -18,7 +18,7 @@ import { getSessionState, normalizeSessionData } from '../session/session-state'
 import { PortAllocatorService } from './port-allocator.service'
 
 const SHM_SIZE_PATTERN = /^(\d+)([gmk])?$/i
-const SCREEN_SIZE_PATTERN = /^(\d+)x(\d+)(?:@\d+)?$/i
+const SCREEN_SIZE_PATTERN = /^(\d+)x(\d+)(?:@(\d+))?$/i
 const CONTAINER_REMOVAL_IN_PROGRESS_PATTERN = /already in progress/i
 const PRE_STOP_COOKIE_CAPTURE_TIMEOUT_MS = 3_000
 const PRE_STOP_BROWSER_CLOSE_TIMEOUT_MS = 5_000
@@ -153,8 +153,10 @@ export class ContainerService implements OnModuleInit {
     const nekoConfig = this.configService.get('neko', { infer: true })!
     const containerConfig = this.configService.get('container', { infer: true })!
     const configuredDataDir = this.configService.get('dataDir', { infer: true })!
-    const webrtcNat1to1 = this.configService.get('webrtc', { infer: true })!.nat1to1
+    const webrtcConfig = this.configService.get('webrtc', { infer: true })!
+    const webrtcNat1to1 = webrtcConfig.nat1to1
     const nanoCpus = this.parseNanoCpus(containerConfig.cpuLimit)
+    const useNvidiaGpu = nekoConfig.gpuEnabled || nekoConfig.videoEncoder === 'nvh264'
 
     const containerName = `neko-${safeUserId}-${safeDirId}`
     const nekoAdminPassword = randomUUID().slice(0, 12)
@@ -176,12 +178,36 @@ export class ContainerService implements OnModuleInit {
       await this.prepareBrowserDataDir(browserDataPath)
       await this.cleanupChromiumSingletonFiles(browserDataPath)
 
+      // host 网络模式下所有容器共享网络命名空间，X server 的 abstract UNIX socket
+      // (@/tmp/.X11-unix/X<num>) 受网络命名空间隔离 → 多个容器若都用默认 DISPLAY=:99
+      // 会发生 "Cannot establish any listening sockets" 冲突，进而导致 neko 无法连接
+      // input driver 而 panic。这里直接用已唯一的 httpPort 作为 X display 编号，
+      // 保证多个容器同时运行时各自的 X server abstract socket 名称互不重叠。
+      const displayValue = `:${httpPort}.0`
+
       const env = [
         `NEKO_WEBRTC_UDPMUX=${udpPort}`,
         `NEKO_DESKTOP_SCREEN=${nekoConfig.screen}`,
+        // host 网络模式下容器直接绑定宿主机端口，需显式告知 neko 监听哪个 HTTP 端口
+        `NEKO_SERVER_BIND=:${httpPort}`,
+        // ICE lite 可通过 WEBRTC_ICE_LITE=false 关闭。
+        // 关闭场景：客户端仅发送 mDNS-obfuscated candidate 时，pion ICE lite 无法解析
+        // 远端候选地址，会导致 ICE 超时失败；此时应禁用 ICE lite 并配置 STUN 服务器。
+        ...(webrtcConfig.iceLite ? ['NEKO_WEBRTC_ICELITE=1'] : []),
+        // 覆盖基础镜像默认的 DISPLAY=:99.0，避免 host 网络下多容器 X server abstract socket 冲突
+        `DISPLAY=${displayValue}`,
       ]
+      if (useNvidiaGpu) {
+        env.push(
+          'NVIDIA_VISIBLE_DEVICES=all',
+          'NVIDIA_DRIVER_CAPABILITIES=all',
+        )
+      }
       if (webrtcNat1to1) {
         env.push(`NEKO_WEBRTC_NAT1TO1=${webrtcNat1to1}`)
+      }
+      if (webrtcConfig.iceServers) {
+        env.push(`NEKO_WEBRTC_ICESERVERS=${webrtcConfig.iceServers}`)
       }
 
       // 完整的浏览器启动命令（用于环境变量和 supervisord browser.conf）
@@ -203,7 +229,7 @@ export class ContainerService implements OnModuleInit {
       binds.push(`${nekoServerConfigPath}:/etc/neko/neko.yaml:ro`)
 
       this.logger.log(
-        `正在创建容器 ${containerName}（HTTP:${httpPort}，UDP:${udpPort}，CPU:${containerConfig.cpuLimit ?? '不限制'}）`,
+        `正在创建容器 ${containerName}（HTTP:${httpPort}，UDP:${udpPort}，CPU:${containerConfig.cpuLimit ?? '不限制'}，GPU:${useNvidiaGpu ? '启用' : '禁用'}，编码:${nekoConfig.videoEncoder}）`,
       )
 
       const container = await this.docker.createContainer({
@@ -215,18 +241,24 @@ export class ContainerService implements OnModuleInit {
         },
         Env: env,
         HostConfig: {
-          PortBindings: {
-            '8080/tcp': [{ HostPort: String(httpPort) }],
-            [`${udpPort}/udp`]: [{ HostPort: String(udpPort) }],
-          },
+          // host 网络：容器直接使用宿主机网络栈，UDP 包无需经过 docker-proxy
+          // 消除每个 RTP 包的用户态代理开销（5–20ms 抖动），NEKO_SERVER_BIND 显式指定 HTTP 监听端口
+          NetworkMode: 'host',
           Binds: binds,
           CapAdd: ['SYS_ADMIN'],
           ShmSize: this.parseShmSize(nekoConfig.shmSize),
+          ...(useNvidiaGpu
+            ? {
+                DeviceRequests: [
+                  {
+                    Driver: 'nvidia',
+                    Count: -1,
+                    Capabilities: [['gpu', 'utility', 'video', 'compute', 'graphics']],
+                  },
+                ],
+              }
+            : {}),
           ...(nanoCpus ? { NanoCpus: nanoCpus } : {}),
-        },
-        ExposedPorts: {
-          '8080/tcp': {},
-          [`${udpPort}/udp`]: {},
         },
       })
 
@@ -845,11 +877,25 @@ export class ContainerService implements OnModuleInit {
 
   /** 将 NEKO_DESKTOP_SCREEN 转为 Chromium 的 --window-size 参数值 */
   private parseWindowSize(screen: string): string {
+    const { width, height } = this.parseScreenSettings(screen)
+    return `${width},${height}`
+  }
+
+  /**
+   * 从 CONTAINER_SCREEN 中解析桌面尺寸与目标帧率。
+   * 约定格式为 WIDTHxHEIGHT@FPS，缺少 FPS 时默认按 30fps 处理。
+   */
+  private parseScreenSettings(screen: string): { width: number, height: number, frameRate: number } {
     const match = screen.match(SCREEN_SIZE_PATTERN)
     if (!match) {
-      return '1920,1080'
+      return { width: 1920, height: 1080, frameRate: 30 }
     }
-    return `${match[1]},${match[2]}`
+
+    return {
+      width: Number.parseInt(match[1], 10),
+      height: Number.parseInt(match[2], 10),
+      frameRate: Number.parseInt(match[3] || '30', 10),
+    }
   }
 
   /** 生成并写入 browser.conf（按 userId/dirId 隔离） */
@@ -872,8 +918,10 @@ export class ContainerService implements OnModuleInit {
 
   /** 渲染 supervisord browser.conf 内容 */
   private buildBrowserSupervisorConf(command: string): string {
+    // DISPLAY 改为引用容器环境变量 %(ENV_DISPLAY)s 而非硬编码 :99.0，
+    // 这样浏览器进程会跟随 createAndStart 注入的唯一 DISPLAY，与 X server 保持一致。
     return `[program:browser]
-environment=HOME="/home/neko",USER="neko",DISPLAY=":99.0",PULSE_SERVER="unix:/tmp/pulseaudio.socket",XDG_RUNTIME_DIR="/tmp/runtime-neko"
+environment=HOME="/home/neko",USER="neko",DISPLAY="%(ENV_DISPLAY)s",PULSE_SERVER="unix:/tmp/pulseaudio.socket",XDG_RUNTIME_DIR="/tmp/runtime-neko"
 command=${command}
 autorestart=false
 priority=900
@@ -888,7 +936,9 @@ redirect_stderr=true
   /** 渲染 neko v3 配置，禁用游客并仅允许固定管理员账号登录 */
   private buildNekoServerConfig(credential: string): string {
     const quotedCredential = JSON.stringify(credential)
-    const audioBitrate = this.configService.get('neko', { infer: true })!.audioBitrate
+    const nekoConfig = this.configService.get('neko', { infer: true })!
+    const { frameRate } = this.parseScreenSettings(nekoConfig.screen)
+    const videoPipeline = this.buildVideoCapturePipeline(nekoConfig.videoEncoder, frameRate, nekoConfig.videoBitrate)
 
     return `server:
   proxy: true
@@ -899,17 +949,13 @@ capture:
       pulsesrc device={device}
         ! audioconvert
         ! audioresample
-        ! queue
-        ! opusenc bitrate=${audioBitrate}
+        ! queue max-size-time=500000000 max-size-buffers=0 max-size-bytes=0 leaky=upstream
+        ! opusenc bitrate=${nekoConfig.audioBitrate}
         ! appsink name=appsink
   video:
-    codec: "vp8"
+    codec: "h264"
     pipeline: |
-      ximagesrc display-name={display} show-pointer=false use-damage=false
-        ! videoconvert
-        ! queue
-        ! vp8enc
-        ! appsink name=appsink
+${videoPipeline}
 member:
   provider: "object"
   object:
@@ -933,6 +979,32 @@ session:
   cookie:
     enabled: false
 `
+  }
+
+  /** 根据配置生成 Neko 视频采集管线，默认 x264 以兼容无 GPU 部署。 */
+  private buildVideoCapturePipeline(videoEncoder: 'x264' | 'nvh264', frameRate: number, videoBitrate: number): string {
+    const bitrateKbps = Math.round(videoBitrate / 1000)
+
+    if (videoEncoder === 'nvh264') {
+      return `      ximagesrc display-name={display} show-pointer=false use-damage=false
+        ! videorate
+        ! video/x-raw,framerate=${frameRate}/1
+        ! videoconvert
+        ! video/x-raw,format=NV12
+        ! queue max-size-buffers=1 leaky=downstream
+        ! nvh264enc bitrate=${bitrateKbps} rc-mode=cbr gop-size=60 zerolatency=true
+        ! h264parse config-interval=-1
+        ! appsink name=appsink`
+    }
+
+    return `      ximagesrc display-name={display} show-pointer=false use-damage=false
+        ! videorate
+        ! video/x-raw,framerate=${frameRate}/1
+        ! videoconvert
+        ! video/x-raw,format=I420
+        ! queue max-size-buffers=1 leaky=downstream
+        ! x264enc bitrate=${bitrateKbps} speed-preset=ultrafast key-int-max=60 tune=zerolatency
+        ! appsink name=appsink`
   }
 
   /** 清理会话对应的 neko/brower 配置目录 */

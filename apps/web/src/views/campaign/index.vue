@@ -2,6 +2,7 @@
 import NewYear from '/@/views/campaign/new-year/index.vue'
 import SpringFestival from '/@/views/campaign/spring-festival/index.vue'
 import Easter from '/@/views/campaign/easter/index.vue'
+import Freedom from '/@/views/campaign/freedom/index.vue'
 import { useCampaignStore } from '/@/stores/campaign'
 import { enhanceCountdown, sleep } from '/@/utils'
 import { ActivityType } from '/@/enums/base'
@@ -22,6 +23,10 @@ const activityMap = {
   [ActivityType.Easter]: {
     component: markRaw(Easter),
     localStorageKey: '$EasterModalStatus',
+  },
+  [ActivityType.Freedom]: {
+    component: markRaw(Freedom),
+    localStorageKey: '$FreedomModalStatus',
   },
 }
 
@@ -46,12 +51,14 @@ async function getActivityBySeason() {
 }
 
 function stratHolidaySeasonCountdown() {
+  console.log('seasonalActivity.value', seasonalActivity.value)
   if (seasonalActivity.value.none)
     return
 
   const timeStamp = seasonalActivity.value.active
     ? currentActivity.value.end_timestamp
     : currentActivity.value.start_timestamp
+  // console.log('timeStamp', timeStamp)
 
   stopCountdown.value = enhanceCountdown(timeStamp, () => { }, {
     onEnd: async () => {
@@ -59,6 +66,12 @@ function stratHolidaySeasonCountdown() {
       await getActivityBySeason()
     },
   })
+  // const now = new Date()
+  // const ms = timeStamp - now.getTime()
+  // console.log('ms', ms)
+  // setTimeout(() => {
+  //   sleep(300).then(getActivityBySeason)
+  // }, ms + 1000)
 }
 
 function clearExpiredLocalStorageKey() {

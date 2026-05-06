@@ -1,10 +1,10 @@
-import type { ResourceUpdateMessage } from "@roxy/electron-preload";
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type {
   Items,
   SettingsModule,
-} from "/@/layout/components/header/profile/type";
-import { $t } from "/@/locales";
-import About from "./components/about.vue";
+} from '/@/layout/components/header/profile/type'
+import { $t } from '/@/locales'
+import About from './components/about.vue'
 
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 
@@ -15,13 +15,9 @@ async function checkForUpdates() {
   }
 }
 
-async function checkWebForUpdates() {
-  globalThis.electronAPI.send('app:checkWebForUpdates')
-}
-
-globalThis.electronAPI.on("app:resource-update", (data) => {
+globalThis.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
-  if (data.type !== "kernel") {
+  if (data.type !== 'kernel') {
     const index = clientUpdates.value.findIndex(item => data.type === item.type)
     if (index === -1) {
       clientUpdates.value.push(data)
@@ -30,33 +26,31 @@ globalThis.electronAPI.on("app:resource-update", (data) => {
       clientUpdates.value[index] = data
     }
   }
-});
+})
 
 requestIdleCallback(checkForUpdates)
 
 export function useAbout() {
-  checkWebForUpdates()
-
   function getAboutPanels(): SettingsModule {
     return {
-      title: $t("关于"),
-      description: $t("软件信息和更新。"),
+      title: $t('关于'),
+      description: $t('软件信息和更新。'),
       list: [
         {
           items: [
             {
-              name: "about",
+              name: 'about',
               text: () => {
-                return <About upgradeList={clientUpdates.value} />;
+                return <About upgradeList={clientUpdates.value} />
               },
             },
           ],
         },
       ],
-    };
+    }
   }
 
   return {
     getAboutPanels,
-  };
+  }
 }

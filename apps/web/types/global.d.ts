@@ -32,3 +32,11 @@ declare module 'vue' {
     'rx-svg-icon': typeof RxSvgIcon
   }
 }
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    metadata?: {
+      reqTime?: number
+    }
+  }
+}

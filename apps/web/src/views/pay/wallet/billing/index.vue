@@ -9,12 +9,14 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog } from '/@/hooks/useDialog'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { openProcessing } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
+const { showFreedomActivityModal } = useFreedomActivity()
 
 const tableRef = useTemplateRef('rxtable')
 
@@ -170,6 +172,7 @@ function reAutoRenew(row: any) {
             return
           openProcessing(row, row.orderType)
             .finally(() => {
+              showFreedomActivityModal()
               tableRef.value?.refresh()
             })
         },

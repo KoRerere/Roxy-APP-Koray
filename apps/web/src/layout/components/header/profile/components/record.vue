@@ -9,7 +9,7 @@ import { copyText } from '/@/utils'
 defineEmits(['close'])
 
 const [showModal] = useDialog()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [showToast] = useResponseToast()
 const { seasonalActivity } = storeToRefs(useCampaignStore())
 
 const statusStrMap = {
@@ -42,18 +42,9 @@ const columns = [
   },
 ]
 
-const dataList = ref<any[]>([])
-
-onBeforeMount(() => {
-  getCdkeyList()
-})
-
 async function getCdkeyList() {
   const { code, data, msg } = await API.pay.userRedeemCodeListList()
-  onlyErrorToast(code, msg)
-  if (code !== 0)
-    return
-  dataList.value = data
+  return { code, data: { rows: data }, msg }
 }
 
 function onCopy(code: string) {
@@ -82,7 +73,7 @@ function giftRule() {
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
     <div class="h-70 overflow-hidden">
-      <RyTable :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+      <RyTable :columns="columns" :table-request="getCdkeyList" :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
                :row-class="(data: any) => ({ 'p-disabled': data.status !== 0 })"
       >
         <template #table-empty>
@@ -122,7 +113,11 @@ function giftRule() {
   color: var(--component-dropdown-text-active);
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
-  background: linear-gradient(103deg, #32a9ff -10.43%, #e74ef8 53.33%, #ff9393 117.09%);
+  background: linear-gradient(
+    103deg,
+    var(--campaign-may-freedom-bg-gradient-1, #4096ff) 0.45%,
+    var(--campaign-may-freedom-bg-gradient-2, #01cab3) 60.72%
+  );
 }
 
 .expire {

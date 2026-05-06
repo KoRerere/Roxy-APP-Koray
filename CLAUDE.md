@@ -168,16 +168,6 @@ Renderer: window.electronAPI.invoke('browser:launch', config)
   1. OpenAPI MCP (roxybrowser_openapi): RoxyBrowser API tools
   2. Playwright MCP (roxybrowser_playwright_{workerId}): Browser automation
 
-**Skills System** (`src/agent/skills/`):
-- Lazy-loaded via `load_skills` tool
-- Skills: openapiMcpSkills, playwrightMcpSkills, fileSystemSkills, twoFactorSkills
-- Skills stored in ContextManager and restored across conversation turns
-
-**Context Management** (`src/database/summary/`):
-- Auto-summarizes conversation when exceeds MAX_MESSAGES_BEFORE_SUMMARY
-- Preserves recent messages + summary for next turn
-- Stores allowedSkills for skill state restoration
-
 ### Browser Management
 
 **BrowserManager** (`apps/electron/src/modules/browser/browser-manager/`):

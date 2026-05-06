@@ -5,6 +5,7 @@ import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
+import { appConfig } from '/@/constants'
 import { isLinux, isMac } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
@@ -293,7 +294,7 @@ export class BeforeLaunchTask {
     }
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      args.push(`http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`)
+      args.push(`http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`)
     }
 
     // 如果用户开启了插件
@@ -514,7 +515,7 @@ export class BeforeLaunchTask {
     // }
 
     // 生成指纹配置
-    const fingerprintConfig = genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
+    const fingerprintConfig = await genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
     console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)
     try {
       await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)

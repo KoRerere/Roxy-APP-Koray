@@ -27,9 +27,10 @@ function getRowState(datas: ProxyItem[]) {
   let isGift = false
   let canRenew = true
   let canRefresh = true
+  let isDirect = false
 
   for (const item of datas) {
-    if (item?.proxyExpireStatus === ProxyExpireStatus.expired)
+    if (item.proxyExpireStatus === ProxyExpireStatus.expired)
       hasExpired = true
 
     if (item.orderStatus === ProxyOrderStatus.pending)
@@ -48,6 +49,9 @@ function getRowState(datas: ProxyItem[]) {
       canRenew = false
     if (!item.refreshUrl)
       canRefresh = false
+
+    if (item.isDirect)
+      isDirect = true
   }
 
   return {
@@ -59,6 +63,7 @@ function getRowState(datas: ProxyItem[]) {
     isGift,
     canRenew,
     canRefresh,
+    isDirect,
   }
 }
 
@@ -72,6 +77,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     isGift,
     canRenew,
     canRefresh,
+    isDirect,
   } = getRowState(([] as ProxyItem[]).concat(data))
 
   return [
@@ -112,7 +118,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_download',
       tooltip: $t('下载'),
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect,
       quick: true,
       multiple: true,
       multipleProps: {

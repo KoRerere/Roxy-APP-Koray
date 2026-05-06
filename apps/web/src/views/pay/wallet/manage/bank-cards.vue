@@ -213,7 +213,7 @@ function deleteCard(cardId: number) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 select-none walllet-bank-cards">
+  <div class="flex flex-col gap-6 walllet-bank-cards">
     <div class="flex flex-col gap-2">
       <div class="flex justify-between items-center">
         <div class="title">

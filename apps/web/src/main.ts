@@ -1,4 +1,5 @@
 import './polyfill'
+import './web-auto-updater'
 import { OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
@@ -54,7 +55,7 @@ queueMicrotask(async () => {
     console.log('currentLocale', cacheData?.currentLocale)
     const locale = cacheData?.currentLocale || defaultLanguage
 
-    setupI18n({ defaultLocale: locale }).finally(async () => {
+    setupI18n({ defaultLocale: locale as SupportedLanguagesType }).finally(async () => {
       await import('./electron-api-polyfill')
 
       const { app } = await import('./app')

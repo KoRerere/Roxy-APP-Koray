@@ -44,7 +44,7 @@ export async function createAgent(options: {
 }) {
   const thinkingConfig = options.config?.thinking || true
 
-  const model = createLLM(!!thinkingConfig)
+  const model = await createLLM(!!thinkingConfig)
 
   /** 技能发现用 agent-bin：middleware 列 /skills/ 时能解析到 agent-bin/skills，AI 才能识别到技能并去调 read_file */
   const fsBackendForList = new FilesystemBackend({ rootDir: env.SKILLS_DIR, virtualMode: true })

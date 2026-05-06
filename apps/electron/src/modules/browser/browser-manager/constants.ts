@@ -1,3 +1,4 @@
+import { appConfig } from '/@/constants'
 import { isMac } from '/@/constants/common'
 import { store } from '/@/modules/store'
 
@@ -76,6 +77,7 @@ export function getLocalWebServerURL() {
     import.meta.env.VITE_DEV_SERVER_URL,
     `http://localhost:${store.appPort}`,
     `http://127.0.0.1:${store.appPort}`,
+    store.lastWebDomain || '',
   ]
 }
 

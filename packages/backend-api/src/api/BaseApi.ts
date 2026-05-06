@@ -36,8 +36,10 @@ import {
   GetCoreUpgradeCreateData,
   GetCoreUpgradeCreatePayload,
   GetEasterPromoTimeListData,
+  GetEcommerceWhitelistDomainsListData,
   GetFaqHelpList2Data,
   GetFaqHelpListData,
+  GetMayFreedomSeasonPromoTimeListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
   GetPromotionLinkDiscountAndUsernameListData,
@@ -141,6 +143,7 @@ import {
   UserGetWithdrawRecordListListParams,
   UserIsNaifeiUserListData,
   UserLogoutListData,
+  UserMayFreedomResultListData,
   UserMigrateDataListData,
   UserModifyRemarkDisplayStatusCreateData,
   UserModifyRemarkDisplayStatusCreatePayload,
@@ -2245,6 +2248,54 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetMayFreedomSeasonPromoTimeList
+   * @summary 获取五月自由季活动信息
+   * @request GET:/get_may_freedom_season_promo_time
+   * @response `200` `GetMayFreedomSeasonPromoTimeListData`
+   */
+  getMayFreedomSeasonPromoTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetMayFreedomSeasonPromoTimeListData, any>({
+      path: `/get_may_freedom_season_promo_time`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserMayFreedomResultList
+   * @summary 获取五一活动抽奖结果
+   * @request GET:/user_may_freedom_result
+   * @response `200` `UserMayFreedomResultListData`
+   */
+  userMayFreedomResultList = (params: RequestParams = {}) =>
+    this.http.request<UserMayFreedomResultListData, any>({
+      path: `/user_may_freedom_result`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetEcommerceWhitelistDomainsList
+   * @summary 获取直连白名单
+   * @request GET:/get_ecommerce_whitelist_domains
+   * @response `200` `GetEcommerceWhitelistDomainsListData`
+   */
+  getEcommerceWhitelistDomainsList = (params: RequestParams = {}) =>
+    this.http.request<GetEcommerceWhitelistDomainsListData, any>({
+      path: `/get_ecommerce_whitelist_domains`,
+      method: "GET",
       format: "json",
       ...params,
     });

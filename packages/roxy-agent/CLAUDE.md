@@ -1,275 +1,305 @@
 # CLAUDE.md
 
-本文件为 Claude Code (claude.ai/code) 提供在此代码库中工作的指导。
+本文件为 Claude Code 提供在 `packages/roxy-agent` 中工作的指导。
 
-## 构建和开发命令
+## 生产环境启动方式（重要）
+
+**roxy-agent 在生产环境中不是独立进程，而是由 Electron 主进程通过 `utilityProcess.fork()` 作为子进程启动的。**
+
+启动入口：`apps/electron/src/modules/mcp/index.ts` → `McpManager.startMcpServer()`
+
+关键启动流程：
+1. 等待 `agentUpdater` 完成更新检查，确保本地脚本与远端 sha512 匹配
+2. 调用后端 API 获取 LLM 配置（provider/model/apikey）和 RoxyClaw（IM）配置
+3. 通过 `getPortPromise` 动态分配端口（默认从 26580 开始）
+4. 用 `utilityProcess.fork(AGENT_ENTRY_SCRIPT, [], { env, stdio: 'pipe' })` 启动
+
+```typescript
+// apps/electron/src/modules/mcp/index.ts
+const worker = utilityProcess.fork(AGENT_ENTRY_SCRIPT, [], {
+  env,        // 所有环境变量由 Electron 主进程注入，agent 本身不读取 .env 文件
+  execArgv: isDev ? ['--inspect=20580', '--experimental-network-inspection'] : [],
+  stdio: 'pipe',
+})
+```
+
+**环境变量由 Electron 注入**，具体值来源：
+- `LLM_PROVIDER/MODEL/API_KEY`：从后端 `userGetLlmInfoList` 接口获取
+- `ROXY_API_KEY/HOST`：`store.apiKey` 和本地 API 端口（`http://127.0.0.1:{apiPort}`）
+- `ROXY_SERVER_PORT`：动态分配的端口
+- `ROXY_USER_ID/WORKSPACE_ID`：来自 `store`
+- `CHECKPOINT_DIR`：`agentUpdater.agentDir + '/checkpoints'`
+- `SKILLS_DIR`：`agentUpdater.agentDir`
+- `DOWNLOADS_DIR`：`app.getPath('downloads')`（系统下载目录）
+- `ROXY_MODE`：IM 启用时为 `'im'`，否则为 `'agent'`（两者互斥，只启动一个进程）
+
+**子进程与主进程通信**（`worker.on('message', ...)`）：
+- `save_chat_message`：保存对话消息到后端 + 阿里云 OSS
+- `token_usage_change`：计算 token 消耗，扣除余额，通知前端
+
+**脚本路径**：
+- 开发环境：`apps/electron/src/modules/mcp/` 下的 `agent.mjs` / `openapiMcp.mjs` / `playwrightMcp.mjs`
+- 生产环境：`appConfig.agentBinPath` / `openapiMcpBinPath` / `playwrightMcpBinPath`（从 OSS 下载后的本地路径）
+
+> 本地开发调试时（`tsx src/cli.ts`）才会读取 `.env` 文件。生产/打包环境下所有配置均由 Electron 主进程注入。
+
+## 构建命令
 
 ```bash
-# 完整构建
-pnpm build
+vite build          # 构建到 dist-vite/（ES 模块，Node 22 SSR）
+pnpm bundle         # Webpack 打包到 dist/（发布用）
+pnpm build          # 完整构建：vite build + build-words + bundle
+tsx src/cli.ts      # 开发环境启动（读取 .env 文件）
+node scripts/run-dist.mjs  # 运行编译产物
+```
 
-# 仅 Vite 构建（生成 dist-vite/）
-vite build
+## 目录结构
 
-# Webpack 打包（生成 dist/）
-pnpm bundle
-
-# 开发环境启动服务器
-tsx src/cli.ts
+```
+src/
+├── index.ts              # 应用入口，解析执行模式
+├── config.ts             # 环境变量读取与默认值
+├── logger.ts             # 文件日志（按日期轮转，5MB/7天）
+├── abortRegistry.ts      # AbortController 生命周期管理
+├── mcpManager.ts         # MCP 客户端管理（OpenAPI + Playwright + 用户自定义）
+├── sensitiveWords.ts     # 敏感词过滤
+├── cli.ts                # CLI 入口（转发到 index.ts）
+├── llm/                  # LLM 集成层
+│   ├── index.ts          # LLM 工厂函数 createLLM()
+│   ├── provider.ts       # Provider 枚举
+│   └── model/            # 各模型实现
+│       ├── baseLLMChart.ts
+│       ├── claude.ts     # Anthropic（anthropicApiUrl 替代 baseURL）
+│       ├── deepseek.ts   # DeepSeek（支持 enable_thinking）
+│       ├── qwen.ts       # 阿里通义千问
+│       ├── chatgpt.ts    # OpenAI GPT
+│       ├── gemini.ts     # Google Gemini
+│       ├── kimi.ts       # Kimi
+│       ├── moonshot.ts   # Moonshot
+│       └── siliconflow-deepseek.ts
+├── deepagents/           # Agent 执行引擎（核心）
+│   ├── index.ts          # Agent 工厂 createAgent()
+│   ├── handle-stream.ts  # 流式事件处理
+│   ├── tool-wrapper.ts   # 工具异常包装（错误计数限制）
+│   ├── sqlite-checkpointer.ts  # LangGraph checkpoint 持久化
+│   ├── sqlite-store.ts   # SQLite 状态存储
+│   ├── prompt/index.ts   # 系统提示词
+│   └── tools/index.ts    # parallel_dispatch 工具
+├── database/
+│   ├── conversations/    # 对话与消息 SQLite 存储
+│   │   ├── index.ts      # ChatContextAPI
+│   │   └── types.ts
+│   └── context/index.ts  # 跨轮次上下文（摘要 + allowedSkills）
+├── server/               # Express HTTP 服务器
+│   ├── index.ts          # 服务器初始化
+│   ├── chatRoutes.ts     # /api/chat/*
+│   ├── mcpRoutes.ts      # /api/mcp/*
+│   ├── skillRoutes.ts    # /api/skills/*
+│   ├── streamAdapter.ts  # Agent 事件 → SSE 格式转换
+│   └── sseLogger.ts
+├── im/                   # IM 平台适配器
+│   ├── index.ts
+│   ├── core/
+│   │   ├── IMBridge.ts       # IM → Agent 桥接层
+│   │   ├── threadManager.ts  # 频道 → 线程 ID 映射
+│   │   ├── attachments.ts
+│   │   ├── outputGuard.ts
+│   │   └── StreamSender.ts
+│   ├── discord/
+│   ├── feishu/           # 飞书/Lark
+│   ├── slack/
+│   └── telegram/
+└── modes/
+    ├── agent.ts          # HTTP 服务模式
+    ├── im.ts             # IM 服务模式
+    └── worker.ts         # Worker 模式（未实现）
 ```
 
 ## 核心架构
 
-### 双模式智能体系统
+### 执行模式
 
-代码库实现了 **两种截然不同的智能体执行模式**：
+应用通过 `ROXY_MODE` 或 CLI 参数选择三种模式：
 
-1. **Simple 模式** (`src/agent/simple/`): 单智能体迭代式工具调用
-2. **Orchestrator 模式** (`src/agent/orchestrator/`): 多智能体规划、并行执行、结果综合
+- **`agent`**（默认）：启动 Express HTTP 服务器，接收前端请求
+- **`im`**：启动 IM 适配器（飞书/Telegram/Slack/Discord），作为后台服务运行
+- **`worker`**：占位符，未实现
 
-**关键区别**：Simple 模式运行单个 LLM 循环调用工具，而 Orchestrator 模式遵循 **三阶段工作流**：
+### Agent 双模式（`src/deepagents/`）
 
-- **阶段 1 (Planning 规划)**: Orchestrator 生成 JSON 格式的任务计划
-- **阶段 2 (Execution 执行)**: 并行 Worker 独立执行任务，每个 Worker 拥有隔离的 MCP 客户端
-- **阶段 3 (Synthesis 综合)**: Orchestrator 综合所有 Worker 结果生成最终答案
+执行模式由**前端调用接口时传入**，而非由服务端配置决定。
 
-### LangGraph 状态管理
+**Simple 模式**：单 Agent 迭代工具调用。
 
-两种模式都使用 **LangGraph 的 StateGraph**，但状态结构不同：
+**Orchestrator 模式**：多 worker 模式。适合浏览器多窗口并行执行
 
-**Orchestrator 状态** (`src/agent/orchestrator/state.ts`):
 
-- `messages`: 对话历史
-- `plan`: 规划阶段生成的 `Subtask[]` 数组
-- `worker_results`: 并行 Worker 返回的 `WorkerOutput[]` 数组
-- `final_answer`: 综合后的最终答案
-- `enableThinking`: 是否启用 LLM 深度思考模式
-- `summary`: 压缩后的对话上下文
+### MCP 集成（`src/mcpManager.ts`）
 
-**路由逻辑** (`orchestrator.ts:routerOrchestrator`):
+三类 MCP 客户端：
 
-- 如果 `final_answer` 存在 → END
-- 如果 `plan.length > 0 && worker_results.length < plan.length` → 使用 `Send()` API 派发并行 Worker
-- 否则 → 继续到 orchestrator
+| 类型 | 范围 | 传输方式 |
+|------|------|----------|
+| OpenAPI MCP（`roxybrowser_openapi`）| 全局共享 | InMemoryTransport |
+| Playwright MCP（`roxybrowser_playwright_{workerId}`）| 每 Worker 隔离 | stdio 子进程 |
+| 用户自定义 MCP | 全局可配置 | stdio / http（不支持sse模式） |
 
-### MCP (Model Context Protocol) 集成
-
-**关键设计**：每个 Worker 获得 **隔离的 MCP 客户端** 以防止资源冲突。
-
-**McpManager** (`src/mcpManager.ts`):
-
-- 通过 `workerClients: Map<string, MultiServerMCPClient>` 管理每个 Worker 的 MCP 客户端
-- 为每个 Worker 创建两个 MCP 服务器：
-  1. **OpenAPI MCP** (`roxybrowser_openapi`): RoxyBrowser API 工具
-  2. **Playwright MCP** (`roxybrowser_playwright_{workerId}`): 浏览器自动化工具
-
-**生命周期**:
-
+生命周期：
 ```typescript
-// Worker 启动时
-await mcpManager.createPlaywrightClient(workerId)
+await mcpManager.createPlaywrightClientForWorker(workerId)
 const tools = mcpManager.getToolsForWorker(workerId)
-
-// Worker 完成时
-await mcpManager.destroyWorkerClient(workerId)
+await mcpManager.destroyPlaywrightClientForWorker(workerId)
 ```
-
-**MCP 环境变量**:
-
-- `OPENAPI_SCRIPT_PATH`: OpenAPI MCP 脚本路径
-- `PLAYWRIGHT_SCRIPT_PATH`: Playwright MCP 脚本路径
-- `ROXY_API_KEY`, `ROXY_API_HOST`: RoxyBrowser 凭证
-- `PLAYWRIGHT_MCP_SNAPSHOT_MODE`: 设置为 `"optimized"`
-- `PLAYWRIGHT_MCP_ROXY_MODE`: 设置为 `"true"`
 
 ### Skills 技能系统
 
-**Skills 采用懒加载机制**，通过 `load_skills` 工具实现 (`src/agent/skills/index.ts`)。
+**懒加载**：Agent 启动时仅有 `load_skills` + 基础工具，调用后动态注入对应 MCP 工具。
 
-**工作流程**:
-
-1. Agent 启动时仅拥有 `load_skills` 工具 + 基础工具
-2. Agent 调用 `load_skills` 并传入 `skillNames: string[]`
-3. 系统返回技能内容并更新 `allowedTools` 数组
-4. Agent 获得技能对应的 MCP 工具访问权限
-
-**可用技能**:
-
-- `openapiMcpSkills`: RoxyBrowser 配置文件/浏览器管理
-- `playwrightMcpSkills`: 浏览器自动化（导航、点击、填写、截图）
-- `fileSystemSkills`: 文件读写操作
-- `twoFactorSkills`: 2FA 验证码生成
-
-**实现细节**：技能列表存储在 `ContextManager` 的 `allowedSkills: string[]` 中，跨对话轮次自动恢复。
+内置技能：
+- `openapiMcpSkills`：RoxyBrowser 配置文件/浏览器管理
+- `playwrightMcpSkills`：浏览器自动化（导航、点击、截图等）
 
 ### 多 LLM 支持
 
-**支持的提供商** (`src/llm/index.ts`):
+`createLLM(enableThinking?)` 根据 `LLM_PROVIDER` + `LLM_MODEL` 创建实例：
 
-- `siliconflow`: SiliconFlow API（默认）
-- `dashscope`: 阿里云通义千问
-- `openrouter`: OpenRouter
-- `roxybrowser`: RoxyBrowser API
-- `custom`: 自定义 base URL
+| Provider | 备注 |
+|----------|------|
+| `siliconflow` | 默认，支持 DeepSeek thinking |
+| `dashscope` | 阿里云通义千问 |
+| `openrouter` | 多模型聚合 |
+| `roxybrowser` | RoxyBrowser 代理 API |
+| `custom` | 自定义 base URL |
 
-**模型类** (`src/llm/model/`):
+Thinking 模式：`enableThinking=true` 时，DeepSeek/Qwen 在 `chunk.additional_kwargs.reasoning` 返回推理过程。
 
-- `DeepSeek`: 支持 `enable_thinking` 参数
-- `Qwen`: 阿里通义千问，支持思考模式
-- `Claude`: Anthropic Claude（使用 `anthropicApiUrl` 而非 `baseURL`）
-- `Gemini`: Google Gemini
-- `ChatGPT`: OpenAI GPT 系列
+### 上下文管理（`src/database/context/`）
 
-**思考模式**：当 `enableThinking=true` 时，DeepSeek/Qwen 模型会在 `chunk.additional_kwargs.reasoning` 中返回推理过程。
+- 消息数超过 `MAX_MESSAGES_BEFORE_SUMMARY` 时自动压缩
+- 压缩：保留最近 `KEEP_RECENT_MESSAGES` 条 + 摘要消息
+- 记录 `input_tokens`/`output_tokens`，用于用量统计
 
-### 上下文管理与记忆
+### HTTP 服务器路由（`src/server/`）
 
-**ContextManager** (`src/database/summary/`):
+```
+POST   /api/chat              # 流式聊天（SSE）
+POST   /api/conversations     # 创建对话
+GET    /api/conversations     # 列出对话
+GET    /api/conversations/:id
+PUT    /api/conversations/:id
+DELETE /api/conversations/:id
+POST   /api/upload            # 上传附件
+GET    /api/files/:fileId
 
-- 当 `messages.length > MAX_MESSAGES_BEFORE_SUMMARY` 时自动压缩对话
-- 保留最近的 `KEEP_RECENT_MESSAGES` 条消息 + 摘要
-- 存储 `allowedSkills` 以便跨对话恢复技能状态
+GET    /api/mcp/servers       # 列出 MCP 服务
+POST   /api/mcp/servers       # 新增/更新
+DELETE /api/mcp/servers/:name
+POST   /api/mcp/servers/:name/enable
+POST   /api/mcp/servers/:name/disable
+POST   /api/mcp/servers/:name/test
+POST   /api/mcp/servers/import  # 从 Claude Desktop 格式批量导入
 
-**摘要流程**:
+GET    /api/skills            # 列出已安装技能
+POST   /api/skills/validate
+POST   /api/skills/install
+DELETE /api/skills/:name
 
-1. Agent 执行完成后触发 `ContextManager.updateContext(messages, threadId, allowedSkills)`
-2. 如果消息数超过阈值，将旧消息压缩为摘要
-3. 下一轮对话：`restoreHistoryContext()` 前置摘要 + 最近消息
+GET    /health
+```
 
-### 服务器与流式传输
+**SSE 事件类型**：`session` `content` `thinking` `planning` `worker_content` `worker_thinking` `worker_result` `synthesis` `tool_call` `tool_result` `token_usage` `error` `done` `interrupt` `todo` `title`
 
-**Express 服务器** (`src/server/index.ts`):
+### 中断处理
 
-- 端口：`ROXY_SERVER_PORT`（默认 3000）
-- 路由：`/api/chat/*`（聊天 API）、`/health`（健康检查）
-- 静态文件服务目录：`CHECKPOINT_DIR/static/`
+`AbortRegistry`（`src/abortRegistry.ts`）管理每个 run 的 `AbortController`：
+```typescript
+abortRegistry.createAbort(runId)
+abortRegistry.abortRun(runId)
+abortRegistry.cleanupRun(runId)
+```
 
-**Stream Adapter** (`src/server/streamAdapter.ts`):
+Agent 内部在每次工具调用前检查 `config.signal?.aborted`，抛出 `AbortError`。
 
-- 将智能体事件转换为 SSE 格式
-- 事件类型：`content`、`thinking`、`toolCall`、`toolResult`、`planning`、`synthesis`、`workerContent`、`workerThinking`
+## 数据存储
 
-**Writer 模式**：LangGraph config 包含 `writer?: (data: string) => void` 回调，用于向客户端流式传输数据块。
+两个 SQLite 数据库（均在 `CHECKPOINT_DIR`）：
 
-### 配置要求
+**`conversations.db`**：
+- `conversations`：对话元数据（id、user_id、workspace_id、title、thread_id、model、status）
+- `messages`：消息记录（支持 inline 和 file 两种存储方式）
 
-**必需的环境变量**:
+**`checkpoint.db`**：
+- `conversation_contexts`：上下文快照（messages、allowed_skills、token 用量）
+
+LangGraph checkpoint 文件：`checkpoint_{conversationId}.db`（每个对话独立）
+
+## 环境变量
+
+### 必需
 
 ```bash
 LLM_PROVIDER=siliconflow
 LLM_MODEL=Pro/deepseek-ai/DeepSeek-V3.2
 LLM_API_KEY=sk-...
-MAX_TURNS=20                      # 最大工具调用循环次数
-CONTEXT_MESSAGE_LIMIT=15          # 最大对话历史条数
-WORKER_CONTEXT_LIMIT=6            # 最大并行 Worker 数（0=禁用）
-CHECKPOINT_DIR=./logs             # 对话存储目录
+CHECKPOINT_DIR=./logs
 ROXY_SERVER_PORT=3000
 ```
 
-**可选配置**:
+### Agent 行为
 
 ```bash
-SILICONFLOW_THINKING_BUDGET=4096  # 思考 token 限制
-MAX_MESSAGES_BEFORE_SUMMARY=6     # 触发摘要的消息数阈值
-KEEP_RECENT_MESSAGES=6            # 摘要后保留的最近消息数
-DEBUG=true                        # 启用调试日志
+MAX_TURNS=20                      # 最大工具调用轮次
+CONTEXT_MESSAGE_LIMIT=15          # 最大对话历史条数
+WORKER_CONTEXT_LIMIT=6            # 最大并行 Worker 数（0 = 禁用 orchestrator）
+MAX_MESSAGES_BEFORE_SUMMARY=20    # 触发摘要阈值
+KEEP_RECENT_MESSAGES=6            # 摘要后保留条数
+SILICONFLOW_THINKING_BUDGET=4096  # Thinking token 预算
+SYSTEM_LANGUAGE=zh-CN
 ```
 
-## 关键实现模式
+### MCP
 
-### 并行 Worker 执行（Orchestrator 模式）
-
-Worker 通过 **LangGraph 的 `Send()` API** 派发：
-
-```typescript
-// 在 routerOrchestrator() 中
-return plan.map(task => new Send('worker', {
-  task,
-  workerId: task.workerId,
-  enableThinking: state.enableThinking,
-  sessionDir: state.sessionDir,
-}))
+```bash
+OPENAPI_SCRIPT_PATH=...
+PLAYWRIGHT_SCRIPT_PATH=...
+ROXY_API_KEY=...
+ROXY_API_HOST=...
+PLAYWRIGHT_MCP_SNAPSHOT_MODE=optimized
+PLAYWRIGHT_MCP_ROXY_MODE=true
 ```
 
-每个 `Send()` 创建一个 **独立的 Worker 调用**，拥有隔离的 MCP 客户端。
+### IM（可选）
 
-### 非 Claude 模型的工具格式转换
+```bash
+ENABLE_IM=true
 
-Simple 模式对 Claude 模型直接使用 `StructuredTool` 对象。Orchestrator Worker 将工具转换为 OpenRouter 格式：
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_ALLOWED_CHAT_IDS=...
 
-```typescript
-function convertToolsToOpenRouterFormat(tools: any[]): any[] {
-  return tools.map(tool => ({
-    type: 'function',
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.schema || {},
-    },
-  }))
-}
+FEISHU_APP_ID=...
+FEISHU_APP_SECRET=...
+FEISHU_ALLOWED_USER_IDS=...
+
+SLACK_BOT_TOKEN=...
+SLACK_SIGNING_SECRET=...
+SLACK_APP_TOKEN=...
+SLACK_ALLOWED_USER_IDS=...
+SLACK_ALLOWED_CHANNEL_IDS=...
+
+DISCORD_BOT_TOKEN=...
+DISCORD_ALLOWED_USER_IDS=...
+DISCORD_ALLOWED_CHANNEL_IDS=...
+DISCORD_ALLOWED_GUILD_IDS=...
 ```
 
-### 中断处理
+### 其他
 
-两种模式都支持通过 `config.signal` 取消执行：
-
-```typescript
-function checkAbort() {
-  if (config.signal?.aborted) {
-    throw new AbortError('User cancelled')
-  }
-}
-
-// 在工具执行循环中
-for (let turn = 0; turn < MAX_TURNS; turn++) {
-  checkAbort()
-  const stream = await llm.stream(messages, { signal: config.signal })
-  // ...
-}
+```bash
+ROXY_MODE=agent           # agent | im | worker
+ROXY_USER_ID=...
+ROXY_WORKSPACE_ID=...
+SKILLS_DIR=...
+DOWNLOADS_DIR=...
+DEBUG=true
+DEVELOPMENT=true
 ```
-
-### 任务计划 JSON 格式（Orchestrator）
-
-规划阶段期望 LLM 返回：
-
-```json
-{
-  "tasks": [
-    {
-      "id": "1",
-      "description": "导航到 example.com"
-    },
-    {
-      "id": "2",
-      "description": "提取页面标题"
-    }
-  ]
-}
-```
-
-任务数量限制为 `WORKER_CONTEXT_LIMIT`（设为 0 则禁用 orchestrator 模式）。
-
-## Git 提交消息格式
-
-**所有提交消息必须使用中文**（`.cursorrules` 要求）：
-
-```
-类型(范围): 简短描述
-
-详细描述
-```
-
-类型：`feat`（新功能）、`fix`（修复）、`docs`（文档）、`style`（格式）、`refactor`（重构）、`test`（测试）、`chore`（构建）
-
-## 调试
-
-- 在 `.env` 中设置 `DEBUG=true` 启用调试日志
-- Worker 执行日志包含工具调用表：`console.table(callTable)`
-- 检查 `CHECKPOINT_DIR/` 目录查看对话历史和静态文件
-- 通过 `mcpManager.count` 追踪 MCP 客户端数量
-
-## Orchestrator vs Simple 模式选择
-
-- **Simple 模式**：适用于单一任务、简单对话场景
-- **Orchestrator 模式**：适用于需要任务分解、并行执行的复杂场景（需设置 `WORKER_CONTEXT_LIMIT > 0`）

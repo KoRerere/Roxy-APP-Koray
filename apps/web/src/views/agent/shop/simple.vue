@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'

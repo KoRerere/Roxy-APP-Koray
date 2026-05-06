@@ -1,4 +1,4 @@
-import axios from "axios";
+import { request } from "../src/utils/request.ts";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { SocksProxyAgent } from "socks-proxy-agent";
@@ -29,7 +29,7 @@ const checkChannel = `http://iprust.io/ip.json`;
 // const httpUrl = `https://cbbang_1:bang@gate5.rola.vip:2657`;
 const httpUrl = `http://666us:666@162.250.124.195:8005`;
 
-const response = await axios({
+const response = await request({
   url: checkChannel,
   timeout: TIMEOUT,
   maxRedirects: 0,

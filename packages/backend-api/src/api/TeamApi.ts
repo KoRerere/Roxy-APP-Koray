@@ -13,6 +13,8 @@
 import {
   UserAddTeamNicknameCreateData,
   UserAddTeamNicknameCreatePayload,
+  UserAddTeamWorkspaceNicknameCreateData,
+  UserAddTeamWorkspaceNicknameCreatePayload,
   UserDelTeamInfoCreateData,
   UserDelTeamInfoCreatePayload,
   UserGetMemberInfoByWorkspaceListData,
@@ -114,6 +116,27 @@ export class TeamApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserAddTeamNicknameCreateData, any>({
       path: `/user_add_team_nickname`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserAddTeamWorkspaceNicknameCreate
+   * @summary 修改成员空间备注名称
+   * @request POST:/user_add_team_workspace_nickname
+   * @response `200` `UserAddTeamWorkspaceNicknameCreateData`
+   */
+  userAddTeamWorkspaceNicknameCreate = (
+    data: UserAddTeamWorkspaceNicknameCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddTeamWorkspaceNicknameCreateData, any>({
+      path: `/user_add_team_workspace_nickname`,
       method: "POST",
       body: data,
       type: ContentType.Json,

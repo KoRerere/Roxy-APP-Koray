@@ -4,16 +4,11 @@ import currency from 'currency.js'
 import TierSlider from '/@/views/pay/subscribe/components/tier-slider.vue'
 import SubscribePlans from '/@/views/pay/subscribe/components/subscribe-plans.vue'
 import Illustrate from '/@/views/pay/subscribe/components/illustrate.vue'
-
 import { formatNumberToKMB } from '/@/utils/basic'
-import { ceilByStep } from '../util'
+import { alignSubscribeCount, formatTierData } from '../util'
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useCampaignStore } from '/@/stores/campaign'
 import type { Plan } from '../type'
-
-const { list, rawList } = defineProps<Props>()
-
-const popoverRef = useTemplateRef('popover')
 
 interface Props {
   min?: number
@@ -22,11 +17,9 @@ interface Props {
   rawList: Plan[]
 }
 
-interface Tier {
-  start: number
-  end: number
-  step: number
-}
+const { list, rawList } = defineProps<Props>()
+
+const popoverRef = useTemplateRef('popover')
 
 const { seasonalActivity } = storeToRefs(useCampaignStore())
 
@@ -35,16 +28,7 @@ const selectedCount = defineModel<number>('count', { required: true })
 
 const step = ref(10)
 
-const tiersData = computed(() => {
-  const MAX_STEP = 100
-  return (list || []).reduce((acc, { minWindows, maxWindows }) => {
-    const step = Math.min(maxWindows - minWindows, MAX_STEP)
-    if (minWindows <= MAX_STEP)
-      acc.steps.set(minWindows, step)
-    acc.tiers.push({ start: minWindows, end: maxWindows, step })
-    return acc
-  }, { tiers: [], steps: new Map() } as { tiers: Tier[], steps: Map<number, number> })
-})
+const tiersData = computed(() => formatTierData(list))
 const tiersList = computed(() => tiersData.value.tiers)
 const tiersSteps = computed(() => [...tiersData.value.steps])
 
@@ -91,9 +75,7 @@ function onChange(value: number) {
 function onUpdate(value: number) {
   const math = value > selectedCount.value! ? 'plus' : 'minus'
   const _value = Math.max(currency(value).value, tiersList.value[1]!.start)
-  const count = _value < 100
-    ? tiersList.value.findLast(item => _value > item.start)!.end
-    : ceilByStep(_value, getTiersStep(_value, math))
+  const count = alignSubscribeCount(_value, tiersList.value, getTiersStep(_value, math))
 
   nextTick(() => {
     selectedCount.value = count
@@ -149,7 +131,7 @@ function showIllustrate(event: Event) {
         <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate" />
       </div>
       <RxStepInput v-model="selectedCount!" size="lg" class="!w-40" :min="min ?? Math.max(tiersList[1]!.start, 10)" :max="max ?? tiersList[tiersList.length - 1]!.end" :step="step"
-                   :before-plus="onBeforePlus" :before-minus="onBeforeMinus" @change="onChange" @update:model-value="onUpdate"
+                   :before-plus="onBeforePlus" :before-minus="onBeforeMinus" @update:model-value="onUpdate"
       />
     </div>
     <RyPopover ref="popover">

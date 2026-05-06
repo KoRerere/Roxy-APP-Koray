@@ -9,7 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
-defineProps<{
+const props = defineProps<{
   upgradeList: ResourceUpdateMessage[]
 }>()
 
@@ -26,7 +26,7 @@ function formatClientBtnLabel(item: ResourceUpdateMessage) {
       return $t('重启并安装')
     }
     else if (item.type === 'web') {
-      return $t('刷新')
+      return $t('安装')
     }
   }
   else if (item.status === 'failed') {
@@ -73,7 +73,7 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
     showAppUpdaterDialog(info)
   }
   else if (info.type === 'web') {
-    await globalThis.electronAPI.send('app:quitAndInstall', info)
+    // props.updateWebFn()
   }
 }
 
@@ -121,7 +121,7 @@ async function showLastUpdateLog() {
               {{ $t('v{version} 补丁', { version: item.version }) }}
             </div>
             <div class="patch-version">
-              {{ $t('点击刷新以应用更新补丁') }}
+              {{ $t('点击安装以应用更新补丁') }}
             </div>
           </div>
           <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_refresh" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"

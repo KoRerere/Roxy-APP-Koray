@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { request } from '/@/utils'
 import { Buffer } from 'node:buffer'
 import { createCipheriv, createDecipheriv } from 'node:crypto'
 import { browserManager } from '/@/modules/browser'
@@ -28,6 +28,7 @@ export interface SetRoxynetProxyPayload {
     user_name: string
     password: string
     protocal: string
+    v2ray_tunnel_enabled: boolean
   }
 }
 
@@ -50,7 +51,7 @@ export interface SetRoxynetProxyPayload {
  */
 export async function setRoxynetProxy(payload: SetRoxynetProxyPayload) {
   console.log('setRoxynetProxy', payload)
-  return axios.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_proxy`, payload)
+  return request.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_proxy`, payload)
 }
 
 /**
@@ -60,7 +61,7 @@ export async function setRoxynetProxy(payload: SetRoxynetProxyPayload) {
 export async function delRoxynetProxy(dirId: string) {
   // 如果浏览器已经关闭，直接删除roxynet中的代理
   if (getRoxynetProcess() && !browserManager.openedBrowserMap.has(dirId)) {
-    return axios.get(`http://127.0.0.1:${store.roxynetLocalHttpPort}/del_proxy?id=${dirId}`).then(res => res.data).catch((e) => {
+    return request.get(`http://127.0.0.1:${store.roxynetLocalHttpPort}/del_proxy?id=${dirId}`).then(res => res.data).catch((e) => {
       // console.error('delRoxynetProxy error:', e)
     })
   }
@@ -83,7 +84,7 @@ export async function setSystemProxy() {
     v2: store.v2raySwitch,
   }
   console.log('roxynet set_sysproxy modifying system proxy', params)
-  return axios.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
+  return request.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
     console.error('setSystemProxy error:', e)
     return Promise.reject(e)
   })

@@ -4,6 +4,7 @@ import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
 import defaultPlatformIcon from '/@/assets/images/base/rx_ic_user_key.svg?url'
+import { getLocalWebServerURL } from '../utils'
 
 const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
@@ -47,7 +48,7 @@ async function getTwoFactorCode(item) {
   }
   item.loading = true
   try {
-    const response = await fetch(`/api/browser/two-factor-token?code=${item.platformEfa}`)
+    const response = await fetch(`${getLocalWebServerURL()}/api/browser/two-factor-token?code=${item.platformEfa}`)
     const { data } = await response.json()
     console.log('data', data)
     item.efaToken = data.token

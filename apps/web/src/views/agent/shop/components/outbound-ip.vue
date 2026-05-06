@@ -1,67 +1,60 @@
 <script setup lang="ts">
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { formatProxyTime, strConcat } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums'
+import type { SvgNames } from '/@/components/rx-icon/'
 
+interface Props {
+  country?: string
+  city?: string
+  lastIp?: string
+  time?: string
+  status?: ProxyCheckStatus
+  isLoading?: boolean
+}
 
-const props = defineProps({
-  country: {
-    type: String,
-    default: '',
-  },
-  city: {
-    type: String,
-    default: '',
-  },
-  lastIp: {
-    type: String,
-    default: '',
-  },
-  time: {
-    type: String,
-    default: '',
-  },
-  status: {
-    type: Number as PropType<ProxyCheckStatus>,
-    default: ProxyCheckStatus.none,
-  },
-  isLoading: {
-    type: Boolean,
-    default: false,
-  },
+const props = withDefaults(defineProps<Props>(), {
+  country: '',
+  city: '',
+  lastIp: '',
+  time: '',
+  status: ProxyCheckStatus.none,
+  isLoading: false,
 })
 
 const { status, isLoading } = toRefs(props)
 
 const data = computed(() => {
-  const text = `${props.country || '--'}${strConcat('/', props.city)}`;
+  const text = `${props.country || '--'}${strConcat('/', props.city)}`
   if (isLoading.value) {
     return {
       svg: 'base/rx_ic_earth',
       title: $t('测试中...'),
       color: 'var(--colors-text-text-primary)',
-      svgColor: 'var(--colors-icon-icon-tertiary)'
+      svgColor: 'var(--colors-icon-icon-tertiary)',
     }
-  } else if (status.value === ProxyCheckStatus.success) {
+  }
+  else if (status.value === ProxyCheckStatus.success) {
     return {
       svg: `country-code/${props.country}`,
       title: text,
       color: 'var(--colors-text-text-success)',
-      svgColor: 'var(--colors-icon-icon-tertiary)'
-    };
-  } else if (status.value === ProxyCheckStatus.failure) {
+      svgColor: 'var(--colors-icon-icon-tertiary)',
+    }
+  }
+  else if (status.value === ProxyCheckStatus.failure) {
     return {
       svg: 'base/rx_ic_earth',
       title: $t('测试失败'),
       color: 'var(--colors-text-text-error)',
-      svgColor: 'var(--colors-icon-icon-error)'
+      svgColor: 'var(--colors-icon-icon-error)',
     }
-  } else {
+  }
+  else {
     return {
       svg: `country-code/${props.country}`,
       title: text,
       color: 'var(--colors-text-text-primary)',
-      svgColor: 'var(--colors-icon-icon-note)'
+      svgColor: 'var(--colors-icon-icon-note)',
     }
   }
 })
@@ -70,7 +63,7 @@ const data = computed(() => {
 <template>
   <div class="flex gap-2 items-center proxycard">
     <div class="icon">
-      <RxSvgIcon class="block" :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" size="24" />
+      <SvgIcon class="block" :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" size="24" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
       <div class="flex items-center proxycard-title" :style="{ color: data.color }">

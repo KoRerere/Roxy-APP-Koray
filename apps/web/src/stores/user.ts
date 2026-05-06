@@ -33,6 +33,9 @@ export const useUserStore = defineStore(
     const roleStore = useRoleStore()
     const { check } = usePermission()
 
+    /* 是否调用过初始化用户的方法 */
+    const hasCallInitUserInfo = Promise.withResolvers<void>()
+
     const lastLoginTime = ref<number>(0)
     // 登录方式
     const loginWay = ref<LoginWay | undefined>()
@@ -289,8 +292,8 @@ export const useUserStore = defineStore(
 
     /** 获取用户付费详情 */
     async function getUserPayInfo() {
-      const { code, data } = await API.pay.userGetUserPayInfoList()
-
+      const result = await API.pay.userGetUserPayInfoList()
+      const { code, data } = result
       if (code === 0) {
         userPayInfo.value = data
         if (roleStore.isOwner) {
@@ -320,6 +323,7 @@ export const useUserStore = defineStore(
           }
         }
       }
+      return result
     }
 
     async function getUserCards(force = false) {
@@ -349,6 +353,7 @@ export const useUserStore = defineStore(
     }
 
     const initUserInfo = async (intoWorkspaceId?: number) => {
+      hasCallInitUserInfo.resolve()
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
       await checkCookie()
 
@@ -389,9 +394,9 @@ export const useUserStore = defineStore(
 
     async function checkCookie() {
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
-      if (!globalThis.isElectron && !import.meta.hot) {
+      if (!globalThis.isElectron && !import.meta.hot && router.currentRoute.value.name !== 'login') {
         const roxyToken = await getCookie('roxy_token')
-        console.debug('checkCookie', roxyToken)
+        // console.debug('checkCookie', roxyToken)
         if (!roxyToken) {
           token.value = ''
           clearUserInfo()
@@ -411,6 +416,7 @@ export const useUserStore = defineStore(
     }
 
     return {
+      hasCallInitUserInfo,
       token,
       loginWay,
       rememberMe,

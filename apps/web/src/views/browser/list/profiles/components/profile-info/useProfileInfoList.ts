@@ -28,6 +28,15 @@ export function useProfileInfoList(
     return unref(openMessage)?.[row.dirId]?.data?.percent === 100
   })
 
+  function formatVersion(os: string, osVersion: string) {
+    if (os.toLocaleLowerCase() === 'macos' || os.toLocaleLowerCase() === 'ios') {
+      const versionBit = osVersion.split('.')
+      return versionBit[0]
+    } else {
+      return osVersion
+    }
+  }
+
   const list = computed(() => {
     const row = unref(data)
     const keys = unref(filterKeys)
@@ -39,7 +48,7 @@ export function useProfileInfoList(
         svg: OS_ICON[(row.os as string).toLocaleLowerCase()],
         tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', {
           os: row.os === 'IOS' ? 'iOS' : row.os,
-          osVersion: row.osVersion,
+          osVersion: formatVersion(row.os, row.osVersion),
           coreVersion: row.coreVersion,
         }),
       },

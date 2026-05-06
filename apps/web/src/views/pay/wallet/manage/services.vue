@@ -221,7 +221,7 @@ async function openPrimeDialog() {
     </div>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-2.5">
-        <AnimationBorder :animation="false" deg="110" :border-width="2"
+        <AnimationBorder :animation="false" :deg="110" :border-width="2"
                          :animation-duration="12" class="rounded-xl" :gradient="animationGradient"
         >
           <div class="rounded overflow-hidden">

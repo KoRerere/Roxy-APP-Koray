@@ -71,6 +71,7 @@ function handleKickedOut(params: MittEvents['kickedOut']) {
     cancelText: '',
     closable: false,
     okText: $t('确认'),
+    noAutoClose: true,
     slots: {
       default: () => (
         <div>
@@ -141,15 +142,15 @@ globalThis.electronAPI.on('user:kicked-out', onKickedOut)
 }
 
 .global_driver_class {
-  min-width: 220px;
-  max-width: 220px;
-  padding: 12px;
-  border-radius: 6px;
-  background: var(--pattern-tour-tips-bg);
+  min-width: 220px !important;
+  max-width: 220px !important;
+  padding: 12px !important;
+  border-radius: 6px !important;
+  background: var(--pattern-tour-tips-bg) !important;
   box-shadow:
     0 3px 8px 0 rgba(0, 0, 0, 0.07),
     0 2px 5px 0 rgba(0, 0, 0, 0.07),
-    0 1px 1px 0 rgba(0, 0, 0, 0.07);
+    0 1px 1px 0 rgba(0, 0, 0, 0.07) !important;
 
   .driver-popover-description,
   .driver-popover-progress-text {

@@ -28,7 +28,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
-import { copyText, deepClone, genDriver, safeParseJSON } from '/@/utils'
+import { copyText, deepClone, genDriver, genPollingChecker, safeParseJSON } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
@@ -91,6 +91,7 @@ const filtersMenu = ref()
 const advancedSearchOptions = getAdvancedSearch()
 const dataList = ref<Data[]>([])
 const driverObj = ref()
+const checkerLoading = ref(false)
 
 const {
   openMessage,
@@ -136,7 +137,16 @@ let cancelOpenListener: (() => void) | undefined
 let cancelCloseListener: (() => void) | undefined
 let cancelCloseSyncingDataListener: (() => void) | undefined
 
+// const scheduledCheckerProxyStatus = genPollingChecker({
+//   intervalMs: 5 * 60 * 1000,
+//   checkOnce: async () => {
+//     await testAllProxy(true)
+//     return false
+//   },
+// })
+
 onBeforeMount(() => {
+  // scheduledCheckerProxyStatus.check()
   cancelOpenListener = listenOpenMessage({
     openSuccessAfter: () => driverNext(),
   })
@@ -170,6 +180,7 @@ onBeforeMount(() => {
 })
 
 onBeforeUnmount(() => {
+  // scheduledCheckerProxyStatus.stop()
   emitter.off('firstRegisterGuide', onFirstRegisterGuide)
   cancelOpenListener?.()
   cancelCloseListener?.()
@@ -230,17 +241,22 @@ async function getTableList(params: Record<string, unknown>) {
   return data
 }
 
-async function testAllProxy() {
+async function testAllProxy(silent = false) {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无窗口'))
+    !silent && onlyErrorToast(-1, $t('暂无窗口'))
     return
   }
   const targets = dataList.value.filter(row => row.proxyCategory !== 'noproxy')
   if (!targets.length) {
-    onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
+    !silent && onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
     return
   }
-  await runProxySpeedTestForRows(targets, { showConcurrentTaskTopBar: true })
+
+  if (checkerLoading.value)
+    return
+  checkerLoading.value = true
+  await runProxySpeedTestForRows(targets, { showConcurrentTaskTopBar: !silent, silent })
+  checkerLoading.value = false
 }
 
 async function onTestProxy(data: any) {
@@ -866,7 +882,7 @@ defineExpose({
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
                        @filter-change="onRefreshTable"
         />
-        <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy" />
+        <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />
       </div>
     </template>
     <template #table-empty>
@@ -925,7 +941,9 @@ defineExpose({
     </template>
     <template #open="{ data, index }">
       <template v-if="data.id">
-        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord" @open="openBrowserBefore" />
+        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord"
+                        @open="openBrowserBefore"
+        />
       </template>
       <template v-else>
         <Skeleton width="70px" height="24px" border-radius="4px" />

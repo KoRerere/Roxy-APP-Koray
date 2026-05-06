@@ -1,7 +1,7 @@
 import type { UserConfig } from 'vite'
 import { builtinModules } from 'node:module'
 import { join } from 'node:path'
-import dts from 'vite-plugin-dts'
+import dts from 'unplugin-dts/vite'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -43,6 +43,7 @@ const config: UserConfig = {
   plugins: [dts({
     tsconfigPath: join(PACKAGE_ROOT, 'tsconfig.build.json'),
     rollupTypes: true,
+    entryRoot: join(PACKAGE_ROOT, 'src'),
     clearPureImport: false,
     logLevel: 'silent',
   })],

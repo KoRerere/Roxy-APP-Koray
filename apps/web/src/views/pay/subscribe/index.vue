@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -15,6 +15,7 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { deepClone } from '/@/utils'
 import { discountCalculate, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
@@ -22,12 +23,11 @@ import type { Plan } from './type'
 
 const route = useRoute()
 const router = useRouter()
+const { seasonalActivity } = storeToRefs(useCampaignStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
-const { currentActivity } = storeToRefs(useCampaignStore())
-const { discountSpecialCalculate } = useCampaignStore()
 const { getOfficialWebsite } = useSimpleLocale()
-const { openProcessing, planSuccess } = usePay()
+const { openProcessing, planSuccessFreedomActivity2 } = usePay()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -37,7 +37,18 @@ const dataList = ref<Plan[]>()
 const selectedPlan = ref()
 const selectedCount = ref()
 const selectedDuration = ref()
-const giftType = ref()
+
+const upshiftCount = computed(() => {
+  if (!rawList.value)
+    return selectedCount.value
+  const count = Math.max(selectedCount.value, 10)
+  const max = rawList.value[rawList.value.length - 1].maxWindows
+  if (count < 50)
+    return 50
+  if (count < 100)
+    return 100
+  return Math.min(count + 100, max)
+})
 
 const showAlert = computed(() => {
   return selectedCount.value && currency(selectedCount.value).add(userPayInfo.value.freeWindowCount).value < userPayInfo.value.useWindowCount
@@ -49,12 +60,18 @@ const monthlySubscribePrice = computed(() => {
   return tierCalculate(rawList.value!, selectedCount.value).value
 })
 
+const monthlyUpshiftPrice = computed(() => {
+  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial)
+    return 0
+  return tierCalculate(rawList.value!, upshiftCount.value).value
+})
+
 const finalDiscount = computed(() => {
-  return discountSpecialCalculate(discountCalculate([
+  return discountCalculate([
     userPayInfo.value?.firstPurchaseDiscount,
     userPayInfo.value?.discount,
     selectedDuration.value?.discount,
-  ]))
+  ])
 })
 
 const finalCalculate = computed(() => {
@@ -63,6 +80,7 @@ const finalCalculate = computed(() => {
   const discountAmount = currency(originalAmount, { precision: 6 }).subtract(amount).value
   const amountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).multiply(finalDiscount.value).value
   const discountAmountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).subtract(amountPerMonth).value
+  const upshiftAmountPerMonth = currency(monthlyUpshiftPrice.value, { precision: 6 }).subtract(amountPerMonth).subtract(discountAmountPerMonth).value
 
   return {
     amount,
@@ -70,6 +88,7 @@ const finalCalculate = computed(() => {
     discountAmount,
     amountPerMonth,
     discountAmountPerMonth,
+    upshiftAmountPerMonth,
   }
 })
 
@@ -80,13 +99,11 @@ const currentSubscribe = computed(() => {
   return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
 
-const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > finalDiscount.value)
-
 const details = computed(() => {
   // 处理试用导致显示窗口数量小于 10 的情况
   const profileCount = currency(Math.max(selectedCount.value, 10), { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
-  const { amountPerMonth, discountAmountPerMonth } = finalCalculate.value
+  const { amountPerMonth, discountAmountPerMonth, upshiftAmountPerMonth } = finalCalculate.value
 
   return [
     {
@@ -95,6 +112,12 @@ const details = computed(() => {
         {
           label: $t('窗口数量'),
           value: `${profileCount.format()} + ${freeWindowCount.format()}`,
+          visible: !seasonalActivity.value.freedom,
+        },
+        {
+          label: $t('窗口数量（免费升舱）'),
+          visible: seasonalActivity.value.freedom,
+          slot: 'freedom',
         },
         {
           label: $t('每日可创建数'),
@@ -120,23 +143,23 @@ const details = computed(() => {
       items: [
         {
           label: $t('首购折扣'),
-          class: '!color-[#FC9D12]',
+          class: '!color-orange',
           value: `-${userPayInfo.value?.firstPurchaseDiscount}%`,
           visible: !!userPayInfo.value?.firstPurchaseDiscount,
         },
         {
           label: $t('专属折扣'),
-          class: '!color-[#FC9D12]',
+          class: '!color-orange',
           value: `-${userPayInfo.value?.discount}%`,
           visible: !!userPayInfo.value?.discount,
         },
         {
           label: selectedDuration.value?.discountStr || $t('订阅折扣'),
-          class: '!color-[#FC9D12]',
+          class: '!color-orange',
           value: `-${selectedDuration.value?.discount}%`,
           visible: !isTrial.value && !!selectedDuration.value?.discount,
         },
-      ].filter(item => item.visible !== false && beyondDiscount.value),
+      ].filter(item => item.visible !== false),
     },
     {
       items: [
@@ -150,6 +173,7 @@ const details = computed(() => {
           label: $t('实际价格'),
           value: currency(amountPerMonth).format(),
           diffValue: discountAmountPerMonth,
+          extraValue: upshiftAmountPerMonth,
           slot: 'price',
         },
       ].filter(item => item.visible !== false),
@@ -221,14 +245,13 @@ async function onSubscribe() {
             },
             subLevel: selectedPlan.value.subLevel,
             subscriptionMonths: selectedDuration.value.month,
-            giftType: giftType.value,
             orderType: OrderType.Subscribe,
             purchaseType: PurchaseType.Profile,
             subOrderType: PaySubOrderType.Purchase,
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
-            (payType === PayWay.Balance ? planSuccess() : openProcessing({ payType, ...data }, OrderType.Subscribe))
+            (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
               .then(() => {
                 router.push({ name: 'browser-list' })
               })
@@ -256,6 +279,7 @@ async function trialSubscribe() {
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto content">
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="rawList!" />
+          <FreedomActivity v-if="seasonalActivity.freedom && selectedPlan && !isTrial" :count="selectedCount" :upshift-count="upshiftCount" />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div v-show="!isTrial" class="flex flex-col gap-4">
             <div class="title">
@@ -283,6 +307,31 @@ async function trialSubscribe() {
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
           <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="$t('购买窗口数量少于当前窗口数')" :closable="false" />
           <Detail :list="details">
+            <template #freedom="{ item }">
+              <div class="flex justify-between items-center">
+                <div class="tt-secondary text-3.5 leading-5">
+                  {{ item.label }}
+                </div>
+                <div class="flex items-center gap-1 tt-secondary text-3.5 leading-5">
+                  <div>({{ selectedCount }}</div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M9.5 5.13384C10.1667 5.51874 10.1667 6.48099 9.5 6.86589L4.25 9.89698C3.58333 10.2819 2.75 9.80076 2.75 9.03095L2.75 2.96878C2.75 2.19898 3.58333 1.71785 4.25 2.10275L9.5 5.13384Z"
+                      fill="url(#paint0_linear_10147_14311)"
+                    />
+                    <defs>
+                      <linearGradient id="paint0_linear_10147_14311" x1="10" y1="1.96729" x2="9.76688" y2="10.2304" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4096FF" />
+                        <stop offset="1" stop-color="#01CAB3" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div>{{ upshiftCount }})</div>
+                  <div>+</div>
+                  <div>{{ userPayInfo.freeWindowCount }}</div>
+                </div>
+              </div>
+            </template>
             <template #oldprice="{ item }">
               <div class="flex justify-between">
                 <div class="details-label">
@@ -294,27 +343,28 @@ async function trialSubscribe() {
               </div>
             </template>
             <template #price="{ item }">
-              <div class="flex justify-between items-center">
-                <div class="details-label">
-                  {{ item.label }}
-                </div>
-                <div>
-                  <div class="details-price">
-                    <span>{{ item.value }}</span>
-                    <span class="details-price-unit">{{ $t('/月') }}</span>
+              <div class="flex flex-col gap-1.5 items-end">
+                <div class="flex justify-between items-center self-stretch">
+                  <div class="details-label">
+                    {{ item.label }}
                   </div>
-                  <div v-if="item.diffValue > 0" class="details-diffprice">
-                    {{ $t('节省 {value}/月', {
-                      value:
-                        currency(item.diffValue).format(),
-                    }) }}
+                  <div>
+                    <div class="details-price">
+                      <span>{{ item.value }}</span>
+                      <span class="details-price-unit">{{ $t('/月') }}</span>
+                    </div>
+                    <div v-if="item.diffValue > 0" class="details-diffprice">
+                      {{ $t('节省 {value}/月', {
+                        value:
+                          currency(item.diffValue).format(),
+                      }) }}
+                    </div>
                   </div>
                 </div>
               </div>
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <EasterActivity v-if="!isTrial && selectedPlan" v-model="giftType" :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
@@ -396,6 +446,15 @@ async function trialSubscribe() {
     font-weight: 500;
     line-height: normal;
   }
+}
+
+.freedom {
+  font-family: 'DingTalk JinBuTi';
+  font-size: 13px;
+  background: linear-gradient(90deg, #11a3fd 0%, #f047ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .terms {

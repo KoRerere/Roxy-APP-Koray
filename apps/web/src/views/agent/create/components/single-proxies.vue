@@ -40,7 +40,7 @@ const original = ref(deepClone(data))
 const inputs = ref([
   {
     type: 'textarea',
-    label: $t('智能识别'),
+    label: $t('智能识别（支持动态/静态代理 IP）'),
     name: 'proxyRules',
     props: {
       placeholder: $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),

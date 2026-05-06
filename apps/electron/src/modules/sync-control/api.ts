@@ -1,11 +1,11 @@
-import axios from "axios";
 import { getAllSyncControlBrowsers, getRoxySyncAPIBaseURL, setMainControlColor } from "/@/modules/sync-control/bin";
 import { SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from "/@/modules/sync-control/model";
 import { setTimeout } from "timers/promises";
 import { getSynchronizerActionBarWindow } from "/@/modules/sync-control/actionBar";
 import { getMainWindow } from "/@/modules/app/mainWindow";
+import { request } from "/@/utils";
 
-const instance = axios.create();
+const instance = request.create();
 
 instance.interceptors.response.use((response) => {
   return response.data;

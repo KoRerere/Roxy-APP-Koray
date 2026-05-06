@@ -54,13 +54,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="container">
+  <div class="agent-container">
     <motion.div
       class="agent-pill"
       :animate="{ width: size.width || 'auto' }"
       :transition="{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }"
     >
-      <div ref="innerRef" class="inner">
+      <div ref="innerRef" class="agent-inner">
         <img src="/images/mcp/roxyagent.svg" alt="">
         <AnimatePresence mode="wait">
           <motion.span
@@ -69,6 +69,7 @@ onUnmounted(() => {
             :animate="{ y: 0, opacity: 1, filter: 'blur(0px)' }"
             :exit="{ y: -20, opacity: 0, filter: 'blur(4px)' }"
             :transition="{ duration: 0.3 }"
+            class="text-4"
           >
             {{ sequence[currentIndex] }}
           </motion.span>
@@ -79,7 +80,7 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-.container {
+.agent-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -94,7 +95,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.inner {
+.agent-inner {
   display: flex;
   align-items: center;
   gap: 8px;

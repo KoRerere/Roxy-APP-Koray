@@ -75,11 +75,49 @@ function readOptionalPercentageEnv(key: string): number | undefined {
 }
 
 /**
+ * 读取可选布尔环境变量，支持 true/false、1/0、yes/no。
+ */
+function readOptionalBooleanEnv(key: string): boolean | undefined {
+  const raw = process.env[key]
+  if (raw === undefined || raw.trim() === '') {
+    return undefined
+  }
+
+  const normalized = raw.trim().toLowerCase()
+  if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) {
+    return true
+  }
+  if (['false', '0', 'no', 'n', 'off'].includes(normalized)) {
+    return false
+  }
+
+  throw new TypeError(`环境变量 ${key} 必须是布尔值，当前值：${raw}`)
+}
+
+/**
+ * 读取 Neko 视频编码器配置。x264 为 CPU 编码，nvh264 为 NVIDIA NVENC 编码。
+ */
+function readOptionalNekoVideoEncoderEnv(key: string): 'x264' | 'nvh264' | undefined {
+  const raw = process.env[key]
+  if (raw === undefined || raw.trim() === '') {
+    return undefined
+  }
+
+  const normalized = raw.trim().toLowerCase()
+  if (normalized === 'x264' || normalized === 'nvh264') {
+    return normalized
+  }
+
+  throw new TypeError(`环境变量 ${key} 仅支持 x264 或 nvh264，当前值：${raw}`)
+}
+
+/**
  * 应用全局配置
  * 所有配置项（除 REDIS_PASSWORD 外）均为必填，从环境变量加载
  */
 export default function configuration() {
   const dataDir = requireEnv('DATA_DIR')
+  const nekoGpuEnabled = readOptionalBooleanEnv('NEKO_GPU_ENABLED') ?? false
   return {
     port: requireEnvInt('PORT'),
     nodeEnv: requireEnv('NODE_ENV'),
@@ -108,6 +146,12 @@ export default function configuration() {
       browserBinaryPath: process.env.NEKO_BROWSER_BINARY_PATH || '/opt/roxychrome/RoxyChrome',
       /** WebRTC 音频 Opus 码率（bps），默认 96kbps */
       audioBitrate: readOptionalPositiveIntEnv('NEKO_AUDIO_BITRATE') ?? 96000,
+      /** WebRTC 视频 H.264 目标码率（bps），默认 2Mbps；写入 neko.yaml 时自动转换为 kbps */
+      videoBitrate: readOptionalPositiveIntEnv('NEKO_VIDEO_BITRATE') ?? 2000000,
+      /** 是否为容器挂载 NVIDIA GPU */
+      gpuEnabled: nekoGpuEnabled,
+      /** Neko WebRTC 视频编码器：x264(CPU) / nvh264(NVIDIA NVENC) */
+      videoEncoder: readOptionalNekoVideoEncoderEnv('NEKO_VIDEO_ENCODER') ?? (nekoGpuEnabled ? 'nvh264' : 'x264'),
     },
 
     /** 宿主机上浏览器数据持久化的根目录 */
@@ -122,8 +166,21 @@ export default function configuration() {
     },
 
     webrtc: {
-    /** 服务器公网 IP，写入 ICE candidate 供 WebRTC 直连 */
+      /** 服务器公网 IP，写入 ICE candidate 供 WebRTC 直连 */
       nat1to1: requireEnv('WEBRTC_NAT1TO1'),
+      /**
+       * 是否启用 ICE lite（默认 true）。
+       * ICE lite 节省握手时间，但与 Chrome mDNS-only candidate 组合时 pion 可能无法建立
+       * candidate pair。若遇到 ICE 持续失败，可设置 WEBRTC_ICE_LITE=false 关闭。
+       */
+      iceLite: readOptionalBooleanEnv('WEBRTC_ICE_LITE') ?? true,
+      /**
+       * STUN/TURN 服务器列表（JSON 字符串，格式同 RTCIceServer[]）。
+       * 配置后 neko 会在 SDP offer 中下发给客户端，客户端可生成 srflx candidate
+       * 解决 mDNS-only candidate 导致 ICE 失败的问题。
+       * 示例：[{"urls":"stun:stun.l.google.com:19302"}]
+       */
+      iceServers: process.env.WEBRTC_ICE_SERVERS || '',
     },
 
     container: {

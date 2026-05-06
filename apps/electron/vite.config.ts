@@ -3,6 +3,16 @@ import { join } from 'node:path'
 import { node } from './.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = import.meta.dirname
+const OPTIONAL_NATIVE_EXTERNALS = [
+  // ws probes these at runtime via optional requires inside @roxy/playwright.
+  'bufferutil',
+  'utf-8-validate',
+  'fsevents',
+  // systeminformation probes these only on darwin.
+  'osx-temperature-sensor',
+  'macos-temperature-sensor',
+]
+const ELECTRON_EXTERNALS = ['electron', 'electron/index.js']
 
 const config: UserConfig = {
   envDir: PACKAGE_ROOT,
@@ -30,7 +40,7 @@ const config: UserConfig = {
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['@roxy/diskspace-native', 'electron'],
+      external: ['@roxy/diskspace-native', ...ELECTRON_EXTERNALS, ...OPTIONAL_NATIVE_EXTERNALS],
       output: {
         entryFileNames: '[name].mjs',
         chunkFileNames: '[name].mjs',

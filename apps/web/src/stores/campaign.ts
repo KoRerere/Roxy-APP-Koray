@@ -2,14 +2,13 @@ import { defineStore } from 'pinia'
 import { API } from '/@/api'
 import { ActivityType } from '/@/enums/base'
 import { useUserStore } from '/@/stores/user'
-import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
-import type { GetEasterPromoTimeListData } from '@roxy/backend-api'
+import { isEmptyValue } from '/@/utils'
+import type { GetMayFreedomSeasonPromoTimeListData } from '@roxy/backend-api'
 
-type Activity = GetEasterPromoTimeListData['data']
+type Activity = GetMayFreedomSeasonPromoTimeListData['data'] & { isFreedom?: boolean }
 
 export const useCampaignStore = defineStore('campaign', () => {
-  const { userPayInfo } = storeToRefs(useUserStore())
-
+  const { userInfo } = storeToRefs(useUserStore())
   const currentActivity = ref<Activity>({} as Activity)
 
   const seasonalActivity = computed(() => {
@@ -22,31 +21,24 @@ export const useCampaignStore = defineStore('campaign', () => {
       newYear: active && type === ActivityType.NewYear,
       springFestival: active && type === ActivityType.SpringFestival,
       easter: active && type === ActivityType.Easter,
+      freedom: active && type === ActivityType.Freedom,
     }
   })
 
   async function getActivityInfo() {
-    const { code, data } = await API.base.getEasterPromoTimeList()
+    const { code, data } = await API.base.getMayFreedomSeasonPromoTimeList()
     if (code !== 0) {
       currentActivity.value = {} as Activity
       return
     }
 
-    currentActivity.value = data
-  }
-
-  function discountSpecialCalculate(selfDiscount: number, type: 'proxy' | 'subscribe' = 'subscribe') {
-    const specialDiscount = userPayInfo.value.isEaster
-      ? discountCalculate([type === 'proxy' ? currentActivity.value.proxyDiscount : currentActivity.value.discount])
-      : 1
-    return Math.min(specialDiscount, selfDiscount)
+    currentActivity.value = { ...data, isFreedom: !isEmptyValue(userInfo.value.userBadgeList) }
   }
 
   return {
     currentActivity,
     seasonalActivity,
     getActivityInfo,
-    discountSpecialCalculate,
   }
 }, {
   persist: false,

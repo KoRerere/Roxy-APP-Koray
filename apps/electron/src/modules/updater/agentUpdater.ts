@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import { createWriteStream } from 'node:fs'
@@ -7,7 +6,7 @@ import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
 import { isWindows } from '/@/constants/common'
-import { calculateFileHash, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { calculateFileHash, fileExists, getErrorMessage, request, unzipFile } from '/@/utils'
 
 interface VersionInfo {
   /** agent 版本号 */
@@ -56,7 +55,7 @@ export const agentUpdater = new class AgentUpdater {
   async getChecksums() {
     const version = await this.getLocalVersion()
     if (!this.checksums) {
-      this.checksums = await axios.get<ChecksumsInfo>(this.genChecksumsUrl(version)).then(r => r.data)
+      this.checksums = await request.get<ChecksumsInfo>(this.genChecksumsUrl(version)).then(r => r.data)
     }
     return this.checksums
   }
@@ -72,7 +71,7 @@ export const agentUpdater = new class AgentUpdater {
    * 抛异常：网络问题拉取失败，由外层 checkForUpdates 的 catch 兜底，继续使用本地已有版本
    */
   async resolveCompatibleVersion(): Promise<VersionInfo | null> {
-    const index = await axios.get<VersionInfo[]>(this.compatIndexUrl).then(r => r.data)
+    const index = await request.get<VersionInfo[]>(this.compatIndexUrl).then(r => r.data)
     const appVersion = app.getVersion()
     // 数组按发布时间降序排列（最新在前），找第一个 minimum_app_version <= appVersion 的记录
     const entry = index.find(e => compare(appVersion, e.minimum_app_version, '>='))
@@ -129,7 +128,7 @@ export const agentUpdater = new class AgentUpdater {
   }
 
   async downloadFile(url: string, outputPath: string) {
-    const response = await axios({
+    const response = await request({
       url,
       method: 'get',
       responseType: 'stream',

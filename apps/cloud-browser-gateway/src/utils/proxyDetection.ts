@@ -139,10 +139,18 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
     // console.log('proxyDetectionParams', proxyDetectionParams)
     const checkMode = getCheckFunction(normalizedProxyCategory)
-    console.log('代理检测参数', params)
+    console.log('代理检测参数', {
+      host: params.host,
+      ipType: params.ipType,
+      port: params.port,
+      protocol: params.protocol,
+      proxyPassword: params.proxyPassword,
+      proxyUserName: params.proxyUserName,
+
+    })
     const result = await checkMode(params).catch((error) => {
       Reflect.deleteProperty(error, 'config')
-      console.error('代理检测失败', error)
+      console.error('代理检测失败', error?.message, error?.response?.data)
       return Promise.reject($t('代理 IP 检测失败'))
     })
 
@@ -302,7 +310,7 @@ async function checkHttpProxy(
     return response.data.data
   }
   catch (error: any) {
-    console.error('HTTP 代理检测失败', error, error.response?.data)
+    console.error('HTTP 代理检测失败', error?.message, error?.response?.data)
     throw error
   }
 }
@@ -335,8 +343,7 @@ async function checkSocks5Proxy(params: any) {
     return response.data.data
   }
   catch (error: any) {
-    console.error('SOCKS5 代理检测失败', error)
-    console.error('SOCKS5 代理检测失败响应数据', error.response?.data)
+    console.error('SOCKS5 代理检测失败', error?.message, error?.response?.data)
     throw error
   }
 }

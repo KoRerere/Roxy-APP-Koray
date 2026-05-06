@@ -30,11 +30,12 @@ export async function setupModules() {
     await initLocalConfig()
     // 启动 app 内置服务
     await setupAppServer()
-    if (isWindows) {
-      killProcessByName('RoxyBrowserUpdater')
-    }
     // 进入启动页
-    await intoLaunchPage()
+    await intoLaunchPage().finally(() => {
+      if (isWindows) {
+        killProcessByName('RoxyBrowserUpdater')
+      }
+    })
     // 设置 store
     await setupStore()
     // 启动 app

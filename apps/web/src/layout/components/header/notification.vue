@@ -242,7 +242,7 @@ function onHtmlClick(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="flex justify-center">
+  <div class="flex justify-center" v-tooltip.left="{ value: $t('通知'), showDelay: 600 }">
     <OverlayBadge :value="noRead" severity="danger" size="small" :class="noRead ? '' : message.empty">
       <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import ActivityInfoWallet from '/@/views/campaign/freedom/activity-info-wallet.vue'
 import currency from 'currency.js'
-
+// import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user'
 import { OrderType } from '/@/enums/pay'
@@ -17,6 +18,7 @@ defineEmits(['refresh'])
 
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
 
 function onCharge() {
@@ -25,6 +27,7 @@ function onCharge() {
       openProcessing(data, OrderType.Recharge)
         .finally(() => {
           emitter.emit('updateBillList')
+          getUserPayInfo()
         })
     },
   })
@@ -46,9 +49,7 @@ function onCharge() {
           {{ $t('余额') }}
         </div>
         <div class="flex flex-row gap-1 items-center">
-          <i18n-t class="balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })"
-                  scope="global"
-          >
+          <i18n-t class="balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
             <template #invite>
               <span class="cursor-pointer balance-desc-link" @click="router.push({ name: 'referral-program' })">{{
                 $t('推广计划') }}
@@ -64,20 +65,16 @@ function onCharge() {
           <div class="balance-value">
             {{ currency(userPayInfo.balance).format() }}
           </div>
-          <SvgIcon
-            class="balance-refresh-icon"
-            :class="{
-              'balance-refresh-icon--spinning': props.balanceRefreshUi === 'loading',
-              'cursor-pointer': props.balanceRefreshUi === 'idle',
-            }"
-            :name="props.balanceRefreshUi === 'success' ? 'base/rx_ic_check' : 'base/rx_ic_refresh'"
-            size="20"
-            :color="props.balanceRefreshUi === 'success' ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'"
-            @click="props.balanceRefreshUi === 'idle' && $emit('refresh')"
+          <SvgIcon class="balance-refresh-icon" :class="{
+                     'balance-refresh-icon--spinning': props.balanceRefreshUi === 'loading',
+                     'cursor-pointer': props.balanceRefreshUi === 'idle',
+                   }" :name="props.balanceRefreshUi === 'success' ? 'base/rx_ic_check' : 'base/rx_ic_refresh'" size="20"
+                   :color="props.balanceRefreshUi === 'success' ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'" @click="props.balanceRefreshUi === 'idle' && $emit('refresh')"
           />
         </div>
       </div>
       <RxButton class="fund-btn" severity="info" variant="outlined" size="lg" :label="$t('充值')" icon="base/rx_ic_credit_card" @click="onCharge" />
+      <ActivityInfoWallet />
       <!-- <RxButton class="w-full btn-charge mb-[8px]" outlined severity="secondary" size="lg" :label="$t('充值')" icon="base/rx_ic_credit_card" @click="onCharge" /> -->
       <slot name="footer" />
     </div>
@@ -91,6 +88,7 @@ function onCharge() {
 .fund-btn {
   --button-outlined-info-border-color: #11a3fd;
 }
+
 .btn-charge {
   --colors-border-border-action-hover: #11a3fd;
   --button-outlined-secondary-border-color: #11a3fd;
@@ -105,6 +103,7 @@ function onCharge() {
     0 4px 4px -1px rgba(0, 0, 0, 0.02),
     0 1px 1px 0 rgba(0, 0, 0, 0.06);
 }
+
 .title {
   color: var(--colors-text-text-primary);
   font-size: 16px;
@@ -122,6 +121,7 @@ function onCharge() {
     0 3px 8px 0 rgba(0, 0, 0, 0.07),
     0 2px 5px 0 rgba(0, 0, 0, 0.07),
     0 1px 1px 0 rgba(0, 0, 0, 0.07);
+
   &:after {
     content: '';
     position: absolute;

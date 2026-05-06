@@ -15,3 +15,9 @@ export function getTimeOffset() {
   console.log(`当前时区偏移量: ${formattedOffset}`)
   return formattedOffset
 }
+
+export function getLocalWebServerURL() {
+  return ''
+  // const appServerPort = sessionStorage.getItem('appServerPort')
+  // return `http://127.0.0.1:${appServerPort}`
+}

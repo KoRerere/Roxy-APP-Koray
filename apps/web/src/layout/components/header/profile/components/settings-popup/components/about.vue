@@ -3,8 +3,8 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
-import { useUserStore } from '/@/stores/user';
-import { useToast } from 'primevue/usetoast';
+import { useUserStore } from '/@/stores/user'
+import { useToast } from 'primevue/usetoast'
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
@@ -16,19 +16,19 @@ const toast = useToast()
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   switch (item.status) {
     case 'downloading':
-      return `${$t('正在下载')} ${Math.floor(item.percent)}%`;
+      return `${$t('正在下载')} ${Math.floor(item.percent)}%`
     case 'downloaded':
       switch (item.type) {
         case 'app':
-          return $t('升级并重启');
+          return $t('升级并重启')
         case 'web':
-          return $t('立即更新');
+          return $t('立即更新')
       }
-      break;
+      break
     case 'failed':
-      return $t('重试');
+      return $t('重试')
     default:
-      return $t('下载');
+      return $t('下载')
   }
 }
 
@@ -81,20 +81,20 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
         toast.add({
           severity: 'success',
           summary: $t('当前版本已是最新'),
-          life: 3000
+          life: 3000,
         })
-      } else {
+      }
+      else {
         toast.add({
           severity: 'info',
           summary: $t('有新版本可用'),
-          life: 3000
+          life: 3000,
         })
       }
     }
   }
   else if (item.type === 'web') {
-    const result = await globalThis.electronAPI.send('app:checkWebForUpdates')
-    console.log('handleCheckUpdate web', result)
+    console.log('handleCheckUpdate web')
   }
 }
 </script>
@@ -127,8 +127,9 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
         <div v-if="item.version !== item.currentVersion">
           <roxy-rich-text :html="item?.upgradeContent" class="feature-content" />
           <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
-            :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
-            :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
+                    :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+                    :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)"
+          />
         </div>
       </div>
     </template>
@@ -174,7 +175,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
   line-height: normal;
 
   .version {
-    color: var(--colors-text-text-inactive, #7D8387);
+    color: var(--colors-text-text-inactive, #7d8387);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -190,8 +191,8 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
     align-items: center;
     gap: 10px;
     border-radius: var(--radius-full, 9999px);
-    background: var(--primitives-red-500, #F53838);
-    color: var(--component-button-primary-text, #FFF);
+    background: var(--primitives-red-500, #f53838);
+    color: var(--component-button-primary-text, #fff);
     font-family: Inter;
     font-size: 10px;
     font-style: normal;
@@ -201,7 +202,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
 }
 
 .release-time {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   text-align: right;
   font-family: Inter;
   font-size: 12px;
@@ -211,7 +212,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
 }
 
 .feature-content {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

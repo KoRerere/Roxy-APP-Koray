@@ -1,3 +1,5 @@
+import { compare } from 'compare-versions'
+
 /** 是否处于开发环境 */
 export const isDev = import.meta.env.DEV
 /** 是否处于生产环境 */
@@ -81,4 +83,16 @@ export function removeCookie(name: string, path = '/', domain?: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path};${domain ? ` domain=${domain};` : ''}`
 }
 
-globalThis.getCookie = getCookie
+export async function checkWebForUpdates() {
+  const remoteVersion = await fetch('/version').then(res => res.text()).catch(() => null)
+  const localVersion = import.meta.env.VITE_VERSION
+
+  if (remoteVersion && compare(remoteVersion, localVersion, '>')) {
+    console.log(`New version available: ${remoteVersion} (current: ${localVersion})`)
+    return remoteVersion
+  }
+  else {
+    console.log(`Current version (${localVersion}) is up to date.`)
+    return null
+  }
+}

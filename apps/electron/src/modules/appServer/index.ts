@@ -1,9 +1,5 @@
 import express from 'express'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
-import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
 import { setupWebSocketServer } from '/@/modules/appServer/ws'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
@@ -21,59 +17,33 @@ export async function setupAppServer() {
   // 注册 roxynet 接收器
   setupRoxynetReceiver(app)
   // 注册工作台路由
-  setupDashboardServer(app)
+  await setupDashboardServer(app)
   // 静态资源配置：只禁用 html 缓存
-  const staticOptions = {
-    dotfiles: 'allow' as const,
-    setHeaders: (res: any, path: string) => {
-      if (path.endsWith('.html')) {
-        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-        res.set('Pragma', 'no-cache')
-        res.set('Expires', '0')
-        res.set('Surrogate-Control', 'no-store')
-      }
-    },
-  }
+  // const staticOptions = {
+  //   dotfiles: 'allow' as const,
+  //   setHeaders: (res: any, path: string) => {
+  //     if (path.endsWith('.html')) {
+  //       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  //       res.set('Pragma', 'no-cache')
+  //       res.set('Expires', '0')
+  //       res.set('Surrogate-Control', 'no-store')
+  //     }
+  //   },
+  // }
 
   // APP 内置 web 服务中间件
-  const buildInWebMid = express.static(appConfig.buildInWebDir, staticOptions)
-  // APP 外置 web 服务中间件
-  const externalWebMid = express.static(appConfig.externalWebDir, staticOptions)
+  // const buildInWebMid = express.static(appConfig.buildInWebDir, staticOptions)
+  // // APP 外置 web 服务中间件
+  // const externalWebMid = express.static(appConfig.externalWebDir, staticOptions)
   // APP web 服务中间件
-  app.use(async (req, res, next) => {
-    if (store.isExternalWeb) {
-      externalWebMid(req, res, next)
-    }
-    else {
-      buildInWebMid(req, res, next)
-    }
-  })
-
-  if (isPackaged) {
-    // 支持 history 模式，处理 404 请求返回 index.html
-    app.get(/.*/, (req, res, next) => {
-    // 只有 html 请求才返回 index.html
-      if (req.accepts('html')) {
-        // 禁用 index.html 缓存
-        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-        res.set('Pragma', 'no-cache')
-        res.set('Expires', '0')
-        res.set('Surrogate-Control', 'no-store')
-
-        // 根据 store.isExternalWeb 选择正确的 index.html
-        const webDir = store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
-        res.sendFile(join(webDir, 'index.html'), { dotfiles: 'allow' }, (err) => {
-          if (err) {
-            console.error(`[App Server] Failed to serve index.html from ${webDir}:`, err)
-            res.status(500).send('Failed to load page')
-          }
-        })
-      }
-      else {
-        next()
-      }
-    })
-  }
+  // app.use(async (req, res, next) => {
+  //   if (store.isExternalWeb) {
+  //     externalWebMid(req, res, next)
+  //   }
+  //   else {
+  //     buildInWebMid(req, res, next)
+  //   }
+  // })
 
   try {
     const port = await getPortPromise({ port: store.appPort })

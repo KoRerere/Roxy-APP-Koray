@@ -112,6 +112,8 @@ export interface UserMcpEntry {
   createdAt: number
   /** 最后一次测试结果 */
   lastTestResult?: McpTestResult
+  /** 内置 MCP，不可修改/删除 */
+  builtin?: boolean
 }
 
 export interface McpTestResult {
@@ -373,6 +375,27 @@ export class McpManager {
       .sort((a, b) => b.createdAt - a.createdAt)
   }
 
+  /** 获取完整 MCP 列表：内置（builtin=true）置顶 + 用户自定义按创建时间倒序 */
+  listAllMcpServers(): UserMcpEntry[] {
+    const builtins: UserMcpEntry[] = [
+      {
+        name: 'roxybrowser-openapi-mcp',
+        config: { description: 'RoxyBrowser OpenAPI MCP' },
+        enabled: true,
+        createdAt: 0,
+        builtin: true,
+      },
+      {
+        name: 'roxybrowser_playwright',
+        config: { description: 'RoxyBrowser Playwright MCP' },
+        enabled: true,
+        createdAt: 0,
+        builtin: true,
+      },
+    ]
+    return [...builtins, ...this.listUserMcpServers()]
+  }
+
   /** 新增或更新用户自定义 MCP 配置 */
   async upsertUserMcpServer(name: string, config: UserMcpServerConfig, enabled?: boolean): Promise<void> {
     const existing = this.userMcpEntries.get(name)
@@ -522,13 +545,17 @@ export class McpManager {
       client = new MultiServerMCPClient({ mcpServers: { [name]: connection } })
       await client.initializeConnections()
       const tools = await client.getTools()
+      const originalToolNames = tools.map(t => t.name)
 
       if (dryRun) {
         // 测试完即关闭
         await client.close().catch(() => {})
       }
       else {
-        // 成功则缓存
+        // 缓存前加 {serverName}: 前缀，防止与内置工具名冲突
+        for (const tool of tools) {
+          tool.name = `${name}__${tool.name}`
+        }
         this.userMcpClients.set(name, client)
         this.userMcpToolsCache.set(name, tools)
       }
@@ -536,7 +563,7 @@ export class McpManager {
       return {
         success: true,
         toolCount: tools.length,
-        toolNames: tools.map(t => t.name),
+        toolNames: originalToolNames,
         testedAt: Date.now(),
       }
     }

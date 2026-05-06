@@ -4,11 +4,10 @@
     "target": "ES2024",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": "./",
     "rootDir": "./src",
     "module": "commonjs",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     },
     "resolveJsonModule": true,
     "strictBindCallApply": true,
@@ -19,8 +18,8 @@
     "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },

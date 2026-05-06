@@ -431,7 +431,7 @@ async function generateConversationTitle(
   attachments: AttachmentRef[],
   streamCallback: (event: string) => void,
 ): Promise<string> {
-  const llm = createLLM(false)
+  const llm = await createLLM(false)
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 
   // 使用 withStructuredOutput 确保返回结构化数据

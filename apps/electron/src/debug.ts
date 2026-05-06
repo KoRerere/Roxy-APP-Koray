@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import * as utils from '/@/utils'
@@ -32,7 +31,6 @@ export function initDebug() {
 
 function getDebugObj() {
   debugObj ||= {
-    axios,
     store,
     browserManager,
     utils,

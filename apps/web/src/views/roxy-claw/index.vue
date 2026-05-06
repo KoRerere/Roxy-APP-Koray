@@ -155,9 +155,9 @@ async function toggleRoxyClaw() {
     }
   }
   else {
+    await roxyClawStore.updateConfig({ enabled: true })
     const { success, message } = await roxyClawStore.startRoxyClaw()
     if (success) {
-      await roxyClawStore.updateConfig({ enabled: true })
       showToast(0, message || 'RoxyClaw has been started successfully')
     }
     else {

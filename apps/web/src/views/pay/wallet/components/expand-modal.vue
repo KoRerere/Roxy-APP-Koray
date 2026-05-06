@@ -1,14 +1,14 @@
 <script setup lang="tsx">
-import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
+import ActivityInfoExpand from '/@/views/campaign/freedom/activity-info-expand.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useCampaignStore } from '/@/stores/campaign'
 import { useDialog } from '/@/hooks/useDialog'
 
 const dialogRef = inject<any>('dialogRef')
@@ -16,12 +16,11 @@ const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 
-const { discountSpecialCalculate } = useCampaignStore()
-const { currentActivity } = storeToRefs(useCampaignStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
+const { showFreedomActivityModal } = useFreedomActivity()
 
 const min = 0
 const max = 500
@@ -41,6 +40,16 @@ const buyList = ref([
   },
 ])
 
+const renderList = computed<any[]>(() => {
+  const [first, last] = buyList.value
+  const arr = [first]
+  if (first.value > 0) {
+    arr.push({ label: 'activity', render: () => h(ActivityInfoExpand) })
+  }
+  arr.push(last)
+  return arr
+})
+
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
 
 const disabled = computed(() => !buyList.value.some(item => item.value > 0))
@@ -54,14 +63,12 @@ const allDiscount = computed(() => {
 
   return {
     ...discounts,
-    finalDiscount: discountSpecialCalculate(discountCalculate(Object.values(discounts))),
+    finalDiscount: discountCalculate(Object.values(discounts)),
   }
 })
 
 const finalAmount = computed(() => currency(allAmount.value).multiply(allDiscount.value.finalDiscount).value)
 const discountAmount = computed(() => currency(allAmount.value).subtract(finalAmount.value).value)
-
-const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > allDiscount.value.finalDiscount)
 
 const detail = computed(() => {
   const { discount } = allDiscount.value
@@ -87,7 +94,7 @@ const detail = computed(() => {
           value: `-${discount}%`,
           visible: !!discount,
         },
-      ].filter(item => item.visible !== false && beyondDiscount.value),
+      ].filter(item => item.visible !== false),
     },
     {
       items: [
@@ -147,6 +154,7 @@ async function confirm() {
             payType,
             purchaseMember: Object.fromEntries(buyList.value.map(item => [item.key, item.value])),
           })
+          showFreedomActivityModal()
           close(false)
         },
       }),
@@ -182,12 +190,15 @@ function close(isCancel: boolean) {
             </div>
           </div>
           <div class="flex flex-col gap-6">
-            <div v-for="item in buyList" :key="item.label" class="flex items-center gap-4">
-              <div class="w-28 label">
-                {{ item.label }}
-              </div>
-              <RxStepInput v-model="item.value" class="!w-30" size="xs" :min="min" :max="max" @update:model-value="onUpdate($event, item)" />
-              <div>{{ currency(item.cost).format() }} / {{ item.label }}</div>
+            <div v-for="item in renderList" :key="item.label" class="flex items-center gap-4">
+              <component :is="item.render" v-if="item.render" class="w-full" />
+              <template v-else>
+                <div class="w-28 label">
+                  {{ item.label }}
+                </div>
+                <RxStepInput v-model="item.value" class="!w-30" size="xs" :min="min" :max="max" @update:model-value="onUpdate($event, item)" />
+                <div>{{ currency(item.cost).format() }} / {{ item.label }}</div>
+              </template>
             </div>
           </div>
         </div>
@@ -222,7 +233,6 @@ function close(isCancel: boolean) {
         </template>
         <template #after>
           <div class="flex-1 flex flex-col justify-end gap-3">
-            <EasterActivity :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
             <RxButton :disabled="disabled" size="lg" :label="$t('确认付款')" @click="confirm" />
             <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>

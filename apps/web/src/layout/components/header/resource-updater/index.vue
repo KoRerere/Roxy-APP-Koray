@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { onMounted, ref, useTemplateRef } from 'vue'
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 
 import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
@@ -21,6 +21,7 @@ const toast = useToast()
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
 const tabComponentRef = ref()
+const isPopoverVisible = ref(false)
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdateGroup = ref<KernelUpdateGroup[]>([])
@@ -67,12 +68,11 @@ const updateInfo = computed(() => {
 
 async function checkForUpdates() {
   globalThis.electronAPI.send('app:checkForUpdates')
-  globalThis.electronAPI.send('app:checkWebForUpdates')
 }
 
 function toggle(event: Event) {
   popoverRef.value?.instance?.toggle(event)
-  if (popoverRef.value?.instance?.visible) {
+  if (isPopoverVisible.value) {
     tabs.value.some((tab) => {
       if (tab.badge) {
         tabModel.value = tab.value
@@ -146,7 +146,7 @@ watch(isDownloadingKernel, () => {
   if (Date.now() - lastTime < 60000 * 5) {
     return
   }
-  if (isDownloadingKernel.value && !popoverRef.value?.instance?.visible) {
+  if (isDownloadingKernel.value && !isPopoverVisible.value) {
     btnRef.value?.btnEl.click()
     lastTime = Date.now()
     nextTick(() => {
@@ -221,7 +221,7 @@ console.debug('clientUpdates', clientUpdates)
 <template>
   <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" />
 
-  <div class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo">
+  <div class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo" v-tooltip.left="{ value: $t('更新'), showDelay: 600 }">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton ref="btn" severity="secondary" outlined size="xs" @click="toggle">
         <template #icon>
@@ -230,7 +230,7 @@ console.debug('clientUpdates', clientUpdates)
       </RxButton>
     </OverlayBadge>
 
-    <RyPopover ref="popover" :class="popup.content">
+    <RyPopover ref="popover" :class="popup.content" @show="isPopoverVisible = true" @hide="isPopoverVisible = false">
       <div class="header">
         <div class="title">
           {{ $t('更新') }}

@@ -196,9 +196,20 @@ export class BrowserService implements OnModuleInit {
       const container = this.docker.getContainer(containerId)
       let resolved = false
 
+      let logStream: NodeJS.ReadableStream | undefined
+
+      const destroyStream = () => {
+        if (logStream && 'destroy' in logStream && typeof (logStream as any).destroy === 'function') {
+          try { (logStream as any).destroy() }
+          catch {}
+          logStream = undefined
+        }
+      }
+
       const timeout = setTimeout(() => {
         if (!resolved) {
           resolved = true
+          destroyStream()
           reject(new Error(`在 ${CONNECT_TIMEOUT_MS}ms 内未从日志中找到 DevTools WS 地址`))
         }
       }, CONNECT_TIMEOUT_MS)
@@ -215,6 +226,8 @@ export class BrowserService implements OnModuleInit {
             return reject(new Error('未返回日志流'))
           }
 
+          logStream = stream
+
           const onData = (chunk: Buffer) => {
             if (resolved)
               return
@@ -224,9 +237,7 @@ export class BrowserService implements OnModuleInit {
               resolved = true
               clearTimeout(timeout)
               stream.removeListener('data', onData)
-              if ('destroy' in stream && typeof (stream as any).destroy === 'function') {
-                (stream as any).destroy()
-              }
+              destroyStream()
 
               // 将日志中的 0.0.0.0 / 127.0.0.1 替换为容器实际 IP
               const wsUrl = match[1]
@@ -242,6 +253,7 @@ export class BrowserService implements OnModuleInit {
             if (!resolved) {
               resolved = true
               clearTimeout(timeout)
+              destroyStream()
               reject(streamErr)
             }
           })
@@ -311,11 +323,17 @@ export class BrowserService implements OnModuleInit {
   }
 
   /**
-   * 通过 Docker inspect 获取容器内网 IP
+   * 通过 Docker inspect 获取容器内网 IP。
+   * host 网络模式下容器与宿主机共享网络栈，无独立容器 IP，直接返回 127.0.0.1。
    */
   private async getContainerIp(containerId: string): Promise<string> {
     const container = this.docker.getContainer(containerId)
     const info = await container.inspect()
+
+    // host 网络模式：容器直接绑定宿主机端口，DevTools 也监听在 127.0.0.1
+    if ((info.HostConfig as any)?.NetworkMode === 'host') {
+      return '127.0.0.1'
+    }
 
     // 优先取 bridge 网络 IP，其次取全局 IPAddress
     const networks = info.NetworkSettings.Networks

@@ -27,6 +27,6 @@
   "devDependencies": {
     "@roxy/backend-api": "workspace:*",
     "vite": "catalog:",
-    "vite-plugin-dts": "catalog:"
+    "unplugin-dts": "catalog:"
   }
 }

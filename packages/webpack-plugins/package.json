@@ -27,6 +27,6 @@
   },
   "devDependencies": {
     "vite": "catalog:",
-    "vite-plugin-dts": "catalog:"
+    "unplugin-dts": "catalog:"
   }
 }

@@ -22,7 +22,6 @@ export const defaultValues: StoreType = {
   ipChecker: '',
   allWorkspaceId: [],
   sharedWorkspaceList: [],
-  isExternalWeb: false,
   openWorkbench: 1,
   subLevel: '',
   token: '',
@@ -49,4 +48,5 @@ export const defaultValues: StoreType = {
   dashboardTourGuide: false,
   appNormalExit: false,
   windowNameSwitch: true,
+  lastWebDomain: '',
 }

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import EasterActivity from '/@/views/campaign/easter/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -10,7 +10,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import currency from 'currency.js'
 import { differenceInDays, format } from 'date-fns'
 import { debounce } from 'es-toolkit'
-
 import { API } from '/@/api'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
@@ -18,7 +17,6 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnumStr } from '/@/enums/pay'
 import type { SubLevelEnum } from '/@/enums/pay'
 import type { Plan } from './type'
@@ -27,11 +25,10 @@ const router = useRouter()
 const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
-const { openProcessing, planSuccess } = usePay()
+const { openProcessing, planSuccess, planSuccessFreedomActivity2 } = usePay()
 const { getUserPayInfo, mixpanelTrack } = useUserStore()
 const { userPayInfo } = storeToRefs(useUserStore())
-const { currentActivity } = storeToRefs(useCampaignStore())
-
+const { seasonalActivity } = storeToRefs(useCampaignStore())
 const popupCss = useCssModule('popup')
 
 const loading = ref(false)
@@ -41,10 +38,21 @@ const selectedCount = ref(userPayInfo.value.purchaseWindowCount)
 const originalAmount = ref(0)
 const needPayAmount = ref(0)
 const nextBill = ref()
-const giftType = ref()
 
 const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.value.purchaseWindowCount)
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
+
+const upshiftCount = computed(() => {
+  if (!dataList.value)
+    return selectedCount.value
+  const count = Math.max(selectedCount.value, 10)
+  const max = dataList.value[dataList.value.length - 1].maxWindows
+  if (count < 50)
+    return 50
+  if (count < 100)
+    return 100
+  return Math.min(count + 100, max)
+})
 
 const allDiscount = computed(() => {
   const { firstPurchaseDiscount, discount } = userPayInfo.value!
@@ -62,8 +70,6 @@ const currentSubscribe = computed(() => {
   return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
 })
 
-const beyondDiscount = computed(() => !userPayInfo.value.isEaster ? true : discountCalculate([currentActivity.value.discount]) > discountCalculate(Object.values(allDiscount.value)))
-
 const details = computed(() => {
   const { firstPurchaseDiscount, discount } = allDiscount.value
 
@@ -80,6 +86,12 @@ const details = computed(() => {
         {
           label: $t('窗口数量'),
           value: `${profileCount.format()} + ${freeWindowCount.format()}`,
+          visible: !isUpgrade.value || !seasonalActivity.value.freedom,
+        },
+        {
+          label: $t('窗口数量（免费升舱）'),
+          visible: isUpgrade.value && seasonalActivity.value.freedom,
+          slot: 'freedom',
         },
         {
           label: $t('每日可创建数'),
@@ -93,13 +105,13 @@ const details = computed(() => {
           label: $t('首购折扣'),
           class: '!color-[#FC9D12]',
           value: `-${firstPurchaseDiscount}%`,
-          visible: !!firstPurchaseDiscount && beyondDiscount.value,
+          visible: !!firstPurchaseDiscount,
         },
         {
           label: $t('专属折扣'),
           class: '!color-[#FC9D12]',
           value: `-${discount}%`,
-          visible: !!discount && beyondDiscount.value,
+          visible: !!discount,
         },
       ].filter(item => item.visible !== false),
     },
@@ -263,15 +275,15 @@ async function planUpgrade() {
             purchaseMember: { profile: selectedCount.value },
             subLevel: selectedPlan.value.subLevel,
             isAuto: !!userPayInfo.value.isAuto,
-            giftType: giftType.value,
             purchaseType: PurchaseType.Profile,
             subOrderType: PaySubOrderType.Upgrade,
             orderType: OrderType.Subscribe,
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
-            (payType === PayWay.Balance ? planSuccess() : openProcessing({ payType, ...data }, OrderType.Subscribe))
+            (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
               .then(() => {
+                // showFreedomActivityModal()
                 router.push({ name: 'browser-list' })
               })
           }
@@ -381,6 +393,7 @@ function jumpToProfile() {
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto">
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="dataList" :min="sliderMin" />
+          <FreedomActivity v-if="seasonalActivity.freedom && selectedPlan && isUpgrade" :count="selectedCount" :upshift-count="upshiftCount" />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div class="flex items-center justify-between">
             <div class="sub-title">
@@ -398,6 +411,31 @@ function jumpToProfile() {
           <RxLoading v-model="loading" />
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
           <Detail :list="details">
+            <template #freedom="{ item }">
+              <div class="flex justify-between items-center">
+                <div class="tt-secondary text-3.5 leading-5">
+                  {{ item.label }}
+                </div>
+                <div class="flex items-center gap-1 tt-secondary text-3.5 leading-5">
+                  <div>({{ selectedCount }}</div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M9.5 5.13384C10.1667 5.51874 10.1667 6.48099 9.5 6.86589L4.25 9.89698C3.58333 10.2819 2.75 9.80076 2.75 9.03095L2.75 2.96878C2.75 2.19898 3.58333 1.71785 4.25 2.10275L9.5 5.13384Z"
+                      fill="url(#paint0_linear_10147_14311)"
+                    />
+                    <defs>
+                      <linearGradient id="paint0_linear_10147_14311" x1="10" y1="1.96729" x2="9.76688" y2="10.2304" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4096FF" />
+                        <stop offset="1" stop-color="#01CAB3" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div>{{ upshiftCount }})</div>
+                  <div>+</div>
+                  <div>{{ userPayInfo.freeWindowCount }}</div>
+                </div>
+              </div>
+            </template>
             <template #oldprice="{ item }">
               <div class="flex justify-between">
                 <div class="flex items-center gap-1.5 details-label">
@@ -427,7 +465,6 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <EasterActivity v-if="selectedPlan" v-model="giftType" :beyond-discount="beyondDiscount" :discount="currentActivity.discount" />
                 <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe" />
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>

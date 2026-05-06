@@ -36,6 +36,8 @@ import {
   UserGetBindCardListListParams,
   UserGetDowngradeSubscriptionInfoListData,
   UserGetDurationDiscountsListData,
+  UserGetPayChannelFeesListData,
+  UserGetPayChannelFeesListParams,
   UserGetPayLinkListData,
   UserGetPayLinkListParams,
   UserGetPendingPaymentListListData,
@@ -842,6 +844,26 @@ export class PayApi<SecurityDataType = unknown> {
     this.http.request<UserPayCaptchaTriggerListData, any>({
       path: `/user_pay_captcha_trigger`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserGetPayChannelFeesList
+   * @summary 获取用户支付渠道手续费配置
+   * @request GET:/user_get_pay_channel_fees
+   * @response `200` `UserGetPayChannelFeesListData`
+   */
+  userGetPayChannelFeesList = (
+    query: UserGetPayChannelFeesListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPayChannelFeesListData, any>({
+      path: `/user_get_pay_channel_fees`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

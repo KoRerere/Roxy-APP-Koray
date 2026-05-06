@@ -34,8 +34,12 @@ const copySyncOptions: CopySyncOptions = {
   filter: src => !src.endsWith('.map') && !src.endsWith('.d.ts'),
 }
 
-cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
+// cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
 cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dist/web/locales'), copySyncOptions)
+const webPublicAssets = ['html-template', 'electron', 'config.json', 'blockDomain.html', 'fonts', '500.html', 'launch.html']
+for (const p of webPublicAssets) {
+  cpSync(path.join(workDir, `../web/public/${p}`), path.join(workDir, `./dist/web/${p}`), copySyncOptions)
+}
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
 isWindows && cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
 

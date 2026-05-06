@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 // import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
@@ -13,7 +13,7 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useDrawer } from '/@/hooks/useDrawer'
-import { isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
+import { genPollingChecker, isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
@@ -44,6 +44,7 @@ const hasFiltered = ref(false)
 const dataList = ref()
 const newOrderNo = ref()
 const newOrderTimer = ref()
+const checkerLoading = ref(false)
 
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
@@ -83,12 +84,22 @@ const filters = reactive({
   },
 })
 
+// const scheduledCheckerProxyStatus = genPollingChecker({
+//   intervalMs: 5 * 60 * 1000,
+//   checkOnce: async () => {
+//     await testAllProxy(true)
+//     return false
+//   },
+// })
+
 onBeforeMount(async () => {
+  // scheduledCheckerProxyStatus.check()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
 })
 
 onBeforeUnmount(() => {
+  // scheduledCheckerProxyStatus.stop()
   clearTimeout(newOrderTimer.value)
 })
 
@@ -112,7 +123,7 @@ async function operationHandler(operate: any, data: ProxyItem) {
       await deleteProxy(datas)
       break
     case 'test':
-      concurrentProxyTest(buildShopProxySpeedTestRun(datas, operate.name))
+      concurrentProxyTest(buildShopProxySpeedTestRun(datas, { operateName: operate.name }))
       break
     case 'download':
       await download(datas)
@@ -231,15 +242,19 @@ function setNewOrderNo(value: string) {
   }, 3000)
 }
 
-async function testAllProxy() {
+async function testAllProxy(silent = false) {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理 IP'))
+    !silent && onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
-  await concurrentProxyTest(buildShopProxySpeedTestRun(dataList.value, 'test'))
+  if (checkerLoading.value)
+    return
+  checkerLoading.value = true
+  await concurrentProxyTest(buildShopProxySpeedTestRun(dataList.value, { operateName: 'test', silent }))
+  checkerLoading.value = false
 }
 
-function buildShopProxySpeedTestRun(datas: ProxyItem[], operateName: string): ConcurrentProxyTestRun {
+function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }: { operateName: string, silent?: boolean }): ConcurrentProxyTestRun {
   const tasks = datas.map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
@@ -265,7 +280,7 @@ function buildShopProxySpeedTestRun(datas: ProxyItem[], operateName: string): Co
         setOperationLoading(datas[i]!, operateName, false)
     })
     const validResults = results.filter(Boolean) as ConcurrentProxyValidResult[]
-    if (!cancelled) {
+    if (!cancelled && !silent) {
       batchTestShowToast(validResults)
     }
     const proxyList = validResults.filter((item: any) => item?.proxyType === ProxyType.resource)
@@ -460,7 +475,9 @@ function rowClass(data: ProxyItem) {
               <RxSelectButton v-for="item in filters.list" :key="item.value" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
                               @change="filters.onChange"
               />
-              <RxButton v-if="check('Proxy_List_speed_test')" size="xxs" variant="outlined" severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy" />
+              <RxButton v-if="check('Proxy_List_speed_test')" size="xxs" variant="outlined" severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" :loading="checkerLoading"
+                        @click.stop="testAllProxy()"
+              />
               <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
             </div>
           </div>

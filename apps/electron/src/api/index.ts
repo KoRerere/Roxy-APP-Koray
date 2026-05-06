@@ -1,6 +1,5 @@
 import { ApiApi, AppTrackingEventApi, BaseApi, HttpClient, LimitApi, LoggingApi, PayApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
-import { app } from 'electron'
-import { getBaseUrl, getGatewayConfig, getOpenAPIUrl, reGetGatewayConfigByIpChange } from '/@/api/getGatewayConfig'
+import { getBaseUrl, getGatewayConfig, getOpenAPIUrl, reGetGatewayConfigByCountryChange } from '/@/api/getGatewayConfig'
 import { handleResponse } from '/@/api/util'
 import { appCliStartArgs } from '/@/constants/common'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
@@ -46,6 +45,9 @@ httpClient.instance.interceptors.request.use(async (config) => {
     config.baseURL = getOpenAPIUrl()
     config.headers['r-api-token'] = store.userApiToken
   }
+  config.metadata = {
+    reqTime: Date.now(),
+  }
 
   console.debug('config.headers', config.url, config.headers)
   // console.log('config.headers', config.headers)
@@ -59,8 +61,14 @@ httpClient.instance.interceptors.request.use(async (config) => {
 })
 
 httpClient.instance.interceptors.response.use((response) => {
-  // handleResponse(response)
-  reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
+  const { url, baseURL } = response.config
+
+  reGetGatewayConfigByCountryChange({
+    country: response.headers['r-real-country'],
+    reqUrl: url ? new URL(url, baseURL).href : baseURL ?? '',
+    reqTime: response.config.metadata?.reqTime ?? 0,
+  })
+
   const code = response.data.code
   if (code === 405) {
     ipcSender.user.kickedOut(response.data.data)

@@ -1,6 +1,7 @@
 import type { BrowserItem } from './browserItem'
 import type { UserGetUserConfigListData } from '@roxy/backend-api'
 import type { ProxyDetectionResult } from '~/utils'
+import axios from 'axios'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '~/api'
@@ -236,12 +237,12 @@ export class BeforeLaunchTask {
 
     const defaultOpenUrls = await readFile(OPEN_URLS_FILE, 'utf8').then(content => JSON.parse(content) as string[]).catch(() => [])
 
-    defaultOpenUrls.forEach((url) => {
+    for (const url of defaultOpenUrls) {
       const hostName = new URL(url).hostname
-      if (!allOpenUrl.includes(hostName)) {
-        args.push(url)
+      if (!allOpenUrl.some((u: string) => new URL(u).hostname.endsWith(hostName))) {
+        allOpenUrl.push(url)
       }
-    })
+    }
 
     return args.filter(a => a.trim() !== '')
   }
@@ -262,8 +263,11 @@ export class BeforeLaunchTask {
     try {
       this.proxyInfo = await this.browserItem.proxyDetection()
     }
-    catch (error) {
-      console.error('代理检测失败：', error)
+    catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : undefined
+      const errorResponseData = axios.isAxiosError(error) ? error.response?.data : undefined
+
+      console.error('代理检测失败：', errorMessage, errorResponseData)
       if (stopOpenNet) {
         throw new Error($t('网络不通停止打开'))
       }

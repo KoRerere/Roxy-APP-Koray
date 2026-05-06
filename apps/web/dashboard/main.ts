@@ -8,15 +8,17 @@ import { setupPrimeVue } from '/@/primevue'
 import { createApp } from 'vue'
 import { i18n, setupI18n } from '/@/locales'
 import App from './App.vue'
+import { getLocalWebServerURL } from './utils'
 
 const app = createApp(App)
 
 setupPrimeVue(app)
 app.use(i18n)
 
-const dirId = new URLSearchParams(window.location.search).get('id')
+const urlParams = new URLSearchParams(window.location.search)
+const dirId = urlParams.get('id')
 
-fetch(`/api/app/config?dirId=${dirId}`)
+fetch(`${getLocalWebServerURL()}/api/app/config?dirId=${dirId}`)
   .then(res => res.json())
   .then(({ data }) => {
     console.log('app config', data);

@@ -331,7 +331,7 @@ async function openRoxyAIAgent() {
     <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip">
       {{ $t('有疑问吗？欢迎随时与我们联系！') }}
     </div>
-    <div id="roxy-ai-agent" class="flex cursor-pointer" @click="openRoxyAIAgent">
+    <div id="mcp" class="flex cursor-pointer" @click="openRoxyAIAgent">
       <AgentLabel :key="agentLabelKey" />
     </div>
     <div class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">

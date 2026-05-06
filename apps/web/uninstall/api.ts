@@ -3,32 +3,26 @@ import {
   HttpClient,
   UserAddUninstallReasonAnswerApi,
 } from '@roxy/backend-api'
-import qs from 'qs'
-import { getCommonHeaders, getDeviceId, getGatewayConfig, needDeviceIdApis } from '/@/api/util'
+import { serializeRequestParams } from '/@/api/serializeRequestParams'
+import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByCountryChange } from '/@/api/getGatewayConfig'
+import { getCommonHeaders, getDeviceId, needDeviceIdApis } from '/@/api/util'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
-import { isDev, isMainWindow } from '/@/utils'
 
 export const httpClient = new HttpClient({
-  baseURL: isDev ? 'https://apitest.roxybrowser.co' : 'https://hz.gate.roxybrowser.cn',
+  baseURL: import.meta.env.DEV ? 'https://apitest.roxybrowser.co' : 'https://hz.gate.roxybrowser.cn',
   paramsSerializer(params) {
-    return qs.stringify(params, { arrayFormat: 'comma' })
+    return serializeRequestParams(params)
   },
 })
 
-let baseURL = ''
 let commonHeaders
 let deviceId = ''
 let appVersion = ''
 
-globalThis?.globalThis.electronAPI?.on('app:backend-url-change', (url) => {
-  console.log('app:backend-url-change', url)
-  baseURL = url
-})
-
 httpClient.instance.interceptors.request.use(async (config) => {
+  const baseURL = getBaseUrl() || await getGatewayConfig()
   appVersion ||= await globalThis.electronAPI.send('app:getAppVersion')
-  baseURL ||= await getGatewayConfig()
   commonHeaders ||= await getCommonHeaders()
 
   if (needDeviceIdApis.some(api => config.url?.includes(api))) {
@@ -40,6 +34,10 @@ httpClient.instance.interceptors.request.use(async (config) => {
     ...commonHeaders,
     ...config.headers,
   })
+
+  config.metadata = {
+    reqTime: Date.now(),
+  }
 
   console.debug('baseURL', baseURL)
   config.baseURL ||= baseURL
@@ -57,7 +55,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   return config
 }, (error) => {
   if (error?.message?.includes('ERR_CONNECTION_RESET')) {
-    reGetGatewayConfig()
+    getGatewayConfig()
   }
   return Promise.reject(error)
 })
@@ -66,16 +64,15 @@ const closeOtherWindow = debounce(() => {
   globalThis.electronAPI.send('app:uninstall-directly')
 }, 200)
 
-const reGetGatewayConfig = debounce(() => {
-  globalThis.electronAPI.send('util:getGatewayConfig')
-}, 200)
-
-const reGetGatewayConfigByIpChange = debounce((ip: string) => {
-  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
-}, 200)
-
 httpClient.instance.interceptors.response.use(async (response) => {
-  reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
+  const { url, baseURL } = response.config
+
+  reGetGatewayConfigByCountryChange({
+    country: response.headers['r-real-country'],
+    reqUrl: url ? new URL(url, baseURL).href : baseURL ?? '',
+    reqTime: response.config.metadata?.reqTime ?? 0,
+  })
+
   console.log('response.data', response.data)
   const code = response.data.code
   if (code === 405) {

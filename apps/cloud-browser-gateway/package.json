@@ -52,6 +52,6 @@
     "@types/http-proxy": "^1.17.17",
     "@types/node": "^22.15.0",
     "@types/ws": "^8.18.1",
-    "typescript": "^5.9.3"
+    "typescript": "catalog:"
   }
 }

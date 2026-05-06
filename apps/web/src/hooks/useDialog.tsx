@@ -6,6 +6,7 @@ import RxButton from '/@/components/rx-button/'
 import { isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
 import type { ButtonProps } from 'primevue/button'
+import { emitter } from '/@/utils/eventBus'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
   handleCancel?: (...args: any[]) => any
@@ -15,6 +16,7 @@ export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes
   okProps?: ButtonProps
   cancelText?: string
   slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element }
+  noAutoClose?: boolean
 }
 
 export interface UseDialogInstance {
@@ -52,6 +54,8 @@ export function useDialog() {
       if (props.header) {
         dialogMap.delete(props.header)
       }
+      
+      emitter.off('kickedOut', handleKickedOut)
     }
 
     function onAfterHide() {
@@ -70,6 +74,14 @@ export function useDialog() {
         hideModal()
       },
     })
+
+    function handleKickedOut() {
+      console.log('退出登录了，关闭弹窗')
+      setTimeout(() => hideModal(), 500)
+    }
+    // if (!props.noAutoClose) {
+    //   emitter.on('kickedOut', handleKickedOut)
+    // }
 
     const instance = {
       dialogRef: ref<InstanceType<typeof Dialog> | null>(null),

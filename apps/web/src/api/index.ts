@@ -13,8 +13,9 @@ import {
   UserAddUninstallReasonAnswerApi,
   WindowApi,
 } from '@roxy/backend-api'
-import qs from 'qs'
-import { getCommonHeaders, getDeviceId, getGatewayConfig, getInviteCode, needDeviceIdApis } from '/@/api/util'
+import { serializeRequestParams } from '/@/api/serializeRequestParams'
+import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByCountryChange } from '/@/api/getGatewayConfig'
+import { getCommonHeaders, getDeviceId, getInviteCode, needDeviceIdApis } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -34,19 +35,13 @@ export const httpClient = new HttpClient({
    * baseURL: 'https://roxybrowser.app/api',
    */
   paramsSerializer(params) {
-    return qs.stringify(params, { arrayFormat: 'comma' })
+    return serializeRequestParams(params)
   },
 })
 
-let baseURL = ''
 let commonHeaders
 let deviceId = ''
 let inviteCode: string
-
-globalThis?.globalThis.electronAPI?.on('app:backend-url-change', (url) => {
-  console.log('app:backend-url-change', url)
-  baseURL = url
-})
 
 const closeOtherWindow = debounce(() => {
   if (!isMainWindow) {
@@ -54,20 +49,12 @@ const closeOtherWindow = debounce(() => {
   }
 }, 200)
 
-const reGetGatewayConfig = debounce(() => {
-  globalThis.electronAPI.send('util:getGatewayConfig')
-}, 200)
-
-const reGetGatewayConfigByIpChange = debounce((ip: string) => {
-  globalThis.electronAPI.send('util:reGetGatewayConfigByIpChange', ip)
-}, 200)
-
 const showBackDefaultWorkspace = debounce(() => {
   emitter.emit('backDefaultWorkspace')
 }, 200)
 
 httpClient.instance.interceptors.request.use(async (config) => {
-  baseURL ||= await getGatewayConfig()
+  const baseURL = getBaseUrl() || await getGatewayConfig()
   commonHeaders ||= await getCommonHeaders()
   inviteCode ??= await getInviteCode()
 
@@ -93,6 +80,9 @@ httpClient.instance.interceptors.request.use(async (config) => {
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
   config.headers['R-INVITE-CODE'] = inviteCode
+  config.metadata = {
+    reqTime: Date.now(),
+  }
   // R-OS:mac/win
   // R-OSBIT:apple/intel/64/11
   // R-VERSION:1.0.0
@@ -102,13 +92,20 @@ httpClient.instance.interceptors.request.use(async (config) => {
 }, (error) => {
   console.error('request error', error)
   if (error?.message?.includes('ERR_CONNECTION_RESET')) {
-    reGetGatewayConfig()
+    getGatewayConfig()
   }
   return Promise.reject(error)
 })
 
 httpClient.instance.interceptors.response.use(async (response) => {
-  reGetGatewayConfigByIpChange(response.headers['r-real-ip'])
+  const { url, baseURL } = response.config
+
+  reGetGatewayConfigByCountryChange({
+    country: response.headers['r-real-country'],
+    reqUrl: url ? new URL(url, baseURL).href : baseURL ?? '',
+    reqTime: response.config.metadata?.reqTime ?? 0,
+  })
+
   const code = response.data.code
   if (code === 405) {
     // 踢出登录

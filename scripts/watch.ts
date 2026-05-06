@@ -58,20 +58,21 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           electronApp = spawn(String(electronPath), ['--inspect', '.', '--experimental-network-inspection', '--no-sandbox', '--disable-setuid-sandbox'], {
             // 设置工作目录
             cwd: path.resolve(import.meta.dirname, '../apps/electron'),
+            stdio: ['ignore', 'inherit', 'inherit'],
           })
 
-          electronApp.stdout.on('data', (data) => {
-            console.log(data.toString())
-          })
+          // electronApp.stdout.on('data', (data) => {
+          //   console.log(data.toString())
+          // })
 
-          electronApp.stderr.on('data', (data) => {
-            const str = data.toString()
-            const ignoreErrors = ['Secure coding is not enabled for restorable state', 'CoreText note: Client requested name']
-            if (ignoreErrors.some(err => str.includes(err))) {
-              return
-            }
-            console.log('\x1B[31m%s\x1B[0m', str)
-          })
+          // electronApp.stderr.on('data', (data) => {
+          //   const str = data.toString()
+          //   const ignoreErrors = ['Secure coding is not enabled for restorable state', 'CoreText note: Client requested name']
+          //   if (ignoreErrors.some(err => str.includes(err))) {
+          //     return
+          //   }
+          //   console.log('\x1B[31m%s\x1B[0m', str)
+          // })
 
           /** 当应用程序退出时停止监听脚本 */
           electronApp.addListener('exit', process.exit)

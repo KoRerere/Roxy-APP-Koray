@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title data-i18n-title>连接异常</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+      }
+
+      .error-page {
+        width: 100%;
+        min-height: 100vh;
+        background: #f5fbff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+
+      .error-card {
+        width: 100%;
+        max-width: 384px;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .empty-content {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 384px;
+        width: 100%;
+      }
+
+      .empty-img {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .empty-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        align-self: stretch;
+        text-align: left;
+        padding-left: 20px;
+      }
+
+      .empty-info-title {
+        color: #34393d;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: normal;
+      }
+
+      .error-help {
+        color: #575d60;
+        font-size: 12px;
+        line-height: 20px;
+      }
+
+      .error-help .lead {
+        margin-bottom: 8px;
+      }
+
+      .error-link {
+        color: #11a3fd;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .error-link:hover {
+        text-decoration: underline;
+      }
+
+      .actions {
+        display: flex;
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      .btn-reload {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 5px 15px;
+        font-size: 14px;
+        line-height: 22px;
+        font-weight: 400;
+        font-family: inherit;
+        color: #333;
+        background-color: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .btn-reload:hover {
+        background-color: #fff;
+        border-color: #bfbfbf;
+      }
+
+      .btn-reload:active {
+        background-color: #f5f5f5;
+        border-color: #bfbfbf;
+      }
+
+      .btn-reload svg {
+        flex-shrink: 0;
+        pointer-events: none;
+        color: #606266;
+      }
+
+      .btn-reload.is-loading {
+        cursor: not-allowed;
+        opacity: 0.92;
+      }
+
+      .btn-reload.is-loading:hover {
+        border-color: #d9d9d9;
+      }
+
+      .btn-reload-normal,
+      .btn-reload-busy {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-reload-busy[hidden] {
+        display: none !important;
+      }
+
+      .btn-spinner {
+        transform-origin: center;
+        animation: btn-spin 0.75s linear infinite;
+      }
+
+      @keyframes btn-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="error-page">
+      <div class="error-card">
+        <div class="empty-content">
+          <svg
+            class="empty-img"
+            width="90"
+            height="90"
+            viewBox="0 0 90 90"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <g clip-path="url(#clip500)">
+              <ellipse
+                cx="42.8081"
+                cy="45.1831"
+                rx="28.9888"
+                ry="41.2285"
+                transform="rotate(47.6665 42.8081 45.1831)"
+                fill="url(#paint500)"
+              />
+              <path
+                d="M52.5612 55.2672C38.0856 68.299 20.5123 72.378 13.3101 64.378C6.10802 56.3779 11.1865 38.6532 25.6622 25.6213C40.1378 12.5895 58.529 9.18548 65.7311 17.1856C72.9333 25.1856 67.0369 42.2353 52.5612 55.2672Z"
+                fill="white"
+                fill-opacity="0.9"
+              />
+              <path
+                d="M39.8343 41.082L30.4999 35.5L18.5692 57.321C18.2971 57.8187 18.9114 58.3267 19.3492 57.9659L39.8343 41.082Z"
+                fill="#C1E7FE"
+              />
+              <path
+                d="M50.4733 19.1582L30.5 35.5L39.5 41.5L51.2528 19.8025C51.5219 19.3056 50.9107 18.8003 50.4733 19.1582Z"
+                fill="#6CC6FF"
+              />
+            </g>
+            <defs>
+              <linearGradient
+                id="paint500"
+                x1="13.8193"
+                y1="45.1831"
+                x2="159.837"
+                y2="51.2469"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#6FD4FF" stop-opacity="0.1" />
+                <stop offset="0.721154" stop-color="#5FAFFF" />
+              </linearGradient>
+              <clipPath id="clip500">
+                <rect width="90" height="90" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+
+          <div class="empty-info">
+            <div id="i18n-heading" class="empty-info-title">连接异常</div>
+            <div class="error-help">
+              <div id="i18n-lead" class="lead">RoxyBrowser 的响应时间过长。</div>
+              <div id="i18n-hint">请尝试以下方法：</div>
+              <div id="i18n-item1">1.检查网络连接状态</div>
+              <div id="i18n-item2">2.同步当前系统时间</div>
+              <div>
+                <span id="live-chat-trigger" class="error-link" role="button" tabindex="0">3.联系技术支持</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn-reload" id="btn-reload" aria-busy="false">
+                <span class="btn-reload-normal">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"
+                      stroke="currentColor"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span id="i18n-refresh">刷新页面</span>
+                </span>
+                <span class="btn-reload-busy" hidden>
+                  <svg
+                    class="btn-spinner"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-dasharray="48"
+                      stroke-dashoffset="14"
+                      opacity="0.9"
+                    />
+                  </svg>
+                  <span id="i18n-loading">加载中...</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      ;(function () {
+        /**
+         * 文案与 apps/web/src/locales/langs/en.json 中对应键一致（英文值为该文件中的翻译）。
+         */
+        var I18N = {
+          zh: {
+            连接异常: '连接异常',
+            'RoxyBrowser 的响应时间过长。': 'RoxyBrowser 的响应时间过长。',
+            '请尝试以下方法：': '请尝试以下方法：',
+            '1.检查网络连接状态': '1.检查网络连接状态',
+            '2.同步当前系统时间': '2.同步当前系统时间',
+            '3.联系技术支持': '3.联系技术支持',
+            刷新页面: '刷新页面',
+            '加载中...': '加载中...',
+          },
+          en: {
+            连接异常: 'Connection Error',
+            'RoxyBrowser 的响应时间过长。': 'RoxyBrowser response time is too long.',
+            '请尝试以下方法：': 'Please try the following methods:',
+            '1.检查网络连接状态': '1. Check network connection status',
+            '2.同步当前系统时间': '2. Synchronize current system time',
+            '3.联系技术支持': '3. Contact support',
+            刷新页面: 'Refresh page',
+            '加载中...': 'Loading...',
+          },
+        }
+
+        function resolveLocale() {
+          var list =
+            navigator.languages && navigator.languages.length
+              ? navigator.languages
+              : navigator.language
+                ? [navigator.language]
+                : ['en']
+          for (var i = 0; i < list.length; i++) {
+            var tag = String(list[i] || '')
+              .toLowerCase()
+              .replace(/_/g, '-')
+            if (tag.indexOf('zh') === 0) return 'zh'
+          }
+          return 'en'
+        }
+
+        function applyI18n() {
+          var locale = resolveLocale()
+          var pack = I18N[locale] || I18N.en
+
+          document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
+
+          var titleEl = document.querySelector('title[data-i18n-title]')
+          if (titleEl) titleEl.textContent = pack['连接异常']
+
+          var heading = document.getElementById('i18n-heading')
+          if (heading) heading.textContent = pack['连接异常']
+          var lead = document.getElementById('i18n-lead')
+          if (lead) lead.textContent = pack['RoxyBrowser 的响应时间过长。']
+          var hint = document.getElementById('i18n-hint')
+          if (hint) hint.textContent = pack['请尝试以下方法：']
+          var item1 = document.getElementById('i18n-item1')
+          if (item1) item1.textContent = pack['1.检查网络连接状态']
+          var item2 = document.getElementById('i18n-item2')
+          if (item2) item2.textContent = pack['2.同步当前系统时间']
+          var chatTrigger = document.getElementById('live-chat-trigger')
+          if (chatTrigger) chatTrigger.textContent = pack['3.联系技术支持']
+          var refreshSpan = document.getElementById('i18n-refresh')
+          if (refreshSpan) refreshSpan.textContent = pack['刷新页面']
+          var loadingSpan = document.getElementById('i18n-loading')
+          if (loadingSpan) loadingSpan.textContent = pack['加载中...']
+        }
+
+        applyI18n()
+
+        var btnReload = document.getElementById('btn-reload')
+        var reloadNormal = btnReload.querySelector('.btn-reload-normal')
+        var reloadBusy = btnReload.querySelector('.btn-reload-busy')
+
+        function setReloadLoading(loading) {
+          btnReload.disabled = loading
+          btnReload.classList.toggle('is-loading', loading)
+          btnReload.setAttribute('aria-busy', loading ? 'true' : 'false')
+          reloadNormal.hidden = loading
+          reloadBusy.hidden = !loading
+        }
+
+        btnReload.addEventListener('click', function () {
+          var api = globalThis.electronAPI
+          if (!api || typeof api.send !== 'function') return
+          setReloadLoading(true)
+          Promise.resolve(api.send('app:testWebDomain')).finally(function () {
+            setReloadLoading(false)
+          })
+        })
+
+        function openLiveChat() {
+          if (typeof LiveChatWidget !== 'undefined' && LiveChatWidget.call) {
+            LiveChatWidget.call('maximize')
+          }
+        }
+
+        var chatEl = document.getElementById('live-chat-trigger')
+        chatEl.addEventListener('click', openLiveChat)
+        chatEl.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            openLiveChat()
+          }
+        })
+      })()
+    </script>
+  </body>
+</html>

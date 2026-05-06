@@ -133,7 +133,10 @@ onMounted(() => {
             </button>
           </div>
 
-          <div class="font-['Inter'] text-[14px] text-[var(--colors-text-text-primary)] leading-20px">
+          <div
+            v-tooltip.top="{ value: skill.description, showDelay: 1000 }"
+            class="font-['Inter'] text-[14px] text-[var(--colors-text-text-primary)] leading-20px line-clamp-3"
+          >
             {{ skill.description }}
           </div>
         </div>

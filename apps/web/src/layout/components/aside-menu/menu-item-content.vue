@@ -92,7 +92,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
             <span class="ellipsis-1">{{ item.meta?.title }}</span>
             <SvgIcon v-if="item.meta?.slotName === 'proxy'" name="base/fire" />
           </div>
-          <RxButton v-if="item.meta?.slotName === 'proxy'" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="buyProxy()" />
+          <RxButton v-if="item.meta?.slotName === 'proxy' && !collapsed" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="buyProxy()" />
         </template>
 
         <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->

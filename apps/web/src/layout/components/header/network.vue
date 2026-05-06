@@ -52,7 +52,9 @@ setTimeout(detectNetwork, 2000)
 
 <template>
   <div class="flex items-center gap-1">
-    <RxButton class="shrink-0" :icon="proxyInfo.ip ? 'base/rx_ic_location' : 'base/rx_ic_location_error'" :loading="loading" severity="secondary" outlined size="xs" @click="detectNetwork" />
+    <div v-tooltip.left="{ value: $t('当前网络定位'), showDelay: 600 }">
+      <RxButton class="shrink-0" :icon="proxyInfo.ip ? 'base/rx_ic_location' : 'base/rx_ic_location_error'" :loading="loading" severity="secondary" outlined size="xs" @click="detectNetwork" />
+    </div>
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />

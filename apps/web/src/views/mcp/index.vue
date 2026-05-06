@@ -29,9 +29,13 @@ const conversationList = ref<Conversation[]>([])
 const activeConversationId = ref<string>('')
 const loading = ref(false)
 
+// 为初始化的
+const uninitialized = ref(true) 
+
 /**
  * 加载对话列表
  */
+
 async function loadConversations() {
   loading.value = true
   try {
@@ -123,7 +127,8 @@ onMounted(async () => {
   // 初始化 agent store（全局唯一，只会执行一次）
   await agentStore.initMcp()
   // 加载对话列表
-  loadConversations()
+  await loadConversations()
+  uninitialized.value = false
   let _driverStatus = {}
   try {
     _driverStatus = JSON.parse(localStorage.getItem('driverStatus') || '{}')
@@ -136,7 +141,7 @@ onMounted(async () => {
       {
         element: '#mcpAndSkills',
         popover: {
-          description: $t('现在开始您可以通过「通用设置」来配置 MCP 与 Skills。'),
+          description: $t('MCP 和 Skills 设置现已开放。'),
           side: 'top',
           align: 'center',
         },
@@ -210,7 +215,7 @@ onUnmounted(() => {
                 :class="item.id === activeConversationId && viewMode === 'chat' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'bg-transparent hover:bg-[var(--pattern-sidenav-bg-hover)]'"
                 @click="selectConversation(item.id)"
               >
-                <div v-tooltip.top="item.title" class="font-['Inter'] font-500 text-[var(--colors-text-text-primary-hover)] text-14px truncate">
+                <div v-tooltip.top="{ value: item.title, showDelay: 1000 }" class="font-['Inter'] font-500 text-[var(--colors-text-text-primary-hover)] text-14px truncate">
                   {{ item.title }}
                 </div>
 
@@ -250,7 +255,15 @@ onUnmounted(() => {
 
       <!-- 主内容区 -->
       <div class="relative flex-1 w-full h-full bg-[var(--colors-background-bg-page)] rounded-4 overflow-hidden">
-        <ChatView v-if="viewMode === 'chat'" :key="activeConversationId" v-model:is-chatting="isChatting" :conversation-id="activeConversationId" @update-title="handleUpdateTitle" @create-conversation="handleChatViewCreateConversation" />
+        <ChatView 
+          v-if="viewMode === 'chat'" 
+          :key="activeConversationId" 
+          v-model:is-chatting="isChatting" 
+          :conversation-id="activeConversationId" 
+          @update-title="handleUpdateTitle" 
+          @create-conversation="handleChatViewCreateConversation" 
+          :uninitialized="uninitialized"
+        />
         <SettingsView v-else />
       </div>
     </div>

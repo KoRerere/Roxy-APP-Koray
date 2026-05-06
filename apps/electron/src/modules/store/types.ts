@@ -62,8 +62,6 @@ export interface StoreType {
   blockDomainList: string[]
   /** Default IP checker */
   ipChecker: string
-  /** 是否使用外置 web 资源 */
-  isExternalWeb: boolean
   /** 设备 ID */
   deviceId?: string
   /** mac 地址 */
@@ -121,6 +119,6 @@ export interface StoreType {
   updaterExePid?: number
   /** 应用是否正常退出 */
   appNormalExit?: boolean
-  /** 是否开启窗口名称 */
-  windowNameSwitch: boolean
+  /** 最后一次使用的 web 域名 */
+  lastWebDomain?: string
 }

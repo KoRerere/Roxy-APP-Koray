@@ -1,5 +1,7 @@
 <template>
-  <RxButton class="shrink-0" icon="base/rx_ic_unlock2" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
+  <div v-tooltip.left="{ value: $t('应用锁'), showDelay: 600 }">
+    <RxButton class="shrink-0" icon="base/rx_ic_unlock2" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
+  </div>
 
   <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('设置应用打开密码')" :modal="true" :draggable="false" style="width: 384px;">
     <div class="flex flex-col gap-4">

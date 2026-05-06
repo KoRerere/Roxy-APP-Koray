@@ -1,12 +1,12 @@
 // axiosLogger.ts
-import { AxiosInstance, AxiosResponse } from 'axios'
-import log from 'electron-log/main';
-import { join } from 'path';
-import { appConfig } from '/@/constants';
-import { app } from 'electron';
+import type { AxiosInstance, AxiosResponse } from 'axios'
+import { app } from 'electron'
+import log from 'electron-log/main'
+import { join } from 'node:path'
+import { appConfig } from '/@/constants'
 
 export function attachAxiosLogger(instance: AxiosInstance) {
-  const axiosLogger = log.create({ logId: 'axios-logger' });
+  const axiosLogger = log.create({ logId: 'axios-logger' })
   axiosLogger.transports.file.level = 'debug'
   axiosLogger.transports.console.level = false
   axiosLogger.transports.console.format = `[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}`
@@ -61,6 +61,6 @@ export function attachAxiosLogger(instance: AxiosInstance) {
       })
 
       return Promise.reject(error)
-    }
+    },
   )
 }

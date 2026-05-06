@@ -145,6 +145,7 @@ export class BrowserItem {
       const { code, data } = await API.window.userGetCloudBrowserExperienceProxyList({
         id: this.winInfo.id,
       }, { headers: this.requestHeaders })
+      console.log('userGetCloudBrowserExperienceProxyList', { code, data })
       if (code === 0 && data) {
         Object.assign(this.winInfo, data)
       }

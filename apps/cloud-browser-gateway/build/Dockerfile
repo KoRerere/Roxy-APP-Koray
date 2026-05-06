@@ -1,4 +1,4 @@
-FROM ghcr.io/m1k1o/neko/base:3.1.2
+FROM ghcr.io/m1k1o/neko/base:3.1.4
 
 COPY --chmod=755 ./145/ /opt/roxychrome/
 
@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     libpango-1.0-0 \
     libcairo2 \
+    gstreamer1.0-tools \
+    gstreamer1.0-plugins-bad \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /etc/roxychrome/policies/managed

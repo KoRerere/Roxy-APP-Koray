@@ -93,7 +93,7 @@ export const coreManager = new (class CoreManager {
         this.fetchAvailableCoreListPromise = null
       })
     console.debug('user_get_core_upgrade', result.data)
-    this.availableCoreList = result.data?.rows || []
+    this.availableCoreList = result.data?.rows || this.availableCoreList || []
     this.availableCoreList.forEach((n) => {
       n.coreType = 'chrome'
     })

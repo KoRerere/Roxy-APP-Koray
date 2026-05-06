@@ -92,8 +92,6 @@ export interface MainMessage {
   'app:launch-message': (payload: string) => void
   /** 内核列表有更新时，发出 */
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
-  /** 后端地址发生变化 */
-  'app:backend-url-change': (payload: string) => void
   /** 当主窗口聚焦时 */
   'window:on-focus': () => void
   /** 插件下载进度, 如果 errorTips 不为空，则表示下载失败 */
