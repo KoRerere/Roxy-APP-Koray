@@ -103,19 +103,52 @@ export class AfterLaunchTask {
 
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
-    const { cookie, syncCookie, clearCookie, allOpenUrl } = this.browserItem.winInfo
+    const { cookie, syncCookie, clearCookie, allOpenUrl, dirId, openWorkbench } = this.browserItem.winInfo
 
     if (!this.browser || !this.browser.client) {
       console.warn('Browser or browser.client is not available')
       return
     }
 
-    // 开启同步标签页后，同步标签页
-    await Promise.allSettled((allOpenUrl.slice(1) || []).map(async (item) => {
-      if (item && this.browserItem.isValidURL(item)) {
-        return this.browser.newPage(item)
+    const pages = await this.browser?.pages()
+
+    pages?.slice(1).forEach(p => p.close().catch(() => {}))
+    const firstPage = pages?.at(0)
+    const validOpenUrl = allOpenUrl?.filter(url => url && this.browserItem.isValidURL(url)) || []
+
+    const startTime = Date.now()
+    // 导入 cookie
+    if (cookie && !clearCookie) {
+      try {
+        await this.browser.client.Storage.setCookies({ cookies: cookie })
+        console.log('Storage.setCookies success')
+        console.log('Cookie import time:', Date.now() - startTime, 'ms')
       }
-    }))
+      catch (err) {
+        console.log('Failed to import cookies:', err)
+      }
+    }
+
+    const isOpenWorkbench = openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)
+
+    if (isOpenWorkbench) {
+      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
+      if (firstPage) {
+        firstPage.goto(dashboardUrl).catch((err) => {
+          console.log(`goto ${dashboardUrl} failed`, err)
+        })
+      }
+      else {
+        this.browser.newPage(dashboardUrl)
+      }
+    }
+
+    // 开启同步标签页后，同步标签页
+    await Promise.allSettled(validOpenUrl.map(url => this.browser.newPage(url)))
+
+    if (!isOpenWorkbench) {
+      firstPage?.close().catch(() => { })
+    }
 
     const saveCookies = async () => {
       if (!this.browser.client)
@@ -145,30 +178,17 @@ export class AfterLaunchTask {
       }
     }
 
-    const startTime = Date.now()
-    // 导入 cookie
-    if (cookie && !clearCookie) {
-      try {
-        await this.browser.client.Storage.setCookies({ cookies: cookie })
-        console.log('Storage.setCookies success')
-        console.log('Cookie import time:', Date.now() - startTime, 'ms')
-      }
-      catch (err) {
-        console.log('Failed to import cookies:', err)
-      }
-    }
-
-    const pages = await this.browser?.pages()
-    // cookie导入成功后，把打开的tab页重新加载一次
-    pages.map(async (e) => {
-      const target = e.target()
-      const url = target.url()
-      if (url && url !== 'about:blank') {
-        await e.goto(url).catch((err) => {
-          console.log(`goto ${url} failed`, err)
-        })
-      }
-    })
+    // const pages = await this.browser?.pages()
+    // // cookie导入成功后，把打开的tab页重新加载一次
+    // pages.map(async (e) => {
+    //   const target = e.target()
+    //   const url = target.url()
+    //   if (url && url !== 'about:blank') {
+    //     await e.goto(url).catch((err) => {
+    //       console.log(`goto ${url} failed`, err)
+    //     })
+    //   }
+    // })
 
     // 是否同步 cookie
     if (syncCookie) {

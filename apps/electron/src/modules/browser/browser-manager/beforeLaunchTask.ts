@@ -294,7 +294,7 @@ export class BeforeLaunchTask {
     }
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      args.push(`http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`)
+      args.push(`data:text/html,`)
     }
 
     // 如果用户开启了插件
@@ -403,11 +403,11 @@ export class BeforeLaunchTask {
     };
 
     // 开启同步标签页后，同步标签页
-    void (allOpenUrl.slice(0, 1) || []).forEach((item) => {
-      if (item && this.browserItem.isValidURL(item)) {
-        args.push(item)
-      }
-    })
+    // void (allOpenUrl.slice(0, 1) || []).forEach((item) => {
+    //   if (item && this.browserItem.isValidURL(item)) {
+    //     args.push(item)
+    //   }
+    // })
 
     return args.filter(item => item.trim() !== '')
   }
