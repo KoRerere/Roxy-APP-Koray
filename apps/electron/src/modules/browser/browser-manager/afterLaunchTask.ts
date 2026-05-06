@@ -147,7 +147,14 @@ export class AfterLaunchTask {
     await Promise.allSettled(validOpenUrl.map(url => this.browser.newPage(url)))
 
     if (!isOpenWorkbench) {
-      firstPage?.close().catch(() => { })
+      if (validOpenUrl.length) {
+        firstPage?.close().catch(() => { })
+      }
+      else {
+        firstPage?.goto('chrome://newtab/').catch((err) => {
+          console.log(`goto chrome://newtab/ failed`, err)
+        })
+      }
     }
 
     const saveCookies = async () => {
