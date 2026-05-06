@@ -55,6 +55,22 @@ export class ChromePage extends EventEmitter {
     return this.client.Page.navigate(params, sessionId)
   }
 
+  /**
+   * 优先用 location.replace（不产生后退栈记录）；
+   * 无法在页面执行脚本等场景下回退为 Page.navigate。
+   */
+  async gotoReplace(url: string): Promise<void> {
+    try {
+      await this.evaluate((targetUrl: string) => {
+        location.replace(targetUrl)
+      }, url)
+    }
+    catch (err) {
+      console.warn('[ChromePage.gotoReplace] evaluate 失败，回退 Page.navigate:', err)
+      await this.goto(url)
+    }
+  }
+
   async evaluate<T = unknown>(pageFunction: Function | string, ...args: unknown[]): Promise<T> {
     try {
       await this.ensureSession()

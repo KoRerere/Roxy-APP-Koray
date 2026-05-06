@@ -81,6 +81,11 @@ export interface IPage extends EventEmitter {
   goto: (url: string, options?: any) => Promise<any>
 
   /**
+   * 用 location.replace 打开 URL，不产生新的会话历史条目
+   */
+  gotoReplace: (url: string) => Promise<void>
+
+  /**
    * 在页面上执行 JavaScript
    */
   evaluate: <T = unknown>(pageFunction: Function | string, ...args: unknown[]) => Promise<T>

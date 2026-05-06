@@ -134,7 +134,7 @@ export class AfterLaunchTask {
     if (isOpenWorkbench) {
       const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
       if (firstPage) {
-        firstPage.goto(dashboardUrl).catch((err) => {
+        firstPage.gotoReplace(dashboardUrl).catch((err) => {
           console.log(`goto ${dashboardUrl} failed`, err)
         })
       }
@@ -151,7 +151,7 @@ export class AfterLaunchTask {
         firstPage?.close().catch(() => { })
       }
       else {
-        firstPage?.goto('chrome://newtab/').catch((err) => {
+        firstPage?.gotoReplace('chrome://newtab/').catch((err) => {
           console.log(`goto chrome://newtab/ failed`, err)
         })
       }

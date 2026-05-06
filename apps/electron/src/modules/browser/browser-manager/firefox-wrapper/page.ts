@@ -58,6 +58,22 @@ export class FirefoxPage extends EventEmitter {
   }
 
   /**
+   * 与 Chrome 封装一致：优先 location.replace；
+   * 无法在页面执行脚本时回退为 browsingContext.navigate。
+   */
+  async gotoReplace(url: string): Promise<void> {
+    try {
+      await this.evaluate((targetUrl: string) => {
+        location.replace(targetUrl)
+      }, url)
+    }
+    catch (err) {
+      console.warn('[FirefoxPage.gotoReplace] evaluate 失败，回退 navigate:', err)
+      await this.goto(url)
+    }
+  }
+
+  /**
    * 在页面上执行 JavaScript
    */
   async evaluate<T = unknown>(pageFunction: ((...args: any[]) => any) | string, ...args: unknown[]): Promise<T> {
