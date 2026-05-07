@@ -146,8 +146,8 @@ export function useMcp() {
     onlyErrorToast(code, msg)
   }
 
-  async function stopConversation() {
-    const { code, msg } = await fetch(`${serverUrl.value}/api/chat/${currentConversation.value.id}/interrupt`, {
+  async function stopConversation(id?: string) {
+    const { code, msg } = await fetch(`${serverUrl.value}/api/chat/${id || currentConversation.value.id}/interrupt`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     }).then(res => res.json())

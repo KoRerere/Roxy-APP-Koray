@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script lang="tsx" setup>
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -9,6 +9,8 @@ import { useLoginContext } from '../hooks/useLoginContext'
 import { checkEmailValid, emailValidateLoading, getFormSchemas, getPhoneSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
 import { debounce, isBoolean } from 'es-toolkit'
+import { useToast } from 'primevue/usetoast'
+import { I18nT } from 'vue-i18n'
 
 defineProps({
   type: {
@@ -25,6 +27,8 @@ const emit = defineEmits(['register'])
 const signFormData = defineModel({ type: Object, default: {} })
 const { rememberMe, loginWay, userInfo } = storeToRefs(useUserStore())
 const { currentLocale } = storeToRefs(useSimpleLocale())
+const toast = useToast()
+const instance = getCurrentInstance()
 
 const { setSignFormData, setCurrentComponent, toSignIn, toSignInByPhone } = useLoginContext()
 const [_, onlyErrorToast] = useResponseToast()
@@ -118,7 +122,22 @@ async function handleSubmit() {
         setCurrentComponent('emailCodeInputOtp')
       }
       else {
-        onlyErrorToast(-1, msg || $t('发生错误'))
+        if (code === 103) {
+          toast.add({
+            severity: 'error',
+            summary: $t('邮箱不支持'),
+            detail: () => (
+              <I18nT keypath={$t('当前邮箱暂不支持注册，请更换常用邮箱后重试。如需帮助，请{tech}。', { tech: '{tech}' })}>
+                {{ tech: () =>
+                  <span onClick={() => instance?.appContext.config.globalProperties.$showLiveChat()} class="cursor-pointer text-[var(--colors-text-text-brand)]">{$t('联系技术支持')}</span> }}
+              </I18nT>
+            ),
+            life: 2500,
+          })
+        }
+        else {
+          onlyErrorToast(-1, msg || $t('发生错误'))
+        }
       }
       return
     }
@@ -167,13 +186,13 @@ defineExpose({
 </script>
 
 <template>
-  <i18n-t v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
-          :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global"
+  <I18nT v-if="inviteDiscountInfo && inviteDiscountInfo.isShow" class="w-full px-4 py-2.5 rounded-2 discount" tag="div"
+         :keypath="$t('💰 {name} 邀请您注册，消费即可享受 {discount} 折扣', { name: inviteDiscountInfo.userName, discount: '{discount}' })" scope="global"
   >
     <template #discount>
       <span class="discount-value">{{ inviteDiscountInfo.userDiscount }}%</span>
     </template>
-  </i18n-t>
+  </I18nT>
   <div class="self-stretch flex items-center justify-between">
     <SignCardHeader :title="$t('欢迎使用')" />
     <RxSelectButton v-if="isZh" v-model="loginType" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />

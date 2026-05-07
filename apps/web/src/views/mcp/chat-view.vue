@@ -200,7 +200,7 @@ async function sendMessage() {
       onlyErrorToast(-1, '创建会话失败，请重试')
       return
     }
-    isCreatedChat = true;
+    isCreatedChat = true
     currentConversation.value = result.data
   }
 
@@ -270,7 +270,7 @@ async function sendMessage() {
 
 function handleInterrupt() {
   // 停止消息生成的逻辑
-  conversationInterrupt(props.conversationId || '')
+  conversationInterrupt(props.conversationId || currentConversation.value?.id || '')
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain']
@@ -501,11 +501,11 @@ watch([() => props.conversationId, userInfo], ([newId, _userInfo]) => {
           :is-chatting="isChatting"
           :health="{ isOk: true, loading: false }"
           :todo="todo"
+          :uninitialized
           @send-message="sendMessage"
           @stop="handleInterrupt"
           @upload-files="uploadFiles"
           @remove-attachment="removeAttachment"
-          :uninitialized
         />
       </div>
 
