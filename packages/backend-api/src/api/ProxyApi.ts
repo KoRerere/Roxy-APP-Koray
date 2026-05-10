@@ -14,6 +14,8 @@ import {
   GetConsumptionGiftIpConfigListData,
   UserAddProxyModuleCreateData,
   UserAddProxyModuleCreatePayload,
+  UserBatchMdfProxyModuleCheckCreateData,
+  UserBatchMdfProxyModuleCheckCreatePayload,
   UserCheckProxyCreateData,
   UserCheckProxyCreatePayload,
   UserCheckWindowProxyStatusCreateData,
@@ -797,6 +799,27 @@ export class ProxyApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserReportProxyOutOfStockCreateData, any>({
       path: `/user_report_proxy_out_of_stock`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserBatchMdfProxyModuleCheckCreate
+   * @summary 批量修改代理IP检测结果
+   * @request POST:/user_batch_mdf_proxy_module_check
+   * @response `200` `UserBatchMdfProxyModuleCheckCreateData`
+   */
+  userBatchMdfProxyModuleCheckCreate = (
+    data: UserBatchMdfProxyModuleCheckCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchMdfProxyModuleCheckCreateData, any>({
+      path: `/user_batch_mdf_proxy_module_check`,
       method: "POST",
       body: data,
       type: ContentType.Json,

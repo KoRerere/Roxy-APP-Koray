@@ -2263,6 +2263,7 @@
   "邮箱和密码": "Email and password",
   "邮箱和密码设置成功": "Email and password set successfully",
   "邮箱地址": "Email",
+  "该邮箱账号不存在，请使用手机登录或注册": "No account found for this email. Sign in or sign up with your phone instead.",
   "邮箱尚未注册，请设置您的密码：": "Email not registered, please set your password:",
   "邮箱无法使用？": "Email not working?",
   "部分代理 IP 已存在": "Some proxies already exist",
@@ -2366,6 +2367,6 @@
   "🐣 RoxyBrowser 复活节活动现已在官方网站上正式上线。 寻找那些隐藏的复活节彩蛋并领取您的奖励吧！先到先得。{link}": "🐣 RoxyBrowser's Easter event is now live on our official website find the hidden Easter eggs and claim your rewards! {link}",
   "💰 {name} 邀请您注册，消费即可享受 {discount} 折扣": "💰 {name} invites you to register. Enjoy {discount} discount on purchases",
   "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
-  "当前邮箱暂不支持注册，请更换常用邮箱后重试。如需帮助，请{tech}。": "This email is not supported, please {tech}.",
+  "当前邮箱暂不支持注册，请更换 Gmail/163 等主流邮箱后重试。如需帮助，请{tech}。": "This email is not supported, please use mainstream email such as Gmail/163 and try again. For assistance, please {tech}.",
   "邮箱不支持": "Email not supported"
 }

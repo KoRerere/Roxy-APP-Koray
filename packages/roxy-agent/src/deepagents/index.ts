@@ -71,6 +71,11 @@ export async function createAgent(options: {
     tools,
     middleware: [skillsMiddleware],
     name: options.name,
+    interruptOn: {
+      roxy_delete_browsers: { allowedDecisions: ['approve', 'reject'] },
+      roxy_delete_proxies: { allowedDecisions: ['approve', 'reject'] },
+      roxy_delete_accounts: { allowedDecisions: ['approve', 'reject'] },
+    },
   })
 }
 

@@ -4,6 +4,7 @@ import { startDiscordAdapter } from './discord/adapter.js'
 import { startFeishuAdapter } from './feishu/adapter.js'
 import { startSlackAdapter } from './slack/adapter.js'
 import { startTelegramAdapter } from './telegram/adapter.js'
+import { startWeixinAdapter } from './weixin/adapter.js'
 
 export async function startIMServiceIfEnabled(): Promise<void> {
   let started = 0
@@ -53,6 +54,13 @@ export async function startIMServiceIfEnabled(): Promise<void> {
     await safeStartAdapter('Discord', 'discord', () => startDiscordAdapter(discordBridge, {
       botToken: env.DISCORD_BOT_TOKEN!,
       allowedUserIds: env.DISCORD_ALLOWED_USER_IDS || '',
+    }))
+  }
+
+  if (env.WECHAT_BOT_TOKEN) {
+    const weixinBridge = new IMBridge('weixin')
+    await safeStartAdapter('Weixin', 'weixin', () => startWeixinAdapter(weixinBridge, {
+      botToken: env.WECHAT_BOT_TOKEN,
     }))
   }
 

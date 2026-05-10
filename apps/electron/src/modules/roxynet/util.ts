@@ -1,10 +1,9 @@
-import { request } from '/@/utils'
 import { Buffer } from 'node:buffer'
 import { createCipheriv, createDecipheriv } from 'node:crypto'
 import { browserManager } from '/@/modules/browser'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
-import { getSystemProxy } from '/@/utils'
+import { getSystemProxy, request } from '/@/utils'
 
 const key = '098otIp!'
 
@@ -50,7 +49,6 @@ export interface SetRoxynetProxyPayload {
  * 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
  */
 export async function setRoxynetProxy(payload: SetRoxynetProxyPayload) {
-  console.log('setRoxynetProxy', payload)
   return request.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_proxy`, payload)
 }
 

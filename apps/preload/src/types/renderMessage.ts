@@ -464,4 +464,24 @@ export interface RenderMessage {
   'mcp:testSlack': (botToken: string) => Promise<{ success: boolean, message?: string }>
   /** 测试 Discord 连接 */
   'mcp:testDiscord': (botToken: string) => Promise<{ success: boolean, message?: string }>
+  /** 获取微信 Bot 登录二维码 */
+  'mcp:getWeixinBotQrcode': () => Promise<{
+    success: boolean
+    message?: string
+    data?: {
+      qrcode: string
+      url: string
+      qrcodeImgContent: string
+    }
+  }>
+  /** 查询微信 Bot 二维码状态 */
+  'mcp:getWeixinBotQrcodeStatus': (qrcode: string) => Promise<{
+    success: boolean
+    message?: string
+    data?: {
+      status: string
+      botToken: string
+      baseUrl: string
+    }
+  }>
 }

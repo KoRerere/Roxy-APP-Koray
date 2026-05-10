@@ -8,7 +8,7 @@ export async function proxyFetch(
   options: RequestInit = {},
 ): Promise<Response> {
   if (net && net.fetch) {
-    console.log('[Proxy] Using Electron net.fetch for:', url)
+    // console.log('[Proxy] Using Electron net.fetch for:', url)
     try {
       const electronOptions: any = { ...options }
 

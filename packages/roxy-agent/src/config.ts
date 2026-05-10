@@ -31,15 +31,6 @@ export const env = {
   // KEEP_RECENT_MESSAGES: Number(process.env.KEEP_RECENT_MESSAGES) || 6,
   // SIMPLE_SYNTHESIS_CONTEXT_LIMIT: Number(process.env.SIMPLE_SYNTHESIS_CONTEXT_LIMIT) || 10,
 
-  // SITE_URL: process.env.SITE_URL,
-  // SITE_NAME: process.env.SITE_NAME,
-  // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
-  // DEVELOPMENT: process.env.DEVELOPMENT === 'true' || process.env.DEVELOPMENT === '1',
-  // 调试模式：设置为 'true' 或 '1' 开启调试日志
-  // DEBUG: process.env.DEBUG === 'true' || process.env.DEBUG === '1',
-  // 启动脚本：用于启动 bytenode 编译后的脚本
-  // START_SCRIPT: process.env.START_SCRIPT!,
-  // 下载目录：用于保存下载的文件
   DOWNLOADS_DIR: process.env.DOWNLOADS_DIR!,
 
   SKILLS_DIR: process.env.SKILLS_DIR!,
@@ -68,15 +59,10 @@ export const env = {
   DISCORD_ALLOWED_USER_IDS: process.env.DISCORD_ALLOWED_USER_IDS,
   DISCORD_ALLOWED_CHANNEL_IDS: process.env.DISCORD_ALLOWED_CHANNEL_IDS,
   DISCORD_ALLOWED_GUILD_IDS: process.env.DISCORD_ALLOWED_GUILD_IDS,
-  // 启动模式：agent（默认）| im | worker
+  // Weixin iLink bot
+  WECHAT_BOT_TOKEN: process.env.WECHAT_BOT_TOKEN,
+
   ROXY_MODE: process.env.ROXY_MODE || '',
 }
 
 console.debug('env: ', env)
-
-// 监听父进程的消息
-// ;(process as any).parentPort?.on('message', (message: any) => {
-//   if (message.event === 'change_balance') {
-//     env.LLM_BALANCE = Number(message.data.balance)
-//   }
-// })

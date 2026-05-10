@@ -176,7 +176,6 @@ const details = computed(() => {
 })
 
 onMounted(async () => {
-  mixpanelTrack('click_buy_proxy_ip')
   configs.value = await initConfig()
 })
 
@@ -469,19 +468,21 @@ async function initConfig() {
     },
     {
       title: () => {
-        return <div class="flex gap-4 items-center">
-          <div class="subtitle whitespace-nowrap">
-            {$t('选择代理 IP 国家/地区:')}
+        return (
+          <div class="flex gap-4 items-center">
+            <div class="subtitle whitespace-nowrap">
+              {$t('选择代理 IP 国家/地区:')}
+            </div>
+            <RxInputText
+              placeholder={$t('搜索国家/地区名称或代码')}
+              class="!w-50"
+              size="xs"
+              leftIcon="base/rx_ic_magnify"
+              modelValue={searchCountry.value}
+              onUpdate:model-value={(val: string) => { searchCountry.value = val }}
+            />
           </div>
-          <RxInputText 
-            placeholder={$t('搜索国家/地区名称或代码')} 
-            class="!w-200px" 
-            size="xs" 
-            leftIcon="base/rx_ic_magnify" 
-            modelValue={searchCountry.value}
-            onUpdate:modelValue={(val: string) => searchCountry.value = val}
-          />
-        </div>
+        )
       },
       name: 'purchaseCountry',
       value: _countryOptions[0],
@@ -494,44 +495,51 @@ async function initConfig() {
       },
       render: ({ item }: any) => {
         const list = groupCountryOptionsByContinent(item.props.options)
-        const searchContent = searchCountry.value;
+        const searchContent = searchCountry.value
 
         if (searchContent) {
           const fuse = new Fuse(toRaw(item.props.options), {
             keys: [
               { name: 'country_name', weight: 2 }, // 权重更高，匹配成功排在前面
               { name: 'country_code', weight: 1 },
-              { name: 'continent_name', weight: 0.5 }
+              { name: 'continent_name', weight: 0.5 },
             ],
-            threshold: 0.3
+            threshold: 0.3,
           })
 
-          const result = fuse.search(searchContent).map(item => item.item);
+          const result = fuse.search(searchContent).map(item => item.item)
 
           if (result.length > 0) {
-            return <div class="relative min-h-20 flex gap-3 flex-wrap">
-              { result.map((option: any) => {
-                return <div
-                  class={`h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
-                  onClick={() => {
-                    item.value = option
-                    syncQuantityAndDurationFromCountry(option)
-                  }}
-                >
-                  {option.isNew && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">NEW</div>}
-                  {option.isHot && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">HOT</div>}
-                  <RxSvgIcon name={option.icon} size="18"></RxSvgIcon>
-                  <div class={`${styles.purpose}`}>{option.name}</div>
-                </div>
-              }) }
-            </div>
-          } else {
-            return <div class="relative flex items-center flex-col justify-center gap-2.5 py-12 bg-[var(--colors-background-bg-block)] rounded-2">
-              <SvgIcon name={'base/rx_ic_earth'} size={32} color={"var(--colors-icon-icon-inactive)"}></SvgIcon>
-              <div class="text-[var(--colors-text-text-inactive)] text-3">
-                {$t('抱歉，没有找到匹配结果。')}
+            return (
+              <div class="relative min-h-20 flex gap-3 flex-wrap">
+                {result.map((option: any) => {
+                  return (
+                    <div
+                      class={`h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                      onClick={() => {
+                        item.value = option
+                        syncQuantityAndDurationFromCountry(option)
+                      }}
+                    >
+                      {option.isNew && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">NEW</div>}
+                      {option.isHot && <div class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white">HOT</div>}
+                      <RxSvgIcon name={option.icon} size="18"></RxSvgIcon>
+                      <div class={`${styles.purpose}`}>{option.name}</div>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+            )
+          }
+          else {
+            return (
+              <div class="relative flex items-center flex-col justify-center gap-2.5 py-12 bg-[var(--colors-background-bg-block)] rounded-2">
+                <SvgIcon name="base/rx_ic_earth" size={32} color="var(--colors-icon-icon-inactive)"></SvgIcon>
+                <div class="text-[var(--colors-text-text-inactive)] text-3">
+                  {$t('抱歉，没有找到匹配结果。')}
+                </div>
+              </div>
+            )
           }
         }
 
@@ -702,8 +710,8 @@ async function onPay() {
     <div class="py-5 flex-1 flex flex-col pl-8 gap-9 overflow-hidden overflow-y-auto">
       <div class="grid grid-cols-2 gap-y-6">
         <div v-for="item in configs" :key="item.name" class="flex flex-col gap-2" :class="[item.fullWidth ? 'col-span-2' : 'col-span-1']">
-          <component :is="item.title" v-if="typeof item.title === 'function'"></component>
-          <div class="subtitle" v-else>
+          <component :is="item.title" v-if="typeof item.title === 'function'" />
+          <div v-else class="subtitle">
             {{ item.title }}
           </div>
           <component :is="item.render" v-if="item.render" :item="item" />

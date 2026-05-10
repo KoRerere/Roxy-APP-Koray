@@ -197,7 +197,7 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
   })
 
   // 如果版本放开了白名单限制，则需要确认是否继续发布
-  if (targetVersion?.ipLimit === false) {
+  if (targetVersion?.ipLimit === false && isProd) {
     await confirmPublish()
   }
 
@@ -275,7 +275,7 @@ async function uploadFile() {
           console.log(`${fileName} 上传成功: `, url)
           console.log('++++++++++++++++++++++++++++++++++++')
           if (url.endsWith('.exe') || url.endsWith('.pkg') || url.endsWith('.deb')) {
-            publishVersion({
+            return publishVersion({
               osBit: osBit === 'ia32' ? '32' : '64',
               cpu: osBit === 'arm64' ? 'apple' : 'intel',
               downloadUrl: url,

@@ -8,9 +8,18 @@ export interface AttachmentInfo {
   url?: string
 }
 
+// HITL 决策类型
+export type HitlDecisionType = 'approve' | 'reject' | 'edit'
+
+export interface HitlDecision {
+  type: HitlDecisionType
+  reason?: string
+  editedAction?: { name: string, args: any }
+}
+
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'title'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'title' | 'hitl_interrupt' | 'hitl_resume'
   data?: {
     sessionId?: string
     toolId?: string
@@ -24,6 +33,12 @@ export interface SSEEventData {
     thinkingId?: string
     contentId?: string
     message?: string
+    actionRequests?: Array<{ name: string, args: any, description: string }>
+    reviewConfigs?: { actionName: string }[]
+    conversationId?: string
+    title?: string
+    interruptsId?: string
+    decisions?: HitlDecision[]
   }
   timestamp?: number
 }
@@ -149,6 +164,7 @@ export type MessageType
     | 'todo'
     | 'error'
     | 'interrupt'
+    | 'hitl_interrupt'
 
 export type TodoStatus = 'pending' | 'in_progress' | 'completed'
 

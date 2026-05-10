@@ -259,7 +259,7 @@ export const useUserStore = defineStore(
         password.value = ''
       }
 
-      removeCookie('roxy_token', '/', isDev ? '.roxybrowser.co' : '.roxybrowser.com')
+      removeCookie('roxy_token', '/', location.hostname.split('.').slice(-2).join('.'))
       userCards.value = undefined
       token.value = ''
       mixpanel.reset()
@@ -342,7 +342,7 @@ export const useUserStore = defineStore(
       token.value = _token
 
       if (!globalThis.isElectron) {
-        const domain = isDev ? '.roxybrowser.co' : '.roxybrowser.com'
+        const domain = location.hostname.split('.').slice(-2).join('.')
         document.cookie = `roxy_token=${_token}; domain=${domain}; path=/`
       }
     }

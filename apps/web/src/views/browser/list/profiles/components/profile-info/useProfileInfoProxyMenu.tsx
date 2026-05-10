@@ -7,6 +7,7 @@ import { API } from '/@/api'
 import { BuyEntryType, BuyProxyListType, ProxyType } from '/@/enums'
 import { notifyProxyModuleSpeedTest, persistProfileRowAfterProxySpeedTest } from '../../hooks/useProfileProxy'
 import { useProxyStore } from '/@/stores/proxy'
+import { silentUpdateProxy } from '/@/views/browser/list/profiles/components/util'
 
 type CheckProxyFn = ReturnType<typeof import('/@/views/agent/hooks')['useCheckProxy']>['testProxy']
 type BuyProxyFn = ReturnType<typeof import('/@/views/agent/hooks')['useProxy']>['buyProxy']
@@ -87,13 +88,14 @@ export function useProfileInfoProxyMenu(options: {
           if (!globalThis.isElectron) {
             return globalThis.electronAPI.send('proxy:detect', {} as any)
           }
-
+          Reflect.deleteProperty(row, '_checkRes')
           const checkRes = await checkProxy(toRaw(row))
           Reflect.set(row, '_checkRes', checkRes)
+          silentUpdateProxy(row, checkRes)
           batchTestShowToast(checkRes)
           if (row.moduleId && row.buyProxyType === ProxyType.resource)
-            notifyProxyModuleSpeedTest(row.moduleId, checkRes)
-          await persistProfileRowAfterProxySpeedTest(row, checkRes, { onlyErrorToast })
+            notifyProxyModuleSpeedTest([{ id: row.moduleId, ...checkRes }])
+          await persistProfileRowAfterProxySpeedTest([{ item: row, checkRes }], { onlyErrorToast })
         },
       },
       {

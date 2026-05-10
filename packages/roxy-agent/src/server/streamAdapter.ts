@@ -18,6 +18,8 @@ export type StreamEventType
     | 'content'
     | 'todo'
     | 'title' // 对话标题更新
+    | 'hitl_interrupt' // HITL：等待人工审批，SSE 连接保持打开
+    | 'hitl_resume' // HITL：人工审批结果（approve/reject/edit）
 
 export interface StreamEvent {
   type: StreamEventType
@@ -223,6 +225,28 @@ class StreamAdapter {
     return this.formatSSE({
       type: 'title',
       data: { title },
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create HITL interrupt event — agent pauses and waits for human decision via /resume endpoint
+   */
+  hitlInterrupt(data: { actionRequests: any[], reviewConfigs: any[], interruptsId: string }): string {
+    return this.formatSSE({
+      type: 'hitl_interrupt',
+      data,
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create HITL resume event — notify frontend that user has made a decision on a specific interrupt
+   */
+  hitlResume(data: { interruptsId: string, decisions: Array<{ type: 'approve' | 'reject' | 'edit', reason?: string, editedAction?: any }> }): string {
+    return this.formatSSE({
+      type: 'hitl_resume',
+      data,
       timestamp: Date.now(),
     })
   }

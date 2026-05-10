@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useThemeStore } from '/@/stores/theme'
-import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoxyClawStore } from '/@/stores/roxy-claw'
+import { useThemeStore } from '/@/stores/theme'
 
 const [showToast] = useResponseToast()
 const roxyClawStore = useRoxyClawStore()
 const themeStore = useThemeStore()
 const router = useRouter()
+
 const clawLogo = computed(() => themeStore.realTheme === 'dark'
   ? '/images/roxy-claw/roxyclaw-dark.png'
   : '/images/roxy-claw/roxyclaw-light.png')
@@ -41,7 +42,6 @@ const integrations = ref([
     icon: '/images/roxy-claw/discord.svg',
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-discord',
-    isActive: false,
     isComingSoon: true,
   },
   {
@@ -50,15 +50,14 @@ const integrations = ref([
     icon: '/images/roxy-claw/slack.svg',
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-slack',
-    isActive: false,
     isComingSoon: true,
   },
   {
     id: 'wechat',
     name: $t('微信'),
     icon: '/images/roxy-claw/wechat.svg',
-    status: IMStatus.Disconnected,
-    isActive: false,
+    status: IMStatus.NotConfigured,
+    routeName: 'roxy-claw-wechat',
     isComingSoon: true,
   },
 ])
@@ -139,7 +138,13 @@ onMounted(async () => {
     }
   }
 
-  // 等待所有检测完成
+  if (roxyClawStore.wechatConfigured) {
+    const index = integrations.value.findIndex(item => item.id === 'wechat')
+    if (index !== -1) {
+      integrations.value[index].status = IMStatus.Connected
+    }
+  }
+
   await Promise.all(testPromises)
 })
 

@@ -64,7 +64,7 @@ export const getRemoteConfig = (() => {
 
 const ECOMMERCE_DIRECT_WHITELIST_TTL_MS = 1000 * 60 * 5
 
-let ecommerceDirectWhiteListCache: { data: string[]; fetchedAt: number } | null = null
+let ecommerceDirectWhiteListCache: { data: string[], fetchedAt: number } | null = null
 /** 缓存未命中时并发合并：只发起一轮请求，其余调用共享同一 Promise */
 let ecommerceDirectWhiteListInflight: Promise<string[]> | null = null
 
@@ -72,8 +72,8 @@ let ecommerceDirectWhiteListInflight: Promise<string[]> | null = null
 async function getEcommerceDirectWhiteList(): Promise<string[]> {
   const now = Date.now()
   if (
-    ecommerceDirectWhiteListCache &&
-    now - ecommerceDirectWhiteListCache.fetchedAt < ECOMMERCE_DIRECT_WHITELIST_TTL_MS
+    ecommerceDirectWhiteListCache
+    && now - ecommerceDirectWhiteListCache.fetchedAt < ECOMMERCE_DIRECT_WHITELIST_TTL_MS
   ) {
     return ecommerceDirectWhiteListCache.data
   }
@@ -546,15 +546,15 @@ export async function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: R
         return trimmed.replace(/^https?:\/\//, '')
       })?.filter(Boolean)
 
-      return domainList?.length ? domainList : undefined
+      return domainList?.length ? domainList.concat(ecommerceDirectWhiteList) : ecommerceDirectWhiteList.length ? ecommerceDirectWhiteList : undefined
     },
     get blockDomainList() {
       const domainList = winInfo.blockDomainList?.split?.('\n')?.map((item) => {
         const trimmed = item.trim()
         return trimmed.replace(/^https?:\/\//, '')
-      })?.filter(Boolean) || []
+      })?.filter(Boolean)
 
-      return domainList?.length ? domainList.concat(ecommerceDirectWhiteList) : store.blockDomainList?.filter?.(Boolean)
+      return domainList?.length ? domainList : store.blockDomainList?.filter?.(Boolean)
     },
     /** 禁止域名的提示页面 */
     blockDomainPageFile: join(appConfig.buildInWebDir, 'blockDomain.html'),

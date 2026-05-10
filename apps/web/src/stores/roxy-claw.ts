@@ -36,6 +36,13 @@ export interface RoxyClawConfig {
   slack_allowed_channel_ids: string[]
   discord_bot_token: string
   discord_allowed_user_ids: string[]
+  wechat_bot_token: string
+}
+
+export interface UpdateConfigResult {
+  success: boolean
+  config: RoxyClawConfig
+  message?: string
 }
 
 // 默认配置
@@ -54,6 +61,7 @@ const defaultConfig: RoxyClawConfig = {
   slack_allowed_channel_ids: [],
   discord_bot_token: '',
   discord_allowed_user_ids: [],
+  wechat_bot_token: '',
 }
 
 export const useRoxyClawStore = defineStore('roxyClaw', () => {
@@ -67,11 +75,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     lark: { checked: boolean, status: 'success' | 'failed' | null }
     slack: { checked: boolean, status: 'success' | 'failed' | null }
     discord: { checked: boolean, status: 'success' | 'failed' | null }
+    wechat: { checked: boolean, status: 'success' | 'failed' | null }
   }>({
     telegram: { checked: false, status: null },
     lark: { checked: false, status: null },
     slack: { checked: false, status: null },
     discord: { checked: false, status: null },
+    wechat: { checked: false, status: null },
   })
 
   /**
@@ -98,6 +108,7 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
           slack_allowed_channel_ids: data.slack_allowed_channel_ids ? data.slack_allowed_channel_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
           discord_bot_token: data.discord_bot_token || '',
           discord_allowed_user_ids: data.discord_allowed_user_ids ? data.discord_allowed_user_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [],
+          wechat_bot_token: (data as any).weixin_bot_token || (data as any).wechat_bot_token || '',
         }
         config.value = parsedConfig
         // 保存原始配置用于判断是否修改
@@ -170,6 +181,7 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
       slack_allowed_channel_ids: newConfig.slack_allowed_channel_ids.join(','),
       discord_bot_token: newConfig.discord_bot_token,
       discord_allowed_user_ids: newConfig.discord_allowed_user_ids.join(','),
+      wechat_bot_token: newConfig.wechat_bot_token,
     }
 
     try {
@@ -469,6 +481,33 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   const larkConfigured = computed(() => !!config.value.lark_app_id && !!config.value.lark_app_secret)
   const slackConfigured = computed(() => !!config.value.slack_bot_token && !!config.value.slack_signing_secret)
   const discordConfigured = computed(() => !!config.value.discord_bot_token && config.value.discord_allowed_user_ids.length > 0)
+  const wechatConfigured = computed(() => !!config.value.wechat_bot_token)
+
+  async function getWeixinBotQrcode(): Promise<{ success: boolean, message?: string, data?: { qrcode: string, url: string, qrcodeImgContent: string } }> {
+    try {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:getWeixinBotQrcode')
+      }
+      return { success: false, message: 'Electron API unavailable' }
+    }
+    catch (error) {
+      console.error('Failed to get Weixin QR code:', error)
+      return { success: false, message: $t('网络错误') }
+    }
+  }
+
+  async function getWeixinBotQrcodeStatus(qrcode: string): Promise<{ success: boolean, message?: string, data?: { status: string, botToken: string, baseUrl: string } }> {
+    try {
+      if (globalThis.electronAPI) {
+        return await globalThis.electronAPI.send('mcp:getWeixinBotQrcodeStatus', qrcode)
+      }
+      return { success: false, message: 'Electron API unavailable' }
+    }
+    catch (error) {
+      console.error('Failed to get Weixin QR status:', error)
+      return { success: false, message: $t('网络错误') }
+    }
+  }
 
   return {
     config,
@@ -486,10 +525,13 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     larkConfigured,
     slackConfigured,
     discordConfigured,
+    wechatConfigured,
     connectionStatus,
     isConfigChanged,
     updateOriginalConfig,
     getMcpStatus,
+    getWeixinBotQrcode,
+    getWeixinBotQrcodeStatus,
   }
 }, {
   persist: false,

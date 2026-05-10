@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ChatInput from './chat-input.vue'
 import AgentExample from './agent-example.vue'
+// import HitlApprovalCard from './components/hitl-approval-card.vue'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
@@ -51,7 +52,7 @@ const userAvatar = computed<AvatarInfo>(() => {
 const [, onlyErrorToast] = useResponseToast()
 const { mixpanelTrack } = useUserStore()
 const agentStore = useAgentStore()
-const { conversationDetail, conversationInterrupt, uploadFile, getFileUrl, conversationCreate } = useAgentApi()
+const { conversationDetail, conversationInterrupt, conversationResume, uploadFile, getFileUrl, conversationCreate } = useAgentApi()
 
 const mode = ref<'orchestrator' | 'simple'>('simple')
 const userMessage = ref('')
@@ -59,6 +60,13 @@ const isChatting = defineModel('isChatting', { default: false })
 const todo = ref<Todo[]>([])
 const pendingAttachments = ref<AttachmentInfo[]>([])
 const currentConversation = ref<ConversationDetail>()
+
+interface HitlPending {
+  actionRequests: Array<{ name: string, args: any }>
+  conversationId: string
+}
+const hitlPending = ref<HitlPending | null>(null)
+const hitlLoading = ref(false)
 
 /**
  * 消息列表，每条消息包含 messageBlocks 和其他元信息
@@ -161,14 +169,30 @@ function handleSSEEvent(event: any) {
     case 'error':
       messageViewer.add(type, type, data, timestamp)
       updateStream()
+      hitlPending.value = null
       isChatting.value = false
       break
+
     case 'interrupt':
       messageViewer.add(type, type, '', timestamp)
       updateStream()
       isChatting.value = false
       break
+
+    case 'hitl_interrupt':
+      messageViewer.add(data?.interruptsId, 'hitl_interrupt', data, timestamp)
+      updateStream()
+      // isChatting stays true — SSE connection remains open while awaiting decision
+      break
+    case 'hitl_resume':
+      // 将 decisions 合并到已存在的 hitl_interrupt 条目，更新卡片状态
+      if (data?.interruptsId) {
+        messageViewer.add(data.interruptsId, 'hitl_interrupt', { decisions: data.decisions }, timestamp)
+        updateStream()
+      }
+      break
     case 'done':
+      hitlPending.value = null
       updateStream()
       isChatting.value = false
       break
@@ -271,6 +295,10 @@ async function sendMessage() {
 function handleInterrupt() {
   // 停止消息生成的逻辑
   conversationInterrupt(props.conversationId || currentConversation.value?.id || '')
+}
+
+function handleHitlInterrupt(type: 'approve' | 'reject') {
+  return conversationResume(props.conversationId || currentConversation.value?.id || '', [{ type }])
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain']
@@ -476,7 +504,7 @@ watch([() => props.conversationId, userInfo], ([newId, _userInfo]) => {
                 <span class="user-name">{{ item.userName }}</span>
                 <span class="user-date">{{ item.date }}</span>
               </div>
-              <MessageItem v-if="item.role === 'assistant'" :item="item" />
+              <MessageItem v-if="item.role === 'assistant'" :item="item" :handle-hitl-interrupt="handleHitlInterrupt" />
               <div v-else class="flex flex-col gap-2">
                 <div class="whitespace-pre-line text-[var(--colors-text-text-primary)] text-3.5 leading-[1.4]">
                   {{ item.content }}

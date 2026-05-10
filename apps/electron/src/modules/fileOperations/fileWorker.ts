@@ -1,10 +1,9 @@
-
+import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
 import AdmZip from 'adm-zip'
+import { Buffer } from 'node:buffer'
 import { stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
 import si from 'systeminformation'
-import { createHash } from 'node:crypto'
 
 process.parentPort?.on('message', async (e) => {
   const { task, payload, taskId } = e.data as { task: keyof TaskMap, taskId, payload: any }
@@ -18,29 +17,29 @@ process.parentPort?.on('message', async (e) => {
         sendSuccess(compressFile(payload.src, payload.dest))
         break
       case 'compressFiles':
-        {
-          const { files, dest } = payload as TaskQueueItem<typeof task>['payload']
-          sendSuccess(await compressFiles(files, dest))
-          break
-        }
+      {
+        const { files, dest } = payload as TaskQueueItem<typeof task>['payload']
+        sendSuccess(await compressFiles(files, dest))
+        break
+      }
       case 'decompress':
-        {
-          const { src, dest, filters } = payload as TaskQueueItem<typeof task>['payload']
-          sendSuccess(decompressFile(src, dest, filters))
-          break
-        }
+      {
+        const { src, dest, filters } = payload as TaskQueueItem<typeof task>['payload']
+        sendSuccess(decompressFile(src, dest, filters))
+        break
+      }
       case 'getCompressedSize':
-        {
-          const dest = payload as TaskQueueItem<typeof task>['payload']
-          const size = getCompressedSize(dest)
-          sendSuccess(size)
-          break
-        }
+      {
+        const dest = payload as TaskQueueItem<typeof task>['payload']
+        const size = getCompressedSize(dest)
+        sendSuccess(size)
+        break
+      }
       case 'getDeviceInfo':
-        {
-          sendSuccess(await getDeviceInfo())
-          break
-        }
+      {
+        sendSuccess(await getDeviceInfo())
+        break
+      }
       default:
         throw new Error('unknown task type')
     }
@@ -49,7 +48,6 @@ process.parentPort?.on('message', async (e) => {
     sendError(error as Error)
   }
 })
-
 
 /**
  * 压缩文件
@@ -78,19 +76,36 @@ async function compressFiles(files: ZipPayload[], dest: string) {
   return dest
 }
 
+/**
+ * ZIP 文件名编码：位 11（EFS）为 1 时表示 UTF-8；未设置时常为系统 OEM/GBK（中文 Windows）。
+ * 未设置 EFS 但若字节为合法 UTF-8（部分工具未写标志），仍按 UTF-8 解，避免 utf-8 包被误用 gbk 解码乱码。
+ */
+function decodeZipEntryFileName(raw: Buffer, flagsEfs: boolean): string {
+  const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw)
+  if (flagsEfs) {
+    return new TextDecoder('utf-8').decode(buf)
+  }
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buf)
+  }
+  catch {
+    return new TextDecoder('gbk').decode(buf)
+  }
+}
+
 /** 解压文件 */
 function decompressFile(src: string, dest: string, filters?: string[]) {
   const zip = new AdmZip(src)
   const zipEntries = zip.getEntries()
   zipEntries.forEach((entry) => {
+    const flagsEfs = Boolean((entry as { header: { flags_efs?: boolean } }).header.flags_efs)
+    const decodedName = decodeZipEntryFileName(entry.rawEntryName, flagsEfs)
     // 过滤不需要的文件
-    if (filters?.length && !filters.some(filter => entry.entryName.includes(filter))) {
+    if (filters?.length && !filters.some(filter => decodedName.includes(filter))) {
       zip.deleteFile(entry)
       return
     }
-    const decoder = new TextDecoder('gbk');    // 创建 GBK 解码器
-    entry.entryName = decoder.decode(entry.rawEntryName);
-    // entry.entryName = iconv.decode(entry.rawEntryName, 'gbk')
+    entry.entryName = decodedName
   })
   zip.extractAllTo(dest, true, true)
   return dest
@@ -103,12 +118,11 @@ function getCompressedSize(dest: string) {
   return zip.toBuffer().length
 }
 
-
 /** 获取设备信息 */
-const getDeviceInfo = async () => {
+async function getDeviceInfo() {
   console.time('get device info time')
   const queue = [si.uuid(), si.diskLayout()] as const
-  const [uuid, disk,] = await Promise.all(queue)
+  const [uuid, disk] = await Promise.all(queue)
 
   console.debug('sys.uuid', uuid)
   console.debug('disk[0]?.serialNum', disk[0]?.serialNum)
@@ -116,5 +130,5 @@ const getDeviceInfo = async () => {
   return {
     ...uuid,
     serialNum: disk[0]?.serialNum,
-  };
+  }
 }

@@ -37,8 +37,6 @@ export const appUpdater = new class AppUpdater {
     description: '',
   }
 
-  /** 等待下载 */
-  downloadPromiser: PromiseWithResolvers<void> | null = null
   quitAndInstallPromiser: PromiseWithResolvers<void> | null = null
 
   constructor() {
@@ -46,11 +44,13 @@ export const appUpdater = new class AppUpdater {
     appUpdaterLogger.transports.file.level = 'debug'
     appUpdaterLogger.transports.file.fileName = 'app-updater.log'
     this.#autoUpdater.logger = appUpdaterLogger
+
+    setInterval(() => {
+      this.init()
+    }, 10 * 1000 * 60)
   }
 
-  async init(waitForDownload = false, options?: CheckForUpdatesOptions) {
-    this.downloadPromiser = Promise.withResolvers<void>()
-    this.checkForUpdatesOptions = options
+  async init() {
     const result = await API.base.getAppUpgradeCreate(osConfig)
 
     console.debug(`user_get_app_upgrade result`, result)
@@ -95,7 +95,7 @@ export const appUpdater = new class AppUpdater {
       if (version && compare(version, app.getVersion(), '>')) {
         await this.checkForUpdates()
       }
-      return waitForDownload ? this.downloadPromiser?.promise : result
+      return result
     }
 
     // 首次初始化，设置配置和事件监听
@@ -123,8 +123,6 @@ export const appUpdater = new class AppUpdater {
           this.sendErrorMessage()
         }
       }
-
-      this.downloadPromiser?.reject(error)
     })
 
     this.#autoUpdater.on(`checking-for-update`, () => {
@@ -143,7 +141,6 @@ export const appUpdater = new class AppUpdater {
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
       this.sendSuccessMessage()
-      this.downloadPromiser?.resolve()
       store.showNewFeatureTips = Boolean(this.#updateMessageData.newFeatureTips?.[store.language]?.length)
       forceSaveConfig()
     })
@@ -151,7 +148,6 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
       this.isInProgress = false
       console.log(`No update available`, updateInfo)
-      this.downloadPromiser?.resolve()
     })
 
     this.#autoUpdater.on(`download-progress`, (progressInfo) => {
@@ -174,7 +170,7 @@ export const appUpdater = new class AppUpdater {
     })
 
     this.checkForUpdates()
-    return waitForDownload ? this.downloadPromiser?.promise : result
+    return result
   }
 
   async checkForUpdates() {
@@ -190,10 +186,10 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
-    if (this.#updateMessageData.status === 'downloaded') {
-      this.sendSuccessMessage()
-      return this.#updateMessageData
-    }
+    // if (this.#updateMessageData.status === 'downloaded') {
+    //   this.sendSuccessMessage()
+    //   return this.#updateMessageData
+    // }
 
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
@@ -237,28 +233,21 @@ export const appUpdater = new class AppUpdater {
     console.info(`Quitting app and updating immediately`)
     console.debug('this.#autoUpdater', this.#autoUpdater)
 
-    if (this.#autoUpdater.squirrelDownloadedUpdate === false) {
-      // 解决用户取消系统授权弹窗后，无法再次调起更新的问题
-      const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
-        console.log(`quitAndInstall checkForUpdates error`, error)
-        this.isQuittingForUpdate = false
-      })
-      console.log('[appUpdater] quitAndInstall', checkResult)
-      await setTimeout(500)
-    }
-    else {
-      this.downloadPromiser?.resolve()
-    }
+    // if (this.#autoUpdater.squirrelDownloadedUpdate === false) {
+    //   // 解决用户取消系统授权弹窗后，无法再次调起更新的问题
+    //   const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
+    //     console.log(`quitAndInstall checkForUpdates error`, error)
+    //     this.isQuittingForUpdate = false
+    //   })
+    //   console.log('[appUpdater] quitAndInstall', checkResult)
+    //   await setTimeout(500)
+    // }
+    // else {
+    //   this.downloadPromiser?.resolve()
+    // }
 
     if (isPackaged) {
-      if (this.downloadPromiser?.promise) {
-        this.downloadPromiser.promise.finally(() => {
-          this.quitAndInstall()
-        })
-      }
-      else {
-        this.quitAndInstall()
-      }
+      await this.quitAndInstall()
     }
   }
 

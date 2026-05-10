@@ -175,6 +175,17 @@ export function useAgentApi() {
     }).then(res => res.json())
   }
 
+  /**
+   * 提交 HITL 审批决策
+   */
+  function conversationResume(conversationId: string, decisions: Array<{ type: 'approve' | 'reject', reason?: string }>) {
+    return fetch(`${serverUrl.value}/api/chat/${conversationId}/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decisions }),
+    }).then(res => res.json())
+  }
+
   // ============ MCP 服务器管理 API ============
 
   /**
@@ -310,6 +321,7 @@ export function useAgentApi() {
     // 聊天
     chat,
     conversationInterrupt,
+    conversationResume,
     // MCP
     listMcpServers,
     upsertMcpServer,

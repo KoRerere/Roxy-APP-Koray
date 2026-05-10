@@ -25,7 +25,7 @@ defineProps({
 
 const emit = defineEmits(['register'])
 const signFormData = defineModel({ type: Object, default: {} })
-const { rememberMe, loginWay, userInfo } = storeToRefs(useUserStore())
+const { rememberMe, userInfo, loginWay } = storeToRefs(useUserStore())
 const { currentLocale } = storeToRefs(useSimpleLocale())
 const toast = useToast()
 const instance = getCurrentInstance()
@@ -33,7 +33,6 @@ const instance = getCurrentInstance()
 const { setSignFormData, setCurrentComponent, toSignIn, toSignInByPhone } = useLoginContext()
 const [_, onlyErrorToast] = useResponseToast()
 
-const isZh = currentLocale.value === 'zh-CN'
 const lastLoginEmail = userInfo.value.email
 const emailLoginMap = ref<Record<string, boolean>>({})
 
@@ -42,18 +41,18 @@ if (lastLoginEmail) {
 }
 
 const submitLoading = ref(false)
-const formSchemas = ref(getFormSchemas())
+const formSchemas = ref(currentLocale.value === 'zh-CN' ? getPhoneSchemas() : getFormSchemas())
 const formInstance = useTemplateRef('formInstance')
-const loginType = ref<'password' | 'phone'>((!isZh || (loginWay.value && loginWay.value !== 'phone')) ? 'password' : 'phone')
+
+const isZhLocale = computed(() => currentLocale.value === 'zh-CN')
+
+/** 非中文固定邮箱流程；中文在手机号 / 邮箱间切换（邮箱仅限已注册用户登录） */
+const loginTypeZh = ref<'password' | 'phone'>(loginWay.value === 'password' ? 'password' : 'phone')
+const loginType = computed<'password' | 'phone'>(() => (isZhLocale.value ? loginTypeZh.value : 'password'))
+
 const loginTypeOptions = [
-  {
-    name: $t('手机号'),
-    value: 'phone',
-  },
-  {
-    name: $t('邮箱'),
-    value: 'password',
-  },
+  { name: $t('手机号'), value: 'phone' },
+  { name: $t('邮箱'), value: 'password' },
 ]
 
 const isEmailLogin = computed(() => {
@@ -80,23 +79,35 @@ const checkEmailRegistered = debounce(async () => {
       if (isBoolean(data.is_registered)) {
         emailLoginMap.value[username] = data.is_registered
       }
-      formSchemas.value = getFormSchemas(!data.is_registered)
-      formInstance.value?.resetSchema(getFormSchemas(!data.is_registered))
+      const registerSchema = isZhLocale.value ? false : !data.is_registered
+      formSchemas.value = getFormSchemas(registerSchema)
+      formInstance.value?.resetSchema(getFormSchemas(registerSchema))
       formInstance.value?.clearValidateMessages()
     }
   }
 }, 300)
 
 function switchFormMode() {
-  const getSchemas = isEmailLogin.value ? getFormSchemas : () => getPhoneSchemas(() => { loginType.value = 'password' })
+  const getSchemas = isEmailLogin.value
+    ? getFormSchemas
+    : () =>
+        getPhoneSchemas(
+          isZhLocale.value ? () => { loginTypeZh.value = 'password' } : undefined,
+        )
 
-  const isRegister = !isBoolean(emailLoginMap.value[signFormData.value.user_name])
+  const isRegister
+    = isZhLocale.value && isEmailLogin.value
+      ? false
+      : !isBoolean(emailLoginMap.value[signFormData.value.user_name])
 
   formSchemas.value = getSchemas(isRegister)
   formInstance.value?.resetSchema(getSchemas(isRegister))
   // formInstance.value?.resetFields()
   formInstance.value?.clearValidateMessages()
-  emit('register', emailLoginMap.value[signFormData.value.user_name] === false)
+  emit(
+    'register',
+    !isZhLocale.value && emailLoginMap.value[signFormData.value.user_name] === false,
+  )
 }
 
 watch([() => signFormData.value.user_name, loginType], () => {
@@ -104,6 +115,16 @@ watch([() => signFormData.value.user_name, loginType], () => {
   emailValidateLoading.value = isValidEmail.value
   checkEmailRegistered()
 }, { immediate: true })
+
+watch(
+  () => signFormData.value.user_name,
+  (next, prev) => {
+    if (!isEmailLogin.value)
+      return
+    if (prev !== undefined && next !== prev)
+      signFormData.value.password = ''
+  },
+)
 
 async function handleSubmit() {
   if (submitLoading.value)
@@ -114,6 +135,18 @@ async function handleSubmit() {
     // const params = getFormData(inputs.value)
     setSignFormData(formData)
     console.log(formData)
+
+    if (
+      isEmailLogin.value
+      && isZhLocale.value
+      && emailLoginMap.value[formData.user_name] === false
+    ) {
+      onlyErrorToast(
+        -1,
+        $t('该邮箱账号不存在，请使用手机登录或注册'),
+      )
+      return
+    }
 
     // 如果邮箱未注册，发送验证码
     if (isEmailLogin.value && emailLoginMap.value[formData.user_name] === false) {
@@ -127,9 +160,11 @@ async function handleSubmit() {
             severity: 'error',
             summary: $t('邮箱不支持'),
             detail: () => (
-              <I18nT keypath={$t('当前邮箱暂不支持注册，请更换常用邮箱后重试。如需帮助，请{tech}。', { tech: '{tech}' })}>
-                {{ tech: () =>
-                  <span onClick={() => instance?.appContext.config.globalProperties.$showLiveChat()} class="cursor-pointer text-[var(--colors-text-text-brand)]">{$t('联系技术支持')}</span> }}
+              <I18nT keypath={$t('当前邮箱暂不支持注册，请更换 Gmail/163 等主流邮箱后重试。如需帮助，请{tech}。', { tech: '{tech}' })}>
+                {{
+                  tech: () =>
+                    <span onClick={() => instance?.appContext.config.globalProperties.$showLiveChat()} class="cursor-pointer text-[var(--colors-text-text-brand)]">{$t('联系技术支持')}</span>,
+                }}
               </I18nT>
             ),
             life: 2500,
@@ -158,8 +193,20 @@ async function handleSubmit() {
         emailLoginMap.value[formData.user_name] = data.is_registered
       }
 
-      formSchemas.value = getFormSchemas(!data.is_registered)
-      formInstance.value?.resetSchema(getFormSchemas(!data.is_registered))
+      if (isZhLocale.value && data.is_registered === false) {
+        onlyErrorToast(
+          -1,
+          $t('该邮箱账号不存在，请使用手机登录或注册'),
+        )
+        formSchemas.value = getFormSchemas(false)
+        formInstance.value?.resetSchema(getFormSchemas(false))
+        formInstance.value?.clearValidateMessages()
+        return
+      }
+
+      const registerSchema = isZhLocale.value ? false : !data.is_registered
+      formSchemas.value = getFormSchemas(registerSchema)
+      formInstance.value?.resetSchema(getFormSchemas(registerSchema))
       formInstance.value?.clearValidateMessages()
       return
     }
@@ -195,11 +242,11 @@ defineExpose({
   </I18nT>
   <div class="self-stretch flex items-center justify-between">
     <SignCardHeader :title="$t('欢迎使用')" />
-    <RxSelectButton v-if="isZh" v-model="loginType" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
+    <RxSelectButton v-if="isZhLocale" v-model="loginTypeZh" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
   </div>
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit">
     <template #before-field-password>
-      <div v-if="checkEmailValid(signFormData.user_name) && isEmailLogin && !isEmailRegistered && !emailValidateLoading" class="setup-password-tips">
+      <div v-if="checkEmailValid(signFormData.user_name) && isEmailLogin && !isZhLocale && !isEmailRegistered && !emailValidateLoading" class="setup-password-tips">
         {{ $t('邮箱尚未注册，请设置您的密码：') }}
       </div>
     </template>
@@ -219,10 +266,10 @@ defineExpose({
         {{ $t('登录/注册') }}
       </template>
       <template v-else-if="isBoolean(emailLoginMap[signFormData.user_name]) && !emailValidateLoading">
-        {{ emailLoginMap[signFormData.user_name] ? $t('登录') : $t('注册') }}
+        {{ emailLoginMap[signFormData.user_name] ? $t('登录') : (isZhLocale ? $t('登录') : $t('注册')) }}
       </template>
       <template v-else>
-        {{ $t('登录/注册') }}
+        {{ isZhLocale ? $t('登录') : $t('登录/注册') }}
       </template>
     </RxButton>
     <div v-if="loginType === 'phone'" class="-mt-1 auto-register">

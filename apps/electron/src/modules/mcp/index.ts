@@ -39,6 +39,7 @@ export interface McpImConfigPayload {
   discordAllowedUserIds?: string
   discordAllowedChannelIds?: string
   discordAllowedGuildIds?: string
+  weChatBotToken?: string
 }
 
 export const mcpManager = new (class McpManager {
@@ -101,6 +102,7 @@ export const mcpManager = new (class McpManager {
           slackAllowedChannelIds: data.slack_allowed_channel_ids,
           discordBotToken: data.discord_bot_token,
           discordAllowedUserIds: data.discord_allowed_user_ids,
+          weChatBotToken: (data as any).wechat_bot_token || (data as any).wechat_bot_token,
         }
         console.log('RoxyClaw config loaded from backend:', imConfigPayload)
       }
@@ -207,6 +209,7 @@ export const mcpManager = new (class McpManager {
       SLACK_ALLOWED_CHANNEL_IDS: imConfigPayload?.slackAllowedChannelIds,
       DISCORD_BOT_TOKEN: imConfigPayload?.discordBotToken,
       DISCORD_ALLOWED_USER_IDS: imConfigPayload?.discordAllowedUserIds,
+      WECHAT_BOT_TOKEN: imConfigPayload?.weChatBotToken,
       // ROXY_DOCS_MCP_URL: import.meta.env.VITE_ROXY_DOCS_MCP_URL,
     }
 

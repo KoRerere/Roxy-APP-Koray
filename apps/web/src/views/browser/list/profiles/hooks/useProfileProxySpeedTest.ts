@@ -5,6 +5,8 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { notifyProxyModuleSpeedTest, persistProfileRowAfterProxySpeedTest } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { silentUpdateProxy } from '/@/views/browser/list/profiles/components/util'
+import { API } from '/@/api'
 
 type ProfileRow = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -28,8 +30,9 @@ export function useProfileProxySpeedTest() {
       setOperationLoading(item, operationName, true)
       return async () => {
         try {
+          Reflect.deleteProperty(item, '_checkRes')
           const checkRes = await testProxy(toRaw(item))
-          await persistProfileRowAfterProxySpeedTest(item, checkRes, { onlyErrorToast })
+          silentUpdateProxy(item, checkRes)
           Reflect.set(item, '_checkRes', checkRes)
           return { item, checkRes }
         }
@@ -42,7 +45,7 @@ export function useProfileProxySpeedTest() {
     await concurrentProxyTest({
       tasks,
       showConcurrentTaskTopBar,
-      tasksCompleted: (results: any[], cancelled: boolean) => {
+      tasksCompleted: async (results: any[], cancelled: boolean) => {
         results.forEach((res, i) => {
           if (res === undefined)
             setOperationLoading(targets[i]!, operationName, false)
@@ -54,13 +57,21 @@ export function useProfileProxySpeedTest() {
           batchTestShowToast(validResults.map(p => p.checkRes))
         }
 
-        const moduleDone = new Set<number>()
+        const moduleDone = new Map<number, any>()
         for (const { item, checkRes } of validResults) {
           if (item.moduleId && item.buyProxyType === ProxyType.resource && !moduleDone.has(item.moduleId)) {
-            moduleDone.add(item.moduleId)
-            notifyProxyModuleSpeedTest(item.moduleId, checkRes)
+            moduleDone.set(item.moduleId, { id: item.moduleId, ...checkRes })
           }
         }
+
+        if (silent) {
+          API.window.userMdfWindowProxyCheckBatchCreate({ proxyList: Array.from(moduleDone.values()) })// 自动检测无日志
+        }
+        else {
+          notifyProxyModuleSpeedTest(Array.from(moduleDone.values()))
+        }
+
+        await persistProfileRowAfterProxySpeedTest(results, { onlyErrorToast })
       },
     }).catch((err) => {
       onlyErrorToast(-1, err.message)

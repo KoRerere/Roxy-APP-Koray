@@ -120,8 +120,11 @@ export class IMBridge {
               .join('')
           }
 
-          if (text && onChunk) {
+          if (text) {
             fullText += text
+          }
+
+          if (text && onChunk) {
             await onChunk(text)
           }
         }

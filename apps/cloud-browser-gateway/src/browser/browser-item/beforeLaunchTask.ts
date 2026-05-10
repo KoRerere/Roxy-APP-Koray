@@ -290,7 +290,10 @@ export class BeforeLaunchTask {
       proxyInfo: this.proxyInfo,
       globalConfig: this.options.globalConfig,
     })
-    console.log('[启动前任务] fproxy 配置：', fingerprintConfig.fproxy)
+
+    if (!this.browserItem.winInfo.isDirect) {
+      console.log('[启动前任务] fproxy 配置：', fingerprintConfig.fproxy)
+    }
 
     try {
       const dirPath = dirname(this.browserItem.fingerprintConfigPath)

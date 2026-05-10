@@ -5,7 +5,8 @@ import { closeMcpWindow, createMcpWindow, mcpManager } from '/@/modules/mcp'
 import { isMcpError } from '/@/modules/mcp/errors'
 import { mcpRuntimeState } from '/@/modules/mcp/state'
 
-/** MCP IPC 响应结构 */
+const WEIXIN_BOT_BASE_URL = 'https://ilinkai.weixin.qq.com'
+
 interface McpResponse<T = any> {
   success: boolean
   data?: T
@@ -210,7 +211,7 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
     try {
       const response = await net.fetch('https://discord.com/api/v10/users/@me', {
         headers: {
-          'Authorization': `Bot ${botToken}`,
+          Authorization: `Bot ${botToken}`,
         },
       })
 
@@ -223,7 +224,55 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
     }
     catch (error) {
       console.error('Discord test failed:', error)
-      return { success: false, message: '网络错误' }
+      return { success: false, message: 'Network error' }
+    }
+  })
+
+  ipcMain.on('mcp:getWeixinBotQrcode', async () => {
+    try {
+      const response = await net.fetch(`${WEIXIN_BOT_BASE_URL}/ilink/bot/get_bot_qrcode?bot_type=3`)
+      const data: any = await response.json()
+
+      if (!response.ok || !data?.qrcode) {
+        return { success: false, message: data?.errmsg || data?.msg || 'Failed to get Weixin QR code' }
+      }
+
+      return {
+        success: true,
+        data: {
+          qrcode: data.qrcode || '',
+          url: data.url || '',
+          qrcodeImgContent: data.qrcode_img_content || '',
+        },
+      }
+    }
+    catch (error) {
+      console.error('Weixin QR code request failed:', error)
+      return { success: false, message: 'Network error' }
+    }
+  })
+
+  ipcMain.on('mcp:getWeixinBotQrcodeStatus', async (_event, qrcode: string) => {
+    try {
+      const response = await net.fetch(`${WEIXIN_BOT_BASE_URL}/ilink/bot/get_qrcode_status?qrcode=${encodeURIComponent(qrcode)}`)
+      const data: any = await response.json()
+
+      if (!response.ok) {
+        return { success: false, message: data?.errmsg || data?.msg || 'Failed to get Weixin QR status' }
+      }
+
+      return {
+        success: true,
+        data: {
+          status: data?.status || '',
+          botToken: data?.bot_token || '',
+          baseUrl: data?.baseurl || WEIXIN_BOT_BASE_URL,
+        },
+      }
+    }
+    catch (error) {
+      console.error('Weixin QR status request failed:', error)
+      return { success: false, message: 'Network error' }
     }
   })
 }

@@ -516,7 +516,11 @@ export class BeforeLaunchTask {
 
     // 生成指纹配置
     const fingerprintConfig = await genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
-    console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)
+
+    if (!this.browserItem.winInfo.isDirect) {
+      console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)
+    }
+
     try {
       await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)
       const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))

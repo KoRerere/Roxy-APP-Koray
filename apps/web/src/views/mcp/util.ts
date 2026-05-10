@@ -677,7 +677,7 @@ export class MessageViewer {
     if (type === 'thinking' || type === 'content') {
       entry.text += data as string
     }
-    else if (type === 'tool_call' || type === 'tool_result') {
+    else if (type === 'tool_call' || type === 'tool_result' || type === 'hitl_interrupt') {
       Object.assign(entry.meta, data)
     }
     else if (type === 'todo') {
@@ -756,7 +756,7 @@ export class MessageViewer {
     if (storedType === 'thinking' || storedType === 'content') {
       entry.text += data as string
     }
-    else if (storedType === 'tool_call' || storedType === 'tool_result') {
+    else if (storedType === 'tool_call' || storedType === 'tool_result' || storedType === 'hitl_interrupt') {
       Object.assign(entry.meta, data)
     }
 
@@ -850,6 +850,15 @@ export function parseHistorySSE2(content: string) {
         }
         messageViewer.add(block.data?.contentId || '', block.type, block.data?.text || '', block.timestamp)
         break
+      // case 'hitl_interrupt':
+      //   messageViewer.add(block.data?.interruptsId || '', block.type, block.data, block.timestamp)
+      //   break
+      // case 'hitl_resume':
+      //   // 复用已存在的 hitl_interrupt 条目，将 decisions 合并进 meta，用于历史回放
+      //   if (block.data?.interruptsId) {
+      //     messageViewer.add(block.data.interruptsId, 'hitl_interrupt', { decisions: block.data.decisions }, block.timestamp)
+      //   }
+      //   break
       case 'worker_content':
         messageViewer.addWorkerEntry(block.data?.taskId || '', block.data?.contentId || '', block.type, block.data?.text || '', block.timestamp)
         break

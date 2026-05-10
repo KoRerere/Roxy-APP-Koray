@@ -9,12 +9,12 @@ import VideoPlayer from './components/rx-video-player'
 import RxSvgIcon from './components/rx-icon'
 
 // import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
-import { browserTracingIntegration, consoleLoggingIntegration, init as initSentryVue, replayIntegration } from '@sentry/vue'
+// import { browserTracingIntegration, consoleLoggingIntegration, init as initSentryVue, replayIntegration } from '@sentry/vue'
 import mixpanel from 'mixpanel-browser'
 
 import { createApp } from 'vue'
 import { setupStore } from '/@/stores'
-import router, { setupRouter } from '/@/router'
+import { setupRouter } from '/@/router'
 
 import App from './App.vue'
 import { setupPrimeVue } from '/@/primevue'
@@ -26,22 +26,22 @@ app.use(VideoPlayer)
 app.use(RxSvgIcon)
 setupGlobalMethods(app)
 // https://docs.sentry.io/platforms/javascript/guides/electron/
-initSentryVue({
-  app,
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-  release: import.meta.env.VITE_VERSION,
-  environment: import.meta.env.MODE,
-  sendDefaultPii: true,
-  tracesSampleRate: 0.1,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-  enableLogs: true,
-  integrations: [
-    browserTracingIntegration({ router }),
-    replayIntegration(),
-    consoleLoggingIntegration(),
-  ],
-})
+// initSentryVue({
+//   app,
+//   dsn: import.meta.env.VITE_SENTRY_DSN,
+//   release: import.meta.env.VITE_VERSION,
+//   environment: import.meta.env.MODE,
+//   sendDefaultPii: true,
+//   tracesSampleRate: 0.1,
+//   replaysSessionSampleRate: 0.1,
+//   replaysOnErrorSampleRate: 1.0,
+//   enableLogs: true,
+//   integrations: [
+//     browserTracingIntegration({ router }),
+//     replayIntegration(),
+//     consoleLoggingIntegration(),
+//   ],
+// })
 
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,

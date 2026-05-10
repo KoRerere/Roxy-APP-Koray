@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import type { FormattedMessage, MessageEntryView, WorkerEntryView } from '/@/views/mcp/types'
+import type { FormattedMessage, MessageEntryView } from '/@/views/mcp/types'
 import ThinkingBlockVue from './thinking-block.vue'
 import ToolCallBlockVue from './tool-call-block.vue'
 import { getBlockKey, getStatusIconProps, useMessageItem } from '../composables/useMessageItem'
 import { markedParse } from '/@/views/mcp/util'
 import StatusMessage from './status-message.vue'
+import HitlInterrupt from './hitl-interrupt.vue'
 
 defineProps<{
   item: FormattedMessage
+  handleHitlInterrupt: (type: 'approve' | 'reject') => Promise<void>
 }>()
 
 const taskExpandMap = reactive<{ [key: string]: boolean }>({})
@@ -81,6 +83,15 @@ function getTaskSummary(block: MessageEntryView): string {
             </template>
           </div>
         </template>
+      </div>
+
+      <div v-else-if="block.type === 'hitl_interrupt'">
+        <HitlInterrupt
+          v-if="!block.meta?.decisions"
+          :review-configs="block.meta?.reviewConfigs"
+          @approve="handleHitlInterrupt('approve')"
+          @reject="handleHitlInterrupt('reject')"
+        />
       </div>
 
       <!-- Error/Interrupt 状态 -->

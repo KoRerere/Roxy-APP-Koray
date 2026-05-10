@@ -137,16 +137,16 @@ let cancelOpenListener: (() => void) | undefined
 let cancelCloseListener: (() => void) | undefined
 let cancelCloseSyncingDataListener: (() => void) | undefined
 
-// const scheduledCheckerProxyStatus = genPollingChecker({
-//   intervalMs: 5 * 60 * 1000,
-//   checkOnce: async () => {
-//     await testAllProxy(true)
-//     return false
-//   },
-// })
+const scheduledCheckerProxyStatus = genPollingChecker({
+  intervalMs: 5 * 60 * 1000,
+  checkOnce: async () => {
+    await testAllProxy(true)
+    return false
+  },
+})
 
 onBeforeMount(() => {
-  // scheduledCheckerProxyStatus.check()
+  scheduledCheckerProxyStatus.check()
   cancelOpenListener = listenOpenMessage({
     openSuccessAfter: () => driverNext(),
   })
@@ -180,7 +180,7 @@ onBeforeMount(() => {
 })
 
 onBeforeUnmount(() => {
-  // scheduledCheckerProxyStatus.stop()
+  scheduledCheckerProxyStatus.stop()
   emitter.off('firstRegisterGuide', onFirstRegisterGuide)
   cancelOpenListener?.()
   cancelCloseListener?.()
@@ -242,10 +242,14 @@ async function getTableList(params: Record<string, unknown>) {
 }
 
 async function testAllProxy(silent = false) {
+  if (!check('Profiles_speed_test_proxy'))
+    return
+
   if (!dataList.value?.length) {
     !silent && onlyErrorToast(-1, $t('暂无窗口'))
     return
   }
+
   const targets = dataList.value.filter(row => row.proxyCategory !== 'noproxy')
   if (!targets.length) {
     !silent && onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))

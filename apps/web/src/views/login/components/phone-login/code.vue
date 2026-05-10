@@ -52,7 +52,9 @@ async function getCode() {
       <TsFormInputText v-model="modelValue" v-bind="$attrs" />
       <RxButton class="!absolute position-y-center right-2.5" :severity="lock ? 'secondary' : ''" size="xxs" variant="text" :disabled="lock" :label="btnText" @click="getCode" />
     </div>
-    <i18n-t v-if="showTips" class="pt-2 text-right terms" tag="div" scope="global" :keypath="$t('未收到验证码？{link}', { link: '{link}' })" @click="tipsClick">
+    <i18n-t v-if="showTips && tipsClick" class="pt-2 text-right terms" tag="div" scope="global"
+            :keypath="$t('未收到验证码？{link}', { link: '{link}' })" @click="tipsClick"
+    >
       <template #link>
         <span class="cursor-pointer terms-link">{{ $t('点击这里，切换到邮箱登录注册') }}</span>
       </template>

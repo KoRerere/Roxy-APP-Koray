@@ -84,22 +84,22 @@ const filters = reactive({
   },
 })
 
-// const scheduledCheckerProxyStatus = genPollingChecker({
-//   intervalMs: 5 * 60 * 1000,
-//   checkOnce: async () => {
-//     await testAllProxy(true)
-//     return false
-//   },
-// })
+const scheduledCheckerProxyStatus = genPollingChecker({
+  intervalMs: 5 * 60 * 1000,
+  checkOnce: async () => {
+    await testAllProxy(true)
+    return false
+  },
+})
 
 onBeforeMount(async () => {
-  // scheduledCheckerProxyStatus.check()
+  scheduledCheckerProxyStatus.check()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
 })
 
 onBeforeUnmount(() => {
-  // scheduledCheckerProxyStatus.stop()
+  scheduledCheckerProxyStatus.stop()
   clearTimeout(newOrderTimer.value)
 })
 
@@ -243,6 +243,9 @@ function setNewOrderNo(value: string) {
 }
 
 async function testAllProxy(silent = false) {
+  if (!check('Proxy_List_speed_test'))
+    return
+
   if (!dataList.value?.length) {
     !silent && onlyErrorToast(-1, $t('暂无代理 IP'))
     return
@@ -286,7 +289,13 @@ function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }:
     const proxyList = validResults.filter((item: any) => item?.proxyType === ProxyType.resource)
     if (!proxyList.length)
       return
-    updateResourceProxy({ proxyList, requestType: ProxyReqType.SpeedTest })
+
+    if (silent) {
+      API.proxy.userBatchMdfProxyModuleCheckCreate({ proxyList })// 自动检测无日志
+    }
+    else {
+      updateResourceProxy({ proxyList, requestType: ProxyReqType.SpeedTest })
+    }
   }
 
   return { tasks, tasksCompleted }

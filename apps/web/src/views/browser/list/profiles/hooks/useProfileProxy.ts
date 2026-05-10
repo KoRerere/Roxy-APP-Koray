@@ -1,40 +1,11 @@
 import { useConfirm } from 'primevue/useconfirm'
-
 import { API } from '/@/api'
-import { createDefaultObject } from '/@/utils'
+import { createDefaultObject, isEmptyValue } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import type { CheckResult } from '/@/views/agent/hooks'
 
 import { clearProxyKeys, silentUpdateProxy } from '../components/util'
-
-/** 资源型代理模块测速结果同步（同一 moduleId 可绑定多窗口，批量测速时应对 moduleId 去重后只调一次） */
-export function notifyProxyModuleSpeedTest(moduleId: number, checkRes: CheckResult) {
-  API.proxy.userMdfProxyModuleCreate({
-    proxyList: [{ id: moduleId, ...checkRes }] as any,
-    requestType: ProfileReqType.SpeedTest,
-  })
-}
-
-/** 仅写当前窗口行 + silentUpdate；代理模块请用 notifyProxyModuleSpeedTest（批量场景按 moduleId 去重） */
-export async function persistProfileRowAfterProxySpeedTest(
-  data: ProfileLike,
-  checkRes: CheckResult,
-  options: { onlyErrorToast: (code: number, msg: string) => void },
-): Promise<void> {
-  if (checkRes.checkStatus !== ProxyCheckStatus.success)
-    return
-
-  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create({
-    id: data.id,
-    dirId: data.dirId,
-    ...checkRes,
-    requestType: ProfileReqType.SpeedTest,
-  } as any)
-  options.onlyErrorToast(code, msg)
-  if (code === 0)
-    silentUpdateProxy(data as any, checkRes)
-}
 
 interface ProfileLike {
   id?: number
@@ -42,6 +13,32 @@ interface ProfileLike {
   moduleId?: number
   openTime?: string | number | null
   [key: string]: any
+}
+
+/** 资源型代理模块测速结果同步（同一 moduleId 可绑定多窗口，批量测速时应对 moduleId 去重后只调一次） */
+export function notifyProxyModuleSpeedTest(proxyList: any[]) {
+  if (isEmptyValue(proxyList))
+    return
+  API.proxy.userMdfProxyModuleCreate({ proxyList, requestType: ProfileReqType.SpeedTest })
+}
+
+/** 仅写当前窗口行 + silentUpdate；代理模块请用 notifyProxyModuleSpeedTest（批量场景按 moduleId 去重） */
+export async function persistProfileRowAfterProxySpeedTest(
+  list: { item: ProfileLike, checkRes: CheckResult }[],
+  options: { onlyErrorToast: (code: number, msg: string) => void },
+): Promise<void> {
+  const validList = list.filter(data => data.checkRes.checkStatus === ProxyCheckStatus.success)
+  if (validList.length === 0)
+    return
+
+  const proxyList = validList.map(data => ({
+    id: data.item.id!,
+    dirId: data.item.dirId,
+    ...data.checkRes,
+  }))
+
+  const { code, msg } = await API.window.userMdfWindowProxyCheckBatchCreate({ proxyList, requestType: ProfileReqType.SpeedTest } as any)
+  options.onlyErrorToast(code, msg)
 }
 
 export function useProfileProxy() {

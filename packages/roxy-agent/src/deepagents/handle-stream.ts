@@ -61,6 +61,12 @@ function handleMessage(chunk: AIMessageChunk, state: StreamState) {
       return streamAdapter.content(chunk.content, contentId, state.taskId)
     }
   }
+
+  const reasoningContent = chunk?.additional_kwargs?.reasoning_content || chunk.lc_kwargs?.additional_kwargs?.reasoning_content || ''
+  if (reasoningContent) {
+    const thinkingId = `thinking:${chunk.id}`
+    return streamAdapter.thinking(reasoningContent as string, thinkingId, state.taskId)
+  }
 }
 
 function handleTool(chunk: any, state: StreamState) {

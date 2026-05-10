@@ -91,6 +91,7 @@ export type ProxyDetectionParams = Pick<
   | 'host'
   | 'port'
   | 'proxyNetwork'
+  | 'isDirect'
 > & {
   /** 是否优先使用外部的参数 */
   outerParamFirst: boolean
@@ -157,10 +158,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       proxyPassword,
       isDirect,
     } = proxyDetectionParams
-    const systemProxySwitch = Reflect.has(
-      proxyDetectionParams,
-      'systemProxySwitch',
-    )
+    const systemProxySwitch = Reflect.has(proxyDetectionParams, 'systemProxySwitch')
       ? proxyDetectionParams.systemProxySwitch
       : store.systemProxySwitch
 
@@ -172,9 +170,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     const { addr: systemProxyAddress } = await getSystemProxy()
     await startRoxynet().catch(() => { })
 
-    const isUseSystemProxy
-      = proxyCategory === 'SSH'
-        || (getRoxynetProcess() && systemProxySwitch && systemProxyAddress)
+    const isUseSystemProxy = proxyCategory === 'SSH' || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyAddress)
 
     if (isUseSystemProxy) {
       const protocal = proxyCategory.toLocaleLowerCase()
@@ -186,7 +182,10 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
         protocal,
         v2ray_tunnel_enabled: isDirect || false,
       }
-      console.log('roxynetParams', roxynetParams)
+
+      if (!isDirect) {
+        console.log('roxynetParams', roxynetParams)
+      }
 
       if (dirId) {
         await setRoxynetProxy({

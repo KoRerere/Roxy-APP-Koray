@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
+import { Command } from '@langchain/langgraph'
 import { Router } from 'express'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
@@ -13,6 +14,7 @@ import { ChatContextAPI } from '../database/conversations'
 import { createAgent, deleteCheckpoint } from '../deepagents'
 import { handleStream, StreamState } from '../deepagents/handle-stream'
 import { isWorkerStart } from '../deepagents/tools'
+import { cancelInterrupt, createInterruptGate, resolveInterrupt } from '../interruptRegistry'
 import { createLLM } from '../llm'
 import { mcpManager } from '../mcpManager'
 import { sseLoggerManager } from './sseLogger'
@@ -467,20 +469,6 @@ router.post('/chat', async (req: Request, res: Response) => {
   } = req.body
   const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
 
-  // 敏感词校验：使用全局挂载的 __SENSITIVE_WORDS__（build-words 注入）
-  const sensitiveWords = (globalThis as any).__SENSITIVE_WORDS__ as string[] | undefined
-  if (Array.isArray(sensitiveWords) && sensitiveWords.length > 0) {
-    const text = String(message)
-    const matched = sensitiveWords.filter(
-      (w: string) => typeof w === 'string' && w.length > 0 && text.includes(w),
-    )
-    if (matched.length > 0) {
-      res.write(streamAdapter.error(`The content contains sensitive words, please modify and try again: ${matched.join(', ')}`))
-      res.end()
-      return
-    }
-  }
-
   const abortController = createAbort(conversationId)
 
   if ((!message && !attachmentList.length) || !conversationId) {
@@ -582,7 +570,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       configurable: {
         thread_id: conversation.thread_id,
       },
-      streamMode: ['messages', 'custom', 'tools'],
+      streamMode: ['messages', 'custom', 'tools', 'updates'],
       signal: abortController.signal,
       // callbacks: [new TokenUsageChange(conversation.thread_id)],
       // 供 parallel_dispatch 工具内将 worker 的 stream 写出到客户端，避免只依赖外层 stream 合并
@@ -604,6 +592,8 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     await mcpManager.createPlaywrightClientForWorker('simple')
     const simpleTools = await mcpManager.getToolsForWorker('simple')
+    console.log(`[DEBUG] Simple mode tools count: ${simpleTools.length}`)
+    console.log(`[DEBUG] Tool names:`, simpleTools.map(t => t.name).filter(n => n.includes('delete')))
     const agent = await createAgent({
       mode: agentMode,
       tools: simpleTools,
@@ -611,34 +601,74 @@ router.post('/chat', async (req: Request, res: Response) => {
       conversationId,
     })
     const state = new StreamState()
-    const stream = await agent.stream(input, config)
-    // let worker_start = false
-    for await (const rawChunk of stream) {
-      const [namespace, chunk] = rawChunk
-      // Worker 期间跳过非 custom，但必须保留主 agent 的 parallel_dispatch 的 tools 事件，否则 tool start 会丢失、agent 认为返回空
-      const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
-      if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
-        continue
-      }
 
-      const result = handleStream(rawChunk, state)
-      if (Array.isArray(result)) {
-        result.forEach(event => streamCallback(event))
-      }
-      else if (result) {
-        streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
+    // 检查是否有 pending interrupt（用户可能关闭软件后重新打开）
+    // 如果有，必须先处理 interrupt，不能接受新消息
+    const checkpointer = (agent as any).checkpointer
+    let invokeInput: any = input
+
+    if (checkpointer) {
+      const state = await agent.getState(config)
+      if (state.next && state.next.length > 0) {
+        // 有 pending interrupt，使用 null 输入触发 interrupt
+        invokeInput = null
       }
     }
 
-    // 最后一个消息的特殊处理（针对 deepseek 模型）
-    // const lastMessageIsThinking = state.theLastMessageIsThinking()
-    // if (lastMessageIsThinking) {
-    //   streamCallback(streamAdapter.content(lastMessageIsThinking, `content:${state.getRandomId()}`))
-    // }
+    // 支持多轮 interrupt：每次 invoke 后检查是否有 __interrupt__，有则等待用户决策后继续
+    while (true) {
+      const stream = await agent.stream(invokeInput, config)
+      let interrupted = false
+      let interruptValue: any = null
+
+      for await (const rawChunk of stream) {
+        const [namespace, chunk] = rawChunk
+
+        // 检测 __interrupt__ 事件（deepagents 通过 custom namespace 推送）
+        if (chunk?.__interrupt__) {
+          interrupted = true
+          interruptValue = chunk.__interrupt__
+          continue
+        }
+
+        const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
+        if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
+          continue
+        }
+
+        const result = handleStream(rawChunk, state)
+        if (Array.isArray(result)) {
+          result.forEach(event => streamCallback(event))
+        }
+        else if (result) {
+          streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
+        }
+      }
+
+      if (!interrupted) {
+        break
+      }
+
+      // 提取 interrupt 信息并推送给前端，SSE 连接保持打开
+      const interrupts = interruptValue[0]?.value ?? interruptValue
+      const actionRequests = interrupts?.actionRequests ?? []
+      const reviewConfigs = interrupts?.reviewConfigs ?? []
+      const interruptsId = randomUUID()
+      streamCallback(streamAdapter.hitlInterrupt({ actionRequests, reviewConfigs, interruptsId }))
+
+      // 等待前端通过 resume 端点提交决策
+      const decision = await createInterruptGate(conversationId)
+      // 通知前端：该 interruptsId 已被用户处理（approve/reject/edit），便于前端更新 UI 状态
+      streamCallback(streamAdapter.hitlResume({ interruptsId, decisions: decision.decisions }))
+      invokeInput = new Command({ resume: { decisions: decision.decisions } })
+    }
 
     streamCallback(streamAdapter.done())
   }
   catch (error: any) {
+    // 清理可能挂起的 interrupt gate
+    cancelInterrupt(conversationId)
+
     // 检查是否是中断错误（用户取消或客户端断开连接）
     if (AbortError.isAbortError(error) || error.message.includes('User cancelled')) {
       // 中断错误，静默处理，不发送错误消息给客户端
@@ -681,6 +711,46 @@ router.post('/chat', async (req: Request, res: Response) => {
   }
 
   res.end()
+})
+
+// 恢复被 HITL interrupt 暂停的对话
+router.post('/chat/:conversationId/resume', async (req: Request, res: Response) => {
+  try {
+    const conversationId = Array.isArray(req.params.conversationId)
+      ? req.params.conversationId[0]
+      : req.params.conversationId
+    const { decisions } = req.body
+
+    if (!decisions || !Array.isArray(decisions)) {
+      return res.json({
+        code: 1,
+        error: 'decisions array is required',
+        msg: 'decisions array is required',
+      })
+    }
+
+    if (resolveInterrupt(conversationId, { decisions })) {
+      return res.json({
+        code: 0,
+        msg: 'Resume decision submitted successfully',
+      })
+    }
+    else {
+      return res.json({
+        code: 1,
+        error: 'No pending interrupt found for this conversation',
+        msg: 'No pending interrupt found for this conversation',
+      })
+    }
+  }
+  catch (error: any) {
+    console.error('Error resuming conversation:', error)
+    res.json({
+      code: 1,
+      error: error.message,
+      msg: 'Failed to resume conversation',
+    })
+  }
 })
 
 // 中断对话

@@ -228,6 +228,17 @@ export const menuRoutes: RouteRecordRaw[] = [
             },
             component: () => import('/@/views/roxy-claw/discord-config.vue'),
           },
+          {
+            path: 'roxy-claw/wechat',
+            name: 'roxy-claw-wechat',
+            meta: {
+              title: 'WeChat Bot',
+              hideInMenu: true,
+              isRoxyClaw: true,
+              permissions: ['API_MCP_view_page'],
+            },
+            component: () => import('/@/views/roxy-claw/wechat-config.vue'),
+          },
         ],
       },
       {

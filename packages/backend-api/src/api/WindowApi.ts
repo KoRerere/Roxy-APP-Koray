@@ -92,6 +92,8 @@ import {
   UserMdfWindowInfoBatchV2CreatePayload,
   UserMdfWindowInfoSingleV2CreateData,
   UserMdfWindowInfoSingleV2CreatePayload,
+  UserMdfWindowProxyCheckBatchCreateData,
+  UserMdfWindowProxyCheckBatchCreatePayload,
   UserMdfWindowSyncV2CreateData,
   UserMdfWindowSyncV2CreatePayload,
   UserMdfWindowTemplateInfoCreateData,
@@ -1236,6 +1238,27 @@ export class WindowApi<SecurityDataType = unknown> {
     this.http.request<UserGetCloudBrowserExperienceProxyListData, any>({
       path: `/user_get_cloud_browser_experience_proxy`,
       method: "GET",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowProxyCheckBatchCreate
+   * @summary 浏览器窗口->批量修改窗口代理检测结果
+   * @request POST:/user_mdf_window_proxy_check_batch
+   * @response `200` `UserMdfWindowProxyCheckBatchCreateData`
+   */
+  userMdfWindowProxyCheckBatchCreate = (
+    data: UserMdfWindowProxyCheckBatchCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfWindowProxyCheckBatchCreateData, any>({
+      path: `/user_mdf_window_proxy_check_batch`,
+      method: "POST",
       body: data,
       type: ContentType.Json,
       format: "json",

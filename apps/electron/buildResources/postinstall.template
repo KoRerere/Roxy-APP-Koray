@@ -65,12 +65,16 @@ main() {
     local installer_path="$1"
     local uuid=$(extract_uuid_from_path "$installer_path")
 
-    # 获取当前用户信息
-    local user_home="$HOME"
-    [ -z "$user_home" ] && user_home=$(eval echo "~$USER")
+    # postinstall 由 macOS Installer 以 root 身份执行，
+    # 这里通过 /dev/console 获取真正登录的用户，避免拿到 root
+    local current_user
+    current_user=$(/usr/bin/stat -f%Su /dev/console 2>/dev/null)
+    [ -z "$current_user" ] || [ "$current_user" = "root" ] && current_user="$USER"
 
-    local current_user="$USER"
-    [ -z "$current_user" ] && current_user=$(basename "$user_home")
+    # 解析该用户的 home 目录（不要用 $HOME，因为此刻 $HOME 是 /var/root）
+    local user_home
+    user_home=$(/usr/bin/dscl . -read "/Users/$current_user" NFSHomeDirectory 2>/dev/null | awk '{print $2}')
+    [ -z "$user_home" ] && user_home=$(eval echo "~$current_user")
 
     # 应用数据目录
     local app_data_dir="$user_home/Library/Application Support/$APP_NAME"
@@ -81,6 +85,19 @@ main() {
     echo "$installer_path" > "$installer_path_file"
     chmod 644 "$installer_path_file"
     chown -R "$current_user:staff" "$app_data_dir"
+
+    # ============================================================================
+    # 关键：把 /Applications/<APP_NAME>.app 的所有权交给登录用户
+    # ----------------------------------------------------------------------------
+    # PKG 默认由 root 写入 /Applications，导致 .app 归属 root:wheel。
+    # 之后 electron-updater (Squirrel.Mac) 自更新时无法直接覆盖 .app，
+    # 会通过 SMJobBless 请求安装特权 helper，弹出"添加帮助程序工具"授权窗。
+    # 把 .app 的属主改为当前登录用户后，自更新就无需提权，弹窗消失。
+    # ============================================================================
+    local app_path="/Applications/${APP_NAME}.app"
+    if [ -n "$current_user" ] && [ "$current_user" != "root" ] && [ -d "$app_path" ]; then
+        chown -R "${current_user}:staff" "$app_path"
+    fi
 
     # 异步发送安装上报（不阻塞安装流程）
     [ -n "$REPORT_DOMAINS" ] && send_report "$uuid" "$REPORT_DOMAINS" &
