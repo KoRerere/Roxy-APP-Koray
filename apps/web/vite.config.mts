@@ -1,10 +1,6 @@
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import LanguageLocalization from '@roxy/language-localization/vite'
 import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
-import {
-  PWA_HTML_ENTRY_BASENAMES,
-  vitePwaLimitToHtmlEntries,
-} from './vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
@@ -23,7 +19,6 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 import viteCompression from 'vite-plugin-compression'
 import { chrome } from '../electron/.electron-vendors.cache.json'
-import { VitePWA } from 'vite-plugin-pwa'
 
 const PACKAGE_ROOT = __dirname
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..')
@@ -276,55 +271,9 @@ export type SvgNames = ${typeDefine}`
       algorithm: 'gzip',
       ext: '.gz',
     }),
-    VitePWA({
-      includeAssets: [
-        'images/favicon.ico',
-        'images/apple-touch-icon-180x180.png',
-        'images/logo.svg',
-      ],
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // 排除 OAuth 回调页，避免被 SW 预缓存
-        globIgnores: ['**/oauth2callback.html'],
-        // 导航请求也不走 SW，确保 OAuth 重定向能直达服务器
-        navigateFallbackDenylist: [/^\/oauth2callback/],
-        mode: 'production', // 关闭 Workbox 日志
-      },
-      manifest: {
-        name: 'Roxy Browser',
-        short_name: 'Roxy',
-        description: 'RoxyBrowser workspace, profile, and browser automation platform.',
-        scope: '/',
-        start_url: '/',
-        display: 'standalone',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        icons: [
-          {
-            src: 'images/pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png',
-          },
-          {
-            src: 'images/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'images/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: 'images/maskable-icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
-    }),
-    vitePwaLimitToHtmlEntries(PWA_HTML_ENTRY_BASENAMES),
+    // 不再使用 vite-plugin-pwa：HTML 走 Nginx `Cache-Control: no-cache`，
+    // hash 资源走 `max-age=31536000, immutable`，配合浏览器原生 HTTP 缓存即可。
+    // 对历史已注册过 SW 的用户，通过 public/sw.js 自毁脚本注销旧 SW 并清空 caches。
     // sentryVitePlugin({
     //   org: process.env.VITE_SENTRY_ORG,
     //   project: process.env.VITE_SENTRY_PROJECT,
