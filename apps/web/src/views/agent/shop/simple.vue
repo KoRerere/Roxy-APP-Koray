@@ -222,7 +222,7 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
         </template>
         <template #outbound="{ data: row }">
           <OutboundIp class="select-none" :country="row.lastCountry" :city="row.lastCity" :last-ip="row.lastIp" :time="row.checkTime" :status="checkedMessage[row.id]"
-                      :is-loading="row.loadingOperationMap?.test"
+                      :badge-desc="row.badgeTypeDesc" :is-loading="row.loadingOperationMap?.test"
           />
         </template>
         <template #remark="{ data: row }">

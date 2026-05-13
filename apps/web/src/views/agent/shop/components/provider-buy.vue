@@ -22,7 +22,7 @@ import { useNetworkStore } from '/@/stores/network'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { PayWay } from '/@/enums/pay'
-import { BuyEntryType, ProxyIpType, ProxyOrderType, ProxyStockStatus } from '/@/enums/proxy'
+import { BuyEntryType, ProxyIpType, ProxyOrderType, ProxyStockStatus, ProxyUseType } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
@@ -55,6 +55,7 @@ const loading = ref(false)
 const loadingProxyType = ref(false)
 const loadingPurchaseCountry = ref(false)
 const purchaseMember = ref(1)
+const searchCountry = ref('')
 
 const notes = [
   {
@@ -87,7 +88,6 @@ const notes = [
   },
 ].slice(0, provider.vendorName === 'Roxy IP' ? 6 : 7)
 
-const isCN = computed(() => networkInfo.value?.country_code === 'CN')
 const configValue = computed(() => {
   const config = Object.fromEntries(configs.value.map(item => [item.name, item.value]))
   return {
@@ -98,7 +98,15 @@ const configValue = computed(() => {
   }
 })
 
-const searchCountry = ref('')
+const isDirect = computed(() => {
+  const { businessUse } = configValue.value
+  return businessUse.badgeType === ProxyUseType.Direct
+})
+
+const isCN = computed(() => {
+  return networkInfo.value?.country_code === 'CN' && !isDirect.value
+})
+
 const currentCountry = computed(() => {
   const { purchaseCountry } = configValue.value
   return {
@@ -223,15 +231,13 @@ async function getCountryAndDurationList(proxyProviderId: number) {
   if (code !== 0)
     return []
 
-  const isCN = currentLocale.value === 'zh-CN'
-
   return data.map(item => ({
     ...item,
     isNew: item.isNew,
     isHot: item.isHot,
     icon: `country-code/${item.country_code?.toLocaleUpperCase()}`,
     label: `${item.country_name} / ${item.country_code?.toLocaleUpperCase()}`,
-    name: isCN ? item.country_name : item.country_code?.toLocaleUpperCase(),
+    name: currentLocale.value === 'zh-CN' ? item.country_name : item.country_code?.toLocaleUpperCase(),
     value: item.country_code,
     proxyPriceListFmt: item.proxyPriceList.map((item) => {
       const day = item.proxyPurchaseMonths * 30
@@ -606,7 +612,8 @@ function inputPurchaseMember(value: number) {
 function checkStock() {
   const { purchaseCountry, businessUse } = configValue.value
   if (purchaseCountry.inventory > 0) {
-    checkCommerceIP()
+    // checkCommerceIP()
+    onPay()
     return
   }
   showModal({
@@ -619,52 +626,52 @@ function checkStock() {
   })
 }
 
-async function checkCommerceIP() {
-  const { businessUse } = configValue.value
-  if (businessUse.badgeType !== 'Direct') {
-    onPay()
-    return
-  }
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => {
-        return (
-          <div class="flex flex-col pt-4 pb-6 px-6 gap-5 w-100">
-            <div class="relative flex items-center h-9">
-              <span class="tt-primary text-4 font-700">{$t('温馨提示')}</span>
-              <span class="absolute right-0 cursor-pointer" onClick={hideModal}>
-                <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
-              </span>
-            </div>
-            <div class="tt-primary text-3.5 leading-6 whitespace-pre-wrap">
-              <I18nT scope="global" keypath={$t('您当前选择的是电商专用 IP，该 IP {available}跨境电商网站，{notAvailable}非跨境电商类境外网站。请确认用途后继续购买。', { available: '{available}', notAvailable: '{notAvailable}' })}>
-                {{
-                  available: () => <span class="font-bold">{$t('仅可访问 Amazon 等')}</span>,
-                  notAvailable: () => <span class="font-bold">{$t('不支持访问 Google、社交平台等')}</span>,
-                }}
-              </I18nT>
-            </div>
-            <div class="flex justify-end gap-2">
-              <RxButton outlined severity="secondary" size="md" label={$t('取消')} onClick={hideModal}></RxButton>
-              <RxButton
-                size="md"
-                label={$t('确认购买')}
-                onClick={() => {
-                  hideModal()
-                  onPay()
-                }}
-              >
-              </RxButton>
-            </div>
-          </div>
-        )
-      },
-    },
-  })
-}
+// async function checkCommerceIP() {
+//   const { businessUse } = configValue.value
+//   if (businessUse.badgeType !== 'Direct') {
+//     onPay()
+//     return
+//   }
+//   showModal({
+//     showHeader: false,
+//     modal: true,
+//     blockScroll: true,
+//     slots: {
+//       container: ({ hideModal }) => {
+//         return (
+//           <div class="flex flex-col pt-4 pb-6 px-6 gap-5 w-100">
+//             <div class="relative flex items-center h-9">
+//               <span class="tt-primary text-4 font-700">{$t('温馨提示')}</span>
+//               <span class="absolute right-0 cursor-pointer" onClick={hideModal}>
+//                 <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
+//               </span>
+//             </div>
+//             <div class="tt-primary text-3.5 leading-6 whitespace-pre-wrap">
+//               <I18nT scope="global" keypath={$t('您当前选择的是电商专用 IP，该 IP {available}跨境电商网站，{notAvailable}非跨境电商类境外网站。请确认用途后继续购买。', { available: '{available}', notAvailable: '{notAvailable}' })}>
+//                 {{
+//                   available: () => <span class="font-bold">{$t('仅可访问 Amazon 等')}</span>,
+//                   notAvailable: () => <span class="font-bold">{$t('不支持访问 Google、社交平台等')}</span>,
+//                 }}
+//               </I18nT>
+//             </div>
+//             <div class="flex justify-end gap-2">
+//               <RxButton outlined severity="secondary" size="md" label={$t('取消')} onClick={hideModal}></RxButton>
+//               <RxButton
+//                 size="md"
+//                 label={$t('确认购买')}
+//                 onClick={() => {
+//                   hideModal()
+//                   onPay()
+//                 }}
+//               >
+//               </RxButton>
+//             </div>
+//           </div>
+//         )
+//       },
+//     },
+//   })
+// }
 
 async function onPay() {
   mixpanelTrack('click_confirm_proxy_ip_order')
@@ -726,7 +733,8 @@ async function onPay() {
       </div>
     </div>
     <div class="py-5 w-88 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
-      <RxAlert v-if="isCN" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('检测到中国大陆网络，暂不支持直连代理 IP，请切换至海外网络后使用。')" />
+      <RxAlert v-if="isCN" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('检测到中国大陆网络，暂不支持直连代理 IP，请切换至海外网络后使用，或选择大陆直连电商专用 IP。 ')" />
+      <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('电商专用IP 专为跨境电商网站优化，不可访问谷歌、海外社媒等非电商站点；仅限平台内使用，不可导出。')" />
       <div class="flex flex-col gap-6">
         <div v-if="currentCountry" class="flex flex-col gap-1.5 pa-4 quantity">
           <div class="subtitle">

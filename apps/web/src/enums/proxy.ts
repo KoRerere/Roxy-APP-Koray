@@ -110,3 +110,10 @@ export enum ProxyIpType {
   /** 住宅 */
   Residential = 'residential',
 }
+
+export enum ProxyUseType {
+  /** 精选 */
+  Curated = 'Curated',
+  /** 直接 */
+  Direct = 'Direct',
+}
