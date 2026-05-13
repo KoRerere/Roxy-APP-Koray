@@ -6,7 +6,7 @@
         <div class="flex flex-col gap-12 content">
           <div class="flex flex-col items-center">
             <SvgIcon name="empty/screen_lock" size="128px" />
-            <span class="locker-message">{{ $t('Roxy 浏览器已被锁定') }}</span>
+            <span class="locker-message">{{ $t('Roxy浏览器已被锁定') }}</span>
           </div>
           <div class="flex gap-2 relative">
             <Password v-model="password" :placeholder="$t('请输入密码')" @keydown.enter="handleUnlock" :invalid="invalid" autofocus @change="handleChange" ref="inputRef" :feedback="false" toggleMask :pt="{

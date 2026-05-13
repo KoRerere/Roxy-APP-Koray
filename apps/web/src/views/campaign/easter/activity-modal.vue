@@ -49,7 +49,7 @@ function onClose() {
             {{ $t('复活节彩蛋猎寻活动') }}
           </div>
 
-          <i18n-t class="desc" tag="div" :keypath="$t('🐣 Roxy 浏览器复活节活动现已在官方网站上正式上线。 寻找那些隐藏的复活节彩蛋并领取您的奖励吧！先到先得。{link}', { link: '{link}' })" scope="global">
+          <i18n-t class="desc" tag="div" :keypath="$t('🐣 Roxy浏览器复活节活动现已在官方网站上正式上线。 寻找那些隐藏的复活节彩蛋并领取您的奖励吧！先到先得。{link}', { link: '{link}' })" scope="global">
             <template #link>
               <a class="desc-link" :href="getOfficialWebsite('/activity/easter')" target="_blank" rel="noopener noreferrer">
                 {{ $t('寻复活蛋') }}

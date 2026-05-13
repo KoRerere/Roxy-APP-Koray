@@ -219,8 +219,8 @@ function handleIntegrationClick(integration: any) {
             </div>
             <div class="text-xs font-normal text-[var(--colors-text-text-secondary)]">
               {{ roxyClawStore.isEnabled
-                ? $t('您现在可以通过手机深度控制 Roxy 浏览器')
-                : $t('点击 "启动 RoxyClaw" 开始通过手机控制 Roxy 浏览器') }}
+                ? $t('您现在可以通过手机深度控制 Roxy浏览器')
+                : $t('点击 "启动 RoxyClaw" 开始通过手机控制 Roxy浏览器') }}
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@ function handleIntegrationClick(integration: any) {
           {{ $t('集成到您的工作场景') }}
         </h2>
         <p class="text-xs text-[var(--colors-text-text-tertiary)] my-0">
-          {{ $t('选择您偏好的方式连接至 Roxy 浏览器，支持同时连接多个即时通讯 App。') }}
+          {{ $t('选择您偏好的方式连接至 Roxy浏览器，支持同时连接多个即时通讯 App。') }}
         </p>
       </div>
 

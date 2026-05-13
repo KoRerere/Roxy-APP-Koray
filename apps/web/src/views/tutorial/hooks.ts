@@ -28,7 +28,7 @@ export function useOnboardingTaskStatus() {
       slots: {
         container: ({ hideModal }) => h(GuideModal, {
           title: $t('教程提示'),
-          desc: $t('当您对 Roxy 浏览器的产品功能不熟悉或希望学习更多技巧时，可以随时通过右下方蓝色按钮找到"教程"入口。'),
+          desc: $t('当您对 Roxy浏览器的产品功能不熟悉或希望学习更多技巧时，可以随时通过右下方蓝色按钮找到"教程"入口。'),
           video: '/video/tour-hide-guide.mp4',
           onClose: hideModal,
           onConfirm: hideModal,

@@ -35,7 +35,7 @@ watchEffect(() => {
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
-          <span>{{ $t('Roxy 浏览器') }}</span>
+          <span>{{ $t('Roxy浏览器') }}</span>
         </template>
       </div>
       <AsideMenu :collapsed />

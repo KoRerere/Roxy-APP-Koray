@@ -10,7 +10,7 @@ const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardin
     <div class="rx-container relative h-40 inline-flex justify-center px-12 gap-1 overflow-hidden">
       <RxButton v-if="!onboardingTaskStatus?.hideSidebarEntryStatus" icon="base/rx_ic_hidden" class="!absolute top-6 right-19 z-1" severity="secondary" variant="outlined" size="xxs"
         :label="$t('隐藏教程入口')" @click="closeGuideTipsAndUpdateTaskStatus('hideSidebarEntryStatus')" />
-      <i18n-t class="banner-title" tag="div" :keypath="$t('Roxy 浏览器{text}', { text: '{text}' })" scope="global">
+      <i18n-t class="banner-title" tag="div" :keypath="$t('Roxy浏览器{text}', { text: '{text}' })" scope="global">
         <template #text>
           <span class="banner-purple">{{ $t('入门指南') }}</span>
         </template>

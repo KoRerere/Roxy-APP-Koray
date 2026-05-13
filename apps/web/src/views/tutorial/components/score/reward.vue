@@ -62,7 +62,7 @@ function toProxyList() {
         {{ $t('两步即可获得我们提供的 IP 礼品: ') }}
       </div>
 
-      <i18n-t tag="div" class="terms" :keypath="$t('1.在 Trustpilot 网站留下 Roxy 浏览器的五星评价: {link}', { link: '{link}' })">
+      <i18n-t tag="div" class="terms" :keypath="$t('1.在 Trustpilot 网站留下 Roxy浏览器的五星评价: {link}', { link: '{link}' })">
         <template #link>
           <a href="https://uk.trustpilot.com/evaluate/roxybrowser.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 terms-link"
              @click="mixpanelTrack('review_redirect_trustpilot')"

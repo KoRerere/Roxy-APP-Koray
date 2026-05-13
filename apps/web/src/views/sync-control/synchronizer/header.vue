@@ -13,7 +13,7 @@ function showPreferences() {
 <template>
   <div class="header">
     <div class="title">
-      <span class="production-name">{{ $t('Roxy 浏览器') }}</span>
+      <span class="production-name">{{ $t('Roxy浏览器') }}</span>
       <span class="sub-title">{{ $t('窗口同步') }}</span>
     </div>
     <div class="actions">

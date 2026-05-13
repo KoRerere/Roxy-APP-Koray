@@ -41,7 +41,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 1: 创建您的第一个窗口'),
-    descriptions: [$t('窗口是 Roxy 浏览器的核心功能，其各项设定与指纹决定了您在上网浏览时被平台检测到的"身份"，根据教程创建您的第一个窗口，从而开启隐私之旅！')],
+    descriptions: [$t('窗口是 Roxy浏览器的核心功能，其各项设定与指纹决定了您在上网浏览时被平台检测到的"身份"，根据教程创建您的第一个窗口，从而开启隐私之旅！')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -84,7 +84,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 3: 邀请一位好友加入 Roxy'),
-    descriptions: [$t('Roxy 浏览器支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一工作空间共享窗口，在这里都能轻松实现。')],
+    descriptions: [$t('Roxy浏览器支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一工作空间共享窗口，在这里都能轻松实现。')],
     reward: () => {
       return (
         <div class={cssModule.text}>
@@ -105,7 +105,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'advanced',
     icon: 'base/rx_ic_mouse',
     title: $t('通过鼠标右键便捷操作窗口'),
-    descriptions: [$t('绝大多数的 Roxy 浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')],
+    descriptions: [$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -169,7 +169,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'advanced',
     icon: 'base/rx_ic_add_keys',
     title: $t('导入、管理平台账号'),
-    descriptions: [$t('账号资源过多而难以管理？根据教程快速将其导入 Roxy 浏览器，并更方便地与窗口进行绑定。')],
+    descriptions: [$t('账号资源过多而难以管理？根据教程快速将其导入 Roxy浏览器，并更方便地与窗口进行绑定。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -192,7 +192,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'advanced',
     icon: 'base/rx_ic_extension_store',
     title: $t('通过扩展中心管理扩展应用'),
-    descriptions: [$t('浏览器扩展是高级用户不可或缺的助力工具，您可以添加/上传任何适用于常规 Chrome 的扩展程序到 Roxy 浏览器。')],
+    descriptions: [$t('浏览器扩展是高级用户不可或缺的助力工具，您可以添加/上传任何适用于常规 Chrome 的扩展程序到 Roxy浏览器。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -221,7 +221,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'team',
     icon: 'base/rx_ic_user_add',
     title: $t('邀请成员 & 分配访问权限'),
-    descriptions: [$t('Roxy 浏览器允许您邀请成员加入工作空间，并为其分配项目权限。')],
+    descriptions: [$t('Roxy浏览器允许您邀请成员加入工作空间，并为其分配项目权限。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -308,18 +308,18 @@ async function jumpToVideo(item: any) {
   <div class="rx-container h-auto flex flex-col py-16 px-12 gap-12">
     <div class="flex flex-col gap-4.5">
       <div class="title">
-        {{ $t('Roxy 浏览器与普通浏览器有何不同？') }}
+        {{ $t('Roxy浏览器与普通浏览器有何不同？') }}
       </div>
       <div class="flex items-start gap-24">
         <div class="min-w-110 flex-1 flex flex-col gap-4">
           <div class="desc">
-            {{ $t('Roxy 浏览器是一款为用户提供完全独立环境的浏览器。') }}
+            {{ $t('Roxy浏览器是一款为用户提供完全独立环境的浏览器。') }}
           </div>
           <div class="desc">
-            {{ $t('使用 Roxy 浏览器，您就可以在一台电脑上安全地管理多个平台账号。在网站看来，每个账号都来自于一台完全不同的真实设备，从而避免了因账号关联产生的限制行为或隐私泄露。') }}
+            {{ $t('使用 Roxy浏览器，您就可以在一台电脑上安全地管理多个平台账号。在网站看来，每个账号都来自于一台完全不同的真实设备，从而避免了因账号关联产生的限制行为或隐私泄露。') }}
           </div>
           <div class="desc">
-            {{ $t('可以将 Roxy 浏览器想象成谷歌浏览器的“终极强化版”。谷歌浏览器的多用户模式，如同为每个用户在一栋房子里分隔出不同的房间；而 Roxy 浏览器则是直接为每个用户都提供了一栋全新的、位于任意城市的、允许个性化装修的房子。') }}
+            {{ $t('可以将 Roxy浏览器想象成谷歌浏览器的“终极强化版”。谷歌浏览器的多用户模式，如同为每个用户在一栋房子里分隔出不同的房间；而 Roxy浏览器则是直接为每个用户都提供了一栋全新的、位于任意城市的、允许个性化装修的房子。') }}
           </div>
         </div>
         <img class="w-120" src="/images/guide-intro.png">

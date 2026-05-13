@@ -22,7 +22,7 @@ const list = computed(() => {
         !!staticData.ispCount && $t('{ispCount} 条 {ispCountry} 静态住宅代理 IP', { ispCount: staticData.ispCount, ispCountry: staticData.ispCountry }),
         !!staticData.dcCount && $t('{dcCount} 条 {dcCountry} 静态机房代理 IP', { dcCount: staticData.dcCount, dcCountry: staticData.dcCountry }),
       ].join('\n+ '),
-      desc: $t('有效期 {day} 天，由 Roxy 浏览器精选', { day: staticData.day }),
+      desc: $t('有效期 {day} 天，由 Roxy浏览器精选', { day: staticData.day }),
       visible: staticData.enable,
     },
     {
@@ -76,7 +76,7 @@ async function onConfirm() {
     <motion.div v-if="firstGift" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
       <div class="h-110 flex flex-col justify-center gap-9 px-13.5">
         <div class="title">
-          {{ $t('🎁 Roxy 浏览器为您准备了一份礼物，快选一个吧！') }}
+          {{ $t('🎁 Roxy浏览器为您准备了一份礼物，快选一个吧！') }}
         </div>
         <div class="flex gap-3.5">
           <div v-for="item in list" :key="item.value" class="flex-1 flex flex-col gap-2.5">
@@ -111,10 +111,10 @@ async function onConfirm() {
         </video>
         <div class="flex flex-col gap-2 w-90">
           <div class="title">
-            {{ $t('快速上手 Roxy 浏览器') }}
+            {{ $t('快速上手 Roxy浏览器') }}
           </div>
           <div class="desc">
-            {{ $t('我们为您设计了从入门到精通的完整「新手教程」。无论是名词概念、快捷菜单还是个性化设置，所有内容均在侧边栏或右下角帮助中心随时可得。助力您充分发挥 Roxy 浏览器的功能价值。') }}
+            {{ $t('我们为您设计了从入门到精通的完整「新手教程」。无论是名词概念、快捷菜单还是个性化设置，所有内容均在侧边栏或右下角帮助中心随时可得。助力您充分发挥 Roxy浏览器的功能价值。') }}
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ const tabs = [
   // {
   //   key: 'Agent',
   //   title: 'Roxy AI Agent',
-  //   desc: $t('Roxy 浏览器的智能代理助手，帮助你自动执行各种任务，提高工作效率。'),
+  //   desc: $t('Roxy浏览器的智能代理助手，帮助你自动执行各种任务，提高工作效率。'),
   //   component: Agent,
   //   /** Agent 动画较长，自定义 15 秒 */
   //   intervalTime: 15000,
@@ -25,13 +25,13 @@ const tabs = [
   {
     key: 'SupportMorePlatform',
     title: $t('广泛业务平台支持'),
-    desc: $t('Roxy 浏览器致力于服务来自世界各地的企业和个人用户，助力全球业务高效流转。'),
+    desc: $t('Roxy浏览器致力于服务来自世界各地的企业和个人用户，助力全球业务高效流转。'),
     component: SupportMorePlatform,
   },
   {
     key: 'MultiAccounting',
     title: $t('集成式多账户管理'),
-    desc: $t('同步 Roxy 浏览器核心研究成果，定义安全多账户协同标准。'),
+    desc: $t('同步 Roxy浏览器核心研究成果，定义安全多账户协同标准。'),
     component: MultiAccounting,
   },
   {
@@ -43,7 +43,7 @@ const tabs = [
   {
     key: 'TeamSpace',
     title: $t('释放团队协作潜力'),
-    desc: $t('Roxy 浏览器支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
+    desc: $t('Roxy浏览器支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
     component: TeamSpace,
   },
 ]

@@ -385,7 +385,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
         <GuideModal
           title={$t('鼠标右键编辑')}
           desc={({ class: className }) => {
-            return <div class={className}>{$t('绝大多数的 Roxy 浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
+            return <div class={className}>{$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
           }}
           video="/video/right-click.mp4"
           onClose={hideModal}
@@ -893,7 +893,7 @@ defineExpose({
     </template>
     <template #table-empty>
       <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
-      <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 Roxy 浏览器的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等，以方便您更好地执行业务操作。')">
+      <CustomNewEmpty v-else icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 Roxy浏览器的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="check('Profiles_add')" severity="secondary" size="md" icon="base/rx_ic_browser_add" variant="outlined" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
