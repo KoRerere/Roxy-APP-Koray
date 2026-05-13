@@ -1,14 +1,18 @@
-import { useToast } from 'primevue/usetoast'
 import { isDev } from '/@/utils'
 import { API } from '/@/api'
-import type { LoginGoogleV2CreateData } from '@roxy/backend-api'
+import { useSimpleLocale } from '/@/stores/locale'
 import { OAUTH2_CALLBACK_CHANNEL_NAME } from '/@/constants/channel'
+import type { LoginGoogleV2CreateData } from '@roxy/backend-api'
 
 function getRedirectUrl(source: string) {
+  const [devUrl, prodUrl] = useSimpleLocale().isZh
+    ? ['test.roxybrowser.cn', 'roxybrowser.cn']
+    : ['gatetest.roxybrowser.co', 'roxybrowser.com']
+
   if (source === 'vk') {
-    return `https://${isDev ? 'gatetest.roxybrowser.co' : 'roxybrowser.com'}/auth/app_${source}`
+    return `https://${isDev ? devUrl : prodUrl}/auth/app_${source}`
   }
-  return `https://${isDev ? 'gatetest.roxybrowser.co' : 'roxybrowser.com'}/auth?source=${source}`
+  return `https://${isDev ? devUrl : prodUrl}/auth?source=${source}`
 }
 
 /**
@@ -29,21 +33,21 @@ function uint8ToBase64Url(bytes: Uint8Array) {
 /**
  * base64url -> Uint8Array
  */
-function base64UrlToUint8(str: string) {
-  const base64 = str
-    .replace(/-/g, '+')
-    .replace(/_/g, '/')
-    .padEnd(str.length + (4 - (str.length % 4)) % 4, '=')
+// function base64UrlToUint8(str: string) {
+//   const base64 = str
+//     .replace(/-/g, '+')
+//     .replace(/_/g, '/')
+//     .padEnd(str.length + (4 - (str.length % 4)) % 4, '=')
 
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
+//   const binary = atob(base64)
+//   const bytes = new Uint8Array(binary.length)
 
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
+//   for (let i = 0; i < binary.length; i++) {
+//     bytes[i] = binary.charCodeAt(i)
+//   }
 
-  return bytes
-}
+//   return bytes
+// }
 
 /**
  * JSON -> base64url
@@ -57,11 +61,11 @@ function encodeState(obj: any) {
 /**
  * base64url -> JSON
  */
-function decodeState(str: string) {
-  const bytes = base64UrlToUint8(str)
-  const json = new TextDecoder().decode(bytes)
-  return JSON.parse(json)
-}
+// function decodeState(str: string) {
+//   const bytes = base64UrlToUint8(str)
+//   const json = new TextDecoder().decode(bytes)
+//   return JSON.parse(json)
+// }
 
 function generateState(meta: Record<string, any> = {}) {
   Object.assign(meta, { isElectron: globalThis.isElectron })
@@ -112,8 +116,12 @@ function openGoogleAuth2Login() {
 }
 
 function openGithubAuth2Login() {
+  const [devClientId, prodClientId] = useSimpleLocale().isZh
+    ? ['Ov23liuYcjr4arWQTaJW', 'Ov23liuYcjr4arWQTaJW']
+    : ['Ov23lidZHwoteYPc2Bbv', 'Ov23li2tP2jopYhz3S0A']
+
   const paramsObj = {
-    client_id: isDev ? 'Ov23lidZHwoteYPc2Bbv' : 'Ov23li2tP2jopYhz3S0A',
+    client_id: isDev ? devClientId : prodClientId,
     redirect_uri: getRedirectUrl('github'),
     scope: 'user:email',
     state: generateState(),
@@ -174,7 +182,7 @@ async function openVkAuth2Login() {
 
   const paramsObj = {
     response_type: 'code',
-    client_id: '53496485',
+    client_id: '54588305',
     scope: 'email',
     redirect_uri: getRedirectUrl('vk'),
     state: generateState(),
@@ -201,10 +209,6 @@ export const oauth2LoginMap = {
 
 export type OauthLoginType = keyof typeof oauth2LoginMap
 
-export function openOAuth2Login(type: OauthLoginType) {
-  return oauth2LoginMap[type]()
-}
-
 interface Oauth2CallbackParams {
   oauthCode: string
   source: OauthLoginType
@@ -226,15 +230,20 @@ export function useOauth2Callback(callback: (params: Oauth2CallbackParams) => vo
     const oauthCode = searchParams.get('code')!
     const source = searchParams.get('source') as OauthLoginType
 
+    const commonParams = {
+      oauthHost: useSimpleLocale().isZh ? 'cn' : 'com',
+    }
+
     const oauth2LoginAPIMap = {
-      google: () => API.base.loginGoogleV2Create({ googleToken: oauthCode }),
-      github: () => API.base.loginGithubCreate({ githubToken: oauthCode }),
-      facebook: () => API.base.loginFacebookCreate({ facebookToken: oauthCode }),
+      google: () => API.base.loginGoogleV2Create({ googleToken: oauthCode, ...commonParams }),
+      github: () => API.base.loginGithubCreate({ githubToken: oauthCode, ...commonParams }),
+      facebook: () => API.base.loginFacebookCreate({ facebookToken: oauthCode, ...commonParams }),
       vk: () => API.base.loginVkCreate({
         vkToken: oauthCode,
         code_verifier: codeVerifier,
         device_id: searchParams.get('device_id')!,
         state: searchParams.get('state')!,
+        ...commonParams,
       }),
     } as const
 

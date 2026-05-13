@@ -2,8 +2,6 @@ import { app, dialog, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
-import { isWindows } from '/@/constants/common'
-import { isAppQuittingForUpdate } from '/@/modules/app'
 import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { browserManager } from '/@/modules/browser'
@@ -54,14 +52,34 @@ function createContextMenu() {
 
         await forceSaveConfig()
 
-        appUpdater.quitAndInstall()
-        setTimeout(() => {
-          if (isAppQuittingForUpdate()) {
-            return
-          }
-          app.relaunch()
-          isWindows ? app.quit() : app.exit(0)
-        }, 1000)
+        // 先判断是否有可用更新, 再分支:
+        //   有更新 -> 走 autoUpdater.quitAndInstall(), 由 autoUpdater 在合适的时机驱动 quit
+        //   无更新 -> 走纯重启路径 app.relaunch() + app.quit(), 不再依赖 setTimeout race
+        // macOS 上原先的 `quitAndInstall + setTimeout(1000) + app.relaunch+app.quit`:
+        //   - quitAndInstall 是异步的, 可能在 1s 内还没真正接管退出
+        //   - autoUpdater 在没有可下载更新时会 reject/no-op, 一旦走到兜底分支,
+        //     SIGKILL 杀死 relaunch 中介子进程会导致 macOS 上重启彻底失效
+        let hasUpdate = false
+        try {
+          hasUpdate = await appUpdater.hasUpdate()
+        }
+        catch (error) {
+          console.error('[tray] hasUpdate check failed, fallback to plain relaunch:', error)
+        }
+
+        if (hasUpdate) {
+          console.log('[tray] restart with update, calling quitAndInstall')
+          appUpdater.quitAndInstall().catch((error) => {
+            console.error('[tray] quitAndInstall failed, fallback to plain relaunch:', error)
+            app.relaunch()
+            app.quit()
+          })
+          return
+        }
+
+        console.log('[tray] restart without update, calling relaunch + quit')
+        app.relaunch()
+        app.quit()
       },
     },
     {

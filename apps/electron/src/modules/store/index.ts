@@ -1,7 +1,7 @@
 import type { StoreType } from './types'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { createTray } from '/@/modules/app/tray'
-import { _store, autoSaveConfig, fetchUserConfig, initLanguage, initLocalConfigPromise, restoreLastWindowOpenStatus } from './util'
+import { _store, autoSaveConfig, fetchUserConfig, initLanguage, initLocalConfigPromise } from './util'
 
 export * from './util'
 
@@ -39,7 +39,6 @@ async function initStore() {
     await syncAutoStart(Boolean(store.autoStart))
     initLanguage()
     setTimeout(createTray)
-    restoreLastWindowOpenStatus()
   }
 }
 

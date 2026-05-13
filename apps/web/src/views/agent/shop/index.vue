@@ -87,6 +87,8 @@ const filters = reactive({
 const scheduledCheckerProxyStatus = genPollingChecker({
   intervalMs: 5 * 60 * 1000,
   checkOnce: async () => {
+    if (!userConfig.value.autoDetectProxy)
+      return true
     await testAllProxy(true)
     return false
   },
@@ -505,7 +507,7 @@ function rowClass(data: ProxyItem) {
         <template #outbound="{ data }">
           <div class="flex items-center gap-2.5">
             <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
-                        :is-loading="data.loadingOperationMap?.test"
+                        :badge-desc="data.badgeTypeDesc" :is-loading="data.loadingOperationMap?.test"
             />
             <div
               v-if="data.proxyType === ProxyType.buy && data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired"

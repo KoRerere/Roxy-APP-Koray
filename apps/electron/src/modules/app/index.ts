@@ -223,14 +223,44 @@ function initAppEvent() {
   //   console.log('[autoUpdater] error', error)
   // })
 
+  /**
+   * 是否有一次 before-quit 的清理流程正在进行中
+   *
+   * 用于防止在 macOS 上, 用户连点 Cmd+Q / Dock Quit / 托盘"退出" 时
+   * 同时进入多次 before-quit, 重入触发 browserManager.closeAll() 同步任务,
+   * 造成数据被截断或重复落盘.
+   */
+  let isCleanupInFlight = false
+
   app.on('before-quit', async (event) => {
     $$isAppQuitting = true
     if (store.defaultBrowserLauncherPid) {
       killProcessForce(store.defaultBrowserLauncherPid)
     }
 
-    if (!isSyncBrowserData) {
-      event.preventDefault()
+    // 第二次 (或更多次) 进入 before-quit:
+    // - isSyncBrowserData=true && !isCleanupInFlight: 之前已经清理完, 这里直接放行让 Electron 完成 quit 生命周期
+    // - isCleanupInFlight: 上一次还在异步同步中, 阻止当前默认退出, 等上次走完再驱动一次 app.quit()
+    if (isSyncBrowserData) {
+      if (isCleanupInFlight) {
+        console.log('before-quit re-entered while cleanup in flight, prevent default and wait')
+        event.preventDefault()
+      }
+      // 仅在升级路径下需要追加保存 + spawn updater 的逻辑
+      if (isQuittingForUpdate && !isCleanupInFlight) {
+        store.appNormalExit = true
+        await forceSaveConfig()
+        console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
+        // 让 Electron 正常完成退出生命周期, 确保 ShipIt 或其它提权更新服务不会被 SIGKILL 所谋杀
+      }
+      return
+    }
+
+    // 首次进入 before-quit: 拦下默认退出, 走异步清理
+    event.preventDefault()
+    isCleanupInFlight = true
+
+    try {
       try {
         closeAllWindows()
         // 关闭所有浏览器进程，并同步数据
@@ -243,16 +273,15 @@ function initAppEvent() {
       finally {
         console.log('Application is quitting finally.')
         globalShortcut.unregisterAll()
-        // 退出所有浏览器进程, 防止有漏网之鱼
-        killAllBrowserProcess()
+        // 退出所有浏览器进程, 防止有漏网之鱼;
+        // macOS / Linux 上不再依赖后续 SIGKILL 兜底, 必须 await 等清理完再走 app.quit().
+        await killAllBrowserProcess()
       }
-    }
 
-    await coreManager.cleanOldCore()
+      await coreManager.cleanOldCore()
 
-    // 如果由于升级 APP 导致的退出
-    if (isQuittingForUpdate) {
-      if (!isSyncBrowserData) {
+      // 由 APP 升级触发的退出
+      if (isQuittingForUpdate) {
         console.log('Application is quitting for update. Triggering upgradeNow()')
         isSyncBrowserData = true
         if (isWindows) {
@@ -269,7 +298,7 @@ function initAppEvent() {
               stdio: 'ignore',
             })
             store.updaterExePid = child.pid
-            console.log('(`[AppUpdater] updaterExePid', store.updaterExePid)
+            console.log('[AppUpdater] updaterExePid', store.updaterExePid)
             child.unref()
           }
           catch (e) {
@@ -281,18 +310,22 @@ function initAppEvent() {
         appUpdater.upgradeNow()
       }
       else {
+        isSyncBrowserData = true
         store.appNormalExit = true
         await forceSaveConfig()
+        cleanupAndExit()
 
-        console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
-        // 当第二次回到 before-quit 时，什么都不做，让 Electron 正常完成退出生命周期，确保 ShipIt 或其它提权更新服务不会被 SIGKILL 所谋杀
+        // macOS / Linux: cleanupAndExit 在非 Windows 下不再 SIGKILL/app.exit,
+        // 这里需要再次显式触发 app.quit() 让 Electron 走完正常的 quit 生命周期,
+        // 否则被 event.preventDefault() 拦下的退出永远不会真正发生 (尤其会导致 app.relaunch() 失效).
+        if (!isWindows) {
+          // 异步触发, 让当前 before-quit handler 先返回, 再进入下一轮 before-quit 走"已清理"分支
+          setImmediate(() => app.quit())
+        }
       }
     }
-    else {
-      isSyncBrowserData = true
-      store.appNormalExit = true
-      await forceSaveConfig()
-      cleanupAndExit()
+    finally {
+      isCleanupInFlight = false
     }
   })
 }

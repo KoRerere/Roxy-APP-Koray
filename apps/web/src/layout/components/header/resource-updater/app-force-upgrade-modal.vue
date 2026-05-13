@@ -89,7 +89,7 @@ function remindMeLater() {
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" modal :closable="false" class="w-105" :pt="{ header: '!hidden', content: '!pa-6 !pt-4' }">
+  <Dialog v-model:visible="visible" modal :close-on-escape="false" :closable="false" class="w-105" :pt="{ header: '!hidden', content: '!pa-6 !pt-4' }">
     <div class="flex flex-col gap-4">
       <div class="tt-primary text-4 font-600 leading-normal">
         {{ isActivityUpgrade ? $t('活动更新提醒') : $t('重要更新') }}
@@ -100,7 +100,7 @@ function remindMeLater() {
           <img :src="item.url" :alt="item.name" class="w-full object-cover rounded-lg">
         </template>
         <RxAlert class="whitespace-pre-wrap w-full" :title="$t('有新的可用更新')"
-                 :content="`${$t('RoxyBrowser 新活动上线！升级客户端版本即可参与活动。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn" :closable="false"
+                 :content="`${$t('Roxy 浏览器新活动上线！升级客户端版本即可参与活动。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn" :closable="false"
         />
       </template>
       <template v-else>
@@ -112,7 +112,7 @@ function remindMeLater() {
         </div>
 
         <div class=" tt-secondary text-3.5 leading-5">
-          {{ $t('RoxyBrowser 新版本已就绪！更新将为您带来性能优化与稳定性提升，需要您完成更新以继续使用。') }}
+          {{ $t('Roxy 浏览器新版本已就绪！更新将为您带来性能优化与稳定性提升，需要您完成更新以继续使用。') }}
         </div>
 
         <RxAlert class="whitespace-pre-wrap w-full" :content="$t('更新需要重启应用，重启后将为您恢复已打开的窗口。')" type="warn"

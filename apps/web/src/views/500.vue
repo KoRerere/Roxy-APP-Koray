@@ -13,7 +13,7 @@ const reload = () => {
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
           <div class="error-help">
-            <div class="mb-2">{{ $t('RoxyBrowser 的响应时间过长。') }}</div>
+            <div class="mb-2">{{ $t('Roxy 浏览器的响应时间过长。') }}</div>
             <div>{{ $t('请尝试以下方法：') }}</div>
             <div>{{ $t('1.检查网络连接状态') }}</div>
             <div>{{ $t('2.同步当前系统时间') }}</div>

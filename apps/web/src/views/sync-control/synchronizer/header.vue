@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon';
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 function closeWindow() {
-  globalThis.electronAPI.send('syncControl:close');
+  globalThis.electronAPI.send('syncControl:close')
 }
 
 function showPreferences() {
-  globalThis.electronAPI.send('syncControl:openPreferencesDialog');
+  globalThis.electronAPI.send('syncControl:openPreferencesDialog')
 }
 </script>
 
 <template>
   <div class="header">
     <div class="title">
-      <span class="production-name">RoxyBrowser</span>
+      <span class="production-name">{{ $t('Roxy 浏览器') }}</span>
       <span class="sub-title">{{ $t('窗口同步') }}</span>
     </div>
     <div class="actions">
@@ -25,9 +25,10 @@ function showPreferences() {
         <RxSvgIcon name="base/rx_ic_info_line" />
         <span class="text">{{ $t('帮助') }}</span>
       </div>
-      <div v-if="false" class="split-line"></div>
+      <div v-if="false" class="split-line" />
       <RxButton class="close no-drag" text severity="secondary" icon="base/rx_ic_delete" size="xxs"
-        @click="closeWindow" />
+                @click="closeWindow"
+      />
     </div>
   </div>
 </template>
@@ -52,7 +53,7 @@ function showPreferences() {
 
   .title {
     .production-name {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Archivo;
       font-size: 16px;
       font-style: normal;
@@ -62,7 +63,7 @@ function showPreferences() {
     }
 
     .sub-title {
-      color: var(--colors-text-text-tertiary, #8A9093);
+      color: var(--colors-text-text-tertiary, #8a9093);
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -93,7 +94,7 @@ function showPreferences() {
         font-style: normal;
         font-weight: 500;
         line-height: var(--Line-Height-text-xs, 16px);
-        color: var(--colors-text-text-primary, #FAFAFA);
+        color: var(--colors-text-text-primary, #fafafa);
       }
     }
 

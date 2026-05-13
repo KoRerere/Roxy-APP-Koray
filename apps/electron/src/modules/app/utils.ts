@@ -2,12 +2,14 @@ import { app, dialog, globalShortcut } from 'electron'
 import { execFile, spawn } from 'node:child_process'
 import { basename, dirname, join } from 'node:path'
 import { API } from '/@/api'
+import { appConfig } from '/@/constants'
+import { isWindows } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
 import { stopRoxynet } from '/@/modules/roxynet'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { killProcessByName } from '/@/utils'
+import { getProcessIdsByExeDir, killProcessByName, killProcessForce } from '/@/utils'
 import { closeAllWindows } from '/@/utils/browser-window'
 import { closeUninstallFeedbackWindow, createUninstallFeedbackWindow, isUninstallFeedbackMode } from './uninstallFeedback'
 
@@ -81,11 +83,54 @@ export function handleCloseWindow(event: Electron.Event) {
   }
 }
 
-/** 退出所有浏览器进程, 防止有漏网之鱼 */
-export function killAllBrowserProcess() {
-  killProcessByName('RoxyChrome')
-  killProcessByName('chromedriver')
-  killProcessByName('chrome_proxy')
+/**
+ * 退出所有浏览器进程, 防止有漏网之鱼
+ *
+ * - Windows: 按可执行文件名 `taskkill /F /IM`, 能命中所有 RoxyChrome 子进程, 同步触发但 `exec` 仍是异步的.
+ * - macOS / Linux: 之前用 `pkill -f chrome_proxy / chromedriver` 是宽匹配, 会误杀用户本机其它 Chromium 系应用
+ *   (Chrome / Edge / Arc 的 chrome_proxy helper) 以及其它 Selenium 项目的 chromedriver.
+ *   现在改为基于 `appConfig.chromeBinDir / firefoxBinDir` 的"绝对路径前缀"精准匹配, 仅会清理 Roxy 自己解压出来的内核进程.
+ *
+ * 返回 `Promise<void>` 是为了让退出路径上的调用方可选 `await` 等待清理完成
+ * (因为 macOS / Linux 路径上不再有 SIGKILL 兜底, 需要确保兜底杀进程真正完成再触发 `app.quit()`).
+ * 不需要等待的调用方 (如启动期残留清理) 可以直接 fire-and-forget.
+ */
+export async function killAllBrowserProcess(): Promise<void> {
+  if (isWindows) {
+    killProcessByName('RoxyChrome')
+    killProcessByName('RoxyFirefox')
+    killProcessByName('chromedriver')
+    killProcessByName('chrome_proxy')
+    return
+  }
+
+  try {
+    const targetDirs = [
+      appConfig.chromeBinDir,
+      appConfig.firefoxBinDir,
+    ]
+    const pidLists = await Promise.all(
+      targetDirs.map(dir => getProcessIdsByExeDir(dir).catch((err) => {
+        console.error(`getProcessIdsByExeDir error for ${dir}:`, err)
+        return [] as number[]
+      })),
+    )
+    const allPids = Array.from(new Set(pidLists.flat()))
+    if (!allPids.length) {
+      console.log('killAllBrowserProcess: no roxy browser process found')
+      return
+    }
+    console.log(`killAllBrowserProcess: killing pids [${allPids.join(', ')}]`)
+    const results = await Promise.allSettled(allPids.map(pid => killProcessForce(pid)))
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error(`killAllBrowserProcess: failed to kill pid ${allPids[i]}:`, r.reason)
+      }
+    })
+  }
+  catch (error) {
+    console.error('killAllBrowserProcess error:', error)
+  }
 }
 
 /** 是否正在显示卸载反馈窗口 */
@@ -194,23 +239,41 @@ export function cancelQuit() {
   app.exit(0)
 }
 
-/** 清理和释放资源 */
+/**
+ * 清理和释放资源, 让 APP 退出
+ *
+ * Windows: 走原有"硬退出"路径, `process.kill(-pid, SIGKILL)` 杀死整个进程组兜底, `app.exit(0)` 强退.
+ *
+ * macOS / Linux: **不再 SIGKILL 整个进程组**. 原因:
+ *  1. macOS 上 `app.relaunch()` 通过 fork 一个等待父进程退出的中介子进程实现, 这个中介进程
+ *     默认与主进程同 process group, 一旦 `kill -SIGKILL -pid` 会被一同干掉, 导致 `relaunch` 失效.
+ *  2. Squirrel.Mac (ShipIt) 也可能作为子进程被一并杀死, 破坏自动更新流程.
+ *  调用方应保证已经清理完业务资源 (closeAll / killAllBrowserProcess 等), 然后这里只做轻量收尾,
+ *  把退出交还给 Electron 的正常生命周期 (由 `app.quit()` 重新驱动 `will-quit` / `quit`).
+ */
 export function cleanupAndExit() {
   try {
+    stopRoxynet()
     globalShortcut.unregisterAll()
     killAllBrowserProcess()
     closeAllWindows()
     getTray()?.destroy()
-    stopRoxynet()
-    // 杀死整个进程组（包括 zygote、roxynet 等子进程）
-    process.kill(-process.pid, 'SIGKILL')
+
+    if (isWindows) {
+      // 杀死整个进程组（包括 zygote、roxynet 等子进程）
+      process.kill(-process.pid, 'SIGKILL')
+    }
   }
   catch (error) {
     console.error('cleanupAndExit error:', error)
   }
   finally {
-    // 如果失败（比如不是进程组领导者），直接退出
     console.log('cleanupAndExit finally')
-    app.exit(0)
+    if (isWindows) {
+      // Windows 上保留原有的硬退出兜底 (SIGKILL 若失败仍然能退)
+      app.exit(0)
+    }
+    // macOS / Linux: 不再调用 app.exit(0), 让 Electron 走完正常 quit 生命周期,
+    // 否则会绕过 `app.relaunch()` 的中介子进程, 也可能撕裂 Squirrel.Mac 的更新流程.
   }
 }

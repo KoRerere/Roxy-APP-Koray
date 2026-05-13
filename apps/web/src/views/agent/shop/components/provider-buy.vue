@@ -9,10 +9,10 @@ import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import RxStepInput from '/@/components/rx-step-input/index.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { I18nT } from 'vue-i18n'
 import currency from 'currency.js'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import Fuse from 'fuse.js'
-
 import { API } from '/@/api'
 import { addDays, format } from 'date-fns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -83,7 +83,7 @@ const notes = [
   },
   {
     text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('所有代理 IP 均由 RoxyBrowser 从 {name} 特挑。', { name: provider.vendorName })],
+    bolds: [$t('所有代理 IP 均由 Roxy 浏览器从 {name} 特挑。', { name: provider.vendorName })],
   },
 ].slice(0, provider.vendorName === 'Roxy IP' ? 6 : 7)
 
@@ -639,7 +639,14 @@ async function checkCommerceIP() {
                 <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
               </span>
             </div>
-            <div class="tt-primary text-3.5 leading-6 whitespace-pre-wrap">{$t('您当前选择的是电商专用 IP，该 IP 仅可访问 Amazon 等跨境电商网站，不支持访问 Google、社交平台等非跨境电商类境外网站。请确认用途后继续购买。')}</div>
+            <div class="tt-primary text-3.5 leading-6 whitespace-pre-wrap">
+              <I18nT scope="global" keypath={$t('您当前选择的是电商专用 IP，该 IP {available}跨境电商网站，{notAvailable}非跨境电商类境外网站。请确认用途后继续购买。', { available: '{available}', notAvailable: '{notAvailable}' })}>
+                {{
+                  available: () => <span class="font-bold">{$t('仅可访问 Amazon 等')}</span>,
+                  notAvailable: () => <span class="font-bold">{$t('不支持访问 Google、社交平台等')}</span>,
+                }}
+              </I18nT>
+            </div>
             <div class="flex justify-end gap-2">
               <RxButton outlined severity="secondary" size="md" label={$t('取消')} onClick={hideModal}></RxButton>
               <RxButton
@@ -750,11 +757,11 @@ async function onPay() {
               <RxButton v-tooltip.top="!check('Cost_Center_all') && $t('暂无权限。如需开通，请联系工作空间拥有者，更改当前账号身份为管理者并开通‘费用中心’权限。')" size="lg" :disabled="!check('Cost_Center_all')" :label="$t('立即支付')"
                         @click="checkStock"
               />
-              <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+              <I18nT tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
                   <a class="terms-link" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                 </template>
-              </i18n-t>
+              </I18nT>
             </div>
           </template>
         </Detail>
@@ -763,11 +770,11 @@ async function onPay() {
             {{ $t('注意事项:') }}
           </div>
           <ol class="ma-0 pl-4">
-            <i18n-t v-for="item in notes" :key="item.text" tag="li" class="notes" :keypath="item.text" scope="global">
+            <I18nT v-for="item in notes" :key="item.text" tag="li" class="notes" :keypath="item.text" scope="global">
               <template v-for="(bold, index) in item.bolds" :key="index" #[`bold${index}`]>
                 <span class="notes-bold">{{ bold }}</span>
               </template>
-            </i18n-t>
+            </I18nT>
           </ol>
         </div>
       </div>

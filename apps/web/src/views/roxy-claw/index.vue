@@ -239,7 +239,7 @@ function handleIntegrationClick(integration: any) {
           {{ $t('集成到您的工作场景') }}
         </h2>
         <p class="text-xs text-[var(--colors-text-text-tertiary)] my-0">
-          {{ $t('选择您偏好的方式连接至 RoxyBrowser，支持同时连接多个即时通讯 App。') }}
+          {{ $t('选择您偏好的方式连接至 Roxy 浏览器，支持同时连接多个即时通讯 App。') }}
         </p>
       </div>
 

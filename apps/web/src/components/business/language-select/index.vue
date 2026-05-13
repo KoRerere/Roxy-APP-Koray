@@ -4,12 +4,13 @@ import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { ISO639List } from '/@/constants/iso-639'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWindowSize } from '@vueuse/core'
+import { isMobile } from '/@/utils'
 
 const { width } = useWindowSize()
 const simpleLocale = useSimpleLocale()
 const ISO639 = ref(ISO639List)
 const currentLocale = ref(ISO639.value.find(item => item.locale === simpleLocale.currentLocale) || ISO639.value[0])
-const isWebClient = !globalThis.isElectron
+const showDownload = !globalThis.isElectron && !isMobile()
 
 watch(() => currentLocale.value, (val) => {
   simpleLocale.setSimpleLocale(val.locale)
@@ -23,7 +24,7 @@ function toDownload() {
 
 <template>
   <div class="card flex justify-center">
-    <RxButton v-if="isWebClient" icon="base/rx_ic_download" size="xs" variant="text" severity="secondary" :label="$t('下载客户端')" @click="toDownload" />
+    <RxButton v-if="showDownload" icon="base/rx_ic_download" size="xs" variant="text" severity="secondary" :label="$t('下载客户端')" @click="toDownload" />
     <LiveChat class="live-chat">
       <RxButton icon="base/rx_ic_headphone_2" size="xs" variant="text" severity="secondary" :label="$t('帮助')" />
     </LiveChat>

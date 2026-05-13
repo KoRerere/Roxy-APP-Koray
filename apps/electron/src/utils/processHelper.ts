@@ -90,41 +90,166 @@ export function killProcessByName(processName: string) {
     console.debug(`Error killing process ${processName}:`, error)
   }
 }
-/** 根据执行路径获取进程 IDs */
-export function getProcessIdsByExePath(processPath: string) {
-  const { promise, resolve, reject } = Promise.withResolvers<number[]>()
-  exec('wmic process get ExecutablePath,ProcessId', (error, stdout, stderr) => {
-    if (error) {
-      reject(stderr)
-      console.error(`Error: ${error.message}`)
-      return
-    }
-    if (stderr) {
-      reject(stderr)
-      console.error(`Stderr: ${stderr}`)
-      return
-    }
-    const lines = stdout.trim().split('\n').filter(line => line.trim() !== '' && line.trim() !== 'ExecutablePath  ProcessId')
-    /**
-     * 获取进程ID
-     */
-    const matchingProcesses = lines
-      .map(line => line.trim().split(/\s{2,}/)) // 分割每行，获取执行路径和进程ID
-      .filter((parts) => {
-        const exePath = normalize(String.raw`${parts[0]}`).toLocaleLowerCase()
-        console.log('exePath', exePath, processPath.toLocaleLowerCase())
-        return exePath.includes(processPath.toLocaleLowerCase())
-      }) // 过滤出匹配指定路径的进程
-      .map(parts => Number(parts[1]))
+/**
+ * 根据执行路径获取进程 IDs (跨平台, 严格按可执行文件绝对路径匹配)
+ *
+ * - Windows: 通过 wmic 查询 ExecutablePath
+ * - macOS/Linux: 通过 ps -axww 查询 command 列
+ *
+ * 出错时会 resolve 空数组, 不会 reject, 方便调用方做兜底处理
+ */
+export function getProcessIdsByExePath(processPath: string): Promise<number[]> {
+  const { promise, resolve } = Promise.withResolvers<number[]>()
+  const isWin = process.platform === 'win32'
+  const targetPath = normalize(processPath)
+  const targetForCompare = isWin ? targetPath.toLowerCase() : targetPath
 
-    if (matchingProcesses.length > 0) {
-      console.log(`Process IDs with executable path ${processPath}:`)
-      resolve(matchingProcesses)
+  const command = isWin
+    ? 'wmic process get ExecutablePath,ProcessId'
+    : 'ps -axww -o pid=,command='
+
+  exec(command, (error, stdout) => {
+    if (error) {
+      console.error(`getProcessIdsByExePath exec error for ${processPath}:`, error.message)
+      resolve([])
+      return
+    }
+
+    const pids: number[] = []
+    for (const rawLine of stdout.split('\n')) {
+      const line = rawLine.trim()
+      if (!line)
+        continue
+
+      if (isWin) {
+        if (line.toLowerCase().startsWith('executablepath'))
+          continue
+        // 形如: "<ExecutablePath>           <ProcessId>"; 系统进程无 ExecutablePath 时仅剩 PID, 会被过滤掉
+        const lastSpaceIdx = line.lastIndexOf(' ')
+        if (lastSpaceIdx <= 0)
+          continue
+        const exePath = line.slice(0, lastSpaceIdx).trim()
+        const pidStr = line.slice(lastSpaceIdx + 1).trim()
+        if (!exePath || !/^\d+$/.test(pidStr))
+          continue
+        const pid = Number(pidStr)
+        if (!Number.isFinite(pid) || pid <= 0)
+          continue
+        if (normalize(exePath).toLowerCase() === targetForCompare) {
+          pids.push(pid)
+        }
+      }
+      else {
+        // 形如: "<pid> <command> [args...]"
+        const firstSpaceIdx = line.indexOf(' ')
+        if (firstSpaceIdx <= 0)
+          continue
+        const pidStr = line.slice(0, firstSpaceIdx)
+        if (!/^\d+$/.test(pidStr))
+          continue
+        const pid = Number(pidStr)
+        if (!Number.isFinite(pid) || pid <= 0)
+          continue
+        const cmdline = line.slice(firstSpaceIdx + 1).trimStart()
+        // 命令行可能携带参数, 仅匹配可执行文件本身的绝对路径
+        if (cmdline === targetForCompare || cmdline.startsWith(`${targetForCompare} `)) {
+          pids.push(pid)
+        }
+      }
+    }
+
+    if (pids.length) {
+      console.log(`Process IDs with executable path ${processPath}:`, pids)
     }
     else {
-      resolve([])
       console.log(`No processes found with executable path ${processPath}`)
     }
+    resolve(pids)
+  })
+
+  return promise
+}
+
+/**
+ * 根据可执行文件所在目录前缀获取进程 IDs (跨平台, 严格按绝对路径前缀匹配)
+ *
+ * 与 {@link getProcessIdsByExePath} 不同, 这里允许匹配指定目录下所有版本子目录中的可执行文件
+ * (例如所有 `${chromeBinDir}/<version>/RoxyChrome`), 适用于多版本内核 / 多种 helper 子进程的批量清理.
+ *
+ * - Windows: 通过 wmic 查询 ExecutablePath, 不区分大小写匹配前缀
+ * - macOS/Linux: 通过 ps -axww 查询 command 列, 大小写敏感匹配前缀
+ *
+ * 出错时会 resolve 空数组, 不会 reject, 方便调用方做兜底处理.
+ *
+ * @param dirPath 可执行文件所在目录的绝对路径 (会被规范化, 末尾自动补上路径分隔符)
+ */
+export function getProcessIdsByExeDir(dirPath: string): Promise<number[]> {
+  const { promise, resolve } = Promise.withResolvers<number[]>()
+  const isWin = process.platform === 'win32'
+  const sep = isWin ? '\\' : '/'
+  const normalized = normalize(dirPath)
+  // 保证以分隔符结尾, 避免误匹配同名前缀的兄弟目录 (e.g. /foo/bar 误匹配 /foo/bar-baz)
+  const targetPrefix = normalized.endsWith(sep) ? normalized : `${normalized}${sep}`
+  const targetForCompare = isWin ? targetPrefix.toLowerCase() : targetPrefix
+
+  const command = isWin
+    ? 'wmic process get ExecutablePath,ProcessId'
+    : 'ps -axww -o pid=,command='
+
+  exec(command, (error, stdout) => {
+    if (error) {
+      console.error(`getProcessIdsByExeDir exec error for ${dirPath}:`, error.message)
+      resolve([])
+      return
+    }
+
+    const pids: number[] = []
+    for (const rawLine of stdout.split('\n')) {
+      const line = rawLine.trim()
+      if (!line)
+        continue
+
+      if (isWin) {
+        if (line.toLowerCase().startsWith('executablepath'))
+          continue
+        const lastSpaceIdx = line.lastIndexOf(' ')
+        if (lastSpaceIdx <= 0)
+          continue
+        const exePath = line.slice(0, lastSpaceIdx).trim()
+        const pidStr = line.slice(lastSpaceIdx + 1).trim()
+        if (!exePath || !/^\d+$/.test(pidStr))
+          continue
+        const pid = Number(pidStr)
+        if (!Number.isFinite(pid) || pid <= 0)
+          continue
+        if (normalize(exePath).toLowerCase().startsWith(targetForCompare)) {
+          pids.push(pid)
+        }
+      }
+      else {
+        const firstSpaceIdx = line.indexOf(' ')
+        if (firstSpaceIdx <= 0)
+          continue
+        const pidStr = line.slice(0, firstSpaceIdx)
+        if (!/^\d+$/.test(pidStr))
+          continue
+        const pid = Number(pidStr)
+        if (!Number.isFinite(pid) || pid <= 0)
+          continue
+        const cmdline = line.slice(firstSpaceIdx + 1).trimStart()
+        if (cmdline.startsWith(targetForCompare)) {
+          pids.push(pid)
+        }
+      }
+    }
+
+    if (pids.length) {
+      console.log(`Process IDs under executable dir ${dirPath}:`, pids)
+    }
+    else {
+      console.log(`No processes found under executable dir ${dirPath}`)
+    }
+    resolve(pids)
   })
 
   return promise

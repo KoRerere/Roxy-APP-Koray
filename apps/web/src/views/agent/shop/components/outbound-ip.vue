@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { formatProxyTime, strConcat } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums'
-import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props {
   country?: string
@@ -10,6 +9,7 @@ interface Props {
   time?: string
   status?: ProxyCheckStatus
   isLoading?: boolean
+  badgeDesc?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -61,15 +61,16 @@ const data = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-2 items-center proxycard">
+  <div class="flex gap-2 items-center min-w-50 leading-4">
     <div class="icon">
-      <SvgIcon class="block" :name="(data.svg as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" size="24" />
+      <SvgIcon class="block" :name="(data.svg as any)" fallback="base/rx_ic_earth" :color="data.svgColor" size="24" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
-      <div class="flex items-center proxycard-title" :style="{ color: data.color }">
-        <span>{{ data.title }}</span>
+      <div class="flex items-center gap-1.5" :style="{ color: data.color }">
+        <span class="text-3 font-500">{{ data.title }}</span>
+        <span v-if="badgeDesc" class="py-0.5 px-2 rounded-full direct">{{ badgeDesc }}</span>
       </div>
-      <div class="flex items-center gap-1.5 proxycard-subtitle">
+      <div class="flex items-center gap-1.5 tt-tertiary text-3">
         <span>{{ lastIp || '--' }}</span>
         <Divider class="!ma-0" layout="vertical" />
         <span>{{ formatProxyTime(time) }}</span>
@@ -85,18 +86,10 @@ const data = computed(() => {
   overflow: hidden;
 }
 
-.proxycard {
-  min-width: 200px;
-  font-family: Inter;
+.direct {
+  color: #fff;
+  font-family: 'DingTalk JinBuTi';
   font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
-
-  &-title {
-    font-weight: 500;
-  }
-
-  &-subtitle {
-    color: var(--colors-text-text-tertiary);
-  }
+  background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
 }
 </style>

@@ -25,7 +25,7 @@ export function notifyProxyModuleSpeedTest(proxyList: any[]) {
 /** 仅写当前窗口行 + silentUpdate；代理模块请用 notifyProxyModuleSpeedTest（批量场景按 moduleId 去重） */
 export async function persistProfileRowAfterProxySpeedTest(
   list: { item: ProfileLike, checkRes: CheckResult }[],
-  options: { onlyErrorToast: (code: number, msg: string) => void },
+  options: { onlyErrorToast?: (code: number, msg: string) => void },
 ): Promise<void> {
   const validList = list.filter(data => data.checkRes.checkStatus === ProxyCheckStatus.success)
   if (validList.length === 0)
@@ -38,7 +38,7 @@ export async function persistProfileRowAfterProxySpeedTest(
   }))
 
   const { code, msg } = await API.window.userMdfWindowProxyCheckBatchCreate({ proxyList, requestType: ProfileReqType.SpeedTest } as any)
-  options.onlyErrorToast(code, msg)
+  options.onlyErrorToast?.(code, msg)
 }
 
 export function useProfileProxy() {

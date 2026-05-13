@@ -6,8 +6,8 @@ import { intoLaunchPage } from '/@/modules/app/mainWindow'
 // import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { browserManager } from '/@/modules/browser'
-import { startRoxynet } from '/@/modules/roxynet'
-import { initLocalConfig, setupStore } from '/@/modules/store'
+import { killRoxynetZombieProcess, startRoxynet } from '/@/modules/roxynet'
+import { initLocalConfig, restoreLastWindowOpenStatus, setupStore } from '/@/modules/store'
 import { resourceUpdater } from '/@/modules/updater'
 import { fileExists, killProcessByName } from '/@/utils'
 import { setupApp } from './app/'
@@ -47,8 +47,11 @@ export async function setupModules() {
     console.error('setupModules', error)
   }
   finally {
+    // 清理上次 APP 异常退出后残留的 roxynet 僵尸进程, 再启动新的 roxynet 服务
+    await killRoxynetZombieProcess()
     // 启动 roxynet 服务
     startRoxynet()
+    restoreLastWindowOpenStatus()
     browserManager.autoClearByTimestamp()
   }
 }

@@ -393,7 +393,7 @@ provideLoginContext({
           <a class="logo" :href="getOfficialWebsite('/')" target="_blank" rel="noopener noreferrer">
             <SvgIcon name="base/logo" size="36" />
             <div class="logo-text">
-              RoxyBrowser
+              {{ $t('Roxy 浏览器') }}
             </div>
           </a>
           <LanguageSelect />

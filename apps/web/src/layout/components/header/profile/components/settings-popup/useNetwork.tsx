@@ -124,6 +124,20 @@ export function useNetworkPanel() {
                   />
                 ),
             },
+            {
+              label: $t('自动检测代理 IP'),
+              name: 'autoDetectProxy',
+              value: data?.autoDetectProxy ?? true,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
           ],
         },
         {

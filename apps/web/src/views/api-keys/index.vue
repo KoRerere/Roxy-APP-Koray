@@ -212,7 +212,7 @@ const apiList = computed(() => [
   {
     title: $t('无头模式'),
     content: () => (
-      <I18nT tag="div" scope="global" keypath={$t('RoxyBrowser 现在支持以 "无头模式" 打开浏览器。只需在打开窗口的 API 请求中加入参数 {params} 即可。{link}。', { params: '{params}', link: '{link}' })}>
+      <I18nT tag="div" scope="global" keypath={$t('Roxy 浏览器现在支持以 "无头模式" 打开浏览器。只需在打开窗口的 API 请求中加入参数 {params} 即可。{link}。', { params: '{params}', link: '{link}' })}>
         {{
           params: () => <span class={`!no-underline ${cssModule.link}`}>{JSON.stringify({ headless: true })}</span>,
           link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href={getOfficialFaqWebsite('/api-documentation/api-endpoint.html#open-browser')} rel="noopener noreferrer">{$t('查看详情')}</a>,
@@ -257,7 +257,7 @@ const mcpList = [
           value: '1',
           render: () => (
             <div class="w-full flex flex-col">
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 RoxyBrowser MCP 服务器来控制 Roxy 客户端:')}</div>
+              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy 浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
               <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
                 claude mcp add roxybrowser-openapi --scope local -e ROXY_API_KEY="
                 {apiConfig.value.apiKey}
@@ -276,7 +276,7 @@ const mcpList = [
           value: '2',
           render: () => (
             <div class="w-full flex flex-col">
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 RoxyBrowser MCP 服务器来控制 Roxy 客户端:')}</div>
+              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy 浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
               <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
                 codex mcp add --env ROXY_API_KEY="
                 {apiConfig.value.apiKey}
@@ -338,7 +338,7 @@ const mcpList = [
   {
     title: $t('使用 Roxy Playwright MCP 控制 RoxyChrome'),
     content: () => (
-      <I18nT tag="div" scope="global" keypath={$t('PlayRoxy MCP 基于微软的 {link}，并针对 RoxyBrowser 的指纹浏览器功能进行了增强。', { link: '{link}' })}>
+      <I18nT tag="div" scope="global" keypath={$t('PlayRoxy MCP 基于微软的 {link}，并针对 Roxy 浏览器的指纹浏览器功能进行了增强。', { link: '{link}' })}>
         {{
           link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://github.com/microsoft/playwright-mcp">Playwright MCP</a>,
         }}

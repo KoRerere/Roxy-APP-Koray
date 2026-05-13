@@ -481,14 +481,14 @@ export async function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: R
       // proxyMethod noproxy 直连  platform 购买的ip import 自定义
       // if (winInfo.proxyMethod !== `noproxy`) {
       // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
-      const { host, port, proxyUserName, proxyPassword } = winInfo
+      const { host, port, proxyUserName, proxyPassword, isDirect } = winInfo
       const { systemProxySwitch } = store
       const systemProxyAddress = getSystemProxyAddress()
       const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress.split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
       const isSSH = protocol === 'ssh'
       // 是否开启系统代理
-      const isUseSystemProxy = isSSH || getRoxynetProcess() && systemProxySwitch && systemProxyHost && systemProxyPort
+      const isUseSystemProxy = isSSH || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyHost && systemProxyPort)
       // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
       const type = isUseSystemProxy && protocol === 'https' ? 'http' : isSSH ? 'socks5' : protocol
       // 是否为直连

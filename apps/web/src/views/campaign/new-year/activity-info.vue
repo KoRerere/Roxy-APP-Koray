@@ -89,7 +89,7 @@ function generateSnowflakes() {
         <SvgIcon class="mr-1" name="other/tree" size="20" />
         <i18n-t class="title" tag="div" scope="global" :keypath="$t('{bold} 双旦活动大促', { bold: '{bold}' })">
           <template #bold>
-            <span class="title-bold">RoxyBrowser</span>
+            <span class="title-bold">{{ $t('Roxy 浏览器') }}</span>
           </template>
         </i18n-t>
       </div>

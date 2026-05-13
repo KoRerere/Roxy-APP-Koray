@@ -50,7 +50,7 @@ async function checkCode(value: string) {
         {{ $t('请在下方输入礼品码') }}
       </div>
       <div class="desc">
-        {{ $t('礼品码是用于兑换 RoxyBrowser 订阅和其他福利的代码。') }}
+        {{ $t('礼品码是用于兑换 Roxy 浏览器订阅和其他福利的代码。') }}
       </div>
     </div>
     <TsFormInputText v-model.trim="code" class="text-center" size="lg" :placeholder="$t('请输入兑换码')" @update:model-value="checkCodeDebounce" />

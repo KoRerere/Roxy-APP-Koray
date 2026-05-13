@@ -1,6 +1,8 @@
+import { isMobile } from '/@/utils'
+
 export const ISO639List = [
   {
-    label: '中文（简体）',
+    label: isMobile() ? '中文' : '中文（简体）',
     locale: 'zh-CN',
     icon: 'country-code/CN',
   },

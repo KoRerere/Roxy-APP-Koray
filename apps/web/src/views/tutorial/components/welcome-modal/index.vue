@@ -51,7 +51,7 @@ async function receiveSuccess(type?: FirstGiftType) {
     <div class="flex items-center justify-between px-6">
       <div class="flex items-center gap-1.5">
         <SvgIcon name="base/logo" size="36" />
-        <span class="welcome-logo">RoxyBrowser</span>
+        <span class="welcome-logo">{{ $t('Roxy 浏览器') }}</span>
       </div>
       <div class="welcome-text">
         {{ $t('欢迎加入') }}

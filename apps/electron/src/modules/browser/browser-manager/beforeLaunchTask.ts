@@ -294,7 +294,8 @@ export class BeforeLaunchTask {
     }
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      args.push(`data:text/html,`)
+      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
+      args.push(dashboardUrl)
     }
 
     // 如果用户开启了插件
@@ -468,7 +469,7 @@ export class BeforeLaunchTask {
 
   /** 根据代理检测结果决定是否要拉起浏览器 */
   private async handleProxyDetection() {
-    const { stopOpenNet, stopOpenIP, stopOpenPosition, lastIp, lastCountry } = this.browserItem.winInfo
+    const { stopOpenNet, stopOpenIP, stopOpenPosition, lastIp, lastCountry, host } = this.browserItem.winInfo
 
     // 网络不通停止打开 stopOpenNet
     // IP发生变化停止打开 stopOpenIP
@@ -485,7 +486,10 @@ export class BeforeLaunchTask {
       }
 
       const message = this.browserItem.winInfo.buyProxyType === 1 ? $t('无法连接至代理 IP，请检查您当前的网络环境并重试。') : $t('代理 IP 检测失败')
-      this.warningMessages.push(message)
+
+      if (host) {
+        this.warningMessages.push(message)
+      }
     }
 
     // IP发生变化停止打开

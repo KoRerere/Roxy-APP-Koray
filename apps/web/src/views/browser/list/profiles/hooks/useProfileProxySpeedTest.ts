@@ -6,7 +6,6 @@ import { notifyProxyModuleSpeedTest, persistProfileRowAfterProxySpeedTest } from
 
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { silentUpdateProxy } from '/@/views/browser/list/profiles/components/util'
-import { API } from '/@/api'
 
 type ProfileRow = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -64,14 +63,8 @@ export function useProfileProxySpeedTest() {
           }
         }
 
-        if (silent) {
-          API.window.userMdfWindowProxyCheckBatchCreate({ proxyList: Array.from(moduleDone.values()) })// 自动检测无日志
-        }
-        else {
-          notifyProxyModuleSpeedTest(Array.from(moduleDone.values()))
-        }
-
-        await persistProfileRowAfterProxySpeedTest(results, { onlyErrorToast })
+        notifyProxyModuleSpeedTest(Array.from(moduleDone.values()))
+        await persistProfileRowAfterProxySpeedTest(results, { onlyErrorToast: silent ? undefined : onlyErrorToast })
       },
     }).catch((err) => {
       onlyErrorToast(-1, err.message)

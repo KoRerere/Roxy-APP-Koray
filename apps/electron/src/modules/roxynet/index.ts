@@ -1,13 +1,13 @@
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { chmod } from 'node:fs/promises'
-import { setTimeout } from 'node:timers/promises'
 import { appConfig } from '/@/constants'
 import { isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
-import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
+import { roxynetReportResolvers } from '/@/modules/appServer/roxynet-receiver'
+import { encryptByDESModeCBC } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { fileExists, getSystemProxy, isProcessExists } from '/@/utils'
+import { fileExists, getProcessIdsByExePath, getSystemProxy, isProcessExists, killProcessForce } from '/@/utils'
 
 export * from './util'
 
@@ -38,7 +38,7 @@ export async function startRoxynet() {
 
   if (roxynetProcess?.pid) {
     if (Date.now() - lastCheckTime < 60 * 1000 * 1) {
-      return
+      return roxynetReportResolvers.promise
     }
     lastCheckTime = Date.now()
     console.log('Roxynet has been started')
@@ -49,7 +49,7 @@ export async function startRoxynet() {
       await startRoxynet()
       return
     }
-    return
+    return roxynetReportResolvers.promise
   }
 
   const systemProxy = await getSystemProxy()
@@ -94,9 +94,43 @@ export async function startRoxynet() {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-  // 监听 stdout 数据事件
+  const { promise, resolve, reject } = Promise.withResolvers<void>()
+
+  // 等待 roxynet 启动完成（api server 监听后才算启动成功）
+  let settled = false
+  const READY_TIMEOUT_MS = 6_000
+  const readyTimer = setTimeout(() => {
+    if (settled) {
+      return
+    }
+    settled = true
+    reject(new Error('roxynetProcess startup timed out'))
+  }, READY_TIMEOUT_MS)
+
+  const settleResolve = () => {
+    if (settled) {
+      return
+    }
+    settled = true
+    clearTimeout(readyTimer)
+    resolve()
+  }
+
+  const settleReject = (error: Error) => {
+    if (settled) {
+      return
+    }
+    settled = true
+    clearTimeout(readyTimer)
+    reject(error)
+  }
+
   roxynetProcess.stdout?.on('data', (data) => {
-    console.log(`roxynetProcess stdout: ${data}`)
+    const output = data.toString()
+    console.log(`roxynetProcess stdout: ${output}`)
+    setTimeout(() => {
+      settleResolve()
+    }, 200)
   })
 
   // 监听 stderr 数据事件
@@ -108,6 +142,7 @@ export async function startRoxynet() {
   roxynetProcess.on('close', (code) => {
     console.log(`roxynetProcess exited with code ${code}`)
     roxynetProcess = null
+    settleReject(new Error(`roxynetProcess exited before startup completed, code=${code}`))
   })
 
   roxynetProcess.on('exit', (code) => {
@@ -119,15 +154,43 @@ export async function startRoxynet() {
   roxynetProcess.on('error', (error) => {
     console.error('roxynetProcess Error executing file:', error)
     roxynetProcess = null
+    settleReject(error)
   })
 
   console.log(`Child process ID: ${roxynetProcess.pid}`)
-  await setTimeout(100)
+  return Promise.all([promise, roxynetReportResolvers.promise])
 }
 
 export function stopRoxynet() {
   if (roxynetProcess) {
     roxynetProcess.kill('SIGKILL')
     roxynetProcess = null
+  }
+}
+
+/**
+ * 清理上次 APP 异常退出后残留的 roxynet 僵尸进程
+ *
+ * - 仅会杀掉可执行路径完全等于 `appConfig.roxynetBinPath` 的进程, 避免误伤其他同名进程
+ * - 内部捕获所有错误, 失败时只打印日志, 不会向外抛出, 不影响后续启动流程
+ */
+export async function killRoxynetZombieProcess() {
+  try {
+    const exePath = appConfig.roxynetBinPath
+    const pids = await getProcessIdsByExePath(exePath)
+    if (!pids.length) {
+      console.log('killRoxynetZombieProcess: no zombie process found at', exePath)
+      return
+    }
+    console.log(`killRoxynetZombieProcess: killing pids [${pids.join(', ')}] for ${exePath}`)
+    const results = await Promise.allSettled(pids.map(pid => killProcessForce(pid)))
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error(`killRoxynetZombieProcess: failed to kill pid ${pids[i]}:`, r.reason)
+      }
+    })
+  }
+  catch (error) {
+    console.error('killRoxynetZombieProcess error:', error)
   }
 }

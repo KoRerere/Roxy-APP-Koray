@@ -27,12 +27,12 @@ const active = ref(defaultActive || list[0])
 
     <template v-if="active?.name === 'WeChat'">
       <div class="text-center title">
-        {{ $t('RoxyBrowser 专属技术支持') }}
+        {{ $t('Roxy 浏览器专属技术支持') }}
       </div>
       <div class="py-2 px-4 rounded-2 gift">
         <div class="relative indent-5">
           <SvgIcon class="absolute top-0 left-0" name="other/gift" />
-          <span>{{ $t('只需添加 RoxyBrowser 专属技术支持微信，即可延长 {day} 天当前套餐。', { day: 5 }) }}</span>
+          <span>{{ $t('只需添加 Roxy 浏览器专属技术支持微信，即可延长 {day} 天当前套餐。', { day: 5 }) }}</span>
         </div>
         <br>
         <div>{{ $t('同时邀请您加入官方交流群组。') }}</div>

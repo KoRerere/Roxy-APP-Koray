@@ -273,7 +273,7 @@ defineExpose({
       </template>
     </RxButton>
     <div v-if="loginType === 'phone'" class="-mt-1 auto-register">
-      {{ $t('新手机号将自动注册 RoxyBrowser 账号') }}
+      {{ $t('新手机号将自动注册 Roxy 浏览器账号') }}
     </div>
     <div class="divider">
       <span class="mx-2">{{ $t('或') }}</span>

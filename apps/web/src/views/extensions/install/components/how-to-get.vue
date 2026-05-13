@@ -3,8 +3,8 @@
 
 
 const descriptions: any = [
-  $t('RoxyBrowser 通过遵循 Google Chrome 官方制定的扩展程序分发与更新规范来获取.crx 安装文件。'),
-  $t('根据 Chrome 扩展的 Manifest 文件格式官方文档(1)，所有发布在 Chrome 应用商店的扩展程序，其更新服务均由 Google 官方的更新服务器(后台地址为 https://clients2.google.com/service/update2/crx)统一管理。RoxyBrowser 通过向此官方服务发送一个标准化的更新检查请求(包含目标扩展程序的唯一ID)，模拟浏览器获取最新、最安全官方扩展包的过程。此操作符合 Chrome 扩展分发指南(2)中的更新机制。'),
+  $t('Roxy 浏览器通过遵循 Google Chrome 官方制定的扩展程序分发与更新规范来获取.crx 安装文件。'),
+  $t('根据 Chrome 扩展的 Manifest 文件格式官方文档(1)，所有发布在 Chrome 应用商店的扩展程序，其更新服务均由 Google 官方的更新服务器(后台地址为 https://clients2.google.com/service/update2/crx)统一管理。Roxy 浏览器通过向此官方服务发送一个标准化的更新检查请求(包含目标扩展程序的唯一ID)，模拟浏览器获取最新、最安全官方扩展包的过程。此操作符合 Chrome 扩展分发指南(2)中的更新机制。'),
 ]
 
 </script>
@@ -15,7 +15,7 @@ const descriptions: any = [
       <AccordionHeader v-slot="{ active }" as="div" :pt="{ root: '!py-3 !px-4' }">
         <div class="flex items-center gap-2.5">
           <SvgIcon :class="{ 'rotate-90': active }" class="transition-transform duration-300" name="base/rx_ic_play" size="10" />
-          <span class="title">{{ $t('RoxyBrowser 如何获取扩展？') }}</span>
+          <span class="title">{{ $t('Roxy 浏览器如何获取扩展？') }}</span>
         </div>
       </AccordionHeader>
       <AccordionContent>

@@ -47,7 +47,7 @@ const imageSrc = computed(() => {
         {{ $t('活动范围：窗口订阅（含续费）可参与二选一活动；升级套餐只可享受选项一优惠。') }}
       </div>
       <div class="desc">
-        {{ $t('本活动最终解释权归 RoxyBrowser 团队所有。') }}
+        {{ $t('本活动最终解释权归 Roxy 浏览器团队所有。') }}
       </div>
       <div class="flex flex-col gap-3 pt-2">
         <div class="font-700 desc">
