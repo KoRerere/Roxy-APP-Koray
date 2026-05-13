@@ -43,9 +43,9 @@ function createMainWindow(options?: BrowserWindowConstructorOptions) {
   /**
    * @see https://github.com/electron/electron/issues/25012
    */
-  browserWindow.on('ready-to-show', () => {
-    browserWindow?.show?.()
-  })
+  // browserWindow.on('ready-to-show', () => {
+  //   browserWindow?.show?.()
+  // })
 
   if (isProd) {
     // 生产禁用菜单栏
