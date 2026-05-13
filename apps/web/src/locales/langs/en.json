@@ -1480,7 +1480,7 @@
   "检测": "Detect",
   "检测中...": "Detecting...",
   "检测内核是否可用": "Check if Kernel is Available",
-  "检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。Roxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。": "Network detected in Mainland China; direct proxy access is currently unavailable. Please switch to an overseas network. Roxy supports the healthy development of China's internet and advocates for a secure, compliant network environment.",
+  "检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。": "Network detected in Mainland China; direct proxy access is currently unavailable. Please switch to an overseas network. Roxy supports the healthy development of China's internet and advocates for a secure, compliant network environment.",
   "检测到脚本": "This skill contains scripts",
   "检测成功": "Detection Successful",
   "检测时间": "Detection Time",

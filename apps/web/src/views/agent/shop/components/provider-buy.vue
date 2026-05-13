@@ -733,7 +733,7 @@ async function onPay() {
       </div>
     </div>
     <div class="py-5 w-88 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
-      <RxAlert v-if="isCN" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。Roxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')" />
+      <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :title="$t('温馨提示')" :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')" />
       <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('电商专用 IP 专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
       <div class="flex flex-col gap-6">
         <div v-if="currentCountry" class="flex flex-col gap-1.5 pa-4 quantity">
