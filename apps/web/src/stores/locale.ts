@@ -1,7 +1,24 @@
 import { ref } from 'vue'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY } from '/@/constants/storage-key'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
 import { defaultLanguage } from '/@/locales'
+
+/** 从 document.cookie 读取 Web 登录 token（与 Pinia 一致域名 Cookie，便于在未导入 user store 时使用） */
+function readRoxyTokenFromCookie(): string {
+  const parts = document.cookie.split(';')
+  for (const part of parts) {
+    const trimmed = part.trim()
+    const eq = trimmed.indexOf('=')
+    if (eq === -1)
+      continue
+    const name = trimmed.slice(0, eq)
+    if (name !== 'roxy_token')
+      continue
+    return decodeURIComponent(trimmed.slice(eq + 1))
+  }
+  return ''
+}
 
 /** 根据语言码选择 .env 中的 Web App 域名（zh-* → ZH，其余 → EN） */
 export function getLocaleAppOrigin(locale: string): string {
@@ -10,14 +27,6 @@ export function getLocaleAppOrigin(locale: string): string {
     ? import.meta.env.VITE_LOCALE_APP_ORIGIN_ZH
     : import.meta.env.VITE_LOCALE_APP_ORIGIN_EN
   return raw.replace(/\/$/, '')
-}
-
-/** Web 版：是否与路由中的登录页 path 一致（避免 store 引用 router 产生循环依赖） */
-function isWebLoginPathname(): boolean {
-  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-  const path = window.location.pathname.replace(/\/$/, '') || '/'
-  const loginPath = base ? `${base}/login` : '/login'
-  return path === loginPath
 }
 
 export const useSimpleLocale = defineStore('locale', () => {
@@ -34,34 +43,41 @@ export const useSimpleLocale = defineStore('locale', () => {
     if (currentLocale.value === locale) {
       return
     }
-    // loadLocaleMessages(locale)
-    // primevue.config.locale = locale
-    await API.base.userSetUserConfigCreate({ language: locale }).finally(() => {
+    try {
+      await API.base.userSetUserConfigCreate({ language: locale })
+    }
+    finally {
       clearDictCache()
       currentLocale.value = locale
       globalThis.electronAPI.send('app:saveSoftConfig', { language: locale } as never)
+    }
 
-      if (globalThis.isElectron) {
-        location.reload()
-        return
-      }
-
-      if (isWebLoginPathname()) {
-        const targetBase = getLocaleAppOrigin(locale)
-        const targetOrigin = new URL(`${targetBase}/`).origin
-        if (targetOrigin !== window.location.origin) {
-          const dest = new URL(
-            `${window.location.pathname}${window.location.search}${window.location.hash}`,
-            `${targetBase}/`,
-          )
-          dest.searchParams.set('official-site-lang', locale)
-          location.replace(dest.href)
-          return
-        }
-      }
-
+    if (globalThis.isElectron) {
       location.reload()
-    })
+      return
+    }
+
+    const targetBase = getLocaleAppOrigin(locale)
+    const targetOrigin = new URL(`${targetBase}/`).origin
+    if (targetOrigin !== window.location.origin) {
+      const dest = new URL(
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        `${targetBase}/`,
+      )
+      dest.searchParams.delete(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
+      dest.searchParams.set('official-site-lang', locale)
+      let handoffToken = readRoxyTokenFromCookie()
+      if (!handoffToken) {
+        const { useUserStore } = await import('/@/stores/user')
+        handoffToken = useUserStore().token || ''
+      }
+      if (handoffToken)
+        dest.searchParams.set(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, handoffToken)
+      location.replace(dest.href)
+      return
+    }
+
+    location.reload()
   }
 
   /** 当前语言下 Web 版站点根 URL（见 VITE_LOCALE_APP_ORIGIN_*） */

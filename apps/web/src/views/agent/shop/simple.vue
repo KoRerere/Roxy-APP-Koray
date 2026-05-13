@@ -166,7 +166,11 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
   const tasks = datas.map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
-      const checkResult = await testProxy(toRaw(item))
+      const checkResult = await testProxy({
+        ...toRaw(item),
+        apiCheck: item.proxyType === ProxyType.buy,
+        id: item.id,
+      })
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
       checkedMessage.value[item.id!] = checkResult.checkStatus

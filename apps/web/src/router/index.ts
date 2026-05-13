@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY } from '/@/constants/storage-key'
 import { baseRoutes } from '/@/router/base'
 import { menuRoutes } from './menu'
 import { isEqual } from 'es-toolkit'
@@ -38,7 +39,7 @@ const router = createRouter({
 
 const whiteList = ['oauth2callback']
 // 不需要携带的查询参数
-const noTakeQueryList = ['official-site-lang', 'official-site-invite-code']
+const noTakeQueryList = ['official-site-lang', 'official-site-invite-code', LOCALE_SWITCH_HANDOFF_TOKEN_QUERY]
 
 router.beforeEach(async (to) => {
   const userStore = useUserStore()

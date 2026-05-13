@@ -1,6 +1,6 @@
 import './polyfill'
 import './web-auto-updater'
-import { OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
 
@@ -34,6 +34,7 @@ queueMicrotask(async () => {
     const officialSiteInviteCode = searchParams.get('official-site-invite-code')
     const jumpReferer = searchParams.get('jump-referer')
     const officialSiteRedirect = searchParams.get('official-site-redirect')
+    const localeHandoffToken = searchParams.get(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
 
     if (officialSiteRedirect) {
       sessionStorage.setItem('officialSiteRedirect', officialSiteRedirect)
@@ -65,6 +66,13 @@ queueMicrotask(async () => {
       const simpleLocale = useSimpleLocale()
 
       simpleLocale.currentLocale = locale
+
+      if (localeHandoffToken) {
+        userStore.setToken(localeHandoffToken)
+        const url = new URL(window.location.href)
+        url.searchParams.delete(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
+        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+      }
 
       if (globalThis.cookieStore) {
         try {
