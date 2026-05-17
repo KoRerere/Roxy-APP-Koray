@@ -722,10 +722,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { genRandomFonts, getAllowFontList } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
-            genRandomFonts: [],
+          const { getAllowFontList } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
+            // genRandomFonts: [],
             getAllowFontList: [],
           })
+
+          const genRandomFonts = await globalThis.electronAPI.send('util:genRandomFonts')
 
           Object.assign(original, {
             font: genRandomFonts.join(';'),
