@@ -2,7 +2,7 @@ import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-
 import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { shallowReactive, watch } from '@vue/reactivity'
-import { debounce } from 'es-toolkit'
+import { debounce, isPlainObject } from 'es-toolkit'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -95,6 +95,14 @@ export class BrowserManager {
       return acc
     }, {} as Record<string, string[]>)
     console.log('recordOpenedBrowser', store.waitingRestoreWindow)
+
+    if (store.waitingRestoreWindowBounds && isPlainObject(store.waitingRestoreWindowBounds)) {
+      Object.keys(store.waitingRestoreWindowBounds).forEach((dirId) => {
+        if (!this.openedBrowserMap.has(dirId)) {
+          Reflect.deleteProperty(store.waitingRestoreWindowBounds!, dirId)
+        }
+      })
+    }
   }
 
   /** 根据 dirId 获取已经打开的浏览器 */
@@ -175,9 +183,9 @@ export class BrowserManager {
 
         await this.#batchUploadData()
 
-        const { coreVersion, browserType } = browserItem.winInfo
+        const { coreVersion } = browserItem.winInfo
         // 如果没有任何浏览器在使用该内核，则尝试解压内核
-        coreManager.getCoreManager(browserType).tryUpzipCore(coreVersion)
+        coreManager.getCoreManager(browserItem.coreType).tryUpzipCore(coreVersion)
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
       browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -194,8 +202,19 @@ export class BrowserManager {
   }
 
   /** 批量启动浏览器 */
-  async batchLaunch(dirIds: string[], customParams?: any, workspaceId?: number) {
+  async batchLaunch(dirIds: string[], options?: {
+    workspaceId?: number
+    customParams?: any
+    customParamsByDirId?: Record<string, any>/** 按 dirId 合并，优先级高于 customParams */
+  }) {
+    const { workspaceId, customParams, customParamsByDirId } = options ?? {}
     console.log(`BrowserManager === Batch launching browsers`, dirIds)
+
+    const mergeLaunchPayload = (winInfo: WindowItemType) => ({
+      ...winInfo,
+      ...customParams,
+      ...(winInfo.dirId ? (customParamsByDirId?.[winInfo.dirId] ?? {}) : {}),
+    })
 
     const firstBatch = dirIds.slice(0, 5)
     const remainingIds = dirIds.slice(5)
@@ -203,7 +222,7 @@ export class BrowserManager {
     const winInfoList = await this.getWindowList(firstBatch, workspaceId).catch(() => [])
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
 
-    const launchTasks = winInfoList.map(winInfo => batchLaunchLimit(() => this.launch({ ...winInfo, ...customParams }).catch((error) => {
+    const launchTasks = winInfoList.map(winInfo => batchLaunchLimit(() => this.launch(mergeLaunchPayload(winInfo)).catch((error) => {
       console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
     })))
 
@@ -211,7 +230,7 @@ export class BrowserManager {
       const batchIds = remainingIds.slice(i, i + 15)
       const batchWinInfoList = await this.getWindowList(batchIds, workspaceId).catch(() => [])
 
-      const batchTasks = batchWinInfoList.map(winInfo => batchLaunchLimit(() => this.launch({ ...winInfo, ...customParams }).catch((error) => {
+      const batchTasks = batchWinInfoList.map(winInfo => batchLaunchLimit(() => this.launch(mergeLaunchPayload(winInfo)).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
       })))
 
@@ -288,8 +307,10 @@ export class BrowserManager {
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
     const cores = this.openedBrowserMap.values().map((n) => {
-      const { coreType, coreVersion } = n.winInfo
-      return { coreType, coreVersion }
+      return {
+        coreType: n.coreType,
+        coreVersion: n.winInfo.coreVersion,
+      }
     })
     try {
       const result = await this.batchClose([...this.openedBrowserMap.keys()])
@@ -297,8 +318,8 @@ export class BrowserManager {
     }
     finally {
       // 等所有浏览器都关闭之后，尝试解压内核
-      for (const { browserType, coreVersion } of cores) {
-        await coreManager.getCoreManager(browserType).tryUpzipCore(coreVersion)
+      for (const { coreType, coreVersion } of cores) {
+        await coreManager.getCoreManager(coreType).tryUpzipCore(coreVersion)
       }
     }
   }

@@ -284,6 +284,7 @@ async function uploadFile() {
         })
     }
   }
+  rl.close()
 }
 
 uploadFile()

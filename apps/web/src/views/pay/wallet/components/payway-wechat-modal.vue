@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import QRCode from 'qrcode'
 
 import { usePay } from '/@/views/pay/wallet/hook'
@@ -84,7 +85,7 @@ function close(isCancel: boolean) {
           <img :src="qrcode" class="block pointer-events-none w-45 h-45">
         </div>
         <div class="h-9 flex items-center gap-1">
-          <img class="block w-12" src="/images/payments/rx_payment_wepay_white.svg">
+          <img class="block w-12" :src="getImage('payments/rx_payment_wepay_white.svg')">
           <span class="sacn-text">{{ $t('微信支付') }}</span>
         </div>
       </div>

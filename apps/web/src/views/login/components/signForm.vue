@@ -90,10 +90,7 @@ const checkEmailRegistered = debounce(async () => {
 function switchFormMode() {
   const getSchemas = isEmailLogin.value
     ? getFormSchemas
-    : () =>
-        getPhoneSchemas(
-          isZhLocale.value ? () => { loginTypeZh.value = 'password' } : undefined,
-        )
+    : getPhoneSchemas
 
   const isRegister
     = isZhLocale.value && isEmailLogin.value

@@ -13,15 +13,16 @@ import MigrationTips from './components/migration-tips.vue'
 import { provideLoginContext } from './hooks/useLoginContext'
 import type { CurrentComp } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
-import AppUpdater from './components/app-updater.vue'
+// import AppUpdater from './components/app-updater.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { AnimatePresence, motion } from 'motion-v'
+// import { AnimatePresence, motion } from 'motion-v'
 import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { Role, WorkspaceType } from '/@/enums'
 import { getInviteCode } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
+import { markSessionLost } from '/@/utils/sessionLost'
 
 const loginEventCommonParams = {
   login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
@@ -43,6 +44,7 @@ const signFormData = ref<LoginCreatePayload & LoginPhoneCreatePayload>({
   password: '',
   phone: '',
   verCode: '',
+  inviteCode: '',
 })
 const updateInfo = ref<ResourceUpdateMessage>()
 const signFormSwitchRegister = ref(false)
@@ -55,9 +57,9 @@ const inviteDiscountInfo = ref()
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
 
-const showUpdaterMessage = computed(() => {
-  return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
-})
+// const showUpdaterMessage = computed(() => {
+//   return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
+// })
 
 onMounted(() => {
   token.value = ''
@@ -84,6 +86,7 @@ async function getInviteDiscount() {
   if (!inviteCode)
     return
 
+  signFormData.value.inviteCode = inviteCode
   const { code, data } = await API.base.getPromotionLinkDiscountAndUsernameList({})
   if (code !== 0) {
     return
@@ -95,11 +98,12 @@ decryptPassword()
 getInviteDiscount()
 
 async function handleSubmit() {
-  const { user_name, password } = signFormData.value
+  const { user_name, password, inviteCode } = signFormData.value
 
   const params = {
     user_name: user_name.trim(),
     password: password.trim(),
+    inviteCode: inviteCode?.trim(),
   }
 
   const isContinueLogin = await checkContinueLogin({ ...params, login_type: 'login' })
@@ -135,11 +139,12 @@ async function handleSubmit() {
 }
 
 async function handleSubmitByPhone() {
-  const { phone, verCode } = signFormData.value
+  const { phone, verCode, inviteCode } = signFormData.value
 
   const params = {
     phone: phone.trim(),
     verCode: verCode.trim(),
+    inviteCode: inviteCode?.trim(),
   }
 
   const isContinueLogin = await checkContinueLogin({ ...params, login_type: 'login' })
@@ -372,6 +377,8 @@ onBeforeUnmount(() => {
   clearInterval(timer)
 })
 
+markSessionLost()
+
 provideLoginContext({
   setCurrentComponent,
   setSignFormData(data) {
@@ -421,14 +428,6 @@ provideLoginContext({
             </template>
           </i18n-t>
         </div>
-
-        <AnimatePresence>
-          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-                      :transition="{ duration: 0.2 }" class="app-updater-motion"
-          >
-            <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
-          </motion.div>
-        </AnimatePresence>
       </div>
 
       <RxSvgIcon name="login/blob1" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -left-60%" />

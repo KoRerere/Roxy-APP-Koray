@@ -30,13 +30,13 @@ async function onCopy() {
     </div>
     <div class="text-value">
       <span>{{ text }}</span>
-      <span v-if="mask && !text" class="pointer-events-none select-none"> https://roxybrowser.com/invite?code=13122341233</span>
+      <span v-if="mask && !text" class="pointer-events-none select-none">https://roxybrowser.com/invite?code=13122341233</span>
     </div>
     <RxButton v-if="!mask" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click.stop="onCopy" />
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 :where(.rx-copy-content) {
   position: relative;
   width: 100%;
@@ -61,14 +61,8 @@ async function onCopy() {
     word-break: break-word;
   }
 
-  &:hover {
-    .copy-btn {
-      display: flex;
-    }
-  }
-
   .copy-btn {
-    display: none;
+    display: flex;
     position: absolute !important;
     right: 6px;
     top: 6px;

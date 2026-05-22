@@ -1848,6 +1848,8 @@ export interface PostBasePayload {
   email: string;
   /** 验证码 */
   ver_code: string;
+  /** 邀请码 */
+  inviteCode?: string;
 }
 
 export interface PostBaseData {
@@ -2051,6 +2053,8 @@ export interface UserGetUserInfoListData {
     role: number;
     onboardingTaskStatus: {
       createProfileStatus: boolean;
+      promotionLinkRevampReminderStatus: boolean;
+      batchOpenWindowNoPromptStatus: boolean;
       createProxyStatus: boolean;
       inviteMemberStatus: boolean;
       firstRegisterGuideStatus: boolean;
@@ -2066,6 +2070,7 @@ export interface UserGetUserInfoListData {
       firstOpenWindowStatus: boolean;
       onboardingTaskStatus: boolean;
       firstWebRegisterGuideStatus: boolean;
+      newSpaceCreateTeamStatus: boolean;
     };
     userBadgeList: {
       des?: string;
@@ -2251,6 +2256,9 @@ export interface UserGetUserConfigListData {
     /** 语言 */
     language: string;
     autoRestoreWindow: boolean;
+    batchOpenLayout: string;
+    autoDetectProxy: boolean;
+    windowNameSwitch: boolean;
     /** 时区 */
     timeZone: string;
     /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
@@ -2349,6 +2357,7 @@ export interface UserGetDefConfigListData {
 
 export interface UserSetUserConfigCreatePayload {
   language?: string;
+  autoDetectProxy?: boolean;
   timeZone?: string;
   closeSoft?: string;
   uploadDir?: string;
@@ -2363,13 +2372,7 @@ export interface UserSetUserConfigCreatePayload {
   ipBlackList?: string[];
   apiToken?: string;
   isFirstSwitchTheme?: boolean;
-  remarkDisplayStatus?: boolean;
-  /** 偏好设置 */
-  preferenceSettings?: object;
-  /** 快捷键设置 */
-  keySettings?: object;
-  /** 同步设置 */
-  syncSettings?: object;
+  batchOpenLayout?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -2867,6 +2870,10 @@ export interface UserGetPromotionInfoListData {
     totalIncome: number;
     purchaseUserTotalAmount: number;
     pendingAmount: number;
+    businessManagerQrCode: {
+      Telegram: string;
+      Wechat: string;
+    };
     promotionLinkList: {
       isModify?: number;
       linkStatus?: number;
@@ -2877,11 +2884,8 @@ export interface UserGetPromotionInfoListData {
       purchaseTotalAmount?: number;
       userDiscount?: number;
       promotionCode?: string;
-      /** 是否展示 */
       isShow?: number;
-      /** 已经邀请人数 */
       completed_count?: number;
-      /** 解锁需要总邀请人数 */
       total_count?: number;
     }[];
   };
@@ -3400,6 +3404,8 @@ export interface UserUpdateOnboardingTaskStatusCreatePayload {
   externalRatingStatus?: boolean;
   firstOpenWindowStatus?: boolean;
   firstWebRegisterGuideStatus?: boolean;
+  batchOpenWindowNoPromptStatus?: boolean;
+  newSpaceCreateTeamStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -3450,18 +3456,21 @@ export type UserSubmitSurveyAnswerCreateData = object;
 
 export interface SendPhoneVerCodeCreatePayload {
   phone: string;
-  /** old new */
   source?: string;
 }
 
 export interface SendPhoneVerCodeCreateData {
   code: number;
+  data: {
+    isRegistered: boolean;
+  };
   msg: string;
 }
 
 export interface LoginPhoneCreatePayload {
   phone: string;
   verCode: string;
+  inviteCode?: string;
 }
 
 export interface LoginPhoneCreateData {
@@ -3745,10 +3754,6 @@ export interface UserSetRoxyClawCreatePayload {
   slack_allowed_channel_ids: string;
   discord_bot_token: string;
   discord_allowed_user_ids: string;
-  weixin_bot_token?: string;
-  weixin_bot_base_url?: string;
-  wechat_bot_token?: string;
-  wechat_bot_base_url?: string;
 }
 
 export interface UserSetRoxyClawCreateData {
@@ -3778,6 +3783,67 @@ export interface UserMayFreedomResultListData {
 export interface GetEcommerceWhitelistDomainsListData {
   code: number;
   data: string[];
+  msg: string;
+}
+
+export interface UserGetRpaScriptLibraryListListData {
+  code: number;
+  data: {
+    rows: {
+      category?: string;
+      categoryKey?: string;
+      categorySortNum?: number;
+      description?: string;
+      iconUrl?: string;
+      id?: number;
+      name?: string;
+      scriptOssUrl?: string;
+      title?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UninstallReasonReportCreatePayload {
+  /** 平台类型 */
+  r_os: string;
+  /** 语言 */
+  language: string;
+  /** 用户ID */
+  userId: number;
+  /** app版本号 */
+  appVersion: string;
+  /** 其他原因 */
+  otherReasonText: string;
+  selectedReasonIds: number[];
+}
+
+export interface UninstallReasonReportCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetInfluencerRankingListData {
+  code: number;
+  data: {
+    /** 推广金额 */
+    bonusText?: string;
+    /** 推广人数 */
+    inviteText?: number;
+    /** 排名 */
+    rank?: number;
+    /** 用户名 */
+    username?: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetPromotionLinkListListData {
+  code: number;
+  data: {
+    linkType: string;
+    promotionCode: string;
+  }[];
   msg: string;
 }
 
@@ -6342,6 +6408,7 @@ export interface UserGetProxyListMergedListData {
       modelParam?: string;
       refreshUrl?: string;
       isDirect?: boolean;
+      badgeTypeDesc?: string;
       dataType?: string;
       checkChannel?: string;
       checkChannelValue?: string;
@@ -6484,6 +6551,66 @@ export type UserBatchMdfProxyModuleCheckCreatePayload = object;
 
 export interface UserBatchMdfProxyModuleCheckCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetProxyDetailMergedListParams {
+  /** @example "397385" */
+  id?: string;
+}
+
+export interface UserGetProxyDetailMergedListData {
+  code: number;
+  data: {
+    id: number;
+    userId: number;
+    workspaceId: number;
+    proxyProviderId: number;
+    orderNo: string;
+    orderStatus: number;
+    ipType: string;
+    host: string;
+    protocol: string;
+    country: string;
+    lastIp: string;
+    port: string;
+    proxyUserName: string;
+    proxyPassword: string;
+    proxyCheckChannel: string;
+    remark: string;
+    lastCountry: string;
+    lastState: string;
+    lastCity: string;
+    checkStatus: number;
+    proxyExpireStatus: number;
+    checkTime: string;
+    renewalTime: null;
+    createTime: string;
+    proxyMonths: number;
+    updateTime: string;
+    expireDate: string;
+    replaceStatus: number;
+    proxyProviderName: string;
+    proxyType: number;
+    providerType: string;
+    opName: string;
+    giftDays: number;
+    autoRenew: number;
+    canRenew: boolean;
+    modelParam: string;
+    refreshUrl: string;
+    isDirect: boolean;
+    dataType: string;
+    badgeTypeDesc: string;
+    checkChannel: string;
+    checkChannelValue: string;
+    isBind: boolean;
+    bindCount: number;
+    bindList: number[];
+    proxyProviderPrice: number;
+    proxyProviderDiscountPrice: number;
+    canRefund: boolean;
+  };
   msg: string;
 }
 
@@ -7133,7 +7260,7 @@ export interface UserUpdateTeamPermissionsCreateData {
 export interface UserGetRolePermissionsListParams {
   /** @example "2" */
   role?: string;
-  /** @example "37424" */
+  /** @example "19312" */
   userId?: string;
 }
 
@@ -7141,12 +7268,14 @@ export interface UserGetRolePermissionsListData {
   code: number;
   data: {
     rows: {
+      moduleDes: string;
       moduleName: string;
       permissions: {
+        configurable: boolean;
+        hasPermission: boolean;
+        isSensitive: boolean;
         permissionCode: string;
         permissionName: string;
-        configurable: boolean;
-        isSensitive: boolean;
       }[];
     }[];
   };
@@ -7162,6 +7291,15 @@ export interface UserGetTeamPermissionVerifyStatusListData {
 }
 
 export interface UserSendTeamPermissionVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSetTeamCostCenterViewerEditorAllowCreatePayload {
+  allowViewerEditorCostCenter: number;
+}
+
+export interface UserSetTeamCostCenterViewerEditorAllowCreateData {
   code: number;
   msg: string;
 }
@@ -7316,7 +7454,9 @@ export interface UserAddWorkspaceInfoCreatePayload {
 
 export interface UserAddWorkspaceInfoCreateData {
   code: number;
-  data: object;
+  data: {
+    workspaceId: number;
+  };
   msg: string;
 }
 
@@ -7674,23 +7814,6 @@ export interface UserGetUserPayInfoListData {
     maxMemberCount: number;
     maxWindowCount: number;
     maxWorkspaceCount: number;
-    onboardingTaskStatus: {
-      autoRatingStatus: boolean;
-      contextMenuGuideStatus: boolean;
-      createProfileStatus: boolean;
-      createProfileTourGuideStatus: boolean;
-      createProfileVideoEntryStatus: boolean;
-      createProxyStatus: boolean;
-      createProxyVideoEntryStatus: boolean;
-      externalRatingStatus: boolean;
-      firstOpenWindowStatus: boolean;
-      firstRegisterGuideStatus: boolean;
-      firstWebRegisterGuideStatus: boolean;
-      hideSidebarEntryStatus: boolean;
-      inviteMemberStatus: boolean;
-      ratingStatus: boolean;
-      saveFilterGuideStatus: boolean;
-    };
     openWindowTimes: number;
     orderNo: string;
     originalAmount: number;
@@ -8725,10 +8848,6 @@ export interface UserGetRoxyClawListData {
     slack_allowed_channel_ids: string;
     discord_bot_token: string;
     discord_allowed_user_ids: string;
-    weixin_bot_token?: string;
-    weixin_bot_base_url?: string;
-    wechat_bot_token?: string;
-    wechat_bot_base_url?: string;
   };
   msg: string;
 }
@@ -8768,5 +8887,27 @@ export interface GetCountryConfigListData {
       }[];
     }[];
   };
+  msg: string;
+}
+
+export interface ReportAppVersionUpdateCreatePayload {
+  /** client_receive：客户端接收成功；install_complete：安装完成 */
+  type: string;
+  appVersion: string;
+}
+
+export interface ReportAppVersionUpdateCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface GetUninstallReasonQuestionListListData {
+  code: number;
+  data: {
+    id: number;
+    code: string;
+    title: string;
+    sortNum: number;
+  }[];
   msg: string;
 }

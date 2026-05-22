@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { onMounted, ref, useTemplateRef } from 'vue'
 
 import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
@@ -8,12 +8,19 @@ import KernelUpdater from './kernel-updater.vue'
 import { useToast } from 'primevue/usetoast'
 import { debounce } from 'es-toolkit'
 import { I18nT } from 'vue-i18n'
-import { safeParseJSON } from '/@/utils'
 import { useSimpleLocale } from '/@/stores/locale'
+import type { KernelUpdateItem } from './kernel-utils'
+import {
+  clearKernelRead,
+  isKernelRead,
+  matchKernelItem,
+  normalizeCoreType,
+  sortKernelList,
+} from './kernel-utils'
 
 interface KernelUpdateGroup {
   title: string
-  list: (ResourceUpdateMessage & { _light?: boolean, _desc?: string })[]
+  list: KernelUpdateItem[]
 }
 
 const simpleLocale = useSimpleLocale()
@@ -23,7 +30,9 @@ const btnRef = useTemplateRef('btn')
 const tabComponentRef = ref()
 const isPopoverVisible = ref(false)
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
+/** 全量内核列表（Chrome + Firefox），以 coreType + coreVersion 唯一标识 */
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
+/** 分组后的内核列表，供 KernelUpdater 渲染 */
 const kernelUpdateGroup = ref<KernelUpdateGroup[]>([])
 
 const tabs = ref([
@@ -93,14 +102,24 @@ globalThis.electronAPI.on('app:core-list-update', getKernelList)
 
 async function getKernelList() {
   const list = await globalThis.electronAPI.send('app:getCoreList')
-  console.log('getKernelList', list)
-  kernelUpdates.value = list.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
+  // 将后端拉取的列表同步到 kernelUpdates，正在下载的条目保留本地状态
+  list.forEach((item) => {
+    // 必须同时匹配 coreType 和 coreVersion，避免 Chrome/Firefox 同版本互相覆盖
+    const idx = kernelUpdates.value.findIndex(i => matchKernelItem(i, item))
+    if (idx === -1) {
+      kernelUpdates.value.push(item)
+    }
+    else if (kernelUpdates.value[idx].status !== 'downloading') {
+      // 非下载中状态可以用后端数据覆盖，保持状态最新
+      kernelUpdates.value[idx] = { ...kernelUpdates.value[idx], ...item }
+    }
+  })
+  kernelUpdates.value = sortKernelList(kernelUpdates.value)
   genKernelGroup(toRaw(kernelUpdates.value))
 }
 
+/** 将内核列表分为「新内容」和「内核列表」两组，每种 coreType 各自独立提示新版本 */
 function genKernelGroup(list: ResourceUpdateMessage[]) {
-  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
-
   const defaults: KernelUpdateGroup[] = [
     {
       title: $t('新内容'),
@@ -112,11 +131,20 @@ function genKernelGroup(list: ResourceUpdateMessage[]) {
     },
   ]
 
-  kernelUpdateGroup.value = list.reduce((acc, item, index) => {
-    if (index === 0 && !['update', 'downloaded'].includes(item.status!) && !readMap[item.coreVersion!]) {
+  // 记录每种内核类型（Chrome / Firefox）各自的最新条目，用于"新版本"提示
+  const firstByCoreType = new Set<string>()
+
+  kernelUpdateGroup.value = sortKernelList(list).reduce((acc, item) => {
+    const coreType = normalizeCoreType(item.coreType)
+    const isFirst = !firstByCoreType.has(coreType)
+    if (isFirst) {
+      firstByCoreType.add(coreType)
+    }
+
+    if (isFirst && !['update', 'downloaded'].includes(item.status!) && !isKernelRead(item)) {
       acc[0]!.list.push({ ...item, _light: true, _desc: $t('新版本') })
     }
-    else if (item.status === 'update' && !readMap[item.coreVersion!]) {
+    else if (item.status === 'update' && !isKernelRead(item)) {
       acc[0]!.list.push({ ...item, _light: true, _desc: $t('有新的更新可用') })
     }
     else {
@@ -126,14 +154,9 @@ function genKernelGroup(list: ResourceUpdateMessage[]) {
   }, defaults).filter(item => item.list.length > 0)
 }
 
-function updateKernelReadRap(data: ResourceUpdateMessage) {
-  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
-  Reflect.deleteProperty(readMap, data.coreVersion!)
-  localStorage.setItem('kernel-read-map', JSON.stringify(readMap))
-}
-
 function updateKernelStatus(data: ResourceUpdateMessage) {
-  const item = kernelUpdateGroup.value.flatMap(item => item.list).find(item => item.coreVersion === data.coreVersion)
+  // 增量更新分组视图中的单条状态，避免整表重渲染
+  const item = kernelUpdateGroup.value.flatMap(item => item.list).find(item => matchKernelItem(item, data))
   if (item) {
     Object.assign(item, data)
   }
@@ -180,10 +203,10 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
       showDownloadError(data)
     }
 
-    const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
+    const index = kernelUpdates.value.findIndex(item => matchKernelItem(item, data))
     if (index === -1) {
       kernelUpdates.value.push(data)
-      kernelUpdates.value.sort((a, b) => Number(b.coreVersion) - Number(a.coreVersion))
+      kernelUpdates.value = sortKernelList(kernelUpdates.value)
       genKernelGroup(toRaw(kernelUpdates.value))
     }
     else {
@@ -192,7 +215,8 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
     }
 
     if (data.status === 'downloaded') {
-      updateKernelReadRap(data)
+      // 下载完成后清除已读标记，使该内核重新出现在「新内容」分组
+      clearKernelRead(data)
       genKernelGroup(toRaw(kernelUpdates.value))
     }
 
@@ -215,13 +239,12 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
   }
 })
 
-console.debug('clientUpdates', clientUpdates)
 </script>
 
 <template>
   <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" />
 
-  <div class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo" v-tooltip.left="{ value: $t('更新'), showDelay: 600 }">
+  <div v-tooltip.left="{ value: $t('更新'), showDelay: 600 }" class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton ref="btn" severity="secondary" outlined size="xs" @click="toggle">
         <template #icon>

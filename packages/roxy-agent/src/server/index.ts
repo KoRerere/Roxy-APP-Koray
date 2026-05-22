@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express'
+import type { Express, Request, Response } from 'express'
 import cors from 'cors'
 import express from 'express'
 import fs from 'node:fs'
@@ -12,7 +12,7 @@ import skillRoutes from './skillRoutes'
  * 创建并返回配置好的 Express 应用实例（含所有路由和中间件）。
  * 所有目录初始化副作用在此函数内完成，模块 import 时不产生任何副作用。
  */
-export function createApp() {
+export function createApp(): Express {
   const staticDir = path.join(env.CHECKPOINT_DIR, 'static')
   if (!fs.existsSync(staticDir)) {
     fs.mkdirSync(staticDir, { recursive: true })

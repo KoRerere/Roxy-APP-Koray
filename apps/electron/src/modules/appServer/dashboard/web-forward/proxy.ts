@@ -2,7 +2,6 @@ import type express from 'express'
 import { createProxyMiddleware, responseInterceptor } from 'http-proxy-middleware'
 import { Buffer } from 'node:buffer'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import {
   createWebCacheFileName,
@@ -100,9 +99,8 @@ export async function setupWebForwardProxy(app: express.Application) {
           return req.method === 'HEAD' ? Buffer.alloc(0) : responseBody
         }
 
-        const requestUrl = new URL(req.url || '/', store.lastWebDomain)
-        const id = requestUrl.searchParams.get('id') || ''
-        await browserManager.getOpenedBrowser(id)
+        // 勿阻塞 HTML 响应：首屏请求往往发生在 launchPromise 完成之前，
+        // await getOpenedBrowser 会等待整段启动流程，导致 dashboard 一直 loading。
 
         // responseInterceptor 会先自动解压 gzip/br/deflate，再把这里返回的正文重新写回响应。
         responseBody = Buffer.from(

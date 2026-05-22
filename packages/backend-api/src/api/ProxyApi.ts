@@ -33,6 +33,8 @@ import {
   UserGetProxyCountryListByContinentListParams,
   UserGetProxyCountryPriceListListData,
   UserGetProxyCountryPriceListListParams,
+  UserGetProxyDetailMergedListData,
+  UserGetProxyDetailMergedListParams,
   UserGetProxyListMergedListData,
   UserGetProxyListMergedListParams,
   UserGetProxyModuleListData,
@@ -823,6 +825,26 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyDetailMergedList
+   * @summary 获取代理详情
+   * @request GET:/user_get_proxy_detail_merged
+   * @response `200` `UserGetProxyDetailMergedListData`
+   */
+  userGetProxyDetailMergedList = (
+    query: UserGetProxyDetailMergedListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyDetailMergedListData, any>({
+      path: `/user_get_proxy_detail_merged`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

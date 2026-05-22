@@ -19,7 +19,7 @@ const active = ref(defaultActive || list[0])
     <RxSelectButton v-if="list.length > 1" v-model="active" :options="list" size="lg" option-label="name" data-key="name" />
     <div v-if="active" class="flex flex-col items-center w-full rounded-xl">
       <div class="pa-3 rounded-2 border-1 border-solid border-[var(--colors-border-border-base)] bg-white">
-        <img class="mx-auto block w-46 object-cover" :src="active.value">
+        <img class="mx-auto block size-46 object-cover" :src="active.value">
       </div>
     </div>
 

@@ -10,7 +10,7 @@ import CookiesItem from './cookies.vue'
 import Os from './os.vue'
 import { $t } from '/@/locales/index.js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { copyText } from '/@/utils/'
+import { copyText, isDev } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
 interface Props {
@@ -62,10 +62,18 @@ function onCopy(dirId: string) {
                   <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
                   <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
                 </InputGroup>
-                <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                <template v-if="isDev">
+                  <InputGroup>
+                    <Os v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                    <RxInputSelect v-bind="input.items[3]" v-model="input.items[3].value" @change="input.items[3].change?.(input.items[3], input.items)" />
+                  </InputGroup>
+                </template>
+                <template v-else>
+                  <RxInputSelect v-bind="input.items[3]" v-model="input.items[3].value" @change="input.items[3].change?.(input.items[3], input.items)" />
+                </template>
               </div>
-              <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
-                {{ input.items[2].help }}
+              <Message v-if="input.items[3].help" severity="error" size="small" variant="simple">
+                {{ input.items[3].help }}
               </Message>
             </div>
           </div>

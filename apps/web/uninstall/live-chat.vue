@@ -7,14 +7,14 @@ const sessionVariables = computed(() => {
   const { username } = globalThis.$softConfig.userInfo || {}
   const { maxWindowCount, useWindowCount } = globalThis.$softConfig.userPayInfo || {}
   return {
-    username: `[Roxy]-${username}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
+    username: `[Roxy]-${username}-总窗口${maxWindowCount}/已用-${useWindowCount}-[拟卸载用户]`,
     Account_ID: globalThis.$softConfig.token,
     // Total_order_value: `$${totalAmount / 100}`
   }
 })
 const customerName = computed(() => {
   const { username } = globalThis.$softConfig.userInfo || {}
-  return `[Roxy]-${username || '游客'}`
+  return `[Roxy]-${username || '游客'}-[拟卸载用户]`
 })
 
 function handleVisibilityChanged(data: any) {

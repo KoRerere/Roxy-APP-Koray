@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import ConfigBase from './components/config-base.vue'
 import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
@@ -49,7 +50,7 @@ function WhitelistHelperText() {
           return (
             <RxTooltip>
               {{
-                content: () => <img src="/images/roxy-claw/bot.png" class="w-240px h-181px" />,
+                content: () => <img src={getImage('roxy-claw/bot.png')} class="w-240px h-181px" />,
                 default: () => (
                   <p class="my-0 translate-y-0.5">
                     <SvgIcon name="base/rx_ic_info" size="12" />
@@ -211,7 +212,7 @@ async function handleTest(field: string) {
 <template>
   <ConfigBase
     :title="$t('集成到 Telegram Bot')"
-    icon="/images/roxy-claw/telegram.svg"
+    :icon="getImage('roxy-claw/telegram.svg')"
     bg-color="#44b6ef"
     :steps="steps"
     :setup-fields="setupFields"

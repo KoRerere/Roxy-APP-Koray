@@ -161,7 +161,7 @@ function close(isCancel: boolean) {
           </div>
         </div>
         <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
-          <img class="block loading-circle w-8 h-8" src="/@/assets/images/status/loading.png">
+          <img class="block loading-circle w-8 h-8" src="/@/assets/icons/status/loading.png">
           <div class="status">
             {{ $t('检查支付状态中...') }}
           </div>

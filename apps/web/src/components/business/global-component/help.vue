@@ -2,20 +2,18 @@
 import Score from '/@/views/tutorial/components/score'
 import QrcodeModal from '/@/components/qrcode-modal.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { useUserStore } from '/@/stores/user'
-import { useWorkspaceStore } from '/@/stores/workspace'
+// import { useUserStore } from '/@/stores/user'
+// import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useRoleStore } from '/@/stores/role'
+// import { useRoleStore } from '/@/stores/role'
+import { usePermission } from '/@/hooks/usePermission'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
-import { getDictMap, safeParseJSON } from '/@/utils'
+import { getDictMap } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import { getMcpErrorMessage } from '/@/stores/roxy-claw'
+// import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import AgentLabel from './agent-label.vue'
-import { I18nT } from 'vue-i18n'
-import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
@@ -27,20 +25,19 @@ const AGENT_LABEL_REFRESH_INTERVAL = 1 * 60 * 1000
 
 const route = useRoute()
 const router = useRouter()
+const { check } = usePermission()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
-const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { isOwner, isManager } = storeToRefs(useRoleStore())
-const { token } = storeToRefs(useUserStore())
-const { mixpanelTrack } = useUserStore()
-const { onboardingTaskStatus } = useOnboardingTaskStatus()
+// const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+// const { isOwner, isManager } = storeToRefs(useRoleStore())
+// const { token } = storeToRefs(useUserStore())
+// const { onboardingTaskStatus } = useOnboardingTaskStatus()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
-const [, onlyErrorToast] = useResponseToast()
+const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
 const showTooltip = ref(false)
 const qrcodeMap = ref<Record<string, any>>({})
 const qrcodeList = ref<any[]>([])
-const opening = ref(false)
 
 const supportCss = useCssModule('support')
 
@@ -218,112 +215,6 @@ function openScore() {
     },
   })
 }
-
-async function getMcpStatus(): Promise<{ mcpWindowOpen: boolean, roxyClawEnabled: boolean, mcpServerRunning: boolean }> {
-  if (globalThis.electronAPI) {
-    try {
-      return await globalThis.electronAPI.send('mcp:getStatus')
-    }
-    catch (error) {
-      console.error('Failed to get MCP status:', error)
-      return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
-    }
-  }
-  return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
-}
-
-async function openRoxyAIAgent() {
-  if (isOwner.value || isManager.value) {
-    if (opening.value)
-      return
-
-    mixpanelTrack('click_enter_agent')
-    opening.value = true
-
-    try {
-    // 检查 RoxyClaw 是否正在运行
-      const mcpStatus = await getMcpStatus()
-      if (mcpStatus.roxyClawEnabled) {
-        showToast({
-          severity: 'warn',
-          summary: $t('Agent 被占用'),
-          detail: (
-            <I18nT keypath={$t('RoxyClaw 正在运行中，使用 Roxy AI Agent 之前请先{RoxyClaw}。', { RoxyClaw: '{RoxyClaw}' })}>
-              {{ RoxyClaw: () => <a class="cursor-pointer" onClick={() => router.push({ name: 'roxy-claw-home' })}>{$t('关闭 RoxyClaw')}</a> }}
-            </I18nT>
-          ),
-          life: 5000,
-        })
-        opening.value = false
-        return
-      }
-
-      // 检查 API 是否开启
-      const ApiResult = await API.base.userGetUserApiList()
-      if (ApiResult.code === 0 && !ApiResult.data.open) {
-        let opened = false
-        async function openApiKeys() {
-          if (opened)
-            return
-          const { code, msg } = await API.base.userSetUserApiCreate({ ...ApiResult.data, open: true })
-          onlyErrorToast(code, msg)
-          if (code === 0) {
-          // 开关或端口改变时 重启 API 服务
-            await globalThis.electronAPI.send('app:restartAPIServer')
-          }
-          opened = true
-          router.push({ name: 'api-keys' })
-        }
-
-        showToast({
-          severity: 'warn',
-          summary: $t('未开启 API'),
-          detail: (
-            <I18nT keypath={$t('请先 {start} 状态后再使用 AI Agent。', { start: '{start}' })}>
-              {{ start: () => <a class="cursor-pointer" onClick={openApiKeys}>{ $t('开启 API') }</a> }}
-            </I18nT>
-          ),
-          life: 5000,
-        })
-        opening.value = false
-        return
-      }
-
-      // 检查 API 端口是否被占用
-      const apiPort = await globalThis.electronAPI.send('util:getApiPort')
-      if (apiPort === -1) {
-        showToast({
-          severity: 'warn',
-          summary: $t('端口已被占用'),
-          detail: $t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: ApiResult.data.port }),
-          life: 5000,
-        })
-        router.push({ name: 'api-keys' })
-        return
-      }
-
-      // 打开 Roxy AI Agent 窗口
-      const result = await globalThis.electronAPI.send('mcp:open')
-      console.log('Mcp open result:', result)
-      if (!result.success) {
-        const errorMessage = result.type
-          ? getMcpErrorMessage(result.type)
-          : result.message || $t('Roxy Agent 启动失败')
-        onlyErrorToast(-1, errorMessage)
-      }
-    }
-    catch (error) {
-      console.error('Failed to open MCP:', error)
-      onlyErrorToast(-1, error instanceof Error ? error.message : $t('Roxy Agent 启动失败'))
-    }
-    finally {
-      opening.value = false
-    }
-  }
-  else {
-    onlyErrorToast(-1, $t('该功能暂时只开放给管理者使用。如需开通，请联系空间创建人。'))
-  }
-}
 </script>
 
 <template>
@@ -331,7 +222,7 @@ async function openRoxyAIAgent() {
     <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip">
       {{ $t('有疑问吗？欢迎随时与我们联系！') }}
     </div>
-    <div id="mcp" class="flex cursor-pointer" @click="openRoxyAIAgent">
+    <div v-if="check('Roxy_AI_Agent_All')" id="mcp" class="flex cursor-pointer" @click="() => openRoxyAIAgent()">
       <AgentLabel :key="agentLabelKey" />
     </div>
     <div class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full icon" @click="showHelp">

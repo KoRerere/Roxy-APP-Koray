@@ -3,12 +3,13 @@ import type { ImgHTMLAttributes } from 'vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { useThemeStore } from '/@/stores/theme'
 
-type Props = /* @vue-ignore */ Omit<ImgHTMLAttributes, 'src'> & {
+interface Props extends /* @vue-ignore */ Omit<ImgHTMLAttributes, 'src'> {
   src: string
   darkSrc?: string
   fileName?: string
   downloadLink?: string
   preview?: boolean
+  containerClass?: string
 }
 
 defineOptions({ inheritAttrs: false })
@@ -59,7 +60,7 @@ async function download() {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative" :class="props.containerClass">
     <img :src="imgUrl" v-bind="$attrs">
     <div v-if="props.preview || props.downloadLink" class="absolute inset-0 bg-transparent hover:bg-black/30 [&:hover_.overlay]:flex">
       <div class="justify-center items-center gap-12.5 h-full hidden overlay">

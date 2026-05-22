@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { motion } from 'motion-v'
 import { useThemeStore } from '/@/stores/theme'
 
@@ -7,22 +8,22 @@ const HOLD = 2400
 const timeId = ref()
 const iconParts = ref([
   {
-    icon: '/images/update/update_top.svg',
-    darkIcon: '/images/update/update_top-dark.svg',
+    icon: getImage('update/update_top.svg'),
+    darkIcon: getImage('update/update_top-dark.svg'),
     initial: { y: 6, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     transition: { delay: 0.3, duration: 0.3 },
   },
   {
-    icon: '/images/update/update_middle.svg',
-    darkIcon: '/images/update/update_middle-dark.svg',
+    icon: getImage('update/update_middle.svg'),
+    darkIcon: getImage('update/update_middle-dark.svg'),
     initial: { y: 6, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     transition: { delay: 0.1, duration: 0.3 },
   },
   {
-    icon: '/images/update/update_bottom.svg',
-    darkIcon: '/images/update/update_bottom-dark.svg',
+    icon: getImage('update/update_bottom.svg'),
+    darkIcon: getImage('update/update_bottom-dark.svg'),
     initial: { y: 6, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     transition: { delay: 0, duration: 0.3 },

@@ -107,7 +107,7 @@ async function onConfirm() {
     <motion.div v-if="showGuide" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
       <div class="h-110 flex justify-center items-center gap-12">
         <video class="block w-100 rounded-md" autoplay muted loop playsinline>
-          <source src="/video/tour-hide-guide.mp4" type="video/webm">
+          <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/tour-hide-guide.mp4" type="video/webm">
         </video>
         <div class="flex flex-col gap-2 w-90">
           <div class="title">

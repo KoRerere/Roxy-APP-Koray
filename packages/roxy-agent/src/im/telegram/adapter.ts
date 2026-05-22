@@ -124,6 +124,70 @@ export async function startTelegramAdapter(
     await ctx.reply(`📊 当前对话长度：${len} 条消息`).catch(err => console.error('[Telegram] Reply error:', err))
   })
 
+  bot.command('script', async (ctx) => {
+    const channelId = `tg:${ctx.chat.id}`
+    const args = ctx.match?.trim() ?? ''
+    if (!args) {
+      await ctx.reply('❌ 请提供脚本指令。用法：/script <内容>').catch(err => console.error('[Telegram] Reply error:', err))
+      return
+    }
+
+    if (bridge.isBusy()) {
+      await ctx.reply('⏳ 我正在处理上一条请求，请稍等片刻后再发送新消息。').catch(err => console.error('[Telegram] Reply error:', err))
+      return
+    }
+
+    await ctx.replyWithChatAction('typing').catch(err => console.error('[Telegram] Chat action error:', err))
+
+    const streamer = new StreamSender(500)
+    let sentMsgId: number | null = null
+
+    try {
+      await bridge.handleMessage(channelId, args, async (chunk) => {
+        await streamer.onChunk(
+          chunk,
+          async (txt) => {
+            const safeText = normalizeImText(txt, { maxChars: TELEGRAM_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+            const m = await ctx.reply(safeText)
+            sentMsgId = m.message_id
+            return String(m.message_id)
+          },
+          async (_id, _txt) => {
+            if (sentMsgId) {
+              const safeText = normalizeImText(streamer.buffer, { maxChars: TELEGRAM_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+              await ctx.api.editMessageText(ctx.chat.id, sentMsgId, safeText).catch(err => console.error('[Telegram] Edit message error:', err))
+            }
+          },
+        )
+      }, 'script')
+
+      await streamer.flush(
+        async (txt) => {
+          const safeText = normalizeImText(txt, { maxChars: TELEGRAM_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+          const m = await ctx.reply(safeText)
+          sentMsgId = m.message_id
+          return String(m.message_id)
+        },
+        async (_id, txt) => {
+          if (sentMsgId) {
+            const safeText = normalizeImText(txt, { maxChars: TELEGRAM_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+            await ctx.api.editMessageText(ctx.chat.id, sentMsgId, safeText).catch(err => console.error('[Telegram] Edit message error:', err))
+          }
+        },
+      )
+    }
+    catch (err) {
+      console.error('[Telegram] script handleMessage error:', err)
+      const errMsg = formatError(err)
+      if (sentMsgId) {
+        await ctx.api.editMessageText(ctx.chat.id, sentMsgId, errMsg).catch(err => console.error('[Telegram] Edit message error:', err))
+      }
+      else {
+        await ctx.reply(errMsg).catch(err => console.error('[Telegram] Reply error:', err))
+      }
+    }
+  })
+
   bot.on('message', async (ctx) => {
     const channelId = `tg:${ctx.chat.id}`
     const text = ctx.message.text ?? ctx.message.caption ?? ''

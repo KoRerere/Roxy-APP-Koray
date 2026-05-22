@@ -5,7 +5,7 @@ import { debounce } from 'es-toolkit'
 import { isEmpty } from 'es-toolkit/compat'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, rename, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { loadLocaleMessages } from '/@/locales'
@@ -13,6 +13,7 @@ import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
 import { fileExists, getInstallerParams, killProcessByName, killProcessForce, safeParseJSON } from '/@/utils'
+import { absoluteTopLeftToWindowRatioPosition, getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 
 function normalizeSimulationConfig(simulation: Record<string, any> | undefined) {
   if (!simulation || typeof simulation !== 'object') {
@@ -79,12 +80,34 @@ export function encryptData(data: string): string {
   }
 }
 
+/**
+ * 校验加密数据格式是否合法：必须满足 `<32位十六进制 IV>:<偶数位十六进制密文>` 的形式
+ * 用于在解密前快速过滤掉空文件、被截断或被破坏的内容，避免抛出晦涩的 `Invalid initialization vector` 错误
+ */
+function isValidEncryptedFormat(encryptedData: string): boolean {
+  if (typeof encryptedData !== 'string' || encryptedData.length === 0) {
+    return false
+  }
+  const sepIdx = encryptedData.indexOf(':')
+  if (sepIdx <= 0) {
+    return false
+  }
+  const ivHex = encryptedData.slice(0, sepIdx)
+  const encrypted = encryptedData.slice(sepIdx + 1)
+  // IV 长度为 16 字节 = 32 个十六进制字符；密文为十六进制（长度为偶数且非空）
+  return /^[0-9a-f]{32}$/i.test(ivHex) && encrypted.length > 0 && encrypted.length % 2 === 0 && /^[0-9a-f]+$/i.test(encrypted)
+}
+
 /** 解密数据 */
 export function decryptData(encryptedData: string): string {
+  if (!isValidEncryptedFormat(encryptedData)) {
+    throw new Error('Invalid encrypted data format')
+  }
   try {
     const key = generateEncryptionKey()
-    // 分离 IV 和加密数据
-    const [ivHex, encrypted] = encryptedData.split(':')
+    const sepIdx = encryptedData.indexOf(':')
+    const ivHex = encryptedData.slice(0, sepIdx)
+    const encrypted = encryptedData.slice(sepIdx + 1)
     const iv = Buffer.from(ivHex, 'hex')
 
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
@@ -126,7 +149,10 @@ export async function forceSaveConfig() {
       return value
     })
     const encryptedData = encryptData(jsonData)
-    await writeFile(appConfig.configFile, encryptedData, 'utf-8')
+    // 原子性写入：先写入临时文件，再 rename 替换，避免进程异常退出导致目标文件被部分写入而损坏
+    const tmpFile = `${appConfig.configFile}.tmp`
+    await writeFile(tmpFile, encryptedData, 'utf-8')
+    await rename(tmpFile, appConfig.configFile)
   }
   catch (error) {
     console.error('saveConfig error: ', error)
@@ -141,12 +167,39 @@ export const initLocalConfigPromise = Promise.withResolvers<void>()
 export async function initLocalConfig() {
   try {
     await fileExists(appConfig.roxyDataDir, true)
-    const encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
-    // 解密数据
-    const lastStore = safeParseJSON(encryptedConfig, () => {
-      const decryptedConfig = decryptData(encryptedConfig)
-      return JSON.parse(decryptedConfig)
-    })
+    let encryptedConfig = ''
+    try {
+      encryptedConfig = await readFile(appConfig.configFile, 'utf-8')
+    }
+    catch (error: any) {
+      // 配置文件不存在属于首次启动场景，直接使用默认值
+      if (error?.code !== 'ENOENT') {
+        console.warn('readConfig error: ', error)
+      }
+    }
+
+    // 文件为空、被截断或破坏时，跳过解析，直接使用默认配置，避免抛出 Invalid initialization vector 等错误
+    let lastStore: Record<string, any> | null = null
+    if (encryptedConfig.length > 0) {
+      lastStore = safeParseJSON(encryptedConfig, () => {
+        if (!isValidEncryptedFormat(encryptedConfig)) {
+          console.warn('Local config file is empty or corrupted, falling back to default config')
+          return null
+        }
+        try {
+          const decryptedConfig = decryptData(encryptedConfig)
+          return JSON.parse(decryptedConfig)
+        }
+        catch (error) {
+          console.warn('Failed to decrypt local config, falling back to default config', error)
+          return null
+        }
+      })
+    }
+
+    if (!lastStore || typeof lastStore !== 'object') {
+      lastStore = {}
+    }
     lastStore.simulation = normalizeSimulationConfig(lastStore.simulation)
     Object.assign(store, lastStore)
     // 重置下次更新时间
@@ -271,13 +324,32 @@ async function recordFirstLaunchAppEvent() {
   }
 }
 
+/** 异常退出后恢复窗口函数，如果函数存在，则调用函数恢复窗口 */
+let restoreLastWindowOpenStatusOnException: (() => Promise<void>) | null = null
+
+export function getRestoreLastWindowOpenStatusOnException() {
+  return restoreLastWindowOpenStatusOnException
+}
+
+export function cancelRestoreLastWindowOpenStatus() {
+  restoreLastWindowOpenStatusOnException = null
+}
+
+export const restoreLastWindowOpenStatusResolver = Promise.withResolvers<void>()
+
 /** 恢复上次窗口打开状态 */
 export async function restoreLastWindowOpenStatus() {
+  restoreLastWindowOpenStatusResolver.resolve()
+
   const appNormalExit = store.appNormalExit
   const needRestoreWindow = store.needRestoreWindow
 
   store.appNormalExit = false
   store.needRestoreWindow = false
+
+  if (!store.token) {
+    return
+  }
 
   console.log('restoreLastWindowOpenStatus', store.waitingRestoreWindow, needRestoreWindow, appNormalExit)
   if (isEmpty(store.waitingRestoreWindow)) {
@@ -290,9 +362,42 @@ export async function restoreLastWindowOpenStatus() {
       const waitingRestoreWindow = structuredClone(store.waitingRestoreWindow)
       store.waitingRestoreWindow = {}
 
-      for (const workspaceId in waitingRestoreWindow) {
-        const dirIds = waitingRestoreWindow[workspaceId]
-        await browserManager.batchLaunch(dirIds, undefined, Number(workspaceId))
+      restoreLastWindowOpenStatusOnException = async () => {
+        for (const workspaceId in waitingRestoreWindow) {
+          const dirIds = waitingRestoreWindow[workspaceId]
+
+          console.log('store.waitingRestoreWindowBounds', store.waitingRestoreWindowBounds)
+
+          const virtual = getVirtualWorkAreaUnion()
+
+          const customParamsByDirId = dirIds.reduce((acc, dirId) => {
+            const bounds = store.waitingRestoreWindowBounds?.[dirId]
+            if (!bounds) {
+              return acc
+            }
+
+            acc[dirId] = {
+              positionSwitch: true,
+              openWidth: bounds.width,
+              openHeight: bounds.height,
+              windowRatioPosition: absoluteTopLeftToWindowRatioPosition(bounds.left, bounds.top, virtual),
+            }
+            return acc
+          }, {} as Record<string, { positionSwitch: boolean, openWidth: number, openHeight: number, windowRatioPosition: string }>)
+
+          console.log('customParamsByDirId', customParamsByDirId)
+
+          await browserManager.batchLaunch(dirIds, {
+            workspaceId: Number(workspaceId),
+            customParamsByDirId,
+          })
+        }
+      }
+
+      //  如果应用正常退出，则清空恢复窗口函数
+      if (appNormalExit !== false) {
+        restoreLastWindowOpenStatusOnException()
+        restoreLastWindowOpenStatusOnException = null
       }
     }
     catch (error) {

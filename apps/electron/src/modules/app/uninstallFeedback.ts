@@ -24,8 +24,8 @@ export async function createUninstallFeedbackWindow(): Promise<BrowserWindow> {
 
   uninstallFeedbackWindow = createWindow({
     roxyWindowId: 'uninstall-feedback',
-    width: 480,
-    height: 770,
+    width: 720,
+    height: 400,
     resizable: false,
     frame: false,
     transparent: true,

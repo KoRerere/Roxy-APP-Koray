@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IpChangeWarnMessage from './ip-change-warn-message.vue'
 import TwoFactorAuth from './two-factor-auth.vue'
-import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
+import dashboardBgSvg from '/@/assets/icons/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'

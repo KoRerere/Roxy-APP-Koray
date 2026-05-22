@@ -1,7 +1,7 @@
 import type { McpFailureType } from '@roxy/electron-preload'
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { globalShortcut, net } from 'electron'
-import { closeMcpWindow, createMcpWindow, mcpManager } from '/@/modules/mcp'
+import { closeMcpWindow, createMcpWindow, getMcpWindow, mcpManager } from '/@/modules/mcp'
 import { isMcpError } from '/@/modules/mcp/errors'
 import { mcpRuntimeState } from '/@/modules/mcp/state'
 
@@ -31,7 +31,7 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 打开mcp */
-  ipcMain.on('mcp:open', async (_event): Promise<McpResponse> => {
+  ipcMain.on('mcp:open', async (_event, options?: { scene?: string }): Promise<McpResponse> => {
     console.log('Opening MCP')
 
     // 检查 RoxyClaw 是否正在运行
@@ -42,9 +42,19 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
       }
     }
 
+    // 窗口已打开，直接聚焦到前台
+    const existingWin = getMcpWindow()
+    if (existingWin) {
+      if (existingWin.isMinimized()) {
+        existingWin.restore()
+      }
+      existingWin.focus()
+      return { success: true }
+    }
+
     try {
-      await mcpManager.startMcpServer()
-      await createMcpWindow()
+      await mcpManager.startMcpServer('agent')
+      await createMcpWindow(options?.scene)
       mcpRuntimeState.setMcpWindowOpen(true)
       return { success: true }
     }
@@ -90,7 +100,7 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
         }
       }
 
-      await mcpManager.startMcpServer()
+      await mcpManager.startMcpServer('im')
       mcpRuntimeState.setRoxyClawEnabled(true)
       return { success: true, data: { message: 'RoxyClaw started successfully' } }
     }

@@ -19,10 +19,10 @@ export const useAgentStore = defineStore('agent', () => {
     controller: null as AbortController | null,
   })
 
-  // 标记是否已初始化
   const initialized = ref(false)
-  // 健康检查 loop 的引用，用于 cleanup
   let healthCheckRunning = false
+  let firstCheckResolve: (() => void) | null = null
+  let firstCheckReject: ((reason?: unknown) => void) | null = null
 
   async function initMcp() {
     if (initialized.value) {
@@ -33,11 +33,20 @@ export const useAgentStore = defineStore('agent', () => {
     try {
       const softConfig = await globalThis.electronAPI.send('mcp:config')
       mcpPort.value = softConfig.port
-      startHealthCheck()
+
+      await new Promise<void>((resolve, reject) => {
+        firstCheckResolve = resolve
+        firstCheckReject = reject
+        startHealthCheck()
+      })
     }
     catch (e) {
       console.error('Failed to init MCP:', e)
       initialized.value = false
+    }
+    finally {
+      firstCheckResolve = null
+      firstCheckReject = null
     }
   }
 
@@ -89,6 +98,10 @@ export const useAgentStore = defineStore('agent', () => {
 
         health.isOk = ok
         health.loading = false
+
+        if (ok) {
+          firstCheckResolve?.()
+        }
       }
       catch (e) {
         if (!health.loop) {
@@ -99,6 +112,7 @@ export const useAgentStore = defineStore('agent', () => {
 
       if (health.count > 10 && health.loading) {
         onlyErrorToast(-1, $t('服务异常，请关闭 MCP 服务稍后重试'))
+        firstCheckReject?.(new Error('MCP health check failed after max retries'))
         break
       }
 

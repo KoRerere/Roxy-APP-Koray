@@ -78,6 +78,61 @@ export async function startSlackAdapter(
     await say(`📊 当前对话长度：${len} 条消息`)
   })
 
+  app.command('/script', async ({ command, ack, say, client }) => {
+    await ack()
+    const channelId = `slack:${command.channel_id}`
+    const args = command.text?.trim() ?? ''
+    if (!args) {
+      await say('❌ 请提供脚本指令。用法：/script <内容>')
+      return
+    }
+    if (bridge.isBusy()) {
+      await say('⏳ 我正在处理上一条请求，请稍等片刻后再发送新消息。')
+      return
+    }
+    const streamer = new StreamSender(800)
+    let sentTs: string | null = null
+    let fullText = ''
+    try {
+      await bridge.handleMessage(channelId, args, async (chunk) => {
+        fullText += chunk
+        await streamer.onChunk(
+          chunk,
+          async (txt) => {
+            const safeText = normalizeImText(txt, { maxChars: SLACK_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+            const result = await client.chat.postMessage({ channel: command.channel_id, text: safeText })
+            sentTs = result.ts as string
+            return sentTs
+          },
+          async (_id, _txt) => {
+            if (sentTs) {
+              const safeText = normalizeImText(streamer.buffer, { maxChars: SLACK_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+              await client.chat.update({ channel: command.channel_id, ts: sentTs, text: safeText }).catch((e: any) => console.error('[Slack] Update error:', e))
+            }
+          },
+        )
+      }, 'script')
+      await streamer.flush(
+        async (txt) => {
+          const safeText = normalizeImText(txt, { maxChars: SLACK_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+          const result = await client.chat.postMessage({ channel: command.channel_id, text: safeText })
+          sentTs = result.ts as string
+          return sentTs
+        },
+        async (_id, txt) => {
+          if (sentTs) {
+            const safeText = normalizeImText(txt, { maxChars: SLACK_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+            await client.chat.update({ channel: command.channel_id, ts: sentTs, text: safeText }).catch((e: any) => console.error('[Slack] Flush update error:', e))
+          }
+        },
+      )
+    }
+    catch (err) {
+      console.error('[Slack] script handleMessage error:', err)
+      await say(formatError(err))
+    }
+  })
+
   // 启动应用
   await app.start(process.env.PORT || 3001)
   console.log('[Slack] Adapter started.')

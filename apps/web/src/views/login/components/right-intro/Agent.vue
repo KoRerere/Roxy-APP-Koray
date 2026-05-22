@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import { defineComponent, h, onMounted, onUnmounted, ref } from 'vue'
 import type { VNode } from 'vue'
 import { motion } from 'motion-v'
@@ -334,7 +335,7 @@ onUnmounted(() => {
   }
 })
 
-const agentBg = computed(() => isDark.value ? '/images/mcp/agent-bg-dark.png' : '/images/mcp/agent-bg.png')
+const agentBg = computed(() => isDark.value ? getImage('mcp/agent-bg-dark.png') : getImage('mcp/agent-bg.png'))
 </script>
 
 <template>
@@ -369,7 +370,7 @@ const agentBg = computed(() => isDark.value ? '/images/mcp/agent-bg-dark.png' : 
             { text: $t('网页爬虫'), icon: 'base/rx_ic_insect', color: '#C084FC' },
           ]" :key="item.text" class="agent-tags-item"
           >
-            <RxSvgIcon :name="item.icon" :color="item.color" size="16" />
+            <RxSvgIcon :name="(item.icon as any)" :color="item.color" size="16" />
             <span class="text-3">{{ item.text }}</span>
           </div>
         </div>
@@ -392,7 +393,7 @@ const agentBg = computed(() => isDark.value ? '/images/mcp/agent-bg-dark.png' : 
 
       <div v-if="receiveTimelineStarted" class="w-full">
         <div class="flex gap-3">
-          <img draggable="false" class="_image_miopt_1" src="/images/mcp/agent_avatar.png" style="width: 32px; height: 32px; line-height: 32px; font-size: 16px; border-radius: 50%;">
+          <img draggable="false" class="_image_miopt_1" :src="getImage('mcp/agent_avatar.png')" style="width: 32px; height: 32px; line-height: 32px; font-size: 16px; border-radius: 50%;">
           <div class="flex flex-col gap-2 w-full">
             <VNodeRenderer v-for="(node, i) in receiveCompletedNodes" :key="i" :vnode="node" />
             <VNodeRenderer v-if="receiveCurrentVNode" :vnode="receiveCurrentVNode" />

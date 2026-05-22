@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { useRouter } from 'vue-router'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
@@ -72,6 +73,7 @@ interface Props {
   step2?: Step[]
   modelValue?: string[]
   isIntegrate?: boolean
+  notActionButtons?: boolean
 }
 
 const router = useRouter()
@@ -130,7 +132,7 @@ function handleDelete() {
       <!-- Header with icons -->
       <div class="content-stretch flex items-end justify-between top-[105px] w-[218px] mt-10 mb-16">
         <img
-          :src="themeStore.realTheme === 'dark' ? '/images/roxy-claw/roxyclaw-dark.png' : '/images/roxy-claw/roxyclaw-light.png'"
+          :src="themeStore.realTheme === 'dark' ? getImage('roxy-claw/roxyclaw-dark.png') : getImage('roxy-claw/roxyclaw-light.png')"
           class="w-12 object-contain select-none" draggable="false"
           alt="RoxyClaw"
         >
@@ -190,6 +192,7 @@ function handleDelete() {
                   />
                   <RxInputSelect
                     v-if="field.type === 'select'"
+                    name="claw"
                     size="md"
                     :placeholder="field.placeholder"
                     :model-value="field.value"
@@ -235,7 +238,7 @@ function handleDelete() {
         <slot />
 
         <!-- Action buttons -->
-        <div class="content-stretch flex justify-end gap-2.5 relative shrink-0 w-full mt-4">
+        <div v-if="!notActionButtons" class="content-stretch flex justify-end gap-2.5 relative shrink-0 w-full mt-4">
           <RxButton
             severity="danger"
             size="md"

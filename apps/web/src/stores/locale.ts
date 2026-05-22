@@ -1,8 +1,9 @@
 import { ref } from 'vue'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY } from '/@/constants/storage-key'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
 import { defaultLanguage } from '/@/locales'
+import { getInviteCode } from '/@/api/util'
 
 /** 从 document.cookie 读取 Web 登录 token（与 Pinia 一致域名 Cookie，便于在未导入 user store 时使用） */
 function readRoxyTokenFromCookie(): string {
@@ -73,6 +74,9 @@ export const useSimpleLocale = defineStore('locale', () => {
       }
       if (handoffToken)
         dest.searchParams.set(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, handoffToken)
+      const inviteCode = await getInviteCode()
+      if (inviteCode)
+        dest.searchParams.set(OFFICIAL_SITE_INVITE_CODE, inviteCode)
       location.replace(dest.href)
       return
     }

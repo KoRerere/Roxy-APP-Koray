@@ -1,3 +1,5 @@
+import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
+import OpenedLayoutModel from '/@/views/browser/list/profiles/components/opened-layout-model.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { ProfileOpenStatus } from '/@/enums'
@@ -5,8 +7,9 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { isNewerVersion } from '/@/utils/common'
+import { compare } from 'compare-versions'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -31,7 +34,8 @@ export function useProfileOpenState() {
     })
   }
   const workspaceStore = useWorkspaceStore()
-  const { userInfo } = storeToRefs(useUserStore())
+  const userStore = useUserStore()
+  const { userInfo, userConfig } = storeToRefs(useUserStore())
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { mixpanelTrack } = useUserStore()
 
@@ -94,10 +98,49 @@ export function useProfileOpenState() {
     return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
   }
 
-  function onOpenBrowser(datas: Data[]) {
+  async function onOpenBrowser(datas: Data[]) {
     const dirIds = datas.map(item => item.dirId!)
-    if (dirIds.length)
-      globalThis.electronAPI.send('browser:batchLaunch', dirIds)
+    if (dirIds.length) {
+      if (dirIds.length === 1 || compare(userStore.appVersion, '3.8.7', '<')) {
+        globalThis.electronAPI.send('browser:batchLaunch', dirIds)
+        return
+      }
+
+      if (userInfo.value.onboardingTaskStatus?.batchOpenWindowNoPromptStatus !== false) {
+        if (userConfig.value.batchOpenLayout === 'grid') {
+          globalThis.electronAPI.send('browser:chunkBrowsersByScreen', dirIds)
+        }
+        else {
+          globalThis.electronAPI.send('browser:batchLaunch', dirIds)
+        }
+        return
+      }
+
+      showModal({
+        showHeader: false,
+        modal: true,
+        blockScroll: true,
+        closeOnEscape: false,
+        slots: {
+          container: ({ hideModal }) => h(OpenedLayoutModel, {
+            count: dirIds.length,
+            onClose: () => {
+              clearMessage(datas)
+              hideModal()
+            },
+            onConfirm: (value) => {
+              if (value === 'grid') {
+                globalThis.electronAPI.send('browser:chunkBrowsersByScreen', dirIds)
+              }
+              else {
+                globalThis.electronAPI.send('browser:batchLaunch', dirIds)
+              }
+              hideModal()
+            },
+          }),
+        },
+      })
+    }
   }
 
   async function openBrowserBefore(data: Data | Data[]) {

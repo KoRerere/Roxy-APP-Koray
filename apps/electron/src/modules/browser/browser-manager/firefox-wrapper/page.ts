@@ -3,6 +3,7 @@ import type { FirefoxBrowser } from './browser'
 import type { BiDiContext } from './types'
 import { EventEmitter } from 'node:events'
 import { FirefoxBiDiSession } from './bidi-session'
+import { deserializeRemoteValue } from './remote-value'
 import { FirefoxTarget } from './target'
 
 /**
@@ -62,6 +63,16 @@ export class FirefoxPage extends EventEmitter {
    * 无法在页面执行脚本时回退为 browsingContext.navigate。
    */
   async gotoReplace(url: string): Promise<void> {
+    const currentUrl = this.url()
+    if (
+      !currentUrl
+      || currentUrl === 'about:blank'
+      || currentUrl === 'about:newtab'
+      || currentUrl.startsWith('chrome://')
+    ) {
+      await this.goto(url)
+      return
+    }
     try {
       await this.evaluate((targetUrl: string) => {
         location.replace(targetUrl)
@@ -86,19 +97,18 @@ export class FirefoxPage extends EventEmitter {
         expression,
         target: { context: this.contextInfo.context },
         awaitPromise: true,
-      })
+      }, { timeout: 10 * 60 * 1000 })
 
-      // 解析 BiDi 返回值
-      if (result.result?.type === 'success') {
-        const scriptResult = result.result.result
-        // 根据类型解析值
-        if (scriptResult?.type === 'string' || scriptResult?.type === 'number' || scriptResult?.type === 'boolean') {
-          return scriptResult.value as T
-        }
-        return scriptResult as T
+      if (result.type === 'exception') {
+        const details = (result as { exceptionDetails?: { text?: string } }).exceptionDetails
+        throw new Error(details?.text || 'Script evaluation failed')
       }
 
-      return result.result as T
+      if (result.type === 'success') {
+        return deserializeRemoteValue(result.result) as T
+      }
+
+      return result as T
     }
     catch (error) {
       console.error('Failed to evaluate:', error)

@@ -140,9 +140,9 @@ export async function startRoxynet() {
 
   // 监听子进程关闭事件
   roxynetProcess.on('close', (code) => {
-    console.log(`roxynetProcess exited with code ${code}`)
+    console.log(`roxynetProcess close with code ${code}`)
     roxynetProcess = null
-    settleReject(new Error(`roxynetProcess exited before startup completed, code=${code}`))
+    settleReject(new Error(`roxynetProcess close before startup completed, code=${code}`))
   })
 
   roxynetProcess.on('exit', (code) => {

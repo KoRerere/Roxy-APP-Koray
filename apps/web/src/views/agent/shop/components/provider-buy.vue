@@ -86,7 +86,7 @@ const notes = [
     text: $t('{bold0}', { bold0: '{bold0}' }),
     bolds: [$t('所有代理 IP 均由 Roxy浏览器从 {name} 特挑。', { name: provider.vendorName })],
   },
-].slice(0, provider.vendorName === 'Roxy IP' ? 6 : 7)
+].slice(0, provider.vendorName === 'RoxyIP' ? 6 : 7)
 
 const configValue = computed(() => {
   const config = Object.fromEntries(configs.value.map(item => [item.name, item.value]))

@@ -8,40 +8,28 @@ export type { FirefoxLaunchOptions }
 
 /**
  * 启动 Firefox 浏览器
+ *
+ * 完整的命令行参数（包含 -profile / --remote-debugging-port=0 / 启动 URL 等）
+ * 由上层 BeforeLaunchTask 生成，本函数仅负责拉起进程并连接 BiDi。
  */
-export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrowser> {
+export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrowser | void> {
   const {
     executablePath,
     args = [],
-    headless = false,
-    userDataDir,
+    relaunch = false,
   } = options
 
   if (!executablePath) {
     throw new Error('executablePath is required')
   }
 
-  // 构建启动参数
-  const firefoxArgs: string[] = []
-
-  // 添加用户数据目录
-  if (userDataDir) {
-    firefoxArgs.push('-profile', userDataDir)
+  if (relaunch) {
+    // Firefox 同 profile 再次 spawn 会新开实例；聚焦由 BeforeLaunchTask.focusExistingFirefoxBrowser 通过 BiDi 完成
+    return
   }
 
-  // 添加远程调试
-  firefoxArgs.push('--remote-debugging-port=0')
-
-  // 添加 headless 模式
-  if (headless) {
-    firefoxArgs.push('-headless')
-  }
-
-  // 添加自定义参数
-  firefoxArgs.push(...args)
-
-  // 启动 Firefox 进程
-  const firefoxProcess = spawn(executablePath, firefoxArgs, {
+  // 启动 Firefox 进程，参数原样传递
+  const firefoxProcess = spawn(executablePath, args, {
     detached: false,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
@@ -120,7 +108,12 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
   }
   catch (error) {
     // 如果连接失败，杀死进程
-    firefoxProcess.kill()
+    try {
+      firefoxProcess.kill()
+    }
+    catch (killErr) {
+      console.warn('Failed to kill firefox process after connect failure:', killErr)
+    }
     throw error
   }
 }

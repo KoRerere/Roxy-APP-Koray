@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// import RaffleModal from '/@/views/campaign/freedom/raffle-modal.vue'
 // import { useDialog } from '/@/hooks/useDialog'
+import { getImage } from '/@/utils/basic'
 import { emitter } from '/@/utils/eventBus'
 import { useCampaignStore } from '/@/stores/campaign'
 
@@ -23,20 +23,6 @@ function onExpand() {
   })
 }
 
-// function onRaffle() {
-//   emit('close')
-//   showModal({
-//     showHeader: false,
-//     modal: true,
-//     blockScroll: true,
-//     slots: {
-//       container: ({ hideModal }) => h(RaffleModal, {
-//         onClose: hideModal,
-//       }),
-//     },
-//   })
-// }
-
 function onConfirm() {
   emit('close')
 }
@@ -52,7 +38,7 @@ function onConfirm() {
     </div>
 
     <div class="flex flex-col items-center gap-3 py-3">
-      <img class="w-15 h-15 rounded-3" src="/images/campaing/freedom/palm_tree_icon.svg">
+      <img class="w-15 h-15 rounded-3" :src="getImage('campaing/freedom/palm_tree_icon.svg')">
       <div class="freedom">
         {{ $t('五月自由季') }}
       </div>

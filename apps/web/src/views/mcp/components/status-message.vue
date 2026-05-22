@@ -11,6 +11,10 @@ const message = computed(() => {
       return $t('您的 Roxy AI Agent 请求过于频繁，请稍后重试。')
     case 400:
       return $t('模型不支持，请尝试将 APP 更到最新版本，或者重启 Roxy AI Agent 窗口')
+    case 403:
+      return $t('图片生成次数已用完，如需继续使用，请联系技术支持。')
+    case 406:
+      return $t('图片内容涉及敏感信息，请修改描述后重试。')
     case 504:
       return $t('额度限制，如需体验额度，请联系技术支持。')
     default:
@@ -20,7 +24,7 @@ const message = computed(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-1.5 px-3 py-2 rounded-1 status-message status-error">
+  <div class="flex items-center gap-1.5 status-message status-error">
     <SvgIcon name="base/rx_ic_delete" size="14" />
     <span>{{ message }}</span>
   </div>

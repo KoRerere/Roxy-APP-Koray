@@ -8,6 +8,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { Permission, PermissionMode } from '/@/hooks/usePermission/type'
 import type { SvgNames } from '/@/components/rx-icon'
+import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -18,6 +19,8 @@ declare module 'vue-router' {
     shared?: boolean
     type?: 'group' | 'button' | (string & {})
     icon?: SvgNames
+    isRoxyAgent?: boolean
+    version?: string[]
   }
 }
 
@@ -167,9 +170,9 @@ export const menuRoutes: RouteRecordRaw[] = [
         name: 'roxy-claw',
         meta: {
           title: 'RoxyClaw',
-          icon: 'base/rx_ic_roxy_claw',
+          icon: 'base/rx_ic_roxyclaw',
           isRoxyClaw: true,
-          permissions: ['API_MCP_view_page'],
+          permissions: ['Roxy_Claw_All'],
         },
         redirect: { name: 'roxy-claw-home' },
         children: [
@@ -180,7 +183,7 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'Claw',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw'),
           },
@@ -191,7 +194,7 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'Telegram Bot',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw/telegram-config.vue'),
           },
@@ -202,7 +205,7 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'Lark / Feishu Bot',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw/lark-config.vue'),
           },
@@ -213,7 +216,7 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'Slack Bot',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw/slack-config.vue'),
           },
@@ -224,7 +227,7 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'Discord Bot',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw/discord-config.vue'),
           },
@@ -235,11 +238,28 @@ export const menuRoutes: RouteRecordRaw[] = [
               title: 'WeChat Bot',
               hideInMenu: true,
               isRoxyClaw: true,
-              permissions: ['API_MCP_view_page'],
+              permissions: ['Roxy_Claw_All'],
             },
             component: () => import('/@/views/roxy-claw/wechat-config.vue'),
           },
         ],
+      },
+      {
+        path: 'roxy-agent',
+        name: 'roxy-agent',
+        meta: {
+          title: $t('素材生成'),
+          type: 'button',
+          icon: 'roxy-agent/rx-ic-assets',
+          isRoxyAgent: true,
+          permissions: ['Roxy_Claw_All'],
+          version: ['3.8.7', '>='],
+          onClick: async (_event: Event) => {
+            const { openRoxyAIAgent } = useOpenRoxyAIAgent()
+            openRoxyAIAgent('asset')
+          },
+        },
+        component: () => import('/@/views/api-keys'),
       },
       {
         path: 'sync-control',
@@ -309,11 +329,21 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'teams',
         name: 'teams',
         meta: {
-          title: $t('团队'),
+          title: $t('团队管理'),
           icon: 'base/rc_ic_user_referral',
           permissions: ['Team_Member_view_page'],
         },
         component: () => import('/@/views/team'),
+      },
+      {
+        name: 'wallet',
+        path: 'wallet',
+        meta: {
+          title: $t('费用中心'),
+          icon: 'base/rx_ic_wallet',
+          permissions: ['Cost_Center_all'],
+        },
+        component: () => import('/@/views/pay/wallet'),
       },
     ],
   },
@@ -339,17 +369,7 @@ export const menuRoutes: RouteRecordRaw[] = [
     },
     component: () => import('/@/views/pay/subscribe/upgrade-plan.vue'),
   },
-  {
-    name: 'wallet',
-    path: 'wallet',
-    meta: {
-      title: $t('费用中心'),
-      icon: 'base/rx_ic_wallet',
-      hideInMenu: true,
-      permissions: ['Cost_Center_all'],
-    },
-    component: () => import('/@/views/pay/wallet'),
-  },
+
   {
     name: 'tutorial',
     path: 'tutorial',

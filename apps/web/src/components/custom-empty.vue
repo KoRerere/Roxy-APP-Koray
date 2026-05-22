@@ -12,7 +12,7 @@ const props = defineProps<Props>()
 const themeStore = useThemeStore()
 
 const imgSrc = computed(() => {
-  return new URL(`../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/${props.icon}`, import.meta.url).href
+  return new URL(`../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/${props.icon}`, import.meta.url).href
 })
 </script>
 

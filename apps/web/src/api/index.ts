@@ -23,6 +23,7 @@ import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { isMainWindow } from '/@/utils'
+import { markSessionLost } from '/@/utils/sessionLost'
 // import { AxiosError } from 'axios'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
@@ -108,14 +109,17 @@ httpClient.instance.interceptors.response.use(async (response) => {
 
   const code = response.data.code
   if (code === 405) {
+    // 记录首次掉登录态时间（不重复覆盖，避免轮询 403 重置 1 小时计时）
+    markSessionLost()
     // 踢出登录
     emitter.emit('kickedOut', response.data.data)
     closeOtherWindow()
     return response
   }
   else if (code === 403) {
+    markSessionLost() // 同上，仅记录首次失效时间
     closeOtherWindow()
-    // 未登录
+    // 未登录，跳转登录页；强制升级弹窗由 useForceUpgradeOnSessionLostReturn 在用户回到 APP 时触发
     useUserStore().clearUserInfo()
     const { default: router } = await import('/@/router')
     router.push({ name: 'login' })

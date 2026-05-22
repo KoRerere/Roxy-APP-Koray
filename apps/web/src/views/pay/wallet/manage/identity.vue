@@ -8,11 +8,11 @@ const isVip = computed(() => [PayIdentity.old, PayIdentity.invited].includes(ide
 const isCustomDiscount = computed(() => userPayInfo.value.discount > 15)
 const discountKeyPath = computed(() => {
   if (identityInfo.value.identity === PayIdentity.old || identityInfo.value.identity === PayIdentity.invited) {
-    return $t('窗口计划、会员、工作区：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
+    return $t('窗口订阅、成员、工作空间：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
   }
 
   if (isCustomDiscount.value) {
-    return $t('永久享受窗口计划、会员、工作区：{profile} 折扣，代理 IP ：{proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
+    return $t('永久享受窗口订阅、成员、工作空间：{profile} 折扣，代理 IP ：{proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
   }
 
   return ''

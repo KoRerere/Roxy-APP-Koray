@@ -10,6 +10,7 @@ export interface Conversation {
   workspace_id: string
   title: string
   thread_id: string
+  conversation_type?: 'automation' | 'asset'
   model?: string
   status: 'active' | 'archived' | 'deleted'
   created_at: string
@@ -25,12 +26,14 @@ export interface CreateConversationInput {
   id: string
   title: string
   thread_id: string
+  conversation_type?: 'automation' | 'asset'
   model?: string
 }
 
 export interface UpdateConversationInput {
   title?: string
   model?: string
+  conversation_type?: 'automation' | 'asset'
 }
 
 // 消息相关类型

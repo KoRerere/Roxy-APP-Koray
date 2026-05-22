@@ -73,7 +73,11 @@ function handleTool(chunk: any, state: StreamState) {
   // 特殊处理todo工具调用
   if (chunk.name === 'write_todos') {
     if (chunk.event === 'on_tool_start') {
-      return streamAdapter.todo(JSON.parse(chunk.input))
+      const todos = JSON.parse(chunk.input)
+      if (state.taskId) {
+        return streamAdapter.workerTodo(state.taskId, todos)
+      }
+      return streamAdapter.todo(todos)
     }
     return
   }

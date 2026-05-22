@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
+
 defineProps<{
   count: number
   upshiftCount: number
@@ -47,7 +49,7 @@ defineProps<{
         {{ $t('3. 充值领取「五月自由季」限定勋章，解锁永久 5% 续费折扣权益') }}
       </div>
     </div>
-    <img draggable="false" class="absolute inset-0 w-full h-full" src="/images/campaing/freedom/mid_bg.png">
+    <img draggable="false" class="absolute inset-0 w-full h-full" :src="getImage('campaing/freedom/mid_bg.png')">
     <SvgIcon class="absolute w-16.5 h-16.5 -right-1.5 -bottom-1.5" name="other/palm_tree" size="34" />
   </div>
 </template>

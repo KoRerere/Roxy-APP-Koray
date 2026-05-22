@@ -1,17 +1,17 @@
 import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { UaStrictMode } from '/@/enums'
+import { CoreType, UaStrictMode } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
-import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isDev, isEmptyValue, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
 
 const userStore = useUserStore()
 
 async function setUaWebgl(inputsGroup: any) {
-  const { os, osVersion, coreVersion, browserVersion } = getFormDataByList(inputsGroup)
-  const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, browserVersion, count: 1 })
+  const { os, osVersion, coreVersion, browserVersion, coreType } = getFormDataByList(inputsGroup)
+  const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, coreType, browserVersion, count: 1 })
   if (code === 0) {
     setInputValueByFormData(inputsGroup, data[0])
     const ua = findInputByName(inputsGroup[0], 'userAgent')
@@ -53,7 +53,7 @@ const defaultFingerOptions = {
 }
 
 export async function ceateRandomFinger(inupts: any, options?: { count?: number, preview?: boolean }) {
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion, coreType } = getFormDataByList(inupts)
   const { count, preview } = { ...defaultFingerOptions, ...options }
   const fingerDetail = await globalThis.electronAPI.send('util:genRandomFingerprint', {
     fontType,
@@ -66,6 +66,7 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
     os,
     osVersion,
     coreVersion,
+    coreType,
   }, count)
 
   if (preview) {
@@ -136,6 +137,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   // fix: 如果是 macos, ios 系统，就取大版本去做匹配。其他系统不需要处理
   const osVersion = data.os?.toLocaleLowerCase() === 'macos' || data.ios?.toLocaleLowerCase() ? fixMacOsVersion(data.osVersion || '') : data.osVersion
   const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === osVersion) ?? osValue?._versionOptions[0]
+  const coreTypeOptions = [
+    { label: CoreType.Chrome, value: CoreType.Chrome, icon: 'base/rx_ic_chrome' },
+    { label: CoreType.Firefox, value: CoreType.Firefox, icon: 'base/rx_ic_firefox' },
+  ]
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
   // TODO:(anbin)
   const searchEngineOptions = searchEngine.code === 0
@@ -170,6 +175,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const extraMoblieVisible = initInputVisible(osValue.value, 'Android', false) || initInputVisible(osValue.value, 'IOS', false)
 
   const inputsGroup = [] as any[]
+  const isFirefox = data.coreType === 'Firefox'
 
   const original = reactive<any>({
     ...getDefaultValue(),
@@ -264,11 +270,47 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         },
         {
           type: 'select',
-          name: 'coreVersion',
-          value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
-          options: coreVersionOptions,
-          icon: 'base/rx_ic_chrome',
+          name: 'coreType',
+          value: coreTypeOptions.find((item: any) => item.value === data.coreType) ?? coreTypeOptions[0],
+          options: coreTypeOptions,
+          filter: false,
           iconColor: 'var(--primary-color, #12a3fc)',
+          style: {
+            width: '66px',
+            flex: 'none',
+          },
+          overlayStyle: {
+            width: '120px',
+          },
+          disabled: Boolean(data.id),
+          class: 'items-center',
+          change: async (item: any) => {
+            if (item.value) {
+              const coreType = item.value.value
+              console.log('coreType', coreType)
+              const coreVersionInput = findInputByName(windowInputs, 'coreVersion')
+              const webGLInput = findInputByName(highLevelInputs, 'webGL')
+
+              const _coreVersionOptions = coreType === 'Firefox' ? $dict_map.firefoxCoreVersion : coreVersionOptions
+              coreVersionInput.options = _coreVersionOptions
+              coreVersionInput.value = _coreVersionOptions[0]
+              coreVersionInput.change?.(coreVersionInput)
+              webGLInput.change?.(webGLInput)
+            }
+          },
+          preview: {
+            label: $t('内核类型'),
+          },
+          required: true,
+        },
+        {
+          type: 'select',
+          name: 'coreVersion',
+          value: (isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions).find((item: any) => item.value === data.coreVersion) ?? (isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions)[0],
+          options: isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions,
+          ...(isDev
+            ? { }
+            : { icon: 'base/rx_ic_chrome', iconColor: 'var(--primary-color, #12a3fc)' }),
           required: true,
           filter: false,
           change: async (item: any) => {
@@ -767,10 +809,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { getwebGLNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
-            getwebGLNoiseValue: [],
-          })
-          Object.assign(original, { webGLValue: getwebGLNoiseValue })
+          const coreTypeInput = findInputByName(windowInputs, 'coreType')
+
+          if (coreTypeInput.value.value === 'Firefox') {
+            Object.assign(original, { webGLValue: Math.random() })
+          }
+          else {
+            const { getwebGLNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
+              getwebGLNoiseValue: [],
+            })
+            Object.assign(original, { webGLValue: getwebGLNoiseValue })
+          }
         }
         else {
           Reflect.deleteProperty(original, 'webGLValue')
@@ -1556,7 +1605,7 @@ export function getDefaultValue() {
 export async function genDefaultProfileByCount(count: number) {
   const [inputsGroup, original] = await getInputsGroup()
   const defaultParams = getFormDataByList(inputsGroup)
-  const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion']
+  const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion', 'coreType']
   const fingerParams = Object.fromEntries(fingerKeys.map(key => [key, defaultParams[key]]))
   const fingerDetail = await globalThis.electronAPI.send('util:genRandomFingerprint', fingerParams, count)
 

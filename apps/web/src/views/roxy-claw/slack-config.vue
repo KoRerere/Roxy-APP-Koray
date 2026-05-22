@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import ConfigBase from './components/config-base.vue'
 import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
@@ -177,7 +178,7 @@ async function handleTest(field: string) {
 <template>
   <ConfigBase
     :title="$t('集成到 Slack')"
-    icon="/images/roxy-claw/slack.svg"
+    :icon="getImage('roxy-claw/slack.svg')"
     bg-color="#4a154b"
     :steps="steps"
     :setup-fields="setupFields"

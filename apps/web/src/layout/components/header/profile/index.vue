@@ -3,30 +3,31 @@ import RxAvatar from '/@/components/rx-avatar'
 import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
 import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import SettingsPopup from './components/settings-popup.vue'
-import Badges from './components/badges.vue'
+import BasicInfo from '/@/layout/components/header/profile/components/workspace/basic-info.vue'
+import WorkspaceList from '/@/layout/components/header/profile/components/workspace/list.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from 'primevue/usedialog'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 import { ISO639List } from '/@/constants/iso-639'
-
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
-import { copyText, showPageLoading } from '/@/utils'
+import { showPageLoading } from '/@/utils'
 import { getSettings } from './components/settings-popup'
 import { getColorSchemeList, useThemeStore } from '/@/stores/theme'
 import { emitter } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
-import type { SvgNames } from '/@/components/rx-icon/'
 import { usePreventMask } from '/@/hooks/usePreventMask'
+import type { SvgNames } from '/@/components/rx-icon'
 
 const router = useRouter()
 const dialog = useDialog()
 const userStore = useUserStore()
 const simpleLocale = useSimpleLocale()
 const themeStore = useThemeStore()
-const styles = useCssModule()
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { planSuccess } = usePay()
 const [showModal] = useDialogHook()
 const [showToast] = useResponseToast()
@@ -34,30 +35,19 @@ const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const menuRef = useTemplateRef('menu')
 
+const avatarProps = computed(() => {
+  const { workspacePicture, workspaceName } = currentWorkspace.value || {}
+  return {
+    name: workspacePicture || workspaceName?.slice(0, 2),
+    color: workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+    size: 26,
+    fontSize: workspacePicture ? 18 : 14,
+    radius: '6px',
+  }
+})
+
 const items = computed(() => {
   return [
-    {
-      render: () => {
-        return (
-          <div class="w-full">
-            <div class="flex items-center gap-2.5">
-              <div class={styles.name}>
-                {userStore.userInfo.userName}
-              </div>
-              <Badges />
-            </div>
-            <div class="flex items-center gap-1">
-              <div class={`ellipsis-1 ${styles.email}`}>{userStore.userInfo.email || userStore.userInfo.phone}</div>
-              <RxSvgIcon name="base/rx_ic_copy" size="14" color="var(--colors-icon-icon-note)" />
-            </div>
-          </div>
-        )
-      },
-      command: copyUserInfo,
-    },
-    {
-      separator: true,
-    },
     {
       label: $t('兑换'),
       icon: 'base/rx_ic_medal',
@@ -70,7 +60,7 @@ const items = computed(() => {
         return (
           <div class="flex items-center gap-2 w-full">
             <RxSvgIcon name={item.icon as SvgNames} color="var(--colors-icon-icon-secondary)" />
-            <span class={styles.label}>{item.label}</span>
+            <span class="tt-primary text-3.25 leading-4">{item.label}</span>
           </div>
         )
       },
@@ -95,7 +85,7 @@ const items = computed(() => {
           isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
             simpleLocale.setSimpleLocale(item.locale)
-            globalThis.electronAPI.send('app:saveSoftConfig', { language: item.locale })
+            globalThis.electronAPI.send('app:saveSoftConfig', { language: item.locale } as never)
           },
         }
       }),
@@ -248,12 +238,6 @@ function showLogoutConfirm() {
   return promise
 }
 
-async function copyUserInfo() {
-  const { email, phone } = await userStore.getUserContact()
-  copyText(email || phone || '')
-  showToast(0, $t('复制成功'))
-}
-
 function openSettings(activeKey: string, anchorPoint?: string) {
   dialog.open(SettingsPopup, {
     props: {
@@ -280,27 +264,36 @@ function toggle(event: Event) {
   menuRef.value?.toggle(event)
   userStore.fetchUserInfo()
 }
+
+function hideMenu() {
+  menuRef.value?.hide()
+}
 </script>
 
 <template>
-  <div class="settings cursor-pointer select-none" @click="toggle">
-    <template v-if="userStore.userInfo">
-      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.iconSmall" :name="(userStore.identityInfo.iconSmall as any)" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
-      </RxAvatar>
-      <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
-    </template>
-    <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
+  <div class="flex items-center pr-1.5 pl-1 py-0.5 gap-1.5 select-none cursor-pointer rounded-1 settings" @click="toggle">
+    <RxAvatar v-bind="avatarProps" />
+    <div class="tt-primary text-3.25 font-600 leading-4">
+      {{ currentWorkspace?.workspaceName }}
+    </div>
+    <RxSvgIcon class="cursor-pointer pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 
-  <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 w-[240px]' }" @hide="hidePreventMask" @show="showPreventMask">
+  <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 max-w-80 min-w-60' }" @hide="hidePreventMask" @show="showPreventMask">
+    <template #start>
+      <div class="flex flex-col gap-1 pa-1">
+        <BasicInfo />
+        <RxDivider line-only line-color="var(--tieredmenu-separator-border-color)" />
+        <WorkspaceList @hide="hideMenu" />
+        <RxDivider line-only line-color="var(--tieredmenu-separator-border-color)" />
+      </div>
+    </template>
     <template #item="{ item, props, hasSubmenu }">
       <a v-ripple class="flex items-center" v-bind="props.action">
         <component :is="item.render" v-if="item.render" :item="item" />
         <template v-else>
           <RxSvgIcon :name="(item.icon as SvgNames)" color="var(--colors-icon-icon-secondary)" />
-          <span :class="styles.label">{{ item.label }}</span>
+          <span class="tt-primary text-3.25 leading-4">{{ item.label }}</span>
           <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
           <RxSvgIcon v-if="item.isCheck?.()" class="ml-auto" name="base/rx_ic_check" />
         </template>
@@ -309,54 +302,13 @@ function toggle(event: Event) {
   </TieredMenu>
 </template>
 
-<style lang="scss" module>
-.name {
-  color: var(--colors-text-text-primary);
-  font-size: 13px;
-  line-height: var(--Line-Height-text-xs, 16px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.email {
-  margin-top: var(--spacing-sm, 4px);
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
-}
-
-.label {
-  color: var(--colors-text-text-primary);
-  font-size: 13px;
-  line-height: 16px;
-}
-</style>
-
 <style lang="scss" scoped>
-.username {
-  font-size: 12px;
-  font-weight: 500;
-  line-height: normal;
-}
-
 .settings {
-  display: flex;
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  align-items: center;
-  gap: var(--spacing-md, 6px);
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--colors-border-border-action, #afb7bb);
-  background: var(--colors-background-bg-action, #fff);
-  box-shadow:
-    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-
   &:not(:disabled):hover {
-    color: var(--colors-text-text-primary, #111213);
-    background: var(--colors-background-bg-action-hover, #f1f5f8);
+    background: var(--colors-background-bg-action-hover);
 
     svg {
-      color: var(--colors-text-text-primary, #111213);
+      color: var(--colors-text-text-primary);
     }
   }
 }

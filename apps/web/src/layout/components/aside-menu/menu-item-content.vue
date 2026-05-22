@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
@@ -60,18 +61,19 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
       <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href"
-         :class="{ 'active': isActive, 'roxy-claw': item.meta?.isRoxyClaw }" @click.prevent="handleClickItem($event, navigate)"
+         :class="{ active: isActive }" @click.prevent="handleClickItem($event, navigate)"
       >
         <!-- Roxy Claw 菜单样式 -->
         <template v-if="item.meta?.isRoxyClaw">
-          <img :src="themeStore.realTheme === 'light'
+          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <!-- <img :src="themeStore.realTheme === 'light'
             ? (isActive
-              ? '/images/roxy-claw/menu/sidenav-active.png'
-              : '/images/roxy-claw/menu/sidenav-inactive.png')
+              ? getImage('roxy-claw/menu/sidenav-active.png')
+              : getImage('roxy-claw/menu/sidenav-inactive.png'))
             : (isActive
-              ? '/images/roxy-claw/menu/sidenav-active.png'
-              : '/images/roxy-claw/menu/sidenav-inactive-dark.png')" class="block w-4.5" draggable="false"
-          >
+              ? getImage('roxy-claw/menu/sidenav-active.png')
+              : getImage('roxy-claw/menu/sidenav-inactive-dark.png'))" class="block w-4.5" draggable="false"
+          > -->
           <div class="flex items-center justify-between w-full menu-title">
             <div :title="item.meta?.title">
               <span>{{ item.meta?.title }}</span>
@@ -81,6 +83,15 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
               <circle cx="10" cy="10" r="6" fill="var(--colors-icon-icon-success)" />
               <circle cx="10" cy="10" r="8" stroke="rgba(28, 201, 77, 0.40)" stroke-opacity="0.4" stroke-width="4" />
             </svg>
+          </div>
+        </template>
+
+        <!-- Roxy Agent 菜单样式 -->
+        <template v-else-if="item.meta?.isRoxyAgent">
+          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <div class="flex items-center justify-between w-full menu-title">
+            <span class="roxy-agent-title ellipsis-1">{{ item.meta?.title }}</span>
+            <!-- <span class="new-badge">NEW</span> -->
           </div>
         </template>
 
@@ -197,5 +208,24 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     font-weight: 600;
     line-height: 1;
   }
+}
+
+.roxy-agent-title {
+  background: linear-gradient(101deg, #3faaf6 -10.13%, #f359dc 44.94%, #f28fb0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.new-badge {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: linear-gradient(101deg, #3faaf6 -10.13%, #f359dc 44.94%, #f28fb0 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.5px;
 }
 </style>

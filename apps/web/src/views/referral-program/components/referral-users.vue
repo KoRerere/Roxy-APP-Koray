@@ -3,13 +3,9 @@ import { format } from 'date-fns'
 
 import { API } from '/@/api'
 import type { SvgNames } from '/@/components/rx-icon'
-import type { UnwrapRowType, UserGetInviteUserListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UserGetInviteUserListV2ListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetInviteUserListV2ListData>
-
-const { promotionInfo } = defineProps<{
-  promotionInfo: UserGetPromotionInfoListData['data']
-}>()
 
 const columns = [
   {
@@ -17,10 +13,10 @@ const columns = [
     key: 'userName',
     getText: (data: Data) => data.email || data.phone,
   },
-  {
-    title: $t('来源链接'),
-    key: 'source',
-  },
+  // {
+  //   title: $t('来源链接'),
+  //   key: 'source',
+  // },
   {
     title: $t('非代理返利比例'),
     key: 'youGet',
@@ -51,6 +47,8 @@ function tableRequest(params: any) {
 }
 
 async function tableFilters() {
+  // const { data } = await API.base.userGetPromotionLinkListList()
+
   return [
     {
       type: 'date',
@@ -63,13 +61,13 @@ async function tableFilters() {
         }
       },
     },
-    {
-      type: 'select',
-      name: 'source',
-      placeholder: $t('请选择来源链接'),
-      showClear: true,
-      options: promotionInfo.promotionLinkList?.map(item => ({ label: item.linkType, value: item.linkType })),
-    },
+    // {
+    //   type: 'select',
+    //   name: 'source',
+    //   placeholder: $t('请选择来源链接'),
+    //   showClear: true,
+    //   options: data.map(item => ({ label: item.linkType, value: item.linkType })),
+    // },
   ]
 }
 </script>

@@ -44,9 +44,11 @@ export const defaultValues: StoreType = {
   visitorId: '',
   hasLoggedIn: false,
   autoStart: false,
+  autoUpdateApp: true,
   autoRestoreWindow: 2,
   dashboardTourGuide: false,
   appNormalExit: false,
   windowNameSwitch: true,
   lastWebDomain: '',
+  isFirstClearWebCache: true,
 }

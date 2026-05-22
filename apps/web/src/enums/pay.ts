@@ -151,13 +151,27 @@ export enum SubLevelEnum {
 }
 
 export const SubLevelEnumStr = {
-  [SubLevelEnum.Free]: $t('免费'),
-  [SubLevelEnum.Expired]: $t('已过期'),
-  [SubLevelEnum.Trial]: $t('免费试用'),
-  [SubLevelEnum.Basic]: $t('基础版'),
-  [SubLevelEnum.Pro]: $t('专业版'),
-  [SubLevelEnum.Business]: $t('商业版'),
-  [SubLevelEnum.Enterprise]: $t('企业版'),
+  get [SubLevelEnum.Free]() {
+    return $t('免费')
+  },
+  get [SubLevelEnum.Expired]() {
+    return $t('已过期')
+  },
+  get [SubLevelEnum.Trial]() {
+    return $t('免费试用')
+  },
+  get [SubLevelEnum.Basic]() {
+    return $t('基础版')
+  },
+  get [SubLevelEnum.Pro]() {
+    return $t('专业版')
+  },
+  get [SubLevelEnum.Business]() {
+    return $t('商业版')
+  },
+  get [SubLevelEnum.Enterprise]() {
+    return $t('企业版')
+  },
 }
 
 /** 日志保留天数 */

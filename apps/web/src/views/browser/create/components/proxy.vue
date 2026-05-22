@@ -51,7 +51,7 @@ async function onBuyProxy() {
     const data = await getProxyVendors()
     if (!data)
       return
-    proxyProvider.value = data.find((item: any) => item.vendorName === 'Roxy IP')
+    proxyProvider.value = data.find((item: any) => item.isOfficial)
   }
 
   const provider = {

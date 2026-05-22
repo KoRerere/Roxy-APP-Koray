@@ -1,9 +1,11 @@
-import type { UserGetLlmInfoListData } from '@roxy/backend-api'
+import type { AgentMode } from './types'
 import type { UtilityProcess } from 'electron'
 import { app, utilityProcess } from 'electron'
+import { EventEmitter } from 'node:events'
 import path from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
+import { getBaseUrl, getGatewayConfig } from '/@/api/getGatewayConfig'
 import { ROXY_MCP_WINDOW_ID } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
 import { appCliStartArgs, isDev, isPackaged, isProd } from '/@/constants/common'
@@ -14,9 +16,10 @@ import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
 import { getErrorMessage } from '/@/utils'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
+import { getCommonRequestHeaders } from '/@/utils/common'
 import { aliOSS } from '/@/utils/oss'
-import { ipcSender } from '../ipc/sender'
 import { createMcpError } from './errors'
+import { mcpEventEmitter } from './event'
 
 export function getMcpWindow() {
   return getWindowById(ROXY_MCP_WINDOW_ID)
@@ -49,11 +52,11 @@ export const mcpManager = new (class McpManager {
     port: 26580,
   }
 
+  eventEmitter: EventEmitter = new EventEmitter()
+
   private mcpWorker: UtilityProcess | null = null
 
-  private llmInfo: UserGetLlmInfoListData['data'] = null!
-
-  async startMcpServer() {
+  async startMcpServer(agentModel?: AgentMode) {
     // 等待更新完毕。
     try {
       if (agentUpdater.promise) {
@@ -72,45 +75,6 @@ export const mcpManager = new (class McpManager {
       console.error('[mcp] agentUpdater.checkForUpdates error:', error)
     }
 
-    const llmInfo = await API.base.userGetLlmInfoList({})
-
-    if (llmInfo.code !== 0 || !llmInfo.data) {
-      return
-    }
-
-    this.llmInfo = llmInfo.data
-
-    // 获取 RoxyClaw 配置
-    let imConfigPayload: McpImConfigPayload | undefined
-    try {
-      const roxyClawConfig = await API.base.userGetRoxyClawList()
-      if (roxyClawConfig.code === 0 && roxyClawConfig.data) {
-        const data = roxyClawConfig.data
-        console.log('roxyClawConfig', roxyClawConfig.data)
-        imConfigPayload = {
-          enableIM: data.enabled === 1,
-          larkAppId: data.lark_app_id,
-          larkAppSecret: data.lark_app_secret,
-          larkEnvironment: data.lark_environment as 'lark' | 'feishu',
-          larkAllowedChatIds: data.lark_allowed_chat_ids,
-          tgBotToken: data.tg_bot_token,
-          tgAllowedChatIds: data.tg_allowed_chat_ids,
-          slackBotToken: data.slack_bot_token,
-          slackSigningSecret: data.slack_signing_secret,
-          slackAppToken: data.slack_app_token,
-          slackAllowedUserIds: data.slack_allowed_user_ids,
-          slackAllowedChannelIds: data.slack_allowed_channel_ids,
-          discordBotToken: data.discord_bot_token,
-          discordAllowedUserIds: data.discord_allowed_user_ids,
-          weChatBotToken: (data as any).wechat_bot_token || (data as any).wechat_bot_token,
-        }
-        console.log('RoxyClaw config loaded from backend:', imConfigPayload)
-      }
-    }
-    catch (error) {
-      console.error('[mcp] Failed to load RoxyClaw config:', error)
-    }
-
     if (this.mcpWorker) {
       return this.mcpWorker
     }
@@ -124,9 +88,6 @@ export const mcpManager = new (class McpManager {
 
     const AGENT_ENTRY_SCRIPT = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : appConfig.agentBinPath
 
-    // 开发时让 agent 能解析到 packages/roxy-agent/words（敏感词库）
-    const ROXY_AGENT_PACKAGE_ROOT = isDevelopment ? path.resolve(import.meta.dirname, '..', '..', '..', 'packages', 'roxy-agent') : undefined
-
     // 获取系统下载目录，提供给 agent 作为默认下载路径
     const DOWNLOADS_DIR = app.getPath('downloads')
 
@@ -134,6 +95,8 @@ export const mcpManager = new (class McpManager {
 
     // 提供流式输出的服务需要的端口
     const port = await getPortPromise({ port: this.config.port })
+
+    const ROXY_SERVER_URL = getBaseUrl() || await getGatewayConfig()
 
     // 启动前校验：验证本地脚本与远端 sha512 是否匹配，不匹配则自动重新下载
     if (!isDevelopment) {
@@ -159,14 +122,13 @@ export const mcpManager = new (class McpManager {
       }
     }
 
-    console.info('isProd', isProd)
-
     const env = {
       ...process.env,
       ENV_TYPE: isDevelopment ? 'development' : (isProd ? 'production' : 'staging'),
-      // LLM_BASE_URL: llmInfo.data.baseUrl,
 
       ROXY_USER_TOKEN: store.token,
+      ROXY_SERVER_URL,
+      ROXY_SERVER_HEADERS: JSON.stringify(getCommonRequestHeaders()),
 
       // openapi 和 playwright mcp 执行脚本路径，已经相关参数。
       OPENAPI_SCRIPT_PATH,
@@ -174,10 +136,12 @@ export const mcpManager = new (class McpManager {
       ROXY_API_HOST: `http://127.0.0.1:${store.apiPort}`,
       PLAYWRIGHT_SCRIPT_PATH,
 
+      AGENT_SCRIPT_PATH: AGENT_ENTRY_SCRIPT,
+
       CHECKPOINT_DIR,
 
       // agent 的工作目录
-      ROXY_AGENT_PACKAGE_ROOT,
+      // ROXY_AGENT_PACKAGE_ROOT,
 
       ROXY_SERVER_PORT: String(port),
       ROXY_USER_ID: String(store.userId),
@@ -186,31 +150,12 @@ export const mcpManager = new (class McpManager {
       // 语言
       SYSTEM_LANGUAGE: store.language,
 
-      // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
-      // DEVELOPMENT: isDevelopment ? 'true' : 'false',
-
       DOWNLOADS_DIR,
+      DESKTOP_DIR: app.getPath('desktop'),
       SKILLS_DIR: agentUpdater.agentDir,
 
-      // 启动模式：启用 IM 时以 im 模式运行，否则以 agent 模式运行（两者互斥，只有一个进程）
-      ROXY_MODE: imConfigPayload?.enableIM ? 'im' : 'agent',
-
-      ENABLE_IM: imConfigPayload?.enableIM,
-      FEISHU_APP_ID: imConfigPayload?.larkAppId,
-      FEISHU_APP_SECRET: imConfigPayload?.larkAppSecret,
-      FEISHU_ENVIRONMENT: imConfigPayload?.larkEnvironment,
-      FEISHU_ALLOWED_USER_IDS: imConfigPayload?.larkAllowedChatIds,
-      TELEGRAM_BOT_TOKEN: imConfigPayload?.tgBotToken,
-      TELEGRAM_ALLOWED_CHAT_IDS: imConfigPayload?.tgAllowedChatIds,
-      SLACK_BOT_TOKEN: imConfigPayload?.slackBotToken,
-      SLACK_SIGNING_SECRET: imConfigPayload?.slackSigningSecret,
-      SLACK_APP_TOKEN: imConfigPayload?.slackAppToken,
-      SLACK_ALLOWED_USER_IDS: imConfigPayload?.slackAllowedUserIds,
-      SLACK_ALLOWED_CHANNEL_IDS: imConfigPayload?.slackAllowedChannelIds,
-      DISCORD_BOT_TOKEN: imConfigPayload?.discordBotToken,
-      DISCORD_ALLOWED_USER_IDS: imConfigPayload?.discordAllowedUserIds,
-      WECHAT_BOT_TOKEN: imConfigPayload?.weChatBotToken,
-      // ROXY_DOCS_MCP_URL: import.meta.env.VITE_ROXY_DOCS_MCP_URL,
+      // // 启动模式：启用 IM 时以 im 模式运行，否则以 agent 模式运行（两者互斥，只有一个进程）
+      ROXY_MODE: agentModel || 'agent',
     }
 
     // 清理和验证环境变量 - 只保留有效的值
@@ -228,7 +173,7 @@ export const mcpManager = new (class McpManager {
 
     const worker = utilityProcess.fork(AGENT_ENTRY_SCRIPT, [], {
       env,
-      execArgv: appCliStartArgs['roxy-log-level'] === 'debug' || isDev ? ['--inspect=20580', '--experimental-network-inspection'] : [],
+      execArgv: [isProd ? '--inspect=20580' : '--inspect=20581', '--experimental-network-inspection', '--experimental-strip-types'],
       stdio: 'pipe',
     })
 
@@ -252,10 +197,11 @@ export const mcpManager = new (class McpManager {
         case 'save_chat_message':
           this.handleSaveChatMessage(message)
           break
-        case 'token_usage_change':
-          this.handleTokenUsage(message)
-          break
       }
+    })
+
+    mcpEventEmitter.on('baseUrlChanged', (baseUrl) => {
+      worker.postMessage({ data: { baseUrl } })
     })
 
     return worker
@@ -345,35 +291,6 @@ export const mcpManager = new (class McpManager {
     }
   }
 
-  /**
-   * 计算消费 token 数量（每次 LLM 调用后立即扣钱）
-   * @param message
-   */
-  private async handleTokenUsage(message: { event: 'token_usage_change', data: { input_tokens: number, output_tokens: number } }) {
-    console.log('llm token usage message:', message)
-    try {
-      const res = await API.base.userCalcLlmTokenCostCreate({
-        provider: this.llmInfo.provider || 'siliconflow',
-        model: this.llmInfo.model || 'Pro/deepseek-ai/DeepSeek-V3.2',
-        inputToken: message.data.input_tokens,
-        outputToken: message.data.output_tokens,
-      })
-
-      if (res.code === 0) {
-        this.mcpWorker?.postMessage({ event: 'change_balance', data: { balance: res.data.balance } })
-        // ipcMain.send('mcp:token-usage', { ...res.data })
-        ipcSender.mcp.tokenUsage({ ...res.data })
-        this.llmInfo.balance = res.data.balance
-      }
-      else {
-        console.error('llm token usage error:', res.msg)
-      }
-    }
-    catch (error) {
-      console.error('llm token usage error:', error)
-    }
-  }
-
   closeMcpServer() {
     if (this.mcpWorker) {
       this.mcpWorker.kill()
@@ -391,10 +308,13 @@ export const mcpManager = new (class McpManager {
   }
 })()
 
-export async function createMcpWindow() {
+export async function createMcpWindow(scene?: string) {
   const targetWin = getMcpWindow()
 
   if (targetWin) {
+    if (scene) {
+      targetWin.loadURL(`${await getWebEntryUrl('mcp')}?scene=${scene}`)
+    }
     targetWin.show()
     return
   }
@@ -403,9 +323,9 @@ export async function createMcpWindow() {
     roxyWindowId: ROXY_MCP_WINDOW_ID,
     autoHideMenuBar: true,
     width: 960,
-    height: 624,
+    height: 720,
     minWidth: 960,
-    minHeight: 624,
+    minHeight: 720,
     // resizable: false,
     // frame: false,
     // alwaysOnTop: false,
@@ -424,7 +344,7 @@ export async function createMcpWindow() {
     win.destroy()
   })
 
-  win.loadURL(await getWebEntryUrl('mcp'))
+  win.loadURL(`${await getWebEntryUrl('mcp')}${scene ? `?scene=${scene}` : ''}`)
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);

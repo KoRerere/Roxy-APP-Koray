@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { getImage, safeParseJSON } from '/@/utils/basic'
 import ActivityModal from './activity-modal.vue'
 import { useDialog } from '/@/hooks/useDialog'
 // import { useUserStore } from '/@/stores/user'
-import { safeParseJSON } from '/@/utils/basic'
 
 const { collapsed = false, localStorageKey } = defineProps<{
   collapsed?: boolean
@@ -48,12 +48,12 @@ function openModal(force = false) {
 
 <template>
   <div class="relative h-8.5 flex items-center justify-center rounded-1.5 select-none cursor-pointer overflow-hidden" @click="openModal(true)">
-    <img v-if="collapsed" class="block h-full aspect-square" src="/images/campaing/freedom/palm_tree_icon.svg">
+    <img v-if="collapsed" class="block h-full aspect-square" :src="getImage('campaing/freedom/palm_tree_icon.svg')">
     <template v-else>
       <div class="relative w-full px-3 z-1 text font-['DingTalk_JinBuTi']">
         {{ $t('五月自由季') }}
       </div>
-      <img draggable="false" class="absolute inset-0 w-full h-full" src="/images/campaing/freedom/mid_bg.png">
+      <img draggable="false" class="absolute inset-0 w-full h-full" :src="getImage('campaing/freedom/mid_bg.png')">
       <SvgIcon class="absolute w-8.5 h-8.5 right-1 -bottom-0.5" name="other/palm_tree" size="34" />
     </template>
   </div>

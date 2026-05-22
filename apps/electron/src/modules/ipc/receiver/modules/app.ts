@@ -6,14 +6,22 @@ import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { proxyManager } from '/@/modules/app/proxy-manager'
 import { cancelQuit, confirmQuit } from '/@/modules/app/utils'
-import { browserManager, coreManager } from '/@/modules/browser'
+import { coreManager } from '/@/modules/browser'
+import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { startMoveWindow, stopMoveWindow } from '/@/modules/ipc/utils'
 import { openAPIServer } from '/@/modules/openapi'
 import { setSystemProxy } from '/@/modules/roxynet'
-import { fetchUserConfig, setUserConfig, store } from '/@/modules/store'
+import { cancelRestoreLastWindowOpenStatus, fetchUserConfig, getRestoreLastWindowOpenStatusOnException, restoreLastWindowOpenStatusResolver, setUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
+
+let appIdleState = false
+
+/** 获取 APP 当前是否为空闲状态 */
+export function getAppIdleState() {
+  return appIdleState
+}
 
 export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取应用版本号 */
@@ -82,12 +90,12 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 重新获取更新信息，如：APP、内核等版本升级信息 */
-  ipcMain.on('app:reGetUpdateInfo', (event, type) => {
+  ipcMain.on('app:reGetUpdateInfo', (event, type, coreType: CoreType = CoreType.Chrome) => {
     if (type === 'app') {
       return appUpdater.init()
     }
     else if (type === 'kernel') {
-      return coreManager.fetchAvailableCoreList()
+      return coreManager.getCoreManager(coreType).fetchAvailableCoreList()
     }
   })
 
@@ -115,22 +123,20 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 下载指定的内核 */
-  ipcMain.on('app:download-chrome-core', (event, coreVersion) => {
-    return coreManager.getCoreManager('chrome').downloadCore({ coreVersion }).catch((error) => {
-      console.error('app:download-chrome-core error', error)
-    })
+  ipcMain.on('app:download-chrome-core', (event, coreVersion, coreType: CoreType = CoreType.Chrome) => {
+    return coreManager.getCoreManager(coreType).downloadCore({ coreVersion })
   })
 
   /** 取消下载指定的内核 */
-  ipcMain.on('app:cancel-download-chrome-core', (event, coreVersion) => {
-    return coreManager.getCoreManager('chrome').cancelDownloadCore(coreVersion).catch((error) => {
+  ipcMain.on('app:cancel-download-chrome-core', (event, coreVersion, coreType: CoreType = CoreType.Chrome) => {
+    return coreManager.getCoreManager(coreType).cancelDownloadCore(coreVersion).catch((error) => {
       console.error('app:cancel-download-chrome-core error', error)
     })
   })
 
   /** 删除指定内核 */
-  ipcMain.on('app:delete-chrome-core', (event, coreVersion) => {
-    return coreManager.getCoreManager('chrome').deleteCore(coreVersion)
+  ipcMain.on('app:delete-chrome-core', (event, coreVersion, coreType: CoreType = CoreType.Chrome) => {
+    return coreManager.getCoreManager(coreType).deleteCore(coreVersion)
   })
 
   /** 获取本机 mac address */
@@ -319,5 +325,33 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('app:uninstall-cancelled', async (event) => {
     console.log('Uninstall cancelled by user')
     cancelQuit()
+  })
+
+  /** 设置 APP 当前是否为空闲状态 */
+  ipcMain.on('app:setIdleState', (event, idle: boolean) => {
+    appIdleState = idle
+    if (idle) {
+      appUpdater.installUpdateWhenIdle()
+    }
+  })
+
+  /** 恢复窗口函数是否准备好了 */
+  ipcMain.on('app:restoreLastWindowOpenStatusReady', (event) => {
+    return restoreLastWindowOpenStatusResolver.promise
+  })
+
+  /** 检查是否需要恢复窗口 */
+  ipcMain.on('app:checkNeedRestoreWindow', (event) => {
+    return getRestoreLastWindowOpenStatusOnException() !== null
+  })
+
+  /** 恢复窗口 */
+  ipcMain.on('app:restoreWindow', async (event) => {
+    return getRestoreLastWindowOpenStatusOnException()?.()
+  })
+
+  /** 取消恢复窗口 */
+  ipcMain.on('app:cancelRestoreWindow', (event) => {
+    cancelRestoreLastWindowOpenStatus()
   })
 }

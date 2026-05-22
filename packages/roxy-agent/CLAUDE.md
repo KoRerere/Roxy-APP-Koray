@@ -35,7 +35,6 @@ const worker = utilityProcess.fork(AGENT_ENTRY_SCRIPT, [], {
 
 **子进程与主进程通信**（`worker.on('message', ...)`）：
 - `save_chat_message`：保存对话消息到后端 + 阿里云 OSS
-- `token_usage_change`：计算 token 消耗，扣除余额，通知前端
 
 **脚本路径**：
 - 开发环境：`apps/electron/src/modules/mcp/` 下的 `agent.mjs` / `openapiMcp.mjs` / `playwrightMcp.mjs`

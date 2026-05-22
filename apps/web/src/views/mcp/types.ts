@@ -6,6 +6,27 @@ export interface AttachmentInfo {
   size: number
   /** 用于展示的 URL（图片预览或服务器文件地址） */
   url?: string
+  preview?: string
+  source?: 'upload' | 'generated'
+}
+
+export type InputScene = 'automation' | 'asset'
+
+export interface AssetGenerationOptions {
+  aspectRatio: string
+  quality: string
+  count: string
+}
+
+export interface GeneratedImageInfo {
+  fileId: string
+  fileName: string
+  mimeType?: string
+  size?: number
+  url?: string
+  prompt?: string
+  /** true 表示该图片仍在生成中（占位状态） */
+  isPending?: boolean
 }
 
 // HITL 决策类型
@@ -19,9 +40,10 @@ export interface HitlDecision {
 
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'title' | 'hitl_interrupt' | 'hitl_resume'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
   data?: {
     sessionId?: string
+    workerId?: string
     toolId?: string
     toolName?: string
     args?: Record<string, any>
@@ -39,6 +61,13 @@ export interface SSEEventData {
     title?: string
     interruptsId?: string
     decisions?: HitlDecision[]
+    // image generation
+    count?: number
+    index?: number
+    image?: GeneratedImageInfo
+    images?: GeneratedImageInfo[]
+    model?: string
+    revisedPrompt?: string
   }
   timestamp?: number
 }
@@ -87,8 +116,16 @@ export interface ToolCallBlock {
   taskId?: string
 }
 
+// Image 消息块（图片生成结果）
+export interface ImageBlock {
+  type: 'image'
+  images: GeneratedImageInfo[]
+  /** true 表示仍在生成中（占位状态） */
+  isPending?: boolean
+}
+
 // 消息块联合类型
-export type MessageBlock = ThinkingBlock | ContentBlock | ToolCallBlock
+export type MessageBlock = ThinkingBlock | ContentBlock | ToolCallBlock | ImageBlock
 
 // 工具调用 (保留用于 WorkerTask 内部)
 export interface ToolCall {
@@ -165,6 +202,7 @@ export type MessageType
     | 'error'
     | 'interrupt'
     | 'hitl_interrupt'
+    | 'image'
 
 export type TodoStatus = 'pending' | 'in_progress' | 'completed'
 
@@ -225,6 +263,8 @@ export interface FormattedMessage extends AvatarInfo {
   synthesisText?: string
   mode?: string
   messageBlocks?: MessageEntryView[]
+  /** @deprecated 已统一到 messageBlocks 中的 image 块，仅保留用于旧历史格式兼容 */
+  generatedImages?: GeneratedImageInfo[]
   isStreaming?: boolean
   endStatus?: ReplyEndStatus
   errorMessage?: string

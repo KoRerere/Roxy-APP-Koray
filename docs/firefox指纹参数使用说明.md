@@ -2,7 +2,7 @@
 ```RoxyFirefox -profile data-dir  --remote-debugging-port=0  url1 url2 ...```
 ## 参数说明:
 - ```-profile data-dir``` 指定数据目录，每个窗口一个，与chrome的user-data-dir意义一样，启动之前先创建data-dir目录，将加密后的指纹内容写入 ```data-dir/lumi.conf```中
-- 指纹加密方法：```des-cbc```，key:```402ead7d```, iv: ```3a105229```
+- 指纹加密方法(与chrome相同)：```aes-256-gcm```，key:```402ead7d23b43b6d1e0528d4f99c59bd```, iv: ```3a105229aa31```
 - ```--remote-debugging-port=0``` 自动生成调试端口，stderr会输出：WebDriver BiDi listening on ws://127.0.0.1:59935，后续用这个ws接口来做自动化
 - ```url1 url2``` 启动时要打开的网址
 
@@ -68,70 +68,71 @@
 # 6. 指纹参数
 ```json
 {
-	"userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.5; rv:132.0) Gecko/20100101 Firefox/132.0",
+	"userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",   
 	"navigator": {
-		"platform": "Linux x86_64",  // 平台：windows：Win32, Mac: MacIntel, Linux: Linux x86_64, IOS:iPhone, Android: Linux armv81
-		"hardwareConcurrency": 4,
-		"maxTouchPoints": 5,		// 移动端使用，IOS填 5，adnroid： ？
-		"deviceMemory": 16,
-		"mobile":false				// 是否为移动端，为true的时候会自动打开仿真页面
+		"platform": "Linux x86_64",     // Linux: Linux x86_64 , Windows: Win32, mac: MacIntel, android: Linux armv81, ios: iPhone
+		"hardwareConcurrency": 4,       // cpu核数，与chrome相同
+		"maxTouchPoints": 5,			// 模拟android和ios的时候填：5 ， 其他填 0 
+		"deviceMemory": 16,				// 内存与chrome相同
+		"mobile":false					// 是否为移动端
 	},
-	"windowNum": 22,                        // 窗口编号
-	"timeZone": "America/New_York",         // 时区
-	"browserIconPath": "D:\\lumi.ico",      // 任务栏图标
-	"appLocale": "zh-CN",                   // 界面语言
-	"acceptLang": "en-US",                  // acceptLang 语言
-	"audioBuffer": {                        // audio指纹
-		"enableAudioBufferNoise": true,
-		"audioBufferNoiseValue": 0.213254345
+	"windowNum": 22,					// 窗口编号
+	"timeZone": "America/Chicago",		// 时区，与chrome取法相同
+	"browserIconPath": "D:\\lumi.ico",	// 任务栏图标
+	"appLocale": "zh-CN",				// 界面语言
+	"acceptLang": "en-US",				// js语言
+	"audioBuffer": {					
+		"enableAudioBufferNoise": false,
+		"audioBufferNoiseValue": 0.213254345		// 0-1之间随机
 	},
-	"canvasContext": {                      // canvas指纹
+	"canvasContext": {
 		"enableCanvasContextNoise": true,
-		"canvasContextNoiseValue": 0.2034342344
+		"canvasContextNoiseValue": 0.2034342344 	// 0-1之间随机
 	},
-	"clientRects": {                        // clientRects指纹
+	"clientRects": {
 		"enable": true,
-		"clientRectsNoiseFactorX": 0.1,
-		"clientRectsNoiseFactorY": 0.0093456
+		"clientRectsNoiseFactorX": 0.1,			// 0-1之间随机
+		"clientRectsNoiseFactorY": 0.0093456	// 0-1之间随机
 	},
-	"webGL": {                              // webGl指纹
+	"webGL": {									// webgl 与chrome相同
 		"enableWebGLRendererNoise": true,
 		"webglRenderer": "ANGLE (INTEL, INTEL GeForce GTX 1660 Ti (0x00002182) Direct3D11 vs_5_0 ps_5_0, D3D11)",
 		"webglVendor": "Google Inc. (INTEL1)",
 		"webGLRendererNoiseValue": 0.2343546
 	},
-	"geoLocation": {                        // 地理位置
-		"mode":"disable",                   // disable：禁止，其他的值表示允许，
-		"enableFakeLocationData": true,     // 决定是否用下面的值来替换真实值
+	"geoLocation": {						// 地址位置 与chrome相同
+		"mode":"allow",
+		"enableFakeLocationData": true,
 		"locationLatitude": 33.5828,
 		"locationLongitude": -111.898,
 		"locationAccuracy": 0,
 		"locationAltitude": 0
 	},
-	"doNotTrack": true,             
-	"imageSizeLimit": -1,                   // 禁止加载指定大小的图片，-1表示不禁止，单位KB
-	"fproxy": {                             // 代理支持 http,https,socks5，不设置表示不走代理
-		"host": "gate.rola.vip",
-		"port": 1000,
-		"username": "rola690_2344-country-us",
-		"password": "isdufh984e",
+	"doNotTrack": true,
+	"imageSizeLimit": -1,
+	"disablePlayVideo": false,
+	"fproxy": {
+		"host": "66.80.103.23",
+		"port": 5782,
+		"username": "rq9kusin",
+		"password": "4FtymAboDQ1i",
 		"type": "http",
 		"proxyByPassList": "*.ip123.in,*.travel-eye.org"
 	},
-	"portScan": {                           // 端口扫描保护
+	"portScan": {
 		"enablePortScanWhiteList": true,
 		"portScanWhiteList": "8080"
 	},
-	"screen": {                             // 屏幕指纹
+	"screen": {
 		"pixelDepth": 48,
 		"colorDepth": 48,
-		"width": 1000,
-		"height": 1000,
-		"availWidth": 1000,
-		"availHeight": 1000,
+		"width": 428,
+		"height": 926,
+		"availWidth": 428,
+		"availHeight": 926,
 		"devicePixelRatio": 1
 	},
-	"speechSynthesis": {                    // speech指纹
+	"speechSynthesis": {     // 用chome语音修改
 		"enable": true,
 		"voices": [
 			{
@@ -156,15 +157,15 @@
 			}
 		]
 	},
-	"webrtc": {             
-		"mode": "altered",      // 禁止：disable，替换：altered，跟随系统：real
+	"webrtc": {
+		"mode": "altered",
 		"loaclIP": "2603:800c:4840:88:ec8f:1c67:f09b:e90",
 		"remoteIP": "2603:800c:4840:88:ec8f:1c67:f09b:e90"
 	},
-	"allowDomains": [],         // 域名白名单
-	"disableDomains": [],       // 域名黑名单
+	"allowDomains": [],				
+	"disableDomains": [],
 	"blockDomainPageFile": "D:\\RoxybrowserDev1\\resources\\app.asar.unpacked\\dist\\web\\blockDomain.html",
-	"autofillWebSiteMult": [    // 账号平台，自动填充账号密码
+	"autofillWebSiteMult": [
 		{
 			"url": "http://admin1.rola-ip.co",
 			"username": "aws",
@@ -178,13 +179,21 @@
 	],
 	"disablePlayVideo": true,
 	"disablePlaySound": true,
-	"disablePasswordSaveTips":false,
+	"disablePasswordSaveTips1":false,
 	"allowFontList": "Al Bayan;Al Nile;Al Tarikh;American Typewriter;Andale Mono;Apple Braille;Apple Chancery;Apple Color Emoji;Apple SD Gothic Neo;Apple Symbols;AppleGothic;AppleMyungjo;Arial Black;Arial Hebrew;Arial Narrow;Arial Rounded MT Bold;Arial Unicode MS;Arial;Avenir Next Condensed;Avenir Next;Avenir;Ayuthaya;Baghdad;Bangla MN;Bangla Sangam MN;Baskerville;Beirut;Big Caslon;Bodoni Ornaments;Bradley Hand;Brush Script MT;Chalkboard SE;Chalkboard;Chalkduster;Cochin;Comic Sans MS;Copperplate;Corsiva Hebrew;Courier New;Damascus;DecoType Naskh;Devanagari MT;Devanagari Sangam MN;Didot;Diwan Kufi;Diwan Thuluth;Euphemia UCAS;Farah;Farisi;Futura;GB18030 Bitmap;Geeza Pro;Geneva;Georgia;Gill Sans;Gujarati MT;Gujarati Sangam MN;Gurmukhi MN;Gurmukhi MT;Gurmukhi Sangam MN;Heiti SC;Helvetica Neue;Helvetica;Herculanum;Hiragino Sans GB;Hiragino Sans;Hoefler Text;ITF Devanagari;Impact;InaiMathi;Kannada MN;Kefa;Khmer MN;Khmer Sangam MN;Kohinoor Bangla;Kohinoor Telugu;Kokonor;Krungthep;KufiStandardGK;Lao MN;Lao Sangam MN;Lucida Grande;Luminari;Marker Felt;Menlo;Microsoft Sans Serif;Mishafi Gold;Monaco;Mshtakan;Muna;Nadeem;New Peninim MT;Noteworthy;Optima;Oriya Sangam MN;PT Mono;PT Sans Caption;PT Sans Narrow;PT Sans;PT Serif Caption;PT Serif;Palatino;Papyrus;Phosphate;PingFang HK;Plantagenet Cherokee;Raanana;STIXGeneral;STIXIntegralsD;STIXIntegralsSm;STIXIntegralsUp;STIXIntegralsUpD;STIXIntegralsUpSm;STIXSizeFiveSym;STIXSizeFourSym;STIXSizeOneSym;STIXSizeThreeSym;STIXSizeTwoSym;STIXVariants;STSong;Sana;Sathu;Savoye LET;SignPainter;Silom;Sinhala Sangam MN;Skia;Snell Roundhand;Songti SC;Sukhumvit Set;Symbol;Tahoma;Tamil Sangam MN;Telugu Sangam MN;Thonburi;Trattatello;Trebuchet MS;Verdana;Waseem;Zapfino;Charter;DIN Alternate;DIN Condensed;Noto Nastaliq Urdu;Rockwell;Zapf Dingbats;Courier;BlinkMacSystemFont;Mishafi;Myanmar MN;Myanmar Sangam MN;Oriya MN;Songti TC;Tamil MN;Telugu MN;Webdings;Wingdings;NSimsun;Simsun;Noto Sans SC",
-	"windowName":"窗口名称",
-	"simulation": {  // 粘贴仿真
-        "delay": 200,
+	"windowName":"测试窗口名称",
+	"simulation": {			// 粘贴仿真
+        "minDelay": 200,
+        "maxDelay":500,
         "enable": true,
         "shortcutKey": "Ctrl Shift E"
-    }
+    },
+	"sessionStorageSync": {			// session  storage 同步
+		"enable":true,
+		"allowDomains":["ip123.in"]
+	},
+  "searchEngine": {				// 搜索引擎
+    "name": "Google"
+  }
 }
 ```

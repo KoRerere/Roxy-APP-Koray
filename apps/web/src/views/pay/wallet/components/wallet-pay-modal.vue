@@ -33,7 +33,7 @@ const loading = ref(false)
 const isAuto = ref(showAutoRenew ? !!userPayInfo.value.isAuto : false)
 
 const imgSrc = computed(() => {
-  return new URL(`../../../../assets/images/${realTheme.value === 'light' ? 'empty' : 'empty-dark'}/wallet.svg`, import.meta.url).href
+  return new URL(`../../../../assets/icons/${realTheme.value === 'light' ? 'empty' : 'empty-dark'}/wallet.svg`, import.meta.url).href
 })
 
 const finalResult = computed(() => {

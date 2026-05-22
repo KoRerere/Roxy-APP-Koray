@@ -127,8 +127,14 @@ export function createDefaultObject<T extends string[], U>(keys: T, defaultValue
   return keys.reduce((res, key) => ({ ...res, [key]: defaultValue }), {} as { [K in T[number]]: U })
 }
 
+const images = import.meta.glob('/src/assets/images/**/*', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+})
+
 export function getImage(path: string) {
-  return new URL(`../assets/images/${path}`, import.meta.url).href
+  return images[`/src/assets/images/${path}`] as string ?? ''
 }
 
 export function deepClone<T>(source: T, hash = new WeakMap()): T {

@@ -9,13 +9,38 @@ import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
-const props = defineProps<{
+const { upgradeList } = defineProps<{
   upgradeList: ResourceUpdateMessage[]
 }>()
 
 const confirm = useConfirm()
 const userStore = useUserStore()
-const { getOfficialWebsite } = useSimpleLocale()
+const { currentLocale, getOfficialWebsite } = useSimpleLocale()
+
+const updateFeature = ref()
+const updateSummary = ref()
+
+watchEffect(async () => {
+  console.debug('upgradeList', upgradeList)
+  const appUpdate = upgradeList?.find(item => item.type === 'app')
+  if (appUpdate) {
+    getUpdateSummary()
+    console.debug('updateFeature', updateFeature.value, !updateFeature.value)
+    if (!appUpdate.upgradeContent) {
+      return
+    }
+
+    const div = document.createElement('div')
+    div.innerHTML = appUpdate.upgradeContent
+
+    const selectors: Array<'h3' | 'h4' | 'p'> = ['h3', 'h4', 'p']
+    const matched = selectors.find(sel => div.querySelector(sel))
+
+    updateSummary.value = matched
+      ? Array.from(div.querySelectorAll(matched), el => plainTextsFromElement(el)).flat().filter(Boolean)
+      : [$t('最新版本已发布，请更新客户端以保持稳定性并享受最新功能。')]
+  }
+})
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -78,11 +103,45 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 }
 
 async function showLastUpdateLog() {
-  const result = await electronAPI.send('app:getLastUpdateFeature')
-  const newFeatureTips = result?.filter((item: any) => item.content?.length)
+  updateFeature.value ??= await electronAPI.send('app:getLastUpdateFeature')
+  const localFeature = updateFeature.value.newFeatureTips?.[currentLocale]
+  const localContent = localFeature?.[0]?.content ? localFeature : []
+  const newFeatureTips = localContent?.filter((item: any) => item.content?.length)
+  console.debug('newFeatureTips', newFeatureTips)
   if (newFeatureTips?.length) {
     emitter.emit('showAppUpgradeDialog', newFeatureTips)
   }
+}
+
+function normalizePlainText(text: string): string {
+  return text
+    .replace(/\u00A0/g, ' ')
+    .replace(/[\n\r\t]+/g, ' ')
+    .trim()
+}
+
+/** 抽取块内文案：忽略内部任意嵌套标签（如 strong），等价于取子树全部文本节点后拼接 */
+function plainTextFromElement(el: Element): string {
+  return normalizePlainText(el.textContent ?? '')
+}
+
+/** 抽取块内文案列表：含 br 时按行拆分，兼容单 p 内多行与多个 p 两种格式 */
+function plainTextsFromElement(el: Element): string[] {
+  if (!el.querySelector('br')) {
+    const text = plainTextFromElement(el)
+    return text ? [text] : []
+  }
+
+  const clone = el.cloneNode(true) as Element
+  clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'))
+  return (clone.textContent ?? '')
+    .split('\n')
+    .map(normalizePlainText)
+    .filter(Boolean)
+}
+
+async function getUpdateSummary() {
+  updateFeature.value ??= await electronAPI.send('app:getLastUpdateFeature')
 }
 </script>
 
@@ -90,14 +149,22 @@ async function showLastUpdateLog() {
   <div class="flex flex-col items-start self-stretch gap-3 min-h-65">
     <template v-if="upgradeList.length">
       <template v-for="item in upgradeList" :key="item.releaseTime">
-        <div v-if="item.type === 'app'" class="w-full flex flex-col items-center gap-6 pa-6 app">
-          <MotionArrow class="mx-auto" />
-          <div class="flex flex-col gap-1.5">
-            <div class="app-title">
-              {{ $t('有新的更新可用') }}
+        <div v-if="item.type === 'app'" class="w-full flex flex-col items-center gap-5 pa-6 app">
+          <div class="flex flex-col gap-2">
+            <MotionArrow class="mx-auto" />
+            <div class="tt-primary font-[JetBrains_Mono] font-700 text-center text-4 leading-5">
+              v{{ userStore.appVersion }} -> v{{ item.version }}
             </div>
-            <div class="app-desc">
-              {{ $t('最新版本 v{version} 已发布，请更新客户端以保持稳定性并享受最新功能。', { version: item.version }) }}
+          </div>
+
+          <div class="flex flex-col gap-3 w-full">
+            <div class="tt-primary text-3.5 leading-5.5 font-600">
+              {{ $t('Roxy浏览器 v{version} 现已发布', { version: item.version }) }}
+            </div>
+            <div v-if="false" class="flex flex-col gap-1.5">
+              <div v-for="str in updateSummary" :key="str" class="tt-secondary text-3.25 leading-4.5">
+                {{ str }}
+              </div>
             </div>
           </div>
           <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)" />
@@ -154,21 +221,6 @@ async function showLastUpdateLog() {
 </template>
 
 <style lang="scss" scoped>
-.app {
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 16px;
-  }
-
-  &-desc {
-    color: var(--colors-text-text-secondary);
-    font-size: 12px;
-    line-height: 18px;
-  }
-}
-
 .patch {
   border-bottom: 1px solid var(--component-dropdown-divider, #e2e9ee);
 

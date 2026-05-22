@@ -132,7 +132,7 @@ const config: UserConfig = {
   },
 
   optimizeDeps: {
-    include: [...primevueComponents],
+    include: [...primevueComponents, 'cobe'],
   },
 
   build: {
@@ -201,7 +201,7 @@ const config: UserConfig = {
       sourceLang: 'zh-CN',
     }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
-    uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
+    uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/icons') }),
     svgLoader({
       svgoConfig: {
         plugins: [
@@ -222,7 +222,7 @@ export type SvgNames = ${typeDefine}`
 
               return (root, params, info) => {
                 const name = info.path
-                  ?.split('assets/images/')
+                  ?.split('assets/icons/')
                   .at(1)
                   ?.replace('.svg', '')
                 name && nameSet.add(name)
@@ -235,7 +235,7 @@ export type SvgNames = ${typeDefine}`
                         node.attributes.height = '1em'
                       }
                       // // 基础图标的颜色使用当前颜色
-                      // if (info.path?.includes('assets/images/base/')
+                      // if (info.path?.includes('assets/icons/base/')
                       //   && node.attributes.fill
                       //   && node.name === 'path') {
                       //   node.attributes.fill = 'currentColor'

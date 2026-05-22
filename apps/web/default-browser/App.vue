@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AnimatePresence, motion } from 'motion-v'
-import { isMacOS } from '/@/utils'
+import { getImage, isMacOS } from '/@/utils'
 import type { BrowserProcessMessage } from '@roxy/electron-preload'
 
 const startTime = Date.now()
@@ -79,22 +79,16 @@ async function closeWindow(force = false) {
 
 <template>
   <div class="drag-region-top">
-    <RxButton v-if="!isMacOS" class="close no-drag" text severity="secondary" icon="base/rx_ic_delete" size="xxs"
-              @click="closeWindow(true)"
-    />
+    <RxButton v-if="!isMacOS" class="close no-drag" text severity="secondary" icon="base/rx_ic_delete" size="xxs" @click="closeWindow(true)" />
   </div>
   <div class="openning-screen">
-    <motion.div
-      :initial="{ rotate: 45, scale: 0.96, opacity: 0 }"
-      :animate="{ rotate: -315, scale: 1, opacity: 1 }"
-      :transition="{
-        rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
-        scale: { duration: 0.64, delay: 0.4 },
-        opacity: { duration: 0.64, delay: 0.4 },
-      }"
-      class="roxychrome"
+    <motion.div :initial="{ rotate: 45, scale: 0.96, opacity: 0 }" :animate="{ rotate: -315, scale: 1, opacity: 1 }" :transition="{
+      rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
+      scale: { duration: 0.64, delay: 0.4 },
+      opacity: { duration: 0.64, delay: 0.4 },
+    }" class="roxychrome"
     >
-      <img src="/images/default-browser/roxychrome.svg" alt="">
+      <img :src="getImage('default-browser/roxychrome.svg')">
     </motion.div>
     <div class="info-container">
       <motion.h1 :initial="{ x: -10, opacity: 0 }" :animate="{ x: 0, opacity: 1 }" :transition="{ duration: 0.32, delay: 0.1 }">
@@ -102,13 +96,7 @@ async function closeWindow(force = false) {
       </motion.h1>
       <motion.div :initial="{ x: -10, opacity: 0 }" :animate="{ x: 0, opacity: 1 }" :transition="{ duration: 0.32, delay: 0.2 }">
         <AnimatePresence mode="wait">
-          <motion.p
-            :key="currentText"
-            :initial="{ y: 6, opacity: 0 }"
-            :animate="{ y: 0, opacity: 1 }"
-            :exit="{ y: -6, opacity: 0 }"
-            :transition="{ duration: 0.48, ease: [0, 0.71, 0.2, 1.01] }"
-          >
+          <motion.p :key="currentText" :initial="{ y: 6, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :exit="{ y: -6, opacity: 0 }" :transition="{ duration: 0.48, ease: [0, 0.71, 0.2, 1.01] }">
             {{ currentText }}
             <template v-if="kernelDownloadPercent !== null && kernelDownloadPercent > 0 && kernelDownloadPercent < 100">
               ... {{ kernelDownloadPercent }}%
@@ -159,6 +147,7 @@ async function closeWindow(force = false) {
       user-select: none;
       -webkit-user-drag: none;
     }
+
     position: absolute;
     top: -60px;
     left: -160px;

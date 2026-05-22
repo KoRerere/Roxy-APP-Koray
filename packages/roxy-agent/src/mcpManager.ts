@@ -3,23 +3,21 @@
  *
  * 三类 MCP 的生命周期：
  *
- * 1. openapi MCP  —— 走 InMemoryTransport，全局共享，无需额外进程
+ * 1. 全局 MCP（openapi / faq）—— 见 globalMcpClients.ts，全局共享，无需进程隔离
  * 2. playwright MCP —— 每个 worker 独立 stdio 子进程，随 worker 创建/销毁（浏览器上下文隔离）
  * 3. 用户自定义 MCP —— stdio / sse / http，全局共享连接，通过配置文件持久化，支持启用/禁用
  */
 
-import type { DynamicStructuredTool, StructuredTool } from '@langchain/core/tools'
+import type { StructuredTool } from '@langchain/core/tools'
 import type { Connection } from '@langchain/mcp-adapters'
-import { loadMcpTools, MultiServerMCPClient } from '@langchain/mcp-adapters'
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { RoxyBrowserMCPServer } from '@roxybrowser/openapi'
+import { MultiServerMCPClient } from '@langchain/mcp-adapters'
 import { createHash } from 'node:crypto'
-import { existsSync, readFile, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile as readFileAsync } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from './config'
 import { wrapToolsWithErrorHandling } from './deepagents/tool-wrapper'
+import { getGlobalMcpTools } from './globalMcpClients'
 
 // ─────────────────────────────────────────────
 // 工具函数
@@ -136,25 +134,6 @@ interface UserMcpStateFile {
     createdAt?: number
     lastTestResult?: McpTestResult
   }>
-}
-
-// ─────────────────────────────────────────────
-// Openapi MCP（in-memory，全局共享）
-// ─────────────────────────────────────────────
-
-/**
- * 创建 roxybrowser openapi MCP 工具列表（in-memory 协议，无子进程）
- */
-export async function getRoxyLangChainTools(): Promise<DynamicStructuredTool[]> {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
-  const roxyServer = new RoxyBrowserMCPServer()
-  await roxyServer.connect(serverTransport)
-  const mcpClient = new Client(
-    { name: 'roxybrowser-openapi-mcp', version: '1.0.0' },
-    { capabilities: {} },
-  )
-  await mcpClient.connect(clientTransport)
-  return loadMcpTools('roxybrowser', mcpClient as any)
 }
 
 // ─────────────────────────────────────────────
@@ -342,12 +321,12 @@ export class McpManager {
    *   openapi (in-memory) + playwright (per-worker) + 启用的用户自定义 MCP
    */
   async getToolsForWorker(workerId: string): Promise<StructuredTool[]> {
-    const openapiTools = await getRoxyLangChainTools()
+    const globalTools = await getGlobalMcpTools()
     const playwrightTools = this.workerPlaywrightTools.get(workerId) ?? []
     const userTools = this._getEnabledUserMcpTools()
 
     return wrapToolsWithErrorHandling(
-      [...openapiTools, ...playwrightTools, ...userTools],
+      [...globalTools, ...playwrightTools, ...userTools],
       { workerId, maxErrorsPerWorker: 10 },
     )
   }
@@ -388,6 +367,13 @@ export class McpManager {
       {
         name: 'roxybrowser_playwright',
         config: { description: 'RoxyBrowser Playwright MCP' },
+        enabled: true,
+        createdAt: 0,
+        builtin: true,
+      },
+      {
+        name: 'roxybrowser-faq-mcp',
+        config: { url: 'https://faq.roxybrowser.com/mcp', description: 'RoxyBrowser FAQ MCP' },
         enabled: true,
         createdAt: 0,
         builtin: true,

@@ -8,6 +8,7 @@ import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { MENU_COLLAPSED } from '../constants/storage-key'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const { realTheme } = storeToRefs(useThemeStore())
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -22,6 +23,14 @@ const indicatorColor = computed(() => {
 watchEffect(() => {
   localStorage.setItem(MENU_COLLAPSED, collapsed.value ? '1' : '0')
 })
+
+const { currentLocale } = storeToRefs(useSimpleLocale())
+
+const imageSrc = computed(() => {
+  const suffix = ['zh-CN', 'en', 'ru'].includes(currentLocale.value!) ? currentLocale.value : 'zh-CN'
+  const theme = realTheme.value === 'dark' ? 'dark' : 'light'
+  return `/images/roxybrowser_text_${theme}_${suffix}.svg`
+})
 </script>
 
 <template>
@@ -35,7 +44,7 @@ watchEffect(() => {
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
-          <span>{{ $t('Roxy浏览器') }}</span>
+          <img draggable="false" class="block h-5" :src="imageSrc">
         </template>
       </div>
       <AsideMenu :collapsed />

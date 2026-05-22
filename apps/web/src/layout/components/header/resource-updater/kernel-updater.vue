@@ -3,19 +3,25 @@ import RxTooltip from '/@/components/rx-tooltip'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { safeParseJSON } from '/@/utils'
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { CoreType } from '/@/enums'
 import type { SvgNames } from '/@/components/rx-icon'
+import type { KernelUpdateItem } from './kernel-utils'
+import {
+  fetchUsingCoreVersions,
+  formatKernelName,
+  getKernelKey,
+  isChromeCore,
+  isFirefoxCore,
+  isKernelInUse,
+  markKernelAsRead,
+} from './kernel-utils'
+import { isString } from 'es-toolkit'
 
-type KernelUpdateItem = ResourceUpdateMessage & {
-  _light?: boolean
-  _desc?: string
-}
-
-enum KernelType {
-  All = 'all',
-  Chrome = 'chrome',
-  Firefox = 'firefox',
+/** 内核类型筛选（UI 层），与 CoreType 枚举对应 */
+enum KernelFilter {
+  All = 'All',
+  Chrome = 'Chrome',
+  Firefox = 'Firefox',
 }
 
 const { upgradeList } = defineProps<{
@@ -31,40 +37,59 @@ const confirm = useConfirm()
 const [_, onlyErrorToast] = useResponseToast()
 const popoverRef = useTemplateRef('popover')
 
-const usingVersion = ref()
-const kernelType = ref(KernelType.All)
+const usingVersion = ref('')
+/** 当前筛选的内核类型：全部 / Chrome / Firefox */
+const kernelType = ref(KernelFilter.All)
 
+/** 根据筛选条件计算展示列表、各类型数量和可更新条目 */
 const currentKernel = computed(() => {
-  // todo! 后续新增 Firefox 内核后需要做分类
   const available = upgradeList || []
   const flatList = available.flatMap(upgrade => upgrade.list)
-  const updateList = flatList.filter(item => item.status === 'update')
+
+  const chromeCount = flatList.filter(item => isChromeCore(item.coreType)).length
+  const firefoxCount = flatList.filter(item => isFirefoxCore(item.coreType)).length
+
+  const filteredAvailable = available.map(group => ({
+    ...group,
+    list: group.list.filter((item) => {
+      if (kernelType.value === KernelFilter.All)
+        return true
+      if (kernelType.value === KernelFilter.Firefox)
+        return isFirefoxCore(item.coreType)
+      return isChromeCore(item.coreType)
+    }),
+  })).filter(group => group.list.length > 0)
+
+  const filteredList = filteredAvailable.flatMap(g => g.list)
+  const updateList = filteredList.filter(item => item.status === 'update')
 
   return {
-    count: flatList.length,
-    available,
+    count: filteredList.length,
+    chromeCount,
+    firefoxCount,
+    available: filteredAvailable,
     updateList,
   }
 })
 
 const kernelOptions = computed(() => {
-  const count = currentKernel.value.count
+  const { chromeCount, firefoxCount } = currentKernel.value
 
   return [
     {
       name: $t('全部'),
-      value: KernelType.All,
+      value: KernelFilter.All,
       disabled: false,
     },
     {
-      name: `Chrome${count > 0 ? `(${count})` : ''}`,
-      value: KernelType.Chrome,
+      name: `Chrome${chromeCount > 0 ? `(${chromeCount})` : ''}`,
+      value: KernelFilter.Chrome,
       disabled: false,
     },
     {
-      name: 'Firefox',
-      value: KernelType.Firefox,
-      disabled: true,
+      name: `Firefox${firefoxCount > 0 ? `(${firefoxCount})` : ''}`,
+      value: KernelFilter.Firefox,
+      disabled: firefoxCount === 0,
     },
   ]
 })
@@ -98,24 +123,25 @@ function formatKernelIcon(item: KernelUpdateItem) {
 }
 
 async function updateAllKernel(event: MouseEvent) {
-  const usingCores = await globalThis.electronAPI.send('browser:usingCores')
+  const usingCores = await fetchUsingCoreVersions()
 
   const _usingCores: string[] = []
 
   currentKernel.value.updateList.forEach((item) => {
     if (item.coreVersion) {
-      if (!usingCores.includes(item.coreVersion!)) {
-        globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
+      if (!isKernelInUse(usingCores, item)) {
+        // IPC 名称沿用历史命名，实际支持 Chrome 和 Firefox，通过 coreType 区分
+        globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion, item.coreType ?? CoreType.Chrome)
         emit('onDownloadClick', item)
       }
       else {
-        _usingCores.push(item.coreVersion!)
+        _usingCores.push(formatKernelName(item.coreType, item.coreVersion))
       }
     }
   })
 
   if (_usingCores.length) {
-    usingVersion.value = _usingCores.join(',')
+    usingVersion.value = _usingCores.join(', ')
     popoverRef.value?.instance?.show(event, event.target)
   }
 }
@@ -123,21 +149,21 @@ async function updateAllKernel(event: MouseEvent) {
 async function handleKernelItemClick(event: MouseEvent, item: KernelUpdateItem) {
   if (item.status === 'downloading') {
     if (item.coreVersion) {
-      await globalThis.electronAPI.send('app:cancel-download-chrome-core', item.coreVersion)
+      await globalThis.electronAPI.send('app:cancel-download-chrome-core', item.coreVersion, item.coreType ?? CoreType.Chrome)
     }
     return
   }
 
-  const usingCores = await globalThis.electronAPI.send('browser:usingCores')
+  const usingCores = await fetchUsingCoreVersions()
 
-  if (usingCores.includes(item.coreVersion!)) {
-    usingVersion.value = usingCores.join(',')
+  if (isKernelInUse(usingCores, item)) {
+    usingVersion.value = formatKernelName(item.coreType, item.coreVersion)
     popoverRef.value?.instance?.show(event, event.target)
     return
   }
 
   if (item.coreVersion) {
-    globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion)
+    globalThis.electronAPI.send('app:download-chrome-core', item.coreVersion, item.coreType ?? CoreType.Chrome)
     emit('onDownloadClick', item)
   }
 }
@@ -160,12 +186,12 @@ function handleRemove(event: MouseEvent, item: KernelUpdateItem) {
     },
     accept: async () => {
       try {
-        await globalThis.electronAPI.send('app:delete-chrome-core', item.coreVersion!)
+        await globalThis.electronAPI.send('app:delete-chrome-core', item.coreVersion!, item.coreType ?? CoreType.Chrome)
         item.status = 'uninstalled'
       }
       catch (error) {
         console.error('error', error)
-        onlyErrorToast(-1, $t('删除失败'))
+        onlyErrorToast(-1, isString(error) ? error : $t('删除失败'))
       }
     },
   })
@@ -173,16 +199,18 @@ function handleRemove(event: MouseEvent, item: KernelUpdateItem) {
 
 function onRead(item: KernelUpdateItem) {
   item._light = false
-  const readMap = safeParseJSON(localStorage.getItem('kernel-read-map') || '{}')
-  readMap[item.coreVersion!] = true
-  localStorage.setItem('kernel-read-map', JSON.stringify(readMap))
+  markKernelAsRead(item)
 }
 
 defineExpose({
+  /** 自动展开 popover 时，滚动到正在下载的内核条目 */
   focusKernel() {
-    const coreVersion = currentKernel.value.available[1]?.list.find(item => item.status === 'downloading')?.coreVersion
-    if (coreVersion) {
-      document.getElementById(`kernel_${coreVersion}`)?.scrollIntoView({ behavior: 'smooth' })
+    const downloadingItem = currentKernel.value.available
+      .flatMap(group => group.list)
+      .find(item => item.status === 'downloading')
+    if (downloadingItem) {
+      // id 使用组合键，避免 Chrome/Firefox 同版本冲突
+      document.getElementById(`kernel_${getKernelKey(downloadingItem)}`)?.scrollIntoView({ behavior: 'smooth' })
     }
   },
 })
@@ -206,7 +234,7 @@ defineExpose({
       <div v-if="currentKernel.available.length > 1" class="py-2 px-4 title">
         {{ upgrade.title }}
       </div>
-      <div v-for="item in upgrade.list" :id="`kernel_${item.coreVersion}`" :key="item.releaseTime" class="w-full flex flex-col items-start item" :class="{ 'cursor-pointer light': item._light }">
+      <div v-for="item in upgrade.list" :id="`kernel_${getKernelKey(item)}`" :key="getKernelKey(item)" class="w-full flex flex-col items-start item" :class="{ 'cursor-pointer light': item._light }">
         <div class="w-full flex justify-between items-center self-stretch">
           <div class="flex-1 flex items-center gap-1.5 py-3 pl-4" @click="onRead(item)">
             <div class="relative">
@@ -215,7 +243,7 @@ defineExpose({
             </div>
             <div>
               <div class="version">
-                {{ `RoxyChrome ${item.coreVersion}` }}
+                {{ formatKernelName(item.coreType, item.coreVersion) }}
               </div>
               <div v-if="item._desc" class="mt-0.5 desc">
                 {{ item._desc }}

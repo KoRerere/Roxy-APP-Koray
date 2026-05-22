@@ -387,7 +387,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
           desc={({ class: className }) => {
             return <div class={className}>{$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
           }}
-          video="/video/right-click.mp4"
+          video="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/right-click.mp4"
           onClose={hideModal}
           onConfirm={hideModal}
         >
@@ -520,7 +520,8 @@ async function onMoveToProject(data: any) {
           onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
           return
         }
-        await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, true)
+
+        await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, !props.isProjectProfile)
           .then(() => {
             const projectName = options.find(item => item.value === formData.projectId)!.label
             datas.forEach((item) => {
@@ -885,7 +886,7 @@ defineExpose({
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
-        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="/video/profile-filter.mp4" :save-filters="saveFilters"
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/profile-filter.mp4" :save-filters="saveFilters"
                        @filter-change="onRefreshTable"
         />
         <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />

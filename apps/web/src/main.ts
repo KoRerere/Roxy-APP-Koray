@@ -1,13 +1,15 @@
 import './polyfill'
-import './web-auto-updater'
 import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
+import { getCookie } from '/@/utils'
 
 globalThis.isElectron = Boolean(globalThis.electronAPI)
 
 queueMicrotask(async () => {
   if (globalThis.isElectron) {
+    import('./web-auto-updater')
+
     globalThis.electronAPI.send('app:getSoftConfig').then((softConfig) => {
       const { language, token } = softConfig
 
@@ -31,7 +33,7 @@ queueMicrotask(async () => {
     await import('./polyfill')
     const searchParams = new URLSearchParams(window.location.search)
     const officialSiteLang = searchParams.get('official-site-lang')
-    const officialSiteInviteCode = searchParams.get('official-site-invite-code')
+    const officialSiteInviteCode = searchParams.get(OFFICIAL_SITE_INVITE_CODE)
     const jumpReferer = searchParams.get('jump-referer')
     const officialSiteRedirect = searchParams.get('official-site-redirect')
     const localeHandoffToken = searchParams.get(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
@@ -58,6 +60,7 @@ queueMicrotask(async () => {
 
     setupI18n({ defaultLocale: locale as SupportedLanguagesType }).finally(async () => {
       await import('./electron-api-polyfill')
+      import('./web-auto-updater')
 
       const { app } = await import('./app')
       const { useUserStore } = await import('/@/stores/user')
@@ -74,16 +77,13 @@ queueMicrotask(async () => {
         window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
       }
 
-      if (globalThis.cookieStore) {
-        try {
-          const token = await globalThis.cookieStore.get('roxy_token')
-          if (token?.value) {
-            userStore.setToken(token.value)
-          }
-        }
-        catch (error) {
-          console.error('Failed to get token from cookie store:', error)
-        }
+      try {
+        const roxyToken = await getCookie('roxy_token')
+        if (roxyToken)
+          userStore.setToken(roxyToken)
+      }
+      catch (error) {
+        console.error('Failed to get token from cookie:', error)
       }
 
       userStore.initUserInfo()

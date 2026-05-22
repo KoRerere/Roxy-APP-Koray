@@ -4,14 +4,16 @@ import type {
   UserGetCoreUpgradeCreateData,
 } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import type { BrowserType } from '/@/modules/browser/browser-manager/adapter'
 import { compare } from 'compare-versions'
 import { readFile, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
+import { API } from '/@/api'
+import { osConfig } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
 import { isMac, isWindows } from '/@/constants/common'
 import { browserManager } from '/@/modules/browser/browser-manager'
+import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { downloadZipFile, fileExists, findProcessByHandle, unzipFile } from '/@/utils'
@@ -28,10 +30,14 @@ interface CoreDownloadTask {
 export class CoreManagerUtils {
   pendingCoreDir = ''
   oldCoreDir = ''
+  /** 拉取内核 promise */
+  private fetchAvailableCoreListPromise: Promise<UserGetCoreUpgradeCreateData> | null
+    = null
+
   /** 上一次的内核版本信息 */
   lastCoreVersionList: Record<string, string> = {}
   /** 内核执行程序文件名称 */
-  private chromeBinName = ''
+  private coreBinName = ''
   /** 内核所在目录 */
   coreBinDir = ''
   /** 是否有内核正在解压中 */
@@ -45,20 +51,20 @@ export class CoreManagerUtils {
   /** 正在使用中的内核 */
   get usingCores() {
     const cores = [...browserManager.openedBrowserMap.values()]
-      .filter(browserItem => browserItem.winInfo.coreType === this.coreType)
+      .filter(browserItem => browserItem.coreType === this.coreType)
       .map(browserItem => browserItem.winInfo.coreVersion)
     return new Set(cores)
   }
 
   /** 能够被当前系统使用的内核列表 */
-  private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
+  availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
 
-  constructor(private coreType: BrowserType) {
-    if (this.coreType === 'firefox') {
+  constructor(private coreType: CoreType) {
+    if (this.coreType === CoreType.Firefox) {
       this.coreBinDir = appConfig.firefoxBinDir
       this.pendingCoreDir = join(appConfig.firefoxBinDir, 'pending')
       this.oldCoreDir = join(appConfig.firefoxBinDir, 'old')
-      this.chromeBinName = isMac
+      this.coreBinName = isMac
         ? 'RoxyFirefox.app/Contents/MacOS/RoxyFirefox'
         : `RoxyFirefox${isWindows ? '.exe' : ''}`
     }
@@ -66,10 +72,70 @@ export class CoreManagerUtils {
       this.coreBinDir = appConfig.chromeBinDir
       this.pendingCoreDir = join(appConfig.chromeBinDir, 'pending')
       this.oldCoreDir = join(appConfig.chromeBinDir, 'old')
-      this.chromeBinName = isMac
+      this.coreBinName = isMac
         ? 'RoxyChrome.app/Contents/MacOS/RoxyChrome'
         : `RoxyChrome${isWindows ? '.exe' : ''}`
     }
+  }
+
+  /** 拉取当前系统可用的内核列表 */
+  async fetchAvailableCoreList(retryCount = 0): Promise<UserGetCoreUpgradeCreateData> {
+    const params = {
+      ...osConfig,
+      coreType: this.coreType,
+    }
+    console.log('fetchAvailableCoreList', params)
+    this.fetchAvailableCoreListPromise ||= API.base.getCoreUpgradeCreate(params)
+    const result = await this.fetchAvailableCoreListPromise
+      .catch((err) => {
+        console.error('fetchAvailableCoreList error', err)
+        if (retryCount < 3) {
+          console.log(`Retrying fetchAvailableCoreList... Attempt ${retryCount + 1}`)
+          this.fetchAvailableCoreListPromise = null
+          return this.fetchAvailableCoreList(retryCount + 1)
+        }
+        return Promise.reject(err)
+      })
+      .finally(() => {
+        this.fetchAvailableCoreListPromise = null
+      })
+    console.debug(`${this.coreType} user_get_core_upgrade`, result)
+    if (result.code === 0) {
+      this.availableCoreList = result.data?.rows || this.availableCoreList || []
+    }
+
+    if (this.availableCoreList.length) {
+      this.availableCoreList.forEach((core) => {
+        this.lastCoreVersionList[core.coreVersion!] = core.version!
+      })
+
+      ipcSender.app.coreListUpdate(await this.getCoreList())
+      console.debug(`${this.coreType}CoreManagerUtils lastCoreVersionList`, this.lastCoreVersionList)
+    }
+
+    this.autoDownloadCore()
+
+    return result
+  }
+
+  /** 获取内核列表（供前端展示用） */
+  async getCoreList(): Promise<ResourceUpdateMessage[]> {
+    if (!this.availableCoreList.length) {
+      await this.fetchAvailableCoreList()
+    }
+    const arr = this.availableCoreList.map(
+      async (core): Promise<ResourceUpdateMessage> => {
+        return {
+          ...core,
+          type: 'kernel',
+          coreType: this.coreType,
+          version: core.version,
+          coreVersion: core.coreVersion,
+          status: await this.getCoreStatus(core),
+        }
+      },
+    )
+    return Promise.all(arr)
   }
 
   async getCoreStatus(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
@@ -115,7 +181,7 @@ export class CoreManagerUtils {
   /** 检查内核是否在等待解压 */
   private async checkCoreIsPendingUnzip(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
     const pendingCoreVersion = await readFile(join(this.genPendingCoreDir(core.coreVersion!), 'version'), 'utf-8').catch(() => '0.0.0')
-    const pendingExeExists = await fileExists(join(this.genPendingCoreDir(core.coreVersion!), this.chromeBinName))
+    const pendingExeExists = await fileExists(join(this.genPendingCoreDir(core.coreVersion!), this.coreBinName))
     // 如果等待解压的内核存在，并且版本大于等于远程版本，则返回下载完成
     return pendingExeExists && compare(pendingCoreVersion.trim(), core.version!, '>=')
   }
@@ -135,12 +201,12 @@ export class CoreManagerUtils {
 
   /** 根据内核版本组成内核执行文件路径 */
   genCoreExePath(coreVersion: string) {
-    return join(this.genCoreDir(coreVersion), this.chromeBinName)
+    return join(this.genCoreDir(coreVersion), this.coreBinName)
   }
 
   /** 根据内核版本获取内核驱动文件路径 */
   genCoreDriverPath(coreVersion: string) {
-    if (this.coreType === 'firefox') {
+    if (this.coreType === CoreType.Firefox) {
       return ''
     }
 
@@ -148,11 +214,6 @@ export class CoreManagerUtils {
       this.genCoreDir(coreVersion),
       isWindows ? 'chromedriver.exe' : 'chromedriver',
     )
-  }
-
-  /** 设置可用内核列表 */
-  setAvailableCoreList(cores: UnwrapRowsType<UserGetCoreUpgradeCreateData>) {
-    this.availableCoreList = cores.filter(core => (core as typeof core & { coreType?: BrowserType }).coreType === this.coreType)
   }
 
   /** 获取指定的可用内核 */
@@ -244,9 +305,11 @@ export class CoreManagerUtils {
 
     const status = await this.checkCoreVersion(availableCore)
     if (status === 'update') {
+      // 通知前端该内核有可用更新，需携带 coreType 以便正确匹配
       ipcSender.app.resourceUpdate({
         ...availableCore,
         type: 'kernel',
+        coreType: this.coreType,
         version: availableCore.version,
         coreVersion: availableCore.coreVersion,
         status: 'update',
@@ -266,12 +329,15 @@ export class CoreManagerUtils {
 
   /** 将解压后的内核移动到内核目录 */
   private unzipToCoreDirTask = async (coreVersion: string) => {
-    await fileExists(this.pendingCoreDir, true)
-    await fileExists(this.oldCoreDir, true)
-    console.log('unzipToCoreDirTask start', coreVersion)
+    await Promise.all([
+      fileExists(this.pendingCoreDir, true),
+      fileExists(this.oldCoreDir, true),
+      // fileExists(this.genCoreDir(coreVersion), true),
+    ])
+    console.log('unzipToCoreDirTask start', coreVersion, this.coreType)
     // 将本地内核移动到旧内核目录
     await rename(this.genCoreDir(coreVersion), this.genOldCoreDir(coreVersion)).catch((error) => {
-      console.error('rename to oldCoreDir error', error)
+      // console.error('rename to oldCoreDir error', error)
     })
     // 将解压后的内核移动到内核目录
     await rename(this.genPendingCoreDir(coreVersion), this.genCoreDir(coreVersion)).catch((error) => {
@@ -318,12 +384,13 @@ export class CoreManagerUtils {
       throw new Error($t('当前系统不支持使用{version}内核', { version: coreVersion }))
     }
 
-    const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
+    const outputZipPath = join(this.coreBinDir, `${coreVersion}.zip`)
     const controller = new AbortController()
     const getDownloadTask = () => this.downloadingMap.get(coreVersion)
     const shouldThrowOnCancel = () => getDownloadTask()?.throwOnCancel ?? throwOnCancel
     const payload: ResourceUpdateMessage = {
       type: 'kernel',
+      coreType: this.coreType, // 前端通过 coreType + coreVersion 匹配下载进度
       status: 'downloading',
       percent: 0,
       description: $t('正在下载 {coreVersion} 内核', { coreVersion }),
@@ -537,6 +604,10 @@ export class CoreManagerUtils {
         await Promise.try(fn).catch(() => {})
       }
     }
+    await rm(this.oldCoreDir, { recursive: true, force: true }).catch(() => {})
+  }
+
+  async cleanOldCore() {
     await rm(this.oldCoreDir, { recursive: true, force: true }).catch(() => {})
   }
 }

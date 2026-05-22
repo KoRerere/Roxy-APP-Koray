@@ -56,7 +56,7 @@ function onCopy() {
             scope="global"
     >
       <template #video>
-        <TutorialVideo video-url="/video/redeem_proxy.mp4">
+        <TutorialVideo video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/redeem_proxy.mp4">
           <template #default="{ onPlay }">
             <span class="cursor-pointer desc-link" @click="onPlay">{{ $t('[视频引导]') }}</span>
           </template>

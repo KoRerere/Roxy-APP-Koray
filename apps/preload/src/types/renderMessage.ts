@@ -9,6 +9,7 @@ import type {
   UserGetUserConfigListData,
 } from '@roxy/backend-api'
 import type { OsConfig } from '#roxybrowser/constants'
+import type { CoreType } from '#roxybrowser/modules/browser/browser-manager/adapter'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type {
@@ -49,11 +50,23 @@ interface ReGetUpdateInfoType {
   kernel: UserGetCoreUpgradeCreateData
 }
 
+export type ChunkBrowsersByScreenPayload
+  = | string[]
+    | {
+      dirIds: string[]
+      gap?: number
+      cols?: number
+      rows?: number
+      stackOffset?: { x: number, y: number }
+    }
+
 export interface RenderMessage {
   /** 批量启动窗口 */
   'browser:batchLaunch': (dirIds: string[]) => void
   /** 批量重启窗口 */
   'browser:batchRelaunch': (dirIds: string[]) => void
+  /** 按屏幕分组启动窗口（可多传 gap/cols/rows/stackOffset） */
+  'browser:chunkBrowsersByScreen': (payload: ChunkBrowsersByScreenPayload) => void
   /** 批量关闭窗口 */
   'browser:batchClose': (dirIds: string[]) => void
   /** 关闭所有窗口 */
@@ -78,8 +91,11 @@ export interface RenderMessage {
   }) => void
   /** 根据进程 PID 判断进程是否存在 */
   'browser:isProcessExists': (dirIds: string[]) => Promise<boolean[]>
-  /** 正在使用中的内核 */
-  'browser:usingCores': () => string[]
+  /** 正在使用中的内核版本，按 coreType 分组 */
+  'browser:usingCores': () => {
+    chrome: string[]
+    firefox: string[]
+  }
   /** 设为默认浏览器 */
   'browser:setAsDefaultBrowser': (windowItem: WindowItemType) => void
   /** 获取默认浏览器 */
@@ -100,7 +116,7 @@ export interface RenderMessage {
   'proxy:refreshUrl': (refreshUrl: string) => Promise<boolean>
 
   /** 保存用户信息 */
-  'user:setUserInfo': (userInfo: { token: string, userId: number, workspaceId: number, userName: string, email: string }) => void
+  'user:setUserInfo': (userInfo: { token: string, userId: number, lastUserId: number, workspaceId: number, userName: string, email: string }) => void
   /** 用户退出登录 */
   'user:logout': () => void
   /** 切换空间时设置当前空间 ID  */
@@ -146,7 +162,8 @@ export interface RenderMessage {
   /** 重新获取更新信息，如：APP、内核等版本升级信息 */
   'app:reGetUpdateInfo': <T extends keyof ReGetUpdateInfoType>(
     type: T,
-  ) => ReGetUpdateInfoType[T]
+    coreType?: CoreType,
+  ) => Promise<ReGetUpdateInfoType[T]>
   /** 检测 APP 更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
   /** 检测是否有更新 */
@@ -170,11 +187,11 @@ export interface RenderMessage {
   /** 获取所有可用的内核列表 */
   'app:getCoreList': () => ResourceUpdateMessage[]
   /** 下载指定内核 */
-  'app:download-chrome-core': (coreVersion: string) => void
+  'app:download-chrome-core': (coreVersion: string, coreType: CoreType) => void
   /** 取消下载指定内核 */
-  'app:cancel-download-chrome-core': (coreVersion: string) => void
+  'app:cancel-download-chrome-core': (coreVersion: string, coreType: CoreType) => void
   /** 删除指定内核 */
-  'app:delete-chrome-core': (coreVersion: string) => void
+  'app:delete-chrome-core': (coreVersion: string, coreType: CoreType) => void
   /** 显示 RoxyBrowser 缓存所在目录 */
   'app:showCacheDir': () => void
   /** 显示系统日志所在目录 */
@@ -216,6 +233,16 @@ export interface RenderMessage {
   'app:isShowLongTimeNotLoginTips': () => boolean
   /** 设置下次更新时间 */
   'app:setNextUpdateTime': (timestamp: number) => void
+  /** 设置 APP 当前是否为空闲状态 */
+  'app:setIdleState': (idle: boolean) => void
+  /** 恢复窗口函数是否准备好了 */
+  'app:restoreLastWindowOpenStatusReady': () => Promise<void>
+  /** 检查是否需要恢复窗口 */
+  'app:checkNeedRestoreWindow': () => boolean
+  /** 恢复窗口 */
+  'app:restoreWindow': () => Promise<void>
+  /** 取消恢复窗口 */
+  'app:cancelRestoreWindow': () => void
 
   /** 下载指定插件 */
   'extension:download': (
@@ -356,7 +383,7 @@ export interface RenderMessage {
   'syncControl:closePreferencesDialog': () => void
   /** 动态改变偏好设置弹窗大小 */
   'syncControl:resizePreferencesDialog': (payload: {
-    width?: number
+    width: number
     height: number
   }) => void
   /** 获取当前同步窗口的个数 */
@@ -419,7 +446,7 @@ export interface RenderMessage {
   'syncControl:resume': () => void
 
   /** 打开 MCP */
-  'mcp:open': () => Promise<{
+  'mcp:open': (options?: { scene?: string }) => Promise<{
     success: boolean
     type?: McpFailureType
     message?: string

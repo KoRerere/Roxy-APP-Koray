@@ -54,7 +54,7 @@ export function useDialog() {
       if (props.header) {
         dialogMap.delete(props.header)
       }
-      
+
       emitter.off('kickedOut', handleKickedOut)
     }
 
@@ -77,7 +77,7 @@ export function useDialog() {
 
     function handleKickedOut() {
       console.log('退出登录了，关闭弹窗')
-      setTimeout(() => hideModal(), 500)
+      setTimeout(hideModal, 500)
     }
     // if (!props.noAutoClose) {
     //   emitter.on('kickedOut', handleKickedOut)
@@ -100,7 +100,7 @@ export function useDialog() {
       const __dialogSlots = {
         footer: () => (
           <div class="flex justify-end gap-2">
-            {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
+            {cancelText === '' ? null : <RxButton type="button" label={cancelText || $t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
             <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk}></RxButton>
           </div>
         ),

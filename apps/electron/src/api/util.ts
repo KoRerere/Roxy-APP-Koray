@@ -1,13 +1,15 @@
 import type { AxiosResponse } from 'axios'
 import { API } from '/@/api'
-import { checkCoreVersion } from '/@/api/checkCoreVersion'
 import { checkDictVersion } from '/@/api/checkDictVersion'
 import { osConfig } from '/@/constants'
 import { store } from '/@/modules/store'
+import { checkChromeCoreVersion } from './checkChromeCoreVersion'
+import { checkFirefoxCoreVersion } from './checkFirefoxCoreVersion'
 
 export function handleResponse(response: AxiosResponse<any, any>) {
   if (response.data?.code === 0 && store.token) {
-    checkCoreVersion(response)
+    checkChromeCoreVersion(response)
+    checkFirefoxCoreVersion(response)
     checkDictVersion(response)
   }
 }

@@ -1,7 +1,7 @@
 import type { ContentBlock } from './attachments.js'
+import type { AgentInstance } from '../../deepagents/index.js'
 import { HumanMessage } from '@langchain/core/messages'
-import { createAgent, deleteCheckpoint } from '../../deepagents/index.js'
-import { mcpManager } from '../../mcpManager.js'
+import { createClawAgent, createScriptAgent } from '../../deepagents/index.js'
 import { ThreadManager } from './threadManager.js'
 
 export type { ContentBlock }
@@ -55,6 +55,7 @@ export class IMBridge {
     channelId: string,
     content: string | ContentBlock[],
     onChunk?: (text: string) => Promise<void>,
+    agentType: 'claw' | 'script' = 'claw',
   ): Promise<string> {
     const session = this.getSession(channelId)
     const threadId = this.threadManager.getThreadId(this.imName, channelId)
@@ -68,20 +69,21 @@ export class IMBridge {
 
     let fullText = ''
 
-    try {
-      // 单 worker 模式：固定 worker id
-      await mcpManager.createPlaywrightClientForWorker(IMBridge.WORKER_ID)
-      const simpleTools = await mcpManager.getToolsForWorker(IMBridge.WORKER_ID)
-
-      // 创建 agent
-      const agent = await createAgent({
-        mode: 'simple',
-        tools: simpleTools,
-        name: 'simple',
+    let agentInstance: AgentInstance
+    if (agentType === 'script') {
+      agentInstance = await createScriptAgent({
         conversationId: session.conversationId,
-        promptVariant: 'im-compact',
       })
+    }
+    else {
+      agentInstance = await createClawAgent({
+        workerId: IMBridge.WORKER_ID,
+        conversationId: session.conversationId,
+      })
+    }
+    const { agent, destroy } = agentInstance
 
+    try {
       const input = {
         messages: [
           Array.isArray(content)
@@ -100,7 +102,6 @@ export class IMBridge {
       for await (const rawChunk of stream as any) {
         const [namespace, chunks] = rawChunk
 
-        // 从消息 chunk 中提取文本
         if (namespace === 'messages' && chunks?.[0]) {
           const chunk = chunks?.[0]
 
@@ -130,14 +131,10 @@ export class IMBridge {
         }
       }
 
-      await mcpManager.destroyPlaywrightClientForWorker(IMBridge.WORKER_ID)
       return fullText
     }
-    catch (err) {
-      await mcpManager.destroyPlaywrightClientForWorker(IMBridge.WORKER_ID).catch(() => {})
-      throw err
-    }
     finally {
+      await destroy()
       session.isProcessing = false
     }
   }
@@ -154,7 +151,7 @@ export class IMBridge {
     console.log(`[IMBridge] Cleared session for channel: ${channelId}, oldThread: ${oldThreadId}, newThread: ${newThreadId}`)
   }
 
-  getSessionLength(channelId: string): number {
+  getSessionLength(_channelId: string): number {
     return 0
   }
 

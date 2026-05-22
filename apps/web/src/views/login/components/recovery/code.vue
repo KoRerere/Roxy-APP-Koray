@@ -25,7 +25,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const recoverCode = ref('')
 const visible2FA = ref(false)
 
-const imgSrc = computed(() => new URL(`../../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_code.svg`, import.meta.url).href)
+const imgSrc = computed(() => new URL(`../../../../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_code.svg`, import.meta.url).href)
 
 async function handleSubmit() {
   const { code, data, msg } = await API.base.checkRecoverCodeCreate({ temp_token: tempToken, recover_code: recoverCode.value })

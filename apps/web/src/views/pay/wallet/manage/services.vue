@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { strConcat } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
@@ -20,6 +21,7 @@ import { BUSINESS_CODE } from '/@/constants/business-code'
 const router = useRouter()
 const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
+const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 const { buyProxy } = useProxy()
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -28,7 +30,7 @@ const nextBillText = ref()
 const isFree = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Free)
 const isTrial = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Trial)
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
-const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent)
+const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 const usedWindowCount = computed(() => userPayInfo.value.useWindowCount)
 const otherCards = computed(() => [
   {
@@ -221,13 +223,9 @@ async function openPrimeDialog() {
     </div>
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-2.5">
-        <AnimationBorder :animation="false" :deg="110" :border-width="2"
-                         :animation-duration="12" class="rounded-xl" :gradient="animationGradient"
-        >
+        <AnimationBorder :animation="false" :deg="110" :border-width="2" :animation-duration="12" class="rounded-xl" :gradient="animationGradient">
           <div class="rounded overflow-hidden">
-            <div
-              class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan"
-            >
+            <div class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan">
               <div class="flex justify-between items-center">
                 <div class="plan-title">
                   {{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}
@@ -235,10 +233,7 @@ async function openPrimeDialog() {
                 <template v-if="userPayInfo?.subEndDate">
                   <div v-if="userPayInfo.isAuto" class="flex items-center gap-1 plan-expired">
                     <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
-                    <SvgIcon v-if="nextBillText"
-                             v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14"
-                             name="base/rx_ic_info" color="#FC9D12"
-                    />
+                    <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12" />
                   </div>
                   <div v-else class="expire-time text-[14px] font-normal text-[var(--colors-text-text-secondary)]">
                     {{ subscribeInfo.expireTime }}
@@ -250,7 +245,9 @@ async function openPrimeDialog() {
                 <div class="flex flex-row plan-value whitespace-pre">
                   <i18n-t :keypath="$t('{used} / {total}', { used: '{used}', total: '{total}' })">
                     <template #used>
-                      <span class="used-count text-[32px] " :class="usedWindowCount === 0 ? '' : usedWindowCount <= subscribeInfo.profileNumber ? 'text-[var(--colors-text-text-brand)]' : 'text-[var(--colors-text-text-error)]'">
+                      <span class="used-count text-[32px] "
+                            :class="usedWindowCount === 0 ? '' : usedWindowCount <= subscribeInfo.profileNumber ? 'text-[var(--colors-text-text-brand)]' : 'text-[var(--colors-text-text-error)]'"
+                      >
                         {{ usedWindowCount }}
                       </span>
                     </template>
@@ -285,17 +282,14 @@ async function openPrimeDialog() {
                   {{ $t('自动续订') }}
                 </div>
                 <div class="flex-1 flex justify-end items-center gap-2.5">
-                  <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" :class="item.class"
-                            :outlined="item.outlined !== false" :severity="item.severity || 'secondary'" :label="item.label"
-                            size="md" @click="item.command"
+                  <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" :class="item.class" :outlined="item.outlined !== false" :severity="item.severity || 'secondary'"
+                            :label="item.label" size="md" @click="item.command"
                   />
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="freeOrExpired"
-               class="px-3 py-1 gap-[4px] flex flex-row text-[12px] text-[var(--colors-text-text-tertiary)]"
-          >
+          <div v-if="freeOrExpired" class="px-3 py-1 gap-[4px] flex flex-row text-[12px] text-[var(--colors-text-text-tertiary)]">
             <i18n-t tag="div" scope="global" :keypath="$t('升级即可获取更多高级功能：窗口模板，窗口转移等等！{detail}', { detail: '{detail}' })">
               <template #detail>
                 <span class="text-[var(--colors-text-text-link)] cursor-pointer select-none" @click="openPrimeDialog">{{ $t('查看详情') }}</span>
@@ -314,14 +308,10 @@ async function openPrimeDialog() {
         {{ $t('我的资源') }}
       </div>
       <div class="flex gap-2">
-        <div v-for="item in otherCards" :key="item.title"
-             class="h-[105px] flex flex-col justify-between flex-1 pa-4 rounded-xl others"
-        >
+        <div v-for="item in otherCards" :key="item.title" class="h-[105px] flex flex-col justify-between flex-1 pa-4 rounded-xl others">
           <div class="flex justify-between items-center">
             <span class="others-title">{{ item.title }}</span>
-            <RxButton class="card-add-btn" variant="outlined" size="xxs"
-                      :label="strConcat('+ ', item.addText)" @click="item.addClick"
-            />
+            <RxButton class="card-add-btn" variant="outlined" size="xxs" :label="strConcat('+ ', item.addText)" @click="item.addClick" />
           </div>
           <div class="flex items-baseline">
             <span class="others-used" :class="item.textClass">{{ item.used }}</span>
@@ -476,6 +466,7 @@ async function openPrimeDialog() {
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;
+
     &.warning {
       color: var(--colors-text-text-warning);
     }

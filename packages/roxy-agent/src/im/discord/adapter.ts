@@ -276,6 +276,57 @@ export async function startDiscordAdapter(
         return
       }
 
+      const scriptMatch = text.trim().match(/^\/script\s+([\s\S]+)$/i)
+      if (scriptMatch) {
+        await client.triggerTyping(channelId)
+        const streamer = new StreamSender(800)
+        let sentMsgId: string | null = null
+        try {
+          await bridge.handleMessage(channelKey, scriptMatch[1].trim(), async (chunk) => {
+            await streamer.onChunk(
+              chunk,
+              async (txt) => {
+                const safeText = normalizeImText(txt, { maxChars: DISCORD_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+                const msg = await client.sendMessage(channelId, safeText)
+                sentMsgId = msg.id
+                return sentMsgId
+              },
+              async (_id, _txt) => {
+                if (sentMsgId) {
+                  const safeText = normalizeImText(streamer.buffer, { maxChars: DISCORD_TEXT_MAX_CHARS, fallbackText: '（处理中...）' })
+                  await client.editMessage(channelId, sentMsgId, safeText).catch(err => console.error('[Discord] Edit message error:', err))
+                }
+              },
+            )
+          }, 'script')
+          await streamer.flush(
+            async (txt) => {
+              const safeText = normalizeImText(txt, { maxChars: DISCORD_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+              const msg = await client.sendMessage(channelId, safeText)
+              sentMsgId = msg.id
+              return sentMsgId
+            },
+            async (_id, txt) => {
+              if (sentMsgId) {
+                const safeText = normalizeImText(txt, { maxChars: DISCORD_TEXT_MAX_CHARS, fallbackText: '（无回复）' })
+                await client.editMessage(channelId, sentMsgId, safeText).catch(err => console.error('[Discord] Flush update error:', err))
+              }
+            },
+          )
+        }
+        catch (err) {
+          console.error('[Discord] script handleMessage error:', err)
+          const errMsg = formatError(err)
+          if (sentMsgId) {
+            await client.editMessage(channelId, sentMsgId, errMsg).catch(e => console.error('[Discord] Error update failed:', e))
+          }
+          else {
+            await client.sendMessage(channelId, errMsg)
+          }
+        }
+        return
+      }
+
       // 处理附件
       const imageUrls: string[] = []
       if (message.attachments) {

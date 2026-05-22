@@ -2,6 +2,8 @@
 import MenuItemContent from './menu-item-content.vue'
 import { AnimatePresence, motion } from 'motion-v'
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
+import { useUserStore } from '/@/stores/user'
+import { compare } from 'compare-versions'
 
 defineOptions({
   name: 'SubMenuItem',
@@ -14,6 +16,8 @@ const { level = 0, collapsed, collapsedChildren } = defineProps<{
   collapsedChildren?: boolean
   level?: number
 }>()
+
+const userStore = useUserStore()
 
 // const d = 'max-height calc(max(calc(var(--child-count) / 3), 1) * 0.25s) cubic-bezier(0.19, 0.56, 0.03, 1.01)'
 
@@ -42,7 +46,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
           <div v-else class="line" />
         </template>
         <template v-else>
-          <MenuItemContent v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :class="`menu_${item.name?.toString()}`" :item="item" :collapsed />
+          <MenuItemContent v-if="item.meta?.version ? compare(userStore.appVersion, ...item.meta!.version) : true" v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :class="`menu_${item.name?.toString()}`" :item="item" :collapsed />
         </template>
         <!-- 递归生成子菜单 -->
         <template v-if="item.children?.length">

@@ -1,4 +1,3 @@
-import type { BrowserType } from '/@/modules/browser/browser-manager/adapter'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { genRandomFingerprint } from '@roxy/shared'
 import { get } from 'es-toolkit/compat'
@@ -7,7 +6,8 @@ import { createReadStream } from 'node:fs'
 import { rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
-import { isDev, openAPICommonHeaders } from '/@/constants/common'
+import { openAPICommonHeaders } from '/@/constants/common'
+import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { getInvalidUrls, getNeedSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
@@ -69,9 +69,14 @@ export class BrowserItem {
     return this.beforeLaunchTask?.browser
   }
 
-  /** 浏览器类型 */
-  get browserType() {
-    return this.winInfo.browserType as BrowserType
+  /** 内核类型（CoreType.Chrome | CoreType.Firefox），来源于后端下发的 winInfo.coreType */
+  get coreType(): CoreType {
+    return (this.winInfo.coreType as CoreType) || CoreType.Chrome
+  }
+
+  /** 是否是 Firefox 内核 */
+  get isFirefox() {
+    return this.coreType === CoreType.Firefox
   }
 
   /** 指纹配置文件路径 */
@@ -88,17 +93,19 @@ export class BrowserItem {
     return join(this.userDataDir, 'roxy_tabs')
   }
 
-  /** 浏览器本地状态设置 */
+  /** 浏览器本地状态设置（Chrome 专用） */
   get roxyLocalStatePath() {
     return join(this.userDataDir, 'Local State')
   }
 
-  /** lumiLogin 文件路径 */
+  /** lumiLogin 文件路径，Firefox 直接放在 profile 根目录下，Chrome 在 Default 下 */
   get lumiLoginPath() {
-    return join(this.userDataDir, 'Default', 'LumiLogin')
+    return this.isFirefox
+      ? join(this.userDataDir, 'lumilogin')
+      : join(this.userDataDir, 'Default', 'LumiLogin')
   }
 
-  /** 浏览器偏好设置文件路径 */
+  /** 浏览器偏好设置文件路径（Chrome 专用） */
   get preferencesPath() {
     return join(this.userDataDir, 'Default', 'Preferences')
   }
@@ -115,7 +122,7 @@ export class BrowserItem {
 
   /** 需要同步到 OSS 的文件 */
   get needSyncFiles() {
-    return Object.entries(getNeedSyncLocalFileMap(this.winInfo.browserType)).filter(([key]) => get(this.winInfo, key)).flatMap(([_, value]) => value)
+    return Object.entries(getNeedSyncLocalFileMap(this.coreType)).filter(([key]) => get(this.winInfo, key)).flatMap(([_, value]) => value)
   }
 
   /** 最后一次发送的消息 */
@@ -139,7 +146,7 @@ export class BrowserItem {
       /** 内核版本 */
       coreVersion: this.winInfo.coreVersion,
       /** 用于自动化工具的 webdriver */
-      driver: coreManager.getCoreManager(this.winInfo.browserType).genCoreDriverPath(this.winInfo.coreVersion),
+      driver: coreManager.getCoreManager(this.coreType).genCoreDriverPath(this.winInfo.coreVersion),
       /** 窗口排序号 */
       sortNum: this.winInfo.windowSortNum,
       /** 窗口名称 */
@@ -153,7 +160,7 @@ export class BrowserItem {
 
   /** 当前内核信息 */
   get coreVersion() {
-    const { version, coreVersion, releaseTime } = coreManager.getCoreManager(this.winInfo.browserType).getAvailableCore(this.winInfo.coreVersion)
+    const { version, coreVersion, releaseTime } = coreManager.getCoreManager(this.coreType).getAvailableCore(this.winInfo.coreVersion)
     return {
       version,
       coreVersion,
@@ -166,7 +173,8 @@ export class BrowserItem {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
-    this.winInfo.browserType = isDev && winItem.windowName === 'firefox' ? 'firefox' : 'chrome'
+    // 如果 coreType 没有设置，则默认使用 Chrome
+    this.winInfo.coreType ||= CoreType.Chrome
   }
 
   /** 获取浏览器实例 */

@@ -114,7 +114,7 @@ export class BiDiClient {
   private handleMessage(data: string): void {
     try {
       const message: BiDiMessage = JSON.parse(data)
-      console.log('Received:', JSON.stringify(message, null, 2))
+      // console.log('Received:', JSON.stringify(message, null, 2))
 
       // 检查是否是 session.new 的响应
       if (message.id === 0 && message.type === 'success') {
@@ -146,6 +146,7 @@ export class BiDiClient {
   async sendCommand<T extends keyof Commands>(
     method: T,
     params: Commands[T]['params'],
+    options?: { timeout?: number },
   ): Promise<Commands[T]['returnType']> {
     if (!this.ws || !this.connected) {
       throw new Error('WebSocket not connected')
@@ -158,9 +159,10 @@ export class BiDiClient {
     }
 
     return new Promise<Commands[T]['returnType']>((resolve, reject) => {
+      const timeoutMs = options?.timeout ?? 5000
       const timeout = setTimeout(() => {
         reject(new Error(`Command timeout: ${method}`))
-      }, 5000)
+      }, timeoutMs)
 
       const messageHandler = (event: MessageEvent) => {
         try {

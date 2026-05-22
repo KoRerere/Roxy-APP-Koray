@@ -75,7 +75,7 @@ function close(isCancel: boolean) {
 
 <template>
   <div class="flex flex-col pt-12 pb-6 px-6 gap-6 select-none popup">
-    <img class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
+    <img class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/icons/status/loading.png">
     <div class="flex flex-col">
       <div class="title">
         {{ $t('正在处理支付...') }}

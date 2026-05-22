@@ -4,7 +4,7 @@ import { useThemeStore } from '/@/stores/theme'
 const themeStore = useThemeStore()
 
 const imgSrc = computed(() => {
-  return new URL(`../../../../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href
+  return new URL(`../../../../../../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href
 })
 
 const modelValue = defineModel<string>('modelValue')

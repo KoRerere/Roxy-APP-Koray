@@ -70,7 +70,8 @@ export function isMobile() {
 export async function getCookie(name: string) {
   if (globalThis.cookieStore) {
     const cookie = await cookieStore.get(name)
-    return cookie?.value
+    if (cookie?.value)
+      return cookie.value
   }
 
   const match = document.cookie.match(
@@ -81,6 +82,20 @@ export async function getCookie(name: string) {
 
 export function removeCookie(name: string, path = '/', domain?: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path};${domain ? ` domain=${domain};` : ''}`
+}
+
+/** 远程版本是否高于本地版本（compare-versions，无法解析时返回 false） */
+export function isNewerVersion(remoteVersion?: string | null, localVersion?: string | null): boolean {
+  if (!remoteVersion || !localVersion)
+    return false
+
+  try {
+    return compare(remoteVersion, localVersion, '>')
+  }
+  catch (error) {
+    console.warn('isNewerVersion compare failed', remoteVersion, localVersion, error)
+    return false
+  }
 }
 
 export async function checkWebForUpdates() {

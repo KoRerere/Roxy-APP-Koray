@@ -154,6 +154,29 @@ async function handleFeishuMessage(
     return
   }
 
+  const scriptMatch = text.trim().match(/^\/script\s+([\s\S]+)$/i)
+  if (scriptMatch) {
+    const cardMsgId = await sendCard(client, msg.chat_id, '⏳ 思考中...')
+    const streamer = new StreamSender(800)
+    let fullText = ''
+    try {
+      await bridge.handleMessage(channelId, scriptMatch[1].trim(), async (chunk) => {
+        fullText += chunk
+        await streamer.onChunk(
+          chunk,
+          async () => { await updateCard(client, cardMsgId, fullText); return cardMsgId },
+          async () => { await updateCard(client, cardMsgId, fullText) },
+        )
+      }, 'script')
+      await updateCard(client, cardMsgId, fullText || '（无回复）')
+    }
+    catch (err) {
+      console.error('[Feishu] script bridge.handleMessage error:', err)
+      await updateCard(client, cardMsgId, formatError(err))
+    }
+    return
+  }
+
   const imageBlocks: ContentBlock[] = []
   if (msg.message_type === 'image' && msgContent.image_key) {
     try {

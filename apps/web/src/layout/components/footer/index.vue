@@ -7,9 +7,6 @@ import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { getRoleLabelMap, WorkspaceType } from '/@/enums'
 import { usePreventMask } from '/@/hooks/usePreventMask'
-import { usePermission } from '/@/hooks/usePermission'
-
-const collapsed = defineModel('collapsed', { default: false })
 
 const router = useRouter()
 const roleStore = useRoleStore()
@@ -18,7 +15,8 @@ const { userInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 const { showPreventMask, hidePreventMask } = usePreventMask()
-const { check } = usePermission()
+
+const collapsed = defineModel('collapsed', { default: false })
 
 const items = computed(() => {
   if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
@@ -40,19 +38,10 @@ const items = computed(() => {
       }),
     },
     {
-      label: $t('费用中心'),
-      icon: 'base/rx_ic_wallet',
-      rootMenu: true,
-      routeName: 'wallet',
-      visible: check('Cost_Center_all'),
-      command: () => {
-        router.push({ name: 'wallet' })
-      },
-    },
-    {
       label: $t('推广计划'),
       icon: 'base/rx_ic_coins_hand',
       rootMenu: true,
+      showFirstBadge: true,
       routeName: 'referral-program',
       shiny: true,
       command: () => {
@@ -70,8 +59,9 @@ const items = computed(() => {
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
           <a v-ripple class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
             <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
-            <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
+            <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title flex gap-1.5" :title="(item.label as string)">
               {{ item.label }}
+              <SvgIcon v-if="item.showFirstBadge" name="base/fire" />
             </span>
           </a>
         </ShinyButton>

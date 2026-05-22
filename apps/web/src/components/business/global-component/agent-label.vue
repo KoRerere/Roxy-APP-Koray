@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { computed, onMounted, onUnmounted, reactive, ref, useTemplateRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { AnimatePresence, motion } from 'motion-v'
@@ -34,7 +35,7 @@ const size = reactive(
 )
 
 const currentIndex = ref(0)
-let timer = null
+let timer: NodeJS.Timeout | null = null
 
 onMounted(() => {
   timer = setInterval(() => {
@@ -42,34 +43,24 @@ onMounted(() => {
       currentIndex.value++
     }
     else {
-      clearInterval(timer)
+      timer && clearInterval(timer)
     }
   }, props.interval)
 })
 
 onUnmounted(() => {
-  if (timer)
-    clearInterval(timer)
+  timer && clearInterval(timer)
 })
 </script>
 
 <template>
   <div class="agent-container">
-    <motion.div
-      class="agent-pill"
-      :animate="{ width: size.width || 'auto' }"
-      :transition="{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }"
-    >
+    <motion.div class="agent-pill" :animate="{ width: size.width || 'auto' }" :transition="{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }">
       <div ref="innerRef" class="agent-inner">
-        <img src="/images/mcp/roxyagent.svg" alt="">
+        <img :src="getImage('mcp/roxyagent.svg')" alt="">
         <AnimatePresence mode="wait">
-          <motion.span
-            :key="currentIndex"
-            :initial="{ y: 20, opacity: 0, filter: 'blur(4px)' }"
-            :animate="{ y: 0, opacity: 1, filter: 'blur(0px)' }"
-            :exit="{ y: -20, opacity: 0, filter: 'blur(4px)' }"
-            :transition="{ duration: 0.3 }"
-            class="text-4"
+          <motion.span :key="currentIndex" :initial="{ y: 20, opacity: 0, filter: 'blur(4px)' }" :animate="{ y: 0, opacity: 1, filter: 'blur(0px)' }"
+                       :exit="{ y: -20, opacity: 0, filter: 'blur(4px)' }" :transition="{ duration: 0.3 }" class="text-4"
           >
             {{ sequence[currentIndex] }}
           </motion.span>

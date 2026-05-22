@@ -60,6 +60,16 @@ export class ChromePage extends EventEmitter {
    * 无法在页面执行脚本等场景下回退为 Page.navigate。
    */
   async gotoReplace(url: string): Promise<void> {
+    const currentUrl = this.url()
+    // 空白页 / 内置页没有稳定 JS 上下文，或正在首 navigaton，直接用 CDP 导航更可靠
+    if (
+      !currentUrl
+      || currentUrl === 'about:blank'
+      || currentUrl.startsWith('chrome://')
+    ) {
+      await this.goto(url)
+      return
+    }
     try {
       await this.evaluate((targetUrl: string) => {
         location.replace(targetUrl)

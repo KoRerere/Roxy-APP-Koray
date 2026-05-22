@@ -18,7 +18,7 @@ const currentIcon = ref<SvgNames>()
 const colorTest = ref(false)
 
 const svgModules = Object.keys(svgIcons).reduce((acc, key) => {
-  const path = key.split('assets/images/').at(1)!.replace('.svg', '') as SvgNames
+  const path = key.split('assets/icons/').at(1)!.replace('.svg', '') as SvgNames
 
   const [dirname, filename] = path.split('/')
 

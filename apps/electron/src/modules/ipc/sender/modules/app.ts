@@ -1,5 +1,5 @@
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type { IPCMainInstance } from '../../types'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
 export function createAppSender(ipcMain: IPCMainInstance) {
   return {

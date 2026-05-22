@@ -34,6 +34,8 @@ export default defineConfig({
     'tt-primary': 'text-[var(--colors-text-text-primary)]',
     'tt-secondary': 'text-[var(--colors-text-text-secondary)]',
     'tt-tertiary': 'text-[var(--colors-text-text-tertiary)]',
+    'tt-inactive': 'text-[var(--colors-text-text-inactive)]',
+    'tt-brand': 'text-[var(--colors-text-text-brand)]',
   },
   theme: {
     colors: {

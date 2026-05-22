@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { PayWay } from '/@/enums/pay'
@@ -65,31 +66,31 @@ const defaultMethods = [
   {
     label: $t('Roxy 钱包'),
     value: [PayWay.Balance],
-    image: '/images/payments/rx_payment_balance.svg',
+    image: getImage('payments/rx_payment_balance.svg'),
   },
   {
     label: 'Card',
     value: [PayWay.Card],
-    image: '/images/payments/rx_payment_cards.svg',
+    image: getImage('payments/rx_payment_cards.svg'),
   },
   {
     label: $t('支付宝'),
     value: [PayWay.Alipay],
-    image: '/images/payments/rx_payment_alipay.svg',
+    image: getImage('payments/rx_payment_alipay.svg'),
     desc: $t('您已选择{method}作为付款方式。', { method: $t('支付宝') }),
     tip: $t('提交后将前往支付界面，请在规定的期限内完成付款。'),
   },
   {
     label: $t('微信支付'),
     value: [PayWay.Wechat],
-    image: '/images/payments/rx_payment_wepay.svg',
+    image: getImage('payments/rx_payment_wepay.svg'),
     desc: $t('您已选择{method}作为付款方式。', { method: $t('微信支付') }),
     tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。'),
   },
   {
     label: 'USDT/USDC',
     value: [PayWay.USDT, PayWay.USDC],
-    image: '/images/payments/rx_payment_usdt_usdc.svg',
+    image: getImage('payments/rx_payment_usdt_usdc.svg'),
     desc: $t('您已选择{method}作为付款方式。', { method: 'USDT/USDC' }),
     tip: $t('提交后将显示一个二维码，请在规定的期限内完成付款。'),
     getValue: () => {

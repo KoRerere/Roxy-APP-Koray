@@ -25,10 +25,10 @@ const tabs = computed(() => [
 
 const activeKey = ref(tabs.value[0]!.value)
 
-const isAgentUser = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
+const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 
 const activeComponent = computed(() => {
-  if (!isAgentUser.value)
+  if (!isPremiumPartner.value)
     return TramsferNormal
   return tabs.value.find(tab => tab.value === activeKey.value)!.component
 })
@@ -44,7 +44,7 @@ function updateInkBar() {
       <span class="header">{{ windowIds.length > 1 ? $t('转移 {count} 个窗口', { count: windowIds.length }) : $t('转移窗口') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
-    <RxTabs v-if="isAgentUser" ref="tabs" v-model:value="activeKey" :tabs="tabs" :show-navigators="false" head-tabs only-tabs />
+    <RxTabs v-if="isPremiumPartner" ref="tabs" v-model:value="activeKey" :tabs="tabs" :show-navigators="false" head-tabs only-tabs />
     <component :is="activeComponent" :ids="windowIds" :datas="datas" :buy-proxy-type="buyProxyType" @resize="updateInkBar" @confirm="$emit('confirm', $event)" />
   </div>
 </template>

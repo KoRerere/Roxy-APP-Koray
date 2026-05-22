@@ -9,14 +9,13 @@ import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
 import { AbortError, abortRun, createAbort } from '../abortRegistry'
-import { env } from '../config'
+import { aiAgentUrl, env } from '../config'
 import { ChatContextAPI } from '../database/conversations'
-import { createAgent, deleteCheckpoint } from '../deepagents'
+import { createChatAgent, createScriptAgent, deleteCheckpoint } from '../deepagents'
 import { handleStream, StreamState } from '../deepagents/handle-stream'
-import { isWorkerStart } from '../deepagents/tools'
+import { isWorkerStart } from '../deepagents/tools/run_worker'
 import { cancelInterrupt, createInterruptGate, resolveInterrupt } from '../interruptRegistry'
 import { createLLM } from '../llm'
-import { mcpManager } from '../mcpManager'
 import { sseLoggerManager } from './sseLogger'
 import { streamAdapter } from './streamAdapter'
 
@@ -68,10 +67,63 @@ const EXT_TO_MIME: Record<string, string> = {
   '.txt': 'text/plain',
 }
 
+function normalizeMimeType(mimeType: string) {
+  return mimeType.split(';')[0].trim().toLowerCase()
+}
+
+function extractBase64Payload(data: string) {
+  const trimmed = data.trim()
+  const match = trimmed.match(/^data:([^;,]+)(?:;[^,]*)?;base64,(.+)$/s)
+
+  if (!match) {
+    return {
+      base64: trimmed,
+      mimeType: undefined as string | undefined,
+    }
+  }
+
+  return {
+    base64: match[2],
+    mimeType: normalizeMimeType(match[1]),
+  }
+}
+
 /**
  * 5MB
  */
 const MAX_FILE_SIZE = 5 * 1024 * 1024
+const IMAGE_SIZE_MAP: Record<string, Record<string, string>> = {
+  '2K': {
+    '1:1': '2048x2048',
+    '4:3': '2304x1728',
+    '3:4': '1728x2304',
+    '16:9': '2848x1600',
+    '9:16': '1600x2848',
+    '3:2': '2496x1664',
+    '2:3': '1664x2496',
+    '21:9': '3136x1344',
+  },
+  '3K': {
+    '1:1': '3072x3072',
+    '4:3': '3456x2592',
+    '3:4': '2592x3456',
+    '16:9': '4096x2304',
+    '9:16': '2304x4096',
+    '3:2': '3744x2496',
+    '2:3': '2496x3744',
+    '21:9': '4704x2016',
+  },
+  '4K': {
+    '1:1': '4096x4096',
+    '4:3': '4704x3520',
+    '3:4': '3520x4704',
+    '16:9': '5504x3040',
+    '9:16': '3040x5504',
+    '3:2': '4992x3328',
+    '2:3': '3328x4992',
+    '21:9': '6240x2656',
+  },
+}
 
 const router: Router = Router()
 
@@ -84,16 +136,20 @@ router.post('/upload', (req: Request, res: Response) => {
       return res.json({ code: 1, msg: 'data, mimeType and fileName are required' })
     }
 
-    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-      return res.json({ code: 1, msg: `Unsupported file type: ${mimeType}` })
+    const normalizedMimeType = normalizeMimeType(mimeType)
+    const { base64, mimeType: detectedMimeType } = extractBase64Payload(data)
+    const finalMimeType = detectedMimeType || normalizedMimeType
+
+    if (!ALLOWED_MIME_TYPES.has(finalMimeType)) {
+      return res.json({ code: 1, msg: `Unsupported file type: ${finalMimeType}` })
     }
 
-    const buffer = Buffer.from(data, 'base64')
+    const buffer = Buffer.from(base64, 'base64')
     if (buffer.length > MAX_FILE_SIZE) {
       return res.json({ code: 1, msg: 'File size exceeds 5MB limit' })
     }
 
-    const ext = MIME_TO_EXT[mimeType] || ''
+    const ext = MIME_TO_EXT[finalMimeType] || ''
     const fileId = `${randomUUID()}${ext}`
     const filePath = path.join(uploadsDir, fileId)
     fs.writeFileSync(filePath, buffer)
@@ -104,7 +160,7 @@ router.post('/upload', (req: Request, res: Response) => {
       data: {
         fileId,
         fileName,
-        mimeType,
+        mimeType: finalMimeType,
         size: buffer.length,
       },
     })
@@ -118,32 +174,56 @@ router.post('/upload', (req: Request, res: Response) => {
 // 提供附件文件访问
 router.get('/files/:fileId', (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params
+    const fileId = Array.isArray(req.params.fileId)
+      ? req.params.fileId[0]
+      : req.params.fileId
+    if (!fileId) {
+      return res.status(400).json({ code: 1, msg: 'File ID is required' })
+    }
     // 安全校验：只允许字母数字、连字符、点
     if (!/^[\w\-.]+$/.test(fileId)) {
       return res.status(400).json({ code: 1, msg: 'Invalid file ID' })
     }
 
     const filePath = path.join(uploadsDir, fileId)
+    console.log('filePath', filePath)
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ code: 1, msg: 'File not found' })
     }
 
     const ext = path.extname(fileId).toLowerCase()
     const mimeType = EXT_TO_MIME[ext] || 'application/octet-stream'
-    res.setHeader('Content-Type', mimeType)
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
-    res.sendFile(filePath)
+    return res.sendFile(fileId, {
+      root: uploadsDir,
+      headers: {
+        'Content-Type': mimeType,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    }, (error) => {
+      if (!error)
+        return
+
+      console.error('Error sending file:', error)
+      if (!res.headersSent) {
+        const sendError = error as Error & { statusCode?: number }
+        res.status(sendError.statusCode || 500).json({
+          code: 1,
+          msg: 'Failed to serve file',
+          error: sendError.message,
+        })
+      }
+    })
   }
   catch (error: any) {
     console.error('Error serving file:', error)
-    res.status(500).json({ code: 1, msg: 'Failed to serve file', error: error.message })
+    return res.status(500).json({ code: 1, msg: 'Failed to serve file', error: error.message })
   }
 })
 
 // 创建新对话
 router.post('/conversations', async (req: Request, res: Response) => {
   try {
+    const conversationType = req.body?.conversationType === 'asset' ? 'asset' : 'automation'
     const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     const finalThreadId = `thread_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
@@ -151,6 +231,7 @@ router.post('/conversations', async (req: Request, res: Response) => {
       id: conversationId,
       title: 'New Chat',
       thread_id: finalThreadId,
+      conversation_type: conversationType,
       // model: model || 'gpt-4',
     })
 
@@ -231,9 +312,13 @@ router.get('/conversations/:conversationId', async (req: Request, res: Response)
 router.put('/conversations/:conversationId', async (req: Request, res: Response) => {
   try {
     const { conversationId } = req.params
-    const { title, model } = req.body
+    const { title, model, conversationType } = req.body
 
-    const success = ChatContextAPI.updateConversation(conversationId as string, { title, model })
+    const success = ChatContextAPI.updateConversation(conversationId as string, {
+      title,
+      model,
+      conversation_type: conversationType,
+    })
 
     if (!success) {
       return res.json({
@@ -331,6 +416,172 @@ interface AttachmentRef {
   fileName: string
   mimeType: string
   size?: number
+  url?: string
+}
+
+interface AssetGenerationOptions {
+  aspectRatio?: string
+  quality?: string
+  count?: string
+}
+
+interface GeneratedImageRecord {
+  fileId: string
+  fileName: string
+  mimeType?: string
+  size?: number
+  prompt?: string
+}
+
+function extractPositiveInteger(value: unknown, fallback: number) {
+  const match = String(value ?? '').match(/\d+/)
+  const parsed = match ? Number(match[0]) : Number.NaN
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function resolveImageSize(options?: AssetGenerationOptions) {
+  const quality = options?.quality === '4K' ? '4K' : '2K'
+  const aspectRatio = options?.aspectRatio && IMAGE_SIZE_MAP[quality][options.aspectRatio]
+    ? options.aspectRatio
+    : '1:1'
+  return IMAGE_SIZE_MAP[quality][aspectRatio]
+}
+
+function resolveGeneratedImageCount(options?: AssetGenerationOptions) {
+  return Math.min(extractPositiveInteger(options?.count, 1), 4)
+}
+
+function getAttachmentFilePath(fileId: string) {
+  return path.join(uploadsDir, fileId)
+}
+
+function getFileExtensionByMimeType(mimeType: string) {
+  return MIME_TO_EXT[normalizeMimeType(mimeType)] || '.png'
+}
+
+function persistBufferAsUpload(buffer: Buffer, mimeType: string, prefix = 'generated') {
+  const fileId = `${prefix}-${randomUUID()}${getFileExtensionByMimeType(mimeType)}`
+  const filePath = getAttachmentFilePath(fileId)
+  fs.writeFileSync(filePath, buffer)
+  return {
+    fileId,
+    fileName: fileId,
+    mimeType,
+    size: buffer.length,
+  }
+}
+
+function isDataUrl(url: string) {
+  return /^data:/i.test(url)
+}
+
+async function readAttachmentAsDataUrl(att: AttachmentRef) {
+  const filePath = att.fileId ? getAttachmentFilePath(att.fileId) : ''
+  if (filePath && fs.existsSync(filePath)) {
+    const base64 = fs.readFileSync(filePath).toString('base64')
+    return `data:${att.mimeType};base64,${base64}`
+  }
+
+  if (att.url) {
+    if (isDataUrl(att.url)) {
+      return att.url
+    }
+
+    const response = await fetch(att.url)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch attachment url: ${att.url}`)
+    }
+    const mimeType = normalizeMimeType(response.headers.get('content-type') || att.mimeType || 'image/png')
+    const buffer = Buffer.from(await response.arrayBuffer())
+    return `data:${mimeType};base64,${buffer.toString('base64')}`
+  }
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Attachment file not found: ${att.fileId}`)
+  }
+  const base64 = fs.readFileSync(filePath).toString('base64')
+  return `data:${att.mimeType};base64,${base64}`
+}
+
+function buildAssetPrompt(message: string, options: AssetGenerationOptions) {
+  const prompt = message.trim()
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
+  const sections = isZh
+    ? [
+        '当前任务是生图生素材，请结合用户上传的参考图片理解主体、构图、风格、配色和材质信息。',
+        `生成参数：画面比例 ${options.aspectRatio}，清晰度 ${options.quality}，数量 ${options.count}。`,
+      ]
+    : [
+        'The current task is to generate image assets. Please analyze the reference images uploaded by the user to understand the subject, composition, style, color palette, and material.',
+        `Generation parameters: aspect ratio ${options.aspectRatio}, quality ${options.quality}, count ${options.count}.`,
+      ]
+
+  if (prompt)
+    sections.unshift(prompt)
+  else
+    sections.unshift(isZh ? '请基于参考图片生成符合上述参数的图片素材。' : 'Please generate image assets based on the reference images and the parameters above.')
+
+  return sections.join('\n\n')
+}
+
+async function buildImageGenerationRequest(
+  prompt: string,
+  attachments: AttachmentRef[],
+  options?: AssetGenerationOptions,
+) {
+  const imageInputs = await Promise.all(
+    attachments
+      .filter(att => att.mimeType.startsWith('image/'))
+      .slice(0, 5)
+      .map(readAttachmentAsDataUrl),
+  )
+  const count = resolveGeneratedImageCount(options)
+  const payload: Record<string, any> = {
+    // model: IMAGE_GENERATION_MODEL,
+    prompt,
+    size: resolveImageSize(options),
+    watermark: false,
+    // response_format: 'b64_json',
+  }
+
+  if (imageInputs.length > 0) {
+    payload.image = imageInputs
+  }
+
+  if (count > 1) {
+    payload.sequential_image_generation = 'auto'
+    payload.sequential_image_generation_options = {
+      max_images: count,
+    }
+  }
+
+  return payload
+}
+
+async function persistGeneratedImages(result: any): Promise<GeneratedImageRecord[]> {
+  const records = Array.isArray(result?.data) ? result.data : []
+  const generatedImages: GeneratedImageRecord[] = []
+
+  for (const item of records) {
+    if (typeof item?.url === 'string' && item.url) {
+      const response = await fetch(item.url)
+      if (!response.ok) {
+        throw new Error(`Failed to download generated image: ${item.url}`)
+      }
+      const mimeType = normalizeMimeType(response.headers.get('content-type') || item.mime_type || 'image/png')
+      const buffer = Buffer.from(await response.arrayBuffer())
+      generatedImages.push(persistBufferAsUpload(buffer, mimeType))
+      continue
+    }
+
+    if (typeof item?.b64_json === 'string' && item.b64_json) {
+      const buffer = Buffer.from(item.b64_json, 'base64')
+      generatedImages.push(persistBufferAsUpload(buffer, normalizeMimeType(item.mime_type || 'image/png')))
+      continue
+    }
+  }
+
+  return generatedImages
 }
 
 /**
@@ -339,19 +590,22 @@ interface AttachmentRef {
 function buildMessageContent(message: string, attachments: AttachmentRef[]): any[] | string {
   const parts: any[] = []
   const attachmentInfos: string[] = []
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
 
   if (message?.trim()) {
     parts.push({ type: 'text', text: message })
   }
 
   for (const att of attachments) {
-    const filePath = path.join(uploadsDir, att.fileId)
+    const filePath = getAttachmentFilePath(att.fileId)
     if (!fs.existsSync(filePath)) {
       console.warn(`Attachment file not found: ${att.fileId}`)
       continue
     }
 
-    attachmentInfos.push(`- 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`)
+    attachmentInfos.push(isZh
+      ? `- 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`
+      : `- filename: ${att.fileName}, local path: ${filePath}, type: ${att.mimeType}`)
 
     if (att.mimeType.startsWith('image/')) {
       const base64 = fs.readFileSync(filePath).toString('base64')
@@ -362,11 +616,10 @@ function buildMessageContent(message: string, attachments: AttachmentRef[]): any
     }
     else if (att.mimeType === 'text/plain') {
       const text = fs.readFileSync(filePath, 'utf-8')
-      parts.push({ type: 'text', text: `[文件: ${att.fileName}]\n${text}` })
+      parts.push({ type: 'text', text: isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}` })
     }
     else if (att.mimeType === 'application/pdf') {
       const base64 = fs.readFileSync(filePath).toString('base64')
-      // 使用 OpenAI 兼容格式，Claude 会自动处理
       parts.push({
         type: 'image_url',
         image_url: { url: `data:application/pdf;base64,${base64}` },
@@ -377,7 +630,9 @@ function buildMessageContent(message: string, attachments: AttachmentRef[]): any
   if (attachmentInfos.length > 0) {
     parts.push({
       type: 'text',
-      text: `\n[附件信息 - 可用于文件操作的本地路径]\n${attachmentInfos.join('\n')}`,
+      text: isZh
+        ? `\n[附件信息 - 可用于文件操作的本地路径]\n${attachmentInfos.join('\n')}`
+        : `\n[Attachment info - local paths for file operations]\n${attachmentInfos.join('\n')}`,
     })
   }
 
@@ -394,13 +649,14 @@ function buildMessageContent(message: string, attachments: AttachmentRef[]): any
  */
 function buildMessageContentAsPlainText(message: string, attachments: AttachmentRef[]): string {
   const chunks: string[] = []
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
 
   if (message?.trim()) {
     chunks.push(message.trim())
   }
 
   for (const att of attachments) {
-    const filePath = path.join(uploadsDir, att.fileId)
+    const filePath = getAttachmentFilePath(att.fileId)
     if (!fs.existsSync(filePath)) {
       console.warn(`Attachment file not found: ${att.fileId}`)
       continue
@@ -408,11 +664,12 @@ function buildMessageContentAsPlainText(message: string, attachments: Attachment
 
     if (att.mimeType === 'text/plain') {
       const text = fs.readFileSync(filePath, 'utf-8')
-      chunks.push(`[文件: ${att.fileName}]\n${text}`)
+      chunks.push(isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}`)
     }
     else {
-      chunks.push(
-        `[附件] 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`,
+      chunks.push(isZh
+        ? `[附件] 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`
+        : `[attachment] filename: ${att.fileName}, local path: ${filePath}, type: ${att.mimeType}`,
       )
     }
   }
@@ -420,33 +677,28 @@ function buildMessageContentAsPlainText(message: string, attachments: Attachment
   return chunks.join('\n\n')
 }
 
-// 标题输出的 Zod Schema
 const TitleOutputSchema = z.object({
-  title: z.string().max(20, '标题不能超过20个字符').describe('对话标题，简洁准确概括主题，不超过10个汉字或20个字符'),
+  title: z.string().max(20, 'Title must not exceed 20 characters').describe('Conversation title, concise and accurate, no more than 20 characters'),
 })
 
-/**
- * 使用 LLM 生成对话标题（使用 withStructuredOutput 确保可控）
- */
 async function generateConversationTitle(
   userMessage: string,
   attachments: AttachmentRef[],
   streamCallback: (event: string) => void,
 ): Promise<string> {
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
   const llm = await createLLM(false)
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 
-  // 使用 withStructuredOutput 确保返回结构化数据
   const structuredLlm = llm.withStructuredOutput(TitleOutputSchema, {
     name: 'generate_title',
   })
 
   const result = await structuredLlm.invoke([
-    new SystemMessage('你是一个专业的对话标题生成助手。'),
-    new HumanMessage(`请根据用户的第一条消息，为这个对话生成一个简洁、准确的标题。
-
-用户消息：
-${messageContent}`),
+    new SystemMessage(isZh ? '你是一个专业的对话标题生成助手。' : 'You are a professional conversation title generator.'),
+    new HumanMessage(isZh
+      ? `请根据用户的第一条消息，为这个对话生成一个简洁、准确的标题。\n\n用户消息：\n${messageContent}`
+      : `Please generate a concise, accurate title for this conversation based on the user's first message.\n\nUser message:\n${messageContent}`),
   ])
 
   const title = result.title.trim()
@@ -457,6 +709,222 @@ ${messageContent}`),
   return title
 }
 
+router.post('/images/generations', async (req: Request, res: Response) => {
+  const {
+    message,
+    conversationId,
+    attachments,
+    assetOptions,
+  } = req.body
+  const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
+  const prompt = typeof message === 'string' ? message : ''
+
+  if ((!prompt.trim() && attachmentList.length === 0) || !conversationId) {
+    return res.json({
+      code: 1,
+      error: 'message or attachments and conversationId are required',
+      msg: 'message or attachments and conversationId are required',
+    })
+  }
+
+  const conversation = ChatContextAPI.getConversation(conversationId)
+  if (!conversation) {
+    return res.json({
+      code: 1,
+      error: 'conversation not found',
+      msg: 'conversation not found',
+    })
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+  res.flushHeaders()
+
+  const fileName = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  const sseFilePath = path.join(env.CHECKPOINT_DIR!, 'sse', `${fileName}.sse`)
+
+  const sseLogger = sseLoggerManager.createLogger(sseFilePath)
+
+  const streamCallback = (event: string) => {
+    res.write(event)
+    sseLogger.log(event)
+    if (typeof (res as any).flush === 'function') {
+      (res as any).flush()
+    }
+  }
+
+  // SSE 建立后立即告知前端开始生成，携带图片数量用于占位
+  const count = resolveGeneratedImageCount(assetOptions)
+  streamCallback(streamAdapter.imageGenerating({ count }))
+
+  const startTime = Date.now()
+
+  try {
+    ChatContextAPI.setActiveConversation(conversationId)
+
+    ChatContextAPI.addMessage({
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      conversation_id: conversationId,
+      role: 'user',
+      content: prompt,
+      content_type: 'text',
+      storage_type: 'inline',
+      agent_mode: 'simple',
+      metadata: {
+        timestamp: Date.now(),
+        source: 'api_image_generation',
+        attachments: attachmentList.length > 0 ? attachmentList : undefined,
+        assetOptions,
+      },
+    })
+
+    // 预先注册 assistant 消息，指向 SSE 文件（和 /chat 一致）
+    ChatContextAPI.addMessage({
+      id: fileName,
+      conversation_id: conversationId,
+      role: 'assistant',
+      content: '',
+      content_type: 'file',
+      storage_type: 'file',
+      file_path: sseFilePath,
+      agent_mode: 'simple',
+      metadata: {
+        timestamp: Date.now(),
+        source: 'sse_stream',
+        assetOptions,
+      },
+    })
+
+    if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
+      await generateConversationTitle(prompt, attachmentList, streamCallback)
+        .then((generatedTitle) => {
+          if (generatedTitle) {
+            ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to generate title:', err)
+        })
+    }
+
+    const payload = {
+      ...await buildImageGenerationRequest(buildAssetPrompt(prompt, assetOptions), attachmentList, assetOptions),
+      stream: true,
+    }
+
+    const upstreamResponse = await fetch(`${aiAgentUrl}/v1/images/generations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.ROXY_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!upstreamResponse.ok) {
+      const errorText = await upstreamResponse.text()
+      console.error('Upstream image generation failed:', errorText)
+      let errorResult: any = {}
+      try { errorResult = errorText ? JSON.parse(errorText) : {} }
+      catch {}
+      streamCallback(streamAdapter.error(errorResult?.error?.message || errorResult?.message || 'Image generation failed', upstreamResponse.status))
+      streamCallback(streamAdapter.done())
+      res.end()
+      return
+    }
+
+    // Parse upstream SSE stream — push each image as soon as it's ready
+    const reader = upstreamResponse.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let completedEvent: any = null
+    // index → persisted record, built incrementally
+    const partialImages: Map<number, GeneratedImageRecord & { prompt?: string }> = new Map()
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done)
+        break
+
+      buffer += decoder.decode(value, { stream: true })
+
+      let splitIndex: number
+      while (true) {
+        splitIndex = buffer.search(/\r?\n\r?\n/)
+        if (splitIndex === -1)
+          break
+
+        const rawBlock = buffer.slice(0, splitIndex)
+        buffer = buffer.slice(splitIndex).replace(/^\r?\n\r?\n/, '')
+
+        for (const line of rawBlock.split(/\r?\n/)) {
+          if (!line.startsWith('data:'))
+            continue
+          const data = line.slice(5).trim()
+          if (data === '[DONE]')
+            continue
+          let parsed: any
+          try { parsed = JSON.parse(data) }
+          catch { continue }
+
+          if (parsed?.type === 'image_generation.partial_succeeded') {
+            // Download and persist this image immediately
+            const index: number = parsed.image_index ?? 0
+            try {
+              const [record] = await persistGeneratedImages({ data: [{ url: parsed.url, b64_json: parsed.b64_json, mime_type: parsed.mime_type }] })
+              if (record) {
+                const imageWithPrompt = { ...record, prompt }
+                partialImages.set(index, imageWithPrompt)
+                streamCallback(streamAdapter.imagePartial({ index, image: imageWithPrompt }))
+              }
+            }
+            catch (err: any) {
+              console.error('Failed to persist partial image:', err)
+            }
+          }
+          else if (parsed?.type === 'image_generation.completed') {
+            completedEvent = parsed
+          }
+        }
+      }
+    }
+
+    if (partialImages.size === 0) {
+      streamCallback(streamAdapter.error('No generated images returned'))
+      streamCallback(streamAdapter.done())
+      res.end()
+      return
+    }
+
+    streamCallback(streamAdapter.done())
+  }
+  catch (error: any) {
+    console.error('Error generating image:', error)
+    streamCallback(streamAdapter.error(error.message))
+    streamCallback(streamAdapter.done())
+  }
+  finally {
+    const endTime = Date.now()
+    ;(process as any).parentPort?.postMessage({
+      event: 'save_chat_message',
+      data: {
+        conversationId,
+        file: sseFilePath,
+        message: prompt,
+        inputToken: 0,
+        outputToken: 0,
+        time: endTime - startTime,
+        taskType: 'simple',
+      },
+    })
+    sseLoggerManager.closeLogger(sseFilePath)
+  }
+
+  res.end()
+})
+
 // 开始对话（流式聊天）
 router.post('/chat', async (req: Request, res: Response) => {
   const {
@@ -466,6 +934,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     mode,
     attachments,
     multimodalAttachments,
+    script,
   } = req.body
   const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
 
@@ -500,7 +969,7 @@ router.post('/chat', async (req: Request, res: Response) => {
   res.flushHeaders()
 
   // 添加用户消息到对话历史
-  const agentMode = (mode === 'orchestrator' ? 'orchestrator' : 'simple') as 'orchestrator' | 'simple'
+  const agentMode = mode
   ChatContextAPI.addMessage({
     id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     conversation_id: conversationId,
@@ -548,9 +1017,9 @@ router.post('/chat', async (req: Request, res: Response) => {
   // 先把会话开始标识写入
   streamCallback(streamAdapter.session(conversation.thread_id))
 
-  // 如果标题还没有设置，就异步生成标题（不阻塞主流程）
+  // 如果标题还没有设置，就生成标题
   if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-    generateConversationTitle(message || '', attachmentList, streamCallback)
+    await generateConversationTitle(message || '', attachmentList, streamCallback)
       .then((generatedTitle) => {
         if (generatedTitle) {
           ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
@@ -561,10 +1030,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       })
   }
 
-  // 创建 token 使用量统计器，用于统计本次请求的 token 消耗
-  // const tokenUsageAggregator = new RequestTokenUsageAggregator(conversation.thread_id)
-
   const startTime = Date.now()
+  const { agent, destroy } = await (script ? createScriptAgent : createChatAgent)({
+    mode: agentMode,
+    conversationId,
+  })
+
   try {
     const config = {
       configurable: {
@@ -590,16 +1061,6 @@ router.post('/chat', async (req: Request, res: Response) => {
       streamCallback,
     }
 
-    await mcpManager.createPlaywrightClientForWorker('simple')
-    const simpleTools = await mcpManager.getToolsForWorker('simple')
-    console.log(`[DEBUG] Simple mode tools count: ${simpleTools.length}`)
-    console.log(`[DEBUG] Tool names:`, simpleTools.map(t => t.name).filter(n => n.includes('delete')))
-    const agent = await createAgent({
-      mode: agentMode,
-      tools: simpleTools,
-      name: agentMode,
-      conversationId,
-    })
     const state = new StreamState()
 
     // 检查是否有 pending interrupt（用户可能关闭软件后重新打开）
@@ -683,10 +1144,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
   }
   finally {
-    await mcpManager.destroyPlaywrightClientForWorker('simple')
-
-    // 获取本次请求的 token 使用量统计
-    // const tokenUsage = tokenUsageAggregator.getUsage()
+    await destroy()
 
     const endTime = Date.now()
     const duration = endTime - startTime
@@ -706,7 +1164,6 @@ router.post('/chat', async (req: Request, res: Response) => {
     })
 
     // 清理统计器资源
-    // tokenUsageAggregator.dispose()
     sseLoggerManager.closeLogger(sseFilePath)
   }
 
@@ -714,7 +1171,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 })
 
 // 恢复被 HITL interrupt 暂停的对话
-router.post('/chat/:conversationId/resume', async (req: Request, res: Response) => {
+router.post('/conversations/:conversationId/resume', async (req: Request, res: Response) => {
   try {
     const conversationId = Array.isArray(req.params.conversationId)
       ? req.params.conversationId[0]
@@ -753,16 +1210,20 @@ router.post('/chat/:conversationId/resume', async (req: Request, res: Response) 
   }
 })
 
-// 中断对话
-router.post('/chat/:conversationId/interrupt', async (req: Request, res: Response) => {
+// 停止对话（包括 HITL 等待状态）
+router.post('/conversations/:conversationId/stop', async (req: Request, res: Response) => {
   try {
     const conversationId = Array.isArray(req.params.conversationId)
       ? req.params.conversationId[0]
       : req.params.conversationId
+
+    // 如果当前处于 HITL 等待状态，先取消 interrupt gate
+    cancelInterrupt(conversationId)
+
     if (abortRun(conversationId)) {
       return res.json({
         code: 0,
-        msg: 'Conversation interrupted successfully',
+        msg: 'Conversation stopped successfully',
       })
     }
     else {
@@ -774,11 +1235,11 @@ router.post('/chat/:conversationId/interrupt', async (req: Request, res: Respons
     }
   }
   catch (error: any) {
-    console.error('Error interrupting conversation:', error)
+    console.error('Error stopping conversation:', error)
     res.json({
       code: 1,
       error: error.message,
-      msg: 'Failed to interrupt conversation',
+      msg: 'Failed to stop conversation',
     })
   }
 })

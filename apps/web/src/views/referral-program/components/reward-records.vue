@@ -5,13 +5,9 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
-import type { UnwrapRowType, UserGetPromotionInfoListData, UserGetRewardRecordListListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UserGetRewardRecordListListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetRewardRecordListListData>
-
-const { promotionInfo } = defineProps<{
-  promotionInfo: UserGetPromotionInfoListData['data']
-}>()
 
 const rewardStatusMap = {
   approved: $t('审核成功'),
@@ -25,10 +21,10 @@ const columns = [
     key: 'userName',
     getText: (data: Data) => data.email || data.phone,
   },
-  {
-    title: $t('来源链接'),
-    key: 'source',
-  },
+  // {
+  //   title: $t('来源链接'),
+  //   key: 'source',
+  // },
   {
     title: $t('消费金额'),
     key: 'payAmount',
@@ -62,6 +58,8 @@ function tableRequest(params: any) {
 }
 
 async function tableFilters() {
+  // const { data } = await API.base.userGetPromotionLinkListList()
+
   return [
     {
       type: 'date',
@@ -75,13 +73,13 @@ async function tableFilters() {
         console.log('input.value ', input.value)
       },
     },
-    {
-      type: 'select',
-      name: 'source',
-      placeholder: $t('请选择来源链接'),
-      showClear: true,
-      options: promotionInfo.promotionLinkList?.map(item => ({ label: item.linkType, value: item.linkType })),
-    },
+    // {
+    //   type: 'select',
+    //   name: 'source',
+    //   placeholder: $t('请选择来源链接'),
+    //   showClear: true,
+    //   options: data.map(item => ({ label: item.linkType, value: item.linkType })),
+    // },
     {
       type: 'select',
       name: 'reward_status',

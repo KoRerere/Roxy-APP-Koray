@@ -5,6 +5,7 @@ export interface Conversation {
   id: string
   title: string
   thread_id: string
+  conversation_type?: 'automation' | 'asset'
   is_active?: number
   is_title_set?: number
   message_count?: number
@@ -19,6 +20,7 @@ export interface ConversationDetail {
   workspace_id: string
   title: string
   thread_id: string
+  conversation_type?: 'automation' | 'asset'
   model: null
   is_active: 0 | 1
   created_at: string
@@ -32,6 +34,18 @@ export interface AttachmentRef {
   fileName: string
   mimeType: string
   size?: number
+  url?: string
+}
+
+export interface AssetGenerationRequest {
+  message: string
+  conversationId: string
+  attachments?: AttachmentRef[]
+  assetOptions: {
+    aspectRatio: string
+    quality: string
+    count: string
+  }
 }
 
 // MCP 服务器配置类型
@@ -50,6 +64,44 @@ export interface SkillEntry {
   description: string
   dirName: string
   installedAt: number
+  hasScripts: boolean
+  runtimeSource: 'declared' | 'inferred' | 'none'
+  runtimes: SkillRuntime[]
+  missingRuntimeIds: string[]
+}
+
+export interface SkillRuntime {
+  id: string
+  displayName: string
+  homepage: string
+  installed: boolean
+  version?: string
+  source: 'declared' | 'inferred'
+}
+
+export type SkillValidationErrorCode =
+  | 'path-not-found'
+  | 'invalid-source-type'
+  | 'zip-extract-failed'
+  | 'missing-skill-md'
+  | 'read-failed'
+  | 'content-too-large'
+  | 'missing-frontmatter'
+  | 'invalid-yaml'
+  | 'frontmatter-not-mapping'
+  | 'missing-name'
+  | 'missing-description'
+
+export interface ValidateSkillSuccessData {
+  name: string
+  description: string
+}
+
+export interface ValidateSkillResponse {
+  code: number
+  msg?: string
+  errorCode?: SkillValidationErrorCode
+  data?: ValidateSkillSuccessData
 }
 
 export function useAgentApi() {
@@ -84,10 +136,11 @@ export function useAgentApi() {
   /**
    * 创建新对话
    */
-  function conversationCreate() {
+  function conversationCreate(conversationType?: 'automation' | 'asset') {
     return fetch(`${serverUrl.value}/api/conversations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(conversationType ? { conversationType } : {}),
     }).then(res => res.json())
   }
 
@@ -114,7 +167,7 @@ export function useAgentApi() {
   /**
    * 更新对话信息
    */
-  function conversationUpdate(conversationId: string, data: { title?: string, model?: string }) {
+  function conversationUpdate(conversationId: string, data: { title?: string, model?: string, conversationType?: 'automation' | 'asset' }) {
     return fetch(`${serverUrl.value}/api/conversations/${conversationId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -166,20 +219,29 @@ export function useAgentApi() {
   }
 
   /**
-   * 中断对话
+   * 停止对话（包括 HITL 等待状态）
    */
-  function conversationInterrupt(conversationId: string) {
-    return fetch(`${serverUrl.value}/api/chat/${conversationId}/interrupt`, {
+  function conversationStop(conversationId: string) {
+    return fetch(`${serverUrl.value}/api/conversations/${conversationId}/stop`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     }).then(res => res.json())
+  }
+
+  function generateImages(params: AssetGenerationRequest, signal?: AbortSignal) {
+    return fetch(`${serverUrl.value}/api/images/generations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+      signal,
+    })
   }
 
   /**
    * 提交 HITL 审批决策
    */
   function conversationResume(conversationId: string, decisions: Array<{ type: 'approve' | 'reject', reason?: string }>) {
-    return fetch(`${serverUrl.value}/api/chat/${conversationId}/resume`, {
+    return fetch(`${serverUrl.value}/api/conversations/${conversationId}/resume`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ decisions }),
@@ -281,7 +343,7 @@ export function useAgentApi() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sourcePath }),
-    }).then(res => res.json())
+    }).then(res => res.json() as Promise<ValidateSkillResponse>)
   }
 
   /**
@@ -320,7 +382,8 @@ export function useAgentApi() {
     readFileContent,
     // 聊天
     chat,
-    conversationInterrupt,
+    generateImages,
+    conversationStop,
     conversationResume,
     // MCP
     listMcpServers,

@@ -6,12 +6,14 @@
  */
 import { compareVersions } from 'compare-versions'
 
-const IDLE_MS = (import.meta.env.DEV ? 2 : 15) * 60 * 1000
+const IDLE_MS = (import.meta.env.DEV ? 5 : 15) * 60 * 1000
 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'pointerdown'] as const
 
 let idleTimer: ReturnType<typeof setTimeout> | undefined
 let started = false
+/** 与主进程 appIdleState 对齐，仅在状态变化时发 IPC，避免 mousemove 等高频事件刷屏 */
+let isIdle = false
 
 function getLocalVersion(): string {
   return String(import.meta.env.VITE_VERSION ?? '').trim()
@@ -51,11 +53,24 @@ async function checkAndReloadIfStale() {
   }
 }
 
+function setIdleState(idle: boolean) {
+  if (isIdle === idle)
+    return
+  isIdle = idle
+  globalThis.electronAPI.send('app:setIdleState', idle).catch(() => {
+    console.info('need app version 3.8.7')
+  })
+}
+
 function resetIdleTimer() {
   if (idleTimer)
     clearTimeout(idleTimer)
+
+  setIdleState(false)
+
   idleTimer = setTimeout(() => {
     idleTimer = undefined
+    setIdleState(true)
     void checkAndReloadIfStale()
   }, IDLE_MS)
 }

@@ -1,7 +1,6 @@
 import { app, autoUpdater, globalShortcut, shell } from 'electron'
 import { spawn } from 'node:child_process'
 import path, { dirname, join } from 'node:path'
-import { setTimeout } from 'node:timers/promises'
 import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
 import { isPackaged, isWindows } from '/@/constants/common'

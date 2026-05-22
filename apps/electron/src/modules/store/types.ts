@@ -30,6 +30,8 @@ export interface StoreType {
   token?: string
   /** 用户 ID */
   userId?: number
+  /** 上次登录用户 ID */
+  lastUserId?: number
   /** 空间 ID */
   workspaceId?: number
   /** 当前用户所有的空间 ID */
@@ -103,10 +105,19 @@ export interface StoreType {
   hasLoggedIn?: boolean
   /** 开机自启动 */
   autoStart?: boolean
+  /** 是否自动更新 APP，自动下载并安装新版本 */
+  autoUpdateApp?: boolean
   /** 窗口自动恢复, 0: 关闭, 1: 开启, 2: 弹出提示 */
   autoRestoreWindow?: 0 | 1 | 2
   /** 等待恢复的窗口 { workspaceId: dirId[] } */
   waitingRestoreWindow?: Record<string, string[]>
+  /** 等待恢复的窗口 bounds {  dirId: { left: number, top: number, width: number, height: number } } */
+  waitingRestoreWindowBounds?: Record<string, {
+    left: number
+    top: number
+    width: number
+    height: number
+  }>
   /** 下次启动时是否需要恢复窗口 */
   needRestoreWindow?: boolean
   /** 默认浏览器启动器进程 ID */
@@ -121,4 +132,6 @@ export interface StoreType {
   appNormalExit?: boolean
   /** 最后一次使用的 web 域名 */
   lastWebDomain?: string
+  /** 是否第一次清除 web 缓存 */
+  isFirstClearWebCache: boolean
 }

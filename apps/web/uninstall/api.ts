@@ -78,11 +78,11 @@ httpClient.instance.interceptors.response.use(async (response) => {
   if (code === 405) {
     // 踢出登录
     emitter.emit('kickedOut', response.data.data)
-    closeOtherWindow()
+    // closeOtherWindow()
     return response
   }
   else if (code === 403) {
-    closeOtherWindow()
+    // closeOtherWindow()
     return response
   }
   // await handleResponse(response)

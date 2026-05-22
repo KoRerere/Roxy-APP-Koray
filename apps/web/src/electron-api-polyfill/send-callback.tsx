@@ -34,6 +34,7 @@ const downloadClientChannels = [
   'browser:closeAll',
   'browser:batchClose',
   'browser:batchLaunch',
+  'browser:chunkBrowsersByScreen',
   'app:showLogDir',
   'proxy:detect',
   'syncControl:open',

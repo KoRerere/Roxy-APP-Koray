@@ -19,8 +19,8 @@ import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMUL
 import { isWindows } from '/@/utils/common'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
+import { isEmptyValue, isObject } from '/@/utils'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
-import { isObject } from '/@/utils'
 
 const SIMULATION_DELAY_RANGE_KEY = 'delayRange'
 
@@ -226,6 +226,30 @@ export function usePreferencesPanel() {
                 )
               },
             },
+            {
+              label: $t('批量打开布局'),
+              text: $t('批量打开窗口时，窗口的布局方式'),
+              name: 'batchOpenLayout',
+              value: data?.batchOpenLayout ?? 'stack',
+              props: {
+                filter: false,
+                optionValue: 'value',
+                options: [
+                  { label: $t('堆叠'), value: 'stack' },
+                  { label: $t('网格'), value: 'grid' },
+                ],
+              },
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
           ],
         },
         {
@@ -414,9 +438,13 @@ export function usePreferencesPanel() {
                         min={0}
                         max={100000}
                         onValueChange={() => {
-                          if (oldValue !== item.value) {
-                            saveUserConfig(item)
-                          }
+                          nextTick(() => {
+                            if (isEmptyValue(item.value))
+                              item.value = 8
+                            if (oldValue !== item.value) {
+                              saveUserConfig(item)
+                            }
+                          })
                         }}
                       />
                       <InputIcon class="pt-0.5">GB</InputIcon>
@@ -508,9 +536,13 @@ export function usePreferencesPanel() {
                       min={0}
                       max={100}
                       onValueChange={() => {
-                        if (oldValue !== item.value) {
-                          saveUserConfig(item)
-                        }
+                        nextTick(() => {
+                          if (isEmptyValue(item.value))
+                            item.value = 30
+                          if (oldValue !== item.value) {
+                            saveUserConfig(item)
+                          }
+                        })
                       }}
                     />
                     <InputIcon class="pt-0.5">{$t('天')}</InputIcon>
@@ -623,7 +655,7 @@ export function usePreferencesPanel() {
               text: () => (
                 <div class="w-88">
                   {
-                    $t('客户端重新打开时，恢复上次窗口打开状态')
+                    $t('主动重启客户端后，恢复上次窗口打开状态')
                   }
                 </div>
               ),
@@ -660,6 +692,27 @@ export function usePreferencesPanel() {
               ),
               name: 'autoStart',
               value: data?.autoStart ?? true,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('自动更新'),
+              text: () => (
+                <div class="w-88">
+                  {$t(
+                    '自动下载并安装新版本',
+                  )}
+                </div>
+              ),
+              name: 'autoUpdateApp',
+              value: data?.autoUpdateApp ?? true,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch

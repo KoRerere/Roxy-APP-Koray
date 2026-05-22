@@ -1,22 +1,22 @@
 import type { BrowserItem } from './browserItem'
 import type { BrowserLaunchOptions, IBrowser } from '/@/modules/browser/browser-manager/adapter'
 import type { proxyDetection } from '/@/utils'
-import { screen } from 'electron'
-import { readFile, rm, writeFile } from 'node:fs/promises'
+import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
-import { appConfig } from '/@/constants'
+// import { appConfig } from '/@/constants'
 import { isLinux, isMac } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
-import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
+import { defaultCLIArgs, firefoxCacheToKeep, firefoxDefaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ExtensionManager } from '/@/modules/extension'
-import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
+import { getExtensionIDByPath } from '/@/modules/extension/helper'
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
-import { encryptFingerprintConfig, genFingerprintConfig, getTimezoneByCity, importBookmarks } from './utils'
+import { getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
+import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
 
 const RE_MEM_TOTAL = /MemTotal:\s+(\d+)/
 const RE_MEM_AVAILABLE = /MemAvailable:\s+(\d+)/
@@ -138,16 +138,23 @@ export class BeforeLaunchTask {
     this.launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', this.launchArgs)
 
-    // 更新浏览器偏好设置
-    await this.updateBrowserPreferences()
-    // 写入登录信息
-    await this.writeLoginData()
-    // 修改浏览器 Local State 文件
-    await this.modifyLocalStateFile()
-    // 导入书签
-    await this.importBookmarks().catch((error) => {
-      console.error('Failed to import bookmarks', error)
-    })
+    if (this.browserItem.isFirefox) {
+      // Firefox 没有 Local State / Preferences / Bookmarks 等 Chrome 概念
+      // 写入登录信息（Firefox 是 lumilogin 文件，由内核启动前还原）
+      await this.writeLoginData()
+    }
+    else {
+      // 更新浏览器偏好设置
+      await this.updateBrowserPreferences()
+      // 写入登录信息
+      await this.writeLoginData()
+      // 修改浏览器 Local State 文件
+      await this.modifyLocalStateFile()
+      // 导入书签
+      await this.importBookmarks().catch((error) => {
+        console.error('Failed to import bookmarks', error)
+      })
+    }
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
@@ -170,7 +177,8 @@ export class BeforeLaunchTask {
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
-        browserType: this.browserItem.winInfo.browserType,
+        coreType: this.browserItem.coreType,
+        userDataDir: this.browserItem.isFirefox ? this.browserItem.userDataDir : undefined,
       }
       console.log('launchOptions', launchOptions)
       let timer
@@ -195,6 +203,10 @@ export class BeforeLaunchTask {
 
         this.wsEndpoint = this.browser!.wsEndpoint()
         console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
+      }
+      else if (this.browserItem.isFirefox) {
+        // Firefox 同 profile 再次 spawn 会新开实例；通过 BiDi 激活已有窗口
+        await this.focusExistingFirefoxBrowser()
       }
       else {
         await launchBrowser({
@@ -222,11 +234,25 @@ export class BeforeLaunchTask {
     return promise
   }
 
+  /** 将已运行的 Firefox 窗口置于前台（不 spawn 新进程） */
+  private async focusExistingFirefoxBrowser() {
+    if (!this.browser) {
+      return
+    }
+
+    try {
+      await this.browser.bringToFront?.()
+    }
+    catch (error) {
+      console.warn('focusExistingFirefoxBrowser failed:', error)
+    }
+  }
+
   /** 重新连接浏览器 */
   async reconnectBrowser() {
     if (this.wsEndpoint) {
       try {
-        this.browser = await connectBrowser({ browserType: 'chrome', browserWSEndpoint: this.wsEndpoint })
+        this.browser = await connectBrowser({ coreType: this.browserItem.coreType, browserWSEndpoint: this.wsEndpoint })
         console.log('Reconnected to browser successfully')
         return true
       }
@@ -239,7 +265,7 @@ export class BeforeLaunchTask {
 
   /** 检测内核是否可用 */
   private async checkKernelAvailability() {
-    const { coreVersion, browserType } = this.browserItem.winInfo
+    const { coreVersion } = this.browserItem.winInfo
 
     if (!coreVersion) {
       this.sendErrorMessage($t('没有指定内核版本'))
@@ -247,7 +273,7 @@ export class BeforeLaunchTask {
     }
 
     // 获取内核执行程序路径
-    this.exePath = await coreManager.getCoreManager(browserType).getCoreExePath(coreVersion, (payload) => {
+    this.exePath = await coreManager.getCoreManager(this.browserItem.coreType).getCoreExePath(coreVersion, (payload) => {
       if (payload.description && this.currentTask) {
         if (payload.percent) {
           this.progress = this.currentTask.start + ((this.currentTask.end - this.currentTask.start) * (payload.percent / 100))
@@ -262,6 +288,60 @@ export class BeforeLaunchTask {
 
   /** 生成内核启动的命令行参数 */
   private async genLaunchCLIArgs(): Promise<string[]> {
+    if (this.browserItem.isFirefox) {
+      return this.genFirefoxLaunchCLIArgs()
+    }
+    return this.genChromeLaunchCLIArgs()
+  }
+
+  /**
+   * 生成 Firefox 启动命令行参数：
+   *  ```
+   *  RoxyFirefox -profile <data-dir> --remote-debugging-port=0 [user-args] [urls...]
+   *  ```
+   */
+  private async genFirefoxLaunchCLIArgs(): Promise<string[]> {
+    const {
+      dirId,
+      startupParam,
+      allOpenUrl,
+      openWorkbench,
+    } = this.browserItem.winInfo
+
+    const args: string[] = [
+      '-profile',
+      this.browserItem.userDataDir,
+      ...firefoxDefaultCLIArgs,
+    ]
+
+    // 用户自定义启动参数（不允许覆盖 -profile / --remote-debugging-port）
+    if (startupParam && startupParam.trim?.() !== '') {
+      const userCustomArgs = startupParam.split(';')
+        .map((item: string) => item.trim())
+        .filter((arg: string) => {
+          if (!arg)
+            return false
+          const key = arg.split('=')[0]
+          return key !== '-profile' && key !== '--remote-debugging-port'
+        })
+      args.push(...userCustomArgs)
+    }
+
+    // dashboard URL 作为位置参数
+    if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
+      args.push(`http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`)
+    }
+
+    // 同步标签页：Firefox 用命令行 url 恢复
+    const validOpenUrls = (allOpenUrl ?? [])
+      .filter(url => url && this.browserItem.isValidURL(url))
+    args.push(...validOpenUrls)
+
+    return args.filter(item => item.trim() !== '')
+  }
+
+  /** 生成 Chrome 启动命令行参数 */
+  private async genChromeLaunchCLIArgs(): Promise<string[]> {
     const {
       dirId,
       sandboxPermission,
@@ -269,7 +349,6 @@ export class BeforeLaunchTask {
       startupParam,
       openWidth,
       openHeight,
-      os,
       allOpenUrl,
       useGpu,
       workspaceId,
@@ -364,16 +443,16 @@ export class BeforeLaunchTask {
     else {
       args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
 
-      const primaryDisplay = screen.getPrimaryDisplay()
-      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+      const virtual = getVirtualWorkAreaUnion()
 
-      const [x = 0, y = 0, direction = 'tl'] = windowRatioPosition?.split(',') || []
-      const xx = Math.floor(screenWidth * x)
-      const yy = Math.floor(screenHeight * y)
+      // rxRaw 和 ryRaw 是相对于虚拟工作台的百分比，direction 是方向
+      const [rxRaw = '0', ryRaw = '0', direction = 'tl'] = windowRatioPosition?.split(',') ?? []
+      const xx = virtual.originX + Math.floor(virtual.width * Number(rxRaw))
+      const yy = virtual.originY + Math.floor(virtual.height * Number(ryRaw))
       const winWidth = Number(openWidth)
       const winHeight = Number(openHeight)
-      let positions = [xx, yy]
-      console.log('screenWidth', screenWidth, 'screenHeight', screenHeight)
+      let positions: number[] = [xx, yy]
+      console.log('virtualWorkArea', virtual)
       console.log('windowRatioPosition', windowRatioPosition, positions)
 
       if (direction === 'tr') {
@@ -518,7 +597,7 @@ export class BeforeLaunchTask {
     //   }
     // }
 
-    // 生成指纹配置
+    // 按内核生成对应形状的指纹配置
     const fingerprintConfig = await genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
 
     if (!this.browserItem.winInfo.isDirect) {
@@ -527,8 +606,15 @@ export class BeforeLaunchTask {
 
     try {
       await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)
-      const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
-      await writeFile(this.browserItem.fingerprintConfigPath, content)
+      // TODO: 测试阶段暂时用明文的
+      if (this.browserItem.isFirefox) {
+        const content = JSON.stringify(fingerprintConfig, null, 2)
+        await writeFile(join(this.browserItem.userDataDir, 'fingerprint.json'), content)
+      }
+      else {
+        const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
+        await writeFile(this.browserItem.fingerprintConfigPath, content)
+      }
     }
     catch (error) {
       console.error('Failed to create fingerprint config file', error)
@@ -658,6 +744,68 @@ export class BeforeLaunchTask {
 
   /** 根据用户设置，是否要清除浏览器缓存 */
   async clearBrowserCache() {
+    if (this.browserItem.isFirefox) {
+      return this.clearFirefoxCache()
+    }
+    return this.clearChromeCache()
+  }
+
+  /** 清除 Firefox 缓存 */
+  private async clearFirefoxCache() {
+    const { clearCookie, clearLocalStorage, clearCacheFile } = this.browserItem.winInfo
+    const profileDir = this.browserItem.userDataDir
+
+    if (clearCacheFile) {
+      // 删 profile 根除 firefoxCacheToKeep（扩展相关）之外的内容
+      try {
+        if (await fileExists(profileDir)) {
+          const entries = await readdir(profileDir)
+          await Promise.all(entries
+            .filter(name => !(firefoxCacheToKeep as readonly string[]).includes(name))
+            .map(name => rm(join(profileDir, name), { recursive: true, force: true })))
+          console.log('Firefox profile cache cleared (except extensions):', profileDir)
+        }
+      }
+      catch (err) {
+        console.log('Firefox profile cache clear failed', err)
+      }
+      return
+    }
+
+    if (clearCookie) {
+      const cookieFiles = ['cookies.sqlite', 'cookies.sqlite-wal', 'cookies.sqlite-shm']
+      for (const f of cookieFiles) {
+        const fp = join(profileDir, f)
+        if (await fileExists(fp)) {
+          try {
+            await rm(fp, { force: true })
+            console.log('Firefox cookie file deleted:', fp)
+          }
+          catch (err) {
+            this.warningMessages.push($t('cookie文件删除失败'))
+            console.log('Firefox cookie file deletion failed', err)
+          }
+        }
+      }
+    }
+
+    if (clearLocalStorage) {
+      const storageDir = join(profileDir, 'storage', 'default')
+      if (await fileExists(storageDir)) {
+        try {
+          await rm(storageDir, { recursive: true, force: true })
+          console.log('Firefox localStorage deleted:', storageDir)
+        }
+        catch (err) {
+          this.warningMessages.push($t('localStorage文件删除失败'))
+          console.log('Firefox localStorage deletion failed', err)
+        }
+      }
+    }
+  }
+
+  /** 清除 Chrome 缓存 */
+  private async clearChromeCache() {
     const { clearCookie, clearLocalStorage, clearCacheFile } = this.browserItem.winInfo
 
     if (clearCacheFile) {

@@ -6,3 +6,7 @@ export const MENU_COLLAPSED = 'menuCollapsed'
 export const OFFICIAL_SITE_INVITE_CODE = 'official-site-invite-code'
 /** Web 跨语言域名跳转时携带 token（中英文站点域名不同时无法用 Cookie，需在落地页读出后立即从 URL 移除） */
 export const LOCALE_SWITCH_HANDOFF_TOKEN_QUERY = 'locale-handoff-token'
+/** 客户端接收成功版本号 */
+export const CLIENT_RECEIVE_VERSION = 'client-receive-version'
+/** 安装完成版本号 */
+export const INSTALL_COMPLETE_VERSION = 'install-complete-version'

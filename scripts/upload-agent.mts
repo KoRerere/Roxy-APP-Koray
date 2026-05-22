@@ -33,14 +33,14 @@ const baseOssConfig = {
 }
 
 // 正式环境 agent 版本
-const prodVersion = '1.0.10'
+const prodVersion = '1.0.11'
 // 开发环境 agent 版本
-const devVersion = '2.2.45'
+const devVersion = '2.2.68'
 
 // 当前 agent 的版本
 const version = isProd ? prodVersion : devVersion
 // 此 agent 兼容的最低 app 版本
-const minAppVersion = isProd ? '3.8.1' : '7.6.6'
+const minAppVersion = isProd ? '3.8.7' : '7.6.6'
 
 /** compat-index.json 在 OSS 上的路径（不区分平台，由 app 侧根据 os 自行拼接脚本地址） */
 const compatIndexOssPath = '/public/package/agent/compat-index.json'

@@ -113,7 +113,7 @@ async function handleSubmit() {
   }
 }
 
-const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_mail.svg`, import.meta.url).href)
+const imgSrc = computed(() => new URL(`../../../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_mail.svg`, import.meta.url).href)
 
 onBeforeMount(() => {
   startCountdown()

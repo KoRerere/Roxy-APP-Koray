@@ -64,6 +64,7 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
 
   /** 生成随机指纹 */
   ipcMain.on('util:genRandomFingerprint', (event, payload, count = 1) => {
+    console.log('util:genRandomFingerprint payload', payload)
     return genRandomFingerprint({
       payload,
       count,

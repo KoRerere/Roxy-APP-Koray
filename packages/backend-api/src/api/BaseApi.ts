@@ -45,6 +45,7 @@ import {
   GetPromotionLinkDiscountAndUsernameListData,
   GetQrcodeInfoListData,
   GetSpringFestivalTimeListData,
+  GetUninstallReasonQuestionListListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
   LoginCreateData,
@@ -61,6 +62,8 @@ import {
   LoginVkCreatePayload,
   PostBaseData,
   PostBasePayload,
+  ReportAppVersionUpdateCreateData,
+  ReportAppVersionUpdateCreatePayload,
   SaveChannelSourcesPeopleListData,
   SaveChannelSourcesPeopleListParams,
   SavePromotionLinkClickCountListData,
@@ -73,6 +76,8 @@ import {
   SendPhoneVerCodeCreatePayload,
   SendValidatorEmailVerifyCodeListData,
   SendValidatorEmailVerifyCodeListParams,
+  UninstallReasonReportCreateData,
+  UninstallReasonReportCreatePayload,
   UserAppRatingCreateData,
   UserAppRatingCreatePayload,
   UserBindEmailCreateData,
@@ -111,6 +116,7 @@ import {
   UserGetDictVersionListData,
   UserGetGuideVideosByTypeListData,
   UserGetGuideVideosByTypeListParams,
+  UserGetInfluencerRankingListData,
   UserGetInviteCodeListData,
   UserGetInviteLinkListData,
   UserGetInviteNotifyListData,
@@ -124,12 +130,14 @@ import {
   UserGetPromotionInfoByTypeListData,
   UserGetPromotionInfoByTypeListParams,
   UserGetPromotionInfoListData,
+  UserGetPromotionLinkListListData,
   UserGetPromptTemplateListListData,
   UserGetRatingRewardCreateData,
   UserGetRatingRewardCreatePayload,
   UserGetRewardRecordListListData,
   UserGetRewardRecordListListParams,
   UserGetRoxyClawListData,
+  UserGetRpaScriptLibraryListListData,
   UserGetSystemDictV2CreateData,
   UserGetSystemDictV2CreatePayload,
   UserGetUninstallReasonQuestionListListData,
@@ -2303,6 +2311,75 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserGetRpaScriptLibraryListList
+   * @summary 脚本广场列表
+   * @request GET:/user_get_rpa_script_library_list
+   * @response `200` `UserGetRpaScriptLibraryListListData`
+   */
+  userGetRpaScriptLibraryListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetRpaScriptLibraryListListData, any>({
+      path: `/user_get_rpa_script_library_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UninstallReasonReportCreate
+   * @summary 上报卸载原因 -无权限
+   * @request POST:/uninstall_reason_report
+   * @response `200` `UninstallReasonReportCreateData`
+   */
+  uninstallReasonReportCreate = (
+    data: UninstallReasonReportCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UninstallReasonReportCreateData, any>({
+      path: `/uninstall_reason_report`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetInfluencerRankingList
+   * @summary 获取影响力排行榜 (10条数据)
+   * @request GET:/user_get_influencer_ranking
+   * @response `200` `UserGetInfluencerRankingListData`
+   */
+  userGetInfluencerRankingList = (params: RequestParams = {}) =>
+    this.http.request<UserGetInfluencerRankingListData, any>({
+      path: `/user_get_influencer_ranking`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetPromotionLinkListList
+   * @summary 获取推广链接列表
+   * @request GET:/user_get_promotion_link_list
+   * @response `200` `UserGetPromotionLinkListListData`
+   */
+  userGetPromotionLinkListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPromotionLinkListListData, any>({
+      path: `/user_get_promotion_link_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name GetFaqHelpList2
    * @summary 获取FAQ&HELP
    * @request GET:/app_statistics/get_faq_help
@@ -2366,6 +2443,43 @@ export class BaseApi<SecurityDataType = unknown> {
   userGetRoxyClawList = (params: RequestParams = {}) =>
     this.http.request<UserGetRoxyClawListData, any>({
       path: `/user_get_roxy_claw`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name ReportAppVersionUpdateCreate
+   * @summary 版本更新监控
+   * @request POST:/report_app_version_update
+   * @response `200` `ReportAppVersionUpdateCreateData`
+   */
+  reportAppVersionUpdateCreate = (
+    data: ReportAppVersionUpdateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<ReportAppVersionUpdateCreateData, any>({
+      path: `/report_app_version_update`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetUninstallReasonQuestionListList
+   * @summary 查询卸载原因列表
+   * @request GET:/get_uninstall_reason_question_list
+   * @response `200` `GetUninstallReasonQuestionListListData`
+   */
+  getUninstallReasonQuestionListList = (params: RequestParams = {}) =>
+    this.http.request<GetUninstallReasonQuestionListListData, any>({
+      path: `/get_uninstall_reason_question_list`,
       method: "GET",
       format: "json",
       ...params,

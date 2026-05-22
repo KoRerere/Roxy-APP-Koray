@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import { debounce } from 'es-toolkit'
 import AnimationBorder from '/@/components/animation-border.vue'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
@@ -36,7 +37,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
           </I18nT>
         )
       },
-      image: '/images/payments/pay-wall-synchronizer.png',
+      image: getImage('payments/pay-wall-synchronizer.png'),
       about: $t('关于同步器'),
       document: getOfficialFaqWebsite('/features/synchronizer'),
     },
@@ -66,7 +67,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
           </I18nT>
         )
       },
-      image: '/images/payments/pay-wall-transfer.png',
+      image: getImage('payments/pay-wall-transfer.png'),
       about: $t('关于窗口转移'),
       document: getOfficialFaqWebsite('/features/transfer-profile'),
     },

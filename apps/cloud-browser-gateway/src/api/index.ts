@@ -12,6 +12,9 @@ httpClient.instance.interceptors.request.use(async (config) => {
     ...commonRequestHeaders,
     ...config.headers,
   })
+
+  config.baseURL = process.env.API_BASE_URL
+
   return config
 }, (error) => {
   return Promise.reject(error)

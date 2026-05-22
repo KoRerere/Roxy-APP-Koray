@@ -15,6 +15,7 @@ import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
 import { encryptAESGCM, getCookie, hidePageLoading, isDev, isMainWindow, isMobile, isWindows, removeCookie } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
+import { clearSessionLost, markSessionLost } from '/@/utils/sessionLost'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -117,6 +118,8 @@ export const useUserStore = defineStore(
 
       if (code === 0) {
         lastLoginTime.value = Date.now()
+        // 登录成功，取消待触发的掉登录态强制升级
+        clearSessionLost()
 
         setUserInfo(data)
         workspaceStore.setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
@@ -184,6 +187,7 @@ export const useUserStore = defineStore(
           globalThis.electronAPI.send('user:setUserInfo', {
             token: token.value,
             userId: userInfo.value.id!,
+            lastUserId: userInfo.value.id!,
             workspaceId: userInfo.value.workspaceId!,
             userName: userInfo.value.userName!,
             email: userInfo.value.email!,
@@ -258,7 +262,7 @@ export const useUserStore = defineStore(
         userInfo.value = {}
         password.value = ''
       }
-
+      markSessionLost()
       removeCookie('roxy_token', '/', location.hostname.split('.').slice(-2).join('.'))
       userCards.value = undefined
       token.value = ''
@@ -355,9 +359,13 @@ export const useUserStore = defineStore(
     const initUserInfo = async (intoWorkspaceId?: number) => {
       hasCallInitUserInfo.resolve()
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
+      console.log('initUserInfo checkCookie')
       await checkCookie()
 
+      console.log('initUserInfo token.value', token.value)
+
       if (token.value) {
+        setToken(token.value)
         await getUserInfo(intoWorkspaceId)
         getUserConfig(true)
       }
@@ -396,8 +404,19 @@ export const useUserStore = defineStore(
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
       if (!globalThis.isElectron && !import.meta.hot && router.currentRoute.value.name !== 'login') {
         const roxyToken = await getCookie('roxy_token')
-        // console.debug('checkCookie', roxyToken)
+
         if (!roxyToken) {
+          if (!userInfo.value.id) {
+            console.log('未登录状态')
+            return Promise.resolve()
+          }
+
+          if (document.hidden || !document.hasFocus()) {
+            console.log('当前标签页未聚焦，跳过 cookie 登出清理')
+            return Promise.resolve()
+          }
+          console.log('cookie expired', document.cookie.split(';'))
+
           token.value = ''
           clearUserInfo()
           router.push({ name: 'login' })

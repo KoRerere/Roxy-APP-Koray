@@ -6,11 +6,13 @@ import { app } from 'electron'
 import log from 'electron-log/main'
 import electronUpdater from 'electron-updater'
 import { join } from 'node:path'
-import { setTimeout } from 'node:timers/promises'
+// import { setTimeout } from 'node:timers/promises'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
+import { browserManager } from '/@/modules/browser'
+import { getAppIdleState } from '/@/modules/ipc/receiver/modules/app'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { CustomDebUpdater } from './CustomDebUpdater'
@@ -60,14 +62,14 @@ export const appUpdater = new class AppUpdater {
       return result
     }
 
-    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime, newFeatureTips = [] } = result.data
-    this.#updateMessageData.originUpgradeData = result.data
+    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime, newFeatureTips } = result.data
+    this.#updateMessageData.originUpgradeData = structuredClone(result.data)
     this.#updateMessageData.upgradeContent = upgradeContent
     this.#updateMessageData.title = upgradeTitle || 'RoxyBrowser'
     this.#updateMessageData.version = version
     this.#updateMessageData.currentVersion = app.getVersion()
     this.#updateMessageData.releaseTime = releaseTime
-    this.#updateMessageData.newFeatureTips = newFeatureTips
+    this.#updateMessageData.newFeatureTips = structuredClone(newFeatureTips ?? {})
     // downloadUrl = `http://localhost:7788/static`
     console.debug(`AppUpdater downloadUrl`, downloadUrl)
 
@@ -143,6 +145,11 @@ export const appUpdater = new class AppUpdater {
       this.sendSuccessMessage()
       store.showNewFeatureTips = Boolean(this.#updateMessageData.newFeatureTips?.[store.language]?.length)
       forceSaveConfig()
+
+      // 安转包下载完成后，20 秒后检查是否为空闲状态，如果为空闲状态，则自动更新
+      setTimeout(() => {
+        this.installUpdateWhenIdle()
+      }, 20 * 1000)
     })
 
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
@@ -209,14 +216,14 @@ export const appUpdater = new class AppUpdater {
 
   async getLastUpdateFeature() {
     if (!isDevelopment) {
-      return this.#updateMessageData.newFeatureTips?.[store.language]?.[0]?.content ? this.#updateMessageData.newFeatureTips[store.language] : []
+      return this.#updateMessageData
     }
 
     const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
     if (code !== 0 || !data) {
-      return []
+      return {}
     }
-    return data.newFeatureTips?.[store.language]?.[0]?.content ? data.newFeatureTips[store.language] : []
+    return data
   }
 
   /** 是否有更新 */
@@ -257,6 +264,26 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.quitAndInstall(true, true)
     // return this.quitAndInstallPromiser.promise
+  }
+
+  /** 当 APP 处于空闲状态时，安装更新 */
+  async installUpdateWhenIdle() {
+    if (!store.autoUpdateApp || !getAppIdleState()) {
+      return
+    }
+
+    const { version, status } = this.#updateMessageData
+    const { openedBrowserList, openingBrowserMap } = browserManager
+
+    // 有新版本可以升级
+    const newVersionIsReadyToUpgrade = version && status === 'downloaded' && compare(version, app.getVersion(), '>')
+    // 无处于打开状态的窗口
+    const allBrowsersClosed = openedBrowserList.length === 0 && openingBrowserMap.size === 0
+    // 如果 APP 当前为空闲状态，则检查是否需要更新
+    if (newVersionIsReadyToUpgrade && allBrowsersClosed) {
+      console.log('installUpdateWhenIdle, upgrade now')
+      this.upgradeNow()
+    }
   }
 
   private sendSuccessMessage() {

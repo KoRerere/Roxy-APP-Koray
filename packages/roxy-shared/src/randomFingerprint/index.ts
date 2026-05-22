@@ -107,17 +107,22 @@ export interface GenRandomFingerprintOptions {
 /** 生成随机指纹 */
 export async function genRandomFingerprint(options: GenRandomFingerprintOptions): Promise<any[]> {
   const { payload, count = 1, genType, API, getMacAddress, local_fonts } = options
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = payload
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion, coreType } = payload
   const headers = genType === 'api' ? { source: 'api' } : {}
 
+  console.log('genRandomFingerprint payload', payload)
+
   const result = await Promise.all([
-    API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }, { headers }),
-    API.window.userGetDeviceNameV2List({ os, count }, { headers }),
+    API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, coreType, count }, { headers }),
+    API.window.userGetDeviceNameV2List({ os, coreType, count }, { headers }),
     macInfo
-      ? API.window.userGetMacAddrV2List({ count }, { headers })
+      ? API.window.userGetMacAddrV2List({ count, coreType }, { headers })
       : { code: 0, data: [{ macAddr: await getMacAddress() }] },
-  ])
-  console.log('result', result)
+  ]).catch((error) => {
+    console.error('genRandomFingerprint error', error)
+    return Promise.reject(error)
+  })
+  console.log('genRandomFingerprint result', result)
   const unSuccessItem = result.find(n => n.code !== 0)
   if (unSuccessItem) {
     console.error('unSuccessItem', unSuccessItem)

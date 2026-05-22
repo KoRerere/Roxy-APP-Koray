@@ -17,6 +17,14 @@ if (!userId || !workspaceId) {
   throw new Error('Missing required environment variables: ROXY_USER_ID and ROXY_WORKSPACE_ID')
 }
 
+function utcToLocal(utcStr: string): string {
+  const d = new Date(`${utcStr.replace(' ', 'T')}Z`)
+  if (Number.isNaN(d.getTime()))
+    return utcStr
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 // 类型断言：确保 userId 和 workspaceId 不是 undefined
 const safeUserId: string = userId
 const safeWorkspaceId: string = workspaceId
@@ -44,6 +52,7 @@ function initDatabase() {
       workspace_id TEXT NOT NULL,
       title TEXT NOT NULL,
       thread_id TEXT UNIQUE NOT NULL,
+      conversation_type TEXT DEFAULT 'automation',
       model TEXT,
       is_active INTEGER DEFAULT 0,
       is_title_set INTEGER DEFAULT 0,
@@ -97,6 +106,14 @@ function initDatabase() {
   // 数据库迁移：为已存在的 conversations 表添加 is_active 字段
   try {
     const tableInfo = db.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{ name: string }>
+    const hasConversationType = tableInfo.some(col => col.name === 'conversation_type')
+    if (!hasConversationType) {
+      db.exec(`
+        ALTER TABLE conversations ADD COLUMN conversation_type TEXT DEFAULT 'automation';
+      `)
+      console.log(`✅ Added conversation_type column to conversations table`)
+    }
+
     const hasIsActive = tableInfo.some(col => col.name === 'is_active')
 
     if (!hasIsActive) {
@@ -136,6 +153,7 @@ export interface Conversation {
   workspace_id: string
   title: string
   thread_id: string
+  conversation_type?: 'automation' | 'asset'
   model?: string
   created_at: string
   updated_at: string
@@ -179,22 +197,22 @@ export interface Message {
 const statements = {
   // Conversation operations
   insertConversation: db.prepare(`
-    INSERT INTO conversations (id, user_id, workspace_id, title, thread_id, model, is_active, is_title_set)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO conversations (id, user_id, workspace_id, title, thread_id, conversation_type, model, is_active, is_title_set)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
   updateConversation: db.prepare(`
-    UPDATE conversations SET title = ?, model = ?, updated_at = CURRENT_TIMESTAMP
+    UPDATE conversations SET title = ?, model = ?, conversation_type = COALESCE(?, conversation_type), updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
   updateConversationModel: db.prepare(`
-    UPDATE conversations SET model = ?, updated_at = CURRENT_TIMESTAMP
+    UPDATE conversations SET model = ?, conversation_type = COALESCE(?, conversation_type), updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
   updateConversationWithTitleSet: db.prepare(`
-    UPDATE conversations SET title = ?, model = ?, is_title_set = 1, updated_at = CURRENT_TIMESTAMP
+    UPDATE conversations SET title = ?, model = ?, conversation_type = COALESCE(?, conversation_type), is_title_set = 1, updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
@@ -268,6 +286,7 @@ export class ConversationManager {
         safeWorkspaceId,
         conversation.title,
         conversation.thread_id,
+        conversation.conversation_type ?? 'automation',
         conversation.model ?? null,
         1, // is_active 设置为 1（活跃状态）
         0, // is_title_set 设置为 0（未设置）
@@ -286,7 +305,7 @@ export class ConversationManager {
     return result as unknown as Conversation
   }
 
-  static update(conversationId: string, updates: Partial<Pick<Conversation, 'title' | 'model'>>): boolean {
+  static update(conversationId: string, updates: Partial<Pick<Conversation, 'title' | 'model' | 'conversation_type'>>): boolean {
     // 如果更新了标题，则使用 updateConversationWithTitleSet 来同时设置 is_title_set = 1
     if (updates.title !== undefined) {
       // 获取当前对话信息，以便在只更新 title 时保持 model 不变
@@ -296,6 +315,7 @@ export class ConversationManager {
       const result = statements.updateConversationWithTitleSet.run(
         updates.title ?? null as any,
         modelToUpdate ?? null as any,
+        updates.conversation_type ?? null as any,
         conversationId,
         safeUserId,
         safeWorkspaceId,
@@ -306,6 +326,19 @@ export class ConversationManager {
       // 只更新 model，不更新标题
       const result = statements.updateConversationModel.run(
         updates.model ?? null as any,
+        updates.conversation_type ?? null as any,
+        conversationId,
+        safeUserId,
+        safeWorkspaceId,
+      )
+      return result.changes > 0
+    }
+    else if (updates.conversation_type !== undefined) {
+      const currentConversation = ConversationManager.getById(conversationId)
+      const result = statements.updateConversation.run(
+        currentConversation?.title ?? null as any,
+        currentConversation?.model ?? null as any,
+        updates.conversation_type ?? null as any,
         conversationId,
         safeUserId,
         safeWorkspaceId,
@@ -321,7 +354,12 @@ export class ConversationManager {
   }
 
   static getAll(): Conversation[] {
-    return statements.getConversationsByWorkspace.all(safeWorkspaceId, safeUserId) as unknown as Conversation[]
+    const rows = statements.getConversationsByWorkspace.all(safeWorkspaceId, safeUserId) as unknown as Conversation[]
+    return rows.map(c => ({
+      ...c,
+      created_at: utcToLocal(c.created_at),
+      updated_at: utcToLocal(c.updated_at),
+    }))
   }
 
   static getById(conversationId: string): Conversation | null {
@@ -424,6 +462,7 @@ export class MessageManager {
         ...msg,
         content,
         metadata,
+        created_at: utcToLocal(msg.created_at),
       }
     })
   }

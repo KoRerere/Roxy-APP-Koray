@@ -1,6 +1,7 @@
 import { createGatewayConfig } from '@roxy/shared'
 import { debounce } from 'es-toolkit'
 import { coreManager } from '/@/modules/browser'
+import { mcpEventEmitter } from '/@/modules/mcp/event'
 import { appUpdater } from '/@/modules/updater'
 
 console.debug(`VITE_GATEWAY_URL_LIST`, import.meta.env.VITE_GATEWAY_URL_LIST)
@@ -16,6 +17,7 @@ const gatewayConfig = createGatewayConfig({
   onCountryChanged: debounce(() => {
     appUpdater.init()
     coreManager.fetchAvailableCoreList()
+    mcpEventEmitter.emit('baseUrlChanged', gatewayConfig.getBaseUrl())
   }, 3000),
 })
 

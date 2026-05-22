@@ -14,6 +14,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:setUserInfo', async (event, userInfo) => {
     store.token = userInfo.token
     store.userId = userInfo.userId
+    store.lastUserId = userInfo.lastUserId
     store.hasLoggedIn = true
     store.visitorId = ''
     store.userInfo = {

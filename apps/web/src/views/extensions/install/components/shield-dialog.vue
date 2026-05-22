@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api';
-;
+import { getImage } from '/@/utils/basic'
+import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { useToast } from 'primevue/usetoast';
+
+import { useToast } from 'primevue/usetoast'
 import { RxAlert } from '/@/components/rx-alert/'
 
 const props = defineProps<{
@@ -17,22 +18,22 @@ const toast = useToast()
 const checkList = [
   {
     name: 'VirusTotal',
-    icon: '/images/shield/virustotal.png',
+    icon: getImage('shield/virustotal.png'),
     link: 'virustotal.com',
-    desc: $t('由谷歌运营的知名在线病毒检测平台，被全球安全专家广泛信赖。')
+    desc: $t('由谷歌运营的知名在线病毒检测平台，被全球安全专家广泛信赖。'),
   },
   {
     name: 'Metadefender',
-    icon: '/images/shield/metadefender.png',
+    icon: getImage('shield/metadefender.png'),
     link: 'metadefender.com',
-    desc: $t('以多重扫描技术和恶意软件检测能力享誉业界，获国际安全机构认可。')
+    desc: $t('以多重扫描技术和恶意软件检测能力享誉业界，获国际安全机构认可。'),
   },
   {
     name: 'Kaspersky',
-    icon: '/images/shield/kaspersky.png',
+    icon: getImage('shield/kaspersky.png'),
     link: 'opentip.kaspersky.com',
-    desc: $t('依托卡巴斯基在网络安全领域的深厚技术，提供实时恶意文件分析服务。')
-  }
+    desc: $t('依托卡巴斯基在网络安全领域的深厚技术，提供实时恶意文件分析服务。'),
+  },
 ]
 
 async function checkExtensionInfo() {
@@ -40,10 +41,11 @@ async function checkExtensionInfo() {
     const result = await globalThis.electronAPI.send('extension:getExtensionInfo', props.extensionInfo.pluginDir!)
     console.log('checkExtensionInfo', result)
     extensionExist.value = true
-  } catch (error) {
+  }
+  catch (error) {
     console.error(`checkExtensionInfo error: ${error}`)
     extensionExist.value = false
-    globalThis.electronAPI.send('extension:download', [toRaw(props.extensionInfo)])
+    globalThis.electronAPI.send('extension:download', [toRaw(props.extensionInfo)] as any[])
   }
 }
 
@@ -59,7 +61,7 @@ const cancelListener = globalThis.electronAPI.on('extension:download-progress', 
   }
 
   if (payload.errorTips) {
-    toast.add({ severity: 'error', summary: payload.errorTips, life: 3000 });
+    toast.add({ severity: 'error', summary: payload.errorTips, life: 3000 })
   }
 })
 
@@ -85,13 +87,17 @@ checkExtensionInfo()
         </div>
       </div>
     </div>
-    <RxAlert class="whitespace-pre-wrap w-full" :closable="false" type="info" :title="$t('Roxy浏览器鼓励您自行通过权威机构检查扩展的安全性，以此来减少因使用恶意扩展而导致业务资产损失的担忧。\n\n您可以根据以下推荐步骤进行扩展安全性检查。')"></RxAlert>
+    <RxAlert class="whitespace-pre-wrap w-full" :closable="false" type="info" :title="$t('Roxy浏览器鼓励您自行通过权威机构检查扩展的安全性，以此来减少因使用恶意扩展而导致业务资产损失的担忧。\n\n您可以根据以下推荐步骤进行扩展安全性检查。')" />
     <div class="extension-info-step">
-      <div class="extension-info-step-title">{{ $t('1. 点击下方按钮打开该扩展所在的本地文件夹') }}</div>
-      <RxButton icon="base/rx_ic_folder" outlined :label="extensionExist ? $t('扩展文件夹') : $t('扩展加载中...')" :loading="!extensionExist" @click="showExtensionDir"> </RxButton>
+      <div class="extension-info-step-title">
+        {{ $t('1. 点击下方按钮打开该扩展所在的本地文件夹') }}
+      </div>
+      <RxButton icon="base/rx_ic_folder" outlined :label="extensionExist ? $t('扩展文件夹') : $t('扩展加载中...')" :loading="!extensionExist" @click="showExtensionDir" />
     </div>
     <div class="extension-info-step">
-      <div class="extension-info-step-title">{{ $t('2. 将文件上传至下列任意权威渠道进行安全性检查') }}</div>
+      <div class="extension-info-step-title">
+        {{ $t('2. 将文件上传至下列任意权威渠道进行安全性检查') }}
+      </div>
       <div class="extension-info-step-list">
         <template v-for="item in checkList" :key="item.name">
           <div class="extension-info-step-item">
@@ -116,7 +122,6 @@ checkExtensionInfo()
   </div>
 </template>
 
-
 <style lang="scss" scoped>
 .shield-dialog {
   margin-top: 20px;
@@ -138,7 +143,7 @@ checkExtensionInfo()
     align-items: center;
     gap: 13.333px;
     border-radius: 8px;
-    border: 1px solid var(--colors-border-border-base, #C7CDD1);
+    border: 1px solid var(--colors-border-border-base, #c7cdd1);
     background: var(--colors-background-bg-block);
 
     img {
@@ -162,7 +167,7 @@ checkExtensionInfo()
       display: flex;
       align-items: center;
       gap: 4px;
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -171,8 +176,8 @@ checkExtensionInfo()
     }
 
     .extension-info-version {
-      color: var(--colors-text-text-tertiary, #575D60);
-      font-family: "JetBrains Mono";
+      color: var(--colors-text-text-tertiary, #575d60);
+      font-family: 'JetBrains Mono';
       font-size: 14px;
       font-style: normal;
       font-weight: 400;
@@ -191,7 +196,7 @@ checkExtensionInfo()
 }
 
 .extension-info-step-title {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -231,7 +236,7 @@ checkExtensionInfo()
   .extension-info-step-item-name {
     display: flex;
     align-items: center;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -244,7 +249,7 @@ checkExtensionInfo()
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: var(--colors-text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-align: center;
     font-family: Inter;
     font-size: 12px;
@@ -254,7 +259,7 @@ checkExtensionInfo()
   }
 
   .extension-info-step-item-desc {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-size: 12px;
     font-style: normal;
     font-weight: 400;

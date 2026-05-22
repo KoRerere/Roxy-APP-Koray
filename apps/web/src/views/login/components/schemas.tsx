@@ -3,7 +3,6 @@ import CodeInput from '/@/views/login/components/phone-login/code.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormInputPassword from '/@/views/lab/components/form/m-input-password.vue'
 import { defineFormSchema } from '/@/components/rx-form/'
-import type { Ref } from 'vue'
 
 import { z } from 'zod'
 
@@ -87,10 +86,28 @@ export function getFormSchemas(isRegister = false) {
         },
       },
     },
+    {
+      field: 'inviteCode',
+      component: ({ formModel }: any) => {
+        return <TsFormInputText v-model={formModel.value.inviteCode}></TsFormInputText>
+      },
+      vIf: ({ formModel }) => {
+        return checkEmailValid(formModel.value.user_name) && !emailValidateLoading.value && isRegister
+      },
+      componentProps: {
+        size: 'lg',
+        preIcon: 'base/rx_ic_binary',
+        feedback: false,
+        toggleMask: true,
+        placeholder: $t('邀请码（选填）'),
+      },
+    },
   ])
 }
 
-export function getPhoneSchemas(tipsClick?: () => void) {
+export function getPhoneSchemas() {
+  const isRegistered = ref()
+
   return defineFormSchema([
     {
       field: 'phone',
@@ -116,7 +133,7 @@ export function getPhoneSchemas(tipsClick?: () => void) {
       field: 'verCode',
       component: ({ formModel }) => {
         return (
-          <CodeInput v-model={formModel.value.verCode} phone={formModel.value.phone} tipsClick={tipsClick}></CodeInput>
+          <CodeInput v-model={formModel.value.verCode} phone={formModel.value.phone} v-model:isRegistered={isRegistered.value}></CodeInput>
         )
       },
       componentProps: {
@@ -131,6 +148,20 @@ export function getPhoneSchemas(tipsClick?: () => void) {
           const z = zod.string()
           return z.min(1, $t('请输入您的验证码')).max(6, $t('验证码不超过 {num} 位', { num: 6 }))
         },
+      },
+    },
+    {
+      field: 'inviteCode',
+      component: ({ formModel }: any) => {
+        return <TsFormInputText v-model={formModel.value.inviteCode}></TsFormInputText>
+      },
+      vIf: () => isRegistered.value === false,
+      componentProps: {
+        size: 'lg',
+        preIcon: 'base/rx_ic_binary',
+        feedback: false,
+        toggleMask: true,
+        placeholder: $t('邀请码（选填）'),
       },
     },
   ])

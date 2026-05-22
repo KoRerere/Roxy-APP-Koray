@@ -76,7 +76,7 @@ async function sendNotifyMe() {
     <div class="relative mx-auto flex items-center py-4 gap-2.5">
       <SvgIcon :name="(`country-code/${country}` as any)" size="32" />
       <div class="name">
-        Roxy IP
+        RoxyIP
       </div>
     </div>
     <div class="tt-primary text-3.5 leading-normal">

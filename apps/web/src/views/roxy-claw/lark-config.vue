@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import ConfigBase from './components/config-base.vue'
 import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
@@ -185,7 +186,7 @@ async function handleTest(field: string) {
 <template>
   <ConfigBase
     :title="$t('集成到 Lark/飞书 机器人')"
-    icon="/images/roxy-claw/lark.png"
+    :icon="getImage('roxy-claw/lark.png')"
     bg-color="#78d5b9"
     :steps="steps"
     :setup-fields="setupFields"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { useCampaignStore } from '/@/stores/campaign'
 
 const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
@@ -13,7 +14,7 @@ const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
       {{ $t('永久勋章 + 终身 {discount}% 折扣权益', { discount: currentActivity.discount }) }}
     </div>
 
-    <img draggable="false" class="absolute inset-0 w-full h-full" src="/images/campaing/freedom/mid_bg.png">
+    <img draggable="false" class="absolute inset-0 w-full h-full" :src="getImage('campaing/freedom/mid_bg.png')">
     <SvgIcon class="absolute w-16.5 h-16.5 -right-1.5 -bottom-1.5" name="other/palm_tree" size="34" />
   </div>
 </template>

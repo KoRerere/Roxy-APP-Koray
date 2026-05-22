@@ -3,7 +3,7 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
-import defaultPlatformIcon from '/@/assets/images/base/rx_ic_user_key.svg?url'
+import defaultPlatformIcon from '/@/assets/icons/base/rx_ic_user_key.svg?url'
 import { getLocalWebServerURL } from '../utils'
 
 const isDark = document.documentElement.getAttribute('data-theme') === 'dark'

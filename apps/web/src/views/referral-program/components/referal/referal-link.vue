@@ -1,78 +1,33 @@
 <script setup lang="tsx">
-import RxTooltip from '/@/components/rx-tooltip/index.vue'
+import NewReferralModal from '/@/views/referral-program/components/new-referral-modal.vue'
+import QrcodeModal from './qrcode-modal.vue'
+import RankList from './rank-list.vue'
 import { RxCopyContent } from '/@/components/rx-copy'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import currency from 'currency.js'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
+import { copyText, genDriver, safeParseJSON } from '/@/utils'
 import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
-import { genDriver, safeParseJSON } from '/@/utils'
 
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
 
+const { isZh } = storeToRefs(useSimpleLocale())
 const { mixpanelTrack } = useUserStore()
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
+const [showModal] = useDialog()
+const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 
 const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
 const selectBannerSize = ref('')
 const dataPreformanceValue = ref()
-const MAX_NUMBER = 999999
 
 const detailPopover = useTemplateRef('detail')
-
-const dataPreformance = computed(() => {
-  return [
-    {
-      title: $t('链接点击次数'),
-      total: dataPreformanceValue.value?.promotionClickCount || 0,
-      // todayCount: dataPreformanceValue.value?.todayPromotionClickCount || 0,
-    },
-    {
-      title: $t('名下用户'),
-      total: dataPreformanceValue.value?.registeredUserNum || 0,
-      // todayCount: dataPreformanceValue.value?.todayRegisteredUserNum || 0,
-    },
-    {
-      title: $t('充值用户'),
-      total: dataPreformanceValue.value?.purchaseUserNum || 0,
-      // todayCount: dataPreformanceValue.value?.todayPurchaseUserNum || 0,
-    },
-    {
-      title: $t('近 30 天名下用户消费金额'),
-      total: Math.min(dataPreformanceValue.value?.purchaseUserTotalAmount || 0, MAX_NUMBER),
-      /**
-       * todayCount: 0,
-       */
-      format(val: number) {
-        return currency(val).format()
-      },
-    },
-    {
-      title: $t('审核中'),
-      total: dataPreformanceValue.value?.pendingAmount || 0,
-      // todayCount: 0,
-      tootip: $t('消费后 7 天内完成审核'),
-      format(val: number) {
-        return currency(val).format()
-      },
-    },
-    {
-      title: $t('已审核奖励'),
-      total: Math.min(MAX_NUMBER, dataPreformanceValue.value?.awardsReviewed || 0),
-      // todayCount: dataPreformanceValue.value?.todayAwardsReviewed || 0,
-      style: {
-        color: '#12A3FC',
-      },
-      format(val: number) {
-        return currency(val).format()
-      },
-    },
-  ]
-})
 
 const referralLink = computed(() => {
   return activeMenu.value.promotionLink
@@ -89,7 +44,6 @@ const bannerImagePreviewHtmlCode = computed(() => {
 })
 
 const bonusList = computed(() => {
-  const targetMenu = promotionInfo.promotionLinkList.find(item => item.linkType === activeMenu.value.linkType)
   return [
     {
       id: 1,
@@ -99,7 +53,7 @@ const bonusList = computed(() => {
       isNew: true,
       items: [
         {
-          title: `${targetMenu?.promotionDiscount}%`,
+          title: `${activeMenu.value.promotionDiscount}%`,
           desc: $t('窗口/空间/成员消费返利'),
           class: '',
         },
@@ -108,7 +62,7 @@ const bonusList = computed(() => {
           class: 'flex-none',
         },
         {
-          title: `${targetMenu?.proxyPromotionDiscount}%`,
+          title: `${activeMenu.value.proxyPromotionDiscount}%`,
           desc: $t('代理 IP 消费返利'),
           class: '',
         },
@@ -121,7 +75,7 @@ const bonusList = computed(() => {
       class: 'flex-1/3 give',
       items: [
         {
-          title: `${targetMenu?.userDiscount}%`,
+          title: `${activeMenu.value.userDiscount}%`,
           desc: $t('消费优惠'),
           class: '',
         },
@@ -130,14 +84,41 @@ const bonusList = computed(() => {
   ]
 })
 
+const communityQrcodeList = computed(() => {
+  const channel = isZh.value ? 'Wechat' : 'Telegram'
+  return [{ name: channel, value: promotionInfo.businessManagerQrCode[channel as keyof typeof promotionInfo.businessManagerQrCode] }]
+})
+
 watch(activeMenu, () => {
   getBannerPictureList()
   getPromotionInfoByTypeList()
 }, { immediate: true })
 
 onMounted(() => {
-  focusReward()
+  showNewInfo()
 })
+
+async function showNewInfo() {
+  if (onboardingTaskStatus.value?.promotionLinkRevampReminderStatus !== false) {
+    // focusReward()
+    return
+  }
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    handleCancel: () => updateOnboardingTaskStatus({ promotionLinkRevampReminderStatus: true } as any),
+    slots: {
+      container: ({ hideModal }) => h(NewReferralModal, {
+        onClose: () => {
+          // focusReward()
+          hideModal()
+        },
+      }),
+    },
+  })
+}
 
 function focusReward() {
   const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
@@ -146,43 +127,12 @@ function focusReward() {
 
   genDriver({
     steps: [
-      { element: '.get', popover: { description: $t('您现在可以获得名下用户的代理 IP 消费返利了。'), side: 'top', align: 'center' } },
+      { element: '.get', popover: { description: $t('您现在可以获得名下用户的代理 IP 消费返利了。'), side: 'right', align: 'center' } },
     ],
     onDestroyed: () => {
       localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, referralProgram: true }))
     },
   }).drive()
-}
-
-function DataPreformance(props: any) {
-  return (
-    <div class="flex justify-between items-center px-3 py-2.5 rounded-1 bg-[var(--colors-background-bg-page)] gap-2">
-      <RxTooltip class="ellipsis-1">
-        {{
-          default: () => (
-            <span class="text-14px text-[var(--colors-text-text-tertiary)] text-3.5 font-500 ellipsis-1">
-              {props.title}
-              :
-            </span>
-          ),
-          content: () => <span class="text-white">{props.title}</span>,
-        }}
-      </RxTooltip>
-      <span class="flex items-center gap-2.5">
-        {props.todayCount > 0
-          ? (
-              <span class="text-[var(--colors-text-text-success)] text-3 font-500">
-                +
-                {props.format ? props.format(props.todayCount) : props.todayCount}
-              </span>
-            )
-          : <></>}
-        <span class="text-[var(--colors-text-text-primary)] text-4 font-700" style={props.style}>
-          {props.format ? props.format(props.total) : props.total}
-        </span>
-      </span>
-    </div>
-  )
 }
 
 async function getBannerPictureList() {
@@ -214,38 +164,58 @@ async function toggleInviteDetail() {
 function showDetail(event: Event) {
   detailPopover.value?.instance?.toggle(event)
 }
+// =====================
 
-function isLocked(linkStatus: number) {
-  return linkStatus === 0
+const referral = computed(() => [
+  {
+    value: referralLink.value!,
+    label: $t('邀请链接:'),
+    tooltip: $t('通过此链接注册即可成为您名下用户'),
+    trackName: 'promotion_link_copy',
+  },
+  {
+    value: activeMenu.value.promotionCode!,
+    label: $t('邀请码:'),
+    tooltip: $t('注册时填写此邀请码即可成为您名下用户'),
+    trackName: 'promotion_link_copy',
+  },
+])
+
+function copyReferral(copyStr: string, trackName: string) {
+  mixpanelTrack(trackName)
+  copyText(copyStr)
+  showToast(0, $t('复制成功'))
+}
+
+/** 商务经理联系二维码（中文微信 / 非中文 Telegram），与全局帮助入口策略一致 */
+
+function openCommunity() {
+  const list = communityQrcodeList.value
+  console.log('🚀 ~ openCommunity ~ list:', list)
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(QrcodeModal, {
+        list,
+        defaultActive: list[0],
+        onClose: hideModal,
+      }),
+    },
+  })
 }
 </script>
 
 <template>
-  <div class="referal-link-container">
-    <aside>
-      <div class="referal-title">
-        {{ $t('选择推广链接') }}
-      </div>
-      <div class="flex flex-col items-start self-stretch gap-3">
-        <div v-for="menu in promotionInfo.promotionLinkList" :key="menu.linkType" class="flex items-center self-stretch py-2 px-3 gap-3 rounded cursor-pointer menu-item"
-             :class="{ active: activeMenu.linkType === menu.linkType }" @click="activeMenu = menu"
-        >
-          <RxSvgIcon :class="{ invisible: !isLocked(menu.linkStatus!) }" name="base/rx_ic_lock" color="var(--colors-icon-icon-note)" />
-          <div class="flex-1">
-            {{ menu.linkType }}
+  <div class="flex items-start gap-6">
+    <div class="flex-1 flex flex-col items-start gap-9 items-stretch overflow-hidden">
+      <div class="flex flex-col items-start gap-3 self-stretch">
+        <div class="w-full flex justify-between items-center">
+          <div class="tt-primary text-4 font-600 leading-6">
+            {{ $t('邀请链接 & 邀请码') }}
           </div>
-          <CircleProgress v-if="isLocked(menu.linkStatus!)" :value="(menu.completed_count! / menu.total_count!) * 100" size="20" stroke-width="4" />
-        </div>
-      </div>
-    </aside>
-    <div class="content">
-      <div class="row">
-        <div class="self-stretch flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="referal-title">{{ activeMenu.linkType }}</span>
-            <span v-if="isLocked(activeMenu.linkStatus!)" class="referal-unlocked">({{ $t('邀请 {count} 人订阅后解锁', { count: activeMenu.total_count }) }})</span>
-          </div>
-          <div v-if="!isLocked(activeMenu.linkStatus!)" class="inline-flex items-center gap-2">
+          <div class="inline-flex items-center gap-2">
             <RxToggleSwitch v-model="activeMenu.isShow" :true-value="1" :false-value="0" :before-change="toggleInviteDetail" />
             <div class="detail-invite">
               {{ $t('显示邀请详情') }}
@@ -255,20 +225,23 @@ function isLocked(linkStatus: number) {
             </span>
           </div>
         </div>
-        <div v-if="isLocked(activeMenu.linkStatus!)" class="w-full flex items-center gap-3">
-          <div class="referal-desc">
-            {{ $t('用户邀请数据:') }}
-          </div>
-          <Usage class="flex-1 gap-1.5 referal-progress" :ratio="(activeMenu.completed_count! / activeMenu.total_count!)" :block-count="Math.min(10, activeMenu.total_count!)"
-                 default-color="var(--colors-border-border-inactive)"
-                 :color-level="{ normal: 'var(--component-alert-announcement-border-success)', weak: 'var(--component-alert-announcement-border-success)' }"
-          />
-          <div class="flex items-baseline gap-1">
-            <span class="referal-value">{{ activeMenu.completed_count }}</span>
-            <span class="referal-need">/{{ activeMenu.total_count }}</span>
+        <RxDivider line-only line-color="var(--colors-border-border-inactive)" />
+        <div class="w-full flex flex-col gap-4">
+          <div v-for="item in referral" :key="item.value">
+            <div class=" tt-primary text-3.5 font-500 leading-5 flex items-center gap-1">
+              {{ item.label }}
+              <span v-tooltip.top="item.tooltip" class="inline-flex ">
+                <SvgIcon class="pointer-events-none" name="base/rx_ic_info" color="var(--colors-icon-icon-tertiary)" />
+              </span>
+            </div>
+            <div class="mt-2 flex gap-3">
+              <div class="flex-1 flex items-center pa-2.5 pl-4 color-white font-[JetBrains_Mono] text-3.5 font-500 rounded-1.5 bg-[var(--pattern-editor-bg)]">
+                {{ item.value }}
+              </div>
+              <RxButton size="lg" :label="$t('复制')" icon="base/rx_ic_copy" @click="copyReferral(item.value, item.trackName)" />
+            </div>
           </div>
         </div>
-        <RxCopyContent :text="referralLink!" :mask="isLocked(activeMenu.linkStatus!)" @copy-success="mixpanelTrack('promotion_link_copy')" />
         <div class="w-full flex gap-2.5 bonus">
           <div v-for="item in bonusList" :key="item.id" class="w-full flex flex-col gap-2" :class="item.class">
             <div class="bonus-title">
@@ -290,48 +263,43 @@ function isLocked(linkStatus: number) {
             </div>
           </div>
         </div>
+        <i18n-t class="tt-secondary text-3.25 font-400 leading-5 whitespace-pre-line ml-auto" tag="div" scope="global" :keypath="$t('希望获取更高返利？请 {link} 最高获得30%返利。', { link: '{link}' })">
+          <template #link>
+            <span class="tt-brand cursor-pointer" role="button" tabindex="0" @click="openCommunity">{{ $t('添加商务经理') }}</span>
+          </template>
+        </i18n-t>
       </div>
-      <template v-if="!isLocked(activeMenu.linkStatus!)">
-        <div class="row">
-          <div class="title">
-            {{ $t('数据统计') }}
-          </div>
-          <div class="grid grid-cols-10 gap-3 w-full">
-            <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-4">
-              <DataPreformance v-for="i in 3" :key="i" v-bind="dataPreformance[i - 1]" />
-            </div>
-            <div class="flex flex-col gap-2.5 bg-[var(--colors-background-bg-block)] rounded-1.5 col-span-10 p-2 lg:col-span-6">
-              <DataPreformance v-for="i in 3" :key="i" v-bind="dataPreformance[i + 2]" />
-            </div>
+      <div class="flex flex-col items-start gap-3 self-stretch">
+        <div class="tt-primary font-600 text-3.5 leading-5 mb-1">
+          {{ $t('推广宣传图（建站用户专用）') }}
+        </div>
+        <div class="banner-sizes">
+          <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
+            <RadioButton v-model="selectBannerSize" :input-id="item.size" name="dynamic" :value="item.size" />
+            <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
           </div>
         </div>
-
-        <div class="row">
-          <div class="title">
-            {{ $t('推广宣传图（建站用户专用）') }}
+        <div class="relative flex gap-3 h-50">
+          <div class="flex-1 flex shrink-0 overflow-hidden pa-3 rounded-1 bg-[var(--colors-background-bg-block)]">
+            <RxImage v-if="currentBannerImage" class="w-full h-full object-contain object-center [&:not([src])]:invisible" container-class="w-full" :src="currentBannerImage.image_1x"
+                     :download-link="currentBannerImage.image_2x" preview
+            >
+              <template #original>
+                <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`">
+              </template>
+            </RxImage>
           </div>
-          <div class="banner-sizes">
-            <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
-              <RadioButton v-model="selectBannerSize" :input-id="item.size" name="dynamic" :value="item.size" />
-              <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
-            </div>
-          </div>
-          <div class="banner-preview-container">
-            <div v-if="currentBannerImage" class="banner-preview">
-              <RxImage :src="currentBannerImage.image_1x" :download-link="currentBannerImage.image_2x" preview class="w-full h-full object-contain p-3">
-                <template #original>
-                  <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview">
-                </template>
-              </RxImage>
-            </div>
-            <RxCopyContent :text="bannerImagePreviewHtmlCode" :mask="isLocked(activeMenu.linkStatus!)" class="flex-1" />
-          </div>
+          <RxCopyContent :text="bannerImagePreviewHtmlCode" class="flex-1" />
         </div>
-      </template>
+      </div>
+    </div>
+    <RxDivider vertical line-only line-color="var(--colors-border-border-inactive)" />
+    <div class="w-100 overflow-hidden">
+      <RankList />
     </div>
 
     <RyPopover ref="detail">
-      <div class="w-120 flex flex-col gap-1 pa-3">
+      <div class="w-120 h-334px flex flex-col gap-1 pa-3">
         <div class="detail-title">
           {{ $t('邀请详情') }}
         </div>
@@ -339,7 +307,7 @@ function isLocked(linkStatus: number) {
           {{ $t('在注册或登录页面上显示邀请者和适用的折扣。') }}
         </div>
         <video class="block w-full mt-1 rounded-md" autoplay muted loop playsinline>
-          <source src="/video/invite_tips_guide.mp4" type="video/webm">
+          <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/invite_tips_guide.mp4" type="video/webm">
         </video>
       </div>
     </RyPopover>
@@ -347,160 +315,30 @@ function isLocked(linkStatus: number) {
 </template>
 
 <style lang="scss" scoped>
-.referal-link-container {
-  display: flex;
-  align-items: flex-start;
+.banner-sizes {
+  width: 100%;
+  display: grid;
+  gap: var(--spacing-md, 6px);
+  grid-template-columns: repeat(4, 1fr);
 
-  aside {
-    display: flex;
-    width: 224px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding-right: 27px;
-  }
-
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 36px;
-    align-self: stretch;
-    flex: 3;
-    padding-left: 27px;
-    border-left: 1px solid var(--colors-border-border-inactive);
-
-    .row {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-      align-self: stretch;
-
-      .title {
-        color: var(--colors-text-text-primary);
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 20px;
-        margin-bottom: 4px;
-      }
-    }
-  }
-
-  .banner-sizes {
-    width: 100%;
-    display: grid;
-    gap: var(--spacing-md, 6px);
+  @media (max-width: 1090px) {
     grid-template-columns: repeat(4, 1fr);
-
-    @media (max-width: 1090px) {
-      grid-template-columns: repeat(4, 1fr);
-    }
-
-    .banner-size-item {
-      width: 45%;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 2px 4px 2px 6px;
-    }
-
-    .banner-size-label {
-      color: var(--colors-text-text-primary);
-      font-size: 13px;
-      font-weight: 400;
-      line-height: var(--Line-Height-text-xs, 16px);
-      cursor: pointer;
-    }
   }
 
-  .banner-preview-container {
+  .banner-size-item {
+    width: 45%;
     display: flex;
-    gap: 12px;
-    height: 192px;
-
-    .banner-preview {
-      flex: 1;
-      height: 100%;
-      border-radius: 4px;
-      background: var(--colors-background-bg-block);
-
-      :deep(.p-image) {
-        width: 100%;
-        height: 100%;
-        padding: 12px;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          object-position: 50% 50%;
-
-          &:not([src]) {
-            visibility: hidden;
-          }
-        }
-      }
-    }
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2px 4px 2px 6px;
   }
-}
 
-.menu {
-  &-item {
+  .banner-size-label {
     color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    transition: all 0.2s ease;
-
-    &:is(:hover, .active) {
-      color: var(--pattern-sidenav-text-active);
-      font-weight: 600;
-      background: var(--pattern-sidenav-bg-active);
-    }
-  }
-}
-
-.referal {
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 24px;
-  }
-
-  &-unlocked {
-    color: var(--colors-text-text-secondary);
-    font-size: 16px;
-    line-height: 24px;
-  }
-
-  &-desc {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-  }
-
-  &-progress {
-    :deep(.color-block) {
-      height: 6px;
-      border-radius: 100px;
-    }
-  }
-
-  &-value {
-    color: var(--colors-text-text-primary);
-    font-size: 18px;
-    font-weight: 500;
-    line-height: 24px;
-  }
-
-  &-need {
-    color: var(--colors-text-text-inactive);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 22px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-xs, 16px);
+    cursor: pointer;
   }
 }
 

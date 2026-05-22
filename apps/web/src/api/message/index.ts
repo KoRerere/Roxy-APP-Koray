@@ -1,6 +1,7 @@
 import type { AxiosResponse } from 'axios'
 import { checkAppVersion } from './checkAppVersion'
-import { checkCoreVersion } from './checkCoreVersion'
+import { checkChromeCoreVersion } from './checkChromeCoreVersion'
+import { checkFirefoxCoreVersion } from './checkFirefoxCoreVersion'
 import { checkNotify } from './checkNotify'
 import { checkDictVersion } from './checkDictVersion'
 import { checkSoftConfigVersion } from './checkSoftConfigVersion'
@@ -30,7 +31,8 @@ export function handleResponseHeaders(response: AxiosResponse) {
   const userStore = useUserStore()
 
   checkAppVersion(response)
-  checkCoreVersion(response)
+  checkChromeCoreVersion(response)
+  checkFirefoxCoreVersion(response)
   checkDictVersion(response)
   checkSoftConfigVersion(response)
 

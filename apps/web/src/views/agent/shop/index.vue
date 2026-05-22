@@ -49,7 +49,8 @@ const checkerLoading = ref(false)
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const hideTypeConfig = reactive({
-  value: localStorage.getItem('ProxyShopHideType') || BuyProxyListType.Available,
+  value: BuyProxyListType.List,
+  // value: localStorage.getItem('ProxyShopHideType') || BuyProxyListType.Available,
   trueValue: BuyProxyListType.Available,
   falseValue: BuyProxyListType.List,
 })

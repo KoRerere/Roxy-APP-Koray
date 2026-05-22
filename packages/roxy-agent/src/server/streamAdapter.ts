@@ -17,9 +17,12 @@ export type StreamEventType
     | 'interrupt'
     | 'content'
     | 'todo'
+    | 'worker_todo'
     | 'title' // 对话标题更新
     | 'hitl_interrupt' // HITL：等待人工审批，SSE 连接保持打开
     | 'hitl_resume' // HITL：人工审批结果（approve/reject/edit）
+    | 'image_generating' // 图片生成开始（SSE 建立后立即推送，携带占位数量）
+    | 'image_partial' // 单张图片生成完成（流式逐张推送）
 
 export interface StreamEvent {
   type: StreamEventType
@@ -210,10 +213,18 @@ class StreamAdapter {
     })
   }
 
-  todo(data: any[]): string {
+  todo(data: any): string {
     return this.formatSSE({
       type: 'todo',
       data,
+      timestamp: Date.now(),
+    })
+  }
+
+  workerTodo(workerId: string, data: any): string {
+    return this.formatSSE({
+      type: 'worker_todo',
+      data: { ...data, workerId },
       timestamp: Date.now(),
     })
   }
@@ -246,6 +257,28 @@ class StreamAdapter {
   hitlResume(data: { interruptsId: string, decisions: Array<{ type: 'approve' | 'reject' | 'edit', reason?: string, editedAction?: any }> }): string {
     return this.formatSSE({
       type: 'hitl_resume',
+      data,
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create image_generating event — sent immediately when SSE is established, carries placeholder count
+   */
+  imageGenerating(data: { count: number }): string {
+    return this.formatSSE({
+      type: 'image_generating',
+      data,
+      timestamp: Date.now(),
+    })
+  }
+
+  /**
+   * Create image_partial event — one image is done, push immediately
+   */
+  imagePartial(data: { index: number, image: any }): string {
+    return this.formatSSE({
+      type: 'image_partial',
       data,
       timestamp: Date.now(),
     })

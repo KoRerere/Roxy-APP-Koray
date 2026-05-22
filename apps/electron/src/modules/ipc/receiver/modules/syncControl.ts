@@ -1,18 +1,16 @@
-
-import { IPCMainInstance } from "/@/modules/ipc/types"
-import { closeSynchronizerWindow, createSynchronizerWindow, checkOpenedBrowserStatus } from "/@/modules/sync-control/synchronizer"
-import { getAllSyncControlBrowsers, getMainControlBrowser, getMainControlBrowserSize, getRoxySyncStartResult, getSyncWindowCount, } from "/@/modules/sync-control/bin"
-import { sendText, syncSettings } from "/@/modules/sync-control/api"
-import { closePreferencesDialogWindowWindow, openPreferencesDialog, resizePreferencesDialog } from "/@/modules/sync-control/dialog/preferences"
-import { closeCustomLayoutsDialogWindow, openCustomLayoutDialog } from "/@/modules/sync-control/dialog/custom-layout"
-import { closeBatchInputsDialogWindow, openBatchInputsDialog, resizeBatchInputsDialog } from "/@/modules/sync-control/dialog/batch-inputs"
-import { closeOpenSitesDialogWindow, openOpenSitesDialog } from "/@/modules/sync-control/dialog/open-sites"
-import { closeSyncingWindowListWindow, openSyncingWindowList } from "/@/modules/sync-control/dialog/syncing-window-list"
-import { checkShortcutKeysIsOccupied, registerGlobalShortcut } from "/@/modules/sync-control/shortcutKey"
-import { globalShortcut } from "electron"
-import { SyncControlUtil } from "/@/modules/sync-control/util"
-import { closeSyncOtherDialogs } from "/@/modules/sync-control/common"
-
+import type { IPCMainInstance } from '/@/modules/ipc/types'
+import { globalShortcut } from 'electron'
+import { sendText, syncSettings } from '/@/modules/sync-control/api'
+import { getAllSyncControlBrowsers, getMainControlBrowser, getMainControlBrowserSize, getRoxySyncStartResult, getSyncWindowCount } from '/@/modules/sync-control/bin'
+import { closeSyncOtherDialogs } from '/@/modules/sync-control/common'
+import { closeBatchInputsDialogWindow, openBatchInputsDialog, resizeBatchInputsDialog } from '/@/modules/sync-control/dialog/batch-inputs'
+import { closeCustomLayoutsDialogWindow, openCustomLayoutDialog } from '/@/modules/sync-control/dialog/custom-layout'
+import { closeOpenSitesDialogWindow, openOpenSitesDialog } from '/@/modules/sync-control/dialog/open-sites'
+import { closePreferencesDialogWindowWindow, openPreferencesDialog, resizePreferencesDialog } from '/@/modules/sync-control/dialog/preferences'
+import { closeSyncingWindowListWindow, openSyncingWindowList } from '/@/modules/sync-control/dialog/syncing-window-list'
+import { checkShortcutKeysIsOccupied, registerGlobalShortcut } from '/@/modules/sync-control/shortcutKey'
+import { checkOpenedBrowserStatus, closeSynchronizerWindow, createSynchronizerWindow } from '/@/modules/sync-control/synchronizer'
+import { SyncControlUtil } from '/@/modules/sync-control/util'
 
 export function closeSyncControl() {
   closeSynchronizerWindow()
@@ -38,7 +36,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 关闭窗口同步器 */
-  ipcMain.on('syncControl:close', (event) => {
+  ipcMain.on('syncControl:close', () => {
     console.log('Closing window synchronizer')
     closeSyncControl()
   })
@@ -53,16 +51,13 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
    * 1. 启动同步
         命令：
         roxy-sync.exe --pids=pid1,pid2,pid3...  --settings=base64(settings结构)
-
         参数说明：
         pids 需要同步的窗口的pid 用,分割， 第一个PID为主窗口
         settings 为同步相关的设置，settings结构 base64编码
-
         启动成功后,会输出监听的端口以及显示器信息，格式如下:
         start success:{"listening":64550,"monitors":[{"height":1040,"index":0,"width":1920}]}
-
         如果没有取到，就认为启动失败
-   * */
+   */
   ipcMain.on('syncControl:start', async (event, dirIds) => {
     return SyncControlUtil.start(dirIds)
   })
@@ -73,14 +68,14 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 暂停同步 */
-  ipcMain.on('syncControl:pause', (event) => {
+  ipcMain.on('syncControl:pause', () => {
     SyncControlUtil.pause()
     globalShortcut.unregisterAll()
     closeSyncOtherDialogs()
   })
 
   /** 恢复同步 */
-  ipcMain.on('syncControl:resume', (event) => {
+  ipcMain.on('syncControl:resume', () => {
     SyncControlUtil.resume()
     registerGlobalShortcut()
   })
@@ -92,7 +87,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 显示所有窗口 */
-  ipcMain.on('syncControl:showAll', (event) => {
+  ipcMain.on('syncControl:showAll', () => {
     console.log('Showing all windows')
     return SyncControlUtil.showAllWindows()
   })
@@ -112,11 +107,10 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 关闭偏好设置弹窗 */
-  ipcMain.on('syncControl:closePreferencesDialog', (event) => {
+  ipcMain.on('syncControl:closePreferencesDialog', () => {
     console.log('Closing preferences dialog')
     closePreferencesDialogWindowWindow()
   })
-
 
   /** 动态改变偏好设置弹窗弹窗大小 */
   ipcMain.on('syncControl:resizePreferencesDialog', (event, payload) => {
@@ -125,37 +119,37 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 获取当前同步窗口的个数 */
-  ipcMain.on('syncControl:getSyncWindowCount', (event) => {
+  ipcMain.on('syncControl:getSyncWindowCount', () => {
     console.log('Getting sync window count')
     return getSyncWindowCount()
   })
 
   /** 打开自定义布局弹窗 */
-  ipcMain.on('syncControl:openCustomLayoutDialog', (event) => {
+  ipcMain.on('syncControl:openCustomLayoutDialog', () => {
     console.log('Opening custom layout dialog')
     openCustomLayoutDialog()
   })
 
   /** 关闭自定义布局弹窗 */
-  ipcMain.on('syncControl:closeCustomLayoutDialog', (event) => {
+  ipcMain.on('syncControl:closeCustomLayoutDialog', () => {
     console.log('Closing custom layout dialog')
     closeCustomLayoutsDialogWindow()
   })
 
   /** 获取同步器启动返回的结果 */
-  ipcMain.on('syncControl:getSyncStartResult', (event) => {
+  ipcMain.on('syncControl:getSyncStartResult', () => {
     console.log('Getting sync start result')
     return getRoxySyncStartResult()
   })
 
   /** 打开批量输入文本弹窗 */
-  ipcMain.on('syncControl:openBatchInputsDialog', (event) => {
+  ipcMain.on('syncControl:openBatchInputsDialog', () => {
     console.log('Opening batch input dialog')
     openBatchInputsDialog()
   })
 
   /** 关闭批量输入文本弹窗 */
-  ipcMain.on('syncControl:closeBatchInputsDialog', (event) => {
+  ipcMain.on('syncControl:closeBatchInputsDialog', () => {
     console.log('Closing batch input dialog')
     closeBatchInputsDialogWindow()
   })
@@ -175,27 +169,27 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 获取主控浏览器大小 */
-  ipcMain.on('syncControl:getMainControlBrowserSize', async (event) => {
-    return getMainControlBrowserSize()
+  ipcMain.on('syncControl:getMainControlBrowserSize', async () => {
+    return getMainControlBrowserSize() as Promise<{ width: number, height: number } | undefined>
   })
 
   /** 统一标签页 */
-  ipcMain.on('syncControl:unifyTabs', async (event) => {
+  ipcMain.on('syncControl:unifyTabs', async () => {
     await SyncControlUtil.unifyTabs()
   })
 
   /** 关闭其他标签页 */
-  ipcMain.on('syncControl:closeOtherTabs', async (event) => {
+  ipcMain.on('syncControl:closeOtherTabs', async () => {
     await SyncControlUtil.closeOtherTabs()
   })
 
   /** 关闭当前标签页 */
-  ipcMain.on('syncControl:closeCurrentTab', async (event) => {
+  ipcMain.on('syncControl:closeCurrentTab', async () => {
     await SyncControlUtil.closeCurrentTab()
   })
 
   /** 关闭空白标签页 */
-  ipcMain.on('syncControl:closeBlankTabs', async (event) => {
+  ipcMain.on('syncControl:closeBlankTabs', async () => {
     await SyncControlUtil.closeBlankTabs()
   })
 
@@ -205,38 +199,37 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 打开 打开网址弹窗 */
-  ipcMain.on('syncControl:openOpenSitesDialog', (event) => {
+  ipcMain.on('syncControl:openOpenSitesDialog', () => {
     console.log('Opening open sites dialog')
     openOpenSitesDialog()
   })
 
   /** 关闭打开网址弹窗 */
-  ipcMain.on('syncControl:closeOpenSitesDialog', (event) => {
+  ipcMain.on('syncControl:closeOpenSitesDialog', () => {
     console.log('Closing open sites dialog')
     closeOpenSitesDialogWindow()
   })
 
-
   /** 显示所有正在同步的窗口列表弹窗 */
-  ipcMain.on('syncControl:openSyncingWindowListDialog', (event) => {
+  ipcMain.on('syncControl:openSyncingWindowListDialog', () => {
     console.log('Showing all syncing windows list')
     openSyncingWindowList()
   })
 
   /** 关闭所有正在同步的窗口列表弹窗 */
-  ipcMain.on('syncControl:closeSyncingWindowListDialog', (event) => {
+  ipcMain.on('syncControl:closeSyncingWindowListDialog', () => {
     console.log('Closing syncing windows list')
     closeSyncingWindowListWindow()
   })
 
   /** 获取主控窗口 dirId */
-  ipcMain.on('syncControl:getMainControlDirId', (event) => {
+  ipcMain.on('syncControl:getMainControlDirId', () => {
     console.log('Getting main control window dirId')
     return getMainControlBrowser()?.winInfo.dirId
   })
 
   /** 获取所有群控中的窗口 */
-  ipcMain.on('syncControl:getAllSyncingWindows', (event) => {
+  ipcMain.on('syncControl:getAllSyncingWindows', () => {
     console.log('Getting all syncing windows')
     return getAllSyncControlBrowsers().map(browser => ({
       ...browser.winInfo,
@@ -258,6 +251,3 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
     return result
   })
 }
-
-
-

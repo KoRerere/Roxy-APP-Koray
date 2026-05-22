@@ -1,8 +1,5 @@
 <script setup lang="ts">
-;
-
-const emit = defineEmits(['close'])
-
+defineEmits(['close'])
 </script>
 
 <template>
@@ -11,16 +8,24 @@ const emit = defineEmits(['close'])
       <span class="header">{{ $t('如何获取空间 ID') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-note)" @click="$emit('close')" />
     </div>
-    <div class="description">{{ $t('Roxy浏览器允许您向任意的工作空间转移窗口：') }}</div>
+    <div class="description">
+      {{ $t('Roxy浏览器允许您向任意的工作空间转移窗口：') }}
+    </div>
     <ol class="flex flex-col gap-1 ma-0 pa-0 pl-5">
-      <li class="description">{{ $t('您可以直接将窗口转移到您拥有的其他工作空间') }}</li>
-      <li class="description">{{ $t('要转移窗口至其他人的工作空间，您需得知相应的空间 ID') }}</li>
+      <li class="description">
+        {{ $t('您可以直接将窗口转移到您拥有的其他工作空间') }}
+      </li>
+      <li class="description">
+        {{ $t('要转移窗口至其他人的工作空间，您需得知相应的空间 ID') }}
+      </li>
     </ol>
-    <div class="description">{{ $t('您可以通过以下操作指引获取空间 ID') }}</div>
+    <div class="description">
+      {{ $t('您可以通过以下操作指引获取空间 ID') }}
+    </div>
     <video class="block w-full rounded-md" autoplay muted loop playsinline>
-      <source src="/video/copy_workspace_id.mp4" type="video/webm" />
+      <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/copy_workspace_id.mp4" type="video/webm">
     </video>
-    <RxButton class="self-end" @click="$emit('close')" size="md" :label="$t('了解')" />
+    <RxButton class="self-end" size="md" :label="$t('了解')" @click="$emit('close')" />
   </div>
 </template>
 

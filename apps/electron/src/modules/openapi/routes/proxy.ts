@@ -82,6 +82,33 @@ router.get('/detect_channel', async (req, res) => {
 })
 
 /* 代理 IP 列表 */
+router.get('/list_merged', async (req, res) => {
+  const { workspaceId, ...params } = req.query as Record<string, any>
+  try {
+    const result = await API.proxy.userGetProxyListMergedList(params, { headers: { workspaceId, ...openAPICommonHeaders } })
+    // if (result.code === 0 && result.data?.rows) {
+    //   result.data.rows = mappingKeys(proxyMapping, result.data.rows)
+    // }
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+/* 代理 IP 列表 */
+router.get('/detail', async (req, res) => {
+  const { workspaceId, ...params } = req.query as Record<string, any>
+  try {
+    const result = await API.proxy.userGetProxyDetailMergedList(params, { headers: { workspaceId, ...openAPICommonHeaders } })
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+/* 代理 IP 列表 */
 router.get('/list', async (req, res) => {
   const { workspaceId, ...params } = req.query as Record<string, any>
   try {

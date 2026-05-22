@@ -1,7 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatGoogle } from '@langchain/google'
 import { ChatOpenAI } from '@langchain/openai'
-import { env } from '../config'
+import { aiAgentUrl, env } from '../config'
 import { ChatMoonshot } from './model/moonshot'
 
 /**
@@ -10,7 +10,7 @@ import { ChatMoonshot } from './model/moonshot'
  * @returns 返回对应的 LLM
  */
 export async function createLLM(enableThinking = false) {
-  const baseURL = env.ENV_TYPE === 'production' ? 'https://roxybrowser.com/llm-proxy' : 'https://apitest.roxybrowser.co/llm-proxy'
+  const baseURL = aiAgentUrl
   const apiKey = env.ROXY_API_KEY
   const response = await fetch(`${baseURL}/v1/user/model`, {
     headers: {

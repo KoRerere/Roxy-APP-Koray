@@ -22,7 +22,7 @@ const { setCurrentComponent } = useLoginContext()
 const isShowAlert = ref(false)
 const fa_code = ref('')
 const loading = ref(false)
-const imgSrc = computed(() => new URL(`../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href)
+const imgSrc = computed(() => new URL(`../../../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification.svg`, import.meta.url).href)
 
 async function onSubmit() {
   if (fa_code.value.length !== 6)

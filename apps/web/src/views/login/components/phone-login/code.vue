@@ -8,13 +8,13 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 defineOptions({ inheritAttrs: false })
 
 const { phone } = defineProps<{
-  phone: string,
-  tipsClick?: () => void
+  phone: string
 }>()
 
 const [showToast] = useResponseToast()
 
 const modelValue = defineModel<string>()
+const isRegistered = defineModel<boolean>('isRegistered')
 
 const showTips = ref(false)
 const lock = ref(false)
@@ -29,19 +29,28 @@ onBeforeUnmount(() => {
   countdown.value?.stop()
 })
 
+watch(
+  () => phone,
+  () => {
+    isRegistered.value = undefined
+  },
+)
+
 async function getCode() {
   if (lock.value)
     return
 
-  const { code, msg } = await API.base.sendPhoneVerCodeCreate({ phone })
+  const { code, data, msg } = await API.base.sendPhoneVerCodeCreate({ phone })
   showToast(code, msg)
   if (code !== 0)
     return
 
+  isRegistered.value = data.isRegistered
+
   lock.value = true
   showTips.value = true
-  countdown.value = enhanceCountdown(new Date(Date.now() + 60 * 1000), (data) => {
-    seconds.value = data.seconds
+  countdown.value = enhanceCountdown(new Date(Date.now() + 60 * 1000), (countdownData) => {
+    seconds.value = countdownData.seconds
   }, { onEnd: () => { lock.value = false } })
 }
 </script>
@@ -52,13 +61,7 @@ async function getCode() {
       <TsFormInputText v-model="modelValue" v-bind="$attrs" />
       <RxButton class="!absolute position-y-center right-2.5" :severity="lock ? 'secondary' : ''" size="xxs" variant="text" :disabled="lock" :label="btnText" @click="getCode" />
     </div>
-    <i18n-t v-if="showTips && tipsClick" class="pt-2 text-right terms" tag="div" scope="global"
-            :keypath="$t('未收到验证码？{link}', { link: '{link}' })" @click="tipsClick"
-    >
-      <template #link>
-        <span class="cursor-pointer terms-link">{{ $t('点击这里，切换到邮箱登录注册') }}</span>
-      </template>
-    </i18n-t>
+    <i18n-t v-if="showTips" class="pt-2 text-right terms" tag="div" scope="global" :keypath="$t('未收到验证码？请检查是否在垃圾短信中')" />
   </div>
 </template>
 

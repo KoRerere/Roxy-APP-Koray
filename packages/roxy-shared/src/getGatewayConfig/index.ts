@@ -155,7 +155,7 @@ export function createGatewayConfig(options: CreateGatewayConfigOptions): Gatewa
   async function reGetGatewayConfigByCountryChange(options: ReGetGatewayConfigByCountryChangeOptions): Promise<void> {
     const { country, reqUrl, reqTime } = options
 
-    console.debug(`🚀 ~ reGetGatewayConfigByCountryChange`, options, lastFetchTime)
+    // console.debug(`🚀 ~ reGetGatewayConfigByCountryChange`, options, lastFetchTime)
     if (!country)
       return
 

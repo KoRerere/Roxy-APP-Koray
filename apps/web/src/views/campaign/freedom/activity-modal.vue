@@ -1,10 +1,11 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import { I18nT } from 'vue-i18n'
 import { isString } from 'es-toolkit'
 import { enhanceCountdown } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
-import { useSimpleLocale } from '/@/stores/locale'
+// import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useRoleStore } from '/@/stores/role'
 import { useDialog } from '/@/hooks/useDialog'
@@ -21,16 +22,16 @@ const { isOwner } = storeToRefs(useRoleStore())
 const { switchDefaultWorkspace } = useWorkspaceStore()
 const { currentActivity } = storeToRefs(useCampaignStore())
 const { isDarkTheme } = storeToRefs(useThemeStore())
-const { getOfficialWebsite } = useSimpleLocale()
+// const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
 
-const styles = useCssModule()
+// const styles = useCssModule()
 
 const countdown = ref()
 const stopCountdown = ref()
 
 const imgSrc = computed(() => isDarkTheme.value ? 'url("/images/campaing/freedom/modal_bg_dark.jpg")' : 'url("/images/campaing/freedom/modal_bg.jpg")')
-const itemImgBg = computed(() => `url(${isDarkTheme.value ? '/images/campaing/freedom/fs_modal_bg-dark.png' : '/images/campaing/freedom/fs_modal_bg.png'})`)
+const itemImgBg = computed(() => `url(${isDarkTheme.value ? getImage('campaing/freedom/fs_modal_bg-dark.png') : getImage('campaing/freedom/fs_modal_bg.png')})`)
 
 function showInfo() {
   showToast({
@@ -175,7 +176,7 @@ onBeforeUnmount(() => {
     <div class="flex gap-8 items-start">
       <div class="flex-1 flex flex-col gap-0.5">
         <div class="tt-primary font-[Archivo] text-8 font-700 flex items-center gap-2.5 mt-2 ml-2">
-          <img class="block h-full aspect-square w-9" src="/images/campaing/freedom/palm_tree_icon.svg">
+          <img class="block h-full aspect-square w-9" :src="getImage('campaing/freedom/palm_tree_icon.svg')">
           {{ $t('Roxy 五月自由季') }}
         </div>
         <!-- <div class=" tt-secondary font-[Archivo] text-4.5 leading-normal">

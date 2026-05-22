@@ -25,6 +25,11 @@ const isActivityUpgrade = computed(() => {
 watch(() => props.isForceUpgrade, (newVal) => {
   console.log('props.isForceUpgrade', newVal)
   globalThis.electronAPI.send('app:getSoftConfig').then((config) => {
+    // if (import.meta.hot) {
+    //   console.log('In development environment, "getSoftConfig" is invalid')
+    //   return
+    // }
+
     nextUpdateTimestamp.value = config.nextUpdateTimestamp
     // 如果是强制更新
     if (newVal) {
@@ -66,10 +71,10 @@ function remindMeLater() {
   visible.value = false
   clearTimeout(timer)
 
-  // if (isDev) {
-  //   console.log('In development environment, "remind me later" is invalid')
-  //   return
-  // }
+  if (import.meta.hot) {
+    console.log('In development environment, "remind me later" is invalid')
+    return
+  }
 
   if (props.isForceUpgrade) {
     // 1 小时后更新

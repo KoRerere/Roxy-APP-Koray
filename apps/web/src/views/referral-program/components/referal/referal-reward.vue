@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import NumberFlow from '@number-flow/vue'
 import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
 import { RxSvgIcon } from '/@/components/rx-icon';
@@ -112,7 +113,7 @@ function showWithdrawDialog() {
 
 <template>
   <div class="referal-reward">
-    <img src="/images/payments/ripple.svg" class="ripple-bg">
+    <img :src="getImage('payments/ripple.svg')" class="ripple-bg">
     <div class="referal-reward-money">
       <div class="referal-reward-money-title">
         <span class="referal-reward-money-title-money">

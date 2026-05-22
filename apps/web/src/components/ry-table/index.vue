@@ -137,7 +137,7 @@ const selectionData = computed({
 })
 // primevue 缺少 row disabled 功能，所以需要自己手动过滤 selection 数据用于使用，创造全选的 '假象'
 const realUseSelection = computed(() => {
-  return selectionData.value?.filter((item: any) => !_selectionDisableds.value.includes(item[props.dataKey].toString()))
+  return selectionData.value?.filter((item: any) => !_selectionDisableds.value.includes(item[props.dataKey]?.toString()))
 })
 
 const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || props.pageRows

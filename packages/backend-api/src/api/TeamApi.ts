@@ -27,6 +27,8 @@ import {
   UserMdfTeamInfoV2CreateData,
   UserMdfTeamInfoV2CreatePayload,
   UserSendTeamPermissionVerifyCodeListData,
+  UserSetTeamCostCenterViewerEditorAllowCreateData,
+  UserSetTeamCostCenterViewerEditorAllowCreatePayload,
   UserUpdateTeamPermissionsCreateData,
   UserUpdateTeamPermissionsCreatePayload,
 } from "./data-contracts";
@@ -233,6 +235,27 @@ export class TeamApi<SecurityDataType = unknown> {
     this.http.request<UserSendTeamPermissionVerifyCodeListData, any>({
       path: `/user_send_team_permission_verify_code`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserSetTeamCostCenterViewerEditorAllowCreate
+   * @summary 设置不允许查看者/编辑者拥有费用中心权限
+   * @request POST:/user_set_team_cost_center_viewer_editor_allow
+   * @response `200` `UserSetTeamCostCenterViewerEditorAllowCreateData`
+   */
+  userSetTeamCostCenterViewerEditorAllowCreate = (
+    data: UserSetTeamCostCenterViewerEditorAllowCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSetTeamCostCenterViewerEditorAllowCreateData, any>({
+      path: `/user_set_team_cost_center_viewer_editor_allow`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

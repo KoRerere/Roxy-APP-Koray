@@ -36,11 +36,11 @@ app.whenReady().then(async () => {
     // 如果是首次启动，需要初始化本地配置和启动 APP 内置 Web 服务
     if (isSingleInstance && !getUninstallFeedbackWindow()) {
       try {
-      // 初始化本地配置
+        // 初始化本地配置
         await initLocalConfig()
         // 启动 APP 内置 Web 服务
         await setupAppServer()
-        if (!store.token) {
+        if (!store.token && !store.lastUserId) {
           executeUninstall()
           return
         }
@@ -49,7 +49,7 @@ app.whenReady().then(async () => {
         console.error('[UninstallFeedback] init failed:', error)
       }
     }
-    if (!store.token) {
+    if (!store.token && !store.lastUserId) {
       executeUninstall()
       return
     }

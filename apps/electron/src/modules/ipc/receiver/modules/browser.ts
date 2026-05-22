@@ -1,26 +1,43 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
-import { app } from 'electron'
-import { spawn } from 'node:child_process'
-import { access } from 'node:fs/promises'
-import { join } from 'node:path'
-import { appConfig } from '/@/constants'
+import type { ArrangeGridOptions, DisplayLayoutInput } from '/@/utils/windowGridLayout'
+import { app, screen } from 'electron'
+// import { spawn } from 'node:child_process'
+// import { access } from 'node:fs/promises'
+// import { join } from 'node:path'
+// import { appConfig } from '/@/constants'
 import { browserManager, coreManager } from '/@/modules/browser'
+import { CoreType } from '/@/modules/browser/browser-manager/adapter'
+import { registerChunkLayoutReflowShortcut, setChunkLayoutSnapshot, setupChunkReflowShortcutLifecycle } from '/@/modules/browser/browser-manager/chunkLayoutReflow'
 import { DefaultBrowserInstaller } from '/@/modules/shortcut-manager/DefaultBrowserInstaller'
-import { ShortcutManager } from '/@/modules/shortcut-manager/ShortcutManager'
+// import { ShortcutManager } from '/@/modules/shortcut-manager/ShortcutManager'
 import { store } from '/@/modules/store'
-import { resourceUpdater } from '/@/modules/updater'
+// import { resourceUpdater } from '/@/modules/updater'
+import { buildChunkLaunchParamsByDirId, computeWindowGridLayouts, sortDisplaysSpatial } from '/@/utils/windowGridLayout'
 
-async function pathExists(p: string) {
-  try {
-    await access(p)
-    return true
-  }
-  catch {
-    return false
-  }
-}
+/** 与 preload `RenderMessage.browser:chunkBrowsersByScreen` 对齐 */
+export type ChunkBrowsersByScreenPayload
+  = | string[]
+    | {
+      dirIds: string[]
+      gap?: number
+      cols?: number
+      rows?: number
+      stackOffset?: { x: number, y: number }
+    }
+
+// async function pathExists(p: string) {
+//   try {
+//     await access(p)
+//     return true
+//   }
+//   catch {
+//     return false
+//   }
+// }
 
 export function setupBrowserIpc(ipcMain: IPCMainInstance) {
+  setupChunkReflowShortcutLifecycle(browserManager)
+
   /** 批量启动浏览器 */
   ipcMain.on('browser:batchLaunch', (_event, dirIds) => {
     return browserManager.batchLaunch(dirIds)
@@ -58,9 +75,12 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     }))
   })
 
-  /** 获取正在使用中的内核 */
+  /** 获取正在使用中的内核版本列表，按 coreType 分组返回原始 coreVersion */
   ipcMain.on('browser:usingCores', (_event) => {
-    return [...coreManager.getCoreManager('chrome').usingCores]
+    return {
+      chrome: [...coreManager.chromeCoreManager.usingCores],
+      firefox: [...coreManager.firefoxCoreManager.usingCores],
+    }
   })
 
   /** 获取所有已打开的窗口 */
@@ -161,11 +181,41 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('browser:startCookieRobot', async (_event, payload) => {
     const { dirIds, customParams, robotParams } = payload
 
-    await browserManager.batchLaunch(dirIds, customParams)
+    await browserManager.batchLaunch(dirIds, { customParams })
 
     for await (const dirId of dirIds) {
       const openedBrowser = browserManager.openedBrowserMap.get(dirId)
       openedBrowser?.cookieRobot(robotParams)
     }
+  })
+
+  ipcMain.on('browser:chunkBrowsersByScreen', (_event, payload: ChunkBrowsersByScreenPayload) => {
+    const dirIds = Array.isArray(payload) ? payload : payload.dirIds
+    const gridOpts: ArrangeGridOptions = Array.isArray(payload)
+      ? {}
+      : {
+          gap: payload.gap,
+          cols: payload.cols,
+          rows: payload.rows,
+          stackOffset: payload.stackOffset,
+        }
+
+    if (dirIds.length) {
+      setChunkLayoutSnapshot({ orderedDirIds: dirIds.slice(), gridOpts })
+      registerChunkLayoutReflowShortcut()
+    }
+
+    const displays: DisplayLayoutInput[] = sortDisplaysSpatial(
+      screen.getAllDisplays().map(d => ({
+        id: d.id,
+        bounds: d.bounds,
+        workArea: d.workArea,
+      })),
+    )
+
+    const layouts = computeWindowGridLayouts(displays, dirIds.length, gridOpts)
+    const customParamsByDirId = buildChunkLaunchParamsByDirId(dirIds, layouts)
+
+    return browserManager.batchLaunch(dirIds, { customParamsByDirId })
   })
 }

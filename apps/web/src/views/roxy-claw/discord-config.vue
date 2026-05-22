@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { getImage } from '/@/utils/basic'
 import ConfigBase from './components/config-base.vue'
 import { useRouter } from 'vue-router'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
@@ -145,7 +146,7 @@ async function handleTest(field: string) {
 <template>
   <ConfigBase
     :title="$t('集成到 Discord')"
-    icon="/images/roxy-claw/discord.svg"
+    :icon="getImage('roxy-claw/discord.svg')"
     bg-color="#5865f2"
     :steps="steps"
     :setup-fields="setupFields"

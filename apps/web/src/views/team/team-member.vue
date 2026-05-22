@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import WarnTipsModal from '/@/views/team/components/warn-tips-modal.vue'
 import MemberInfo from '/@/views/team/components/member-info.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
@@ -14,10 +15,14 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTeamStore } from '/@/stores/team'
 import { useDialog } from '/@/hooks/useDialog'
 import { useColumns } from '/@/hooks/useColumns'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useTeam } from '/@/views/team/hook'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
+
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
+import { compare } from 'compare-versions'
+import { useUserStore } from '/@/stores/user'
 
 const confirm = useConfirm()
 const roleLabelMap = getRoleLabelMap()
@@ -29,7 +34,8 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { check } = usePermission()
 const { getTeamMembers } = useTeamStore()
 const { inviteMembers } = useTeam()
-
+const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+const userStore = useUserStore()
 const tableRef = useTemplateRef('team')
 
 type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData> & { _oldNickname: string, _oldWorkspaceNickname: string }
@@ -50,6 +56,7 @@ const { columns } = useColumns({
       title: $t('成员备注'),
       key: 'nickname',
       slot: 'nickname',
+      headerSlot: 'nicknameHeader',
       style: {
         minWidth: '120px',
       },
@@ -58,7 +65,7 @@ const { columns } = useColumns({
       title: $t('成员昵称'),
       key: 'workspaceNickname',
       slot: 'workspaceNickname',
-      headerSlot: 'workspaceNicknameHeader', 
+      headerSlot: 'workspaceNicknameHeader',
       style: {
         minWidth: '120px',
       },
@@ -120,7 +127,25 @@ onMounted(() => {
   emitter.on('updateTeamMemberList', () => {
     filters.onChange()
   })
+  if (compare(userStore.appVersion, '3.8.7', '>=')) {
+    showWarnTipsModal()
+  }
 })
+
+function showWarnTipsModal() {
+  if (!isOwner.value || onboardingTaskStatus.value?.newSpaceCreateTeamStatus !== false)
+    return
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => <WarnTipsModal onClose={hideModal} />,
+    },
+    handleCancel: () => updateOnboardingTaskStatus({ newSpaceCreateTeamStatus: true }),
+  })
+}
 
 async function tableRequest(params: any) {
   const data = await getTeamMembers(params)
@@ -131,13 +156,15 @@ async function tableRequest(params: any) {
 function tableOperation(data: TableRow) {
   // 只能修改比自己权限低的成员
   const disabled = currentWorkspace.value!.role <= data.role
+  const notJoined = data.status === Membership.notJoined
+
   return [
     {
       name: 'permission',
       label: $t('修改权限'),
       icon: 'base/rx_ic_permission',
-      disabled,
-      disabledTooltip: $t('权限不足'),
+      disabled: disabled || notJoined,
+      disabledTooltip: notJoined ? '' : $t('权限不足'),
       power: check('Team_Member_Permission'),
       quick: true,
       tooltip: $t('修改权限'),
@@ -331,6 +358,12 @@ function onRefreshTable(params = {}) {
     <template #member="{ data }">
       <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
     </template>
+    <template #nicknameHeader="{ column: { title } }">
+      <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">
+        <span>{{ title }}</span>
+        <SvgIcon v-tooltip.top="{ value: $t('仅自己可见的私人备注') }" class="inline-flex shrink-0 cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
+      </div>
+    </template>
     <template #nickname="{ data }">
       <Inplace v-focustrap :pt="{ display: '!border-none !pa-0' }">
         <template #display>
@@ -348,20 +381,14 @@ function onRefreshTable(params = {}) {
     <template #workspaceNicknameHeader="{ column: { title } }">
       <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">
         <span>{{ title }}</span>
-        <SvgIcon
-          v-tooltip.top="{ value: $t('团队内展示名称，全员可见') }"
-          class="inline-flex shrink-0 cursor-pointer"
-          name="base/rx_ic_info"
-          size="12"
-          color="var(--colors-icon-icon-note)"
-        />
+        <SvgIcon v-tooltip.top="{ value: $t('团队内展示名称，全员可见') }" class="inline-flex shrink-0 cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
       </div>
     </template>
     <template #workspaceNickname="{ data }">
       <div v-if="isViewer" class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
         {{ data.workspaceNickname }}
       </div>
-      <Inplace v-else v-focustrap :pt="{ display: '!border-none !pa-0' }">
+      <Inplace v-else v-focustrap :disabled="!check('Team_Member_Edit_Team_Name')" :pt="{ display: '!border-none !pa-0' }">
         <template #display>
           <div class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
             {{ data.workspaceNickname }}

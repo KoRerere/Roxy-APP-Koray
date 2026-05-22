@@ -26,6 +26,8 @@ export class AfterLaunchTask {
   private checkIpChangeTimer: NodeJS.Timeout | null = null
   /** cookie 定时同步定时器 */
   private cookieTimer: NodeJS.Timeout | null = null
+  /** 窗口 bounds 定时同步定时器 */
+  private windowBoundsTimer: NodeJS.Timeout | null = null
 
   constructor(private browserItem: BrowserItem, public browser: IBrowser) { }
 
@@ -42,8 +44,61 @@ export class AfterLaunchTask {
       if (this.cookieTimer) {
         clearInterval(this.cookieTimer)
       }
+      if (this.windowBoundsTimer) {
+        clearInterval(this.windowBoundsTimer)
+      }
     })
     await this.handleBrowserEvent()
+    await this.startWindowBoundsSync()
+  }
+
+  /**
+   * 启动窗口 bounds 定时同步
+   * 每 3 秒通过 CDP Browser.getWindowBounds 获取一次窗口位置与尺寸
+   * 参考：https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-getWindowBounds
+   */
+  private async startWindowBoundsSync() {
+    if (!this.browser?.client)
+      return
+
+    try {
+      // getWindowForTarget 需要一个有 web contents 的 target，取第一个真实页面的 targetId
+      const pages = await this.browser.pages()
+      const firstPage = pages?.at(0)
+      if (!firstPage) {
+        console.warn('startWindowBoundsSync: no pages available, skipping')
+        return
+      }
+      const targetId = firstPage.target()._targetId
+
+      // 通过 Browser.getWindowForTarget 获取当前窗口 ID（只需获取一次）
+      const { windowId } = await this.browser.client.Browser.getWindowForTarget({ targetId })
+
+      this.windowBoundsTimer = setInterval(async () => {
+        // 若 CDP client 已断开，停止定时器
+        if (!this.browser?.client) {
+          clearInterval(this.windowBoundsTimer!)
+          this.windowBoundsTimer = null
+          return
+        }
+        try {
+          const { bounds } = await this.browser.client.Browser.getWindowBounds({ windowId })
+          store.waitingRestoreWindowBounds ??= {}
+          store.waitingRestoreWindowBounds[this.browserItem.winInfo.dirId!] = {
+            left: bounds.left!,
+            top: bounds.top!,
+            width: bounds.width!,
+            height: bounds.height!,
+          }
+        }
+        catch (error) {
+          console.error('Failed to get window bounds:', error)
+        }
+      }, 3 * 1000)
+    }
+    catch (error) {
+      console.error('Failed to start window bounds sync:', error)
+    }
   }
 
   /** 获取标签页 */
@@ -104,6 +159,7 @@ export class AfterLaunchTask {
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
     const { cookie, syncCookie, clearCookie, allOpenUrl, dirId, openWorkbench } = this.browserItem.winInfo
+    const isFirefox = this.browserItem.isFirefox
 
     if (!this.browser || !this.browser.client) {
       console.warn('Browser or browser.client is not available')
@@ -112,7 +168,11 @@ export class AfterLaunchTask {
 
     const pages = await this.browser?.pages()
 
-    pages?.slice(1).forEach(p => p.close().catch(() => {}))
+    // Firefox 已经把 url 通过命令行启动了，第一页通常是 about:newtab，
+    // 这里不需要像 Chrome 一样关闭多余 tab
+    if (!isFirefox) {
+      pages?.slice(1).forEach(p => p.close().catch(() => {}))
+    }
     const firstPage = pages?.at(0)
     const validOpenUrl = allOpenUrl?.filter(url => url && this.browserItem.isValidURL(url)) || []
 
@@ -134,7 +194,13 @@ export class AfterLaunchTask {
     if (isOpenWorkbench) {
       const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
       if (firstPage) {
-        firstPage.gotoReplace(dashboardUrl).catch((err) => {
+        const pageUrl = firstPage.url()
+        const alreadyOnDashboard = pageUrl.includes('/dashboard.html')
+        // Chrome/Firefox 启动参数已打开工作台：setCookies 后用 CDP 刷新即可，避免 location.replace 打断进行中的首屏导航
+        const navigate = alreadyOnDashboard
+          ? firstPage.goto.bind(firstPage)
+          : firstPage.gotoReplace.bind(firstPage)
+        navigate(dashboardUrl).catch((err) => {
           console.log(`goto ${dashboardUrl} failed`, err)
         })
       }
@@ -143,17 +209,20 @@ export class AfterLaunchTask {
       }
     }
 
-    // 开启同步标签页后，同步标签页
-    await Promise.allSettled(validOpenUrl.map(url => this.browser.newPage(url)))
+    // Firefox 通过命令行已经把 url 全部打开了，不再走 newPage
+    if (!isFirefox) {
+      // 开启同步标签页后，同步标签页
+      await Promise.allSettled(validOpenUrl.map(url => this.browser.newPage(url)))
 
-    if (!isOpenWorkbench) {
-      if (validOpenUrl.length) {
-        firstPage?.close().catch(() => { })
-      }
-      else {
-        firstPage?.gotoReplace('chrome://newtab/').catch((err) => {
-          console.log(`goto chrome://newtab/ failed`, err)
-        })
+      if (!isOpenWorkbench) {
+        if (validOpenUrl.length) {
+          firstPage?.close().catch(() => { })
+        }
+        else {
+          firstPage?.gotoReplace('chrome://newtab/').catch((err) => {
+            console.log(`goto chrome://newtab/ failed`, err)
+          })
+        }
       }
     }
 
@@ -170,8 +239,8 @@ export class AfterLaunchTask {
       }
     }
 
-    // Chrome 特定功能：移动端触摸模拟
-    if (this.isPhone && this.browser.actualPort) {
+    // Chrome 特定功能：移动端触摸模拟（Firefox 没有 CDP，跳过）
+    if (!isFirefox && this.isPhone && this.browser.actualPort) {
       try {
         const targets = await CDP.List({ port: this.browser.actualPort })
         targets.forEach(async (target) => {
@@ -205,6 +274,11 @@ export class AfterLaunchTask {
       this.cookieTimer = setInterval(() => {
         saveCookies()
       }, 3 * 1000)
+
+      // Firefox 走 BiDi storage.getCookies 轮询即可，不附加 CDP 网络层监听
+      if (isFirefox) {
+        return
+      }
 
       // 监听真正的网络响应 (Network.responseReceived)
 
@@ -315,12 +389,14 @@ export class AfterLaunchTask {
               resolve = res
               reject = rej
             })
+            if (!document.body)
+              return null
+
             const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.('myEscapePolicy', {
               createHTML: (string: string) => string,
             })
-
-            const escaped = escapeHTMLPolicy.createHTML(html)
-            document.body.insertAdjacentHTML('beforeend', escaped)
+            const htmlToInsert = escapeHTMLPolicy?.createHTML?.(html) ?? html
+            document.body.insertAdjacentHTML('beforeend', htmlToInsert as string)
             const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal')
             const cancelBtn = document.querySelector('#roxy-modal #cancelBtn')
             const confirmBtn = document.querySelector('#roxy-modal #confirmBtn')

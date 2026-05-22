@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import { safeParseJSON } from '/@/utils'
-import type { ContentBlock, MessageBlock, MessageEntry, MessageEntryView, MessageType, SSEEventData, SSEParseResult, ThinkingBlock, Todo, TodoStatus, ToolCallBlock, WorkerEntryView, WorkerStatus, WorkerTask } from './types'
+import type { ContentBlock, GeneratedImageInfo, MessageBlock, MessageEntry, MessageEntryView, MessageType, SSEEventData, SSEParseResult, ThinkingBlock, Todo, ToolCallBlock, WorkerEntryView, WorkerStatus, WorkerTask } from './types'
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {
@@ -656,7 +656,7 @@ export class MessageViewer {
 
   add(id: string, type: MessageType, data: unknown, timestamp?: number): void {
     // 非 thinking 事件到来时，结束当前进行中的 thinking
-    if (type !== 'thinking' && this.currentThinkingId) {
+    if ((type !== 'thinking' || (type === 'thinking' && this.currentThinkingId !== id)) && this.currentThinkingId) {
       const prev = this.entries.get(this.currentThinkingId)
       if (prev)
         prev.isThinking = false
@@ -685,6 +685,9 @@ export class MessageViewer {
     }
     else if (type === 'error' || type === 'interrupt') {
       entry.text = data as string
+    }
+    else if (type === 'image') {
+      entry.meta.images = data as GeneratedImageInfo[]
     }
 
     if (!entry.start) {
@@ -790,6 +793,46 @@ export class MessageViewer {
     this.entries.get(workerId)!.status = status
   }
 
+  /** 流式更新单张图片占位（image_partial 事件） */
+  setImageAtIndex(id: string, index: number, image: GeneratedImageInfo): void {
+    if (!this.entries.has(id)) {
+      this.entries.set(id, { text: '', meta: { images: [], isPending: true }, type: 'image' })
+      this.order.add(id)
+    }
+    const entry = this.entries.get(id)!
+    const images: GeneratedImageInfo[] = Array.isArray(entry.meta.images) ? [...entry.meta.images] : []
+    if (index < images.length)
+      images[index] = image
+    else
+      images.push(image)
+    entry.meta.images = images
+  }
+
+  /** 清除占位状态；传入 images 时替换列表（image_done 兼容），不传时仅移除剩余 pending 占位 */
+  finalizeImages(id: string, images?: GeneratedImageInfo[]): void {
+    if (!this.entries.has(id)) {
+      if (!images?.length)
+        return
+      this.entries.set(id, { text: '', meta: {}, type: 'image' })
+      this.order.add(id)
+    }
+    const entry = this.entries.get(id)!
+    if (images) {
+      entry.meta.images = images
+    }
+    else {
+      // 过滤掉仍处于 pending 状态的占位
+      const existing = Array.isArray(entry.meta.images) ? entry.meta.images as GeneratedImageInfo[] : []
+      entry.meta.images = existing.filter(img => !img.isPending)
+    }
+    entry.meta.isPending = false
+  }
+
+  remove(id: string): void {
+    this.entries.delete(id)
+    this.order.delete(id)
+  }
+
   /** 结束所有进行中的 thinking，用于流结束时调用 */
   finalize(): void {
     this.currentThinkingId = null
@@ -872,11 +915,58 @@ export function parseHistorySSE2(content: string) {
       case 'interrupt':
         messageViewer.add(block.type, block.type, block.data, block.timestamp)
         break
+      case 'image_generating': {
+        const count = Math.min(Math.max(Number(block.data?.count) || 1, 1), 4)
+        const pendingImages: GeneratedImageInfo[] = Array.from({ length: count }, (_, i) => ({
+          fileId: `pending-${i}`,
+          fileName: '',
+          isPending: true,
+        }))
+        messageViewer.add('__images__', 'image', pendingImages)
+        break
+      }
+      case 'image_partial': {
+        const { index, image } = block.data ?? {}
+        if (image != null && index != null) {
+          messageViewer.setImageAtIndex('__images__', index, image)
+        }
+        break
+      }
+      case 'image_done': {
+        if (Array.isArray(block.data?.images)) {
+          messageViewer.finalizeImages('__images__', block.data.images)
+        }
+        break
+      }
       // case 'done':
       default:
-        console.log('unknown event', block)
+        break
     }
   })
 
   return messageViewer.view()
+}
+
+/**
+ * 从图片生成的 SSE 文件内容中还原图片列表（用于历史回显）
+ */
+export function parseHistoryImageSSE(content: string): GeneratedImageInfo[] {
+  const events = parseSSEContentString<SSEEventData>(content).map(e => e.json)
+  const imageMap = new Map<number, GeneratedImageInfo>()
+
+  for (const block of events) {
+    if (!block)
+      continue
+    if (block.type === 'image_partial' && block.data?.image != null && block.data.index != null) {
+      imageMap.set(block.data.index, block.data.image)
+    }
+    else if (block.type === 'image_done' && Array.isArray(block.data?.images)) {
+      // image_done 包含最终有序列表，直接用它
+      return block.data.images
+    }
+  }
+
+  return Array.from(imageMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([, img]) => img)
 }

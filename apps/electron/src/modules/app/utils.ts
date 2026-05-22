@@ -144,7 +144,7 @@ let isQuitConfirmed = false
  */
 export async function showUninstallFeedback(): Promise<void> {
   console.log('showUninstallFeedback called', isShowingUninstallFeedback, isQuitConfirmed)
-  if (!store.token) {
+  if (!store.token && !store.lastUserId) {
     executeUninstall()
     return
   }

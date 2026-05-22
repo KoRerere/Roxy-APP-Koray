@@ -27,7 +27,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 
 const wcisRef = useTemplateRef('wcis')
 const visible2FA = ref(false)
-const imgSrc = computed(() => new URL(`../../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_mail.svg`, import.meta.url).href)
+const imgSrc = computed(() => new URL(`../../../../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_verification_mail.svg`, import.meta.url).href)
 
 const inputs = ref([
   {

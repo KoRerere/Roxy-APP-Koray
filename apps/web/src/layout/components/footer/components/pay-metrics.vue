@@ -5,6 +5,7 @@ import Usage from '/@/components/usage.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { createReusableTemplate } from '@vueuse/core'
 import { useUserStore } from '/@/stores/user'
+import { useRoleStore } from '/@/stores/role'
 import { emitter } from '/@/utils/eventBus'
 import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 
@@ -16,11 +17,12 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
 
 const router = useRouter()
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
+const { isOwner } = storeToRefs(useRoleStore())
 
 const opRef = useTemplateRef('op')
 const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value?.subLevel as SubLevelEnum))
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
-const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent)
+const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 
 const blockCount = computed(() => {
   if (isFree.value || isExpired.value) {

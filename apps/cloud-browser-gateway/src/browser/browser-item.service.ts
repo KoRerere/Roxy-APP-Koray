@@ -56,12 +56,14 @@ export class BrowserItemService {
     const nekoConfig = this.configService.get('neko', { infer: true })!
 
     // 获取窗口配置
-    const { code, data } = await API.window.userGetWindowInfoV2List(
+    const { code, data, msg } = await API.window.userGetWindowInfoV2List(
       { dirId, sourceType: 'open' } as any,
       { headers: { token: sessionContext.token, workspaceId: sessionContext.workspaceId } },
     )
-    if (code !== 0 || !data.rows[0]) {
-      throw new Error(`获取目录 ID=${dirId} 的窗口信息失败`)
+    console.log('userGetWindowInfoV2List request', { dirId, workspaceId: sessionContext.workspaceId, token: sessionContext.token })
+    console.log('userGetWindowInfoV2List response', { code, data, msg })
+    if (code !== 0 || !data?.rows?.[0]) {
+      throw new Error(msg || `获取目录 ID=${dirId} 的窗口信息失败`)
     }
     const winInfo = data.rows[0]
 

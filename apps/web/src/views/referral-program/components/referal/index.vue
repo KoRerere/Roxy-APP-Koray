@@ -1,14 +1,14 @@
 <script setup lang="tsx">
-import type { UserGetPromotionInfoListData } from '@roxy/backend-api';
-import ReferalLink from './referal-link.vue';
+import type { UserGetPromotionInfoListData } from '@roxy/backend-api'
+import ReferalLink from './referal-link.vue'
 import ReferalReward from './referal-reward.vue'
-import { useSimpleLocale } from "/@/stores/locale";
+import { useSimpleLocale } from '/@/stores/locale'
 
 defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
 
-const { currentLocale, getOfficialWebsite } = useSimpleLocale();
+const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 
 const bonusImage = computed(() => {
   if (['zh-CN', 'en', 'ru'].includes(currentLocale!)) {
@@ -29,18 +29,18 @@ const hideBonus = computed(() => {
 <template>
   <div class="referal">
     <div class="reward">
-      <ReferalReward class="content" :promotionInfo />
+      <ReferalReward class="py-4 mx-auto mt-5 content" :promotion-info />
     </div>
-    <div v-if="!hideBonus" class="relative flex items-center content">
+    <div v-if="!hideBonus" class="relative flex items-center py-4 mx-auto mt-5 content">
       <RxButton class="!absolute right-16" size="lg" @click="viewDetail">
         <template #default>
           <span>{{ $t('查看详情') }}</span>
-          <SvgIcon name="base/rx_ic_arrow_right"></SvgIcon>
+          <SvgIcon name="base/rx_ic_arrow_right" />
         </template>
       </RxButton>
       <img class="block w-full rounded-xl" :src="bonusImage">
     </div>
-    <ReferalLink v-if="promotionInfo.promotionLinkList?.length" class="content" :promotionInfo />
+    <ReferalLink v-if="promotionInfo.promotionLinkList?.length" class="pt-10 pb-20 mx-auto content" :promotion-info />
   </div>
 </template>
 
@@ -61,13 +61,11 @@ const hideBonus = computed(() => {
   }
 
   .content {
-    padding: 16px 32px;
-    width: min(1000px, 100%);
-    margin: 20px auto 0 auto;
+    width: min(1080px, 100%);
   }
 }
 
-[data-theme="dark"] .reward {
+[data-theme='dark'] .reward {
   background-image: url('/images/referral-program/referal-reward-bg-dark.png');
 }
 </style>

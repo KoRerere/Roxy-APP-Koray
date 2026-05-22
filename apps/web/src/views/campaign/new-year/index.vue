@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { getImage, safeParseJSON } from '/@/utils/basic'
 import ActivityModal from '/@/views/campaign/new-year/activity-modal.vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { SubLevelEnum } from '/@/enums/pay'
-import { safeParseJSON } from '/@/utils/basic'
 import { emitter } from '/@/utils/eventBus'
 
 const { collapsed = false, localStorageKey } = defineProps<{
@@ -68,7 +68,7 @@ function goToSubscribePlan() {
 
 <template>
   <div class="cursor-pointer" @click="goToSubscribePlan">
-    <img v-if="collapsed" class="block rounded aspect-ratio-1" src="/images/campaing/new-year/holiday_season.svg">
+    <img v-if="collapsed" class="block rounded aspect-ratio-1" :src="getImage('campaing/new-year/holiday_season.svg')">
     <div v-else class="flex flex-col items-center justify-center">
       <motion.div class="relative rounded-2 overflow-hidden h-9 holiday" :class="{ hover }" :while-press="{ scale: 0.99 }" @mouseover="hover = true" @mouseleave="hover = false">
         <AnimatePresence mode="popLayout" :initial="false">

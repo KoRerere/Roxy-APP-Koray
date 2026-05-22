@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import autoThemeImage from '/@/views/account/list/components/platform-icon.vue'
 
 defineProps<{
@@ -14,7 +15,7 @@ function setMesage(item: any) {
 
 <template>
   <div class="relative flex flex-col justify-end items-start px-7 pb-50 overflow-hidden">
-    <autoThemeImage class="absolute top-0 left-1/2 -translate-x-1/2 w-335" platform-icon="/images/mcp/agent-bg.png" platform-icon-dark="/images/mcp/agent-bg-dark.png" />
+    <autoThemeImage class="absolute top-0 left-1/2 -translate-x-1/2 w-335" :platform-icon="getImage('mcp/agent-bg.png')" :platform-icon-dark="getImage('mcp/agent-bg-dark.png')" />
     <div class="relative flex flex-col gap-1.5 z-1">
       <div class="title">
         {{ $t('Roxy AI Agent, 您的数字员工') }}

@@ -58,5 +58,5 @@ export function cancelInterrupt(conversationId: string): void {
   if (!pending)
     return
   registry.delete(conversationId)
-  pending.reject(new Error('Interrupt cancelled'))
+  pending.reject(new Error('User cancelled'))
 }

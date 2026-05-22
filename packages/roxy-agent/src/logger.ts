@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const LOG_DIR = path.join(process.env.CHECKPOINT_DIR ?? process.cwd(), 'logs')
 /**
- * 10MB
+ * 5MB
  */
 const MAX_SIZE = 5 * 1024 * 1024
 /**
@@ -11,14 +11,102 @@ const MAX_SIZE = 5 * 1024 * 1024
  */
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
-fs.mkdirSync(LOG_DIR, { recursive: true })
+const mode = process.env.ROXY_MODE ?? 'agent'
+const isSandbox = mode === 'sandbox'
 
-function getDateStr(): string {
-  return new Date().toISOString().slice(0, 10)
+let LOG_FILE: string
+let LOG_BACKUP: string | undefined
+
+if (isSandbox) {
+  // Sandbox mode: logs/sandbox/{pid}.log
+  const sandboxDir = path.join(LOG_DIR, 'sandbox')
+  fs.mkdirSync(sandboxDir, { recursive: true })
+  LOG_FILE = path.join(sandboxDir, `${process.pid}.log`)
+  // No backup file for sandbox, just overwrite on restart
+  if (fs.existsSync(LOG_FILE)) {
+    fs.unlinkSync(LOG_FILE)
+  }
+}
+else {
+  // Normal mode: logs/{mode}.log + logs/{mode}.2.log
+  fs.mkdirSync(LOG_DIR, { recursive: true })
+  LOG_FILE = path.join(LOG_DIR, `${mode}.log`)
+  LOG_BACKUP = path.join(LOG_DIR, `${mode}.2.log`)
 }
 
-function getLogPath(): string {
-  return path.join(LOG_DIR, `${getDateStr()}.log`)
+function trimBackupIfNeeded(): void {
+  if (!LOG_BACKUP)
+    return
+  try {
+    if (!fs.existsSync(LOG_BACKUP))
+      return
+    if (fs.statSync(LOG_BACKUP).size <= MAX_SIZE)
+      return
+    const lines = fs.readFileSync(LOG_BACKUP, 'utf8').split('\n').filter(l => l.length > 0)
+    const kept = lines.slice(Math.floor(lines.length / 2))
+    fs.writeFileSync(LOG_BACKUP, `${kept.join('\n')}\n`, 'utf8')
+  }
+  catch {
+    // ignore
+  }
+}
+
+// On startup: move current log into backup, start fresh
+function rotateOnStartup(): void {
+  if (!LOG_BACKUP)
+    return
+  try {
+    if (!fs.existsSync(LOG_FILE))
+      return
+    const content = fs.readFileSync(LOG_FILE, 'utf8')
+    if (content.length > 0) {
+      fs.appendFileSync(LOG_BACKUP, content, 'utf8')
+      trimBackupIfNeeded()
+    }
+    fs.writeFileSync(LOG_FILE, '', 'utf8')
+  }
+  catch {
+    // ignore
+  }
+}
+
+function cleanOldSandboxLogs(): void {
+  if (!isSandbox)
+    return
+  try {
+    const sandboxDir = path.join(LOG_DIR, 'sandbox')
+    if (!fs.existsSync(sandboxDir))
+      return
+    const files = fs.readdirSync(sandboxDir)
+    const cutoff = Date.now() - MAX_AGE_MS
+    for (const file of files) {
+      if (!file.endsWith('.log'))
+        continue
+      const filePath = path.join(sandboxDir, file)
+      try {
+        const mtime = fs.statSync(filePath).mtime.getTime()
+        if (mtime < cutoff)
+          fs.unlinkSync(filePath)
+      }
+      catch {
+        // ignore
+      }
+    }
+  }
+  catch {
+    // ignore
+  }
+}
+
+if (isSandbox) {
+  // Sandbox: clean old logs on startup and every hour
+  cleanOldSandboxLogs()
+  const cleanupTimer = setInterval(cleanOldSandboxLogs, 60 * 60 * 1000)
+  cleanupTimer.unref()
+}
+else {
+  // Normal mode: rotate on startup
+  rotateOnStartup()
 }
 
 function formatArgs(args: unknown[]): string {
@@ -47,17 +135,8 @@ function formatArgs(args: unknown[]): string {
 }
 
 function writeToFile(line: string): void {
-  const logPath = getLogPath()
   try {
-    fs.appendFileSync(logPath, `${line}\n`, 'utf8')
-    const size = fs.statSync(logPath).size
-    if (size > MAX_SIZE) {
-      const rotatedPath = path.join(LOG_DIR, `${getDateStr()}.2.log`)
-      if (fs.existsSync(rotatedPath)) {
-        fs.unlinkSync(rotatedPath)
-      }
-      fs.renameSync(logPath, rotatedPath)
-    }
+    fs.appendFileSync(LOG_FILE, `${line}\n`, 'utf8')
   }
   catch {
     // ignore write errors to avoid infinite recursion
@@ -69,34 +148,6 @@ function writeLog(level: string, args: unknown[]): void {
   const line = `[${timestamp}] [${level.padEnd(5)}] ${formatArgs(args)}`
   writeToFile(line)
 }
-
-function cleanOldLogs(): void {
-  try {
-    const files = fs.readdirSync(LOG_DIR)
-    const cutoff = Date.now() - MAX_AGE_MS
-    for (const file of files) {
-      if (!file.endsWith('.log'))
-        continue
-      const filePath = path.join(LOG_DIR, file)
-      try {
-        const mtime = fs.statSync(filePath).mtime.getTime()
-        if (mtime < cutoff)
-          fs.unlinkSync(filePath)
-      }
-      catch {
-        // ignore
-      }
-    }
-  }
-  catch {
-    // ignore
-  }
-}
-
-// Run cleanup on startup and every hour
-cleanOldLogs()
-const cleanupTimer = setInterval(cleanOldLogs, 60 * 60 * 1000)
-cleanupTimer.unref()
 
 // Override console
 const _log = console.log.bind(console)

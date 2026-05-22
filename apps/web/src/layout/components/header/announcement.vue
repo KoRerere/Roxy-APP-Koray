@@ -187,29 +187,6 @@ function handleCloseProxyExpired() {
     outline-style: none;
     outline-width: 0;
     z-index: 0;
-
-    // &::before {
-    //   content: '';
-    //   position: absolute;
-    //   inset: 0;
-    //   background-image: url('/images/campaing/spring-festival/cloud_full.svg');
-    //   background-repeat: no-repeat;
-    //   background-position: -28px -10px;
-    //   opacity: 0.3;
-    //   z-index: -1;
-    // }
-
-    // &::after {
-    //   content: '';
-    //   position: absolute;
-    //   inset: 0;
-    //   background-image: url('/images/campaing/spring-festival/cloud_full.svg');
-    //   background-repeat: no-repeat;
-    //   background-position: -28px -10px;
-    //   transform: scaleX(-1);
-    //   opacity: 0.8;
-    //   z-index: -2;
-    // }
   }
 
   :deep(a) {

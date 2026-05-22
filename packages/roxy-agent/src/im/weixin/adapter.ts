@@ -2,7 +2,6 @@ import type { IMBridge } from '../core/IMBridge.js'
 import { Buffer } from 'node:buffer'
 import { randomInt, randomUUID } from 'node:crypto'
 import { normalizeImText } from '../core/outputGuard.js'
-import { proxyFetch } from '../core/proxy.js'
 
 const DEFAULT_BASE_URL = 'https://ilinkai.weixin.qq.com'
 const CHANNEL_VERSION = '1.0.2'
@@ -171,6 +170,19 @@ class WeixinAdapter {
       return
     }
 
+    const scriptMatch = trimmedText.match(/^\/script\s+([\s\S]+)$/i)
+    if (scriptMatch) {
+      try {
+        const reply = await this.bridge.handleMessage(channelId, scriptMatch[1].trim(), undefined, 'script')
+        await this.sendText(fromUserId, reply, contextToken)
+      }
+      catch (err) {
+        console.error('[Weixin] script handleMessage error:', err)
+        await this.sendText(fromUserId, formatError(err), contextToken)
+      }
+      return
+    }
+
     try {
       const reply = await this.bridge.handleMessage(channelId, trimmedText)
       await this.sendText(fromUserId, reply, contextToken)
@@ -214,7 +226,7 @@ class WeixinAdapter {
 
   private async apiPost<T>(endpoint: string, body: unknown): Promise<T> {
     const payload = JSON.stringify(body)
-    const response = await proxyFetch(`${DEFAULT_BASE_URL}/${endpoint}`, {
+    const response = await fetch(`${DEFAULT_BASE_URL}/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -45,3 +45,4 @@ apps/web/public/current_app_version
 apps/electron/logs
 apps/electron/buildResources/installer.nsh
 apps/electron/buildResources/pkg-scripts/postinstall
+.pnpm-store

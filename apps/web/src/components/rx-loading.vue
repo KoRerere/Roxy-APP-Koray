@@ -14,7 +14,7 @@ const iconSize = computed(() => Number.isNaN(Number(size)) ? size : CSS.px(size 
 <template>
   <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10 select-none">
     <div class="absolute inset-0 z-1 mask"></div>
-    <img class="block mx-auto loading-circle z-2 loading-icon" src="/@/assets/images/status/loading.png">
+    <img class="block mx-auto loading-circle z-2 loading-icon" src="/@/assets/icons/status/loading.png">
   </div>
 </template>
 

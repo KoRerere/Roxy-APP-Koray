@@ -1,3 +1,4 @@
+import type { CoreType } from '#roxybrowser/modules/browser/browser-manager/adapter'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 
 export interface MainMessageResult<T = any> {
@@ -22,6 +23,8 @@ export interface BrowserProcessMessage {
 export interface ResourceUpdateMessage {
   /** 更新类型 */
   type: 'app' | 'patch' | 'web' | 'kernel' | 'agent'
+  /** 内核类型 */
+  coreType?: CoreType
   /** 状态 */
   status?: 'downloading' | 'downloaded' | 'uninstalled' | 'failed' | 'update'
   /** 下载进度 */

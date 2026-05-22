@@ -1,3 +1,4 @@
+import '../src/polyfill'
 import '@unocss/reset/normalize.css'
 import 'driver.js/dist/driver.css'
 import 'primeicons/primeicons.css'

@@ -1,5 +1,5 @@
 import type { BiDiClient } from './bidi-client'
-import type { BiDiCapabilities, FirefoxBrowserEvents, ProcessExitData } from './types'
+import type { BiDiCapabilities, BiDiContext, FirefoxBrowserEvents, ProcessExitData } from './types'
 import type { ChildProcess } from 'node:child_process'
 import { execSync } from 'node:child_process'
 import { EventEmitter } from 'node:events'
@@ -137,25 +137,35 @@ export class FirefoxBrowser extends EventEmitter {
 
   /**
    * 关闭浏览器
+   * 使用 BiDi 标准 browser.close 命令，让内核有机会写出 lumilogin / roxy_tabs / places.sqlite
    */
   async close(): Promise<void> {
-    // 发送结束会话命令
-    if (this.sessionId) {
-      try {
-        await this.bidiClient.sendCommand('session.end', {})
-      }
-      catch (error) {
-        console.error('Failed to end session:', error)
-      }
+    try {
+      await this.bidiClient.sendCommand('browser.close' as any, {} as any)
+    }
+    catch (error) {
+      console.error('Failed to send browser.close:', error)
     }
 
     // 关闭 BiDi 连接
     this.bidiClient.close()
 
-    // 等待进程退出
+    // 等待进程退出，给内核足够时间写盘
     if (!this.#exited && this.browserProcess) {
-      await setTimeout(100)
-      this.kill()
+      // 等待最多 5 秒让进程自然退出
+      const exitTimeout = new Promise<void>((resolve) => {
+        const timer = globalThis.setTimeout(() => resolve(), 5000)
+        this.browserProcess?.once('exit', () => {
+          clearTimeout(timer)
+          resolve()
+        })
+      })
+      await exitTimeout
+
+      // 如果进程仍未退出，强制 kill
+      if (!this.#exited) {
+        this.kill()
+      }
     }
 
     return this.#browserProcessExiting || Promise.resolve()
@@ -222,13 +232,43 @@ export class FirefoxBrowser extends EventEmitter {
   }
 
   /**
+   * 将浏览器窗口置于前台（重新激活已运行的实例）
+   */
+  async bringToFront(): Promise<void> {
+    const pages = await this.pages()
+    if (pages.length === 0) {
+      return
+    }
+
+    const preferred = pages.filter((page) => {
+      const url = page.url()
+      return url && !url.startsWith('about:')
+    })
+    const target = preferred[preferred.length - 1] ?? pages[pages.length - 1]
+    await target.bringToFront()
+  }
+
+  /** 展平 browsingContext.getTree 返回的嵌套上下文 */
+  private flattenBrowsingContexts(contexts: BiDiContext[]): BiDiContext[] {
+    const result: BiDiContext[] = []
+    for (const context of contexts) {
+      result.push(context)
+      const children = (context as BiDiContext & { children?: BiDiContext[] }).children
+      if (children?.length) {
+        result.push(...this.flattenBrowsingContexts(children))
+      }
+    }
+    return result
+  }
+
+  /**
    * 获取所有页面
    */
   async pages(): Promise<FirefoxPage[]> {
     try {
       // 使用 BiDi 的 browsingContext.getTree 获取所有上下文
       const result = await this.bidiClient.sendCommand('browsingContext.getTree', {})
-      const contexts = result?.contexts || []
+      const contexts = this.flattenBrowsingContexts(result?.contexts || [])
 
       const pages: FirefoxPage[] = []
       for (const context of contexts) {

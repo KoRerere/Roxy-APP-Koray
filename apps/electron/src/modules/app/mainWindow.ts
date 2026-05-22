@@ -7,6 +7,7 @@ import { isPackaged, isProd, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { ipcSender } from '/@/modules/ipc/sender'
+import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { request } from '/@/utils'
 import { createWindow } from '/@/utils/browser-window'
@@ -112,6 +113,19 @@ export async function intoMainPage() {
     // 典型失败：DNS / 超时 / 断网 / SSL
     mainWin.loadURL(pathToFileURL(join(appConfig.buildInWebDir, '500.html')).href)
   })
+
+  try {
+    if (store.isFirstClearWebCache) {
+      await mainWin.webContents.session.clearCache()
+      await mainWin.webContents.session.clearStorageData({
+        storages: ['serviceworkers', 'cachestorage'],
+      })
+      store.isFirstClearWebCache = false
+    }
+  }
+  catch (error) {
+
+  }
 
   await mainWin.loadURL(webUrl).catch((error) => {
     console.error('intoMainPage error', error)

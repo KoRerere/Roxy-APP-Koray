@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeCardCvcElement, StripeCardExpiryElement, StripeCardNumberElement, StripeElements } from '@stripe/stripe-js'
 import { API } from '/@/api'
@@ -216,8 +217,8 @@ async function stripePayment() {
     <slot name="after" />
     <div class="flex items-center justify-between gap-2">
       <span class="tip">{{ $t('*我们不会存储您的完整卡号或敏感信息。') }}</span>
-      <img v-if="realTheme === 'dark'" class="block h-5" src="/images/payments/stripe-blurple-dark.svg">
-      <img v-else class="block h-5" src="/images/payments/stripe-blurple.svg">
+      <img v-if="realTheme === 'dark'" class="block h-5" :src="getImage('payments/stripe-blurple-dark.svg')">
+      <img v-else class="block h-5" :src="getImage('payments/stripe-blurple.svg')">
     </div>
   </form>
 </template>

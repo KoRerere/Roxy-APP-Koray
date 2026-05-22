@@ -1,5 +1,6 @@
 import { useDialog } from 'primevue/usedialog'
 import { useUserStore } from '/@/stores/user'
+import { usePermission } from '/@/hooks/usePermission'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
@@ -14,7 +15,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { enhanceCountdown, genDriver, isMainWindow, safeParseJSON, sleep } from '/@/utils'
+import { enhanceCountdown, genDriver, getImage, isMainWindow, safeParseJSON, sleep } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -55,7 +56,8 @@ export function useSubscribe() {
   const userStore = useUserStore()
   const { getUserPayInfo, clearUserInfo } = userStore
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-  const { isOwner, isManager } = storeToRefs(useRoleStore())
+  const { isOwner } = storeToRefs(useRoleStore())
+  const { check } = usePermission()
 
   watchEffect(() => {
     if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
@@ -101,7 +103,7 @@ export function useSubscribe() {
       workspace_suspended: showDefaultWorkspaceDialog,
     }
     const message = messageMap[payload?.type] || $t('默认浏览器开启失败，请重新打开。')
-    const imageSrc = `/images/default-browser/launch-failed-${themeStore.realTheme}.svg`
+    const imageSrc = getImage(`default-browser/launch-failed-${themeStore.realTheme}.svg`)
 
     if (isFunction(message)) {
       message()
@@ -387,7 +389,7 @@ export function useSubscribe() {
   async function showMcpDriver() {
     const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
 
-    if (driverStatus?.mcpGuide || !(isOwner.value || isManager.value))
+    if (driverStatus?.mcpGuide || !check('Roxy_AI_Agent_All'))
       return
 
     await Promise.all([

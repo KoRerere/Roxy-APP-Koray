@@ -18,21 +18,6 @@ const [_, onlyErrorToast] = useResponseToast()
 
 const loading = ref(false)
 const list = ref()
-const moduleNameStr = {
-  API_MCP: 'API & AI MCP',
-  Platform: $t('平台账号'),
-  Plugin_Installed: $t('扩展中心'),
-  Plugin_Recommend: $t('扩展推荐'),
-  Profiles: $t('全部窗口'),
-  Profiles_Label: $t('标签管理'),
-  Projects: $t('项目管理'),
-  Proxy_List: $t('代理 IP 列表'),
-  Proxy_Store: $t('代理 IP 商店'),
-  Team_Log: $t('操作日志'),
-  Team_Member: $t('团队成员'),
-  Team_Transfer: $t('转移历史'),
-  Cost_Center: $t('费用中心'),
-}
 
 onMounted(() => {
   getPermissionsByRole()
@@ -151,10 +136,12 @@ async function permissionChange(data: { status: boolean, code?: string }, item: 
       <RxLoading v-model="loading" :opacity="1" />
       <template v-for="(group, gIndex) in list ?? []" :key="group.moduleName">
         <template v-for="(item, index) in group.permissions" :key="item.permissionCode">
-          <span class="title shrink-0 py-3 pl-3" :class="{ 'opacity-0': index !== 0 }">{{ moduleNameStr[group.moduleName as keyof typeof moduleNameStr] }}</span>
+          <span class="title shrink-0 py-3 pl-3" :class="{ 'opacity-0': index !== 0 }">{{ group.moduleDes }}</span>
           <span class="name min-w-0 py-3 flex items-center gap-1.5">
             <span>{{ item.permissionName }}</span>
-            <SvgIcon v-if="item.permissionCode === 'Cost_Center_all'" v-tooltip.top="$t('开启后，用户将完全接管空间拥有者的资产权限，包含钱包、续订、银行卡、窗口、空间、成员、代理 IP 等资产的详情查看、信息修改和购买权限，消费将会从空间所有者钱包内扣款。')" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+            <SvgIcon v-if="item.permissionCode === 'Cost_Center_all'" v-tooltip.top="$t('开启后，用户将完全接管空间拥有者的资产权限，包含钱包、续订、银行卡、窗口、空间、成员、代理 IP 等资产的详情查看、信息修改和购买权限，消费将会从空间所有者钱包内扣款。')" class="cursor-pointer"
+                     name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)"
+            />
           </span>
           <div class="flex shrink-0 items-center justify-end py-3 pr-6">
             <template v-if="item.configurable">

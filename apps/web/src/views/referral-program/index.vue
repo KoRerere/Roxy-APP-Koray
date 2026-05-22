@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { API } from '/@/api';
-;
 import Referal from './components/referal/index.vue'
 import ReferralUsers from './components/referral-users.vue'
 import RewardRecords from './components/reward-records.vue'
 import WithdrawRecords from './components/withdraw-records.vue'
 import { provideReferralProgram } from './useContext'
+import { API } from '/@/api'
+
 const tabs = [
   {
     title: $t('概览'),
@@ -38,13 +38,6 @@ const activeTab = computed(() => {
   return tabs.find(n => n.value === activeTabValue.value)
 })
 
-async function getPromotionInfo() {
-  const { code, data } = await API.base.userGetPromotionInfoList()
-  if (code === 0) {
-    promotionInfo.value = data
-  }
-}
-
 watch(activeTabValue, () => {
   if (activeTabValue.value === defaultTab.value) {
     getPromotionInfo()
@@ -54,16 +47,22 @@ watch(activeTabValue, () => {
 provideReferralProgram({
   getPromotionInfo,
 })
+
+async function getPromotionInfo() {
+  const { code, data } = await API.base.userGetPromotionInfoList()
+  if (code === 0) {
+    promotionInfo.value = data
+  }
+}
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs></RxTabs>
+    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs />
     <div class="flex flex-1 overflow-hidden">
-      <component v-if="promotionInfo" :is="activeTab?.component" :promotionInfo />
+      <component :is="activeTab?.component" v-if="promotionInfo" :promotion-info />
     </div>
   </div>
-
 </template>
 
 <style scoped></style>

@@ -148,7 +148,6 @@ async function toCreateBrowser() {
 <template>
   <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <template v-if="check('Profiles_add')">
-      <!-- <img v-if="!collapsed" class="absolute top-0 left-0 w-full z-11 pointer-events-none" src="/images/campaing/new-year-btn.png"> -->
       <RxButton id="NEW_PROFILE" class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
     </template>
     <div class="relative flex-1 overflow-hidden">
@@ -165,9 +164,6 @@ async function toCreateBrowser() {
   word-break: keep-all;
   isolation: isolate;
   overflow: hidden;
-  // background-image: url('/images/bg_scrollcontentblur.svg');
-  // background-position: bottom -120px center;
-  // background-repeat: no-repeat;
 
   &.collapsed {
     .menu::-webkit-scrollbar {

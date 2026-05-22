@@ -1,15 +1,11 @@
 import './logger'
+import './polyfill'
 import fixPath from 'fix-path'
 import { env } from './config'
 import { runAgentMode } from './modes/agent'
 import { runIMMode } from './modes/im'
+import { runSandboxMode } from './modes/sandbox'
 import { runWorkerMode } from './modes/worker'
-// import { initSensitiveWords } from './sensitiveWords'
-
-// 开发环境：从 words/ 加载敏感词并注入 globalThis.__SENSITIVE_WORDS__（打包后由 build-words 注入，此处不覆盖）
-// if (env.DEVELOPMENT) {
-//   initSensitiveWords()
-// }
 
 // 修复系统环境变量
 fixPath()
@@ -44,6 +40,9 @@ async function main() {
   }
   else if (mode === 'worker') {
     shutdown = await runWorkerMode()
+  }
+  else if (mode === 'sandbox') {
+    shutdown = await runSandboxMode()
   }
   else {
     console.error(`[startup] Unknown mode: "${mode}". Valid modes: agent, im, worker`)

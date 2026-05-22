@@ -1,19 +1,35 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { motion } from 'motion-v'
 import MultiAccounting from './MultiAccounting.vue'
 import ProfilesSyncing from './ProfilesSyncing.vue'
 import SupportMorePlatform from './SupportMorePlatform.vue'
 import TeamSpace from './TeamSpace.vue'
+import RoxyAIAgent from './RoxyAIAgent.vue'
+import RoxyIP from './RoxyIP.vue'
+
 // import Agent from './Agent.vue'
 import { useThemeStore } from '/@/stores/theme'
 
 const themeStore = useThemeStore()
-const agentBg = computed(() => themeStore.realTheme === 'dark' ? '/images/mcp/login-bg-dark.svg' : '/images/mcp/login-bg-light.svg')
+const agentBg = computed(() => themeStore.realTheme === 'dark' ? getImage('mcp/login-bg-dark.svg') : getImage('mcp/login-bg-light.svg'))
 
 /** 默认 tab 停留时长（ms） */
 const DEFAULT_INTERVAL = 8000
 
 const tabs = [
+  {
+    key: 'AIAgent',
+    title: $t('Roxy AI Agent'),
+    desc: $t('全球首款 AI 指纹浏览器，智驱全自动运营，省时聚力，迸发无限创作力。'),
+    component: RoxyAIAgent,
+  },
+  {
+    key: 'RoxyIP',
+    title: $t('Roxy 官方直营 IP'),
+    desc: $t('海量 IP 池支持多协议，高匿代理 IP + 指纹隔离双重防护，彻底消除浏览器与 IP 的关联风险。'),
+    component: RoxyIP,
+  },
   // {
   //   key: 'Agent',
   //   title: 'Roxy AI Agent',
@@ -46,6 +62,7 @@ const tabs = [
     desc: $t('Roxy浏览器支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
     component: TeamSpace,
   },
+
 ]
 
 const currentTab = ref(tabs[0].key)
@@ -186,6 +203,8 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
+$indicator-bar-width: 80px;
+
 .intro {
   .intro-title {
     display: inline-block;
@@ -229,7 +248,7 @@ onUnmounted(() => {
     display: block;
     padding: 4px 4px;
     cursor: pointer;
-    width: 104px;
+    width: $indicator-bar-width;
     position: relative;
 
     .indicator-bar-item {
@@ -246,7 +265,7 @@ onUnmounted(() => {
     &:after {
       content: '';
       display: block;
-      width: 104px;
+      width: $indicator-bar-width;
       height: 6px;
       background-color: #ffffff;
       border-radius: 6px;

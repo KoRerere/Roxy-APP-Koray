@@ -6,7 +6,13 @@
       "Bash(curl -v \"https://mcp.figma.com/mcp\")",
       "mcp__figma__get_design_context",
       "Bash(npm view *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(git stash *)",
+      "Bash(pnpm lint *)"
     ]
+  },
+  "enabledPlugins": {
+    "claude-hud@claude-hud": true
   }
 }

@@ -2,6 +2,23 @@ import type { ChildProcess } from 'node:child_process'
 import type { EventEmitter } from 'node:events'
 
 /**
+ * CDP Browser.Bounds — 窗口位置与尺寸
+ * @see https://chromedevtools.github.io/devtools-protocol/tot/Browser/#type-Bounds
+ */
+export interface CDPWindowBounds {
+  /** 窗口相对屏幕左边缘的偏移量（像素） */
+  left?: number
+  /** 窗口相对屏幕上边缘的偏移量（像素） */
+  top?: number
+  /** 窗口宽度（像素） */
+  width?: number
+  /** 窗口高度（像素） */
+  height?: number
+  /** 窗口状态 */
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen'
+}
+
+/**
  * 统一的浏览器接口
  * 抽象 Chrome 和 Firefox 的通用功能
  */
@@ -60,6 +77,12 @@ export interface IBrowser extends EventEmitter {
     }
     Browser: {
       getTabs: () => Promise<{ tabs: string }>
+      /** 获取当前 target 所在窗口的 ID 及 bounds */
+      getWindowForTarget: (params?: { targetId?: string }) => Promise<{ windowId: number, bounds: CDPWindowBounds }>
+      /** 获取指定窗口的 bounds（位置与尺寸） */
+      getWindowBounds: (params: { windowId: number }) => Promise<{ bounds: CDPWindowBounds }>
+      /** 设置窗口位置与尺寸（Chromium/CDP）；Firefox BiDi client 不提供 */
+      setWindowBounds?: (params: { windowId: number, bounds: CDPWindowBounds }) => Promise<void>
     }
     [key: string]: any
   }
@@ -69,6 +92,11 @@ export interface IBrowser extends EventEmitter {
    * 用于建立额外的连接或调试
    */
   actualPort?: number
+
+  /**
+   * 将已运行的浏览器窗口置于前台（Firefox 重新激活时使用）
+   */
+  bringToFront?: () => Promise<void>
 }
 
 /**
@@ -146,7 +174,7 @@ export interface ITarget {
  */
 export interface BrowserLaunchOptions {
   /** 浏览器类型 */
-  browserType: BrowserType
+  coreType: CoreType
   /**
    * 浏览器可执行文件路径
    */
@@ -185,7 +213,10 @@ export interface BrowserLaunchOptions {
 /**
  * 浏览器类型
  */
-export type BrowserType = 'chrome' | 'firefox'
+export enum CoreType {
+  Chrome = 'Chrome',
+  Firefox = 'Firefox',
+}
 
 /**
  * 浏览器适配器工厂
@@ -195,7 +226,7 @@ export class BrowserAdapterFactory {
    * 启动浏览器
    */
   static async launch(options: BrowserLaunchOptions): Promise<IBrowser> {
-    if (options.browserType === 'firefox') {
+    if (options.coreType === CoreType.Firefox) {
       const firefoxWrapper = await import('./firefox-wrapper')
       return firefoxWrapper.launch(options) as unknown as IBrowser
     }
@@ -208,17 +239,17 @@ export class BrowserAdapterFactory {
   /**
    * 连接到已存在的浏览器
    */
-  static async connect(options: { browserType: BrowserType, browserWSEndpoint: string }): Promise<IBrowser> {
-    if (options.browserType === 'chrome') {
+  static async connect(options: { coreType: CoreType, browserWSEndpoint: string }): Promise<IBrowser> {
+    if (options.coreType === CoreType.Chrome) {
       const chromeWrapper = await import('./chrome-wrapper')
       return chromeWrapper.connect(options) as unknown as IBrowser
     }
-    else if (options.browserType === 'firefox') {
+    else if (options.coreType === CoreType.Firefox) {
       const firefoxWrapper = await import('./firefox-wrapper')
       return firefoxWrapper.connect(options) as unknown as IBrowser
     }
     else {
-      throw new Error(`Unsupported browser type: ${options.browserType}`)
+      throw new Error(`Unsupported browser type: ${options.coreType}`)
     }
   }
 }
@@ -236,7 +267,7 @@ export async function launchBrowser(
  * 便捷函数：自动检测浏览器类型并连接
  */
 export async function connectBrowser(
-  options: { browserType: BrowserType, browserWSEndpoint: string },
+  options: { coreType: CoreType, browserWSEndpoint: string },
 ): Promise<IBrowser> {
   return BrowserAdapterFactory.connect(options)
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
@@ -58,11 +59,11 @@ const variantsRight = {
 }
 
 const bannerMap = {
-  macos: '/images/systeam/mac.webp',
-  ios: '/images/systeam/ios.webp',
-  android: '/images/systeam/android.webp',
-  windows: '/images/systeam/windows.webp',
-  linux: '/images/systeam/linux.png',
+  macos: getImage('systeam/mac.webp'),
+  ios: getImage('systeam/ios.webp'),
+  android: getImage('systeam/android.webp'),
+  windows: getImage('systeam/windows.webp'),
+  linux: getImage('systeam/linux.png'),
 }
 
 const collapsed = defineModel<boolean>('collapsed', { default: false })

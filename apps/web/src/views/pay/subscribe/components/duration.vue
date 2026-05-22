@@ -64,7 +64,7 @@ function onSelected(item: Duration) {
 
 <template>
   <div class="flex gap-3">
-    <img v-if="loading" class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
+    <img v-if="loading" class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/icons/status/loading.png">
     <template v-else>
       <div v-for="(item, index) in durationList" :key="index" class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration" :class="{ active: selectedDuration?.key === item.key }"
            @click="onSelected(item)"

@@ -1,4 +1,4 @@
-const modules = import.meta.glob<Component>('../../../assets/images/**/*.svg', {
+const modules = import.meta.glob<Component>('../../../assets/icons/**/*.svg', {
   query: '?component',
   eager: false,
 })

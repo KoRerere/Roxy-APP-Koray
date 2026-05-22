@@ -4,6 +4,7 @@ import type { AttachmentInfo } from '/@/views/mcp/types'
 defineProps<{
   attachments: (AttachmentInfo & { preview?: string })[]
   onRemove?: (fileId: string) => void
+  conversationType?: string
 }>()
 
 function formatFileName(name: string, maxLen = 10): string {
@@ -19,16 +20,23 @@ function formatFileName(name: string, maxLen = 10): string {
 </script>
 
 <template>
-  <div
-    v-for="att in attachments" :key="att.fileId"
-    class="relative bg-[var(--colors-background-bg-block)] overflow-hidden p-2 flex items-center gap-2 rounded-2.5"
-  >
-    <div class="p-1 rounded-1.5 bg-[var(--colors-background-bg-brand)] flex items-center justify-center">
-      <SvgIcon name="base/rx_ic_doc_article" size="16" color="var(--component-dropdown-icon-active)" />
+  <template v-if="conversationType === 'automation'">
+    <div
+      v-for="att in attachments"
+      :key="att.fileId"
+      class="relative bg-[var(--colors-background-bg-block)] overflow-hidden p-2 flex items-center gap-2 rounded-2.5"
+    >
+      <div class="p-1 rounded-1.5 bg-[var(--colors-background-bg-brand)] flex items-center justify-center">
+        <SvgIcon name="base/rx_ic_doc_article" size="16" color="var(--component-dropdown-icon-active)" />
+      </div>
+      <span class="text-3 text-[var(--colors-text-text-tertiary)] leading-4 font-[Inter] font-500">
+        {{ formatFileName(att.fileName) }}
+      </span>
+      <SvgIcon v-if="onRemove" name="base/rx_ic_delete" size="16" color="var(--colors-icon-icon-primary)" class="cursor-pointer" @click="onRemove(att.fileId)" />
     </div>
-    <span class="text-3 text-[var(--colors-text-text-tertiary)] leading-4 font-[Inter] font-500">
-      {{ formatFileName(att.fileName) }}
-    </span>
-    <SvgIcon v-if="onRemove" name="base/rx_ic_delete" size="16" color="var(--colors-icon-icon-primary)" class="cursor-pointer" @click="onRemove(att.fileId)" />
+  </template>
+
+  <div v-else class="flex gap-2">
+    <img v-for="att in attachments" :key="att.fileId" :src="att.url" class="size-25 rounded-2 object-cover border-1 border-solid border-[var(--colors-border-border-action)]">
   </div>
 </template>

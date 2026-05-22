@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
 import { RxAlert } from '/@/components/rx-alert/'
@@ -35,17 +36,17 @@ const alertInfo = computed(() => {
 
 const images = ref([
   {
-    itemImageSrc: '/images/payments/paywall_banners/theme=template.png',
+    itemImageSrc: getImage('payments/paywall_banners/theme=template.png'),
     title: $t('窗口模板'),
     description: $t('窗口模板功能支持保存配置环境的系统、内核、UA、基础设置、高级指纹设置及偏好设置中的各种参数'),
   },
   {
-    itemImageSrc: '/images/payments/paywall_banners/theme=synchronizer.png',
+    itemImageSrc: getImage('payments/paywall_banners/theme=synchronizer.png'),
     title: $t('窗口同步器'),
     description: $t('窗口同步器模块包括窗口自动布局、同步窗口标签页、模拟键盘鼠标输入等细分功能'),
   },
   {
-    itemImageSrc: '/images/payments/paywall_banners/theme=api.png',
+    itemImageSrc: getImage('payments/paywall_banners/theme=api.png'),
     title: $t('更多 API 请求频率'),
     description: $t('API 功能可以配合 Selenium、Puppeteer 和 Playwright 等工具实现浏览器操作的自动化'),
   },

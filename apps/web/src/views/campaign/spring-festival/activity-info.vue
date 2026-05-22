@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import ActivityRule from '/@/views/campaign/spring-festival/activity-rule.vue'
 import currency from 'currency.js'
 import { $t } from '/@/locales'
@@ -116,7 +117,7 @@ function giftRule() {
 
 <template>
   <div v-if="seasonalActivity.springFestival" id="gifts" class="relative flex flex-col gap-6 pa-4 rounded-2 overflow-hidden content">
-    <img class="absolute -top-0.5 -right-12 opacity-15 z-0 w-34" src="/images/campaing/spring-festival/uspicious_cloud.svg">
+    <img class="absolute -top-0.5 -right-12 opacity-15 z-0 w-34" :src="getImage('campaing/spring-festival/uspicious_cloud.svg')">
     <div class="relative flex items-center justify-between z-1">
       <img draggable="false" :src="gifts.titleImage">
       <div class="flex items-center gap-0.5 cursor-pointer" @click="giftRule">

@@ -1,18 +1,22 @@
 <script setup lang="ts">
+import { getImage } from '/@/utils/basic'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import { useThemeStore } from '/@/stores/theme'
+import { compare } from 'compare-versions'
+import { useUserStore } from '/@/stores/user'
 
 const [showToast] = useResponseToast()
 const roxyClawStore = useRoxyClawStore()
 const themeStore = useThemeStore()
 const router = useRouter()
+const userStore = useUserStore()
 
 const clawLogo = computed(() => themeStore.realTheme === 'dark'
-  ? '/images/roxy-claw/roxyclaw-dark.png'
-  : '/images/roxy-claw/roxyclaw-light.png')
+  ? getImage('roxy-claw/roxyclaw-dark.png')
+  : getImage('roxy-claw/roxyclaw-light.png'))
 
 const IMStatus = {
   Checking: 0,
@@ -21,44 +25,53 @@ const IMStatus = {
   NotConfigured: 3,
 } as const
 
+const comingSoonIm = computed(() => {
+  const list = [
+    'roxy-claw-discord',
+    'roxy-claw-slack',
+  ]
+  if (!compare(userStore.appVersion, '3.8.7', '>=')) {
+    list.push('roxy-claw-wechat')
+  }
+  return list
+})
+
 const integrations = ref([
+  {
+    id: 'wechat',
+    name: $t('微信'),
+    icon: getImage('roxy-claw/wechat.svg'),
+    status: IMStatus.NotConfigured,
+    routeName: 'roxy-claw-wechat',
+    isNew: true,
+  },
   {
     id: 'telegram',
     name: 'Telegram',
-    icon: '/images/roxy-claw/telegram.svg',
+    icon: getImage('roxy-claw/telegram.svg'),
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-telegram',
   },
   {
     id: 'lark',
     name: $t('飞书 / Lark'),
-    icon: '/images/roxy-claw/lark.png',
+    icon: getImage('roxy-claw/lark.png'),
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-lark',
   },
   {
     id: 'discord',
     name: 'Discord',
-    icon: '/images/roxy-claw/discord.svg',
+    icon: getImage('roxy-claw/discord.svg'),
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-discord',
-    isComingSoon: true,
   },
   {
     id: 'slack',
     name: 'Slack',
-    icon: '/images/roxy-claw/slack.svg',
+    icon: getImage('roxy-claw/slack.svg'),
     status: IMStatus.NotConfigured,
     routeName: 'roxy-claw-slack',
-    isComingSoon: true,
-  },
-  {
-    id: 'wechat',
-    name: $t('微信'),
-    icon: '/images/roxy-claw/wechat.svg',
-    status: IMStatus.NotConfigured,
-    routeName: 'roxy-claw-wechat',
-    isComingSoon: true,
   },
 ])
 
@@ -156,6 +169,7 @@ async function toggleRoxyClaw() {
       showToast(0, message || 'RoxyClaw has been stopped successfully')
     }
     else {
+      await roxyClawStore.updateConfig({ enabled: true })
       showToast(1, message || 'Failed to stop RoxyClaw')
     }
   }
@@ -166,6 +180,7 @@ async function toggleRoxyClaw() {
       showToast(0, message || 'RoxyClaw has been started successfully')
     }
     else {
+      await roxyClawStore.updateConfig({ enabled: false })
       showToast(1, message || 'Failed to start RoxyClaw')
     }
   }
@@ -259,11 +274,18 @@ function handleIntegrationClick(integration: any) {
 
           <!-- Name and status -->
           <div class="flex flex-1 flex-col gap-1">
-            <div class="text-sm font-bold text-[var(--colors-text-text-primary)]">
+            <div class="flex items-center gap-3 text-sm font-bold text-[var(--colors-text-text-primary)]">
               {{ integration.name }}
+              <!-- <span v-if="integration.isNew" class="text-3 font-[DingTalk_Sans] rounded-full px-1 py-0.5 text-xs text-white bg-[var(--colors-background-bg-error)]">
+                NEW
+              </span> -->
+              <svg v-if="integration.isNew && compare(userStore.appVersion, '3.8.7', '>=')" width="46" height="19" viewBox="0 0 46 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 9.5C0 4.2533 4.25329 0 9.5 0H36.5C41.7467 0 46 4.2533 46 9.5V9.5C46 14.7467 41.7467 19 36.5 19H9.5C4.2533 19 0 14.7467 0 9.5V9.5Z" fill="var(--colors-background-bg-error)" />
+                <path d="M9.56 4.92H10.916L14.54 11.556L14.6 11.664L15.428 4.92H16.784L15.68 13.932H14.324L10.688 7.32L10.64 7.212L9.812 13.932H8.456L9.56 4.92ZM18.68 4.92H24.488L24.332 6.216H19.94L19.628 8.724H23.468L23.312 10.008H19.472L19.148 12.624H23.648L23.492 13.932H17.576L18.68 4.92ZM27.0013 13.932C26.8013 13.932 26.6333 13.868 26.4973 13.74C26.3693 13.62 26.2893 13.428 26.2573 13.164L25.3813 4.92H26.8813L27.6373 12.612H27.9613L30.5293 5.652H32.4253L33.2773 12.624H33.6013L36.2533 4.932H37.8013L34.8733 13.284C34.7213 13.708 34.4533 13.928 34.0693 13.944H32.6533C32.4533 13.944 32.2853 13.88 32.1493 13.752C32.0213 13.632 31.9413 13.44 31.9093 13.176L31.2853 7.488L29.2213 13.272C29.0613 13.712 28.7813 13.932 28.3813 13.932H27.0013Z" fill="white" />
+              </svg>
             </div>
             <!-- Connected 状态 -->
-            <div v-if="!integration.isComingSoon && integration.status === IMStatus.Connected" class="flex items-center gap-1">
+            <div v-if="!comingSoonIm.includes(integration.routeName) && integration.status === IMStatus.Connected" class="flex items-center gap-1">
               <SvgIcon
                 name="status/rx_ic_check_fill"
                 size="14"
@@ -272,21 +294,21 @@ function handleIntegrationClick(integration: any) {
               <span class="text-[var(--colors-text-text-success)] text-3">{{ $t('连接正常') }}</span>
             </div>
             <!-- Disconnected 状态 -->
-            <div v-if="!integration.isComingSoon && integration.status === IMStatus.Disconnected" class="flex items-center gap-1">
+            <div v-if="!comingSoonIm.includes(integration.routeName) && integration.status === IMStatus.Disconnected" class="flex items-center gap-1">
               <span class="text-[var(--colors-text-text-warning)] text-3">{{ $t('连接失败') }}</span>
             </div>
             <!-- Checking 状态 -->
-            <div v-if="!integration.isComingSoon && integration.status === IMStatus.Checking" class="flex items-center gap-1">
+            <div v-if="!comingSoonIm.includes(integration.routeName) && integration.status === IMStatus.Checking" class="flex items-center gap-1">
               <span class="text-[var(--colors-text-text-inactive)] text-3">{{ $t('连接中...') }}</span>
             </div>
             <!-- NotConfigured 状态 -->
-            <div v-if="!integration.isComingSoon && integration.status === IMStatus.NotConfigured" class="flex items-center gap-1">
+            <div v-if="!comingSoonIm.includes(integration.routeName) && integration.status === IMStatus.NotConfigured" class="flex items-center gap-1">
               <span class="text-[var(--colors-text-text-inactive)] text-3">{{ $t('未配置') }}</span>
             </div>
           </div>
 
           <RxButton
-            v-if="!integration.isComingSoon"
+            v-if="!comingSoonIm.includes(integration.routeName)"
             severity="secondary"
             size="xxs"
             outlined

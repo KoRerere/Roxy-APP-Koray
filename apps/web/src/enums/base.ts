@@ -44,3 +44,11 @@ export enum ActivityType {
   /** 自由季活动 */
   Freedom = 4,
 }
+
+/**
+ * 浏览器类型
+ */
+export enum CoreType {
+  Chrome = 'Chrome',
+  Firefox = 'Firefox',
+}

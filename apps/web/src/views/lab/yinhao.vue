@@ -7,7 +7,8 @@ import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 // import { emitter } from '/@/utils/eventBus'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
-import RaffleModal from '/@/views/campaign/freedom/raffle-modal.vue'
+import RaffleModal from './raffle-modal.vue'
+// import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 
 // ============ table ===================
@@ -40,7 +41,7 @@ function _open1() {
     //   // mask: "!backdrop-blur-md",
     // },
     slots: {
-      container: ({ hideModal }) => <ActivityRechangeModal onClose={hideModal}></ActivityRechangeModal>,
+      container: ({ hideModal }) => <RaffleModal onClose={hideModal}></RaffleModal>,
     },
   })
 }
@@ -50,12 +51,12 @@ function _open2() {
   //   showHeader: false,
   //   modal: true,
   //   blockScroll: true,
-  //   pt: {
-  //     // root: "!bg-transparent !border-none !shadow-none",
-  //     mask: '!backdrop-blur-md',
-  //   },
+  //   // pt: {
+  //   //   // root: "!bg-transparent !border-none !shadow-none",
+  //   //   mask: '!backdrop-blur-md',
+  //   // },
   //   slots: {
-  //     container: ({ hideModal }) => <ActivityRechangeModal count={10} upshiftCount={40} onClose={hideModal}></ActivityRechangeModal>,
+  //     container: ({ hideModal }) => <ProfileLayout onClose={hideModal}></ProfileLayout>,
   //   },
   // })
 }

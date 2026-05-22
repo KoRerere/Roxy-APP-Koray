@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { getImage, safeParseJSON } from '/@/utils/basic'
 import ActivityModal from './activity-modal.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
-import { safeParseJSON } from '/@/utils/basic'
 
 const { collapsed = false, localStorageKey } = defineProps<{
   collapsed?: boolean
@@ -81,12 +81,12 @@ function goToSubscribePlan() {
 <template>
   <div v-if="easterText" class="cursor-pointer" @click="openModal(true)">
     <div class="relative h-9 flex items-center justify-center rounded-1.5 select-none overflow-hidden">
-      <img v-if="collapsed" class="block w-full aspect-square" src="/images/campaing/easter/egg.png">
+      <img v-if="collapsed" class="block w-full aspect-square" :src="getImage('campaing/easter/egg.png')">
       <template v-else>
         <div class="relative w-full px-3 z-1 text">
           {{ easterText }}
         </div>
-        <img draggable="false" class="absolute inset-0 h-full" src="/images/campaing/easter/mini_banner.png">
+        <img draggable="false" class="absolute inset-0 h-full" :src="getImage('campaing/easter/mini_banner.png')">
       </template>
     </div>
   </div>
