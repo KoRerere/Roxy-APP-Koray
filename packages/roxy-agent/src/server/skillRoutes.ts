@@ -49,9 +49,12 @@ router.post('/install', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/:name', async (req: Request, res: Response) => {
+router.delete(/^\/(.+)$/, async (req: Request, res: Response) => {
   try {
-    const name = req.params.name as string
+    const name = (req.params as any)[0] as string
+    if (!name) {
+      return res.json({ code: 1, msg: 'Skill 名称不能为空' })
+    }
     await getSkillManager().uninstallSkill(name)
     res.json({ code: 0, msg: 'Skill 已卸载' })
   }
