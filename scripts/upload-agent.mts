@@ -33,7 +33,7 @@ const baseOssConfig = {
 }
 
 // 正式环境 agent 版本
-const prodVersion = '1.0.11'
+const prodVersion = '1.0.13'
 // 开发环境 agent 版本
 const devVersion = '2.2.68'
 

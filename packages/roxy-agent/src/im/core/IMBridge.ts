@@ -1,5 +1,5 @@
-import type { ContentBlock } from './attachments.js'
 import type { AgentInstance } from '../../deepagents/index.js'
+import type { ContentBlock } from './attachments.js'
 import { HumanMessage } from '@langchain/core/messages'
 import { createClawAgent, createScriptAgent } from '../../deepagents/index.js'
 import { ThreadManager } from './threadManager.js'
@@ -69,21 +69,22 @@ export class IMBridge {
 
     let fullText = ''
 
-    let agentInstance: AgentInstance
-    if (agentType === 'script') {
-      agentInstance = await createScriptAgent({
-        conversationId: session.conversationId,
-      })
-    }
-    else {
-      agentInstance = await createClawAgent({
-        workerId: IMBridge.WORKER_ID,
-        conversationId: session.conversationId,
-      })
-    }
-    const { agent, destroy } = agentInstance
-
+    let destroy: (() => Promise<void>) | undefined
     try {
+      let agentInstance: AgentInstance
+      if (agentType === 'script') {
+        agentInstance = await createScriptAgent({
+          conversationId: session.conversationId,
+        })
+      }
+      else {
+        agentInstance = await createClawAgent({
+          workerId: IMBridge.WORKER_ID,
+          conversationId: session.conversationId,
+        })
+      }
+      const { agent, destroy: _destroy } = agentInstance
+      destroy = _destroy
       const input = {
         messages: [
           Array.isArray(content)
@@ -134,7 +135,9 @@ export class IMBridge {
       return fullText
     }
     finally {
-      await destroy()
+      if (destroy) {
+        await destroy()
+      }
       session.isProcessing = false
     }
   }
