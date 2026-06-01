@@ -738,6 +738,16 @@ export function genDriver(config: Config) {
   })
 }
 
+export function getLocalStorageDriverStatus(key: string) {
+  const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
+  return driverStatus[key]
+}
+
+export function setLocalStorageDriverStatus(key: string, value: boolean) {
+  const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
+  localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, [key]: value }))
+}
+
 export function localDiscountValue(locale: string, discount: number) {
   if (locale === 'zh-CN') {
     return currency(100).subtract(discount).divide(10).value

@@ -23,7 +23,7 @@ import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './f
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getDictMap, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
+import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getDictMap, getFormDataByList, getLocalStorageDriverStatus, isEmptyValue, setInputValue, setLocalStorageDriverStatus } from '/@/utils'
 import { CoreType } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
@@ -219,7 +219,7 @@ async function getSettings() {
 
   oneClickSettings.value = data
 
-  if (route.query.driver) {
+  if (route.query.driver || !getLocalStorageDriverStatus('oneClick')) {
     nextTick(() => {
       showGuide()
     })
@@ -233,11 +233,13 @@ function showGuide() {
     allowClose: true,
     showButtons: ['close'],
     overlayClickBehavior: (_, __, opts) => {
-      opts.driver.destroy()
-      driverObj.value = undefined
-    },
-    onDestroyed: () => {
-      clearGuide1Highlight()
+      if (opts.state.activeIndex === 0 && route.query.driver) {
+        opts.driver.moveNext()
+      }
+      else {
+        opts.driver.destroy()
+        driverObj.value = undefined
+      }
     },
     steps: [
       {
@@ -248,7 +250,7 @@ function showGuide() {
           align: 'center',
         },
         onDeselected: () => {
-          driverObj?.value.drive(1)
+          setLocalStorageDriverStatus('oneClick', true)
         },
       },
       {
