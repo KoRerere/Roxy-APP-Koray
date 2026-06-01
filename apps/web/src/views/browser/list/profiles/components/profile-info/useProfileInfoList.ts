@@ -2,6 +2,7 @@ import { computed, unref } from 'vue'
 import type { MaybeRef } from 'vue'
 import { formatProxyTime, strConcat } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums/proxy'
+import { CoreType } from '/@/enums'
 
 const OS_ICON: Record<string, string> = {
   windows: 'platforms/rx_os_windows',
@@ -32,7 +33,8 @@ export function useProfileInfoList(
     if (os.toLocaleLowerCase() === 'macos' || os.toLocaleLowerCase() === 'ios') {
       const versionBit = osVersion.split('.')
       return versionBit[0]
-    } else {
+    }
+    else {
       return osVersion
     }
   }
@@ -46,10 +48,11 @@ export function useProfileInfoList(
       {
         key: 'os',
         svg: OS_ICON[(row.os as string).toLocaleLowerCase()],
-        tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', {
+        tooltip: $t('系统: {os} {osVersion}\n内核: {coreType} {coreVersion}', {
           os: row.os === 'IOS' ? 'iOS' : row.os,
           osVersion: formatVersion(row.os, row.osVersion),
           coreVersion: row.coreVersion,
+          coreType: row.coreType || CoreType.Chrome,
         }),
       },
       {

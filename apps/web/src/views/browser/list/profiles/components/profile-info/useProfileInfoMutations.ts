@@ -32,18 +32,19 @@ export function useProfileInfoMutations(options: {
   }
 
   function setChooseProxy(formData: any) {
-    const { id: moduleId, proxyCategory, protocol, proxyType, ...rest } = formData
+    const { id: moduleId, proxyCategory, protocol, proxyType, isDirect, ...rest } = formData
     const row = unref(data)
     const { id, dirId } = row
     updateProfile({ id, dirId, moduleId, proxyMethod: 'choose', requestType: ProfileReqType.SelectProxy }, {
       success: () => silentUpdateProxy(row, {
         ...rest,
         moduleId,
+        isDirect,
         protocol,
         proxyCategory: proxyCategory || protocol,
         proxyMethod: 'choose',
         buyProxyType: proxyType ?? ProxyType.resource,
-      }, ['isEncryptProxy', 'proxyEncryptInfo']),
+      }, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo']),
     })
   }
 

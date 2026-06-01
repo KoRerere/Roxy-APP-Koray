@@ -1,6 +1,7 @@
 import type { BiDiClient } from './bidi-client'
 import type { BiDiCapabilities, BiDiContext, FirefoxBrowserEvents, ProcessExitData } from './types'
 import type { ChildProcess } from 'node:child_process'
+import { Buffer } from 'node:buffer'
 import { execSync } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { setTimeout } from 'node:timers/promises'
@@ -137,9 +138,16 @@ export class FirefoxBrowser extends EventEmitter {
 
   /**
    * 关闭浏览器
-   * 使用 BiDi 标准 browser.close 命令，让内核有机会写出 lumilogin / roxy_tabs / places.sqlite
+   * 使用 BiDi 标准 browser.close 命令，让内核有机会写出 lumilogin / roxy_tabs / places.sqlite。
+   * 若 BiDi session 已被 releaseSession() 释放，则直接 kill 进程，避免 5s 超时等待。
    */
   async close(): Promise<void> {
+    if (!this.bidiClient.isConnected()) {
+      // BiDi session 已释放（cookie 导入后主动断开），直接 kill 进程
+      this.kill()
+      return this.#browserProcessExiting || Promise.resolve()
+    }
+
     try {
       await this.bidiClient.sendCommand('browser.close' as any, {} as any)
     }
@@ -154,7 +162,7 @@ export class FirefoxBrowser extends EventEmitter {
     if (!this.#exited && this.browserProcess) {
       // 等待最多 5 秒让进程自然退出
       const exitTimeout = new Promise<void>((resolve) => {
-        const timer = globalThis.setTimeout(() => resolve(), 5000)
+        const timer = globalThis.setTimeout(resolve, 5000)
         this.browserProcess?.once('exit', () => {
           clearTimeout(timer)
           resolve()
@@ -262,13 +270,96 @@ export class FirefoxBrowser extends EventEmitter {
   }
 
   /**
-   * 获取所有页面
+   * 将 BiDi cookie 格式统一转换为 CDP 兼容格式
+   * 处理 string / base64 两种 BiDi value 类型，并将 expiry 映射到 expires
+   */
+  private convertBiDiCookiesToCDP(cookies: any[]): any[] {
+    return cookies.map((cookie: any) => {
+      // BiDi cookie.value 格式：{ type: 'string', value: string } 或 { type: 'base64', value: string }
+      let value: string
+      if (typeof cookie.value === 'object' && cookie.value !== null) {
+        if (cookie.value.type === 'base64') {
+          // base64 类型：解码为 binary 字符串（与 Chrome 行为一致）
+          try {
+            value = Buffer.from(cookie.value.value, 'base64').toString('binary')
+          }
+          catch {
+            value = cookie.value.value ?? ''
+          }
+        }
+        else {
+          // string 类型直接取内层 value
+          value = cookie.value.value ?? ''
+        }
+      }
+      else {
+        value = String(cookie.value ?? '')
+      }
+
+      return {
+        name: cookie.name,
+        value,
+        domain: cookie.domain || '',
+        path: cookie.path || '/',
+        // BiDi 使用 expiry（秒级时间戳），CDP 使用 expires；undefined/null 统一为 -1 表示 session cookie
+        expires: cookie.expiry ?? -1,
+        httpOnly: cookie.httpOnly || false,
+        secure: cookie.secure || false,
+        // BiDi 返回小写 sameSite（'none'|'lax'|'strict'），转换为 CDP 大写形式。
+        // 若 BiDi 未返回 sameSite 属性（未显式设置），不包含该属性以避免回写时因缺少 secure 被拒绝
+        ...(cookie.sameSite ? { sameSite: cookie.sameSite.charAt(0).toUpperCase() + cookie.sameSite.slice(1) } : {}),
+      }
+    })
+  }
+
+  /**
+   * 兜底方案：逐个顶层浏览上下文调用 storage.getCookies，去重后合并
+   * 适用于 storage.getCookies {} 全局查询返回空或超时的情况
+   * 只遍历顶层 context（tab 级别），不含 iframe，避免重复请求
+   */
+  private async getCookiesFromAllContexts(): Promise<{ cookies: any[] }> {
+    const tree = await this.bidiClient.sendCommand('browsingContext.getTree', {})
+    const topLevelContexts = tree?.contexts || []
+
+    const allCookies: any[] = []
+    const seenKeys = new Set<string>()
+
+    for (const ctx of topLevelContexts) {
+      try {
+        const result = await this.bidiClient.sendCommand('storage.getCookies', {
+          // 按上下文 partition 查询，确保获取到该 tab 的所有 cookie
+          partition: { type: 'context', context: ctx.context } as any,
+        })
+        for (const cookie of (result?.cookies || [])) {
+          // 以 name + domain + path 作为去重 key
+          const key = `${cookie.name}|${cookie.domain}|${cookie.path || '/'}`
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key)
+            allCookies.push(cookie)
+          }
+        }
+      }
+      catch (ctxError) {
+        console.warn(`[Firefox] getCookies for context ${ctx.context} failed:`, ctxError)
+      }
+    }
+
+    // console.debug(`[Firefox] per-context getCookies: ${allCookies.length} cookies from ${topLevelContexts.length} tab(s)`)
+    return { cookies: this.convertBiDiCookiesToCDP(allCookies) }
+  }
+
+  /**
+   * 获取所有页面（仅顶层 tab，不含 iframe 子上下文）
+   * browsingContext.getTree 返回的 contexts 数组即为顶层 tab；
+   * iframe 作为 children 嵌套在内，不应作为独立页面暴露，
+   * 否则 browsingContext.close 会因非顶层 context 而报错
    */
   async pages(): Promise<FirefoxPage[]> {
     try {
       // 使用 BiDi 的 browsingContext.getTree 获取所有上下文
       const result = await this.bidiClient.sendCommand('browsingContext.getTree', {})
-      const contexts = this.flattenBrowsingContexts(result?.contexts || [])
+      // 只取顶层 context（tab 级别），不展开 children（iframe 等子上下文）
+      const contexts: BiDiContext[] = result?.contexts || []
 
       const pages: FirefoxPage[] = []
       for (const context of contexts) {
@@ -341,6 +432,34 @@ export class FirefoxBrowser extends EventEmitter {
   }
 
   /**
+   * 释放 BiDi session（发送 session.end 并关闭 WebSocket 连接）。
+   * 启动时导入 cookie 完成后调用，避免保持常驻 session。
+   * 调用后 client.Storage 方法将变为 no-op，不再可用。
+   */
+  async releaseSession(): Promise<void> {
+    try {
+      // 发送 session.end，通知 Firefox 销毁会话
+      await this.bidiClient.sendCommand('session.end', {} as any, { timeout: 3000 })
+    }
+    catch (error) {
+      // session.end 失败不影响后续关闭，忽略
+      console.warn('[FirefoxBrowser] session.end failed (ignored):', error)
+    }
+    // 关闭 WebSocket 连接
+    this.bidiClient.close()
+    // 将 client 替换为 no-op 版本，防止后续调用抛出 "WebSocket not connected"
+    this.client = {
+      Storage: {
+        getCookies: async () => ({ cookies: [] }),
+        setCookies: async () => {},
+      },
+      Browser: {
+        getTabs: async () => ({ tabs: '[]' }),
+      },
+    }
+  }
+
+  /**
    * 创建浏览器级别的 BiDi Session
    * 类似 ChromeBrowser.createBrowserCDPSession()
    */
@@ -358,76 +477,102 @@ export class FirefoxBrowser extends EventEmitter {
       Storage: {
         getCookies: async () => {
           try {
-            // 使用 BiDi 的 storage.getCookies 命令
-            const result = await this.bidiClient.sendCommand('storage.getCookies', {})
+            // 使用 BiDi 的 storage.getCookies 命令获取所有 cookie
+            // 适当延长超时时间（默认 5s 在 cookie 数量较多时可能不足）
+            const result = await this.bidiClient.sendCommand('storage.getCookies', {}, { timeout: 30_000 })
             const cookies = result?.cookies || []
 
-            // 转换 BiDi cookie 格式为 CDP 格式
-            const cdpCookies = cookies.map((cookie: any) => {
-              // BiDi cookie.value 可能是 { type: 'string', value: string } 格式
-              const value = typeof cookie.value === 'object' && cookie.value.value
-                ? cookie.value.value
-                : cookie.value
+            if (cookies.length > 0) {
+              // console.debug(`[Firefox] storage.getCookies (global) returned ${cookies.length} cookies`)
+              return { cookies: this.convertBiDiCookiesToCDP(cookies) }
+            }
 
-              return {
-                name: cookie.name,
-                value,
-                domain: cookie.domain || '',
-                path: cookie.path || '/',
-                expires: cookie.expiry || -1,
-                httpOnly: cookie.httpOnly || false,
-                secure: cookie.secure || false,
-                sameSite: cookie.sameSite || 'None',
-              }
-            })
-
-            return { cookies: cdpCookies }
+            // 全局查询返回空时，降级为逐上下文查询（兜底）
+            // 某些 Firefox 版本或配置下 storage.getCookies {} 可能不返回数据
+            // console.warn('[Firefox] storage.getCookies (global) returned empty, falling back to per-context query')
+            return this.getCookiesFromAllContexts()
           }
           catch (error) {
-            console.error('Failed to get cookies via BiDi:', error)
-            return { cookies: [] }
+            // WebSocket 已断开说明浏览器正在关闭，直接抛出让上层 saveCookies 的 catch 捕获
+            // 不能返回 { cookies: [] }，否则会将调用方缓存的有效 cookie 覆盖为空
+            if (error instanceof Error && error.message.includes('WebSocket not connected')) {
+              throw error
+            }
+            console.error('[Firefox] Failed to get cookies via BiDi (global):', error)
+            // 其他错误：尝试逐上下文查询兜底；若 fallback 也失败则异常上抛，上层 saveCookies 会保留旧缓存
+            return await this.getCookiesFromAllContexts()
           }
         },
 
         setCookies: async (params: { cookies: any[] }) => {
-          try {
-            // BiDi 一次只能设置一个 cookie，需要循环设置
-            for (const cookie of params.cookies) {
-              // 转换 CDP cookie 格式为 BiDi 格式
+          // BiDi 协议通过命令 ID 区分并发请求，可以同时发出所有 setCookie 命令，
+          // 用 Promise.allSettled 等待全部结果，避免串行等待带来的延迟（约 N × RTT）。
+
+          // 将 CDP cookie 格式转换为 BiDi 格式，跳过无效 cookie
+          const tasks = params.cookies
+            .filter((cookie) => {
+              if (!cookie.domain) {
+                console.warn('[Firefox] setCookies: skipping cookie with empty domain:', cookie.name)
+                return false
+              }
+              return true
+            })
+            .map((cookie) => {
               const bidiCookie: any = {
                 name: cookie.name,
                 value: {
                   type: 'string',
-                  value: cookie.value,
+                  // value 防空 undefined/null
+                  value: cookie.value ?? '',
                 },
-                domain: cookie.domain || '',
+                domain: cookie.domain,
               }
 
               // 可选字段
               if (cookie.path)
                 bidiCookie.path = cookie.path
               if (cookie.expires && cookie.expires > 0) {
-                // CDP 的 expires 是秒级时间戳，BiDi 的 expiry 也是秒级
-                bidiCookie.expiry = Math.floor(cookie.expires)
+                // BiDi expiry 为秒级时间戳。
+                // 部分 cookie 来源（如从 Chrome/系统导出）以毫秒格式存储（13 位），需转换为秒。
+                // 阈值 1e10 可安全区分两者：当前秒级时间戳约 1.78e9，毫秒级约 1.78e12。
+                bidiCookie.expiry = cookie.expires > 1e10
+                  ? Math.floor(cookie.expires / 1000)
+                  : Math.floor(cookie.expires)
               }
               if (cookie.httpOnly !== undefined)
                 bidiCookie.httpOnly = cookie.httpOnly
-              if (cookie.secure !== undefined)
-                bidiCookie.secure = cookie.secure
               if (cookie.sameSite) {
                 // 转换为小写，BiDi 使用小写
                 bidiCookie.sameSite = cookie.sameSite.toLowerCase()
               }
+              // RFC 6265bis / Firefox BiDi 要求：SameSite=None 的 cookie 必须带 Secure 标志。
+              // 若原始 cookie 的 secure=false 但 sameSite=none，强制置为 true，否则 Firefox 会拒绝写入。
+              const isSameSiteNone = bidiCookie.sameSite === 'none'
+              bidiCookie.secure = isSameSiteNone ? true : (cookie.secure ?? false)
 
-              // 使用 BiDi 的 storage.setCookie 命令
-              await this.bidiClient.sendCommand('storage.setCookie', {
-                cookie: bidiCookie,
-              })
+              return { cookie, bidiCookie }
+            })
+
+          // 并发发送所有 setCookie 命令，单个失败不影响其他
+          const results = await Promise.allSettled(
+            tasks.map(({ bidiCookie }) =>
+              this.bidiClient.sendCommand('storage.setCookie', { cookie: bidiCookie }),
+            ),
+          )
+
+          // 统计失败项并输出日志，便于排查
+          let failCount = 0
+          results.forEach((result, i) => {
+            if (result.status === 'rejected') {
+              failCount++
+              console.warn(
+                `[Firefox] setCookie failed for "${tasks[i].cookie.name}" (${tasks[i].cookie.domain}):`,
+                result.reason,
+              )
             }
-          }
-          catch (error) {
-            console.error('Failed to set cookies via BiDi:', error)
-            throw error
+          })
+          if (failCount > 0) {
+            console.warn(`[Firefox] setCookies: ${failCount}/${tasks.length} cookies failed`)
           }
         },
       },

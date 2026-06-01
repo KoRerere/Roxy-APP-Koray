@@ -88,7 +88,7 @@ function showAsideMenuGuideTour() {
       {
         element: '#NEW_PROFILE',
         popover: {
-          description: $t('如果您有更多自定义窗口需求，点击"创建窗口"按钮即可快速设置。'),
+          description: $t('点击创建一个新的浏览器窗口。'),
           side: 'right',
           align: 'center',
         },

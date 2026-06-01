@@ -44,6 +44,8 @@ module.exports = {
     'font-list': 'node-commonjs font-list',
     // 'http-proxy-middleware': 'node-commonjs http-proxy-middleware',
     '@roxy/diskspace-native': 'node-commonjs @roxy/diskspace-native',
+    // @napi-rs/canvas 含 platform-specific Skia .node 二进制，必须从 node_modules 运行时加载
+    '@napi-rs/canvas': 'node-commonjs @napi-rs/canvas',
     // 'better-sqlite3': 'node-commonjs better-sqlite3',
     // 'bindings': 'node-commonjs bindings',
     // 'file-uri-to-path': 'node-commonjs file-uri-to-path',

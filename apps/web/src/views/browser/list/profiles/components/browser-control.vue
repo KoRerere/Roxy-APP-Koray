@@ -12,6 +12,8 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
 import type { Driver } from 'driver.js'
 import { isDev } from '/@/utils'
+import type { SvgNames } from '/@/components/rx-icon'
+import { CoreType } from '/@/enums'
 
 interface Props {
   btnId?: string
@@ -224,7 +226,7 @@ if (!globalThis.isElectron) {
       <template #default>
         <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
           <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-          <SvgIcon v-if="!browser.percent && !browser.pending" class="control-icon" :name="(icon as any)" />
+          <SvgIcon v-if="!browser.percent && !browser.pending" class="control-icon" :name="icon as SvgNames" :class="{ firefox: data.coreType === CoreType.Firefox }" />
           <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
         </RxButton>
       </template>
@@ -274,6 +276,10 @@ if (!globalThis.isElectron) {
   &:not(:disabled) {
     .control-icon {
       color: #12a3fc;
+
+      &.firefox {
+        color: #fd7c12;
+      }
     }
   }
 }

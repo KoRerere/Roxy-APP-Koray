@@ -15,14 +15,15 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { genPollingChecker, isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
-import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyReqType, ProxyType } from '/@/enums'
 import { usePermission } from '/@/hooks/usePermission'
+import { emitter } from '/@/utils/eventBus'
 import type { ProxyItem } from './operation'
+import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
 
 const route = useRoute()
 const router = useRouter()
@@ -99,6 +100,13 @@ onBeforeMount(async () => {
   scheduledCheckerProxyStatus.check()
   filtersMenu.value = await getCustomFilters()
   setNewOrderNo(route.query.orderNo as string)
+})
+
+onMounted(() => {
+  emitter.on('updateShopList', (orderNo) => {
+    onRefreshTable()
+    setNewOrderNo(orderNo)
+  })
 })
 
 onBeforeUnmount(() => {
@@ -230,11 +238,11 @@ function onAdvancedSearch(search?: Record<string, any>) {
 function onBuyProxy(props?: Record<string, any>) {
   buyProxy(toRaw(props)).then((orderInfo) => {
     onRefreshTable()
-    setNewOrderNo(orderInfo?.orderNo || '')
+    setNewOrderNo(orderInfo?.orderNo)
   })
 }
 
-function setNewOrderNo(value: string) {
+function setNewOrderNo(value?: string) {
   if (!value)
     return
   newOrderNo.value = value
@@ -466,7 +474,7 @@ function rowClass(data: ProxyItem) {
       >
         <template #filter-after>
           <div class="w-full flex gap-1.5 items-start justify-between">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-2">
               <div class="relative">
                 <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
                 <div class="new-dot" />
@@ -474,7 +482,7 @@ function rowClass(data: ProxyItem) {
               <RxButton v-if="check('Proxy_List_add')" size="xxs" icon="base/rx_ic_plus" variant="outlined" :label="$t('添加')" @click.stop="createProxy" />
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-2">
               <!-- <div class="flex items-center gap-1.5">
                 <RxCheckbox v-model="hideTypeConfig.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="hideTypeConfig.trueValue"
                             :false-value="hideTypeConfig.falseValue" @change="filters.onChange"
@@ -507,8 +515,8 @@ function rowClass(data: ProxyItem) {
         </template>
         <template #outbound="{ data }">
           <div class="flex items-center gap-2.5">
-            <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]"
-                        :badge-desc="data.badgeTypeDesc" :is-loading="data.loadingOperationMap?.test"
+            <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]" :badge-desc="data.badgeTypeDesc"
+                        :is-loading="data.loadingOperationMap?.test"
             />
             <div
               v-if="data.proxyType === ProxyType.buy && data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired"

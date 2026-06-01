@@ -48,7 +48,7 @@ const { onConfirm } = defineProps<{
 
 const confirm = useConfirm()
 const { getUserConfig } = useUserStore()
-const userStore = useUserStore()
+const { userConfig, userPayInfo } = storeToRefs(useUserStore())
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -112,7 +112,7 @@ watch(ipType, async (newVal) => {
   const $dict_map = await getDictMap()
   const dictKey = newVal === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
   ipCheckerConfig.props.options = $dict_map[dictKey]
-  ipCheckerConfig.value = $dict_map[dictKey]!.find((item: any) => item.value === userStore.userConfig!.ipChecker) || $dict_map[dictKey]![0]
+  ipCheckerConfig.value = $dict_map[dictKey]!.find((item: any) => item.value === userConfig.value.ipChecker) || $dict_map[dictKey]![0]
 })
 
 onBeforeMount(async () => {
@@ -219,7 +219,7 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
       setOperationLoading(item, operateName, true)
 
       const _task = async () => {
-        const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
+        const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP', isDirect: userPayInfo.value.isDirectWhitelist })
         if (checkResult.checkStatus === ProxyCheckStatus.failure && !item._secondCheck) {
           Reflect.set(item, '_secondCheck', true)
           secondCheckMap.set(index, _task)
@@ -398,8 +398,8 @@ async function onSave() {
         </div>
       </div>
       <div class="parse-result-message">
-        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理 IP。{filterCount} 重复代理 IP 已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
-                 @close="messageClose"
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理 IP。{filterCount} 重复代理 IP 已过滤。', { count: dataList.length, filterCount }) + missMessage"
+                 closable @close="messageClose"
         />
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]" />
       </div>

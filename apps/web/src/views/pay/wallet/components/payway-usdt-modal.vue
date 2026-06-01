@@ -63,7 +63,13 @@ onMounted(() => {
   genProxyQrcode()
   stopCountdown.value = enhanceCountdown(new Date(props.endTime), (time) => {
     countdown.value = time
-  }, { alwaysSecondLevel: true, onEnd: () => close(true) })
+  }, {
+    alwaysSecondLevel: true,
+    onEnd: () => {
+      console.log('order timeout closed')
+      close(true)
+    },
+  })
 })
 
 onBeforeUnmount(() => {

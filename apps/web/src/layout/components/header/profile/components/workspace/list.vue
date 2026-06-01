@@ -52,13 +52,16 @@ function getAvatarProps(item: Data) {
   }
 }
 
-async function copyUserInfo() {
+async function _copyUserInfo() {
   const { email, phone } = await getUserContact()
   copyText(email || phone || '')
   showToast(0, $t('复制成功'))
 }
 
 async function enterWorkspace(item: Data) {
+  if (item.id === currentWorkspace.value?.id)
+    return
+
   item.id && setCurrentWorkspace(item.id)
   globalThis.electronAPI.send('mcp:close')
   emit('hide')
@@ -153,7 +156,7 @@ function showFirstCreateTipsDialog() {
       </div>
     </div>
     <div class="flex flex-col gap-1 pr-1.5 max-h-40 overflow-y-auto">
-      <div v-for="item in list" :key="item.id" class="shrink-0 h-7 flex items-center gap-1.5 pl-1 cursor-pointer item" @click="enterWorkspace(item)">
+      <div v-for="item in list" :key="item.id" class="shrink-0 h-7 flex items-center gap-1.5 pl-1 cursor-pointer select-none item" @click="enterWorkspace(item)">
         <RxAvatar v-bind="getAvatarProps(item)" />
         <div class="flex gap-1 flex-1 items-center overflow-hidden">
           <div class="tt-primary text-3 font-500 ellipsis-1">

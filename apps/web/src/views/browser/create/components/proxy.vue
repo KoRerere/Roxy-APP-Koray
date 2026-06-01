@@ -1,73 +1,101 @@
 <script setup lang="ts">
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
+import ProxyBuyAddDrawer from './proxy-buy-add-drawer.vue'
+import ProxyCountrySwitch from '/@/views/browser/create/components/proxy-country-switch.vue'
 import { RxAlert } from '/@/components/rx-alert'
+// import currency from 'currency.js'
 import { useSimpleDialog } from '/@/components/simplePopup'
-
 import { deepClone, isEmptyValue, sleep, strConcat } from '/@/utils'
-import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { usePermission } from '/@/hooks/usePermission'
 import { useTableContext } from '../hooks/useContext'
 import { useNetworkStore } from '/@/stores/network'
 import { useProxyStore } from '/@/stores/proxy'
+import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
-import { BuyEntryType, BuyProxyListType, ProxyType } from '/@/enums/proxy'
+import { BuyProxyListType, ProxyType } from '/@/enums/proxy'
 import type { SvgNames } from '/@/components/rx-icon/'
 
 defineOptions({
   inheritAttrs: false,
 })
+const { isBatch, createCount, driverObj, presetTemplate } = useTableContext()
 
 const router = useRouter()
-const [showToast, _] = useResponseToast()
 const drawerInstance = useDrawer()
+const network = useNetworkStore()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
+const { getProxyVendors } = useProxyStore()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
-const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const { isBatch, createCount, driverObj } = useTableContext()
-const { buyProxy } = useProxy()
-const network = useNetworkStore()
-const { getProxyVendors } = useProxyStore()
+const [showToast, _] = useResponseToast()
+const [showModal] = useDialog()
 
 const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
 
+const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
 const checkIndex = reactive<Record<string, boolean>>({})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 
 const proxyProvider = ref()
+const dualDrawerVisible = ref(false)
+const moreCountryDrawerVisible = ref(false)
+
+const canBuy = computed(() => check('Cost_Center_all'))
+const canAdd = computed(() => (isBatch.value || !proxyList.value?.length) && !moreCountryDrawerVisible.value && check('Profiles_add_proxy_outside'))
+
+const providerProps = computed(() => {
+  if (!proxyProvider.value)
+    return undefined
+
+  return {
+    proxyProviderId: proxyProvider.value.id,
+    proxyProviderWebsite: proxyProvider.value.vendorWebsite,
+    proxyProviderIcon: proxyProvider.value.vendorIcon,
+    proxyProviderName: proxyProvider.value.vendorName,
+  }
+})
 
 function driverNext() {
-  sleep(300).then(() => driverObj.value?.drive(1))
+  moreCountryDrawerVisible.value = false
+
+  sleep(300).then(() => driverObj?.value.drive(1))
 }
 
-async function onBuyProxy() {
+async function openDualDrawer() {
   driverObj?.value?.destroy()
 
-  if (!proxyProvider.value) {
+  if (canBuy.value && !proxyProvider.value) {
     const data = await getProxyVendors()
     if (!data)
       return
     proxyProvider.value = data.find((item: any) => item.isOfficial)
   }
 
-  const provider = {
-    proxyProviderId: proxyProvider.value.id,
-    proxyProviderWebsite: proxyProvider.value.vendorWebsite,
-    proxyProviderIcon: proxyProvider.value.vendorIcon,
-    proxyProviderName: proxyProvider.value.vendorName,
-  }
+  dualDrawerVisible.value = true
+}
 
+function closeDualDrawer() {
+  dualDrawerVisible.value = false
+}
+
+async function onDualDrawerBuySuccess(orderInfo: any) {
   try {
-    const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
     await buySuccessNext(orderInfo)
   }
   finally {
-    driverNext()
+    closeDualDrawer()
   }
+}
+
+function onDualDrawerAddConfirm(formData: Record<string, any>) {
+  addProxy(formData)
+  closeDualDrawer()
 }
 
 async function buySuccessNext(orderInfo: any) {
@@ -144,6 +172,7 @@ function deleteProxy(index: number) {
 }
 
 function addProxy(data: any) {
+  clearPresetTemplate()
   if (data._tempId) {
     const index = proxyList.value.findIndex((item: any) => item._tempId === data._tempId)
     if (index > -1) {
@@ -167,6 +196,7 @@ function addProxy(data: any) {
 
 function onChoose(data: any) {
   if (!isEmptyValue(data)) {
+    clearPresetTemplate()
     if (isBatch.value) {
       /**
        *过滤手动新增的代理
@@ -226,7 +256,34 @@ function tooltipValue(item: any) {
   }
 }
 
-const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
+function clearPresetTemplate() {
+  if (presetTemplate) {
+    presetTemplate.value = undefined
+  }
+}
+
+function switchProxyCountry() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(ProxyCountrySwitch, {
+        data: presetTemplate!.value.proxyInfo,
+        onClose: hideModal,
+        onConfirm: (data: any) => {
+          hideModal()
+          Reflect.set(presetTemplate!.value, 'proxyInfo', data)
+        },
+        onMore: () => {
+          hideModal()
+          moreCountryDrawerVisible.value = true
+          openDualDrawer()
+        },
+      }),
+    },
+  })
+}
 </script>
 
 <template>
@@ -236,7 +293,7 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
         <div class="title">
           {{ attrs.label }}
         </div>
-        <div class="flex items-center gap-1 tips">
+        <div v-if="!presetTemplate && !proxyList.length" class="flex items-center gap-1 tips">
           <span>{{ $t('本机网络环境: {value}({ip})', {
             value: strConcat(network.info?.country_code, strConcat('/', network.info?.city)),
             ip: network.info?.ip,
@@ -247,19 +304,19 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
 
       <div class="flex items-center gap-2 guide1">
         <!-- 外层 span 用于引导脉冲高亮：::after 不能挂在 .p-button 上，否则会被按钮 overflow 裁切 -->
-        <span v-if="check('Cost_Center_all')" class="guide1-pulse-target inline-flex rounded-md">
-          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
-        </span>
-        <span v-if="(isBatch || !proxyList?.length) && check('Profiles_add_proxy_outside')" class="guide1-pulse-target inline-flex rounded-md">
-          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+        <span v-if="canBuy || canAdd" class="guide1-pulse-target inline-flex rounded-md">
+          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="proxyList.length ? $t('购买') : $t('购买 / 添加')" @click="openDualDrawer" />
         </span>
       </div>
       <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
     </div>
+    <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="driverNext" @buy-success="onDualDrawerBuySuccess"
+                       @add-confirm="onDualDrawerAddConfirm"
+    />
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
              :closable="false"
     />
-    <div v-if="proxyList.length" class="grid gap-2 list">
+    <div v-if="!presetTemplate && proxyList.length" class="grid gap-2 pl-27 list">
       <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
         <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
         <div class="flex-1 flex flex-col gap-1 overflow-hidden">
@@ -289,6 +346,27 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
         </div>
       </RxCard>
+    </div>
+    <div v-if="presetTemplate && !isBatch" class="flex items-center gap-2 pl-27">
+      <div class="flex-1 flex flex-col gap-1 pa-2 rounded-1.5 cursor-pointer preorder" @click="switchProxyCountry">
+        <div class="flex items-center gap-2">
+          <SvgIcon :name="(`country-code/${presetTemplate.proxyInfo.purchaseCountry.value.toLocaleUpperCase()}` as any)" size="20" />
+          <div class="flex items-center gap-2">
+            <span class="tt-primary text-3 font-500 leading-5">{{ presetTemplate.proxyInfo.purchaseCountry.label }}</span>
+            <SvgIcon class="cursor-pointer" name="base/rx_ic_exchange" size="14" color="var(--colors-icon-icon-tertiary)" />
+          </div>
+          <SvgIcon class="mx-auto mr-0 cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="clearPresetTemplate" />
+        </div>
+        <div class="flex items-center gap-1.5 pl-7">
+          <div class="select-none preorder-desc">
+            {{ presetTemplate.description }}
+          </div>
+          <SvgIcon v-tooltip.top="{ value: presetTemplate.hover, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
+        </div>
+      </div>
+      <div class="flex-1 tt-inactive text-3 leading-4">
+        {{ $t('Roxy 官方直营 IP，业务稳定性 99%+') }}
+      </div>
     </div>
   </div>
 </template>
@@ -328,5 +406,26 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
   color: var(--colors-text-text-tertiary);
   font-size: 12px;
   line-height: 16px;
+}
+
+.preorder {
+  border: 1px solid var(--colors-border-border-action);
+  background-color: var(--colors-background-bg-action);
+  box-shadow: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+
+  background-image: url('/images/proxy/preorder_bg_line.svg');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: top center;
+
+  &-desc {
+    font-family: 'DingTalk JinBuTi';
+    font-size: 12px;
+    line-height: 16px;
+    background: linear-gradient(90deg, #1ba9ff 0%, #60d990 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 </style>

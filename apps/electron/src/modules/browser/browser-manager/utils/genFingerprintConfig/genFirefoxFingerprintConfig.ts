@@ -5,6 +5,7 @@ import { currentOS, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress } from '/@/utils'
+import { ensureFirefoxIcon } from './firefoxIcon'
 import { getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
 
 /** 生成 Firefox 浏览器指纹配置（结构按 docs/firefox指纹参数使用说明.md） */
@@ -31,6 +32,9 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     ecommerceDirectWhiteList = await getEcommerceDirectWhiteList()
   }
 
+  // 动态生成带 windowSortNum 数字徽章的 .ico；内部含磁盘+内存双层缓存与失败回退
+  const browserIconPath = await ensureFirefoxIcon(winInfo.windowSortNum)
+
   return {
     userAgent: winInfo.userAgentNew,
     navigator: {
@@ -49,7 +53,8 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
         return winInfo.timeZone.split(' ').at(-1)
       }
     },
-    browserIconPath: join(appConfig.buildInWebDir, 'lumi.ico'),
+    /** 火狐内核应用图标路径（按 windowSortNum 动态生成带数字徽章的 .ico） */
+    browserIconPath,
     get appLocale() {
       if (winInfo.isLanguageBaseIp) {
         return getCityCode(proxyInfo.country_code)
@@ -176,6 +181,15 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
         }
       },
     },
+    ssl: {
+      /** 禁用SSL特性，选填. 为空表示不禁用 */
+      get cipherSuiteBlacklist() {
+        if (winInfo.disableSsl && Array.isArray(winInfo.disableSslList)) {
+          return winInfo.disableSslList.join(',')
+        }
+        return ''
+      },
+    },
     get allowDomains() {
       const domainList = winInfo.allowDomainList?.split?.('\n')?.map((item) => {
         const trimmed = item.trim()
@@ -197,7 +211,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       password: item.platformPassword,
     })),
     disablePlaySound: !winInfo.forbidAudio,
-    disablePasswordSaveTips1: !winInfo.forbidSavePassword,
+    disablePasswordSaveTips: !winInfo.forbidSavePassword,
     get allowFontList() {
       if (winInfo.fontType) {
         return winInfo.allowFontList
@@ -221,9 +235,6 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
         enable: winInfo.syncSessionStorage,
         allowDomains: winInfo.sessionStorages,
       }
-    },
-    searchEngine: {
-      name: winInfo.searchEngine,
     },
   }
 }

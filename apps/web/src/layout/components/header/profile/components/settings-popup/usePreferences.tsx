@@ -608,7 +608,7 @@ export function usePreferencesPanel() {
             {
               label: $t('自定义书签'),
               name: 'bookText',
-              text: $t('仅支持.html 格式，最多 {count} 个 URL\n窗口偏好设置中开启“自定义书签”功能生效', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }),
+              text: $t('支持 Chrome / Firefox 导出的 .html 格式，最多 {count} 个 URL\n窗口偏好设置中开启“自定义书签”功能生效', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }),
               value: data?.bookText,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
@@ -703,11 +703,11 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('自动更新'),
+              label: $t('自动更新客户端'),
               text: () => (
                 <div class="w-88">
                   {$t(
-                    '自动下载并安装新版本',
+                    '仅在系统空闲时更新，不打断正常业务',
                   )}
                 </div>
               ),

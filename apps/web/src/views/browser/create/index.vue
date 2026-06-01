@@ -5,6 +5,7 @@ import ImportWindow from './components/import-window.vue'
 import PreviewCard from './components/preview-card.vue'
 import RxButton from '/@/components/rx-button'
 import RxLoading from '/@/components/rx-loading.vue'
+import LastPayModal from '/@/views/browser/create/components/last-pay-modal.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useConfirm } from 'primevue/useconfirm'
@@ -22,7 +23,8 @@ import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './f
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
+import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getDictMap, getFormDataByList, isEmptyValue, setInputValue } from '/@/utils'
+import { CoreType } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
@@ -46,7 +48,10 @@ const { check } = usePermission()
 const isBatch = ref(false)
 const createCount = ref(1)
 const driverObj = ref()
-createTableContext({ isBatch, createCount, driverObj })
+const presetTemplate = ref()
+const oneClickSettings = ref()
+
+createTableContext({ isBatch, createCount, driverObj, presetTemplate, oneClickSettings })
 
 const tabs = [
   { title: $t('单个创建'), value: 'single' },
@@ -138,6 +143,7 @@ watch(() => tabsValue.value, (value, oldValue) => {
 onBeforeMount(() => {
   getTemplateList()
   initFormInputs()
+  getSettings()
 })
 
 async function getTemplateList() {
@@ -204,6 +210,14 @@ async function initFormInputs(template: Record<string, any> = {}) {
   extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
+}
+
+async function getSettings() {
+  const { code, data } = await API.window.userGetWindowOneClickConfigListList()
+  if (code !== 0)
+    return
+
+  oneClickSettings.value = data
 
   if (route.query.driver) {
     nextTick(() => {
@@ -227,8 +241,19 @@ function showGuide() {
     },
     steps: [
       {
+        element: '.one-click',
+        popover: {
+          description: $t('👋 试试一键配置，1 秒配好整套环境'),
+          side: 'top',
+          align: 'center',
+        },
+        onDeselected: () => {
+          driverObj?.value.drive(1)
+        },
+      },
+      {
         element: '.guide1',
-        popover: { description: $t('此处展示的是您当前的 IP 地址。'), side: 'top', align: 'center' },
+        popover: { description: $t('点击购买/添加一个代理 IP'), side: 'top', align: 'center' },
         onHighlightStarted: () => {
           nextTick(() => {
             requestAnimationFrame(() => {
@@ -244,7 +269,7 @@ function showGuide() {
           clearGuide1Highlight()
         },
       },
-      { element: '.guide2', popover: { description: $t('单击此处即可完成创建。'), side: 'top', align: 'end' } },
+      { element: '.guide2', popover: { description: $t('点击完成创建。'), side: 'top', align: 'end' } },
     ],
   })
   driverObj.value.drive()
@@ -281,6 +306,11 @@ function showMobileExtraSettings() {
     const moblieVisible = ['Android', 'IOS'].includes(input.value.value)
     switchMoblieInputVisible(extraSettings.value, moblieVisible)
   }
+}
+
+function choosePreset(data: any) {
+  presetTemplate.value = data
+  initFormInputs(data.preset)
 }
 
 async function onShuffle() {
@@ -407,12 +437,34 @@ async function createProfile(openBrowser: boolean) {
   }
   switch (tabsValue.value) {
     case 'single':
-      return singleCreateProfile(params, openBrowser)
+      return checkPresetTemplate(params, openBrowser)
     case 'multiple':
       return batchCreateProfile(params)
     case 'import':
       return importProfile(params)
   }
+}
+
+function checkPresetTemplate(params: any, openBrowser: boolean) {
+  if (!presetTemplate.value) {
+    return singleCreateProfile(params, openBrowser)
+  }
+
+  return showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(LastPayModal, {
+        data: { ...toRaw(presetTemplate.value.proxyInfo), description: presetTemplate.value.description },
+        isDirect: presetTemplate!.value.isDirect,
+        onClose: hideModal,
+        onSuccess: ({ id: moduleId, lastCity, lastCountry, lastIp }: any) => {
+          singleCreateProfile({ ...params, moduleId, lastCity, lastCountry, lastIp, proxyMethod: 'choose' }, openBrowser)
+        },
+      }),
+    },
+  })
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
@@ -473,8 +525,62 @@ async function importProfile(params: any) {
   }
   loading.value = true
   const modal = showLoading()
-  const fingerCount = fileAnalyzeData.value.excelData.length
-  const fingerDetail = (await ceateRandomFinger(previewInputs.value, { count: fingerCount })).map(({ webGLManufacturer, webGLRender, ...item }: any) => {
+  const { excelData } = fileAnalyzeData.value
+
+  // 读取表单的公共指纹参数（字体、canvas 等与内核无关的项作为基准值）
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion } = getFormDataByList(previewInputs.value)
+
+  // 从字典获取各内核类型的最新版本，用于行内 coreVersion 为空时的回退
+  const $dict_map = await getDictMap()
+  const latestChromeVersion: string = $dict_map.coreVersion?.[0]?.value ?? ''
+  const latestFirefoxVersion: string = $dict_map.firefoxCoreVersion?.[0]?.value ?? ''
+
+  // 按「coreType + coreVersion」组合分组，并记录每行的原始索引
+  // 目的：不同 coreType/coreVersion 组合需分别调用指纹生成接口，同时保证回填后顺序与导入顺序一致
+  interface GroupValue { coreType: string, coreVersion: string, indices: number[] }
+  const coreTypeGroups = new Map<string, GroupValue>()
+  excelData.forEach((row: any, index: number) => {
+    const rowCoreType: string = row.coreType || CoreType.Chrome
+    // 行内 coreVersion 为空时，按内核类型回退到对应的最新版本
+    const fallbackVersion = rowCoreType === CoreType.Firefox ? latestFirefoxVersion : latestChromeVersion
+    const rowCoreVersion: string = row.coreVersion || fallbackVersion
+    const groupKey = `${rowCoreType}:${rowCoreVersion}`
+    if (!coreTypeGroups.has(groupKey))
+      coreTypeGroups.set(groupKey, { coreType: rowCoreType, coreVersion: rowCoreVersion, indices: [] })
+    coreTypeGroups.get(groupKey)!.indices.push(index)
+  })
+
+  // 并行为各 coreType+coreVersion 组批量生成指纹，再按原始索引回填，确保最终顺序与导入顺序相同
+  const rawFingerDetail: any[] = Array.from({ length: excelData.length })
+  await Promise.all(
+    Array.from(coreTypeGroups.values()).map(async ({ coreType: rowCoreType, coreVersion: rowCoreVersion, indices }) => {
+      const fingers = await globalThis.electronAPI.send('util:genRandomFingerprint', {
+        fontType,
+        canvas,
+        webGL,
+        audioContext,
+        speechVoices,
+        clientRects,
+        macInfo,
+        os,
+        osVersion,
+        coreVersion: rowCoreVersion, // 使用该行自身的 coreVersion
+        coreType: rowCoreType, // 使用该行自身的 coreType 生成对应指纹
+      }, indices.length)
+      // 将生成结果按原始行索引回填，保证顺序
+      indices.forEach((origIndex, i) => {
+        rawFingerDetail[origIndex] = fingers[i]
+      })
+    }),
+  ).catch((error) => {
+    console.error('指纹生成失败:', error)
+    loading.value = false
+    modal.hideModal()
+    onlyErrorToast(-1, $t('指纹生成失败，请检查输入的参数是否正确'))
+    return Promise.reject(new Error('指纹生成失败'))
+  })
+
+  const fingerDetail = rawFingerDetail.map(({ webGLManufacturer, webGLRender, ...item }: any) => {
     return {
       ...item,
       webGLManufacturer: params.webGLInfo === 2 ? params.webGLManufacturer : webGLManufacturer, // 2 表示自定义 webgl 信息
@@ -541,10 +647,10 @@ function onBack(data?: any, openBrowser = false) {
   <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs />
-    <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
+    <div class="flex flex-1 px-16 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex gap-8 overflow-hidden">
-          <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex min-w-0 gap-8 overflow-hidden">
+          <div class="flex min-w-0 flex-1 flex-col">
             <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">
                 <div class="subtitle">
@@ -568,9 +674,11 @@ function onBack(data?: any, openBrowser = false) {
               </template>
             </AccordionInputs>
           </div>
-          <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
+          <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="tabsValue === 'import'" :on-shuffle="onShuffle"
+                       :choose-preset="choosePreset"
+          />
         </div>
-        <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
+        <div class="relative flex items-center justify-end gap-2 py-4 min-h-16 footer">
           <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
           <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
           <RxButton class="guide2" :label="$t('创建窗口')" @click.stop="createProfile(false)" />

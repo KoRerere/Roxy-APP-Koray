@@ -21,11 +21,14 @@ export const appConfig = {
   roxyDataDir,
   /** 系统语言 */
   lang: app.getLocale(),
-
+  /** APP 静态资源路径（打包后 resources/ 部分文件被 asarUnpack 解包，路径需指向 app.asar.unpacked） */
+  staticResourceDir: join(import.meta.dirname, '..', 'resources').replace('app.asar', 'app.asar.unpacked'),
   /** chrome 内核缓存目录 */
   chromeBinDir: join(sessionDir, 'chrome-bin'),
   /** firefox 内核缓存目录 */
   firefoxBinDir: join(sessionDir, 'firefox-bin'),
+  /** Firefox 动态图标缓存目录（按 windowSortNum 缓存 .ico，跨 Win/Mac/Linux 通用） */
+  firefoxIconsCacheDir: join(sessionDir, 'firefox-icons'),
   /** 浏览器缓存根目录 */
   get browserCacheRootDir() {
     return store.browserCacheRootDir

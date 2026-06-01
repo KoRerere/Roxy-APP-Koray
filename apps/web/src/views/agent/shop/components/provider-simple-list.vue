@@ -100,12 +100,12 @@ function buyProxyFromAnnouncement() {
           </div>
         </div>
         <RxDivider line-only line-color="var(--pattern-proxystore-mood-button-border)" />
-        <div class="flex items-center gap-2.5">
-          <div class="color-[#111213] text-3 leading-4">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="color-[#111213] text-3 leading-4 shrink-0">
             {{ $t('社媒 / 电商 / AI专线 IP :') }}
           </div>
-          <div v-for="data in roxybrowser.iconList" :key="data" class="w-5 h-5 pa-0.75 rounded-1 bg-white">
-            <img class="block w-full h-full" :src="data">
+          <div v-for="data in roxybrowser.iconList" :key="data" class="shrink-0 w-5 h-5 pa-0.75 rounded-1 bg-white">
+            <img class="shrink-0 block w-full h-full" :src="data">
           </div>
         </div>
       </div>

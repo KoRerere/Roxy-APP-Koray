@@ -2,7 +2,6 @@
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 
-
 interface Props {
   value?: string
   title?: string
@@ -22,7 +21,8 @@ const { showSimpleDialog } = useSimpleDialog()
 const hasRemark = computed(() => props.value)
 
 function onRemark() {
-  if (props.disabled) return
+  if (props.disabled)
+    return
 
   showSimpleDialog({
     title: props.title,
@@ -35,7 +35,7 @@ function onRemark() {
         props: {
           placeholder: props.placeholder || $t('请输入备注'),
           rows: 6,
-        }
+        },
       },
     ],
     onConfirm: async (formData: any) => {
@@ -48,12 +48,12 @@ function onRemark() {
 
 <template>
   <RxButton v-if="mode === 'button'" v-tooltip.top="value" class="!gap-0 !text-0 !min-w-auto" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
-    <RxSvgIcon :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ disabled, 'light': hasRemark }" />
+    <RxSvgIcon :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ disabled, light: hasRemark }" />
     <span v-if="label" class="ml-2 text-[12px] ellipsis-1">{{ label }}</span>
     <!-- 占位用span用于保持按钮的高度 -->
     <span class="p-button-label" data-pc-section="label">&nbsp;</span>
   </RxButton>
-  <RxSvgIcon v-else v-tooltip.top="value" :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ disabled, 'light': hasRemark }" @click.stop="onRemark" />
+  <RxSvgIcon v-else v-tooltip.top="value" :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ disabled, light: hasRemark }" @click.stop="onRemark" />
 </template>
 
 <style lang="scss" scoped>

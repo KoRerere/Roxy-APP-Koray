@@ -5,6 +5,7 @@ import { API } from '/@/api'
 
 import { useToast } from 'primevue/usetoast'
 import { downloadTemplate } from '/@/views/browser/create/utils'
+import { isDev } from '/@/utils'
 
 type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
@@ -27,6 +28,18 @@ const excelSchema = [
     name: $t('操作系统'),
     getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os, // 历史原因ios特殊处理
   },
+  ...(isDev
+    ? [
+        {
+          key: 'coreType',
+          name: $t('浏览器内核'),
+        },
+        {
+          key: 'coreVersion',
+          name: $t('内核版本'),
+        },
+      ]
+    : []),
   {
     key: 'osVersion',
     name: $t('系统版本'),

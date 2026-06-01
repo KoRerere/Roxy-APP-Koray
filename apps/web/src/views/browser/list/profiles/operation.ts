@@ -5,6 +5,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { getColumns } from './columns'
 import { getDictMap, setInputValueByFormData, transformSortOrder } from '/@/utils'
 import type { SortOrderNumber } from '/@/utils'
+import { CoreType } from '/@/enums'
 
 const { getTeamMembers } = useTeamStore()
 const { check } = usePermission()
@@ -70,7 +71,6 @@ export async function getCustomFilters(params: any = {}) {
       getOptions: async () => {
         const { data } = await API.window.userGetWindowPlatformAccountListList()
         return (data?.rows || []).map((item: any) => {
-          /* eslint-disable e18e/prefer-static-regex */
           const label = new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1')
           return {
             parentName: 'platformUrls',
@@ -275,7 +275,7 @@ export function getOperation(row: any = {}) {
     {
       name: 'open',
       label: $t('打开窗口'),
-      icon: 'base/rx_ic_chrome',
+      icon: row.coreType === CoreType.Firefox ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome',
       multiple: true,
       multipleProps: {
         name: 'G1',

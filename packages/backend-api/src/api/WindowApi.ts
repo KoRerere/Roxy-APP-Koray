@@ -74,6 +74,9 @@ import {
   UserGetWindowInfoListListParams,
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
+  UserGetWindowOneClickConfigListListData,
+  UserGetWindowOneClickProxyInfoListListData,
+  UserGetWindowOneClickProxyInfoListListParams,
   UserGetWindowPlatformAccountListListData,
   UserGetWindowRowsSortListData,
   UserGetWindowStatusInfoCreateData,
@@ -1261,6 +1264,42 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowOneClickConfigListList
+   * @summary 获取窗口一键配置列表
+   * @request GET:/user_get_window_one_click_config_list
+   * @response `200` `UserGetWindowOneClickConfigListListData`
+   */
+  userGetWindowOneClickConfigListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowOneClickConfigListListData, any>({
+      path: `/user_get_window_one_click_config_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowOneClickProxyInfoListList
+   * @summary 获取一键配置代理信息列表
+   * @request GET:/user_get_window_one_click_proxy_info_list
+   * @response `200` `UserGetWindowOneClickProxyInfoListListData`
+   */
+  userGetWindowOneClickProxyInfoListList = (
+    query: UserGetWindowOneClickProxyInfoListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetWindowOneClickProxyInfoListListData, any>({
+      path: `/user_get_window_one_click_proxy_info_list`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

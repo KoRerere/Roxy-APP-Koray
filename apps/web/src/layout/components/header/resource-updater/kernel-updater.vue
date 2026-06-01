@@ -16,6 +16,8 @@ import {
   markKernelAsRead,
 } from './kernel-utils'
 import { isString } from 'es-toolkit'
+import RoxyChromeImg from '/@/assets/images/kernel/RoxyChrome.png'
+import RoxyFirefoxImg from '/@/assets/images/kernel/RoxyFirefox.png'
 
 /** 内核类型筛选（UI 层），与 CoreType 枚举对应 */
 enum KernelFilter {
@@ -96,6 +98,9 @@ const kernelOptions = computed(() => {
 
 function formatKernelBtnLabel(item: KernelUpdateItem) {
   if (item.status === 'downloading') {
+    if (item.percent >= 99) {
+      return $t('安装中')
+    }
     return `${$t('正在下载')} ${Math.floor(item.percent ?? 0)}%`
   }
   else if (item.status === 'downloaded') {
@@ -238,7 +243,7 @@ defineExpose({
         <div class="w-full flex justify-between items-center self-stretch">
           <div class="flex-1 flex items-center gap-1.5 py-3 pl-4" @click="onRead(item)">
             <div class="relative">
-              <img class="block w-8 h-8" src="/kernel-logo.png">
+              <img class="block w-8 h-8" :src="item.coreType === CoreType.Firefox ? RoxyFirefoxImg : RoxyChromeImg">
               <div v-if="item._light" class="absolute top-0 right-0 w-2 h-2 bg-red rounded-full" />
             </div>
             <div>

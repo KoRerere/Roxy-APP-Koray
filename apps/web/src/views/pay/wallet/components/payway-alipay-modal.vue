@@ -30,7 +30,13 @@ onMounted(() => {
   stopCountdown.value = enhanceCountdown(new Date(props.endTime), (time) => {
     const { minutes, seconds } = time
     countdown.value = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }, { alwaysSecondLevel: true, onEnd: () => close(true) })
+  }, {
+    alwaysSecondLevel: true,
+    onEnd: () => {
+      console.log('order timeout closed')
+      close(true)
+    },
+  })
 })
 
 onBeforeUnmount(() => {

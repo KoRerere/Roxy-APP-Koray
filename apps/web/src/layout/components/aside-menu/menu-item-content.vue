@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { getImage } from '/@/utils/basic'
-import { RxSvgIcon } from '/@/components/rx-icon'
-import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
+// import { getImage } from '/@/utils/basic'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
-import { useThemeStore } from '/@/stores/theme'
+// import { useThemeStore } from '/@/stores/theme'
 import { useProxy } from '/@/views/agent/hooks'
+import { emitter } from '/@/utils/eventBus'
+import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
 
 const props = defineProps<{
   item: RouteRecordRaw
   collapsed: boolean
 }>()
 const route = useRoute()
-const themeStore = useThemeStore()
+// const themeStore = useThemeStore()
 const roxyClawStore = useRoxyClawStore()
 const { buyProxy } = useProxy()
 
@@ -55,17 +55,24 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     localStorage.setItem('badgeMapCache', JSON.stringify(badgeMap.value))
   }
 }
+
+function onAsideBuy() {
+  buyProxy()
+    .then((orderInfo) => {
+      emitter.emit('updateShopList', orderInfo?.orderNo)
+    })
+}
 </script>
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href"
-         :class="{ active: isActive }" @click.prevent="handleClickItem($event, navigate)"
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+         @click.prevent="handleClickItem($event, navigate)"
       >
         <!-- Roxy Claw 菜单样式 -->
         <template v-if="item.meta?.isRoxyClaw">
-          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
           <!-- <img :src="themeStore.realTheme === 'light'
             ? (isActive
               ? getImage('roxy-claw/menu/sidenav-active.png')
@@ -88,7 +95,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 
         <!-- Roxy Agent 菜单样式 -->
         <template v-else-if="item.meta?.isRoxyAgent">
-          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
           <div class="flex items-center justify-between w-full menu-title">
             <span class="roxy-agent-title ellipsis-1">{{ item.meta?.title }}</span>
             <!-- <span class="new-badge">NEW</span> -->
@@ -97,13 +104,13 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 
         <!-- 普通菜单样式 -->
         <template v-else>
-          <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
 
           <div class="relative flex items-center gap-1.5 overflow-hidden menu-title" :title="item.meta?.title">
             <span class="ellipsis-1">{{ item.meta?.title }}</span>
             <SvgIcon v-if="item.meta?.slotName === 'proxy'" name="base/fire" />
           </div>
-          <RxButton v-if="item.meta?.slotName === 'proxy' && !collapsed" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="buyProxy()" />
+          <RxButton v-if="item.meta?.slotName === 'proxy' && !collapsed" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="onAsideBuy" />
         </template>
 
         <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->
@@ -111,7 +118,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
           <SvgIcon size="12" name="base/rx_ic_gift_2" color="#ffffff" />
           <span class="sent-text">{{ $t('已发放') }}</span>
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
+        <SvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>

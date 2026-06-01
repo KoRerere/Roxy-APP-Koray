@@ -25,7 +25,7 @@ const {
 
 const [showToast] = useResponseToast()
 const { getUserConfig } = useUserStore()
-const userStore = useUserStore()
+const { userConfig, userPayInfo } = storeToRefs(useUserStore())
 
 const { testProxy, batchTestShowToast } = useCheckProxy()
 const lastTestResult = ref<CheckResult | null>(null)
@@ -103,7 +103,7 @@ const inputs = ref([
         else {
           formRef.value?.setInputsProps({
             checkChannel: {
-              value: isExist ? defaultCheckChannel : (userStore.userConfig?.ipChecker || defaultCheckChannel),
+              value: isExist ? defaultCheckChannel : (userConfig.value.ipChecker || defaultCheckChannel),
               options: $dict_map.checkChannel,
             },
           })
@@ -276,7 +276,8 @@ async function onCheckProxyStatus() {
   const formData = getFormData()
   alertVisible.value = false
   loading.value = true
-  const result = await testProxy(formData!)
+  // 直连白名单用户标记
+  const result = await testProxy({ ...formData, isDirect: userPayInfo.value.isDirectWhitelist })
   loading.value = false
   lastTestResult.value = result
   original.value = { ...original.value, ...result }

@@ -130,14 +130,14 @@ function replaceData(data: any) {
       <div v-if="isBatch" class="mb-2 subtitle">
         {{ $t('账号列表 ({count})', { count: sumAccountCount }) }}
       </div>
-      <div class="grid gap-2 list">
+      <div class="pl-27 grid gap-2 list">
         <RxCard v-for="(item, index) in windowPlatformList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
           <div class="mt-0.5">
             <PlatformIcon v-if="item.platformIcon" class="icon" :platform-icon="item.platformIcon" :platform-icon-dark="item.platformIconDark" />
             <SvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
           </div>
           <div class="flex-1 flex flex-col gap-1 overflow-hidden">
-            <div class="flex items-center gap-2 region">
+            <div class="ellipsis-1 region min-w-0">
               {{ item.platformUrl }}
             </div>
             <div class="flex items-center gap-1.5 info">

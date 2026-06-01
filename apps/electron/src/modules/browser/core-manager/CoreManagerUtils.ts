@@ -206,13 +206,11 @@ export class CoreManagerUtils {
 
   /** 根据内核版本获取内核驱动文件路径 */
   genCoreDriverPath(coreVersion: string) {
-    if (this.coreType === CoreType.Firefox) {
-      return ''
-    }
+    const driver = this.coreType === CoreType.Firefox ? 'geckodriver' : 'chromedriver'
 
     return join(
       this.genCoreDir(coreVersion),
-      isWindows ? 'chromedriver.exe' : 'chromedriver',
+      isWindows ? `${driver}.exe` : driver,
     )
   }
 

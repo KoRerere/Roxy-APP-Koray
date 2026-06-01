@@ -348,7 +348,7 @@ export class DefaultBrowserInstaller {
 
       const iconPath = path.join(defaultBrowserBinDir, 'launcher.png')
       if (!(await fileExists(iconPath))) {
-        await cp(path.join(import.meta.dirname, '..', 'resources/launcher.png'), iconPath).catch(() => undefined)
+        await cp(path.join(appConfig.staticResourceDir, 'launcher.png'), iconPath).catch(() => undefined)
       }
       const iconLine = (await fileExists(iconPath)) ? `Icon=${iconPath}\n` : ''
 

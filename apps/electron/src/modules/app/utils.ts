@@ -70,7 +70,7 @@ export function handleCloseWindow(event: Electron.Event) {
         // event.preventDefault();
       }
       else {
-        tray.destroy()
+        Promise.try(() => tray.destroy())
         closeAllWindows()
       }
     })

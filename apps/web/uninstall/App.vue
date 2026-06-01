@@ -7,7 +7,7 @@ import type { UserGetUninstallReasonQuestionListListData } from '@roxy/backend-a
 import { useToast } from 'primevue/usetoast'
 import { getUserAgentOs } from '/@/utils/basic'
 import LiveChat from './live-chat.vue'
-import { url } from 'node:inspector'
+import { shuffle } from 'es-toolkit'
 
 type UninstallStep = 'confirm' | 'feedback'
 
@@ -118,7 +118,7 @@ async function getUninstallReasonQuestionList() {
   })
   console.log('getUninstallReasonQuestionList', { code, data, msg })
   if (code === 0) {
-    uninstallReasons.value = data
+    uninstallReasons.value = shuffle(data)
   }
   else {
     toast.add({
@@ -292,11 +292,7 @@ function contactSupport() {
 
         <div class="flex flex-col gap-3">
           <RxButton severity="secondary" size="lg" variant="outlined" :disabled="isSubmitting || (selectedReasons.length === 0 && !feedbackText.trim())" :label="$t('提交反馈')" @click="submitFeedback" />
-          <button
-            type="button"
-            class="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent py-2"
-            @click="uninstallDirectly"
-          >
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent py-2" @click="uninstallDirectly">
             <span class="min-w-0 flex-1 text-right text-3.25 font-500 leading-5 tt-inactive">
               {{ $t('直接卸载，无需反馈') }}
             </span>

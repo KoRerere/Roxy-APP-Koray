@@ -69,7 +69,7 @@ const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
-  filters: ['ipChecker', 'proxyProviderPrice', 'autoRenew'],
+  filters: ['proxy', 'ipChecker', 'proxyProviderPrice', 'autoRenew'],
 })
 
 const tableProps = {

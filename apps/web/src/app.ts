@@ -46,6 +46,7 @@ setupGlobalMethods(app)
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,
   track_pageview: false,
+  autocapture: false,
   persistence: 'localStorage',
   // https://documentation.freshpaint.io/integrations/destinations/apps/mixpanel
   // autotrack: true,

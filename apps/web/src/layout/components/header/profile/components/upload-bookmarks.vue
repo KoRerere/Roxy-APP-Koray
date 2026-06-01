@@ -25,7 +25,98 @@ type BookmarkItem = {
 type BookText = {
   bookmarkBar: BookmarkItem[]
   other: BookmarkItem[]
+  synced?: BookmarkItem[]
   importMode: ImportMode
+}
+
+type BookmarkFolderItem = BookmarkItem & {
+  personalToolbarFolder?: boolean
+}
+
+const TOOLBAR_FOLDER_NAMES = new Set([
+  'bookmarks bar',
+  'bookmarks toolbar',
+  'bookmark bar',
+  'bookmark toolbar',
+  'personal toolbar',
+  'personal bar',
+  '书签栏',
+  '书签工具栏',
+  '收藏栏',
+])
+
+const MOBILE_FOLDER_NAMES = new Set([
+  'mobile bookmarks',
+  'mobile bookmark',
+  '移动设备书签',
+  '移动书签',
+])
+
+const OTHER_SYSTEM_FOLDER_NAMES = new Set([
+  'other bookmarks',
+  'other bookmark',
+  '其他书签',
+  '未分类书签',
+])
+
+function normalizeFolderName(name: string) {
+  return name.trim().toLowerCase()
+}
+
+function isToolbarFolder(folder: BookmarkFolderItem) {
+  return folder.personalToolbarFolder
+    || TOOLBAR_FOLDER_NAMES.has(normalizeFolderName(folder.name))
+}
+
+function isMobileFolder(folder: BookmarkFolderItem) {
+  return MOBILE_FOLDER_NAMES.has(normalizeFolderName(folder.name))
+}
+
+function isOtherSystemFolder(folder: BookmarkFolderItem) {
+  return OTHER_SYSTEM_FOLDER_NAMES.has(normalizeFolderName(folder.name))
+}
+
+function categorizeTopLevelFolders(items: BookmarkItem[]) {
+  const bookmarkBar: BookmarkItem[] = []
+  const other: BookmarkItem[] = []
+  const synced: BookmarkItem[] = []
+  const folders = items.filter((item): item is BookmarkFolderItem => item.type === BookmarkType.FOLDER)
+  const directUrls = items.filter(item => item.type === BookmarkType.URL)
+  const hasToolbarFolder = folders.some(isToolbarFolder)
+
+  folders.forEach((folder, index) => {
+    const children = folder.children || []
+
+    if (isToolbarFolder(folder) || (!hasToolbarFolder && index === 0)) {
+      bookmarkBar.push(...children)
+      return
+    }
+
+    if (isMobileFolder(folder)) {
+      synced.push(...children)
+      return
+    }
+
+    if (isOtherSystemFolder(folder)) {
+      other.push(...children)
+      return
+    }
+
+    other.push(folder)
+  })
+
+  if (directUrls.length)
+    other.push(...directUrls)
+
+  return { bookmarkBar, other, synced }
+}
+
+function findRootDl(doc: Document) {
+  for (const child of Array.from(doc.body.children)) {
+    if (child.localName === 'dl')
+      return child as HTMLDListElement
+  }
+  return doc.querySelector('dl')
 }
 
 const emit = defineEmits(['change'])
@@ -33,6 +124,7 @@ const modelValue = defineModel<BookText>({
   default: {
     bookmarkBar: [],
     other: [],
+    synced: [],
     importMode: ImportMode.MERGE
   }
 })
@@ -44,6 +136,7 @@ const visible = ref(false)
 const __modelValue = ref<BookText>({
   bookmarkBar: [],
   other: [],
+  synced: [],
   importMode: ImportMode.MERGE
 })
 
@@ -80,11 +173,19 @@ const tree = computed(() => {
   const data = __modelValue.value || {};
   const bookmarkBar = renderTree(data.bookmarkBar || [], 'bookmarkBar');
   const other = renderTree(data.other || [], '__other__');
+  const synced = renderTree(data.synced || [], '__synced__');
   if (other.length > 0) {
     bookmarkBar.push({
       label: $t('其他书签'),
       key: "__other__",
       children: other
+    })
+  }
+  if (synced.length > 0) {
+    bookmarkBar.push({
+      label: $t('移动设备书签'),
+      key: "__synced__",
+      children: synced
     })
   }
   expandAll(bookmarkBar)
@@ -163,12 +264,13 @@ function parserBookmarksDt(nodes: HTMLCollection) {
 
 function parserBookmarksDl(nodes: HTMLCollection) {
   const children = Array.from(nodes)
-  const title = children.find(n => n.localName === 'h3' || n.localName === 'h1') as HTMLDivElement
-  const dl = children.find(n => n.localName === 'dl') as HTMLDivElement
+  const title = children.find(n => n.localName === 'h3') as HTMLHeadingElement
+  const dl = children.find(n => n.localName === 'dl') as HTMLDListElement
   if (title) {
-    const item: BookmarkItem = {
+    const item: BookmarkFolderItem = {
       name: title.innerText,
       type: BookmarkType.FOLDER,
+      personalToolbarFolder: title.hasAttribute('personal_toolbar_folder'),
       children: convertFolder(parserBookmarksDt(dl?.children || []))
     }
     return item
@@ -178,14 +280,16 @@ function parserBookmarksDl(nodes: HTMLCollection) {
 function parseHtml(html: string): BookText {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
-  const bookmarks = parserBookmarksDl(doc.body.children)
-  // 获取书签栏
-  const bookmarkBar = bookmarks?.children?.[0]?.children || []
-  // 除了一个书签栏，其他都属于其他书签
-  const other = bookmarks?.children?.slice(1) || []
+  const rootDl = findRootDl(doc)
+  const topLevelItems = rootDl
+    ? convertFolder(parserBookmarksDt(rootDl.children))
+    : []
+  const { bookmarkBar, other, synced } = categorizeTopLevelFolders(topLevelItems)
+
   return {
     bookmarkBar,
     other,
+    synced,
     importMode: importMode.value,
   }
 }
@@ -213,7 +317,7 @@ async function parseBookmarks() {
   const result = parseHtml(html)
   upLoadFileName.value = file.name
 
-  if (!result.bookmarkBar.length && !result.other.length) {
+  if (!result.bookmarkBar.length && !result.other.length && !result.synced?.length) {
     throw new Error($t('没有解析到书签'))
   }
 
@@ -267,6 +371,7 @@ function saveBookmarks() {
 function deleteBookmarks() {
   __modelValue.value.bookmarkBar = []
   __modelValue.value.other = []
+  __modelValue.value.synced = []
   upLoadFileName.value = ''
 }
 
@@ -296,7 +401,7 @@ function cancelBookmarks() {
             @click="uploadBookmarks" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
-        <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（仅支持.html格式）') }}</div>
+        <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（支持 Chrome / Firefox 导出的 .html 格式）') }}</div>
       </div>
 
       <div class="flex flex-col gap-2">

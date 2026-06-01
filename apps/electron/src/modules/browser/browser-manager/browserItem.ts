@@ -225,6 +225,13 @@ export class BrowserItem {
   handleOnDisconnected = async () => {
     const dirId = this.winInfo.dirId!
     try {
+      // Firefox：BiDi session 已在启动后释放，进程关闭时通过 cookies.sqlite 读取最新 cookie。
+      // 无论是用户点 X 关闭窗口还是 App 触发 close()，都确保 cookie 被保存。
+      if (this.isFirefox && this.afterLaunchTask) {
+        await this.afterLaunchTask.saveCookiesNow().catch((e) => {
+          console.warn('[BrowserItem] Firefox cookie save in handleOnDisconnected failed:', e)
+        })
+      }
       const uploadDataPromise = this.uploadData()
       emitter.emit(`close-${dirId}`, uploadDataPromise)
       removeSyncWindowByPid(this.browserPid!)
@@ -248,6 +255,13 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
+      // Firefox: BiDi 连接在 browser.close 后立即断开，必须在此之前做最后一次 cookie 保存
+      // 否则关闭时的最新 cookie 将丢失（定时器可能未来得及触发）
+      if (this.isFirefox && this.afterLaunchTask) {
+        await this.afterLaunchTask.saveCookiesNow().catch((e) => {
+          console.warn('[BrowserItem] Final cookie save before Firefox close failed:', e)
+        })
+      }
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
       await this.#browser.close()
       this.beforeLaunchTask.browser = null

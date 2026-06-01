@@ -8,6 +8,7 @@ import { useUserStore } from '/@/stores/user'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 import type { SortOrderNumber } from '/@/utils'
+import { CoreType } from '/@/enums'
 
 interface Props {
   selectionMode?: 'single' | 'multiple'
@@ -237,12 +238,13 @@ globalThis.electronAPI.on('browser:on-close', (dirIds) => {
 globalThis.electronAPI.on('browser:opened-browser-list-change', (data) => {
   console.log('browser:opened-browser-list-change', data)
   if (!isSyncing.value) {
-    tableData.value = data
+    tableData.value = data.filter(n => n.coreType !== CoreType.Firefox)
   }
 })
 
 async function getOpenedBrowser() {
-  tableData.value = await globalThis.electronAPI.send(isSyncing.value ? 'syncControl:getAllSyncingWindows' : 'browser:getOpenedBrowser')
+  const data = await globalThis.electronAPI.send(isSyncing.value ? 'syncControl:getAllSyncingWindows' : 'browser:getOpenedBrowser')
+  tableData.value = data.filter(n => n.coreType !== CoreType.Firefox)
   console.log('tableData.value', tableData.value)
 }
 
@@ -301,7 +303,7 @@ function setMainControlWindow(data: any) {
 globalThis.electronAPI.on('syncControl:start', startSync)
 
 function handleValueChange(val: any[]) {
-  tableData.value = val
+  tableData.value = val.filter(n => n.coreType !== CoreType.Firefox)
   console.debug('handleValueChange', val)
   if (val.length && !useSetDefaulted && !props.mainControlWindowDirId) {
     mainControlWindowDirId.value = val[0].dirId

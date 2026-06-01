@@ -93,15 +93,15 @@ function oldFieldsFormat() {
     <ViewsHeader show-back :title="$t('编辑窗口')" />
     <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex gap-8 overflow-hidden">
-          <AccordionInputs :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
+        <div class="flex-1 flex min-w-0 gap-8 overflow-hidden">
+          <AccordionInputs class="min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>
               <div class="flex items-center justify-between px-4 py-4 subtitle">
                 {{ $t('窗口信息') }}
               </div>
             </template>
           </AccordionInputs>
-          <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
+          <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" is-edit :on-shuffle="onShuffle" />
         </div>
         <div class="relative flex items-center gap-2 py-4 min-h-16 overflow-hidden footer">
           <div class="footer-separator" />

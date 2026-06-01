@@ -4,13 +4,14 @@ import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import Position from '/@/views/browser/create/components/position.vue'
 import AccountItem from './account.vue'
+import UserAgentField from './user-agent-field.vue'
 import ProxyItem from './proxy.vue'
 import UrlsItem from './urls.vue'
 import CookiesItem from './cookies.vue'
-import Os from './os.vue'
+import OsSwitch from './os-switch.vue'
 import { $t } from '/@/locales/index.js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { copyText, isDev } from '/@/utils/'
+import { copyText } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
 interface Props {
@@ -37,46 +38,63 @@ function onCopy(dirId: string) {
 </script>
 
 <template>
-  <div class="flex-ovh-1 flex-col">
-    <div v-if="accordions" class="flex-1 overflow-auto pb-4 content">
+  <div class="flex-ovh-1 min-w-0 w-full flex-col">
+    <div v-if="accordions" class="content min-w-0 flex-1 overflow-auto pb-4">
       <slot name="before" />
-      <RyForm v-if="settings.basic?.length" class="profile-info" :inputs="settings.basic">
+      <RyForm v-if="settings.basic?.length" class="profile-info min-w-0 w-full max-w-full" label-position="left" :inputs="settings.basic">
         <template #name="{ input }">
-          <div class="flex flex-col px-4">
-            <div class="flex items-center justify-between">
-              <InputLabel v-bind="input" />
-              <div v-if="!!input.dirId" class="flex items-center gap-2.5 mb-2 dir-id">
-                <span>ID:{{ input.dirId }}</span>
-                <span class="color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
-              </div>
+          <div class="flex flex-col gap-2 px-4">
+            <div v-if="!!input.dirId" class="flex items-center justify-end gap-2.5">
+              <span class="text-3 font-[JetBrains_Mono]">ID:{{ input.dirId }}</span>
+              <span class="text-3 font-[JetBrains_Mono] color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
             </div>
-            <RxInputText v-model="input.value" v-bind="input" />
+            <div class="flex items-center">
+              <InputLabel v-bind="input" />
+              <RxInputText v-model="input.value" v-bind="input" />
+            </div>
           </div>
         </template>
         <template #system="{ input }">
-          <div class="flex flex-col px-4">
+          <div class="flex items-center px-4">
             <InputLabel v-bind="input" />
-            <div class="flex flex-col gap-2">
-              <div class="flex gap-2">
-                <InputGroup>
-                  <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
-                  <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
-                </InputGroup>
-                <template v-if="isDev">
-                  <InputGroup>
-                    <Os v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
-                    <RxInputSelect v-bind="input.items[3]" v-model="input.items[3].value" @change="input.items[3].change?.(input.items[3], input.items)" />
-                  </InputGroup>
+            <div class="flex-1 flex gap-2 overflow-hidden">
+              <OsSwitch v-model="input.items[0].value" class="flex-1" :options="input.items[0].options" @change="input.items[0].change?.(input.items[0], input.items)">
+                <template #item="{ item }">
+                  <SvgIcon :name="item.icon!" />
                 </template>
-                <template v-else>
-                  <RxInputSelect v-bind="input.items[3]" v-model="input.items[3].value" @change="input.items[3].change?.(input.items[3], input.items)" />
-                </template>
+              </OsSwitch>
+              <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" class="flex-1" @change="input.items[1].change?.(input.items[1], input.items)" />
+            </div>
+          </div>
+        </template>
+        <template #kernel="{ input }">
+          <div class="flex items-center px-4">
+            <InputLabel v-bind="input" />
+            <div class="flex-1 flex flex-col gap-2 overflow-hidden">
+              <div class="flex-1 flex gap-2 overflow-hidden">
+                <OsSwitch v-model="input.items[0].value" class="flex-1" :disabled="input.items[0].disabled" :options="input.items[0].options"
+                          @change="input.items[0].change?.(input.items[0], input.items)"
+                >
+                  <template #item="{ item }">
+                    <div class="flex items-center gap-1.5">
+                      <SvgIcon :name="item.icon!" />
+                      <span>{{ item.label }}</span>
+                    </div>
+                  </template>
+                </OsSwitch>
+                <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" class="flex-1" @change="input.items[1].change?.(input.items[1], input.items)" />
               </div>
-              <Message v-if="input.items[3].help" severity="error" size="small" variant="simple">
-                {{ input.items[3].help }}
+              <Message v-if="input.items[1].help" severity="error" size="small" variant="simple">
+                {{ input.items[1].help }}
               </Message>
             </div>
           </div>
+        </template>
+        <template #userAgent="{ input }">
+          <UserAgentField :input="input" :inputs-group="inputsGroup" />
+        </template>
+        <template #cookies="{ input }">
+          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
         <template #proxy="{ input }">
           <div class="-mt-5 px-4 py-6 w-full dashed-border">
@@ -90,9 +108,6 @@ function onCopy(dirId: string) {
         </template>
         <template #urls="{ input }">
           <UrlsItem v-model="input.value" v-model:invalid="input.invalid" class="-mt-5" v-bind="input" />
-        </template>
-        <template #cookies="{ input }">
-          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" class="-mt-5" v-bind="input" />
         </template>
       </RyForm>
       <RxAccordion :value="accordions.value" multiple>
@@ -163,7 +178,9 @@ function onCopy(dirId: string) {
 }
 
 :deep(.rx-label) {
-  max-width: 120px;
+  text-align: right;
+  max-width: 100px;
+  min-width: 100px !important;
 }
 
 .content {
@@ -183,19 +200,13 @@ function onCopy(dirId: string) {
   }
 
   :deep(.rx-label) {
-    margin-bottom: 8px;
-    font-weight: 400;
-    line-height: 16px !important;
+    text-align: right;
+    min-width: 100px !important;
   }
 }
 
 .dashed-border {
   border-bottom: 1px dashed var(--colors-border-divider-dashed);
-}
-
-.dir-id {
-  font-size: 12px;
-  font-family: 'JetBrains Mono';
 }
 
 .header {

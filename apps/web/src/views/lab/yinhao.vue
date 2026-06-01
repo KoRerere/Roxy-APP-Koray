@@ -8,9 +8,10 @@ import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
 import RaffleModal from './raffle-modal.vue'
+import QuickOpen from './quick-open.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
-
+import DoubeOpen from './doube-open.vue'
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
 // import { useUserStore } from '/@/stores/user'
@@ -41,7 +42,7 @@ function _open1() {
     //   // mask: "!backdrop-blur-md",
     // },
     slots: {
-      container: ({ hideModal }) => <RaffleModal onClose={hideModal}></RaffleModal>,
+      container: ({ hideModal }) => <QuickOpen onClose={hideModal}></QuickOpen>,
     },
   })
 }
@@ -56,7 +57,7 @@ function _open2() {
   //   //   mask: '!backdrop-blur-md',
   //   // },
   //   slots: {
-  //     container: ({ hideModal }) => <ProfileLayout onClose={hideModal}></ProfileLayout>,
+  //     container: ({ hideModal }) => <LastPayModal onClose={hideModal} onSuccess={hideModal}></LastPayModal>,
   //   },
   // })
 }
@@ -392,33 +393,7 @@ function clearHighlight() {
 
     <RxButton label="open1" @click="_open1" />
     <RxButton label="open2" @click="_open2" />
-    <RxButton label="GO!" @click="_driverStart" />
-
-    <Teleport to="body">
-      <div v-if="mambaSpotlightOn" class="mamba-spotlight-ring--body" :style="_mambaSpotlightStyle" aria-hidden="true" />
-    </Teleport>
-
-    <div id="mamba" ref="mamba" class="mamba-ripple-wrap relative inline-flex rounded-xl">
-      <RxButton class="relative z-1" label="close" />
-    </div>
-
-    <div id="group" class="flex gap-4 mt-10">
-      <div v-for="(value, index) in ['bg-orange', 'bg-blue', 'bg-green', 'bg-purple', 'bg-pink']" :key="value" :data-index="index"
-           class="box w-20 h-20 flex items-center justify-center rounded-2 text-6 font-bold select-none text-white" :class="value"
-      >
-        {{ index + 1 }}
-      </div>
-    </div>
-
-    <div class="group">
-      <div class="hidden group-hover:block">
-        111
-      </div>
-      <div class="group-hover:hidden">
-        222
-      </div>
-    </div>
-
+    <DoubeOpen />
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris

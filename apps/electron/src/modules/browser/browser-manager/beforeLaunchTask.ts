@@ -86,7 +86,8 @@ export class BeforeLaunchTask {
     this.taskMap.set($t('可用磁盘大小检测中'), { handler: this.diskSizeDetection, start: 3, end: 6 })
     this.taskMap.set($t('代理 IP 检测中'), { handler: this.handleProxyDetection, start: 6, end: 10 })
     this.taskMap.set($t('判断是否需要清理浏览器缓存'), { handler: this.clearBrowserCache, start: 10, end: 15 })
-    this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 25 })
+    this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 23 })
+    this.taskMap.set($t('导入书签'), { handler: this.importBookmarks, start: 23, end: 25 })
     this.taskMap.set($t('生成指纹配置文件'), { handler: this.createFingerprintConfigFile, start: 25, end: 30 })
     this.taskMap.set($t('检测内核是否可用'), { handler: this.checkKernelAvailability, start: 30, end: 80 })
     this.taskMap.set($t('准备启动浏览器'), { handler: this.launch, start: 80, end: 100 })
@@ -140,6 +141,8 @@ export class BeforeLaunchTask {
 
     if (this.browserItem.isFirefox) {
       // Firefox 没有 Local State / Preferences / Bookmarks 等 Chrome 概念
+      // 标签页由命令行 URL 打开，禁用 session 恢复以免与 CLI 重复开 tab
+      await this.prepareFirefoxProfile()
       // 写入登录信息（Firefox 是 lumilogin 文件，由内核启动前还原）
       await this.writeLoginData()
     }
@@ -150,15 +153,13 @@ export class BeforeLaunchTask {
       await this.writeLoginData()
       // 修改浏览器 Local State 文件
       await this.modifyLocalStateFile()
-      // 导入书签
-      await this.importBookmarks().catch((error) => {
-        console.error('Failed to import bookmarks', error)
-      })
     }
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
     let isTimedOut = false
+
+    const launchTimeoutMs = this.browserItem.isFirefox ? 45_000 : 30_100
 
     this.launchTimer = setTimeout(() => {
       isTimedOut = true
@@ -168,7 +169,7 @@ export class BeforeLaunchTask {
         this.browser.close().catch(() => {})
         this.browser = null
       }
-    }, 30.1 * 1000)
+    }, launchTimeoutMs)
 
     this.makeBrowserActive = async () => {
       const launchOptions: BrowserLaunchOptions = {
@@ -205,8 +206,13 @@ export class BeforeLaunchTask {
         console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       }
       else if (this.browserItem.isFirefox) {
-        // Firefox 同 profile 再次 spawn 会新开实例；通过 BiDi 激活已有窗口
-        await this.focusExistingFirefoxBrowser()
+        // Firefox 同一 profile 再次 spawn 可唤醒已有实例（不能带 URL，否则会开新 tab）
+        await launchBrowser({
+          ...launchOptions,
+          args: ['-profile', this.browserItem.userDataDir],
+        }).catch((error) => {
+          console.warn('Firefox focus re-launch failed:', error)
+        })
       }
       else {
         await launchBrowser({
@@ -302,10 +308,13 @@ export class BeforeLaunchTask {
    */
   private async genFirefoxLaunchCLIArgs(): Promise<string[]> {
     const {
-      dirId,
       startupParam,
-      allOpenUrl,
+      positionSwitch,
+      openWidth,
+      openHeight,
+      dirId,
       openWorkbench,
+      allOpenUrl,
     } = this.browserItem.winInfo
 
     const args: string[] = [
@@ -313,6 +322,17 @@ export class BeforeLaunchTask {
       this.browserItem.userDataDir,
       ...firefoxDefaultCLIArgs,
     ]
+
+    // 窗口大小：全屏用 -maximized，自定义用 -width / -height
+    if (!positionSwitch) {
+      args.push('-maximized')
+    }
+    else {
+      // if (openWidth)
+      //   args.push('-width', String(openWidth))
+      // if (openHeight)
+      //   args.push('-height', String(openHeight))
+    }
 
     // 用户自定义启动参数（不允许覆盖 -profile / --remote-debugging-port）
     if (startupParam && startupParam.trim?.() !== '') {
@@ -327,15 +347,20 @@ export class BeforeLaunchTask {
       args.push(...userCustomArgs)
     }
 
-    // dashboard URL 作为位置参数
+    // 工作台 URL
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      args.push(`http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`)
+      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
+      args.push(dashboardUrl)
     }
 
-    // 同步标签页：Firefox 用命令行 url 恢复
-    const validOpenUrls = (allOpenUrl ?? [])
-      .filter(url => url && this.browserItem.isValidURL(url))
-    args.push(...validOpenUrls)
+    // 用户配置的打开标签页
+    allOpenUrl?.forEach((url: string) => {
+      if (url && this.browserItem.isValidURL(url)) {
+        args.push(url)
+      }
+    })
+
+    args.push('-no-remote')
 
     return args.filter(item => item.trim() !== '')
   }
@@ -482,12 +507,12 @@ export class BeforeLaunchTask {
       args.push('--disable-gpu')
     };
 
-    // 开启同步标签页后，同步标签页
-    // void (allOpenUrl.slice(0, 1) || []).forEach((item) => {
-    //   if (item && this.browserItem.isValidURL(item)) {
-    //     args.push(item)
-    //   }
-    // })
+    // 用户配置的打开标签页（通过 CLI 打开，确保在 afterLaunchTask 注入 cookie 后 reload 即可生效）
+    allOpenUrl?.forEach((item: string) => {
+      if (item && this.browserItem.isValidURL(item)) {
+        args.push(item)
+      }
+    })
 
     return args.filter(item => item.trim() !== '')
   }
@@ -607,14 +632,14 @@ export class BeforeLaunchTask {
     try {
       await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)
       // TODO: 测试阶段暂时用明文的
-      if (this.browserItem.isFirefox) {
-        const content = JSON.stringify(fingerprintConfig, null, 2)
-        await writeFile(join(this.browserItem.userDataDir, 'fingerprint.json'), content)
-      }
-      else {
-        const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
-        await writeFile(this.browserItem.fingerprintConfigPath, content)
-      }
+      // if (this.browserItem.isFirefox) {
+      //   const content = JSON.stringify(fingerprintConfig, null, 2)
+      //   await writeFile(join(this.browserItem.userDataDir, 'fingerprint.json'), content)
+      // }
+      // else {
+      const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
+      await writeFile(this.browserItem.fingerprintConfigPath, content)
+      // }
     }
     catch (error) {
       console.error('Failed to create fingerprint config file', error)
@@ -628,8 +653,23 @@ export class BeforeLaunchTask {
       return
     }
 
-    const bookmarkPath = join(this.browserItem.userDataDir, 'Default', 'Bookmarks')
-    await importBookmarks(bookmarkPath, this.browserItem.preferencesPath)
+    try {
+      if (this.browserItem.isFirefox) {
+        await importBookmarks({
+          bookmarkPath: join(this.browserItem.userDataDir, 'places.sqlite'),
+          isFirefox: true,
+        })
+        return
+      }
+
+      await importBookmarks({
+        bookmarkPath: join(this.browserItem.userDataDir, 'Default', 'Bookmarks'),
+        preferencesPath: this.browserItem.preferencesPath,
+      })
+    }
+    catch (error) {
+      console.error('Failed to import bookmarks', error)
+    }
   }
 
   /** 拉取远程缓存文件 */
@@ -686,6 +726,116 @@ export class BeforeLaunchTask {
       this.warningMessages.push($t('同步远程缓存文件失败'))
       // return Promise.reject(error)
     }
+  }
+
+  /**
+   * 写入 Firefox user.js，禁止启动时恢复 session。
+   * Roxy 通过命令行 URL / roxy_tabs 管理标签页；若 profile 中 browser.startup.page=3，
+   * 会与 CLI 同时恢复上次标签，导致偶发重复 tab。
+   */
+  private async prepareFirefoxProfile() {
+    const profileDir = this.browserItem.userDataDir
+    try {
+      await fileExists(profileDir, true)
+
+      // 禁止 Firefox 启动时恢复上次 session，避免与 CLI URL 重复开 tab
+      const userJsPath = join(profileDir, 'user.js')
+      const { useGpu, sandboxPermission } = this.browserItem.winInfo
+      const managedPrefs: string[] = [
+        '// Roxy Browser managed preferences',
+        'user_pref("browser.startup.page", 0);',
+        'user_pref("browser.sessionstore.resume_from_crash", false);',
+      ]
+
+      // 硬件加速：useGpu=false 时禁用（等同于 Chrome 的 --disable-gpu）
+      if (!useGpu) {
+        managedPrefs.push('user_pref("layers.acceleration.disabled", true);')
+        managedPrefs.push('user_pref("gfx.webrender.disabled", true);')
+      }
+      else {
+        managedPrefs.push('user_pref("layers.acceleration.disabled", false);')
+        managedPrefs.push('user_pref("gfx.webrender.disabled", false);')
+      }
+
+      // 沙盒：sandboxPermission=true 时禁用内容沙盒（等同于 Chrome 的 --no-sandbox）
+      if (sandboxPermission) {
+        managedPrefs.push('user_pref("security.sandbox.content.level", 0);')
+      }
+      else {
+        // 恢复 Firefox 默认沙盒等级（Windows 默认 4，其他平台默认 3）
+        managedPrefs.push('user_pref("security.sandbox.content.level", -1);')
+      }
+
+      await writeFile(userJsPath, `${managedPrefs.join('\n')}\n`)
+
+      // 写入 xulstore.json 设置 Firefox 窗口初始位置
+      // Firefox 不支持 --window-position CLI 参数，通过 profile 内的 xulstore.json 实现
+      await this.writeFirefoxWindowPosition(profileDir)
+    }
+    catch (error) {
+      console.error('Failed to prepare Firefox profile:', error)
+    }
+  }
+
+  /**
+   * 将窗口位置写入 Firefox profile 的 xulstore.json。
+   * xulstore.json 格式：
+   * { "chrome://browser/content/browser.xhtml": { "main-window": { "screenX": "100", "screenY": "100", "sizemode": "normal" } } }
+   */
+  private async writeFirefoxWindowPosition(profileDir: string) {
+    const { positionSwitch, openWidth, openHeight, windowRatioPosition } = this.browserItem.winInfo
+    const xulstorePath = join(profileDir, 'xulstore.json')
+
+    // 读取已有 xulstore.json，不存在则初始化为空对象
+    let xulstore: Record<string, any> = {}
+    try {
+      const raw = await readFile(xulstorePath, 'utf-8')
+      xulstore = JSON.parse(raw)
+    }
+    catch {
+      // 文件不存在或解析失败，从空对象开始
+    }
+
+    const windowKey = 'chrome://browser/content/browser.xhtml'
+    xulstore[windowKey] ??= {}
+    const win = xulstore[windowKey]['main-window'] ?? {}
+
+    if (!positionSwitch) {
+      // 全屏模式
+      win.sizemode = 'maximized'
+    }
+    else {
+      win.sizemode = 'normal'
+      if (openWidth)
+        win.width = String(openWidth)
+      if (openHeight)
+        win.height = String(openHeight)
+
+      // 计算绝对像素坐标（复用 Chrome 的虚拟工作台逻辑）
+      const virtual = getVirtualWorkAreaUnion()
+      const [rxRaw = '0', ryRaw = '0', direction = 'tl'] = windowRatioPosition?.split(',') ?? []
+      let xx = virtual.originX + Math.floor(virtual.width * Number(rxRaw))
+      let yy = virtual.originY + Math.floor(virtual.height * Number(ryRaw))
+      const winWidth = Number(openWidth) || 0
+      const winHeight = Number(openHeight) || 0
+
+      if (direction === 'tr') {
+        xx = xx - winWidth
+      }
+      else if (direction === 'br') {
+        xx = xx - winWidth
+        yy = yy - winHeight
+      }
+      else if (direction === 'bl') {
+        yy = yy - winHeight
+      }
+
+      win.screenX = String(xx)
+      win.screenY = String(yy)
+    }
+
+    xulstore[windowKey]['main-window'] = win
+    await writeFile(xulstorePath, JSON.stringify(xulstore))
   }
 
   /** 写入登录信息 */

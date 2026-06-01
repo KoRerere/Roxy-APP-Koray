@@ -176,7 +176,7 @@ function tableOperation(data: any) {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
-      power: isPersonal,
+      power: isPersonal || role.isOwner,
       visible: data.source === 'local',
       command: ({ item }: any) => {
         operationHandler(item, data)

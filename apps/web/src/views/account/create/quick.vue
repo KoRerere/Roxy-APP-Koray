@@ -189,7 +189,7 @@ async function onFormSubmit({ intelligent: _, platformUserName, platformPassword
     <TsForm id="account" ref="tsform" :validate-on-value-update="false" validate-on-blur :inputs="inputs" @submit="onFormSubmit" />
     <div class="flex flex-1 items-end">
       <div class="w-full flex justify-end gap-3 pt-4 pb-5">
-        <RxButton v-if="!data.id && showCreateMore" :label="$t('保存 & 继续添加')" severity="secondary" outlined :loading="loading" @click="onSave(true)" />
+        <RxButton v-if="!data.id && !data._tempId && showCreateMore" :label="$t('保存 & 继续添加')" severity="secondary" outlined :loading="loading" @click="onSave(true)" />
         <RxButton :label="$t('保存')" :loading="loading" @click="onSave(false)" />
       </div>
     </div>

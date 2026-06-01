@@ -29,6 +29,8 @@ import {
   UserGetProxyBusinessSceneListListData,
   UserGetProxyBusinessSceneListListParams,
   UserGetProxyBusinessUseListListData,
+  UserGetProxyCountryListByBusinessSceneListData,
+  UserGetProxyCountryListByBusinessSceneListParams,
   UserGetProxyCountryListByContinentListData,
   UserGetProxyCountryListByContinentListParams,
   UserGetProxyCountryPriceListListData,
@@ -40,6 +42,8 @@ import {
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
   UserGetProxyProviderListListData,
+  UserGetProxyProvidersByBusinessSceneCountryListData,
+  UserGetProxyProvidersByBusinessSceneCountryListParams,
   UserGetProxyProvidersByBusinessSceneListData,
   UserGetProxyProvidersByBusinessSceneListParams,
   UserGetProxyProvidersTypeListData,
@@ -848,4 +852,46 @@ export class ProxyApi<SecurityDataType = unknown> {
       format: "json",
       ...params,
     });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyCountryListByBusinessSceneList
+   * @summary 根据用途获取代理IP国家信息
+   * @request GET:/user_get_proxy_country_list_by_business_scene
+   * @response `200` `UserGetProxyCountryListByBusinessSceneListData`
+   */
+  userGetProxyCountryListByBusinessSceneList = (
+    query: UserGetProxyCountryListByBusinessSceneListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyCountryListByBusinessSceneListData, any>({
+      path: `/user_get_proxy_country_list_by_business_scene`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyProvidersByBusinessSceneCountryList
+   * @summary 根据用途跟国家获取代理类型信息
+   * @request GET:/user_get_proxy_providers_by_business_scene_country
+   * @response `200` `UserGetProxyProvidersByBusinessSceneCountryListData`
+   */
+  userGetProxyProvidersByBusinessSceneCountryList = (
+    query: UserGetProxyProvidersByBusinessSceneCountryListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyProvidersByBusinessSceneCountryListData, any>(
+      {
+        path: `/user_get_proxy_providers_by_business_scene_country`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      },
+    );
 }

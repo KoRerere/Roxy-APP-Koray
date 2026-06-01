@@ -1,7 +1,7 @@
 import type { UserAddWindowInfoV2CreatePayload } from '@roxy/backend-api'
 import { sampleSize } from 'es-toolkit'
 import { genRandomFonts } from '../fonts'
-import { fontList, voices } from './constants/'
+import { chromeVoices, firefoxVoices, fontList } from './constants/'
 
 /**
  * 获取canvas随机值,从0123456789ABCDEF里面随机取32位
@@ -18,7 +18,11 @@ export function getAllowFontList() {
   return sampleSize(fontList, Math.floor(Math.random() * 400) + 100).join(';')
 }
 
-export function getwebGLNoiseValue() {
+export function getwebGLNoiseValue(coreType: 'Chrome' | 'Firefox' = 'Chrome') {
+  if (isFirefox(coreType)) {
+    return Math.random()
+  }
+
   const randStr = 'ABCDEFGHIJKLMNOPQISTUVWXYZ0123456789'
   // 0-9随机数，原生js
   const n1 = Math.floor(Math.random() * 10)
@@ -32,6 +36,10 @@ export function getwebGLNoiseValue() {
   }
 
   return `${n1}${n2}${n3}`
+}
+
+function isFirefox(coreType: 'Chrome' | 'Firefox' = 'Chrome') {
+  return coreType === 'Firefox'
 }
 
 function getClientRectsValue() {
@@ -52,8 +60,10 @@ export function getRandomInt(min: number, max: number) {
 /**
  * 一般isLocalService 会有3个true
  */
-function getSpeechSynthesis(os: string) {
-  const newVoices = [...voices]
+function getSpeechSynthesis(os: string, coreType: 'Chrome' | 'Firefox' = 'Chrome') {
+  const newVoices = [...(isFirefox(coreType) ? firefoxVoices : chromeVoices)]
+  console.log('coreType', coreType)
+  console.log('newVoices', newVoices)
   for (let i = 0; i < Math.floor(Math.random() * 2); i++) {
     newVoices.splice(Math.floor(Math.random() * (newVoices.length - 1)), 1)
   }
@@ -69,8 +79,10 @@ function getSpeechSynthesis(os: string) {
     })
   }
 
+  // Firefox 基础列表本身就是 Windows SAPI 系统语音，无需额外追加；
+  // Chrome 基础列表是 Google TTS 远程语音，Windows 下需要叠加本地 SAPI 语音。
   let windowsVoices: any[] = []
-  if (os === 'Windows' || !os) {
+  if (!isFirefox(coreType) && (os === 'Windows' || !os)) {
     windowsVoices = [
       {
         name: 'Microsoft David - English (United States)',
@@ -110,7 +122,7 @@ export async function genRandomFingerprint(options: GenRandomFingerprintOptions)
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion, coreType } = payload
   const headers = genType === 'api' ? { source: 'api' } : {}
 
-  console.log('genRandomFingerprint payload', payload)
+  console.log('genRandomFingerprint options', options)
 
   const result = await Promise.all([
     API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, coreType, count }, { headers }),
@@ -148,10 +160,10 @@ export async function genRandomFingerprint(options: GenRandomFingerprintOptions)
       font: fontType ? genRandomFonts(local_fonts).join(';') : undefined,
       allowFontList: fontType ? getAllowFontList() : undefined,
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
-      canvasValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
-      webGLValue: webGL ? getwebGLNoiseValue() : undefined,
+      canvasValueV2: isFirefox(coreType) ? Math.random() : getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
+      webGLValue: webGL ? getwebGLNoiseValue(coreType) : undefined,
       audioContextValue: audioContext ? Math.random() : undefined,
-      speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis(os) },
+      speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis(os, coreType) },
       clientRectsValue: { enable: clientRects, ...getClientRectsValue() },
     }
   })

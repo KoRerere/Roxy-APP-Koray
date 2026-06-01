@@ -45,4 +45,6 @@ apps/web/public/current_app_version
 apps/electron/logs
 apps/electron/buildResources/installer.nsh
 apps/electron/buildResources/pkg-scripts/postinstall
+apps/electron/.firefox-icon-test
 .pnpm-store
+.claude/settings.local.json

@@ -1,20 +1,54 @@
 import type { CachedWebResource } from './cache'
 import type express from 'express'
 import type { Buffer } from 'node:buffer'
+import { isPackaged } from '/@/constants/common'
 import { store } from '/@/modules/store'
 import { MAX_WEB_CACHE_BODY_BYTES } from './cache'
 
 /** 带 hash 的静态资源可以视为不可变资源，本地直接给较长缓存时间。 */
 const IMMUTABLE_ASSET_CACHE_TTL = 30 * 24 * 60 * 60 * 1000
 
+const webDomains: string[] = JSON.parse(import.meta.env.VITE_WEB_BASE_URL || '[]')
+
+/** 与 getWebEntryUrl 使用同一套 base 解析逻辑，避免 dev 代理走 VITE_DEV_SERVER_URL 但 cacheKey 仍依赖 lastWebDomain。 */
+function getWebCacheBaseUrl() {
+  if (!isPackaged) {
+    const devServerUrl = import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')
+    if (devServerUrl) {
+      return devServerUrl
+    }
+  }
+
+  if (store.lastWebDomain) {
+    return store.lastWebDomain.replace(/\/$/, '')
+  }
+
+  const fallbackDomain = webDomains.find(domain => domain.includes('roxybrowser.cn')) || webDomains[0]
+  return fallbackDomain?.replace(/\/$/, '') || 'http://localhost'
+}
+
+function resolveRequestUrl(req: { url?: string, originalUrl?: string, path?: string }) {
+  return req.url || req.originalUrl || req.path || '/'
+}
+
 /** 标准化生成 cacheKey：method + 完整 URL，便于在代理两端复用。 */
-export function getWebCacheKey(req: { method?: string, url?: string }) {
-  return `${req.method || 'GET'}:${new URL(req.url || '/', store.lastWebDomain).toString()}`
+export function getWebCacheKey(req: { method?: string, url?: string, originalUrl?: string, path?: string }) {
+  const baseUrl = getWebCacheBaseUrl()
+  const requestPath = resolveRequestUrl(req)
+  try {
+    return `${req.method || 'GET'}:${new URL(requestPath, `${baseUrl}/`).toString()}`
+  }
+  catch {
+    const path = req.path || '/'
+    const queryIndex = requestPath.indexOf('?')
+    const query = queryIndex === -1 ? '' : requestPath.slice(queryIndex)
+    return `${req.method || 'GET'}:${baseUrl}${path}${query}`
+  }
 }
 
 /** 判断请求路径是否为构建产物中带 hash 的不可变静态资源。 */
-export function isImmutableAssetRequest(req: { url?: string }) {
-  const { pathname } = new URL(req.url || '/', store.lastWebDomain)
+export function isImmutableAssetRequest(req: { url?: string, originalUrl?: string, path?: string }) {
+  const { pathname } = new URL(resolveRequestUrl(req), `${getWebCacheBaseUrl()}/`)
   if (!pathname.startsWith('/assets/')) {
     return false
   }

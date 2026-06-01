@@ -23,7 +23,7 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ClearType, ProfileModifyType, ProfileReqType, ProxyType } from '/@/enums'
+import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
@@ -207,7 +207,7 @@ async function onFirstRegisterGuide() {
         {
           element: '#OPEN_0',
           popover: {
-            description: $t('点击「打开」按钮即可启动该浏览器环境。'),
+            description: $t('点击「打开」以启动浏览器。'),
             side: 'right',
             align: 'center',
           },
@@ -589,17 +589,18 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     if (code !== 0)
       return
 
-    const { protocol, proxyCategory, proxyType, ...rest } = formData
+    const { protocol, proxyCategory, proxyType, isDirect, ...rest } = formData
     const params = {
       ...rest,
       moduleId: id ?? 0,
+      isDirect,
       proxyMethod,
       protocol,
       proxyCategory: proxyCategory || protocol,
       buyProxyType: proxyType ?? ProxyType.resource,
     }
     datas.forEach((item) => {
-      silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+      silentUpdateProxy(item, params, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo'])
     })
   }
 
@@ -886,8 +887,8 @@ defineExpose({
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
-        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/profile-filter.mp4" :save-filters="saveFilters"
-                       @filter-change="onRefreshTable"
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile"
+                       video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/profile-filter.mp4" :save-filters="saveFilters" @filter-change="onRefreshTable"
         />
         <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />
       </div>
@@ -948,7 +949,7 @@ defineExpose({
     </template>
     <template #open="{ data, index }">
       <template v-if="data.id">
-        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord"
+        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord" :icon="data.coreType === CoreType.Firefox ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome'"
                         @open="openBrowserBefore"
         />
       </template>

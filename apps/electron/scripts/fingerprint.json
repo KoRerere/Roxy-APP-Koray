@@ -1,0 +1,199 @@
+{
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:146.0.0.0) Gecko/20100101 Firefox/146.0.0.0",
+  "navigator": {
+    "platform": "Win32",
+    "hardwareConcurrency": 12,
+    "maxTouchPoints": 0,
+    "deviceMemory": 8,
+    "mobile": false
+  },
+  "windowNum": 31,
+  "timeZone": "Asia/Shanghai",
+  "browserIconPath": "C:\\Users\\Administrator\\AppData\\Roaming\\roxybrowserdev\\firefox-icons\\v1_31.ico",
+  "appLocale": "zh-CN",
+  "acceptLang": "zh-CN",
+  "audioBuffer": {
+    "enableAudioBufferNoise": true,
+    "audioBufferNoiseValue": 0.1500442778057729
+  },
+  "canvasContext": {
+    "enableCanvasContextNoise": true,
+    "canvasContextNoiseValue": 20586
+  },
+  "clientRects": {
+    "enable": true,
+    "clientRectsNoiseFactorX": -0.6649067810422782,
+    "clientRectsNoiseFactorY": -0.29413508705847446
+  },
+  "webGL": {
+    "enableWebGLRendererNoise": true,
+    "webglRenderer": "ANGLE (AMD, Radeon RX 580 Series Direct3D11 vs_5_0 ps_5_0, D3D11-31.0.21910.5)",
+    "webglVendor": "Google Inc. (AMD)",
+    "webGLRendererNoiseValue": 0.22554413502737136
+  },
+  "geoLocation": {
+    "mode": "allow",
+    "enableFakeLocationData": true,
+    "locationLatitude": 22.5455,
+    "locationLongitude": 114.0683,
+    "locationAccuracy": 0,
+    "locationAltitude": 0
+  },
+  "doNotTrack": true,
+  "imageSizeLimit": -1,
+  "disablePlayVideo": false,
+  "portScan": {
+    "enablePortScanWhiteList": true,
+    "portScanWhiteList": "45535;"
+  },
+  "screen": {
+    "pixelDepth": 0,
+    "colorDepth": 0,
+    "width": 0,
+    "height": 0,
+    "availWidth": 0,
+    "availHeight": 0,
+    "devicePixelRatio": 1
+  },
+  "speechSynthesis": {
+    "enable": true,
+    "voices": [
+      {
+        "isLocalService": true,
+        "lang": "en-US",
+        "name": "Microsoft David - English (United States)"
+      },
+      {
+        "isLocalService": true,
+        "lang": "en-US",
+        "name": "Microsoft Mark - English (United States)"
+      },
+      {
+        "isLocalService": true,
+        "lang": "en-US",
+        "name": "Microsoft Zira - English (United States)"
+      },
+      {
+        "isLocalService": true,
+        "lang": "hi-IN",
+        "name": "Google हिन्दी"
+      },
+      {
+        "isLocalService": true,
+        "lang": "pt-BR",
+        "name": "Google português do Brasil"
+      },
+      {
+        "isLocalService": true,
+        "lang": "ja-JP",
+        "name": "Google 日本語"
+      },
+      {
+        "isLocalService": false,
+        "lang": "id-ID",
+        "name": "Google Bahasa Indonesia"
+      },
+      {
+        "isLocalService": false,
+        "lang": "de-DE",
+        "name": "Google Deutsch"
+      },
+      {
+        "isLocalService": false,
+        "lang": "es-ES",
+        "name": "Google español"
+      },
+      {
+        "isLocalService": false,
+        "lang": "es-US",
+        "name": "Google español de Estados Unidos"
+      },
+      {
+        "isLocalService": false,
+        "lang": "fr-FR",
+        "name": "Google français"
+      },
+      {
+        "isLocalService": false,
+        "lang": "it-IT",
+        "name": "Google italiano"
+      },
+      {
+        "isLocalService": false,
+        "lang": "nl-NL",
+        "name": "Google Nederlands"
+      },
+      {
+        "isLocalService": false,
+        "lang": "pl-PL",
+        "name": "Google polski"
+      },
+      {
+        "isLocalService": false,
+        "lang": "en-GB",
+        "name": "Google UK English Female"
+      },
+      {
+        "isLocalService": false,
+        "lang": "en-GB",
+        "name": "Google UK English Male"
+      },
+      {
+        "isLocalService": false,
+        "lang": "en-US",
+        "name": "Google US English"
+      },
+      {
+        "isLocalService": false,
+        "lang": "ru-RU",
+        "name": "Google русский"
+      },
+      {
+        "isLocalService": false,
+        "lang": "zh-TW",
+        "name": "Google 國語（臺灣）"
+      },
+      {
+        "isLocalService": false,
+        "lang": "ko-KR",
+        "name": "Google 한국의"
+      },
+      {
+        "isLocalService": false,
+        "lang": "zh-CN",
+        "name": "Google 普通话（中国大陆）"
+      },
+      {
+        "isLocalService": false,
+        "lang": "zh-HK",
+        "name": "Google 粤語（香港）"
+      }
+    ]
+  },
+  "webrtc": {
+    "mode": "disable"
+  },
+  "allowDomains": [],
+  "disableDomains": [],
+  "blockDomainPageFile": "D:\\work\\roxy-browser\\node_modules\\.pnpm\\electron@40.10.0\\node_modules\\electron\\dist\\resources\\app.asar.unpacked\\dist\\web\\blockDomain.html",
+  "autofillWebSiteMult": [],
+  "disablePlaySound": false,
+  "disablePasswordSaveTips1": false,
+  "windowName": "火",
+  "simulation": {
+    "delayRange": [
+      1,
+      3000
+    ],
+    "enable": true,
+    "humanNoise": true,
+    "shortcutKey": "Ctrl Shift E"
+  },
+  "sessionStorageSync": {
+    "enable": false,
+    "allowDomains": []
+  },
+  "searchEngine": {
+    "name": "Google"
+  }
+}

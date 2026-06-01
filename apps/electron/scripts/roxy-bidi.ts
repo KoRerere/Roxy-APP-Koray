@@ -1,179 +1,121 @@
-import child_process from 'node:child_process'
-
 (async () => {
-  const firefox = 'D:\\工作资料\\火狐内核\\RoxyFirefox\\RoxyFirefox.exe'
-  const user_data_dir = 'D:\\工作资料\\火狐内核\\RoxyFirefox\\firefox-user-data-dir'
-  const process = child_process.spawn(firefox, [
-    '-profile',
-    user_data_dir,
-    '--remote-debugging-port=0',
-    'https://browserleaks.com',
-    'https://browserleaks.com',
-    'https://ip123.in',
-  ])
+  // 连接到已运行的 Firefox BiDi WebSocket
+  // 注意：Firefox BiDi 只允许一个会话。若遇到 "Maximum number of active sessions"，
+  // 说明存在僵尸会话（上次脚本未正常退出），需要重启 Firefox 一次清除。
+  const wsUrl = 'ws://127.0.0.1:55049'
 
-  let wsUrl = null
-  let wsConnected = false
+  console.log(`Connecting to: ${wsUrl}/session`)
 
-  process.stdout.on('data', (data) => {
-    console.log(data.toString())
-  })
+  await new Promise<void>((resolve, reject) => {
+    const ws = new WebSocket(`${wsUrl}/session`)
+    let sessionActive = false
+    let nextCommandId = 1
+    const pendingCommands = new Map<number, { resolve: (value: any) => void, reject: (reason?: unknown) => void }>()
 
-  process.stderr.on('data', (data) => {
-    const output = data.toString()
-    console.error(output)
+    /**
+     * 进程退出时确保关闭连接，释放 Firefox 侧的会话
+     */
+    const cleanup = () => ws.readyState === WebSocket.OPEN && ws.close()
+    process.on('exit', cleanup)
+    process.on('SIGINT', () => { cleanup(); process.exit(0) })
 
-    // 解析 WebDriver BiDi WebSocket URL
-    if (!wsUrl && !wsConnected) {
-      const match = output.match(/WebDriver BiDi listening on (ws:\/\/\S+)/)
-      if (match) {
-        wsUrl = match[1]
+    ws.onopen = () => {
+      console.log('WebSocket connected, creating BiDi session...')
+      // BiDi 协议要求先通过 session.new 创建会话，之后的命令才有效
+      ws.send(JSON.stringify({ id: 0, method: 'session.new', params: { capabilities: {} } }))
+    }
 
-        console.log(`Found WebSocket URL: ${wsUrl}`)
-        // 尝试通过 HTTP 获取会话信息，或直接连接
-        tryConnectWebSocket(wsUrl).catch((err) => {
-          console.error('Failed to connect:', err)
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data as string)
+      console.log('Received:', JSON.stringify(msg, null, 2))
+
+      // 处理 session.new 响应
+      if (msg.id === 0) {
+        if (msg.type === 'success') {
+          console.log('Session created, sending commands...')
+          sessionActive = true
+          sendCommands()
+        }
+        else if (msg.type === 'error') {
+          if (msg.error === 'session not created') {
+            console.error(
+              '\n[错误] Firefox 存在僵尸会话，无法创建新会话。\n'
+              + '请重启 Firefox 后重试（本脚本退出后会自动清理会话，下次不会再有此问题）。\n',
+            )
+          }
+          else {
+            console.error(`[错误] ${msg.error}: ${msg.message}`)
+          }
+          ws.close()
+          reject(new Error(msg.message))
+        }
+        return
+      }
+
+      // 处理后续命令响应
+      if (typeof msg.id === 'number' && pendingCommands.has(msg.id)) {
+        const pending = pendingCommands.get(msg.id)
+        pendingCommands.delete(msg.id)
+
+        if (msg.type === 'success') {
+          pending?.resolve(msg.result)
+        }
+        else {
+          pending?.reject(new Error(`${msg.error}: ${msg.message}`))
+        }
+        return
+      }
+
+      // 打印其他命令的错误
+      if (msg.type === 'error') {
+        console.error(`[命令错误] id=${msg.id} ${msg.error}: ${msg.message}`)
+      }
+    }
+
+    function sendBiDiCommand(method: string, params: Record<string, unknown>) {
+      const id = nextCommandId++
+      return new Promise<any>((resolveCommand, rejectCommand) => {
+        pendingCommands.set(id, { resolve: resolveCommand, reject: rejectCommand })
+        ws.send(JSON.stringify({ id, method, params }))
+        console.log(`Sent: ${method}`)
+      })
+    }
+
+    async function sendCommands() {
+      try {
+        // 动态创建新标签页
+        const createResult = await sendBiDiCommand('browsingContext.create', { type: 'tab' })
+        const context = createResult.context as string
+        console.log(`Created tab context: ${context}`)
+
+        // 在新标签页打开 baidu.com
+        await sendBiDiCommand('browsingContext.navigate', {
+          context,
+          url: 'https://www.baidu.com',
+          wait: 'complete',
         })
+        console.log('Opened: https://www.baidu.com')
+
+        await new Promise(resolve => setTimeout(resolve, 2000)) // 等待页面加载完成
+
+        // 结束会话并关闭连接，避免留下僵尸会话
+        await sendBiDiCommand('session.end', {})
+        ws.close()
+        resolve()
+      }
+      catch (err) {
+        reject(err)
+        ws.close()
       }
     }
-  })
 
-  async function tryConnectWebSocket(url: string) {
-    try {
-      // 直接使用 WebSocket 连接，因为 /session 端点只支持 WebSocket 协议
-      // HTTP GET/POST 会返回错误：The handshake request has incorrect Upgrade header
-      console.log('Connecting directly via WebSocket (HTTP not supported for /session endpoint)')
-      await connectAndSendCommands(url)
-    }
-    catch (error) {
-      console.error('Failed to connect:', error)
-    }
-  }
+    ws.onerror = () => console.error('WebSocket error')
 
-  async function connectAndSendCommands(url) {
-    return new Promise((resolve, reject) => {
-      // 尝试不同的 WebSocket 路径
-      // 注意：根据 Firefox 的实现，可能需要先连接到根路径，让服务器自动创建会话
-      const urlsToTry = [
-        `${url}/session`, // 先尝试 /session，因为之前这个连接成功了
-        url, // 然后尝试根路径
-        `${url}/bidi`, // 最后尝试 /bidi
-      ]
-
-      let currentIndex = 0
-
-      function tryNextUrl() {
-        if (currentIndex >= urlsToTry.length) {
-          reject(new Error('All WebSocket URLs failed'))
-          return
-        }
-
-        const currentUrl = urlsToTry[currentIndex]
-        console.log(`Trying WebSocket URL: ${currentUrl}`)
-
-        const ws = new WebSocket(currentUrl)
-
-        let sessionInitialized = false
-        let initMessageReceived = false
-
-        ws.onopen = () => {
-          console.log('WebSocket connected')
-          wsConnected = true
-
-          // 必须先发送 session.new 命令来创建会话
-          console.log('Sending session.new to create session...')
-          const sessionNewCommand = {
-            id: 0,
-            method: 'session.new',
-            params: {
-              capabilities: {},
-            },
-          }
-          ws.send(JSON.stringify(sessionNewCommand))
-          console.log('Sent: session.new')
-        }
-
-        /**
-         * 监听消息，处理 session.new 的响应
-         */
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data)
-            console.log('Received:', JSON.stringify(message, null, 2))
-
-            // 检查是否是 session.new 的响应
-            if (message.id === 0 && message.type === 'success') {
-              // session.new 成功，会话已创建
-              initMessageReceived = true
-              console.log('Session created successfully via session.new')
-              // 会话创建成功后，发送命令
-              setTimeout(() => {
-                sendCommands()
-              }, 2000)
-              return
-            }
-
-            // 处理其他错误
-            if (message.type === 'error') {
-              console.log(`Error: ${message.error} - ${message.message}`)
-            }
-          }
-          catch (e) {
-            console.log('Received (raw):', event.data)
-          }
-        }
-
-        function sendCommands() {
-          if (sessionInitialized) {
-            return // 已经发送过了
-          }
-          sessionInitialized = true
-
-          // 发送第一个命令: browser.getTabs
-          const getTabsCommand = {
-            id: 1,
-            method: 'browser.getTabs',
-            params: {},
-          }
-          ws.send(JSON.stringify(getTabsCommand))
-          console.log('Sent: browser.getTabs')
-
-          // 发送第二个命令: browser.setColor
-          const setColorCommand = {
-            id: 2,
-            method: 'browser.setColor',
-            params: {
-              color: '#FF0000',
-            },
-          }
-          ws.send(JSON.stringify(setColorCommand))
-          console.log('Sent: browser.setColor')
-
-          resolve(ws)
-        }
-
-        ws.onerror = (event) => {
-          console.error(`WebSocket error for ${currentUrl}`)
-        }
-
-        ws.onclose = () => {
-          console.log('WebSocket closed')
-          wsConnected = false
-          // 尝试下一个 URL
-          if (!sessionInitialized) {
-            currentIndex++
-            if (currentIndex < urlsToTry.length) {
-              console.log('Trying next URL...')
-              setTimeout(tryNextUrl, 500)
-            }
-            else {
-              reject(new Error('All WebSocket URLs failed'))
-            }
-          }
-        }
+    ws.onclose = () => {
+      console.log('WebSocket closed')
+      if (!sessionActive) {
+        reject(new Error('Connection closed before session was established'))
       }
-
-      tryNextUrl()
-    })
-  }
+    }
+  }).catch(err => console.error('Failed:', err))
 })()

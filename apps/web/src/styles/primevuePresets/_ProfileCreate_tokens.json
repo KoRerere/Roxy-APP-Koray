@@ -1,0 +1,18 @@
+{
+  "light": {
+    "Scrollmask": {
+      "blob1": "#b3c3ff",
+      "blob2": "#f2b6ff"
+    },
+    "border-floating-1": "#ebf1f5",
+    "border-floating-2": "#ffffff"
+  },
+  "dark": {
+    "Scrollmask": {
+      "blob1": "#5c76d6",
+      "blob2": "#ba66cc"
+    },
+    "border-floating-1": "#414c58",
+    "border-floating-2": "#96d1f5"
+  }
+}

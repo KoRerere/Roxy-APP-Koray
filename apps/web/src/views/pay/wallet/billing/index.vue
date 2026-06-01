@@ -27,6 +27,10 @@ const columns = [
     getText: (row: any) => row.orderNo || '--',
   },
   {
+    title: $t('操作人'),
+    key: 'operatorName',
+  },
+  {
     title: $t('类型'),
     key: 'orderType',
     getText: (row: any) => OrderTypeStr[row.orderType as keyof typeof OrderTypeStr],

@@ -62,6 +62,8 @@ export interface MittEvents {
     settingsKey: 'profiles' | 'authentication' | 'preferences' | 'network' | 'loginActivity'
     anchorPoint?: string
   }
+  /** 更新代理 IP 列表 */
+  updateShopList?: string
   badgeMap: string
   showAppUpgradeDialog: any
   backDefaultWorkspace: void

@@ -103,9 +103,9 @@ function onConfirm(windowRemark: string) {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton :disabled="!check('Profiles_move_project')" outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
-    <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
-      <RxButton :disabled="!check('Profiles_select_label')" outlined severity="secondary" size="sm" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
+    <RxButton :disabled="!check('Profiles_move_project')" outlined severity="secondary" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
+    <div class="flex items-center position-relative" :class="{ selected: metaData?.labelIds?.length }">
+      <RxButton :disabled="!check('Profiles_select_label')" outlined severity="secondary" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
     </div>
     <RemarkIcon v-if="showRemark" :disabled="!check('Profiles_edit_remark')" :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>

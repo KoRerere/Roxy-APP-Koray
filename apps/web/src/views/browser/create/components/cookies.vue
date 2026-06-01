@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import rxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
-
+import RxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
 import { checkCookieFormat, readCookiesFile } from '/@/utils'
 
 defineOptions({
@@ -11,7 +10,7 @@ const attrs = useAttrs()
 
 const modelValue = defineModel<string>()
 const invalid = defineModel('invalid', { default: false })
-const errorMsg = ref($t('Cookie 格式错误，请检查格式'))
+const errorMsg = ref()
 
 async function onIconClick() {
   const res = await readCookiesFile()
@@ -39,35 +38,19 @@ function onBlur(event: any) {
 </script>
 
 <template>
-  <RxAccordion :class="attrs.class">
-    <AccordionPanel value="open" :pt="{ root: '!border-dashed' }">
-      <AccordionHeader as="div" #default="{ active }">
-        <div class="flex items-center gap-3 header">
-          <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
-          <span>{{ attrs.label }}</span>
-        </div>
-      </AccordionHeader>
-      <AccordionContent>
-        <rxInputTextarea v-model="modelValue" rows="5" icon="base/rx_ic_attachment" :placeholder="$t('请以 JSON 格式输入 Cookies')" :auto-resize="false" :invalid="invalid" @iconClick="onIconClick"
-          @blur="onBlur" />
-        <Message v-if="invalid" severity="error" size="small" variant="simple">{{ errorMsg }}</Message>
-      </AccordionContent>
-    </AccordionPanel>
-  </RxAccordion>
+  <div class="flex min-w-0 w-full px-4">
+    <div class="mr-2 tt-primary text-3.25 leading-32px rx-label">
+      {{ attrs.label }}
+    </div>
+    <div class="w-full">
+      <RxInputTextarea v-model="modelValue" rows="3" icon="base/rx_ic_attachment" :placeholder="$t('请以 JSON 格式输入 Cookies')" :auto-resize="false" :invalid="invalid" @icon-click="onIconClick"
+                       @blur="onBlur"
+      />
+      <Message v-if="invalid" severity="error" size="small" variant="simple">
+        {{ errorMsg }}
+      </Message>
+    </div>
+  </div>
 </template>
 
-<style lang="scss" scoped>
-.header {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 16px;
-
-  &-icon {
-    border: 1px solid var(--colors-border-border-base);
-    border-radius: 4px;
-    padding: 2px;
-    background: var(--colors-background-bg-action);
-  }
-}
-</style>
+<style lang="scss" scoped></style>

@@ -69,6 +69,8 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
     coreType,
   }, count)
 
+  console.debug('fingerDetail', fingerDetail)
+
   if (preview) {
     const { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName } = fingerDetail[0]
     setInputValueByFormData(inupts, { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName })// 批量创建时用于界面显示
@@ -94,13 +96,68 @@ function fixMacOsVersion(version: string) {
   return list?.[0]
 }
 
+/** 判断是否为 Firefox 内核 */
+function isFirefoxCoreType(coreType?: string) {
+  return coreType === CoreType.Firefox
+}
+
+function isMacOs(os?: string) {
+  return os?.toLocaleLowerCase() === 'macos'
+}
+
+function isMacOsAllVersion(version?: string) {
+  return version?.toLocaleLowerCase() === 'all'
+}
+
+/** Firefox + macOS 时系统版本仅支持 ALL */
+function getOsVersionOptionsByCoreType(coreType: string, os: string | undefined, versionOptions: any[]) {
+  if (isFirefoxCoreType(coreType) && isMacOs(os)) {
+    return versionOptions.filter(item => isMacOsAllVersion(item.value))
+  }
+  return versionOptions
+}
+
+function syncOsVersionOptionsByCoreType(osVersionInput: any, coreType: string, os: string | undefined, allVersionOptions: any[]) {
+  const options = getOsVersionOptionsByCoreType(coreType, os, allVersionOptions)
+  osVersionInput.options = options
+  const matched = options.find((opt: any) => opt.value === osVersionInput.value?.value)
+  if (!matched && options.length) {
+    osVersionInput.value = options[0]
+  }
+}
+
+/** 从表单读取当前内核类型 */
+function getFormCoreType(windowInputs: any[]): string {
+  return findInputByName(windowInputs, 'coreType')?.value?.value ?? CoreType.Chrome
+}
+
+/** 归一化内核类型，缺省视为 Chrome */
+function normalizeCoreType(coreType?: string): CoreType {
+  return coreType === CoreType.Firefox ? CoreType.Firefox : CoreType.Chrome
+}
+
+/** 更新内核版本下拉图标（生产环境） */
+function updateCoreVersionIcon(coreVersionInput: any, coreType: string) {
+  if (isDev)
+    return
+  coreVersionInput.icon = isFirefoxCoreType(coreType) ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome'
+}
+
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
-  const [$dict_map, userConfig, searchEngine, availableCoreVersion] = await Promise.all([
+  const [$dict_map, userConfig, searchEngine, coreList] = await Promise.all([
     getDictMap(),
     userStore.getUserConfig(),
     API.platform.userGetSearchEnginesList(),
-    globalThis.electronAPI.send('app:getCoreList').then(res => res.map(item => item.coreVersion)),
+    globalThis.electronAPI.send('app:getCoreList'),
   ])
+
+  // Chrome / Firefox 可能存在相同 coreVersion，需按 coreType 分别过滤本地可用内核
+  const availableChromeVersions = coreList
+    .filter(item => normalizeCoreType(item.coreType) === CoreType.Chrome)
+    .map(item => item.coreVersion)
+  const availableFirefoxVersions = coreList
+    .filter(item => normalizeCoreType(item.coreType) === CoreType.Firefox)
+    .map(item => item.coreVersion)
 
   const osIconMap = {
     windows: 'platforms/rx_os_windows',
@@ -110,12 +167,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     ios: 'platforms/rx_os_iOS',
   } as const
 
-  const getCoreVersionOptions = (os: string, version: string) => {
-    const coreVersion = $dict_map.coreVersion!.filter(item => availableCoreVersion.includes(item.value))
+  /** 按内核类型获取可选版本，并过滤本地已安装/可用的内核 */
+  const getCoreVersionOptionsByType = (coreType: string, os?: string, version?: string) => {
+    if (isFirefoxCoreType(coreType)) {
+      return ($dict_map.firefoxCoreVersion ?? []).filter(item => availableFirefoxVersions.includes(item.value))
+    }
 
+    const chromeVersions = $dict_map.coreVersion!.filter(item => availableChromeVersions.includes(item.value))
     return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0) ?? '')
-      ? coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
-      : coreVersion
+      ? chromeVersions.filter((item: any) => item.value === '109') // win7，win8 只有 109 内核版本
+      : chromeVersions
   }
 
   const osOptions = $dict_map.os!.map(({ label, ...item }: any) => {
@@ -127,6 +188,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     return {
       ...item,
       label,
+      tooltip: label,
       icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
       _versionOptions,
     }
@@ -136,12 +198,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
   // fix: 如果是 macos, ios 系统，就取大版本去做匹配。其他系统不需要处理
   const osVersion = data.os?.toLocaleLowerCase() === 'macos' || data.ios?.toLocaleLowerCase() ? fixMacOsVersion(data.osVersion || '') : data.osVersion
-  const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === osVersion) ?? osValue?._versionOptions[0]
+  const initialCoreType = data.coreType ?? CoreType.Chrome
+  const initialOsVersionOptions = getOsVersionOptionsByCoreType(initialCoreType, osValue?.value, osValue?._versionOptions ?? [])
+  const osVersionValue = initialOsVersionOptions.find((item: any) => item.value === osVersion) ?? initialOsVersionOptions[0]
   const coreTypeOptions = [
     { label: CoreType.Chrome, value: CoreType.Chrome, icon: 'base/rx_ic_chrome' },
-    { label: CoreType.Firefox, value: CoreType.Firefox, icon: 'base/rx_ic_firefox' },
+    { label: CoreType.Firefox, value: CoreType.Firefox, icon: 'base/rx_ic_firefox', disabled: !isDev, disabledTooltip: $t('即将上线') },
   ]
-  const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
+  const initialCoreVersionOptions = getCoreVersionOptionsByType(initialCoreType, osValue?.value, osVersionValue?.value)
   // TODO:(anbin)
   const searchEngineOptions = searchEngine.code === 0
     ? (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon }))
@@ -149,8 +213,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const searchEngineValue = data.searchEngine ?? userConfig?.searchEngine
 
-  // 非严格模式获取浏览器版本选项
-  const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
+  // 非严格模式获取浏览器版本选项（仅 Chrome 内核支持）
+  const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue && !isFirefoxCoreType(initialCoreType)
     ? await getBrowserVersion({ os: osValue.value, osVersion: osVersionValue.value })
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
@@ -175,10 +239,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const extraMoblieVisible = initInputVisible(osValue.value, 'Android', false) || initInputVisible(osValue.value, 'IOS', false)
 
   const inputsGroup = [] as any[]
-  const isFirefox = data.coreType === 'Firefox'
+  const isFirefox = isFirefoxCoreType(initialCoreType)
 
   const original = reactive<any>({
     ...getDefaultValue(),
+    // 补充 searchEngine 默认值，保证 Firefox 下隐藏该字段时仍能提交（data 有值时会被下方 spread 覆盖）
+    searchEngine: searchEngineValue,
     ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))), // 过滤掉加密字段
   })
 
@@ -197,7 +263,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'name',
     },
     {
-      label: $t('系统 & 内核'),
+      label: $t('系统'),
       items: [
         {
           type: 'select',
@@ -216,8 +282,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           change: async (item: any) => {
             if (item.value) {
               const osVersionInput = findInputByName(windowInputs, 'osVersion')
-              osVersionInput.options = item.value._versionOptions
-              osVersionInput.value = item.value._versionOptions[0]
+              const coreType = getFormCoreType(windowInputs)
+              const versionOptions = getOsVersionOptionsByCoreType(coreType, item.value.value, item.value._versionOptions)
+              osVersionInput.options = versionOptions
+              osVersionInput.value = versionOptions[0]
               osVersionInput.change?.(osVersionInput)
 
               const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(item.value.value, $dict_map)
@@ -241,22 +309,24 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           type: 'select',
           name: 'osVersion',
           value: osVersionValue,
-          options: osValue?._versionOptions,
+          options: initialOsVersionOptions,
           filter: false,
           change: async (item: any) => {
             const coreVersionInput = findInputByName(windowInputs, 'coreVersion')
-            // windowInputs.find((item: any) => item.name === 'coreVersion')!
 
             if (item.value) {
               const { _osValue, value: version } = item.value
-              const _coreVersionOptions = getCoreVersionOptions(_osValue, version)
+              const coreType = getFormCoreType(windowInputs)
+              const _coreVersionOptions = getCoreVersionOptionsByType(coreType, _osValue, version)
 
-              if (coreVersionInput.options?.length !== _coreVersionOptions.length) {
-                coreVersionInput.options = _coreVersionOptions
+              coreVersionInput.options = _coreVersionOptions
+              const matched = _coreVersionOptions.find((opt: any) => opt.value === coreVersionInput.value?.value)
+              if (!matched && _coreVersionOptions.length) {
                 coreVersionInput.value = _coreVersionOptions[0]
               }
 
-              if (userConfig?.uaModeSwitch === UaStrictMode.close) {
+              // browserVersion 仅 Chrome 非严格模式使用
+              if (!isFirefoxCoreType(coreType) && userConfig?.uaModeSwitch === UaStrictMode.close) {
                 const options = await getBrowserVersion({ os: _osValue, osVersion: version })
                 const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
                 browserVersionInput.options = options
@@ -268,11 +338,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           },
           required: true,
         },
+      ],
+      slot: 'system', // items 特殊实现
+    },
+    {
+      label: $t('内核'),
+      items: [
         {
           type: 'select',
           name: 'coreType',
           value: coreTypeOptions.find((item: any) => item.value === data.coreType) ?? coreTypeOptions[0],
           options: coreTypeOptions,
+          icon: isFirefox ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome',
           filter: false,
           iconColor: 'var(--primary-color, #12a3fc)',
           style: {
@@ -287,15 +364,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           change: async (item: any) => {
             if (item.value) {
               const coreType = item.value.value
-              console.log('coreType', coreType)
-              const coreVersionInput = findInputByName(windowInputs, 'coreVersion')
-              const webGLInput = findInputByName(highLevelInputs, 'webGL')
+              const [osInput, osVersionInput, coreVersionInput] = filterInputsByNames(windowInputs, ['os', 'osVersion', 'coreVersion'])
 
-              const _coreVersionOptions = coreType === 'Firefox' ? $dict_map.firefoxCoreVersion : coreVersionOptions
+              const os = osVersionInput?.value?._osValue ?? osInput?.value?.value ?? osValue?.value
+              syncOsVersionOptionsByCoreType(
+                osVersionInput,
+                coreType,
+                os,
+                osInput?.value?._versionOptions ?? osValue?._versionOptions ?? [],
+              )
+              const version = osVersionInput?.value?.value ?? osVersionValue?.value
+
+              const _coreVersionOptions = getCoreVersionOptionsByType(coreType, os, version)
               coreVersionInput.options = _coreVersionOptions
-              coreVersionInput.value = _coreVersionOptions[0]
-              coreVersionInput.change?.(coreVersionInput)
+              coreVersionInput.value = _coreVersionOptions[0] ?? null
+              updateCoreVersionIcon(coreVersionInput, coreType)
+
+              await syncCoreTypeRelatedFields(coreType, os, version)
+              const [webGLInput, canvasInput] = filterInputsByNames(highLevelInputs, ['webGL', 'canvas'])
+
               webGLInput.change?.(webGLInput)
+              canvasInput?.change?.(canvasInput)
+              coreVersionInput.change?.(coreVersionInput)
             }
           },
           preview: {
@@ -306,11 +396,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         {
           type: 'select',
           name: 'coreVersion',
-          value: (isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions).find((item: any) => item.value === data.coreVersion) ?? (isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions)[0],
-          options: isFirefox ? $dict_map.firefoxCoreVersion : coreVersionOptions,
-          ...(isDev
-            ? { }
-            : { icon: 'base/rx_ic_chrome', iconColor: 'var(--primary-color, #12a3fc)' }),
+          value: initialCoreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? initialCoreVersionOptions[0],
+          options: initialCoreVersionOptions,
           required: true,
           filter: false,
           change: async (item: any) => {
@@ -325,7 +412,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           },
         },
       ],
-      slot: 'system', // items 特殊实现
+      slot: 'kernel', // items 特殊实现
     },
     {
       type: 'multiSelect',
@@ -337,7 +424,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       options: browserVersionOptions,
       maxSelectedLabels: 4,
       selectedItemsLabel: $t('已选择了 {count} 个浏览器版本', { count: '{()}' }),
-      visible: initInputVisible(userConfig?.uaModeSwitch, UaStrictMode.close, false),
+      visible: !isFirefox && initInputVisible(userConfig?.uaModeSwitch, UaStrictMode.close, false),
       formatValue: (input: any) => input.value.join(','),
       onHide: () => {
         const input = findInputByName(windowInputs, 'browserVersion')
@@ -353,7 +440,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('User-Agent'),
       name: 'userAgent',
       value: data.userAgent,
-      icon: 'base/rx_ic_shuffle',
       rows: 3,
       iconClick: async () => {
         await setUaWebgl(inputsGroup)
@@ -366,19 +452,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         Reflect.set(formData, '_custom_ua', input._custom_ua)
         return input.value?.trim()
       },
+      slot: 'userAgent',
       preview: {
         label: 'User Agent',
       },
     },
     {
-      label: $t('搜索引擎'),
-      name: 'searchEngine',
-      type: 'select',
-      class: '!w-1/2',
-      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
-      options: searchEngineOptions,
-      filter: false,
-      required: true,
+      type: 'textarea',
+      label: 'Cookies',
+      placeholder: $t('请以 JSON 格式输入 Cookies'),
+      name: 'cookie',
+      value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
+      formatValue: (input: any) => safeParseJSON(input.value, []),
+      slot: 'cookies',
     },
     {
       separator: true,
@@ -421,15 +507,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'defaultOpenUrl',
       value: data.defaultOpenUrl ?? [],
       slot: 'urls',
-    },
-    {
-      type: 'textarea',
-      label: 'Cookies',
-      placeholder: $t('请以 JSON 格式输入 Cookies'),
-      name: 'cookie',
-      value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
-      slot: 'cookies',
-      formatValue: (input: any) => safeParseJSON(input.value, []),
     },
   ])
 
@@ -701,7 +778,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: data.openHeight ?? '1000',
         },
       ],
-      visible: initInputVisible(data.positionSwitch, true, true),
+      // Firefox 下隐藏窗口大小输入（openWidth/openHeight 由 original 兜底传递）
+      visible: !isFirefox && initInputVisible(data.positionSwitch, true, true),
       slot: 'windowOpenSize',
     },
     {
@@ -709,8 +787,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'windowRatioPosition',
       value: data.windowRatioPosition || '0,0',
       tooltip: $t('窗口打开时在屏幕中的初始位置'),
-      visible: initInputVisible(data.positionSwitch, true, true),
+      // Firefox 下隐藏窗口位置（由 original 兜底传递）
+      visible: !isFirefox && initInputVisible(data.positionSwitch, true, true),
       slot: 'windowRatioPosition',
+    },
+    {
+      label: $t('搜索引擎'),
+      name: 'searchEngine',
+      type: 'select',
+      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
+      options: searchEngineOptions,
+      filter: false,
+      required: true,
+      visible: !isFirefox, // Firefox 内核不支持搜索引擎设置，Chrome 专有
     },
   ])
 
@@ -883,6 +972,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('真实'), value: 'real' },
         { label: $t('禁止'), value: 'block' },
       ],
+      // Firefox 不支持 WebGPU 指纹，Chrome 专有
+      visible: !isFirefox,
     },
     {
       type: 'selectButton',
@@ -897,14 +988,24 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         label: 'Canvas',
       },
       change: async (input: any) => {
+        const coreType = getFormCoreType(windowInputs)
         if (input.value) {
-          const { getCanvasContextNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
-            getCanvasContextNoiseValue: [],
-          })
-          Object.assign(original, { canvasValue: getCanvasContextNoiseValue })
+          if (isFirefoxCoreType(coreType)) {
+            // Firefox 使用 canvasValueV2（0-1 浮点噪声）
+            Object.assign(original, { canvasValueV2: Math.random() })
+            Reflect.deleteProperty(original, 'canvasValue')
+          }
+          else {
+            const { getCanvasContextNoiseValue } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
+              getCanvasContextNoiseValue: [],
+            })
+            Object.assign(original, { canvasValue: getCanvasContextNoiseValue })
+            Reflect.deleteProperty(original, 'canvasValueV2')
+          }
         }
         else {
           Reflect.deleteProperty(original, 'canvasValue')
+          Reflect.deleteProperty(original, 'canvasValueV2')
         }
       },
     },
@@ -945,7 +1046,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         if (input.value) {
           const osInput = findInputByName(windowInputs, 'os')
           const { getSpeechSynthesis } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
-            getSpeechSynthesis: [original.os || osInput?.value?.value],
+            getSpeechSynthesis: [original.os || osInput?.value?.value, getFormCoreType(windowInputs)],
           })
           Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
         }
@@ -1003,6 +1104,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: $t('媒体设备'),
       },
+      // Firefox 不支持媒体设备指纹，Chrome 专有
+      visible: !isFirefox,
     },
     {
       type: 'selectButton',
@@ -1019,6 +1122,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: $t('设备名称'),
       },
+      // Firefox 不支持设备名称指纹，Chrome 专有
+      visible: !isFirefox,
     },
     {
       type: 'text',
@@ -1027,7 +1132,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.deviceName,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.deviceNameSwitch, true, true),
+      // Firefox 不支持设备名称指纹；Chrome 下受父控件 deviceNameSwitch 约束
+      visible: !isFirefox && initInputVisible(data.deviceNameSwitch, true, true),
       iconClick: () => {
         setDeviceName(inputsGroup)
       },
@@ -1041,12 +1147,15 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('真实'), value: false },
         { label: $t('自定义'), value: true },
       ],
+      // Firefox 不支持 MAC 地址指纹，Chrome 专有
+      visible: !isFirefox,
       change: async (input: any) => {
         const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
+        const coreType = getFormCoreType(windowInputs)
         macAddrInput.visible = input.value === true
 
         if (macAddrInput.visible) {
-          macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data }) => data[0]?.macAddr)
+          macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1, coreType } as any).then(({ data }) => data[0]?.macAddr)
         }
         else {
           const macAddr = await globalThis.electronAPI.send('app:getMacAddress')
@@ -1064,10 +1173,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.macAddr,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.macInfo, true, true),
+      // Firefox 不支持 MAC 地址指纹；Chrome 下受父控件 macInfo 约束
+      visible: !isFirefox && initInputVisible(data.macInfo, true, true),
       iconClick: async () => {
         const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
-        macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data }) => data[0]?.macAddr)
+        const coreType = getFormCoreType(windowInputs)
+        macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1, coreType } as any).then(({ data }) => data[0]?.macAddr)
       },
     },
     {
@@ -1107,6 +1218,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: $t('SSL指纹设置'),
       },
+      // Firefox 不支持 SSL 指纹设置，Chrome 专有
+      visible: !isFirefox,
     },
     {
       type: 'multiSelect',
@@ -1120,7 +1233,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       optionValue: 'value',
       filter: true,
       maxSelectedLabels: 1,
-      visible: initInputVisible(data.disableSsl, true, false),
+      // Firefox 不支持 SSL 指纹设置；Chrome 下受父控件 disableSsl 约束
+      visible: !isFirefox && initInputVisible(data.disableSsl, true, false),
     },
     {
       type: 'selectButton',
@@ -1158,6 +1272,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: $t('硬件加速模式'),
       },
+      visible: true,
     },
     {
       type: 'selectButton',
@@ -1406,6 +1521,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'syncExtensions',
       value: data.syncExtensions ?? false,
       options: genSwitchOptions(),
+      // Firefox 扩展机制与 Chrome 完全不同，Chrome 专有
+      visible: !isFirefox,
     },
     {
       type: 'selectButton',
@@ -1533,6 +1650,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('是否开启谷歌登录'),
       name: 'enableGoogleLogin',
       value: data.enableGoogleLogin ?? 2,
+      visible: !isFirefox,
       options: [
         { label: $t('开启'), value: 1 },
         { label: $t('关闭'), value: 0 },
@@ -1557,7 +1675,90 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     },
   ])
 
+  /** 切换内核类型时同步 Chrome 专有字段显隐与 browserVersion */
+  async function syncCoreTypeRelatedFields(coreType: string, os?: string, osVersion?: string) {
+    const isFirefox = isFirefoxCoreType(coreType)
+    const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
+
+    // 切换内核时同步 Chrome 专有指纹字段的显隐
+    // useGpu / sandboxPermission 已通过 user.js prefs 在 Firefox 上实现，无需隐藏
+    const chromeOnlyFingerFields = ['webGpu', 'deviceInfo', 'deviceNameSwitch', 'macInfo']
+    filterInputsByNames(highLevelInputs, chromeOnlyFingerFields).forEach((ipt) => {
+      ipt.visible = !isFirefox
+    })
+    // deviceName / macAddr 的显隐额外受父控件状态约束
+    const deviceNameInput = findInputByName(highLevelInputs, 'deviceName')
+    if (deviceNameInput) {
+      const deviceNameSwitchInput = findInputByName(highLevelInputs, 'deviceNameSwitch')
+      deviceNameInput.visible = !isFirefox && deviceNameSwitchInput?.value === true
+    }
+    const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
+    if (macAddrInput) {
+      const macInfoInput = findInputByName(highLevelInputs, 'macInfo')
+      macAddrInput.visible = !isFirefox && macInfoInput?.value === true
+    }
+
+    // searchEngine：Firefox 内核不支持搜索引擎设置，Chrome 专有
+    const searchEngineInput = findInputByName(windowInputs, 'searchEngine')
+    if (searchEngineInput)
+      searchEngineInput.visible = !isFirefox
+
+    // windowOpenSize：Firefox 下隐藏，值由 original 兜底传递
+    const windowOpenSizeInput = findInputByName(basicInputs, 'windowOpenSize')
+    if (windowOpenSizeInput) {
+      const positionSwitchInput = findInputByName(basicInputs, 'positionSwitch')
+      windowOpenSizeInput.visible = !isFirefox && positionSwitchInput?.value === true
+    }
+    const windowRatioPositionInput = findInputByName(basicInputs, 'windowRatioPosition')
+    if (windowRatioPositionInput) {
+      const positionSwitchInput = findInputByName(basicInputs, 'positionSwitch')
+      windowRatioPositionInput.visible = !isFirefox && positionSwitchInput?.value === true
+    }
+
+    // disableSsl / disableSslList：Firefox 不支持 SSL 指纹设置，Chrome 专有
+    const disableSslInput = findInputByName(highLevelInputs, 'disableSsl')
+    if (disableSslInput)
+      disableSslInput.visible = !isFirefox
+    const disableSslListInput = findInputByName(highLevelInputs, 'disableSslList')
+    if (disableSslListInput)
+      disableSslListInput.visible = !isFirefox && disableSslInput?.value === true
+
+    // syncExtensions：getNeedSyncLocalFileMap 的 Firefox 分支不包含此 key，Chrome 专有
+    const syncExtensionsInput = findInputByName(otherInputs, 'syncExtensions')
+    if (syncExtensionsInput)
+      syncExtensionsInput.visible = !isFirefox
+
+    if (browserVersionInput) {
+      const showBrowserVersion = !isFirefox && userConfig?.uaModeSwitch === UaStrictMode.close
+      browserVersionInput.visible = showBrowserVersion
+      if (isFirefox) {
+        browserVersionInput.value = []
+        browserVersionInput._oldValue = []
+        browserVersionInput.options = []
+      }
+      else if (showBrowserVersion && os && osVersion) {
+        const options = await getBrowserVersion({ os, osVersion })
+        browserVersionInput.options = options
+        browserVersionInput.value = options.map(item => item.value)
+        browserVersionInput._oldValue = browserVersionInput.value.slice()
+      }
+    }
+
+    // 切换内核时重新生成 Speech Voices：Chrome 使用 Google TTS，Firefox 使用 Windows SAPI，列表完全不同
+    const speechVoicesInput = findInputByName(highLevelInputs, 'speechVoices')
+    if (speechVoicesInput?.value === true) {
+      const osInput = findInputByName(windowInputs, 'os')
+      const currentOs = original.os || osInput?.value?.value
+      const { getSpeechSynthesis } = await globalThis.electronAPI.send('util:callRandomFingerprintFunc', {
+        getSpeechSynthesis: [currentOs, coreType],
+      })
+      Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
+    }
+  }
+
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])
+
+  await syncCoreTypeRelatedFields(initialCoreType, osValue?.value, osVersionValue?.value)
 
   return [inputsGroup, original]
 }
@@ -1594,8 +1795,17 @@ export function getDefaultValue() {
     enablePlugin: false,
     enablePluginList: [],
     mediaDevice: false,
+    disableSsl: false,
     disableSslList: [],
     isPositionBaseIp: true,
+    // Chrome-only 字段的兜底默认值：Firefox 下这些字段被隐藏，
+    // 通过 original 中的默认值保证提交时数据完整，不丢失字段
+    webGpu: 'webgl',
+    deviceInfo: true,
+    deviceNameSwitch: true,
+    macInfo: true,
+    syncExtensions: false,
+    enableGoogleLogin: 2,
   }
 }
 

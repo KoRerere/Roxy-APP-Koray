@@ -5,7 +5,9 @@ import type { Driver } from 'driver.js'
 interface DynamicTableType {
   isBatch: Ref<boolean>
   createCount: Ref<number>
-  driverObj: Ref<Driver>
+  driverObj?: Ref<Driver>
+  presetTemplate?: Ref<any>
+  oneClickSettings?: Ref<any[]>
 }
 
 const key = Symbol('dynamic-table')

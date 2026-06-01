@@ -4,7 +4,7 @@ import ProviderExternal from './provider-external.vue'
 import { useProxyStore } from '/@/stores/proxy'
 import type { BuyEntryType } from '/@/enums/proxy'
 
-const { provider } = defineProps<{
+const { provider, entryType } = defineProps<{
   provider?: Record<string, any>
   entryType?: BuyEntryType
 }>()
@@ -28,7 +28,7 @@ async function getProviders() {
   const data = await getProxyVendors()
   if (!data)
     return
-  providers.value = data.map(item => ({ title: item.vendorName, value: item.id, image: item.vendorIcon, isJump: item.isJump, data: item }))
+  providers.value = data.filter(item => entryType ? !item.isJump : true).map(item => ({ title: item.vendorName, value: item.id, image: item.vendorIcon, isJump: item.isJump, data: item }))
   activeKey.value = provider?.proxyProviderId || providers.value[0]?.value
 
   switchProvider()

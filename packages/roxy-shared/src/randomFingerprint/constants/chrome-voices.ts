@@ -1,4 +1,9 @@
-export const voices = [
+/**
+ * Chrome 浏览器通过 speechSynthesis API 暴露的语音列表。
+ * Chrome 内置 Google TTS 远程语音（isLocalService: false），
+ * 另外会附加少量操作系统本地语音（由 getSpeechSynthesis 逻辑随机注入）。
+ */
+export const chromeVoices = [
   {
     name: 'Google Bahasa Indonesia',
     lang: 'id-ID',

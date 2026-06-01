@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import type { UserAnalysisWindowInfoCreatePayload } from '@roxy/backend-api'
 
 import { ExcelAccept, TextAccept } from '/@/utils/constants'
 import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } from '../utils'
@@ -81,13 +82,13 @@ async function handleBeforeUpload(rawFile: any) {
     return
   }
 
-  const fileAnalyzeData = {
+  const fileAnalyzeData: UserAnalysisWindowInfoCreatePayload = {
     fileName,
     excelData,
   }
 
   try {
-    const { code, msg } = await API.window.userAnalysisWindowInfoCreate(fileAnalyzeData as any)
+    const { code, msg } = await API.window.userAnalysisWindowInfoCreate(fileAnalyzeData)
 
     if (code === 0) {
       fileData.status = true

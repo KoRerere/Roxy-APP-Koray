@@ -61,6 +61,48 @@ const config = isDev
     }
 
 // 构建 extraResources 配置
+
+/**
+ * 把当前打包目标平台/架构对应的 @napi-rs/canvas Skia 二进制和 ICU 数据
+ * 直接拷进 node_modules/@napi-rs/canvas/ 主目录。
+ *
+ * 每个平台子包包含两个文件：
+ *  - skia.{platform}.node  — Skia NAPI 二进制，js-binding.js 优先以 require('./skia.{platform}.node') 加载
+ *  - icudtl.dat            — ICU 文字数据，Skia 文本渲染（drawText）依赖此文件
+ *
+ * pnpm 把 napi 子包放在 .pnpm store 里，这里直接定位到 store 路径取文件。
+ */
+function canvasPlatformBinaries(): NonNullable<Configuration['extraResources']> {
+  const matrix: Record<string, string[]> = {
+    win32: ['win32-x64-msvc', 'win32-ia32-msvc', 'win32-arm64-msvc'],
+    darwin: ['darwin-x64', 'darwin-arm64'],
+    linux: ['linux-x64-gnu', 'linux-x64-musl', 'linux-arm64-gnu', 'linux-arm64-musl', 'linux-arm-gnueabihf'],
+  }
+  const platforms = matrix[platform] ?? []
+  if (platforms.length === 0)
+    return []
+  // 解析 @napi-rs/canvas 实际安装版本，拼出 .pnpm store 目录名
+  const canvasPkgPath = path.join(workDir, 'node_modules/@napi-rs/canvas/package.json')
+  const canvasVersion = JSON.parse(readFileSync(canvasPkgPath, 'utf-8')).version as string
+  return platforms.flatMap((suffix, idx) => {
+    const base = `../../node_modules/.pnpm/@napi-rs+canvas-${suffix}@${canvasVersion}/node_modules/@napi-rs/canvas-${suffix}`
+    const entries: NonNullable<Configuration['extraResources']> = [
+      {
+        from: `${base}/skia.${suffix}.node`,
+        to: `node_modules/@napi-rs/canvas/skia.${suffix}.node`,
+      },
+    ]
+    // icudtl.dat 各平台子包内容相同，只需从第一个 suffix 拷一次
+    if (idx === 0) {
+      entries.push({
+        from: `${base}/icudtl.dat`,
+        to: `node_modules/@napi-rs/canvas/icudtl.dat`,
+      })
+    }
+    return entries
+  })
+}
+
 const extraResources: NonNullable<Configuration['extraResources']> = [
   {
     from: 'node_modules/font-list',
@@ -74,6 +116,15 @@ const extraResources: NonNullable<Configuration['extraResources']> = [
       'diskspace-native.win32-x64-msvc.node',
     ],
   },
+  // @napi-rs/canvas 走运行时 require（webpack externals 已声明），
+  // 配合 Skia napi 平台 .node 二进制完成图标绘制（详见 canvasPlatformBinaries 注释）
+  // js-binding.js 是加载 .node 的入口，load-image/node-canvas/geometry 是运行时依赖，均需打包
+  {
+    from: 'node_modules/@napi-rs/canvas',
+    to: 'node_modules/@napi-rs/canvas',
+    filter: ['package.json', 'index.js', 'js-binding.js', 'load-image.js', 'node-canvas.js', 'geometry.js'],
+  },
+  ...canvasPlatformBinaries(),
   {
     from: '../../node_modules/bytenode',
     to: 'node_modules/bytenode',
@@ -194,6 +245,9 @@ const options: Configuration = {
     'dist/web',
     'dist/bin',
     'dist/starter.js',
+    // resources/firefox 含 icon.ico，由 @napi-rs/canvas (Skia native) 读取；
+    // Skia 走 OS 文件 API，绕过 Electron asar 虚拟 FS，必须解包到 app.asar.unpacked
+    'resources/firefox',
   ],
   extraMetadata: {
     version,

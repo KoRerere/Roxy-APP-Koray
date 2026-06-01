@@ -143,14 +143,14 @@
 	--component-dropdown-bg-active: var(--primitives-blue-600);
 	--component-dropdown-text-active: var(--primitives-netural-0);
 	--component-dropdown-icon-active: var(--primitives-netural-0);
-	--component-skeleton-bg-overlay: #363d45;
-	--component-skeleton-bg: var(--primitives-netural-800);
 	--component-progress-bg: var(--primitives-netural-700);
 	--component-progress-success: var(--primitives-green-400);
 	--component-progress-info: var(--primitives-blue-400);
 	--component-marquee-indicator: var(--primitives-netural-700);
 	--component-marquee-indicator-active: var(--colors-background-bg-brand);
 	--component-collapse-bg: var(--primitives-netural-800);
+	--component-skeleton-bg-overlay: #363d45;
+	--component-skeleton-bg: var(--primitives-netural-800);
 	--component-scrollbar-bg: var(--primitives-netural-800);
 	--component-scrollbar-border: var(--colors-border-border-subtle);
 	--component-scrollbar-indicator: var(--primitives-netural-600);
@@ -193,6 +193,17 @@
 	--component-button-pale-icon: var(--colors-icon-icon-secondary);
 	--component-button-pale-icon-hover: var(--colors-icon-icon-secondary-hover);
 	--component-button-pale-icon-inactive: var(--colors-icon-icon-inactive);
+	--component-segment-bg-action: #00263d;
+	--component-segment-bg-tab: var(--primitives-netural-900);
+	--component-segment-bg-selection: var(--primitives-netural-800);
+	--component-segment-bg-selection-active: var(--primitives-netural-700);
+	--component-segment-border-selection-active: var(--primitives-netural-600);
+	--component-segment-text: var(--colors-text-text-secondary);
+	--component-tooltip-action-bg: var(--component-tooltip-bg);
+	--component-tooltip-bg: var(--primitives-netural-700);
+	--component-tooltip-text-primary: var(--primitives-netural-0);
+	--component-tooltip-text-secondary: var(--primitives-netural-200);
+	--component-tooltip-divider: var(--primitives-netural-600);
 	--component-table-bg-header: var(--primitives-netural-800);
 	--component-table-border-header: var(--colors-border-border-subtle);
 	--component-table-bg-hover: var(--primitives-netural-800);
@@ -207,16 +218,6 @@
 	--component-table-bg-updated-hover: var(--primitives-green-800);
 	--component-table-border-updated: var(--primitives-green-700);
 	--component-table-border-updated-hover: var(--primitives-green-600);
-	--component-segment-bg-tab: var(--primitives-netural-900);
-	--component-segment-bg-selection: var(--primitives-netural-800);
-	--component-segment-bg-selection-active: var(--primitives-netural-700);
-	--component-segment-border-selection-active: var(--primitives-netural-600);
-	--component-segment-text: var(--colors-text-text-secondary);
-	--component-tooltip-action-bg: var(--component-tooltip-bg);
-	--component-tooltip-bg: var(--primitives-netural-700);
-	--component-tooltip-text-primary: var(--primitives-netural-0);
-	--component-tooltip-text-secondary: var(--primitives-netural-200);
-	--component-tooltip-divider: var(--primitives-netural-600);
 	--component-rainbow-Yellow: #ffdd19;
 	--component-rainbow-Indigo: #0064d6;
 	--component-rainbow-Violet: #9747ff;
@@ -230,6 +231,8 @@
 	--pattern-resources-border-card-inactive: var(--colors-border-border-inactive);
 	--pattern-resources-bg-card-active: var(--colors-background-bg-block);
 	--pattern-resources-border-card-active: var(--colors-border-border-inactive);
+	--pattern-empty-bg-start: rgba(17, 163, 253, 0.8000);
+	--pattern-empty-bg-end: rgba(17, 163, 253, 0.0000);
 	--pattern-tour-tips-bg: var(--colors-background-bg-brand);
 	--pattern-tour-tips-border: var(--colors-border-border-brand);
 	--pattern-tour-mask-bg: rgba(36, 38, 41, 0.9000);
@@ -244,8 +247,6 @@
 	--pattern-tutorial-video-bg-end: #3c0e3a;
 	--pattern-tutorial-video-bg-icon: #efbff6;
 	--pattern-tutorial-video-bg-play: #cb4fe7;
-	--pattern-empty-bg-start: rgba(17, 163, 253, 0.8000);
-	--pattern-empty-bg-end: rgba(17, 163, 253, 0.0000);
 	--pattern-editor-key: #79c0ff;
 	--pattern-editor-value: #a5d6ff;
 	--pattern-editor-btn-bg: var(--primitives-netural-700);
@@ -372,6 +373,9 @@
 	--pattern-roxyclaw-border: #892802;
 	--pattern-roxyclaw-sidenav: #ee4f1f;
 	--pattern-roxyclaw-text: #ee4f1f;
+	--pattern-referral-gradient-01: #217275;
+	--pattern-referral-gradient-02: #4432aa;
+	--pattern-referral-gradient-03: #8c6b6b;
 	--bg-start: #ffffff;
 	--campaign-netflix-text-announcement: #ffffff;
 	--campaign-netflix-bg-announcement: var(--colors-background-bg-brand);
@@ -381,5 +385,9 @@
 	--campaign-giftcard-bg-giftcard: #5c2161;
 	--campaign-giftcard-icon-giftcard: #ffffff;
 	--campaign-giftcard-text-giftcard-note: #cbaacc;
-	--campaign-giftcard-border-giftcard-select: #e469ff
+	--campaign-giftcard-border-giftcard-select: #e469ff;
+	--campaign-mayFreedom-bg-gradient-1: #4096ff;
+	--campaign-mayFreedom-bg-gradient-1-hover: #1f84ff;
+	--campaign-mayFreedom-bg-gradient-2: #01cab3;
+	--campaign-mayFreedom-bg-gradient-2-hover: #01a795
 }

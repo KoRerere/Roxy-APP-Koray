@@ -9,7 +9,17 @@
       "WebSearch",
       "Bash(npx tsc *)",
       "Bash(git stash *)",
-      "Bash(pnpm lint *)"
+      "Bash(pnpm lint *)",
+      "Bash(node *)",
+      "Bash(pnpm why *)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm build:dev)",
+      "Bash(pnpm tsx *)",
+      "Bash(powershell *)",
+      "Bash(explorer *)"
     ]
   },
   "enabledPlugins": {

@@ -20,7 +20,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
   } = options
 
   if (!executablePath) {
-    throw new Error('executablePath is required')
+    throw new Error($t('Firefox 内核路径未指定'))
   }
 
   if (relaunch) {
@@ -37,7 +37,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
   // 等待获取 WebSocket URL
   const wsUrl = await new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
-      reject(new Error('Failed to get WebSocket URL from Firefox'))
+      reject(new Error($t('Firefox 启动超时，未能获取调试端口')))
     }, 30000)
 
     firefoxProcess.stdout?.on('data', (data) => {
@@ -62,13 +62,18 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
       reject(error)
     })
 
-    firefoxProcess.on('exit', (code, _signal) => {
+    firefoxProcess.on('exit', (code, signal) => {
       clearTimeout(timeout)
       if (code !== 0 && code !== null) {
-        reject(new Error(`Firefox process exited with code ${code}`))
+        const exitDesc = code !== null ? `退出码 ${code}` : `信号 ${signal}`
+        reject(new Error($t('Firefox 进程意外退出（{exitDesc}），未能获取调试端口', { exitDesc })))
       }
     })
   })
+
+  // Firefox 在打印 "WebDriver BiDi listening on ..." 时，WebSocket 服务器可能尚未完全
+  // bind 完毕，立即连接会触发竞态失败。等待 300ms 让系统完成端口监听。
+  await new Promise(resolve => setTimeout(resolve, 300))
 
   try {
     // 创建 BiDi 客户端
@@ -77,10 +82,8 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     // 连接到 BiDi WebSocket
     await bidiClient.connect(wsUrl)
 
-    // 创建会话
-    const sessionResult = await bidiClient.sendCommand('session.new', {
-      capabilities: {},
-    })
+    // 创建会话（带重试，Firefox 窗口就绪前 session.new 会失败）
+    const sessionResult = await bidiClient.createSessionWithRetry()
 
     const sessionId = sessionResult.sessionId
     const capabilities = sessionResult.capabilities
@@ -134,11 +137,9 @@ export async function connect(options: { browserWSEndpoint: string, sessionId?: 
     let actualSessionId = sessionId
     let capabilities
 
-    // 如果没有提供 sessionId，尝试创建新会话
+    // 如果没有提供 sessionId，带重试创建新会话
     if (!actualSessionId) {
-      const sessionResult = await bidiClient.sendCommand('session.new', {
-        capabilities: {},
-      })
+      const sessionResult = await bidiClient.createSessionWithRetry()
       actualSessionId = sessionResult.sessionId
       capabilities = sessionResult.capabilities
     }

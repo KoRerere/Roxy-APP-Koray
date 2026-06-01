@@ -2,8 +2,9 @@ import ExcelJS from 'exceljs'
 import { format } from 'date-fns'
 
 import { API } from '/@/api'
-import { getDictMap, safeParseJSON } from '/@/utils'
+import { getDictMap, isDev, safeParseJSON } from '/@/utils'
 import { parseIntelligent } from '/@/views/account/create/utils'
+import { CoreType } from '/@/enums'
 
 interface DownloadTemplateOptions {
   afterAddColumns?: (columns: any[]) => any[]
@@ -108,6 +109,10 @@ async function getExportColumns() {
     return acc
   }, { os: [] as string[], version: [] as string[] })
 
+  // 从字典中分别获取 Chrome 和 Firefox 的可用内核版本号列表
+  const chromeCoreVersion = $dict_map.coreVersion?.map(item => item.value) ?? []
+  const firefoxCoreVersion = $dict_map.firefoxCoreVersion?.map(item => item.value) ?? []
+
   let searchEngine: string[] = []
   if (searchEngineResult.code === 0 && searchEngineResult.data) {
     searchEngine = searchEngineResult.data.map((item: any, index) => (`${exampleText}${index + 1}: ${item.code}`))
@@ -128,6 +133,23 @@ async function getExportColumns() {
       placeholder: $t('操作系统（必填项）\n如: Windows'),
       example: os.join('\n'),
     },
+    ...(isDev
+      ? [
+          {
+            header: $t('浏览器内核'),
+            key: 'coreType',
+            required: true,
+            placeholder: $t('浏览器内核（必填项）\n如: Chrome'),
+            example: [CoreType.Chrome, CoreType.Firefox].map(item => `${exampleText}: ${item}`).join('\n'),
+          },
+          {
+            header: $t('内核版本'),
+            key: 'coreVersion',
+            placeholder: $t('内核版本，如：{version}\n每行只能填写一个,留空则自动使用对应内核最新版本', { version: chromeCoreVersion[0] ?? '149' }),
+            example: `${$t('可用内核版本:')}\nRoxyChrome: ${chromeCoreVersion.join('、')}\nRoxyFirefox: ${firefoxCoreVersion.join('、')}`,
+          },
+        ]
+      : []),
     {
       header: $t('系统版本'),
       key: 'osVersion',
@@ -226,7 +248,13 @@ async function getExportColumns() {
       placeholder: $t('浏览器窗口打开时地址栏使用的搜索引擎，留空则默认使用Google!'),
       example: searchEngine.join('\n'),
     },
-  ]
+  ].filter((n) => {
+    // TODO
+    if (!isDev) {
+      return n.key !== 'coreType' && n.key !== 'coreVersion'
+    }
+    return true
+  })
 }
 
 export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
@@ -305,6 +333,9 @@ export async function downloadTextTemplate() {
     {
       windowName: 'name1',
       os: 'Windows',
+      ...(isDev
+        ? { coreType: 'Chrome', coreVersion: '149' }
+        : {}),
       osVersion: 11,
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:80:username:password',
@@ -318,6 +349,9 @@ export async function downloadTextTemplate() {
     {
       windowName: 'name2',
       os: 'iOS',
+      ...(isDev
+        ? { coreType: 'Firefox', coreVersion: '146' }
+        : {}),
       osVersion: '17.0',
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:81:username:password',

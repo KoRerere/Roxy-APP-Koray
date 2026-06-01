@@ -6,6 +6,7 @@ import ejs from 'ejs'
 import { debounce } from 'es-toolkit'
 import { readFile, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { appConfig } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
@@ -58,7 +59,11 @@ export class AfterLaunchTask {
    * 参考：https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-getWindowBounds
    */
   private async startWindowBoundsSync() {
-    if (!this.browser?.client)
+    if (!this.browser?.client || this.browserItem.isFirefox)
+      return
+
+    const Browser = this.browser.client.Browser
+    if (!Browser?.getWindowForTarget || typeof Browser.getWindowBounds !== 'function')
       return
 
     try {
@@ -72,7 +77,7 @@ export class AfterLaunchTask {
       const targetId = firstPage.target()._targetId
 
       // 通过 Browser.getWindowForTarget 获取当前窗口 ID（只需获取一次）
-      const { windowId } = await this.browser.client.Browser.getWindowForTarget({ targetId })
+      const { windowId } = await Browser.getWindowForTarget({ targetId })
 
       this.windowBoundsTimer = setInterval(async () => {
         // 若 CDP client 已断开，停止定时器
@@ -82,7 +87,7 @@ export class AfterLaunchTask {
           return
         }
         try {
-          const { bounds } = await this.browser.client.Browser.getWindowBounds({ windowId })
+          const { bounds } = await Browser.getWindowBounds({ windowId })
           store.waitingRestoreWindowBounds ??= {}
           store.waitingRestoreWindowBounds[this.browserItem.winInfo.dirId!] = {
             left: bounds.left!,
@@ -142,6 +147,75 @@ export class AfterLaunchTask {
     return lumiLogin
   }
 
+  /**
+   * 立即执行一次 cookie 保存。
+   * Firefox：BiDi session 已在启动时导入完成后释放，直接从 cookies.sqlite 读取。
+   * Chrome：通过 CDP Storage.getCookies 获取。
+   */
+  async saveCookiesNow(): Promise<void> {
+    if (this.browserItem.isFirefox) {
+      // Firefox session 已释放，通过 SQLite 文件读取最新 cookies
+      try {
+        this.cookies = await this.readCookiesFromFirefoxSqlite()
+        console.debug(`[AfterLaunchTask] saveCookiesNow (Firefox SQLite): ${this.cookies.length} cookies`)
+      }
+      catch (error) {
+        console.error('[AfterLaunchTask] saveCookiesNow (Firefox) failed:', error)
+      }
+      return
+    }
+    if (!this.browser.client)
+      return
+    try {
+      const { cookies } = await this.browser.client.Storage.getCookies()
+      this.cookies = cookies as Protocol.Network.Cookie[]
+      console.debug(`[AfterLaunchTask] saveCookiesNow: ${cookies.length} cookies saved`)
+    }
+    catch (error) {
+      console.error('[AfterLaunchTask] saveCookiesNow failed:', error)
+    }
+  }
+
+  /**
+   * 直接从 Firefox profile 目录的 cookies.sqlite 读取 cookies。
+   * Firefox 使用 WAL 模式，SQLite 并发读安全，适用于 BiDi session 已释放时。
+   * Firefox moz_cookies.sameSite 枚举值：0=UNSET, 1=None, 2=Lax, 3=Strict
+   * 注意：此处读出的 expiry 为秒级时间戳（Firefox 原生格式），上传后再次导入时 < 1e10，
+   *       setCookies 中的 ms→s 转换逻辑不会错误处理（两者阈值区分安全）。
+   */
+  private async readCookiesFromFirefoxSqlite(): Promise<Protocol.Network.Cookie[]> {
+    const cookiePath = join(this.browserItem.userDataDir, 'cookies.sqlite')
+    const db = new DatabaseSync(cookiePath, { timeout: 5000 })
+    try {
+      const rows = db.prepare(
+        'SELECT name, value, host, path, expiry, isSecure, isHttpOnly, sameSite FROM moz_cookies',
+      ).all() as any[]
+      // Firefox moz_cookies.sameSite: 0=UNSET, 1=None, 2=Lax, 3=Strict
+      // UNSET 映射为 undefined，不设置 sameSite 属性（与浏览器默认行为一致）
+      const sameSiteMap: Record<number, string | undefined> = { 0: undefined, 1: 'None', 2: 'Lax', 3: 'Strict' }
+      return rows.map((row) => {
+        const sameSite = sameSiteMap[row.sameSite as number]
+        return {
+          name: row.name as string,
+          value: row.value as string,
+          domain: row.host as string,
+          path: row.path as string,
+          // expiry=0 表示 session cookie，映射为 -1（CDP 约定）
+          expires: (row.expiry as number) || -1,
+          httpOnly: Boolean(row.isHttpOnly),
+          secure: Boolean(row.isSecure),
+          // sameSite=undefined 时不包含该属性，避免回写时因缺少 secure 被 Firefox 拒绝
+          ...(sameSite !== undefined ? { sameSite } : {}),
+          session: !(row.expiry as number),
+          size: ((row.name as string) + (row.value as string)).length,
+        } as Protocol.Network.Cookie
+      })
+    }
+    finally {
+      db.close()
+    }
+  }
+
   /** 获取需要同步的数据 */
   async getUploadData() {
     const defaultOpenUrl = await this.getDefaultOpenUrl()
@@ -158,7 +232,7 @@ export class AfterLaunchTask {
 
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
-    const { cookie, syncCookie, clearCookie, allOpenUrl, dirId, openWorkbench } = this.browserItem.winInfo
+    const { cookie, syncCookie, clearCookie } = this.browserItem.winInfo
     const isFirefox = this.browserItem.isFirefox
 
     if (!this.browser || !this.browser.client) {
@@ -166,15 +240,8 @@ export class AfterLaunchTask {
       return
     }
 
+    // 所有标签页已通过命令行参数打开，此处只需导入 cookie 并重新加载
     const pages = await this.browser?.pages()
-
-    // Firefox 已经把 url 通过命令行启动了，第一页通常是 about:newtab，
-    // 这里不需要像 Chrome 一样关闭多余 tab
-    if (!isFirefox) {
-      pages?.slice(1).forEach(p => p.close().catch(() => {}))
-    }
-    const firstPage = pages?.at(0)
-    const validOpenUrl = allOpenUrl?.filter(url => url && this.browserItem.isValidURL(url)) || []
 
     const startTime = Date.now()
     // 导入 cookie
@@ -189,40 +256,28 @@ export class AfterLaunchTask {
       }
     }
 
-    const isOpenWorkbench = openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)
-
-    if (isOpenWorkbench) {
-      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
-      if (firstPage) {
-        const pageUrl = firstPage.url()
-        const alreadyOnDashboard = pageUrl.includes('/dashboard.html')
-        // Chrome/Firefox 启动参数已打开工作台：setCookies 后用 CDP 刷新即可，避免 location.replace 打断进行中的首屏导航
-        const navigate = alreadyOnDashboard
-          ? firstPage.goto.bind(firstPage)
-          : firstPage.gotoReplace.bind(firstPage)
-        navigate(dashboardUrl).catch((err) => {
-          console.log(`goto ${dashboardUrl} failed`, err)
-        })
-      }
-      else {
-        this.browser.newPage(dashboardUrl)
-      }
-    }
-
-    // Firefox 通过命令行已经把 url 全部打开了，不再走 newPage
-    if (!isFirefox) {
-      // 开启同步标签页后，同步标签页
-      await Promise.allSettled(validOpenUrl.map(url => this.browser.newPage(url)))
-
-      if (!isOpenWorkbench) {
-        if (validOpenUrl.length) {
-          firstPage?.close().catch(() => { })
-        }
-        else {
-          firstPage?.gotoReplace('chrome://newtab/').catch((err) => {
-            console.log(`goto chrome://newtab/ failed`, err)
+    // cookie 导入完成后重新加载所有已通过 CLI 打开的标签页，确保请求携带正确的 cookie。
+    // 注意：必须在 releaseSession() 之前完成导航，否则 BiDi 已断开，goto 会失败。
+    if (pages?.length) {
+      await Promise.all(pages.map(async (e) => {
+        const url = e.target().url()
+        if (url && url !== 'about:blank' && !url.startsWith('chrome://') && !url.startsWith('about:')) {
+          await e.goto(url).catch((err) => {
+            console.log(`goto ${url} failed`, err)
           })
         }
+      }))
+    }
+
+    // Firefox：页面重载完成后再释放 BiDi session，参考 AdsPower 不常驻 session 的做法。
+    // 后续 cookie 读取通过 cookies.sqlite 完成，不依赖 BiDi 连接。
+    if (isFirefox) {
+      try {
+        await this.browser.releaseSession()
+        console.log('[AfterLaunchTask] Firefox BiDi session released after page reload')
+      }
+      catch (err) {
+        console.warn('[AfterLaunchTask] Failed to release Firefox BiDi session:', err)
       }
     }
 
@@ -271,14 +326,16 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
-      this.cookieTimer = setInterval(() => {
-        saveCookies()
-      }, 3 * 1000)
 
-      // Firefox 走 BiDi storage.getCookies 轮询即可，不附加 CDP 网络层监听
+      // Firefox：BiDi session 已在 cookie 导入后释放，不使用 BiDi 轮询定时器。
+      // cookie 将在浏览器关闭时通过 saveCookiesNow() 从 cookies.sqlite 读取，参考 AdsPower 做法。
       if (isFirefox) {
         return
       }
+
+      this.cookieTimer = setInterval(() => {
+        saveCookies()
+      }, 3 * 1000)
 
       // 监听真正的网络响应 (Network.responseReceived)
 
@@ -358,7 +415,14 @@ export class AfterLaunchTask {
     // const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
     // const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))
 
-    const allPages = await this.browser?.pages()
+    // Firefox：BiDi session 在启动后已释放，无法通过 BiDi 获取页面，跳过 IP 变化检测
+    const isFirefoxSessionReleased = this.browserItem.isFirefox
+      && this.browser && !(this.browser as any).bidiClient?.isConnected?.()
+    if (isFirefoxSessionReleased) {
+      return
+    }
+
+    const allPages = await this.browser?.pages().catch(() => [] as any[])
     allPages.map(async (activePage) => {
       // if (activePage) {
       // 在网页里面发送检测 IP 请求

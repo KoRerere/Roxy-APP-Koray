@@ -35,7 +35,7 @@ async function submitScore() {
 
   const [scoreFmt, step, params] = star.value < STARS
   // 非五星评分允许重新评5星领取奖励
-    ? ['1_4_star', 'thanks', { ratingStatus: false, externalRatingStatus: false }]
+    ? ['1_4_star', 'thanks', { ratingStatus: true, externalRatingStatus: false }]
     : ['5_star', onboardingTaskStatus.value?.ratingStatus ? 'thanks' : 'reward', { externalRatingStatus: true, ratingStatus: !!onboardingTaskStatus.value?.ratingStatus }]
 
   mixpanelTrack('review_submit_rating', { review_rating_score: scoreFmt })

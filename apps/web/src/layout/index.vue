@@ -27,7 +27,7 @@ watchEffect(() => {
 const { currentLocale } = storeToRefs(useSimpleLocale())
 
 const imageSrc = computed(() => {
-  const suffix = ['zh-CN', 'en', 'ru'].includes(currentLocale.value!) ? currentLocale.value : 'zh-CN'
+  const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
   const theme = realTheme.value === 'dark' ? 'dark' : 'light'
   return `/images/roxybrowser_text_${theme}_${suffix}.svg`
 })

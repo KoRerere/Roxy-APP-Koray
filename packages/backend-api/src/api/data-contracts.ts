@@ -5577,6 +5577,74 @@ export interface UserMdfWindowProxyCheckBatchCreateData {
   msg: string;
 }
 
+export interface UserGetWindowOneClickConfigListListData {
+  code: number;
+  data: {
+    darkImage: string | null;
+    description: string;
+    hover: string;
+    id: number;
+    image: string | null;
+    preset: {
+      coreType: string;
+      coreVersion: string;
+      lastCountry: string;
+      os: string;
+      osVersion: string;
+      resolutionType: number;
+      resolutionX: number;
+      resolutionY: number;
+      windowName: string;
+      windowPlatformList: {
+        platformEfa: string;
+        platformIcon: string;
+        platformIconDark: string;
+        platformPassword: string;
+        platformUrl: string;
+        platformUserName: string;
+      }[];
+    };
+    proxyInfo: {
+      businessId: number;
+      proxyPriceList: {
+        proxyPrice: number;
+        proxyPurchaseMonths: number;
+      }[];
+      proxyProviderId: number;
+      purchaseCountry: {
+        label: string;
+        value: string;
+      };
+    };
+    title: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetWindowOneClickProxyInfoListListParams {
+  /** @example "2" */
+  proxyProviderId?: string;
+  /** @example "1" */
+  businessId?: string;
+}
+
+export interface UserGetWindowOneClickProxyInfoListListData {
+  code: number;
+  data: {
+    businessId: number;
+    proxyPriceList: {
+      proxyPrice: number;
+      proxyPurchaseMonths: number;
+    }[];
+    proxyProviderId: number;
+    purchaseCountry: {
+      label: string;
+      value: string;
+    };
+  }[];
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -6611,6 +6679,59 @@ export interface UserGetProxyDetailMergedListData {
     proxyProviderDiscountPrice: number;
     canRefund: boolean;
   };
+  msg: string;
+}
+
+export interface UserGetProxyCountryListByBusinessSceneListParams {
+  /** @example "1" */
+  sceneId?: string;
+  /**
+   *  0 正常购买 1 购买并使用
+   * @example "1"
+   */
+  entryType?: string;
+}
+
+export interface UserGetProxyCountryListByBusinessSceneListData {
+  code: number;
+  data: {
+    continent: string;
+    continent_name: string;
+    country_code: string;
+    country_name: string;
+    isHot: boolean;
+    isNew: boolean;
+    proxyTpye: string;
+    status: string;
+  }[];
+  msg: string;
+}
+
+export interface UserGetProxyProvidersByBusinessSceneCountryListParams {
+  /** @example "1" */
+  sceneId?: string;
+  /** @example "hk" */
+  countryCode?: string;
+  /**
+   *  0 正常购买 1 购买并使用
+   * @example "1"
+   */
+  entryType?: string;
+}
+
+export interface UserGetProxyProvidersByBusinessSceneCountryListData {
+  code: number;
+  data: {
+    hoverText: string;
+    id: number;
+    inventory: number;
+    proxyPriceList: {
+      proxyPrice: number;
+      proxyPurchaseMonths: number;
+    }[];
+    proxyProviderName: string;
+    typeName: string;
+  }[];
   msg: string;
 }
 
@@ -7795,6 +7916,7 @@ export interface UserGetUserPayInfoListData {
   code: number;
   data: {
     apiRate: number;
+    isDirectWhitelist: boolean;
     autoRecharge: number;
     autoRenewDiscount: number;
     autoRenewDowngrade: boolean;
@@ -7913,6 +8035,8 @@ export interface UserGetPurchaseRecordsInfoListData {
       showAmount?: boolean;
       /** 订单类型 */
       orderType?: string;
+      /** 操作者名字 */
+      operatorName?: string;
       /** 实际金额(美元) */
       actualAmount?: number;
       /** 支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败' */

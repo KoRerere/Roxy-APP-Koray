@@ -2,7 +2,7 @@ import axios from 'axios'
 import { store } from '/@/modules/store'
 
 const webDomains = JSON.parse(import.meta.env.VITE_WEB_BASE_URL)
-const defaultDomain = webDomains.find(domain => domain.includes('roxybrowser.cn'))
+const defaultDomain = webDomains.find(domain => domain.includes('roxybrowser.cn')) || webDomains[0]
 
 let lastWebDomain = ''
 

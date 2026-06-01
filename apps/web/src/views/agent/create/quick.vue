@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import SingleProxies from './components/single-proxies.vue';
+import SingleProxies from './components/single-proxies.vue'
 
 interface Props {
   data?: Record<string, any>
@@ -16,7 +16,7 @@ async function _onConfirm(params: Record<string, any>[]) {
 
 <template>
   <div class="min-w-96 h-full pa-4 pb-5">
-    <SingleProxies :data="data" :show-remark="showRemark" :onConfirm="_onConfirm"></SingleProxies>
+    <SingleProxies :data="data" :show-remark="showRemark" :on-confirm="_onConfirm" />
   </div>
 </template>
 
