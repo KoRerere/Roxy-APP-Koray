@@ -13,16 +13,21 @@ type UninstallStep = 'confirm' | 'feedback'
 
 const step = ref<UninstallStep>('confirm')
 const selectedReasons = ref<number[]>([])
-const feedbackText = ref('')
+/** 各选项对应的补充说明（选填），key 为 reason id */
+const reasonDetailTexts = reactive<Record<number, string>>({})
 const isSubmitting = ref(false)
 const confirmPanelEl = useTemplateRef('confirmPanelEl')
 const uninstallDialogEl = useTemplateRef('uninstallDialogEl')
+const reasonListScrollEl = useTemplateRef('reasonListScrollEl')
+const reasonItemRefs = new Map<number, HTMLElement>()
 
 const confirmBox = useElementBounding(confirmPanelEl)
 const feedbackBox = useElementBounding(uninstallDialogEl)
 
 const toast = useToast()
 const loading = ref(false)
+/** 下次有效尺寸测量时是否需要居中（弹窗首次出现 / step 切换） */
+const pendingCenter = ref(true)
 const appVersion = ref()
 const localNetwork = ref()
 const isMac = computed(() => getUserAgentOs() === 'macOS')
@@ -30,9 +35,6 @@ const isLinux = computed(() => getUserAgentOs() === 'Linux')
 
 // 卸载原因选项
 const uninstallReasons = ref<UserGetUninstallReasonQuestionListListData['data']>()
-const otherReasonId = computed(() => {
-  return uninstallReasons.value?.find(reason => reason.code === 'other')?.id
-})
 
 const image = computed(() => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
@@ -45,20 +47,29 @@ const imageBg = computed(() => {
 })
 
 watch(
-  [step, () => confirmBox.width.value, () => confirmBox.height.value, () => feedbackBox.width.value, () => feedbackBox.height.value],
+  [() => confirmBox.width.value, () => confirmBox.height.value, () => feedbackBox.width.value, () => feedbackBox.height.value],
   () => {
+    if (pendingCenter.value) {
+      return
+    }
     void nextTick(() => {
-      resizeWindowToActivePanel()
+      applyWindowResize()
     })
   },
   { flush: 'post' },
 )
 
+watch(step, () => {
+  pendingCenter.value = true
+})
+
 onMounted(() => {
-  nextTick(() => {
-    resizeWindowToActivePanel()
+  void (async () => {
+    pendingCenter.value = true
+    await centerActivePanel()
+    pendingCenter.value = false
     mixpanelTrack('before_uninstall_pop')
-  })
+  })()
 })
 
 async function mixpanelTrack(event_name: string, data?: Record<string, any>) {
@@ -81,16 +92,43 @@ async function mixpanelTrack(event_name: string, data?: Record<string, any>) {
   })
 }
 
-function resizeWindowToActivePanel() {
-  const w = step.value === 'confirm' ? confirmBox.width.value : feedbackBox.width.value
-  const h = step.value === 'confirm' ? confirmBox.height.value : feedbackBox.height.value
-  if (w < 2 || h < 2) {
+/** 等待 DOM 更新并完成布局绘制 */
+async function waitForPanelLayout() {
+  await nextTick()
+  await new Promise<void>(resolve => requestAnimationFrame(() => {
+    requestAnimationFrame(() => resolve())
+  }))
+}
+
+function getActivePanelSize() {
+  const el = step.value === 'confirm' ? confirmPanelEl.value : uninstallDialogEl.value
+  if (!el) {
+    return null
+  }
+  const { width, height } = el.getBoundingClientRect()
+  if (width < 2 || height < 2) {
+    return null
+  }
+  return { width: Math.round(width), height: Math.round(height) }
+}
+
+/** 仅调整窗口尺寸，不改变位置 */
+function applyWindowResize() {
+  const size = getActivePanelSize()
+  if (!size) {
     return
   }
-  globalThis.electronAPI.send('app:resizeWindow', {
-    width: Math.ceil(w),
-    height: Math.ceil(h),
-  })
+  globalThis.electronAPI.send('app:resizeWindow', size)
+}
+
+/** 在面板完全渲染后测量实际尺寸并居中 */
+async function centerActivePanel() {
+  await waitForPanelLayout()
+  const size = getActivePanelSize()
+  if (!size) {
+    return
+  }
+  globalThis.electronAPI.send('app:resizeWindow', { ...size, center: true })
 }
 
 /**
@@ -105,26 +143,69 @@ function continueToUse() {
  * 进入反馈收集步骤
  */
 async function continueToFeedback() {
+  loading.value = true
   step.value = 'feedback'
   await nextTick()
-  resizeWindowToActivePanel()
-  getUninstallReasonQuestionList()
+  await getUninstallReasonQuestionList()
 }
 
 async function getUninstallReasonQuestionList() {
   loading.value = true
-  const { code, data, msg } = await API.base.getUninstallReasonQuestionListList().finally(() => {
+  try {
+    const { code, data, msg } = await API.base.getUninstallReasonQuestionListList()
+    console.log('getUninstallReasonQuestionList', { code, data, msg })
+    if (code === 0) {
+      const [other, ...rest] = data.reverse()
+      uninstallReasons.value = [...shuffle(rest), other]
+    }
+    else {
+      toast.add({
+        severity: 'error',
+        summary: msg,
+        life: 3000,
+      })
+    }
+  }
+  finally {
     loading.value = false
-  })
-  console.log('getUninstallReasonQuestionList', { code, data, msg })
-  if (code === 0) {
-    uninstallReasons.value = shuffle(data)
+    // 等选项列表完全渲染、高度稳定后再居中
+    if (step.value === 'feedback' && pendingCenter.value) {
+      await centerActivePanel()
+      pendingCenter.value = false
+    }
+  }
+}
+
+function setReasonItemRef(id: number, el: Element | ComponentPublicInstance | null) {
+  if (el instanceof HTMLElement) {
+    reasonItemRefs.set(id, el)
   }
   else {
-    toast.add({
-      severity: 'error',
-      summary: msg,
-      life: 3000,
+    reasonItemRefs.delete(id)
+  }
+}
+
+function scrollReasonItemIntoView(id: number) {
+  const container = reasonListScrollEl.value
+  const item = reasonItemRefs.get(id)
+  if (!container || !item) {
+    return
+  }
+
+  const padding = 8
+  const containerRect = container.getBoundingClientRect()
+  const itemRect = item.getBoundingClientRect()
+
+  if (itemRect.bottom > containerRect.bottom) {
+    container.scrollTo({
+      top: container.scrollTop + itemRect.bottom - containerRect.bottom + padding,
+      behavior: 'smooth',
+    })
+  }
+  else if (itemRect.top < containerRect.top) {
+    container.scrollTo({
+      top: Math.max(0, container.scrollTop - (containerRect.top - itemRect.top) - padding),
+      behavior: 'smooth',
     })
   }
 }
@@ -132,23 +213,42 @@ async function getUninstallReasonQuestionList() {
 /**
  * 切换选择原因
  */
-function toggleReason(value: number) {
+async function toggleReason(value: number) {
   const index = selectedReasons.value.findIndex(n => n === value)
   if (index > -1) {
     selectedReasons.value.splice(index, 1)
+    delete reasonDetailTexts[value]
+    return
   }
-  else {
-    selectedReasons.value.push(value)
-  }
+
+  selectedReasons.value.push(value)
+  await nextTick()
+  scrollReasonItemIntoView(value)
+}
+
+function buildOtherReasonTextList(): string[] {
+  const reasons = uninstallReasons.value ?? []
+  return selectedReasons.value
+    .map((id) => {
+      const text = (reasonDetailTexts[id] ?? '').trim()
+      const code = reasons.find(reason => reason.id === id)?.code
+      if (!text || !code) {
+        return null
+      }
+      return `${code}:${text}`
+    })
+    .filter((item): item is string => item !== null)
 }
 
 /**
  * 提交反馈
  */
 async function submitFeedback() {
-  if (selectedReasons.value.length === 0 && !feedbackText.value.trim()) {
+  if (selectedReasons.value.length === 0) {
     return
   }
+
+  const selectedReasonStr = buildOtherReasonTextList()
 
   isSubmitting.value = true
   try {
@@ -159,7 +259,8 @@ async function submitFeedback() {
       userId: $softConfig.lastUserId, // 用户ID
       appVersion: appVersion.value, // app版本号
       selectedReasonIds: selectedReasons.value,
-      otherReasonText: feedbackText.value.trim(),
+      otherReasonText: '',
+      selectedReasons: selectedReasonStr,
     }).catch(() => {
       // 即使发送失败也继续退出
       console.error('Failed to submit uninstall feedback')
@@ -168,7 +269,7 @@ async function submitFeedback() {
     // 通知主进程可以退出
     await globalThis.electronAPI.send('app:uninstall-feedback-submitted', {
       reasons: [...selectedReasons.value],
-      feedback: feedbackText.value.trim(),
+      selectedReasons: selectedReasonStr,
     })
   }
   catch (error) {
@@ -207,18 +308,18 @@ function contactSupport() {
 </script>
 
 <template>
-  <div class="relative flex h-screen w-screen items-center justify-center bg-transparent">
-    <div class="absolute left-0 right-0 top-0 z-[1000] h-[30px] [-webkit-app-region:drag]" />
+  <div class="uninstall-root relative box-border h-screen w-screen bg-transparent">
+    <div class="absolute left-0 top-0 z-100 h-10 w-92vw [-webkit-app-region:drag]" />
 
-    <div v-if="step === 'confirm'" ref="confirmPanelEl" class="flex flex-col max-w-full w-180 h-100 rounded-2 step1" :style="{ backgroundImage: imageBg }">
-      <div class="pa-6 tt-primary font-[Archivo] text-4.5 font-700 leading-normal">
+    <div v-if="step === 'confirm'" ref="confirmPanelEl" class="step1 box-border flex h-100 w-180 flex-col overflow-hidden rounded-2" :style="{ backgroundImage: imageBg }">
+      <div class="shrink-0 pa-4 tt-primary font-[Archivo] text-4.5 font-700 leading-normal">
         {{ $t('卸载 Roxy浏览器') }}
       </div>
-      <div class="flex-1 flex items-center px-6 gap-5 overflow-hidden -mt-10">
-        <div class="pa-10 ">
-          <img class="block w-35 aspect-square object-cover" :src="image">
+      <div class="min-h-0 flex flex-1 items-center gap-4 overflow-hidden px-4 pb-4">
+        <div class="shrink-0 pa-10">
+          <img class="block aspect-square w-35 object-cover" :src="image">
         </div>
-        <div class="flex flex-col">
+        <div class="flex-1 flex min-w-0 flex-col overflow-hidden">
           <div class="tt-primary font-[Archivo] text-6 font-700 leading-8">
             {{ $t('真的要说再见嘛？') }}
           </div>
@@ -230,11 +331,11 @@ function contactSupport() {
             </template>
           </i18n-t>
 
-          <div class="mt-5 flex gap-4 justify-start">
-            <RxButton @click="continueToUse">
+          <div class="mt-8 flex flex-wrap gap-3">
+            <RxButton size="lg" @click="continueToUse">
               {{ $t('继续使用') }}
             </RxButton>
-            <RxButton severity="secondary" variant="outlined" @click="continueToFeedback">
+            <RxButton size="lg" severity="secondary" variant="outlined" @click="continueToFeedback">
               {{ $t('残忍卸载') }}
             </RxButton>
           </div>
@@ -242,20 +343,20 @@ function contactSupport() {
       </div>
     </div>
 
-    <div v-else ref="uninstallDialogEl" class="w-140 h-auto flex flex-col pa-6 pt-4 rounded-2 step2">
-      <div class="mb-4 flex-bc">
+    <div v-else ref="uninstallDialogEl" class="step2 box-border flex w-full max-w-140 flex-col pa-4 pt-3  rounded-2">
+      <div class="mb-3 flex-bc">
         <div class="tt-primary text-4 font-600 leading-normal">
           {{ $t('卸载原因') }}
         </div>
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="cancelUninstall" />
       </div>
-      <div class="flex flex-col gap-5">
-        <div class="flex items-center justify-between gap-5 py-4 px-5 rounded-1.5 contact">
+      <div class="flex flex-col gap-4">
+        <div class="contact flex items-center justify-between gap-3 rounded-1.5 px-4 py-3">
           <div class="flex flex-col gap-1">
-            <div class="text-[var(--colors-text-text-brand)] text-4 font-700 leading-6">
+            <div class="text-[var(--colors-text-text-brand)] text-3.5 font-700 leading-5.5">
               {{ $t('卸载前需要帮助吗？') }}
             </div>
-            <div class=" tt-secondary text-3.25 leading-4.5">
+            <div class="tt-secondary text-3 leading-4.5">
               {{ $t('我们的技术支持团队随时准备帮助您解决任何问题。') }}
             </div>
           </div>
@@ -264,34 +365,35 @@ function contactSupport() {
 
         <RxDivider line-color="var(--colors-border-border-container)" />
 
-        <div class="tt-primary text-4 font-700 leading-6">
+        <div class="tt-primary text-3.5 font-700 leading-5.5">
           {{ $t('请告诉我们您卸载的原因（可多选）') }}
         </div>
 
-        <div class="flex flex-1 flex-col gap-3">
-          <template v-if="loading">
-            <Skeleton v-for="i in 6" :key="i" height="2rem" class="mb-2" />
-          </template>
-          <template v-else>
-            <button v-for="reason in uninstallReasons" :key="reason.id" type="button" class="flex cursor-pointer items-center gap-2.5 pa-3 rounded-1.5 item"
-                    :class="{ active: selectedReasons.some(id => id === reason.id) }" @click="toggleReason(reason.id)"
-            >
-              <RxSvgIcon class="shrink-0" :name="selectedReasons.some(id => id === reason.id) ? 'base/rx_ic_check_fill' : 'base/rx_ic_uncheck'"
-                         :color="selectedReasons.some(id => id === reason.id) ? 'var(--colors-background-bg-brand)' : 'var(--component-checker-inner-border)'"
-              />
-              <span class="tt-primary text-3.5 leading-5">{{ reason.title }}</span>
-            </button>
-          </template>
-        </div>
-
-        <div v-if="selectedReasons.some(id => id === otherReasonId)" class="-mt-2">
-          <textarea v-model="feedbackText" :placeholder="$t('如果您愿意，可以详细说明一下原因，帮助我们改进...')" rows="5"
-                    class="font-inherit w-full resize-y rounded-lg border border-[#c7d1d6] border-solid p-3 text-sm text-[#111213] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] min-h-[149px] placeholder:text-[#575d60] focus:border-[#11a3fd] focus:outline-none"
-          />
+        <div ref="reasonListScrollEl" class="reason-list-scroll overflow-y-auto overflow-x-hidden">
+          <div class="flex flex-col gap-3 pr-1">
+            <template v-if="loading">
+              <Skeleton v-for="i in 6" :key="i" height="2rem" class="mb-2" />
+            </template>
+            <template v-else>
+              <div v-for="reason in uninstallReasons" :key="reason.id" :ref="(el) => setReasonItemRef(reason.id, el)" class="flex flex-col gap-2">
+                <button type="button" class="flex cursor-pointer items-center gap-2.5 pa-3 rounded-1.5 item" :class="{ active: selectedReasons.some(id => id === reason.id) }"
+                        @click="toggleReason(reason.id)"
+                >
+                  <RxSvgIcon class="shrink-0" :name="selectedReasons.some(id => id === reason.id) ? 'base/rx_ic_check_fill' : 'base/rx_ic_uncheck'"
+                             :color="selectedReasons.some(id => id === reason.id) ? 'var(--colors-background-bg-brand)' : 'var(--component-checker-inner-border)'"
+                  />
+                  <span class="tt-primary text-3.5 leading-5">{{ reason.title }}</span>
+                </button>
+                <textarea v-if="selectedReasons.some(id => id === reason.id)" v-model="reasonDetailTexts[reason.id]" :placeholder="$t('如果您愿意，可以详细说明一下原因，帮助我们改进...')" rows="3"
+                          class="font-inherit w-full resize-y rounded-lg border border-[#c7d1d6] border-solid px-3 py-2 text-sm text-[#111213] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] min-h-[72px] placeholder:text-[#575d60] focus:border-[#11a3fd] focus:outline-none"
+                />
+              </div>
+            </template>
+          </div>
         </div>
 
         <div class="flex flex-col gap-3">
-          <RxButton severity="secondary" size="lg" variant="outlined" :disabled="isSubmitting || (selectedReasons.length === 0 && !feedbackText.trim())" :label="$t('提交反馈')" @click="submitFeedback" />
+          <RxButton severity="secondary" size="lg" variant="outlined" :disabled="isSubmitting || selectedReasons.length === 0" :label="$t('提交反馈')" @click="submitFeedback" />
           <button type="button" class="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent py-2" @click="uninstallDirectly">
             <span class="min-w-0 flex-1 text-right text-3.25 font-500 leading-5 tt-inactive">
               {{ $t('直接卸载，无需反馈') }}
@@ -316,6 +418,7 @@ body {
 
 <style lang="scss" scoped>
 .step1 {
+  height: 400px;
   border-radius: 8px;
   border: 1px solid var(--colors-border-border-base);
   box-shadow:
@@ -350,6 +453,7 @@ body {
 
 .contact {
   background: url('/images/uninstall/cards-light.svg') no-repeat center center;
+  background-size: 100% auto;
 }
 
 .item {
@@ -359,6 +463,29 @@ body {
   &.active {
     border: 1px solid var(--colors-border-border-info);
     background: #def3ff;
+  }
+}
+
+.uninstall-root {
+  margin: 0;
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+.reason-list-scroll {
+  max-height: min(360px, max(340px, calc(100vh - 340px)));
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--colors-border-border-container) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: var(--colors-border-border-container);
   }
 }
 </style>

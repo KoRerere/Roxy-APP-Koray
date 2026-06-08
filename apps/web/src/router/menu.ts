@@ -244,22 +244,34 @@ export const menuRoutes: RouteRecordRaw[] = [
           },
         ],
       },
+      // {
+      //   path: 'roxy-agent',
+      //   name: 'roxy-agent',
+      //   meta: {
+      //     title: $t('素材生成'),
+      //     type: 'button',
+      //     icon: 'roxy-agent/rx-ic-assets',
+      //     isRoxyAgent: true,
+      //     permissions: ['Roxy_AI_Agent_All'],
+      //     version: ['3.8.7', '>='],
+      //     onClick: async (_event: Event) => {
+      //       const { openRoxyAIAgent } = useOpenRoxyAIAgent()
+      //       openRoxyAIAgent('asset')
+      //     },
+      //   },
+      //   component: () => import('/@/views/api-keys'),
+      // },
       {
-        path: 'roxy-agent',
-        name: 'roxy-agent',
+        path: 'skills-store',
+        name: 'skills-store',
         meta: {
-          title: $t('素材生成'),
-          type: 'button',
-          icon: 'roxy-agent/rx-ic-assets',
+          title: $t('AI Skills 商城'),
           isRoxyAgent: true,
-          permissions: ['Roxy_Claw_All'],
-          version: ['3.8.7', '>='],
-          onClick: async (_event: Event) => {
-            const { openRoxyAIAgent } = useOpenRoxyAIAgent()
-            openRoxyAIAgent('asset')
-          },
+          permissions: ['Roxy_AI_Agent_All'],
+          icon: 'roxy-agent/rx-ic-skills-store-color',
+          version: ['3.8.8', '>='],
         },
-        component: () => import('/@/views/api-keys'),
+        component: () => import('/@/views/skills/index.vue'),
       },
       {
         path: 'sync-control',

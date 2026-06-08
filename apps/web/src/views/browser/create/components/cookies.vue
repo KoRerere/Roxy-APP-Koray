@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import RxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
-import { checkCookieFormat, readCookiesFile } from '/@/utils'
+import { readCookiesFile, validateCookieInput } from '/@/utils'
 
 defineOptions({
   inheritAttrs: false,
 })
+
+const props = defineProps<{
+  platformUrls?: string[]
+}>()
 
 const attrs = useAttrs()
 
@@ -26,15 +30,30 @@ async function onIconClick() {
   }
 }
 
-function onBlur(event: any) {
-  if (checkCookieFormat(event.target.value)) {
+function validateCookieValue(value: string) {
+  const result = validateCookieInput(value?.trim() ?? '', {
+    platformUrls: props.platformUrls,
+  })
+
+  if (result.valid) {
     invalid.value = false
-    return
+    errorMsg.value = undefined
+    return true
   }
 
   invalid.value = true
-  errorMsg.value = $t('Cookie 格式错误，请检查格式')
+  errorMsg.value = result.message
+  return false
 }
+
+function onBlur(event: any) {
+  validateCookieValue(event.target.value)
+}
+
+watch(() => props.platformUrls, () => {
+  if (modelValue.value)
+    validateCookieValue(modelValue.value)
+}, { deep: true })
 </script>
 
 <template>
@@ -43,7 +62,7 @@ function onBlur(event: any) {
       {{ attrs.label }}
     </div>
     <div class="w-full">
-      <RxInputTextarea v-model="modelValue" rows="3" icon="base/rx_ic_attachment" :placeholder="$t('请以 JSON 格式输入 Cookies')" :auto-resize="false" :invalid="invalid" @icon-click="onIconClick"
+      <RxInputTextarea v-model="modelValue" rows="3" icon="base/rx_ic_attachment" :placeholder="(attrs.placeholder as string) || $t('支持格式: JSON、Netscape、Name=Value\nName=Value 未写 domain 时，将按行从下方平台账号的网址自动填充')" :auto-resize="false" :invalid="invalid" @icon-click="onIconClick"
                        @blur="onBlur"
       />
       <Message v-if="invalid" severity="error" size="small" variant="simple">

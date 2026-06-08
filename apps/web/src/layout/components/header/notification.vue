@@ -1,11 +1,12 @@
 <script lang="tsx" setup>
+import { h } from 'vue'
 import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
 import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 
@@ -53,11 +54,10 @@ const tabsValue = ref('sys')
 const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 0))
 const readSet = ref<Set<number>>(new Set())
 
+useEmitterEvent('notifyUpdateData', getMessageList)
+
 onBeforeMount(() => {
   getMessageList()
-    .finally(() => {
-      emitter.on('notifyUpdateData', getMessageList)
-    })
 })
 
 function toggle(event: Event) {

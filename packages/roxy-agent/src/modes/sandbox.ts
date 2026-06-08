@@ -1,5 +1,5 @@
 // @ts-expect-error 不需要检测
-import { chromium } from '@roxybrowser/playwright-mcp'
+// import { chromium } from '@roxybrowser/playwright-mcp'
 import buffer from 'node:buffer'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -49,7 +49,7 @@ export async function runSandboxMode() {
   }
 
   const sandboxApis: Record<string, Record<string, unknown>> = {
-    'playwright': { chromium },
+    // 'playwright': { chromium },
     'fs': { ...fs },
     'node:fs': { ...fs },
     'path': { ...path },

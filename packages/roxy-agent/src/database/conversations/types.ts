@@ -46,9 +46,9 @@ export interface Message {
   storage_type: 'inline' | 'file'
   file_path?: string
   /**
-   * orchestrator(编排模式), simple(简单模式)
+   * orchestrator(编排模式), simple(简单模式), image(生图模式)
    */
-  agent_mode: 'orchestrator' | 'simple'
+  agent_mode: 'orchestrator' | 'simple' | 'image'
   metadata?: Record<string, any>
   created_at: string
 }
@@ -59,13 +59,43 @@ export interface CreateMessageInput {
   role: 'user' | 'assistant' | 'system'
   content: string
   content_type?: 'text' | 'image' | 'file' | 'inline' | 'external'
-  agent_mode?: 'orchestrator' | 'simple' /**
-                                          * orchestrator(编排模式), simple(简单模式)
-                                          */
+  agent_mode?: 'orchestrator' | 'simple' | 'image' /**
+                                                    * orchestrator(编排模式), simple(简单模式), image(生图模式)
+                                                    */
   forceFileStorage?: boolean /**
                               * 强制使用文件存储
                               */
   metadata?: Record<string, any>
+}
+
+// 资产相关类型
+export type AssetType = 'image' | 'video'
+export type AssetStatus = 'generating' | 'success' | 'failed'
+
+export interface ConversationAsset {
+  id: string
+  conversation_id: string
+  message_id?: string | null
+  batch_id: string
+  batch_index: number
+  ordinal_in_batch: number
+  asset_type: AssetType
+  file_id?: string | null
+  file_name?: string | null
+  url?: string | null
+  remote_url?: string | null
+  mime_type?: string | null
+  status: AssetStatus
+  prompt?: string | null
+  aspect_ratio?: string | null
+  quality?: string | null
+  width?: number | null
+  height?: number | null
+  depends_on: string[]
+  search_text?: string | null
+  metadata?: Record<string, any>
+  created_at: string
+  fts_rank?: number
 }
 
 // API 响应类型

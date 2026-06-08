@@ -1,9 +1,19 @@
 import { ref } from 'vue'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
 import { defaultLanguage } from '/@/locales'
 import { getInviteCode } from '/@/api/util'
+
+/** 跨域名切换时携带的 Mixpanel 匿名 distinct_id（优先 localStorage，否则取当前会话） */
+function readMpDistinctIdForHandoff(): string {
+  const stored = localStorage.getItem(MP_DISTINCT_ID)
+  if (stored)
+    return stored
+  if (typeof globalThis.mixpanel?.get_distinct_id === 'function')
+    return globalThis.mixpanel.get_distinct_id() || ''
+  return ''
+}
 
 /** 从 document.cookie 读取 Web 登录 token（与 Pinia 一致域名 Cookie，便于在未导入 user store 时使用） */
 function readRoxyTokenFromCookie(): string {
@@ -77,6 +87,11 @@ export const useSimpleLocale = defineStore('locale', () => {
       const inviteCode = await getInviteCode()
       if (inviteCode)
         dest.searchParams.set(OFFICIAL_SITE_INVITE_CODE, inviteCode)
+      const mpDistinctId = readMpDistinctIdForHandoff()
+      if (mpDistinctId) {
+        localStorage.setItem(MP_DISTINCT_ID, mpDistinctId)
+        dest.searchParams.set(MP_DISTINCT_ID, mpDistinctId)
+      }
       location.replace(dest.href)
       return
     }
@@ -104,6 +119,11 @@ export const useSimpleLocale = defineStore('locale', () => {
     return `${import.meta.env.VITE_OFFICIAL_FAQ_WEBSITE}${locale}${pathname}`
   }
 
+  function getVideoSource(name: string) {
+    const locale = isZh.value ? 'zh' : 'en'
+    return `https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif_${locale}/${name}`
+  }
+
   async function openTelegram() {
     const $dict_map = await getDictMap()
     const tgLink = $dict_map.tgLink!.find(item => item.label === currentLocale.value) || $dict_map.tgLink![0]
@@ -119,6 +139,7 @@ export const useSimpleLocale = defineStore('locale', () => {
     getOfficialWebsite,
     getOfficialFaqWebsite,
     getLocaleAppBaseUrl,
+    getVideoSource,
   }
 }, {
   persist: {

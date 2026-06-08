@@ -155,6 +155,8 @@ export class BrowserItem {
       windowRemark: this.winInfo.windowRemark,
       /** 进程id */
       pid: this.browserPid,
+      /** Marionette 端口（仅 Firefox 内核，供 Selenium/GeckoDriver 使用） */
+      marionette_port: this.isFirefox ? (this.#browser?.marionettePort ?? '') : undefined,
     }
   }
 
@@ -180,6 +182,21 @@ export class BrowserItem {
   /** 获取浏览器实例 */
   getBrowser() {
     return this.#browser
+  }
+
+  /** 在已打开的浏览器中打开 URL（兼容 Firefox BiDi 重连） */
+  async openUrls(urls: string[]) {
+    if (!this.#browser)
+      return
+    if (this.afterLaunchTask) {
+      await this.afterLaunchTask.openUrls(urls)
+      return
+    }
+    for (const url of urls.filter(Boolean)) {
+      await this.#browser.newPage(url).catch((error) => {
+        console.error(`[BrowserItem] openUrls failed for ${url}:`, error)
+      })
+    }
   }
 
   /** 启动浏览器 */
@@ -255,13 +272,9 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
-      // Firefox: BiDi 连接在 browser.close 后立即断开，必须在此之前做最后一次 cookie 保存
-      // 否则关闭时的最新 cookie 将丢失（定时器可能未来得及触发）
-      if (this.isFirefox && this.afterLaunchTask) {
-        await this.afterLaunchTask.saveCookiesNow().catch((e) => {
-          console.warn('[BrowserItem] Final cookie save before Firefox close failed:', e)
-        })
-      }
+      // Firefox cookie 保存不在此处提前执行：
+      // releaseSession() 之后 cookies.sqlite 仍被 Firefox 进程持有（数据库锁）。
+      // handleOnDisconnected 在 process-close 后（进程真正退出）读取 SQLite，时机正确。
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
       await this.#browser.close()
       this.beforeLaunchTask.browser = null

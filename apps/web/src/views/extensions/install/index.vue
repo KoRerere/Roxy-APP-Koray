@@ -246,7 +246,7 @@ async function uploadRecordCheck() {
 function installViaUrl() {
   showSimpleDialog({
     title: $t('添加 Google 扩展'),
-    content: $t('每日总扩展添加数量限制为 5 个。'),
+    content: $t('每日总扩展添加数量限制为 {count} 个。', { count: 50 }),
     confirmText: $t('确认添加'),
     inputs: [
       {
@@ -280,7 +280,7 @@ function installViaUrl() {
         onlyErrorToast(-1, error as string)
       }
     },
-    afterRender: () => <HowToGet class="mt-2" />,
+    afterRender: () => <HowToGet />,
   })
 }
 

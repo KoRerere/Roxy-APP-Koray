@@ -2,6 +2,7 @@ import { createGatewayConfig } from '@roxy/shared'
 import { debounce } from 'es-toolkit'
 import { coreManager } from '/@/modules/browser'
 import { mcpEventEmitter } from '/@/modules/mcp/event'
+import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 
 console.debug(`VITE_GATEWAY_URL_LIST`, import.meta.env.VITE_GATEWAY_URL_LIST)
@@ -10,15 +11,27 @@ const gateConfUrls: string[] = JSON.parse(import.meta.env.VITE_GATEWAY_URL_LIST)
 const defaultAppGateway = import.meta.env.DEV ? 'https://apitest.roxybrowser.co' : 'https://hz.gate.roxybrowser.cn'
 const defaultApiGateway = import.meta.env.DEV ? 'https://apitest.roxybrowser.co' : 'https://hz.api.roxybrowser.cn'
 
+export function onNetworkNodeChanged() {
+  appUpdater.init()
+  coreManager.fetchAvailableCoreList()
+  if (store.lastSelectedNetworkNode === 'auto' || !store.lastSelectedNetworkNode?.gate) {
+    mcpEventEmitter.emit('baseUrlChanged', gatewayConfig.getBaseUrl())
+  }
+  else {
+    mcpEventEmitter.emit('baseUrlChanged', `https://${store.lastSelectedNetworkNode.gate}`)
+  }
+}
+
 const gatewayConfig = createGatewayConfig({
   gateConfUrls,
   defaultAppGateway,
   defaultApiGateway,
-  onCountryChanged: debounce(() => {
-    appUpdater.init()
-    coreManager.fetchAvailableCoreList()
-    mcpEventEmitter.emit('baseUrlChanged', gatewayConfig.getBaseUrl())
-  }, 3000),
+  get headers() {
+    return {
+      'user-id': store?.userId,
+    }
+  },
+  onCountryChanged: debounce(onNetworkNodeChanged, 3000),
 })
 
 /** 通过 API 调用的接口采用此域名 */

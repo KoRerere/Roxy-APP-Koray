@@ -2,15 +2,14 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
-
-import { useToast } from 'primevue/usetoast'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { downloadTemplate } from '/@/views/browser/create/utils'
-import { isDev } from '/@/utils'
+import { isDev, isNewerOrEqualVersion, normalizeCookies } from '/@/utils'
 
 type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
 const dialogRef = inject<any>('dialogRef')
-const toast = useToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 const _props = ref()
 const _onConfirm = ref()
@@ -28,7 +27,7 @@ const excelSchema = [
     name: $t('操作系统'),
     getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os, // 历史原因ios特殊处理
   },
-  ...(isDev
+  ...(isNewerOrEqualVersion('3.8.8')
     ? [
         {
           key: 'coreType',
@@ -78,10 +77,11 @@ const excelSchema = [
     key: 'cookie',
     name: 'Cookie',
     getText: (item: Data) => {
-      const value = item.cookie ? JSON.stringify(item.cookie) : ''
+      const normalized = normalizeCookies(item.cookie)
+      const value = normalized.length ? JSON.stringify(normalized) : ''
       if (exportType.value && value.length >= 32767) {
         const message = $t('[{name}] 的 cookies 长度超过 Excel 文档限制，请使用 txt 格式进行导出。', { name: `${_props.value.workspaceName}-${item.windowSortNum}` })
-        toast.add({ severity: 'warn', summary: $t('操作失败'), detail: message, life: 5000 })
+        onlyErrorToast(-1, message, { severity: 'warn', life: 5000 })
         throw new Error(message)
       }
       return value

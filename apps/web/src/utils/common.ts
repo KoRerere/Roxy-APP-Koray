@@ -98,6 +98,24 @@ export function isNewerVersion(remoteVersion?: string | null, localVersion?: str
   }
 }
 
+/** 当前 APP 版本是否大于等于指定版本 */
+export function isNewerOrEqualVersion(targetVersion?: string | null): boolean {
+  if (!globalThis.isElectron) {
+    return true
+  }
+
+  if (!targetVersion)
+    return false
+
+  try {
+    return compare(globalThis.$appVersion, targetVersion, '>=')
+  }
+  catch (error) {
+    console.warn('isNewerOrEqualVersion compare failed', targetVersion, error)
+    return false
+  }
+}
+
 export async function checkWebForUpdates() {
   const remoteVersion = await fetch('/version').then(res => res.text()).catch(() => null)
   const localVersion = import.meta.env.VITE_VERSION

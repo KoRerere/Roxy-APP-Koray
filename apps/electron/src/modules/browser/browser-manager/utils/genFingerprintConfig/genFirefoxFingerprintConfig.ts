@@ -9,7 +9,7 @@ import { ensureFirefoxIcon } from './firefoxIcon'
 import { getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
 
 /** 生成 Firefox 浏览器指纹配置（结构按 docs/firefox指纹参数使用说明.md） */
-export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
+export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}, userDataDir: string) {
   const isMobile = [`Android`, `IOS`].includes(winInfo.os)
 
   function getPlatformString() {
@@ -32,8 +32,8 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     ecommerceDirectWhiteList = await getEcommerceDirectWhiteList()
   }
 
-  // 动态生成带 windowSortNum 数字徽章的 .ico；内部含磁盘+内存双层缓存与失败回退
-  const browserIconPath = await ensureFirefoxIcon(winInfo.windowSortNum)
+  // 动态生成带 windowSortNum 数字徽章的 .ico；图标存于 userDataDir，内部含磁盘+内存双层缓存与失败回退
+  const browserIconPath = await ensureFirefoxIcon(winInfo.windowSortNum, userDataDir)
 
   return {
     userAgent: winInfo.userAgentNew,
@@ -53,7 +53,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
         return winInfo.timeZone.split(' ').at(-1)
       }
     },
-    /** 火狐内核应用图标路径（按 windowSortNum 动态生成带数字徽章的 .ico） */
+    /** 火狐内核应用图标路径（按 windowSortNum 动态生成带数字徽章；格式随 OS 自适应：Windows→.ico / macOS→.icns / Linux→.png） */
     browserIconPath,
     get appLocale() {
       if (winInfo.isLanguageBaseIp) {
@@ -69,11 +69,11 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     },
     audioBuffer: {
       enableAudioBufferNoise: winInfo.audioContext,
-      audioBufferNoiseValue: Number(winInfo.audioContextValue),
+      audioBufferNoiseValue: toNumber(winInfo.audioContextValue, 0),
     },
     canvasContext: {
       enableCanvasContextNoise: winInfo.canvas,
-      canvasContextNoiseValue: Number(winInfo.canvasValueV2),
+      canvasContextNoiseValue: toNumber(winInfo.canvasValueV2, 0),
     },
     clientRects: {
       enable: winInfo.clientRects,
@@ -84,7 +84,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       enableWebGLRendererNoise: winInfo.webGL,
       webglRenderer: winInfo.webGLInfo ? winInfo.webGLRender : '',
       webglVendor: winInfo.webGLInfo ? winInfo.webGLManufacturer : '',
-      webGLRendererNoiseValue: Number(winInfo.webGLValue),
+      webGLRendererNoiseValue: toNumber(winInfo.webGLValue, 0),
     },
     get geoLocation() {
       const { position, isPositionBaseIp = false } = winInfo
@@ -113,7 +113,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     doNotTrack: winInfo.doNotTrack,
     get imageSizeLimit() {
       if (!winInfo.forbidImage) {
-        return Number(winInfo.forbiddenPictureSize)
+        return toNumber(winInfo.forbiddenPictureSize, 0)
       }
       return -1
     },
@@ -152,10 +152,10 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       return {
         pixelDepth: currentOS === winInfo.os.toLowerCase() ? 0 : 24,
         colorDepth: currentOS === winInfo.os.toLowerCase() ? 0 : 24,
-        width: toNumber(winInfo.resolutionX) || 0,
-        height: toNumber(winInfo.resolutionY) || 0,
-        availWidth: toNumber(winInfo.resolutionX) || 0,
-        availHeight: toNumber(winInfo.resolutionY) || 0,
+        width: toNumber(winInfo.resolutionX, 0),
+        height: toNumber(winInfo.resolutionY, 0),
+        availWidth: toNumber(winInfo.resolutionX, 0),
+        availHeight: toNumber(winInfo.resolutionY, 0),
         get devicePixelRatio() {
           if (currentOS !== winInfo.os.toLowerCase()) {
             return winInfo.devicePixelRatio

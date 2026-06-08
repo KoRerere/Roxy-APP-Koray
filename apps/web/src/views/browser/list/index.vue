@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Tags from '/@/views/browser/list/tags'
+// import QuickManage from '/@/views/browser/create/quick.vue'
 import Profiles from '/@/views/browser/list/profiles'
 import Recycle from '/@/views/browser/list/recycle'
 import Transfer from '/@/views/browser/list/transfer'
@@ -7,7 +8,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
 import { I18nT } from 'vue-i18n'
 import { debounce } from 'es-toolkit'
-
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from '/@/hooks/useDialog'
@@ -249,6 +249,51 @@ async function openManageCategory() {
   })
 }
 
+// async function openManageQuickGen() {
+//   const { code, data, msg } = await API.window.userGetProxyTemplateList()
+
+//   onlyErrorToast(code, msg)
+//   if (code !== 0)
+//     return
+
+//   const { id, proxyInfo } = data || {}
+//   const { host, port, proxyUserName, proxyPassword, refreshUrl, remark } = proxyInfo || {}
+//   let _proxyInfo = [host, port, proxyUserName, proxyPassword].filter(str => Boolean(str)).join(':')
+
+//   if (refreshUrl) {
+//     _proxyInfo = `${_proxyInfo}[${refreshUrl}]`
+//   }
+
+//   if (remark) {
+//     _proxyInfo = `${_proxyInfo}{${remark}}`
+//   }
+
+//   showDialog({
+//     showHeader: false,
+//     modal: true,
+//     blockScroll: true,
+//     pt: {
+//       content: '!pa-0',
+//     },
+//     slots: {
+//       container: ({ hideModal }) => h(QuickManage, {
+//         isEdit: true,
+//         data: { id, proxyInfo: _proxyInfo },
+//         onClose: hideModal,
+//         onConfirm: async (params: any) => {
+//           if (id) {
+//             await API.window.userMdfProxyTemplateCreate({ id, ...params })
+//           }
+//           else {
+//             await API.window.userAddProxyTemplateCreate(params)
+//           }
+//           hideModal()
+//         },
+//       }),
+//     },
+//   })
+// }
+
 function showPopover(event: Event) {
   configRef.value?.show(event)
 }
@@ -301,6 +346,7 @@ async function hidePopover() {
       <template v-if="check('Profiles_Label_view_page')">
         <RxDivider class="mx-1 !h-4" vertical line-only />
         <RxButton v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory" />
+        <!-- <RxButton v-tooltip.top="{ value: $t('快速创建管理') }" text severity="secondary" size="xs" icon="base/rx_ic_browser_flash" @click="openManageQuickGen" /> -->
       </template>
     </div>
     <div class="flex flex-1 overflow-hidden">

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { getImage } from '/@/utils/basic'
 import type { QRCodeToDataURLOptions } from 'qrcode'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { h, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QRCode from 'qrcode'
 import { useResponseToast } from '/@/hooks/useResponseToast'

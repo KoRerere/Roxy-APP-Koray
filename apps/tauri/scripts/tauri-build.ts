@@ -2,20 +2,19 @@ import { spawnSync } from 'node:child_process'
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
-import { getDefaultTargetsForHost } from './utils.ts'
+import { getLauncherVariants, resolveVariantConfigPath } from './launcher-variants.ts'
+import { ensureCargoInPath, getDefaultTargetsForHost } from './utils.ts'
 
 const nodeEnv = process.env.NODE_ENV || 'development'
 console.log('[tauri-build] NODE_ENV', nodeEnv)
 
 cpSync(join(import.meta.dirname, `../.env.${nodeEnv}`), '.env')
 
-function getTauriIdentifierForEnv(env: string) {
-  // 约定：
-  // - 测试/开发环境：com.roxybrowserdev.browser.launcher
-  // - 生产环境：com.roxybrowser.browser.launcher
-  return env === 'production'
+function getTauriIdentifierForEnv(env: string, variant: 'chrome' | 'firefox') {
+  const base = env === 'production'
     ? 'com.roxybrowser.browser.launcher'
     : 'com.roxybrowserdev.browser.launcher'
+  return variant === 'firefox' ? `${base}.firefox` : base
 }
 
 function normalizeSemverFromEnv(raw: string): string {
@@ -27,72 +26,65 @@ function normalizeSemverFromEnv(raw: string): string {
   return v
 }
 
+function syncTauriConfFile(
+  relativePath: string,
+  version: string,
+  identifier: string,
+) {
+  const tauriConfPath = join(import.meta.dirname, '../src-tauri', relativePath)
+  if (!existsSync(tauriConfPath))
+    return
+
+  const tauriConfRaw = readFileSync(tauriConfPath, 'utf8')
+  const tauriConf = JSON.parse(tauriConfRaw) as Record<string, any>
+  let changed = false
+  if (tauriConf.version !== version) {
+    tauriConf.version = version
+    changed = true
+  }
+  if (tauriConf.identifier !== identifier) {
+    tauriConf.identifier = identifier
+    changed = true
+  }
+  if (changed) {
+    writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`, 'utf8')
+    console.log(`[tauri-build] 已同步 ${relativePath} version=${version} identifier=${identifier}`)
+  }
+}
+
 function syncTauriVersionFromViteVersion() {
   const raw = process.env.VITE_VERSION
   if (!raw)
     return
 
   const version = normalizeSemverFromEnv(raw)
-  const identifier = getTauriIdentifierForEnv(nodeEnv)
+  syncTauriConfFile('tauri.conf.json', version, getTauriIdentifierForEnv(nodeEnv, 'chrome'))
+  syncTauriConfFile('tauri.firefox.conf.json', version, getTauriIdentifierForEnv(nodeEnv, 'firefox'))
 
-  // 1) tauri.conf.json
-  const tauriConfPath = join(import.meta.dirname, '../src-tauri/tauri.conf.json')
-  const tauriConfRaw = readFileSync(tauriConfPath, 'utf8')
-  const tauriConf = JSON.parse(tauriConfRaw) as Record<string, any>
-  let tauriConfChanged = false
-  if (tauriConf.version !== version) {
-    tauriConf.version = version
-    tauriConfChanged = true
-    console.log('[tauri-build] 已同步 tauri.conf.json version =', version)
-  }
-  if (tauriConf.identifier !== identifier) {
-    tauriConf.identifier = identifier
-    tauriConfChanged = true
-    console.log('[tauri-build] 已同步 tauri.conf.json identifier =', identifier)
-  }
-  if (tauriConfChanged)
-    writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`, 'utf8')
-
-  // 2) Cargo.toml（仅替换 [package] 下的 version 行）
   const cargoTomlPath = join(import.meta.dirname, '../src-tauri/Cargo.toml')
   const cargoRaw = readFileSync(cargoTomlPath, 'utf8')
-  const replaced = cargoRaw.replace(
-    /(\[package\][\s\S]*?^version\s*=\s*")[^"]*(")/m,
-    `$1${version}$2`,
-  )
-  if (replaced !== cargoRaw) {
-    writeFileSync(cargoTomlPath, replaced, 'utf8')
-    console.log('[tauri-build] 已同步 Cargo.toml package.version =', version)
+  const versionLineRe = /^version\s*=\s*"[^"]*"/m
+  if (!versionLineRe.test(cargoRaw)) {
+    console.warn('[tauri-build] 未能在 Cargo.toml 中定位 version 行，已跳过同步')
   }
   else {
-    console.warn('[tauri-build] 未能在 Cargo.toml 的 [package] 段落中定位 version 行，已跳过同步')
+    const replaced = cargoRaw.replace(versionLineRe, `version = "${version}"`)
+    if (replaced !== cargoRaw) {
+      writeFileSync(cargoTomlPath, replaced, 'utf8')
+      console.log('[tauri-build] 已同步 Cargo.toml package.version =', version)
+    }
   }
 }
 
-// 构建前同步版本号（可选）：VITE_VERSION -> tauri.conf.json + Cargo.toml
 syncTauriVersionFromViteVersion()
 
-function getBundleAppName() {
-  const fromEnv = process.env.ROXY_DEFAULT_BROWSER_APP_NAME?.trim()
-  if (fromEnv)
-    return fromEnv
-  try {
-    const tauriConfPath = join(import.meta.dirname, '../src-tauri/tauri.conf.json')
-    const raw = readFileSync(tauriConfPath, 'utf8')
-    const conf = JSON.parse(raw) as Record<string, any>
-    const productName = String(conf.productName || '').trim()
-    if (productName)
-      return productName
-  }
-  catch {}
-  return 'RoxyChrome'
-}
+const launcherVariants = getLauncherVariants()
+console.log('[tauri-build] 将构建启动器变体:', launcherVariants.map(v => v.appName).join(', '))
 
 function findFirstAppImageFile(dir: string) {
   try {
     const files = readdirSync(dir)
       .filter(f => /\.appimage$/i.test(f))
-      // ignore signature/zsync files if any
       .filter(f => !/\.(zsync|sig)$/i.test(f))
       .sort((a, b) => a.localeCompare(b))
     return files[0]
@@ -102,18 +94,16 @@ function findFirstAppImageFile(dir: string) {
   }
 }
 
-function renameLinuxAppImage(options: { target?: string }) {
+function renameLinuxAppImage(options: { target?: string, appName: string }) {
   if (process.platform !== 'linux')
     return
 
-  const appName = getBundleAppName()
-  const desiredFileName = `${appName}.AppImage`
+  const desiredFileName = `${options.appName}.AppImage`
 
   const tryDirs: string[] = []
   if (options.target) {
     tryDirs.push(join(import.meta.dirname, '../src-tauri/target', options.target, 'release', 'bundle', 'appimage'))
   }
-  // when building without --target, tauri outputs to target/release
   tryDirs.push(join(import.meta.dirname, '../src-tauri/target', 'release', 'bundle', 'appimage'))
 
   for (const dir of tryDirs) {
@@ -151,12 +141,11 @@ function parseTargets(input: string | undefined): string[] {
 }
 
 function stripTargetArgs(positionals: string[]): string[] {
-  // 当我们用 --targets/--all-targets 控制多 target 时，避免把外部的 --target 再透传给 tauri，导致冲突
   const out: string[] = []
   for (let i = 0; i < positionals.length; i++) {
     const cur = positionals[i]
     if (cur === '--target' || cur === '-t') {
-      i++ // skip value
+      i++
       continue
     }
     if (cur.startsWith('--target=')) {
@@ -168,26 +157,17 @@ function stripTargetArgs(positionals: string[]): string[] {
 }
 
 const options = {
-  /** 是否跳过公证 */
   'skip-notarize': {
     type: 'boolean',
     default: false,
   },
-  /** 是否强制走 ad-hoc 签名 */
   'adhoc': {
     type: 'boolean',
     default: false,
   },
-  /**
-   * 指定 Rust targets（逗号分隔）
-   * - macOS: aarch64-apple-darwin,x86_64-apple-darwin
-   * - Windows: x86_64-pc-windows-msvc,i686-pc-windows-msvc
-   * - Linux(AppImage): x86_64-unknown-linux-gnu
-   */
   'targets': {
     type: 'string',
   },
-  /** 一键构建当前平台的默认 targets（mac 双架构 / win 双架构 / linux x86_64） */
   'all-targets': {
     type: 'boolean',
     default: true,
@@ -197,7 +177,7 @@ const options = {
 const parsed = parseArgs({
   options,
   allowPositionals: true,
-  strict: false, // 默认 true，遇到未知参数会报错
+  strict: false,
 })
 const args = parsed.values
 const positionals = parsed.positionals
@@ -213,22 +193,29 @@ const targetsToBuild = targets.length > 0
   ? targets
   : (useAllTargets ? defaultTargets : [])
 
-const childEnv: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: nodeEnv }
+const childEnvBase: NodeJS.ProcessEnv = ensureCargoInPath({ ...process.env, NODE_ENV: nodeEnv })
+
+const cargoBin = join(process.env.USERPROFILE || process.env.HOME || '', '.cargo', 'bin')
+if (!existsSync(join(cargoBin, process.platform === 'win32' ? 'cargo.exe' : 'cargo'))) {
+  console.error(
+    '[tauri-build] 未找到 cargo。请先安装 Rust：https://rustup.rs/\n'
+    + '  Windows 安装后请重启终端，或确保 %USERPROFILE%\\.cargo\\bin 在 PATH 中。',
+  )
+  process.exit(1)
+}
 
 if (forceAdhoc) {
-  // 强制走 tauri.conf.json 里配置的 signingIdentity（默认我们设为 "-"）
-  delete childEnv.APPLE_SIGNING_IDENTITY
+  delete childEnvBase.APPLE_SIGNING_IDENTITY
   console.log('[tauri-build] 已开启 --adhoc（忽略 APPLE_SIGNING_IDENTITY，使用配置里的 ad-hoc 签名）')
 }
 
 if (skipNotarize) {
-  // 只签名不公证：保留 APPLE_SIGNING_IDENTITY，移除 notarize 相关变量
-  delete childEnv.APPLE_ID
-  delete childEnv.APPLE_PASSWORD
-  delete childEnv.APPLE_TEAM_ID
-  delete childEnv.APPLE_API_ISSUER
-  delete childEnv.APPLE_API_KEY
-  delete childEnv.APPLE_API_KEY_PATH
+  delete childEnvBase.APPLE_ID
+  delete childEnvBase.APPLE_PASSWORD
+  delete childEnvBase.APPLE_TEAM_ID
+  delete childEnvBase.APPLE_API_ISSUER
+  delete childEnvBase.APPLE_API_KEY
+  delete childEnvBase.APPLE_API_KEY_PATH
   console.log('[tauri-build] 已开启 --skip-notarize（只签名，不触发公证）')
 }
 
@@ -250,35 +237,56 @@ const baseTauriArgs = [
 
 const extraArgs = targetsToBuild.length > 0 ? stripTargetArgs(positionals) : positionals
 
-if (targetsToBuild.length === 0) {
-  // 兼容旧行为：不指定 --target，按当前 Rust toolchain 的默认 target 打一次
-  const result = spawnSync('pnpm', [...baseTauriArgs, ...extraArgs], {
+function runTauriBuildForVariant(options: {
+  variant: (typeof launcherVariants)[number]
+  target?: string
+}) {
+  const { variant, target } = options
+  const configPath = resolveVariantConfigPath(variant.configFile)
+  const tauriArgs = [
+    ...baseTauriArgs,
+    ...(configPath ? ['--config', configPath] : []),
+    ...(target ? ['--target', target] : []),
+    ...extraArgs,
+  ]
+
+  const childEnv: NodeJS.ProcessEnv = {
+    ...childEnvBase,
+    ROXY_DEFAULT_BROWSER_APP_NAME: variant.appName,
+  }
+
+  const label = target
+    ? `variant=${variant.id} target=${target}`
+    : `variant=${variant.id}`
+
+  console.log(`[tauri-build] 开始构建 ${label} (appName=${variant.appName})`)
+  const result = spawnSync('pnpm', tauriArgs, {
     stdio: 'inherit',
     env: childEnv,
   })
   if (result.status !== 0) {
-    console.error('[tauri-build] 打包失败')
+    console.error(`[tauri-build] ${label} 打包失败`)
     process.exit(1)
   }
 
-  renameLinuxAppImage({})
+  renameLinuxAppImage({ target, appName: variant.appName })
+}
+
+const buildTargets = targetsToBuild.length > 0 ? targetsToBuild : [undefined]
+
+for (const target of buildTargets) {
+  if (target && targetsToBuild.length > 0) {
+    console.log(`[tauri-build] ===== target=${target} =====`)
+  }
+
+  for (const variant of launcherVariants) {
+    runTauriBuildForVariant({ variant, target })
+  }
+}
+
+if (targetsToBuild.length > 0) {
+  console.log('[tauri-build] 全部 targets 与变体构建完成:', targetsToBuild.join(', '))
 }
 else {
-  console.log('[tauri-build] 将按 targets 依次构建:', targetsToBuild.join(', '))
-  if (useAllTargets && defaultTargets.length > 0)
-    console.log('[tauri-build]（提示）默认 targets:', defaultTargets.join(', '))
-
-  for (const target of targetsToBuild) {
-    console.log(`[tauri-build] 开始构建 target=${target}`)
-    const result = spawnSync('pnpm', [...baseTauriArgs, '--target', target, ...extraArgs], {
-      stdio: 'inherit',
-      env: childEnv,
-    })
-    if (result.status !== 0) {
-      console.error(`[tauri-build] target=${target} 打包失败`)
-      process.exit(1)
-    }
-
-    renameLinuxAppImage({ target })
-  }
+  console.log('[tauri-build] 全部变体构建完成')
 }

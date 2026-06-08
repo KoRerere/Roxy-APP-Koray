@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TextareaProps } from 'primevue/textarea'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
 
@@ -11,7 +11,7 @@ interface Props extends /* @vue-ignore */ TextareaProps {
   fluid?: boolean
   icon?: SvgNames
   preIcon?: SvgNames
-  fieldProps?: Record<string, any>,
+  fieldProps?: Record<string, any>
 }
 
 defineOptions({
@@ -19,7 +19,6 @@ defineOptions({
 })
 
 const { size = 'sm', rows = 3, cols = 30, fluid = true, icon, preIcon, fieldProps, ...props } = defineProps<Props>()
-
 defineEmits(['preIconClick', 'iconClick'])
 
 const attrs = useAttrs()
@@ -28,11 +27,11 @@ const attrs = useAttrs()
 <template>
   <IconField class="w-full" :class="size" v-bind="fieldProps">
     <InputIcon v-if="preIcon">
-      <RxSvgIcon class="cursor-pointer" :name="preIcon" @click="$emit('preIconClick')" />
+      <SvgIcon class="cursor-pointer" :name="preIcon" @click="$emit('preIconClick')" />
     </InputIcon>
     <Textarea v-bind="{ ...attrs, ...props }" :fluid="fluid" :rows="rows" :cols="cols" />
     <InputIcon v-if="icon">
-      <RxSvgIcon class="cursor-pointer" :name="icon" @click="$emit('iconClick')" />
+      <SvgIcon class="cursor-pointer" :name="icon" @click="$emit('iconClick')" />
     </InputIcon>
   </IconField>
 </template>
@@ -43,7 +42,7 @@ const attrs = useAttrs()
   resize: vertical;
   color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
-  border-color: var(--colors-border-border-base, #AFB7BB);
+  border-color: var(--colors-border-border-base, #afb7bb);
 
   &:disabled {
     color: var(--colors-text-text-placeholder, #7c8387);
@@ -81,7 +80,8 @@ const attrs = useAttrs()
 }
 
 .lg {
-  @include input-styles(10px,
+  @include input-styles(
+    10px,
     10px,
     10px,
     var(--spacing-xl, 12px),
@@ -89,11 +89,13 @@ const attrs = useAttrs()
     1px,
     var(--Component-Colors-TextInput-radius-radius-lg, 8px),
     14px,
-    var(--Line-Height-text-lg, 20px));
+    var(--Line-Height-text-lg, 20px)
+  );
 }
 
 .md {
-  @include input-styles(8px,
+  @include input-styles(
+    8px,
     8px,
     8px,
     10px,
@@ -101,11 +103,13 @@ const attrs = useAttrs()
     1px,
     var(--Component-Colors-TextInput-radius-radius-md, 6px),
     13px,
-    var(--Line-Height-text-lg, 20px));
+    var(--Line-Height-text-lg, 20px)
+  );
 }
 
 .sm {
-  @include input-styles(var(--spacing-md, 6px),
+  @include input-styles(
+    var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     8px,
@@ -113,11 +117,13 @@ const attrs = useAttrs()
     1px,
     var(--Component-Colors-TextInput-radius-radius-md, 6px),
     12px,
-    var(--Line-Height-text-lg, 20px));
+    var(--Line-Height-text-lg, 20px)
+  );
 }
 
 .xs {
-  @include input-styles(var(--spacing-md, 6px),
+  @include input-styles(
+    var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
@@ -125,11 +131,13 @@ const attrs = useAttrs()
     0.5px,
     var(--radius-sm, 4px),
     12px,
-    var(--Line-Height-text-xs, 16px));
+    var(--Line-Height-text-xs, 16px)
+  );
 }
 
 .xxs {
-  @include input-styles(var(--spacing-sm, 4px),
+  @include input-styles(
+    var(--spacing-sm, 4px),
     var(--spacing-sm, 4px),
     var(--spacing-sm, 4px),
     var(--spacing-md, 6px),
@@ -137,6 +145,7 @@ const attrs = useAttrs()
     0.5px,
     var(--radius-sm, 4px),
     12px,
-    var(--Line-Height-text-xs, 16px));
+    var(--Line-Height-text-xs, 16px)
+  );
 }
 </style>

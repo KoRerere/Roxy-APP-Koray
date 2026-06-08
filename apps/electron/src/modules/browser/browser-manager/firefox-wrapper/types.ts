@@ -28,7 +28,6 @@ export interface FirefoxLaunchOptions {
   ignoreDefaultArgs?: boolean | string[]
   defaultViewport?: { width: number, height: number } | null
   userDataDir?: string
-  /** @deprecated Firefox 不再通过 spawn 重新激活，由 BiDi bringToFront 聚焦已有实例 */
   relaunch?: boolean
 }
 

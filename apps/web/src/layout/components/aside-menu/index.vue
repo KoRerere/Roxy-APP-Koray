@@ -1,32 +1,42 @@
 <script setup lang="tsx">
+// import { h } from 'vue'
+// import QuickOpen from '/@/views/browser/create/quick.vue'
 import SubMenuItem from './sub-menu-item.vue'
 import { cloneDeep } from 'es-toolkit'
 import { API } from '/@/api'
 import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
+// import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+// import { useDialog } from '/@/hooks/useDialog'
 import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+// import { useCheckProxy } from '/@/views/agent/hooks'
+import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
+// import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
+import { emitter } from '/@/utils/eventBus'
 import { ProjectPin, WorkspaceType } from '/@/enums'
 import { genDriver, safeParseJSON } from '/@/utils'
-import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
-import { emitter } from '/@/utils/eventBus'
+
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 
 const { collapsed = false } = defineProps<{
   collapsed?: boolean
 }>()
 
-const { handleBusinessCode } = useHandleBusinessCode()
-const [_, onlyErrorToast] = useResponseToast()
 const route = useRoute()
 const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
+// const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+// const { testProxy } = useCheckProxy()
 const { check } = usePermission()
+const { handleBusinessCode } = useHandleBusinessCode()
+const [_, onlyErrorToast] = useResponseToast()
+// const [showModal] = useDialog()
 
 const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
 const driverObj = ref()
@@ -126,12 +136,20 @@ function filterMenus(menus: RouteRecordRaw[]) {
   })
 }
 
-async function toCreateBrowser() {
+async function checkWindowTotalCountOk() {
   const { code, msg } = await API.window.userCheckWindowTotalCountList()
   if (code !== 0) {
     handleBusinessCode(code, () => onlyErrorToast(code, msg))
-    return
+    return false
   }
+
+  return true
+}
+
+async function toCreateBrowser() {
+  const isOk = await checkWindowTotalCountOk()
+  if (!isOk)
+    return
 
   const query = route.name === 'project-item' ? { projectId: route.params.id } : {}
 
@@ -143,13 +161,66 @@ async function toCreateBrowser() {
 
   router.push({ name: 'browser-create', query })
 }
+
+// async function quickGenBrowser() {
+//   const isOk = await checkWindowTotalCountOk()
+//   if (!isOk)
+//     return
+
+//   const { code, data, msg } = await API.window.userGetProxyTemplateList()
+
+//   onlyErrorToast(code, msg)
+//   if (code !== 0)
+//     return
+
+//   if (data) {
+//     const customerParams = await genCustomerParams(data.proxyInfo)
+//     const [windowId] = await genDefaultProfileByCount(1, customerParams)
+//     emitter.emit('refreshProfileList', windowId)
+//     return
+//   }
+
+//   showModal({
+//     showHeader: false,
+//     modal: true,
+//     blockScroll: true,
+//     slots: {
+//       container: ({ hideModal }) => h(QuickOpen, {
+//         onClose: hideModal,
+//         onConfirm: async (params) => {
+//           const customerParams = await genCustomerParams(params)
+//           const [windowId] = await genDefaultProfileByCount(1, customerParams)
+//           emitter.emit('refreshProfileList', windowId)
+//           API.window.userAddProxyTemplateCreate(params || {})
+//           hideModal()
+//         },
+//       }),
+//     },
+//   })
+// }
+
+// async function genCustomerParams(data: any) {
+//   if (isEmptyValue(data))
+//     return {}
+
+//   // const checkResult = await testProxy({ ...data, isDirect: userPayInfo.value.isDirectWhitelist })
+//   return {
+//     proxyInfoList: [{
+//       _tempId: Date.now().toString(32),
+//       proxyMethod: 'custom',
+//       ...data,
+//       // ...checkResult,
+//     }],
+//   }
+// }
 </script>
 
 <template>
-  <aside class="relative -mt-6.5 pt-6.5 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <template v-if="check('Profiles_add')">
-      <RxButton id="NEW_PROFILE" class="new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
-    </template>
+  <aside class="relative -mt-6.5 pt-5.25 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
+    <div v-if="check('Profiles_add')" class="flex items-center gap-2">
+      <RxButton id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
+      <!-- <RxButton v-if="!collapsed" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" /> -->
+    </div>
     <div class="relative flex-1 overflow-hidden">
       <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">
         <SubMenuItem v-model:badge-map="badgeMap" class="relative z-1" :items="menus" :collapsed />
@@ -173,12 +244,11 @@ async function toCreateBrowser() {
 }
 
 .new-profile-btn {
+  flex: 1;
   position: relative;
   flex-shrink: 0;
   white-space: nowrap;
   word-break: keep-all;
-  transition: width 0.3s;
-  height: 36px;
   font-size: 14px;
   z-index: 10;
 }

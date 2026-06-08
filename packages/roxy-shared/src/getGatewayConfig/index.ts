@@ -23,8 +23,8 @@ export interface CreateGatewayConfigOptions {
   defaultApiGateway: string
   /** 单次请求超时时间（毫秒），默认 10 秒 */
   timeoutMs?: number
-  /** 网关配置接口要求的鉴权 token */
-  token?: string
+  /** 自定义请求头 */
+  headers?: Record<string, any>
   /** 网关地址（baseUrl/openAPIUrl）变更后的回调 */
   onChange?: (urls: { baseUrl: string, openAPIUrl: string }) => void
   /**
@@ -56,7 +56,6 @@ export interface GatewayConfigInstance {
   reGetGatewayConfigByCountryChange: (options: ReGetGatewayConfigByCountryChangeOptions) => Promise<void>
 }
 
-const DEFAULT_TOKEN = '112233998877rrttyy'
 const DEFAULT_TIMEOUT_MS = 10_000
 
 /**
@@ -69,7 +68,6 @@ export function createGatewayConfig(options: CreateGatewayConfigOptions): Gatewa
     defaultAppGateway,
     defaultApiGateway,
     timeoutMs = DEFAULT_TIMEOUT_MS,
-    token = DEFAULT_TOKEN,
     onChange,
     onCountryChanged,
   } = options
@@ -89,7 +87,7 @@ export function createGatewayConfig(options: CreateGatewayConfigOptions): Gatewa
     try {
       const res = await fetch(url, {
         method: 'GET',
-        headers: { token },
+        headers: { ...options?.headers, 'Content-Type': 'application/json' },
         signal: controller.signal,
       })
       if (!res.ok)

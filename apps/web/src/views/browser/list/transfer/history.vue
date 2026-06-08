@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import HistoryDetail from '/@/views/browser/list/transfer/components/history-detail.vue';
 
 import { API } from '/@/api'

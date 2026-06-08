@@ -73,6 +73,7 @@
   },
   "devDependencies": {
     "@primevue/auto-import-resolver": "^4.5.4",
+    "@roxy/agent-api": "workspace:*",
     "@roxy/backend-api": "workspace:*",
     "@roxy/electron-preload": "workspace:*",
     "@roxy/language-localization": "workspace:*",

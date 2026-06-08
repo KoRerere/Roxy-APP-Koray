@@ -51,4 +51,5 @@ export const defaultValues: StoreType = {
   windowNameSwitch: true,
   lastWebDomain: '',
   isFirstClearWebCache: true,
+  lastSelectedNetworkNode: 'auto',
 }

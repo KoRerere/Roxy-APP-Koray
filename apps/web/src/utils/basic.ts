@@ -155,53 +155,6 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
   return target
 }
 
-export function checkCookieFormat(cookie: string): boolean {
-  try {
-    if (cookie && typeof cookie === 'string') {
-      if (!Array.isArray(JSON.parse(cookie))) {
-        return false
-      }
-    }
-  }
-  catch (error) {
-    return false
-  }
-  return true
-}
-
-export async function readCookiesFile(): Promise<any> {
-  try {
-    const file = await (window as any).showOpenFilePicker({
-      types: [
-        {
-          description: 'cookies Files',
-          accept: {
-            'application/json': ['.json'],
-          },
-        },
-      ],
-      excludeAcceptAllOption: true,
-      multiple: false,
-    }).then((handleFile: FileSystemFileHandle[]) => handleFile[0]!.getFile())
-
-    const reader = new FileReader()
-    reader.readAsText(file)
-    return new Promise((resolve) => {
-      reader.onload = function fileReadCompleted() {
-        const isOk = reader.result && checkCookieFormat(reader.result as string)
-        resolve({
-          code: isOk ? 0 : -1,
-          data: isOk ? reader.result : null,
-          message: isOk ? $t('导入成功') : $t('导入 Cookie 格式错误，请检查格式'),
-        })
-      }
-    })
-  }
-  catch (error) {
-    console.log(error)
-  }
-}
-
 export function getRandomIntByRange(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
@@ -268,7 +221,11 @@ export function validateURL(url: string): boolean {
   }
 }
 
-interface ProxyObject {
+const REGEX_PROXY_URL_1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+const REGEX_PROXY_URL_2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
+const REGEX_PROXY_URL_TYPE = /^[^:/\s]+:[^:/\s]+@/
+
+export function parseProxyUrl(url: string): {
   protocol?: string | undefined
   host: string | undefined
   port: string | undefined
@@ -276,18 +233,7 @@ interface ProxyObject {
   proxyPassword: string | undefined
   refreshUrl?: string
   remark?: string
-}
-
-export enum IPType {
-  IPV4 = 'IPV4',
-  IPV6 = 'IPV6',
-}
-
-const REGEX_PROXY_URL_1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
-const REGEX_PROXY_URL_2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
-const REGEX_PROXY_URL_TYPE = /^[^:/\s]+:[^:/\s]+@/
-
-export function parseProxyUrl(url: string): ProxyObject {
+} {
   const regex = REGEX_PROXY_URL_TYPE.test(url) ? REGEX_PROXY_URL_2 : REGEX_PROXY_URL_1
   const match = url.match(regex)
   const data = match?.groups

@@ -1,49 +1,71 @@
+import type { UserModelInfo } from '../api/model'
+import type { ChatOpenAICallOptions } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatGoogle } from '@langchain/google'
 import { ChatOpenAI } from '@langchain/openai'
-import { aiAgentUrl, env } from '../config'
+import { aiAgentModelApi } from '../api/model'
+import { aiAgentToken, aiAgentUrl } from '../config'
 import { ChatMoonshot } from './model/moonshot'
 
-/**
- * 创建 LLM
- * @param enableThinking 是否开启深度思考模式
- * @returns 返回对应的 LLM
- */
-export async function createLLM(enableThinking = false) {
+export type LLMInstance = ChatAnthropic | ChatGoogle | ChatMoonshot | ChatOpenAI<ChatOpenAICallOptions>
+
+export interface CreateLLMOptions {
+  enableThinking?: boolean
+  conversationId?: string
+  turnId?: string
+  /** 指定使用的模型类型：生成图片用 vlm_model，其他全部用 text_model（默认） */
+  modelType?: 'text_model' | 'vlm_model'
+}
+
+function buildTracingHeaders(options: CreateLLMOptions = {}) {
+  return {
+    ...(options.conversationId ? { 'Conversation-Id': options.conversationId } : {}),
+    ...(options.turnId ? { 'Turn-Id': options.turnId } : {}),
+  }
+}
+
+export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOptions = {}): LLMInstance {
   const baseURL = aiAgentUrl
-  const apiKey = env.ROXY_API_KEY
-  const response = await fetch(`${baseURL}/v1/user/model`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  })
-  const result: any = await response.json()
-  let model = ''
-  let protocol = 'anthropic'
-  if (result.success) {
-    model = result.data.model
-    protocol = result.data.protocol
+  const apiKey = aiAgentToken
+  const enableThinking = options.enableThinking === true
+  const tracingHeaders = buildTracingHeaders(options)
+
+  const modelType = options.modelType ?? 'text_model'
+  const selected = data[modelType]
+  const model = selected?.model
+  const apiFormat = selected?.api_format
+
+  if (!model || !apiFormat) {
+    console.error(`invalid model info (${modelType}): `, JSON.stringify(data))
+    throw new Error('获取模型信息失败')
   }
 
-  if (protocol === 'anthropic') {
-    return new ChatAnthropic({
+  let llm: LLMInstance
+  if (apiFormat === 'anthropic') {
+    llm = new ChatAnthropic({
       model,
       apiKey,
       anthropicApiUrl: baseURL, // 使用 anthropicApiUrl 设置自定义 API 端点
       streaming: true,
       maxTokens: 4096 + 1024,
+      clientOptions: {
+        defaultHeaders: {
+          ...tracingHeaders,
+        },
+      },
       thinking: enableThinking
         ? { type: 'enabled', budget_tokens: 4096 }
         : undefined,
       ...(enableThinking ? {} : { temperature: 0.5 }),
     })
   }
-  else if (protocol === 'openai') {
-    return new ChatOpenAI({
+  else if (apiFormat === 'openai') {
+    llm = new ChatOpenAI({
       modelName: model,
       apiKey,
       configuration: {
         baseURL,
+        defaultHeaders: tracingHeaders,
       },
       streaming: true,
       temperature: 0.7,
@@ -52,24 +74,57 @@ export async function createLLM(enableThinking = false) {
       },
     })
   }
-  else if (protocol === 'google') {
+  else if (apiFormat === 'google') {
     const url = new URL(baseURL)
-    return new ChatGoogle(model, {
+    llm = new ChatGoogle(model, {
       apiKey,
+      apiClient: {
+        hasApiKey: () => Boolean(apiKey),
+        getProjectId: async () => '',
+        fetch: async (request: Request) => {
+          if (apiKey)
+            request.headers.set('x-goog-api-key', apiKey)
+          for (const [key, value] of Object.entries(tracingHeaders))
+            request.headers.set(key, value)
+          return fetch(request)
+        },
+      } as any,
       endpoint: url.host + url.pathname,
       streaming: true,
       temperature: 0.5,
     })
   }
-  else if (protocol === 'moonshot') {
-    return new ChatMoonshot({
+  else if (apiFormat === 'moonshot') {
+    llm = new ChatMoonshot({
       model,
       streaming: true,
       apiKey,
       apiUrl: baseURL,
+      defaultHeaders: tracingHeaders,
     })
   }
   else {
     throw new Error('当前模型协议不支持')
   }
+
+  return llm
+}
+
+/**
+ * 创建 LLM
+ * @param enableThinking 是否开启深度思考模式
+ * @returns 返回对应的 LLM
+ */
+export async function createLLM(options: CreateLLMOptions = {}): Promise<LLMInstance> {
+  let data: UserModelInfo
+  try {
+    data = await aiAgentModelApi.getUserModel({
+      headers: buildTracingHeaders(options),
+    })
+  }
+  catch (error) {
+    console.error('failed to fetch model info: ', error)
+    throw new Error('获取模型信息失败')
+  }
+  return createLLMFromModelInfo(data, options)
 }

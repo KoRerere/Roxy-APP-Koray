@@ -17,6 +17,7 @@ import {
   normalizeCoreType,
   sortKernelList,
 } from './kernel-utils'
+import { CoreType } from '/@/enums/'
 
 interface KernelUpdateGroup {
   title: string
@@ -92,6 +93,14 @@ function toggle(event: Event) {
   }
   checkForUpdates()
 }
+
+watch(isPopoverVisible, (visible) => {
+  console.debug('isPopoverVisible', visible)
+  if (visible) {
+    globalThis.electronAPI.send('app:reGetUpdateInfo', 'kernel', CoreType.Chrome)
+    globalThis.electronAPI.send('app:reGetUpdateInfo', 'kernel', CoreType.Firefox)
+  }
+})
 
 onMounted(() => {
   getKernelList()
@@ -238,7 +247,6 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
     }
   }
 })
-
 </script>
 
 <template>

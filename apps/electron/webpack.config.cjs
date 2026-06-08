@@ -56,12 +56,24 @@ module.exports = {
     chunkIds: 'deterministic', // 确定性 chunk ID
     minimize: true, // 启用代码压缩和混淆
     minimizer: [
+      // 第三方库（vendors chunk）：只压缩，不混淆
+      // 避免 mangle 破坏 ali-oss 等依赖 prototype 链 / mixin 模式的库
+      // new TerserPlugin({
+      //   include: /vendors/,
+      //   terserOptions: {
+      //     compress: true,
+      //     mangle: false,
+      //   },
+      //   extractComments: false,
+      // }),
+      // 自己的源码：压缩 + 混淆
       new TerserPlugin({
+        // exclude: /vendors/,
         terserOptions: {
-          compress: true, // 启用代码压缩
-          mangle: true, // 混淆变量名称
+          compress: true,
+          mangle: true,
         },
-        extractComments: false, // 禁止生成 LICENSE.txt 文件
+        extractComments: false,
       }),
     ],
     // splitChunks: {

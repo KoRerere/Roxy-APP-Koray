@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import BrowserControl from './components/browser-control.vue'
 import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
@@ -36,7 +37,7 @@ import { silentUpdateAccount, silentUpdateProxy } from './components/util'
 import { getAdvancedSearch, getCustomFilters, getOperation, getSorts } from './operation'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import { emitter } from '/@/utils/eventBus'
+import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
@@ -48,6 +49,7 @@ import { useProfilesTable } from '/@/views/browser/list/profiles/hooks/useProfil
 import { useWindowModify } from '/@/views/browser/list/profiles/hooks/useWindowModify'
 import { createProfileOperationHandler } from '/@/views/browser/list/profiles/operationHandlers'
 import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/utils/filterParams'
+import { useSimpleLocale } from '/@/stores/locale'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -83,13 +85,13 @@ const { runProxySpeedTestForRows } = useProfileProxySpeedTest()
 const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
+const { getVideoSource } = useSimpleLocale()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const advancedSearchOptions = getAdvancedSearch()
-const dataList = ref<Data[]>([])
 const driverObj = ref()
 const checkerLoading = ref(false)
 
@@ -105,7 +107,7 @@ const {
   sendFirstOpenRecord,
 } = useProfileOpenState()
 
-const { hasFiltered, hasTempProfile, onRefreshTable, tableRequest } = useProfilesTable({
+const { dataList, hasFiltered, hasTempProfile, clearPendingAutoOpen, syncOpenedProxyToRow, onRefreshTable, tableRequest } = useProfilesTable({
   tableRef,
   filtersMenu,
   getCurrentFilterParams: () => props.currentFilter?._params,
@@ -147,15 +149,24 @@ const scheduledCheckerProxyStatus = genPollingChecker({
   },
 })
 
+useEmitterEvent('refreshProfileList', async (windowId?: number) => {
+  if (windowId) {
+    router.replace({ name: route.name, query: { browser: JSON.stringify({ openBrowser: true, windowId }) } })
+  }
+  onRefreshTable()
+})
+
 onBeforeMount(() => {
   scheduledCheckerProxyStatus.check()
   cancelOpenListener = listenOpenMessage({
-    openSuccessAfter: () => driverNext(),
+    onOpenSuccess: (dirId) => {
+      void syncOpenedProxyToRow(dirId)
+      driverNext()
+    },
+    onOpenFailed: clearPendingAutoOpen,
   })
   cancelCloseListener = listenCloseMessage()
   cancelCloseSyncingDataListener = listenCloseSyncingDataMessage()
-
-  emitter.on('refreshProfileList', () => onRefreshTable())
 
   if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false)
     emitter.on('firstRegisterGuide', onFirstRegisterGuide)
@@ -234,13 +245,6 @@ function driverNext() {
     driverObj.value = undefined
     emitter.emit('asideMenuGuide')
   }
-}
-
-async function getTableList(params: Record<string, unknown>) {
-  const data = await tableRequest(params)
-  if (data.code === 0)
-    dataList.value = data.data?.rows ?? []
-  return data
 }
 
 async function testAllProxy(silent = false) {
@@ -387,7 +391,7 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
           desc={({ class: className }) => {
             return <div class={className}>{$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
           }}
-          video="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/right-click.mp4"
+          video={getVideoSource('right-click.mp4')}
           onClose={hideModal}
           onConfirm={hideModal}
         >
@@ -880,15 +884,15 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="getTableList" :table-operation="getOperation"
+  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
            :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
   >
     <template #filter-after>
       <div class="w-full flex items-start gap-2">
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
-        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile"
-                       video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/profile-filter.mp4" :save-filters="saveFilters" @filter-change="onRefreshTable"
+        <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :video-url="getVideoSource('profile-filter.mp4')"
+                       :save-filters="saveFilters" @filter-change="onRefreshTable"
         />
         <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />
       </div>
@@ -949,8 +953,8 @@ defineExpose({
     </template>
     <template #open="{ data, index }">
       <template v-if="data.id">
-        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord" :icon="data.coreType === CoreType.Firefox ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome'"
-                        @open="openBrowserBefore"
+        <BrowserControl :btn-id="`OPEN_${index}`" :data="data" :open-message="openMessage" :driver-obj="driverObj" :driver-next="driverNext" :send-first-open-record="sendFirstOpenRecord"
+                        :icon="data.coreType === CoreType.Firefox ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome'" @open="openBrowserBefore"
         />
       </template>
       <template v-else>

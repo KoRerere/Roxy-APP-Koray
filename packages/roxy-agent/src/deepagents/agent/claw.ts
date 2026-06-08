@@ -15,13 +15,18 @@ const HITL_DELETE_TOOLS = ['roxy_delete_browsers', 'roxy_delete_proxies', 'roxy_
 export async function createClawAgent(options: {
   workerId: string
   conversationId?: string
+  turnId?: string
 }): Promise<AgentInstance> {
   const { workerId } = options
 
   await mcpManager.createPlaywrightClientForWorker(workerId)
   const mcpTools = await mcpManager.getToolsForWorker(workerId)
 
-  const model = await createLLM(true)
+  const model = await createLLM({
+    enableThinking: true,
+    conversationId: options.conversationId,
+    turnId: options.turnId,
+  })
 
   let checkpointer
   if (options.conversationId) {

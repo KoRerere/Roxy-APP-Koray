@@ -10,7 +10,7 @@ let lastVersion = 0
 let isCheckingAppVersion = false
 
 export async function checkAnncVersion(response: AxiosResponse<any, any>) {
-  if (isCheckingAppVersion) {
+  if (isCheckingAppVersion || typeof response.headers.r_annc_v !== 'string') {
     return
   }
 
@@ -20,7 +20,7 @@ export async function checkAnncVersion(response: AxiosResponse<any, any>) {
   const { setAnntList } = useCommonStore()
 
   const remoteVersions = response.headers.r_annc_v.split(';').map((item: string) => item.split('='))
-  const remoteVersion = remoteVersions?.find(([locale]: string[]) => simpleLocaleStore.currentLocale.startsWith(locale))?.[1]
+  const remoteVersion = Number(remoteVersions?.find(([locale]: string[]) => simpleLocaleStore.currentLocale.startsWith(locale))?.[1])
 
   if (!remoteVersion) {
     isCheckingAppVersion = false

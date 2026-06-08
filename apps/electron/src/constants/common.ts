@@ -76,5 +76,7 @@ export enum Role {
   OWNER = 3,
 }
 
-/** 默认浏览器执行文件名称 */
+/** 默认浏览器（Chrome）执行文件名称 */
 export const defaultBrowserExeName = 'RoxyChrome'
+/** 默认浏览器（Firefox）执行文件名称 */
+export const defaultFirefoxExeName = 'RoxyFirefox'

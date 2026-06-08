@@ -1,14 +1,17 @@
-import type { BiDiClient } from './bidi-client'
 import type { BiDiCapabilities, BiDiContext, FirefoxBrowserEvents, ProcessExitData } from './types'
+import { BiDiClient } from './bidi-client'
 import type { ChildProcess } from 'node:child_process'
 import { Buffer } from 'node:buffer'
-import { execSync } from 'node:child_process'
+import { exec } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { setTimeout } from 'node:timers/promises'
+import { promisify } from 'node:util'
 import { isErrorLike, pidExists } from '/@/utils'
 import { FirefoxBiDiSession } from './bidi-session'
 import { FirefoxPage } from './page'
 import { FirefoxTarget } from './target'
+
+const execAsync = promisify(exec)
 
 /**
  * Firefox 浏览器封装类
@@ -22,9 +25,12 @@ export class FirefoxBrowser extends EventEmitter {
   private disconnectedEmitted = false
   #browserProcessExiting: Promise<void> | null = null
   #exited = false
+  private reconnectBiDiInFlight: Promise<void> | null = null
   private sessionId?: string
   private capabilities?: BiDiCapabilities
   actualPort?: number
+  /** Marionette 协议端口（供 Selenium/GeckoDriver 使用） */
+  marionettePort?: number
 
   /**
    * Chrome 兼容的 client 接口
@@ -47,6 +53,7 @@ export class FirefoxBrowser extends EventEmitter {
     sessionId?: string,
     capabilities?: BiDiCapabilities,
     actualPort?: number,
+    marionettePort?: number,
   ) {
     super()
     this.bidiClient = bidiClient
@@ -55,6 +62,7 @@ export class FirefoxBrowser extends EventEmitter {
     this.sessionId = sessionId
     this.capabilities = capabilities
     this.actualPort = actualPort
+    this.marionettePort = marionettePort
     this.setupProcessListeners()
 
     // 初始化 Chrome 兼容的 client 接口
@@ -85,7 +93,7 @@ export class FirefoxBrowser extends EventEmitter {
         // 如果底层管道建立失败或早期崩溃，导致 Node 无法 cleanly 收尾，则需要手动触发 close
         if (!closed) {
           this.emit('process-close', { code, signal } as ProcessExitData)
-          this.kill()
+          await this.kill()
         }
       })
 
@@ -137,22 +145,106 @@ export class FirefoxBrowser extends EventEmitter {
   }
 
   /**
-   * 关闭浏览器
-   * 使用 BiDi 标准 browser.close 命令，让内核有机会写出 lumilogin / roxy_tabs / places.sqlite。
-   * 若 BiDi session 已被 releaseSession() 释放，则直接 kill 进程，避免 5s 超时等待。
+   * 优雅终止浏览器进程
+   * 发送 SIGTERM（macOS/Linux）或 taskkill /T（Windows）让进程有机会清理后退出。
+   * 若等待 termTimeout 毫秒后进程仍存活，则升级为 SIGKILL 强制结束。
    */
-  async close(): Promise<void> {
-    if (!this.bidiClient.isConnected()) {
-      // BiDi session 已释放（cookie 导入后主动断开），直接 kill 进程
-      this.kill()
-      return this.#browserProcessExiting || Promise.resolve()
+  private async terminate(termTimeout = 8000): Promise<void> {
+    if (!this.browserProcess?.pid || !pidExists(this.browserProcess.pid)) {
+      return
     }
 
+    const pid = this.browserProcess.pid
+
+    // 等待进程退出的 Promise（resolve 由 exit 事件或超时触发）
+    const waitExit = new Promise<void>((resolve) => {
+      const timer = globalThis.setTimeout(resolve, termTimeout)
+      this.browserProcess?.once('exit', () => {
+        clearTimeout(timer)
+        resolve()
+      })
+    })
+
     try {
+      if (process.platform === 'win32') {
+        // Windows：/T 终止进程树，不带 /F 让进程有机会处理 WM_CLOSE
+        // execSync(`taskkill /pid ${pid} /T`)
+        console.log('terminate: kill SIGTERM', pid)
+        this.browserProcess.kill('SIGTERM')
+        console.log('terminate: kill SIGTERM success', pid)
+      }
+      else if (process.platform === 'darwin') {
+        // macOS：通过 JXA ObjC 桥接按 PID 调用 NSRunningApplication.terminate
+        // JXA ObjC 桥接中，无参数的 ObjC 方法（如 - (BOOL)terminate）会被当作属性 getter，
+        // 直接访问 .terminate 即可触发调用并返回 BOOL（true=成功）。
+        // 不能写 .terminate()，否则会尝试调用返回值 true，抛出 "is not a function" 错误。
+        try {
+          // 使用异步 exec，避免阻塞主进程事件循环
+          await execAsync(
+            `osascript -l JavaScript -e "ObjC.import('AppKit'); $.NSRunningApplication.runningApplicationWithProcessIdentifier(${pid}).terminate"`,
+            { timeout: 5000 },
+          )
+          console.debug(`[FirefoxBrowser] darwin Apple Event quit (JXA) sent to pid ${pid}`)
+        }
+        catch (e) {
+          console.debug('JXA terminate failed, fallback to SIGTERM', e)
+          // JXA 失败时降级为 SIGTERM
+          const processGroupId = -pid
+          try {
+            process.kill(processGroupId, 'SIGTERM')
+          }
+          catch {
+            this.browserProcess.kill('SIGTERM')
+          }
+        }
+      }
+      else {
+        // Linux：向进程组发送 SIGTERM
+        const processGroupId = -pid
+        try {
+          process.kill(processGroupId, 'SIGTERM')
+        }
+        catch {
+          this.browserProcess.kill('SIGTERM')
+        }
+      }
+    }
+    catch (error) {
+      console.debug('terminate: failed to send graceful signal', error)
+    }
+
+    await waitExit
+
+    // 用 pidExists 做最终判断，避免 exit 事件仍在队列中未处理导致的竞态：
+    // osascript/SIGTERM 已触发进程退出，但 Node.js 的 exit 事件可能稍晚到达，
+    // 此时 #exited 仍为 false，若仅凭 #exited 判断会误发 SIGKILL 打断优雅退出。
+    if (pidExists(pid)) {
+      console.debug(`Browser process ${pid} did not exit after graceful signal, escalating to SIGKILL`)
+      await this.kill()
+    }
+  }
+
+  /**
+   * 关闭浏览器
+   * 优先通过 BiDi browser.close 命令触发 Firefox 优雅退出，让内核有机会写出
+   * lumilogin / roxy_tabs / places.sqlite 等数据文件。
+   * 兜底路径均使用 SIGTERM → 等待 → SIGKILL 的优雅退出序列，避免直接强杀进程。
+   */
+  async close(): Promise<void> {
+    try {
+      console.debug('Sending browser.close command via BiDi')
       await this.bidiClient.sendCommand('browser.close' as any, {} as any)
+      console.debug('browser.close command sent successfully')
     }
     catch (error) {
       console.error('Failed to send browser.close:', error)
+    }
+
+    if (!this.bidiClient.isConnected()) {
+      console.warn('BiDi client not connected, skipping browser.close command')
+      // BiDi session 已释放（cookie 导入后主动断开），通过 SIGTERM 优雅退出
+      await this.terminate()
+      return this.#browserProcessExiting || Promise.resolve()
     }
 
     // 关闭 BiDi 连接
@@ -160,7 +252,7 @@ export class FirefoxBrowser extends EventEmitter {
 
     // 等待进程退出，给内核足够时间写盘
     if (!this.#exited && this.browserProcess) {
-      // 等待最多 5 秒让进程自然退出
+      // 等待最多 5 秒让进程响应 browser.close 自然退出
       const exitTimeout = new Promise<void>((resolve) => {
         const timer = globalThis.setTimeout(resolve, 5000)
         this.browserProcess?.once('exit', () => {
@@ -170,9 +262,9 @@ export class FirefoxBrowser extends EventEmitter {
       })
       await exitTimeout
 
-      // 如果进程仍未退出，强制 kill
+      // browser.close 超时后仍未退出，降级为 SIGTERM 优雅退出序列
       if (!this.#exited) {
-        this.kill()
+        await this.terminate()
       }
     }
 
@@ -182,7 +274,7 @@ export class FirefoxBrowser extends EventEmitter {
   /**
    * 强制杀死浏览器进程
    */
-  kill(): void {
+  async kill(): Promise<void> {
     console.debug(`Trying to kill ${this.browserProcess?.pid}`)
     // 如果进程启动失败（例如浏览器可执行路径无效），则进程不会获得pid
     // 调用`proc.kill`会出错，因为找不到要杀死的`pid`
@@ -195,7 +287,8 @@ export class FirefoxBrowser extends EventEmitter {
         console.debug(`Browser process ${this.browserProcess.pid} exists`)
         if (process.platform === 'win32') {
           try {
-            execSync(
+            // 使用异步 exec，避免阻塞主进程事件循环
+            await execAsync(
               `taskkill /pid ${this.browserProcess.pid} /T /F`,
             )
           }
@@ -379,11 +472,13 @@ export class FirefoxBrowser extends EventEmitter {
    * 创建新页面
    */
   async newPage(url = 'about:blank'): Promise<FirefoxPage> {
+    /** cookie robot 等场景下 Firefox 创建 tab 可能较慢，默认 5s 易超时 */
+    const tabCommandTimeout = { timeout: 30_000 }
     try {
       // 使用 BiDi 的 browsingContext.create 创建新的浏览上下文
       const result = await this.bidiClient.sendCommand('browsingContext.create', {
         type: 'tab' as any,
-      })
+      }, tabCommandTimeout)
 
       const contextId = result?.context
 
@@ -393,13 +488,13 @@ export class FirefoxBrowser extends EventEmitter {
           context: contextId,
           url,
           wait: 'none' as any,
-        })
+        }, tabCommandTimeout)
       }
 
       // 获取上下文信息
       const treeResult = await this.bidiClient.sendCommand('browsingContext.getTree', {
         root: contextId,
-      })
+      }, tabCommandTimeout)
 
       const context = treeResult?.contexts?.[0]
       return new FirefoxPage(this.bidiClient, context, this)
@@ -429,6 +524,35 @@ export class FirefoxBrowser extends EventEmitter {
    */
   getBidiClient(): BiDiClient {
     return this.bidiClient
+  }
+
+  /**
+   * 在 releaseSession() 之后重新建立 BiDi 连接（用于 cookieRobot 等短时自动化）。
+   * 复用同一 FirefoxBrowser 实例，保留进程监听，不替换 beforeLaunchTask.browser。
+   */
+  async reconnectBiDi(): Promise<void> {
+    if (this.bidiClient.isConnected()) {
+      return
+    }
+    if (this.reconnectBiDiInFlight) {
+      return this.reconnectBiDiInFlight
+    }
+
+    this.reconnectBiDiInFlight = this.doReconnectBiDi().finally(() => {
+      this.reconnectBiDiInFlight = null
+    })
+    return this.reconnectBiDiInFlight
+  }
+
+  private async doReconnectBiDi(): Promise<void> {
+    const newClient = new BiDiClient()
+    await newClient.connect(this._wsEndpoint)
+    const { sessionId, capabilities } = await newClient.createSessionWithRetry()
+    this.bidiClient = newClient
+    this.sessionId = sessionId
+    this.capabilities = capabilities
+    this.client = this.createCompatibleClient()
+    console.log('[FirefoxBrowser] BiDi session reconnected for automation')
   }
 
   /**

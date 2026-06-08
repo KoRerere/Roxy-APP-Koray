@@ -21,6 +21,8 @@ export class BiDiClient {
   private sessionInitialized = false
   private commandId = 0
   private options: BiDiClientOptions
+  /** BiDi 事件监听器：method → handlers */
+  private eventHandlers = new Map<string, Set<(params: any) => void>>()
   /**
    * 缓存 session.new 的成功结果。
    * Firefox 存在边界竞态：当 1500ms 窗口等待定时器恰好在窗口打开瞬间触发时，
@@ -189,6 +191,16 @@ export class BiDiClient {
       // 处理错误
       if (message.type === 'error') {
         console.log(`Error: ${(message as any).error} - ${(message as any).message}`)
+      }
+
+      // 分发 BiDi 事件到已注册的监听器
+      if (message.type === 'event') {
+        const method = (message as any).method as string
+        const params = (message as any).params
+        const handlers = this.eventHandlers.get(method)
+        if (handlers) {
+          handlers.forEach(handler => handler(params))
+        }
       }
 
       this.options.onMessage?.(message)
@@ -365,6 +377,24 @@ export class BiDiClient {
    */
   async deleteCookies(params: Commands['storage.deleteCookies']['params'] = {}) {
     return this.sendCommand('storage.deleteCookies', params)
+  }
+
+  /**
+   * 注册 BiDi 事件监听器
+   * 需先调用 session.subscribe 订阅对应事件，方可收到推送
+   */
+  addBiDiEventListener(method: string, handler: (params: any) => void): void {
+    if (!this.eventHandlers.has(method)) {
+      this.eventHandlers.set(method, new Set())
+    }
+    this.eventHandlers.get(method)!.add(handler)
+  }
+
+  /**
+   * 移除 BiDi 事件监听器
+   */
+  removeBiDiEventListener(method: string, handler: (params: any) => void): void {
+    this.eventHandlers.get(method)?.delete(handler)
   }
 
   /**

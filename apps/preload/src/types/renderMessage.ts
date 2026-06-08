@@ -171,7 +171,7 @@ export interface RenderMessage {
   /** 获取应用版本号 */
   'app:getAppVersion': () => string
   /** 卸载反馈已提交 */
-  'app:uninstall-feedback-submitted': (payload: { reasons: number[], feedback: string }) => Promise<void>
+  'app:uninstall-feedback-submitted': (payload: { reasons: number[], selectedReasons: string[] }) => Promise<void>
   /** 跳过卸载反馈 */
   'app:uninstall-feedback-skipped': () => Promise<void>
   /** 直接卸载，无需反馈 */
@@ -220,7 +220,7 @@ export interface RenderMessage {
   /** 获取系统 GPU 信息 */
   'app:getGPUFeatureStatus': () => GPUFeatureStatus
   /** 动态设置窗口大小 */
-  'app:resizeWindow': (payload: { width?: number, height?: number }) => void
+  'app:resizeWindow': (payload: { width?: number, height?: number, center?: boolean }) => void
   /** 获取新功能提示，不为空数组表示有新功能提示 */
   'app:getNewFeatureTips': () => string[]
   /** 获取最后一次跟新特性 */
@@ -446,7 +446,7 @@ export interface RenderMessage {
   'syncControl:resume': () => void
 
   /** 打开 MCP */
-  'mcp:open': (options?: { scene?: string }) => Promise<{
+  'mcp:open': (options?: { scene?: string, skill?: string }) => Promise<{
     success: boolean
     type?: McpFailureType
     message?: string

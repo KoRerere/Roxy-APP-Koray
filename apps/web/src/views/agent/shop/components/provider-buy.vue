@@ -495,7 +495,7 @@ async function initConfig() {
       title: () => {
         return (
           <div class="flex gap-4 items-center">
-            <div class="subtitle whitespace-nowrap">
+            <div class="tt-primary text-3.5 font-600 leading-normal whitespace-nowrap">
               {$t('选择代理 IP 国家/地区:')}
             </div>
             <RxInputText
@@ -696,7 +696,7 @@ async function onPay() {
       <div class="grid grid-cols-2 gap-y-6">
         <div v-for="item in configs" :key="item.name" class="flex flex-col gap-2" :class="[item.fullWidth ? 'col-span-2' : 'col-span-1']">
           <component :is="item.title" v-if="typeof item.title === 'function'" />
-          <div v-else class="subtitle">
+          <div v-else class="tt-primary text-3.5 font-600 leading-normal">
             {{ item.title }}
           </div>
           <component :is="item.render" v-if="item.render" :item="item" />
@@ -710,7 +710,7 @@ async function onPay() {
       <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('电商专用 IP 专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
       <div class="flex flex-col gap-6">
         <div v-if="proxyTypeValue != null" class="flex flex-col gap-1.5 pa-4 quantity">
-          <div class="subtitle">
+          <div class="tt-primary text-3.5 font-600 leading-normal">
             {{ $t('代理 IP 数量:') }}
           </div>
           <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentProxyType.inventory), ONE_BUY_MAX)"
@@ -768,7 +768,7 @@ async function onPay() {
           </template>
         </Detail>
         <div class="flex flex-col gap-2">
-          <div class="subtitle">
+          <div class="tt-primary text-3.5 font-600 leading-normal">
             {{ $t('注意事项:') }}
           </div>
           <ol class="ma-0 pl-4">
@@ -889,13 +889,6 @@ async function onPay() {
     font-size: 12px;
     line-height: normal;
   }
-}
-
-.subtitle {
-  color: var(--colors-text-text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: normal;
 }
 
 .quantity {

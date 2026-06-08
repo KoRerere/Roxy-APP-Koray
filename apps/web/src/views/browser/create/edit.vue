@@ -7,6 +7,7 @@ import type { WindowMetaData } from './components/type'
 import AccordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
+import { createFormAsyncGate } from './hooks/useAsyncGate'
 import { createTableContext } from './hooks/useContext'
 import { useBackRoute } from '/@/router/utils'
 import { getFormDataByList } from '/@/utils'
@@ -29,9 +30,14 @@ const original = ref()
 const metaData = ref<WindowMetaData>()
 const collapsed = ref(false)
 const loading = ref(false)
+const formGate = createFormAsyncGate()
+const formInitialized = ref(false)
 const windowInfo = ref({})
 
+const canSave = computed(() => formInitialized.value && formGate.isReady.value && !loading.value)
+
 onBeforeMount(async () => {
+  formInitialized.value = false
   const { code, data: { rows: [data] }, msg } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
 
   if (code !== 0) {
@@ -40,7 +46,7 @@ onBeforeMount(async () => {
   }
 
   windowInfo.value = data!
-  const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
+  const [_inputsGroup, _original] = await getInputsGroup(data, showToast, formGate)
   inputsGroup.value = _inputsGroup
   original.value = _original
   oldFieldsFormat()
@@ -50,15 +56,20 @@ onBeforeMount(async () => {
     labelIds: data!.labelIds,
     windowRemark: data!.windowRemark,
   }
+  formInitialized.value = true
 })
 
 async function onShuffle() {
-  const data = await ceateRandomFinger(inputsGroup.value)
+  const data = await formGate.run(() => ceateRandomFinger(inputsGroup.value))
   Object.assign(original.value, data[0])
   showToast(0, $t('指纹刷新成功'))
 }
 
 async function createProfile() {
+  if (!formInitialized.value || !inputsGroup.value)
+    return
+
+  await formGate.waitUntilReady()
   const formData = getFormDataByList(inputsGroup.value, toRaw(metaData.value))
   const params = {
     ...original.value,
@@ -91,23 +102,22 @@ function oldFieldsFormat() {
 <template>
   <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :title="$t('编辑窗口')" />
-    <div class="flex flex-1 px-28 overflow-hidden overflow-x-auto">
-      <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex min-w-0 gap-8 overflow-hidden">
-          <AccordionInputs class="min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
-            <template #before>
-              <div class="flex items-center justify-between px-4 py-4 subtitle">
-                {{ $t('窗口信息') }}
-              </div>
-            </template>
-          </AccordionInputs>
-          <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" is-edit :on-shuffle="onShuffle" />
-        </div>
-        <div class="relative flex items-center gap-2 py-4 min-h-16 overflow-hidden footer">
-          <div class="footer-separator" />
-          <MateGroup v-model="metaData" class="flex-1" is-edit />
-          <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
-        </div>
+    <div class="px-16 flex flex-1 overflow-hidden overflow-x-auto">
+      <div class="w-full h-full flex gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
+        <AccordionInputs class="min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
+          <template #before>
+            <div class="flex items-center justify-between px-4 py-4 subtitle">
+              {{ $t('窗口信息') }}
+            </div>
+          </template>
+        </AccordionInputs>
+        <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" is-edit :on-shuffle="onShuffle" />
+      </div>
+    </div>
+    <div class="px-16">
+      <div class="mx-auto relative flex items-center justify-end gap-2 py-4 min-h-16 footer" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
+        <MateGroup v-model="metaData" class="flex-1" is-edit />
+        <RxButton v-tooltip.top="canSave ? '' : $t('正在同步指纹，请稍后')" severity="primary" :label="$t('保存')" :disabled="!canSave" :loading="loading" @click="createProfile" />
       </div>
     </div>
     <div class="foot-separator" />

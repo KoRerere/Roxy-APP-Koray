@@ -133,5 +133,10 @@
       "defaultPrefix": "assets/",
       "cdnDomain": ""
     }
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "请用中文生成 git 提交注释，格式为：类型(范围): 简短描述。类型包括：feat(新功能)、fix(修复bug)、docs(文档)、style(格式)、refactor(重构)、test(测试)、chore(构建/工具)。"
+    }
   ]
 }

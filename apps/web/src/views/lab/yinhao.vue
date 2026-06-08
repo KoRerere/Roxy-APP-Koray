@@ -1,14 +1,15 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import { genDriver, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
+import RxButton from '/@/components/rx-button'
 import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 // import { emitter } from '/@/utils/eventBus'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
 import RaffleModal from './raffle-modal.vue'
-import QuickOpen from './quick-open.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 import DoubeOpen from './doube-open.vue'
@@ -27,7 +28,7 @@ import Test from '/@/views/lab/components/test.vue'
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
 // import { getInviteCode } from '/@/api/util'
-
+const router = useRouter()
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 
@@ -42,12 +43,33 @@ function _open1() {
     //   // mask: "!backdrop-blur-md",
     // },
     slots: {
-      container: ({ hideModal }) => <QuickOpen onClose={hideModal}></QuickOpen>,
+      container: ({ hideModal }) => <RaffleModal onClose={hideModal}></RaffleModal>,
     },
   })
 }
 
+function getToastMessage(options: { msg: string, reCheck?: () => void }) {
+  return (
+    <div class="flex flex-col gap-2">
+      <div>{options.msg}</div>
+      <div class="flex gap-2 justify-end">
+        <RxButton text name="base/rx_ic_close" size="xxs" label={$t('重新检测')} onClick={options.reCheck}></RxButton>
+        <RxButton
+          text
+          name="base/rx_ic_reload"
+          size="xxs"
+          label={$t('检查代理配置')}
+          onClick={() => { router.push({ name: 'agent-list' }) }}
+        >
+        </RxButton>
+      </div>
+    </div>
+  )
+}
+
 function _open2() {
+  showToast(-1, getToastMessage({ msg: '代理 IP 检测失败，可能由于代理失效或本地网络波动导致。', reCheck: () => { console.log('reCheck') } }))
+
   // showModal({
   //   showHeader: false,
   //   modal: true,

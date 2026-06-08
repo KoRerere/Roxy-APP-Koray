@@ -8,8 +8,9 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
-import { isNewerVersion } from '/@/utils/common'
+// import { isNewerVersion } from '/@/utils/common'
 import { compare } from 'compare-versions'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -38,7 +39,7 @@ export function useProfileOpenState() {
   const { userInfo, userConfig } = storeToRefs(useUserStore())
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { mixpanelTrack } = useUserStore()
-
+  const [_, onlyErrorToast] = useResponseToast()
   const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
   const openMessage = reactive<Record<string, any>>({})
@@ -52,16 +53,30 @@ export function useProfileOpenState() {
     }
   }
 
-  function listenOpenMessage(options?: { openSuccessAfter?: () => void }) {
+  function listenOpenMessage(options?: {
+    onOpenSuccess?: (dirId: string | number) => void
+    onOpenFailed?: (dirId: string | number) => void
+  }) {
     return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
       if (event.code === 1 && event.message.includes('ERR101'))
         showDiskSpaceModal()
 
-      const id = event.data?.dirId || event.data
-      Reflect.set(openMessage, id as string, event)
-      if (event.code === 0 && event.data?.percent === 100) {
+      const dirId = typeof event.data === 'object' && event.data?.dirId != null
+        ? event.data.dirId
+        : typeof event.data === 'string' || typeof event.data === 'number'
+          ? event.data
+          : null
+      if (dirId == null)
+        return
+
+      Reflect.set(openMessage, String(dirId), event)
+      if (event.code !== 0) {
+        options?.onOpenFailed?.(dirId)
+        return
+      }
+      if (typeof event.data === 'object' && event.data.percent === 100) {
         sendFirstOpenRecord()
-        options?.openSuccessAfter?.()
+        options?.onOpenSuccess?.(dirId)
       }
     })
   }
@@ -94,7 +109,14 @@ export function useProfileOpenState() {
 
   async function checkProfileStatus(datas: Data[]) {
     const ids = datas.map(item => item.id!)
-    const { data } = await API.window.userGetWindowStatusInfoCreate({ ids })
+    const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ ids }).catch((error) => {
+      console.error(error)
+      return { code: -1, data: [], msg: $t('获取窗口状态信息失败') }
+    })
+    if (code !== 0) {
+      onlyErrorToast(code, msg)
+      return []
+    }
     return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
   }
 

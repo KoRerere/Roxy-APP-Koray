@@ -46,7 +46,7 @@ export function matchKernelItem(
 /** 先按内核类型分组，同类型内按版本号降序排列 */
 export function sortKernelList<T extends Pick<ResourceUpdateMessage, 'coreVersion' | 'coreType'>>(list: T[]): T[] {
   return [...list].sort((a, b) => {
-    const typeDiff = CORE_TYPE_ORDER[normalizeCoreType(a.coreType)] - CORE_TYPE_ORDER[normalizeCoreType(b.coreType)]
+    const typeDiff = CORE_TYPE_ORDER[normalizeCoreType(b.coreType)] - CORE_TYPE_ORDER[normalizeCoreType(a.coreType)]
     if (typeDiff !== 0)
       return typeDiff
     return Number(b.coreVersion) - Number(a.coreVersion)

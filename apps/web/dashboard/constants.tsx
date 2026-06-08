@@ -1,6 +1,5 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 
-
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 
 // export const baseUrl = `http://${location.hostname}:${globalThis.serverPort || new URLSearchParams(window.location.search).get('port')}`
@@ -10,8 +9,8 @@ export const fingerprintInfoList = [
     label: () => $t('系统/内核'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
-      const { os, coreVersion } = winInfo
-      return `${(os === 'IOS' ? 'iOS' : os) || '--'} / ${coreVersion || '--'}`
+      const { os, coreVersion, coreType } = winInfo
+      return `${(os === 'IOS' ? 'iOS' : os) || '--'} / Roxy${coreType} ${coreVersion || '--'}`
     },
   },
   {
@@ -53,12 +52,12 @@ export const profileInfoList = [
           {
             labelInfo?.length
               ? labelInfo.map(item => (
-                <div class="tag">
-                  <span class="dot" style={{ '--tag-color': item.labelColor }}></span>
-                  <span>{item.labelName}</span>
-                </div>
-              ),
-              )
+                  <div class="tag">
+                    <span class="dot" style={{ '--tag-color': item.labelColor }}></span>
+                    <span>{item.labelName}</span>
+                  </div>
+                ),
+                )
               : '--'
           }
         </div>

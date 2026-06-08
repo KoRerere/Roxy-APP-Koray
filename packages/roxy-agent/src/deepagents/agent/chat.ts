@@ -21,13 +21,18 @@ export async function createChatAgent(options: {
   mode: 'simple' | 'orchestrator'
   workerId?: string
   conversationId?: string
+  turnId?: string
 }): Promise<AgentInstance> {
   const workerId = options.workerId ?? 'simple'
 
   await mcpManager.createPlaywrightClientForWorker(workerId)
   const mcpTools = await mcpManager.getToolsForWorker(workerId)
 
-  const model = await createLLM(true)
+  const model = await createLLM({
+    enableThinking: true,
+    conversationId: options.conversationId,
+    turnId: options.turnId,
+  })
 
   let checkpointer
   if (options.conversationId) {

@@ -24,7 +24,7 @@ const config: UserConfig = {
   },
   build: {
     ssr: true,
-    sourcemap: false,
+    sourcemap: process.env.MODE === 'development' ? 'inline' : false,
     target: `node${node}`,
     outDir: 'dist-vite',
     assetsDir: '.',

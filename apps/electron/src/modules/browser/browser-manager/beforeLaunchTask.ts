@@ -210,6 +210,7 @@ export class BeforeLaunchTask {
         await launchBrowser({
           ...launchOptions,
           args: ['-profile', this.browserItem.userDataDir],
+          relaunch: true,
         }).catch((error) => {
           console.warn('Firefox focus re-launch failed:', error)
         })
@@ -555,15 +556,23 @@ export class BeforeLaunchTask {
         preferences.extensions.pinned_extensions = pinnedExtensions
       }
 
-      preferences.browser ??= {}
-      preferences.browser.theme ??= {}
-      // 0: 自动, 1: 浅色, 2: 深色
-      preferences.browser.theme.color_scheme2 = {
-        system: 0,
-        light: 1,
-        dark: 2,
-      }[store.browserColorScheme || 'system']
-      preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
+      // 读取上次记录的 colorScheme，仅当发生变化时才更新主题偏好，避免每次启动都无谓写入。
+      const colorScheme = store.browserColorScheme || 'system'
+      const colorSchemeCachePath = join(this.browserItem.userDataDir, '.roxy_color_scheme')
+      const storedColorScheme = (await fileExists(colorSchemeCachePath))
+        ? await readFile(colorSchemeCachePath, 'utf-8').catch(() => null)
+        : null
+      if (storedColorScheme !== colorScheme) {
+        preferences.browser ??= {}
+        preferences.browser.theme ??= {}
+        // 0: 自动, 1: 浅色, 2: 深色
+        preferences.browser.theme.color_scheme2 = { system: 0, light: 1, dark: 2 }[colorScheme]
+        preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
+        // 写入新的 colorScheme 缓存，供下次启动时比对
+        await writeFile(colorSchemeCachePath, colorScheme, 'utf-8').catch(err =>
+          console.error('Failed to write color scheme cache', err),
+        )
+      }
       await writeFile(preferencesPath, JSON.stringify(preferences))
     }
     catch (error) {
@@ -622,8 +631,8 @@ export class BeforeLaunchTask {
     //   }
     // }
 
-    // 按内核生成对应形状的指纹配置
-    const fingerprintConfig = await genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
+    // 按内核生成对应形状的指纹配置；userDataDir 用于 Firefox 图标缓存路径
+    const fingerprintConfig = await genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo, this.browserItem.userDataDir)
 
     if (!this.browserItem.winInfo.isDirect) {
       console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)
@@ -743,8 +752,14 @@ export class BeforeLaunchTask {
       const { useGpu, sandboxPermission } = this.browserItem.winInfo
       const managedPrefs: string[] = [
         '// Roxy Browser managed preferences',
-        'user_pref("browser.startup.page", 0);',
-        'user_pref("browser.sessionstore.resume_from_crash", false);',
+        // page=1：启动时显示主页（对应设置 → 主页 → 主页和新窗口 = "Firefox 主页（默认）"）
+        // 不使用 page=3，避免 session 恢复与 CLI URL 重复开 tab
+        // 'user_pref("browser.startup.page", 1);',
+        // 主页 URL 指向官方 Activity Stream（about:home）
+        'user_pref("browser.startup.homepage", "about:home");',
+        // 'user_pref("browser.sessionstore.resume_from_crash", false);',
+        // 新标签页使用官方 Firefox 主页（Activity Stream），对应设置 → 主页 → 新标签页 = "Firefox 主页（默认）"
+        'user_pref("browser.newtabpage.enabled", true);',
       ]
 
       // 硬件加速：useGpu=false 时禁用（等同于 Chrome 的 --disable-gpu）
@@ -766,7 +781,54 @@ export class BeforeLaunchTask {
         managedPrefs.push('user_pref("security.sandbox.content.level", -1);')
       }
 
+      // 颜色主题：
+      // layout.css.prefers-color-scheme.content-override 控制网页 prefers-color-scheme 媒体查询
+      //   0 = 强制暗色，1 = 强制浅色，2 = 跟随系统（Firefox 默认）
+      // ui.systemUsesDarkTheme 覆盖 Firefox 对操作系统明暗模式的感知，控制浏览器 UI 自身的明暗
+      //   -1 = 跟随系统（重置，Firefox 只识别 0/1，其余值回退到 OS 感知）
+      //   0 = 强制浅色，1 = 强制深色
+      // 注意：browser.theme.content-theme / browser.theme.toolbar-theme 是主题引擎计算后写入的只读值，
+      //       无法通过 user.js 或 prefs.js 覆盖，Firefox 启动时会根据激活主题重新覆盖它们。
+      const colorScheme = store.browserColorScheme || 'system'
+
+      if (colorScheme !== 'system') {
+        // 网页内容的明暗感知：dark=0，light=1
+        const contentOverride = colorScheme === 'dark' ? 0 : 1
+        managedPrefs.push(`user_pref("layout.css.prefers-color-scheme.content-override", ${contentOverride});`)
+        // 浏览器 UI 明暗：dark=1，light=0
+        const uiDarkTheme = colorScheme === 'dark' ? 1 : 0
+        managedPrefs.push(`user_pref("ui.systemUsesDarkTheme", ${uiDarkTheme});`)
+      }
+      else {
+        // 跟随系统时，网页内容的 prefers-color-scheme 媒体查询恢复跟随 OS（2 = follow system）
+        managedPrefs.push('user_pref("layout.css.prefers-color-scheme.content-override", 2);')
+        // 注意：不在 user.js 中设置 ui.systemUsesDarkTheme。
+        // 该 pref 只要存在于 prefs.js 就会覆盖系统主题感知，且 user.js 只能 SET 不能 DELETE；
+        // 遗留值的清除由 applyFirefoxThemeToExtensionsJson 直接编辑 prefs.js 完成。
+      }
+
+      const activeThemeID = colorScheme === 'dark' ? 'firefox-compact-dark@mozilla.org' : colorScheme === 'light' ? 'firefox-compact-light@mozilla.org' : 'default-theme@mozilla.org'
+      managedPrefs.push(`user_pref("extensions.activeThemeID", "${activeThemeID}");`)
+
       await writeFile(userJsPath, `${managedPrefs.join('\n')}\n`)
+
+      // 读取上次记录的 colorScheme，仅当发生变化时才修改 extensions.json 并删除 addon 启动缓存。
+      // 避免每次启动都重建 addon 状态，减少不必要的 I/O 开销。
+      const colorSchemeCachePath = join(profileDir, '.roxy_color_scheme')
+      const storedColorScheme = (await fileExists(colorSchemeCachePath))
+        ? await readFile(colorSchemeCachePath, 'utf-8').catch(() => null)
+        : null
+      if (storedColorScheme !== colorScheme) {
+        // 修改 extensions.json，将目标主题标记为激活状态。
+        // Firefox 主题系统以 extensions.json 中的 active/userDisabled 字段为权威来源，
+        // 优先级高于 user.js 里的 extensions.activeThemeID 偏好值；
+        // 只有同时更新此文件，浏览器 UI 主题才能真正生效（仅对已存在的 profile 有效）。
+        await this.applyFirefoxThemeToExtensionsJson(profileDir, activeThemeID)
+        // 写入新的 colorScheme 缓存，供下次启动时比对
+        await writeFile(colorSchemeCachePath, colorScheme, 'utf-8').catch(err =>
+          console.error('Failed to write color scheme cache', err),
+        )
+      }
 
       // 写入 xulstore.json 设置 Firefox 窗口初始位置
       // Firefox 不支持 --window-position CLI 参数，通过 profile 内的 xulstore.json 实现
@@ -774,6 +836,79 @@ export class BeforeLaunchTask {
     }
     catch (error) {
       console.error('Failed to prepare Firefox profile:', error)
+    }
+  }
+
+  /**
+   * 修改 profile 目录下的 extensions.json，将指定主题标记为激活状态。
+   *
+   * Firefox AddonManager 的主题状态读取优先级：
+   *   addonStartup.json.lz4（LZ4 压缩启动缓存）> extensions.json
+   * 上次正常启动后，Firefox 会将当前 addon 状态写入 addonStartup.json.lz4，
+   * 下次启动时优先使用该缓存，导致对 extensions.json 的外部修改被忽略（二次启动不生效问题）。
+   * 解决方法：修改 extensions.json 后同时删除 addonStartup.json.lz4，
+   * 迫使 Firefox 在下次启动时从 extensions.json 重建 addon 状态。
+   *
+   * 只对已有 profile（extensions.json 已存在）有效；首次启动的全新 profile
+   * 不存在此文件，由 user.js 里的 extensions.activeThemeID 兜底。
+   */
+  private async applyFirefoxThemeToExtensionsJson(profileDir: string, activeThemeID: string) {
+    const extensionsJsonPath = join(profileDir, 'extensions.json')
+    if (!(await fileExists(extensionsJsonPath))) {
+      // 全新 profile，extensions.json 尚未生成，user.js 偏好值会在首次启动时生效
+      return
+    }
+    try {
+      const extensionsJson = JSON.parse(await readFile(extensionsJsonPath, 'utf-8'))
+      /** Firefox 内置的三个 UI 主题 ID */
+      const builtinThemeIds = new Set([
+        'default-theme@mozilla.org',
+        'firefox-compact-light@mozilla.org',
+        'firefox-compact-dark@mozilla.org',
+      ])
+      if (Array.isArray(extensionsJson.addons)) {
+        for (const addon of extensionsJson.addons) {
+          if (builtinThemeIds.has(addon.id)) {
+            const isTarget = addon.id === activeThemeID
+            // active=true + userDisabled=false 表示该主题被激活
+            addon.active = isTarget
+            addon.userDisabled = !isTarget
+          }
+        }
+      }
+      await writeFile(extensionsJsonPath, JSON.stringify(extensionsJson))
+      console.log('Applied Firefox theme in extensions.json:', activeThemeID)
+
+      // 删除 addon 启动缓存，迫使 Firefox 从 extensions.json 重建状态。
+      // 若不删除，Firefox 会在二次及后续启动时优先读取此 LZ4 缓存，
+      // 导致对 extensions.json 的修改被忽略，主题切换不生效。
+      const addonStartupCachePath = join(profileDir, 'addonStartup.json.lz4')
+      if (await fileExists(addonStartupCachePath)) {
+        await rm(addonStartupCachePath, { force: true })
+        console.log('Deleted addonStartup.json.lz4 to invalidate addon startup cache')
+      }
+
+      // 恢复系统主题时，从 prefs.js 中删除 ui.systemUsesDarkTheme。
+      // 该 pref 只要存在于 prefs.js 就会直接被 Firefox 使用（覆盖 OS 检测）；
+      // 没有任何"跟随系统"的有效值——唯一的方法是让该 pref 不存在。
+      // user.js 只能写入/覆盖 pref，无法删除已有项，因此必须直接编辑 prefs.js。
+      if (activeThemeID === 'default-theme@mozilla.org') {
+        const prefsJsPath = join(profileDir, 'prefs.js')
+        if (await fileExists(prefsJsPath)) {
+          const prefsContent = await readFile(prefsJsPath, 'utf-8')
+          const cleaned = prefsContent
+            .split('\n')
+            .filter(line => !line.includes('"ui.systemUsesDarkTheme"'))
+            .join('\n')
+          if (cleaned !== prefsContent) {
+            await writeFile(prefsJsPath, cleaned, 'utf-8')
+            console.log('Removed ui.systemUsesDarkTheme from prefs.js to restore OS theme detection')
+          }
+        }
+      }
+    }
+    catch (err) {
+      console.error('Failed to update extensions.json for theme', err)
     }
   }
 

@@ -42,7 +42,7 @@ export class ExtensionManager {
   workspaceId: number
   /** 插件目录 */
   get extensionDir() {
-    return `${appConfig.browserExtensionsDir}/w_${this.workspaceId}`
+    return `${join(store.browserCacheRootDir, 'RoxyExtensions')}/w_${this.workspaceId}`
   }
 
   constructor({ workspaceId }: ExtensionManagerOptions = {}) {

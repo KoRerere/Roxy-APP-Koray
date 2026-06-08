@@ -1,5 +1,6 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { isString } from 'es-toolkit'
+import { MP_DISTINCT_ID } from '/@/constants/storage-key'
 import { decryptAESGCM, encryptAESGCM, isDev } from '/@/utils'
 
 /** 需要使用 aes-256-gcm 加解密的接口数据 */
@@ -60,6 +61,14 @@ export async function getCommonHeaders() {
     .finally(() => {
       commonHeadersPromise = null
     })
+}
+
+export function getMpDistinctId() {
+  return localStorage.getItem(MP_DISTINCT_ID) || undefined
+}
+
+export function clearMpDistinctId(): void {
+  localStorage.removeItem(MP_DISTINCT_ID)
 }
 
 let getInviteCodePromise: Promise<string> | null = null

@@ -1,3 +1,8 @@
+export enum IPType {
+  IPV4 = 'IPV4',
+  IPV6 = 'IPV6',
+}
+
 export enum ProxyCheckStatus {
   /** 没有测试 */
   none = 0,

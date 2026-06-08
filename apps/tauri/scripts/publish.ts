@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
+import { getLauncherVariants } from './launcher-variants.ts'
 import { getDefaultTargetsForHost } from './utils.ts'
 
 // 忽略 SSL/TLS 证书验证
@@ -29,7 +30,7 @@ function getArchDirFromTarget(target: string): string {
 }
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo1743595549211'
+const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'TMckk256xUnn50cP1780034563479'
 
 const isMacOS = process.platform === 'darwin'
 const isWindows = process.platform === 'win32'
@@ -43,14 +44,10 @@ if (version === undefined) {
   throw new Error('请在 env 环境变量中配置版本号')
 }
 
-const appName = process.env.ROXY_DEFAULT_BROWSER_APP_NAME?.trim()
-console.log('APP 名称（上传文件名）：', appName)
-if (!appName) {
-  throw new Error('请在 env 环境变量中配置 ROXY_DEFAULT_BROWSER_APP_NAME（用于上传到 OSS 的文件名）')
-}
+const launcherVariants = getLauncherVariants()
+console.log('将上传启动器变体：', launcherVariants.map(v => v.appName).join(', '))
 
 const defaultTargets = getDefaultTargetsForHost()
-// 默认就是 all-targets：按当前平台上传所有默认 targets
 const targetsToUpload = defaultTargets
 
 if (targetsToUpload.length === 0) {
@@ -67,11 +64,6 @@ const baseOssConfig = {
   accessKeySecret: '',
   bucket: isProd ? 'lumibrowser' : 'lumibrowser-test',
 }
-
-// 将 web 资源包添加到 zip 中, 排除 .map 文件
-// zip.addLocalFolder(webPath, '', (filename) => {
-//   return !filename.endsWith('.map')
-// })
 
 async function getOssToken() {
   const response = await fetch(
@@ -90,9 +82,79 @@ async function getOssToken() {
   return data
 }
 
+function resolveArtifact(options: {
+  appName: string
+  releaseDir: string
+  target: string
+}): { fileName: string, uploadFilePath: string } {
+  const { appName, releaseDir, target } = options
+
+  if (isMacOS) {
+    const macosBundleDir = path.join(releaseDir, 'bundle/macos')
+    const appPath = path.join(macosBundleDir, `${appName}.app`)
+
+    if (!fs.existsSync(appPath))
+      throw new Error(`未找到 macOS .app：${appPath}（target=${target}）`)
+
+    const fileName = `${appName}.app.zip`
+    const uploadFilePath = path.join(releaseDir, fileName)
+
+    try {
+      fs.rmSync(uploadFilePath, { force: true })
+    }
+    catch {}
+
+    const r = spawnSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, uploadFilePath], {
+      stdio: 'inherit',
+    })
+    if (r.status !== 0) {
+      throw new Error(`ditto 打包失败：${uploadFilePath}（target=${target}）`)
+    }
+
+    return { fileName, uploadFilePath }
+  }
+
+  if (isWindows) {
+    const fileName = `${appName}.exe`
+    const uploadFilePath = path.join(releaseDir, fileName)
+    if (!fs.existsSync(uploadFilePath))
+      throw new Error(`未找到 Windows .exe：${uploadFilePath}（target=${target}）`)
+    return { fileName, uploadFilePath }
+  }
+
+  if (isLinux) {
+    const appimageDir = path.join(releaseDir, 'bundle/appimage')
+    let uploadFilePath = path.join(appimageDir, `${appName}.AppImage`)
+
+    if (!fs.existsSync(uploadFilePath)) {
+      const candidates = fs.readdirSync(appimageDir)
+        .filter(f => /\.appimage$/i.test(f))
+        .filter(f => !/\.(zsync|sig)$/i.test(f))
+        .sort((a, b) => a.localeCompare(b))
+
+      const found = candidates[0]
+      if (!found) {
+        throw new Error(`未找到 Linux AppImage：${appimageDir}（target=${target}，appName=${appName}）`)
+      }
+
+      const fromPath = path.join(appimageDir, found)
+      try {
+        fs.rmSync(uploadFilePath, { force: true })
+      }
+      catch {}
+      fs.renameSync(fromPath, uploadFilePath)
+      console.log('已重命名 AppImage：', found, '->', `${appName}.AppImage`)
+    }
+
+    const fileName = `${appName}${path.extname(uploadFilePath)}`
+    return { fileName, uploadFilePath }
+  }
+
+  throw new Error(`不支持的平台：${process.platform}`)
+}
+
 async function startUpload() {
   const ossConfig = await getOssToken()
-  // console.log('ossConfig',ossConfig)
   const ossClient = new AliOss({
     ...baseOssConfig,
     ...ossConfig,
@@ -109,84 +171,27 @@ async function startUpload() {
     const archDir = getArchDirFromTarget(target)
     const releaseDir = path.join(import.meta.dirname, '../src-tauri/target', target, 'release')
 
-    let fileName: string
-    let uploadFilePath: string
-
-    if (isMacOS) {
-      const macosBundleDir = path.join(releaseDir, 'bundle/macos')
-      const appPath = path.join(macosBundleDir, `${appName}.app`)
-
-      if (!fs.existsSync(appPath))
-        throw new Error(`未找到 macOS .app：${appPath}（target=${target}）`)
-
-      // macOS：必须用 ditto 打包 .app，才能最大概率保留 bundle 内的可执行位/资源 fork
-      fileName = `${appName}.app.zip`
-      uploadFilePath = path.join(releaseDir, fileName)
-
-      try {
-        fs.rmSync(uploadFilePath, { force: true })
-      }
-      catch {}
-
-      const r = spawnSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, uploadFilePath], {
-        stdio: 'inherit',
+    for (const variant of launcherVariants) {
+      const { fileName, uploadFilePath } = resolveArtifact({
+        appName: variant.appName,
+        releaseDir,
+        target,
       })
-      if (r.status !== 0) {
-        throw new Error(`ditto 打包失败：${uploadFilePath}（target=${target}）`)
-      }
+
+      const remoteBase = `/public/static/browser-launcher/${platform}/${archDir}`
+
+      const uploadZip = await ossClient.put(
+        `${remoteBase}/${fileName}`,
+        uploadFilePath,
+      )
+      console.log(`上传 APP 资源包成功（${variant.id} ${platform}/${archDir}）：`, uploadZip.url)
+
+      const uploadVersionResByArch = await ossClient.put(
+        `${remoteBase}/version.json`,
+        versionPayload,
+      )
+      console.log(`上传版本号成功（${variant.id} ${platform}/${archDir}）：`, uploadVersionResByArch.url)
     }
-    else if (isWindows) {
-      fileName = `${appName}.exe`
-      uploadFilePath = path.join(releaseDir, `${appName}.exe`)
-
-      if (!fs.existsSync(uploadFilePath))
-        throw new Error(`未找到 Windows .exe：${uploadFilePath}（target=${target}）`)
-    }
-    else if (isLinux) {
-      const appimageDir = path.join(releaseDir, 'bundle/appimage')
-      uploadFilePath = path.join(appimageDir, `${appName}.AppImage`)
-
-      if (!fs.existsSync(uploadFilePath)) {
-        // 兼容 Tauri 默认命名：<productName>_<version>_<arch>.AppImage
-        const candidates = fs.readdirSync(appimageDir)
-          .filter(f => /\.appimage$/i.test(f))
-          .filter(f => !/\.(zsync|sig)$/i.test(f))
-          .sort((a, b) => a.localeCompare(b))
-
-        const found = candidates[0]
-        if (!found) {
-          throw new Error(`未找到 Linux AppImage：${appimageDir}（target=${target}）`)
-        }
-
-        const fromPath = path.join(appimageDir, found)
-        try {
-          fs.rmSync(uploadFilePath, { force: true })
-        }
-        catch {}
-        fs.renameSync(fromPath, uploadFilePath)
-        console.log('已重命名 AppImage：', found, '->', `${appName}.AppImage`)
-      }
-
-      // 远程统一用 appName 命名；扩展名沿用真实产物（.AppImage/.appimage）
-      fileName = `${appName}${path.extname(uploadFilePath)}`
-    }
-    else {
-      throw new Error(`不支持的平台：${process.platform}`)
-    }
-
-    const remoteBase = `/public/static/browser-launcher/${platform}/${archDir}`
-
-    const uploadZip = await ossClient.put(
-      `${remoteBase}/${fileName}`,
-      uploadFilePath,
-    )
-    console.log(`上传 APP 资源包成功（${platform}/${archDir}）：`, uploadZip.url)
-
-    const uploadVersionResByArch = await ossClient.put(
-      `${remoteBase}/version.json`,
-      versionPayload,
-    )
-    console.log(`上传版本号成功（${platform}/${archDir}）：`, uploadVersionResByArch.url)
   }
 }
 

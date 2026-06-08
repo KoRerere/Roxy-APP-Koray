@@ -5,7 +5,7 @@ import { chmod, cp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path, { join, normalize } from 'node:path'
 import { appConfig } from '/@/constants'
-import { defaultBrowserExeName, isDev } from '/@/constants/common'
+import { defaultBrowserExeName, defaultFirefoxExeName, isDev } from '/@/constants/common'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
 import { resourceUpdater } from '/@/modules/updater'
@@ -61,18 +61,45 @@ function sanitizeDesktopId(name: string) {
 
 const defaultBrowserBinDir = join(appConfig.sessionDir, 'default-browser-bin')
 
-const sourceAppPath = {
-  darwin: join(defaultBrowserBinDir, `${defaultBrowserExeName}.app`),
-  win32: join(defaultBrowserBinDir, `${defaultBrowserExeName}.exe`),
-  linux: join(defaultBrowserBinDir, `${defaultBrowserExeName}.AppImage`),
-}[process.platform]
-
 interface InstallAndRegisterOptions {
   dirId: string
   workspaceId: number
   execName: string
   /** 是否设为默认浏览器 */
   isSetAsDefaultBrowser?: boolean
+  /** 浏览器内核类型，Chrome 或 Firefox，缺省按 Chrome 处理 */
+  coreType?: string
+}
+
+/**
+ * 根据内核类型和平台返回启动器可执行文件路径
+ * - Chrome：default-browser-bin/RoxyChrome.{ext}
+ * - Firefox：firefox-bin/RoxyFirefox.{ext}
+ */
+function getSourceAppPath(coreType?: string): string {
+  const isFirefox = coreType === 'Firefox'
+  const exeName = isFirefox ? defaultFirefoxExeName : defaultBrowserExeName
+  return {
+    darwin: join(defaultBrowserBinDir, `${exeName}.app`),
+    win32: join(defaultBrowserBinDir, `${exeName}.exe`),
+    linux: join(defaultBrowserBinDir, `${exeName}.AppImage`),
+  }[process.platform] ?? join(defaultBrowserBinDir, exeName)
+}
+
+/**
+ * 返回 macOS / Linux 快捷方式图标路径（.icns 或 .png）
+ * Firefox 使用 resources/firefox/ 下的专属图标，Chrome 使用通用 launcher 图标。
+ */
+function getLauncherIconPath(coreType: string | undefined, ext: 'icns' | 'png' | 'ico'): string {
+  const resourcesDir = path.join(import.meta.dirname, '..', 'resources')
+  if (coreType === 'Firefox') {
+    return path.join(resourcesDir, 'firefox', `icon.${ext}`)
+  }
+  // Chrome 保持原有命名规则
+  if (ext === 'icns' || ext === 'ico') {
+    return path.join(resourcesDir, `launcher.${ext}`)
+  }
+  return path.join(resourcesDir, 'launcher.png')
 }
 
 export class DefaultBrowserInstaller {
@@ -131,6 +158,7 @@ export class DefaultBrowserInstaller {
   }
 
   async installAndRegister(options: InstallAndRegisterOptions) {
+    const sourceAppPath = getSourceAppPath(options.coreType)
     if (!(await fileExists(sourceAppPath))) {
       console.error(`[browser:setAsDefaultBrowser] source app path not found: ${sourceAppPath}`)
       await resourceUpdater.checkForUpdates()
@@ -157,7 +185,10 @@ export class DefaultBrowserInstaller {
   async installAndRegisterOnWindows(options: InstallAndRegisterOptions) {
     // 在桌面创建快捷方式（.lnk）
     try {
-      const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
+      const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
+      const sourceAppPath = getSourceAppPath(coreType)
+      // Firefox 使用专属 .ico 图标；Chrome 使用通用 launcher.ico（若存在）
+      const iconPath = getLauncherIconPath(coreType, 'ico')
 
       const desktopShortcutPath = path.join(app.getPath('desktop'), `${execName}.lnk`)
 
@@ -190,10 +221,15 @@ export class DefaultBrowserInstaller {
       }
 
       const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
+      // 仅在图标文件实际存在时才写入 icon 字段，避免快捷方式显示错误图标
+      const iconExists = await fileExists(iconPath)
+      const shortcutIcon = iconExists ? iconPath : undefined
+
       const isDesktopSuccess = shell.writeShortcutLink(desktopShortcutPath, {
         target: sourceAppPath,
         args,
         description: execName,
+        ...(shortcutIcon ? { icon: shortcutIcon } : {}),
       })
 
       // 开始菜单：确保目录存在，再写入 .lnk（失败不影响主流程）
@@ -202,6 +238,7 @@ export class DefaultBrowserInstaller {
         target: sourceAppPath,
         args,
         description: execName,
+        ...(shortcutIcon ? { icon: shortcutIcon } : {}),
       })
 
       if (isDesktopSuccess) {
@@ -227,6 +264,7 @@ export class DefaultBrowserInstaller {
     }
 
     if (options.isSetAsDefaultBrowser) {
+      const sourceAppPath = getSourceAppPath(options.coreType)
       spawn(
         sourceAppPath,
         ['--set-default-browser'],
@@ -239,9 +277,12 @@ export class DefaultBrowserInstaller {
    * macOS：复制 bundle 到 /Applications（需要管理员权限），然后调用 --set-default-browser
    */
   async installAndRegisterOnMac(options: InstallAndRegisterOptions) {
-    const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
-    const targetAppPath = `/Applications/${defaultBrowserExeName}.app`
-    const targetAppBinPath = `/Applications/${defaultBrowserExeName}.app/Contents/MacOS/${defaultBrowserExeName}`
+    const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
+    const sourceAppPath = getSourceAppPath(coreType)
+    const isFirefox = coreType === 'Firefox'
+    const exeName = isFirefox ? defaultFirefoxExeName : defaultBrowserExeName
+    const targetAppPath = `/Applications/${exeName}.app`
+    const targetAppBinPath = `/Applications/${exeName}.app/Contents/MacOS/${exeName}`
 
     if (isSetAsDefaultBrowser) {
       // 通过 applet 触发管理员授权，弹窗将显示该 applet 的名称（而不是 osascript）
@@ -249,7 +290,7 @@ export class DefaultBrowserInstaller {
         sourceAppPath,
         targetAppPath,
         // 使用固定名称以匹配期望的系统弹窗展示（系统后半句文案无法自定义）
-        displayName: 'RoxyBrowser',
+        displayName: isFirefox ? 'RoxyFirefox' : 'RoxyBrowser',
       })
       spawn(
         targetAppBinPath,
@@ -262,7 +303,7 @@ export class DefaultBrowserInstaller {
 
     const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
 
-    const scriptPath = path.join(os.tmpdir(), 'launch_roxy_chrome.scpt')
+    const scriptPath = path.join(os.tmpdir(), isFirefox ? 'launch_roxy_firefox.scpt' : 'launch_roxy_chrome.scpt')
     const appOutPath = path.join(
       os.homedir(),
       'Applications',
@@ -305,7 +346,7 @@ export class DefaultBrowserInstaller {
       scriptPath,
     ])
 
-    const iconPath = path.join(import.meta.dirname, '..', 'resources/launcher.icns')
+    const iconPath = getLauncherIconPath(coreType, 'icns')
     await cp(iconPath, path.join(appOutPath, 'Contents/Resources/applet.icns'))
     await cp(iconPath, path.join(appOutPath, 'Contents/Resources/droplet.icns'))
     await rm(path.join(appOutPath, 'Contents/Resources/Assets.car')).catch(() => undefined)
@@ -322,9 +363,10 @@ export class DefaultBrowserInstaller {
   async installAndRegisterOnLinux(options: InstallAndRegisterOptions) {
     // 在桌面创建快捷方式（.desktop）
     try {
-      const { dirId, workspaceId, execName, isSetAsDefaultBrowser } = options
+      const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
+      const sourceAppPath = getSourceAppPath(coreType)
 
-      // 确保 AppImage 可执行（某些下载/解压场景可能丢失权限）
+      // 确保可执行文件有执行权限（某些下载/解压场景可能丢失权限）
       await chmod(sourceAppPath, 0o755).catch(() => undefined)
 
       // .desktop 文件名尽量保持稳定且可写入（避免路径分隔符等非法字符）
@@ -346,9 +388,16 @@ export class DefaultBrowserInstaller {
 
       const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
 
-      const iconPath = path.join(defaultBrowserBinDir, 'launcher.png')
-      if (!(await fileExists(iconPath))) {
-        await cp(path.join(appConfig.staticResourceDir, 'launcher.png'), iconPath).catch(() => undefined)
+      // Firefox 优先使用 resources/firefox/icon.png；Chrome 使用 default-browser-bin/launcher.png（兜底复制 staticResourceDir）
+      let iconPath: string
+      if (coreType === 'Firefox') {
+        iconPath = getLauncherIconPath(coreType, 'png')
+      }
+      else {
+        iconPath = path.join(defaultBrowserBinDir, 'launcher.png')
+        if (!(await fileExists(iconPath))) {
+          await cp(path.join(appConfig.staticResourceDir, 'launcher.png'), iconPath).catch(() => undefined)
+        }
       }
       const iconLine = (await fileExists(iconPath)) ? `Icon=${iconPath}\n` : ''
 
@@ -431,6 +480,7 @@ Categories=Network;WebBrowser;
     }
 
     if (options.isSetAsDefaultBrowser) {
+      const sourceAppPath = getSourceAppPath(options.coreType)
       spawn(
         sourceAppPath,
         ['--set-default-browser'],

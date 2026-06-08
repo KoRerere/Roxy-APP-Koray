@@ -70,6 +70,7 @@ export class BrowserManager {
       return {
         ...browserItem.winInfo,
         $pId: browserItem.launchInfo?.pid,
+        $proxyInfo: browserItem.beforeLaunchTask.proxyInfo ?? {},
       }
     })
   }
@@ -238,7 +239,9 @@ export class BrowserManager {
       await setTimeout(1500)
     }
 
+    console.debug('launchTasks count', launchTasks.length)
     await Promise.allSettled(launchTasks)
+    console.debug('Batch launch completed')
   }
 
   /** 批量重启浏览器 */

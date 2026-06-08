@@ -8,10 +8,11 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useConfirm } from 'primevue/useconfirm'
 import { ProxyCheckStatus } from '/@/enums'
+import { IPType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import { useUserStore } from '/@/stores/user'
-import { concurrentControl, getDictMap, IPType, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
+import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getColumns } from './columns'
 

@@ -138,6 +138,8 @@ export interface ChatMoonshotParams {
    */
   apiUrl?: string
 
+  defaultHeaders?: Record<string, string>
+
   /**
    * Amount of randomness injected into the response. Ranges
    * from 0 to 1 (0 is not included). Use temp closer to 0 for analytical /
@@ -364,6 +366,8 @@ export class ChatMoonshot extends BaseChatModel implements ChatMoonshotParams {
 
   apiUrl: string
 
+  defaultHeaders?: Record<string, string>
+
   maxTokens?: number | undefined
 
   temperature?: number | undefined
@@ -388,6 +392,7 @@ export class ChatMoonshot extends BaseChatModel implements ChatMoonshotParams {
     }
 
     this.apiUrl = resolveMoonshotApiUrl(fields.apiUrl)
+    this.defaultHeaders = fields.defaultHeaders
     this.streaming = fields.streaming ?? false
     this.messages = fields.messages ?? []
     this.temperature = fields.temperature ?? 0
@@ -579,6 +584,7 @@ export class ChatMoonshot extends BaseChatModel implements ChatMoonshotParams {
           ...(stream ? { Accept: 'text/event-stream' } : {}),
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
+          ...this.defaultHeaders,
         },
         body: JSON.stringify(request),
         signal,

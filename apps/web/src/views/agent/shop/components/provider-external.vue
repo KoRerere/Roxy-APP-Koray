@@ -11,6 +11,8 @@ const { data } = defineProps<{
   data: ShopItem
 }>()
 
+const autoJump = defineModel<boolean>('autoJump')
+
 const [showToast, onlyErrorToast] = useResponseToast()
 const { locale } = useI18n()
 
@@ -24,6 +26,13 @@ const account = computed(() => [
     value: data.jumpInfo?.password,
   },
 ])
+
+onBeforeMount(() => {
+  if (autoJump.value) {
+    autoJump.value = false
+    onJump(data)
+  }
+})
 
 function onCopy(value: string) {
   copyText(value)
@@ -71,7 +80,7 @@ async function onJump(item: any) {
           {{ data.vendorName }}
         </div>
         <div class="flex gap-1.5">
-          <span v-for="item in data.proxyTypeList" :key="item.typeName" class="provider-tag">{{ item }}</span>
+          <span v-for="item in data.proxyTypeList" :key="item" class="provider-tag">{{ item }}</span>
         </div>
       </div>
       <div class="whitespace-pre-line tt-secondary text-3.25 leading-4.5" v-html="data.vendorDesc" />

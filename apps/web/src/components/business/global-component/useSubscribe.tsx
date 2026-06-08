@@ -124,7 +124,7 @@ export function useSubscribe() {
       workspace_suspended: showDefaultWorkspaceDialog,
     }
     const message = messageMap[payload?.type] || $t('默认浏览器开启失败，请重新打开。')
-    const imageSrc = getImage(`default-browser/launch-failed-${themeStore.realTheme}.svg`)
+    const imageSrc = getImage(`browser/launch-failed-${themeStore.realTheme}.svg`)
 
     if (isFunction(message)) {
       message()

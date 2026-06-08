@@ -2,6 +2,13 @@
 
 This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
+## 环境要求
+
+- **Rust / Cargo**（Tauri 构建必需）：[rustup.rs](https://rustup.rs/) 安装后，确保 `cargo` 在 PATH 中。
+  - Windows 默认路径：`%USERPROFILE%\.cargo\bin`
+  - 若终端报 `program not found`，可重启终端，或把上述目录加入系统 PATH。
+  - `tauri-build.ts` 会自动把 `~/.cargo/bin`  prepend 到子进程 PATH（无需全局配置时也能打包）。
+
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
@@ -9,6 +16,22 @@ This template should help get you started developing with Vue 3 and TypeScript i
 ## 打包（macOS）签名 + 公证（绿色版 .app）
 
 项目默认打绿色版 `.app`（macOS）。bundle 类型由 `src-tauri/tauri.conf.json` 与构建命令参数共同决定（脚本里 macOS 默认 `--bundles app`，Linux 默认 `--bundles appimage`，Windows 默认 `--no-bundle`）。
+
+## 双启动器产物（RoxyChrome + RoxyFirefox）
+
+一次 `pnpm build:win` / `build:mac` / `build:linux:appimage` 会**依次构建两个变体**（共享同一份 Rust 逻辑，仅可执行文件名与图标不同）：
+
+| 变体 | Windows | macOS | Linux |
+| --- | --- | --- | --- |
+| Chrome | `target/<triple>/release/RoxyChrome.exe` | `.../bundle/macos/RoxyChrome.app` | `.../RoxyChrome.AppImage` |
+| Firefox | `target/<triple>/release/RoxyFirefox.exe` | `.../bundle/macos/RoxyFirefox.app` | `.../RoxyFirefox.AppImage` |
+
+- Firefox 叠加配置：`src-tauri/tauri.firefox.conf.json`（图标来自 `apps/electron/resources/firefox/`）
+  - **注意**：`--config` 使用 JSON Merge Patch，数组会整段替换；Firefox 配置里不要写 `app.windows`，否则会覆盖 Chrome 的 `create: false` 并弹出空白 Webview。
+- Windows 默认浏览器注册名由**当前 exe 文件名**推导（`RoxyChrome.exe` / `RoxyFirefox.exe`），无需为 Firefox 单独改业务代码
+- OSS 上传（`publish:*`）：Chrome 与 Firefox 同级，均在 `browser-launcher/{platform}/{arch}/`（如 `RoxyChrome.exe` 与 `RoxyFirefox.exe`）
+
+开发环境 Chrome 名称仍由 `ROXY_DEFAULT_BROWSER_APP_NAME` 控制（如 `RoxyChrome` / `RoxyChromeDev`）；Firefox 固定为 `RoxyFirefox`。
 
 ## 多架构打包（同一平台）
 

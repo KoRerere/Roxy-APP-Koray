@@ -15,6 +15,8 @@ import {
   UserActivateCloudBrowserCreatePayload,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
+  UserAddProxyTemplateCreateData,
+  UserAddProxyTemplateCreatePayload,
   UserAddWindowFilterNameCreateData,
   UserAddWindowFilterNameCreatePayload,
   UserAddWindowInfoV2CreateData,
@@ -35,6 +37,8 @@ import {
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
   UserCreateWindowInspectListData,
+  UserDeleteProxyTemplateCreateData,
+  UserDeleteProxyTemplateCreatePayload,
   UserDeleteWindowFilterNameCreateData,
   UserDeleteWindowFilterNameCreatePayload,
   UserDeleteWindowTemplateInfoCreateData,
@@ -59,6 +63,7 @@ import {
   UserGetLabelInfoListParams,
   UserGetMacAddrV2ListData,
   UserGetMacAddrV2ListParams,
+  UserGetProxyTemplateListData,
   UserGetTransferReceiveWindowListListData,
   UserGetTransferReceiveWindowListListParams,
   UserGetTransferRecordListListData,
@@ -89,6 +94,8 @@ import {
   UserMdfCloudBrowserActivateInfoCreatePayload,
   UserMdfLabelInfoCreateData,
   UserMdfLabelInfoCreatePayload,
+  UserMdfProxyTemplateCreateData,
+  UserMdfProxyTemplateCreatePayload,
   UserMdfWindowDataBatchCreateData,
   UserMdfWindowDataBatchCreatePayload,
   UserMdfWindowInfoBatchV2CreateData,
@@ -1300,6 +1307,85 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_window_one_click_proxy_info_list`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAddProxyTemplateCreate
+   * @summary 新增用户窗口代理模板
+   * @request POST:/user_add_proxy_template
+   * @response `200` `UserAddProxyTemplateCreateData`
+   */
+  userAddProxyTemplateCreate = (
+    data: UserAddProxyTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddProxyTemplateCreateData, any>({
+      path: `/user_add_proxy_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetProxyTemplateList
+   * @summary 查询用户窗口代理模板
+   * @request GET:/user_get_proxy_template
+   * @response `200` `UserGetProxyTemplateListData`
+   */
+  userGetProxyTemplateList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyTemplateListData, any>({
+      path: `/user_get_proxy_template`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfProxyTemplateCreate
+   * @summary 修改用户窗口代理模板
+   * @request POST:/user_mdf_proxy_template
+   * @response `200` `UserMdfProxyTemplateCreateData`
+   */
+  userMdfProxyTemplateCreate = (
+    data: UserMdfProxyTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfProxyTemplateCreateData, any>({
+      path: `/user_mdf_proxy_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserDeleteProxyTemplateCreate
+   * @summary 删除用户窗口代理模板
+   * @request POST:/user_delete_proxy_template
+   * @response `200` `UserDeleteProxyTemplateCreateData`
+   */
+  userDeleteProxyTemplateCreate = (
+    data: UserDeleteProxyTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDeleteProxyTemplateCreateData, any>({
+      path: `/user_delete_proxy_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

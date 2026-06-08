@@ -26,7 +26,8 @@
     "publish:app:prod:only": "node --env-file=.env.production scripts/publish.ts",
     "tauri": "tauri",
     "gen:mac:icon": "tauri icon ./src-tauri/icons/app-icon-macos.png -o ./src-tauri/icons/macos",
-    "gen:win:icon": "tauri icon ./src-tauri/icons/app-icon-windows.png -o ./src-tauri/icons/windows"
+    "gen:win:icon": "tauri icon ./src-tauri/icons/app-icon-windows.png -o ./src-tauri/icons/windows",
+    "gen:firefox:icons": "tauri icon ../../electron/resources/firefox/icon.png -o ./src-tauri/icons/firefox"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",

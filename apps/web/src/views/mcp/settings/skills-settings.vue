@@ -3,6 +3,7 @@ import { useAgentApi } from '../agent-api'
 import type { SkillEntry, SkillRuntime, SkillValidationErrorCode } from '../agent-api'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import RxButton from '/@/components/rx-button/index.vue'
+import RxToggleSwitch from '/@/components/rx-toggle-switch/index.vue'
 import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 import Empty from './components/empty.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -10,15 +11,32 @@ import { I18nT } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { compare } from 'compare-versions'
 import { useUserStore } from '/@/stores/user'
+import { useMcpDataStore } from '../pinia-store/mcp-data-store'
 
 const toast = useToast()
-const { listSkills, validateSkill, installSkill, uninstallSkill } = useAgentApi()
+const { listSkills, validateSkill, installSkill, uninstallSkill, enableSkill, disableSkill } = useAgentApi()
 const { showMenu } = usePopupMenu()
 const [, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
+const mcpDataStore = useMcpDataStore()
 
 const skills = ref<SkillEntry[]>([])
 const loading = ref(false)
+const uninstallingSkill = ref<string>('')
+
+type SkillTab = 'all' | 'user' | 'store'
+const activeTab = ref<SkillTab>('all')
+const tabs = computed<Array<{ key: SkillTab, label: string }>>(() => [
+  { key: 'all', label: $t('全部') },
+  { key: 'user', label: $t('用户') },
+  { key: 'store', label: $t('商店') },
+])
+
+const filteredSkills = computed(() => {
+  if (activeTab.value === 'all')
+    return skills.value
+  return skills.value.filter(skill => skill.source === activeTab.value)
+})
 
 function getSkillValidationErrorMessage(errorCode?: SkillValidationErrorCode, fallback?: string) {
   switch (errorCode) {
@@ -136,13 +154,48 @@ async function validateAndInstall(sourcePath: string) {
 }
 
 async function handleUninstall(skill: SkillEntry) {
+  if (uninstallingSkill.value)
+    return
+  uninstallingSkill.value = skill.name
   try {
     await uninstallSkill(skill.name)
+
+    // 删除成功后，直接从响应式状态中移除，避免重新加载
+    if (mcpDataStore.userSkills) {
+      const index = mcpDataStore.userSkills.findIndex(s => s.slug === skill.name)
+      if (index !== -1) {
+        mcpDataStore.userSkills.splice(index, 1)
+      }
+    }
+
     await loadSkills()
+    // 如果是商店安装的 skill，同步更新商店的 userSkills 缓存
+    if (skill.source === 'store') {
+      mcpDataStore.invalidateUserSkills()
+      await mcpDataStore.fetchUserSkills()
+    }
   }
   catch (error) {
     onlyErrorToast(-1, $t('卸载失败'))
     return Promise.reject(error)
+  }
+  finally {
+    uninstallingSkill.value = ''
+  }
+}
+
+async function handleToggleEnabled(skill: SkillEntry, newValue: boolean) {
+  try {
+    const res = newValue ? await enableSkill(skill.name) : await disableSkill(skill.name)
+    if (res.code !== 0) {
+      onlyErrorToast(-1, res.msg || $t('操作失败'))
+      return false
+    }
+    skill.enabled = newValue
+  }
+  catch (error) {
+    onlyErrorToast(-1, $t('操作失败'))
+    return false
   }
 }
 
@@ -152,8 +205,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-5" style="will-change: transform;">
-    <div v-if="missingRuntimeIds.length > 0" class=" flex flex-col gap-2">
+  <div class="h-full flex flex-col gap-5">
+    <div v-if="missingRuntimeIds.length > 0" class="pr-10 flex flex-col gap-2">
       <div
         v-for="runtime in missingRuntimeIds"
         :key="runtime"
@@ -164,37 +217,53 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="flex items-center justify-between">
-      <div class="font-['Archivo'] text-6 font-semibold text-[var(--colors-text-text-primary)]">
+    <div class="flex items-center justify-between pr-10">
+      <div class="font-['Archivo'] text-5 font-semibold text-[var(--colors-text-text-primary)]">
         Skills
       </div>
       <div class="relative">
         <RxButton
-          :label="$t('上传')"
-          icon="base/rx_ic_export"
+          :label="$t('新建')"
+          icon="base/rx_ic_plus"
           size="md"
           @click="handleInstall"
         />
       </div>
     </div>
 
-    <div class="flex h-[calc(100%-38px)] flex-col gap-4 overflow-y-auto">
+    <!-- All / User / Store 分段标签 -->
+    <div class="flex items-center">
+      <div class="flex items-center gap-1 p-1 rounded-2 bg-[var(--component-segment-bg-selection,#ebf1f5)]">
+        <div
+          v-for="tab in tabs"
+          :key="tab.key"
+          class="flex items-center h-[30px] px-3 rounded-1.5 cursor-pointer text-3.5 font-medium transition-colors"
+          :class="activeTab === tab.key
+            ? 'bg-[var(--component-segment-bg-selection-active,white)] text-[var(--colors-text-text-primary)]'
+            : 'text-[var(--colors-text-text-tertiary)] hover:text-[var(--colors-text-text-primary)]'"
+          @click="activeTab = tab.key"
+        >
+          {{ tab.label }}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto pr-10 pb-10">
       <div
-        v-for="skill in skills"
+        v-for="skill in filteredSkills"
         :key="skill.name"
-        class="flex items-start gap-3 rounded-1.5 bg-[var(--colors-background-bg-block)] px-4 py-10px"
+        class="flex flex-col gap-3 rounded-2 bg-[var(--colors-background-bg-block)] px-4 py-10px"
       >
-        <div class="flex flex-1 flex-col gap-1">
+        <div class="flex flex-col gap-1">
           <div class="flex items-center justify-between gap-3">
             <div class="font-['Inter'] text-[14px] leading-20px font-700 text-[var(--colors-text-text-primary)]">
-              {{ skill.name }}
+              {{ skill.title || skill.name }}
             </div>
-            <button
-              class="szie-6 flex cursor-pointer items-center justify-center rounded border-none bg-transparent outline-none"
-              @click="handleUninstall(skill)"
-            >
-              <SvgIcon name="base/rx_ic_bin_1" size="16" />
-            </button>
+            <RxToggleSwitch
+              :model-value="skill.enabled"
+              class="-ml-2 -mr-1 scale-70"
+              :before-change="(val: boolean) => handleToggleEnabled(skill, val)"
+            />
           </div>
 
           <div
@@ -204,12 +273,30 @@ onMounted(() => {
             {{ skill.description }}
           </div>
         </div>
+
+        <div class="h-px w-full bg-[var(--colors-border-border-inactive)]" />
+
+        <div class="flex items-center justify-between">
+          <div class="font-['Inter'] text-3 text-[var(--colors-text-text-inactive)]">
+            {{ $t('来源') }}: {{ skill.source === 'store' ? $t('商店') : $t('用户') }}
+          </div>
+          <button
+            class="flex cursor-pointer items-center gap-1 rounded-1 border-none bg-transparent px-1.5 py-1 outline-none"
+            :disabled="uninstallingSkill === skill.name"
+            @click="handleUninstall(skill)"
+          >
+            <SvgIcon :name="uninstallingSkill === skill.name ? 'base/rx_ic_spin-1' : 'base/rx_ic_bin_1'" size="16" :color="uninstallingSkill === skill.name ? 'var(--colors-text-text-inactive)' : 'var(--colors-icon-icon-primary)'" />
+            <span class="font-['Inter'] text-3 font-medium" :class="uninstallingSkill === skill.name ? 'text-[var(--colors-text-text-inactive)]' : 'text-[var(--colors-text-text-primary)]'">
+              {{ $t('删除') }}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div v-if="loading" class="py-2 text-center text-sm text-gray-500">
-        Loading...
+        {{ $t('加载中...') }}
       </div>
-      <template v-else-if="skills.length === 0">
+      <template v-else-if="filteredSkills.length === 0">
         <Empty icon="base/rx_ic_fix" :title="$t('暂无 Skills')">
           <I18nT :keypath="$t('关于 Skills 的信息与配置方法，请访问 {skills}', { skills: '{skills}' })">
             <template #skills>

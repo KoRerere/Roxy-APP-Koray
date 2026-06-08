@@ -53,7 +53,10 @@ export function useProfileProxySpeedTest() {
         const validResults = results.filter(Boolean)
 
         if (!cancelled && !silent) {
-          batchTestShowToast(validResults.map(p => p.checkRes))
+          batchTestShowToast(
+            validResults.map(p => ({ ...p.checkRes, proxyType: p.item.buyProxyType })),
+            { reCheck: () => runProxySpeedTestForRows(targets, options) },
+          )
         }
 
         const moduleDone = new Map<number, any>()

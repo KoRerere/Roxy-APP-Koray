@@ -1,4 +1,7 @@
 /** 更新代理字段前先写入 before* 快照（字段一一对应 last* / checkTime） */
+import { format } from 'date-fns'
+import { ProxyCheckStatus } from '/@/enums'
+
 const PROXY_BEFORE_SNAPSHOT: readonly [from: string, before: string][] = [
   ['lastIp', 'beforeIp'],
   ['lastCity', 'beforeCity'],
@@ -32,6 +35,8 @@ const SILENT_PROXY_KEYS = [
   'isEncryptProxy',
   'proxyEncryptInfo',
 ] as const
+
+export const clearProxyKeys = ['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl']
 
 export function silentUpdateProxy(origin: Record<string, any>, params: Record<string, any>, deleteKeys?: string[]) {
   const beforeProxyInfo: Record<string, any> = {}
@@ -68,4 +73,16 @@ export function silentUpdateAccount(
   }))
 }
 
-export const clearProxyKeys = ['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl']
+/** 将启动后检测到的代理信息映射为可静默合并的字段 */
+export function mapOpenedProxyInfoToSilentParams(proxyInfo: Record<string, any> | undefined | null) {
+  if (!proxyInfo?.ip)
+    return null
+  return {
+    lastIp: proxyInfo.ip ?? '',
+    lastCity: proxyInfo.city ?? '',
+    lastCountry: proxyInfo.country_code ?? '',
+    timezone: proxyInfo.timezone ?? '',
+    checkStatus: ProxyCheckStatus.success,
+    checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+  }
+}

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import RxTooltip from '/@/components/rx-tooltip'
 import MotionArrow from '/@/layout/components/header/resource-updater/motion-arrow.vue'
 import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -15,31 +14,42 @@ const { upgradeList } = defineProps<{
 
 const confirm = useConfirm()
 const userStore = useUserStore()
-const { currentLocale, getOfficialWebsite } = useSimpleLocale()
+const simpleLocale = useSimpleLocale()
+const { getOfficialWebsite } = simpleLocale
 
 const updateFeature = ref()
 const updateSummary = ref()
 
-watchEffect(async () => {
-  console.debug('upgradeList', upgradeList)
+function getLocalizedFeatureTips(newFeatureTips?: Record<string, any>) {
+  const localFeature = newFeatureTips?.[simpleLocale.currentLocale]
+  return localFeature?.[0]?.content
+    ? localFeature.filter((item: { content?: string }) => item.content?.length)
+    : []
+}
+
+function extractFeatureTitles(tipsList: Array<{ content: string }>): string[] {
+  return tipsList
+    .map((item) => {
+      const div = document.createElement('div')
+      div.innerHTML = item.content
+      const h3 = div.querySelector('h3')
+      const title = h3 ? plainTextFromElement(h3) : ''
+      return title ? `${title}` : ''
+    })
+    .filter(Boolean)
+}
+
+watchEffect(() => {
   const appUpdate = upgradeList?.find(item => item.type === 'app')
-  if (appUpdate) {
-    getUpdateSummary()
-    console.debug('updateFeature', updateFeature.value, !updateFeature.value)
-    if (!appUpdate.upgradeContent) {
-      return
-    }
-
-    const div = document.createElement('div')
-    div.innerHTML = appUpdate.upgradeContent
-
-    const selectors: Array<'h3' | 'h4' | 'p'> = ['h3', 'h4', 'p']
-    const matched = selectors.find(sel => div.querySelector(sel))
-
-    updateSummary.value = matched
-      ? Array.from(div.querySelectorAll(matched), el => plainTextsFromElement(el)).flat().filter(Boolean)
-      : [$t('最新版本已发布，请更新客户端以保持稳定性并享受最新功能。')]
+  if (!appUpdate) {
+    return
   }
+
+  const tipsList = getLocalizedFeatureTips(appUpdate.newFeatureTips)
+  const titles = extractFeatureTitles(tipsList)
+  updateSummary.value = titles.length
+    ? titles
+    : [$t('最新版本已发布，请更新客户端以保持稳定性并享受最新功能。')]
 })
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
@@ -104,11 +114,8 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 
 async function showLastUpdateLog() {
   updateFeature.value ??= await electronAPI.send('app:getLastUpdateFeature')
-  const localFeature = updateFeature.value.newFeatureTips?.[currentLocale]
-  const localContent = localFeature?.[0]?.content ? localFeature : []
-  const newFeatureTips = localContent?.filter((item: any) => item.content?.length)
-  console.debug('newFeatureTips', newFeatureTips)
-  if (newFeatureTips?.length) {
+  const newFeatureTips = getLocalizedFeatureTips(updateFeature.value?.newFeatureTips)
+  if (newFeatureTips.length) {
     emitter.emit('showAppUpgradeDialog', newFeatureTips)
   }
 }
@@ -123,25 +130,6 @@ function normalizePlainText(text: string): string {
 /** 抽取块内文案：忽略内部任意嵌套标签（如 strong），等价于取子树全部文本节点后拼接 */
 function plainTextFromElement(el: Element): string {
   return normalizePlainText(el.textContent ?? '')
-}
-
-/** 抽取块内文案列表：含 br 时按行拆分，兼容单 p 内多行与多个 p 两种格式 */
-function plainTextsFromElement(el: Element): string[] {
-  if (!el.querySelector('br')) {
-    const text = plainTextFromElement(el)
-    return text ? [text] : []
-  }
-
-  const clone = el.cloneNode(true) as Element
-  clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'))
-  return (clone.textContent ?? '')
-    .split('\n')
-    .map(normalizePlainText)
-    .filter(Boolean)
-}
-
-async function getUpdateSummary() {
-  updateFeature.value ??= await electronAPI.send('app:getLastUpdateFeature')
 }
 </script>
 
@@ -161,25 +149,16 @@ async function getUpdateSummary() {
             <div class="tt-primary text-3.5 leading-5.5 font-600">
               {{ $t('Roxy浏览器 v{version} 现已发布', { version: item.version }) }}
             </div>
-            <div v-if="false" class="flex flex-col gap-1.5">
-              <div v-for="str in updateSummary" :key="str" class="tt-secondary text-3.25 leading-4.5">
+            <ul v-if="updateSummary?.length" class="flex flex-col gap-1.5 ma-0 pa-0 pl-6">
+              <li v-for="str in updateSummary" :key="str" class="tt-secondary text-3.25 leading-4.5">
                 {{ str }}
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
           <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)" />
-          <component :is="item.status === 'downloading' ? RxTooltip : 'div'" v-else class="w-full" tooltip-content-class="py-1 px-2">
-            <template #default>
-              <RxButton class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
-                        @click="handleClientItemClick(item)"
-              />
-            </template>
-            <template #content>
-              <div class="text-3 font-600 text-white w-fit">
-                {{ $t('取消') }}
-              </div>
-            </template>
-          </component>
+          <RxButton v-else class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"
+                    @click="handleClientItemClick(item)"
+          />
         </div>
         <div v-if="item.type === 'web'" class="w-full flex items-start gap-2.5 px-4 py-3 patch">
           <RxSvgIcon class="flex-shrink-0" name="base/rx_ic_patch" color="var(--colors-icon-icon-brand)" />

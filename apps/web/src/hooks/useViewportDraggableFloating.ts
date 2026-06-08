@@ -135,6 +135,24 @@ export function useViewportDraggableFloating(
   let dragElW = 0
   let dragElH = 0
   let pointerMovedEnough = false
+  let pointerCaptureActive = false
+
+  function exceedsDragThreshold(dx: number, dy: number) {
+    if (verticalRail)
+      return Math.abs(dy) >= threshold
+    return Math.abs(dx) >= threshold || Math.abs(dy) >= threshold
+  }
+
+  function beginPointerDrag(el: HTMLElement, e: PointerEvent) {
+    if (pointerCaptureActive)
+      return
+    pointerCaptureActive = true
+    pointerMovedEnough = true
+    dragging.value = true
+    if (disableBodySelection)
+      document.body.style.userSelect = 'none'
+    el.setPointerCapture(e.pointerId)
+  }
 
   function teardownListeners(el: HTMLElement, pointerId: number) {
     if (el.hasPointerCapture(pointerId))
@@ -145,15 +163,18 @@ export function useViewportDraggableFloating(
   }
 
   function onPointerMove(e: PointerEvent) {
+    const el = elRef.value
+    if (!el)
+      return
+
     const dx = e.clientX - dragStartClientX
     const dy = e.clientY - dragStartClientY
-    if (verticalRail) {
-      if (Math.abs(dy) >= threshold)
-        pointerMovedEnough = true
-    }
-    else if (Math.abs(dx) >= threshold || Math.abs(dy) >= threshold) {
-      pointerMovedEnough = true
-    }
+
+    if (!pointerMovedEnough && exceedsDragThreshold(dx, dy))
+      beginPointerDrag(el, e)
+
+    if (!pointerMovedEnough)
+      return
 
     if (verticalRail) {
       position.value = applyDragConstraintToPoint(
@@ -176,14 +197,24 @@ export function useViewportDraggableFloating(
 
   function onPointerUp(e: PointerEvent) {
     const el = elRef.value
+    const hadDrag = pointerMovedEnough
     if (el)
       teardownListeners(el, e.pointerId)
     dragging.value = false
-    if (pointerMovedEnough) {
-      suppressClickAfterDrag.value = true
+    if (hadDrag && el) {
+      // 阻止拖拽松手后由浏览器合成的 click（常落在父容器，子项 @click 无法吞掉）
+      e.preventDefault()
       onDragCommit?.()
+      const swallowGhostClick = (ev: MouseEvent) => {
+        ev.preventDefault()
+        ev.stopImmediatePropagation()
+        el.removeEventListener('click', swallowGhostClick, true)
+      }
+      el.addEventListener('click', swallowGhostClick, true)
     }
+    suppressClickAfterDrag.value = false
     pointerMovedEnough = false
+    pointerCaptureActive = false
     if (disableBodySelection)
       document.body.style.userSelect = ''
   }
@@ -192,7 +223,9 @@ export function useViewportDraggableFloating(
     const el = elRef.value
     if (!el || e.button !== 0)
       return
+    suppressClickAfterDrag.value = false
     pointerMovedEnough = false
+    pointerCaptureActive = false
     const rect = el.getBoundingClientRect()
     dragElW = rect.width
     dragElH = rect.height
@@ -200,16 +233,16 @@ export function useViewportDraggableFloating(
     dragStartClientY = e.clientY
     dragStartLeft = position.value.left
     dragStartTop = position.value.top
-    dragging.value = true
-    if (disableBodySelection)
-      document.body.style.userSelect = 'none'
-    el.setPointerCapture(e.pointerId)
+    dragging.value = false
     el.addEventListener('pointermove', onPointerMove)
     el.addEventListener('pointerup', onPointerUp)
     el.addEventListener('pointercancel', onPointerUp)
   }
 
-  /** 拖拽刚结束紧随的「误触」click：吞掉本次并返回 true */
+  /**
+   * 拖拽后若仍有漏网的 click，在业务 @click 里调用可吞掉一次。
+   * 正常情况已在 pointerup + preventDefault 处理，此处作兜底。
+   */
   function swallowFollowingClick(ev: MouseEvent): boolean {
     if (!suppressClickAfterDrag.value)
       return false

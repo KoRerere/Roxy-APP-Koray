@@ -31,7 +31,7 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 打开mcp */
-  ipcMain.on('mcp:open', async (_event, options?: { scene?: string }): Promise<McpResponse> => {
+  ipcMain.on('mcp:open', async (_event, options?: { scene?: string, skill?: string }): Promise<McpResponse> => {
     console.log('Opening MCP')
 
     // 检查 RoxyClaw 是否正在运行
@@ -49,12 +49,19 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
         existingWin.restore()
       }
       existingWin.focus()
+      // 已打开窗口时用消息而非重载，避免打断对话，由 Agent 窗口判断 isChatting 后决定提示或应用
+      if (options?.skill) {
+        ipcMain.send('mcp:use-skill', options.skill)
+      }
+      if (options?.scene) {
+        ipcMain.send('mcp:use-scene', options.scene)
+      }
       return { success: true }
     }
 
     try {
       await mcpManager.startMcpServer('agent')
-      await createMcpWindow(options?.scene)
+      await createMcpWindow(options?.scene, options?.skill)
       mcpRuntimeState.setMcpWindowOpen(true)
       return { success: true }
     }

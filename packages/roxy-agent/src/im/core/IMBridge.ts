@@ -59,6 +59,7 @@ export class IMBridge {
   ): Promise<string> {
     const session = this.getSession(channelId)
     const threadId = this.threadManager.getThreadId(this.imName, channelId)
+    const messageId = `turn_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
     if (session.isProcessing) {
       return '⚠️ 上一条消息还在处理中，请稍候...'
@@ -74,13 +75,15 @@ export class IMBridge {
       let agentInstance: AgentInstance
       if (agentType === 'script') {
         agentInstance = await createScriptAgent({
-          conversationId: session.conversationId,
+          conversationId: threadId,
+          turnId: messageId,
         })
       }
       else {
         agentInstance = await createClawAgent({
           workerId: IMBridge.WORKER_ID,
-          conversationId: session.conversationId,
+          conversationId: threadId,
+          turnId: messageId,
         })
       }
       const { agent, destroy: _destroy } = agentInstance

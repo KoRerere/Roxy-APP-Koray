@@ -37,7 +37,6 @@ const [showModal] = useDialog()
 const attrs = useAttrs()
 const proxyList = defineModel<any>('modelValue')
 
-const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
 const checkIndex = reactive<Record<string, boolean>>({})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
@@ -45,6 +44,15 @@ const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item
 const proxyProvider = ref()
 const dualDrawerVisible = ref(false)
 const moreCountryDrawerVisible = ref(false)
+
+const proxyAlertMessage = computed(() => {
+  return sumProxyCount.value > createCount.value
+    ? $t('仅 {count} 个窗口将会绑定代理 IP。请移除多余的 {beyond} 条代理 IP。', {
+        count: createCount.value,
+        beyond: sumProxyCount.value - createCount.value,
+      })
+    : $t('仅 {count} 个窗口将会绑定代理 IP', { count: sumProxyCount.value })
+})
 
 const canBuy = computed(() => check('Cost_Center_all'))
 const canAdd = computed(() => (isBatch.value || !proxyList.value?.length) && !moreCountryDrawerVisible.value && check('Profiles_add_proxy_outside'))
@@ -214,7 +222,7 @@ async function testProxySpeed(data: any, index: number) {
   checkIndex[index] = true
   const result = await checkProxy(toRaw(data))
   checkIndex[index] = false
-  batchTestShowToast(result)
+  batchTestShowToast({ ...result, proxyType: data.proxyType ?? data.buyProxyType }, { reCheck: () => testProxySpeed(data, index) })
   Object.assign(data, result)
 }
 
@@ -305,7 +313,7 @@ function switchProxyCountry() {
       <div class="flex items-center gap-2 guide1">
         <!-- 外层 span 用于引导脉冲高亮：::after 不能挂在 .p-button 上，否则会被按钮 overflow 裁切 -->
         <span v-if="canBuy || canAdd" class="guide1-pulse-target inline-flex rounded-md">
-          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="proxyList.length ? $t('购买') : $t('购买 / 添加')" @click="openDualDrawer" />
+          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="proxyList.length && !isBatch ? $t('购买') : $t('购买 / 添加')" @click="openDualDrawer" />
         </span>
       </div>
       <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
@@ -313,59 +321,61 @@ function switchProxyCountry() {
     <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="driverNext" @buy-success="onDualDrawerBuySuccess"
                        @add-confirm="onDualDrawerAddConfirm"
     />
-    <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn" :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message })"
-             :closable="false"
-    />
-    <div v-if="!presetTemplate && proxyList.length" class="grid gap-2 pl-27 list">
-      <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
-        <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
-        <div class="flex-1 flex flex-col gap-1 overflow-hidden">
-          <div class="flex items-center gap-2 region">
-            <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-            <SvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
-          </div>
-          <div v-if="isBatch" class="flex items-center gap-1.5 info">
-            <span>{{ $t('绑定窗口数:') }}</span>
-            <span class="text-[var(--colors-text-text-primary)] font-bold">{{ item._proxyCount }}</span>
-            <span class="text-[var(--colors-text-text-link)] cursor-pointer" @click.stop="modifyProxyCount(item)">{{
-              $t('修改') }}</span>
-          </div>
-          <div v-else class="flex items-center gap-1.5 info">
-            <div>{{ item.ipType }}</div>
-            <div class="line" />
-            <div class="flex-1 ellipsis-1">
-              {{ item.proxyCategory || item.protocol }}{{ strConcat('://', item.host) }}{{
-                strConcat(':', item.port) }}
+    <div class="pl-27 flex flex-col gap-3">
+      <RxAlert v-if="isBatch && sumProxyCount && sumProxyCount !== createCount" class="w-full whitespace-pre-line" :type="sumProxyCount > createCount ? 'warn' : 'info'" :closable="false"
+               :title="proxyAlertMessage"
+      />
+      <div v-if="!presetTemplate && proxyList.length" class="grid gap-2 list">
+        <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
+          <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
+          <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+            <div class="flex items-center gap-2 region">
+              <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
+              <SvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
+            </div>
+            <div v-if="isBatch" class="flex items-center gap-1.5 info">
+              <span>{{ $t('绑定窗口数:') }}</span>
+              <span class="text-[var(--colors-text-text-primary)] font-bold">{{ item._proxyCount }}</span>
+              <span class="text-[var(--colors-text-text-link)] cursor-pointer" @click.stop="modifyProxyCount(item)">{{
+                $t('修改') }}</span>
+            </div>
+            <div v-else class="flex items-center gap-1.5 info">
+              <div>{{ item.ipType }}</div>
+              <div class="line" />
+              <div class="flex-1 ellipsis-1">
+                {{ item.proxyCategory || item.protocol }}{{ strConcat('://', item.host) }}{{
+                  strConcat(':', item.port) }}
+              </div>
             </div>
           </div>
-        </div>
-        <div class="mt-0.5 flex gap-2">
-          <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
-                   :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
-          />
-          <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
-        </div>
-      </RxCard>
-    </div>
-    <div v-if="presetTemplate && !isBatch" class="flex items-center gap-2 pl-27">
-      <div class="flex-1 flex flex-col gap-1 pa-2 rounded-1.5 cursor-pointer preorder" @click="switchProxyCountry">
-        <div class="flex items-center gap-2">
-          <SvgIcon :name="(`country-code/${presetTemplate.proxyInfo.purchaseCountry.value.toLocaleUpperCase()}` as any)" size="20" />
-          <div class="flex items-center gap-2">
-            <span class="tt-primary text-3 font-500 leading-5">{{ presetTemplate.proxyInfo.purchaseCountry.label }}</span>
-            <SvgIcon class="cursor-pointer" name="base/rx_ic_exchange" size="14" color="var(--colors-icon-icon-tertiary)" />
+          <div class="mt-0.5 flex gap-2">
+            <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
+                     :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
+            />
+            <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
           </div>
-          <SvgIcon class="mx-auto mr-0 cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="clearPresetTemplate" />
-        </div>
-        <div class="flex items-center gap-1.5 pl-7">
-          <div class="select-none preorder-desc">
-            {{ presetTemplate.description }}
-          </div>
-          <SvgIcon v-tooltip.top="{ value: presetTemplate.hover, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
-        </div>
+        </RxCard>
       </div>
-      <div class="flex-1 tt-inactive text-3 leading-4">
-        {{ $t('Roxy 官方直营 IP，业务稳定性 99%+') }}
+      <div v-if="presetTemplate && !isBatch" class="flex items-center gap-2">
+        <div class="flex-1 flex flex-col gap-1 pa-2 rounded-1.5 cursor-pointer preorder" @click="switchProxyCountry">
+          <div class="flex items-center gap-2">
+            <SvgIcon :name="(`country-code/${presetTemplate.proxyInfo.purchaseCountry.value.toLocaleUpperCase()}` as any)" size="20" />
+            <div class="flex items-center gap-2">
+              <span class="tt-primary text-3 font-500 leading-5">{{ presetTemplate.proxyInfo.purchaseCountry.label }}</span>
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_exchange" size="14" color="var(--colors-icon-icon-tertiary)" />
+            </div>
+            <SvgIcon class="mx-auto mr-0 cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="clearPresetTemplate" />
+          </div>
+          <div class="flex items-center gap-1.5 pl-7">
+            <div class="select-none preorder-desc">
+              {{ presetTemplate.description }}
+            </div>
+            <SvgIcon v-tooltip.top="{ value: presetTemplate.hover, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
+          </div>
+        </div>
+        <div class="flex-1 tt-inactive text-3 leading-4">
+          {{ $t('Roxy 官方直营 IP，业务稳定性 99%+') }}
+        </div>
       </div>
     </div>
   </div>

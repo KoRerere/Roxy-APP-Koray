@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'

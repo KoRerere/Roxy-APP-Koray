@@ -320,9 +320,9 @@ export class McpManager {
    * 获取指定 worker 的完整工具列表：
    *   openapi (in-memory) + playwright (per-worker) + 启用的用户自定义 MCP
    */
-  async getToolsForWorker(workerId: string): Promise<StructuredTool[]> {
+  async getToolsForWorker(workerId: string, needPlaywright = true): Promise<StructuredTool[]> {
     const globalTools = await getGlobalMcpTools()
-    const playwrightTools = this.workerPlaywrightTools.get(workerId) ?? []
+    const playwrightTools = needPlaywright ? this.workerPlaywrightTools.get(workerId) ?? [] : []
     const userTools = this._getEnabledUserMcpTools()
 
     return wrapToolsWithErrorHandling(

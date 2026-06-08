@@ -22,7 +22,7 @@ interface Props {
   createCount?: number
 }
 
-const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>()
+const { data: outerData, isBatch = false } = defineProps<Props>()
 const emit = defineEmits(['confirm'])
 
 const totalMark = defineModel<number>('total')
@@ -100,10 +100,17 @@ const tableProps = {
       }),
 }
 
-const sumProxyCount = computed(() => {
-  if (!isBatch)
-    return 0
-  return (selection.value || []).reduce((sum: number, item: any) => sum += item._proxyCount, 0)
+// const sumProxyCount = computed(() => {
+//   if (!isBatch)
+//     return 0
+
+//   return [].concat(selection.value || []).reduce((sum: number, item: any) => sum += item._proxyCount, 0)
+// })
+
+const proxyAlertMessage = computed(() => {
+  return $t('已选择 {count} 条代理 IP', { count: selection.value?.length })
+  // const message = sumProxyCount.value > createCount ? $t('已超过创建窗口数，请取消选择代理 IP 或减少 {count} 个窗口关联数量。', { count: sumProxyCount.value - createCount }) : ''
+  // return $t('已选择 {count} 条代理 IP，将会关联 {sumCount} 个窗口。{message}', { count: selection.value?.length, sumCount: sumProxyCount.value, message })
 })
 
 onBeforeMount(async () => {
@@ -179,7 +186,7 @@ async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
   })
 
   const results = await concurrentControl(tasks, 5)
-  batchTestShowToast(results)
+  batchTestShowToast(results, { reCheck: () => onCheckProxyStatus(datas, operateName) })
 
   const proxyList = results.filter((item: any) => item.proxyType === ProxyType.resource)
   if (!proxyList.length)
@@ -196,8 +203,6 @@ function saveSelected() {
       }))
   emit('confirm', selectProxy)
 }
-
-const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口数。')
 </script>
 
 <template>
@@ -214,9 +219,7 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
         <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="onCheckAllProxy" />
       </div>
     </div>
-    <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-             :title="$t('{count} 个窗口将会绑定代理 IP。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? message : '' })" :closable="false"
-    />
+    <RxAlert :visible="isBatch" class="w-full proxy-alert" type="info" :title="proxyAlertMessage" :closable="false" />
     <div class="flex-ovh-1">
       <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
                :show-table-header="false"
@@ -225,8 +228,8 @@ const message = $t('当前选择绑定的代理 IP 数量已超过创建窗口�
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
         </template>
         <template #outbound="{ data: row }">
-          <OutboundIp class="select-none" :country="row.lastCountry" :city="row.lastCity" :last-ip="row.lastIp" :time="row.checkTime" :status="checkedMessage[row.id]"
-                      :badge-desc="row.badgeTypeDesc" :is-loading="row.loadingOperationMap?.test"
+          <OutboundIp class="select-none" :country="row.lastCountry" :city="row.lastCity" :last-ip="row.lastIp" :time="row.checkTime" :status="checkedMessage[row.id]" :badge-desc="row.badgeTypeDesc"
+                      :is-loading="row.loadingOperationMap?.test"
           />
         </template>
         <template #remark="{ data: row }">

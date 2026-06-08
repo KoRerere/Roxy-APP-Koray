@@ -1,13 +1,17 @@
-import { app, dialog, Menu, Tray } from 'electron'
+import { app, BrowserWindow, dialog, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
+import { onNetworkNodeChanged } from '/@/api/getGatewayConfig'
+import { isDev } from '/@/constants/common'
 import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { browserManager } from '/@/modules/browser'
+import { dictStore, onNetworkNodeUpdated } from '/@/modules/dict'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { closeAllWindows } from '/@/utils/browser-window'
+import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 
 let tray: Tray
 /** 创建托盘 */
@@ -34,7 +38,73 @@ export async function createTray() {
   tray.on('click', () => {
     restoreOrCreateWindow()
   })
+
+  // 字典数据就绪后刷新「切换线路」子菜单
+  onNetworkNodeUpdated(() => {
+    tray.setContextMenu(createContextMenu())
+  })
+
   return tray
+}
+
+/**
+ * 构建网络线路子菜单
+ * 从字典获取可用节点列表，当前选中项通过 store.lastSelectedNetworkNode 持久化
+ */
+function buildNetworkNodeSubmenu(): Electron.MenuItemConstructorOptions[] {
+  const nodes = dictStore.network_node
+  const current = store.lastSelectedNetworkNode
+
+  /** 选择线路并刷新托盘菜单 */
+  async function selectNode(value: typeof store.lastSelectedNetworkNode) {
+    // 测试环境不支持切换线路
+    if (isDev) {
+      const win = getMainWindow()
+      const messageBoxOptions: Electron.MessageBoxOptions = {
+        type: 'info',
+        title: $t('提示'),
+        message: '测试环境不支持切换线路',
+        defaultId: 0,
+      }
+      if (win) {
+        await dialog.showMessageBox(win, messageBoxOptions)
+      }
+      else {
+        await dialog.showMessageBox(messageBoxOptions)
+      }
+      return
+    }
+
+    store.lastSelectedNetworkNode = value
+    onNetworkNodeChanged()
+    tray.setContextMenu(createContextMenu())
+
+    const site = value === 'auto' ? await getProdWebDomain(true) : `https://${value.site}`
+
+    BrowserWindow.getAllWindows().forEach((window) => {
+      if (!window.isVisible()) {
+        return
+      }
+      window.loadURL(site)
+    })
+  }
+
+  return [
+    // 自动选择选项
+    {
+      label: $t('自动'),
+      type: 'radio',
+      checked: current === 'auto',
+      click: () => selectNode('auto'),
+    },
+    // 从字典动态生成各节点选项，label 取 gate 主机名首段（如 "hz.gate.roxybrowser.cn" → "hz"）
+    ...nodes.map<Electron.MenuItemConstructorOptions>((node, index) => ({
+      label: $t('线路 {number}', { number: index + 1 }),
+      type: 'radio',
+      checked: typeof current === 'object' && current.gate === node.gate,
+      click: () => selectNode(node),
+    })),
+  ]
 }
 
 /** 创建托盘菜单 */
@@ -81,6 +151,10 @@ function createContextMenu() {
         app.relaunch()
         app.quit()
       },
+    },
+    {
+      label: $t('切换线路'),
+      submenu: buildNetworkNodeSubmenu(),
     },
     {
       label: $t('显示'),

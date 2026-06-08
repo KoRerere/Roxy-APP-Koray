@@ -84,6 +84,29 @@ export async function getCustomFilters(params: any = {}) {
       },
     },
     {
+      type: 'Checkbox',
+      name: 'coreType',
+      label: $t('内核'),
+      icon: 'base/rx_ic_chrome',
+      getOptions: async () => {
+        return [
+          {
+            parentName: 'coreType',
+            label: 'Chrome',
+            value: CoreType.Chrome,
+          },
+          {
+            parentName: 'coreType',
+            label: 'Firefox',
+            value: CoreType.Firefox,
+          },
+        ]
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
+      },
+    },
+    {
       separator: true,
     },
     {

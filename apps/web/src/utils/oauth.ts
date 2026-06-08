@@ -1,5 +1,6 @@
 import { isDev } from '/@/utils'
 import { API } from '/@/api'
+import { getMpDistinctId } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { OAUTH2_CALLBACK_CHANNEL_NAME } from '/@/constants/channel'
 import type { LoginGoogleV2CreateData } from '@roxy/backend-api'
@@ -232,6 +233,7 @@ export function useOauth2Callback(callback: (params: Oauth2CallbackParams) => vo
 
     const commonParams = {
       oauthHost: useSimpleLocale().isZh ? 'cn' : 'com',
+      distinctId: getMpDistinctId(),
     }
 
     const oauth2LoginAPIMap = {

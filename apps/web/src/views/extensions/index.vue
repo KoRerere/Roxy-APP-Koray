@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Hub from './hub/index.vue'
 import Install from './install/index.vue'
+import { RxAlert } from '/@/components/rx-alert'
 
 const tabs = ref([
   {
@@ -48,10 +49,20 @@ function onSearch() {
   <div class="flex flex-col h-full w-full extensions">
     <RxTabs v-model:value="tabsValue" class="flex-1 overflow-hidden" :tabs="tabs" head-tabs @update:value="onChange">
       <template #installed>
-        <Install ref="listref" v-model:needsync="syncHub" @search="onSearch" />
+        <div class="w-full flex flex-col">
+          <RxAlert class="!w-full pl-6 rounded-0" type="info" :title="$t('仅支持在 Google 内核窗口中安装或上传扩展。火狐内核窗口请打开浏览器后完成安装。')" :closable="false" />
+          <div class="flex-1 overflow-hidden">
+            <Install ref="listref" v-model:needsync="syncHub" @search="onSearch" />
+          </div>
+        </div>
       </template>
       <template #hub>
-        <Hub ref="hubref" v-model:needsync="syncList" />
+        <div class="w-full flex flex-col">
+          <RxAlert class="!w-full pl-6 rounded-0" type="info" :title="$t('仅支持在 Google 内核窗口中安装或上传扩展。火狐内核窗口请打开浏览器后完成安装。')" :closable="false" />
+          <div class="flex flex-1 overflow-hidden">
+            <Hub ref="hubref" v-model:needsync="syncList" />
+          </div>
+        </div>
       </template>
     </RxTabs>
   </div>

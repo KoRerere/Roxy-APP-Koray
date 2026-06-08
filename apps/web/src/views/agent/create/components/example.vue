@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { IPType } from '/@/utils'
+import { IPType } from '/@/enums/proxy'
 
 const props = defineProps<{
   ipType?: IPType

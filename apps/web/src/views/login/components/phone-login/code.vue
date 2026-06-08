@@ -15,6 +15,7 @@ const [showToast] = useResponseToast()
 
 const modelValue = defineModel<string>()
 const isRegistered = defineModel<boolean>('isRegistered')
+const showInviteCodeInput = defineModel<boolean>('showInviteCodeInput', { default: false })
 
 const showTips = ref(false)
 const lock = ref(false)
@@ -33,6 +34,7 @@ watch(
   () => phone,
   () => {
     isRegistered.value = undefined
+    showInviteCodeInput.value = false
   },
 )
 
@@ -46,6 +48,9 @@ async function getCode() {
     return
 
   isRegistered.value = data.isRegistered
+  // 接口确认新用户后自动展开（已展开则不变）
+  if (data.isRegistered === false && !showInviteCodeInput.value)
+    showInviteCodeInput.value = true
 
   lock.value = true
   showTips.value = true

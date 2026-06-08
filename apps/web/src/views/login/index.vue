@@ -20,7 +20,7 @@ import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { Role, WorkspaceType } from '/@/enums'
-import { getInviteCode } from '/@/api/util'
+import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
 
@@ -145,6 +145,7 @@ async function handleSubmitByPhone() {
     phone: phone.trim(),
     verCode: verCode.trim(),
     inviteCode: inviteCode?.trim(),
+    distinctId: getMpDistinctId(),
   }
 
   const isContinueLogin = await checkContinueLogin({ ...params, login_type: 'login' })
@@ -166,6 +167,7 @@ async function handleSubmitByPhone() {
     return
   }
   if (data.workspaceId === 0) {
+    clearMpDistinctId()
     showModal({
       slots: {
         container: ({ hideModal }) => (
@@ -176,6 +178,7 @@ async function handleSubmitByPhone() {
     return
   }
 
+  clearMpDistinctId()
   await afterLogin(data)
 }
 
@@ -321,6 +324,7 @@ useOauth2Callback(async (params) => {
       }
 
       if (source === 'google' && data.workspaceId === 0) {
+        clearMpDistinctId()
         showModal({
           slots: {
             container: ({ hideModal }) => (
@@ -331,6 +335,7 @@ useOauth2Callback(async (params) => {
         return
       }
       globalThis.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
+      clearMpDistinctId()
       afterLogin(data)
     }
     catch (e) {

@@ -235,6 +235,9 @@ defineExpose({
                 @click="updateAllKernel"
       />
     </div>
+    <div v-if="kernelType === KernelFilter.Firefox" class="px-3 tt-tertiary text-3 leading-4">
+      {{ $t('火狐内核不支持修改的指纹参数：webgpu、沙盒模式、移动端电池、蓝牙、网络指纹') }}
+    </div>
     <div v-for="upgrade in currentKernel.available" :key="upgrade.title" class="w-full">
       <div v-if="currentKernel.available.length > 1" class="py-2 px-4 title">
         {{ upgrade.title }}

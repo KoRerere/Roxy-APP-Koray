@@ -18,7 +18,7 @@ import { useColumns } from '/@/hooks/useColumns'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useTeam } from '/@/views/team/hook'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { compare } from 'compare-versions'
@@ -123,10 +123,11 @@ const filters = reactive({
 
 const members = ref()
 
+useEmitterEvent('updateTeamMemberList', () => {
+  filters.onChange()
+})
+
 onMounted(() => {
-  emitter.on('updateTeamMemberList', () => {
-    filters.onChange()
-  })
   if (compare(userStore.appVersion, '3.8.7', '>=')) {
     showWarnTipsModal()
   }

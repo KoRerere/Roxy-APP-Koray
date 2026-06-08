@@ -1,14 +1,135 @@
-/**
- * Worker 模式：作为子 worker 被主 orchestrator 调用。
- * 需求尚未明确，当前为占位存根，保留架构位置。
- *
- * Future: 通过 parentPort / stdin 接收任务，执行后返回结果
- */
-export async function runWorkerMode(): Promise<() => Promise<void>> {
-  console.log('[mode:worker] Worker mode is not yet implemented.')
-  // process.parentPort?.on('message', handleWorkOrder)
+import type { WorkerResultStatus } from '../worker/protocol'
+import { HumanMessage } from '@langchain/core/messages'
+import { env } from '../config'
+import { createChatAgent } from '../deepagents/agent/chat'
+import { handleWorkerStream, StreamState } from '../deepagents/handle-stream'
+import { loadWorkerPayload } from '../worker/payload'
+import {
+  closeIpcAndExit,
+  sendEvent,
+  sendHeartbeat,
+  sendReady,
+  sendResult,
+  WORKER_HEARTBEAT_INTERVAL_MS,
+} from '../worker/protocol'
 
-  return async function shutdown() {
-    console.log('[mode:worker] Shutting down worker...')
+const WORKER_DESTROY_TIMEOUT_MS = 12_000
+
+export async function runWorkerMode(): Promise<() => Promise<void>> {
+  if (!env.CHECKPOINT_DIR) {
+    throw new Error('CHECKPOINT_DIR must be set before starting worker process')
   }
+
+  const payload = await loadWorkerPayload()
+
+  const { workerId, task, timeoutMs, conversationId, turnId } = payload
+
+  console.log(`[worker] Starting workerId=${workerId} pid=${process.pid} timeoutMs=${timeoutMs}`)
+
+  const abortController = new AbortController()
+  const startedAt = Date.now()
+  let failureReason: string | null = null
+  let finalStatus: WorkerResultStatus = 'failed'
+  let finalResult = ''
+  let finalError: string | null = 'Worker ended without result'
+  let delivered = false
+
+  // Listen for cancel from parent
+  process.on('message', (msg: any) => {
+    if (msg?.type === 'cancel') {
+      console.log(`[worker] Received cancel reason=${msg.reason}`)
+      failureReason = msg.message ?? `Worker cancelled: ${msg.reason}`
+      abortController.abort(failureReason)
+    }
+  })
+
+  // Send ready after payload is loaded — parent will unlink the file on receipt
+  sendReady(workerId)
+
+  const heartbeatHandle = setInterval(() => {
+    sendHeartbeat(workerId)
+  }, WORKER_HEARTBEAT_INTERVAL_MS)
+  heartbeatHandle.unref()
+
+  // Worker-side timeout (belt-and-suspenders alongside parent timer)
+  const timeoutHandle = setTimeout(() => {
+    failureReason = `Worker timed out after ${timeoutMs}ms`
+    abortController.abort(failureReason)
+  }, timeoutMs)
+  timeoutHandle.unref()
+
+  let agent, destroy
+  try {
+    ;({ agent, destroy } = await createChatAgent({ mode: 'simple', workerId, conversationId, turnId }))
+
+    const streamState = new StreamState()
+    streamState.setTaskId(workerId)
+
+    const stream = await agent.stream(
+      { messages: [new HumanMessage({ content: task })] },
+      {
+        tags: [workerId],
+        streamMode: ['messages', 'custom', 'tools'],
+        signal: abortController.signal,
+      } as any,
+    )
+
+    for await (const rawChunk of stream) {
+      const events = handleWorkerStream(rawChunk, streamState)
+      for (const event of events) {
+        sendEvent(workerId, event)
+      }
+    }
+
+    if (abortController.signal.aborted) {
+      throw new Error(failureReason ?? 'Worker cancelled')
+    }
+
+    finalStatus = 'success'
+    finalResult = streamState.getLastChunkContent()
+    finalError = null
+  }
+  catch (error: any) {
+    const isAbort = error?.name === 'AbortError' || abortController.signal.aborted
+    const errorMessage = failureReason
+      ?? (isAbort ? 'Worker cancelled' : error instanceof Error ? error.message : String(error))
+
+    console.error('[worker] Run ended status=failed', errorMessage)
+    finalStatus = 'failed'
+    finalResult = ''
+    finalError = errorMessage
+  }
+  finally {
+    clearTimeout(timeoutHandle)
+    clearInterval(heartbeatHandle)
+
+    delivered = await sendResult({
+      workerId,
+      status: finalStatus,
+      result: finalResult,
+      error: finalError,
+      durationMs: Date.now() - startedAt,
+    })
+
+    if (destroy) {
+      try {
+        const destroyWithTimeout = Promise.race([
+          destroy(),
+          new Promise<void>(resolve => setTimeout(resolve, WORKER_DESTROY_TIMEOUT_MS)),
+        ])
+        await destroyWithTimeout
+      }
+      catch (error: any) {
+        console.warn('[worker] destroy failed during shutdown:', error instanceof Error ? error.message : String(error))
+      }
+    }
+  }
+
+  closeIpcAndExit(delivered && finalStatus === 'success' ? 0 : 1)
+
+  /**
+   * Return a no-op shutdown; closeIpcAndExit has already disconnected IPC and
+   * scheduled a fallback process exit after the final result was flushed.
+   */
+  return async function shutdown() {}
 }

@@ -7,7 +7,7 @@ import { OrderType, OrderTypeStr, PaymentStatus, PaymentStatusStr, PayWay, Purch
 import { useUserStore } from '/@/stores/user'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 import { useDialog } from '/@/hooks/useDialog'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 
@@ -76,10 +76,8 @@ const detailMapStr = {
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
-onMounted(() => {
-  emitter.on('updateBillList', () => {
-    tableRef.value?.refresh()
-  })
+useEmitterEvent('updateBillList', () => {
+  tableRef.value?.refresh()
 })
 
 async function tableRequest(params: any) {

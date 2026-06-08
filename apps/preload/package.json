@@ -29,11 +29,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
-    "electron": "^40.10.0"
+    "electron": "^40.10.2"
   },
   "devDependencies": {
     "@roxy/backend-api": "workspace:*",
-    "electron-log": "^5.4.3",
+    "electron-log": "^5.4.4",
     "unplugin-dts": "catalog:",
     "vite": "catalog:"
   }

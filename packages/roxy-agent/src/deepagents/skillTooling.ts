@@ -1,31 +1,23 @@
+import type { SkillEntry } from '../skillManager'
 import type { StructuredToolInterface } from '@langchain/core/tools'
 import { createMiddleware, tool } from 'langchain'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
 import { env } from '../config'
+import { getSkillManager } from '../skillManager'
 import {
   loadSkillMetadataFromDir,
   MAX_SKILL_FILE_SIZE_BYTES,
 } from '../skills/metadata'
 
 const DEFAULT_SKILL_READ_LINE_LIMIT = 1000
-const SKILLS_ROOT_DIR = path.resolve(env.SKILLS_DIR, 'skills')
 
 interface SkillSummary {
   name: string
   description: string
   skillMdPath: string
   rootDir: string
-}
-
-function isPathInside(parent: string, target: string): boolean {
-  const relative = path.relative(parent, target)
-  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
-}
-
-function isPathInsideOrEqual(parent: string, target: string): boolean {
-  return parent === target || isPathInside(parent, target)
 }
 
 function formatNumberedTextSlice(content: string, offset = 0, limit = DEFAULT_SKILL_READ_LINE_LIMIT): string {
@@ -43,43 +35,22 @@ function formatNumberedTextSlice(content: string, offset = 0, limit = DEFAULT_SK
     .join('\n')
 }
 
-async function parseSkillDir(dirPath: string): Promise<SkillSummary | null> {
-  const result = await loadSkillMetadataFromDir(dirPath)
-  if (!result.ok) {
-    if (result.code !== 'missing-skill-md') {
-      console.warn(result.message)
-    }
-    return null
-  }
+function isPathInsideOrEqual(parent: string, target: string): boolean {
+  const relative = path.relative(parent, target)
+  return parent === target || (relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative))
+}
 
-  for (const warning of result.warnings) {
-    console.warn(warning)
-  }
-
+function toSkillSummary(entry: SkillEntry): SkillSummary {
   return {
-    name: result.metadata.name,
-    description: result.metadata.description,
-    skillMdPath: result.skillMdPath,
-    rootDir: result.rootDir,
+    name: entry.name,
+    description: entry.description,
+    skillMdPath: path.join(entry.rootDir, 'SKILL.md'),
+    rootDir: entry.rootDir,
   }
 }
 
 export async function listInstalledSkills(): Promise<SkillSummary[]> {
-  try {
-    const entries = await fs.readdir(SKILLS_ROOT_DIR, { withFileTypes: true })
-    const skills = await Promise.all(
-      entries
-        .filter(entry => entry.isDirectory())
-        .map(entry => parseSkillDir(path.join(SKILLS_ROOT_DIR, entry.name))),
-    )
-
-    return skills
-      .filter((skill): skill is SkillSummary => Boolean(skill))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }
-  catch {
-    return []
-  }
+  return (await getSkillManager().listAvailableSkills()).map(toSkillSummary)
 }
 
 function buildSkillsSystemPrompt(skills: SkillSummary[]): string {
@@ -101,6 +72,7 @@ ${list}
 3. 如果 \`SKILL.md\` 提到 \`guides/\`、\`examples/\`、脚本或配置文件，继续用 \`load_skill_file\` 读取
 4. \`load_skill_file\` 只能读取 skills 目录内的文件，传入上面展示的绝对路径
 5. 普通业务文件不要用 \`load_skill_file\` 读取，那仍然属于普通文件访问
+6. 如果 \`load_skill_file\` 返回不存在、被禁用等状态，不要尝试使用其他方式加载，直接当作该 skill 不可用处理
 
 建议：
 - 先读 \`SKILL.md\`，再决定是否继续读子文件
@@ -126,6 +98,7 @@ Rules:
 3. If \`SKILL.md\` references \`guides/\`, \`examples/\`, scripts, or config files, keep using \`load_skill_file\`
 4. \`load_skill_file\` only works for files inside the skills directory, so pass the absolute paths shown above
 5. Do not use \`load_skill_file\` for regular workspace files; normal file access still uses the standard filesystem tools
+6. If \`load_skill_file\` returns not found, disabled, or similar status, do not attempt to load it through other means; treat it as the skill being unavailable
 
 Tips:
 - Start with \`SKILL.md\`, then read sub-files only if needed
@@ -135,15 +108,27 @@ Tips:
 
 export function createRoxySkillsMiddleware() {
   let cachedPrompt = ''
+  let syncPromise: Promise<void> | null = null
+
+  async function syncStoreSkillsOnce() {
+    if (!syncPromise) {
+      syncPromise = getSkillManager().syncSkills().catch((error: any) => {
+        console.warn(`Failed to sync store skills: ${error.message}`)
+      })
+    }
+    await syncPromise
+  }
 
   return createMiddleware({
     name: 'RoxySkillsMiddleware',
     beforeAgent: async () => {
+      await syncStoreSkillsOnce()
       const skills = await listInstalledSkills()
       cachedPrompt = buildSkillsSystemPrompt(skills)
     },
     wrapModelCall: async (request: any, handler: any) => {
       if (!cachedPrompt) {
+        await syncStoreSkillsOnce()
         const skills = await listInstalledSkills()
         cachedPrompt = buildSkillsSystemPrompt(skills)
       }
@@ -160,8 +145,19 @@ export const loadSkillFileTools = [
   tool(
     async (input: { path: string, offset?: number, limit?: number }): Promise<string> => {
       const requestedPath = path.resolve(input.path)
-      if (!isPathInsideOrEqual(SKILLS_ROOT_DIR, requestedPath)) {
+      if (!getSkillManager().isPathInsideSkillsRoot(requestedPath)) {
         return `Error: Path '${input.path}' is outside the skills directory`
+      }
+
+      // 检查该 skill 是否被禁用
+      const skillDir = getSkillManager().resolveSkillDirForPath(requestedPath)
+      if (skillDir) {
+        const skills = await getSkillManager().listAvailableSkills()
+        if (!skills.some(skill => isPathInsideOrEqual(skillDir, skill.rootDir))) {
+          const skillMetadata = await loadSkillMetadataFromDir(skillDir)
+          const skillName = skillMetadata.ok ? skillMetadata.metadata.name : path.basename(skillDir)
+          return `Error: Skill "${skillName}" not found.`
+        }
       }
 
       try {

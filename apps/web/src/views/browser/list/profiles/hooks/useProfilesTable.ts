@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import { API } from '/@/api'
 import { filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
 import { parseBrowserOpenQuery } from '/@/views/browser/list/profiles/utils/browserQuery'
+import { useAutoOpenProxySync } from '/@/views/browser/list/profiles/hooks/useAutoOpenProxySync'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
@@ -17,6 +18,9 @@ export function useProfilesTable(options: {
 
   const hasFiltered = ref(false)
   const hasTempProfile = ref(false)
+  /** 与 tableRequest 返回的 rows 同一引用，供测速、静默更新代理等使用 */
+  const dataList = ref<Data[]>([])
+  const { markRouteAutoOpen, clearPendingAutoOpen, syncOpenedProxyToRow } = useAutoOpenProxySync(dataList)
 
   function onRefreshTable(tabParams: Record<string, unknown> = {}, force = false) {
     const params = {
@@ -28,35 +32,44 @@ export function useProfilesTable(options: {
     options.tableRef.value?.refresh(params, force)
   }
 
-  function autoOpenBrowser(list: Data[]) {
+  function autoOpenBrowser() {
     const query = parseBrowserOpenQuery(route.query.browser)
-    if (query?.openBrowser) {
-      const data = list.find(item => item.id === query.windowId)
-      router.replace({ name: route.name as string })
-      if (data)
-        options.openBrowserBefore(data)
-    }
+    if (!query?.openBrowser)
+      return
+
+    const data = dataList.value.find(item => item.id === query.windowId)
+    router.replace({ name: route.name as string })
+    if (!data)
+      return
+
+    markRouteAutoOpen(data.dirId!)
+    options.openBrowserBefore(data)
   }
 
   async function tableRequest(params: Record<string, unknown>) {
     const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 } as any)
 
-    if (data.code === 0 && data.data.rows.length > 0) {
+    if (data.code === 0) {
       const rows = data.data.rows.map(item => ({
         ...item,
         projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
       }))
-      hasTempProfile.value = rows.some(item => item.isTemporary)
-      autoOpenBrowser(rows)
+      dataList.value = rows
       data.data.rows = rows
+      hasTempProfile.value = rows.some(item => item.isTemporary)
+      if (rows.length > 0)
+        autoOpenBrowser()
     }
 
     return data
   }
 
   return {
+    dataList,
     hasFiltered,
     hasTempProfile,
+    clearPendingAutoOpen,
+    syncOpenedProxyToRow,
     onRefreshTable,
     tableRequest,
   }

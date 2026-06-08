@@ -36,15 +36,18 @@ export function useProfileInfoMutations(options: {
     const row = unref(data)
     const { id, dirId } = row
     updateProfile({ id, dirId, moduleId, proxyMethod: 'choose', requestType: ProfileReqType.SelectProxy }, {
-      success: () => silentUpdateProxy(row, {
-        ...rest,
-        moduleId,
-        isDirect,
-        protocol,
-        proxyCategory: proxyCategory || protocol,
-        proxyMethod: 'choose',
-        buyProxyType: proxyType ?? ProxyType.resource,
-      }, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo']),
+      success: () => {
+        Reflect.deleteProperty(row, '_checkRes')
+        silentUpdateProxy(row, {
+          ...rest,
+          moduleId,
+          isDirect,
+          protocol,
+          proxyCategory: proxyCategory || protocol,
+          proxyMethod: 'choose',
+          buyProxyType: proxyType ?? ProxyType.resource,
+        }, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo'])
+      },
     })
   }
 
@@ -63,7 +66,10 @@ export function useProfileInfoMutations(options: {
             const { id, dirId } = row
             const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: proxyData ? ProfileReqType.EditProxy : ProfileReqType.AddProxy }
             updateProfile(params, {
-              success: () => silentUpdateProxy(row, params, ['isEncryptProxy', 'proxyEncryptInfo']),
+              success: () => {
+                Reflect.deleteProperty(row, '_checkRes')
+                silentUpdateProxy(row, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+              },
             })
             drawerInstance.hideDrawer()
           },

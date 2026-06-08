@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
+import { store } from '/@/modules/store'
 import { safeParseJSON } from '/@/utils'
 
 let language: any[]
@@ -15,7 +16,7 @@ export function getCityCode(key: string) {
 
 /** 获取浏览器用户数据目录路径 */
 export function getUserDataDirPath(dirId: string) {
-  return join(appConfig.browserCacheRootDir, dirId)
+  return join(store.browserCacheRootDir, dirId)
 }
 
 /** 转换数字, 如果转换后为 NaN, 则返回 null */

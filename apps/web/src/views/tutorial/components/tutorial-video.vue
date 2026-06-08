@@ -32,7 +32,7 @@ async function openVideoModal() {
     blockScroll: true,
     pt: {
       root: '!bg-transparent !border-none !shadow-none',
-      mask: '!z-1200',
+      mask: '!z-3000',
     },
     slots: {
       container: ({ hideModal }) => h(VideoModal, {

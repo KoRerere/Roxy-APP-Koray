@@ -1,10 +1,12 @@
+import { tryOnScopeDispose } from '@vueuse/core'
 import mitt from 'mitt'
+import type { Handler } from 'mitt'
 import type { ToastMessageOptions } from 'primevue/toast'
 import type { UserGetNotifyListData, UserPaySettlementCreateData } from '@roxy/backend-api'
 
 export type PayWallType = 'synchronizer' | 'createProfileTemplates' | 'transfer'
 
-export interface MittEvents {
+export type MittEvents = {
   notifyUpdateData: UserGetNotifyListData
   maxWindowCountChange?: number
   /** 显示 toast */
@@ -68,7 +70,31 @@ export interface MittEvents {
   showAppUpgradeDialog: any
   backDefaultWorkspace: void
   /** 刷新窗口列表 */
-  refreshProfileList?: void
-}
+  refreshProfileList?: number
+} & Record<string | symbol, unknown>
 
 export const emitter = mitt<MittEvents>()
+
+type SubscribeMitt = <Key extends keyof MittEvents>(
+  type: Key,
+  handler: Handler<MittEvents[Key]>,
+) => void
+
+const subscribe: SubscribeMitt = emitter.on.bind(emitter) as SubscribeMitt
+const unsubscribe: SubscribeMitt = emitter.off.bind(emitter) as SubscribeMitt
+
+/**
+ * 订阅全局 `emitter`，当前组件 / effect scope 销毁时自动 `off`。
+ * 在 `setup` 中调用即可，无需 `onMounted` + `onBeforeUnmount` 样板代码。
+ *
+ * VueUse 的 `useEventBus` 是另一套按 key 隔离的总线，与项目现有 mitt 实例不通用。
+ */
+export function useEmitterEvent<K extends keyof MittEvents>(
+  event: K,
+  handler: Handler<MittEvents[K]>,
+): void {
+  subscribe(event, handler)
+  tryOnScopeDispose(() => {
+    unsubscribe(event, handler)
+  })
+}

@@ -2,6 +2,7 @@
 import { useProxyStore } from '/@/stores/proxy'
 import { useThemeStore } from '/@/stores/theme'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
+import { useResizeObserver } from '@vueuse/core'
 
 type ShopItem = UserGetProxyVendorListListData['data'][number] & {
   props: Record<string, any>
@@ -24,6 +25,21 @@ const rolaip = computed(() => shopList.value[1])
 
 const imgSrc = computed(() => isDarkTheme.value ? 'url("/images/proxy/shop_card_bg_dark.svg")' : 'url("/images/proxy/shop_card_bg.svg")')
 const checkIcon = computed(() => isDarkTheme.value ? 'status/rx_ic_check_fill_dark' : 'status/rx_ic_check_fill_light')
+
+const iconTrackRef = useTemplateRef<HTMLElement>('iconTrackRef')
+const iconListRef = useTemplateRef<HTMLElement>('iconListRef')
+const iconListOverflow = ref(false)
+
+function updateIconListOverflow() {
+  const track = iconTrackRef.value
+  const list = iconListRef.value
+  if (!track || !list)
+    return
+  iconListOverflow.value = list.scrollWidth > track.clientWidth
+}
+
+useResizeObserver(iconTrackRef, updateIconListOverflow)
+watch(() => roxybrowser.value?.iconList, () => nextTick(updateIconListOverflow))
 
 watch(
   () => route.query._t,
@@ -100,12 +116,19 @@ function buyProxyFromAnnouncement() {
           </div>
         </div>
         <RxDivider line-only line-color="var(--pattern-proxystore-mood-button-border)" />
-        <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="flex items-center gap-2.5 min-w-0">
           <div class="color-[#111213] text-3 leading-4 shrink-0">
             {{ $t('社媒 / 电商 / AI专线 IP :') }}
           </div>
-          <div v-for="data in roxybrowser.iconList" :key="data" class="shrink-0 w-5 h-5 pa-0.75 rounded-1 bg-white">
-            <img class="shrink-0 block w-full h-full" :src="data">
+          <div ref="iconTrackRef" class="min-w-0 flex-1 overflow-hidden">
+            <div ref="iconListRef" class="flex w-max items-center gap-2">
+              <div v-for="data in roxybrowser.iconList" :key="data" class="shrink-0 w-5 h-5 pa-0.75 rounded-1 bg-white">
+                <img class="shrink-0 block w-full h-full" :src="data">
+              </div>
+            </div>
+          </div>
+          <div v-if="iconListOverflow" class="shrink-0 color-black text-3 self-end">
+            ...
           </div>
         </div>
       </div>

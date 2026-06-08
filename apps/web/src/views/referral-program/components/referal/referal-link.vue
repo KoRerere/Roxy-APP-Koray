@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import NewReferralModal from '/@/views/referral-program/components/new-referral-modal.vue'
 import QrcodeModal from './qrcode-modal.vue'
 import RankList from './rank-list.vue'
@@ -17,11 +18,11 @@ const { promotionInfo } = defineProps<{
 }>()
 
 const { isZh } = storeToRefs(useSimpleLocale())
+const { getVideoSource } = useSimpleLocale()
 const { mixpanelTrack } = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
-
 const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
 const selectBannerSize = ref('')
@@ -120,7 +121,7 @@ async function showNewInfo() {
   })
 }
 
-function focusReward() {
+function _focusReward() {
   const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
   if (driverStatus.referralProgram)
     return
@@ -307,7 +308,7 @@ function openCommunity() {
           {{ $t('在注册或登录页面上显示邀请者和适用的折扣。') }}
         </div>
         <video class="block w-full mt-1 rounded-md" autoplay muted loop playsinline>
-          <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/invite_tips_guide.mp4" type="video/webm">
+          <source :src="getVideoSource('invite_tips_guide.mp4')" type="video/webm">
         </video>
       </div>
     </RyPopover>

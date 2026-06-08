@@ -2,9 +2,11 @@
 import { AnimatePresence, motion } from 'motion-v'
 import { getImage, isMacOS } from '/@/utils'
 import type { BrowserProcessMessage } from '@roxy/electron-preload'
+import { CoreType } from '/@/enums/base'
 
 const startTime = Date.now()
 const dirId = new URLSearchParams(window.location.search).get('dirId')
+const coreType = new URLSearchParams(window.location.search).get('coreType') || CoreType.Chrome
 const currentText = ref($t('正在打开 RoxyBrowser，请稍候…'))
 const launchProcessMessage = ref<BrowserProcessMessage | null>(null)
 
@@ -88,11 +90,11 @@ async function closeWindow(force = false) {
       opacity: { duration: 0.64, delay: 0.4 },
     }" class="roxychrome"
     >
-      <img :src="getImage('default-browser/roxychrome.svg')">
+      <img :src="getImage('browser/roxychrome.svg')">
     </motion.div>
     <div class="info-container">
       <motion.h1 :initial="{ x: -10, opacity: 0 }" :animate="{ x: 0, opacity: 1 }" :transition="{ duration: 0.32, delay: 0.1 }">
-        RoxyChrome
+        {{ coreType === CoreType.Chrome ? 'RoxyChrome' : 'RoxyFirefox' }}
       </motion.h1>
       <motion.div :initial="{ x: -10, opacity: 0 }" :animate="{ x: 0, opacity: 1 }" :transition="{ duration: 0.32, delay: 0.2 }">
         <AnimatePresence mode="wait">

@@ -2,7 +2,7 @@
   // 连接到已运行的 Firefox BiDi WebSocket
   // 注意：Firefox BiDi 只允许一个会话。若遇到 "Maximum number of active sessions"，
   // 说明存在僵尸会话（上次脚本未正常退出），需要重启 Firefox 一次清除。
-  const wsUrl = 'ws://127.0.0.1:55049'
+  const wsUrl = 'ws://127.0.0.1:59077'
 
   console.log(`Connecting to: ${wsUrl}/session`)
 

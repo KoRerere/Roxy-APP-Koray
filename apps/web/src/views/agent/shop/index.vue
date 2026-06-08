@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 // import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
@@ -19,9 +20,10 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { useUserStore } from '/@/stores/user'
+import { useSimpleLocale } from '/@/stores/locale'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyReqType, ProxyType } from '/@/enums'
 import { usePermission } from '/@/hooks/usePermission'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 import type { ProxyItem } from './operation'
 import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
 
@@ -33,6 +35,7 @@ const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
+const { getOfficialWebsite } = useSimpleLocale()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
@@ -102,11 +105,9 @@ onBeforeMount(async () => {
   setNewOrderNo(route.query.orderNo as string)
 })
 
-onMounted(() => {
-  emitter.on('updateShopList', (orderNo) => {
-    onRefreshTable()
-    setNewOrderNo(orderNo)
-  })
+useEmitterEvent('updateShopList', (orderNo) => {
+  onRefreshTable()
+  setNewOrderNo(orderNo)
 })
 
 onBeforeUnmount(() => {
@@ -295,7 +296,7 @@ function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }:
     })
     const validResults = results.filter(Boolean) as ConcurrentProxyValidResult[]
     if (!cancelled && !silent) {
-      batchTestShowToast(validResults)
+      batchTestShowToast(validResults, { reCheck: () => concurrentProxyTest(buildShopProxySpeedTestRun(datas, { operateName, silent })) })
     }
     const proxyList = validResults.filter((item: any) => item?.proxyType === ProxyType.resource)
     if (!proxyList.length)
@@ -463,6 +464,12 @@ function rowClass(data: ProxyItem) {
     // 'row-disabled': data.proxyExpireStatus === ProxyExpireStatus.expired || [ProxyOrderStatus.pending, ProxyOrderStatus.refunded].includes(data.orderStatus!),
   }
 }
+
+function jumpToWhois(ip: string) {
+  if (!ip)
+    return
+  window.open(getOfficialWebsite(`/whoer?ip=${ip}`), '_blank')
+}
 </script>
 
 <template>
@@ -515,8 +522,8 @@ function rowClass(data: ProxyItem) {
         </template>
         <template #outbound="{ data }">
           <div class="flex items-center gap-2.5">
-            <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="checkedMessage[data.id]" :badge-desc="data.badgeTypeDesc"
-                        :is-loading="data.loadingOperationMap?.test"
+            <OutboundIp v-tooltip.top="{ value: data.lastIp && $t('点击查看 IP 地址详情') }" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+                        :status="checkedMessage[data.id]" :badge-desc="data.badgeTypeDesc" :is-loading="data.loadingOperationMap?.test" @click.stop="jumpToWhois(data.lastIp)"
             />
             <div
               v-if="data.proxyType === ProxyType.buy && data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired"

@@ -1,18 +1,18 @@
 import { onBeforeUnmount, ref, shallowRef } from 'vue'
+import RxButton from '/@/components/rx-button'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import DownloadModal from '/@/views/agent/shop/components/download-modal.vue'
 import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
 import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
-import { API } from '/@/api'
-import { ProxyCheckStatus, ProxyExpireStatus } from '/@/enums'
-import { concurrentControl, createDefaultObject, decryptAESGCM, strConcat } from '/@/utils'
 import { $t } from '/@/locales'
+import { API } from '/@/api'
+import { ProxyCheckStatus, ProxyExpireStatus, ProxyType } from '/@/enums'
+import { concurrentControl, createDefaultObject, decryptAESGCM, strConcat } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
 import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
-import type { ProxyType } from '/@/enums'
 
 export interface CheckResult {
   loading: boolean
@@ -23,6 +23,7 @@ export interface CheckResult {
   lastCountry?: string
   checkTime?: string
   timezone?: string
+  proxyType?: ProxyType
 }
 
 interface ProxyCheckParams extends Partial<ProxyDetectionParams> {
@@ -38,6 +39,12 @@ export type ConcurrentProxyValidResult = CheckResult & { id?: number, proxyType?
 /** concurrentControl 原始结果槽位，未执行到的为 undefined */
 export type ConcurrentProxyTestResults = Array<ConcurrentProxyValidResult | undefined>
 
+export interface BatchTestShowToastOptions {
+  reCheck?: () => void
+  /** 是否展示「联系技术支持」按钮；单条检测默认仅购买代理展示，批量检测默认展示 */
+  showSupport?: boolean
+}
+
 export type ConcurrentProxyTestNext = (results: ConcurrentProxyTestResults, cancelled: boolean) => void | Promise<void>
 
 /** 单次并发测速运行参数：tasks 由业务构造（含每条测速与 loading 等） */
@@ -50,7 +57,7 @@ export interface ConcurrentProxyTestRun {
 
 interface useCheckProxyResult {
   testProxy: (data: ProxyCheckParams) => Promise<CheckResult>
-  batchTestShowToast: (results: CheckResult | CheckResult[]) => void
+  batchTestShowToast: (results: CheckResult | CheckResult[], options?: BatchTestShowToastOptions) => void
   concurrentProxyTest: (run: ConcurrentProxyTestRun) => Promise<void>
 }
 
@@ -67,6 +74,17 @@ interface DownloadProxyParams {
 
 export function useCheckProxy(): useCheckProxyResult {
   const [showToast] = useResponseToast()
+
+  const concurrentTaskTopBar = useConcurrentTaskTopBar()
+  const hostUnmounted = ref(false)
+  const speedTestAbort = shallowRef<AbortController | null>(null)
+  /** 并发测速互斥（不依赖顶栏 isOpen，顶栏关闭时仍需阻止重复进入） */
+  const concurrentProxyTestBusy = ref(false)
+
+  onBeforeUnmount(() => {
+    hostUnmounted.value = true
+    speedTestAbort.value?.abort()
+  })
 
   async function testBuyProxy(proxyBuyId: number): Promise<CheckResult> {
     const { code, data, msg } = await API.proxy.userCheckProxyCreate({ proxyBuyId })
@@ -127,32 +145,48 @@ export function useCheckProxy(): useCheckProxyResult {
     return { ...local }
   }
 
-  function batchTestShowToast(__results: CheckResult | CheckResult[]) {
+  function batchTestShowToast(__results: CheckResult | CheckResult[], options?: BatchTestShowToastOptions) {
     const results = Array.isArray(__results) ? __results : [__results]
     if (results.length === 1) {
       const checkRes = results[0]!
       const [code, msg] = checkRes.checkStatus === ProxyCheckStatus.failure
-        ? [-1, checkRes.error || $t('测试代理 IP 失败')]
+        // checkRes.error || 暂时改 web ，后续版本将这个提示挪到主进程中
+        ? [-1, genProxyTestToastDetail($t('代理 IP 检测失败，请检查代理 IP 配置'), {
+            ...options,
+            showSupport: options?.showSupport ?? checkRes.proxyType === ProxyType.buy,
+          })]
         : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
       showToast(code, msg)
     }
     else {
       const success = results.filter(item => item.checkStatus === ProxyCheckStatus.success)
       const error = results.filter(item => item.checkStatus === ProxyCheckStatus.failure)
-      showToast(0, $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length }))
+      const summary = $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length })
+      showToast(0, genProxyTestToastDetail(summary, options))
     }
   }
 
-  const concurrentTaskTopBar = useConcurrentTaskTopBar()
-  const hostUnmounted = ref(false)
-  const speedTestAbort = shallowRef<AbortController | null>(null)
-  /** 并发测速互斥（不依赖顶栏 isOpen，顶栏关闭时仍需阻止重复进入） */
-  const concurrentProxyTestBusy = ref(false)
-
-  onBeforeUnmount(() => {
-    hostUnmounted.value = true
-    speedTestAbort.value?.abort()
-  })
+  function genProxyTestToastDetail(msg: string, options?: BatchTestShowToastOptions) {
+    const { reCheck, showSupport = false } = options ?? {}
+    return (
+      <div class="flex flex-col gap-2">
+        <div>{msg}</div>
+        <div class="flex gap-2 justify-end">
+          {reCheck && <RxButton text name="base/rx_ic_close" size="xxs" label={$t('重新检测')} onClick={reCheck}></RxButton>}
+          {showSupport && (
+            <RxButton
+              text
+              name="base/rx_ic_reload"
+              size="xxs"
+              label={$t('联系技术支持')}
+              onClick={showLiveChat}
+            >
+            </RxButton>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   async function concurrentProxyTest(run: ConcurrentProxyTestRun) {
     if (!concurrentTaskTopBar)

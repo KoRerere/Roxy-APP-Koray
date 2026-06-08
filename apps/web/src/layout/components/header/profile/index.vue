@@ -16,7 +16,7 @@ import { useUserStore } from '/@/stores/user'
 import { showPageLoading } from '/@/utils'
 import { getSettings } from './components/settings-popup'
 import { getColorSchemeList, useThemeStore } from '/@/stores/theme'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { usePreventMask } from '/@/hooks/usePreventMask'
@@ -55,7 +55,7 @@ const items = computed(() => {
     },
     {
       label: $t('我的兑换码'),
-      icon: 'other/palm_tree',
+      icon: 'base/rx_ic_red-envelope',
       render: ({ item }: any) => {
         return (
           <div class="flex items-center gap-2 w-full">
@@ -168,14 +168,8 @@ const items = computed(() => {
   ].filter(item => !item.vIf || item.vIf())
 })
 
-onMounted(() => {
-  emitter.on('openSettings', ({ settingsKey, anchorPoint }) => {
-    openSettings(settingsKey, anchorPoint)
-  })
-})
-
-onBeforeUnmount(() => {
-  emitter.off('openSettings')
+useEmitterEvent('openSettings', ({ settingsKey, anchorPoint }) => {
+  openSettings(settingsKey, anchorPoint)
 })
 
 function openRedeemCode() {

@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import Score from '/@/views/tutorial/components/score'
 import QrcodeModal from '/@/components/qrcode-modal.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -14,7 +15,7 @@ import { API } from '/@/api'
 // import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import AgentLabel from './agent-label.vue'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
-import type { ViewportFloatingDefaultContext, ViewportPoint } from '/@/hooks/useViewportDraggableFloating'
+import type { ViewportPoint } from '/@/hooks/useViewportDraggableFloating'
 import { clampPointToViewport, useViewportDraggableFloatingGroup } from '/@/hooks/useViewportDraggableFloating'
 
 let timer: any = null
@@ -37,19 +38,33 @@ const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
-/** 右下角帮助区悬浮按钮位置持久化（AI Agent、帮助气泡可分别拖拽） */
-const HELP_FLOAT_STORAGE_KEY = 'roxy-browser.helpFloatPositions.v1'
+/** 帮助区悬浮组（Agent + 气泡）整体位置持久化 */
+const HELP_FLOAT_STORAGE_KEY = 'roxy-browser.helpFloatPositions.v2'
+const HELP_FLOAT_STORAGE_KEY_V1 = 'roxy-browser.helpFloatPositions.v1'
 const HELP_FLOAT_RIGHT_GAP = 16
 
-const bubbleWrapRef = useTemplateRef('bubbleWrap')
-const agentWrapRef = useTemplateRef('agentWrap')
+const helpDockRef = useTemplateRef('helpDock')
 
-const showRoxyAiAgentFab = computed(() => check('Roxy_AI_Agent_All'))
+function migrateHelpFloatStorageFromV1() {
+  try {
+    if (localStorage.getItem(HELP_FLOAT_STORAGE_KEY))
+      return
+    const raw = localStorage.getItem(HELP_FLOAT_STORAGE_KEY_V1)
+    if (!raw)
+      return
+    const parsed = JSON.parse(raw) as { bubble?: ViewportPoint }
+    if (parsed?.bubble && Number.isFinite(parsed.bubble.top))
+      localStorage.setItem(HELP_FLOAT_STORAGE_KEY, JSON.stringify({ dock: parsed.bubble }))
+  }
+  catch {
+    // ignore
+  }
+}
 
-function defaultBubblePos(): ViewportPoint {
+function defaultHelpDockPos(): ViewportPoint {
   const gapBottom = 72
-  const w = bubbleWrapRef.value?.offsetWidth ?? 40
-  const h = bubbleWrapRef.value?.offsetHeight ?? 40
+  const w = helpDockRef.value?.offsetWidth ?? 40
+  const h = helpDockRef.value?.offsetHeight ?? 40
   return clampPointToViewport(
     window.innerWidth - HELP_FLOAT_RIGHT_GAP - w,
     window.innerHeight - gapBottom - h,
@@ -62,56 +77,34 @@ const {
   layers: helpFloatLayers,
   layoutReady: helpFloatLayoutReady,
   bootstrapLayout: bootstrapHelpFloatLayout,
-  hydrateKey: hydrateHelpFloatKey,
-} = useViewportDraggableFloatingGroup<'bubble' | 'agent'>({
+} = useViewportDraggableFloatingGroup<'dock'>({
   storageKey: HELP_FLOAT_STORAGE_KEY,
   hideUntilHydrated: true,
   dragConstraint: { mode: 'right-edge-vertical', rightGap: HELP_FLOAT_RIGHT_GAP },
   layers: [
     {
-      key: 'bubble',
-      elRef: bubbleWrapRef,
-      getDefaultPosition: (_ctx: ViewportFloatingDefaultContext<'bubble' | 'agent'>) => defaultBubblePos(),
-    },
-    {
-      key: 'agent',
-      elRef: agentWrapRef,
-      getDefaultPosition: ({ positions }) => {
-        const gapY = 10
-        const aw = agentWrapRef.value?.offsetWidth ?? 80
-        const ah = agentWrapRef.value?.offsetHeight ?? 40
-        const b = positions.bubble.value
-        return clampPointToViewport(
-          window.innerWidth - HELP_FLOAT_RIGHT_GAP - aw,
-          b.top - gapY - ah,
-          aw,
-          ah,
-        )
-      },
-      active: showRoxyAiAgentFab,
+      key: 'dock',
+      elRef: helpDockRef,
+      getDefaultPosition: () => defaultHelpDockPos(),
     },
   ],
 })
 
-/** 顶层 computed 供模板 :style（规避 reactive 深层解包 nested Ref） */
-const helpFloatBubbleCss = computed(() => {
-  const { left, top } = helpFloatLayers.bubble.position.value
-  return { left: `${left}px`, top: `${top}px` }
-})
+const helpDockFloat = helpFloatLayers.dock
 
-const helpFloatAgentCss = computed(() => {
-  const { left, top } = helpFloatLayers.agent.position.value
+const helpDockCss = computed(() => {
+  const { left, top } = helpDockFloat.position.value
   return { left: `${left}px`, top: `${top}px` }
 })
 
 function onBubbleTriggeredClick(ev: MouseEvent) {
-  if (helpFloatLayers.bubble.swallowFollowingClick(ev))
+  if (helpDockFloat.swallowFollowingClick(ev))
     return
   showHelp(ev)
 }
 
 function onAgentTriggeredClick(ev: MouseEvent) {
-  if (helpFloatLayers.agent.swallowFollowingClick(ev))
+  if (helpDockFloat.swallowFollowingClick(ev))
     return
   openRoxyAIAgent()
 }
@@ -218,17 +211,10 @@ watch(() => route.path, () => {
   }
 }, { immediate: true })
 
-watch(showRoxyAiAgentFab, (visible) => {
-  if (!visible)
-    return
-  nextTick(() => {
-    hydrateHelpFloatKey('agent')
-  })
-})
-
 let agentLabelTimer: any = null
 
 onBeforeMount(() => {
+  migrateHelpFloatStorageFromV1()
   getFaqList()
 })
 
@@ -308,25 +294,23 @@ function openScore() {
 </script>
 
 <template>
-  <!-- 气泡帮助：fixed + 拖拽，位置存 localStorage -->
-  <div ref="bubbleWrap" class="help-float help-float-bubble relative touch-none select-none" :class="[
-    { 'help-float-dragging': helpFloatLayers.bubble.dragging },
+  <!-- Agent + 帮助气泡并排，整体拖拽 -->
+  <div ref="helpDock" class="help-float-dock touch-none select-none" :class="[
+    { 'help-float-dock-dragging': helpDockFloat.dragging },
     helpFloatLayoutReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
-  ]" :style="helpFloatBubbleCss" @pointerdown="helpFloatLayers.bubble.onPointerDown" @click="onBubbleTriggeredClick"
+  ]" :style="helpDockCss" @pointerdown="helpDockFloat.onPointerDown"
   >
-    <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip pointer-events-none">
-      {{ $t('有疑问吗？欢迎随时与我们联系！') }}
+    <div v-if="check('Roxy_AI_Agent_All')" id="mcp" class="help-float-item help-float-item-agent flex shrink-0" @click="onAgentTriggeredClick">
+      <AgentLabel :key="agentLabelKey" />
     </div>
-    <div class="w-10 h-10 flex items-center justify-center rounded-full icon">
-      <SvgIcon class="mt-0.5 pointer-events-none" name="base/rx_ic_bubble" size="22" color="#FFFFFF" />
+    <div class="help-float-item help-float-item-bubble relative shrink-0" @click="onBubbleTriggeredClick">
+      <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip pointer-events-none">
+        {{ $t('有疑问吗？欢迎随时与我们联系！') }}
+      </div>
+      <div class="w-10 h-10 flex items-center justify-center rounded-full icon">
+        <SvgIcon class="pointer-events-none" name="base/rx_ic_customer_support" size="22" color="#FFFFFF" />
+      </div>
     </div>
-  </div>
-  <div v-if="showRoxyAiAgentFab" id="mcp" ref="agentWrap" class="help-float help-float-agent relative touch-none select-none flex" :class="[
-    { 'help-float-dragging': helpFloatLayers.agent.dragging },
-    helpFloatLayoutReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
-  ]" :style="helpFloatAgentCss" @pointerdown="helpFloatLayers.agent.onPointerDown" @click="onAgentTriggeredClick"
-  >
-    <AgentLabel :key="agentLabelKey" />
   </div>
   <LiveChat v-show="false" />
 </template>
@@ -341,17 +325,21 @@ function openScore() {
 </style>
 
 <style lang="scss" scoped>
-.help-float {
+.help-float-dock {
   position: fixed;
   z-index: 100;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   touch-action: none;
   user-select: none;
   filter: drop-shadow(0px 0px 5.333px rgba(0, 0, 0, 0.05));
   cursor: grab;
+}
 
-  &.help-float-dragging {
-    cursor: grabbing;
-  }
+.help-float-item {
+  cursor: pointer;
 }
 
 .icon {

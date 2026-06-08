@@ -30,7 +30,18 @@ if (appCliStartArgs['roxy-log-level'] === 'debug') {
 
 httpClient.instance.interceptors.request.use(async (config) => {
   commonRequestHeaders ||= getCommonRequestHeaders()
-  config.baseURL = getBaseUrl() || await getGatewayConfig()
+
+  if (store.lastSelectedNetworkNode === 'auto') {
+    config.baseURL = getBaseUrl() || await getGatewayConfig()
+  }
+  else {
+    config.baseURL = `https://${store.lastSelectedNetworkNode.gate}`
+  }
+  // api请求后端使用新域名
+  if (config.headers.source === 'api') {
+    config.baseURL = store.lastSelectedNetworkNode === 'auto' ? getOpenAPIUrl() : `https://${store.lastSelectedNetworkNode.api}`
+    config.headers['r-api-token'] = store.userApiToken
+  }
 
   // handleRequest(config)
   config.headers.token = store.token
@@ -40,11 +51,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
     workspaceId: config.headers.workspaceId || store.workspaceId,
     language: store.language,
   })
-  // api请求后端使用新域名
-  if (config.headers.source === 'api') {
-    config.baseURL = getOpenAPIUrl()
-    config.headers['r-api-token'] = store.userApiToken
-  }
+
   config.metadata = {
     reqTime: Date.now(),
   }
@@ -63,11 +70,13 @@ httpClient.instance.interceptors.request.use(async (config) => {
 httpClient.instance.interceptors.response.use((response) => {
   const { url, baseURL } = response.config
 
-  reGetGatewayConfigByCountryChange({
-    country: response.headers['r-real-country'],
-    reqUrl: url ? new URL(url, baseURL).href : baseURL ?? '',
-    reqTime: response.config.metadata?.reqTime ?? 0,
-  })
+  if (store.lastSelectedNetworkNode === 'auto') {
+    reGetGatewayConfigByCountryChange({
+      country: response.headers['r-real-country'],
+      reqUrl: url ? new URL(url, baseURL).href : baseURL ?? '',
+      reqTime: response.config.metadata?.reqTime ?? 0,
+    })
+  }
 
   const code = response.data.code
   if (code === 405) {

@@ -9,7 +9,7 @@ import { API } from '/@/api'
 import { useTeamStore } from '/@/stores/team'
 import { usePermission } from '/@/hooks/usePermission'
 import { useDialog } from '/@/hooks/useDialog'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,11 +30,12 @@ watch(() => route.params.id, (value) => {
   getMemberByCurrentProject()
 })
 
+useEmitterEvent('updateProjectList', () => {
+  projectRef.value?.tableRef?.refresh()
+})
+
 onMounted(() => {
   getMemberByCurrentProject()
-  emitter.on('updateProjectList', () => {
-    projectRef.value?.tableRef?.refresh()
-  })
 })
 
 async function getMemberByCurrentProject() {

@@ -9,6 +9,7 @@ import { ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
+import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
@@ -142,10 +143,10 @@ async function handleMessage(ws: WebSocket, message: any) {
     const { dirId, url } = message
     if (dirId && url) {
       console.debug('browser:open-url', dirId, url)
-      const browser = await browserManager.getOpenedBrowser(dirId)
-      if (browser) {
-        browser.getBrowser()?.newPage().then((page) => {
-          page.goto(url)
+      const browserItem = await browserManager.getOpenedBrowser(dirId)
+      if (browserItem) {
+        await browserItem.openUrls([url]).catch((error) => {
+          console.error('browser:open-url failed:', error)
         })
       }
     }
@@ -186,22 +187,20 @@ export async function openBrowserWindow(dirId: string, workspaceId: number, urls
             const lastMessage = browserManager.openingBrowserMap.get(dirId)?.browserItem?.beforeLaunchTask?.lastMessage
 
             if (lastMessage && lastMessage.percent < 80) {
-              await showDefaultBrowserWindow(dirId)
+              await showDefaultBrowserWindow(dirId, winInfo.coreType as CoreType || CoreType.Chrome)
             }
           }, 3000)
           browserManager.launch(winInfo as any)
-            .then(() => {
+            .then(async () => {
               // 等浏览器真正打开后，再统一打开 URL（避免外部提前发 open-url 丢失）
               const list = Array.isArray(urls) ? urls.filter(Boolean) : []
               if (!list.length)
                 return
-              const browser = browserManager.openedBrowserMap.get(dirId)?.getBrowser()
-              if (!browser)
+              const browserItem = browserManager.openedBrowserMap.get(dirId)
+              if (!browserItem)
                 return
-              list.forEach((u) => {
-                browser.newPage().then((page) => {
-                  page.goto(u)
-                })
+              await browserItem.openUrls(list).catch((error) => {
+                console.error('browser:open-window openUrls failed:', error)
               })
             })
             .catch((error) => {
@@ -241,8 +240,8 @@ export async function openBrowserWindow(dirId: string, workspaceId: number, urls
 }
 
 /** 显示默认浏览器启动中的窗口 */
-async function showDefaultBrowserWindow(dirId: string) {
-  const url = await getWebEntryUrl(`default-browser${isPackaged ? '.html' : ''}?dirId=${dirId}`)
+async function showDefaultBrowserWindow(dirId: string, coreType: CoreType) {
+  const url = await getWebEntryUrl(`default-browser${isPackaged ? '.html' : ''}?dirId=${dirId}&coreType=${coreType}`)
   console.log('showDefaultBrowserWindow', url)
 
   const win = createWindow({

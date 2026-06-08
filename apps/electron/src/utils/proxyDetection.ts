@@ -168,7 +168,11 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     const { addr: systemProxyAddress } = await getSystemProxy()
     console.log('systemProxySwitch', store.systemProxySwitch, systemProxyAddress)
     console.log(`dirId && proxyUserName`, dirId, proxyUserName)
-    await startRoxynet().catch(() => { })
+
+    const shouldStartRoxynet = proxyCategory === 'SSH' || isDirect || (systemProxySwitch && systemProxyAddress)
+    if (shouldStartRoxynet) {
+      await startRoxynet().catch(() => { })
+    }
 
     const isUseSystemProxy = proxyCategory === 'SSH' || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyAddress)
 

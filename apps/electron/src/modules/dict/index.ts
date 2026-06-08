@@ -1,7 +1,7 @@
 import type { UserGetDictVersionListData, UserGetSystemDictV2CreateData } from '@roxy/backend-api'
 import { debounce } from 'es-toolkit'
 import { isEmpty } from 'es-toolkit/compat'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
@@ -21,6 +21,8 @@ interface DictStore {
   'ipv6-check-domains': string[]
   /** IPV6 检测渠道字典列表 */
   'ipv6-query-channels': Record<string, string>
+  /** 网络节点字典列表，值格式：app.roxybrowser.com;us.gate.roxybrowser.net;us.api.roxybrowser.net */
+  'network_node': { site: string, gate: string, api: string }[]
 }
 
 /** 主进程用到的字典，后续根据版本只更新这些字典 */
@@ -29,6 +31,7 @@ const dictKeys = [
   'checkChannel',
   'ipv6-check-domains',
   'ipv6-query-channels',
+  'network_node',
 ] as const
 
 export type DictKey = (typeof dictKeys)[number]
@@ -42,12 +45,21 @@ const _dictStore: DictStore = {
   'checkChannel': {},
   'ipv6-check-domains': [],
   'ipv6-query-channels': {},
+  'network_node': [
+    { site: 'app.roxybrowser.cn', gate: 'hz.gate.roxybrowser.cn', api: 'hz.api.roxybrowser.cn' },
+    { site: 'app.roxybrowser.com', gate: 'sg.gate.roxybrowser.net', api: 'sg.api.roxybrowser.net' },
+    { site: 'app.roxybrowser.com', gate: 'gate.roxybrowser.net', api: 'api.roxybrowser.net' },
+    { site: 'app.roxybrowser.com', gate: 'us.gate.roxybrowser.net', api: 'us.api.roxybrowser.net' },
+  ],
 }
 
 async function forceSaveDictCache() {
   try {
     const encryptedData = encryptData(JSON.stringify(_dictStore))
-    await writeFile(cacheFilePath, encryptedData, 'utf-8')
+    // 原子性写入：先写入临时文件，再 rename 替换，避免进程异常退出导致目标文件被部分写入而损坏
+    const tmpFile = `${cacheFilePath}.tmp`
+    await writeFile(tmpFile, encryptedData, 'utf-8')
+    await rename(tmpFile, cacheFilePath)
   }
   catch (error) {
     console.error('saveDictCache error:', error)
@@ -56,10 +68,25 @@ async function forceSaveDictCache() {
 
 export const autoSaveDictCache = debounce(forceSaveDictCache, 60)
 
+/** network_node 字典更新后的回调列表 */
+const networkNodeListeners: Array<() => void> = []
+
+/**
+ * 注册 network_node 字典更新监听器
+ * 当字典数据从服务端拉取完成并写入后触发
+ */
+export function onNetworkNodeUpdated(cb: () => void) {
+  networkNodeListeners.push(cb)
+}
+
 export const dictStore = new Proxy(_dictStore, {
   set(target, prop: keyof DictStore, value) {
     Reflect.set(target, prop, value)
     autoSaveDictCache()
+    // 当 network_node 写入时，通知所有监听器
+    if (prop === 'network_node') {
+      networkNodeListeners.forEach(cb => cb())
+    }
     return true
   },
 })
@@ -82,10 +109,10 @@ const initDictCachePromise = (async () => {
 })()
 
 export async function initDictCache() {
-  await initDictCachePromise
-  if (isEmpty(dictStore.versions)) {
-    await getDictVersions()
-  }
+  // await initDictCachePromise
+  // if (isEmpty(dictStore.versions)) {
+  await getDictVersions()
+  // }
 }
 
 /** 获取字典版本 */
@@ -149,6 +176,12 @@ export async function updateDict(keys: DictKey[]) {
           map[hostname] = item.label.toLowerCase()
           return map
         }, {})
+      }
+      else if (key === 'network_node') {
+        dictStore[key] = items.map((item) => {
+          const [site, gate, api] = item.value.split(';')
+          return { site, gate, api }
+        })
       }
       else {
         dictStore[key] = items.map(n => n.value)

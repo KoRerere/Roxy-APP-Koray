@@ -30,6 +30,8 @@ export async function setupModules() {
     await initLocalConfig()
     // 启动 app 内置服务
     await setupAppServer()
+    // 在任意逻辑拉起 roxynet 之前, 先清理上次异常退出残留的进程
+    await killRoxynetZombieProcess()
     // 进入启动页
     await intoLaunchPage().finally(() => {
       if (isWindows) {
@@ -47,10 +49,9 @@ export async function setupModules() {
     console.error('setupModules', error)
   }
   finally {
-    // 清理上次 APP 异常退出后残留的 roxynet 僵尸进程, 再启动新的 roxynet 服务
-    await killRoxynetZombieProcess()
-    // 启动 roxynet 服务
-    startRoxynet()
+    await startRoxynet().catch((error) => {
+      console.error('startRoxynet error:', error)
+    })
     restoreLastWindowOpenStatus()
     browserManager.autoClearByTimestamp()
   }

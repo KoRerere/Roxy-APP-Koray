@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod default_browser;
 
+mod launcher_identity;
+
 mod args;
 mod config;
 mod logging;

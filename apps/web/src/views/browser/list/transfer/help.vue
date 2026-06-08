@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useSimpleLocale } from '/@/stores/locale'
+
 defineEmits(['close'])
+const { getVideoSource } = useSimpleLocale()
 </script>
 
 <template>
@@ -23,7 +26,7 @@ defineEmits(['close'])
       {{ $t('您可以通过以下操作指引获取空间 ID') }}
     </div>
     <video class="block w-full rounded-md" autoplay muted loop playsinline>
-      <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/copy_workspace_id.mp4" type="video/webm">
+      <source :src="getVideoSource('copy_workspace_id.mp4')" type="video/webm">
     </video>
     <RxButton class="self-end" size="md" :label="$t('了解')" @click="$emit('close')" />
   </div>

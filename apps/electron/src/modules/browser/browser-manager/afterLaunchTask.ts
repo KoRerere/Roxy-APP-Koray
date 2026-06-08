@@ -1,6 +1,7 @@
 import type { IBrowser } from './adapter'
 import type { BrowserItem } from './browserItem'
 import type { ChromePage, ChromeTarget, Protocol } from './chrome-wrapper/'
+import type { FirefoxBrowser } from './firefox-wrapper/browser'
 import CDP from 'chrome-remote-interface'
 import ejs from 'ejs'
 import { debounce } from 'es-toolkit'
@@ -29,8 +30,27 @@ export class AfterLaunchTask {
   private cookieTimer: NodeJS.Timeout | null = null
   /** 窗口 bounds 定时同步定时器 */
   private windowBoundsTimer: NodeJS.Timeout | null = null
+  /** 同一 profile 重复触发时跳过，避免 Firefox BiDi 被重复 releaseSession */
+  private cookieRobotRunning = false
+  /**
+   * Firefox：handleBrowserEvent 中 releaseSession 完成后 resolve。
+   * 多 profile 并行 cookie robot 时，须等各自启动流程结束再 reconnectBiDi，否则会与 releaseSession 竞态。
+   */
+  private readonly firefoxBidiIdleDeferred = Promise.withResolvers<void>()
+  private firefoxBidiIdleResolved = false
 
-  constructor(private browserItem: BrowserItem, public browser: IBrowser) { }
+  constructor(private browserItem: BrowserItem, public browser: IBrowser) {
+    if (!browserItem.isFirefox) {
+      this.markFirefoxBidiIdle()
+    }
+  }
+
+  private markFirefoxBidiIdle() {
+    if (this.firefoxBidiIdleResolved)
+      return
+    this.firefoxBidiIdleResolved = true
+    this.firefoxBidiIdleDeferred.resolve()
+  }
 
   async run() {
     this.checkIpChangeTimer = setTimeout(() => {
@@ -118,7 +138,7 @@ export class AfterLaunchTask {
       rm(this.browserItem.roxyTabsPath)
     }
     catch (error) {
-      defaultOpenUrl = this.browserItem.winInfo.defaultOpenUrl || []
+      defaultOpenUrl = this.browserItem.winInfo.allOpenUrl || []
       console.log(`roxy_tabs file does not exist, skipping`, error)
     }
     return defaultOpenUrl
@@ -235,6 +255,7 @@ export class AfterLaunchTask {
     const { cookie, syncCookie, clearCookie } = this.browserItem.winInfo
     const isFirefox = this.browserItem.isFirefox
 
+    try {
     if (!this.browser || !this.browser.client) {
       console.warn('Browser or browser.client is not available')
       return
@@ -394,6 +415,12 @@ export class AfterLaunchTask {
         })
       })
     }
+    }
+    finally {
+      if (isFirefox) {
+        this.markFirefoxBidiIdle()
+      }
+    }
   }
 
   /** 定时检测浏览器网页 IP 变化 */
@@ -505,6 +532,108 @@ export class AfterLaunchTask {
     })
   }
 
+  /** cookie robot 应跳过的 URL（Chrome / Firefox 内置页、扩展页等） */
+  private shouldSkipCookieRobotUrl(url: string): boolean {
+    if (!url || url === 'about:blank')
+      return true
+    const skipPrefixes = [
+      'chrome://',
+      'devtools://',
+      'moz-extension://',
+      'resource://',
+      'view-source:',
+    ]
+    if (skipPrefixes.some(prefix => url.startsWith(prefix)))
+      return true
+    if (url.startsWith('about:') && url !== 'about:blank')
+      return true
+    return false
+  }
+
+  /** 获取当前浏览器实例（与 BrowserItem 保持同一引用） */
+  private getActiveBrowser(): IBrowser | null {
+    return this.browserItem.beforeLaunchTask?.browser ?? this.browser ?? null
+  }
+
+  /**
+   * 通过 WS 等方式在已打开的浏览器中打开 URL。
+   * Firefox 启动后会 releaseSession()，须先等待 idle 再 reconnectBiDi。
+   */
+  async openUrls(urls: string[]): Promise<void> {
+    const list = urls.filter(Boolean)
+    if (!list.length)
+      return
+
+    if (this.browserItem.isFirefox) {
+      const firefoxBrowser = await this.ensureFirefoxBiDiForCookieRobot()
+      if (!firefoxBrowser)
+        return
+      try {
+        for (const url of list) {
+          try {
+            await firefoxBrowser.newPage(url)
+          }
+          catch (error) {
+            console.error(`[AfterLaunchTask] openUrls failed for ${url}:`, error)
+          }
+        }
+      }
+      finally {
+        try {
+          if (firefoxBrowser.getBidiClient().isConnected()) {
+            await firefoxBrowser.releaseSession()
+          }
+        }
+        catch (error) {
+          console.warn('[AfterLaunchTask] openUrls: failed to release Firefox BiDi session:', error)
+        }
+      }
+      return
+    }
+
+    const browser = this.getActiveBrowser()
+    if (!browser) {
+      console.warn('[AfterLaunchTask] openUrls: browser not available')
+      return
+    }
+
+    for (const url of list) {
+      try {
+        await browser.newPage(url)
+      }
+      catch (error) {
+        console.error(`[AfterLaunchTask] openUrls failed for ${url}:`, error)
+      }
+    }
+  }
+
+  /**
+   * Firefox 在启动后会 releaseSession()；cookie robot / openUrls 需临时重连 BiDi。
+   */
+  private async ensureFirefoxBiDiForCookieRobot(): Promise<FirefoxBrowser | null> {
+    if (!this.browserItem.isFirefox)
+      return null
+
+    // 等待本 profile 启动后 releaseSession 完成，避免与并行 batchLaunch 中的 handleBrowserEvent 竞态
+    await this.firefoxBidiIdleDeferred.promise
+
+    const browser = this.getActiveBrowser() as FirefoxBrowser | null
+    if (!browser?.reconnectBiDi) {
+      console.warn('Cookie robot: Firefox browser instance is not available')
+      return null
+    }
+
+    try {
+      await browser.reconnectBiDi()
+      this.browser = browser
+      return browser
+    }
+    catch (error) {
+      console.error('Cookie robot: Failed to reconnect Firefox BiDi session:', error)
+      return null
+    }
+  }
+
   /**
    * Cookie 机器人：自动滚动所有标签页以触发 cookie 更新
    * @param options 配置选项
@@ -521,26 +650,46 @@ export class AfterLaunchTask {
     pageLoadTimeout?: number
     closeProfile?: boolean
   }) {
+    if (this.cookieRobotRunning) {
+      console.warn('[Cookie robot] Already running on this profile, skip duplicate invoke')
+      return
+    }
+    this.cookieRobotRunning = true
+    try {
     const cookieRobotUrls = options?.cookieRobotUrls
     const scrollRange = options?.scrollRange || [100, 500]
     const delayRange = options?.delayRange || [0, 500]
     const pageLoadTimeout = options?.pageLoadTimeout || 60000
     const closeProfile = options?.closeProfile || false
+    const isFirefox = this.browserItem.isFirefox
 
-    if (!this.browser || !cookieRobotUrls?.length) {
+    if (!cookieRobotUrls?.length) {
+      console.warn('Cookie robot: No URLs to process')
+      return
+    }
+
+    if (isFirefox) {
+      const firefoxBrowser = await this.ensureFirefoxBiDiForCookieRobot()
+      if (!firefoxBrowser) {
+        return
+      }
+    }
+    else if (!this.getActiveBrowser()) {
       console.warn('Cookie robot: Browser is not available')
       return
     }
 
+    const browser = this.getActiveBrowser()!
+    this.browser = browser
+
     try {
-      console.log(`Cookie robot: Starting to process ${cookieRobotUrls.length} URLs`)
+      console.log(`Cookie robot: Starting to process ${cookieRobotUrls.length} URLs (${isFirefox ? 'Firefox' : 'Chrome'})`)
 
       // 串行处理每个 URL
       for (let i = 0; i < cookieRobotUrls.length; i++) {
         const url = cookieRobotUrls[i]
 
-        // 跳过空白页和特殊协议页面
-        if (!url || url === 'about:blank' || url.startsWith('chrome://') || url.startsWith('devtools://')) {
+        if (this.shouldSkipCookieRobotUrl(url)) {
           console.log(`Cookie robot: Skipping URL ${i + 1} (${url})`)
           continue
         }
@@ -549,9 +698,9 @@ export class AfterLaunchTask {
           console.log(`Cookie robot: Opening tab ${i + 1}/${cookieRobotUrls.length} (${url})`)
 
           // 如果是第一个 tab，先记录用户之前的所有 tab，稍后关闭
-          const pagesToClose = await this.browser.pages()
+          const pagesToClose = await browser.pages()
           // 打开新标签页
-          const page = await this.browser.newPage(url)
+          const page = await browser.newPage(url)
           // 关闭之前记录的旧 tab
           if (i === 0 && pagesToClose.length > 0) {
             pagesToClose.forEach((p) => {
@@ -572,27 +721,34 @@ export class AfterLaunchTask {
 
           console.log(`Cookie robot: Waiting for tab ${i + 1} to load...`)
 
-          // 等待页面加载完成
-          await page.evaluate((timeoutValue) => {
-            return new Promise<string>((resolve) => {
-              console.log('evaluate cookie robot: ', document.readyState)
-              if (document.readyState === 'complete') {
-                resolve('complete')
-                return
-              }
-
-              let resolved = false
-              const finish = (reason: string) => {
-                if (!resolved) {
-                  resolved = true
-                  resolve(reason)
-                }
-              }
-
-              window.addEventListener('load', () => finish('loadEvent'), { once: true })
-              setTimeout(finish, timeoutValue as number, 'timeout')
+          // Firefox：用 BiDi navigate 的 complete 等待；Chrome：在页面内轮询 readyState
+          if (isFirefox) {
+            await page.goto({ url, wait: 'complete' }).catch((err: unknown) => {
+              console.warn(`Cookie robot: Firefox wait for load on tab ${i + 1} failed:`, err)
             })
-          }, pageLoadTimeout).catch(() => { })
+          }
+          else {
+            await page.evaluate((timeoutValue) => {
+              return new Promise<string>((resolve) => {
+                console.log('evaluate cookie robot: ', document.readyState)
+                if (document.readyState === 'complete') {
+                  resolve('complete')
+                  return
+                }
+
+                let resolved = false
+                const finish = (reason: string) => {
+                  if (!resolved) {
+                    resolved = true
+                    resolve(reason)
+                  }
+                }
+
+                window.addEventListener('load', () => finish('loadEvent'), { once: true })
+                setTimeout(finish, timeoutValue as number, 'timeout')
+              })
+            }, pageLoadTimeout).catch(() => { })
+          }
 
           // 额外等待 500ms 确保页面完全渲染
           await new Promise(resolve => setTimeout(resolve, 500))
@@ -674,44 +830,77 @@ export class AfterLaunchTask {
               return new Promise((resolve) => {
                 console.log('[Cookie robot] evaluate: start scroll')
 
-                // 检查页面是否可滚动
-                const maxScrollY = Math.max(
-                  document.body.scrollHeight,
-                  document.documentElement.scrollHeight,
-                ) - window.innerHeight
+                const scrollingElement = document.scrollingElement || document.documentElement
+                const getWindowMaxScroll = () => Math.max(
+                  0,
+                  Math.max(
+                    scrollingElement.scrollHeight,
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                  ) - window.innerHeight,
+                )
+
+                const findScrollContainer = () => {
+                  let best: Element | null = null
+                  let bestMax = 0
+                  const selectors = ['main', '[role="main"]', 'ytd-app', '#content', '#app', '#page']
+                  for (const sel of selectors) {
+                    const el = document.querySelector(sel)
+                    if (!el || !(el instanceof HTMLElement))
+                      continue
+                    const max = el.scrollHeight - el.clientHeight
+                    if (max > bestMax) {
+                      bestMax = max
+                      best = el
+                    }
+                  }
+                  return bestMax > 0 ? { el: best, maxScroll: bestMax } : null
+                }
+
+                const windowMax = getWindowMaxScroll()
+                const containerInfo = findScrollContainer()
+                const useContainer = containerInfo && containerInfo.maxScroll > windowMax
+                const maxScrollY = useContainer ? containerInfo!.maxScroll : windowMax
 
                 if (maxScrollY <= 0) {
-                  // 页面不可滚动，返回特殊标记，让外层决定是否重试
                   resolve({ scrolled: false, reachedBottom: false, notScrollable: true, reason: 'Page not scrollable' })
                   return
                 }
 
-                const startPosition = window.scrollY
+                const getPosition = () => useContainer
+                  ? (containerInfo!.el as HTMLElement).scrollTop
+                  : window.scrollY
 
-                // 检查是否已经在底部
+                const doScroll = (delta: number) => {
+                  if (useContainer) {
+                    (containerInfo!.el as HTMLElement).scrollTop += delta
+                  }
+                  else {
+                    window.scrollBy({ top: delta, behavior: 'smooth' })
+                  }
+                }
+
+                const startPosition = getPosition()
+
                 if (startPosition >= maxScrollY - 10) {
                   resolve({ scrolled: false, reachedBottom: true, reason: 'Already at bottom', startPosition, maxScrollY })
                   return
                 }
 
-                // 执行滚动
-                window.scrollBy({ top: distance as number, behavior: 'smooth' })
+                doScroll(distance as number)
 
-                // 等待滚动完成
                 let lastPosition = startPosition
                 let samePositionCount = 0
                 const checkInterval = setInterval(() => {
-                  const currentPosition = window.scrollY
-                  const currentMaxScrollY = Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight,
-                  ) - window.innerHeight
+                  const currentMaxScrollY = useContainer
+                    ? containerInfo!.maxScroll
+                    : getWindowMaxScroll()
+                  const currentPosition = getPosition()
 
                   if (Math.abs(currentPosition - lastPosition) < 1) {
                     samePositionCount++
                     if (samePositionCount >= 3) {
                       clearInterval(checkInterval)
-                      // 检查是否到达底部（允许10px的误差）
                       const reachedBottom = currentPosition >= currentMaxScrollY - 10
                       resolve({
                         scrolled: true,
@@ -728,14 +917,12 @@ export class AfterLaunchTask {
                   }
                 }, 100)
 
-                // 最多等待 2 秒
                 setTimeout(() => {
                   clearInterval(checkInterval)
-                  const currentPosition = window.scrollY
-                  const currentMaxScrollY = Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight,
-                  ) - window.innerHeight
+                  const currentMaxScrollY = useContainer
+                    ? containerInfo!.maxScroll
+                    : getWindowMaxScroll()
+                  const currentPosition = getPosition()
                   const reachedBottom = currentPosition >= currentMaxScrollY - 10
                   resolve({
                     scrolled: true,
@@ -804,9 +991,33 @@ export class AfterLaunchTask {
       console.error('Cookie robot: Failed to execute:', error)
     }
     finally {
-      if (closeProfile) {
-        this.browser.close()
+      if (isFirefox) {
+        try {
+          await this.saveCookiesNow()
+          console.log('[Cookie robot] Firefox cookies saved to cache')
+        }
+        catch (error) {
+          console.error('[Cookie robot] Failed to save Firefox cookies:', error)
+        }
+        try {
+          const firefoxBrowser = browser as FirefoxBrowser
+          if (firefoxBrowser.getBidiClient().isConnected()) {
+            await firefoxBrowser.releaseSession()
+            console.log('[Cookie robot] Firefox BiDi session released after cookie robot')
+          }
+        }
+        catch (error) {
+          console.warn('[Cookie robot] Failed to release Firefox BiDi session:', error)
+        }
       }
+
+      if (closeProfile) {
+        browser.close()
+      }
+    }
+    }
+    finally {
+      this.cookieRobotRunning = false
     }
   }
 }

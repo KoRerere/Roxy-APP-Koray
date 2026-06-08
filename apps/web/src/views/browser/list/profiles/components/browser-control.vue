@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   data: () => ({}),
   openMessage: () => ({}),
   isPublic: false,
-  text: $t('打开'),
+  text: $t('打开窗口'),
   icon: 'base/rx_ic_chrome',
 })
 
@@ -67,6 +67,10 @@ const usePeoples = computed(() => {
   if (users.length < 1)
     return ''
   return `${$t('{count} 人正在使用', { count: users.length })}：${users.join(', ')}`
+})
+
+const coreInfo = computed(() => {
+  return `${props.data.coreType} ${props.data.coreVersion}`
 })
 
 const browser = computed(() => {
@@ -224,11 +228,15 @@ if (!globalThis.isElectron) {
   <div class="flex items-center gap-2">
     <component :is="check('Cost_Center_all') && !data.openLimitStatus && data.isTransfer ? RxTooltip : 'div'">
       <template #default>
-        <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
-          <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-          <SvgIcon v-if="!browser.percent && !browser.pending" class="control-icon" :name="icon as SvgNames" :class="{ firefox: data.coreType === CoreType.Firefox }" />
-          <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
-        </RxButton>
+        <div class="control-group flex items-center gap-2">
+          <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="!data.openLimitStatus || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
+            <div v-if="!browser.percent || browser.complted" v-tooltip.top="{ value: coreInfo, showDelay: 300 }" class="flex items-center justify-center">
+              <SvgIcon class="control-icon pointer-events-none" :name="(icon as SvgNames)" :class="{ firefox: data.coreType === CoreType.Firefox }" />
+            </div>
+            <CircleProgress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
+            <span class="select-none">{{ browser.complted && !browser.uploading ? $t('查看') : browser?.msg }}</span>
+          </RxButton>
+        </div>
       </template>
       <template #content>
         <i18n-t tag="div" scope="global" class="w-50 error" :keypath="$t('当前临时窗口已过期，请升级窗口用量后继续使用。{link}', { link: '{link}' })">
@@ -257,8 +265,8 @@ if (!globalThis.isElectron) {
 
 <style lang="scss" scoped>
 .control {
-  padding: var(--spacing-sm, 4px) 10px;
-  gap: var(--spacing-sm, 4px);
+  padding: 4px 10px;
+  gap: 4px;
 
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
@@ -266,21 +274,16 @@ if (!globalThis.isElectron) {
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
-  text-align: center;
-  font-family: Inter;
-  font-size: var(--Font-Size-text-sm, 12px);
-  font-style: normal;
+  font-size: 12px;
   font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
+}
 
-  &:not(:disabled) {
-    .control-icon {
-      color: #12a3fc;
+.control-group:has(.control:not(:disabled)) .control-icon {
+  color: #12a3fc;
 
-      &.firefox {
-        color: #fd7c12;
-      }
-    }
+  &.firefox {
+    color: #fd7c12;
   }
 }
 

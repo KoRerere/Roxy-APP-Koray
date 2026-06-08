@@ -94,6 +94,11 @@ export interface IBrowser extends EventEmitter {
   actualPort?: number
 
   /**
+   * Marionette 协议端口（仅 Firefox，供 Selenium/GeckoDriver 使用）
+   */
+  marionettePort?: number
+
+  /**
    * 将已运行的浏览器窗口置于前台（Firefox 重新激活时使用）
    */
   bringToFront?: () => Promise<void>

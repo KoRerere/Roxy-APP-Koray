@@ -6,12 +6,13 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import type { ParsedCookie } from '/@/utils/cookie'
 
 type ProfileData = UserGetWindowInfoListListData['data']['rows'][number]
 
 interface Params {
   data: ProfileData[]
-  onConfirm: (cookie: Record<string, any>[]) => Promise<void>
+  onConfirm: (cookie: ParsedCookie[]) => Promise<void>
 }
 
 export function useCookie() {

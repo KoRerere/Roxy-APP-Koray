@@ -1,32 +1,34 @@
 <script setup lang="ts">
 import { getImage } from '/@/utils/basic'
-import ChatView from './chat-view.vue'
-import SettingsView from './settings-view.vue'
+import ScrollOverflowEffect from '/@/components/scroll-overflow-effect.vue'
 import { useAgentApi } from './agent-api'
 import type { Conversation } from './agent-api'
 import { useAgentStore } from '/@/stores/agent'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { genDriver } from '/@/utils'
-import ScriptsView from './scripts-view.vue'
-import { useChatStream } from './composables/useChatStream'
+import { useMcpDataStore } from './pinia-store/mcp-data-store'
+import { useChatStreamStore } from './pinia-store/useChatStreamStore'
+import type { InputScene } from './types'
+import { compare } from 'compare-versions'
+import { skillsCommand } from './config'
 
 const themeStore = useThemeStore()
 const route = useRoute()
+const router = useRouter()
 const background = computed(() => themeStore.realTheme === 'dark'
-  ? 'images/mcp/agent-background-dark.svg'
-  : 'images/mcp/agent-background-light.svg')
+  ? '/images/mcp/agent-background-dark.svg'
+  : '/images/mcp/agent-background-light.svg')
 
-// 视图模式
-type ViewMode = 'chat' | 'settings' | 'scripts'
-const viewMode = ref<ViewMode>('chat')
 const [, onlyErrorToast] = useResponseToast()
 
 // API
-const { conversationList: fetchConversationList, conversationDelete } = useAgentApi()
+const agentApi = useAgentApi()
+const { conversationList: fetchConversationList, conversationDelete, storeInstallSkill, storeGetSkill, listSkills } = agentApi
 const agentStore = useAgentStore()
+const mcpDataStore = useMcpDataStore()
 
 // 聊天相关状态
 const conversationList = ref<Conversation[]>([])
@@ -35,11 +37,9 @@ const loading = ref(false)
 const deletePopoverRefs = ref<Record<string, any>>({})
 const openDeleteIds = ref(new Set<string>())
 
-// 为初始化的
-const uninitialized = ref(true)
-
 // SSE 流式逻辑提升到父级
-const chatStream = useChatStream(
+const chatStore = useChatStreamStore()
+chatStore.init(
   () => activeConversationId.value,
   {
     onUpdateTitle(conversationId, title) {
@@ -78,15 +78,21 @@ async function loadConversations(notSetFrist?: boolean) {
 }
 
 function handleCreateConversation() {
-  if (chatStream.isChatting.value)
+  if (chatStore.isChatting)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
-  chatStream.resetChat()
+  chatStore.resetChat()
   activeConversationId.value = ''
-  chatStream.inputScene.value = 'automation'
-  navigateTo('chat')
+  chatStore.inputScene = 'automation'
+  if (route.name !== 'mcp-chat') {
+    router.push('/mcp/chat')
+  }
 }
 
 async function handleDeleteConversation(id: string) {
+  if (chatStore.isChatting && id === activeConversationId.value) {
+    deletePopoverRefs.value[id]?.hide()
+    return onlyErrorToast(-1, $t('任务进行中，不可操作'))
+  }
   deletePopoverRefs.value[id]?.hide()
   try {
     const res = await conversationDelete(id)
@@ -99,52 +105,154 @@ async function handleDeleteConversation(id: string) {
   }
 }
 
-function navigateTo(value: ViewMode) {
-  viewMode.value = value
-}
-
 function selectConversation(id: string) {
-  if (chatStream.isChatting.value)
+  if (chatStore.isChatting)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = id
-  navigateTo('chat')
+  if (route.name !== 'mcp-chat') {
+    router.push('/mcp/chat')
+  }
 }
 
 function selectSettings() {
-  if (chatStream.isChatting.value)
+  if (chatStore.isChatting)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = ''
-  navigateTo('settings')
+  router.push({ path: '/mcp/settings', query: { tab: 'mcp' } })
 }
 
-function selectScripts() {
-  if (chatStream.isChatting.value)
+function selectSkillsStore() {
+  if (chatStore.isChatting)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = ''
-  navigateTo('scripts')
+  router.push('/mcp/skills-store')
+}
+
+function handleGoToSkills() {
+  activeConversationId.value = ''
+  router.push({ path: '/mcp/settings', query: { tab: 'skills' } })
 }
 
 function handleUseScript(script: any) {
-  if (chatStream.isChatting.value)
+  if (chatStore.isChatting)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
-  chatStream.resetChat()
+  chatStore.resetChat()
   activeConversationId.value = ''
-  navigateTo('chat')
+  if (route.name !== 'mcp-chat') {
+    router.push('/mcp/chat')
+  }
   nextTick(() => {
-    chatStream.userMessage.value = `创建一个窗口，然后执行 \`${script.name}\` 脚本`
-    chatStream.pendingScript.value = script
+    chatStore.userMessage = `创建一个窗口，然后执行 \`${script.name}\` 脚本`
+    chatStore.pendingScript = script
   })
 }
+
+/**
+ * 新开会话并预填技能消息（等同 skills-content 的 handleUseSkill）
+ * 确保技能已下载到 Agent：未下载则调用 storeInstallSkill 等待完成。
+ * @param slug - 技能的 slug（技术标识），用于下载和查询
+ */
+async function applySkill(slug: string) {
+  try {
+    // 从 agent 的商城接口查询技能信息，获取 name（展示名）
+    const skillInfoRes = await storeGetSkill(slug)
+    console.log('skillInfoRes', skillInfoRes)
+    if (skillInfoRes.code !== 0 || !skillInfoRes.data) {
+      onlyErrorToast(-1, skillInfoRes.msg || $t('未找到技能'))
+      return
+    }
+    const skillName = skillInfoRes.data.name
+
+    console.log('skillInfoRes.data', skillInfoRes.data)
+
+    // 检查技能是否已下载到 Agent（查询 agent 本地已安装列表）
+    const localSkillsRes = await listSkills()
+    const isDownloaded = localSkillsRes.code === 0
+      && localSkillsRes.data?.some((s: any) => s.slug === slug)
+
+    if (!isDownloaded) {
+      // 未下载：调用 agent 的 store install 接口下载
+      const installRes = await storeInstallSkill(slug)
+      if (installRes.code !== 0) {
+        onlyErrorToast(-1, installRes.msg || $t('技能下载失败'))
+        return
+      }
+      // 下载成功，同步更新缓存，让 Skills 商城列表状态立即更新
+      if (mcpDataStore.userSkills && installRes.data?.userSkill) {
+        mcpDataStore.userSkills.push(installRes.data.userSkill)
+      }
+      else {
+        // userSkills 未初始化，重新拉取
+        await mcpDataStore.fetchUserSkills()
+      }
+    }
+
+    // 下载完成（或已下载），预填消息
+    chatStore.resetChat()
+    activeConversationId.value = ''
+    if (route.name !== 'mcp-chat') {
+      router.push('/mcp/chat')
+    }
+    nextTick(() => {
+      chatStore.userMessage = skillsCommand[skillInfoRes.data.slug] || $t('使用 `{skillName}` 技能，帮我完成 ', { skillName })
+      chatStore.inputScene = 'automation'
+    })
+  }
+  catch (e: any) {
+    onlyErrorToast(-1, e.message || $t('操作失败'))
+  }
+}
+
+/** 切换场景（如从资源生成入口切到 asset 场景） */
+function applyScene(scene: string) {
+  const validScenes: InputScene[] = ['automation', 'asset']
+  if (!validScenes.includes(scene as InputScene))
+    return
+  if (route.name !== 'mcp-chat') {
+    router.push('/mcp/chat')
+  }
+  nextTick(() => {
+    chatStore.inputScene = scene as InputScene
+  })
+}
+
+// 窗口已打开时，从外部入口（如资源生成）切场景会通过主进程消息触发：
+// 对话进行中则提示、不打断；否则切换场景。
+const cancelUseSceneListener = globalThis.electronAPI?.on('mcp:use-scene', (scene: string) => {
+  if (chatStore.isChatting) {
+    onlyErrorToast(-1, $t('任务进行中，不可操作'))
+    return
+  }
+  applyScene(scene)
+})
+
+// 窗口已打开时，从 Skills 商城「去使用」会通过主进程消息触发（参数为 skill 的 slug）：
+// 对话进行中则提示、不打断；否则确保下载后新开会话并预填。
+const cancelUseSkillListener = globalThis.electronAPI?.on('mcp:use-skill', (slug: string) => {
+  console.log('skills slug', slug)
+  if (chatStore.isChatting) {
+    onlyErrorToast(-1, $t('任务进行中，不可操作'))
+    return
+  }
+  applySkill(slug)
+})
 
 // 初始化
 onMounted(async () => {
   const isAsset = route.query.scene === 'asset'
   if (isAsset) {
-    chatStream.inputScene.value = 'asset'
+    chatStore.inputScene = 'asset'
   }
   await agentStore.initMcp()
+  void mcpDataStore.prefetchAutomationModelData()
   await loadConversations(true)
-  uninitialized.value = false
+
+  // 从 Skills 商城「去使用」首次打开窗口：URL 带 skill（slug），新窗口必然不在对话中，确保下载后预填
+  const skillSlug = route.query.skill as string | undefined
+  if (skillSlug) {
+    applySkill(skillSlug)
+  }
+
   let _driverStatus = {}
   try {
     _driverStatus = JSON.parse(localStorage.getItem('driverStatus') || '{}')
@@ -175,6 +283,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   agentStore.stopHealthCheck()
+  chatStore.destroy()
+  cancelUseSceneListener?.()
+  cancelUseSkillListener?.()
 })
 </script>
 
@@ -182,16 +293,16 @@ onUnmounted(() => {
   <div class="relative w-full h-screen flex gap-4">
     <div class="absolute w-full h-screen z-0" :style="{ background: `url(${background}) no-repeat 50% 50% / cover` }" />
 
-    <div class="w-full h-screen p-4 flex gap-4 relative z-1">
+    <div class="w-full h-screen gap-4 p-4 flex relative z-1">
       <!-- 左侧边栏 -->
       <div class="w-[168px] h-full flex flex-col justify-between">
         <div class="flex-1 min-h-0 flex flex-col gap-3">
           <!-- Logo -->
           <div class="flex items-center gap-2">
-            <div class="size-8">
+            <div class="size-8 select-none">
               <img alt="" class="w-full h-full" :src="getImage('mcp/agent_avatar.png')">
             </div>
-            <div class="font-['Archivo'] font-semibold text-[var(--colors-text-text-primary)] text-lg">
+            <div class="font-['Archivo'] font-semibold text-[var(--colors-text-text-primary)] text-lg select-none">
               Roxy AI Agent
             </div>
           </div>
@@ -206,7 +317,7 @@ onUnmounted(() => {
           >
             <div class="flex items-center gap-1.5">
               <SvgIcon name="roxy-agent/rx-ic-chat" size="16" color="var(--colors-icon-icon-primary)" />
-              <div class="new font-500 text-14px text-[var(--colors-icon-icon-primary)]">
+              <div class="select-none font-['Inter'] font-medium text-[14px] leading-[20px] bg-[linear-gradient(101deg,#3faaf6_-10.13%,#f359dc_44.94%,#f28fb0_100%)] bg-clip-text text-transparent">
                 {{ $t('新建对话') }}
               </div>
             </div>
@@ -214,121 +325,130 @@ onUnmounted(() => {
 
           <!-- Conversation List -->
           <div class="flex-1 min-h-0 flex flex-col gap-1.5 w-full">
-            <div class="font-['Inter'] font-600 text-[var(--colors-text-text-secondary)] text-sm">
+            <div class="select-none font-['Inter'] font-600 text-[var(--colors-text-text-secondary)] text-sm">
               {{ $t('对话列表') }}
             </div>
-            <div class="flex flex-col gap-0.5 w-full flex-1 min-h-0 overflow-y-auto">
-              <div v-for="item in conversationList" :key="item.id" class="w-full min-h-11 flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer menu-item"
-                   :class="[
-                     item.id === activeConversationId && viewMode === 'chat' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'bg-transparent hover:bg-[var(--pattern-sidenav-bg-hover)]',
-                     openDeleteIds.has(item.id) && 'del-open',
-                   ]"
-                   @click="selectConversation(item.id)"
-              >
-                <div v-tooltip.top="{ value: item.title, showDelay: 1000 }" class="font-['Inter'] font-500 text-[var(--colors-text-text-primary-hover)] text-14px truncate">
-                  {{ item.title }}
-                </div>
-
-                <!-- Delete Button -->
-                <button class="size-6 hidden items-center justify-center rounded bg-transparent outline-none border-none cursor-pointer del-btn" @click.stop="openDeleteIds.add(item.id); deletePopoverRefs[item.id]?.toggle($event)">
-                  <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-text-text-secondary)" />
-                </button>
-                <Popover :ref="el => deletePopoverRefs[item.id] = el" :pt="{ content: { class: '!p-2' } }" @click.stop @hide="openDeleteIds.delete(item.id)">
-                  <div class="flex flex-col gap-1 p-1 min-w-[120px]">
-                    <div class="text-3 text-[var(--colors-text-text-secondary)] py-1">
-                      {{ $t('确认删除？') }}
-                    </div>
-                    <div class="flex items-center gap-1 px-1">
-                      <button class="flex-1 py-1.5 rounded cursor-pointer border-none bg-[var(--colors-background-bg-block)] text-[var(--colors-text-text-primary)]" @click.stop="deletePopoverRefs[item.id]?.hide()">
-                        {{ $t('取消') }}
-                      </button>
-                      <button class="flex-1 py-1.5 rounded cursor-pointer border-none bg-transparent text-[var(--colors-text-text-danger)] text-3 hover:(bg-[var(--colors-text-text-error)] text-white)" @click.stop="handleDeleteConversation(item.id)">
-                        {{ $t('删除') }}
-                      </button>
-                    </div>
+            <ScrollOverflowEffect
+              class="conversation-scroll-effect flex-1 min-h-0 !overflow-hidden"
+              mode="mask"
+              :light="themeStore.realTheme === 'light'"
+              width="100%"
+              aspect-ratio="auto"
+              max-height="100%"
+              :mask-size="32"
+              :edge-threshold="24"
+            >
+              <div class="flex flex-col gap-0.5 w-full py-1">
+                <div
+                  v-for="item in conversationList"
+                  :key="item.id"
+                  class="w-full min-h-9 flex items-center justify-between px-3 rounded-lg cursor-pointer group"
+                  :class="[
+                    item.id === activeConversationId && route.name === 'mcp-chat' ? 'bg-[var(--pattern-sidenav-bg-hover)] font-500' : 'font-400 bg-transparent hover:bg-[var(--pattern-sidenav-bg-hover)]',
+                  ]"
+                  @click="selectConversation(item.id)"
+                >
+                  <div
+                    v-tooltip.top="{ value: item.title, showDelay: 1000 }"
+                    class="text-[var(--colors-text-text-primary-hover)] text-13px truncate"
+                  >
+                    {{ item.title }}
                   </div>
-                </Popover>
+
+                  <!-- Delete Button -->
+                  <button class="size-6 hidden items-center justify-center rounded bg-transparent outline-none border-none cursor-pointer group-hover:flex" :class="{ flex: openDeleteIds.has(item.id) }" @click.stop="openDeleteIds.add(item.id); deletePopoverRefs[item.id]?.toggle($event)">
+                    <SvgIcon name="base/rx_ic_bin_1" size="16" color="var(--colors-text-text-secondary)" />
+                  </button>
+                  <Popover :ref="el => deletePopoverRefs[item.id] = el" :pt="{ content: { class: '!p-2' } }" @click.stop @hide="openDeleteIds.delete(item.id)">
+                    <div class="flex flex-col gap-1 p-1 min-w-[120px]">
+                      <div class="text-3 text-[var(--colors-text-text-secondary)] py-1">
+                        {{ $t('确认删除？') }}
+                      </div>
+                      <div class="flex items-center gap-1 px-1">
+                        <button class="flex-1 py-1.5 rounded cursor-pointer border-none bg-[var(--colors-background-bg-block)] text-[var(--colors-text-text-primary)]" @click.stop="deletePopoverRefs[item.id]?.hide()">
+                          {{ $t('取消') }}
+                        </button>
+                        <button class="flex-1 py-1.5 rounded cursor-pointer border-none bg-transparent text-[var(--colors-text-text-danger)] text-3 hover:(bg-[var(--colors-text-text-error)] text-white)" @click.stop="handleDeleteConversation(item.id)">
+                          {{ $t('删除') }}
+                        </button>
+                      </div>
+                    </div>
+                  </Popover>
+                </div>
+                <div v-if="loading" class="text-center text-sm text-[var(--colors-text-text-primary-hover)] py-2">
+                  {{ $t('加载中...') }}
+                </div>
+                <div v-else-if="conversationList.length === 0" class="text-center text-sm text-[var(--colors-text-text-primary-hover)] py-2">
+                  {{ $t('暂无对话记录') }}
+                </div>
               </div>
-              <div v-if="loading" class="text-center text-sm text-gray-500 py-2">
-                Loading...
-              </div>
-              <div v-else-if="conversationList.length === 0" class="text-center text-sm text-gray-500 py-2">
-                {{ $t('暂无对话记录') }}
-              </div>
-            </div>
+            </ScrollOverflowEffect>
           </div>
         </div>
 
         <!-- Bottom Section -->
-        <div class="flex flex-col gap-1 w-full pt-1">
+        <div class="flex flex-col gap-1 w-full pt-1 text-13px">
           <!-- <div id="scripts" class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
-               :class="viewMode === 'scripts' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectScripts"
+               :class="route.name === 'mcp-scripts' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectScripts"
           >
             <SvgIcon name="base/rx_ic_doc_code" size="16" color="var(--colors-icon-icon-primary-hover)" />
-            <div class="font-['Inter'] font-medium text-sm">
+            <div class="font-medium">
               Scripts
             </div>
           </div> -->
-          <div id="mcpAndSkills" class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
-               :class="viewMode === 'settings' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectSettings"
+          <div id="mcpAndSkills"
+               class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
+               :class="route.name === 'mcp-settings' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'" @click="selectSettings"
           >
             <SvgIcon name="base/rx_ic_mcp" size="16" color="var(--colors-icon-icon-primary-hover)" />
-            <div class="font-['Inter'] font-medium text-sm">
+            <div class="font-medium">
               MCP & Skills
             </div>
           </div>
+          <ShinyButton v-if="compare($appVersion, '3.8.8', '>=')" class="w-full cursor-pointer rounded" @click="selectSkillsStore">
+            <div class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
+                 :class="route.name === 'mcp-skills-store' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
+            >
+              <SvgIcon name="base/rx_ic_skills_store" size="16" color="var(--colors-icon-icon-primary-hover)" />
+              <div class="font-medium">
+                {{ $t('Skills 商城') }}
+              </div>
+              <SvgIcon name="base/fire" />
+            </div>
+          </ShinyButton>
+
+          <!-- <div class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
+               :class="route.name === 'mcp-points' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectPoints"
+          >
+            <SvgIcon name="base/rx_ic_coins" size="16" color="var(--colors-icon-icon-primary-hover)" />
+            <div class="font-medium">
+              Points
+            </div>
+          </div> -->
         </div>
       </div>
 
       <!-- 主内容区 -->
       <div class="relative flex-1 w-full h-full bg-[var(--colors-background-bg-page)] rounded-4 overflow-hidden">
-        <ChatView v-if="viewMode === 'chat'" :message-list="chatStream.messageList.value" :is-chatting="chatStream.isChatting.value" :todo="chatStream.todo.value"
-                  :pending-attachments="chatStream.pendingAttachments.value" :pending-script="chatStream.pendingScript.value" :current-conversation="chatStream.currentConversation.value"
-                  :is-empty="chatStream.isEmpty.value" :uninitialized="uninitialized" :user-message="chatStream.userMessage.value" :mode="chatStream.mode.value" :scene="chatStream.inputScene.value"
-                  :asset-options="chatStream.assetOptions.value" @update:user-message="chatStream.userMessage.value = $event" @update:mode="chatStream.mode.value = $event"
-                  @update:scene="chatStream.inputScene.value = $event" @update:asset-options="chatStream.assetOptions.value = $event" @send-message="chatStream.sendMessage()"
-                  @interrupt="chatStream.handleInterrupt" @hitl-interrupt="chatStream.handleHitlInterrupt" @upload-files="chatStream.uploadFiles" @remove-attachment="chatStream.removeAttachment"
-                  @remove-script="chatStream.pendingScript.value = null" @use-generated-image="chatStream.useGeneratedImageAsReference" @set-scroll-callback="chatStream.setScrollCallback"
-        />
-        <SettingsView v-else-if="viewMode === 'settings'" />
-        <ScriptsView v-else-if="viewMode === 'scripts'" @use-script="handleUseScript" />
+        <router-view v-slot="{ Component }">
+          <component :is="Component" @go-to-skills="handleGoToSkills" @use-script="handleUseScript" />
+        </router-view>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.new {
-  font-family: Inter;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 20px;
-  /* 142.857% */
-  background: linear-gradient(101deg, #3faaf6 -10.13%, #f359dc 44.94%, #f28fb0 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+<style scoped lang="scss">
+.conversation-scroll-effect:deep(.scroll-overflow-effect) {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 12px;
+  background: transparent;
+  --soe-bg: transparent;
+  --soe-color: var(--colors-text-text-primary);
 }
 
-.menu-item:hover .del-btn,
-.menu-item.del-open .del-btn {
-  display: flex;
-}
-
-.conversation-type {
-  width: fit-content;
-  padding: 1px 6px;
-  border: 1px solid var(--colors-border-border-action);
-  border-radius: 999px;
-  background: var(--colors-background-bg-action);
-  color: var(--colors-text-text-secondary);
-  font-size: 10px;
-  line-height: 14px;
-
-  &--asset {
-    border-color: color-mix(in srgb, #f359dc 30%, var(--colors-border-border-action));
-    color: #d53db8;
-  }
+.conversation-scroll-effect:deep(.scroll-overflow-effect__scroller) {
+  box-shadow: none;
 }
 </style>

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const LOG_DIR = path.join(process.env.CHECKPOINT_DIR ?? process.cwd(), 'logs')
+const LOG_DIR = path.join(process.env.AGENT_WORK_DIR ?? process.cwd(), 'logs')
 /**
  * 5MB
  */
@@ -11,13 +11,21 @@ const MAX_SIZE = 5 * 1024 * 1024
  */
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
-const mode = process.env.ROXY_MODE ?? 'agent'
-const isSandbox = mode === 'sandbox'
+const argv2 = process.argv[2]
+const isWorkerMode = argv2 === 'worker'
+const isSandbox = argv2 === 'sandbox' || (process.env.ROXY_MODE === 'sandbox' && !isWorkerMode)
+const mode = isWorkerMode ? 'worker' : (process.env.ROXY_MODE ?? 'agent')
 
 let LOG_FILE: string
 let LOG_BACKUP: string | undefined
 
-if (isSandbox) {
+if (isWorkerMode) {
+  // Worker mode: logs/worker/<pid>.log — one file per worker process, no shared rotation
+  const workerDir = path.join(LOG_DIR, 'worker')
+  fs.mkdirSync(workerDir, { recursive: true })
+  LOG_FILE = path.join(workerDir, `${process.pid}.log`)
+}
+else if (isSandbox) {
   // Sandbox mode: logs/sandbox/{pid}.log
   const sandboxDir = path.join(LOG_DIR, 'sandbox')
   fs.mkdirSync(sandboxDir, { recursive: true })
@@ -51,7 +59,9 @@ function trimBackupIfNeeded(): void {
   }
 }
 
-// On startup: move current log into backup, start fresh
+/**
+ * On startup: move current log into backup, start fresh.
+ */
 function rotateOnStartup(): void {
   if (!LOG_BACKUP)
     return
@@ -104,8 +114,8 @@ if (isSandbox) {
   const cleanupTimer = setInterval(cleanOldSandboxLogs, 60 * 60 * 1000)
   cleanupTimer.unref()
 }
-else {
-  // Normal mode: rotate on startup
+else if (!isWorkerMode) {
+  // Normal mode: rotate on startup (workers start fresh each time, no rotation needed)
   rotateOnStartup()
 }
 
@@ -149,12 +159,15 @@ function writeLog(level: string, args: unknown[]): void {
   writeToFile(line)
 }
 
-// Override console
-const _log = console.log.bind(console)
-const _debug = console.debug.bind(console)
-const _info = console.info.bind(console)
-const _warn = console.warn.bind(console)
-const _error = console.error.bind(console)
+/**
+ * Override console.
+ * Worker mode suppresses stdout/stderr to avoid IPC pipe backpressure from concurrent workers.
+ */
+const _log = isWorkerMode ? () => {} : console.log.bind(console)
+const _debug = isWorkerMode ? () => {} : console.debug.bind(console)
+const _info = isWorkerMode ? () => {} : console.info.bind(console)
+const _warn = isWorkerMode ? () => {} : console.warn.bind(console)
+const _error = isWorkerMode ? () => {} : console.error.bind(console)
 
 console.log = (...args: unknown[]) => {
   writeLog('INFO', args)

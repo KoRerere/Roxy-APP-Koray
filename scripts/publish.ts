@@ -40,7 +40,7 @@ const ossConfig = {
 
 const apiBaseUrl = `${isProd ? 'https://admin.lumibrowser.com' : 'https://admintest.roxybrowser.co'}/fb-admin-api`
 // 懒得模拟登录获取 token 了，反正 token 是永久的
-const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'UJ4UKYUU3UKGfAmo1743595549211'
+const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'TMckk256xUnn50cP1780034563479'
 /** 安装包输出路径 */
 const outDir = join(import.meta.dirname, '../out')
 /** YAML 文件路径 */

@@ -40,27 +40,27 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
 
   /** 批量启动浏览器 */
   ipcMain.on('browser:batchLaunch', (_event, dirIds) => {
-    return browserManager.batchLaunch(dirIds)
+    browserManager.batchLaunch(dirIds)
   })
 
   /** 批量关闭浏览器 */
   ipcMain.on('browser:batchClose', (_event, dirIds: string[]) => {
-    return browserManager.batchClose(dirIds)
+    browserManager.batchClose(dirIds)
   })
 
   /** 关闭所有浏览器 */
   ipcMain.on('browser:closeAll', (_event) => {
-    return browserManager.closeAll()
+    browserManager.closeAll()
   })
 
   /** 批量重启浏览器 */
   ipcMain.on('browser:batchRelaunch', (_event, dirIds) => {
-    return browserManager.batchReLaunch(dirIds)
+    browserManager.batchReLaunch(dirIds)
   })
 
   /** 批量删除本地浏览器 */
   ipcMain.on('browser:batchRemove', (_event, dirIds) => {
-    return browserManager.batchDelete(dirIds)
+    browserManager.batchDelete(dirIds)
   })
 
   /** 根据进程 PID 判断进程是否存在 */
@@ -143,7 +143,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
         : __orderName
 
       const installer = new DefaultBrowserInstaller()
-      await installer.installAndRegister({ dirId, workspaceId, execName, isSetAsDefaultBrowser: true })
+      await installer.installAndRegister({ dirId, workspaceId, execName, coreType: windowItem.coreType, isSetAsDefaultBrowser: true })
     }
     catch (err) {
       console.error('[browser:setAsDefaultBrowser] failed:', err)
@@ -171,7 +171,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
         : __orderName
 
       const installer = new DefaultBrowserInstaller()
-      await installer.installAndRegister({ dirId, workspaceId, execName, isSetAsDefaultBrowser: false })
+      await installer.installAndRegister({ dirId, workspaceId, execName, coreType: windowItem.coreType, isSetAsDefaultBrowser: false })
     }
     catch (err) {
       console.error('[browser:createDesktopShortcut] failed:', err)

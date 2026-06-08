@@ -3,6 +3,7 @@ import CDP from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
+import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { getErrorMessage } from '/@/utils'
 import { ChromeBrowser } from './browser'
@@ -104,29 +105,50 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
     })
   })
 
-  try {
-    // 获取 WebSocket 端点
-    const version = await CDP.Version({ port: actualPort })
-    const wsEndpoint = version.webSocketDebuggerUrl
-    console.debug('wsEndpoint', wsEndpoint, actualPort)
-    // 连接到 Chrome
-    const client = await CDP({ target: wsEndpoint }) as Client
+  // 尝试连接 CDP，带重试逻辑
+  // Chrome 端口已写入但 WebSocket 服务尚未就绪时会出现 ECONNRESET，短暂等待后重试可解决
+  const MAX_RETRY = 5
+  const RETRY_DELAY_MS = 200
+  let lastError: unknown
+  for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+    try {
+      // 获取 WebSocket 端点
+      const version = await CDP.Version({ port: actualPort })
+      const wsEndpoint = version.webSocketDebuggerUrl
+      console.debug('wsEndpoint', wsEndpoint, actualPort, `attempt=${attempt}`)
+      // 连接到 Chrome
+      const client = await CDP({ target: wsEndpoint }) as Client
 
-    // 启用必要的域
-    await client.Target.setDiscoverTargets({ discover: true })
-    return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
-  }
-  catch (error) {
-    console.error('connect error', error)
-    chromeProcess.kill()
-    if (getErrorMessage(error).startsWith('connect ')) {
-      if (actualPort) {
-        ipcSender.browser.networkIntercepted()
-      }
-      throw new Error($t('内核连接失败，请重试'))
+      // 启用必要的域
+      await client.Target.setDiscoverTargets({ discover: true })
+      return new ChromeBrowser(client, wsEndpoint, chromeProcess, actualPort)
     }
-    throw error
+    catch (error) {
+      lastError = error
+      const msg = getErrorMessage(error)
+      // ECONNRESET / ECONNREFUSED 是 Chrome 未就绪的瞬态错误，可重试
+      const isTransient = msg.includes('ECONNRESET') || msg.includes('ECONNREFUSED')
+      console.warn(`connect error (attempt ${attempt}/${MAX_RETRY}):`, msg)
+      if (isTransient && attempt < MAX_RETRY) {
+        await setTimeoutPromise(RETRY_DELAY_MS)
+        continue
+      }
+      // 非瞬态错误或已超过重试次数，直接失败
+      break
+    }
   }
+
+  // 所有重试均失败
+  console.error('connect error (all retries exhausted)', lastError)
+  chromeProcess.kill()
+  const lastMsg = getErrorMessage(lastError)
+  if (lastMsg.startsWith('connect ') || lastMsg.includes('ECONNRESET') || lastMsg.includes('ECONNREFUSED')) {
+    if (actualPort) {
+      ipcSender.browser.networkIntercepted()
+    }
+    throw new Error($t('内核连接失败，请重试'))
+  }
+  throw lastError
 }
 
 /**

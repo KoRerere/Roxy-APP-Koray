@@ -2712,31 +2712,20 @@ export interface UserGetInviteUserListV2ListData {
   data: {
     total: number;
     rows: {
-      /**
-       * 邮箱
-       * 邮箱
-       */
+      /** 邮箱 */
       email?: string;
       phone?: string;
-      /**
-       * 创建时间
-       * 创建时间
-       */
+      /** 创建时间 */
       createTime?: number;
-      /**
-       * 推广者返利(%)
-       * 推广者返利(%)
-       */
+      /** 推广者返利(%) */
       youGet?: number;
-      /**
-       * 用户折扣(%)(%)
-       * 用户折扣(%)
-       */
+      /** 积分返利(%) */
+      pointsYouGet?: number;
+      /** 代理返利(%) */
+      proxyYouGet?: number;
+      /** 用户折扣(%) */
       theyGet?: number;
-      /**
-       * 邀请来源：inviteCode：邀请码，inviteLink：邀请链接
-       * 邀请来源：inviteCode：邀请码，inviteLink：邀请链接
-       */
+      /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
       source?: string;
     }[];
   };
@@ -3587,6 +3576,7 @@ export interface UserAddUninstallReasonAnswerCreatePayload {
   selectedReasonIds: number[];
   /** 其他原因详细说明 */
   otherReasonText: string;
+  selectedReasons: string[];
 }
 
 export interface UserAddUninstallReasonAnswerCreateData {
@@ -5642,6 +5632,78 @@ export interface UserGetWindowOneClickProxyInfoListListData {
       value: string;
     };
   }[];
+  msg: string;
+}
+
+export interface UserAddProxyTemplateCreatePayload {
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  ipType: string;
+  host: string;
+  protocol: string;
+  proxyCategory: string;
+  checkChannel: string;
+}
+
+export interface UserAddProxyTemplateCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyTemplateListData {
+  code: number;
+  data: {
+    id: number;
+    proxyInfo: {
+      port: string;
+      proxyUserName: string;
+      proxyPassword: string;
+      ipType: string;
+      host: string;
+      protocol: string;
+      proxyCategory: string;
+      checkChannel: string;
+      createTime: string;
+      updateTime: string;
+    };
+    port: string;
+    proxyUserName: string;
+    proxyPassword: string;
+    ipType: string;
+    host: string;
+    protocol: string;
+    proxyCategory: string;
+    checkChannel: string;
+    createTime: string;
+    updateTime: string;
+  };
+  msg: string;
+}
+
+export interface UserMdfProxyTemplateCreatePayload {
+  id: number;
+  port?: string;
+  proxyUserName?: string;
+  proxyPassword?: string;
+  ipType?: string;
+  host?: string;
+  protocol?: string;
+  proxyCategory?: string;
+  checkChannel?: string;
+}
+
+export interface UserMdfProxyTemplateCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDeleteProxyTemplateCreatePayload {
+  id: number;
+}
+
+export interface UserDeleteProxyTemplateCreateData {
+  code: number;
   msg: string;
 }
 
@@ -8944,6 +9006,65 @@ export interface UserBindRedeemCodeCreatePayload {
 
 export interface UserBindRedeemCodeCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserCalculatePointsPriceListParams {
+  /** @example "1000" */
+  rechargeAmount?: string;
+}
+
+export interface UserCalculatePointsPriceListData {
+  code: number;
+  data: {
+    originalAmount: number;
+    actualAmount: number;
+    points: number;
+  };
+  msg: string;
+}
+
+export type UserBuyPointsSettlementCreatePayload = object;
+
+export interface UserBuyPointsSettlementCreateData {
+  code: number;
+  data: {
+    orderNo: string;
+    payType: string;
+    payId: number;
+    payUrl: string;
+    orderAmount: number;
+    endTime: string;
+    realAmount: number;
+    originalAmount: number;
+    points: number;
+    immediate: boolean;
+  };
+  msg: string;
+}
+
+export interface UserGetPointsRechargeRecordsListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+  /** @example "2026-06-02" */
+  startDate?: string;
+  /** @example "2026-06-02" */
+  endDate?: string;
+}
+
+export interface UserGetPointsRechargeRecordsListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      orderNo?: string;
+      payTime?: number;
+      points?: number;
+      amount?: number;
+    }[];
+  };
   msg: string;
 }
 

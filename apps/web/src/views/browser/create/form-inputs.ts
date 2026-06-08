@@ -1,11 +1,17 @@
 import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
+import type { FormAsyncGate } from './hooks/useAsyncGate'
 import { API } from '/@/api'
 import { CoreType, UaStrictMode } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
-import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isDev, isEmptyValue, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, isNewerOrEqualVersion, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, validateCookieInput } from '/@/utils'
 import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
+
+function getCookiePlatformUrls(inputs: any[]) {
+  const platformList = findInputByName(inputs, 'windowPlatformList')?.value ?? []
+  return platformList.map((item: any) => item.platformUrl).filter(Boolean)
+}
 
 const userStore = useUserStore()
 
@@ -136,20 +142,15 @@ function normalizeCoreType(coreType?: string): CoreType {
   return coreType === CoreType.Firefox ? CoreType.Firefox : CoreType.Chrome
 }
 
-/** 更新内核版本下拉图标（生产环境） */
-function updateCoreVersionIcon(coreVersionInput: any, coreType: string) {
-  if (isDev)
-    return
-  coreVersionInput.icon = isFirefoxCoreType(coreType) ? 'base/rx_ic_firefox' : 'base/rx_ic_chrome'
-}
+export async function getInputsGroup(data: any = {}, showToast: any = () => { }, gate?: Pick<FormAsyncGate, 'run'>) {
+  const run = gate?.run ?? (<T>(task: () => Promise<T>) => task())
 
-export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
-  const [$dict_map, userConfig, searchEngine, coreList] = await Promise.all([
+  const [$dict_map, userConfig, searchEngine, coreList] = await run(() => Promise.all([
     getDictMap(),
     userStore.getUserConfig(),
     API.platform.userGetSearchEnginesList(),
     globalThis.electronAPI.send('app:getCoreList'),
-  ])
+  ]))
 
   // Chrome / Firefox 可能存在相同 coreVersion，需按 coreType 分别过滤本地可用内核
   const availableChromeVersions = coreList
@@ -203,7 +204,13 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const osVersionValue = initialOsVersionOptions.find((item: any) => item.value === osVersion) ?? initialOsVersionOptions[0]
   const coreTypeOptions = [
     { label: CoreType.Chrome, value: CoreType.Chrome, icon: 'base/rx_ic_chrome' },
-    { label: CoreType.Firefox, value: CoreType.Firefox, icon: 'base/rx_ic_firefox', disabled: !isDev, disabledTooltip: $t('即将上线') },
+    {
+      label: CoreType.Firefox,
+      value: CoreType.Firefox,
+      icon: 'base/rx_ic_firefox',
+      disabled: !isNewerOrEqualVersion('3.8.8'),
+      disabledTooltip: $t('该功能需要升级到 v{version} 及以上版本', { version: '3.8.8' }),
+    },
   ]
   const initialCoreVersionOptions = getCoreVersionOptionsByType(initialCoreType, osValue?.value, osVersionValue?.value)
   // TODO:(anbin)
@@ -215,7 +222,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   // 非严格模式获取浏览器版本选项（仅 Chrome 内核支持）
   const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue && !isFirefoxCoreType(initialCoreType)
-    ? await getBrowserVersion({ os: osValue.value, osVersion: osVersionValue.value })
+    ? await run(() => getBrowserVersion({ os: osValue.value, osVersion: osVersionValue.value }))
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
@@ -296,7 +303,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
                 resolutionInput.options = resolutionOptions
               }
 
-              const moblieVisible = ['Android', 'IOS'].includes(item.value.value)
+              const moblieVisible = ['Android', 'IOS'].includes(item.value.value) && coreType !== CoreType.Firefox
               switchMoblieInputVisible(highLevelInputs, moblieVisible)
             }
           },
@@ -327,7 +334,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
               // browserVersion 仅 Chrome 非严格模式使用
               if (!isFirefoxCoreType(coreType) && userConfig?.uaModeSwitch === UaStrictMode.close) {
-                const options = await getBrowserVersion({ os: _osValue, osVersion: version })
+                const options = await run(() => getBrowserVersion({ os: _osValue, osVersion: version }))
                 const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
                 browserVersionInput.options = options
                 browserVersionInput.value = options.map(item => item.value)
@@ -378,9 +385,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
               const _coreVersionOptions = getCoreVersionOptionsByType(coreType, os, version)
               coreVersionInput.options = _coreVersionOptions
               coreVersionInput.value = _coreVersionOptions[0] ?? null
-              updateCoreVersionIcon(coreVersionInput, coreType)
 
-              await syncCoreTypeRelatedFields(coreType, os, version)
+              await run(() => syncCoreTypeRelatedFields(coreType, os, version))
+              const moblieVisible = ['Android', 'IOS'].includes(os) && coreType !== CoreType.Firefox
+              switchMoblieInputVisible(highLevelInputs, moblieVisible)
               const [webGLInput, canvasInput] = filterInputsByNames(highLevelInputs, ['webGL', 'canvas'])
 
               webGLInput.change?.(webGLInput)
@@ -402,7 +410,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           filter: false,
           change: async (item: any) => {
             if (item.value) {
-              await setUaWebgl(inputsGroup)
+              await run(() => setUaWebgl(inputsGroup))
             }
             if (data.dirId) {
               item.help = data.coreVersion !== item.value.value
@@ -431,7 +439,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         const isEq = input.value.slice().sort().join(',') === input._oldValue.slice().sort().join(',')
         if (!isEq) {
           input._oldValue = input.value.slice()
-          setUaWebgl(inputsGroup)
+          void run(() => setUaWebgl(inputsGroup))
         }
       },
     },
@@ -442,7 +450,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.userAgent,
       rows: 3,
       iconClick: async () => {
-        await setUaWebgl(inputsGroup)
+        await run(() => setUaWebgl(inputsGroup))
         showToast(0, $t('UA刷新成功'))
       },
       change: (input: any) => {
@@ -460,10 +468,25 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     {
       type: 'textarea',
       label: 'Cookies',
-      placeholder: $t('请以 JSON 格式输入 Cookies'),
+      placeholder: $t('支持格式: JSON、Netscape、Name=Value\nName=Value 未写 domain 时，将按行从下方平台账号的网址自动填充'),
       name: 'cookie',
-      value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
-      formatValue: (input: any) => safeParseJSON(input.value, []),
+      value: isEmptyValue(data?.cookie) ? '' : stringifyCookies(data.cookie),
+      validator(input: any) {
+        const result = validateCookieInput(input.value?.trim() ?? '', {
+          platformUrls: getCookiePlatformUrls(windowInputs),
+        })
+        if (!result.valid) {
+          input.errorMsg = result.message
+          return false
+        }
+        input.errorMsg = undefined
+        return true
+      },
+      formatValue: (input: any, inputs: any) => {
+        return parseCookies(input.value?.trim() ?? '', {
+          platformUrls: getCookiePlatformUrls(inputs),
+        }) ?? []
+      },
       slot: 'cookies',
     },
     {
@@ -926,7 +949,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('自定义'), value: 2 },
       ],
       change(input: any) {
-        input.value === 1 && setUaWebgl(inputsGroup)
+        input.value === 1 && void run(() => setUaWebgl(inputsGroup))
 
         filterInputsByNames(highLevelInputs, ['webGLManufacturer', 'webGLRender']).forEach((ipt) => {
           ipt.visible = input.value !== 0
@@ -946,7 +969,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       disabled: data.webGLInfo !== 2,
       visible: !initInputVisible(data.webGLInfo, 0, false),
       iconClick: () => {
-        setUaWebgl(inputsGroup)
+        void run(() => setUaWebgl(inputsGroup))
       },
     },
     {
@@ -959,7 +982,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       disabled: data.webGLInfo !== 2,
       visible: !initInputVisible(data.webGLInfo, 0, false),
       iconClick: () => {
-        setUaWebgl(inputsGroup)
+        void run(() => setUaWebgl(inputsGroup))
       },
     },
     {
@@ -1279,6 +1302,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('禁用沙盒'),
       name: 'sandboxPermission',
       value: data.sandboxPermission ?? false,
+      visible: !isFirefox, // Firefox 内核不支持沙盒设置，Chrome 专有
       options: [
         { label: $t('开启'), value: true },
         { label: $t('关闭'), value: false },
@@ -1681,7 +1705,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
 
     // 切换内核时同步 Chrome 专有指纹字段的显隐
-    // useGpu / sandboxPermission 已通过 user.js prefs 在 Firefox 上实现，无需隐藏
     const chromeOnlyFingerFields = ['webGpu', 'deviceInfo', 'deviceNameSwitch', 'macInfo']
     filterInputsByNames(highLevelInputs, chromeOnlyFingerFields).forEach((ipt) => {
       ipt.visible = !isFirefox
@@ -1698,10 +1721,20 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       macAddrInput.visible = !isFirefox && macInfoInput?.value === true
     }
 
-    // searchEngine：Firefox 内核不支持搜索引擎设置，Chrome 专有
-    const searchEngineInput = findInputByName(windowInputs, 'searchEngine')
+    // searchEngine 在 basicInputs（基础设置），非 windowInputs
+    const searchEngineInput = findInputByName(basicInputs, 'searchEngine')
     if (searchEngineInput)
       searchEngineInput.visible = !isFirefox
+
+    // sandboxPermission：Firefox 内核不支持沙盒设置，Chrome 专有
+    const sandboxPermissionInput = findInputByName(highLevelInputs, 'sandboxPermission')
+    if (sandboxPermissionInput)
+      sandboxPermissionInput.visible = !isFirefox
+
+    // enableGoogleLogin：Firefox 内核不支持谷歌登录设置，Chrome 专有
+    const enableGoogleLoginInput = findInputByName(otherInputs, 'enableGoogleLogin')
+    if (enableGoogleLoginInput)
+      enableGoogleLoginInput.visible = !isFirefox
 
     // windowOpenSize：Firefox 下隐藏，值由 original 兜底传递
     const windowOpenSizeInput = findInputByName(basicInputs, 'windowOpenSize')
@@ -1758,7 +1791,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])
 
-  await syncCoreTypeRelatedFields(initialCoreType, osValue?.value, osVersionValue?.value)
+  await run(() => syncCoreTypeRelatedFields(initialCoreType, osValue?.value, osVersionValue?.value))
 
   return [inputsGroup, original]
 }
@@ -1812,7 +1845,7 @@ export function getDefaultValue() {
 /**
  * 仅新用户注册礼物选择 ip 时使用
  */
-export async function genDefaultProfileByCount(count: number) {
+export async function genDefaultProfileByCount(count: number, customerParams?: Record<string, any>) {
   const [inputsGroup, original] = await getInputsGroup()
   const defaultParams = getFormDataByList(inputsGroup)
   const fingerKeys: (keyof typeof defaultParams)[] = ['fontType', 'canvas', 'webGL', 'audioContext', 'speechVoices', 'clientRects', 'macInfo', 'os', 'osVersion', 'coreVersion', 'coreType']
@@ -1827,6 +1860,7 @@ export async function genDefaultProfileByCount(count: number) {
       ...toRaw(defaultParams),
       fingerDetail,
       proxyInfoList: Array.from({ length: count }, () => ({ id: 0, proxyCategory: 'noproxy' })),
+      ...customerParams,
     })
 
     return data.windowIds

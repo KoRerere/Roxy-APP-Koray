@@ -41,10 +41,21 @@ if (lastLoginEmail) {
 }
 
 const submitLoading = ref(false)
-const formSchemas = ref(currentLocale.value === 'zh-CN' ? getPhoneSchemas() : getFormSchemas())
 const formInstance = useTemplateRef('formInstance')
 
 const isZhLocale = computed(() => currentLocale.value === 'zh-CN')
+
+/** 非中文邮箱：默认显示切换按钮且折叠；邮箱校验确认未注册（新用户）后自动展开 */
+function buildEmailFormSchemas(isRegister: boolean) {
+  const email = signFormData.value.user_name
+  const confirmedNewUser = !isZhLocale.value && emailLoginMap.value[email] === false
+  return getFormSchemas(isRegister, {
+    hideInviteCode: isZhLocale.value,
+    autoExpandInviteCode: confirmedNewUser,
+  })
+}
+
+const formSchemas = ref(currentLocale.value === 'zh-CN' ? getPhoneSchemas() : buildEmailFormSchemas(false))
 
 /** 非中文固定邮箱流程；中文在手机号 / 邮箱间切换（邮箱仅限已注册用户登录） */
 const loginTypeZh = ref<'password' | 'phone'>(loginWay.value === 'password' ? 'password' : 'phone')
@@ -80,25 +91,27 @@ const checkEmailRegistered = debounce(async () => {
         emailLoginMap.value[username] = data.is_registered
       }
       const registerSchema = isZhLocale.value ? false : !data.is_registered
-      formSchemas.value = getFormSchemas(registerSchema)
-      formInstance.value?.resetSchema(getFormSchemas(registerSchema))
+      formSchemas.value = buildEmailFormSchemas(registerSchema)
+      formInstance.value?.resetSchema(buildEmailFormSchemas(registerSchema))
       formInstance.value?.clearValidateMessages()
     }
   }
 }, 300)
 
 function switchFormMode() {
-  const getSchemas = isEmailLogin.value
-    ? getFormSchemas
-    : getPhoneSchemas
-
   const isRegister
     = isZhLocale.value && isEmailLogin.value
       ? false
       : !isBoolean(emailLoginMap.value[signFormData.value.user_name])
 
-  formSchemas.value = getSchemas(isRegister)
-  formInstance.value?.resetSchema(getSchemas(isRegister))
+  if (isEmailLogin.value) {
+    formSchemas.value = buildEmailFormSchemas(isRegister)
+    formInstance.value?.resetSchema(buildEmailFormSchemas(isRegister))
+  }
+  else {
+    formSchemas.value = getPhoneSchemas()
+    formInstance.value?.resetSchema(getPhoneSchemas())
+  }
   // formInstance.value?.resetFields()
   formInstance.value?.clearValidateMessages()
   emit(
@@ -112,6 +125,11 @@ watch([() => signFormData.value.user_name, loginType], () => {
   emailValidateLoading.value = isValidEmail.value
   checkEmailRegistered()
 }, { immediate: true })
+
+watch(isZhLocale, () => {
+  if (isEmailLogin.value)
+    switchFormMode()
+})
 
 watch(
   () => signFormData.value.user_name,
@@ -195,15 +213,15 @@ async function handleSubmit() {
           -1,
           $t('该邮箱账号不存在，请使用手机登录或注册'),
         )
-        formSchemas.value = getFormSchemas(false)
-        formInstance.value?.resetSchema(getFormSchemas(false))
+        formSchemas.value = buildEmailFormSchemas(false)
+        formInstance.value?.resetSchema(buildEmailFormSchemas(false))
         formInstance.value?.clearValidateMessages()
         return
       }
 
       const registerSchema = isZhLocale.value ? false : !data.is_registered
-      formSchemas.value = getFormSchemas(registerSchema)
-      formInstance.value?.resetSchema(getFormSchemas(registerSchema))
+      formSchemas.value = buildEmailFormSchemas(registerSchema)
+      formInstance.value?.resetSchema(buildEmailFormSchemas(registerSchema))
       formInstance.value?.clearValidateMessages()
       return
     }

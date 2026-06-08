@@ -1,6 +1,9 @@
 /**
  * Event types for SSE stream
  */
+import type { AgentErrorEnvelope } from './agentError'
+import { statusToCode } from './agentError'
+
 export type StreamEventType
   = | 'session'
     | 'thinking' // Simple 模式
@@ -8,6 +11,8 @@ export type StreamEventType
     | 'worker_content'
     | 'worker_thinking'
     | 'worker_result'
+    | 'worker_stopped'
+    | 'orchestrator_stopped'
     | 'synthesis'
     | 'tool_call'
     | 'tool_result'
@@ -62,31 +67,39 @@ class StreamAdapter {
   /**
    * Create planning thinking event (流式)
    */
-  thinking(text: string, thinkingId: string, taskId?: string): string {
+  thinkingEvent(text: string, thinkingId: string, taskId?: string): StreamEvent {
     if (taskId) {
-      return this.workerThinking(taskId, text, thinkingId)
+      return this.workerThinkingEvent(taskId, text, thinkingId)
     }
-    return this.formatSSE({
+    return {
       type: 'thinking',
       data: { text, thinkingId },
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  thinking(text: string, thinkingId: string, taskId?: string): string {
+    return this.formatSSE(this.thinkingEvent(text, thinkingId, taskId))
   }
 
   /**
    * Create content event (流式)
    * @param text
-   * @returns
+   * @returns string
    */
-  content(text: string, contentId: string, taskId?: string): string {
+  contentEvent(text: string, contentId: string, taskId?: string): StreamEvent {
     if (taskId) {
-      return this.workerContent(taskId, text, contentId)
+      return this.workerContentEvent(taskId, text, contentId)
     }
-    return this.formatSSE({
+    return {
       type: 'content',
       data: { text, contentId },
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  content(text: string, contentId: string, taskId?: string): string {
+    return this.formatSSE(this.contentEvent(text, contentId, taskId))
   }
 
   /**
@@ -105,28 +118,96 @@ class StreamAdapter {
   /**
    * Create worker thinking event (流式)
    */
-  workerThinking(taskId: string, text: string, thinkingId: string): string {
-    return this.formatSSE({
+  workerThinkingEvent(taskId: string, text: string, thinkingId: string): StreamEvent {
+    return {
       type: 'worker_thinking',
       data: { taskId, text, thinkingId },
       timestamp: Date.now(),
-    })
+    }
   }
 
-  workerContent(taskId: string, text: string, contentId: string): string {
-    return this.formatSSE({
+  workerThinking(taskId: string, text: string, thinkingId: string): string {
+    return this.formatSSE(this.workerThinkingEvent(taskId, text, thinkingId))
+  }
+
+  workerContentEvent(taskId: string, text: string, contentId: string): StreamEvent {
+    return {
       type: 'worker_content',
       data: { taskId, text, contentId },
       timestamp: Date.now(),
-    })
+    }
   }
 
-  workerResult(data: { taskId: string, status: 'success' | 'failed', error?: any }): string {
-    return this.formatSSE({
+  workerContent(taskId: string, text: string, contentId: string): string {
+    return this.formatSSE(this.workerContentEvent(taskId, text, contentId))
+  }
+
+  workerResultEvent(data: {
+    taskId: string
+    status: 'success' | 'failed'
+    exitCode?: number | null
+    signal?: NodeJS.Signals | null
+    error?: any
+    durationMs?: number
+  }): StreamEvent {
+    return {
       type: 'worker_result',
       data,
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  workerResult(data: {
+    taskId: string
+    status: 'success' | 'failed'
+    exitCode?: number | null
+    signal?: NodeJS.Signals | null
+    error?: any
+    durationMs?: number
+  }): string {
+    return this.formatSSE(this.workerResultEvent(data))
+  }
+
+  workerStoppedEvent(data: {
+    taskId: string
+    status: 'failed'
+    reason: 'user'
+    error: string
+  }): StreamEvent {
+    return {
+      type: 'worker_stopped',
+      data,
+      timestamp: Date.now(),
+    }
+  }
+
+  workerStopped(data: {
+    taskId: string
+    status: 'failed'
+    reason: 'user'
+    error: string
+  }): string {
+    return this.formatSSE(this.workerStoppedEvent(data))
+  }
+
+  orchestratorStoppedEvent(data: {
+    status: 'failed'
+    reason: 'user'
+    message: string
+  }): StreamEvent {
+    return {
+      type: 'orchestrator_stopped',
+      data,
+      timestamp: Date.now(),
+    }
+  }
+
+  orchestratorStopped(data: {
+    status: 'failed'
+    reason: 'user'
+    message: string
+  }): string {
+    return this.formatSSE(this.orchestratorStoppedEvent(data))
   }
 
   // ==================== 综合阶段 (Synthesis Phase) ====================
@@ -145,15 +226,53 @@ class StreamAdapter {
   // ==================== 系统类 ====================
 
   /**
-   * Create error event
+   * Create error event.
+   *
+   * 兼容两种调用：
+   * - 旧：`error(message, httpStatus?)` —— 仍输出 `data.errorCode` 供旧前端 / 历史回放使用
+   * - 新：`error(envelope)` —— 输出稳定的 `code` / `category` / `retryable` / `requestId` 等字段
+   *
+   * 统一输出契约（见 docs/error_codes.md，前端优先用 `code` 分支）：
+   * `{ code, category, message, retryable, requestId?, httpStatus?, source, errorCode? }`
+   * 其中 `errorCode` 是 `httpStatus` 的别名，仅为向后兼容保留。
    */
-  error(message: string, errorCode?: number): string {
+  error(messageOrEnvelope: string | AgentErrorEnvelope, errorCode?: number): string {
+    if (typeof messageOrEnvelope === 'string') {
+      return this.formatSSE({
+        type: 'error',
+        data: {
+          code: errorCode ? statusToCode(errorCode) : 'agent_internal_error',
+          message: messageOrEnvelope,
+          category: 'internal',
+          retryable: false,
+          source: 'agent',
+          httpStatus: errorCode,
+          errorCode,
+        },
+        timestamp: Date.now(),
+      })
+    }
+
+    const { code, message, data } = messageOrEnvelope
     return this.formatSSE({
       type: 'error',
-      data: { message, errorCode },
+      data: {
+        code,
+        message,
+        category: data.category,
+        retryable: data.retryable,
+        source: data.source,
+        requestId: data.requestId,
+        provider: data.provider,
+        model: data.model,
+        httpStatus: data.httpStatus,
+        // 向后兼容旧前端字段（status-message.vue 旧逻辑读取 errorCode）
+        errorCode: data.httpStatus,
+      },
       timestamp: Date.now(),
     })
   }
+
 
   /**
    * Create interrupt event
@@ -182,23 +301,31 @@ class StreamAdapter {
   /**
    * Create tool call event
    */
-  toolCall(data: { toolName: string, args: any, taskId?: string, toolId?: string }): string {
-    return this.formatSSE({
+  toolCallEvent(data: { toolName: string, args: any, taskId?: string, toolId?: string }): StreamEvent {
+    return {
       type: 'tool_call',
       data,
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  toolCall(data: { toolName: string, args: any, taskId?: string, toolId?: string }): string {
+    return this.formatSSE(this.toolCallEvent(data))
   }
 
   /**
    * Create tool result event
    */
-  toolResult(data: { toolName: string, result: any, et?: number, taskId?: string, toolId?: string, status?: 'success' | 'failed' }): string {
-    return this.formatSSE({
+  toolResultEvent(data: { toolName: string, result: any, et?: number, taskId?: string, toolId?: string, status?: 'success' | 'failed' }): StreamEvent {
+    return {
       type: 'tool_result',
       data: { ...data },
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  toolResult(data: { toolName: string, result: any, et?: number, taskId?: string, toolId?: string, status?: 'success' | 'failed' }): string {
+    return this.formatSSE(this.toolResultEvent(data))
   }
   // ==================== Token Usage 类 ====================
 
@@ -213,20 +340,28 @@ class StreamAdapter {
     })
   }
 
-  todo(data: any): string {
-    return this.formatSSE({
+  todoEvent(data: any): StreamEvent {
+    return {
       type: 'todo',
       data,
       timestamp: Date.now(),
-    })
+    }
   }
 
-  workerTodo(workerId: string, data: any): string {
-    return this.formatSSE({
+  todo(data: any): string {
+    return this.formatSSE(this.todoEvent(data))
+  }
+
+  workerTodoEvent(workerId: string, data: any): StreamEvent {
+    return {
       type: 'worker_todo',
       data: { ...data, workerId },
       timestamp: Date.now(),
-    })
+    }
+  }
+
+  workerTodo(workerId: string, data: any): string {
+    return this.formatSSE(this.workerTodoEvent(workerId, data))
   }
 
   /**

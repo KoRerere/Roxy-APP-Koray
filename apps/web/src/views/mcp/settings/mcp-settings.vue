@@ -1,6 +1,5 @@
 <script setup lang="tsx">
 import { useDialog } from '/@/hooks/useDialog'
-import type { UseDialogInstance } from '/@/hooks/useDialog'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useAgentApi } from '../agent-api'
 import type { UserMcpServerConfig } from '../agent-api'
@@ -306,7 +305,7 @@ function showServerDialog() {
     // okText: $t('保存'),
     // cancelText: $t('取消'),
     slots: {
-      default: (instance) => (
+      default: instance => (
         <div>
           <div class="flex flex-col gap-4 pt-2.5 pb-10">
             {/* Name */}
@@ -479,7 +478,7 @@ function showServerDialog() {
                           headers: Object.fromEntries(headers.value.filter(e => e.key).map(e => [e.key, e.value])),
                         }),
                   }
-                  
+
                   try {
                     const result = await testMcpServer(serverName.value, config)
                     if (result.code === 0 && result.data.success) {
@@ -495,9 +494,9 @@ function showServerDialog() {
                 }}
               />
 
-              <RxButton 
-                label={$t('保存')} 
-                size="md" 
+              <RxButton
+                label={$t('保存')}
+                size="md"
                 onClick={async function handleOk() {
                   const config: UserMcpServerConfig = {
                     type: serverType.value,
@@ -535,7 +534,8 @@ function showServerDialog() {
                     onlyErrorToast(-1, $t('服务错误，请联系技术支持'))
                   }
                 }}
-              ></RxButton>
+              >
+              </RxButton>
             </div>
           </div>
         </div>
@@ -544,7 +544,7 @@ function showServerDialog() {
     },
     handleCancel: resetForm,
     async handleOk() {
-      
+
     },
   })
 }
@@ -557,7 +557,7 @@ onMounted(() => {
 <template>
   <div class="h-full" style="will-change: transform;">
     <!-- 标题和添加按钮 -->
-    <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center justify-between mb-5 pr-10">
       <div class="font-['Archivo'] font-semibold text-[var(--colors-text-text-primary)] text-6">
         MCP
       </div>
@@ -572,7 +572,7 @@ onMounted(() => {
     </div>
 
     <!-- MCP Servers 列表 -->
-    <div class="flex flex-col gap-4 overflow-y-auto h-[calc(100%-38px)]">
+    <div class="flex flex-col gap-4 overflow-y-auto h-[calc(100%-38px)] pr-10 pb-10">
       <div
         v-for="server in servers"
         :key="server.id"

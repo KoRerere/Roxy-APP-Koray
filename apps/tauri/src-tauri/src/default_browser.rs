@@ -194,9 +194,11 @@ mod windows {
     Some(s.trim_end_matches('\0').to_string())
   }
 
-  fn path_like_matches_current_exe(candidate: &str) -> bool {
+  use crate::launcher_identity::{launcher_app_name, launcher_display_brand};
+
+  fn path_like_matches_current_exe(candidate: &str, app_name: &str) -> bool {
     let cand = candidate.trim().to_lowercase();
-    let app_name_lc = default_browser_app_name().to_lowercase();
+    let app_name_lc = app_name.to_lowercase();
     let exe = match current_exe_path()
       .ok()
       .and_then(|p| p.file_name().map(|s| s.to_string_lossy().to_string()))
@@ -210,18 +212,6 @@ mod windows {
     // - 先快速判断是否包含 app_name（兜底）
     // - 再判断是否包含当前 exe 文件名
     cand.contains(&app_name_lc) || cand.contains(&exe)
-  }
-
-  fn default_browser_app_name() -> &'static str {
-    // build.rs 会把 apps/tauri/.env.* 注入为编译期常量；
-    // 若没有配置，则按 build.rs 的默认规则：development => RoxyChromeDev，production => RoxyChrome
-    option_env!("ROXY_DEFAULT_BROWSER_APP_NAME").unwrap_or_else(|| {
-      if cfg!(debug_assertions) {
-        "RoxyChromeDev"
-      } else {
-        "RoxyChrome"
-      }
-    })
   }
 
   fn default_browser_progid_url(app_name: &str) -> String {
@@ -260,9 +250,14 @@ mod windows {
     let progid_url = default_browser_progid_url(app_name);
     let progid_html = default_browser_progid_html(app_name);
 
+    let brand = launcher_display_brand(app_name);
+    let url_handler_label = format!("{brand} URL");
+    let html_handler_label = format!("{brand} HTML Document");
+    let app_description = format!("{brand} - a minimal browser / URL handler.");
+
     // 1) ProgId: URL (http/https)
     let key_url = format!(r"Software\Classes\{progid_url}");
-    reg_set_sz(&hkcu(), &key_url, "", "Roxy Chrome URL")?;
+    reg_set_sz(&hkcu(), &key_url, "", &url_handler_label)?;
     // URL Protocol 值存在且可为空字符串，表示这是一个 URL 协议处理器
     reg_set_sz(&hkcu(), &key_url, "URL Protocol", "")?;
     reg_set_sz(&hkcu(), &format!(r"{key_url}\DefaultIcon"), "", &format!("{quoted_exe},0"))?;
@@ -275,7 +270,7 @@ mod windows {
 
     // 2) ProgId: HTML files (.htm/.html 等)
     let key_html = format!(r"Software\Classes\{progid_html}");
-    reg_set_sz(&hkcu(), &key_html, "", "Roxy Chrome HTML Document")?;
+    reg_set_sz(&hkcu(), &key_html, "", &html_handler_label)?;
     reg_set_sz(
       &hkcu(),
       &format!(r"{key_html}\DefaultIcon"),
@@ -291,13 +286,8 @@ mod windows {
 
     // 3) RegisteredApplications + StartMenuInternet Capabilities
     let cap_root = format!(r"Software\Clients\StartMenuInternet\{app_name}\Capabilities");
-    reg_set_sz(&hkcu(), &cap_root, "ApplicationName", "Roxy Chrome")?;
-    reg_set_sz(
-      &hkcu(),
-      &cap_root,
-      "ApplicationDescription",
-      "Roxy Chrome - a minimal browser / URL handler.",
-    )?;
+    reg_set_sz(&hkcu(), &cap_root, "ApplicationName", brand)?;
+    reg_set_sz(&hkcu(), &cap_root, "ApplicationDescription", &app_description)?;
 
     // URLAssociations: http/https -> ProgId
     let url_assoc = format!(r"{cap_root}\URLAssociations");
@@ -384,19 +374,20 @@ mod windows {
     // 0) 最优先：用系统 API 看 http/https 最终启动哪个 exe（与 Start-Process 的行为一致）
     let http_exe = assoc_query_executable_for_protocol("http");
     let https_exe = assoc_query_executable_for_protocol("https");
-    if http_exe.as_deref().is_some_and(path_like_matches_current_exe)
-      && https_exe.as_deref().is_some_and(path_like_matches_current_exe)
+    let app_name = launcher_app_name();
+
+    if http_exe.as_deref().is_some_and(|p| path_like_matches_current_exe(p, &app_name))
+      && https_exe.as_deref().is_some_and(|p| path_like_matches_current_exe(p, &app_name))
     {
       return Ok(true);
     }
 
     // 优先走“权威”判断：对比 UserChoice(http/https) 的 ProgId 是否等于我们注册的 ProgId。
     // 这能做到和 Chrome 一样：已经是默认浏览器就不再引导用户打开设置页。
-    let app_name = default_browser_app_name();
-    let fallback = default_browser_progid_url(app_name);
-    let our_http = query_registered_progid_for_scheme(app_name, "http")
+    let fallback = default_browser_progid_url(&app_name);
+    let our_http = query_registered_progid_for_scheme(&app_name, "http")
       .unwrap_or_else(|| fallback.clone());
-    let our_https = query_registered_progid_for_scheme(app_name, "https")
+    let our_https = query_registered_progid_for_scheme(&app_name, "https")
       .unwrap_or_else(|| fallback.clone());
 
     let cur_http = query_userchoice_progid_for_scheme("http");
@@ -431,8 +422,8 @@ mod windows {
 
     // 1) 先把应用注册成“可选默认浏览器”（出现在系统默认应用列表里）
     //    这里用 HKCU（无需管理员权限），对当前用户生效。
-    let app_name = default_browser_app_name();
-    let _ = register_default_browser_capabilities(app_name);
+    let app_name = launcher_app_name();
+    let _ = register_default_browser_capabilities(&app_name);
 
     // 2) 再打开系统“默认应用”设置页，引导用户选择（Windows 不允许静默强制设置默认浏览器）
     // - 优先直接跳转到“当前应用的默认应用详情页”（Chrome 的体验）
@@ -442,7 +433,7 @@ mod windows {
     // 用 explorer.exe 打开 ms-settings，避免 cmd.exe 弹出黑框
     let deep_link = format!(
       "ms-settings:defaultapps?registeredAppUser={}",
-      url_encode_component(app_name),
+      url_encode_component(&app_name),
     );
     // 先尝试深链接到“当前应用详情页”；失败就回退到默认应用列表页
     if shell_open(&deep_link).is_err() {

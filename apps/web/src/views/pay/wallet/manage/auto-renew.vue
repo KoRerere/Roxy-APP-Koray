@@ -6,7 +6,7 @@ import { API } from '/@/api'
 
 import { AutoRenewalPayStatus } from '/@/enums/pay'
 import { strConcat } from '/@/utils'
-import { emitter } from '/@/utils/eventBus'
+import { useEmitterEvent } from '/@/utils/eventBus'
 import type { SvgNames } from '/@/components/rx-icon'
 
 const router = useRouter()
@@ -41,10 +41,8 @@ function toBilling() {
   router.replace({ name: 'wallet', query: { name: 'billing' } })
 }
 
-onMounted(() => {
-  emitter.on('updateAutoRenewList', () => {
-    tableRef.value?.refresh()
-  })
+useEmitterEvent('updateAutoRenewList', () => {
+  tableRef.value?.refresh()
 })
 </script>
 

@@ -38,7 +38,7 @@ export function useOpenRoxyAIAgent() {
 
   const opening = ref(false)
 
-  async function openRoxyAIAgent(scene?: string) {
+  async function openRoxyAIAgent(scene?: string, skill?: string) {
     if (!check('Roxy_AI_Agent_All')) {
       return
     }
@@ -112,7 +112,12 @@ export function useOpenRoxyAIAgent() {
       }
 
       // 打开 Roxy AI Agent 窗口
-      const result = await globalThis.electronAPI.send('mcp:open', scene ? { scene } : {})
+      const openOptions: { scene?: string, skill?: string } = {}
+      if (scene)
+        openOptions.scene = scene
+      if (skill)
+        openOptions.skill = skill
+      const result = await globalThis.electronAPI.send('mcp:open', openOptions)
       console.log('Mcp open result:', result)
       if (!result.success) {
         const errorMessage = result.type

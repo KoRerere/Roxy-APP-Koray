@@ -1,17 +1,14 @@
+import type { WorkerResult } from '../../worker/protocol'
 import type { StructuredToolInterface } from '@langchain/core/tools'
-import { HumanMessage } from '@langchain/core/messages'
 import { tool } from 'langchain'
+import { randomUUID } from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import { z } from 'zod'
+import { env } from '../../config'
 import { streamAdapter } from '../../server/streamAdapter'
-import { createChatAgent } from '../agent/chat'
-import { handleStream, StreamState } from '../handle-stream'
+import { clearPayloadFile, DEFAULT_WORKER_TIMEOUT_MS, WorkerRunner } from '../../worker/workerRunner'
 import { workerNames } from '../prompt'
-
-interface WorkerResult {
-  worker: string
-  status: 'success' | 'error'
-  result: string
-}
 
 interface parallelDispatchParam { worker: string, task: string }
 
@@ -21,17 +18,18 @@ function formatWorkerResultsAsMarkdown(results: WorkerResult[]): string {
     const statusEmoji = r.status === 'success' ? '✅' : '❌'
     lines.push(`### ${statusEmoji} Worker: ${r.worker}`)
     lines.push(`**状态**: ${r.status}`)
+    if (r.error)
+      lines.push(`**错误**: ${r.error}`)
     lines.push('**结果**:')
     lines.push(r.result?.trim() ? r.result : '(无文本输出)')
+    lines.push(`**耗时**: ${r.durationMs}ms | exitCode: ${r.exitCode ?? 'N/A'} | signal: ${r.signal ?? 'N/A'}`)
     lines.push('')
   }
   return lines.join('\n').trim()
 }
 
-let worker_start = false
-
-export function isWorkerStart() {
-  return worker_start
+function createWorkerTaskId(workerName: string, dispatchId: string, index: number): string {
+  return `${workerName}-${dispatchId}-${index}`
 }
 
 export const workerTools = [
@@ -40,65 +38,91 @@ export const workerTools = [
       input: { assignments: Array<parallelDispatchParam> },
       config: any,
     ): Promise<string> => {
-      worker_start = true
-      const results: WorkerResult[] = await Promise.all(
-        input.assignments.map(async (assignment: parallelDispatchParam) => {
-          const workerId = assignment.worker
-          try {
-            const { agent, destroy } = await createChatAgent({ mode: 'simple', workerId })
+      const agentScriptPath = process.env.AGENT_SCRIPT_PATH
+      if (!agentScriptPath) {
+        throw new Error('AGENT_SCRIPT_PATH must be set by parent process')
+      }
+      const checkpointDir = env.CHECKPOINT_DIR
+      if (!checkpointDir) {
+        throw new Error('CHECKPOINT_DIR must be set before starting worker process')
+      }
 
-            const state = {
-              messages: [new HumanMessage({ content: assignment.task })],
-            }
+      const parentRunId = `run_${Date.now()}_${randomUUID().slice(0, 8)}`
+      const dispatchId = randomUUID().slice(0, 8)
+      const payloadDir = path.join(checkpointDir, 'worker-payloads')
+      await fs.mkdir(payloadDir, { recursive: true })
 
-            const result = await agent.stream(state, {
-              tags: [assignment.worker],
-              streamMode: ['messages', 'custom', 'tools'],
-              signal: config.signal,
-            })
+      const runners: WorkerRunner[] = []
+      const workerLabelMap = new Map<string, string>()
 
-            const streamState = new StreamState()
-            streamState.setTaskId(workerId)
+      for (const [index, assignment] of input.assignments.entries()) {
+        const workerTaskId = createWorkerTaskId(assignment.worker, dispatchId, index)
+        workerLabelMap.set(workerTaskId, assignment.worker)
+        const payloadPath = path.join(payloadDir, `${parentRunId}-${workerTaskId}-${randomUUID().slice(0, 8)}.json`)
 
-            for await (const rawChunk of result) {
-              const result = handleStream(rawChunk, streamState)
-              if (Array.isArray(result)) {
-                result.forEach(event => config.writer?.(event))
-              }
-              else if (result) {
-                config.writer?.(typeof result === 'object' ? JSON.stringify(result) : result)
-              }
-            }
+        const payload = {
+          protocolVersion: 1,
+          workerId: workerTaskId,
+          parentRunId,
+          conversationId: config.conversationId,
+          task: assignment.task,
+          timeoutMs: DEFAULT_WORKER_TIMEOUT_MS,
+          turnId: config.turnId,
+        }
+        await fs.writeFile(payloadPath, JSON.stringify(payload), 'utf8')
 
-            await destroy()
+        const runner = new WorkerRunner(
+          workerTaskId,
+          payloadPath,
+          agentScriptPath,
+          DEFAULT_WORKER_TIMEOUT_MS,
+          config.writer ?? (() => {}),
+          config.signal,
+        )
+        runners.push(runner)
+      }
 
-            config.writer?.(streamAdapter.workerResult({
-              taskId: workerId,
-              status: 'success',
-            }))
+      // Start all runners
+      for (const runner of runners) {
+        runner.start()
+      }
 
-            return {
-              worker: assignment.worker,
-              status: 'success' as const,
-              result: streamState.getLastChunkContent(),
-            }
+      // Wait for all workers to finish and exit
+      const settled = await Promise.allSettled(runners.map(r => r.promise))
+
+      const wasAborted = Boolean(config.signal?.aborted)
+
+      const results: WorkerResult[] = settled.map((s) => {
+        if (s.status === 'fulfilled') {
+          return {
+            ...s.value,
+            worker: workerLabelMap.get(s.value.worker) ?? s.value.worker,
           }
-          catch (error: any) {
-            config.writer?.(streamAdapter.workerResult({
-              taskId: workerId,
-              status: 'error',
-              error: error instanceof Error ? error.message : String(error),
-            }))
+        }
+        // Should not happen since WorkerRunner always resolves
+        return {
+          worker: 'unknown',
+          status: 'failed' as const,
+          result: '',
+          error: String(s.reason),
+          exitCode: null,
+          signal: null,
+          durationMs: 0,
+        }
+      })
 
-            return {
-              worker: assignment.worker,
-              status: 'error' as const,
-              result: error instanceof Error ? error.message : String(error),
-            }
-          }
-        }),
-      )
-      worker_start = false
+      // Sweep any leftover payload files for this run
+      await clearPayloadFile(checkpointDir, parentRunId)
+
+      if (wasAborted) {
+        config.writer?.(streamAdapter.orchestratorStopped({
+          status: 'failed',
+          reason: 'user',
+          message: 'Orchestrator stopped: User cancelled',
+        }))
+        throw new Error('User cancelled')
+      }
+
       return formatWorkerResultsAsMarkdown(results)
     },
     {

@@ -14,7 +14,7 @@ const rl = readline.createInterface({
 })
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo1743595549211'
+const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'WUYtoKyw5TvUT8iW1780026837812'
 
 const platformList = process.env.PLATFORM
   ? [process.env.PLATFORM === 'mac' ? 'macOS' : 'Windows']
@@ -33,14 +33,14 @@ const baseOssConfig = {
 }
 
 // 正式环境 agent 版本
-const prodVersion = '1.0.13'
+const prodVersion = '1.0.14'
 // 开发环境 agent 版本
-const devVersion = '2.2.68'
+const devVersion = '2.2.89'
 
 // 当前 agent 的版本
 const version = isProd ? prodVersion : devVersion
 // 此 agent 兼容的最低 app 版本
-const minAppVersion = isProd ? '3.8.7' : '7.6.6'
+const minAppVersion = isProd ? '3.8.8' : '7.6.6'
 
 /** compat-index.json 在 OSS 上的路径（不区分平台，由 app 侧根据 os 自行拼接脚本地址） */
 const compatIndexOssPath = '/public/package/agent/compat-index.json'
@@ -57,6 +57,9 @@ async function getOssToken() {
       },
     },
   )
+  if (!response.ok) {
+    throw new Error(`请求 oss token 失败: ${response.statusText}`)
+  }
   const result = await response.json()
   const { code, data, msg } = result
   if (code !== 0) {

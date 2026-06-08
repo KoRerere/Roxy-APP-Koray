@@ -6,6 +6,7 @@ import path from 'node:path'
 import { env } from '../config'
 import chatRoutes, { initChatRouteDirs } from './chatRoutes'
 import mcpRoutes from './mcpRoutes'
+import modelRoutes from './modelRoutes'
 import skillRoutes from './skillRoutes'
 
 /**
@@ -32,6 +33,9 @@ export function createApp(): Express {
 
   // MCP management routes
   app.use('/api/mcp', mcpRoutes)
+
+  // User model routes
+  app.use('/api/model', modelRoutes)
 
   // Skill management routes
   app.use('/api/skills', skillRoutes)

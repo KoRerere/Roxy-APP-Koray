@@ -26,10 +26,12 @@ export async function createUninstallFeedbackWindow(): Promise<BrowserWindow> {
     roxyWindowId: 'uninstall-feedback',
     width: 720,
     height: 400,
+    center: true,
     resizable: false,
     frame: false,
     transparent: true,
-    hasShadow: true,
+    // Windows 高 DPI 下 DWM 阴影不对称，易导致视觉居中偏下
+    hasShadow: !isWindows,
     roundedCorners: false,
     autoHideMenuBar: true,
     show: false,

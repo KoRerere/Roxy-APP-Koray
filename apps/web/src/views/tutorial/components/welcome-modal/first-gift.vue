@@ -3,11 +3,13 @@ import { API } from '/@/api'
 import { motion } from 'motion-v'
 import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
 import { FirstGiftType } from '/@/enums/pay'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const { next } = defineProps<{
   next: (type?: FirstGiftType) => void | Promise<void>
 }>()
 
+const { getVideoSource } = useSimpleLocale()
 const firstGift = ref()
 const chooseType = ref()
 const showGuide = ref(false)
@@ -107,7 +109,7 @@ async function onConfirm() {
     <motion.div v-if="showGuide" :initial="{ y: -40, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :transition="{ duration: 0.4, ease: 'easeOut' }">
       <div class="h-110 flex justify-center items-center gap-12">
         <video class="block w-100 rounded-md" autoplay muted loop playsinline>
-          <source src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/tour-hide-guide.mp4" type="video/webm">
+          <source :src="getVideoSource('tour-hide-guide.mp4')" type="video/webm">
         </video>
         <div class="flex flex-col gap-2 w-90">
           <div class="title">

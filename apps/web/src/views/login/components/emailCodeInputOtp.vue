@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { clearMpDistinctId, getMpDistinctId } from '/@/api/util'
 
 import { useLoginContext } from '../hooks/useLoginContext'
 import SignCardHeader from './sign-card-header.vue'
@@ -96,9 +97,11 @@ async function handleSubmit() {
     user_name: signFormData.user_name.split('@')[0].replace(/[^a-z0-9]/gi, '').slice(0, 20),
     email: signFormData.user_name,
     ver_code: emailCode.value,
+    distinctId: getMpDistinctId(),
   })
   if (code === 0) {
     globalThis.electronAPI.send('util:clearInstallerPath')// 清空安装时生成的邀请码，如果有的话
+    clearMpDistinctId()
     await toSignIn()
     mixpanel.track('signUp', {
       method: 'email',

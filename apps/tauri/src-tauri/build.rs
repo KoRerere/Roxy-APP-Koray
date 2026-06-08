@@ -114,6 +114,11 @@ fn main() {
     ]
     .map(|p| app_root.join(p));
 
+    println!(
+        "cargo:rerun-if-changed={}",
+        manifest_dir.join("tauri.firefox.conf.json").display()
+    );
+
     for p in &watch_files {
         println!("cargo:rerun-if-changed={}", p.display());
     }

@@ -1,18 +1,10 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { isPackaged, isProd, isWindows } from '/@/constants/common'
-// import { store } from '/@/modules/store'
 
 const sessionDir = app.getPath('sessionData')
 const roxyDataDirName = isProd ? '.roxybrowser' : '.roxybrowser-dev'
 const roxyDataDir = join(app.getPath('home'), roxyDataDirName)
-
-let store
-
-// 延迟获取 store，避免循环依赖问题
-import('/@/modules/store').then((mod) => {
-  store = mod.store
-})
 
 export const appConfig = {
   /** Electron 会话数据目录（sessionData），用于缓存/临时文件/运行期数据 */
@@ -27,16 +19,6 @@ export const appConfig = {
   chromeBinDir: join(sessionDir, 'chrome-bin'),
   /** firefox 内核缓存目录 */
   firefoxBinDir: join(sessionDir, 'firefox-bin'),
-  /** Firefox 动态图标缓存目录（按 windowSortNum 缓存 .ico，跨 Win/Mac/Linux 通用） */
-  firefoxIconsCacheDir: join(sessionDir, 'firefox-icons'),
-  /** 浏览器缓存根目录 */
-  get browserCacheRootDir() {
-    return store.browserCacheRootDir
-  },
-  /** 浏览器扩展目录 */
-  get browserExtensionsDir() {
-    return join(this.browserCacheRootDir, 'RoxyExtensions')
-  },
   /** 临时文件目录 */
   tempDir: join(sessionDir, 'temp'),
   /** 应用日志目录 */

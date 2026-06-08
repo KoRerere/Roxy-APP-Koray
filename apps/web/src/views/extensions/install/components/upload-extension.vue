@@ -90,7 +90,11 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">{{ $t('每日总扩展添加数量限制为 5 个。') }}</span>
+        <span class="upload-tip">{{ $t('每日总扩展添加数量限制为 {count} 个。', { count: 50 }) }}</span>
+      </div>
+      <div class="flex items-center gap-1 mt-1">
+        <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
+        <span class="upload-tip">{{ $t('当前仅支持 Google 扩展，暂不支持 Firefox 扩展。') }}</span>
       </div>
     </div>
 

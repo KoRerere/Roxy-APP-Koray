@@ -134,4 +134,15 @@ export interface StoreType {
   lastWebDomain?: string
   /** 是否第一次清除 web 缓存 */
   isFirstClearWebCache: boolean
+  /** 上次选择的网络线路 */
+  lastSelectedNetworkNode: 'auto' | {
+    /** 站点域名 */
+    site: string
+    /** 网关域名 */
+    gate: string
+    /** API 域名 */
+    api: string
+  }
+  /** 窗口名称开关 */
+  windowNameSwitch?: boolean
 }

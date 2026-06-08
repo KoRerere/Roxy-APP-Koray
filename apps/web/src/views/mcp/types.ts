@@ -4,10 +4,13 @@ export interface AttachmentInfo {
   fileName: string
   mimeType: string
   size: number
-  /** 用于展示的 URL（图片预览或服务器文件地址） */
   url?: string
+  localUrl?: string
+  remoteUrl?: string
+  fileUrl?: string
   preview?: string
   source?: 'upload' | 'generated'
+  uploadStatus?: 'uploading' | 'uploaded'
 }
 
 export type InputScene = 'automation' | 'asset'
@@ -19,11 +22,15 @@ export interface AssetGenerationOptions {
 }
 
 export interface GeneratedImageInfo {
+  assetId?: string
   fileId: string
   fileName: string
   mimeType?: string
   size?: number
   url?: string
+  localUrl?: string
+  remoteUrl?: string
+  fileUrl?: string
   prompt?: string
   /** true 表示该图片仍在生成中（占位状态） */
   isPending?: boolean
@@ -40,7 +47,7 @@ export interface HitlDecision {
 
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'worker_stopped' | 'orchestrator_stopped' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
   data?: {
     sessionId?: string
     workerId?: string
@@ -50,6 +57,8 @@ export interface SSEEventData {
     result?: string
     et?: number
     status?: ToolCallStatus | WorkerStatus
+    reason?: string
+    error?: string
     text?: string
     taskId?: string
     thinkingId?: string
@@ -61,7 +70,16 @@ export interface SSEEventData {
     title?: string
     interruptsId?: string
     decisions?: HitlDecision[]
-    // image generation
+    /** error event（见 roxy-agent docs/error_codes.md，前端优先用 code 分支） */
+    code?: string
+    category?: string
+    retryable?: boolean
+    requestId?: string
+    source?: 'local' | 'upstream' | 'agent'
+    httpStatus?: number
+    /** @deprecated 旧字段，等于 httpStatus，仅兼容历史 .sse 回放 */
+    errorCode?: number
+    /** image generation */
     count?: number
     index?: number
     image?: GeneratedImageInfo

@@ -47,4 +47,6 @@ apps/electron/buildResources/installer.nsh
 apps/electron/buildResources/pkg-scripts/postinstall
 apps/electron/.firefox-icon-test
 .pnpm-store
-.claude/settings.local.json
+
+HANDOFF.md
+.vscode/launch.json

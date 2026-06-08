@@ -1,6 +1,7 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { getCurrentScope } from '@sentry/electron/main'
 import path from 'node:path'
+import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { browserManager } from '/@/modules/browser'
 import { initDictCache } from '/@/modules/dict'
@@ -21,6 +22,10 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
       username: userInfo.userName,
       email: userInfo.email,
     }
+
+    // if (userInfo.userId) {
+    //   getGatewayConfig()
+    // }
 
     const scope = getCurrentScope()
     scope.setUser({

@@ -17,10 +17,15 @@ export interface AgentConfig {
 export interface AgentInstance {
   agent: DeepAgent
   destroy: () => Promise<void>
+  imageProviderOptions?: {
+    imageModel?: string
+    imageProtocol?: string
+  }
 }
 
 export { createChatAgent } from './agent/chat'
 export { createClawAgent } from './agent/claw'
+export { createImageAgent } from './agent/image'
 export { createScriptAgent } from './agent/script'
 
 export async function deleteCheckpoint(conversationId: string): Promise<void> {

@@ -1,5 +1,4 @@
 import type { AxiosResponse } from 'axios'
-import { isEqual } from 'es-toolkit'
 import { coreManager } from '/@/modules/browser'
 import { parseHeaderParams } from './util'
 
@@ -21,7 +20,14 @@ export async function checkFirefoxCoreVersion(response: AxiosResponse<any, any>)
     console.error('checkFirefoxCoreVersion parseHeaderParams error', error)
   }
 
-  if (isEqual(core_last_version_list, coreManager.firefoxCoreManager.lastCoreVersionList) || isCheckingCoreVersion) {
+  // 以 lastCoreVersionList 的 key 为准，只要有任意一个 key 在新版本列表中的值发生了变化，才触发重新拉取
+  const lastVersionList = coreManager.firefoxCoreManager.lastCoreVersionList
+  const hasChanged = Object.keys(lastVersionList).some(
+    key => core_last_version_list[key] !== undefined
+      && core_last_version_list[key] !== lastVersionList[key],
+  )
+
+  if (!hasChanged || isCheckingCoreVersion) {
     return
   }
 

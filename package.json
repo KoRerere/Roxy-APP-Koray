@@ -49,6 +49,7 @@
     "publish:app:prod:noPack": "cross-env NODE_ENV=production tsx scripts/publish.ts",
     "publish:app:mac:dev": "pnpm -F roxybrowserdev run pack:app:mac:dev && pnpm run publish:app:dev:noPack",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
+    "openapi:agent": "pnpm -F @roxy/agent-api run openapi",
     "genLanguage": "pnpm -F web run genLanguage",
     "postinstall": "npm run build:pkg && npm run install:electron",
     "lint": "turbo run lint",
@@ -83,7 +84,7 @@
     "@unocss/eslint-plugin": "^66.6.6",
     "adm-zip": "^0.5.17",
     "ali-oss": "^6.23.0",
-    "axios": "^1.16.0",
+    "axios": "^1.16.1",
     "bytenode": "^1.5.7",
     "cross-env": "^10.1.0",
     "eslint": "10.4.0",
@@ -98,8 +99,14 @@
     "tsx": "^4.21.0",
     "turbo": "^2.8.13",
     "typescript": "^6.0.3",
-    "unplugin-dts": "^1.0.0",
-    "vite": "^8.0.13"
+    "unplugin-dts": "^1.0.2",
+    "vite": "^8.0.16"
+  },
+  "pnpm": {
+    "supportedArchitectures": {
+      "os": ["current", "darwin"],
+      "cpu": ["current", "x64", "arm64"]
+    }
   },
   "overrides": {
     "@electron/rebuild>node-gyp": "^12.1.0"

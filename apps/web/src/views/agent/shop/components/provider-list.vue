@@ -19,6 +19,7 @@ const { getProxyVendors } = useProxyStore()
 const providers = ref()
 const activeKey = ref()
 const currentProvider = ref()
+const autoJump = ref(provider?.autoJump)
 
 onBeforeMount(() => {
   getProviders()
@@ -69,7 +70,7 @@ function toRola() {
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="32" @click="$emit('close')" />
       </div>
       <div v-if="currentProvider" class="flex-1 flex flex-col overflow-hidden content">
-        <ProviderExternal v-if="currentProvider.isJump" :data="currentProvider" />
+        <ProviderExternal v-if="currentProvider.isJump" v-model:auto-jump="autoJump" :data="currentProvider" />
         <ProviderBuy v-else :data="currentProvider" :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)" />
       </div>
     </template>

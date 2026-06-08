@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { h } from 'vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'

@@ -20,13 +20,14 @@ import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './form-inputs'
+import { createFormAsyncGate } from './hooks/useAsyncGate'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getDictMap, getFormDataByList, getLocalStorageDriverStatus, isEmptyValue, setInputValue, setLocalStorageDriverStatus } from '/@/utils'
 import { CoreType } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
-import { withModifiers } from 'vue'
+import { h, withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 
@@ -72,6 +73,7 @@ const metaData = ref<WindowMetaData>({
   windowRemark: '',
 })
 const loading = ref(false)
+const formGate = createFormAsyncGate()
 const collapsed = ref(false)
 
 const accordions = ref({
@@ -110,6 +112,8 @@ const items = computed(() => [
 ])
 
 const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100))
+
+const canCreate = computed(() => formGate.isReady.value && !loading.value)
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -203,13 +207,13 @@ async function getTemplateList() {
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
-  const [inputsGroup, _original] = await getInputsGroup(template, showToast)
+  const [inputsGroup, _original] = await getInputsGroup(template, showToast, formGate)
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
   mainSetting.value = windowInputs
   extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
-  onUpdateFinger()
+  await onUpdateFinger()
 }
 
 async function getSettings() {
@@ -321,7 +325,7 @@ async function onShuffle() {
 }
 
 async function onUpdateFinger() {
-  const data = await ceateRandomFinger(previewInputs.value)
+  const data = await formGate.run(() => ceateRandomFinger(previewInputs.value))
   Object.assign(original.value, data[0])
 }
 
@@ -429,6 +433,7 @@ function importSuccess(data: any) {
 }
 
 async function createProfile(openBrowser: boolean) {
+  await formGate.waitUntilReady()
   clearDriver()
   const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(inputsGroup.value, _metaData)
@@ -649,42 +654,42 @@ function onBack(data?: any, openBrowser = false) {
   <div class="relative flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs />
-    <div class="flex flex-1 px-16 overflow-hidden overflow-x-auto">
-      <div class="w-full h-full flex flex-col ma-auto" :class="[collapsed ? 'min-w-[768px] max-w-[768px]' : 'min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex min-w-0 gap-8 overflow-hidden">
-          <div class="flex min-w-0 flex-1 flex-col">
-            <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
-              <div class="flex items-center justify-between">
-                <div class="subtitle">
-                  {{ $t('窗口数量') }}
-                </div>
-                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-30" />
+    <div class="px-16 flex flex-1 overflow-hidden overflow-x-auto">
+      <div class="w-full h-full flex gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
+        <div class="flex min-w-0 flex-1 flex-col">
+          <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
+            <div class="flex items-center justify-between">
+              <div class="subtitle">
+                {{ $t('窗口数量') }}
               </div>
-              <div class="select-none multiple-tip">
-                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
-              </div>
+              <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-30" />
             </div>
-            <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
-              <template #before>
-                <ImportWindow v-if="tabsValue === 'import'" v-model:error="fileAnalyzeError" class="pt-4" @import-success="importSuccess" />
-                <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
-                  <div class="subtitle">
-                    {{ $t('窗口信息') }}
-                  </div>
-                  <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)" />
-                </div>
-              </template>
-            </AccordionInputs>
+            <div class="select-none multiple-tip">
+              {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+            </div>
           </div>
-          <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="tabsValue === 'import'" :on-shuffle="onShuffle"
-                       :choose-preset="choosePreset"
-          />
+          <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+            <template #before>
+              <ImportWindow v-if="tabsValue === 'import'" v-model:error="fileAnalyzeError" class="pt-4" @import-success="importSuccess" />
+              <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
+                <div class="subtitle">
+                  {{ $t('窗口信息') }}
+                </div>
+                <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)" />
+              </div>
+            </template>
+          </AccordionInputs>
         </div>
-        <div class="relative flex items-center justify-end gap-2 py-4 min-h-16 footer">
-          <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
-          <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-          <RxButton class="guide2" :label="$t('创建窗口')" @click.stop="createProfile(false)" />
-        </div>
+        <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="tabsValue === 'import'" :on-shuffle="onShuffle"
+                     :choose-preset="choosePreset"
+        />
+      </div>
+    </div>
+    <div class="px-16">
+      <div class="mx-auto relative flex items-center justify-end gap-2 py-4 min-h-16 footer" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
+        <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
+        <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+        <RxButton v-tooltip.top="canCreate ? '' : $t('正在生成新指纹，请稍后')" class="guide2" :label="$t('创建窗口')" :disabled="!canCreate" :loading="loading" @click.stop="createProfile(false)" />
       </div>
     </div>
     <div class="foot-separator" />

@@ -15,6 +15,7 @@ export const defaultCLIArgs = [
 
 /** 默认的 Firefox 浏览器启动参数 */
 export const firefoxDefaultCLIArgs = [
+  '--marionette',
   '--remote-debugging-port=0',
 ]
 

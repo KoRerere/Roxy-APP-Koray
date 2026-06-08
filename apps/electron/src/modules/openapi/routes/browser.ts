@@ -326,21 +326,40 @@ router.post('/random_env', async (req, res) => {
 
 /** 清空窗口本地缓存 */
 router.post('/clear_local_cache', async (req, res) => {
-  const { dirIds } = req.body
+  const { dirIds, type = 'all', workspaceId } = req.body
 
   if (!Array.isArray(dirIds)) {
     return res.error('dirIds is required')
   }
 
-  const promiseArr = dirIds.map(dirId => browserManager.removeLocalData(dirId))
+  const validTypes = ['partial', 'all', 'cloud'] as const
+  if (!validTypes.includes(type)) {
+    return res.error('type must be one of: partial, all, cloud')
+  }
+
+  if (type === 'cloud' && !workspaceId) {
+    return res.error('workspaceId is required when type is cloud')
+  }
+
   try {
-    await Promise.all(promiseArr)
+    if (type === 'partial') {
+      await Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalDataExcludeExtension(dirId)))
+    }
+    else if (type === 'all') {
+      await Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
+    }
+    else if (type === 'cloud') {
+      await Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
+      const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
+      if (result.code !== 0) {
+        return res.error(result.msg)
+      }
+    }
+    res.success()
   }
   catch (error) {
     console.error('clear_local_cache error', error)
-  }
-  finally {
-    res.success()
+    res.error(error)
   }
 })
 

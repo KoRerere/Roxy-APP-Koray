@@ -1,5 +1,5 @@
 import './polyfill'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
 import { getCookie } from '/@/utils'
@@ -8,12 +8,18 @@ globalThis.isElectron = Boolean(globalThis.electronAPI)
 
 queueMicrotask(async () => {
   if (globalThis.isElectron) {
+    globalThis.electronAPI.send('app:getAppVersion').then((appVersion) => {
+      globalThis.$appVersion = appVersion
+    })
+
     import('./web-auto-updater')
 
     globalThis.electronAPI.send('app:getSoftConfig').then((softConfig) => {
-      const { language, token } = softConfig
+      const { language, token, lastSelectedNetworkNode = 'auto' } = softConfig
 
-      console.debug('init', { language, token })
+      console.debug('init', { language, token, lastSelectedNetworkNode })
+
+      globalThis.$lastSelectedNetworkNode = lastSelectedNetworkNode
 
       setupI18n({ defaultLocale: language as SupportedLanguagesType }).finally(async () => {
         const { app } = await import('./app')
@@ -34,6 +40,7 @@ queueMicrotask(async () => {
     const searchParams = new URLSearchParams(window.location.search)
     const officialSiteLang = searchParams.get('official-site-lang')
     const officialSiteInviteCode = searchParams.get(OFFICIAL_SITE_INVITE_CODE)
+    const mpDistinctId = searchParams.get(MP_DISTINCT_ID)
     const jumpReferer = searchParams.get('jump-referer')
     const officialSiteRedirect = searchParams.get('official-site-redirect')
     const localeHandoffToken = searchParams.get(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
@@ -44,6 +51,10 @@ queueMicrotask(async () => {
 
     if (officialSiteInviteCode) {
       localStorage.setItem(OFFICIAL_SITE_INVITE_CODE, officialSiteInviteCode)
+    }
+
+    if (mpDistinctId) {
+      localStorage.setItem(MP_DISTINCT_ID, mpDistinctId)
     }
     let cacheData = { currentLocale: officialSiteLang }
 

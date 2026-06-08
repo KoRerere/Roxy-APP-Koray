@@ -70,8 +70,13 @@ const SCRIPT_AGENT_SYSTEM_PROMPT
 
 export async function createScriptAgent(options: {
   conversationId?: string
+  turnId?: string
 }): Promise<AgentInstance> {
-  const model = await createLLM(true)
+  const model = await createLLM({
+    enableThinking: true,
+    conversationId: options.conversationId,
+    turnId: options.turnId,
+  })
 
   let checkpointer
   if (options.conversationId) {

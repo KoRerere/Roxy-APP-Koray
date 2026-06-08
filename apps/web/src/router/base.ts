@@ -65,5 +65,38 @@ export const baseRoutes: RouteRecordRaw[] = [
     path: '/mcp',
     meta: { title: 'MCP' },
     component: () => import('/@/views/mcp/index.vue'),
+    redirect: { name: 'mcp-chat' },
+    children: [
+      {
+        name: 'mcp-chat',
+        path: 'chat',
+        meta: { title: 'MCP Chat' },
+        component: () => import('/@/views/mcp/chat/chat-view.vue'),
+      },
+      {
+        name: 'mcp-settings',
+        path: 'settings',
+        meta: { title: 'MCP Settings' },
+        component: () => import('/@/views/mcp/settings/settings-view.vue'),
+      },
+      {
+        name: 'mcp-skills-store',
+        path: 'skills-store',
+        meta: { title: 'Skills Store' },
+        component: () => import('/@/views/mcp/skills-store/index.vue'),
+      },
+      {
+        name: 'mcp-points',
+        path: 'points',
+        meta: { title: 'Points' },
+        component: () => import('/@/views/mcp/points/points-view.vue'),
+      },
+      {
+        name: 'mcp-scripts',
+        path: 'scripts',
+        meta: { title: 'MCP Scripts' },
+        component: () => import('/@/views/mcp/scripts/scripts-view.vue'),
+      },
+    ],
   },
 ]

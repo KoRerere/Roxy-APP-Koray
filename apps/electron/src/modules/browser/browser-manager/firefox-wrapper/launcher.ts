@@ -24,7 +24,10 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
   }
 
   if (relaunch) {
-    // Firefox 同 profile 再次 spawn 会新开实例；聚焦由 BeforeLaunchTask.focusExistingFirefoxBrowser 通过 BiDi 完成
+    spawn(executablePath, args, {
+      detached: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
     return
   }
 
@@ -34,6 +37,11 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
+  console.debug('firefoxProcess pid', firefoxProcess?.pid)
+
+  // 暂存 Marionette 端口（通过 stdout 解析，早于 BiDi URL 打印；若未能解析则兜底用 BiDi 端口 - 1）
+  let marionettePort: number | undefined
+
   // 等待获取 WebSocket URL
   const wsUrl = await new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -41,14 +49,23 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     }, 30000)
 
     firefoxProcess.stdout?.on('data', (data) => {
-      console.debug('[firefox stdout]', data.toString())
+      const output = data.toString()
+      console.debug('[firefox stdout]', output)
+
+      // 解析 Marionette 端口，格式示例（来自 stdout）：
+      // "1779936938036    Marionette      INFO    Listening on port 2828"
+      const marionetteMatch = output.match(/Marionette\s+INFO\s+Listening on port\s+(\d+)/)
+      if (marionetteMatch && !marionettePort) {
+        marionettePort = Number.parseInt(marionetteMatch[1], 10)
+        console.log('Extracted marionettePort from stdout:', marionettePort)
+      }
     })
 
     firefoxProcess.stderr?.on('data', (data: ArrayBuffer) => {
       const output = Buffer.from(data).toString()
       console.debug('[firefox stderr]', output)
 
-      // 解析 WebDriver BiDi WebSocket URL
+      // 解析 WebDriver BiDi WebSocket URL（来自 stderr）
       const match = output.match(/WebDriver BiDi listening on (ws:\/\/\S+)/)
       if (match) {
         clearTimeout(timeout)
@@ -99,6 +116,10 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
       console.warn('Failed to extract port from WebSocket URL:', error)
     }
 
+    // Marionette 端口：优先取 stderr 解析值，兜底用 BiDi 端口 - 1（本项目 Firefox 构建约定）
+    const resolvedMarionettePort = marionettePort ?? (actualPort !== undefined ? actualPort - 1 : undefined)
+    console.log('Resolved marionettePort:', resolvedMarionettePort)
+
     // 创建并返回 FirefoxBrowser 实例
     return new FirefoxBrowser(
       bidiClient,
@@ -107,6 +128,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
       sessionId,
       capabilities,
       actualPort,
+      resolvedMarionettePort,
     )
   }
   catch (error) {

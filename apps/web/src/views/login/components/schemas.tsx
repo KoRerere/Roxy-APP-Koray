@@ -2,6 +2,7 @@ import PhoneInput from '/@/views/login/components/phone-login/phone.vue'
 import CodeInput from '/@/views/login/components/phone-login/code.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormInputPassword from '/@/views/lab/components/form/m-input-password.vue'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { defineFormSchema } from '/@/components/rx-form/'
 
 import { z } from 'zod'
@@ -57,7 +58,55 @@ export function checkEmailValid(email: string) {
   }
 }
 
-export function getFormSchemas(isRegister = false) {
+function isEmailFormFieldsReady(userName?: string) {
+  return checkEmailValid(userName ?? '') && !emailValidateLoading.value
+}
+
+function renderInviteCodeLink(showInviteCodeInput: Ref<boolean>) {
+  return () => (
+    <div
+      class="flex items-center justify-center gap-1.5 cursor-pointer"
+      onClick={() => { showInviteCodeInput.value = !showInviteCodeInput.value }}
+    >
+      <span class="tt-secondary text-3.25 font-500">{$t('我有邀请码')}</span>
+      <RxSvgIcon class={`transition-transform duration-200 ${showInviteCodeInput.value ? 'rotate-180' : ''}`} name="base/rx_ic_chevron_down" />
+    </div>
+  )
+}
+
+const inviteCodeFieldProps = {
+  size: 'lg' as const,
+  preIcon: 'base/rx_ic_binary',
+  feedback: false,
+  toggleMask: true,
+  placeholder: $t('邀请码（选填）'),
+}
+
+export function getFormSchemas(
+  isRegister = false,
+  options?: { hideInviteCode?: boolean, autoExpandInviteCode?: boolean },
+) {
+  /** 非中文邮箱：默认显示切换按钮且折叠，仅接口确认新用户后自动展开；中文邮箱不展示 */
+  const enableInviteCode = !options?.hideInviteCode
+  const showInviteCodeInput = ref(enableInviteCode && !!options?.autoExpandInviteCode)
+
+  const inviteCodeSchemas = enableInviteCode
+    ? defineFormSchema([
+        {
+          field: '_inviteCodeLink',
+          component: renderInviteCodeLink(showInviteCodeInput),
+        },
+        {
+          field: 'inviteCode',
+          component: ({ formModel }: any) => {
+            return <TsFormInputText v-model={formModel.value.inviteCode}></TsFormInputText>
+          },
+          vIf: () => showInviteCodeInput.value,
+          componentProps: inviteCodeFieldProps,
+        },
+      ])
+    : []
+
   return defineFormSchema([
     ...getEmailSchemas(isRegister),
     {
@@ -65,9 +114,7 @@ export function getFormSchemas(isRegister = false) {
       component: ({ formModel }) => {
         return <TsFormInputPassword v-model={formModel.value.password}></TsFormInputPassword>
       },
-      vIf: ({ formModel }) => {
-        return checkEmailValid(formModel.value.user_name) && !emailValidateLoading.value
-      },
+      vIf: ({ formModel }) => isEmailFormFieldsReady(formModel.value.user_name),
       componentProps: {
         size: 'lg',
         preIcon: 'base/rx_ic_unlock',
@@ -86,27 +133,15 @@ export function getFormSchemas(isRegister = false) {
         },
       },
     },
-    {
-      field: 'inviteCode',
-      component: ({ formModel }: any) => {
-        return <TsFormInputText v-model={formModel.value.inviteCode}></TsFormInputText>
-      },
-      vIf: ({ formModel }) => {
-        return checkEmailValid(formModel.value.user_name) && !emailValidateLoading.value && isRegister
-      },
-      componentProps: {
-        size: 'lg',
-        preIcon: 'base/rx_ic_binary',
-        feedback: false,
-        toggleMask: true,
-        placeholder: $t('邀请码（选填）'),
-      },
-    },
+    ...inviteCodeSchemas,
   ])
 }
 
 export function getPhoneSchemas() {
-  const isRegistered = ref()
+  const isRegistered = ref<boolean | undefined>()
+  const showInviteCodeInput = ref(false)
+
+  const shouldShowInviteCodeInput = () => showInviteCodeInput.value
 
   return defineFormSchema([
     {
@@ -133,7 +168,14 @@ export function getPhoneSchemas() {
       field: 'verCode',
       component: ({ formModel }) => {
         return (
-          <CodeInput v-model={formModel.value.verCode} phone={formModel.value.phone} v-model:isRegistered={isRegistered.value}></CodeInput>
+          <CodeInput
+            v-model={formModel.value.verCode}
+            phone={formModel.value.phone}
+            isRegistered={isRegistered.value}
+            onUpdate:isRegistered={(val) => { isRegistered.value = val }}
+            showInviteCodeInput={showInviteCodeInput.value}
+            onUpdate:showInviteCodeInput={(val) => { showInviteCodeInput.value = val }}
+          />
         )
       },
       componentProps: {
@@ -151,18 +193,16 @@ export function getPhoneSchemas() {
       },
     },
     {
+      field: '_inviteCodeLink',
+      component: renderInviteCodeLink(showInviteCodeInput),
+    },
+    {
       field: 'inviteCode',
       component: ({ formModel }: any) => {
         return <TsFormInputText v-model={formModel.value.inviteCode}></TsFormInputText>
       },
-      vIf: () => isRegistered.value === false,
-      componentProps: {
-        size: 'lg',
-        preIcon: 'base/rx_ic_binary',
-        feedback: false,
-        toggleMask: true,
-        placeholder: $t('邀请码（选填）'),
-      },
+      vIf: shouldShowInviteCodeInput,
+      componentProps: inviteCodeFieldProps,
     },
   ])
 }

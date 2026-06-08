@@ -11,7 +11,7 @@ import CookiesItem from './cookies.vue'
 import OsSwitch from './os-switch.vue'
 import { $t } from '/@/locales/index.js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { copyText } from '/@/utils/'
+import { copyText, findInputByName } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
 interface Props {
@@ -29,6 +29,11 @@ const settings = computed(() => {
     basic,
     others,
   }
+})
+
+const cookiePlatformUrls = computed(() => {
+  const platformList = findInputByName(settings.value.basic, 'windowPlatformList')?.value ?? []
+  return platformList.map((item: any) => item.platformUrl).filter(Boolean)
 })
 
 function onCopy(dirId: string) {
@@ -94,7 +99,7 @@ function onCopy(dirId: string) {
           <UserAgentField :input="input" :inputs-group="inputsGroup" />
         </template>
         <template #cookies="{ input }">
-          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" :platform-urls="cookiePlatformUrls" v-bind="input" />
         </template>
         <template #proxy="{ input }">
           <div class="-mt-5 px-4 py-6 w-full dashed-border">

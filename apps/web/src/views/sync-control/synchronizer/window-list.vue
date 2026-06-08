@@ -3,6 +3,7 @@ import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
+import { RxAlert } from '/@/components/rx-alert'
 import { useToast } from 'primevue/usetoast'
 import { useUserStore } from '/@/stores/user'
 import { useMutationObserver } from '@vueuse/core'
@@ -293,7 +294,7 @@ async function handleRowSelectAll() {
 }
 
 function setMainControlWindow(data: any) {
-// isSyncing.value || (mainControlWindowDirId.value = data.dirId)
+  // isSyncing.value || (mainControlWindowDirId.value = data.dirId)
   if (!isSyncing.value) {
     mainControlWindowDirId.value = data.dirId
     useSetDefaulted = true
@@ -313,37 +314,40 @@ function handleValueChange(val: any[]) {
 
 <template>
   <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multiple-operation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-           :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" :table-sort="getSorts" class="sync-control-table" :class="{ 'syncing': isSyncing, 'no-data': tableFilterData.length === 0 }"
-           v-bind="$attrs" @row-select-all="handleRowSelectAll" @value-change="handleValueChange"
+           :show-actions="false" :show-display="false" :show-reload="false" :context-menu="false" :table-sort="getSorts" class="sync-control-table"
+           :class="{ 'syncing': isSyncing, 'no-data': tableFilterData.length === 0 }" v-bind="$attrs" @row-select-all="handleRowSelectAll" @value-change="handleValueChange"
   >
     <template v-if="!isSyncing && tableData.length" #table-header>
-      <div class="w-full flex gap-2.5">
-        <TsFormMultiSelect v-for="{ name, ...other } in searchList" :key="name" v-model="searchParams[name as keyof typeof searchParams]" class="flex-1 min-w-0" v-bind="other" size="xxs"
-                           :max-selected-labels="1" :show-toggle-all="false" :filter="false"
-        >
-          <template #option="slotProps">
-            <template v-if="name === 'labelIds'">
-              <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
-                <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
-                <span class="text-3.25">{{ slotProps.option.label }}</span>
-              </div>
+      <div class="w-full flex flex-col gap-2">
+        <div class="w-full flex gap-2.5">
+          <TsFormMultiSelect v-for="{ name, ...other } in searchList" :key="name" v-model="searchParams[name as keyof typeof searchParams]" class="flex-1 min-w-0" v-bind="other" size="xxs"
+                             :max-selected-labels="1" :show-toggle-all="false" :filter="false"
+          >
+            <template #option="slotProps">
+              <template v-if="name === 'labelIds'">
+                <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
+                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
+                  <span class="text-3.25">{{ slotProps.option.label }}</span>
+                </div>
+                <div v-else class="flex items-center">
+                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
+                  </svg>
+                  <div class="text-3.25 ellipsis-1">
+                    {{ slotProps.option.labelName }}
+                  </div>
+                </div>
+              </template>
               <div v-else class="flex items-center">
-                <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
-                </svg>
-                <div class="text-3.25 ellipsis-1">
-                  {{ slotProps.option.labelName }}
+                <div class="text-3.25">
+                  {{ slotProps.option.label }}
                 </div>
               </div>
             </template>
-            <div v-else class="flex items-center">
-              <div class="text-3.25">
-                {{ slotProps.option.label }}
-              </div>
-            </div>
-          </template>
-        </TsFormMultiSelect>
-        <TsFormInputText v-model="searchParams.windowName" :field-props="{ class: 'flex-1 min-w-0' }" pre-icon="base/rx_ic_magnify" size="xxs" :placeholder="$t('搜索窗口')" />
+          </TsFormMultiSelect>
+          <TsFormInputText v-model="searchParams.windowName" :field-props="{ class: 'flex-1 min-w-0' }" pre-icon="base/rx_ic_magnify" size="xxs" :placeholder="$t('搜索窗口')" />
+        </div>
+        <RxAlert class="!w-full" type="info" :title="$t('火狐内核的窗口暂不支持窗口同步功能')" :closable="false" />
       </div>
     </template>
     <template #table-empty>
@@ -353,8 +357,18 @@ function handleValueChange(val: any[]) {
           <div class="whitespace-pre-wrap text-[var(--colors-text-text-tertiary)] text-3.5">
             {{ $t('窗口同步：即窗口群控，可同时控制多个窗口，实现鼠标同步，键盘同步，大幅提高工作效率。') }}
           </div>
-          <div class="mt-[16px] whitespace-pre-wrap text-[var(--colors-text-text-tertiary)] text-3.5">
-            {{ $t('注意：不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
+          <div>
+            <div class="whitespace-pre-wrap tt-tertiary text-3.5">
+              {{ $t('注意:') }}
+            </div>
+            <ol class="ma-0 mt-1 pl-8 flex flex-col gap-1">
+              <li class="whitespace-pre-wrap tt-tertiary text-3.5">
+                {{ $t('不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
+              </li>
+              <li class="whitespace-pre-wrap tt-tertiary text-3.5">
+                {{ $t('火狐内核的窗口暂不支持窗口同步功能') }}
+              </li>
+            </ol>
           </div>
           <div v-if="false" class="mt-3">
             <i18n-t :keypath="$t('更多的文档说明，请访问：{link}', { link: '{link}' })" scope="global">

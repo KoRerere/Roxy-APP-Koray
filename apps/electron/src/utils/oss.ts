@@ -50,6 +50,21 @@ const _aliOSS = new class AliOSS {
       accessKeySecret: data.accessKeySecret,
       bucket: data.bucket,
       stsToken: data.securityToken,
+      /**
+       * 自动刷新 STS 凭证，避免 token 过期后请求失败
+       */
+      refreshSTSToken: async () => {
+        const { code, data: tokenData, msg } = await API.base.userGetOssCredentialV2List({ headers: { workspaceId } })
+        if (code !== 0) {
+          return Promise.reject(msg)
+        }
+        return {
+          accessKeyId: tokenData.accessKeyId,
+          accessKeySecret: tokenData.accessKeySecret,
+          stsToken: tokenData.securityToken,
+        }
+      },
+      refreshSTSTokenInterval: 8 * 60 * 1000, // 每 8 分钟自动刷新（凭证有效期约 15 分钟）
     })
     console.debug('aliOSS init success', data)
     // 避免存在多个定时器

@@ -1,8 +1,7 @@
 import ExcelJS from 'exceljs'
 import { format } from 'date-fns'
-
 import { API } from '/@/api'
-import { getDictMap, isDev, safeParseJSON } from '/@/utils'
+import { getDictMap, isDev, parseImportCookies, safeParseJSON } from '/@/utils'
 import { parseIntelligent } from '/@/views/account/create/utils'
 import { CoreType } from '/@/enums'
 
@@ -218,12 +217,12 @@ async function getExportColumns() {
       key: 'cookie',
       placeholder: 'richText',
       width: 60,
-      example: `${exampleText}: \n[\n  {"name":"fb","path":"/","domain":".facebook.com"},\n  {"name":"ma","path":"/","domain":".amazon.com"},\n  {"name":"x","path":"/","domain":".x.com"}\n]`,
+      example: `${exampleText}1 (JSON): \n[{"name":"fb","path":"/","domain":".facebook.com"}]\n${exampleText}2 (Name=Value): \ndomain=.x.com; name=value; ...`,
       richText: [
-        { text: $t('仅支持 JSON 格式的数组, 可支持填写多个 cookie, 多个 cookie 请使用英文逗号隔开! ') },
-        { font: { color: { argb: 'EF4444' } }, text: $t('需要用 [ ] 包含！') },
+        { text: $t('支持格式: JSON、Netscape、Name=Value\n') },
+        { font: { color: { argb: 'EF4444' } }, text: $t('JSON 格式需要用 [ ] 包含\nName=Value / Netscape 直接填写文本\n') },
+        { text: $t('Name=Value 未写 domain 时，会从「平台账号」列获取并按行填充') },
       ],
-      formatValue: (value: string) => safeParseJSON(value, []),
     },
     {
       header: $t('窗口备注'),
@@ -352,15 +351,15 @@ export async function downloadTextTemplate() {
       ...(isDev
         ? { coreType: 'Firefox', coreVersion: '146' }
         : {}),
-      osVersion: '17.0',
+      osVersion: 17,
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:81:username:password',
       windowPlatformList: '["https://x.com/:roxy1:123", "https://www.tiktok.com/:roxy2:456", "https://www.youtube.com/:roxy3:789:roxy_2fa"]',
       defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark2',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
-      searchEngine: 'Microsoft Bing',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/146.0 Mobile/15E148 Safari/605.1.15',
+      searchEngine: 'Google',
     },
   ]
 
@@ -405,6 +404,22 @@ async function addExplain(worksheet: ExcelJS.Worksheet) {
   }
 }
 
+function normalizeImportCellText(cellValue: unknown): string {
+  if (cellValue == null || cellValue === '')
+    return ''
+
+  if (typeof cellValue === 'object' && cellValue !== null && 'text' in cellValue)
+    return String((cellValue as { text: string }).text).trim()
+
+  return String(cellValue).trim()
+}
+
+function applyImportCookie(data: Record<string, any>) {
+  const rawCookie = typeof data.cookie === 'string' ? data.cookie : normalizeImportCellText(data.cookie)
+  data.cookie = parseImportCookies(rawCookie, data.windowPlatformList ?? [])
+  return data
+}
+
 export async function parseTemplate(file: File) {
   try {
     const result: any = []
@@ -414,17 +429,24 @@ export async function parseTemplate(file: File) {
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowIndex) => {
         if (rowIndex >= 5) {
+          const cellValues = columns.map((column, index) => {
+            /**
+             * excel 索引从1开始
+             */
+            const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]
+            if (column.key === 'cookie')
+              return [column.key, normalizeImportCellText(cellValue)] as const
+
+            const value = column.formatValue?.((cellValue as any)?.text || cellValue) || cellValue
+            return [column.key, value] as const
+          })
+
           const data: { [key: string]: any } = {
             rowNum: rowIndex,
-            ...Object.fromEntries(columns.map((column, index) => {
-              /**
-               *excel 索引从1开始
-               */
-              const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]
-              const value = column.formatValue?.((cellValue as any)?.text || cellValue) || cellValue
-              return [column.key, value]
-            })),
+            ...Object.fromEntries(cellValues),
           }
+
+          applyImportCookie(data)
 
           // 历史原因特殊处理 ios
           if (data.os?.toLocaleUpperCase() === 'IOS') {
@@ -462,27 +484,32 @@ export async function parseTextFile(file: File) {
           }).filter(item => item.length)
 
           const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
+          const windowPlatformListParsed = safeParseJSON(windowPlatformList, []).map((str: string) => {
+            const { platform, username, password, twoFactor } = parseIntelligent(str)
+            return {
+              platformUrl: platform,
+              platformUserName: username ?? '',
+              platformPassword: password ?? '',
+              platformEfa: twoFactor ?? '',
+            }
+          })
 
-          // 历史原因特殊处理 ios
-          if (data.os?.toLocaleUpperCase() === 'IOS') {
-            data.os = data.os.toLocaleUpperCase()
-          }
-
-          return {
+          const rowData = {
             rowNum: index + 1,
             ...data,
-            cookie: safeParseJSON(cookie, []),
             defaultOpenUrl: safeParseJSON(defaultOpenUrl, []),
-            windowPlatformList: safeParseJSON(windowPlatformList, []).map((str: string) => {
-              const { platform, username, password, twoFactor } = parseIntelligent(str)
-              return {
-                platformUrl: platform,
-                platformUserName: username ?? '',
-                platformPassword: password ?? '',
-                platformEfa: twoFactor ?? '',
-              }
-            }),
+            windowPlatformList: windowPlatformListParsed,
+            cookie: cookie ?? '',
           }
+
+          applyImportCookie(rowData)
+
+          // 历史原因特殊处理 ios
+          if (rowData.os?.toLocaleUpperCase() === 'IOS') {
+            rowData.os = rowData.os.toLocaleUpperCase()
+          }
+
+          return rowData
         })
         resolve(result)
       })

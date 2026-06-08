@@ -3,6 +3,7 @@ import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 
 import { copyText } from '/@/utils/basic'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const { data } = defineProps<{
   data: Record<string, any>
@@ -11,7 +12,7 @@ const { data } = defineProps<{
 defineEmits(['close', 'confirm'])
 
 const [showToast] = useResponseToast()
-
+const { getVideoSource } = useSimpleLocale()
 function onCopy() {
   copyText(data.code)
   showToast(0, $t('复制成功'))
@@ -56,7 +57,7 @@ function onCopy() {
             scope="global"
     >
       <template #video>
-        <TutorialVideo video-url="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/guide_video/gif/redeem_proxy.mp4">
+        <TutorialVideo :video-url="getVideoSource('redeem_proxy.mp4')">
           <template #default="{ onPlay }">
             <span class="cursor-pointer desc-link" @click="onPlay">{{ $t('[视频引导]') }}</span>
           </template>

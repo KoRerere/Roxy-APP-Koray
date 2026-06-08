@@ -43,10 +43,9 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
             <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
             {{ item.meta?.title }}
           </div>
-          <div v-else class="line" />
         </template>
         <template v-else>
-          <MenuItemContent v-if="item.meta?.version ? compare(userStore.appVersion, ...item.meta!.version) : true" v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :class="`menu_${item.name?.toString()}`" :item="item" :collapsed />
+          <MenuItemContent v-if="item.meta?.version ? compare($appVersion, ...item.meta!.version) : true" v-model:open="collapsedMap[item.name!]" v-model:badge-map="badgeMap" :class="`menu_${item.name?.toString()}`" :item="item" :collapsed />
         </template>
         <!-- 递归生成子菜单 -->
         <template v-if="item.children?.length">

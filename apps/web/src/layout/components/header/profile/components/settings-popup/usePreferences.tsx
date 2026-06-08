@@ -141,9 +141,7 @@ export function usePreferencesPanel() {
               label: $t('Google 登录'),
               text: () => (
                 <div class="w-88">
-                  {$t(
-                    '窗口是否开启谷歌账号登录',
-                  )}
+                  <div>{$t('窗口是否开启谷歌账号登录（火狐内核的窗口暂不支持此功能。）')}</div>
                 </div>
               ),
               name: 'googleLoginEnable',

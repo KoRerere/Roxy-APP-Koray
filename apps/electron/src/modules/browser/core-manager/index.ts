@@ -1,6 +1,4 @@
-import { isDev } from '/@/constants/common'
 import { CoreType } from '/@/modules/browser/browser-manager/adapter'
-import { ipcSender } from '/@/modules/ipc/sender'
 import { fileExists } from '/@/utils'
 import { CoreManagerUtils } from './CoreManagerUtils'
 
@@ -31,6 +29,13 @@ export const coreManager = new (class CoreManager {
     })
   }
 
+  async autoDownloadCore() {
+    await Promise.all([
+      this.chromeCoreManager.autoDownloadCore(),
+      this.firefoxCoreManager.autoDownloadCore(),
+    ])
+  }
+
   getCoreManager(coreType: CoreType) {
     if (coreType === CoreType.Firefox) {
       return this.firefoxCoreManager
@@ -42,14 +47,14 @@ export const coreManager = new (class CoreManager {
   async fetchAvailableCoreList() {
     return Promise.all([
       this.chromeCoreManager.fetchAvailableCoreList(),
-      isDev ? this.firefoxCoreManager.fetchAvailableCoreList() : Promise.resolve(),
+      this.firefoxCoreManager.fetchAvailableCoreList(),
     ])
   }
 
   async getCoreList() {
     const result = await Promise.all([
       this.chromeCoreManager.getCoreList(),
-      isDev ? this.firefoxCoreManager.getCoreList() : Promise.resolve(),
+      this.firefoxCoreManager.getCoreList(),
     ])
     return result.flat().filter(Boolean)
   }

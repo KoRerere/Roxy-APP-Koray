@@ -8,31 +8,31 @@ import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
-import { AbortError, abortRun, createAbort } from '../abortRegistry'
-import { aiAgentUrl, env } from '../config'
+import { abortRun, cleanupRun, createAbort } from '../abortRegistry'
+import { env } from '../config'
 import { ChatContextAPI } from '../database/conversations'
-import { createChatAgent, createScriptAgent, deleteCheckpoint } from '../deepagents'
-import { handleStream, StreamState } from '../deepagents/handle-stream'
-import { isWorkerStart } from '../deepagents/tools/run_worker'
+import { createChatAgent, createImageAgent, createScriptAgent, deleteCheckpoint } from '../deepagents'
+import { handleStream, handleStreamEvents, StreamState } from '../deepagents/handle-stream'
+import { clearImageSpec, consumeImageSpec } from '../deepagents/imageSpec'
+import { fileManager } from '../fileManager'
 import { cancelInterrupt, createInterruptGate, resolveInterrupt } from '../interruptRegistry'
 import { createLLM } from '../llm'
+import { isAbortLike, normalizeAgentError } from './agentError'
+import { generateImagesFromPlan } from './imageGeneration'
 import { sseLoggerManager } from './sseLogger'
 import { streamAdapter } from './streamAdapter'
 
-// 附件文件存储目录
-const uploadsDir = path.join(env.CHECKPOINT_DIR, 'uploads')
-
 let _dirsInitialized = false
 /**
- * 初始化路由所需目录（sse、uploads），幂等，由 server/index.ts 的 createApp() 调用
+ * 初始化路由所需目录（sse、uploads），幂等，由 server/index.ts 的 createApp() 调用。
+ * uploads 目录由 FileManager 统一管理。
  */
 export function initChatRouteDirs() {
   if (_dirsInitialized)
     return
   if (!fs.existsSync(path.join(env.CHECKPOINT_DIR, 'sse')))
     fs.mkdirSync(path.join(env.CHECKPOINT_DIR, 'sse'), { recursive: true })
-  if (!fs.existsSync(uploadsDir))
-    fs.mkdirSync(uploadsDir, { recursive: true })
+  fileManager.ensureDir()
   _dirsInitialized = true
 }
 
@@ -45,27 +45,6 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
   'text/plain',
 ])
-
-const MIME_TO_EXT: Record<string, string> = {
-  'image/jpeg': '.jpg',
-  'image/png': '.png',
-  'image/gif': '.gif',
-  'image/webp': '.webp',
-  'image/avif': '.avif',
-  'application/pdf': '.pdf',
-  'text/plain': '.txt',
-}
-
-const EXT_TO_MIME: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-  '.pdf': 'application/pdf',
-  '.txt': 'text/plain',
-}
 
 function normalizeMimeType(mimeType: string) {
   return mimeType.split(';')[0].trim().toLowerCase()
@@ -92,43 +71,10 @@ function extractBase64Payload(data: string) {
  * 5MB
  */
 const MAX_FILE_SIZE = 5 * 1024 * 1024
-const IMAGE_SIZE_MAP: Record<string, Record<string, string>> = {
-  '2K': {
-    '1:1': '2048x2048',
-    '4:3': '2304x1728',
-    '3:4': '1728x2304',
-    '16:9': '2848x1600',
-    '9:16': '1600x2848',
-    '3:2': '2496x1664',
-    '2:3': '1664x2496',
-    '21:9': '3136x1344',
-  },
-  '3K': {
-    '1:1': '3072x3072',
-    '4:3': '3456x2592',
-    '3:4': '2592x3456',
-    '16:9': '4096x2304',
-    '9:16': '2304x4096',
-    '3:2': '3744x2496',
-    '2:3': '2496x3744',
-    '21:9': '4704x2016',
-  },
-  '4K': {
-    '1:1': '4096x4096',
-    '4:3': '4704x3520',
-    '3:4': '3520x4704',
-    '16:9': '5504x3040',
-    '9:16': '3040x5504',
-    '3:2': '4992x3328',
-    '2:3': '3328x4992',
-    '21:9': '6240x2656',
-  },
-}
-
 const router: Router = Router()
 
 // 上传附件文件
-router.post('/upload', (req: Request, res: Response) => {
+router.post('/upload', async (req: Request, res: Response) => {
   try {
     const { data, mimeType, fileName } = req.body
 
@@ -149,19 +95,27 @@ router.post('/upload', (req: Request, res: Response) => {
       return res.json({ code: 1, msg: 'File size exceeds 5MB limit' })
     }
 
-    const ext = MIME_TO_EXT[finalMimeType] || ''
-    const fileId = `${randomUUID()}${ext}`
-    const filePath = path.join(uploadsDir, fileId)
-    fs.writeFileSync(filePath, buffer)
+    // 统一交给 FileManager：写本地 + sha256 去重 + 同步上传 OSS + 元信息入库
+    const record = await fileManager.saveBuffer({
+      buffer,
+      fileName,
+      mimeType: finalMimeType,
+      source: 'upload',
+      uploadNow: true,
+    })
+    const localUrl = `/api/files/${record.file_id}`
 
     res.json({
       code: 0,
       msg: 'File uploaded successfully',
       data: {
-        fileId,
+        fileId: record.file_id,
         fileName,
-        mimeType: finalMimeType,
-        size: buffer.length,
+        mimeType: record.mime_type || finalMimeType,
+        size: record.size ?? buffer.length,
+        url: localUrl,
+        localUrl,
+        ...(record.oss_url ? { remoteUrl: record.oss_url, fileUrl: record.oss_url } : {}),
       },
     })
   }
@@ -185,16 +139,15 @@ router.get('/files/:fileId', (req: Request, res: Response) => {
       return res.status(400).json({ code: 1, msg: 'Invalid file ID' })
     }
 
-    const filePath = path.join(uploadsDir, fileId)
-    console.log('filePath', filePath)
+    const filePath = fileManager.getLocalPath(fileId)
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ code: 1, msg: 'File not found' })
     }
 
-    const ext = path.extname(fileId).toLowerCase()
-    const mimeType = EXT_TO_MIME[ext] || 'application/octet-stream'
-    return res.sendFile(fileId, {
-      root: uploadsDir,
+    const mimeType = fileManager.resolveMimeType(fileId)
+    // 去重条目的物理文件名可能与 fileId 不同，按真实 local_path 发送
+    return res.sendFile(path.basename(filePath), {
+      root: path.dirname(filePath),
       headers: {
         'Content-Type': mimeType,
         'Cache-Control': 'public, max-age=31536000, immutable',
@@ -417,177 +370,54 @@ interface AttachmentRef {
   mimeType: string
   size?: number
   url?: string
-}
-
-interface AssetGenerationOptions {
-  aspectRatio?: string
-  quality?: string
-  count?: string
-}
-
-interface GeneratedImageRecord {
-  fileId: string
-  fileName: string
-  mimeType?: string
-  size?: number
-  prompt?: string
-}
-
-function extractPositiveInteger(value: unknown, fallback: number) {
-  const match = String(value ?? '').match(/\d+/)
-  const parsed = match ? Number(match[0]) : Number.NaN
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
-}
-
-function resolveImageSize(options?: AssetGenerationOptions) {
-  const quality = options?.quality === '4K' ? '4K' : '2K'
-  const aspectRatio = options?.aspectRatio && IMAGE_SIZE_MAP[quality][options.aspectRatio]
-    ? options.aspectRatio
-    : '1:1'
-  return IMAGE_SIZE_MAP[quality][aspectRatio]
-}
-
-function resolveGeneratedImageCount(options?: AssetGenerationOptions) {
-  return Math.min(extractPositiveInteger(options?.count, 1), 4)
+  localUrl?: string
+  remoteUrl?: string
+  fileUrl?: string
 }
 
 function getAttachmentFilePath(fileId: string) {
-  return path.join(uploadsDir, fileId)
+  return fileManager.getLocalPath(fileId)
 }
 
-function getFileExtensionByMimeType(mimeType: string) {
-  return MIME_TO_EXT[normalizeMimeType(mimeType)] || '.png'
+function asRemoteFileUrl(url?: string) {
+  return url && /^https?:\/\//i.test(url) ? url : undefined
 }
 
-function persistBufferAsUpload(buffer: Buffer, mimeType: string, prefix = 'generated') {
-  const fileId = `${prefix}-${randomUUID()}${getFileExtensionByMimeType(mimeType)}`
-  const filePath = getAttachmentFilePath(fileId)
-  fs.writeFileSync(filePath, buffer)
-  return {
-    fileId,
-    fileName: fileId,
-    mimeType,
-    size: buffer.length,
-  }
+async function resolveAttachmentRemoteUrl(att: AttachmentRef, options: { required?: boolean } = {}) {
+  // 前端回传的远程 URL 可信，优先复用；否则交给 FileManager（按 hash 去重 / 上传 / 回填）
+  const direct = asRemoteFileUrl(att.remoteUrl) || asRemoteFileUrl(att.fileUrl)
+  if (direct)
+    return direct
+  const remoteUrl = await fileManager.resolveRemoteUrl(att.fileId)
+  if (!remoteUrl && options.required)
+    throw new Error(`Failed to upload attachment to file server: ${att.fileName || att.fileId}`)
+  return remoteUrl
 }
 
-function isDataUrl(url: string) {
-  return /^data:/i.test(url)
-}
-
-async function readAttachmentAsDataUrl(att: AttachmentRef) {
-  const filePath = att.fileId ? getAttachmentFilePath(att.fileId) : ''
-  if (filePath && fs.existsSync(filePath)) {
-    const base64 = fs.readFileSync(filePath).toString('base64')
-    return `data:${att.mimeType};base64,${base64}`
-  }
-
-  if (att.url) {
-    if (isDataUrl(att.url)) {
-      return att.url
+async function hydrateAttachmentFileUrls(attachments: Array<Partial<AttachmentRef> & { fileId: string }>) {
+  return Promise.all(attachments.map(async (input) => {
+    // 前端仅回传 fileId，其余信息（fileName/mimeType/size/本地与远程 URL）由 FileManager 从 files 表补全
+    const att = fileManager.toAttachmentRef(input.fileId, input)
+    const remoteUrl = await resolveAttachmentRemoteUrl(att)
+    return {
+      ...att,
+      ...(remoteUrl ? { remoteUrl, fileUrl: remoteUrl } : {}),
     }
-
-    const response = await fetch(att.url)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch attachment url: ${att.url}`)
-    }
-    const mimeType = normalizeMimeType(response.headers.get('content-type') || att.mimeType || 'image/png')
-    const buffer = Buffer.from(await response.arrayBuffer())
-    return `data:${mimeType};base64,${buffer.toString('base64')}`
-  }
-
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Attachment file not found: ${att.fileId}`)
-  }
-  const base64 = fs.readFileSync(filePath).toString('base64')
-  return `data:${att.mimeType};base64,${base64}`
+  }))
 }
 
-function buildAssetPrompt(message: string, options: AssetGenerationOptions) {
-  const prompt = message.trim()
-  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
-  const sections = isZh
-    ? [
-        '当前任务是生图生素材，请结合用户上传的参考图片理解主体、构图、风格、配色和材质信息。',
-        `生成参数：画面比例 ${options.aspectRatio}，清晰度 ${options.quality}，数量 ${options.count}。`,
-      ]
-    : [
-        'The current task is to generate image assets. Please analyze the reference images uploaded by the user to understand the subject, composition, style, color palette, and material.',
-        `Generation parameters: aspect ratio ${options.aspectRatio}, quality ${options.quality}, count ${options.count}.`,
-      ]
-
-  if (prompt)
-    sections.unshift(prompt)
-  else
-    sections.unshift(isZh ? '请基于参考图片生成符合上述参数的图片素材。' : 'Please generate image assets based on the reference images and the parameters above.')
-
-  return sections.join('\n\n')
-}
-
-async function buildImageGenerationRequest(
-  prompt: string,
-  attachments: AttachmentRef[],
-  options?: AssetGenerationOptions,
-) {
-  const imageInputs = await Promise.all(
-    attachments
-      .filter(att => att.mimeType.startsWith('image/'))
-      .slice(0, 5)
-      .map(readAttachmentAsDataUrl),
-  )
-  const count = resolveGeneratedImageCount(options)
-  const payload: Record<string, any> = {
-    // model: IMAGE_GENERATION_MODEL,
-    prompt,
-    size: resolveImageSize(options),
-    watermark: false,
-    // response_format: 'b64_json',
-  }
-
-  if (imageInputs.length > 0) {
-    payload.image = imageInputs
-  }
-
-  if (count > 1) {
-    payload.sequential_image_generation = 'auto'
-    payload.sequential_image_generation_options = {
-      max_images: count,
-    }
-  }
-
-  return payload
-}
-
-async function persistGeneratedImages(result: any): Promise<GeneratedImageRecord[]> {
-  const records = Array.isArray(result?.data) ? result.data : []
-  const generatedImages: GeneratedImageRecord[] = []
-
-  for (const item of records) {
-    if (typeof item?.url === 'string' && item.url) {
-      const response = await fetch(item.url)
-      if (!response.ok) {
-        throw new Error(`Failed to download generated image: ${item.url}`)
-      }
-      const mimeType = normalizeMimeType(response.headers.get('content-type') || item.mime_type || 'image/png')
-      const buffer = Buffer.from(await response.arrayBuffer())
-      generatedImages.push(persistBufferAsUpload(buffer, mimeType))
-      continue
-    }
-
-    if (typeof item?.b64_json === 'string' && item.b64_json) {
-      const buffer = Buffer.from(item.b64_json, 'base64')
-      generatedImages.push(persistBufferAsUpload(buffer, normalizeMimeType(item.mime_type || 'image/png')))
-      continue
-    }
-  }
-
-  return generatedImages
+function readAttachmentAsDataUrl(att: AttachmentRef) {
+  return fileManager.readDataUrl(att.fileId, att.mimeType)
 }
 
 /**
  * 构建 LangChain HumanMessage 的多模态内容数组
  */
-function buildMessageContent(message: string, attachments: AttachmentRef[]): any[] | string {
+async function buildMessageContent(
+  message: string,
+  attachments: AttachmentRef[],
+  options: { requireRemoteImageUrl?: boolean } = {},
+): Promise<any[] | string> {
   const parts: any[] = []
   const attachmentInfos: string[] = []
   const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
@@ -598,31 +428,41 @@ function buildMessageContent(message: string, attachments: AttachmentRef[]): any
 
   for (const att of attachments) {
     const filePath = getAttachmentFilePath(att.fileId)
-    if (!fs.existsSync(filePath)) {
+    const remoteUrl = att.remoteUrl || att.fileUrl
+    const hasLocalFile = att.fileId ? fileManager.exists(att.fileId) : false
+    if (!hasLocalFile && !remoteUrl) {
       console.warn(`Attachment file not found: ${att.fileId}`)
       continue
     }
 
     attachmentInfos.push(isZh
-      ? `- 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`
-      : `- filename: ${att.fileName}, local path: ${filePath}, type: ${att.mimeType}`)
+      ? `- 文件名: ${att.fileName}, 本地路径: ${hasLocalFile ? filePath : 'N/A'}, 文件URL: ${remoteUrl || '未上传'}, 类型: ${att.mimeType}`
+      : `- filename: ${att.fileName}, local path: ${hasLocalFile ? filePath : 'N/A'}, file URL: ${remoteUrl || 'not uploaded'}, type: ${att.mimeType}`)
 
     if (att.mimeType.startsWith('image/')) {
-      const base64 = fs.readFileSync(filePath).toString('base64')
+      let imageUrl = remoteUrl
+      if (!imageUrl && options.requireRemoteImageUrl)
+        imageUrl = await resolveAttachmentRemoteUrl(att, { required: true })
+
       parts.push({
         type: 'image_url',
-        image_url: { url: `data:${att.mimeType};base64,${base64}` },
+        image_url: { url: imageUrl || readAttachmentAsDataUrl(att) },
       })
     }
     else if (att.mimeType === 'text/plain') {
-      const text = fs.readFileSync(filePath, 'utf-8')
+      if (!hasLocalFile)
+        continue
+
+      const text = fileManager.readBuffer(att.fileId).toString('utf-8')
       parts.push({ type: 'text', text: isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}` })
     }
     else if (att.mimeType === 'application/pdf') {
-      const base64 = fs.readFileSync(filePath).toString('base64')
+      if (!hasLocalFile)
+        continue
+
       parts.push({
         type: 'image_url',
-        image_url: { url: `data:application/pdf;base64,${base64}` },
+        image_url: { url: readAttachmentAsDataUrl(att) },
       })
     }
   }
@@ -657,13 +497,13 @@ function buildMessageContentAsPlainText(message: string, attachments: Attachment
 
   for (const att of attachments) {
     const filePath = getAttachmentFilePath(att.fileId)
-    if (!fs.existsSync(filePath)) {
+    if (!att.fileId || !fileManager.exists(att.fileId)) {
       console.warn(`Attachment file not found: ${att.fileId}`)
       continue
     }
 
     if (att.mimeType === 'text/plain') {
-      const text = fs.readFileSync(filePath, 'utf-8')
+      const text = fileManager.readBuffer(att.fileId).toString('utf-8')
       chunks.push(isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}`)
     }
     else {
@@ -684,13 +524,19 @@ const TitleOutputSchema = z.object({
 async function generateConversationTitle(
   userMessage: string,
   attachments: AttachmentRef[],
+  conversationId: string,
+  turnId: string,
   streamCallback: (event: string) => void,
 ): Promise<string> {
   const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
-  const llm = await createLLM(false)
+  const llm = await createLLM({
+    enableThinking: false,
+    conversationId,
+    turnId,
+  })
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 
-  const structuredLlm = llm.withStructuredOutput(TitleOutputSchema, {
+  const structuredLlm = (llm as any).withStructuredOutput(TitleOutputSchema, {
     name: 'generate_title',
   })
 
@@ -709,6 +555,47 @@ async function generateConversationTitle(
   return title
 }
 
+/**
+ * 构造给 image agent 的真实用户输入文本：
+ * - 用「用户输入如下：」+ Markdown 代码块包裹原始输入，把用户文字与系统框架彻底隔离，
+ *   让模型按字面解读（顺带抵御提示注入），不再把生图参数/兜底指令混进提示词。
+ * - 生图参数（比例/清晰度/张数）一律以前端 assetOptions 为准，不进提示词、不进 save_image_spec。
+ * - 空输入（仅附件、无文字）也放进代码块，不再自动生图，交由 image agent 的「无效输入护栏」澄清。
+ * 附件信息仍由 buildMessageContent 在其后追加，保持不变。
+ */
+function buildImageAgentUserMessage(message: string) {
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
+  const trimmed = message.trim()
+  const preface = isZh ? '用户输入如下：' : 'User input is as follows:'
+  const inputText = trimmed || (isZh ? '（用户未输入任何文字。）' : '(The user did not enter any text.)')
+
+  // 用比输入中最长反引号串更长的围栏，避免用户输入里自带的 ``` 破坏代码块
+  const longestBacktickRun = (inputText.match(/`+/g) ?? [])
+    .reduce((max, run) => Math.max(max, run.length), 0)
+  const fence = '`'.repeat(Math.max(3, longestBacktickRun + 1))
+
+  return `${preface}\n${fence}\n${inputText}\n${fence}`
+}
+
+function resolveChatAgentMode(mode: unknown): 'simple' | 'orchestrator' {
+  return mode === 'orchestrator' ? 'orchestrator' : 'simple'
+}
+
+function streamImageAgentEvents(rawChunk: any, state: StreamState, streamCallback: (event: string) => void) {
+  const result = handleStreamEvents(rawChunk, state)
+  const events = Array.isArray(result) ? result : result ? [result] : []
+  for (const event of events) {
+    if (
+      (event.type === 'tool_call' || event.type === 'tool_result')
+      && event.data?.toolName === 'save_image_spec'
+    ) {
+      continue
+    }
+
+    streamCallback(streamAdapter.formatSSE(event))
+  }
+}
+
 router.post('/images/generations', async (req: Request, res: Response) => {
   const {
     message,
@@ -716,7 +603,7 @@ router.post('/images/generations', async (req: Request, res: Response) => {
     attachments,
     assetOptions,
   } = req.body
-  const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
+  const attachmentList: AttachmentRef[] = await hydrateAttachmentFileUrls(Array.isArray(attachments) ? attachments : [])
   const prompt = typeof message === 'string' ? message : ''
 
   if ((!prompt.trim() && attachmentList.length === 0) || !conversationId) {
@@ -736,6 +623,8 @@ router.post('/images/generations', async (req: Request, res: Response) => {
     })
   }
 
+  const abortController = createAbort(conversationId)
+
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
@@ -746,6 +635,7 @@ router.post('/images/generations', async (req: Request, res: Response) => {
   const sseFilePath = path.join(env.CHECKPOINT_DIR!, 'sse', `${fileName}.sse`)
 
   const sseLogger = sseLoggerManager.createLogger(sseFilePath)
+  clearImageSpec(conversationId, fileName)
 
   const streamCallback = (event: string) => {
     res.write(event)
@@ -755,23 +645,21 @@ router.post('/images/generations', async (req: Request, res: Response) => {
     }
   }
 
-  // SSE 建立后立即告知前端开始生成，携带图片数量用于占位
-  const count = resolveGeneratedImageCount(assetOptions)
-  streamCallback(streamAdapter.imageGenerating({ count }))
-
-  const startTime = Date.now()
+  // const startTime = Date.now()
+  let destroy: (() => Promise<void>) | undefined
 
   try {
     ChatContextAPI.setActiveConversation(conversationId)
 
+    const userMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     ChatContextAPI.addMessage({
-      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      id: userMessageId,
       conversation_id: conversationId,
       role: 'user',
       content: prompt,
       content_type: 'text',
       storage_type: 'inline',
-      agent_mode: 'simple',
+      agent_mode: 'image',
       metadata: {
         timestamp: Date.now(),
         source: 'api_image_generation',
@@ -789,7 +677,7 @@ router.post('/images/generations', async (req: Request, res: Response) => {
       content_type: 'file',
       storage_type: 'file',
       file_path: sseFilePath,
-      agent_mode: 'simple',
+      agent_mode: 'image',
       metadata: {
         timestamp: Date.now(),
         source: 'sse_stream',
@@ -798,7 +686,7 @@ router.post('/images/generations', async (req: Request, res: Response) => {
     })
 
     if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-      await generateConversationTitle(prompt, attachmentList, streamCallback)
+      await generateConversationTitle(prompt, attachmentList, conversationId, userMessageId, streamCallback)
         .then((generatedTitle) => {
           if (generatedTitle) {
             ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
@@ -809,116 +697,123 @@ router.post('/images/generations', async (req: Request, res: Response) => {
         })
     }
 
-    const payload = {
-      ...await buildImageGenerationRequest(buildAssetPrompt(prompt, assetOptions), attachmentList, assetOptions),
-      stream: true,
-    }
+    const imageAgent = await createImageAgent({ conversationId, turnId: userMessageId })
+    const agent = imageAgent.agent
+    destroy = imageAgent.destroy
 
-    const upstreamResponse = await fetch(`${aiAgentUrl}/v1/images/generations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.ROXY_API_KEY}`,
+    const config: any = {
+      configurable: {
+        thread_id: conversation.thread_id,
+        imageContext: {
+          conversationId,
+          messageId: fileName,
+          userMessageId,
+          attachments: attachmentList,
+          assetOptions,
+        },
       },
-      body: JSON.stringify(payload),
-    })
+      conversationId,
+      turnId: userMessageId,
+      streamMode: ['messages', 'custom', 'tools', 'updates'],
+      signal: abortController.signal,
+      writer: streamCallback,
+      imageContext: {
+        conversationId,
+        messageId: fileName,
+        userMessageId,
+        attachments: attachmentList,
+        assetOptions,
+      },
+    }
+    const imageRequest = buildImageAgentUserMessage(prompt)
+    const messageContent = await buildMessageContent(imageRequest, attachmentList, { requireRemoteImageUrl: true })
+    const input = {
+      messages: [
+        Array.isArray(messageContent)
+          ? new HumanMessage({ content: messageContent })
+          : new HumanMessage(messageContent || imageRequest),
+      ],
+      streamCallback,
+    }
+    const checkpointer = (agent as any).checkpointer
+    let invokeInput: any = input
 
-    if (!upstreamResponse.ok) {
-      const errorText = await upstreamResponse.text()
-      console.error('Upstream image generation failed:', errorText)
-      let errorResult: any = {}
-      try { errorResult = errorText ? JSON.parse(errorText) : {} }
-      catch {}
-      streamCallback(streamAdapter.error(errorResult?.error?.message || errorResult?.message || 'Image generation failed', upstreamResponse.status))
-      streamCallback(streamAdapter.done())
-      res.end()
-      return
+    if (checkpointer) {
+      const checkpointState = await (agent as any).getState(config)
+      if (checkpointState.next && checkpointState.next.length > 0)
+        invokeInput = null
     }
 
-    // Parse upstream SSE stream — push each image as soon as it's ready
-    const reader = upstreamResponse.body!.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let completedEvent: any = null
-    // index → persisted record, built incrementally
-    const partialImages: Map<number, GeneratedImageRecord & { prompt?: string }> = new Map()
+    const runImageAgentTurn = async (turnInput: any, turnConfig = config) => {
+      const turnState = new StreamState()
+      let currentInput = turnInput
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done)
-        break
-
-      buffer += decoder.decode(value, { stream: true })
-
-      let splitIndex: number
       while (true) {
-        splitIndex = buffer.search(/\r?\n\r?\n/)
-        if (splitIndex === -1)
+        const stream = await (agent as any).stream(currentInput, turnConfig)
+        let interrupted = false
+        let interruptValue: any = null
+
+        for await (const rawChunk of stream) {
+          const [, chunk] = rawChunk
+
+          if (chunk?.__interrupt__) {
+            interrupted = true
+            interruptValue = chunk.__interrupt__
+            continue
+          }
+
+          streamImageAgentEvents(rawChunk, turnState, streamCallback)
+        }
+
+        if (!interrupted)
           break
 
-        const rawBlock = buffer.slice(0, splitIndex)
-        buffer = buffer.slice(splitIndex).replace(/^\r?\n\r?\n/, '')
-
-        for (const line of rawBlock.split(/\r?\n/)) {
-          if (!line.startsWith('data:'))
-            continue
-          const data = line.slice(5).trim()
-          if (data === '[DONE]')
-            continue
-          let parsed: any
-          try { parsed = JSON.parse(data) }
-          catch { continue }
-
-          if (parsed?.type === 'image_generation.partial_succeeded') {
-            // Download and persist this image immediately
-            const index: number = parsed.image_index ?? 0
-            try {
-              const [record] = await persistGeneratedImages({ data: [{ url: parsed.url, b64_json: parsed.b64_json, mime_type: parsed.mime_type }] })
-              if (record) {
-                const imageWithPrompt = { ...record, prompt }
-                partialImages.set(index, imageWithPrompt)
-                streamCallback(streamAdapter.imagePartial({ index, image: imageWithPrompt }))
-              }
-            }
-            catch (err: any) {
-              console.error('Failed to persist partial image:', err)
-            }
-          }
-          else if (parsed?.type === 'image_generation.completed') {
-            completedEvent = parsed
-          }
-        }
+        const interrupts = interruptValue[0]?.value ?? interruptValue
+        const actionRequests = interrupts?.actionRequests ?? []
+        const reviewConfigs = interrupts?.reviewConfigs ?? []
+        const interruptsId = randomUUID()
+        streamCallback(streamAdapter.hitlInterrupt({ actionRequests, reviewConfigs, interruptsId }))
+        const decision = await createInterruptGate(conversationId)
+        streamCallback(streamAdapter.hitlResume({ interruptsId, decisions: decision.decisions }))
+        currentInput = new Command({ resume: { decisions: decision.decisions } })
       }
+
+      return turnState
     }
 
-    if (partialImages.size === 0) {
-      streamCallback(streamAdapter.error('No generated images returned'))
-      streamCallback(streamAdapter.done())
-      res.end()
-      return
+    await runImageAgentTurn(invokeInput)
+    const generationPlan = consumeImageSpec(conversationId, fileName)
+    if (generationPlan) {
+      await generateImagesFromPlan(generationPlan, {
+        conversationId,
+        messageId: fileName,
+        attachments: attachmentList,
+        assetOptions,
+        writer: streamCallback,
+        signal: abortController.signal,
+      }, imageAgent.imageProviderOptions)
+    }
+    else {
+      console.log('Image agent did not save an image generation spec; skipping image generation for conversation', conversationId, 'message', fileName)
     }
 
     streamCallback(streamAdapter.done())
   }
   catch (error: any) {
-    console.error('Error generating image:', error)
-    streamCallback(streamAdapter.error(error.message))
+    // 清理可能挂起的 interrupt gate
+    cancelInterrupt(conversationId)
+    if (isAbortLike(error)) {
+      console.log('Image generation interrupted by user')
+    }
+    else {
+      console.error('Error generating image:', error)
+      streamCallback(streamAdapter.error(normalizeAgentError(error)))
+    }
     streamCallback(streamAdapter.done())
   }
   finally {
-    const endTime = Date.now()
-    ;(process as any).parentPort?.postMessage({
-      event: 'save_chat_message',
-      data: {
-        conversationId,
-        file: sseFilePath,
-        message: prompt,
-        inputToken: 0,
-        outputToken: 0,
-        time: endTime - startTime,
-        taskType: 'simple',
-      },
-    })
+    await destroy?.()
+    cleanupRun(conversationId)
     sseLoggerManager.closeLogger(sseFilePath)
   }
 
@@ -936,7 +831,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     multimodalAttachments,
     script,
   } = req.body
-  const attachmentList: AttachmentRef[] = Array.isArray(attachments) ? attachments : []
+  const attachmentList: AttachmentRef[] = await hydrateAttachmentFileUrls(Array.isArray(attachments) ? attachments : [])
 
   const abortController = createAbort(conversationId)
 
@@ -969,9 +864,10 @@ router.post('/chat', async (req: Request, res: Response) => {
   res.flushHeaders()
 
   // 添加用户消息到对话历史
-  const agentMode = mode
+  const agentMode = resolveChatAgentMode(mode)
+  const useMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   ChatContextAPI.addMessage({
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    id: useMessageId,
     conversation_id: conversationId,
     role: 'user',
     content: message || '',
@@ -1004,10 +900,22 @@ router.post('/chat', async (req: Request, res: Response) => {
   })
 
   const sseLogger = sseLoggerManager.createLogger(sseFilePath)
+  let orchestratorStoppedSent = false
 
   const streamCallback = (event: any) => {
     res.write(event)
     sseLogger.log(event)
+
+    try {
+      const matched = typeof event === 'string' ? event.match(/^data: (.*)$/m) : null
+      const parsed = matched?.[1] ? JSON.parse(matched[1]) : null
+      if (parsed?.type === 'orchestrator_stopped') {
+        orchestratorStoppedSent = true
+      }
+    }
+    catch {
+      // Ignore malformed diagnostic data; the SSE event was already written.
+    }
 
     if (typeof (res as any).flush === 'function') {
       (res as any).flush()
@@ -1019,7 +927,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
   // 如果标题还没有设置，就生成标题
   if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-    await generateConversationTitle(message || '', attachmentList, streamCallback)
+    await generateConversationTitle(message || '', attachmentList, conversationId, useMessageId, streamCallback)
       .then((generatedTitle) => {
         if (generatedTitle) {
           ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
@@ -1030,17 +938,20 @@ router.post('/chat', async (req: Request, res: Response) => {
       })
   }
 
-  const startTime = Date.now()
+  // const startTime = Date.now()
   const { agent, destroy } = await (script ? createScriptAgent : createChatAgent)({
     mode: agentMode,
     conversationId,
+    turnId: useMessageId,
   })
 
   try {
-    const config = {
+    const config: any = {
       configurable: {
         thread_id: conversation.thread_id,
       },
+      conversationId,
+      turnId: useMessageId,
       streamMode: ['messages', 'custom', 'tools', 'updates'],
       signal: abortController.signal,
       // callbacks: [new TokenUsageChange(conversation.thread_id)],
@@ -1050,7 +961,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     const useMultimodalAttachments = multimodalAttachments === true
     const messageContent = useMultimodalAttachments
-      ? buildMessageContent(message, attachmentList)
+      ? await buildMessageContent(message, attachmentList)
       : buildMessageContentAsPlainText(message, attachmentList)
     const input = {
       messages: [
@@ -1069,8 +980,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     let invokeInput: any = input
 
     if (checkpointer) {
-      const state = await agent.getState(config)
-      if (state.next && state.next.length > 0) {
+      const checkpointState = await (agent as any).getState(config)
+      if (checkpointState.next && checkpointState.next.length > 0) {
         // 有 pending interrupt，使用 null 输入触发 interrupt
         invokeInput = null
       }
@@ -1078,22 +989,17 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // 支持多轮 interrupt：每次 invoke 后检查是否有 __interrupt__，有则等待用户决策后继续
     while (true) {
-      const stream = await agent.stream(invokeInput, config)
+      const stream = await (agent as any).stream(invokeInput, config)
       let interrupted = false
       let interruptValue: any = null
 
       for await (const rawChunk of stream) {
-        const [namespace, chunk] = rawChunk
+        const [, chunk] = rawChunk
 
         // 检测 __interrupt__ 事件（deepagents 通过 custom namespace 推送）
         if (chunk?.__interrupt__) {
           interrupted = true
           interruptValue = chunk.__interrupt__
-          continue
-        }
-
-        const isParallelDispatchTool = namespace === 'tools' && (chunk?.name === 'parallel_dispatch')
-        if (isWorkerStart() && namespace !== 'custom' && !isParallelDispatchTool) {
           continue
         }
 
@@ -1131,37 +1037,44 @@ router.post('/chat', async (req: Request, res: Response) => {
     cancelInterrupt(conversationId)
 
     // 检查是否是中断错误（用户取消或客户端断开连接）
-    if (AbortError.isAbortError(error) || error.message.includes('User cancelled')) {
+    if (isAbortLike(error)) {
       // 中断错误，静默处理，不发送错误消息给客户端
       console.log('Chat interrupted by user')
+      if (!orchestratorStoppedSent) {
+        streamCallback(streamAdapter.orchestratorStopped({
+          status: 'failed',
+          reason: 'user',
+          message: 'Orchestrator stopped: User cancelled',
+        }))
+      }
       streamCallback(streamAdapter.interrupt(error.message))
     }
     else {
-      // 其他错误，正常处理
+      // 其他错误，归一化为统一错误信封后下发（前端按 code 分支）
       console.error('Error in chat:', error)
-      const errorCode = extractHttpErrorCode(error.message)
-      streamCallback(streamAdapter.error(error.message, errorCode))
+      streamCallback(streamAdapter.error(normalizeAgentError(error)))
     }
   }
   finally {
     await destroy()
+    cleanupRun(conversationId)
 
-    const endTime = Date.now()
-    const duration = endTime - startTime
+    // const endTime = Date.now()
+    // const duration = endTime - startTime
 
     // 发送消息保存事件
-    ;(process as any).parentPort?.postMessage({
-      event: 'save_chat_message',
-      data: {
-        conversationId,
-        file: sseFilePath,
-        message,
-        inputToken: 0,
-        outputToken: 0,
-        time: duration,
-        taskType: agentMode,
-      },
-    })
+    // ;(process as any).parentPort?.postMessage({
+    //   event: 'save_chat_message',
+    //   data: {
+    //     conversationId,
+    //     file: sseFilePath,
+    //     message,
+    //     inputToken: 0,
+    //     outputToken: 0,
+    //     time: duration,
+    //     taskType: agentMode,
+    //   },
+    // })
 
     // 清理统计器资源
     sseLoggerManager.closeLogger(sseFilePath)
@@ -1243,11 +1156,5 @@ router.post('/conversations/:conversationId/stop', async (req: Request, res: Res
     })
   }
 })
-
-/** 从上游错误消息中提取 HTTP 状态码，如 "402 \"Insufficient balance\"" → 402 */
-function extractHttpErrorCode(message: string): number | undefined {
-  const match = message?.match(/\b([45]\d{2})\b/)
-  return match ? Number(match[1]) : undefined
-}
 
 export default router

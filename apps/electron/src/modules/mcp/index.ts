@@ -8,7 +8,7 @@ import { API } from '/@/api'
 import { getBaseUrl, getGatewayConfig } from '/@/api/getGatewayConfig'
 import { ROXY_MCP_WINDOW_ID } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
-import { appCliStartArgs, isDev, isPackaged, isProd } from '/@/constants/common'
+import { isPackaged, isProd } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { mcpRuntimeState } from '/@/modules/mcp/state'
 import { store } from '/@/modules/store'
@@ -23,6 +23,39 @@ import { mcpEventEmitter } from './event'
 
 export function getMcpWindow() {
   return getWindowById(ROXY_MCP_WINDOW_ID)
+}
+
+const electronAppPathEnvKeyMap = {
+  home: 'HOME_DIR',
+  appData: 'APP_DATA_DIR',
+  assets: 'ASSETS_DIR',
+  userData: 'USER_DATA_DIR',
+  sessionData: 'SESSION_DATA_DIR',
+  temp: 'TEMP_DIR',
+  exe: 'EXE_PATH',
+  module: 'MODULE_PATH',
+  desktop: 'DESKTOP_DIR',
+  documents: 'DOCUMENTS_DIR',
+  downloads: 'DOWNLOADS_DIR',
+  music: 'MUSIC_DIR',
+  pictures: 'PICTURES_DIR',
+  videos: 'VIDEOS_DIR',
+  recent: 'RECENT_DIR',
+  logs: 'LOGS_DIR',
+  crashDumps: 'CRASH_DUMPS_DIR',
+} as const satisfies Record<Parameters<typeof app.getPath>[0], string>
+
+function getElectronAppPathEnv(): Record<string, string> {
+  return Object.entries(electronAppPathEnvKeyMap).reduce<Record<string, string>>((acc, [pathName, envKey]) => {
+    try {
+      acc[envKey] = app.getPath(pathName as Parameters<typeof app.getPath>[0])
+    }
+    catch (error) {
+      console.warn(`[mcp] app.getPath(${pathName}) failed:`, getErrorMessage(error))
+    }
+
+    return acc
+  }, {})
 }
 
 export interface McpImConfigPayload {
@@ -88,8 +121,7 @@ export const mcpManager = new (class McpManager {
 
     const AGENT_ENTRY_SCRIPT = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : appConfig.agentBinPath
 
-    // 获取系统下载目录，提供给 agent 作为默认下载路径
-    const DOWNLOADS_DIR = app.getPath('downloads')
+    const electronAppPathEnv = getElectronAppPathEnv()
 
     const CHECKPOINT_DIR = path.join(agentUpdater.agentDir, 'checkpoints')
 
@@ -141,6 +173,7 @@ export const mcpManager = new (class McpManager {
       CHECKPOINT_DIR,
 
       // agent 的工作目录
+      AGENT_WORK_DIR: agentUpdater.agentDir,
       // ROXY_AGENT_PACKAGE_ROOT,
 
       ROXY_SERVER_PORT: String(port),
@@ -150,8 +183,7 @@ export const mcpManager = new (class McpManager {
       // 语言
       SYSTEM_LANGUAGE: store.language,
 
-      DOWNLOADS_DIR,
-      DESKTOP_DIR: app.getPath('desktop'),
+      ...electronAppPathEnv,
       SKILLS_DIR: agentUpdater.agentDir,
 
       // // 启动模式：启用 IM 时以 im 模式运行，否则以 agent 模式运行（两者互斥，只有一个进程）
@@ -186,7 +218,7 @@ export const mcpManager = new (class McpManager {
       this.mcpWorker = null
     })
 
-    if (isDevelopment) {
+    if (isDevelopment || !isProd) {
       this.attachMcpWorkerDiagnostics(worker, AGENT_ENTRY_SCRIPT)
     }
 
@@ -308,12 +340,22 @@ export const mcpManager = new (class McpManager {
   }
 })()
 
-export async function createMcpWindow(scene?: string) {
+export async function createMcpWindow(scene?: string, skill?: string) {
+  // 用 encodeURIComponent 而非 URLSearchParams：后者会把空格编码成 `+`，
+  // 而 vue-router 解析 query 时用 decodeURIComponent，不会把 `+` 还原成空格。
+  const parts: string[] = []
+  if (scene)
+    parts.push(`scene=${encodeURIComponent(scene)}`)
+  if (skill)
+    parts.push(`skill=${encodeURIComponent(skill)}`)
+  const query = parts.join('&')
+  const suffix = query ? `?${query}` : ''
+
   const targetWin = getMcpWindow()
 
   if (targetWin) {
-    if (scene) {
-      targetWin.loadURL(`${await getWebEntryUrl('mcp')}?scene=${scene}`)
+    if (query) {
+      targetWin.loadURL(`${await getWebEntryUrl('mcp')}${suffix}`)
     }
     targetWin.show()
     return
@@ -322,9 +364,9 @@ export async function createMcpWindow(scene?: string) {
   const win = createWindow({
     roxyWindowId: ROXY_MCP_WINDOW_ID,
     autoHideMenuBar: true,
-    width: 960,
+    width: 1000,
     height: 720,
-    minWidth: 960,
+    minWidth: 1000,
     minHeight: 720,
     // resizable: false,
     // frame: false,
@@ -344,7 +386,7 @@ export async function createMcpWindow(scene?: string) {
     win.destroy()
   })
 
-  win.loadURL(`${await getWebEntryUrl('mcp')}${scene ? `?scene=${scene}` : ''}`)
+  win.loadURL(`${await getWebEntryUrl('mcp')}${suffix}`)
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);

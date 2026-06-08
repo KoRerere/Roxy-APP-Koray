@@ -1,5 +1,10 @@
 import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
 import { env } from '../config'
+import { aiAgentClient } from './aiAgentClient'
+import { aiAgentFilesApi } from './files'
+import { aiAgentImagesApi } from './images'
+import { aiAgentModelApi } from './model'
+import { aiAgentSkillsApi } from './skills'
 
 export const httpClient = new HttpClient({
   timeout: 15000,
@@ -45,3 +50,17 @@ export const API = {
   limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),
 } as const
+
+export const AI_AGENT_API = {
+  client: aiAgentClient,
+  files: aiAgentFilesApi,
+  images: aiAgentImagesApi,
+  model: aiAgentModelApi,
+  skills: aiAgentSkillsApi,
+} as const
+
+export * from './aiAgentClient'
+export * from './files'
+export * from './images'
+export * from './model'
+export * from './skills'

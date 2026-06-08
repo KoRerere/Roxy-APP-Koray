@@ -88,14 +88,17 @@ export function useProfileInfoProxyMenu(options: {
           if (!globalThis.isElectron) {
             return globalThis.electronAPI.send('proxy:detect', {} as any)
           }
-          Reflect.deleteProperty(row, '_checkRes')
-          const checkRes = await checkProxy(toRaw(row))
-          Reflect.set(row, '_checkRes', checkRes)
-          silentUpdateProxy(row, checkRes)
-          batchTestShowToast(checkRes)
-          if (row.moduleId && row.buyProxyType === ProxyType.resource)
-            notifyProxyModuleSpeedTest([{ id: row.moduleId, ...checkRes }])
-          await persistProfileRowAfterProxySpeedTest([{ item: row, checkRes }], { onlyErrorToast })
+          const runCheck = async () => {
+            Reflect.deleteProperty(row, '_checkRes')
+            const checkRes = await checkProxy(toRaw(row))
+            Reflect.set(row, '_checkRes', checkRes)
+            silentUpdateProxy(row, checkRes)
+            batchTestShowToast({ ...checkRes, proxyType: row.buyProxyType }, { reCheck: runCheck })
+            if (row.moduleId && row.buyProxyType === ProxyType.resource)
+              notifyProxyModuleSpeedTest([{ id: row.moduleId, ...checkRes }])
+            await persistProfileRowAfterProxySpeedTest([{ item: row, checkRes }], { onlyErrorToast })
+          }
+          await runCheck()
         },
       },
       {

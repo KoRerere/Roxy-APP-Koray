@@ -10,4 +10,5 @@ export function setupGlobalMethods(app: App) {
   app.config.globalProperties.$showLiveChat = showLiveChat
   app.config.globalProperties.$t = $t
   app.config.globalProperties.$isElectron = globalThis.isElectron
+  app.config.globalProperties.$appVersion = globalThis.$appVersion
 }

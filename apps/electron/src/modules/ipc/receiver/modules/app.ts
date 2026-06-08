@@ -146,18 +146,18 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
 
   /** 获取浏览器缓存所在磁盘 */
   ipcMain.on('app:getRoxyCacheDiskInfo', async () => {
-    await fileExists(appConfig.browserCacheRootDir, true)
-    return getDiskInfoByPath(appConfig.browserCacheRootDir)
+    await fileExists(store.browserCacheRootDir, true)
+    return getDiskInfoByPath(store.browserCacheRootDir)
   })
 
   /** 获取浏览器缓存文件夹大小 */
   ipcMain.on('app:getRoxyCacheSize', () => {
-    return getFolderSize(appConfig.browserCacheRootDir)
+    return getFolderSize(store.browserCacheRootDir)
   })
 
   /** 显示 RoxyBrowser 缓存所在目录 */
   ipcMain.on('app:showCacheDir', (event) => {
-    shell.openPath(appConfig.browserCacheRootDir)
+    shell.openPath(store.browserCacheRootDir)
   })
 
   /** 显示系统日志所在目录 */
@@ -217,8 +217,23 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     const minWidth = 200
     const finalHeight = Math.min(Math.max(payload.height || height, minHeight), maxHeight)
     const finalWidth = Math.min(Math.max(payload.width || width, minWidth), maxWidth)
+    const shouldCenter = Boolean(payload.center)
 
-    win!.setContentSize(finalWidth, finalHeight, true) // true = 带动画（Windows11 有效果）
+    if (shouldCenter) {
+      // 用 setContentBounds 一次性设置内容区位置与尺寸（DIP），高 DPI 缩放下避免外框/阴影导致偏移
+      const { x, y, width: workWidth, height: workHeight } = display.workArea
+      const posX = Math.round(x + (workWidth - finalWidth) / 2)
+      const posY = Math.round(y + (workHeight - finalHeight) / 2)
+      win.setContentBounds({
+        x: posX,
+        y: posY,
+        width: finalWidth,
+        height: finalHeight,
+      }, false)
+    }
+    else {
+      win.setContentSize(finalWidth, finalHeight, true)
+    }
   })
 
   /** 获取新功能提示 */
@@ -299,7 +314,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 卸载反馈已提交 */
-  ipcMain.on('app:uninstall-feedback-submitted', async (event, payload: { reasons: string[], feedback: string }) => {
+  ipcMain.on('app:uninstall-feedback-submitted', async (event, payload: { reasons: number[], selectedReasons: string[] }) => {
     console.log('Uninstall feedback submitted:', payload)
     confirmQuit()
   })

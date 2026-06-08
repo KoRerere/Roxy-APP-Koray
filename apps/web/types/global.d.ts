@@ -13,6 +13,17 @@ declare global {
   var $t: (...args: any[]) => string
   /** 是否为 electron 环境 */
   var isElectron: boolean
+  /** 当前 APP 版本 */
+  var $appVersion: string
+  /** 当前选择的网络线路 */
+  var $lastSelectedNetworkNode: 'auto' | {
+    /** 站点域名 */
+    site: string
+    /** 网关域名 */
+    gate: string
+    /** API 域名 */
+    api: string
+  }
 }
 
 declare module 'vue' {
@@ -20,6 +31,7 @@ declare module 'vue' {
     $showLiveChat: () => void
     $t: (...args: any[]) => string
     $isElectron: boolean
+    $appVersion: string
   }
   interface GlobalComponents {
     // 请务必在此处输入 Vue 组件类型

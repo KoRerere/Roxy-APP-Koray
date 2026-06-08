@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { store } from '/@/modules/store'
 
-const webDomains = JSON.parse(import.meta.env.VITE_WEB_BASE_URL)
+const webDomains: string[] = JSON.parse(import.meta.env.VITE_WEB_BASE_URL)
 const defaultDomain = webDomains.find(domain => domain.includes('roxybrowser.cn')) || webDomains[0]
 
 let lastWebDomain = ''
@@ -9,6 +9,12 @@ let lastWebDomain = ''
 /** 并发测试多个域名，返回第一个可用的域名，如果都不可用，则返回 CN 的域名 */
 export async function getProdWebDomain(force = false) {
   if (!force && lastWebDomain) {
+    return lastWebDomain
+  }
+
+  if (store.lastSelectedNetworkNode !== 'auto' && store.lastSelectedNetworkNode?.site) {
+    lastWebDomain = `https://${store.lastSelectedNetworkNode.site}`
+    store.lastWebDomain = lastWebDomain
     return lastWebDomain
   }
 

@@ -45,7 +45,7 @@ export const runScriptTools = [
         return '任务已被中断'
       }
 
-      const sandboxPath = env.ENV_TYPE === 'development' ? fileURLToPath(import.meta.url) : path.resolve(env.CHECKPOINT_DIR, '../roxy-agent.mjs')
+      const sandboxPath = env.ENV_TYPE === 'development' ? env.AGENT_ENTRY_SCRIPT : path.resolve(env.CHECKPOINT_DIR, '../roxy-agent.mjs')
 
       console.info('self path: ', sandboxPath)
       const allScriptsPromises = input.scripts.map(async (item: RunScriptParam) => {

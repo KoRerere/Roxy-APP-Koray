@@ -13,12 +13,24 @@ export * from './util'
 
 let roxynetProcess: ChildProcess | null = null
 let lastCheckTime = 0
+let startRoxynetInFlight: Promise<void | unknown> | null = null
 
 export function getRoxynetProcess() {
   return roxynetProcess
 }
 
 export async function startRoxynet() {
+  if (startRoxynetInFlight) {
+    return startRoxynetInFlight
+  }
+
+  startRoxynetInFlight = startRoxynetInternal().finally(() => {
+    startRoxynetInFlight = null
+  })
+  return startRoxynetInFlight
+}
+
+async function startRoxynetInternal() {
   console.log('startRoxynet systemProxySwitch:', store.systemProxySwitch)
   console.log('startRoxynet v2raySwitch:', store.v2raySwitch)
 
@@ -46,8 +58,7 @@ export async function startRoxynet() {
     if (!processExists) {
       console.log('roxynetProcess is not exist')
       roxynetProcess = null
-      await startRoxynet()
-      return
+      return startRoxynetInternal()
     }
     return roxynetReportResolvers.promise
   }
@@ -177,7 +188,9 @@ export function stopRoxynet() {
 export async function killRoxynetZombieProcess() {
   try {
     const exePath = appConfig.roxynetBinPath
-    const pids = await getProcessIdsByExePath(exePath)
+    const managedPid = roxynetProcess?.pid
+    const pids = (await getProcessIdsByExePath(exePath))
+      .filter(pid => pid !== managedPid)
     if (!pids.length) {
       console.log('killRoxynetZombieProcess: no zombie process found at', exePath)
       return
