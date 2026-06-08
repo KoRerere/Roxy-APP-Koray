@@ -394,19 +394,19 @@ const options: Configuration = {
     identity: skipCodeSigning ? '-' : 'LINKV TECH PTE. LTD. (GLM223L5MF)', // 根据环境变量决定使用 ad-hoc 签名或证书签名
   },
   linux: {
-    icon: 'logo.icns',
+    icon: 'logo.png',
     target: 'deb',
     category: 'Network',
     synopsis: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
     description: 'Premier Antidetect Browser Streamline Your Workflow Effortlessly',
     // Linux 启动参数（会添加到 .desktop 文件的 Exec 字段中）
-    executableArgs: ['--no-sandbox --disable-setuid-sandbox'],
+    executableArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
     desktop: {
       entry: {
         Name: shortcutName,
         Comment: isDev ? 'Roxy Browser Dev' : 'Roxy Browser',
         Categories: 'Network;WebBrowser;',
-        MimeType: 'x-scheme-handler/roxybrowser;',
+        MimeType: `x-scheme-handler/${appProtocol};`,
       },
     },
   },
