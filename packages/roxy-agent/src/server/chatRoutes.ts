@@ -533,6 +533,7 @@ async function generateConversationTitle(
     enableThinking: false,
     conversationId,
     turnId,
+    isStreaming: false,
   })
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 

@@ -48,6 +48,9 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
       if (existingWin.isMinimized()) {
         existingWin.restore()
       }
+      // macOS 上窗口被遮挡时渲染进程可能处于限流状态，先 show 再 focus，
+      // 确保窗口真正回到前台、渲染恢复后再下发消息，避免监听器收不到。
+      existingWin.show()
       existingWin.focus()
       // 已打开窗口时用消息而非重载，避免打断对话，由 Agent 窗口判断 isChatting 后决定提示或应用
       if (options?.skill) {

@@ -15,6 +15,7 @@ export interface CreateLLMOptions {
   turnId?: string
   /** 指定使用的模型类型：生成图片用 vlm_model，其他全部用 text_model（默认） */
   modelType?: 'text_model' | 'vlm_model'
+  isStreaming?: boolean
 }
 
 function buildTracingHeaders(options: CreateLLMOptions = {}) {
@@ -46,7 +47,7 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
       model,
       apiKey,
       anthropicApiUrl: baseURL, // 使用 anthropicApiUrl 设置自定义 API 端点
-      streaming: true,
+      streaming: options.isStreaming,
       maxTokens: 4096 + 1024,
       clientOptions: {
         defaultHeaders: {
@@ -67,7 +68,7 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
         baseURL,
         defaultHeaders: tracingHeaders,
       },
-      streaming: true,
+      streaming: options.isStreaming,
       temperature: 0.7,
       modelKwargs: {
         enable_thinking: enableThinking,
@@ -90,14 +91,14 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
         },
       } as any,
       endpoint: url.host + url.pathname,
-      streaming: true,
+      streaming: options.isStreaming,
       temperature: 0.5,
     })
   }
   else if (apiFormat === 'moonshot') {
     llm = new ChatMoonshot({
       model,
-      streaming: true,
+      streaming: options.isStreaming,
       apiKey,
       apiUrl: baseURL,
       defaultHeaders: tracingHeaders,
