@@ -404,7 +404,7 @@ provideLoginContext({
         <div class="w-full flex justify-between sm:p-5 p-3">
           <a class="logo" :href="getOfficialWebsite('/')" target="_blank" rel="noopener noreferrer">
             <SvgIcon name="base/logo" size="36" />
-            <div class="logo-text">
+            <div class="logo-text" :class="{ zh: simpleLocaleStore?.currentLocale === 'zh-CN' }">
               {{ $t('Roxy浏览器') }}
             </div>
           </a>
@@ -479,6 +479,10 @@ provideLoginContext({
     font-style: normal;
     line-height: 20px;
     font-weight: bold;
+
+    &.zh {
+      font-family: 'Chinese Brand', Archivo, sans-serif;
+    }
   }
 }
 

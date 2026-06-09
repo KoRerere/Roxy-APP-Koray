@@ -141,3 +141,12 @@
   font-family: 'DingTalk JinBuTi';
   src: url('/fonts/DingTalk JinBuTi/DingTalk JinBuTi.ttf');
 }
+
+/** Chinese Brand */
+@font-face {
+  font-family: 'Chinese Brand';
+  src: url('/fonts/chinese-brand/chinese-brand.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
