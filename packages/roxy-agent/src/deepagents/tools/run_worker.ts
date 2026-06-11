@@ -82,9 +82,13 @@ export const workerTools = [
         runners.push(runner)
       }
 
-      // Start all runners
-      for (const runner of runners) {
-        runner.start()
+      // Start runners with staggered delay to reduce resource contention
+      for (let i = 0; i < runners.length; i++) {
+        runners[i].start()
+        if (i < runners.length - 1) {
+          const delayMs = 1000 + Math.floor(Math.random() * 2000) // 1–3 s
+          await new Promise<void>(resolve => setTimeout(resolve, delayMs))
+        }
       }
 
       // Wait for all workers to finish and exit

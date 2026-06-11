@@ -92,7 +92,7 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
   catch (error: any) {
     const isAbort = error?.name === 'AbortError' || abortController.signal.aborted
     const errorMessage = failureReason
-      ?? (isAbort ? 'Worker cancelled' : error instanceof Error ? error.message : String(error))
+      ?? (isAbort ? 'Worker cancelled' : error instanceof Error ? `${error.message}\n${error.stack}` : String(error))
 
     console.error('[worker] Run ended status=failed', errorMessage)
     finalStatus = 'failed'

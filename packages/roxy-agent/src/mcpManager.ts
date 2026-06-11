@@ -163,7 +163,7 @@ export class McpManager {
   private readonly stateFilePath: string
 
   /** electron 进程路径 */
-  private readonly command = isElectron() ? process.execPath : 'node'
+  private readonly command = process.execPath
 
   /** 当前活跃 worker 数（仅计 playwright worker） */
   count = 0
@@ -268,7 +268,7 @@ export class McpManager {
    */
   async createPlaywrightClientForWorker(workerId: string): Promise<void> {
     await assertFileIntegritySha512(env.PLAYWRIGHT_SCRIPT_PATH!, env.PLAYWRIGHT_SCRIPT_SHA512, 'PLAYWRIGHT_SCRIPT_PATH')
-
+    console.log('env.PLAYWRIGHT_SCRIPT_PATH', env.PLAYWRIGHT_SCRIPT_PATH)
     const playwright: Connection = {
       transport: 'stdio',
       command: this.command,
