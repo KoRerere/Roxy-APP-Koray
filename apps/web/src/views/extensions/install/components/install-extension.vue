@@ -103,7 +103,8 @@ onMounted(() => {
         {{ $t('安装到项目:') }}
       </div>
       <div class="description">
-        {{ $t('扩展将被安装至所选项目中的所有窗口') }}
+        <SvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
+        {{ $t('扩展将被安装至所选项目中的 Chrome 内核窗口') }}
       </div>
       <div class="project-table mt-2.5 h-60">
         <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
@@ -221,6 +222,9 @@ onMounted(() => {
 }
 
 .description {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 4px);
   margin-top: var(--spacing-sm, 4px);
   color: var(--colors-text-text-tertiary, #575d60);
   font-family: Inter;

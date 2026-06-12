@@ -4,6 +4,8 @@ import { filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
 import { parseBrowserOpenQuery } from '/@/views/browser/list/profiles/utils/browserQuery'
 import { useAutoOpenProxySync } from '/@/views/browser/list/profiles/hooks/useAutoOpenProxySync'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { emitter } from '/@/utils/eventBus'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -15,12 +17,19 @@ export function useProfilesTable(options: {
 }) {
   const route = useRoute()
   const router = useRouter()
+  const workspaceStore = useWorkspaceStore()
 
   const hasFiltered = ref(false)
   const hasTempProfile = ref(false)
   /** 与 tableRequest 返回的 rows 同一引用，供测速、静默更新代理等使用 */
   const dataList = ref<Data[]>([])
   const { markRouteAutoOpen, clearPendingAutoOpen, syncOpenedProxyToRow } = useAutoOpenProxySync(dataList)
+
+  watch(() => workspaceStore.currentWorkspace, (newValue, oldValue) => {
+    if (newValue?.workspaceName !== oldValue?.workspaceName) {
+      onRefreshTable()
+    }
+  })
 
   function onRefreshTable(tabParams: Record<string, unknown> = {}, force = false) {
     const params = {
@@ -60,6 +69,8 @@ export function useProfilesTable(options: {
       if (rows.length > 0)
         autoOpenBrowser()
     }
+
+    emitter.emit('updateProfileList', data.data.rows)
 
     return data
   }

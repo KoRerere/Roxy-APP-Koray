@@ -77,7 +77,9 @@ function onCopy(dirId: string) {
             <InputLabel v-bind="input" />
             <div class="flex-1 flex flex-col gap-2 overflow-hidden">
               <div class="flex-1 flex gap-2 overflow-hidden">
-                <OsSwitch v-model="input.items[0].value" class="flex-1" :disabled="input.items[0].disabled" :options="input.items[0].options"
+                <OsSwitch v-model="input.items[0].value" class="flex-1" :disabled="input.items[0].disabled"
+                          :disabled-tooltip="input.items[0].disabled ? $t('内核不支持修改') : undefined"
+                          :options="input.items[0].options"
                           @change="input.items[0].change?.(input.items[0], input.items)"
                 >
                   <template #item="{ item }">

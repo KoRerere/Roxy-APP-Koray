@@ -156,7 +156,12 @@ export const useUserStore = defineStore(
     }
 
     async function fetchUserInfo() {
-      return API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
+      const result = await API.base.userGetUserInfoList().catch(() => API.base.userGetUserInfoList())
+
+      if (result.code === 0) {
+        setUserInfo(result.data)
+      }
+      return result
     }
 
     async function setUserInfo(info: UserInfo) {

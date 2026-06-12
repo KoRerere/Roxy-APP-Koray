@@ -1,54 +1,66 @@
+import { API } from '/@/api'
 import { isMainWindow, safeParseJSON } from '/@/utils'
 
-const LOCK_KEY = '__lock__';
+const LOCK_KEY = '__lock__'
 
 export const useLock = defineStore('lock', () => {
-
   const defaultValue = {
     password: '',
     openScreenLock: false,
   }
-  let __localLockData = localStorage.getItem(LOCK_KEY);
+  let __localLockData = localStorage.getItem(LOCK_KEY)
   // 兼容localStorage.getItem(LOCK_KEY)返回值为字符串的'null'，导致页面奔溃
   if (__localLockData == 'null') {
     __localLockData = JSON.stringify(defaultValue)
   }
-  const localLockData = __localLockData || JSON.stringify(defaultValue);
+  const localLockData = __localLockData || JSON.stringify(defaultValue)
   const lockData = reactive(safeParseJSON(localLockData, defaultValue))
 
   const route = useRoute()
-  const isLocked = computed(() => lockData.password && lockData.openScreenLock && route.name !== 'login' && isMainWindow);
+  const isLocked = computed(() => lockData.password && lockData.openScreenLock && route.name !== 'login' && isMainWindow)
+
+  watch(isLocked, (newVal) => {
+    if (newVal) {
+      console.log('isLocked', newVal)
+      API.base.userReportAppEventCreate({
+        eventName: 'app_lock_screen_show',
+      })
+    }
+  })
 
   async function sha256(password: string) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
+    const encoder = new TextEncoder()
+    const data = encoder.encode(password)
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    return hashHex
   }
 
-  // 密码是否正确
+  /**
+   * 密码是否正确
+   */
   async function checkPassword(password: string) {
     const text = await sha256(password)
     return text === lockData.password
   }
 
   const openLockMark = async () => {
-    lockData.openScreenLock = true;
+    lockData.openScreenLock = true
     localStorage.setItem(LOCK_KEY, JSON.stringify(lockData))
   }
 
   const closeLockMark = async () => {
-    lockData.openScreenLock = false;
+    lockData.openScreenLock = false
     localStorage.setItem(LOCK_KEY, JSON.stringify(lockData))
   }
 
   const setPassword = async (password: string) => {
     if (password) {
       lockData.password = await sha256(password)
-    } else {
-      lockData.password = '';
+    }
+    else {
+      lockData.password = ''
     }
     localStorage.setItem(LOCK_KEY, JSON.stringify(lockData))
   }
@@ -63,9 +75,9 @@ export const useLock = defineStore('lock', () => {
     const handleStorage = () => {
       localStorage.setItem(LOCK_KEY, JSON.stringify(lockData))
     }
-    window.addEventListener("storage", handleStorage);
+    window.addEventListener('storage', handleStorage)
     onBeforeUnmount(() => {
-      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener('storage', handleStorage)
     })
   })
 
@@ -76,6 +88,6 @@ export const useLock = defineStore('lock', () => {
     checkPassword,
     openLockMark,
     setPassword,
-    closeLockMark
+    closeLockMark,
   }
 })

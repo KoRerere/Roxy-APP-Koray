@@ -12,6 +12,7 @@ import { getAdvancedSearch, getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
 import { ProfileReqType } from '/@/enums'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const columns = [
   {
@@ -199,7 +200,7 @@ function getRemainingStatus(day: number) {
         <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
       </template>
       <template #profile="{ data }">
-        <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
+        <profileInfo :workspace-name="getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName)" :data="data" disabled />
       </template>
       <template #note="{ data }">
         <div class="inline-flex items-center gap-2">

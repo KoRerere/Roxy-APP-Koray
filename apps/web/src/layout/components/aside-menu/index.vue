@@ -1,24 +1,23 @@
 <script setup lang="tsx">
-// import { h } from 'vue'
-// import QuickOpen from '/@/views/browser/create/quick.vue'
+import { h } from 'vue'
+import QuickOpen from '/@/views/browser/create/quick.vue'
 import SubMenuItem from './sub-menu-item.vue'
 import { cloneDeep } from 'es-toolkit'
 import { API } from '/@/api'
 import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
-// import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-// import { useDialog } from '/@/hooks/useDialog'
+import { useDialog } from '/@/hooks/useDialog'
 import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-// import { useCheckProxy } from '/@/views/agent/hooks'
 import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
-// import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
+import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
 import { emitter } from '/@/utils/eventBus'
 import { ProjectPin, WorkspaceType } from '/@/enums'
-import { genDriver, safeParseJSON } from '/@/utils'
+import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
 
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 
@@ -30,13 +29,12 @@ const route = useRoute()
 const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
-// const { userPayInfo } = storeToRefs(useUserStore())
+const userStore = useUserStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-// const { testProxy } = useCheckProxy()
 const { check } = usePermission()
 const { handleBusinessCode } = useHandleBusinessCode()
-const [_, onlyErrorToast] = useResponseToast()
-// const [showModal] = useDialog()
+const [showToast, onlyErrorToast] = useResponseToast()
+const [showModal] = useDialog()
 
 const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
 const driverObj = ref()
@@ -162,64 +160,82 @@ async function toCreateBrowser() {
   router.push({ name: 'browser-create', query })
 }
 
-// async function quickGenBrowser() {
-//   const isOk = await checkWindowTotalCountOk()
-//   if (!isOk)
-//     return
+async function saveQuickCreateProxyInfo(proxyInfo: string) {
+  const { code, msg } = await API.base.userSetUserConfigCreate({ quickCreateProxyTemplate: proxyInfo } as any)
+  onlyErrorToast(code, msg)
+  if (code === 0) {
+    globalThis.electronAPI.send('app:saveSoftConfig', { quickCreateProxyTemplate: proxyInfo } as never)
+    userStore.updateUserConfig()
+  }
+}
 
-//   const { code, data, msg } = await API.window.userGetProxyTemplateList()
+async function quickCreateProfile(proxyData?: Record<string, any>) {
+  console.log('proxyData', proxyData)
+  const refreshResult = await tryRefreshProxyUrl(proxyData?.refreshUrl)
+  if (refreshResult !== null)
+    showToast(refreshResult ? 0 : -1, proxyData!.refreshUrl)
 
-//   onlyErrorToast(code, msg)
-//   if (code !== 0)
-//     return
+  const customerParams = await genCustomerParams(proxyData)
+  const [windowId] = await genDefaultProfileByCount(1, customerParams)
+  emitter.emit('refreshProfileList', windowId)
+  return windowId
+}
 
-//   if (data) {
-//     const customerParams = await genCustomerParams(data.proxyInfo)
-//     const [windowId] = await genDefaultProfileByCount(1, customerParams)
-//     emitter.emit('refreshProfileList', windowId)
-//     return
-//   }
+async function quickGenBrowser() {
+  const isOk = await checkWindowTotalCountOk()
+  if (!isOk)
+    return
 
-//   showModal({
-//     showHeader: false,
-//     modal: true,
-//     blockScroll: true,
-//     slots: {
-//       container: ({ hideModal }) => h(QuickOpen, {
-//         onClose: hideModal,
-//         onConfirm: async (params) => {
-//           const customerParams = await genCustomerParams(params)
-//           const [windowId] = await genDefaultProfileByCount(1, customerParams)
-//           emitter.emit('refreshProfileList', windowId)
-//           API.window.userAddProxyTemplateCreate(params || {})
-//           hideModal()
-//         },
-//       }),
-//     },
-//   })
-// }
+  const userConfig = await userStore.getUserConfig()
+  const showModalEveryTime = (userConfig as any)?.quickCreateModalSwitch ?? true
+  const proxyInfoText = ((userConfig as any)?.quickCreateProxyTemplate ?? '').trim()
 
-// async function genCustomerParams(data: any) {
-//   if (isEmptyValue(data))
-//     return {}
+  if (!showModalEveryTime) {
+    const proxyData = proxyInfoText ? buildQuickCreateProxyParams(proxyInfoText) : undefined
+    await quickCreateProfile(proxyData)
+    return
+  }
 
-//   // const checkResult = await testProxy({ ...data, isDirect: userPayInfo.value.isDirectWhitelist })
-//   return {
-//     proxyInfoList: [{
-//       _tempId: Date.now().toString(32),
-//       proxyMethod: 'custom',
-//       ...data,
-//       // ...checkResult,
-//     }],
-//   }
-// }
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(QuickOpen, {
+        isEdit: !!proxyInfoText,
+        data: proxyInfoText ? { proxyInfo: proxyInfoText } : undefined,
+        onClose: hideModal,
+        onConfirm: async (params) => {
+          await quickCreateProfile(params)
+          if (params) {
+            await saveQuickCreateProxyInfo(formatProxyInfoToString(params))
+          }
+          hideModal()
+        },
+      }),
+    },
+  })
+}
+
+async function genCustomerParams(data: any) {
+  if (isEmptyValue(data))
+    return {}
+
+  return {
+    proxyInfoList: [{
+      _tempId: Date.now().toString(32),
+      proxyMethod: 'custom',
+      ...data,
+    }],
+  }
+}
 </script>
 
 <template>
   <aside class="relative -mt-6.5 pt-5.25 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
     <div v-if="check('Profiles_add')" class="flex items-center gap-2">
       <RxButton id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
-      <!-- <RxButton v-if="!collapsed" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" /> -->
+      <RxButton v-if="!collapsed && isDev" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" />
     </div>
     <div class="relative flex-1 overflow-hidden">
       <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">

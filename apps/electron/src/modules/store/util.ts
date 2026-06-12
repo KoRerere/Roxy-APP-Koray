@@ -137,6 +137,7 @@ export async function forceSaveConfig() {
   })
 
   const isExists = await fileExists(_store.browserCacheRootDir)
+  console.log('old browserCacheRootDir', isExists, _store.browserCacheRootDir)
   if (!isExists) {
     _store.browserCacheRootDir = defaultValues.browserCacheRootDir
   }

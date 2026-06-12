@@ -21,6 +21,7 @@ export interface Items {
 export interface List {
   subId?: string
   subtitle?: string
+  hide?: () => boolean
   items: Items[]
 }
 export interface SettingsModule {

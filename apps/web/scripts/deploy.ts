@@ -197,10 +197,10 @@ export async function deployWeb(isProd: boolean, isWhitelist = true) {
       ]
     : [
         {
-          host: '113.10.160.72',
+          host: '8.218.38.36',
           username: 'root',
-          password: '7PjbTOXM8HKRW9',
-          remoteBasePath: isWhitelist ? '/root/roxybrowser/dist-whitelist' : '/root/roxybrowser/dist',
+          password: 'K9#b$mP2*vQ',
+          remoteBasePath: isWhitelist ? '/var/www/roxybrowser/dist-whitelist' : '/var/www/roxybrowser/dist',
         },
       ]
 

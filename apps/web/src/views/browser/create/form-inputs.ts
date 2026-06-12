@@ -142,6 +142,64 @@ function normalizeCoreType(coreType?: string): CoreType {
   return coreType === CoreType.Firefox ? CoreType.Firefox : CoreType.Chrome
 }
 
+/**
+ * 「保持最新」虚拟选项的内部标识。
+ * 该选项仅用于 UI 展示，提交时需转换为 useLatestCore + 最新 coreVersion。
+ */
+const USE_LATEST_CORE_VALUE = '__useLatestCore__'
+
+function isUseLatestCoreOption(option?: { value?: string }) {
+  return option?.value === USE_LATEST_CORE_VALUE
+}
+
+/** 在真实内核版本列表前插入「保持最新」虚拟选项 */
+function withUseLatestCoreOption(options: any[]) {
+  if (options.some(isUseLatestCoreOption)) {
+    return options
+  }
+  return [{ label: $t('保持最新'), value: USE_LATEST_CORE_VALUE }, ...options]
+}
+
+/** 从 options 中取第一个真实内核版本号（字典已按版本降序，即最新版） */
+function getLatestCoreVersionFromOptions(options: any[]) {
+  return options.find(option => !isUseLatestCoreOption(option))?.value ?? ''
+}
+
+/** 从 options 中取第一个真实内核版本对应的 option 对象，供下拉框默认选中 */
+function getLatestCoreVersionOption(options: any[]) {
+  return options.find(option => !isUseLatestCoreOption(option)) ?? options[0]
+}
+
+/**
+ * 将下拉框选中值解析为接口字段。
+ * 选中「保持最新」时：useLatestCore=true，coreVersion 仍传当前最新版本（UA/指纹等逻辑依赖具体版本号）。
+ */
+function resolveCoreVersionFromInput(input: any) {
+  const selectedValue = input.value?.value
+  const useLatestCore = isUseLatestCoreOption(input.value)
+  return {
+    useLatestCore,
+    coreVersion: useLatestCore ? getLatestCoreVersionFromOptions(input.options) : selectedValue,
+  }
+}
+
+/** 根据编辑数据或默认值，确定内核版本下拉的初始选中项 */
+function getInitialCoreVersionValue(options: any[], data: any) {
+  // 后端标记为保持最新时，选中虚拟选项
+  if (data.useLatestCore === true) {
+    return options.find(isUseLatestCoreOption) ?? getLatestCoreVersionOption(options)
+  }
+  // 编辑已有窗口：回显具体版本
+  if (data.coreVersion) {
+    const matched = options.find((item: any) => item.value === data.coreVersion)
+    if (matched) {
+      return matched
+    }
+  }
+  // 新建默认选中最新内核，而非「保持最新」
+  return getLatestCoreVersionOption(options)
+}
+
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }, gate?: Pick<FormAsyncGate, 'run'>) {
   const run = gate?.run ?? (<T>(task: () => Promise<T>) => task())
 
@@ -168,16 +226,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     ios: 'platforms/rx_os_iOS',
   } as const
 
-  /** 按内核类型获取可选版本，并过滤本地已安装/可用的内核 */
+  /** 按内核类型获取可选版本，过滤本地已安装内核，并在列表前插入「保持最新」虚拟选项 */
   const getCoreVersionOptionsByType = (coreType: string, os?: string, version?: string) => {
     if (isFirefoxCoreType(coreType)) {
-      return ($dict_map.firefoxCoreVersion ?? []).filter(item => availableFirefoxVersions.includes(item.value))
+      const options = ($dict_map.firefoxCoreVersion ?? []).filter(item => availableFirefoxVersions.includes(item.value))
+      return withUseLatestCoreOption(options)
     }
 
     const chromeVersions = $dict_map.coreVersion!.filter(item => availableChromeVersions.includes(item.value))
-    return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0) ?? '')
+    const filtered = os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0) ?? '')
       ? chromeVersions.filter((item: any) => item.value === '109') // win7，win8 只有 109 内核版本
       : chromeVersions
+    return withUseLatestCoreOption(filtered)
   }
 
   const osOptions = $dict_map.os!.map(({ label, ...item }: any) => {
@@ -328,8 +388,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
 
               coreVersionInput.options = _coreVersionOptions
               const matched = _coreVersionOptions.find((opt: any) => opt.value === coreVersionInput.value?.value)
+              // 当前选中版本在新系统下不可用时，回退到最新内核（非「保持最新」）
               if (!matched && _coreVersionOptions.length) {
-                coreVersionInput.value = _coreVersionOptions[0]
+                coreVersionInput.value = getLatestCoreVersionOption(_coreVersionOptions)
               }
 
               // browserVersion 仅 Chrome 非严格模式使用
@@ -384,7 +445,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
 
               const _coreVersionOptions = getCoreVersionOptionsByType(coreType, os, version)
               coreVersionInput.options = _coreVersionOptions
-              coreVersionInput.value = _coreVersionOptions[0] ?? null
+              // 切换内核类型后默认使用最新内核
+              coreVersionInput.value = getLatestCoreVersionOption(_coreVersionOptions) ?? null
 
               await run(() => syncCoreTypeRelatedFields(coreType, os, version))
               const moblieVisible = ['Android', 'IOS'].includes(os) && coreType !== CoreType.Firefox
@@ -404,16 +466,24 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
         {
           type: 'select',
           name: 'coreVersion',
-          value: initialCoreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? initialCoreVersionOptions[0],
+          value: getInitialCoreVersionValue(initialCoreVersionOptions, data),
           options: initialCoreVersionOptions,
           required: true,
           filter: false,
+          // 虚拟选项「保持最新」需拆分为 useLatestCore + 实际 coreVersion 再提交
+          formatValue: (input: any, _inputs: any, formData: any) => {
+            const { useLatestCore, coreVersion } = resolveCoreVersionFromInput(input)
+            Reflect.set(formData, 'useLatestCore', useLatestCore)
+            return coreVersion
+          },
           change: async (item: any) => {
             if (item.value) {
               await run(() => setUaWebgl(inputsGroup))
             }
             if (data.dirId) {
-              item.help = data.coreVersion !== item.value.value
+              // 与后端已保存的实际版本比较，虚拟选项需先解析为真实版本号
+              const { coreVersion } = resolveCoreVersionFromInput(item)
+              item.help = data.coreVersion !== coreVersion
                 ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
                 : ''
             }

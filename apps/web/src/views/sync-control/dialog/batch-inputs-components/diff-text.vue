@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-api';
 import { useWorkspaceStore } from '/@/stores/workspace';
+import { getWorkspaceNamePrefix } from '/@/utils/workspace';
 import { RxSvgIcon } from '/@/components/rx-icon';
 
 const props = defineProps({
@@ -15,9 +16,7 @@ const textMap = ref<Recordable>({})
 const labelList = ref<HTMLLabelElement[]>([])
 const maxLabelWidth = ref(0)
 
-const workspaceName = computed(() => {
-  return workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
-})
+const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
 
 watch(() => props.syncWindows, (val) => {
   val.forEach((window) => {

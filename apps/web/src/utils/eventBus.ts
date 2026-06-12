@@ -2,7 +2,7 @@ import { tryOnScopeDispose } from '@vueuse/core'
 import mitt from 'mitt'
 import type { Handler } from 'mitt'
 import type { ToastMessageOptions } from 'primevue/toast'
-import type { UserGetNotifyListData, UserPaySettlementCreateData } from '@roxy/backend-api'
+import type { UserGetNotifyListData, UserGetWindowInfoListListData, UserPaySettlementCreateData } from '@roxy/backend-api'
 
 export type PayWallType = 'synchronizer' | 'createProfileTemplates' | 'transfer'
 
@@ -71,6 +71,8 @@ export type MittEvents = {
   backDefaultWorkspace: void
   /** 刷新窗口列表 */
   refreshProfileList?: number
+  /** 窗口列表数据更新时 */
+  updateProfileList?: UserGetWindowInfoListListData['data']['rows']
 } & Record<string | symbol, unknown>
 
 export const emitter = mitt<MittEvents>()

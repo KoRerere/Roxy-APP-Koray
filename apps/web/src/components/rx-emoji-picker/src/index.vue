@@ -2,9 +2,12 @@
 import data from '@emoji-mart/data'
 import { Picker } from 'emoji-mart'
 import { RxSvgIcon } from '../../rx-icon'
-import { useThemeStore } from '/@/stores/theme';
+import { useThemeStore } from '/@/stores/theme'
+import { needsCompactFallbackText } from '/@/utils/workspace'
 
 const props = defineProps<{ disabled?: boolean, fallbackText?: string }>()
+
+const isCompactFallback = computed(() => needsCompactFallbackText(props.fallbackText))
 const modelValue = defineModel<string>()
 
 const themeStore = useThemeStore()
@@ -39,7 +42,7 @@ function handleClose(e: MouseEvent) {
     <RxSvgIcon v-if="modelValue && !disabled" name="base/rx_ic_delete" class="close-icon" @click="handleClose" />
     <slot>
       <div class="default-box">
-        <div class="emoji-preview">
+        <div class="emoji-preview" :class="{ 'emoji-preview--compact': isCompactFallback }">
           <template v-if="modelValue">
             {{ modelValue }}
           </template>
@@ -113,6 +116,15 @@ function handleClose(e: MouseEvent) {
     font-weight: 700;
     line-height: 28px;
     /* 70% */
+
+    &--compact {
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 28px;
+      white-space: nowrap;
+      letter-spacing: -0.5px;
+    }
   }
 }
 

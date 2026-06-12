@@ -11,6 +11,7 @@ import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 // import { isNewerVersion } from '/@/utils/common'
 import { compare } from 'compare-versions'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -40,7 +41,7 @@ export function useProfileOpenState() {
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { mixpanelTrack } = useUserStore()
   const [_, onlyErrorToast] = useResponseToast()
-  const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
+  const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
 
   const openMessage = reactive<Record<string, any>>({})
 

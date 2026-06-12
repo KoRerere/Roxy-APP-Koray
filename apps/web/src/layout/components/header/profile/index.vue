@@ -21,6 +21,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 import type { SvgNames } from '/@/components/rx-icon'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
 const router = useRouter()
 const dialog = useDialog()
@@ -37,13 +38,13 @@ const menuRef = useTemplateRef('menu')
 
 const avatarProps = computed(() => {
   const { workspacePicture, workspaceName } = currentWorkspace.value || {}
-  return {
-    name: workspacePicture || workspaceName?.slice(0, 2),
-    color: workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+  return getWorkspaceAvatarProps({
+    workspacePicture,
+    workspaceName,
     size: 26,
-    fontSize: workspacePicture ? 18 : 14,
-    radius: '6px',
-  }
+    emojiFontSize: 18,
+    textFontSize: 14,
+  })
 })
 
 const items = computed(() => {

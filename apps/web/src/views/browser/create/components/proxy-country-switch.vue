@@ -38,7 +38,7 @@ async function getList() {
       </div>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <div v-for="item in list" :key="item.businessId" class="h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none radio"
            :class="{ active: selected.purchaseCountry.value === item.purchaseCountry.value }" @click="selected = item"
       >
@@ -49,7 +49,7 @@ async function getList() {
       </div>
 
       <div class="h-10 relative flex items-center gap-1.5 leading-none px-3 cursor-pointer select-none radio" @click="$emit('more')">
-        <span class="tt-primary text-3.5 leading-5">{{ $t('更多国家') }}</span>
+        <span class="tt-primary text-3.5 leading-5 whitespace-nowrap word-break-keep-all">{{ $t('更多国家') }}</span>
         <SvgIcon name="base/rx_ic_arrow_right_2" color="var(--colors-icon-icon-secondary)" />
       </div>
     </div>

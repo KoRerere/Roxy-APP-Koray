@@ -3,6 +3,7 @@ import InputIcon from 'primevue/inputicon'
 import InputNumber from 'primevue/inputnumber'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
+import TsFormInputTextarea from '/@/views/lab/components/form/m-input-textarea.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import FolderDirectory from '../folder-directory.vue'
 import DiskOverview from '../disk-overview.vue'
@@ -16,7 +17,7 @@ import { useCommonUtil } from '/@/layout/components/header/profile/components/se
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_HUMAN_NOISE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
-import { isWindows } from '/@/utils/common'
+import { isDev, isWindows } from '/@/utils/common'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
 import { isEmptyValue, isObject } from '/@/utils'
@@ -33,6 +34,8 @@ export function usePreferencesPanel() {
       globalThis.electronAPI.send('app:getRoxyCacheDiskInfo'),
       API.platform.userGetSearchEnginesList(),
     ])
+
+    const proxyInfoText = data?.quickCreateProxyTemplate ?? ''
 
     let searchEngineOptions: { label: string, value: string, image: string }[] = []
     if (searchEngineResult.code === 0 && searchEngineResult.data) {
@@ -244,6 +247,50 @@ export function usePreferencesPanel() {
                     {...props}
                     name={item.name}
                     onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+          ],
+        },
+        {
+          subtitle: $t('快速创建'),
+          hide: () => !isDev,
+          items: [
+            {
+              label: $t('每次显示配置弹窗'),
+              name: 'quickCreateModalSwitch',
+              value: data?.quickCreateModalSwitch ?? true,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('代理配置'),
+              name: 'quickCreateProxyTemplate',
+              classes: 'flex-col !items-start gap-2',
+              value: proxyInfoText,
+              oldValue: proxyInfoText,
+              vaildator: (item: Items) => item.oldValue !== item.value,
+              props: {
+                size: 'md',
+                rows: 4,
+                class: 'resize-none w-full',
+                placeholder: $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
+              },
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormInputTextarea
+                    {...item.props}
+                    {...props}
+                    class="w-full"
+                    onBlur={() => saveUserConfig(item)}
                   />
                 )
               },

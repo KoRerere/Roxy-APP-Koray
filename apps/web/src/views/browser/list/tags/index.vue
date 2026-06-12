@@ -7,12 +7,13 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const emit = defineEmits(['close'])
 
 const confirm = useConfirm()
 const { check } = usePermission()
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
+const workspaceName = getWorkspaceNamePrefix(useWorkspaceStore().currentWorkspace?.workspaceName)
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
 

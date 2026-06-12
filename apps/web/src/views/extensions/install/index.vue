@@ -21,7 +21,10 @@ import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api
 
 type Data = UnwrapRowType<UserGetPluginListListData>
 
-defineEmits(['search'])
+const emits = defineEmits<{
+  (e: 'search'): void
+  (e: 'dataChange', result: UserGetPluginListListData): void
+}>()
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
@@ -93,7 +96,9 @@ const filters = reactive({
 })
 
 async function tableRequest(params: any) {
-  return API.plugins.userGetPluginListList(params)
+  const result = await API.plugins.userGetPluginListList(params)
+  emits('dataChange', result)
+  return result
 }
 
 async function showPinMenu(event: any, data: any) {

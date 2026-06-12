@@ -7,6 +7,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
 import { Role } from '/@/enums/role'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
@@ -15,7 +16,7 @@ const workspaceStore = useWorkspaceStore()
 const [showToast] = useResponseToast()
 
 const exampleName = computed(() => {
-  const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
+  const _name = getWorkspaceNamePrefix(workspaceInfo.value.workspaceName)
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
 })
 
@@ -32,7 +33,6 @@ const remainWorkspaceCount = computed(() => {
 function onInput() {
   const result = z.string()
     .min(1, $t('请输入空间名称'))
-    .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
     .min(4, $t('空间名称最少 4 个字符'))
     .max(20, $t('空间名称最多 20 个字符'))
     .safeParse(workspaceInfo.value.workspaceName)

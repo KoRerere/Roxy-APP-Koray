@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import { loadEnvFile } from 'node:process'
 import readline from 'node:readline'
 import { getLauncherVariants } from './launcher-variants.ts'
 import { getDefaultTargetsForHost } from './utils.ts'
@@ -30,7 +31,20 @@ function getArchDirFromTarget(target: string): string {
 }
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'TMckk256xUnn50cP1780034563479'
+
+if (isProd) {
+  try {
+    loadEnvFile(path.join(import.meta.dirname, '../../../.env.local'))
+  }
+  catch {
+    // .env.local 不存在时忽略
+  }
+}
+
+const token = isProd ? process.env.PUBLISH_ADMIN_TOKEN : 'TMckk256xUnn50cP1780034563479'
+if (isProd && !token) {
+  throw new Error('缺少 PUBLISH_ADMIN_TOKEN，请在 .env.local 中配置')
+}
 
 const isMacOS = process.platform === 'darwin'
 const isWindows = process.platform === 'win32'

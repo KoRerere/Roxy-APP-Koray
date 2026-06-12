@@ -25,5 +25,12 @@ body {
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-sm, 18px);
+    // 内容超出时允许滚动，但隐藏滚动条
+    overflow-y: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }

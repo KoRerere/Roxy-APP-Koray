@@ -109,6 +109,7 @@ function openGoogleAuth2Login() {
     scope: 'https://www.googleapis.com/auth/userinfo.email',
     response_type: 'code',
     state: generateState(),
+    prompt: 'select_account',
   }
   const params = new URLSearchParams(paramsObj)
   const url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`

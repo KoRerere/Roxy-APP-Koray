@@ -3,6 +3,7 @@ import yaml from 'js-yaml'
 import { Buffer } from 'node:buffer'
 import fs, { renameSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
+import { loadEnvFile } from 'node:process'
 import readline from 'node:readline'
 
 const rl = readline.createInterface({
@@ -26,6 +27,16 @@ function confirmPublish() {
 // 忽略 SSL/TLS 证书验证
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 const isProd = process.env.NODE_ENV === 'production'
+
+if (isProd) {
+  try {
+    loadEnvFile(join(import.meta.dirname, '../.env.local'))
+  }
+  catch {
+    // .env.local 不存在时忽略
+  }
+}
+
 const isMac = process.platform === 'darwin'
 const isLinux = process.platform === 'linux'
 console.log('isMac:', isMac)
@@ -40,7 +51,10 @@ const ossConfig = {
 
 const apiBaseUrl = `${isProd ? 'https://admin.lumibrowser.com' : 'https://admintest.roxybrowser.co'}/fb-admin-api`
 // 懒得模拟登录获取 token 了，反正 token 是永久的
-const token = isProd ? '1xWSPxbYCyovSiWk1763960754091' : 'TMckk256xUnn50cP1780034563479'
+const token = isProd ? process.env.PUBLISH_ADMIN_TOKEN : 'TMckk256xUnn50cP1780034563479'
+if (isProd && !token) {
+  throw new Error('缺少 PUBLISH_ADMIN_TOKEN，请在 .env.local 中配置')
+}
 /** 安装包输出路径 */
 const outDir = join(import.meta.dirname, '../out')
 /** YAML 文件路径 */

@@ -53,15 +53,6 @@ const { columns } = useColumns({
       },
     },
     {
-      title: $t('成员备注'),
-      key: 'nickname',
-      slot: 'nickname',
-      headerSlot: 'nicknameHeader',
-      style: {
-        minWidth: '120px',
-      },
-    },
-    {
       title: $t('成员昵称'),
       key: 'workspaceNickname',
       slot: 'workspaceNickname',
@@ -281,26 +272,6 @@ async function handleShowInviteUserFormDialog(role = Role.VIEWER) {
   })
 }
 
-async function saveNickname(data: TableRow, close: () => void) {
-  const { email, phone, userId, nickname, _oldNickname } = data
-  if (!nickname?.trim() && !_oldNickname?.trim()) {
-    data.nickname = ''
-    data._oldNickname = ''
-    close()
-    return
-  }
-  const { code, msg } = await API.team.userAddTeamNicknameCreate({
-    nickname: nickname || '',
-    emailOrPhone: email || phone || '',
-    targetUserId: userId!,
-  })
-  onlyErrorToast(code, msg)
-  if (code !== 0) {
-    data.nickname = _oldNickname
-  }
-  close()
-}
-
 async function saveWorkspaceNickname(data: TableRow, close: () => void) {
   const { email, phone, userId, workspaceNickname, _oldWorkspaceNickname } = data
   if (!workspaceNickname?.trim() && !_oldWorkspaceNickname?.trim()) {
@@ -358,26 +329,6 @@ function onRefreshTable(params = {}) {
     </template>
     <template #member="{ data }">
       <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
-    </template>
-    <template #nicknameHeader="{ column: { title } }">
-      <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">
-        <span>{{ title }}</span>
-        <SvgIcon v-tooltip.top="{ value: $t('仅自己可见的私人备注') }" class="inline-flex shrink-0 cursor-pointer" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
-      </div>
-    </template>
-    <template #nickname="{ data }">
-      <Inplace v-focustrap :pt="{ display: '!border-none !pa-0' }">
-        <template #display>
-          <div class="w-40 rounded-1 text-ellipsis overflow-hidden nickname">
-            {{ data.nickname }}
-          </div>
-        </template>
-        <template #content="{ closeCallback }">
-          <TsFormInputText v-model="data.nickname" class="!w-40" autofocus size="xxs" @focus="data._oldNickname = data.nickname" @blur="saveNickname(data, closeCallback)"
-                           @keydown.enter="saveNickname(data, closeCallback)"
-          />
-        </template>
-      </Inplace>
     </template>
     <template #workspaceNicknameHeader="{ column: { title } }">
       <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">

@@ -3,6 +3,8 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
+import RxAvatar from '/@/components/rx-avatar'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
 type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data' | 'workspaceId', any>
 
@@ -16,6 +18,14 @@ const workspaceStore = useWorkspaceStore()
 
 
 const isInWorkspace = computed(() => workspaceStore.workspaceList.some(item => item.id === props.inviteInfo?.workspaceId))
+
+const workspaceAvatarProps = computed(() => getWorkspaceAvatarProps({
+  workspacePicture: props.inviteInfo?.workspacePicture,
+  workspaceName: props.inviteInfo?.workspaceName,
+  size: 48,
+  emojiFontSize: 28,
+  textFontSize: 28,
+}))
 
 /** 接受邀请 */
 async function acceptInvitation() {
@@ -44,8 +54,7 @@ async function skipInvitation(intoWorkspaceId?: number) {
   <div class="invite-into-workspace">
     <div class="detail-box">
       <div class="pb-1 detail-body">
-        <Avatar class="workspace-icon" :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }" :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)"
-          size="xlarge" />
+        <RxAvatar v-bind="workspaceAvatarProps" />
         <div class="workspace-name">
           {{ inviteInfo?.workspaceName }}
         </div>
@@ -81,23 +90,6 @@ async function skipInvitation(intoWorkspaceId?: number) {
       align-items: center;
       gap: var(--spacing-xl, 12px);
       align-self: stretch;
-    }
-
-    .workspace-icon {
-      display: flex;
-      width: 48px;
-      height: 48px;
-      flex-direction: column;
-      justify-content: center;
-      flex-shrink: 0;
-      color: var(--colors-text-text-inactive, #c7cdd1);
-      text-align: center;
-      font-family: 'JetBrains Mono';
-      font-size: 32px;
-      font-style: normal;
-      font-weight: 700;
-      line-height: 28px;
-      /* 70% */
     }
 
     .workspace-name {

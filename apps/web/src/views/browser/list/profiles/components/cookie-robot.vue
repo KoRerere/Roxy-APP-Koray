@@ -6,6 +6,7 @@ import TsFormInputTextarea from '/@/views/lab/components/form/m-input-textarea.v
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { isEmptyValue, validateURL } from '/@/utils'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const { data, onConfirm } = defineProps<{
   data: any[]
@@ -31,7 +32,7 @@ const list = ref<any[]>([
           return (
             <div class="flex items-end gap-3 flex-wrap overflow-hidden">
               {
-                data.map(item => <div class={`shrink-0 py-1 px-1.5 rounded-1 ${panel.tag}`}>{`${item.workspaceName.slice(0, 3)}-${item.windowSortNum}`}</div>)
+                data.map(item => <div class={`shrink-0 py-1 px-1.5 rounded-1 ${panel.tag}`}>{`${getWorkspaceNamePrefix(item.workspaceName)}-${item.windowSortNum}`}</div>)
               }
             </div>
           )

@@ -7,12 +7,24 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import RxAvatar from '/@/components/rx-avatar'
+import { getWorkspaceAvatarProps, getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const route = useRoute()
 const router = useRouter()
 const [showModal] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
+const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName)!)
+
+function getWorkspaceAvatar(item: Record<string, any>) {
+  return getWorkspaceAvatarProps({
+    workspacePicture: item.workspacePicture,
+    workspaceName: item.workspaceName,
+    size: 24,
+    emojiFontSize: 12,
+    textFontSize: 14,
+  })
+}
 
 const columns = [
   {
@@ -108,8 +120,7 @@ async function howToGetHelp() {
     </template>
     <template #transfer="{ data }">
       <div class="flex items-center">
-        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-[var(--pattern-topnav-space-avatar-bg)]': !data.workspacePicture }"
-          :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
+        <RxAvatar v-bind="getWorkspaceAvatar(data)" />
         <div class="ml-3 space-name">{{ data.workspaceName }}</div>
         <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
       </div>
@@ -118,19 +129,6 @@ async function howToGetHelp() {
 </template>
 
 <style lang="scss" scoped>
-.space-icon {
-  width: 24px;
-  height: 24px;
-  color: #fff;
-  text-align: center;
-  font-family: 'JetBrains Mono';
-  font-size: 12px !important;
-  font-weight: 700;
-  line-height: 12px;
-  letter-spacing: -0.4px;
-  text-transform: uppercase;
-}
-
 .space-name {
   color: var(--colors-text-text-primary);
   font-size: 14px;

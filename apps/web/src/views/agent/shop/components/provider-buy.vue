@@ -466,26 +466,36 @@ async function initConfig() {
         return (
           <div class="flex gap-3 flex-wrap">
             {
-              item.props.options.map((option: any) => (
-                <div
-                  class={`h-10 relative flex items-center gap-1.5 px-4 leading-none cursor-pointer select-none  ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
-                  onClick={async () => {
-                    item.value = option
-                    await refreshFromScene(option.value)
-                  }}
-                >
-                  {option.badgeDesc && (
-                    <RxTooltip class="position-y-center top-0 -right-2 z-10">
+              item.props.options.map((option: any) => {
+                const content = (
+                  <div
+                    class={`h-10 relative flex items-center gap-1.5 px-4 leading-none cursor-pointer select-none  ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                    onClick={async () => {
+                      item.value = option
+                      await refreshFromScene(option.value)
+                    }}
+                  >
+                    {option.badgeDesc && (
+                      <div class={`absolute position-y-center top-0 -right-2 z-10 py-0.5 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>
+                    )}
+                    {option.image && <RxImage class="block w-5" src={option.image} darkSrc={option.darkImage} alt={option.label} />}
+                    <div class={`${styles.purpose}`}>{option.label}</div>
+                  </div>
+                )
+
+                if (option.badgeDesc) {
+                  return (
+                    <RxTooltip>
                       {{
-                        default: () => <div class={`py-0.5 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>,
+                        default: () => content,
                         content: () => <div class="w-76 color-[var(--component-tooltip-text-secondary)] whitespace-pre-wrap text-3 leading-4">{option.desc}</div>,
                       }}
                     </RxTooltip>
-                  )}
-                  {option.image && <RxImage class="block w-5" src={option.image} darkSrc={option.darkImage} alt={option.label} />}
-                  <div class={`${styles.purpose}`}>{option.label}</div>
-                </div>
-              ))
+                  )
+                }
+
+                return content
+              })
             }
           </div>
         )

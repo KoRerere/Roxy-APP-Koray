@@ -12,12 +12,15 @@ import { useSimpleLocale } from '/@/stores/locale'
 import type { KernelUpdateItem } from './kernel-utils'
 import {
   clearKernelRead,
+  getLatestKernelByCoreType,
   isKernelRead,
   matchKernelItem,
   normalizeCoreType,
   sortKernelList,
 } from './kernel-utils'
 import { CoreType } from '/@/enums/'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { emitter } from '/@/utils/eventBus.ts'
 
 interface KernelUpdateGroup {
   title: string
@@ -35,6 +38,7 @@ const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 /** 分组后的内核列表，供 KernelUpdater 渲染 */
 const kernelUpdateGroup = ref<KernelUpdateGroup[]>([])
+const profileList = ref<UserGetWindowInfoListListData['data']['rows']>([])
 
 const tabs = ref([
   {
@@ -74,6 +78,11 @@ const isForceUpgrade = computed(() => {
 const updateInfo = computed(() => {
   // APP 升级优先级高于 web 升级
   return clientUpdates.value.find(item => item.type === 'app') || clientUpdates.value.find(item => item.type === 'web')
+})
+
+emitter.on('updateProfileList', (list) => {
+  console.debug('updateProfileList', list)
+  profileList.value = list ?? []
 })
 
 async function checkForUpdates() {
@@ -125,6 +134,33 @@ async function getKernelList() {
   })
   kernelUpdates.value = sortKernelList(kernelUpdates.value)
   genKernelGroup(toRaw(kernelUpdates.value))
+
+  checkAndDownloadLatestCore()
+}
+
+async function checkAndDownloadLatestCore() {
+  // 当前最新的 Chrome / Firefox 内核（按 coreVersion 降序取最高版本）
+  const latestChromeCore = getLatestKernelByCoreType(kernelUpdates.value, CoreType.Chrome)
+  const latestFirefoxCore = getLatestKernelByCoreType(kernelUpdates.value, CoreType.Firefox)
+
+  const useLatestCoreChromeProfile = profileList.value.find(item => item.useLatestCore && item.coreType === CoreType.Chrome)
+  const useLatestCoreFirefoxProfile = profileList.value.find(item => item.useLatestCore && item.coreType === CoreType.Firefox)
+
+  const usingCores = await globalThis.electronAPI.send('browser:usingCores')
+
+  console.debug('profileList', profileList.value)
+  console.debug('useLatestCoreChromeProfile', useLatestCoreChromeProfile)
+  console.debug('useLatestCoreFirefoxProfile', useLatestCoreFirefoxProfile)
+  console.debug('usingCores', usingCores)
+
+  // 闲时下载并安装最新 Chrome 内核
+  if (useLatestCoreChromeProfile && latestChromeCore?.coreVersion && latestChromeCore.status !== 'downloaded' && !usingCores.chrome.includes(latestChromeCore.coreVersion)) {
+    globalThis.electronAPI.send('app:download-chrome-core', latestChromeCore.coreVersion, CoreType.Chrome)
+  }
+  // 闲时下载并安装最新 Firefox 内核
+  if (useLatestCoreFirefoxProfile && latestFirefoxCore?.coreVersion && latestFirefoxCore.status !== 'downloaded' && !usingCores.firefox.includes(latestFirefoxCore.coreVersion)) {
+    globalThis.electronAPI.send('app:download-chrome-core', latestFirefoxCore.coreVersion, CoreType.Firefox)
+  }
 }
 
 /** 将内核列表分为「新内容」和「内核列表」两组，每种 coreType 各自独立提示新版本 */

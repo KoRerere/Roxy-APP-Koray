@@ -1467,6 +1467,8 @@ export interface UserAddWindowInfoV2CreatePayload {
   deviceMemory: number;
   /** 浏览器内核类型，Chrome/Firefox */
   coreType: string;
+  /** 保持使用最新版本内核 */
+  useLatestCore: boolean;
 }
 
 export interface UserAddWindowInfoV2CreateData {
@@ -1641,6 +1643,8 @@ export interface UserMdfWindowInfoSingleV2CreatePayload {
   checkStatus?: number;
   /** 浏览器内核类型，Chrome/Firefox */
   coreType?: string;
+  /** 保持使用最新版本内核 */
+  useLatestCore: boolean;
 }
 
 export interface UserMdfWindowInfoSingleV2CreateData {
@@ -3837,6 +3841,16 @@ export interface UserGetPromotionLinkListListData {
   msg: string;
 }
 
+export interface UserReportAppEventCreatePayload {
+  eventName: string;
+  eventProperties: object;
+}
+
+export interface UserReportAppEventCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -4014,6 +4028,8 @@ export interface UserGetWindowInfoListListData {
       transferUserName?: string;
       workspaceName?: string;
       isDirect?: boolean;
+      /** 保持使用最新版本内核 */
+      useLatestCore: boolean;
     }[];
   };
   msg: string;
@@ -8025,6 +8041,8 @@ export interface UserGetUserPayInfoListData {
     useWorkspaceCount: number;
     walletDiscount: number;
     workspaceSinglePrice: number;
+    /** AI Agent 积分 */
+    points: number;
   };
   msg: string;
 }

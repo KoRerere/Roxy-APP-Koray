@@ -8,6 +8,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { emitter } from '/@/utils/eventBus'
+import { getWorkspaceAvatarProps, getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 const { windowTransferNo } = defineProps<{
   windowTransferNo: string
@@ -21,7 +22,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 
-const workspaceName = computed(() => currentWorkspace.value?.workspaceName!.slice(0, 3).toLocaleUpperCase())
+const workspaceName = computed(() => getWorkspaceNamePrefix(currentWorkspace.value?.workspaceName))
 
 const transferTotal = ref(0)
 const columns = [
@@ -78,13 +79,13 @@ async function tableRequest(params: any) {
 }
 
 function getWorkspaceProps(item: Record<string, any>) {
-  return {
-    name: item.workspacePicture || item.workspaceName?.slice(0, 2),
-    color: item.workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+  return getWorkspaceAvatarProps({
+    workspacePicture: item.workspacePicture,
+    workspaceName: item.workspaceName,
     size: 24,
-    fontSize: item.workspacePicture ? 12 : 14,
-    radius: '6px',
-  }
+    emojiFontSize: 12,
+    textFontSize: 14,
+  })
 }
 
 async function onReceive() {

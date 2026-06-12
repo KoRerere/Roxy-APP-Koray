@@ -10,6 +10,7 @@ import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useDialog } from '/@/hooks/useDialog'
 import { getRoleLabelMap, Role, WorkspaceType } from '/@/enums'
 import { copyText, sleep } from '/@/utils/'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 import { API } from '/@/api'
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
@@ -43,13 +44,13 @@ const list = computed(() => {
 })
 
 function getAvatarProps(item: Data) {
-  return {
-    name: item.workspacePicture || item.workspaceName?.slice(0, 2),
-    color: item.workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+  return getWorkspaceAvatarProps({
+    workspacePicture: item.workspacePicture,
+    workspaceName: item.workspaceName,
     size: 20,
-    fontSize: item.workspacePicture ? 12 : 10,
-    radius: '6px',
-  }
+    emojiFontSize: 12,
+    textFontSize: 10,
+  })
 }
 
 async function _copyUserInfo() {

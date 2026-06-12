@@ -7,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import type { ParsedCookie } from '/@/utils/cookie'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 type ProfileData = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -23,7 +24,7 @@ export function useCookie() {
 
   function editCookieByProfile(params: Params) {
     const { data, onConfirm } = params
-    const names = data.slice(0, 3).map(item => `${currentWorkspace.value?.workspaceName}-${item.windowSortNum}`).join(', ')
+    const names = data.slice(0, 3).map(item => `${getWorkspaceNamePrefix(currentWorkspace.value?.workspaceName)}-${item.windowSortNum}`).join(', ')
     const namesStr = `[${names}${data.length > 3 ? '...' : ''}]`
 
     showDrawer({

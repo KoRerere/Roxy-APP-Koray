@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { useWorkspaceStore } from '/@/stores/workspace'
+import RxAvatar from '/@/components/rx-avatar'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
 const emit = defineEmits(['close'])
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { setCurrentWorkspace } = useWorkspaceStore()
+
+const workspaceAvatarProps = computed(() => getWorkspaceAvatarProps({
+  workspacePicture: currentWorkspace.value?.workspacePicture,
+  workspaceName: currentWorkspace.value?.workspaceName,
+  size: 32,
+  emojiFontSize: 22,
+  textFontSize: 18,
+}))
 
 function backDefaultWorkspace() {
   emit('close')
@@ -19,7 +29,7 @@ function backDefaultWorkspace() {
     </div>
     <div class="flex flex-col items-center gap-3">
       <div class="pa-1 rounded-2 box">
-        <Avatar class="icon" :class="{ '!bg-black': !currentWorkspace!.workspacePicture }" :label="currentWorkspace!.workspacePicture || currentWorkspace!.workspaceName?.slice(0, 2)" size="large" />
+        <RxAvatar v-bind="workspaceAvatarProps" />
       </div>
       <div class="name">
         {{ currentWorkspace!.workspaceName }}
@@ -46,13 +56,6 @@ function backDefaultWorkspace() {
   box-shadow:
     0 4px 4px -1px rgba(0, 0, 0, 0.02),
     0 1px 1px 0 rgba(0, 0, 0, 0.06);
-}
-
-.icon {
-  color: #ffffff;
-  font-family: 'JetBrains Mono';
-  font-size: 32px;
-  font-weight: 700;
 }
 
 .name {

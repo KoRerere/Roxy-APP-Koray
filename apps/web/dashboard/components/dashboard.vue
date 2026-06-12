@@ -9,6 +9,7 @@ import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getLocalWebServerURL, getTimeOffset } from '../utils'
 import { genDriver } from '/@/utils'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 
@@ -173,7 +174,7 @@ onBeforeMount(() => {
     <div class="header">
       <div class="left">
         <div class="sort-number">
-          {{ windowInfo.workspaceName?.slice(0, 3).toLocaleUpperCase() }}-{{ windowInfo.windowSortNum }}
+          {{ getWorkspaceNamePrefix(windowInfo.workspaceName) }}-{{ windowInfo.windowSortNum }}
         </div>
         <RxTooltip>
           <div class="window-name ellipsis-1">

@@ -53,6 +53,15 @@ export function sortKernelList<T extends Pick<ResourceUpdateMessage, 'coreVersio
   })
 }
 
+/** 从内核列表中筛选指定类型的最新版本 */
+export function getLatestKernelByCoreType<T extends Pick<ResourceUpdateMessage, 'coreVersion' | 'coreType'>>(
+  list: T[],
+  coreType: CoreType,
+): T | undefined {
+  const [latest] = sortKernelList(list.filter(item => normalizeCoreType(item.coreType) === coreType))
+  return latest
+}
+
 /** 格式化内核显示名称，如 `RoxyChrome 109` */
 export function formatKernelName(coreType?: string, coreVersion?: string): string {
   const type = normalizeCoreType(coreType)

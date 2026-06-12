@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSimpleLocale } from '/@/stores/locale'
 import { useProxyStore } from '/@/stores/proxy'
 import { useThemeStore } from '/@/stores/theme'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
@@ -16,6 +17,7 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
+const simpleLocale = useSimpleLocale()
 const { isDarkTheme } = storeToRefs(useThemeStore())
 const { getProxyVendors } = useProxyStore()
 
@@ -103,6 +105,9 @@ function buyProxyFromAnnouncement() {
           </div>
           <div class="py-0.5 px-2 rounded-full roxy-tag">
             {{ $t('无网包退') }}
+          </div>
+          <div v-if="simpleLocale.isZh" class="py-0.5 px-2 rounded-full roxy-tag">
+            大陆直连电商
           </div>
         </div>
         <div class="flex-1 overflow-hidden">

@@ -16,9 +16,10 @@ interface Props extends Avatar {
   fontSize?: number
   radius?: string
   gap?: number
+  compact?: boolean
 }
 
-const { list, max, size = 32, fontSize = 16, gap = -4, radius = '50%', ...avatar } = defineProps<Props>()
+const { list, max, size = 32, fontSize = 16, gap = -4, radius = '50%', compact = false, ...avatar } = defineProps<Props>()
 
 const _gap = computed(() => {
   return CSS.px(gap as number).toString()
@@ -55,7 +56,7 @@ const _style = computed(() => {
   <div class="relative flex items-center cursor-default">
     <template v-for="item in avatars.icons" :key="item.name">
       <img v-if="item.avatar" draggable="false" :class="classes.image" :style="_style" :src="item.avatar">
-      <component :is="item.more ? RxTooltip : 'div'" v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: item.color }">
+      <component :is="item.more ? RxTooltip : 'div'" v-else :class="[classes.image, classes.text, compact && classes.compact]" :style="{ ..._style, backgroundColor: item.color }">
         <template #default>
           {{ item.name?.toLocaleUpperCase() }}
         </template>
@@ -64,7 +65,7 @@ const _style = computed(() => {
             <div v-for="(surplus, index) in avatars.surplus" :key="index" class="relative flex items-center cursor-default">
               <template v-for="sub in surplus" :key="sub.name">
                 <img v-if="sub.avatar" :class="classes.image" :style="_style" :src="sub.avatar">
-                <div v-else :class="[classes.image, classes.text]" :style="{ ..._style, backgroundColor: sub.color }">
+                <div v-else :class="[classes.image, classes.text, compact && classes.compact]" :style="{ ..._style, backgroundColor: sub.color }">
                   {{ sub.name?.toLocaleUpperCase() }}
                 </div>
               </template>
@@ -92,5 +93,11 @@ const _style = computed(() => {
   color: #fff;
   font-family: 'JetBrains Mono';
   font-weight: 500;
+}
+
+.compact {
+  font-family: Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  letter-spacing: -0.5px;
 }
 </style>

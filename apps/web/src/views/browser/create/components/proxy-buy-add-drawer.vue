@@ -52,12 +52,14 @@ const buyMaskClass = computed(() => {
 const buyDrawerPt = computed(() => ({
   mask: { class: buyMaskClass.value },
   root: {
-    class: 'proxy-dual-drawer-root proxy-dual-drawer-buy-root',
-    style: {
-      width: buyWidth.value,
-      maxWidth: buyWidth.value,
-      height: DRAWER_HEIGHT,
-    },
+    class: `proxy-dual-drawer-root proxy-dual-drawer-buy-root ${showAdd ? '' : '!w-100vw !max-w-300'}`,
+    style: showAdd
+      ? {
+          width: buyWidth.value,
+          maxWidth: buyWidth.value,
+          height: DRAWER_HEIGHT,
+        }
+      : undefined,
   },
 }))
 

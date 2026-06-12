@@ -8,11 +8,12 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { format } from 'date-fns'
 import { ProxyType } from '/@/enums/proxy'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 export function getRawColumns(options?: any) {
   const { check } = usePermission()
   const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-  const workspaceName = currentWorkspace.value?.workspaceName!.slice(0, 3).toLocaleUpperCase()
+  const workspaceName = getWorkspaceNamePrefix(currentWorkspace.value?.workspaceName)
 
   const columns = [
     {

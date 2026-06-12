@@ -9,6 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 import type { SortOrderNumber } from '/@/utils'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 import { CoreType } from '/@/enums'
 
 interface Props {
@@ -347,7 +348,7 @@ function handleValueChange(val: any[]) {
           </TsFormMultiSelect>
           <TsFormInputText v-model="searchParams.windowName" :field-props="{ class: 'flex-1 min-w-0' }" pre-icon="base/rx_ic_magnify" size="xxs" :placeholder="$t('搜索窗口')" />
         </div>
-        <RxAlert class="!w-full" type="info" :title="$t('火狐内核的窗口暂不支持窗口同步功能')" :closable="false" />
+        <RxAlert class="!w-full" type="info" :title="$t('Firefox 内核的窗口暂不支持窗口同步功能')" :closable="false" />
       </div>
     </template>
     <template #table-empty>
@@ -366,7 +367,7 @@ function handleValueChange(val: any[]) {
                 {{ $t('不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
               </li>
               <li class="whitespace-pre-wrap tt-tertiary text-3.5">
-                {{ $t('火狐内核的窗口暂不支持窗口同步功能') }}
+                {{ $t('Firefox 内核的窗口暂不支持窗口同步功能') }}
               </li>
             </ol>
           </div>
@@ -384,7 +385,7 @@ function handleValueChange(val: any[]) {
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
+      <ProfileInfo :workspace-name="getWorkspaceNamePrefix(data?.workspaceName)" :data="data" :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
     <template #windowName="{ data }">
       <div v-tooltip.top="{ value: data.windowName }" class="ellipsis-1 max-w-150px">

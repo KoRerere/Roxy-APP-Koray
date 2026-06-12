@@ -321,7 +321,7 @@ function switchProxyCountry() {
     <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="driverNext" @buy-success="onDualDrawerBuySuccess"
                        @add-confirm="onDualDrawerAddConfirm"
     />
-    <div class="pl-27 flex flex-col gap-3">
+    <div class="pl-27 flex flex-col gap-3 empty:hidden">
       <RxAlert v-if="isBatch && sumProxyCount && sumProxyCount !== createCount" class="w-full whitespace-pre-line" :type="sumProxyCount > createCount ? 'warn' : 'info'" :closable="false"
                :title="proxyAlertMessage"
       />

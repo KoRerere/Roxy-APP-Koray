@@ -4,9 +4,10 @@ import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 export function getRawColumns(options?: any) {
-  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
+  const workspaceName = getWorkspaceNamePrefix(useWorkspaceStore().currentWorkspace?.workspaceName)
   return setColumns([
     {
       title: $t('账号信息'),

@@ -160,6 +160,8 @@ import {
   UserRegGiftCreateData,
   UserRegGiftCreatePayload,
   UserRegisterGiftConfigListData,
+  UserReportAppEventCreateData,
+  UserReportAppEventCreatePayload,
   UserSaveLlmDataCreateData,
   UserSaveLlmDataCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
@@ -2373,6 +2375,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetPromotionLinkListListData, any>({
       path: `/user_get_promotion_link_list`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserReportAppEventCreate
+   * @summary 客户端事件上报
+   * @request POST:/user_report_app_event
+   * @response `200` `UserReportAppEventCreateData`
+   */
+  userReportAppEventCreate = (
+    data: UserReportAppEventCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserReportAppEventCreateData, any>({
+      path: `/user_report_app_event`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

@@ -1,16 +1,19 @@
 <script setup lang="tsx">
-import { nextTick } from 'vue'
+import { nextTick, onMounted } from 'vue'
 import { motion } from 'motion-v'
 import PendingAttachments from './components/pending-attachments.vue'
 import AssetToolbar from './components/asset-toolbar.vue'
 import AutomationToolbar from './components/automation-toolbar.vue'
 import type { AssetGenerationOptions, AttachmentInfo, InputScene, Todo } from '/@/views/mcp/types'
+import { isMacOS } from '/@/utils'
 
 const props = withDefaults(defineProps<Props>(), {})
 const emit = defineEmits<Emits>()
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain']
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif']
 const MAX_PENDING_ATTACHMENTS = 3
+const TEXTAREA_MIN_HEIGHT = 60
+const TEXTAREA_MAX_HEIGHT = 160
 
 interface Props {
   health: {
@@ -47,6 +50,7 @@ const assetOptions = defineModel<AssetGenerationOptions>('assetOptions', {
 const isDraggingOver = ref(false)
 const todoExpanded = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const textareaRef = ref<{ $el: HTMLTextAreaElement } | null>(null)
 const isComposing = ref(false)
 
 const isAssetScene = computed(() => scene.value === 'asset')
@@ -83,12 +87,41 @@ const textareaPlaceholder = computed(() => {
   if (isAssetScene.value) {
     return $t('请输入自然语言或结合图片来描述您想要生成的素材，例如：根据图片中的产品，生成符合亚马逊的高清商品主图...')
   }
-  return $t('请输入您的指令')
+
+  if (isMacOS) {
+    return $t('请输入您的指令，通过 Cmd + 回车 即可换行')
+  }
+  else {
+    return $t('请输入您的指令，通过 Shift + 回车 即可换行')
+  }
 })
 
 watch(mode, (val) => {
   emit('changeMode', val)
 })
+
+watch(message, resizeTextarea, { flush: 'post' })
+
+onMounted(resizeTextarea)
+
+function resizeTextarea() {
+  nextTick(() => {
+    const textarea = textareaRef.value?.$el
+    if (!textarea)
+      return
+
+    if (!textarea.value) {
+      textarea.style.height = `${TEXTAREA_MIN_HEIGHT}px`
+      textarea.style.overflowY = 'hidden'
+      return
+    }
+
+    textarea.style.height = 'auto'
+    const height = Math.min(Math.max(textarea.scrollHeight, TEXTAREA_MIN_HEIGHT), TEXTAREA_MAX_HEIGHT)
+    textarea.style.height = `${height}px`
+    textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
+  })
+}
 
 function onClickUpload() {
   if (!canUploadMore.value)
@@ -235,6 +268,7 @@ function getAttachmentPreview(attachment: AttachmentInfo) {
 
       <!-- 共享 Textarea -->
       <Textarea
+        ref="textareaRef"
         v-model="message"
         :disabled="!health.isReady && !health.loading"
         class="asset-textarea relative z-10 !pa-0 !shadow-none !border-none resize-none !bg-[var(--colors-background-bg-page)]"
@@ -337,7 +371,11 @@ function getAttachmentPreview(attachment: AttachmentInfo) {
 .asset-textarea {
   color: var(--colors-text-text-primary);
   font-size: 14px;
+  height: 60px;
   line-height: 20px;
+  min-height: 60px;
+  max-height: 160px;
+  overflow-y: hidden;
 }
 
 .asset-gallery {

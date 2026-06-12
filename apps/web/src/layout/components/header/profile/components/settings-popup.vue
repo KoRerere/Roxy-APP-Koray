@@ -49,30 +49,32 @@ onBeforeMount(async () => {
               {{ activePanel.panel.description }}
             </div>
           </div>
-          <div v-for="item in activePanel.panel.list" :id="item.subId || item.subtitle" :key="item.subtitle">
-            <div v-if="item.subtitle" class="pt-6 pb-3 panel-subtitle">
-              {{ item.subtitle }}
-            </div>
-            <template v-for="subItem in item.items" :key="subItem.label">
-              <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
-                <component :is="subItem.renderComponent" v-if="subItem.renderComponent" />
-                <div v-else class="flex flex-1 items-center" :class="subItem.classes">
-                  <div class="flex-1">
-                    <div class="panel-item-label">
-                      <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
-                    </div>
-                    <div class="whitespace-pre-wrap panel-item-text">
-                      <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
-                    </div>
-                  </div>
-                  <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
-                    <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
-                  </div>
-                </div>
-                <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
+          <template v-for="item in activePanel.panel.list" :key="item.subtitle">
+            <div v-if="!item.hide?.()" :id="item.subId || item.subtitle">
+              <div v-if="item.subtitle" class="pt-6 pb-3 panel-subtitle">
+                {{ item.subtitle }}
               </div>
-            </template>
-          </div>
+              <template v-for="subItem in item.items" :key="subItem.label">
+                <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
+                  <component :is="subItem.renderComponent" v-if="subItem.renderComponent" />
+                  <div v-else class="flex flex-1 items-center" :class="subItem.classes">
+                    <div class="flex-1">
+                      <div class="panel-item-label">
+                        <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
+                      </div>
+                      <div class="whitespace-pre-wrap panel-item-text">
+                        <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
+                      </div>
+                    </div>
+                    <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
+                      <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
+                    </div>
+                  </div>
+                  <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
+                </div>
+              </template>
+            </div>
+          </template>
         </div>
       </div>
     </div>

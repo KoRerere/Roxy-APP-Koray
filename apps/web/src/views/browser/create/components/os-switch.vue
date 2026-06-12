@@ -12,8 +12,19 @@ interface Option {
 
 const props = defineProps<{
   disabled?: boolean
+  disabledTooltip?: string
   options: Option[]
 }>()
+
+function getTooltip(item: Option) {
+  if (props.disabled) {
+    return props.disabledTooltip
+  }
+  if (item.disabled) {
+    return item.disabledTooltip
+  }
+  return item.tooltip
+}
 
 const emit = defineEmits<{
   (e: 'change', item: Option): void
@@ -32,7 +43,7 @@ function onChange(item: Option) {
 
 <template>
   <div class="flex overflow-hidden rounded-1.5 switch-group">
-    <div v-for="item in options" :key="item.value" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500 }" class="
+    <div v-for="item in options" :key="item.value" v-tooltip.top="{ value: getTooltip(item), showDelay: 500 }" class="
         flex-1 min-w-0 flex items-center justify-center cursor-pointer select-none transition-all duration-200 switch-group-item" :class="{
           active: model === item,
           disabled: item.disabled || disabled,

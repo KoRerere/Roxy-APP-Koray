@@ -4,6 +4,7 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useDialog } from '/@/hooks/useDialog'
 import { getRoleLabelMap } from '/@/enums/role'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
@@ -15,13 +16,13 @@ const roleStr = getRoleLabelMap()
 
 const avatarProps = computed(() => {
   const { workspacePicture, workspaceName } = currentWorkspace.value || {}
-  return {
-    name: workspacePicture || workspaceName?.slice(0, 2),
-    color: workspacePicture ? 'var(--pattern-topnav-space-emoji-bg)' : 'var(--pattern-topnav-space-avatar-bg)',
+  return getWorkspaceAvatarProps({
+    workspacePicture,
+    workspaceName,
     size: 32,
-    fontSize: workspacePicture ? 22 : 18,
-    radius: '6px',
-  }
+    emojiFontSize: 22,
+    textFontSize: 18,
+  })
 })
 
 function editWorkspace() {

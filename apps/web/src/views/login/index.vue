@@ -23,6 +23,7 @@ import { Role, WorkspaceType } from '/@/enums'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
+import { useThemeStore } from '/@/stores/theme.ts'
 
 const loginEventCommonParams = {
   login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
@@ -31,6 +32,7 @@ const loginEventCommonParams = {
 const signFormRef = useTemplateRef('signForm')
 const { width: windowWidth } = useWindowSize()
 const isSupportGPU = ref(false)
+const themeStore = useThemeStore()
 const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite } = simpleLocaleStore
 const { setToken, setPassword, initUserInfo, setLoginWay } = useUserStore()
@@ -403,10 +405,15 @@ provideLoginContext({
       <div class="relative z-10 h-full flex-col flex-bc">
         <div class="w-full flex justify-between sm:p-5 p-3">
           <a class="logo" :href="getOfficialWebsite('/')" target="_blank" rel="noopener noreferrer">
-            <SvgIcon name="base/logo" size="36" />
-            <div class="logo-text" :class="{ zh: simpleLocaleStore?.currentLocale === 'zh-CN' }">
-              {{ $t('Roxy浏览器') }}
-            </div>
+            <template v-if="simpleLocaleStore.currentLocale === 'zh-CN'">
+              <SvgIcon name="base/chinese-logo" width="164" height="44" :color="themeStore.realTheme === 'dark' ? '#fff' : '#000'" />
+            </template>
+            <template v-else>
+              <SvgIcon name="base/logo" size="36" />
+              <div class="logo-text">
+                {{ $t('Roxy浏览器') }}
+              </div>
+            </template>
           </a>
           <LanguageSelect />
         </div>

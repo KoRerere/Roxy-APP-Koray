@@ -7,7 +7,9 @@ import { debounce } from 'es-toolkit'
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
+import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api'
+import RxAvatar from '/@/components/rx-avatar'
+import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
@@ -131,8 +133,14 @@ function handleChoose(item: Data) {
   chooseRef.value?.hide()
 }
 
-function getAvatarStyle(workspacePicture: string) {
-  return workspacePicture ? {} : { backgroundColor: 'var(--pattern-topnav-space-avatar-bg)', color: '#fff', fontSize: '14px' }
+function getWorkspaceAvatar(item: Data) {
+  return getWorkspaceAvatarProps({
+    workspacePicture: item.workspacePicture,
+    workspaceName: item.workspaceName,
+    size: 48,
+    emojiFontSize: 24,
+    textFontSize: 34,
+  })
 }
 </script>
 
@@ -171,8 +179,7 @@ function getAvatarStyle(workspacePicture: string) {
             </div>
             <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
               :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }" @click="handleChoose(item)">
-              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
-                :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
+              <RxAvatar class="workspace-icon" v-bind="getWorkspaceAvatar(item)" />
               <div>
                 <div class="workspace-name">{{ item.workspaceName }}</div>
                 <div class="mt-1 workspace-id">
@@ -198,20 +205,6 @@ function getAvatarStyle(workspacePicture: string) {
 </template>
 
 <style scoped lang="scss">
-.workspace-icon {
-  width: 48px;
-  height: 48px;
-  color: #fff;
-  text-align: center;
-  font-family: 'JetBrains Mono';
-  font-size: 20px !important;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 20px;
-  letter-spacing: -0.4px;
-  text-transform: uppercase;
-}
-
 .choose {
   border-radius: 8px;
   background: var(--colors-background-bg-action);
