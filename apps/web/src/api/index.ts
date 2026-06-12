@@ -86,7 +86,7 @@ export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (con
     config.headers.token ||= token
     config.headers.source = globalThis.isElectron ? 'app' : 'web'
     config.headers.language = currentLocale
-    config.headers.appVersion = appVersion
+    config.headers.appVersion = globalThis.isElectron ? appVersion : undefined
     config.headers.workspaceId = currentWorkspace?.id
     config.headers['R-INVITE-CODE'] = inviteCode
     config.metadata = {

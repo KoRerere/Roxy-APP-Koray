@@ -36,6 +36,8 @@ queueMicrotask(async () => {
     })
   }
   else {
+    // web端无需版本控制
+    globalThis.$appVersion = '1000.0.0'
     await import('./polyfill')
     const searchParams = new URLSearchParams(window.location.search)
     const officialSiteLang = searchParams.get('official-site-lang')
