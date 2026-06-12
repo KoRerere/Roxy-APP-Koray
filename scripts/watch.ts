@@ -2,7 +2,7 @@
 
 import type { ChildProcess } from 'node:child_process'
 import type { LogLevel, ViteDevServer } from 'vite'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { build, createServer } from 'vite'
 import electronPath from '../apps/electron/node_modules/electron'
@@ -11,6 +11,17 @@ import electronPath from '../apps/electron/node_modules/electron'
 const mode = (process.env.MODE = process.env.MODE || 'development')
 
 const logLevel: LogLevel = 'warn'
+
+function syncWebAppVersion(mode: string) {
+  const scriptPath = path.resolve(import.meta.dirname, 'sync-web-app-version.mjs')
+  const result = spawnSync(process.execPath, [scriptPath, mode], {
+    stdio: 'inherit',
+  })
+
+  if (result.status !== 0) {
+    throw new Error('同步 web VITE_APP_VERSION 失败')
+  }
+}
 
 const argv = process.argv.slice(2)
 // 解析命令行参数
@@ -119,6 +130,8 @@ function setupPreloadPackageWatcher({ ws }: ViteDevServer) {
  * 依赖于开发服务器的属性
  */
 (async () => {
+  syncWebAppVersion(mode)
+
   const rendererWatchServer = await createServer({
     mode,
     logLevel,

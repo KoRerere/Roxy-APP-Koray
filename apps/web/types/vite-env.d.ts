@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_LOCALE_APP_ORIGIN_ZH: string
   /** 非中文 Web App 根地址 */
   readonly VITE_LOCALE_APP_ORIGIN_EN: string
+  /** APP 版本 */
+  readonly VITE_APP_VERSION: string
 }
 
 interface ImportMeta {

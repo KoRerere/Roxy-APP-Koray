@@ -29,6 +29,8 @@
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
     "build:pkg": "pnpm -F \"./packages/**\" build",
     "build": "turbo run build",
+    "sync:web-app-version:dev": "node scripts/sync-web-app-version.mjs development",
+    "sync:web-app-version:prod": "node scripts/sync-web-app-version.mjs production",
     "dev:p": "turbo run dev --parallel",
     "compile": "pnpm build && turbo run compile",
     "pack:dev": "pnpm run build && pnpm -F web run build:dev && pnpm -F roxybrowserdev run pack:dev",
