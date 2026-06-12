@@ -146,7 +146,7 @@ export async function sendCallback(channel: string, ...args: any[]) {
 
   // 获取 APP 版本号
   if (channel === 'app:getAppVersion') {
-    return import.meta.env.VITE_MIN_APP_VERSION
+    return import.meta.env.VITE_APP_VERSION
   }
 
   // 获取设备 ID
