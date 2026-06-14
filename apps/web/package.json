@@ -79,6 +79,7 @@
     "@roxy/electron-preload": "workspace:*",
     "@roxy/language-localization": "workspace:*",
     "@roxy/vite-plugins": "workspace:*",
+    "@roxybrowser/jumpserver-deploy": "1.0.0",
     "@sentry/vite-plugin": "^5.1.1",
     "@sentry/wizard": "^6.11.0",
     "@types/canvas-confetti": "^1.9.0",
