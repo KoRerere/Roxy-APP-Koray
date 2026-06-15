@@ -85,6 +85,9 @@ export function useSubscribe() {
   })
 
   async function showTempMambaLastUpdateLog() {
+    if (localStorage.getItem('$T528'))
+      return
+
     localStorage.setItem('$T528', '1')
     const updateFeature = await globalThis.electronAPI.send('app:getLastUpdateFeature')
     const localFeature = updateFeature.newFeatureTips?.[currentLocale]

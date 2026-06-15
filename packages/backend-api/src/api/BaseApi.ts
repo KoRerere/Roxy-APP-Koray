@@ -19,6 +19,9 @@ import {
   CheckEmailRegisteredListParams,
   CheckOtherDeviceLoginListData,
   CheckOtherDeviceLoginListParams,
+  CheckPhoneRegisteredListData,
+  CheckPhoneRegisteredListParams,
+  CheckPhoneRegisteredListPayload,
   CheckRecoverCodeCreateData,
   CheckRecoverCodeCreatePayload,
   ForgetPasswordCreateData,
@@ -2394,6 +2397,29 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserReportAppEventCreateData, any>({
       path: `/user_report_app_event`,
       method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckPhoneRegisteredList
+   * @summary 检测手机号是否已注册
+   * @request GET:/check_phone_registered
+   * @response `200` `CheckPhoneRegisteredListData`
+   */
+  checkPhoneRegisteredList = (
+    query: CheckPhoneRegisteredListParams,
+    data: CheckPhoneRegisteredListPayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckPhoneRegisteredListData, any>({
+      path: `/check_phone_registered`,
+      method: "GET",
+      query: query,
       body: data,
       type: ContentType.Json,
       format: "json",

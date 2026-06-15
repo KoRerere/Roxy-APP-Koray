@@ -3851,6 +3851,15 @@ export interface UserReportAppEventCreateData {
   msg: string;
 }
 
+export type CheckPhoneRegisteredListPayload = object;
+
+export interface CheckPhoneRegisteredListParams {
+  /** @example "18229955380" */
+  phone?: string;
+}
+
+export type CheckPhoneRegisteredListData = object;
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -9062,10 +9071,10 @@ export interface UserBuyPointsSettlementCreateData {
 }
 
 export interface UserGetPointsRechargeRecordsListParams {
-  /** @example "1" */
-  page_index?: string;
-  /** @example "10" */
-  page_size?: string;
+  /** @example 1 */
+  page_index?: number;
+  /** @example 10 */
+  page_size?: number;
   /** @example "2026-06-02" */
   startDate?: string;
   /** @example "2026-06-02" */
@@ -9078,6 +9087,7 @@ export interface UserGetPointsRechargeRecordsListData {
     total: number;
     rows: {
       orderNo?: string;
+      orderType?: string;
       payTime?: number;
       points?: number;
       amount?: number;
