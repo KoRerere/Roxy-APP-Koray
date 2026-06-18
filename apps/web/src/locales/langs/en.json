@@ -1529,7 +1529,7 @@
   "暂无需要更新的扩展": "No extensions need to be updated",
   "暂无项目": "No Project",
   "暂时仅支持中国大陆手机号": "Currently only mainland China phone numbers are supported",
-  "暂时只支持 Firefox 内核的窗口": "Currently only supported for Firefox-based windows",
+  "Chrome 内核暂时仅 148 及以上版本支持": "Chrome kernel is currently only supported from version 148 onwards",
   "暂未找到相关扩展，请前往 {link} 查看更多扩展": "No related extensions found. Please visit {link} for more extensions",
   "暂未添加代理 IP": "Proxy not added",
   "暂未添加账号": "No accounts added yet",

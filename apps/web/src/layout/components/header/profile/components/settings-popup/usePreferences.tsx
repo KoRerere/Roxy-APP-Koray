@@ -360,20 +360,13 @@ export function usePreferencesPanel() {
                   </RxTooltip>
                 </div>
               ),
-              text: () => (
-                <div class="w-88">
-                  {$t(
-                    '暂时只支持 Firefox 内核的窗口',
-                  )}
-                </div>
-              ),
+              text: $t('Chrome 内核暂时仅 148 及以上版本支持'),
               name: 'taskbarIconDisplay',
               hide: () => isLinux,
               value: resolveTaskbarIconDisplay(data),
               props: {
                 filter: false,
                 optionValue: 'value',
-                class: 'w-[183px]',
                 options: [
                   { label: $t('窗口编号'), value: TaskbarIconDisplay.windowNum },
                   { label: $t('窗口名称'), value: TaskbarIconDisplay.windowName },
@@ -411,7 +404,6 @@ export function usePreferencesPanel() {
               props: {
                 filter: false,
                 optionValue: 'value',
-                class: 'w-[183px]',
                 options: [
                   { label: $t('当前标签页名称'), value: TaskbarTabDisplay.tabTitle },
                   { label: $t('窗口名称'), value: TaskbarTabDisplay.windowName },
