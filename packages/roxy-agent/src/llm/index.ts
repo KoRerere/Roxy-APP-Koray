@@ -4,7 +4,7 @@ import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatGoogle } from '@langchain/google'
 import { ChatOpenAI } from '@langchain/openai'
 import { aiAgentModelApi } from '../api/model'
-import { aiAgentToken, aiAgentUrl } from '../config'
+import { aiAgentToken, aiAgentUrl, env } from '../config'
 
 export type LLMInstance = ChatAnthropic | ChatGoogle | ChatOpenAI<ChatOpenAICallOptions>
 
@@ -21,6 +21,7 @@ function buildTracingHeaders(options: CreateLLMOptions = {}) {
   return {
     ...(options.conversationId ? { 'Conversation-Id': options.conversationId } : {}),
     ...(options.turnId ? { 'Turn-Id': options.turnId } : {}),
+    'ai-agent-version': env.AI_AGENT_VERSION,
   }
 }
 
