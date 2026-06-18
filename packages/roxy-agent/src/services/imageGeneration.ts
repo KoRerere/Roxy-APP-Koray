@@ -220,6 +220,8 @@ async function buildImageGenerationRequest(
   attachments: AttachmentRef[],
   options: AssetGenerationOptions,
   providerOptions: ImageGenerationProviderOptions,
+  conversationId: string,
+  turnId: string,
 ) {
   const imageInputs = await Promise.all(
     attachments
@@ -234,6 +236,8 @@ async function buildImageGenerationRequest(
     prompt: addImageSpec(prompt, count, aspectRatio, quality),
     size,
     count,
+    conversationId,
+    turnId,
   }
 
   if (imageInputs.length > 0)
@@ -423,9 +427,9 @@ export async function generateImagesFromPlan(
     attachments,
     { aspectRatio, quality, count },
     providerOptions,
+    context.conversationId,
+    context.turnId,
   )
-  payload.conversationId = context.conversationId;
-  payload.turnId = context.turnId;
 
   // 用户可能在 agent 轮次结束后、生图真正开始前就点了取消：进入上游请求前先检查中断信号，
   // 抛 AbortError 让路由 catch 走 interrupt（而非误报错误，也不白白发起一次计费请求）。

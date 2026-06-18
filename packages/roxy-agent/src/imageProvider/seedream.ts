@@ -34,10 +34,10 @@ function buildSeedreamBody(payload: ImageGeneratePayload) {
 
 export const seedreamGenerator: ImageGenerator = {
   generate(payload: ImageGeneratePayload, signal?: AbortSignal) {
-    return aiAgentClient.rawPost('/v1/images/generations', { body: buildSeedreamBody(payload), signal }, {
+    return aiAgentClient.rawPost('/v1/images/generations', { body: buildSeedreamBody(payload), signal, headers: {
       'conversation-id': payload.conversationId,
       'turn-id': payload.turnId,
-    })
+    } })
   },
 
   readStream(reader) {

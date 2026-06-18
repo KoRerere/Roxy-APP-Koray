@@ -1,3 +1,5 @@
+const dotenv = require('dotenv')
+const fs = require('node:fs')
 const path = require('node:path')
 const TerserPlugin = require('terser-webpack-plugin')
 const webpack = require('webpack')
@@ -5,6 +7,22 @@ const webpack = require('webpack')
 // const { JavascriptObfuscatorPlugin } = require('@roxy/webpack-plugins')
 
 // console.log('process.env.NODE_ENV', process.env.NODE_ENV)
+
+const versionEnvPath = path.resolve(__dirname, '.env.local')
+const rootEnv = fs.existsSync(versionEnvPath)
+  ? dotenv.parse(fs.readFileSync(versionEnvPath))
+  : {}
+const AI_AGENT_VERSION_DEV = rootEnv.AI_AGENT_VERSION_DEV || process.env.AI_AGENT_VERSION_DEV || ''
+const AI_AGENT_VERSION_PROD = rootEnv.AI_AGENT_VERSION_PROD || process.env.AI_AGENT_VERSION_PROD || ''
+
+if (!AI_AGENT_VERSION_DEV || !AI_AGENT_VERSION_PROD) {
+  throw new Error(
+    `[roxy-agent webpack] 缺少 agent 版本号，请在 packages/roxy-agent/.env.local 配置 `
+    + `AI_AGENT_VERSION_DEV / AI_AGENT_VERSION_PROD`
+    + `（当前 dev=${AI_AGENT_VERSION_DEV || '空'}, prod=${AI_AGENT_VERSION_PROD || '空'}）`,
+  )
+}
+console.log(`[roxy-agent webpack] 注入版本号 dev=${AI_AGENT_VERSION_DEV} prod=${AI_AGENT_VERSION_PROD}`)
 
 // 共享的配置
 const sharedConfig = {
@@ -33,6 +51,12 @@ const sharedConfig = {
     ],
   },
   plugins: [
+    // 将 agent 版本号在构建期内联为字面量（config.ts 中 process.env.AI_AGENT_VERSION_* 的读取会被替换）。
+    // 注意：仅注入版本号，不注入 ENV_TYPE —— ENV_TYPE 由 Electron 运行时注入，用于选择 DEV/PROD。
+    new webpack.DefinePlugin({
+      'process.env.AI_AGENT_VERSION_DEV': JSON.stringify(AI_AGENT_VERSION_DEV),
+      'process.env.AI_AGENT_VERSION_PROD': JSON.stringify(AI_AGENT_VERSION_PROD),
+    }),
     // 只处理 TypeScript 和 JavaScript 文件，忽略其他所有文件类型
     new webpack.IgnorePlugin({
       checkResource(resource) {

@@ -30,8 +30,9 @@
     "@roxybrowser/playwright-mcp": "0.0.6"
   },
   "devDependencies": {
-    "vite": "catalog:",
+    "terser-webpack-plugin": "^5.6.1",
     "unplugin-dts": "catalog:",
+    "vite": "catalog:",
     "webpack": "catalog:",
     "webpack-cli": "catalog:"
   }
