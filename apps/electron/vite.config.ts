@@ -68,6 +68,7 @@ const config: UserConfig = {
         openapiMcp: join(PACKAGE_ROOT, 'src/modules/mcp/openapi-mcp/index.ts'),
         playwrightMcp: join(PACKAGE_ROOT, 'src/modules/mcp/playwright-mcp/index.ts'),
         agent: join(PACKAGE_ROOT, 'src/modules/mcp/agent/index.ts'),
+        browserIconRenderWorker: join(PACKAGE_ROOT, 'src/modules/browserIconRenderWorker/workerProcess.ts'),
         // logWorker: join(PACKAGE_ROOT, 'src/workers/log/index.ts'),
       },
       formats: ['es'],

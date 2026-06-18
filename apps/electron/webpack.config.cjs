@@ -13,6 +13,7 @@ module.exports = {
   entry: {
     main: './dist-vite/index.mjs',
     fileWorker: './dist-vite/fileWorker.mjs',
+    browserIconRenderWorker: './dist-vite/browserIconRenderWorker.mjs',
     // openapiMcp: './dist-vite/openapiMcp.mjs',
     // playwrightMcp: './dist-vite/playwrightMcp.mjs',
     // orchestrator: './dist-vite/orchestrator.mjs',

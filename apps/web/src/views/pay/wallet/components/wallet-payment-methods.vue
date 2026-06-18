@@ -239,6 +239,10 @@ async function newCardConfirm(stripeResult: any) {
 
 async function payConfirm() {
   const data = { ...toRaw(activeCard.value) }
+  if (data.cardId) {
+    selectedPayway.value = PayWay.Card
+  }
+
   if ([PayWay.USDT, PayWay.USDC].includes(selectedPayway.value!)) {
     const { value } = cryptoCoins.value?.find((item: any) => item.name === 'chain')!.value
     Reflect.set(data, 'chainType', value)

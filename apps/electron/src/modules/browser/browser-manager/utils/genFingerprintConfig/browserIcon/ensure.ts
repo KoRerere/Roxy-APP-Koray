@@ -1,13 +1,9 @@
-import type { RenderBadgedPngOptions } from './render'
-import type { Buffer } from 'node:buffer'
-import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import type { BrowserIconPackFormat, RenderBadgedPngOptions } from '/@/modules/browserIconRenderWorker'
+import { access, mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants/appConfig'
 import { isMac, isWindows } from '/@/constants/common'
-import { MAC_BADGE_MIN_SIZE, WINDOWS_BADGE_MIN_SIZE, WINDOWS_ICO_SIZES } from './badgeMetrics'
-import { isPngBuffer, packIcns, parseIcns } from './icns'
-import { pngsToIco } from './ico'
-import { CHROME_BADGE_CSS, FIREFOX_BADGE_CSS, renderBadgedPng, renderIconPng } from './render'
+import { browserIconRenderWorker, CHROME_BADGE_CSS, FIREFOX_BADGE_CSS } from '/@/modules/browserIconRenderWorker'
 
 export type BrowserIconKind = 'firefox' | 'chrome'
 
@@ -45,72 +41,34 @@ const BROWSER_ICON_DEFINITIONS: Record<BrowserIconKind, BrowserIconDefinition> =
 
 interface PlatformConfig {
   baseIcon: string
-  ext: string
-  pack: (baseIcon: string, badgeText: string) => Promise<Buffer>
+  ext: BrowserIconPackFormat
+  badgeCss: string
 }
-
-/** Windows 小于该尺寸的 ICO 帧不叠加徽章文字 */
-const WINDOWS_ICO_BADGE_MIN_SIZE = WINDOWS_BADGE_MIN_SIZE
-
-/** macOS 小于该尺寸的 ICNS 帧不叠加徽章，避免数字不可辨识 */
-const MAC_ICNS_BADGE_MIN_SIZE = MAC_BADGE_MIN_SIZE
 
 function makePlatformConfig(resourceDir: string, renderOptions: RenderBadgedPngOptions): PlatformConfig {
   const resDir = join(appConfig.staticResourceDir, resourceDir)
+  const badgeCss = renderOptions.badgeCss ?? FIREFOX_BADGE_CSS
 
   if (isWindows) {
-    const basePng = join(resDir, 'icon.png')
     return {
-      baseIcon: basePng,
+      baseIcon: join(resDir, 'icon.png'),
       ext: 'ico',
-      async pack(iconPath, badgeText) {
-        const pngs = await Promise.all(
-          WINDOWS_ICO_SIZES.map(size =>
-            size >= WINDOWS_ICO_BADGE_MIN_SIZE
-              ? renderBadgedPng(iconPath, badgeText, size, renderOptions)
-              : renderIconPng(iconPath, size),
-          ),
-        )
-        return pngsToIco(pngs)
-      },
+      badgeCss,
     }
   }
 
   if (isMac) {
-    const baseIcns = join(resDir, 'icon.icns')
     return {
-      baseIcon: baseIcns,
+      baseIcon: join(resDir, 'icon.icns'),
       ext: 'icns',
-      async pack(iconPath, badgeText) {
-        const src = await readFile(iconPath)
-        const blocks = parseIcns(src)
-
-        const patched = await Promise.all(
-          blocks.map(async (block) => {
-            if (!isPngBuffer(block.data))
-              return block
-
-            const width = block.data.readUInt32BE(16)
-            if (width < MAC_ICNS_BADGE_MIN_SIZE)
-              return block
-
-            const newPng = await renderBadgedPng(block.data, badgeText, undefined, renderOptions)
-            return { osType: block.osType, data: newPng }
-          }),
-        )
-
-        return packIcns(patched)
-      },
+      badgeCss,
     }
   }
 
-  const basePng = join(resDir, 'icon.png')
   return {
-    baseIcon: basePng,
+    baseIcon: join(resDir, 'icon.png'),
     ext: 'png',
-    async pack(iconPath, badgeText) {
-      return renderBadgedPng(iconPath, badgeText, 128, renderOptions)
-    },
+    badgeCss,
   }
 }
 
@@ -146,14 +104,6 @@ async function isIconCacheValid(iconPath: string, metaPath: string, badgeText: s
   return meta.version === BROWSER_ICON_CACHE_VERSION && meta.badge === badgeText
 }
 
-async function writeIconMeta(metaPath: string, badgeText: string): Promise<void> {
-  const meta: IconCacheMeta = {
-    version: BROWSER_ICON_CACHE_VERSION,
-    badge: badgeText,
-  }
-  await writeFile(metaPath, JSON.stringify(meta), 'utf8')
-}
-
 function resolveBadgeText(badge: string | number | null | undefined): string | null {
   if (badge == null)
     return null
@@ -187,11 +137,15 @@ function createBrowserIconEnsurer(kind: BrowserIconKind) {
       if (await isIconCacheValid(iconPath, metaPath, badgeText))
         return iconPath
 
-      const buf = await platformConfig.pack(platformConfig.baseIcon, badgeText)
-      const tmp = `${iconPath}.tmp`
-      await writeFile(tmp, buf)
-      await rename(tmp, iconPath)
-      await writeIconMeta(metaPath, badgeText)
+      await browserIconRenderWorker.writeIcon({
+        baseIconPath: platformConfig.baseIcon,
+        badgeText,
+        badgeCss: platformConfig.badgeCss,
+        packFormat: platformConfig.ext,
+        iconPath,
+        metaPath,
+        cacheVersion: BROWSER_ICON_CACHE_VERSION,
+      })
       return iconPath
     }
     catch (err) {

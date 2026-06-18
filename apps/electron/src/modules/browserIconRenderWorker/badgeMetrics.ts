@@ -1,4 +1,4 @@
-import { isMac, isWindows } from '/@/constants/common'
+import { isMac, isWindows } from './platform'
 import { measureBadgeTextWidth } from './textMeasure'
 
 /**

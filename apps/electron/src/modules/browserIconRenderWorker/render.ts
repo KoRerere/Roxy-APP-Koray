@@ -1,8 +1,9 @@
-import type { SKRSContext2D } from '@napi-rs/canvas'
+import type { Canvas, SKRSContext2D } from '@napi-rs/canvas'
 import type { Buffer } from 'node:buffer'
 import { createCanvas, loadImage } from '@napi-rs/canvas'
-import { isMac } from '/@/constants/common'
+import { isMac } from './platform'
 import { BADGE_MIN_FONT_SIZE, computeOptimalBadgeFontSize, getBadgeGeometry, getBadgeReadableMinFontSize } from './badgeMetrics'
+import { withCanvasLock } from './canvasLock'
 import { formatBadgeFont } from './fonts'
 
 /**
@@ -58,6 +59,18 @@ function applyHighQualitySmoothing(ctx: SKRSContext2D): void {
 
 function applyCrispDownscale(ctx: SKRSContext2D): void {
   ctx.imageSmoothingEnabled = false
+}
+
+/**
+ * 统一使用 @napi-rs/canvas 的同步编码（encodeSync）输出 PNG。
+ *
+ * 异步 `canvas.encode('png')` 会把任务投递到底层线程池，其 finalizer 在 GC 时与
+ * 线程池任务竞态，已知会在 Electron utilityProcess / Node 中触发 SIGSEGV（退出码 11，
+ * 见 napi-rs/canvas#988、oven-sh/bun#12375）。改用同步编码可彻底规避该竞态；
+ * 本模块已通过 withCanvasLock 串行化，且运行在独立子进程中，同步阻塞无副作用。
+ */
+function encodeCanvasPng(canvas: Canvas): Buffer {
+  return canvas.encodeSync('png')
 }
 
 /**
@@ -142,11 +155,11 @@ async function compositeBadgedIcon(
   drawBaseIcon(ctx, img, targetSize)
 
   if (!badgeText.trim())
-    return canvas.encode('png') as Promise<Buffer>
+    return encodeCanvasPng(canvas)
 
   if (overlayScale === 1) {
     drawBadge(ctx, badgeText, targetSize, badgeCss, 1, false)
-    return canvas.encode('png') as Promise<Buffer>
+    return encodeCanvasPng(canvas)
   }
 
   const overlaySize = targetSize * overlayScale
@@ -159,18 +172,20 @@ async function compositeBadgedIcon(
   overlayCtx.drawImage(overlay, 0, 0, targetSize, targetSize)
 
   ctx.drawImage(scaledOverlay, 0, 0)
-  return canvas.encode('png') as Promise<Buffer>
+  return encodeCanvasPng(canvas)
 }
 
 /**
  * 仅绘制基底图标，不叠加徽章（用于 Windows 16px 等过小档位）。
  */
-export async function renderIconPng(source: string | Buffer, size?: number): Promise<Buffer> {
-  const img = await loadImage(source)
-  const actualSize = size ?? img.width
-  const canvas = createCanvas(actualSize, actualSize)
-  drawBaseIcon(canvas.getContext('2d'), img, actualSize)
-  return canvas.encode('png') as Promise<Buffer>
+export function renderIconPng(source: string | Buffer, size?: number): Promise<Buffer> {
+  return withCanvasLock(async () => {
+    const img = await loadImage(source)
+    const actualSize = size ?? img.width
+    const canvas = createCanvas(actualSize, actualSize)
+    drawBaseIcon(canvas.getContext('2d'), img, actualSize)
+    return encodeCanvasPng(canvas)
+  })
 }
 
 /**
@@ -184,15 +199,17 @@ export async function renderIconPng(source: string | Buffer, size?: number): Pro
  * @param badgeText 徽章文字：窗口编号或窗口名称
  * @param size 画布像素尺寸；省略时按基底图像原始宽度（保持每帧原始分辨率不丢失细节）
  */
-export async function renderBadgedPng(
+export function renderBadgedPng(
   source: string | Buffer,
   badgeText: string | number,
   size?: number,
   options: RenderBadgedPngOptions = {},
 ): Promise<Buffer> {
-  const img = await loadImage(source)
-  const actualSize = size ?? img.width
-  const text = typeof badgeText === 'number' ? String(Math.floor(badgeText)) : badgeText
-  const badgeCss = options.badgeCss ?? FIREFOX_BADGE_CSS
-  return compositeBadgedIcon(img, actualSize, text, badgeCss)
+  return withCanvasLock(async () => {
+    const img = await loadImage(source)
+    const actualSize = size ?? img.width
+    const text = typeof badgeText === 'number' ? String(Math.floor(badgeText)) : badgeText
+    const badgeCss = options.badgeCss ?? FIREFOX_BADGE_CSS
+    return compositeBadgedIcon(img, actualSize, text, badgeCss)
+  })
 }

@@ -39,9 +39,8 @@ function onConfirm() {
 <template>
   <div class="flex flex-col gap-1.5 select-none">
     <RxButton class="self-end" size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('关闭')" @click="$emit('close')" />
-    <div class="relative">
+    <div class="relative cursor-pointer" @click="onConfirm">
       <img draggable="false" class="block w-160 rounded-5" :src="imageSrc">
-
       <div class="absolute inset-0 flex flex-col items-start pa-6">
         <div class="flex w-full justify-between items-center">
           <div class="flex items-center py-1.5 px-4 gap-1.5 rounded-full top">
@@ -92,7 +91,7 @@ function onConfirm() {
         </div>
 
         <div class="!absolute left-6 bottom-6 flex items-center gap-5">
-          <RxButton class="flex-row-reverse !border-none btn" size="lg" icon="base/rx_ic_chevron_right" :label="$t('立即充值')" @click="onConfirm" />
+          <RxButton class="flex-row-reverse !border-none btn" size="lg" icon="base/rx_ic_chevron_right" :label="$t('立即充值')" />
           <div v-tooltip.top="{ value: topUpSeasonText, pt: { root: '!max-w-80' } }" class="flex items-center gap-1 color-white opacity-80 cursor-pointer">
             <SvgIcon name="base/rx_ic_info_line" />
             <span class="text-3 leading-4">{{ $t('活动详情') }}</span>

@@ -342,7 +342,7 @@ onMounted(() => {
                 </div>
 
                 <div v-else-if="filteredRecords.length === 0">
-                  <Empty icon="empty/wallet" :title="activeTabMeta.emptyText" />
+                  <Empty icon="roxy-agent/rx_ic_record" :title="activeTabMeta.emptyText" />
                 </div>
 
                 <div v-else class="flex flex-col">

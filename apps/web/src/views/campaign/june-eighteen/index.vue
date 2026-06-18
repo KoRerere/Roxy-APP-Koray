@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { getImage, safeParseJSON } from '/@/utils/basic'
 import ActivityModal from './activity-modal.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -8,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { emitter } from '/@/utils/eventBus'
 import { OrderType } from '/@/enums/pay'
+import { enhanceCountdown, getImage, safeParseJSON } from '/@/utils/basic'
 
 const { collapsed = false, localStorageKey } = defineProps<{
   collapsed?: boolean
@@ -16,13 +16,14 @@ const { collapsed = false, localStorageKey } = defineProps<{
 
 const router = useRouter()
 const { currentLocale } = storeToRefs(useSimpleLocale())
-const { maxBonus } = storeToRefs(useCampaignStore())
+const { seasonalActivity, maxBonus } = storeToRefs(useCampaignStore())
 const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
 const [showModal] = useDialog()
 // const { mixpanelTrack } = useUserStore()
 
-const opened = ref(safeParseJSON(localStorage.getItem(localStorageKey)))
+const countdown = ref()
+const opened = ref(safeParseJSON(sessionStorage.getItem(localStorageKey)))
 
 const imageSrc = computed(() => {
   const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
@@ -34,7 +35,12 @@ onMounted(() => {
 })
 
 function openModal(force = false) {
-  if (!force && opened.value)
+  if (!force && opened.value) {
+    openAgainBy24Hours()
+    return
+  }
+
+  if (!seasonalActivity.value.juneEighteen)
     return
 
   // if (force) {
@@ -49,17 +55,33 @@ function openModal(force = false) {
       root: '!bg-transparent !border-none !shadow-none',
       mask: '!z-1110',
     },
+    handleCancel: () => {
+      openAgainBy24Hours()
+    },
     slots: {
       container: ({ hideModal }) => h(ActivityModal, {
         onClose: () => {
           hideModal()
-          localStorage.setItem(localStorageKey, JSON.stringify(true))
+          sessionStorage.setItem(localStorageKey, JSON.stringify(true))
         },
         onConfirm: () => {
           onCharge()
           router.push({ name: 'wallet' })
         },
       }),
+    },
+  })
+}
+
+function openAgainBy24Hours() {
+  if (countdown.value)
+    return
+
+  const day = Date.now() + 1000 * 60 * 60 * 24
+  countdown.value = enhanceCountdown(day, () => { }, {
+    onEnd: () => {
+      countdown.value = undefined
+      openModal(true)
     },
   })
 }

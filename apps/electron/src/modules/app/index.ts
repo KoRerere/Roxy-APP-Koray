@@ -8,6 +8,7 @@ import { checkResource } from '/@/modules/app/checkResource'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
+import { browserIconRenderWorker } from '/@/modules/browserIconRenderWorker'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
@@ -275,6 +276,7 @@ function initAppEvent() {
         // 退出所有浏览器进程, 防止有漏网之鱼;
         // macOS / Linux 上不再依赖后续 SIGKILL 兜底, 必须 await 等清理完再走 app.quit().
         await killAllBrowserProcess()
+        browserIconRenderWorker.terminate()
       }
 
       await coreManager.cleanOldCore()
