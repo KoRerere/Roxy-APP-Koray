@@ -135,6 +135,14 @@ export interface UserModelOption {
   model: string
   api_format: string
   alias?: string | null
+  mate?: {
+    title?: Record<string, string> | null
+    desc?: Record<string, string> | null
+  } | null
+  meta?: {
+    title?: Record<string, string> | null
+    desc?: Record<string, string> | null
+  } | null
 }
 
 export interface UserModelOptionsResult {
@@ -323,11 +331,15 @@ export function useAgentApi() {
     return await (res.json() as Promise<AgentApiResponse<UserModelOptionsResult>>)
   }
 
-  async function switchUserModel(modelType: UserModelType, model: string | null) {
+  async function switchUserModel(modelType: UserModelType, model: string | null, conversationId?: string) {
     const res = await fetch(`${serverUrl.value}/api/model`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model_type: modelType, model }),
+      body: JSON.stringify({
+        model_type: modelType,
+        model,
+        ...(conversationId ? { conversation_id: conversationId } : {}),
+      }),
     })
     return await (res.json() as Promise<AgentApiResponse<UserModelInfo>>)
   }

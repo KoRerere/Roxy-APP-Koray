@@ -2,7 +2,7 @@ import { genRandomFingerprint } from '@roxy/shared'
 import express from 'express'
 import { API } from '/@/api'
 import { openAPICommonHeaders } from '/@/constants/common'
-import { browserManager } from '/@/modules/browser'
+import { browserManager, coreManager } from '/@/modules/browser'
 import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { getLocalFonts, getMacAddress } from '/@/utils'
@@ -61,7 +61,13 @@ router.get('/workspace', async (req, res) => {
 
 /* 创建窗口 */
 router.post('/create', async (req, res) => {
-  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId } = req.body || {}
+  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId, coreType, coreVersion } = req.body || {}
+
+  // 根据用户传入的 coreType / coreVersion 校验当前系统可用内核，缺省时回落为最新版本
+  const coreResult = await coreManager.resolveCoreParams(coreType, coreVersion, { fillDefaults: true })
+  if (!coreResult.ok) {
+    return res.error(coreResult.error)
+  }
 
   const _platformUrlIds = windowPlatformList.map(item => item.id).filter(Boolean)
   const _windowPlatformList = windowPlatformList.filter(item => !item.id)
@@ -72,6 +78,8 @@ router.post('/create', async (req, res) => {
   const params = {
     ...getDefaultBrowserCreateParams(),
     ...req.body,
+    coreType: coreResult.coreType,
+    coreVersion: coreResult.coreVersion,
     ...proxyInfo,
     ...fingerInfo,
     platformUrlIds: _platformUrlIds,

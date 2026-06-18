@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useMcpDataStore } from '/@/views/mcp/pinia-store/mcp-data-store'
 import type { UserModelOption } from '/@/views/mcp/agent-api'
 import { AUTOMATION_MODEL_TYPE } from '/@/views/mcp/model-config'
@@ -12,10 +13,12 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 const [, onlyErrorToast] = useResponseToast()
 const { showMenu } = usePopupMenu()
+const localeStore = useSimpleLocale()
 const mcpDataStore = useMcpDataStore()
 
 interface Props {
   canUploadMore: boolean
+  conversationId?: string
   pendingScript?: any
   disabled?: boolean
 }
@@ -42,11 +45,38 @@ const modelButtonLabel = computed(() => {
     return getModelOptionLabel(currentModelOption.value)
   if (currentModelName.value)
     return currentModelName.value
-  return userModelLoading.value ? $t('加载中') : $t('默认模型')
+  return $t('通用模式')
 })
+const modelButtonTooltip = computed(() =>
+  currentModelOption.value
+    ? getModelOptionDesc(currentModelOption.value) || $t('适合大部分日常自动化任务')
+    : $t('适合大部分日常自动化任务'),
+)
+
+function getModelOptionMate(option: UserModelOption) {
+  return option.mate || option.meta || null
+}
+
+function getLocalizedMateText(textMap?: Record<string, string> | null) {
+  if (!textMap)
+    return ''
+
+  const locale = localeStore.currentLocale || 'en'
+  const siteLocale = localeStore.siteLocale || locale.split('-')[0] || 'en'
+  return textMap[locale]?.trim()
+    || textMap[siteLocale]?.trim()
+    || textMap.zh?.trim()
+    || textMap.en?.trim()
+    || Object.values(textMap).find(Boolean)?.trim()
+    || ''
+}
 
 function getModelOptionLabel(option: UserModelOption) {
-  return option.alias?.trim() || option.model
+  return getLocalizedMateText(getModelOptionMate(option)?.title) || option.model
+}
+
+function getModelOptionDesc(option: UserModelOption) {
+  return getLocalizedMateText(getModelOptionMate(option)?.desc)
 }
 
 function trackMenuOpen(openRef: Ref<boolean>) {
@@ -86,11 +116,11 @@ async function ensureModelOptions() {
 function buildModelMenuOptions(options: UserModelOption[]) {
   if (!options.length) {
     return [{
-      label: $t('暂无可用模型'),
+      label: $t('通用模式'),
       disabled: true,
       render: () => (
         <div class="px-2.5 py-2 text-3.25 text-[var(--colors-text-text-tertiary)]">
-          {$t('暂无可用模型')}
+          {$t('通用模式')}
         </div>
       ),
     }]
@@ -109,6 +139,11 @@ function buildModelMenuOptions(options: UserModelOption[]) {
       >
         <div class="min-w-0 flex-1">
           <div class="truncate text-3.25 text-[var(--colors-text-text-primary)]">{getModelOptionLabel(option)}</div>
+          {!!getModelOptionDesc(option) && (
+            <div class="mt-0.5 text-3 text-[var(--colors-text-text-tertiary)] leading-4 break-words whitespace-normal">
+              {getModelOptionDesc(option)}
+            </div>
+          )}
         </div>
       </div>
     ),
@@ -132,7 +167,7 @@ async function handleModelSelect(option: UserModelOption) {
       },
     }
 
-    const res = await mcpDataStore.switchUserModel(AUTOMATION_MODEL_TYPE, option.model)
+    const res = await mcpDataStore.switchUserModel(AUTOMATION_MODEL_TYPE, option.model, props.conversationId)
     if (res.code === 0) {
       return
     }
@@ -204,7 +239,7 @@ onBeforeUnmount(() => {
 
     <div class="inline-flex items-center gap-1 h-[30px] rounded-[60px] bg-[var(--component-segment-bg-selection)]">
       <button
-        v-tooltip.top="{ value: $t('切换当前自动化对话使用的模型'), showDelay: 300 }"
+        v-tooltip.top="{ value: modelButtonTooltip, showDelay: 300 }"
         type="button"
         class="flex items-center gap-1.5 h-[30px] px-3 border-0 rounded-15 bg-transparent text-[var(--colors-text-text-primary)] text-sm leading-5 cursor-pointer whitespace-nowrap overflow-hidden hover:bg-[var(--component-table-bg-button-hover)]"
         :class="{ 'opacity-50 cursor-not-allowed': disabled || isSwitchingModel }"

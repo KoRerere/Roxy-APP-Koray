@@ -66,7 +66,7 @@ const detailMapStr = {
   [SubOrderType.Extend]: (data: any) => $t('套餐延长 {day} 天', { day: data.day }),
   [SubOrderType.Workspace_Member]: (data: any) => {
     return [
-      [data.workspace, $t('{workspace} 工作空间', { workspace: data.workspace })],
+      [data.workspace, $t('{workspace} 团队', { workspace: data.workspace })],
       [data.staff, $t('{member} 团队成员', { member: data.staff })],
     ].filter(([value]) => value > 0).map(([_, label]) => label).join(', ')
   },
@@ -98,10 +98,11 @@ async function tableFilters() {
       placeholder: $t('全部类型'),
       options: [
         { label: $t('钱包充值'), value: OrderType.Recharge },
+        { label: $t('AI Agent 积分购买'), value: OrderType.PointsRecharge },
         { label: $t('套餐购买'), value: OrderType.Subscribe },
         { label: $t('套餐变更'), value: OrderType.Change },
         { label: $t('套餐续费'), value: OrderType.Renew },
-        { label: $t('空间和成员'), value: OrderType.Purchase },
+        { label: $t('团队和成员'), value: OrderType.Purchase },
         { label: $t('代理 IP 购买'), value: OrderType.ProxyPurchase },
         { label: $t('代理 IP 退款'), value: OrderType.ProxyRefund },
         { label: $t('代理 IP 续费'), value: OrderType.ProxyRenew },

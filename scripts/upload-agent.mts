@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import { loadEnvFile } from 'node:process'
 import readline from 'node:readline'
 
 // 忽略 SSL/TLS 证书验证
@@ -14,7 +15,20 @@ const rl = readline.createInterface({
 })
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'WUYtoKyw5TvUT8iW1780026837812'
+
+if (isProd) {
+  try {
+    loadEnvFile(path.join(import.meta.dirname, '../.env.local'))
+  }
+  catch {
+    // .env.local 不存在时忽略
+  }
+}
+
+const token = isProd ? process.env.PUBLISH_ADMIN_TOKEN : 'WUYtoKyw5TvUT8iW1780026837812'
+if (isProd && !token) {
+  throw new Error('缺少 PUBLISH_ADMIN_TOKEN，请在 .env.local 中配置')
+}
 
 const platformList = process.env.PLATFORM
   ? [process.env.PLATFORM === 'mac' ? 'macOS' : 'Windows']
@@ -33,14 +47,14 @@ const baseOssConfig = {
 }
 
 // 正式环境 agent 版本
-const prodVersion = '1.0.16'
+const prodVersion = '1.1.2'
 // 开发环境 agent 版本
-const devVersion = '2.2.97'
+const devVersion = '2.3.0'
 
 // 当前 agent 的版本
 const version = isProd ? prodVersion : devVersion
 // 此 agent 兼容的最低 app 版本
-const minAppVersion = isProd ? '3.8.8' : '7.6.6'
+const minAppVersion = isProd ? '3.8.9' : '7.6.6'
 
 /** compat-index.json 在 OSS 上的路径（不区分平台，由 app 侧根据 os 自行拼接脚本地址） */
 const compatIndexOssPath = '/public/package/agent/compat-index.json'

@@ -50,8 +50,7 @@ const columns = [
     style: {
       width: '40%',
     },
-  },
-  ,
+  },,
   {
     title: $t('转移发起时间'),
     key: 'createTime',
@@ -79,7 +78,7 @@ async function howToGetHelp() {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(TransferHelp, {
@@ -89,8 +88,8 @@ async function howToGetHelp() {
         onConfirm: () => {
           hideModal()
         },
-      })
-    }
+      }),
+    },
   })
 }
 </script>
@@ -102,10 +101,10 @@ async function howToGetHelp() {
       <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无转移窗口数据')">
         <template #extra>
           <div class="flex flex-col gap-3 help">
-            <div>{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。或者使用工作空间 ID 转移到他人的工作空间。') }}</div>
+            <div>{{ $t('您可以直接将窗口转移到您拥有的其他团队。或者使用团队 ID 转移到他人的团队。') }}</div>
             <i18n-t tag="div" :keypath="$t('更多信息请查看：{link}。', { link: '{link}' })" scope="global">
               <template #link>
-                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
+                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('团队 ID') }}</span>
               </template>
             </i18n-t>
           </div>
@@ -121,8 +120,12 @@ async function howToGetHelp() {
     <template #transfer="{ data }">
       <div class="flex items-center">
         <RxAvatar v-bind="getWorkspaceAvatar(data)" />
-        <div class="ml-3 space-name">{{ data.workspaceName }}</div>
-        <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
+        <div class="ml-3 space-name">
+          {{ data.workspaceName }}
+        </div>
+        <div class="ml-1 space-id">
+          ID: {{ data.workspaceNo }}
+        </div>
       </div>
     </template>
   </RyTable>
@@ -138,7 +141,7 @@ async function howToGetHelp() {
 
 .space-id {
   color: var(--colors-text-text-tertiary);
-  font-family: "JetBrains Mono";
+  font-family: 'JetBrains Mono';
   font-size: 12px;
   line-height: 16px;
 }

@@ -290,6 +290,19 @@ export class AfterLaunchTask {
       }))
     }
 
+    const deferredUrls = this.browserItem.beforeLaunchTask?.deferredOpenUrls ?? []
+    if (deferredUrls.length) {
+      console.log(`[AfterLaunchTask] Opening ${deferredUrls.length} deferred URL(s) via CDP (command line length limit)`)
+      await Promise.all(deferredUrls.map(async (url) => {
+        try {
+          await this.browser!.newPage(url)
+        }
+        catch (error) {
+          console.error(`[AfterLaunchTask] Failed to open deferred URL ${url}:`, error)
+        }
+      }))
+    }
+
     // Firefox：页面重载完成后再释放 BiDi session，参考 AdsPower 不常驻 session 的做法。
     // 后续 cookie 读取通过 cookies.sqlite 完成，不依赖 BiDi 连接。
     if (isFirefox) {

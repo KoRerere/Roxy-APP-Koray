@@ -8,6 +8,7 @@ import {
   PayApi,
   PlatformApi,
   PluginsApi,
+  PointsApi,
   ProxyApi,
   TeamApi,
   UserAddUninstallReasonAnswerApi,
@@ -172,4 +173,5 @@ export const API = {
   pay: new PayApi(httpClient),
   appTrackingEvent: new AppTrackingEventApi(httpClient),
   userAddUninstallReasonAnswer: new UserAddUninstallReasonAnswerApi(httpClient),
+  points: new PointsApi(httpClient),
 }

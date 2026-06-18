@@ -67,7 +67,7 @@ const advanced = computed(() => [
             <RxDivider line-color="var(--component-tooltip-divider)" line-only line-style="dashed" />
             <div class="flex items-start gap-2.5 tip">
               <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)" />
-              <span>{{ $t('带有此图标的功能可以在任何空间中使用，其他功能仅限在自己创建的空间使用。') }}</span>
+              <span>{{ $t('带有此图标的功能可以在任何团队中使用，其他功能仅限在自己创建的团队使用。') }}</span>
             </div>
           </template>
         </div>

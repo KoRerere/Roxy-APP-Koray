@@ -59,10 +59,10 @@ async function skipInvitation(intoWorkspaceId?: number) {
           {{ inviteInfo?.workspaceName }}
         </div>
         <div class="detail-content">
-          {{ $t('您被邀请至工作空间 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
+          {{ $t('您被邀请至团队 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
         </div>
       </div>
-      <RxButton class="w-full capitalize" size="lg" :disabled="isInWorkspace" :label="isInWorkspace ? $t('已加入') : $t('加入工作空间')" @click="acceptInvitation"></RxButton>
+      <RxButton class="w-full capitalize" size="lg" :disabled="isInWorkspace" :label="isInWorkspace ? $t('已加入') : $t('加入团队')" @click="acceptInvitation"></RxButton>
       <RxDivider />
       <RxButton class="w-full" size="lg" outlined :label="$t('忽略')" @click="skipInvitation()"></RxButton>
     </div>

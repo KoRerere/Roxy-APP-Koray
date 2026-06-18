@@ -2,6 +2,8 @@
 import Badges from '/@/layout/components/header/profile/components/badges.vue'
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 import WorkspaceGuide from '/@/layout/components/header/components/workspace-guide.vue'
+import RxTooltip from '/@/components/rx-tooltip'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -87,9 +89,22 @@ async function showCreateWorkspaceDialog() {
   }
 
   return showWorkspaceFormDialog({
-    header: $t('创建新的工作空间'),
+    header: $t('创建新的团队'),
     class: 'w-[500px]',
     slots: {
+      header: () => (
+        <div class="flex items-center justify-between gap-1">
+          <span class="tt-primary text-4 font-600">{$t('创建新的团队')}</span>
+
+          <RxTooltip class="flex items-center">
+            {{
+              default: () => <RxSvgIcon class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-tertiary)" />,
+              content: () => <div class="color-white w-60 whitespace-pre-wrap text-3">{$t('团队是一个独立的分组环境，通过创建或加入不同团队，您可以使用单一主账号邀请成员组建团队，并为其分配不同的权限设置。每个团队内的数据（如窗口、成员、代理 IP、项目和账号等）完全隔离，确保团队间的操作互不干扰。')}</div>,
+            }}
+          </RxTooltip>
+
+        </div>
+      ),
       default: () => (
         <WorkspaceForm
           ref={workspaceFormRef}
@@ -176,7 +191,7 @@ function showFirstCreateTipsDialog() {
     <div class="h-7 -my-1 flex items-center gap-1.5 pl-1 cursor-pointer item" @click="showCreateWorkspaceDialog">
       <SvgIcon class="tt-brand" name="base/rx_ic_plus" />
       <div class="tt-brand text-3 leading-4">
-        {{ $t('创建工作空间') }}
+        {{ $t('创建团队') }}
       </div>
     </div>
   </div>

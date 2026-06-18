@@ -8,7 +8,7 @@ const { getVideoSource } = useSimpleLocale()
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-6 popup">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('如何获取空间 ID') }}</span>
+      <span class="header">{{ $t('如何获取团队 ID') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-note)" @click="$emit('close')" />
     </div>
     <video class="block w-full rounded-md" autoplay muted loop playsinline>

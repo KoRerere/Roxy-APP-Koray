@@ -2,10 +2,10 @@
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { API } from '/@/api'
-;
+
 import { debounce } from 'es-toolkit'
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
-import { useWorkspaceStore } from "/@/stores/workspace";
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api'
 import RxAvatar from '/@/components/rx-avatar'
@@ -39,18 +39,20 @@ async function getTransferHistory(event: MouseEvent) {
     return
   }
 
-  if (openLoading.value) return
+  if (openLoading.value)
+    return
 
   openLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
-    windowIds: windowIds.join(',')
+    windowIds: windowIds.join(','),
   })
   openLoading.value = false
 
   const { self, history } = data.reduce((acc, item) => {
     if (item.type === SpaceType.Self) {
       acc.self.push(item)
-    } else if (item.type === SpaceType.History) {
+    }
+    else if (item.type === SpaceType.History) {
       acc.history.push(item)
     }
     return acc
@@ -60,13 +62,13 @@ async function getTransferHistory(event: MouseEvent) {
     {
       key: SpaceType.History,
       title: $t('转移历史'),
-      items: history.slice(0, 3)
+      items: history.slice(0, 3),
     },
     {
       key: SpaceType.Self,
-      title: $t('我的工作空间'),
-      items: self
-    }
+      title: $t('我的团队'),
+      items: self,
+    },
   ].filter(item => item.items.length)
 
   historyList.value = spaceList.value
@@ -80,7 +82,7 @@ async function howToGetHelp() {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(TransferHelp, {
@@ -90,8 +92,8 @@ async function howToGetHelp() {
         onConfirm: () => {
           hideModal()
         },
-      })
-    }
+      }),
+    },
   })
 }
 
@@ -103,19 +105,20 @@ function clearSearch() {
 const onInput = debounce(onSearch, 300)
 
 async function onSearch() {
-  if (!search.value || search.value.length < 10 || searchLoading.value) return
+  if (!search.value || search.value.length < 10 || searchLoading.value)
+    return
   searchLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
     windowIds: windowIds.join(','),
-    transferWorkspaceNo: search.value
+    transferWorkspaceNo: search.value,
   })
   searchLoading.value = false
   spaceList.value = [
     {
       key: SpaceType.Other,
       title: $t('搜索结果:'),
-      items: data
-    }
+      items: data,
+    },
   ]
 }
 
@@ -127,7 +130,8 @@ async function clearHistory(space: any) {
 }
 
 function handleChoose(item: Data) {
-  if (!item.isWindowCountEnough || item.workspaceNo === currentWorkspace.value!.workspaceNo) return
+  if (!item.isWindowCountEnough || item.workspaceNo === currentWorkspace.value!.workspaceNo)
+    return
   selectedWorkspace.value = item
   search.value = ''
   chooseRef.value?.hide()
@@ -146,44 +150,52 @@ function getWorkspaceAvatar(item: Data) {
 
 <template>
   <div class="flex items-center justify-between w-full pa-2.5 pl-3 select-none cursor-pointer choose" :class="width" @click="getTransferHistory">
-    <span :class="{ 'choose-text': !!selectedWorkspace?.workspaceName }">{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
+    <span :class="{ 'choose-text': !!selectedWorkspace?.workspaceName }">{{ selectedWorkspace?.workspaceName || $t('选择团队') }}</span>
     <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />
     <div v-else class="relative px-3">
-      <RxLoading :size="16" v-model="openLoading" />
+      <RxLoading v-model="openLoading" :size="16" />
     </div>
     <RyPopover ref="choose" @hide="clearSearch">
       <div class="relative flex flex-col gap-3 pa-3 overflow-hidden" :class="width">
         <div class="flex justify-between items-center">
-          <div class="header">{{ $t('选择空间') }}</div>
+          <div class="header">
+            {{ $t('选择团队') }}
+          </div>
           <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
             <template #link>
-              <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
+              <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('团队 ID') }}</span>
             </template>
           </i18n-t>
         </div>
-        <TsFormInputText v-model="search" size="md" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @pre-icon-click="onSearch"
-          @input="onInput">
+        <TsFormInputText v-model="search" size="md" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索团队 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @pre-icon-click="onSearch"
+                         @input="onInput"
+        >
           <template #icon>
-            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
+            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch" />
           </template>
         </TsFormInputText>
         <div class="relative flex flex-col gap-6 -mr-3 pr-3 max-h-80 overflow-y-auto">
-          <RxLoading :opacity="0.9" v-model="searchLoading" />
+          <RxLoading v-model="searchLoading" :opacity="0.9" />
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
-              <div class="text-[var(--colors-text-text-primary)]">{{ space.title }}</div>
+              <div class="text-[var(--colors-text-text-primary)]">
+                {{ space.title }}
+              </div>
               <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer" @click="clearHistory(space)">
-                <SvgIcon name="base/rx_ic_bin_1"></SvgIcon>
+                <SvgIcon name="base/rx_ic_bin_1" />
                 <span>{{ $t('清除历史') }}</span>
               </div>
             </div>
             <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
-              :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }" @click="handleChoose(item)">
+                 :class="{ disabled: !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }" @click="handleChoose(item)"
+            >
               <RxAvatar class="workspace-icon" v-bind="getWorkspaceAvatar(item)" />
               <div>
-                <div class="workspace-name">{{ item.workspaceName }}</div>
+                <div class="workspace-name">
+                  {{ item.workspaceName }}
+                </div>
                 <div class="mt-1 workspace-id">
-                  <span v-if="item.workspaceNo === currentWorkspace!.workspaceNo">{{ $t('当前空间') }}</span>
+                  <span v-if="item.workspaceNo === currentWorkspace!.workspaceNo">{{ $t('当前团队') }}</span>
                   <span v-else-if="!item.isWindowCountEnough">{{ $t('窗口额度不足') }}</span>
                   <span v-else>ID: {{ item.workspaceNo }}</span>
                 </div>
@@ -191,10 +203,10 @@ function getWorkspaceAvatar(item: Data) {
             </div>
           </div>
           <div v-if="search && !spaceList[0]?.items?.length" class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
-            <div>{{ $t('空间不存在') }}</div>
+            <div>{{ $t('团队不存在') }}</div>
             <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
               <template #link>
-                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
+                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('团队 ID') }}</span>
               </template>
             </i18n-t>
           </div>
@@ -227,12 +239,12 @@ function getWorkspaceAvatar(item: Data) {
 }
 
 .help {
-  color: var(--colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive, #7d8387);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--colors-text-text-brand, #11A3FD);
+    color: var(--colors-text-text-brand, #11a3fd);
   }
 }
 
@@ -244,7 +256,7 @@ function getWorkspaceAvatar(item: Data) {
 }
 
 .workspace {
-  border-bottom: 1px dashed var(--colors-border-border-inactive, #C7D1D6);
+  border-bottom: 1px dashed var(--colors-border-border-inactive, #c7d1d6);
 
   &.disabled {
     cursor: not-allowed;
@@ -252,7 +264,7 @@ function getWorkspaceAvatar(item: Data) {
 
     .workspace-name,
     .workspace-id {
-      color: var(--colors-text-text-inactive, #7D8387);
+      color: var(--colors-text-text-inactive, #7d8387);
     }
 
     .workspace-icon {
@@ -272,8 +284,8 @@ function getWorkspaceAvatar(item: Data) {
   }
 
   &-id {
-    color: var(--colors-text-text-tertiary, #575D60);
-    font-family: "JetBrains Mono";
+    color: var(--colors-text-text-tertiary, #575d60);
+    font-family: 'JetBrains Mono';
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
   }

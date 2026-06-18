@@ -22,7 +22,7 @@ import { useNetworkStore } from '/@/stores/network'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { PayWay } from '/@/enums/pay'
-import { BuyEntryType, ProxyOrderType, ProxyStockStatus, ProxyUseType } from '/@/enums/proxy'
+import { BuyEntryType, ProxyIpType, ProxyOrderType, ProxyStockStatus, ProxyUseType } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
@@ -37,13 +37,12 @@ const { data: provider = {}, entryType = BuyEntryType.Normal, toRola } = defineP
 
 const emit = defineEmits(['close', 'success'])
 
-const simpleLocale = useSimpleLocale()
 const styles = useCssModule()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
-// const { currentLocale } = storeToRefs(useSimpleLocale())
+const { isZh } = storeToRefs(useSimpleLocale())
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
@@ -135,11 +134,14 @@ const originalAmount = computed(() => {
 
 const finalAmount = computed(() => {
   const { proxyDiscount } = userPayInfo.value!
+  const { businessUse } = configValue.value
+  if (businessUse.isSpecialOffer)
+    return originalAmount.value
   return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
 })
 
 const details = computed(() => {
-  const { purchaseCountry, subscriptionMonths } = configValue.value
+  const { purchaseCountry, subscriptionMonths, businessUse } = configValue.value
   const { proxyDiscount } = userPayInfo.value!
 
   return [
@@ -188,7 +190,7 @@ const details = computed(() => {
           label: $t('专属折扣'),
           value: `-${proxyDiscount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!proxyDiscount,
+          visible: !!proxyDiscount && !businessUse.isSpecialOffer,
         },
         {
           label: $t('Roxy 独家特惠'),
@@ -230,10 +232,11 @@ async function getBusinessUseList(vendorId: string) {
     badgeType: item.badgeType,
     badgeDesc: item.badgeTypeDesc,
     badgeClass: item.badgeType?.toLocaleLowerCase(),
+    isSpecialOffer: item.isSpecialOffer,
   })).filter((item) => {
     // 只要中文环境下，才显示 Direct 类型的代理 IP 用途
     if (item.badgeType === 'Direct') {
-      return simpleLocale.currentLocale === 'zh-CN'
+      return isZh.value
     }
 
     return true
@@ -464,22 +467,23 @@ async function initConfig() {
       },
       render: ({ item }: any) => {
         return (
-          <div class="flex gap-3 flex-wrap">
+          <div class="flex gap-col-3 gap-row-4 flex-wrap">
             {
               item.props.options.map((option: any) => {
                 const content = (
-                  <div
-                    class={`h-10 relative flex items-center gap-1.5 px-4 leading-none cursor-pointer select-none  ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
-                    onClick={async () => {
-                      item.value = option
-                      await refreshFromScene(option.value)
-                    }}
-                  >
-                    {option.badgeDesc && (
-                      <div class={`absolute position-y-center top-0 -right-2 z-10 py-0.5 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>
-                    )}
-                    {option.image && <RxImage class="block w-5" src={option.image} darkSrc={option.darkImage} alt={option.label} />}
-                    <div class={`${styles.purpose}`}>{option.label}</div>
+                  <div class="flex flex-col items-center gap-0.5">
+                    <div
+                      class={`h-10 relative flex items-center gap-1.5 px-4 leading-none cursor-pointer select-none ${styles.radio} ${item.value.value === option.value ? styles.active : ''}`}
+                      onClick={async () => {
+                        item.value = option
+                        await refreshFromScene(option.value)
+                      }}
+                    >
+                      {option.badgeDesc && <div class={`absolute position-y-center top-0 -right-2 z-10 py-0.5 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>}
+                      {option.image && <RxImage class="block w-5" src={option.image} darkSrc={option.darkImage} alt={option.label} />}
+                      <div class={`${styles.purpose}`}>{option.label}</div>
+                    </div>
+                    {option.isSpecialOffer && <div class="color-[#FF7A00] font-[DingTalk_JinBuTi] text-3.25 leading-3.5">{$t('🔥限时最低 $5.5/月')}</div>}
                   </div>
                 )
 
@@ -717,29 +721,25 @@ async function onPay() {
       <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :title="$t('温馨提示')"
                :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')"
       />
-      <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('电商专用 IP 专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
+      <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
       <div class="flex flex-col gap-6">
         <div v-if="proxyTypeValue != null" class="flex flex-col gap-1.5 pa-4 quantity">
           <div class="tt-primary text-3.5 font-600 leading-normal">
             {{ $t('代理 IP 数量:') }}
           </div>
-          <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentProxyType.inventory), ONE_BUY_MAX)"
-                       @update:model-value="inputPurchaseMember"
-          />
+          <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentProxyType.inventory), ONE_BUY_MAX)" @update:model-value="inputPurchaseMember" />
         </div>
         <Detail :list="details">
           <template #type>
             <div class="relative">
               <RxLoading v-model="loadingProxyType" :opacity="0.1" />
               <div class="flex flex-col gap-1.5">
-                <label v-for="item in proxyTypeOptions" :key="item.id" class="w-full flex items-start gap-1.5 select-none cursor-pointer"
-                       :for="`${CID}_${item.id}`"
-                >
+                <label v-for="item in proxyTypeOptions" :key="item.id" class="w-full flex items-start gap-1.5 select-none cursor-pointer" :for="`${CID}_${item.id}`">
                   <RadioButton v-model="proxyTypeValue" class="!hidden" :input-id="`${CID}_${item.id}`" :value="item.id" name="proxy-provider-type" />
                   <div class="w-full flex items-center gap-2 min-w-0">
                     <div class="flex items-center gap-1.5 min-w-0 flex-1">
                       <div class="shrink-0 details-radio" :class="{ checked: proxyTypeValue === item.id }" />
-                      <div class="tt-secondary text-3.5 leading-5 truncate">{{ item.typeName }}</div>
+                      <div class="tt-secondary text-3.5 leading-5 truncate" :class="{ premium: item.proxyType === ProxyIpType.Residential }">{{ item.typeName }}</div>
                       <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
                     </div>
                     <span v-if="formatProxyTypeUnitPrice(item)" class="shrink-0 tt-secondary text-3.5 leading-5 whitespace-nowrap">{{ formatProxyTypeUnitPrice(item) }}</span>
@@ -766,12 +766,15 @@ async function onPay() {
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-              <RxButton v-tooltip.top="!check('Cost_Center_all') && $t('暂无权限。如需开通，请联系工作空间拥有者，更改当前账号身份为管理者并开通‘费用中心’权限。')" size="lg" :disabled="!check('Cost_Center_all')" :label="$t('立即支付')"
+              <div v-if="configValue.businessUse.isSpecialOffer" class="tt-inactive text-3 leading-5 text-center">
+                {{ $t('请注意：当前代理 IP 为特价商品，不退不换') }}
+              </div>
+              <RxButton v-tooltip.top="!check('Cost_Center_all') && $t('暂无权限。如需开通，请联系团队拥有者，更改当前账号身份为管理者并开通‘费用中心’权限。')" size="lg" :disabled="!check('Cost_Center_all')" :label="$t('立即支付')"
                         @click="checkStock"
               />
-              <I18nT tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+              <I18nT tag="div" class="tt-tertiary text-3 leading-4.5 select-none" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                 <template #terms>
-                  <a class="terms-link" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+                  <a class="terms" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
                 </template>
               </I18nT>
             </div>
@@ -782,9 +785,9 @@ async function onPay() {
             {{ $t('注意事项:') }}
           </div>
           <ol class="ma-0 pl-4">
-            <I18nT v-for="item in notes" :key="item.text" tag="li" class="notes" :keypath="item.text" scope="global">
+            <I18nT v-for="item in notes" :key="item.text" tag="li" class=" tt-tertiary text-3.25 leading-6" :keypath="item.text" scope="global">
               <template v-for="(bold, index) in item.bolds" :key="index" #[`bold${index}`]>
-                <span class="notes-bold">{{ bold }}</span>
+                <span class="tt-secondary font-bold">{{ bold }}</span>
               </template>
             </I18nT>
           </ol>
@@ -829,7 +832,6 @@ async function onPay() {
     box-shadow: none;
 
     .purpose,
-    &.type_title,
     &.period {
       color: var(--colors-text-text-brand);
       font-weight: 600;
@@ -843,6 +845,11 @@ async function onPay() {
   font-weight: 500;
 }
 
+.period {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+}
+
 .curated {
   color: #fff;
   font-family: 'DingTalk JinBuTi';
@@ -851,54 +858,21 @@ async function onPay() {
 }
 
 .direct {
-  color: #fff;
+  color: #34393d;
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
   background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
 }
-
-.type_title {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-  // line-height: 24px;
-}
-
-.period {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-}
 </style>
 
 <style lang="scss" scoped>
-.provider {
-  &-name {
-    color: var(--colors-text-text-primary);
-    font-size: 20px;
-    font-weight: 600;
-    line-height: normal;
-  }
-
-  &-tag {
-    display: flex;
-    padding: 1px 4px;
-    justify-content: center;
-    align-items: center;
-    border-radius: 2px;
-    border: 1px solid var(--component-tag-border);
-    background: var(--component-tag-bg);
-    color: var(--component-tag-text);
-    font-family: 'JetBrains Mono';
-    font-size: 10px;
-    font-weight: 800;
-    line-height: normal;
-  }
-
-  &-website {
-    color: var(--colors-text-text-tertiary);
-    font-size: 12px;
-    line-height: normal;
-  }
+.premium {
+  font-size: 15px;
+  font-family: 'DingTalk JinBuTi';
+  background: linear-gradient(90deg, #e635f9 0%, #12a3fc 60.1%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .quantity {
@@ -993,29 +967,12 @@ async function onPay() {
 }
 
 .terms {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 18px;
-
-  &-link {
-    color: var(--colors-text-text-brand);
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-decoration-skip-ink: none;
-    text-decoration-thickness: auto;
-    text-underline-offset: auto;
-    text-underline-position: from-font;
-  }
-}
-
-.notes {
-  color: var(--colors-text-text-tertiary, #989ca0);
-  font-size: 13px;
-  line-height: 24px;
-
-  &-bold {
-    color: var(--colors-text-text-secondary);
-    font-weight: bold;
-  }
+  color: var(--colors-text-text-brand);
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
 }
 </style>

@@ -29,7 +29,7 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
     return `${mediaProtocolName}:${pathname}`
   })
 
-  /** 删除工作空间 */
+  /** 删除团队 */
   ipcMain.on('util:removeWorkspace', async (event, workspaceId) => {
     const result = await API.window.userGetWindowInfoV2List({ page_index: 1, page_size: 2000 }, { headers: { workspaceId } })
 

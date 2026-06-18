@@ -137,7 +137,7 @@ async function switchTab(tabId: string, event?: Event) {
           severity: 'warn',
           summary: $t('窗口转移不可用'),
           detail: h(I18nT, {
-            keypath: $t('窗口转移不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
+            keypath: $t('窗口转移不可用，请联系团队的拥有者进行升级，或{link}以激活该跨团队功能。', { link: '{link}' }),
           }, {
             link: () => h('a', {
               class: 'cursor-pointer',

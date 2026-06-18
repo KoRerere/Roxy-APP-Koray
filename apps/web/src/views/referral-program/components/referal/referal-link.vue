@@ -1,8 +1,10 @@
 <script setup lang="tsx">
 import { h } from 'vue'
 import NewReferralModal from '/@/views/referral-program/components/new-referral-modal.vue'
+import EditPromotionCodeModal from './edit-promotion-code-modal.vue'
 import QrcodeModal from './qrcode-modal.vue'
 import RankList from './rank-list.vue'
+import { useReferralProgram } from '../../useContext'
 import { RxCopyContent } from '/@/components/rx-copy'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -22,6 +24,7 @@ const { getVideoSource } = useSimpleLocale()
 const { mixpanelTrack } = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
+const { getPromotionInfo } = useReferralProgram()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
@@ -50,12 +53,12 @@ const bonusList = computed(() => {
       id: 1,
       icon: 'referral-program/rx_illustration_coin2',
       title: $t('您将获得'),
-      class: 'flex-2/3 get',
+      class: 'flex-3/4 get',
       isNew: true,
       items: [
         {
           title: `${activeMenu.value.promotionDiscount}%`,
-          desc: $t('窗口/空间/成员消费返利'),
+          desc: $t('窗口/团队/成员消费返利'),
           class: '',
         },
         {
@@ -67,17 +70,26 @@ const bonusList = computed(() => {
           desc: $t('代理 IP 消费返利'),
           class: '',
         },
+        {
+          title: '+',
+          class: 'flex-none',
+        },
+        {
+          title: `${activeMenu.value.pointsPromotionDiscount}%`,
+          desc: $t('AI Agent\n积分返利'),
+          class: '',
+        },
       ],
     },
     {
       id: 2,
       icon: 'referral-program/rx_illustration_discount',
       title: $t('他们得到'),
-      class: 'flex-1/3 give',
+      class: 'flex-1/4 give',
       items: [
         {
           title: `${activeMenu.value.userDiscount}%`,
-          desc: $t('消费优惠'),
+          desc: $t('消费优惠\n* Agent 积分除外'),
           class: '',
         },
       ],
@@ -94,6 +106,12 @@ watch(activeMenu, () => {
   getBannerPictureList()
   getPromotionInfoByTypeList()
 }, { immediate: true })
+
+watch(() => promotionInfo.promotionLinkList, (list) => {
+  const matched = list?.find(item => item.linkType === activeMenu.value.linkType)
+  if (matched)
+    activeMenu.value = matched
+}, { deep: true })
 
 onMounted(() => {
   showNewInfo()
@@ -173,12 +191,14 @@ const referral = computed(() => [
     label: $t('邀请链接:'),
     tooltip: $t('通过此链接注册即可成为您名下用户'),
     trackName: 'promotion_link_copy',
+    editable: true,
   },
   {
     value: activeMenu.value.promotionCode!,
     label: $t('邀请码:'),
     tooltip: $t('注册时填写此邀请码即可成为您名下用户'),
     trackName: 'promotion_link_copy',
+    editable: true,
   },
 ])
 
@@ -186,6 +206,24 @@ function copyReferral(copyStr: string, trackName: string) {
   mixpanelTrack(trackName)
   copyText(copyStr)
   showToast(0, $t('复制成功'))
+}
+
+function openEditPromotionCodeModal() {
+  mixpanelTrack('promotion_code_edit')
+  showModal({
+    header: $t('修改邀请码'),
+    class: 'w-[486px]',
+    slots: {
+      default: ({ handleCancel }) => h(EditPromotionCodeModal, {
+        promotionCode: activeMenu.value.promotionCode!,
+        promotionLink: activeMenu.value.promotionLink!,
+        nextModifyTime: activeMenu.value.nextModifyTime,
+        hideFn: handleCancel,
+        onSuccess: getPromotionInfo,
+      }),
+      footer: undefined,
+    },
+  })
 }
 
 /** 商务经理联系二维码（中文微信 / 非中文 Telegram），与全局帮助入口策略一致 */
@@ -240,6 +278,15 @@ function openCommunity() {
                 {{ item.value }}
               </div>
               <RxButton size="lg" :label="$t('复制')" icon="base/rx_ic_copy" @click="copyReferral(item.value, item.trackName)" />
+              <RxButton
+                v-if="item.editable"
+                v-tooltip.top="$t('编辑')"
+                size="md"
+                severity="secondary"
+                outlined
+                icon="base/rx_ic_edit"
+                @click="openEditPromotionCodeModal"
+              />
             </div>
           </div>
         </div>
@@ -257,7 +304,7 @@ function openCommunity() {
                 <div class="bonus-ratio">
                   {{ it.title }}
                 </div>
-                <div v-if="it.desc" class="bonus-desc">
+                <div v-if="it.desc" class="bonus-desc whitespace-pre-wrap">
                   {{ it.desc }}
                 </div>
               </div>

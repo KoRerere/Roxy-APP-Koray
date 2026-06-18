@@ -27,7 +27,7 @@ const avatarProps = computed(() => {
 
 function editWorkspace() {
   showModal({
-    header: $t('编辑工作空间'),
+    header: $t('编辑团队'),
     class: 'w-130',
     slots: {
       footer: undefined,

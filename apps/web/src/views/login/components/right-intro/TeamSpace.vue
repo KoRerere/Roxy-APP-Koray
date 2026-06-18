@@ -130,7 +130,7 @@ onUnmounted(() => {
                     }"
         >
           <p class="workspace">
-            {{ locale === 'zh-CN' ? '工作空间：' : 'Workspace:' }} {{ log.workspace }}
+            {{ locale === 'zh-CN' ? '团队：' : 'Workspace:' }} {{ log.workspace }}
           </p>
           <div class="log-notification">
             <div class="log-wrapper">

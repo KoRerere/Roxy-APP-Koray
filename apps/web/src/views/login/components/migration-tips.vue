@@ -56,10 +56,10 @@ async function handleMigration() {
       {{ $t('数据迁移说明：') }}
     </div>
     <div class="content">
-      <span>{{ $t('1. Lumibrowser 中的所有窗口、代理 IP、扩展等数据将自动同步至 Roxy浏览器默认工作空间（每位用户将拥有专属工作空间）') }}</span>
+      <span>{{ $t('1. Lumibrowser 中的所有窗口、代理 IP、扩展等数据将自动同步至 Roxy浏览器默认团队（每位用户将拥有专属团队）') }}</span>
       <span>
         <i18n-t
-          :keypath="$t('2. {desc}：团队中的窗口将归属主账号的工作空间，并由主账号统一管理（窗口数据归于主账号，代理 IP 及扩展数据仍为个人所有），主账号可以通过邀请，使成员加入工作空间并分配相应权限。', { desc: '{desc}' })"
+          :keypath="$t('2. {desc}：团队中的窗口将归属主账号的团队，并由主账号统一管理（窗口数据归于主账号，代理 IP 及扩展数据仍为个人所有），主账号可以通过邀请，使成员加入团队并分配相应权限。', { desc: '{desc}' })"
           scope="global"
         >
           <template #desc>

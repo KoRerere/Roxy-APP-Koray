@@ -7,6 +7,7 @@ import { useThemeStore } from '/@/stores/theme'
 import type { GeneratedImageInfo, HitlDecision, InputScene } from '/@/views/mcp/types'
 import MessageItem from './components/message-item.vue'
 import PendingAttachments from './components/pending-attachments.vue'
+import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { compare } from 'compare-versions'
 import { useChatStreamStore } from '../pinia-store/useChatStreamStore'
 import { useAgentStore } from '/@/stores/agent'
@@ -42,7 +43,8 @@ const background = computed(() => themeStore.realTheme === 'dark'
   : getImage('mcp/agent-chat-light.svg'))
 
 // ---- 自动滚动 ----
-const scrollContainerRef = useTemplateRef<HTMLElement>('scrollContainer')
+// DynamicScroller 实例：$el 即其内部可滚动根元素，强制滚底时直接操作它
+const scrollerRef = useTemplateRef<{ scrollToBottom: () => void, $el?: HTMLElement }>('scroller')
 const inputContainerRef = useTemplateRef<HTMLElement>('inputContainer')
 const titleBarRef = useTemplateRef<HTMLElement>('titleBar')
 const shouldAutoScroll = ref(true)
@@ -77,9 +79,13 @@ function onWheel(e: WheelEvent) {
     shouldAutoScroll.value = false
 }
 
-function onScroll() {
+/**
+ * DynamicScroller 的 @scroll 透传为原生 scroll 事件，event.target 即其内部可滚动根元素。
+ * 用 event.target 读取，避免再持有独立 ref；距底 < 50px 视为「贴底」，重新启用自动滚动。
+ */
+function onScroll(e: Event) {
   if (!shouldAutoScroll.value) {
-    const el = scrollContainerRef.value
+    const el = e.target as HTMLElement | null
     if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 50)
       shouldAutoScroll.value = true
   }
@@ -88,16 +94,72 @@ function onScroll() {
 function scrollToBottom() {
   if (!shouldAutoScroll.value)
     return
-  requestAnimationFrame(() => {
-    const el = scrollContainerRef.value
-    if (el)
-      el.scrollTop = el.scrollHeight
-  })
+  const el = scrollerRef.value?.$el as HTMLElement | undefined
+  if (el)
+    el.scrollTop = el.scrollHeight
+}
+
+/**
+ * 强制滚底：直接操作滚动容器 DOM，用稳定性轮询跟上 DynamicScroller 的渐进测高。
+ *
+ * DynamicScroller 的 scrollToBottom() 内部有防重入锁，快速切换时会被吞掉；
+ * 且它只跑固定几次 rAF，长列表测高未完成时就停了。
+ *
+ * 这里改用 epoch 令牌取消旧循环：每次调用时 epoch 自增，旧循环检测到 epoch 变了就退出。
+ * 每帧把 scrollTop 顶到 scrollHeight，连续 MAX_STABLE_FRAMES 帧 scrollHeight 不再增长则停止。
+ */
+let scrollEpoch = 0
+const MAX_STABLE_FRAMES = 6
+/**
+ * 约 2 秒保护上限
+ */
+const MAX_FRAMES = 120
+
+function forceScrollToBottom() {
+  shouldAutoScroll.value = true
+  const epoch = ++scrollEpoch
+
+  let lastScrollHeight = -1
+  let stableCount = 0
+  let frameCount = 0
+
+  function tick() {
+    if (epoch !== scrollEpoch)
+      return // 已被新的调用取代，退出
+
+    const el = scrollerRef.value?.$el as HTMLElement | undefined
+    if (!el) {
+      // DOM 未就绪，稍后重试
+      requestAnimationFrame(tick)
+      return
+    }
+
+    el.scrollTop = el.scrollHeight
+
+    frameCount++
+    if (el.scrollHeight === lastScrollHeight) {
+      stableCount++
+    }
+    else {
+      lastScrollHeight = el.scrollHeight
+      stableCount = 0
+    }
+
+    if (stableCount < MAX_STABLE_FRAMES && frameCount < MAX_FRAMES)
+      requestAnimationFrame(tick)
+  }
+
+  requestAnimationFrame(tick)
 }
 
 onMounted(() => {
   chatStore.setScrollCallback(scrollToBottom)
 })
+
+// 对话切换时强制滚底（watch token，由 loadConversation 自增触发）
+watch(() => chatStore.scrollToBottomToken, () => {
+  forceScrollToBottom()
+}, { flush: 'post' })
 
 // 输入框高度变化（ResizeObserver 驱动）防抖，避免缩放/换行时连续触发 nextTick + 滚动
 const debouncedScrollToBottom = useDebounceFn(async () => {
@@ -120,6 +182,11 @@ function handleUseGeneratedImage(image: GeneratedImageInfo) {
   chatStore.useGeneratedImageAsReference(image)
 }
 
+function handleSend() {
+  forceScrollToBottom()
+  chatStore.sendMessage()
+}
+
 function isLast(index: number, messageList: any[]) {
   return index === messageList.length - 1
 }
@@ -130,7 +197,8 @@ function isLast(index: number, messageList: any[]) {
     <!-- 背景渐变装饰 -->
     <img v-if="chatStore.isEmpty" class="absolute size-full z-1 object-cover object-center" :src="background">
 
-    <div class="flex flex-col items-center h-full relative z-2 gap-6 overflow-y-auto" :class="chatStore.isEmpty ? 'pt-9' : ''" :style="containerStyle">
+    <!-- 有内容时 DynamicScroller 是唯一滚动容器，外层不能再滚动（消除嵌套滚动） -->
+    <div class="flex flex-col items-center h-full relative z-2 gap-6" :class="chatStore.isEmpty ? 'pt-9 overflow-y-auto' : 'overflow-hidden'" :style="containerStyle">
       <!-- 标题栏，粘性布局 -->
       <div
         v-if="!chatStore.isEmpty"
@@ -197,44 +265,53 @@ function isLast(index: number, messageList: any[]) {
         </GradientButton>
       </template>
 
-      <div
+      <DynamicScroller
         v-else
-        ref="scrollContainer"
-        class="w-full flex-1 min-h-0 w-full pl-1.5 overflow-y-auto will-change-auto"
-        :style="contentContainerStyle"
+        ref="scroller"
+        :items="chatStore.messageList"
+        :min-item-size="80"
+        key-field="id"
+        class="w-full flex-1 min-h-0 pl-1.5"
+        :style="[contentContainerStyle, { willChange: 'transform' }]"
         :class="chatStore.isEmpty ? '' : 'pt-8'"
         @scroll="onScroll"
         @wheel="onWheel"
       >
-        <div class="w-full flex flex-col mx-auto gap-6 max-w-[640px]">
-          <div v-for="(item, index) in chatStore.messageList" :key="item.id" class="flex items-start self-stretch gap-2">
-            <RxAvatar class="border border-[var(--colors-border-border-inactive)] rounded-full" :avatar="item.avatar" :color="item.color" :name="item.name" :size="32" :font-size="16" />
-            <div class="flex-1 flex flex-col gap-3 overflow-hidden">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-[var(--colors-text-text-placeholder)] text-3 font-bold leading-[16px]">{{ item.userName }}</span>
-                <span class="text-[var(--colors-text-text-inactive)] text-3 leading-[16px]">{{ item.date }}</span>
-              </div>
-              <MessageItem
-                v-if="item.role === 'assistant'"
-                :item="item"
-                :handle-hitl-interrupt="handleHitlInterrupt"
-                :conversation-type="chatStore.currentConversation?.conversation_type"
-                :is-chatting="chatStore.isChatting"
-                :is-last="isLast(index, chatStore.messageList)"
-                @use-reference="handleUseGeneratedImage"
-              />
-              <div v-else class="flex flex-col gap-5">
-                <div class="whitespace-pre-line text-[var(--colors-text-text-primary)] text-3.5 leading-[1.4]">
-                  {{ item.content }}
-                </div>
-                <div v-if="item.attachments?.length" class="flex flex-col gap-2 max-w-185px">
-                  <PendingAttachments :attachments="item.attachments" :conversation-type="chatStore.currentConversation?.conversation_type" />
+        <template #default="{ item, index, active }">
+          <!-- active 必须透传：DynamicScrollerItem 据此判断自己是否在可视池中并触发测高 -->
+          <DynamicScrollerItem :item="item" :active="active" :data-index="index">
+            <!-- content-visibility: auto 让屏外节点跳过 layout/paint；contain-intrinsic-size 给浏览器估算高度 -->
+            <div class="w-full max-w-[640px] mx-auto pb-6" style="content-visibility: auto; contain-intrinsic-size: auto 120px">
+              <div class="flex items-start self-stretch gap-2">
+                <RxAvatar class="border border-[var(--colors-border-border-inactive)] rounded-full" :avatar="item.avatar" :color="item.color" :name="item.name" :size="32" :font-size="16" />
+                <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[var(--colors-text-text-placeholder)] text-3 font-bold leading-[16px]">{{ item.userName }}</span>
+                    <span class="text-[var(--colors-text-text-inactive)] text-3 leading-[16px]">{{ item.date }}</span>
+                  </div>
+                  <MessageItem
+                    v-if="item.role === 'assistant'"
+                    :item="item"
+                    :handle-hitl-interrupt="handleHitlInterrupt"
+                    :conversation-type="chatStore.currentConversation?.conversation_type"
+                    :is-chatting="chatStore.isChatting"
+                    :is-last="isLast(index, chatStore.messageList)"
+                    @use-reference="handleUseGeneratedImage"
+                  />
+                  <div v-else class="flex flex-col gap-5">
+                    <div class="whitespace-pre-line text-[var(--colors-text-text-primary)] text-3.5 leading-[1.4]">
+                      {{ item.content }}
+                    </div>
+                    <div v-if="item.attachments?.length" class="flex flex-col gap-2 max-w-185px">
+                      <PendingAttachments :attachments="item.attachments" :conversation-type="chatStore.currentConversation?.conversation_type" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </DynamicScrollerItem>
+        </template>
+      </DynamicScroller>
 
       <!-- 输入框 -->
       <div ref="inputContainer" class="max-w-[640px] w-full rounded-2" :class="[chatStore.isEmpty ? '' : 'mt-2.5 absolute left-1/2 transform -translate-x-1/2 bottom-0']">
@@ -245,10 +322,11 @@ function isLast(index: number, messageList: any[]) {
           v-model="userMessage"
           :pending-attachments="chatStore.pendingAttachments"
           :pending-script="chatStore.pendingScript"
+          :conversation-id="chatStore.currentConversation?.id"
           :is-chatting="chatStore.isChatting"
           :health="{ isReady: agentStore.isReady, loading: agentStore.health.loading }"
           :todo="chatStore.todo"
-          @send-message="chatStore.sendMessage()"
+          @send-message="handleSend"
           @stop="chatStore.handleInterrupt()"
           @upload-files="(files) => chatStore.uploadFiles(files)"
           @remove-attachment="(fileId) => chatStore.removeAttachment(fileId)"

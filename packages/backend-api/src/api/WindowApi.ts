@@ -94,6 +94,8 @@ import {
   UserMdfCloudBrowserActivateInfoCreatePayload,
   UserMdfLabelInfoCreateData,
   UserMdfLabelInfoCreatePayload,
+  UserMdfPlatformBindWindowCreateData,
+  UserMdfPlatformBindWindowCreatePayload,
   UserMdfProxyTemplateCreateData,
   UserMdfProxyTemplateCreatePayload,
   UserMdfWindowDataBatchCreateData,
@@ -1383,6 +1385,27 @@ export class WindowApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserDeleteProxyTemplateCreateData, any>({
       path: `/user_delete_proxy_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfPlatformBindWindowCreate
+   * @summary 平台账号关联窗口
+   * @request POST:/user_mdf_platform_bind_window
+   * @response `200` `UserMdfPlatformBindWindowCreateData`
+   */
+  userMdfPlatformBindWindowCreate = (
+    data: UserMdfPlatformBindWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfPlatformBindWindowCreateData, any>({
+      path: `/user_mdf_platform_bind_window`,
       method: "POST",
       body: data,
       type: ContentType.Json,

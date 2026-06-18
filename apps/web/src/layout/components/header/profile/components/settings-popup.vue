@@ -5,6 +5,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
 
 import { useSettingsPopup } from './settings-popup/'
+import { TaskbarImagePreviewHost } from './settings-popup/usePreferences'
 
 const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup()
 
@@ -62,7 +63,7 @@ onBeforeMount(async () => {
                       <div class="panel-item-label">
                         <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
                       </div>
-                      <div class="whitespace-pre-wrap panel-item-text">
+                      <div v-if="subItem.text" class="whitespace-pre-wrap panel-item-text">
                         <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
                       </div>
                     </div>
@@ -78,6 +79,7 @@ onBeforeMount(async () => {
         </div>
       </div>
     </div>
+    <TaskbarImagePreviewHost />
   </div>
 </template>
 

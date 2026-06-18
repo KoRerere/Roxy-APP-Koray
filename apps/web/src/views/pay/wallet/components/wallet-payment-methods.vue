@@ -274,15 +274,8 @@ async function payConfirm() {
     </div>
     <div v-show="openOther" class="w-full grid gap-3 select-none payway">
       <template v-for="item in availableMethods" :key="item.label">
-        <div
-          class="payway-item flex items-center justify-center"
-          :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }"
-        >
-          <component
-            :is="item.disabled ? RxToolTip : 'div'"
-            class="relative flex flex-col items-center justify-center gap-1.5"
-            @click="handleClick(item)"
-          >
+        <div class="payway-item flex items-center justify-center" :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }" @click="handleClick(item)">
+          <component :is="item.disabled ? RxToolTip : 'div'" class="relative flex flex-col items-center justify-center gap-1.5">
             <div v-if="item.discount" class="payway-item-discount">
               {{ item.discount }}
             </div>
@@ -290,7 +283,7 @@ async function payConfirm() {
             <div>{{ item.label }}</div>
 
             <template #content>
-              {{ $t('该支付方式暂时无法使用') }}
+              <span class="text-white">{{ $t('该支付方式暂时无法使用') }}</span>
             </template>
           </component>
         </div>

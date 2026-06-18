@@ -9,6 +9,8 @@ export interface ImageGeneratePayload {
   count?: number
   /** 参考图（图片编辑场景）：http(s) URL 或 data URL */
   image?: string[]
+  conversationId?: string
+  turnId?: string
 }
 
 export interface ParsedImageEvent {

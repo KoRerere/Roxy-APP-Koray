@@ -155,7 +155,7 @@ function handleCloseProxyExpired() {
             </span>
           </template>
         </i18n-t>
-        <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global" />
+        <i18n-t v-else :keypath="$t('当前团队的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系团队拥有者续费。', { remainTime, subEndDate })" scope="global" />
       </template>
     </RxAlert>
     <RxAlert v-if="userPayInfo.proxyExpireCount > 0 && isShowProxyExpired" class="w-full expired-alert" type="warn" announcement @close="handleCloseProxyExpired">
@@ -163,7 +163,7 @@ function handleCloseProxyExpired() {
         <i18n-t scope="global" :keypath="$t('您的一些代理 IP 即将过期。为避免您使用受到任何干扰，请{link}。', { link: '{link}' })">
           <template #link>
             <span v-if="check('Cost_Center_all')" class="font-bold underline cursor-pointer" @click="viewExpiresSoonProxy">{{ $t('点击查看') }}</span>
-            <span v-else>{{ $t('联系空间拥有者续费') }}</span>
+            <span v-else>{{ $t('联系团队拥有者续费') }}</span>
           </template>
         </i18n-t>
       </template>

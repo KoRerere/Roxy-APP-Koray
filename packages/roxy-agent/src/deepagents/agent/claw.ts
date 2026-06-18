@@ -3,9 +3,9 @@ import {
   createDeepAgent,
 } from 'deepagents'
 import path from 'node:path'
+import { mcpManager } from '@/core/mcp/mcpManager'
 import { env } from '../../config'
 import { createLLM } from '../../llm'
-import { mcpManager } from '../../mcpManager'
 import { createDeepAgentRuntime } from '../backend'
 import { SIMPLE_SYSTEM_PROMPT_IM_COMPACT } from '../prompt'
 import { SqliteSaver } from '../sqlite-checkpointer'
@@ -51,6 +51,7 @@ export async function createClawAgent(options: {
     tools,
     middleware: runtime.middleware,
     name: 'simple',
+    subagents: [],
     ...(checkpointer ? { interruptOn: runtime.interruptOn } : {}),
   })
 

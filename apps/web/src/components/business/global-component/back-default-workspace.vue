@@ -25,7 +25,7 @@ function backDefaultWorkspace() {
 <template>
   <div class="flex flex-col pa-6 gap-12">
     <div class="title">
-      {{ $t('空间被冻结') }}
+      {{ $t('团队被冻结') }}
     </div>
     <div class="flex flex-col items-center gap-3">
       <div class="pa-1 rounded-2 box">
@@ -35,9 +35,9 @@ function backDefaultWorkspace() {
         {{ currentWorkspace!.workspaceName }}
       </div>
       <div class="whitespace-pre-wrap desc">
-        {{ $t('很抱歉，当前工作空间已被冻结，请联系空间拥有者。\n如有疑问请通过右下角联系产品技术支持。') }}
+        {{ $t('很抱歉，当前团队已被冻结，请联系团队拥有者。\n如有疑问请通过右下角联系产品技术支持。') }}
       </div>
-      <RxButton class="mt-1 w-full" variant="outlined" severity="secondary" icon="base/rx_ic_arrow_left" size="lg" :label="$t('回到默认空间')" @click="backDefaultWorkspace" />
+      <RxButton class="mt-1 w-full" variant="outlined" severity="secondary" icon="base/rx_ic_arrow_left" size="lg" :label="$t('回到默认团队')" @click="backDefaultWorkspace" />
     </div>
   </div>
 </template>

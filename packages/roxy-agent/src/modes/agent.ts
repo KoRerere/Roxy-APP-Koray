@@ -1,7 +1,7 @@
-import { abortAll } from '../abortRegistry'
+import { abortAll } from '@/core/registry/abortRegistry'
+import { startServer } from '../app'
 import { closeDatabase as closeConversationsDatabase } from '../database/conversations'
 import { closeCheckpointer } from '../deepagents/sqlite-checkpointer'
-import { startServer } from '../server'
 
 /**
  * Agent 模式：启动 HTTP 服务器，暴露 chat API 给前端调用。

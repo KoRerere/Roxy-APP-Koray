@@ -668,7 +668,16 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
   }
 }
 
-export function closeCheckpointer() {
+export function closeCheckpointer(connString?: string) {
+  if (connString) {
+    const instance = SqliteSaver.instances.get(connString)
+    if (instance) {
+      instance.db.close()
+      SqliteSaver.instances.delete(connString)
+    }
+    return
+  }
+
   for (const instance of SqliteSaver.instances.values()) {
     instance.db.close()
   }

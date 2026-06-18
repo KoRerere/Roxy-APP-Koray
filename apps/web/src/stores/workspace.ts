@@ -41,7 +41,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     userStore.getUserCards(true)
   }, 50)
 
-  /** 记住用户最后一次使用的工作空间 */
+  /** 记住用户最后一次使用的团队 */
   const rememberLastWorkspace = debounce(() => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
@@ -75,7 +75,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ name: isPublic && val.role !== Role.OWNER ? 'shared' : 'home' })
     }
 
-    // 如果当前工作空间有 ID 且是主窗口，则发送消息给主进程
+    // 如果当前团队有 ID 且是主窗口，则发送消息给主进程
     if (val?.id && isMainWindow) {
       globalThis.electronAPI.send('user:setWorkspaceId', val.id)
       rememberLastWorkspace()
@@ -117,11 +117,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       fetchSharedWorkspaceList(),
     ])
 
-    // 如果获取工作空间列表失败，则清除用户信息
+    // 如果获取团队列表失败，则清除用户信息
     if (result.code !== 0 || !result.data?.rows?.length) {
       userStore.clearUserInfo()
       router.push({ name: 'login' })
-      onlyErrorToast(-1, $t('获取工作空间列表失败，请重新登录'), { summary: $t('提示'), life: 5000 })
+      onlyErrorToast(-1, $t('获取团队列表失败，请重新登录'), { summary: $t('提示'), life: 5000 })
     }
 
     const list = [

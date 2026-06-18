@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu, Tray } from 'electron'
+import { app, BrowserWindow, dialog, Menu, MenuItem, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
@@ -12,17 +12,79 @@ import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { closeAllWindows } from '/@/utils/browser-window'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
+import { formatAutoGateLatency, formatGateLatency, onGateLatencyUpdated, onProbeBatchComplete, refreshNodeLatencies } from '/@/utils/probe-gate-latency'
 
 let tray: Tray
+let trayContextMenu: Menu
+let isTrayMenuOpen = false
+
+/** gate -> 线路菜单项，用于异步更新延迟文案 */
+const nodeMenuItems = new Map<string, { item: MenuItem, index: number }>()
+/** 自动线路菜单项 */
+let autoMenuItem: MenuItem | null = null
+
+function getAutoLineLabel() {
+  return `${$t('自动')} ${formatAutoGateLatency()}`
+}
+
+function getNodeLineLabel(index: number, gate: string) {
+  return `${$t('线路 {number}', { number: index + 1 })} ${formatGateLatency(gate)}`
+}
+
+function syncAllNodeMenuLabels() {
+  autoMenuItem && (autoMenuItem.label = getAutoLineLabel())
+  nodeMenuItems.forEach(({ item, index }, gate) => {
+    item.label = getNodeLineLabel(index, gate)
+  })
+}
+
+/** 菜单即将展示时异步探测延迟，不阻塞菜单弹出 */
+function probeLatenciesOnMenuShow() {
+  // Windows 原生菜单改 label 不会重绘，文案在关闭菜单或探测完成后重建；macOS/Linux 可实时改 label
+  if (process.platform !== 'win32') {
+    syncAllNodeMenuLabels()
+  }
+  // setContextMenu 会接管右键，tray right-click 不一定触发，改由 menu-will-show 驱动
+  refreshNodeLatencies()
+}
+
+/** Windows 用最新缓存重建菜单，供下次打开时展示；打开期间不 repop，避免子菜单位置跳动 */
+function rebuildTrayContextMenuFromCache() {
+  if (process.platform !== 'win32')
+    return
+  setTrayContextMenu()
+}
+
+function handleGateLatencyUpdated(_gate: string) {
+  if (process.platform === 'win32')
+    return
+  autoMenuItem && (autoMenuItem.label = getAutoLineLabel())
+  const entry = nodeMenuItems.get(_gate)
+  if (entry) {
+    entry.item.label = getNodeLineLabel(entry.index, _gate)
+  }
+}
+
+/** 菜单关闭后或探测完成且菜单已关时重建，保证下次打开看到最新延迟 */
+function handleProbeBatchComplete() {
+  if (!isTrayMenuOpen) {
+    rebuildTrayContextMenuFromCache()
+  }
+}
+
+function setTrayContextMenu() {
+  trayContextMenu = createContextMenu()
+  tray?.setContextMenu(trayContextMenu)
+}
+
 /** 创建托盘 */
 export async function createTray() {
   await setTimeoutPromise()
   if (isUninstallFeedbackMode) {
     return
   }
-  // 如果已经创建过托盘，直接返回, 因为
+  // 如果已经创建过托盘，直接返回
   if (tray) {
-    tray.setContextMenu(createContextMenu())
     return tray
   }
 
@@ -32,16 +94,23 @@ export async function createTray() {
   // 托盘名称
   tray.setToolTip(app.getName())
 
-  // 载入托盘菜单
-  tray.setContextMenu(createContextMenu())
+  setTrayContextMenu()
+
   // 双击触发
   tray.on('click', () => {
     restoreOrCreateWindow()
   })
 
-  // 字典数据就绪后刷新「切换线路」子菜单
+  onGateLatencyUpdated(handleGateLatencyUpdated)
+  onProbeBatchComplete(handleProbeBatchComplete)
+
+  // 初始化时探测一次线路延迟
+  refreshNodeLatencies()
+
+  // 字典数据就绪后重建菜单并重新探测
   onNetworkNodeUpdated(() => {
-    tray.setContextMenu(createContextMenu())
+    setTrayContextMenu()
+    refreshNodeLatencies()
   })
 
   return tray
@@ -51,7 +120,7 @@ export async function createTray() {
  * 构建网络线路子菜单
  * 从字典获取可用节点列表，当前选中项通过 store.lastSelectedNetworkNode 持久化
  */
-function buildNetworkNodeSubmenu(): Electron.MenuItemConstructorOptions[] {
+function buildNetworkNodeSubmenu(): Menu {
   const nodes = dictStore.network_node
   const current = store.lastSelectedNetworkNode
 
@@ -77,7 +146,7 @@ function buildNetworkNodeSubmenu(): Electron.MenuItemConstructorOptions[] {
 
     store.lastSelectedNetworkNode = value
     onNetworkNodeChanged()
-    tray.setContextMenu(createContextMenu())
+    setTrayContextMenu()
 
     const site = value === 'auto' ? await getProdWebDomain(true) : `https://${value.site}`
 
@@ -89,27 +158,36 @@ function buildNetworkNodeSubmenu(): Electron.MenuItemConstructorOptions[] {
     })
   }
 
-  return [
-    // 自动选择选项
-    {
-      label: $t('自动'),
-      type: 'radio',
-      checked: current === 'auto',
-      click: () => selectNode('auto'),
-    },
-    // 从字典动态生成各节点选项，label 取 gate 主机名首段（如 "hz.gate.roxybrowser.cn" → "hz"）
-    ...nodes.map<Electron.MenuItemConstructorOptions>((node, index) => ({
-      label: $t('线路 {number}', { number: index + 1 }),
+  nodeMenuItems.clear()
+  autoMenuItem = null
+
+  autoMenuItem = new MenuItem({
+    label: getAutoLineLabel(),
+    type: 'radio',
+    checked: current === 'auto',
+    click: () => selectNode('auto'),
+  })
+
+  const nodeItems = nodes.map((node, index) => {
+    const item = new MenuItem({
+      label: getNodeLineLabel(index, node.gate),
       type: 'radio',
       checked: typeof current === 'object' && current.gate === node.gate,
       click: () => selectNode(node),
-    })),
-  ]
+    })
+    nodeMenuItems.set(node.gate, { item, index })
+    return item
+  })
+
+  const menu = new Menu()
+  menu.append(autoMenuItem)
+  nodeItems.forEach(item => menu.append(item))
+  return menu
 }
 
 /** 创建托盘菜单 */
 function createContextMenu() {
-  return Menu.buildFromTemplate([
+  const menu = Menu.buildFromTemplate([
     {
       label: $t('重启客户端'),
       click: async () => {
@@ -171,6 +249,17 @@ function createContextMenu() {
       },
     },
   ])
+
+  menu.on('menu-will-show', () => {
+    isTrayMenuOpen = true
+    probeLatenciesOnMenuShow()
+  })
+  menu.on('menu-will-close', () => {
+    isTrayMenuOpen = false
+    rebuildTrayContextMenuFromCache()
+  })
+
+  return menu
 }
 
 export function getTray() {

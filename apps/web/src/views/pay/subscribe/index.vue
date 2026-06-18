@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/june-eighteen/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -16,7 +16,7 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+// import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { deepClone } from '/@/utils'
 import { discountCalculate, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
@@ -280,7 +280,7 @@ async function trialSubscribe() {
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto content">
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="rawList!" />
-          <FreedomActivity v-if="seasonalActivity.freedom && selectedPlan && !isTrial" :count="selectedCount" :upshift-count="upshiftCount" />
+          <FreedomActivity v-if="selectedPlan " :count="selectedCount" :upshift-count="upshiftCount" />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div v-show="!isTrial" class="flex flex-col gap-4">
             <div class="title">

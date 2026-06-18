@@ -125,7 +125,7 @@ function buildWorkerMarkdown(block: MessageEntryView) {
   const failedCount = toolCalls.filter(worker => worker.meta?.status === 'failed').length
 
   return [
-    `### ${$t('任务 {id}', { id: block.id })}`,
+    `### ${$t('执行任务')}：${block.meta?.title || block.id}`,
     '',
     `- ${$t('状态')}: ${formatToolStatus(block.status)}`,
     `- ${$t('成功工具数量')}: ${successCount}`,
@@ -301,7 +301,7 @@ function getTaskSummary(block: MessageEntryView): string {
     <template v-for="block in item.messageBlocks" v-else :key="getBlockKey(block)">
       <!-- Thinking -->
       <ThinkingBlockVue
-        v-if="block.type === 'thinking'"
+        v-if="block.type === 'thinking' && block.text && block.text?.trim()"
         :thinking="block"
         :expanded="isThinkingExpanded(block.id)"
         @toggle="toggleThinkingExpand(block.id)"
@@ -316,7 +316,7 @@ function getTaskSummary(block: MessageEntryView): string {
       <!-- Worker 子任务 -->
       <div v-else-if="block.type === 'worker'" class="flex flex-col gap-1.5 px-3 py-1.5 rounded-2 worker" @click.stop="toggleTaskExpand(block.id)">
         <div class="flex items-center justify-between">
-          <span class="select-none worker-title">{{ $t('任务 {id}', { id: block.id }) }}</span>
+          <span class="select-none worker-title">{{ $t('执行任务') }} {{ block.meta?.title || block.id }}</span>
           <SvgIcon v-bind="getStatusIconProps(block.status)" />
         </div>
         <div v-if="!taskExpandMap[block.id]" class="ellipsis-1 worker-summary">
@@ -326,28 +326,27 @@ function getTaskSummary(block: MessageEntryView): string {
           <div v-if="block.workers?.length" class="flex flex-col gap-1">
             <template v-for="event in block.workers" :key="event.type + event.id">
               <ThinkingBlockVue
-                v-if="event.type === 'thinking'"
+                v-if="event.type === 'thinking' && event.text && event.text?.trim()"
                 class="worker-think"
                 :thinking="event"
                 :expanded="isThinkingExpanded(event.id)"
                 @toggle="toggleThinkingExpand(event.id)"
               />
               <ToolCallBlockVue v-else-if="event.type === 'tool_call'" :tool="event" @click.stop />
-              <div v-else-if="event.type === 'content' && event.text" class="worker-desc" v-html="markedParse(event.text)" />
+              <div v-else-if="event.type === 'content' && event.text && event.text?.trim()" class="worker-desc" v-html="markedParse(event.text)" />
             </template>
           </div>
         </template>
       </div>
 
-      <div v-else-if="block.type === 'hitl_interrupt'">
-        <HitlInterrupt
-          :review-configs="block.meta?.reviewConfigs"
-          :action-requests="block.meta?.actionRequests"
-          :decisions="block.meta?.decisions"
-          :is-chatting="isChatting"
-          @decide="(decisions) => handleHitlInterrupt(decisions)"
-        />
-      </div>
+      <HitlInterrupt
+        v-else-if="block.type === 'hitl_interrupt'"
+        :review-configs="block.meta?.reviewConfigs"
+        :action-requests="block.meta?.actionRequests"
+        :decisions="block.meta?.decisions"
+        :is-chatting="isChatting"
+        @decide="(decisions) => handleHitlInterrupt(decisions)"
+      />
 
       <!-- Error/Interrupt 状态 -->
       <StatusMessage

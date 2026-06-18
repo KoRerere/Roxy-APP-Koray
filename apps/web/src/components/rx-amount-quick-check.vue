@@ -1,45 +1,92 @@
 <script setup lang="ts">
 import currency from 'currency.js'
+import { useCampaignStore } from '/@/stores/campaign'
 
-const { presets = [20, 50, 100, 300], disabled = false } = defineProps<{
-  presets?: number[],
-  disabled?: boolean,
+const { presets = [20, 100, 500, 1000], disabled = false } = defineProps<{
+  presets?: number[]
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'select', value: number): void
 }>()
 
-function handleSelect(item: number) {
-  if (disabled) return
+const { seasonalActivity } = storeToRefs(useCampaignStore())
+const { getActivityPercentage } = useCampaignStore()
 
-  emit('select', item)
+const actualPresets = computed(() => {
+  return presets.map((value) => {
+    const percentage = getActivityPercentage(value)
+
+    return {
+      text: currency(value, { precision: 0 }).format(),
+      percentage,
+      value,
+    }
+  })
+})
+
+function handleSelect(value: number) {
+  if (disabled)
+    return
+
+  emit('select', value)
 }
-
 </script>
 
 <template>
-  <template v-for="item in presets" :key="item">
-    <div class="py-1 px-3 rounded-full cursor-pointer select-none preset" :class="{ disabled }"
-      @click="handleSelect(item)">
-      {{ currency(item, { precision: 0 }).format() }}
+  <div class="flex items-center gap-2">
+    <div v-for="item in actualPresets" :key="item.value" class="relative min-w-25 py-1.5 px-4 text-center rounded-1.5 cursor-pointer select-none preset" :class="{ disabled }"
+         @click="handleSelect(item.value)"
+    >
+      <span class="preset-text">{{ item.text }}</span>
+      <AnimationBorder v-if="seasonalActivity.juneEighteen" class="absolute -top-0.5 right-1 position-y-center" :gradient="['#05caed', '#05caed', '#47d769']" :animation="false" :deg="110"
+                       :border-width="1" :border-radius="4"
+      >
+        <div class=" h-5 px-1 flex items-center rounded-1 percentage">
+          <span class="percentage-text">{{ $t('赠 {percentage}%', { percentage: item.percentage }) }}</span>
+        </div>
+      </AnimationBorder>
     </div>
-  </template>
+  </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .preset {
-  border: 0.5px solid var(--component-tag-border, #E4E8EB);
-  background: var(--component-tag-bg, #F0F3F5);
-  color: var(--component-tag-text, #575D61);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+  border: 0.5px solid var(--component-tag-border);
+  background: var(--component-tag-bg);
 
   &.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  &:not(:last-of-type) {
+    .percentage {
+      background: linear-gradient(97deg, rgba(5, 202, 237, 0.1) 0%, rgba(71, 215, 105, 0.1) 100%), #fff;
+
+      &-text {
+        color: #009966;
+      }
+    }
+  }
+
+  &-text {
+    color: var(--component-tag-text);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+  }
+}
+
+.percentage {
+  background: linear-gradient(97deg, #05caed 0%, #47d769 100%);
+
+  &-text {
+    font-family: 'DingTalk JinBuTi';
+    font-size: 11px;
+    line-height: 1;
+    color: #ffffff;
   }
 }
 </style>

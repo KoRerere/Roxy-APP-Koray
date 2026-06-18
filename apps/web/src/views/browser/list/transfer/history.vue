@@ -89,7 +89,7 @@ function viewDetail(item: any) {
         <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无转移窗口数据')">
           <template #extra>
             <div class="flex flex-col gap-3 help">
-              <div>{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。或者使用工作空间 ID 转移到他人的工作空间。') }}</div>
+              <div>{{ $t('您可以直接将窗口转移到您拥有的其他团队。或者使用团队 ID 转移到他人的团队。') }}</div>
             </div>
           </template>
         </CustomEmpty>

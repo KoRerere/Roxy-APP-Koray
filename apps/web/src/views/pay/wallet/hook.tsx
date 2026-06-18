@@ -19,6 +19,9 @@ import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
 import type { UserRechargeSettlementCreateData } from '@roxy/backend-api'
 
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { I18nT } from 'vue-i18n'
+import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent.tsx'
+import { isMainWindow } from '/@/utils/common'
 
 type Data = UserRechargeSettlementCreateData['data']
 interface ChargeParams {
@@ -42,6 +45,7 @@ export function usePay() {
   const { check } = usePermission()
   const { currentLocale } = storeToRefs(useSimpleLocale())
   const { getUserPayInfo } = useUserStore()
+  const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
   const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
 
@@ -205,10 +209,29 @@ export function usePay() {
       return
     await getUserPayInfo()
     const { maxMemberCount, maxWorkspaceCount } = userPayInfo.value!
-    showToast(0, $t('您的当前资源: {member} 成员, {workspace} 空间', {
+    showToast(0, $t('您的当前资源: {member} 成员, {workspace} 团队', {
       member: maxMemberCount,
       workspace: maxWorkspaceCount,
     }), { life: 5000 })
+  }
+
+  /**
+   * 购买积分成功后的提示
+   */
+  async function purchaseSuccessIntoPoints() {
+    if (!check('Cost_Center_all'))
+      return
+    await getUserPayInfo()
+    const { points } = userPayInfo.value!
+    const detail = isMainWindow
+      ? (
+          <I18nT keypath={$t('您当前的积分：{points}，{open}', { open: '{open}', points })}>
+            {{ open: () => <a class="cursor-pointer" onClick={() => openRoxyAIAgent()}>{$t('去使用')}</a> }}
+          </I18nT>
+        )
+      : $t('您当前的积分：{points}', { points })
+
+    showToast(0, detail)
   }
 
   async function walletRecharge(chargeParams: ChargeParams) {
@@ -304,6 +327,7 @@ export function usePay() {
     planSuccess,
     balanceSuccess,
     purchaseSuccess,
+    purchaseSuccessIntoPoints,
     walletRecharge,
     planSuccessForSlotMachine,
     planSuccessFreedomActivity,

@@ -32,9 +32,9 @@ const remainWorkspaceCount = computed(() => {
 
 function onInput() {
   const result = z.string()
-    .min(1, $t('请输入空间名称'))
-    .min(4, $t('空间名称最少 4 个字符'))
-    .max(20, $t('空间名称最多 20 个字符'))
+    .min(1, $t('请输入团队名称'))
+    .min(4, $t('团队名称最少 4 个字符'))
+    .max(20, $t('团队名称最多 20 个字符'))
     .safeParse(workspaceInfo.value.workspaceName)
 
   if (result.error) {
@@ -74,7 +74,7 @@ defineExpose({
     <div v-if="workspaceInfo.workspaceNo" class="row">
       <div class="flex items-center gap-3">
         <div class="title">
-          {{ $t('空间 ID') }}:
+          {{ $t('团队 ID') }}:
         </div>
         <div class="flex items-center !mt-0 gap-2 description">
           <span>{{ workspaceInfo.workspaceNo }}</span>
@@ -85,10 +85,10 @@ defineExpose({
     <div class="row">
       <div>
         <div class="title">
-          {{ $t('空间图标') }}
+          {{ $t('团队图标') }}
         </div>
         <div class="description">
-          {{ $t('默认图标展示工作空间名称的前两个字符') }}
+          {{ $t('默认图标展示团队名称的前两个字符') }}
         </div>
       </div>
       <div class="emoji-picker-box">
@@ -104,10 +104,10 @@ defineExpose({
     <div class="row">
       <div>
         <div class="title">
-          {{ $t('空间名称') }}
+          {{ $t('团队名称') }}
         </div>
         <div class="description">
-          {{ $t('默认窗口信息会展示为空间名称的前三个字符与序号的组合') }}
+          {{ $t('默认窗口信息会展示为团队名称的前三个字符与序号的组合') }}
         </div>
       </div>
       <div class="w-full">

@@ -22,10 +22,12 @@ export interface SkillCategoryThemeValue {
   light?: string | null
 }
 
+export type SkillThemeValue = SkillCategoryThemeValue | string
+
 export interface SkillCategoryIconInfo {
-  icon?: SkillCategoryThemeValue | null
-  bgColor?: SkillCategoryThemeValue | null
-  primaryColor?: SkillCategoryThemeValue | null
+  icon?: SkillThemeValue | null
+  bgColor?: SkillThemeValue | null
+  primaryColor?: SkillThemeValue | null
 }
 
 export interface StoreSkill {
@@ -33,6 +35,7 @@ export interface StoreSkill {
   category_id: number
   category_name: string | null
   category_slug: string | null
+  iconInfo?: SkillCategoryIconInfo | null
   slug: string
   name: string
   title: string | null
@@ -43,6 +46,7 @@ export interface StoreSkill {
   meta: Record<string, unknown> | null
   file_url: string | null
   published: 0 | 1
+  usage_example?: string
 }
 
 export interface UserSkill extends StoreSkill {
@@ -307,11 +311,11 @@ export const useMcpDataStore = defineStore('mcpData', () => {
     ])
   }
 
-  async function switchUserModel(modelType: UserModelType, model: string | null) {
+  async function switchUserModel(modelType: UserModelType, model: string | null, conversationId?: string) {
     ensureModelServerScope()
     await waitForAgentReady()
 
-    const res = await agentApi.switchUserModel(modelType, model)
+    const res = await agentApi.switchUserModel(modelType, model, conversationId)
     if (res.code === 0) {
       userModel.value = res.data
       userModelLoaded.value = true

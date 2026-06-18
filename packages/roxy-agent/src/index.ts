@@ -1,5 +1,5 @@
-import './logger'
-import './polyfill'
+import './core/logger'
+import './core/polyfill'
 import fixPath from 'fix-path'
 import { env } from './config'
 import { runAgentMode } from './modes/agent'

@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import { h } from 'vue'
+import currency from 'currency.js'
 import { genDriver, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
@@ -22,6 +23,8 @@ import DoubeOpen from './doube-open.vue'
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
+
+import NextBouns from '/@/views/campaign/june-eighteen/next-bouns.vue'
 
 // ====================================
 
@@ -409,13 +412,14 @@ function clearHighlight() {
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
+    <NextBouns :amount="10" />
     <!-- <a href="/workspace/teams">wcis man</a> -->
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <RxButton label="open1" @click="_open1" />
+    <!-- <RxButton label="open1" @click="_open1" />
     <RxButton label="open2" @click="_open2" />
-    <DoubeOpen />
+    <DoubeOpen /> -->
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris

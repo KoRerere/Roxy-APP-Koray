@@ -56,7 +56,7 @@ function handleDeleteConfirm() {
 
     async function confirmDelete() {
       const workspaceId = workspaceInfo.value.id!
-      // 先删除本地空间的浏览器数据
+      // 先删除本地团队的浏览器数据
       await globalThis.electronAPI.send('util:removeWorkspace', workspaceId)
       const { code, data, msg } = await API.limit.userDelWorkspaceInfoCreate({
         workspaceName: workspaceName.value,
@@ -69,7 +69,7 @@ function handleDeleteConfirm() {
           userStore.fetchUserInfo()
         }
         dialogRef.value.close()
-        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
+        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除团队成功'), life: 3000 })
         emit('delete', { isCurrentWorkspace, id: data })
       }
       else {
@@ -80,19 +80,19 @@ function handleDeleteConfirm() {
     return (
       <div class={styles['delete-confirm']}>
         <div class={styles['delete-confirm-title']}>
-          <I18nT keypath={$t('您确认要删除 {workspaceName} 工作空间吗？', { workspaceName: '{workspaceName}' })}>
+          <I18nT keypath={$t('您确认要删除 {workspaceName} 团队吗？', { workspaceName: '{workspaceName}' })}>
             {{ workspaceName: () => <b class="mx-1 cursor-pointer" onClick={copyWorkspaceName}>{workspaceInfo.value.workspaceName}</b> }}
           </I18nT>
         </div>
         <div class={styles['delete-confirm-content']}>
-          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该空间的相关内容（窗口/项目/平台账号/代理 IP/团队成员/ API 等）{br}要确认删除，请在下方输入空间名称', { br: '{br}' })}>
+          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该团队的相关内容（窗口/项目/平台账号/代理 IP/团队成员/ API 等）{br}要确认删除，请在下方输入团队名称', { br: '{br}' })}>
             {{ br: () => <br /> }}
           </I18nT>
         </div>
-        <TsFormInputText v-model={workspaceName.value} class="w-full" size="md" placeholder={$t('请确认要删除的空间名称')} />
+        <TsFormInputText v-model={workspaceName.value} class="w-full" size="md" placeholder={$t('请确认要删除的团队名称')} />
         <div class="w-full flex justify-end gap-2">
           <RxButton outlined label={$t('取消')} onClick={() => dialogRef.value.close()} />
-          <RxButton severity="danger" label={$t('删除空间')} disabled={workspaceName.value !== workspaceInfo.value.workspaceName} onClick={confirmDelete} />
+          <RxButton severity="danger" label={$t('删除团队')} disabled={workspaceName.value !== workspaceInfo.value.workspaceName} onClick={confirmDelete} />
         </div>
       </div>
     )
@@ -112,18 +112,18 @@ async function handleSaveChange() {
   const { code, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value as any)
   if (code === 0) {
     getWorkspaceList()
-    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('团队信息更新成功'), life: 3000 })
     emit('save')
   }
   else if (code === 409) {
     showModal({
-      header: $t('各空间可创建总量大于账号本身的限额'),
+      header: $t('各团队可创建总量大于账号本身的限额'),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
         default: () => (
           <div class={styles.description}>
-            <div>{$t('您在其他工作空间的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
+            <div>{$t('您在其他团队的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
             <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
           </div>
         ),
@@ -138,8 +138,8 @@ async function handleSaveChange() {
 function leaveWorkspace() {
   confirm.require({
     group: 'deleteConfirmDialog',
-    header: $t('离开空间'),
-    message: $t('您确认要离开该空间吗？离开后将无法查看该空间内的任何内容'),
+    header: $t('离开团队'),
+    message: $t('您确认要离开该团队吗？离开后将无法查看该团队内的任何内容'),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -153,7 +153,7 @@ function leaveWorkspace() {
       const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
       const { code, msg } = await API.limit.userLeaveWorkspaceList({ workspaceId: workspaceInfo.value.id })
       if (code === 0) {
-        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开工作空间'), life: 3000 })
+        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开团队'), life: 3000 })
         if (isCurrentWorkspace) {
           showPageLoading()
         }
@@ -178,7 +178,7 @@ function leaveWorkspace() {
       </template>
       <div class="flex justify-end" :class="{ 'w-full': !(workspaceOwner && !workspaceInfo?.workspaceDefault) }">
         <RxButton v-if="workspaceOwner" :label="$t('保存修改')" @click="handleSaveChange" />
-        <RxButton v-else :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
+        <RxButton v-else :label="$t('离开团队')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>
@@ -187,7 +187,7 @@ function leaveWorkspace() {
     <div class="action-list">
       <div class="action-item danger" @click="handleDeleteConfirm">
         <SvgIcon name="base/rx_ic_bin_1" />
-        {{ $t('删除空间') }}
+        {{ $t('删除团队') }}
       </div>
     </div>
   </Popover>
@@ -236,8 +236,6 @@ function leaveWorkspace() {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 452px;
-  margin: 0 auto;
   height: 100%;
 }
 

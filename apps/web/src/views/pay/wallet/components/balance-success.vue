@@ -1,18 +1,26 @@
 <script setup lang="tsx">
 import NumberFlow from '@number-flow/vue'
 import currency from 'currency.js'
-
-import { useUserStore } from '/@/stores/user';
+import { useCampaignStore } from '/@/stores/campaign'
+import { useUserStore } from '/@/stores/user'
 import { sleep } from '/@/utils'
 
-const dialogRef = inject<any>('dialogRef')
 const emit = defineEmits(['confirm'])
+const dialogRef = inject<any>('dialogRef')
 const { userInfo, userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
+const { getActualRecharge } = useCampaignStore()
 
-const oldAmount = ref(userPayInfo.value?.balance || 0)
-const diffAmount = computed(() => currency(userPayInfo.value?.balance || 0).subtract(oldAmount.value).format())
 const retryCount = ref(0)
+const oldAmount = ref(userPayInfo.value?.balance || 0)
+
+const diffValue = computed(() => {
+  const amount = currency(userPayInfo.value?.balance || 0).subtract(oldAmount.value).value
+  const actual = getActualRecharge(amount)
+  const bonus = currency(amount).subtract(actual).value
+
+  return { actual, bonus }
+})
 
 onMounted(() => {
   getNewUserPayInfo()
@@ -45,21 +53,23 @@ function close() {
         </div>
         <div>
           <span class="card-symbol">$</span>
-          <NumberFlow class="card-balance" :format="{ minimumFractionDigits: 2 }" :value="userPayInfo?.balance || 0">
-          </NumberFlow>
+          <NumberFlow class="card-balance" :format="{ minimumFractionDigits: 2 }" :value="userPayInfo?.balance || 0" />
         </div>
-        <div class="flex justify-end card-desc">{{ userInfo?.email }}</div>
+        <div class="flex justify-end card-desc">
+          {{ userInfo?.email }}
+        </div>
       </div>
       <CardItem as="div" :translate-z="1" class="flex flex-col gap-3 feat">
         <div class="flex items-center gap-2.5 feat-title">
           <SvgIcon name="base/rx_ic_check_fill" color="#1CC94D" size="24" />
           <span>{{ $t('充值成功！') }}</span>
         </div>
-        <i18n-t class="feat-desc" tag="div"
-          :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })"
-          scope="global">
+        <i18n-t class="feat-desc" tag="div" :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })" scope="global">
           <template #amount>
-            <span class="feat-desc-link">{{ diffAmount }}</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="feat-desc-link">{{ currency(diffValue.actual).format() }}</span>
+              <span v-if="diffValue.bonus > 0" class="feat-desc-link">({{ $t('另赠送 {value}', { value: currency(diffValue.bonus).format() }) }})</span>
+            </span>
           </template>
         </i18n-t>
       </CardItem>
@@ -100,7 +110,7 @@ function close() {
   }
 
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -108,7 +118,7 @@ function close() {
   }
 
   &-symbol {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 32px;
     font-weight: 600;
@@ -116,7 +126,7 @@ function close() {
   }
 
   &-balance {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 40px;
     font-weight: 600;
@@ -124,7 +134,7 @@ function close() {
   }
 
   &-new {
-    color: var(--pattern-sidenav-text-active, #3FB6FD);
+    color: var(--pattern-sidenav-text-active, #3fb6fd);
     font-family: Inter;
     font-size: 16px;
     font-weight: 600;
@@ -139,7 +149,7 @@ function close() {
   }
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   .card {
     &::before {
       background-image: url('/images/payments/ripple_dark.svg');
@@ -153,7 +163,7 @@ function close() {
 
 .feat {
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Archivo;
     font-size: 24px;
     font-weight: 600;
@@ -161,13 +171,13 @@ function close() {
   }
 
   &-desc {
-    color: var(--colors-text-text-secondary, #B2B6B8);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;
 
     &-link {
-      color: var(--colors-text-text-brand, #12A3FC);
+      color: var(--colors-text-text-brand, #12a3fc);
       font-weight: 600;
     }
   }

@@ -18,7 +18,7 @@ import SkillsContent from './skills-content.vue'
       </div>
 
       <div class="leading-18px text-3 text-[var(--colors-text-text-tertiary)] flex justify-between">
-        {{ $t('专门服务于跨境电商和多账号矩阵玩家的技能合集，助力提效拓客') }}
+        {{ $t('专门服务于跨境电商和多账号矩阵玩家的技能合集，完美替代 RPA') }}
       </div>
     </div>
 

@@ -143,6 +143,8 @@ export interface StoreType {
     /** API 域名 */
     api: string
   }
-  /** 窗口名称开关 */
-  windowNameSwitch?: boolean
+  /** 任务栏图标显示：windowNum | windowName */
+  taskbarIconDisplay?: 'windowNum' | 'windowName'
+  /** 任务栏标签显示：tabTitle | windowName */
+  taskbarTabDisplay?: 'tabTitle' | 'windowName'
 }

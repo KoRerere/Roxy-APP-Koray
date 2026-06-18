@@ -18,7 +18,7 @@ import AutoThemeImage from '/@/views/account/list/components/platform-icon.vue'
           {{ $t('Roxy AI Skills 商城') }}
         </div>
         <div class="text-[var(--colors-text-text-tertiary)] text-14px">
-          {{ $t('专门服务于跨境电商和多账号矩阵玩家的技能合集，助力提效拓客') }}
+          {{ $t('专门服务于跨境电商和多账号矩阵玩家的技能合集，完美替代 RPA') }}
         </div>
         <AutoThemeImage class="absolute -right-12 translate-x-100% top-1%" :platform-icon-dark="getImage('mcp/skills/dark-right.svg')" :platform-icon="getImage('mcp/skills/light-right.svg')" />
       </div>

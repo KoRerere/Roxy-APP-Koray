@@ -84,7 +84,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 3: 邀请一位好友加入 Roxy'),
-    descriptions: [$t('Roxy浏览器支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一工作空间共享窗口，在这里都能轻松实现。')],
+    descriptions: [$t('Roxy浏览器支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一团队共享窗口，在这里都能轻松实现。')],
     reward: () => {
       return (
         <div class={cssModule.text}>
@@ -221,7 +221,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'team',
     icon: 'base/rx_ic_user_add',
     title: $t('邀请成员 & 分配访问权限'),
-    descriptions: [$t('Roxy浏览器允许您邀请成员加入工作空间，并为其分配项目权限。')],
+    descriptions: [$t('Roxy浏览器允许您邀请成员加入团队，并为其分配项目权限。')],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">

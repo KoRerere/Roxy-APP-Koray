@@ -212,7 +212,7 @@
 | `400` | `upstream_invalid_request` | `invalid_request` | 上游判定请求参数不合法 | 是 |
 | `400` / `422` | `upstream_content_policy_violation` | `content_policy` | 上游内容安全策略拒绝 | 是 |
 | `401` | 依赖全局鉴权返回 | - | 缺少或无效 token | 是 |
-| `402` | `insufficient_balance` / `insufficient_points` / `insufficient_image_quota` | `billing` | 用户自己的余额、积分或图片额度不足 | 是 |
+| `402` | `insufficient_points` | `billing` | 用户自己的余额、积分或图片额度不足 | 是 |
 | `422` | `upstream_invalid_request` | `invalid_request` | 上游返回更精确的语义校验失败 | 是 |
 | `429` | `forward_rate_limited` | `rate_limit` | 本地 forward 并发限流 | 可重试 |
 | `429` | `upstream_rate_limited` | `rate_limit` | 上游限流 | 可重试 |
@@ -487,11 +487,7 @@ where request_id = 'req_xxx';
 
 #### A. 本地 `402`
 
-先判断是哪一种：
-
-- `insufficient_balance`
 - `insufficient_points`
-- `insufficient_image_quota`
 
 排查：
 

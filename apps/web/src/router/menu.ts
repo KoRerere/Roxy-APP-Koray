@@ -100,7 +100,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'agent',
         name: 'agent-list',
         meta: {
-          title: $t('全球代理 IP'),
+          title: $t('代理 IP'),
           icon: 'base/rx_ic_internet',
           permissions: ['Proxy_List_view_page'],
           permissionMode: 'any',
@@ -291,7 +291,7 @@ export const menuRoutes: RouteRecordRaw[] = [
                   severity: 'warn',
                   summary: $t('窗口同步不可用'),
                   detail: h(I18nT, {
-                    keypath: $t('窗口同步不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
+                    keypath: $t('窗口同步不可用，请联系团队的拥有者进行升级，或{link}以激活该跨团队功能。', { link: '{link}' }),
                   }, {
                     link: () => h('a', {
                       class: 'cursor-pointer',

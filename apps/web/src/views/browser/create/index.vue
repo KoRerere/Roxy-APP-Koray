@@ -342,7 +342,7 @@ async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
         life: 5000,
         summary: $t('窗口模板不可用'),
         detail: (
-          <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })}>
+          <I18nT keypath={$t('窗口模板不可用，请联系团队的拥有者进行升级，或{link}以激活该跨团队功能。', { link: '{link}' })}>
             {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
           </I18nT>
         ),

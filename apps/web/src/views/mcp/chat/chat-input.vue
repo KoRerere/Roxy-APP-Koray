@@ -4,12 +4,26 @@ import { motion } from 'motion-v'
 import PendingAttachments from './components/pending-attachments.vue'
 import AssetToolbar from './components/asset-toolbar.vue'
 import AutomationToolbar from './components/automation-toolbar.vue'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { AssetGenerationOptions, AttachmentInfo, InputScene, Todo } from '/@/views/mcp/types'
 import { isMacOS } from '/@/utils'
 
 const props = withDefaults(defineProps<Props>(), {})
 const emit = defineEmits<Emits>()
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain']
+const [, onlyErrorToast] = useResponseToast()
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'application/pdf',
+  'text/plain',
+  'application/json',
+  'text/markdown',
+  'text/x-markdown',
+]
+const ALLOWED_FILE_EXTENSIONS = ['.json', '.md', '.markdown']
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif']
 const MAX_PENDING_ATTACHMENTS = 3
 const TEXTAREA_MIN_HEIGHT = 60
@@ -21,6 +35,7 @@ interface Props {
     loading: boolean
   }
   isChatting: boolean
+  conversationId?: string
   pendingAttachments: AttachmentInfo[]
   pendingScript?: any
   todo?: Todo[]
@@ -54,7 +69,7 @@ const textareaRef = ref<{ $el: HTMLTextAreaElement } | null>(null)
 const isComposing = ref(false)
 
 const isAssetScene = computed(() => scene.value === 'asset')
-const acceptedMimeTypes = computed(() => isAssetScene.value ? IMAGE_MIME_TYPES : ALLOWED_MIME_TYPES)
+const acceptedMimeTypes = computed(() => isAssetScene.value ? IMAGE_MIME_TYPES : [...ALLOWED_MIME_TYPES, ...ALLOWED_FILE_EXTENSIONS])
 const assetAttachments = computed(() => props.pendingAttachments.filter(a => IMAGE_MIME_TYPES.includes(a.mimeType)))
 const canUploadMore = computed(() => {
   const count = isAssetScene.value ? assetAttachments.value.length : props.pendingAttachments.length
@@ -158,6 +173,45 @@ function onDrop(event: DragEvent) {
     return
 
   const files = Array.from(event.dataTransfer?.files ?? [])
+  emit('uploadFiles', files)
+}
+
+function getPastedFiles(event: ClipboardEvent) {
+  const clipboardData = event.clipboardData
+  if (!clipboardData)
+    return { files: [] as File[], hasFileItem: false }
+
+  const dataFiles = Array.from(clipboardData.files ?? [])
+  const items = Array.from(clipboardData.items ?? [])
+  const types = Array.from(clipboardData.types ?? [])
+  const itemFiles = items
+    .filter(item => item.kind === 'file')
+    .map(item => item.getAsFile())
+    .filter((file): file is File => Boolean(file))
+
+  return {
+    files: dataFiles.length > 0 ? dataFiles : itemFiles,
+    hasFileItem: dataFiles.length > 0 || items.some(item => item.kind === 'file') || types.some(type => type.toLowerCase().includes('file')),
+  }
+}
+
+function onPaste(event: ClipboardEvent) {
+  const { files, hasFileItem } = getPastedFiles(event)
+  if (!hasFileItem)
+    return
+
+  event.preventDefault()
+
+  if (!props.health.isReady || props.isChatting) {
+    onlyErrorToast(-1, $t('当前无法粘贴文件，请稍后重试'))
+    return
+  }
+
+  if (files.length === 0) {
+    onlyErrorToast(-1, $t('粘贴文件失败，请使用附件按钮上传'))
+    return
+  }
+
   emit('uploadFiles', files)
 }
 
@@ -278,6 +332,7 @@ function getAttachmentPreview(attachment: AttachmentInfo) {
         cols="30"
         autofocus
         @keydown="onKeydown"
+        @paste="onPaste"
         @compositionstart="onCompositionStart"
         @compositionend="onCompositionEnd"
       />
@@ -314,8 +369,9 @@ function getAttachmentPreview(attachment: AttachmentInfo) {
           v-else
           v-model:mode="mode"
           :can-upload-more="canUploadMore"
+          :conversation-id="conversationId"
           :pending-script="pendingScript"
-          :disabled="!health.isReady && !health.loading"
+          :disabled="isChatting || (!health.isReady && !health.loading)"
           @upload="onClickUpload"
           @remove-script="emit('removeScript')"
         />

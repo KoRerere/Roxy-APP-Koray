@@ -48,6 +48,8 @@ export enum OrderType {
   RewardRedeem = 'reward_redeem',
   /** 活动奖励 */
   EventRewards = 'event_rewards',
+  /** AI Agent 充值 */
+  PointsRecharge = 'points_recharge',
 }
 
 export const OrderTypeStr = {
@@ -66,6 +68,7 @@ export const OrderTypeStr = {
   get [OrderType.OfficialGift]() { return $t('官方赠送') },
   get [OrderType.RewardRedeem]() { return $t('奖励兑换') },
   get [OrderType.EventRewards]() { return $t('活动奖励') },
+  get [OrderType.PointsRecharge]() { return $t('AI Agent 积分购买') },
 }
 
 export enum SubOrderType {
@@ -128,13 +131,13 @@ export enum PayIdentity {
 export enum PurchaseType {
   /** 钱包 */
   Wallet = 'wallet',
-  /** 工作空间 */
+  /** 团队 */
   Workspace = 'workspace',
   /** 员工 */
   Staff = 'staff',
   /** 窗口 */
   Profile = 'profile',
-  /** 工作空间和员工 */
+  /** 团队和员工 */
   Workspace_Staff = 'workspace_staff',
   /** 代理 */
   Proxy = 'proxy',

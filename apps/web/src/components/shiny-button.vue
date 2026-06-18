@@ -44,6 +44,7 @@ import { Motion } from "motion-v";
   position: absolute;
   inset: 0;
   z-index: 10;
+  pointer-events: none;
   border-radius: inherit;
   background-image: linear-gradient(-75deg,
       hsla(272, 77%, 76%, 0%) calc(var(--x) + 20%),

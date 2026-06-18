@@ -6,12 +6,11 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import Empty from '../settings/components/empty.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useMcpDataStore } from '../pinia-store/mcp-data-store'
-import type { SkillCategory, SkillCategoryThemeValue, StoreSkill } from '../pinia-store/mcp-data-store'
+import type { SkillCategory, SkillCategoryThemeValue, SkillThemeValue, StoreSkill } from '../pinia-store/mcp-data-store'
 import { useChatStreamStore } from '../pinia-store/useChatStreamStore'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '/@/stores/theme'
 import { getHexWithAlpha } from '../utils'
-import { skillsCommand } from '../config.ts'
 
 // const emit = defineEmits<{
 //   (e: 'goToSkills'): void
@@ -85,24 +84,65 @@ function isInstalled(slug: string) {
   return installedSlugs.value.has(slug)
 }
 
-function pickThemeValue(value?: SkillCategoryThemeValue | null) {
+function isThemeValueObject(value?: SkillThemeValue | null): value is SkillCategoryThemeValue {
+  return !!value && typeof value === 'object'
+}
+
+function pickThemeValue(value?: SkillThemeValue | null) {
   if (!value)
     return ''
+  if (typeof value === 'string')
+    return value
   return themeStore.realTheme === 'dark'
     ? (value.dark || value.light || '')
     : (value.light || value.dark || '')
 }
 
-function getCategoryIcon(skill: Pick<StoreSkill, 'category_slug'>) {
-  return pickThemeValue(categoryMap.value[skill.category_slug || '']?.iconInfo?.icon)
+function mergeThemeValue(
+  categoryValue?: SkillThemeValue | null,
+  skillValue?: SkillThemeValue | null,
+) {
+  if (!categoryValue)
+    return skillValue
+  if (!skillValue)
+    return categoryValue
+  if (!isThemeValueObject(categoryValue) || !isThemeValueObject(skillValue))
+    return skillValue
+
+  return {
+    ...categoryValue,
+    ...skillValue,
+  }
 }
 
-function getCategoryBgColor(skill: Pick<StoreSkill, 'category_slug'>) {
-  return pickThemeValue(categoryMap.value[skill.category_slug || '']?.iconInfo?.bgColor) || 'var(--colors-background-bg-action)'
+function getSkillIconInfo(skill: Pick<StoreSkill, 'category_slug' | 'iconInfo'>) {
+  const categoryIconInfo = categoryMap.value[skill.category_slug || '']?.iconInfo
+  const skillIconInfo = skill.iconInfo
+
+  if (!categoryIconInfo)
+    return skillIconInfo
+  if (!skillIconInfo)
+    return categoryIconInfo
+
+  return {
+    ...categoryIconInfo,
+    ...skillIconInfo,
+    icon: mergeThemeValue(categoryIconInfo.icon, skillIconInfo.icon),
+    bgColor: mergeThemeValue(categoryIconInfo.bgColor, skillIconInfo.bgColor),
+    primaryColor: mergeThemeValue(categoryIconInfo.primaryColor, skillIconInfo.primaryColor),
+  }
 }
 
-function getCategoryPrimaryColor(skill: Pick<StoreSkill, 'category_slug'>) {
-  return pickThemeValue(categoryMap.value[skill.category_slug || '']?.iconInfo?.primaryColor) || 'var(--colors-icon-icon-brand)'
+function getCategoryIcon(skill: Pick<StoreSkill, 'category_slug' | 'iconInfo'>) {
+  return pickThemeValue(getSkillIconInfo(skill)?.icon)
+}
+
+function getCategoryBgColor(skill: Pick<StoreSkill, 'category_slug' | 'iconInfo'>) {
+  return pickThemeValue(getSkillIconInfo(skill)?.bgColor) || 'var(--colors-background-bg-action)'
+}
+
+function getCategoryPrimaryColor(skill: Pick<StoreSkill, 'category_slug' | 'iconInfo'>) {
+  return pickThemeValue(getSkillIconInfo(skill)?.primaryColor) || 'var(--colors-icon-icon-brand)'
 }
 
 async function handleInstall(skill: StoreSkill) {
@@ -190,7 +230,7 @@ function handleUseSkill(skill: StoreSkill) {
   // 使用 nextTick 确保路由跳转完成后再设置消息
   nextTick(() => {
     const skillName = skill.name
-    chatStore.userMessage = skillsCommand[skill.slug] || $t('使用 `{skillName}` 技能，帮我完成 ', { skillName })
+    chatStore.userMessage = skill.usage_example || $t('使用 `{skillName}` 技能，帮我完成 ', { skillName })
     chatStore.inputScene = 'automation'
   })
 }

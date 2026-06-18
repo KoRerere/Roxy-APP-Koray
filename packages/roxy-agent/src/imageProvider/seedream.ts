@@ -15,7 +15,9 @@ function parseSeedreamImageEvent(parsed: unknown, currentIndex: number): ParsedI
 
 // 把通用参数翻译成 seedream（火山）上游字段：
 // - 多图通过 sequential_image_generation='auto' + max_images 控制
-// - 固定关闭水印，并请求流式输出（seedream 上游支持真流式）
+/**
+ * - 固定关闭水印，并请求流式输出（seedream 上游支持真流式）
+ */
 function buildSeedreamBody(payload: ImageGeneratePayload) {
   const { count, ...rest } = payload
   const body: Record<string, any> = {
@@ -32,7 +34,10 @@ function buildSeedreamBody(payload: ImageGeneratePayload) {
 
 export const seedreamGenerator: ImageGenerator = {
   generate(payload: ImageGeneratePayload, signal?: AbortSignal) {
-    return aiAgentClient.rawPost('/v1/images/generations', { body: buildSeedreamBody(payload), signal })
+    return aiAgentClient.rawPost('/v1/images/generations', { body: buildSeedreamBody(payload), signal }, {
+      'conversation-id': payload.conversationId,
+      'turn-id': payload.turnId,
+    })
   },
 
   readStream(reader) {

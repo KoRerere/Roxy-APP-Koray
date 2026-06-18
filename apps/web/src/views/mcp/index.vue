@@ -13,7 +13,12 @@ import { useMcpDataStore } from './pinia-store/mcp-data-store'
 import { useChatStreamStore } from './pinia-store/useChatStreamStore'
 import type { InputScene } from './types'
 import { compare } from 'compare-versions'
-import { skillsCommand } from './config'
+import { useUserStore } from '/@/stores/user'
+import { useElementSize } from '@vueuse/core'
+import { API } from '/@/api'
+import { MAIN_WINDOW_NAME, MAIN_WINDOW_NAVIGATION_CHANNEL_NAME } from '/@/constants/channel'
+import type { UserGetPromotionInfoListData } from '@roxy/backend-api'
+import { useBuyPoints } from './components/buyPointes'
 
 const themeStore = useThemeStore()
 const route = useRoute()
@@ -23,12 +28,14 @@ const background = computed(() => themeStore.realTheme === 'dark'
   : '/images/mcp/agent-background-light.svg')
 
 const [, onlyErrorToast] = useResponseToast()
+const { buyPoints } = useBuyPoints()
 
 // API
 const agentApi = useAgentApi()
 const { conversationList: fetchConversationList, conversationDelete, storeInstallSkill, storeGetSkill, listSkills } = agentApi
 const agentStore = useAgentStore()
 const mcpDataStore = useMcpDataStore()
+const userStore = useUserStore()
 
 // 聊天相关状态
 const conversationList = ref<Conversation[]>([])
@@ -36,6 +43,7 @@ const activeConversationId = ref<string>('')
 const loading = ref(false)
 const deletePopoverRefs = ref<Record<string, any>>({})
 const openDeleteIds = ref(new Set<string>())
+const promotionInfo = ref<UserGetPromotionInfoListData['data']>()
 
 // SSE 流式逻辑提升到父级
 const chatStore = useChatStreamStore()
@@ -128,6 +136,13 @@ function selectSkillsStore() {
   router.push('/mcp/skills-store')
 }
 
+function selectPoints() {
+  if (chatStore.isChatting)
+    return onlyErrorToast(-1, $t('任务进行中，不可操作'))
+  activeConversationId.value = ''
+  router.push('/mcp/points')
+}
+
 function handleGoToSkills() {
   activeConversationId.value = ''
   router.push({ path: '/mcp/settings', query: { tab: 'skills' } })
@@ -194,7 +209,7 @@ async function applySkill(slug: string) {
       router.push('/mcp/chat')
     }
     nextTick(() => {
-      chatStore.userMessage = skillsCommand[skillInfoRes.data.slug] || $t('使用 `{skillName}` 技能，帮我完成 ', { skillName })
+      chatStore.userMessage = skillInfoRes.data.usage_example || $t('使用 `{skillName}` 技能，帮我完成 ', { skillName })
       chatStore.inputScene = 'automation'
     })
   }
@@ -237,6 +252,26 @@ const cancelUseSkillListener = globalThis.electronAPI?.on('mcp:use-skill', (slug
   applySkill(slug)
 })
 
+async function getPromotionInfo() {
+  const { code, data } = await API.base.userGetPromotionInfoList()
+  if (code === 0) {
+    promotionInfo.value = data
+  }
+}
+
+// function handleGoToInvite() {
+//   const target = { name: 'referral-program' }
+
+//   if (!globalThis.isElectron || window.name === MAIN_WINDOW_NAME) {
+//     router.push(target)
+//     return
+//   }
+
+//   const channel = new BroadcastChannel(MAIN_WINDOW_NAVIGATION_CHANNEL_NAME)
+//   channel.postMessage(target)
+//   channel.close()
+// }
+
 // 初始化
 onMounted(async () => {
   const isAsset = route.query.scene === 'asset'
@@ -246,6 +281,8 @@ onMounted(async () => {
   await agentStore.initMcp()
   void mcpDataStore.prefetchAutomationModelData()
   await loadConversations(true)
+
+  getPromotionInfo()
 
   // 从 Skills 商城「去使用」首次打开窗口：URL 带 skill（slug），新窗口必然不在对话中，确保下载后预填
   const skillSlug = route.query.skill as string | undefined
@@ -263,20 +300,20 @@ onMounted(async () => {
   const driverObj = genDriver({
     steps: [
       {
-        element: '#mcpAndSkills',
+        element: '#buyPoints',
         popover: {
-          description: $t('MCP 和 Skills 设置现已开放。'),
+          description: $t('Roxy AI Agent 现已开放积分购买。所有用户均赠送 100 起始积分'),
           side: 'top',
           align: 'center',
         },
       },
     ],
     onDestroyed: () => {
-      localStorage.setItem('driverStatus', JSON.stringify({ ..._driverStatus, mcpAndSkills: true }))
+      localStorage.setItem('driverStatus', JSON.stringify({ ..._driverStatus, buyPoints: true }))
     },
   })
 
-  if (!_driverStatus.mcpAndSkills) {
+  if (!_driverStatus.buyPoints) {
     driverObj.drive()
   }
 })
@@ -387,7 +424,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Bottom Section -->
-        <div class="flex flex-col gap-1 w-full pt-1 text-13px">
+        <div class="flex flex-col gap-0 w-full text-13px">
           <!-- <div id="scripts" class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
                :class="route.name === 'mcp-scripts' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectScripts"
           >
@@ -405,26 +442,39 @@ onUnmounted(() => {
               MCP & Skills
             </div>
           </div>
-          <ShinyButton v-if="compare($appVersion, '3.8.8', '>=')" class="w-full cursor-pointer rounded" @click="selectSkillsStore">
-            <div class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
-                 :class="route.name === 'mcp-skills-store' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
+
+          <div
+            :class="route.name === 'mcp-skills-store' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
+            class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
+            @click="selectSkillsStore"
+          >
+            <SvgIcon name="base/rx_ic_skills_store" size="16" color="var(--colors-icon-icon-primary-hover)" />
+            <div class="font-medium">
+              {{ $t('Skills 商城') }}
+            </div>
+            <SvgIcon name="base/fire" />
+          </div>
+
+          <ShinyButton
+            v-if="compare($appVersion, '3.8.8', '>=')"
+            :class="route.name === 'mcp-points' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
+            class="w-full cursor-pointer rounded"
+            @click="selectPoints"
+          >
+            <div
+              id="buyPoints"
+              class="flex items-center justify-between gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary)] select-none"
             >
-              <SvgIcon name="base/rx_ic_skills_store" size="16" color="var(--colors-icon-icon-primary-hover)" />
-              <div class="font-medium">
-                {{ $t('Skills 商城') }}
+              <div class="flex items-center gap-1.5">
+                <SvgIcon name="roxy-agent/rx-ic-points" size="16" color="var(--colors-icon-icon-primary)" />
+                <div class="font-medium">
+                  {{ $t('积分：{points}', { points: userStore.userPayInfo.points }) }}
+                </div>
               </div>
-              <SvgIcon name="base/fire" />
+
+              <RxButton class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click.stop="buyPoints" />
             </div>
           </ShinyButton>
-
-          <!-- <div class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
-               :class="route.name === 'mcp-points' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectPoints"
-          >
-            <SvgIcon name="base/rx_ic_coins" size="16" color="var(--colors-icon-icon-primary-hover)" />
-            <div class="font-medium">
-              Points
-            </div>
-          </div> -->
         </div>
       </div>
 

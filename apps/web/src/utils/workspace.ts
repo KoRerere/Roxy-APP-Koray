@@ -38,7 +38,7 @@ export function getWorkspaceAvatarProps(options: WorkspaceAvatarOptions) {
 }
 
 /**
- * 获取空间名称前缀，用于窗口信息展示（如 JIN-001）
+ * 获取团队名称前缀，用于窗口信息展示（如 JIN-001）
  * - 非中文：取前 3 个字符并转大写
  * - 含中文：逐字转拼音后取前 3 个字母并转大写（如「经济上行」→ JIN）
  */

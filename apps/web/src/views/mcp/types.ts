@@ -47,13 +47,17 @@ export interface HitlDecision {
 
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'worker_stopped' | 'orchestrator_stopped' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
+  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'worker_stopped' | 'worker_dispatch' | 'orchestrator_stopped' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
   data?: {
     sessionId?: string
     workerId?: string
     toolId?: string
     toolName?: string
     args?: Record<string, any>
+    /** parallel_dispatch 工具的并行任务数量（后端注入，用于前端文案展示） */
+    assignmentsCount?: number
+    /** load_skill_file 工具加载的 skill 名（后端解析路径注入） */
+    skillName?: string
     result?: string
     et?: number
     status?: ToolCallStatus | WorkerStatus
@@ -277,6 +281,8 @@ export interface AvatarInfo {
 
 // 格式化后的消息
 export interface FormattedMessage extends AvatarInfo {
+  /** 虚拟列表 key，DynamicScroller 的 key-field 依赖该字段，必须非空且唯一 */
+  id: string
   date: string
   synthesisText?: string
   mode?: string

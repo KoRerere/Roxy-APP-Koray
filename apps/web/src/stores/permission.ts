@@ -9,6 +9,16 @@ import type {
 
 import type { UnwrapRowsType, UserGetTeamPermissionsListData } from '@roxy/backend-api'
 
+/** 平台账号权限码 */
+export const PlatformPermissionCode = {
+  ViewPage: 'Platform_view_page',
+  Add: 'Platform_add',
+  Edit: 'Platform_edit',
+  Delete: 'Platform_delete',
+  ViewPassword: 'Platform_view_password',
+  BatchExport: 'Platform_batch_export',
+} as const
+
 interface PermissionIndex {
   exact: Set<string>
 }

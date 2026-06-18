@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { h } from 'vue'
-import ActivityInfoExpand from '/@/views/campaign/freedom/activity-info-expand.vue'
+import ActivityInfoExpand from '/@/views/campaign/june-eighteen/activity-info-expand.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
@@ -26,7 +26,7 @@ const { showFreedomActivityModal } = useFreedomActivity()
 const min = 0
 const max = 500
 
-const buyList = ref([
+const buyList = ref<any[]>([
   {
     key: 'staff',
     label: $t('团队成员'),
@@ -35,20 +35,14 @@ const buyList = ref([
   },
   {
     key: 'workspace',
-    label: $t('工作空间'),
+    label: $t('团队'),
     value: 0,
     cost: 10,
   },
 ])
 
 const renderList = computed<any[]>(() => {
-  const [first, last] = buyList.value
-  const arr = [first]
-  if (first.value > 0) {
-    arr.push({ label: 'activity', render: () => h(ActivityInfoExpand) })
-  }
-  arr.push(last)
-  return arr
+  return [...buyList.value, { label: 'activity', render: () => h(ActivityInfoExpand) }]
 })
 
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
@@ -172,14 +166,17 @@ function close(isCancel: boolean) {
 
 <template>
   <div class="flex flex-col pl-8 pr-6 py-6 gap-6 popup">
-    <div class="relative flex items-center h-10 header">
-      <span>{{ $t('购买团队成员和工作空间') }}</span>
+    <div class="relative flex items-center h-10">
+      <div class="flex items-center gap-1 header">
+        <span>{{ $t('购买团队成员和团队') }}</span>
+        <SvgIcon v-tooltip.top="$t('团队是一个独立的分组环境，通过创建或加入不同团队，您可以使用单一主账号邀请成员组建团队，并为其分配不同的权限设置。每个团队内的数据（如窗口、成员、代理 IP、项目和账号等）完全隔离，确保团队间的操作互不干扰。')" class="cursor-pointer" name="base/rx_ic_info" size="20" color="var(--colors-icon-icon-tertiary)" />
+      </div>
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
     <div class="flex gap-6">
       <div class="flex-1 flex flex-col gap-8">
         <div class="flex flex-col gap-4">
-          <RxAlert class="w-full" type="info" size="small" :title="$t('您当前拥有: {member} 团队成员, {workspace} 工作空间', { member: userPayInfo?.maxMemberCount, workspace: userPayInfo?.maxWorkspaceCount })"
+          <RxAlert class="w-full" type="info" size="small" :title="$t('您当前拥有: {member} 团队成员, {workspace} 团队', { member: userPayInfo?.maxMemberCount, workspace: userPayInfo?.maxWorkspaceCount })"
                    :closable="false"
           />
           <div>
@@ -187,7 +184,7 @@ function close(isCancel: boolean) {
               {{ $t('请选择数量') }}
             </div>
             <div class="mt-2 desc">
-              {{ $t('团队成员和工作空间购买后永久有效') }}
+              {{ $t('团队成员和团队购买后永久有效') }}
             </div>
           </div>
           <div class="flex flex-col gap-6">

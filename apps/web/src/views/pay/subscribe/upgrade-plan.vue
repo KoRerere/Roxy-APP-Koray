@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import FreedomActivity from '/@/views/campaign/freedom/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/june-eighteen/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -26,7 +26,7 @@ const router = useRouter()
 const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
-const { openProcessing, planSuccess, planSuccessFreedomActivity2 } = usePay()
+const { openProcessing, planSuccessFreedomActivity2 } = usePay()
 const { getUserPayInfo, mixpanelTrack } = useUserStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { seasonalActivity } = storeToRefs(useCampaignStore())
@@ -394,7 +394,7 @@ function jumpToProfile() {
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto">
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="dataList" :min="sliderMin" />
-          <FreedomActivity v-if="seasonalActivity.freedom && selectedPlan && isUpgrade" :count="selectedCount" :upshift-count="upshiftCount" />
+          <FreedomActivity v-if="selectedPlan" :count="selectedCount" :upshift-count="upshiftCount" />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div class="flex items-center justify-between">
             <div class="sub-title">

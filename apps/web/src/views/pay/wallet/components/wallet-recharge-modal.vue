@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPaymentMethods from '/@/views/pay/wallet/components/wallet-payment-methods.vue'
+import NextBouns from '/@/views/campaign/june-eighteen/next-bouns.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 import { debounce } from 'es-toolkit'
 import { useUserStore } from '/@/stores/user'
+import { useCampaignStore } from '/@/stores/campaign'
 import { PayWay } from '/@/enums/pay'
 import { ceilByStep } from '/@/views/pay/subscribe/util'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
-import type { UserGetPayChannelFeesListData } from '@roxy/backend-api'
 
 interface Props {
   needAmount?: number
@@ -24,9 +25,10 @@ const emit = defineEmits<{
 
 const [_, onlyErrorToast] = useResponseToast()
 const { mixpanelTrack } = useUserStore()
+const { getActivityTotalRecharge } = useCampaignStore()
 
-const selectedPayway = ref(PayWay.Card)
-const paywayList = [PayWay.Card, PayWay.Alipay, PayWay.Wechat, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
+const selectedPayway = ref(PayWay.Alipay)
+const paywayList = [PayWay.Alipay, PayWay.Wechat, PayWay.Card, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
 
 const disabledMethods = ref<PayWay[]>([])
 const min = 10
@@ -36,9 +38,28 @@ const amount = ref(10)
 const loading = ref(false)
 const lockModal = ref(false)
 const minRechargeAmount = 1
+const playInfoList = ref()
 
 const rechargeAmount = computed(() => needAmount ? Math.max(needAmount, minRechargeAmount) : (amount.value ?? min))
 const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，请勿关闭。') : '')
+
+const playInfo = computed(() => {
+  if (!playInfoList.value)
+    return {}
+
+  const data = playInfoList.value.find((item: any) => item.payType === selectedPayway.value)
+
+  return {
+    ...data,
+    activityTotalRecharge: getActivityTotalRecharge(rechargeAmount.value),
+  }
+})
+
+provide('$rechargeModal', {
+  preventModalClose: (value = true) => {
+    lockModal.value = value
+  },
+})
 
 onBeforeMount(() => {
   if (needAmount) {
@@ -50,16 +71,8 @@ onBeforeMount(() => {
   querySupportPayway()
 })
 
-provide('$rechargeModal', {
-  preventModalClose: (value = true) => {
-    lockModal.value = value
-  },
-})
-
 const delayQuery = debounce(querySupportPayway, 300)
 
-const playInfoList = ref()
-const playInfo = computed<UserGetPayChannelFeesListData['data'][number]>(() => playInfoList.value?.find(item => item.payType === selectedPayway.value))
 async function querySupportPayway() {
   loading.value = true
   const { code, data, msg } = await API.pay.userGetPayChannelFeesList({ amount: String(rechargeAmount.value) })
@@ -126,7 +139,7 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex flex-col gap-6 px-6">
       <div v-if="needAmount" class="flex flex-col gap-4">
-        <div v-if="playInfo?.feeRate > 0" class="flex flex-col gap-2 w-full">
+        <div v-if="playInfo.feeRate > 0" class="flex flex-col gap-2 w-full">
           <div class="flex justify-between items-center">
             <div class="text-3.5 text-[var(--colors-text-text-tertiary)] font-500">
               {{ $t('充值金额') }}
@@ -138,13 +151,13 @@ function close(isCancel: boolean) {
 
           <div class="flex justify-between items-center">
             <div class="flex gap-1 items-center text-3.5 text-[var(--colors-text-text-tertiary)] font-500">
-              <div>{{ $t('收取 {feeRate}% 的手续', { feeRate: playInfo?.feeRate }) }}</div>
-              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo?.feeRate }) }" class="flex items-center">
+              <div>{{ $t('收取 {feeRate}% 的手续', { feeRate: playInfo.feeRate }) }}</div>
+              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo.feeRate }) }" class="flex items-center">
                 <SvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
               </div>
             </div>
             <div class="text-[var(--colors-text-text-secondary)]">
-              {{ currency(playInfo?.fee).format() }}
+              {{ currency(playInfo.fee).format() }}
             </div>
           </div>
         </div>
@@ -154,7 +167,7 @@ function close(isCancel: boolean) {
             {{ $t('实付金额') }}
           </div>
           <div class="need-value">
-            {{ currency(playInfo?.total).format() }}
+            {{ currency(playInfo.total).format() }}
           </div>
         </div>
         <RxAlert v-if="needAmount < minRechargeAmount" class="w-full" type="info" :content="$t('根据支付平台的要求，最低充值金额为 {amount}。', { amount: currency(minRechargeAmount).format() })" />
@@ -164,23 +177,23 @@ function close(isCancel: boolean) {
           <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="max" :step="step" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
                        :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
           />
-          <div v-if="playInfo?.feeRate > 0" class="px-6 justify-between flex gap-4 text-[var(--colors-text-text-tertiary)]">
-            <div class="font-500 text-3.5">
-              <I18nT :keypath="$t('实付金额：{money}', { money: '{money}' })">
-                <template #money>
-                  <span class="text-[var(--colors-text-text-brand)] font-600">${{ currency(playInfo?.total) }}</span>
-                </template>
-              </I18nT>
-            </div>
-            <div class="flex gap-1 items-center text-3.5">
-              <div>{{ $t('收取 {feeRate}% 的手续: ${fee}', { feeRate: playInfo?.feeRate, fee: currency(playInfo?.fee) }) }}</div>
-              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo?.feeRate }) }" class="flex items-center">
+          <div class="px-6 justify-between flex gap-3 tt-tertiary">
+            <I18nT class="font-500 text-3.5" scope="global" tag="div" :keypath="$t('实付金额：{money}', { money: '{money}' })">
+              <template #money>
+                <span class="tt-brand font-600">{{ currency(playInfo.total).format() }}</span>
+                <span v-if="playInfo.activityTotalRecharge > rechargeAmount" class="tt-brand font-600">({{ $t('到账 {amount}', { amount: currency(playInfo.activityTotalRecharge).format() }) }})</span>
+              </template>
+            </I18nT>
+            <div v-if="playInfo.feeRate > 0" class="flex gap-1 items-center text-3.5">
+              <div>{{ $t('收取 {feeRate}% 的手续: {fee}', { feeRate: playInfo.feeRate, fee: currency(playInfo.fee).format() }) }}</div>
+              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo.feeRate }) }" class="flex items-center">
                 <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
               </div>
             </div>
           </div>
-          <div class="flex gap-2">
+          <div class="mt-1 flex flex-col gap-2.5">
             <RxAmountQuickCheck @select="quickSelect" />
+            <NextBouns :amount="rechargeAmount" />
           </div>
         </div>
       </ItemBlock>
@@ -188,7 +201,9 @@ function close(isCancel: boolean) {
 
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">
-        <WalletPaymentMethods v-model="selectedPayway" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods" :on-confirm="confirm" :play-info="playInfo" />
+        <WalletPaymentMethods v-model="selectedPayway" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods"
+                              :on-confirm="confirm" :play-info="playInfo"
+        />
       </ItemBlock>
     </div>
   </div>

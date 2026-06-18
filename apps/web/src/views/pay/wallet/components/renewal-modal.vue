@@ -3,6 +3,7 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
+import ActivityInfoExpand from '/@/views/campaign/june-eighteen/activity-info-expand.vue'
 import currency from 'currency.js'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { API } from '/@/api'
@@ -219,6 +220,7 @@ function onUpgradePlan() {
             <div v-if="!isExpired" class="help">
               {{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}
             </div>
+            <ActivityInfoExpand />
           </div>
         </ItemBlock>
       </div>

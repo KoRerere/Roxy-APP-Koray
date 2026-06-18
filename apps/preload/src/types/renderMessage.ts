@@ -273,7 +273,7 @@ export interface RenderMessage {
 
   /** 将本地绝对路径转为自定义媒体协议路径 */
   'util:toMediaPath': (pathname: string) => string
-  /** 删除工作空间 */
+  /** 删除团队 */
   'util:removeWorkspace': (workspaceId: number) => void
   /** 删除项目 */
   'util:removeProject': (payload: {

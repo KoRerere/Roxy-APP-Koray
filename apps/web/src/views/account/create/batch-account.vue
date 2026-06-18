@@ -28,7 +28,7 @@ const columns = [
   // },
   {
     key: 'platformUserName',
-    title: $t('用户名'),
+    title: $t('账号'),
     getText: (data: any) => data.platformUserName || '--',
   },
   {
@@ -117,7 +117,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.replace(/\s/g, '').replace(/：/g, ':')).filter(Boolean)
 
   if (!list.length) {
-    onlyErrorToast(-1, $t('请先输入账号信息'))
+    onlyErrorToast(-1, $t('请先输入账号'))
     return
   }
   const { platformIcon = '', platformIconDark = '' } = input.value._rows.find((item: any) => item.platformUrl === input.value.value) || {}

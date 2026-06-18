@@ -5,12 +5,12 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
+import { streamAdapter } from '@/core/sse/streamAdapter'
 import { env } from '../../config'
-import { streamAdapter } from '../../server/streamAdapter'
 import { clearPayloadFile, DEFAULT_WORKER_TIMEOUT_MS, WorkerRunner } from '../../worker/workerRunner'
 import { workerNames } from '../prompt'
 
-interface parallelDispatchParam { worker: string, task: string }
+interface parallelDispatchParam { worker: string, task: string, title: string }
 
 function formatWorkerResultsAsMarkdown(results: WorkerResult[]): string {
   const lines: string[] = ['## parallel_dispatch 执行结果\n']
@@ -58,6 +58,10 @@ export const workerTools = [
       for (const [index, assignment] of input.assignments.entries()) {
         const workerTaskId = createWorkerTaskId(assignment.worker, dispatchId, index)
         workerLabelMap.set(workerTaskId, assignment.worker)
+
+        // 在 fork worker 子进程之前同步下发任务标题，保证 worker_dispatch 先于该 worker 的任何内部事件到达前端
+        config.writer?.(streamAdapter.workerDispatch({ taskId: workerTaskId, title: assignment.title }))
+
         const payloadPath = path.join(payloadDir, `${parentRunId}-${workerTaskId}-${randomUUID().slice(0, 8)}.json`)
 
         const payload = {
@@ -138,6 +142,7 @@ export const workerTools = [
             z.object({
               worker: z.enum(workerNames).describe('Worker name to dispatch to'),
               task: z.string().describe('Self-contained task description'),
+              title: z.string().describe('Short one-line description about the task delegated to worker'),
             }),
           )
           .min(1, 'At least one assignment is required')

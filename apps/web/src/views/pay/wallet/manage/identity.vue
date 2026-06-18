@@ -8,11 +8,11 @@ const isVip = computed(() => [PayIdentity.old, PayIdentity.invited].includes(ide
 const isCustomDiscount = computed(() => userPayInfo.value.discount > 15)
 const discountKeyPath = computed(() => {
   if (identityInfo.value.identity === PayIdentity.old || identityInfo.value.identity === PayIdentity.invited) {
-    return $t('窗口订阅、成员、工作空间：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
+    return $t('窗口订阅、成员、团队：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
   }
 
   if (isCustomDiscount.value) {
-    return $t('永久享受窗口订阅、成员、工作空间：{profile} 折扣，代理 IP ：{proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
+    return $t('永久享受窗口订阅、团队成员、团队：{profile} 折扣，代理 IP ：{proxy} 折扣{points}', { profile: '{profile}', proxy: '{proxy}', points: '{points}' })
   }
 
   return ''
@@ -34,6 +34,13 @@ const discountKeyPath = computed(() => {
         </template>
         <template #proxy>
           <span class="identity-discount">{{ $t('{value}%', { value: userPayInfo.proxyDiscount }) }}</span>
+        </template>
+        <template #points>
+          <i18n-t v-if="userPayInfo.pointsDiscount > 0" :keypath="$t('，AI Agent 积分 {discount} 折扣', { discount: '{discount}' })">
+            <template #discount>
+              <span class="identity-discount">{{ $t('{value}%', { value: userPayInfo.pointsDiscount }) }}</span>
+            </template>
+          </i18n-t>
         </template>
       </i18n-t>
     </template>

@@ -1,4 +1,4 @@
-import { abortAll } from '../abortRegistry'
+import { abortAll } from '@/core/registry/abortRegistry'
 import { closeDatabase as closeConversationsDatabase } from '../database/conversations'
 import { closeCheckpointer } from '../deepagents/sqlite-checkpointer'
 import { startIMServiceIfEnabled } from '../im'

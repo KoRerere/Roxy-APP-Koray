@@ -17,6 +17,7 @@ import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
 import { getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
+import { appendOpenUrlsToLaunchArgs } from './utils/splitOpenUrlsForLaunch'
 
 const RE_MEM_TOTAL = /MemTotal:\s+(\d+)/
 const RE_MEM_AVAILABLE = /MemAvailable:\s+(\d+)/
@@ -47,6 +48,8 @@ export class BeforeLaunchTask {
   launchTimer?: NodeJS.Timeout
   /** 启动浏览器命令行参数 */
   launchArgs: string[] = []
+  /** Windows 命令行过长时，延后到启动后通过 CDP 打开的 URL */
+  deferredOpenUrls: string[] = []
   /** 当前任务 */
   private currentTask: LaunchTask | null = null
   /** 任务队列 */
@@ -295,10 +298,24 @@ export class BeforeLaunchTask {
 
   /** 生成内核启动的命令行参数 */
   private async genLaunchCLIArgs(): Promise<string[]> {
+    this.deferredOpenUrls = []
     if (this.browserItem.isFirefox) {
       return this.genFirefoxLaunchCLIArgs()
     }
     return this.genChromeLaunchCLIArgs()
+  }
+
+  /** 将用户配置的打开 URL 写入启动参数，超出 Windows 命令行长度限制的 URL 延后打开 */
+  private appendOpenUrls(args: string[], urls?: string[]): string[] {
+    const validUrls = urls?.filter(url => url && this.browserItem.isValidURL(url)) ?? []
+    const { args: nextArgs, deferredUrls } = appendOpenUrlsToLaunchArgs(this.exePath, args, validUrls)
+    if (deferredUrls.length) {
+      this.deferredOpenUrls.push(...deferredUrls)
+      console.warn(
+        `[BeforeLaunchTask] ${deferredUrls.length} URL(s) deferred due to Windows command line length limit (ENAMETOOLONG)`,
+      )
+    }
+    return nextArgs
   }
 
   /**
@@ -354,16 +371,10 @@ export class BeforeLaunchTask {
       args.push(dashboardUrl)
     }
 
-    // 用户配置的打开标签页
-    allOpenUrl?.forEach((url: string) => {
-      if (url && this.browserItem.isValidURL(url)) {
-        args.push(url)
-      }
-    })
+    const nextArgs = this.appendOpenUrls(args, allOpenUrl)
+    nextArgs.push('-no-remote')
 
-    args.push('-no-remote')
-
-    return args.filter(item => item.trim() !== '')
+    return nextArgs.filter(item => item.trim() !== '')
   }
 
   /** 生成 Chrome 启动命令行参数 */
@@ -509,13 +520,7 @@ export class BeforeLaunchTask {
     };
 
     // 用户配置的打开标签页（通过 CLI 打开，确保在 afterLaunchTask 注入 cookie 后 reload 即可生效）
-    allOpenUrl?.forEach((item: string) => {
-      if (item && this.browserItem.isValidURL(item)) {
-        args.push(item)
-      }
-    })
-
-    return args.filter(item => item.trim() !== '')
+    return this.appendOpenUrls(args, allOpenUrl).filter(item => item.trim() !== '')
   }
 
   /** 更新浏览器偏好设置 */

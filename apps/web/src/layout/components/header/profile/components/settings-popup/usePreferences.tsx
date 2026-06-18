@@ -1,6 +1,7 @@
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputNumber from 'primevue/inputnumber'
+import { defineComponent, onUnmounted, Teleport, watch } from 'vue'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import TsFormInputTextarea from '/@/views/lab/components/form/m-input-textarea.vue'
@@ -12,18 +13,157 @@ import SimulationShortcut from '../simulation-shortcut.vue'
 import ClearCache from '/@/layout/components/header/profile/components/settings-popup/components/clear-cache.vue'
 import RxTooltip from '/@/components/rx-tooltip'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { ClearType, UaStrictMode } from '/@/enums'
+import { ClearType, TaskbarIconDisplay, TaskbarTabDisplay, UaStrictMode } from '/@/enums'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_HUMAN_NOISE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
-import { isDev, isWindows } from '/@/utils/common'
+import { isDev, isLinux, isWindows } from '/@/utils/common'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
-import { isEmptyValue, isObject } from '/@/utils'
+import { getImage, isEmptyValue, isObject } from '/@/utils'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
 
 const SIMULATION_DELAY_RANGE_KEY = 'delayRange'
+
+const TASK_BAR_SETTING_TOOLTIP_CLASS = '!bg-[var(--colors-background-bg-overlay)] !border-[0.5px] !border-[var(--colors-border-border-base)] !shadow-[0px_3px_8px_0px_rgba(0,0,0,0.07),0px_2px_5px_0px_rgba(0,0,0,0.07),0px_1px_1px_0px_rgba(0,0,0,0.07)]'
+
+const TASK_BAR_PREVIEW_IMAGE_MAX_STYLE = {
+  maxWidth: '480px',
+  maxHeight: '360px',
+  width: 'auto',
+  height: 'auto',
+  objectFit: 'contain',
+} as const
+
+const taskbarPreviewImageSrc = ref<string | null>(null)
+
+function openTaskbarImagePreview(src: string, hideTooltip: () => void) {
+  taskbarPreviewImageSrc.value = src
+  hideTooltip()
+}
+
+function closeTaskbarImagePreview() {
+  taskbarPreviewImageSrc.value = null
+}
+
+export const TaskbarImagePreviewHost = defineComponent({
+  name: 'TaskbarImagePreviewHost',
+  setup() {
+    function onKeydown(event: KeyboardEvent) {
+      if (event.key === 'Escape')
+        closeTaskbarImagePreview()
+    }
+
+    watch(taskbarPreviewImageSrc, (src) => {
+      if (src)
+        window.addEventListener('keydown', onKeydown)
+      else
+        window.removeEventListener('keydown', onKeydown)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('keydown', onKeydown)
+      closeTaskbarImagePreview()
+    })
+
+    return () => {
+      if (!taskbarPreviewImageSrc.value)
+        return null
+
+      return (
+        <Teleport to="body">
+          <div
+            class="fixed inset-0 z-[5001] flex items-center justify-center bg-black/50"
+            onClick={closeTaskbarImagePreview}
+          >
+            <img
+              src={taskbarPreviewImageSrc.value}
+              style={TASK_BAR_PREVIEW_IMAGE_MAX_STYLE}
+              class="rounded-lg"
+              onClick={(event: Event) => event.stopPropagation()}
+            />
+          </div>
+        </Teleport>
+      )
+    }
+  },
+})
+
+function TaskbarSettingPreviewImage({ src, onPreview }: { src: string, onPreview: (src: string) => void }) {
+  return (
+    <div
+      class="group relative h-[108px] w-full cursor-pointer overflow-hidden rounded-lg"
+      onClick={(event: Event) => {
+        event.stopPropagation()
+        onPreview(src)
+      }}
+    >
+      <img src={src} class="h-full w-full object-cover" alt="" />
+      <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+        <RxSvgIcon name="base/rx_ic_eye" size="24" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
+    </div>
+  )
+}
+
+function resolveTaskbarIconDisplay(data?: { taskbarIconDisplay?: string }) {
+  if (data?.taskbarIconDisplay === TaskbarIconDisplay.windowNum || data?.taskbarIconDisplay === TaskbarIconDisplay.windowName)
+    return data.taskbarIconDisplay
+
+  return TaskbarIconDisplay.windowName
+}
+
+function resolveTaskbarTabDisplay(data?: { taskbarTabDisplay?: string }) {
+  if (data?.taskbarTabDisplay === TaskbarTabDisplay.tabTitle || data?.taskbarTabDisplay === TaskbarTabDisplay.windowName)
+    return data.taskbarTabDisplay
+
+  return TaskbarTabDisplay.windowName
+}
+
+function TaskbarIconDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () => void }) {
+  const handlePreview = (src: string) => openTaskbarImagePreview(src, onHideTooltip)
+
+  return (
+    <div class="flex flex-col gap-3 w-[258px]">
+      <div class="text-3 leading-[19.2px] text-[var(--colors-text-text-primary)]">
+        {$t('设置 Windows 任务栏中浏览器图标显示的内容')}
+      </div>
+      <div class="flex gap-2.5">
+        <div class="flex flex-col gap-1 items-start w-[116px]">
+          <TaskbarSettingPreviewImage src={getImage('settings/task-icon-window-num.jpg')} onPreview={handlePreview} />
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口编号')}</span>
+        </div>
+        <div class="flex flex-col gap-1 items-start w-[116px]">
+          <TaskbarSettingPreviewImage src={getImage('settings/task-icon-window-name.jpg')} onPreview={handlePreview} />
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口名字')}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TaskbarTabDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () => void }) {
+  const handlePreview = (src: string) => openTaskbarImagePreview(src, onHideTooltip)
+
+  return (
+    <div class="flex flex-col gap-3 w-[258px]">
+      <div class="text-3 leading-[19.2px] text-[var(--colors-text-text-primary)]">
+        {$t('设置 Windows 任务栏中浏览器图标悬停提示显示的内容')}
+      </div>
+      <div class="flex gap-2.5">
+        <div class="flex flex-col gap-1 items-start w-[116px]">
+          <TaskbarSettingPreviewImage src={getImage('settings/task-label-tab-name.jpg')} onPreview={handlePreview} />
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('当前标签页名称')}</span>
+        </div>
+        <div class="flex flex-col gap-1 items-start w-[116px]">
+          <TaskbarSettingPreviewImage src={getImage('settings/task-label-window-name.jpg')} onPreview={handlePreview} />
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口名称')}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil()
@@ -206,22 +346,83 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('显示窗口名称提示'),
+              label: () => (
+                <div class="flex items-center gap-1">
+                  <span>{$t('任务栏图标显示')}</span>
+                  <RxTooltip
+                    placement="top"
+                    tooltipContentClass={TASK_BAR_SETTING_TOOLTIP_CLASS}
+                  >
+                    {{
+                      default: () => <RxSvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />,
+                      content: ({ hide }: { hide: () => void }) => <TaskbarIconDisplayTooltipContent onHideTooltip={hide} />,
+                    }}
+                  </RxTooltip>
+                </div>
+              ),
               text: () => (
                 <div class="w-88">
                   {$t(
-                    '关闭后，浏览器图标提示将显示当前标签页名称',
+                    '暂时只支持 Firefox 内核的窗口',
                   )}
                 </div>
               ),
-              name: 'windowNameSwitch',
-              value: data?.windowNameSwitch ?? true,
-              hide: () => !isWindows,
+              name: 'taskbarIconDisplay',
+              hide: () => isLinux,
+              value: resolveTaskbarIconDisplay(data),
+              props: {
+                filter: false,
+                optionValue: 'value',
+                class: 'w-[183px]',
+                options: [
+                  { label: $t('窗口编号'), value: TaskbarIconDisplay.windowNum },
+                  { label: $t('窗口名称'), value: TaskbarIconDisplay.windowName },
+                ],
+              },
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
-                  <RxToggleSwitch
+                  <TsFormSelect
                     {...item.props}
                     {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: () => (
+                <div class="flex items-center gap-1">
+                  <span>{$t('任务栏标签显示')}</span>
+                  <RxTooltip
+                    placement="top"
+                    tooltipContentClass={TASK_BAR_SETTING_TOOLTIP_CLASS}
+                  >
+                    {{
+                      default: () => <RxSvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />,
+                      content: ({ hide }: { hide: () => void }) => <TaskbarTabDisplayTooltipContent onHideTooltip={hide} />,
+                    }}
+                  </RxTooltip>
+                </div>
+              ),
+              name: 'taskbarTabDisplay',
+              value: resolveTaskbarTabDisplay(data),
+              hide: () => !isWindows,
+              props: {
+                filter: false,
+                optionValue: 'value',
+                class: 'w-[183px]',
+                options: [
+                  { label: $t('当前标签页名称'), value: TaskbarTabDisplay.tabTitle },
+                  { label: $t('窗口名称'), value: TaskbarTabDisplay.windowName },
+                ],
+              },
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
                     onChange={() => saveUserConfig(item)}
                   />
                 )

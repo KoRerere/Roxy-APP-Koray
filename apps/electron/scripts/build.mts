@@ -245,9 +245,10 @@ const options: Configuration = {
     'dist/web',
     'dist/bin',
     'dist/starter.js',
-    // resources/firefox 含 icon.ico，由 @napi-rs/canvas (Skia native) 读取；
+    // resources/firefox / chrome 含 icon.ico，由 @napi-rs/canvas (Skia native) 读取；
     // Skia 走 OS 文件 API，绕过 Electron asar 虚拟 FS，必须解包到 app.asar.unpacked
     'resources/firefox',
+    'resources/chrome',
   ],
   extraMetadata: {
     version,

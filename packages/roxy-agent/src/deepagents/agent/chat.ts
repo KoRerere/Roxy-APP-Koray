@@ -3,9 +3,9 @@ import {
   createDeepAgent,
 } from 'deepagents'
 import path from 'node:path'
+import { mcpManager } from '@/core/mcp/mcpManager'
 import { env } from '../../config'
 import { createLLM } from '../../llm'
-import { mcpManager } from '../../mcpManager'
 import { createDeepAgentRuntime } from '../backend'
 import { ORCHESTRATOR_SYSTEM_PROMPT, SIMPLE_SYSTEM_PROMPT } from '../prompt'
 import { SqliteSaver } from '../sqlite-checkpointer'
@@ -60,6 +60,7 @@ export async function createChatAgent(options: {
     tools,
     middleware: runtime.middleware,
     name: options.mode,
+    subagents: [],
     ...(checkpointer
       ? {
           interruptOn: {

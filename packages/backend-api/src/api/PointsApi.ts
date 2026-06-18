@@ -11,10 +11,13 @@
  */
 
 import {
+  GetPointsTierDiscountRulesListData,
   UserBuyPointsSettlementCreateData,
   UserBuyPointsSettlementCreatePayload,
   UserCalculatePointsPriceListData,
   UserCalculatePointsPriceListParams,
+  UserGetPointsChargesRecordsListData,
+  UserGetPointsChargesRecordsListParams,
   UserGetPointsRechargeRecordsListData,
   UserGetPointsRechargeRecordsListParams,
 } from "./data-contracts";
@@ -83,6 +86,42 @@ export class PointsApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserGetPointsRechargeRecordsListData, any>({
       path: `/user_get_points_recharge_records`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags points
+   * @name GetPointsTierDiscountRulesList
+   * @summary 获取积分梯度折扣
+   * @request GET:/get_points_tier_discount_rules
+   * @response `200` `GetPointsTierDiscountRulesListData`
+   */
+  getPointsTierDiscountRulesList = (params: RequestParams = {}) =>
+    this.http.request<GetPointsTierDiscountRulesListData, any>({
+      path: `/get_points_tier_discount_rules`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags points
+   * @name UserGetPointsChargesRecordsList
+   * @summary 获取用户积分消费记录
+   * @request GET:/user_get_points_charges_records
+   * @response `200` `UserGetPointsChargesRecordsListData`
+   */
+  userGetPointsChargesRecordsList = (
+    query: UserGetPointsChargesRecordsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPointsChargesRecordsListData, any>({
+      path: `/user_get_points_charges_records`,
       method: "GET",
       query: query,
       format: "json",

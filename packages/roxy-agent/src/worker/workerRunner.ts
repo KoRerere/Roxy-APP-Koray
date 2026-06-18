@@ -3,7 +3,7 @@ import type { ChildProcess } from 'node:child_process'
 import { fork } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { streamAdapter } from '../server/streamAdapter'
+import { streamAdapter } from '@/core/sse/streamAdapter'
 import {
   WORKER_HEARTBEAT_INTERVAL_MS,
   WORKER_HEARTBEAT_TIMEOUT_MS,

@@ -43,12 +43,15 @@ const props = withDefaults(defineProps<{
    * 不传（或传 0）则不做限制。
    */
   cardWidth?: number
+
+  hideTooltip?: boolean
 }>(), {
   min: 0,
   padding: 0,
   thumbSize: 26,
   markSize: 10,
   cardWidth: 0,
+  hideTooltip: false,
 })
 
 const modelValue = defineModel<number>({ default: 0 })
@@ -59,7 +62,10 @@ const markSizeCSS = computed(() => `${props.markSize}px`)
 
 // ─── Slider DOM ───────────────────────────────────────────────────────────────
 const sliderRoot = useTemplateRef('sliderRoot')
-const sliderWidth = ref(1) // px，resize 时更新
+/**
+ * px，resize 时更新
+ */
+const sliderWidth = ref(1)
 
 // ─── Track geometry ───────────────────────────────────────────────────────────
 
@@ -89,7 +95,8 @@ const gradientClipRight = computed(() => {
 
 // 浮动卡片的最大左边距（%），防止卡片超出右边界
 const cardMaxLeftPct = computed(() => {
-  if (!props.cardWidth) return 100
+  if (!props.cardWidth)
+    return 100
   return 100 - (props.cardWidth / 2 / sliderWidth.value) * 100
 })
 
@@ -98,7 +105,9 @@ const cardMaxLeftPct = computed(() => {
 // 将 marks + step 展开成完整的「可选值列表」和对应的「轨道位置列表」。
 // 例如 marks=[{value:0},{value:10,step:5},{value:20}] 展开为：
 //   values:    [5, 10, 20]
-//   positions: [对应的轨道百分比, ...]
+/**
+ *   positions: [对应的轨道百分比, ...]
+ */
 function buildSelectables(): { values: number[], positions: number[] } {
   const values: number[] = []
   const positions: number[] = []
@@ -110,7 +119,10 @@ function buildSelectables(): { values: number[], positions: number[] } {
   for (let i = 1; i < props.marks.length; i++) {
     const from = props.marks[i - 1]!
     const to = props.marks[i]!
-    const step = from.step ?? (to.value - from.value) // 默认整段一步
+    /**
+     * 默认整段一步
+     */
+    const step = from.step ?? (to.value - from.value)
     const stepCount = Math.round((to.value - from.value) / step)
     const prevMarkPos = markPositions.value[i - 1]!
     const currMarkPos = markPositions.value[i]!
@@ -135,14 +147,18 @@ function trackPositionOf(value: number): number | null {
   return idx !== -1 ? (selectablePositions[idx] ?? null) : null
 }
 
-// 同时更新滑块中心和左边缘位置
+/**
+ * 同时更新滑块中心和左边缘位置
+ */
 function setThumbPosition(centerPct: number) {
   const halfThumbPct = (props.thumbSize / 2 / sliderWidth.value) * 100
   thumbCenterPct.value = centerPct
   thumbLeftPct.value = Math.max(0, centerPct - halfThumbPct)
 }
 
-// 找到 position 落在哪两个相邻可选位置之间，返回 [prev, next] 或 null
+/**
+ * 找到 position 落在哪两个相邻可选位置之间，返回 [prev, next] 或 null
+ */
 function findBracket(position: number): [number, number] | null {
   for (let i = 1; i < selectablePositions.length; i++) {
     const prev = selectablePositions[i - 1]!
@@ -156,7 +172,8 @@ function findBracket(position: number): [number, number] | null {
 // ─── Init / resize ────────────────────────────────────────────────────────────
 
 function init() {
-  if (!sliderRoot.value) return
+  if (!sliderRoot.value)
+    return
   sliderWidth.value = sliderRoot.value.getBoundingClientRect().width
   const pos = trackPositionOf(modelValue.value)
   // 值不在可选列表中（如 value=0 表示免费档）→ 滑块停在最左侧 mark 处
@@ -166,7 +183,8 @@ function init() {
 // ─── Drag handling ────────────────────────────────────────────────────────────
 
 function handleDrag(clientX: number) {
-  if (!sliderRoot.value) return
+  if (!sliderRoot.value)
+    return
 
   const { left, width } = sliderRoot.value.getBoundingClientRect()
   const pct = ((clientX - left) / width) * 100
@@ -224,7 +242,8 @@ function handleMarkClick(mark: SliderMark) {
 
 // sliderWidth > 1 means init() has run and the DOM has been measured
 watch(modelValue, (val) => {
-  if (sliderWidth.value <= 1) return
+  if (sliderWidth.value <= 1)
+    return
   const pos = trackPositionOf(val)
   setThumbPosition(pos ?? paddingPct.value)
 })
@@ -244,10 +263,13 @@ onMounted(() => {
     <div
       v-for="(mark, index) in marks"
       :key="mark.value"
-      :class="['rx-slider__mark', mark.value <= modelValue ? 'active' : '']"
+      class="rx-slider__mark" :class="[mark.value <= modelValue ? 'active' : '']"
       :style="{ left: `calc(${markPositions[index]}% - ${markSize / 2}px)` }"
       @click.stop="handleMarkClick(mark)"
     >
+      <div v-if="$slots['mark-badge']" class="rx-slider__mark-badge">
+        <slot name="mark-badge" :value="mark.value" :is-active="mark.value === modelValue" />
+      </div>
       <div class="rx-slider__mark-label" :class="{ active: mark.value === modelValue }">
         <slot name="mark" :value="mark.value" :is-active="mark.value === modelValue">
           {{ mark.value }}
@@ -261,7 +283,7 @@ onMounted(() => {
       @mousedown="handleThumbDragStart"
       @touchstart="handleThumbTouchStart"
     >
-      <div v-if="modelValue > 0" class="rx-slider__thumb-popup">
+      <div v-if="modelValue > 0 && !hideTooltip" class="rx-slider__thumb-popup">
         <slot name="popup" :value="modelValue">
           {{ modelValue }}
         </slot>
@@ -282,10 +304,10 @@ onMounted(() => {
 .rx-slider {
   position: relative;
   height: 20px;
-  background-color: #f0f3f5;
+  background-color: var(--pattern-pay-plan-bg-slider);
   border-radius: 12px;
   cursor: pointer;
-  border: 1px solid #e4e8eb;
+  border: 1px solid var(--pattern-pay-plan-border-slider);
   width: 103%;
   transform: translateX(-1.5%);
   box-sizing: border-box;
@@ -307,12 +329,25 @@ onMounted(() => {
   height: v-bind(markSizeCSS);
   top: 50%;
   transform: translateY(-50%);
-  background-color: rgba($color: #000000, $alpha: 0.2);
+  // background-color: rgba($color: #000000, $alpha: 0.2);
+  background-color: var(--pattern-pay-plan-bg-slider-dot);
   border-radius: 50%;
 }
 
 .rx-slider__mark.active {
-  background-color: rgba(255, 255, 255, 0.6) !important;
+  // background-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: var(--colors-alpha-alpha-white-60);
+}
+
+.rx-slider__mark-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-bottom: 16px;
+  transform: translateX(-50%);
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .rx-slider__mark-label {

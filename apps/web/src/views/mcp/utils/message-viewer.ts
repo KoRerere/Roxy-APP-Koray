@@ -201,6 +201,30 @@ export class MessageViewer {
     if (!workerId)
       return
 
+    const isNew = !this.entries.has(workerId)
+    if (isNew) {
+      this.entries.set(workerId, {
+        text: '',
+        meta: {},
+        type: 'worker',
+        workerEntries: new Map(),
+        workerOrder: new Set(),
+        status: 'pending',
+      })
+      this._orderChanged = true
+    }
+
+    this.entries.get(workerId)!.status = status
+    this.finalizeWorkerThinking(workerId, endTimestamp)
+    this.order.add(workerId)
+    this._dirty.add(workerId)
+  }
+
+  /** 设置 worker 任务标题（worker_dispatch 事件）。merge-safe：仅写 meta.title，不替换整个 meta。 */
+  setWorkerTitle(workerId: string, title: string): void {
+    if (!workerId)
+      return
+
     if (!this.entries.has(workerId)) {
       this.entries.set(workerId, {
         text: '',
@@ -212,8 +236,7 @@ export class MessageViewer {
       })
     }
 
-    this.entries.get(workerId)!.status = status
-    this.finalizeWorkerThinking(workerId, endTimestamp)
+    this.entries.get(workerId)!.meta.title = title
     this.order.add(workerId)
   }
 
@@ -237,6 +260,7 @@ export class MessageViewer {
       }
     }
     this.currentWorkerThinkingMap.delete(workerId)
+    this._dirty.add(workerId)
   }
 
   markPendingAsFailed(): void {
@@ -249,6 +273,7 @@ export class MessageViewer {
 
       if (entry.type === 'tool_call' && (entry.meta.status == null || entry.meta.status === 'pending')) {
         entry.meta.status = 'failed'
+        this._dirty.add(id)
       }
 
       if (entry.type === 'worker') {
@@ -262,6 +287,7 @@ export class MessageViewer {
     if (!this.entries.has(id)) {
       this.entries.set(id, { text: '', meta: { images: [], isPending: true }, type: 'image' })
       this.order.add(id)
+      this._orderChanged = true
     }
     const entry = this.entries.get(id)!
     const images: GeneratedImageInfo[] = Array.isArray(entry.meta.images) ? [...entry.meta.images] : []
@@ -270,6 +296,7 @@ export class MessageViewer {
     else
       images.push(image)
     entry.meta.images = images
+    this._dirty.add(id)
   }
 
   /** 清除占位状态；传入 images 时替换列表（image_done 兼容），不传时仅移除剩余 pending 占位 */
@@ -279,6 +306,7 @@ export class MessageViewer {
         return
       this.entries.set(id, { text: '', meta: {}, type: 'image' })
       this.order.add(id)
+      this._orderChanged = true
     }
     const entry = this.entries.get(id)!
     if (images) {
@@ -290,21 +318,26 @@ export class MessageViewer {
       entry.meta.images = existing.filter(img => !img.isPending)
     }
     entry.meta.isPending = false
+    this._dirty.add(id)
   }
 
   remove(id: string): void {
     this.entries.delete(id)
     this.order.delete(id)
+    this._cachedViews.delete(id)
+    this._cachedResult = null
+    this._orderChanged = true
   }
 
   /** 结束所有进行中的 thinking，用于流结束时调用 */
   finalize(endTimestamp?: number): void {
     this.currentThinkingId = null
     this.currentWorkerThinkingMap.clear()
-    for (const entry of this.entries.values()) {
+    for (const [id, entry] of this.entries) {
       if (entry.isThinking) {
         entry.isThinking = false
         entry.end = endTimestamp ?? entry.end ?? entry.start
+        this._dirty.add(id)
       }
       if (entry.workerEntries) {
         for (const we of entry.workerEntries.values()) {
@@ -313,18 +346,45 @@ export class MessageViewer {
             we.end = endTimestamp ?? we.end ?? we.start
           }
         }
+        // workerEntries 内部变化通过 worker 顶层条目 dirty 触发重建
+        if (entry.type === 'worker')
+          this._dirty.add(id)
       }
     }
   }
 
   view(): MessageEntryView[] {
-    return Array.from(this.order, (id) => {
-      const { workerEntries, workerOrder, ...rest } = this.entries.get(id)!
+    // 只重建有变化的条目，其余复用缓存引用，让下游 props 浅比较命中
+    for (const id of this._dirty) {
+      const entry = this.entries.get(id)
+      if (!entry) {
+        this._cachedViews.delete(id)
+        continue
+      }
+      const { workerEntries, workerOrder, ...rest } = entry
       const workers = workerOrder && workerEntries
         ? Array.from(workerOrder, wid => ({ id: wid, ...workerEntries.get(wid)! }))
         : []
-      return { id, ...rest, workers }
-    })
+      this._cachedViews.set(id, { id, ...rest, workers })
+    }
+    this._dirty.clear()
+
+    // 顺序未变且已有缓存结果直接返回同一数组引用
+    if (!this._orderChanged && this._cachedResult) {
+      // 原地更新数组内容（保持引用稳定）而不是重建，避免虚拟列表认为整体换了
+      for (let i = 0; i < this._cachedResult.length; i++) {
+        const id = this._cachedResult[i].id
+        const cached = this._cachedViews.get(id)
+        if (cached)
+          this._cachedResult[i] = cached
+      }
+      return this._cachedResult
+    }
+
+    // 顺序有变化：重建数组
+    this._cachedResult = Array.from(this.order, id => this._cachedViews.get(id)!)
+    this._orderChanged = false
+    return this._cachedResult
   }
 
   viewTodo(): Todo[] {
@@ -378,6 +438,9 @@ export function parseHistorySSE2(content: string) {
         break
       case 'worker_thinking':
         messageViewer.addWorkerEntry(block.data?.taskId || '', block.data?.thinkingId || '', block.type, block.data?.text || '', block.timestamp)
+        break
+      case 'worker_dispatch':
+        messageViewer.setWorkerTitle(block.data?.taskId || '', block.data?.title || '')
         break
       case 'worker_result':
         messageViewer.setWorkerStatus(block.data?.taskId || '', normalizeWorkerStatus(block.data?.status), block.timestamp)

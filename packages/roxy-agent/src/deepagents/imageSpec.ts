@@ -50,15 +50,6 @@ export interface ImageSpecAttachmentRef {
   fileUrl?: string
 }
 
-interface SavedImageSpec {
-  conversationId: string
-  messageId: string
-  spec: ImageGenerationSpec
-  savedAt: number
-}
-
-const savedImageSpecs = new Map<string, SavedImageSpec>()
-
 function normalizeMimeType(mimeType?: string) {
   return (mimeType || '').split(';')[0].trim().toLowerCase()
 }
@@ -127,36 +118,29 @@ function normalizeImageGenerationSpec(
   }
 }
 
-function getImageSpecKey(conversationId: string, messageId: string) {
-  return `${conversationId}:${messageId}`
+export interface ImageSpecStore {
+  save: (
+    spec: unknown,
+    options?: { uploadedAttachments?: ImageSpecAttachmentRef[] },
+  ) => ImageGenerationSpec
+  consume: () => ImageGenerationSpec | undefined
 }
 
-export function saveImageSpec(
-  conversationId: string,
-  messageId: string,
-  spec: unknown,
-  options: { uploadedAttachments?: ImageSpecAttachmentRef[] } = {},
-) {
-  const parsedSpec = normalizeImageGenerationSpec(
-    ImageGenerationSpecSchema.parse(spec),
-    options.uploadedAttachments,
-  )
-  savedImageSpecs.set(getImageSpecKey(conversationId, messageId), {
-    conversationId,
-    messageId,
-    spec: parsedSpec,
-    savedAt: Date.now(),
-  })
-  return parsedSpec
-}
+export function createImageSpecStore(): ImageSpecStore {
+  let savedSpec: ImageGenerationSpec | undefined
 
-export function consumeImageSpec(conversationId: string, messageId: string) {
-  const key = getImageSpecKey(conversationId, messageId)
-  const saved = savedImageSpecs.get(key)
-  savedImageSpecs.delete(key)
-  return saved?.spec
-}
-
-export function clearImageSpec(conversationId: string, messageId: string) {
-  savedImageSpecs.delete(getImageSpecKey(conversationId, messageId))
+  return {
+    save(spec, options = {}) {
+      savedSpec = normalizeImageGenerationSpec(
+        ImageGenerationSpecSchema.parse(spec),
+        options.uploadedAttachments,
+      )
+      return savedSpec
+    },
+    consume() {
+      const spec = savedSpec
+      savedSpec = undefined
+      return spec
+    },
+  }
 }

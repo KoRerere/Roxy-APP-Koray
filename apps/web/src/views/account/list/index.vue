@@ -2,38 +2,75 @@
 import AccountEdit from '/@/views/account/create/quick.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import AccountFieldCell from '/@/views/account/list/components/account-field-cell.vue'
+import PlatformInfoCell from '/@/views/account/list/components/platform-info-cell.vue'
+import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
+import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
+import ExportAccounts from '/@/views/account/list/components/export-accounts.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useColumns } from './columns'
+import { getRelatedProfileLabels, useColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
+import { PlatformPermissionCode } from '/@/stores/permission'
+import { copyText } from '/@/utils'
+import { formatAccountCopyText } from './utils'
+import { PlatformReqType } from '/@/enums'
+import { useDialog } from 'primevue/usedialog'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRoleStore } from '/@/stores/role'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
-import { PlatformReqType } from '/@/enums'
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const router = useRouter()
 const confirm = useConfirm()
+const dialog = useDialog()
 const drawerInstance = useDrawer()
+const toast = useToast()
 const { userConfig } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
+const workspaceStore = useWorkspaceStore()
+const { isViewer } = storeToRefs(useRoleStore())
+const canEdit = computed(() => !isViewer.value)
+const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
+const canViewPassword = computed(() => check(PlatformPermissionCode.ViewPassword))
+const canBatchExport = computed(() => check(PlatformPermissionCode.BatchExport))
+
+watch(isViewer, (viewer) => {
+  const actionsColumn = columns.value.find(column => column.key === 'actions')
+  if (actionsColumn)
+    actionsColumn._visible = !viewer
+}, { immediate: true })
 
 const tableRef = useTemplateRef('account')
+const tableSelection = ref<Data[]>([])
+const exportData = ref<Data[]>([])
+
 const operation = ref([
+  {
+    name: 'copy',
+    label: $t('复制'),
+    icon: 'base/rx_ic_copy',
+    tooltip: $t('复制'),
+    quick: true,
+  },
   {
     name: 'edit',
     label: $t('编辑'),
     icon: 'base/rx_ic_edit',
-    power: check('Platform_edit'),
+    power: check(PlatformPermissionCode.Edit),
     tooltip: $t('编辑'),
     quick: true,
   },
@@ -54,7 +91,7 @@ const operation = ref([
     name: 'delete',
     label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
-    power: check('Platform_delete'),
+    power: check(PlatformPermissionCode.Delete),
     quick: true,
     tooltip: $t('删除'),
     multiple: true,
@@ -88,6 +125,9 @@ const advancedSearchOptions = [
 
 async function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
+    case 'copy':
+      onCopyAccount(data)
+      break
     case 'edit':
       editAccount(data)
       break
@@ -108,8 +148,11 @@ function onAdvancedSearch(search?: Record<string, any>) {
   tableRef.value?.refresh({ queryKey: value && (key || 'name_remark'), queryValue: value }, true)
 }
 
-function tableRequest(params: any) {
-  return API.platform.userGetPlatformInfoV2List(params)
+async function tableRequest(params: any) {
+  const result = await API.platform.userGetPlatformInfoV2List(params)
+  if (result.code === 0)
+    exportData.value = result.data.rows as Data[]
+  return result
 }
 
 function createAccount() {
@@ -135,6 +178,43 @@ function editAccount(data?: Data) {
       }),
     },
   })
+}
+
+function editField(data: Data, field: keyof Data, title: string, inputType: 'text' | 'password' | 'textarea' = 'text') {
+  const hideValue = field === 'platformPassword' && !check(PlatformPermissionCode.ViewPassword)
+  showSimpleDialog({
+    title,
+    inputs: [
+      {
+        type: inputType,
+        name: field,
+        value: hideValue ? '' : data?.[field],
+        props: {
+          placeholder: title,
+          rows: inputType === 'textarea' ? 6 : undefined,
+        },
+      },
+    ],
+    onConfirm: async (formData: any) => {
+      const payload = { ...data, [field]: formData[field]?.trim?.() ?? formData[field] }
+      const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: [payload] })
+      onlyErrorToast(code, msg)
+      if (code === 0)
+        tableRef.value?.refresh()
+    },
+  })
+}
+
+function onCopyField(value?: string) {
+  if (!value)
+    return
+  copyText(value)
+  toast.add({ severity: 'success', summary: $t('已复制'), life: 2000 })
+}
+
+function onCopyAccount(data: Data) {
+  copyText(formatAccountCopyText(data, check(PlatformPermissionCode.ViewPassword)))
+  toast.add({ severity: 'success', summary: $t('已复制'), life: 2000 })
 }
 
 function onRemark(data: Data) {
@@ -172,6 +252,51 @@ function toggleRemarkDisplayStatus(cache: Record<string, any>) {
   }
 }
 
+function togglePasswordVisible(cache: Record<string, any>) {
+  cache.visible = !cache.visible
+}
+
+function bindProfiles(data: Data) {
+  drawerInstance.showDrawer({
+    title: $t('选择窗口'),
+    slots: {
+      container: () => h(ProfileSelect, {
+        account: data,
+        onClose: () => drawerInstance.hideDrawer(),
+        onConfirm: async (profiles: any[]) => {
+          if (!data.id)
+            return
+          const { code, msg } = await API.window.userMdfPlatformBindWindowCreate({
+            platformId: data.id,
+            windowIds: profiles.map(item => item.id),
+          })
+          onlyErrorToast(code, msg)
+          if (code === 0)
+            tableRef.value?.refresh()
+        },
+      }),
+    },
+  })
+}
+
+function exportAccounts() {
+  const data = tableSelection.value.length ? tableSelection.value : exportData.value
+  dialog.open(ExportAccounts, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        data,
+        workspaceName: workspaceName.value,
+        canViewPassword: canViewPassword.value,
+      },
+    },
+  })
+}
+
 function deletePopup(data: any) {
   const { promise, resolve } = Promise.withResolvers<void>()
   const datas = [].concat(data)
@@ -206,27 +331,52 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="check('Platform_add')" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
+      <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" v-model:columns="columns" cache-key="account-list" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-               :show-gridlines="false" :show-actions="false"
+      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest" :operation="canEdit ? operation : []" :operation-handler="operationHandler"
+               :show-gridlines="false" :show-actions="false" :context-menu="canEdit"
       >
+        <template #display-before>
+          <RxButton v-if="canBatchExport" severity="secondary" outlined size="xxs" icon="base/rx_ic_export" :label="$t('导出数据')" @click.stop="exportAccounts" />
+        </template>
         <template #filter-after>
           <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
+        </template>
+        <template #platformInfo="{ data }">
+          <PlatformInfoCell :data="data" :readonly="isViewer" @click="editAccount(data)" />
+        </template>
+        <template #userName="{ data }">
+          <AccountFieldCell :value="data.platformUserName" show-copy :show-edit="canEdit"
+                            @copy="onCopyField(data.platformUserName)"
+                            @edit="editField(data, 'platformUserName', $t('修改账号'), 'textarea')"
+          />
+        </template>
+        <template #passwordHeader="{ column: { title, _cache } }">
+          <div class="flex items-center gap-2 note-header w-full">
+            <span>{{ title }}</span>
+            <RxSvgIcon v-if="canViewPassword" v-tooltip.top="{ value: _cache.visible ? $t('隐藏') : $t('显示'), showDelay: 0 }" class="cursor-pointer shrink-0 color-[#989CA0]"
+                       :name="_cache.visible ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="togglePasswordVisible(_cache)"
+            />
+          </div>
+        </template>
+        <template #password="{ data, column: { _cache } }">
+          <AccountFieldCell :value="data.platformPassword" :masked="!canViewPassword || !_cache.visible" :show-edit="canEdit && check(PlatformPermissionCode.Edit)"
+                            @edit="editField(data, 'platformPassword', $t('修改密码'), 'textarea')"
+          />
         </template>
         <template #table-empty>
           <CustomNewEmpty icon="base/rx_ic_keys" img="empty-accounts.png" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="check('Platform_add')" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
                 <TutorialVideo video-type="account_management" :autoplay="false" />
               </div>
             </template>
           </CustomNewEmpty>
         </template>
         <template #remarkHeader="{ column: { title, _cache } }">
-          <div class="flex items-center gap-2 note-header">
+          <div class="flex items-center gap-2 note-header w-full">
             <span>{{ title }}</span>
             <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
                        :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)"
@@ -234,17 +384,19 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
-          <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
+          <div class="inline-flex items-center gap-1" :class="{ 'cursor-pointer': canEdit }" @click.stop="canEdit && operationHandler({ name: 'remark' }, data)">
             <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
                       :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
             />
             <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">
-              {{
-                data.platformRemarks }}
+              {{ data.platformRemarks }}
             </div>
           </div>
         </template>
-        <template #actions="{ data }">
+        <template #related="{ data }">
+          <RelatedProfilesCell :list="getRelatedProfileLabels(data)" :show-add="canEdit && check('Profiles_select_platform')" @add="bindProfiles(data)" />
+        </template>
+        <template v-if="canEdit" #actions="{ data }">
           <div class="flex gap-2 items-center">
             <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
@@ -255,6 +407,13 @@ function deletePopup(data: any) {
 </template>
 
 <style lang="scss" scoped>
+:deep(.account-table) {
+  tr:not([data-p-selected='true']):hover .row-hover-action,
+  tr:not([data-p-selected='true']):focus-within .row-hover-action {
+    opacity: 1;
+  }
+}
+
 .note {
   &-header {
     color: var(--colors-text-text-primary, #fafafa);

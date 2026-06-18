@@ -59,7 +59,7 @@ const tabs = [
   {
     key: 'TeamSpace',
     title: $t('释放团队协作潜力'),
-    desc: $t('Roxy浏览器支持在自由的团队空间中无缝协作，每个工作空间数据与资源完全隔离。'),
+    desc: $t('Roxy浏览器支持在自由的团队中无缝协作，每个团队的数据与资源完全隔离。'),
     component: TeamSpace,
   },
 

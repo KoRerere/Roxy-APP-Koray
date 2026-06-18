@@ -8,22 +8,22 @@ const { getVideoSource } = useSimpleLocale()
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-6 popup">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('如何获取空间 ID') }}</span>
+      <span class="header">{{ $t('如何获取团队 ID') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-note)" @click="$emit('close')" />
     </div>
     <div class="description">
-      {{ $t('Roxy浏览器允许您向任意的工作空间转移窗口：') }}
+      {{ $t('Roxy浏览器允许您向任意的团队转移窗口：') }}
     </div>
     <ol class="flex flex-col gap-1 ma-0 pa-0 pl-5">
       <li class="description">
-        {{ $t('您可以直接将窗口转移到您拥有的其他工作空间') }}
+        {{ $t('您可以直接将窗口转移到您拥有的其他团队') }}
       </li>
       <li class="description">
-        {{ $t('要转移窗口至其他人的工作空间，您需得知相应的空间 ID') }}
+        {{ $t('要转移窗口至其他人的团队，您需得知相应的团队 ID') }}
       </li>
     </ol>
     <div class="description">
-      {{ $t('您可以通过以下操作指引获取空间 ID') }}
+      {{ $t('您可以通过以下操作指引获取团队 ID') }}
     </div>
     <video class="block w-full rounded-md" autoplay muted loop playsinline>
       <source :src="getVideoSource('copy_workspace_id.mp4')" type="video/webm">

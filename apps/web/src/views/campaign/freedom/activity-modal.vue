@@ -38,7 +38,7 @@ function showInfo() {
     severity: 'warn',
     summary: $t('操作失败'),
     detail: (
-      <I18nT keypath={$t('当前活动仅支持在自己的工作空间参与。{click}', { click: '{click}' })}>
+      <I18nT keypath={$t('当前活动仅支持在自己的团队参与。{click}', { click: '{click}' })}>
         {{ click: () => (
           <a
             class="cursor-pointer"
@@ -47,7 +47,7 @@ function showInfo() {
               emit('close')
             }}
           >
-            {$t('返回我的默认工作空间')}
+            {$t('返回我的默认团队')}
           </a>
         ) }}
       </I18nT>

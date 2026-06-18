@@ -2,7 +2,6 @@
 import Manage from '/@/views/pay/wallet/manage/index.vue'
 import Billing from '/@/views/pay/wallet/billing/index.vue'
 
-
 const route = useRoute()
 const router = useRouter()
 
@@ -24,7 +23,8 @@ watch(
       activeTabValue.value = value as string
       router.replace({ name: 'wallet', query: route.query })
     }
-  })
+  },
+)
 
 function onChange(value: any) {
   router.replace({ name: 'wallet', query: { name: value } })
@@ -33,7 +33,7 @@ function onChange(value: any) {
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs @update:value="onChange"></RxTabs>
+    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs @update:value="onChange" />
     <div class="flex-1 overflow-hidden">
       <component :is="activeTab?.component" />
     </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // import { getImage } from '/@/utils/basic'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
+import { useSimpleLocale } from '/@/stores/locale'
 // import { useThemeStore } from '/@/stores/theme'
 import { useProxy } from '/@/views/agent/hooks'
 import { emitter } from '/@/utils/eventBus'
@@ -14,6 +15,7 @@ const route = useRoute()
 // const themeStore = useThemeStore()
 const roxyClawStore = useRoxyClawStore()
 const { buyProxy } = useProxy()
+const { isZh } = storeToRefs(useSimpleLocale())
 
 const isCollapsed = defineModel('open', { default: false })
 const badgeMap = defineModel<Record<NonNullable<RouteRecordNameGeneric>, boolean>>('badgeMap', { default: () => ({}) })
@@ -108,7 +110,10 @@ function onAsideBuy() {
 
           <div class="relative flex items-center gap-1.5 overflow-hidden menu-title" :title="item.meta?.title">
             <span class="ellipsis-1">{{ item.meta?.title }}</span>
-            <SvgIcon v-if="item.meta?.slotName === 'proxy'" name="base/fire" />
+            <span v-if="item.meta?.slotName === 'proxy'" class="inline-flex items-center gap-0.5">
+              <SvgIcon name="base/fire" />
+              <span v-if="isZh" class="color-[#F53838] text-3.25 font-600">特惠</span>
+            </span>
           </div>
           <RxButton v-if="item.meta?.slotName === 'proxy' && !collapsed" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="onAsideBuy" />
         </template>

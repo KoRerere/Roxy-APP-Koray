@@ -122,7 +122,7 @@ export const useUserStore = defineStore(
         clearSessionLost()
 
         setUserInfo(data)
-        workspaceStore.setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
+        await workspaceStore.setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
 
         setTimeout(() => {
           hidePageLoading()
@@ -362,17 +362,21 @@ export const useUserStore = defineStore(
     }
 
     const initUserInfo = async (intoWorkspaceId?: number) => {
-      hasCallInitUserInfo.resolve()
-      // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
-      console.log('initUserInfo checkCookie')
-      await checkCookie()
+      try {
+        // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
+        console.log('initUserInfo checkCookie')
+        await checkCookie()
 
-      console.log('initUserInfo token.value', token.value)
+        console.log('initUserInfo token.value', token.value)
 
-      if (token.value) {
-        setToken(token.value)
-        await getUserInfo(intoWorkspaceId)
-        getUserConfig(true)
+        if (token.value) {
+          setToken(token.value)
+          await getUserInfo(intoWorkspaceId)
+          getUserConfig(true)
+        }
+      }
+      finally {
+        hasCallInitUserInfo.resolve()
       }
     }
 

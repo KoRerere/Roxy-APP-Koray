@@ -5,10 +5,11 @@ import { currentOS, isDev, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress } from '/@/utils'
+import { ensureChromeIcon, fitBadgeText } from './browserIcon'
 import { getCityCode, getEcommerceDirectWhiteList, getRemoteConfig, toNumber } from './util'
 
 /** 生成浏览器指纹配置 */
-export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
+export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}, userDataDir = '') {
   const isMobile = [`Android`, `IOS`].includes(winInfo.os)
   const isWindows = winInfo.os === `Windows`
   const isMacOS = winInfo.os === `macOS`
@@ -18,15 +19,20 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
     ecommerceDirectWhiteList = await getEcommerceDirectWhiteList()
   }
 
+  // 任务栏图标写入 userDataDir/chrome-icon.{ext}；徽章未变时复用缓存，跳过重复渲染
+  const browserIconPath = await ensureChromeIcon(
+    store.taskbarIconDisplay === 'windowName' ? (fitBadgeText(winInfo.windowName) || winInfo.windowSortNum) : winInfo.windowSortNum,
+    userDataDir,
+  )
+
   return {
     computerName: winInfo.computerName,
     macAddress: winInfo.macAddress,
     searchEngine: {
       name: winInfo.searchEngine,
     },
-    /** 窗口名称 */
     get windowName() {
-      if (store.windowNameSwitch) {
+      if (store.taskbarTabDisplay === 'windowName') {
         return winInfo.windowName
       }
     },
@@ -422,6 +428,8 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
       username: item.platformUserName,
       password: item.platformPassword,
     })),
+    /** Chrome 内核应用图标路径（按 windowSortNum 动态生成带数字徽章；格式随 OS 自适应：Windows→.ico / macOS→.icns / Linux→.png） */
+    browserIconPath,
     /** 在任务栏ICON上绘制小圆点 */
     taskBarIcon: {
       /** 圆点的颜色 */

@@ -38,7 +38,7 @@ interface ExtensionManagerOptions {
 /** 正在下载的插件 */
 const downloadingExtensions = new Map<string, Promise<string>>()
 export class ExtensionManager {
-  /** 工作空间 ID */
+  /** 团队 ID */
   workspaceId: number
   /** 插件目录 */
   get extensionDir() {

@@ -98,7 +98,7 @@ async function tableFilters() {
               severity: 'warn',
               summary: $t('您只能查看{days}天内的日志', { days }),
               detail: !check('Cost_Center_all')
-                ? $t('如需查看更多日志，请联系空间的拥有者进行升级。')
+                ? $t('如需查看更多日志，请联系团队的拥有者进行升级。')
                 : userPayInfo.value.autoRenewDowngrade
                   ? ''// 特殊情况，如果用户是自动续费降级用户，则不显示升级提醒
                   : (

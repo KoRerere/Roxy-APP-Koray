@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import AccountFieldCell from '/@/views/account/list/components/account-field-cell.vue'
+import PlatformInfoCell from '/@/views/account/list/components/platform-info-cell.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRawColumns } from './columns'
@@ -73,6 +75,15 @@ function handleSave() {
       >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" />
+        </template>
+        <template #platformInfo="{ data: row }">
+          <PlatformInfoCell :data="row" />
+        </template>
+        <template #userName="{ data: row }">
+          <AccountFieldCell :value="row.platformUserName" />
+        </template>
+        <template #password="{ data: row, column: { _cache } }">
+          <AccountFieldCell :value="row.platformPassword" :masked="!_cache?.visible" />
         </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.platformRemarks, showDelay: 500 }" :name="row.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"

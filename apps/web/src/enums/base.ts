@@ -25,6 +25,16 @@ export enum UaStrictMode {
   open = 1, // 开启
 }
 
+export enum TaskbarTabDisplay {
+  tabTitle = 'tabTitle',
+  windowName = 'windowName',
+}
+
+export enum TaskbarIconDisplay {
+  windowNum = 'windowNum',
+  windowName = 'windowName',
+}
+
 export enum WorkspaceType {
   /** 私有 */
   Private = 0,
@@ -43,6 +53,8 @@ export enum ActivityType {
   Easter = 3,
   /** 自由季活动 */
   Freedom = 4,
+  /** 618 活动 */
+  JuneEighteen = 5,
 }
 
 /**

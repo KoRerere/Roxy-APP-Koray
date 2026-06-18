@@ -2318,6 +2318,10 @@ export interface UserGetUserConfigListData {
       dirId: string;
       remainingUsageMs: number;
     };
+    /** 任务栏图标显示 windowSortNum（窗口编号） windowName（窗口名字） */
+    taskbarIconDisplay: string;
+    /** 任务栏标签显示  tabTitle（当前标签页名称） windowName（窗口名字） */
+    taskbarTabDisplay: string;
   };
   msg: string;
 }
@@ -2360,23 +2364,25 @@ export interface UserGetDefConfigListData {
 }
 
 export interface UserSetUserConfigCreatePayload {
-  language?: string;
-  autoDetectProxy?: boolean;
-  timeZone?: string;
-  closeSoft?: string;
-  uploadDir?: string;
-  cacheDir?: string;
-  autoDelDays?: string;
-  autoDelSize?: string;
-  memoryLimit?: string;
-  appearance?: number;
-  systemProxySwitch?: boolean;
-  v2raySwitch?: boolean;
-  ipChecker?: string;
-  ipBlackList?: string[];
-  apiToken?: string;
-  isFirstSwitchTheme?: boolean;
-  batchOpenLayout?: string;
+  language: string;
+  autoDetectProxy: boolean;
+  timeZone: string;
+  closeSoft: string;
+  uploadDir: string;
+  cacheDir: string;
+  autoDelDays: string;
+  autoDelSize: string;
+  memoryLimit: string;
+  appearance: number;
+  systemProxySwitch: boolean;
+  v2raySwitch: boolean;
+  ipChecker: string;
+  ipBlackList: string[];
+  apiToken: string;
+  isFirstSwitchTheme: boolean;
+  batchOpenLayout: string;
+  taskbarIconDisplay: string;
+  taskbarTabDisplay: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -2869,9 +2875,11 @@ export interface UserGetPromotionInfoListData {
     };
     promotionLinkList: {
       isModify?: number;
+      nextModifyTime?: number;
       linkStatus?: number;
       linkType?: string;
       promotionDiscount?: number;
+      pointsPromotionDiscount?: number;
       proxyPromotionDiscount?: number;
       promotionLink?: string;
       purchaseTotalAmount?: number;
@@ -3859,6 +3867,32 @@ export interface CheckPhoneRegisteredListParams {
 }
 
 export type CheckPhoneRegisteredListData = object;
+
+export interface GetJuneRechargePromoTimeListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    server_utc_timestamp: number;
+    type: number;
+    min_amount: number;
+    recharge_benefits: {
+      amount: number;
+      discount: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserModifyPromotionLinkCreatePayload {
+  promotionCode: string;
+  newPromotionCode: string;
+}
+
+export interface UserModifyPromotionLinkCreateData {
+  code: number;
+  msg: string;
+}
 
 export interface UserGetWindowInfoListListParams {
   /**
@@ -5732,6 +5766,16 @@ export interface UserDeleteProxyTemplateCreateData {
   msg: string;
 }
 
+export interface UserMdfPlatformBindWindowCreatePayload {
+  platformId: number;
+  windowIds: number[];
+}
+
+export interface UserMdfPlatformBindWindowCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -6618,6 +6662,7 @@ export interface UserGetProxyBusinessSceneListListData {
   data: {
     id: number;
     sceneKey: string;
+    isSpecialOffer: boolean;
     sceneValue: string;
     sceneDesc: string;
     badgeType: string | null;
@@ -6809,15 +6854,16 @@ export interface UserGetProxyProvidersByBusinessSceneCountryListParams {
 export interface UserGetProxyProvidersByBusinessSceneCountryListData {
   code: number;
   data: {
-    hoverText: string;
-    id: number;
-    inventory: number;
-    proxyPriceList: {
+    hoverText?: string;
+    id?: number;
+    inventory?: number;
+    proxyType?: string;
+    proxyPriceList?: {
       proxyPrice: number;
       proxyPurchaseMonths: number;
     }[];
-    proxyProviderName: string;
-    typeName: string;
+    proxyProviderName?: string;
+    typeName?: string;
   }[];
   msg: string;
 }
@@ -8003,6 +8049,7 @@ export interface UserGetUserPayInfoListData {
   code: number;
   data: {
     apiRate: number;
+    points: number;
     isDirectWhitelist: boolean;
     autoRecharge: number;
     autoRenewDiscount: number;
@@ -8050,8 +8097,7 @@ export interface UserGetUserPayInfoListData {
     useWorkspaceCount: number;
     walletDiscount: number;
     workspaceSinglePrice: number;
-    /** AI Agent 积分 */
-    points: number;
+    pointsDiscount: number;
   };
   msg: string;
 }
@@ -9047,6 +9093,12 @@ export interface UserCalculatePointsPriceListData {
     originalAmount: number;
     actualAmount: number;
     points: number;
+    /** 梯度折扣 */
+    tierDiscount: number;
+    /** 用户身份折扣 */
+    identityDiscount: number;
+    /** 消费总折扣 */
+    totalDiscount: number;
   };
   msg: string;
 }
@@ -9095,6 +9147,30 @@ export interface UserGetPointsRechargeRecordsListData {
   };
   msg: string;
 }
+
+export interface GetPointsTierDiscountRulesListData {
+  code: number;
+  data: {
+    rules: {
+      threshold: number;
+      discount: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetPointsChargesRecordsListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "10" */
+  page_size?: string;
+  /** @example "2026-06-02" */
+  startDate?: string;
+  /** @example "2026-06-17" */
+  endDate?: string;
+}
+
+export type UserGetPointsChargesRecordsListData = object;
 
 export type UserGetRatingRewardCreatePayload = object;
 

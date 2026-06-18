@@ -132,6 +132,9 @@ async function showIdentityVerificationModal() {
 }
 
 function handleAmountQuickCheck(amount: number) {
+  if (isAmountLessThan50.value)
+    return
+
   form.value.amount = Math.min(amount, promotionInfo.withdrawAmount)
 }
 
@@ -184,7 +187,13 @@ function handleBlur(event: InputNumberBlurEvent) {
           <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
         </template>
         <template v-else>
-          <rx-amount-quick-check :presets="[50, 100, 200, 300]" :disabled="isAmountLessThan50" @select="handleAmountQuickCheck($event)" />
+          <div class="flex items-center gap-2">
+            <div v-for="item in [50, 100, 200, 300]" :key="item" class="py-1 px-3 rounded-full cursor-pointer select-none preset" :class="{ disabled: isAmountLessThan50 }"
+                 @click="handleAmountQuickCheck(item)"
+            >
+              {{ currency(item, { precision: 0 }).format() }}
+            </div>
+          </div>
         </template>
       </div>
     </div>
@@ -299,6 +308,21 @@ function handleBlur(event: InputNumberBlurEvent) {
     font-style: normal;
     font-weight: 400;
     line-height: normal;
+  }
+}
+
+.preset {
+  border: 0.5px solid var(--component-tag-border, #e4e8eb);
+  background: var(--component-tag-bg, #f0f3f5);
+  color: var(--component-tag-text, #575d61);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 </style>

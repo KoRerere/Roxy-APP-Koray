@@ -31,7 +31,7 @@ const imageSrc = computed(() => {
       </div>
       <div class="desc">
         <span class="font-700">{{ $t('选项一') }}：</span>
-        <span>{{ $t('每消费 {amount} 可获得 {count} 个空间成员席位，上不封顶 ', { amount: currency(currentActivity.amount).format(), count: currentActivity.staff.count }) }}</span>
+        <span>{{ $t('每消费 {amount} 可获得 {count} 个团队成员席位，上不封顶 ', { amount: currency(currentActivity.amount).format(), count: currentActivity.staff.count }) }}</span>
       </div>
       <div class="desc">
         <span class="font-700">{{ $t('选项二') }}：</span>

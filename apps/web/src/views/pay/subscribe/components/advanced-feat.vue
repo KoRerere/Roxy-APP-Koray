@@ -1,6 +1,5 @@
 <script setup lang="ts">
-;
-import type { Plan } from '../type';
+import type { Plan } from '../type'
 
 interface Props {
   plan?: Plan
@@ -22,7 +21,7 @@ const advanced = computed(() => [
   [
     $t('窗口同步'),
     $t('日志保留时长（{value} 天）', { value: plan?.logDays }),
-  ]
+  ],
 ])
 
 const selfAdvancedFeat: Record<string, boolean> = {
@@ -34,19 +33,21 @@ const selfAdvancedFeat: Record<string, boolean> = {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="advanced-title">{{ $t('额外高级功能') }}</div>
+    <div class="advanced-title">
+      {{ $t('额外高级功能') }}
+    </div>
     <div class="flex justify-between">
-      <div class="flex flex-col gap-4" v-for="(list, index) in advanced" :key="index">
-        <div class="flex items-center gap-3" v-for="(item, idx) in list" :key="item">
-          <SvgIcon v-if="selfAdvancedFeat[`${index}_${idx}`]" name="base/rx_ic_portrait-spark-light"></SvgIcon>
-          <SvgIcon v-else name="base/rx_ic_check" color="var(--colors-icon-icon-success)"></SvgIcon>
+      <div v-for="(list, index) in advanced" :key="index" class="flex flex-col gap-4">
+        <div v-for="(item, idx) in list" :key="item" class="flex items-center gap-3">
+          <SvgIcon v-if="selfAdvancedFeat[`${index}_${idx}`]" name="base/rx_ic_portrait-spark-light" />
+          <SvgIcon v-else name="base/rx_ic_check" color="var(--colors-icon-icon-success)" />
           <span class="advanced-value">{{ item }}</span>
         </div>
       </div>
     </div>
     <div class="flex items-center gap-3 advanced-tip">
-      <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)"></SvgIcon>
-      <span>{{ $t('带有此图标的功能可以在任何空间中使用，其他功能仅限在自己创建的空间使用。') }}</span>
+      <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)" />
+      <span>{{ $t('带有此图标的功能可以在任何团队中使用，其他功能仅限在自己创建的团队使用。') }}</span>
     </div>
   </div>
 </template>
@@ -54,7 +55,7 @@ const selfAdvancedFeat: Record<string, boolean> = {
 <style scoped lang="scss">
 .advanced {
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-weight: 600;
@@ -63,7 +64,7 @@ const selfAdvancedFeat: Record<string, boolean> = {
 
   &-value {
     min-width: 150px;
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;

@@ -33,3 +33,35 @@ export function validatePayPalAddress(address: string) {
 
   return { isValid: true, message: '地址有效' }
 }
+
+const PROMOTION_CODE_OFFICIAL_KEYWORDS = ['official', 'support', 'help', 'admin', 'team'] as const
+export const PROMOTION_CODE_MIN_LENGTH = 6
+export const PROMOTION_CODE_MAX_LENGTH = 16
+
+export function validatePromotionCode(code: string) {
+  const trimmed = code.trim()
+
+  if (/[^a-zA-Z0-9]/.test(trimmed)) {
+    return { isValid: false, message: $t('邀请码只能包含字母和数字，长度为 6-16 位') }
+  }
+
+  if (!/^[a-zA-Z0-9]{6,16}$/.test(trimmed)) {
+    return { isValid: false, message: $t('邀请码只能包含字母和数字，长度为 6-16 位') }
+  }
+
+  const lower = trimmed.toLowerCase()
+
+  if (lower === 'roxy' || lower === 'roxybrowser') {
+    return { isValid: false, message: $t('邀请码不可使用 roxy 或 roxybrowser 相关保留词') }
+  }
+
+  if (lower.includes('roxybrowser')) {
+    return { isValid: false, message: $t('邀请码不可包含 roxybrowser') }
+  }
+
+  if (lower.includes('roxy') && PROMOTION_CODE_OFFICIAL_KEYWORDS.some(keyword => lower.includes(keyword))) {
+    return { isValid: false, message: $t('邀请码不可包含 roxy 与官方关键词的组合') }
+  }
+
+  return { isValid: true, message: '' }
+}

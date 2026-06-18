@@ -4,10 +4,10 @@ import { useUserStore } from '/@/stores/user'
 import { useRoxyClawStore } from '/@/stores/roxy-claw'
 
 import { onMounted } from 'vue'
-import { KICKED_OUT_CHANNEL_NAME } from './constants/channel'
+import { KICKED_OUT_CHANNEL_NAME, MAIN_WINDOW_NAME, MAIN_WINDOW_NAVIGATION_CHANNEL_NAME } from './constants/channel'
 import { useDialog } from './hooks/useDialog'
 import { $t } from './locales'
-import { hidePageLoading, isMainWindow, isNewerVersion, showPageLoading } from './utils'
+import { hidePageLoading, isMainWindow, showPageLoading } from './utils'
 import { markSessionLost } from './utils/sessionLost'
 import { emitter } from './utils/eventBus'
 import type { MittEvents } from './utils/eventBus'
@@ -18,6 +18,22 @@ const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME)
 export function useApp() {
   const router = useRouter()
   const [showModal] = useDialog()
+  const mainWindowNavigationChannel = new BroadcastChannel(MAIN_WINDOW_NAVIGATION_CHANNEL_NAME)
+
+  if (isMainWindow) {
+    window.name = MAIN_WINDOW_NAME
+  }
+
+  mainWindowNavigationChannel.onmessage = (event) => {
+    if (!isMainWindow)
+      return
+
+    const target = event.data
+    if (target) {
+      router.push(target)
+    }
+    window.focus()
+  }
 
   // RoxyClaw 自动启动
   onMounted(async () => {

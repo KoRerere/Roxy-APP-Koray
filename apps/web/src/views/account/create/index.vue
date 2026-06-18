@@ -4,6 +4,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import SingleAccount from '/@/views/account/create/quick.vue'
 import BatchAccount from './batch-account.vue'
+import TemplateImport from './template-import.vue'
 
 const router = useRouter()
 const [showToast] = useResponseToast()
@@ -11,6 +12,7 @@ const [showToast] = useResponseToast()
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
   { title: $t('批量添加'), value: 'batch' },
+  { title: $t('模板导入'), value: 'template' },
 ])
 const tabsValue = ref('single')
 
@@ -27,6 +29,7 @@ async function saveAccount(formData: any) {
     <div class="flex-1 flex overflow-hidden">
       <SingleAccount class="mx-auto w-140" v-show="tabsValue === 'single'" @confirm="saveAccount" @close="router.replace({ name: 'account-list' })" />
       <BatchAccount v-show="tabsValue === 'batch'" />
+      <TemplateImport class="mx-auto w-152" v-show="tabsValue === 'template'" />
     </div>
   </div>
 </template>

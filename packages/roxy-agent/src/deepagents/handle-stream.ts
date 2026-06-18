@@ -1,6 +1,22 @@
-import type { StreamEvent } from '../server/streamAdapter'
+import type { StreamEvent } from '@/core/sse/streamAdapter'
 import type { AIMessageChunk } from '@langchain/core/messages'
-import { streamAdapter } from '../server/streamAdapter'
+import { streamAdapter } from '@/core/sse/streamAdapter'
+import { resolveSkillNameFromPath } from './tools/skill'
+
+/**
+ * 工具入参可能是 JSON 字符串或对象，统一解析为对象（失败返回空对象）。
+ */
+function safeParseInput(input: any): any {
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input)
+    }
+    catch {
+      return {}
+    }
+  }
+  return input ?? {}
+}
 
 type StreamEventResult = StreamEvent | StreamEvent[] | undefined
 
@@ -90,12 +106,26 @@ function handleTool(chunk: any, state: StreamState): StreamEventResult {
   }
 
   if (chunk.event === 'on_tool_start') {
-    return streamAdapter.toolCallEvent({
+    const data: { toolName: string, args: any, toolId: string, taskId: string, assignmentsCount?: number, skillName?: string } = {
       toolName: chunk.name,
       args: chunk.input,
       toolId: chunk.toolCallId,
       taskId: state.taskId,
-    })
+    }
+
+    // 为特定工具注入前端展示所需的标量字段（args 是 JSON 字符串，前端不可靠解析，故由后端解析后下发）
+    if (chunk.name === 'parallel_dispatch') {
+      const parsed = safeParseInput(chunk.input)
+      if (Array.isArray(parsed.assignments)) {
+        data.assignmentsCount = parsed.assignments.length
+      }
+    }
+    else if (chunk.name === 'load_skill_file') {
+      const parsed = safeParseInput(chunk.input)
+      data.skillName = resolveSkillNameFromPath(parsed.path)
+    }
+
+    return streamAdapter.toolCallEvent(data)
   }
 
   if (chunk.event === 'on_tool_end') {

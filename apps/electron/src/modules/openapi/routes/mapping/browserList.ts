@@ -192,5 +192,5 @@ export const browserListMappingV3 = {
   createTime: '2023-12-04 21:55:58', // 窗口创建时间, str类型
   updateTime: '2023-12-04 21:56:01', // 窗口修改时间, str类型
   userName: 'roxytest', // 窗口归属人用户名,即用户账号, str类型
-  workspaceName: 'Roxytest', // 工作空间名称, str类型
+  workspaceName: 'Roxytest', // 团队名称, str类型
 }

@@ -5,7 +5,7 @@ import { currentOS, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress } from '/@/utils'
-import { ensureFirefoxIcon } from './firefoxIcon'
+import { ensureFirefoxIcon, fitBadgeText } from './browserIcon'
 import { getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
 
 /** 生成 Firefox 浏览器指纹配置（结构按 docs/firefox指纹参数使用说明.md） */
@@ -32,8 +32,11 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     ecommerceDirectWhiteList = await getEcommerceDirectWhiteList()
   }
 
-  // 动态生成带 windowSortNum 数字徽章的 .ico；图标存于 userDataDir，内部含磁盘+内存双层缓存与失败回退
-  const browserIconPath = await ensureFirefoxIcon(winInfo.windowSortNum, userDataDir)
+  // 任务栏图标写入 userDataDir/firefox-icon.{ext}；徽章未变时复用缓存，跳过重复渲染
+  const browserIconPath = await ensureFirefoxIcon(
+    store.taskbarIconDisplay === 'windowName' ? (fitBadgeText(winInfo.windowName) || winInfo.windowSortNum) : winInfo.windowSortNum,
+    userDataDir,
+  )
 
   return {
     userAgent: winInfo.userAgentNew,
@@ -218,7 +221,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       }
     },
     get windowName() {
-      if (store.windowNameSwitch) {
+      if (store.taskbarTabDisplay === 'windowName') {
         return winInfo.windowName
       }
     },

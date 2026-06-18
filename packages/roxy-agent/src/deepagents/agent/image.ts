@@ -3,12 +3,14 @@ import { createDeepAgent } from 'deepagents'
 import path from 'node:path'
 import { aiAgentModelApi } from '@/api/model'
 import { env } from '@/config'
+import { mcpManager } from '@/core/mcp/mcpManager'
 import { createDeepAgentRuntime } from '@/deepagents/backend'
+import { createImageSpecStore } from '@/deepagents/imageSpec'
+import { createSaveImageSpecLimitMiddleware } from '@/deepagents/middlewares/imageSpec'
 import { IMAGE_SYSTEM_PROMPT } from '@/deepagents/prompt'
 import { SqliteSaver } from '@/deepagents/sqlite-checkpointer'
-import { imageTools } from '@/deepagents/tools/image'
+import { createImageTools } from '@/deepagents/tools/image'
 import { createLLMFromModelInfo } from '@/llm'
-import { mcpManager } from '@/mcpManager'
 
 export async function createImageAgent(options: {
   conversationId?: string
@@ -41,11 +43,12 @@ export async function createImageAgent(options: {
   const runtime = await createDeepAgentRuntime({
     allowExecution: Boolean(checkpointer),
   })
+  const imageSpecStore = createImageSpecStore()
 
   const tools = [
     ...runtime.tools,
     ...mcpTools,
-    ...imageTools,
+    ...createImageTools(imageSpecStore),
   ]
   const agent = createDeepAgent({
     model,
@@ -53,8 +56,9 @@ export async function createImageAgent(options: {
     backend: runtime.backend,
     systemPrompt: IMAGE_SYSTEM_PROMPT,
     tools,
-    middleware: runtime.middleware,
+    middleware: [...runtime.middleware, createSaveImageSpecLimitMiddleware()],
     name: 'image',
+    subagents: [],
     ...(checkpointer ? { interruptOn: runtime.interruptOn } : {}),
   })
 
@@ -64,6 +68,7 @@ export async function createImageAgent(options: {
       imageModel: modelInfo.image_model?.model,
       imageProtocol: modelInfo.image_model?.api_format,
     },
+    consumeImageSpec: imageSpecStore.consume,
     destroy: async () => {
       await runtime.destroy()
     },

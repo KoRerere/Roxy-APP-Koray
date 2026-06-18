@@ -1,7 +1,9 @@
+import type { ImageGenerationSpec } from './imageSpec'
 import type { DeepAgent } from 'deepagents'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config'
+import { closeCheckpointer } from './sqlite-checkpointer'
 
 export interface AgentConfig {
   apiKey: string
@@ -21,6 +23,7 @@ export interface AgentInstance {
     imageModel?: string
     imageProtocol?: string
   }
+  consumeImageSpec?: () => ImageGenerationSpec | undefined
 }
 
 export { createChatAgent } from './agent/chat'
@@ -30,11 +33,29 @@ export { createScriptAgent } from './agent/script'
 
 export async function deleteCheckpoint(conversationId: string): Promise<void> {
   const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${conversationId}.db`)
-  try {
-    await fs.unlink(checkpointPath)
-    console.log(`Deleted checkpoint for conversation ${conversationId}`)
+  closeCheckpointer(checkpointPath)
+
+  const paths = [
+    checkpointPath,
+    `${checkpointPath}-wal`,
+    `${checkpointPath}-shm`,
+  ]
+  let deleted = false
+
+  for (const filePath of paths) {
+    try {
+      await fs.unlink(filePath)
+      deleted = true
+    }
+    catch (err: any) {
+      if (err?.code !== 'ENOENT')
+        throw err
+    }
   }
-  catch (err) {
-    console.log(`Checkpoint not found for conversation ${conversationId}, skipping delete`)
-  }
+
+  console.log(
+    deleted
+      ? `Deleted checkpoint for conversation ${conversationId}`
+      : `Checkpoint not found for conversation ${conversationId}, skipping delete`,
+  )
 }

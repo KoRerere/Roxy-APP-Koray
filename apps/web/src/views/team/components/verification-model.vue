@@ -45,9 +45,9 @@ async function sendCode() {
       <div class="flex justify-center">
         <SvgIcon name="empty/rx_illustration_verification_mail" size="128" />
       </div>
-      <RxAlert class="w-full" type="warn" :closable="false" :title="$t('您正在配置的权限与资产相关，请确保空间创建人知晓本次操作')" />
+      <RxAlert class="w-full" type="warn" :closable="false" :title="$t('您正在配置的权限与资产相关，请确保团队创建人知晓本次操作')" />
       <div class="description">
-        <div>{{ $t('请输入发送至空间创建人绑定{type} {value} 的验证码，以完成验证。', { type: currentWorkspace!.phone ? $t('手机号') : $t('邮箱'), value: currentWorkspace!.phone || currentWorkspace!.email }) }}</div>
+        <div>{{ $t('请输入发送至团队创建人绑定{type} {value} 的验证码，以完成验证。', { type: currentWorkspace!.phone ? $t('手机号') : $t('邮箱'), value: currentWorkspace!.phone || currentWorkspace!.email }) }}</div>
       </div>
       <InputOtp v-model="emailCode" class="w-full flex gap-1.5 inputotp" integer-only :length="6" size="large" />
       <div class="flex justify-end gap-3">

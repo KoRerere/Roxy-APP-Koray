@@ -1,0 +1,5 @@
+export { fitBadgeText } from './badgeMetrics'
+export { ensureChromeIcon, ensureFirefoxIcon } from './ensure'
+export type { BrowserIconKind } from './ensure'
+export { CHROME_BADGE_CSS, FIREFOX_BADGE_CSS, renderBadgedPng } from './render'
+export type { RenderBadgedPngOptions } from './render'

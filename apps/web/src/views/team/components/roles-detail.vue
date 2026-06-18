@@ -139,7 +139,7 @@ async function permissionChange(data: { status: boolean, code?: string }, item: 
           <span class="title shrink-0 py-3 pl-3" :class="{ 'opacity-0': index !== 0 }">{{ group.moduleDes }}</span>
           <span class="name min-w-0 py-3 flex items-center gap-1.5">
             <span>{{ item.permissionName }}</span>
-            <SvgIcon v-if="item.permissionCode === 'Cost_Center_all'" v-tooltip.top="$t('开启后，用户将完全接管空间拥有者的资产权限，包含钱包、续订、银行卡、窗口、空间、成员、代理 IP 等资产的详情查看、信息修改和购买权限，消费将会从空间所有者钱包内扣款。')" class="cursor-pointer"
+            <SvgIcon v-if="item.permissionCode === 'Cost_Center_all'" v-tooltip.top="$t('开启后，用户将完全接管团队拥有者的资产权限，包含钱包、续订、银行卡、窗口、团队、成员、代理 IP 等资产的详情查看、信息修改和购买权限，消费将会从团队所有者钱包内扣款。')" class="cursor-pointer"
                      name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)"
             />
           </span>

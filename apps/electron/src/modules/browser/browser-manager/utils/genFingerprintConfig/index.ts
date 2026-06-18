@@ -9,5 +9,5 @@ export async function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: R
   if (isFirefox) {
     return genFirefoxFingerprintConfig(winInfo, proxyInfo, userDataDir)
   }
-  return genChromeFingerprintConfig(winInfo, proxyInfo)
+  return genChromeFingerprintConfig(winInfo, proxyInfo, userDataDir)
 }

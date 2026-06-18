@@ -1,23 +1,48 @@
 <script setup lang="ts">
 import type { AgentErrorData } from '../../utils/agent-error'
 import { resolveAgentError } from '../../utils/agent-error'
+import { copyText } from '/@/utils/basic'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { data } = defineProps<{
   data?: AgentErrorData | string
 }>()
 
+const [showToast, onlyErrorToast] = useResponseToast()
+
 const resolved = computed(() => resolveAgentError(data))
 const message = computed(() => resolved.value.message)
 const requestId = computed(() => resolved.value.requestId)
+
+async function copyRequestId() {
+  if (!requestId.value)
+    return
+  try {
+    await copyText(requestId.value)
+    showToast(0, $t('复制成功'))
+  }
+  catch (error) {
+    console.error('Failed to copy request id:', error)
+    onlyErrorToast(-1, $t('复制失败，请重试'))
+  }
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-0.5 status-message status-error">
+  <div class="flex status-message status-error">
     <div class="flex items-center gap-1.5">
       <SvgIcon name="base/rx_ic_delete" size="14" />
       <span>{{ message }}</span>
     </div>
-    <span v-if="requestId" class="request-id">{{ $t('如需协助，请提供请求 ID：') }}{{ requestId }}</span>
+    <span v-if="requestId">
+      <I18nT :keypath="$t('请求 ID：{requestId}', { requestId: '{requestId}' })">
+        <template #requestId>
+          <a class="underline cursor-pointer text-[var(--colors-text-text-error)]" @click="copyRequestId">
+            {{ requestId }}
+          </a>
+        </template>
+      </I18nT>
+    </span>
   </div>
 </template>
 
@@ -35,12 +60,5 @@ const requestId = computed(() => resolved.value.requestId)
 .status-interrupt {
   background: var(--colors-background-bg-warning-subtle);
   color: var(--colors-text-text-warning);
-}
-
-.request-id {
-  padding-left: 19.5px;
-  font-size: 11px;
-  opacity: 0.7;
-  user-select: text;
 }
 </style>

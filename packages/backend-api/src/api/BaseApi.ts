@@ -42,6 +42,7 @@ import {
   GetEcommerceWhitelistDomainsListData,
   GetFaqHelpList2Data,
   GetFaqHelpListData,
+  GetJuneRechargePromoTimeListData,
   GetMayFreedomSeasonPromoTimeListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
@@ -156,6 +157,8 @@ import {
   UserLogoutListData,
   UserMayFreedomResultListData,
   UserMigrateDataListData,
+  UserModifyPromotionLinkCreateData,
+  UserModifyPromotionLinkCreatePayload,
   UserModifyRemarkDisplayStatusCreateData,
   UserModifyRemarkDisplayStatusCreatePayload,
   UserReadNotifyCreateData,
@@ -2420,6 +2423,43 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/check_phone_registered`,
       method: "GET",
       query: query,
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetJuneRechargePromoTimeList
+   * @summary 6月充值活动
+   * @request GET:/get_june_recharge_promo_time
+   * @response `200` `GetJuneRechargePromoTimeListData`
+   */
+  getJuneRechargePromoTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetJuneRechargePromoTimeListData, any>({
+      path: `/get_june_recharge_promo_time`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserModifyPromotionLinkCreate
+   * @summary 用户修改自定义推广邀请码
+   * @request POST:/user_modify_promotion_link
+   * @response `200` `UserModifyPromotionLinkCreateData`
+   */
+  userModifyPromotionLinkCreate = (
+    data: UserModifyPromotionLinkCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserModifyPromotionLinkCreateData, any>({
+      path: `/user_modify_promotion_link`,
+      method: "POST",
       body: data,
       type: ContentType.Json,
       format: "json",

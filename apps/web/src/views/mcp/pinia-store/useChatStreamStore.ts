@@ -1,4 +1,4 @@
-import { computed, nextTick, ref, toRaw, watch } from 'vue'
+import { computed, markRaw, nextTick, ref, shallowRef, toRaw, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { getImage } from '/@/utils/basic'
 import { format } from 'date-fns'
@@ -10,8 +10,13 @@ import { useAgentApi } from '../agent-api'
 import type { AssetGenerationOptions, AttachmentInfo, AvatarInfo, FormattedMessage, GeneratedImageInfo, HitlDecision, InputScene, MessageEntryView, SSEEventData, Todo, WorkerStatus } from '/@/views/mcp/types'
 import type { ConversationDetail } from '../agent-api'
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain']
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'application/pdf', 'text/plain', 'application/json', 'text/markdown', 'text/x-markdown', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif']
+const EXTENSION_MIME_TYPES: Record<string, string> = {
+  '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.markdown': 'text/markdown',
+}
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const MAX_PENDING_ATTACHMENTS = 3
 const DEFAULT_ASSET_OPTIONS: AssetGenerationOptions = {
@@ -45,6 +50,14 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+function resolveFileMimeType(file: File) {
+  if (file.type)
+    return file.type
+
+  const match = file.name.toLowerCase().match(/\.[^.]+$/)
+  return match ? EXTENSION_MIME_TYPES[match[0]] || '' : ''
 }
 
 function createContentBlock(text: string): MessageEntryView {
@@ -128,7 +141,7 @@ export interface UseChatStreamOptions {
 
 export const useChatStreamStore = defineStore('chatStream', () => {
   const [, onlyErrorToast] = useResponseToast()
-  const { mixpanelTrack } = useUserStore()
+  const { mixpanelTrack, getUserPayInfo } = useUserStore()
   const { userInfo } = storeToRefs(useUserStore())
   const agentStore = useAgentStore()
   const { conversationDetail, conversationStop, conversationResume, uploadFile, getFileUrl, conversationCreate } = useAgentApi()
@@ -168,7 +181,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
   const pendingAttachments = ref<AttachmentInfo[]>([])
   const pendingScript = ref<any>(null)
   const currentConversation = ref<ConversationDetail>()
-  const messageList = ref<any[]>([])
+  const messageList = shallowRef<any[]>([])
   const isEmpty = computed(() => messageList.value.length === 0)
   const currentImagePrompt = ref('')
 
@@ -186,6 +199,8 @@ export const useChatStreamStore = defineStore('chatStream', () => {
   }
 
   // ---- Scroll integration ----
+  /** 每次需要强制滚底时自增；view 层 watch 此值，变化则在 nextTick 后强制滚底 */
+  const scrollToBottomToken = ref(0)
   let scrollCallback: (() => void) | null = null
 
   function setScrollCallback(cb: () => void) {
@@ -193,12 +208,23 @@ export const useChatStreamStore = defineStore('chatStream', () => {
   }
 
   function updateStream(isStreaming = true) {
-    const currentMessage = messageList.value[messageList.value.length - 1]
-    if (currentMessage) {
-      currentMessage.isStreaming = isStreaming
-      currentMessage.messageBlocks = messageViewer.view()
-      todo.value = messageViewer.viewTodo()
+    const list = messageList.value
+    const idx = list.length - 1
+    if (idx < 0) {
+      nextTick(() => scrollCallback?.())
+      return
     }
+    // 替换最后一个 item 为新对象，同时用 slice() 换一个新数组引用，
+    // 确保 DynamicScroller 的 :items prop 发生变化（shallowRef + markRaw 下不能原地 mutate）
+    const newItem = markRaw({
+      ...list[idx],
+      isStreaming,
+      messageBlocks: messageViewer.view(),
+    })
+    todo.value = messageViewer.viewTodo()
+    const newList = list.slice()
+    newList[idx] = newItem
+    messageList.value = newList
     nextTick(() => scrollCallback?.())
   }
 
@@ -260,6 +286,11 @@ export const useChatStreamStore = defineStore('chatStream', () => {
 
       case 'worker_content':
         messageViewer.addWorkerEntry(data?.taskId || '', data?.contentId || '', 'worker_content', data?.text || '', eventTimestamp)
+        updateStream()
+        break
+
+      case 'worker_dispatch':
+        messageViewer.setWorkerTitle(data?.taskId || '', data?.title || '')
         updateStream()
         break
 
@@ -414,21 +445,25 @@ export const useChatStreamStore = defineStore('chatStream', () => {
       fileUrl: att.fileUrl,
     }))
 
-    messageList.value.push({
-      ...userAvatar.value,
-      mode: outgoingMode,
-      date: formatDate(new Date()),
-      attachments: displayAttachments.length ? displayAttachments : undefined,
-      content: msg,
-    })
-
-    messageList.value.push({
-      ...aiAvatar,
-      mode: outgoingMode,
-      date: formatDate(new Date()),
-      messageBlocks: [],
-      isStreaming: true,
-    })
+    messageList.value = [
+      ...messageList.value,
+      markRaw({
+        id: generateId(),
+        ...userAvatar.value,
+        mode: outgoingMode,
+        date: formatDate(new Date()),
+        attachments: displayAttachments.length ? displayAttachments : undefined,
+        content: msg,
+      }),
+      markRaw({
+        id: generateId(),
+        ...aiAvatar,
+        mode: outgoingMode,
+        date: formatDate(new Date()),
+        messageBlocks: [],
+        isStreaming: true,
+      }),
+    ]
 
     isChatting.value = true
     messageViewer = new MessageViewer()
@@ -477,6 +512,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         if (isCreatedChat) {
           options.onCreateConversation?.(toRaw(currentConversation.value!))
         }
+        getUserPayInfo()
       })
 
       return
@@ -517,6 +553,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
       if (isCreatedChat) {
         options.onCreateConversation?.(toRaw(currentConversation.value!))
       }
+      getUserPayInfo()
     })
   }
 
@@ -546,7 +583,9 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         break
       }
 
-      if (!allowedMimeTypes.includes(file.type)) {
+      const mimeType = resolveFileMimeType(file)
+
+      if (!allowedMimeTypes.includes(mimeType)) {
         onlyErrorToast(-1, `不支持的文件类型: ${file.name}`)
         continue
       }
@@ -557,14 +596,14 @@ export const useChatStreamStore = defineStore('chatStream', () => {
       }
 
       const tempId = generateId()
-      const preview = file.type.startsWith('image/')
+      const preview = mimeType.startsWith('image/')
         ? URL.createObjectURL(file)
         : undefined
 
       pendingAttachments.value.push({
         fileId: tempId,
         fileName: file.name,
-        mimeType: file.type,
+        mimeType,
         size: file.size,
         preview,
         uploadStatus: 'uploading',
@@ -572,7 +611,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
 
       try {
         const base64 = await fileToBase64(file)
-        const res = await uploadFile(base64, file.type, file.name)
+        const res = await uploadFile(base64, mimeType, file.name)
 
         if (res.code === 0) {
           const index = pendingAttachments.value.findIndex(a => a.fileId === tempId)
@@ -667,6 +706,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
           return acc
         }, [])
         return {
+          id: data.id || generateId(),
           ...aiAvatar,
           mode: data.agent_mode,
           date: formatDate(data.created_at),
@@ -690,6 +730,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
           : []
         const imageBlock: MessageEntryView = { id: '__images__', type: 'image', meta: { images }, text: '', workers: [] }
         return {
+          id: data.id || generateId(),
           ...aiAvatar,
           mode: data.agent_mode,
           date: formatDate(data.created_at),
@@ -700,6 +741,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
 
       const events = parseHistorySSE2(data.content)
       return {
+        id: data.id || generateId(),
         ...aiAvatar,
         mode: data.agent_mode,
         date: formatDate(data.created_at),
@@ -720,6 +762,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
     return {
       ...userAvatar.value,
       ...data,
+      id: data.id || generateId(),
       date: formatDate(data.created_at),
       attachments: historyAttachments,
     }
@@ -750,9 +793,10 @@ export const useChatStreamStore = defineStore('chatStream', () => {
     if (res.code === 0) {
       currentConversation.value = res.data
       inputScene.value = res.data.conversation_type === 'asset' ? 'asset' : 'automation'
-      messageList.value = res.data.messages.map(formatMessage)
+      messageList.value = res.data.messages.map(m => markRaw(formatMessage(m)))
       console.log('🚀 ~ loadConversation ~ messageList.value:', toRaw(messageList.value))
-      nextTick(() => scrollCallback?.())
+      // 自增 token 通知 view 层强制滚底（响应式，无需回调注入）
+      scrollToBottomToken.value++
     }
     else {
       messageList.value = []
@@ -813,6 +857,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
     useGeneratedImageAsReference,
     loadConversation,
     resetChat,
+    scrollToBottomToken,
     setScrollCallback,
     // Lifecycle
     init,

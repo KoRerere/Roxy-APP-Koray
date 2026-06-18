@@ -276,7 +276,7 @@ function handleIntegrationClick(integration: any) {
           <div class="flex flex-1 flex-col gap-1">
             <div class="flex items-center gap-3 text-sm font-bold text-[var(--colors-text-text-primary)]">
               {{ integration.name }}
-              <!-- <span v-if="integration.isNew" class="text-3 font-[DingTalk_Sans] rounded-full px-1 py-0.5 text-xs text-white bg-[var(--colors-background-bg-error)]">
+              <!-- <span v-if="integration.isNew" class="text-3 font-[DingTalk_JinBuTi] rounded-full px-1 py-0.5 text-xs text-white bg-[var(--colors-background-bg-error)]">
                 NEW
               </span> -->
               <svg v-if="integration.isNew && compare(userStore.appVersion, '3.8.7', '>=')" width="46" height="19" viewBox="0 0 46 19" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -26,7 +26,10 @@ export function toUpgradePlan() {
   }
 }
 
-export const switchWorkspaceAndToUpgradePlan = executeSomethingByBackToSelfWorkspace(toUpgradePlan)
+export function hasWorkspaceBillingPermission() {
+  const { check } = usePermission()
+  return check('Cost_Center_all')
+}
 
 function buyMoreExpand(defaultType: 'workspace' | 'staff') {
   emitter.emit('showExpandDialog', { defaultType })
@@ -53,6 +56,18 @@ export function executeSomethingByBackToSelfWorkspace(next: (...args: any[]) => 
   }
 }
 
+export const switchWorkspaceAndToUpgradePlan = executeSomethingByBackToSelfWorkspace(toUpgradePlan)
+
+/** 空间权益：有费用中心权限时在当前空间直接跳转升级/付费页 */
+export function navigateToWorkspaceUpgrade() {
+  if (hasWorkspaceBillingPermission()) {
+    toUpgradePlan()
+  }
+}
+
+/** 个人权益：切回自有空间后跳转升级（窗口模板、窗口转移、窗口同步） */
+export const navigateToPersonalUpgrade = switchWorkspaceAndToUpgradePlan
+
 export const showToast = (options: ToastMessageOptions) => emitter.emit('showToast', options)
 
 export function useHandleBusinessCode() {
@@ -62,13 +77,13 @@ export function useHandleBusinessCode() {
   async function handleBusinessCode(code: number, next?: () => void) {
     const privateMoreExpand = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
 
-    // 空间数量超出
+    // 团队数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
       showToast({
         severity: 'warn',
-        summary: $t('工作空间用量不足'),
+        summary: $t('团队用量不足'),
         detail: (
-          <I18nT keypath={$t('您已达到最大工作空间创建限制，可通过删除不再使用的工作空间或 {link}', { link: '{link}' })}>
+          <I18nT keypath={$t('您已达到最大团队创建限制，可通过删除不再使用的团队或 {link}', { link: '{link}' })}>
             {{ link: () => <a class="cursor-pointer" onClick={() => privateMoreExpand('workspace')}>{$t('购买更多')}</a> }}
           </I18nT>
         ),
@@ -80,7 +95,7 @@ export function useHandleBusinessCode() {
         return showToast({
           severity: 'warn',
           summary: $t('团队成员用量不足'),
-          detail: $t('当前空间下的团队成员数量已到达上限，请删除不再活跃的团队成员或者联系空间的拥有者进行升级。'),
+          detail: $t('当前团队下的团队成员数量已到达上限，请删除不再活跃的团队成员或者联系团队的拥有者进行升级。'),
           life: 5000,
         })
       }
@@ -100,7 +115,7 @@ export function useHandleBusinessCode() {
         return showToast({
           severity: 'warn',
           summary: $t('窗口用量不足'),
-          detail: $t('当前空间下的可创建窗口数量已到达上限，请删除不需要的窗口或者联系空间的拥有者进行升级。'),
+          detail: $t('当前团队下的可创建窗口数量已到达上限，请删除不需要的窗口或者联系团队的拥有者进行升级。'),
           life: 5000,
         })
       }
@@ -131,7 +146,7 @@ export function useHandleBusinessCode() {
         return showToast({
           severity: 'warn',
           summary: $t('项目用量不足'),
-          detail: $t('当前空间下的项目数量已到达上限，请删除不再使用的项目或者联系空间的拥有者进行升级。'),
+          detail: $t('当前团队下的项目数量已到达上限，请删除不再使用的项目或者联系团队的拥有者进行升级。'),
           life: 5000,
         })
       }
@@ -151,7 +166,7 @@ export function useHandleBusinessCode() {
         return showToast({
           severity: 'warn',
           summary: $t('窗口打开次数不足'),
-          detail: $t('当前空间下的窗口打开次数已到达上限，请删除不再使用的窗口或者联系空间的拥有者进行升级。'),
+          detail: $t('当前团队下的窗口打开次数已到达上限，请删除不再使用的窗口或者联系团队的拥有者进行升级。'),
           life: 5000,
         })
       }

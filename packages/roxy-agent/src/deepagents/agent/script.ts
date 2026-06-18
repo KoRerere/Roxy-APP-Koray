@@ -3,8 +3,8 @@ import {
   createDeepAgent,
 } from 'deepagents'
 import path from 'node:path'
+import { getOpenApiTools } from '@/core/mcp/globalMcpClients'
 import { env } from '../../config'
-import { getOpenApiTools } from '../../globalMcpClients'
 import { createLLM } from '../../llm'
 import { createDeepAgentRuntime } from '../backend'
 import { SqliteSaver } from '../sqlite-checkpointer'
@@ -99,6 +99,7 @@ export async function createScriptAgent(options: {
     tools,
     middleware: runtime.middleware,
     name: 'run_script_agent',
+    subagents: [],
     ...(checkpointer ? { interruptOn: runtime.interruptOn } : {}),
   })
 

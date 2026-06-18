@@ -1,6 +1,6 @@
 export const browserUpdateMapping = {
   dirId: 'dc1e73d4dd954a3a8ca087d53d2e18ce', // 浏览器窗口id, str类型，必传
-  workspaceId: 1, // 工作空间id，int类型，必传
+  workspaceId: 1, // 团队id，int类型，必传
   windowName: '窗口1', // 窗口名称, str类型，非必传
   coreVersion: '117', // 内核版本，枚举值：117，109, str类型，非必传，默认125
   os: 'Windows', // 操作系统, 枚举值：Windows、macOS、Linux、IOS、Android, str类型，非必传，默认Windows

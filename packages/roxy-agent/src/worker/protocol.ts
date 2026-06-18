@@ -1,4 +1,4 @@
-import type { StreamEvent } from '../server/streamAdapter'
+import type { StreamEvent } from '@/core/sse/streamAdapter'
 
 export const PROTOCOL_VERSION = 1
 export const WORKER_HEARTBEAT_INTERVAL_MS = 15_000

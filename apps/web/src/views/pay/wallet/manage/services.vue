@@ -17,6 +17,7 @@ import { ProxyExpireStatus } from '/@/enums/proxy'
 import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
+import { useBuyPoints } from '/@/views/mcp/components/buyPointes'
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
@@ -25,6 +26,7 @@ const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 const { buyProxy } = useProxy()
 const { handleBusinessCode } = useHandleBusinessCode()
+const { buyPoints } = useBuyPoints()
 
 const nextBillText = ref()
 const isFree = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Free)
@@ -60,12 +62,19 @@ const otherCards = computed(() => [
     addClick: () => onExpand('staff'),
   },
   {
-    title: $t('工作空间'),
+    title: $t('团队'),
     used: userPayInfo.value.useWorkspaceCount,
     total: userPayInfo.value.maxWorkspaceCount,
     text: $t('已使用'),
     addText: $t('新增'),
     addClick: () => onExpand('workspace'),
+  },
+  {
+    title: $t('AI Agent 积分'),
+    used: userPayInfo.value.points,
+    text: $t('积分'),
+    addText: $t('购买'),
+    addClick: buyPoints,
   },
 ])
 
@@ -214,7 +223,7 @@ async function openPrimeDialog() {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center gap-8">
       <div class="title">
         {{ $t('服务') }}
       </div>
@@ -307,7 +316,7 @@ async function openPrimeDialog() {
       <div class="title">
         {{ $t('我的资源') }}
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 gap-2">
         <div v-for="item in otherCards" :key="item.title" class="h-[105px] flex flex-col justify-between flex-1 pa-4 rounded-xl others">
           <div class="flex justify-between items-center">
             <span class="others-title">{{ item.title }}</span>

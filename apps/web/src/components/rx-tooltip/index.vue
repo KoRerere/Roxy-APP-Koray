@@ -112,6 +112,13 @@ function hide() {
   }, 200)
 }
 
+function hideImmediate() {
+  delayTimer && clearTimeout(delayTimer)
+  hideTimer && clearTimeout(hideTimer)
+  motionShow.value = false
+  show.value = false
+}
+
 function enterContent() {
   hideTimer && clearTimeout(hideTimer)
 }
@@ -147,6 +154,8 @@ onMounted(() => {
 
 defineExpose({
   align,
+  hide,
+  hideImmediate,
 })
 </script>
 
@@ -161,7 +170,7 @@ defineExpose({
                     :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"
                     :transition="{ duration: 0.15 }"
         >
-          <slot name="content" />
+          <slot name="content" :hide="hideImmediate" />
         </motion.div>
       </AnimatePresence>
     </div>

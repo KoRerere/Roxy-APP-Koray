@@ -1,20 +1,39 @@
-import RelatedInfo from '/@/components/related-info.vue'
-import PlatformInfo from '/@/views/account/list/components/platform-info.vue'
 import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { parseWindowInfo } from './utils'
 
 export function getRawColumns(options?: any) {
-  const workspaceName = getWorkspaceNamePrefix(useWorkspaceStore().currentWorkspace?.workspaceName)
   return setColumns([
     {
-      title: $t('账号信息'),
+      title: $t('平台'),
       key: 'status',
       disabledToggle: true,
-      render: ({ data }: any) => {
-        return <PlatformInfo data={data}></PlatformInfo>
+      slot: 'platformInfo',
+      style: {
+        minWidth: '220px',
+      },
+    },
+    {
+      title: $t('账号'),
+      key: 'platformUserName',
+      slot: 'userName',
+      style: {
+        minWidth: '160px',
+      },
+    },
+    {
+      title: $t('密码'),
+      key: 'platformPassword',
+      headerSlot: 'passwordHeader',
+      slot: 'password',
+      style: {
+        minWidth: '160px',
+      },
+      _cache: {
+        visible: false,
       },
     },
     {
@@ -32,9 +51,9 @@ export function getRawColumns(options?: any) {
     {
       title: $t('已关联窗口'),
       key: 'related',
-      render: ({ data }: any) => {
-        const list = data.window_info.map((id: number) => `${workspaceName}-${id}`)
-        return <RelatedInfo list={list}></RelatedInfo>
+      slot: 'related',
+      style: {
+        minWidth: '120px',
       },
     },
     {
@@ -56,12 +75,17 @@ export function useColumns(options?: any) {
 
   onBeforeMount(() => {
     updateColumns((columns) => {
-      const column = columns.find(column => column.key === 'remark')
-      if (column?._cache) {
-        Reflect.set(column._cache, 'extend', userConfig.value.remarkDisplayStatus!)
+      const remarkColumn = columns.find(column => column.key === 'remark')
+      if (remarkColumn?._cache) {
+        Reflect.set(remarkColumn._cache, 'extend', userConfig.value.remarkDisplayStatus!)
       }
     })
   })
 
   return { columns, updateRemarkDisplayStatus }
+}
+
+export function getRelatedProfileLabels(data: Record<string, any>) {
+  const workspaceName = getWorkspaceNamePrefix(useWorkspaceStore().currentWorkspace?.workspaceName)
+  return parseWindowInfo(data.window_info).map(id => `${workspaceName}-${id}`)
 }
