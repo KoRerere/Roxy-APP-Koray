@@ -78,7 +78,7 @@ importers:
         version: 1.25.1(patch_hash=9ea4d654ca2d33ac63a3babe4767a882ec9a8d86f710139bc4b464b46b23a8e2)(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
       '@napi-rs/cli':
         specifier: ^3.5.1
-        version: 3.7.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(node-addon-api@7.1.1)
+        version: 3.7.0(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(node-addon-api@7.1.1)
       '@types/adm-zip':
         specifier: ^0.5.8
         version: 0.5.8
@@ -1116,6 +1116,9 @@ importers:
       '@roxybrowser/openapi':
         specifier: 1.0.10
         version: 1.0.10(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
+      terser-webpack-plugin:
+        specifier: ^5.6.1
+        version: 5.6.1(esbuild@0.28.0)(webpack@5.105.4)
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -1142,6 +1145,9 @@ importers:
         specifier: 0.0.6
         version: 0.0.6
     devDependencies:
+      terser-webpack-plugin:
+        specifier: ^5.6.1
+        version: 5.6.1(esbuild@0.28.0)(webpack@5.105.4)
       unplugin-dts:
         specifier: 'catalog:'
         version: 1.0.2(esbuild@0.28.0)(rolldown@1.0.3)(rollup@4.61.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))(webpack@5.105.4)
@@ -14986,9 +14992,9 @@ snapshots:
       '@napi-rs/canvas-win32-arm64-msvc': 1.0.0
       '@napi-rs/canvas-win32-x64-msvc': 1.0.0
 
-  '@napi-rs/cli@3.7.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(node-addon-api@7.1.1)':
+  '@napi-rs/cli@3.7.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.1)(node-addon-api@7.1.1)':
     dependencies:
-      '@inquirer/prompts': 8.5.2(@types/node@22.19.19)
+      '@inquirer/prompts': 8.5.2(@types/node@25.9.1)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       '@napi-rs/wasm-tools': 1.0.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       '@octokit/rest': 22.0.1
@@ -15018,9 +15024,9 @@ snapshots:
       - node-addon-api
       - supports-color
 
-  '@napi-rs/cli@3.7.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.1)(node-addon-api@7.1.1)':
+  '@napi-rs/cli@3.7.0(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(node-addon-api@7.1.1)':
     dependencies:
-      '@inquirer/prompts': 8.5.2(@types/node@25.9.1)
+      '@inquirer/prompts': 8.5.2(@types/node@22.19.19)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       '@napi-rs/wasm-tools': 1.0.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       '@octokit/rest': 22.0.1

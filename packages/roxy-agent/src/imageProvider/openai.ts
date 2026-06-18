@@ -84,17 +84,17 @@ export const openaiImageGenerator: ImageGenerator = {
   async generate(payload: ImageGeneratePayload, signal?: AbortSignal) {
     const hasReferenceImages = Array.isArray(payload.image) && payload.image.length > 0
     if (!hasReferenceImages) {
-      return aiAgentClient.rawPost('/v1/images/generations', { body: buildGenerationsBody(payload), signal }, {
+      return aiAgentClient.rawPost('/v1/images/generations', { body: buildGenerationsBody(payload), signal, headers: {
         'conversation-id': payload.conversationId,
         'turn-id': payload.turnId,
-      })
+      } })
     }
 
     const form = await buildEditFormData(payload, signal)
-    return aiAgentClient.rawPost('/v1/images/edits', { body: form, signal }, {
+    return aiAgentClient.rawPost('/v1/images/edits', { body: form, signal, headers: {
       'conversation-id': payload.conversationId,
       'turn-id': payload.turnId,
-    })
+    }})
   },
 
   readStream(reader) {

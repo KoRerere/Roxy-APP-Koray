@@ -29,25 +29,19 @@ export interface AiAgentJsonRequestOptions extends AiAgentRequestOptions {
   body?: AiAgentBody | object | null
 }
 
-function buildAiAgentHeaders(options: AiAgentRequestOptions = {}, headers?: Record<string, any>) {
-  const requestHeaders = new Headers(options.headers)
+function buildAiAgentHeaders(options: AiAgentRequestOptions = {}) {
+  const headers = new Headers(options.headers)
   const token = options.token ?? aiAgentToken
   const language = options.language ?? env.SYSTEM_LANGUAGE
 
-  if (token && !requestHeaders.has('Authorization') && !requestHeaders.has('x-api-key'))
-    requestHeaders.set('Authorization', `Bearer ${token}`)
+  if (token && !headers.has('Authorization') && !headers.has('x-api-key'))
+    headers.set('Authorization', `Bearer ${token}`)
 
-  if (language && !requestHeaders.has('Language') && !requestHeaders.has('language'))
-    requestHeaders.set('Language', language)
+  if (language && !headers.has('Language') && !headers.has('language'))
+    headers.set('Language', language)
+  headers.set('ai-agent-version', env.AI_AGENT_VERSION)
 
-  if (headers && Object.keys(headers).length > 0) {
-    for (const [key, value] of Object.entries(headers)) {
-      requestHeaders.set(key, String(value))
-    }
-  }
-  requestHeaders.set('ai-agent-version', env.AI_AGENT_VERSION)
-
-  return requestHeaders
+  return headers
 }
 
 function buildAiAgentUrl(path: string, query?: Record<string, AiAgentQueryValue>) {
@@ -110,9 +104,8 @@ async function requestJson<T>(
   method: string,
   path: string,
   options: AiAgentJsonRequestOptions = {},
-  headers?: Record<string, any>,
 ) {
-  const requestHeaders = buildAiAgentHeaders(options, headers)
+  const requestHeaders = buildAiAgentHeaders(options)
   let body: AiAgentBody | undefined
 
   if (options.body != null) {
@@ -155,9 +148,8 @@ async function requestRaw(
   method: string,
   path: string,
   options: AiAgentJsonRequestOptions = {},
-  headers?: Record<string, any>,
 ): Promise<Response> {
-  const requestHeaders = buildAiAgentHeaders(options, headers)
+  const requestHeaders = buildAiAgentHeaders(options)
   let body: AiAgentBody | undefined
 
   if (options.body != null) {
@@ -212,11 +204,11 @@ export function resolveAiAgentPath(path?: string | null) {
 
 export const aiAgentClient = {
   buildUrl: buildAiAgentUrl,
-  delete: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('DELETE', path, options, headers),
+  delete: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('DELETE', path, options),
   download,
-  get: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('GET', path, options, headers),
-  post: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('POST', path, options, headers),
-  put: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('PUT', path, options, headers),
-  rawGet: (path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestRaw('GET', path, options, headers),
-  rawPost: (path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestRaw('POST', path, options, headers),
+  get: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('GET', path, options),
+  post: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('POST', path, options),
+  put: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('PUT', path, options),
+  rawGet: (path: string, options?: AiAgentJsonRequestOptions) => requestRaw('GET', path, options),
+  rawPost: (path: string, options?: AiAgentJsonRequestOptions) => requestRaw('POST', path, options),
 }
