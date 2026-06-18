@@ -27,9 +27,13 @@ export const env = {
 
   ROXY_MODE: process.env.ROXY_MODE || '',
   ROXY_SERVER_URL: process.env.ROXY_SERVER_URL!,
-  //
+
   AGENT_WORK_DIR: process.env.AGENT_WORK_DIR!,
   ROXY_SERVER_HEADERS: JSON.parse(process.env.ROXY_SERVER_HEADERS || '{}'),
+
+  AI_AGENT_VERSION: process.env.ENV_TYPE === 'development'
+    ? process.env.AI_AGENT_VERSION_DEV!
+    : process.env.AI_AGENT_VERSION_PROD!
 }
 
 export const aiAgentUrl = `${env.ROXY_SERVER_URL}/llm-proxy`

@@ -46,7 +46,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
-    "@roxybrowser/openapi": "1.0.10"
+    "@roxybrowser/openapi": "1.0.10",
+    "terser-webpack-plugin": "^5.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
