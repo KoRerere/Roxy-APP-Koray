@@ -5,9 +5,8 @@ import { ChatGoogle } from '@langchain/google'
 import { ChatOpenAI } from '@langchain/openai'
 import { aiAgentModelApi } from '../api/model'
 import { aiAgentToken, aiAgentUrl } from '../config'
-import { ChatMoonshot } from './model/moonshot'
 
-export type LLMInstance = ChatAnthropic | ChatGoogle | ChatMoonshot | ChatOpenAI<ChatOpenAICallOptions>
+export type LLMInstance = ChatAnthropic | ChatGoogle | ChatOpenAI<ChatOpenAICallOptions>
 
 export interface CreateLLMOptions {
   enableThinking?: boolean
@@ -93,15 +92,6 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
       endpoint: url.host + url.pathname,
       streaming: options.isStreaming,
       temperature: 0.5,
-    })
-  }
-  else if (apiFormat === 'moonshot') {
-    llm = new ChatMoonshot({
-      model,
-      streaming: options.isStreaming,
-      apiKey,
-      apiUrl: baseURL,
-      defaultHeaders: tracingHeaders,
     })
   }
   else {
