@@ -16,13 +16,11 @@ const rl = readline.createInterface({
 
 const isProd = process.env.NODE_ENV === 'production'
 
-if (isProd) {
-  try {
-    loadEnvFile(path.join(import.meta.dirname, '../.env.local'))
-  }
-  catch {
-    // .env.local 不存在时忽略
-  }
+try {
+  loadEnvFile(path.join(import.meta.dirname, '../packages/roxy-agent/.env.local'))
+}
+catch {
+  // .env.local 不存在时忽略
 }
 
 const token = isProd ? process.env.PUBLISH_ADMIN_TOKEN : 'WUYtoKyw5TvUT8iW1780026837812'
@@ -47,14 +45,28 @@ const baseOssConfig = {
 }
 
 // 正式环境 agent 版本
-const prodVersion = '1.1.2'
+const prodVersion = process.env.AI_AGENT_VERSION_PROD
 // 开发环境 agent 版本
-const devVersion = '2.3.0'
+const devVersion = process.env.AI_AGENT_VERSION_DEV
+
+// 读取必填的 .env.local 配置项；为空时直接报错，避免把 undefined 写进 OSS 路径与 compat-index 记录
+function requireEnvValue(value: string | undefined, name: string): string {
+  if (!value) {
+    throw new Error(`缺少 ${name}，请在 .env.local 配置`)
+  }
+  return value
+}
 
 // 当前 agent 的版本
-const version = isProd ? prodVersion : devVersion
+const version = requireEnvValue(
+  isProd ? prodVersion : devVersion,
+  isProd ? 'AI_AGENT_VERSION_PROD' : 'AI_AGENT_VERSION_DEV',
+)
 // 此 agent 兼容的最低 app 版本
-const minAppVersion = isProd ? '3.8.9' : '7.6.6'
+const minAppVersion = requireEnvValue(
+  isProd ? process.env.MIN_APP_VERSION_PROD : process.env.MIN_APP_VERSION_DEV,
+  isProd ? 'MIN_APP_VERSION_PROD' : 'MIN_APP_VERSION_DEV',
+)
 
 /** compat-index.json 在 OSS 上的路径（不区分平台，由 app 侧根据 os 自行拼接脚本地址） */
 const compatIndexOssPath = '/public/package/agent/compat-index.json'

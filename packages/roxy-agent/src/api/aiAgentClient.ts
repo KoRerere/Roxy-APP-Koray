@@ -40,11 +40,13 @@ function buildAiAgentHeaders(options: AiAgentRequestOptions = {}, headers?: Reco
   if (language && !requestHeaders.has('Language') && !requestHeaders.has('language'))
     requestHeaders.set('Language', language)
 
-  if (headers) {
+  if (headers && Object.keys(headers).length > 0) {
     for (const [key, value] of Object.entries(headers)) {
       requestHeaders.set(key, String(value))
     }
   }
+  requestHeaders.set('ai-agent-version', env.AI_AGENT_VERSION)
+
   return requestHeaders
 }
 
@@ -108,8 +110,9 @@ async function requestJson<T>(
   method: string,
   path: string,
   options: AiAgentJsonRequestOptions = {},
+  headers?: Record<string, any>,
 ) {
-  const headers = buildAiAgentHeaders(options)
+  const requestHeaders = buildAiAgentHeaders(options, headers)
   let body: AiAgentBody | undefined
 
   if (options.body != null) {
@@ -123,15 +126,15 @@ async function requestJson<T>(
       body = options.body
     }
     else {
-      if (!headers.has('Content-Type'))
-        headers.set('Content-Type', 'application/json')
+      if (!requestHeaders.has('Content-Type'))
+        requestHeaders.set('Content-Type', 'application/json')
       body = JSON.stringify(options.body)
     }
   }
 
   const response = await fetch(buildAiAgentUrl(path, options.query), {
     method,
-    headers,
+    headers: requestHeaders,
     body,
     signal: options.signal,
   })
@@ -152,7 +155,7 @@ async function requestRaw(
   method: string,
   path: string,
   options: AiAgentJsonRequestOptions = {},
-  headers?: Record<string, any>
+  headers?: Record<string, any>,
 ): Promise<Response> {
   const requestHeaders = buildAiAgentHeaders(options, headers)
   let body: AiAgentBody | undefined
@@ -209,11 +212,11 @@ export function resolveAiAgentPath(path?: string | null) {
 
 export const aiAgentClient = {
   buildUrl: buildAiAgentUrl,
-  delete: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('DELETE', path, options),
+  delete: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('DELETE', path, options, headers),
   download,
-  get: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('GET', path, options),
-  post: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('POST', path, options),
-  put: <T>(path: string, options?: AiAgentJsonRequestOptions) => requestJson<T>('PUT', path, options),
-  rawGet: (path: string, options?: AiAgentJsonRequestOptions) => requestRaw('GET', path, options),
+  get: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('GET', path, options, headers),
+  post: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('POST', path, options, headers),
+  put: <T>(path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestJson<T>('PUT', path, options, headers),
+  rawGet: (path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestRaw('GET', path, options, headers),
   rawPost: (path: string, options?: AiAgentJsonRequestOptions, headers?: Record<string, any>) => requestRaw('POST', path, options, headers),
 }

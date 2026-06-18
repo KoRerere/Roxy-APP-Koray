@@ -170,9 +170,9 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
 
   // 添加用户消息到对话历史
   const agentMode = resolveChatAgentMode(mode)
-  const useMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  const userMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   ChatContextAPI.addMessage({
-    id: useMessageId,
+    id: userMessageId,
     conversation_id: conversationId,
     role: 'user',
     content: message || '',
@@ -219,7 +219,7 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
 
   // 如果标题还没有设置，就生成标题
   if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-    await generateConversationTitle(message || '', attachmentList, conversationId, useMessageId, streamCallback)
+    await generateConversationTitle(message || '', attachmentList, conversationId, userMessageId, streamCallback)
       .then((generatedTitle) => {
         if (generatedTitle) {
           ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
@@ -233,7 +233,7 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
   const { agent, destroy } = await (script ? createScriptAgent : createChatAgent)({
     mode: agentMode,
     conversationId,
-    turnId: useMessageId,
+    turnId: userMessageId,
   })
 
   try {
@@ -242,7 +242,7 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
         thread_id: conversation.thread_id,
       },
       conversationId,
-      turnId: useMessageId,
+      turnId: userMessageId,
       streamMode: ['messages', 'custom', 'tools', 'updates'],
       signal,
       // 供 parallel_dispatch 工具内将 worker 的 stream 写出到客户端，避免只依赖外层 stream 合并
