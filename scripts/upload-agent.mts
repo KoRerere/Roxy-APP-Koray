@@ -18,6 +18,7 @@ const isProd = process.env.NODE_ENV === 'production'
 
 try {
   loadEnvFile(path.join(import.meta.dirname, '../packages/roxy-agent/.env.local'))
+  loadEnvFile(path.join(import.meta.dirname, '../.env.local'))
 }
 catch {
   // .env.local 不存在时忽略
@@ -49,7 +50,9 @@ const prodVersion = process.env.AI_AGENT_VERSION_PROD
 // 开发环境 agent 版本
 const devVersion = process.env.AI_AGENT_VERSION_DEV
 
-// 读取必填的 .env.local 配置项；为空时直接报错，避免把 undefined 写进 OSS 路径与 compat-index 记录
+/**
+ * 读取必填的 .env.local 配置项；为空时直接报错，避免把 undefined 写进 OSS 路径与 compat-index 记录
+ */
 function requireEnvValue(value: string | undefined, name: string): string {
   if (!value) {
     throw new Error(`缺少 ${name}，请在 .env.local 配置`)
