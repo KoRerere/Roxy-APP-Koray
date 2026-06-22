@@ -125,7 +125,7 @@ const selectedUnitPrice = computed(() => {
   const proxyType = proxyTypeOptions.value.find(item => item.id === proxyTypeValue.value)
   if (!proxyType)
     return 0
-  return getProxyTypePriceForSelectedDuration(proxyType) ?? 0
+  return getProxyTypePriceForSelectedDuration(proxyType)?.proxyPrice ?? 0
 })
 
 const originalAmount = computed(() => {
@@ -350,15 +350,22 @@ function getProxyTypePriceForSelectedDuration(proxyType: any) {
   if (durationValue == null)
     return undefined
   const priceRow = proxyType.proxyPriceListFmt?.find((row: any) => row.value === durationValue)
-  return priceRow?.proxyPrice
+
+  return priceRow
 }
 
 /** 按当前选中的 IP 时长，取该代理类型对应的单价文案 */
 function formatProxyTypeUnitPrice(proxyType: any) {
   const price = getProxyTypePriceForSelectedDuration(proxyType)
-  if (price == null)
-    return ''
-  return $t('{month}/个', { month: currency(price).format() })
+  if (!price)
+    return undefined
+
+  return (
+    <div class="flex gap-2 shrink-0 whitespace-nowrap">
+      <span class="tt-secondary text-4 font-[DingTalk_JinBuTi] leading-5">{ $t('{month}/个', { month: currency(price.proxyPrice).format() }) }</span>
+      {price.proxyPrice < price.originalProxyPrice && <span class="tt-inactive text-3 leading-5 line-through">{$t('{month}/个', { month: currency(price.originalProxyPrice).format() }) }</span>}
+    </div>
+  )
 }
 
 function updatePurchaseMemberClamp(inventory: number) {
@@ -717,7 +724,7 @@ async function onPay() {
         </div>
       </div>
     </div>
-    <div class="py-5 w-88 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
+    <div class="shrink-0 py-5 w-95 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
       <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :title="$t('温馨提示')"
                :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')"
       />
@@ -742,7 +749,7 @@ async function onPay() {
                       <div class="tt-secondary text-3.5 leading-5 truncate" :class="{ premium: item.proxyType === ProxyIpType.Residential }">{{ item.typeName }}</div>
                       <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
                     </div>
-                    <span v-if="formatProxyTypeUnitPrice(item)" class="shrink-0 tt-secondary text-3.5 leading-5 whitespace-nowrap">{{ formatProxyTypeUnitPrice(item) }}</span>
+                    <component :is="formatProxyTypeUnitPrice(item)" />
                   </div>
                 </label>
               </div>
