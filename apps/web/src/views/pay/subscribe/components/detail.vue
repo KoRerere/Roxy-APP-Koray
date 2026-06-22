@@ -18,18 +18,20 @@ const { list } = defineProps<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 pa-4 rounded-md subscribe">
+  <div class="flex flex-col gap-3 pa-4 rounded-md" :class="$style.subscribe">
     <slot name="before" />
     <template v-for="(detail, index) in list" :key="detail.title">
       <div v-if="index > 0" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
-      <div v-if="detail.title" class="subscribe-title">
-        {{ detail.title }}
-      </div>
+      <slot :name="detail.title" :class="$style.title">
+        <div v-if="detail.title" :class="$style.title">
+          {{ detail.title }}
+        </div>
+      </slot>
       <template v-for="item in detail.items" :key="item.label">
         <div v-if="item.separator" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
-        <component :is="item.render" v-else-if="item.render" class="subscribe-value" />
+        <component :is="item.render" v-else-if="item.render" :class="$style.value" />
         <slot v-else :name="item.slot" :item="item">
-          <div class="flex justify-between subscribe-value" :class="item.class">
+          <div class="flex justify-between" :class="[$style.value, item.class]">
             <div>{{ item.label }}</div>
             <div>{{ item.value }}</div>
           </div>
@@ -40,24 +42,24 @@ const { list } = defineProps<{
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" module>
 .subscribe {
   border: 1px solid var(--colors-border-border-overlay);
   background: var(--pattern-pay-plan-bg-bill);
+}
 
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-family: Inter;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 20px;
-  }
+.title {
+  color: var(--colors-text-text-primary);
+  font-family: Inter;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
 
-  &-value {
-    color: var(--colors-text-text-secondary);
-    font-family: Inter;
-    font-size: 14px;
-    line-height: 20px;
-  }
+.value {
+  color: var(--colors-text-text-secondary);
+  font-family: Inter;
+  font-size: 14px;
+  line-height: 20px;
 }
 </style>

@@ -146,7 +146,7 @@ const details = computed(() => {
 
   return [
     {
-      title: $t('代理 IP 信息'),
+      title: 'title',
       items: [
         {
           label: $t('代理 IP 类型'),
@@ -486,7 +486,7 @@ async function initConfig() {
                         await refreshFromScene(option.value)
                       }}
                     >
-                      {option.badgeDesc && <div class={`absolute position-y-center top-0 -right-2 z-10 py-0.5 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>}
+                      {option.badgeDesc && <div class={`absolute position-y-center top-0 -right-2 z-10 px-2 rounded-full ${styles[option.badgeClass]}`}>{option.badgeDesc}</div>}
                       {option.image && <RxImage class="block w-5" src={option.image} darkSrc={option.darkImage} alt={option.label} />}
                       <div class={`${styles.purpose}`}>{option.label}</div>
                     </div>
@@ -737,6 +737,16 @@ async function onPay() {
           <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentProxyType.inventory), ONE_BUY_MAX)" @update:model-value="inputPurchaseMember" />
         </div>
         <Detail :list="details">
+          <template #title="props">
+            <div class="flex items-center gap-2">
+              <div v-bind="props">
+                {{ $t('代理 IP 信息') }}
+              </div>
+              <div v-if="isDirect" class="px-2 rounded-full" :class="styles.direct">
+                {{ $t('大陆直连') }}
+              </div>
+            </div>
+          </template>
           <template #type>
             <div class="relative">
               <RxLoading v-model="loadingProxyType" :opacity="0.1" />
@@ -861,6 +871,7 @@ async function onPay() {
   color: #fff;
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
+  line-height: 18px;
   background: linear-gradient(90deg, #8780fe 0%, #c491f1 100%);
 }
 
@@ -868,6 +879,7 @@ async function onPay() {
   color: #34393d;
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
+  line-height: 18px;
   background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
 }
 </style>
