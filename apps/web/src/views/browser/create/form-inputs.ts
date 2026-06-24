@@ -4,7 +4,7 @@ import { API } from '/@/api'
 import { CoreType, UaStrictMode } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
-import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, isNewerOrEqualVersion, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, validateCookieInput } from '/@/utils'
+import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, supportsApp3_8_8, validateCookieInput } from '/@/utils'
 import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
 
@@ -268,7 +268,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
       label: CoreType.Firefox,
       value: CoreType.Firefox,
       icon: 'base/rx_ic_firefox',
-      disabled: !isNewerOrEqualVersion('3.8.8'),
+      disabled: !supportsApp3_8_8(),
       disabledTooltip: $t('该功能需要升级到 v{version} 及以上版本', { version: '3.8.8' }),
     },
   ]

@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { downloadTemplate } from '/@/views/browser/create/utils'
-import { isDev, isNewerOrEqualVersion, normalizeCookies } from '/@/utils'
+import { normalizeCookies, supportsApp3_8_8 } from '/@/utils'
 
 type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
@@ -27,7 +27,7 @@ const excelSchema = [
     name: $t('操作系统'),
     getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os, // 历史原因ios特殊处理
   },
-  ...(isNewerOrEqualVersion('3.8.8')
+  ...(supportsApp3_8_8()
     ? [
         {
           key: 'coreType',

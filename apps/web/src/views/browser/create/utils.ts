@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs'
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { getDictMap, isDev, parseImportCookies, safeParseJSON } from '/@/utils'
+import { getDictMap, parseImportCookies, safeParseJSON, supportsApp3_8_8 } from '/@/utils'
 import { parseIntelligent } from '/@/views/account/create/utils'
 import { CoreType } from '/@/enums'
 
@@ -132,7 +132,7 @@ async function getExportColumns() {
       placeholder: $t('操作系统（必填项）\n如: Windows'),
       example: os.join('\n'),
     },
-    ...(isDev
+    ...(supportsApp3_8_8()
       ? [
           {
             header: $t('浏览器内核'),
@@ -247,13 +247,7 @@ async function getExportColumns() {
       placeholder: $t('浏览器窗口打开时地址栏使用的搜索引擎，留空则默认使用Google!'),
       example: searchEngine.join('\n'),
     },
-  ].filter((n) => {
-    // TODO
-    if (!isDev) {
-      return n.key !== 'coreType' && n.key !== 'coreVersion'
-    }
-    return true
-  })
+  ]
 }
 
 export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
@@ -332,7 +326,7 @@ export async function downloadTextTemplate() {
     {
       windowName: 'name1',
       os: 'Windows',
-      ...(isDev
+      ...(supportsApp3_8_8()
         ? { coreType: 'Chrome', coreVersion: '149' }
         : {}),
       osVersion: 11,
@@ -348,7 +342,7 @@ export async function downloadTextTemplate() {
     {
       windowName: 'name2',
       os: 'iOS',
-      ...(isDev
+      ...(supportsApp3_8_8()
         ? { coreType: 'Firefox', coreVersion: '146' }
         : {}),
       osVersion: 17,

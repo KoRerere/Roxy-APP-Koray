@@ -8,11 +8,10 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { genDriver } from '/@/utils'
+import { genDriver, supportsApp3_8_8 } from '/@/utils'
 import { useMcpDataStore } from './pinia-store/mcp-data-store'
 import { useChatStreamStore } from './pinia-store/useChatStreamStore'
 import type { InputScene } from './types'
-import { compare } from 'compare-versions'
 import { useUserStore } from '/@/stores/user'
 import { useElementSize } from '@vueuse/core'
 import { API } from '/@/api'
@@ -456,7 +455,7 @@ onUnmounted(() => {
           </div>
 
           <ShinyButton
-            v-if="compare($appVersion, '3.8.8', '>=')"
+            v-if="supportsApp3_8_8()"
             :class="route.name === 'mcp-points' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
             class="w-full cursor-pointer rounded"
             @click="selectPoints"

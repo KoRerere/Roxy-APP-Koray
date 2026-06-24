@@ -1,3 +1,4 @@
+export * from './app-supports'
 export * from './basic'
 export * from './common'
 export * from './cookie'

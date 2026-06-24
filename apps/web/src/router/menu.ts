@@ -8,7 +8,6 @@ import { usePermission } from '/@/hooks/usePermission'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { Permission, PermissionMode } from '/@/hooks/usePermission/type'
 import type { SvgNames } from '/@/components/rx-icon'
-import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 
 declare module 'vue-router' {
   interface RouteMeta {
