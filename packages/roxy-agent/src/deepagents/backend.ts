@@ -1,5 +1,5 @@
 import { FilesystemBackend, LocalShellBackend } from 'deepagents'
-import { createDisableSubagentMiddleware, createRoxySkillsMiddleware } from './middlewares/index.js'
+import { createDisableSubagentMiddleware, createRoxySkillsMiddleware, createToolErrorFallbackMiddleware } from './middlewares/index.js'
 import { loadSkillFileTools } from './tools/skill'
 
 const DEEPAGENT_ROOT_DIR = process.cwd()
@@ -29,7 +29,11 @@ export async function createDeepAgentRuntime(options?: {
 
   return {
     backend,
-    middleware: [createRoxySkillsMiddleware(), createDisableSubagentMiddleware()],
+    middleware: [
+      createRoxySkillsMiddleware(),
+      createDisableSubagentMiddleware(),
+      createToolErrorFallbackMiddleware(),
+    ],
     tools: [...loadSkillFileTools],
     interruptOn: {
       read_file: { allowedDecisions: ['approve', 'reject'] },

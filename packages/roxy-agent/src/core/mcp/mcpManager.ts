@@ -16,7 +16,6 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile as readFileAsync } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '@/config'
-import { wrapToolsWithErrorHandling } from '@/deepagents/tool-wrapper'
 import { getGlobalMcpTools } from './globalMcpClients'
 
 // ─────────────────────────────────────────────
@@ -325,10 +324,7 @@ export class McpManager {
     const playwrightTools = needPlaywright ? this.workerPlaywrightTools.get(workerId) ?? [] : []
     const userTools = this._getEnabledUserMcpTools()
 
-    return wrapToolsWithErrorHandling(
-      [...globalTools, ...playwrightTools, ...userTools],
-      { workerId, maxErrorsPerWorker: 10 },
-    )
+    return [...globalTools, ...playwrightTools, ...userTools]
   }
 
   private _getEnabledUserMcpTools(): StructuredTool[] {
