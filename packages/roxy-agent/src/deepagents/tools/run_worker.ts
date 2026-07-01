@@ -1,4 +1,4 @@
-import type { WorkerResult } from '../../worker/protocol'
+import type { WorkerResult } from '../../core/worker/protocol'
 import type { StructuredToolInterface } from '@langchain/core/tools'
 import { tool } from 'langchain'
 import { randomUUID } from 'node:crypto'
@@ -7,7 +7,7 @@ import path from 'node:path'
 import { z } from 'zod'
 import { streamAdapter } from '@/core/sse/streamAdapter'
 import { env } from '../../config'
-import { clearPayloadFile, DEFAULT_WORKER_TIMEOUT_MS, WorkerRunner } from '../../worker/workerRunner'
+import { clearPayloadFile, DEFAULT_WORKER_TIMEOUT_MS, WorkerRunner } from '../../core/worker/workerRunner'
 import { workerNames } from '../prompt'
 
 interface parallelDispatchParam { worker: string, task: string, title: string }

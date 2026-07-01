@@ -190,6 +190,14 @@ export const mcpManager = new (class McpManager {
       ROXY_MODE: agentModel || 'agent',
     }
 
+    // 移除从宿主机 process.env 透传进来的 Anthropic SDK 鉴权变量。
+    // agent 创建 ChatAnthropic 时已显式传入 apiKey（即 x-api-key），
+    // 但 @anthropic-ai/sdk 会在 authToken 未传时回退读取 ANTHROPIC_AUTH_TOKEN，
+    // 一旦宿主机设置了该变量，就会在 x-api-key 之外额外注入 Authorization: Bearer，
+    // 导致 /v1/messages 请求同时携带两个鉴权头。这里统一清掉，确保只用 x-api-key。
+    delete env.ANTHROPIC_AUTH_TOKEN
+    delete env.ANTHROPIC_API_KEY
+
     // 清理和验证环境变量 - 只保留有效的值
     Object.keys(env).forEach((key) => {
       const value = env[key]

@@ -1,6 +1,6 @@
 import type { UserSkill } from '@/api/skills'
-import type { SkillMetadataLoadErrorCode, SkillMetadataLoadFailure } from '@/skills/metadata'
-import type { RuntimeAvailability, RuntimeCommandRunner, SkillRuntimeDescriptor, SkillRuntimeSource } from '@/skills/runtime'
+import type { SkillMetadataLoadErrorCode, SkillMetadataLoadFailure } from '@/core/skills/metadata'
+import type { RuntimeAvailability, RuntimeCommandRunner, SkillRuntimeDescriptor, SkillRuntimeSource } from '@/core/skills/runtime'
 import AdmZip from 'adm-zip'
 import { Buffer } from 'node:buffer'
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -8,12 +8,12 @@ import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { aiAgentSkillsApi } from '@/api/skills'
-import { loadSkillMetadataFromDir } from '@/skills/metadata'
+import { loadSkillMetadataFromDir } from '@/core/skills/metadata'
 import {
   detectSkillRuntimes,
   isSupportedRuntimeId,
   probeRuntimeAvailability,
-} from '@/skills/runtime'
+} from '@/core/skills/runtime'
 import { env } from '../config'
 
 export type SkillValidationErrorCode
@@ -145,7 +145,7 @@ export class SkillManager {
     this.storeSkillsDir = path.join(skillsDir, 'store-skills')
     mkdirSync(this.skillsDir, { recursive: true })
     mkdirSync(this.storeSkillsDir, { recursive: true })
-    this.builtinSkills = new Set(['roxybrowser-openapi-skills', 'roxybrowser-playwright-skills'])
+    this.builtinSkills = new Set(['roxybrowser-openapi-skills', 'roxybrowser-playwright-skills', 'playwright-rpa-enhance-skills'])
     this.runtimeCommandRunner = deps.runtimeCommandRunner
     this.migrateLegacyStoreSkills()
   }

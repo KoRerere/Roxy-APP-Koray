@@ -1,3 +1,4 @@
+import type { CollectedFile } from './fileCollector'
 import type { ImageGenerationSpec } from './imageSpec'
 import type { DeepAgent } from 'deepagents'
 import fs from 'node:fs/promises'
@@ -24,12 +25,12 @@ export interface AgentInstance {
     imageProtocol?: string
   }
   consumeImageSpec?: () => ImageGenerationSpec | undefined
+  consumeFiles?: () => CollectedFile[]
 }
 
 export { createChatAgent } from './agent/chat'
 export { createClawAgent } from './agent/claw'
 export { createImageAgent } from './agent/image'
-export { createScriptAgent } from './agent/script'
 
 export async function deleteCheckpoint(conversationId: string): Promise<void> {
   const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${conversationId}.db`)

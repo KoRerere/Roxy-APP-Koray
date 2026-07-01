@@ -12,13 +12,22 @@ queueMicrotask(async () => {
       globalThis.$appVersion = appVersion
     })
 
+    // 功能开关：在 app 挂载前就绪，供渲染层同步读取（如脚本录制入口可见性）
+    const featureFlagsPromise = globalThis.electronAPI.send('app:getFeatureFlags')
+
     import('./web-auto-updater')
 
-    globalThis.electronAPI.send('app:getSoftConfig').then((softConfig) => {
+    globalThis.electronAPI.send('app:getSoftConfig').then(async (softConfig) => {
       const { language, token, lastSelectedNetworkNode = 'auto' } = softConfig
 
       console.debug('init', { language, token, lastSelectedNetworkNode })
 
+      try {
+        globalThis.$featureFlags = await featureFlagsPromise
+      } catch {
+        // 暂时忽略不存在的 feature flag
+        console.log('ignoring feature flag')
+      }
       globalThis.$lastSelectedNetworkNode = lastSelectedNetworkNode
 
       setupI18n({ defaultLocale: language as SupportedLanguagesType }).finally(async () => {
@@ -38,6 +47,7 @@ queueMicrotask(async () => {
   else {
     // web端无需版本控制
     globalThis.$appVersion = import.meta.env.VITE_APP_VERSION
+    globalThis.$featureFlags = { scriptRecording: import.meta.env.VITE_ENABLE_SCRIPT_RECORDING === 'yes' }
     await import('./polyfill')
     const searchParams = new URLSearchParams(window.location.search)
     const officialSiteLang = searchParams.get('official-site-lang')

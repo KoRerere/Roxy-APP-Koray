@@ -1,9 +1,8 @@
-import type { WorkerResultStatus } from '../worker/protocol'
+import type { WorkerResultStatus } from '../core/worker/protocol'
 import { HumanMessage } from '@langchain/core/messages'
 import { env } from '../config'
-import { createChatAgent } from '../deepagents/agent/chat'
-import { handleWorkerStream, StreamState } from '../deepagents/handle-stream'
-import { loadWorkerPayload } from '../worker/payload'
+import { streamAdapter } from '../core/sse/streamAdapter'
+import { loadWorkerPayload } from '../core/worker/payload'
 import {
   closeIpcAndExit,
   sendEvent,
@@ -11,7 +10,9 @@ import {
   sendReady,
   sendResult,
   WORKER_HEARTBEAT_INTERVAL_MS,
-} from '../worker/protocol'
+} from '../core/worker/protocol'
+import { createChatAgent } from '../deepagents/agent/chat'
+import { handleWorkerStream, StreamState } from '../deepagents/handle-stream'
 
 const WORKER_DESTROY_TIMEOUT_MS = 12_000
 
@@ -60,7 +61,14 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
 
   let agent, destroy
   try {
-    ;({ agent, destroy } = await createChatAgent({ mode: 'simple', workerId, conversationId, turnId }))
+    ;({ agent, destroy } = await createChatAgent({
+      mode: 'simple',
+      workerId,
+      conversationId,
+      turnId,
+      // worker 内模型调用网络中断也自动重试；经 IPC 回传 worker_retry（带 taskId），前端据此停计时 / 截断块、不展示提示
+      onRetry: info => sendEvent(workerId, streamAdapter.workerRetryEvent({ taskId: workerId, ...info })),
+    }))
 
     const streamState = new StreamState()
     streamState.setTaskId(workerId)
@@ -79,6 +87,11 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
       for (const event of events) {
         sendEvent(workerId, event)
       }
+    }
+
+    const finishedThinking = streamState.finishThinking(Date.now())
+    if (finishedThinking) {
+      sendEvent(workerId, streamAdapter.thinkingCompleteEvent(finishedThinking))
     }
 
     if (abortController.signal.aborted) {

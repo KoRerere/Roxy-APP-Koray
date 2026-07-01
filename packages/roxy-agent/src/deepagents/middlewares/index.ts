@@ -1,4 +1,7 @@
+export { createBrowserRecordingMiddleware } from './browserRecording.js'
 export { createDisableSubagentMiddleware } from './disableSubagent.js'
-export { createSaveImageSpecLimitMiddleware } from './imageSpec.js'
+export { createFsSandboxMiddleware } from './fsSandbox.js'
+export { createModelRetryMiddleware, type ModelRetryInfo, type ModelRetryMiddlewareOptions } from './modelRetry.js'
+export { createParallelToolCallLimitMiddleware } from './parallelToolCallLimit.js'
 export { createRoxySkillsMiddleware } from './skills.js'
 export { createToolErrorFallbackMiddleware } from './toolErrorFallback.js'

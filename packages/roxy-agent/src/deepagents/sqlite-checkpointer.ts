@@ -153,6 +153,8 @@ export class SqliteSaver extends BaseCheckpointSaver {
   protected pruneWritesStmt!: Statement
   protected pruneCheckpointsStmt!: Statement
   protected migratePendingSendsStmt!: Statement
+  /** 清理某 thread 最新 checkpoint 的 pending writes（中止后收尾用） */
+  protected clearPendingWritesStmt!: Statement
 
   /** 静态实例缓存：同一路径复用同一个 SqliteSaver，避免重复打开连接造成泄漏 */
   static instances = new Map<string, SqliteSaver>()
@@ -256,6 +258,19 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
         AND ps.checkpoint_id = ?
         AND ps.channel = '${TASKS}'
       ORDER BY ps.idx
+    `)
+
+    // 清理某 thread 最新 checkpoint 的 pending writes：用于用户主动中止会话后把中途
+    // pending 状态收尾为完成态（next 置空），保留 channel_values（messages 历史），
+    // 避免下次新消息被 runChatStream 开头的 null 恢复分支吞掉而继续旧路线。
+    this.clearPendingWritesStmt = this.db.prepare(`
+      DELETE FROM writes
+      WHERE thread_id = ? AND checkpoint_ns = ''
+        AND checkpoint_id = (
+          SELECT checkpoint_id FROM checkpoints
+          WHERE thread_id = ? AND checkpoint_ns = ''
+          ORDER BY checkpoint_id DESC LIMIT 1
+        )
     `)
 
     this.isSetup = true
@@ -634,6 +649,29 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
       // writes 先删（外键依赖），再删 checkpoints
       this.pruneWritesStmt.run(threadId, threadId, keepLastN)
       this.pruneCheckpointsStmt.run(threadId, threadId, keepLastN)
+      this.db.exec('COMMIT')
+    }
+    catch (err) {
+      this.db.exec('ROLLBACK')
+      throw err
+    }
+  }
+
+  /**
+   * 清理该 thread 最新 checkpoint 的 pending writes，使 next 变空（收尾为完成态）。
+   * 仅删 writes 表中「最新 checkpoint 对应的待应用任务」，不动 checkpoints 表本身，
+   * 故 channel_values（messages 历史）原样保留 —— 下一次 stream(null) 不会再继续旧路线，
+   * 而是按正常 input 分支处理新消息，且 agent 仍记得之前的对话。
+   *
+   * 用途：用户主动中止会话（/stop）后清理 abort 残留的 pending 状态。
+   * 调用时机须保证该 thread 的 stream 已停止、checkpoint 稳定，避免与 stream 的 writes 竞态。
+   * @param threadId 线程 ID（与 conversation 的 thread_id 一致）
+   */
+  clearPendingWrites(threadId: string): void {
+    this.setup()
+    this.db.exec('BEGIN')
+    try {
+      this.clearPendingWritesStmt.run(threadId, threadId)
       this.db.exec('COMMIT')
     }
     catch (err) {

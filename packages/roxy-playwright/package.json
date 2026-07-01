@@ -27,7 +27,8 @@
     "build": "vite build && pnpm bundle"
   },
   "dependencies": {
-    "@roxybrowser/playwright-mcp": "0.0.6"
+    "@roxybrowser/playwright": "2.0.2-beta.25",
+    "@roxybrowser/playwright-mcp": "0.0.8-beta.10"
   },
   "devDependencies": {
     "terser-webpack-plugin": "^5.6.1",

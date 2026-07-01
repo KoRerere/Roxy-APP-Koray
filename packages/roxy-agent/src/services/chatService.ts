@@ -1,19 +1,24 @@
 import type { AttachmentRef } from './fileService'
+import type { CollectedFile } from '@/deepagents/fileCollector'
 import type { Response } from 'express'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { Command } from '@langchain/langgraph'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
+import path from 'node:path'
 import { z } from 'zod'
 import { isAbortLike, normalizeAgentError } from '@/core/agentError'
+import { extToMime, fileManager } from '@/core/fileManager'
 import { cleanupRun } from '@/core/registry/abortRegistry'
 import { cancelInterrupt, createInterruptGate } from '@/core/registry/interruptRegistry'
 import { sseLoggerManager } from '@/core/sse/sseLogger'
 import { streamAdapter } from '@/core/sse/streamAdapter'
 import { ChatContextAPI } from '@/database/conversations'
-import { createChatAgent, createScriptAgent, deleteCheckpoint } from '@/deepagents'
+import { createChatAgent, deleteCheckpoint } from '@/deepagents'
+import { SqliteSaver } from '@/deepagents/sqlite-checkpointer'
 import { handleStream, StreamState } from '@/deepagents/handle-stream'
 import { createLLM } from '@/llm'
+import { recordingManager } from '@/recording/recordingManager'
 import { env } from '../config'
 import { buildMessageContent, buildMessageContentAsPlainText } from './fileService'
 import { createStreamCallback, initSSEHeaders, resolveSSEFilePath } from './sseStream'
@@ -140,6 +145,41 @@ function resolveChatAgentMode(mode: unknown): 'simple' | 'orchestrator' {
   return mode === 'orchestrator' ? 'orchestrator' : 'simple'
 }
 
+function getDisplayFileName(file: CollectedFile): string {
+  const source = (file.displayName ?? file.virtualPath).replace(/\\/g, '/')
+  return path.posix.basename(source) || 'generated-file'
+}
+
+async function publishCollectedFiles(
+  files: CollectedFile[],
+  streamCallback: (event: string) => void,
+): Promise<void> {
+  for (const file of files) {
+    const fileName = getDisplayFileName(file)
+    const mimeType = extToMime(fileName) ?? 'application/octet-stream'
+    try {
+      const buffer = await fsPromises.readFile(file.realPath)
+      const record = await fileManager.saveBuffer({
+        buffer,
+        fileName,
+        mimeType,
+        source: 'generated',
+        uploadNow: true,
+      })
+      streamCallback(streamAdapter.agentFile({
+        fileId: record.file_id,
+        fileName,
+        size: record.size ?? buffer.length,
+        mimeType,
+        op: file.op === 'edit' ? 'update' : 'create',
+      }))
+    }
+    catch (error) {
+      console.warn(`Failed to save collected agent file ${file.virtualPath}:`, error)
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // C. /chat 流式主流程（含自己独立的 HITL 循环）
 // ---------------------------------------------------------------------------
@@ -149,11 +189,12 @@ export interface RunChatStreamOptions {
   conversationId: string
   mode?: unknown
   multimodalAttachments?: boolean
-  script?: unknown
   attachmentList: AttachmentRef[]
   conversation: any
   signal: AbortSignal
   res: Response
+  /** 完全访问模式（yolo）：开启后本次会话跳过 HITL，所有操作直接执行。 */
+  fullAccess?: boolean
 }
 
 /**
@@ -161,7 +202,7 @@ export interface RunChatStreamOptions {
  * 调用方（路由）已完成入参校验、附件注水、对话存在性检查与 abort 注册。
  */
 export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
-  const { message, conversationId, mode, multimodalAttachments, script, attachmentList, conversation, signal, res } = opts
+  const { message, conversationId, mode, multimodalAttachments, attachmentList, conversation, signal, res, fullAccess } = opts
 
   // 自动设置为活跃对话
   ChatContextAPI.setActiveConversation(conversationId)
@@ -185,6 +226,11 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
       attachments: attachmentList.length > 0 ? attachmentList : undefined,
     },
   })
+
+  // 如果正在录制，追加用户消息（意图上下文）
+  if (message && recordingManager.isRecording(conversationId)) {
+    recordingManager.appendUserMessage(conversationId, message)
+  }
 
   const { fileName, sseFilePath } = resolveSSEFilePath()
 
@@ -230,11 +276,21 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
       })
   }
 
-  const { agent, destroy } = await (script ? createScriptAgent : createChatAgent)({
+  const { agent, destroy, consumeFiles } = await createChatAgent({
     mode: agentMode,
     conversationId,
     turnId: userMessageId,
+    fullAccess,
+    onRetry: info => streamCallback(streamAdapter.retry(info)),
   })
+
+  const state = new StreamState()
+  const flushThinkingTiming = () => {
+    const payload = state.finishThinking(Date.now())
+    if (payload) {
+      streamCallback(streamAdapter.thinkingComplete(payload))
+    }
+  }
 
   try {
     const config: any = {
@@ -262,8 +318,6 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
       streamCallback,
     }
 
-    const state = new StreamState()
-
     // 检查是否有 pending interrupt（用户可能关闭软件后重新打开）
     // 如果有，必须先处理 interrupt，不能接受新消息
     const checkpointer = (agent as any).checkpointer
@@ -271,9 +325,22 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
 
     if (checkpointer) {
       const checkpointState = await (agent as any).getState(config)
-      if (checkpointState.next && checkpointState.next.length > 0) {
-        // 有 pending interrupt，使用 null 输入触发 interrupt
+      const hasRealInterrupt = Array.isArray(checkpointState.tasks)
+        && checkpointState.tasks.some((t: any) => Array.isArray(t.interrupts) && t.interrupts.length > 0)
+
+      if (hasRealInterrupt) {
         invokeInput = null
+      }
+      else if (checkpointState.next && checkpointState.next.length > 0) {
+        const residualSaver = checkpointer as SqliteSaver
+        if (typeof residualSaver.clearPendingWrites === 'function') {
+          try {
+            residualSaver.clearPendingWrites(conversation.thread_id)
+          }
+          catch (clearErr) {
+            console.warn('Failed to clear pending writes (abort residual):', clearErr)
+          }
+        }
       }
     }
 
@@ -320,16 +387,36 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
       invokeInput = new Command({ resume: { decisions: decision.decisions } })
     }
 
+    flushThinkingTiming()
+
+    const collectedFiles = consumeFiles?.() ?? []
+    if (collectedFiles.length > 0) {
+      await publishCollectedFiles(collectedFiles, streamCallback)
+    }
+
     streamCallback(streamAdapter.done())
   }
   catch (error: any) {
     // 清理可能挂起的 interrupt gate
     cancelInterrupt(conversationId)
 
+    flushThinkingTiming()
+
     // 检查是否是中断错误（用户取消或客户端断开连接）
     if (isAbortLike(error)) {
       // 中断错误，静默处理，不发送错误消息给客户端
       console.log('Chat interrupted by user')
+
+      const checkpointSaver = (agent as any).checkpointer as SqliteSaver | undefined
+      if (checkpointSaver && typeof checkpointSaver.clearPendingWrites === 'function') {
+        try {
+          checkpointSaver.clearPendingWrites(conversation.thread_id)
+        }
+        catch (clearErr) {
+          console.warn('Failed to clear pending writes after interrupt:', clearErr)
+        }
+      }
+
       if (!orchestratorStoppedSent) {
         streamCallback(streamAdapter.orchestratorStopped({
           status: 'failed',

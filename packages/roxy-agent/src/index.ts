@@ -13,9 +13,9 @@ fixPath()
 type ShutdownFn = () => Promise<void>
 
 function resolveMode(): string {
-  // CLI 参数优先
+  // CLI 参数优先（sandbox 也支持关键字模式，此时 argv[2]==='sandbox'，脚本路径在 argv[3]）
   const arg = process.argv[2]
-  if (arg === 'agent' || arg === 'im' || arg === 'worker') {
+  if (arg === 'agent' || arg === 'im' || arg === 'worker' || arg === 'sandbox') {
     return arg
   }
   // 其次读环境变量
@@ -45,7 +45,7 @@ async function main() {
     shutdown = await runSandboxMode()
   }
   else {
-    console.error(`[startup] Unknown mode: "${mode}". Valid modes: agent, im, worker`)
+    console.error(`[startup] Unknown mode: "${mode}". Valid modes: agent, im, worker, sandbox`)
     process.exit(1)
   }
 

@@ -9,6 +9,7 @@ import { createLLM } from '../../llm'
 import { createDeepAgentRuntime } from '../backend'
 import { SIMPLE_SYSTEM_PROMPT_IM_COMPACT } from '../prompt'
 import { SqliteSaver } from '../sqlite-checkpointer'
+import { getCurrentTimeTool } from '../tools/get_current_time'
 
 const HITL_DELETE_TOOLS = ['roxy_delete_browsers', 'roxy_delete_proxies', 'roxy_delete_accounts']
 
@@ -40,6 +41,7 @@ export async function createClawAgent(options: {
 
   const tools = [
     ...runtime.tools,
+    getCurrentTimeTool,
     ...mcpTools.filter((t: any) => !HITL_DELETE_TOOLS.includes(t.name)),
   ]
 

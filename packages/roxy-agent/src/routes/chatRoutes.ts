@@ -19,7 +19,8 @@ const ChatSchema = z.object({
   mode: z.string().optional(),
   attachments: z.array(AttachmentInputSchema).optional(),
   multimodalAttachments: z.boolean().optional(),
-  script: z.any().optional(),
+  /** 完全访问模式（yolo）：开启后本次会话跳过 HITL，所有操作直接执行。 */
+  fullAccess: z.boolean().optional(),
 })
 
 const ImageGenerationSchema = z.object({
@@ -88,7 +89,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     return res.json({ code: 1, error: msg, msg })
   }
 
-  const { message, conversationId, mode, attachments, multimodalAttachments, script } = parsed.data
+  const { message, conversationId, mode, attachments, multimodalAttachments, fullAccess } = parsed.data
   const attachmentList = await fileService.hydrateAttachmentFileUrls(Array.isArray(attachments) ? attachments : [])
 
   const abortController = createAbort(conversationId)
@@ -116,11 +117,11 @@ router.post('/chat', async (req: Request, res: Response) => {
     conversationId,
     mode,
     multimodalAttachments,
-    script,
     attachmentList,
     conversation,
     signal: abortController.signal,
     res,
+    fullAccess,
   })
 
   res.end()

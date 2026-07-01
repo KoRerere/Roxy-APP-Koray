@@ -188,7 +188,7 @@ export class McpManager {
       }
 
       // 加载扩展状态
-      let state: Record<string, { enabled: boolean, lastTestResult?: McpTestResult }> = {}
+      let state: Record<string, { enabled: boolean, createdAt?: number, lastTestResult?: McpTestResult }> = {}
       if (existsSync(this.stateFilePath)) {
         const raw = readFileSync(this.stateFilePath, 'utf-8')
         const file: UserMcpStateFile = JSON.parse(raw)
@@ -239,7 +239,7 @@ export class McpManager {
       // 保存规范配置 (mcpServers)
       const servers: Record<string, UserMcpServerConfig> = {}
       // 保存扩展状态
-      const state: Record<string, { enabled: boolean, lastTestResult?: McpTestResult }> = {}
+      const state: Record<string, { enabled: boolean, createdAt?: number, lastTestResult?: McpTestResult }> = {}
 
       for (const [name, entry] of this.userMcpEntries) {
         servers[name] = entry.config
@@ -261,6 +261,30 @@ export class McpManager {
   // ──────────────────────────────────────────
   // Playwright per-worker（进程隔离）
   // ──────────────────────────────────────────
+
+  /**
+   * 检测 Playwright MCP 是否就绪（脚本存在 + sha512 校验通过）。
+   *
+   * 用于 recording Enhance 阶段在启动 run_script debug 测试前的环境准备：
+   * 确认底层浏览器 MCP 可被拉起，避免增强流程跑到测试环节才失败。
+   * 不实际拉起子进程，仅做轻量的前置条件检查。
+   */
+  async checkPlaywrightMcpReadiness(): Promise<{ ready: boolean, reason?: string }> {
+    const scriptPath = env.PLAYWRIGHT_SCRIPT_PATH
+    if (!scriptPath) {
+      return { ready: false, reason: 'PLAYWRIGHT_SCRIPT_PATH 未配置' }
+    }
+    if (!existsSync(scriptPath)) {
+      return { ready: false, reason: `Playwright MCP 脚本不存在：${scriptPath}` }
+    }
+    try {
+      await assertFileIntegritySha512(scriptPath, env.PLAYWRIGHT_SCRIPT_SHA512, 'PLAYWRIGHT_SCRIPT_PATH')
+    }
+    catch (err: any) {
+      return { ready: false, reason: err?.message ?? String(err) }
+    }
+    return { ready: true }
+  }
 
   /**
    * 为指定 worker 创建专属 playwright MCP 子进程
@@ -318,8 +342,12 @@ export class McpManager {
   /**
    * 获取指定 worker 的完整工具列表：
    *   openapi (in-memory) + playwright (per-worker) + 启用的用户自定义 MCP
+   *
+   * @param workerId worker 标识
+   * @param needPlaywright 是否包含 Playwright MCP 工具
+   * @param conversationId 当前会话 ID，用于录制事件关联
    */
-  async getToolsForWorker(workerId: string, needPlaywright = true): Promise<StructuredTool[]> {
+  async getToolsForWorker(workerId: string, needPlaywright = true, conversationId?: string): Promise<StructuredTool[]> {
     const globalTools = await getGlobalMcpTools()
     const playwrightTools = needPlaywright ? this.workerPlaywrightTools.get(workerId) ?? [] : []
     const userTools = this._getEnabledUserMcpTools()

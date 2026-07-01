@@ -21,7 +21,6 @@ roxy-agent 是一个基于 LangGraph 和 deepagents (v1.9.0) 的 AI agent 系统
 
 **现有配置：**
 - `CONTEXT_MESSAGE_LIMIT=15`：配置项存在但未被实际使用
-- `WORKER_CONTEXT_LIMIT=6`：orchestrator 模式下的 worker 数量限制
 - 无自动触发的上下文管理机制
 
 **消息存储：**

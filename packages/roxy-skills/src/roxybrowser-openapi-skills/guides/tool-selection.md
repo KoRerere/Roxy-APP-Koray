@@ -1,252 +1,121 @@
 # Tool Selection Decision Tree
 
-Use this flowchart to determine which RoxyBrowser MCP tool to call based on user intent.
+Use this guide with the current RoxyBrowser OpenAPI MCP server.
 
----
+## Primary Flow
 
-## Primary Decision Flow
-
-```
-START: Analyze user request
-│
-├─── Does user need to CREATE a browser?
-│    ├─ YES → `roxy_create_browser`
-│    │        ├─ Need proxy? → Get moduleId from `roxy_list_proxies` first
-│    │        └─ Returns: dirId (use for opening)
-│    └─ NO → Continue
-│
-├─── Does user need to OPEN an existing browser?
-│    ├─ YES → Have dirId?
-│    │        ├─ YES → `roxy_open_browser(workspaceId, dirId)`
-│    │        │        └─ Returns: CDP WebSocket URL for automation
-│    │        └─ NO → Call `roxy_list_browsers` first to get dirId
-│    └─ NO → Continue
-│
-├─── Does user need to VIEW/LIST resources?
-│    ├─ Workspaces? → `roxy_list_workspaces`
-│    ├─ Browsers? → `roxy_list_browsers` (requires workspaceId)
-│    ├─ Proxies? → `roxy_list_proxies` or `roxy_store_proxies`
-│    ├─ Accounts? → `roxy_list_accounts`
-│    ├─ Labels? → `roxy_list_labels`
-│    └─ Connection info? → `roxy_get_connection_info`
-│
-├─── Does user need to MANAGE proxies?
-│    ├─ Create new → `roxy_create_proxy` or `roxy_batch_create_proxies`
-│    ├─ Test proxy → `roxy_detect_proxy`
-│    ├─ Update proxy → `roxy_modify_proxy`
-│    └─ Delete proxy → `roxy_delete_proxies`
-│
-├─── Does user need to MANAGE accounts?
-│    ├─ Create → `roxy_create_account` or `roxy_batch_create_accounts`
-│    ├─ Update → `roxy_modify_account`
-│    └─ Delete → `roxy_delete_accounts`
-│
-├─── Does user need to CLOSE/DELETE browsers?
-│    ├─ Just close (keep profile) → `roxy_close_browsers`
-│    ├─ Delete permanently (FREE QUOTA) → `roxy_delete_browsers` ⚠️
-│    └─ ⚠️ IMPORTANT: Closing does NOT free quota!
-│
-├─── Does user need to MODIFY browser?
-│    ├─ Update settings → `roxy_update_browser`
-│    ├─ Randomize fingerprint → `roxy_random_fingerprint`
-│    ├─ Clear local cache → `roxy_clear_local_cache`
-│    └─ Clear server cache → `roxy_clear_server_cache`
-│
-├─── Does user mention ERRORS or PROBLEMS?
-│    ├─ "Quota" or "409" or "101" → Guide to `roxy_delete_browsers`
-│    ├─ "Connection" or "401" → `roxy_system_diagnostics`
-│    ├─ "Proxy not working" → `roxy_validate_proxy_config` or `roxy_detect_proxy`
-│    └─ General troubleshooting → `roxy_system_diagnostics`
-│
-└─── UNKNOWN intent?
-     └─ Ask clarifying question OR call `roxy_system_diagnostics` for health check
+```text
+START
+|
+|-- Need workspace IDs?
+|    `-- roxy_list_workspaces
+|
+|-- Need browser profiles?
+|    |-- List/filter -> roxy_list_browsers
+|    |-- Detail for one profile -> roxy_get_browser_detail
+|    |-- Create one -> roxy_create_browser
+|    |-- Create many -> roxy_batch_create_browsers
+|    |-- Update -> roxy_update_browser
+|    |-- Open and get CDP endpoint -> roxy_open_browsers
+|    |-- Get live endpoints for already-open browsers -> roxy_get_connection_info
+|    |-- Close only -> roxy_close_browsers
+|    `-- Delete permanently -> roxy_delete_browsers
+|
+|-- Need proxy operations?
+|    |-- List -> roxy_list_proxies
+|    |-- Detail -> roxy_proxy_detail
+|    |-- Create -> roxy_create_proxies
+|    |-- Detect/test -> roxy_detect_proxy
+|    |-- Modify -> roxy_modify_proxy
+|    `-- Delete -> roxy_delete_proxies
+|
+|-- Need account operations?
+|    |-- List -> roxy_list_accounts
+|    |-- Create one -> roxy_create_account
+|    |-- Create many -> roxy_batch_create_accounts
+|    |-- Modify -> roxy_modify_account
+|    `-- Delete -> roxy_delete_accounts
+|
+|-- Need browser extras?
+|    |-- Labels -> roxy_list_labels
+|    |-- Randomize fingerprint -> roxy_random_fingerprint
+|    |-- Clear local cache -> roxy_clear_local_cache
+|    `-- Clear server cache -> roxy_clear_server_cache
+|
+`-- Need connectivity check?
+     `-- roxy_health_check
 ```
 
----
+## Common Decision Paths
 
-## Scenario-Based Decision Trees
+### User says "open a browser"
 
-### Scenario A: "I want to automate a task"
+1. If `workspaceId` unknown -> `roxy_list_workspaces`
+2. If `dirId` unknown -> `roxy_list_browsers`
+3. Open -> `roxy_open_browsers`
 
-```
-User wants browser automation
-│
-├─ Step 1: Get workspace ID
-│  └─ Call `roxy_list_workspaces` → Select workspace
-│
-├─ Step 2: Check existing browsers
-│  └─ Call `roxy_list_browsers(workspaceId)`
-│     ├─ Found suitable browser? → Use existing dirId
-│     └─ No browser? → Create new with `roxy_create_browser`
-│
-├─ Step 3: Open browser
-│  └─ Call `roxy_open_browser(workspaceId, dirId)`
-│     └─ Extract CDP WebSocket URL from response
-│
-├─ Step 4: Automation (outside MCP)
-│  └─ User uses CDP endpoint with Playwright/Puppeteer
-│
-└─ Step 5: Cleanup
-   └─ Call `roxy_close_browsers([dirId])`
-```
+Note:
+- The current tool name is `roxy_open_browsers`.
+- It expects `dirIds: []`, even when opening only one browser.
 
-### Scenario B: "I'm getting quota errors"
+### User says "I need a CDP endpoint"
 
-```
-User reports quota/409/101 error
-│
-├─ Step 1: Explain the issue
-│  └─ "Closing browsers doesn't free quota - you must DELETE them"
-│
-├─ Step 2: Show current browsers
-│  └─ Call `roxy_list_browsers(workspaceId)`
-│     └─ Display list with dirIds
-│
-├─ Step 3: Confirm deletion
-│  └─ Ask user which browsers to delete
-│
-└─ Step 4: Delete browsers
-   └─ Call `roxy_delete_browsers(workspaceId, [dirId1, dirId2, ...])`
-      └─ ✅ Quota now freed
-```
+1. If browser is not open yet -> `roxy_open_browsers`
+2. If browser may already be open -> `roxy_get_connection_info`
 
-### Scenario C: "Set up proxy for browser"
+### User says "set up proxy for a browser"
 
-```
-User needs proxy configuration
-│
-├─ Does user have existing proxy in RoxyBrowser?
-│  ├─ YES → Call `roxy_list_proxies(workspaceId)` or `roxy_store_proxies(workspaceId)`
-│  │        └─ Get moduleId from results
-│  │           └─ Use in `roxy_create_browser(proxyInfo: {moduleId: X})`
-│  │
-│  └─ NO → Need to create proxy
-│           ├─ Option 1: Create proxy first
-│           │  └─ Call `roxy_create_proxy(workspaceId, protocol, host, port, ...)`
-│           │     └─ Get moduleId → Use in browser creation
-│           │
-│           └─ Option 2: Inline proxy config
-│              └─ Call `roxy_create_browser(proxyInfo: {protocol, host, port, ...})`
-│
-└─ Verify proxy works
-   └─ Call `roxy_validate_proxy_config(proxyInfo)` before browser creation
-```
+1. Existing proxy unknown -> `roxy_list_proxies`
+2. Need proxy details -> `roxy_proxy_detail`
+3. Need to create proxy -> `roxy_create_proxies`
+4. Need to test proxy -> `roxy_detect_proxy`
+5. Bind by `proxyInfo.moduleId` in `roxy_create_browser` or `roxy_update_browser`
 
-### Scenario D: "Troubleshooting connection issues"
+### User says "I hit quota limit"
 
-```
-User reports connection/authentication errors
-│
-├─ Step 1: Run diagnostics
-│  └─ Call `roxy_system_diagnostics(verbose: true)`
-│
-├─ Step 2: Analyze results
-│  ├─ connected: false
-│  │  └─ Check: Is RoxyBrowser app running? Firewall blocking port 50000?
-│  │
-│  ├─ authentication: false
-│  │  └─ Check: ROXY_API_KEY environment variable set correctly?
-│  │
-│  └─ workspaceAccess: false
-│     └─ Check: Does workspace exist? Call `roxy_list_workspaces` to verify
-│
-└─ Step 3: Follow recommendations
-   └─ Diagnostics output includes specific troubleshooting steps
-```
+1. `roxy_list_browsers`
+2. `roxy_delete_browsers`
 
----
+Do not use `roxy_close_browsers` for quota recovery.
 
-## Parameter Resolution Tree
+### User says "browser settings need changing"
 
-### When you need `workspaceId`:
+1. `roxy_get_browser_detail`
+2. `roxy_update_browser`
+3. If needed, `roxy_random_fingerprint`
 
-```
-Do you have workspaceId?
-├─ YES → Use it directly
-└─ NO → Call `roxy_list_workspaces`
-         └─ User selects workspace → Get id field
-```
+### User says "credentials/account needs to be reused"
 
-### When you need `dirId` (browser ID):
+1. `roxy_list_accounts`
+2. Use returned `id` inside `windowPlatformList`
 
-```
-Do you have dirId?
-├─ YES → Use it directly
-└─ NO → Call `roxy_list_browsers(workspaceId)`
-         └─ User selects browser → Get dirId field
-         OR
-         └─ Call `roxy_create_browser` → Get dirId from response
-```
+## ID Resolution
 
-### When you need `moduleId` (proxy ID):
+### Need `workspaceId`
 
-```
-Do you have proxy moduleId?
-├─ YES → Use in proxyInfo: {moduleId: X}
-└─ NO → Two options:
-         ├─ Option A: List existing
-         │  └─ Call `roxy_list_proxies` or `roxy_store_proxies`
-         │     └─ Get id field (this is moduleId)
-         │
-         └─ Option B: Create new
-            └─ Call `roxy_create_proxy`
-               └─ Get id from response (this is moduleId)
-```
+Use `roxy_list_workspaces`.
 
----
+### Need `dirId`
 
-## Tool Combination Patterns
+Use one of:
+- `roxy_list_browsers`
+- result from `roxy_create_browser`
 
-### Pattern 1: Complete Browser Automation Setup
-```
-roxy_list_workspaces
-  → roxy_create_browser(workspaceId)
-    → roxy_open_browser(workspaceId, dirId)
-      → [User automation with CDP endpoint]
-        → roxy_close_browsers([dirId])
-```
+### Need proxy `id`
 
-### Pattern 2: Proxy-Enabled Browser
-```
-roxy_list_proxies(workspaceId) OR roxy_create_proxy(...)
-  → roxy_create_browser(workspaceId, proxyInfo: {moduleId})
-    → roxy_open_browser(workspaceId, dirId)
-```
+Use one of:
+- `roxy_list_proxies`
+- `roxy_proxy_detail`
 
-### Pattern 3: Platform Account Integration
-```
-roxy_list_accounts(workspaceId) OR roxy_create_account(...)
-  → roxy_create_browser(workspaceId, windowPlatformList: [{id: accountId}])
-    → roxy_open_browser(workspaceId, dirId)
-```
+### Need account `id`
 
-### Pattern 4: Quota Management
-```
-roxy_list_browsers(workspaceId)
-  → [User identifies unused browsers]
-    → roxy_delete_browsers(workspaceId, [dirId1, dirId2, ...])
-      → ✅ Quota freed for new browsers
-```
+Use `roxy_list_accounts`.
 
----
+## Legacy Names To Avoid
 
-## Quick Reference: Which Tool When?
-
-| If user says... | First tool to call |
-|----------------|-------------------|
-| "Create a browser" | `roxy_create_browser` |
-| "Open browser" | `roxy_open_browser` (need dirId first) |
-| "List my browsers" | `roxy_list_browsers` (need workspaceId first) |
-| "I don't know my workspace" | `roxy_list_workspaces` |
-| "Set up proxy" | `roxy_list_proxies` or `roxy_create_proxy` |
-| "Getting quota error" | `roxy_delete_browsers` (NOT close!) |
-| "Can't connect" | `roxy_system_diagnostics` |
-| "Get CDP endpoint" | `roxy_open_browser` |
-| "Delete browser" | `roxy_delete_browsers` |
-| "Close browser" | `roxy_close_browsers` (doesn't free quota) |
-| "Save credentials" | `roxy_create_account` |
-| "Check proxy" | `roxy_validate_proxy_config` or `roxy_detect_proxy` |
-
----
-
-**Pro Tip**: When in doubt, start with `roxy_list_workspaces` to get the workspace ID, then narrow down from there.
+- `roxy_open_browser`
+- `roxy_system_diagnostics`
+- `roxy_create_proxy`
+- `roxy_batch_create_proxies`
+- `roxy_store_proxies`
+- `roxy_validate_proxy_config`

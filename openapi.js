@@ -16,7 +16,7 @@ class RoxyClient {
       method: 'post',
       body: JSON.stringify(data),
       headers: this._build_headers(),
-      timeout: 10000,
+      timeout: 100000,
     })
     return response.json()
   }
@@ -198,11 +198,22 @@ class RoxyClient {
   }
 }
 
-const client = new RoxyClient(50479, '5869995eb91e1a4ba81d868c7d61423a')
-client._get('/browser/list_v3', {
-  workspaceId: 19437,
-}).then((res) => {
+const workspaceId = 116613
+
+const client = new RoxyClient(50000, 'f3890208798d7e74df13327b393892fd')
+// client._get('/browser/list_v3', {
+//   workspaceId,
+// }).then((res) => {
+//   console.log(res.data)
+// }).catch((err) => {
+//   console.log(err)
+// })
+
+// TK
+await client._post('/browser/open', { workspaceId, dirId: 'ec37c83e1343bb9c4d9048e6f8724f90' }).then((res) => {
   console.log(res.data)
-}).catch((err) => {
-  console.log(err)
 })
+
+// await client._post('/browser/open', { workspaceId, dirId: '9b2e03f701aabcde8d94a74136c3ddc9' }).then((res) => {
+//   console.log(res.data)
+// })

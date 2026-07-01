@@ -10,6 +10,9 @@ import conversationRoutes from './routes/conversationRoutes'
 import fileRoutes from './routes/fileRoutes'
 import mcpRoutes from './routes/mcpRoutes'
 import modelRoutes from './routes/modelRoutes'
+import recordingRoutes from './routes/recordingRoutes'
+import scheduleRoutes from './routes/scheduleRoutes'
+import scriptRoutes from './routes/scriptRoutes'
 import skillRoutes from './routes/skillRoutes'
 
 /**
@@ -53,6 +56,15 @@ export function createApp(): Express {
 
   // Skill management routes
   app.use('/api/skills', skillRoutes)
+
+  // Recording routes
+  app.use('/api/recording', recordingRoutes)
+
+  // Script CRUD and run routes
+  app.use('/api/scripts', scriptRoutes)
+
+  // Schedule (定时任务) CRUD and run history routes
+  app.use('/api/schedules', scheduleRoutes)
 
   // Serve static files from root directory (must be after API routes)
   app.use(express.static(staticDir))

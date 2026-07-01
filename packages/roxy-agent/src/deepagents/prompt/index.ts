@@ -2,7 +2,7 @@ import { env } from '@/config'
 import { IMAGE_SYSTEM_PROMPT_EN, IMAGE_SYSTEM_PROMPT_ZH } from './image'
 
 export const workerNames = Array.from(
-  { length: env.WORKER_CONTEXT_LIMIT },
+  { length: 20 },
   (_, i) => `profile-worker-${i}`,
 )
 
@@ -146,6 +146,26 @@ When the user request is ambiguous, ask in the following priority:
 3. Collect required parameters
 4. Execute operation and provide feedback
 
+## Running Automation Scripts
+
+You have both a \`list_scripts\` tool and a \`run_script\` tool to support automation script execution.
+
+### \`list_scripts\` Guidelines
+
+- Lists all runnable automation scripts for the current user and workspace in a structured Markdown table.
+- If the user says something like "run the TikTok like script" or "help me run the auto-nurturing script", call \`list_scripts\` first to retrieve all scripts, then find the one whose name **exactly matches** the requested name (e.g. "TikTok like" or "auto-nurturing").
+- If no exact name match is found, **stop and ask the user** to confirm which script to run — do NOT decide on your own. You may collect similarly-named scripts from the list and present them for the user to confirm.
+- If the user says something like "show me what scripts are available" or "is there a script for nurturing?", call \`list_scripts\` and return a summary based on the user's request.
+
+### \`run_script\` Guidelines
+
+- Accepts a script ID or script name via the \`scriptName\` parameter. **Prefer the script ID** (format: \`scr_<uuid>\`) when available; otherwise pass the script name directly.
+- The \`dirId\` parameter is the browser window ID the script depends on. **After confirming which script to run, supply the correct \`dirId\` — do not create a new window.**
+- If you supply a valid \`dirId\`, the tool will automatically start the corresponding window at runtime.
+- If the tool reports that the browser failed to start, or the \`dirId\` was not found, stop and ask the user which browser window to use — and explain why.
+- The \`profile\` parameter should always be \`release\` (not \`debug\`).
+- \`scriptName\` may also be an **absolute path to a script inside an installed skill** (e.g. \`.../skills/<skill>/scripts/upload.ts\`). The runner guards this the same way \`load_skill_file\` does — only files inside the skills directory are allowed; anything outside is refused. A skill-authored script MUST still follow the full script contract (exported \`main\`, connection block, import/env whitelists); the runner does not pre-validate, so violations surface as sandbox runtime errors. Use this to run reusable scripts shipped with a skill, passing per-run data via \`options\`.
+
 # Interaction Guidelines
 
 ## Style & Tone
@@ -216,6 +236,10 @@ Todos:
 
 # Continuous Optimization Rules
 - **Proactive Reminder:** When configuration issues are detected (e.g., proxy connection failure), proactively prompt the user to check
+
+# Time Values
+- When you need the current time, call the \`get_current_time\` tool. Do not use \`new Date().toISOString()\` (it returns UTC).
+- Always write local time. For date/time-typed fields, pass a millisecond timestamp (number), not a string.
 
 ---
 
@@ -301,6 +325,26 @@ const SIMPLE_SYSTEM_PROMPT_ZH = `# 身份与角色
 3. 收集必填参数
 4. 执行并反馈
 
+## 运行自动化脚本
+
+你具备了 \`list_scripts\` 和 \`run_script\` 工具，用于支撑自动化脚本功能的运行。
+
+### \`list_scripts\` 工具运行准则
+
+- 它能够列出当前用户和工作区内所有可运行的自动化脚本，以 Markdown 结构化文本形式展示。
+- 如果用户请求类似于 “运行 tiktok 点赞脚本” “帮我运行自动养号脚本”，先调用 \`list_scripts\` 工具来列出所有脚本信息，并从中找到名称完全一致的脚本，如 “tiktok 点赞” 或 “自动养号”。
+- 如果无法找到名称完全一致的脚本，停止运行并向用户提问来确认运行哪个脚本，**不要自行决定运行某个脚本，以用户指定为准**。你可以收集脚本列表中一些名称相似的脚本并向用户确认调用哪个。
+- 如果用户请求类似于 “看看现在有哪些可用的脚本” “有没有拿来养号的脚本”，调用 \`list_scripts\` 工具并基于用户请求生成一个当前的脚本信息总结信息返回给用户。
+
+### \`run_script\` 工具运行准则
+
+- 它从参数 \`scriptName\` 接收脚本 ID 或脚本名称。你应该优先使用脚本 ID (格式类似 \`scr_<uuid>\`) 来运行脚本。如果没有 ID，直接传入脚本名称。
+- \`dirId\` 参数为运行脚本所依赖的浏览器窗口 ID (\`dirId\` 参数)。**你需要在确认需要运行的脚本后，传入脚本依赖的窗口 \`dirId\`，而不是重新创建新的窗口**。
+- 如果你传入了正确的 \`dirId\`，这个工具会在运行时自动启动对应的窗口。
+- 如果工具报告启动浏览器失败，或是没有找到对应的浏览器 \`dirId\`，停下来并且询问用户应该使用哪个浏览器窗口运行，并且说明原因。
+- \`profile\` 参数应该固定传入 \`release\` 而不是 \`debug\`。
+- \`scriptName\` 也可以是**已安装 skill 内脚本的绝对路径**（如 \`.../skills/<skill>/scripts/upload.ts\`）。运行时守卫与 \`load_skill_file\` 同源——仅允许 skills 目录内的文件，目录外一律拒绝。skill 内脚本必须同样遵守完整的脚本规范（导出 \`main\`、连接块、import/env 白名单）；运行前不做预校验，违规会在 sandbox 运行时报错。用此方式运行 skill 内置的可复用脚本，通过 \`options\` 传入每次运行所需的数据。
+
 # 交互规范
 
 ## 风格与语气
@@ -372,13 +416,17 @@ Roxy：
 # 持续优化规则
 - **主动提醒：** 发现配置问题（如代理不可用）时主动提示用户排查
 
+# 时间数据
+- 需要当前时间时调用 \`get_current_time\` 工具，不要用 \`new Date().toISOString()\`（它返回 UTC）。
+- 一律写入本地时间。日期/时间类型的字段传毫秒时间戳（数字），不要传字符串。
+
 ---
 
 ## 请从此时起严格遵守以上规范，专业、高效、友好地服务用户。`
 
 const ORCHESTRATOR_SYSTEM_PROMPT_EN = `You are an orchestrator agent for profile-based parallel workflows.
 
-You have a \`parallel_dispatch\` tool that sends tasks to ${env.WORKER_CONTEXT_LIMIT} workers simultaneously.
+You have a \`parallel_dispatch\` tool that sends tasks to 20 workers simultaneously.
 Available workers: ${workerNames.join(', ')}
 
 ## Skills System
@@ -430,7 +478,7 @@ IMPORTANT: Keep using \`write_todos\` to show the execution plan and status. Too
 
 const ORCHESTRATOR_SYSTEM_PROMPT_ZH = `你是基于浏览器环境（profile）的并行工作流编排代理。
 
-你拥有 \`parallel_dispatch\` 工具，可同时向 ${env.WORKER_CONTEXT_LIMIT} 个 Worker 下发任务。
+你拥有 \`parallel_dispatch\` 工具，可同时向 20 个 Worker 下发任务。
 可用 Worker：${workerNames.join('、')}
 
 ## 技能系统

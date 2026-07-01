@@ -41,6 +41,16 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     return confirmMacAppOwnershipFix()
   })
 
+  /**
+   * 获取功能开关
+   * scriptRecording：是否启用自动化脚本库与录制入口，由主进程 env ENABLE_SCRIPT_RECORDING=yes 开启
+   */
+  ipcMain.on('app:getFeatureFlags', (event) => {
+    return {
+      scriptRecording: process.env.ENABLE_SCRIPT_RECORDING === 'yes',
+    }
+  })
+
   /** 设置系统主题 */
   ipcMain.on('app:setSystemTheme', (event, theme) => {
     nativeTheme.themeSource = theme
@@ -79,8 +89,8 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     const v2rayChangedForSystem = store.v2raySwitch !== originV2raySwitch && networkMode === 'system'
     const shouldRefreshRoxynetUpstream
       = (store.networkMode !== originNetworkMode && (networkMode === 'system' || networkMode === 'custom'))
-      || (kernelProxyChanged && networkMode === 'custom')
-      || v2rayChangedForSystem
+        || (kernelProxyChanged && networkMode === 'custom')
+        || v2rayChangedForSystem
 
     if (shouldRefreshRoxynetUpstream) {
       await startRoxynet().catch(() => { })

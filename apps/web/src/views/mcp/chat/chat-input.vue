@@ -5,6 +5,7 @@ import PendingAttachments from './components/pending-attachments.vue'
 import AssetToolbar from './components/asset-toolbar.vue'
 import AutomationToolbar from './components/automation-toolbar.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import type { RecordingPhase, RecordingUIStatus } from '/@/views/mcp/agent-api'
 import type { AssetGenerationOptions, AttachmentInfo, InputScene, Todo } from '/@/views/mcp/types'
 import { isMacOS } from '/@/utils'
 
@@ -40,6 +41,8 @@ interface Props {
   pendingScript?: any
   todo?: Todo[]
   class?: string
+  recordingStatus?: RecordingUIStatus
+  recordingPhase?: RecordingPhase
 }
 
 interface Emits {
@@ -49,6 +52,10 @@ interface Emits {
   (e: 'removeAttachment', fileId: string): void
   (e: 'removeScript'): void
   (e: 'changeMode', value: 'orchestrator' | 'simple'): void
+  (e: 'startRecording'): void
+  (e: 'stopRecording'): void
+  (e: 'stopGeneration'): void
+  (e: 'retryGeneration'): void
 }
 
 const message = defineModel<string>()
@@ -372,8 +379,15 @@ function getAttachmentPreview(attachment: AttachmentInfo) {
           :conversation-id="conversationId"
           :pending-script="pendingScript"
           :disabled="isChatting || (!health.isReady && !health.loading)"
+          :recording-disabled="!health.isReady && !health.loading"
+          :recording-status="props.recordingStatus ?? 'idle'"
+          :recording-phase="props.recordingPhase"
           @upload="onClickUpload"
           @remove-script="emit('removeScript')"
+          @start-recording="emit('startRecording')"
+          @stop-recording="emit('stopRecording')"
+          @stop-generation="emit('stopGeneration')"
+          @retry-generation="emit('retryGeneration')"
         />
 
         <SvgIcon

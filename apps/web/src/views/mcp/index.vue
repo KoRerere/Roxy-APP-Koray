@@ -8,7 +8,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { genDriver, supportsApp3_8_8 } from '/@/utils'
+import { genDriver, isScriptRecordingEnabled, supportsApp3_8_8 } from '/@/utils'
 import { useMcpDataStore } from './pinia-store/mcp-data-store'
 import { useChatStreamStore } from './pinia-store/useChatStreamStore'
 import type { InputScene } from './types'
@@ -85,7 +85,7 @@ async function loadConversations(notSetFrist?: boolean) {
 }
 
 function handleCreateConversation() {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   chatStore.resetChat()
   activeConversationId.value = ''
@@ -96,7 +96,7 @@ function handleCreateConversation() {
 }
 
 async function handleDeleteConversation(id: string) {
-  if (chatStore.isChatting && id === activeConversationId.value) {
+  if ((chatStore.isChatting || chatStore.isRecordingProcessing) && id === activeConversationId.value) {
     deletePopoverRefs.value[id]?.hide()
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   }
@@ -113,7 +113,7 @@ async function handleDeleteConversation(id: string) {
 }
 
 function selectConversation(id: string) {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = id
   if (route.name !== 'mcp-chat') {
@@ -122,24 +122,31 @@ function selectConversation(id: string) {
 }
 
 function selectSettings() {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = ''
   router.push({ path: '/mcp/settings', query: { tab: 'mcp' } })
 }
 
 function selectSkillsStore() {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = ''
   router.push('/mcp/skills-store')
 }
 
 function selectPoints() {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   activeConversationId.value = ''
   router.push('/mcp/points')
+}
+
+function selectScripts() {
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
+    return onlyErrorToast(-1, $t('任务进行中，不可操作'))
+  activeConversationId.value = ''
+  router.push('/mcp/scripts')
 }
 
 function handleGoToSkills() {
@@ -148,7 +155,7 @@ function handleGoToSkills() {
 }
 
 function handleUseScript(script: any) {
-  if (chatStore.isChatting)
+  if (chatStore.isChatting || chatStore.isRecordingProcessing)
     return onlyErrorToast(-1, $t('任务进行中，不可操作'))
   chatStore.resetChat()
   activeConversationId.value = ''
@@ -156,7 +163,7 @@ function handleUseScript(script: any) {
     router.push('/mcp/chat')
   }
   nextTick(() => {
-    chatStore.userMessage = `创建一个窗口，然后执行 \`${script.name}\` 脚本`
+    chatStore.userMessage = `帮我执行 \`${script.name}\` 脚本`
     chatStore.pendingScript = script
   })
 }
@@ -233,7 +240,7 @@ function applyScene(scene: string) {
 // 窗口已打开时，从外部入口（如资源生成）切场景会通过主进程消息触发：
 // 对话进行中则提示、不打断；否则切换场景。
 const cancelUseSceneListener = globalThis.electronAPI?.on('mcp:use-scene', (scene: string) => {
-  if (chatStore.isChatting) {
+  if (chatStore.isChatting || chatStore.isRecordingProcessing) {
     onlyErrorToast(-1, $t('任务进行中，不可操作'))
     return
   }
@@ -244,7 +251,7 @@ const cancelUseSceneListener = globalThis.electronAPI?.on('mcp:use-scene', (scen
 // 对话进行中则提示、不打断；否则确保下载后新开会话并预填。
 const cancelUseSkillListener = globalThis.electronAPI?.on('mcp:use-skill', (slug: string) => {
   console.log('skills slug', slug)
-  if (chatStore.isChatting) {
+  if (chatStore.isChatting || chatStore.isRecordingProcessing) {
     onlyErrorToast(-1, $t('任务进行中，不可操作'))
     return
   }
@@ -423,15 +430,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Bottom Section -->
-        <div class="flex flex-col gap-0 w-full text-13px">
-          <!-- <div id="scripts" class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)]"
-               :class="route.name === 'mcp-scripts' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : ''" @click="selectScripts"
-          >
-            <SvgIcon name="base/rx_ic_doc_code" size="16" color="var(--colors-icon-icon-primary-hover)" />
-            <div class="font-medium">
-              Scripts
-            </div>
-          </div> -->
+        <div class="flex flex-col gap-1 w-full pt-1 text-13px">
           <div id="mcpAndSkills"
                class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
                :class="route.name === 'mcp-settings' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'" @click="selectSettings"
@@ -474,6 +473,18 @@ onUnmounted(() => {
               <RxButton class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click.stop="buyPoints" />
             </div>
           </ShinyButton>
+
+          <div
+            v-if="isScriptRecordingEnabled()"
+            class="flex items-center gap-1.5 h-9 px-3 rounded-lg cursor-pointer text-[var(--colors-text-text-primary-hover)] select-none"
+            :class="route.name === 'mcp-scripts' ? 'bg-[var(--pattern-sidenav-bg-hover)]' : 'hover:bg-[var(--pattern-sidenav-bg-hover)]'"
+            @click="selectScripts"
+          >
+            <SvgIcon name="base/rx_ic_doc_code" size="16" color="var(--colors-icon-icon-primary-hover)" />
+            <div class="font-medium">
+              {{ $t('自动化脚本') }}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -176,6 +176,14 @@ export const useChatStreamStore = defineStore('chatStream', () => {
   const assetOptions = ref<AssetGenerationOptions>({ ...DEFAULT_ASSET_OPTIONS })
   const userMessage = ref('')
   const isChatting = ref(false)
+  // 录制/enhance 脚本生成是否进行中（active/processing）。与 isChatting 并列，
+  // 用于在生成脚本期间阻止切换会话/页面（侧边栏 guard + 路由离开拦截）。
+  // 由 chat-view.vue 在 recordingData 变化时同步。
+  const isRecordingProcessing = ref(false)
+  // 完全访问模式（yolo）：开启后本次会话发消息时携带 fullAccess=true，
+  // 后端 agent 启动不挂 HITL interrupt，所有操作（文件读写、命令执行、删除等）直接执行不中断。
+  // 会话级开关，默认关闭；不持久化，仅随 /api/chat 请求体传递。
+  const fullAccess = ref(false)
   const activeRequestKind = ref<'chat' | 'image' | null>(null)
   const todo = ref<Todo[]>([])
   const pendingAttachments = ref<AttachmentInfo[]>([])
@@ -242,13 +250,17 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         updateStream()
         break
 
+      case 'thinking_complete':
+        messageViewer.applyThinkingComplete(data?.thinkingId || '', data?.durationMs ?? 0, data?.taskId)
+        updateStream()
+        break
+
       case 'content':
         messageViewer.add(data?.contentId || '', 'content', data?.text || '', eventTimestamp)
         updateStream()
         break
 
       case 'tool_call':
-        messageViewer.finalizeThinkingForEvent(data?.taskId, eventTimestamp)
         if (isHiddenToolEvent(data)) {
           updateStream()
           break
@@ -264,7 +276,6 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         break
 
       case 'tool_result':
-        messageViewer.finalizeThinkingForEvent(data?.taskId, eventTimestamp)
         if (isHiddenToolEvent(data)) {
           updateStream()
           break
@@ -310,19 +321,47 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         updateStream()
         break
 
+      case 'script_log': {
+        // 沙箱脚本日志：按 toolId（或 runId）归组成一个日志块，逐行累积
+        const groupId = `script:${data?.toolId || data?.runId || data?.scriptName || 'default'}`
+        messageViewer.add(groupId, type, data, eventTimestamp)
+        updateStream()
+        break
+      }
+
+      case 'agent_file':
+        messageViewer.add('agent-files', 'agent_file', data, eventTimestamp)
+        updateStream()
+        break
+
+      // 顶层模型调用网络中断自动重试：同一重试序列复用 retryId，原地更新「重试中…(n/N)」而非新增消息
+      case 'retry':
+        messageViewer.add(`retry:${data?.retryId ?? eventTimestamp}`, 'retry', data, eventTimestamp)
+        updateStream()
+        break
+
+      // worker 内重试：不展示提示，仅停止该 worker 当前 thinking 计时；重试后的新块自然新建、保留截断块
+      case 'worker_retry':
+        messageViewer.noteWorkerRetry(data?.taskId || '', eventTimestamp)
+        updateStream()
+        break
+
       case 'error':
+        messageViewer.finalize(eventTimestamp)
         messageViewer.add(type, type, data, eventTimestamp)
         updateStream(false)
         isChatting.value = false
         break
 
       case 'interrupt':
+        messageViewer.finalize(eventTimestamp)
         messageViewer.add(type, type, '', eventTimestamp)
         updateStream(false)
         isChatting.value = false
         break
 
       case 'orchestrator_stopped': {
+        messageViewer.finalize(eventTimestamp)
         messageViewer.markPendingAsFailed()
         updateStream(false)
         isChatting.value = false
@@ -531,6 +570,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
         mode: outgoingMode,
         conversationId: currentConversation.value!.id,
         enableThinking: true,
+        fullAccess: fullAccess.value,
         attachments: attachmentsToSend.map(({ fileId }) => ({ fileId })),
         ...(scriptToSend ? { script: scriptToSend } : {}),
       }),
@@ -560,8 +600,12 @@ export const useChatStreamStore = defineStore('chatStream', () => {
   function handleInterrupt() {
     // 图片生成与 chat 一样必须走服务端 /stop：仅 abort 客户端 fetch 只会断开浏览器侧连接，
     // 服务端的 image agent 与 generateImagesFromPlan 仍会继续跑（继续调用 LLM 代理计费、
-    // 继续生图、写库），切回会话会看到“仍在运行”。conversationStop 会触发服务端 abortController
-    // 真正 abort，服务端随后发 interrupt + done 让前端优雅停止。
+    // 继续生图、写库），切回会话会看到“仍在运行”。前端先乐观停止计时与流式状态，
+    // 再由 conversationStop 触发服务端 abortController 真正 abort。
+    messageViewer.finalize()
+    updateStream(false)
+    isChatting.value = false
+
     conversationStop(activeConversationId?.() || currentConversation.value?.id || '')
   }
 
@@ -842,6 +886,8 @@ export const useChatStreamStore = defineStore('chatStream', () => {
     assetOptions,
     userMessage,
     isChatting,
+    isRecordingProcessing,
+    fullAccess,
     todo,
     pendingAttachments,
     pendingScript,

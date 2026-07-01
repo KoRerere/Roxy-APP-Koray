@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import { fileManager } from '@/core/fileManager'
+import { FileRecordStore } from '@/database/conversations'
 import { env } from '../config'
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -131,7 +132,7 @@ export async function saveUpload(input: UploadInput): Promise<UploadResult> {
  * 非法 fileId 或文件不存在时返回带 status 的错误（由路由转响应）。
  */
 export function resolveServeFile(fileId: string):
-  | { ok: true, filePath: string, mimeType: string }
+  | { ok: true, filePath: string, mimeType: string, fileName: string }
   | { ok: false, status: number, msg: string } {
   // 安全校验：只允许字母数字、连字符、点
   if (!/^[\w\-.]+$/.test(fileId)) {
@@ -143,8 +144,9 @@ export function resolveServeFile(fileId: string):
     return { ok: false, status: 404, msg: 'File not found' }
   }
 
+  const record = FileRecordStore.getByFileId(fileId)
   const mimeType = fileManager.resolveMimeType(fileId)
-  return { ok: true, filePath, mimeType }
+  return { ok: true, filePath, mimeType, fileName: record?.file_name || fileId }
 }
 
 // 附件类型定义

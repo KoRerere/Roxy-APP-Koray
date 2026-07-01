@@ -1,4 +1,4 @@
-import type { GeneratedImageInfo, MessageEntryView, MessageType, SSEEventData, Todo, WorkerStatus } from '../types'
+import type { AgentFileItem, GeneratedImageInfo, MessageEntryView, MessageType, ScriptLogLine, SSEEventData, Todo, WorkerStatus } from '../types'
 import { isHiddenToolEvent, normalizeWorkerStatus, parseSSEContentString } from './sse'
 
 /** util.ts 内部存储结构（含 Map 字段，不对外暴露） */
@@ -7,6 +7,7 @@ interface TopLevelEntry {
   meta: Record<string, any>
   type: MessageType
   isThinking?: boolean
+  authoritativeDuration?: number
   start?: number
   end?: number
   status?: WorkerStatus
@@ -18,34 +19,68 @@ export class MessageViewer {
   private entries = new Map<string, TopLevelEntry>()
   private order = new Set<string>()
   private todos: Todo[][] = []
-  /** 当前正在进行的顶层 thinking 条目 id */
-  private currentThinkingId: string | null = null
-  /** 每个 worker 当前正在进行的 thinking id */
-  private currentWorkerThinkingMap = new Map<string, string>()
 
   private _dirty = new Set<string>()
   private _cachedViews = new Map<string, MessageEntryView>()
   private _cachedResult: MessageEntryView[] | null = null
   private _orderChanged = false
 
-  private finalizeTopLevelThinking(endTimestamp?: number): void {
-    if (!this.currentThinkingId)
+  private stopActiveTopLevelThinking(endTimestamp?: number, exceptId?: string): void {
+    for (const [id, entry] of this.entries) {
+      if (entry.type === 'thinking' && entry.isThinking && id !== exceptId) {
+        entry.isThinking = false
+        entry.end = endTimestamp ?? entry.end ?? entry.start
+        this._dirty.add(id)
+      }
+    }
+  }
+
+  private stopActiveWorkerThinking(workerId: string, endTimestamp?: number, exceptId?: string): void {
+    const workerEntries = this.entries.get(workerId)?.workerEntries
+    if (!workerEntries)
       return
 
-    const entry = this.entries.get(this.currentThinkingId)
-    if (entry?.isThinking) {
-      entry.isThinking = false
-      entry.end = endTimestamp ?? entry.end ?? entry.start
-      this._dirty.add(this.currentThinkingId)
+    for (const [id, entry] of workerEntries) {
+      if (entry.type === 'thinking' && entry.isThinking && id !== exceptId) {
+        entry.isThinking = false
+        entry.end = endTimestamp ?? entry.end ?? entry.start
+        this._dirty.add(workerId)
+      }
     }
-    this.currentThinkingId = null
+  }
+
+  /** 停掉进行中 retry 条的 spinner（保留文案）：重试结束（成功进入正常输出或终止）时调用。 */
+  private stopActiveRetry(): void {
+    for (const [id, entry] of this.entries) {
+      if (entry.type === 'retry' && entry.meta.retrying) {
+        entry.meta.retrying = false
+        this._dirty.add(id)
+      }
+    }
+  }
+
+  applyThinkingComplete(thinkingId: string, durationMs: number, taskId?: string): void {
+    if (!thinkingId)
+      return
+
+    const entry = taskId
+      ? this.entries.get(taskId)?.workerEntries?.get(thinkingId)
+      : this.entries.get(thinkingId)
+    if (!entry)
+      return
+
+    entry.isThinking = false
+    entry.authoritativeDuration = durationMs
+    if (entry.start != null)
+      entry.end = entry.start + durationMs
+    this._dirty.add(taskId || thinkingId)
   }
 
   add(id: string, type: MessageType, data: unknown, timestamp?: number): void {
-    // 非 thinking 事件到来时，结束当前进行中的 thinking
-    if ((type !== 'thinking' || (type === 'thinking' && this.currentThinkingId !== id)) && this.currentThinkingId) {
-      this.finalizeTopLevelThinking(timestamp)
-    }
+    this.stopActiveTopLevelThinking(timestamp, type === 'thinking' ? id : undefined)
+    // 任何非 retry 的新块到来，说明重试已结束（成功进入正常输出或终止），停掉进行中 retry 条的 spinner
+    if (type !== 'retry')
+      this.stopActiveRetry()
 
     const isNew = !this.entries.has(id)
     if (isNew) {
@@ -71,11 +106,39 @@ export class MessageViewer {
     else if (type === 'todo') {
       this.todos.push(data?.todos as Todo[])
     }
+    else if (type === 'script_log') {
+      // 脚本日志：累积成一组日志行，前端以淡色逐行展示
+      const lines = Array.isArray(entry.meta.lines) ? entry.meta.lines as ScriptLogLine[] : []
+      const payload = data as { message?: string, level?: string, scriptName?: string }
+      lines.push({
+        level: payload?.level,
+        scriptName: payload?.scriptName,
+        text: payload?.message ?? '',
+      })
+      entry.meta.lines = lines
+    }
+    else if (type === 'agent_file') {
+      const payload = data as AgentFileItem
+      const existing = Array.isArray(entry.meta.files) ? [...entry.meta.files] as AgentFileItem[] : []
+      const index = existing.findIndex(item => item.fileName === payload.fileName)
+      if (index >= 0) {
+        existing[index] = payload
+      }
+      else {
+        existing.push(payload)
+      }
+      entry.meta.files = existing
+    }
     else if (type === 'error' || type === 'interrupt') {
       entry.text = data as string
     }
     else if (type === 'image') {
       entry.meta.images = data as GeneratedImageInfo[]
+    }
+    else if (type === 'retry') {
+      // 顶层模型调用网络中断自动重试提示：把 attempt/maxAttempts/reason 存入 meta 供展示「重试中…(n/N)」
+      Object.assign(entry.meta, data)
+      entry.meta.retrying = true
     }
 
     if (!entry.start) {
@@ -87,7 +150,6 @@ export class MessageViewer {
 
     if (type === 'thinking') {
       entry.isThinking = true
-      this.currentThinkingId = id
     }
 
     if (isNew)
@@ -104,29 +166,6 @@ export class MessageViewer {
     return type
   }
 
-  private finalizeWorkerThinking(workerId: string, endTimestamp?: number): void {
-    const workerEntries = this.entries.get(workerId)?.workerEntries
-    if (workerEntries) {
-      for (const entry of workerEntries.values()) {
-        if (entry.type === 'thinking' && entry.isThinking) {
-          entry.isThinking = false
-          entry.end = endTimestamp ?? entry.end ?? entry.start
-          this._dirty.add(workerId)
-        }
-      }
-    }
-    this.currentWorkerThinkingMap.delete(workerId)
-  }
-
-  finalizeThinkingForEvent(workerId?: string, endTimestamp?: number): void {
-    if (workerId) {
-      this.finalizeWorkerThinking(workerId, endTimestamp)
-      return
-    }
-
-    this.finalizeTopLevelThinking(endTimestamp)
-  }
-
   addWorkerEntry(
     workerId: string,
     id: string,
@@ -134,6 +173,8 @@ export class MessageViewer {
     data: unknown,
     timestamp?: number,
   ): void {
+    // orchestrator 顶层重试后若直接产生 worker 输出，也停掉 retry spinner
+    this.stopActiveRetry()
     const isNewWorker = !this.entries.has(workerId)
     if (isNewWorker) {
       this.entries.set(workerId, {
@@ -152,10 +193,7 @@ export class MessageViewer {
 
     const storedType = this.formatType(type)
 
-    // 非 thinking 事件到来时，结束该 worker 当前进行中的 thinking
-    if (storedType !== 'thinking' && this.currentWorkerThinkingMap.has(workerId)) {
-      this.finalizeWorkerThinking(workerId, timestamp)
-    }
+    this.stopActiveWorkerThinking(workerId, timestamp, storedType === 'thinking' ? id : undefined)
 
     if (!workerEntries.has(id)) {
       workerEntries.set(id, {
@@ -187,7 +225,6 @@ export class MessageViewer {
 
     if (storedType === 'thinking') {
       entry.isThinking = true
-      this.currentWorkerThinkingMap.set(workerId, id)
     }
 
     workerOrder.add(id)
@@ -215,9 +252,21 @@ export class MessageViewer {
     }
 
     this.entries.get(workerId)!.status = status
-    this.finalizeWorkerThinking(workerId, endTimestamp)
+    this.stopActiveWorkerThinking(workerId, endTimestamp)
     this.order.add(workerId)
     this._dirty.add(workerId)
+  }
+
+  /**
+   * worker 模型调用网络中断重试（worker_retry 事件）：仅停止该 worker 当前进行中的 thinking 计时，
+   * 不改 worker 状态、不展示提示。重试后产生新 chunk.id 的 worker thinking/content 会自然新建块、保留截断块。
+   */
+  noteWorkerRetry(workerId: string, endTimestamp?: number): void {
+    if (!workerId)
+      return
+    this.stopActiveWorkerThinking(workerId, endTimestamp)
+    this._dirty.add(workerId)
+    this.order.add(workerId)
   }
 
   /** 设置 worker 任务标题（worker_dispatch 事件）。merge-safe：仅写 meta.title，不替换整个 meta。 */
@@ -234,10 +283,14 @@ export class MessageViewer {
         workerOrder: new Set(),
         status: 'pending',
       })
+      // 新建 worker 条目必须置 _orderChanged，否则 view() 走原地更新路径不会把它追加进 _cachedResult，
+      // 导致 worker 卡片不展示，直到后续某事件触发 _orderChanged 才批量出现
+      this._orderChanged = true
     }
 
     this.entries.get(workerId)!.meta.title = title
     this.order.add(workerId)
+    this._dirty.add(workerId)
   }
 
   markWorkerPendingAsFailed(workerId: string): void {
@@ -259,17 +312,15 @@ export class MessageViewer {
         }
       }
     }
-    this.currentWorkerThinkingMap.delete(workerId)
     this._dirty.add(workerId)
   }
 
   markPendingAsFailed(): void {
-    this.currentThinkingId = null
-    this.currentWorkerThinkingMap.clear()
-
     for (const [id, entry] of this.entries) {
-      if (entry.isThinking)
+      if (entry.isThinking) {
         entry.isThinking = false
+        this._dirty.add(id)
+      }
 
       if (entry.type === 'tool_call' && (entry.meta.status == null || entry.meta.status === 'pending')) {
         entry.meta.status = 'failed'
@@ -331,12 +382,15 @@ export class MessageViewer {
 
   /** 结束所有进行中的 thinking，用于流结束时调用 */
   finalize(endTimestamp?: number): void {
-    this.currentThinkingId = null
-    this.currentWorkerThinkingMap.clear()
     for (const [id, entry] of this.entries) {
       if (entry.isThinking) {
         entry.isThinking = false
         entry.end = endTimestamp ?? entry.end ?? entry.start
+        this._dirty.add(id)
+      }
+      // 流结束兜底：停掉仍在「重试中」的 retry 条 spinner
+      if (entry.type === 'retry' && entry.meta.retrying) {
+        entry.meta.retrying = false
         this._dirty.add(id)
       }
       if (entry.workerEntries) {
@@ -418,6 +472,9 @@ export function parseHistorySSE2(content: string) {
       case 'thinking':
         messageViewer.add(block.data?.thinkingId || '', block.type, block.data?.text || '', block.timestamp)
         break
+      case 'thinking_complete':
+        messageViewer.applyThinkingComplete(block.data?.thinkingId || '', block.data?.durationMs ?? 0, block.data?.taskId)
+        break
       case 'content':
         if (!block.data?.contentId) {
           console.log(block)
@@ -456,6 +513,20 @@ export function parseHistorySSE2(content: string) {
       case 'interrupt':
         messageViewer.add(block.type, block.type, block.data, block.timestamp)
         break
+      case 'script_log': {
+        const groupId = `script:${block.data?.toolId || block.data?.runId || block.data?.scriptName || 'default'}`
+        messageViewer.add(groupId, block.type, block.data, block.timestamp)
+        break
+      }
+      case 'agent_file':
+        messageViewer.add('agent-files', 'agent_file', block.data, block.timestamp)
+        break
+      case 'retry':
+        messageViewer.add(`retry:${block.data?.retryId ?? block.timestamp ?? ''}`, block.type, block.data, block.timestamp)
+        break
+      case 'worker_retry':
+        messageViewer.noteWorkerRetry(block.data?.taskId || '', block.timestamp)
+        break
       case 'image_generating': {
         const count = Math.min(Math.max(Number(block.data?.count) || 1, 1), 4)
         const pendingImages: GeneratedImageInfo[] = Array.from({ length: count }, (_, i) => ({
@@ -485,6 +556,7 @@ export function parseHistorySSE2(content: string) {
     }
   })
 
+  messageViewer.finalize()
   return messageViewer.view()
 }
 

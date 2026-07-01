@@ -32,6 +32,8 @@ const CODE_MESSAGE: Record<string, string> = {
   provider_not_found: $t('服务配置异常，请联系技术支持。'),
   provider_unavailable: $t('服务暂时不可用，请稍后重试。'),
   provider_timeout: $t('服务响应超时，请稍后重试。'),
+  // 传输层网络中断（重试耗尽后仍中断）
+  network_interrupted: $t('网络异常，请稍后重试。'),
   // agent 自身
   agent_internal_error: $t('未知错误，请联系技术支持。'),
   agent_cancelled: $t('请求已取消。'),

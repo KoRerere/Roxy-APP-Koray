@@ -84,6 +84,51 @@ export function isAbortLike(error: unknown): boolean {
   return typeof err.message === 'string' && /\b(?:abort(?:ed)?|user cancelled|cancell?ed)\b/i.test(err.message)
 }
 
+/** undici / Node 传输层网络中断错误码（socket 被提前关闭、空闲断开、读超时等）。 */
+const NETWORK_ERROR_CODES = new Set([
+  'UND_ERR_SOCKET',
+  'UND_ERR_BODY_TIMEOUT',
+  'UND_ERR_HEADERS_TIMEOUT',
+  'UND_ERR_CONNECT_TIMEOUT',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ECONNABORTED',
+  'EPIPE',
+  'ETIMEDOUT',
+  'ENOTFOUND',
+])
+
+/** 传输层中断的消息特征（undici 的 `TypeError: terminated`、`fetch failed`、`other side closed` 等）。 */
+const NETWORK_MESSAGE_RE = /\b(?:terminated|fetch failed|other side closed|socket hang ?up|network ?error|connection (?:reset|closed|refused)|premature close)\b/i
+
+/**
+ * 判定是否为「传输层网络中断」错误（如 SSE 流被上游/中间设备提前掐断导致 undici `TypeError: terminated`）。
+ *
+ * 这类错误既无 HTTP 状态码也无业务错误信封，区别于业务/鉴权/限流等可归类错误，应作为**可重试的瞬时网络错误**
+ * 处理。供 modelRetry 中间件的 `retryOn` 与 {@link normalizeAgentError} 共用，保证「重试判定」与「错误归类」口径一致。
+ *
+ * 用户主动取消 / 客户端断开（abort）**不算**网络中断，绝不重试。
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (isAbortLike(error))
+    return false
+
+  let cur: any = error
+  const seen = new Set<any>()
+  while (cur && typeof cur === 'object' && !seen.has(cur)) {
+    seen.add(cur)
+    const code = typeof cur.code === 'string' ? cur.code : undefined
+    if (code && NETWORK_ERROR_CODES.has(code))
+      return true
+    const message = typeof cur.message === 'string' ? cur.message : ''
+    if (message && NETWORK_MESSAGE_RE.test(message))
+      return true
+    // 沿 cause 链下探（LangChain 的 MiddlewareError 把底层 undici 错误包在 cause 里）
+    cur = cur.cause
+  }
+  return false
+}
+
 interface CodeSpec {
   category: AgentErrorCategory
   retryable: boolean
@@ -111,6 +156,8 @@ const CODE_SPEC: Record<string, CodeSpec> = {
   provider_not_found: { category: 'provider_not_found', retryable: false },
   provider_unavailable: { category: 'provider_unavailable', retryable: true },
   provider_timeout: { category: 'provider_timeout', retryable: true },
+  // 传输层网络中断（SSE 流被提前掐断，undici terminated 等）
+  network_interrupted: { category: 'provider_unavailable', retryable: true },
   // agent 自身
   agent_internal_error: { category: 'internal', retryable: false },
   agent_cancelled: { category: 'cancelled', retryable: false },
@@ -262,6 +309,16 @@ export function normalizeAgentError(error: unknown): AgentErrorEnvelope {
       code: 'agent_cancelled',
       message: 'Request cancelled',
       data: { source: 'agent', category: 'cancelled', retryable: false },
+    }
+  }
+
+  // 传输层网络中断：modelRetry 重试耗尽后仍抛出的 terminated 等错误，归一为可重试的 network_interrupted，
+  // 前端据此展示「网络异常，请稍后重试」而非迷惑的「内部错误」。须先于信封/状态码解析，因其无信封无状态码。
+  if (isNetworkError(error)) {
+    return {
+      code: 'network_interrupted',
+      message: 'Network connection interrupted',
+      data: { source: 'upstream', category: 'provider_unavailable', retryable: true },
     }
   }
 

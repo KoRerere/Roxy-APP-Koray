@@ -1,4 +1,5 @@
 import type { AgentInstance } from '@/deepagents'
+import type { ModelRetryInfo } from '@/deepagents/middlewares'
 import { createDeepAgent } from 'deepagents'
 import path from 'node:path'
 import { aiAgentModelApi } from '@/api/model'
@@ -6,7 +7,7 @@ import { env } from '@/config'
 import { mcpManager } from '@/core/mcp/mcpManager'
 import { createDeepAgentRuntime } from '@/deepagents/backend'
 import { createImageSpecStore } from '@/deepagents/imageSpec'
-import { createSaveImageSpecLimitMiddleware } from '@/deepagents/middlewares/imageSpec'
+import { createModelRetryMiddleware, createParallelToolCallLimitMiddleware } from '@/deepagents/middlewares'
 import { IMAGE_SYSTEM_PROMPT } from '@/deepagents/prompt'
 import { SqliteSaver } from '@/deepagents/sqlite-checkpointer'
 import { createImageTools } from '@/deepagents/tools/image'
@@ -15,6 +16,7 @@ import { createLLMFromModelInfo } from '@/llm'
 export async function createImageAgent(options: {
   conversationId?: string
   turnId?: string
+  onRetry?: (info: ModelRetryInfo) => void
 }): Promise<AgentInstance> {
   const mcpTools = await mcpManager.getToolsForWorker('image', false)
   const modelInfo = await aiAgentModelApi.getUserModel({
@@ -56,7 +58,11 @@ export async function createImageAgent(options: {
     backend: runtime.backend,
     systemPrompt: IMAGE_SYSTEM_PROMPT,
     tools,
-    middleware: [...runtime.middleware, createSaveImageSpecLimitMiddleware()],
+    middleware: [
+      createModelRetryMiddleware({ onRetry: options.onRetry }),
+      ...runtime.middleware,
+      createParallelToolCallLimitMiddleware('save_image_spec'),
+    ],
     name: 'image',
     subagents: [],
     ...(checkpointer ? { interruptOn: runtime.interruptOn } : {}),

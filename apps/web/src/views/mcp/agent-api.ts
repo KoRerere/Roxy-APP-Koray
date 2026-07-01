@@ -1,5 +1,6 @@
 import { useAgentStore } from '/@/stores/agent'
 import { useSimpleLocale } from '/@/stores/locale'
+import { fetchSSE } from './utils/fetch'
 
 // 对话类型定义
 export interface Conversation {
@@ -157,6 +158,75 @@ export interface AgentApiResponse<T> {
   message?: string
 }
 
+export type RecordingStatus = 'active' | 'processing' | 'done' | 'failed' | 'cancelled' | 'needs_review'
+export type RecordingUIStatus = 'idle' | RecordingStatus
+export type RecordingPhase = 'skeleton' | 'refine' | 'enhance' | 'done'
+
+export interface RecordingStatusData {
+  recordingId: string
+  conversationId: string
+  status: RecordingStatus
+  phase?: RecordingPhase
+  primaryDirId?: string
+  eventCount: number
+  createdAt: number
+  stoppedAt?: number
+  completedAt?: number
+  finalScriptPath?: string
+  finalScript?: string
+  finalScriptFileId?: string
+  finalScriptOssUrl?: string
+  errorMessage?: string
+}
+
+// 手动运行脚本相关类型
+export type ScriptRunStatus = 'running' | 'done' | 'failed' | 'killed' | 'timeout'
+
+// 录制脚本（本地 agent）类型
+export interface ScriptListItem {
+  id: string
+  name: string
+  description?: string | null
+  conversationId?: string | null
+  dirId?: string | null
+  source: string
+  ossUrl?: string | null
+  fileName?: string | null
+  size?: number | null
+  createdAt: string
+  /** 是否可运行（后端有 oss_url 或 local_path 时为 true） */
+  runnable?: boolean
+}
+
+export interface ScriptDetail extends ScriptListItem {
+  content?: string
+}
+
+export interface ScriptRunStartResult {
+  runId: string
+  cdpUrl: string
+}
+
+export interface ScriptRunLogEvent {
+  runId: string
+  level?: string
+  message: string
+}
+
+export interface ScriptRunDoneEvent {
+  runId: string
+  status: ScriptRunStatus
+  exitCode: number | null
+  artifacts?: Array<{ fileName: string, size: number, fileId?: string }>
+}
+
+export interface ScriptRunSubscribeCallbacks {
+  onLog?: (evt: ScriptRunLogEvent) => void
+  onDone?: (evt: ScriptRunDoneEvent) => void
+  onError?: (err: unknown) => void
+  signal?: AbortSignal
+}
+
 export function useAgentApi() {
   const agentStore = useAgentStore()
   const localeStore = useSimpleLocale()
@@ -182,8 +252,14 @@ export function useAgentApi() {
   /**
    * 获取附件文件
    */
-  function getFileUrl(fileId: string) {
-    return `${serverUrl.value}/api/files/${fileId}`
+  function getFileUrl(fileId: string, options: { download?: boolean, fileName?: string } = {}) {
+    const params = new URLSearchParams()
+    if (options.download)
+      params.set('download', '1')
+    if (options.fileName)
+      params.set('filename', options.fileName)
+    const query = params.toString()
+    return `${serverUrl.value}/api/files/${fileId}${query ? `?${query}` : ''}`
   }
 
   // ============ 对话相关 API ============
@@ -552,6 +628,199 @@ export function useAgentApi() {
     return await res.json()
   }
 
+  // ============ 录制相关 API ============
+
+  /**
+   * 启动录制
+   */
+  async function recordingStart(conversationId: string): Promise<AgentApiResponse<{
+    recordingId: string
+    conversationId: string
+    status: string
+    createdAt: number
+  }>> {
+    const res = await fetch(`${serverUrl.value}/api/recording/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId }),
+    })
+    return await res.json()
+  }
+
+  /**
+   * 停止录制（触发后台处理）
+   */
+  async function recordingStop(conversationId: string): Promise<AgentApiResponse<{
+    recordingId: string
+    conversationId: string
+    status: string
+    eventCount: number
+  }>> {
+    const res = await fetch(`${serverUrl.value}/api/recording/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId }),
+    })
+    return await res.json()
+  }
+
+  /**
+   * 查询录制状态
+   */
+  async function recordingStatus(conversationId: string): Promise<AgentApiResponse<RecordingStatusData | null>> {
+    const res = await fetch(`${serverUrl.value}/api/recording/status/${encodeURIComponent(conversationId)}`)
+    return await res.json()
+  }
+
+  /**
+   * 取消脚本生成
+   */
+  async function recordingCancel(conversationId: string): Promise<AgentApiResponse<{
+    recordingId: string
+    conversationId: string
+    status: string
+  }>> {
+    const res = await fetch(`${serverUrl.value}/api/recording/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId }),
+    })
+    return await res.json()
+  }
+
+  /**
+   * 重试脚本生成（复用上次录制工作区，重新启动 enhance agent）
+   */
+  async function recordingRetry(conversationId: string): Promise<AgentApiResponse<{
+    recordingId: string
+    conversationId: string
+    status: string
+  }>> {
+    const res = await fetch(`${serverUrl.value}/api/recording/retry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId }),
+    })
+    return await res.json()
+  }
+
+  // ============ 手动运行脚本相关 API ============
+
+  /**
+   * 查询当前被脚本运行占用的浏览器分身 dirId 列表
+   */
+  async function scriptRunOccupied(): Promise<AgentApiResponse<string[]>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/run/occupied`)
+    return await res.json()
+  }
+
+  /**
+   * 启动一次手动脚本运行：后端会先打开浏览器分身，再以 sandbox 模式运行脚本
+   */
+  async function scriptRunStart(params: {
+    scriptName: string
+    scriptUrl: string
+    dirId: string
+  }): Promise<AgentApiResponse<ScriptRunStartResult>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    return await res.json()
+  }
+
+  /**
+   * 订阅脚本运行状态（SSE）：实时接收日志和完成事件
+   */
+  function scriptRunSubscribe(runId: string, callbacks: ScriptRunSubscribeCallbacks): void {
+    void fetchSSE(`${serverUrl.value}/api/scripts/run/${encodeURIComponent(runId)}/status`, {
+      method: 'GET',
+      signal: callbacks.signal,
+      onEvent: (evt) => {
+        if (evt.event === 'log') {
+          callbacks.onLog?.(evt.json as ScriptRunLogEvent)
+        }
+        else if (evt.event === 'done') {
+          callbacks.onDone?.(evt.json as ScriptRunDoneEvent)
+        }
+      },
+      onError: callbacks.onError,
+    }).catch((err) => {
+      callbacks.onError?.(err)
+    })
+  }
+
+  /**
+   * 中止运行中的脚本
+   */
+  async function scriptRunStop(runId: string): Promise<AgentApiResponse<null>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/run/${encodeURIComponent(runId)}/stop`, {
+      method: 'POST',
+    })
+    return await res.json()
+  }
+
+  // ============ 录制脚本 CRUD API ============
+
+  /**
+   * 获取本地录制脚本列表
+   * @param opts.sync 为 true 时先由 agent 侧从后端拉取并合并本地，再返回本地列表
+   */
+  async function scriptList(opts?: { limit?: number, offset?: number, sync?: boolean }): Promise<AgentApiResponse<{ rows: ScriptListItem[], syncError?: string | null }>> {
+    const url = new URL(`${serverUrl.value}/api/scripts`)
+    if (opts?.limit != null)
+      url.searchParams.set('limit', String(opts.limit))
+    if (opts?.offset != null)
+      url.searchParams.set('offset', String(opts.offset))
+    if (opts?.sync)
+      url.searchParams.set('sync', 'true')
+    const res = await fetch(url.toString())
+    return await res.json()
+  }
+
+  /**
+   * 获取单个脚本详情
+   */
+  async function scriptDetail(id: string): Promise<AgentApiResponse<ScriptDetail>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/${encodeURIComponent(id)}`)
+    return await res.json()
+  }
+
+  /**
+   * 重命名/改描述
+   */
+  async function scriptUpdate(id: string, patch: { name?: string, description?: string }): Promise<AgentApiResponse<ScriptListItem>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    return await res.json()
+  }
+
+  /**
+   * 删除脚本（仅删记录，不动 files/OSS）
+   */
+  async function scriptDelete(id: string): Promise<AgentApiResponse<null>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+    return await res.json()
+  }
+
+  /**
+   * 按 id 运行脚本（agent 从 DB 解析 file 路径），dirId 可选（缺省用脚本记录的 dirId）
+   */
+  async function scriptRunById(id: string, dirId?: string): Promise<AgentApiResponse<ScriptRunStartResult>> {
+    const res = await fetch(`${serverUrl.value}/api/scripts/${encodeURIComponent(id)}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dirId ? { dirId } : {}),
+    })
+    return await res.json()
+  }
+
   return {
     serverUrl,
     health,
@@ -596,5 +865,22 @@ export function useAgentApi() {
     storeListUserSkills,
     storeInstallSkill,
     storeRemoveSkill,
+    // Recording
+    recordingStart,
+    recordingStop,
+    recordingStatus,
+    recordingCancel,
+    recordingRetry,
+    // 手动运行脚本
+    scriptRunOccupied,
+    scriptRunStart,
+    scriptRunSubscribe,
+    scriptRunStop,
+    // 录制脚本 CRUD
+    scriptList,
+    scriptDetail,
+    scriptUpdate,
+    scriptDelete,
+    scriptRunById,
   }
 }

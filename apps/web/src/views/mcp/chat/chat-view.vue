@@ -13,9 +13,14 @@ import { useChatStreamStore } from '../pinia-store/useChatStreamStore'
 import { useAgentStore } from '/@/stores/agent'
 import GradientButton from './components/gradient-button.vue'
 import { useRouter } from 'vue-router'
+import { useAgentApi } from '/@/views/mcp/agent-api'
+import type { RecordingStatusData } from '/@/views/mcp/agent-api'
+import { extractZipEntry } from './utils/zip-extract'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const router = useRouter()
 const agentStore = useAgentStore()
+const [, onlyErrorToast] = useResponseToast()
 
 function goToSkillsStore() {
   router.push('/mcp/skills-store')
@@ -152,10 +157,6 @@ function forceScrollToBottom() {
   requestAnimationFrame(tick)
 }
 
-onMounted(() => {
-  chatStore.setScrollCallback(scrollToBottom)
-})
-
 // 对话切换时强制滚底（watch token，由 loadConversation 自增触发）
 watch(() => chatStore.scrollToBottomToken, () => {
   forceScrollToBottom()
@@ -189,6 +190,341 @@ function handleSend() {
 
 function isLast(index: number, messageList: any[]) {
   return index === messageList.length - 1
+}
+
+const agentApi = useAgentApi()
+
+const recordingData = ref<RecordingStatusData | null>(null)
+
+const recordingUIStatus = computed(() => {
+  if (!recordingData.value)
+    return 'idle'
+  return recordingData.value.status
+})
+
+const recordingUIPhase = computed(() => recordingData.value?.phase)
+
+let recordingPollTimer: ReturnType<typeof setInterval> | null = null
+
+function stopRecordingPoll() {
+  if (recordingPollTimer) {
+    clearInterval(recordingPollTimer)
+    recordingPollTimer = null
+  }
+}
+
+// 录制/enhance 处于进行中的状态：active（录制中）/ processing（生成脚本中）
+const RECORDING_ACTIVE_STATUSES = ['active', 'processing']
+const RECORDING_TERMINAL_STATUSES = ['done', 'failed', 'cancelled', 'needs_review']
+
+/**
+ * 统一写入 recordingData 并同步 chatStore.isRecordingProcessing。
+ * 进行中（active/processing）时置 isRecordingProcessing=true，用于阻止切换会话/页面；
+ * 终态或无数据时置 false。
+ */
+function applyRecordingData(data: RecordingStatusData | null) {
+  recordingData.value = data
+  chatStore.isRecordingProcessing = !!data && RECORDING_ACTIVE_STATUSES.includes(data.status)
+}
+
+async function pollRecordingStatus() {
+  const conversationId = chatStore.currentConversation?.id
+  if (!conversationId)
+    return
+
+  try {
+    const res = await agentApi.recordingStatus(conversationId)
+    if (res.code === 0) {
+      const prevStatus = recordingData.value?.status
+      applyRecordingData(res.data)
+
+      if (!res.data || RECORDING_TERMINAL_STATUSES.includes(res.data.status)) {
+        stopRecordingPoll()
+        if (res.data?.status === 'done' && prevStatus !== 'done') {
+          await nextTick()
+          forceScrollToBottom()
+        }
+      }
+    }
+  }
+  catch {
+    // 网络错误不影响主流程
+  }
+}
+
+/**
+ * 从后端拉取当前会话的录制状态并恢复前端视图。
+ * 用于切走再切回（路由重挂载 / 切换会话）后重建 recordingData 与轮询：
+ * - 进行中（active/processing）：重建数据 + 重启轮询，恢复"停止生成"入口与进度可见性；
+ * - 终态（done/failed/...）：填入数据展示上次结果，不轮询；
+ * - 无数据：置 idle。
+ */
+async function syncRecordingStatus(conversationId?: string) {
+  const id = conversationId ?? chatStore.currentConversation?.id
+  if (!id) {
+    applyRecordingData(null)
+    return
+  }
+
+  try {
+    const res = await agentApi.recordingStatus(id)
+    if (res.code !== 0) {
+      applyRecordingData(null)
+      return
+    }
+    applyRecordingData(res.data ?? null)
+    if (res.data && RECORDING_ACTIVE_STATUSES.includes(res.data.status)) {
+      stopRecordingPoll()
+      recordingPollTimer = setInterval(pollRecordingStatus, 2000)
+    }
+    else {
+      stopRecordingPoll()
+    }
+  }
+  catch {
+    // 拉取失败不影响主流程，保持现有本地状态
+  }
+}
+
+async function handleStartRecording() {
+  const conversationId = chatStore.currentConversation?.id
+  if (!conversationId)
+    return
+
+  try {
+    const res = await agentApi.recordingStart(conversationId)
+    if (res.code === 0) {
+      applyRecordingData({
+        recordingId: res.data.recordingId,
+        conversationId: res.data.conversationId,
+        status: 'active',
+        hasUnsupportedOps: false,
+        eventCount: 0,
+        createdAt: res.data.createdAt,
+      } as RecordingStatusData)
+    }
+    else {
+      console.error('[Recording] Start failed:', res.msg)
+    }
+  }
+  catch (err: any) {
+    console.error('[Recording] Start error:', err.message)
+  }
+}
+
+async function handleStopRecording() {
+  const conversationId = chatStore.currentConversation?.id
+  if (!conversationId)
+    return
+
+  try {
+    const res = await agentApi.recordingStop(conversationId)
+    if (res.code === 0) {
+      if (recordingData.value) {
+        applyRecordingData({
+          ...recordingData.value,
+          status: 'processing',
+        })
+      }
+
+      stopRecordingPoll()
+      recordingPollTimer = setInterval(pollRecordingStatus, 2000)
+    }
+    else {
+      console.error('[Recording] Stop failed:', res.msg)
+    }
+  }
+  catch (err: any) {
+    console.error('[Recording] Stop error:', err.message)
+  }
+}
+
+async function handleStopGeneration() {
+  const conversationId = chatStore.currentConversation?.id
+  if (!conversationId)
+    return
+
+  try {
+    const res = await agentApi.recordingCancel(conversationId)
+    if (res.code === 0) {
+      stopRecordingPoll()
+      if (recordingData.value) {
+        applyRecordingData({
+          ...recordingData.value,
+          status: 'cancelled',
+        })
+      }
+    }
+    else {
+      console.error('[Recording] Cancel generation failed:', res.msg)
+    }
+  }
+  catch (err: any) {
+    console.error('[Recording] Cancel generation error:', err.message)
+  }
+}
+
+async function handleRetryGeneration() {
+  const conversationId = chatStore.currentConversation?.id
+  if (!conversationId)
+    return
+
+  try {
+    const res = await agentApi.recordingRetry(conversationId)
+    if (res.code === 0) {
+      // 本地立即切回 processing 并清空终态字段，重启轮询拿后续 phase/状态
+      if (recordingData.value) {
+        applyRecordingData({
+          ...recordingData.value,
+          status: 'processing',
+          phase: undefined,
+          errorMessage: undefined,
+          completedAt: undefined,
+          finalScript: undefined,
+          finalScriptPath: undefined,
+          finalScriptFileId: undefined,
+          finalScriptOssUrl: undefined,
+        })
+      }
+
+      stopRecordingPoll()
+      recordingPollTimer = setInterval(pollRecordingStatus, 2000)
+    }
+    else {
+      console.error('[Recording] Retry generation failed:', res.msg)
+    }
+  }
+  catch (err: any) {
+    console.error('[Recording] Retry generation error:', err.message)
+  }
+}
+
+watch(
+  () => chatStore.currentConversation?.id,
+  (newId) => {
+    stopRecordingPoll()
+    // 切会话时清空旧状态，并拉取新会话的录制状态以恢复视图（进行中则重启轮询）
+    applyRecordingData(null)
+    if (newId)
+      syncRecordingStatus(newId)
+  },
+)
+
+// 路由离开 /mcp/chat 去往其他 mcp 子路由时，若录制/enhance 正在进行则阻止切换
+onBeforeRouteLeave(() => {
+  if (chatStore.isRecordingProcessing) {
+    onlyErrorToast(-1, $t('任务进行中，不可操作'))
+    return false
+  }
+  return true
+})
+
+onMounted(() => {
+  chatStore.setScrollCallback(scrollToBottom)
+  // 路由重新挂载（从其他页面切回）时恢复当前会话的录制状态
+  syncRecordingStatus()
+})
+
+onUnmounted(() => {
+  stopRecordingPoll()
+  // 组件卸载时复位进行中标志（状态已由后端持有，重挂载时 syncRecordingStatus 恢复）
+  chatStore.isRecordingProcessing = false
+})
+
+const recordingScriptFileName = computed(() => {
+  const title = chatStore.currentConversation?.title || 'recording'
+  const safeTitle = title.replace(/[/\\:*?"<>|]/g, '_').substring(0, 40)
+  const suffix = recordingData.value?.recordingId?.split('_').pop() || Date.now()
+  return `${safeTitle}_${suffix}.ts`
+})
+
+const recordingScriptDownloadUrl = computed(() => {
+  if (recordingData.value?.finalScriptFileId)
+    return agentApi.getFileUrl(recordingData.value.finalScriptFileId, { download: true, fileName: recordingScriptFileName.value })
+  if (recordingData.value?.finalScriptOssUrl)
+    return recordingData.value.finalScriptOssUrl
+  return ''
+})
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function downloadRecordingScript() {
+  if (recordingScriptDownloadUrl.value) {
+    try {
+      const res = await fetch(recordingScriptDownloadUrl.value)
+      if (res.ok) {
+        const buffer = await res.arrayBuffer()
+        // 真实产物是单入口 zip（入口名 script.ts）。按下载源后缀决定解压策略：
+        //  - .zip：直接解压取出 script.ts；
+        //  - .ts（OSS/前端覆盖了文件名）：先检测是否含 zip 头，有则解压，否则当作正常 TS 脚本。
+        const sourceExt = getSourceFileExtension(recordingScriptDownloadUrl.value)
+        const scriptText = await extractScriptFromBuffer(buffer, sourceExt)
+        downloadBlob(new Blob([scriptText], { type: 'text/typescript' }), recordingScriptFileName.value)
+        return
+      }
+    }
+    catch {
+      if (!recordingData.value?.finalScriptOssUrl || recordingData.value?.finalScriptFileId)
+        return
+    }
+  }
+
+  const script = recordingData.value?.finalScript
+  if (!script)
+    return
+
+  downloadBlob(new Blob([script], { type: 'text/typescript' }), recordingScriptFileName.value)
+}
+
+/** 从下载源 URL 推断真实文件后缀（小写，含点；无法判断时返回空串） */
+function getSourceFileExtension(url: string): string {
+  try {
+    const u = new URL(url)
+    const pathname = u.pathname
+    const dot = pathname.lastIndexOf('.')
+    if (dot < 0)
+      return ''
+    return pathname.slice(dot).toLowerCase()
+  }
+  catch {
+    // 非标准 URL（如本地 /api/files/:id），按整体取后缀
+    const clean = url.split('?')[0].split('#')[0]
+    const dot = clean.lastIndexOf('.')
+    return dot < 0 ? '' : clean.slice(dot).toLowerCase()
+  }
+}
+
+/**
+ * 从下载到的字节中还原脚本源码。
+ * - 后缀 .zip：直接解压取出 `script.ts` 入口。
+ * - 后缀 .ts 或未知：先检测 PK 头，是 zip 则解压，否则当作正常 TS 脚本直接返回文本。
+ * 解压失败时回退为原始文本，保证下载不中断。
+ */
+async function extractScriptFromBuffer(buffer: ArrayBuffer, sourceExt: string): Promise<string> {
+  const hasZipHeader = buffer.byteLength >= 4
+    && new Uint8Array(buffer)[0] === 0x50 // 'P' (PK 头)
+
+  // .zip 后缀直接解压；.ts / 未知后缀仅当检测到 zip 头（PK）时才解压，否则当作正常 TS 脚本
+  const shouldUnzip = sourceExt === '.zip' || hasZipHeader
+  if (!shouldUnzip)
+    return new TextDecoder('utf-8').decode(buffer)
+
+  try {
+    return await extractZipEntry(buffer, 'script.ts')
+  }
+  catch (err: any) {
+    console.warn('[Recording] Failed to extract script.ts from zip, fallback to raw text:', err?.message)
+    return new TextDecoder('utf-8').decode(buffer)
+  }
 }
 </script>
 
@@ -311,6 +647,41 @@ function isLast(index: number, messageList: any[]) {
             </div>
           </DynamicScrollerItem>
         </template>
+
+        <template #after>
+          <div
+            v-if="recordingData?.status === 'done' && (recordingData.finalScript || recordingData.finalScriptFileId || recordingData.finalScriptOssUrl)"
+            class="w-full max-w-[640px] mx-auto pb-6 px-1.5"
+          >
+            <div class="flex items-start gap-2">
+              <div class="w-8 h-8 shrink-0" />
+              <div class="flex-1 rounded-2 border border-[var(--colors-border-border-inactive)] bg-[var(--colors-background-bg-block)] overflow-hidden">
+                <div class="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--colors-border-border-inactive)]">
+                  <SvgIcon name="base/rx_ic_doc_api" size="16" color="var(--colors-icon-icon-brand)" class="shrink-0" />
+                  <span class="flex-1 text-3.5 font-500 text-[var(--colors-text-text-primary)] truncate">
+                    {{ recordingScriptFileName }}
+                  </span>
+                  <span class="text-3 text-[var(--colors-text-text-tertiary)] shrink-0">
+                    {{ $t('自动化脚本') }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between gap-3 px-3 py-2">
+                  <span class="text-3 text-[var(--colors-text-text-secondary)]">
+                    {{ $t('录制完成，脚本已生成') }}
+                  </span>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 h-7 px-3 border-0 rounded-[31px] bg-[var(--colors-brand-brand-default)] text-white text-3 leading-5 cursor-pointer hover:opacity-90 transition-opacity duration-150 shrink-0"
+                    @click="downloadRecordingScript"
+                  >
+                    <SvgIcon name="base/rx_ic_download" size="14" color="white" />
+                    {{ $t('下载脚本') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
       </DynamicScroller>
 
       <!-- 输入框 -->
@@ -326,11 +697,17 @@ function isLast(index: number, messageList: any[]) {
           :is-chatting="chatStore.isChatting"
           :health="{ isReady: agentStore.isReady, loading: agentStore.health.loading }"
           :todo="chatStore.todo"
+          :recording-status="recordingUIStatus"
+          :recording-phase="recordingUIPhase"
           @send-message="handleSend"
           @stop="chatStore.handleInterrupt()"
           @upload-files="(files) => chatStore.uploadFiles(files)"
           @remove-attachment="(fileId) => chatStore.removeAttachment(fileId)"
           @remove-script="chatStore.pendingScript = null"
+          @start-recording="handleStartRecording"
+          @stop-recording="handleStopRecording"
+          @stop-generation="handleStopGeneration"
+          @retry-generation="handleRetryGeneration"
         />
         <div v-if="!chatStore.isEmpty" class="h-6 bg-[var(--colors-background-bg-page)]" />
       </div>

@@ -29,6 +29,20 @@ export interface AiAgentJsonRequestOptions extends AiAgentRequestOptions {
   body?: AiAgentBody | object | null
 }
 
+export class AiAgentHttpError extends Error {
+  readonly status: number
+  readonly code?: number
+  readonly payload?: unknown
+
+  constructor(status: number, message: string, extra?: { code?: number, payload?: unknown }) {
+    super(message)
+    this.name = 'AiAgentHttpError'
+    this.status = status
+    this.code = extra?.code
+    this.payload = extra?.payload
+  }
+}
+
 function buildAiAgentHeaders(options: AiAgentRequestOptions = {}) {
   const headers = new Headers(options.headers)
   const token = options.token ?? aiAgentToken
@@ -133,12 +147,12 @@ async function requestJson<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`AI Agent request failed: ${await extractErrorMessage(response)}`)
+    throw new AiAgentHttpError(response.status, await extractErrorMessage(response))
   }
 
   const payload = await response.json() as AiAgentApiResponse<T>
   if (payload.code !== 0) {
-    throw new Error(payload.message || `AI Agent request failed with code ${payload.code}`)
+    throw new AiAgentHttpError(response.status, payload.message || `AI Agent request failed with code ${payload.code}`, { code: payload.code, payload })
   }
 
   return payload.data
@@ -185,7 +199,7 @@ async function download(path: string, options: AiAgentRequestOptions = {}): Prom
   })
 
   if (!response.ok) {
-    throw new Error(`AI Agent download failed: ${await extractErrorMessage(response)}`)
+    throw new AiAgentHttpError(response.status, await extractErrorMessage(response))
   }
 
   return {

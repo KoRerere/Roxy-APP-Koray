@@ -42,9 +42,13 @@ export function formatElapsedDuration(startTimestamp?: number, nowTimestamp = Da
 }
 
 /**
- * 格式化消息条目的持续时间（使用 start/end 字段）
+ * 格式化消息条目的持续时间（优先使用 agent 侧权威时长）
  */
 export function formatThinkingDuration(block: MessageEntry): string {
+  if (typeof block.authoritativeDuration === 'number') {
+    const seconds = Math.floor(block.authoritativeDuration / 100) / 10
+    return `${seconds}s`
+  }
   return formatDuration(block.start ?? (block as any).startTimestamp, block.end ?? (block as any).endTimestamp)
 }
 

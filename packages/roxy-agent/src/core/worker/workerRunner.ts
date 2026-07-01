@@ -60,6 +60,7 @@ export class WorkerRunner {
       {
         stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
         execArgv: ['--experimental-strip-types'],
+        execPath: process.execPath,  // 需设置 execPath，否则会出现无法找到 electron node 导致进程无法启动
       },
     )
     this.child = child

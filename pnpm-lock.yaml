@@ -1002,11 +1002,14 @@ importers:
         specifier: workspace:*
         version: link:../backend-api
       '@roxybrowser/openapi':
-        specifier: 1.0.13-beta.7
-        version: 1.0.13-beta.7(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
+        specifier: 1.0.15
+        version: 1.0.15(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
+      '@roxybrowser/playwright':
+        specifier: 2.0.2-beta.25
+        version: 2.0.2-beta.25(@cfworker/json-schema@4.1.1)
       '@roxybrowser/playwright-mcp':
-        specifier: 0.0.8-beta.5
-        version: 0.0.8-beta.5(@cfworker/json-schema@4.1.1)
+        specifier: 0.0.8-beta.10
+        version: 0.0.8-beta.10(@cfworker/json-schema@4.1.1)
       '@slack/bolt':
         specifier: ^3.22.0
         version: 3.22.0
@@ -1040,6 +1043,9 @@ importers:
       langchain:
         specifier: 'catalog:'
         version: 1.4.4(patch_hash=41ac3a264b872da049d12dc0df2630b99f4813d9179270974c63449fb2fa7e39)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.207.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(openai@6.41.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.207.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(openai@6.41.0(ws@8.21.0)(zod@4.4.3))(vue@3.5.35(typescript@6.0.3))(ws@8.21.0)(zod-to-json-schema@3.25.2(zod@4.4.3))
+      node-cron:
+        specifier: ^3.0.3
+        version: 3.0.3
       openai:
         specifier: ^6.15.0
         version: 6.41.0(ws@8.21.0)(zod@4.4.3)
@@ -1083,6 +1089,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
+      '@types/node-cron':
+        specifier: ^3.0.11
+        version: 3.0.11
       electron:
         specifier: 40.8.3
         version: 40.8.3
@@ -1141,9 +1150,12 @@ importers:
 
   packages/roxy-playwright:
     dependencies:
+      '@roxybrowser/playwright':
+        specifier: 2.0.2-beta.25
+        version: 2.0.2-beta.25(@cfworker/json-schema@4.1.1)
       '@roxybrowser/playwright-mcp':
-        specifier: 0.0.6
-        version: 0.0.6
+        specifier: 0.0.8-beta.10
+        version: 0.0.8-beta.10(@cfworker/json-schema@4.1.1)
     devDependencies:
       terser-webpack-plugin:
         specifier: ^5.6.1
@@ -5081,19 +5093,18 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@roxybrowser/openapi@1.0.13-beta.7':
-    resolution: {integrity: sha512-PvYH2E4FwOYA89whEpWUjQZqZFH/RITo0Cad00t60HRWTOanSAcFFghX+2mXddLnSZfZ+veMose1GYGZUTud1g==}
+  '@roxybrowser/openapi@1.0.15':
+    resolution: {integrity: sha512-cH96lddauSbE1IW6oWVrtbG0qyScqotzpRitCDTRzbj230MLCtRUhXvOQBdCXkxQXUp7+QF6wdQkcRhlldz7bg==}
     engines: {node: '>=18'}
     hasBin: true
 
-  '@roxybrowser/playwright-mcp@0.0.6':
-    resolution: {integrity: sha512-Os4gdNKOZh+aruDVrUHH++jH7wcIDdevKpBlCHVuoomeK2pDxnlIp3iRZCf4E+vz/or1dCfZY5o/Im0FZiDcSQ==}
+  '@roxybrowser/playwright-mcp@0.0.8-beta.10':
+    resolution: {integrity: sha512-Gyntq0jvsmFqK3omTg/MXCdUZL2wyRQuPtAViHMNg+/dDcpo58SMfLfgCTwiwpPMVqG2URfzIa2ykBSl6iyhxQ==}
     engines: {node: '>=18'}
     hasBin: true
 
-  '@roxybrowser/playwright-mcp@0.0.8-beta.5':
-    resolution: {integrity: sha512-NmpNaKSGy7dW5/hWHJaKBQkV+fg5afIJZE1ebbpbR6xhzyk8sZQF3sBOKGbhYhL7nJRbSdxf5hC1chfROdRZkg==}
-    engines: {node: '>=18'}
+  '@roxybrowser/playwright@2.0.2-beta.25':
+    resolution: {integrity: sha512-CbKrrTC42xce6UlIcbvV0ursalxF/5bf1y4ml9+E5r6q0fHKG6m3nD7QVYDPvMkP8lNh9SbM/jBiXDag61jH3w==}
     hasBin: true
 
   '@scarf/scarf@1.4.0':
@@ -5699,6 +5710,9 @@ packages:
 
   '@types/mysql@2.15.27':
     resolution: {integrity: sha512-YfWiV16IY0OeBfBCk8+hXKmdTKrKlwKN1MNKAPBu5JYxLwBEZl7QzeEpGnlZb3VMGJrrGmB84gXiH+ofs/TezA==}
+
+  '@types/node-cron@3.0.11':
+    resolution: {integrity: sha512-0ikrnug3/IyneSHqCBeslAhlK2aBfYek1fGo4bP4QnZPmiqSGRK+Oy7ZMisLWkesffJvQ1cqAcBnJC+8+nxIAg==}
 
   '@types/node-fetch@2.6.13':
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
@@ -6923,6 +6937,10 @@ packages:
   chrome-launcher@1.2.1:
     resolution: {integrity: sha512-qmFR5PLMzHyuNJHwOloHPAHhbaNglkfeV/xDtt5b7xiFFyU1I+AZZX0PYseMuhenJSSirgxELYIbswcoc+5H4A==}
     engines: {node: '>=12.13.0'}
+    hasBin: true
+
+  chrome-remote-interface@0.33.3:
+    resolution: {integrity: sha512-zNnn0prUL86Teru6UCAZ1yU1XeXljHl3gj7OrfPcarEfU62OUU4IujDPdTDW3dAWwRqN3ZMG/Chhkh2gPL/wiw==}
     hasBin: true
 
   chrome-remote-interface@0.34.0:
@@ -9784,6 +9802,11 @@ packages:
     engines: {node: '>=4.0.0'}
     hasBin: true
 
+  mime@4.1.0:
+    resolution: {integrity: sha512-X5ju04+cAzsojXKes0B/S4tcYtFAJ6tTMuSPBEn9CPGlrWr8Fiw7qYeLT0XyH80HSoAoqWCaz+MWKh22P7G1cw==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   mimic-fn@1.2.0:
     resolution: {integrity: sha512-jf84uxzwiuiIVKiOLpfYk7N46TSy8ubTonmneY9vrpHNAnp0QBt2BxWV9dO3/j+BoVAb+a5G6YDPW3M5HOdMWQ==}
     engines: {node: '>=4'}
@@ -10021,6 +10044,10 @@ packages:
 
   node-api-version@0.2.1:
     resolution: {integrity: sha512-2xP/IGGMmmSQpI1+O/k72jF/ykvZ89JeuKX3TLJAYPDVLUalrshrLHkeVcCCZqG/eEa635cr8IBYzgnDvM2O8Q==}
+
+  node-cron@3.0.3:
+    resolution: {integrity: sha512-dOal67//nohNgYWb+nWmg5dkFdIwDm8EpeGYMekPMrngV3637lqnX0lbUcCtgibHTz6SEz7DAIjKvKDFYCnO1A==}
+    engines: {node: '>=6.0.0'}
 
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
@@ -11388,8 +11415,8 @@ packages:
     engines: {node: '>= 6'}
 
   statuses@1.5.0:
-    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==, tarball: https://registry.npmjs.org/statuses/-/statuses-1.5.0.tgz}
-    engines: {node: '>= 0.8'}
+    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==}
+    engines: {node: '>= 0.6'}
 
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
@@ -16724,23 +16751,18 @@ snapshots:
       - supports-color
       - zod
 
-  '@roxybrowser/openapi@1.0.13-beta.7(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)':
+  '@roxybrowser/openapi@1.0.15(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.25.1(patch_hash=9ea4d654ca2d33ac63a3babe4767a882ec9a8d86f710139bc4b464b46b23a8e2)(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
       commander: 14.0.3
+      dotenv: 17.4.2
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - hono
       - supports-color
       - zod
 
-  '@roxybrowser/playwright-mcp@0.0.6':
-    dependencies:
-      commander: 13.1.0
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
-
-  '@roxybrowser/playwright-mcp@0.0.8-beta.5(@cfworker/json-schema@4.1.1)':
+  '@roxybrowser/playwright-mcp@0.0.8-beta.10(@cfworker/json-schema@4.1.1)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.29.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       commander: 13.1.0
@@ -16749,6 +16771,19 @@ snapshots:
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - supports-color
+
+  '@roxybrowser/playwright@2.0.2-beta.25(@cfworker/json-schema@4.1.1)':
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+      chrome-remote-interface: 0.33.3
+      mime: 4.1.0
+      yaml: 2.9.0
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   '@scarf/scarf@1.4.0': {}
 
@@ -17473,6 +17508,8 @@ snapshots:
   '@types/mysql@2.15.27':
     dependencies:
       '@types/node': 22.19.19
+
+  '@types/node-cron@3.0.11': {}
 
   '@types/node-fetch@2.6.13':
     dependencies:
@@ -19166,6 +19203,14 @@ snapshots:
       lighthouse-logger: 2.0.2
     transitivePeerDependencies:
       - supports-color
+
+  chrome-remote-interface@0.33.3:
+    dependencies:
+      commander: 2.11.0
+      ws: 7.5.11
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   chrome-remote-interface@0.34.0:
     dependencies:
@@ -22613,6 +22658,8 @@ snapshots:
 
   mime@2.6.0: {}
 
+  mime@4.1.0: {}
+
   mimic-fn@1.2.0: {}
 
   mimic-fn@2.1.0: {}
@@ -22826,6 +22873,10 @@ snapshots:
   node-api-version@0.2.1:
     dependencies:
       semver: 7.8.1
+
+  node-cron@3.0.3:
+    dependencies:
+      uuid: 8.3.2
 
   node-domexception@1.0.0: {}
 

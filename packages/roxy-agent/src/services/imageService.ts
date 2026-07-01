@@ -131,7 +131,11 @@ export async function runImageStream(opts: RunImageStreamOptions): Promise<void>
         })
     }
 
-    const imageAgent = await createImageAgent({ conversationId, turnId: userMessageId })
+    const imageAgent = await createImageAgent({
+      conversationId,
+      turnId: userMessageId,
+      onRetry: info => streamCallback(streamAdapter.retry(info)),
+    })
     const agent = imageAgent.agent
     destroy = imageAgent.destroy
 

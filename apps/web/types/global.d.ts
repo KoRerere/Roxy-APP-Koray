@@ -15,6 +15,8 @@ declare global {
   var isElectron: boolean
   /** 当前 APP 版本 */
   var $appVersion: string
+  /** 功能开关（由主进程 env 决定，web 端回退到 VITE_ 变量） */
+  var $featureFlags: { scriptRecording?: boolean } | undefined
   /** 当前选择的网络线路 */
   var $lastSelectedNetworkNode: 'auto' | {
     /** 站点域名 */

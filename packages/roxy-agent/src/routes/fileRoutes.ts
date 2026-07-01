@@ -12,6 +12,11 @@ const UploadSchema = z.object({
   fileName: z.string({ error: 'data, mimeType and fileName are required' }),
 })
 
+function toContentDisposition(fileName: string, disposition: 'inline' | 'attachment') {
+  const fallback = fileName.replace(/[^\w.-]+/g, '_') || 'download'
+  return `${disposition}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+}
+
 // 上传附件文件
 router.post('/upload', async (req: Request, res: Response) => {
   const parsed = UploadSchema.safeParse(req.body)
@@ -52,6 +57,10 @@ router.get('/files/:fileId', (req: Request, res: Response) => {
       root: path.dirname(resolved.filePath),
       headers: {
         'Content-Type': resolved.mimeType,
+        'Content-Disposition': toContentDisposition(
+          typeof req.query.filename === 'string' && req.query.filename ? req.query.filename : resolved.fileName,
+          req.query.download === '1' ? 'attachment' : 'inline',
+        ),
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     }, (error) => {

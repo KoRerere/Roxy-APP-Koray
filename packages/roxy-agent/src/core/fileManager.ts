@@ -16,6 +16,7 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/svg+xml': '.svg',
   'application/pdf': '.pdf',
   'application/json': '.json',
+  'text/typescript': '.ts',
   'text/plain': '.txt',
   'text/markdown': '.md',
   'text/x-markdown': '.md',
@@ -37,6 +38,7 @@ const EXT_TO_MIME: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.pdf': 'application/pdf',
   '.json': 'application/json',
+  '.ts': 'text/typescript',
   '.txt': 'text/plain',
   '.md': 'text/markdown',
   '.markdown': 'text/markdown',
@@ -84,7 +86,7 @@ function looksLikeMpo(buf: Buffer): boolean {
 
 /** 删除 JPEG 中的 MPF APP2 段（FFE2 + "MPF\0"），使其不再被识别为 MPO。返回新 Buffer。 */
 function stripMpfSegment(frame: Buffer): Buffer {
-  let p = 2 // 跳过 SOI(FFD8)
+  let p = 2
   while (p + 4 <= frame.length) {
     if (frame[p] !== 0xFF)
       break
@@ -123,7 +125,7 @@ function extractMpoFirstJpeg(buf: Buffer): Buffer | null {
   const tiff = mpfPos + 4
   if (tiff + 8 > buf.length)
     return null
-  const le = buf.toString('latin1', tiff, tiff + 2) === 'II' // 'II'=小端，'MM'=大端
+  const le = buf.toString('latin1', tiff, tiff + 2) === 'II'
 
   let firstSize: number | null = null
   try {
@@ -266,6 +268,26 @@ export class FileManager {
   }
 
   /**
+   * 用内存 buffer 直接上传到 OSS（不读磁盘，避免与本地写入竞态），返回后端 file_id + 永久 URL。
+   * 失败返回 undefined（吞异常，由调用方决定降级）。
+   */
+  async uploadBufferToOss(buffer: Buffer, fileName: string, mimeType?: string): Promise<{ url: string, remoteFileId?: string } | undefined> {
+    try {
+      const contentType = normalizeMimeType(mimeType) || extToMime(fileName) || 'application/octet-stream'
+      const blob = new Blob([new Uint8Array(buffer)], { type: contentType })
+      const result = await aiAgentFilesApi.upload(blob, fileName)
+      const url = result.url
+      if (typeof url !== 'string' || !url)
+        throw new Error('File upload response did not include url')
+      return { url, remoteFileId: result.file_id }
+    }
+    catch (error) {
+      console.error('[FileManager] uploadBufferToOss failed:', error)
+      return undefined
+    }
+  }
+
+  /**
    * 保存一份内容并入库，返回新建的文件记录。
    * 相同 hash 已存在且本地物理文件仍在时，复用其 local_path 与 oss_url（不写新文件、不重传 OSS）。
    */
@@ -304,6 +326,47 @@ export class FileManager {
       file_name: input.fileName ?? null,
       local_path: localPath,
       oss_url: ossUrl,
+      mime_type: mimeType,
+      size: buffer.length,
+      hash,
+      source: input.source ?? 'upload',
+    })
+  }
+
+  /**
+   * 保存一份内容并入库，同时拿到并持久化后端 OSS file_id（脚本同步场景专用）。
+   * **串行 + 全有或全无**：先上传 OSS，成功后才本地写盘 + 入库（直接带上 oss_url 与
+   * remote_file_id）。OSS 失败或返回空 → 直接抛错，不触碰本地，无需回滚。本地写盘/入库
+   * 失败 → 抛错（此时 OSS 已上传，但本地无条目，可由后续重试或人工补登记）。
+   * 不做 hash 去重（脚本每次内容不同且需明确上传换取后端 file_id）。
+   */
+  async saveBufferWithRemote(input: SaveBufferInput): Promise<FileRecord> {
+    this.ensureDir()
+    const mimeType = normalizeMimeType(input.mimeType) || 'application/octet-stream'
+    const buffer = this.normalizeImageBuffer(input.buffer, input.mimeType)
+    const hash = this.hashBuffer(buffer)
+    const prefix = input.prefix ?? (input.source === 'generated' ? 'generated' : undefined)
+    const fileId = this.generateFileId(mimeType, prefix)
+    const fileName = input.fileName ?? fileId
+
+    // 1. 先上传 OSS，拿后端 file_id + url。失败直接抛出，不落本地。
+    const uploadResult = await this.uploadBufferToOss(buffer, fileName, mimeType)
+    if (!uploadResult || !uploadResult.url || !uploadResult.remoteFileId) {
+      throw new Error(
+        `saveBufferWithRemote: OSS upload failed or returned empty (url=${uploadResult?.url ?? '(空)'}, remoteFileId=${uploadResult?.remoteFileId ?? '(空)'})`,
+      )
+    }
+    const { url, remoteFileId } = uploadResult
+
+    // 2. OSS 成功后，本地写盘 + 入库（直接带上 oss_url / remote_file_id）。
+    const localPath = path.join(this.uploadsDir, fileId)
+    await fs.promises.writeFile(localPath, buffer)
+    return FileRecordStore.insert({
+      file_id: fileId,
+      file_name: input.fileName ?? null,
+      local_path: localPath,
+      oss_url: url,
+      remote_file_id: remoteFileId,
       mime_type: mimeType,
       size: buffer.length,
       hash,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormattedMessage, GeneratedImageInfo, HitlDecision, MessageEntryView } from '/@/views/mcp/types'
+import type { AgentFileItem, FormattedMessage, GeneratedImageInfo, HitlDecision, MessageEntryView, ScriptLogLine } from '/@/views/mcp/types'
 import { copyText } from '/@/utils/basic'
 import ThinkingBlockVue from './thinking-block.vue'
 import ToolCallBlockVue from './tool-call-block.vue'
@@ -13,6 +13,7 @@ import { markedParse } from '/@/views/mcp/util'
 import StatusMessage from './status-message.vue'
 import HitlInterrupt from './hitl-interrupt.vue'
 import Loading from './loading.vue'
+import { useAgentApi } from '/@/views/mcp/agent-api'
 
 const props = defineProps<{
   item: FormattedMessage
@@ -29,6 +30,7 @@ const taskExpandMap = reactive<{ [key: string]: boolean }>({})
 const { toggleThinkingExpand, isThinkingExpanded } = useMessageItem()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
+const agentApi = useAgentApi()
 const copied = ref(false)
 let copiedResetTimer: ReturnType<typeof window.setTimeout> | null = null
 
@@ -131,6 +133,28 @@ function buildWorkerMarkdown(block: MessageEntryView) {
     `- ${$t('成功工具数量')}: ${successCount}`,
     `- ${$t('失败工具数量')}: ${failedCount}`,
   ].join('\n')
+}
+
+function formatFileSize(bytes?: number) {
+  const size = Number(bytes) || 0
+  if (size < 1024)
+    return `${size} B`
+  if (size < 1024 * 1024)
+    return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
+function getFileIconName(file: AgentFileItem) {
+  const ext = file.fileName.split('.').pop()?.toLowerCase()
+  if (['js', 'ts', 'tsx', 'jsx', 'py', 'json', 'html', 'css', 'md', 'yaml', 'yml'].includes(ext || ''))
+    return 'base/rx_ic_doc_code'
+  if (file.mimeType?.includes('json') || file.mimeType?.startsWith('text/'))
+    return 'base/rx_ic_doc_api'
+  return 'base/rx_ic_doc_article'
+}
+
+function getAgentFileUrl(file: AgentFileItem) {
+  return agentApi.getFileUrl(file.fileId, { download: true, fileName: file.fileName })
 }
 
 function serializeMessageEntry(block: MessageEntryView): string[] {
@@ -354,6 +378,65 @@ function getTaskSummary(block: MessageEntryView): string {
         :data="block.text"
       />
 
+      <!-- 脚本运行日志：字体颜色稍轻的日志行列表 -->
+      <div
+        v-else-if="block.type === 'script_log'"
+        class="script-log-block"
+      >
+        <template v-for="(line, idx) in (block.meta?.lines as ScriptLogLine[])" :key="idx">
+          <div
+            class="script-log-line"
+            :class="{
+              'script-log-warn': line.level === 'warn',
+              'script-log-error': line.level === 'error',
+            }"
+          >
+            <span v-if="line.level && line.level !== 'info'" class="script-log-badge" :class="`script-log-badge--${line.level}`">{{ line.level }}</span>
+            <span class="script-log-text">{{ line.text }}</span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Agent 生成的文件卡片（write_file / edit_file / run_script）：可下载文件 -->
+      <div
+        v-else-if="block.type === 'agent_file' && block.meta?.files?.length"
+        class="flex flex-col gap-2"
+      >
+        <div
+          v-for="file in (block.meta.files as AgentFileItem[])"
+          :key="file.fileId"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-2 border border-[var(--colors-border-border-inactive)] bg-[var(--colors-background-bg-block)] max-w-[360px]"
+        >
+          <div class="size-9 rounded-1.5 bg-[var(--colors-background-bg-page)] flex items-center justify-center shrink-0">
+            <SvgIcon :name="getFileIconName(file)" size="22" color="var(--colors-icon-icon-brand)" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-3.5 font-600 text-[var(--colors-text-text-primary)] truncate m-0 leading-5">
+              {{ file.fileName }}
+            </p>
+            <p class="text-3 text-[var(--colors-text-text-tertiary)] m-0 leading-4">
+              {{ formatFileSize(file.size) }}
+            </p>
+          </div>
+          <a
+            v-tooltip.top="$t('下载')"
+            :href="getAgentFileUrl(file)"
+            :download="file.fileName"
+            class="size-8 inline-flex items-center justify-center rounded-1.5 hover:bg-[var(--colors-background-bg-page)] cursor-pointer shrink-0"
+          >
+            <SvgIcon name="base/rx_ic_download" size="16" color="var(--colors-icon-icon-secondary)" />
+          </a>
+        </div>
+      </div>
+
+      <!-- 模型调用网络中断自动重试提示 -->
+      <div v-else-if="block.type === 'retry'" class="flex items-center gap-1.5 retry-tip">
+        <SvgIcon :class="{ 'loading-circle': block.meta?.retrying }" name="base/rx_ic_spin" size="14" color="var(--colors-icon-icon-tertiary)" />
+        <span class="text-3 leading-[1.4] text-[var(--colors-text-text-tertiary)]">
+          {{ $t('网络不稳定，重试中...') }} ({{ block.meta?.attempt }}/{{ block.meta?.maxAttempts }})
+        </span>
+      </div>
+
       <!-- 生成图片 -->
       <div v-else-if="block.type === 'image' && block.meta?.images?.length" class="flex gap-3 flex-wrap">
         <div
@@ -552,5 +635,58 @@ function getTaskSummary(block: MessageEntryView): string {
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
+}
+
+/* 脚本运行日志：字体颜色稍轻，与正文区分 */
+.script-log-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--colors-background-bg-block);
+}
+
+.script-log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  /* 字体颜色稍轻 */
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-word;
+}
+
+.script-log-warn {
+  color: var(--colors-text-text-warning, #b8860b);
+}
+
+.script-log-error {
+  color: var(--colors-text-text-error, var(--colors-icon-icon-error));
+}
+
+.script-log-badge {
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 14px;
+  text-transform: uppercase;
+  color: var(--colors-text-text-inactive);
+  background: var(--colors-background-bg-action);
+}
+
+.script-log-badge--warn {
+  color: var(--colors-text-text-warning, #b8860b);
+}
+
+.script-log-badge--error {
+  color: var(--colors-icon-icon-error);
+}
+
+.script-log-text {
+  white-space: pre-wrap;
 }
 </style>

@@ -11,6 +11,7 @@ const distDir = path.join(rootDir, 'dist');
 const skills = [
   'roxybrowser-playwright-skills',
   'roxybrowser-openapi-skills',
+  'playwright-rpa-enhance-skills',
 ];
 
 if (!fs.existsSync(distDir)) {

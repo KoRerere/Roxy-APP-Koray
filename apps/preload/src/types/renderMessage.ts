@@ -176,6 +176,8 @@ export interface RenderMessage {
   'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
   'app:getAppVersion': () => string
+  /** 获取功能开关（由主进程运行时读取 env 决定） */
+  'app:getFeatureFlags': () => { scriptRecording: boolean }
   /** 卸载反馈已提交 */
   'app:uninstall-feedback-submitted': (payload: { reasons: number[], selectedReasons: string[] }) => Promise<void>
   /** 跳过卸载反馈 */

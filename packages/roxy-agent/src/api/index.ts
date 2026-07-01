@@ -4,6 +4,7 @@ import { aiAgentClient } from './aiAgentClient'
 import { aiAgentFilesApi } from './files'
 import { aiAgentImagesApi } from './images'
 import { aiAgentModelApi } from './model'
+import { aiAgentScriptsApi } from './scripts'
 import { aiAgentSkillsApi } from './skills'
 
 export const httpClient = new HttpClient({
@@ -56,6 +57,7 @@ export const AI_AGENT_API = {
   files: aiAgentFilesApi,
   images: aiAgentImagesApi,
   model: aiAgentModelApi,
+  scripts: aiAgentScriptsApi,
   skills: aiAgentSkillsApi,
 } as const
 
@@ -63,4 +65,5 @@ export * from './aiAgentClient'
 export * from './files'
 export * from './images'
 export * from './model'
+export * from './scripts'
 export * from './skills'

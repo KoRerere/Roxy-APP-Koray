@@ -170,10 +170,10 @@ class WeixinAdapter {
       return
     }
 
-    const scriptMatch = trimmedText.match(/^\/script\s+([\s\S]+)$/i)
+    const scriptMatch = trimmedText.match(/^\/script\s+(\S[\s\S]*)$/i)
     if (scriptMatch) {
       try {
-        const reply = await this.bridge.handleMessage(channelId, scriptMatch[1].trim(), undefined, 'script')
+        const reply = await this.bridge.handleMessage(channelId, scriptMatch[1].trim(), undefined)
         await this.sendText(fromUserId, reply, contextToken)
       }
       catch (err) {

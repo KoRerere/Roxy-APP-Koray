@@ -4,3 +4,11 @@ import { isNewerOrEqualVersion } from './common'
 export function supportsApp3_8_8() {
   return isNewerOrEqualVersion('3.8.8')
 }
+
+/**
+ * 是否启用自动化脚本库与录制入口。
+ * Electron 端由主进程 env ENABLE_SCRIPT_RECORDING=yes 控制；
+ */
+export function isScriptRecordingEnabled(): boolean {
+  return Boolean(globalThis?.$featureFlags?.scriptRecording)
+}

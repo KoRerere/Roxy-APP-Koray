@@ -7,7 +7,7 @@ Snapshot mode: aria (default)
 ## Decision Path
 
 ```
-1. browser_connect_roxy(cdpEndpoint="ws://...")
+1. roxy_browser_connect(endpoint="ws://...", browserCore="Chrome")
 2. browser_navigate(url="https://www.bing.com")
 3. browser_snapshot()
    → Snapshot shows: textbox "Search..." [ref=e48]
@@ -23,3 +23,4 @@ Snapshot mode: aria (default)
 - Always include the "e" prefix
 - Never extract the number and use it as mcpId
 - Always re-snapshot after navigation to get fresh refs
+- If you are automating Firefox, connect with a Firefox BiDi endpoint and `browserCore="Firefox"` first

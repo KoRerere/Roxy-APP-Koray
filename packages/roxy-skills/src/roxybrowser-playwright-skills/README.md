@@ -5,6 +5,7 @@ This skill provides guidance for web automation using RoxyBrowser Playwright MCP
 ## Purpose
 
 Helps Claude select the right Playwright tools for common web automation tasks like:
+
 - Navigation and page interaction
 - Form filling and submission
 - Data extraction and scraping
@@ -15,6 +16,7 @@ Helps Claude select the right Playwright tools for common web automation tasks l
 ## Usage
 
 This skill is automatically loaded when working with RoxyBrowser Playwright MCP. It provides:
+
 - Quick decision matrix for tool selection
 - Critical rules for safe automation
 - Progressive disclosure into guides, examples, and references
@@ -22,10 +24,18 @@ This skill is automatically loaded when working with RoxyBrowser Playwright MCP.
 ## Integration
 
 Works in conjunction with `roxybrowser-openapi-skills`:
+
 1. Use OpenAPI MCP to create/open browser profiles
-2. Get CDP endpoint from OpenAPI MCP
+2. Get the browser WebSocket endpoint from OpenAPI MCP
 3. Use Playwright MCP (this skill) for automation
 4. Use OpenAPI MCP to clean up browsers
+
+Connection notes:
+
+- `roxy_browser_connect` accepts `endpoint`
+- `roxy_browser_connect` supports `browserCore: "Chrome"` and `browserCore: "Firefox"`
+- Chrome uses a CDP WebSocket endpoint
+- Firefox uses a BiDi WebSocket endpoint
 
 ## File Structure
 

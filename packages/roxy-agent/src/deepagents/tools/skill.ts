@@ -8,7 +8,7 @@ import { getSkillManager } from '@/core/skillManager'
 import {
   loadSkillMetadataFromDir,
   MAX_SKILL_FILE_SIZE_BYTES,
-} from '@/skills/metadata'
+} from '@/core/skills/metadata'
 
 const DEFAULT_SKILL_READ_LINE_LIMIT = 1000
 
@@ -60,6 +60,24 @@ export async function listInstalledSkills(): Promise<SkillSummary[]> {
 export function resolveSkillNameFromPath(p: string): string | undefined {
   const dir = getSkillManager().resolveSkillDirForPath(path.resolve(p))
   return dir ? path.basename(dir) : undefined
+}
+
+/**
+ * 从 skills 目录内的文件路径同步解析出「skill 名 + 文件相对 skill 目录的路径」，
+ * 用于前端展示具体加载的文件（如 "tiktok-matrix-upload/references/harness.md"）。
+ * 读 SKILL.md 与 skill 内子文件区分展示。同步实现，可安全用于流式事件热路径。
+ * 解析失败（路径不在 skills 目录内）返回 undefined。
+ */
+export function resolveSkillFilePathFromPath(p: string): string | undefined {
+  const resolved = path.resolve(p)
+  const skillDir = getSkillManager().resolveSkillDirForPath(resolved)
+  if (!skillDir)
+    return undefined
+  const skillName = path.basename(skillDir)
+  const rel = path.relative(skillDir, resolved)
+  // rel 为空字符串表示路径就是 skill 目录本身（不应发生于文件加载），兜底返回目录名
+  const relNormalized = rel ? rel.split(path.sep).join('/') : ''
+  return relNormalized ? `${skillName}/${relNormalized}` : skillName
 }
 
 export const loadSkillFileTools = [

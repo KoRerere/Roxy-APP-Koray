@@ -7,7 +7,7 @@ Snapshot mode: optimized
 ## Decision Path
 
 ```
-1. browser_connect_roxy(cdpEndpoint="ws://...")
+1. roxy_browser_connect(endpoint="ws://...", browserCore="Chrome")
 2. browser_navigate(url="https://example.com/login")
 3. browser_snapshot()
    → Snapshot shows:

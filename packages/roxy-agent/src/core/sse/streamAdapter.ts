@@ -7,6 +7,7 @@ import { statusToCode } from '../agentError'
 export type StreamEventType
   = | 'session'
     | 'thinking' // Simple 模式
+    | 'thinking_complete' // 思考结束：携带 agent 侧权威计时
     | 'planning'
     | 'worker_content'
     | 'worker_thinking'
@@ -29,6 +30,10 @@ export type StreamEventType
     | 'hitl_resume' // HITL：人工审批结果（approve/reject/edit）
     | 'image_generating' // 图片生成开始（SSE 建立后立即推送，携带占位数量）
     | 'image_partial' // 单张图片生成完成（流式逐张推送）
+    | 'script_log' // run_script 沙箱脚本 console.* 输出（实时推送，前端以淡色日志行展示）
+    | 'agent_file' // chat agent write_file/edit_file 生成的文件卡片
+    | 'retry' // 模型调用因网络中断（terminated 等）后自动重试：顶层 chat/image 展示"重试中…"
+    | 'worker_retry' // worker 内模型调用网络中断后自动重试：携带 taskId，前端不展示提示，仅用于停止当前 worker thinking 计时 / 准备新内容块
 
 export interface StreamEvent {
   type: StreamEventType
@@ -81,6 +86,30 @@ class StreamAdapter {
 
   thinking(text: string, thinkingId: string, taskId?: string): string {
     return this.formatSSE(this.thinkingEvent(text, thinkingId, taskId))
+  }
+
+  thinkingCompleteEvent(data: {
+    thinkingId: string
+    startTimestamp: number
+    endTimestamp: number
+    durationMs: number
+    taskId?: string
+  }): StreamEvent {
+    return {
+      type: 'thinking_complete',
+      data,
+      timestamp: data.endTimestamp,
+    }
+  }
+
+  thinkingComplete(data: {
+    thinkingId: string
+    startTimestamp: number
+    endTimestamp: number
+    durationMs: number
+    taskId?: string
+  }): string {
+    return this.formatSSE(this.thinkingCompleteEvent(data))
   }
 
   /**
@@ -207,6 +236,41 @@ class StreamAdapter {
     return this.formatSSE(this.workerDispatchEvent(data))
   }
 
+  /**
+   * 模型调用网络中断后自动重试事件（顶层 chat / image 用）。
+   * `attempt` 从 1 计数（第几次重试），`maxAttempts` 为最大重试次数，前端展示「重试中…(attempt/maxAttempts)」。
+   * worker 的静默重试不发此事件。
+   */
+  retryEvent(data: { id?: string, attempt: number, maxAttempts: number, reason?: string }): StreamEvent {
+    return {
+      type: 'retry',
+      // retryId 标识同一次 model 调用的重试序列，前端据此原地更新「重试中…(n/N)」而非新增消息
+      data: { retryId: data.id, attempt: data.attempt, maxAttempts: data.maxAttempts, reason: data.reason },
+      timestamp: Date.now(),
+    }
+  }
+
+  retry(data: { id?: string, attempt: number, maxAttempts: number, reason?: string }): string {
+    return this.formatSSE(this.retryEvent(data))
+  }
+
+  /**
+   * worker 内模型调用网络中断后自动重试事件（带 taskId）。worker 经 IPC `sendEvent` 回传该 Event 对象，
+   * 父进程转发给前端。前端**不展示**重试提示，仅据此停止该 worker 当前 thinking 计时、为新内容块做准备
+   * （重试后产生新 chunk.id 自然新建块，旧的截断块保留）。
+   */
+  workerRetryEvent(data: { taskId: string, attempt: number, maxAttempts: number, reason?: string }): StreamEvent {
+    return {
+      type: 'worker_retry',
+      data,
+      timestamp: Date.now(),
+    }
+  }
+
+  workerRetry(data: { taskId: string, attempt: number, maxAttempts: number, reason?: string }): string {
+    return this.formatSSE(this.workerRetryEvent(data))
+  }
+
   orchestratorStoppedEvent(data: {
     status: 'failed'
     reason: 'user'
@@ -317,7 +381,7 @@ class StreamAdapter {
   /**
    * Create tool call event
    */
-  toolCallEvent(data: { toolName: string, args: any, taskId?: string, toolId?: string }): StreamEvent {
+  toolCallEvent(data: { toolName: string, args: any, taskId?: string, toolId?: string, assignmentsCount?: number, skillName?: string, skillFilePath?: string, target?: string }): StreamEvent {
     return {
       type: 'tool_call',
       data,
@@ -430,6 +494,41 @@ class StreamAdapter {
   imagePartial(data: { index: number, image: any }): string {
     return this.formatSSE({
       type: 'image_partial',
+      data,
+      timestamp: Date.now(),
+    })
+  }
+
+  // ==================== 脚本运行（run_script 沙箱）类 ====================
+
+  /**
+   * Create script_log event — 沙箱脚本调用 console.log/info/warn/error 时实时推送。
+   * debug 模式下也会推送 console.debug；release 模式下 console.debug 不产生日志。
+   */
+  scriptLogEvent(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string }): StreamEvent {
+    return {
+      type: 'script_log',
+      data,
+      timestamp: Date.now(),
+    }
+  }
+
+  scriptLog(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string }): string {
+    return this.formatSSE(this.scriptLogEvent(data))
+  }
+
+  /**
+   * Create agent_file event — chat agent write_file/edit_file 生成的文件保存后推送。
+   */
+  agentFile(data: {
+    fileId: string
+    fileName: string
+    size: number
+    mimeType: string
+    op: 'create' | 'update'
+  }): string {
+    return this.formatSSE({
+      type: 'agent_file',
       data,
       timestamp: Date.now(),
     })

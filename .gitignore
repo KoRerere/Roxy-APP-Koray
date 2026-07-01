@@ -52,3 +52,5 @@ apps/electron/.firefox-icon-test
 
 HANDOFF.md
 .vscode/launch.json
+
+.reasonix

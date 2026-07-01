@@ -26,6 +26,24 @@ function utcToLocal(utcStr: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
+/**
+ * 将后端返回的时间戳（Python isoformat，如 '2026-06-20T10:30:00'、带微秒
+ * '...00.123456'、带时区 '...+00:00'/'Z'）归一为与本地 SQLite CURRENT_TIMESTAMP
+ * 一致的 UTC 'YYYY-MM-DD HH:MM:SS'（秒级、空格分隔），以便 scripts 列表在 DB 层
+ * 按 TEXT 排序时本地记录与后端同步记录可正确比较。无时区后缀的 naive isoformat
+ * 按 UTC 解析（不做时区换算）。无法解析则返回 null（调用方用 COALESCE 回退）。
+ */
+function normalizeTimestamp(iso: string | null | undefined): string | null {
+  if (!iso)
+    return null
+  const hasTz = /z$|[+-]\d{2}:?\d{2}$/i.test(iso)
+  const d = new Date(hasTz ? iso : `${iso}Z`)
+  if (Number.isNaN(d.getTime()))
+    return null
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+}
+
 // 类型断言：确保 userId 和 workspaceId 不是 undefined
 const safeUserId: string = userId
 const safeWorkspaceId: string = workspaceId
@@ -134,22 +152,112 @@ function initDatabase() {
   // 相同 hash 的多条记录共享同一 local_path 与 oss_url（物理去重、逻辑保留各自 file_id）。
   db.exec(`
     CREATE TABLE IF NOT EXISTS files (
-      file_id     TEXT PRIMARY KEY,
-      file_name   TEXT,
-      local_path  TEXT,
-      oss_url     TEXT,
-      mime_type   TEXT,
-      size        INTEGER,
-      hash        TEXT,
-      source      TEXT DEFAULT 'upload',
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+      file_id        TEXT PRIMARY KEY,
+      file_name      TEXT,
+      local_path     TEXT,
+      oss_url        TEXT,
+      remote_file_id TEXT,
+      mime_type      TEXT,
+      size           INTEGER,
+      hash           TEXT,
+      source         TEXT DEFAULT 'upload',
+      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `)
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_files_hash ON files(hash);
     CREATE INDEX IF NOT EXISTS idx_files_oss_url ON files(oss_url);
   `)
+
+  // 录制脚本表：持久化录制生成的自动化脚本（file 本体仍由 files 表管理）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scripts (
+      id              TEXT PRIMARY KEY,
+      user_id         TEXT NOT NULL,
+      workspace_id    TEXT NOT NULL,
+      name            TEXT NOT NULL,
+      description     TEXT,
+      conversation_id TEXT,
+      recording_id    TEXT,
+      file_id         TEXT NOT NULL,
+      dir_id          TEXT,
+      remote_id       INTEGER,
+      options_schema  TEXT,
+      source          TEXT DEFAULT 'recording',
+      created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, workspace_id, name)
+    );
+    CREATE INDEX IF NOT EXISTS idx_scripts_user_workspace ON scripts(user_id, workspace_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_scripts_conversation   ON scripts(conversation_id);
+    CREATE INDEX IF NOT EXISTS idx_scripts_file           ON scripts(file_id);
+  `)
+
+  // 数据库迁移：为已存在的 scripts 表添加 dir_id 字段
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(scripts)').all() as unknown as Array<{ name: string }>
+    const hasDirId = tableInfo.some(col => col.name === 'dir_id')
+    if (!hasDirId) {
+      db.exec(`ALTER TABLE scripts ADD COLUMN dir_id TEXT;`)
+      console.log(`✅ Added dir_id column to scripts table`)
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for scripts.dir_id failed:`, error)
+  }
+
+  // 数据库迁移：为已存在的 scripts 表添加 remote_id 字段（后端脚本数字 id，用于级联删除/更新与同步匹配）
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(scripts)').all() as unknown as Array<{ name: string }>
+    const hasRemoteId = tableInfo.some(col => col.name === 'remote_id')
+    if (!hasRemoteId) {
+      db.exec(`ALTER TABLE scripts ADD COLUMN remote_id INTEGER;`)
+      console.log(`✅ Added remote_id column to scripts table`)
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for scripts.remote_id failed:`, error)
+  }
+
+  // 数据库迁移：移除已废弃的 scripts.status 字段（旧库可能仍存在该列）
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(scripts)').all() as unknown as Array<{ name: string }>
+    const hasStatus = tableInfo.some(col => col.name === 'status')
+    if (hasStatus) {
+      db.exec(`ALTER TABLE scripts DROP COLUMN status;`)
+      console.log(`✅ Dropped legacy status column from scripts table`)
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for scripts.status failed:`, error)
+  }
+
+  // 数据库迁移：为已存在的 scripts 表添加 options_schema 字段（脚本入参 JSON Schema）
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(scripts)').all() as unknown as Array<{ name: string }>
+    const hasOptionsSchema = tableInfo.some(col => col.name === 'options_schema')
+    if (!hasOptionsSchema) {
+      db.exec(`ALTER TABLE scripts ADD COLUMN options_schema TEXT;`)
+      console.log(`✅ Added options_schema column to scripts table`)
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for scripts.options_schema failed:`, error)
+  }
+
+  // 数据库迁移：为已存在的 files 表添加 remote_file_id 字段（后端 OSS file_id）
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(files)').all() as unknown as Array<{ name: string }>
+    const hasRemoteFileId = tableInfo.some(col => col.name === 'remote_file_id')
+    if (!hasRemoteFileId) {
+      db.exec(`ALTER TABLE files ADD COLUMN remote_file_id TEXT;`)
+      console.log(`✅ Added remote_file_id column to files table`)
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for files.remote_file_id failed:`, error)
+  }
 
   // 数据库迁移：为已存在的 messages 表添加 agent_mode 字段
   try {
@@ -458,8 +566,8 @@ const statements = {
 
   // File operations
   insertFile: db.prepare(`
-    INSERT INTO files (file_id, file_name, local_path, oss_url, mime_type, size, hash, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO files (file_id, file_name, local_path, oss_url, remote_file_id, mime_type, size, hash, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
   getFileById: db.prepare('SELECT * FROM files WHERE file_id = ?'),
@@ -479,6 +587,71 @@ const statements = {
 
   updateFileOssById: db.prepare(`
     UPDATE files SET oss_url = ?, updated_at = CURRENT_TIMESTAMP WHERE file_id = ?
+  `),
+
+  updateFileRemoteIdById: db.prepare(`
+    UPDATE files SET remote_file_id = ?, updated_at = CURRENT_TIMESTAMP WHERE file_id = ?
+  `),
+
+  // Script operations
+  insertScript: db.prepare(`
+    INSERT INTO scripts (id, user_id, workspace_id, name, description, conversation_id, recording_id, file_id, dir_id, source, remote_id, options_schema, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+  `),
+
+  updateScriptDirId: db.prepare(`
+    UPDATE scripts SET dir_id = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND user_id = ? AND workspace_id = ?
+  `),
+
+  listScriptsByWorkspace: db.prepare(`
+    SELECT s.*, f.file_name, f.oss_url, f.local_path, f.remote_file_id, f.mime_type, f.size
+    FROM scripts s
+    LEFT JOIN files f ON s.file_id = f.file_id
+    WHERE s.user_id = ? AND s.workspace_id = ?
+    ORDER BY s.created_at DESC, s.rowid DESC
+    LIMIT ? OFFSET ?
+  `),
+
+  getScriptByIdJoinFile: db.prepare(`
+    SELECT s.*, f.file_name, f.oss_url, f.local_path, f.remote_file_id, f.mime_type, f.size
+    FROM scripts s
+    LEFT JOIN files f ON s.file_id = f.file_id
+    WHERE s.id = ? AND s.user_id = ? AND s.workspace_id = ?
+  `),
+
+  updateScript: db.prepare(`
+    UPDATE scripts SET name = COALESCE(?, name), description = COALESCE(?, description), updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND user_id = ? AND workspace_id = ?
+  `),
+
+  deleteScript: db.prepare(`
+    DELETE FROM scripts WHERE id = ? AND user_id = ? AND workspace_id = ?
+  `),
+
+  // 回写/纠正后端脚本数字 id（registerScript 同步后回写、sync 命中时回填）
+  updateScriptRemoteId: db.prepare(`
+    UPDATE scripts SET remote_id = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND user_id = ? AND workspace_id = ?
+  `),
+
+  getScriptByName: db.prepare(`
+    SELECT id FROM scripts WHERE user_id = ? AND workspace_id = ? AND name = ?
+  `),
+
+  // 同步专用：按后端 OSS file_id（即本地 files.remote_file_id）定位本地脚本
+  getScriptByRemoteFileId: db.prepare(`
+    SELECT s.*, f.file_name, f.oss_url, f.local_path, f.remote_file_id, f.mime_type, f.size
+    FROM scripts s
+    LEFT JOIN files f ON s.file_id = f.file_id
+    WHERE f.remote_file_id = ? AND s.user_id = ? AND s.workspace_id = ?
+  `),
+
+  // 同步专用：以后端为准直接 SET（name/description/dir_id/source/remote_id/options_schema 直接覆盖；
+  // created_at 用 COALESCE 仅在后端有值时纠正，避免后端缺失时把本地时间写成 null）
+  updateScriptFromSync: db.prepare(`
+    UPDATE scripts SET name = ?, description = ?, dir_id = ?, source = ?, remote_id = ?, options_schema = ?, created_at = COALESCE(?, created_at), updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
 }
@@ -1059,6 +1232,8 @@ export interface FileRecord {
   file_name: string | null
   local_path: string | null
   oss_url: string | null
+  /** 后端 OSS 文件 ID（/v2/files/upload 返回），与本地 file_id 区分 */
+  remote_file_id: string | null
   mime_type: string | null
   size: number | null
   hash: string | null
@@ -1072,6 +1247,7 @@ export interface CreateFileInput {
   file_name?: string | null
   local_path?: string | null
   oss_url?: string | null
+  remote_file_id?: string | null
   mime_type?: string | null
   size?: number | null
   hash?: string | null
@@ -1084,6 +1260,7 @@ function mapFileRow(row: any): FileRecord {
     file_name: row.file_name ?? null,
     local_path: row.local_path ?? null,
     oss_url: row.oss_url ?? null,
+    remote_file_id: row.remote_file_id ?? null,
     mime_type: row.mime_type ?? null,
     size: row.size != null ? Number(row.size) : null,
     hash: row.hash ?? null,
@@ -1104,6 +1281,7 @@ export class FileRecordStore {
       input.file_name ?? null as any,
       input.local_path ?? null as any,
       input.oss_url ?? null as any,
+      input.remote_file_id ?? null as any,
       input.mime_type ?? null as any,
       input.size ?? null as any,
       input.hash ?? null as any,
@@ -1152,6 +1330,14 @@ export class FileRecordStore {
     const result = statements.updateFileOssById.run(ossUrl, fileId)
     return Number(result.changes) > 0
   }
+
+  /** 回填后端 OSS file_id（与本地 file_id 区分） */
+  static setRemoteFileId(fileId: string, remoteFileId: string): boolean {
+    if (!fileId || !remoteFileId)
+      return false
+    const result = statements.updateFileRemoteIdById.run(remoteFileId, fileId)
+    return Number(result.changes) > 0
+  }
 }
 
 // 导出便捷的组合函数
@@ -1181,6 +1367,241 @@ export const ChatContextAPI = {
   getNextAssetBatchIndex: AssetManager.getNextBatchIndex,
   searchAssetsByFts: AssetManager.searchByFts,
   backfillAssetsFromHistory: AssetManager.backfillFromHistory,
+}
+
+// ============ 录制脚本（scripts 表）============
+
+export interface ScriptRecord {
+  id: string
+  user_id: string
+  workspace_id: string
+  name: string
+  description: string | null
+  conversation_id: string | null
+  recording_id: string | null
+  file_id: string
+  dir_id: string | null
+  remote_id: number | null
+  options_schema: string | null
+  source: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ScriptWithFile extends ScriptRecord {
+  file_name: string | null
+  oss_url: string | null
+  local_path: string | null
+  remote_file_id: string | null
+  mime_type: string | null
+  size: number | null
+}
+
+export interface CreateScriptInput {
+  name: string
+  file_id: string
+  conversation_id?: string
+  recording_id?: string
+  dir_id?: string
+  description?: string
+  options_schema?: string
+  source?: string
+}
+
+export interface UpdateScriptInput {
+  name?: string
+  description?: string
+}
+
+/**
+ * 后端返回的脚本记录（camelCase，与 roxy-agent-server /v1/user/scripts 的 _serialize 对齐）。
+ * 结构兼容 api/scripts.ts 的 ScriptRecordDto，此处本地定义以避免 database 包反向依赖 api 包。
+ * `fileId` = 后端 OSS file_id = 本地 files.remote_file_id（同步匹配键）。
+ */
+export interface BackendScriptDto {
+  id: number
+  name: string
+  description: string | null
+  ossUrl: string | null
+  fileId: string | null
+  source: string
+  conversationId: string | null
+  recordingId: string | null
+  dirId: string | null
+  optionsSchema: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+function mapScriptRow(row: any): ScriptWithFile {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    workspace_id: row.workspace_id,
+    name: row.name,
+    description: row.description ?? null,
+    conversation_id: row.conversation_id ?? null,
+    recording_id: row.recording_id ?? null,
+    file_id: row.file_id,
+    dir_id: row.dir_id ?? null,
+    remote_id: row.remote_id != null ? Number(row.remote_id) : null,
+    options_schema: row.options_schema ?? null,
+    source: row.source ?? 'recording',
+    created_at: row.created_at ? utcToLocal(row.created_at) : row.created_at,
+    updated_at: row.updated_at ? utcToLocal(row.updated_at) : row.updated_at,
+    file_name: row.file_name ?? null,
+    oss_url: row.oss_url ?? null,
+    local_path: row.local_path ?? null,
+    remote_file_id: row.remote_file_id ?? null,
+    mime_type: row.mime_type ?? null,
+    size: row.size != null ? Number(row.size) : null,
+  }
+}
+
+function dedupeScriptName(name: string): string {
+  if (!statements.getScriptByName.get(safeUserId, safeWorkspaceId, name))
+    return name
+  let suffix = 2
+  while (true) {
+    const candidate = `${name} (${suffix})`
+    if (!statements.getScriptByName.get(safeUserId, safeWorkspaceId, candidate))
+      return candidate
+    suffix++
+  }
+}
+
+export class ScriptStore {
+  static create(input: CreateScriptInput): ScriptRecord {
+    const id = `scr_${randomUUID()}`
+    const safeName = dedupeScriptName(input.name)
+    statements.insertScript.run(
+      id,
+      safeUserId,
+      safeWorkspaceId,
+      safeName,
+      input.description ?? null as any,
+      input.conversation_id ?? null as any,
+      input.recording_id ?? null as any,
+      input.file_id,
+      input.dir_id ?? null as any,
+      input.source ?? 'recording',
+      null, // remote_id：本地创建时尚无后端 id，由 registerScript 同步成功后回写
+      input.options_schema ?? null as any, // options_schema：脚本入参 JSON Schema
+      null, // created_at：传 null 走 COALESCE → CURRENT_TIMESTAMP 默认
+    )
+    const row = statements.getScriptByIdJoinFile.get(id, safeUserId, safeWorkspaceId)
+    if (!row)
+      throw new Error('Failed to create script record')
+    return mapScriptRow(row)
+  }
+
+  static list(opts?: { limit?: number, offset?: number }): ScriptWithFile[] {
+    const limit = opts?.limit ?? 100
+    const offset = opts?.offset ?? 0
+    const rows = statements.listScriptsByWorkspace.all(safeUserId, safeWorkspaceId, limit, offset)
+    return (rows as any[]).map(mapScriptRow)
+  }
+
+  static getById(id: string): ScriptWithFile | null {
+    const row = statements.getScriptByIdJoinFile.get(id, safeUserId, safeWorkspaceId)
+    return row ? mapScriptRow(row) : null
+  }
+
+  static update(id: string, patch: UpdateScriptInput): ScriptRecord | null {
+    statements.updateScript.run(
+      patch.name ?? null as any,
+      patch.description ?? null as any,
+      id,
+      safeUserId,
+      safeWorkspaceId,
+    )
+    const row = statements.getScriptByIdJoinFile.get(id, safeUserId, safeWorkspaceId)
+    return row ? mapScriptRow(row) : null
+  }
+
+  static updateDirId(id: string, dirId: string): void {
+    statements.updateScriptDirId.run(dirId, id, safeUserId, safeWorkspaceId)
+  }
+
+  static delete(id: string): boolean {
+    const result = statements.deleteScript.run(id, safeUserId, safeWorkspaceId)
+    return Number(result.changes) > 0
+  }
+
+  /** 回写/纠正本地脚本对应的后端数字 id（registerScript 同步成功后调用）。 */
+  static setRemoteId(id: string, remoteId: number): void {
+    statements.updateScriptRemoteId.run(remoteId, id, safeUserId, safeWorkspaceId)
+  }
+
+  /**
+   * 以后端返回为准 upsert 本地脚本记录（同步合并用）。
+   * 匹配键：优先 remote_file_id（后端 fileId），其次 name（同工作区内后端 name 唯一）。
+   * - 命中：更新 name/description/dir_id/source，并补全 files 表的 oss_url/remote_file_id。
+   * - 未命中：插入 files 记录（仅元信息，无 local_path）+ scripts 记录（生成新的 scr_/fid_ id）。
+   * 不删除本地独有脚本（保留策略，避免丢失尚未同步到后端的本地脚本）。
+   */
+  static upsertFromBackend(dto: BackendScriptDto): void {
+    const remoteFileId = dto.fileId ?? null
+    let existing: any = null
+    if (remoteFileId) {
+      existing = statements.getScriptByRemoteFileId.get(remoteFileId, safeUserId, safeWorkspaceId)
+    }
+    if (!existing) {
+      const byName = statements.getScriptByName.get(safeUserId, safeWorkspaceId, dto.name) as { id: string } | undefined
+      if (byName) {
+        existing = statements.getScriptByIdJoinFile.get(byName.id, safeUserId, safeWorkspaceId)
+      }
+    }
+
+    if (existing) {
+      statements.updateScriptFromSync.run(
+        dto.name,
+        dto.description ?? null as any,
+        dto.dirId ?? null as any,
+        dto.source || 'recording',
+        dto.id, // remote_id：以后端为准回填/纠正
+        dto.optionsSchema ?? null as any, // options_schema：以后端为准
+        normalizeTimestamp(dto.createdAt), // created_at：后端为准，归一为 UTC 秒级
+        existing.id,
+        safeUserId,
+        safeWorkspaceId,
+      )
+      const localFileId: string | undefined = existing.file_id
+      if (localFileId) {
+        if (dto.ossUrl)
+          FileRecordStore.setOssById(localFileId, dto.ossUrl)
+        if (remoteFileId)
+          FileRecordStore.setRemoteFileId(localFileId, remoteFileId)
+      }
+      return
+    }
+
+    // 未命中：插入 files 元信息 + scripts 记录
+    const fileId = `fid_${randomUUID()}`
+    FileRecordStore.insert({
+      file_id: fileId,
+      file_name: `${dto.name}.zip`,
+      oss_url: dto.ossUrl ?? null,
+      remote_file_id: remoteFileId,
+      mime_type: 'application/zip',
+      source: 'recording',
+    })
+    statements.insertScript.run(
+      `scr_${randomUUID()}`,
+      safeUserId,
+      safeWorkspaceId,
+      dto.name,
+      dto.description ?? null as any,
+      dto.conversationId ?? null as any,
+      dto.recordingId ?? null as any,
+      fileId,
+      dto.dirId ?? null as any,
+      dto.source || 'recording',
+      dto.id, // remote_id：存后端数字 id，使首次同步进来的脚本即可级联删除/更新
+      dto.optionsSchema ?? null as any, // options_schema：脚本入参 JSON Schema
+      normalizeTimestamp(dto.createdAt), // created_at：后端真实创建时刻，归一为 UTC 秒级
+    )
+  }
 }
 
 /**

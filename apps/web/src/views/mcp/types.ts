@@ -47,7 +47,7 @@ export interface HitlDecision {
 
 // SSE 事件数据类型
 export interface SSEEventData {
-  type: 'session' | 'planning' | 'thinking' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'worker_stopped' | 'worker_dispatch' | 'orchestrator_stopped' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial'
+  type: 'session' | 'planning' | 'thinking' | 'thinking_complete' | 'tool_call' | 'tool_result' | 'worker_thinking' | 'worker_content' | 'worker_result' | 'worker_stopped' | 'worker_dispatch' | 'orchestrator_stopped' | 'content' | 'synthesis' | 'done' | 'error' | 'interrupt' | 'todo' | 'worker_todo' | 'title' | 'hitl_interrupt' | 'hitl_resume' | 'image_generating' | 'image_partial' | 'image_done' | 'script_log' | 'agent_file' | 'retry' | 'worker_retry'
   data?: {
     sessionId?: string
     workerId?: string
@@ -58,6 +58,10 @@ export interface SSEEventData {
     assignmentsCount?: number
     /** load_skill_file 工具加载的 skill 名（后端解析路径注入） */
     skillName?: string
+    /** load_skill_file 工具加载的文件相对 skill 目录的路径（如 tiktok-matrix-upload/references/harness.md，后端解析路径注入） */
+    skillFilePath?: string
+    /** 文件系统/脚本类工具的操作目标简述（后端解析 args 注入：文件名/目录名/pattern/脚本名，前端卡片拼接展示） */
+    target?: string
     result?: string
     et?: number
     status?: ToolCallStatus | WorkerStatus
@@ -66,6 +70,9 @@ export interface SSEEventData {
     text?: string
     taskId?: string
     thinkingId?: string
+    startTimestamp?: number
+    endTimestamp?: number
+    durationMs?: number
     contentId?: string
     message?: string
     actionRequests?: Array<{ name: string, args: any, description: string }>
@@ -88,8 +95,23 @@ export interface SSEEventData {
     index?: number
     image?: GeneratedImageInfo
     images?: GeneratedImageInfo[]
+    todos?: Todo[]
     model?: string
     revisedPrompt?: string
+    /** script_log（run_script 沙箱脚本运行日志） */
+    runId?: string
+    scriptName?: string
+    level?: string
+    /** agent_file（chat agent write_file/edit_file 产物） */
+    fileId?: string
+    fileName?: string
+    size?: number
+    mimeType?: string
+    op?: 'create' | 'update'
+    /** retry / worker_retry（模型调用网络中断自动重试）：retryId 标识同一重试序列（前端原地更新次数），attempt 从 1 计数，maxAttempts 为最大重试次数 */
+    retryId?: string
+    attempt?: number
+    maxAttempts?: number
   }
   timestamp?: number
 }
@@ -225,12 +247,31 @@ export type MessageType
     | 'interrupt'
     | 'hitl_interrupt'
     | 'image'
+    | 'script_log' // run_script 沙箱脚本 console.* 输出
+    | 'agent_file' // chat agent write_file/edit_file 产物文件卡片
+    | 'retry' // 顶层模型调用网络中断自动重试提示（「重试中…(n/N)」）
 
 export type TodoStatus = 'pending' | 'in_progress' | 'completed'
 
 export interface Todo {
   status: TodoStatus
   content: string
+}
+
+/** script_log 单条日志行 */
+export interface ScriptLogLine {
+  level?: string
+  scriptName?: string
+  text: string
+}
+
+/** agent_file 单个生成文件 */
+export interface AgentFileItem {
+  fileId: string
+  fileName: string
+  size: number
+  mimeType: string
+  op?: 'create' | 'update'
 }
 
 /** MessageViewer 对外输出的消息条目基础结构 */
@@ -243,6 +284,8 @@ export interface MessageEntry {
   status?: WorkerStatus
   /** 仅 thinking 类型使用：true 表示仍在思考中 */
   isThinking?: boolean
+  /** 仅 thinking 类型使用：agent 侧权威计时（毫秒） */
+  authoritativeDuration?: number
 }
 
 /** Worker 子条目视图（worker 内部的 thinking / tool_call / content） */

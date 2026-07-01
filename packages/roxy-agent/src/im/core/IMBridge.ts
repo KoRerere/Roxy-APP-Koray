@@ -1,7 +1,6 @@
-import type { AgentInstance } from '../../deepagents/index.js'
 import type { ContentBlock } from './attachments.js'
 import { HumanMessage } from '@langchain/core/messages'
-import { createClawAgent, createScriptAgent } from '../../deepagents/index.js'
+import { createClawAgent } from '../../deepagents/index.js'
 import { ThreadManager } from './threadManager.js'
 
 export type { ContentBlock }
@@ -55,7 +54,6 @@ export class IMBridge {
     channelId: string,
     content: string | ContentBlock[],
     onChunk?: (text: string) => Promise<void>,
-    agentType: 'claw' | 'script' = 'claw',
   ): Promise<string> {
     const session = this.getSession(channelId)
     const threadId = this.threadManager.getThreadId(this.imName, channelId)
@@ -72,20 +70,11 @@ export class IMBridge {
 
     let destroy: (() => Promise<void>) | undefined
     try {
-      let agentInstance: AgentInstance
-      if (agentType === 'script') {
-        agentInstance = await createScriptAgent({
-          conversationId: threadId,
-          turnId: messageId,
-        })
-      }
-      else {
-        agentInstance = await createClawAgent({
-          workerId: IMBridge.WORKER_ID,
-          conversationId: threadId,
-          turnId: messageId,
-        })
-      }
+      const agentInstance = await createClawAgent({
+        workerId: IMBridge.WORKER_ID,
+        conversationId: threadId,
+        turnId: messageId,
+      })
       const { agent, destroy: _destroy } = agentInstance
       destroy = _destroy
       const input = {

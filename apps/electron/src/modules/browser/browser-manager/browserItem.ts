@@ -228,7 +228,7 @@ export class BrowserItem {
       // 记录浏览器进程 ID
       this.browserPid = this.#browser!.process()?.pid
       // 异步执行启动后的任务, 不需要等待
-      this.afterLaunchTask.run()
+      await this.afterLaunchTask.run()
 
       // ipcSender.user.mixpanelTrack('profile_start', {
       //   coreVersion: this.coreVersion.coreVersion,

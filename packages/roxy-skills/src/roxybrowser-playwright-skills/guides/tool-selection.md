@@ -3,7 +3,7 @@
 Use this guide when the correct tool is not obvious or when several tools could work.
 
 ## High-Level Flow
-1. Connect: `browser_connect_roxy`
+1. Connect: `roxy_browser_connect`
 2. Navigate (if needed): `browser_navigate`
 3. Snapshot: `browser_snapshot`
 4. Interact using element identifiers from snapshot
