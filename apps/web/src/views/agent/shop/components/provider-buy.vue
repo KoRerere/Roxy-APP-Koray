@@ -14,7 +14,6 @@ import currency from 'currency.js'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import Fuse from 'fuse.js'
 import { API } from '/@/api'
-import { addDays, format } from 'date-fns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -185,22 +184,9 @@ const details = computed(() => {
           label: $t('国家/地区'),
           value: purchaseCountry.label,
         },
-      ],
-    },
-    {
-      title: $t('订阅时长'),
-      items: [
         {
           label: $t('订阅天数'),
           value: subscriptionMonths.label,
-        },
-        {
-          label: $t('开始时间'),
-          value: format(new Date(), 'yyyy/MM/dd'),
-        },
-        {
-          label: $t('到期时间'),
-          value: format(addDays(new Date(), subscriptionMonths.day ?? 0), 'yyyy/MM/dd'),
         },
       ],
     },
@@ -759,11 +745,9 @@ async function onPay() {
       </div>
     </div>
     <div class="shrink-0 py-5 w-95 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
-      <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :title="$t('温馨提示')"
-               :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')"
-      />
-      <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
-      <div class="flex flex-col gap-6">
+      <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')" />
+      <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
+      <div class="flex flex-col gap-2">
         <div v-if="proxyTypeValue != null" class="flex flex-col gap-1.5 pa-4 quantity">
           <div class="tt-primary text-3.5 font-600 leading-normal">
             {{ $t('代理 IP 数量:') }}
@@ -810,8 +794,9 @@ async function onPay() {
                 </I18nT>
               </div>
               <template v-else>
-                <div class="tt-secondary text-3.5">
-                  {{ item.label }}
+                <div class="flex items-center gap-1">
+                  <span class="tt-secondary text-3.5">{{ item.label }}</span>
+                  <SvgIcon v-tooltip.top="$t('当前仅支持美国、香港、法国和日本的超高质量代理 IP 进行带宽升级。')" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
                 </div>
                 <div class="grid grid-cols-4 gap-1.5">
                   <div v-for="option in proxySpeedOptions" :key="option.value" v-tooltip.top="{ value: option.bandwidthSpeedDesc }"
@@ -893,7 +878,7 @@ async function onPay() {
 
 .radio {
   border-radius: 8px;
-  border: 3px solid var(--colors-background-bg-page);
+  border: 3px solid var(--pattern-pay-plan-bg-bill);
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
   transition: all 0.3s;
