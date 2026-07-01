@@ -25,7 +25,7 @@ const disabled = computed(() => workspaceInfo.value.role !== Role.OWNER && Boole
 /** 剩余可创建窗口数量 */
 const remainWorkspaceCount = computed(() => {
   if (workspaceInfo.value?.id) {
-    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount! - workspaceInfo.value.maxWindowCount!
+    return workspaceStore.maxCreateWindowCount + (workspaceStore.currentWorkspace?.maxWindowCount ?? 0) - workspaceInfo.value.maxWindowCount!
   }
   return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount!
 })
@@ -45,7 +45,7 @@ function onInput() {
   }
 }
 
-watch(() => workspaceInfo.value.maxWindowCount, (val) => {
+watch(() => workspaceInfo.value.maxWindowCount, () => {
   if (workspaceInfo.value?.id) {
     emitter.emit('maxWindowCountChange', remainWorkspaceCount.value)
   }

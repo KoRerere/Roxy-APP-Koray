@@ -50,6 +50,8 @@ export enum OrderType {
   EventRewards = 'event_rewards',
   /** AI Agent 充值 */
   PointsRecharge = 'points_recharge',
+  /** 升级带宽 */
+  BandwidthUpgrade = 'bandwidth_upgrade',
 }
 
 export const OrderTypeStr = {
@@ -69,6 +71,7 @@ export const OrderTypeStr = {
   get [OrderType.RewardRedeem]() { return $t('奖励兑换') },
   get [OrderType.EventRewards]() { return $t('活动奖励') },
   get [OrderType.PointsRecharge]() { return $t('AI Agent 积分购买') },
+  get [OrderType.BandwidthUpgrade]() { return $t('升级带宽') },
 }
 
 export enum SubOrderType {

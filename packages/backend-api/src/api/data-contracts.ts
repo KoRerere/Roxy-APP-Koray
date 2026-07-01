@@ -87,6 +87,15 @@ export interface UserGetPlatformInfoV2ListParams {
    * @example "desc"
    */
   order_type?: string;
+  /**
+   * 关联邮箱
+   * @example "xxx"
+   */
+  platformEmail?: string;
+  /** @example "platform" */
+  queryKey?: string;
+  /** @example "tk" */
+  queryValue?: string;
 }
 
 export interface UserGetPlatformInfoV2ListData {
@@ -94,31 +103,19 @@ export interface UserGetPlatformInfoV2ListData {
   data: {
     total: number;
     rows: {
-      /** 平台ID */
       id?: number;
-      /** 用户ID */
       userId?: number;
-      /** 平台url */
       platformUrl?: string;
-      /** 平台icon */
+      platformEmail?: string;
       platformIcon?: string;
-      /** 平台账户 */
       platformUserName?: string;
-      /** 平台密码 */
       platformPassword?: string;
-      /** 平台2FA密钥 */
       platformEfa?: string;
-      /** 平台cookies */
       platformCookies?: string;
-      /** 平台名字 */
       platformName?: string;
-      /** 平台备注 */
       platformRemarks?: string;
-      /** 创建时间 */
       createTime?: string;
-      /** 修改时间 */
       updateTime?: string;
-      /** 关联窗口ID */
       window_info?: string;
     }[];
   };
@@ -3703,7 +3700,14 @@ export interface UserGetInviteNotifyListData {
   msg: string;
 }
 
-export type UserAppRatingCreatePayload = object;
+export interface UserAppRatingCreatePayload {
+  /** 星级数 */
+  ratingStar: number;
+  /** 评价内容 */
+  ratingContent?: string;
+  /** 图片url */
+  images?: string[];
+}
 
 export interface UserAppRatingCreateData {
   code: number;
@@ -6572,9 +6576,11 @@ export interface UserGetProxyListMergedListData {
       id?: number;
       userId?: number;
       workspaceId?: number;
-      proxyProviderId?: null;
-      orderNo?: null;
-      orderStatus?: null;
+      /** 是否能升级带宽 true 可以 false 不可以 */
+      canBandwidthUpgrade?: boolean;
+      proxyProviderId?: number;
+      orderNo?: string;
+      orderStatus?: number;
       ipType?: string;
       host?: string;
       protocol?: string;
@@ -6595,12 +6601,12 @@ export interface UserGetProxyListMergedListData {
       createTime?: string;
       proxyMonths?: number;
       updateTime?: string;
-      expireDate?: null;
+      expireDate?: string;
       replaceStatus?: number;
-      proxyProviderName?: null;
+      proxyProviderName?: string;
       proxyType?: number;
-      providerType?: null;
-      opName?: null;
+      providerType?: string;
+      opName?: string;
       giftDays?: number;
       autoRenew?: number;
       canRenew?: boolean;
@@ -6615,6 +6621,7 @@ export interface UserGetProxyListMergedListData {
       bindCount?: number;
       bindList?: number[];
       canRefund?: boolean;
+      bandwidthSpeed?: number;
     }[];
   };
   msg: string;
@@ -6854,17 +6861,68 @@ export interface UserGetProxyProvidersByBusinessSceneCountryListParams {
 export interface UserGetProxyProvidersByBusinessSceneCountryListData {
   code: number;
   data: {
-    hoverText?: string;
-    id?: number;
-    inventory?: number;
-    proxyType?: string;
-    proxyPriceList?: {
+    canBandwidthUpgrade: boolean;
+    hoverText: string;
+    id: number;
+    inventory: number;
+    proxyBandwidthPriceList: {
+      bandwidthPrice: number;
+      bandwidthSpeed: number;
+      originalBandwidthPrice: number;
+    }[];
+    proxyPriceList: {
+      originalProxyPrice: number;
       proxyPrice: number;
       proxyPurchaseMonths: number;
     }[];
-    proxyProviderName?: string;
-    typeName?: string;
+    proxyProviderName: string;
+    proxyType: string;
+    typeName: string;
   }[];
+  msg: string;
+}
+
+export type UserUpgradeProxyBandwidthSettlementCreatePayload = object;
+
+export interface UserUpgradeProxyBandwidthSettlementCreateData {
+  code: number;
+  data: {
+    bandwidthSpeed: number;
+    endTime: string;
+    orderAmount: number;
+    orderNo: string;
+    payId: number;
+    payType: string;
+    payUrl: string;
+    realAmount: number;
+  };
+  msg: string;
+}
+
+export interface UserMdfProxyBindWindowCreatePayload {
+  proxyId: number;
+  windowIds: number[];
+}
+
+export interface UserMdfProxyBindWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyBandwidthUpgradePriceListListParams {
+  /** @example "754018" */
+  proxyId?: string;
+}
+
+export interface UserGetProxyBandwidthUpgradePriceListListData {
+  code: number;
+  data: {
+    proxyBandwidthPriceList: {
+      bandwidthPrice: number;
+      bandwidthSpeed: number;
+      bandwidthUpgradePrice: number;
+    }[];
+  };
   msg: string;
 }
 
@@ -6963,6 +7021,8 @@ export interface UserAddPlatformInfoCreatePayload {
   platformName: string;
   /** 平台备注 */
   platformRemarks: string;
+  /** 关联邮箱 */
+  platformEmail: string;
 }
 
 export interface UserAddPlatformInfoCreateData {
@@ -6972,7 +7032,7 @@ export interface UserAddPlatformInfoCreateData {
 }
 
 export interface UserMdfPlatformInfoCreatePayload {
-  requestType?: string;
+  requestType: string;
   platformList: {
     /** 平台ID */
     id?: number;
@@ -6992,6 +7052,8 @@ export interface UserMdfPlatformInfoCreatePayload {
     platformName?: string;
     /** 平台备注 */
     platformRemarks?: string;
+    /** 关联邮箱 */
+    platformEmail?: string;
   }[];
 }
 
@@ -7018,6 +7080,8 @@ export type UserAddPlatformInfoBatchCreatePayload = {
   platformPassword: string;
   platformEfa: string;
   platformRemarks: string;
+  /** 关联邮箱 */
+  platformEmail: string;
 }[];
 
 export interface UserAddPlatformInfoBatchCreateData {
@@ -8587,43 +8651,24 @@ export interface UserGetAutoSubscriptionInfoListData {
 
 export interface UserBuyProxySettlementCreatePayload {
   entryType?: number;
-  /**
-   * 购买数量
-   * 购买数量
-   */
+  /** 购买数量 */
   purchaseMember?: number;
-  /**
-   * 购买月数(1)
-   * 购买月数(1)
-   */
-  subscriptionMonths: number;
-  /**
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   */
-  payType: string;
-  /**
-   * 订单类型(续费//购买:renew/purchase)
-   * 订单类型(续费//购买:renew/purchase)
-   */
-  orderType: string;
-  /**
-   * 购买供应商ID
-   * 购买供应商ID
-   */
+  /** 购买月数(1) */
+  subscriptionMonths?: number;
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  payType?: string;
+  /** 订单类型(续费//购买:renew/purchase) */
+  orderType?: string;
+  /** 购买供应商ID */
   proxyProviderId?: number;
-  /**
-   * 购买的城市
-   * 购买的城市
-   */
+  /** 购买的城市 */
   purchaseCountry?: string;
-  /**
-   * 商业用途
-   * 商业用途
-   */
+  /** 商业用途 */
   businessUse?: string;
   /** 商业用途 */
   businessId?: number;
+  /** 代理ip 带宽 */
+  bandwidthSpeed?: number;
   renewIdList?: number[];
 }
 

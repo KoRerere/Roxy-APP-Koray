@@ -14,6 +14,7 @@ export const defaultValues: StoreType = {
   browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
   defaultBrowserDirId: '',
   systemProxySwitch: true,
+  networkMode: 'system',
   v2raySwitch: false,
   appPort: 45535,
   appWsPort: 45536,
@@ -53,4 +54,10 @@ export const defaultValues: StoreType = {
   lastWebDomain: '',
   isFirstClearWebCache: true,
   lastSelectedNetworkNode: 'auto',
+  appNetwork: 'local',
+  proxyProtocol: 'SOCKS5',
+  proxyHost: '127.0.0.1',
+  proxyPort: 0,
+  proxyUsername: '',
+  proxyPassword: '',
 }

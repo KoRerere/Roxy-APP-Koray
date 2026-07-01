@@ -21,6 +21,7 @@ function getExcelSchema() {
     schema.push({ key: 'platformPassword', name: $t('密码') })
   schema.push(
     { key: 'platformEfa', name: '2FA' },
+    // { key: 'platformEmail', name: $t('关联邮箱') },
     { key: 'platformRemarks', name: $t('备注') },
     {
       key: 'window_info',

@@ -43,11 +43,12 @@ const inputs = [
         if (isEmptyValue(Object.values(result).filter(Boolean)))
           return
 
-        const { username, password, twoFactor, remark } = result
+        const { username, password, twoFactor, linkedEmail, remark } = result
         formRef.value?.setValues({
           platformUserName: username ?? '',
           platformPassword: password ?? '',
           platformEfa: twoFactor ?? '',
+          // platformEmail: linkedEmail ?? '',
           platformRemarks: remark ?? '',
           intelligent: '',
         })
@@ -122,6 +123,15 @@ const inputs = [
       placeholder: $t('请输入 2FA 密钥'),
     },
   },
+  // {
+  //   type: 'text',
+  //   label: $t('关联邮箱'),
+  //   name: 'platformEmail',
+  //   value: data.platformEmail,
+  //   props: {
+  //     placeholder: $t('请输入关联邮箱'),
+  //   },
+  // },
   {
     type: 'textarea',
     label: $t('备注'),
@@ -185,19 +195,19 @@ async function onFormSubmit({ intelligent: _, platformUserName, platformPassword
 </script>
 
 <template>
-  <div class="flex flex-col h-full pt-4 px-4 content">
-    <TsForm id="account" ref="tsform" :validate-on-value-update="false" validate-on-blur :inputs="inputs" @submit="onFormSubmit" />
-    <div class="flex flex-1 items-end">
-      <div class="w-full flex justify-end gap-3 pt-4 pb-5">
-        <RxButton v-if="!data.id && !data._tempId && showCreateMore" :label="$t('保存 & 继续添加')" severity="secondary" outlined :loading="loading" @click="onSave(true)" />
-        <RxButton :label="$t('保存')" :loading="loading" @click="onSave(false)" />
-      </div>
+  <div class="flex flex-col h-full min-w-96 px-4 pt-4">
+    <div class="flex-1 overflow-y-auto scrollbar">
+      <TsForm id="account" ref="tsform" :validate-on-value-update="false" validate-on-blur :inputs="inputs" @submit="onFormSubmit" />
+    </div>
+    <div class="flex flex-row-reverse justify-between gap-3 pt-4 pb-5">
+      <RxButton :label="$t('保存')" :loading="loading" @click="onSave(false)" />
+      <RxButton v-if="!data.id && !data._tempId && showCreateMore" :label="$t('保存 & 继续添加')" severity="secondary" outlined :loading="loading" @click="onSave(true)" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.content {
-  min-width: 384px;
+.scrollbar::-webkit-scrollbar {
+  display: none;
 }
 </style>

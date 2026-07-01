@@ -11,19 +11,18 @@ import useColumns from '/@/hooks/useColumns'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
-import { parseWindowInfo } from '../utils'
 
 interface Props {
-  account?: Record<string, any>
+  linkedWindowSortNums?: number[]
+  cacheKey?: string
 }
 
-const { account } = defineProps<Props>()
+const { linkedWindowSortNums = [], cacheKey = 'account-profile-select' } = defineProps<Props>()
 const emit = defineEmits(['confirm', 'close'])
 
 const workspaceStore = useWorkspaceStore()
 const { userConfig } = storeToRefs(useUserStore())
 const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
-const linkedWindowSortNums = computed(() => parseWindowInfo(account?.window_info))
 const advancedSearchOptions = getAdvancedSearch()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(
   getColumns(),
@@ -44,7 +43,7 @@ onBeforeMount(() => {
 })
 
 async function preloadLinkedSelection() {
-  const sortNums = linkedWindowSortNums.value
+  const sortNums = linkedWindowSortNums
   if (!sortNums.length)
     return
 
@@ -65,10 +64,10 @@ function onAdvancedSearch(search?: Record<string, any>) {
 }
 
 function mergeLinkedSelection(rows: any[]) {
-  if (!linkedWindowSortNums.value.length)
+  if (!linkedWindowSortNums.length)
     return
 
-  const linkedSet = new Set(linkedWindowSortNums.value)
+  const linkedSet = new Set(linkedWindowSortNums)
   const selectedIds = new Set(selection.value.map(item => item.id))
   const merged = [...selection.value]
 
@@ -118,7 +117,7 @@ function handleSave() {
           ref="profileSelect"
           v-model:columns="columns"
           v-model:selection="selection"
-          cache-key="account-profile-select"
+          :cache-key="cacheKey"
           selection-mode="multiple"
           :multiple-operation="false"
           :table-request="tableRequest"

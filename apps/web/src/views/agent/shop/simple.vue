@@ -2,6 +2,7 @@
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
+import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
@@ -10,7 +11,7 @@ import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
-import { getRawColumns } from './columns'
+import { getRawColumns, getRelatedProfileLabels } from './columns'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
 import type { ProxyCheckStatus } from '/@/enums'
 import type { ProxyItem } from './operation'
@@ -20,10 +21,10 @@ interface Props {
   data?: any
   isBatch?: boolean
   createCount?: number
+  onConfirm: (data: any) => void | Promise<void>
 }
 
-const { data: outerData, isBatch = false } = defineProps<Props>()
-const emit = defineEmits(['confirm'])
+const { data: outerData, isBatch = false, onConfirm } = defineProps<Props>()
 
 const totalMark = defineModel<number>('total')
 
@@ -66,6 +67,7 @@ const filtersMenu = ref()
 const dataList = ref()
 const selection = ref(toRaw(outerData))
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
+const checking = ref(false)
 
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
@@ -151,7 +153,7 @@ function operationHandler(operate: any, data: ProxyItem) {
   const datas = ([] as ProxyItem[]).concat(data)
   switch (operate.name) {
     case 'test':
-      onCheckProxyStatus(datas, operate.name)
+      onCheckProxyStatus(datas, { key: operate.name })
       break
   }
 }
@@ -166,42 +168,47 @@ async function onCheckAllProxy() {
     onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
-  await onCheckProxyStatus(dataList.value, 'test')
+  await onCheckProxyStatus(dataList.value, { key: 'test' })
 }
 
-async function onCheckProxyStatus(datas: ProxyItem[], operateName: string) {
+async function onCheckProxyStatus(datas: ProxyItem[], options: { key: string, apiCheck?: boolean, enableReCheck?: boolean }) {
+  const { key, apiCheck = true, enableReCheck = true } = options
+
   const tasks = datas.map((item) => {
-    setOperationLoading(item, operateName, true)
+    setOperationLoading(item, key, true)
     return async () => {
       const checkResult = await testProxy({
         ...toRaw(item),
-        apiCheck: item.proxyType === ProxyType.buy,
-        id: item.id,
+        apiCheck: apiCheck && item.proxyType === ProxyType.buy,
       })
-      setOperationLoading(item, operateName, false)
-      Object.assign(item, checkResult)
+      setOperationLoading(item, key, false)
+      Object.assign(item, { ...checkResult, _checkRes: checkResult })
       checkedMessage.value[item.id!] = checkResult.checkStatus
       return { ...checkResult, id: item.id, proxyType: item.proxyType }
     }
   })
 
   const results = await concurrentControl(tasks, 5)
-  batchTestShowToast(results, { reCheck: () => onCheckProxyStatus(datas, operateName) })
+  batchTestShowToast(results, {
+    reCheck: enableReCheck ? () => onCheckProxyStatus(datas, options) : undefined,
+  })
 
   const proxyList = results.filter((item: any) => item.proxyType === ProxyType.resource)
-  if (!proxyList.length)
-    return
-  API.proxy.userMdfProxyModuleCreate({ proxyList: results, requestType: ProxyReqType.SpeedTest })
+  if (proxyList.length) {
+    API.proxy.userMdfProxyModuleCreate({ proxyList: results, requestType: ProxyReqType.SpeedTest })
+  }
+
+  return results
 }
 
-function saveSelected() {
-  const selectProxy = !isBatch
-    ? selection.value
-    : selection.value?.map(({ loadingOperationMap: _, _disabled, ...item }: any) => ({
-        ...item,
-        _type: ProxyType.buy,
-      }))
-  emit('confirm', selectProxy)
+async function saveSelected() {
+  const selectProxy = [].concat(selection.value)
+  // 用户打算使用代理，关闭 apiCheck 让所有购买的代理走本地检测
+  checking.value = true
+  await onCheckProxyStatus(selectProxy, { key: 'test', apiCheck: false, enableReCheck: false })
+  checking.value = false
+  const proxyData = selectProxy.map(({ loadingOperationMap: _, _disabled, ...item }: any) => toRaw(item))
+  await onConfirm(isBatch ? proxyData : proxyData[0])
 }
 </script>
 
@@ -222,7 +229,7 @@ function saveSelected() {
     <RxAlert :visible="isBatch" class="w-full proxy-alert" type="info" :title="proxyAlertMessage" :closable="false" />
     <div class="flex-ovh-1">
       <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-               :show-table-header="false"
+               :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
       >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
@@ -240,13 +247,16 @@ function saveSelected() {
             <RxInputNumber v-model="row._proxyCount" :disabled="row._disabled" :min="1" :step="1" />
           </div>
         </template>
+        <template #bindList="{ data: row }">
+          <RelatedProfilesCell :list="getRelatedProfileLabels(row)" />
+        </template>
         <template #actions="{ data: row }">
           <Actions :operation="testOnlyOperations(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>
     <div class="w-full flex justify-end gap-3 button-group">
-      <RxButton :label="$t('保存')" @click.stop="saveSelected" />
+      <RxButton :label="checking ? $t('检测中...') : $t('保存')" @click.stop="saveSelected" />
     </div>
   </div>
 </template>

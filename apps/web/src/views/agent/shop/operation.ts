@@ -1,12 +1,13 @@
-import type { UnwrapRowType, UserGetUserBuyProxyListListData } from '@roxy/backend-api'
+import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
 import { usePermission } from '/@/hooks/usePermission'
 import { useColumns } from './columns'
 import type { SortOrderNumber } from '/@/utils'
+import type { UnwrapRowType, UserGetProxyListMergedListData } from '@roxy/backend-api'
 
-export interface ProxyItem extends UnwrapRowType<UserGetUserBuyProxyListListData> {
+export interface ProxyItem extends UnwrapRowType<UserGetProxyListMergedListData> {
   loadingOperationMap: {
     [key: string]: boolean
   }
@@ -28,6 +29,7 @@ function getRowState(datas: ProxyItem[]) {
   let canRenew = true
   let canRefresh = true
   let isDirect = false
+  let canUpgrade = false
 
   for (const item of datas) {
     if (item.proxyExpireStatus === ProxyExpireStatus.expired)
@@ -52,6 +54,9 @@ function getRowState(datas: ProxyItem[]) {
 
     if (item.isDirect)
       isDirect = true
+
+    if (item.canBandwidthUpgrade)
+      canUpgrade = true
   }
 
   return {
@@ -64,6 +69,7 @@ function getRowState(datas: ProxyItem[]) {
     canRenew,
     canRefresh,
     isDirect,
+    canUpgrade,
   }
 }
 
@@ -78,6 +84,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     canRenew,
     canRefresh,
     isDirect,
+    canUpgrade,
   } = getRowState(([] as ProxyItem[]).concat(data))
 
   return [
@@ -109,7 +116,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_refresh',
       power: check('Proxy_List_refresh_proxy'),
       tooltip: $t('刷新代理 IP'),
-      disabled: !canRefresh,
+      disabled: isDirect || !canRefresh,
       disabledTooltip: !canRefresh ? $t('未配置刷新URL') : undefined,
     },
     {
@@ -128,6 +135,16 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       },
     },
     {
+      name: 'qrcode',
+      label: $t('二维码'),
+      icon: 'base/rx_ic_qrcode',
+      power: check('Proxy_Store_download_proxy_info'),
+      disabled: isDirect,
+      quick: true,
+      visible: false,
+      render: () => h(Qrcode, { data }),
+    },
+    {
       name: 'renew',
       label: $t('续费'),
       icon: 'base/rx_ic_renew2',
@@ -140,6 +157,13 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
         name: 'G3',
         showLabel: true,
       },
+    },
+    {
+      name: 'upgrade',
+      label: $t('升级'),
+      icon: 'base/rx_ic_double_up',
+      power: check('Cost_Center_all'),
+      disabled: hasExpired || !isDone || !canUpgrade,
     },
     {
       name: 'remark',

@@ -4,10 +4,10 @@ import SingleProxies from './components/single-proxies.vue'
 interface Props {
   data?: Record<string, any>
   showRemark?: boolean
-  onConfirm?: (formData: Record<string, any>) => void | Promise<void>
+  onConfirm: (formData: Record<string, any>) => void | Promise<void>
 }
 
-const { data, showRemark = false, onConfirm = () => { } } = defineProps<Props>()
+const { data, showRemark = false, onConfirm } = defineProps<Props>()
 
 async function _onConfirm(params: Record<string, any>[]) {
   await onConfirm(params[0])

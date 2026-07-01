@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import currency from 'currency.js'
+import { format, subDays } from 'date-fns'
 import { API } from '/@/api'
 import { getImage } from '/@/utils'
 import { useThemeStore } from '/@/stores/theme'
 
 const themeStore = useThemeStore()
+
+const range = [format(subDays(Date.now(), 30), 'yyyy-MM-dd'), format(Date.now(), 'yyyy-MM-dd')]
 
 const columns = ref([
   {
@@ -46,7 +49,7 @@ async function tableRequest() {
         {{ $t('按本月已审核返利金额排序 · Top 10') }}
       </div>
     </div>
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex rounded-1 overflow-hidden">
       <RyTable class="rank-table" :columns="columns" :table-request="tableRequest" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #rank="{ data }">
           <div>
@@ -75,6 +78,9 @@ async function tableRequest() {
         </template>
       </RyTable>
     </div>
+    <div class="tt-tertiary text-3 text-center leading-none mt-2">
+      {{ $t('统计范围：{start} ～ {end}', { start: range[0], end: range[1] }) }}
+    </div>
   </div>
 </template>
 
@@ -89,6 +95,7 @@ async function tableRequest() {
   :deep(td) {
     height: 48px !important;
   }
+
   :deep(.p-datatable-table) {
     padding-bottom: 0 !important;
   }

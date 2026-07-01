@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { strConcat } from '/@/utils'
 
-defineProps<{
+const { data } = defineProps<{
   data: any
 }>()
 </script>
@@ -16,8 +16,10 @@ defineProps<{
     </div>
     <div class="flex items-center gap-1.5 ip-type">
       <span>{{ data.ipType }}</span>
-      <Divider class="!ma-0" layout="vertical" />
-      <span>{{ data.protocol?.toLocaleLowerCase() }}</span>
+      <template v-if="data.protocol">
+        <Divider class="!ma-0" layout="vertical" />
+        <span>{{ data.protocol.toLocaleLowerCase() }}</span>
+      </template>
     </div>
   </div>
 </template>

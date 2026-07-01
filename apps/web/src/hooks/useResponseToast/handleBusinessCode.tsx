@@ -56,6 +56,30 @@ export function executeSomethingByBackToSelfWorkspace(next: (...args: any[]) => 
   }
 }
 
+export function executeSomethingByTargetWorkspace(next: (...args: any[]) => void) {
+  return async (targetWorkspaceId: number, ...args: any[]) => {
+    const workspaceStore = useWorkspaceStore()
+    if (workspaceStore.workspaceList.length === 0) {
+      await workspaceStore.getWorkspaceList()
+    }
+
+    if (targetWorkspaceId === workspaceStore.currentWorkspace?.id) {
+      next(...args)
+      return
+    }
+
+    const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === targetWorkspaceId)
+
+    if (targetWorkspace) {
+      workspaceStore.setCurrentWorkspace(targetWorkspace.id!).finally(() => {
+        setTimeout(() => {
+          next(...args)
+        }, 1500)
+      })
+    }
+  }
+}
+
 export const switchWorkspaceAndToUpgradePlan = executeSomethingByBackToSelfWorkspace(toUpgradePlan)
 
 /** 空间权益：有费用中心权限时在当前空间直接跳转升级/付费页 */
@@ -75,7 +99,7 @@ export function useHandleBusinessCode() {
   const { check } = usePermission()
 
   async function handleBusinessCode(code: number, next?: () => void) {
-    const privateMoreExpand = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
+    const privateMoreExpand = check('Cost_Center_all') ? buyMoreExpand : executeSomethingByBackToSelfWorkspace(buyMoreExpand)
 
     // 团队数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {

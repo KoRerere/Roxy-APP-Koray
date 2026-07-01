@@ -463,8 +463,8 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="extable" cache-key="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
-           :show-gridlines="false" :operation-handler="operationHandler"
+  <RyTable ref="extable" cache-key="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :operation-handler="operationHandler"
+           :columns="columns" :virtual-scroller-options="{ itemSize: 60 }" :show-display="false" :show-gridlines="false"
   >
     <template #filter-after>
       <div class="flex items-start justify-between w-full">

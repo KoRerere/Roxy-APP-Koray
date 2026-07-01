@@ -2,6 +2,7 @@ import type { ProbeResult } from '/@/utils/probe-proxy'
 import type { Session } from 'electron'
 import { session } from 'electron'
 import { setSystemProxy } from '/@/modules/roxynet'
+import { getNetworkMode } from '/@/modules/store/networkMode'
 import { probeBestProxy } from '/@/utils/probe-proxy'
 
 let systemProxyAddr: string
@@ -38,8 +39,10 @@ export async function getSystemProxy(force = false) {
   }
 
   if (currSystemProxyAddr !== systemProxyAddr) {
-    // 系统代理地址发生变化，重新设置系统代理
-    queueMicrotask(() => setSystemProxy())
+    // custom 模式上游为用户代理，系统代理变化时不更新 roxynet
+    if (getNetworkMode() !== 'custom') {
+      queueMicrotask(() => setSystemProxy())
+    }
     console.log('getSystemProxy resolveProxy', proxy)
     await updateSystemProxyType(currSystemProxyAddr)
   }
@@ -53,27 +56,34 @@ export async function getSystemProxy(force = false) {
 
 async function updateSystemProxyType(systemProxyAddr: string) {
   const [host, port] = systemProxyAddr.split(':')
-  if (host && port) {
-    const timer = setTimeout(() => {
-      updateSystemProxyTypePromise = null
-    }, 5000)
-
-    updateSystemProxyTypePromise = probeBestProxy({
-      http: { host, port: Number(port) },
-      socks5: { host, port: Number(port) },
-      timeoutMs: 4000,
-    }).catch((error) => {
-      console.error('probeBestProxy error:', error)
+  if (!host || !port) {
+    systemProxyType = 'http'
+    console.log('getSystemProxy result', {
+      addr: systemProxyAddr,
+      protocol: systemProxyType,
     })
+    return
+  }
 
-    const res = await updateSystemProxyTypePromise.finally(() => {
-      clearTimeout(timer)
-      updateSystemProxyTypePromise = null
-    })
+  const timer = setTimeout(() => {
+    updateSystemProxyTypePromise = null
+  }, 5000)
 
-    if (res && res.ok) {
-      systemProxyType = res.kind
-    }
+  updateSystemProxyTypePromise = probeBestProxy({
+    http: { host, port: Number(port) },
+    socks5: { host, port: Number(port) },
+    timeoutMs: 4000,
+  }).catch((error) => {
+    console.error('probeBestProxy error:', error)
+  })
+
+  const res = await updateSystemProxyTypePromise.finally(() => {
+    clearTimeout(timer)
+    updateSystemProxyTypePromise = null
+  })
+
+  if (res && res.ok) {
+    systemProxyType = res.kind
   }
 
   console.log('getSystemProxy result', {

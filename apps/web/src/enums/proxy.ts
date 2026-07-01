@@ -13,9 +13,10 @@ export enum ProxyCheckStatus {
 }
 
 export enum ProxyProtocol {
+  SOCKS5 = 'SOCKS5',
   HTTP = 'HTTP',
   HTTPS = 'HTTPS',
-  SOCKS5 = 'SOCKS5',
+  SSH = 'SSH',
 }
 
 export enum ProxyType {

@@ -1,19 +1,22 @@
-import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import BasicInfo from '/@/views/agent/shop/components/basic-info.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
+import BandwidthCell from '/@/views/agent/shop/components/bandwidth-cell.vue'
 import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { format } from 'date-fns'
-import { ProxyType } from '/@/enums/proxy'
+import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+
+export function getRelatedProfileLabels(data: Record<string, any>) {
+  const workspaceName = getWorkspaceNamePrefix(useWorkspaceStore().currentWorkspace?.workspaceName)
+  return (data.bindList ?? []).map((id: string | number) => `${workspaceName}-${id}`)
+}
 
 export function getRawColumns(options?: any) {
   const { check } = usePermission()
-  const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-  const workspaceName = getWorkspaceNamePrefix(currentWorkspace.value?.workspaceName)
 
   const columns = [
     {
@@ -31,6 +34,7 @@ export function getRawColumns(options?: any) {
       title: $t('到期时间'),
       key: 'expireDate',
       sortable: true,
+      slot: 'expireDate',
       render: ({ data }: any) => <ExpireDate data={data}></ExpireDate>,
     },
     {
@@ -43,6 +47,13 @@ export function getRawColumns(options?: any) {
       key: 'autoRenew',
       slot: 'renew',
       power: check('Cost_Center_all'),
+    },
+    {
+      title: $t('带宽'),
+      key: 'bandwidth',
+      sortable: true,
+      slot: 'bandwidth',
+      render: ({ data }: any) => <BandwidthCell data={data}></BandwidthCell>,
     },
     {
       title: $t('备注'),
@@ -59,25 +70,43 @@ export function getRawColumns(options?: any) {
     {
       title: $t('已关联窗口'),
       key: 'bindList',
-      render: ({ data }: any) => {
-        const list = data.bindList.map((id: number) => `${workspaceName}-${id}`)
-        return <RelatedInfo list={list}></RelatedInfo>
+      slot: 'bindList',
+      style: {
+        minWidth: '120px',
       },
     },
     {
       title: $t('IP 查询渠道'),
       key: 'ipChecker',
-      render: ({ data }: any) => {
-        return (
-          <RxTag tooltip={$t('为保障测试结果统一，暂时仅支持官方指定的查询渠道。')} icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>
-        )
-      },
+      render: ({ data }: any) => <RxTag tooltip={$t('为保障测试结果统一，暂时仅支持官方指定的查询渠道。')} icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>,
     },
     {
       title: $t('来源'),
       key: 'proxyType',
       sortable: true,
       getText: (data: any) => data.proxyType === ProxyType.buy ? $t('购买') : $t('添加'),
+    },
+    {
+      title: $t('状态'),
+      key: 'proxyExpireStatus',
+      _visible: false,
+      render: ({ data }: any) => {
+        const ExpireStatusMap = {
+          [ProxyExpireStatus.expired]: { text: $t('已过期'), color: 'var(--colors-text-text-inactive)' },
+          [ProxyExpireStatus.using]: { text: $t('使用中'), color: 'var(--colors-text-text-success)' },
+          [ProxyExpireStatus.soon]: { text: $t('即将过期'), color: 'var(--colors-text-text-warning)' },
+        } as const
+
+        const OrderStatusMap = {
+          [ProxyOrderStatus.pending]: { text: $t('配置中, 预计 {time} 分钟内完成', { time: 2 }), color: 'var(--colors-text-text-primary)' },
+          [ProxyOrderStatus.refunding]: { text: $t('退款中, 预计 {time} 小时内完成', { time: 12 }), color: 'var(--colors-text-text-inactive)' },
+          [ProxyOrderStatus.changing]: { text: $t('更换中, 预计 {time} 小时内完成', { time: 12 }), color: 'var(--colors-text-text-inactive)' },
+          [ProxyOrderStatus.refunded]: { text: $t('已退款'), color: 'var(--colors-text-text-inactive)' },
+        }
+
+        const status = OrderStatusMap[data.orderStatus as keyof typeof OrderStatusMap] || ExpireStatusMap[data.proxyExpireStatus as keyof typeof ExpireStatusMap] || { text: '', color: '' }
+        return <div class="text-3 font-500 leading-4" style={{ color: status.color }}>{status.text}</div>
+      },
     },
     {
       title: $t('代理 IP 类型'),
@@ -123,7 +152,7 @@ export function useColumns(options?: any) {
   const { userConfig } = storeToRefs(useUserStore())
 
   const { columns, updateColumns, updateRemarkDisplayStatus } = _useColumns({
-    key: 'proxy.shop',
+    key: 'proxy_display_v1',
     data: getRawColumns(options),
   })
 

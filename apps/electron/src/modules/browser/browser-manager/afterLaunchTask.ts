@@ -177,19 +177,20 @@ export class AfterLaunchTask {
       // Firefox session 已释放，通过 SQLite 文件读取最新 cookies
       try {
         this.cookies = await this.readCookiesFromFirefoxSqlite()
-        console.debug(`[AfterLaunchTask] saveCookiesNow (Firefox SQLite): ${this.cookies.length} cookies`)
+        console.log(`[AfterLaunchTask] saveCookiesNow (Firefox SQLite): ${this.cookies.length} cookies`)
       }
       catch (error) {
         console.error('[AfterLaunchTask] saveCookiesNow (Firefox) failed:', error)
       }
       return
     }
-    if (!this.browser.client)
+    if (!this.browser.client) {
       return
+    }
     try {
       const { cookies } = await this.browser.client.Storage.getCookies()
       this.cookies = cookies as Protocol.Network.Cookie[]
-      console.debug(`[AfterLaunchTask] saveCookiesNow: ${cookies.length} cookies saved`)
+      console.log(`[AfterLaunchTask] saveCookiesNow: ${cookies.length} cookies saved`)
     }
     catch (error) {
       console.error('[AfterLaunchTask] saveCookiesNow failed:', error)

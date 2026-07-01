@@ -109,7 +109,7 @@ export interface RenderMessage {
   /** 删除 roxynet 代理 */
   'proxy:delRoxynetProxy': (dirId: string) => void
   /** 检测本地网络/系统代理 */
-  'proxy:detectNetwork': (type?: 'local' | 'system') => ProxyDetectionResult
+  'proxy:detectNetwork': (type?: 'local' | 'system' | 'custom') => ProxyDetectionResult
   /** 获取系统代理 */
   'proxy:getSystemProxy': () => Promise<string>
   /** 代理 => 刷新 URL */
@@ -123,6 +123,8 @@ export interface RenderMessage {
   'user:setWorkspaceId': (workspaceId: number) => void
   /** 用户上传头像  */
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
+  /** 用户上传评价图片 */
+  'user:uploadReviewImage': (reviewImagePath: string) => Promise<string>
   /** 设置所有空间 ID */
   'user:setAllWorkspaceId': (workspaceIds: number[]) => void
   /** 设置公共空间列表 */
@@ -164,6 +166,10 @@ export interface RenderMessage {
     type: T,
     coreType?: CoreType,
   ) => Promise<ReGetUpdateInfoType[T]>
+  /** macOS：查询 .app 属主修复状态（needFix=需弹窗修复；justFixed=上次修复已成功，提示一次） */
+  'app:getMacOwnershipFixStatus': () => Promise<{ needFix: boolean, justFixed: boolean }>
+  /** macOS：用户确认后以 copy-replace 修复 .app 属主并自动重启 */
+  'app:confirmMacOwnershipFix': () => Promise<void>
   /** 检测 APP 更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
   /** 检测是否有更新 */

@@ -22,9 +22,9 @@ const discountKeyPath = computed(() => {
 <template>
   <div v-if="userPayInfo.discount || userPayInfo.proxyDiscount" class="flex items-center gap-3">
     <template v-if="isCustomDiscount">
-      <div v-if="isVip" class="flex items-center gap-0.5">
+      <div v-if="isVip" class="shrink-0 flex items-center gap-0.5">
         <SvgIcon v-if="identityInfo.icon" :name="(identityInfo.icon as any)" />
-        <div class="identity-label">
+        <div class="tt-primary text-3 leading-4 font-[DingTalk_JinBuTi]">
           {{ identityInfo.text }}
         </div>
       </div>
@@ -56,13 +56,6 @@ const discountKeyPath = computed(() => {
 
 <style lang="scss" scoped>
 .identity {
-  &-label {
-    color: var(--colors-text-text-primary);
-    font-family: 'DingTalk JinBuTi';
-    font-size: 12px;
-    line-height: 16px;
-  }
-
   &-value {
     color: var(--colors-text-text-secondary);
     font-size: 12px;

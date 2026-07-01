@@ -22,6 +22,7 @@ const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { isZh } = storeToRefs(useSimpleLocale())
 const { openTelegram, getOfficialFaqWebsite } = useSimpleLocale()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
@@ -222,177 +223,179 @@ const apiList = computed(() => [
   },
 ])
 
-const mcpList = [
-  {
-    title: $t('安装'),
-    content: () => {
-      return (
-        <div class="flex flex-col gap-1.5">
-          <div>{$t('标准配置适用于大多数工具')}</div>
-          <div class={`relative w-full ${cssModule.copy}`}>
-            <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => trackByCopy(mcpConfig.value.standard, 'mco_config_copy')} />
-            <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
+const mcpList = computed(() => {
+  return [
+    {
+      title: $t('环境依赖'),
+      content: () => (
+        <I18nT tag="div" scope="global" keypath={$t('Node.js 18 及以上。{link}', { link: '{link}' })}>
+          {{
+            link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href={isZh.value ? 'https://nodejs.org/zh-cn/download' : 'https://nodejs.org/en/download'}>{$t('安装')}</a>,
+          }}
+        </I18nT>
+      ),
+    },
+    {
+      title: $t('安装'),
+      content: () => {
+        return (
+          <div class="flex flex-col gap-1.5">
+            <div>{$t('标准配置适用于大多数工具')}</div>
+            <div class={`relative w-full ${cssModule.copy}`}>
+              <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => trackByCopy(mcpConfig.value.standard, 'mco_config_copy')} />
+              <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
+            </div>
           </div>
-        </div>
-      )
+        )
+      },
     },
-  },
-  {
-    title: $t('需求'),
-    content: () => (
-      <I18nT tag="div" scope="global" keypath={$t('{link} 18 以上或最新', { link: '{link}' })}>
-        {{
-          link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://nodejs.org/en/download">Node.js</a>,
-        }}
-      </I18nT>
-    ),
-  },
-  {
-    title: $t('特定的客户端配置'),
-    content: () => {
-      const tabs = [
-        {
-          icon: 'websites/rx_site_claude',
-          title: 'Claude Code',
-          value: '1',
-          render: () => (
-            <div class="w-full flex flex-col">
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
-              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
-                claude mcp add roxybrowser-openapi --scope local -e ROXY_API_KEY="
-                {apiConfig.value.apiKey}
-                " -e ROXY_API_HOST="http://127.0.0.1:
-                {apiConfig.value.port}
-                " -- npx @roxybrowser/openapi@latest
-              </div>
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
-              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>claude mcp add roxybrowser-playwright-mcp --scope local --transport stdio -- npx @roxybrowser/playwright-mcp@latest</div>
-            </div>
-          ),
-        },
-        {
-          icon: 'websites/rx_site_codex',
-          title: 'Codex',
-          value: '2',
-          render: () => (
-            <div class="w-full flex flex-col">
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
-              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
-                codex mcp add --env ROXY_API_KEY="
-                {apiConfig.value.apiKey}
-                " --env ROXY_API_HOST="http://127.0.0.1:
-                {apiConfig.value.port}
-                " roxybrowser-openapi -- npx @roxybrowser/openapi@latest
-              </div>
-              <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
-              <div class={`pa-3 rounded-md ${cssModule.cmd}`}>codex mcp add roxybrowser-playwright-mcp -- npx @roxybrowser/playwright-mcp@latest</div>
-            </div>
-          ),
-        },
-        {
-          icon: 'websites/rx_site_cursor',
-          title: 'Cursor',
-          value: '3',
-          render: () => (
-            <div class="w-full flex flex-col">
-              <div class="pa-3">{$t('前往 Cursor 设置 -> MCP -> 添加新的 MCP 服务器，然后粘贴以下内容:')}</div>
-              <div class={`relative w-full ${cssModule.copy}`}>
-                <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.standard)} />
-                <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
-              </div>
-            </div>
-          ),
-        },
-        {
-          icon: 'websites/rx_site_opencode',
-          title: 'OpenCode',
-          value: '5',
-          render: () => (
-            <div class="w-full flex flex-col">
-              <div class="pa-3">{$t('更新您的 ~/.config/opencode/opencode.json')}</div>
-              <div class={`relative w-full ${cssModule.copy}`}>
-                <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.openCode)} />
-                <JsonEditor class="min-h-75" modelValue={mcpConfig.value.openCode} editable={false}></JsonEditor>
-              </div>
-            </div>
-          ),
-        },
-        {
-          icon: 'websites/rx_site_gemini',
-          title: 'Gemini GLI',
-          value: '4',
-          render: () => (
-            <div class="pa-3">
-              <I18nT scope="global" keypath={$t('请遵循 MCP 安装{link}，并使用上述标准配置。', { link: '{link}' })}>
-                {{
-                  link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#configure-the-mcp-server-in-settingsjson">{$t('指南')}</a>,
-                }}
-              </I18nT>
-            </div>
-          ),
-        },
-      ]
-      return <RxTabs tabs={tabs} value="1"></RxTabs>
-    },
-  },
-  {
-    title: $t('使用 Roxy Playwright MCP 控制 RoxyChrome'),
-    content: () => (
-      <I18nT tag="div" scope="global" keypath={$t('PlayRoxy MCP 基于微软的 {link}，并针对 Roxy浏览器的指纹浏览器功能进行了增强。', { link: '{link}' })}>
-        {{
-          link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://github.com/microsoft/playwright-mcp">Playwright MCP</a>,
-        }}
-      </I18nT>
-    ),
-  },
-  {
-    title: $t('MCP 资源'),
-    content: () => {
-      const resources = [
-        {
-          icon: 'websites/rx_site_github',
-          text: 'roxybrowser-mcp-server',
-          url: 'https://github.com/roxybrowserlabs/roxybrowser-mcp-server?tab=readme-ov-file#roxybrowser-mcp-server-beta',
-        },
-        {
-          icon: 'websites/rx_site_github',
-          text: 'roxybrowser-playwright-mcp',
-          url: 'https://github.com/roxybrowserlabs/roxybrowser-playwright-mcp?tab=readme-ov-file#playwright-mcp',
-        },
-      ]
-      return (
-        <div class="grid grid-cols-2 gap-2.5">
+    {
+      title: $t('特定的客户端配置'),
+      content: () => {
+        const tabs = [
           {
-            resources.map(item => (
-              <RxButton class="flex-1 !h-11" severity="secondary" outlined size="lg" onClick={() => window.open(item.url, '_blank')}>
-                <div class="w-full flex items-center justify-start gap-1.5">
-                  <RxSvgIcon name={item.icon as SvgNames}></RxSvgIcon>
-                  <div class={`flex-1 text-left ${cssModule.text}`}>{item.text}</div>
-                  <RxSvgIcon name="base/rx_ic_arrow_top_right" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
+            icon: 'websites/rx_site_claude',
+            title: 'Claude Code',
+            value: '1',
+            render: () => (
+              <div class="w-full flex flex-col">
+                <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
+                <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
+                  claude mcp add roxybrowser-openapi --scope local -e ROXY_API_KEY="
+                  {apiConfig.value.apiKey}
+                  " -e ROXY_API_HOST="http://127.0.0.1:
+                  {apiConfig.value.port}
+                  " -- npx @roxybrowser/openapi@latest
                 </div>
-              </RxButton>
-            ))
-          }
-        </div>
-      )
+                <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
+                <div class={`pa-3 rounded-md ${cssModule.cmd}`}>claude mcp add roxybrowser-playwright-mcp --scope local --transport stdio -- npx @roxybrowser/playwright-mcp@latest</div>
+              </div>
+            ),
+          },
+          {
+            icon: 'websites/rx_site_codex',
+            title: 'Codex',
+            value: '2',
+            render: () => (
+              <div class="w-full flex flex-col">
+                <div class={`pa-3 ${cssModule.platform}`}>{$t('使用 Roxy浏览器 MCP 服务器来控制 Roxy 客户端:')}</div>
+                <div class={`pa-3 rounded-md ${cssModule.cmd}`}>
+                  codex mcp add --env ROXY_API_KEY="
+                  {apiConfig.value.apiKey}
+                  " --env ROXY_API_HOST="http://127.0.0.1:
+                  {apiConfig.value.port}
+                  " roxybrowser-openapi -- npx @roxybrowser/openapi@latest
+                </div>
+                <div class={`pa-3 ${cssModule.platform}`}>{$t('要与 RoxyChrome 进行交互，请安装 roxybrowser-playwright-mcp:')}</div>
+                <div class={`pa-3 rounded-md ${cssModule.cmd}`}>codex mcp add roxybrowser-playwright-mcp -- npx @roxybrowser/playwright-mcp@latest</div>
+              </div>
+            ),
+          },
+          {
+            icon: 'websites/rx_site_cursor',
+            title: 'Cursor',
+            value: '3',
+            render: () => (
+              <div class="w-full flex flex-col">
+                <div class="pa-3">{$t('前往 Cursor 设置 -> MCP -> 添加新的 MCP 服务器，然后粘贴以下内容:')}</div>
+                <div class={`relative w-full ${cssModule.copy}`}>
+                  <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.standard)} />
+                  <JsonEditor class="min-h-75" modelValue={mcpConfig.value.standard} editable={false}></JsonEditor>
+                </div>
+              </div>
+            ),
+          },
+          {
+            icon: 'websites/rx_site_opencode',
+            title: 'OpenCode',
+            value: '5',
+            render: () => (
+              <div class="w-full flex flex-col">
+                <div class="pa-3">{$t('更新您的 ~/.config/opencode/opencode.json')}</div>
+                <div class={`relative w-full ${cssModule.copy}`}>
+                  <RxButton class={cssModule['copy-btn']} text size="xxs" icon="base/rx_ic_copy" label={$t('复制')} onClick={() => onCopy(mcpConfig.value.openCode)} />
+                  <JsonEditor class="min-h-75" modelValue={mcpConfig.value.openCode} editable={false}></JsonEditor>
+                </div>
+              </div>
+            ),
+          },
+          {
+            icon: 'websites/rx_site_gemini',
+            title: 'Gemini GLI',
+            value: '4',
+            render: () => (
+              <div class="pa-3">
+                <I18nT scope="global" keypath={$t('请遵循 MCP 安装{link}，并使用上述标准配置。', { link: '{link}' })}>
+                  {{
+                    link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#configure-the-mcp-server-in-settingsjson">{$t('指南')}</a>,
+                  }}
+                </I18nT>
+              </div>
+            ),
+          },
+        ]
+        return <RxTabs tabs={tabs} value="1"></RxTabs>
+      },
     },
-  },
-  {
-    title: $t('社群'),
-    content: () => (
-      <div class="grid grid-cols-2 gap-2.5">
-        <div class="col-span-2">{$t('请向我们提供反馈，并加入我们的社区，共同创造更多价值。')}</div>
-        <RxButton class="flex-1 !h-11" severity="secondary" outlined size="lg" onClick={openTelegram}>
-          <div class="w-full flex items-center justify-start gap-1.5">
-            <RxSvgIcon name="websites/rx_site_telegram" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
-            <div class={`flex-1 text-left ${cssModule.text}`}>{$t('Telegram 频道')}</div>
-            <RxSvgIcon name="base/rx_ic_arrow_top_right" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
+    {
+      title: $t('使用 Roxy Playwright MCP 控制 RoxyChrome'),
+      content: () => (
+        <I18nT tag="div" scope="global" keypath={$t('PlayRoxy MCP 基于微软的 {link}，并针对 Roxy浏览器的指纹浏览器功能进行了增强。', { link: '{link}' })}>
+          {{
+            link: () => <a class={`cursor-pointer ${cssModule.link}`} target="_blank" href="https://github.com/microsoft/playwright-mcp">Playwright MCP</a>,
+          }}
+        </I18nT>
+      ),
+    },
+    {
+      title: $t('MCP 资源'),
+      content: () => {
+        const resources = [
+          {
+            icon: 'websites/rx_site_github',
+            text: 'roxybrowser-mcp-server',
+            url: 'https://github.com/roxybrowserlabs/roxybrowser-mcp-server?tab=readme-ov-file#roxybrowser-mcp-server-beta',
+          },
+          {
+            icon: 'websites/rx_site_github',
+            text: 'roxybrowser-playwright-mcp',
+            url: 'https://github.com/roxybrowserlabs/roxybrowser-playwright-mcp?tab=readme-ov-file#playwright-mcp',
+          },
+        ]
+        return (
+          <div class="grid grid-cols-2 gap-2.5">
+            {
+              resources.map(item => (
+                <RxButton class="flex-1 !h-11" severity="secondary" outlined size="lg" onClick={() => window.open(item.url, '_blank')}>
+                  <div class="w-full flex items-center justify-start gap-1.5">
+                    <RxSvgIcon name={item.icon as SvgNames}></RxSvgIcon>
+                    <div class={`flex-1 text-left ${cssModule.text}`}>{item.text}</div>
+                    <RxSvgIcon name="base/rx_ic_arrow_top_right" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
+                  </div>
+                </RxButton>
+              ))
+            }
           </div>
-        </RxButton>
-      </div>
-    ),
-  },
-]
+        )
+      },
+    },
+    {
+      title: $t('社群'),
+      content: () => (
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="col-span-2">{$t('请向我们提供反馈，并加入我们的社区，共同创造更多价值。')}</div>
+          <RxButton class="flex-1 !h-11" severity="secondary" outlined size="lg" onClick={openTelegram}>
+            <div class="w-full flex items-center justify-start gap-1.5">
+              <RxSvgIcon name="websites/rx_site_telegram" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
+              <div class={`flex-1 text-left ${cssModule.text}`}>{$t('Telegram 频道')}</div>
+              <RxSvgIcon name="base/rx_ic_arrow_top_right" color="var(--colors-icon-icon-brand)"></RxSvgIcon>
+            </div>
+          </RxButton>
+        </div>
+      ),
+    },
+  ]
+})
 
 onBeforeMount(() => {
   getApiKeys()

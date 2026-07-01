@@ -58,8 +58,8 @@ onBeforeMount(async () => {
               <template v-for="subItem in item.items" :key="subItem.label">
                 <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
                   <component :is="subItem.renderComponent" v-if="subItem.renderComponent" />
-                  <div v-else class="flex flex-1 items-center" :class="subItem.classes">
-                    <div class="flex-1">
+                  <div v-else class="flex flex-1 items-center gap-2" :class="subItem.classes">
+                    <div class="flex-3/5">
                       <div class="panel-item-label">
                         <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
                       </div>
@@ -67,7 +67,7 @@ onBeforeMount(async () => {
                         <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
                       </div>
                     </div>
-                    <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
+                    <div v-if="subItem.component" class="flex-3/10 flex justify-end w-full">
                       <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
                     </div>
                   </div>

@@ -7,11 +7,8 @@ import PlatformInfoCell from '/@/views/account/list/components/platform-info-cel
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
 import ExportAccounts from '/@/views/account/list/components/export-accounts.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getRelatedProfileLabels, useColumns } from './columns'
@@ -20,7 +17,7 @@ import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { PlatformPermissionCode } from '/@/stores/permission'
 import { copyText } from '/@/utils'
-import { formatAccountCopyText } from './utils'
+import { formatAccountCopyText, parseWindowInfo } from './utils'
 import { PlatformReqType } from '/@/enums'
 import { useDialog } from 'primevue/usedialog'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -35,9 +32,8 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const drawerInstance = useDrawer()
-const toast = useToast()
 const { userConfig } = storeToRefs(useUserStore())
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
@@ -205,16 +201,9 @@ function editField(data: Data, field: keyof Data, title: string, inputType: 'tex
   })
 }
 
-function onCopyField(value?: string) {
-  if (!value)
-    return
-  copyText(value)
-  toast.add({ severity: 'success', summary: $t('已复制'), life: 2000 })
-}
-
 function onCopyAccount(data: Data) {
   copyText(formatAccountCopyText(data, check(PlatformPermissionCode.ViewPassword)))
-  toast.add({ severity: 'success', summary: $t('已复制'), life: 2000 })
+  showToast(0, $t('已复制'))
 }
 
 function onRemark(data: Data) {
@@ -252,8 +241,13 @@ function toggleRemarkDisplayStatus(cache: Record<string, any>) {
   }
 }
 
-function togglePasswordVisible(cache: Record<string, any>) {
-  cache.visible = !cache.visible
+function togglePasswordVisible(id: string, cache: Record<string, any>) {
+  if (Reflect.has(cache.visible, id)) {
+    Reflect.deleteProperty(cache.visible, id)
+  }
+  else {
+    Reflect.set(cache.visible, id, true)
+  }
 }
 
 function bindProfiles(data: Data) {
@@ -261,7 +255,7 @@ function bindProfiles(data: Data) {
     title: $t('选择窗口'),
     slots: {
       container: () => h(ProfileSelect, {
-        account: data,
+        linkedWindowSortNums: parseWindowInfo(data.window_info),
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: async (profiles: any[]) => {
           if (!data.id)
@@ -334,8 +328,8 @@ function deletePopup(data: any) {
       <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest" :operation="canEdit ? operation : []" :operation-handler="operationHandler"
-               :show-gridlines="false" :show-actions="false" :context-menu="canEdit"
+      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest"
+               :operation="canEdit ? operation : []" :operation-handler="operationHandler" :virtual-scroller-options="{ itemSize: 60 }" :show-gridlines="false" :show-actions="false" :context-menu="canEdit"
       >
         <template #display-before>
           <RxButton v-if="canBatchExport" severity="secondary" outlined size="xxs" icon="base/rx_ic_export" :label="$t('导出数据')" @click.stop="exportAccounts" />
@@ -343,43 +337,37 @@ function deletePopup(data: any) {
         <template #filter-after>
           <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         </template>
-        <template #platformInfo="{ data }">
-          <PlatformInfoCell :data="data" :readonly="isViewer" @click="editAccount(data)" />
-        </template>
-        <template #userName="{ data }">
-          <AccountFieldCell :value="data.platformUserName" show-copy :show-edit="canEdit"
-                            @copy="onCopyField(data.platformUserName)"
-                            @edit="editField(data, 'platformUserName', $t('修改账号'), 'textarea')"
-          />
-        </template>
-        <template #passwordHeader="{ column: { title, _cache } }">
-          <div class="flex items-center gap-2 note-header w-full">
-            <span>{{ title }}</span>
-            <RxSvgIcon v-if="canViewPassword" v-tooltip.top="{ value: _cache.visible ? $t('隐藏') : $t('显示'), showDelay: 0 }" class="cursor-pointer shrink-0 color-[#989CA0]"
-                       :name="_cache.visible ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="togglePasswordVisible(_cache)"
-            />
-          </div>
-        </template>
-        <template #password="{ data, column: { _cache } }">
-          <AccountFieldCell :value="data.platformPassword" :masked="!canViewPassword || !_cache.visible" :show-edit="canEdit && check(PlatformPermissionCode.Edit)"
-                            @edit="editField(data, 'platformPassword', $t('修改密码'), 'textarea')"
-          />
-        </template>
         <template #table-empty>
           <CustomNewEmpty icon="base/rx_ic_keys" img="empty-accounts.png" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex gap-3">
-                <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" outlined severity="secondary" size="md" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
+                          @click.stop="operationHandler({ name: 'create' })"
+                />
                 <TutorialVideo video-type="account_management" :autoplay="false" />
               </div>
             </template>
           </CustomNewEmpty>
         </template>
+        <template #platformInfo="{ data }">
+          <PlatformInfoCell :data="data" :readonly="isViewer" @click.stop="() => !isViewer && editAccount(data)" />
+        </template>
+        <template #userName="{ data }">
+          <AccountFieldCell :value="data.platformUserName" show-copy :show-edit="canEdit" @edit="editField(data, 'platformUserName', $t('修改账号'), 'textarea')" />
+        </template>
+        <template #password="{ data, column: { _cache } }">
+          <AccountFieldCell :value="data.platformPassword" :masked="!canViewPassword || !_cache.visible[data.id]" show-masked :show-copy="canViewPassword"
+                            :show-edit="canEdit && check(PlatformPermissionCode.Edit)" @edit="editField(data, 'platformPassword', $t('修改密码'), 'textarea')" @toggle-masked="togglePasswordVisible(data.id, _cache)"
+          />
+        </template>
+        <!-- <template #email="{ data }">
+          <AccountFieldCell :value="data.platformEmail" show-copy :show-edit="canEdit" @edit="editField(data, 'platformEmail', $t('修改关联邮箱'), 'textarea')" />
+        </template> -->
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header w-full">
             <span>{{ title }}</span>
-            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-                       :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)"
+            <SvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+                     @click.stop="toggleRemarkDisplayStatus(_cache)"
             />
           </div>
         </template>
@@ -411,6 +399,11 @@ function deletePopup(data: any) {
   tr:not([data-p-selected='true']):hover .row-hover-action,
   tr:not([data-p-selected='true']):focus-within .row-hover-action {
     opacity: 1;
+  }
+
+  tr:not([data-p-selected='true']):hover .row-hover-empty,
+  tr:not([data-p-selected='true']):focus-within .row-hover-empty {
+    display: none;
   }
 }
 

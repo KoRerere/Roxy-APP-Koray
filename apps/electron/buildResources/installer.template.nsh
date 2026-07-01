@@ -1,4 +1,4 @@
-; ============================================================================
+﻿; ============================================================================
 ; NSIS 安装脚本模板
 ; ============================================================================
 ; 构建时会替换以下占位符：
@@ -26,6 +26,58 @@
 
 !macro customInit
   ; 初始化时不需要做任何操作
+!macroend
+
+; ============================================================================
+; 自定义安装模式：自动更新时沿用上次的安装方式，跳过"为谁安装"选择页
+; ============================================================================
+; - electron-builder 默认只会根据注册表把对应单选项设为默认选中，但仍会停留在
+;   选择页等待用户点"下一步"；这里在更新场景（${isUpdated}）下直接强制安装模式，
+;   使该页被自动跳过（assisted 安装器的 MultiUser.InstallModePre 会据此 Abort）。
+; - 仅在"只存在一种历史安装"时强制，保证默认按之前用户的选择；
+;   per-machine 更新仍会按需触发一次系统 UAC 提权（无法避免）。
+!macro customInstallMode
+  ${if} ${isUpdated}
+    ${if} $hasPerMachineInstallation == "1"
+    ${andif} $hasPerUserInstallation == "0"
+      StrCpy $isForceMachineInstall "1"
+    ${elseif} $hasPerUserInstallation == "1"
+    ${andif} $hasPerMachineInstallation == "0"
+      StrCpy $isForceCurrentInstall "1"
+    ${endif}
+  ${endif}
+!macroend
+
+; ============================================================================
+; 自定义完成页：实现"非静默更新但全自动"
+; ============================================================================
+; - 首次安装（非更新）：保留带"运行应用"勾选的标准完成页，由用户点击完成
+; - 自动更新（${isUpdated}）：自动拉起新版本并跳过完成页，做到全程无需点击
+;   （许可页/目录页由 electron-builder 的 skipPageIfUpdated 自动跳过，
+;     安装模式页由上面的 customInstallMode 自动跳过，安装进度页正常显示）
+!macro customFinishPage
+  Function StartApp
+    ${if} ${isUpdated}
+      StrCpy $1 "--updated"
+    ${else}
+      StrCpy $1 ""
+    ${endif}
+    ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$1"
+  FunctionEnd
+
+  ; 更新场景下：隐藏窗口 -> 启动新版本 -> Abort 跳过完成页
+  Function finishPagePre
+    ${if} ${isUpdated}
+      HideWindow
+      Call StartApp
+      Abort
+    ${endif}
+  FunctionEnd
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE finishPagePre
+
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
+  !insertmacro MUI_PAGE_FINISH
 !macroend
 
 !macro customInstall

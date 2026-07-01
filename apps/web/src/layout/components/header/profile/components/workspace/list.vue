@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import Badges from '/@/layout/components/header/profile/components/badges.vue'
-import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
+import WorkspaceForm from '/@/layout/components/header/profile/components/workspace/form.vue'
 import WorkspaceGuide from '/@/layout/components/header/components/workspace-guide.vue'
 import RxTooltip from '/@/components/rx-tooltip'
 import { RxSvgIcon } from '/@/components/rx-icon'

@@ -2,9 +2,10 @@
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import AccountFieldCell from '/@/views/account/list/components/account-field-cell.vue'
 import PlatformInfoCell from '/@/views/account/list/components/platform-info-cell.vue'
+import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { getRawColumns } from './columns'
+import { getRawColumns, getRelatedProfileLabels } from './columns'
 import { RxAlert } from '/@/components/rx-alert'
 import { AccountBindType } from '/@/enums/account'
 
@@ -70,7 +71,7 @@ function handleSave() {
     />
     <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
     <div class="flex-ovh-1">
-      <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false"
+      <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
                :show-display="false" :context-menu="false" :show-actions="false"
       >
         <template #table-empty>
@@ -83,12 +84,15 @@ function handleSave() {
           <AccountFieldCell :value="row.platformUserName" />
         </template>
         <template #password="{ data: row, column: { _cache } }">
-          <AccountFieldCell :value="row.platformPassword" :masked="!_cache?.visible" />
+          <AccountFieldCell :value="row.platformPassword" :masked="!_cache.visible[row.id]" />
         </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.platformRemarks, showDelay: 500 }" :name="row.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
                      :class="{ 'color-[#12A3FC]': row.platformRemarks }"
           />
+        </template>
+        <template #related="{ data: row }">
+          <RelatedProfilesCell :list="getRelatedProfileLabels(row)" />
         </template>
       </RyTable>
     </div>

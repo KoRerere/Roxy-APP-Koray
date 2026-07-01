@@ -141,17 +141,15 @@ const realUseSelection = computed(() => {
 })
 
 const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || props.pageRows
+
 const paginatorConfig = reactive({
   rows: cachedRows,
   first: cachedRows * ((Number(route.query.page_index) || 1) - 1),
   totalRecords: 0,
-  rowsPerPageOptions: [
-    { label: $t('5 条/页'), value: 5 },
-    { label: $t('10 条/页'), value: 10 },
-    { label: $t('20 条/页'), value: 20 },
-    { label: $t('50 条/页'), value: 50 },
-    { label: $t('100 条/页'), value: 100 },
-  ],
+  rowsPerPageOptions: [5, 10, 20, 50, 100, 500].map(count => ({
+    label: $t('{count} 条/页', { count }),
+    value: count,
+  })),
   onResetPage(first = 0, rows?: number) {
     paginatorConfig.first = first
     if (rows) {

@@ -25,11 +25,11 @@ async function saveAccount(formData: any) {
 <template>
   <div class="flex flex-col h-full w-full overflow-hidden">
     <ViewsHeader show-back :divider="false" :title="$t('添加账号')" />
-    <RxTabs v-model:value="tabsValue" :tabs="tabs"></RxTabs>
+    <RxTabs v-model:value="tabsValue" :tabs="tabs" />
     <div class="flex-1 flex overflow-hidden">
-      <SingleAccount class="mx-auto w-140" v-show="tabsValue === 'single'" @confirm="saveAccount" @close="router.replace({ name: 'account-list' })" />
+      <SingleAccount v-show="tabsValue === 'single'" class="mx-auto w-128" @confirm="saveAccount" @close="router.replace({ name: 'account-list' })" />
       <BatchAccount v-show="tabsValue === 'batch'" />
-      <TemplateImport class="mx-auto w-152" v-show="tabsValue === 'template'" />
+      <TemplateImport v-show="tabsValue === 'template'" class="mx-auto w-152" />
     </div>
   </div>
 </template>

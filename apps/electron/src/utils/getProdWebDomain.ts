@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { store } from '/@/modules/store'
+import { electronAdapter } from '/@/utils/request/electronAdapter'
 
 const webDomains: string[] = JSON.parse(import.meta.env.VITE_WEB_BASE_URL)
 const defaultDomain = webDomains.find(domain => domain.includes('roxybrowser.cn')) || webDomains[0]
@@ -21,6 +22,7 @@ export async function getProdWebDomain(force = false) {
   if (store.lastWebDomain) {
     try {
       const result = await axios.get(store.lastWebDomain, {
+        // adapter: electronAdapter,
         proxy: false,
         timeout: 5000,
         validateStatus: status => status >= 200 && status < 300,
@@ -38,6 +40,7 @@ export async function getProdWebDomain(force = false) {
 
   const attempts = webDomains.map(async (domain) => {
     const result = await axios.get(domain, {
+      // adapter: electronAdapter,
       proxy: false,
       timeout: 5000,
       validateStatus: status => status >= 200 && status < 300,

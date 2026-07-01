@@ -1,16 +1,17 @@
 import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import type { QuitSyncProgressMessage } from '@roxy/electron-preload'
 import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { shallowReactive, watch } from '@vue/reactivity'
 import { debounce, isPlainObject } from 'es-toolkit'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { readdir, rm } from 'node:fs/promises'
+import { readdir, readFile, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { scheduler, setTimeout } from 'node:timers/promises'
 import pLimit from 'p-limit'
 import { API } from '/@/api'
 import { Role } from '/@/constants/common'
 import { isAppQuitting } from '/@/modules/app'
+import { beginQuitSyncProgress, finishQuitSyncProgress, updateQuitSyncProgress } from '/@/modules/app/quitSyncProgress'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
@@ -19,9 +20,40 @@ import { coreManager } from '/@/modules/browser/core-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
+import { appUpdater } from '/@/modules/updater'
 import { asyncDebounce } from '/@/utils'
 
 const batchLaunchLimit = pLimit(5)
+
+/** 退出/升级场景下的服务端同步参数 (大 payload + 多窗口) */
+const QUIT_SYNC_BATCH_SIZE = 6
+const QUIT_SYNC_TIMEOUT_MS = 45_000
+const QUIT_SYNC_MAX_RETRIES = 3
+
+/**
+ * 退出/升级/登出时整体同步的兜底超时.
+ * 防止个别窗口 close() 或服务端同步僵死, 导致整个退出流程被无限阻塞.
+ * 实际超时 = 基础值 + 每窗口增量, 并以最大值封顶.
+ */
+const QUIT_SYNC_OVERALL_BASE_MS = 60_000
+const QUIT_SYNC_OVERALL_PER_WINDOW_MS = 8_000
+const QUIT_SYNC_OVERALL_MAX_MS = 5 * 60_000
+
+/**
+ * 单个窗口 close()/数据同步的兜底超时.
+ * close() 依赖浏览器进程关闭后才 resolve; 若进程僵死, uploadDataPromiser 永不 settle,
+ * 会导致 #batchUploadData 的 allSettled 无限等待 (普通关窗路径不经过 closeAll 的整体超时).
+ * 这里给每个窗口的 task 单独加超时, 保证 allSettled 一定能结束、finally 清理一定执行.
+ * 取值需大于正常的 saveCookies + browser.close + OSS 上传耗时, 仅用于防僵死.
+ */
+const SINGLE_WINDOW_CLOSE_TIMEOUT_MS = 2 * 60_000
+
+/**
+ * 单窗口加权进度权重: 一个窗口「关闭 + OSS 上传」了结计 0.7, 「接口同步」了结再计 0.3, 合计 1.0.
+ * 整体进度 = 所有窗口完成度之和 / 总窗口数, 全程平滑且单调递增.
+ */
+const QUIT_SYNC_WEIGHT_CLOSE_OSS = 0.7
+const QUIT_SYNC_WEIGHT_API = 0.3
 
 const OpenErrorMessageMap = {
   /**
@@ -182,11 +214,16 @@ export class BrowserManager {
           })
         }
 
-        await this.#batchUploadData()
+        // 退出/升级同步由 closeAll 的单次流程统一处理:
+        // 此时若每个窗口 disconnect 再各自触发一次 #batchUploadData, debounce 会被多轮并发执行,
+        // 导致同一批窗口数据被重复同步、共享进度计数器越界 (例如出现 32/20).
+        if (!this.#ensureServerSync) {
+          await this.#batchUploadData()
 
-        const { coreVersion } = browserItem.winInfo
-        // 如果没有任何浏览器在使用该内核，则尝试解压内核
-        coreManager.getCoreManager(browserItem.coreType).tryUpzipCore(coreVersion)
+          const { coreVersion } = browserItem.winInfo
+          // 如果没有任何浏览器在使用该内核，则尝试解压内核
+          coreManager.getCoreManager(browserItem.coreType).tryUpzipCore(coreVersion)
+        }
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
       browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -258,16 +295,53 @@ export class BrowserManager {
     }
   }
 
+  /** 退出/升级路径: 使用更保守的批次/超时/重试策略同步服务端数据 (失败不阻断退出) */
+  #ensureServerSync = false
+  #quitSyncApiSynced = 0
+  #quitSyncApiTotal = 0
+  #quitSyncCloseFailed = 0
+  /** 加权完成度累加值 (0 ~ #quitSyncTotalWindows), 与总窗口数一起算整体进度 */
+  #quitSyncUnits = 0
+  #quitSyncTotalWindows = 0
+
   /** 批量关闭浏览器 */
   batchClose(dirIds: string[]) {
+    const ensureServerSync = this.#ensureServerSync
     dirIds.forEach((dirId) => {
       if (this.openedBrowserMap.has(dirId)) {
-        this.uploadDataQueue.set(dirId, this.close(dirId))
+        const task = this.close(dirId)
+        // 退出/升级/登出: 每个窗口「关闭 + OSS 上传」一了结就立刻推进 0.7,
+        // 直接挂在原始 task 上(不经过 #batchUploadData 的 debounce 与 allSettled),
+        // 保证进度随每个 OSS 完成实时、逐个增长, 而不是等全部完成后一起跳到 70%.
+        if (ensureServerSync) {
+          task
+            .finally(() => {
+              this.#quitSyncUnits += QUIT_SYNC_WEIGHT_CLOSE_OSS
+              updateQuitSyncProgress(this.#quitSyncUnits, this.#quitSyncTotalWindows)
+            })
+            .catch(() => {})
+        }
+        this.uploadDataQueue.set(dirId, task)
       }
     })
     if (this.uploadDataQueue.size > 0) {
       return this.#batchUploadData()
     }
+  }
+
+  /**
+   * 给单个窗口的 close/同步 task 套一个兜底超时.
+   * 超时后以 rejected 返回 (该窗口本轮不再同步), 避免进程僵死时 allSettled 无限挂起.
+   */
+  #withCloseTimeout<T>(task: Promise<T>, dirId: string): Promise<T> {
+    // task 可能在超时之后才 settle, 先吞掉它自身的 rejection, 防止 unhandledRejection.
+    task.catch(() => {})
+    return Promise.race([
+      task,
+      setTimeout(SINGLE_WINDOW_CLOSE_TIMEOUT_MS).then(() =>
+        Promise.reject(new Error(`window ${dirId} close/sync timed out after ${SINGLE_WINDOW_CLOSE_TIMEOUT_MS}ms`)),
+      ),
+    ])
   }
 
   #batchUploadData = asyncDebounce(async () => {
@@ -280,8 +354,21 @@ export class BrowserManager {
 
     ipcSender.browser.onCloseSyncingData(dirIds)
 
-    const results = await Promise.allSettled(uploadDataQueue)
+    // 关闭阶段的进度(每窗口 +0.7)已在 batchClose 中按真实 OSS 完成时机逐个上报, 这里只负责等待所有 task 了结.
+    const results = await Promise.allSettled(
+      uploadDataQueue.map((task, index) =>
+        this.#withCloseTimeout(task, dirIds[index]!).catch((reason) => {
+          console.warn(`Quit sync: failed to close window ${dirIds[index]}`, reason)
+          throw reason
+        }),
+      ),
+    )
     console.debug('batchClose results', results)
+
+    if (this.#ensureServerSync) {
+      this.#quitSyncCloseFailed = results.filter(item => item.status === 'rejected').length
+    }
+
     const uploadParamsObj = Object.groupBy(results, (item) => {
       if (item.status === 'fulfilled' && item.value?.requestHeaders) {
         return JSON.stringify(item.value.requestHeaders)
@@ -291,14 +378,50 @@ export class BrowserManager {
 
     console.debug('batchClose uploadParamsObj', uploadParamsObj)
 
-    const uploadParamsList = Object.entries(uploadParamsObj).map(([key, value]) => {
+    let apiWindowTotal = 0
+    const uploadParamsList = Object.entries(uploadParamsObj).flatMap(([key, value]) => {
       if (key && value?.length) {
         const params = value.map(item => item.status === 'fulfilled' && item.value?.uploadParams).filter(Boolean)
-        return this.syncWindowData(params, JSON.parse(key))
+        apiWindowTotal += params.length
+        return [this.syncWindowData(params, JSON.parse(key), { ensureServerSync: this.#ensureServerSync })]
       }
+      return []
     })
 
-    return Promise.allSettled(uploadParamsList).finally(() => {
+    if (this.#ensureServerSync) {
+      this.#quitSyncApiSynced = 0
+      this.#quitSyncApiTotal = apiWindowTotal
+      // 不进入接口同步的窗口(close 失败 / 无数据)没有后续 0.3, 这里一次性补足, 保证进度最终能到 100%
+      const nonApiWindows = this.#quitSyncTotalWindows - apiWindowTotal
+      if (nonApiWindows > 0) {
+        this.#quitSyncUnits += nonApiWindows * QUIT_SYNC_WEIGHT_API
+        updateQuitSyncProgress(this.#quitSyncUnits, this.#quitSyncTotalWindows)
+      }
+    }
+
+    const syncPromise = Promise.allSettled(uploadParamsList)
+
+    return syncPromise.then((syncResults) => {
+      // 显式记录被 allSettled 吞掉的 rejection, 避免同步失败时无任何日志
+      syncResults.forEach((r) => {
+        if (r.status === 'rejected') {
+          console.error('syncWindowData group rejected (some windows not synced):', r.reason)
+        }
+      })
+      return syncResults
+    }).finally(() => {
+      if (this.#ensureServerSync) {
+        console.log(
+          `Quit sync summary: closed ${dirIds.length - this.#quitSyncCloseFailed}/${dirIds.length}, `
+          + `API synced ${this.#quitSyncApiSynced}/${this.#quitSyncApiTotal}`,
+        )
+        if (this.#quitSyncApiSynced < this.#quitSyncApiTotal || this.#quitSyncCloseFailed > 0) {
+          console.warn(
+            'Quit sync partial failure:',
+            { closeFailed: this.#quitSyncCloseFailed, apiSynced: this.#quitSyncApiSynced, apiTotal: this.#quitSyncApiTotal },
+          )
+        }
+      }
       dirIds.forEach((dirId) => {
         this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
@@ -308,21 +431,56 @@ export class BrowserManager {
   }, 300)
 
   /** 关闭所有已打开的浏览器 */
-  async closeAll() {
+  async closeAll(options?: { ensureServerSync?: boolean, syncProgressReason?: QuitSyncProgressMessage['reason'] }) {
+    const ensureServerSync = options?.ensureServerSync ?? false
     const cores = this.openedBrowserMap.values().map((n) => {
       return {
         coreType: n.coreType,
         coreVersion: n.winInfo.coreVersion,
       }
     })
+    this.#ensureServerSync = ensureServerSync
+    const total = this.openedBrowserMap.size
+    if (ensureServerSync) {
+      this.#quitSyncApiSynced = 0
+      this.#quitSyncApiTotal = 0
+      this.#quitSyncCloseFailed = 0
+      this.#quitSyncUnits = 0
+      this.#quitSyncTotalWindows = Math.max(total, 1)
+    }
+    if (ensureServerSync && total > 0) {
+      const reason = options?.syncProgressReason ?? (appUpdater.isQuittingForUpdate ? 'update' : 'quit')
+      beginQuitSyncProgress(total, reason)
+    }
     try {
-      const result = await this.batchClose([...this.openedBrowserMap.keys()])
-      return result
+      const closeTask = this.batchClose([...this.openedBrowserMap.keys()])
+      if (ensureServerSync && total > 0) {
+        // 退出/升级/登出兜底超时: 个别窗口 close() 或服务端同步僵死时, 不能无限阻塞退出.
+        // 超时后放行退出流程; 底层同步 promise 不取消, 仍会在后台尽量跑完.
+        const overallTimeout = Math.min(
+          QUIT_SYNC_OVERALL_BASE_MS + total * QUIT_SYNC_OVERALL_PER_WINDOW_MS,
+          QUIT_SYNC_OVERALL_MAX_MS,
+        )
+        // batchClose 内部已用 allSettled, 理论不会 reject; 仍兜底 catch, 防止超时后该 promise 无人处理触发 unhandledRejection.
+        Promise.resolve(closeTask).catch(() => {})
+        return await Promise.race([
+          closeTask,
+          setTimeout(overallTimeout).then(() => {
+            console.warn(`[closeAll] quit-sync timed out after ${overallTimeout}ms, releasing quit (sync continues in background)`)
+            return undefined
+          }),
+        ])
+      }
+      return await closeTask
     }
     finally {
+      this.#ensureServerSync = false
       // 等所有浏览器都关闭之后，尝试解压内核
       for (const { coreType, coreVersion } of cores) {
         await coreManager.getCoreManager(coreType).tryUpzipCore(coreVersion)
+      }
+      if (ensureServerSync) {
+        finishQuitSyncProgress()
       }
     }
   }
@@ -395,19 +553,47 @@ export class BrowserManager {
   /** 清除超过指定时间的缓存 */
   async clearCacheByTimestamp({ days, clearType }: { days: number, clearType: 'partial' | 'all' }) {
     const browserCacheRootDir = getUserDataDirPath('')
-    const dirIds: string[] = []
+    const thresholdMs = Number(days) * 24 * 60 * 60 * 1000
 
-    for (const dirent of readdirSync(browserCacheRootDir, { withFileTypes: true })) {
-      if (dirent.isDirectory()) {
-        const targetFile = join(browserCacheRootDir, dirent.name, 'close_timestamp')
-        if (existsSync(targetFile)) {
-          const [timestamp, dirId] = readFileSync(targetFile, 'utf-8').split('_')
-          if (Date.now() - Number(timestamp) > days * 24 * 60 * 60 * 1000) {
-            dirIds.push(dirId)
+    const dirents = await readdir(browserCacheRootDir, { withFileTypes: true })
+
+    const dirIds = (await Promise.all(
+      dirents
+        .filter(dirent => dirent.isDirectory() && dirent.name !== 'RoxyExtensions')
+        .map(async (dirent) => {
+          const dirId = dirent.name
+          if (this.openedBrowserMap.has(dirId) || this.openingBrowserMap.has(dirId))
+            return null
+
+          const profileDir = join(browserCacheRootDir, dirId)
+          const targetFile = join(profileDir, 'close_timestamp')
+
+          let lastUsedTime: number
+          try {
+            const content = await readFile(targetFile, 'utf-8')
+            lastUsedTime = Number(content.trim().split('_')[0])
           }
-        }
-      }
-    }
+          catch (error: any) {
+            if (error?.code !== 'ENOENT') {
+              console.warn('[BrowserManager] read close_timestamp failed:', { dirId, error })
+              return null
+            }
+            try {
+              lastUsedTime = (await stat(profileDir)).mtimeMs
+            }
+            catch {
+              return null
+            }
+          }
+
+          if (!Number.isFinite(lastUsedTime))
+            return null
+
+          return Date.now() - lastUsedTime > thresholdMs ? dirId : null
+        }),
+    )).filter((dirId): dirId is string => dirId != null)
+
+    console.log('[BrowserManager] clearCacheByTimestamp', { days, clearType, count: dirIds.length })
     return Promise.allSettled(dirIds.map(dirId => clearType === 'all' ? this.removeLocalData(dirId) : this.removeLocalDataExcludeExtension(dirId)))
   }
 
@@ -461,25 +647,84 @@ export class BrowserManager {
     return winInfoList
   }
 
-  /** 同步窗口数据, 限制最多 10个 作为一批 */
-  async syncWindowData(uploadParams: Record<string, any>[], headers: any) {
+  /** 同步窗口数据; 退出/升级场景使用更小批次、更长超时与重试 (失败仅记录, 不阻断退出) */
+  async syncWindowData(
+    uploadParams: Record<string, any>[],
+    headers: any,
+    options: { ensureServerSync?: boolean } = {},
+  ) {
+    const ensureServerSync = options.ensureServerSync ?? this.#ensureServerSync
+    const batchSize = ensureServerSync ? QUIT_SYNC_BATCH_SIZE : 10
+    const timeout = ensureServerSync ? QUIT_SYNC_TIMEOUT_MS : 15_000
+    const maxRetries = ensureServerSync ? QUIT_SYNC_MAX_RETRIES : 1
+
     console.debug('syncWindowData uploadParams', uploadParams)
     console.debug('syncWindowData headers', headers)
+    console.debug('syncWindowData ensureServerSync', ensureServerSync, { batchSize, timeout, maxRetries })
 
-    const batchSize = 10
     const batches: Record<string, any>[][] = []
     for (let i = 0; i < uploadParams.length; i += batchSize) {
       batches.push(uploadParams.slice(i, i + batchSize))
     }
     console.debug('syncWindowData batches', batches.length)
-    for (const batch of batches) {
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i]!
       console.debug('syncWindowData batch', batch.map(item => item.id))
-      await API.window.userMdfWindowSyncV2Create(batch, { headers }).then((res) => {
-        console.log('user_mdf_window_sync_v2 uploadData', res)
-      }).catch((error) => {
-        console.error('user_mdf_window_sync_v2 uploadData error: ', error)
-      })
+      const syncedCount = await this.#syncWindowDataBatch(batch, headers, { timeout, maxRetries })
+      if (ensureServerSync) {
+        // syncedCount 仅用于日志汇总(成功数); 进度按「已了结窗口数」推进(无论成功/失败), 避免接口失败时进度卡住
+        this.#quitSyncApiSynced += syncedCount
+        this.#quitSyncUnits += batch.length * QUIT_SYNC_WEIGHT_API
+        // 进度上报失败不能中断后续批次同步
+        try {
+          updateQuitSyncProgress(this.#quitSyncUnits, this.#quitSyncTotalWindows)
+        }
+        catch (error) {
+          console.warn('syncWindowData progress update failed (ignored):', error)
+        }
+      }
     }
+  }
+
+  async #syncWindowDataBatch(
+    batch: Record<string, any>[],
+    headers: any,
+    options: { timeout: number, maxRetries: number },
+  ): Promise<number> {
+    const windowIds = batch.map(item => item.id).filter(Boolean)
+    let lastError: unknown
+    for (let attempt = 1; attempt <= options.maxRetries; attempt++) {
+      try {
+        const res = await API.window.userMdfWindowSyncV2Create(batch, {
+          headers,
+          timeout: options.timeout,
+        })
+        if (res?.code !== 0) {
+          throw new Error(`user_mdf_window_sync_v2 failed: code=${res?.code}, msg=${res?.msg}`)
+        }
+        console.log('user_mdf_window_sync_v2 uploadData', res)
+        return batch.length
+      }
+      catch (error) {
+        lastError = error
+        console.error(
+          `user_mdf_window_sync_v2 uploadData error (attempt ${attempt}/${options.maxRetries}, windows: ${windowIds.join(',')}):`,
+          error,
+        )
+        if (attempt < options.maxRetries) {
+          await setTimeout(2000 * attempt)
+        }
+      }
+    }
+
+    if (lastError) {
+      console.warn(
+        `user_mdf_window_sync_v2 uploadData failed after retries (windows: ${windowIds.join(',')}), continuing quit:`,
+        lastError,
+      )
+    }
+    return 0
   }
 
   /** 每隔 5分钟 定时同步窗口状态 */

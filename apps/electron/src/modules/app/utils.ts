@@ -32,7 +32,6 @@ export function handleCloseWindow(event: Electron.Event) {
 
   const { closeSoft } = store
   const win = getMainWindow()!
-  const tray = getTray()
 
   if (closeSoft === 'pop') {
     event.preventDefault()
@@ -70,8 +69,8 @@ export function handleCloseWindow(event: Electron.Event) {
         // event.preventDefault();
       }
       else {
-        Promise.try(() => tray.destroy())
-        closeAllWindows()
+        // 退出程序: 交给 app.quit() 走 before-quit 流程(先同步窗口数据并显示进度遮罩), 同步完成后再清理退出.
+        app.quit()
       }
     })
   }
@@ -80,6 +79,12 @@ export function handleCloseWindow(event: Electron.Event) {
     // win.minimize()
     win.setSkipTaskbar(true)
     win.hide()
+  }
+  else if (closeSoft === 'exit') {
+    // 退出程序: 先拦下默认关闭(避免窗口被直接销毁导致看不到同步进度),
+    // 交给 app.quit() 走 before-quit 流程同步窗口数据并显示进度遮罩, 完成后再清理退出.
+    event.preventDefault()
+    app.quit()
   }
 }
 

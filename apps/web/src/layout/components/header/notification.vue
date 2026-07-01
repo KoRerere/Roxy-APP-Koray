@@ -4,6 +4,7 @@ import TransferReceive from '/@/views/browser/list/transfer/receive.vue'
 import RedeemCodeRecord from '/@/layout/components/header/profile/components/record.vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { executeSomethingByTargetWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
 import { useEmitterEvent } from '/@/utils/eventBus'
@@ -231,6 +232,18 @@ function onHtmlClick(e: MouseEvent) {
 
   const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
 
+  const targetWorkspaceId = Number(url.searchParams.get('workspaceId'))
+  if (targetWorkspaceId) {
+    executeSomethingByTargetWorkspace(() => {
+      jumpByUrl(url)
+    })(targetWorkspaceId)
+    return
+  }
+
+  jumpByUrl(url)
+}
+
+function jumpByUrl(url: URL) {
   router.replace({
     path: url.pathname,
     query: {
@@ -242,7 +255,7 @@ function onHtmlClick(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="flex justify-center" v-tooltip.left="{ value: $t('通知'), showDelay: 600 }">
+  <div v-tooltip.left="{ value: $t('通知'), showDelay: 600 }" class="flex justify-center">
     <OverlayBadge :value="noRead" severity="danger" size="small" :class="noRead ? '' : message.empty">
       <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>

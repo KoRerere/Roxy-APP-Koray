@@ -21,7 +21,7 @@ const { list } = defineProps<{
   <div class="flex flex-col gap-3 pa-4 rounded-md" :class="$style.subscribe">
     <slot name="before" />
     <template v-for="(detail, index) in list" :key="detail.title">
-      <div v-if="index > 0" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
+      <RxDivider v-if="index > 0" line-style="dashed" line-only line-color="var(--colors-border-divider-dashed)" />
       <slot :name="detail.title" :class="$style.title">
         <div v-if="detail.title" :class="$style.title">
           {{ detail.title }}

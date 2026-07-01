@@ -11,6 +11,7 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
+import { resetBrowserDataSyncedBeforeQuit, syncBrowserDataBeforeQuit } from '/@/modules/app/quitCleanup'
 import { browserManager } from '/@/modules/browser'
 import { getAppIdleState } from '/@/modules/ipc/receiver/modules/app'
 import { ipcSender } from '/@/modules/ipc/sender'
@@ -26,6 +27,8 @@ export const appUpdater = new class AppUpdater {
   checkForUpdatesOptions?: CheckForUpdatesOptions
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   isQuittingForUpdate = false
+  /** 是否正在执行升级退出流程 (含数据同步) */
+  private upgradeInProgress = false
   #autoUpdater: DebUpdater | typeof electronUpdater.autoUpdater = process.platform === 'linux'
     ? new CustomDebUpdater()
     : electronUpdater.autoUpdater
@@ -134,6 +137,7 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.on('update-available', (updateInfo) => {
       this.isInProgress = true
       console.log(`Update available`, updateInfo)
+      // autoDownload 默认开启，electron-updater 会自动下载，无需在此处理
     })
 
     // 更新下载完成
@@ -234,27 +238,33 @@ export const appUpdater = new class AppUpdater {
     return Boolean(version) && compare(version, app.getVersion(), '>')
   }
 
-  /** 立即退出应用并且更新 */
+  /** 立即退出应用并且更新 (先同步用户数据, 再触发安装) */
   async upgradeNow() {
-    // autoUpdater.quitAndInstall();
-    console.info(`Quitting app and updating immediately`)
-    console.debug('this.#autoUpdater', this.#autoUpdater)
+    if (this.upgradeInProgress) {
+      console.log('upgradeNow already in progress, skipping duplicate call')
+      return
+    }
+    this.upgradeInProgress = true
+    this.isQuittingForUpdate = true
 
-    // if (this.#autoUpdater.squirrelDownloadedUpdate === false) {
-    //   // 解决用户取消系统授权弹窗后，无法再次调起更新的问题
-    //   const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
-    //     console.log(`quitAndInstall checkForUpdates error`, error)
-    //     this.isQuittingForUpdate = false
-    //   })
-    //   console.log('[appUpdater] quitAndInstall', checkResult)
-    //   await setTimeout(500)
-    // }
-    // else {
-    //   this.downloadPromiser?.resolve()
-    // }
+    console.info('Preparing to quit and update: syncing browser data first')
 
-    if (isPackaged) {
-      await this.quitAndInstall()
+    try {
+      await syncBrowserDataBeforeQuit()
+      store.appNormalExit = true
+      await forceSaveConfig()
+      console.info('Browser data synced, quitting app and updating immediately')
+
+      if (isPackaged) {
+        await this.quitAndInstall()
+      }
+    }
+    catch (error) {
+      console.error('upgradeNow failed:', error)
+      this.upgradeInProgress = false
+      this.isQuittingForUpdate = false
+      resetBrowserDataSyncedBeforeQuit()
+      throw error
     }
   }
 
@@ -262,7 +272,8 @@ export const appUpdater = new class AppUpdater {
     this.quitAndInstallPromiser = Promise.withResolvers<void>()
     this.isQuittingForUpdate = true
 
-    this.#autoUpdater.quitAndInstall(true, true)
+    // isSilent=false: 让真实 NSIS 安装器以非静默方式运行并显示安装进度（仅对 Windows 生效）
+    this.#autoUpdater.quitAndInstall(false, true)
     // return this.quitAndInstallPromiser.promise
   }
 

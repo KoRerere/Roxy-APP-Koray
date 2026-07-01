@@ -188,10 +188,10 @@ function getRemainingStatus(day: number) {
         <template #link>
           <span class="cursor-pointer info-link">{{ $t('Extend Expiration Time') }}</span>
         </template>
-      </i18n-t>
-    </div> -->
+</i18n-t>
+</div> -->
     <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-             :show-gridlines="false" :show-display="false" :show-actions-menu="false"
+             :virtual-scroller-options="{ itemSize: 60 }" :show-gridlines="false" :show-display="false" :show-actions-menu="false"
     >
       <template #filter-after>
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />

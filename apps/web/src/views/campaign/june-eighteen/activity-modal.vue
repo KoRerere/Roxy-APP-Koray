@@ -3,13 +3,16 @@ import currency from 'currency.js'
 import { format } from 'date-fns'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
-import { getImage } from '/@/utils/basic'
+import { enhanceCountdown, getImage } from '/@/utils'
 
 const emit = defineEmits(['close', 'confirm'])
 
 const { currentLocale } = storeToRefs(useSimpleLocale())
 const { currentActivity, maxBonus } = storeToRefs(useCampaignStore())
 const { getActivityTotalRecharge } = useCampaignStore()
+
+const countdown = ref()
+const countdownData = ref()
 
 const imageSrc = computed(() => {
   const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
@@ -25,6 +28,31 @@ const topUpSeasonText = computed(() => {
     return $t('充值 {start} - {end} 送 {percentage}', { start: currency(item.amount, { precision: 0 }).format(), end: currency(next.amount, { precision: 0 }).subtract(1).format(), percentage: `${item.discount}%` })
   }).join('\n')
 })
+
+onMounted(() => {
+  initCountdown()
+})
+
+onBeforeUnmount(() => {
+  countdown.value?.stop()
+})
+
+function initCountdown() {
+  countdown.value = enhanceCountdown(currentActivity.value.end_timestamp, (date) => {
+    const { days, hours, minutes, seconds } = date
+    countdownData.value = [
+      { label: $t('天'), value: days.toString().padStart(2, '0') },
+      { label: $t('时'), value: hours.toString().padStart(2, '0') },
+      { label: $t('分'), value: minutes.toString().padStart(2, '0') },
+      { label: $t('秒'), value: seconds.toString().padStart(2, '0') },
+    ].slice(days > 0 ? 0 : 1)
+  }, {
+    alwaysSecondLevel: true,
+    onEnd: () => {
+      emit('close')
+    },
+  })
+}
 
 function formatAmount(amount: number) {
   return currency(amount, { precision: 0 }).format()
@@ -67,27 +95,41 @@ function onConfirm() {
           <div>{{ $t('Roxy 超级充值季') }}</div>
           <i18n-t tag="div" scope="global" :keypath="$t('单笔充值最高 {bonus}', { bonus: '{bonus}' })">
             <template #bonus>
-              <span class="text-11 font-400 font-[DingTalk_JinBuTi] text">{{ $t('赠送 {value}', { value: `${maxBonus}%` }) }}</span>
+              <span class="text-11 font-400 font-[DingTalk_JinBuTi] bonus">{{ $t('赠送 {value}', { value: `${maxBonus}%` }) }}</span>
             </template>
           </i18n-t>
         </div>
-
-        <div class="text-white text-4 font-500 opacity-80 leading-normal mt-4">
-          {{ $t('活动期间多充多送，新老用户均可参与') }}
-        </div>
-        <div class="flex flex-col mt-6">
+        <div class="flex flex-col mt-5">
           <i18n-t tag="div" scope="global" class="text-5 color-white font-500 leading-7.5 whitespace-pre-wrap"
-                  :keypath="$t('充 {start} 起享赠送，充 {amount} 得 {value}', { start: formatAmount(10), amount: formatAmount(100), value: '{value}' })"
+                  :keypath="$t('充 {start} 起享赠送，充 {amount} 得 {value}', { start: formatAmount(10), amount: formatAmount(1000), value: '{value}' })"
           >
             <template #value>
-              <span class="font-bold text">{{ formatAmount(getActivityTotalRecharge(100)) }}</span>
+              <span class="font-bold bonus">{{ formatAmount(getActivityTotalRecharge(1000)) }}</span>
             </template>
           </i18n-t>
-          <i18n-t tag="div" scope="global" class="text-5 color-white font-500 leading-7.5" :keypath="$t('充 {amount} 得 {value}', { amount: formatAmount(1000), value: '{value}' })">
-            <template #value>
-              <span class="font-bold text">{{ formatAmount(getActivityTotalRecharge(1000)) }}</span>
+        </div>
+        <div class="flex flex-col gap-3 mt-8">
+          <div class="text-3 color-white leading-normal">
+            {{ $t('活动结束倒计时') }}
+          </div>
+          <div class="flex items-start gap-3.5">
+            <template v-for="(item, index) in countdownData" :key="item.label">
+              <div v-if="index !== 0" class="h-14.5 flex items-center justify-center color-white text-8">
+                :
+              </div>
+              <div class="flex flex-col items-center gap-2">
+                <AnimationBorder :gradient="['rgba(5,202,237,0.7)', 'rgba(5,202,237,0.7)', 'rgba(71,215,105,0.7)']" :animation="false" :deg="110" :border-width="1" :border-radius="8">
+                  <div class="w-14.5 h-14.5 flex items-center rounded-2 justify-center text-white text-7.5 leading-9 font-[JetBrains_Mono] bg-[#202C29]">
+                    {{ item.value }}
+                  </div>
+                </AnimationBorder>
+
+                <div class="text-2.75 color-white/70 leading-normal">
+                  {{ item.label }}
+                </div>
+              </div>
             </template>
-          </i18n-t>
+          </div>
         </div>
 
         <div class="!absolute left-6 bottom-6 flex items-center gap-5">
@@ -116,7 +158,7 @@ function onConfirm() {
   }
 }
 
-.text {
+.bonus {
   background: linear-gradient(97deg, #05caed 0%, #47d769 100%);
   background-clip: text;
   -webkit-background-clip: text;

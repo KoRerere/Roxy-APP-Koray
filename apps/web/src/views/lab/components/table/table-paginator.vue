@@ -14,15 +14,12 @@ const emit = defineEmits<{
 const paginatorFirst = defineModel<number>('first', { default: 0 })
 const paginatorRows = defineModel<number>('rows', { default: 10 })
 
-const paginatorRowOptions = [
-  { label: $t('5 条/页'), value: 5 },
-  { label: $t('10 条/页'), value: 10 },
-  { label: $t('20 条/页'), value: 20 },
-  { label: $t('50 条/页'), value: 50 },
-  { label: $t('100 条/页'), value: 100 },
-]
+const paginatorRowOptions = [5, 10, 20, 50, 100, 500].map(count => ({
+  label: $t('{count} 条/页', { count }),
+  value: count,
+}))
 
-function onChangePage(event: PageState) {
+function onChangePage(_event: PageState) {
   emit('update')
 }
 
@@ -36,15 +33,13 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
 </script>
 
 <template>
-  <Paginator v-model:first="paginatorFirst" class="paginator" :rows="paginatorRows" :total-records="totalRecords"
-             :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" @page="onChangePage"
+  <Paginator v-model:first="paginatorFirst" class="paginator" :rows="paginatorRows" :total-records="totalRecords" :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
+             @page="onChangePage"
   >
     <template #start>
       <div class="flex flex-1 items-center paginator-jump">
         <div>{{ $t('总计 {total} 个', { total: totalRecords }) }}</div>
-        <RxInputSelect v-model="paginatorRows" class="!w-fit" name="rowsPerPage" :options="paginatorRowOptions"
-                       option-value="value" size="xxs" :filter="false" @change="onChangeRows"
-        />
+        <RxInputSelect v-model="paginatorRows" class="!w-fit" name="rowsPerPage" :options="paginatorRowOptions" option-value="value" size="xxs" :filter="false" @change="onChangeRows" />
         <div class="flex-1 flex items-center gap-2 justify-end">
           {{ $t('跳转页数至') }}
         </div>

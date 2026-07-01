@@ -13,7 +13,6 @@ import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useProxy } from '/@/views/agent/hooks'
-import { ProxyExpireStatus } from '/@/enums/proxy'
 import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
@@ -24,7 +23,7 @@ const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
-const { buyProxy } = useProxy()
+const { buyProxy, viewExpiresSoonProxy } = useProxy()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { buyPoints } = useBuyPoints()
 
@@ -34,49 +33,54 @@ const isTrial = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Trial
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 const usedWindowCount = computed(() => userPayInfo.value.useWindowCount)
-const otherCards = computed(() => [
-  {
-    title: $t('代理 IP'),
-    used: userPayInfo.value.proxyExpireCount || userPayInfo.value.proxyUsingCount,
-    text: $t('IPs'),
-    extraText: userPayInfo.value.proxyExpireCount > 0 ? $t('即将过期') : '',
-    addText: $t('购买'),
-    extraTextClass: userPayInfo.value.proxyExpireCount > 0 ? 'warning' : '',
-    textClass: userPayInfo.value.proxyExpireCount > 0 ? 'warning' : '',
-    visibleJump: userPayInfo.value.proxyExpireCount > 0,
-    addClick: () => {
-      buyProxy().then((orderInfo) => {
-        router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
-      })
+const otherCards = computed(() => {
+  const { proxyExpireCount, proxyUsingCount, useMemberCount, maxMemberCount, useWorkspaceCount, maxWorkspaceCount, points } = userPayInfo.value
+  return [
+    {
+      title: $t('代理 IP'),
+      used: proxyExpireCount || proxyUsingCount,
+      text: 'IPs',
+      extraText: proxyExpireCount > 0 ? $t('即将过期') : '',
+      addText: $t('购买'),
+      extraTextClass: proxyExpireCount > 0 ? 'warning' : '',
+      textClass: proxyExpireCount > 0 ? 'warning' : '',
+      visibleJump: proxyExpireCount > 0,
+      addClick: () => {
+        buyProxy().then((orderInfo) => {
+          router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
+        })
+      },
+      jump: () => {
+        if (proxyExpireCount > 0) {
+          viewExpiresSoonProxy()
+        }
+      },
     },
-    jump: () => {
-      router.push({ name: 'agent-list', query: { name: 'shop', expireStatus: ProxyExpireStatus.soon } })
+    {
+      title: $t('团队成员'),
+      used: useMemberCount,
+      total: maxMemberCount,
+      text: $t('已使用'),
+      addText: $t('新增'),
+      addClick: () => onExpand('staff'),
     },
-  },
-  {
-    title: $t('团队成员'),
-    used: userPayInfo.value.useMemberCount,
-    total: userPayInfo.value.maxMemberCount,
-    text: $t('已使用'),
-    addText: $t('新增'),
-    addClick: () => onExpand('staff'),
-  },
-  {
-    title: $t('团队'),
-    used: userPayInfo.value.useWorkspaceCount,
-    total: userPayInfo.value.maxWorkspaceCount,
-    text: $t('已使用'),
-    addText: $t('新增'),
-    addClick: () => onExpand('workspace'),
-  },
-  {
-    title: $t('AI Agent 积分'),
-    used: userPayInfo.value.points,
-    text: $t('积分'),
-    addText: $t('购买'),
-    addClick: buyPoints,
-  },
-])
+    {
+      title: $t('团队'),
+      used: useWorkspaceCount,
+      total: maxWorkspaceCount,
+      text: $t('已使用'),
+      addText: $t('新增'),
+      addClick: () => onExpand('workspace'),
+    },
+    {
+      title: $t('AI Agent 积分'),
+      used: points,
+      text: $t('积分'),
+      addText: $t('购买'),
+      addClick: buyPoints,
+    },
+  ]
+})
 
 const planActions = computed(() => {
   return [
@@ -224,7 +228,7 @@ async function openPrimeDialog() {
 <template>
   <div class="flex flex-col gap-4">
     <div class="flex justify-between items-center gap-8">
-      <div class="title">
+      <div class="shrink-0 title">
         {{ $t('服务') }}
       </div>
       <Identity />
@@ -322,14 +326,14 @@ async function openPrimeDialog() {
             <span class="others-title">{{ item.title }}</span>
             <RxButton class="card-add-btn" variant="outlined" size="xxs" :label="strConcat('+ ', item.addText)" @click="item.addClick" />
           </div>
-          <div class="flex items-baseline">
-            <span class="others-used" :class="item.textClass">{{ item.used }}</span>
-            <span class="others-total">{{ strConcat('/', item.total?.toString()) }}</span>
-            <span class="ml-1.5 others-text">{{ item.text }}</span>
-            <span class="ml-1.5 others-text" :class="item.extraTextClass">{{ item.extraText }}</span>
-            <div v-if="item.visibleJump && item.jump" class="flex-1 flex justify-end">
-              <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_arrow_right_2" @click="item.jump" />
+          <div class="flex justify-between items-baseline">
+            <div class="flex items-baseline" :class="{ 'cursor-pointer': item.visibleJump }" @click="item.jump">
+              <span class="others-used" :class="item.textClass">{{ item.used }}</span>
+              <span class="others-total">{{ strConcat('/', item.total?.toString()) }}</span>
+              <span class="ml-1.5 others-text">{{ item.text }}</span>
+              <span class="ml-1.5 others-text" :class="item.extraTextClass">{{ item.extraText }}</span>
             </div>
+            <RxButton v-if="item.visibleJump && item.jump" text severity="secondary" size="xxs" icon="base/rx_ic_arrow_right_2" @click="item.jump" />
           </div>
         </div>
       </div>

@@ -1,16 +1,16 @@
-import { app, BrowserWindow, dialog, Menu, MenuItem, Tray } from 'electron'
+import { app, BrowserWindow, dialog, Menu, MenuItem, nativeImage, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
 import { onNetworkNodeChanged } from '/@/api/getGatewayConfig'
 import { isDev } from '/@/constants/common'
 import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
+import { isCustomProxyConfigured, proxyManager } from '/@/modules/app/proxy-manager'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { browserManager } from '/@/modules/browser'
 import { dictStore, onNetworkNodeUpdated } from '/@/modules/dict'
 import { forceSaveConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { closeAllWindows } from '/@/utils/browser-window'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 import { formatAutoGateLatency, formatGateLatency, onGateLatencyUpdated, onProbeBatchComplete, refreshNodeLatencies } from '/@/utils/probe-gate-latency'
 
@@ -77,6 +77,25 @@ function setTrayContextMenu() {
   tray?.setContextMenu(trayContextMenu)
 }
 
+/** 刷新托盘菜单（APP 网络配置变更后更新自定义代理 disabled 状态） */
+export function refreshTrayContextMenu() {
+  if (!tray) {
+    return
+  }
+  setTrayContextMenu()
+}
+
+function createTrayIcon() {
+  const resourcesDir = path.join(import.meta.dirname, '..', 'resources')
+  if (process.platform === 'darwin') {
+    // macOS 菜单栏：22/44px Template PNG + 透明底，系统会自动加载 @2x 并适配深浅色
+    const image = nativeImage.createFromPath(path.join(resourcesDir, 'roxy-trayTemplate.png'))
+    image.setTemplateImage(true)
+    return image
+  }
+  return nativeImage.createFromPath(path.join(resourcesDir, 'roxy-tray.png'))
+}
+
 /** 创建托盘 */
 export async function createTray() {
   await setTimeoutPromise()
@@ -88,9 +107,8 @@ export async function createTray() {
     return tray
   }
 
-  const iconPath = path.join(import.meta.dirname, '..', 'resources/roxy-tray.png')
   // 新建托盘
-  tray = new Tray(iconPath)
+  tray = new Tray(createTrayIcon())
   // 托盘名称
   tray.setToolTip(app.getName())
 
@@ -185,6 +203,42 @@ function buildNetworkNodeSubmenu(): Menu {
   return menu
 }
 
+/**
+ * 构建 APP 网络设置子菜单
+ */
+function buildAppNetworkSubmenu(): Menu {
+  const current = store.appNetwork ?? 'local'
+  const customConfigured = isCustomProxyConfigured()
+
+  async function selectNetwork(mode: typeof store.appNetwork) {
+    store.appNetwork = mode
+    await proxyManager.applyAppNetwork()
+    setTrayContextMenu()
+  }
+
+  const menu = new Menu()
+  menu.append(new MenuItem({
+    label: $t('本地网络'),
+    type: 'radio',
+    checked: current === 'local',
+    click: () => selectNetwork('local'),
+  }))
+  menu.append(new MenuItem({
+    label: $t('系统代理'),
+    type: 'radio',
+    checked: current === 'system',
+    click: () => selectNetwork('system'),
+  }))
+  menu.append(new MenuItem({
+    label: $t('自定义代理'),
+    type: 'radio',
+    checked: current === 'custom',
+    enabled: customConfigured,
+    click: () => selectNetwork('custom'),
+  }))
+  return menu
+}
+
 /** 创建托盘菜单 */
 function createContextMenu() {
   const menu = Menu.buildFromTemplate([
@@ -216,9 +270,9 @@ function createContextMenu() {
         }
 
         if (hasUpdate) {
-          console.log('[tray] restart with update, calling quitAndInstall')
-          appUpdater.quitAndInstall().catch((error) => {
-            console.error('[tray] quitAndInstall failed, fallback to plain relaunch:', error)
+          console.log('[tray] restart with update, calling upgradeNow')
+          appUpdater.upgradeNow().catch((error) => {
+            console.error('[tray] upgradeNow failed, fallback to plain relaunch:', error)
             app.relaunch()
             app.quit()
           })
@@ -234,6 +288,10 @@ function createContextMenu() {
       label: $t('切换线路'),
       submenu: buildNetworkNodeSubmenu(),
     },
+    // {
+    //   label: $t('网络设置'),
+    //   submenu: buildAppNetworkSubmenu(),
+    // },
     {
       label: $t('显示'),
       click: () => {
@@ -243,8 +301,8 @@ function createContextMenu() {
     {
       label: $t('退出'),
       click: () => {
-        tray.destroy()
-        closeAllWindows()
+        // 不在此处销毁窗口/托盘: 先交给 before-quit 同步窗口数据并显示同步进度遮罩,
+        // 同步完成后再由 cleanupAndExit 统一清理窗口/托盘并退出.
         app.quit()
       },
     },

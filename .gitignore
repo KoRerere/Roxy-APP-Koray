@@ -17,6 +17,7 @@ coverage
 # next.js
 .next/
 out/
+*.txt
 
 # misc
 .DS_Store

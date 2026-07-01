@@ -1,7 +1,8 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { getCurrentScope } from '@sentry/electron/main'
+import { randomUUID } from 'node:crypto'
 import path from 'node:path'
-import { getGatewayConfig } from '/@/api/getGatewayConfig'
+// import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { browserManager } from '/@/modules/browser'
 import { initDictCache } from '/@/modules/dict'
@@ -48,10 +49,10 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 退出登录 */
-  ipcMain.on('user:logout', async (event) => {
+  ipcMain.on('user:logout', async () => {
     closeAllSyncDialogs()
     openAPIServer.stop()
-    await browserManager.closeAll().finally(() => {
+    await browserManager.closeAll({ ensureServerSync: true, syncProgressReason: 'logout' }).finally(() => {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')
     })
@@ -78,6 +79,15 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     const extname = path.extname(avatarPath)
     console.log('Uploading avatar', userId, avatarPath, extname)
     const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
+    return url
+  })
+
+  /** 用户上传评价图片 */
+  ipcMain.on('user:uploadReviewImage', async (event, reviewImagePath) => {
+    const userId = store.userId
+    const uuid = randomUUID()
+    const extname = path.extname(reviewImagePath)
+    const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}_review_${uuid}${extname}`, reviewImagePath)
     return url
   })
 }

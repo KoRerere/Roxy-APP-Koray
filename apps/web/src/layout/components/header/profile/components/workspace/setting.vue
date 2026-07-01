@@ -1,7 +1,7 @@
 <script setup lang="tsx">
-import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import RxButton from '/@/components/rx-button'
-import WorkspaceForm from './workspace-form.vue'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import WorkspaceForm from '/@/layout/components/header/profile/components/workspace/form.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'

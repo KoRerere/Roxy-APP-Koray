@@ -4,6 +4,7 @@ import { appConfig } from '/@/constants'
 import { currentOS, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
+import { isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxyAddress } from '/@/utils'
 import { ensureFirefoxIcon, fitBadgeText } from './browserIcon'
 import { getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
@@ -123,12 +124,10 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     disablePlayVideo: !winInfo.forbidMedia,
     get fproxy() {
       const { host, port, proxyUserName, proxyPassword, isDirect } = winInfo
-      const { systemProxySwitch } = store
       const systemProxyAddress = getSystemProxyAddress()
-      const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress.split(':')
       const protocol = winInfo.protocol?.toLocaleLowerCase?.() || ''
       const isSSH = protocol === 'ssh'
-      const isUseSystemProxy = isSSH || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyHost && systemProxyPort)
+      const isUseSystemProxy = isSSH || isDirect || (getRoxynetProcess() && isRoxynetUpstreamReady(systemProxyAddress))
       const type = isUseSystemProxy && protocol === 'https' ? 'http' : isSSH ? 'socks5' : protocol
       const isNoProxy = type.toLocaleLowerCase() === 'noproxy'
 

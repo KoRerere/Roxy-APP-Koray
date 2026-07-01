@@ -5,7 +5,7 @@ import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
 // import { appConfig } from '/@/constants'
-import { isLinux, isMac } from '/@/constants/common'
+import { isLinux, isMac, isWindows } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
 import { defaultCLIArgs, firefoxCacheToKeep, firefoxDefaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
@@ -158,6 +158,10 @@ export class BeforeLaunchTask {
       await this.modifyLocalStateFile()
     }
 
+    if (!this.browserItem.isFirefox && !isWindows) {
+      await this.cleanupChromiumSingletonFiles()
+    }
+
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
     let isTimedOut = false
@@ -242,6 +246,20 @@ export class BeforeLaunchTask {
     })
 
     return promise
+  }
+
+  /** 清理 macOS/Linux 下 Chromium 用户数据目录中的单例锁文件，避免启动时因残留锁导致失败 */
+  private async cleanupChromiumSingletonFiles() {
+    const singletonFiles = ['SingletonCookie', 'SingletonLock', 'SingletonSocket']
+    await Promise.all(singletonFiles.map(async (fileName) => {
+      const targetPath = join(this.browserItem.userDataDir, fileName)
+      try {
+        await rm(targetPath, { force: true })
+      }
+      catch (error) {
+        console.warn(`Failed to delete singleton file: ${targetPath}, ${getErrorMessage(error)}`)
+      }
+    }))
   }
 
   /** 将已运行的 Firefox 窗口置于前台（不 spawn 新进程） */

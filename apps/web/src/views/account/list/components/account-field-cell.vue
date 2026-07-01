@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { copyText } from '/@/utils/basic'
 
-defineProps<{
+const { value, masked, showMasked } = defineProps<{
   value?: string
   masked?: boolean
   showCopy?: boolean
   showEdit?: boolean
+  showMasked?: boolean
 }>()
 
 const emit = defineEmits<{
-  copy: []
   edit: []
+  toggleMasked: []
 }>()
+
+const [showToast] = useResponseToast()
 
 function displayValue(value?: string, masked?: boolean) {
   if (!value)
@@ -20,48 +24,45 @@ function displayValue(value?: string, masked?: boolean) {
     return '••••••••'
   return value
 }
+
+function onCopy() {
+  if (!value || masked)
+    return
+  copyText(value)
+  showToast(0, $t('已复制'))
+}
+
+function toggleMasked() {
+  if (!showMasked)
+    return
+  emit('toggleMasked')
+}
 </script>
 
 <template>
-  <div class="account-field-cell">
-    <span class="account-field-cell__value" :title="masked ? undefined : value">{{ displayValue(value, masked) }}</span>
-    <div v-if="showCopy || showEdit" class="account-field-cell__actions row-hover-action">
-      <RxButton v-if="showCopy && value" v-tooltip.top="{ value: $t('复制'), showDelay: 500 }" class="shrink-0" text severity="secondary" size="xxs"
-                icon="base/rx_ic_copy" @click.stop="emit('copy')"
+  <div class="w-full h-full min-h-6 flex items-center gap-1 select-none">
+    <span class="min-w-0 tt-primary text-3 leading-4 font-500 truncate" :title="masked ? undefined : value" @click.stop="toggleMasked">{{ displayValue(value, masked) }}</span>
+    <div v-if="showCopy || showEdit" class="cell_actions row-hover-action">
+      <RxButton v-if="showCopy && value && !masked" v-tooltip.top="{ value: $t('复制'), showDelay: 500 }" class="shrink-0" text severity="secondary" size="xxs" icon="base/rx_ic_copy"
+                @click.stop="onCopy"
       />
-      <RxButton v-if="showEdit" v-tooltip.top="{ value: $t('编辑'), showDelay: 500 }" class="shrink-0" text severity="secondary" size="xxs"
-                icon="base/rx_ic_edit" @click.stop="emit('edit')"
+      <RxButton v-if="showEdit && !masked" v-tooltip.top="{ value: $t('编辑'), showDelay: 500 }" class="shrink-0" text severity="secondary" size="xxs" icon="base/rx_ic_edit"
+                @click.stop="emit('edit')"
+      />
+      <RxButton v-if="showMasked" v-tooltip.top="{ value: masked ? $t('显示') : $t('隐藏'), showDelay: 500 }" class="shrink-0" text severity="secondary" size="xxs"
+                :icon="masked ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleMasked"
       />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.account-field-cell {
+.cell_actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-height: 24px;
-  width: 100%;
-
-  &__value {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-    line-height: 16px;
-    color: var(--colors-text-text-primary);
-    font-weight: 500;
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 </style>

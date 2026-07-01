@@ -14,6 +14,12 @@ export enum SettingAppearance {
   dark = 2, // 暗色
 }
 
+export enum NetworkType {
+  Local = 'local', // 本地网络
+  System = 'system', // 系统代理
+  Custom = 'custom', // 自定义代理
+}
+
 export enum ClearType {
   partial = 'partial', // 清除本地缓存，保留插件
   all = 'all', // 清除本地缓存

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { performance } from 'node:perf_hooks'
 import { getBaseUrl, getGatewayConfig } from '/@/api/getGatewayConfig'
 import { dictStore } from '/@/modules/dict'
+import { electronAdapter } from '/@/utils/request/electronAdapter'
 
 const PROBE_TIMEOUT_MS = 5000
 /** 自动线路延迟更新事件标识，与具体 gate 探测回调共用 */
@@ -38,6 +39,7 @@ function notifyGateLatencyUpdated(gate: string) {
 function probeSingleGate(gate: string): Promise<number | null> {
   const t0 = performance.now()
   return axios.get(`https://${gate}/vgo/gateway`, {
+    // adapter: electronAdapter,
     proxy: false,
     timeout: PROBE_TIMEOUT_MS,
     validateStatus: () => true,

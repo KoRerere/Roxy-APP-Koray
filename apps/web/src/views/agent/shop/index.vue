@@ -2,11 +2,16 @@
 import { h } from 'vue'
 import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 // import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
+import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
+import BandwidthCell from '/@/views/agent/shop/components/bandwidth-cell.vue'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import ProviderSimpleList from '/@/views/agent/shop/components/provider-simple-list.vue'
+import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
+import { parseWindowInfo } from '/@/views/account/list/utils'
+import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import currency from 'currency.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
@@ -17,7 +22,7 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { genPollingChecker, isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
-import { useColumns } from './columns'
+import { getRelatedProfileLabels, useColumns } from './columns'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -39,7 +44,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
-const { buyProxy, downloadProxy, renewProxy } = useProxy()
+const { buyProxy, downloadProxy, renewProxy, upgradeProxy } = useProxy()
 const { check } = usePermission()
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('shoptable')
@@ -57,6 +62,13 @@ const hideTypeConfig = reactive({
   // value: localStorage.getItem('ProxyShopHideType') || BuyProxyListType.Available,
   trueValue: BuyProxyListType.Available,
   falseValue: BuyProxyListType.List,
+})
+
+const proxyStatus = reactive({
+  value: Number(route.query.expireStatus) || null,
+  trueValue: ProxyExpireStatus.soon,
+  falseValue: null,
+  onChange: onRefreshTable,
 })
 
 const filters = reactive({
@@ -99,6 +111,16 @@ const scheduledCheckerProxyStatus = genPollingChecker({
   },
 })
 
+watch(
+  () => route.query._t,
+  () => {
+    if (route.query.expireStatus && proxyStatus.value !== Number(route.query.expireStatus)) {
+      proxyStatus.value = Number(route.query.expireStatus)
+      proxyStatus.onChange()
+    }
+  },
+)
+
 onBeforeMount(async () => {
   scheduledCheckerProxyStatus.check()
   filtersMenu.value = await getCustomFilters()
@@ -116,7 +138,7 @@ onBeforeUnmount(() => {
 })
 
 async function getTableList(params: any) {
-  const data = await tableRequest({ ...filters.getValues(), type: hideTypeConfig.value, ...params })
+  const data = await tableRequest({ ...filters.getValues(), proxyExpireStatus: proxyStatus.value, type: hideTypeConfig.value, ...params })
   dataList.value = (data.data?.rows || []).filter(item => item.proxyType === ProxyType.resource || (item.proxyExpireStatus !== ProxyExpireStatus.expired && [ProxyOrderStatus.done, ProxyOrderStatus.refunding, ProxyOrderStatus.changing].includes(item.orderStatus!)))
   return data
 }
@@ -142,6 +164,9 @@ async function operationHandler(operate: any, data: ProxyItem) {
       break
     case 'renew':
       onRenewProxy(datas)
+      break
+    case 'upgrade':
+      onUpgradeProxy(datas)
       break
     case 'remark':
       onRemark(data)
@@ -325,6 +350,12 @@ function onRenewProxy(datas: ProxyItem[]) {
   })
 }
 
+function onUpgradeProxy(datas: ProxyItem[]) {
+  upgradeProxy(datas, () => {
+    onRefreshTable()
+  })
+}
+
 function download(datas: ProxyItem[]) {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
 
@@ -470,14 +501,38 @@ function jumpToWhois(ip: string) {
     return
   window.open(getOfficialWebsite(`/whoer?ip=${ip}`), '_blank')
 }
+
+function bindProfiles(data: ProxyItem) {
+  drawerInstance.showDrawer({
+    title: $t('选择窗口'),
+    slots: {
+      container: () => h(ProfileSelect, {
+        linkedWindowSortNums: parseWindowInfo(data.bindList),
+        cacheKey: 'agent-profile-select',
+        onClose: () => drawerInstance.hideDrawer(),
+        onConfirm: async (profiles: any[]) => {
+          if (!data.id)
+            return
+          const { code, msg } = await API.proxy.userMdfProxyBindWindowCreate({
+            proxyId: data.id,
+            windowIds: profiles.map(item => item.id),
+          })
+          onlyErrorToast(code, msg)
+          if (code === 0)
+            onRefreshTable()
+        },
+      }),
+    },
+  })
+}
 </script>
 
 <template>
   <div class="flex flex-col w-full h-full">
     <ProviderSimpleList :on-buy-proxy="onBuyProxy" />
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" removable-sort
-               :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh"
+      <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" class="agent-shop-table" :table-request="getTableList" :table-operation="tableOperation"
+               removable-sort :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :virtual-scroller-options="{ itemSize: 60 }"
       >
         <template #filter-after>
           <div class="w-full flex gap-1.5 items-start justify-between">
@@ -487,6 +542,14 @@ function jumpToWhois(ip: string) {
                 <div class="new-dot" />
               </div>
               <RxButton v-if="check('Proxy_List_add')" size="xxs" icon="base/rx_ic_plus" variant="outlined" :label="$t('添加')" @click.stop="createProxy" />
+              <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
+              <div class="flex items-center gap-1.5">
+                <RxCheckbox v-model="proxyStatus.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="proxyStatus.trueValue"
+                            :false-value="proxyStatus.falseValue" @change="proxyStatus.onChange"
+                />
+                <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
+                  $t('显示即将过期') }}</label>
+              </div>
             </div>
 
             <div class="flex items-center gap-2">
@@ -534,6 +597,13 @@ function jumpToWhois(ip: string) {
             </div>
           </div>
         </template>
+        <template #expireDate="{ data }">
+          <ExpireDate :data="data" :show-renew="check('Cost_Center_all')" @renew="() => onRenewProxy([data])" />
+        </template>
+        <template #bandwidth="{ data }">
+          <BandwidthCell :data="data" :show-upgrade="check('Cost_Center_all')" @upgrade="() => onUpgradeProxy([data])" />
+        </template>
+
         <template #price="{ data }">
           <div v-if="data.proxyType === ProxyType.buy && data.canRenew">
             <span>{{ currency(data.proxyProviderDiscountPrice).format() }}</span>
@@ -582,12 +652,27 @@ function jumpToWhois(ip: string) {
             --
           </div>
         </template>
+        <template #bindList="{ data }">
+          <RelatedProfilesCell :list="getRelatedProfileLabels(data)" :show-add="check('Profiles_select_proxy')" @add="bindProfiles(data)" />
+        </template>
       </RyTable>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+:deep(.agent-shop-table) {
+  tr:not([data-p-selected='true']):hover .row-hover-action,
+  tr:not([data-p-selected='true']):focus-within .row-hover-action {
+    opacity: 1;
+  }
+
+  tr:not([data-p-selected='true']):hover .row-hover-empty,
+  tr:not([data-p-selected='true']):focus-within .row-hover-empty {
+    display: none;
+  }
+}
+
 :deep(.row-success) {
   border-color: var(--component-table-border-updated);
   background: var(--colors-background-bg-success);

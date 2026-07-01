@@ -1,5 +1,5 @@
 export function parseIntelligent(str: string) {
-  return str.match(/^(?!:)(?<platform>https?:\/\/[^:\s{]+)?(?::?(?<username>[^:{}\s]+)(?::(?<password>[^:{}\s]+))?(?::(?<twoFactor>[^:{}\s]+))?)?(?:\{(?<remark>[^{}]+)\})?$/)?.groups ?? {}
+  return str.match(/^(?!:)(?<platform>https?:\/\/[^:\s[\]{}]+)?(?::?(?<username>[^:[\]{}\s]+)(?::(?<password>[^:[\]{}\s]+))?(?::(?<twoFactor>[^:[\]{}\s]+))?)?(?:\[(?<linkedEmail>[^[\]]+)\])?(?:\{(?<remark>[^{}]+)\})?$/)?.groups ?? {}
 }
 
 export function normalizeImportCellText(cellValue: unknown): string {

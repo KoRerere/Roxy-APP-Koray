@@ -21,21 +21,28 @@ export function getRawColumns(options?: any) {
       key: 'platformUserName',
       slot: 'userName',
       style: {
-        minWidth: '160px',
+        minWidth: '130px',
       },
     },
     {
       title: $t('密码'),
       key: 'platformPassword',
-      headerSlot: 'passwordHeader',
       slot: 'password',
       style: {
-        minWidth: '160px',
+        minWidth: '130px',
       },
       _cache: {
-        visible: false,
+        visible: {},
       },
     },
+    // {
+    //   title: $t('关联邮箱'),
+    //   key: 'platformEmail',
+    //   slot: 'email',
+    //   style: {
+    //     minWidth: '130px',
+    //   },
+    // },
     {
       title: $t('备注'),
       key: 'remark',
@@ -69,7 +76,7 @@ export function useColumns(options?: any) {
   const { userConfig } = storeToRefs(useUserStore())
 
   const { columns, updateColumns, updateRemarkDisplayStatus } = _useColumns({
-    key: 'account.list',
+    key: 'platform.list',
     data: getRawColumns(options),
   })
 

@@ -26,6 +26,8 @@ import {
   UserGetPromotionRedeemCodeListListParams,
   UserGetProxyAllCountriesListData,
   UserGetProxyAllCountriesListParams,
+  UserGetProxyBandwidthUpgradePriceListListData,
+  UserGetProxyBandwidthUpgradePriceListListParams,
   UserGetProxyBusinessSceneListListData,
   UserGetProxyBusinessSceneListListParams,
   UserGetProxyBusinessUseListListData,
@@ -66,6 +68,8 @@ import {
   UserGetTimezoneByIpListParams,
   UserGetUserBuyProxyListListData,
   UserGetUserBuyProxyListListParams,
+  UserMdfProxyBindWindowCreateData,
+  UserMdfProxyBindWindowCreatePayload,
   UserMdfProxyModuleCreateData,
   UserMdfProxyModuleCreatePayload,
   UserMdfUserBuyProxyRemarkCreateData,
@@ -84,6 +88,8 @@ import {
   UserSetProxyAutoRenewalCreatePayload,
   UserUpdateProxyTableRowsCreateData,
   UserUpdateProxyTableRowsCreatePayload,
+  UserUpgradeProxyBandwidthSettlementCreateData,
+  UserUpgradeProxyBandwidthSettlementCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -894,4 +900,66 @@ export class ProxyApi<SecurityDataType = unknown> {
         ...params,
       },
     );
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserUpgradeProxyBandwidthSettlementCreate
+   * @summary 代理IP带宽升级
+   * @request POST:/user_upgrade_proxy_bandwidth_settlement
+   * @response `200` `UserUpgradeProxyBandwidthSettlementCreateData`
+   */
+  userUpgradeProxyBandwidthSettlementCreate = (
+    data: UserUpgradeProxyBandwidthSettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpgradeProxyBandwidthSettlementCreateData, any>({
+      path: `/user_upgrade_proxy_bandwidth_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserMdfProxyBindWindowCreate
+   * @summary 修改代理绑定的窗口
+   * @request POST:/user_mdf_proxy_bind_window
+   * @response `200` `UserMdfProxyBindWindowCreateData`
+   */
+  userMdfProxyBindWindowCreate = (
+    data: UserMdfProxyBindWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfProxyBindWindowCreateData, any>({
+      path: `/user_mdf_proxy_bind_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyBandwidthUpgradePriceListList
+   * @summary 获取用户升级代理带宽价格
+   * @request GET:/user_get_proxy_bandwidth_upgrade_price_list
+   * @response `200` `UserGetProxyBandwidthUpgradePriceListListData`
+   */
+  userGetProxyBandwidthUpgradePriceListList = (
+    query: UserGetProxyBandwidthUpgradePriceListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyBandwidthUpgradePriceListListData, any>({
+      path: `/user_get_proxy_bandwidth_upgrade_price_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
 }

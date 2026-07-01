@@ -61,6 +61,8 @@ const searchCountry = ref('')
 const CID = `${getCurrentInstance()?.uid ?? ''}-ptype`
 const proxyTypeOptions = ref<any[]>([])
 const proxyTypeValue = ref<number | undefined>(undefined)
+const proxySpeedOptions = ref<any[]>([])
+const proxySpeedValue = ref<number | undefined>(undefined)
 
 const notes = [
   {
@@ -100,6 +102,7 @@ const configValue = computed(() => {
     businessUse: {},
     subscriptionMonths: {},
     proxyProviderId: { value: proxyTypeValue.value },
+    bandwidthSpeed: { value: proxySpeedValue.value },
     ...config,
   }
 })
@@ -128,16 +131,29 @@ const selectedUnitPrice = computed(() => {
   return getProxyTypePriceForSelectedDuration(proxyType)?.proxyPrice ?? 0
 })
 
+const selectedBandwidthPrice = computed(() => {
+  const proxySpeed = proxySpeedOptions.value.find(item => item.value === proxySpeedValue.value)
+  if (!proxySpeed)
+    return 0
+  return proxySpeed.bandwidthPrice
+})
+
 const originalAmount = computed(() => {
   return currency(selectedUnitPrice.value * purchaseMember.value).value
 })
 
-const finalAmount = computed(() => {
+const finalResult = computed(() => {
   const { proxyDiscount } = userPayInfo.value!
   const { businessUse } = configValue.value
-  if (businessUse.isSpecialOffer)
-    return originalAmount.value
-  return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
+
+  const proxyAmount = businessUse.isSpecialOffer ? originalAmount.value : currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
+  const speedAmount = businessUse.isSpecialOffer ? selectedBandwidthPrice.value : currency(selectedBandwidthPrice.value).multiply(discountCalculate([proxyDiscount])).value
+  const diffAmount = currency(originalAmount.value).add(selectedBandwidthPrice.value).subtract(proxyAmount).subtract(speedAmount).value
+
+  return {
+    amount: currency(proxyAmount).add(speedAmount).value,
+    diffAmount,
+  }
 })
 
 const details = computed(() => {
@@ -150,10 +166,14 @@ const details = computed(() => {
       items: [
         {
           label: $t('代理 IP 类型'),
-          value: '代理 IP 类型',
           slot: 'type',
         },
-      ],
+        {
+          label: $t('代理 IP 带宽'),
+          visible: proxySpeedOptions.value?.length > 1 || isDirect.value,
+          slot: 'speed',
+        },
+      ].filter(item => item.visible !== false),
     },
     {
       items: [
@@ -194,8 +214,8 @@ const details = computed(() => {
         },
         {
           label: $t('Roxy 独家特惠'),
-          value: currency(finalAmount.value).format(),
-          diffValue: currency(originalAmount.value).subtract(finalAmount.value).value,
+          value: currency(finalResult.value.amount).format(),
+          diffValue: currency(finalResult.value.diffAmount).value,
           slot: 'price',
         },
       ].filter(item => item.visible !== false),
@@ -211,6 +231,7 @@ watch(proxyTypeValue, (id) => {
     return
   syncSubscriptionMonthsFromProxyType(row)
   syncQuantityFromProxyType(row)
+  syncProxySpeedFromProxyType(row)
 })
 
 onMounted(async () => {
@@ -256,6 +277,13 @@ async function getProxyTypeList(sceneId: number, countryCode: string) {
     proxyPriceListFmt: (item.proxyPriceList ?? []).map((row) => {
       const day = row.proxyPurchaseMonths * 30
       return { label: $t('{day} 天', { day }), value: row.proxyPurchaseMonths, day, ...row }
+    }),
+    proxyBandwidthPriceListFmt: (item.proxyBandwidthPriceList ?? []).map((row) => {
+      return {
+        label: `${row.bandwidthSpeed}Mbps`,
+        value: row.bandwidthSpeed,
+        ...row,
+      }
     }),
   }))
 }
@@ -388,15 +416,20 @@ function syncSubscriptionMonthsFromProxyType(proxyType: any) {
   updateSubscriptionMonthsFromOptions(proxyType?.proxyPriceListFmt ?? [])
 }
 
+/** 按当前选中的代理类型，写入右侧明细区带宽选项（数据已在 getProxyTypeList 中格式化） */
+function syncProxySpeedFromProxyType(proxyType: any) {
+  proxySpeedOptions.value = proxyType?.proxyBandwidthPriceListFmt ?? []
+  proxySpeedValue.value = proxySpeedOptions.value[0]?.value
+}
+
 /** 与国内「用途→国家→类型」联动一致：写入右侧明细区 Radio 列表（数据已在 getProxyTypeList 中格式化） */
 function applyProxyTypeRadios(typeOptions: any[]) {
   proxyTypeOptions.value = typeOptions ?? []
   const first = proxyTypeOptions.value[0]
   proxyTypeValue.value = first?.id
-  if (first) {
-    syncSubscriptionMonthsFromProxyType(first)
-    syncQuantityFromProxyType(first)
-  }
+  syncSubscriptionMonthsFromProxyType(first)
+  syncQuantityFromProxyType(first)
+  syncProxySpeedFromProxyType(first)
 }
 
 function applyPurchaseCountryList(countryOptions: any[]) {
@@ -674,7 +707,7 @@ async function onPay() {
     slots: {
       container: ({ hideModal }) => (
         <WalletPayModal
-          amount={finalAmount.value}
+          amount={finalResult.value.amount}
           onClose={hideModal}
           onConfirm={onConfirm}
         />
@@ -684,7 +717,7 @@ async function onPay() {
 
   async function onConfirm({ payType }: { payType: PayWay, isAuto: boolean }) {
     mixpanelTrack('click_pay_proxy_ip')
-    const { subscriptionMonths, proxyProviderId, purchaseCountry, businessUse } = configValue.value
+    const { subscriptionMonths, proxyProviderId, bandwidthSpeed, purchaseCountry, businessUse } = configValue.value
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
       entryType,
       purchaseMember: purchaseMember.value,
@@ -692,6 +725,7 @@ async function onPay() {
       payType,
       orderType: ProxyOrderType.Purchase,
       proxyProviderId: proxyProviderId.value,
+      bandwidthSpeed: bandwidthSpeed.value,
       purchaseCountry: purchaseCountry.value,
       businessId: businessUse.value,
     })
@@ -763,6 +797,31 @@ async function onPay() {
                   </div>
                 </label>
               </div>
+            </div>
+          </template>
+          <template #speed="{ item }">
+            <div class="flex flex-col gap-3">
+              <RxDivider class="col-span-4" line-style="dashed" line-only line-color="var(--colors-border-divider-dashed)" />
+              <div v-if="isDirect">
+                <I18nT tag="div" class="tt-secondary font-[DingTalk_JinBuTi] text-3.5 leading-4 select-none" :keypath="$t('电商直连 IP 默认支持 {value}', { value: '{value}' })" scope="global">
+                  <template #value>
+                    <span class="bandwidth">100Mbps</span>
+                  </template>
+                </I18nT>
+              </div>
+              <template v-else>
+                <div class="tt-secondary text-3.5">
+                  {{ item.label }}
+                </div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <div v-for="option in proxySpeedOptions" :key="option.value" v-tooltip.top="{ value: option.bandwidthSpeedDesc }"
+                       class="col-span-2 h-10 flex items-center justify-center px-3 leading-none cursor-pointer select-none tt-primary !text-3.5"
+                       :class="[styles.period, styles.radio, proxySpeedValue === option.value ? styles.active : '']" @click="proxySpeedValue = option.value"
+                  >
+                    {{ option.label }}
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
 
@@ -930,6 +989,13 @@ async function onPay() {
       }
     }
   }
+}
+
+.bandwidth {
+  background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .details {

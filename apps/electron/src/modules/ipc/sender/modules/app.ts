@@ -1,5 +1,5 @@
 import type { IPCMainInstance } from '../../types'
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { QuitSyncProgressMessage, ResourceUpdateMessage } from '@roxy/electron-preload'
 
 export function createAppSender(ipcMain: IPCMainInstance) {
   return {
@@ -21,6 +21,11 @@ export function createAppSender(ipcMain: IPCMainInstance) {
     /** 卸载反馈模式（由卸载程序启动） */
     uninstallFeedbackMode(isUninstallMode: boolean) {
       return ipcMain.send('app:uninstall-feedback-mode', isUninstallMode)
+    },
+
+    /** 退出/升级前同步窗口数据进度 */
+    quitSyncProgress(payload: QuitSyncProgressMessage) {
+      return ipcMain.send('app:quit-sync-progress', payload)
     },
   } as const
 }

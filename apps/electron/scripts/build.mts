@@ -306,7 +306,6 @@ const options: Configuration = {
 
   win: {
     icon: 'logo.ico',
-    signExts: isAppx ? undefined : ['RoxyBrowserUpdater.exe'],
     target: isAppx
       ? [{ target: 'appx', arch: ['x64'] }]
       : [
@@ -330,18 +329,6 @@ const options: Configuration = {
             certificatePassword: '0000',
           },
   },
-  extraFiles: (isWindows && !isAppx)
-    ? [
-        {
-          from: 'build/updater/RoxyBrowserUpdater.exe',
-          to: 'RoxyBrowserUpdater.exe',
-        },
-        {
-          from: 'build/updater/RoxyBrowserUpdater.exe.manifest',
-          to: 'RoxyBrowserUpdater.exe.manifest',
-        },
-      ]
-    : [],
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',
     uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',

@@ -81,6 +81,7 @@ async function parseTxtFile(file: File) {
       platformUserName: parsed.username ?? '',
       platformPassword: parsed.password ?? '',
       platformEfa: parsed.twoFactor ?? '',
+      // platformEmail: parsed.linkedEmail ?? '',
       platformRemarks: parsed.remark ?? '',
       platformName: '',
     }
@@ -105,6 +106,8 @@ async function parseExcelFile(file: File) {
     'platformPassword': 'platformPassword',
     '2FA': 'platformEfa',
     'platformEfa': 'platformEfa',
+    // [$t('关联邮箱')]: 'platformEmail',
+    // 'platformEmail': 'platformEmail',
     [$t('备注')]: 'platformRemarks',
     'platformRemarks': 'platformRemarks',
   }
@@ -160,6 +163,7 @@ async function downloadTemplate() {
     { header: $t('账号'), key: 'platformUserName', width: 20 },
     { header: $t('密码'), key: 'platformPassword', width: 20 },
     { header: '2FA', key: 'platformEfa', width: 20 },
+    // { header: $t('关联邮箱'), key: 'platformEmail', width: 20 },
     { header: $t('备注'), key: 'platformRemarks', width: 20 },
   ]
   worksheet.addRow({
@@ -167,6 +171,7 @@ async function downloadTemplate() {
     platformUserName: 'example@gmail.com',
     platformPassword: 'password123',
     platformEfa: '',
+    // platformEmail: '',
     platformRemarks: '',
   })
   const buffer = await workbook.xlsx.writeBuffer()

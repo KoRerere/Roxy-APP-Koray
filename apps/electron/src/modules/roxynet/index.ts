@@ -5,9 +5,10 @@ import { appConfig } from '/@/constants'
 import { isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { roxynetReportResolvers } from '/@/modules/appServer/roxynet-receiver'
-import { encryptByDESModeCBC } from '/@/modules/roxynet/util'
+import { encryptByDESModeCBC, buildRoxynetUpstreamProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { fileExists, getProcessIdsByExePath, getSystemProxy, isProcessExists, killProcessForce } from '/@/utils'
+import { getNetworkMode } from '/@/modules/store/networkMode'
+import { fileExists, getProcessIdsByExePath, isProcessExists, killProcessForce } from '/@/utils'
 
 export * from './util'
 
@@ -31,11 +32,11 @@ export async function startRoxynet() {
 }
 
 async function startRoxynetInternal() {
-  console.log('startRoxynet systemProxySwitch:', store.systemProxySwitch)
+  console.log('startRoxynet networkMode:', getNetworkMode())
   console.log('startRoxynet v2raySwitch:', store.v2raySwitch)
 
-  // if (!store.systemProxySwitch) {
-  //   console.log('systemProxySwitch is off')
+  // if (!isKernelSystemProxyEnabled()) {
+  //   console.log('networkMode is local')
   //   return
   // }
 
@@ -63,19 +64,17 @@ async function startRoxynetInternal() {
     return roxynetReportResolvers.promise
   }
 
-  const systemProxy = await getSystemProxy()
-  console.log('systemProxy', systemProxy)
-
-  // if (!systemProxy) {
-  //   console.log('没有获取到系统代理，停止拉起 roxynet')
-  //   return
-  // }
+  const upstream = await buildRoxynetUpstreamProxy()
+  console.log('roxynet upstream proxy', upstream)
 
   const launchParams = {
     system_proxy: {
-      addr: systemProxy.addr,
-      protocal: systemProxy.protocol,
-      v2: store.v2raySwitch, // 是否走v2兼任模式，代理为http的情况下需要设置为true
+      addr: upstream.addr,
+      protocal: upstream.protocal,
+      v2: upstream.v2,
+      ...(getNetworkMode() === 'custom'
+        ? { user_name: upstream.user_name ?? '', password: upstream.password ?? '' }
+        : {}),
     },
     api_server: `127.0.0.1:${store.appPort}`,
     api_token: store.apiKey,

@@ -86,10 +86,10 @@
     "@unocss/eslint-plugin": "^66.6.6",
     "adm-zip": "^0.5.17",
     "ali-oss": "^6.23.0",
-    "axios": "^1.16.1",
+    "axios": "^1.18.1",
     "bytenode": "^1.5.7",
     "cross-env": "^10.1.0",
-    "eslint": "10.4.0",
+    "eslint": "10.5.0",
     "eslint-plugin-format": "^2.0.1",
     "js-yaml": "^4.1.1",
     "langchain": "catalog:",
@@ -101,7 +101,7 @@
     "tsx": "^4.21.0",
     "turbo": "^2.8.13",
     "typescript": "^6.0.3",
-    "unplugin-dts": "^1.0.2",
-    "vite": "^8.0.16"
+    "unplugin-dts": "^1.0.3",
+    "vite": "^8.1.0"
   }
 }

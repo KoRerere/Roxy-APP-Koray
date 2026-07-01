@@ -8,6 +8,7 @@ import { browserManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { getCommonRequestHeaders } from '/@/utils'
+import { electronAdapter } from '/@/utils/request/electronAdapter'
 import { attachAxiosLogger } from './axiosLogger'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
@@ -16,9 +17,9 @@ import { attachAxiosLogger } from './axiosLogger'
 export const httpClient = new HttpClient({
   // baseURL: 'https://apitest.roxybrowser.co/',
   timeout: 15000,
+  // 走 Electron net.request，跟随 proxy-manager 的 APP 网络代理设置
+  // adapter: electronAdapter,
   proxy: false,
-  // httpsAgent: agent,
-  // adapter: 'fetch',
 })
 
 let commonRequestHeaders

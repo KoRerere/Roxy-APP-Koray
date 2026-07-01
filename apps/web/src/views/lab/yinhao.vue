@@ -408,11 +408,28 @@ function clearHighlight() {
   document.querySelectorAll('.fake-highlight')
     .forEach(el => el.classList.remove('fake-highlight'))
 }
+
+const ipItems = [
+  { placeholder: '0~255', min: 0, max: 255 },
+  { separator: true, text: '.' },
+  { placeholder: '0~255', min: 0, max: 255 },
+  { separator: true, text: '.' },
+  { placeholder: '0~255', min: 0, max: 255 },
+  { separator: true, text: '.' },
+  { placeholder: '0~255', min: 0, max: 255 },
+  { separator: true },
+  { placeholder: '0~65535', min: 1, max: 65535 },
+]
+
+const ipValues = ref([192, 168, 134, 22])
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
     <NextBouns :amount="10" />
+    <div>
+      <RxInputGroup v-model="ipValues" :items="ipItems" class="max-w-xs" />
+    </div>
     <!-- <a href="/workspace/teams">wcis man</a> -->
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->

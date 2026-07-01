@@ -4,7 +4,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import { useSimpleLocale } from '/@/stores/locale'
+// import { useSimpleLocale } from '/@/stores/locale'
 import type { RoxyGiftsType } from '/@/enums/pay'
 import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
 import { isFunction } from 'es-toolkit'
@@ -59,16 +59,16 @@ export function useSubscribe() {
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { isOwner } = storeToRefs(useRoleStore())
   const { check } = usePermission()
-  const { currentLocale } = useSimpleLocale()
+  // const { currentLocale } = useSimpleLocale()
 
-  const $t528 = localStorage.getItem('$T528')
+  // const $t528 = localStorage.getItem('$T528')
 
   watchEffect(() => {
     if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
-      if (!$t528) {
-        showTempMambaLastUpdateLog()
-        return
-      }
+      // if (!$t528) {
+      //   showTempMambaLastUpdateLog()
+      //   return
+      // }
 
       // 检查是否显示新功能提示
       globalThis.electronAPI.send('app:getNewFeatureTips').then((result) => {
@@ -84,20 +84,20 @@ export function useSubscribe() {
     }
   })
 
-  async function showTempMambaLastUpdateLog() {
-    if (localStorage.getItem('$T528'))
-      return
+  // async function showTempMambaLastUpdateLog() {
+  //   if (localStorage.getItem('$T528'))
+  //     return
 
-    localStorage.setItem('$T528', '1')
-    const updateFeature = await globalThis.electronAPI.send('app:getLastUpdateFeature')
-    const localFeature = updateFeature.newFeatureTips?.[currentLocale]
-    const localContent = localFeature?.[0]?.content ? localFeature : []
-    const newFeatureTips = localContent?.filter((item: any) => item.content?.length)
-    console.debug('newFeatureTips', newFeatureTips)
-    if (newFeatureTips?.length) {
-      showAppUpgradeDialog(newFeatureTips)
-    }
-  }
+  //   localStorage.setItem('$T528', '1')
+  //   const updateFeature = await globalThis.electronAPI.send('app:getLastUpdateFeature')
+  //   const localFeature = updateFeature.newFeatureTips?.[currentLocale]
+  //   const localContent = localFeature?.[0]?.content ? localFeature : []
+  //   const newFeatureTips = localContent?.filter((item: any) => item.content?.length)
+  //   console.debug('newFeatureTips', newFeatureTips)
+  //   if (newFeatureTips?.length) {
+  //     showAppUpgradeDialog(newFeatureTips)
+  //   }
+  // }
 
   // 显示toast
   emitter.on('showToast', showToast)
@@ -445,7 +445,7 @@ export function useSubscribe() {
 
     if (userStore.userInfo.onboardingTaskStatus?.autoRatingStatus === false) {
       const $score_timestamp = localStorage.getItem('$score_timestamp')
-      const default_timestamp = Date.now() + 3 * 60 * 60 * 1000
+      const default_timestamp = Date.now() + 3 * 24 * 60 * 60 * 1000
 
       if (!$score_timestamp) {
         localStorage.setItem('$score_timestamp', default_timestamp.toString())

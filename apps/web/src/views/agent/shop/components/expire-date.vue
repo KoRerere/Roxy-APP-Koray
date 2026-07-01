@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import type { UserGetUserBuyProxyListListData, UnwrapRowType } from '@roxy/backend-api';
 import { ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
-;
-import { format } from 'date-fns'
+import type { UnwrapRowType, UserGetProxyListMergedListData } from '@roxy/backend-api'
 
-type Data = UnwrapRowType<UserGetUserBuyProxyListListData>
+type Data = UnwrapRowType<UserGetProxyListMergedListData>
 
-const { data } = defineProps<{
+const { data, showRenew = false, onRenew = () => { } } = defineProps<{
   data: Data
+  showRenew?: boolean
+  onRenew?: (data: any) => void
 }>()
 
 const ExpireStatusMap = {
   [ProxyExpireStatus.expired]: { text: $t('已过期'), color: 'var(--colors-text-text-inactive)' },
   [ProxyExpireStatus.using]: { text: $t('使用中'), color: 'var(--colors-text-text-success)' },
-  [ProxyExpireStatus.soon]: { text: $t('即将过期'), color: 'var(--colors-text-text-warning)' }
+  [ProxyExpireStatus.soon]: { text: $t('即将过期'), color: 'var(--colors-text-text-warning)' },
 }
 
 const OrderStatusMap = {
@@ -32,13 +32,28 @@ const showTime = computed(() => {
   return data.proxyExpireStatus !== ProxyExpireStatus.expired && ![ProxyOrderStatus.pending, ProxyOrderStatus.refunded].includes(data.orderStatus!)
 })
 
+// const needHelp = computed(() => {
+//   return data.proxyType === ProxyType.buy && data.checkStatus === ProxyCheckStatus.failure && data.orderStatus === ProxyOrderStatus.done && data.proxyExpireStatus !== ProxyExpireStatus.expired
+// })
+
+const isRenewable = computed(() => {
+  return data.proxyExpireStatus === ProxyExpireStatus.soon && data.orderStatus === ProxyOrderStatus.done
+})
+
 const statusColor = computed(() => status.value.color)
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
-    <div v-if="showTime" class="date">{{ data.expireDate || '--' }}</div>
-    <div class="status">{{ status.text }}</div>
+  <div class="flex items-center gap-4">
+    <div class="flex flex-col gap-1">
+      <div v-if="showTime" class="date">
+        {{ data.expireDate || '--' }}
+      </div>
+      <div class="status">
+        {{ status.text }}
+      </div>
+    </div>
+    <RxButton v-if="showRenew && isRenewable" outlined severity="secondary" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" @click.stop="onRenew" />
   </div>
 </template>
 

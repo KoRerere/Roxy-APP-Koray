@@ -12,7 +12,8 @@ import { loadLocaleMessages } from '/@/locales'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
-import { fileExists, getInstallerParams, killProcessByName, killProcessForce, safeParseJSON } from '/@/utils'
+import { migrateNetworkModeFromLegacy } from '/@/modules/store/networkMode'
+import { fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
 import { absoluteTopLeftToWindowRatioPosition, getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 
 function normalizeSimulationConfig(simulation: Record<string, any> | undefined) {
@@ -203,6 +204,7 @@ export async function initLocalConfig() {
     }
     lastStore.simulation = normalizeSimulationConfig(lastStore.simulation)
     Object.assign(store, lastStore)
+    migrateNetworkModeFromLegacy(lastStore)
     // 重置下次更新时间
     store.nextUpdateTimestamp = 0
     // 有用户信息，则认为有登录过
@@ -237,12 +239,6 @@ export async function initLocalConfig() {
   console.debug('deviceId', store.deviceId)
   if (!store.deviceId) {
     recordFirstLaunchAppEvent()
-  }
-  // 如果有更新器进程 ID，则杀掉更新器进程
-  console.log('updaterExePid', store.updaterExePid)
-  if (store.updaterExePid) {
-    killProcessForce(store.updaterExePid)
-    store.updaterExePid = undefined
   }
   initLocalConfigPromise.resolve()
 }

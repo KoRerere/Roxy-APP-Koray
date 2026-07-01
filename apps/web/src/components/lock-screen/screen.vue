@@ -81,11 +81,16 @@ let trendsMark: HTMLElement | null = null;
 const handleLogout = async () => {
   showPageLoading()
   userStore.clearRememberMe();
-  userStore.clearUserInfo();
+  // 先同步窗口数据并关闭浏览器(此时 token 仍有效, 主进程会显示同步进度), 同步完成后再登出,
+  // 避免"数据还没同步完就退出登录"导致窗口数据丢失.
+  await globalThis.electronAPI.send('user:logout').catch((error) => {
+    console.warn('logout window sync failed (ignored):', error)
+  })
+  await API.base.userLogoutList().catch(() => {})
+  userStore.clearUserInfo({ skipServerSync: true });
   resetLockData()
   unlock()
   password.value = ''
-  await API.base.userLogoutList()
   router.push({ name: "login" });
 }
 

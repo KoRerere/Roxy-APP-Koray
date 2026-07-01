@@ -256,8 +256,12 @@ export const useUserStore = defineStore(
       mixpanelTrack(event_name, data)
     })
 
-    async function clearUserInfo() {
-      const logoutPromise = globalThis.electronAPI.send('user:logout')
+    async function clearUserInfo(options?: { skipServerSync?: boolean }) {
+      // skipServerSync: 调用方(如主动退出登录)已自行 await `user:logout` 完成窗口数据同步,
+      // 这里只做本地登录态清理, 避免重复触发同步/二次关闭浏览器.
+      const logoutPromise = options?.skipServerSync
+        ? Promise.resolve()
+        : globalThis.electronAPI.send('user:logout')
       if (loginWay.value === 'password') {
         userInfo.value = {
           email: userInfo.value.email,

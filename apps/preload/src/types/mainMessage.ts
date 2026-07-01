@@ -53,6 +53,17 @@ export interface ResourceUpdateMessage {
   silent?: boolean
 }
 
+/** 退出/升级前同步窗口数据进度 */
+export interface QuitSyncProgressMessage {
+  visible: boolean
+  /** quit: 普通退出; update: 升级退出; logout: 退出登录/被踢下线 */
+  reason?: 'quit' | 'update' | 'logout'
+  /** 已完成的加权窗口数 (单窗口: 关闭+OSS 0.7, 接口同步 0.3), 可能为小数, 前端按 round 显示 */
+  current?: number
+  /** 总窗口数 */
+  total?: number
+}
+
 export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error' | 'workspace_suspended'
 
 /** MCP 错误类型 */
@@ -99,6 +110,8 @@ export interface MainMessage {
   'app:launch-message': (payload: string) => void
   /** 内核列表有更新时，发出 */
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
+  /** 退出/升级前同步窗口数据进度 */
+  'app:quit-sync-progress': (payload: QuitSyncProgressMessage) => void
   /** 当主窗口聚焦时 */
   'window:on-focus': () => void
   /** 插件下载进度, 如果 errorTips 不为空，则表示下载失败 */

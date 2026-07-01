@@ -5,14 +5,16 @@ import { appConfig } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { proxyManager } from '/@/modules/app/proxy-manager'
+import { refreshTrayContextMenu } from '/@/modules/app/tray'
 import { cancelQuit, confirmQuit } from '/@/modules/app/utils'
 import { coreManager } from '/@/modules/browser'
 import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { startMoveWindow, stopMoveWindow } from '/@/modules/ipc/utils'
 import { openAPIServer } from '/@/modules/openapi'
-import { setSystemProxy } from '/@/modules/roxynet'
+import { setSystemProxy, startRoxynet } from '/@/modules/roxynet'
 import { cancelRestoreLastWindowOpenStatus, fetchUserConfig, getRestoreLastWindowOpenStatusOnException, restoreLastWindowOpenStatusResolver, setUserConfig, store } from '/@/modules/store'
-import { appUpdater } from '/@/modules/updater'
+import { getNetworkMode } from '/@/modules/store/networkMode'
+import { appUpdater, confirmMacAppOwnershipFix, getMacAppOwnershipFixStatus } from '/@/modules/updater'
 import { fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 
@@ -27,6 +29,16 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取应用版本号 */
   ipcMain.on('app:getAppVersion', (event) => {
     return app.getVersion()
+  })
+
+  /** macOS：查询 .app 属主修复状态，供渲染进程加载完成后决定是否弹窗 / 提示成功 */
+  ipcMain.on('app:getMacOwnershipFixStatus', () => {
+    return getMacAppOwnershipFixStatus()
+  })
+
+  /** macOS：用户确认后执行 copy-replace 修复并自动重启 */
+  ipcMain.on('app:confirmMacOwnershipFix', () => {
+    return confirmMacAppOwnershipFix()
   })
 
   /** 设置系统主题 */
@@ -44,30 +56,35 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 保存软件设置 */
-  ipcMain.on('app:saveSoftConfig', (event, config) => {
+  ipcMain.on('app:saveSoftConfig', async (event, config) => {
     const originAutoUpdateKernel = store.autoUpdateKernel
-    const originSystemProxySwitch = store.systemProxySwitch
+    const originNetworkMode = store.networkMode
     const originV2raySwitch = store.v2raySwitch
+    const kernelProxyKeys = ['proxyProtocol', 'proxyHost', 'proxyPort', 'proxyUsername', 'proxyPassword'] as const
     setUserConfig(config)
+
+    const appNetworkKeys = ['appNetwork', ...kernelProxyKeys] as const
+    if (appNetworkKeys.some(k => k in config)) {
+      await proxyManager.applyAppNetwork()
+      refreshTrayContextMenu()
+    }
 
     // 如果自动更新内核设置变了，则重新检查内核更新
     if (store.autoUpdateKernel !== originAutoUpdateKernel) {
       coreManager.autoDownloadCore()
     }
 
-    if (store.systemProxySwitch !== originSystemProxySwitch) {
-      if (store.systemProxySwitch) {
-        // 重新设置系统代理
-        setSystemProxy()
-      }
-      else {
-        // 这里不需要关闭 roxynet，因为关闭 roxynet 会导致已打开的窗口的系统代理失效
-        // stopRoxynet()
-      }
-    }
-    else if (store.v2raySwitch !== originV2raySwitch) {
-      // 重新设置系统代理
-      setSystemProxy()
+    const networkMode = getNetworkMode()
+    const kernelProxyChanged = kernelProxyKeys.some(k => k in config)
+    const v2rayChangedForSystem = store.v2raySwitch !== originV2raySwitch && networkMode === 'system'
+    const shouldRefreshRoxynetUpstream
+      = (store.networkMode !== originNetworkMode && (networkMode === 'system' || networkMode === 'custom'))
+      || (kernelProxyChanged && networkMode === 'custom')
+      || v2rayChangedForSystem
+
+    if (shouldRefreshRoxynetUpstream) {
+      await startRoxynet().catch(() => { })
+      await setSystemProxy()
     }
   })
 

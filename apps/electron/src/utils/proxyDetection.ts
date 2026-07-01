@@ -12,6 +12,7 @@ import {
   startRoxynet,
 } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
+import { getNetworkMode, isKernelCustomProxyConfigured, isKernelSystemProxyEnabled, isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 
 export interface ProxyDetectionResult {
@@ -160,21 +161,22 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     } = proxyDetectionParams
     const systemProxySwitch = Reflect.has(proxyDetectionParams, 'systemProxySwitch')
       ? proxyDetectionParams.systemProxySwitch
-      : store.systemProxySwitch
+      : isKernelSystemProxyEnabled()
 
     if (systemProxySwitch && !dirId) {
       throw new Error(`dirId is required when systemProxySwitch is true`)
     }
     const { addr: systemProxyAddress } = await getSystemProxy()
-    console.log('systemProxySwitch', store.systemProxySwitch, systemProxyAddress)
+    console.log('systemProxySwitch', systemProxySwitch, systemProxyAddress)
     console.log(`dirId && proxyUserName`, dirId, proxyUserName)
 
-    const shouldStartRoxynet = proxyCategory === 'SSH' || isDirect || (systemProxySwitch && systemProxyAddress)
+    const hasRoxynetUpstream = systemProxySwitch && isRoxynetUpstreamReady(systemProxyAddress)
+    const shouldStartRoxynet = proxyCategory === 'SSH' || isDirect || hasRoxynetUpstream
     if (shouldStartRoxynet) {
       await startRoxynet().catch(() => { })
     }
 
-    const isUseSystemProxy = proxyCategory === 'SSH' || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyAddress)
+    const isUseSystemProxy = proxyCategory === 'SSH' || isDirect || (getRoxynetProcess() && hasRoxynetUpstream)
 
     if (isUseSystemProxy) {
       const protocal = proxyCategory.toLocaleLowerCase()
@@ -491,8 +493,19 @@ function encodeAuth(proxyUserName: string, proxyPassword: string) {
   return ``
 }
 
-export async function detectNetwork(type?: 'local' | 'system') {
-  type ||= store.systemProxySwitch ? 'system' : 'local'
+export async function detectNetwork(type?: 'local' | 'system' | 'custom') {
+  const mode = getNetworkMode()
+  if (!type) {
+    type = mode === 'local' ? 'local' : 'system'
+  }
+  if (type === 'local') {
+    return proxyDetection({
+      systemProxySwitch: false,
+      outerParamFirst: true,
+      proxyCategory: 'noproxy',
+    })
+  }
+
   if (type === 'system') {
     const systemProxy = await getSystemProxy()
     console.log('detectNetwork systemProxy', systemProxy)
@@ -504,11 +517,17 @@ export async function detectNetwork(type?: 'local' | 'system') {
       systemProxySwitch: false,
     })
   }
-  else {
+
+  if (mode === 'custom' && isKernelCustomProxyConfigured()) {
+    await startRoxynet().catch(() => { })
     return proxyDetection({
+      host: store.proxyHost!,
+      port: String(store.proxyPort),
+      proxyCategory: (store.proxyProtocol ?? 'SOCKS5').toUpperCase(),
+      proxyUserName: store.proxyUsername ?? '',
+      proxyPassword: store.proxyPassword ?? '',
       systemProxySwitch: false,
       outerParamFirst: true,
-      proxyCategory: 'noproxy',
     })
   }
 }

@@ -41,6 +41,11 @@ const columns = [
     title: '2FA',
     getText: (data: any) => data.platformEfa || '--',
   },
+  // {
+  //   key: 'platformEmail',
+  //   title: $t('关联邮箱'),
+  //   getText: (data: any) => data.platformEmail || '--',
+  // },
   {
     key: 'platformRemarks',
     title: $t('备注'),
@@ -123,16 +128,17 @@ function parseValue() {
   const { platformIcon = '', platformIconDark = '' } = input.value._rows.find((item: any) => item.platformUrl === input.value.value) || {}
 
   dataList.value = [...new Set(list)].map((str, index) => {
-    const { username, password, twoFactor, remark } = parseIntelligent(str)
+    const { platform, username, password, twoFactor, linkedEmail, remark } = parseIntelligent(str)
     return {
       id: index,
-      platformUrl: input.value.value,
+      platformUrl: platform || input.value.value,
       // platformName: input.value.value.replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
       platformIcon,
       platformIconDark,
       platformUserName: username ?? '',
       platformPassword: password ?? '',
       platformEfa: twoFactor ?? '',
+      // platformEmail: linkedEmail ?? '',
       platformRemarks: remark ?? '',
     }
   })
@@ -246,6 +252,12 @@ async function onSave(needMore: boolean) {
             <div class="rules-example">
               USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span class="text-blue break-all">{{ `\{${$t('备注')}\}` }}</span>
             </div>
+            <!-- <div class="rules-example">
+              USERNAME3:PASSWORD3<span class="text-green">:2FA</span><span class="text-orange break-all">[{{ $t('关联邮箱') }}]</span>
+            </div>
+            <div class="rules-example">
+              USERNAME4:PASSWORD4<span class="text-green">:2FA</span><span class="text-orange break-all">[{{ $t('关联邮箱') }}]</span><span class="text-blue break-all">{{ `\{${$t('备注')}\}` }}</span>
+            </div> -->
             <br>
             <div class="rules-help">
               {{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}

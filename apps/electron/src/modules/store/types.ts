@@ -38,7 +38,9 @@ export interface StoreType {
   allWorkspaceId?: number[]
   /** 公共空间列表 */
   sharedWorkspaceList?: { workspaceId: number, role: number }[]
-  /** 是否使用系统代理 */
+  /**
+   * @deprecated 使用 networkMode 替代；false 对应 local，true 对应 system
+   */
   systemProxySwitch?: boolean
   /** roxynet 本地 http 服务端口 */
   roxynetLocalHttpPort?: number
@@ -126,8 +128,6 @@ export interface StoreType {
   autoUpdateKernel?: false
   /** 最后一次使用的 ip2location url */
   lastUseIp2locationUrl?: string
-  /** 更新器进程 ID */
-  updaterExePid?: number
   /** 应用是否正常退出 */
   appNormalExit?: boolean
   /** 最后一次使用的 web 域名 */
@@ -147,4 +147,18 @@ export interface StoreType {
   taskbarIconDisplay?: 'windowNum' | 'windowName'
   /** 任务栏标签显示：tabTitle | windowName */
   taskbarTabDisplay?: 'tabTitle' | 'windowName'
+  /** APP 网络模式：local | system | custom */
+  appNetwork?: 'local' | 'system' | 'custom'
+  /** 内核网络模式：local | system | custom */
+  networkMode?: 'local' | 'system' | 'custom'
+  /** APP 自定义代理协议 */
+  proxyProtocol?: string
+  /** APP 自定义代理主机 */
+  proxyHost?: string
+  /** APP 自定义代理端口 */
+  proxyPort?: number
+  /** APP 自定义代理账号 */
+  proxyUsername?: string
+  /** APP 自定义代理密码 */
+  proxyPassword?: string
 }

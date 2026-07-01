@@ -1,20 +1,17 @@
-import { app, autoUpdater, globalShortcut, shell } from 'electron'
-import { spawn } from 'node:child_process'
-import path, { dirname, join } from 'node:path'
+import { app, autoUpdater, shell } from 'electron'
+import path from 'node:path'
 import { parseArgs } from 'node:util'
 import { appProtocolName } from '/@/constants'
 import { isPackaged, isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
+import { isBrowserDataSyncedBeforeQuit, resetBrowserDataSyncedBeforeQuit, syncBrowserDataBeforeQuit } from '/@/modules/app/quitCleanup'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
-import { cleanupAndExit, killAllBrowserProcess, showUninstallFeedback } from '/@/modules/app/utils'
+import { cleanupAndExit, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
-import { browserIconRenderWorker } from '/@/modules/browserIconRenderWorker'
-import { browserManager, coreManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady, killProcessForce } from '/@/utils'
-import { closeAllWindows } from '/@/utils/browser-window'
 import { getMainWindow, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { proxyManager } from './proxy-manager'
 
@@ -168,10 +165,9 @@ export async function setupApp() {
   try {
     await app.whenReady()
 
-    // 设置默认代理配置
-    await proxyManager.enableDefaultProxy()
-    // 启动系统代理监听器
-    proxyManager.startSystemProxyWatcher()
+    // 设置 APP 网络代理
+    proxyManager.setupProxyAuthHandler()
+    await proxyManager.applyAppNetwork()
 
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
@@ -192,13 +188,11 @@ export async function setupApp() {
   }
 }
 
-/** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
-let isQuittingForUpdate = false
 /** APP 是否处于退出中 */
 let $$isAppQuitting = false
 
 export function isAppQuittingForUpdate() {
-  return isQuittingForUpdate
+  return appUpdater.isQuittingForUpdate
 }
 
 export function isAppQuitting() {
@@ -206,16 +200,14 @@ export function isAppQuitting() {
 }
 
 export function resetAppQuittingForUpdate() {
-  isQuittingForUpdate = false
+  appUpdater.isQuittingForUpdate = false
+  resetBrowserDataSyncedBeforeQuit()
 }
 
 /** 初始化应用程序事件 */
 function initAppEvent() {
-  /** 是否已经在 APP 退出前同步过浏览器数据了 */
-  let isSyncBrowserData = false
-
   autoUpdater.on('before-quit-for-update', () => {
-    isQuittingForUpdate = true
+    appUpdater.isQuittingForUpdate = true
     console.log('Application is quitting for update.')
   })
 
@@ -239,88 +231,43 @@ function initAppEvent() {
     }
 
     // 第二次 (或更多次) 进入 before-quit:
-    // - isSyncBrowserData=true && !isCleanupInFlight: 之前已经清理完, 这里直接放行让 Electron 完成 quit 生命周期
+    // - 数据已同步 && !isCleanupInFlight: 直接放行让 Electron 完成 quit 生命周期
     // - isCleanupInFlight: 上一次还在异步同步中, 阻止当前默认退出, 等上次走完再驱动一次 app.quit()
-    if (isSyncBrowserData) {
+    if (isBrowserDataSyncedBeforeQuit()) {
       if (isCleanupInFlight) {
         console.log('before-quit re-entered while cleanup in flight, prevent default and wait')
         event.preventDefault()
       }
-      // 仅在升级路径下需要追加保存 + spawn updater 的逻辑
-      if (isQuittingForUpdate && !isCleanupInFlight) {
+      // 升级路径: 数据已同步, 追加保存配置后放行, 让 updater 正常完成安装
+      if (appUpdater.isQuittingForUpdate && !isCleanupInFlight) {
         store.appNormalExit = true
         await forceSaveConfig()
         console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
-        // 让 Electron 正常完成退出生命周期, 确保 ShipIt 或其它提权更新服务不会被 SIGKILL 所谋杀
       }
       return
     }
 
-    // 首次进入 before-quit: 拦下默认退出, 走异步清理
+    // 首次进入 before-quit: 拦下默认退出, 同步完用户数据后再继续退出/升级
     event.preventDefault()
     isCleanupInFlight = true
 
     try {
-      try {
-        closeAllWindows()
-        // 关闭所有浏览器进程，并同步数据
-        await browserManager.closeAll()
-        console.log('Application is quitting normally.')
-      }
-      catch (error) {
-        console.error('browserManager.closeAll error:', error)
-      }
-      finally {
-        console.log('Application is quitting finally.')
-        globalShortcut.unregisterAll()
-        // 退出所有浏览器进程, 防止有漏网之鱼;
-        // macOS / Linux 上不再依赖后续 SIGKILL 兜底, 必须 await 等清理完再走 app.quit().
-        await killAllBrowserProcess()
-        browserIconRenderWorker.terminate()
-      }
+      await syncBrowserDataBeforeQuit()
+      store.appNormalExit = true
+      await forceSaveConfig()
 
-      await coreManager.cleanOldCore()
-
-      // 由 APP 升级触发的退出
-      if (isQuittingForUpdate) {
-        console.log('Application is quitting for update. Triggering upgradeNow()')
-        isSyncBrowserData = true
-        if (isWindows) {
-          try {
-            if (store.updaterExePid) {
-              killProcessForce(store.updaterExePid)
-            }
-            // 构造 updaterExe 路径并脱离主进程执行
-            const updaterExe = join(dirname(process.execPath), 'RoxyBrowserUpdater.exe')
-            console.log('Spawning updater detached:', updaterExe)
-
-            const child = spawn(updaterExe, [], {
-              detached: true,
-              stdio: 'ignore',
-            })
-            store.updaterExePid = child.pid
-            console.log('[AppUpdater] updaterExePid', store.updaterExePid)
-            child.unref()
-          }
-          catch (e) {
-            console.error(`[AppUpdater] Failed to spawn updater UI`, e)
-          }
-        }
-        store.appNormalExit = true
-        await forceSaveConfig()
-        appUpdater.upgradeNow()
+      if (appUpdater.isQuittingForUpdate) {
+        console.log('Browser data synced, proceeding with update quit.')
+        // 被 preventDefault 拦下的退出需要再次触发 app.quit(), 让 updater 接管后续生命周期
+        setImmediate(() => app.quit())
       }
       else {
-        isSyncBrowserData = true
-        store.appNormalExit = true
-        await forceSaveConfig()
         cleanupAndExit()
 
         // macOS / Linux: cleanupAndExit 在非 Windows 下不再 SIGKILL/app.exit,
         // 这里需要再次显式触发 app.quit() 让 Electron 走完正常的 quit 生命周期,
         // 否则被 event.preventDefault() 拦下的退出永远不会真正发生 (尤其会导致 app.relaunch() 失效).
         if (!isWindows) {
-          // 异步触发, 让当前 before-quit handler 先返回, 再进入下一轮 before-quit 走"已清理"分支
           setImmediate(() => app.quit())
         }
       }

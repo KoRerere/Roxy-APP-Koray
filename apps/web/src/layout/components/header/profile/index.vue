@@ -160,9 +160,16 @@ const items = computed(() => {
             return
         }
         showPageLoading()
-        await API.base.userLogoutList()
+        // 1) 先同步窗口数据并关闭浏览器(此时 token 仍有效, 主进程会显示同步进度遮罩),
+        //    同步真正完成后才继续, 避免"数据没同步完就跳到登录页".
+        await globalThis.electronAPI.send('user:logout').catch((error) => {
+          console.warn('logout window sync failed (ignored):', error)
+        })
+        // 2) 同步完成后再调用服务端登出接口, 避免提前失效 token 导致上一步数据同步失败.
+        await API.base.userLogoutList().catch(() => {})
         await globalThis.electronAPI.send('mcp:close')
-        userStore.clearUserInfo()
+        // 3) 仅清理本地登录态(浏览器已在上面关闭), 再跳转登录页.
+        userStore.clearUserInfo({ skipServerSync: true })
         router.push({ name: 'login' })
       },
     },
@@ -222,8 +229,7 @@ function showLogoutConfirm() {
     slots: {
       default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>,
     },
-    async handleOk() {
-      await globalThis.electronAPI.send('browser:closeAll')
+    handleOk() {
       resolve(true)
     },
     handleCancel() {

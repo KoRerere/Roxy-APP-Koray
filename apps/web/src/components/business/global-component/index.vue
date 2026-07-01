@@ -10,10 +10,13 @@ import { isMainWindow } from '/@/utils'
 const LiveChat = defineAsyncComponent(() => import('../live-chat/live-chat.vue'))
 const PayWall = defineAsyncComponent(() => import('./pay-wall.vue'))
 const Help = defineAsyncComponent(() => import('./help.vue'))
+const QuitSyncProgress = defineAsyncComponent(() => import('./quit-sync-progress.vue'))
+const MacOwnershipFix = defineAsyncComponent(() => import('./mac-ownership-fix.vue'))
 
 useSubscribe()
 
 const isShowLiveChat = ref(false)
+const isElectron = globalThis.isElectron
 
 updatePrimeVueLocale()
 
@@ -33,6 +36,8 @@ setTimeout(() => {
   />
   <RxToastHeadless />
   <DomSpotlightRing />
+  <QuitSyncProgress />
+  <MacOwnershipFix v-if="isElectron && isMainWindow" />
   <ConfirmDialog :pt="{
     root: global.dialog,
     pcAcceptButton: { root: '!text-3.25 line-height-none' },

@@ -3,6 +3,7 @@ import RxButton from '/@/components/rx-button'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import DownloadModal from '/@/views/agent/shop/components/download-modal.vue'
 import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
+import UpgradeModal from '/@/views/agent/shop/components/upgrade-modal.vue'
 import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
 import { $t } from '/@/locales'
@@ -40,7 +41,7 @@ export type ConcurrentProxyValidResult = CheckResult & { id?: number, proxyType?
 export type ConcurrentProxyTestResults = Array<ConcurrentProxyValidResult | undefined>
 
 export interface BatchTestShowToastOptions {
-  reCheck?: () => void
+  reCheck?: () => any | Promise<any>
   /** 是否展示「联系技术支持」按钮；单条检测默认仅购买代理展示，批量检测默认展示 */
   showSupport?: boolean
 }
@@ -311,9 +312,20 @@ export function useProxy() {
     })
   }
 
-  function viewExpiresSoonProxy() {
-    router.push({ name: 'agent-list', query: { name: 'shop', expireStatus: ProxyExpireStatus.soon } })
+  function upgradeProxy(data: any[], next: () => void) {
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      slots: {
+        container: ({ hideModal }) => <UpgradeModal data={data} onClose={hideModal} onSuccess={next} />,
+      },
+    })
   }
 
-  return { buyProxy, downloadProxy, renewProxy, viewExpiresSoonProxy }
+  function viewExpiresSoonProxy() {
+    router.push({ name: 'agent-list', query: { name: 'shop', expireStatus: ProxyExpireStatus.soon, _t: Date.now() } })
+  }
+
+  return { buyProxy, downloadProxy, renewProxy, upgradeProxy, viewExpiresSoonProxy }
 }

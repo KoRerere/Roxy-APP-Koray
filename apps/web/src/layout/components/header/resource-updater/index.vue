@@ -85,8 +85,30 @@ emitter.on('updateProfileList', (list) => {
   profileList.value = list ?? []
 })
 
+/** 合并一条客户端升级信息（app / web / patch）到列表，存在则覆盖，不存在则新增 */
+function applyClientUpdate(data: ResourceUpdateMessage) {
+  const index = clientUpdates.value.findIndex(item => data.type === item.type)
+  if (index === -1) {
+    clientUpdates.value.push(data)
+  }
+  else {
+    clientUpdates.value[index] = data
+  }
+
+  // 有 app 更新就不展示 web 资源更新
+  if (clientUpdates.value.length > 1 && clientUpdates.value.some(data => data.type === 'app')) {
+    clientUpdates.value = clientUpdates.value.filter(data => data.type === 'app')
+  }
+}
+
 async function checkForUpdates() {
-  globalThis.electronAPI.send('app:checkForUpdates')
+  // 直接消费主进程返回值回填状态，避免依赖 app:resource-update 推送时序
+  //（刷新后 clientUpdates 被重置，若推送早于监听注册会丢失"已下载"状态）
+  const data = await globalThis.electronAPI.send('app:checkForUpdates')
+  // 仅当确实存在升级生命周期（下载中/已下载/失败）时回填，避免把默认空状态加入列表
+  if (data && data.status && ['downloading', 'downloaded', 'failed'].includes(data.status)) {
+    applyClientUpdate(data)
+  }
 }
 
 function toggle(event: Event) {
@@ -269,18 +291,7 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
   }
   // 客户端升级(app、web、patch)
   else {
-    const index = clientUpdates.value.findIndex(item => data.type === item.type)
-    if (index === -1) {
-      clientUpdates.value.push(data)
-    }
-    else {
-      clientUpdates.value[index] = data
-    }
-
-    // 有 app 更新就不展示 web 资源更新
-    if (clientUpdates.value.length > 1 && clientUpdates.value.some(data => data.type === 'app')) {
-      clientUpdates.value = clientUpdates.value.filter(data => data.type === 'app')
-    }
+    applyClientUpdate(data)
   }
 })
 </script>

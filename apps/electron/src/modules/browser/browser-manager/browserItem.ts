@@ -260,6 +260,9 @@ export class BrowserItem {
     }
     finally {
       delRoxynetProxy(dirId)
+      writeFile(this.closeTimestampPath, `${Date.now().toString()}_${dirId}`).catch((error) => {
+        console.warn(`[BrowserItem] write close_timestamp failed (${dirId}):`, error)
+      })
       rm(this.fakeVideoDir, { recursive: true, force: true }).catch(() => { })
       // ipcSender.user.mixpanelTrack('profile_end', {
       //   coreVersion: this.coreVersion.coreVersion,
@@ -272,9 +275,13 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
-      // Firefox cookie 保存不在此处提前执行：
-      // releaseSession() 之后 cookies.sqlite 仍被 Firefox 进程持有（数据库锁）。
-      // handleOnDisconnected 在 process-close 后（进程真正退出）读取 SQLite，时机正确。
+      // Chrome: 在关闭 CDP 连接前先保存 cookie, 避免 WebSocket 断开后读不到最新数据.
+      // Firefox: 仍在 handleOnDisconnected 中 process-close 后读 cookies.sqlite (进程持有 DB 锁).
+      if (!this.isFirefox && this.afterLaunchTask) {
+        await this.afterLaunchTask.saveCookiesNow().catch((error) => {
+          console.warn(`[BrowserItem] saveCookiesNow before close failed (${this.winInfo.dirId}):`, error)
+        })
+      }
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
       await this.#browser.close()
       this.beforeLaunchTask.browser = null
@@ -323,7 +330,6 @@ export class BrowserItem {
       newVersion = newVersion + 1
       isUploadSuccess = true
       writeFile(this.ossCacheVersionPath, String(newVersion))
-      writeFile(this.closeTimestampPath, `${Date.now().toString()}_${dirId}`)
       console.log(`OSS cache files uploaded successfully`)
     }
     catch (error) {

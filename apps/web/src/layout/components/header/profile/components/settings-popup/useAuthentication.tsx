@@ -59,9 +59,10 @@ export function useAuthentication() {
               visible: simpleLocale.currentLocale === 'zh-CN',
               component: () => {
                 return (
-                  <div class="w-full flex gap-2 items-center justify-between">
-                    <div>{userStore.userInfo?.phone || $t('当前未设置手机号')}</div>
+                  <div class="w-full flex gap-6 items-center justify-end">
+                    <div class="shrink-0">{userStore.userInfo?.phone || $t('当前未设置手机号')}</div>
                     <RxButton
+                      class="shrink-0"
                       severity="secondary"
                       size="sm"
                       outlined
@@ -80,12 +81,12 @@ export function useAuthentication() {
               component: () => {
                 const hasEmail = userStore.userInfo?.email
                 return (
-                  <div class="w-full flex gap-2 items-center justify-between">
+                  <div class="w-full flex gap-6 items-center justify-end">
                     {hasEmail
-                      ? withDirectives(h('div', { class: 'truncate w-[152px]' }, userStore.userInfo?.email), [
+                      ? withDirectives(h('div', { class: 'truncate' }, userStore.userInfo?.email), [
                           [TooltipHook, { value: userStore.userInfo?.email }, '', { top: true }],
                         ])
-                      : <div>{$t('当前未设置邮箱')}</div>}
+                      : <div class="shrink-0">{$t('当前未设置邮箱')}</div>}
                     <RxButton
                       severity="secondary"
                       size="sm"
@@ -104,9 +105,10 @@ export function useAuthentication() {
               component: () => {
                 const hasPassword = userStore.userInfo?.setPasswordStatus
                 return (
-                  <div class="w-full flex items-center justify-between">
-                    <div>{hasPassword ? '********' : $t('当前未设置密码')}</div>
+                  <div class="w-full flex gap-6 items-center justify-end">
+                    <div class="shrink-0">{hasPassword ? '********' : $t('当前未设置密码')}</div>
                     <RxButton
+                      class="shrink-0"
                       severity="secondary"
                       size="sm"
                       outlined

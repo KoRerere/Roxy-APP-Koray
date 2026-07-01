@@ -11,11 +11,20 @@ const props = defineProps<{
   updateInfo?: ResourceUpdateMessage
 }>()
 
+const FORCE_UPGRADE_SHOW_DELAY = 15 * 1000
+
 let timer: NodeJS.Timeout
 const simpleLocale = useSimpleLocale()
 const userStore = useUserStore()
 const visible = ref(false)
 const nextUpdateTimestamp = ref<number | undefined>(undefined)
+
+function scheduleShowModal(delayMs: number) {
+  clearTimeout(timer)
+  timer = setTimeout(() => {
+    visible.value = true
+  }, delayMs)
+}
 
 const isActivityUpgrade = computed(() => {
   const { isActivity, activityInfo } = props.updateInfo?.newFeatureTips || {}
@@ -24,6 +33,13 @@ const isActivityUpgrade = computed(() => {
 
 watch(() => props.isForceUpgrade, (newVal) => {
   console.log('props.isForceUpgrade', newVal)
+
+  if (!newVal) {
+    visible.value = false
+    clearTimeout(timer)
+    return
+  }
+
   globalThis.electronAPI.send('app:getSoftConfig').then((config) => {
     // if (import.meta.hot) {
     //   console.log('In development environment, "getSoftConfig" is invalid')
@@ -40,16 +56,19 @@ watch(() => props.isForceUpgrade, (newVal) => {
           visible.value = true
         }
         else {
-          timer = setTimeout(() => {
-            visible.value = true
-          }, config.nextUpdateTimestamp - Date.now())
+          scheduleShowModal(config.nextUpdateTimestamp - Date.now())
         }
       }
       else {
-        visible.value = true
+        // 更新包下载完成后，延迟 15 秒再弹出
+        scheduleShowModal(FORCE_UPGRADE_SHOW_DELAY)
       }
     }
   })
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(timer)
 })
 
 /** 立即重启 */
@@ -81,14 +100,10 @@ function remindMeLater() {
     const timestamp = Date.now() + 1000 * 60 * (isDev ? 2 : 60)
     globalThis.electronAPI.send('app:setNextUpdateTime', timestamp)
     nextUpdateTimestamp.value = timestamp
-    timer = setTimeout(() => {
-      visible.value = true
-    }, timestamp - Date.now())
+    scheduleShowModal(timestamp - Date.now())
   }
   else {
-    timer = setTimeout(() => {
-      visible.value = true
-    }, 1000 * 60 * 5)
+    scheduleShowModal(1000 * 60 * 5)
   }
 }
 </script>

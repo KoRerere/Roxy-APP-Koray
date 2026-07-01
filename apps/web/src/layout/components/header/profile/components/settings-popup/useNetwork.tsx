@@ -1,5 +1,7 @@
 import Textarea from 'primevue/textarea'
+import InputText from 'primevue/inputtext'
 import RxButton from '/@/components/rx-button'
+import RxInputGroup from '/@/components/rx-input-group.vue'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { RxAlert } from '/@/components/rx-alert'
@@ -9,16 +11,31 @@ import type {
   SettingsModule,
 } from '/@/layout/components/header/profile/type'
 import { $t } from '/@/locales'
-import { getDictMap } from '/@/utils'
-import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
-import { withDirectives } from 'vue'
-import { TooltipHook } from '/@/layout/components/header/profile/components/settings-popup/useAuthentication'
+import { getDictMap, strConcat } from '/@/utils'
+import { NetworkType, ProxyCheckStatus, ProxyProtocol } from '/@/enums'
+
+const DEFAULT_PROXY_HOST = '127.0.0.1'
+const APP_PROXY_PROTOCOL_OPTIONS = [
+  { label: 'SOCKS5', value: ProxyProtocol.SOCKS5 },
+  { label: 'HTTP', value: ProxyProtocol.HTTP },
+]
+
+function resolveProxyHost(host?: string | null) {
+  return host?.trim() || DEFAULT_PROXY_HOST
+}
+
+function getNetworkModeValue(items: Items[]) {
+  return items.find(i => i.name === 'networkMode')?.value ?? NetworkType.System
+}
 
 export function useNetworkPanel() {
-  const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } = useCommonUtil()
+  const { saveUserConfig, saveLocalConfig, detectLocalNetwork, detectSystemNetwork, detectCustomAppNetwork } = useCommonUtil()
 
   const getNetworkPanels = async (data?: any): Promise<SettingsModule> => {
-    const $dict_map = await getDictMap()
+    const [$dict_map, softConfig] = await Promise.all([
+      getDictMap(),
+      globalThis.electronAPI.send('app:getSoftConfig'),
+    ])
 
     const items = reactive({
       title: $t('网络设置'),
@@ -28,39 +45,35 @@ export function useNetworkPanel() {
           subtitle: $t('网络连接方式'),
           items: [
             {
-              label: $t('使用系统代理'),
-              text: () => (
-                <div>
-                  <div>{$t('关闭后使用本地网络连接')}</div>
-                  <div class="w-[370px] text-[color:--colors-text-text-error] line-height-normal">
-                    {$t('改变此开关状态后，请重启窗口以确保生效')}
-                  </div>
-                </div>
-              ),
-              name: 'systemProxySwitch',
-              value: data?.systemProxySwitch ?? false,
+              label: $t('网络模式'),
+              name: 'networkMode',
+              value: softConfig?.networkMode ?? NetworkType.System,
+              props: {
+                filter: false,
+                optionValue: 'value',
+                options: [
+                  { label: $t('本地网络'), value: NetworkType.Local },
+                  { label: $t('系统代理'), value: NetworkType.System },
+                  { label: $t('自定义代理'), value: NetworkType.Custom },
+                ],
+                class: 'w-[180px]',
+              },
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
-                  <RxToggleSwitch
+                  <TsFormSelect
                     {...item.props}
                     {...props}
-                    onChange={() => saveUserConfig(item, items)}
+                    name={item.name}
+                    onChange={() => saveLocalConfig(item)}
                   />
                 )
               },
             },
             {
               label: $t('网络兼容模式'),
-              text: () => (
-                <div class="flex items-center gap-1">
-                  <span>{$t('系统代理识别失败时，可尝试启用')}</span>
-                  { withDirectives(<SvgIcon name="base/rx_ic_question" class="w-4 h-4" />, [
-                    [TooltipHook, { value: $t('帮助客户端使用系统代理网络，但开启后可能影响 HTTP 代理检测') }, '', { top: true }],
-                  ])}
-                </div>
-              ),
+              text: $t('系统代理识别失败时，可尝试启用'),
               name: 'v2raySwitch',
-              hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'systemProxySwitch')?.value,
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.System,
               value: data?.v2raySwitch ?? false,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
@@ -73,7 +86,120 @@ export function useNetworkPanel() {
               },
             },
             {
-              label: $t('检查系统代理'),
+              label: $t('代理协议'),
+              name: 'proxyProtocol',
+              value: softConfig?.proxyProtocol ?? ProxyProtocol.SOCKS5,
+              props: {
+                filter: false,
+                optionValue: 'value',
+                options: APP_PROXY_PROTOCOL_OPTIONS,
+                class: 'w-[180px]',
+              },
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveLocalConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('代理信息'),
+              name: 'proxyHostPort',
+              value: [resolveProxyHost(softConfig?.proxyHost), (softConfig?.proxyPort ?? 0) > 0 ? softConfig?.proxyPort : null],
+              oldValue: [resolveProxyHost(softConfig?.proxyHost), (softConfig?.proxyPort ?? 0) > 0 ? softConfig?.proxyPort : null],
+              props: {
+                items: [
+                  { placeholder: $t('主机') },
+                  { separator: true },
+                  { placeholder: $t('端口'), min: 1, max: 65535 },
+                ],
+                class: 'w-[270px]',
+              },
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
+              formatValue: (item: Items) => {
+                const [proxyHost, proxyPort] = item.value
+                return { proxyHost: resolveProxyHost(proxyHost), proxyPort }
+              },
+              vaildator: (item: Items) => {
+                const [oldHost, oldPort] = item.oldValue ?? []
+                const [newHost, newPort] = item.value ?? []
+                return oldHost !== newHost || oldPort !== newPort
+              },
+              component: ({ item }: any) => {
+                return (
+                  <RxInputGroup
+                    {...item.props}
+                    modelValue={item.value}
+                    onUpdate:modelValue={(val: (string | number | null)[]) => { item.value = val }}
+                    onBlur={() => saveLocalConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: () => (
+                <span>
+                  {$t('代理账号')}
+                  <span class="text-[color:var(--colors-text-text-tertiary)]">{` (${$t('选填')})`}</span>
+                </span>
+              ),
+              name: 'proxyUsername',
+              value: softConfig?.proxyUsername ?? '',
+              oldValue: softConfig?.proxyUsername ?? '',
+              props: {
+                placeholder: $t('请输入代理账号'),
+                class: 'w-[180px]',
+              },
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
+              vaildator: (item: Items) => item.oldValue !== item.value,
+              component: ({ item }: any) => {
+                return (
+                  <InputText
+                    {...item.props}
+                    modelValue={item.value}
+                    onUpdate:modelValue={(val: string) => { item.value = val }}
+                    type="text"
+                    onBlur={() => saveLocalConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: () => (
+                <span>
+                  {$t('代理密码')}
+                  <span class="text-[color:var(--colors-text-text-tertiary)]">{` (${$t('选填')})`}</span>
+                </span>
+              ),
+              name: 'proxyPassword',
+              value: softConfig?.proxyPassword ?? '',
+              oldValue: softConfig?.proxyPassword ?? '',
+              props: {
+                placeholder: $t('请输入代理密码'),
+                class: 'w-[180px]',
+              },
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
+              vaildator: (item: Items) => item.oldValue !== item.value,
+              component: ({ item }: any) => {
+                return (
+                  <InputText
+                    {...item.props}
+                    modelValue={item.value}
+                    onUpdate:modelValue={(val: string) => { item.value = val }}
+                    type="password"
+                    onBlur={() => saveLocalConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('检测自定义代理'),
+              hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
               component: ({ item }: any) => (
                 <RxButton
                   class="mb-1.5"
@@ -82,19 +208,26 @@ export function useNetworkPanel() {
                   severity="secondary"
                   icon="base/rx_ic_speed_test"
                   label={$t('检测')}
-                  onClick={() => detectSystemNetwork(item)}
+                  onClick={() => detectCustomAppNetwork(item, items)}
                 />
               ),
               afterComponent: ({ item }: any) =>
-                item.value && (
+                item.value?.checkStatus === ProxyCheckStatus.success && (
                   <RxAlert
                     class="w-full whitespace-pre-wrap"
                     type="success"
                     visible={true}
                     closable={true}
                     title={$t('检测成功')}
-                    content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
-                    onClose={() => { item.value = null }}
+                    content={$t('位置: {location}\nIP: {ip}\n时区: {timezone}', {
+                      location: `${item.value.lastCountry}${strConcat('/', item.value.lastCity)}`,
+                      ip: item.value.lastIp,
+                      timezone: item.value.timezone,
+                    })}
+                    onUpdate:visible={(visible: boolean) => {
+                      if (!visible)
+                        item.value = null
+                    }}
                   />
                 ),
             },
@@ -120,14 +253,46 @@ export function useNetworkPanel() {
                     closable={true}
                     title={$t('检测成功')}
                     content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
-                    onClose={() => { item.value = null }}
+                    onUpdate:visible={(visible: boolean) => {
+                      if (!visible)
+                        item.value = null
+                    }}
+                  />
+                ),
+            },
+            {
+              label: $t('检查系统代理'),
+              component: ({ item }: any) => (
+                <RxButton
+                  class="mb-1.5"
+                  size="sm"
+                  outlined
+                  severity="secondary"
+                  icon="base/rx_ic_speed_test"
+                  label={$t('检测')}
+                  onClick={() => detectSystemNetwork(item)}
+                />
+              ),
+              afterComponent: ({ item }: any) =>
+                item.value && (
+                  <RxAlert
+                    class="w-full whitespace-pre-wrap"
+                    type="success"
+                    visible={true}
+                    closable={true}
+                    title={$t('检测成功')}
+                    content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
+                    onUpdate:visible={(visible: boolean) => {
+                      if (!visible)
+                        item.value = null
+                    }}
                   />
                 ),
             },
             {
               label: $t('自动检测代理 IP'),
               name: 'autoDetectProxy',
-              value: data?.autoDetectProxy ?? true,
+              value: data?.autoDetectProxy ?? false,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch

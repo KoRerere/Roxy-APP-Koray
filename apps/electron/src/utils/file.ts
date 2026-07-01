@@ -54,6 +54,9 @@ export async function downloadZipFile(
     url,
     responseType: 'stream',
     signal: options?.signal,
+    // electronAdapter 的 timeout 是请求开始即计时的总截止，会中断大文件下载；
+    // 这里关闭它，改由下方 30s「不活动」看门狗兜底
+    timeout: 0,
     onDownloadProgress: (progressEvent) => {
       clearTimeout(timer)
       const totalLength = progressEvent.total

@@ -140,7 +140,7 @@ function buyProxyFromAnnouncement() {
       <RxButton class="shrink-0 roxy-btn" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('购买')" />
     </div>
     <!--  -->
-    <div class="w-100 flex flex-col gap-3">
+    <div class="w-110 flex flex-col gap-3">
       <div class="flex-1 flex flex-col pa-4 gap-1.5 rounded-2 cursor-pointer normal" @click.stop="onBuyProxy(rolaip.props)">
         <div class="flex gap-3 items-center overflow-hidden">
           <img draggable="false" class="block w-10 aspect-1 rounded-2 normal-image" :src="rolaip.vendorIcon" :alt="rolaip.vendorName">

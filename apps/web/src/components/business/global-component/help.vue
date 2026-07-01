@@ -188,7 +188,7 @@ const items = computed(() => {
       separator: true,
     },
     {
-      label: $t('评价我们🎁'),
+      label: $t('评价与反馈🎁'),
       icon: 'base/rx_ic_star',
       /**
        * visible: onboardingTaskStatus.value?.ratingStatus === false,

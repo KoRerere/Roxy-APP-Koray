@@ -90,6 +90,14 @@ const inputs = [
       placeholder: $t('请输入 2FA 密钥'),
     },
   },
+  // {
+  //   type: 'text',
+  //   label: $t('关联邮箱'),
+  //   name: 'platformEmail',
+  //   props: {
+  //     placeholder: $t('请输入关联邮箱'),
+  //   },
+  // },
 ]
 
 watch(() => themeStore.realTheme, () => {

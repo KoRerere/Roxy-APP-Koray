@@ -1,6 +1,7 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { delRoxynetProxy } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
+import { isKernelSystemProxyEnabled } from '/@/modules/store/networkMode'
 import {
   detectNetwork,
   getSystemProxy,
@@ -16,7 +17,7 @@ export function setupProxyIpc(ipcMain: IPCMainInstance) {
 
   /** 删除 roxynet 代理 */
   ipcMain.on('proxy:delRoxynetProxy', (event, dirId) => {
-    if (store.systemProxySwitch) {
+    if (isKernelSystemProxyEnabled()) {
       return delRoxynetProxy(dirId)
     }
   })
@@ -24,7 +25,7 @@ export function setupProxyIpc(ipcMain: IPCMainInstance) {
   /** 根据用户设置，检测本地网络/系统代理 */
   ipcMain.on(
     'proxy:detectNetwork',
-    async (event, type?: 'local' | 'system') => {
+    async (event, type?: 'local' | 'system' | 'custom') => {
       return detectNetwork(type)
     },
   )

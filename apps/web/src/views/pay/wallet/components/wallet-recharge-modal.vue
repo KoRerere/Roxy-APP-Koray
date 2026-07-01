@@ -27,8 +27,8 @@ const [_, onlyErrorToast] = useResponseToast()
 const { mixpanelTrack } = useUserStore()
 const { getActivityTotalRecharge } = useCampaignStore()
 
-const selectedPayway = ref(PayWay.Alipay)
-const paywayList = [PayWay.Alipay, PayWay.Wechat, PayWay.Card, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
+const paywayList = [PayWay.Wechat, PayWay.Alipay, PayWay.Card, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
+const selectedPayway = ref(paywayList[0].value)
 
 const disabledMethods = ref<PayWay[]>([])
 const min = 10

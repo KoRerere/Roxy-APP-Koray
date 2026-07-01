@@ -580,7 +580,7 @@ export function usePreferencesPanel() {
                       />
                       <InputIcon>ms</InputIcon>
                     </IconField>
-                    <div class="h-px w-[10px] bg-[var(--colors-border-border-base,#C7CDD1)]" />
+                    <div class="text-5 tt-inactive">~</div>
                     <IconField class="w-[92px]">
                       <InputNumber
                         modelValue={item.value[1]}
@@ -890,13 +890,7 @@ export function usePreferencesPanel() {
             },
             {
               label: $t('窗口自动恢复'),
-              text: () => (
-                <div class="w-88">
-                  {
-                    $t('主动重启客户端后，恢复上次窗口打开状态')
-                  }
-                </div>
-              ),
+              text: $t('主动重启客户端后，恢复上次窗口打开状态'),
               name: 'autoRestoreWindow',
               value: data?.autoRestoreWindow ?? 2,
               props: {
@@ -929,7 +923,7 @@ export function usePreferencesPanel() {
                 </div>
               ),
               name: 'autoStart',
-              value: data?.autoStart ?? true,
+              value: data?.autoStart ?? false,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch

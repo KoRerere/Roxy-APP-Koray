@@ -5,14 +5,10 @@ defineProps<{
   data: Record<string, any>
   readonly?: boolean
 }>()
-
-const emit = defineEmits<{
-  click: []
-}>()
 </script>
 
 <template>
-  <div v-tooltip.top="readonly ? undefined : { value: $t('点击编辑/查看详情'), showDelay: 500 }" class="platform-info-cell" :class="{ 'platform-info-cell--readonly': readonly }" @click.stop="!readonly && emit('click')">
+  <div v-tooltip.top="readonly ? undefined : { value: $t('点击编辑/查看详情'), showDelay: 500 }" class="platform-info-cell" :class="{ 'platform-info-cell--readonly': readonly }">
     <PlatformIcon v-if="data.platformIcon" :platform-icon="data.platformIcon" :platform-icon-dark="data.platformIconDark" class="w-6 shrink-0" />
     <SvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" size="24" />
     <div class="flex flex-col flex-1 gap-0.5 min-w-0">

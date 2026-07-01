@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { isNotNil } from 'es-toolkit'
 import { useNetworkStore } from '/@/stores/network'
-import { useUserStore } from '/@/stores/user'
 
 const { setNetworkInfo } = useNetworkStore()
-const userStore = useUserStore()
 
 let retryCount = 0
 const loading = ref(true)
@@ -17,8 +14,8 @@ const proxyInfo = ref(defaultProxyInfo)
 async function detectNetwork() {
   loading.value = true
   try {
-    await globalThis.electronAPI.send('proxy:getSystemProxy')
-    const result = await globalThis.electronAPI.send('proxy:detectNetwork')
+    const softConfig = await globalThis.electronAPI.send('app:getSoftConfig')
+    const result = await globalThis.electronAPI.send('proxy:detectNetwork', softConfig.networkMode)
     proxyInfo.value.city = `${result.country_code}/${result.city}`
     proxyInfo.value.ip = result.ip
     console.log('detectNetwork result', result, proxyInfo)
@@ -38,12 +35,6 @@ async function detectNetwork() {
     loading.value = false
   }
 }
-
-watch(() => userStore.userConfig?.systemProxySwitch, (val, oldVal) => {
-  if (isNotNil(val) && isNotNil(oldVal)) {
-    detectNetwork()
-  }
-})
 
 window.addEventListener('online', detectNetwork)
 // window.addEventListener('offline', detectNetwork)

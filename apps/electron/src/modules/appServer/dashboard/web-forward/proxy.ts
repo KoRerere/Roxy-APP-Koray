@@ -1,8 +1,8 @@
 import type express from 'express'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { createProxyMiddleware, responseInterceptor } from 'http-proxy-middleware'
 import { Buffer } from 'node:buffer'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { store } from '/@/modules/store'
 import {
   createWebCacheFileName,
   deleteCachedWebResource,
@@ -10,6 +10,7 @@ import {
   setCachedWebResource,
   webResourceCache,
 } from './cache'
+import type { CachedWebResource } from './cache'
 import {
   getStringHeaderValue,
   getWebCacheKey,
@@ -19,6 +20,58 @@ import {
   shouldStoreWebResource,
   syncCachedHeaders,
 } from './policy'
+
+type ProxyResInterceptor = Parameters<typeof responseInterceptor>[0]
+
+/** 304 协商命中时，用本地缓存正文回包。 */
+async function serveRevalidatedCache(
+  req: IncomingMessage,
+  res: ServerResponse,
+  cacheKey: string,
+  cacheEntry: CachedWebResource,
+) {
+  const cachedBody = await readCachedWebResourceBody(cacheEntry).catch(async () => {
+    await deleteCachedWebResource(cacheKey)
+    return null
+  })
+  if (!cachedBody) {
+    return false
+  }
+
+  syncCachedHeaders(res, cacheEntry.headers, cachedBody.length)
+  res.statusCode = 200
+  res.setHeader('x-roxy-cache', 'REVALIDATED')
+  if (req.method === 'HEAD') {
+    res.end()
+  }
+  else {
+    res.end(cachedBody)
+  }
+  return true
+}
+
+/**
+ * http-proxy-middleware@4.1.0+ 的 responseInterceptor 会把 304/HEAD 视为无正文响应，
+ * 不再调用自定义 interceptor。这里在外层先处理 304，再委托给 responseInterceptor。
+ */
+function createCachedProxyResHandler(interceptor: ProxyResInterceptor) {
+  const innerHandler = responseInterceptor(interceptor)
+
+  return async (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
+    if (proxyRes.statusCode === 304) {
+      const cacheKey = getWebCacheKey(req)
+      const cacheEntry = webResourceCache.get(cacheKey)
+      if (cacheEntry) {
+        proxyRes.resume()
+        if (await serveRevalidatedCache(req, res, cacheKey, cacheEntry)) {
+          return
+        }
+      }
+    }
+
+    return innerHandler(proxyRes, req, res)
+  }
+}
 
 /**
  * 装配 web 转发代理：
@@ -53,26 +106,8 @@ export async function setupWebForwardProxy(app: express.Application) {
           proxyReq.setHeader('if-modified-since', cacheEntry.lastModified)
         }
       },
-      proxyRes: responseInterceptor(async (responseBuffer, proxyRes, req, res) => {
+      proxyRes: createCachedProxyResHandler(async (responseBuffer, proxyRes, req, res) => {
         const cacheKey = getWebCacheKey(req)
-        const cacheEntry = webResourceCache.get(cacheKey)
-
-        if (proxyRes.statusCode === 304 && cacheEntry) {
-          // 上游确认资源未变更，直接用本地正文回包，避免再次下载 body。
-          const cachedBody = await readCachedWebResourceBody(cacheEntry).catch(async () => {
-            await deleteCachedWebResource(cacheKey)
-            return null
-          })
-          if (!cachedBody) {
-            res.setHeader('x-roxy-cache', 'MISS')
-            return responseBuffer
-          }
-
-          syncCachedHeaders(res, cacheEntry.headers, cachedBody.length)
-          res.statusCode = 200
-          res.setHeader('x-roxy-cache', 'REVALIDATED')
-          return req.method === 'HEAD' ? Buffer.alloc(0) : cachedBody
-        }
 
         const contentType = proxyRes.headers['content-type']
         let responseBody = responseBuffer

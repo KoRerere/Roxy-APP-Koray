@@ -4,6 +4,7 @@ import { appConfig } from '/@/constants'
 import { currentOS, isDev, isMac } from '/@/constants/common'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
+import { isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxyAddress } from '/@/utils'
 import { ensureChromeIcon, fitBadgeText } from './browserIcon'
 import { getCityCode, getEcommerceDirectWhiteList, getRemoteConfig, toNumber } from './util'
@@ -381,13 +382,10 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
       // if (winInfo.proxyMethod !== `noproxy`) {
       // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
       const { host, port, proxyUserName, proxyPassword, isDirect } = winInfo
-      const { systemProxySwitch } = store
       const systemProxyAddress = getSystemProxyAddress()
-      const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress.split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
       const isSSH = protocol === 'ssh'
-      // 是否开启系统代理
-      const isUseSystemProxy = isSSH || isDirect || (getRoxynetProcess() && systemProxySwitch && systemProxyHost && systemProxyPort)
+      const isUseSystemProxy = isSSH || isDirect || (getRoxynetProcess() && isRoxynetUpstreamReady(systemProxyAddress))
       // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
       const type = isUseSystemProxy && protocol === 'https' ? 'http' : isSSH ? 'socks5' : protocol
       // 是否为直连

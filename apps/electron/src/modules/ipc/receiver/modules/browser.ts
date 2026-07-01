@@ -48,7 +48,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     browserManager.batchClose(dirIds)
   })
 
-  /** 关闭所有浏览器 */
+  /** 关闭所有浏览器 (被踢下线等场景, token 已失效不做服务端同步) */
   ipcMain.on('browser:closeAll', (_event) => {
     browserManager.closeAll()
   })

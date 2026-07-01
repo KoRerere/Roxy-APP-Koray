@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import WorkspaceSetting from '/@/views/workspace-setting/index.vue'
+import WorkspaceSetting from '/@/layout/components/header/profile/components/workspace/setting.vue'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useDialog } from '/@/hooks/useDialog'
