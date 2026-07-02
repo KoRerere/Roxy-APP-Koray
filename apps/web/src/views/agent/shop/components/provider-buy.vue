@@ -123,34 +123,35 @@ const currentProxyType = computed(() => {
   }
 })
 
-const selectedUnitPrice = computed(() => {
+const selectedUnit = computed(() => {
   const proxyType = proxyTypeOptions.value.find(item => item.id === proxyTypeValue.value)
   if (!proxyType)
-    return 0
-  return getProxyTypePriceForSelectedDuration(proxyType)?.proxyPrice ?? 0
+    return undefined
+  return getProxyTypePriceForSelectedDuration(proxyType)
 })
 
 const selectedBandwidthPrice = computed(() => {
   const proxySpeed = proxySpeedOptions.value.find(item => item.value === proxySpeedValue.value)
   if (!proxySpeed)
     return 0
-  return proxySpeed.bandwidthPrice
+  const proxyPurchaseMonths = selectedUnit.value?.proxyPurchaseMonths ?? 1
+  return proxySpeed.bandwidthPriceMonths[proxyPurchaseMonths] ?? 0
 })
 
 const originalAmount = computed(() => {
-  return currency(selectedUnitPrice.value * purchaseMember.value).value
+  const selectedUnitPrice = selectedUnit.value?.proxyPrice ?? 0
+  return currency(selectedUnitPrice, { precision: 6 }).multiply(purchaseMember.value).value
 })
 
 const finalResult = computed(() => {
   const { proxyDiscount } = userPayInfo.value!
   const { businessUse } = configValue.value
-
-  const proxyAmount = businessUse.isSpecialOffer ? originalAmount.value : currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
-  const speedAmount = businessUse.isSpecialOffer ? selectedBandwidthPrice.value : currency(selectedBandwidthPrice.value).multiply(discountCalculate([proxyDiscount])).value
-  const diffAmount = currency(originalAmount.value).add(selectedBandwidthPrice.value).subtract(proxyAmount).subtract(speedAmount).value
+  const proxyAmount = businessUse.isSpecialOffer ? originalAmount.value : currency(originalAmount.value, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
+  const speedAmount = businessUse.isSpecialOffer ? selectedBandwidthPrice.value : currency(selectedBandwidthPrice.value, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
+  const diffAmount = currency(originalAmount.value, { precision: 6 }).add(selectedBandwidthPrice.value).subtract(proxyAmount).subtract(speedAmount).value
 
   return {
-    amount: currency(proxyAmount).add(speedAmount).value,
+    amount: currency(proxyAmount, { precision: 6 }).add(speedAmount).value,
     diffAmount,
   }
 })
