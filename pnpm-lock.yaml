@@ -711,9 +711,6 @@ importers:
       vue-router:
         specifier: ^5.0.6
         version: 5.1.0(@vue/compiler-sfc@3.5.35)(pinia@3.0.4(typescript@6.0.3)(vue@3.5.25(typescript@6.0.3)))(vite@8.1.0(@types/node@22.19.19)(esbuild@0.28.0)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))(vue@3.5.25(typescript@6.0.3))
-      vue-virtual-scroller:
-        specifier: 3.0.4
-        version: 3.0.4(vue@3.5.25(typescript@6.0.3))
       zod:
         specifier: ^3.24.2
         version: 3.25.76
@@ -12363,11 +12360,6 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: '>=5.0.0'
-
-  vue-virtual-scroller@3.0.4:
-    resolution: {integrity: sha512-3qh3c9VUVysuXynaa4fVZ3ncx3VgD7EPRiQcj+jUVZl5u/TTkD3c27XvSEu3JGJfsJt/vVTVziZ3djiiHtW4cQ==}
-    peerDependencies:
-      vue: ^3.3.0
 
   vue@3.5.25:
     resolution: {integrity: sha512-YLVdgv2K13WJ6n+kD5owehKtEXwdwXuj2TTyJMsO7pSeKw2bfRNZGjhB7YzrpbMYj5b5QsUebHpOqR3R3ziy/g==}
@@ -25635,10 +25627,6 @@ snapshots:
       '@volar/typescript': 2.4.28
       '@vue/language-core': 3.3.3
       typescript: 6.0.3
-
-  vue-virtual-scroller@3.0.4(vue@3.5.25(typescript@6.0.3)):
-    dependencies:
-      vue: 3.5.25(typescript@6.0.3)
 
   vue@3.5.25(typescript@6.0.3):
     dependencies:

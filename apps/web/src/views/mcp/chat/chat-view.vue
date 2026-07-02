@@ -7,7 +7,6 @@ import { useThemeStore } from '/@/stores/theme'
 import type { GeneratedImageInfo, HitlDecision, InputScene } from '/@/views/mcp/types'
 import MessageItem from './components/message-item.vue'
 import PendingAttachments from './components/pending-attachments.vue'
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { compare } from 'compare-versions'
 import { useChatStreamStore } from '../pinia-store/useChatStreamStore'
 import { useAgentStore } from '/@/stores/agent'
@@ -48,8 +47,7 @@ const background = computed(() => themeStore.realTheme === 'dark'
   : getImage('mcp/agent-chat-light.svg'))
 
 // ---- 自动滚动 ----
-// DynamicScroller 实例：$el 即其内部可滚动根元素，强制滚底时直接操作它
-const scrollerRef = useTemplateRef<{ scrollToBottom: () => void, $el?: HTMLElement }>('scroller')
+const messageScrollRef = useTemplateRef<HTMLElement>('messageScroll')
 const inputContainerRef = useTemplateRef<HTMLElement>('inputContainer')
 const titleBarRef = useTemplateRef<HTMLElement>('titleBar')
 const shouldAutoScroll = ref(true)
@@ -85,8 +83,7 @@ function onWheel(e: WheelEvent) {
 }
 
 /**
- * DynamicScroller 的 @scroll 透传为原生 scroll 事件，event.target 即其内部可滚动根元素。
- * 用 event.target 读取，避免再持有独立 ref；距底 < 50px 视为「贴底」，重新启用自动滚动。
+ * 距底 < 50px 视为「贴底」，重新启用自动滚动。
  */
 function onScroll(e: Event) {
   if (!shouldAutoScroll.value) {
@@ -99,17 +96,13 @@ function onScroll(e: Event) {
 function scrollToBottom() {
   if (!shouldAutoScroll.value)
     return
-  const el = scrollerRef.value?.$el as HTMLElement | undefined
+  const el = messageScrollRef.value
   if (el)
     el.scrollTop = el.scrollHeight
 }
 
 /**
- * 强制滚底：直接操作滚动容器 DOM，用稳定性轮询跟上 DynamicScroller 的渐进测高。
- *
- * DynamicScroller 的 scrollToBottom() 内部有防重入锁，快速切换时会被吞掉；
- * 且它只跑固定几次 rAF，长列表测高未完成时就停了。
- *
+ * 强制滚底：直接操作滚动容器 DOM，用稳定性轮询跟上异步内容渲染。
  * 这里改用 epoch 令牌取消旧循环：每次调用时 epoch 自增，旧循环检测到 epoch 变了就退出。
  * 每帧把 scrollTop 顶到 scrollHeight，连续 MAX_STABLE_FRAMES 帧 scrollHeight 不再增长则停止。
  */
@@ -132,7 +125,7 @@ function forceScrollToBottom() {
     if (epoch !== scrollEpoch)
       return // 已被新的调用取代，退出
 
-    const el = scrollerRef.value?.$el as HTMLElement | undefined
+    const el = messageScrollRef.value
     if (!el) {
       // DOM 未就绪，稍后重试
       requestAnimationFrame(tick)
@@ -533,7 +526,7 @@ async function extractScriptFromBuffer(buffer: ArrayBuffer, sourceExt: string): 
     <!-- 背景渐变装饰 -->
     <img v-if="chatStore.isEmpty" class="absolute size-full z-1 object-cover object-center" :src="background">
 
-    <!-- 有内容时 DynamicScroller 是唯一滚动容器，外层不能再滚动（消除嵌套滚动） -->
+    <!-- 有内容时消息列表是唯一滚动容器，外层不能再滚动（消除嵌套滚动） -->
     <div class="flex flex-col items-center h-full relative z-2 gap-6" :class="chatStore.isEmpty ? 'pt-9 overflow-y-auto' : 'overflow-hidden'" :style="containerStyle">
       <!-- 标题栏，粘性布局 -->
       <div
@@ -601,88 +594,81 @@ async function extractScriptFromBuffer(buffer: ArrayBuffer, sourceExt: string): 
         </GradientButton>
       </template>
 
-      <DynamicScroller
+      <div
         v-else
-        ref="scroller"
-        :items="chatStore.messageList"
-        :min-item-size="80"
-        key-field="id"
-        class="w-full flex-1 min-h-0 pl-1.5"
-        :style="[contentContainerStyle, { willChange: 'transform' }]"
+        ref="messageScroll"
+        class="w-full flex-1 min-h-0 overflow-y-auto pl-1.5"
+        :style="contentContainerStyle"
         :class="chatStore.isEmpty ? '' : 'pt-8'"
         @scroll="onScroll"
         @wheel="onWheel"
       >
-        <template #default="{ item, index, active }">
-          <!-- active 必须透传：DynamicScrollerItem 据此判断自己是否在可视池中并触发测高 -->
-          <DynamicScrollerItem :item="item" :active="active" :data-index="index">
-            <!-- content-visibility: auto 让屏外节点跳过 layout/paint；contain-intrinsic-size 给浏览器估算高度 -->
-            <div class="w-full max-w-[640px] mx-auto pb-6" style="content-visibility: auto; contain-intrinsic-size: auto 120px">
-              <div class="flex items-start self-stretch gap-2">
-                <RxAvatar class="border border-[var(--colors-border-border-inactive)] rounded-full" :avatar="item.avatar" :color="item.color" :name="item.name" :size="32" :font-size="16" />
-                <div class="flex-1 flex flex-col gap-3 overflow-hidden">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-[var(--colors-text-text-placeholder)] text-3 font-bold leading-[16px]">{{ item.userName }}</span>
-                    <span class="text-[var(--colors-text-text-inactive)] text-3 leading-[16px]">{{ item.date }}</span>
-                  </div>
-                  <MessageItem
-                    v-if="item.role === 'assistant'"
-                    :item="item"
-                    :handle-hitl-interrupt="handleHitlInterrupt"
-                    :conversation-type="chatStore.currentConversation?.conversation_type"
-                    :is-chatting="chatStore.isChatting"
-                    :is-last="isLast(index, chatStore.messageList)"
-                    @use-reference="handleUseGeneratedImage"
-                  />
-                  <div v-else class="flex flex-col gap-5">
-                    <div class="whitespace-pre-line text-[var(--colors-text-text-primary)] text-3.5 leading-[1.4]">
-                      {{ item.content }}
-                    </div>
-                    <div v-if="item.attachments?.length" class="flex flex-col gap-2 max-w-185px">
-                      <PendingAttachments :attachments="item.attachments" :conversation-type="chatStore.currentConversation?.conversation_type" />
-                    </div>
-                  </div>
-                </div>
+        <div
+          v-for="(item, index) in chatStore.messageList"
+          :key="item.id"
+          class="w-full max-w-[640px] mx-auto pb-6"
+        >
+          <div class="flex items-start self-stretch gap-2">
+            <RxAvatar class="border border-[var(--colors-border-border-inactive)] rounded-full" :avatar="item.avatar" :color="item.color" :name="item.name" :size="32" :font-size="16" />
+            <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[var(--colors-text-text-placeholder)] text-3 font-bold leading-[16px]">{{ item.userName }}</span>
+                <span class="text-[var(--colors-text-text-inactive)] text-3 leading-[16px]">{{ item.date }}</span>
               </div>
-            </div>
-          </DynamicScrollerItem>
-        </template>
-
-        <template #after>
-          <div
-            v-if="recordingData?.status === 'done' && (recordingData.finalScript || recordingData.finalScriptFileId || recordingData.finalScriptOssUrl)"
-            class="w-full max-w-[640px] mx-auto pb-6 px-1.5"
-          >
-            <div class="flex items-start gap-2">
-              <div class="w-8 h-8 shrink-0" />
-              <div class="flex-1 rounded-2 border border-[var(--colors-border-border-inactive)] bg-[var(--colors-background-bg-block)] overflow-hidden">
-                <div class="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--colors-border-border-inactive)]">
-                  <SvgIcon name="base/rx_ic_doc_api" size="16" color="var(--colors-icon-icon-brand)" class="shrink-0" />
-                  <span class="flex-1 text-3.5 font-500 text-[var(--colors-text-text-primary)] truncate">
-                    {{ recordingScriptFileName }}
-                  </span>
-                  <span class="text-3 text-[var(--colors-text-text-tertiary)] shrink-0">
-                    {{ $t('自动化脚本') }}
-                  </span>
+              <MessageItem
+                v-if="item.role === 'assistant'"
+                :item="item"
+                :handle-hitl-interrupt="handleHitlInterrupt"
+                :conversation-type="chatStore.currentConversation?.conversation_type"
+                :is-chatting="chatStore.isChatting"
+                :is-last="isLast(index, chatStore.messageList)"
+                @use-reference="handleUseGeneratedImage"
+              />
+              <div v-else class="flex flex-col gap-5">
+                <div class="whitespace-pre-line text-[var(--colors-text-text-primary)] text-3.5 leading-[1.4]">
+                  {{ item.content }}
                 </div>
-                <div class="flex items-center justify-between gap-3 px-3 py-2">
-                  <span class="text-3 text-[var(--colors-text-text-secondary)]">
-                    {{ $t('录制完成，脚本已生成') }}
-                  </span>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 h-7 px-3 border-0 rounded-[31px] bg-[var(--colors-brand-brand-default)] text-white text-3 leading-5 cursor-pointer hover:opacity-90 transition-opacity duration-150 shrink-0"
-                    @click="downloadRecordingScript"
-                  >
-                    <SvgIcon name="base/rx_ic_download" size="14" color="white" />
-                    {{ $t('下载脚本') }}
-                  </button>
+                <div v-if="item.attachments?.length" class="flex flex-col gap-2 max-w-185px">
+                  <PendingAttachments :attachments="item.attachments" :conversation-type="chatStore.currentConversation?.conversation_type" />
                 </div>
               </div>
             </div>
           </div>
-        </template>
-      </DynamicScroller>
+        </div>
+
+        <div
+          v-if="recordingData?.status === 'done' && (recordingData.finalScript || recordingData.finalScriptFileId || recordingData.finalScriptOssUrl)"
+          class="w-full max-w-[640px] mx-auto pb-6 px-1.5"
+        >
+          <div class="flex items-start gap-2">
+            <div class="w-8 h-8 shrink-0" />
+            <div class="flex-1 rounded-2 border border-[var(--colors-border-border-inactive)] bg-[var(--colors-background-bg-block)] overflow-hidden">
+              <div class="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--colors-border-border-inactive)]">
+                <SvgIcon name="base/rx_ic_doc_api" size="16" color="var(--colors-icon-icon-brand)" class="shrink-0" />
+                <span class="flex-1 text-3.5 font-500 text-[var(--colors-text-text-primary)] truncate">
+                  {{ recordingScriptFileName }}
+                </span>
+                <span class="text-3 text-[var(--colors-text-text-tertiary)] shrink-0">
+                  {{ $t('自动化脚本') }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between gap-3 px-3 py-2">
+                <span class="text-3 text-[var(--colors-text-text-secondary)]">
+                  {{ $t('录制完成，脚本已生成') }}
+                </span>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-7 px-3 border-0 rounded-[31px] bg-[var(--colors-brand-brand-default)] text-white text-3 leading-5 cursor-pointer hover:opacity-90 transition-opacity duration-150 shrink-0"
+                  @click="downloadRecordingScript"
+                >
+                  <SvgIcon name="base/rx_ic_download" size="14" color="white" />
+                  {{ $t('下载脚本') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- 输入框 -->
       <div ref="inputContainer" class="max-w-[640px] w-full rounded-2" :class="[chatStore.isEmpty ? '' : 'mt-2.5 absolute left-1/2 transform -translate-x-1/2 bottom-0']">

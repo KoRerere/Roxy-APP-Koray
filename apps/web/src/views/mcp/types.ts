@@ -324,7 +324,7 @@ export interface AvatarInfo {
 
 // 格式化后的消息
 export interface FormattedMessage extends AvatarInfo {
-  /** 虚拟列表 key，DynamicScroller 的 key-field 依赖该字段，必须非空且唯一 */
+  /** 消息列表渲染 key，必须非空且唯一 */
   id: string
   date: string
   synthesisText?: string

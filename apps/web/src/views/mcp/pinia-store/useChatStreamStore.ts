@@ -223,7 +223,7 @@ export const useChatStreamStore = defineStore('chatStream', () => {
       return
     }
     // 替换最后一个 item 为新对象，同时用 slice() 换一个新数组引用，
-    // 确保 DynamicScroller 的 :items prop 发生变化（shallowRef + markRaw 下不能原地 mutate）
+    // 确保 shallowRef + markRaw 下的消息列表更新能触发视图刷新。
     const newItem = markRaw({
       ...list[idx],
       isStreaming,

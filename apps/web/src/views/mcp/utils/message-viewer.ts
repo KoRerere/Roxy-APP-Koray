@@ -425,7 +425,7 @@ export class MessageViewer {
 
     // 顺序未变且已有缓存结果直接返回同一数组引用
     if (!this._orderChanged && this._cachedResult) {
-      // 原地更新数组内容（保持引用稳定）而不是重建，避免虚拟列表认为整体换了
+      // 原地更新数组内容（保持引用稳定）而不是重建，避免下游重复渲染。
       for (let i = 0; i < this._cachedResult.length; i++) {
         const id = this._cachedResult[i].id
         const cached = this._cachedViews.get(id)
