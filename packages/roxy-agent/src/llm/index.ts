@@ -43,12 +43,11 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
 
   let llm: LLMInstance
   if (apiFormat === 'anthropic') {
-    llm = new ChatAnthropic({
+    const anthropic = new ChatAnthropic({
       model,
       apiKey,
       anthropicApiUrl: baseURL, // 使用 anthropicApiUrl 设置自定义 API 端点
       streaming: options.isStreaming,
-      maxTokens: 4096 + 1024,
       clientOptions: {
         defaultHeaders: {
           ...tracingHeaders,
@@ -59,6 +58,12 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
         : undefined,
       ...(enableThinking ? {} : { temperature: 0.5 }),
     })
+
+    Object.defineProperty(anthropic, 'profile', {
+      value: { maxInputTokens: 1_000_000 }, // TODO: 后续从后端返回
+      configurable: true,
+    })
+    llm = anthropic
   }
   else if (apiFormat === 'openai') {
     llm = new ChatOpenAI({
