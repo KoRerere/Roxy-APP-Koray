@@ -241,11 +241,11 @@ export function useSubscribe() {
         globalThis.electronAPI.send('app:hideNewFeatureTips')
       },
       slots: {
-        default: ({ hideModal }) => {
+        default: ({ handleCancel }) => {
           return (
             <AppUpgradeTips
               onSkip={() => {
-                hideModal()
+                handleCancel()
                 showMcpDriver()
               }}
               newFeatureTips={newFeatureTips}
@@ -405,7 +405,7 @@ export function useSubscribe() {
         updateOnboardingTaskStatus({ firstRegisterGuideStatus: true })
       },
       slots: {
-        container: ({ hideModal }) => <WelcomeModal onClose={hideModal} />,
+        container: ({ handleCancel }) => <WelcomeModal onClose={handleCancel} />,
       },
     })
   }

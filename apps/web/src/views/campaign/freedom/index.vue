@@ -38,8 +38,8 @@ function openModal(force = false) {
       localStorage.setItem(localStorageKey, JSON.stringify(true))
     },
     slots: {
-      container: ({ hideModal }) => h(ActivityModal, {
-        onClose: hideModal,
+      container: ({ handleCancel }) => h(ActivityModal, {
+        onClose: handleCancel,
       }),
     },
   })

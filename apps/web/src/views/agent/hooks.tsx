@@ -248,11 +248,11 @@ export function useProxy() {
       blockScroll: true,
       beforeClose: ipBeforeClose,
       slots: {
-        container: ({ hideModal }) => (
+        container: ({ handleCancel }) => (
           <ChooseModal
             {...props}
             onSuccess={resolve}
-            onClose={hideModal}
+            onClose={handleCancel}
           />
         ),
       },

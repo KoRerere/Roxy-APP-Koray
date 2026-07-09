@@ -59,9 +59,9 @@ function openModal(force = false) {
       openAgainBy24Hours()
     },
     slots: {
-      container: ({ hideModal }) => h(ActivityModal, {
+      container: ({ handleCancel }) => h(ActivityModal, {
         onClose: () => {
-          hideModal()
+          handleCancel()
           sessionStorage.setItem(localStorageKey, JSON.stringify(true))
         },
         onConfirm: () => {

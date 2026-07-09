@@ -495,15 +495,15 @@ function showOperationMenu(props: { event: Event, operation: any[] }, data: any)
     blockScroll: true,
     handleCancel: () => updateOnboardingTaskStatus({ contextMenuGuideStatus: true }),
     slots: {
-      container: ({ hideModal }) => (
+      container: ({ handleCancel }) => (
         <GuideModal
           title={$t('鼠标右键编辑')}
           desc={({ class: className }) => {
             return <div class={className}>{$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')}</div>
           }}
           video={getVideoSource('right-click.mp4')}
-          onClose={hideModal}
-          onConfirm={hideModal}
+          onClose={handleCancel}
+          onConfirm={handleCancel}
         >
         </GuideModal>
       ),
