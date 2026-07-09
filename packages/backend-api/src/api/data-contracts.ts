@@ -2361,25 +2361,25 @@ export interface UserGetDefConfigListData {
 }
 
 export interface UserSetUserConfigCreatePayload {
-  language: string;
-  autoDetectProxy: boolean;
-  timeZone: string;
-  closeSoft: string;
-  uploadDir: string;
-  cacheDir: string;
-  autoDelDays: string;
-  autoDelSize: string;
-  memoryLimit: string;
-  appearance: number;
-  systemProxySwitch: boolean;
-  v2raySwitch: boolean;
-  ipChecker: string;
-  ipBlackList: string[];
-  apiToken: string;
-  isFirstSwitchTheme: boolean;
-  batchOpenLayout: string;
-  taskbarIconDisplay: string;
-  taskbarTabDisplay: string;
+  language?: string;
+  autoDetectProxy?: boolean;
+  timeZone?: string;
+  closeSoft?: string;
+  uploadDir?: string;
+  cacheDir?: string;
+  autoDelDays?: string;
+  autoDelSize?: string;
+  memoryLimit?: string;
+  appearance?: number;
+  systemProxySwitch?: boolean;
+  v2raySwitch?: boolean;
+  ipChecker?: string;
+  ipBlackList?: string[];
+  apiToken?: string;
+  isFirstSwitchTheme?: boolean;
+  batchOpenLayout?: string;
+  taskbarIconDisplay?: string;
+  taskbarTabDisplay?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -6868,6 +6868,7 @@ export interface UserGetProxyProvidersByBusinessSceneCountryListData {
     proxyBandwidthPriceList: {
       bandwidthPrice: number;
       bandwidthSpeed: number;
+      bandwidthSpeedDesc: string;
       originalBandwidthPrice: number;
     }[];
     proxyPriceList: {
@@ -6917,11 +6918,13 @@ export interface UserGetProxyBandwidthUpgradePriceListListParams {
 export interface UserGetProxyBandwidthUpgradePriceListListData {
   code: number;
   data: {
+    currentBandwidthSpeed: number;
     proxyBandwidthPriceList: {
       bandwidthPrice: number;
       bandwidthSpeed: number;
       bandwidthUpgradePrice: number;
     }[];
+    remainingDays: number;
   };
   msg: string;
 }
@@ -7870,42 +7873,25 @@ export interface UserGetProjectInfoByWorkspaceListData {
       projectDefault?: number;
       /** 1 转移项目 0 非转移项目 */
       isTransfer?: number;
-      /**
-       * 项目ID
-       * 项目ID
-       */
+      /** 项目ID */
       project_id?: number;
       user_info?: {
-        /**
-         * 权限
-         * role 权限： Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1)  Manager(管理者,枚举：2) Owner(拥有者,枚举：3)
-         */
+        /** role 权限： Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1)  Manager(管理者,枚举：2) Owner(拥有者,枚举：3) */
         role: number;
-        /**
-         * 用户ID
-         * 用户ID
-         */
+        /** 用户ID */
         userId: number;
-        /**
-         * 用户名
-         * 用户名
-         */
+        /** 用户名 */
         userName: string;
-        /**
-         * 邮箱
-         * 邮箱
-         */
+        /** 昵称 */
+        workspaceNickname: string;
+        /** 邮箱 */
         email: string;
         /** 手机号 */
         phone: string;
         pinStatus: number;
       }[];
-      /**
-       * 项目名称
-       * 项目名称
-       */
+      /** 项目名称 */
       projectName?: string;
-      topTime?: string;
     }[];
   };
   msg: string;
@@ -7994,8 +7980,12 @@ export interface UserGetTopProjectInfoListData {
 }
 
 export interface UserAddProjectInfoCreatePayload {
-  /** 项目名称 */
+  /**
+   * 项目名称
+   * 项目名称
+   */
   projectName: string;
+  relatedUserIds?: number[];
 }
 
 export interface UserAddProjectInfoCreateData {

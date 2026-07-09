@@ -42,10 +42,12 @@ export enum TaskbarIconDisplay {
 }
 
 export enum WorkspaceType {
-  /** 私有 */
+  /** 私有 / 普通模式 */
   Private = 0,
-  /** 公共 */
+  /** 公共 — @legacy，当前未使用 */
   Public = 1,
+  /** 电商模式 */
+  ECommerce = 2,
 }
 
 export enum ActivityType {

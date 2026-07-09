@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getImage } from '/@/utils/basic'
+import { getImage, getLocalStorageDriverStatus, setLocalStorageDriverStatus } from '/@/utils/basic'
 import ScrollOverflowEffect from '/@/components/scroll-overflow-effect.vue'
 import { useAgentApi } from './agent-api'
 import type { Conversation } from './agent-api'
@@ -296,13 +296,6 @@ onMounted(async () => {
     applySkill(skillSlug)
   }
 
-  let _driverStatus = {}
-  try {
-    _driverStatus = JSON.parse(localStorage.getItem('driverStatus') || '{}')
-  }
-  catch (error) {
-
-  }
   const driverObj = genDriver({
     steps: [
       {
@@ -315,11 +308,11 @@ onMounted(async () => {
       },
     ],
     onDestroyed: () => {
-      localStorage.setItem('driverStatus', JSON.stringify({ ..._driverStatus, buyPoints: true }))
+      setLocalStorageDriverStatus('buyPoints', true)
     },
   })
 
-  if (!_driverStatus.buyPoints) {
+  if (!getLocalStorageDriverStatus('buyPoints')) {
     driverObj.drive()
   }
 })

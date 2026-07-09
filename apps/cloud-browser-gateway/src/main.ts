@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AppModule } from './app.module'
 import { ContainerService } from './container/container.service'
+import { initCrypto } from './utils/crypto-aes-256-gcm'
 
 (globalThis as any).$t = (id: string, values?: Record<string, any>) => {
   if (!values)
@@ -19,6 +20,7 @@ import { ContainerService } from './container/container.service'
  */
 async function bootstrap() {
   const logger = new Logger('Bootstrap')
+  await initCrypto()
   const app = await NestFactory.create(AppModule)
 
   // 全局参数校验管道：自动过滤未声明字段、校验 DTO 类型

@@ -23,10 +23,7 @@ import DoubeOpen from './doube-open.vue'
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
-
-import NextBouns from '/@/views/campaign/june-eighteen/next-bouns.vue'
-
-// ====================================
+import NewEnter from '/@/views/lab/new-enter/index.vue'
 
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
@@ -71,7 +68,12 @@ function getToastMessage(options: { msg: string, reCheck?: () => void }) {
 }
 
 function _open2() {
-  showToast(-1, getToastMessage({ msg: '代理 IP 检测失败，可能由于代理失效或本地网络波动导致。', reCheck: () => { console.log('reCheck') } }))
+  showToast(-1, getToastMessage({
+    msg: '代理 IP 检测失败，可能由于代理失效或本地网络波动导致。',
+    reCheck: () => {
+      console.log('reCheck')
+    },
+  }))
 
   // showModal({
   //   showHeader: false,
@@ -422,21 +424,50 @@ const ipItems = [
 ]
 
 const ipValues = ref([192, 168, 134, 22])
+
+// ===================
+
+function _open122() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      root: '!max-w-full !max-h-full !border-none !shadow-none !rounded-none overflow-hidden',
+    },
+    slots: {
+      container: ({ hideModal }) => <NewEnter onClose={hideModal}></NewEnter>,
+    },
+  })
+}
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
-    <NextBouns :amount="10" />
+    <RxButton :label="$t('before enter')" @click="_open122" />
     <div>
       <RxInputGroup v-model="ipValues" :items="ipItems" class="max-w-xs" />
     </div>
+
+    <RxMaskScroll class="max-h-50">
+      <!-- <div v-for="value in 20" :key="value" class="h-10 w-30 border-0 border-b-1 border-solid">
+        {{ value }}
+      </div> -->
+
+      <ul class="flex flex-col gap-1.5 ma-0 pa-0 pl-6">
+        <li v-for="value in 20" :key="value" class="break-all tt-secondary text-3.25 leading-4.5">
+          {{ value }}
+        </li>
+      </ul>
+    </RxMaskScroll>
+
     <!-- <a href="/workspace/teams">wcis man</a> -->
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <!-- <RxButton label="open1" @click="_open1" />
-    <RxButton label="open2" @click="_open2" />
-    <DoubeOpen /> -->
+    <RxButton label="open1" @click="_open1" />
+    <!-- <RxButton label="open2" @click="_open2" /> -->
+    <!-- <DoubeOpen /> -->
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris

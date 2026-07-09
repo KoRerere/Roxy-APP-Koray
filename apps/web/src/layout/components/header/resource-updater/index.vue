@@ -103,7 +103,7 @@ function applyClientUpdate(data: ResourceUpdateMessage) {
 
 async function checkForUpdates() {
   // 直接消费主进程返回值回填状态，避免依赖 app:resource-update 推送时序
-  //（刷新后 clientUpdates 被重置，若推送早于监听注册会丢失"已下载"状态）
+  // （刷新后 clientUpdates 被重置，若推送早于监听注册会丢失"已下载"状态）
   const data = await globalThis.electronAPI.send('app:checkForUpdates')
   // 仅当确实存在升级生命周期（下载中/已下载/失败）时回填，避免把默认空状态加入列表
   if (data && data.status && ['downloading', 'downloaded', 'failed'].includes(data.status)) {
@@ -321,7 +321,7 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
             <Badge v-if="tab.badge" :value="tab.badge" severity="danger" size="small" />
           </Tab>
         </TabList>
-        <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
+        <TabPanels class="!pa-0 min-h-25 max-h-90 overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="overflow-hidden">
             <component :is="tab.component" ref="tabComponentRef" :upgrade-list="(tab.list as any)" @on-download-click="onDownloadClick" />
           </TabPanel>

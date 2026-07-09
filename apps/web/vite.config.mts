@@ -101,6 +101,19 @@ function replaceRootInScss() {
   }
 }
 
+function roxyCryptoWasmResolver(): PluginOption {
+  const wasmJs = join(PROJECT_ROOT, 'packages/roxy-crypto/pkg/roxy_crypto_wasm.js')
+  return {
+    name: 'roxy-crypto-wasm-resolver',
+    resolveId(source, importer) {
+      if (source === './roxy_crypto_wasm.js' && importer?.includes('roxy-crypto/src')) {
+        return wasmJs
+      }
+      return null
+    },
+  }
+}
+
 console.log('web is build with', process.env.NODE_ENV)
 const config: UserConfig = {
   mode: process.env.MODE,
@@ -111,6 +124,7 @@ const config: UserConfig = {
     alias: {
       '/@/': `${join(PACKAGE_ROOT, 'src')}/`,
       '#roxybrowser/': `${join(PROJECT_ROOT, 'apps/electron/src')}/`,
+      '@roxy/crypto': join(PROJECT_ROOT, 'packages/roxy-crypto/src/index.ts'),
     },
   },
 
@@ -133,7 +147,10 @@ const config: UserConfig = {
 
   optimizeDeps: {
     include: [...primevueComponents, 'cobe'],
+    exclude: ['@roxy/crypto'],
   },
+
+  assetsInclude: ['**/*.wasm'],
 
   build: {
     // sourcemap: true,
@@ -174,6 +191,7 @@ const config: UserConfig = {
   },
 
   plugins: [
+    roxyCryptoWasmResolver(),
     // {
     //   name: 'generate-manifest-like-file',
     //   writeBundle(options, bundle) {

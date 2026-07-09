@@ -1,13 +1,14 @@
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { chmod } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { appConfig } from '/@/constants'
 import { isWindows } from '/@/constants/common'
-import { checkResource } from '/@/modules/app/checkResource'
 import { roxynetReportResolvers } from '/@/modules/appServer/roxynet-receiver'
-import { encryptByDESModeCBC, buildRoxynetUpstreamProxy } from '/@/modules/roxynet/util'
+import { buildRoxynetUpstreamProxy, encryptByDESModeCBC } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { getNetworkMode } from '/@/modules/store/networkMode'
+import { roxynetBinUpdater } from '/@/modules/updater/binUpdater'
 import { fileExists, getProcessIdsByExePath, isProcessExists, killProcessForce } from '/@/utils'
 
 export * from './util'
@@ -15,6 +16,14 @@ export * from './util'
 let roxynetProcess: ChildProcess | null = null
 let lastCheckTime = 0
 let startRoxynetInFlight: Promise<void | unknown> | null = null
+
+/** 等待 roxynet 上报本地端口（report），带超时兜底，避免永久挂起导致代理检测卡死 */
+function waitRoxynetReport(timeoutMs = 15_000) {
+  return Promise.race([
+    roxynetReportResolvers.promise,
+    sleep(timeoutMs),
+  ])
+}
 
 export function getRoxynetProcess() {
   return roxynetProcess
@@ -43,15 +52,16 @@ async function startRoxynetInternal() {
   const isExist = await fileExists(appConfig.roxynetBinPath)
   if (!isExist) {
     console.log('roxynetBinPath is not exist')
-    await checkResource().catch((error) => {
-      console.error('checkResource error:', error)
+    // 本地 seed 自愈（快速、不联网），替代原先启动页阻塞式联网下载
+    await roxynetBinUpdater.ensureActiveFromSeed().catch((error) => {
+      console.error('ensureActiveFromSeed error:', error)
       return Promise.reject(error)
     })
   }
 
   if (roxynetProcess?.pid) {
     if (Date.now() - lastCheckTime < 60 * 1000 * 1) {
-      return roxynetReportResolvers.promise
+      return waitRoxynetReport()
     }
     lastCheckTime = Date.now()
     console.log('Roxynet has been started')
@@ -61,7 +71,7 @@ async function startRoxynetInternal() {
       roxynetProcess = null
       return startRoxynetInternal()
     }
-    return roxynetReportResolvers.promise
+    return waitRoxynetReport()
   }
 
   const upstream = await buildRoxynetUpstreamProxy()
@@ -168,7 +178,8 @@ async function startRoxynetInternal() {
   })
 
   console.log(`Child process ID: ${roxynetProcess.pid}`)
-  return Promise.all([promise, roxynetReportResolvers.promise])
+  // report 等待加超时兜底，保证 startRoxynet 有界返回，代理检测不会卡住
+  return Promise.all([promise, waitRoxynetReport()])
 }
 
 export function stopRoxynet() {

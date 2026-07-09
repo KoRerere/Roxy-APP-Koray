@@ -69,6 +69,7 @@ const inputs = ref([
     type: 'number',
     name: 'port',
     placeholder: '0~65535',
+    errorClass: 'whitespace-nowrap',
     onblur: async () => {
       const input = findInputByName(inputs.value, 'port')
 

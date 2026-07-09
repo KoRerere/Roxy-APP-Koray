@@ -27,7 +27,7 @@ const loading = ref(false)
 const _members = computed(() =>
   (labels || [])
     .filter((item: any) => `${item.labelId}`.startsWith('u_'))
-    .map(item => ({ ...item, color: item.labelColor, name: item.labelName.slice(0, 2) })),
+    .map(item => ({ ...item, color: item.labelColor, name: item.labelName, tooltip: item.labelName })),
 )
 const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
 

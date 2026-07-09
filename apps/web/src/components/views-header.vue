@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBackRoute } from '/@/router/utils';
+import { useBackRoute } from '/@/router/navigation';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 interface Props {

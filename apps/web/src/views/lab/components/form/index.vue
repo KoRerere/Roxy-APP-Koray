@@ -1,23 +1,26 @@
 <script setup lang="tsx">
-import FormItem from './item.vue';
-import { z } from 'zod';
-;
-import { genFormContext } from './useContext';
-import { isFunction } from 'es-toolkit';
-import { zodResolver } from '@primevue/forms/resolvers/zod';
-import type { FormInstance, FormSubmitEvent } from '@primevue/forms';
-import type { Input } from './type';
+import FormItem from './item.vue'
+import { z } from 'zod'
+import { genFormContext } from './useContext'
+import { isFunction } from 'es-toolkit'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import type { FormInstance, FormSubmitEvent } from '@primevue/forms'
+import type { Input } from './type'
 
-const { id = Date.now().toString(32), inputs = [], position = 'top', labelProps } = defineProps<{
+const { id = Date.now().toString(32), inputs } = defineProps<{
   id?: string
-  position?: 'top' | 'left'
-  labelProps?: Record<string, any>
+  // position?: 'top' | 'left'
+  /**
+   * labelProps?: Record<string, any>
+   */
   inputs: Input[]
 }>()
 
 const emit = defineEmits<{
   (e: 'submit', values: Record<string, any>): void
 }>()
+
+const formRef = useTemplateRef<FormInstance>('tsform')
 
 genFormContext({
   setValues: (values: Record<string, any>) => {
@@ -28,10 +31,9 @@ genFormContext({
   },
   getFieldState: (name: string) => {
     return formRef.value?.getFieldState(name)
-  }
+  },
 })
 
-const formRef = useTemplateRef<FormInstance>('tsform')
 const _inputs = ref(inputs)
 const initialForm = formatForm(inputs)
 const initialValues = reactive(Object.fromEntries(initialForm.values))
@@ -45,7 +47,8 @@ function formatForm(inputs: Input[]) {
       const { resolver, values } = formatForm(items)
       acc.resolver.push(...resolver)
       acc.values.push(...values)
-    } else if (name) {
+    }
+    else if (name) {
       const _resolver = (isFunction(resolver) && resolver(z)) || (required && z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder })))
       _resolver && acc.resolver.push([name, _resolver])
       acc.values.push([name, initialFieldValue(input)])
@@ -56,7 +59,8 @@ function formatForm(inputs: Input[]) {
 }
 
 function initialFieldValue(input: Input) {
-  if (input.value) return input.value
+  if (input.value)
+    return input.value
 
   switch (input.type) {
     case 'number':
@@ -74,10 +78,11 @@ function onFormSubmit(event: FormSubmitEvent) {
 }
 
 function setInputsProps(map: Record<string, any>, inputs: Input[]) {
-  inputs.forEach(item => {
+  inputs.forEach((item) => {
     if (item.items?.length) {
       setInputsProps(map, item.items)
-    } else if (map.hasOwnProperty(item.name)) {
+    }
+    else if (Object.hasOwn(map, item.name)) {
       const { value, ...props } = map[item.name]
       Reflect.set(item, 'props', { ...item.props, ...props })
       if (value) {
@@ -100,22 +105,22 @@ defineExpose({
     formRef.value?.setValues(values)
   },
   getValues: () => {
-    return Object.fromEntries(Object.entries(formRef.value?.states!).map(([key, value]) => [key, value.value]))
+    return Object.fromEntries(Object.entries(formRef.value?.states ?? {}).map(([key, value]) => [key, value.value]))
   },
   reset: () => {
     formRef.value?.reset()
   },
   submit: () => {
     formRef.value?.submit()
-  }
+  },
 })
 </script>
 
 <template>
-  <Form ref="tsform" :id="id" :initialValues="initialValues" :resolver="resolver" @submit="onFormSubmit" class="flex flex-col gap-4 self-stretch">
+  <Form :id="id" ref="tsform" :initial-values="initialValues" :resolver="resolver" class="flex flex-col gap-4 self-stretch" @submit="onFormSubmit">
     <slot name="default" :inputs="_inputs">
       <template v-for="input in _inputs" :key="input.name">
-        <FormItem :input="input"></FormItem>
+        <FormItem :input="input" />
       </template>
     </slot>
   </Form>

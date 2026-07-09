@@ -4,7 +4,7 @@ import { debounce } from 'es-toolkit'
 import type { UserGetRoxyClawListData, UserSetRoxyClawCreatePayload } from '@roxy/backend-api'
 import type { McpFailureType } from '@roxy/electron-preload'
 import { API } from '/@/api'
-import { useRouter } from 'vue-router'
+import { replaceToRoute } from '/@/router/navigation'
 
 /**
  * 获取 MCP 错误的 i18n 消息
@@ -67,7 +67,6 @@ const defaultConfig: RoxyClawConfig = {
 export const useRoxyClawStore = defineStore('roxyClaw', () => {
   const config = ref<RoxyClawConfig>({ ...defaultConfig })
   const originalConfig = shallowRef<RoxyClawConfig>({ ...defaultConfig })
-  const router = useRouter()
 
   // connectionStatus 只在内存中，不持久化到 localStorage
   const connectionStatus = shallowRef<{
@@ -236,7 +235,7 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     try {
       const apiPort = await globalThis.electronAPI.send('util:getApiPort')
       if (apiPort === -1) {
-        router.replace({ name: 'api-keys', query: { highlight: 'true' } })
+        replaceToRoute('api-keys', { highlight: 'true' })
         return {
           success: false,
           message: $t('请检查 API 启用状态或端口是否被占用'),

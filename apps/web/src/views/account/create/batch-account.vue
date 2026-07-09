@@ -5,6 +5,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleDialog } from '/@/components/simplePopup'
 
 import { API } from '/@/api'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import { useThemeStore } from '/@/stores/theme'
 import { useConfirm } from 'primevue/useconfirm'
 import { parseIntelligent } from '/@/views/account/create/utils'
@@ -14,6 +15,7 @@ const confirm = useConfirm()
 const themeStore = useThemeStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
+const { invalidateCache: invalidateAccountListCache } = useListCacheActions()
 
 const columns = [
   {
@@ -210,6 +212,7 @@ async function onSave(needMore: boolean) {
   const { code, msg } = await API.platform.userAddPlatformInfoBatchCreate(toRaw(dataList.value))
   onlyErrorToast(code, msg)
   if (code === 0) {
+    invalidateAccountListCache(LIST_CACHE_NAMESPACE.ACCOUNT_LIST)
     if (!needMore) {
       router.replace({ name: 'account-list' })
     }

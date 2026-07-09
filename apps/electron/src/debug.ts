@@ -1,6 +1,6 @@
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
-import { appUpdater } from '/@/modules/updater'
+import { appUpdater, roxynetBinUpdater, roxySyncBinUpdater } from '/@/modules/updater'
 import * as utils from '/@/utils'
 
 // 密码为 roxy-debug
@@ -36,6 +36,8 @@ function getDebugObj() {
     browserManager,
     utils,
     appUpdater,
+    roxynetBinUpdater,
+    roxySyncBinUpdater,
   }
 
   return debugObj

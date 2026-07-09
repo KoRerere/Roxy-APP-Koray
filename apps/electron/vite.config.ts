@@ -74,7 +74,7 @@ const config: UserConfig = {
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['@roxy/diskspace-native', ...ELECTRON_EXTERNALS, ...OPTIONAL_NATIVE_EXTERNALS],
+      external: ['@roxy/diskspace-native', '@roxy/crypto', ...ELECTRON_EXTERNALS, ...OPTIONAL_NATIVE_EXTERNALS],
       output: {
         entryFileNames: '[name].mjs',
         chunkFileNames: '[name].mjs',

@@ -9,7 +9,7 @@ import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createFormAsyncGate } from './hooks/useAsyncGate'
 import { createTableContext } from './hooks/useContext'
-import { useBackRoute } from '/@/router/utils'
+import { useBackRoute } from '/@/router/navigation'
 import { getFormDataByList } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 

@@ -171,8 +171,8 @@ export async function setupApp() {
 
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
-    // 检查资源是否准备完毕
-    await checkResource()
+    // 后台触发 agent 资源检查，不阻塞主窗创建（资源已改为后台异步更新，无需启动页等待）
+    void checkResource()
     // 进入主页
     await intoMainPage()
     // 处理冷启动

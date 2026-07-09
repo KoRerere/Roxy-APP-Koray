@@ -4,7 +4,7 @@ import MotionArrow from '/@/layout/components/header/resource-updater/motion-arr
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
-import { isDev } from '/@/utils'
+import { isDev, isMacOS } from '/@/utils'
 
 const props = defineProps<{
   isForceUpgrade: boolean
@@ -60,8 +60,13 @@ watch(() => props.isForceUpgrade, (newVal) => {
         }
       }
       else {
-        // 更新包下载完成后，延迟 15 秒再弹出
-        scheduleShowModal(FORCE_UPGRADE_SHOW_DELAY)
+        // macOS：更新包下载完成后，延迟 15 秒再弹出
+        if (isMacOS) {
+          scheduleShowModal(FORCE_UPGRADE_SHOW_DELAY)
+        }
+        else {
+          visible.value = true
+        }
       }
     }
   })

@@ -20,8 +20,9 @@ const roles = computed(() => {
   const result = members.value.reduce((acc, item: any) => {
     const data = {
       avatar: item.avatar,
-      name: item.userName?.slice(0, 2),
       color: item.avatarColor,
+      name: item.workspaceNickname || item.userName,
+      tooltip: item.workspaceNickname || item.userName,
     }
 
     if (item.role === Role.MANAGER) {

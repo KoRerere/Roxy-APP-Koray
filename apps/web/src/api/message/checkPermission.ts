@@ -20,13 +20,17 @@ export async function checkPermission(response: AxiosResponse<any, any>) {
   if (remoteVersion > lastVersion) {
     console.log('checkPermissionVersion', remoteVersion, lastVersion)
 
-    isCheckingVersion = true
-    lastVersion = remoteVersion
-
     const workspaceStore = useWorkspaceStore()
+    if (workspaceStore.isSwitchingWorkspace) {
+      lastVersion = remoteVersion
+      return
+    }
 
     if (!workspaceStore.currentWorkspace?.id)
       return
+
+    isCheckingVersion = true
+    lastVersion = remoteVersion
 
     workspaceStore.getPermissionByWorkspace(workspaceStore.currentWorkspace.id).finally(() => {
       isCheckingVersion = false

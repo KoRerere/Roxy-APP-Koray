@@ -23,6 +23,7 @@ import { useDialog } from 'primevue/usedialog'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRoleStore } from '/@/stores/role'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
 
@@ -38,6 +39,7 @@ const { columns, updateRemarkDisplayStatus } = useColumns()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
 const workspaceStore = useWorkspaceStore()
+const { invalidateCache: invalidateAccountListCache } = useListCacheActions()
 const { isViewer } = storeToRefs(useRoleStore())
 const canEdit = computed(() => !isViewer.value)
 const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
@@ -151,6 +153,21 @@ async function tableRequest(params: any) {
   return result
 }
 
+function syncExportDataFromCache() {
+  const entry = tableRef.value?.getCachedEntry?.()
+  if (entry?.rows)
+    exportData.value = entry.rows as Data[]
+}
+
+function refreshAccountList() {
+  invalidateAccountListCache(LIST_CACHE_NAMESPACE.ACCOUNT_LIST)
+  tableRef.value?.refresh()
+}
+
+onMounted(() => {
+  nextTick(syncExportDataFromCache)
+})
+
 function createAccount() {
   router.push({ name: 'account-create' })
 }
@@ -168,7 +185,7 @@ function editAccount(data?: Data) {
           const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: [formData] })
           onlyErrorToast(code, msg)
           if (code === 0) {
-            tableRef.value?.refresh()
+            refreshAccountList()
           }
         },
       }),
@@ -196,7 +213,7 @@ function editField(data: Data, field: keyof Data, title: string, inputType: 'tex
       const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: [payload] })
       onlyErrorToast(code, msg)
       if (code === 0)
-        tableRef.value?.refresh()
+        refreshAccountList()
     },
   })
 }
@@ -226,7 +243,8 @@ function onRemark(data: Data) {
       const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
       const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: datas, requestType: PlatformReqType.EditRemark })
       onlyErrorToast(code, msg)
-      tableRef.value?.refresh()
+      if (code === 0)
+        refreshAccountList()
     },
     onHide: resolve,
   })
@@ -266,7 +284,7 @@ function bindProfiles(data: Data) {
           })
           onlyErrorToast(code, msg)
           if (code === 0)
-            tableRef.value?.refresh()
+            refreshAccountList()
         },
       }),
     },
@@ -311,7 +329,7 @@ function deletePopup(data: any) {
       const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
       onlyErrorToast(code, msg)
       if (code === 0) {
-        tableRef.value?.refresh()
+        refreshAccountList()
       }
       resolve()
     },
@@ -328,7 +346,7 @@ function deletePopup(data: any) {
       <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest"
+      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" list-cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest"
                :operation="canEdit ? operation : []" :operation-handler="operationHandler" :virtual-scroller-options="{ itemSize: 60 }" :show-gridlines="false" :show-actions="false" :context-menu="canEdit"
       >
         <template #display-before>

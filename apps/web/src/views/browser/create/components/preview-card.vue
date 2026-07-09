@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import QuickSettings from '/@/views/browser/create/components/quick-settings.vue'
+// import QuickSettings from '/@/views/browser/create/components/quick-settings.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
@@ -121,7 +121,7 @@ function getPreview(list: any[]) {
 
 <template>
   <div class="flex flex-col my-4 gap-2.5 preview" :class="[!collapsed ? '' : 'hide']">
-    <QuickSettings v-if="!collapsed && !isEdit && !isBatch && !isImport" :choose="choosePreset" />
+    <!-- <QuickSettings v-if="!collapsed && !isEdit && !isBatch && !isImport" :choose="choosePreset" /> -->
     <TutorialVideo v-if="!collapsed && !onboardingTaskStatus?.createProfileVideoEntryStatus" video-type="create_profile" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">

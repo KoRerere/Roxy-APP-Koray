@@ -2,11 +2,12 @@ import './polyfill'
 import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
-import { getCookie } from '/@/utils'
+import { getCookie, initCrypto } from '/@/utils'
 
 globalThis.isElectron = Boolean(globalThis.electronAPI)
 
 queueMicrotask(async () => {
+  await initCrypto()
   if (globalThis.isElectron) {
     globalThis.electronAPI.send('app:getAppVersion').then((appVersion) => {
       globalThis.$appVersion = appVersion

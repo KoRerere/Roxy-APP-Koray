@@ -21,6 +21,7 @@
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/swagger": "^11.2.7",
     "@roxy/backend-api": "workspace:*",
+    "@roxy/crypto": "workspace:*",
     "@roxy/shared": "workspace:*",
     "ali-oss": "^6.23.0",
     "axios": "^1.15.0",

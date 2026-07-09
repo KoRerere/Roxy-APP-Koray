@@ -14,7 +14,11 @@ const ignore = [
 export async function checkIdentity(response: AxiosResponse<any, any>) {
   const userIdentity = Number(response.headers['r-user-identity'])
 
-  const { currentWorkspace, getWorkspaceList } = useWorkspaceStore()
+  const workspaceStore = useWorkspaceStore()
+  const { currentWorkspace, getWorkspaceList } = workspaceStore
+
+  if (workspaceStore.isSwitchingWorkspace)
+    return
 
   if (!currentWorkspace?.id || ignore.includes(response.config.url!)) {
     return

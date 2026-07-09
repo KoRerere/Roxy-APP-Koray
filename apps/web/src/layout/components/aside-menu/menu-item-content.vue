@@ -4,6 +4,7 @@ import { useRoxyClawStore } from '/@/stores/roxy-claw'
 import { useSimpleLocale } from '/@/stores/locale'
 // import { useThemeStore } from '/@/stores/theme'
 import { useProxy } from '/@/views/agent/hooks'
+import { menuActionHandlers } from '/@/router/menu-shared'
 import { emitter } from '/@/utils/eventBus'
 import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
 
@@ -41,7 +42,13 @@ watchEffect(() => {
 
 function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   if (props.item.meta?.type === 'button') {
-    props.item.meta?.onClick?.(event)
+    const menuAction = props.item.meta?.menuAction
+    if (menuAction && menuActionHandlers[menuAction]) {
+      void menuActionHandlers[menuAction](event)
+    }
+    else {
+      props.item.meta?.onClick?.(event)
+    }
   }
   else if (!canOpen.value || props.item.redirect) {
     navigate()

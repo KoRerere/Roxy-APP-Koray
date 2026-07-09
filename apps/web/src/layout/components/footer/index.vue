@@ -2,15 +2,17 @@
 import Campaign from '/@/views/campaign/index.vue'
 import PayMetrics from './components/pay-metrics.vue'
 import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
-import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
-import { getRoleLabelMap, WorkspaceType } from '/@/enums'
+import { useRouteContext } from '/@/composables/useRouteContext'
+import { getRoleLabelMap } from '/@/enums'
 import { usePreventMask } from '/@/hooks/usePreventMask'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { isPublicMember } = useRouteContext()
 const { userInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
@@ -19,7 +21,7 @@ const { showPreventMask, hidePreventMask } = usePreventMask()
 const collapsed = defineModel('collapsed', { default: false })
 
 const items = computed(() => {
-  if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
+  if (isPublicMember.value) {
     return []
   }
 
@@ -41,7 +43,7 @@ const items = computed(() => {
       label: $t('推广计划'),
       icon: 'base/rx_ic_coins_hand',
       rootMenu: true,
-      showFirstBadge: true,
+      // showFireBadge: true,
       routeName: 'referral-program',
       shiny: true,
       command: () => {
@@ -61,7 +63,7 @@ const items = computed(() => {
             <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title flex gap-1.5" :title="(item.label as string)">
               {{ item.label }}
-              <SvgIcon v-if="item.showFirstBadge" name="base/fire" />
+              <SvgIcon v-if="item.showFireBadge" name="base/fire" />
             </span>
           </a>
         </ShinyButton>

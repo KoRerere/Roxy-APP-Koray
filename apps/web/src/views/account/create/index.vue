@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 
 import SingleAccount from '/@/views/account/create/quick.vue'
 import BatchAccount from './batch-account.vue'
@@ -8,6 +9,7 @@ import TemplateImport from './template-import.vue'
 
 const router = useRouter()
 const [showToast] = useResponseToast()
+const { invalidateCache: invalidateAccountListCache } = useListCacheActions()
 
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
@@ -19,6 +21,8 @@ const tabsValue = ref('single')
 async function saveAccount(formData: any) {
   const { code, msg } = await API.platform.userAddPlatformInfoCreate(formData)
   showToast(code, msg)
+  if (code === 0)
+    invalidateAccountListCache(LIST_CACHE_NAMESPACE.ACCOUNT_LIST)
 }
 </script>
 

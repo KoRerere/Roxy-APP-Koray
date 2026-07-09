@@ -4,6 +4,7 @@ import RolesOverview from '/@/views/team/components/roles-overview.vue'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
+import RxLoading from '/@/components/rx-loading.vue'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -13,6 +14,8 @@ import { useSimpleLocale } from '/@/stores/locale'
 const { realTheme } = storeToRefs(useThemeStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+
+const payInfoLoading = computed(() => Boolean(currentWorkspace.value?.id && !userPayInfo.value?.subLevel))
 
 const collapsed = ref<boolean>(Boolean(~~(localStorage.getItem(MENU_COLLAPSED) as string)))
 
@@ -54,8 +57,9 @@ const imageSrc = computed(() => {
       <RxLayoutHeader />
       <Announcement />
       <RolesOverview />
-      <div class="flex-1 mr-4 mb-4 rounded overflow-hidden rx-main-content">
-        <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
+      <div class="flex-1 mr-4 mb-4 rounded overflow-hidden rx-main-content relative">
+        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
+        <RxLoading :model-value="payInfoLoading" :opacity="0.9" />
       </div>
     </main>
   </div>

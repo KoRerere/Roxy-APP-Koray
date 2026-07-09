@@ -322,7 +322,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
       name: 'windowName',
       value: data.windowName ?? '',
       dirId: data.dirId ?? '',
-      placeholder: $t('未命名窗口'),
+      placeholder: $t('未命名窗口(选填)'),
       formatValue: (input: any, _inputs: any, formData: any) => {
         Object.assign(formData, { windowNamePrefix: input.value })// 窗口名称前缀，批量创建时会用到
         return input.value
@@ -470,7 +470,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
           options: initialCoreVersionOptions,
           required: true,
           filter: false,
-          // 虚拟选项「保持最新」需拆分为 useLatestCore + 实际 coreVersion 再提交
+          /**
+           * 虚拟选项「保持最新」需拆分为 useLatestCore + 实际 coreVersion 再提交
+           */
           formatValue: (input: any, _inputs: any, formData: any) => {
             const { useLatestCore, coreVersion } = resolveCoreVersionFromInput(input)
             Reflect.set(formData, 'useLatestCore', useLatestCore)

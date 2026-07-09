@@ -7,7 +7,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useDialog } from '/@/hooks/useDialog'
 import { RoxyGiftsType } from '/@/enums/pay'
-import { genDriver, safeParseJSON, sleep } from '/@/utils'
+import { genDriver, getLocalStorageDriverStatus, setLocalStorageDriverStatus, sleep } from '/@/utils'
 
 const { amount, giftProfile } = defineProps<{
   amount: number
@@ -22,7 +22,6 @@ const [showModal] = useDialog()
 const CID = getCurrentInstance()?.uid
 
 const giftType = defineModel()
-const driverStatus = safeParseJSON(localStorage.getItem('driverStatus'))
 
 const options = computed(() => {
   if (!seasonalActivity.value.springFestival)
@@ -78,7 +77,7 @@ onMounted(() => {
 })
 
 async function driverHighlight() {
-  if (!seasonalActivity.value.active || driverStatus?.springFestival)
+  if (!seasonalActivity.value.active || getLocalStorageDriverStatus('springFestival'))
     return
 
   await Promise.all([
@@ -91,7 +90,7 @@ async function driverHighlight() {
       { element: '#gifts', popover: { description: $t('您现在每次消费，即可获得我们提供的礼物作为赠品，多买多送。'), side: 'left', align: 'center' } },
     ],
     onDestroyed: () => {
-      localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, springFestival: true }))
+      setLocalStorageDriverStatus('springFestival', true)
     },
   })
 

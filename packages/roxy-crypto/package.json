@@ -1,0 +1,30 @@
+{
+  "name": "@roxy/crypto",
+  "version": "1.0.0",
+  "description": "AES-256-GCM encryption via WebAssembly",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:wasm": "node scripts/build.mjs --wasm-only",
+    "dev": "vite build --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "catalog:",
+    "unplugin-dts": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-static-copy": "^3.1.0"
+  }
+}

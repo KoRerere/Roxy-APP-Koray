@@ -6,15 +6,21 @@ type Data = UserGetWindowInfoListListData['data']['rows'][number]
 export function useWindowModify(options: {
   onlyErrorToast: (code: number, msg: string) => void
   onRefreshTable: (tabParams?: Record<string, unknown>, force?: boolean) => void
+  invalidateListCache?: () => void
 }) {
   const { onlyErrorToast } = options
+
+  function refreshAfterMutation(tabParams?: Record<string, unknown>, force?: boolean) {
+    options.invalidateListCache?.()
+    options.onRefreshTable(tabParams, force)
+  }
 
   async function singleModifyWindow(params: any, silent = false) {
     const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
     onlyErrorToast(code, msg)
     if (code === 0) {
       if (!silent)
-        options.onRefreshTable()
+        refreshAfterMutation()
       return Promise.resolve()
     }
     return Promise.reject(msg)
@@ -25,7 +31,7 @@ export function useWindowModify(options: {
     onlyErrorToast(code, msg)
     if (code === 0) {
       if (!silent)
-        options.onRefreshTable()
+        refreshAfterMutation()
       return Promise.resolve()
     }
     return Promise.reject(msg)

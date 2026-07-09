@@ -1,7 +1,5 @@
 <script setup lang="tsx">
-import { getImage } from '/@/utils/basic'
 import QRCode from 'qrcode'
-
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { enhanceCountdown } from '/@/utils'
@@ -75,29 +73,33 @@ function close(isCancel: boolean) {
 </script>
 
 <template>
-  <div class="flex flex-col pt-4 pb-6 px-6 gap-4 select-none popup">
-    <div class="relative flex items-center h-10 header">
-      <span>{{ $t('微信支付') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
-    </div>
-    <div class="flex flex-col gap-12">
-      <i18n-t class="sacn-desc" tag="div" :keypath="$t('请于 {time} 内使用微信扫码完成支付。', { time: '{time}' })" scope="global">
-        <template #time>
-          <span v-if="countdown" class="inline-block w-12 cursor-pointer sacn-time">{{ countdown }}</span>
-        </template>
-      </i18n-t>
-      <div class="flex flex-col items-center gap-2.5 pa-5 self-center sacn-area">
-        <div class="pa-2 rounded-lg bg-white">
-          <img :src="qrcode" class="block pointer-events-none w-45 h-45">
+  <div class="flex flex-col select-none w-115 rounded-2 overflow-hidden">
+    <div class="flex flex-col items-center gap-4 pa-6 top">
+      <div class="w-full relative flex items-center h-9">
+        <div class="flex items-center gap-2 py-2 px-3 rounded-full clock">
+          <SvgIcon class="cursor-pointer" name="base/rx_ic_clock" />
+          <span v-if="countdown" class="tt-primary font-[JetBrains_Mono] text-3.25 font-500">{{ countdown }}</span>
         </div>
-        <div class="h-9 flex items-center gap-1">
-          <img class="block w-12" :src="getImage('payments/rx_payment_wepay_white.svg')">
-          <span class="sacn-text">{{ $t('微信支付') }}</span>
+        <SvgIcon class="absolute right-0 cursor-pointer" size="20" name="base/rx_ic_delete" @click="close(true)" />
+      </div>
+      <div class="w-56 aspect-square rounded-2 bg-white pa-3">
+        <div class="pa-2.5 rounded-1.5 sacn">
+          <img :src="qrcode" class="block pointer-events-none w-full aspect-square">
         </div>
       </div>
-      <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
+    </div>
+
+    <div class="flex flex-col items-center pa-6 gap-6">
+      <div class="flex items-center gap-3">
+        <SvgIcon name="other/wxpay" size="36" />
+        <span class="tt-primary text-4 leading-5 font-700">{{ $t('微信支付') }}</span>
+      </div>
+      <div class="-mt-3 tt-secondary text-4 leading-5">
+        {{ $t('使用微信扫码完成支付') }}
+      </div>
+      <i18n-t class="tt-tertiary text-3 leading-5" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
         <template #link>
-          <span class="cursor-pointer help-link" @click="$showLiveChat">{{ $t('联系我们') }}</span>
+          <span class="cursor-pointer link" @click="$showLiveChat">{{ $t('联系我们') }}</span>
         </template>
       </i18n-t>
     </div>
@@ -105,56 +107,25 @@ function close(isCancel: boolean) {
 </template>
 
 <style lang="scss" scoped>
-.popup {
-  width: 384px;
+.top {
+  background: var(--colors-background-bg-block);
 }
 
-.header {
-  color: var(--colors-text-text-primary);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: normal;
+.clock {
+  background: var(--component-tag-bg2);
 }
 
 .sacn {
-  &-desc {
-    color: var(--colors-text-text-primary);
-    font-family: Inter;
-    font-size: 16px;
-    line-height: 20px;
-  }
-
-  &-time {
-    color: var(--colors-text-text-warning);
-    font-weight: 600;
-  }
-
-  &-area {
-    border-radius: 16px;
-    background-color: #65b84a;
-  }
-
-  &-text {
-    color: #fff;
-    font-family: 'Microsoft YaHei UI';
-    font-size: 20px;
-    line-height: 20px;
-  }
+  border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
 }
 
-.help {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 20px;
-
-  &-link {
-    color: var(--colors-text-text-brand);
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-decoration-skip-ink: auto;
-    text-decoration-thickness: auto;
-    text-underline-offset: auto;
-    text-underline-position: from-font;
-  }
+.link {
+  color: var(--colors-text-text-brand);
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: auto;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
 }
 </style>

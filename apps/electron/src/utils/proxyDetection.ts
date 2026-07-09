@@ -142,8 +142,33 @@ async function checkDictUpdate() {
   }
 }
 
+/**
+ * 正在进行中的代理检测数量
+ *
+ * roxynet 二进制热替换需要在“完全空闲”时进行：除了没有已打开/打开中的内核，
+ * 还必须确保没有正在进行的代理检测（检测过程会经 setRoxynetProxy 依赖运行中的 roxynet），
+ * 否则替换/重启 roxynet 会打断正在进行的检测。
+ */
+let proxyDetectionInFlight = 0
+
+/** 是否存在正在进行中的代理检测（供 roxynet 空闲判定使用） */
+export function isProxyDetectionInFlight() {
+  return proxyDetectionInFlight > 0
+}
+
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
+  // 计数在最外层入口自增、finally 自减，覆盖整个检测生命周期（含多协议重试与字典更新）
+  proxyDetectionInFlight++
+  try {
+    return await runProxyDetection(proxyDetectionParams)
+  }
+  finally {
+    proxyDetectionInFlight--
+  }
+}
+
+async function runProxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
   await checkDictUpdate()
 
   async function __proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {

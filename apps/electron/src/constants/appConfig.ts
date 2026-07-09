@@ -31,6 +31,20 @@ export const appConfig = {
   get roxySyncBinPath() {
     return join(sessionDir, 'roxy-sync-bin', isWindows ? 'roxy-sync.exe' : 'roxy-sync')
   },
+  /**
+   * roxynet 内置 seed 目录（只读）
+   *
+   * 打包时按安装包 arch 通过 extraResources 内置到 resources/roxynet-seed，
+   * 内含二进制 + version + sha512，用于启动自愈与损坏回滚，不联网。
+   * 非打包(dev)环境 resources 下不存在 seed，ensureActiveFromSeed 会自动回退到后台下载。
+   */
+  get roxynetSeedDir() {
+    return join(process.resourcesPath, 'roxynet-seed')
+  },
+  /** roxysync 内置 seed 目录（只读，仅 Windows 内置） */
+  get roxySyncSeedDir() {
+    return join(process.resourcesPath, 'roxy-sync-seed')
+  },
   /** agent 脚本文件 */
   get agentBinPath() {
     return join(sessionDir, 'agent-bin', 'roxy-agent.mjs')

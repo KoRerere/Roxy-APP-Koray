@@ -54,5 +54,5 @@ mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
 globalThis.mixpanel = mixpanel
 
 setupPrimeVue(app)
-setupRouter(app)
 setupStore(app)
+setupRouter(app)

@@ -1,0 +1,15 @@
+{
+  "name": "roxy-crypto-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "roxy_crypto_wasm_bg.wasm",
+    "roxy_crypto_wasm.js",
+    "roxy_crypto_wasm.d.ts"
+  ],
+  "main": "roxy_crypto_wasm.js",
+  "types": "roxy_crypto_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

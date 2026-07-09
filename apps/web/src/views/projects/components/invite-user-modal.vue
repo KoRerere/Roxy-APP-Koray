@@ -140,7 +140,7 @@ function updateCurrentMembers(emailList: string[]) {
       </div>
       <div class="member-list">
         <div v-for="item in currentMembers" :key="item.id" class="flex items-center gap-2 member-item">
-          <MemberInfo class="flex-1" :avatar="item.avatar" :user-name="item.userName" :avatar-color="item.avatarColor" :email="item.email" :phone="item.phone" />
+          <MemberInfo class="flex-1" :avatar="item.avatar" :user-name="item.workspaceNickname || item.userName" :avatar-color="item.avatarColor" :email="item.email" :phone="item.phone" />
           <RxTag disabled :label="roleLabelMap[item.role as keyof typeof roleLabelMap]" />
         </div>
       </div>

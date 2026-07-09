@@ -138,9 +138,11 @@ export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (con
     }
     // 没有空间权限或被移出空间
     else if (code === 418) {
-      const { defaultWorkspace, setCurrentWorkspace, fetchWorkspaceList } = useWorkspaceStore()
-      setCurrentWorkspace(defaultWorkspace!.id!)
-      fetchWorkspaceList()
+      const workspaceStore = useWorkspaceStore()
+      await workspaceStore.fetchWorkspaceList()
+      const defaultId = workspaceStore.defaultWorkspace?.id
+      if (defaultId)
+        await workspaceStore.setCurrentWorkspace(defaultId)
       globalThis.electronAPI.send('mcp:close')
       return response
     }

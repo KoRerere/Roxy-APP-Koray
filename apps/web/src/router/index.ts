@@ -1,14 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
-import { baseRoutes } from '/@/router/base'
-import { menuRoutes } from './menu'
-import { isEqual } from 'es-toolkit'
-import { useUserStore } from '/@/stores/user'
-import { useThemeStore } from '/@/stores/theme'
-import { useSimpleLocale } from '/@/stores/locale'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { usePermissionStore } from '/@/stores/permission'
-import { WorkspaceType } from '/@/enums'
+import { baseRoutes } from '/@/router/base-routes'
+import { menuRoutes } from './menu-routes'
+import { runNavigationGuards } from '/@/router/guards'
+import { registerRouter } from '/@/router/navigation'
+import '/@/router/types'
 import type { App } from 'vue'
 
 const router = createRouter({
@@ -19,7 +14,6 @@ const router = createRouter({
       name: 'home',
       path: '/',
       component: () => import('/@/layout/index.vue'),
-      redirect: { name: 'browser-list' },
       children: [
         ...menuRoutes,
         {
@@ -37,48 +31,10 @@ const router = createRouter({
   ],
 })
 
-const whiteList = ['oauth2callback']
-// 不需要携带的查询参数
-const noTakeQueryList = ['official-site-lang', OFFICIAL_SITE_INVITE_CODE, MP_DISTINCT_ID, LOCALE_SWITCH_HANDOFF_TOKEN_QUERY]
+registerRouter(router)
 
 router.beforeEach(async (to) => {
-  const userStore = useUserStore()
-  const themeStore = useThemeStore()
-  const simpleLocale = useSimpleLocale()
-  const permissionStore = usePermissionStore()
-  const { currentWorkspace } = useWorkspaceStore()
-
-  await userStore.hasCallInitUserInfo.promise
-
-  // 设置全局查询参数，保持语言和标题，客服插件需要用到
-  const query: any = { ...to.query, theme: themeStore.realTheme, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' }
-
-  if (Array.isArray(to.meta.permissions) && !permissionStore.check(to.meta.permissions, to.meta.permissionMode)) {
-    return { name: 'home', query }
-  }
-
-  noTakeQueryList.forEach((key) => {
-    delete query[key as keyof typeof query]
-  })
-
-  if (currentWorkspace?.workspaceType === WorkspaceType.Private && to.name === 'shared') {
-    return { name: 'home', query }
-  }
-  else if (currentWorkspace?.workspaceType === WorkspaceType.Public && to.name === 'home') {
-    return { name: 'shared', query }
-  }
-
-  if (!whiteList.includes(to.name as string)) {
-    if (to.name !== 'login' && !userStore.token) {
-      return { name: 'login', query }
-    }
-  }
-  if (isEqual(to.query, query)) {
-    return true
-  }
-  else {
-    return { ...to, query }
-  }
+  return runNavigationGuards(to)
 })
 
 if (import.meta.hot) {

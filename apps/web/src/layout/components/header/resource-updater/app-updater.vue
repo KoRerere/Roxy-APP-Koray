@@ -149,11 +149,13 @@ function plainTextFromElement(el: Element): string {
             <div class="tt-primary text-3.5 leading-5.5 font-600">
               {{ $t('Roxy浏览器 v{version} 现已发布', { version: item.version }) }}
             </div>
-            <ul v-if="updateSummary?.length" class="flex flex-col gap-1.5 ma-0 pa-0 pl-6">
-              <li v-for="str in updateSummary" :key="str" class="tt-secondary text-3.25 leading-4.5">
-                {{ str }}
-              </li>
-            </ul>
+            <RxMaskScroll v-if="updateSummary?.length" class="max-h-30">
+              <ul class="flex flex-col gap-1.5 ma-0 pa-0 pl-6">
+                <li v-for="str in updateSummary" :key="str" class="break-all tt-secondary text-3.25 leading-4.5">
+                  {{ str }}
+                </li>
+              </ul>
+            </RxMaskScroll>
           </div>
           <RxButton v-if="item.status === 'downloaded'" class="w-full" size="md" icon="base/rx_ic_renew" :label="formatClientBtnLabel(item)" @click="handleClientItemClick(item)" />
           <RxButton v-else class="w-full" size="md" outlined severity="secondary" icon="base/rx_ic_download" :label="formatClientBtnLabel(item)" :loading="item.status === 'downloading'"

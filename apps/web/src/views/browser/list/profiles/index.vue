@@ -50,6 +50,8 @@ import { useWindowModify } from '/@/views/browser/list/profiles/hooks/useWindowM
 import { createProfileOperationHandler } from '/@/views/browser/list/profiles/operationHandlers'
 import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/utils/filterParams'
 import { useSimpleLocale } from '/@/stores/locale'
+import { LIST_CACHE_NAMESPACE, useListCacheActions, useListCacheStore } from '/@/stores/listCache'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -86,11 +88,15 @@ const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
 const { getVideoSource } = useSimpleLocale()
+const workspaceStore = useWorkspaceStore()
+const listCacheStore = useListCacheStore()
+const { invalidateCache: invalidateProfilesListCache } = useListCacheActions()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
+const listInitialized = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
 const driverObj = ref()
 const checkerLoading = ref(false)
@@ -107,31 +113,143 @@ const {
   sendFirstOpenRecord,
 } = useProfileOpenState()
 
-const { dataList, hasFiltered, hasTempProfile, clearPendingAutoOpen, syncOpenedProxyToRow, onRefreshTable, tableRequest } = useProfilesTable({
+const { dataList, hasFiltered, hasTempProfile, clearPendingAutoOpen, syncOpenedProxyToRow, onRefreshTable, tableRequest, syncFromCacheEntry } = useProfilesTable({
   tableRef,
   filtersMenu,
   getCurrentFilterParams: () => props.currentFilter?._params,
   openBrowserBefore,
 })
 
-const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowModify({ onlyErrorToast, onRefreshTable })
+function getProfilesListCacheScope() {
+  return props.isProjectProfile
+    ? { projectId: String(route.params.id ?? '') }
+    : { projectId: '' }
+}
 
-watch(() => props.currentFilter, (value: any) => {
-  if (value) {
-    getCustomFilters(value.filter_condition || {})
-      .then((data) => {
-        filtersMenu.value = data
-        onRefreshTable(value._params)
-      })
+function invalidateProfilesListCacheForProjectId(projectId: string | number) {
+  invalidateProfilesListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: String(projectId) })
+}
+
+function invalidateProfilesListCacheScope() {
+  invalidateProfilesListCacheForProjectId(getProfilesListCacheScope().projectId as string)
+}
+
+function invalidateAndRefreshProfilesList(tabParams: Record<string, unknown> = {}, force = false) {
+  invalidateProfilesListCacheScope()
+  onRefreshTable(tabParams, force)
+}
+
+function getProfilesCacheEntry() {
+  const workspaceId = workspaceStore.currentWorkspace?.id
+  if (!workspaceId)
+    return null
+  return listCacheStore.get(
+    LIST_CACHE_NAMESPACE.BROWSER_LIST,
+    String(workspaceId),
+    getProfilesListCacheScope(),
+  )
+}
+
+/** 缓存仅对应离开时的单个 Tab；只有当前 Tab 与缓存 meta.activeTabId 一致时才允许恢复 */
+function shouldRestoreProfilesListCache() {
+  const entry = getProfilesCacheEntry()
+  if (!entry)
+    return false
+  if (props.isProjectProfile)
+    return true
+  const cachedTabId = entry.meta?.activeTabId as string | undefined
+  const currentTabId = props.currentFilter?.id ?? 'rx_1000'
+  return !!cachedTabId && cachedTabId === currentTabId
+}
+
+/** 父组件尚未把 activeTab 切到缓存记录的 Tab 时，暂缓初始化 */
+function isWaitingForCachedTabRestore() {
+  if (props.isProjectProfile)
+    return false
+  const cachedTabId = getProfilesCacheEntry()?.meta?.activeTabId as string | undefined
+  if (!cachedTabId)
+    return false
+  const currentTabId = props.currentFilter?.id ?? 'rx_1000'
+  return cachedTabId !== currentTabId
+}
+
+function listCacheMeta() {
+  const meta: Record<string, unknown> = {}
+  if (!props.isProjectProfile)
+    meta.activeTabId = props.currentFilter?.id ?? 'rx_1000'
+  if (filtersMenu.value)
+    meta.filtersMenu = filtersMenu.value
+  return meta
+}
+
+function tryRestoreProfilesFromCache() {
+  if (!shouldRestoreProfilesListCache())
+    return false
+  const entry = getProfilesCacheEntry()
+  if (!entry)
+    return false
+  syncFromCacheEntry(entry)
+  return true
+}
+
+async function loadFiltersForCurrentTab() {
+  const filter = props.currentFilter
+  if (!filter)
+    return
+  filtersMenu.value = await getCustomFilters(filter.filter_condition || {})
+}
+
+async function initializeProfilesList() {
+  if (listInitialized.value || isWaitingForCachedTabRestore())
+    return
+
+  listInitialized.value = true
+  await loadFiltersForCurrentTab()
+
+  if (shouldRestoreProfilesListCache()) {
+    tableRef.value?.restoreFromCache()
+    tryRestoreProfilesFromCache()
+    return
   }
+
+  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
+  onRefreshTable({
+    ...customFilterParams,
+    ...(props.currentFilter?._params ?? {}),
+  }, false)
+}
+
+async function refreshOnTabSwitch() {
+  if (!props.currentFilter)
+    return
+
+  if (!listInitialized.value) {
+    await initializeProfilesList()
+    return
+  }
+
+  await loadFiltersForCurrentTab()
+  onRefreshTable(props.currentFilter._params ?? {}, false)
+}
+
+const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowModify({
+  onlyErrorToast,
+  onRefreshTable,
+  invalidateListCache: invalidateProfilesListCacheScope,
+})
+
+watch(() => props.currentFilter?.id, () => {
+  void refreshOnTabSwitch()
 })
 
 watch(
   () => route.params.id,
-  () => {
-    if (route.params.id) {
-      tableRef.value?.refresh()
-    }
+  async () => {
+    if (!route.params.id)
+      return
+    listInitialized.value = false
+    await nextTick()
+    await initializeProfilesList()
   },
 )
 
@@ -153,7 +271,7 @@ useEmitterEvent('refreshProfileList', async (windowId?: number) => {
   if (windowId) {
     router.replace({ name: route.name, query: { browser: JSON.stringify({ openBrowser: true, windowId }) } })
   }
-  onRefreshTable()
+  invalidateAndRefreshProfilesList()
 })
 
 onBeforeMount(() => {
@@ -181,15 +299,7 @@ onBeforeMount(() => {
 
   void syncOpenedBrowserState()
 
-  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
-
-  getCustomFilters(customFilterParams)
-    .then((data) => {
-      filtersMenu.value ??= data
-    })
-    .finally(() => {
-      onRefreshTable(customFilterParams, false)
-    })
+  void nextTick(() => initializeProfilesList())
 })
 
 onBeforeUnmount(() => {
@@ -479,7 +589,7 @@ async function onTransfer(datas: Data[], operate?: any) {
           }
           else {
             if (needRefresh) {
-              onRefreshTable()
+              invalidateAndRefreshProfilesList()
             }
             showToast(0, $t('转移成功'))
           }
@@ -534,6 +644,9 @@ async function onMoveToProject(data: any) {
               item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })
+            invalidateProfilesListCacheForProjectId(formData.projectId)
+            if (props.isProjectProfile)
+              invalidateProfilesListCacheScope()
           })
       }
       resolve()
@@ -821,7 +934,7 @@ async function deleteProfile(datas: any, ids: number[]) {
   const windowStatus = ids.map(id => ({ id, openStatus: false }))
   await API.window.userMdfWindowSyncV2Create(windowStatus)
 
-  const usePeoples = datas.some((item: any) => item.statusInfo.filter((item: any) => item.openUserId !== userInfo.value.id).length > 0)
+  const usePeoples = datas.some((item: any) => item.statusInfo.some((status: any) => status.openUserId !== userInfo.value.id))
 
   if (usePeoples) {
     onlyErrorToast(-1, $t('无法删除正在被其他成员使用的窗口'))
@@ -850,7 +963,7 @@ async function deleteProfile(datas: any, ids: number[]) {
         onlyErrorToast(code, msg)
         if (code !== 0)
           return reject(msg)
-        onRefreshTable()
+        invalidateAndRefreshProfilesList()
         globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }
       else {
@@ -884,7 +997,8 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :list-cache-key="LIST_CACHE_NAMESPACE.BROWSER_LIST"
+           :list-cache-scope="getProfilesListCacheScope" :list-cache-meta="listCacheMeta" :list-cache-should-restore="shouldRestoreProfilesListCache" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
            :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
   >
     <template #filter-after>
@@ -931,7 +1045,7 @@ defineExpose({
     </template>
     <template #profile="{ data }">
       <template v-if="data.id">
-        <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
+        <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="invalidateAndRefreshProfilesList" />
       </template>
       <div v-else class="flex items-center gap-[16px]">
         <Skeleton width="44px" height="16px" />
@@ -945,7 +1059,7 @@ defineExpose({
     </template>
     <template #profileName="{ data }">
       <template v-if="data.id">
-        <ProfileName :data="data" :readonly="!check('Profiles_edit')" @refresh="onRefreshTable" />
+        <ProfileName :data="data" :readonly="!check('Profiles_edit')" @refresh="invalidateAndRefreshProfilesList" />
       </template>
       <template v-else>
         <Skeleton width="160px" height="24px" border-radius="4px" />

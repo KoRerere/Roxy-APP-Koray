@@ -3,7 +3,6 @@ import Network from './network.vue'
 import Notification from './notification.vue'
 import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
-import LockButton from './lock-button.vue'
 import DownloadAppButton from './download-app-button.vue'
 </script>
 
@@ -15,7 +14,6 @@ import DownloadAppButton from './download-app-button.vue'
       <ResourceUpdater v-if="$isElectron" />
       <DownloadAppButton v-else />
       <Notification />
-      <LockButton />
       <Divider class="!ma-0" layout="vertical" />
       <Profile />
     </div>

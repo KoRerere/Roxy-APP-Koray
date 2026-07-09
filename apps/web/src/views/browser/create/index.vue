@@ -16,9 +16,10 @@ import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePermission } from '/@/hooks/usePermission'
-import { useBackRoute } from '/@/router/utils'
+import { useBackRoute } from '/@/router/navigation'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './form-inputs'
 import { createFormAsyncGate } from './hooks/useAsyncGate'
 import { createTableContext } from './hooks/useContext'
@@ -44,6 +45,7 @@ const { showSimpleDialog } = useSimpleDialog()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { invalidateCache: invalidateListCache } = useListCacheActions()
 const { check } = usePermission()
 
 const isBatch = ref(false)
@@ -147,7 +149,6 @@ watch(() => tabsValue.value, (value, oldValue) => {
 onBeforeMount(() => {
   getTemplateList()
   initFormInputs()
-  getSettings()
 })
 
 async function getTemplateList() {
@@ -214,14 +215,15 @@ async function initFormInputs(template: Record<string, any> = {}) {
   extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   await onUpdateFinger()
+  getSettings()
 }
 
 async function getSettings() {
-  const { code, data } = await API.window.userGetWindowOneClickConfigListList()
-  if (code !== 0)
-    return
+  // const { code, data } = await API.window.userGetWindowOneClickConfigListList()
+  // if (code !== 0)
+  //   return
 
-  oneClickSettings.value = data
+  // oneClickSettings.value = data
 
   if (route.query.driver || !getLocalStorageDriverStatus('oneClick')) {
     nextTick(() => {
@@ -246,17 +248,17 @@ function showGuide() {
       }
     },
     steps: [
-      {
-        element: '.one-click',
-        popover: {
-          description: $t('👋 试试一键配置，1 秒配好整套环境'),
-          side: 'top',
-          align: 'center',
-        },
-        onDeselected: () => {
-          setLocalStorageDriverStatus('oneClick', true)
-        },
-      },
+      // {
+      //   element: '.one-click',
+      //   popover: {
+      //     description: $t('👋 试试一键配置，1 秒配好整套环境'),
+      //     side: 'top',
+      //     align: 'center',
+      //   },
+      //   onDeselected: () => {
+      //     setLocalStorageDriverStatus('oneClick', true)
+      //   },
+      // },
       {
         element: '.guide1',
         popover: { description: $t('点击购买/添加一个代理 IP'), side: 'top', align: 'center' },
@@ -272,6 +274,7 @@ function showGuide() {
           })
         },
         onDeselected: () => {
+          setLocalStorageDriverStatus('oneClick', true)
           clearGuide1Highlight()
         },
       },
@@ -515,7 +518,7 @@ async function batchCreateProfile(params: any) {
   loading.value = false
   onlyErrorToast(code, msg)
   if (code === 0) {
-    router.back()
+    onBack()
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
@@ -635,7 +638,14 @@ function showLoading() {
   })
 }
 
+function invalidateBrowserListCache() {
+  invalidateListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: '' })
+  if (metaData.value.projectId)
+    invalidateListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: String(metaData.value.projectId) })
+}
+
 function onBack(data?: any, openBrowser = false) {
+  invalidateBrowserListCache()
   const { path, query } = backRoute
   const backRoutes = ['/browser', '/projects']
   const toPath = !backRoutes.some(n => path?.startsWith(n)) || path === '/browser/edit' ? '/browser' : path

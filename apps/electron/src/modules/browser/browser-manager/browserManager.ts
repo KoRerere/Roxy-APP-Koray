@@ -224,6 +224,12 @@ export class BrowserManager {
           // 如果没有任何浏览器在使用该内核，则尝试解压内核
           coreManager.getCoreManager(browserItem.coreType).tryUpzipCore(coreVersion)
         }
+
+        // 内核关闭后可能进入空闲，尝试应用已就绪的 roxynet 新版本
+        // 动态导入避免与 binUpdater 形成静态循环依赖
+        import('/@/modules/updater/binUpdater')
+          .then(m => m.roxynetBinUpdater.tryApplyPending())
+          .catch(() => {})
       }
       // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
       browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -621,7 +627,7 @@ export class BrowserManager {
         }
         dirIds.forEach((dirId) => {
           if (!res.data.rows.some(item => item.dirId === dirId)) {
-            sendErrorMessage($t('窗口不存在'), dirId)
+            sendErrorMessage($t('窗口/数据不存在，请刷新页面后重试'), dirId)
           }
         })
 

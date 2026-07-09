@@ -1,12 +1,12 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
+import GenProjectModal from '/@/views/projects/components/gen-project.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin, ProjectReqType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
 import { useProjectStore } from '/@/stores/project'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { usePermission } from '/@/hooks/usePermission'
@@ -18,6 +18,7 @@ import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDialog } from '/@/hooks/useDialog'
 import { useTeamStore } from '/@/stores/team'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
@@ -34,6 +35,7 @@ const { userPayInfo, userInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
 const { getTeamMembers } = useTeamStore()
 const { check } = usePermission()
+const { invalidateCache: invalidateProjectListCache } = useListCacheActions()
 
 const columns = ref([
   {
@@ -55,8 +57,9 @@ const columns = ref([
     render: ({ data }: any) => {
       const list = data.user_info.map((item: any) => ({
         avatar: item.avatar,
-        name: item.userName?.slice(0, 2),
         color: item.avatarColor,
+        name: item.workspaceNickname || item.userName,
+        tooltip: item.workspaceNickname || item.userName,
       }))
       return <RxAvatar list={list} size={28} max={4} font-size={14} />
     },
@@ -71,6 +74,11 @@ const columns = ref([
 async function tableRequest(params: any) {
   getProjects()
   return API.limit.userGetProjectInfoByWorkspaceList({ ...params, default: 2 })
+}
+
+function refreshProjectList() {
+  invalidateProjectListCache(LIST_CACHE_NAMESPACE.PROJECT_LIST)
+  tableRef.value?.refresh()
 }
 
 function getOperation(data: Project) {
@@ -137,11 +145,13 @@ function operationHandler(operate: any, data?: any) {
         return
       }
 
-      projectModfiyDialog({
-        confirmNext: () => {
-          tableRef.value?.refresh()
-        },
-      })
+      genNewProject()
+
+      // projectModfiyDialog({
+      //   confirmNext: () => {
+      //     tableRef.value?.refresh()
+      //   },
+      // })
       break
     }
     case 'pin':
@@ -154,7 +164,7 @@ function operationHandler(operate: any, data?: any) {
       projectModfiyDialog({
         ...data,
         confirmNext: () => {
-          tableRef.value?.refresh()
+          refreshProjectList()
         },
       })
       break
@@ -162,6 +172,27 @@ function operationHandler(operate: any, data?: any) {
       deletePopup(data)
       break
   }
+}
+
+function genNewProject() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => (
+        <GenProjectModal
+          onSuccess={
+            () => {
+              hideModal()
+              refreshProjectList()
+            }
+          }
+          onClose={hideModal}
+        />
+      ),
+    },
+  })
 }
 
 async function onRowReorder({ value }: any) {
@@ -185,6 +216,7 @@ async function onRowReorder({ value }: any) {
     return
   tableRef.value?.updateDataList(value)
   getProjects()
+  invalidateProjectListCache(LIST_CACHE_NAMESPACE.PROJECT_LIST)
 }
 
 async function pinProject(data: Project) {
@@ -193,7 +225,7 @@ async function pinProject(data: Project) {
 
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus, requestType: ProjectReqType.PinProject })
   if (code === 0) {
-    tableRef.value?.refresh()
+    refreshProjectList()
   }
   else {
     onlyErrorToast(code, msg)
@@ -219,7 +251,9 @@ function deletePopup(item: Project) {
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       onlyErrorToast(code, msg || $t('删除失败'))
       if (code === 0) {
-        tableRef.value?.refresh()
+        invalidateProjectListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: String(item.project_id!) })
+        invalidateProjectListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: '' })
+        refreshProjectList()
       }
     },
   })
@@ -248,6 +282,10 @@ async function inviteUserInProject(project: Project) {
           v-model:currentMembers={project.user_info}
           allMembers={allMembers}
           project={{ projectName, projectId: project_id }}
+          onBeforeClose={(refresh?: boolean) => {
+            if (refresh)
+              refreshProjectList()
+          }}
           onClose={hideModal}
         />
       ),
@@ -258,11 +296,13 @@ async function inviteUserInProject(project: Project) {
 
 <template>
   <div class="flex flex-col h-full">
-    <ViewsHeader :divider="false" :title="$t('项目管理')">
+    <ViewsHeader class="items-center" :divider="false" :title="$t('项目管理')">
       <RxButton v-if="check('Projects_add')" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxDivider vertical line-only class="!h-4" />
+      <RxButton severity="secondary" variant="outlined" size="xxs" icon="base/rx_ic_refresh" @click.stop="refreshProjectList" />
     </ViewsHeader>
     <div class="flex-1 flex overflow-hidden">
-      <RyTable ref="project" v-model:columns="columns" data-key="project_id" cache-key="project-list" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
+      <RyTable ref="project" v-model:columns="columns" data-key="project_id" cache-key="project-list" list-cache-key="project-list" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
                :show-gridlines="false" :show-actions-menu="false" :show-actions="false" @row-reorder="onRowReorder"
       >
         <template #table-empty>

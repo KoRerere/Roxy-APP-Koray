@@ -16,7 +16,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { enhanceCountdown, genDriver, getImage, isMainWindow, safeParseJSON, sleep } from '/@/utils'
+import { enhanceCountdown, genDriver, getImage, getLocalStorageDriverStatus, isMainWindow, setLocalStorageDriverStatus, sleep } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -411,9 +411,7 @@ export function useSubscribe() {
   }
 
   async function showMcpDriver() {
-    const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
-
-    if (driverStatus?.mcpGuide || !check('Roxy_AI_Agent_All'))
+    if (getLocalStorageDriverStatus('mcpGuide') || !check('Roxy_AI_Agent_All'))
       return
 
     await Promise.all([
@@ -433,7 +431,7 @@ export function useSubscribe() {
         },
       ],
       onDestroyed: () => {
-        localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, mcpGuide: true }))
+        setLocalStorageDriverStatus('mcpGuide', true)
         checkScoreDialog()
       },
     })

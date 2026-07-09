@@ -12,7 +12,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
-import { copyText, genDriver, safeParseJSON } from '/@/utils'
+import { copyText, genDriver, getLocalStorageDriverStatus, setLocalStorageDriverStatus } from '/@/utils'
 import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
 
 const { promotionInfo } = defineProps<{
@@ -140,8 +140,7 @@ async function showNewInfo() {
 }
 
 function _focusReward() {
-  const driverStatus = safeParseJSON(localStorage.getItem('driverStatus')) ?? {}
-  if (driverStatus.referralProgram)
+  if (getLocalStorageDriverStatus('referralProgram'))
     return
 
   genDriver({
@@ -149,7 +148,7 @@ function _focusReward() {
       { element: '.get', popover: { description: $t('您现在可以获得名下用户的代理 IP 消费返利了。'), side: 'right', align: 'center' } },
     ],
     onDestroyed: () => {
-      localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, referralProgram: true }))
+      setLocalStorageDriverStatus('referralProgram', true)
     },
   }).drive()
 }

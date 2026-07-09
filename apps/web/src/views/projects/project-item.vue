@@ -10,6 +10,7 @@ import { useTeamStore } from '/@/stores/team'
 import { usePermission } from '/@/hooks/usePermission'
 import { useDialog } from '/@/hooks/useDialog'
 import { useEmitterEvent } from '/@/utils/eventBus'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,11 +19,23 @@ const [projectModfiyDialog] = useProjectActions()
 const { getProjects } = useProjectStore()
 const { getTeamMembers } = useTeamStore()
 const { check } = usePermission()
+const { invalidateCache: invalidateListCache } = useListCacheActions()
 
 const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
 const members = ref()
+
+function invalidateCurrentProjectProfilesCache() {
+  invalidateListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, {
+    projectId: String(projectId.value),
+  })
+}
+
+function refreshProjectProfiles() {
+  invalidateCurrentProjectProfilesCache()
+  projectRef.value?.tableRef?.refresh()
+}
 
 watch(() => route.params.id, (value) => {
   projectId.value = Number(value)
@@ -31,7 +44,7 @@ watch(() => route.params.id, (value) => {
 })
 
 useEmitterEvent('updateProjectList', () => {
-  projectRef.value?.tableRef?.refresh()
+  refreshProjectProfiles()
 })
 
 onMounted(() => {

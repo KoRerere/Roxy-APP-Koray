@@ -1,26 +1,37 @@
 import { createVNode, render } from 'vue'
-import type { AppContext, FunctionalComponent, HTMLAttributes } from 'vue'
+import type { AppContext, FunctionalComponent } from 'vue'
 import Dialog from 'primevue/dialog'
 import type { DialogProps, DialogSlots } from 'primevue/dialog'
+import type { ButtonProps } from 'primevue/button'
 import RxButton from '/@/components/rx-button/'
+import type { SvgNames } from '/@/components/rx-icon/'
 import { isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
-import type { ButtonProps } from 'primevue/button'
 import { emitter } from '/@/utils/eventBus'
 
-export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
+interface UseDialogOkProps extends Partial<Omit<ButtonProps, 'icon' | 'size' | 'disabled'>> {
+  icon?: SvgNames
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
+  disabled?: boolean
+}
+
+interface UseDialogCustomProps {
   handleCancel?: (...args: any[]) => any
   handleOk?: (...args: any[]) => any
-  beforeClose?: (closeCallback: () => any) => any
+  beforeClose?: () => boolean | void | Promise<boolean | void>
   okText?: string
-  okProps?: ButtonProps
+  okProps?: UseDialogOkProps
   cancelText?: string
   slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element }
   noAutoClose?: boolean
 }
 
+export type UseDialogProps = DialogProps & UseDialogCustomProps
+
+type UseDialogInnerProps = DialogProps & UseDialogCustomProps
+
 export interface UseDialogInstance {
-  hideModal: () => void
+  hideModal: () => Promise<boolean>
   handleOk: () => void
   handleCancel: () => void
 }
@@ -49,7 +60,12 @@ export function useDialog() {
     const div = document.createElement('div')
     const visible = ref(false)
 
-    function hideModal() {
+    const innerProps = ref<UseDialogInnerProps>({
+      draggable: false,
+      ...props,
+    })
+
+    function doHide() {
       visible.value = false
       if (props.header) {
         dialogMap.delete(props.header)
@@ -58,26 +74,49 @@ export function useDialog() {
       emitter.off('kickedOut', handleKickedOut)
     }
 
+    let closing = false
+    async function tryClose(onClosed?: () => void): Promise<boolean> {
+      if (closing)
+        return false
+      closing = true
+      try {
+        const result = await innerProps.value.beforeClose?.()
+        if (result === false)
+          return false
+        doHide()
+        onClosed?.()
+        return true
+      }
+      finally {
+        closing = false
+      }
+    }
+
+    async function onVisibleUpdate(val: boolean) {
+      if (val) {
+        visible.value = true
+        return
+      }
+      await tryClose(() => props?.handleCancel?.())
+    }
+
+    Object.assign(innerProps.value, {
+      handleCancel: async () => {
+        await tryClose(() => props?.handleCancel?.())
+      },
+      handleOk: async () => {
+        await props?.handleOk?.()
+        doHide()
+      },
+    })
+
     function onAfterHide() {
       div.remove()
     }
 
-    const innerProps = ref<UseDialogProps>({
-      draggable: false,
-      ...props,
-      handleCancel: () => {
-        hideModal()
-        props?.handleCancel?.()
-      },
-      handleOk: async () => {
-        await props?.handleOk?.()
-        hideModal()
-      },
-    })
-
     function handleKickedOut() {
-      console.log('退出登录了，关闭弹窗')
-      setTimeout(hideModal, 500)
+      console.log('User kicked out, closing dialog')
+      setTimeout(tryClose, 500)
     }
     // if (!props.noAutoClose) {
     //   emitter.on('kickedOut', handleKickedOut)
@@ -85,7 +124,7 @@ export function useDialog() {
 
     const instance = {
       dialogRef: ref<InstanceType<typeof Dialog> | null>(null),
-      hideModal,
+      hideModal: () => tryClose(),
       handleOk: () => innerProps.value.handleOk?.(),
       handleCancel: () => innerProps.value.handleCancel?.(),
     }
@@ -94,14 +133,14 @@ export function useDialog() {
       dialogMap.set(props.header, instance)
     }
 
-    const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
-      const { handleCancel, handleOk, okText, cancelText, slots, okProps, ...dialogProps } = innerProps.value
+    const DialogComponent: FunctionalComponent = () => {
+      const { handleCancel, handleOk, okText, cancelText, slots, okProps, beforeClose: _beforeClose, noAutoClose: _noAutoClose, ...dialogProps } = innerProps.value
 
       const __dialogSlots = {
         footer: () => (
           <div class="flex justify-end gap-2">
             {cancelText === '' ? null : <RxButton type="button" label={cancelText || $t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
-            <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk}></RxButton>
+            <RxButton type="button" label={okText || $t('保存')} {...okProps} onClick={handleOk} />
           </div>
         ),
         ...Object.entries(slots || {}).reduce((acc, [key, value]) => {
@@ -116,8 +155,21 @@ export function useDialog() {
         }, {} as Record<string, (instance: UseDialogInstance) => JSX.Element>),
       }
 
+      const dialogBindProps = {
+        ...dialogProps,
+        'visible': visible.value,
+        'modal': true,
+        'onUpdate:visible': onVisibleUpdate,
+        'onAfter-hide': onAfterHide,
+      }
+
       return (
-        <Dialog ref={instance.dialogRef} v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}></Dialog>
+        <Dialog
+          ref={instance.dialogRef}
+          v-slots={__dialogSlots}
+          {...dialogBindProps as DialogProps}
+        >
+        </Dialog>
       )
     }
 
@@ -125,17 +177,6 @@ export function useDialog() {
     vnode.appContext = appContext
     render(vnode, div)
     visible.value = true
-    if (instance.dialogRef.value?.close) {
-      const originalClose = instance.dialogRef.value.close
-      instance.dialogRef.value.close = () => {
-        if (props.beforeClose) {
-          props.beforeClose(originalClose)
-        }
-        else {
-          originalClose()
-        }
-      }
-    }
     return instance
   }
 

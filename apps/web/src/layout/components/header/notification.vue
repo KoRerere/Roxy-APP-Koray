@@ -173,6 +173,7 @@ function checkTransfer(item: Message) {
     slots: {
       container: ({ hideModal }) => h(TransferReceive, {
         windowTransferNo: item.windowTransferNo!,
+        workspaceId: item.workspaceId!,
         onClose: hideModal,
       }),
     },

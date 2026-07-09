@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ProviderBuy from './provider-buy.vue'
+import ProviderBuy from './provider-buy/index.vue'
 import ProviderExternal from './provider-external.vue'
 import { useProxyStore } from '/@/stores/proxy'
 import type { BuyEntryType } from '/@/enums/proxy'
@@ -70,8 +70,8 @@ function toRola() {
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="32" @click="$emit('close')" />
       </div>
       <div v-if="currentProvider" class="flex-1 flex flex-col overflow-hidden content">
-        <ProviderExternal v-if="currentProvider.isJump" v-model:auto-jump="autoJump" :data="currentProvider" />
-        <ProviderBuy v-else :data="currentProvider" :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)" />
+        <ProviderBuy v-show="!currentProvider.isJump" :data="currentProvider" :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)" />
+        <ProviderExternal v-show="currentProvider.isJump" v-model:auto-jump="autoJump" :data="currentProvider" />
       </div>
     </template>
   </div>

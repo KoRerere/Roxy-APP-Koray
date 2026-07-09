@@ -1,0 +1,43 @@
+---
+description: console 日志使用英文；异步延时使用 node:timers/promises 的 setTimeout
+alwaysApply: true
+---
+
+# Console 日志与异步延时规范
+
+## Console 日志一律英文
+
+- `console.log` / `console.warn` / `console.error` / `console.debug` / `console.info` 的输出内容**必须使用英文**。
+- 面向开发者的诊断信息用英文；用户可见文案走 i18n（`$t(...)`），不要写进 console。
+- 日志前缀保持模块名方括号风格，如 `[BinUpdater:roxynet]`、`[prepareBinSeed]`。
+
+```ts
+// ❌ 差
+console.log(`[BinUpdater:${name}] seed 不存在，跳过自愈`)
+
+// ✅ 好
+console.log(`[BinUpdater:${name}] seed missing, skip self-heal`)
+```
+
+## 异步延时用 node:timers/promises
+
+模拟延迟、重试退避、`Promise.race` 超时兜底等，使用 `node:timers/promises` 的 `setTimeout`（建议别名 `sleep` 以免遮蔽全局 `setTimeout`），不要手写 `new Promise(resolve => setTimeout(resolve, ms))` 或项目内 `delay()` 包装。
+
+```ts
+import { setTimeout as sleep } from 'node:timers/promises'
+
+// ❌ 差
+function delay(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms))
+}
+await delay(500)
+
+// ✅ 好
+await sleep(500)
+
+// ✅ 好：超时 race
+return Promise.race([
+  reportPromise,
+  sleep(timeoutMs),
+])
+```

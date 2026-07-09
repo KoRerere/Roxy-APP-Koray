@@ -140,8 +140,8 @@ export async function getCustomFilters(params: any = {}) {
 
         const menbers = (memberList.rows || []).map((item: any) => ({
           parentName: 'labelIds',
-          value: `u_${item.user_id}`,
-          label: item.userName,
+          value: `u_${item.userId}`,
+          label: item.workspaceNickname || item.userName,
           avatar: item.avatar,
           avatarColor: item.avatarColor,
         }))

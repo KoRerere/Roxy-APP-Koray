@@ -3,24 +3,25 @@ import { RxAlert } from '/@/components/rx-alert/'
 import RxAvatar from '/@/components/rx-avatar'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import { API } from '/@/api'
-import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { executeSomethingByTargetWorkspace, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { emitter } from '/@/utils/eventBus'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import { getWorkspaceAvatarProps, getWorkspaceNamePrefix } from '/@/utils/workspace'
 
-const { windowTransferNo } = defineProps<{
+const { windowTransferNo, workspaceId } = defineProps<{
   windowTransferNo: string
+  workspaceId: number
 }>()
 
 const emit = defineEmits(['close'])
 
 const router = useRouter()
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
-const { isOwner } = storeToRefs(useRoleStore())
-const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { invalidateCache: invalidateListCache } = useListCacheActions()
 
 const workspaceName = computed(() => getWorkspaceNamePrefix(currentWorkspace.value?.workspaceName))
 
@@ -88,16 +89,23 @@ function getWorkspaceProps(item: Record<string, any>) {
   })
 }
 
+function invalidateProfilesListCacheAfterReceive(projectId?: string | number) {
+  invalidateListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: '' })
+  if (projectId != null && projectId !== '')
+    invalidateListCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: String(projectId) })
+}
+
 async function onReceive() {
   const { code, msg } = await API.window.userAgreeTransferWindowCreate({
     total: transferTotal.value,
     windowTransferNo,
+    workspaceId,
   })
-  handleBusinessCode(code, () => {
+  await handleBusinessCode(code, async () => {
     showToast(code, msg)
     if (code !== 0)
       return
-    toProject()
+    await toProject()
   })
   emit('close')
 }
@@ -111,15 +119,22 @@ async function onReject() {
 }
 
 async function toProject() {
-  if (!isOwner.value)
-    return
-  // 接收完窗口后跳转到项目列表
-  const { data: { rows } } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+  const { data: { rows } } = await API.limit.userGetProjectInfoByWorkspaceList({ workspaceId, default: 2 })
   const projectItem = rows.find(item => !!item.isTransfer)
-  if (projectItem) {
-    router.push({ name: 'project-item', params: { id: projectItem.project_id }, query: { title: projectItem.projectName } })
+  if (projectItem?.project_id)
+    invalidateProfilesListCacheAfterReceive(projectItem.project_id)
+
+  await executeSomethingByTargetWorkspace(async () => {
+    if (!projectItem)
+      return
+    await router.push({
+      name: 'project-item',
+      params: { id: projectItem.project_id },
+      query: { title: projectItem.projectName },
+    })
     emitter.emit('updateProjectList')
-  }
+    emitter.emit('refreshProfileList')
+  })(workspaceId)
 }
 </script>
 

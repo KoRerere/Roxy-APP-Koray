@@ -22,6 +22,7 @@ import { isDev, isLinux, isWindows } from '/@/utils/common'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
 import { getImage, isEmptyValue, isObject } from '/@/utils'
+// import { useBusinessModePanel } from './useBusinessMode'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
 
 const SIMULATION_DELAY_RANGE_KEY = 'delayRange'
@@ -167,6 +168,7 @@ function TaskbarTabDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () 
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil()
+  // const { createBusinessModeSection } = useBusinessModePanel()
 
   const getPreferencesPanels = async (data?: any) => {
     const [softConfig, disk, searchEngineResult] = await Promise.all([
@@ -204,6 +206,7 @@ export function usePreferencesPanel() {
       title: $t('软件设置'),
       description: $t('设置您的客户端使用偏好'),
       list: [
+        // createBusinessModeSection(),
         {
           subtitle: $t('窗口'),
           items: [

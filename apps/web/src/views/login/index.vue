@@ -6,7 +6,7 @@ import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
 
 import { useUserStore } from '/@/stores/user'
-import { decryptAESGCM, hidePageLoading, useOauth2Callback } from '/@/utils'
+import { decryptLocalPassword, hidePageLoading, useOauth2Callback } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import { EmailCodeInputOtp, RecoveryCode, RecoveryEmail, ResetPassword, SignForm, Verify2fa } from './components/'
 import MigrationTips from './components/migration-tips.vue'
@@ -19,7 +19,7 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { Role, WorkspaceType } from '/@/enums'
+import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
@@ -72,9 +72,15 @@ async function decryptPassword() {
     try {
       signFormData.value.password = atob(password.value)
     }
-    catch (e) {
+    catch {
+      const sessionMaterial = signFormData.value.user_name?.trim()
+        || userInfo.value.email
+        || ''
       try {
-        signFormData.value.password = await decryptAESGCM(password.value)
+        signFormData.value.password = await decryptLocalPassword(
+          password.value,
+          sessionMaterial || 'roxy-default',
+        )
       }
       catch (e) {
         console.error('decrypt password error', e)
@@ -242,7 +248,7 @@ async function jumpHome(intoWorkspaceId?: number) {
   setLoginWay(loginWay.value)
   API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
 
-  const name = userInfo.value.workspaceType === WorkspaceType.Public && userInfo.value.role !== Role.OWNER ? 'shared' : 'home'
+  const name = getWorkspaceTypeLandingRoute(userInfo.value.workspaceType, userInfo.value.role)
   await router.push({ name })
 
   mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })

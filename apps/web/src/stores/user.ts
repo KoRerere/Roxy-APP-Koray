@@ -12,10 +12,12 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCM, getCookie, hidePageLoading, isDev, isMainWindow, isMobile, isWindows, removeCookie } from '/@/utils'
+import { encryptAESGCMLocal, getCookie, hidePageLoading, initCrypto, isDev, isMainWindow, isMobile, isWindows, removeCookie } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 import { clearSessionLost, markSessionLost } from '/@/utils/sessionLost'
+import { isLoginRoute, navigateToLogin, pushToLocation } from '/@/router/navigation'
+import { useListCacheStore } from '/@/stores/listCache'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -23,13 +25,15 @@ type UserCards = UnwrapRowsType<UserGetBindCardListListData>
 type UserPayInfo = UserGetUserPayInfoListData['data']
 type LoginWay = 'password' | 'phone' | OauthLoginType
 
+function getWorkspaceStore() {
+  return useWorkspaceStore()
+}
+
 export const useUserStore = defineStore(
   'user',
   () => {
-    const router = useRouter()
     const toast = useToast()
     const locale = useSimpleLocale()
-    const workspaceStore = useWorkspaceStore()
     const tutorialStore = useTutorialStore()
     const roleStore = useRoleStore()
     const { check } = usePermission()
@@ -122,7 +126,7 @@ export const useUserStore = defineStore(
         clearSessionLost()
 
         setUserInfo(data)
-        await workspaceStore.setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
+        await getWorkspaceStore().setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
 
         setTimeout(() => {
           hidePageLoading()
@@ -138,7 +142,7 @@ export const useUserStore = defineStore(
       else {
         // 如果获取用户信息失败，则清除用户信息
         clearUserInfo()
-        router.push({ name: 'login' })
+        navigateToLogin()
         toast.add({
           severity: 'error',
           summary: $t('提示'),
@@ -200,7 +204,7 @@ export const useUserStore = defineStore(
           const openPageUrl = sessionStorage.getItem('openPageUrl')
           if (openPageUrl) {
             sessionStorage.removeItem('openPageUrl')
-            router.push(openPageUrl)
+            pushToLocation(openPageUrl)
           }
         })
 
@@ -276,7 +280,8 @@ export const useUserStore = defineStore(
       userCards.value = undefined
       token.value = ''
       mixpanel.reset()
-      workspaceStore.resetWorkspace()
+      useListCacheStore().clearAll()
+      getWorkspaceStore().resetWorkspace()
       tutorialStore.resetVideoMaps()
       await logoutPromise
     }
@@ -362,7 +367,10 @@ export const useUserStore = defineStore(
 
     /** 记住我的时候需要保存密码 */
     async function setPassword(pwd: string) {
-      password.value = await encryptAESGCM(pwd)
+      const sessionMaterial = userInfo.value.email || userInfo.value.phone || String(userInfo.value.userId ?? '')
+      password.value = sessionMaterial
+        ? await encryptAESGCMLocal(pwd, sessionMaterial)
+        : await encryptAESGCMLocal(pwd, 'roxy-default')
     }
 
     const initUserInfo = async (intoWorkspaceId?: number) => {
@@ -415,7 +423,7 @@ export const useUserStore = defineStore(
 
     async function checkCookie() {
       // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
-      if (!globalThis.isElectron && !import.meta.hot && router.currentRoute.value.name !== 'login') {
+      if (!globalThis.isElectron && !import.meta.hot && !isLoginRoute()) {
         const roxyToken = await getCookie('roxy_token')
 
         if (!roxyToken) {
@@ -432,7 +440,7 @@ export const useUserStore = defineStore(
 
           token.value = ''
           clearUserInfo()
-          router.push({ name: 'login' })
+          navigateToLogin()
           return Promise.reject(new Error('cookie expired'))
         }
         else {

@@ -20,6 +20,7 @@ import { useRoleStore } from '/@/stores/role'
 import { usePermission } from '/@/hooks/usePermission'
 import { safeParseJSON, sleep } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
+import { LIST_CACHE_NAMESPACE, useListCacheStore } from '/@/stores/listCache'
 
 const confirm = useConfirm()
 const [showDialog] = useDialog()
@@ -29,6 +30,7 @@ const role = useRoleStore()
 const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 const { check } = usePermission()
+const listCacheStore = useListCacheStore()
 
 interface TabType {
   id: string
@@ -92,9 +94,31 @@ const updateInkBar = debounce(() => {
 
 watch(tabs, updateInkBar)
 
+function applyActiveTabFromCache() {
+  const workspaceId = workspaceStore.currentWorkspace?.id
+  if (!workspaceId)
+    return
+
+  const cached = listCacheStore.get(
+    LIST_CACHE_NAMESPACE.BROWSER_LIST,
+    String(workspaceId),
+    { projectId: '' },
+  )
+  const activeTabId = cached?.meta?.activeTabId as string | undefined
+  if (!activeTabId)
+    return
+
+  const matchedTab = tabs.value.find(item => item.id === activeTabId)
+    ?? suffixTabs.value.find(item => item.id === activeTabId)
+  if (matchedTab)
+    active.value = activeTabId
+}
+
 onBeforeMount(() => {
+  applyActiveTabFromCache()
   // 提前跳转 suffixTabs 以解决切回全部窗口时，虚拟列表异常问题
   switchActiveTabByQuery(suffixTabs.value)
+  applyActiveTabFromCache()
   nextTick(() => {
     getFilterTabs()
   })
@@ -111,6 +135,7 @@ async function getFilterTabs() {
     })).concat(localTabs as any).sort((a, b) => a.sort - b.sort)
     tabs.value = [...pinTabs, ...list]
     switchActiveTabByQuery(tabs.value)
+    applyActiveTabFromCache()
 
     setTimeout(() => {
       // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310

@@ -10,6 +10,7 @@ export default antfu(
 
     ignores: [
       'packages/backend-api/src/api/*.ts',
+      'packages/roxy-crypto/pkg/**/*',
     ],
   },
   {

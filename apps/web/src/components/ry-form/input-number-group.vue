@@ -30,9 +30,13 @@ function parseInput(input: any) {
     <template v-for="(item, index) in _inputs" :key="index">
       <div v-if="!item.separator" class="number-group-item">
         <input v-model="item.value" class="number-group-item-input" type="number" v-bind="parseInput(item)">
-        <div v-if="item.invalid" class="number-group-item-error">{{ item.errorMsg }}</div>
+        <div v-if="item.invalid" class="number-group-item-error" :class="item.errorClass">
+          {{ item.errorMsg }}
+        </div>
       </div>
-      <div v-else class="number-group-separator">{{ item.value || ':' }}</div>
+      <div v-else class="number-group-separator">
+        {{ item.value || ':' }}
+      </div>
     </template>
   </div>
 </template>

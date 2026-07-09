@@ -6,6 +6,7 @@ import { chmodSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
+import { getSeedResourceEntries, prepareBinSeed } from './prepareBinSeed.mts'
 
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV !== 'production'
@@ -103,6 +104,9 @@ function canvasPlatformBinaries(): NonNullable<Configuration['extraResources']> 
   })
 }
 
+// 打包前准备 roxynet / roxysync 内置 seed（按当前平台目标 arch 下载并校验）
+await prepareBinSeed()
+
 const extraResources: NonNullable<Configuration['extraResources']> = [
   {
     from: 'node_modules/font-list',
@@ -131,6 +135,9 @@ const extraResources: NonNullable<Configuration['extraResources']> = [
     filter: ['**/*'],
   },
 ]
+
+// roxynet / roxysync 内置 seed（利用 ${arch} 宏按安装包 arch 分别内置，x86 装 x86、x64 装 x64）
+;(extraResources as { from: string, to: string }[]).push(...getSeedResourceEntries())
 
 // 处理 macOS PKG 脚本
 if (platform === 'darwin') {
@@ -245,6 +252,8 @@ const options: Configuration = {
     'dist/web',
     'dist/bin',
     'dist/starter.js',
+    // @roxy/crypto WASM 需从真实文件系统读取
+    'node_modules/@roxy/crypto/dist/**',
     // resources/firefox / chrome 含 icon.ico，由 @napi-rs/canvas (Skia native) 读取；
     // Skia 走 OS 文件 API，绕过 Electron asar 虚拟 FS，必须解包到 app.asar.unpacked
     'resources/firefox',
@@ -263,6 +272,16 @@ const options: Configuration = {
   files: [
     'dist',
     'resources',
+    {
+      from: '../../packages/roxy-crypto',
+      to: 'node_modules/@roxy/crypto',
+      filter: [
+        'package.json',
+        'dist/index.js',
+        'dist/roxy_crypto_wasm.js',
+        'dist/roxy_crypto_wasm_bg.wasm',
+      ],
+    },
   ],
   protocols: [
     {

@@ -22,6 +22,7 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 import type { SvgNames } from '/@/components/rx-icon'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
+import { useLockApp } from '/@/layout/components/header/useLockApp'
 
 const router = useRouter()
 const dialog = useDialog()
@@ -33,6 +34,7 @@ const { planSuccess } = usePay()
 const [showModal] = useDialogHook()
 const [showToast] = useResponseToast()
 const { showPreventMask, hidePreventMask } = usePreventMask()
+const { openLockApp } = useLockApp()
 
 const menuRef = useTemplateRef('menu')
 
@@ -74,6 +76,12 @@ const items = computed(() => {
       ...item,
       command: () => openSettings(item.name),
     })),
+    {
+      label: $t('应用锁'),
+      name: 'lockApp',
+      icon: 'base/rx_ic_unlock2',
+      command: openLockApp,
+    },
     {
       separator: true,
     },
@@ -166,7 +174,7 @@ const items = computed(() => {
           console.warn('logout window sync failed (ignored):', error)
         })
         // 2) 同步完成后再调用服务端登出接口, 避免提前失效 token 导致上一步数据同步失败.
-        await API.base.userLogoutList().catch(() => {})
+        await API.base.userLogoutList().catch(() => { })
         await globalThis.electronAPI.send('mcp:close')
         // 3) 仅清理本地登录态(浏览器已在上面关闭), 再跳转登录页.
         userStore.clearUserInfo({ skipServerSync: true })

@@ -297,7 +297,7 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
       /**  操作系统版本,可以不填 */
       platformVersion: winInfo.platformVersion,
       get architecture() {
-        if (isMacOS) {
+        if (isMacOS && winInfo.webGLInfo) {
           return winInfo.architecture
         }
       },

@@ -13,6 +13,9 @@ import { deepClone, getFormData, getSortIcon, isEmptyValue, isFunction, isLikeFu
 import type { Operation, SortOrderNumber } from '/@/utils'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { AnimatePresence } from 'motion-v'
+import type { ListCacheEntry } from '/@/stores/listCache'
+import { useListCacheStore } from '/@/stores/listCache'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 defineOptions({
   inheritAttrs: false,
@@ -62,9 +65,16 @@ export interface Props {
   operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
   beforeRefresh?: () => any | Promise<any>
   afterRefresh?: () => any | Promise<any>
+  listCacheKey?: string
+  listCacheScope?: () => Record<string, unknown>
+  listCacheMeta?: () => Record<string, unknown>
+  /** 返回 false 时 mount 阶段跳过 cache 恢复（由外部在条件满足后手动 restoreFromCache） */
+  listCacheShouldRestore?: () => boolean
 }
 
 const route = useRoute()
+const workspaceStore = useWorkspaceStore()
+const listCacheStore = useListCacheStore()
 const [showContextMenu] = useContextMenu()
 const columnCss = useCssModule('ColumnCss_Module')
 const rootElRef = useTemplateRef('rootEl')
@@ -171,8 +181,70 @@ const paginatorInfo = computed(() => $t('总计 {total} 个', {
   total: paginatorConfig.totalRecords,
 }))
 
+function _resolveListCacheContext() {
+  if (!props.listCacheKey)
+    return null
+  const workspaceId = workspaceStore.currentWorkspace?.id
+  if (!workspaceId)
+    return null
+  return {
+    namespace: props.listCacheKey,
+    workspaceId: String(workspaceId),
+    scope: props.listCacheScope?.() ?? {},
+  }
+}
+
+function _hydrateFromCache(entry: ListCacheEntry) {
+  _outerParams.value = { ...entry.outerParams }
+  paginatorConfig.first = entry.paginator.first
+  paginatorConfig.rows = entry.paginator.rows
+  paginatorConfig.totalRecords = entry.total
+  _dataList.value = entry.rows
+}
+
+function _writeListCache() {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return
+  listCacheStore.set(ctx.namespace, ctx.workspaceId, ctx.scope, {
+    rows: _dataList.value ?? [],
+    total: paginatorConfig.totalRecords,
+    outerParams: { ...(_outerParams.value ?? {}) },
+    paginator: { first: paginatorConfig.first, rows: paginatorConfig.rows },
+    meta: props.listCacheMeta?.() ?? {},
+    lastAccessedAt: Date.now(),
+  })
+}
+
+function _invalidateListCache() {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return
+  listCacheStore.invalidate(ctx.namespace, ctx.workspaceId, ctx.scope)
+}
+
+function restoreFromCache(): ListCacheEntry | null {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return null
+  const entry = listCacheStore.get(ctx.namespace, ctx.workspaceId, ctx.scope)
+  if (!entry)
+    return null
+  listCacheStore.touch(ctx.namespace, ctx.workspaceId, ctx.scope)
+  _hydrateFromCache(entry)
+  return entry
+}
+
 onBeforeMount(async () => {
   _getConditionPromise = _getCondition()
+  await _getConditionPromise
+  if (props.listCacheKey) {
+    const canRestore = !props.listCacheShouldRestore || props.listCacheShouldRestore()
+    if (canRestore && restoreFromCache()) {
+      _firstLoad.value = true
+      return
+    }
+  }
   if (props.immediate) {
     await _request()
   }
@@ -253,9 +325,12 @@ async function _request() {
   _loading.value = true
   await _getConditionPromise
   const requestParams = _getParams()
-  const { data } = await props.tableRequest(requestParams)
+  const response = await props.tableRequest(requestParams)
+  const data = response?.data ?? response
   paginatorConfig.totalRecords = data?.total ?? 0
   _dataList.value = data?.rows || []
+  if (props.listCacheKey && (response?.code === 0 || response?.code === undefined))
+    _writeListCache()
   _clearSelection()
   _loading.value = false
 }
@@ -269,6 +344,9 @@ function _clearSelection() {
     selectionData.value = undefined
     _selectionDisableds.value = []
   }
+  else {
+    (onUpdateSelection?.value as any)(undefined)
+  }
 }
 
 const contextMenuSelected = ref()
@@ -281,7 +359,7 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
 
   const operation = _getOperation(event.data)
 
-  if (operation.filter(item => item.visible !== false).length === 0) {
+  if (!operation.some(item => item.visible !== false)) {
     contextMenuSelected.value = undefined
     return
   }
@@ -330,7 +408,9 @@ function _updateDataList(list: any[]) {
   _dataList.value = list || []
 }
 
-async function _onRefresh() {
+async function _onRefresh(invalidateCache = false) {
+  if (invalidateCache && props.listCacheKey)
+    _invalidateListCache()
   await props.beforeRefresh?.()
   await _request()
   await props.afterRefresh?.()
@@ -349,6 +429,13 @@ defineExpose({
   clearSelection: _clearSelection,
   updateDataList: _updateDataList,
   getParams: _getParams,
+  restoreFromCache,
+  getCachedEntry: () => {
+    const ctx = _resolveListCacheContext()
+    if (!ctx)
+      return null
+    return listCacheStore.get(ctx.namespace, ctx.workspaceId, ctx.scope)
+  },
 })
 
 const slots: any = useSlots()
@@ -380,7 +467,7 @@ function initBodyrow(options: any) {
             </TableDisplay>
             <Divider layout="vertical" class="!mx-0 h-4" />
           </template>
-          <TableReload v-if="showReload" :loading="_loading" @click="_onRefresh" />
+          <TableReload v-if="showReload" :loading="_loading" @click="_onRefresh(true)" />
         </div>
       </slot>
     </div>

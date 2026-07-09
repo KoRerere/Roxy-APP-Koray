@@ -1,3 +1,4 @@
+import type { ListCacheEntry } from '/@/stores/listCache'
 import type { Ref } from 'vue'
 import { API } from '/@/api'
 import { filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
@@ -75,6 +76,20 @@ export function useProfilesTable(options: {
     return data
   }
 
+  function syncFromCacheEntry(entry: ListCacheEntry) {
+    const rows = entry.rows as Data[]
+    dataList.value = rows
+    hasTempProfile.value = rows.some(item => item.isTemporary)
+    if (entry.meta?.filtersMenu)
+      options.filtersMenu.value = entry.meta.filtersMenu
+    const params = {
+      ...entry.outerParams,
+      ...filterFieldByValue(getFormData(options.filtersMenu.value)),
+    }
+    hasFiltered.value = !isEmptyValue(params)
+    emitter.emit('updateProfileList', rows)
+  }
+
   return {
     dataList,
     hasFiltered,
@@ -83,5 +98,6 @@ export function useProfilesTable(options: {
     syncOpenedProxyToRow,
     onRefreshTable,
     tableRequest,
+    syncFromCacheEntry,
   }
 }

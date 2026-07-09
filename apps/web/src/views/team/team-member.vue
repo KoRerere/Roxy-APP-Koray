@@ -77,6 +77,15 @@ const { columns } = useColumns({
       slot: 'related',
     },
     {
+      title: $t('邀请人'),
+      key: 'inviteMember',
+      slot: 'inviteMember',
+      style: {
+        width: '10%',
+        minWidth: '240px',
+      },
+    },
+    {
       title: $t('操作'),
       slot: 'actions',
     },
@@ -328,7 +337,13 @@ function onRefreshTable(params = {}) {
       </CustomNewEmpty>
     </template>
     <template #member="{ data }">
-      <MemberInfo :avatar="data.avatar" :user-name="data._userName" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
+      <MemberInfo :avatar="data.avatar" :user-name="data.workspaceNickname || data._userName" :nick-name="data.workspaceNickname" :avatar-color="data.avatarColor" :email="data.email" :phone="data.phone" />
+    </template>
+    <template #inviteMember="{ data }">
+      <MemberInfo v-if="data.inviterInfo?.inviterId" :avatar="data.inviterInfo.avatar" :user-name="data.inviterInfo.inviterName" :avatar-color="data.inviterInfo.avatarColor" :email="data.inviterInfo.email" :phone="data.inviterInfo.phone" />
+      <div v-else>
+        --
+      </div>
     </template>
     <template #workspaceNicknameHeader="{ column: { title } }">
       <div class="flex items-center gap-0.5 text-3 font-[Inter] font-600 leading-16px">

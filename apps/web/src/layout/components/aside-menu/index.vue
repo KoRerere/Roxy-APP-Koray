@@ -2,13 +2,14 @@
 import { h } from 'vue'
 import QuickOpen from '/@/views/browser/create/quick.vue'
 import SubMenuItem from './sub-menu-item.vue'
-import { cloneDeep } from 'es-toolkit'
 import { API } from '/@/api'
-import { menuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRouteContext } from '/@/composables/useRouteContext'
+import { resolveMenuRoutes } from '/@/router/resolve-menu'
+import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
@@ -17,7 +18,6 @@ import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
 import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
 import { emitter } from '/@/utils/eventBus'
 import { ProjectPin, WorkspaceType } from '/@/enums'
-import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
 
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 
@@ -31,6 +31,7 @@ const roleStore = useRoleStore()
 const projectStore = useProjectStore()
 const userStore = useUserStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { ctx } = useRouteContext()
 const { check } = usePermission()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -49,21 +50,23 @@ const projectList = computed(() => {
   })
 })
 
-const menus = computed(() => {
-  if (!roleStore.isOwner && currentWorkspace.value?.workspaceType === WorkspaceType.Public) {
-    const menu = menuRoutes.find(item => item.name === 'shared')!
-    return filterMenus(cloneDeep([{ ...menu, meta: { ...menu.meta, hideInMenu: false } }]))
-  }
+const ecommerceGroupList = computed(() => {
+  return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
+    return {
+      path: ':id',
+      name: 'ecommerce-group-item',
+      meta: { title: item.projectName, params: { id: item.project_id } },
+    } as unknown as RouteRecordRaw
+  })
+})
 
-  const projectIndex = menuRoutes.findIndex(item => item.name === 'projects')!
-  return filterMenus(cloneDeep([
-    ...menuRoutes.slice(0, projectIndex),
-    {
-      ...menuRoutes[projectIndex],
-      children: projectList.value,
-    },
-    ...menuRoutes.slice(projectIndex + 1),
-  ] as RouteRecordRaw[]))
+const menus = computed(() => {
+  return resolveMenuRoutes({
+    ctx: ctx.value,
+    projectChildren: ctx.value.isNormal ? projectList.value : undefined,
+    ecommerceGroupChildren: ctx.value.isEcommerce ? ecommerceGroupList.value : undefined,
+    checkPermission: check,
+  })
 })
 
 // 切换空间后重新获取 pin 项目
@@ -115,23 +118,6 @@ function showAsideMenuGuideTour() {
   })
 
   driverObj.value.drive()
-}
-
-/** 过滤菜单 */
-function filterMenus(menus: RouteRecordRaw[]) {
-  return menus.filter((item) => {
-    if (item.children?.length) {
-      item.children = filterMenus(item.children)
-    }
-
-    if (item.meta?.type === 'group' && !item.children?.length) {
-      return false
-    }
-
-    const hasPermission = !item.meta?.permissions?.length || check(item.meta.permissions, item.meta.permissionMode)
-
-    return !item.meta?.hideInMenu && hasPermission
-  })
 }
 
 async function checkWindowTotalCountOk() {
@@ -233,7 +219,7 @@ async function genCustomerParams(data: any) {
 
 <template>
   <aside class="relative -mt-6.5 pt-5.25 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <div v-if="check('Profiles_add')" class="flex items-center gap-2">
+    <div v-if="check('Profiles_add') && ctx.isNormal" class="flex items-center gap-2">
       <RxButton id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
       <RxButton v-if="!collapsed && isDev" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" />
     </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import { ExcelAccept, TextAccept } from '/@/utils/constants'
 import { getExtname } from '/@/utils'
 import { normalizeImportCellText, parseIntelligent } from '/@/views/account/create/utils'
@@ -8,6 +9,7 @@ import ExcelJS from 'exceljs'
 
 const router = useRouter()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { invalidateCache: invalidateAccountListCache } = useListCacheActions()
 
 const FILE_MAX_SIZE = 5 * 1024 * 1024
 const FILE_ACCEPT = Object.freeze({ ...ExcelAccept, ...TextAccept })
@@ -146,6 +148,7 @@ async function saveAccounts(keepAdding = false) {
     return
   }
   showToast(0, $t('导入成功'))
+  invalidateAccountListCache(LIST_CACHE_NAMESPACE.ACCOUNT_LIST)
   if (keepAdding) {
     pendingRows.value = []
     fileData.status = false

@@ -29,6 +29,8 @@ export const appUpdater = new class AppUpdater {
   isQuittingForUpdate = false
   /** 是否正在执行升级退出流程 (含数据同步) */
   private upgradeInProgress = false
+  /** electron-updater 实际已下载完成的版本，与 #updateMessageData.version 解耦，避免 init 提前刷新远端版本后误判无需重下 */
+  #downloadedVersion?: string
   #autoUpdater: DebUpdater | typeof electronUpdater.autoUpdater = process.platform === 'linux'
     ? new CustomDebUpdater()
     : electronUpdater.autoUpdater
@@ -98,7 +100,7 @@ export const appUpdater = new class AppUpdater {
       console.log('Is remote version greater than local version:', compare(version, app.getVersion(), '>'))
       // 远程版本发生变化，重新检查更新
       if (version && compare(version, app.getVersion(), '>')) {
-        await this.checkForUpdates()
+        await this.checkForUpdates(version)
       }
       return result
     }
@@ -119,6 +121,12 @@ export const appUpdater = new class AppUpdater {
       this.isInProgress = false
 
       if (this.#updateMessageData.status === 'downloaded') {
+        // 安装阶段失败：重置状态，允许下次重新下载并安装，同时通知用户
+        this.#updateMessageData.status = undefined
+        this.#downloadedVersion = undefined
+        this.upgradeInProgress = false
+        this.isQuittingForUpdate = false
+        this.sendErrorMessage()
         return
       }
 
@@ -144,6 +152,7 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.on('update-downloaded', (event) => {
       this.isInProgress = false
       console.log(`Update download completed`, event)
+      this.#downloadedVersion = event.version
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
       this.sendSuccessMessage()
@@ -184,7 +193,7 @@ export const appUpdater = new class AppUpdater {
     return result
   }
 
-  async checkForUpdates() {
+  async checkForUpdates(remoteVersion?: string) {
     console.info(`Checking for updates checkAppUpdate`, this.isInProgress)
 
     if (this.isInProgress) {
@@ -197,10 +206,23 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
-    // if (this.#updateMessageData.status === 'downloaded') {
-    //   this.sendSuccessMessage()
-    //   return this.#updateMessageData
-    // }
+    // 更新已下载完成，等待安装中
+    if (this.#updateMessageData.status === 'downloaded') {
+      const targetVersion = remoteVersion ?? this.#updateMessageData.version
+      const downloadedVersion = this.#downloadedVersion
+      // 远端目标版本高于本地 pending 包时，必须重下；不能拿 #updateMessageData.version 比较，init 会先把它刷成最新远端版本
+      if (targetVersion && downloadedVersion && compare(targetVersion, downloadedVersion, '>')) {
+        console.log(`[AppUpdater] Newer version ${targetVersion} available, downloaded ${downloadedVersion}, reset and re-download`)
+        this.#updateMessageData.status = undefined
+        this.#downloadedVersion = undefined
+        this.#updateMessageData.percent = 0
+      }
+      else {
+        // 已是最新版本，通知前端并跳过，避免重复调用干扰 Squirrel.Mac 安装流程
+        this.sendSuccessMessage()
+        return this.#updateMessageData
+      }
+    }
 
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
@@ -244,6 +266,14 @@ export const appUpdater = new class AppUpdater {
       console.log('upgradeNow already in progress, skipping duplicate call')
       return
     }
+
+    const { version, status } = this.#updateMessageData
+    if (status === 'downloaded' && version && this.#downloadedVersion && version !== this.#downloadedVersion) {
+      console.log(`[AppUpdater] Pending package is ${this.#downloadedVersion}, target is ${version}, re-check before install`)
+      await this.checkForUpdates(version)
+      return
+    }
+
     this.upgradeInProgress = true
     this.isQuittingForUpdate = true
 
@@ -252,7 +282,12 @@ export const appUpdater = new class AppUpdater {
     try {
       await syncBrowserDataBeforeQuit()
       store.appNormalExit = true
-      await forceSaveConfig()
+      // 不待候 forceSaveConfig 完成，直接进入 quitAndInstall。
+      // 背景：macOS Intel 上磁盘 IO 较慢，若 await forceSaveConfig 期间
+      // before-quit 快捷路径未调用 event.preventDefault() 就放行 quit，
+      // 会导致进程在 quitAndInstall 调用前就退出，ShipIt 只收到 InstallOnly。
+      // 改为 fire-and-forget：先确保 Squirrel 收到 InstallAndRelaunch 指令，配置市异步保存。
+      forceSaveConfig()
       console.info('Browser data synced, quitting app and updating immediately')
 
       if (isPackaged) {
@@ -286,8 +321,16 @@ export const appUpdater = new class AppUpdater {
     const { version, status } = this.#updateMessageData
     const { openedBrowserList, openingBrowserMap } = browserManager
 
-    // 有新版本可以升级
-    const newVersionIsReadyToUpgrade = version && status === 'downloaded' && compare(version, app.getVersion(), '>')
+    // pending 包版本须与展示的目标版本一致，避免远端已升到 8.7.2 但 pending 仍是 8.7.1 时被空闲自动升级
+    const packageMatchesTarget = !version || !this.#downloadedVersion || version === this.#downloadedVersion
+    if (status === 'downloaded' && version && this.#downloadedVersion && !packageMatchesTarget) {
+      console.log(`[AppUpdater] Idle install skipped: pending ${this.#downloadedVersion}, target ${version}, re-check`)
+      await this.checkForUpdates(version)
+      return
+    }
+
+    const newVersionIsReadyToUpgrade = this.#downloadedVersion && status === 'downloaded'
+      && compare(this.#downloadedVersion, app.getVersion(), '>') && packageMatchesTarget
     // 无处于打开状态的窗口
     const allBrowsersClosed = openedBrowserList.length === 0 && openingBrowserMap.size === 0
     // 如果 APP 当前为空闲状态，则检查是否需要更新

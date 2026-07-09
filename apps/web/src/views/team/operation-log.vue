@@ -67,7 +67,7 @@ async function tableFilters() {
       name: 'userNameIds',
       value: [],
       placeholder: $t('全部成员'),
-      options: members.value.map(user => ({ label: user.userName, value: user.user_id })),
+      options: members.value.map(user => ({ label: user.workspaceNickname || user.userName, value: user.user_id })),
     },
     {
       type: 'multiple',

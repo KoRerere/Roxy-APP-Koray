@@ -83,7 +83,7 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
 
       if (Array.isArray(remoteConfig?.needDeviceIdApis)) {
         if (remoteConfig.needDeviceIdApis.some(api => request.url.includes(api))) {
-          deviceId ||= encryptAESGCM(await getDeviceId())
+          deviceId ||= await encryptAESGCM(await getDeviceId())
           inviteCode = await getInviteCode()
           request.headers.set('R-DEVICE-ID', deviceId)
           request.headers.set('R-INVITE-CODE', inviteCode)

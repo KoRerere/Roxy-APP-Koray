@@ -4,12 +4,13 @@ import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import DownloadModal from '/@/views/agent/shop/components/download-modal.vue'
 import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
 import UpgradeModal from '/@/views/agent/shop/components/upgrade-modal.vue'
+import BeforeClose from '/@/views/agent/shop/components/provider-buy/before-close.vue'
 import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { ProxyCheckStatus, ProxyExpireStatus, ProxyType } from '/@/enums'
-import { concurrentControl, createDefaultObject, decryptAESGCM, strConcat } from '/@/utils'
+import { concurrentControl, createDefaultObject, decryptAESGCM, safeParseJSON, strConcat } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
@@ -245,6 +246,7 @@ export function useProxy() {
       showHeader: false,
       modal: true,
       blockScroll: true,
+      beforeClose: ipBeforeClose,
       slots: {
         container: ({ hideModal }) => (
           <ChooseModal
@@ -255,6 +257,26 @@ export function useProxy() {
         ),
       },
       handleCancel: reject,
+    })
+    return promise
+  }
+
+  function ipBeforeClose() {
+    const isRemind = safeParseJSON(localStorage.getItem('IPColseRemind'))
+    if (isRemind) {
+      return true
+    }
+
+    const { promise, resolve } = Promise.withResolvers<boolean>()
+
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      handleCancel: () => resolve(true),
+      slots: {
+        container: ({ handleCancel }) => <BeforeClose onClose={handleCancel} />,
+      },
     })
     return promise
   }

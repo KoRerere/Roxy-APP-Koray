@@ -7,6 +7,7 @@ import { ipcSender } from '/@/modules/ipc/sender'
 import { browserManager } from "/@/modules/browser";
 import { closeAllSyncDialogs, defaultMainControlWindowColor } from "/@/modules/sync-control/common";
 import { createSynchronizerWindow } from "/@/modules/sync-control/synchronizer";
+import { roxySyncBinUpdater } from "/@/modules/updater/binUpdater";
 import { killProcessByName } from "/@/utils";
 
 export type RoxySyncStartResult = { "listening": number, "monitors": [{ "height": number, "index": number, "width": number }] }
@@ -88,6 +89,9 @@ export async function startRoxySync(pIds: number[] = []) {
     return
   }
 
+  // spawn 前确保 active 可用（本地 seed 自愈，快速、不联网）
+  await roxySyncBinUpdater.ensureActiveFromSeed()
+
   roxySyncProcess = spawn(appConfig.roxySyncBinPath, startArgs, {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
@@ -162,6 +166,8 @@ export function stopRoxySync() {
     roxySyncStartResult = {} as RoxySyncStartResult
   }
   killProcessByName('roxysync.exe')
+  // 群控停止后已进入空闲，尝试应用可能就绪的 roxysync 新版本
+  roxySyncBinUpdater.tryApplyPending()
 }
 
 /** 获取主控浏览器 */

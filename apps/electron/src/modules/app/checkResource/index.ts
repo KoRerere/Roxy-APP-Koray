@@ -1,6 +1,3 @@
-import { getWebDomain } from '/@/api/util'
-import { checkRoxynetBin } from '/@/modules/app/checkResource/checkRoxynetBin'
-import { checkRoxySyncBin } from '/@/modules/app/checkResource/checkRoxySyncBin'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
 
@@ -15,15 +12,8 @@ export async function checkResource() {
   console.log('checkResource start')
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
-    const webDomain = await getWebDomain()
-    // 检测更新 roxynet
-    await checkRoxynetBin(webDomain).catch((error) => {
-      console.log('checkRoxynetBin error', error)
-    })
-    // 检测更新 roxySync
-    await checkRoxySyncBin(webDomain).catch((error) => {
-      console.log('checkRoxySyncBin error', error)
-    })
+    // 注意：roxynet / roxysync 不再在此处（启动页）阻塞式联网下载，
+    // 改为“启动本地 seed 自愈 + 后台 pending 更新 + 空闲 apply”（见 modules/updater/binUpdater）。
     agentUpdater.checkForUpdates().catch((error) => {
       console.log('checkRoxyagent scripts error', error)
     })
