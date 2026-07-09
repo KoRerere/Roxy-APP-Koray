@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import Menu from 'primevue/menu'
+import type { MenuItem } from 'primevue/menuitem'
 import SelectionMenuItem from './menu-selection-item.vue'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { MenuProps } from '../type'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 
-interface Props extends /* @vue-ignore */ Omit<MenuProps, 'slots'> { }
+interface Props {
+  mode?: MenuProps['mode']
+  model?: MenuItem[]
+  menuProps?: Record<string, any>
+}
 
 const { mode, model, menuProps = {} } = defineProps<Props>()
 const slots: Record<string, any> = useSlots()
