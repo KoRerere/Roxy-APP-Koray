@@ -129,10 +129,10 @@ async function showNewInfo() {
     blockScroll: true,
     handleCancel: () => updateOnboardingTaskStatus({ promotionLinkRevampReminderStatus: true } as any),
     slots: {
-      container: ({ hideModal }) => h(NewReferralModal, {
+      container: ({ handleCancel }) => h(NewReferralModal, {
         onClose: () => {
           // focusReward()
-          hideModal()
+          handleCancel()
         },
       }),
     },

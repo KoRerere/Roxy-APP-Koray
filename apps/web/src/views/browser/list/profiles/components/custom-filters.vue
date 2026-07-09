@@ -226,7 +226,7 @@ function onShowGuideModal() {
     blockScroll: true,
     handleCancel: () => updateOnboardingTaskStatus({ saveFilterGuideStatus: true }),
     slots: {
-      container: ({ hideModal }) => (
+      container: ({ handleCancel }) => (
         <GuideModal
           title={$t('高级筛选')}
           desc={({ class: className }) => {
@@ -238,8 +238,8 @@ function onShowGuideModal() {
             )
           }}
           video={videoUrl}
-          onClose={hideModal}
-          onConfirm={hideModal}
+          onClose={handleCancel}
+          onConfirm={handleCancel}
         >
         </GuideModal>
       ),

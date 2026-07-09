@@ -50,10 +50,10 @@ export function useFreedomActivity() {
       blockScroll: true,
       closeOnEscape: false,
       slots: {
-        container: ({ hideModal }) => h(ActivityRechangeModal, {
+        container: ({ handleCancel }) => h(ActivityRechangeModal, {
           onClose: () => {
             callback?.()
-            hideModal()
+            handleCancel()
             if (isNext)
               showSlotMachine()
           },

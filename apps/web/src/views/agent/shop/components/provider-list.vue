@@ -18,7 +18,6 @@ const { getProxyVendors } = useProxyStore()
 
 const providers = ref()
 const activeKey = ref()
-const currentProvider = ref()
 const autoJump = ref(provider?.autoJump)
 
 onBeforeMount(() => {
@@ -31,19 +30,12 @@ async function getProviders() {
     return
   providers.value = data.filter(item => entryType ? !item.isJump : true).map(item => ({ title: item.vendorName, value: item.id, image: item.vendorIcon, isJump: item.isJump, data: item }))
   activeKey.value = provider?.proxyProviderId || providers.value[0]?.value
-
-  switchProvider()
-}
-
-function switchProvider() {
-  currentProvider.value = providers.value.find((item: any) => item.value === activeKey.value)?.data
 }
 
 function toRola() {
   const item = providers.value.find((item: any) => item.title === 'Rola-IP')
   if (item) {
     activeKey.value = item.value
-    switchProvider()
   }
 }
 </script>
@@ -52,7 +44,7 @@ function toRola() {
   <div class="relative flex-1 flex flex-col pt-3 w-100vw max-w-300 overflow-hidden provider">
     <template v-if="providers">
       <div class="flex items-center justify-between pr-7">
-        <RxTabs v-model:value="activeKey" :tabs="providers" head-tabs only-tabs @update:value="switchProvider">
+        <RxTabs v-model:value="activeKey" :tabs="providers" head-tabs only-tabs>
           <template #tab="{ data }">
             <div class="flex items-center gap-3">
               <img class="block w-8 rounded-1.5 image" :src="data.image">
@@ -69,9 +61,10 @@ function toRola() {
         </RxTabs>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="32" @click="$emit('close')" />
       </div>
-      <div v-if="currentProvider" class="flex-1 flex flex-col overflow-hidden content">
-        <ProviderBuy v-show="!currentProvider.isJump" :data="currentProvider" :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)" />
-        <ProviderExternal v-show="currentProvider.isJump" v-model:auto-jump="autoJump" :data="currentProvider" />
+      <div class="flex-1 flex flex-col overflow-hidden content">
+        <component :is="item.data.isJump ? ProviderExternal : ProviderBuy" v-for="item in providers" v-show="activeKey === item.value" :key="item.value" v-model:auto-jump="autoJump" :data="item.data"
+                   :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
+        />
       </div>
     </template>
   </div>

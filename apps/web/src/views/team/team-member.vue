@@ -142,7 +142,7 @@ function showWarnTipsModal() {
     modal: true,
     blockScroll: true,
     slots: {
-      container: ({ hideModal }) => <WarnTipsModal onClose={hideModal} />,
+      container: ({ handleCancel }) => <WarnTipsModal onClose={handleCancel} />,
     },
     handleCancel: () => updateOnboardingTaskStatus({ newSpaceCreateTeamStatus: true }),
   })

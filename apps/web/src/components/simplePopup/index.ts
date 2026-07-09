@@ -23,9 +23,9 @@ export function useSimpleDialog() {
       modal: true,
       blockScroll: true,
       slots: {
-        container: ({ hideModal }) => h(popup, {
+        container: ({ handleCancel }) => h(popup, {
           ...props,
-          onClose: hideModal,
+          onClose: handleCancel,
         }),
       },
       handleCancel: onHide,

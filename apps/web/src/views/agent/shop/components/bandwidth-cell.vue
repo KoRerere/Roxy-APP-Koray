@@ -5,7 +5,7 @@ import { ProxyExpireStatus, ProxyOrderStatus } from '/@/enums/proxy'
 
 type Data = UnwrapRowType<UserGetProxyListMergedListData>
 
-const { data, showUpgrade = true, onUpgrade = () => { } } = defineProps<{
+const { data, showUpgrade = false, onUpgrade = () => { } } = defineProps<{
   data: Data
   showUpgrade?: boolean
   onUpgrade?: (data: any) => void
