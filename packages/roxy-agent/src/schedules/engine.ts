@@ -13,6 +13,7 @@ import type { ScheduleRecord } from '@/database/schedules/types'
 import type { ScheduledTask } from 'node-cron'
 import cron from 'node-cron'
 import { ScheduleRunStore, ScheduleStore } from '@/database/schedules'
+import { runScheduledTurn } from './runner'
 
 export interface RegisterResult {
   ok: boolean
@@ -142,8 +143,6 @@ class SchedulerEngine {
       runRecord = ScheduleRunStore.create({ schedule_id: scheduleId, status: 'running' })
       console.log(`[scheduler] firing schedule ${scheduleId} (${schedule.name}) runId=${runRecord.id}`)
 
-      // 懒加载切断静态循环（engine → runner → createChatAgent → scheduleTools → engine）
-      const { runScheduledTurn } = await import('./runner')
       const { output, error } = await runScheduledTurn(schedule)
 
       const durationMs = Date.now() - startedAt

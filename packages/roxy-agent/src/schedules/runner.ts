@@ -20,9 +20,15 @@ import { handleWorkerStream, StreamState } from '@/deepagents/handle-stream'
 const SCHEDULE_DESTROY_TIMEOUT_MS = 12_000
 const SCHEDULE_RUN_TIMEOUT_MS = Number(process.env.SCHEDULE_RUN_TIMEOUT_MS) || 180_000
 
+type ScheduleAgentMode = 'simple' | 'orchestrator'
+
 export interface RunScheduledTurnResult {
   output: string
   error?: string
+}
+
+function resolveScheduleAgentMode(mode: unknown): ScheduleAgentMode {
+  return mode === 'orchestrator' ? 'orchestrator' : 'simple'
 }
 
 /**
@@ -47,7 +53,7 @@ export async function runScheduledTurn(schedule: ScheduleRecord): Promise<RunSch
   let agent: any
   let destroy: (() => Promise<void>) | undefined
   try {
-    ;({ agent, destroy } = await createChatAgent({ mode: 'simple', workerId }))
+    ;({ agent, destroy } = await createChatAgent({ mode: resolveScheduleAgentMode(schedule.mode), workerId }))
 
     const streamState = new StreamState()
     streamState.setTaskId(runId)

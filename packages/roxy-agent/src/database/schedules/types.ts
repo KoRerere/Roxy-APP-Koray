@@ -18,7 +18,7 @@ export interface ScheduleRecord {
   cron_expr: string
   /** 0 | 1 */
   enabled: number
-  /** 当前仅 'simple'；预留扩展 */
+  /** 创建任务时使用的 agent 模式；执行时沿用该模式 */
   mode: string
   created_at: string
   updated_at: string

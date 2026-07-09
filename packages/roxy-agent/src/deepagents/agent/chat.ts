@@ -12,11 +12,11 @@ import { createDeepAgentRuntime, ensureWorkspaceDir } from '../backend'
 import { createFileCollectorStore } from '../fileCollector'
 import { ORCHESTRATOR_SYSTEM_PROMPT, SIMPLE_SYSTEM_PROMPT } from '../prompt'
 import { SqliteSaver } from '../sqlite-checkpointer'
+import { getCurrentTimeTool } from '../tools/get_current_time'
 import { listScriptsTool } from '../tools/list_scripts'
 import { createRunScriptTool } from '../tools/run_script'
 import { workerTools } from '../tools/run_worker'
-import { scheduleTools } from '../tools/schedules'
-import { getCurrentTimeTool } from '../tools/get_current_time'
+import { createScheduleTools } from '../tools/schedules'
 
 const HITL_INTERRUPT_ON: Record<string, any> = {
   roxy_delete_browsers: { allowedDecisions: ['approve', 'reject'] },
@@ -66,6 +66,7 @@ export async function createChatAgent(options: {
     scriptOutputDir: workspaceDir ? path.join(workspaceDir, 'script-run') : undefined,
     scriptLogsDir: workspaceDir ? path.join(workspaceDir, 'script-run') : undefined,
   })
+  const scheduleTools = createScheduleTools(options.mode)
   const tools = options.mode === 'orchestrator'
     ? [...runtime.tools, ...workerTools, ...scheduleTools, getCurrentTimeTool, ...mcpTools]
     : [...runtime.tools, runScriptTool, listScriptsTool, ...scheduleTools, getCurrentTimeTool, ...mcpTools]

@@ -1014,11 +1014,11 @@ importers:
         specifier: workspace:*
         version: link:../backend-api
       '@roxybrowser/openapi':
-        specifier: 1.0.15
-        version: 1.0.15(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
+        specifier: 1.0.17
+        version: 1.0.17(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
       '@roxybrowser/playwright':
-        specifier: 2.0.2-beta.28
-        version: 2.0.2-beta.28(@cfworker/json-schema@4.1.1)
+        specifier: 2.0.2-beta.30
+        version: 2.0.2-beta.30(@cfworker/json-schema@4.1.1)
       '@roxybrowser/playwright-mcp':
         specifier: 0.0.8-beta.10
         version: 0.0.8-beta.10(@cfworker/json-schema@4.1.1)
@@ -5123,8 +5123,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@roxybrowser/openapi@1.0.15':
-    resolution: {integrity: sha512-cH96lddauSbE1IW6oWVrtbG0qyScqotzpRitCDTRzbj230MLCtRUhXvOQBdCXkxQXUp7+QF6wdQkcRhlldz7bg==}
+  '@roxybrowser/openapi@1.0.17':
+    resolution: {integrity: sha512-ydkX5OvLEEQd8tSIVXG63Zf6dXTC0Wz5C5v9m0Npi1tn9bWyJekaGIIXrXdwycn2rIXP/XYxfvk8334Rq6p9ZA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -5135,6 +5135,10 @@ packages:
 
   '@roxybrowser/playwright@2.0.2-beta.28':
     resolution: {integrity: sha512-jXJ0vp8SD+yoP8Waz3baliWgJJjIPPEYloeBNDUuMwHtNzSr1n7Kx2VKfXJ7aMpqsJ9mYz++InUeRnQT9f+AdQ==}
+    hasBin: true
+
+  '@roxybrowser/playwright@2.0.2-beta.30':
+    resolution: {integrity: sha512-BPORyN/X6RuPHHxdVaR6B6dxF/a/ijHZdw01RKFx9n4qbT3SO8kR4n/X3m7afiKwFb15aaotBnvyniTmymhuhA==}
     hasBin: true
 
   '@scarf/scarf@1.4.0':
@@ -11623,8 +11627,8 @@ packages:
     engines: {node: '>= 6'}
 
   statuses@1.5.0:
-    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==, tarball: https://registry.npmjs.org/statuses/-/statuses-1.5.0.tgz}
-    engines: {node: '>= 0.8'}
+    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==}
+    engines: {node: '>= 0.6'}
 
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
@@ -16972,7 +16976,7 @@ snapshots:
       - supports-color
       - zod
 
-  '@roxybrowser/openapi@1.0.15(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)':
+  '@roxybrowser/openapi@1.0.17(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.25.1(patch_hash=9ea4d654ca2d33ac63a3babe4767a882ec9a8d86f710139bc4b464b46b23a8e2)(@cfworker/json-schema@4.1.1)(hono@4.12.23)(zod@4.4.3)
       commander: 14.0.3
@@ -16994,6 +16998,19 @@ snapshots:
       - supports-color
 
   '@roxybrowser/playwright@2.0.2-beta.28(@cfworker/json-schema@4.1.1)':
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+      chrome-remote-interface: 0.33.3
+      mime: 4.1.0
+      yaml: 2.9.0
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@roxybrowser/playwright@2.0.2-beta.30(@cfworker/json-schema@4.1.1)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
       chrome-remote-interface: 0.33.3

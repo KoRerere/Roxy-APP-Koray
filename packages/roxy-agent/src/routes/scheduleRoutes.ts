@@ -60,6 +60,7 @@ const CreateSchema = z.object({
   cron: z.string({ error: 'cron is required' }),
   description: z.string().optional(),
   enabled: z.boolean().optional(),
+  mode: z.enum(['simple', 'orchestrator']).optional(),
 })
 
 const UpdateSchema = z.object({
@@ -67,6 +68,7 @@ const UpdateSchema = z.object({
   prompt: z.string().optional(),
   cron: z.string().optional(),
   description: z.string().optional(),
+  mode: z.enum(['simple', 'orchestrator']).optional(),
 })
 
 const ValidateSchema = z.object({
@@ -111,7 +113,7 @@ router.post('/', (req: Request, res: Response) => {
     cron_expr: parsed.data.cron,
     description: parsed.data.description,
     enabled: parsed.data.enabled !== false,
-    mode: 'simple',
+    mode: parsed.data.mode ?? 'simple',
   })
   schedulerEngine.register(rec)
   return res.json({ code: 0, data: toDTO(rec) })
@@ -139,6 +141,7 @@ router.put('/:id', (req: Request, res: Response) => {
     prompt: parsed.data.prompt,
     cron_expr: parsed.data.cron,
     description: parsed.data.description,
+    mode: parsed.data.mode,
   })
   if (!rec)
     return res.json({ code: 1, msg: 'Schedule not found' })
