@@ -5,7 +5,7 @@ import type { SvgNames } from '/@/components/rx-icon'
 import type { MenuProps } from '../type'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 
-interface Props extends Omit<MenuProps, 'slots'> { }
+interface Props extends /* @vue-ignore */ Omit<MenuProps, 'slots'> { }
 
 const { mode, model, menuProps = {} } = defineProps<Props>()
 const slots: Record<string, any> = useSlots()

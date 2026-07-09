@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CheckboxProps } from 'primevue/checkbox'
 
-interface Props extends Omit<CheckboxProps, 'size'> {
+interface Props extends /* @vue-ignore */ Omit<CheckboxProps, 'size'> {
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
 }
 

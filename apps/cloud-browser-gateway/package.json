@@ -53,6 +53,6 @@
     "@types/http-proxy": "^1.17.17",
     "@types/node": "^22.15.0",
     "@types/ws": "^8.18.1",
-    "typescript": "catalog:"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

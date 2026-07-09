@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RadioButtonProps } from 'primevue/radiobutton'
 
-interface Props extends Omit<RadioButtonProps, 'size'> {
+interface Props extends /* @vue-ignore */ Omit<RadioButtonProps, 'size'> {
   name: string
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   options?: {
