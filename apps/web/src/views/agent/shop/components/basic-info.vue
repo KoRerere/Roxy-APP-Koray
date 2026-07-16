@@ -9,10 +9,15 @@ const { data } = defineProps<{
 <template>
   <div class="flex flex-col gap-1">
     <div class="proxy-host">
-      <span>{{ data.host }}</span>
+      <template v-if="data.isEncryptProxy">
+        --
+      </template>
+      <template v-else>
+        <span>{{ data.host }}</span>
       <span>{{ strConcat(':', data.port) }}</span>
       <span>{{ strConcat(':', data.proxyUserName) }}</span>
       <span>{{ strConcat(':', data.proxyPassword) }}</span>
+      </template>
     </div>
     <div class="flex items-center gap-1.5 ip-type">
       <span>{{ data.ipType }}</span>

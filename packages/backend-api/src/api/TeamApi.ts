@@ -26,6 +26,8 @@ import {
   UserGetTeamPermissionVerifyStatusListData,
   UserMdfTeamInfoV2CreateData,
   UserMdfTeamInfoV2CreatePayload,
+  UserMdfWorkspaceTypeCreateData,
+  UserMdfWorkspaceTypeCreatePayload,
   UserSendTeamPermissionVerifyCodeListData,
   UserSetTeamCostCenterViewerEditorAllowCreateData,
   UserSetTeamCostCenterViewerEditorAllowCreatePayload,
@@ -253,6 +255,27 @@ export class TeamApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserSetTeamCostCenterViewerEditorAllowCreateData, any>({
       path: `/user_set_team_cost_center_viewer_editor_allow`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserMdfWorkspaceTypeCreate
+   * @summary 修改团队类型
+   * @request POST:/user_mdf_workspace_type
+   * @response `200` `UserMdfWorkspaceTypeCreateData`
+   */
+  userMdfWorkspaceTypeCreate = (
+    data: UserMdfWorkspaceTypeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfWorkspaceTypeCreateData, any>({
+      path: `/user_mdf_workspace_type`,
       method: "POST",
       body: data,
       type: ContentType.Json,

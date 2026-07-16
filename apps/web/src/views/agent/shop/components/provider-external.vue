@@ -89,14 +89,12 @@ async function onJump(item: any) {
 
     <div class="flex flex-col gap-5">
       <div class="flex flex-col gap-2 items-start">
-        <div class="price" :class="{ invisible: data.vendorDiscount === 0 }">
-          {{ $t('Roxy 独家折扣: {discount} 折', { discount: localDiscountValue(locale, data.vendorDiscount!) }) }}
+        <div class="price" :class="{ invisible: !data.vendorDiscountTitle }">
+          {{ data.vendorDiscountTitle }}
         </div>
-        <i18n-t class="tt-primary text-3.5 leading-4.5" tag="div" scope="global" :keypath="$t('使用以下账户登录已享受 {discount}优惠', { discount: '{discount}' })">
-          <template #discount>
-            <span class="font-500 color-orange">{{ $t('{discount} 折', { discount: localDiscountValue(locale, data.vendorDiscount!) }) }}</span>
-          </template>
-        </i18n-t>
+        <template v-if="data.vendorDiscountDesc">
+          <div class="tt-primary text-3.5 leading-4.5" v-html="data.vendorDiscountDesc" />
+        </template>
       </div>
 
       <div class="flex flex-wrap items-center justify-between gap-6">

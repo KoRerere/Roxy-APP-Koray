@@ -2,6 +2,7 @@ import { onBeforeUnmount, ref, shallowRef } from 'vue'
 import RxButton from '/@/components/rx-button'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import DownloadModal from '/@/views/agent/shop/components/download-modal.vue'
+import ProxyDownloadKycBlockModal from '/@/views/agent/shop/components/proxy-download-kyc-block-modal.vue'
 import RenewModal from '/@/views/agent/shop/components/renew-modal.vue'
 import UpgradeModal from '/@/views/agent/shop/components/upgrade-modal.vue'
 import BeforeClose from '/@/views/agent/shop/components/provider-buy/before-close.vue'
@@ -13,6 +14,15 @@ import { ProxyCheckStatus, ProxyExpireStatus, ProxyType } from '/@/enums'
 import { concurrentControl, createDefaultObject, decryptAESGCM, safeParseJSON, strConcat } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoleStore } from '/@/stores/role'
+import { useSimpleLocale } from '/@/stores/locale'
+import {
+  fetchWorkspaceKycUnlockedCached,
+  getProxyDownloadBlockVariant,
+  hasBuyProxy,
+  resolveProxyDownloadRows,
+} from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
+import type { ProxyItem } from '/@/views/agent/shop/operation'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
 import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
 
@@ -64,12 +74,7 @@ interface useCheckProxyResult {
 }
 
 interface DownloadProxyParams {
-  data: {
-    host?: string
-    port?: string
-    username?: string
-    password?: string
-  }[]
+  items: ProxyItem[]
   cancel?: () => void
   confirm?: () => void
 }
@@ -239,6 +244,8 @@ export function useCheckProxy(): useCheckProxyResult {
 export function useProxy() {
   const [showModal] = useDialog()
   const router = useRouter()
+  const roleStore = useRoleStore()
+  const simpleLocale = useSimpleLocale()
 
   function buyProxy(props = {}) {
     const { promise, resolve, reject } = Promise.withResolvers<UserBuyProxySettlementCreateData['data'] | undefined>()
@@ -281,7 +288,33 @@ export function useProxy() {
     return promise
   }
 
-  function downloadProxy({ data, cancel, confirm }: DownloadProxyParams) {
+  async function downloadProxy({ items, cancel, confirm }: DownloadProxyParams) {
+    if (hasBuyProxy(items)) {
+      const unlocked = await fetchWorkspaceKycUnlockedCached()
+      if (!unlocked) {
+        const variant = getProxyDownloadBlockVariant(simpleLocale.currentLocale, roleStore.isOwner)
+        showModal({
+          showHeader: false,
+          modal: true,
+          blockScroll: true,
+          slots: {
+            container: ({ hideModal }) => (
+              <ProxyDownloadKycBlockModal
+                variant={variant}
+                onClose={() => {
+                  hideModal()
+                  cancel?.()
+                }}
+              />
+            ),
+          },
+        })
+        return
+      }
+    }
+
+    const data = await resolveProxyDownloadRows(items)
+
     showModal({
       showHeader: false,
       modal: true,

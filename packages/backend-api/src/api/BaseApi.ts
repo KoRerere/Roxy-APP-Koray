@@ -33,9 +33,13 @@ import {
   GetActivityDiscountListData,
   GetAppUpgradeCreateData,
   GetAppUpgradeCreatePayload,
+  GetAppUpgradeV2CreateData,
+  GetAppUpgradeV2CreatePayload,
   GetBlackFridayTimeListData,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
+  GetCoreDownloadUrlsCreateData,
+  GetCoreDownloadUrlsCreatePayload,
   GetCoreUpgradeCreateData,
   GetCoreUpgradeCreatePayload,
   GetEasterPromoTimeListData,
@@ -2459,6 +2463,48 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserModifyPromotionLinkCreateData, any>({
       path: `/user_modify_promotion_link`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetAppUpgradeV2Create
+   * @summary app升级->获取版本信息v2--无权限认证
+   * @request POST:/get_app_upgrade_v2
+   * @response `200` `GetAppUpgradeV2CreateData`
+   */
+  getAppUpgradeV2Create = (
+    data: GetAppUpgradeV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetAppUpgradeV2CreateData, any>({
+      path: `/get_app_upgrade_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetCoreDownloadUrlsCreate
+   * @summary core升级->获取内核预签名下载地址
+   * @request POST:/get_core_download_urls
+   * @response `200` `GetCoreDownloadUrlsCreateData`
+   */
+  getCoreDownloadUrlsCreate = (
+    data: GetCoreDownloadUrlsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetCoreDownloadUrlsCreateData, any>({
+      path: `/get_core_download_urls`,
       method: "POST",
       body: data,
       type: ContentType.Json,

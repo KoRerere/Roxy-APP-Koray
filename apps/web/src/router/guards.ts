@@ -1,4 +1,9 @@
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import {
+  LOCALE_SWITCH_HANDOFF_TOKEN_QUERY,
+  MP_DISTINCT_ID,
+  OFFICIAL_SITE_INVITE_CODE,
+  OFFICIAL_SITE_LANG,
+} from '/@/constants/search-params-key'
 import { buildRouteContext } from '/@/composables/useRouteContext'
 import type { RouteContext } from '/@/composables/useRouteContext'
 import type { Role } from '/@/enums'
@@ -42,7 +47,7 @@ type GuardResult = boolean | RouteLocationRaw | undefined
 
 const authWhiteList = ['oauth2callback']
 
-const noTakeQueryList = ['official-site-lang', OFFICIAL_SITE_INVITE_CODE, MP_DISTINCT_ID, LOCALE_SWITCH_HANDOFF_TOKEN_QUERY]
+const noTakeQueryList = [OFFICIAL_SITE_LANG, OFFICIAL_SITE_INVITE_CODE, MP_DISTINCT_ID, LOCALE_SWITCH_HANDOFF_TOKEN_QUERY]
 
 // --- Individual guards ---
 

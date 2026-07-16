@@ -9,6 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { resolveMenuRoutes } from '/@/router/resolve-menu'
+import { useSimpleLocale } from '/@/stores/locale'
 import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePermission } from '/@/hooks/usePermission'
@@ -32,6 +33,7 @@ const projectStore = useProjectStore()
 const userStore = useUserStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { ctx } = useRouteContext()
+const { siteLocale } = storeToRefs(useSimpleLocale())
 const { check } = usePermission()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -63,6 +65,7 @@ const ecommerceGroupList = computed(() => {
 const menus = computed(() => {
   return resolveMenuRoutes({
     ctx: ctx.value,
+    siteLocale: siteLocale.value,
     projectChildren: ctx.value.isNormal ? projectList.value : undefined,
     ecommerceGroupChildren: ctx.value.isEcommerce ? ecommerceGroupList.value : undefined,
     checkPermission: check,

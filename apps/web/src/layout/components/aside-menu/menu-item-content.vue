@@ -113,16 +113,17 @@ function onAsideBuy() {
 
         <!-- 普通菜单样式 -->
         <template v-else>
-          <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
+          <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon rounded-0.75" :size="18" />
 
           <div class="relative flex items-center gap-1.5 overflow-hidden menu-title" :title="item.meta?.title">
             <span class="ellipsis-1">{{ item.meta?.title }}</span>
-            <span v-if="item.meta?.slotName === 'proxy'" class="inline-flex items-center gap-0.5">
+            <span v-if="item.meta?.slotName === 'proxy' || item.meta?.showFireBadge" class="inline-flex items-center gap-0.5">
               <SvgIcon name="base/fire" />
-              <span v-if="isZh" class="color-[#F53838] text-3.25 font-600">特惠</span>
+              <span v-if="item.meta?.slotName === 'proxy' && isZh" class="color-[#F53838] text-3.25 font-600">特惠</span>
             </span>
           </div>
           <RxButton v-if="item.meta?.slotName === 'proxy' && !collapsed" class="-mx-1.5" icon="base/rx_ic_cart" variant="outlined" severity="secondary" size="xxs" @click="onAsideBuy" />
+          <SvgIcon v-if="item.meta?.external && !collapsed" name="base/rx_ic_arrow_top_right" class="menu-icon external" :size="12" />
         </template>
 
         <!-- <SvgIcon v-if="item.meta?.newBadge && isShowNewBadge" size="25" :name="(item.meta?.newBadge as SvgNames)" /> -->
@@ -151,6 +152,10 @@ function onAsideBuy() {
     }
 
     .menu-icon.plus {
+      display: none;
+    }
+
+    .menu-icon.external {
       display: none;
     }
 

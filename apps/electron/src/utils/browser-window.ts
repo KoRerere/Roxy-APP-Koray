@@ -1,5 +1,6 @@
 import type { BrowserWindowConstructorOptions, Protocol } from 'electron'
 import { BrowserWindow, net, session } from 'electron'
+import { pathToFileURL } from 'node:url'
 import { getBaseUrl } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { isPackaged } from '/@/constants/common'
@@ -49,15 +50,37 @@ export function closeWindowById(id: string) {
   win?.destroy()
 }
 
+/** 从 roxy-media 请求 URL 解析出本地绝对路径 */
+function resolveMediaProtocolFilePath(requestUrl: string): string {
+  const prefix = `${mediaProtocolName}:`
+  let filePath = requestUrl.slice(prefix.length)
+
+  try {
+    const parsed = new URL(requestUrl)
+    // roxy-media:///Users/... 会把 Users 解析为 hostname，需拼回完整路径
+    if (parsed.hostname)
+      filePath = `/${parsed.hostname}${parsed.pathname}`
+    else if (parsed.pathname)
+      filePath = parsed.pathname
+  }
+  catch {
+    // slice 结果兜底
+  }
+
+  return decodeURIComponent(filePath)
+}
+
 export function handleCustomProtocol(protocol: Protocol = session.defaultSession.protocol) {
   if (protocol.isProtocolHandled(mediaProtocolName)) {
     return
   }
 
   protocol.handle(mediaProtocolName, (request) => {
-    const filePath = request.url.slice(`${mediaProtocolName}:`.length)
+    const filePath = resolveMediaProtocolFilePath(request.url)
     console.debug('protocol handle', filePath)
-    return net.fetch(filePath)
+    return net.fetch(pathToFileURL(filePath).href, {
+      bypassCustomProtocolHandlers: true,
+    })
   })
 }
 

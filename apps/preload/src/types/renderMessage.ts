@@ -125,6 +125,8 @@ export interface RenderMessage {
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
   /** 用户上传评价图片 */
   'user:uploadReviewImage': (reviewImagePath: string) => Promise<string>
+  /** 通用 OSS 文件上传 */
+  'user:uploadOssFile': (payload: { localPath: string, objectKey: string }) => Promise<string>
   /** 设置所有空间 ID */
   'user:setAllWorkspaceId': (workspaceIds: number[]) => void
   /** 设置公共空间列表 */

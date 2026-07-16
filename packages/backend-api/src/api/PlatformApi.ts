@@ -23,6 +23,7 @@ import {
   UserGetPlatformInfoV2ListParams,
   UserGetPlatformTableRowsListData,
   UserGetPlatformTableSortOrderListData,
+  UserGetPlatformUrlTreeListData,
   UserGetSearchEnginesListData,
   UserMdfPlatformInfoCreateData,
   UserMdfPlatformInfoCreatePayload,
@@ -251,6 +252,22 @@ export class PlatformApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Platform
+   * @name UserGetPlatformUrlTreeList
+   * @summary 获取平台网址库三级树
+   * @request GET:/user_get_platform_url_tree
+   * @response `200` `UserGetPlatformUrlTreeListData`
+   */
+  userGetPlatformUrlTreeList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPlatformUrlTreeListData, any>({
+      path: `/user_get_platform_url_tree`,
+      method: "GET",
       format: "json",
       ...params,
     });

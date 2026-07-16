@@ -9,7 +9,7 @@ import { initDictCache } from '/@/modules/dict'
 import { openAPIServer } from '/@/modules/openapi'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
-import { aliOSS } from '/@/utils'
+import { aliOSS, uploadOssFile } from '/@/utils'
 
 export function setupUserIpc(ipcMain: IPCMainInstance) {
   /** 登录成功后，保存用户信息 */
@@ -89,5 +89,10 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     const extname = path.extname(reviewImagePath)
     const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}_review_${uuid}${extname}`, reviewImagePath)
     return url
+  })
+
+  /** 通用 OSS 文件上传（渲染进程传入完整 objectKey） */
+  ipcMain.on('user:uploadOssFile', async (event, payload: { localPath: string, objectKey: string }) => {
+    return uploadOssFile(payload)
   })
 }

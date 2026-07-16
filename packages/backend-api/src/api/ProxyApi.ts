@@ -56,6 +56,7 @@ import {
   UserGetProxyRecommendInfoListData,
   UserGetProxyRefundInfoListData,
   UserGetProxyRefundInfoListParams,
+  UserGetProxyRenewPriceListListData,
   UserGetProxyStoreListListData,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
@@ -80,6 +81,8 @@ import {
   UserRedeemProxyCodeCreatePayload,
   UserRegisterProxyProviderUserCreateData,
   UserRegisterProxyProviderUserCreatePayload,
+  UserRenewDeviceProxySettlementCreateData,
+  UserRenewDeviceProxySettlementCreatePayload,
   UserReportProxyOutOfStockCreateData,
   UserReportProxyOutOfStockCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
@@ -959,6 +962,43 @@ export class ProxyApi<SecurityDataType = unknown> {
       path: `/user_get_proxy_bandwidth_upgrade_price_list`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserRenewDeviceProxySettlementCreate
+   * @summary 代理设备续费
+   * @request POST:/user_renew_device_proxy_settlement
+   * @response `200` `UserRenewDeviceProxySettlementCreateData`
+   */
+  userRenewDeviceProxySettlementCreate = (
+    data: UserRenewDeviceProxySettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRenewDeviceProxySettlementCreateData, any>({
+      path: `/user_renew_device_proxy_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyRenewPriceListList
+   * @summary 获取设备价格列表信息
+   * @request GET:/user_get_proxy_renew_price_list
+   * @response `200` `UserGetProxyRenewPriceListListData`
+   */
+  userGetProxyRenewPriceListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyRenewPriceListListData, any>({
+      path: `/user_get_proxy_renew_price_list`,
+      method: "GET",
       format: "json",
       ...params,
     });

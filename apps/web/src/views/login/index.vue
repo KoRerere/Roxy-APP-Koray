@@ -24,6 +24,7 @@ import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
 import { useThemeStore } from '/@/stores/theme.ts'
+import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
 
 const loginEventCommonParams = {
   login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
@@ -216,8 +217,8 @@ async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
 
-  const officialSiteRedirect = sessionStorage.getItem('officialSiteRedirect')
-  sessionStorage.removeItem('officialSiteRedirect')
+  const officialSiteRedirect = sessionStorage.getItem(OFFICIAL_SITE_REDIRECT_SESSION)
+  sessionStorage.removeItem(OFFICIAL_SITE_REDIRECT_SESSION)
   if (officialSiteRedirect) {
     window.location.replace(officialSiteRedirect)
     return

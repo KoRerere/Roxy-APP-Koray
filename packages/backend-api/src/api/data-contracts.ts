@@ -10,6 +10,179 @@
  * ---------------------------------------------------------------
  */
 
+export interface KycWorkspaceStatusResult {
+  /** 空间是否已解锁：仅当 Owner 个人实名或企业实名已通过（与当前登录用户本人 KYC 无关） */
+  unlocked: boolean;
+}
+
+/** KYC 状态聚合结果（personal/enterprise 为当前用户；unlocked 看空间 Owner） */
+export interface KycStatusResult {
+  /** 当前用户个人认证状态与提交资料 */
+  personal?: KycStatusItem;
+  /** 当前用户个人认证状态与提交资料 */
+  enterprise?: KycStatusItem;
+  /** 当前 header 工作空间是否已解锁：仅当该空间 Owner 个人实名或企业实名已通过（与当前用户本人 KYC 无关） */
+  unlocked?: boolean;
+}
+
+/** 个人或企业认证状态项（均按用户）。企业字段仅 authType=enterprise 时有值；个人字段仅 personal 时有值。有记录时返回当时提交字段及脱敏字段。 */
+export interface KycStatusItem {
+  /** 0未认证 1审核中 2已通过 3已拒绝 */
+  status?: KycStatusItemStatusEnum;
+  /** 记录 ID，未提交时为 null */
+  recordId?: number | null;
+  /** 失败码 */
+  failCode?: string;
+  /** 失败原因 */
+  failReason?: string;
+  /** 认证类型 */
+  authType?: KycStatusItemAuthTypeEnum;
+  /** 提交时间，格式 YYYY-MM-DD HH:MM:SS */
+  createTime?: string;
+  /** 审核完成时间，未完成时为空串 */
+  reviewedAt?: string;
+  /** 真实姓名（个人） */
+  realName?: string;
+  /** 身份证号（个人） */
+  idNumber?: string;
+  /** 身份证人像面（个人） */
+  idFrontUrl?: string;
+  /** 身份证国徽面（个人） */
+  idBackUrl?: string;
+  /** 用户绑定手机号（个人，来自用户资料，非 KYC 表单字段） */
+  phone?: string;
+  /** 脱敏姓名，如 高*锐 */
+  realNameMasked?: string;
+  /** 脱敏身份证号 */
+  idNumberMasked?: string;
+  /** 脱敏手机号 */
+  phoneMasked?: string;
+  /** 企业名称（企业） */
+  companyName?: string;
+  /** 统一社会信用代码（企业） */
+  creditCode?: string;
+  /** 法人姓名（企业） */
+  legalName?: string;
+  /** 法人身份证号（企业） */
+  legalIdNumber?: string;
+  /** 营业执照（企业） */
+  licenseUrl?: string;
+  /** 脱敏企业名称 */
+  companyNameMasked?: string;
+  /** 脱敏统一社会信用代码 */
+  creditCodeMasked?: string;
+  /** 脱敏法人姓名 */
+  legalNameMasked?: string;
+  /** 脱敏法人身份证号 */
+  legalIdNumberMasked?: string;
+}
+
+export interface KycSubmitResult {
+  /** KYC 记录 ID */
+  recordId?: number;
+  /** 认证状态：0未认证 1审核中 2已通过 3已拒绝 */
+  status?: KycSubmitResultStatusEnum;
+}
+
+export interface KycEnterpriseSubmitRequest {
+  /**
+   * 企业名称
+   * @minLength 1
+   * @maxLength 128
+   */
+  companyName: string;
+  /**
+   * 统一社会信用代码
+   * @minLength 15
+   * @maxLength 18
+   * @pattern ^[0-9A-Z]{18}$
+   */
+  creditCode: string;
+  /**
+   * 法人姓名
+   * @minLength 1
+   * @maxLength 64
+   */
+  legalName: string;
+  /**
+   * 法人身份证号
+   * @minLength 15
+   * @maxLength 18
+   * @pattern ^\d{17}[\dXx]$
+   */
+  legalIdNumber: string;
+  /**
+   * 营业执照 OSS 路径或 URL
+   * @maxLength 2000
+   */
+  licenseUrl: string;
+  /**
+   * 是否同意协议，须为 true
+   * @default true
+   */
+  agreed?: boolean;
+}
+
+export interface KycPersonalSubmitRequest {
+  /**
+   * 真实姓名
+   * @minLength 1
+   * @maxLength 64
+   */
+  realName: string;
+  /**
+   * 身份证号
+   * @minLength 15
+   * @maxLength 18
+   * @pattern ^\d{17}[\dXx]$
+   */
+  idNumber: string;
+  /**
+   * 身份证人像面 OSS 路径或 URL
+   * @maxLength 2000
+   */
+  idFrontUrl: string;
+  /**
+   * 身份证国徽面 OSS 路径或 URL
+   * @maxLength 2000
+   */
+  idBackUrl: string;
+  /**
+   * 是否同意协议，须为 true
+   * @default true
+   */
+  agreed?: boolean;
+}
+
+export interface ApiResponse {
+  /** 业务码，0 表示成功 */
+  code: number;
+  msg: string;
+  data?: string;
+}
+
+/** 0未认证 1审核中 2已通过 3已拒绝 */
+export enum KycStatusItemStatusEnum {
+  Value0 = 0,
+  Value1 = 1,
+  Value2 = 2,
+  Value3 = 3,
+}
+
+/** 认证类型 */
+export enum KycStatusItemAuthTypeEnum {
+  Personal = "personal",
+  Enterprise = "enterprise",
+}
+
+/** 认证状态：0未认证 1审核中 2已通过 3已拒绝 */
+export enum KycSubmitResultStatusEnum {
+  Value0 = 0,
+  Value1 = 1,
+  Value2 = 2,
+  Value3 = 3,
+}
+
 export interface UserGetWorkspaceListApiListParams {
   /**
    * 分页索引
@@ -3898,6 +4071,90 @@ export interface UserModifyPromotionLinkCreateData {
   msg: string;
 }
 
+export interface GetAppUpgradeV2CreatePayload {
+  /**
+   * 操作系统
+   * 如 "win32", "darwin"，str，必传
+   */
+  os: string;
+  /**
+   * cpu架构
+   * mac专用：interl/apple，str，非必传
+   */
+  cpu?: string;
+  /**
+   *  操作系统位数
+   * 32或64，str，非必传
+   */
+  osBit?: string;
+}
+
+export interface GetAppUpgradeV2CreateData {
+  code: number;
+  data: {
+    /**
+     * 下载地址
+     * 预签名下载地址
+     */
+    downloadUrl: string;
+    /**
+     * 版本号，我们自己定义的版本号，用来和客户端的比对
+     * 版本号，我们自己定义的版本号，用来和客户端的比对
+     */
+    version: string;
+    /**
+     * 升级标题
+     * 升级标题
+     */
+    upgradeTitle: string;
+    /**
+     * 升级描述
+     * 升级描述
+     */
+    upgradeDesc: string;
+    /** 新版升级内容描述 */
+    upgradeContent: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    upgradeContentEn: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    /**
+     * 发布时间
+     * 发布时间
+     */
+    releaseTime: string;
+    newFeatureTips: string[];
+  };
+  msg: string;
+}
+
+export interface GetCoreDownloadUrlsCreatePayload {
+  os: string;
+  osVersion: string;
+  osBit: string;
+  cpu: string;
+  /** 浏览器内核类型，Chrome/Firefox */
+  coreType: string;
+  /** coreVersion列表 */
+  coreVersions: string[];
+}
+
+export interface GetCoreDownloadUrlsCreateData {
+  code: number;
+  data: {
+    rows: {
+      coreVersion?: string;
+      downloadUrl?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -4007,6 +4264,11 @@ export interface UserGetWindowInfoListListParams {
    */
   enableStatus?: string;
   projectIds?: string;
+  /**
+   * 是否电商专用窗口：1是 0否 不传查询全部
+   * @example 1
+   */
+  isEcommerce?: number;
 }
 
 export interface UserGetWindowInfoListListData {
@@ -6632,6 +6894,8 @@ export interface UserGetProxyVendorListListData {
   data: {
     carouselList: string[];
     createTime: string;
+    vendorDiscountDesc: string;
+    vendorDiscountTitle: string;
     iconList: string[];
     id: number;
     isJump: number;
@@ -6862,6 +7126,7 @@ export interface UserGetProxyProvidersByBusinessSceneCountryListData {
   code: number;
   data: {
     canBandwidthUpgrade: boolean;
+    showDefaultSupport100M: boolean;
     hoverText: string;
     id: number;
     inventory: number;
@@ -6925,6 +7190,34 @@ export interface UserGetProxyBandwidthUpgradePriceListListData {
       bandwidthUpgradePrice: number;
     }[];
     remainingDays: number;
+  };
+  msg: string;
+}
+
+export type UserRenewDeviceProxySettlementCreatePayload = object;
+
+export interface UserRenewDeviceProxySettlementCreateData {
+  code: number;
+  data: {
+    endTime: string;
+    orderAmount: number;
+    orderNo: string;
+    payId: number;
+    payType: string;
+    payUrl: string;
+    realAmount: number;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyRenewPriceListListData {
+  code: number;
+  data: {
+    proxyPriceList: {
+      originalProxyPrice: number;
+      proxyPrice: number;
+      proxyPurchaseMonths: number;
+    }[];
   };
   msg: string;
 }
@@ -7090,6 +7383,38 @@ export type UserAddPlatformInfoBatchCreatePayload = {
 export interface UserAddPlatformInfoBatchCreateData {
   code: number;
   data: object;
+  msg: string;
+}
+
+export interface UserGetPlatformUrlTreeListData {
+  code: number;
+  data: {
+    children: {
+      children: {
+        countryCode: string;
+        displayName: string;
+        id: number;
+        name: string;
+        platformIcon: string;
+        platformIconDark: string;
+        sort: number;
+        url: string;
+      }[];
+      id: number;
+      name: string;
+      platformIcon: string;
+      platformIconDark: string;
+      sort: number;
+    }[];
+    id: number;
+    name: string;
+    sort: number;
+    countryCode?: string;
+    displayName?: string;
+    platformIcon?: string;
+    platformIconDark?: string;
+    url?: string;
+  }[];
   msg: string;
 }
 
@@ -7452,6 +7777,13 @@ export interface UserGetMemberInfoByWorkspaceListData {
     rows: {
       nickname?: string;
       workspaceNickname?: string;
+      inviterInfo?: {
+        inviterId: number;
+        inviterName: string;
+        email: string;
+        phone: string;
+        avatar: string;
+      };
       user_id: number;
       userId?: number;
       role: number;
@@ -7625,6 +7957,16 @@ export interface UserSetTeamCostCenterViewerEditorAllowCreateData {
   msg: string;
 }
 
+export interface UserMdfWorkspaceTypeCreatePayload {
+  id: number;
+  workspaceType: number;
+}
+
+export interface UserMdfWorkspaceTypeCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetOperateLogListParams {
   /**
    * token必填
@@ -7767,10 +8109,10 @@ export interface UserGetWorkspaceListListData {
 export interface UserAddWorkspaceInfoCreatePayload {
   /** 工作空间名称 */
   workspaceName: string;
+  /** 0 普通空间，2电商专用 */
+  workspaceType: number;
   /** 工作空间图片 */
   workspacePicture: string;
-  /** 可创建最大窗口数量 */
-  maxWindowCount: number;
 }
 
 export interface UserAddWorkspaceInfoCreateData {
@@ -7862,6 +8204,11 @@ export interface UserGetProjectInfoByWorkspaceListParams {
   page_index?: number;
   /** @example 10 */
   page_size?: number;
+  /**
+   * 空间ID
+   * @example "1"
+   */
+  workspaceId?: string;
 }
 
 export interface UserGetProjectInfoByWorkspaceListData {
@@ -8532,7 +8879,7 @@ export interface UserCancelSubscriptionListData {
 export interface UserDowngradeSubscriptionListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -8547,7 +8894,7 @@ export interface UserDowngradeSubscriptionListData {
 export interface UserDowngradeSubscriptionV2ListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -9117,6 +9464,49 @@ export interface UserBindRedeemCodeCreateData {
   msg: string;
 }
 
+export interface GetCompanyPartnerListListParams {
+  /** @example "zh" */
+  language: string;
+}
+
+export interface GetCompanyPartnerListListData {
+  code: number;
+  data: {
+    id: number;
+    name: string;
+    summary: string;
+    description: string;
+    logo: string;
+    website: string;
+    sortOrder: number;
+  }[];
+  msg: string;
+}
+
+export interface GetCompanyPartnerDetailListParams {
+  /** @example "1" */
+  id: string;
+  /** @example "e" */
+  language: string;
+}
+
+export interface GetCompanyPartnerDetailListData {
+  code: number;
+  data: {
+    id: number;
+    name: string;
+    summary: string;
+    description: string;
+    logo: string;
+    website: string;
+    sortOrder: number;
+    useCase: string;
+    supportedRegions: string;
+    screenshots: string[];
+  };
+  msg: string;
+}
+
 export interface UserCalculatePointsPriceListParams {
   /** @example "1000" */
   rechargeAmount?: string;
@@ -9206,6 +9596,23 @@ export interface UserGetPointsChargesRecordsListParams {
 }
 
 export type UserGetPointsChargesRecordsListData = object;
+
+export type WorkspaceStatusListData = ApiResponse & {
+  data?: KycWorkspaceStatusResult;
+};
+
+export type KycPersonalSubmitData = ApiResponse & {
+  data?: KycSubmitResult;
+};
+
+export type KycEnterpriseSubmitData = ApiResponse & {
+  data?: KycSubmitResult;
+};
+
+export type KycStatusData = ApiResponse & {
+  /** KYC 状态聚合结果（personal/enterprise 为当前用户；unlocked 看空间 Owner） */
+  data?: KycStatusResult;
+};
 
 export type UserGetRatingRewardCreatePayload = object;
 

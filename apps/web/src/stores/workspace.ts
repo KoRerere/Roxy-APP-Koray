@@ -209,10 +209,20 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         currentWorkspace.value = nextWorkspace
 
         if (isMainWindow) {
-          workspaceChangeChannel.postMessage({
-            workspaceId: nextWorkspace.id,
-            workspaceName: nextWorkspace.workspaceName,
-          })
+          if (globalThis.isElectron) {
+            workspaceChangeChannel.postMessage({
+              workspaceId: nextWorkspace.id,
+              workspaceName: nextWorkspace.workspaceName,
+            })
+          } else if (document.visibilityState === 'visible') {
+            const userStore = getUserStore()
+
+            workspaceChangeChannel.postMessage({
+              workspaceId: nextWorkspace.id,
+              workspaceName: nextWorkspace.workspaceName,
+              token: userStore.token,
+            })
+          }
         }
       }
       finally {
@@ -232,6 +242,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     console.log('Received message:', event.data)
     if (event.data.workspaceId !== currentWorkspace.value?.id) {
       setCurrentWorkspace(event.data.workspaceId)
+    }
+    if (event.data.token) {
+      getUserStore().setToken(event.data.token)
     }
   }
 

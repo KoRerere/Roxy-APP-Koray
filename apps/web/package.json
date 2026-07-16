@@ -33,6 +33,7 @@
     "@roxy/shared": "workspace:*",
     "@roxy/crypto": "workspace:*",
     "@sentry/vue": "^10.40.0",
+    "ali-oss": "^6.23.0",
     "@stripe/stripe-js": "^8.8.0",
     "@types/qrcode": "^1.5.5",
     "@vueuse/components": "^13.9.0",

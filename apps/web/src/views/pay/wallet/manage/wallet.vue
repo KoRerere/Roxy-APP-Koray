@@ -6,6 +6,7 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user'
 import { OrderType } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
+import { REDIRECT_ACTION } from '/@/constants/search-params-key'
 
 const props = withDefaults(
   defineProps<{
@@ -17,6 +18,8 @@ const props = withDefaults(
 defineEmits(['refresh'])
 
 const router = useRouter()
+const route = useRoute()
+const redirectAction = route.query[REDIRECT_ACTION] as string
 const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
@@ -32,6 +35,12 @@ function onCharge() {
     },
   })
 }
+
+onMounted(() => {
+  if (redirectAction === 'open-wallet-modal') {
+    onCharge()
+  }
+})
 </script>
 
 <template>

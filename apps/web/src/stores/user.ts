@@ -452,7 +452,7 @@ export const useUserStore = defineStore(
     }
 
     if (!globalThis.isElectron) {
-      setInterval(checkCookie, 3 * 1000)
+      // setInterval(checkCookie, 3 * 1000)
     }
 
     return {

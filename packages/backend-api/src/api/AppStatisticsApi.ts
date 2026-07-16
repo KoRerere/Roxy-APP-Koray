@@ -14,6 +14,10 @@ import {
   AddSystemTodoListData,
   AddSystemTodoListParams,
   CheckIpDownloadLimitListData,
+  GetCompanyPartnerDetailListData,
+  GetCompanyPartnerDetailListParams,
+  GetCompanyPartnerListListData,
+  GetCompanyPartnerListListParams,
   GetEasterEggRemainingListData,
   GetPromotionLinkDiscountListData,
   GetPromotionLinkDiscountListParams,
@@ -135,6 +139,44 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
     this.http.request<GetEasterEggRemainingListData, any>({
       path: `/app_statistics/get_easter_egg_remaining`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetCompanyPartnerListList
+   * @summary 官网获取合作伙伴列表
+   * @request GET:/app_statistics/get_company_partner_list
+   * @response `200` `GetCompanyPartnerListListData`
+   */
+  getCompanyPartnerListList = (
+    query: GetCompanyPartnerListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetCompanyPartnerListListData, any>({
+      path: `/app_statistics/get_company_partner_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetCompanyPartnerDetailList
+   * @summary 官网获取合作伙伴详情
+   * @request GET:/app_statistics/get_company_partner_detail
+   * @response `200` `GetCompanyPartnerDetailListData`
+   */
+  getCompanyPartnerDetailList = (
+    query: GetCompanyPartnerDetailListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetCompanyPartnerDetailListData, any>({
+      path: `/app_statistics/get_company_partner_detail`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

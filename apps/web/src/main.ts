@@ -1,5 +1,14 @@
 import './polyfill'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import {
+  JUMP_REFERER,
+  LOCALE_SWITCH_HANDOFF_TOKEN_QUERY,
+  MP_DISTINCT_ID,
+  OFFICIAL_SITE_INVITE_CODE,
+  OFFICIAL_SITE_LANG,
+  OFFICIAL_SITE_REDIRECT,
+  REDIRECT_ACTION,
+} from '/@/constants/search-params-key'
+import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
 import { getCookie, initCrypto } from '/@/utils'
@@ -51,15 +60,16 @@ queueMicrotask(async () => {
     globalThis.$featureFlags = { scriptRecording: import.meta.env.VITE_ENABLE_SCRIPT_RECORDING === 'yes' }
     await import('./polyfill')
     const searchParams = new URLSearchParams(window.location.search)
-    const officialSiteLang = searchParams.get('official-site-lang')
+    const officialSiteLang = searchParams.get(OFFICIAL_SITE_LANG)
     const officialSiteInviteCode = searchParams.get(OFFICIAL_SITE_INVITE_CODE)
     const mpDistinctId = searchParams.get(MP_DISTINCT_ID)
-    const jumpReferer = searchParams.get('jump-referer')
-    const officialSiteRedirect = searchParams.get('official-site-redirect')
+    const jumpReferer = searchParams.get(JUMP_REFERER)
+    const officialSiteRedirect = searchParams.get(OFFICIAL_SITE_REDIRECT)
+    const redirectAction = searchParams.get(REDIRECT_ACTION)
     const localeHandoffToken = searchParams.get(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
 
-    if (officialSiteRedirect) {
-      sessionStorage.setItem('officialSiteRedirect', officialSiteRedirect)
+    if (officialSiteRedirect && !localeHandoffToken) {
+      sessionStorage.setItem(OFFICIAL_SITE_REDIRECT_SESSION, officialSiteRedirect)
     }
 
     if (officialSiteInviteCode) {
@@ -95,19 +105,24 @@ queueMicrotask(async () => {
       simpleLocale.currentLocale = locale
 
       if (localeHandoffToken) {
+        console.log('localeHandoffToken', localeHandoffToken)
         userStore.setToken(localeHandoffToken)
         const url = new URL(window.location.href)
+        if (redirectAction) {
+          url.searchParams.set(REDIRECT_ACTION, redirectAction)
+        }
         url.searchParams.delete(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
-        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
-      }
-
-      try {
-        const roxyToken = await getCookie('roxy_token')
-        if (roxyToken)
-          userStore.setToken(roxyToken)
-      }
-      catch (error) {
-        console.error('Failed to get token from cookie:', error)
+        url.searchParams.delete(OFFICIAL_SITE_REDIRECT)
+        window.history.replaceState(null, '', `${officialSiteRedirect || url.pathname}${url.search}${url.hash}`)
+      } else {
+        try {
+          const roxyToken = await getCookie('roxy_token')
+          if (roxyToken)
+            userStore.setToken(roxyToken)
+        }
+        catch (error) {
+          console.error('Failed to get token from cookie:', error)
+        }
       }
 
       userStore.initUserInfo()

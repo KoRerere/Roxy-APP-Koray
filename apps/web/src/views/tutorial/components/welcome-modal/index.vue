@@ -33,9 +33,9 @@ async function receiveSuccess(type?: FirstGiftType) {
   else if (!globalThis.isElectron && userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false) {
     // 新用户 web 端自动创建一个窗口
     const windowIds = await genDefaultProfileByCount(1)
-    if (windowIds.length) {
+    if (windowIds?.length) {
       emitter.emit('refreshProfileList')
-      API.base.userUpdateOnboardingTaskStatusCreate({ firstWebRegisterGuideStatus: true })
+      API.base.userUpdateOnboardingTaskStatusCreate({ firstWebRegisterGuideStatus: true, firstRegisterGuideStatus: true })
       await API.window.userActivateCloudBrowserCreate({ windowId: windowIds[0] }).then(() => {
         updateUserConfig()
       })

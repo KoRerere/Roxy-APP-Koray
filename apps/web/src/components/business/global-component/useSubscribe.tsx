@@ -402,7 +402,7 @@ export function useSubscribe() {
       },
       handleCancel: async () => {
         await globalThis.electronAPI.send('app:hideNewFeatureTips')
-        updateOnboardingTaskStatus({ firstRegisterGuideStatus: true })
+        updateOnboardingTaskStatus({ firstRegisterGuideStatus: true, firstWebRegisterGuideStatus: true })
       },
       slots: {
         container: ({ handleCancel }) => <WelcomeModal onClose={handleCancel} />,

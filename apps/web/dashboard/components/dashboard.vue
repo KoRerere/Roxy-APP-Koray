@@ -49,7 +49,7 @@ function getWindowInfo() {
   fetch(`${getLocalWebServerURL()}/api/browser/list?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
-      console.log(result)
+      // console.log(result)
       const { code, data, msg } = result
       if (code === 0) {
         windowInfo.value = data

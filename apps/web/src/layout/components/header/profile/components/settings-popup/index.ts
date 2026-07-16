@@ -8,6 +8,7 @@ import { useNetworkPanel } from './useNetwork'
 import { usePreferencesPanel } from './usePreferences'
 import { useUserProfilePanel } from './useUserProfile'
 import { useAuthentication } from './useAuthentication'
+import { getIdentityStatus, setIdentityPollingScope } from './identity-verification'
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 
 export type PanelKeyType = ReturnType<typeof getSettings>[number]['name']
@@ -65,7 +66,7 @@ export function useSettingsPopup() {
   const { getNetworkPanels } = useNetworkPanel()
   const { getPreferencesPanels } = usePreferencesPanel()
   const { getLoginActivityPanels } = useLoginActive()
-  const { getUserProfilePanels } = useUserProfilePanel()
+  const { getUserProfilePanels, openIdentityVerificationEntry } = useUserProfilePanel()
   const { getAuthentication } = useAuthentication()
   // const { getKernelPanels } = useKernel()
   // const { getAboutPanels } = useAbout()
@@ -120,10 +121,23 @@ export function useSettingsPopup() {
     activePanel.panel = await settingsPanel[activePanel.key].get()
   }
 
+  watch(
+    () => [activePanel.key, getIdentityStatus().value.status] as const,
+    ([key, status]) => {
+      setIdentityPollingScope('profilesPanel', key === 'profiles' && status === 'pending')
+    },
+    { immediate: true, flush: 'sync' },
+  )
+
+  onUnmounted(() => {
+    setIdentityPollingScope('profilesPanel', false)
+  })
+
   return {
     dialogRef,
     activePanel,
     initPanels,
+    openIdentityVerificationEntry,
     panels: ref(settings),
   }
 }

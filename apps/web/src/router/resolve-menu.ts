@@ -8,6 +8,8 @@ import type { RouteMeta, RouteRecordRaw } from 'vue-router'
 
 export interface ResolveMenuOptions {
   ctx: RouteContext
+  /** 当前主语言码（如 zh / en / ru），用于 meta.locales 过滤 */
+  siteLocale: string
   /** @legacy 普通模式 pin 项目 */
   projectChildren?: RouteRecordRaw[]
   /** 电商模式 pin 分组 */
@@ -36,14 +38,21 @@ function matchesWorkspaceType(meta: RouteMeta | undefined, workspaceType: Worksp
   return meta.workspaceTypes.includes(workspaceType)
 }
 
+function matchesLocale(meta: RouteMeta | undefined, siteLocale: string) {
+  if (!meta?.locales?.length)
+    return true
+  return meta.locales.includes(siteLocale)
+}
+
 export function filterMenuRoutes(
   menus: RouteRecordRaw[],
   ctx: RouteContext,
+  siteLocale: string,
   checkPermission: ResolveMenuOptions['checkPermission'],
 ): RouteRecordRaw[] {
   return menus.filter((item) => {
     if (item.children?.length) {
-      item.children = filterMenuRoutes(item.children, ctx, checkPermission)
+      item.children = filterMenuRoutes(item.children, ctx, siteLocale, checkPermission)
     }
 
     if (item.meta?.type === 'group' && !item.children?.length)
@@ -51,8 +60,9 @@ export function filterMenuRoutes(
 
     const hasPermission = !item.meta?.permissions?.length || checkPermission(item.meta.permissions, item.meta.permissionMode)
     const hasWorkspaceType = matchesWorkspaceType(item.meta, ctx.workspaceType)
+    const hasLocale = matchesLocale(item.meta, siteLocale)
 
-    return !item.meta?.hideInMenu && hasPermission && hasWorkspaceType
+    return !item.meta?.hideInMenu && hasPermission && hasWorkspaceType && hasLocale
   })
 }
 
@@ -76,12 +86,13 @@ function injectPinnedChildren(
 }
 
 export function resolveMenuRoutes(options: ResolveMenuOptions): RouteRecordRaw[] {
-  const { ctx, projectChildren, ecommerceGroupChildren, checkPermission } = options
+  const { ctx, siteLocale, projectChildren, ecommerceGroupChildren, checkPermission } = options
 
   if (ctx.isPublicMember) {
     return filterMenuRoutes(
       cloneDeep(resolveLegacySharedMenuRoutes(normalMenuRoutes)),
       ctx,
+      siteLocale,
       checkPermission,
     )
   }
@@ -91,12 +102,12 @@ export function resolveMenuRoutes(options: ResolveMenuOptions): RouteRecordRaw[]
       ? injectPinnedChildren(cloneDeep([...ecommerceMenuRoutes, ...sharedMenuRoutes]), 'ecommerce-groups', ecommerceGroupChildren)
       : cloneDeep([...ecommerceMenuRoutes, ...sharedMenuRoutes])
 
-    return filterMenuRoutes(routes, ctx, checkPermission)
+    return filterMenuRoutes(routes, ctx, siteLocale, checkPermission)
   }
 
   const routes = projectChildren?.length
     ? injectPinnedChildren(cloneDeep([...normalMenuRoutes, ...sharedMenuRoutes]), 'projects', projectChildren)
     : cloneDeep([...normalMenuRoutes, ...sharedMenuRoutes])
 
-  return filterMenuRoutes(routes, ctx, checkPermission)
+  return filterMenuRoutes(routes, ctx, siteLocale, checkPermission)
 }

@@ -31,6 +31,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useEmitterEvent } from '/@/utils/eventBus'
 import type { ProxyItem } from './operation'
 import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
+import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
 
 const route = useRoute()
 const router = useRouter()
@@ -261,7 +262,15 @@ function onAdvancedSearch(search?: Record<string, any>) {
   onRefreshTable({ queryKey: value && (key || 'fuzzy'), queryValue: value }, true)
 }
 
-function onBuyProxy(props?: Record<string, any>) {
+function onBuyProxy(props?: UserGetProxyVendorListListData['data'][number]) {
+   if (props) {
+     // 第三方的合作商（使用跳转的方式）
+     if (props?.jumpInfo?.jumpUrl) {
+    window.open(props.jumpInfo?.jumpUrl, '_blank')
+    return
+  }
+   }
+
   buyProxy(toRaw(props)).then((orderInfo) => {
     onRefreshTable()
     setNewOrderNo(orderInfo?.orderNo)
@@ -359,10 +368,8 @@ function onUpgradeProxy(datas: ProxyItem[]) {
 function download(datas: ProxyItem[]) {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
 
-  const data = datas.map(({ host, port, proxyUserName, proxyPassword }) => ({ host, port, username: proxyUserName, password: proxyPassword }))
-
   downloadProxy({
-    data,
+    items: datas,
     cancel: reject,
     confirm: resolve,
   })

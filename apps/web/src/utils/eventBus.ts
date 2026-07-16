@@ -63,6 +63,7 @@ export type MittEvents = {
   openSettings: {
     settingsKey: 'profiles' | 'authentication' | 'preferences' | 'network' | 'loginActivity'
     anchorPoint?: string
+    openIdentityVerification?: boolean
   }
   /** 更新代理 IP 列表 */
   updateShopList?: string

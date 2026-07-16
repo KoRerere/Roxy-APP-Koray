@@ -3,6 +3,7 @@ import {
   AppTrackingEventApi,
   BaseApi,
   HttpClient,
+  KycApi,
   LimitApi,
   LoggingApi,
   PayApi,
@@ -176,4 +177,5 @@ export const API = {
   appTrackingEvent: new AppTrackingEventApi(httpClient),
   userAddUninstallReasonAnswer: new UserAddUninstallReasonAnswerApi(httpClient),
   points: new PointsApi(httpClient),
+  kyc: new KycApi(httpClient),
 }

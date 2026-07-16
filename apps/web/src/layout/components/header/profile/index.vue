@@ -184,8 +184,8 @@ const items = computed(() => {
   ].filter(item => !item.vIf || item.vIf())
 })
 
-useEmitterEvent('openSettings', ({ settingsKey, anchorPoint }) => {
-  openSettings(settingsKey, anchorPoint)
+useEmitterEvent('openSettings', ({ settingsKey, anchorPoint, openIdentityVerification }) => {
+  openSettings(settingsKey, anchorPoint, openIdentityVerification)
 })
 
 function openRedeemCode() {
@@ -247,7 +247,7 @@ function showLogoutConfirm() {
   return promise
 }
 
-function openSettings(activeKey: string, anchorPoint?: string) {
+function openSettings(activeKey: string, anchorPoint?: string, openIdentityVerification?: boolean) {
   dialog.open(SettingsPopup, {
     props: {
       showHeader: false,
@@ -264,6 +264,7 @@ function openSettings(activeKey: string, anchorPoint?: string) {
       props: {
         activeKey,
         anchorPoint,
+        openIdentityVerification,
       },
     },
   })

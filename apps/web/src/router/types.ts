@@ -18,6 +18,13 @@ declare module 'vue-router' {
     version?: string[]
     /** 不填 = 所有 workspaceType 可见；普通路由设 [Private]，电商路由设 [ECommerce] */
     workspaceTypes?: WorkspaceType[]
+    /** 侧边栏外链标识，用于展示右上角外链箭头 */
+    external?: boolean
+    /** 限制可见语言（主语言码，如 zh / en / ru）；不填则所有语言可见 */
+    locales?: string[]
+    /** 菜单标题旁展示火焰徽章 */
+    showFireBadge?: boolean
+    slotName?: string
   }
 }
 

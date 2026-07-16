@@ -2,12 +2,9 @@
 export const RESTORE_WINDOW_NOT_REMIND = 'restoreWindowNotRemind'
 /** 菜单栏是否折叠，0：折叠，1：展开 */
 export const MENU_COLLAPSED = 'menuCollapsed'
-/** 邀请码 */
-export const OFFICIAL_SITE_INVITE_CODE = 'official-site-invite-code'
-/** Web 跨语言域名跳转时携带 mixpanel distinct_id */
-export const MP_DISTINCT_ID = 'mp-distinct-id'
-/** Web 跨语言域名跳转时携带 token（中英文站点域名不同时无法用 Cookie，需在落地页读出后立即从 URL 移除） */
-export const LOCALE_SWITCH_HANDOFF_TOKEN_QUERY = 'locale-handoff-token'
+export { MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from './search-params-key'
+/** 官网跳转 Web App 后的目标路径（sessionStorage，登录成功后用于还原路由） */
+export const OFFICIAL_SITE_REDIRECT_SESSION = 'officialSiteRedirect'
 /** 客户端接收成功版本号 */
 export const CLIENT_RECEIVE_VERSION = 'client-receive-version'
 /** 安装完成版本号 */

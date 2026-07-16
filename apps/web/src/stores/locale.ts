@@ -1,5 +1,10 @@
 import { ref } from 'vue'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, MP_DISTINCT_ID, OFFICIAL_SITE_INVITE_CODE } from '/@/constants/storage-key'
+import {
+  LOCALE_SWITCH_HANDOFF_TOKEN_QUERY,
+  OFFICIAL_SITE_INVITE_CODE,
+  OFFICIAL_SITE_LANG,
+} from '/@/constants/search-params-key'
+import { MP_DISTINCT_ID } from '/@/constants/storage-key'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
 import { defaultLanguage } from '/@/locales'
@@ -76,7 +81,7 @@ export const useSimpleLocale = defineStore('locale', () => {
         `${targetBase}/`,
       )
       dest.searchParams.delete(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
-      dest.searchParams.set('official-site-lang', locale)
+      dest.searchParams.set(OFFICIAL_SITE_LANG, locale)
       let handoffToken = readRoxyTokenFromCookie()
       if (!handoffToken) {
         const { useUserStore } = await import('/@/stores/user')
