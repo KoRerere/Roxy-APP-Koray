@@ -66,7 +66,7 @@ export function useSettingsPopup() {
   const { getNetworkPanels } = useNetworkPanel()
   const { getPreferencesPanels } = usePreferencesPanel()
   const { getLoginActivityPanels } = useLoginActive()
-  const { getUserProfilePanels, openIdentityVerificationEntry } = useUserProfilePanel()
+  const { getUserProfilePanels } = useUserProfilePanel()
   const { getAuthentication } = useAuthentication()
   // const { getKernelPanels } = useKernel()
   // const { getAboutPanels } = useAbout()
@@ -137,7 +137,6 @@ export function useSettingsPopup() {
     dialogRef,
     activePanel,
     initPanels,
-    openIdentityVerificationEntry,
     panels: ref(settings),
   }
 }

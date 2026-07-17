@@ -19,7 +19,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 
 const bindCss = useCssModule('bind')
 // const cardDefault = ref(false)
-const autoRecharge = ref(userPayInfo.value.autoRecharge.toString())
+const autoRecharge = ref(userPayInfo.value.autoRecharge?.toString?.())
 const cardTypeMap = {
   amex: 'cards/american-express',
   bc: 'cards/bc',

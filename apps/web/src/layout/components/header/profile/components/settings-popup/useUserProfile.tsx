@@ -5,31 +5,18 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxButton from '/@/components/rx-button'
 import RxTooltip from '/@/components/rx-tooltip'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
-import { useDialog, type UseDialogInstance, type UseDialogProps } from '/@/hooks/useDialog'
 import {
-  fetchIdentityStatusWithNotify,
   formatIdentityRejectedTooltip,
   getIdentityStatus,
   onIdentityStatusSettled,
-  syncIdentityStatusPolling,
   type IdentityVerificationStatus,
-  type IdentityVerificationType,
 } from './identity-verification'
+import { useIdentityVerificationEntry } from './identity-verification-entry'
 
 import UploadAvatar from '../upload-avatar.vue'
 import ThirdAccount from './components/third-account.vue'
 import { oauth2LoginMap, useOauth2Callback } from '/@/utils'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
-
-const IdentityVerificationDialog = defineAsyncComponent(
-  () => import('./components/identity-verification-dialog.vue'),
-)
-const IdentityVerificationDetailsDialog = defineAsyncComponent(
-  () => import('./components/identity-verification-details-dialog.vue'),
-)
-const IdentityVerificationPendingDialog = defineAsyncComponent(
-  () => import('./components/identity-verification-pending-dialog.vue'),
-)
 
 function getStatusLabel(status: IdentityVerificationStatus) {
   if (status === 'verified')
@@ -54,9 +41,9 @@ function getActionLabel(status: IdentityVerificationStatus) {
 export function useUserProfilePanel() {
   const { userStore, updateUserName, showToast, onlyErrorToast, simpleLocale } = useCommonUtil()
   const { fetchUserInfo } = userStore
-  const [showModal] = useDialog()
   const currentData = ref({} as Recordable<any>)
   const identityInfo = getIdentityStatus()
+  const { handleIdentityAction, refreshIdentityInfo } = useIdentityVerificationEntry()
 
   const unsubscribeSettled = onIdentityStatusSettled((info) => {
     if (info.status === 'verified')
@@ -100,92 +87,6 @@ export function useUserProfilePanel() {
         item.bindType.toLowerCase() === 'google' ? item.thirdEmail : item.thirdUserName,
       ])))
     }
-  }
-
-  async function refreshIdentityInfo() {
-    const info = await fetchIdentityStatusWithNotify()
-    identityInfo.value = info
-    syncIdentityStatusPolling()
-  }
-
-  function showIdentityFormDialog(defaultTab?: IdentityVerificationType, showRegulatoryNotice = false) {
-    showModal({
-      header: $t('实名认证'),
-      class: '!w-[560px]',
-      slots: {
-        default: ({ hideModal }: UseDialogInstance) => (
-          <IdentityVerificationDialog
-            defaultTab={defaultTab}
-            showRegulatoryNotice={showRegulatoryNotice}
-            onSuccess={() => {
-              hideModal()
-              refreshIdentityInfo()
-            }}
-          />
-        ),
-        footer: undefined,
-      },
-    } as unknown as UseDialogProps)
-  }
-
-  function showIdentityPendingDialog() {
-    showModal({
-      showHeader: false,
-      header: $t('实名认证审核中'),
-      class: '!w-[440px]',
-      slots: {
-        container: ({ hideModal }: UseDialogInstance) => (
-          <IdentityVerificationPendingDialog
-            details={identityInfo.value.details}
-            onClose={hideModal}
-          />
-        ),
-        footer: undefined,
-      },
-    } as unknown as UseDialogProps)
-  }
-
-  function showIdentityDetailsDialog() {
-    const details = identityInfo.value.details
-    if (!details)
-      return
-
-    const isEnterprise = details.type === 'enterprise'
-    showModal({
-      showHeader: false,
-      header: $t('实名认证'),
-      class: isEnterprise ? '!w-[440px]' : '!w-[384px]',
-      slots: {
-        container: ({ hideModal }: UseDialogInstance) => (
-          <IdentityVerificationDetailsDialog
-            details={details}
-            onClose={hideModal}
-          />
-        ),
-        footer: undefined,
-      },
-    } as unknown as UseDialogProps)
-  }
-
-  async function handleIdentityAction(options?: { showRegulatoryNotice?: boolean }) {
-    const { status, type } = identityInfo.value
-    if (status === 'verified') {
-      showIdentityDetailsDialog()
-      return
-    }
-    if (status === 'pending') {
-      await refreshIdentityInfo()
-      if (identityInfo.value.status !== 'pending')
-        return
-      showIdentityPendingDialog()
-      return
-    }
-    if (status === 'rejected') {
-      await refreshIdentityInfo()
-      showIdentityFormDialog(identityInfo.value.type ?? type, options?.showRegulatoryNotice)
-      return
-    }
-    showIdentityFormDialog(type, options?.showRegulatoryNotice)
   }
 
   async function getUserProfilePanels(data?: any): Promise<SettingsModule> {
@@ -374,12 +275,7 @@ export function useUserProfilePanel() {
     }
   }
 
-  async function openIdentityVerificationEntry() {
-    await handleIdentityAction({ showRegulatoryNotice: true })
-  }
-
   return {
     getUserProfilePanels,
-    openIdentityVerificationEntry,
   }
 }

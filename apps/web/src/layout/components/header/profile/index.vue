@@ -15,6 +15,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { showPageLoading } from '/@/utils'
 import { getSettings } from './components/settings-popup'
+import { useIdentityVerificationEntry } from './components/settings-popup/identity-verification-entry'
 import { getColorSchemeList, useThemeStore } from '/@/stores/theme'
 import { useEmitterEvent } from '/@/utils/eventBus'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -35,6 +36,7 @@ const [showModal] = useDialogHook()
 const [showToast] = useResponseToast()
 const { showPreventMask, hidePreventMask } = usePreventMask()
 const { openLockApp } = useLockApp()
+const { openIdentityVerificationEntry } = useIdentityVerificationEntry()
 
 const menuRef = useTemplateRef('menu')
 
@@ -184,8 +186,12 @@ const items = computed(() => {
   ].filter(item => !item.vIf || item.vIf())
 })
 
-useEmitterEvent('openSettings', ({ settingsKey, anchorPoint, openIdentityVerification }) => {
-  openSettings(settingsKey, anchorPoint, openIdentityVerification)
+useEmitterEvent('openSettings', ({ settingsKey, anchorPoint }) => {
+  openSettings(settingsKey, anchorPoint)
+})
+
+useEmitterEvent('openIdentityVerification', (options) => {
+  void openIdentityVerificationEntry(options)
 })
 
 function openRedeemCode() {
@@ -247,7 +253,7 @@ function showLogoutConfirm() {
   return promise
 }
 
-function openSettings(activeKey: string, anchorPoint?: string, openIdentityVerification?: boolean) {
+function openSettings(activeKey: string, anchorPoint?: string) {
   dialog.open(SettingsPopup, {
     props: {
       showHeader: false,
@@ -264,7 +270,6 @@ function openSettings(activeKey: string, anchorPoint?: string, openIdentityVerif
       props: {
         activeKey,
         anchorPoint,
-        openIdentityVerification,
       },
     },
   })

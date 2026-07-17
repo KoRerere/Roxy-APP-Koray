@@ -288,27 +288,31 @@ export function useProxy() {
     return promise
   }
 
+  function showProxyDownloadKycBlockModal(onClose?: () => void) {
+    const variant = getProxyDownloadBlockVariant(simpleLocale.currentLocale, roleStore.isOwner)
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      slots: {
+        container: ({ hideModal }) => (
+          <ProxyDownloadKycBlockModal
+            variant={variant}
+            onClose={() => {
+              hideModal()
+              onClose?.()
+            }}
+          />
+        ),
+      },
+    })
+  }
+
   async function downloadProxy({ items, cancel, confirm }: DownloadProxyParams) {
     if (hasBuyProxy(items)) {
       const unlocked = await fetchWorkspaceKycUnlockedCached()
       if (!unlocked) {
-        const variant = getProxyDownloadBlockVariant(simpleLocale.currentLocale, roleStore.isOwner)
-        showModal({
-          showHeader: false,
-          modal: true,
-          blockScroll: true,
-          slots: {
-            container: ({ hideModal }) => (
-              <ProxyDownloadKycBlockModal
-                variant={variant}
-                onClose={() => {
-                  hideModal()
-                  cancel?.()
-                }}
-              />
-            ),
-          },
-        })
+        showProxyDownloadKycBlockModal(cancel)
         return
       }
     }
@@ -382,5 +386,5 @@ export function useProxy() {
     router.push({ name: 'agent-list', query: { name: 'shop', expireStatus: ProxyExpireStatus.soon, _t: Date.now() } })
   }
 
-  return { buyProxy, downloadProxy, renewProxy, upgradeProxy, viewExpiresSoonProxy }
+  return { buyProxy, downloadProxy, renewProxy, upgradeProxy, viewExpiresSoonProxy, showProxyDownloadKycBlockModal }
 }

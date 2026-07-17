@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from '/@/locales'
-import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { copyText, localDiscountValue } from '/@/utils/basic'
+import { copyText } from '/@/utils/basic'
+import { useProviderJump } from '/@/views/agent/shop/hooks/useProviderJump'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
 
 type ShopItem = UserGetProxyVendorListListData['data'][number]
@@ -13,8 +13,9 @@ const { data } = defineProps<{
 
 const autoJump = defineModel<boolean>('autoJump')
 
-const [showToast, onlyErrorToast] = useResponseToast()
+const [showToast] = useResponseToast()
 const { locale } = useI18n()
+const { jumpToProvider } = useProviderJump()
 
 const account = computed(() => [
   {
@@ -30,7 +31,7 @@ const account = computed(() => [
 onBeforeMount(() => {
   if (autoJump.value) {
     autoJump.value = false
-    onJump(data)
+    jumpToProvider(data)
   }
 })
 
@@ -39,36 +40,6 @@ function onCopy(value: string) {
   showToast(0, $t('复制成功'))
 }
 
-async function onJump(item: any) {
-  // 第三方的合作商（使用跳转的方式）
-  if (!item.jumpInfo.isToken) {
-    window.open(item.jumpInfo?.jumpUrl, '_blank')
-    return
-  }
-
-  if (item.jumpInfo.apiKey) {
-    const url = new URL(item.jumpInfo?.jumpUrl)
-    url.searchParams.set('token', item.jumpInfo?.apiKey)
-    window.open(url.toString(), '_blank')
-    return
-  }
-
-  const result = await API.proxy.userRegisterProxyProviderUserCreate({ proxyProviderId: item.id })
-
-  if (result.code === 0) {
-    const url = new URL(item.jumpInfo?.jumpUrl)
-    url.searchParams.set('token', result.data)
-    Reflect.set(item.jumpInfo, 'apiKey', result.data)
-    window.open(url.toString(), '_blank')
-  }
-  else if (result.code === 466) {
-    window.open(item.jumpInfo?.jumpUrl, '_blank')
-    showToast(466, $t('账号已存在，请联系技术支持！'))
-  }
-  else {
-    onlyErrorToast(result.code, result.msg)
-  }
-}
 </script>
 
 <template>
@@ -109,7 +80,7 @@ async function onJump(item: any) {
             </div>
           </div>
         </div>
-        <RxButton class="shrink-0" size="md" icon="base/rx_ic_arrow_top_right" :label="$t('前往 {home}', { home: data.vendorName })" @click="onJump(data)" />
+        <RxButton class="shrink-0" size="md" icon="base/rx_ic_arrow_top_right" :label="$t('前往 {home}', { home: data.vendorName })" @click="jumpToProvider(data)" />
       </div>
     </div>
     <RxDivider line-only />

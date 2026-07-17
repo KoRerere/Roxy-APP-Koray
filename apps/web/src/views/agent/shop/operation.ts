@@ -1,4 +1,5 @@
 import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
+import { canShowProxyQrcode } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
@@ -74,6 +75,8 @@ function getRowState(datas: ProxyItem[]) {
 }
 
 export function tableOperation(data: ProxyItem | ProxyItem[]) {
+  const rows = ([] as ProxyItem[]).concat(data)
+  const rowData = rows[0]!
   const {
     hasExpired,
     hasPending,
@@ -85,7 +88,9 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     canRefresh,
     isDirect,
     canUpgrade,
-  } = getRowState(([] as ProxyItem[]).concat(data))
+  } = getRowState(rows)
+
+  const canShowQrcode = canShowProxyQrcode(rowData)
 
   return [
     {
@@ -126,7 +131,6 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       tooltip: $t('下载'),
       power: check('Proxy_Store_download_proxy_info'),
       disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect,
-      quick: true,
       multiple: true,
       multipleProps: {
         disabledTooltip: isGift ? $t('官方赠送的代理 IP 无法下载') : undefined,
@@ -136,13 +140,21 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     },
     {
       name: 'qrcode',
-      label: $t('二维码'),
+      label: $t('扫码导出'),
       icon: 'base/rx_ic_qrcode',
       power: check('Proxy_Store_download_proxy_info'),
       disabled: isDirect,
-      quick: true,
-      visible: false,
-      render: () => h(Qrcode, { data }),
+      hideSubmenuIcon: !canShowQrcode,
+      ...(canShowQrcode
+        ? {
+            items: [
+              {
+                name: 'qrcodePanel',
+                render: () => h(Qrcode, { data: rowData, mode: 'panel' }),
+              },
+            ],
+          }
+        : {}),
     },
     {
       name: 'renew',

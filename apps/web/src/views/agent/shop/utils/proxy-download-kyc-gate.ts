@@ -84,6 +84,33 @@ export function resetWorkspaceKycUnlockedCache(workspaceId?: number) {
   pendingByWorkspace.clear()
 }
 
+/** 同步读取当前工作区 KYC 缓存；无有效缓存时返回 null */
+export function getWorkspaceKycUnlockedCachedSync(): boolean | null {
+  const workspaceId = useWorkspaceStore().currentWorkspace?.id
+  if (workspaceId == null)
+    return null
+
+  const cached = cacheByWorkspace.get(workspaceId)
+  if (!cached || !isWorkspaceKycCacheValid(cached))
+    return null
+
+  return cached.unlocked
+}
+
+/** 是否可在子菜单内嵌展示代理二维码 */
+export function canShowProxyQrcode(item: ProxyItem): boolean {
+  if (item.isDirect)
+    return false
+
+  if (!item.proxyUserName || !item.proxyPassword)
+    return false
+
+  if (!isBuyProxy(item))
+    return true
+
+  return getWorkspaceKycUnlockedCachedSync() === true
+}
+
 export function getProxyDownloadBlockVariant(locale: string, isOwner: boolean): ProxyDownloadBlockVariant {
   if (locale !== 'zh-CN')
     return 'support'
@@ -111,10 +138,7 @@ export function getProxyDownloadBlockTooltip(locale: string, isOwner: boolean) {
 
 /** 从代理 KYC 拦截入口跳转实名认证 */
 export function openProxyKycVerification() {
-  emitter.emit('openSettings', {
-    settingsKey: 'profiles',
-    openIdentityVerification: true,
-  })
+  emitter.emit('openIdentityVerification', { showRegulatoryNotice: true })
 }
 
 async function resolveProxyDownloadRow(item: ProxyItem): Promise<ProxyDownloadRow> {

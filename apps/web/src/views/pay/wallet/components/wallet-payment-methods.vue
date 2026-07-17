@@ -125,7 +125,11 @@ const availableMethods = computed(() => {
 const chooseMethod = computed(() => defaultMethods.find(item => item.value.includes(selectedPayway.value!))!)
 
 onBeforeMount(() => {
-  getCardList()
+  getCardList().then(data => {
+    if (data?.length) {
+      selectedPayway.value = PayWay.Card
+    }
+  })
   getCryptoCoins()
 })
 
@@ -139,6 +143,7 @@ async function getCardList() {
   }
   cardList.value = data?.map(item => ({ ...item, cardIcon: cardTypeMap[item.brand as keyof typeof cardTypeMap] }))
   activeCard.value = data?.[0]
+  return data
 }
 
 async function getCryptoCoins() {

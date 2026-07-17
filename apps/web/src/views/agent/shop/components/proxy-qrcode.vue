@@ -11,8 +11,10 @@ import {
 } from '../utils/proxy-download-kyc-gate'
 import type { ProxyItem } from '../operation'
 
-const { data } = defineProps<{
+const { data, mode = 'trigger' } = defineProps<{
   data: ProxyItem
+  /** trigger：快捷栏图标 + Tooltip；panel：子菜单内嵌展示 */
+  mode?: 'trigger' | 'panel'
 }>()
 
 const roleStore = useRoleStore()
@@ -86,60 +88,93 @@ function onTooltipGoVerify(hide: () => void) {
   openProxyKycVerification()
   hide()
 }
+
+function onPanelGoVerify() {
+  openProxyKycVerification()
+}
 </script>
 
 <template>
-  <div v-if="data.isDirect" class="flex items-center">
-    <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
-  </div>
-  <RxTooltip
-    v-else-if="kycBlocked && canGoVerify"
-    class="flex items-center"
-    placement="top"
-    :delay="500"
-    tooltip-content-class="proxy-kyc-tooltip"
-  >
-    <template #default>
-      <div class="flex items-center kyc-blocked kyc-blocked--owner" @click="onBlockedClick">
-        <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+  <!-- panel：二级子菜单内嵌展示，无需外层 Tooltip -->
+  <div v-if="mode === 'panel'" class="proxy-qrcode-panel" @click.stop>
+    <div v-if="kycBlocked && canGoVerify" class="proxy-kyc-panel__body">
+      <p class="proxy-kyc-panel__desc">
+        {{ blockTooltip }}
+      </p>
+      <RxButton
+        size="sm"
+        :label="$t('去认证')"
+        @click="onPanelGoVerify"
+      />
+    </div>
+    <p v-else-if="kycBlocked" class="proxy-kyc-panel__desc proxy-kyc-panel__desc--only">
+      {{ blockTooltip }}
+    </p>
+    <div v-else-if="kycBlocked === null && isBuyProxy(data)" class="proxy-qrcode-panel__loading">
+      <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+    </div>
+    <div v-else-if="qrcode" class="flex flex-col items-center gap-3 ">
+      <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" size="xxs" option-label="name" option-value="value" data-key="value" />
+      <div class=" py-4.5 rounded-1">
+        <img class="block w-36 aspect-square" :src="qrcode">
       </div>
-    </template>
-    <template #content="{ hide }">
-      <div class="proxy-kyc-tooltip__body">
-        <p class="proxy-kyc-tooltip__desc">
-          {{ blockTooltip }}
-        </p>
-        <RxButton
-          size="sm"
-          :label="$t('去认证')"
-          @click="onTooltipGoVerify(hide)"
-        />
-      </div>
-    </template>
-  </RxTooltip>
-  <div
-    v-else-if="kycBlocked"
-    v-tooltip.top="blockedTooltipOptions"
-    class="flex items-center kyc-blocked"
-  >
-    <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+    </div>
   </div>
-  <div v-else-if="kycBlocked === null && isBuyProxy(data)" class="flex items-center">
-    <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
-  </div>
-  <RxTooltip v-else-if="qrcode" class="flex items-center" tooltip-content-class="bg-white">
-    <template #default>
-      <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-secondary)" />
-    </template>
-    <template #content>
-      <div class="flex flex-col items-center gap-3">
-        <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" size="xxs" option-label="name" option-value="value" data-key="value" />
-        <div class="w-36 pa-3 rounded-1 image">
-          <img class="block w-30 aspect-square" :src="qrcode">
+
+  <!-- trigger：图标 + Tooltip（快捷栏等场景） -->
+  <template v-else>
+    <div v-if="data.isDirect" class="flex items-center">
+      <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+    </div>
+    <RxTooltip
+      v-else-if="kycBlocked && canGoVerify"
+      class="flex items-center"
+      placement="top"
+      :delay="500"
+      tooltip-content-class="proxy-kyc-tooltip"
+    >
+      <template #default>
+        <div class="flex items-center kyc-blocked kyc-blocked--owner" @click="onBlockedClick">
+          <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
         </div>
-      </div>
-    </template>
-  </RxTooltip>
+      </template>
+      <template #content="{ hide }">
+        <div class="proxy-kyc-tooltip__body">
+          <p class="proxy-kyc-tooltip__desc">
+            {{ blockTooltip }}
+          </p>
+          <RxButton
+            size="sm"
+            :label="$t('去认证')"
+            @click="onTooltipGoVerify(hide)"
+          />
+        </div>
+      </template>
+    </RxTooltip>
+    <div
+      v-else-if="kycBlocked"
+      v-tooltip.top="blockedTooltipOptions"
+      class="flex items-center kyc-blocked"
+    >
+      <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+    </div>
+    <div v-else-if="kycBlocked === null && isBuyProxy(data)" class="flex items-center">
+      <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
+    </div>
+    <RxTooltip v-else-if="qrcode" class="flex items-center" tooltip-content-class="bg-white">
+      <template #default>
+        <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-secondary)" />
+      </template>
+      <template #content>
+        <div class="flex flex-col items-center gap-3">
+          <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" size="xxs" option-label="name" option-value="value" data-key="value" />
+          <div class="py-4.5 rounded-1">
+            <img class="block w-36 aspect-square" :src="qrcode">
+          </div>
+        </div>
+      </template>
+    </RxTooltip>
+  </template>
 </template>
 
 <style scoped>
@@ -153,6 +188,38 @@ function onTooltipGoVerify(hide: () => void) {
   &--owner {
     cursor: pointer;
   }
+}
+
+.proxy-qrcode-panel__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.proxy-kyc-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 12px;
+  max-width: 16rem;
+}
+
+.proxy-kyc-panel__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: pre-wrap;
+  color: var(--colors-text-text-secondary);
+
+  &--only {
+    padding: 10px 12px;
+    max-width: 16rem;
+  }
+}
+
+.proxy-kyc-panel__body .p-button {
+  align-self: flex-end;
 }
 </style>
 

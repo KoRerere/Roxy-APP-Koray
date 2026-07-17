@@ -7,7 +7,7 @@ import type { SvgNames } from '/@/components/rx-icon/'
 import { useSettingsPopup } from './settings-popup/'
 import { TaskbarImagePreviewHost } from './settings-popup/usePreferences'
 
-const { dialogRef, activePanel, panels, initPanels, openIdentityVerificationEntry } = useSettingsPopup()
+const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup()
 
 function closePopup() {
   dialogRef?.value.close()
@@ -16,14 +16,11 @@ function closePopup() {
 onBeforeMount(async () => {
   activePanel.key = dialogRef?.value?.data?.props?.activeKey
   await initPanels()
-  nextTick(async () => {
+  nextTick(() => {
     const anchorPoint = dialogRef?.value?.data?.props?.anchorPoint
     if (anchorPoint) {
       document.getElementById(anchorPoint)?.scrollIntoView({ behavior: 'smooth' })
     }
-
-    if (dialogRef?.value?.data?.props?.openIdentityVerification)
-      await openIdentityVerificationEntry()
   })
 })
 </script>

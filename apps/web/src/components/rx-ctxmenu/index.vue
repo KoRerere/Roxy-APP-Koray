@@ -50,7 +50,10 @@ function onChange() {
 <template>
   <ContextMenu ref="ctxMenu" :model="operation" :pt="{ root: '!border-0.5' }" @before-hide="onHide" @show="showPreventMask">
     <template #item="{ item, props: ctxProps }">
-      <a v-ripple v-tooltip="{ value: item.menuTooltip, delay: 300 }" class="!pa-0" v-bind="ctxProps.action">
+      <div v-if="item.render" :class="menu.renderItem" @click.stop>
+        <component :is="item.render" />
+      </div>
+      <a v-else v-ripple v-tooltip="{ value: item.menuTooltip, delay: 300 }" class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'radio'" class="cursor-pointer" :class="menu.item" :for="item.value" @click.stop>
           <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop @change="onChange" />
           <span>{{ item.label }}</span>
@@ -65,7 +68,7 @@ function onChange() {
           <SvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
           <span class="flex-1">{{ item.label }}</span>
           <SvgIcon v-if="item.suffixIcon" :class="item.iconClass" :name="(item.suffixIcon as SvgNames)" />
-          <SvgIcon v-if="item.items" :class="item.iconClass" name="base/rx_ic_chevron_right" />
+          <SvgIcon v-if="item.items && !item.hideSubmenuIcon" :class="item.iconClass" name="base/rx_ic_chevron_right" />
         </div>
       </a>
     </template>
@@ -80,5 +83,10 @@ function onChange() {
   gap: var(--spacing-md, 6px) !important;
   width: 100%;
   font-size: 13px;
+}
+
+.renderItem {
+  padding: 0 !important;
+  width: 100%;
 }
 </style>

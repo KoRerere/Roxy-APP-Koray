@@ -17,6 +17,7 @@ import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useBuyPoints } from '/@/views/mcp/components/buyPointes'
+import { isEmpty } from 'es-toolkit/compat';
 
 const router = useRouter()
 const [showModal] = RxUseDialog()
@@ -153,6 +154,9 @@ const animationGradient = computed(() => {
 })
 
 const subscribeInfo = computed(() => {
+  if (isEmpty(userPayInfo.value))
+    return {}
+
   const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
   const create = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(30).format()
   const open = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(100).format()
@@ -249,7 +253,7 @@ async function openPrimeDialog() {
                     <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12" />
                   </div>
                   <div v-else class="expire-time text-[14px] font-normal text-[var(--colors-text-text-secondary)]">
-                    {{ subscribeInfo.expireTime }}
+                    {{ subscribeInfo?.expireTime }}
                   </div>
                 </template>
               </div>
@@ -266,7 +270,7 @@ async function openPrimeDialog() {
                     </template>
                     <template #total>
                       <span class="total-count">
-                        {{ subscribeInfo.profileCount }}
+                        {{ subscribeInfo?.profileCount }}
                       </span>
                     </template>
                   </i18n-t>
@@ -279,12 +283,12 @@ async function openPrimeDialog() {
                     </template>
                     <template #create>
                       <span class="create-count">
-                        {{ subscribeInfo.profileCreate }}
+                        {{ subscribeInfo?.profileCreate }}
                       </span>
                     </template>
                     <template #open>
                       <span class="open-count">
-                        {{ subscribeInfo.profileOpen }}
+                        {{ subscribeInfo?.profileOpen }}
                       </span>
                     </template>
                   </i18n-t>

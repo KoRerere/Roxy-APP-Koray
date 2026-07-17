@@ -23,7 +23,13 @@ import { genPollingChecker, isEmptyValue, setOperationLoading, setRowsLoading } 
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { getRelatedProfileLabels, useColumns } from './columns'
+import { useProviderJump } from './hooks/useProviderJump'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
+import {
+  canShowProxyQrcode,
+  fetchWorkspaceKycUnlockedCached,
+  isBuyProxy,
+} from './utils/proxy-download-kyc-gate'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyReqType, ProxyType } from '/@/enums'
@@ -45,7 +51,8 @@ const { getOfficialWebsite } = useSimpleLocale()
 const { columns, updateRemarkDisplayStatus } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
-const { buyProxy, downloadProxy, renewProxy, upgradeProxy } = useProxy()
+const { buyProxy, downloadProxy, renewProxy, upgradeProxy, showProxyDownloadKycBlockModal } = useProxy()
+const { isProviderJump, jumpToProvider } = useProviderJump()
 const { check } = usePermission()
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('shoptable')
@@ -128,6 +135,10 @@ onBeforeMount(async () => {
   setNewOrderNo(route.query.orderNo as string)
 })
 
+onMounted(() => {
+  void fetchWorkspaceKycUnlockedCached()
+})
+
 useEmitterEvent('updateShopList', (orderNo) => {
   onRefreshTable()
   setNewOrderNo(orderNo)
@@ -162,6 +173,14 @@ async function operationHandler(operate: any, data: ProxyItem) {
       break
     case 'download':
       await download(datas)
+      break
+    case 'qrcode':
+      if (canShowProxyQrcode(data))
+        break
+      if (!isBuyProxy(data))
+        break
+      if (!(await fetchWorkspaceKycUnlockedCached()))
+        showProxyDownloadKycBlockModal()
       break
     case 'renew':
       onRenewProxy(datas)
@@ -263,13 +282,10 @@ function onAdvancedSearch(search?: Record<string, any>) {
 }
 
 function onBuyProxy(props?: UserGetProxyVendorListListData['data'][number]) {
-   if (props) {
-     // 第三方的合作商（使用跳转的方式）
-     if (props?.jumpInfo?.jumpUrl) {
-    window.open(props.jumpInfo?.jumpUrl, '_blank')
+  if (props && isProviderJump(props)) {
+    void jumpToProvider(props)
     return
   }
-   }
 
   buyProxy(toRaw(props)).then((orderInfo) => {
     onRefreshTable()
