@@ -91,8 +91,6 @@ import {
   SendValidatorEmailVerifyCodeListParams,
   UninstallReasonReportCreateData,
   UninstallReasonReportCreatePayload,
-  UserAppRatingCreateData,
-  UserAppRatingCreatePayload,
   UserBindEmailCreateData,
   UserBindEmailCreatePayload,
   UserBindEmailListListData,
@@ -2204,27 +2202,6 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetInviteNotifyListData, any>({
       path: `/user_get_invite_notify`,
       method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserAppRatingCreate
-   * @summary 用户APP评分
-   * @request POST:/user_app_rating
-   * @response `200` `UserAppRatingCreateData`
-   */
-  userAppRatingCreate = (
-    data: UserAppRatingCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserAppRatingCreateData, any>({
-      path: `/user_app_rating`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });

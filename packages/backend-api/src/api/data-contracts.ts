@@ -10,6 +10,61 @@
  * ---------------------------------------------------------------
  */
 
+export type UserAllRatingsResponse = BaseResponse & {
+  data?: UserRatingRecord[];
+};
+
+export type UserRatingDetailResponse = BaseResponse & {
+  data?: UserRatingRecord | null;
+};
+
+export interface UserRatingRecord {
+  /** 评价 ID */
+  id?: number;
+  userId?: number;
+  /** 评分 1-5 */
+  ratingStar?: number;
+  ratingContent?: string;
+  /** 评价时模式：1=通用 2=电商 */
+  sceneMask?: number;
+  createTime?: string;
+  updateTime?: string;
+  images?: RatingImageItem[];
+}
+
+export interface RatingImageItem {
+  /** 图片记录 ID */
+  id?: number;
+  /** 图片完整 URL */
+  imageUrl?: string;
+}
+
+export interface UserAppRatingSubmitRequest {
+  /**
+   * 星级评分，必填
+   * @min 1
+   * @max 5
+   */
+  ratingStar: number;
+  /**
+   * 评价内容，可选，新版 >= 3.9.0 支持
+   * @maxLength 500
+   */
+  ratingContent?: string;
+  /**
+   * 图片完整 URL 列表（前端直传 OSS 后），最多 6 张
+   * @maxItems 6
+   */
+  images?: string[];
+}
+
+export interface BaseResponse {
+  /** 0=成功，101=参数错误，403=权限错误，500=服务器错误 */
+  code: number;
+  msg: string;
+  data?: null;
+}
+
 export interface KycWorkspaceStatusResult {
   /** 空间是否已解锁：仅当 Owner 个人实名或企业实名已通过（与当前登录用户本人 KYC 无关） */
   unlocked: boolean;
@@ -3948,19 +4003,7 @@ export interface UserGetInviteNotifyListData {
   msg: string;
 }
 
-export interface UserAppRatingCreatePayload {
-  /** 星级数 */
-  ratingStar: number;
-  /** 评价内容 */
-  ratingContent?: string;
-  /** 图片url */
-  images?: string[];
-}
-
-export interface UserAppRatingCreateData {
-  code: number;
-  msg: string;
-}
+export type UserAppRatingData = BaseResponse;
 
 export type UserSentryClientCreatePayload = object;
 
@@ -9156,7 +9199,7 @@ export interface UserCancelSubscriptionListData {
 export interface UserDowngradeSubscriptionListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -9171,7 +9214,7 @@ export interface UserDowngradeSubscriptionListData {
 export interface UserDowngradeSubscriptionV2ListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -9995,6 +10038,21 @@ export interface GetTgWechatQrcodeListData {
     wechatQrCode: string;
     tgName: string;
     wechatName: string;
+  };
+  msg: string;
+}
+
+export interface UserGetProxySegmentReplaceListListData {
+  code: number;
+  data: {
+    list: {
+      oldHost?: string;
+      oldPort?: string;
+      newHost?: string;
+      newPort?: string;
+      oldExpireDate?: string;
+      newExpireDate?: string;
+    }[];
   };
   msg: string;
 }

@@ -37,6 +37,7 @@
     "synchronizer/**/*",
     "launch/**/*",
     "default-browser/**/*",
+    "proxy-segment-replace/**/*",
     "uninstall/**/*",
     "figma-icons/**/*",
     "types/*.d.ts",

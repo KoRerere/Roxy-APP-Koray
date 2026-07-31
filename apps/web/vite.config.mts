@@ -164,6 +164,7 @@ const config: UserConfig = {
         'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
         'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
         'default-browser': join(PACKAGE_ROOT, 'default-browser.html'),
+        'proxy-segment-replace': join(PACKAGE_ROOT, 'proxy-segment-replace.html'),
         'uninstall': join(PACKAGE_ROOT, 'uninstall.html'),
       },
       output: {
