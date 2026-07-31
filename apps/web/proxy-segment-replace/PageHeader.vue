@@ -8,11 +8,11 @@ defineProps<{
   userInfo: UserGetUserInfoListData['data'] | null
 }>()
 
-/** 中文用 logo-zh，英文与俄语共用 logo-en（直接用 PNG，避免 SVG 外链在 img 中无法渲染） */
+/** 中文用 logo-zh，英文与俄语共用 logo-en */
 const brandLogoSrc = computed(() => {
   return pageLocale === 'zh-CN'
-    ? '/images/proxy-segment-replace/logo-zh.png'
-    : '/images/proxy-segment-replace/logo-en.png'
+    ? '/images/proxy-segment-replace/logo-zh.svg'
+    : '/images/proxy-segment-replace/logo-en.svg'
 })
 </script>
 
