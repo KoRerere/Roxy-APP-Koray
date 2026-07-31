@@ -8,8 +8,14 @@ export interface WindowMetaData {
 
 export interface Accordions {
   value: string[]
-  panels: {
-    title: string
-    value: string
-  }[]
+  panels: FormPanel[]
+}
+
+export interface FormPanel {
+  title?: string
+  value: string
+  groupIndex: number
+  placement: 'outside' | 'accordion'
+  variant?: 'window' | 'settings'
+  excludedFields?: string[]
 }

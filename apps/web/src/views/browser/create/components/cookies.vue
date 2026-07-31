@@ -57,11 +57,11 @@ watch(() => props.platformUrls, () => {
 </script>
 
 <template>
-  <div class="flex min-w-0 w-full px-4">
-    <div class="mr-2 tt-primary text-3.25 leading-32px rx-label">
+  <div class="flex min-w-0 w-full">
+    <div class="mr-2 shrink-0 tt-primary text-3.25 leading-32px rx-label">
       {{ attrs.label }}
     </div>
-    <div class="w-full">
+    <div class="min-w-0 flex-1">
       <RxInputTextarea v-model="modelValue" rows="3" icon="base/rx_ic_attachment" :placeholder="(attrs.placeholder as string) || $t('支持格式: JSON、Netscape、Name=Value\nName=Value 未写 domain 时，将按行从下方平台账号的网址自动填充')" :auto-resize="false" :invalid="invalid" @icon-click="onIconClick"
                        @blur="onBlur"
       />

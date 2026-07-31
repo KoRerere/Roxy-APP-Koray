@@ -10,15 +10,32 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useEmitterEvent } from '/@/utils/eventBus'
 import { useDialog } from '/@/hooks/useDialog'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const router = useRouter()
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 const { openProcessing } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const { showFreedomActivityModal } = useFreedomActivity()
 
 const tableRef = useTemplateRef('rxtable')
+
+/** 账单订单类型文案：代理相关三项随普通/电商模式切换 */
+function getOrderTypeLabel(orderType: OrderType) {
+  const labels = billingLabels.value
+  switch (orderType) {
+    case OrderType.ProxyPurchase:
+      return labels.proxyPurchaseOrderType
+    case OrderType.ProxyRefund:
+      return labels.proxyRefundOrderType
+    case OrderType.ProxyRenew:
+      return labels.proxyRenewOrderType
+    default:
+      return OrderTypeStr[orderType as keyof typeof OrderTypeStr]
+  }
+}
 
 const columns = [
   {
@@ -33,7 +50,7 @@ const columns = [
   {
     title: $t('类型'),
     key: 'orderType',
-    getText: (row: any) => OrderTypeStr[row.orderType as keyof typeof OrderTypeStr],
+    getText: (row: any) => getOrderTypeLabel(row.orderType as OrderType),
   },
   {
     title: $t('金额'),
@@ -59,9 +76,9 @@ const columns = [
   },
 ]
 
-const detailMapStr = {
-  [SubOrderType.Subscribe]: (data: any) => $t('{count} 窗口, {day} 天', { count: data.windowCount, day: data.day }),
-  [SubOrderType.Upgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
+const detailMapStr = computed(() => ({
+  [SubOrderType.Subscribe]: (data: any) => billingLabels.value.billingPeriodEntities(data.windowCount, data.day),
+  [SubOrderType.Upgrade]: (data: any) => billingLabels.value.upgradeEntitiesRange(data.oldWindowCount, data.windowCount),
   [SubOrderType.Auto]: () => $t('自动续订'),
   [SubOrderType.Extend]: (data: any) => $t('套餐延长 {day} 天', { day: data.day }),
   [SubOrderType.Workspace_Member]: (data: any) => {
@@ -70,9 +87,9 @@ const detailMapStr = {
       [data.staff, $t('{member} 团队成员', { member: data.staff })],
     ].filter(([value]) => value > 0).map(([_, label]) => label).join(', ')
   },
-  [SubOrderType.Downgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
+  [SubOrderType.Downgrade]: (data: any) => billingLabels.value.upgradeEntitiesRange(data.oldWindowCount, data.windowCount),
   [SubOrderType.Proxy]: (data: any) => data.proxyContent,
-}
+}))
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
@@ -83,7 +100,7 @@ useEmitterEvent('updateBillList', () => {
 async function tableRequest(params: any) {
   const data = await API.pay.userGetPurchaseRecordsInfoList(params)
   data.data.rows = data.data.rows.map(({ detail, ...item }) => {
-    const detailStr = detail?.content || detailMapStr[detail?.subType as SubOrderType]?.(detail) || '--'
+    const detailStr = detail?.content || detailMapStr.value[detail?.subType as SubOrderType]?.(detail) || '--'
     return { detail, detailStr, ...item }
   })
   return data
@@ -108,7 +125,7 @@ async function tableFilters() {
         OrderType.ProxyRenew,
         OrderType.OfficialGift,
         OrderType.BandwidthUpgrade,
-      ].map(item => ({ label: OrderTypeStr[item as keyof typeof OrderTypeStr], value: item })),
+      ].map(item => ({ label: getOrderTypeLabel(item), value: item })),
     },
     {
       type: 'date',

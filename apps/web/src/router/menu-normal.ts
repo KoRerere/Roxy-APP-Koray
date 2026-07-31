@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { WorkspaceType } from '/@/enums'
+import { roxyGeoRoute } from './menu-shared'
 
 const privateOnly = [WorkspaceType.Private] as const
 
@@ -130,10 +131,11 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         path: 'cattle-slaughter',
         name: 'cattle-slaughter',
         meta: {
-          title: '牛马屠宰场',
+          title: 'Roxy Lab',
           icon: 'base/rx_ic_keys',
           hideInMenu: true,
-          workspaceTypes: [...privateOnly],
+          // 开发测试页，两种业务模式均需可直达（父级 resource 为 Private only）
+          workspaceTypes: [WorkspaceType.Private, WorkspaceType.ECommerce],
         },
         component: () => import('/@/views/lab'),
       },
@@ -148,27 +150,7 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         },
         component: () => import('/@/views/extensions'),
       },
-      {
-        path: 'roxy-geo',
-        name: 'roxy-geo',
-        meta: {
-          title: $t('跨境营销'),
-          icon: 'websites/rx_accounts_tiktok',
-          type: 'button',
-          external: true,
-          showFireBadge: true,
-          locales: ['zh'],
-          workspaceTypes: [...privateOnly],
-          onClick: async () => {
-            const userStore = await import('/@/stores/user').then(m => m.useUserStore())
-            const simpleLocale = await import('/@/stores/locale').then(m => m.useSimpleLocale())
-            const base = import.meta.env.VITE_OFFICIAL_WEBSITE_ZH.replace(/\/$/, '')
-            const url = `${base}/roxy-geo/?roxy-geo-token=${userStore.token}&roxy-geo-locale=${simpleLocale.currentLocale}`
-            window.open(url, '_blank')
-          },
-        },
-        component: () => import('/@/views/extensions'),
-      },
+      roxyGeoRoute,
     ],
   },
 ]

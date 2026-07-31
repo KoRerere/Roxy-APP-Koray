@@ -22,8 +22,11 @@ const { path, query } = useBackRoute()
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
 const accordions = ref({
   value: [],
-  panels: [$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
-    .map((title, index) => ({ title, value: index.toString() })),
+  panels: [
+    { value: 'window', groupIndex: 0, placement: 'outside' as const, variant: 'window' as const },
+    ...[$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
+      .map((title, index) => ({ title, value: index.toString(), groupIndex: index + 1, placement: 'accordion' as const })),
+  ],
 })
 const inputsGroup = ref()
 const original = ref()
@@ -100,11 +103,11 @@ function oldFieldsFormat() {
 </script>
 
 <template>
-  <div class="relative flex flex-col h-full">
+  <div class="relative flex min-h-0 flex-col h-full">
     <ViewsHeader show-back :title="$t('编辑窗口')" />
-    <div class="px-16 flex flex-1 overflow-hidden overflow-x-auto">
-      <div class="w-full h-full flex gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
-        <AccordionInputs class="min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
+    <div class="px-16 flex flex-1 min-h-0 overflow-hidden overflow-x-auto">
+      <div class="w-full h-full flex min-h-0 gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
+        <AccordionInputs class="min-h-0 min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
           <template #before>
             <div class="flex items-center justify-between px-4 py-4 subtitle">
               {{ $t('窗口信息') }}

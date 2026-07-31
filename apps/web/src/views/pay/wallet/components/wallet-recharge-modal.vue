@@ -216,7 +216,6 @@ function close(isCancel: boolean) {
 
 .header {
   color: var(--colors-text-text-primary);
-  font-family: 'Microsoft YaHei UI';
   font-size: 20px;
   font-weight: 700;
   line-height: normal;

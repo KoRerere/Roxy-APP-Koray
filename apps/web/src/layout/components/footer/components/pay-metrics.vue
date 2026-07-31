@@ -8,6 +8,7 @@ import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { emitter } from '/@/utils/eventBus'
 import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const { collapsed } = defineProps<{
   collapsed: boolean
@@ -18,6 +19,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
 const router = useRouter()
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
+const billingLabels = useBillingEntityLabels()
 
 const opRef = useTemplateRef('op')
 const isFree = computed(() => [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.value?.subLevel as SubLevelEnum))
@@ -47,8 +49,8 @@ const payMetricsItems = computed(() => {
   const { useWindowCount, maxWindowCount } = userPayInfo.value
   return [
     {
-      label: $t('窗口用量'),
-      usage: isPremiumPartner.value ? $t('无限窗口') : `${useWindowCount} / ${maxWindowCount}`,
+      label: billingLabels.value.entityUsage,
+      usage: isPremiumPartner.value ? billingLabels.value.unlimitedEntities : `${useWindowCount} / ${maxWindowCount}`,
     },
   ]
 })

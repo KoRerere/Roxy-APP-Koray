@@ -172,10 +172,9 @@
         "success": "{primitives.green.500}",
         "info": "{primitives.blue.500}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.50}",
-        "border": "{colors.border.border-inactive}",
-        "indicator": "{primitives.netural.200}"
+      "marquee": {
+        "indicator": "{primitives.netural.100}",
+        "indicator-active": "{colors.background.bg-brand}"
       },
       "collapse": {
         "bg": "{primitives.netural.100}"
@@ -184,9 +183,10 @@
         "bg": "#ebf1f5",
         "bg-overlay": "#ebf1f5"
       },
-      "marquee": {
-        "indicator": "{primitives.netural.100}",
-        "indicator-active": "{colors.background.bg-brand}"
+      "scrollbar": {
+        "bg": "{primitives.netural.50}",
+        "border": "{colors.border.border-inactive}",
+        "indicator": "{primitives.netural.200}"
       },
       "tag": {
         "bg2": "#e2e9ee",
@@ -242,15 +242,6 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
-      "tooltip": {
-        "action": {
-          "bg": "{primitives.netural.0}"
-        },
-        "bg": "{primitives.netural.900}",
-        "text-primary": "{primitives.netural.0}",
-        "text-secondary": "{primitives.netural.200}",
-        "divider": "{primitives.netural.600}"
-      },
       "table": {
         "bg-button-hover": "#d3dde4",
         "bg-header": "{primitives.netural.50}",
@@ -275,6 +266,15 @@
         "border-selection-active": "{colors.border.border-base}",
         "text": "{colors.text.text-secondary}"
       },
+      "tooltip": {
+        "action": {
+          "bg": "{primitives.netural.0}"
+        },
+        "bg": "{primitives.netural.900}",
+        "text-primary": "{primitives.netural.0}",
+        "text-secondary": "{primitives.netural.200}",
+        "divider": "{primitives.netural.600}"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -286,12 +286,22 @@
         "Netural": "{primitives.netural.300}"
       }
     },
+    "bg": "#ffffff",
     "pattern": {
       "resources": {
         "bg-card-inactive": "{colors.background.bg-block}",
         "border-card-inactive": "{primitives.netural.50}",
         "bg-card-active": "{colors.background.bg-page}",
         "border-card-active": "{colors.border.border-inactive}"
+      },
+      "tour": {
+        "tips": {
+          "bg": "{component.tooltip.bg}",
+          "border": "{component.tooltip.bg}"
+        },
+        "mask": {
+          "bg": "{colors.alpha.alpha-black-40}"
+        }
       },
       "tutorial": {
         "banner": {
@@ -313,15 +323,6 @@
       "empty": {
         "bg-start": "rgba(17, 163, 253, 0.4000)",
         "bg-end": "rgba(17, 163, 253, 0.0000)"
-      },
-      "tour": {
-        "tips": {
-          "bg": "{component.tooltip.bg}",
-          "border": "{component.tooltip.bg}"
-        },
-        "mask": {
-          "bg": "{colors.alpha.alpha-black-40}"
-        }
       },
       "editor": {
         "key": "#005cc5",
@@ -521,9 +522,17 @@
         "gradient-01": "#b8ebff",
         "gradient-02": "#ebe0ff",
         "gradient-03": "#ffe6ec"
+      },
+      "operation": {
+        "operation-bg": "#e5f5ff"
+      },
+      "E-Commerce": {
+        "bg-gradient-01": "#11a3fd",
+        "bg-gradient-02": "#6dc7ff",
+        "top-bg-gradient-01": "#18a7ff",
+        "top-bg-gradient-02": "#87d1fc"
       }
     },
-    "bg": "#ffffff",
     "bg-start": "#ffffff",
     "campaign": {
       "netflix": {
@@ -730,10 +739,9 @@
         "success": "{primitives.green.400}",
         "info": "{primitives.blue.400}"
       },
-      "scrollbar": {
-        "bg": "{primitives.netural.800}",
-        "border": "{colors.border.border-subtle}",
-        "indicator": "{primitives.netural.600}"
+      "marquee": {
+        "indicator": "{primitives.netural.700}",
+        "indicator-active": "{colors.background.bg-brand}"
       },
       "collapse": {
         "bg": "{primitives.netural.800}"
@@ -742,9 +750,10 @@
         "bg-overlay": "#363d45",
         "bg": "{primitives.netural.800}"
       },
-      "marquee": {
-        "indicator": "{primitives.netural.700}",
-        "indicator-active": "{colors.background.bg-brand}"
+      "scrollbar": {
+        "bg": "{primitives.netural.800}",
+        "border": "{colors.border.border-subtle}",
+        "indicator": "{primitives.netural.600}"
       },
       "tag": {
         "bg2": "#36404a",
@@ -800,15 +809,6 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
-      "tooltip": {
-        "action": {
-          "bg": "{component.tooltip.bg}"
-        },
-        "bg": "{primitives.netural.700}",
-        "text-primary": "{primitives.netural.0}",
-        "text-secondary": "{primitives.netural.200}",
-        "divider": "{primitives.netural.600}"
-      },
       "table": {
         "bg-header": "{primitives.netural.800}",
         "border-header": "{colors.border.border-subtle}",
@@ -833,6 +833,15 @@
         "border-selection-active": "{primitives.netural.600}",
         "text": "{colors.text.text-secondary}"
       },
+      "tooltip": {
+        "action": {
+          "bg": "{component.tooltip.bg}"
+        },
+        "bg": "{primitives.netural.700}",
+        "text-primary": "{primitives.netural.0}",
+        "text-secondary": "{primitives.netural.200}",
+        "divider": "{primitives.netural.600}"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -844,12 +853,22 @@
         "Netural": "{primitives.netural.600}"
       }
     },
+    "bg": "#ffffff",
     "pattern": {
       "resources": {
         "bg-card-inactive": "{colors.background.bg-page}",
         "border-card-inactive": "{colors.border.border-inactive}",
         "bg-card-active": "{colors.background.bg-block}",
         "border-card-active": "{colors.border.border-inactive}"
+      },
+      "tour": {
+        "tips": {
+          "bg": "{colors.background.bg-brand}",
+          "border": "{colors.border.border-brand}"
+        },
+        "mask": {
+          "bg": "rgba(36, 38, 41, 0.9000)"
+        }
       },
       "tutorial": {
         "banner": {
@@ -871,15 +890,6 @@
       "empty": {
         "bg-start": "rgba(17, 163, 253, 0.8000)",
         "bg-end": "rgba(17, 163, 253, 0.0000)"
-      },
-      "tour": {
-        "tips": {
-          "bg": "{colors.background.bg-brand}",
-          "border": "{colors.border.border-brand}"
-        },
-        "mask": {
-          "bg": "rgba(36, 38, 41, 0.9000)"
-        }
       },
       "editor": {
         "key": "#79c0ff",
@@ -1079,9 +1089,17 @@
         "gradient-01": "#217275",
         "gradient-02": "#4432aa",
         "gradient-03": "#8c6b6b"
+      },
+      "operation": {
+        "operation-bg": "#00263d"
+      },
+      "E-Commerce": {
+        "bg-gradient-01": "#193565",
+        "bg-gradient-02": "#163582",
+        "top-bg-gradient-01": "#0455b8",
+        "top-bg-gradient-02": "#022652"
       }
     },
-    "bg": "#ffffff",
     "bg-start": "#ffffff",
     "campaign": {
       "netflix": {

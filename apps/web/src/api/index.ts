@@ -13,6 +13,7 @@ import {
   ProxyApi,
   TeamApi,
   UserAddUninstallReasonAnswerApi,
+  UserReportRolaJumpClickApi,
   WindowApi,
 } from '@roxy/backend-api'
 import { serializeRequestParams } from '/@/api/serializeRequestParams'
@@ -89,6 +90,7 @@ export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (con
     config.headers.source = globalThis.isElectron ? 'app' : 'web'
     config.headers.language = currentLocale
     config.headers.appVersion = appVersion
+    config.headers.webVersion = __WEB_VERSION__
     config.headers.workspaceId = currentWorkspace?.id
     config.headers['R-INVITE-CODE'] = inviteCode
     config.metadata = {
@@ -178,4 +180,5 @@ export const API = {
   userAddUninstallReasonAnswer: new UserAddUninstallReasonAnswerApi(httpClient),
   points: new PointsApi(httpClient),
   kyc: new KycApi(httpClient),
+  userReportRolaJumpClick: new UserReportRolaJumpClickApi(httpClient),
 }

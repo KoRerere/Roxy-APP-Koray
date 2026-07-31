@@ -12,6 +12,8 @@ export function useDrawer() {
   const _visible = ref(false)
   const _innerProps = ref<any>({})
   let _currentVNode: VNode | null = null
+  // 独立挂载点：避免多个 useDrawer 实例共用 document.body 时互相卸载
+  let _container: HTMLElement | null = null
 
   const _DrawerComponent = () => {
     const { slots, ...props } = _innerProps.value
@@ -21,18 +23,22 @@ export function useDrawer() {
   }
 
   const _destroy = () => {
-    if (_currentVNode) {
-      render(null, document.body)
-      _currentVNode = null
+    if (_container) {
+      render(null, _container)
+      _container.remove()
+      _container = null
     }
+    _currentVNode = null
   }
 
   const _renderCmp = async () => {
     _destroy()
+    _container = document.createElement('div')
+    document.body.appendChild(_container)
     const vnode = createVNode(_DrawerComponent)
     vnode.appContext = appContext
     _currentVNode = vnode
-    render(vnode, document.body)
+    render(vnode, _container)
     await nextTick()
   }
 

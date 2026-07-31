@@ -5,6 +5,7 @@ import { setupWebSocketServer } from '/@/modules/appServer/ws'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { setupDashboardServer } from './dashboard'
+import { setupDevViteWebSocketProxy } from './dashboard/web-forward/dev-vite-proxy'
 // import { setLogsServer } from './logs/index'
 
 export async function setupAppServer() {
@@ -47,13 +48,14 @@ export async function setupAppServer() {
 
   try {
     const port = await getPortPromise({ port: store.appPort })
-    app.listen(port, (error) => {
+    const server = app.listen(port, (error) => {
       if (error) {
         reject(error)
         return
       }
       console.log(`App server is running at http://127.0.0.1:${port}`)
       store.appPort = port
+      setupDevViteWebSocketProxy(server)
       resolve(app)
     })
     // 启动 WebSocket 服务

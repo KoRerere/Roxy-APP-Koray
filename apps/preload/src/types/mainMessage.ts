@@ -66,6 +66,18 @@ export interface QuitSyncProgressMessage {
 
 export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not_found' | 'other_error' | 'workspace_suspended'
 
+export type BrowserCacheRootDirFallbackReason = 'parent_missing' | 'mkdir_failed'
+
+export type EnsureBrowserCacheRootDirResult =
+  | { ok: true, path: string }
+  | { ok: false, reason: BrowserCacheRootDirFallbackReason, error?: unknown }
+
+export interface BrowserCacheRootDirFallbackPayload {
+  previousPath: string
+  fallbackPath: string
+  reason: BrowserCacheRootDirFallbackReason
+}
+
 /** MCP 错误类型 */
 export type McpFailureType =
   /** RoxyClaw 已在运行 */
@@ -134,6 +146,8 @@ export interface MainMessage {
   'syncControl:resume': () => void
   /** 通过外部打开浏览器失败错误弹窗 */
   'dialog:open-browser-failed': (payload: { name: string, type: OpenBrowserFailureType, message?: string }) => void
+  /** 缓存目录不可用，已回退默认路径 */
+  'app:browser-cache-root-dir-fallback': (payload: BrowserCacheRootDirFallbackPayload) => void
   /** 卸载反馈模式（由卸载程序启动） */
   'app:uninstall-feedback-mode': (isUninstallMode: boolean) => void
   /** 埋点上报事件 */

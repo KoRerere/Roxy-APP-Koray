@@ -11,6 +11,8 @@ import type {
   SettingsModule,
 } from '/@/layout/components/header/profile/type'
 import { $t } from '/@/locales'
+import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import { getDictMap, strConcat } from '/@/utils'
 import { NetworkType, ProxyCheckStatus, ProxyProtocol } from '/@/enums'
 
@@ -30,8 +32,10 @@ function getNetworkModeValue(items: Items[]) {
 
 export function useNetworkPanel() {
   const { saveUserConfig, saveLocalConfig, detectLocalNetwork, detectSystemNetwork, detectCustomAppNetwork } = useCommonUtil()
+  const { isEcommerce } = useRouteContext()
 
   const getNetworkPanels = async (data?: any): Promise<SettingsModule> => {
+    const proxyLabels = createProxyShopLabels(isEcommerce.value)
     const [$dict_map, softConfig] = await Promise.all([
       getDictMap(),
       globalThis.electronAPI.send('app:getSoftConfig'),
@@ -290,9 +294,10 @@ export function useNetworkPanel() {
                 ),
             },
             {
-              label: $t('自动检测代理 IP'),
+              label: proxyLabels.autoDetectProxy,
               name: 'autoDetectProxy',
               value: data?.autoDetectProxy ?? false,
+              hide: () => isEcommerce.value,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch

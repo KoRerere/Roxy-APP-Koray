@@ -13,6 +13,7 @@ import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { SubLevelEnum } from '/@/enums/pay'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
@@ -22,6 +23,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
 const { showFreedomActivityModal } = useFreedomActivity()
+const billingLabels = useBillingEntityLabels()
 const selectedDuration = ref()
 const monthAmount = ref(0)
 const loading = ref(false)
@@ -59,10 +61,10 @@ const detail = computed(() => {
 
   return [
     {
-      title: $t('窗口'),
+      title: billingLabels.value.entityUnit,
       items: [
         {
-          label: $t('窗口数量'),
+          label: billingLabels.value.entityCount,
           value: `${profileCount.format()} + ${freeCount.format()}`,
         },
         {
@@ -200,11 +202,9 @@ function onUpgradePlan() {
         <ItemBlock :title="isExpired ? $t('续费套餐') : $t('当前套餐')">
           <div>
             <div class="plan">
-              {{ $t('{count} 窗口', {
-                count: currency(userPayInfo.purchaseWindowCount, { precision: 0, symbol: '' }).add(userPayInfo.freeWindowCount).format(),
-              }) }}
+              {{ billingLabels.countEntitiesShort(currency(userPayInfo.purchaseWindowCount, { precision: 0, symbol: '' }).add(userPayInfo.freeWindowCount).format()) }}
             </div>
-            <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="$t('若要增加窗口上限，请{terms}{text}新套餐。', { terms: '{terms}', text: '{text}' })" scope="global">
+            <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="billingLabels.upgradeForMoreEntitiesKeypath" scope="global">
               <template #terms>
                 <a class="cursor-pointer terms-link" target="_blank" @click="onUpgradePlan">{{ $t('单击此处') }}</a>
               </template>

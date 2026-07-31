@@ -7,6 +7,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useExtensionLabels } from '../utils/extension-labels'
 import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 
 type CategoryItem = UnwrapRowType<UserGetPluginCategoryListData>
@@ -21,6 +22,7 @@ interface PluginMap {
 
 const [showToast, onlyErrorToast] = useResponseToast()
 const dialog = useDialog()
+const labels = useExtensionLabels()
 const needsync = defineModel('needsync')
 
 const categories = ref<CategoryItem[]>([])
@@ -285,10 +287,10 @@ defineExpose({
         <InputGroupAddon>
           <RxSvgIcon name="base/rx_ic_magnify" />
         </InputGroupAddon>
-        <TsFormInputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
+        <TsFormInputText v-model="search" :placeholder="labels.searchPlaceholder" @input="searchPlugins" />
       </InputGroup>
       <div ref="listContainer" class="relative flex-1 overflow-y-auto list-container dynamic-padding">
-        <i18n-t v-if="search && !extensionList?.length" tag="div" class="h-full flex items-center justify-center google" :keypath="$t('暂未找到相关扩展，请前往 {link} 查看更多扩展', { link: '{link}' })" scope="global">
+        <i18n-t v-if="search && !extensionList?.length" tag="div" class="h-full flex items-center justify-center google" :keypath="labels.notFoundMessageKeypath" scope="global">
           <template #link>
             <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer">Google Store</a>
           </template>

@@ -36,7 +36,7 @@ function createMainWindow(options?: BrowserWindowConstructorOptions) {
     center: true,
     webPreferences: {
       // 主窗口禁用节流
-      backgroundThrottling: false,
+      // backgroundThrottling: false,
     },
     ...options,
   })

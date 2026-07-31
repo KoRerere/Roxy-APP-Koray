@@ -12,12 +12,19 @@ import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCMLocal, getCookie, hidePageLoading, initCrypto, isDev, isMainWindow, isMobile, isWindows, removeCookie } from '/@/utils'
+import { encryptAESGCMLocal, getCookie, hidePageLoading, initCrypto, isDev, isMainWindow, isMobile, isWindows, removeCookie, sleep } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 import { clearSessionLost, markSessionLost } from '/@/utils/sessionLost'
+import { clearLastRoute } from '/@/utils/lastRoute'
 import { isLoginRoute, navigateToLogin, pushToLocation } from '/@/router/navigation'
 import { useListCacheStore } from '/@/stores/listCache'
+import {
+  isBeforeEnterSessionActive,
+  markBeforeEnterSession,
+  needsBeforeEnterResume,
+} from '/@/domain/before-enter'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -117,7 +124,20 @@ export const useUserStore = defineStore(
       return { identity, ...identityMap[identity] }
     })
 
-    async function getUserInfo(intoWorkspaceId?: number) {
+    type GetUserInfoOptions = {
+      /** 默认 true：拉取用户信息后正式进空间；false 时仅更新 userInfo */
+      enterWorkspace?: boolean
+    }
+
+    async function enterWorkspace(workspaceId?: number) {
+      const workspaceStore = getWorkspaceStore()
+      const resolvedId = workspaceId ?? workspaceStore.currentWorkspace?.id ?? userInfo.value.workspaceId
+      if (!resolvedId)
+        return
+      await workspaceStore.enterWorkspace(resolvedId)
+    }
+
+    async function getUserInfo(intoWorkspaceId?: number, options?: GetUserInfoOptions) {
       const { code, data } = await fetchUserInfo()
 
       if (code === 0) {
@@ -126,7 +146,9 @@ export const useUserStore = defineStore(
         clearSessionLost()
 
         setUserInfo(data)
-        await getWorkspaceStore().setCurrentWorkspace(intoWorkspaceId || data.workspaceId)
+
+        if (options?.enterWorkspace !== false)
+          await enterWorkspace(intoWorkspaceId ?? data.workspaceId)
 
         setTimeout(() => {
           hidePageLoading()
@@ -283,6 +305,7 @@ export const useUserStore = defineStore(
       useListCacheStore().clearAll()
       getWorkspaceStore().resetWorkspace()
       tutorialStore.resetVideoMaps()
+      clearLastRoute()
       await logoutPromise
     }
 
@@ -308,40 +331,78 @@ export const useUserStore = defineStore(
       updateUserConfig()
     }
 
-    /** 获取用户付费详情 */
+    /** 付费详情请求世代：新调用会作废仍在退避重试的旧请求，避免切空间后写回脏数据 */
+    let payInfoRequestId = 0
+    /** 付费详情最大尝试次数（含首次） */
+    const PAY_INFO_MAX_ATTEMPTS = 5
+    /** 付费详情重试基础间隔（毫秒），按 attempt 线性退避 */
+    const PAY_INFO_RETRY_BASE_DELAY_MS = 1000
+
+    /** 获取用户付费详情（失败自动重试；layout 依赖 subLevel 解除 loading） */
     async function getUserPayInfo() {
-      const result = await API.pay.userGetUserPayInfoList()
-      const { code, data } = result
-      if (code === 0) {
-        userPayInfo.value = data
-        if (roleStore.isOwner) {
-          // 如果用户付费信息过期，则显示弹窗
-          if (data.showSubExpiredDlg) {
-            emitter.emit('showSubscriptionExpiredDialog')
+      const requestId = ++payInfoRequestId
+      let lastResult: Awaited<ReturnType<typeof API.pay.userGetUserPayInfoList>> | undefined
+
+      for (let attempt = 1; attempt <= PAY_INFO_MAX_ATTEMPTS; attempt++) {
+        if (requestId !== payInfoRequestId)
+          return lastResult
+
+        try {
+          const result = await API.pay.userGetUserPayInfoList()
+          if (requestId !== payInfoRequestId)
+            return result
+
+          lastResult = result
+          const { code, data } = result
+          if (code === 0) {
+            userPayInfo.value = data
+            // 电商模式无窗口套餐/额度语义，跳过订阅到期与升级套餐弹窗
+            if (roleStore.isOwner && !isCurrentEcommerceWorkspace()) {
+              // 如果用户付费信息过期，则显示弹窗
+              if (data.showSubExpiredDlg) {
+                emitter.emit('showSubscriptionExpiredDialog')
+              }
+              // 旧用户首次登录，显示升级套餐弹窗
+              if (data.showPayWallDlg) {
+                emitter.emit('showUpgradePlanDialog')
+              }
+            }
+
+            globalThis.electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
+
+            if (isWindows) {
+              const { code: rightsCode } = await API.pay.userCheckTeamUserRightsList()
+              if (rightsCode !== 0) {
+                // 免费用户或者过期用户，关闭窗口同步器
+                console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
+                if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
+                  globalThis.electronAPI.send('syncControl:close')
+                  setTimeout(() => {
+                    globalThis.electronAPI.send('syncControl:stop', false)
+                  }, 500)
+                }
+              }
+            }
+            return result
           }
-          // 旧用户首次登录，显示升级套餐弹窗
-          if (data.showPayWallDlg) {
-            emitter.emit('showUpgradePlanDialog')
+
+          console.warn(`[UserStore] getUserPayInfo failed, code=${code}, attempt=${attempt}/${PAY_INFO_MAX_ATTEMPTS}`)
+        }
+        catch (error) {
+          console.warn(`[UserStore] getUserPayInfo error, attempt=${attempt}/${PAY_INFO_MAX_ATTEMPTS}`, error)
+          if (attempt >= PAY_INFO_MAX_ATTEMPTS) {
+            if (requestId === payInfoRequestId)
+              throw error
+            return lastResult
           }
         }
 
-        globalThis.electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
-
-        if (isWindows) {
-          const { code } = await API.pay.userCheckTeamUserRightsList()
-          if (code !== 0) {
-            // 免费用户或者过期用户，关闭窗口同步器
-            console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
-            if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
-              globalThis.electronAPI.send('syncControl:close')
-              setTimeout(() => {
-                globalThis.electronAPI.send('syncControl:stop', false)
-              }, 500)
-            }
-          }
+        if (attempt < PAY_INFO_MAX_ATTEMPTS) {
+          await sleep(PAY_INFO_RETRY_BASE_DELAY_MS * attempt)
         }
       }
-      return result
+
+      return lastResult
     }
 
     async function getUserCards(force = false) {
@@ -373,7 +434,7 @@ export const useUserStore = defineStore(
         : await encryptAESGCMLocal(pwd, 'roxy-default')
     }
 
-    const initUserInfo = async (intoWorkspaceId?: number) => {
+    const initUserInfo = async (intoWorkspaceId?: number, options?: GetUserInfoOptions) => {
       try {
         // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
         console.log('initUserInfo checkCookie')
@@ -383,7 +444,31 @@ export const useUserStore = defineStore(
 
         if (token.value) {
           setToken(token.value)
-          await getUserInfo(intoWorkspaceId)
+          await getUserInfo(intoWorkspaceId, { enterWorkspace: false })
+
+          // 页内刷新：session 仍活跃，静默准备 workspace，保持 before-enter 路由
+          if (isBeforeEnterSessionActive()) {
+            const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
+            if (workspaceId)
+              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true })
+            getUserConfig(true)
+            return
+          }
+
+          // App 重启后仍有本地步骤进度：恢复 before-enter，勿 enterWorkspace（避免 WelcomeModal）
+          if (needsBeforeEnterResume(userInfo.value, intoWorkspaceId)) {
+            const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
+            if (workspaceId)
+              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true })
+            markBeforeEnterSession()
+            getUserConfig(true)
+            return
+          }
+
+          // App 重启或无活跃 session：正常进空间（未完成且无进度视为 skip）
+          if (options?.enterWorkspace !== false)
+            await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
+
           getUserConfig(true)
         }
       }
@@ -474,6 +559,7 @@ export const useUserStore = defineStore(
       clearUserInfo,
       setToken,
       getUserInfo,
+      enterWorkspace,
       setUserConfig,
       getUserConfig,
       updateUserConfig,

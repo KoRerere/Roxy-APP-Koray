@@ -1,4 +1,5 @@
 import { WorkspaceType } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 export { getWorkspaceTypeLandingRoute } from '/@/domain/workspace-routing'
 
@@ -16,4 +17,9 @@ export function isEcommerceWorkspace(type?: WorkspaceType) {
 
 export function isPrivateWorkspace(type?: WorkspaceType) {
   return normalizeWorkspaceType(type) === WorkspaceType.Private
+}
+
+/** 当前 workspace 是否为电商模式（电商无窗口额度与套餐升级弹窗语义） */
+export function isCurrentEcommerceWorkspace() {
+  return isEcommerceWorkspace(useWorkspaceStore().currentWorkspace?.workspaceType)
 }

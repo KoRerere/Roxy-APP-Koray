@@ -31,8 +31,8 @@ export function useProfileProxySpeedTest() {
         try {
           Reflect.deleteProperty(item, '_checkRes')
           const checkRes = await testProxy(toRaw(item))
-          silentUpdateProxy(item, checkRes)
-          Reflect.set(item, '_checkRes', checkRes)
+          silentUpdateProxy(item, checkRes, { replaceProxy: false })
+          Reflect.set(item, '_checkRes', toRaw(checkRes))
           return { item, checkRes }
         }
         finally {

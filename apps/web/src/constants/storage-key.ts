@@ -9,3 +9,5 @@ export const OFFICIAL_SITE_REDIRECT_SESSION = 'officialSiteRedirect'
 export const CLIENT_RECEIVE_VERSION = 'client-receive-version'
 /** 安装完成版本号 */
 export const INSTALL_COMPLETE_VERSION = 'install-complete-version'
+/** Electron 主窗口上次退出前的应用内路由 */
+export const LAST_APP_ROUTE = 'app:lastRoute'

@@ -2,16 +2,23 @@
 import type { UserGetPluginListListData } from '@roxy/backend-api'
 import Hub from './hub/index.vue'
 import Install from './install/index.vue'
-import { RxAlert } from '/@/components/rx-alert'
+import { useExtensionLabels } from './utils/extension-labels'
+import type { ExtensionLabelMode } from './utils/extension-labels'
 
-const tabs = ref([
+const { mode: modeProp } = defineProps<{
+  mode?: ExtensionLabelMode
+}>()
+
+const labels = useExtensionLabels(computed(() => modeProp ?? 'extension'))
+
+const tabs = computed(() => [
   {
-    title: $t('已安装扩展'),
+    title: labels.value.installedTab,
     value: 'installed',
     slot: 'installed',
   },
   {
-    title: $t('扩展推荐'),
+    title: labels.value.recommendTab,
     value: 'hub',
     slot: 'hub',
   },

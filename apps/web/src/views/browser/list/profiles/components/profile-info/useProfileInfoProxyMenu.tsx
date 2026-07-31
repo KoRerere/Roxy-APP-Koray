@@ -91,8 +91,8 @@ export function useProfileInfoProxyMenu(options: {
           const runCheck = async () => {
             Reflect.deleteProperty(row, '_checkRes')
             const checkRes = await checkProxy(toRaw(row))
-            Reflect.set(row, '_checkRes', checkRes)
-            silentUpdateProxy(row, checkRes)
+            Reflect.set(row, '_checkRes', toRaw(checkRes))
+            silentUpdateProxy(row, checkRes, { replaceProxy: false })
             batchTestShowToast({ ...checkRes, proxyType: row.buyProxyType }, { reCheck: runCheck })
             if (row.moduleId && row.buyProxyType === ProxyType.resource)
               notifyProxyModuleSpeedTest([{ id: row.moduleId, ...checkRes }])
@@ -165,12 +165,12 @@ export function useProfileInfoProxyMenu(options: {
           try {
             const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
 
+            showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
+
             if (!orderInfo?.immediate) {
               router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
               return
             }
-
-            showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
 
             const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
             if (code !== 0 || !data.rows?.[0]) {

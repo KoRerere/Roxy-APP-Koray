@@ -1,9 +1,11 @@
 <script setup lang="tsx">
 
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { emitter } from '/@/utils/eventBus'
 import { useUserStore } from '/@/stores/user';
 
 const { userConfig } = storeToRefs(useUserStore())
+const profileLabels = useProfileEntityLabels()
 
 const emit = defineEmits(['close'])
 
@@ -23,7 +25,7 @@ function close() {
       <span class="header">{{ $t('磁盘空间不足') }}</span>
       <SvgIcon class="absolute right-0 cursor-pointer" size="20" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click="close" />
     </div>
-    <i18n-t class="help" tag="div" :keypath="$t('当前所在磁盘空间不足 {bold}，无法打开窗口。您可以前往软件设置中调整磁盘限制。', { bold: '{bold}' })" scope="global">
+    <i18n-t class="help" tag="div" :keypath="profileLabels.cannotOpenDisk" scope="global">
       <template #bold>
         <span class="help-bold">{{ userConfig.diskLimit }}GB</span>
       </template>

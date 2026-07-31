@@ -7,7 +7,7 @@ import type { SvgNames } from '/@/components/rx-icon/'
 import { useSettingsPopup } from './settings-popup/'
 import { TaskbarImagePreviewHost } from './settings-popup/usePreferences'
 
-const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup()
+const { dialogRef, activePanel, panelLoading, panels, initPanels } = useSettingsPopup()
 
 function closePopup() {
   dialogRef?.value.close()
@@ -39,7 +39,8 @@ onBeforeMount(async () => {
       </div>
       <RxButton icon="base/rx_ic_delete" text severity="secondary" size="lg" class="close-btn" @click="closePopup" />
     </div>
-    <div class="settings-content">
+    <div class="settings-content relative min-h-full">
+      <RxLoading v-model="panelLoading" :opacity="1" />
       <div class="mx-auto w-2/3 pt-6">
         <div v-if="activePanel.panel" class="w-full flex flex-col gap-6">
           <div>
@@ -88,6 +89,7 @@ onBeforeMount(async () => {
   position: absolute !important;
   right: 16px;
   top: 16px;
+  z-index: 1;
 }
 
 .settings {

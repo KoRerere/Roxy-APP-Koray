@@ -4,6 +4,7 @@ import { getMpDistinctId } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { OAUTH2_CALLBACK_CHANNEL_NAME } from '/@/constants/channel'
 import type { LoginGoogleV2CreateData } from '@roxy/backend-api'
+import { LoginLinuxDoCreatePayloadOauthHostEnum } from '@roxy/backend-api'
 
 function getRedirectUrl(source: string) {
   const [devUrl, prodUrl] = useSimpleLocale().isZh
@@ -147,7 +148,24 @@ function openFacebookAuth2Login() {
   toAuth(url, 'Facebook Auth')
 }
 
-// ... existing code ...
+/** Linux Do Connect OAuth2 授权登录 */
+function openLinuxDoAuth2Login() {
+  const [devClientId, prodClientId] = useSimpleLocale().isZh
+    ? ['qzRn5yF4xBtIU9CNGiLfWLtiuAgfakZ0', 'JowzUfZxsMsKaQhw75OTsR4fIh54dBRo']
+    : ['NQ7y15R9jxm3JUerHiIfkBwZ5BQrbYIy', 'iqmI1ZOIT1H5rM7l2EIWDu8tSIUGAuWX']
+
+  const paramsObj = {
+    response_type: 'code',
+    client_id: isDev ? devClientId : prodClientId,
+    redirect_uri: getRedirectUrl('linuxdo'),
+    scope: 'openid profile email',
+    state: generateState(),
+  }
+  const params = new URLSearchParams(paramsObj)
+  const url = `https://connect.linux.do/oauth2/authorize?${params.toString()}`
+
+  toAuth(url, 'Linux Do Auth')
+}
 
 /**
  * 生成符合要求的随机字符串
@@ -207,6 +225,7 @@ export const oauth2LoginMap = {
   github: openGithubAuth2Login,
   facebook: openFacebookAuth2Login,
   vk: openVkAuth2Login,
+  linuxdo: openLinuxDoAuth2Login,
 } as const
 
 export type OauthLoginType = keyof typeof oauth2LoginMap
@@ -247,6 +266,13 @@ export function useOauth2Callback(callback: (params: Oauth2CallbackParams) => vo
         device_id: searchParams.get('device_id')!,
         state: searchParams.get('state')!,
         ...commonParams,
+      }),
+      linuxdo: () => API.base.loginLinuxDoCreate({
+        linuxDoToken: oauthCode,
+        oauthHost: useSimpleLocale().isZh
+          ? LoginLinuxDoCreatePayloadOauthHostEnum.Cn
+          : LoginLinuxDoCreatePayloadOauthHostEnum.Com,
+        distinctId: commonParams.distinctId,
       }),
     } as const
 

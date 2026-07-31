@@ -11,6 +11,7 @@ import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 import { ProxyIpType } from '/@/enums/proxy'
 import { getProxyTypePriceForSelectedDuration } from './utils'
 import type { BandwidthOption, BusinessUseOption, DurationOption, ProxyTypeOption } from './utils'
+import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
 const {
   isCN,
@@ -25,7 +26,7 @@ const {
   canPay,
   payTooltip,
   officialWebsiteUrl,
-  vendorName = '',
+  // vendorName = '',
 } = defineProps<{
   isCN: boolean
   isDirect: boolean
@@ -39,12 +40,14 @@ const {
   canPay: boolean
   payTooltip?: string
   officialWebsiteUrl: string
-  vendorName?: string
+  // vendorName?: string
 }>()
 
 const emit = defineEmits<{
   pay: []
 }>()
+
+const labels = useProxyPurchaseLabels()
 
 const ONE_BUY_MAX = 1000
 
@@ -66,46 +69,18 @@ function inputPurchaseMember(value: number) {
   })
 }
 
-const notes = computed(() => [
-  {
-    text: $t('所有代理 IP 都 {bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('同时支持 SOCKS5 和 HTTP 协议')],
-  },
-  {
-    text: $t('您购买的所有代理 IP 都是 {bold0}，不会与他人共享。', { bold0: '{bold0}' }),
-    bolds: [$t('独享专用 IP')],
-  },
-  {
-    text: $t('订阅期间所有代理 IP {bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('不限流量')],
-  },
-  {
-    text: $t('若购买的代理 IP 出现 {bold0} 的问题，支持 {bold1}。', { bold0: '{bold0}', bold1: '{bold1}' }),
-    bolds: [$t('无法连接'), $t('免费更换或退款')],
-  },
-  {
-    text: $t('您可以在代理 IP 列表中延长代理 IP 的使用期限，{bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('价格与购买时相同')],
-  },
-  {
-    text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('代理 IP 过期后将被停用，无法找回或再次续费。')],
-  },
-  {
-    text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('所有代理 IP 均由 Roxy浏览器从 {name} 特挑。', { name: vendorName })],
-  },
-].slice(0, vendorName === 'RoxyIP' ? 6 : 7))
+const notes = computed(() => labels.value.notes)
 </script>
 
 <template>
-  <div class="shrink-0 py-5 w-95 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto">
-    <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :content="$t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。')" />
-    <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
+  <div class="shrink-0 pt-5 w-95 flex flex-col pr-8 gap-2 overflow-hidden overflow-y-auto summary">
+    <RxAlert v-if="isCN" class="!w-full shrink-0 whitespace-pre-wrap" type="warn" :content="labels.cnNetworkAlert" />
+    <RxAlert v-if="isDirect && labels.mode === 'proxy'" class="!w-full shrink-0" type="warn" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
+    <RxAlert v-if="isDirect && labels.mode === 'device'" class="!w-full shrink-0" type="warn" :content="$t('设备限 Roxy 生态内合规使用。Roxy 持续助力跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
     <div class="flex flex-col gap-2">
       <div v-if="proxyTypeValue != null" class="flex flex-col gap-1.5 pa-4 quantity">
         <div class="tt-primary text-3.5 font-600 leading-normal">
-          {{ $t('代理 IP 数量:') }}
+          {{ labels.entityQuantityLabel }}
         </div>
         <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentInventory), ONE_BUY_MAX)" @update:model-value="inputPurchaseMember" />
       </div>
@@ -113,9 +88,9 @@ const notes = computed(() => [
         <template #title="props">
           <div class="flex items-center gap-2">
             <div v-bind="props">
-              {{ $t('代理 IP 信息') }}
+              {{ labels.entityInfo }}
             </div>
-            <div v-if="isDirect" class="px-2 rounded-full" :class="styles.direct">
+            <div v-if="isDirect && !labels.hideDirectTag" class="px-2 rounded-full" :class="styles.direct">
               {{ $t('大陆直连') }}
             </div>
           </div>
@@ -160,7 +135,7 @@ const notes = computed(() => [
             <template v-else>
               <div class="flex items-center gap-1">
                 <span class="tt-secondary text-3.5">{{ item.label }}</span>
-                <SvgIcon v-tooltip.top="$t('当前仅支持美国、香港、法国和日本的超高质量代理 IP 进行带宽升级。')" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+                <SvgIcon v-tooltip.top="labels.bandwidthUpgradeTooltip" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
               </div>
               <div class="grid grid-cols-4 gap-1.5">
                 <div v-for="option in proxySpeedOptions" :key="option.value" v-tooltip.top="{ value: option.bandwidthSpeedDesc }"
@@ -171,6 +146,21 @@ const notes = computed(() => [
                 </div>
               </div>
             </template>
+          </div>
+        </template>
+        <template #unitPrice="{ item, classes }">
+          <div class="flex justify-between items-center">
+            <div :class="classes">
+              {{ item.label }}
+            </div>
+            <div class="flex gap-2 shrink-0 whitespace-nowrap">
+              <span class="font-[DingTalk_JinBuTi]" :class="classes">
+                {{ $t('{month}/个', { month: currency(item.proxyPrice).format() }) }}
+              </span>
+              <!-- <span v-if="item.proxyPrice < item.originalProxyPrice" class="tt-inactive text-3 leading-5 line-through">
+                {{ $t('{month}/个', { month: currency(item.originalProxyPrice).format() }) }}
+              </span> -->
+            </div>
           </div>
         </template>
         <template #price="{ item }">
@@ -191,7 +181,7 @@ const notes = computed(() => [
         <template #after>
           <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
             <div v-if="businessUse?.isSpecialOffer" class="tt-inactive text-3 leading-5 text-center">
-              {{ $t('请注意：当前代理 IP 为特价商品，不退不换') }}
+              {{ labels.specialOfferNote }}
             </div>
             <RxButton v-tooltip.top="payTooltip" size="lg" :disabled="!canPay" :label="$t('立即支付')" @click="emit('pay')" />
             <I18nT tag="div" class="tt-tertiary text-3 leading-4.5 select-none" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
@@ -202,19 +192,12 @@ const notes = computed(() => [
           </div>
         </template>
       </Detail>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 pb-5 notes">
         <div class="tt-primary text-3.5 font-600 leading-normal">
           {{ $t('注意事项:') }}
         </div>
         <ol class="ma-0 pl-4">
-          <I18nT
-            v-for="item in notes"
-            :key="item.text"
-            tag="li"
-            class="tt-tertiary text-3.25 leading-6"
-            :keypath="item.text"
-            scope="global"
-          >
+          <I18nT v-for="item in notes" :key="item.text" tag="li" class="tt-tertiary text-3.25 leading-6" :keypath="item.text" scope="global">
             <template v-for="(bold, index) in item.bolds" :key="index" #[`bold${index}`]>
               <span class="tt-secondary font-bold">{{ bold }}</span>
             </template>
@@ -228,7 +211,7 @@ const notes = computed(() => [
 <style lang="scss" module>
 .radio {
   border-radius: 8px;
-  border: 3px solid var(--pattern-pay-plan-bg-bill);
+  border: 3px solid var(--colors-background-bg-page);
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
   transition: all 0.3s;

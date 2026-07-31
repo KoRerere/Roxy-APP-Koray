@@ -5,13 +5,15 @@ import { appProtocolName } from '/@/constants'
 import { isPackaged, isWindows } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { isBrowserDataSyncedBeforeQuit, resetBrowserDataSyncedBeforeQuit, syncBrowserDataBeforeQuit } from '/@/modules/app/quitCleanup'
+import { ROXY_UPDATED_ARG } from '/@/modules/app/relaunch'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
-import { cleanupAndExit, showUninstallFeedback } from '/@/modules/app/utils'
+import { cleanupAndExit, clearLauncherLog, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady, killProcessForce } from '/@/utils'
+import { setupTrustedWebCertificateHandler } from '/@/utils/getProdWebDomain'
 import { getMainWindow, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { proxyManager } from './proxy-manager'
 
@@ -33,6 +35,9 @@ app.commandLine.appendSwitch('js-flags', '--max-old-space-size=3072')
 app.commandLine.appendSwitch('no-sandbox')
 // 开发环境忽略 localhost 连接数限制
 !isPackaged && app.commandLine.appendSwitch('ignore-connections-limit', 'localhost')
+
+// 仅自家 web 域名忽略证书错误，对所有 BrowserWindow / webContents 生效
+setupTrustedWebCertificateHandler()
 
 // macOS 的行为不同：当应用通过协议被启动时，系统不会把参数放在 process.argv，而是触发 open-url 事件，必须在 ready 之前监听
 app.on('open-url', (event, url) => {
@@ -105,6 +110,13 @@ export async function setupApp() {
 
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
+
+    // 安装/更新完成后 NSIS 会拉起带 --updated 的新实例；旧实例需退出以释放单实例锁
+    if (commandLine.includes(ROXY_UPDATED_ARG)) {
+      console.log('[App] Post-update instance launching, quitting current instance')
+      app.quit()
+      process.exit(0)
+    }
 
     // 卸载反馈由“卸载模式独立进程”处理。这里直接忽略，避免主实例抢焦点/重复弹窗。
     if (commandLine.includes('--uninstall-feedback')) {
@@ -242,6 +254,7 @@ function initAppEvent() {
       if (appUpdater.isQuittingForUpdate && !isCleanupInFlight) {
         store.appNormalExit = true
         await forceSaveConfig()
+        await clearLauncherLog()
         console.log('Application is finally quitting to allow Updater to install. Bypassing cleanupAndExit.')
       }
       return

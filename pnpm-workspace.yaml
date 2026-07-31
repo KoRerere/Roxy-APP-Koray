@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - tools/*
 
 catalog:
   '@larksuiteoapi/node-sdk': 1.60.0
@@ -12,7 +13,7 @@ catalog:
   marked: ^17.0.1
   typescript: ^7.0.2
   unplugin-dts: 1.0.3
-  vite: 8.1.3
+  vite: 8.1.5
   webpack: 5.105.4
   webpack-cli: 7.0.3
 

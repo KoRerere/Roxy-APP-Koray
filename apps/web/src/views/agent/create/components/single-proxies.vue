@@ -1,4 +1,6 @@
 <script lang="tsx" setup>
+import { h } from 'vue'
+import DeviceDetectResultModal from '/@/views/ecommerce/devices/components/device-detect-result-modal.vue'
 import TsForm from '/@/views/lab/components/form/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import RxButton from '/@/components/rx-button'
@@ -11,7 +13,9 @@ import { IPType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
+import { useProxyCreateLabels } from '../proxy-create-mode'
+import { useDialog } from '/@/hooks/useDialog'
 import type { CheckResult } from '/@/views/agent/hooks'
 
 const {
@@ -24,12 +28,16 @@ const {
   onConfirm?: (params: Record<string, any>[]) => void | Promise<void>
 }>()
 
+const labels = useProxyCreateLabels()
+
 const [showToast] = useResponseToast()
 const { getUserConfig } = useUserStore()
 const { userConfig, userPayInfo } = storeToRefs(useUserStore())
 
+const [showModal] = useDialog()
 const { testProxy, batchTestShowToast } = useCheckProxy()
 const lastTestResult = ref<CheckResult | null>(null)
+const isDeviceMode = computed(() => labels.value.mode === 'device')
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
 const formRef = useTemplateRef('form')
@@ -38,13 +46,15 @@ const cssModule = useCssModule()
 const loading = ref(false)
 const alertVisible = ref(false)
 const original = ref(deepClone(data))
-const inputs = ref([
+const inputs = computed(() => [
   {
     type: 'textarea',
-    label: $t('智能识别（支持动态/静态代理 IP）'),
+    label: labels.value.smartRecognize,
     name: 'proxyRules',
     props: {
-      placeholder: $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
+      placeholder: isDeviceMode.value
+        ? $t('示例（备注为选填）:\n192.168.0.1:8000:用户名:密码{notes}\n用户名:密码{at}192.168.0.1:8000{notes}', { at: '@', notes: `{${$t('备注')}}` })
+        : $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
       rows: 3,
       size: 'md',
       onBlur: (event: Event) => {
@@ -62,7 +72,8 @@ const inputs = ref([
           port,
           proxyUserName,
           proxyPassword,
-          refreshUrl,
+          // 电商模式无刷新 URL 能力，解析结果也不回填该字段
+          ...(isDeviceMode.value ? {} : { refreshUrl }),
           proxyRules: '',
         })
 
@@ -82,7 +93,7 @@ const inputs = ref([
   },
   {
     type: 'radio',
-    label: $t('代理 IP 类型'),
+    label: labels.value.entityType,
     name: 'ipType',
     props: {
       name: 'ipType',
@@ -114,7 +125,7 @@ const inputs = ref([
   },
   {
     type: 'group',
-    label: $t('代理 IP 信息'),
+    label: labels.value.entityInfo,
     items: [
       {
         type: 'select',
@@ -180,25 +191,28 @@ const inputs = ref([
       size: 'md',
     },
   },
-  {
-    type: 'text',
-    name: 'refreshUrl',
-    label: $t('刷新URL'),
-    tooltip: $t('请在填写后点击下方刷新按钮测试。'),
-    value: data.refreshUrl ?? '',
-    props: {
-      placeholder: $t('请输入刷新URL'),
-      icon: 'base/rx_ic_refresh',
-      size: 'md',
-      onIconClick: async () => {
-        const refreshUrl = formRef.value?.getFieldState('refreshUrl')?.value
-        if (refreshUrl) {
-          const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', refreshUrl)
-          showToast(isOK ? 0 : -1, refreshUrl)
-        }
-      },
-    },
-  },
+  // 电商模式无刷新 URL 能力，隐藏该表单项
+  ...(isDeviceMode.value
+    ? []
+    : [{
+        type: 'text',
+        name: 'refreshUrl',
+        label: $t('刷新URL'),
+        tooltip: $t('请在填写后点击下方刷新按钮测试。'),
+        value: data.refreshUrl ?? '',
+        props: {
+          placeholder: $t('请输入刷新URL'),
+          icon: 'base/rx_ic_refresh',
+          size: 'md',
+          onIconClick: async () => {
+            const refreshUrl = formRef.value?.getFieldState('refreshUrl')?.value
+            if (refreshUrl) {
+              const isOK = await globalThis.electronAPI.send('proxy:refreshUrl', refreshUrl)
+              showToast(isOK ? 0 : -1, refreshUrl)
+            }
+          },
+        },
+      }]),
   {
     separator: true,
   },
@@ -213,7 +227,7 @@ const inputs = ref([
       return (
         <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
           <TsFormSelect size="md" {...props} />
-          <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={$t('测试代理 IP')} onClick={onCheckProxyStatus} />
+          <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={labels.value.testAction} onClick={onCheckProxyStatus} />
         </div>
       )
     },
@@ -296,19 +310,53 @@ function addRemark(platformRemarks: string) {
   original.value.remark = platformRemarks
 }
 
+function buildSubmitPayload(formData: Record<string, any>, checkResult?: CheckResult) {
+  return [{
+    ...original.value,
+    ...formData,
+    ...(checkResult ?? {}),
+    protocol: formData.proxyCategory, // 兼容新版接口字段名 protocol
+  }]
+}
+
+/** 电商模式：弹窗内完成连通性与历史库检测后再导入 */
+function showDeviceDetectModal(formData: Record<string, any>) {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(DeviceDetectResultModal, {
+        formData,
+        isDirect: userPayInfo.value.isDirectWhitelist,
+        onClose: hideModal,
+        onConfirm: async (checkResult: CheckResult) => {
+          await onConfirm?.(buildSubmitPayload(formData, checkResult))
+          hideModal()
+        },
+      }),
+    },
+  })
+}
+
 async function onSubmit() {
+  await formRef.value?.instance!.validate()
+  if (!formRef.value?.instance!.valid)
+    return
+
+  const formData = getFormData()
+
+  if (isDeviceMode.value) {
+    showDeviceDetectModal(formData)
+    return
+  }
+
   if (!alertVisible.value) {
     await onCheckProxyStatus()
   }
 
   if (formRef.value?.instance!.valid) {
-    const formData = getFormData()
-
-    await onConfirm?.([{
-      ...original.value,
-      ...formData,
-      protocol: formData.proxyCategory, // 兼容新版接口字段名 protocol
-    }])
+    await onConfirm?.(buildSubmitPayload(formData))
   }
 }
 
@@ -319,7 +367,7 @@ defineExpose({
 
 <template>
   <div class="h-full flex flex-col gap-4">
-    <TutorialVideo v-if="!onboardingTaskStatus?.createProxyVideoEntryStatus" video-type="proxy_management" :autoplay="false">
+    <TutorialVideo v-if="!isDeviceMode && !onboardingTaskStatus?.createProxyVideoEntryStatus" video-type="proxy_management" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
@@ -327,11 +375,11 @@ defineExpose({
           </div>
           <div class="flex-1 cursor-pointer">
             <div class="flex justify-between items-center">
-              <span class="video-title">{{ $t('代理 IP 教程') }}</span>
+              <span class="video-title">{{ labels.tutorialTitle }}</span>
               <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="closeGuideTipsAndUpdateTaskStatus('createProxyVideoEntryStatus')" />
             </div>
             <div class="video-desc">
-              {{ $t('了解如何导入和配置代理 IP') }}
+              {{ labels.tutorialDesc }}
             </div>
           </div>
         </div>
@@ -350,7 +398,7 @@ defineExpose({
     <slot name="footer" :submit="onSubmit">
       <div class="inline-flex flex-row-reverse justify-between w-full">
         <RxButton size="sm" :label="$t('保存')" @click="onSubmit" />
-        <RemarkIcon v-if="showRemark" :title="$t('请为代理 IP 添加备注')" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
+        <RemarkIcon v-if="showRemark" :title="labels.remarkTitle" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
       </div>
     </slot>
   </div>

@@ -99,4 +99,10 @@ export const baseRoutes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    name: 'before-enter',
+    path: '/tutorial/before-enter',
+    meta: { title: $t('开始之前') },
+    component: () => import('/@/views/tutorial/before-enter/index.vue'),
+  },
 ]

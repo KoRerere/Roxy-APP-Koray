@@ -5,6 +5,9 @@ import { runNavigationGuards } from '/@/router/guards'
 import { registerRouter } from '/@/router/navigation'
 import '/@/router/types'
 import type { App } from 'vue'
+import { useUserStore } from '/@/stores/user'
+import { isMainWindow } from '/@/utils'
+import { saveLastRoute } from '/@/utils/lastRoute'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +38,17 @@ registerRouter(router)
 
 router.beforeEach(async (to) => {
   return runNavigationGuards(to)
+})
+
+router.afterEach((to) => {
+  if (!globalThis.isElectron || !isMainWindow)
+    return
+
+  const userStore = useUserStore()
+  if (!userStore.token)
+    return
+
+  saveLastRoute(to, userStore.userInfo.id)
 })
 
 if (import.meta.hot) {

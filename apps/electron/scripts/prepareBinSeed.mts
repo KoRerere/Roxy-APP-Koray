@@ -154,8 +154,7 @@ let cachedWebDomain: string | null = null
 /**
  * 解析托管静态 seed 的 webDomain（与运行时完全一致的两步流程）：
  * 1. 拉取网关配置（VITE_GATEWAY_URL_LIST），得到 app_gateway；
- * 2. 带 app 请求头 POST app_gateway/get_app_upgrade，取 data.webDomain。
- * 失败抛错，由调用方决定是否回退本地缓存。
+ * 2. 带 app 请求头 POST app_gateway/get_app_upgrade，取 data.webDomain（限流等瞬时失败时无限重试）。
  */
 async function resolveWebDomain(): Promise<string> {
   if (cachedWebDomain) {
@@ -182,11 +181,12 @@ async function resolveWebDomain(): Promise<string> {
   }
 
   // 2. get_app_upgrade -> webDomain（IP 就近的静态资源域名，通常为 OSS 域名）
-  // 带重试退避：服务端限流(code=249 请求过频)等瞬时失败时优先重试拿新的，
-  // 而不是立刻回退到可能过期的本地缓存。
-  const maxAttempts = 3
+  // 无限重试 + 退避：限流(code=249)等瞬时失败时持续等待，直到拿到最新 webDomain。
+  const maxDelayMs = 30_000
+  let attempt = 0
   let lastErr = ''
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  while (true) {
+    attempt++
     try {
       const res = await fetch(`${appGateway}/get_app_upgrade`, {
         method: 'POST',
@@ -205,12 +205,10 @@ async function resolveWebDomain(): Promise<string> {
     catch (error) {
       lastErr = (error as Error).message
     }
-    if (attempt < maxAttempts) {
-      console.warn(`[prepareBinSeed] resolve webDomain attempt ${attempt}/${maxAttempts} failed: ${lastErr}, retrying...`)
-      await sleep(2000 * attempt)
-    }
+    const delayMs = Math.min(2000 * attempt, maxDelayMs)
+    console.warn(`[prepareBinSeed] resolve webDomain attempt ${attempt} failed: ${lastErr}, retrying in ${delayMs}ms...`)
+    await sleep(delayMs)
   }
-  throw new Error(`resolve webDomain failed after ${maxAttempts} attempts: ${lastErr}`)
 }
 
 async function fetchText(url: string): Promise<string> {

@@ -11,17 +11,13 @@ const styles = useCssModule()
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 col-span-2">
-    <div class="tt-primary text-3.5 font-600 leading-normal">
-      {{ $t('选择 IP 时长:') }}
+  <div class="flex gap-2 col-span-2">
+    <div class="w-20 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0">
+      {{ $t('时长:') }}
     </div>
     <div class="flex gap-3">
-      <div
-        v-for="option in options"
-        :key="option.value"
-        class="h-10 flex items-center px-3 leading-none cursor-pointer select-none"
-        :class="[styles.period, styles.radio, modelValue?.value === option.value ? styles.active : '']"
-        @click="modelValue = option"
+      <div v-for="option in options" :key="option.value" class="w-38 h-10 flex items-center justify-center leading-none cursor-pointer select-none"
+           :class="[styles.period, styles.radio, modelValue?.value === option.value ? styles.active : '']" @click="modelValue = option"
       >
         {{ option.label }}
       </div>
@@ -32,7 +28,7 @@ const styles = useCssModule()
 <style lang="scss" module>
 .radio {
   border-radius: 8px;
-  border: 3px solid var(--pattern-pay-plan-bg-bill);
+  border: 3px solid var(--colors-background-bg-page);
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
   transition: all 0.3s;

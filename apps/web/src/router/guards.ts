@@ -15,12 +15,16 @@ import {
   PRIVATE_DEFAULT_ROUTE,
 } from '/@/domain/workspace-routing'
 import { getCrossModeFallbackRoute, resolveCrossModeRoute } from '/@/router/routing'
+import { getRouter } from '/@/router/navigation'
+import { isGuideIncomplete, needsBeforeEnterResume } from '/@/domain/before-enter'
 import { usePermissionStore } from '/@/stores/permission'
 import { useRoleStore } from '/@/stores/role'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useThemeStore } from '/@/stores/theme'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { isMainWindow } from '/@/utils'
+import { getLastRoute, resolveLastRoute } from '/@/utils/lastRoute'
 import { isEqual } from 'es-toolkit'
 import type { LocationQueryRaw, RouteLocationNormalized, RouteLocationRaw } from 'vue-router'
 
@@ -37,7 +41,6 @@ export function createGuardContext() {
     workspaceStore,
     roleStore,
     permissionStore,
-    currentWorkspace: workspaceStore.currentWorkspace,
   }
 }
 
@@ -48,6 +51,9 @@ type GuardResult = boolean | RouteLocationRaw | undefined
 const authWhiteList = ['oauth2callback']
 
 const noTakeQueryList = [OFFICIAL_SITE_LANG, OFFICIAL_SITE_INVITE_CODE, MP_DISTINCT_ID, LOCALE_SWITCH_HANDOFF_TOKEN_QUERY]
+
+/** 冷启动仅尝试恢复一次，避免后续主动进入首页时被覆盖 */
+let hasAttemptedRestore = false
 
 // --- Individual guards ---
 
@@ -72,6 +78,28 @@ function permissionGuard(to: RouteLocationNormalized, ctx: GuardContext) {
   return true
 }
 
+/** 已完成首次引导的用户不可再访问 before-enter；未完成且有本地进度则强制回到引导 */
+function beforeEnterGuard(to: RouteLocationNormalized, ctx: GuardContext): GuardResult {
+  const userInfo = ctx.userStore.userInfo
+
+  if (to.name === 'before-enter') {
+    if (!userInfo?.id)
+      return true
+    if (!isGuideIncomplete(userInfo))
+      return { name: 'home', query: to.query }
+    return true
+  }
+
+  if (!ctx.userStore.token)
+    return true
+  if (to.name === 'login' || authWhiteList.includes(to.name as string))
+    return true
+  if (!needsBeforeEnterResume(userInfo))
+    return true
+
+  return { name: 'before-enter', query: to.query }
+}
+
 function landingGuard(
   to: RouteLocationNormalized,
   workspaceType?: WorkspaceType,
@@ -85,6 +113,32 @@ function landingGuard(
     return true
 
   return { name: landingRoute, query: to.query }
+}
+
+function restoreRouteGuard(to: RouteLocationNormalized, ctx: GuardContext): GuardResult {
+  if (!globalThis.isElectron || !isMainWindow)
+    return true
+
+  if (!ctx.userStore.token)
+    return true
+
+  if (hasAttemptedRestore)
+    return true
+
+  hasAttemptedRestore = true
+
+  if (to.name !== 'home' && to.path !== '/')
+    return true
+
+  const fullPath = getLastRoute(ctx.userStore.userInfo.id)
+  if (!fullPath)
+    return true
+
+  const location = resolveLastRoute(fullPath, getRouter())
+  if (!location)
+    return true
+
+  return location
 }
 
 function getEffectiveWorkspaceTypes(to: RouteLocationNormalized): WorkspaceType[] | undefined {
@@ -152,11 +206,14 @@ export async function runNavigationGuards(to: RouteLocationNormalized): Promise<
 
   await ctx.userStore.hasCallInitUserInfo.promise
 
+  // init 完成后再读，避免 createGuardContext 时 currentWorkspace 尚未赋值
+  const currentWorkspace = ctx.workspaceStore.currentWorkspace
+
   const query = mergeQuery(to)
   const routeContext = buildRouteContext({
-    workspaceType: ctx.currentWorkspace?.workspaceType,
-    workspaceId: ctx.currentWorkspace?.id,
-    role: ctx.currentWorkspace?.role,
+    workspaceType: currentWorkspace?.workspaceType,
+    workspaceId: currentWorkspace?.id,
+    role: currentWorkspace?.role,
     isOwner: ctx.roleStore.isOwner,
   })
 
@@ -168,11 +225,32 @@ export async function runNavigationGuards(to: RouteLocationNormalized): Promise<
   if (permissionResult !== true)
     return typeof permissionResult === 'object' ? { ...permissionResult, query } : permissionResult
 
-  const legacyResult = legacyWorkspaceGuard(to, ctx.currentWorkspace?.workspaceType)
+  const beforeEnterResult = beforeEnterGuard(to, ctx)
+  if (beforeEnterResult !== true)
+    return typeof beforeEnterResult === 'object' ? { ...beforeEnterResult, query } : beforeEnterResult
+
+  const legacyResult = legacyWorkspaceGuard(to, currentWorkspace?.workspaceType)
   if (legacyResult !== true)
     return typeof legacyResult === 'object' ? { ...legacyResult, query } : legacyResult
 
-  const landingResult = landingGuard(to, ctx.currentWorkspace?.workspaceType, ctx.currentWorkspace?.role)
+  const restoreResult = restoreRouteGuard(to, ctx)
+  if (restoreResult !== true) {
+    if (typeof restoreResult === 'object') {
+      const restoredQuery = typeof restoreResult.query === 'object' ? restoreResult.query : {}
+      return {
+        ...restoreResult,
+        query: {
+          ...restoredQuery,
+          theme: query.theme,
+          language: query.language,
+          _title: query._title,
+        },
+      }
+    }
+    return restoreResult
+  }
+
+  const landingResult = landingGuard(to, currentWorkspace?.workspaceType, currentWorkspace?.role)
   if (landingResult !== true)
     return typeof landingResult === 'object' ? { ...landingResult, query } : landingResult
 

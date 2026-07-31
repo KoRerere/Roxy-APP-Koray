@@ -3,9 +3,10 @@ import path from 'node:path'
 import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { API } from '/@/api'
 import { onNetworkNodeChanged } from '/@/api/getGatewayConfig'
-import { isDev } from '/@/constants/common'
+import { isDev, isWindows } from '/@/constants/common'
 import { getMainWindow, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { isCustomProxyConfigured, proxyManager } from '/@/modules/app/proxy-manager'
+import { relaunchApp } from '/@/modules/app/relaunch'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { browserManager } from '/@/modules/browser'
 import { dictStore, onNetworkNodeUpdated } from '/@/modules/dict'
@@ -243,7 +244,7 @@ function buildAppNetworkSubmenu(): Menu {
 function createContextMenu() {
   const menu = Menu.buildFromTemplate([
     {
-      label: $t('重启客户端'),
+      label: $t('重启'),
       click: async () => {
         if (store.autoRestoreWindow === 2) {
           await showAutoRestoreWindowDialog()
@@ -254,44 +255,46 @@ function createContextMenu() {
 
         await forceSaveConfig()
 
-        // 先判断是否有可用更新, 再分支:
+        if (!isWindows) {
+          // 先判断是否有可用更新, 再分支:
         //   有更新 -> 走 autoUpdater.quitAndInstall(), 由 autoUpdater 在合适的时机驱动 quit
         //   无更新 -> 走纯重启路径 app.relaunch() + app.quit(), 不再依赖 setTimeout race
         // macOS 上原先的 `quitAndInstall + setTimeout(1000) + app.relaunch+app.quit`:
         //   - quitAndInstall 是异步的, 可能在 1s 内还没真正接管退出
         //   - autoUpdater 在没有可下载更新时会 reject/no-op, 一旦走到兜底分支,
         //     SIGKILL 杀死 relaunch 中介子进程会导致 macOS 上重启彻底失效
-        let hasUpdate = false
-        try {
-          hasUpdate = await appUpdater.hasUpdate()
-        }
-        catch (error) {
-          console.error('[tray] hasUpdate check failed, fallback to plain relaunch:', error)
-        }
+          let hasUpdate = false
+          try {
+            hasUpdate = await appUpdater.hasUpdate()
+          }
+          catch (error) {
+            console.error('[tray] hasUpdate check failed, fallback to plain relaunch:', error)
+          }
 
-        if (hasUpdate) {
-          console.log('[tray] restart with update, calling upgradeNow')
-          appUpdater.upgradeNow().catch((error) => {
-            console.error('[tray] upgradeNow failed, fallback to plain relaunch:', error)
-            app.relaunch()
-            app.quit()
-          })
-          return
+          if (hasUpdate) {
+            console.log('[tray] restart with update, calling upgradeNow')
+            appUpdater.upgradeNow().catch((error) => {
+              console.error('[tray] upgradeNow failed, fallback to plain relaunch:', error)
+              relaunchApp({ skipPendingUpdate: true })
+            })
+            return
+          }
         }
 
         console.log('[tray] restart without update, calling relaunch + quit')
-        app.relaunch()
-        app.quit()
+        relaunchApp({ skipPendingUpdate: true })
+      },
+    },
+    {
+      label: $t('刷新'),
+      click: () => {
+        getMainWindow()?.reload()
       },
     },
     {
       label: $t('切换线路'),
       submenu: buildNetworkNodeSubmenu(),
     },
-    // {
-    //   label: $t('网络设置'),
-    //   submenu: buildAppNetworkSubmenu(),
-    // },
     {
       label: $t('显示'),
       click: () => {

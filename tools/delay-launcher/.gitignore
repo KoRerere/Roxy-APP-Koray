@@ -1,0 +1,4 @@
+# 本目录产物（可执行文件体积较大，勿提交）
+dist/
+.staging/
+node_modules/

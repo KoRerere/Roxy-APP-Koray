@@ -8,6 +8,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const emit = defineEmits(['close'])
 
@@ -19,15 +20,16 @@ const totalNum = ref(0)
 
 const [onEdit] = useTagsActions()
 const [_, onlyErrorToast] = useResponseToast()
+const profileLabels = useProfileEntityLabels()
 
-const columns = ref([
+const columns = computed(() => [
   {
     title: $t('标签'),
     key: 'name',
     slot: 'tag',
   },
   {
-    title: $t('已关联窗口'),
+    title: profileLabels.value.relatedProfilesColumn,
     key: 'relatedProfiles',
     render: ({ data }: any) => {
       const list = data.bindWindowIds.map((id: number) => `${workspaceName}-${id}`)
@@ -97,7 +99,7 @@ function editTag(data?: any) {
 async function deleteTag(data: any) {
   confirm.require({
     header: $t('删除标签'),
-    message: $t('您确认要删除所选标签吗？删除后，关联窗口的标签将被清除。'),
+    message: profileLabels.value.deleteTagConfirmMessage,
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',

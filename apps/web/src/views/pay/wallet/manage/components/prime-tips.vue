@@ -2,27 +2,29 @@
 import type { SvgNames } from '/@/components/rx-icon'
 import { SubLevelEnum } from '/@/enums/pay'
 import { useUserStore } from '/@/stores/user'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 
 const isLocked = computed(() => [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum))
 
 const advanced = computed(() => [
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('创建窗口模板'),
+    text: billingLabels.value.createEntityTemplate,
   },
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('窗口转移'),
+    text: billingLabels.value.entityTransfer,
   },
   {
     icon: 'base/rx_ic_portrait-spark-light',
-    text: $t('窗口同步'),
+    text: billingLabels.value.entitySync,
   },
   {
     icon: 'base/rx_ic_check',
-    text: $t('无限项目数量'),
+    text: billingLabels.value.unlimitedProjects,
   },
   {
     icon: 'base/rx_ic_check',

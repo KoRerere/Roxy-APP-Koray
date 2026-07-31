@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Plan } from '../type'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 interface Props {
   plan?: Plan
@@ -7,19 +8,21 @@ interface Props {
 
 const { plan } = defineProps<Props>()
 
+const billingLabels = useBillingEntityLabels()
+
 const advanced = computed(() => [
   [
-    $t('创建窗口模板'),
-    $t('无限项目数量'),
+    billingLabels.value.createEntityTemplate,
+    billingLabels.value.unlimitedProjects,
     $t('专属技术支持'),
   ],
   [
-    $t('窗口转移'),
+    billingLabels.value.entityTransfer,
     $t('频道权限（即将推出）'),
     $t('API 请求次数（{value}次 / 分钟）', { value: plan?.apiRate }),
   ],
   [
-    $t('窗口同步'),
+    billingLabels.value.entitySync,
     $t('日志保留时长（{value} 天）', { value: plan?.logDays }),
   ],
 ])

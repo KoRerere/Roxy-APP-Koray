@@ -7,6 +7,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 
 const { upgradeList } = defineProps<{
   upgradeList: ResourceUpdateMessage[]
@@ -15,6 +16,7 @@ const { upgradeList } = defineProps<{
 const confirm = useConfirm()
 const userStore = useUserStore()
 const simpleLocale = useSimpleLocale()
+const tutorialLabels = useTutorialEntityLabels()
 const { getOfficialWebsite } = simpleLocale
 
 const updateFeature = ref()
@@ -78,7 +80,7 @@ function showAppUpdaterDialog(item: ResourceUpdateMessage) {
   }
   else if (item.status === 'downloaded') {
     confirm.require({
-      message: $t('所有窗口将被关闭，您的工作将被保存。'),
+      message: tutorialLabels.value.closeAllEntitiesOnUpdate,
       header: $t('你确认要重启并安装新版本吗？'),
       rejectProps: {
         label: $t('取消'),

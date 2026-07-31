@@ -57,9 +57,10 @@ function setIdleState(idle: boolean) {
   if (isIdle === idle)
     return
   isIdle = idle
-  globalThis.electronAPI.send('app:setIdleState', idle).catch(() => {
-    console.info('need app version 3.8.7')
-  })
+  // 从 4.0.0 版本开始，闲时自动安装新版本功能下线：https://zbvt20250214083819453.pingcode.com/pjm/workitems/P93maFCY
+  // globalThis.electronAPI.send('app:setIdleState', idle).catch(() => {
+  //   console.info('need app version 3.8.7')
+  // })
 }
 
 function resetIdleTimer() {

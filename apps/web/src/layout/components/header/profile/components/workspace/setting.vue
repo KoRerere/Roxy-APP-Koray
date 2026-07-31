@@ -10,10 +10,17 @@ import { API } from '/@/api'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, showPageLoading } from '/@/utils'
+import { copyText, isDev, showPageLoading } from '/@/utils'
+import { WorkspaceType } from '/@/enums'
 import { Role } from '/@/enums/role'
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
+import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import {
+  getTargetWorkspaceType,
+  useWorkspaceModeSwitchConfirm,
+} from '/@/layout/components/header/profile/components/workspace/useWorkspaceMode'
 
 const props = defineProps<{
   workspaceInfo: UnwrapRowType<UserGetWorkspaceListListData>
@@ -30,8 +37,15 @@ const dialog = useDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const userStore = useUserStore()
-const { getWorkspaceList, currentWorkspace } = useWorkspaceStore()
+const workspaceStore = useWorkspaceStore()
+const { currentWorkspace } = storeToRefs(workspaceStore)
+const { getWorkspaceList, switchWorkspaceType } = workspaceStore
 const [showModal] = useCustomDialog()
+const projectLabels = useProjectEntityLabels()
+const profileLabels = useProfileEntityLabels()
+const { confirmSwitchWorkspaceMode } = useWorkspaceModeSwitchConfirm()
+
+const workspaceFormRef = useTemplateRef('workspaceFormRef')
 
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
 
@@ -39,6 +53,17 @@ const errorMessage = ref('')
 const workspaceInfo = ref({ ...props.workspaceInfo })
 
 const workspaceOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
+
+/** 默认空间不可删除 */
+const canDeleteWorkspace = computed(() => workspaceOwner.value && !workspaceInfo.value?.workspaceDefault)
+
+/** 仅当前团队所有者可切换模式 */
+const canSwitchMode = computed(() => {
+  return !!workspaceInfo.value.id
+    && workspaceOwner.value
+    && workspaceInfo.value.id === currentWorkspace.value?.id
+    && isDev
+})
 
 function showMoreActions(event: MouseEvent) {
   moreActionPopoverRef.value?.toggle(event)
@@ -63,7 +88,7 @@ function handleDeleteConfirm() {
         workspaceId,
       })
       if (code === 0) {
-        const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
+        const isCurrentWorkspace = workspaceInfo.value.id === workspaceStore.currentWorkspace?.id
         if (!isCurrentWorkspace) {
           getWorkspaceList()
           userStore.fetchUserInfo()
@@ -85,7 +110,7 @@ function handleDeleteConfirm() {
           </I18nT>
         </div>
         <div class={styles['delete-confirm-content']}>
-          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该团队的相关内容（窗口/项目/平台账号/代理 IP/团队成员/ API 等）{br}要确认删除，请在下方输入团队名称', { br: '{br}' })}>
+          <I18nT keypath={projectLabels.value.deleteTeamContentsKeypath}>
             {{ br: () => <br /> }}
           </I18nT>
         </div>
@@ -101,6 +126,25 @@ function handleDeleteConfirm() {
       showHeader: false,
       modal: true,
       blockScroll: true,
+    },
+  })
+}
+
+function handleSwitchMode() {
+  moreActionPopoverRef.value?.hide()
+
+  const currentType = currentWorkspace.value?.workspaceType ?? WorkspaceType.Private
+  const targetType = getTargetWorkspaceType(currentType)
+
+  confirmSwitchWorkspaceMode({
+    currentType,
+    onConfirm: async () => {
+      await switchWorkspaceType(targetType)
+      if (currentWorkspace.value?.workspaceType !== targetType)
+        return false
+
+      getWorkspaceList()
+      emit('save')
     },
   })
 }
@@ -123,7 +167,7 @@ async function handleSaveChange() {
       slots: {
         default: () => (
           <div class={styles.description}>
-            <div>{$t('您在其他团队的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
+            <div>{profileLabels.value.exceedsMaxCreatableEntities}</div>
             <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
           </div>
         ),
@@ -150,7 +194,7 @@ function leaveWorkspace() {
       severity: 'danger',
     },
     accept: async () => {
-      const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
+      const isCurrentWorkspace = workspaceInfo.value.id === workspaceStore.currentWorkspace?.id
       const { code, msg } = await API.limit.userLeaveWorkspaceList({ workspaceId: workspaceInfo.value.id })
       if (code === 0) {
         // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开团队'), life: 3000 })
@@ -170,22 +214,25 @@ function leaveWorkspace() {
 
 <template>
   <div class="workspace-settings">
-    <WorkspaceForm v-model:workspace-info="workspaceInfo" v-model:error-message="errorMessage" />
-
-    <div class="footer">
-      <template v-if="workspaceOwner && !workspaceInfo?.workspaceDefault">
-        <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
-      </template>
-      <div class="flex justify-end" :class="{ 'w-full': !(workspaceOwner && !workspaceInfo?.workspaceDefault) }">
+    <WorkspaceForm ref="workspaceFormRef" v-model:workspace-info="workspaceInfo" v-model:error-message="errorMessage" />
+    <div class="w-full flex flex-row-reverse items-center justify-between pt-4">
+      <div class="flex justify-end" :class="{ 'w-full': !workspaceOwner }">
         <RxButton v-if="workspaceOwner" :label="$t('保存修改')" @click="handleSaveChange" />
         <RxButton v-else :label="$t('离开团队')" severity="danger" @click="leaveWorkspace" />
       </div>
+      <template v-if="canSwitchMode || canDeleteWorkspace">
+        <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
+      </template>
     </div>
   </div>
 
   <Popover ref="moreActionPopover" :class="$style['more-action-popover']">
     <div class="action-list">
-      <div class="action-item danger" @click="handleDeleteConfirm">
+      <div v-if="canSwitchMode" class="action-item" @click="handleSwitchMode">
+        <SvgIcon name="base/rx_ic_transfer" />
+        <span class="tt-primary text-3.25 leading-4">{{ $t('切换模式') }}</span>
+      </div>
+      <div v-if="canDeleteWorkspace" class="action-item danger" @click="handleDeleteConfirm">
         <SvgIcon name="base/rx_ic_bin_1" />
         {{ $t('删除团队') }}
       </div>
@@ -246,21 +293,12 @@ function leaveWorkspace() {
   gap: var(--spacing-sm, 4px);
 }
 
-.footer {
-  width: 100%;
-  display: flex;
-  width: 452px;
-  padding: var(--spacing-2xl, 16px) var(--spacing-none, 0px) 0 var(--spacing-none, 0px);
-  justify-content: space-between;
-  align-items: center;
-}
-
 .action-list {
   display: flex;
   padding: var(--spacing-sm, 4px);
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-none, 0px);
+  gap: var(--spacing-none, 4px);
   align-self: stretch;
 }
 

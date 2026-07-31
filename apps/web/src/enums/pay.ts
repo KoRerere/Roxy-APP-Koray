@@ -107,6 +107,8 @@ export enum PaymentStatus {
   Wait = 'WAIT_BUYER_PAY',
   /** 自动扣款失败 */
   Fail = 'TRADE_FAIL',
+  /** 已退款 */
+  Refund = 'TRADE_REFUND',
 }
 
 export const PaymentStatusStr = {
@@ -114,6 +116,7 @@ export const PaymentStatusStr = {
   get [PaymentStatus.Closed]() { return $t('交易关闭') },
   get [PaymentStatus.Wait]() { return $t('待支付') },
   get [PaymentStatus.Fail]() { return $t('支付失败') },
+  get [PaymentStatus.Refund]() { return $t('已退款') },
 }
 
 export enum PayIdentity {

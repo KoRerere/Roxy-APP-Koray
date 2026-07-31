@@ -3,39 +3,43 @@
 import { useUserStore } from '/@/stores/user';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+
 const props = defineProps<{
   identity?: string,
 }>()
 
 
 const userStore = useUserStore()
+const profileLabels = useProfileEntityLabels()
 
 
 const privileges = computed(() => {
+  const entityUsage = (count: number) => profileLabels.value.entityUsageCount(count)
   const identity = props.identity || userStore.userInfo.identity
   if (identity === 'old') {
     return [
       $t('专属【创始】身份+徽章'),
-      $t('{count}个窗口用量', { count: 100 }),
+      entityUsage(100),
       $t('{count}个额外团队用量', { count: 3 }),
       $t('特权码生成权限（推广计划）'),
     ]
   } else if (identity === 'invited') {
     return [
       $t('专属【特邀】身份+徽章'),
-      $t('{count}个窗口用量', { count: 60 }),
+      entityUsage(60),
       $t('{count}个额外团队用量', { count: 2 }),
     ]
   } else if (identity === 'agent') {
     return [
       $t('专属【合作】身份+徽章'),
-      $t('{count}个窗口用量', { count: 1000 }),
+      entityUsage(1000),
       $t('{count}个额外团队用量', { count: 10 }),
       $t('特权码生成权限（推广计划）'),
     ]
   }
   return [
-    $t('{count}个窗口用量', { count: userStore.userInfo.maxWindowCount }),
+    entityUsage(userStore.userInfo.maxWindowCount),
     $t('{count}个额外团队用量', { count: 1 }),
   ]
 })

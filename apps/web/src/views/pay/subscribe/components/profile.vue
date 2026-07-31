@@ -8,6 +8,7 @@ import { formatNumberToKMB } from '/@/utils/basic'
 import { alignSubscribeCount, formatTierData } from '../util'
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useCampaignStore } from '/@/stores/campaign'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { Plan } from '../type'
 
 interface Props {
@@ -22,6 +23,7 @@ const { list, rawList } = defineProps<Props>()
 const popoverRef = useTemplateRef('popover')
 
 const { seasonalActivity } = storeToRefs(useCampaignStore())
+const billingLabels = useBillingEntityLabels()
 
 const selectedPlan = defineModel<Plan>('plan')
 const selectedCount = defineModel<number>('count', { required: true })
@@ -41,17 +43,17 @@ const planInfo = computed(() => {
   const isTrial = subLevel === SubLevelEnum.Trial
 
   const description = isTrial
-    ? $t('窗口单价（试用价格）')
-    : $t('窗口单价（{value} 数量区间）', { value: `${(minWindows < 10 ? 0 : minWindows) + 1}~${maxWindows}` })
+    ? billingLabels.value.entityUnitPriceTrial
+    : billingLabels.value.entityUnitPriceTier(`${(minWindows < 10 ? 0 : minWindows) + 1}~${maxWindows}`)
 
   return { isTrial, windowPrice, description }
 })
 
 function tooltipFormatter(value: number) {
   if (selectedPlan.value?.subLevel === SubLevelEnum.Trial) {
-    return `${$t('{count} 个窗口', { count: 10 })} ` + `(${SubLevelEnumStr[SubLevelEnum.Trial]})`
+    return `${billingLabels.value.countEntities(10)} ` + `(${SubLevelEnumStr[SubLevelEnum.Trial]})`
   }
-  return $t('{count} 个窗口', { count: formatNumberToKMB(value) })
+  return billingLabels.value.countEntities(formatNumberToKMB(value))
 }
 
 function getTiersStep(value: number, math: 'plus' | 'minus' = 'plus') {
@@ -103,7 +105,7 @@ function showIllustrate(event: Event) {
     <SubscribePlans v-model="selectedPlan" :list="list" @change="onPlanChange" />
     <div class="flex flex-col gap-3 mt-6 pb-18">
       <div class="title">
-        {{ $t('滑动以选择窗口数量') }}
+        {{ billingLabels.selectEntityCount }}
       </div>
       <TierSlider v-model="selectedCount" :min="min ?? tiersList[1]!.start" :max="max ?? tiersList[tiersList.length - 1]!.end" :tiers="tiersList" :hide-labels="[5]"
                   :tooltip-formatter="tooltipFormatter" @change="onChange"
@@ -116,7 +118,7 @@ function showIllustrate(event: Event) {
             <div>
               <span class="current-unit">$</span>
               <NumberFlow :spin-timing="{ duration: 550 }" :opacity-timing="{ duration: 250 }" will-change class="ml-1 current-price" :value="planInfo.windowPrice" />
-              <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
+              <span class="ml-2.5 current-text">/{{ billingLabels.entityUnit }}</span>
             </div>
             <div class="current-desc">
               {{ planInfo.description }}
@@ -127,7 +129,7 @@ function showIllustrate(event: Event) {
     </div>
     <div v-if="!planInfo?.isTrial" class="flex items-center justify-between pt-8">
       <div class="flex items-center gap-1.5">
-        <span class="sub-title">{{ $t('窗口数量') }}</span>
+        <span class="sub-title">{{ billingLabels.entityCount }}</span>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate" />
       </div>
       <RxStepInput v-model="selectedCount!" size="lg" class="!w-40" :min="min ?? Math.max(tiersList[1]!.start, 10)" :max="max ?? tiersList[tiersList.length - 1]!.end" :step="step"

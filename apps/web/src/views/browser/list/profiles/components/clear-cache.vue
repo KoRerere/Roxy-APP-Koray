@@ -1,18 +1,20 @@
 <script setup lang="tsx">
 import { RxAlert } from '/@/components/rx-alert'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { ClearType } from '/@/enums'
 
 import { useRoleStore } from '/@/stores/role'
 
 const role = useRoleStore()
+const profileLabels = useProfileEntityLabels()
 const dialogRef = inject<any>('dialogRef')
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 const value = ref(ClearType.partial)
 
-const options = [
+const options = computed(() => [
   {
     label: $t('清除本地缓存（保留插件）'),
     value: ClearType.partial,
@@ -22,7 +24,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('清除扩展数据以外的所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={profileLabels.value.clearCachePartialNote} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -43,7 +45,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('清除所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={profileLabels.value.clearCacheAllNote} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -77,7 +79,7 @@ const options = [
       )
     ),
   },
-].filter(item => item.visible !== false)
+].filter(item => item.visible !== false))
 
 function close() {
   dialogRef.value.close()

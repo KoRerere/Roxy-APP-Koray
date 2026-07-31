@@ -49,7 +49,12 @@ export function usePay() {
 
   const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
 
-  function openProcessing(data: Record<string, any>, type: OrderType | 'silent') {
+  function openProcessing(
+    data: Record<string, any>,
+    type: OrderType | 'silent',
+    options: { cancelRedirect?: boolean } = {},
+  ) {
+    const { cancelRedirect = true } = options
     const { promise, resolve, reject } = Promise.withResolvers<void>()
     if (data.payType === PayWay.Card || data.payType === PayWay.Balance) {
       onConfirm()
@@ -101,7 +106,8 @@ export function usePay() {
     }
 
     function onCancel() {
-      router.push({ name: 'wallet', query: { name: 'billing' } })
+      if (cancelRedirect)
+        router.push({ name: 'wallet', query: { name: 'billing' } })
       reject()
     }
 

@@ -14,7 +14,7 @@ import { ExtensionManager } from '/@/modules/extension'
 import { getExtensionIDByPath } from '/@/modules/extension/helper'
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
-import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage } from '/@/utils'
+import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage, getProxyEntityLabels } from '/@/utils'
 import { getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
 import { appendOpenUrlsToLaunchArgs } from './utils/splitOpenUrlsForLaunch'
@@ -48,6 +48,8 @@ export class BeforeLaunchTask {
   launchTimer?: NodeJS.Timeout
   /** 启动浏览器命令行参数 */
   launchArgs: string[] = []
+  /** 本次启动是否伴随内核首次下载落盘：新 exe 首次运行会触发杀软实时扫描,初始化明显变慢,需放宽启动超时 */
+  isFreshCoreInstall = false
   /** Windows 命令行过长时，延后到启动后通过 CDP 打开的 URL */
   deferredOpenUrls: string[] = []
   /** 当前任务 */
@@ -87,7 +89,7 @@ export class BeforeLaunchTask {
   async run() {
     this.taskMap.set($t('内存检测中'), { handler: this.memoryDetection, start: 0, end: 3 })
     this.taskMap.set($t('可用磁盘大小检测中'), { handler: this.diskSizeDetection, start: 3, end: 6 })
-    this.taskMap.set($t('代理 IP 检测中'), { handler: this.handleProxyDetection, start: 6, end: 10 })
+    this.taskMap.set(getProxyEntityLabels().detecting, { handler: this.handleProxyDetection, start: 6, end: 10 })
     this.taskMap.set($t('判断是否需要清理浏览器缓存'), { handler: this.clearBrowserCache, start: 10, end: 15 })
     this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 23 })
     this.taskMap.set($t('导入书签'), { handler: this.importBookmarks, start: 23, end: 25 })
@@ -165,11 +167,23 @@ export class BeforeLaunchTask {
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
     let isTimedOut = false
+    let launchProgressTimer: ReturnType<typeof setInterval> | undefined
 
-    const launchTimeoutMs = this.browserItem.isFirefox ? 45_000 : 30_100
+    /** 停止进度轮询，避免超时/失败后 success 消息覆盖 error 状态导致渲染进程卡在「正在启动浏览器」 */
+    const stopLaunchProgress = () => {
+      if (launchProgressTimer) {
+        clearInterval(launchProgressTimer)
+        launchProgressTimer = undefined
+      }
+    }
+
+    const baseTimeoutMs = 60_000
+    // 内核刚落盘首次运行时,杀软实时扫描会显著拖慢进程初始化(实测可达 40s+),放宽超时避免误判失败
+    const launchTimeoutMs = this.isFreshCoreInstall ? baseTimeoutMs + 30_000 : baseTimeoutMs
 
     this.launchTimer = setTimeout(() => {
       isTimedOut = true
+      stopLaunchProgress()
       this.sendErrorMessage($t('浏览器启动超时'))
       reject(new Error($t('浏览器启动超时')))
       if (this.browser) {
@@ -187,19 +201,22 @@ export class BeforeLaunchTask {
         defaultViewport: null,
         coreType: this.browserItem.coreType,
         userDataDir: this.browserItem.isFirefox ? this.browserItem.userDataDir : undefined,
+        // 与外层启动超时对齐,避免底层等待调试端口的超时先于/晚于外层且行为不一致
+        timeoutMs: launchTimeoutMs,
       }
       console.log('launchOptions', launchOptions)
-      let timer
 
       if (!this.browser) {
         let acc = 0
-        timer = setInterval(() => {
+        launchProgressTimer = setInterval(() => {
+          if (isTimedOut)
+            return
           acc += 0.2
           this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
         }, 60)
 
         this.browser = await launchBrowser(launchOptions).finally(() => {
-          clearInterval(timer)
+          stopLaunchProgress()
         })
 
         if (isTimedOut && this.browser) {
@@ -226,8 +243,6 @@ export class BeforeLaunchTask {
         await launchBrowser({
           ...launchOptions,
           relaunch: true,
-        }).finally(() => {
-          clearInterval(timer)
         })
       }
 
@@ -300,8 +315,13 @@ export class BeforeLaunchTask {
       throw new Error($t('没有指定内核版本'))
     }
 
+    const coreManagerUtils = coreManager.getCoreManager(this.browserItem.coreType)
+
+    // exe 不存在说明本次启动会触发内核下载/解压,首次运行需放宽启动超时
+    this.isFreshCoreInstall = !(await fileExists(coreManagerUtils.genCoreExePath(coreVersion)))
+
     // 获取内核执行程序路径
-    this.exePath = await coreManager.getCoreManager(this.browserItem.coreType).getCoreExePath(coreVersion, (payload) => {
+    this.exePath = await coreManagerUtils.getCoreExePath(coreVersion, (payload) => {
       if (payload.description && this.currentTask) {
         if (payload.percent) {
           this.progress = this.currentTask.start + ((this.currentTask.end - this.currentTask.start) * (payload.percent / 100))
@@ -383,9 +403,10 @@ export class BeforeLaunchTask {
       args.push(...userCustomArgs)
     }
 
-    // 工作台 URL
+    // 工作台 URL；附带 workspaceType，旧客户端未下发 appConfig.workspaceType 时仍可识别电商模式
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
+      const workspaceType = store.workspaceType ?? 0
+      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}&workspaceType=${workspaceType}`
       args.push(dashboardUrl)
     }
 
@@ -428,7 +449,8 @@ export class BeforeLaunchTask {
     }
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
-      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}`
+      const workspaceType = store.workspaceType ?? 0
+      const dashboardUrl = `http://127.0.0.1:${store.appPort}/dashboard.html?id=${dirId}&workspaceType=${workspaceType}`
       args.push(dashboardUrl)
     }
 
@@ -621,7 +643,8 @@ export class BeforeLaunchTask {
         return Promise.reject(new Error($t('网络不通停止打开')))
       }
 
-      const message = this.browserItem.winInfo.buyProxyType === 1 ? $t('无法连接至代理 IP，请检查您当前的网络环境并重试。') : $t('代理 IP 检测失败')
+      const labels = getProxyEntityLabels()
+      const message = this.browserItem.winInfo.buyProxyType === 1 ? labels.cannotConnect : labels.detectFailed
 
       if (host) {
         this.warningMessages.push(message)

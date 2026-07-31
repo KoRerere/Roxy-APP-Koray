@@ -100,6 +100,10 @@ export const appConfig = {
   get roxyConfigFile() {
     return join(this.roxyDataDir, 'config.json')
   },
+  /** Tauri 默认浏览器 launcher 日志（与 apps/tauri paths.rs 保持一致） */
+  get launcherLogFile() {
+    return join(this.roxyDataDir, 'logs', 'launcher.log')
+  },
 } as const
 
 console.debug('appConfig', appConfig)

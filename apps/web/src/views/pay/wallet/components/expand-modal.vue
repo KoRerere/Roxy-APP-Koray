@@ -11,6 +11,7 @@ import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useDialog } from '/@/hooks/useDialog'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const dialogRef = inject<any>('dialogRef')
 const _props = ref()
@@ -18,6 +19,7 @@ const _onConfirm = ref()
 const _onCancel = ref()
 
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const [showModal] = useDialog()
@@ -169,7 +171,7 @@ function close(isCancel: boolean) {
     <div class="relative flex items-center h-10">
       <div class="flex items-center gap-1 header">
         <span>{{ $t('购买团队成员和团队') }}</span>
-        <SvgIcon v-tooltip.top="$t('团队是一个独立的分组环境，通过创建或加入不同团队，您可以使用单一主账号邀请成员组建团队，并为其分配不同的权限设置。每个团队内的数据（如窗口、成员、代理 IP、项目和账号等）完全隔离，确保团队间的操作互不干扰。')" class="cursor-pointer" name="base/rx_ic_info" size="20" color="var(--colors-icon-icon-tertiary)" />
+        <SvgIcon v-tooltip.top="billingLabels.teamIsolationDescription" class="cursor-pointer" name="base/rx_ic_info" size="20" color="var(--colors-icon-icon-tertiary)" />
       </div>
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>

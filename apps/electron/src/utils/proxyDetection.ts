@@ -14,6 +14,7 @@ import {
 import { store } from '/@/modules/store'
 import { getNetworkMode, isKernelCustomProxyConfigured, isKernelSystemProxyEnabled, isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
+import { getProxyEntityLabels } from '/@/utils/proxyEntityLabels'
 
 export interface ProxyDetectionResult {
   ip: string
@@ -262,7 +263,7 @@ async function runProxyDetection(proxyDetectionParams: ProxyDetectionParams): Pr
     const result = await checkMode(params, !!isUseSystemProxy).catch((error) => {
       Reflect.deleteProperty(error, 'config')
       console.error('proxyDetection error', error)
-      return Promise.reject($t('代理 IP 检测失败'))
+      return Promise.reject(getProxyEntityLabels().detectFailedCheckConfig)
     })
 
     console.log('proxyDetection original result', result)

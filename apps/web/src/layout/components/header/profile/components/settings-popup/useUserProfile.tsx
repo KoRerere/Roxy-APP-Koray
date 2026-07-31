@@ -8,9 +8,10 @@ import { useCommonUtil } from '/@/layout/components/header/profile/components/se
 import {
   formatIdentityRejectedTooltip,
   getIdentityStatus,
+
   onIdentityStatusSettled,
-  type IdentityVerificationStatus,
 } from './identity-verification'
+import type { IdentityVerificationStatus } from './identity-verification'
 import { useIdentityVerificationEntry } from './identity-verification-entry'
 
 import UploadAvatar from '../upload-avatar.vue'
@@ -142,7 +143,7 @@ export function useUserProfilePanel() {
             {
               label: $t('实名认证'),
               name: 'identityVerification',
-              visible: simpleLocale.currentLocale === 'zh-CN',
+              visible: simpleLocale.currentLocale === 'zh-CN' && globalThis.isElectron,
               component: () => {
                 const { status, rejectedReasons } = identityInfo.value
                 const isVerified = status === 'verified'
@@ -255,18 +256,18 @@ export function useUserProfilePanel() {
               },
             },
             {
-              name: 'VK',
-              value: currentData.value?.tp_vk ?? '',
+              name: 'Linux Do',
+              value: currentData.value?.tp_linuxdo ?? '',
               label: () => {
                 return (
                   <div class="flex items-center gap-2">
-                    <RxSvgIcon name="websites/rx_site_vk" />
-                    <span>VK (ВКонтакте)</span>
+                    <RxSvgIcon name="websites/rx_site_linuxdo" />
+                    <span>Linux Do</span>
                   </div>
                 )
               },
               component: () => {
-                return <ThirdAccount value={currentData.value?.tp_vk} bindType="VK" onBind={oauth2LoginMap.vk} onUnbind={updateUserBindEmailList} />
+                return <ThirdAccount value={currentData.value?.tp_linuxdo} bindType="LINUXDO" onBind={oauth2LoginMap.linuxdo} onUnbind={updateUserBindEmailList} />
               },
             },
           ],

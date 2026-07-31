@@ -3,9 +3,11 @@ import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 import { ExtensionsSource } from '/@/enums'
+import { useExtensionLabels } from '../../utils/extension-labels'
 
 const dialogRef = inject<any>('dialogRef')
 const toast = useToast()
+const labels = useExtensionLabels()
 
 const _props = ref()
 const _onConfirm = ref()
@@ -86,15 +88,15 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">{{ $t('支持Zip, CRX 格式的扩展，最大不超过 50MB') }}</span>
+        <span class="upload-tip">{{ labels.uploadFormat }}</span>
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">{{ $t('每日总扩展添加数量限制为 {count} 个。', { count: 50 }) }}</span>
+        <span class="upload-tip">{{ labels.formatDailyLimit(50) }}</span>
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">{{ $t('当前仅支持 Google 扩展，暂不支持 Firefox 扩展。') }}</span>
+        <span class="upload-tip">{{ labels.googleOnly }}</span>
       </div>
     </div>
 
@@ -103,7 +105,7 @@ onMounted(() => {
         <img class="extension-icon-image" :src="extension.pluginIconPath">
       </div>
       <div class="flex justify-between items-center extension-name">
-        <span>{{ $t('扩展名称') }}</span>
+        <span>{{ labels.nameLabel }}</span>
         <span class="extension-name-length">{{ extension.pluginName.length }}/50</span>
       </div>
       <InputText v-model="extension.pluginName" class="extension-input" maxlength="50" type="text" />
@@ -111,18 +113,18 @@ onMounted(() => {
 
     <div v-if="extension?.isSuccess" class="flex flex-col gap-1.5 description">
       <div class="flex justify-between items-center">
-        <span>{{ $t('扩展描述') }}</span>
+        <span>{{ labels.descLabel }}</span>
         <span class="description-length">{{ extension.pluginDesc?.length || 0 }}/500</span>
       </div>
       <Textarea v-model="extension.pluginDesc" class="w-full description-input" maxlength="500" rows="3" />
     </div>
 
     <div class="guide">
-      <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
+      <i18n-t :keypath="labels.guideNoteKeypath" scope="global">
         <template #guide>
           <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank" rel="noopener noreferrer"
              class="text-blue decoration-underline cursor-pointer"
-          >{{ $t('Google 扩展协议') }}</a>
+          >{{ labels.googleProtocolLink }}</a>
         </template>
       </i18n-t>
     </div>

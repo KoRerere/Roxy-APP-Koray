@@ -2,6 +2,8 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import { useProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { downloadTemplate } from '/@/views/browser/create/utils'
 import { normalizeCookies, supportsApp3_8_8 } from '/@/utils'
@@ -10,6 +12,8 @@ type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
 const dialogRef = inject<any>('dialogRef')
 const [_, onlyErrorToast] = useResponseToast()
+const profileLabels = useProfileEntityLabels()
+const proxyLabels = useProxyShopLabels()
 
 const _props = ref()
 const _onConfirm = ref()
@@ -17,10 +21,10 @@ const _onCancel = ref()
 const limit = 5
 const description = ref()
 const exportType = ref(true)
-const excelSchema = [
+const excelSchema = computed(() => [
   {
     key: 'windowName',
-    name: $t('窗口名称'),
+    name: profileLabels.value.entityName,
   },
   {
     key: 'os',
@@ -45,12 +49,12 @@ const excelSchema = [
   },
   {
     key: 'proxyCategory',
-    name: $t('代理 IP 类型'),
+    name: proxyLabels.value.entityTypeColumn,
     getText: (item: Data) => item.proxyCategory === 'noproxy' ? '直连' : item.proxyCategory?.toLocaleUpperCase(),
   },
   {
     key: 'proxyInfo',
-    name: $t('代理 IP 信息'),
+    name: proxyLabels.value.entityInfoColumn,
     getText: (item: Data) => {
       if (!item.host)
         return ''
@@ -101,16 +105,16 @@ const excelSchema = [
   },
   {
     key: 'dirId',
-    name: $t('窗口 ID'),
+    name: profileLabels.value.entityId,
   },
-].map((item, _index) => ({ ...item, _index }))
-const selection = ref(excelSchema.slice(0, -1))
+].map((item, _index) => ({ ...item, _index })))
+const selection = ref<any[]>([])
 
 async function getExportData() {
   const ids = _props.value.data.map((item: any) => item.id)
   const { data: { rows } } = await API.window.userGetWindowInfoV2List({ windowIds: ids.join(','), isDelete: 0, page_index: 1, page_size: ids.length })
+  const sortArr = selection.value.sort((a, b) => a._index - b._index)
   return rows.map((item) => {
-    const sortArr = selection.value.sort((a, b) => a._index - b._index)
     return sortArr.reduce((acc, schema) => {
       if (acc[schema.key]) {
         return acc
@@ -127,7 +131,7 @@ async function exportExcel() {
 
   downloadTemplate({
     afterAddColumns: (columns) => {
-      return !hasDirId ? columns : [...columns, { header: $t('窗口 ID (仅导出用)'), key: 'dirId' }]
+      return !hasDirId ? columns : [...columns, { header: profileLabels.value.entityIdExportOnly, key: 'dirId' }]
     },
     afterAddExplain: (worksheet) => {
       worksheet.addRows(data)// 批量添加数据行
@@ -172,6 +176,7 @@ onMounted(() => {
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
   description.value = props.data.slice(0, limit).map((item: any) => `${_props.value.workspaceName}-${item.windowSortNum}`).join(', ') + (props.data.length > limit ? `, ...(${props.data.length - limit} more)` : '')
+  selection.value = excelSchema.value.slice(0, -1)
 })
 </script>
 
@@ -180,7 +185,7 @@ onMounted(() => {
     <div class="flex flex-col popup-content">
       <div class="flex flex-col popup-block">
         <div class="popup-block__title">
-          {{ $t('要导出的窗口:') }}
+          {{ profileLabels.exportEntities }}
         </div>
         <div class="popup-block__description">
           {{ description }}
@@ -192,7 +197,7 @@ onMounted(() => {
         </div>
         <RxInputRadio v-model="exportType" size="xs" name="proxySwitch" :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
         <div class="popup-block__tip">
-          {{ $t('*对于具有大量 cookie 的窗口，请选择 .txt 格式') }}
+          {{ profileLabels.exportCookieTip }}
         </div>
       </div>
       <div class="h-80 flex flex-col popup-block">

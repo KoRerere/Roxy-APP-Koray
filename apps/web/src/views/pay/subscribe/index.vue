@@ -20,6 +20,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { deepClone } from '/@/utils'
 import { discountCalculate, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { Plan } from './type'
 
 const route = useRoute()
@@ -31,6 +32,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccessFreedomActivity2 } = usePay()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
+const billingLabels = useBillingEntityLabels()
 
 const rawList = ref<Plan[]>()
 const dataList = ref<Plan[]>()
@@ -97,7 +99,12 @@ const isTrial = computed(() => selectedPlan.value?.subLevel === SubLevelEnum.Tri
 
 const currentSubscribe = computed(() => {
   const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
-  return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+  return billingLabels.value.currentPlanUsage({
+    subLevel: SubLevelEnumStr[subLevel as SubLevelEnum],
+    count: maxWindowCount,
+    useCount: useWindowCount,
+    maxCount: maxWindowCount,
+  })
 })
 
 const details = computed(() => {
@@ -111,12 +118,12 @@ const details = computed(() => {
       title: $t('套餐详情'),
       items: [
         {
-          label: $t('窗口数量'),
+          label: billingLabels.value.entityCount,
           value: `${profileCount.format()} + ${freeWindowCount.format()}`,
           visible: !seasonalActivity.value.freedom,
         },
         {
-          label: $t('窗口数量（免费升舱）'),
+          label: billingLabels.value.entityCountFreeUpgrade,
           visible: seasonalActivity.value.freedom,
           slot: 'freedom',
         },
@@ -306,7 +313,7 @@ async function trialSubscribe() {
         </div>
         <div class="flex flex-col gap-3 w-88">
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
-          <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="$t('购买窗口数量少于当前窗口数')" :closable="false" />
+          <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="billingLabels.purchaseLessThanCurrent" :closable="false" />
           <Detail :list="details">
             <template #freedom="{ item }">
               <div class="flex justify-between items-center">

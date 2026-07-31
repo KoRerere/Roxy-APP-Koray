@@ -1,12 +1,19 @@
 <script setup lang="ts">
-defineProps<{
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+
+const props = defineProps<{
   list: string[]
   showAdd?: boolean
+  /** 添加关联项按钮的 tooltip，默认按 workspace 模式为「选择窗口/账号」 */
+  addTooltip?: string
 }>()
 
 const emit = defineEmits<{
   add: []
 }>()
+
+const profileLabels = useProfileEntityLabels()
+const resolvedAddTooltip = computed(() => props.addTooltip ?? profileLabels.value.selectEntityTooltip)
 </script>
 
 <template>
@@ -16,7 +23,7 @@ const emit = defineEmits<{
         <span class="row-hover-empty">--</span>
       </template>
     </RelatedInfo>
-    <RxButton v-if="showAdd" v-tooltip.top="{ value: $t('选择窗口'), showDelay: 500 }" class="shrink-0 row-hover-action" text severity="secondary" size="xxs" icon="base/rx_ic_plus"
+    <RxButton v-if="showAdd" v-tooltip.top="{ value: resolvedAddTooltip, showDelay: 500 }" class="shrink-0 row-hover-action" text severity="secondary" size="xxs" icon="base/rx_ic_plus"
               @click.stop="emit('add')"
     />
   </div>

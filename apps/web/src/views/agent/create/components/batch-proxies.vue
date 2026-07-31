@@ -7,6 +7,7 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useConfirm } from 'primevue/useconfirm'
+import { API } from '/@/api'
 import { ProxyCheckStatus } from '/@/enums'
 import { IPType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -14,6 +15,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
+import { useProxyCreateLabels } from '../proxy-create-mode'
 import { getColumns } from './columns'
 
 interface ProxyItem {
@@ -30,6 +32,8 @@ interface ProxyItem {
   remark?: string
   _missField: any[]
   _missIndex: number
+  hasImportRecord?: boolean
+  historyChecking?: boolean
   [key: string]: any
 }
 
@@ -47,6 +51,8 @@ const { onConfirm } = defineProps<{
   onConfirm: (data: ProxyItem[]) => Promise<void> | void
 }>()
 
+const labels = useProxyCreateLabels()
+const isDeviceMode = computed(() => labels.value.mode === 'device')
 const confirm = useConfirm()
 const { getUserConfig } = useUserStore()
 const { userConfig, userPayInfo } = storeToRefs(useUserStore())
@@ -57,14 +63,19 @@ const proxiesText = ref('')
 const dataList = ref<ProxyItem[]>([])
 const isDuplicate = ref(true)
 const showMessage = ref(false)
+const showHistoryWarning = ref(false)
 const filterCount = ref(0)
 
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
+const isTestingAll = ref(false)
+/** 历史库批量检测结果缓存，连通性完成后按 _id 匹配 */
+const historyResultMap = new Map<string, boolean>()
+let historyCheckPending = false
 const protocolOptions = ref()
 const protocolValue = ref()
 const ipTypeOptions = ref()
 const ipType = ref()
-const columns = ref(getColumns())
+const columns = computed(() => getColumns(labels.value))
 
 const ipCheckerConfig = reactive<IpCheckerConfig>({
   value: undefined,
@@ -86,6 +97,21 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
 
 const deleteFailDisabled = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
 
+const historyMatchCount = computed(() => dataList.value.filter(item => item.hasImportRecord).length)
+
+const historyWarningMessage = computed(() => $t('有 {count} 条设备命中平台半年内历史库，继续导入可能造成账号关联风险。', { count: historyMatchCount.value }))
+
+const messageAlertHeight = computed(() => {
+  let height = 0
+  if (showMessage.value)
+    height += 52
+  if (showHistoryWarning.value)
+    height += 52
+  if (showMessage.value && showHistoryWarning.value)
+    height += 10
+  return `${height}px`
+})
+
 const missMessage = computed(() => {
   const list = dataList.value.map(item => ({
     ...item,
@@ -106,7 +132,7 @@ const missMessage = computed(() => {
     return data
   }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
 
-  return $t('第 [{miss}] 条代理 IP 缺少信息，将不会被保存。', { miss: miss.map(item => item._missIndex).join(', ') })
+  return labels.value.formatMissSaveMessage(miss.map(item => item._missIndex).join(', '))
 })
 
 watch(ipType, async (newVal) => {
@@ -126,11 +152,11 @@ onBeforeMount(async () => {
   ipType.value = $dict_map.ipType![0]!.value
 })
 
-function parseValue() {
+async function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.replace(/\s/g, '').replace(/：/g, ':')).filter(Boolean)
 
   if (!list.length) {
-    onlyErrorToast(-1, $t('请先输入代理 IP 信息'))
+    onlyErrorToast(-1, labels.value.inputRequired)
     return
   }
 
@@ -153,7 +179,8 @@ function parseValue() {
         port,
         proxyUserName,
         proxyPassword,
-        refreshUrl,
+        // 电商模式无刷新 URL 能力，解析结果也不保留该字段
+        ...(isDeviceMode.value ? {} : { refreshUrl }),
         remark,
         _missField,
         _missIndex: _missField.length ? index + 1 : 0,
@@ -163,8 +190,29 @@ function parseValue() {
 
   filterCount.value = list.length - dataList.value.length
   showMessage.value = true
+  showHistoryWarning.value = false
   // 重置掉状态
   testStatus.value = {}
+  historyResultMap.clear()
+  historyCheckPending = false
+  dataList.value.forEach((item) => {
+    item.hasImportRecord = undefined
+    item.historyChecking = false
+  })
+
+  if (isTestingAll.value)
+    return
+
+  isTestingAll.value = true
+  try {
+    await Promise.all([
+      runTestAllProxy(),
+      isDeviceMode.value ? startHistoryCheck(dataList.value) : Promise.resolve(),
+    ])
+  }
+  finally {
+    isTestingAll.value = false
+  }
 }
 
 function messageClose() {
@@ -173,20 +221,35 @@ function messageClose() {
   })
 }
 
+function historyWarningClose() {
+  sleep(300).then(() => {
+    showHistoryWarning.value = false
+  })
+}
+
 function tableOperation(data: any) {
   return [
-    {
-      name: 'refresh',
-      label: $t('刷新代理 IP'),
-      icon: 'base/rx_ic_refresh',
-      quick: true,
-      disabled: !data.refreshUrl,
-      disabledTooltip: $t('未配置刷新URL'),
-    },
+    // 电商模式无刷新 URL 能力，隐藏刷新操作
+    ...(isDeviceMode.value
+      ? []
+      : [{
+          name: 'refresh',
+          label: labels.value.refreshAction,
+          icon: 'base/rx_ic_refresh',
+          quick: true,
+          disabled: !data.refreshUrl,
+          disabledTooltip: $t('未配置刷新URL'),
+        }]),
     {
       name: 'test',
-      label: $t('测试代理 IP'),
+      label: labels.value.testAction,
       icon: 'base/rx_ic_speed_test',
+      quick: true,
+    },
+    {
+      name: 'delete',
+      label: $t('删除'),
+      icon: 'base/rx_ic_bin_1',
       quick: true,
     },
   ]
@@ -202,6 +265,9 @@ function operationHandler(operate: any, data: any) {
         return globalThis.electronAPI.send('proxy:detect', {} as any)
       }
       testProxy(data, operate.name)
+      break
+    case 'delete':
+      deleteProxyItem(data)
       break
   }
 }
@@ -230,6 +296,7 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
           Object.assign(item, checkResult)
           testStatus.value[item._id] = checkResult.checkStatus
           setOperationLoading(item, operateName, false)
+          applyHistoryResultToItem(item)
         }
         return checkResult
       }
@@ -251,8 +318,8 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
 
 function clearProxy() {
   confirm.require({
-    header: $t('清空代理 IP'),
-    message: $t('您确认清空所有代理 IP 吗?'),
+    header: labels.value.clearHeader,
+    message: labels.value.clearMessage,
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -265,13 +332,71 @@ function clearProxy() {
     accept: () => {
       dataList.value = []
       showMessage.value = false
+      showHistoryWarning.value = false
     },
   })
 }
 
-async function testAllProxy() {
+function syncHistoryWarning() {
+  showHistoryWarning.value = isDeviceMode.value && historyMatchCount.value > 0
+}
+
+/** 连通性已有结果时，从历史批量结果中回填风险评级 */
+function applyHistoryResultToItem(item: ProxyItem) {
+  if (!isDeviceMode.value || item._missIndex || !item.host || !item.port)
+    return
+  if (item.checkStatus === undefined)
+    return
+
+  if (historyCheckPending) {
+    item.historyChecking = true
+    return
+  }
+
+  item.hasImportRecord = historyResultMap.get(String(item._id)) ?? true
+  item.historyChecking = false
+  syncHistoryWarning()
+}
+
+/** 电商模式：并行发起历史库批量检测，结果缓存后随连通性结果逐条匹配 */
+async function startHistoryCheck(items: ProxyItem[]) {
+  const validItems = items.filter(item => !item._missIndex && item.host && item.port)
+  if (!validItems.length)
+    return
+
+  historyResultMap.clear()
+  historyCheckPending = true
+
+  try {
+    const { code, data } = await API.proxy.userBatchCheckProxyImportCreate({
+      items: validItems.map(item => ({
+        tempId: String(item._id),
+        host: item.host,
+        port: item.port,
+        proxyUserName: item.proxyUserName,
+        proxyPassword: item.proxyPassword,
+      })),
+    })
+
+    // API 异常时保守视为命中，与单条检测弹窗一致
+    if (code !== 0 || !data.items) {
+      validItems.forEach(item => historyResultMap.set(String(item._id), true))
+    }
+    else {
+      data.items.forEach((item) => {
+        historyResultMap.set(item.tempId!, !!item.hasImportRecord)
+      })
+    }
+  }
+  finally {
+    historyCheckPending = false
+    validItems.forEach(item => applyHistoryResultToItem(item))
+  }
+}
+
+async function runTestAllProxy() {
   if (!dataList.value?.length) {
-    onlyErrorToast(-1, $t('暂无代理 IP'))
+    onlyErrorToast(-1, labels.value.emptyList)
     return
   }
   if (!globalThis.isElectron) {
@@ -280,11 +405,36 @@ async function testAllProxy() {
   await testProxy(dataList.value, 'test')
 }
 
+function deleteProxyItem(data: ProxyItem) {
+  dataList.value = dataList.value.filter(item => item._id !== data._id)
+  delete testStatus.value[data._id]
+  if (!dataList.value.length) {
+    showMessage.value = false
+    showHistoryWarning.value = false
+  }
+  else if (historyMatchCount.value === 0) {
+    showHistoryWarning.value = false
+  }
+}
+
+async function testAllProxy() {
+  if (isTestingAll.value)
+    return
+
+  isTestingAll.value = true
+  try {
+    await runTestAllProxy()
+  }
+  finally {
+    isTestingAll.value = false
+  }
+}
+
 function deleteFailProxy() {
   const list = dataList.value.filter((item: any) => item.checkStatus !== ProxyCheckStatus.failure)
   confirm.require({
-    header: $t('删除失败代理 IP'),
-    message: $t('您确认删除所有测速失败的代理 IP 吗?共 {count} 个', { count: dataList.value.length - list.length }),
+    header: labels.value.deleteFailHeader,
+    message: labels.value.formatDeleteFailMessage(dataList.value.length - list.length),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -296,6 +446,8 @@ function deleteFailProxy() {
     },
     accept: () => {
       dataList.value = list
+      if (historyMatchCount.value === 0)
+        showHistoryWarning.value = false
     },
   })
 }
@@ -325,7 +477,7 @@ async function onSave() {
 
   confirm.require({
     header: $t('警告'),
-    message: $t('第 [{miss}] 条代理 IP 缺少信息，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
+    message: labels.value.formatMissConfirmMessage(miss.map(item => item._missIndex).join(', ')),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -351,7 +503,7 @@ async function onSave() {
     <div class="parse-input w-full">
       <div class="flex flex-col gap-1.5 xl:w-60%">
         <div class="panel-title flex justify-between items-start xl:items-center flex-col xl:flex-row gap-1">
-          <div>{{ $t('代理 IP 信息') }}</div>
+          <div>{{ labels.entityInfo }}</div>
           <div class="flex gap-1.5">
             <TsFormSelect v-model="ipType" class="flex-1" :options="ipTypeOptions" option-value="value" size="xs" />
             <TsFormSelect v-model="protocolValue" class="!w-30" :options="protocolOptions" option-value="value" size="xs" />
@@ -359,7 +511,7 @@ async function onSave() {
           </div>
         </div>
         <div class="information min-w-423px">
-          <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理 IP 信息')" />
+          <ParseTextarea v-model="proxiesText" :placeholder="labels.inputPlaceholder" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
@@ -369,16 +521,16 @@ async function onSave() {
                 <RxCheckbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
                 <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理 IP 信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
+                <RxSvgIcon v-tooltip="{ value: labels.duplicateTip, showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
               </div>
             </div>
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析并测试')" icon="base/rx_ic_play" :disabled="isTestingAll" @click.stop="parseValue" />
           </div>
         </div>
       </div>
       <div class="flex flex-col gap-1.5 w-40%">
         <div class="panel-title h-30px flex items-center">
-          {{ $t('导入规则（支持动态/静态代理 IP）') }}
+          {{ labels.importRules }}
         </div>
         <div class="rules flex-1 min-w-335px">
           <!-- :parser-type="parserType" -->
@@ -390,29 +542,43 @@ async function onSave() {
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar">
         <div class="panel-title">
-          {{ $t('已解析代理 IP') }}
+          {{ labels.parsedTitle }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('清空代理 IP')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click.stop="clearProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="labels.clearAction" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click.stop="clearProxy" />
           <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_internet_error" :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click.stop="testAllProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length || isTestingAll" @click.stop="testAllProxy" />
         </div>
       </div>
       <div class="parse-result-message">
-        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理 IP。{filterCount} 重复代理 IP 已过滤。', { count: dataList.length, filterCount }) + missMessage"
-                 closable @close="messageClose"
-        />
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="labels.formatParseSuccess(dataList.length, filterCount) + missMessage" closable @close="messageClose" />
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]" />
+        <RxAlert v-if="isDeviceMode" v-model:visible="showHistoryWarning" type="warn" class="w-full" :content="historyWarningMessage" closable @close="historyWarningClose" />
+        <div v-if="showHistoryWarning" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]" />
       </div>
       <div class="flex-1 overflow-x-auto">
-        <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false"
+        <RyTable :style="{ '--message-h': messageAlertHeight }" :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false"
                  :show-actions="false"
         >
           <template #table-empty>
-            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理 IP')" class="min-h-258px" />
+            <CustomEmpty icon="rx_illustration_star.svg" :title="labels.emptyTable" class="min-h-258px" />
           </template>
           <template #outbound="{ data }">
             <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
+          </template>
+          <template #riskRating="{ data }">
+            <div v-if="data.historyChecking" class="text-3 font-500 leading-4 tt-secondary">
+              {{ $t('检测中') }}
+            </div>
+            <template v-else-if="data.hasImportRecord === undefined">
+              --
+            </template>
+            <div v-else-if="data.hasImportRecord" class="text-3 font-500 leading-4 tt-warning">
+              {{ $t('关联风险') }}
+            </div>
+            <div v-else class="text-3 font-500 leading-4 tt-success">
+              {{ $t('安全') }}
+            </div>
           </template>
           <template #actions="{ data }">
             <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />

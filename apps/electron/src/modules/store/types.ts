@@ -34,6 +34,8 @@ export interface StoreType {
   lastUserId?: number
   /** 空间 ID */
   workspaceId?: number
+  /** 当前空间业务模式：0 普通 / 2 电商（供工作台等本地页文案） */
+  workspaceType?: number
   /** 当前用户所有的空间 ID */
   allWorkspaceId?: number[]
   /** 公共空间列表 */
@@ -107,10 +109,25 @@ export interface StoreType {
   hasLoggedIn?: boolean
   /** 开机自启动 */
   autoStart?: boolean
-  /** 是否自动更新 APP，自动下载并安装新版本 */
+  /** @deprecated 使用 autoUpdateAppOnLaunch；仅作旧版配置迁移来源 */
   autoUpdateApp?: boolean
+  /** 自动更新客户端：Windows 控制冷启动安装；macOS/Linux 控制退出时静默安装 */
+  autoUpdateAppOnLaunch?: boolean
+  /** 已下载待安装的 APP 版本（Windows 本地标记，供冷启动离线探测） */
+  pendingAppUpdateVersion?: string
+  /** 待安装包对应的 generic feed URL（Windows 冷启动安装需要） */
+  pendingAppUpdateFeedUrl?: string
   /** 窗口自动恢复, 0: 关闭, 1: 开启, 2: 弹出提示 */
   autoRestoreWindow?: 0 | 1 | 2
+  /** 恢复窗口前客户端网络变化时的处理方式：prompt | continue | abort */
+  restoreWindowNetworkChange?: 'prompt' | 'continue' | 'abort'
+  /** 上次记录恢复窗口时的客户端网络快照，仅本地存储 */
+  lastRestoreClientNetwork?: {
+    ip: string
+    country: string
+    country_code: string
+    city: string
+  }
   /** 等待恢复的窗口 { workspaceId: dirId[] } */
   waitingRestoreWindow?: Record<string, string[]>
   /** 等待恢复的窗口 bounds {  dirId: { left: number, top: number, width: number, height: number } } */

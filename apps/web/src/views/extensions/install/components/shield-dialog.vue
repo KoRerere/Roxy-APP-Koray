@@ -5,10 +5,13 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 
 import { useToast } from 'primevue/usetoast'
 import { RxAlert } from '/@/components/rx-alert/'
+import { useExtensionLabels } from '../../utils/extension-labels'
 
 const props = defineProps<{
   extensionInfo: UnwrapRowType<UserGetPluginListListData>
 }>()
+
+const labels = useExtensionLabels()
 
 /** 插件是否存在 */
 const extensionExist = ref(false)
@@ -87,12 +90,12 @@ checkExtensionInfo()
         </div>
       </div>
     </div>
-    <RxAlert class="whitespace-pre-wrap w-full" :closable="false" type="info" :title="$t('Roxy浏览器鼓励您自行通过权威机构检查扩展的安全性，以此来减少因使用恶意扩展而导致业务资产损失的担忧。\n\n您可以根据以下推荐步骤进行扩展安全性检查。')" />
+    <RxAlert class="whitespace-pre-wrap w-full" :closable="false" type="info" :title="labels.securityAlertTitle" />
     <div class="extension-info-step">
       <div class="extension-info-step-title">
-        {{ $t('1. 点击下方按钮打开该扩展所在的本地文件夹') }}
+        {{ labels.openFolderStep }}
       </div>
-      <RxButton icon="base/rx_ic_folder" outlined :label="extensionExist ? $t('扩展文件夹') : $t('扩展加载中...')" :loading="!extensionExist" @click="showExtensionDir" />
+      <RxButton icon="base/rx_ic_folder" outlined :label="extensionExist ? labels.itemFolder : labels.itemLoading" :loading="!extensionExist" @click="showExtensionDir" />
     </div>
     <div class="extension-info-step">
       <div class="extension-info-step-title">

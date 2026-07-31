@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import TsForm from '/@/views/lab/components/form/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
 interface Props {
   data: {
@@ -20,12 +21,13 @@ const emit = defineEmits<{
 
 const styles = useCssModule()
 const loading = ref(false)
+const shopLabels = useProxyShopLabels()
 
-const inputs = [
+const inputs = computed(() => [
   {
     type: 'select',
     name: 'format',
-    label: $t('代理 IP 格式:'),
+    label: shopLabels.value.downloadFormatLabel,
     value: {
       value: 'host_:_port_:_username_:_password',
       label: $t('主机:端口:用户名:密码'),
@@ -45,7 +47,7 @@ const inputs = [
     afterRender: () => (
       <div class="flex items-center gap-1">
         <RxSvgIcon name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
-        <span class={styles.tips}>{$t('代理 IP 支持 HTTP 和 SOCKS5 协议')}</span>
+        <span class={styles.tips}>{shopLabels.value.downloadProtocolTip}</span>
       </div>
     ),
   },
@@ -62,7 +64,7 @@ const inputs = [
       ],
     },
   },
-]
+])
 
 function formatParse(data: any, formatTemplate: string, separator?: string) {
   return formatTemplate
@@ -89,7 +91,7 @@ async function onSubmit(formData: any) {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-4 rounded-lg w-120">
     <div class="h-9 flex items-center justify-between">
-      <span class="header">{{ $t('下载选中的代理 IP 信息') }}</span>
+      <span class="header">{{ shopLabels.downloadSelectedTitle }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="onClose" />
     </div>
     <TsForm id="download" :inputs="inputs" @submit="onSubmit" />
@@ -111,48 +113,5 @@ async function onSubmit(formData: any) {
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-}
-
-.description {
-  color: var(--colors-text-text-primary);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.subtitle {
-  color: var(--colors-text-text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
-.help {
-  border-radius: 8px;
-  border: 1px solid var(--colors-border-border-action);
-  background: var(--colors-background-bg-action);
-
-  &-item {
-    border-color: transparent;
-    background: var(--colors-background-bg-block);
-  }
-
-  &-title {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-  }
-
-  &-desc {
-    color: var(--colors-text-text-tertiary);
-    font-size: 12px;
-    line-height: 18px;
-  }
-}
-
-.tips {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
-  line-height: 18px;
 }
 </style>

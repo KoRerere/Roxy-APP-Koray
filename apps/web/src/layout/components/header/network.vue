@@ -43,21 +43,21 @@ setTimeout(detectNetwork, 2000)
 
 <template>
   <div class="flex items-center gap-1">
-    <div v-tooltip.left="{ value: $t('当前网络定位'), showDelay: 600 }">
-      <RxButton class="shrink-0" :icon="proxyInfo.ip ? 'base/rx_ic_location' : 'base/rx_ic_location_error'" :loading="loading" severity="secondary" outlined size="xs" @click="detectNetwork" />
-    </div>
+    <RxButton v-tooltip.left="{ value: $t('点击刷新'), showDelay: 300 }" class="shrink-0" :icon="proxyInfo.ip ? 'base/rx_ic_location' : 'base/rx_ic_location_error'" severity="secondary" outlined size="xs"
+              @click="detectNetwork"
+    />
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />
     </template>
-    <template v-else-if="proxyInfo.ip">
+    <div v-else-if="proxyInfo.ip" v-tooltip.bottom="{ value: $t('当前网络定位'), showDelay: 300 }" class="flex items-center gap-1">
       <div class="city">
         {{ proxyInfo.city }}
       </div>
       <div class="ip">
         ({{ proxyInfo.ip }})
       </div>
-    </template>
+    </div>
   </div>
 </template>
 

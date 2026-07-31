@@ -52,6 +52,8 @@ export type MittEvents = {
   showUserGuideDialog?: void
   /** 显示第一次注册引导 */
   firstRegisterGuide?: void
+  /** 电商账号列表首次打开引导 */
+  ecommerceAccountOpenGuide?: void
   /** 显示侧边栏引导 */
   asideMenuGuide?: void
   /** 更新项目列表 */

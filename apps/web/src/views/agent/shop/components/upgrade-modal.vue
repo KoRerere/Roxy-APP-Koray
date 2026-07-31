@@ -9,6 +9,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { PayWay } from '/@/enums/pay'
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
 interface Props {
   data: any[]
@@ -26,6 +27,7 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { showFreedomActivityModal } = useFreedomActivity()
+const shopLabels = useProxyShopLabels()
 
 const columns = [
   {
@@ -132,7 +134,7 @@ async function onPay() {
     </div>
     <div class="flex flex-col gap-3 h-48">
       <div class="subtitle">
-        {{ $t('您将要升级 {count} 个代理 IP:', { count: dataList.length }) }}
+        {{ shopLabels.upgradeCountDesc(dataList.length) }}
       </div>
       <RyTable class="proxies" :columns="columns" :data-list="dataList" :show-table-header="false" :paginator="false" :show-actions="false">
         <template #current>

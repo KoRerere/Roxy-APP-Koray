@@ -20,12 +20,12 @@ import { useBackRoute } from '/@/router/navigation'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
-import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from './form-inputs'
-import { createFormAsyncGate } from './hooks/useAsyncGate'
+import { ceateRandomFinger } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
+import { useWindowCreateCore } from './hooks/useWindowCreateCore'
 import { getDefaultTemplate } from './utils'
 import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { deepClone, filterFieldByValue, filterInputsByNames, findInputByName, genDriver, getDictMap, getFormDataByList, getLocalStorageDriverStatus, isEmptyValue, setInputValue, setLocalStorageDriverStatus } from '/@/utils'
+import { deepClone, filterInputsByNames, genDriver, getDictMap, getFormDataByList, getLocalStorageDriverStatus, setInputValue, setLocalStorageDriverStatus } from '/@/utils'
 import { CoreType } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
 import { h, withModifiers } from 'vue'
@@ -65,23 +65,45 @@ const tabsValue = ref(tabs[0]!.value)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
 const rawMainSetting = ref<any[]>([])
-const mainSetting = ref<any[]>([])
-const extraSettings = ref<any[][]>([])
-const original = ref()
 const metaData = ref<WindowMetaData>({
   projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
   windowRemark: '',
 })
-const loading = ref(false)
-const formGate = createFormAsyncGate()
 const collapsed = ref(false)
+
+const {
+  mainSetting,
+  extraSettings,
+  loading,
+  formGate,
+  canSubmit,
+  initialize,
+  syncMobileVisibility,
+  updateFingerprint,
+  shuffleFingerprint,
+  buildCreateParams,
+  executeSingleCreate,
+} = useWindowCreateCore({
+  getFingerprintInputs: state => tabsValue.value === 'import'
+    ? [rawMainSetting.value, ...state.extraSettings.value]
+    : state.inputsGroup.value,
+  resolveMobileVisible: () => tabsValue.value === 'import' ? true : undefined,
+  onInputsInitialized: (state) => {
+    // 导入模式需要保留系统、系统版本和内核版本的默认值作为预览基准
+    rawMainSetting.value = state.mainSetting.value.map(input => deepClone(input))
+  },
+  onInitialized: getSettings,
+})
 
 const accordions = ref({
   value: [],
-  panels: [$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
-    .map((title, index) => ({ title, value: index.toString() })),
+  panels: [
+    { value: 'window', groupIndex: 0, placement: 'outside' as const, variant: 'window' as const },
+    ...[$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
+      .map((title, index) => ({ title, value: index.toString(), groupIndex: index + 1, placement: 'accordion' as const })),
+  ],
 })
 
 const templateMap = ref<Record<string, any>>()
@@ -95,7 +117,7 @@ const profileTemplate = reactive({
       return
     profileTemplate.oldValue = profileTemplate.value
     const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
-    initFormInputs(template)
+    initialize(template)
   },
 })
 
@@ -114,8 +136,6 @@ const items = computed(() => [
 ])
 
 const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100))
-
-const canCreate = computed(() => formGate.isReady.value && !loading.value)
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -142,13 +162,13 @@ watch(() => tabsValue.value, (value, oldValue) => {
       setInputValue(inputsGroup.value[0]!, name, value)
     })
   }
-  showMobileExtraSettings()
-  onUpdateFinger()
+  syncMobileVisibility()
+  updateFingerprint()
 })
 
 onBeforeMount(() => {
   getTemplateList()
-  initFormInputs()
+  initialize()
 })
 
 async function getTemplateList() {
@@ -205,17 +225,6 @@ async function getTemplateList() {
       },
     }
   })
-}
-
-async function initFormInputs(template: Record<string, any> = {}) {
-  const [inputsGroup, _original] = await getInputsGroup(template, showToast, formGate)
-  const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
-  rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
-  mainSetting.value = windowInputs
-  extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
-  original.value = _original
-  await onUpdateFinger()
-  getSettings()
 }
 
 async function getSettings() {
@@ -306,30 +315,9 @@ function clearGuide1Highlight() {
   document.querySelectorAll('.guide1 .guide1-pulse-active').forEach(el => el.classList.remove('guide1-pulse-active'))
 }
 
-function showMobileExtraSettings() {
-  if (tabsValue.value === 'import') {
-    switchMoblieInputVisible(extraSettings.value, true)
-  }
-  else {
-    const input = findInputByName(mainSetting.value, 'os')
-    const moblieVisible = ['Android', 'IOS'].includes(input.value.value)
-    switchMoblieInputVisible(extraSettings.value, moblieVisible)
-  }
-}
-
 function choosePreset(data: any) {
   presetTemplate.value = data
-  initFormInputs(data.preset)
-}
-
-async function onShuffle() {
-  await onUpdateFinger()
-  showToast(0, $t('指纹刷新成功'))
-}
-
-async function onUpdateFinger() {
-  const data = await formGate.run(() => ceateRandomFinger(previewInputs.value))
-  Object.assign(original.value, data[0])
+  initialize(data.preset)
 }
 
 function showTemplates(event: MouseEvent) {
@@ -438,13 +426,11 @@ function importSuccess(data: any) {
 async function createProfile(openBrowser: boolean) {
   await formGate.waitUntilReady()
   clearDriver()
-  const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
-  const formData = getFormDataByList(inputsGroup.value, _metaData)
-  const params = {
+  const params = buildCreateParams({
+    inputs: inputsGroup.value,
+    metadata: metaData.value,
     createCount: createCount.value,
-    ...original.value,
-    ...formData,
-  }
+  })
   switch (tabsValue.value) {
     case 'single':
       return checkPresetTemplate(params, openBrowser)
@@ -478,15 +464,14 @@ function checkPresetTemplate(params: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
-  loading.value = true
-  const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    onBack(data, openBrowser)
-    workspaceStore.getWorkspaceList()
-    userStore.fetchUserInfo()
-  }
-  loading.value = false
+  return executeSingleCreate({
+    params,
+    onSuccess: (data) => {
+      onBack(data, openBrowser)
+      workspaceStore.getWorkspaceList()
+      userStore.fetchUserInfo()
+    },
+  })
 }
 
 async function batchCreateProfile(params: any) {
@@ -661,12 +646,12 @@ function onBack(data?: any, openBrowser = false) {
 </script>
 
 <template>
-  <div class="relative flex flex-col h-full">
+  <div class="relative flex min-h-0 flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs />
-    <div class="px-16 flex flex-1 overflow-hidden overflow-x-auto">
-      <div class="w-full h-full flex gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
-        <div class="flex min-w-0 flex-1 flex-col">
+    <div class="px-16 flex flex-1 min-h-0 overflow-hidden overflow-x-auto">
+      <div class="w-full h-full flex min-h-0 gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col">
           <div v-if="tabsValue === 'multiple'" class="mx-4 py-4 multiple">
             <div class="flex items-center justify-between">
               <div class="subtitle">
@@ -678,7 +663,7 @@ function onBack(data?: any, openBrowser = false) {
               {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
             </div>
           </div>
-          <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+          <AccordionInputs class="flex-1 min-h-0" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>
               <ImportWindow v-if="tabsValue === 'import'" v-model:error="fileAnalyzeError" class="pt-4" @import-success="importSuccess" />
               <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
@@ -690,7 +675,7 @@ function onBack(data?: any, openBrowser = false) {
             </template>
           </AccordionInputs>
         </div>
-        <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="tabsValue === 'import'" :on-shuffle="onShuffle"
+        <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="tabsValue === 'import'" :on-shuffle="shuffleFingerprint"
                      :choose-preset="choosePreset"
         />
       </div>
@@ -699,7 +684,7 @@ function onBack(data?: any, openBrowser = false) {
       <div class="mx-auto relative flex items-center justify-end gap-2 py-4 min-h-16 footer" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
         <MateGroup v-model="metaData" class="flex-1" :show-remark="tabsValue !== 'import'" />
         <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-        <RxButton v-tooltip.top="canCreate ? '' : $t('正在生成新指纹，请稍后')" class="guide2" :label="$t('创建窗口')" :disabled="!canCreate" :loading="loading" @click.stop="createProfile(false)" />
+        <RxButton v-tooltip.top="canSubmit ? '' : $t('正在生成新指纹，请稍后')" class="guide2" :label="$t('创建窗口')" :disabled="!canSubmit" :loading="loading" @click.stop="createProfile(false)" />
       </div>
     </div>
     <div class="foot-separator" />

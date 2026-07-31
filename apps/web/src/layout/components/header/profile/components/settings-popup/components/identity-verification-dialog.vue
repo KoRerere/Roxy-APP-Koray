@@ -9,6 +9,7 @@ import {
   validateKycIdNumber,
   type IdentityVerificationType,
 } from '../identity-verification'
+import { useProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
 
 const props = defineProps<{
   defaultTab?: IdentityVerificationType
@@ -18,6 +19,7 @@ const props = defineProps<{
 }>()
 
 const [showToast, onlyErrorToast] = useResponseToast()
+const proxyLabels = useProxyShopLabels()
 
 const activeTab = ref(props.defaultTab ?? 'personal')
 const agreed = ref(false)
@@ -148,7 +150,7 @@ async function handleSubmit() {
     >
       <template #content>
         <p class="identity-form__notice">
-          {{ $t('根据相关法规要求，导出代理 IP 需团队创建者完成实名认证。请在此完成企业或个人认证，认证通过后即可解锁团队导出限制。') }}
+          {{ proxyLabels.exportRequiresKycDesc }}
         </p>
       </template>
     </RxAlert>
@@ -185,7 +187,7 @@ async function handleSubmit() {
           <span class="form-field__required">*</span>
         </label>
         <p class="form-field__hint">
-          {{ $t('建议图片大小不超过4MB，支持 jpg、jpeg、png 等格式') }}
+          {{ $t('建议图片大小不超过4MB，超过将自动压缩；支持 jpg、jpeg、png 等格式') }}
         </p>
         <div class="identity-form__uploads">
           <IdentityIdUpload
@@ -255,7 +257,7 @@ async function handleSubmit() {
           <span class="form-field__required">*</span>
         </label>
         <p class="form-field__hint !mb-2">
-          {{ $t('建议图片大小不超过4MB，支持 jpg、jpeg、png 等格式') }}
+          {{ $t('建议图片大小不超过4MB，超过将自动压缩；支持 jpg、jpeg、png 等格式') }}
         </p>
         <IdentityIdUpload
           v-model="enterpriseForm.license"

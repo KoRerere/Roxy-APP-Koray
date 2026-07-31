@@ -1,10 +1,51 @@
+import { app } from 'electron'
 import { createWriteStream } from 'node:fs'
 import { access, cp, mkdir, rename, rm } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { homedir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { fileOperations } from '/@/modules/fileOperations'
 import { request } from '/@/utils/request'
 
 const ZIP_FILE_PATTERN = /\.zip$/
+
+export type EnsureBrowserCacheRootDirResult
+  = | { ok: true, path: string }
+    | { ok: false, reason: 'parent_missing' | 'mkdir_failed', error?: unknown }
+
+/**
+ * 确保浏览器缓存根目录存在
+ *
+ * @param dirPath 缓存根目录路径
+ * @param options.recursive 为 true 时等价 mkdir -p；为 false 时要求父目录已存在，仅创建叶子目录
+ */
+export async function ensureBrowserCacheRootDir(
+  dirPath: string,
+  options: { recursive?: boolean } = {},
+): Promise<EnsureBrowserCacheRootDirResult> {
+  if (!dirPath?.trim()) {
+    return { ok: false, reason: 'parent_missing' }
+  }
+
+  if (await fileExists(dirPath)) {
+    return { ok: true, path: dirPath }
+  }
+
+  const recursive = options.recursive ?? false
+  if (!recursive) {
+    const parentDir = dirname(dirPath)
+    if (!(await fileExists(parentDir))) {
+      return { ok: false, reason: 'parent_missing' }
+    }
+  }
+
+  try {
+    await mkdir(dirPath, { recursive })
+    return { ok: true, path: dirPath }
+  }
+  catch (error) {
+    return { ok: false, reason: 'mkdir_failed', error }
+  }
+}
 
 /**
  * 文件或目录是否存在
@@ -189,5 +230,24 @@ export async function moveDir(src: string, dest: string) {
     // 跨盘：只能 copy + delete
     await cp(src, dest, { recursive: true })
     await rm(src, { recursive: true })
+  }
+}
+
+/**
+ * 获取缓存路径
+ *
+ * @returns 缓存路径
+ */
+export function getCachePath(): string {
+  if (process.platform === 'darwin') {
+    return join(homedir(), 'Library', 'Caches')
+  }
+  else if (process.platform === 'win32') {
+    // Windows 一般用 LOCALAPPDATA 下的 Cache
+    return join(app.getPath('appData'), 'Cache')
+  }
+  else {
+    // Linux 一般是 ~/.cache
+    return join(homedir(), '.cache')
   }
 }

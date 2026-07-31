@@ -1,0 +1,12 @@
+{
+  "name": "@roxy/delay-launcher",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:all": "node build.mjs --targets=win-x64,macos-x64,macos-arm64,linux-x64"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.21.0"
+  }
+}

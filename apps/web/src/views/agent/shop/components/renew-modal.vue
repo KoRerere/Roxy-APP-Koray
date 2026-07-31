@@ -3,14 +3,15 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
-import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useFreedomActivity } from '/@/views/campaign/freedom/hook'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { PayWay } from '/@/enums/pay'
-import { ProxyOrderType } from '/@/enums/proxy'
+import { ProxyOrderType, ProxyType } from '/@/enums/proxy'
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
 interface Props {
   data: any[]
@@ -28,6 +29,7 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { showFreedomActivityModal } = useFreedomActivity()
+const shopLabels = useProxyShopLabels()
 
 const columns = [
   {
@@ -37,12 +39,24 @@ const columns = [
   },
   {
     title: $t('Roxy 独家特惠'),
-    getText: (data: any) => currency(data.proxyProviderDiscountPrice).format(),
+    render: ({ data }: any) => {
+      return (
+        <div>
+          <div class="text-3.25 font-[DingTalk_JinBuTi]">{currency(data.proxyProviderDiscountPrice).format()}</div>
+          {data.proxyProviderDiscountPrice !== data.proxyProviderPrice && <div class="tt-tertiary line-through">{currency(data.proxyProviderPrice).format()}</div>}
+        </div>
+      )
+    },
   },
   {
     title: $t('服务商'),
     key: 'proxyProviderName',
-    getText: (data: any) => data.proxyProviderName || $t('官方赠送'),
+    getText: (data: any) => data.proxyProviderName || '--',
+  },
+  {
+    title: $t('类型'),
+    key: 'proxyType',
+    getText: (data: any) => data.proxyType === ProxyType.buy ? $t('购买') : $t('添加'),
   },
   {
     title: $t('到期时间'),
@@ -123,45 +137,49 @@ async function onPay() {
 </script>
 
 <template>
-  <div class="relative flex flex-col gap-9 pa-8 rounded-lg w-240 popup">
+  <div class="relative flex flex-col gap-4 pa-8 rounded-lg w-192 popup">
     <RxLoading v-model="loading" :opacity="0.9" />
     <div class="flex items-center justify-between">
-      <span class="header">{{ $t('续费代理 IP') }}</span>
+      <span class="header">{{ shopLabels.renewTitle }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="24" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
-    <div class="flex flex-col gap-3 h-76">
-      <div class="subtitle">
-        {{ $t('您将要续费 {count} 个代理 IP:', { count: dataList.length }) }}
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-3 h-60">
+        <div class="tt-primary text-3 font-600 leading-normal">
+          {{ shopLabels.renewCountDesc(dataList.length) }}
+        </div>
+        <RyTable class="proxies" :columns="columns" :data-list="dataList" :show-table-header="false" :paginator="false" :show-actions="false">
+          <template #expired="{ data: row }">
+            <div class="flex items-center gap-3">
+              <span>{{ format(new Date(row.expireDate || Date.now()), "yyyy/MM/dd") }}</span>
+              <SvgIcon name="base/rx_ic_play" size="12" />
+              <span class="color-[var(--colors-text-text-success)]">{{ format(addDays(new Date(row.expireDate || Date.now()), periodValue?.day ?? 0), 'yyyy/MM/dd') }}</span>
+            </div>
+          </template>
+        </RyTable>
       </div>
-      <RyTable class="proxies" :columns="columns" :data-list="dataList" :show-table-header="false" :paginator="false" :show-actions="false">
-        <template #expired="{ data: row }">
-          <div class="flex items-center gap-3">
-            <span>{{ format(new Date(row.expireDate), "yyyy/MM/dd") }}</span>
-            <SvgIcon name="base/rx_ic_play" size="12" />
-            <span class="color-[var(--colors-text-text-success)]">{{ format(addDays(new Date(row.expireDate), periodValue?.day ?? 0), 'yyyy/MM/dd') }}</span>
+      <div class="flex flex-col gap-3">
+        <div class="tt-primary text-4 font-600 leading-normal">
+          {{ $t('续费时长:') }}
+        </div>
+        <div class="flex gap-3">
+          <div v-for="item in periods" :key="item.value" class="h-10 flex items-center px-3 leading-none cursor-pointer select-none period radio" :class="{ active: item.value === periodValue?.value }"
+               @click="periodValue = item"
+          >
+            {{ item.label }}
           </div>
-        </template>
-      </RyTable>
-    </div>
-    <div class="flex items-center gap-6">
-      <div class="w-40 text-right subtitle">
-        {{ $t('续费时长:') }}
-      </div>
-      <div class="flex gap-4">
-        <div v-for="item in periods" :key="item.value" class="px-5 py-2 cursor-pointer select-none period" :class="{ active: item.value === periodValue.value }" @click="periodValue = item">
-          {{ item.label }}
         </div>
       </div>
-    </div>
-    <div class="separator" />
-    <div class="flex items-center justify-end">
-      <div class="mr-3 price-label">
-        {{ $t('总价:') }}
+      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-border-base)" />
+      <div class="flex items-center justify-end">
+        <div class="mr-3 price-label">
+          {{ $t('总价:') }}
+        </div>
+        <div class="mr-6 price-value">
+          {{ currency(totalAmount).format() }}
+        </div>
+        <RxButton size="lg" :label="$t('确认并支付')" @click="onPay" />
       </div>
-      <div class="mr-6 price-value">
-        {{ currency(totalAmount).format() }}
-      </div>
-      <RxButton size="lg" :label="$t('确认并支付')" @click="onPay" />
     </div>
   </div>
 </template>
@@ -195,22 +213,32 @@ async function onPay() {
   overflow: hidden;
 }
 
-.period {
+.radio {
   border-radius: 8px;
-  border: 1px solid var(--colors-border-border-base);
+  border: 3px solid var(--colors-background-bg-page);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-  line-height: 24px;
+  transition: all 0.3s;
+
+  &:not(.active):hover {
+    background: var(--colors-background-bg-action-hover);
+  }
 
   &.active {
     border-color: var(--colors-border-border-brand);
-    color: var(--colors-text-text-brand);
+    background: var(--pattern-pay-gradient-selected-start);
+    box-shadow: none;
+
+    &.period {
+      color: var(--colors-text-text-brand);
+      font-weight: 600;
+    }
   }
 }
 
-.separator {
-  border-bottom: 1px solid var(--colors-border-divider);
+.period {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
 }
 
 .price {

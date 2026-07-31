@@ -1,3 +1,5 @@
+import { createProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import DiskInsufficient from '/@/views/browser/list/profiles/components/disk-Insufficient.vue'
 import OpenedLayoutModel from '/@/views/browser/list/profiles/components/opened-layout-model.vue'
 import { useConfirm } from 'primevue/useconfirm'
@@ -7,13 +9,89 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
-// import { isNewerVersion } from '/@/utils/common'
 import { compare } from 'compare-versions'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { windowManager } from '/@/utils/windowManager'
+import type { BrowserProcessMessage, MainMessageResult } from '@roxy/electron-preload'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
-type Data = UserGetWindowInfoListListData['data']['rows'][number]
+/** 窗口列表行数据 */
+export type ProfileRow = Omit<UserGetWindowInfoListListData['data']['rows'][number], 'statusInfo'> & {
+  proxyExpireStatus?: number
+  /** 是否电商专用窗口/账号：true/1 为电商，false/0 为普通 */
+  isEcommerce?: boolean | number
+  statusInfo?: {
+    openUserId?: number
+    openUserName?: string
+  }[]
+}
+
+/** 打开进度消息（Electron IPC + Web 云浏览器共用结构） */
+export type ProfileOpenMessage = Partial<MainMessageResult<Partial<BrowserProcessMessage>>> & {
+  pending?: boolean
+  uploading?: boolean
+}
+
+type Data = ProfileRow
+
+/** 创建打开成功消息，与 Electron launch-process-message 结构保持一致 */
+export function createOpenSuccessMessage(dirId: string): ProfileOpenMessage {
+  return {
+    code: 0,
+    pending: false,
+    uploading: false,
+    data: {
+      dirId,
+      percent: 100,
+      message: $t('打开成功'),
+      warningMessages: [],
+    },
+  }
+}
+
+/** 创建启动中消息 */
+export function createOpeningMessage(dirId: string, message = $t('启动中...')): ProfileOpenMessage {
+  return {
+    code: 0,
+    pending: false,
+    uploading: true,
+    data: {
+      dirId,
+      percent: 100,
+      message,
+      warningMessages: [],
+    },
+  }
+}
+
+/** 写入指定 dirId 的打开状态 */
+export function setProfileOpenMessage(
+  openMessage: Record<string, ProfileOpenMessage>,
+  dirId: string,
+  message: ProfileOpenMessage,
+) {
+  Reflect.set(openMessage, dirId, message)
+}
+
+/** 清除指定 dirId 的打开状态 */
+export function clearProfileOpenMessage(
+  openMessage: Record<string, ProfileOpenMessage>,
+  dirId: string,
+) {
+  Reflect.deleteProperty(openMessage, dirId)
+}
+
+/** 判断 Web 端消息是否处于活跃打开流程中，避免 winMap 同步误删 */
+function isProfileOpenMessageInProgress(message?: ProfileOpenMessage) {
+  if (!message)
+    return false
+  if (message.pending || message.uploading)
+    return true
+  if (message.code === 0 && message.data?.percent != null && message.data.percent < 100)
+    return true
+  return false
+}
 
 export function useProfileOpenState() {
   const [showModal] = RxUseDialog()
@@ -41,9 +119,38 @@ export function useProfileOpenState() {
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { mixpanelTrack } = useUserStore()
   const [_, onlyErrorToast] = useResponseToast()
+  const { isEcommerce } = useRouteContext()
+  const profileLabels = computed(() => createProfileEntityLabels(isEcommerce.value))
   const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
 
-  const openMessage = reactive<Record<string, any>>({})
+  const openMessage = reactive<Record<string, ProfileOpenMessage>>({})
+
+  /** 根据 winMap 同步 Web 云浏览器打开态，列表级单 watcher 避免每行重复监听 */
+  function syncWebWindowOpenState() {
+    const winMap = windowManager.winMap.value
+
+    winMap.forEach((win, dirId) => {
+      if (win && !win.closed)
+        setProfileOpenMessage(openMessage, String(dirId), createOpenSuccessMessage(String(dirId)))
+    })
+
+    for (const dirId of Object.keys(openMessage)) {
+      const win = winMap.get(dirId)
+      if (win && !win.closed)
+        continue
+      if (isProfileOpenMessageInProgress(openMessage[dirId]))
+        continue
+      clearProfileOpenMessage(openMessage, dirId)
+    }
+  }
+
+  /** 注册 Web 端窗口管理器监听，在页面 onBeforeMount 调用 */
+  function listenWebWindowManager() {
+    if (globalThis.isElectron)
+      return () => {}
+
+    return watch(windowManager.winMap, syncWebWindowOpenState, { immediate: true })
+  }
 
   function sendFirstOpenRecord() {
     if (userInfo.value.onboardingTaskStatus?.firstOpenWindowStatus === false) {
@@ -70,7 +177,7 @@ export function useProfileOpenState() {
       if (dirId == null)
         return
 
-      Reflect.set(openMessage, String(dirId), event)
+      Reflect.set(openMessage, String(dirId), event as ProfileOpenMessage)
       if (event.code !== 0) {
         options?.onOpenFailed?.(dirId)
         return
@@ -104,7 +211,7 @@ export function useProfileOpenState() {
 
   function clearMessage(datas: Data[]) {
     datas.forEach((item) => {
-      Reflect.deleteProperty(openMessage, item.dirId!)
+      clearProfileOpenMessage(openMessage, item.dirId!)
     })
   }
 
@@ -112,7 +219,7 @@ export function useProfileOpenState() {
     const ids = datas.map(item => item.id!)
     const { code, data, msg } = await API.window.userGetWindowStatusInfoCreate({ ids }).catch((error) => {
       console.error(error)
-      return { code: -1, data: [], msg: $t('获取窗口状态信息失败') }
+      return { code: -1, data: [], msg: profileLabels.value.getStatusFailed }
     })
     if (code !== 0) {
       onlyErrorToast(code, msg)
@@ -177,7 +284,7 @@ export function useProfileOpenState() {
       return
 
     datas.forEach((item, index) => {
-      Reflect.set(openMessage, item.dirId!, {
+      setProfileOpenMessage(openMessage, item.dirId!, {
         pending: true,
         data: {
           message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
@@ -235,6 +342,7 @@ export function useProfileOpenState() {
     listenOpenMessage,
     listenCloseMessage,
     listenCloseSyncingDataMessage,
+    listenWebWindowManager,
     openBrowserBefore,
     clearMessage,
     checkProfileStatus,

@@ -7,12 +7,15 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import type { FormInstance, FormSubmitEvent } from '@primevue/forms'
 import type { Input } from './type'
 
-const { id = Date.now().toString(32), inputs } = defineProps<{
+const {
+  id = useId(),
+  inputs,
+  position = 'top',
+  labelProps,
+} = defineProps<{
   id?: string
-  // position?: 'top' | 'left'
-  /**
-   * labelProps?: Record<string, any>
-   */
+  position?: 'top' | 'left'
+  labelProps?: Record<string, any>
   inputs: Input[]
 }>()
 
@@ -32,6 +35,8 @@ genFormContext({
   getFieldState: (name: string) => {
     return formRef.value?.getFieldState(name)
   },
+  position: toRef(() => position),
+  labelProps: toRef(() => labelProps),
 })
 
 const _inputs = ref(inputs)
@@ -113,12 +118,15 @@ defineExpose({
   submit: () => {
     formRef.value?.submit()
   },
+  validateField: (field: string) => {
+    return formRef.value?.validate(field)
+  },
 })
 </script>
 
 <template>
   <Form :id="id" ref="tsform" :initial-values="initialValues" :resolver="resolver" class="flex flex-col gap-4 self-stretch" @submit="onFormSubmit">
-    <slot name="default" :inputs="_inputs">
+    <slot name="default" :inputs="_inputs" :position="position" :label-props="labelProps">
       <template v-for="input in _inputs" :key="input.name">
         <FormItem :input="input" />
       </template>

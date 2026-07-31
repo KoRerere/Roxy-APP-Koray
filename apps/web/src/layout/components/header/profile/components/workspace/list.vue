@@ -15,6 +15,7 @@ import { copyText, sleep } from '/@/utils/'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 import { API } from '/@/api'
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
 
 type Data = UnwrapRowType<UserGetWorkspaceListListData>
 
@@ -29,6 +30,7 @@ const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const [showWorkspaceFormDialog] = useDialog()
+const projectLabels = useProjectEntityLabels()
 
 const roleStr = getRoleLabelMap()
 const workspaceForm = ref({
@@ -40,7 +42,7 @@ const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 
 const list = computed(() => {
   const { owner, member } = Object.groupBy(workspaceList.value, ({ role, workspaceType }) => {
-    return role === Role.OWNER ? 'owner' : workspaceType === WorkspaceType.Private ? 'member' : 'shared'
+    return role === Role.OWNER ? 'owner' : workspaceType === WorkspaceType.Public ? 'shared' : 'member'
   })
   return [...(owner || []), ...(member || [])]
 })
@@ -99,7 +101,7 @@ async function showCreateWorkspaceDialog() {
           <RxTooltip class="flex items-center">
             {{
               default: () => <RxSvgIcon class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-tertiary)" />,
-              content: () => <div class="color-white w-60 whitespace-pre-wrap text-3">{$t('团队是一个独立的分组环境，通过创建或加入不同团队，您可以使用单一主账号邀请成员组建团队，并为其分配不同的权限设置。每个团队内的数据（如窗口、成员、代理 IP、项目和账号等）完全隔离，确保团队间的操作互不干扰。')}</div>,
+              content: () => <div class="color-white w-60 whitespace-pre-wrap text-3">{projectLabels.value.teamIsolationDescription}</div>,
             }}
           </RxTooltip>
 
@@ -120,7 +122,10 @@ async function showCreateWorkspaceDialog() {
         return Promise.reject(new Error('表单校验失败'))
       }
       Reflect.deleteProperty(workspaceForm.value, 'maxWindowCount')
-      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(workspaceForm.value)
+      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate({
+        ...workspaceForm.value,
+        workspaceType: currentWorkspace.value?.workspaceType,
+      })
       if (code === 0) {
         userStore.fetchUserInfo()
         resetWorkspaceForm()

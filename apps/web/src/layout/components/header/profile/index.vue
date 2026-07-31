@@ -24,6 +24,7 @@ import { usePreventMask } from '/@/hooks/usePreventMask'
 import type { SvgNames } from '/@/components/rx-icon'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 import { useLockApp } from '/@/layout/components/header/useLockApp'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const router = useRouter()
 const dialog = useDialog()
@@ -37,6 +38,7 @@ const [showToast] = useResponseToast()
 const { showPreventMask, hidePreventMask } = usePreventMask()
 const { openLockApp } = useLockApp()
 const { openIdentityVerificationEntry } = useIdentityVerificationEntry()
+const profileLabels = useProfileEntityLabels()
 
 const menuRef = useTemplateRef('menu')
 
@@ -117,7 +119,7 @@ const items = computed(() => {
                 class: '!w-[480px]',
                 okText: $t('前往'),
                 slots: {
-                  default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>,
+                  default: () => <>{profileLabels.value.themeEntitySettingsNote}</>,
                 },
                 async handleOk() {
                   openSettings('preferences')
@@ -241,7 +243,7 @@ function showLogoutConfirm() {
       severity: 'danger',
     },
     slots: {
-      default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>,
+      default: () => <>{profileLabels.value.closeAllEntitiesOnExit}</>,
     },
     handleOk() {
       resolve(true)

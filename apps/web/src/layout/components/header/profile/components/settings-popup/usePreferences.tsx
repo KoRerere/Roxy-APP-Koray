@@ -13,16 +13,18 @@ import SimulationShortcut from '../simulation-shortcut.vue'
 import ClearCache from '/@/layout/components/header/profile/components/settings-popup/components/clear-cache.vue'
 import RxTooltip from '/@/components/rx-tooltip'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { ClearType, TaskbarIconDisplay, TaskbarTabDisplay, UaStrictMode } from '/@/enums'
+import { ClearType, RestoreWindowNetworkChange, TaskbarIconDisplay, TaskbarTabDisplay, UaStrictMode } from '/@/enums'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_HUMAN_NOISE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
 import { isDev, isLinux, isWindows } from '/@/utils/common'
+import { supportsApp4_0_0 } from '/@/utils/app-supports'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
 import { getImage, isEmptyValue, isObject } from '/@/utils'
-// import { useBusinessModePanel } from './useBusinessMode'
+import { createProfileEntityLabels, useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import type { Items, SettingsModule } from '/@/layout/components/header/profile/type'
 
 const SIMULATION_DELAY_RANGE_KEY = 'delayRange'
@@ -123,6 +125,7 @@ function resolveTaskbarTabDisplay(data?: { taskbarTabDisplay?: string }) {
 }
 
 function TaskbarIconDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () => void }) {
+  const profileLabels = useProfileEntityLabels()
   const handlePreview = (src: string) => openTaskbarImagePreview(src, onHideTooltip)
 
   return (
@@ -133,11 +136,11 @@ function TaskbarIconDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: ()
       <div class="flex gap-2.5">
         <div class="flex flex-col gap-1 items-start w-[116px]">
           <TaskbarSettingPreviewImage src={getImage('settings/task-icon-window-num.jpg')} onPreview={handlePreview} />
-          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口编号')}</span>
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{profileLabels.value.entityNum}</span>
         </div>
         <div class="flex flex-col gap-1 items-start w-[116px]">
           <TaskbarSettingPreviewImage src={getImage('settings/task-icon-window-name.jpg')} onPreview={handlePreview} />
-          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口名字')}</span>
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{profileLabels.value.entityDisplayName}</span>
         </div>
       </div>
     </div>
@@ -145,6 +148,7 @@ function TaskbarIconDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: ()
 }
 
 function TaskbarTabDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () => void }) {
+  const profileLabels = useProfileEntityLabels()
   const handlePreview = (src: string) => openTaskbarImagePreview(src, onHideTooltip)
 
   return (
@@ -159,7 +163,7 @@ function TaskbarTabDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () 
         </div>
         <div class="flex flex-col gap-1 items-start w-[116px]">
           <TaskbarSettingPreviewImage src={getImage('settings/task-label-window-name.jpg')} onPreview={handlePreview} />
-          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{$t('窗口名称')}</span>
+          <span class="text-3 leading-5 text-[var(--colors-text-text-primary)]">{profileLabels.value.entityName}</span>
         </div>
       </div>
     </div>
@@ -167,10 +171,11 @@ function TaskbarTabDisplayTooltipContent({ onHideTooltip }: { onHideTooltip: () 
 }
 
 export function usePreferencesPanel() {
-  const { saveUserConfig } = useCommonUtil()
-  // const { createBusinessModeSection } = useBusinessModePanel()
+  const { saveUserConfig, saveLocalConfig } = useCommonUtil()
+  const { isEcommerce } = useRouteContext()
 
   const getPreferencesPanels = async (data?: any) => {
+    const profileLabels = createProfileEntityLabels(isEcommerce.value)
     const [softConfig, disk, searchEngineResult] = await Promise.all([
       globalThis.electronAPI.send('app:getSoftConfig'),
       globalThis.electronAPI.send('app:getRoxyCacheDiskInfo'),
@@ -202,13 +207,14 @@ export function usePreferencesPanel() {
       simulation[SIMULATION_DELAY_RANGE_KEY] = [fallbackMin, fallbackMax]
     }
 
+    const isAutoUpdateOnLaunchLocal = supportsApp4_0_0()
+
     const items = reactive<SettingsModule>({
       title: $t('软件设置'),
       description: $t('设置您的客户端使用偏好'),
       list: [
-        // createBusinessModeSection(),
         {
-          subtitle: $t('窗口'),
+          subtitle: profileLabels.settingsPanelSubtitle,
           items: [
             {
               label: $t('主题模式'),
@@ -262,9 +268,7 @@ export function usePreferencesPanel() {
               label: $t('工作台'),
               text: () => (
                 <div class="w-88">
-                  {$t(
-                    '打开窗口时，是否打开工作台页面',
-                  )}
+                  {profileLabels.openWorkbenchWhenOpen}
                 </div>
               ),
               name: 'openWorkbench',
@@ -287,7 +291,7 @@ export function usePreferencesPanel() {
               label: $t('Google 登录'),
               text: () => (
                 <div class="w-88">
-                  <div>{$t('窗口是否开启谷歌账号登录（火狐内核的窗口暂不支持此功能。）')}</div>
+                  <div>{profileLabels.googleLoginEnableDesc}</div>
                 </div>
               ),
               name: 'googleLoginEnable',
@@ -326,7 +330,7 @@ export function usePreferencesPanel() {
             {
               label: $t('搜索引擎'),
               name: 'searchEngine',
-              text: $t('打开窗口时，浏览器使用的默认搜索引擎'),
+              text: profileLabels.searchEngineWhenOpen,
               value: searchEngineOptions.find(item => item.value === data?.searchEngine) ?? searchEngineOptions[0],
               props: {
                 filter: false,
@@ -371,8 +375,8 @@ export function usePreferencesPanel() {
                 filter: false,
                 optionValue: 'value',
                 options: [
-                  { label: $t('窗口编号'), value: TaskbarIconDisplay.windowNum },
-                  { label: $t('窗口名称'), value: TaskbarIconDisplay.windowName },
+                  { label: profileLabels.entityNum, value: TaskbarIconDisplay.windowNum },
+                  { label: profileLabels.entityName, value: TaskbarIconDisplay.windowName },
                 ],
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -409,7 +413,7 @@ export function usePreferencesPanel() {
                 optionValue: 'value',
                 options: [
                   { label: $t('当前标签页名称'), value: TaskbarTabDisplay.tabTitle },
-                  { label: $t('窗口名称'), value: TaskbarTabDisplay.windowName },
+                  { label: profileLabels.entityName, value: TaskbarTabDisplay.windowName },
                 ],
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -425,7 +429,7 @@ export function usePreferencesPanel() {
             },
             {
               label: $t('批量打开布局'),
-              text: $t('批量打开窗口时，窗口的布局方式'),
+              text: profileLabels.batchOpenLayoutDesc,
               name: 'batchOpenLayout',
               value: data?.batchOpenLayout ?? 'stack',
               props: {
@@ -663,7 +667,7 @@ export function usePreferencesPanel() {
               name: 'diskLimit',
               value: data?.diskLimit ?? 8,
               text: () => (
-                <div class="w-88">{$t('磁盘空间低于设置的阈值时，将停止打开浏览器窗口')}</div>
+                <div class="w-88">{profileLabels.stopOpenWhenDiskLow}</div>
               ),
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 const oldValue = item.value
@@ -724,12 +728,12 @@ export function usePreferencesPanel() {
                   {
                     label: $t('清除本地缓存（保留插件）'),
                     value: ClearType.partial,
-                    tooltip: $t('清除扩展数据以外的所有本地缓存文件，登录状态不会失效！窗口指纹信息、IP 不会被清理。'),
+                    tooltip: profileLabels.clearCachePartialTooltipPlain,
                   },
                   {
                     label: $t('清除本地缓存'),
                     value: ClearType.all,
-                    tooltip: $t('清除所有本地缓存文件，登录状态不会失效！窗口指纹信息、IP 不会被清理。'),
+                    tooltip: profileLabels.clearCacheAllTooltipPlain,
                   },
                 ],
               },
@@ -760,7 +764,7 @@ export function usePreferencesPanel() {
             },
             {
               label: $t('自动清除缓存时间'),
-              text: () => <div class="w-88">{$t('清除过去指定时间内未使用窗口的缓存数据')}</div>,
+              text: () => <div class="w-88">{profileLabels.clearUnusedEntityCacheDesc}</div>,
               name: 'clearCachePeriod',
               value: data?.clearCachePeriod ?? 30,
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === 'autoClearCache')?.value,
@@ -818,7 +822,7 @@ export function usePreferencesPanel() {
               value: data?.memoryLimit ?? '',
               text: () => (
                 <div class="w-88">
-                  {$t('内存使用达到设置的阈值时，将停止打开浏览器窗口')}
+                  {profileLabels.stopOpenWhenMemoryLow}
                 </div>
               ),
               component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -849,7 +853,7 @@ export function usePreferencesPanel() {
             {
               label: $t('自定义书签'),
               name: 'bookText',
-              text: $t('支持 Chrome / Firefox 导出的 .html 格式，最多 {count} 个 URL\n窗口偏好设置中开启“自定义书签”功能生效', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }),
+              text: $t('支持 Chrome / Firefox 导出的 .html 格式，最多 {count} 个 URL\n{pref}', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT, pref: profileLabels.customBookmarksPreferenceDesc }),
               value: data?.bookText,
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
@@ -892,8 +896,8 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('窗口自动恢复'),
-              text: $t('主动重启客户端后，恢复上次窗口打开状态'),
+              label: profileLabels.autoRestoreEntity,
+              text: profileLabels.autoRestoreEntityDesc,
               name: 'autoRestoreWindow',
               value: data?.autoRestoreWindow ?? 2,
               props: {
@@ -903,6 +907,35 @@ export function usePreferencesPanel() {
                   { label: $t('弹出提示'), value: 2 },
                   { label: $t('开启'), value: 1 },
                   { label: $t('关闭'), value: 0 },
+                ],
+              },
+              component: ({ item, ...props }: { item: Items, props: any }) => {
+                return (
+                  <TsFormSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                )
+              },
+            },
+            {
+              label: $t('客户端网络变化提示'),
+              text: profileLabels.restoreEntityNetworkChangeDesc,
+              name: 'restoreWindowNetworkChange',
+              value: data?.restoreWindowNetworkChange ?? RestoreWindowNetworkChange.Prompt,
+              hide: (_item, items) => {
+                const autoRestoreWindow = items.find(i => i.name === 'autoRestoreWindow')?.value ?? data?.autoRestoreWindow ?? 2
+                return autoRestoreWindow === 0
+              },
+              props: {
+                filter: false,
+                optionValue: 'value',
+                options: [
+                  { label: $t('弹出提示'), value: RestoreWindowNetworkChange.Prompt },
+                  { label: profileLabels.continueRestoreEntity, value: RestoreWindowNetworkChange.Continue },
+                  { label: profileLabels.abortRestoreEntity, value: RestoreWindowNetworkChange.Abort },
                 ],
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -939,21 +972,24 @@ export function usePreferencesPanel() {
             },
             {
               label: $t('自动更新客户端'),
+              hide: () => !isWindows,
               text: () => (
                 <div class="w-88">
                   {$t(
-                    '仅在系统空闲时更新，不打断正常业务',
+                    '客户端启动时，自动安装已下载的最新版本',
                   )}
                 </div>
               ),
-              name: 'autoUpdateApp',
-              value: data?.autoUpdateApp ?? true,
+              name: isAutoUpdateOnLaunchLocal ? 'autoUpdateAppOnLaunch' : 'autoUpdateApp',
+              value: isAutoUpdateOnLaunchLocal
+                ? (softConfig?.autoUpdateAppOnLaunch ?? softConfig?.autoUpdateApp ?? true)
+                : (data?.autoUpdateApp ?? softConfig?.autoUpdateApp ?? true),
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
                   <RxToggleSwitch
                     {...item.props}
                     {...props}
-                    onChange={() => saveUserConfig(item)}
+                    onChange={() => (isAutoUpdateOnLaunchLocal ? saveLocalConfig(item) : saveUserConfig(item))}
                   />
                 )
               },

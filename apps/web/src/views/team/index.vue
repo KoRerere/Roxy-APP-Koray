@@ -2,18 +2,21 @@
 import TeamMember from './team-member.vue'
 import OperationLog from './operation-log.vue'
 import TransferHistory from '/@/views/browser/list/transfer/history.vue'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import { usePermission } from '/@/hooks/usePermission'
 
 const route = useRoute()
 const router = useRouter()
 const { check } = usePermission()
+const { isEcommerce } = useRouteContext()
 const activeTabValue = ref((route.query.name as string) || 'team-member')
 
 const tabs = computed(() => {
   return [
     { title: $t('团队成员'), value: 'team-member', component: TeamMember, visible: true },
     { title: $t('操作日志'), value: 'operation-log', component: OperationLog, visible: check('Team_Log_view_page') },
-    { title: $t('转移历史'), value: 'transfer-record', component: TransferHistory, visible: check('Team_Transfer_view_page') },
+    // 电商模式无窗口转移能力，隐藏转移历史
+    { title: $t('转移历史'), value: 'transfer-record', component: TransferHistory, visible: !isEcommerce.value && check('Team_Transfer_view_page') },
   ].filter(tab => tab.visible !== false)
 })
 

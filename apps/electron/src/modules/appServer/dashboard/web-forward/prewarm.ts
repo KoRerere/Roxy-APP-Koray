@@ -18,8 +18,8 @@ import {
   shouldStoreWebResource,
 } from './policy'
 
-/** 预热入口 HTML 路径（同时兼容根路径和 index.html）。 */
-const PREWARM_ENTRY_PATHS = ['/index.html', '/'] as const
+/** 预热入口 HTML 路径（同时兼容根路径、index.html 与 dashboard.html）。 */
+const PREWARM_ENTRY_PATHS = ['/index.html', '/dashboard.html', '/'] as const
 /** 并发拉取 /assets/* 的最大数量，避免在启动阶段抢占带宽。 */
 const PREWARM_ASSET_CONCURRENCY = 6
 /** 整个预热阶段最长执行时间，超时则放弃，等待用户实际请求时再走代理。 */

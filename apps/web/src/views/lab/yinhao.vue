@@ -11,6 +11,8 @@ import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
 import RaffleModal from './raffle-modal.vue'
+import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk-modal.vue'
+import ConsultantModal from '/@/views/tutorial/before-enter/consultant-modal.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 import DoubeOpen from './doube-open.vue'
@@ -23,8 +25,6 @@ import DoubeOpen from './doube-open.vue'
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
-import NewEnter from '/@/views/lab/new-enter/index.vue'
-
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
 // import { getInviteCode } from '/@/api/util'
@@ -32,18 +32,48 @@ const router = useRouter()
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 
-function _open1() {
+function openConsultantModal() {
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
-    // closeOnEscape: false,
-    // pt: {
-    //   root: '!border-none !shadow-none rounded-lg overflow-hidden',
-    //   // mask: "!backdrop-blur-md",
-    // },
     slots: {
-      container: ({ hideModal }) => <RaffleModal onClose={hideModal}></RaffleModal>,
+      container: ({ hideModal }) => h(ConsultantModal, {
+        onClose: hideModal,
+      }),
+    },
+  })
+}
+
+function _openBindRisk() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => (
+        <ProxyBindRiskModal
+          proxyId="754276"
+          displayId="108"
+          formContext={{
+            accountPlatform: null,
+            windowName: 'Profile-1416159',
+            platformUserName: '',
+            deviceInfo: {
+              lastCountry: 'US',
+              lastIp: '45.76.18.61',
+              port: '9100',
+              expireDate: '2026-08-09',
+              proxyType: 1,
+              proxyExpireStatus: 1,
+              orderStatus: 1,
+            },
+          }}
+          onClose={hideModal}
+          onReselect={hideModal}
+          onContinue={hideModal}
+        />
+      ),
     },
   })
 }
@@ -428,17 +458,7 @@ const ipValues = ref([192, 168, 134, 22])
 // ===================
 
 function _open122() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    pt: {
-      root: '!max-w-full !max-h-full !border-none !shadow-none !rounded-none overflow-hidden',
-    },
-    slots: {
-      container: ({ hideModal }) => <NewEnter onClose={hideModal}></NewEnter>,
-    },
-  })
+  router.push({ name: 'before-enter' })
 }
 </script>
 
@@ -465,7 +485,8 @@ function _open122() {
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <RxButton label="open1" @click="_open1" />
+    <RxButton label="consultant modal" @click="openConsultantModal" />
+    <RxButton label="bind risk" @click="_openBindRisk" />
     <!-- <RxButton label="open2" @click="_open2" /> -->
     <!-- <DoubeOpen /> -->
     <!-- <ScrollPanel class="w-100 h-100">
@@ -509,6 +530,15 @@ function _open122() {
           </Accordion>
         </template>
 </TsForm>
+
+<TsForm id="ecommerce-basic-info" ref="form" :inputs="inputs" :validate-on-value-update="false" validate-on-blur class="gap-4">
+  <template #default="{ inputs: formInputs }">
+        <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+          <FormItem v-for="input in formInputs" :key="input.name" :input="input" />
+        </div>
+      </template>
+</TsForm>
+
 <RxButton class="w-full" type="submit" label="normal submit" form="wcis" />
 <RxButton class="w-full" outlined severity="secondary" label="no form id submit" @click="_noFormIdWcis"></RxButton>
 <RxButton class="w-full" outlined severity="secondary" label="set inputs props" @click="_setInputsProps"></RxButton>

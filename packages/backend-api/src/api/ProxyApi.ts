@@ -14,14 +14,22 @@ import {
   GetConsumptionGiftIpConfigListData,
   UserAddProxyModuleCreateData,
   UserAddProxyModuleCreatePayload,
+  UserAddProxyModuleV2CreateData,
+  UserAddProxyModuleV2CreatePayload,
+  UserBatchCheckProxyImportCreateData,
+  UserBatchCheckProxyImportCreatePayload,
   UserBatchMdfProxyModuleCheckCreateData,
   UserBatchMdfProxyModuleCheckCreatePayload,
+  UserCheckProxyBindRiskCreateData,
+  UserCheckProxyBindRiskCreatePayload,
   UserCheckProxyCreateData,
   UserCheckProxyCreatePayload,
   UserCheckWindowProxyStatusCreateData,
   UserCheckWindowProxyStatusCreatePayload,
   UserDelProxyModuleV2CreateData,
   UserDelProxyModuleV2CreatePayload,
+  UserExportProxyDeviceInfoCreateData,
+  UserExportProxyDeviceInfoCreatePayload,
   UserGetPromotionRedeemCodeListListData,
   UserGetPromotionRedeemCodeListListParams,
   UserGetProxyAllCountriesListData,
@@ -39,10 +47,16 @@ import {
   UserGetProxyCountryPriceListListParams,
   UserGetProxyDetailMergedListData,
   UserGetProxyDetailMergedListParams,
+  UserGetProxyDeviceBoundAccountsListData,
+  UserGetProxyDeviceBoundAccountsListParams,
+  UserGetProxyDeviceDetailListData,
+  UserGetProxyDeviceDetailListParams,
   UserGetProxyListMergedListData,
   UserGetProxyListMergedListParams,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
+  UserGetProxyOperateRecordListCreateData,
+  UserGetProxyOperateRecordListCreatePayload,
   UserGetProxyProviderListListData,
   UserGetProxyProvidersByBusinessSceneCountryListData,
   UserGetProxyProvidersByBusinessSceneCountryListParams,
@@ -999,6 +1013,151 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<UserGetProxyRenewPriceListListData, any>({
       path: `/user_get_proxy_renew_price_list`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserExportProxyDeviceInfoCreate
+   * @summary 代理设备导出记录
+   * @request POST:/user_export_proxy_device_info
+   * @response `200` `UserExportProxyDeviceInfoCreateData`
+   */
+  userExportProxyDeviceInfoCreate = (
+    data: UserExportProxyDeviceInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserExportProxyDeviceInfoCreateData, any>({
+      path: `/user_export_proxy_device_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyOperateRecordListCreate
+   * @summary 获取设备操作记录
+   * @request POST:/user_get_proxy_operate_record_list
+   * @response `200` `UserGetProxyOperateRecordListCreateData`
+   */
+  userGetProxyOperateRecordListCreate = (
+    data: UserGetProxyOperateRecordListCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyOperateRecordListCreateData, any>({
+      path: `/user_get_proxy_operate_record_list`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserCheckProxyBindRiskCreate
+   * @summary 设备检测
+   * @request POST:/user_check_proxy_bind_risk
+   * @response `200` `UserCheckProxyBindRiskCreateData`
+   */
+  userCheckProxyBindRiskCreate = (
+    data: UserCheckProxyBindRiskCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCheckProxyBindRiskCreateData, any>({
+      path: `/user_check_proxy_bind_risk`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyDeviceDetailList
+   * @summary 获取代理IP详情信息
+   * @request GET:/user_get_proxy_device_detail
+   * @response `200` `UserGetProxyDeviceDetailListData`
+   */
+  userGetProxyDeviceDetailList = (
+    query: UserGetProxyDeviceDetailListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyDeviceDetailListData, any>({
+      path: `/user_get_proxy_device_detail`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserBatchCheckProxyImportCreate
+   * @summary 批量检测 半年内是否导入 IP
+   * @request POST:/user_batch_check_proxy_import
+   * @response `200` `UserBatchCheckProxyImportCreateData`
+   */
+  userBatchCheckProxyImportCreate = (
+    data: UserBatchCheckProxyImportCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchCheckProxyImportCreateData, any>({
+      path: `/user_batch_check_proxy_import`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyDeviceBoundAccountsList
+   * @summary  获取代理设备绑定账号分页列表
+   * @request GET:/user_get_proxy_device_bound_accounts
+   * @response `200` `UserGetProxyDeviceBoundAccountsListData`
+   */
+  userGetProxyDeviceBoundAccountsList = (
+    query: UserGetProxyDeviceBoundAccountsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyDeviceBoundAccountsListData, any>({
+      path: `/user_get_proxy_device_bound_accounts`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserAddProxyModuleV2Create
+   * @summary 导入代理（电商模式）
+   * @request POST:/user_add_proxy_module_v2
+   * @response `200` `UserAddProxyModuleV2CreateData`
+   */
+  userAddProxyModuleV2Create = (
+    data: UserAddProxyModuleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddProxyModuleV2CreateData, any>({
+      path: `/user_add_proxy_module_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

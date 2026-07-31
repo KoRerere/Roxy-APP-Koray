@@ -17,19 +17,26 @@ import AgentLabel from './agent-label.vue'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 import type { ViewportPoint } from '/@/hooks/useViewportDraggableFloating'
 import { clampPointToViewport, useViewportDraggableFloatingGroup } from '/@/hooks/useViewportDraggableFloating'
+import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
+import { useDocumentVisibility } from '@vueuse/core'
+import { useRouteContext } from '/@/composables/useRouteContext'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
 
 // 用于强制重新创建 AgentLabel 组件的 key
 const agentLabelKey = ref(0)
-// 每 30 分钟刷新一次组件
+// 每 1 分钟刷新一次组件（强制重新创建 AgentLabel）
 const AGENT_LABEL_REFRESH_INTERVAL = 1 * 60 * 1000
+
+const visibility = useDocumentVisibility()
+const agentLabelPaused = computed(() => visibility.value !== 'visible')
 
 const route = useRoute()
 const router = useRouter()
 const { check } = usePermission()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
+const { isEcommerce } = useRouteContext()
 // const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 // const { isOwner, isManager } = storeToRefs(useRoleStore())
 // const { token } = storeToRefs(useUserStore())
@@ -37,6 +44,8 @@ const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
 const { openRoxyAIAgent } = useOpenRoxyAIAgent()
+
+const isBeforeEnterPage = computed(() => route.name === 'before-enter')
 
 /** 帮助区悬浮组（Agent + 气泡）整体位置持久化 */
 const HELP_FLOAT_STORAGE_KEY = 'roxy-browser.helpFloatPositions.v2'
@@ -154,21 +163,22 @@ const items = computed(() => {
     {
       label: $t('Telegram 群组'),
       icon: 'base/rx_ic_telegram_2',
-      visible: !!qrcodeMap.value.Telegram,
+      visible: !!qrcodeMap.value.Telegram && !isEcommerce.value,
       command: async () => openCommunity('Telegram'),
     },
     {
+      visible: !!qrcodeMap.value.Telegram && !isEcommerce.value,
       separator: true,
     },
-    {
-      label: $t('意见反馈'),
-      icon: 'base/rx_ic_survy',
-      command: async () => {
-        const $dict_map = await getDictMap()
-        const tgLink = $dict_map.feedback!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
-        window.open(tgLink!.value, '_blank')
-      },
-    },
+    // {
+    //   label: $t('意见反馈'),
+    //   icon: 'base/rx_ic_survy',
+    //   command: async () => {
+    //     const $dict_map = await getDictMap()
+    //     const tgLink = $dict_map.feedback!.find((item: any) => item.label === currentLocale) || $dict_map.tgLink![0]
+    //     window.open(tgLink!.value, '_blank')
+    //   },
+    // },
     {
       label: $t('官方网站'),
       icon: 'base/rx_ic_link',
@@ -183,6 +193,7 @@ const items = computed(() => {
       label: $t('新手教程'),
       icon: 'base/rx_ic_books',
       command: openTutorial,
+      visible: !isEcommerce.value,
     },
     {
       separator: true,
@@ -211,8 +222,6 @@ watch(() => route.path, () => {
   }
 }, { immediate: true })
 
-let agentLabelTimer: any = null
-
 onBeforeMount(() => {
   migrateHelpFloatStorageFromV1()
   getFaqList()
@@ -220,16 +229,12 @@ onBeforeMount(() => {
 
 onMounted(() => {
   bootstrapHelpFloatLayout()
-  // 每 30 分钟更新一次 key，强制重新创建 AgentLabel
-  agentLabelTimer = setInterval(() => {
-    agentLabelKey.value++
-  }, AGENT_LABEL_REFRESH_INTERVAL)
 })
 
-onBeforeUnmount(() => {
-  if (agentLabelTimer)
-    clearInterval(agentLabelTimer)
-})
+// 每 1 分钟更新一次 key，强制重新创建 AgentLabel（页面 hidden 时暂停）
+useVisibilityAwareInterval(() => {
+  agentLabelKey.value++
+}, AGENT_LABEL_REFRESH_INTERVAL)
 
 async function getFaqList() {
   const { code, data } = await API.base.getFaqHelpList()
@@ -277,8 +282,19 @@ function openTutorial() {
   router.replace({ name: 'tutorial' })
 }
 
+/** 电商模式帮助文档：中文走 .cn，俄语走 /ru/ecom/，其余走 .com */
+function getEcommerceHelpDocumentUrl() {
+  const siteLang = currentLocale!.split('-')[0]
+  if (siteLang === 'ru')
+    return `${import.meta.env.VITE_OFFICIAL_WEBSITE}/docs/ru/ecom/`
+  return getOfficialWebsite('/docs/ecom/')
+}
+
 function openHelpDocument() {
-  window.open(`https://faq.roxybrowser.com/${currentLocale!.split('-')[0]}`, '_blank')
+  const url = isEcommerce.value
+    ? getEcommerceHelpDocumentUrl()
+    : `https://faq.roxybrowser.com/${currentLocale!.split('-')[0]}`
+  window.open(url, '_blank')
 }
 
 function openScore() {
@@ -300,8 +316,8 @@ function openScore() {
     helpFloatLayoutReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
   ]" :style="helpDockCss" @pointerdown="helpDockFloat.onPointerDown"
   >
-    <div v-if="check('Roxy_AI_Agent_All')" id="mcp" class="help-float-item help-float-item-agent flex shrink-0" @click="onAgentTriggeredClick">
-      <AgentLabel :key="agentLabelKey" />
+    <div v-if="check('Roxy_AI_Agent_All') && !isEcommerce && !isBeforeEnterPage" id="mcp" class="help-float-item help-float-item-agent flex shrink-0" @click="onAgentTriggeredClick">
+      <AgentLabel :key="agentLabelKey" :paused="agentLabelPaused" />
     </div>
     <div class="help-float-item help-float-item-bubble relative shrink-0" @click="onBubbleTriggeredClick">
       <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip pointer-events-none">

@@ -94,7 +94,7 @@ export function useProfileProxy() {
 
         datas.forEach((item) => {
           const params = buildDeleteProxyParams(item)
-          silentUpdateProxy(item as any, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+          silentUpdateProxy(item as any, params)
         })
       },
       reject,

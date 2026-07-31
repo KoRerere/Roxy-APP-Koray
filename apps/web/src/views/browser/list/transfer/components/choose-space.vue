@@ -10,6 +10,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api'
 import RxAvatar from '/@/components/rx-avatar'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
@@ -20,6 +21,7 @@ const { ids: windowIds, width = 'w-108' } = defineProps<{
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [showModal] = RxUseDialog()
+const profileLabels = useProfileEntityLabels()
 
 const selectedWorkspace = defineModel<Data>('modelValue')
 
@@ -196,7 +198,7 @@ function getWorkspaceAvatar(item: Data) {
                 </div>
                 <div class="mt-1 workspace-id">
                   <span v-if="item.workspaceNo === currentWorkspace!.workspaceNo">{{ $t('当前团队') }}</span>
-                  <span v-else-if="!item.isWindowCountEnough">{{ $t('窗口额度不足') }}</span>
+                  <span v-else-if="!item.isWindowCountEnough">{{ profileLabels.quotaInsufficientShort }}</span>
                   <span v-else>ID: {{ item.workspaceNo }}</span>
                 </div>
               </div>

@@ -10,8 +10,8 @@ import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { ProxyCheckStatus, ProxyExpireStatus, ProxyType } from '/@/enums'
-import { concurrentControl, createDefaultObject, decryptAESGCM, safeParseJSON, strConcat } from '/@/utils'
+import { ProxyCheckStatus, ProxyExpireStatus, ProxyType, WorkspaceType } from '/@/enums'
+import { concurrentControl, createDefaultObject, decryptAESGCM, deepClone, safeParseJSON, strConcat } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
@@ -22,6 +22,8 @@ import {
   hasBuyProxy,
   resolveProxyDownloadRows,
 } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
+import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 import type { ProxyItem } from '/@/views/agent/shop/operation'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
 import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
@@ -121,15 +123,17 @@ export function useCheckProxy(): useCheckProxyResult {
       checkStatus: ProxyCheckStatus.failure,
     }
 
+    const checkData = deepClone(data)
+
     if (isEncryptProxy && proxyEncryptInfo) {
       const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
-      Object.assign(data, decryptedProxyEncryptInfo)
+      Object.assign(checkData, decryptedProxyEncryptInfo)
     }
 
-    data.dirId ||= Math.random().toString(36).slice(2)
+    checkData.dirId ||= Math.random().toString(36).slice(2)
 
     try {
-      const checkRes = await globalThis.electronAPI.send('proxy:detect', data as ProxyDetectionParams)
+      const checkRes = await globalThis.electronAPI.send('proxy:detect', checkData as ProxyDetectionParams)
       local.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       local.lastIp = checkRes.ip ?? ''
       local.lastCity = checkRes.city ?? ''
@@ -147,7 +151,7 @@ export function useCheckProxy(): useCheckProxyResult {
     finally {
       local.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       local.loading = false
-      data.dirId && globalThis.electronAPI.send('proxy:delRoxynetProxy', data.dirId)
+      checkData.dirId && globalThis.electronAPI.send('proxy:delRoxynetProxy', checkData.dirId)
     }
     return { ...local }
   }
@@ -156,11 +160,13 @@ export function useCheckProxy(): useCheckProxyResult {
     const results = Array.isArray(__results) ? __results : [__results]
     if (results.length === 1) {
       const checkRes = results[0]!
+      const shopLabels = createProxyShopLabels(isCurrentEcommerceWorkspace())
+      const errMsg = checkRes.proxyType === ProxyType.buy ? checkRes.error : shopLabels.testFailedCheckConfig
+      const showSupport = options?.showSupport ?? checkRes.proxyType === ProxyType.buy
       const [code, msg] = checkRes.checkStatus === ProxyCheckStatus.failure
-        // checkRes.error || 暂时改 web ，后续版本将这个提示挪到主进程中
-        ? [-1, genProxyTestToastDetail($t('代理 IP 检测失败，请检查代理 IP 配置'), {
+        ? [-1, genProxyTestToastDetail(errMsg, {
             ...options,
-            showSupport: options?.showSupport ?? checkRes.proxyType === ProxyType.buy,
+            showSupport,
           })]
         : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
       showToast(code, msg)
@@ -247,16 +253,21 @@ export function useProxy() {
   const roleStore = useRoleStore()
   const simpleLocale = useSimpleLocale()
 
-  function buyProxy(props = {}) {
+  function buyProxy(props: Record<string, unknown> = {}) {
     const { promise, resolve, reject } = Promise.withResolvers<UserBuyProxySettlementCreateData['data'] | undefined>()
+    // 费用中心等共享页未显式传 mode 时，按工作区补齐电商=设备购买语义（隐藏用途 badge 等）
+    const ecommerceDefaults = isCurrentEcommerceWorkspace()
+      ? { mode: 'device' as const, workspaceType: WorkspaceType.ECommerce }
+      : {}
     showModal({
       showHeader: false,
       modal: true,
       blockScroll: true,
-      beforeClose: ipBeforeClose,
+      // beforeClose: ipBeforeClose,
       slots: {
         container: ({ handleCancel }) => (
           <ChooseModal
+            {...ecommerceDefaults}
             {...props}
             onSuccess={resolve}
             onClose={handleCancel}
@@ -268,7 +279,7 @@ export function useProxy() {
     return promise
   }
 
-  function ipBeforeClose() {
+  function _ipBeforeClose() {
     const isRemind = safeParseJSON(localStorage.getItem('IPColseRemind'))
     if (isRemind) {
       return true

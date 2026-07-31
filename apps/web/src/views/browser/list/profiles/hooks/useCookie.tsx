@@ -1,3 +1,4 @@
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import CookieEdit from '/@/views/browser/list/profiles/components/cookie-edit.vue'
 import CookieRobot from '/@/views/browser/list/profiles/components/cookie-robot.vue'
 import { RxAlert } from '/@/components/rx-alert'
@@ -21,6 +22,7 @@ export function useCookie() {
   const { mixpanelTrack } = useUserStore()
   const { showDrawer, hideDrawer } = useDrawer()
   const [showModal] = useDialog()
+  const profileLabels = useProfileEntityLabels()
 
   function editCookieByProfile(params: Params) {
     const { data, onConfirm } = params
@@ -35,7 +37,7 @@ export function useCookie() {
           <div class="h-full flex flex-col">
             {data.length > 1 && (
               <div class="px-4 pt-4">
-                <RxAlert class="min-w-full" type="warn" closable={false} title={$t('所选窗口的所有 Cookie 都将被覆盖，请谨慎操作。')} />
+                <RxAlert class="min-w-full" type="warn" closable={false} title={profileLabels.value.selectedCookiesWarning} />
               </div>
             )}
             <CookieEdit

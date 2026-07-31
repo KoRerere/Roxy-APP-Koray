@@ -5,6 +5,7 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { isDev, isMacOS } from '/@/utils'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 
 const props = defineProps<{
   isForceUpgrade: boolean
@@ -16,6 +17,7 @@ const FORCE_UPGRADE_SHOW_DELAY = 15 * 1000
 let timer: NodeJS.Timeout
 const simpleLocale = useSimpleLocale()
 const userStore = useUserStore()
+const tutorialLabels = useTutorialEntityLabels()
 const visible = ref(false)
 const nextUpdateTimestamp = ref<number | undefined>(undefined)
 
@@ -125,7 +127,7 @@ function remindMeLater() {
           <img :src="item.url" :alt="item.name" class="w-full object-cover rounded-lg">
         </template>
         <RxAlert class="whitespace-pre-wrap w-full" :title="$t('有新的可用更新')"
-                 :content="`${$t('Roxy浏览器新活动上线！升级客户端版本即可参与活动。')}\n\n${updateInfo?.type === 'app' ? $t('请注意，重启客户端会关闭你当前打开的窗口。') : $t('本次更新无需重启客户端。')}`" type="warn" :closable="false"
+                 :content="`${$t('Roxy浏览器新活动上线！升级客户端版本即可参与活动。')}\n\n${updateInfo?.type === 'app' ? tutorialLabels.restartCloseEntities : $t('本次更新无需重启客户端。')}`" type="warn" :closable="false"
         />
       </template>
       <template v-else>
@@ -140,7 +142,7 @@ function remindMeLater() {
           {{ $t('Roxy浏览器新版本已就绪！更新将为您带来性能优化与稳定性提升，需要您完成更新以继续使用。') }}
         </div>
 
-        <RxAlert class="whitespace-pre-wrap w-full" :content="$t('更新需要重启应用，重启后将为您恢复已打开的窗口。')" type="warn"
+        <RxAlert class="whitespace-pre-wrap w-full" :content="tutorialLabels.restoreOpenedEntities" type="warn"
                  :closable="false"
         />
       </template>

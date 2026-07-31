@@ -38,7 +38,24 @@ const SILENT_PROXY_KEYS = [
 
 export const clearProxyKeys = ['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl']
 
-export function silentUpdateProxy(origin: Record<string, any>, params: Record<string, any>, deleteKeys?: string[]) {
+/** 加密代理字段：仅 params 显式携带时写入；清除只在 replaceProxy 且新数据未标明加密时发生 */
+const ENCRYPT_PROXY_KEYS = ['isEncryptProxy', 'proxyEncryptInfo'] as const
+
+export interface SilentUpdateProxyOptions {
+  /**
+   * 是否同步加密态，默认 true。
+   * - true：params.isEncryptProxy 为真则保留已合并加密字段，否则清除旧加密信息
+   * - false：测速 / 启动回写等局部更新，缺失加密字段不清除
+   */
+  replaceProxy?: boolean
+}
+
+export function silentUpdateProxy(
+  origin: Record<string, any>,
+  params: Record<string, any>,
+  options?: SilentUpdateProxyOptions,
+) {
+  const { replaceProxy = true } = options ?? {}
   const beforeProxyInfo: Record<string, any> = {}
   for (const [fromKey, beforeKey] of PROXY_BEFORE_SNAPSHOT) {
     if (Object.hasOwn(params, fromKey))
@@ -51,8 +68,8 @@ export function silentUpdateProxy(origin: Record<string, any>, params: Record<st
       origin[key] = params[key]
   }
 
-  if (deleteKeys) {
-    for (const key of deleteKeys)
+  if (replaceProxy && !params.isEncryptProxy) {
+    for (const key of ENCRYPT_PROXY_KEYS)
       delete origin[key]
   }
 }

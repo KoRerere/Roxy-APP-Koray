@@ -7,6 +7,7 @@ import { useTeam } from '/@/views/team/hook'
 import { useDialog } from '/@/hooks/useDialog'
 import { getRoleLabelMap, Role } from '/@/enums'
 import { emitter } from '/@/utils/eventBus'
+import { useTeamEntityLabels } from '/@/composables/useTeamEntityLabels'
 
 const route = useRoute()
 const { isOwner } = storeToRefs(useRoleStore())
@@ -14,6 +15,7 @@ const { members } = storeToRefs(useTeamStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const [showModal] = useDialog()
 const { inviteMembers } = useTeam()
+const teamLabels = useTeamEntityLabels()
 
 const roleStr = getRoleLabelMap()
 const roles = computed(() => {
@@ -42,19 +44,19 @@ const roles = computed(() => {
       value: Role.MANAGER,
       role: roleStr[Role.MANAGER],
       members: result.manager,
-      desc: $t('可以管理所有窗口，编辑所有查看者和编辑者权限'),
+      desc: teamLabels.value.roleManagerDesc,
     },
     {
       value: Role.EDITOR,
       role: roleStr[Role.EDITOR],
       members: result.editor,
-      desc: $t('可以管理所有窗口，编辑所有查看者权限'),
+      desc: teamLabels.value.roleEditorDesc,
     },
     {
       value: Role.VIEWER,
       role: roleStr[Role.VIEWER],
       members: result.viewer,
-      desc: $t('只能打开或查看权限内的窗口信息'),
+      desc: teamLabels.value.roleViewerDesc,
     },
   ]
 })

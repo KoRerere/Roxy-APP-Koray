@@ -17,6 +17,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     executablePath,
     args = [],
     relaunch = false,
+    timeoutMs = 30_000,
   } = options
 
   if (!executablePath) {
@@ -44,9 +45,12 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
 
   // 等待获取 WebSocket URL
   const wsUrl = await new Promise<string>((resolve, reject) => {
+    // 超时必须同步回收进程：迟到就绪的实例已无法被使用,若不 kill 会残留脱管的
+    // Firefox 进程占着 profile 锁,导致用户立刻重试同一窗口也会失败
     const timeout = setTimeout(() => {
+      firefoxProcess.kill()
       reject(new Error($t('Firefox 启动超时，未能获取调试端口')))
-    }, 30000)
+    }, timeoutMs)
 
     firefoxProcess.stdout?.on('data', (data) => {
       const output = data.toString()

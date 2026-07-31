@@ -12,6 +12,8 @@ import ProviderSimpleList from '/@/views/agent/shop/components/provider-simple-l
 import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
 import { parseWindowInfo } from '/@/views/account/list/utils'
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
+import ProxyFilter from '/@/views/agent/shop/components/proxy-filter/index.vue'
+import { useProxyFilter } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
 import currency from 'currency.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
@@ -72,41 +74,12 @@ const hideTypeConfig = reactive({
   falseValue: BuyProxyListType.List,
 })
 
-const proxyStatus = reactive({
-  value: Number(route.query.expireStatus) || null,
-  trueValue: ProxyExpireStatus.soon,
-  falseValue: null,
-  onChange: onRefreshTable,
-})
-
-const filters = reactive({
-  list: [
-    {
-      name: 'proxyType',
-      value: undefined,
-      options: [
-        {
-          name: $t('全部'),
-          value: undefined,
-        },
-        {
-          name: $t('已添加'),
-          value: ProxyType.resource.toString(),
-        },
-        {
-          name: $t('已购买'),
-          value: ProxyType.buy.toString(),
-        },
-      ],
-    },
-  ],
-  getValues() {
-    return Object.fromEntries(filters.list.filter(item => item.value).map(item => [item.name, item.value]))
-  },
-  onChange() {
-    localStorage.setItem('ProxyShopHideType', hideTypeConfig.value)
-    onRefreshTable()
-  },
+const proxyFilter = useProxyFilter({
+  multiple: true,
+  onApply: () => onRefreshTable(),
+  initialValues: route.query.expireStatus
+    ? { proxyExpireStatus: Number(route.query.expireStatus) }
+    : undefined,
 })
 
 const scheduledCheckerProxyStatus = genPollingChecker({
@@ -122,9 +95,12 @@ const scheduledCheckerProxyStatus = genPollingChecker({
 watch(
   () => route.query._t,
   () => {
-    if (route.query.expireStatus && proxyStatus.value !== Number(route.query.expireStatus)) {
-      proxyStatus.value = Number(route.query.expireStatus)
-      proxyStatus.onChange()
+    if (route.query.expireStatus) {
+      const expireStatus = Number(route.query.expireStatus)
+      if (proxyFilter.applied.value.proxyExpireStatus !== expireStatus) {
+        proxyFilter.setApplied({ proxyExpireStatus: expireStatus })
+        onRefreshTable()
+      }
     }
   },
 )
@@ -150,7 +126,7 @@ onBeforeUnmount(() => {
 })
 
 async function getTableList(params: any) {
-  const data = await tableRequest({ ...filters.getValues(), proxyExpireStatus: proxyStatus.value, type: hideTypeConfig.value, ...params })
+  const data = await tableRequest({ ...proxyFilter.getApiParams(), type: hideTypeConfig.value, ...params })
   dataList.value = (data.data?.rows || []).filter(item => item.proxyType === ProxyType.resource || (item.proxyExpireStatus !== ProxyExpireStatus.expired && [ProxyOrderStatus.done, ProxyOrderStatus.refunding, ProxyOrderStatus.changing].includes(item.orderStatus!)))
   return data
 }
@@ -450,6 +426,7 @@ function tableBeforeRefresh() {
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
     ...tabParams,
+    ...proxyFilter.getApiParams(),
     ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   hasFiltered.value = !isEmptyValue(params)
@@ -566,13 +543,7 @@ function bindProfiles(data: ProxyItem) {
               </div>
               <RxButton v-if="check('Proxy_List_add')" size="xxs" icon="base/rx_ic_plus" variant="outlined" :label="$t('添加')" @click.stop="createProxy" />
               <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
-              <div class="flex items-center gap-1.5">
-                <RxCheckbox v-model="proxyStatus.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary :true-value="proxyStatus.trueValue"
-                            :false-value="proxyStatus.falseValue" @change="proxyStatus.onChange"
-                />
-                <label for="wrap" class="text-3 select-none cursor-pointer text-[var(--colors-text-text-secondary)]">{{
-                  $t('显示即将过期') }}</label>
-              </div>
+              <ProxyFilter :filter="proxyFilter" />
             </div>
 
             <div class="flex items-center gap-2">
@@ -585,9 +556,6 @@ function bindProfiles(data: ProxyItem) {
               </div> -->
               <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
               <Divider layout="vertical" class="!ml-0 !mr-0 h-4" />
-              <RxSelectButton v-for="item in filters.list" :key="item.value" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
-                              @change="filters.onChange"
-              />
               <RxButton v-if="check('Proxy_List_speed_test')" size="xxs" variant="outlined" severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" :loading="checkerLoading"
                         @click.stop="testAllProxy()"
               />

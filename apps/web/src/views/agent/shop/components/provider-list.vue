@@ -3,10 +3,15 @@ import ProviderBuy from './provider-buy/index.vue'
 import ProviderExternal from './provider-external.vue'
 import { useProxyStore } from '/@/stores/proxy'
 import type { BuyEntryType } from '/@/enums/proxy'
+import type { WorkspaceType } from '/@/enums/base'
+import type { ProxyPurchaseMode } from '../utils/proxy-purchase-labels'
 
-const { provider, entryType } = defineProps<{
+const { provider, entryType, mode, workspaceType } = defineProps<{
   provider?: Record<string, any>
   entryType?: BuyEntryType
+  /** 不传则由 ProviderBuy 按当前工作区推断 */
+  mode?: ProxyPurchaseMode
+  workspaceType?: WorkspaceType
 }>()
 
 defineEmits<{
@@ -63,7 +68,7 @@ function toRola() {
       </div>
       <div class="flex-1 flex flex-col overflow-hidden content">
         <component :is="item.data.isJump ? ProviderExternal : ProviderBuy" v-for="item in providers" v-show="activeKey === item.value" :key="item.value" v-model:auto-jump="autoJump" :data="item.data"
-                   :entry-type="entryType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
+                   :entry-type="entryType" :mode="mode" :workspace-type="workspaceType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
         />
       </div>
     </template>

@@ -3,6 +3,7 @@ import type { QuitSyncProgressMessage } from '@roxy/electron-preload'
 import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { shallowReactive, watch } from '@vue/reactivity'
+import { app } from 'electron'
 import { debounce, isPlainObject } from 'es-toolkit'
 import { readdir, readFile, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -20,8 +21,9 @@ import { coreManager } from '/@/modules/browser/core-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
+import { scheduleRestoreClientNetworkSnapshotUpdate } from '/@/modules/store/restoreClientNetwork'
 import { appUpdater } from '/@/modules/updater'
-import { asyncDebounce } from '/@/utils'
+import { asyncDebounce, getCachePath, getProxyEntityLabels } from '/@/utils'
 
 const batchLaunchLimit = pLimit(5)
 
@@ -55,31 +57,20 @@ const SINGLE_WINDOW_CLOSE_TIMEOUT_MS = 2 * 60_000
 const QUIT_SYNC_WEIGHT_CLOSE_OSS = 0.7
 const QUIT_SYNC_WEIGHT_API = 0.3
 
+/** 已购代理/设备异常状态文案；按 store.workspaceType 区分普通/电商术语 */
 const OpenErrorMessageMap = {
-  /**
-   * IP检测不通
-   */
-  get 1() { return $t('您购买的代理 IP 检测到错误。{link}', { link: '{link}' }) },
-  /**
-   * 国家不一致
-   */
-  get 2() { return $t('您购买的代理 IP 检测结果与目标出口 IP 不符。{link}', { link: '{link}' }) },
-  /**
-   * 已过期
-   */
-  get 3() { return $t('您购买的代理 IP 已过期。请在打开窗口前更新代理 IP 信息') },
-  /**
-   * 已退款
-   */
-  get 4() { return $t('您当前窗口的代理 IP 已退款，无法使用。请在打开窗口之前更新代理 IP 信息。') },
-  /**
-   * 退款中
-   */
-  get 5() { return $t('您购买的代理 IP 正在退款中，无法使用。请在打开窗口之前更新代理 IP 信息。') },
-  /**
-   * 更换中
-   */
-  get 6() { return $t('您购买的代理 IP 正在更换中，无法使用。请在打开窗口之前更新代理 IP 信息。') },
+  /** IP检测不通 */
+  get 1() { return getProxyEntityLabels().openErrorByStatus[1] },
+  /** 国家不一致 */
+  get 2() { return getProxyEntityLabels().openErrorByStatus[2] },
+  /** 已过期 */
+  get 3() { return getProxyEntityLabels().openErrorByStatus[3] },
+  /** 已退款 */
+  get 4() { return getProxyEntityLabels().openErrorByStatus[4] },
+  /** 退款中 */
+  get 5() { return getProxyEntityLabels().openErrorByStatus[5] },
+  /** 更换中 */
+  get 6() { return getProxyEntityLabels().openErrorByStatus[6] },
 }
 
 export class BrowserManager {
@@ -136,6 +127,8 @@ export class BrowserManager {
         }
       })
     }
+
+    scheduleRestoreClientNetworkSnapshotUpdate()
   }
 
   /** 根据 dirId 获取已经打开的浏览器 */
@@ -514,6 +507,10 @@ export class BrowserManager {
     }
 
     try {
+      // 删除内核启动时产生的 V8 CachedData 等缓存文件
+      const cachePath = join(getCachePath(), app.name, 'browser-cache', dirId)
+      console.debug(`[BrowserManager] removeLocalData ${dirId} delete cache path`, cachePath)
+      rm(cachePath, { recursive: true, force: true }).catch(() => {})
       // 删除本地浏览器数据目录
       await rm(getUserDataDirPath(dirId), { recursive: true, force: true })
       return { dirId, success: true }

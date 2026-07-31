@@ -59,6 +59,81 @@ function sanitizeDesktopId(name: string) {
     .toLowerCase() || 'app'
 }
 
+const WINDOWS_RESERVED_FILE_NAMES = new Set([
+  'CON',
+  'PRN',
+  'AUX',
+  'NUL',
+  'COM1',
+  'COM2',
+  'COM3',
+  'COM4',
+  'COM5',
+  'COM6',
+  'COM7',
+  'COM8',
+  'COM9',
+  'LPT1',
+  'LPT2',
+  'LPT3',
+  'LPT4',
+  'LPT5',
+  'LPT6',
+  'LPT7',
+  'LPT8',
+  'LPT9',
+])
+
+/** 根据内核类型返回快捷方式文件名 fallback */
+function getShortcutNameFallback(coreType?: string): string {
+  return coreType === 'Firefox' ? defaultFirefoxExeName : defaultBrowserExeName
+}
+
+function stripControlChars(input: string): string {
+  return input.split('').filter(ch => ch.charCodeAt(0) >= 0x20).join('')
+}
+
+/**
+ * 将窗口名转为安全的快捷方式文件名（不含扩展名）。
+ * 展示文案仍应使用原始 execName，避免路径分隔符/Windows 非法字符导致 .lnk 创建失败。
+ */
+function sanitizeShortcutFileName(name: string, fallback: string): string {
+  let sanitized = stripControlChars(name || '')
+    .replace(/[<>:"/\\|?*]/g, '_')
+    .trim()
+
+  while (/[. ]$/.test(sanitized)) {
+    sanitized = sanitized.replace(/[. ]+$/, '')
+  }
+
+  if (!sanitized || sanitized === '.' || sanitized === '..') {
+    sanitized = fallback
+  }
+
+  if (WINDOWS_RESERVED_FILE_NAMES.has(sanitized.toUpperCase())) {
+    sanitized = `${sanitized}_`
+  }
+
+  if (sanitized.length > 120) {
+    sanitized = sanitized.slice(0, 120).replace(/[. ]+$/, '')
+  }
+
+  return sanitized || fallback
+}
+
+/** 分离快捷方式磁盘文件名与 UI 展示名 */
+function resolveShortcutNames(execName: string, fallback: string) {
+  const displayName = (execName || '').trim() || fallback
+  const shortcutFileName = sanitizeShortcutFileName(displayName, fallback)
+  return { displayName, shortcutFileName }
+}
+
+/** 设为默认浏览器时写入 store，供 Tauri launcher 读取 config.json */
+function persistDefaultBrowserSelection(dirId: string, workspaceId: number) {
+  store.defaultBrowserDirId = dirId
+  store.defaultBrowserWorkspaceId = workspaceId
+}
+
 const defaultBrowserBinDir = join(appConfig.sessionDir, 'default-browser-bin')
 
 interface InstallAndRegisterOptions {
@@ -183,14 +258,21 @@ export class DefaultBrowserInstaller {
   }
 
   async installAndRegisterOnWindows(options: InstallAndRegisterOptions) {
+    const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
+
+    if (isSetAsDefaultBrowser) {
+      persistDefaultBrowserSelection(dirId, workspaceId)
+    }
+
     // 在桌面创建快捷方式（.lnk）
     try {
-      const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
       const sourceAppPath = getSourceAppPath(coreType)
+      const fallback = getShortcutNameFallback(coreType)
+      const { displayName, shortcutFileName } = resolveShortcutNames(execName, fallback)
       // Firefox 使用专属 .ico 图标；Chrome 使用通用 launcher.ico（若存在）
       const iconPath = getLauncherIconPath(coreType, 'ico')
 
-      const desktopShortcutPath = path.join(app.getPath('desktop'), `${execName}.lnk`)
+      const desktopShortcutPath = path.join(app.getPath('desktop'), `${shortcutFileName}.lnk`)
 
       // Windows 开始菜单「所有应用」入口：
       // 把 .lnk 写到：%APPDATA%\Microsoft\Windows\Start Menu\Programs\<AppName>\xxx.lnk
@@ -203,7 +285,7 @@ export class DefaultBrowserInstaller {
         'Programs',
         app.getName(),
       )
-      const startMenuShortcutPath = path.join(startMenuDir, `${execName}.lnk`)
+      const startMenuShortcutPath = path.join(startMenuDir, `${shortcutFileName}.lnk`)
 
       const oldShortcutItem = await shortcutStore.get(dirId)
 
@@ -228,7 +310,7 @@ export class DefaultBrowserInstaller {
       const isDesktopSuccess = shell.writeShortcutLink(desktopShortcutPath, {
         target: sourceAppPath,
         args,
-        description: execName,
+        description: displayName,
         ...(shortcutIcon ? { icon: shortcutIcon } : {}),
       })
 
@@ -237,30 +319,28 @@ export class DefaultBrowserInstaller {
       shell.writeShortcutLink(startMenuShortcutPath, {
         target: sourceAppPath,
         args,
-        description: execName,
+        description: displayName,
         ...(shortcutIcon ? { icon: shortcutIcon } : {}),
       })
 
       if (isDesktopSuccess) {
-        if (isSetAsDefaultBrowser) {
-          store.defaultBrowserDirId = dirId
-          store.defaultBrowserWorkspaceId = workspaceId
-        }
         await shortcutStore.set(dirId, {
           // 仍以桌面快捷方式为主路径存储，便于旧逻辑清理/兼容
           launcherEntry: desktopShortcutPath,
           startMenuEntry: startMenuShortcutPath,
           program: sourceAppPath,
           arguments: args,
-          title: execName,
+          title: displayName,
         })
       }
       else {
-        throw new Error(`[browser:setAsDefaultBrowser] create shortcut failed: desktop=${desktopShortcutPath} startMenu=${startMenuShortcutPath}`)
+        console.error(
+          `[browser:setAsDefaultBrowser] create shortcut failed: displayName=${displayName} desktop=${desktopShortcutPath} startMenu=${startMenuShortcutPath}`,
+        )
       }
     }
-    catch {
-      // ignore: 创建快捷方式失败不影响后续注册逻辑
+    catch (error) {
+      console.error('[browser:setAsDefaultBrowser] create windows shortcut failed', error)
     }
 
     if (options.isSetAsDefaultBrowser) {
@@ -281,6 +361,8 @@ export class DefaultBrowserInstaller {
     const sourceAppPath = getSourceAppPath(coreType)
     const isFirefox = coreType === 'Firefox'
     const exeName = isFirefox ? defaultFirefoxExeName : defaultBrowserExeName
+    const fallback = getShortcutNameFallback(coreType)
+    const { displayName, shortcutFileName } = resolveShortcutNames(execName, fallback)
     const targetAppPath = `/Applications/${exeName}.app`
     const targetAppBinPath = `/Applications/${exeName}.app/Contents/MacOS/${exeName}`
 
@@ -297,8 +379,7 @@ export class DefaultBrowserInstaller {
         ['--set-default-browser'],
         { detached: true, stdio: 'ignore' },
       ).unref()
-      store.defaultBrowserDirId = dirId
-      store.defaultBrowserWorkspaceId = workspaceId
+      persistDefaultBrowserSelection(dirId, workspaceId)
     }
 
     const args = `--dir-id=${dirId} --workspace-id=${workspaceId}`
@@ -308,7 +389,7 @@ export class DefaultBrowserInstaller {
       os.homedir(),
       'Applications',
       $t('{appName} 应用', { appName: `RoxyBrowser${isDev ? 'Dev' : ''}` }),
-      `${execName}.app`,
+      `${shortcutFileName}.app`,
     )
 
     const oldShortcutItem = await shortcutStore.get(dirId)
@@ -326,7 +407,7 @@ export class DefaultBrowserInstaller {
       launcherEntry: appOutPath,
       program: sourceAppPath,
       arguments: args,
-      title: execName,
+      title: displayName,
     })
 
     await writeFile(
@@ -361,21 +442,22 @@ export class DefaultBrowserInstaller {
   }
 
   async installAndRegisterOnLinux(options: InstallAndRegisterOptions) {
+    const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
+
+    if (isSetAsDefaultBrowser) {
+      persistDefaultBrowserSelection(dirId, workspaceId)
+    }
+
     // 在桌面创建快捷方式（.desktop）
     try {
-      const { dirId, workspaceId, execName, isSetAsDefaultBrowser, coreType } = options
       const sourceAppPath = getSourceAppPath(coreType)
+      const fallback = getShortcutNameFallback(coreType)
+      const { displayName, shortcutFileName } = resolveShortcutNames(execName, fallback)
 
       // 确保可执行文件有执行权限（某些下载/解压场景可能丢失权限）
       await chmod(sourceAppPath, 0o755).catch(() => undefined)
 
-      // .desktop 文件名尽量保持稳定且可写入（避免路径分隔符等非法字符）
-      const safeName = (execName || defaultBrowserExeName)
-        .replace(/[\\/\0]/g, '_')
-        .replace(/\s+/g, ' ')
-        .trim() || defaultBrowserExeName
-
-      const shortcutPath = path.join(app.getPath('desktop'), `${safeName}.desktop`)
+      const shortcutPath = path.join(app.getPath('desktop'), `${shortcutFileName}.desktop`)
 
       const oldShortcutItem = await shortcutStore.get(dirId)
       // 如果该窗口已经存在快捷方式，但是路径不一致，则删除旧的快捷方式
@@ -405,8 +487,8 @@ export class DefaultBrowserInstaller {
       const escapedExecPath = sourceAppPath.replace(/"/g, '\\"')
       const desktopFileContent = `[Desktop Entry]
 Type=Application
-Name=${safeName}
-Comment=${safeName}
+Name=${displayName}
+Comment=${displayName}
     Exec="${escapedExecPath}" ${args} %U
     MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
 ${iconLine}Terminal=false
@@ -425,7 +507,7 @@ Categories=Network;WebBrowser;
       // 写入到 XDG applications 目录，供系统默认浏览器设置使用
       const xdgDataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')
       const applicationsDir = path.join(xdgDataHome, 'applications')
-      const desktopId = `${sanitizeDesktopId(safeName)}-default.desktop`
+      const desktopId = `${sanitizeDesktopId(shortcutFileName)}-default.desktop`
       const systemDesktopPath = path.join(applicationsDir, desktopId)
 
       // 如果该窗口已经存在开始菜单快捷方式，但是路径不一致，则删除旧的快捷方式
@@ -437,8 +519,8 @@ Categories=Network;WebBrowser;
 
       const systemDesktopContent = `[Desktop Entry]
 Type=Application
-Name=${safeName}
-Comment=${safeName}
+Name=${displayName}
+Comment=${displayName}
 Exec="${escapedExecPath}" ${args} %U
 MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
 ${iconLine}Terminal=false
@@ -461,17 +543,12 @@ Categories=Network;WebBrowser;
       await spawnWait('gio', ['mime', 'x-scheme-handler/https', desktopId]).catch(() => undefined)
       console.debug('shortcutPath', shortcutPath)
 
-      if (isSetAsDefaultBrowser) {
-        store.defaultBrowserDirId = dirId
-        store.defaultBrowserWorkspaceId = workspaceId
-      }
-
       await shortcutStore.set(dirId, {
         launcherEntry: shortcutPath,
         startMenuEntry: systemDesktopPath,
         program: sourceAppPath,
         arguments: args,
-        title: execName,
+        title: displayName,
       })
     }
     catch (error) {

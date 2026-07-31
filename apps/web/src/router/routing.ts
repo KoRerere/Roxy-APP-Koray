@@ -4,28 +4,32 @@ import { ECOMMERCE_DEFAULT_ROUTE, PRIVATE_DEFAULT_ROUTE } from '/@/domain/worksp
 export const NORMAL_TO_ECOMMERCE_ROUTE_MAP: Record<string, string> = {
   'browser': ECOMMERCE_DEFAULT_ROUTE,
   'browser-list': ECOMMERCE_DEFAULT_ROUTE,
-  'browser-create': ECOMMERCE_DEFAULT_ROUTE,
-  'browser-edit': ECOMMERCE_DEFAULT_ROUTE,
+  'browser-create': 'ecommerce-account-create',
+  'browser-edit': 'ecommerce-account-edit',
   'projects': 'ecommerce-group-list',
   'project-list': 'ecommerce-group-list',
   'project-item': 'ecommerce-group-list',
   'agent-list': 'ecommerce-device-list',
-  'agent-create': 'ecommerce-device-list',
+  'agent-create': 'ecommerce-device-create',
   'extensions': 'ecommerce-plugin-list',
   'account-list': ECOMMERCE_DEFAULT_ROUTE,
-  'account-create': ECOMMERCE_DEFAULT_ROUTE,
+  'account-create': 'ecommerce-account-create',
 }
 
 /** 电商模式专属路由 → 普通模式对应路由 */
 export const ECOMMERCE_TO_NORMAL_ROUTE_MAP: Record<string, string> = {
   'ecommerce-account-list': 'browser-list',
+  'ecommerce-account-create': 'browser-create',
+  'ecommerce-account-edit': 'browser-edit',
   'ecommerce-groups': 'project-list',
   'ecommerce-group-list': 'project-list',
   'ecommerce-group-item': 'project-list',
+  'ecommerce-devices': 'agent-list',
   'ecommerce-device-list': 'agent-list',
+  'ecommerce-device-create': 'agent-create',
   'ecommerce-plugin-list': 'extensions',
+  'ecommerce-resource': 'resource',
   'ecosystem-center': 'browser-list',
-  'cross-border-marketing': 'browser-list',
 }
 
 export function resolveCrossModeRoute(routeName: string | symbol | null | undefined, isEcommerce: boolean) {

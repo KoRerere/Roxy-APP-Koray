@@ -85,40 +85,65 @@ export function useSettingsPopup() {
     panel: null,
   })
 
+  const panelLoading = ref(false)
+
   const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({})
+
+  /** 拉取指定面板数据，已缓存则直接返回 */
+  async function fetchPanel(key: PanelKeyType) {
+    const entry = settingsPanel[key]
+    activePanel.panel = await (entry.value ?? entry.get())
+  }
 
   const settings = getSettings().map(item => ({
     ...item,
     command: async () => {
       activePanel.key = item.name
-      activePanel.panel = await (settingsPanel[activePanel.key].value ?? settingsPanel[activePanel.key].get())
+      const entry = settingsPanel[item.name]
+      if (entry.value) {
+        activePanel.panel = entry.value
+        return
+      }
+      panelLoading.value = true
+      try {
+        await fetchPanel(item.name)
+      }
+      finally {
+        panelLoading.value = false
+      }
     },
   }))
 
   async function initPanels() {
-    const data = toRaw(await userStore.getUserConfig())
+    panelLoading.value = true
+    try {
+      const data = toRaw(await userStore.getUserConfig())
 
-    Object.entries(promiseMap).forEach(([key, getSettingPanel]) => {
-      settingsPanel[key as PanelKeyType] = {
+      Object.entries(promiseMap).forEach(([key, getSettingPanel]) => {
+        settingsPanel[key as PanelKeyType] = {
+          value: null,
+          get: async () => {
+            const value = await getSettingPanel(data)
+            settingsPanel[key as PanelKeyType].value = value
+            return value
+          },
+        }
+      })
+
+      settingsPanel.profiles = {
         value: null,
         get: async () => {
-          const value = await getSettingPanel(data)
-          settingsPanel[key as PanelKeyType].value = value
+          const value = await getUserProfilePanels(toRaw(userStore.userInfo))
+          settingsPanel.profiles.value = value
           return value
         },
       }
-    })
 
-    settingsPanel.profiles = {
-      value: null,
-      get: async () => {
-        const value = await getUserProfilePanels(toRaw(userStore.userInfo))
-        settingsPanel.profiles.value = value
-        return value
-      },
+      await fetchPanel(activePanel.key)
     }
-
-    activePanel.panel = await settingsPanel[activePanel.key].get()
+    finally {
+      panelLoading.value = false
+    }
   }
 
   watch(
@@ -136,6 +161,7 @@ export function useSettingsPopup() {
   return {
     dialogRef,
     activePanel,
+    panelLoading,
     initPanels,
     panels: ref(settings),
   }

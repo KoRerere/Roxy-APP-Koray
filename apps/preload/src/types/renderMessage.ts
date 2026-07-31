@@ -1,5 +1,6 @@
 import type { McpFailureType, ResourceUpdateMessage } from './mainMessage'
 import type {
+  EnsureBrowserCacheRootDirResult,
   UnwrapRowsType,
   UnwrapRowType,
   UserAddWindowInfoV2CreatePayload,
@@ -22,6 +23,7 @@ import type {
   UploadExtensionToOSSResult,
 } from '#roxybrowser/modules/extension/types'
 import type { StoreType } from '#roxybrowser/modules/store/types'
+import type { RestoreClientNetworkCheckResult } from '#roxybrowser/modules/store/restoreClientNetwork'
 import type { RoxySyncStartResult } from '#roxybrowser/modules/sync-control/bin'
 import type { OpenPreferencesDialogPayload } from '#roxybrowser/modules/sync-control/dialog/preferences'
 import type {
@@ -119,8 +121,8 @@ export interface RenderMessage {
   'user:setUserInfo': (userInfo: { token: string, userId: number, lastUserId: number, workspaceId: number, userName: string, email: string }) => void
   /** 用户退出登录 */
   'user:logout': () => void
-  /** 切换空间时设置当前空间 ID  */
-  'user:setWorkspaceId': (workspaceId: number) => void
+  /** 切换空间时设置当前空间 ID；可选附带 workspaceType 供工作台文案适配 */
+  'user:setWorkspaceId': (workspaceId: number, workspaceType?: number) => void
   /** 用户上传头像  */
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
   /** 用户上传评价图片 */
@@ -204,6 +206,8 @@ export interface RenderMessage {
   'app:delete-chrome-core': (coreVersion: string, coreType: CoreType) => void
   /** 显示 RoxyBrowser 缓存所在目录 */
   'app:showCacheDir': () => void
+  /** 确保浏览器缓存根目录存在 */
+  'app:ensureBrowserCacheRootDir': (dirPath: string) => Promise<EnsureBrowserCacheRootDirResult>
   /** 显示系统日志所在目录 */
   'app:showLogDir': () => void
   /** 获取本机 mac address */
@@ -249,6 +253,8 @@ export interface RenderMessage {
   'app:restoreLastWindowOpenStatusReady': () => Promise<void>
   /** 检查是否需要恢复窗口 */
   'app:checkNeedRestoreWindow': () => boolean
+  /** 恢复窗口前检查客户端网络是否变化 */
+  'app:checkRestoreClientNetworkChanged': () => Promise<RestoreClientNetworkCheckResult>
   /** 恢复窗口 */
   'app:restoreWindow': () => Promise<void>
   /** 取消恢复窗口 */

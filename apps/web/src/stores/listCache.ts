@@ -6,6 +6,7 @@ export const LIST_CACHE_NAMESPACE = {
   BROWSER_LIST: 'browser-list',
   ACCOUNT_LIST: 'account-list',
   PROJECT_LIST: 'project-list',
+  ECOMMERCE_ACCOUNT_LIST: 'ecommerce-account-list',
 } as const
 
 export type ListCacheNamespace = typeof LIST_CACHE_NAMESPACE[keyof typeof LIST_CACHE_NAMESPACE]
@@ -32,6 +33,11 @@ export function buildScopeKey(scope: Record<string, unknown>): string {
 export function isProjectDetailScope(scope: Record<string, unknown>): boolean {
   const projectId = scope.projectId
   return projectId !== undefined && projectId !== null && String(projectId) !== ''
+}
+
+function isProjectDetailListCache(namespace: string) {
+  return namespace === LIST_CACHE_NAMESPACE.BROWSER_LIST
+    || namespace === LIST_CACHE_NAMESPACE.ECOMMERCE_ACCOUNT_LIST
 }
 
 function buildCacheKey(namespace: string, workspaceId: string, scope: Record<string, unknown>) {
@@ -67,7 +73,7 @@ export const useListCacheStore = defineStore('listCache', () => {
     entry.lastAccessedAt = Date.now()
     entries.value.set(key, entry)
 
-    if (namespace === LIST_CACHE_NAMESPACE.BROWSER_LIST && isProjectDetailScope(scope)) {
+    if (isProjectDetailListCache(namespace) && isProjectDetailScope(scope)) {
       const workspaceKey = buildWorkspaceKey(namespace, workspaceId)
       const order = projectDetailLru.value.get(workspaceKey) ?? []
       const index = order.indexOf(key)
@@ -89,7 +95,7 @@ export const useListCacheStore = defineStore('listCache', () => {
     }
     entries.value.set(key, nextEntry)
 
-    if (namespace === LIST_CACHE_NAMESPACE.BROWSER_LIST && isProjectDetailScope(scope)) {
+    if (isProjectDetailListCache(namespace) && isProjectDetailScope(scope)) {
       const workspaceKey = buildWorkspaceKey(namespace, workspaceId)
       const order = projectDetailLru.value.get(workspaceKey) ?? []
       const index = order.indexOf(key)
@@ -114,7 +120,7 @@ export const useListCacheStore = defineStore('listCache', () => {
       const key = buildCacheKey(namespace, workspaceId, scope)
       entries.value.delete(key)
 
-      if (namespace === LIST_CACHE_NAMESPACE.BROWSER_LIST && isProjectDetailScope(scope)) {
+      if (isProjectDetailListCache(namespace) && isProjectDetailScope(scope)) {
         const workspaceKey = buildWorkspaceKey(namespace, workspaceId)
         const order = projectDetailLru.value.get(workspaceKey) ?? []
         projectDetailLru.value.set(workspaceKey, order.filter(item => item !== key))

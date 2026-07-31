@@ -1,5 +1,6 @@
 import { app, dialog, globalShortcut } from 'electron'
 import { execFile, spawn } from 'node:child_process'
+import { rm } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
@@ -244,6 +245,19 @@ export function cancelQuit() {
   app.exit(0)
 }
 
+/** APP 退出时清理 Tauri launcher 日志，避免 launcher.log 无限增长 */
+export async function clearLauncherLog() {
+  try {
+    await rm(appConfig.launcherLogFile, { force: true })
+    console.log('[cleanup] launcher.log cleared')
+  }
+  catch (error: any) {
+    if (error?.code !== 'ENOENT') {
+      console.error('[cleanup] failed to clear launcher.log:', error)
+    }
+  }
+}
+
 /**
  * 清理和释放资源, 让 APP 退出
  *
@@ -258,6 +272,7 @@ export function cancelQuit() {
  */
 export function cleanupAndExit() {
   try {
+    clearLauncherLog()
     stopRoxynet()
     globalShortcut.unregisterAll()
     killAllBrowserProcess()

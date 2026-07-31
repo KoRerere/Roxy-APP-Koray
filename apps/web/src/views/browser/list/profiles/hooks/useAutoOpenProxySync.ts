@@ -33,7 +33,7 @@ export function useAutoOpenProxySync(dataList: Ref<Row[]>) {
 
     const row = dataList.value.find(item => String(item.dirId) === key)
     if (row)
-      silentUpdateProxy(row, params)
+      silentUpdateProxy(row, params, { replaceProxy: false })
   }
 
   return { markRouteAutoOpen, clearPendingAutoOpen, syncOpenedProxyToRow }

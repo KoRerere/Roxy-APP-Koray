@@ -7,7 +7,7 @@ import { setupAppServer } from '/@/modules/appServer'
 import { browserManager } from '/@/modules/browser'
 import { killRoxynetZombieProcess, startRoxynet } from '/@/modules/roxynet'
 import { initLocalConfig, restoreLastWindowOpenStatus, setupStore } from '/@/modules/store'
-import { ensureBinSeeds, resourceUpdater, startBinUpdaters, triggerFirstBinCheck } from '/@/modules/updater'
+import { appUpdater, ensureBinSeeds, resourceUpdater, startBinUpdaters, triggerFirstBinCheck } from '/@/modules/updater'
 import { fileExists, initCrypto, killProcessByName } from '/@/utils'
 import { setupApp } from './app/'
 
@@ -19,15 +19,17 @@ import { setupApp } from './app/'
  * Setup the modules.
  */
 export async function setupModules() {
-  // }
+  fileExists(appConfig.tempDir, true, true)
+
+  await app.whenReady()
+  await initCrypto()
+  await initLocalConfig()
+
+  if (await appUpdater.tryInstallPendingUpdateOnLaunch()) {
+    return
+  }
+
   try {
-    // 启动时清理临时目录
-    fileExists(appConfig.tempDir, true, true)
-    // if (isPackaged) {
-    await app.whenReady()
-    await initCrypto()
-    // 初始化本地配置
-    await initLocalConfig()
     // 启动 app 内置服务
     await setupAppServer()
     // 在任意逻辑拉起 roxynet 之前, 先清理上次异常退出残留的进程

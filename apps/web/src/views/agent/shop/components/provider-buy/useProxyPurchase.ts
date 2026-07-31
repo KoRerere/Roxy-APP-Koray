@@ -5,16 +5,28 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { ProxyUseType } from '/@/enums/proxy'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
 import { formatBandwidthPriceList, formatProxyPriceList, getProxyTypePriceForSelectedDuration } from './utils'
-import type { Ref } from 'vue'
+import type { MaybeRefOrGetter, Ref } from 'vue'
 import type { BuyEntryType } from '/@/enums/proxy'
 import type { BandwidthOption, BusinessUseOption, CountryOption, DurationOption, ProxyTypeOption } from './utils'
+import type { ProxyPurchaseLabels, ProxyPurchaseMode } from '../../utils/proxy-purchase-labels'
+import type { WorkspaceType } from '/@/enums/base'
 
-export function useProxyPurchaseApi(options: { entryType: BuyEntryType }) {
+export function useProxyPurchaseApi(options: {
+  entryType: BuyEntryType
+  mode?: MaybeRefOrGetter<ProxyPurchaseMode | undefined>
+  /** before-enter / 电商共享入口传入，用于区分普通/电商场景列表 */
+  workspaceType?: MaybeRefOrGetter<WorkspaceType | undefined>
+}) {
   const { isZh } = storeToRefs(useSimpleLocale())
   const [_, onlyErrorToast] = useResponseToast()
+  const workspaceType = toValue(options.workspaceType)
 
   async function getBusinessUseList(vendorId: string): Promise<BusinessUseOption[]> {
-    const { code, data, msg } = await API.proxy.userGetProxyBusinessSceneListList({ vendorId })
+    const mode = toValue(options.mode)
+    const { code, data, msg } = await API.proxy.userGetProxyBusinessSceneListList({
+      vendorId,
+      ...(workspaceType != null ? { workspaceType: String(workspaceType) } : {}),
+    })
     onlyErrorToast(code, msg)
     if (code !== 0)
       return []
@@ -30,7 +42,10 @@ export function useProxyPurchaseApi(options: { entryType: BuyEntryType }) {
       badgeClass: item.badgeType?.toLocaleLowerCase(),
       isSpecialOffer: item.isSpecialOffer,
     })).filter((item) => {
-      if (item.badgeType === 'Direct')
+      // 电商设备模式已隐藏大陆直连等 badge，无需按语言过滤 Direct 用途
+      if (mode === 'device')
+        return true
+      if (item.badgeType === ProxyUseType.Direct)
         return isZh.value
       return true
     })
@@ -41,6 +56,7 @@ export function useProxyPurchaseApi(options: { entryType: BuyEntryType }) {
       sceneId: sceneId.toString(),
       countryCode,
       entryType: options.entryType.toString(),
+      ...(workspaceType != null ? { workspaceType: String(workspaceType) } : {}),
     })
     onlyErrorToast(code, msg)
     if (code !== 0)
@@ -293,6 +309,7 @@ export function useProxyPurchaseForm(options: {
 }
 
 export function useProxyPurchasePricing(options: {
+  labels: Ref<ProxyPurchaseLabels>
   userPayInfo: Ref<{ proxyDiscount?: number } | undefined>
   businessUse: Ref<BusinessUseOption | undefined>
   purchaseCountry: Ref<CountryOption | undefined>
@@ -361,14 +378,17 @@ export function useProxyPurchasePricing(options: {
     const businessUse = options.businessUse.value
     const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
     const currentProxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)
+    const { entityType, entityBandwidth, entityQuantity, entityPrice } = options.labels.value
+    const unitPrice = selectedUnit.value
+    const isDeviceMode = options.labels.value.mode === 'device'
 
     return [
       {
         title: 'title',
         items: [
-          { label: $t('代理 IP 类型'), slot: 'type' },
+          { label: entityType, slot: 'type', visible: !isDeviceMode },
           {
-            label: $t('代理 IP 带宽'),
+            label: entityBandwidth,
             visible: options.proxySpeedOptions.value?.length > 1 || (isDirect.value && currentProxyType?.showDefaultSupport100M),
             slot: 'speed',
           },
@@ -376,10 +396,17 @@ export function useProxyPurchasePricing(options: {
       },
       {
         items: [
-          { label: $t('代理 IP 数量'), value: options.purchaseMember.value },
+          {
+            label: entityPrice,
+            slot: 'unitPrice',
+            visible: isDeviceMode && !!unitPrice,
+            proxyPrice: unitPrice?.proxyPrice ?? 0,
+            originalProxyPrice: unitPrice?.originalProxyPrice ?? 0,
+          },
+          { label: entityQuantity, value: options.purchaseMember.value },
           { label: $t('国家/地区'), value: purchaseCountry?.label },
           { label: $t('订阅天数'), value: subscriptionMonths?.label },
-        ],
+        ].filter(item => item.visible !== false),
       },
       {
         items: [

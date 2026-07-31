@@ -1,0 +1,52 @@
+---
+description: 新增 IPC 时须在 app-supports.ts 声明版本能力，渲染层调用前做低版本兼容
+alwaysApply: true
+---
+
+# IPC 低版本兼容
+
+Web 前端可独立热更新，Electron 客户端版本滞后。渲染进程调用**旧客户端不存在**的 IPC channel / 事件前，必须先做版本判断，避免静默失败或运行时异常。
+
+## 新增 IPC 时的必做步骤
+
+1. **主进程 / Preload**：按既有流程注册 handler、补 `renderMessage.ts` 类型、暴露到 preload。
+2. **`apps/web/src/utils/app-supports.ts`**：新增 `supportsAppX_Y_Z()`（命名与版本号一致），内部用 `isNewerOrEqualVersion('X.Y.Z')`。
+3. **JSDoc 注释**：在函数上方列出该版本引入的 **IPC channel 与事件名**（与 `supportsApp4_0_0` 注释格式一致）。
+4. **渲染层调用处**：`supportsAppX_Y_Z()` 为真才 `send` / `on`；为假时提供降级路径（隐藏 UI、走旧逻辑、提示升级等）。
+
+## 示例
+
+```ts
+// apps/web/src/utils/app-supports.ts
+/** 当前客户端是否 ≥ v4.1.0（foo:bar IPC、foo:baz 事件） */
+export function supportsApp4_1_0() {
+  return isNewerOrEqualVersion('4.1.0')
+}
+```
+
+```ts
+// 渲染层
+import { supportsApp4_1_0 } from '/@/utils/app-supports'
+
+if (globalThis.isElectron && supportsApp4_1_0()) {
+  await globalThis.electronAPI.send('foo:bar', payload)
+}
+else {
+  // 低版本降级逻辑
+}
+```
+
+## 原则
+
+| 场景 | ❌ 避免 | ✅ 优先 |
+|------|--------|--------|
+| 新 IPC 能力 | 直接 `electronAPI.send('new:channel')` | 先 `supportsAppX_Y_Z()` 再调用 |
+| 版本门槛 | 在业务文件散落 `isNewerOrEqualVersion` | 集中到 `app-supports.ts` 导出语义化函数 |
+| UI 入口 | 低版本仍展示不可用的按钮 | `v-if="supportsAppX_Y_Z()"` 或禁用 + 说明 |
+| 注释 | 只写版本号 | 写明关联的 IPC / 事件名，便于检索 |
+
+## 例外
+
+- **仅主进程内部使用、渲染层从不调用的 IPC**：无需在 `app-supports.ts` 登记。
+- **所有已发布版本均具备的 IPC**：不必重复加版本函数；仅针对**随某次客户端发版新增**的能力。
+- **纯 Web 模式**（无 Electron）：`isNewerOrEqualVersion` 在非 Electron 环境返回 `true`，行为与线上一致。

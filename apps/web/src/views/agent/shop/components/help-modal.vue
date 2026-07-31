@@ -5,6 +5,7 @@ import { ProxyReplaceStatus, ProxyReplaceType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePermission } from '/@/hooks/usePermission'
 import type { ProxyItem } from '../operation'
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
 import type { SvgNames } from '/@/components/rx-icon'
 
@@ -15,11 +16,12 @@ const { data, info } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'replace'): void
+  (e: 'replace', replaceType: ProxyReplaceType): void
 }>()
 
 const [_, onlyErrorToast] = useResponseToast()
 const { check } = usePermission()
+const shopLabels = useProxyShopLabels()
 
 const helps = computed(() => [
   {
@@ -56,7 +58,7 @@ const helps = computed(() => [
   },
   {
     icon: 'base/rx_ic_renew',
-    title: $t('更换新代理 IP'),
+    title: shopLabels.value.helpReplaceTitle,
     description: $t('预计在 {hours} 小时内处理完成。', { hours: info.refundHours }),
     class: 'help-item',
     buttonProps: {
@@ -77,7 +79,7 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
   onlyErrorToast(code, msg)
   if (code !== 0)
     return
-  emit('replace')
+  emit('replace', replaceType)
   emit('close')
 }
 </script>
@@ -89,7 +91,7 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="description">
-      {{ $t("我们检测到您购买的代理 IP 存在问题，以下是一些推荐的解决方案。") }}
+      {{ info.isMaintenance ? shopLabels.helpProblemDescriptionMaintenance : shopLabels.helpProblemDescription }}
     </div>
     <div class="flex flex-col gap-3">
       <template v-for="help in helps" :key="help.title">
@@ -114,7 +116,7 @@ async function replaceProxy(replaceType: ProxyReplaceType) {
         {{ $t('提示:') }}
       </div>
       <div class="tips">
-        {{ $t('出现网络波动的代理 IP 通常会在几小时内自动恢复，若您已将其投入长期使用计划，可以尝试耐心等待其自动恢复或联系我们取得确切答复。') }}
+        {{ shopLabels.helpNetworkTips }}
       </div>
     </div>
   </div>

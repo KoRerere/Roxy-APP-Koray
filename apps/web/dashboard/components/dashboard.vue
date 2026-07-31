@@ -6,9 +6,12 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
-import { fingerprintInfoList, profileInfoList } from '../constants'
+import { createProfileInfoList, fingerprintInfoList } from '../constants'
 import { getLocalWebServerURL, getTimeOffset } from '../utils'
+import { createDashboardEntityLabels } from '/@/composables/useDashboardEntityLabels'
+import { WorkspaceType } from '/@/enums'
 import { genDriver } from '/@/utils'
+import { isEcommerceWorkspace } from '/@/utils/workspace-mode'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
@@ -16,6 +19,14 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 const dirId = new URLSearchParams(window.location.search).get('id')
 
 const toast = useToast()
+
+/** 工作台无 Pinia，从 appConfig / URL 读取电商模式 */
+const isEcommerce = isEcommerceWorkspace(
+  (globalThis as any).appConfig?.workspaceType
+  ?? Number(new URLSearchParams(window.location.search).get('workspaceType') || WorkspaceType.Private),
+)
+const dashboardLabels = createDashboardEntityLabels(isEcommerce)
+const profileInfoList = createProfileInfoList(dashboardLabels)
 
 const coreVersion = ref('')
 const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
@@ -83,14 +94,14 @@ async function proxyDetection(event?: MouseEvent) {
     }
     else {
       console.error('代理检查失败')
-      toast.add({ severity: 'error', summary: result.msg || $t('代理 IP 检测失败'), life: 3000 })
+      toast.add({ severity: 'error', summary: result.msg || dashboardLabels.proxyDetectFailed, life: 3000 })
       proxyInfo.value = {}
       isTestSuccess.value = false
     }
   }
   catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: $t('代理 IP 检测失败'), life: 3000 })
+    toast.add({ severity: 'error', summary: dashboardLabels.proxyDetectFailed, life: 3000 })
   }
   finally {
     testProxyLoading.value = false
@@ -145,8 +156,8 @@ async function showTourGuide() {
   if (globalThis.appConfig?.dashboardTourGuide === false) {
     const driverObj = genDriver({
       steps: [
-        { element: '#dashboard_tour_1', popover: { description: $t('这里显示窗口当前代理 IP 信息。'), side: 'top', align: 'center' } },
-        { element: '#dashboard_tour_2', popover: { description: $t('这里显示窗口备注和指纹等信息。'), side: 'top', align: 'center' } },
+        { element: '#dashboard_tour_1', popover: { description: dashboardLabels.tourProxyInfo, side: 'top', align: 'center' } },
+        { element: '#dashboard_tour_2', popover: { description: dashboardLabels.tourProfileInfo, side: 'top', align: 'center' } },
       ],
     })
 
@@ -203,7 +214,7 @@ onBeforeMount(() => {
             <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
                       :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL"
             />
-            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理 IP')" outlined :disabled="refreshUrlLoading || testProxyLoading"
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="dashboardLabels.testProxy" outlined :disabled="refreshUrlLoading || testProxyLoading"
                        @click="proxyDetection"
             />
           </div>
@@ -232,7 +243,7 @@ onBeforeMount(() => {
       <div id="dashboard_tour_2" class="card more-info profile">
         <div class="list">
           <div class="title">
-            {{ $t('窗口信息') }}
+            {{ dashboardLabels.entityInfoTitle }}
           </div>
           <template v-for="item in profileInfoList" :key="item.label">
             <div class="item">

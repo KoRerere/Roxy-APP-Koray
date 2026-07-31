@@ -32,6 +32,7 @@ export function useProviderJump() {
     }
 
     if (jumpInfo.apiKey) {
+      API.userReportRolaJumpClick.userReportRolaJumpClickCreate()
       const url = new URL(jumpInfo.jumpUrl)
       url.searchParams.set('token', jumpInfo.apiKey)
       window.open(url.toString(), '_blank')

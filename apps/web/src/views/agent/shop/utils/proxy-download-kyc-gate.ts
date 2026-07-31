@@ -3,6 +3,8 @@ import { ProxyType } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { decryptAESGCM } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { createProxyShopLabels } from './proxy-shop-labels'
 import type { ProxyItem } from '../operation'
 
 export type ProxyDownloadBlockVariant = 'member' | 'owner' | 'support'
@@ -125,10 +127,11 @@ export function getProxyDownloadBlockTitle(variant: ProxyDownloadBlockVariant) {
 }
 
 export function getProxyDownloadBlockDescription(variant: ProxyDownloadBlockVariant) {
+  const shopLabels = createProxyShopLabels(isCurrentEcommerceWorkspace())
   if (variant === 'member')
-    return $t('根据相关法规要求，导出代理 IP 需团队创建者完成实名认证。请联系您的团队创建者尽快完成认证。')
+    return shopLabels.exportRequiresKycDescMember
   if (variant === 'owner')
-    return $t('根据相关法规要求，导出代理 IP 需团队创建者完成实名认证。请在此完成企业或个人认证，认证通过后即可解锁团队导出限制。')
+    return shopLabels.exportRequiresKycDesc
   return $t('当前无法直接下载，请联系 Roxy AI 技术支持人工审核并开通权限')
 }
 

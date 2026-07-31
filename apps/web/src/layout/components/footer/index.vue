@@ -12,7 +12,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { isPublicMember } = useRouteContext()
+const { isPublicMember, isEcommerce } = useRouteContext()
 const { userInfo } = storeToRefs(useUserStore())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
@@ -31,7 +31,7 @@ const items = computed(() => {
       icon: 'base/rx_ic_books',
       rootMenu: true,
       routeName: 'tutorial',
-      visible: userInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus === false,
+      visible: userInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus === false && !isEcommerce.value,
       command: () => {
         router.push({ name: 'tutorial' })
       },
@@ -75,8 +75,8 @@ const items = computed(() => {
       </template>
     </TieredMenu>
     <Campaign :collapsed />
-    <PayMetrics v-if="roleStore.isOwner" :collapsed />
-    <div v-else-if="!collapsed" class="no-permission">
+    <PayMetrics v-if="roleStore.isOwner && !isEcommerce" :collapsed />
+    <div v-else-if="!roleStore.isOwner && !collapsed" class="no-permission">
       <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">
         <template #role>
           <span class="role-label">

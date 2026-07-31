@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxAlert } from "/@/components/rx-alert";
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
 defineOptions({
   inheritAttrs: false,
@@ -11,6 +12,7 @@ const { onConfirm } = defineProps<{
 
 defineEmits(['close'])
 
+const shopLabels = useProxyShopLabels()
 const notShowAgain = ref(false)
 
 async function _confirm() {
@@ -28,12 +30,12 @@ async function _confirm() {
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="flex flex-col gap-2">
-      <i18n-t class="desc" tag="div" scope="global" :keypath="$t('开启自动续费后，系统会在代理 IP 到期时自动尝试从 {bold} 扣费。', { bold: '{bold}' })">
+      <i18n-t class="desc" tag="div" scope="global" :keypath="shopLabels.autoRenewExpireDesc">
         <template #bold>
           <span class="desc-bold">{{ $t('Roxy 钱包') }}</span>
         </template>
       </i18n-t>
-      <RxAlert class="w-full whitespace-pre-wrap" type="info" :closable="false" :content="$t('距离到期时间不足 {hour} 小时的代理 IP，开启后将立即执行续费。\n到期前 {hour} 小时无法修改自动续费开关。', { hour: 1 })" />
+      <RxAlert class="w-full whitespace-pre-wrap" type="info" :closable="false" :content="shopLabels.autoRenewImmediateAlert(1)" />
     </div>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">

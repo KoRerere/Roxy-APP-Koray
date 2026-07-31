@@ -17,15 +17,49 @@ import { PayWay } from '/@/enums/pay'
 import { BuyEntryType, ProxyOrderType } from '/@/enums/proxy'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
+import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
+import { useRouteContext } from '/@/composables/useRouteContext'
+import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
+import type { ProxyPurchaseMode } from '/@/views/agent/shop/utils/proxy-purchase-labels'
+import type { WorkspaceType } from '/@/enums/base'
 
-const { data: provider = {}, entryType = BuyEntryType.Normal, toRola } = defineProps<{
+const {
+  data: provider = {},
+  entryType = BuyEntryType.Normal,
+  mode,
+  toRola,
+  cancelRedirect = true,
+  workspaceType,
+} = defineProps<{
   entryType?: BuyEntryType
   data?: Record<string, any>
-  toRola: () => void
+  mode?: ProxyPurchaseMode
+  toRola?: () => void
+  /** 取消支付时是否跳转到钱包账单页，默认 true */
+  cancelRedirect?: boolean
+  /** 工作区类型；before-enter 需显式传入（此时工作区可能尚未切到电商） */
+  workspaceType?: WorkspaceType
 }>()
 
-const emit = defineEmits(['close', 'success'])
+const emit = defineEmits<{
+  close: []
+  success: [data: unknown]
+  countryChange: [country: CountryOption | undefined]
+}>()
 
+const { isEcommerce, workspaceType: routeWorkspaceType } = useRouteContext()
+
+/** 显式 props 优先；共享页未传时按当前工作区推断（电商=设备 / 通用=代理） */
+const resolvedMode = computed<ProxyPurchaseMode>(() =>
+  mode ?? (isEcommerce.value ? 'device' : 'proxy'),
+)
+
+/** before-enter 可显式传入；电商共享入口用当前工作区类型拉场景列表 */
+const resolvedWorkspaceType = computed(() =>
+  workspaceType ?? (isEcommerce.value ? routeWorkspaceType.value : undefined),
+)
+
+const labels = useProxyPurchaseLabels(resolvedMode)
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
@@ -36,7 +70,7 @@ const { mixpanelTrack } = useUserStore()
 const { check } = usePermission()
 const { showFreedomActivityModal } = useFreedomActivity()
 
-const api = useProxyPurchaseApi({ entryType })
+const api = useProxyPurchaseApi({ entryType, mode: resolvedMode, workspaceType: resolvedWorkspaceType })
 
 const countryCache = createProxyPurchaseCountryCache({
   fetchCountryList: sceneId => api.getPurchaseCountryListByScene(sceneId),
@@ -75,6 +109,7 @@ const {
   finalResult,
   details,
 } = useProxyPurchasePricing({
+  labels,
   userPayInfo,
   businessUse,
   purchaseCountry,
@@ -95,6 +130,10 @@ const payTooltip = computed(() => {
 })
 
 onMounted(() => init())
+
+watch(purchaseCountry, (value) => {
+  emit('countryChange', value)
+}, { immediate: true })
 
 function checkStock() {
   if ((currentProxyType.value.inventory ?? 0) > 0) {
@@ -134,6 +173,7 @@ async function onPay() {
       container: ({ hideModal }) => (
         <WalletPayModal
           amount={finalResult.value.amount}
+          cancelRedirect={cancelRedirect}
           onClose={hideModal}
           onConfirm={onConfirm}
         />
@@ -153,13 +193,14 @@ async function onPay() {
       bandwidthSpeed: proxySpeedValue.value,
       purchaseCountry: purchaseCountry.value?.value,
       businessId: businessUse.value?.value,
+      workspaceType,
     })
     onlyErrorToast(code, msg)
     if (code !== 0)
       return
     (payType === PayWay.Balance
       ? Promise.resolve()
-      : openProcessing(data, 'silent'))
+      : openProcessing(data, 'silent', { cancelRedirect }))
       .then(() => {
         showFreedomActivityModal()
         emit('success', data)
@@ -172,7 +213,7 @@ async function onPay() {
 <template>
   <div class="relative flex-1 flex gap-6 overflow-hidden">
     <RxLoading v-model="loading" :opacity="0.9" />
-    <div class="py-5 flex-1 flex flex-col pl-8 gap-9 overflow-hidden overflow-y-auto">
+    <div class="py-5 flex-1 flex flex-col pl-8 gap-9 rounded-3 overflow-hidden overflow-y-auto selectors">
       <div class="grid grid-cols-2 gap-y-6">
         <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
         <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
@@ -186,3 +227,9 @@ async function onPay() {
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.selectors {
+  background: var(--colors-background-bg-page);
+}
+</style>

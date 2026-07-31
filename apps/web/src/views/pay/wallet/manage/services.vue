@@ -17,9 +17,13 @@ import PrimeTips from '/@/views/pay/wallet/manage/components/prime-tips.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useBuyPoints } from '/@/views/mcp/components/buyPointes'
-import { isEmpty } from 'es-toolkit/compat';
+import { isEmpty } from 'es-toolkit/compat'
+import { useRouteContext } from '/@/composables/useRouteContext'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const router = useRouter()
+const { isEcommerce } = useRouteContext()
+const billingLabels = useBillingEntityLabels()
 const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { isOwner } = storeToRefs(useRoleStore())
@@ -38,9 +42,9 @@ const otherCards = computed(() => {
   const { proxyExpireCount, proxyUsingCount, useMemberCount, maxMemberCount, useWorkspaceCount, maxWorkspaceCount, points } = userPayInfo.value
   return [
     {
-      title: $t('代理 IP'),
+      title: billingLabels.value.proxyEntity,
       used: proxyExpireCount || proxyUsingCount,
-      text: 'IPs',
+      text: isEcommerce.value ? '' : 'IPs',
       extraText: proxyExpireCount > 0 ? $t('即将过期') : '',
       addText: $t('购买'),
       extraTextClass: proxyExpireCount > 0 ? 'warning' : '',
@@ -79,8 +83,9 @@ const otherCards = computed(() => {
       text: $t('积分'),
       addText: $t('购买'),
       addClick: buyPoints,
+      visible: !isEcommerce.value,
     },
-  ]
+  ].filter(item => item.visible !== false)
 })
 
 const planActions = computed(() => {
@@ -163,7 +168,7 @@ const subscribeInfo = computed(() => {
 
   return {
     expireTime: isPremiumPartner.value ? $t('永久免费') : $t('到期时间: {value}', { value: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
-    profileCount: isPremiumPartner.value ? $t('无限窗口') : $t('{count} 窗口', { count: profileCount.format() }),
+    profileCount: isPremiumPartner.value ? billingLabels.value.unlimitedEntities : billingLabels.value.countEntitiesShort(profileCount.format()),
     // number type
     profileNumber: isPremiumPartner.value ? Infinity : profileCount.value,
     profileCreate: create,
@@ -184,7 +189,7 @@ async function getNextBillingDate() {
   if (code !== 0)
     return
 
-  nextBillText.value = $t('下个计费周期，套餐已更改：\n窗口数量：{count}\n计费金额：{amount}\n账单日期：{date}', {
+  nextBillText.value = billingLabels.value.nextBillEntities({
     count: data.windowCount,
     amount: currency(data.amount).format(),
     date: format(data.windowStartDate, 'yyyy/MM/dd'),
@@ -231,15 +236,17 @@ async function openPrimeDialog() {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center gap-8">
-      <div class="shrink-0 title">
-        {{ $t('服务') }}
+    <template v-if="!isEcommerce">
+      <div class="flex justify-between items-center gap-8">
+        <div class="shrink-0 title">
+          {{ $t('服务') }}
+        </div>
+        <Identity />
+        <!-- <PrimeTips /> -->
       </div>
-      <Identity />
-      <!-- <PrimeTips /> -->
-    </div>
+    </template>
     <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-2.5">
+      <div v-if="!isEcommerce" class="flex flex-col gap-2.5">
         <AnimationBorder :animation="false" :deg="110" :border-width="2" :animation-duration="12" class="rounded-xl" :gradient="animationGradient">
           <div class="rounded overflow-hidden">
             <div class="relative flex flex-col justify-between overflow-hidden pa-4 h-55 rounded-xl overflow-hidden plan">
@@ -263,7 +270,7 @@ async function openPrimeDialog() {
                   <i18n-t :keypath="$t('{used} / {total}', { used: '{used}', total: '{total}' })">
                     <template #used>
                       <span class="used-count text-[32px] "
-                            :class="usedWindowCount === 0 ? '' : usedWindowCount <= subscribeInfo.profileNumber ? 'text-[var(--colors-text-text-brand)]' : 'text-[var(--colors-text-text-error)]'"
+                            :class="usedWindowCount === 0 ? '' : usedWindowCount <= (subscribeInfo?.profileNumber ?? 0) ? 'text-[var(--colors-text-text-brand)]' : 'text-[var(--colors-text-text-error)]'"
                       >
                         {{ usedWindowCount }}
                       </span>
@@ -307,7 +314,7 @@ async function openPrimeDialog() {
             </div>
           </div>
           <div v-if="freeOrExpired" class="px-3 py-1 gap-[4px] flex flex-row text-[12px] text-[var(--colors-text-text-tertiary)]">
-            <i18n-t tag="div" scope="global" :keypath="$t('升级即可获取更多高级功能：窗口模板，窗口转移等等！{detail}', { detail: '{detail}' })">
+            <i18n-t tag="div" scope="global" :keypath="billingLabels.upgradeForAdvancedFeaturesKeypath">
               <template #detail>
                 <span class="text-[var(--colors-text-text-link)] cursor-pointer select-none" @click="openPrimeDialog">{{ $t('查看详情') }}</span>
               </template>
@@ -315,7 +322,7 @@ async function openPrimeDialog() {
           </div>
           <div v-else class="px-3 py-1 gap-[2px] flex align-center items-center flex-row text-white text-[12px] font-medium">
             <SvgIcon size="14" name="base/rx_ic_user_paid" />
-            {{ $t('窗口模板、窗口转移、窗口同步以及多项核心功能均已启用。') }}
+            {{ billingLabels.advancedFeaturesEnabled }}
             <PrimeTips :show-text="false" />
           </div>
         </AnimationBorder>

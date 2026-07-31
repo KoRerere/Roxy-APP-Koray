@@ -36,6 +36,9 @@ export default defineConfig({
     'tt-tertiary': 'text-[var(--colors-text-text-tertiary)]',
     'tt-inactive': 'text-[var(--colors-text-text-inactive)]',
     'tt-brand': 'text-[var(--colors-text-text-brand)]',
+    'tt-placeholder': 'text-[var(--colors-text-text-placeholder)]',
+    'tt-warning': 'text-[var(--colors-text-text-warning)]',
+    'tt-success': 'text-[var(--colors-text-text-success)]',
   },
   theme: {
     colors: {

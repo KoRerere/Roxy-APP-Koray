@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { API } from '/@/api'
+import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
 import { safeParseJSON } from '/@/utils/basic'
 import type { UnwrapRowsType, UserGetAnntListListData } from '@roxy/backend-api'
 
@@ -38,15 +39,14 @@ export const useCommonStore = defineStore('common', () => {
     return fetchAnntList()
   }
 
-  // 定时轮询
-  setInterval(fetchAnntListWithTimestamp, FETCH_INTERVAL)
+  /** 距上次拉取已超过间隔才请求，避免回前台频繁刷新 */
+  function fetchAnntListIfDue() {
+    if (Date.now() - lastFetchTime >= FETCH_INTERVAL)
+      void fetchAnntListWithTimestamp()
+  }
 
-  // 后台恢复时检查是否需要刷新（渲染进程被节流时 setInterval 不可靠）
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && Date.now() - lastFetchTime >= FETCH_INTERVAL) {
-      fetchAnntListWithTimestamp()
-    }
-  })
+  // 定时轮询（页面 hidden 时暂停；回 visible 时由 hook 补跑并校验间隔）
+  useVisibilityAwareInterval(fetchAnntListIfDue, FETCH_INTERVAL)
 
   return {
     anntList,

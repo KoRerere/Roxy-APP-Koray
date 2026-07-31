@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
 import { $t } from '/@/locales'
 
 defineProps<{
   completed: number
   total: number
 }>()
+
+const shopLabels = useProxyShopLabels()
 </script>
 
 <template>
@@ -15,7 +18,7 @@ defineProps<{
           <SvgIcon class="loading-circle" name="base/rx_ic_spin" size="18" />
           <div class="flex items-center gap-1 text-3 font-500 leading-normal">
             <span>{{ completed }} / {{ total }}</span>
-            <span>{{ $t('个代理 IP 正在测试中') }}</span>
+            <span>{{ shopLabels.concurrentTestingLabel }}</span>
           </div>
         </div>
         <div class="pl-6 text-white opacity-80 text-3 leading-normal">

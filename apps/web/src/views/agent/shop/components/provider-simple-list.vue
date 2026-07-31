@@ -139,12 +139,14 @@ function buyProxyFromAnnouncement() {
       </div>
       <RxButton class="shrink-0 roxy-btn" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('购买')" />
     </div>
-    <!--  -->
-    <div class="w-110 flex flex-col gap-3">
-      <div class="flex-1 flex flex-col pa-4 gap-1.5 rounded-2 cursor-pointer normal" @click.stop="onBuyProxy(rolaip)">
-        <div class="flex gap-3 items-center overflow-hidden">
-          <img draggable="false" class="block w-10 aspect-1 rounded-2 normal-image" :src="rolaip.vendorIcon" :alt="rolaip.vendorName">
-          <div class="flex-1 overflow-hidden">
+    <div class="w-110">
+      <div class="relative flex flex-col pa-4 gap-3 rounded-2 cursor-pointer normal overflow-visible" @click.stop="onBuyProxy(rolaip)">
+        <div v-if="rolaip.vendorDiscountTitle" class="rola-discount">
+          {{ rolaip.vendorDiscount }}% off
+        </div>
+        <div class="flex gap-3 items-start">
+          <img draggable="false" class="block w-10 aspect-1 rounded-2 normal-image shrink-0" :src="rolaip.vendorIcon" :alt="rolaip.vendorName">
+          <div class="flex-1 min-w-0 overflow-hidden">
             <div class="tt-primary font-[Archivo] text-4 leading-5 font-600">
               {{ rolaip.vendorName }}
             </div>
@@ -152,23 +154,19 @@ function buyProxyFromAnnouncement() {
               {{ rolaip.vendorWebsite }}
             </div>
           </div>
-          <RxButton class="shrink-0" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('购买')" />
+          <div class="shrink-0">
+            <RxButton class="rola-btn" severity="secondary" variant="outlined" size="md" icon="base/rx_ic_cart" :label="$t('立即领券')" />
+          </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-col-3 gap-row-1">
-          <template v-for="(item, index) in rolaip.vendorAdv" :key="item">
-            <div v-if="index !== 0" class="w-0.25 h-3 bg-[var(--colors-border-border-subtle)]" />
-            <div class="flex items-center gap-1">
-              <div class="w-1.5 h-1.5 bg-[var(--colors-icon-icon-success)] rounded-full" />
-              <div class="tt-primary text-3 font-500 leading-4.5">
-                {{ item }}
-              </div>
+        <div class="flex flex-col gap-1.5 pl-1">
+          <div v-for="item in rolaip.vendorAdv" :key="item" class="flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 bg-[var(--colors-icon-icon-success)] rounded-full shrink-0" />
+            <div class="tt-primary text-3 font-500 leading-4.5">
+              {{ item }}
             </div>
-          </template>
+          </div>
         </div>
-      </div>
-      <div class="pa-4 rounded-2 tt-secondary text-3.5 leading-5 font-500 normal">
-        {{ $t('更多服务商即将到来 ...') }}
       </div>
     </div>
   </div>
@@ -239,5 +237,44 @@ function buyProxyFromAnnouncement() {
   &-image {
     border: 1px solid var(--colors-border-border-inactive);
   }
+}
+
+.content .normal .rola-btn {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--colors-background-bg-page), var(--colors-background-bg-page)) padding-box,
+    linear-gradient(90deg, #12a3fc, #db54f9) border-box;
+  box-shadow:
+    0 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0 1px 1px 0 rgba(0, 0, 0, 0.06);
+
+  &:not(:disabled):hover {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--colors-background-bg-page), var(--colors-background-bg-page)) padding-box,
+      linear-gradient(90deg, #12a3fc, #db54f9) border-box;
+    box-shadow:
+      0 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0 1px 1px 0 rgba(0, 0, 0, 0.06);
+  }
+}
+
+.rola-discount {
+  position: absolute;
+  top: 6px;
+  right: 16px;
+  z-index: 1;
+  max-width: calc(100% - 32px);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #12a3fc, #db54f9);
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', Inter, sans-serif;
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 </style>

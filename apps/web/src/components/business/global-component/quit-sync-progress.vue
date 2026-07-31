@@ -22,12 +22,12 @@ const detail = computed(() => {
 
 const title = computed(() => {
   if (state.value.reason === 'update') {
-    return $t('正在同步窗口数据并准备更新，请稍候…')
+    return $t('正在同步数据并准备更新，请稍候…')
   }
   if (state.value.reason === 'logout') {
-    return $t('正在同步窗口数据并退出登录，请稍候…')
+    return $t('正在同步数据并退出登录，请稍候…')
   }
-  return $t('正在同步窗口数据，请稍候…')
+  return $t('正在同步数据，请稍候…')
 })
 
 if (globalThis.isElectron && isMainWindow) {

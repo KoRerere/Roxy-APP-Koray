@@ -1,4 +1,5 @@
 import { API } from '/@/api'
+import { WorkspaceType } from '/@/enums'
 import { usePermission } from '/@/hooks/usePermission'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
@@ -7,12 +8,33 @@ import { I18nT } from 'vue-i18n'
 import { h } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
 
+/** 普通 / 电商模式共用的 Roxy Geo 外链入口（挂载于各模式「工具」分组下） */
+export const roxyGeoRoute: RouteRecordRaw = {
+  path: 'roxy-geo',
+  name: 'roxy-geo',
+  meta: {
+    title: $t('跨境营销'),
+    icon: 'websites/rx_accounts_tiktok',
+    type: 'button',
+    external: true,
+    showFireBadge: true,
+    workspaceTypes: [WorkspaceType.Private, WorkspaceType.ECommerce],
+    onClick: async () => {
+      const userStore = await import('/@/stores/user').then(m => m.useUserStore())
+      const simpleLocale = await import('/@/stores/locale').then(m => m.useSimpleLocale())
+      const url = `${simpleLocale.getOfficialWebsite('/roxy-geo/')}?roxy-geo-token=${userStore.token}&roxy-geo-locale=${simpleLocale.currentLocale}&source=app`
+      window.open(url, '_blank')
+    },
+  },
+  component: () => import('/@/views/extensions'),
+}
+
 /** 普通 / 电商模式共用的自动化、团队协作及隐藏页路由 */
 export const sharedMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'automation',
     name: 'automation',
-    meta: { title: $t('自动化'), type: 'group' },
+    meta: { title: $t('自动化'), type: 'group', workspaceTypes: [WorkspaceType.Private] },
     children: [
       {
         path: 'roxy-claw',

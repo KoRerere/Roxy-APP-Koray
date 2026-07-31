@@ -2013,6 +2013,53 @@ export interface LoginVkCreateData {
   msg: string;
 }
 
+/**
+ * OAuth 回调域名：com=国际站，cn=国内站
+ * @default "com"
+ */
+export enum LoginLinuxDoCreatePayloadOauthHostEnum {
+  Com = "com",
+  Cn = "cn",
+}
+
+export interface LoginLinuxDoCreatePayload {
+  /** Linux Do OAuth authorization code */
+  linuxDoToken: string;
+  /**
+   * OAuth 回调域名：com=国际站，cn=国内站
+   * @default "com"
+   */
+  oauthHost?: LoginLinuxDoCreatePayloadOauthHostEnum;
+  /** Mixpanel distinctId */
+  distinctId?: string;
+}
+
+export interface LoginLinuxDoCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户名/邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export type LoginLinuxDoCreateError = {
+  code: number;
+  msg: string;
+};
+
 export interface PostBasePayload {
   /** 用户名 */
   user_name: string;
@@ -2492,6 +2539,8 @@ export interface UserGetUserConfigListData {
     taskbarIconDisplay: string;
     /** 任务栏标签显示  tabTitle（当前标签页名称） windowName（窗口名字） */
     taskbarTabDisplay: string;
+    /** 'prompt' | 'continue' | 'abort'，默认是 prompt */
+    restoreWindowNetworkChange: string;
   };
   msg: string;
 }
@@ -2534,25 +2583,26 @@ export interface UserGetDefConfigListData {
 }
 
 export interface UserSetUserConfigCreatePayload {
-  language?: string;
-  autoDetectProxy?: boolean;
-  timeZone?: string;
-  closeSoft?: string;
-  uploadDir?: string;
-  cacheDir?: string;
-  autoDelDays?: string;
-  autoDelSize?: string;
-  memoryLimit?: string;
-  appearance?: number;
-  systemProxySwitch?: boolean;
-  v2raySwitch?: boolean;
-  ipChecker?: string;
-  ipBlackList?: string[];
-  apiToken?: string;
-  isFirstSwitchTheme?: boolean;
-  batchOpenLayout?: string;
-  taskbarIconDisplay?: string;
-  taskbarTabDisplay?: string;
+  language: string;
+  autoDetectProxy: boolean;
+  timeZone: string;
+  closeSoft: string;
+  uploadDir: string;
+  cacheDir: string;
+  autoDelDays: string;
+  autoDelSize: string;
+  memoryLimit: string;
+  appearance: number;
+  systemProxySwitch: boolean;
+  v2raySwitch: boolean;
+  ipChecker: string;
+  ipBlackList: string[];
+  apiToken: string;
+  isFirstSwitchTheme: boolean;
+  batchOpenLayout: string;
+  taskbarIconDisplay: string;
+  taskbarTabDisplay: string;
+  restoreWindowNetworkChange: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -3104,10 +3154,20 @@ export interface UserGetBannerPictureListV2ListData {
   msg: string;
 }
 
+/** Google / Github / Facebook / VK / LINUXDO */
+export enum DataBindTypeEnum {
+  Google = "Google",
+  Github = "Github",
+  Facebook = "Facebook",
+  VK = "VK",
+  LINUXDO = "LINUXDO",
+}
+
 export interface UserBindEmailListListData {
   code: number;
   data: {
-    bindType: string;
+    /** Google / Github / Facebook / VK / LINUXDO */
+    bindType: DataBindTypeEnum;
     thirdEmail: string;
     thirdId: string;
     thirdUserName: string;
@@ -3129,9 +3189,24 @@ export interface UserBindEmailCreateData {
   msg: string;
 }
 
+/**
+ * 绑定类型
+ * Google / Github / Facebook / VK / LINUXDO
+ */
+export enum UserUnbindEmailCreatePayloadBindTypeEnum {
+  Google = "Google",
+  Github = "Github",
+  Facebook = "Facebook",
+  VK = "VK",
+  LINUXDO = "LINUXDO",
+}
+
 export interface UserUnbindEmailCreatePayload {
-  /** 绑定类型: Google/Github/Facebook/VK */
-  bind_type: string;
+  /**
+   * 绑定类型
+   * Google / Github / Facebook / VK / LINUXDO
+   */
+  bind_type: UserUnbindEmailCreatePayloadBindTypeEnum;
 }
 
 export interface UserUnbindEmailCreateData {
@@ -4071,67 +4146,42 @@ export interface UserModifyPromotionLinkCreateData {
   msg: string;
 }
 
-export interface GetAppUpgradeV2CreatePayload {
+export interface AppUpdateDetailParams {
   /**
-   * 操作系统
-   * 如 "win32", "darwin"，str，必传
+   * 操作系统：win32 / darwin / linux
+   * @example "win32"
    */
   os: string;
   /**
-   * cpu架构
-   * mac专用：interl/apple，str，非必传
+   * Windows/Linux 必填：32 或 64
+   * @example "64"
+   */
+  osBit?: string;
+  /**
+   * macOS 必填：intel / apple / arm64（arm64 归一为 apple）
+   * @example "apple"
    */
   cpu?: string;
   /**
-   *  操作系统位数
-   * 32或64，str，非必传
+   * 清单文件名：Windows=latest.yml，macOS=latest-mac.yml，Linux=latest-linux.yml（须与 os 匹配）
+   * @example "latest.yml"
    */
-  osBit?: string;
+  ymlFile: string;
 }
 
-export interface GetAppUpgradeV2CreateData {
-  code: number;
-  data: {
-    /**
-     * 下载地址
-     * 预签名下载地址
-     */
-    downloadUrl: string;
-    /**
-     * 版本号，我们自己定义的版本号，用来和客户端的比对
-     * 版本号，我们自己定义的版本号，用来和客户端的比对
-     */
-    version: string;
-    /**
-     * 升级标题
-     * 升级标题
-     */
-    upgradeTitle: string;
-    /**
-     * 升级描述
-     * 升级描述
-     */
-    upgradeDesc: string;
-    /** 新版升级内容描述 */
-    upgradeContent: {
-      new_function: string;
-      optimize: string;
-      resolve_bug: string;
+/** YAML 文本：version / files[].url(预签名) / path(预签名) / sha512 / releaseDate */
+export type AppUpdateDetailData = string;
+
+export type AppUpdateDetailError =
+  | {
+      code?: number;
+      msg?: string;
+      data?: string;
+    }
+  | {
+      code?: number;
+      msg?: string;
     };
-    upgradeContentEn: {
-      new_function: string;
-      optimize: string;
-      resolve_bug: string;
-    };
-    /**
-     * 发布时间
-     * 发布时间
-     */
-    releaseTime: string;
-    newFeatureTips: string[];
-  };
-  msg: string;
-}
 
 export interface GetCoreDownloadUrlsCreatePayload {
   os: string;
@@ -6828,6 +6878,16 @@ export interface UserGetProxyListMergedListParams {
   orderType?: string;
   /** @example "0" */
   proxyType?: string;
+  /**
+   * 不传 / 空  (全部) ，"1"（已关联），"0" （未关联）
+   * @example "1"
+   */
+  proxyBindStatus?: string;
+  /**
+   * 不传 / 空  (全部) ，"1"（已开启），"0" （未开启）
+   * @example "1"
+   */
+  proxyAutoRenew?: string;
 }
 
 export interface UserGetProxyListMergedListData {
@@ -6838,7 +6898,6 @@ export interface UserGetProxyListMergedListData {
       id?: number;
       userId?: number;
       workspaceId?: number;
-      /** 是否能升级带宽 true 可以 false 不可以 */
       canBandwidthUpgrade?: boolean;
       proxyProviderId?: number;
       orderNo?: string;
@@ -6882,6 +6941,7 @@ export interface UserGetProxyListMergedListData {
       isBind?: boolean;
       bindCount?: number;
       bindList?: number[];
+      bindAccountList?: string[];
       canRefund?: boolean;
       bandwidthSpeed?: number;
     }[];
@@ -6926,6 +6986,11 @@ export interface UserGetProxyVendorListListData {
 export interface UserGetProxyBusinessSceneListListParams {
   /** @example "1" */
   vendorId?: string;
+  /**
+   * 0 普通模式 2电商模式
+   * @example "0"
+   */
+  workspaceType?: string;
 }
 
 export interface UserGetProxyBusinessSceneListListData {
@@ -7120,6 +7185,8 @@ export interface UserGetProxyProvidersByBusinessSceneCountryListParams {
    * @example "1"
    */
   entryType?: string;
+  /** @example "0" */
+  workspaceType?: string;
 }
 
 export interface UserGetProxyProvidersByBusinessSceneCountryListData {
@@ -7219,6 +7286,206 @@ export interface UserGetProxyRenewPriceListListData {
       proxyPurchaseMonths: number;
     }[];
   };
+  msg: string;
+}
+
+export interface UserExportProxyDeviceInfoCreatePayload {
+  proxyModuleId: number;
+}
+
+export interface UserExportProxyDeviceInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyOperateRecordListCreatePayload {
+  proxyModuleId: number;
+}
+
+export interface UserGetProxyOperateRecordListCreateData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      operateContent: string;
+      operateTime: string;
+      operateType: number;
+      operatorId: number;
+      operatorName: string;
+      windowAccountId: string;
+      windowName: string;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserCheckProxyBindRiskCreatePayload {
+  proxyId: string;
+  displayId: string;
+  windowId?: number;
+}
+
+export interface UserCheckProxyBindRiskCreateData {
+  code: number;
+  data: {
+    bindingRecords: {
+      bindStatus?: string;
+      bindStatusLabel?: string;
+      isCurrentWorkspace?: boolean;
+      platform?: string;
+      platformUserName?: string;
+      windowName?: string;
+    }[];
+    /** "high" 高风险  "medium" 中风险  "none" 无风险 */
+    riskLevel: string;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyDeviceDetailListParams {
+  /** @example "754324" */
+  id?: string;
+}
+
+export interface UserGetProxyDeviceDetailListData {
+  code: number;
+  data: {
+    autoRenew: number;
+    badgeTypeDesc: string;
+    bandwidthPrice: number;
+    bandwidthSpeed: number;
+    bindCount: number;
+    bindList: number[];
+    canBandwidthUpgrade: boolean;
+    canRefund: boolean;
+    canRenew: boolean;
+    checkChannel: string;
+    checkChannelValue: string;
+    checkStatus: number;
+    checkTime: string;
+    country: string;
+    createTime: string;
+    dataType: string;
+    expireDate: string;
+    giftDays: number;
+    host: string;
+    id: number;
+    ipType: string;
+    isBind: boolean;
+    isDirect: boolean;
+    isEncryptProxy: boolean;
+    isPermanent: number;
+    isSpecialOffer: number;
+    lastCity: string;
+    lastCountry: string;
+    lastIp: string;
+    lastState: string;
+    modelParam: string;
+    moduleOpName: null;
+    opName: null;
+    orderNo: string;
+    orderStatus: number;
+    port: string;
+    protocol: string;
+    providerType: null;
+    proxyCheckChannel: string;
+    proxyExpireStatus: number;
+    proxyMonths: number;
+    proxyPassword: string;
+    proxyProviderDiscountPrice: number;
+    proxyProviderId: null;
+    proxyProviderName: null;
+    proxyProviderPrice: number;
+    proxyType: number;
+    proxyUserName: string;
+    refreshUrl: string;
+    relatedAccountCount: number;
+    relatedPlatformIcons: {
+      platformIcon: string;
+      platformIconDark: string;
+    }[];
+    remark: string;
+    renewalTime: string;
+    replaceStatus: number;
+    unitPrice: number;
+    updateTime: string;
+    userId: number;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface UserBatchCheckProxyImportCreatePayload {
+  items: {
+    tempId?: string;
+    host?: string;
+    port?: string;
+    proxyUserName?: string;
+    proxyPassword?: string;
+  }[];
+}
+
+export interface UserBatchCheckProxyImportCreateData {
+  code: number;
+  data: {
+    items: {
+      hasImportRecord?: boolean;
+      tempId?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetProxyDeviceBoundAccountsListParams {
+  /** @example "754324" */
+  id?: string;
+}
+
+export interface UserGetProxyDeviceBoundAccountsListData {
+  code: number;
+  data: {
+    rows: {
+      accountName: string;
+      lastLoginTime: string;
+      lastLoginUser: string;
+      lastLoginUserId: number;
+      platform: string;
+      windowId: number;
+    }[];
+    total: number;
+  };
+  msg: string;
+}
+
+export interface UserAddProxyModuleV2CreatePayload {
+  workspaceType?: number;
+  proxyList: {
+    loading?: boolean;
+    checkStatus?: number;
+    lastIp?: string;
+    lastCity?: string;
+    lastCountry?: string;
+    timezone?: string;
+    checkTime?: string;
+    host?: string;
+    port?: string;
+    proxyUserName?: string;
+    proxyPassword?: string;
+    proxyRules?: string;
+    ipType?: string;
+    proxyCategory?: string;
+    checkChannel?: string;
+    protocol?: string;
+  }[];
+}
+
+export interface UserAddProxyModuleV2CreateData {
+  code: number;
+  data: {
+    index?: number;
+    msg?: string[];
+  }[];
   msg: string;
 }
 
@@ -7963,6 +8230,16 @@ export interface UserMdfWorkspaceTypeCreatePayload {
 }
 
 export interface UserMdfWorkspaceTypeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSelectOnboardingWorkspaceTypeCreatePayload {
+  /** （0=普通，2=电商专用） */
+  workspaceType: number;
+}
+
+export interface UserSelectOnboardingWorkspaceTypeCreateData {
   code: number;
   msg: string;
 }
@@ -8879,7 +9156,7 @@ export interface UserCancelSubscriptionListData {
 export interface UserDowngradeSubscriptionListParams {
   /**
    * 窗口数量
-   * @example ""
+   * @example 0
    */
   purchaseMember: number;
 }
@@ -8894,7 +9171,7 @@ export interface UserDowngradeSubscriptionListData {
 export interface UserDowngradeSubscriptionV2ListParams {
   /**
    * 窗口数量
-   * @example ""
+   * @example 0
    */
   purchaseMember: number;
 }
@@ -9614,6 +9891,14 @@ export type KycStatusData = ApiResponse & {
   data?: KycStatusResult;
 };
 
+export interface UserReportRolaJumpClickCreateData {
+  code: number;
+  data: {
+    recorded: boolean;
+  };
+  msg: string;
+}
+
 export type UserGetRatingRewardCreatePayload = object;
 
 export interface UserGetRatingRewardCreateData {
@@ -9700,5 +9985,16 @@ export interface GetUninstallReasonQuestionListListData {
     title: string;
     sortNum: number;
   }[];
+  msg: string;
+}
+
+export interface GetTgWechatQrcodeListData {
+  code: number;
+  data: {
+    tgQrCode: string;
+    wechatQrCode: string;
+    tgName: string;
+    wechatName: string;
+  };
   msg: string;
 }

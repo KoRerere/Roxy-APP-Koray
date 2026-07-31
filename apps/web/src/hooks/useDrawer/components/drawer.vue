@@ -12,8 +12,8 @@ const { title, position = 'right', pt } = defineProps<Props>()
 const cssModule = useCssModule()
 
 const passThrough = {
-  mask: cssModule.mask,
-  root: cssModule.root,
+  mask: 'pa-3',
+  root: 'overflow-hidden rounded-2 border-0.5 !w-auto max-w-full',
   ...pt,
 }
 </script>
@@ -23,7 +23,7 @@ const passThrough = {
     <template #container="{ closeCallback }">
       <slot name="header" :closeCallback="closeCallback">
         <div class="flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3" :class="cssModule.header">
-          <div :class="cssModule.title">{{ title }}</div>
+          <div class="tt-primary text-3.5 font-600 leading-4.5">{{ title }}</div>
           <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeCallback" />
         </div>
       </slot>
@@ -35,36 +35,7 @@ const passThrough = {
 </template>
 
 <style lang="scss" module>
-.mask {
-  padding: var(--spacing-xl, 12px);
-
-  &:global(.p-drawer-left .p-drawer),
-  &:global(.p-drawer-right .p-drawer) {
-    width: auto;
-    max-width: 100%;
-  }
-}
-
-.root {
-  &:global(.p-drawer) {
-    border-radius: var(--radius-lg, 8px);
-    border-width: 0.5px;
-    box-shadow:
-      0px 1px 1px 0px rgba(0, 0, 0, 0.04),
-      0px 2px 8px 0px rgba(0, 0, 0, 0.04),
-      0px 3px 17px 0px rgba(0, 0, 0, 0.04),
-      0px 4px 30px 0px rgba(0, 0, 0, 0.12);
-  }
-}
-
 .header {
   border-bottom: 0.5px solid var(--colors-border-divider);
-}
-
-.title {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-sm, 18px);
 }
 </style>

@@ -39,6 +39,20 @@ function syncFromElement(el: HTMLElement) {
   rect.borderRadius = getComputedStyle(el).borderRadius || '0px'
 }
 
+function getScrollableAncestors(el: HTMLElement): HTMLElement[] {
+  const ancestors: HTMLElement[] = []
+  let node = el.parentElement
+
+  while (node) {
+    const { overflow, overflowX, overflowY } = getComputedStyle(node)
+    if ([overflow, overflowX, overflowY].some(value => /auto|scroll|overlay/.test(value)))
+      ancestors.push(node)
+    node = node.parentElement
+  }
+
+  return ancestors
+}
+
 /** 显示聚光灯并跟随目标（滚动/缩放/尺寸变化） */
 export function focusDomSpotlight(target: DomSpotlightTarget) {
   blurDomSpotlight()
@@ -58,10 +72,15 @@ export function focusDomSpotlight(target: DomSpotlightTarget) {
   const ro = new ResizeObserver(handler)
   ro.observe(el)
 
+  // 虚拟表格等内部滚动容器不冒泡到 window，需单独监听
+  const scrollAncestors = getScrollableAncestors(el)
+  scrollAncestors.forEach(node => node.addEventListener('scroll', handler, { passive: true }))
+
   teardown = () => {
     window.removeEventListener('scroll', handler, true)
     window.removeEventListener('resize', handler)
     ro.disconnect()
+    scrollAncestors.forEach(node => node.removeEventListener('scroll', handler))
   }
 }
 

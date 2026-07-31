@@ -1,9 +1,9 @@
 import { useDialog } from 'primevue/usedialog'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
-import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
 // import { useSimpleLocale } from '/@/stores/locale'
 import type { RoxyGiftsType } from '/@/enums/pay'
 import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
@@ -16,7 +16,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { enhanceCountdown, genDriver, getImage, getLocalStorageDriverStatus, isMainWindow, setLocalStorageDriverStatus, sleep } from '/@/utils'
+import { enhanceCountdown, genDriver, getImage, getLocalStorageDriverStatus, isMainWindow, setLocalStorageDriverStatus, sleep, supportsApp4_0_0 } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -24,6 +24,7 @@ import RxButton from '/@/components/rx-button'
 import styles from './schemas.module.css'
 import type { OpenBrowserFailureType } from '@roxy/electron-preload'
 import { useThemeStore } from '/@/stores/theme'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
@@ -153,6 +154,12 @@ export function useSubscribe() {
     })
   })
 
+  if (supportsApp4_0_0()) {
+    globalThis.electronAPI.on('app:browser-cache-root-dir-fallback', (payload) => {
+      onlyErrorToast(-1, $t('缓存目录不可用，已恢复为默认路径：{path}', { path: payload.fallbackPath }))
+    })
+  }
+
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
 
@@ -177,6 +184,9 @@ export function useSubscribe() {
     // 达到窗口打开次数限制
     globalThis.electronAPI.on('browser:window-open-limit', (result) => {
       console.log('browser:window-open-limit', result)
+      // 电商模式由设备绑定/续费引导，不弹出窗口额度升级提示
+      if (isCurrentEcommerceWorkspace())
+        return
       handleBusinessCode(result.code)
     })
     /** 当主窗口聚焦时 */
@@ -198,6 +208,9 @@ export function useSubscribe() {
 
   /** 显示升级套餐弹窗 */
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
+    if (isCurrentEcommerceWorkspace())
+      return
+
     showModal({
       header: 'showUpgradePlanDialog',
       slots: {
@@ -343,6 +356,9 @@ export function useSubscribe() {
       header: $t('账号设置'),
       class: 'w-[400px]',
       closable: false,
+      pt: {
+        mask: '!backdrop-blur-md',
+      },
       schemas: getAccountSetupFormSchemas(),
       formProps: {
         layout: 'vertical',

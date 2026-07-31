@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { handleRichHtmlLinkClick, navigateByRichHtmlUrl } from '/@/utils/rich-html-link'
+
 const props = defineProps<{
   newFeatureTips: Record<string, any>[]
 }>()
@@ -86,29 +88,14 @@ function handlePrev() {
 }
 
 function onHtmlClick(e: MouseEvent) {
-  const target = e.target as HTMLElement
-  const link = target.closest('a')
-
-  if (!link)
-    return
-
-  const href = link.getAttribute('href')
-
-  // 只拦截站内路由；相对路径即使 target="_blank" 也走 SPA，避免打开外部浏览器
-  if (!href || href.startsWith('http'))
-    return
-  e.preventDefault()
-
-  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
-
-  router.replace({
-    path: url.pathname,
-    query: {
-      ...Object.fromEntries(url.searchParams),
-      _t: Date.now(),
+  handleRichHtmlLinkClick(e, {
+    router,
+    interceptBlankTarget: true,
+    onNavigate(url) {
+      navigateByRichHtmlUrl(router, url)
+      handleSkip()
     },
   })
-  handleSkip()
 }
 </script>
 

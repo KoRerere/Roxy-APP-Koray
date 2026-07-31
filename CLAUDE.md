@@ -210,6 +210,7 @@ All IPC messages are typed via `apps/preload/src/types/renderMessage.ts`. When a
 1. Add type definition in renderMessage.ts
 2. Implement handler in `apps/electron/src/modules/ipc/receiver/modules/`
 3. Expose in preload via `apps/preload/src/ipcRenderer.ts`
+4. **Renderer low-version compat**: Add `supportsAppX_Y_Z()` in `apps/web/src/utils/app-supports.ts` (with JSDoc listing IPC channels/events), and guard all renderer `send`/`on` calls. Web UI can hot-update ahead of the Electron client; never call new IPC without a version gate and fallback.
 
 ### Workspace Types
 

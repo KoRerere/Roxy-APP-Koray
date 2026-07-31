@@ -84,7 +84,7 @@ export class CoreManagerUtils {
       ...osConfig,
       coreType: this.coreType,
     }
-    console.log('fetchAvailableCoreList', params)
+    console.log(`[CoreManagerUtils] ${this.coreType} fetchAvailableCoreList`, params)
     this.fetchAvailableCoreListPromise ||= API.base.getCoreUpgradeCreate(params)
     const result = await this.fetchAvailableCoreListPromise
       .catch((err) => {
@@ -219,6 +219,31 @@ export class CoreManagerUtils {
     return this.availableCoreList.find(
       core => core.coreVersion === coreVersion,
     )
+  }
+
+  /** 获取内核预签名下载地址 */
+  private async fetchCoreDownloadUrl(coreVersion: string, signal?: AbortSignal): Promise<string> {
+    const result = await API.base.getCoreDownloadUrlsCreate({
+      ...osConfig,
+      coreType: this.coreType,
+      coreVersions: [coreVersion],
+    })
+
+    if (signal?.aborted) {
+      throw this.createCancelDownloadError()
+    }
+
+    if (result.code !== 0) {
+      throw new Error(result.msg || $t('获取内核下载地址失败'))
+    }
+
+    const downloadUrl = result.data?.rows?.find(row => row.coreVersion === coreVersion)?.downloadUrl
+
+    if (!downloadUrl) {
+      throw new Error($t('获取内核下载地址失败'))
+    }
+
+    return downloadUrl
   }
 
   private createCancelDownloadError() {
@@ -458,9 +483,19 @@ export class CoreManagerUtils {
     const runDownloadTask = async () => {
       try {
         console.log('downloadCore start', coreVersion)
+        const downloadUrl = await this.fetchCoreDownloadUrl(coreVersion, controller.signal).catch((error) => {
+          if (this.isDownloadCancelledError(error)) {
+            return Promise.reject(error)
+          }
+          console.error('fetchCoreDownloadUrl error', error)
+          payload.status = 'failed'
+          payload.description = $t('获取内核下载地址失败')
+          doMsgCallbacks()
+          return Promise.reject(new Error(payload.description))
+        })
         // 下载内核
         await downloadZipFile(
-          availableCore.downloadUrl!,
+          downloadUrl,
           outputZipPath,
           (progress) => {
             // console.log(`Download progress: ${progress}%`)

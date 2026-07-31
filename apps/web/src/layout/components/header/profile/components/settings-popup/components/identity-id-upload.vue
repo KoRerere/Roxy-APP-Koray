@@ -3,7 +3,10 @@ import { useFileDialog } from '@vueuse/core'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { tempUploadOssFile } from '/@/_temp/renderer-upload-oss-file'
+import { CompressImageError, compressImageFile } from '/@/utils/compress-image-file'
+import { uploadKycImage } from '/@/utils/upload-kyc-image'
+
+const MAX_KYC_IMAGE_BYTES = 4 * 1024 * 1024
 
 defineProps<{
   label: string
@@ -40,27 +43,35 @@ onChange(async (files) => {
   if (!files?.length)
     return
 
-  const file = files[0]!
-  if (file.size > 4 * 1024 * 1024) {
-    showToast(-1, $t('建议图片大小不超过4MB，支持 jpg、jpeg、png 等格式'))
-    return
-  }
-
   const userId = userInfo.value.id
   if (!userId)
     return
 
+  const rawFile = files[0]!
   revokePreviewPath()
-  previewPath.value = URL.createObjectURL(file)
   uploading.value = true
   modelValue.value = ''
 
   try {
-    const ext = getFileExt(file.name)
+    let uploadFile = rawFile
+    if (rawFile.size > MAX_KYC_IMAGE_BYTES) {
+      try {
+        uploadFile = await compressImageFile(rawFile, MAX_KYC_IMAGE_BYTES)
+      }
+      catch (error) {
+        if (error instanceof CompressImageError && error.code === 'too_large')
+          showToast(-1, $t('图片过大，请压缩后重试'))
+        else
+          showToast(-1, $t('图片压缩失败，请选择更小的图片'))
+        return
+      }
+    }
+
+    previewPath.value = URL.createObjectURL(uploadFile)
+
+    const ext = getFileExt(uploadFile.name)
     const objectKey = `/groupdata/kyc/${userId}/${crypto.randomUUID()}${ext}`
-    // TODO: 临时走渲染进程直连 OSS，后续切回主进程 IPC
-    const ossUrl = await tempUploadOssFile({ objectKey, file })
-    // const ossUrl = await globalThis.electronAPI.send('user:uploadOssFile', { localPath, objectKey })
+    const ossUrl = await uploadKycImage(uploadFile, objectKey)
     if (ossUrl)
       modelValue.value = ossUrl
   }

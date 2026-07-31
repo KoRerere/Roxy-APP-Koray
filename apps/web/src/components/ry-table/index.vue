@@ -11,7 +11,6 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import { deepClone, getFormData, getSortIcon, isEmptyValue, isFunction, isLikeFunction, operationPower, transformSortOrder } from '/@/utils'
 import type { Operation, SortOrderNumber } from '/@/utils'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { AnimatePresence } from 'motion-v'
 import type { ListCacheEntry } from '/@/stores/listCache'
 import { useListCacheStore } from '/@/stores/listCache'
@@ -33,6 +32,8 @@ const props = withDefaults(defineProps<Props>(), {
   showActions: true,
   showActionsMenu: true,
   pageRows: 10,
+  // 默认请求后清空选中；选择回显场景（如设备选择抽屉）需关闭
+  clearSelectionOnRequest: true,
   tableRequest: () => ({}),
   tableSort: () => [],
   tableFilters: () => [],
@@ -58,6 +59,8 @@ export interface Props {
   showActionsMenu?: boolean
   skeleton?: boolean
   pageRows?: number
+  /** 为 false 时保留 v-model:selection，避免回显被请求回调清掉 */
+  clearSelectionOnRequest?: boolean
   tableSort?: () => any
   tableFilters?: () => any
   tableRequest?: (data: any) => any | Promise<any>
@@ -331,7 +334,8 @@ async function _request() {
   _dataList.value = data?.rows || []
   if (props.listCacheKey && (response?.code === 0 || response?.code === undefined))
     _writeListCache()
-  _clearSelection()
+  if (props.clearSelectionOnRequest)
+    _clearSelection()
   _loading.value = false
 }
 
@@ -450,7 +454,7 @@ function initBodyrow(options: any) {
 </script>
 
 <template>
-  <div ref="rootEl" class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
+  <div ref="rootEl" class="relative w-full h-full flex flex-col" :class="$attrs.class">
     <div v-if="showTableHeader" class="flex items-start justify-between self-stretch gap-2 rx-header">
       <slot name="table-header">
         <div class="flex flex-1 gap-2 flex-wrap">
@@ -511,26 +515,24 @@ function initBodyrow(options: any) {
           </template>
           <template #body="{ data, index }">
             <slot :name="slot" :data="data" :index="index" :column="column">
-              <component :is="render" v-if="render" :data="data" :class="column.classes" />
+              <template v-if="column.skeleton && !data.id">
+                <Skeleton v-bind="column.skeleton" />
+              </template>
+              <component :is="render" v-else-if="render" :data="data" :index="index" :column="column" :class="column.classes" />
               <template v-else>
-                <template v-if="column.skeleton && !data.id">
-                  <Skeleton v-bind="column.skeleton" />
-                </template>
-                <template v-else>
-                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
-                    {{ column.getText?.(data) || data[column.key] }}
-                  </div>
-                </template>
+                <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
+                  {{ column.getText?.(data) || data[column.key] }}
+                </div>
               </template>
             </slot>
           </template>
           <template #sorticon="{ sorted, sortOrder, ...rest }">
             <div :class="rest.class">
-              <RxSvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)" />
+              <SvgIcon :name="getSortIcon((sorted ? sortOrder : 0) as SortOrderNumber)" size="12px" color="var(--colors-icon-icon-note)" />
             </div>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0px; min-width: 120px" :pt="{
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0px;" :pt="{
           columntitle: ColumnCss_Module.columntitle,
           headercell: ColumnCss_Module.headercell,
           bodycell: ColumnCss_Module.bodycell,

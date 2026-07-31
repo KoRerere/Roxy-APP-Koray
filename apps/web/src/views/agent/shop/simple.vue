@@ -11,10 +11,10 @@ import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
-import { getRawColumns, getRelatedProfileLabels } from './columns'
-import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from './operation'
+import { getRawColumns, getRelatedProfileLabels } from '/@/views/agent/shop/columns.tsx'
+import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from '/@/views/agent/shop/operation.ts'
 import type { ProxyCheckStatus } from '/@/enums'
-import type { ProxyItem } from './operation'
+import type { ProxyItem } from '/@/views/agent/shop/operation.ts'
 import { API } from '/@/api'
 
 interface Props {
@@ -65,9 +65,22 @@ const filters = reactive({
 
 const filtersMenu = ref()
 const dataList = ref()
-const selection = ref(toRaw(outerData))
+// 有有效代理 id 时才回显；无代理时传空对象会让保存按钮误亮
+const selection = ref(resolveInitialSelection(outerData, isBatch))
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 const checking = ref(false)
+
+/**
+ * 解析表格初始选中项：批量直接沿用；单选仅在存在有效代理 id 时回显
+ */
+function resolveInitialSelection(data: any, batch: boolean) {
+  const raw = toRaw(data)
+  if (batch)
+    return raw
+  if (raw?.id != null && raw.id !== 0)
+    return raw
+  return undefined
+}
 
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
@@ -140,6 +153,13 @@ async function getTableList(params: any) {
     dataList.value = _rows
     totalMark.value = result.data.total
     Reflect.set(result.data, 'rows', _rows)
+
+    // 用当前页同源行替换选中对象，保证 dataKey 回显稳定
+    if (!isBatch && selection.value?.id != null) {
+      const matched = _rows.find((item: any) => item.id === selection.value.id)
+      if (matched)
+        selection.value = matched
+    }
   }
 
   return result
@@ -182,7 +202,7 @@ async function onCheckProxyStatus(datas: ProxyItem[], options: { key: string, ap
         apiCheck: apiCheck && item.proxyType === ProxyType.buy,
       })
       setOperationLoading(item, key, false)
-      Object.assign(item, { ...checkResult, _checkRes: checkResult })
+      Object.assign(item, { ...checkResult, _checkRes: toRaw(checkResult) })
       checkedMessage.value[item.id!] = checkResult.checkStatus
       return { ...checkResult, id: item.id, proxyType: item.proxyType }
     }
@@ -228,8 +248,9 @@ async function saveSelected() {
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" type="info" :title="proxyAlertMessage" :closable="false" />
     <div class="flex-ovh-1">
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-               :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
+      <!-- 关闭请求后清空选中，否则更换代理时已选代理无法在列表回显 -->
+      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'"
+               :clear-selection-on-request="false" v-bind="tableProps" :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
       >
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理 IP')" />
@@ -256,7 +277,7 @@ async function saveSelected() {
       </RyTable>
     </div>
     <div class="w-full flex justify-end gap-3 button-group">
-      <RxButton :label="checking ? $t('检测中...') : $t('保存')" @click.stop="saveSelected" />
+      <RxButton :label="checking ? $t('检测中...') : $t('保存')" :disabled="!selection" @click.stop="saveSelected" />
     </div>
   </div>
 </template>

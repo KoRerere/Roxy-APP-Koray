@@ -17,6 +17,7 @@ import { PayWay } from '/@/enums/pay'
 import { BuyEntryType, BuyProxyListType, ProxyOrderType } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
+import { getProxyPurchaseNotes } from '/@/views/agent/shop/utils/proxy-purchase-notes'
 
 const {
   data: initialData,
@@ -45,32 +46,7 @@ const loading = ref(false)
 
 const canSwitchCountry = computed(() => countryList.value.length > 1)
 
-const notes = [
-  {
-    text: $t('所有代理 IP 都 {bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('同时支持 SOCKS5 和 HTTP 协议')],
-  },
-  {
-    text: $t('您购买的所有代理 IP 都是 {bold0}，不会与他人共享。', { bold0: '{bold0}' }),
-    bolds: [$t('独享专用 IP')],
-  },
-  {
-    text: $t('订阅期间所有代理 IP {bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('不限流量')],
-  },
-  {
-    text: $t('若购买的代理 IP 出现 {bold0} 的问题，支持 {bold1}。', { bold0: '{bold0}', bold1: '{bold1}' }),
-    bolds: [$t('无法连接'), $t('免费更换或退款')],
-  },
-  {
-    text: $t('您可以在代理 IP 列表中延长代理 IP 的使用期限，{bold0}。', { bold0: '{bold0}' }),
-    bolds: [$t('价格与购买时相同')],
-  },
-  {
-    text: $t('{bold0}', { bold0: '{bold0}' }),
-    bolds: [$t('代理 IP 过期后将被停用，无法找回或再次续费。')],
-  },
-]
+const notes = computed(() => getProxyPurchaseNotes())
 
 const isCN = computed(() => networkInfo.value?.country_code === 'CN' && !isDirect)
 const configValue = computed(() => {

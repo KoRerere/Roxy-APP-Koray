@@ -5,7 +5,7 @@ import { API } from '/@/api';
 
 const props = defineProps<{
   value: any
-  bindType: 'Google' | 'Github' | 'Facebook' | 'VK'
+  bindType: 'Google' | 'Github' | 'Facebook' | 'LINUXDO'
 }>()
 
 const emit = defineEmits(['bind', 'unbind'])
@@ -14,7 +14,7 @@ const confirm = useConfirm();
 
 async function handleClick(event: Event) {
   if (props.value) {
-    // 绑定类型: Google/Github/Facebook/VK
+    // 绑定类型: Google/Github/Facebook/LINUXDO
     confirm.require({
       target: event.currentTarget as HTMLElement,
       group: 'popup',

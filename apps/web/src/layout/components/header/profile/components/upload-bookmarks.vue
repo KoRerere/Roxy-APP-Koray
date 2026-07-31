@@ -4,6 +4,7 @@ import Dialog from 'primevue/dialog';
 import { useToast } from 'primevue/usetoast';
 import { MaximumLimitExceeded } from './settings-popup';
 import { cloneDeep } from 'es-toolkit';
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 enum BookmarkType {
   FOLDER = 'folder',
@@ -131,6 +132,7 @@ const modelValue = defineModel<BookText>({
 const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 const toast = useToast()
+const profileLabels = useProfileEntityLabels()
 const expandedKeys = ref({});
 const visible = ref(false)
 const __modelValue = ref<BookText>({
@@ -213,11 +215,11 @@ const expandNode = (node, __expandedKeys) => {
 const bookmarkOptions = computed(() => {
   return [
     {
-      label: $t('与窗口中已有书签合并'),
+      label: profileLabels.value.mergeBookmarksWithEntity,
       value: ImportMode.MERGE,
     },
     {
-      label: $t('覆盖原窗口中已有书签'),
+      label: profileLabels.value.overwriteEntityBookmarks,
       value: ImportMode.REPLACE,
     },
   ]

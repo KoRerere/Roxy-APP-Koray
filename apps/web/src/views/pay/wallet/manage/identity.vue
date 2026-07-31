@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { PayIdentity } from '/@/enums/pay'
 import { useUserStore } from '/@/stores/user'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 
 const isVip = computed(() => [PayIdentity.old, PayIdentity.invited].includes(identityInfo.value.identity))
 const isCustomDiscount = computed(() => userPayInfo.value.discount > 15)
 const discountKeyPath = computed(() => {
   if (identityInfo.value.identity === PayIdentity.old || identityInfo.value.identity === PayIdentity.invited) {
-    return $t('窗口订阅、成员、团队：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' })
+    return billingLabels.value.subscribeIdentityDiscount
   }
 
   if (isCustomDiscount.value) {
-    return $t('永久享受窗口订阅、团队成员、团队：{profile} 折扣，代理 IP ：{proxy} 折扣{points}', { profile: '{profile}', proxy: '{proxy}', points: '{points}' })
+    return billingLabels.value.subscribeIdentityDiscountPermanentKeypath
   }
 
   return ''

@@ -1,3 +1,4 @@
+import type { PendingUpdateCache } from './pendingUpdateProbe'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import type { DebUpdater } from 'electron-updater'
@@ -9,14 +10,19 @@ import { join } from 'node:path'
 // import { setTimeout } from 'node:timers/promises'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
+import { isPackaged, isWindows } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { resetBrowserDataSyncedBeforeQuit, syncBrowserDataBeforeQuit } from '/@/modules/app/quitCleanup'
+import { isPostUpdateLaunch, isSkipPendingUpdateLaunch } from '/@/modules/app/relaunch'
 import { browserManager } from '/@/modules/browser'
 import { getAppIdleState } from '/@/modules/ipc/receiver/modules/app'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, store } from '/@/modules/store'
+import { getAutoUpdateAppOnLaunch } from '/@/modules/store/autoUpdateApp'
+import { buildAppUpdateFeedUrl, resolveAppGatewayBaseUrl } from './buildAppUpdateFeedUrl'
 import { CustomDebUpdater } from './CustomDebUpdater'
+import { probeLocalPendingUpdate } from './pendingUpdateProbe'
+import { buildAppUpdatePublishOptions } from './PreservingGenericProvider'
 
 const isDevelopment = !app.isPackaged
 
@@ -31,6 +37,8 @@ export const appUpdater = new class AppUpdater {
   private upgradeInProgress = false
   /** electron-updater 实际已下载完成的版本，与 #updateMessageData.version 解耦，避免 init 提前刷新远端版本后误判无需重下 */
   #downloadedVersion?: string
+  /** 当前会话最近一次 setFeedURL 的地址，供下载完成后写入本地 pending 标记 */
+  #pendingFeedUrl?: string
   #autoUpdater: DebUpdater | typeof electronUpdater.autoUpdater = process.platform === 'linux'
     ? new CustomDebUpdater()
     : electronUpdater.autoUpdater
@@ -60,14 +68,14 @@ export const appUpdater = new class AppUpdater {
   async init() {
     const result = await API.base.getAppUpgradeCreate(osConfig)
 
-    console.debug(`user_get_app_upgrade result`, result)
+    console.debug(`get_app_upgrade result`, result)
 
     if (result.code !== 0 || !result.data) {
       console.log(`Update data is empty, skipping update`)
       return result
     }
 
-    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime, newFeatureTips } = result.data
+    const { version, upgradeContent, upgradeTitle, releaseTime, newFeatureTips } = result.data
     this.#updateMessageData.originUpgradeData = structuredClone(result.data)
     this.#updateMessageData.upgradeContent = upgradeContent
     this.#updateMessageData.title = upgradeTitle || 'RoxyBrowser'
@@ -75,22 +83,24 @@ export const appUpdater = new class AppUpdater {
     this.#updateMessageData.currentVersion = app.getVersion()
     this.#updateMessageData.releaseTime = releaseTime
     this.#updateMessageData.newFeatureTips = structuredClone(newFeatureTips ?? {})
-    // downloadUrl = `http://localhost:7788/static`
-    console.debug(`AppUpdater downloadUrl`, downloadUrl)
 
-    if (!downloadUrl) {
-      console.log(`Update URL is empty, skipping update`)
+    const baseUrl = await resolveAppGatewayBaseUrl()
+    if (!baseUrl) {
+      console.log(`App gateway baseUrl is empty, skipping update`)
       return result
     }
-    const publishOptions = {
-      requestHeaders: {},
-      provider: 'generic',
-      url: downloadUrl,
-    }
+
+    const feedUrl = buildAppUpdateFeedUrl(baseUrl, osConfig)
+    console.debug(`AppUpdater feedUrl`, feedUrl)
+
+    await this.#ensureUpdaterDirectNetwork()
+
+    const publishOptions = buildAppUpdatePublishOptions(feedUrl)
 
     console.debug(`autoUpdater options`, publishOptions)
 
     // 设置更新源
+    this.#pendingFeedUrl = feedUrl
     this.#autoUpdater.setFeedURL(publishOptions)
 
     // 如果已经初始化过，只需要重新检查更新
@@ -106,15 +116,143 @@ export const appUpdater = new class AppUpdater {
     }
 
     // 首次初始化，设置配置和事件监听
+    this.#ensureUpdaterEventListeners()
+    this.checkForUpdates()
+    return result
+  }
+
+  /** 冷启动：本地探测待安装包，命中则安装并跳过其余启动流程（仅 Windows） */
+  async tryInstallPendingUpdateOnLaunch(): Promise<boolean> {
+    if (!isWindows || !isPackaged || !getAutoUpdateAppOnLaunch()) {
+      return false
+    }
+
+    if (isPostUpdateLaunch()) {
+      console.log('[AppUpdater] Post-install launch, clear pending marker and skip cold-start install')
+      this.#clearPendingAppUpdateMarker()
+      return false
+    }
+
+    if (isSkipPendingUpdateLaunch()) {
+      console.log('[AppUpdater] Skip pending update install on relaunch')
+      return false
+    }
+
+    const pendingVersion = store.pendingAppUpdateVersion
+    if (!pendingVersion) {
+      return false
+    }
+
+    if (!compare(pendingVersion, app.getVersion(), '>')) {
+      this.#clearPendingAppUpdateMarker()
+      return false
+    }
+
+    const cache = await probeLocalPendingUpdate(pendingVersion)
+    if (!cache) {
+      console.log('[AppUpdater] Local pending cache missing, clear marker and continue startup')
+      this.#clearPendingAppUpdateMarker()
+      return false
+    }
+
+    try {
+      this.#ensureUpdaterEventListeners()
+      await this.#ensureUpdaterDirectNetwork()
+      if (store.pendingAppUpdateFeedUrl) {
+        this.#autoUpdater.setFeedURL(buildAppUpdatePublishOptions(store.pendingAppUpdateFeedUrl))
+      }
+      this.#hydrateDownloadedUpdateFromCache(cache)
+      this.#downloadedVersion = cache.version
+      this.#updateMessageData.status = 'downloaded'
+      this.#updateMessageData.version = cache.version
+      this.#updateMessageData.percent = 100
+
+      await this.upgradeNow()
+      return true
+    }
+    catch (error) {
+      console.error('[AppUpdater] Launch-time install failed, continue normal startup:', error)
+      this.upgradeInProgress = false
+      this.isQuittingForUpdate = false
+      return false
+    }
+  }
+
+  #clearPendingAppUpdateMarker() {
+    store.pendingAppUpdateVersion = undefined
+    store.pendingAppUpdateFeedUrl = undefined
+    forceSaveConfig()
+  }
+
+  #markPendingAppUpdate(version: string) {
+    if (!isWindows) {
+      return
+    }
+    store.pendingAppUpdateVersion = version
+    if (this.#pendingFeedUrl) {
+      store.pendingAppUpdateFeedUrl = this.#pendingFeedUrl
+    }
+    forceSaveConfig()
+  }
+
+  #syncAutoInstallOnAppQuit() {
+    // Windows 走冷启动安装，退出时不交给 electron-updater
+    this.#autoUpdater.autoInstallOnAppQuit = !isWindows && getAutoUpdateAppOnLaunch()
+  }
+
+  /** electron-updater 使用独立 netSession，显式直连，不继承 defaultSession / 系统代理 */
+  async #ensureUpdaterDirectNetwork() {
+    await this.#autoUpdater.netSession.setProxy({ proxyRules: 'direct://' })
+  }
+
+  #ensureUpdaterEventListeners() {
+    if (this.#isInitialized) {
+      this.#syncAutoInstallOnAppQuit()
+      return
+    }
+
     this.#isInitialized = true
 
-    // 防止报错no such file or directory dev-app-update.yml
+    // 预签名 OSS 无法走 blockmap 差分，禁用后可避免无效 403 重试
+    if (process.platform !== 'linux') {
+      this.#autoUpdater.disableDifferentialDownload = true
+    }
+
     if (isDevelopment) {
       this.#autoUpdater.forceDevUpdateConfig = true
       this.#autoUpdater.updateConfigPath = join(import.meta.dirname, '../dev-app-update.yml')
     }
 
-    this.#autoUpdater.autoInstallOnAppQuit = true
+    this.#registerUpdaterEventListeners()
+  }
+
+  #hydrateDownloadedUpdateFromCache(cache: PendingUpdateCache) {
+    const helper = {
+      cacheDir: cache.cacheDir,
+      cacheDirForPendingUpdate: join(cache.cacheDir, 'pending'),
+      _file: cache.installerPath,
+      _packageFile: null as string | null,
+      _downloadedFileInfo: {
+        fileName: cache.fileName,
+        sha512: cache.sha512,
+        isAdminRightsRequired: cache.isAdminRightsRequired,
+      },
+      get file() {
+        return this._file
+      },
+      get downloadedFileInfo() {
+        return this._downloadedFileInfo
+      },
+      get packageFile() {
+        return this._packageFile
+      },
+    }
+
+    ;(this.#autoUpdater as any).downloadedUpdateHelper = helper
+  }
+
+  #registerUpdaterEventListeners() {
+    this.#syncAutoInstallOnAppQuit()
 
     this.#autoUpdater.on(`error`, (error) => {
       console.error(`autoUpdater error occurred`, error)
@@ -126,6 +264,7 @@ export const appUpdater = new class AppUpdater {
         this.#downloadedVersion = undefined
         this.upgradeInProgress = false
         this.isQuittingForUpdate = false
+        this.#clearPendingAppUpdateMarker()
         this.sendErrorMessage()
         return
       }
@@ -155,6 +294,7 @@ export const appUpdater = new class AppUpdater {
       this.#downloadedVersion = event.version
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
+      this.#markPendingAppUpdate(event.version)
       this.sendSuccessMessage()
       store.showNewFeatureTips = Boolean(this.#updateMessageData.newFeatureTips?.[store.language]?.length)
       forceSaveConfig()
@@ -188,9 +328,6 @@ export const appUpdater = new class AppUpdater {
       getMainWindow()?.setProgressBar(percent / 100)
       this.sendSuccessMessage()
     })
-
-    this.checkForUpdates()
-    return result
   }
 
   async checkForUpdates(remoteVersion?: string) {
@@ -314,7 +451,7 @@ export const appUpdater = new class AppUpdater {
 
   /** 当 APP 处于空闲状态时，安装更新 */
   async installUpdateWhenIdle() {
-    if (!store.autoUpdateApp || !getAppIdleState()) {
+    if (!getAutoUpdateAppOnLaunch() || !getAppIdleState()) {
       return
     }
 

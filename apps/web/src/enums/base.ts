@@ -41,6 +41,16 @@ export enum TaskbarIconDisplay {
   windowName = 'windowName',
 }
 
+/** 恢复窗口前客户端网络变化时的处理方式 */
+export enum RestoreWindowNetworkChange {
+  /** 弹出提示 */
+  Prompt = 'prompt',
+  /** 继续恢复窗口 */
+  Continue = 'continue',
+  /** 终止恢复窗口 */
+  Abort = 'abort',
+}
+
 export enum WorkspaceType {
   /** 私有 / 普通模式 */
   Private = 0,

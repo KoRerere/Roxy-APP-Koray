@@ -78,13 +78,13 @@ const osBitMap = {
 function genUploadPath(osBit: string, fileName: string) {
   if (process.platform === 'win32') {
     osBit = osBit.replaceAll('x64', '64').replaceAll('ia32', '32')
-    return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`
+    return `/private/package/app/Windows/${osBit}/${appVersion}/${fileName}`
   }
   else if (isMac) {
-    return `/public/package/app/macOS/${osBitMap[osBit]}/${appVersion}/${fileName}`
+    return `/private/package/app/macOS/${osBitMap[osBit]}/${appVersion}/${fileName}`
   }
   else if (isLinux) {
-    return `/public/package/app/Linux/x64/${appVersion}/${fileName}`
+    return `/private/package/app/Linux/x64/${appVersion}/${fileName}`
   }
 }
 
@@ -145,6 +145,34 @@ const os = {
   linux: 'Linux',
 }[process.platform]
 
+/** 将构建产物 osBit 映射为 admin API 所需的 osBit/cpu */
+function toPublishParams(osBit: string) {
+  return {
+    osBit: osBit === 'ia32' ? '32' : '64',
+    cpu: osBit === 'arm64' ? 'apple' : (isMac ? 'intel' : ''),
+  }
+}
+
+/** 获取本次发布会调用 admin API 的目标平台 */
+function getPublishTargets() {
+  const osBits = isMac ? ['arm64', 'x64'] : (isLinux ? ['amd64'] : ['ia32', 'x64'])
+  return osBits.map(toPublishParams)
+}
+
+/** 上传前预检：若任一目标版本已放开白名单，需二次确认 */
+async function ensurePublishConfirmed() {
+  if (!isProd)
+    return
+
+  const targetVersions = await Promise.all(
+    getPublishTargets().map(target => getTargetVersion(target)),
+  )
+
+  if (targetVersions.some(version => version?.ipLimit === false)) {
+    await confirmPublish()
+  }
+}
+
 /** 获取后台目标版本，有则为更新，无则为新增 */
 async function getTargetVersion(params: { osBit: string, cpu: string }) {
   const { osBit, cpu } = params
@@ -169,7 +197,7 @@ async function getTargetVersion(params: { osBit: string, cpu: string }) {
 }
 
 /** 发布版本 */
-async function publishVersion({ osBit, cpu, downloadUrl }) {
+async function publishVersion({ osBit, cpu, downloadUrl }: { osBit: string, cpu: string, downloadUrl: string }) {
   const defaultParams = {
     os,
     osVersion: '',
@@ -210,14 +238,11 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
     cpu: defaultParams.cpu,
   })
 
-  // 如果版本放开了白名单限制，则需要确认是否继续发布
-  if (targetVersion?.ipLimit === false && isProd) {
-    await confirmPublish()
-  }
-
   Object.assign(defaultParams, { ...targetVersion })
+  // 更新时保留本次传入的 downloadUrl，避免被历史记录覆盖
+  defaultParams.downloadUrl = downloadUrl
   const action = defaultParams.id ? `/admin_mdf_version` : `/admin_add_version`
-  fetch(
+  const res = await fetch(
     `${apiBaseUrl}/${action}`,
     {
       method: 'POST',
@@ -227,18 +252,16 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
       },
       body: JSON.stringify(defaultParams),
     },
-  )
-    .then(res => res.json())
-    .then((res) => {
-      console.log('action', res)
-    })
-    .catch((err) => {
-      console.error('action', err)
-    })
+  ).then(r => r.json())
+
+  console.log('action', res)
+  return res
 }
 
 /** 上传文件 */
 async function uploadFile() {
+  await ensurePublishConfirmed()
+
   const ossCredential = await getOssCredentials()
 
   const client = new OSS({
@@ -252,6 +275,9 @@ async function uploadFile() {
   const osBits = isMac ? ['arm64', 'x64'] : (isLinux ? ['amd64'] : ['ia32', 'x64'])
 
   for (const osBit of osBits) {
+    // macOS 需 pkg + zip 均上传后再调 admin API，否则后台校验 zip 会报 OSS 资源不存在
+    let macPublishDownloadUrl: string | undefined
+
     for (const extName of extNames) {
       const yamlContent = genYamlContent(osBit, extName)
       const fileName = yamlContent.path
@@ -271,31 +297,40 @@ async function uploadFile() {
         )
         console.log(`${basename(ymlFilePath)} 上传成功：`, ymlUrl)
       }
-      await client
-        .multipartUpload(uploadPath, filePath, {
-          progress: (p) => {
-            const progress = `${fileName} 上传中：${(p * 100).toFixed(2)}%`
-            process.stdout.write(`\x1B[34m${progress}\x1B[0m \r`)
+      const { res } = await client.multipartUpload(uploadPath, filePath, {
+        progress: (p) => {
+          const progress = `${fileName} 上传中：${(p * 100).toFixed(2)}%`
+          process.stdout.write(`\x1B[34m${progress}\x1B[0m \r`)
 
-            if (p === 1) {
-              process.stdout.write('\n')
-            }
-          },
-        })
-        .then(({ res }) => {
-          const url = res.requestUrls[0]
-            ?.split('?')[0]
-            .replace('http://', 'https://')
-          console.log(`${fileName} 上传成功: `, url)
-          console.log('++++++++++++++++++++++++++++++++++++')
-          if (url.endsWith('.exe') || url.endsWith('.pkg') || url.endsWith('.deb')) {
-            return publishVersion({
-              osBit: osBit === 'ia32' ? '32' : '64',
-              cpu: osBit === 'arm64' ? 'apple' : 'intel',
-              downloadUrl: url,
-            })
+          if (p === 1) {
+            process.stdout.write('\n')
           }
-        })
+        },
+      })
+      const url = res.requestUrls[0]
+        ?.split('?')[0]
+        .replace('http://', 'https://')
+      console.log(`${fileName} 上传成功: `, url)
+      console.log('++++++++++++++++++++++++++++++++++++')
+
+      if (url.endsWith('.exe') || url.endsWith('.pkg') || url.endsWith('.deb')) {
+        if (isMac) {
+          macPublishDownloadUrl = url
+        }
+        else {
+          await publishVersion({
+            ...toPublishParams(osBit),
+            downloadUrl: url,
+          })
+        }
+      }
+    }
+
+    if (isMac && macPublishDownloadUrl) {
+      await publishVersion({
+        ...toPublishParams(osBit),
+        downloadUrl: macPublishDownloadUrl,
+      })
     }
   }
   rl.close()

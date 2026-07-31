@@ -1,11 +1,13 @@
-
 import RxTag from '/@/components/rx-tag.vue'
+import { createProxyCreateLabels } from '../proxy-create-mode'
+import type { ProxyCreateLabels } from '../proxy-create-mode'
 
-export const getColumns = () => {
-  return [
+/** 批量导入表格列；电商（device）模式在密码列后追加风险评级 */
+export function getColumns(labels: ProxyCreateLabels = createProxyCreateLabels('proxy')) {
+  const baseColumns = [
     {
       key: 'protocol',
-      title: $t('代理 IP 类型'),
+      title: labels.protocolColumnTitle,
       getText: (data: any) => data.protocol || '--',
     },
     {
@@ -28,12 +30,26 @@ export const getColumns = () => {
       title: $t('密码'),
       getText: (data: any) => data.proxyPassword || '--',
     },
-    {
-      key: 'refreshUrl',
-      title: $t('刷新 URL'),
-      width: 100,
-      getText: (data: any) => data.refreshUrl || '--',
-    },
+  ]
+
+  const riskRatingColumn = {
+    key: 'riskRating',
+    title: $t('风险评级'),
+    slot: 'riskRating',
+  }
+
+  // 电商模式无刷新 URL 能力，不展示该列
+  const refreshUrlColumn = labels.mode === 'device'
+    ? []
+    : [{
+        key: 'refreshUrl',
+        title: $t('刷新 URL'),
+        width: 100,
+        getText: (data: any) => data.refreshUrl || '--',
+      }]
+
+  const tailColumns = [
+    ...refreshUrlColumn,
     {
       key: 'remark',
       title: $t('备注'),
@@ -59,4 +75,8 @@ export const getColumns = () => {
       alignFrozen: 'right',
     },
   ]
+
+  return labels.mode === 'device'
+    ? [...baseColumns, riskRatingColumn, ...tailColumns]
+    : [...baseColumns, ...tailColumns]
 }

@@ -9,6 +9,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useTeamStore } from '/@/stores/team'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
+import { useTeamEntityLabels } from '/@/composables/useTeamEntityLabels'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
 
@@ -17,6 +18,7 @@ const styles = useCssModule()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { members } = storeToRefs(useTeamStore())
 const { check } = usePermission()
+const teamLabels = useTeamEntityLabels()
 
 const columns = ref([
   {
@@ -75,11 +77,11 @@ async function tableFilters() {
       value: [],
       placeholder: $t('全部操作'),
       options: [
-        { label: $t('窗口'), value: 'Profiles' },
-        { label: $t('代理 IP'), value: 'Proxies' },
+        { label: teamLabels.value.moduleProfiles, value: 'Profiles' },
+        { label: teamLabels.value.moduleProxies, value: 'Proxies' },
         { label: $t('账号'), value: 'Accounts' },
-        { label: $t('项目'), value: 'Projects' },
-        { label: $t('扩展'), value: 'Extensions' },
+        { label: teamLabels.value.moduleProjects, value: 'Projects' },
+        { label: teamLabels.value.moduleExtensions, value: 'Extensions' },
         { label: $t('团队'), value: 'Teams' },
       ],
     },

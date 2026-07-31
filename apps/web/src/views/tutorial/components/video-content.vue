@@ -10,6 +10,8 @@ import { useTutorialStore } from '/@/stores/tutorial'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import type { UserGetGuideVideosByTypeListData } from '@roxy/backend-api'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
+import type { TutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 
 interface BaseVideoItem {
   title: string
@@ -26,10 +28,12 @@ const { mixpanelTrack } = useUserStore()
 const { getVideoMaps } = useTutorialStore()
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
+const tutorialLabels = useTutorialEntityLabels()
 
 const cssModule = useCssModule()
 
-const videoMap = ref<Record<string, VideoItem>>({
+function buildVideoMap(labels: TutorialEntityLabels): Record<string, VideoItem> {
+  return {
   create_profile: {
     id: 'create_profile',
     type: 'basic',
@@ -40,13 +44,13 @@ const videoMap = ref<Record<string, VideoItem>>({
         complete,
       }
     },
-    title: $t('任务 1: 创建您的第一个窗口'),
-    descriptions: [$t('窗口是 Roxy浏览器的核心功能，其各项设定与指纹决定了您在上网浏览时被平台检测到的"身份"，根据教程创建您的第一个窗口，从而开启隐私之旅！')],
+    title: labels.task1Title,
+    descriptions: [labels.task1Desc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
           <RxButton variant="outlined" size="md" icon="base/rx_ic_browser_add" label={$t('前往创建')} onClick={() => router.push({ name: 'browser-create' })}></RxButton>
-          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={$t('窗口文档')} onClick={() => toFaqLink('/features/profile-configuration')}></RxButton>
+          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={labels.task1Doc} onClick={() => toFaqLink('/features/profile-configuration')}></RxButton>
         </div>
       )
     },
@@ -61,13 +65,13 @@ const videoMap = ref<Record<string, VideoItem>>({
         complete,
       }
     },
-    title: $t('任务 2: 导入一个代理 IP 至 Roxy'),
-    descriptions: [$t('代理 IP 是确保窗口安全性、匿名性的重要工具，其同时决定了部分指纹参数的生成，对您的"身份"真实性至关重要，根据教程导入您的代理 IP，从而不再因网络环境而被限制。')],
+    title: labels.task2Title,
+    descriptions: [labels.task2Desc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
           <RxButton variant="outlined" size="md" icon="base/rx_ic_add_proxy" label={$t('前往配置')} onClick={() => router.push({ name: 'agent-create' })}></RxButton>
-          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={$t('代理 IP 文档')} onClick={() => toFaqLink('/features/proxies')}></RxButton>
+          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={labels.task2Doc} onClick={() => toFaqLink('/features/proxies')}></RxButton>
         </div>
       )
     },
@@ -84,7 +88,7 @@ const videoMap = ref<Record<string, VideoItem>>({
       }
     },
     title: $t('任务 3: 邀请一位好友加入 Roxy'),
-    descriptions: [$t('Roxy浏览器支持用户自由地与好友分享窗口资源，无论是 1:1 的窗口转移功能，还是加入同一团队共享窗口，在这里都能轻松实现。')],
+    descriptions: [labels.task3Desc],
     reward: () => {
       return (
         <div class={cssModule.text}>
@@ -104,7 +108,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'context_menu',
     type: 'advanced',
     icon: 'base/rx_ic_mouse',
-    title: $t('通过鼠标右键便捷操作窗口'),
+    title: labels.taskContextMenuTitle,
     descriptions: [$t('绝大多数的 Roxy浏览器列表允许您便捷地通过鼠标右键直接编辑，而无需寻找"更多操作"按钮。')],
     render: () => {
       return (
@@ -129,8 +133,8 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'manage_and_classify',
     type: 'advanced',
     icon: 'base/rx_ic_stack',
-    title: $t('通过标签/项目区分管理窗口'),
-    descriptions: [$t('当您的窗口数量较多时，可以为窗口设置标签或划分不同项目，从而更加高效地进行管理。')],
+    title: labels.taskTagProjectTitle,
+    descriptions: [labels.taskTagProjectDesc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -143,8 +147,8 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'advanced_filter',
     type: 'advanced',
     icon: 'base/rx_ic_filter_2',
-    title: $t('通过高级筛选快速定位窗口'),
-    descriptions: [$t('希望快速通过条件定位相应窗口？试试"高级筛选"功能，其亦可被保存为常驻"分组"！')],
+    title: labels.taskAdvancedSearchTitle,
+    descriptions: [labels.taskAdvancedSearchDesc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -169,7 +173,7 @@ const videoMap = ref<Record<string, VideoItem>>({
     type: 'advanced',
     icon: 'base/rx_ic_add_keys',
     title: $t('导入、管理平台账号'),
-    descriptions: [$t('账号资源过多而难以管理？根据教程快速将其导入 Roxy浏览器，并更方便地与窗口进行绑定。')],
+    descriptions: [labels.taskPlatformImportDesc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
@@ -191,13 +195,13 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'plugin_management',
     type: 'advanced',
     icon: 'base/rx_ic_extension_store',
-    title: $t('通过扩展中心管理扩展应用'),
-    descriptions: [$t('浏览器扩展是高级用户不可或缺的助力工具，您可以添加/上传任何适用于常规 Chrome 的扩展程序到 Roxy浏览器。')],
+    title: labels.taskExtensionTitle,
+    descriptions: [labels.taskExtensionDesc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
           <RxButton variant="outlined" size="md" label={$t('前往添加')} onClick={() => router.push({ name: 'extensions' })}></RxButton>
-          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={$t('扩展文档')} onClick={() => toFaqLink('/features/extensions')}></RxButton>
+          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={labels.taskExtensionDoc} onClick={() => toFaqLink('/features/extensions')}></RxButton>
         </div>
       )
     },
@@ -206,12 +210,12 @@ const videoMap = ref<Record<string, VideoItem>>({
     id: 'synchronizer',
     type: 'advanced',
     icon: 'base/rx_ic_frame_stack',
-    title: $t('通过窗口同步简化重复操作'),
-    descriptions: [$t('窗口同步功能允许您同时控制多个环境，无论是多任务处理还是批量操作，都能轻松应对。')],
+    title: labels.taskSyncTitle,
+    descriptions: [labels.taskSyncDesc],
     render: () => {
       return (
         <div class="flex flex-wrap justify-start gap-3">
-          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={$t('窗口同步文档')} onClick={() => toFaqLink('/features/synchronizer')}></RxButton>
+          <RxButton severity="secondary" variant="text" size="md" icon="base/rx_ic_doc_article" label={labels.taskSyncDoc} onClick={() => toFaqLink('/features/synchronizer')}></RxButton>
         </div>
       )
     },
@@ -231,6 +235,19 @@ const videoMap = ref<Record<string, VideoItem>>({
       )
     },
   },
+  }
+}
+
+const apiVideoOverrides = ref<Record<string, Partial<ApiVideoData>>>({})
+
+const videoMap = computed(() => {
+  const base = buildVideoMap(tutorialLabels.value)
+  for (const [key, override] of Object.entries(apiVideoOverrides.value)) {
+    const item = base[key]
+    if (item)
+      Object.assign(item, override)
+  }
+  return base
 })
 
 const lightId = ref()
@@ -279,12 +296,7 @@ async function getVideoList() {
   const data = await getVideoMaps()
   if (!data)
     return
-  Object.entries(data).forEach(([key, value]) => {
-    const oldValue = Reflect.get(videoMap.value, key)
-    if (oldValue) {
-      Reflect.set(videoMap.value, key, { ...oldValue, ...value })
-    }
-  })
+  apiVideoOverrides.value = { ...apiVideoOverrides.value, ...data }
 }
 
 function toFaqLink(link: string) {

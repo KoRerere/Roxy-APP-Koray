@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// import { getUserAgentOs } from '/@/utils'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 
@@ -11,6 +11,8 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'confirm', value: 'grid' | 'stack' | (string & {})): void
 }>()
+
+const profileLabels = useProfileEntityLabels()
 
 const { saveUserConfig } = useCommonUtil()
 const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
@@ -60,7 +62,7 @@ function onConfirm() {
   <div class="w-120 flex flex-col gap-4 pa-6 pt-4 rounded-2">
     <div class="h-9 flex items-center justify-between">
       <div class="tt-primary text-4 font-600 leading-normal">
-        {{ $t('打开并排列 {count} 个窗口', { count }) }}
+        {{ profileLabels.batchOpenAndArrange(count) }}
       </div>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="onClose" />
     </div>

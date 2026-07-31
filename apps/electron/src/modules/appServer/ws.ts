@@ -276,7 +276,13 @@ export async function openBrowserFailedDialog(dirId: string, type: OpenBrowserFa
 
   const shortcut = await shortcutStore.get(dirId)
   console.debug('openBrowserFailedDialog shortcut', dirId, shortcut)
-  const name = await Promise.try(() => basename(shortcut.launcherEntry, extname(shortcut.launcherEntry))).catch(() => $t('默认浏览器'))
+  let name = shortcut?.title?.trim() || ''
+  if (!name && shortcut?.launcherEntry) {
+    name = await Promise.try(() => basename(shortcut.launcherEntry, extname(shortcut.launcherEntry))).catch(() => '') || ''
+  }
+  if (!name) {
+    name = $t('默认浏览器')
+  }
   console.debug('openBrowserFailedDialog name', name)
   ipcSender.dialog.openBrowserFailed({ name, type, message })
   restoreOrCreateWindow()

@@ -297,7 +297,7 @@ defineExpose({
     <div class="w-full grid grid-cols-3 gap-3">
       <RxButton label="Github" severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github" />
       <RxButton label="Facebook" severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook" />
-      <RxButton label="VK" severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk" />
+      <RxButton label="Linux Do" severity="secondary" size="md" icon="websites/rx_site_linuxdo" @click="oauth2LoginMap.linuxdo" />
     </div>
   </div>
 </template>

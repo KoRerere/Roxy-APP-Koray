@@ -1,8 +1,9 @@
 <script setup lang="ts">
-;
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 defineEmits(['close', 'confirm'])
 
+const profileLabels = useProfileEntityLabels()
 const isAgree = ref(false)
 </script>
 
@@ -14,17 +15,17 @@ const isAgree = ref(false)
     </div>
     <div class="flex flex-col gap-3">
       <div class="description">
-        {{ $t('修改缓存路径后，现有窗口启动时将从新路径尝试读取缓存。') }}
+        {{ profileLabels.existingEntityCachePathNote }}
       </div>
-      <i18n-t class="description" tag="div" :keypath="$t('为了避免您现有窗口的缓存丢失，{bold}将旧路径下的所有缓存文件手动迁移至新的缓存路径下。 ', { bold: '{bold}' })" scope="global">
+      <i18n-t class="description" tag="div" :keypath="profileLabels.avoidCacheLossKeypath" scope="global">
         <template #bold>
-          <span class="font-bold">{{ $t('在修改缓存路径后，请您务必于再次启动窗口前') }}</span>
+          <span class="font-bold">{{ profileLabels.migrateCacheBeforeLaunch }}</span>
         </template>
       </i18n-t>
     </div>
     <div class="flex items-center gap-2.5">
       <RxCheckbox v-model="isAgree" input-id="wrap" binary />
-      <label for="wrap" class="tip">{{ $t('我已知晓应迁移旧缓存文件至新路径以避免现有窗口数据无法读取。') }}</label>
+      <label for="wrap" class="tip">{{ profileLabels.migrateCacheAcknowledge }}</label>
     </div>
 
     <div class="flex justify-end items-center gap-2.5">

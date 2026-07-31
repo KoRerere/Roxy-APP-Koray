@@ -48,9 +48,9 @@ const moreCountryDrawerVisible = ref(false)
 const proxyAlertMessage = computed(() => {
   return sumProxyCount.value > createCount.value
     ? $t('仅 {count} 个窗口将会绑定代理 IP。请移除多余的 {beyond} 条代理 IP。', {
-        count: createCount.value,
-        beyond: sumProxyCount.value - createCount.value,
-      })
+      count: createCount.value,
+      beyond: sumProxyCount.value - createCount.value,
+    })
     : $t('仅 {count} 个窗口将会绑定代理 IP', { count: sumProxyCount.value })
 })
 
@@ -72,7 +72,7 @@ const providerProps = computed(() => {
 function driverNext() {
   moreCountryDrawerVisible.value = false
 
-  sleep(300).then(() => driverObj?.value.drive(1))
+  sleep(300).then(() => driverObj?.value?.drive(1))
 }
 
 async function openDualDrawer() {
@@ -218,9 +218,9 @@ function onChoose(data: any) {
   }
 }
 
-async function testProxySpeed(data: any, index: number) {
+async function testProxySpeed({ _checkRes, bindList, ...data }: any, index: number) {
   checkIndex[index] = true
-  const result = await checkProxy(toRaw(data))
+  const result = await checkProxy({ ...toRaw(data), apiCheck: false })
   checkIndex[index] = false
   batchTestShowToast({ ...result, proxyType: data.proxyType ?? data.buyProxyType }, { reCheck: () => testProxySpeed(data, index) })
   Object.assign(data, result)
@@ -319,12 +319,10 @@ function switchProxyCountry() {
       <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
     </div>
     <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="driverNext" @buy-success="onDualDrawerBuySuccess"
-                       @add-confirm="onDualDrawerAddConfirm"
-    />
+      @add-confirm="onDualDrawerAddConfirm" />
     <div class="pl-27 flex flex-col gap-3 empty:hidden">
       <RxAlert v-if="isBatch && sumProxyCount && sumProxyCount !== createCount" class="w-full whitespace-pre-line" :type="sumProxyCount > createCount ? 'warn' : 'info'" :closable="false"
-               :title="proxyAlertMessage"
-      />
+        :title="proxyAlertMessage" />
       <div v-if="!presetTemplate && proxyList.length" class="grid gap-2 list">
         <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
           <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
@@ -350,8 +348,7 @@ function switchProxyCountry() {
           </div>
           <div class="mt-0.5 flex gap-2">
             <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
-                     :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
-            />
+              :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))" />
             <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
           </div>
         </RxCard>

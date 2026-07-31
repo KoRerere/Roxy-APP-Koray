@@ -18,6 +18,7 @@ import {
 import { isString } from 'es-toolkit'
 import RoxyChromeImg from '/@/assets/images/kernel/RoxyChrome.png'
 import RoxyFirefoxImg from '/@/assets/images/kernel/RoxyFirefox.png'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 
 /** 内核类型筛选（UI 层），与 CoreType 枚举对应 */
 enum KernelFilter {
@@ -38,8 +39,10 @@ const emit = defineEmits(['onDownloadClick'])
 const confirm = useConfirm()
 const [_, onlyErrorToast] = useResponseToast()
 const popoverRef = useTemplateRef('popover')
+const tutorialLabels = useTutorialEntityLabels()
 
 const usingVersion = ref('')
+const kernelInUseAlertTitle = computed(() => tutorialLabels.value.kernelInUseCloseEntities(usingVersion.value))
 /** 当前筛选的内核类型：全部 / Chrome / Firefox */
 const kernelType = ref(KernelFilter.All)
 
@@ -281,7 +284,7 @@ defineExpose({
   </div>
 
   <RyPopover ref="popover">
-    <RxAlert type="warn" :title="$t('{version} 版本正在使用中，请先关闭窗口。', { version: usingVersion })" />
+    <RxAlert type="warn" :title="kernelInUseAlertTitle" />
   </RyPopover>
 </template>
 

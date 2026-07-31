@@ -31,10 +31,28 @@ function resolveRequestUrl(req: { url?: string, originalUrl?: string, path?: str
   return req.url || req.originalUrl || req.path || '/'
 }
 
+/** dashboard.html 正文与 ?id= 无关，cacheKey 忽略业务 query 以提升命中率。 */
+function resolveCacheRequestPath(req: { url?: string, originalUrl?: string, path?: string }) {
+  const pathname = req.path || (() => {
+    try {
+      return new URL(resolveRequestUrl(req), 'http://localhost').pathname
+    }
+    catch {
+      return resolveRequestUrl(req).split('?')[0] || '/'
+    }
+  })()
+
+  if (pathname === '/dashboard.html') {
+    return '/dashboard.html'
+  }
+
+  return resolveRequestUrl(req)
+}
+
 /** 标准化生成 cacheKey：method + 完整 URL，便于在代理两端复用。 */
 export function getWebCacheKey(req: { method?: string, url?: string, originalUrl?: string, path?: string }) {
   const baseUrl = getWebCacheBaseUrl()
-  const requestPath = resolveRequestUrl(req)
+  const requestPath = resolveCacheRequestPath(req)
   try {
     return `${req.method || 'GET'}:${new URL(requestPath, `${baseUrl}/`).toString()}`
   }

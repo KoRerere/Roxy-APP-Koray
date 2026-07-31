@@ -1,4 +1,6 @@
+import type { DashboardEntityLabels } from '/@/composables/useDashboardEntityLabels'
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { createDashboardEntityLabels } from '/@/composables/useDashboardEntityLabels'
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 
@@ -28,40 +30,46 @@ export const fingerprintInfoList = [
   },
 ]
 
-export const profileInfoList = [
-  {
-    label: () => $t('备注'),
-    width: '15rem',
-    customRender: (winInfo: WinInfo) => {
-      return <>{winInfo.windowRemark || '--'}</>
+/** 按工作台文案生成窗口/账号信息列表（项目↔分组） */
+export function createProfileInfoList(labels: DashboardEntityLabels = createDashboardEntityLabels(false)) {
+  return [
+    {
+      label: () => $t('备注'),
+      width: '15rem',
+      customRender: (winInfo: WinInfo) => {
+        return <>{winInfo.windowRemark || '--'}</>
+      },
     },
-  },
-  {
-    label: () => $t('项目'),
-    width: '15rem',
-    customRender: (winInfo: WinInfo) => {
-      return <>{winInfo.projectName || '--'}</>
+    {
+      label: () => labels.projectLabel,
+      width: '15rem',
+      customRender: (winInfo: WinInfo) => {
+        return <>{winInfo.projectName || '--'}</>
+      },
     },
-  },
-  {
-    label: () => $t('标签'),
-    customRender: (winInfo: WinInfo) => {
-      const { labelInfo } = winInfo
-      return (
-        <div class="tag-wrap">
-          {
-            labelInfo?.length
-              ? labelInfo.map(item => (
-                  <div class="tag">
-                    <span class="dot" style={{ '--tag-color': item.labelColor }}></span>
-                    <span>{item.labelName}</span>
-                  </div>
-                ),
-                )
-              : '--'
-          }
-        </div>
-      )
+    {
+      label: () => $t('标签'),
+      customRender: (winInfo: WinInfo) => {
+        const { labelInfo } = winInfo
+        return (
+          <div class="tag-wrap">
+            {
+              labelInfo?.length
+                ? labelInfo.map(item => (
+                    <div class="tag">
+                      <span class="dot" style={{ '--tag-color': item.labelColor }}></span>
+                      <span>{item.labelName}</span>
+                    </div>
+                  ),
+                  )
+                : '--'
+            }
+          </div>
+        )
+      },
     },
-  },
-]
+  ]
+}
+
+/** 默认普通模式文案；电商请用 createProfileInfoList(labels) */
+export const profileInfoList = createProfileInfoList()

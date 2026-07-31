@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { getImage } from '/@/utils/basic'
-import { computed, onMounted, onUnmounted, reactive, ref, useTemplateRef } from 'vue'
-import { useElementSize } from '@vueuse/core'
+import { computed, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useElementSize, useIntervalFn } from '@vueuse/core'
 import { AnimatePresence, motion } from 'motion-v'
 
 const props = defineProps({
   count: { type: Number, default: 3 },
   interval: { type: Number, default: 2000 },
+  /** 页面不可见时暂停轮播，避免后台占用 CPU */
+  paused: { type: Boolean, default: false },
 })
 
 // AI 批量发布、AI 智能养号、AI 批量私信、AI 自动控评、AI 视频脚本、AI 竞品分析、AI 智能获客、AI 智能选品
@@ -35,22 +37,27 @@ const size = reactive(
 )
 
 const currentIndex = ref(0)
-let timer: NodeJS.Timeout | null = null
 
-onMounted(() => {
-  timer = setInterval(() => {
-    if (currentIndex.value < sequence.value.length - 1) {
-      currentIndex.value++
-    }
-    else {
-      timer && clearInterval(timer)
-    }
-  }, props.interval)
-})
+const { pause, resume } = useIntervalFn(() => {
+  if (currentIndex.value < sequence.value.length - 1) {
+    currentIndex.value++
+  }
+  else {
+    pause()
+  }
+}, () => props.interval, { immediate: false })
 
-onUnmounted(() => {
-  timer && clearInterval(timer)
-})
+/** 轮播未结束时才恢复 tick，避免结束后被 resume 重新启动 */
+function syncCarouselPaused(isPaused: boolean) {
+  if (isPaused) {
+    pause()
+    return
+  }
+  if (currentIndex.value < sequence.value.length - 1)
+    resume()
+}
+
+watch(() => props.paused, syncCarouselPaused, { immediate: true })
 </script>
 
 <template>

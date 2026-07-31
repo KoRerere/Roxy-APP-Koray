@@ -8,12 +8,14 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
 import { Role } from '/@/enums/role'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
 const workspaceStore = useWorkspaceStore()
 const [showToast] = useResponseToast()
+const profileLabels = useProfileEntityLabels()
 
 const exampleName = computed(() => {
   const _name = getWorkspaceNamePrefix(workspaceInfo.value.workspaceName)
@@ -107,7 +109,7 @@ defineExpose({
           {{ $t('团队名称') }}
         </div>
         <div class="description">
-          {{ $t('默认窗口信息会展示为团队名称的前三个字符与序号的组合') }}
+          {{ profileLabels.defaultEntityInfoExample }}
         </div>
       </div>
       <div class="w-full">
@@ -123,7 +125,7 @@ defineExpose({
           {{ errorMessage }}
         </div>
         <div class="description">
-          {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
+          {{ profileLabels.entityInfoExample(exampleName) }}
         </div>
       </div>
     </div>

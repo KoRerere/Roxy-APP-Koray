@@ -8,6 +8,7 @@ import { executeSomethingByTargetWorkspace } from '/@/hooks/useResponseToast/han
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
 import { useEmitterEvent } from '/@/utils/eventBus'
+import { handleRichHtmlLinkClick, navigateByRichHtmlUrl } from '/@/utils/rich-html-link'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 
@@ -218,38 +219,18 @@ function showRedeemCodeRecord() {
 }
 
 function onHtmlClick(e: MouseEvent) {
-  const target = e.target as HTMLElement
-  const link = target.closest('a')
+  handleRichHtmlLinkClick(e, {
+    router,
+    onNavigate(url) {
+      const targetWorkspaceId = Number(url.searchParams.get('workspaceId'))
+      if (targetWorkspaceId) {
+        executeSomethingByTargetWorkspace(() => {
+          navigateByRichHtmlUrl(router, url)
+        })(targetWorkspaceId)
+        return
+      }
 
-  if (!link || link.target === '_blank')
-    return
-
-  const href = link.getAttribute('href')
-
-  // 只拦截站内路由
-  if (!href || href.startsWith('http'))
-    return
-  e.preventDefault()
-
-  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
-
-  const targetWorkspaceId = Number(url.searchParams.get('workspaceId'))
-  if (targetWorkspaceId) {
-    executeSomethingByTargetWorkspace(() => {
-      jumpByUrl(url)
-    })(targetWorkspaceId)
-    return
-  }
-
-  jumpByUrl(url)
-}
-
-function jumpByUrl(url: URL) {
-  router.replace({
-    path: url.pathname,
-    query: {
-      ...Object.fromEntries(url.searchParams),
-      _t: Date.now(),
+      navigateByRichHtmlUrl(router, url)
     },
   })
 }

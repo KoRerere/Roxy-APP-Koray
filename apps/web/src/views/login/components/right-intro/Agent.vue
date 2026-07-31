@@ -437,7 +437,6 @@ const agentBg = computed(() => isDark.value ? getImage('mcp/agent-bg-dark.png') 
 
 .agent-desc {
   color: var(--colors-text-text-secondary, #34393d);
-  font-family: 'Microsoft YaHei UI';
   font-size: 13px;
   font-style: normal;
   font-weight: 400;

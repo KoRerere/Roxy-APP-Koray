@@ -19,6 +19,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnumStr } from '/@/enums/pay'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { SubLevelEnum } from '/@/enums/pay'
 import type { Plan } from './type'
 
@@ -30,6 +31,7 @@ const { openProcessing, planSuccessFreedomActivity2 } = usePay()
 const { getUserPayInfo, mixpanelTrack } = useUserStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { seasonalActivity } = storeToRefs(useCampaignStore())
+const billingLabels = useBillingEntityLabels()
 const popupCss = useCssModule('popup')
 
 const loading = ref(false)
@@ -68,7 +70,12 @@ const discountAmount = computed(() => currency(originalAmount.value).subtract(ne
 
 const currentSubscribe = computed(() => {
   const { subLevel, useWindowCount, maxWindowCount } = userPayInfo.value
-  return $t('当前: {subLevel} ({count} 窗口)；用量: {useCount} / {maxCount}', { subLevel: SubLevelEnumStr[subLevel as SubLevelEnum], count: maxWindowCount, useCount: useWindowCount, maxCount: maxWindowCount })
+  return billingLabels.value.currentPlanUsage({
+    subLevel: SubLevelEnumStr[subLevel as SubLevelEnum],
+    count: maxWindowCount,
+    useCount: useWindowCount,
+    maxCount: maxWindowCount,
+  })
 })
 
 const details = computed(() => {
@@ -85,12 +92,12 @@ const details = computed(() => {
       title: $t('套餐详情'),
       items: [
         {
-          label: $t('窗口数量'),
+          label: billingLabels.value.entityCount,
           value: `${profileCount.format()} + ${freeWindowCount.format()}`,
           visible: !isUpgrade.value || !seasonalActivity.value.freedom,
         },
         {
-          label: $t('窗口数量（免费升舱）'),
+          label: billingLabels.value.entityCountFreeUpgrade,
           visible: isUpgrade.value && seasonalActivity.value.freedom,
           slot: 'freedom',
         },
@@ -359,7 +366,7 @@ async function subscribeDowngrade() {
                 <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
               </span>
             </div>
-            <div class={`whitespace-pre-wrap ${popupCss.content}`}>{$t('您选择的窗口数量少于当前套餐，确认后，新的订阅将会在下个付费周期生效。')}</div>
+            <div class={`whitespace-pre-wrap ${popupCss.content}`}>{billingLabels.value.downgradeConfirm}</div>
             <div class="flex justify-end gap-2">
               <RxButton outlined severity="secondary" size="md" label={$t('取消')} onClick={handleCancel}></RxButton>
               <RxButton size="md" label={$t('确认降级')} onClick={_onConfirm}></RxButton>

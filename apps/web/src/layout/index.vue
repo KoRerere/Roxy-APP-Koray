@@ -10,7 +10,9 @@ import { useThemeStore } from '/@/stores/theme'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { MENU_COLLAPSED } from '../constants/storage-key'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useRouteContext } from '/@/composables/useRouteContext'
 
+const { isEcommerce } = useRouteContext()
 const { realTheme } = storeToRefs(useThemeStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
@@ -27,12 +29,17 @@ watchEffect(() => {
   localStorage.setItem(MENU_COLLAPSED, collapsed.value ? '1' : '0')
 })
 
-const { currentLocale } = storeToRefs(useSimpleLocale())
+const { currentLocale, isZh } = storeToRefs(useSimpleLocale())
 
 const imageSrc = computed(() => {
   const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
   const theme = realTheme.value === 'dark' ? 'dark' : 'light'
   return `/images/roxybrowser_text_${theme}_${suffix}.svg`
+})
+
+const imageSrcEcommerce = computed(() => {
+  const theme = realTheme.value === 'dark' ? 'dark' : 'light'
+  return isZh.value ? `/images/roxybrowser1_text_${theme}_zh-CN.svg` : `/images/roxybrowser_text_${theme}_en.svg`
 })
 </script>
 
@@ -44,7 +51,13 @@ const imageSrc = computed(() => {
         <SvgIcon name="indicator/indicator_expand" class="expand" />
         <SvgIcon name="indicator/indicator_fold" class="fold" />
       </div>
-      <div class="logo">
+      <div v-if="isEcommerce" class="logo">
+        <SvgIcon name="base/logo" size="36" />
+        <template v-if="!collapsed">
+          <img draggable="false" class="block h-5" :src="imageSrcEcommerce">
+        </template>
+      </div>
+      <div v-else class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
           <img draggable="false" class="block h-5" :src="imageSrc">
@@ -57,7 +70,7 @@ const imageSrc = computed(() => {
       <RxLayoutHeader />
       <Announcement />
       <RolesOverview />
-      <div class="flex-1 mr-4 mb-4 rounded overflow-hidden rx-main-content relative">
+      <div class="flex-1 mr-4 mb-4 rounded overflow-hidden relative flex min-h-0 flex-col rx-main-content">
         <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
         <RxLoading :model-value="payInfoLoading" :opacity="0.9" />
       </div>
@@ -168,17 +181,10 @@ const imageSrc = computed(() => {
   background: var(--colors-background-bg-page);
   z-index: 0;
 
-  // &::before {
-  //   content: '';
-  //   position: absolute;
-  //   inset: 0;
-  //   background-image: url('/images/campaing/spring-festival/cloud_border.svg');
-  //   background-repeat: no-repeat;
-  //   background-position: right -120px bottom 80px;
-  //   background-size: 400px auto;
-  //   z-index: -1;
-  //   opacity: 0.15;
-  // }
+  :deep(> *) {
+    min-height: 0;
+    height: 100%;
+  }
 }
 
 .expired-alert {

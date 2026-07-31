@@ -62,12 +62,12 @@ async function onUaShuffle(input: any) {
 </script>
 
 <template>
-  <div class="user-agent-field flex min-w-0 w-full px-4">
-    <div class="mr-2 tt-primary text-3.25 leading-32px rx-label">
+  <div class="user-agent-field flex min-w-0 w-full">
+    <div class="mr-2 shrink-0 tt-primary text-3.25 leading-32px rx-label">
       {{ input.label }}
     </div>
-    <div ref="uaControlRowRef" class="ua-control-row flex min-w-0 w-full items-start gap-2">
-      <div class="ua-field-slot min-w-0 w-full flex-1 overflow-hidden">
+    <div ref="uaControlRowRef" class="ua-control-row flex min-w-0 flex-1 items-start gap-2">
+      <div class="ua-field-slot min-w-0 flex-1 overflow-hidden">
         <!-- 与 RxInputTextarea 相同：IconField w-full + sm，避免 flex 子项 min-width:auto 被长 UA 撑开 -->
         <IconField v-if="!uaEditing" class="ua-collapsed-iconfield min-w-0 w-full max-w-full" :pt="{ root: 'sm' }">
           <button type="button" class="ua-collapsed-trigger cursor-text text-left transition-[box-shadow]" @click="openUaEdit">

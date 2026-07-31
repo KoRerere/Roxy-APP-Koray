@@ -6,11 +6,14 @@ import { useDialog } from '/@/hooks/useDialog'
 import { getRoleLabelMap } from '/@/enums/role'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { setCurrentWorkspace } = useWorkspaceStore()
 
 const [showModal] = useDialog()
+const profileLabels = useProfileEntityLabels()
 
 const roleStr = getRoleLabelMap()
 
@@ -64,7 +67,7 @@ function editWorkspace() {
         <span>{{ roleStr[currentWorkspace?.role as keyof typeof roleStr] }}</span>
         <span>·</span>
         <span>{{ userPayInfo.maxWindowCount }}</span>
-        <span>{{ $t('窗口') }}</span>
+        <span>{{ profileLabels.entity }}</span>
         <span>·</span>
         <span>{{ currentWorkspace!.useMemberCount }}</span>
         <span>{{ $t('成员') }}</span>

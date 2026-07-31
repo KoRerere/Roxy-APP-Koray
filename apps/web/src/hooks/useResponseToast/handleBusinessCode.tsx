@@ -9,6 +9,8 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { Role } from '/@/enums'
 import router from '/@/router'
 import type { ToastMessageOptions } from 'primevue/toast'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { createBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 export function toUpgradePlan() {
   const { userPayInfo } = useUserStore()
@@ -135,6 +137,10 @@ export function useHandleBusinessCode() {
       })
     }
     else if (code === BUSINESS_CODE.WINDOW_MAX_LIMIT) {
+      // 电商模式按设备绑定/续费约束，不走窗口额度升级链路
+      if (isCurrentEcommerceWorkspace())
+        return
+
       if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
@@ -166,19 +172,20 @@ export function useHandleBusinessCode() {
       }
     }
     else if (code === BUSINESS_CODE.PROJECT_MAX_LIMIT) {
+      const billingLabels = createBillingEntityLabels(isCurrentEcommerceWorkspace())
       if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',
-          summary: $t('项目用量不足'),
-          detail: $t('当前团队下的项目数量已到达上限，请删除不再使用的项目或者联系团队的拥有者进行升级。'),
+          summary: billingLabels.projectUsageInsufficient,
+          detail: billingLabels.projectUsageInsufficientTeamDetail,
           life: 5000,
         })
       }
       showToast({
         severity: 'warn',
-        summary: $t('项目用量不足'),
+        summary: billingLabels.projectUsageInsufficient,
         detail: (
-          <I18nT keypath={$t('您已达到最大项目创建限制，可通过删除不再使用的项目或{link}', { link: '{link}' })}>
+          <I18nT keypath={billingLabels.projectMaxCreateLimitKeypath}>
             {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
           </I18nT>
         ),
@@ -186,6 +193,10 @@ export function useHandleBusinessCode() {
       })
     }
     else if (code === BUSINESS_CODE.DAILY_OPEN_LIMIT) {
+      // 电商模式无「窗口打开次数」额度概念
+      if (isCurrentEcommerceWorkspace())
+        return
+
       if (!check('Cost_Center_all')) {
         return showToast({
           severity: 'warn',

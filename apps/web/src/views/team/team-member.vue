@@ -17,6 +17,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useColumns } from '/@/hooks/useColumns'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useTeam } from '/@/views/team/hook'
+import { useTeamEntityLabels } from '/@/composables/useTeamEntityLabels'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
 import { useEmitterEvent } from '/@/utils/eventBus'
 
@@ -37,10 +38,11 @@ const { inviteMembers } = useTeam()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const userStore = useUserStore()
 const tableRef = useTemplateRef('team')
+const teamLabels = useTeamEntityLabels()
 
 type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData> & { _oldNickname: string, _oldWorkspaceNickname: string }
 
-const { columns } = useColumns({
+const { columns, updateColumns } = useColumns({
   key: 'team.list',
   data: [
     {
@@ -72,7 +74,7 @@ const { columns } = useColumns({
       getText: (row: TableRow) => roleLabelMap[row.role as Role],
     },
     {
-      title: $t('已关联项目'),
+      title: teamLabels.value.relatedProjectsColumn,
       key: 'relatedProjects',
       slot: 'related',
     },
@@ -91,6 +93,14 @@ const { columns } = useColumns({
     },
   ],
 }, (isOwner.value || isManager.value) ? undefined : ['relatedProjects'])
+
+watch(() => teamLabels.value.relatedProjectsColumn, (title) => {
+  updateColumns((cols) => {
+    const col = cols.find(item => item.key === 'relatedProjects')
+    if (col)
+      col.title = title
+  })
+}, { immediate: true })
 
 const filters = reactive({
   value: undefined,
@@ -325,7 +335,7 @@ function onRefreshTable(params = {}) {
       </div>
     </template>
     <template #table-empty>
-      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入团队以管理，并高效地分配窗口或项目的权限。')">
+      <CustomNewEmpty icon="base/rc_ic_user_referral" img="empty-teams.png" :title="$t('暂无团队成员')" :desc="teamLabels.emptyDesc">
         <template #extra>
           <div class="flex gap-3">
             <RxButton v-if="check('Team_Member_invite')" outlined severity="secondary" size="md" icon="base/rx_ic_user_add" :label="$t('邀请')"

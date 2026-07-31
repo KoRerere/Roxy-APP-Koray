@@ -4,6 +4,8 @@ import InputIcon from 'primevue/inputicon'
 import TsFormInputNumber from '/@/views/lab/components/form/m-input-number.vue'
 import TsFormInputTextarea from '/@/views/lab/components/form/m-input-textarea.vue'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
+import { createProfileEntityLabels, useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { isEmptyValue, validateURL } from '/@/utils'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
@@ -16,12 +18,14 @@ const { data, onConfirm } = defineProps<{
 defineEmits(['close'])
 
 const [_, onlyErrorToast] = useResponseToast()
+const profileLabels = useProfileEntityLabels()
 
 const panel = useCssModule('panel')
 
 const showMore = ref(false)
 
-const list = ref<any[]>([
+function createList(labels: ReturnType<typeof createProfileEntityLabels>) {
+  return [
   {
     id: 1,
     items: [
@@ -152,7 +156,7 @@ const list = ref<any[]>([
         },
       },
       {
-        label: $t('关闭窗口'),
+        label: labels.closeEntity,
         name: 'closeProfile',
         value: false,
         component: ({ item, ...props }: { item: any, props: any }) => {
@@ -162,7 +166,7 @@ const list = ref<any[]>([
                 {...item.props}
                 {...props}
               />
-              <div>{$t('开启后，执行完成或出现异常时自动关闭窗口')}</div>
+              <div>{labels.closeEntityAfterComplete}</div>
             </div>
           )
         },
@@ -189,7 +193,20 @@ const list = ref<any[]>([
       },
     ],
   },
-])
+  ]
+}
+
+const { isEcommerce } = useRouteContext()
+const list = ref(createList(createProfileEntityLabels(isEcommerce.value)))
+
+watch(isEcommerce, (value) => {
+  const currentValues = Object.fromEntries(list.value.flatMap(item => item.items).filter(item => !!item.name).map(item => [item.name, toRaw(item.value)]))
+  list.value = createList(createProfileEntityLabels(value))
+  list.value.flatMap(item => item.items).filter(item => !!item.name).forEach((item) => {
+    if (currentValues[item.name] !== undefined)
+      item.value = currentValues[item.name]
+  })
+})
 
 const configs = computed(() => {
   return showMore.value ? list.value : list.value.slice(0, 1)
@@ -231,7 +248,7 @@ async function genCookieRobot() {
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" @click="$emit('close')" />
       </div>
       <div class="desc">
-        {{ $t('帮助新窗口生成浏览记录，降低被网站识别为异常环境的风险。') }}
+        {{ profileLabels.cookieRobotHelp }}
       </div>
     </div>
     <div class="grid gap-4 items-center list">

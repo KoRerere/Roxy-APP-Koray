@@ -11,14 +11,16 @@ import { useDialog } from '/@/hooks/useDialog'
 
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { ClearType } from "/@/enums";
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 const cssModule = useCssModule()
+const profileLabels = useProfileEntityLabels()
 
 const days = ref(30)
 const clearType = ref(ClearType.partial)
-const options = [
+const options = computed(() => [
   {
     label: $t('清除本地缓存（保留插件）'),
     value: ClearType.partial,
@@ -28,7 +30,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('清除扩展数据以外的所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={profileLabels.value.clearCachePartialNote} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -49,7 +51,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('清除所有本地缓存文件，{light}！窗口指纹信息、IP 不会被清理。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={profileLabels.value.clearCacheAllNote} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
@@ -61,7 +63,7 @@ const options = [
       )
     ),
   },
-]
+])
 
 function clearCache() {
   showModal({
@@ -79,7 +81,7 @@ function clearCache() {
           </div>
           <RxInputRadio class={cssModule.radio} v-model={clearType.value} name="clearType" options={options} />
           <RxDivider line-only></RxDivider>
-          <i18n-t tag="div" class={`flex items-center gap-2.5 ${cssModule.text}`} keypath={$t('清除过去{input}未使用窗口的缓存数据', { input: '{input}' })} scope="global">
+          <i18n-t tag="div" class={`flex items-center gap-2.5 ${cssModule.text}`} keypath={profileLabels.value.clearUnusedEntityCacheKeypath} scope="global">
             {{
               input: () => <IconField class="w-18">
                 <TsFormInputNumber size='sm' v-model={days.value} useGrouping={false} fluid min={0} />

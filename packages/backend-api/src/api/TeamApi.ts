@@ -28,6 +28,8 @@ import {
   UserMdfTeamInfoV2CreatePayload,
   UserMdfWorkspaceTypeCreateData,
   UserMdfWorkspaceTypeCreatePayload,
+  UserSelectOnboardingWorkspaceTypeCreateData,
+  UserSelectOnboardingWorkspaceTypeCreatePayload,
   UserSendTeamPermissionVerifyCodeListData,
   UserSetTeamCostCenterViewerEditorAllowCreateData,
   UserSetTeamCostCenterViewerEditorAllowCreatePayload,
@@ -276,6 +278,27 @@ export class TeamApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserMdfWorkspaceTypeCreateData, any>({
       path: `/user_mdf_workspace_type`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserSelectOnboardingWorkspaceTypeCreate
+   * @summary 新用户注册后选择空间类型
+   * @request POST:/user_select_onboarding_workspace_type
+   * @response `200` `UserSelectOnboardingWorkspaceTypeCreateData`
+   */
+  userSelectOnboardingWorkspaceTypeCreate = (
+    data: UserSelectOnboardingWorkspaceTypeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSelectOnboardingWorkspaceTypeCreateData, any>({
+      path: `/user_select_onboarding_workspace_type`,
       method: "POST",
       body: data,
       type: ContentType.Json,

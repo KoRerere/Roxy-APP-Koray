@@ -9,6 +9,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { getRoleLabelMap, Role } from '/@/enums/'
 import { validatePhone } from '/@/utils'
+import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
 
 interface Props {
   project?: Record<string, any>
@@ -33,6 +34,7 @@ const {
 defineEmits(['close'])
 
 const roleLabelMap = getRoleLabelMap()
+const projectLabels = useProjectEntityLabels()
 const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { mixpanelTrack } = useUserStore()
@@ -54,7 +56,7 @@ onBeforeUnmount(() => {
 
 async function inviteNewMember() {
   if (onlyInvite && !selectedProjects.value?.length) {
-    showToast(-1, $t('请选择至少一个项目'))
+    showToast(-1, projectLabels.value.selectAtLeastOne)
     return
   }
 
@@ -113,9 +115,9 @@ function updateCurrentMembers(emailList: string[]) {
     <template v-if="projects?.length && roleValue !== Role.MANAGER">
       <div class="flex flex-col gap-2">
         <div class="title">
-          {{ $t('选择项目') }}
+          {{ projectLabels.selectLabel }}
         </div>
-        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="$t('请选择项目')" display="chip" size="md" option-value="value" />
+        <TsFormMultiSelect v-model="selectedProjects" :options="projects" :placeholder="projectLabels.selectPlaceholder" display="chip" size="md" option-value="value" />
       </div>
       <div class="separator" />
     </template>
@@ -123,7 +125,7 @@ function updateCurrentMembers(emailList: string[]) {
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-1">
         <span class="title">{{ $t('成员邮箱/手机号') }}</span>
-        <SvgIcon v-tooltip.top="$t('被邀请的用户若已在其他项目中，将不会修改身份')" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
+        <SvgIcon v-tooltip.top="projectLabels.inviteAlreadyInOther" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
       </div>
       <div class="w-full flex items-start gap-2">
         <div class="flex-1 flex items-start py-1 pr-1 content">
@@ -136,7 +138,7 @@ function updateCurrentMembers(emailList: string[]) {
 
     <div v-if="!onlyInvite && currentMembers?.length" class="flex flex-col gap-2">
       <div class="title">
-        {{ $t('当前项目成员列表') }}
+        {{ projectLabels.currentMembersList }}
       </div>
       <div class="member-list">
         <div v-for="item in currentMembers" :key="item.id" class="flex items-center gap-2 member-item">

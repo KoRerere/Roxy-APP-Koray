@@ -4,6 +4,7 @@ import { RxAlert } from '/@/components/rx-alert'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useTransferEntityLabels } from '/@/composables/useTransferEntityLabels'
 import { enhanceCountdown, validateEmail, validatePhone } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums/proxy'
 
@@ -18,6 +19,7 @@ const emit = defineEmits(['confirm', 'resize'])
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [_, onlyErrorToast] = useResponseToast()
+const transferLabels = useTransferEntityLabels()
 
 const expireDays = ref(0)
 const targetEmail = ref()
@@ -26,30 +28,33 @@ const emailCode = ref()
 const countdown = ref()
 const stopCountdown = ref()
 
-const optionsGroup = [
-  {
-    title: $t('转移选项'),
-    options: [
-      {
-        label: $t('窗口名称'),
-        value: 'name',
-        disabled: true,
-      },
-      {
-        label: $t('窗口备注'),
-        value: 'notes',
-      },
-      {
-        label: $t('窗口代理 IP'),
-        value: 'tradeProxy',
-      },
-      {
-        label: $t('窗口平台账号'),
-        value: 'tradePlatform',
-      },
-    ],
-  },
-]
+const optionsGroup = computed(() => {
+  const labels = transferLabels.value
+  return [
+    {
+      title: $t('转移选项'),
+      options: [
+        {
+          label: labels.entityNameOption,
+          value: 'name',
+          disabled: true,
+        },
+        {
+          label: labels.entityRemarkOption,
+          value: 'notes',
+        },
+        {
+          label: labels.entityProxyOption,
+          value: 'tradeProxy',
+        },
+        {
+          label: labels.entityPlatformOption,
+          value: 'tradePlatform',
+        },
+      ],
+    },
+  ]
+})
 const transferParam = ref<string[]>(['name', 'notes', 'tradeProxy', 'tradePlatform'])
 
 const isReady = computed(() => {
@@ -84,7 +89,7 @@ async function checkTransferStatus() {
 
   // 只要存在检测失败的代理 IP 就不准转移
   if (datas.some(item => item.checkStatus === ProxyCheckStatus.failure)) {
-    return onlyErrorToast(-1, $t('部分窗口代理 IP 检测失败，请确保代理 IP 测试均正常或删除检测失败的代理 IP 后再继续操作'))
+    return onlyErrorToast(-1, transferLabels.value.proxyTestFailedBeforeTransfer)
   }
 
   const isTradeProxy = transferParam.value.includes('tradeProxy')
@@ -94,16 +99,16 @@ async function checkTransferStatus() {
 
   // 仅转移代理
   if (isTradeProxy && !isTradePlatform && hasEmptyProxy) {
-    return onlyErrorToast(-1, $t('部分窗口缺少代理 IP'))
+    return onlyErrorToast(-1, transferLabels.value.someEntitiesMissingProxy)
   }
 
   // 仅转移账号
   if (!isTradeProxy && isTradePlatform && hasEmptyPlatform) {
-    return onlyErrorToast(-1, $t('部分窗口缺少平台账号'))
+    return onlyErrorToast(-1, transferLabels.value.someEntitiesMissingPlatform)
   }
 
   if (isTradeProxy && isTradePlatform && (hasEmptyProxy || hasEmptyPlatform)) {
-    return onlyErrorToast(-1, $t('部分窗口缺少代理 IP 或平台账号'))
+    return onlyErrorToast(-1, transferLabels.value.someEntitiesMissingProxyOrPlatform)
   }
 
   const { code, data, msg } = await API.window.userGetAgentTransferWindowStatusList()
@@ -152,9 +157,9 @@ async function onTransfer() {
   <div v-if="!step2" class="w-108 flex flex-col gap-6">
     <RxAlert v-if="!isReady" class="w-full" type="error" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('转移的窗口必须包含 {bold1} 或 {bold2}', { bold1: '{bold1}', bold2: '{bold2}' })">
+        <i18n-t scope="global" :keypath="transferLabels.mustIncludeProxyOrPlatformKeypath">
           <template #bold1>
-            <span class="font-bold"> {{ $t('代理 IP') }} </span>
+            <span class="font-bold"> {{ transferLabels.proxyBold }} </span>
           </template>
           <template #bold2>
             <span class="font-bold"> {{ $t('平台账号') }} </span>
@@ -183,8 +188,8 @@ async function onTransfer() {
 
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-1.5 title">
-          <span>{{ $t('临时窗口有效期') }}</span>
-          <SvgIcon v-tooltip.top="$t('临时窗口过期之前均可以正常使用，过期后如用量不足则无法打开，但窗口信息（账号、代理 IP 等）均能正常导出。')" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" />
+          <span>{{ transferLabels.tempEntityValidity }}</span>
+          <SvgIcon v-tooltip.top="transferLabels.tempEntityValidityTooltip" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" size="14" />
         </div>
         <div class="time">
           {{ $t('{day} 天', { day: expireDays }) }}
@@ -197,14 +202,14 @@ async function onTransfer() {
         <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
       </RxButton>
       <div class="help">
-        {{ $t('* 完成窗口转移后，窗口将被移至回收站。') }}
+        {{ transferLabels.afterTransferMovedToRecycle }}
       </div>
     </div>
   </div>
   <div v-if="step2" class="w-84 flex flex-col gap-6">
     <RxAlert class="w-full" type="warn" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('转移无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
+        <i18n-t scope="global" :keypath="transferLabels.transferIrreversibleKeypath">
           <template #bold1>
             <span class="font-bold"> {{ $t('对方拒绝接收') }} </span>
           </template>
@@ -212,7 +217,7 @@ async function onTransfer() {
             <span class="font-bold"> {{ $t('未在24小时内确认') }} </span>
           </template>
           <template #bold3>
-            <span class="font-bold"> {{ $t('转移过程中窗口无法被操作。') }} </span>
+            <span class="font-bold"> {{ transferLabels.transferBlockedDuringProcess }} </span>
           </template>
         </i18n-t>
       </template>

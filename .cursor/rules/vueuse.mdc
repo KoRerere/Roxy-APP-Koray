@@ -1,0 +1,61 @@
+---
+description: Vue 渲染层优先使用 @vueuse/core，避免重复封装已有能力
+alwaysApply: true
+---
+
+# VueUse 优先
+
+适用范围：**Vue 渲染层**（`apps/web` 等）。Electron **主进程**不适用，异步延时仍遵循 `node:timers/promises` 规则。
+
+## 原则
+
+1. **先查 VueUse 再手写**：事件监听、定时器、可见性、防抖节流、存储、尺寸/焦点/clipboard 等，优先用 [`@vueuse/core`](https://vueuse.org/functions.html)（项目已依赖）。
+2. **不要为单一 VueUse 能力再包一层**：除非组合多个 API 形成稳定业务语义（如「可见时才轮询」），否则直接在组件/composable 里 import 使用。
+3. **组合优于复制**：需要「visibility + interval」等模式时，用 VueUse 组合（如 `useDocumentVisibility` + `useIntervalFn`），不要手写 `document.addEventListener('visibilitychange')` + `setInterval`。
+
+## 常见对照
+
+| 场景 | ❌ 避免 | ✅ 优先 |
+|------|--------|--------|
+| 页面可见性 | `document.hidden` + 手写 listener | `useDocumentVisibility` |
+| 定时轮询 | 裸 `setInterval` / 自写 pause | `useIntervalFn`（`pause` / `resume`） |
+| 防抖 / 节流 | 自写 timer 或 lodash | `useDebounceFn` / `useThrottleFn` |
+| DOM 事件 | `addEventListener` + 手动 remove | `useEventListener` |
+| 本地存储 | 直接 `localStorage` + watch | `useLocalStorage` / `useStorage` |
+| 元素尺寸 | `ResizeObserver` 手写 | `useElementSize` / `useResizeObserver` |
+| v-model 双向绑定 | 自写 emit/update | `useVModel` / `useVModels` |
+| 作用域 provide/inject | 裸 `provide`/`inject` 字符串 key | `provideLocal` / `injectLocal` |
+| 组件卸载清理 | 仅依赖 `onUnmounted` 忘清 listener | `tryOnScopeDispose`（非组件上下文也可） |
+
+## 示例：可见性感知的轮询
+
+```ts
+import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
+import { watch } from 'vue'
+
+// ❌ 差：手写 visibility + setInterval
+let timer: ReturnType<typeof setInterval> | undefined
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearInterval(timer)
+  else timer = setInterval(tick, 10_000)
+})
+
+// ✅ 好：VueUse 组合（多文件复用时再抽成 composable）
+const visibility = useDocumentVisibility()
+const { pause, resume } = useIntervalFn(tick, 10_000, { immediate: false })
+
+watch(visibility, (state) => {
+  if (state === 'visible') {
+    tick()
+    resume()
+  } else {
+    pause()
+  }
+}, { immediate: true })
+```
+
+## 例外
+
+- **Electron 主进程 / Node 脚本**：用 `node:timers/promises`，不用 VueUse。
+- **VueUse 无合适 API 或语义不符**：可手写，注释简要说明为何不采用 VueUse。
+- **`@vueuse/components`**：仅在需要 renderless 组件时再引入；默认 `@vueuse/core` 即可。

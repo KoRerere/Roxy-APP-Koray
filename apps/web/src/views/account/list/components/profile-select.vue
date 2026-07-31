@@ -11,14 +11,30 @@ import useColumns from '/@/hooks/useColumns'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 
 interface Props {
   linkedWindowSortNums?: number[]
   cacheKey?: string
+  /** 空状态标题，默认「暂无窗口」 */
+  emptyTitle?: string
+  /** 空状态描述 */
+  emptyDesc?: string
 }
 
-const { linkedWindowSortNums = [], cacheKey = 'account-profile-select' } = defineProps<Props>()
+const {
+  linkedWindowSortNums = [],
+  cacheKey = 'account-profile-select',
+  emptyTitle: emptyTitleProp,
+  emptyDesc: emptyDescProp,
+} = defineProps<Props>()
 const emit = defineEmits(['confirm', 'close'])
+
+const tutorialLabels = useTutorialEntityLabels()
+const { isEcommerce } = useRouteContext()
+const resolvedEmptyTitle = computed(() => emptyTitleProp ?? (isEcommerce.value ? $t('暂无账号') : $t('暂无窗口')))
+const resolvedEmptyDesc = computed(() => emptyDescProp ?? tutorialLabels.value.profileSelectEmptyDesc)
 
 const workspaceStore = useWorkspaceStore()
 const { userConfig } = storeToRefs(useUserStore())
@@ -132,7 +148,7 @@ function handleSave() {
           class="profile-select-table"
         >
           <template #table-empty>
-            <CustomNewEmpty icon="base/rx_ic_browser" img="empty-profiles.png" :title="$t('暂无窗口')" :desc="$t('窗口是 Roxy浏览器的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等，以方便您更好地执行业务操作。')" />
+            <CustomNewEmpty icon="base/rx_ic_browser" img="empty-profiles.png" :title="resolvedEmptyTitle" :desc="resolvedEmptyDesc" />
           </template>
           <template #profile="{ data }">
             <ProfileInfo :workspace-name="workspaceName" :data="data" readonly />

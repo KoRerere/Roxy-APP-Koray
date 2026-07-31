@@ -28,8 +28,8 @@ import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyType } fro
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
-import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
-import { copyText, deepClone, genDriver, genPollingChecker, safeParseJSON } from '/@/utils'
+import { copyText, deepClone, genPollingChecker, safeParseJSON } from '/@/utils'
+import { useFirstRegisterOpenGuide } from './hooks/useFirstRegisterOpenGuide'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
@@ -39,7 +39,7 @@ import { switchWorkspaceAndToUpgradePlan, useHandleBusinessCode } from '/@/hooks
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
-import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
+import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
 import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useProfileProxySpeedTest } from '/@/views/browser/list/profiles/hooks/useProfileProxySpeedTest'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
@@ -98,8 +98,12 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const listInitialized = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
-const driverObj = ref()
 const checkerLoading = ref(false)
+
+const { driverObj, driverNext } = useFirstRegisterOpenGuide({
+  tableRef,
+  enabled: () => userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false,
+})
 
 const {
   openMessage,
@@ -107,6 +111,7 @@ const {
   listenOpenMessage,
   listenCloseMessage,
   listenCloseSyncingDataMessage,
+  listenWebWindowManager,
   openBrowserBefore,
   getNotUsedProfiles,
   syncOpenedBrowserState,
@@ -193,10 +198,7 @@ function tryRestoreProfilesFromCache() {
 }
 
 async function loadFiltersForCurrentTab() {
-  const filter = props.currentFilter
-  if (!filter)
-    return
-  filtersMenu.value = await getCustomFilters(filter.filter_condition || {})
+  filtersMenu.value = await getCustomFilters(props.currentFilter?.filter_condition || {})
 }
 
 async function initializeProfilesList() {
@@ -256,6 +258,7 @@ watch(
 let cancelOpenListener: (() => void) | undefined
 let cancelCloseListener: (() => void) | undefined
 let cancelCloseSyncingDataListener: (() => void) | undefined
+let cancelWebWindowListener: (() => void) | undefined
 
 const scheduledCheckerProxyStatus = genPollingChecker({
   intervalMs: 5 * 60 * 1000,
@@ -285,9 +288,7 @@ onBeforeMount(() => {
   })
   cancelCloseListener = listenCloseMessage()
   cancelCloseSyncingDataListener = listenCloseSyncingDataMessage()
-
-  if (userInfo.value.onboardingTaskStatus?.firstRegisterGuideStatus === false)
-    emitter.on('firstRegisterGuide', onFirstRegisterGuide)
+  cancelWebWindowListener = listenWebWindowManager()
 
   // 列表备注显示状态现在保存到后台
   updateColumns((columns) => {
@@ -304,58 +305,11 @@ onBeforeMount(() => {
 
 onBeforeUnmount(() => {
   scheduledCheckerProxyStatus.stop()
-  emitter.off('firstRegisterGuide', onFirstRegisterGuide)
   cancelOpenListener?.()
   cancelCloseListener?.()
   cancelCloseSyncingDataListener?.()
+  cancelWebWindowListener?.()
 })
-
-async function onFirstRegisterGuide() {
-  await tableRef.value?.refresh({}, true)
-  nextTick(() => {
-    driverObj.value = genDriver({
-      showProgress: false,
-      disableActiveInteraction: false,
-      allowClose: true,
-      overlayClickBehavior: 'close',
-      showButtons: ['close'],
-      stagePadding: 0,
-      popoverOffset: 20,
-      onDestroyed: () => {
-        blurDomSpotlight()
-      },
-      steps: [
-        {
-          element: '#OPEN_0',
-          popover: {
-            description: $t('点击「打开」以启动浏览器。'),
-            side: 'right',
-            align: 'center',
-          },
-          onHighlightStarted: () => {
-            nextTick(() => {
-              requestAnimationFrame(() => {
-                focusDomSpotlight('#OPEN_0')
-              })
-            })
-          },
-          onDeselected: () => {
-            blurDomSpotlight()
-          },
-        },
-      ],
-    })
-
-    driverObj.value.drive()
-  })
-}
-
-function driverNext() {
-  if (driverObj.value) {
-    driverObj.value = undefined
-    emitter.emit('asideMenuGuide')
-  }
-}
 
 async function testAllProxy(silent = false) {
   if (!check('Profiles_speed_test_proxy'))
@@ -717,7 +671,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       buyProxyType: proxyType ?? ProxyType.resource,
     }
     datas.forEach((item) => {
-      silentUpdateProxy(item, params, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo'])
+      silentUpdateProxy(item, params)
     })
   }
 
@@ -997,9 +951,10 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :list-cache-key="LIST_CACHE_NAMESPACE.BROWSER_LIST"
-           :list-cache-scope="getProfilesListCacheScope" :list-cache-meta="listCacheMeta" :list-cache-should-restore="shouldRestoreProfilesListCache" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
-           :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table" removable-sort
+  <RyTable ref="windowTable" v-model:columns="columns" cache-key="browser-list" :list-cache-key="LIST_CACHE_NAMESPACE.BROWSER_LIST" :list-cache-scope="getProfilesListCacheScope"
+           :list-cache-meta="listCacheMeta" :list-cache-should-restore="shouldRestoreProfilesListCache" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest"
+           :table-operation="getOperation" :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtual-scroller-options="{ itemSize: 60 }" class="window-table"
+           removable-sort
   >
     <template #filter-after>
       <div class="w-full flex items-start gap-2">

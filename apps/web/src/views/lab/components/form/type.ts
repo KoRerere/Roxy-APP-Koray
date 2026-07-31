@@ -1,8 +1,11 @@
 import type { z, ZodFirstPartySchemaTypes } from 'zod'
+import type { FormLabelPosition } from './useContext'
 
 interface BaseInput {
   label?: string
   tooltip?: string
+  labelPosition?: FormLabelPosition
+  labelProps?: Record<string, any>
   props?: Record<string, any>
   resolver?: (zod: typeof z) => ZodFirstPartySchemaTypes
   [key: string]: any
@@ -26,5 +29,5 @@ type NormalInput = BaseInput & {
   name: string
 }
 
-export type InputType = 'group' | 'text' | 'number' | 'password' | 'textarea' | 'select' | 'mselect' | 'date' | (string & {})
+export type InputType = 'group' | 'text' | 'number' | 'password' | 'textarea' | 'select' | 'mselect' | 'cascade' | 'date' | (string & {})
 export type Input = SeparatorInput | GroupInput | CustomInput | NormalInput

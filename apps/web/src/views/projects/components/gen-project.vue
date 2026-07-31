@@ -9,6 +9,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 import { getRoleLabelMap, Role } from '/@/enums/role'
+import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
 
 const { data, onSuccess } = defineProps<{
   data?: Record<string, any>
@@ -19,6 +20,7 @@ const { data, onSuccess } = defineProps<{
 const { userInfo } = storeToRefs(useUserStore())
 const { getTeamMembers } = useTeamStore()
 const [_, onlyErrorToast] = useResponseToast()
+const projectLabels = useProjectEntityLabels()
 
 const roleLabelMap = getRoleLabelMap()
 const loading = ref(false)
@@ -27,21 +29,24 @@ const fuse = ref()
 const search = ref()
 const searchResult = ref()
 const selectedMembers = ref()
-const inputs = ref([
-  {
-    type: 'text',
-    name: 'projectName',
-    value: data?.projectName,
-    props: {
-      placeholder: $t('请输入项目名称'),
-      size: 'lg',
+const inputs = computed(() => {
+  const labels = projectLabels.value
+  return [
+    {
+      type: 'text',
+      name: 'projectName',
+      value: data?.projectName,
+      props: {
+        placeholder: labels.namePlaceholder,
+        size: 'lg',
+      },
+      resolver: (zod: any) => zod.string()
+        .min(1, labels.nameRequired)
+        .min(2, labels.nameMinLength)
+        .max(30, labels.nameMaxLength),
     },
-    resolver: (zod: any) => zod.string()
-      .min(1, $t('请输入您的项目名称'))
-      .min(2, $t('项目名称必须大于 1 个字符'))
-      .max(30, $t('项目名称最多不超过 30 个字符')),
-  },
-])
+  ]
+})
 
 const memberList = computed(() => search.value ? searchResult.value : members.value)
 
@@ -91,7 +96,7 @@ async function handleSubmit(formData: Record<string, any>) {
   <div class="flex flex-col pa-6 pt-4 gap-6 w-120">
     <div class="h-9 flex justify-between items-center">
       <div class="tt-primary text-4 font-600">
-        {{ $t('创建项目') }}
+        {{ projectLabels.createTitle }}
       </div>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" @click="onClose" />
     </div>

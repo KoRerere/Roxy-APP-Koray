@@ -16,6 +16,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { concurrentControl } from '/@/utils'
+import { useExtensionLabels } from '../utils/extension-labels'
 
 import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
 
@@ -38,12 +39,14 @@ const { showMenu: showPopupMenu } = usePopupMenu()
 const needsync = defineModel('needsync')
 const tableRef = useTemplateRef('extable')
 
+const labels = useExtensionLabels()
+
 const checkUpdateExtension = ref<{ [key: string]: boolean }>({})
 const updatingMap = ref<{ [key: string]: boolean }>({})
 
-const columns = setColumns([
+const columns = computed(() => setColumns([
   {
-    title: $t('扩展信息'),
+    title: labels.value.infoColumn,
     key: 'extension',
     slot: 'extension',
   },
@@ -53,12 +56,12 @@ const columns = setColumns([
     getText: (row: any) => extensionsSourceFormat(row.source) || $t('未知'),
   },
   {
-    title: $t('扩展归属'),
+    title: labels.value.ownershipColumn,
     key: 'pluginSwitchType',
     slot: 'pluginSwitchType',
   },
   {
-    title: $t('已安装项目'),
+    title: labels.value.installedProjectsColumn,
     key: 'related',
     slot: 'related',
   },
@@ -67,7 +70,7 @@ const columns = setColumns([
     key: 'pluginUpdateState',
     slot: 'update',
   },
-])
+]))
 
 const filters = reactive({
   value: undefined,
@@ -167,7 +170,7 @@ function tableOperation(data: any) {
       power: isPersonal || check('Plugin_Installed_check_update'),
       visible: canUpdate,
       disabled: !canUpdate,
-      disabledTooltip: $t('暂无需要更新的扩展'),
+      disabledTooltip: labels.value.noUpdateNeeded,
       multiple: true,
       multipleProps: {
         name: 'G2',
@@ -189,7 +192,7 @@ function tableOperation(data: any) {
     },
     {
       name: 'install',
-      label: $t('安装到项目'),
+      label: labels.value.installToProject,
       icon: 'base/rx_ic_stack_install',
       power: isPersonal || check('Plugin_Installed_modify_attribution'),
       command: ({ item }: any) => {
@@ -250,15 +253,15 @@ async function uploadRecordCheck() {
 
 function installViaUrl() {
   showSimpleDialog({
-    title: $t('添加 Google 扩展'),
-    content: $t('每日总扩展添加数量限制为 {count} 个。', { count: 50 }),
+    title: labels.value.addGoogle,
+    content: labels.value.formatDailyLimit(50),
     confirmText: $t('确认添加'),
     inputs: [
       {
         name: 'url',
         type: 'text',
         props: {
-          placeholder: $t('请输入 Google Store 中扩展的 URL'),
+          placeholder: labels.value.googleStoreUrlPlaceholder,
           preIcon: 'base/rx_ic_link',
         },
       },
@@ -381,7 +384,9 @@ async function checkUpdate(data: Data[]) {
     return false
   }).length
 
-  const message = detectable.length > 1 ? $t('检查更新完成，{count}个扩展有更新', { count: updateCount }) : $t('检查更新完成')
+  const message = detectable.length > 1
+    ? labels.value.formatCheckUpdateWithCount(updateCount)
+    : $t('检查更新完成')
   showToast(0, message)
 }
 
@@ -409,8 +414,8 @@ async function deleteExtension(datas: Data[]) {
   const { promise, resolve } = Promise.withResolvers<void>()
 
   confirm.require({
-    header: $t('删除扩展'),
-    message: $t('您确认要删除所选扩展吗？删除后，所有已关联项目中的窗口扩展将被移除。'),
+    header: labels.value.deleteHeader,
+    message: labels.value.deleteMessage,
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -446,7 +451,7 @@ async function deleteExtension(datas: Data[]) {
 
 function showShieldDialog(data: any) {
   showModal({
-    header: $t('扩展安全性检查'),
+    header: labels.value.securityCheck,
     class: 'w-480px',
     slots: {
       default: () => <ShieldDialog extensionInfo={data} />,
@@ -470,17 +475,17 @@ defineExpose({
       <div class="flex items-start justify-between w-full">
         <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />
+          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="labels.addGoogle" @click.stop="installViaUrl" />
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click.stop="onUploadExtension()" />
         </div>
       </div>
     </template>
 
     <template #table-empty>
-      <CustomNewEmpty icon="base/rx_ic_extension_store" img="empty-extensions.png" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
+      <CustomNewEmpty icon="base/rx_ic_extension_store" img="empty-extensions.png" :title="labels.emptyTitle" :desc="labels.emptyDesc">
         <template #extra>
           <div class="flex gap-3">
-            <RxButton outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
+            <RxButton outlined severity="secondary" size="md" icon="base/rx_ic_magnify" :label="labels.searchButton" @click.stop="$emit('search')" />
             <TutorialVideo video-type="plugin_management" :autoplay="false" />
           </div>
         </template>

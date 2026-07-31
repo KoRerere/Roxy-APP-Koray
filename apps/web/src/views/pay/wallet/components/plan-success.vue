@@ -4,17 +4,30 @@ import { format } from 'date-fns'
 import currency from 'currency.js'
 import { useUserStore } from '/@/stores/user';
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
-import { getAdvancedFeature } from '/@/constants/advanced-feature';
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const emit = defineEmits(['confirm'])
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 const dialogRef = inject<any>('dialogRef')
 
-const features = getAdvancedFeature()
-const featureTexts = [
-  features.slice(0, 4),
-  features.slice(4)
-]
+const featureTexts = computed(() => {
+  const labels = billingLabels.value
+  return [
+    [
+      labels.createEntityTemplate,
+      labels.unlimitedProjects,
+      labels.entitySync,
+      labels.entityTransfer,
+    ],
+    [
+      $t('频道权限（即将推出）'),
+      $t('额外 API 请求次数'),
+      $t('额外日志保留时长'),
+      $t('专属技术支持'),
+    ],
+  ]
+})
 
 function close() {
   dialogRef.value.close()
@@ -39,11 +52,9 @@ function close() {
           </div>
         </div>
         <div class="card-plan">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-        <div class="flex justify-end card-desc">{{ $t('{count} 窗口', {
-          count: currency(userPayInfo?.maxWindowCount, {
-            symbol: '', precision: 0
-          }).format()
-        }) }}</div>
+        <div class="flex justify-end card-desc">{{ billingLabels.countEntitiesShort(currency(userPayInfo?.maxWindowCount, {
+          symbol: '', precision: 0
+        }).format()) }}</div>
       </div>
       <CardItem as="div" :translate-z="1" class="flex flex-col gap-5 feat">
         <div class="flex items-center gap-2.5 feat-title">

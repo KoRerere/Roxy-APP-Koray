@@ -1,5 +1,5 @@
 import type { IPCMainInstance } from '../../types'
-import type { QuitSyncProgressMessage, ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { BrowserCacheRootDirFallbackPayload, QuitSyncProgressMessage, ResourceUpdateMessage } from '@roxy/electron-preload'
 
 export function createAppSender(ipcMain: IPCMainInstance) {
   return {
@@ -26,6 +26,11 @@ export function createAppSender(ipcMain: IPCMainInstance) {
     /** 退出/升级前同步窗口数据进度 */
     quitSyncProgress(payload: QuitSyncProgressMessage) {
       return ipcMain.send('app:quit-sync-progress', payload)
+    },
+
+    /** 缓存目录不可用，已回退默认路径 */
+    browserCacheRootDirFallback(payload: BrowserCacheRootDirFallbackPayload) {
+      return ipcMain.send('app:browser-cache-root-dir-fallback', payload)
     },
   } as const
 }

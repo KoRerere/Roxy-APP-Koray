@@ -1,0 +1,18 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1DA8FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 20H12.01" opacity="0">
+    <animate id="wifi_dot_on" begin="0;wifi_all_off.end+0.2s" attributeName="opacity" dur="0.2s" values="0;1" fill="freeze"/>
+    <animate begin="wifi_outer_on.end+0.5s" attributeName="opacity" dur="0.1s" values="1;0" fill="freeze"/>
+  </path>
+  <path d="M8.5 16.429C9.43464 15.5129 10.6912 14.9998 12 14.9998C13.3088 14.9998 14.5654 15.5129 15.5 16.429" opacity="0">
+    <animate id="wifi_inner_on" begin="wifi_dot_on.end" attributeName="opacity" dur="0.2s" values="0;1" fill="freeze"/>
+    <animate begin="wifi_outer_on.end+0.5s" attributeName="opacity" dur="0.1s" values="1;0" fill="freeze"/>
+  </path>
+  <path d="M5 12.8591C6.86929 11.0268 9.38247 10.0005 12 10.0005C14.6175 10.0005 17.1307 11.0268 19 12.8591" opacity="0">
+    <animate id="wifi_middle_on" begin="wifi_inner_on.end" attributeName="opacity" dur="0.2s" values="0;1" fill="freeze"/>
+    <animate begin="wifi_outer_on.end+0.5s" attributeName="opacity" dur="0.1s" values="1;0" fill="freeze"/>
+  </path>
+  <path d="M2 8.8199C4.75011 6.36013 8.31034 5.00024 12 5.00024C15.6897 5.00024 19.2499 6.36013 22 8.8199" opacity="0">
+    <animate id="wifi_outer_on" begin="wifi_middle_on.end" attributeName="opacity" dur="0.2s" values="0;1" fill="freeze"/>
+    <animate id="wifi_all_off" begin="wifi_outer_on.end+0.5s" attributeName="opacity" dur="0.1s" values="1;0" fill="freeze"/>
+  </path>
+</svg>

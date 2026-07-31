@@ -143,7 +143,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       label: $t('扫码导出'),
       icon: 'base/rx_ic_qrcode',
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: isDirect,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect,
       hideSubmenuIcon: !canShowQrcode,
       ...(canShowQrcode
         ? {
@@ -162,7 +162,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_renew2',
       tooltip: $t('续费'),
       power: check('Cost_Center_all'),
-      disabled: hasExpired || !isDone || !canRenew,
+      disabled: !canRenew,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -193,7 +193,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_bin_1',
       power: check('Proxy_List_delete'),
       tooltip: $t('删除'),
-      disabled: !isResource,
+      disabled: !isResource && !hasExpired,
       multiple: true,
       multipleProps: {
         disabledTooltip: $t('已购代理 IP 无法进行此操作'),
@@ -303,8 +303,9 @@ export async function getCustomFilters() {
   return inputs
 }
 
-export async function getSorts() {
-  const columns = toRaw(useColumns().columns.value)
+export async function getSorts(options?: { getColumnState?: typeof useColumns }) {
+  const resolveColumns = options?.getColumnState ?? useColumns
+  const columns = toRaw(resolveColumns().columns.value)
   const { data } = await API.proxy.userGetProxyTableSortOrderList()
 
   const onChange = (data: any) => {

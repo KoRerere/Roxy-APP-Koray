@@ -8,6 +8,7 @@ import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRouteContext } from '/@/composables/useRouteContext'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 import { resolveMenuRoutes } from '/@/router/resolve-menu'
 import { useSimpleLocale } from '/@/stores/locale'
 import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
@@ -33,6 +34,7 @@ const projectStore = useProjectStore()
 const userStore = useUserStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { ctx } = useRouteContext()
+const tutorialLabels = useTutorialEntityLabels()
 const { siteLocale } = storeToRefs(useSimpleLocale())
 const { check } = usePermission()
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -90,6 +92,9 @@ emitter.on('badgeMap', (key) => {
 emitter.on('asideMenuGuide', showAsideMenuGuideTour)
 
 function showAsideMenuGuideTour() {
+  if (ctx.value.isEcommerce)
+    return
+
   driverObj.value = genDriver({
     showProgress: false,
     disableActiveInteraction: false,
@@ -102,7 +107,7 @@ function showAsideMenuGuideTour() {
       {
         element: '#NEW_PROFILE',
         popover: {
-          description: $t('点击创建一个新的浏览器窗口。'),
+          description: tutorialLabels.value.createEntityGuideDesc,
           side: 'right',
           align: 'center',
         },
@@ -147,6 +152,15 @@ async function toCreateBrowser() {
   }
 
   router.push({ name: 'browser-create', query })
+}
+
+function toCreateAccount() {
+  // 电商按设备绑定/续费约束，不走窗口总额度预检
+  const query = route.name === 'ecommerce-group-item'
+    ? { projectId: String(route.params.id) }
+    : {}
+
+  router.push({ name: 'ecommerce-account-create', query })
 }
 
 async function saveQuickCreateProxyInfo(proxyInfo: string) {
@@ -222,9 +236,10 @@ async function genCustomerParams(data: any) {
 
 <template>
   <aside class="relative -mt-6.5 pt-5.25 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <div v-if="check('Profiles_add') && ctx.isNormal" class="flex items-center gap-2">
-      <RxButton id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
-      <RxButton v-if="!collapsed && isDev" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" />
+    <div v-if="check('Profiles_add') && (ctx.isNormal || ctx.isEcommerce)" class="flex items-center gap-2">
+      <RxButton v-if="ctx.isNormal" id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
+      <RxButton v-if="ctx.isEcommerce" id="NEW_ACCOUNT" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建账号')" @click="toCreateAccount" />
+      <RxButton v-if="!collapsed && isDev && ctx.isNormal" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" />
     </div>
     <div class="relative flex-1 overflow-hidden">
       <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">

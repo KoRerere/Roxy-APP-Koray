@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useTransferEntityLabels } from '/@/composables/useTransferEntityLabels'
 import { enhanceCountdown } from '/@/utils'
 
 interface OptionGorup {
@@ -31,6 +32,7 @@ const emit = defineEmits(['confirm', 'resize'])
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [_, onlyErrorToast] = useResponseToast()
+const transferLabels = useTransferEntityLabels()
 
 const messageRef = useTemplateRef('message')
 
@@ -38,20 +40,22 @@ const selectedWorkspace = ref()
 const transferParam = ref<string[]>([])
 
 const isDelete = computed(() => !!transferParam.value?.includes('delete'))
-const optionsGroup = computed<OptionGorup[]>(() => [
+const optionsGroup = computed<OptionGorup[]>(() => {
+  const labels = transferLabels.value
+  return [
   {
     title: $t('转移选项'),
     options: [
       {
-        label: $t('窗口名称'),
+        label: labels.entityNameOption,
         value: 'name',
       },
       {
-        label: $t('窗口备注'),
+        label: labels.entityRemarkOption,
         value: 'notes',
       },
       {
-        label: $t('转移后彻底删除窗口（该操作无法撤销）'),
+        label: labels.deleteEntityAfterTransfer,
         value: 'delete',
       },
     ],
@@ -61,18 +65,19 @@ const optionsGroup = computed<OptionGorup[]>(() => [
     visible: isDelete.value,
     options: [
       {
-        label: $t('同时删除代理 IP 资源中仅与转移窗口有绑定关系的代理 IP'),
+        label: labels.deleteOrphanProxyOnTransfer,
         value: 'proxy',
         disabled: buyProxyType,
-        tooltip: buyProxyType ? $t('转移窗口中存在购买代理 IP') : undefined,
+        tooltip: buyProxyType ? labels.transferHasPurchasedProxy : undefined,
       },
       {
-        label: $t('同时删除平台账号中仅与转移窗口有绑定关系的账号'),
+        label: labels.deleteOrphanPlatformOnTransfer,
         value: 'platform',
       },
     ],
   },
-].filter(item => item.visible !== false))
+].filter(item => item.visible !== false)
+})
 
 watch(isDelete, (value) => {
   if (value) {
@@ -154,12 +159,12 @@ async function onTransfer(isSelf: boolean) {
     <div class="flex flex-col gap-2">
       <RxAlert class="w-full" type="info" :closable="false">
         <template #content>
-          <i18n-t scope="global" :keypath="$t('窗口转移将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
+          <i18n-t scope="global" :keypath="transferLabels.transferIncludesKeypath">
             <template #bold>
-              <span class="font-bold"> {{ $t('已同步过的云端数据、代理 IP 信息、平台账号、Cookies 和指纹参数等') }} </span>
+              <span class="font-bold"> {{ transferLabels.transferIncludesBold }} </span>
             </template>
             <template #bold2>
-              <span class="font-bold"> {{ $t('扩展应用，需要接收方手动安装') }} </span>
+              <span class="font-bold"> {{ transferLabels.transferExcludesBold }} </span>
             </template>
           </i18n-t>
         </template>
@@ -189,16 +194,16 @@ async function onTransfer(isSelf: boolean) {
           {{ $t('删除说明') }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 仅与窗口 A 绑定，窗口 A 被转移，则代理 IP a 将从代理 IP 资源中删除') }}
+          {{ transferLabels.deleteProxyOnlyBoundToEntity }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 与窗口 A、B 绑定，仅窗口 A 被转移，则代理 IP a 不会被删除') }}
+          {{ transferLabels.deleteProxyBoundToMultipleKeep }}
         </div>
         <div class="checkboxitem">
-          {{ $t('若代理 IP a 与窗口 A、B 绑定，窗口 A、B 均被转移，则代理 IP a 将从代理 IP 资源中删除') }}
+          {{ transferLabels.deleteProxyBoundToMultipleRemove }}
         </div>
         <div class="checkboxitem">
-          {{ $t('(平台账号删除规则同代理 IP)') }}
+          {{ transferLabels.platformDeleteSameAsProxy }}
         </div>
       </div>
     </div>
@@ -212,7 +217,7 @@ async function onTransfer(isSelf: boolean) {
   <div v-if="step2" class="w-84 flex flex-col gap-6">
     <RxAlert class="w-full" type="warn" :closable="false">
       <template #content>
-        <i18n-t scope="global" :keypath="$t('转移无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
+        <i18n-t scope="global" :keypath="transferLabels.transferIrreversibleKeypath">
           <template #bold1>
             <span class="font-bold"> {{ $t('对方拒绝接收') }} </span>
           </template>
@@ -220,7 +225,7 @@ async function onTransfer(isSelf: boolean) {
             <span class="font-bold"> {{ $t('未在24小时内确认') }} </span>
           </template>
           <template #bold3>
-            <span class="font-bold"> {{ $t('转移过程中窗口无法被操作。') }} </span>
+            <span class="font-bold"> {{ transferLabels.transferBlockedDuringProcess }} </span>
           </template>
         </i18n-t>
       </template>

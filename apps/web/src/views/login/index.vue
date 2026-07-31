@@ -20,10 +20,11 @@ import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
+import { ensureBeforeEnterStep, markBeforeEnterSession, needsBeforeEnter } from '/@/domain/before-enter'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
-import { useThemeStore } from '/@/stores/theme.ts'
 import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
 
 const loginEventCommonParams = {
@@ -33,10 +34,10 @@ const loginEventCommonParams = {
 const signFormRef = useTemplateRef('signForm')
 const { width: windowWidth } = useWindowSize()
 const isSupportGPU = ref(false)
-const themeStore = useThemeStore()
 const simpleLocaleStore = useSimpleLocale()
 const { getOfficialWebsite } = simpleLocaleStore
-const { setToken, setPassword, initUserInfo, setLoginWay } = useUserStore()
+const { setToken, setPassword, initUserInfo, setLoginWay, enterWorkspace } = useUserStore()
+const workspaceStore = useWorkspaceStore()
 
 const { rememberMe, password, userInfo, token } = storeToRefs(useUserStore())
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -244,12 +245,28 @@ async function checkWorkspaceInvitation() {
 }
 
 async function jumpHome(intoWorkspaceId?: number) {
-  await initUserInfo(intoWorkspaceId)
+  await initUserInfo(intoWorkspaceId, { enterWorkspace: false })
   setPassword(rememberMe.value ? signFormData.value.password : '')
   setLoginWay(loginWay.value)
-  API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
+  API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale } as any)
 
-  const name = getWorkspaceTypeLandingRoute(userInfo.value.workspaceType, userInfo.value.role)
+  if (needsBeforeEnter(userInfo.value, intoWorkspaceId)) {
+    await workspaceStore.prepareWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId!, { silent: true })
+    markBeforeEnterSession()
+    // 无进度时种子为 choose；已有 platform 等进度则保留以便恢复
+    if (userInfo.value.id != null)
+      ensureBeforeEnterStep(userInfo.value.id)
+    hidePageLoading()
+    await router.push({ name: 'before-enter' })
+    mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })
+    return
+  }
+
+  await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
+  const name = getWorkspaceTypeLandingRoute(
+    workspaceStore.currentWorkspace?.workspaceType ?? userInfo.value.workspaceType,
+    userInfo.value.role,
+  )
   await router.push({ name })
 
   mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })
@@ -411,17 +428,7 @@ provideLoginContext({
     <div class="lg:w-47% w-full h-full relative bg-[var(--colors-background-bg-page)]">
       <div class="relative z-10 h-full flex-col flex-bc">
         <div class="w-full flex justify-between sm:p-5 p-3">
-          <a class="logo" :href="getOfficialWebsite('/')" target="_blank" rel="noopener noreferrer">
-            <template v-if="simpleLocaleStore.currentLocale === 'zh-CN'">
-              <SvgIcon name="base/chinese-logo" width="164" height="44" :color="themeStore.realTheme === 'dark' ? '#fff' : '#000'" />
-            </template>
-            <template v-else>
-              <SvgIcon name="base/logo" size="36" />
-              <div class="logo-text">
-                {{ $t('Roxy浏览器') }}
-              </div>
-            </template>
-          </a>
+          <BrandLogo />
           <LanguageSelect />
         </div>
 
@@ -472,32 +479,6 @@ provideLoginContext({
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
   cursor: pointer;
-}
-
-.logo {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  color: white;
-  z-index: 10;
-
-  @media (max-width: 768px) {
-    gap: 6px;
-  }
-
-  .logo-text {
-    color: var(--colors-text-text-primary);
-    font-family: Archivo;
-    font-size: 18px;
-    font-style: normal;
-    line-height: 20px;
-    font-weight: bold;
-
-    &.zh {
-      font-family: 'Chinese Brand', Archivo, sans-serif;
-    }
-  }
 }
 
 .footer {

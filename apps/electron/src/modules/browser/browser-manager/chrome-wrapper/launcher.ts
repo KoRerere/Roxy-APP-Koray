@@ -1,4 +1,5 @@
 import type { Client } from 'chrome-remote-interface'
+import type { Buffer } from 'node:buffer'
 import CDP from 'chrome-remote-interface'
 import { spawn } from 'node:child_process'
 import { readFile, rm } from 'node:fs/promises'
@@ -18,6 +19,8 @@ export interface PuppeteerLaunchOptions {
   ignoreDefaultArgs?: boolean | string[]
   defaultViewport?: { width: number, height: number } | null
   relaunch?: boolean
+  /** 等待调试端口就绪的超时时间（毫秒），需与上层启动超时对齐 */
+  timeoutMs?: number
 }
 
 /**
@@ -31,6 +34,7 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
     ignoreDefaultArgs = false,
     defaultViewport = null,
     relaunch = false,
+    timeoutMs = 30_000,
   } = options
 
   if (!executablePath) {
@@ -56,30 +60,58 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
 
   // 等待获取调试端口
   const actualPort = await new Promise<number>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Failed to get debugging port from Chrome'))
-    }, 30000)
+    let readDevToolsActivePortTimer: NodeJS.Timeout | undefined
+    let settled = false
+    let timeout: NodeJS.Timeout
 
-    let tryCount = 0
+    const settleResolve = (port: number) => {
+      if (settled)
+        return
+      settled = true
+      clearTimeout(timeout)
+      clearTimeout(readDevToolsActivePortTimer)
+      resolve(port)
+    }
+
+    const settleReject = (error: Error) => {
+      if (settled)
+        return
+      settled = true
+      clearTimeout(timeout)
+      clearTimeout(readDevToolsActivePortTimer)
+      reject(error)
+    }
+
+    // 超时必须同步回收进程：迟到写出的调试端口已无法被使用,若不 kill 会残留脱管的
+    // Chrome 进程占着 user-data-dir 的 profile 锁,导致用户立刻重试同一窗口也会失败
+    timeout = setTimeout(() => {
+      settleReject(new Error($t('Chrome 启动超时，未能获取调试端口')))
+      chromeProcess.kill()
+    }, timeoutMs)
+
+    /**
+     * 持续轮询直到成功或超时兜底：部分环境 stderr 匹配不到 DevTools listening,
+     * 且内核首装被杀软扫描时端口文件可能在数十秒后才写出,不能提前放弃
+     */
     const readDevToolsActivePort = async () => {
+      if (settled)
+        return
       try {
         const devToolsActivePort = await readFile(join(userDataDir!, 'DevToolsActivePort'), 'utf8')
         console.debug('devToolsActivePort', devToolsActivePort)
         const port = Number(devToolsActivePort.split('\n')[0])
         console.log('devToolsActivePort', port)
         if (port) {
-          clearTimeout(timeout)
-          resolve(port)
+          settleResolve(port)
+          return
         }
       }
       catch (error) {
         console.debug('readDevToolsActivePort error', error)
-        if (tryCount++ < 5) {
-          readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
-        }
       }
+      readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
     }
-    let readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
+    readDevToolsActivePortTimer = setTimeout(readDevToolsActivePort, 3000)
 
     chromeProcess.stdout.on('data', (data) => {
       // 可选：打印日志
@@ -91,17 +123,24 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
       console.debug('chromeProcess.stderr.on', output)
       const match = output.match(/DevTools listening on ws:\/\/[^:]+:(\d+)/)
       if (match) {
-        clearTimeout(timeout)
-        clearTimeout(readDevToolsActivePortTimer)
         console.debug('chromeProcess match', match[1])
-        resolve(Number.parseInt(match[1]))
+        settleResolve(Number.parseInt(match[1]))
       }
     })
 
     chromeProcess.on('error', (error) => {
-      clearTimeout(timeout)
       console.error('chromeProcess.on error', error)
-      reject(error)
+      settleReject(error)
+    })
+
+    // 进程在拿到调试端口前异常退出时立即失败；正常退出码 0 不在此处理，由超时兜底
+    chromeProcess.on('exit', (code, signal) => {
+      if (settled)
+        return
+      if (code !== 0 && code !== null) {
+        const exitDesc = `退出码 ${code}`
+        settleReject(new Error($t('Chrome 进程意外退出（{exitDesc}），未能获取调试端口', { exitDesc })))
+      }
     })
   })
 

@@ -26,6 +26,21 @@ export function parseHeaderParams(headerValue: string) {
   return params
 }
 
+/** 判断响应头版本列表相对本地缓存是否发生变化（含新增内核大版本） */
+export function isCoreVersionListChanged(
+  headerList: Record<string, string>,
+  lastVersionList: Record<string, string>,
+): boolean {
+  const hasNewKey = Object.keys(headerList).some(
+    key => lastVersionList[key] === undefined,
+  )
+  const hasUpdatedKey = Object.keys(lastVersionList).some(
+    key => headerList[key] !== undefined
+      && headerList[key] !== lastVersionList[key],
+  )
+  return hasNewKey || hasUpdatedKey
+}
+
 let lastRequestTime = 0
 let lastWebDomain = ''
 /** 获取 webDomain, 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */

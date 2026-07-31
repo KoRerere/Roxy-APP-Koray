@@ -44,7 +44,6 @@ const active = ref(defaultActive || list[0])
 <style lang="scss" scoped>
 .header {
   color: var(--colors-text-text-primary);
-  font-family: 'Microsoft YaHei UI';
   font-size: 16px;
   font-weight: 600;
   line-height: normal;

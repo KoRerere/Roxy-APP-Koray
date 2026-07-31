@@ -15,6 +15,8 @@ import { API } from '/@/api'
 import { copyText, genDriver, getLocalStorageDriverStatus, setLocalStorageDriverStatus } from '/@/utils'
 import type { UserGetBannerPictureListV2ListData, UserGetPromotionInfoListData } from '@roxy/backend-api'
 
+import { useReferralEntityLabels } from '/@/composables/useReferralEntityLabels'
+
 const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
@@ -25,6 +27,7 @@ const { mixpanelTrack } = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const { getPromotionInfo } = useReferralProgram()
+const referralLabels = useReferralEntityLabels()
 const { onboardingTaskStatus, updateOnboardingTaskStatus } = useOnboardingTaskStatus()
 const activeMenu = ref(promotionInfo.promotionLinkList[0]!)
 const bannerList = ref<UserGetBannerPictureListV2ListData['data']>()
@@ -58,7 +61,7 @@ const bonusList = computed(() => {
       items: [
         {
           title: `${activeMenu.value.promotionDiscount}%`,
-          desc: $t('窗口/团队/成员消费返利'),
+          desc: referralLabels.value.profileConsumptionRebate,
           class: '',
         },
         {
@@ -67,7 +70,7 @@ const bonusList = computed(() => {
         },
         {
           title: `${activeMenu.value.proxyPromotionDiscount}%`,
-          desc: $t('代理 IP 消费返利'),
+          desc: referralLabels.value.proxyConsumptionRebate,
           class: '',
         },
         {
@@ -145,7 +148,7 @@ function _focusReward() {
 
   genDriver({
     steps: [
-      { element: '.get', popover: { description: $t('您现在可以获得名下用户的代理 IP 消费返利了。'), side: 'right', align: 'center' } },
+      { element: '.get', popover: { description: referralLabels.value.proxyRebateGuide, side: 'right', align: 'center' } },
     ],
     onDestroyed: () => {
       setLocalStorageDriverStatus('referralProgram', true)

@@ -1,30 +1,32 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 
-const { proxyProviderId, sceneId, country } = defineProps<{
+const { proxyProviderId, sceneId, country, onJump } = defineProps<{
   proxyProviderId: number
   sceneId: number
   country: string
+  onJump?: () => void
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'jump'): void
 }>()
 
 const [showToast, onlyErrorToast] = useResponseToast()
+const shopLabels = useProxyShopLabels()
 
 async function buyExternal() {
   const { code, data, msg } = await API.proxy.userGetProxyVendorJumpInfoList({})
   onlyErrorToast(code, msg)
   if (code !== 0)
     return
-  onJump(data)
+  _onJump(data)
 }
 
-async function onJump(_item: any) {
-  emit('jump')
+async function _onJump(_item: any) {
+  onJump?.()
   emit('close')
 
   // 第三方的合作商（使用跳转的方式）
@@ -61,7 +63,7 @@ async function sendNotifyMe() {
   const { code, msg } = await API.proxy.userReportProxyOutOfStockCreate({ proxyProviderId, sceneId, country })
   onlyErrorToast(code, msg)
   if (code === 0) {
-    showToast(code, $t('当前代理 IP 补货或上架时，我们将通过站内通知提醒您'), { summary: $t('补货通知登记成功') })
+    showToast(code, shopLabels.value.sellOutNotifyDetail, { summary: $t('补货通知登记成功') })
     emit('close')
   }
 }
@@ -70,7 +72,7 @@ async function sendNotifyMe() {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-4 rounded-lg w-105">
     <div class="h-9 flex items-center justify-between">
-      <span class="header">{{ $t('当前代理 IP 暂时缺货') }}</span>
+      <span class="header">{{ shopLabels.sellOutTitle }}</span>
       <SvgIcon class="cursor-pointer" color="var(--colors-icon-icon-secondary)" size="20" name="base/rx_ic_delete" @click="$emit('close')" />
     </div>
     <div class="relative mx-auto flex items-center py-4 gap-2.5">
@@ -80,7 +82,7 @@ async function sendNotifyMe() {
       </div>
     </div>
     <div class="tt-primary text-3.5 leading-normal">
-      {{ $t("点击下方按钮加入到货通知名单，代理 IP 补货后我们将第一时间通知您。你也可以通过 Rola-IP 进行选购。") }}
+      {{ shopLabels.sellOutDescription }}
     </div>
     <div class="flex flex-col gap-2">
       <RxButton size="lg" icon="base/rx_ic_cart" :label="$t('通过 Rola-lP 购买')" @click="buyExternal" />

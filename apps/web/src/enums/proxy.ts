@@ -48,6 +48,14 @@ export enum ProxyExpireStatus {
   soon = 2,
 }
 
+/** 代理/设备与窗口的关联状态（列表筛选） */
+export enum ProxyBindStatus {
+  /** 未关联窗口 */
+  Unbound = 0,
+  /** 已关联窗口 */
+  Bound = 1,
+}
+
 export enum ProxyOrderType {
   /** 续费 */
   Renew = 'renew',

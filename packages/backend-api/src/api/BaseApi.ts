@@ -11,6 +11,9 @@
  */
 
 import {
+  AppUpdateDetailData,
+  AppUpdateDetailError,
+  AppUpdateDetailParams,
   CheckEmailOr2FaVerifyListData,
   CheckEmailOr2FaVerifyListParams,
   CheckEmailPasswordCreateData,
@@ -33,8 +36,6 @@ import {
   GetActivityDiscountListData,
   GetAppUpgradeCreateData,
   GetAppUpgradeCreatePayload,
-  GetAppUpgradeV2CreateData,
-  GetAppUpgradeV2CreatePayload,
   GetBlackFridayTimeListData,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
@@ -53,6 +54,7 @@ import {
   GetPromotionLinkDiscountAndUsernameListData,
   GetQrcodeInfoListData,
   GetSpringFestivalTimeListData,
+  GetTgWechatQrcodeListData,
   GetUninstallReasonQuestionListListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
@@ -64,6 +66,9 @@ import {
   LoginGithubCreatePayload,
   LoginGoogleV2CreateData,
   LoginGoogleV2CreatePayload,
+  LoginLinuxDoCreateData,
+  LoginLinuxDoCreateError,
+  LoginLinuxDoCreatePayload,
   LoginPhoneCreateData,
   LoginPhoneCreatePayload,
   LoginVkCreateData,
@@ -340,6 +345,32 @@ export class BaseApi<SecurityDataType = unknown> {
   loginVkCreate = (data: LoginVkCreatePayload, params: RequestParams = {}) =>
     this.http.request<LoginVkCreateData, any>({
       path: `/login_vk`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+ * @description Linux Do OAuth2 授权登录/绑定。 **登录**：不传 header `token`，body 传 `linuxDoToken`（Connect 授权码）。 **绑定**（个人信息页）：已登录时在 header 传 `token`，body 同样传 `linuxDoToken`。 `oauthHost` 与后端四套 OAuth 配置对应： - `com` + 测试环境 → `https://gatetest.roxybrowser.co/auth?source=linuxdo` - `cn` + 测试环境 → `https://test.roxybrowser.cn/auth?source=linuxdo` - `com` + 生产环境 → `https://roxybrowser.com/auth?source=linuxdo` - `cn` + 生产环境 → `https://roxybrowser.cn/auth?source=linuxdo` 绑定失败常见错误：`已绑定其他 Linux Do 账号`、`该 Linux Do 账号已绑定其他用户`。 无真实邮箱时使用 `username@privaterelay.linux.do` 占位，`regType=6`。
+ *
+ * @tags Base
+ * @name LoginLinuxDoCreate
+ * @summary Linux Do登录
+ * @request POST:/login_linux_do
+ * @response `200` `LoginLinuxDoCreateData`
+ * @response `x-200-2` `{
+    code: number,
+    msg: string,
+
+}` 已绑定其他 Linux Do 账号 / 该 Linux Do 账号已绑定其他用户
+ */
+  loginLinuxDoCreate = (
+    data: LoginLinuxDoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginLinuxDoCreateData, LoginLinuxDoCreateError>({
+      path: `/login_linux_do`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -1271,7 +1302,7 @@ export class BaseApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description 查询当前用户第三方账号绑定状态。 返回 `Google`、`Github`、`Facebook`、`VK`、`LINUXDO` 五种类型；未绑定时 `thirdEmail`/`thirdId`/`thirdUserName` 为空。 Linux Do 绑定通过 `POST /login_linux_do`（header 带 `token`）完成，不在 `user_bind_email` 邮箱验证码流程内。
    *
    * @tags Base
    * @name UserBindEmailListList
@@ -1308,7 +1339,7 @@ export class BaseApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description 解绑第三方账号。`bind_type` 传 `LINUXDO` 可解绑 Linux Do。 Linux Do 绑定请使用 `POST /login_linux_do` + header `token`，不要使用 `user_bind_email`。
    *
    * @tags Base
    * @name UserUnbindEmailCreate
@@ -2470,24 +2501,38 @@ export class BaseApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
-   *
-   * @tags Base
-   * @name GetAppUpgradeV2Create
-   * @summary app升级->获取版本信息v2--无权限认证
-   * @request POST:/get_app_upgrade_v2
-   * @response `200` `GetAppUpgradeV2CreateData`
-   */
-  getAppUpgradeV2Create = (
-    data: GetAppUpgradeV2CreatePayload,
+ * @description 面向 electron-updater（generic provider）的动态更新清单。 客户端 setFeedURL 示例： `https://apitest.roxybrowser.co/app_update/?os=win32&osBit=64` updater 实际请求： - Windows: GET /app_update/latest.yml?os=win32&osBit=64 - macOS: GET /app_update/latest-mac.yml?os=darwin&cpu=apple - Linux: GET /app_update/latest-linux.yml?os=linux&osBit=64 行为： 1. 取该平台对当前 IP 可见的最新版本（尊重 ipLimit/白名单） 2. 从 OSS 读取原始 latest.yml（优先 private，回退 public） 3. 将 path / files[].url 相对路径改写为短时预签名完整 URL 4. 返回 text/yaml，Cache-Control: no-store 成功 HTTP 200；参数错误 400；无版本/无对象 404；OSS 失败 502。 旧版 JSON POST /app_update 已移除。
+ *
+ * @tags Base
+ * @name AppUpdateDetail
+ * @summary app升级->electron-updater动态feed--无权限认证
+ * @request GET:/app_update/{ymlFile}
+ * @response `200` `AppUpdateDetailData` 返回改写后的 electron-updater 清单（text/yaml）
+ * @response `400` `{
+    code?: number,
+    msg?: string,
+    data?: string,
+
+}` os/osBit/cpu 非法，或 ymlFile 与 os 不匹配
+ * @response `404` `{
+    code?: number,
+    msg?: string,
+
+}` 无可见版本，或 OSS 上找不到 latest.yml
+ * @response `502` `{
+    code?: number,
+    msg?: string,
+
+}`
+ */
+  appUpdateDetail = (
+    { ymlFile, ...query }: AppUpdateDetailParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<GetAppUpgradeV2CreateData, any>({
-      path: `/get_app_upgrade_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
+    this.http.request<AppUpdateDetailData, AppUpdateDetailError>({
+      path: `/app_update/${ymlFile}`,
+      method: "GET",
+      query: query,
       ...params,
     });
   /**
@@ -2615,6 +2660,22 @@ export class BaseApi<SecurityDataType = unknown> {
   getUninstallReasonQuestionListList = (params: RequestParams = {}) =>
     this.http.request<GetUninstallReasonQuestionListListData, any>({
       path: `/get_uninstall_reason_question_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetTgWechatQrcodeList
+   * @summary 获取 TG / 微信二维码
+   * @request GET:/get_tg_wechat_qrcode
+   * @response `200` `GetTgWechatQrcodeListData`
+   */
+  getTgWechatQrcodeList = (params: RequestParams = {}) =>
+    this.http.request<GetTgWechatQrcodeListData, any>({
+      path: `/get_tg_wechat_qrcode`,
       method: "GET",
       format: "json",
       ...params,

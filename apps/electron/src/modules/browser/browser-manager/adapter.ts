@@ -213,6 +213,10 @@ export interface BrowserLaunchOptions {
    * 重新启动浏览器
    */
   relaunch?: boolean
+  /**
+   * 等待调试端口就绪的超时时间（毫秒），需与上层启动超时对齐
+   */
+  timeoutMs?: number
 }
 
 /**

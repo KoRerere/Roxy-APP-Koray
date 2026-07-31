@@ -6,13 +6,7 @@ import { AutoRenewalStatus } from '/@/enums/pay'
 import { useUserStore } from '/@/stores/user'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-
-interface CurrentPlan {
-  label: string
-  value?: string
-  class?: string
-  getText: (data: any) => string
-}
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const emit = defineEmits<{
   (e: 'close', needUpdate: boolean): void
@@ -20,30 +14,13 @@ const emit = defineEmits<{
 
 const [_, onlyErrorToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
 
 const autoRenewOpen = AutoRenewalStatus.Open.toString()
 const autoRenewClose = AutoRenewalStatus.Close.toString()
 const isAuto = ref(userPayInfo.value.isAuto.toString())
 const needUpdate = ref(false)
-const currentPlan = ref<CurrentPlan[]>([
-  {
-    label: $t('价格'),
-    getText: (data: any) => currency(data.orderPrice).format(),
-    class: 'font-600',
-  },
-  {
-    label: $t('窗口数量'),
-    getText: (data: any) => currency(data.windowCount, { precision: 0, symbol: '' }).format(),
-  },
-  {
-    label: $t('订阅时长'),
-    getText: (data: any) => $t('{day} 天', { day: data.subscriptionDays }),
-  },
-  {
-    label: $t('下一次账单日期'),
-    getText: (data: any) => format(data.nextTime, 'yyyy/MM/dd'),
-  },
-])
+const currentPlan = ref<Array<{ label: string, value?: string, class?: string }>>([])
 
 onBeforeMount(() => {
   getCurrentPlan()
@@ -54,7 +31,25 @@ async function getCurrentPlan() {
   onlyErrorToast(code, msg)
   if (code !== 0)
     return
-  currentPlan.value = currentPlan.value.map(item => ({ ...item, value: item.getText(data) }))
+  currentPlan.value = [
+    {
+      label: $t('价格'),
+      value: currency(data.orderPrice).format(),
+      class: 'font-600',
+    },
+    {
+      label: billingLabels.value.entityCount,
+      value: currency(data.windowCount, { precision: 0, symbol: '' }).format(),
+    },
+    {
+      label: $t('订阅时长'),
+      value: $t('{day} 天', { day: data.subscriptionDays }),
+    },
+    {
+      label: $t('下一次账单日期'),
+      value: format(data.nextTime, 'yyyy/MM/dd'),
+    },
+  ]
 }
 
 async function toggleAutoRenew() {

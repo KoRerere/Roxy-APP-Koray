@@ -1,12 +1,15 @@
 import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
 import type { FormAsyncGate } from './hooks/useAsyncGate'
 import { API } from '/@/api'
-import { CoreType, UaStrictMode } from '/@/enums'
+import { CoreType, UaStrictMode, WorkspaceType } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
 import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, supportsApp3_8_8, validateCookieInput } from '/@/utils'
 import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
+import { createProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
+import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 function getCookiePlatformUrls(inputs: any[]) {
   const platformList = findInputByName(inputs, 'windowPlatformList')?.value ?? []
@@ -203,6 +206,10 @@ function getInitialCoreVersionValue(options: any[], data: any) {
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }, gate?: Pick<FormAsyncGate, 'run'>) {
   const run = gate?.run ?? (<T>(task: () => Promise<T>) => task())
 
+  const isEcommerce = useWorkspaceStore().currentWorkspace?.workspaceType === WorkspaceType.ECommerce
+  const profileLabels = createProfileEntityLabels(isEcommerce)
+  const proxyLabels = createProxyShopLabels(isEcommerce)
+
   const [$dict_map, userConfig, searchEngine, coreList] = await run(() => Promise.all([
     getDictMap(),
     userStore.getUserConfig(),
@@ -315,14 +322,15 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))), // 过滤掉加密字段
   })
 
+  let highLevelInputs: any[] = []
   const windowInputs = reactive([
     {
       type: 'text',
-      label: $t('窗口名称'),
+      label: profileLabels.entityName,
       name: 'windowName',
       value: data.windowName ?? '',
       dirId: data.dirId ?? '',
-      placeholder: $t('未命名窗口(选填)'),
+      placeholder: profileLabels.unnamedEntityPlaceholder,
       formatValue: (input: any, _inputs: any, formData: any) => {
         Object.assign(formData, { windowNamePrefix: input.value })// 窗口名称前缀，批量创建时会用到
         return input.value
@@ -562,10 +570,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
       slot: 'cookies',
     },
     {
+      label: 'URLs',
+      name: 'defaultOpenUrl',
+      value: data.defaultOpenUrl ?? [],
+      slot: 'urls',
+    },
+    {
       separator: true,
     },
     {
-      label: $t('代理 IP'),
+      label: proxyLabels.entity,
       name: 'proxyInfoList',
       value: proxyInfoList,
       formatValue: (input: any, _inputs: any, formData: any) => {
@@ -596,12 +610,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
         return input.value.filter((item: any) => !item.id)// 过滤需要关联的账号
       },
       slot: 'accounts',
-    },
-    {
-      label: 'URLs',
-      name: 'defaultOpenUrl',
-      value: data.defaultOpenUrl ?? [],
-      slot: 'urls',
     },
   ])
 
@@ -898,7 +906,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     },
   ])
 
-  const highLevelInputs = reactive([
+  highLevelInputs = reactive([
     {
       type: 'selectButton',
       label: $t('分辨率'),
@@ -1613,7 +1621,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     },
     {
       type: 'selectButton',
-      label: $t('同步扩展应用程序'),
+      label: profileLabels.syncExtensionApps,
       name: 'syncExtensions',
       value: data.syncExtensions ?? false,
       options: genSwitchOptions(),

@@ -13,9 +13,10 @@ import { startMoveWindow, stopMoveWindow } from '/@/modules/ipc/utils'
 import { openAPIServer } from '/@/modules/openapi'
 import { setSystemProxy, startRoxynet } from '/@/modules/roxynet'
 import { cancelRestoreLastWindowOpenStatus, fetchUserConfig, getRestoreLastWindowOpenStatusOnException, restoreLastWindowOpenStatusResolver, setUserConfig, store } from '/@/modules/store'
+import { checkRestoreClientNetworkChanged } from '/@/modules/store/restoreClientNetwork'
 import { getNetworkMode } from '/@/modules/store/networkMode'
 import { appUpdater, confirmMacAppOwnershipFix, getMacAppOwnershipFixStatus } from '/@/modules/updater'
-import { fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
+import { ensureBrowserCacheRootDir, fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
 
 let appIdleState = false
@@ -169,6 +170,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取本机 mac address */
   ipcMain.on('app:getMacAddress', (event) => {
     return getMacAddress()
+  })
+
+  /** 确保浏览器缓存根目录存在（选路径时 recursive 创建整条路径） */
+  ipcMain.on('app:ensureBrowserCacheRootDir', async (_event, dirPath: string) => {
+    return ensureBrowserCacheRootDir(dirPath, { recursive: true })
   })
 
   /** 获取浏览器缓存所在磁盘 */
@@ -385,6 +391,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 检查是否需要恢复窗口 */
   ipcMain.on('app:checkNeedRestoreWindow', (event) => {
     return getRestoreLastWindowOpenStatusOnException() !== null
+  })
+
+  /** 恢复窗口前检查客户端网络是否相对上次快照发生变化 */
+  ipcMain.on('app:checkRestoreClientNetworkChanged', async () => {
+    return checkRestoreClientNetworkChanged()
   })
 
   /** 恢复窗口 */

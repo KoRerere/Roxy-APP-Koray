@@ -10,9 +10,10 @@ import { useUserStore } from '/@/stores/user'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePermissionStore } from '/@/stores/permission'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
-import { getCurrentRoute, navigateToLogin, replaceOnWorkspaceSwitch, replaceToLanding } from '/@/router/navigation'
+import { getCurrentRoute, navigateToLogin, replaceOnWorkspaceSwitch, replaceOnWorkspaceTypeSwitch } from '/@/router/navigation'
 import { emitter } from '/@/utils/eventBus'
 import { useListCacheStore } from '/@/stores/listCache'
+import { useProxyStore } from '/@/stores/proxy'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
 type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
@@ -27,6 +28,10 @@ function getUserStore() {
   return useUserStore()
 }
 
+function getProxyStore() {
+  return useProxyStore()
+}
+
 export const useWorkspaceStore = defineStore('workspace', () => {
   const permissionStore = usePermissionStore()
   const { check } = usePermission()
@@ -36,6 +41,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const workspaceList = ref<Workspace[]>([])
   const sharedWorkspaceList = ref<SharedWorkspace>()
   const isSwitchingWorkspace = ref(false)
+  /** before-enter 等场景：已设置 workspace 上下文但不触发进空间副作用 */
+  const workspaceEntrySilent = ref(false)
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
   const maxCreateWindowCount = computed(() => {
@@ -54,12 +61,52 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
 
+  function syncElectronWorkspaceId(workspaceId: number, workspaceType?: number) {
+    if (isMainWindow)
+      globalThis.electronAPI.send('user:setWorkspaceId', workspaceId, workspaceType)
+  }
+
+  function runPostWorkspaceEntryEffects(workspace: Workspace) {
+    clearTimeout(hidePageLoadingTimeout)
+
+    debounceGetPayInfo()
+
+    hidePageLoadingTimeout = setTimeout(() => {
+      hidePageLoading()
+      globalThis.electronAPI.send('app:restartAPIServer')
+
+      if (workspace.role === Role.OWNER) {
+        if (globalThis.isElectron) {
+          if (getUserStore().userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false)
+            emitter.emit('showUserGuideDialog')
+        }
+        else {
+          if (getUserStore().userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false)
+            emitter.emit('showUserGuideDialog')
+        }
+      }
+    }, 1200)
+  }
+
   watch(currentWorkspace, (val, old) => {
+    // silent 阶段仅同步 workspaceId，供 API 拦截器写入 header
+    if (workspaceEntrySilent.value) {
+      val?.id && syncElectronWorkspaceId(val.id, val.workspaceType)
+      return
+    }
+
     if (val && old && val.id !== old.id) {
       // 空间切换
       getUserStore().mixpanelTrack('workspace_switch')
     }
     if (!val || val?.id === old?.id) {
+      // 同 workspace 仅业务模式变化：等 UI 更新后再做等价路由跳转（如 create/edit）
+      if (val && old && val.workspaceType !== old.workspaceType) {
+        getProxyStore().clearProxyVendors()
+        replaceOnWorkspaceTypeSwitch(val.workspaceType, val.role)
+        syncElectronWorkspaceId(val.id, val.workspaceType)
+      }
+
       val?.id && hidePageLoading()
       return
     }
@@ -79,28 +126,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       })
     }
 
-    // 如果当前团队有 ID 且是主窗口，则发送消息给主进程
     if (val?.id && isMainWindow) {
-      globalThis.electronAPI.send('user:setWorkspaceId', val.id)
+      syncElectronWorkspaceId(val.id, val.workspaceType)
       rememberLastWorkspace()
     }
-    hidePageLoadingTimeout = setTimeout(() => {
-      hidePageLoading()
-      globalThis.electronAPI.send('app:restartAPIServer')
-
-      if (val.role === Role.OWNER) {
-        if (globalThis.isElectron) {
-          if (getUserStore().userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
-            emitter.emit('showUserGuideDialog')
-          }
-        }
-        else {
-          if (getUserStore().userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false) {
-            emitter.emit('showUserGuideDialog')
-          }
-        }
-      }
-    }, 1200)
+    runPostWorkspaceEntryEffects(val)
   }, { flush: 'post' })
 
   async function fetchSharedWorkspaceList() {
@@ -168,6 +198,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     currentWorkspace.value = undefined
     workspaceList.value = []
     sharedWorkspaceList.value = []
+    workspaceEntrySilent.value = false
+    getProxyStore().clearProxyVendors()
     globalThis.electronAPI.send('user:setSharedWorkspaceList', [])
   }
 
@@ -187,15 +219,22 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     permissionStore.setPermissions(data.rows)
   }
 
-  async function setCurrentWorkspace(workspaceId: number) {
+  async function setCurrentWorkspace(
+    workspaceId: number,
+    options?: { silent?: boolean },
+  ) {
     const run = async () => {
       isSwitchingWorkspace.value = true
       try {
         const previousWorkspaceId = currentWorkspace.value?.id
-        if (previousWorkspaceId !== undefined && previousWorkspaceId !== workspaceId)
+        if (previousWorkspaceId !== undefined && previousWorkspaceId !== workspaceId) {
           useListCacheStore().clearAll()
+          getProxyStore().clearProxyVendors()
+        }
 
-        isMainWindow && showPageLoading()
+        workspaceEntrySilent.value = options?.silent ?? false
+        if (!workspaceEntrySilent.value)
+          isMainWindow && showPageLoading()
 
         if (!workspaceList.value.length)
           await fetchWorkspaceList()
@@ -209,7 +248,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         currentWorkspace.value = nextWorkspace
 
         if (isMainWindow) {
-          if (globalThis.isElectron) {
+          if (globalThis.isElectron && !workspaceEntrySilent.value) {
             workspaceChangeChannel.postMessage({
               workspaceId: nextWorkspace.id,
               workspaceName: nextWorkspace.workspaceName,
@@ -235,6 +274,41 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     return next
   }
 
+  /** 静默准备 workspace 上下文（默认 silent），不触发全局 loading 与进空间副作用 */
+  async function prepareWorkspace(
+    workspaceId: number,
+    options?: { silent?: boolean },
+  ) {
+    return setCurrentWorkspace(workspaceId, { silent: options?.silent ?? true })
+  }
+
+  /** 正式进空间：关闭 silent 并触发 loading + 进空间副作用 */
+  async function enterWorkspace(workspaceId?: number) {
+    workspaceEntrySilent.value = false
+
+    isMainWindow && showPageLoading()
+
+    const targetId = workspaceId ?? currentWorkspace.value?.id
+    if (!targetId)
+      return
+
+    if (!currentWorkspace.value?.id) {
+      await setCurrentWorkspace(targetId)
+      return
+    }
+
+    if (currentWorkspace.value.id === targetId) {
+      if (isMainWindow) {
+        syncElectronWorkspaceId(targetId, currentWorkspace.value.workspaceType)
+        rememberLastWorkspace()
+      }
+      runPostWorkspaceEntryEffects(currentWorkspace.value)
+      return
+    }
+
+    await setCurrentWorkspace(targetId)
+  }
+
   /**
    * 监听主窗口发来的消息
    */
@@ -258,7 +332,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   /**
    * 切换工作区业务模式（Private ↔ ECommerce）
-   * TODO!: 后端 workspaceType 更新接口尚未提供，当前为本地状态切换
+   * 模式切换后权限集可能变化，需在更新本地 type 前重拉，避免路由跳转时仍用旧权限
    */
   async function switchWorkspaceType(targetType: WorkspaceType) {
     if (!currentWorkspace.value || currentWorkspace.value.workspaceType === targetType)
@@ -267,14 +341,28 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     const workspaceId = currentWorkspace.value.id
     const previousType = currentWorkspace.value.workspaceType
 
-    // TODO!: 接口就绪后对接，例如：
-    // const { code, msg } = await API.limit.userUpdateWorkspaceTypeCreate({ workspaceId, workspaceType: targetType })
-    // onlyErrorToast(code, msg)
-    // if (code !== 0) return
+    const { code, msg } = await API.team.userMdfWorkspaceTypeCreate({
+      id: workspaceId!,
+      workspaceType: targetType,
+    })
+    onlyErrorToast(code, msg)
+    if (code !== 0)
+      return
+
+    // 后端按新模式返回权限；先刷新再改 type，保证 watch 跳路由时权限已就绪
+    await getPermissionByWorkspace(workspaceId!)
 
     currentWorkspace.value = {
       ...currentWorkspace.value,
       workspaceType: targetType,
+    }
+
+    const workspaceIndex = workspaceList.value.findIndex(item => item.id === workspaceId)
+    if (workspaceIndex >= 0) {
+      workspaceList.value[workspaceIndex] = {
+        ...workspaceList.value[workspaceIndex],
+        workspaceType: targetType,
+      }
     }
 
     getUserStore().mixpanelTrack('workspace_type_switch', {
@@ -282,8 +370,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       from: previousType,
       to: targetType,
     })
-
-    replaceToLanding(targetType, currentWorkspace.value.role)
   }
 
   return {
@@ -292,10 +378,13 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     sharedWorkspaceList,
     currentWorkspace,
     isSwitchingWorkspace,
+    workspaceEntrySilent,
     maxCreateWindowCount,
     resetWorkspace,
     getWorkspaceList,
     setCurrentWorkspace,
+    prepareWorkspace,
+    enterWorkspace,
     fetchWorkspaceList,
     getPermissionByWorkspace,
     switchDefaultWorkspace,

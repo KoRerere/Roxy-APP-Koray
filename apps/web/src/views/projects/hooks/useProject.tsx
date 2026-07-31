@@ -3,8 +3,9 @@ import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { isLikeFunction } from '/@/utils'
-import { projectFormSchemas } from '/@/views/projects/schemas'
+import { createProjectFormSchemas } from '/@/views/projects/schemas'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
 
 interface TagActionsOptions {
   toast?: boolean
@@ -18,14 +19,16 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
   const [showFormDialog] = useFormDialog()
   const [showToast] = useResponseToast()
   const { handleBusinessCode } = useHandleBusinessCode()
+  const projectLabels = useProjectEntityLabels()
 
   async function addDialog(props?: any) {
     const { confirmNext, ...data } = props || {}
+    const labels = projectLabels.value
 
     const formDialogInstance = await showFormDialog({
-      header: data.project_id ? $t('编辑项目') : $t('创建项目'),
+      header: data.project_id ? labels.editTitle : labels.createTitle,
       class: 'w-[500px]',
-      schemas: projectFormSchemas,
+      schemas: createProjectFormSchemas(labels),
       formProps: {
         layout: 'vertical',
       },

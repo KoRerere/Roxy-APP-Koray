@@ -12,8 +12,10 @@ import { loadLocaleMessages } from '/@/locales'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import { defaultValues } from '/@/modules/store/defaultConfig'
+import { migrateAutoUpdateAppOnLaunchFromLegacy } from '/@/modules/store/autoUpdateApp'
 import { migrateNetworkModeFromLegacy } from '/@/modules/store/networkMode'
-import { fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
+import { ipcSender } from '/@/modules/ipc/sender'
+import { ensureBrowserCacheRootDir, fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
 import { absoluteTopLeftToWindowRatioPosition, getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 
 function normalizeSimulationConfig(simulation: Record<string, any> | undefined) {
@@ -137,10 +139,21 @@ export async function forceSaveConfig() {
     console.error('save defaultBrowserConfig error: ', error)
   })
 
-  const isExists = await fileExists(_store.browserCacheRootDir)
-  console.log('old browserCacheRootDir', isExists, _store.browserCacheRootDir)
-  if (!isExists) {
+  const previousPath = _store.browserCacheRootDir
+  const ensured = await ensureBrowserCacheRootDir(previousPath, { recursive: false })
+
+  if (ensured.ok) {
+    _store.browserCacheRootDir = ensured.path
+  }
+  else {
+    console.warn('[Store] browserCacheRootDir unavailable, fallback to default:', ensured.reason, previousPath)
     _store.browserCacheRootDir = defaultValues.browserCacheRootDir
+    await fileExists(_store.browserCacheRootDir, true)
+    ipcSender.app.browserCacheRootDirFallback({
+      previousPath,
+      fallbackPath: _store.browserCacheRootDir,
+      reason: ensured.reason,
+    })
   }
   try {
     // 加密数据后再保存，排除 excludeKeys 中定义的 key
@@ -205,6 +218,7 @@ export async function initLocalConfig() {
     lastStore.simulation = normalizeSimulationConfig(lastStore.simulation)
     Object.assign(store, lastStore)
     migrateNetworkModeFromLegacy(lastStore)
+    migrateAutoUpdateAppOnLaunchFromLegacy(lastStore)
     // 重置下次更新时间
     store.nextUpdateTimestamp = 0
     // 有用户信息，则认为有登录过
@@ -258,6 +272,11 @@ export async function fetchUserConfig() {
       if (store.language) {
         Reflect.deleteProperty(data, 'language')
       }
+      // 自动更新开关仅本地存储，避免远端配置覆盖
+      Reflect.deleteProperty(data, 'autoUpdateApp')
+      Reflect.deleteProperty(data, 'autoUpdateAppOnLaunch')
+      // 缓存根目录随本机磁盘路径，仅本地持久化，避免远端旧路径覆盖或触发 save 回退抖动
+      Reflect.deleteProperty(data, 'browserCacheRootDir')
       setUserConfig(data)
     }
   }
@@ -360,6 +379,9 @@ export async function restoreLastWindowOpenStatus() {
       store.waitingRestoreWindow = {}
 
       restoreLastWindowOpenStatusOnException = async () => {
+        // 调用后先清除 pending 状态，避免页面刷新后重复弹窗；所需数据已在闭包中
+        restoreLastWindowOpenStatusOnException = null
+
         for (const workspaceId in waitingRestoreWindow) {
           const dirIds = waitingRestoreWindow[workspaceId]
 
@@ -391,10 +413,9 @@ export async function restoreLastWindowOpenStatus() {
         }
       }
 
-      //  如果应用正常退出，则清空恢复窗口函数
+      // 正常退出时直接恢复，无需等待用户确认
       if (appNormalExit !== false) {
-        restoreLastWindowOpenStatusOnException()
-        restoreLastWindowOpenStatusOnException = null
+        void restoreLastWindowOpenStatusOnException()
       }
     }
     catch (error) {

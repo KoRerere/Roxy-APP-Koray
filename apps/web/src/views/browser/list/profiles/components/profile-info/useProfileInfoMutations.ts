@@ -39,7 +39,7 @@ export function useProfileInfoMutations(options: {
       success: () => {
         Reflect.deleteProperty(row, '_checkRes')
         if (_checkRes) {
-          Reflect.set(row, '_checkRes', _checkRes)
+          Reflect.set(row, '_checkRes', toRaw(_checkRes))
         }
         silentUpdateProxy(row, {
           ...rest,
@@ -49,7 +49,7 @@ export function useProfileInfoMutations(options: {
           proxyCategory: proxyCategory || protocol,
           proxyMethod: 'choose',
           buyProxyType: proxyType ?? ProxyType.resource,
-        }, isDirect ? [] : ['isEncryptProxy', 'proxyEncryptInfo'])
+        })
       },
     })
   }
@@ -71,7 +71,7 @@ export function useProfileInfoMutations(options: {
             updateProfile(params, {
               success: () => {
                 Reflect.deleteProperty(row, '_checkRes')
-                silentUpdateProxy(row, params, ['isEncryptProxy', 'proxyEncryptInfo'])
+                silentUpdateProxy(row, params)
               },
             })
             drawerInstance.hideDrawer()

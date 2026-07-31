@@ -8,8 +8,23 @@ import { emitter } from '/@/utils/eventBus'
 import type { MittEvents, PayWallType } from '/@/utils/eventBus'
 import { I18nT } from 'vue-i18n'
 import { useUserStore } from '/@/stores/user'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const { userPayInfo } = storeToRefs(useUserStore())
+const billingLabels = useBillingEntityLabels()
+const profileLabels = useProfileEntityLabels()
+
+void [
+  $t('使用{entity}模板快速新建环境', { entity: '{entity}' }),
+  $t('通过升级 {member} 解锁{entity}模板功能\n\n{entity}模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', entity: '{entity}', bold: '{bold}' }),
+  $t('关于{entity}模板', { entity: '{entity}' }),
+  $t('使用{transfer}提升资源分享效率', { transfer: '{transfer}' }),
+  $t('{transfer}功能允许您向任意的团队转移{entity}。{bold}', { transfer: '{transfer}', entity: '{entity}', bold: '{bold}' }),
+  $t('{transfer}不仅支持同步{entity}云端数据，还包括 {proxy} 设置、平台账号、Cookies 和指纹参数等相关信息', { transfer: '{transfer}', entity: '{entity}', proxy: '{proxy}' }),
+  $t('关于{transfer}', { transfer: '{transfer}' }),
+]
+
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const popoverRef = useTemplateRef('popover')
 const currentType = ref<PayWallType | null>(null)
@@ -42,10 +57,10 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
       document: getOfficialFaqWebsite('/features/synchronizer'),
     },
     createProfileTemplates: {
-      title: $t('使用窗口模板快速新建环境'),
+      title: $t('使用{entity}模板快速新建环境', { entity: profileLabels.value.entity }),
       description: () => {
         return (
-          <I18nT scope="global" keypath={$t('通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', bold: '{bold}' })}>
+          <I18nT scope="global" keypath={$t('通过升级 {member} 解锁{entity}模板功能\n\n{entity}模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', entity: profileLabels.value.entity, bold: '{bold}' })}>
             {{
               member: () => <span class="font-bold">{$t('Roxy 会员')}</span>,
               bold: () => <span class="font-bold">{$t('系统、内核、UA、基础设置、高级指纹设置及偏好设置')}</span>,
@@ -53,22 +68,22 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
           </I18nT>
         )
       },
-      about: $t('关于窗口模板'),
+      about: $t('关于{entity}模板', { entity: profileLabels.value.entity }),
       document: getOfficialFaqWebsite('/features/profile-configuration#template'),
     },
     transfer: {
-      title: $t('使用窗口转移提升资源分享效率'),
+      title: $t('使用{transfer}提升资源分享效率', { transfer: billingLabels.value.entityTransfer }),
       description: () => {
         return (
-          <I18nT scope="global" keypath={$t('窗口转移功能允许您向任意的团队转移窗口。{bold}', { bold: '{bold}' })}>
+          <I18nT scope="global" keypath={$t('{transfer}功能允许您向任意的团队转移{entity}。{bold}', { transfer: billingLabels.value.entityTransfer, entity: profileLabels.value.entity, bold: '{bold}' })}>
             {{
-              bold: () => <span class="font-bold">{$t('窗口转移不仅支持同步窗口云端数据，还包括代理 IP 设置、平台账号、Cookies 和指纹参数等相关信息')}</span>,
+              bold: () => <span class="font-bold">{$t('{transfer}不仅支持同步{entity}云端数据，还包括 {proxy} 设置、平台账号、Cookies 和指纹参数等相关信息', { transfer: billingLabels.value.entityTransfer, entity: profileLabels.value.entity, proxy: billingLabels.value.proxyEntity })}</span>,
             }}
           </I18nT>
         )
       },
       image: getImage('payments/pay-wall-transfer.png'),
-      about: $t('关于窗口转移'),
+      about: $t('关于{transfer}', { transfer: billingLabels.value.entityTransfer }),
       document: getOfficialFaqWebsite('/features/transfer-profile'),
     },
   }

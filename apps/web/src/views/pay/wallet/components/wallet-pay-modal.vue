@@ -14,20 +14,23 @@ interface Props {
   originalAmount?: number
   discountAmount?: number
   showAutoRenew?: boolean
+  /** 取消支付时是否跳转到钱包账单页，默认 true */
+  cancelRedirect?: boolean
   onConfirm?: (params: { payType: PayWay, isAuto: boolean }) => any | Promise<any>
   onCancel?: () => any | Promise<any>
 }
 
-const { amount, originalAmount, discountAmount, showAutoRenew = false, onConfirm, onCancel } = defineProps<Props>()
+const { amount, originalAmount, discountAmount, showAutoRenew = false, cancelRedirect = true, onConfirm, onCancel } = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const [showToast] = useResponseToast()
-const { userPayInfo } = storeToRefs(useUserStore())
 const { realTheme } = storeToRefs(useThemeStore())
+const { userPayInfo } = storeToRefs(useUserStore())
+const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
 const { setActivityModalOpenStatus } = useFreedomActivity()
+const [showToast] = useResponseToast()
 
 const loading = ref(false)
 const isAuto = ref(showAutoRenew ? !!userPayInfo.value.isAuto : false)
@@ -56,12 +59,16 @@ const finalResult = computed(() => {
   }
 })
 
+onBeforeMount(() => {
+  getUserPayInfo()
+})
+
 function onRecharge() {
   walletRecharge({
     needAmount: finalResult.value.needAmount,
     next: async (data) => {
       setActivityModalOpenStatus()
-      await openProcessing(data, 'silent')
+      await openProcessing(data, 'silent', { cancelRedirect })
         .then(confirm)
         .catch(() => {
           showToast(1, $t('支付失败'))
@@ -162,7 +169,6 @@ function close(isCancel: boolean) {
 
 .header {
   color: var(--colors-text-text-primary);
-  font-family: 'Microsoft YaHei UI';
   font-size: 20px;
   font-weight: 700;
   line-height: normal;
@@ -171,7 +177,6 @@ function close(isCancel: boolean) {
 .order {
   &-title {
     color: var(--colors-text-text-primary);
-    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: normal;
   }
@@ -204,7 +209,6 @@ function close(isCancel: boolean) {
 .balance {
   &-danger {
     color: var(--colors-text-text-error);
-    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: normal;
   }
@@ -237,7 +241,6 @@ function close(isCancel: boolean) {
 .total {
   &-title {
     color: var(--colors-text-text-primary);
-    font-family: 'Microsoft YaHei UI';
     font-size: 14px;
     line-height: 20px;
   }

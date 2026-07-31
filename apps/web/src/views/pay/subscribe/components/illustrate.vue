@@ -4,6 +4,7 @@ import { type Plan } from '../type'
 import { tierCalculate } from '../util'
 import currency from 'currency.js';
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
+import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 interface Column {
   key: string
@@ -17,13 +18,15 @@ interface Props {
 
 const { data } = defineProps<Props>()
 
+const billingLabels = useBillingEntityLabels()
+
 const SAMPLE = 100
 
-const columns: Column[] = [
+const columns = computed<Column[]>(() => [
   { key: 'subLevel', title: $t('套餐') },
   {
     key: 'windows',
-    title: $t('窗口数量'),
+    title: billingLabels.value.entityCount,
     render: (item: Plan) => item.minWindows >= 50000 ? '> 50000' : `${item.minWindows + 1} - ${item.maxWindows}`
   },
   {
@@ -31,7 +34,7 @@ const columns: Column[] = [
     title: $t('区间单价'),
     render: (item: Plan) => currency(item.windowPrice).format()
   }
-]
+])
 
 const list = computed(() => Object.values(data.reduce((acc, item) => {
   acc[item.subLevel] ??= { title: SubLevelEnumStr[item.subLevel as SubLevelEnum], items: [] }
@@ -46,8 +49,8 @@ const tierPrice = computed(() => tierCalculate(data, SAMPLE))
 <template>
   <div class="flex flex-col gap-3 w-143 pa-4">
     <div>
-      <div class="illustrate-title">{{ $t('窗口价格') }}</div>
-      <div class="mt-2 illustrate-desc">{{ $t('窗口总价将通过各个区间的 数量×对应单价 进行累加计算') }}</div>
+      <div class="illustrate-title">{{ billingLabels.entityPrice }}</div>
+      <div class="mt-2 illustrate-desc">{{ billingLabels.entityPriceDesc }}</div>
     </div>
     <div class="flex flex-col border-0.5 border-solid border-[var(--colors-border-border-base)] rounded-md overflow-hidden">
       <div class="flex">
@@ -67,7 +70,7 @@ const tierPrice = computed(() => tierCalculate(data, SAMPLE))
         </div>
       </div>
     </div>
-    <div class="illustrate-example">{{ $t('例: {count} 个窗口总价为 {algorithm}', { count: SAMPLE, algorithm: tierPrice.algorithm }) }}</div>
+    <div class="illustrate-example">{{ billingLabels.entityPriceExample(SAMPLE, tierPrice.algorithm) }}</div>
   </div>
 </template>
 

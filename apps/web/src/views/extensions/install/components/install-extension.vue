@@ -6,9 +6,11 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType, PluginSwitchType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePermission } from '/@/hooks/usePermission'
+import { useExtensionLabels } from '../../utils/extension-labels'
 
 const [_, onlyErrorToast] = useResponseToast()
 const { check } = usePermission()
+const labels = useExtensionLabels()
 
 type DataItem = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const switchValuePersonal = PluginSwitchType.personal.toString()
@@ -20,12 +22,12 @@ const _onConfirm = ref()
 const _onCancel = ref()
 const _enabled = ref(switchValuePersonal)
 
-const columns = [
+const columns = computed(() => [
   {
-    title: $t('项目名称'),
+    title: labels.value.projectNameColumn,
     slot: 'project',
   },
-]
+])
 const dataList = ref()
 const selection = ref()
 
@@ -52,7 +54,7 @@ function getInstallStatus() {
 
 async function confirm() {
   if (_props.value.required && !selection.value?.length) {
-    onlyErrorToast(-1, $t('请选择至少一个项目'))
+    onlyErrorToast(-1, labels.value.selectAtLeastOneProject)
     return
   }
 
@@ -100,11 +102,11 @@ onMounted(() => {
     </div>
     <div>
       <div class="title">
-        {{ $t('安装到项目:') }}
+        {{ labels.installToProjectTitle }}
       </div>
       <div class="description">
         <SvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        {{ $t('扩展将被安装至所选项目中的 Chrome 内核窗口') }}
+        {{ labels.installToWindow }}
       </div>
       <div class="project-table mt-2.5 h-60">
         <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
@@ -122,12 +124,12 @@ onMounted(() => {
         <div class="line" />
         <div class="flex justify-between items-center">
           <span class="title">
-            {{ $t('为所选项目的所有成员安装') }}
+            {{ labels.installForAllMembers }}
           </span>
           <RxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
         </div>
         <div class="description">
-          {{ $t('您可以在扩展列表中更改此选项') }}
+          {{ labels.changeInList }}
         </div>
         <!-- <RxAlert v-if="_props?.canDelete === false" class="!w-full mt-2.5" :closable="false" type="info" :title="$t('该插件属于其他成员，请联系对方进行关闭操作。')" /> -->
       </div>

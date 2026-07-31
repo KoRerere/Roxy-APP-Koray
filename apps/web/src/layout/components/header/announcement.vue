@@ -8,8 +8,11 @@ import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 import { useCommonStore } from '/@/stores/common'
 import { usePermission } from '/@/hooks/usePermission'
+import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
+import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 // import { executeSomethingByBackToSelfWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { sleep } from '/@/utils'
+import { handleRichHtmlLinkClick } from '/@/utils/rich-html-link'
 // import { Role } from '/@/enums/role'
 
 const router = useRouter()
@@ -18,6 +21,7 @@ const { userPayInfo } = storeToRefs(useUserStore())
 const { fetchUserInfo, getUserPayInfo } = useUserStore()
 const { check } = usePermission()
 const { viewExpiresSoonProxy } = useProxy()
+const tutorialLabels = useTutorialEntityLabels()
 
 const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
@@ -32,18 +36,12 @@ const subEndDate = computed(() => {
   return null
 })
 
-// 每 30 秒计算一次订阅到期时间
-let timer = setInterval(calcSubscriptionExpired, 10 * 1000)
+// 每 10 秒计算一次订阅到期时间（页面 hidden 时暂停）
+useVisibilityAwareInterval(calcSubscriptionExpired, 10 * 1000)
 
 watch(() => currentWorkspace.value?.id, () => {
   remainTime.value = 0
-  clearInterval(timer)
-  timer = setInterval(calcSubscriptionExpired, 10 * 1000)
 }, { immediate: true })
-
-onBeforeUnmount(() => {
-  clearInterval(timer)
-})
 
 /** 定时计算订阅到期时间，如果订阅到期时间小于 3 天，则显示订阅到期提醒  */
 function calcSubscriptionExpired() {
@@ -89,38 +87,7 @@ function handleCloseAnnt(id: number) {
 }
 
 function onHtmlClick(e: MouseEvent) {
-  const target = e.target as HTMLElement
-  const link = target.closest('a')
-
-  if (!link || link.target === '_blank')
-    return
-
-  const href = link.getAttribute('href')
-
-  // 只拦截站内路由
-  if (!href || href.startsWith('http'))
-    return
-  e.preventDefault()
-
-  const url = new URL(href.slice(href.startsWith('#') ? 1 : 0), location.origin)
-  const query = Object.fromEntries(url.searchParams)
-
-  const replaceParams = {
-    path: url.pathname,
-    query: {
-      ...query,
-      _t: Date.now(),
-    },
-  }
-
-  // if (query.name === 'shop' || query.role === Role.OWNER.toString()) {
-  //   executeSomethingByBackToSelfWorkspace(() => {
-  //     router.replace(replaceParams)
-  //   })()
-  // }
-  // else {
-  router.replace(replaceParams)
-  // }
+  handleRichHtmlLinkClick(e, { router })
 }
 
 function handleCloseSubscriptionExpired() {
@@ -160,7 +127,7 @@ function handleCloseProxyExpired() {
     </RxAlert>
     <RxAlert v-if="userPayInfo.proxyExpireCount > 0 && isShowProxyExpired" class="w-full expired-alert" type="warn" announcement @close="handleCloseProxyExpired">
       <template #title>
-        <i18n-t scope="global" :keypath="$t('您的一些代理 IP 即将过期。为避免您使用受到任何干扰，请{link}。', { link: '{link}' })">
+        <i18n-t scope="global" :keypath="tutorialLabels.proxyExpireAnnouncementKeypath">
           <template #link>
             <span v-if="check('Cost_Center_all')" class="font-bold underline cursor-pointer" @click="viewExpiresSoonProxy">{{ $t('点击查看') }}</span>
             <span v-else>{{ $t('联系团队拥有者续费') }}</span>

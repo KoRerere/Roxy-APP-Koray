@@ -37,7 +37,7 @@
     "@roxybrowser/playwright-mcp": "0.0.8-beta.10",
     "@slack/bolt": "^3.22.0",
     "@slack/web-api": "^7.15.1",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.0",
     "cors": "^2.8.5",
     "deepagents": "^1.9.0",
     "discord-api-types": "0.38.46",
@@ -59,7 +59,6 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.8",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",

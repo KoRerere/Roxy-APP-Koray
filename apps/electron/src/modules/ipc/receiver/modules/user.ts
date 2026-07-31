@@ -58,9 +58,11 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     })
   })
 
-  /** 切换空间时设置当前空间 ID  */
-  ipcMain.on('user:setWorkspaceId', (event, workspaceId) => {
+  /** 切换空间时设置当前空间 ID；workspaceType 为可选第二参（旧客户端忽略） */
+  ipcMain.on('user:setWorkspaceId', (event, workspaceId, workspaceType?: number) => {
     store.workspaceId = workspaceId
+    if (workspaceType !== undefined)
+      store.workspaceType = workspaceType
   })
 
   /** 设置所有空间 ID */

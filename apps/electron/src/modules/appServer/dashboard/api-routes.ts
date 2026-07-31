@@ -18,6 +18,8 @@ export function registerDashboardApiRoutes(app: express.Application) {
       language: store.language,
       ipChecker: isIPV6 ? store.lastUseIp2locationUrl : store.ipChecker,
       dashboardTourGuide: store.dashboardTourGuide,
+      // 优先用启动时写入 winInfo 的类型，避免用户切空间后工作台文案错位
+      workspaceType: store.workspaceType ?? 0,
     })
   })
 

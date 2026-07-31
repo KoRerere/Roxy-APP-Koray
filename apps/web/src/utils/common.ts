@@ -1,4 +1,5 @@
 import { compare } from 'compare-versions'
+import { ref, watch } from 'vue'
 
 /** 是否处于开发环境 */
 export const isDev = import.meta.env.DEV
@@ -8,9 +9,9 @@ export const isProd = import.meta.env.PROD
 export const isWindows = navigator.platform.includes('Win')
 /** 是否是 MacOS 系统 */
 export const isMacOS = (() => {
-  if (navigator.userAgentData?.platform) {
-    const uaData = navigator.userAgentData
-    return /mac\s?os/i.test(uaData.platform || '')
+  const uaData = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
+  if (uaData?.platform) {
+    return /mac\s?os/i.test(uaData.platform)
   }
   return /Macintosh|Mac OS X/.test(navigator.userAgent)
 })()
@@ -26,10 +27,14 @@ console.log('isMainWindow', isMainWindow)
 
 let pageLoadingTimer: any
 
+/** 全局 page-loading 可见性（与 show/hidePageLoading 同步，作为唯一状态源） */
+export const pageLoadingVisible = ref(isMainWindow)
+
 export function showPageLoading() {
+  pageLoadingVisible.value = true
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'flex')
   clearTimeout(pageLoadingTimer)
-  // 如果 30s 内没有加载完成，则跳转到 500 页面
+  // 若 60s 内没有加载完成，则跳转到 500 页面（同时会 hidePageLoading）
   pageLoadingTimer = setTimeout(async () => {
     console.log('Redirecting to 500 page')
     const { default: router } = await import('/@/router')
@@ -45,8 +50,66 @@ if (import.meta.hot) {
 }
 
 export function hidePageLoading() {
+  pageLoadingVisible.value = false
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'none')
   clearTimeout(pageLoadingTimer)
+}
+
+/** 全局 page-loading 是否仍在展示 */
+export function isPageLoadingVisible(): boolean {
+  return pageLoadingVisible.value
+}
+
+function isPageLoadingVisibleInDom(): boolean {
+  const pageLoading = document.querySelector<HTMLElement>('#page-loading')
+  return !!pageLoading && getComputedStyle(pageLoading).display !== 'none'
+}
+
+const PAGE_LOADING_WAIT_MS = 30_000
+
+/**
+ * 等待全局 page-loading 隐藏；已隐藏则立即 resolve。
+ * 正常路径由 workspaceStore 调 hidePageLoading；异常路径由 showPageLoading 60s 兜底。
+ * 30s 超时：若 DOM 已隐藏则仍 resolve true（纠正 ref 与 DOM 不同步）。
+ */
+export function whenPageLoadingHidden(
+  registerCancel?: (cancel: () => void) => void,
+): Promise<boolean> {
+  if (!pageLoadingVisible.value && !isPageLoadingVisibleInDom())
+    return Promise.resolve(true)
+
+  return new Promise((resolve) => {
+    let settled = false
+    let stop: () => void
+    let timer: ReturnType<typeof setTimeout>
+
+    const finish = (result: boolean) => {
+      if (settled)
+        return
+      settled = true
+      stop?.()
+      clearTimeout(timer)
+      resolve(result)
+    }
+
+    stop = watch(pageLoadingVisible, (visible) => {
+      if (!visible)
+        finish(true)
+    }, { immediate: true })
+
+    registerCancel?.(() => finish(false))
+
+    timer = setTimeout(() => {
+      if (!isPageLoadingVisibleInDom()) {
+        console.warn('[whenPageLoadingHidden] resolved via DOM fallback')
+        pageLoadingVisible.value = false
+        finish(true)
+        return
+      }
+      console.warn('[whenPageLoadingHidden] timed out')
+      finish(false)
+    }, PAGE_LOADING_WAIT_MS)
+  })
 }
 
 if (isMainWindow) {

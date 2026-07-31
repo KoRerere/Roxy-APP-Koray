@@ -1,7 +1,8 @@
 import type { LocationQueryRaw, RouteLocationRaw, Router, RouteRecordNameGeneric } from 'vue-router'
 import type { Role } from '/@/enums'
 import { WorkspaceType } from '/@/enums'
-import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
+import { resolveCrossModeRoute } from '/@/router/routing'
+import { getWorkspaceTypeLandingRoute, isEcommerceWorkspace } from '/@/utils/workspace-mode'
 
 // --- Router instance ---
 
@@ -42,6 +43,20 @@ export function replaceToLanding(workspaceType?: WorkspaceType, role?: Role) {
   return replaceToRoute(getWorkspaceTypeLandingRoute(workspaceType, role))
 }
 
+/** 模式切换时优先跳到等价页面（如 create/edit），无映射时回 landing */
+export function replaceOnWorkspaceTypeSwitch(workspaceType?: WorkspaceType, role?: Role) {
+  const currentRoute = getCurrentRoute()
+  const mappedRoute = resolveCrossModeRoute(
+    currentRoute.name,
+    isEcommerceWorkspace(workspaceType),
+  )
+
+  if (mappedRoute)
+    return replaceToRoute(mappedRoute, currentRoute.query)
+
+  return replaceToLanding(workspaceType, role)
+}
+
 export function isLoginRoute() {
   return getCurrentRoute().name === 'login'
 }
@@ -71,7 +86,7 @@ export function replaceOnWorkspaceSwitch(options: WorkspaceSwitchNavOptions) {
     replaceToRoute('home')
 
   if (oldWorkspace.workspaceType !== newWorkspace.workspaceType)
-    replaceToLanding(newWorkspace.workspaceType, newWorkspace.role)
+    replaceOnWorkspaceTypeSwitch(newWorkspace.workspaceType, newWorkspace.role)
 }
 
 // --- Composables ---

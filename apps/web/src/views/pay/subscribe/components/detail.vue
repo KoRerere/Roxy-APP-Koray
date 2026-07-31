@@ -30,7 +30,7 @@ const { list } = defineProps<{
       <template v-for="item in detail.items" :key="item.label">
         <div v-if="item.separator" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
         <component :is="item.render" v-else-if="item.render" :class="$style.value" />
-        <slot v-else :name="item.slot" :item="item">
+        <slot v-else :name="item.slot" :item="item" :classes="$style.value">
           <div class="flex justify-between" :class="[$style.value, item.class]">
             <div>{{ item.label }}</div>
             <div>{{ item.value }}</div>
@@ -56,7 +56,7 @@ const { list } = defineProps<{
   line-height: 20px;
 }
 
-.value {
+:where(.value) {
   color: var(--colors-text-text-secondary);
   font-family: Inter;
   font-size: 14px;
