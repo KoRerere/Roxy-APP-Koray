@@ -342,12 +342,13 @@ export function useProxyPurchasePricing(options: {
     return getProxyTypePriceForSelectedDuration(proxyType, options.subscriptionMonths.value?.value)
   })
 
-  const selectedBandwidthPrice = computed(() => {
+  const originalBandwidthPrice = computed(() => {
     const proxySpeed = options.proxySpeedOptions.value.find(item => item.value === options.proxySpeedValue.value)
     if (!proxySpeed)
       return 0
     const proxyPurchaseMonths = selectedUnit.value?.proxyPurchaseMonths ?? 1
-    return proxySpeed.bandwidthPriceMonths[proxyPurchaseMonths] ?? 0
+    const selectedBandwidthPrice = proxySpeed.bandwidthPriceMonths[proxyPurchaseMonths] ?? 0
+    return currency(selectedBandwidthPrice, { precision: 6 }).multiply(options.purchaseMember.value).value
   })
 
   const originalAmount = computed(() => {
@@ -358,17 +359,16 @@ export function useProxyPurchasePricing(options: {
   const finalResult = computed(() => {
     const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
     const businessUse = options.businessUse.value
-    const proxyAmount = businessUse?.isSpecialOffer
-      ? originalAmount.value
-      : currency(originalAmount.value, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
-    const speedAmount = businessUse?.isSpecialOffer
-      ? selectedBandwidthPrice.value
-      : currency(selectedBandwidthPrice.value, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
-    const diffAmount = currency(originalAmount.value, { precision: 6 }).add(selectedBandwidthPrice.value).subtract(proxyAmount).subtract(speedAmount).value
+
+    const totalOriginalAmount = currency(originalAmount.value, { precision: 6 }).add(originalBandwidthPrice.value).value
+
+    const amount = businessUse?.isSpecialOffer
+      ? totalOriginalAmount
+      : currency(totalOriginalAmount, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
 
     return {
-      amount: currency(proxyAmount, { precision: 6 }).add(speedAmount).value,
-      diffAmount,
+      amount,
+      diffAmount: currency(totalOriginalAmount, { precision: 6 }).subtract(amount).value,
     }
   })
 
