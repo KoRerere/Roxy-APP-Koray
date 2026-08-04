@@ -91,6 +91,8 @@ import {
   SendValidatorEmailVerifyCodeListParams,
   UninstallReasonReportCreateData,
   UninstallReasonReportCreatePayload,
+  UserAppRatingData,
+  UserAppRatingSubmitRequest,
   UserBindEmailCreateData,
   UserBindEmailCreatePayload,
   UserBindEmailListListData,
@@ -2202,6 +2204,27 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetInviteNotifyListData, any>({
       path: `/user_get_invite_notify`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 提交用户评价。图片需前端先上传 OSS，此处传完整 URL 列表。 服务端根据 workspaceId 自动记录 sceneMask（1=通用，2=电商）。
+   *
+   * @tags Base
+   * @name UserAppRating
+   * @summary 提交 APP 评价
+   * @request POST:/user_app_rating
+   * @response `200` `UserAppRatingData` 成功
+   */
+  userAppRating = (
+    data: UserAppRatingSubmitRequest,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAppRatingData, any>({
+      path: `/user_app_rating`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

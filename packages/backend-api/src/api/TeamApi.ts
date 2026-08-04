@@ -15,6 +15,8 @@ import {
   UserAddTeamNicknameCreatePayload,
   UserAddTeamWorkspaceNicknameCreateData,
   UserAddTeamWorkspaceNicknameCreatePayload,
+  UserDelProjectMemberCreateData,
+  UserDelProjectMemberCreatePayload,
   UserDelTeamInfoCreateData,
   UserDelTeamInfoCreatePayload,
   UserGetMemberInfoByWorkspaceListData,
@@ -299,6 +301,27 @@ export class TeamApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserSelectOnboardingWorkspaceTypeCreateData, any>({
       path: `/user_select_onboarding_workspace_type`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserDelProjectMemberCreate
+   * @summary 项目删除成员
+   * @request POST:/user_del_project_member
+   * @response `200` `UserDelProjectMemberCreateData`
+   */
+  userDelProjectMemberCreate = (
+    data: UserDelProjectMemberCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDelProjectMemberCreateData, any>({
+      path: `/user_del_project_member`,
       method: "POST",
       body: data,
       type: ContentType.Json,

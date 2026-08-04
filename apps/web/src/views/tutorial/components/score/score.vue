@@ -60,7 +60,7 @@ async function submitScore() {
     .map(item => item.status === 'fulfilled' ? item.value : '')
     .filter(Boolean)
 
-  const { code, msg } = await API.base.userAppRatingCreate({ ratingStar: star.value, ratingContent: reviewContent.value, images })
+  const { code, msg } = await API.base.userAppRating({ ratingStar: star.value, ratingContent: reviewContent.value, images })
   onlyErrorToast(code, msg)
   if (code !== 0)
     return
