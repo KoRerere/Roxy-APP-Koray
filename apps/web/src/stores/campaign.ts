@@ -28,6 +28,31 @@ export const useCampaignStore = defineStore('campaign', () => {
     return currentActivity.value.recharge_benefits.reduce((max, item) => Math.max(max, item.discount), 0)
   })
 
+  /** 充值档位展示文案：区间由相邻档位推算，末档为「及以上」 */
+  const rechargeBenefitTiers = computed(() => {
+    const benefits = currentActivity.value.recharge_benefits ?? []
+    return benefits.map((item, index, array) => {
+      const next = array[index + 1]
+      const start = currency(item.amount, { precision: 0 }).format()
+      if (!next) {
+        return {
+          amount: item.amount,
+          discount: item.discount,
+          range: start,
+          isLast: true as const,
+        }
+      }
+
+      const end = currency(next.amount, { precision: 0 }).subtract(1).format()
+      return {
+        amount: item.amount,
+        discount: item.discount,
+        range: `${start}-${end}`,
+        isLast: false as const,
+      }
+    })
+  })
+
   async function getActivityInfo() {
     const { code, data } = await API.base.getJuneRechargePromoTimeList()
     if (code !== 0) {
@@ -65,6 +90,7 @@ export const useCampaignStore = defineStore('campaign', () => {
     currentActivity,
     seasonalActivity,
     maxBonus,
+    rechargeBenefitTiers,
     getActivityInfo,
     getActivityPercentage,
     getActualRecharge,

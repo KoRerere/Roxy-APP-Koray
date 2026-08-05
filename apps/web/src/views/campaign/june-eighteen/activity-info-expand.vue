@@ -1,33 +1,37 @@
 <script setup lang="ts">
 import { getImage } from '/@/utils/basic'
 import { useCampaignStore } from '/@/stores/campaign'
-import { useSimpleLocale } from '/@/stores/locale'
 
 const { seasonalActivity, maxBonus } = storeToRefs(useCampaignStore())
-const { currentLocale } = storeToRefs(useSimpleLocale())
 
 const imageSrc = computed(() => {
-  const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
-  return getImage(`campaing/june-eighteen/mid_${suffix}.png`)
+  return `url('${getImage(`campaing/june-eighteen/mid.png`)}')`
 })
 </script>
 
 <template>
-  <div v-if="seasonalActivity.juneEighteen" class="relative rounded-1.5 overflow-hidden">
-    <div class="absolute inset-0 flex flex-col justify-center gap-1 pa-3">
-      <div class="text-white font-[Archivo] text-3.75 font-600 leading-4.5">
-        {{ $t('Roxy 超级充值季') }}
-      </div>
-      <i18n-t tag="div" scope="global" class="relative z-1 text-[#989CA0] text-3.5 font-600 leading-5 "
-              :keypath="$t('单笔充值最高赠送 {value}，活动期间多充多送', { value: '{value}' })"
-      >
-        <template #value>
-          <span class="text-white">{{ maxBonus }}%</span>
-        </template>
-      </i18n-t>
+  <div v-if="seasonalActivity.juneEighteen" class="relative flex flex-col justify-center gap-1 py-3 px-4 rounded-1.5 overflow-hidden content">
+    <div class="text-[#111213] font-[Archivo] text-4.5 font-600 leading-6">
+      {{ $t('Roxy 充值福利月') }}
     </div>
-    <img draggable="false" class="block w-full" :src="imageSrc">
+    <i18n-t tag="div" scope="global" class="relative z-1 text-[#34393D] text-3.25 font-500 leading-4.5 whitespace-pre-wrap"
+            :keypath="$t('单笔充值最高 {value}，活动期间{light}', { value: '{value}', light: '{light}' })"
+    >
+      <template #value>
+        <span class="font-[DingTalk_JinBuTi] text-[#FF7D00]">{{ $t('赠送 {value}%', { value: maxBonus }) }}</span>
+      </template>
+      <template #light>
+        <span class="text-[#FF7D00]">{{ $t('多充多送') }}</span>
+      </template>
+    </i18n-t>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.content {
+  background-image: v-bind(imageSrc);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: right bottom;
+}
+</style>

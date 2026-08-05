@@ -2,7 +2,7 @@
 import currency from 'currency.js'
 import { useCampaignStore } from '/@/stores/campaign'
 
-const { presets = [20, 100, 500, 1000], disabled = false } = defineProps<{
+const { presets = [50, 100, 500, 1000], disabled = false } = defineProps<{
   presets?: number[]
   disabled?: boolean
 }>()
@@ -40,8 +40,8 @@ function handleSelect(value: number) {
          @click="handleSelect(item.value)"
     >
       <span class="preset-text">{{ item.text }}</span>
-      <AnimationBorder v-if="seasonalActivity.juneEighteen" class="absolute -top-0.5 right-1 position-y-center" :gradient="['#05caed', '#05caed', '#47d769']" :animation="false" :deg="110"
-                       :border-width="1" :border-radius="4"
+      <AnimationBorder v-if="seasonalActivity.juneEighteen && item.percentage" class="absolute -top-0.5 right-1 position-y-center" :gradient="['#05caed', '#05caed', '#47d769']" :animation="false" :deg="110"
+                       :border-width="0" :border-radius="4"
       >
         <div class=" h-5 px-1 flex items-center rounded-1 percentage">
           <span class="percentage-text">{{ $t('赠 {percentage}%', { percentage: item.percentage }) }}</span>
@@ -63,11 +63,7 @@ function handleSelect(value: number) {
 
   &:not(:last-of-type) {
     .percentage {
-      background: linear-gradient(97deg, rgba(5, 202, 237, 0.1) 0%, rgba(71, 215, 105, 0.1) 100%), #fff;
-
-      &-text {
-        color: #009966;
-      }
+      background: #fc9d12;
     }
   }
 
@@ -80,7 +76,7 @@ function handleSelect(value: number) {
 }
 
 .percentage {
-  background: linear-gradient(97deg, #05caed 0%, #47d769 100%);
+  background: #fc2d12;
 
   &-text {
     font-family: 'DingTalk JinBuTi';

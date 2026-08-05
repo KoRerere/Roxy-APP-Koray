@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { UseDialogInstance } from '/@/hooks/useDialog'
 import ActivityModal from './activity-modal.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { useSimpleLocale } from '/@/stores/locale'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useUserStore } from '/@/stores/user'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
@@ -14,40 +14,60 @@ const { collapsed = false, localStorageKey } = defineProps<{
   localStorageKey: string
 }>()
 
+const REOPEN_INTERVAL_MS = 1000 * 60 * 60 * 24
+/** 下次自动弹出时间戳，与 opened 标记分开存，避免重挂载重复排程 */
+const nextOpenStorageKey = `${localStorageKey}:nextOpen`
+
 const router = useRouter()
-const { currentLocale } = storeToRefs(useSimpleLocale())
 const { seasonalActivity, maxBonus } = storeToRefs(useCampaignStore())
 const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
 const [showModal] = useDialog()
-// const { mixpanelTrack } = useUserStore()
 
-const countdown = ref()
+const countdown = ref<ReturnType<typeof enhanceCountdown>>()
+const dialogInstance = ref<UseDialogInstance>()
 const opened = ref(safeParseJSON(sessionStorage.getItem(localStorageKey)))
 
 const imageSrc = computed(() => {
-  const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
-  return getImage(`campaing/june-eighteen/mini_${suffix}.png`)
+  return getImage(`campaing/june-eighteen/mini.png`)
 })
 
 onMounted(() => {
   openModal()
 })
 
-function openModal(force = false) {
-  if (!force && opened.value) {
-    openAgainBy24Hours()
-    return
-  }
+onBeforeUnmount(() => {
+  // 组件销毁时停掉内存定时器，避免与下次挂载的排程叠出双弹窗
+  countdown.value?.stop()
+  countdown.value = undefined
+})
 
+function markDismissed() {
+  opened.value = true
+  sessionStorage.setItem(localStorageKey, JSON.stringify(true))
+}
+
+/** 关闭弹窗后的统一收尾：标记已读 + 排 24h 再弹（幂等） */
+function onDismiss() {
+  dialogInstance.value = undefined
+  markDismissed()
+  scheduleReopen()
+}
+
+function openModal(force = false) {
   if (!seasonalActivity.value.juneEighteen)
     return
 
-  // if (force) {
-  //   mixpanelTrack('june_eighteen_2026', { june_eighteen_entrance_type: 'App' })
-  // }
+  // 已有实例时不再 showModal，防止遮罩叠两层
+  if (dialogInstance.value)
+    return
 
-  showModal({
+  if (!force && opened.value) {
+    scheduleReopen()
+    return
+  }
+
+  dialogInstance.value = showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -55,14 +75,13 @@ function openModal(force = false) {
       root: '!bg-transparent !border-none !shadow-none',
       mask: '!z-1110',
     },
-    handleCancel: () => {
-      openAgainBy24Hours()
-    },
+    handleCancel: onDismiss,
     slots: {
-      container: ({ handleCancel }) => h(ActivityModal, {
+      container: ({ hideModal }) => h(ActivityModal, {
         onClose: () => {
-          handleCancel()
-          sessionStorage.setItem(localStorageKey, JSON.stringify(true))
+          // hideModal 本身不走 handleCancel；此处显式收尾，scheduleReopen 幂等
+          hideModal()
+          onDismiss()
         },
         onConfirm: () => {
           onCharge()
@@ -73,14 +92,28 @@ function openModal(force = false) {
   })
 }
 
-function openAgainBy24Hours() {
+function scheduleReopen() {
   if (countdown.value)
     return
 
-  const day = Date.now() + 1000 * 60 * 60 * 24
-  countdown.value = enhanceCountdown(day, () => { }, {
+  const stored = Number(sessionStorage.getItem(nextOpenStorageKey))
+  const hasStored = Number.isFinite(stored) && stored > 0
+
+  // 已到点：清时间戳并立刻再弹
+  if (hasStored && stored <= Date.now()) {
+    sessionStorage.removeItem(nextOpenStorageKey)
+    openModal(true)
+    return
+  }
+
+  const nextOpenAt = hasStored ? stored : Date.now() + REOPEN_INTERVAL_MS
+  if (!hasStored)
+    sessionStorage.setItem(nextOpenStorageKey, String(nextOpenAt))
+
+  countdown.value = enhanceCountdown(nextOpenAt, () => { }, {
     onEnd: () => {
       countdown.value = undefined
+      sessionStorage.removeItem(nextOpenStorageKey)
       openModal(true)
     },
   })
@@ -117,16 +150,16 @@ function onCharge() {
 
 <style lang="scss" scoped>
 .text {
-  color: #fff;
+  color: #111213;
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
 }
 
 .icon {
-  color: #fff;
+  color: #111213;
   font-family: 'DingTalk JinBuTi';
   font-size: 10px;
   text-align: center;
-  background: linear-gradient(225deg, #05caed -27.78%, #000 97.21%);
+  background: linear-gradient(93deg, #d7eefe 0%, #9bd6fd 106.84%);
 }
 </style>

@@ -10,7 +10,7 @@ const { amount } = defineProps<{
 const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
 
 const imageSrc = computed(() => {
-  return `url(${getImage('campaing/june-eighteen/next_bg.png')})`
+  return `url(${getImage('campaing/june-eighteen/next.png')})`
 })
 
 const nextBouns = computed(() => {
@@ -31,26 +31,26 @@ const nextBouns = computed(() => {
 
 <template>
   <div v-if="seasonalActivity.juneEighteen" class="flex items-center justify-center gap-2.5 py-2 px-3 rounded-1.5 bouns">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_11161_40519)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <g clip-path="url(#clip0_11532_66320)">
         <path fill-rule="evenodd" clip-rule="evenodd"
-              d="M11.1423 9.4285C13.667 9.4285 15.7137 7.3818 15.7137 4.85707C15.7137 2.33234 13.667 0.285645 11.1423 0.285645C8.61757 0.285645 6.57087 2.33234 6.57087 4.85707C6.57087 7.3818 8.61757 9.4285 11.1423 9.4285ZM11.1423 2.99993C11.5368 2.99993 11.8566 3.31972 11.8566 3.71422V5.99993C11.8566 6.39442 11.5368 6.71422 11.1423 6.71422C10.7478 6.71422 10.428 6.39442 10.428 5.99993V3.71422C10.428 3.31972 10.7478 2.99993 11.1423 2.99993ZM2.39161 7.71422H0.285156V12.2856L2.37479 14.3752C3.23209 15.2326 4.39486 15.7142 5.60727 15.7142H12.2852C13.2319 15.7142 13.9994 14.9467 13.9994 13.9999C13.9994 13.0532 13.2319 12.2856 12.2852 12.2856H9.1116C9.00129 12.6588 8.79891 13.0104 8.50445 13.3048C7.56277 14.2466 6.036 14.2466 5.09432 13.3048L3.43717 11.6477C3.15822 11.3688 3.15822 10.9165 3.43717 10.6376C3.71612 10.3586 4.16838 10.3586 4.44732 10.6376L6.10448 12.2947C6.48826 12.6786 7.11051 12.6786 7.4943 12.2947C7.83943 11.9496 7.8742 11.4116 7.59857 11.0276L5.62409 9.05315C4.76679 8.19585 3.60402 7.71422 2.39161 7.71422Z"
-              fill="url(#paint0_linear_11161_40519)"
+              d="M11.1443 9.42865C13.6689 9.42865 15.7157 7.38196 15.7157 4.85723C15.7157 2.33249 13.6689 0.285797 11.1443 0.285797C8.61952 0.285797 6.57282 2.33249 6.57282 4.85723C6.57282 7.38196 8.61952 9.42865 11.1443 9.42865ZM11.1443 3.00008C11.5388 3.00008 11.8585 3.31988 11.8585 3.71437V6.00008C11.8585 6.39457 11.5388 6.71437 11.1443 6.71437C10.7498 6.71437 10.43 6.39457 10.43 6.00008V3.71437C10.43 3.31988 10.7498 3.00008 11.1443 3.00008ZM2.39357 7.71437H0.287109V12.2858L2.37674 14.3754C3.23405 15.2328 4.39681 15.7144 5.60922 15.7144H12.2871C13.2339 15.7144 14.0014 14.9468 14.0014 14.0001C14.0014 13.0533 13.2339 12.2858 12.2871 12.2858H9.11355C9.00325 12.6589 8.80086 13.0106 8.5064 13.305C7.56472 14.2467 6.03796 14.2467 5.09628 13.305L3.43912 11.6479C3.16017 11.3689 3.16017 10.9167 3.43912 10.6377C3.71807 10.3588 4.17033 10.3588 4.44927 10.6377L6.10644 12.2948C6.49022 12.6787 7.11246 12.6787 7.49625 12.2948C7.84138 11.9498 7.87615 11.4118 7.60053 11.0278L5.62605 9.05331C4.76874 8.196 3.60598 7.71437 2.39357 7.71437Z"
+              fill="url(#paint0_linear_11532_66320)"
         />
       </g>
       <defs>
-        <linearGradient id="paint0_linear_11161_40519" x1="0.285156" y1="0.285645" x2="17.3853" y2="2.43873" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#05CAED" />
-          <stop offset="1" stop-color="#47D769" />
+        <linearGradient id="paint0_linear_11532_66320" x1="0.5" y1="9.11038e-08" x2="15.5" y2="16" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#92D5FF" />
+          <stop offset="1" stop-color="#11A3FD" />
         </linearGradient>
-        <clipPath id="clip0_11161_40519">
+        <clipPath id="clip0_11532_66320">
           <rect width="16" height="16" fill="white" />
         </clipPath>
       </defs>
     </svg>
-    <i18n-t class="color-white text-3" tag="div" scope="global" :keypath="nextBouns.text">
+    <i18n-t class="color-[#111213] text-3" tag="div" scope="global" :keypath="nextBouns.text">
       <template #value>
-        <span class="color-[#12cdd2] font-700">{{ nextBouns.bouns }}</span>
+        <span class="color-[#FF7D00] font-700">{{ nextBouns.bouns }}</span>
       </template>
     </i18n-t>
   </div>

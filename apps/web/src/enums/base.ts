@@ -72,7 +72,7 @@ export enum ActivityType {
   /** 自由季活动 */
   Freedom = 4,
   /** 618 活动 */
-  JuneEighteen = 5,
+  JuneEighteen = 6,
 }
 
 /**
