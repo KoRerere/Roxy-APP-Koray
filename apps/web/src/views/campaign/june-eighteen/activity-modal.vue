@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import RxTooltip from '/@/components/rx-tooltip'
 import currency from 'currency.js'
 import { format } from 'date-fns'
+import { usePermission } from '/@/hooks/usePermission'
 import { useCampaignStore } from '/@/stores/campaign'
 import { enhanceCountdown, getImage } from '/@/utils'
 
@@ -8,6 +10,7 @@ const emit = defineEmits(['close', 'confirm'])
 
 const { currentActivity, maxBonus } = storeToRefs(useCampaignStore())
 const { getActivityTotalRecharge } = useCampaignStore()
+const { check } = usePermission()
 
 const countdown = ref()
 const countdownData = ref()
@@ -33,6 +36,8 @@ const topUpSeasonText = computed(() => {
     return $t('充值 {start} - {end} 送 {percentage}', { start: currency(item.amount, { precision: 0 }).format(), end: currency(next.amount, { precision: 0 }).subtract(1).format(), percentage: `${item.discount}%` })
   }).join('\n')
 })
+
+const hasCostCenterAll = computed(() => check('Cost_Center_all'))
 
 onMounted(() => {
   if (showCountdown.value)
@@ -65,6 +70,9 @@ function formatAmount(amount: number) {
 }
 
 function onConfirm() {
+  if (!hasCostCenterAll.value)
+    return
+
   emit('confirm')
   emit('close')
 }
@@ -166,7 +174,22 @@ function onConfirm() {
         </template>
 
         <div class="!absolute left-6 bottom-6 flex items-center gap-5">
-          <RxButton class="flex-row-reverse !border-none " size="lg" icon="base/rx_ic_chevron_right" :label="$t('立即充值')" />
+          <component :is="hasCostCenterAll ? 'div' : RxTooltip">
+            <RxButton class="flex-row-reverse !border-none" :disabled="!hasCostCenterAll" size="lg" icon="base/rx_ic_chevron_right" :label="$t('立即充值')" />
+            <template #content>
+              <div class="text-white/80 max-w-80 text-3 leading-normal">
+                <div>
+                  {{ $t('当前账号无充值权限') }}
+                </div>
+                <i18n-t tag="div" scope="global" :keypath="$t('请联系团队管理员充值，最高享 {bonus} 加赠福利', { bonus: '{bonus}' })">
+                  <template #bonus>
+                    <span class="font-bold font-[DingTalk_JinBuTi] color-[#FF7D00]">{{ maxBonus }}%</span>
+                  </template>
+                </i18n-t>
+              </div>
+            </template>
+          </component>
+
           <RxTooltip>
             <template #default>
               <div class="flex items-center gap-1 color-[#111213] opacity-80 cursor-pointer">
