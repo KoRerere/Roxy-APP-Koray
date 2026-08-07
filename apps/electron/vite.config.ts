@@ -41,9 +41,7 @@ const OPTIONAL_NATIVE_EXTERNALS = [
   'macos-temperature-sensor',
 ]
 const ELECTRON_EXTERNALS = ['electron', 'electron/index.js']
-const agentEntry = process.env.ROXY_AGENT_ENTRY === 'next'
-  ? join(PACKAGE_ROOT, 'src/modules/mcp/agent-next/index.ts')
-  : join(PACKAGE_ROOT, 'src/modules/mcp/agent/index.ts')
+const agentEntry = join(PACKAGE_ROOT, 'src/modules/mcp/agent/index.ts')
 
 const config: UserConfig = {
   envDir: PACKAGE_ROOT,
