@@ -1,6 +1,5 @@
 import { WorkspaceType } from '/@/enums'
 import type { RouteRecordRaw } from 'vue-router'
-import { roxyGeoRoute } from './menu-shared'
 
 const ecommerceOnly = [WorkspaceType.ECommerce] as const
 
@@ -147,7 +146,6 @@ export const ecommerceMenuRoutes: RouteRecordRaw[] = [
       //   },
       //   component: () => import('/@/views/ecommerce/ecosystem/index.vue'),
       // },
-      roxyGeoRoute,
     ],
   },
 ]

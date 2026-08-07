@@ -41,6 +41,9 @@ const OPTIONAL_NATIVE_EXTERNALS = [
   'macos-temperature-sensor',
 ]
 const ELECTRON_EXTERNALS = ['electron', 'electron/index.js']
+const agentEntry = process.env.ROXY_AGENT_ENTRY === 'next'
+  ? join(PACKAGE_ROOT, 'src/modules/mcp/agent-next/index.ts')
+  : join(PACKAGE_ROOT, 'src/modules/mcp/agent/index.ts')
 
 const config: UserConfig = {
   envDir: PACKAGE_ROOT,
@@ -65,9 +68,7 @@ const config: UserConfig = {
     lib: {
       entry: {
         index: join(PACKAGE_ROOT, 'src/index.ts'),
-        openapiMcp: join(PACKAGE_ROOT, 'src/modules/mcp/openapi-mcp/index.ts'),
-        playwrightMcp: join(PACKAGE_ROOT, 'src/modules/mcp/playwright-mcp/index.ts'),
-        agent: join(PACKAGE_ROOT, 'src/modules/mcp/agent/index.ts'),
+        agent: agentEntry,
         browserIconRenderWorker: join(PACKAGE_ROOT, 'src/modules/browserIconRenderWorker/workerProcess.ts'),
         // logWorker: join(PACKAGE_ROOT, 'src/workers/log/index.ts'),
       },

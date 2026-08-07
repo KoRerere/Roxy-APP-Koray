@@ -1,34 +1,40 @@
 import type { AttachmentRef } from './fileService'
+import type { RunEventPublisher } from '@/core/agent-events/runEventHub'
 import type { CollectedFile } from '@/deepagents/fileCollector'
-import type { Response } from 'express'
+import type { SqliteSaver } from '@/deepagents/sqlite-checkpointer'
+import type { AgentConversationRunStartCommand, AgentRunEvent } from '@roxy/shared/channel'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { Command } from '@langchain/langgraph'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
+import { runEventHub } from '@/core/agent-events/runEventHub'
+import { streamEvents } from '@/core/agent-events/streamEvents'
 import { isAbortLike, normalizeAgentError } from '@/core/agentError'
 import { extToMime, fileManager } from '@/core/fileManager'
-import { cleanupRun } from '@/core/registry/abortRegistry'
+import { AbortError, cleanupRun, createAbort } from '@/core/registry/abortRegistry'
+import { ConversationRunQueue } from '@/core/registry/conversationRunQueue'
 import { cancelInterrupt, createInterruptGate } from '@/core/registry/interruptRegistry'
-import { sseLoggerManager } from '@/core/sse/sseLogger'
-import { streamAdapter } from '@/core/sse/streamAdapter'
+import { agentPaths } from '@/core/storage/agentPaths'
+import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '@/core/task-monitor'
 import { ChatContextAPI } from '@/database/conversations'
 import { createChatAgent, deleteCheckpoint } from '@/deepagents'
-import { SqliteSaver } from '@/deepagents/sqlite-checkpointer'
-import { handleStream, StreamState } from '@/deepagents/handle-stream'
+import { conversationCheckpointPath } from '@/deepagents/checkpointPaths'
+import { handleWorkerStream, StreamState } from '@/deepagents/handle-stream'
+import { closeCheckpointer } from '@/deepagents/sqlite-checkpointer'
 import { createLLM } from '@/llm'
-import { recordingManager } from '@/recording/recordingManager'
+import { conversationLogManager } from '@/script/browserOpsManager'
 import { env } from '../config'
-import { buildMessageContent, buildMessageContentAsPlainText } from './fileService'
-import { createStreamCallback, initSSEHeaders, resolveSSEFilePath } from './sseStream'
+import { buildMessageContentAsPlainText, hydrateAttachmentFileUrls } from './fileService'
+
+const conversationRunQueue = new ConversationRunQueue()
 
 // ---------------------------------------------------------------------------
 // A. 会话 / 消息 CRUD 编排（包裹 ChatContextAPI）
 // ---------------------------------------------------------------------------
 
-export function createConversation(conversationType?: string) {
-  const finalType = conversationType === 'asset' ? 'asset' : 'automation'
+export function createConversation() {
   const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   const finalThreadId = `thread_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
@@ -36,25 +42,20 @@ export function createConversation(conversationType?: string) {
     id: conversationId,
     title: 'New Chat',
     thread_id: finalThreadId,
-    conversation_type: finalType,
   })
 }
 
-export function listConversations() {
-  return ChatContextAPI.getConversations()
+export interface ListConversationsOptions {
+  limit: number
+  offset: number
+}
+
+export function listConversations(options: ListConversationsOptions) {
+  return ChatContextAPI.getConversationPage(options.limit, options.offset)
 }
 
 export function getConversation(conversationId: string) {
   return ChatContextAPI.getConversation(conversationId)
-}
-
-export async function resetConversationRuntime(conversationId: string): Promise<boolean> {
-  const conversation = ChatContextAPI.getConversation(conversationId)
-  if (!conversation)
-    return false
-
-  await deleteCheckpoint(conversationId)
-  return true
 }
 
 export function getConversationDetail(conversationId: string) {
@@ -68,39 +69,63 @@ export function getConversationDetail(conversationId: string) {
 
 export function updateConversation(
   conversationId: string,
-  patch: { title?: string, model?: string, conversationType?: 'asset' | 'automation' },
+  patch: { title?: string, isTitleSet?: boolean },
 ) {
+  const isTitleSet = patch.isTitleSet === undefined
+    ? undefined
+    : Number(patch.isTitleSet) as 0 | 1
+
   return ChatContextAPI.updateConversation(conversationId, {
     title: patch.title,
-    model: patch.model,
-    conversation_type: patch.conversationType,
+    is_title_set: isTitleSet,
   })
+}
+
+export function markConversationRead(conversationId: string, runId: string) {
+  const conversation = ChatContextAPI.getConversation(conversationId)
+  if (!conversation) {
+    return null
+  }
+
+  ChatContextAPI.markConversationRead(conversationId, runId)
+  return ChatContextAPI.getConversation(conversationId)
 }
 
 /**
  * 删除对话及其消息、LangGraph checkpoint。返回 false 表示对话不存在。
  */
-export function deleteConversation(conversationId: string): boolean {
+export async function deleteConversation(conversationId: string): Promise<boolean> {
   const conversation = ChatContextAPI.getConversation(conversationId)
   if (!conversation) {
     return false
   }
 
-  // 删除对话相关的消息
+  // 清理该对话在消息 metadata 中引用的上传附件。按 hash 引用计数，不误删共享文件。
+  try {
+    fileManager.deleteConversationFiles(conversationId)
+  }
+  catch (err: any) {
+    console.warn(`清理会话附件失败 ${conversationId}:`, err?.message)
+  }
+  // 删除对话相关的消息（内部会一并清理 JSONL 事件文件）
   ChatContextAPI.deleteMessagesByConversation(conversationId)
   // 删除对话记录
   ChatContextAPI.deleteConversation(conversationId)
-  // 删除 LangGraph SQLite checkpoint 中该 thread 的数据
-  deleteCheckpoint(conversationId)
+  // 关闭并删除 LangGraph checkpoint（先关句柄，下一步整目录删除才安全）
+  await deleteCheckpoint(conversationId)
+  // 删除该会话在磁盘上的全部数据目录：sessions/{id}/（含 checkpoint.db、recording 草稿、
+  // uploads、artifacts、metadata.json）。此前只删了 checkpoint 文件，导致 session 目录残留。
+  try {
+    await fsPromises.rm(agentPaths.sessionDir(conversationId), { recursive: true, force: true })
+  }
+  catch (err: any) {
+    console.warn(`删除会话目录失败 ${conversationId}:`, err?.message)
+  }
   return true
 }
 
-export function readFileContent(filePath: string) {
-  return fsPromises.readFile(filePath, 'utf-8')
-}
-
 // ---------------------------------------------------------------------------
-// B. 标题生成（chat 与 image 共用，imageService 复用此函数）
+// B. 标题生成（会话与图片工具共用）
 // ---------------------------------------------------------------------------
 
 const TitleOutputSchema = z.object({
@@ -112,14 +137,23 @@ export async function generateConversationTitle(
   attachments: AttachmentRef[],
   conversationId: string,
   turnId: string,
-  streamCallback: (event: string) => void,
+  streamCallback: (event: AgentRunEvent) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
+  if (signal?.aborted)
+    throw new AbortError('User cancelled')
+
   const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
   const llm = await createLLM({
     enableThinking: false,
     conversationId,
     turnId,
+    signal,
   })
+
+  if (signal?.aborted)
+    throw new AbortError('User cancelled')
+
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 
   const structuredLlm = (llm as any).withStructuredOutput(TitleOutputSchema, {
@@ -131,18 +165,24 @@ export async function generateConversationTitle(
     new HumanMessage(isZh
       ? `请根据用户的第一条消息，为这个对话生成一个简洁、准确的标题。\n\n用户消息：\n${messageContent}`
       : `Please generate a concise, accurate title for this conversation based on the user's first message.\n\nUser message:\n${messageContent}`),
-  ])
+  ], { signal })
+
+  if (signal?.aborted)
+    throw new AbortError('User cancelled')
 
   const title = result.title.trim()
 
-  // 发送 SSE 事件更新前端
-  streamCallback(streamAdapter.title(title))
+  streamCallback(streamEvents.title(title))
 
   return title
 }
 
-function resolveChatAgentMode(mode: unknown): 'simple' | 'orchestrator' {
-  return mode === 'orchestrator' ? 'orchestrator' : 'simple'
+function resolveTaskMonitorTitle(title: string | undefined): string {
+  const trimmed = title?.trim()
+  if (!trimmed) {
+    return 'Agent task'
+  }
+  return trimmed.length > 64 ? `${trimmed.slice(0, 64)}...` : trimmed
 }
 
 function getDisplayFileName(file: CollectedFile): string {
@@ -152,7 +192,7 @@ function getDisplayFileName(file: CollectedFile): string {
 
 async function publishCollectedFiles(
   files: CollectedFile[],
-  streamCallback: (event: string) => void,
+  streamCallback: (event: AgentRunEvent) => void,
 ): Promise<void> {
   for (const file of files) {
     const fileName = getDisplayFileName(file)
@@ -166,7 +206,7 @@ async function publishCollectedFiles(
         source: 'generated',
         uploadNow: true,
       })
-      streamCallback(streamAdapter.agentFile({
+      streamCallback(streamEvents.agentFile({
         fileId: record.file_id,
         fileName,
         size: record.size ?? buffer.length,
@@ -181,37 +221,85 @@ async function publishCollectedFiles(
 }
 
 // ---------------------------------------------------------------------------
-// C. /chat 流式主流程（含自己独立的 HITL 循环）
+// C. WebSocket conversation run（含自己独立的 HITL 循环）
 // ---------------------------------------------------------------------------
 
-export interface RunChatStreamOptions {
-  message?: string
+export interface RunConversationTurnOptions {
+  message: string
   conversationId: string
-  mode?: unknown
-  multimodalAttachments?: boolean
   attachmentList: AttachmentRef[]
   conversation: any
   signal: AbortSignal
-  res: Response
-  /** 完全访问模式（yolo）：开启后本次会话跳过 HITL，所有操作直接执行。 */
+  publisher: RunEventPublisher
   fullAccess?: boolean
 }
 
-/**
- * 运行一次 /chat 流式对话：落消息 → 标题 → 创建 agent → HITL 循环 → 清理。
- * 调用方（路由）已完成入参校验、附件注水、对话存在性检查与 abort 注册。
- */
-export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
-  const { message, conversationId, mode, multimodalAttachments, attachmentList, conversation, signal, res, fullAccess } = opts
+export function startConversationRun(
+  command: AgentConversationRunStartCommand,
+  requestId: string,
+): Promise<void> {
+  const { conversationId } = command
+  if (runEventHub.isActive(conversationId)) {
+    return Promise.resolve()
+  }
 
-  // 自动设置为活跃对话
+  const conversation = getConversation(conversationId)
+  if (!conversation) {
+    return Promise.resolve()
+  }
+
+  const suffix = `${Date.now()}_${randomUUID().slice(0, 8)}`
+  const turnId = `msg_${suffix}`
+  const runId = `run_${suffix}`
+  const assistantMessageId = `msg_${Date.now()}_${randomUUID().slice(0, 8)}`
+  const publisher = runEventHub.tryBegin({
+    conversationId,
+    runId,
+    turnId,
+    assistantMessageId,
+    requestId,
+    source: 'user',
+  })
+  if (!publisher) {
+    return Promise.resolve()
+  }
+
+  const abortController = createAbort(runId)
+  return conversationRunQueue.enqueue(conversationId, async () => {
+    try {
+      const attachmentList = await hydrateAttachmentFileUrls(command.attachments ?? [], abortController.signal)
+      await runConversationTurn({
+        message: command.message,
+        conversationId,
+        attachmentList,
+        conversation,
+        signal: abortController.signal,
+        publisher,
+        fullAccess: command.fullAccess,
+      })
+    }
+    catch (error) {
+      if (!publisher.isTerminal) {
+        publisher.publish(isAbortLike(error)
+          ? streamEvents.cancelled({ message: 'Agent stopped: User cancelled' })
+          : streamEvents.error(normalizeAgentError(error)))
+      }
+    }
+    finally {
+      cleanupRun(runId, abortController)
+    }
+  })
+}
+
+export async function runConversationTurn(opts: RunConversationTurnOptions): Promise<void> {
+  const { message, conversationId, attachmentList, conversation, signal, publisher, fullAccess } = opts
+  const streamCallback = (event: AgentRunEvent) => {
+    publisher.publish(event)
+  }
+
   ChatContextAPI.setActiveConversation(conversationId)
-
-  initSSEHeaders(res)
-
-  // 添加用户消息到对话历史
-  const agentMode = resolveChatAgentMode(mode)
-  const userMessageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  const userMessageId = publisher.identity.turnId
+  let taskMonitorTitle = conversation.title
   ChatContextAPI.addMessage({
     id: userMessageId,
     conversation_id: conversationId,
@@ -219,7 +307,6 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
     content: message || '',
     content_type: 'text',
     storage_type: 'inline',
-    agent_mode: agentMode,
     metadata: {
       timestamp: Date.now(),
       source: 'api_chat',
@@ -227,68 +314,80 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
     },
   })
 
-  // 如果正在录制，追加用户消息（意图上下文）
-  if (message && recordingManager.isRecording(conversationId)) {
-    recordingManager.appendUserMessage(conversationId, message)
-  }
-
-  const { fileName, sseFilePath } = resolveSSEFilePath()
+  await conversationLogManager.ensure(conversationId)
 
   ChatContextAPI.addMessage({
-    id: fileName,
+    id: publisher.identity.assistantMessageId,
     conversation_id: conversationId,
     role: 'assistant',
     content: '',
     content_type: 'file',
     storage_type: 'file',
-    file_path: sseFilePath,
-    agent_mode: agentMode,
+    file_path: publisher.filePath,
     metadata: {
       timestamp: Date.now(),
-      source: 'sse_stream',
+      source: 'conversation_run',
+      format: 'jsonl',
+      runId: publisher.identity.runId,
+      turnId: publisher.identity.turnId,
     },
   })
 
-  const sseLogger = sseLoggerManager.createLogger(sseFilePath)
-  let orchestratorStoppedSent = false
-
-  const streamCallback = createStreamCallback(res, sseLogger, {
-    onEvent: (parsed) => {
-      if (parsed?.type === 'orchestrator_stopped') {
-        orchestratorStoppedSent = true
-      }
+  streamCallback({
+    type: 'user_message',
+    data: {
+      messageId: userMessageId,
+      content: message,
+      attachments: attachmentList,
+      createdAt: Date.now(),
     },
   })
-
-  // 先把会话开始标识写入
-  streamCallback(streamAdapter.session(conversation.thread_id))
 
   // 如果标题还没有设置，就生成标题
   if (conversation.is_title_set === 0 || conversation.is_title_set === undefined) {
-    await generateConversationTitle(message || '', attachmentList, conversationId, userMessageId, streamCallback)
+    await generateConversationTitle(message || '', attachmentList, conversationId, userMessageId, streamCallback, signal)
       .then((generatedTitle) => {
         if (generatedTitle) {
-          ChatContextAPI.updateConversation(conversationId, { title: generatedTitle })
+          updateConversation(conversationId, { title: generatedTitle, isTitleSet: true })
+          taskMonitorTitle = generatedTitle
         }
       })
       .catch((err) => {
+        if (isAbortLike(err))
+          return
         console.error('Failed to generate title:', err)
       })
   }
 
+  publishTaskMonitorTaskStarted({
+    taskId: userMessageId,
+    title: resolveTaskMonitorTitle(taskMonitorTitle),
+    sourceType: 'chat',
+    conversationId,
+    runId: publisher.identity.runId,
+  })
+
+  if (signal.aborted) {
+    streamCallback(streamEvents.cancelled({ message: 'Agent stopped: User cancelled' }))
+    publishTaskMonitorTaskFinished(userMessageId)
+    return
+  }
+
   const { agent, destroy, consumeFiles } = await createChatAgent({
-    mode: agentMode,
+    workerId: `chat_${publisher.identity.runId}`,
     conversationId,
     turnId: userMessageId,
     fullAccess,
-    onRetry: info => streamCallback(streamAdapter.retry(info)),
+    onRetry: info => streamCallback(streamEvents.retry(info)),
+    signal,
+    taskMonitorTaskId: userMessageId,
   })
 
   const state = new StreamState()
   const flushThinkingTiming = () => {
     const payload = state.finishThinking(Date.now())
     if (payload) {
-      streamCallback(streamAdapter.thinkingComplete(payload))
+      streamCallback(streamEvents.thinkingCompleteEvent(payload))
     }
   }
 
@@ -296,24 +395,23 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
     const config: any = {
       configurable: {
         thread_id: conversation.thread_id,
+        conversationId,
+        turnId: userMessageId,
+        taskMonitorTaskId: userMessageId,
       },
       conversationId,
       turnId: userMessageId,
+      taskMonitorTaskId: userMessageId,
       streamMode: ['messages', 'custom', 'tools', 'updates'],
       signal,
       // 供 parallel_dispatch 工具内将 worker 的 stream 写出到客户端，避免只依赖外层 stream 合并
       writer: streamCallback,
     }
 
-    const useMultimodalAttachments = multimodalAttachments === true
-    const messageContent = useMultimodalAttachments
-      ? await buildMessageContent(message || '', attachmentList)
-      : buildMessageContentAsPlainText(message || '', attachmentList)
+    const messageContent = buildMessageContentAsPlainText(message || '', attachmentList)
     const input = {
       messages: [
-        Array.isArray(messageContent)
-          ? new HumanMessage({ content: messageContent })
-          : new HumanMessage(messageContent || message || ''),
+        new HumanMessage(messageContent || message || ''),
       ],
       streamCallback,
     }
@@ -345,10 +443,13 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
     }
 
     // 支持多轮 interrupt：每次 invoke 后检查是否有 __interrupt__，有则等待用户决策后继续
+    // 最多重试一次：extended thinking 模式下模型偶发输出空响应（无 text 无 tool_use），自动重试
+    let emptyResponseRetries = 0
     while (true) {
       const stream = await (agent as any).stream(invokeInput, config)
       let interrupted = false
       let interruptValue: any = null
+      let hasOutput = false
 
       for await (const rawChunk of stream) {
         const [, chunk] = rawChunk
@@ -360,30 +461,34 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
           continue
         }
 
-        const result = handleStream(rawChunk, state)
-        if (Array.isArray(result)) {
+        const result = handleWorkerStream(rawChunk, state)
+        if (result.length > 0) {
+          hasOutput = true
           result.forEach(event => streamCallback(event))
         }
-        else if (result) {
-          streamCallback(typeof result === 'object' ? JSON.stringify(result) : result)
-        }
+      }
+
+      // extended thinking 模式下模型偶发输出空响应，自动重试一次
+      if (!interrupted && !hasOutput && emptyResponseRetries === 0) {
+        emptyResponseRetries++
+        console.warn('[chat] Empty model response detected, retrying once...')
+        continue
       }
 
       if (!interrupted) {
         break
       }
 
-      // 提取 interrupt 信息并推送给前端，SSE 连接保持打开
       const interrupts = interruptValue[0]?.value ?? interruptValue
       const actionRequests = interrupts?.actionRequests ?? []
       const reviewConfigs = interrupts?.reviewConfigs ?? []
       const interruptsId = randomUUID()
-      streamCallback(streamAdapter.hitlInterrupt({ actionRequests, reviewConfigs, interruptsId }))
+      streamCallback(streamEvents.hitlInterrupt({ actionRequests, reviewConfigs, interruptsId }))
 
       // 等待前端通过 resume 端点提交决策
       const decision = await createInterruptGate(conversationId)
       // 通知前端：该 interruptsId 已被用户处理（approve/reject/edit），便于前端更新 UI 状态
-      streamCallback(streamAdapter.hitlResume({ interruptsId, decisions: decision.decisions }))
+      streamCallback(streamEvents.hitlResume({ interruptsId, decisions: decision.decisions }))
       invokeInput = new Command({ resume: { decisions: decision.decisions } })
     }
 
@@ -394,7 +499,11 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
       await publishCollectedFiles(collectedFiles, streamCallback)
     }
 
-    streamCallback(streamAdapter.done())
+    if (signal.aborted) {
+      throw new AbortError('User cancelled')
+    }
+
+    streamCallback(streamEvents.done())
   }
   catch (error: any) {
     // 清理可能挂起的 interrupt gate
@@ -417,26 +526,47 @@ export async function runChatStream(opts: RunChatStreamOptions): Promise<void> {
         }
       }
 
-      if (!orchestratorStoppedSent) {
-        streamCallback(streamAdapter.orchestratorStopped({
-          status: 'failed',
-          reason: 'user',
-          message: 'Orchestrator stopped: User cancelled',
-        }))
-      }
-      streamCallback(streamAdapter.interrupt(error.message))
+      if (!publisher.isTerminal)
+        streamCallback(streamEvents.cancelled({ message: 'Agent stopped: User cancelled' }))
     }
     else {
       // 其他错误，归一化为统一错误信封后下发（前端按 code 分支）
       console.error('Error in chat:', error)
-      streamCallback(streamAdapter.error(normalizeAgentError(error)))
+      streamCallback(streamEvents.error(normalizeAgentError(error)))
     }
   }
   finally {
-    await destroy()
-    cleanupRun(conversationId)
+    publishTaskMonitorTaskFinished(userMessageId)
 
-    // 清理统计器资源
-    sseLoggerManager.closeLogger(sseFilePath)
+    const checkpointer = (agent as any).checkpointer as SqliteSaver | undefined
+    try {
+      await destroy()
+    }
+    finally {
+      if (checkpointer && conversation?.thread_id) {
+        try {
+          checkpointer.pruneThreadCheckpoints(conversation.thread_id, 1)
+        }
+        catch (err) {
+          console.warn(`[chat] Failed to prune checkpoints for ${conversation.thread_id}:`, err instanceof Error ? err.message : String(err))
+        }
+      }
+
+      if (checkpointer) {
+        try {
+          closeCheckpointer(conversationCheckpointPath(conversationId))
+        }
+        catch (err) {
+          console.warn(`[chat] Failed to close checkpointer for ${conversationId}:`, err instanceof Error ? err.message : String(err))
+        }
+      }
+
+      try {
+        await conversationLogManager.clearSession(conversationId)
+      }
+      catch (err) {
+        console.warn(`[chat] Failed to clear browser ops session for ${conversationId}:`, err instanceof Error ? err.message : String(err))
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@ const config: UserConfig = {
   root: PACKAGE_ROOT,
   resolve: {
     alias: {
+      '@': join(PACKAGE_ROOT, 'src'),
       '/@/': `${join(PACKAGE_ROOT, 'src')}/`,
     },
   },
@@ -36,9 +37,6 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
   plugins: [],
-  optimizeDeps: {
-    include: ['protobufjs'],
-  },
 }
 
 export default config

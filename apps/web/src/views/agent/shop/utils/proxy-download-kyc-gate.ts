@@ -16,6 +16,44 @@ export interface ProxyDownloadRow {
   password?: string
 }
 
+/** 列表接口对未解锁凭据使用的占位符 */
+const PROXY_MASKED_PLACEHOLDER = '--'
+
+/** 是否为后端脱敏占位，不能当作真实代理凭据 */
+export function isProxyMaskedCredential(value?: string): boolean {
+  return !value || value === PROXY_MASKED_PLACEHOLDER
+}
+
+/** 合并解密字段与列表字段，脱敏占位不参与回退 */
+function pickProxyCredential(decrypted?: string, base?: string): string | undefined {
+  if (!isProxyMaskedCredential(decrypted))
+    return decrypted
+  if (!isProxyMaskedCredential(base))
+    return base
+  return undefined
+}
+
+function getEncryptProxyFields(item: ProxyItem) {
+  return item as ProxyItem & {
+    isEncryptProxy?: boolean
+    proxyEncryptInfo?: string
+  }
+}
+
+/** 大陆直连默认不可导出；凭据仅在加密包内时实名通过后可解密导出 */
+export function isDirectExportBlocked(item: ProxyItem): boolean {
+  if (!item.isDirect)
+    return false
+
+  const { isEncryptProxy, proxyEncryptInfo } = getEncryptProxyFields(item)
+  return !isEncryptProxy || !proxyEncryptInfo
+}
+
+/** 行数据是否具备明文代理凭据（非 `--` 占位） */
+export function hasPlaintextProxyCredentials(item: ProxyItem): boolean {
+  return !isProxyMaskedCredential(item.proxyUserName) && !isProxyMaskedCredential(item.proxyPassword)
+}
+
 export function isBuyProxy(item: ProxyItem) {
   return item.proxyType === ProxyType.buy
 }
@@ -99,18 +137,42 @@ export function getWorkspaceKycUnlockedCachedSync(): boolean | null {
   return cached.unlocked
 }
 
+/** 行数据是否具备可导出的代理凭据（明文、加密包，或购买代理的 `--` 脱敏占位） */
+export function hasExportableProxyCredentials(item: ProxyItem): boolean {
+  if (hasPlaintextProxyCredentials(item))
+    return true
+
+  const { isEncryptProxy, proxyEncryptInfo } = getEncryptProxyFields(item)
+  if (isEncryptProxy && proxyEncryptInfo)
+    return true
+
+  // 购买代理列表常以 `--` 占位；实名通过后由解密或刷新列表获得真实凭据
+  if (isBuyProxy(item)
+    && item.proxyUserName === PROXY_MASKED_PLACEHOLDER
+    && item.proxyPassword === PROXY_MASKED_PLACEHOLDER)
+    return true
+
+  return false
+}
+
+/** 购买代理是否允许展示导出入口（KYC 缓存未就绪时不隐藏，由组件内异步拦截） */
+function isBuyProxyExportAllowedByKycCache(): boolean {
+  const kycUnlocked = getWorkspaceKycUnlockedCachedSync()
+  return kycUnlocked !== false
+}
+
 /** 是否可在子菜单内嵌展示代理二维码 */
 export function canShowProxyQrcode(item: ProxyItem): boolean {
-  if (item.isDirect)
+  if (isDirectExportBlocked(item))
     return false
 
-  if (!item.proxyUserName || !item.proxyPassword)
+  if (!hasExportableProxyCredentials(item))
     return false
 
   if (!isBuyProxy(item))
     return true
 
-  return getWorkspaceKycUnlockedCachedSync() === true
+  return isBuyProxyExportAllowedByKycCache()
 }
 
 export function getProxyDownloadBlockVariant(locale: string, isOwner: boolean): ProxyDownloadBlockVariant {
@@ -144,7 +206,8 @@ export function openProxyKycVerification() {
   emitter.emit('openIdentityVerification', { showRegulatoryNotice: true })
 }
 
-async function resolveProxyDownloadRow(item: ProxyItem): Promise<ProxyDownloadRow> {
+/** 解析单行代理导出凭据；加密代理需客户端解密后与下载逻辑一致 */
+export async function resolveProxyDownloadRow(item: ProxyItem): Promise<ProxyDownloadRow> {
   const base: ProxyDownloadRow = {
     host: item.host,
     port: item.port,
@@ -152,21 +215,23 @@ async function resolveProxyDownloadRow(item: ProxyItem): Promise<ProxyDownloadRo
     password: item.proxyPassword,
   }
 
-  const encryptItem = item as ProxyItem & {
-    isEncryptProxy?: boolean
-    proxyEncryptInfo?: string
-  }
+  const { isEncryptProxy, proxyEncryptInfo } = getEncryptProxyFields(item)
 
-  if (!encryptItem.isEncryptProxy || !encryptItem.proxyEncryptInfo)
-    return base
+  if (!isEncryptProxy || !proxyEncryptInfo)
+    return {
+      host: pickProxyCredential(undefined, base.host),
+      port: pickProxyCredential(undefined, base.port),
+      username: pickProxyCredential(undefined, base.username),
+      password: pickProxyCredential(undefined, base.password),
+    }
 
-  const decrypted = await decryptAESGCM(encryptItem.proxyEncryptInfo) as Record<string, string | undefined>
+  const decrypted = await decryptAESGCM(proxyEncryptInfo) as Record<string, string | undefined>
 
   return {
-    host: decrypted.host ?? base.host,
-    port: decrypted.port ?? base.port,
-    username: decrypted.proxyUserName ?? decrypted.username ?? base.username,
-    password: decrypted.proxyPassword ?? decrypted.password ?? base.password,
+    host: pickProxyCredential(decrypted.host, base.host),
+    port: pickProxyCredential(decrypted.port, base.port),
+    username: pickProxyCredential(decrypted.proxyUserName ?? decrypted.username, base.username),
+    password: pickProxyCredential(decrypted.proxyPassword ?? decrypted.password, base.password),
   }
 }
 

@@ -4,16 +4,15 @@ import { debounce } from 'es-toolkit'
 import type { UserGetRoxyClawListData, UserSetRoxyClawCreatePayload } from '@roxy/backend-api'
 import type { McpFailureType } from '@roxy/electron-preload'
 import { API } from '/@/api'
-import { replaceToRoute } from '/@/router/navigation'
+import { useAgentStore } from '/@/stores/agent'
 
 /**
  * 获取 MCP 错误的 i18n 消息
  */
 export function getMcpErrorMessage(type: McpFailureType): string {
   const messageMap: Record<McpFailureType, string> = {
-    roxyclaw_already_running: $t('RoxyClaw 正在运行中，请先停止 RoxyClaw'),
-    mcp_window_already_open: $t('Roxy AI Agent 正在运行中，请先关闭 Roxy AI Agent 窗口'),
     script_repair_failed: $t('Roxy AI Agent 文件修复失败，请重启应用后重试'),
+    agent_update_in_progress: $t('AI Agent 更新资源下载中，请稍后再试'),
     unknown_error: $t('服务异常，请稍后重试'),
   }
 
@@ -45,6 +44,44 @@ export interface UpdateConfigResult {
   message?: string
 }
 
+export type LarkScanInstallStatus = 'waiting' | 'polling' | 'slow_down' | 'domain_switched' | 'connected' | 'expired' | 'cancelled' | 'error'
+
+export interface LarkScanInstallStartResult {
+  success: boolean
+  message?: string
+  data?: {
+    installId: string
+    qrUrl: string
+    expireIn: number
+  }
+}
+
+export interface LarkScanInstallStatusResult {
+  success: boolean
+  message?: string
+  data?: {
+    status: LarkScanInstallStatus
+    interval?: number
+    result?: {
+      appId: string
+      appSecret: string
+      environment: 'lark' | 'feishu'
+      installerOpenId?: string
+    }
+    error?: string
+  }
+}
+
+interface RoxyClawAgentResponse<T = unknown> {
+  code?: number
+  success: boolean
+  data?: T
+  type?: McpFailureType
+  message?: string
+  msg?: string
+  details?: Record<string, any>
+}
+
 // 默认配置
 const defaultConfig: RoxyClawConfig = {
   enabled: false,
@@ -65,6 +102,7 @@ const defaultConfig: RoxyClawConfig = {
 }
 
 export const useRoxyClawStore = defineStore('roxyClaw', () => {
+  const agentStore = useAgentStore()
   const config = ref<RoxyClawConfig>({ ...defaultConfig })
   const originalConfig = shallowRef<RoxyClawConfig>({ ...defaultConfig })
 
@@ -144,6 +182,44 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     originalConfig.value = { ...toRaw(config.value) }
   }
 
+  async function ensureAgentReady() {
+    await agentStore.waitUntilReady()
+  }
+
+  async function requestAgentRoxyClaw<T = unknown>(path: string, init: RequestInit = {}): Promise<RoxyClawAgentResponse<T>> {
+    try {
+      await ensureAgentReady()
+
+      if (!agentStore.serverUrl) {
+        return { success: false, message: $t('Roxy Agent 服务未启动') }
+      }
+
+      const response = await fetch(`${agentStore.serverUrl}/api/roxy-claw${path}`, {
+        method: init.method ?? 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: init.body,
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        return { success: false, message: $t('Agent 请求失败：{status}', { status: response.status }) }
+      }
+
+      const payload = await response.json() as Partial<RoxyClawAgentResponse<T>>
+      return {
+        ...payload,
+        success: payload.success ?? payload.code === 0,
+        message: payload.message || payload.msg,
+      }
+    }
+    catch (error) {
+      console.error('RoxyClaw agent request failed:', error)
+      return { success: false, message: $t('网络错误') }
+    }
+  }
+
   // 防抖的自动重启函数
   const debouncedRestart = debounce(async () => {
     if (config.value.enabled) {
@@ -213,44 +289,12 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   }
 
   /**
-   * 获取 MCP 状态
-   */
-  async function getMcpStatus(): Promise<{ mcpWindowOpen: boolean, roxyClawEnabled: boolean, mcpServerRunning: boolean }> {
-    if (globalThis.electronAPI) {
-      try {
-        return await globalThis.electronAPI.send('mcp:getStatus')
-      }
-      catch (error) {
-        console.error('Failed to get MCP status:', error)
-        return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
-      }
-    }
-    return { mcpWindowOpen: false, roxyClawEnabled: false, mcpServerRunning: false }
-  }
-
-  /**
    * 启动 RoxyClaw
    */
   async function startRoxyClaw(): Promise<{ success: boolean, message?: string }> {
+    const previousConfig = { ...toRaw(config.value) }
+
     try {
-      const apiPort = await globalThis.electronAPI.send('util:getApiPort')
-      if (apiPort === -1) {
-        replaceToRoute('api-keys', { highlight: 'true' })
-        return {
-          success: false,
-          message: $t('请检查 API 启用状态或端口是否被占用'),
-        }
-      }
-
-      // 检查 MCP 窗口是否正在运行
-      const mcpStatus = await getMcpStatus()
-      if (mcpStatus.mcpWindowOpen) {
-        return {
-          success: false,
-          message: $t('Roxy AI Agent 窗口正在运行中，请先关闭 Roxy AI Agent 窗口'),
-        }
-      }
-
       // 检查 Telegram 配置
       if (config.value.tg_bot_token && config.value.tg_allowed_chat_ids.length === 0) {
         return {
@@ -266,42 +310,42 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
         }
       }
 
-      // 设置为启动中状态
-      config.value.enabled = true
-
-      // 如果在 Electron 环境中，调用主进程
-      if (globalThis.electronAPI) {
-        const result = await globalThis.electronAPI.send('mcp:startRoxyClaw')
-
-        if (!result.success) {
-          config.value.enabled = false
-          // 使用错误类型获取对应的 i18n 消息
-          const errorMessage = result.type
-            ? getMcpErrorMessage(result.type)
-            : result.message || $t('RoxyClaw 启动失败')
+      if (!config.value.enabled) {
+        const nextConfig = await updateConfig({ enabled: true })
+        if (!nextConfig.enabled) {
           return {
             success: false,
-            message: errorMessage,
+            message: $t('RoxyClaw 启动失败'),
           }
-        }
-
-        // 启动成功后更新原始配置
-        updateOriginalConfig()
-        return {
-          success: true,
-          message: $t('RoxyClaw 启动成功'),
         }
       }
 
-      // 如果在浏览器环境（开发模式），使用 mock
-      await new Promise(resolve => setTimeout(resolve, 500))
-      // 启动成功后更新原始配置
+      const result = await requestAgentRoxyClaw<{ message: string }>('/start', {
+        method: 'POST',
+      })
+
+      if (!result.success) {
+        if (!previousConfig.enabled) {
+          await updateConfig({ enabled: false })
+        }
+        const errorMessage = result.type
+          ? getMcpErrorMessage(result.type)
+          : result.message || $t('RoxyClaw 启动失败')
+        return {
+          success: false,
+          message: errorMessage,
+        }
+      }
+
+      config.value.enabled = true
       updateOriginalConfig()
       return { success: true, message: $t('RoxyClaw 启动成功') }
     }
     catch (error) {
       console.error('Failed to start RoxyClaw:', error)
-      config.value.enabled = false
+      if (!previousConfig.enabled) {
+        await updateConfig({ enabled: false })
+      }
       return { success: false, message: $t('RoxyClaw 启动失败') }
     }
   }
@@ -310,28 +354,12 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
    * 停止 RoxyClaw
    */
   async function stopRoxyClaw(): Promise<{ success: boolean, message?: string }> {
-    try {
-      // 首先设置为停止状态
-      config.value.enabled = false
+    const previousConfig = { ...toRaw(config.value) }
 
-      // 如果在 Electron 环境中，调用主进程
-      if (globalThis.electronAPI) {
-        const result = await globalThis.electronAPI.send('mcp:stopRoxyClaw')
-        // 如果停止失败，恢复状态
-        if (!result.success) {
-          config.value.enabled = true
-        }
-        else {
-          // 停止成功后更新原始配置
-          updateOriginalConfig()
-        }
-        if (result.success) {
-          return {
-            success: true,
-            message: $t('RoxyClaw 停止成功'),
-          }
-        }
-        else {
+    try {
+      if (config.value.enabled) {
+        const nextConfig = await updateConfig({ enabled: false })
+        if (nextConfig.enabled) {
           return {
             success: false,
             message: $t('RoxyClaw 停止失败'),
@@ -339,15 +367,29 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
         }
       }
 
-      // 如果在浏览器环境（开发模式），使用 mock
-      await new Promise(resolve => setTimeout(resolve, 500))
-      // 停止成功后更新原始配置
+      const result = await requestAgentRoxyClaw('/stop', {
+        method: 'POST',
+      })
+
+      if (!result.success) {
+        if (previousConfig.enabled) {
+          await updateConfig({ enabled: true })
+        }
+        return {
+          success: false,
+          message: result.message || $t('RoxyClaw 停止失败'),
+        }
+      }
+
+      config.value.enabled = false
       updateOriginalConfig()
       return { success: true, message: $t('RoxyClaw 停止成功') }
     }
     catch (error) {
       console.error('Failed to stop RoxyClaw:', error)
-      config.value.enabled = true
+      if (previousConfig.enabled) {
+        await updateConfig({ enabled: true })
+      }
       return { success: false, message: $t('RoxyClaw 停止失败') }
     }
   }
@@ -374,104 +416,74 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   }
 
   /**
-   * 测试 Telegram 连接（通过 Electron IPC 调用，使用系统代理）
+   * 测试 Telegram 连接
    */
   async function testTelegram(token: string): Promise<{ success: boolean, message?: string }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:testTelegram', token)
-      }
-      // 浏览器环境降级处理
-      const response = await fetch(`https://api.telegram.org/bot${token}/getMe`)
-      const data = await response.json()
-      if (data.ok && data.result && data.result.is_bot) {
-        return { success: true, message: $t('Telegram bot token 有效') }
-      }
-      return { success: false, message: $t('Telegram bot token 无效') }
-    }
-    catch (error) {
-      console.error('Telegram test failed:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    return await requestAgentRoxyClaw('/test/telegram', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    })
   }
 
   /**
-   * 测试 Lark 连接（通过 Electron IPC 调用，使用系统代理）
+   * 测试 Lark 连接
    */
   async function testLark(appId: string, appSecret: string, environment: 'lark' | 'feishu' = 'feishu'): Promise<{ success: boolean, message?: string }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:testLark', appId, appSecret, environment)
-      }
-      // 浏览器环境降级处理
-      const domain = environment === 'lark' ? 'open.larksuite.com' : 'open.feishu.cn'
-      const response = await fetch(`https://${domain}/open-apis/auth/v3/tenant_access_token/internal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
-      })
-      const data = await response.json()
-      if (data.code === 0 && data.tenant_access_token) {
-        return { success: true, message: $t('{lark} app credentials 有效!', { lark: $t('Lark / 飞书') }) }
-      }
-      return { success: false, message: $t('app credentials 无效') }
-    }
-    catch (error) {
-      console.error('Lark test failed:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    return await requestAgentRoxyClaw('/test/lark', {
+      method: 'POST',
+      body: JSON.stringify({ appId, appSecret, environment }),
+    })
+  }
+
+  async function startLarkScanInstall(): Promise<LarkScanInstallStartResult> {
+    return await requestAgentRoxyClaw('/lark/scan-install', {
+      method: 'POST',
+    })
+  }
+
+  async function getLarkScanInstallStatus(installId: string): Promise<LarkScanInstallStatusResult> {
+    return await requestAgentRoxyClaw(`/lark/scan-install/${encodeURIComponent(installId)}`)
+  }
+
+  async function cancelLarkScanInstall(installId: string): Promise<{ success: boolean, message?: string }> {
+    return await requestAgentRoxyClaw(`/lark/scan-install/${encodeURIComponent(installId)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async function completeLarkScanInstall(result: NonNullable<NonNullable<LarkScanInstallStatusResult['data']>['result']>): Promise<RoxyClawConfig> {
+    const allowedUserIds = result.installerOpenId
+      ? Array.from(new Set([...config.value.lark_allowed_chat_ids, result.installerOpenId]))
+      : config.value.lark_allowed_chat_ids
+
+    const nextConfig = await updateConfig({
+      lark_environment: result.environment,
+      lark_app_id: result.appId,
+      lark_app_secret: result.appSecret,
+      lark_allowed_chat_ids: allowedUserIds,
+    })
+    connectionStatus.value.lark = { checked: true, status: 'success' }
+    return nextConfig
   }
 
   /**
-   * 测试 Slack 连接（通过 Electron IPC 调用，使用系统代理）
+   * 测试 Slack 连接
    */
   async function testSlack(botToken: string): Promise<{ success: boolean, message?: string }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:testSlack', botToken)
-      }
-      // 浏览器环境降级处理
-      const response = await fetch('https://slack.com/api/auth.test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${botToken}`,
-        },
-      })
-      const data = await response.json()
-      if (data.ok) {
-        return { success: true, message: $t('Slack bot token 有效!') }
-      }
-      return { success: false, message: data.error || $t('Slack bot token 无效') }
-    }
-    catch (error) {
-      console.error('Slack test failed:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    return await requestAgentRoxyClaw('/test/slack', {
+      method: 'POST',
+      body: JSON.stringify({ botToken }),
+    })
   }
 
   /**
-   * 测试 Discord 连接（通过 Electron IPC 调用，使用系统代理）
+   * 测试 Discord 连接
    */
   async function testDiscord(botToken: string): Promise<{ success: boolean, message?: string }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:testDiscord', botToken)
-      }
-      // 浏览器环境降级处理
-      const response = await fetch('https://discord.com/api/v10/users/@me', {
-        headers: { Authorization: `Bot ${botToken}` },
-      })
-      if (response.ok) {
-        return { success: true, message: $t('Discord bot token 有效!') }
-      }
-      const data = await response.json().catch(() => null)
-      return { success: false, message: data?.message || $t('Discord bot token 无效') }
-    }
-    catch (error) {
-      console.error('Discord test failed:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    return await requestAgentRoxyClaw('/test/discord', {
+      method: 'POST',
+      body: JSON.stringify({ botToken }),
+    })
   }
 
   // 辅助计算属性
@@ -483,29 +495,12 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
   const wechatConfigured = computed(() => !!config.value.wechat_bot_token)
 
   async function getWeixinBotQrcode(): Promise<{ success: boolean, message?: string, data?: { qrcode: string, url: string, qrcodeImgContent: string } }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:getWeixinBotQrcode')
-      }
-      return { success: false, message: 'Electron API unavailable' }
-    }
-    catch (error) {
-      console.error('Failed to get Weixin QR code:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    return await requestAgentRoxyClaw('/weixin/qrcode')
   }
 
   async function getWeixinBotQrcodeStatus(qrcode: string): Promise<{ success: boolean, message?: string, data?: { status: string, botToken: string, baseUrl: string } }> {
-    try {
-      if (globalThis.electronAPI) {
-        return await globalThis.electronAPI.send('mcp:getWeixinBotQrcodeStatus', qrcode)
-      }
-      return { success: false, message: 'Electron API unavailable' }
-    }
-    catch (error) {
-      console.error('Failed to get Weixin QR status:', error)
-      return { success: false, message: $t('网络错误') }
-    }
+    const params = new URLSearchParams({ qrcode })
+    return await requestAgentRoxyClaw(`/weixin/qrcode-status?${params.toString()}`)
   }
 
   return {
@@ -517,6 +512,10 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     restartRoxyClaw,
     testTelegram,
     testLark,
+    startLarkScanInstall,
+    getLarkScanInstallStatus,
+    cancelLarkScanInstall,
+    completeLarkScanInstall,
     testSlack,
     testDiscord,
     isEnabled,
@@ -528,7 +527,6 @@ export const useRoxyClawStore = defineStore('roxyClaw', () => {
     connectionStatus,
     isConfigChanged,
     updateOriginalConfig,
-    getMcpStatus,
     getWeixinBotQrcode,
     getWeixinBotQrcodeStatus,
   }

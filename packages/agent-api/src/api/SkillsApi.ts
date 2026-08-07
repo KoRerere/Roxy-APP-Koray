@@ -11,29 +11,28 @@
  */
 
 import {
-  DownloadSkillV1SkillsSlugDownloadGetData,
-  DownloadSkillV1SkillsSlugDownloadGetError,
-  DownloadSkillV1SkillsSlugDownloadGetParams,
+  DownloadSkillError,
+  DownloadSkillParams,
   EnabledPayload,
-  GetSkillV1SkillsSlugGetData,
-  GetSkillV1SkillsSlugGetError,
-  GetSkillV1SkillsSlugGetParams,
-  InstallSkillV1UserSkillsSlugInstallPostData,
-  InstallSkillV1UserSkillsSlugInstallPostError,
-  InstallSkillV1UserSkillsSlugInstallPostParams,
-  ListSkillCategoriesV1SkillCategoriesGetData,
-  ListSkillCategoriesV1SkillCategoriesGetError,
-  ListSkillsV1SkillsGetData,
-  ListSkillsV1SkillsGetError,
-  ListSkillsV1SkillsGetParams,
-  ListUserSkillsV1UserSkillsGetData,
-  ListUserSkillsV1UserSkillsGetError,
-  RemoveInstalledSkillV1UserSkillsSlugDeleteData,
-  RemoveInstalledSkillV1UserSkillsSlugDeleteError,
-  RemoveInstalledSkillV1UserSkillsSlugDeleteParams,
-  SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutData,
-  SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutError,
-  SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutParams,
+  GetSkillData,
+  GetSkillError,
+  GetSkillParams,
+  InstallUserSkillData,
+  InstallUserSkillError,
+  InstallUserSkillParams,
+  ListSkillCategoriesData,
+  ListSkillCategoriesError,
+  ListSkillsData,
+  ListSkillsError,
+  ListSkillsParams,
+  ListUserSkillsData,
+  ListUserSkillsError,
+  RemoveUserSkillData,
+  RemoveUserSkillError,
+  RemoveUserSkillParams,
+  SetUserSkillEnabledData,
+  SetUserSkillEnabledError,
+  SetUserSkillEnabledParams,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -48,17 +47,26 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name ListSkillCategoriesV1SkillCategoriesGet
+   * @name ListSkillCategories
    * @summary List enabled skill categories
    * @request GET:/v1/skill-categories
-   * @response `200` `ListSkillCategoriesV1SkillCategoriesGetData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `ListSkillCategoriesData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  listSkillCategoriesV1SkillCategoriesGet = (params: RequestParams = {}) =>
-    this.http.request<
-      ListSkillCategoriesV1SkillCategoriesGetData,
-      ListSkillCategoriesV1SkillCategoriesGetError
-    >({
+  listSkillCategories = (params: RequestParams = {}) =>
+    this.http.request<ListSkillCategoriesData, ListSkillCategoriesError>({
       path: `/v1/skill-categories`,
       method: "GET",
       format: "json",
@@ -68,17 +76,26 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name ListSkillsV1SkillsGet
+   * @name ListSkills
    * @summary List published skills
    * @request GET:/v1/skills
-   * @response `200` `ListSkillsV1SkillsGetData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `ListSkillsData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  listSkillsV1SkillsGet = (
-    query: ListSkillsV1SkillsGetParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<ListSkillsV1SkillsGetData, ListSkillsV1SkillsGetError>({
+  listSkills = (query: ListSkillsParams, params: RequestParams = {}) =>
+    this.http.request<ListSkillsData, ListSkillsError>({
       path: `/v1/skills`,
       method: "GET",
       query: query,
@@ -89,20 +106,26 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name GetSkillV1SkillsSlugGet
+   * @name GetSkill
    * @summary Get skill detail
    * @request GET:/v1/skills/{slug}
-   * @response `200` `GetSkillV1SkillsSlugGetData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `GetSkillData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  getSkillV1SkillsSlugGet = (
-    { slug }: GetSkillV1SkillsSlugGetParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<
-      GetSkillV1SkillsSlugGetData,
-      GetSkillV1SkillsSlugGetError
-    >({
+  getSkill = ({ slug }: GetSkillParams, params: RequestParams = {}) =>
+    this.http.request<GetSkillData, GetSkillError>({
       path: `/v1/skills/${slug}`,
       method: "GET",
       format: "json",
@@ -112,40 +135,54 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name DownloadSkillV1SkillsSlugDownloadGet
+   * @name DownloadSkill
    * @summary Download skill package
    * @request GET:/v1/skills/{slug}/download
-   * @response `200` `DownloadSkillV1SkillsSlugDownloadGetData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `302` `void` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  downloadSkillV1SkillsSlugDownloadGet = (
-    { slug }: DownloadSkillV1SkillsSlugDownloadGetParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<
-      DownloadSkillV1SkillsSlugDownloadGetData,
-      DownloadSkillV1SkillsSlugDownloadGetError
-    >({
+  downloadSkill = ({ slug }: DownloadSkillParams, params: RequestParams = {}) =>
+    this.http.request<any, DownloadSkillError>({
       path: `/v1/skills/${slug}/download`,
       method: "GET",
-      format: "json",
       ...params,
     });
   /**
    * No description
    *
    * @tags Skills
-   * @name ListUserSkillsV1UserSkillsGet
+   * @name ListUserSkills
    * @summary List installed skills for current user
    * @request GET:/v1/user/skills
-   * @response `200` `ListUserSkillsV1UserSkillsGetData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `ListUserSkillsData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  listUserSkillsV1UserSkillsGet = (params: RequestParams = {}) =>
-    this.http.request<
-      ListUserSkillsV1UserSkillsGetData,
-      ListUserSkillsV1UserSkillsGetError
-    >({
+  listUserSkills = (params: RequestParams = {}) =>
+    this.http.request<ListUserSkillsData, ListUserSkillsError>({
       path: `/v1/user/skills`,
       method: "GET",
       format: "json",
@@ -155,20 +192,29 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name InstallSkillV1UserSkillsSlugInstallPost
+   * @name InstallUserSkill
    * @summary Record skill installation
    * @request POST:/v1/user/skills/{slug}/install
-   * @response `200` `InstallSkillV1UserSkillsSlugInstallPostData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `InstallUserSkillData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  installSkillV1UserSkillsSlugInstallPost = (
-    { slug }: InstallSkillV1UserSkillsSlugInstallPostParams,
+  installUserSkill = (
+    { slug }: InstallUserSkillParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<
-      InstallSkillV1UserSkillsSlugInstallPostData,
-      InstallSkillV1UserSkillsSlugInstallPostError
-    >({
+    this.http.request<InstallUserSkillData, InstallUserSkillError>({
       path: `/v1/user/skills/${slug}/install`,
       method: "POST",
       format: "json",
@@ -178,21 +224,30 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name SetInstalledSkillEnabledV1UserSkillsSlugEnabledPut
+   * @name SetUserSkillEnabled
    * @summary Toggle installed skill enabled
    * @request PUT:/v1/user/skills/{slug}/enabled
-   * @response `200` `SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `SetUserSkillEnabledData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  setInstalledSkillEnabledV1UserSkillsSlugEnabledPut = (
-    { slug }: SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutParams,
+  setUserSkillEnabled = (
+    { slug }: SetUserSkillEnabledParams,
     data: EnabledPayload,
     params: RequestParams = {},
   ) =>
-    this.http.request<
-      SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutData,
-      SetInstalledSkillEnabledV1UserSkillsSlugEnabledPutError
-    >({
+    this.http.request<SetUserSkillEnabledData, SetUserSkillEnabledError>({
       path: `/v1/user/skills/${slug}/enabled`,
       method: "PUT",
       body: data,
@@ -204,20 +259,29 @@ export class SkillsApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Skills
-   * @name RemoveInstalledSkillV1UserSkillsSlugDelete
+   * @name RemoveUserSkill
    * @summary Remove installed skill record
    * @request DELETE:/v1/user/skills/{slug}
-   * @response `200` `RemoveInstalledSkillV1UserSkillsSlugDeleteData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `200` `RemoveUserSkillData` Successful Response
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
-  removeInstalledSkillV1UserSkillsSlugDelete = (
-    { slug }: RemoveInstalledSkillV1UserSkillsSlugDeleteParams,
+  removeUserSkill = (
+    { slug }: RemoveUserSkillParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<
-      RemoveInstalledSkillV1UserSkillsSlugDeleteData,
-      RemoveInstalledSkillV1UserSkillsSlugDeleteError
-    >({
+    this.http.request<RemoveUserSkillData, RemoveUserSkillError>({
       path: `/v1/user/skills/${slug}`,
       method: "DELETE",
       format: "json",

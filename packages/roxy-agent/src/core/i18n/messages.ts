@@ -21,6 +21,8 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'script.cloudDeleteFailedNetwork': '云端删除失败（连接错误）：{detail}，请重试',
     'script.cloudUpdateFailed': '云端同步失败：{detail}，请重试',
     'script.cloudUpdateFailedNetwork': '云端同步失败（连接错误）：{detail}，请重试',
+    'script.contentSaveFailed': '脚本内容保存失败：{detail}，请重试',
+    'script.officialReadonly': '官方脚本不支持编辑或删除',
     'script.localUpdateFailed': '本地更新失败',
   },
   'en': {
@@ -30,6 +32,8 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'script.cloudDeleteFailedNetwork': 'Failed to delete from cloud (connection error): {detail}. Please retry.',
     'script.cloudUpdateFailed': 'Failed to sync changes to cloud: {detail}. Please retry.',
     'script.cloudUpdateFailedNetwork': 'Failed to sync changes to cloud (connection error): {detail}. Please retry.',
+    'script.contentSaveFailed': 'Failed to save script content: {detail}. Please retry.',
+    'script.officialReadonly': 'Official scripts cannot be edited or deleted',
     'script.localUpdateFailed': 'Local update failed',
   },
 }

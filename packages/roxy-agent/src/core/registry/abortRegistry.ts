@@ -14,15 +14,22 @@ export function createAbort(runId: string) {
 
 export function abortRun(runId: string) {
   const entry = registry.get(runId)
-  if (!entry)
+  if (!entry) {
     return false
+  }
+
   entry.controller.abort('User cancelled')
-  registry.delete(runId)
   return true
 }
 
-export function cleanupRun(runId: string) {
+export function cleanupRun(runId: string, controller: AbortController) {
+  const entry = registry.get(runId)
+  if (!entry || entry.controller !== controller) {
+    return false
+  }
+
   registry.delete(runId)
+  return true
 }
 
 export function abortAll() {

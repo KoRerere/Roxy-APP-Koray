@@ -1,5 +1,6 @@
 import type { ContentBlock } from './attachments.js'
 import { HumanMessage } from '@langchain/core/messages'
+import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '../../core/task-monitor/index.js'
 import { createClawAgent } from '../../deepagents/index.js'
 import { ThreadManager } from './threadManager.js'
 
@@ -8,10 +9,6 @@ export type { ContentBlock }
 export interface AgentMessage {
   role: 'user' | 'assistant'
   content: string | ContentBlock[]
-}
-
-export interface BridgeConfig {
-  maxHistory?: number
 }
 
 interface SessionState {
@@ -24,16 +21,11 @@ export class IMBridge {
   private static readonly WORKER_ID = 'im-single-worker'
 
   private readonly imName: string
-  private config: Required<BridgeConfig>
   private sessions: Map<string, SessionState> = new Map()
   private threadManager: ThreadManager
 
-  constructor(imName: string, config: BridgeConfig = {}) {
+  constructor(imName: string) {
     this.imName = imName
-    this.config = {
-      maxHistory: 20,
-      ...config,
-    }
     this.threadManager = ThreadManager.getInstance()
   }
 
@@ -67,6 +59,16 @@ export class IMBridge {
     session.lastActivity = Date.now()
 
     let fullText = ''
+    const taskTitle = typeof content === 'string' && content.trim()
+      ? content.trim().slice(0, 64)
+      : `${this.imName} message`
+    publishTaskMonitorTaskStarted({
+      taskId: messageId,
+      title: taskTitle,
+      sourceType: 'im',
+      conversationId: threadId,
+      runId: messageId,
+    })
 
     let destroy: (() => Promise<void>) | undefined
     try {
@@ -74,6 +76,7 @@ export class IMBridge {
         workerId: IMBridge.WORKER_ID,
         conversationId: threadId,
         turnId: messageId,
+        taskMonitorTaskId: messageId,
       })
       const { agent, destroy: _destroy } = agentInstance
       destroy = _destroy
@@ -127,6 +130,7 @@ export class IMBridge {
       return fullText
     }
     finally {
+      publishTaskMonitorTaskFinished(messageId)
       if (destroy) {
         await destroy()
       }

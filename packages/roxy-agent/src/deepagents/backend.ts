@@ -1,10 +1,7 @@
 import type { FileCollectorStore } from './fileCollector'
 import { FilesystemBackend, LocalShellBackend } from 'deepagents'
-import { randomUUID } from 'node:crypto'
-import fs from 'node:fs'
-import path from 'node:path'
-import { env } from '@/config'
-import { createBrowserRecordingMiddleware, createDisableSubagentMiddleware, createRoxySkillsMiddleware, createToolErrorFallbackMiddleware } from './middlewares/index.js'
+import { createBrowserOperationLogMiddleware, createDisableSubagentMiddleware, createRoxySkillsMiddleware, createToolErrorFallbackMiddleware } from './middlewares/index.js'
+import { createRoxyFilesystemMiddleware } from './tools/filesystem'
 import { loadSkillFileTools } from './tools/skill'
 
 const DEEPAGENT_ROOT_DIR = process.cwd()
@@ -17,21 +14,18 @@ export interface DeepAgentRuntime {
   destroy: () => Promise<void>
 }
 
-export function ensureWorkspaceDir(conversationId?: string): string {
-  const safeConversationId = conversationId || randomUUID().toString()
-  const workspaceDir = path.join(env.CHECKPOINT_DIR, 'agent-workspaces', safeConversationId)
-  fs.mkdirSync(workspaceDir, { recursive: true })
-  return workspaceDir
-}
-
 export async function createDeepAgentRuntime(options?: {
   allowExecution?: boolean
   workspaceDir?: string
   fileCollector?: FileCollectorStore
-  browserRecording?: boolean
+  browserOperationLogging?: boolean
   conversationId?: string
-  /** worker ID，透传给录制事件用于区分来源 */
+  /** worker ID，透传给操作日志事件用于区分来源 */
   workerId?: string
+  /** 任务监控面板中的本次 agent task ID；传入后即使不录制 browser ops 也会安装浏览器工具监听。 */
+  taskMonitorTaskId?: string
+  /** 是否禁用 deepagents 默认 task subagent 工具，默认禁用 */
+  disableSubagentTool?: boolean
 }): Promise<DeepAgentRuntime> {
   const allowExecution = options?.allowExecution === true
   const rootDir = options?.workspaceDir ?? DEEPAGENT_ROOT_DIR
@@ -46,17 +40,24 @@ export async function createDeepAgentRuntime(options?: {
         rootDir,
       })
 
-  // 中间件顺序：数组前者为外层。BrowserRecording 必须位于 ToolErrorFallback 内层
+  // 中间件顺序：数组前者为外层。BrowserOperationLog 必须位于 ToolErrorFallback 内层
   // （排在它之后），才能最先捕获工具原始异常并记录 success=false，rethrow 后由外层兜底。
   const middleware = [
     createRoxySkillsMiddleware(),
-    createDisableSubagentMiddleware(),
+    createRoxyFilesystemMiddleware({ rootDir, fileCollector: options?.fileCollector }),
     createToolErrorFallbackMiddleware(),
   ]
-  if (options?.browserRecording && options?.conversationId) {
-    middleware.push(createBrowserRecordingMiddleware({
-      conversationId: options.conversationId,
-      workerId: options.workerId,
+  if (options?.disableSubagentTool !== false) {
+    middleware.splice(1, 0, createDisableSubagentMiddleware())
+  }
+  const shouldInstallBrowserMiddleware = Boolean(
+    (options?.browserOperationLogging && options?.conversationId) || options?.taskMonitorTaskId,
+  )
+  if (shouldInstallBrowserMiddleware) {
+    middleware.push(createBrowserOperationLogMiddleware({
+      conversationId: options?.conversationId,
+      workerId: options?.workerId,
+      taskId: options?.taskMonitorTaskId,
     }))
   }
 
@@ -65,7 +66,6 @@ export async function createDeepAgentRuntime(options?: {
     middleware,
     tools: [...loadSkillFileTools],
     interruptOn: {
-      read_file: { allowedDecisions: ['approve', 'reject'] },
       execute: { allowedDecisions: ['approve', 'reject'] },
     } as const,
     destroy: async () => {

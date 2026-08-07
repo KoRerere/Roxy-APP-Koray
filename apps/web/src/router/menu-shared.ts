@@ -1,6 +1,7 @@
 import { API } from '/@/api'
 import { WorkspaceType } from '/@/enums'
 import { usePermission } from '/@/hooks/usePermission'
+import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
@@ -8,7 +9,7 @@ import { I18nT } from 'vue-i18n'
 import { h } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
 
-/** 普通 / 电商模式共用的 Roxy Geo 外链入口（挂载于各模式「工具」分组下） */
+/** 普通 / 电商模式共用的 Roxy Geo 外链入口（挂载于「生态系统」分组下） */
 export const roxyGeoRoute: RouteRecordRaw = {
   path: 'roxy-geo',
   name: 'roxy-geo',
@@ -29,104 +30,13 @@ export const roxyGeoRoute: RouteRecordRaw = {
   component: () => import('/@/views/extensions'),
 }
 
-/** 普通 / 电商模式共用的自动化、团队协作及隐藏页路由 */
+/** 普通 / 电商模式共用的自动化、生态系统、团队协作及隐藏页路由 */
 export const sharedMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'automation',
     name: 'automation',
-    meta: { title: $t('自动化'), type: 'group', workspaceTypes: [WorkspaceType.Private] },
+    meta: { title: $t('AI & 自动化'), type: 'group', workspaceTypes: [WorkspaceType.Private] },
     children: [
-      {
-        path: 'roxy-claw',
-        name: 'roxy-claw',
-        meta: {
-          title: 'RoxyClaw',
-          icon: 'base/rx_ic_roxyclaw',
-          isRoxyClaw: true,
-          permissions: ['Roxy_Claw_All'],
-        },
-        redirect: { name: 'roxy-claw-home' },
-        children: [
-          {
-            path: 'roxy-claw/home',
-            name: 'roxy-claw-home',
-            meta: {
-              title: 'Claw',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw'),
-          },
-          {
-            path: 'roxy-claw/telegram',
-            name: 'roxy-claw-telegram',
-            meta: {
-              title: 'Telegram Bot',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw/telegram-config.vue'),
-          },
-          {
-            path: 'roxy-claw/lark',
-            name: 'roxy-claw-lark',
-            meta: {
-              title: 'Lark / Feishu Bot',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw/lark-config.vue'),
-          },
-          {
-            path: 'roxy-claw/slack',
-            name: 'roxy-claw-slack',
-            meta: {
-              title: 'Slack Bot',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw/slack-config.vue'),
-          },
-          {
-            path: 'roxy-claw/discord',
-            name: 'roxy-claw-discord',
-            meta: {
-              title: 'Discord Bot',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw/discord-config.vue'),
-          },
-          {
-            path: 'roxy-claw/wechat',
-            name: 'roxy-claw-wechat',
-            meta: {
-              title: 'WeChat Bot',
-              hideInMenu: true,
-              isRoxyClaw: true,
-              permissions: ['Roxy_Claw_All'],
-            },
-            component: () => import('/@/views/roxy-claw/wechat-config.vue'),
-          },
-        ],
-      },
-      {
-        path: 'skills-store',
-        name: 'skills-store',
-        meta: {
-          title: $t('AI Skills 商城'),
-          isRoxyAgent: true,
-          permissions: ['Roxy_AI_Agent_All'],
-          icon: 'roxy-agent/rx-ic-skills-store-color',
-          version: ['3.8.8', '>='],
-        },
-        component: () => import('/@/views/skills/index.vue'),
-      },
       {
         path: 'sync-control',
         name: 'sync-control',
@@ -140,6 +50,55 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
         component: () => import('/@/views/api-keys'),
       },
       {
+        path: 'roxy-agent',
+        name: 'roxy-agent',
+        meta: {
+          title: 'AI Agent',
+          type: 'button',
+          menuAction: 'roxy-agent',
+          icon: 'roxy-agent/rx-ic-logo',
+          showNewBadge: true,
+          permissions: ['Roxy_AI_Agent_All'],
+        },
+        redirect: { name: 'agent-console-chat' },
+      },
+      {
+        path: 'template-store',
+        name: 'template-store',
+        meta: {
+          title: $t('模板商城'),
+          type: 'button',
+          menuAction: 'roxy-agent-template-store',
+          icon: 'roxy-agent/rx-ic-templates-store',
+          permissions: ['Roxy_AI_Agent_All'],
+        },
+        redirect: { name: 'agent-console-template-store' },
+      },
+      {
+        path: 'task-manager',
+        name: 'task-manager',
+        meta: {
+          title: $t('任务管理'),
+          type: 'button',
+          menuAction: 'roxy-agent-task-manager',
+          icon: 'roxy-agent/rx-ic-task-manager',
+          permissions: ['Roxy_AI_Agent_All'],
+        },
+        redirect: { name: 'agent-console-task-manager' },
+      },
+      {
+        path: 'my-templates',
+        name: 'my-templates',
+        meta: {
+          title: $t('我的模板'),
+          type: 'button',
+          menuAction: 'roxy-agent-my-templates',
+          icon: 'roxy-agent/rx-ic-templates',
+          permissions: ['Roxy_AI_Agent_All'],
+        },
+        redirect: { name: 'agent-console-my-templates' },
+      },
+      {
         path: 'api-keys',
         name: 'api-keys',
         meta: {
@@ -150,6 +109,12 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
         component: () => import('/@/views/api-keys'),
       },
     ],
+  },
+  {
+    path: 'ecosystem',
+    name: 'ecosystem',
+    meta: { title: $t('生态系统'), type: 'group' },
+    children: [roxyGeoRoute],
   },
   {
     path: 'workspace',
@@ -248,6 +213,15 @@ async function handleSyncControlClick(event: Event) {
   globalThis.electronAPI.send('syncControl:open', check('Cost_Center_all'))
 }
 
+function handleRoxyAgentClick(route = '/agent-console') {
+  const { openRoxyAIAgent } = useOpenRoxyAIAgent()
+  void openRoxyAIAgent(route)
+}
+
 export const menuActionHandlers: Record<string, (event: Event) => void | Promise<void>> = {
+  'roxy-agent': () => handleRoxyAgentClick(),
+  'roxy-agent-task-manager': () => handleRoxyAgentClick('/agent-console/task-manager'),
+  'roxy-agent-my-templates': () => handleRoxyAgentClick('/agent-console/templates'),
+  'roxy-agent-template-store': () => handleRoxyAgentClick('/agent-console/template-store'),
   'sync-control': handleSyncControlClick,
 }

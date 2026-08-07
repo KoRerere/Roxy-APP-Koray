@@ -10,27 +10,41 @@ import { useTutorialStore } from '/@/stores/tutorial'
 import * as Sentry from '@sentry/vue'
 import { emitter } from '/@/utils/eventBus'
 import { useRoleStore } from '/@/stores/role'
+import { usePermissionStore } from '/@/stores/permission'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCMLocal, getCookie, hidePageLoading, initCrypto, isDev, isMainWindow, isMobile, isWindows, removeCookie, sleep } from '/@/utils'
+import { encryptAESGCMLocal, getCookie, hidePageLoading, isMainWindow, isMobile, isWindows, removeCookie, safeParseJSON, sleep } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 import { clearSessionLost, markSessionLost } from '/@/utils/sessionLost'
 import { clearLastRoute } from '/@/utils/lastRoute'
 import { isLoginRoute, navigateToLogin, pushToLocation } from '/@/router/navigation'
 import { useListCacheStore } from '/@/stores/listCache'
+import { clearAgentBackendAuthCache } from '/@/views/agent-console/api'
 import {
   isBeforeEnterSessionActive,
   markBeforeEnterSession,
   needsBeforeEnterResume,
 } from '/@/domain/before-enter'
 import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { createPerfTimer, perfLog } from '/@/utils/perf-log'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
 type UserCards = UnwrapRowsType<UserGetBindCardListListData>
 type UserPayInfo = UserGetUserPayInfoListData['data']
 type LoginWay = 'password' | 'phone' | OauthLoginType
+
+const INIT_USER_INFO_CACHE_KEY = 'user:initUserInfo:cache'
+const INIT_USER_INFO_CACHE_TTL = 5 * 60 * 1000
+
+interface InitUserInfoCache {
+  token: string
+  userInfo: UserInfo
+  workspace?: ReturnType<typeof useWorkspaceStore>['currentWorkspace']
+  permissions?: string[]
+  updatedAt: number
+}
 
 function getWorkspaceStore() {
   return useWorkspaceStore()
@@ -43,6 +57,7 @@ export const useUserStore = defineStore(
     const locale = useSimpleLocale()
     const tutorialStore = useTutorialStore()
     const roleStore = useRoleStore()
+    const permissionStore = usePermissionStore()
     const { check } = usePermission()
 
     /* 是否调用过初始化用户的方法 */
@@ -124,7 +139,7 @@ export const useUserStore = defineStore(
       return { identity, ...identityMap[identity] }
     })
 
-    type GetUserInfoOptions = {
+    interface GetUserInfoOptions {
       /** 默认 true：拉取用户信息后正式进空间；false 时仅更新 userInfo */
       enterWorkspace?: boolean
     }
@@ -260,6 +275,90 @@ export const useUserStore = defineStore(
       }
     }
 
+    function readInitUserInfoCache() {
+      const cache = safeParseJSON(localStorage.getItem(INIT_USER_INFO_CACHE_KEY), null) as InitUserInfoCache | null
+      if (!cache?.token || !cache?.userInfo?.id)
+        return null
+
+      if (cache.token !== token.value)
+        return null
+
+      if (Date.now() - cache.updatedAt > INIT_USER_INFO_CACHE_TTL)
+        return null
+
+      return cache
+    }
+
+    function restoreInitUserInfoCache() {
+      const endRestoreCache = createPerfTimer('user:initUserInfo:cache:restore')
+      const cache = readInitUserInfoCache()
+      if (!cache) {
+        endRestoreCache({ hit: false })
+        return false
+      }
+
+      userInfo.value = cache.userInfo
+      if (cache.workspace)
+        getWorkspaceStore().currentWorkspace = cache.workspace
+      if (cache.permissions?.length)
+        permissionStore.setPermissionCodes(cache.permissions)
+
+      endRestoreCache({
+        hit: true,
+        userId: cache.userInfo.id,
+        workspaceId: cache.workspace?.id,
+        permissionCount: cache.permissions?.length ?? 0,
+      })
+      return true
+    }
+
+    function writeInitUserInfoCache() {
+      if (!token.value || !userInfo.value.id)
+        return
+
+      const workspaceStore = getWorkspaceStore()
+      const permissions = permissionStore.getPermissionCodes()
+      localStorage.setItem(INIT_USER_INFO_CACHE_KEY, JSON.stringify({
+        token: token.value,
+        userInfo: userInfo.value,
+        workspace: workspaceStore.currentWorkspace,
+        permissions,
+        updatedAt: Date.now(),
+      } satisfies InitUserInfoCache))
+      perfLog('user:initUserInfo:cache:write', {
+        userId: userInfo.value.id,
+        workspaceId: workspaceStore.currentWorkspace?.id,
+        permissionCount: permissions.length,
+      })
+    }
+
+    function clearInitUserInfoCache() {
+      localStorage.removeItem(INIT_USER_INFO_CACHE_KEY)
+    }
+
+    function refreshWorkspaceContextInBackground(workspaceId: number) {
+      perfLog('user:workspaceContext:bg:scheduled', { workspaceId })
+      setTimeout(() => {
+        const endRefreshWorkspaceContext = createPerfTimer('user:workspaceContext:bg', { workspaceId })
+        const workspaceStore = getWorkspaceStore()
+        Promise.all([
+          workspaceStore.getPermissionByWorkspace(workspaceId, { pendingSwitch: true }),
+          workspaceStore.fetchWorkspaceList(),
+        ])
+          .then(() => {
+            writeInitUserInfoCache()
+          })
+          .catch((error) => {
+            perfLog('user:workspaceContext:bg:error', {
+              error: error instanceof Error ? error.message : String(error),
+            })
+          })
+          .finally(() => {
+            endRefreshWorkspaceContext()
+          })
+      }, 1500)
+    }
+
     function mixpanelTrack(event_name: string, data?: Record<string, any>) {
       mixpanel.track(event_name, {
         event_name,
@@ -306,6 +405,8 @@ export const useUserStore = defineStore(
       getWorkspaceStore().resetWorkspace()
       tutorialStore.resetVideoMaps()
       clearLastRoute()
+      clearInitUserInfoCache()
+      clearAgentBackendAuthCache()
       await logoutPromise
     }
 
@@ -435,45 +536,104 @@ export const useUserStore = defineStore(
     }
 
     const initUserInfo = async (intoWorkspaceId?: number, options?: GetUserInfoOptions) => {
+      const endInitUserInfo = createPerfTimer('user:initUserInfo', {
+        intoWorkspaceId,
+        enterWorkspace: options?.enterWorkspace !== false,
+      })
+      let resolvedByCache = false
       try {
         // 如果 web 端官网退出登陆了，则清空 token 并跳转至登录页
-        console.log('initUserInfo checkCookie')
+        perfLog('user:initUserInfo:checkCookie:start')
         await checkCookie()
-
-        console.log('initUserInfo token.value', token.value)
+        perfLog('user:initUserInfo:checkCookie:end', { hasToken: Boolean(token.value) })
 
         if (token.value) {
           setToken(token.value)
-          await getUserInfo(intoWorkspaceId, { enterWorkspace: false })
+          const cached = restoreInitUserInfoCache()
+          if (cached) {
+            resolvedByCache = true
+            hasCallInitUserInfo.resolve()
+            perfLog('user:initUserInfo:cache:hit', {
+              userId: userInfo.value.id,
+              workspaceId: getWorkspaceStore().currentWorkspace?.id,
+              permissionCount: permissionStore.getPermissionCodes().length,
+            })
+            perfLog('user:initUserInfo:cache:resolvedInit')
+          }
+          else {
+            perfLog('user:initUserInfo:cache:miss')
+          }
+
+          const endGetUserInfo = createPerfTimer('user:getUserInfo', {
+            intoWorkspaceId,
+            cached,
+            background: cached,
+          })
+          const userInfoPromise = getUserInfo(intoWorkspaceId, { enterWorkspace: false })
+          if (cached) {
+            void userInfoPromise
+              .catch((error) => {
+                perfLog('user:getUserInfo:bg:error', {
+                  error: error instanceof Error ? error.message : String(error),
+                })
+              })
+              .finally(() => {
+                endGetUserInfo()
+              })
+          }
+          else {
+            await userInfoPromise
+            endGetUserInfo()
+          }
 
           // 页内刷新：session 仍活跃，静默准备 workspace，保持 before-enter 路由
           if (isBeforeEnterSessionActive()) {
+            const endPrepareWorkspace = createPerfTimer('user:prepareWorkspace:beforeEnter', {
+              workspaceId: intoWorkspaceId ?? userInfo.value.workspaceId,
+            })
             const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
             if (workspaceId)
-              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true })
+              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true, force: cached })
             getUserConfig(true)
+            writeInitUserInfoCache()
+            endPrepareWorkspace()
             return
           }
 
           // App 重启后仍有本地步骤进度：恢复 before-enter，勿 enterWorkspace（避免 WelcomeModal）
           if (needsBeforeEnterResume(userInfo.value, intoWorkspaceId)) {
+            const endPrepareWorkspace = createPerfTimer('user:prepareWorkspace:resumeBeforeEnter', {
+              workspaceId: intoWorkspaceId ?? userInfo.value.workspaceId,
+            })
             const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
             if (workspaceId)
-              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true })
+              await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true, force: cached })
             markBeforeEnterSession()
             getUserConfig(true)
+            writeInitUserInfoCache()
+            endPrepareWorkspace()
             return
           }
 
           // App 重启或无活跃 session：正常进空间（未完成且无进度视为 skip）
-          if (options?.enterWorkspace !== false)
+          if (options?.enterWorkspace !== false) {
+            const endEnterWorkspace = createPerfTimer('user:enterWorkspace', {
+              workspaceId: intoWorkspaceId ?? userInfo.value.workspaceId,
+            })
             await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
+            endEnterWorkspace()
+            const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
+            if (cached && workspaceId)
+              refreshWorkspaceContextInBackground(workspaceId)
+          }
 
           getUserConfig(true)
+          writeInitUserInfoCache()
         }
       }
       finally {
         hasCallInitUserInfo.resolve()
+        endInitUserInfo({ resolvedByCache })
       }
     }
 

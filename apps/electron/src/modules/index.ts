@@ -5,6 +5,7 @@ import { isWindows } from '/@/constants/common'
 // import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { browserManager } from '/@/modules/browser'
+import { mcpManager } from '/@/modules/mcp'
 import { killRoxynetZombieProcess, startRoxynet } from '/@/modules/roxynet'
 import { initLocalConfig, restoreLastWindowOpenStatus, setupStore } from '/@/modules/store'
 import { appUpdater, ensureBinSeeds, resourceUpdater, startBinUpdaters, triggerFirstBinCheck } from '/@/modules/updater'
@@ -42,6 +43,7 @@ export async function setupModules() {
     await setupStore()
     // 启动 app
     await setupApp()
+    void mcpManager.startRoxyClawIfEnabled('app-start')
     // 启动资源更新器
     resourceUpdater.checkForUpdates()
     // 启动 roxynet / roxysync 后台更新器（定时检查 + 空闲 apply）

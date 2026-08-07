@@ -4,27 +4,26 @@
  * 三类 MCP 的生命周期：
  *
  * 1. 全局 MCP（openapi / faq）—— 见 globalMcpClients.ts，全局共享，无需进程隔离
- * 2. playwright MCP —— 每个 worker 独立 stdio 子进程，随 worker 创建/销毁（浏览器上下文隔离）
- * 3. 用户自定义 MCP —— stdio / sse / http，全局共享连接，通过配置文件持久化，支持启用/禁用
+ * 2. playwright MCP —— 每个 worker 独立 in-memory 客户端，随 worker 创建/销毁（浏览器上下文隔离）
+ * 3. 用户自定义 MCP —— stdio / http，全局共享连接，通过配置文件持久化，支持启用/禁用
  */
 
 import type { StructuredTool } from '@langchain/core/tools'
 import type { Connection } from '@langchain/mcp-adapters'
-import { MultiServerMCPClient } from '@langchain/mcp-adapters'
-import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { readFile as readFileAsync } from 'node:fs/promises'
+import type { CreateRoxyBrowserMcpServerOptions, RoxyBrowserLaunchConfig } from '@roxybrowser/playwright/mcp'
+import { loadMcpTools, MultiServerMCPClient } from '@langchain/mcp-adapters'
+import { Client as McpClient } from '@modelcontextprotocol/sdk/client/index.js'
+import { createRoxyBrowserMcpInMemory } from '@roxybrowser/playwright/mcp'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { env } from '@/config'
+import { agentPaths } from '@/core/storage/agentPaths'
 import { getGlobalMcpTools } from './globalMcpClients'
+import { withWindowScopeGuard } from './windowScope'
 
 // ─────────────────────────────────────────────
 // 工具函数
 // ─────────────────────────────────────────────
-
-function isElectron() {
-  return 'type' in process
-}
 
 /**
  * 将完整命令字符串解析为 [command, args[]]，支持引号包裹的带空格路径。
@@ -64,19 +63,73 @@ function parseCommandString(cmdStr: string): [string, string[]] {
   return [command, args]
 }
 
-async function calculateFileSha512Hex(filePath: string) {
-  const fileBuffer = await readFileAsync(filePath)
-  const hashSum = createHash('sha512')
-  hashSum.update(fileBuffer)
-  return hashSum.digest('hex')
+interface CloseableMcpClient {
+  close: () => Promise<void>
 }
 
-async function assertFileIntegritySha512(filePath: string, expectedSha512: string | undefined, label: string) {
-  if (!expectedSha512)
-    return
-  const localSha512 = await calculateFileSha512Hex(filePath)
-  if (localSha512 !== expectedSha512.toLowerCase()) {
-    throw new Error(`[MCP] ${label} sha512 mismatch`)
+interface PlaywrightMcpClientBundle {
+  client: CloseableMcpClient
+  tools: StructuredTool[]
+}
+
+const HIDDEN_BUILTIN_TOOL_NAMES = new Set([
+  // OpenAPI MCP 里的低层开窗工具只保留内部能力；模型统一使用
+  // Playwright MCP 的 roxy_browser_launch（开窗 + 连接）。
+  'roxy_open_browsers',
+  'roxy_browser_open',
+  'roxy_browser_connect',
+])
+
+function filterHiddenBuiltinTools(tools: StructuredTool[]): StructuredTool[] {
+  return tools.filter(tool => !HIDDEN_BUILTIN_TOOL_NAMES.has(tool.name))
+}
+
+function createRoxyBrowserLaunchConfig(): RoxyBrowserLaunchConfig | undefined {
+  const workspaceId = Number(env.ROXY_WORKSPACE_ID)
+  if (!Number.isFinite(workspaceId) || !env.ROXY_API_KEY || !env.ROXY_API_HOST) {
+    console.warn('[MCP] roxy_browser_launch disabled: missing ROXY_WORKSPACE_ID, ROXY_API_KEY, or ROXY_API_HOST')
+    return undefined
+  }
+
+  try {
+    const apiUrl = new URL(env.ROXY_API_HOST)
+    return {
+      workspaceId,
+      apiToken: env.ROXY_API_KEY,
+      host: apiUrl.hostname,
+      apiPort: apiUrl.port || (apiUrl.protocol === 'https:' ? 443 : 80),
+    }
+  }
+  catch (err: any) {
+    console.warn('[MCP] roxy_browser_launch disabled: invalid ROXY_API_HOST:', err.message)
+    return undefined
+  }
+}
+
+async function createInProcessPlaywrightMcpClient(
+  serverName: string,
+  options: CreateRoxyBrowserMcpServerOptions,
+): Promise<PlaywrightMcpClientBundle> {
+  const inMemoryBundle = await createRoxyBrowserMcpInMemory(options)
+  const client = new McpClient({ name: serverName, version: '1.0.0' })
+
+  try {
+    await client.connect(inMemoryBundle.clientTransport)
+    const tools = await loadMcpTools(serverName, client as any)
+    return {
+      client: {
+        close: async () => {
+          await client.close()
+          await inMemoryBundle.close()
+        },
+      },
+      tools,
+    }
+  }
+  catch (err) {
+    await client.close().catch(() => {})
+    await inMemoryBundle.close().catch(() => {})
+    throw err
   }
 }
 
@@ -92,12 +145,12 @@ export interface UserMcpServerConfig {
   args?: string[]
   /** stdio 传输：环境变量 */
   env?: Record<string, string>
-  /** sse / streamable-http 传输：URL */
+  /** streamable-http 传输：URL */
   url?: string
-  /** sse / http 传输：HTTP 请求头 */
+  /** http 传输：HTTP 请求头 */
   headers?: Record<string, string>
   /** 传输类型，默认根据有无 command 自动判断 */
-  type?: 'stdio' | 'sse' | 'http'
+  type?: 'stdio' | 'http'
   /** 描述 */
   description?: string
 }
@@ -140,11 +193,14 @@ interface UserMcpStateFile {
 // ─────────────────────────────────────────────
 
 export class McpManager {
-  /** playwright per-worker 独立进程客户端 */
-  private workerPlaywrightClients: Map<string, MultiServerMCPClient> = new Map()
+  /** playwright per-worker 独立 MCP 客户端 */
+  private workerPlaywrightClients: Map<string, CloseableMcpClient> = new Map()
 
   /** playwright per-worker 工具缓存 */
   private workerPlaywrightTools: Map<string, StructuredTool[]> = new Map()
+
+  /** per-worker 授权窗口 dirId 集合（未设置表示不限制） */
+  private workerAllowedDirIds: Map<string, Set<string>> = new Map()
 
   /** 用户自定义 MCP 共享连接（name → client） */
   private userMcpClients: Map<string, MultiServerMCPClient> = new Map()
@@ -161,15 +217,14 @@ export class McpManager {
   /** 扩展状态文件路径（我们自己的 enabled、lastTestResult 等） */
   private readonly stateFilePath: string
 
-  /** electron 进程路径 */
-  private readonly command = process.execPath
-
   /** 当前活跃 worker 数（仅计 playwright worker） */
   count = 0
 
   constructor() {
-    this.serversFilePath = path.join(env.CHECKPOINT_DIR!, 'mcp_servers.json')
-    this.stateFilePath = path.join(env.CHECKPOINT_DIR!, 'mcp_state.json')
+    // MCP 配置迁移到 state/mcp/ 下。state.json 与 servers.json 的合并（见设计文档 §4）留待后续，
+    // 本阶段仅做路径归位，保持双文件结构不变。
+    this.serversFilePath = agentPaths.mcpServersFile
+    this.stateFilePath = path.join(path.dirname(agentPaths.mcpServersFile), 'state.json')
     this._loadConfigFromDisk()
   }
 
@@ -250,6 +305,7 @@ export class McpManager {
         }
       }
 
+      mkdirSync(path.dirname(this.serversFilePath), { recursive: true })
       writeFileSync(this.serversFilePath, JSON.stringify({ mcpServers: servers }, null, 2), 'utf-8')
       writeFileSync(this.stateFilePath, JSON.stringify({ servers: state }, null, 2), 'utf-8')
     }
@@ -259,56 +315,51 @@ export class McpManager {
   }
 
   // ──────────────────────────────────────────
-  // Playwright per-worker（进程隔离）
+  // Playwright per-worker（同进程 in-memory）
   // ──────────────────────────────────────────
 
   /**
-   * 检测 Playwright MCP 是否就绪（脚本存在 + sha512 校验通过）。
+   * 检测 Playwright MCP 是否就绪（内置入口可用）。
    *
-   * 用于 recording Enhance 阶段在启动 run_script debug 测试前的环境准备：
+   * 用于启动 run_script debug 测试前的环境准备：
    * 确认底层浏览器 MCP 可被拉起，避免增强流程跑到测试环节才失败。
-   * 不实际拉起子进程，仅做轻量的前置条件检查。
    */
   async checkPlaywrightMcpReadiness(): Promise<{ ready: boolean, reason?: string }> {
-    const scriptPath = env.PLAYWRIGHT_SCRIPT_PATH
-    if (!scriptPath) {
-      return { ready: false, reason: 'PLAYWRIGHT_SCRIPT_PATH 未配置' }
-    }
-    if (!existsSync(scriptPath)) {
-      return { ready: false, reason: `Playwright MCP 脚本不存在：${scriptPath}` }
-    }
-    try {
-      await assertFileIntegritySha512(scriptPath, env.PLAYWRIGHT_SCRIPT_SHA512, 'PLAYWRIGHT_SCRIPT_PATH')
-    }
-    catch (err: any) {
-      return { ready: false, reason: err?.message ?? String(err) }
-    }
-    return { ready: true }
+    return typeof createRoxyBrowserMcpInMemory === 'function'
+      ? { ready: true }
+      : { ready: false, reason: '@roxybrowser/playwright/mcp createRoxyBrowserMcpInMemory 不可用' }
   }
 
   /**
-   * 为指定 worker 创建专属 playwright MCP 子进程
+   * 为指定 worker 创建专属 playwright MCP 客户端
    */
-  async createPlaywrightClientForWorker(workerId: string): Promise<void> {
-    await assertFileIntegritySha512(env.PLAYWRIGHT_SCRIPT_PATH!, env.PLAYWRIGHT_SCRIPT_SHA512, 'PLAYWRIGHT_SCRIPT_PATH')
-    console.log('env.PLAYWRIGHT_SCRIPT_PATH', env.PLAYWRIGHT_SCRIPT_PATH)
-    const playwright: Connection = {
-      transport: 'stdio',
-      command: this.command,
-      args: [env.PLAYWRIGHT_SCRIPT_PATH!],
-      env: {
-        ...process.env,
-        ELECTRON_RUN_AS_NODE: isElectron() ? '1' : '0',
-        ROXY_PLAYWRIGHT_OUTPUT_DIR: env.DOWNLOADS_DIR,
-        PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS: '1',
-      },
-    }
+  async createPlaywrightClientForWorker(workerId: string, sessionId: string): Promise<void> {
+    const serverName = `roxybrowser_playwright_${workerId}`
 
-    const client = new MultiServerMCPClient({
-      mcpServers: { [`roxybrowser_playwright_${workerId}`]: playwright },
+    const artifactsDir = agentPaths.sessionBrowserDir(sessionId)
+    const downloadsDir = agentPaths.sessionBrowserDownloadsDir(sessionId)
+    const screenshotsDir = agentPaths.sessionBrowserScreenshotsDir(sessionId)
+    const snapshotsDir = agentPaths.sessionBrowserSnapshotsDir(sessionId)
+    const tracesDir = agentPaths.sessionBrowserTracesDir(sessionId)
+    const tempDir = snapshotsDir
+
+    for (const dir of [artifactsDir, downloadsDir, screenshotsDir, snapshotsDir, tracesDir, tempDir])
+      mkdirSync(dir, { recursive: true })
+
+    const { client, tools } = await createInProcessPlaywrightMcpClient(serverName, {
+      artifactsDir,
+      downloadsDir,
+      screenshotsDir,
+      snapshotsDir,
+      tracesDir,
+      videosDir: tracesDir,
+      tempDir,
+      serverInfo: {
+        name: serverName,
+        version: '1.0.0',
+      },
+      roxyBrowserLaunch: createRoxyBrowserLaunchConfig(),
     })
-    await client.initializeConnections()
-    const tools = await client.getTools()
 
     this.workerPlaywrightClients.set(workerId, client)
     this.workerPlaywrightTools.set(workerId, tools)
@@ -317,7 +368,7 @@ export class McpManager {
   }
 
   /**
-   * 销毁指定 worker 的 playwright MCP 子进程
+   * 销毁指定 worker 的 playwright MCP 客户端
    */
   async destroyPlaywrightClientForWorker(workerId: string): Promise<void> {
     const client = this.workerPlaywrightClients.get(workerId)
@@ -331,6 +382,7 @@ export class McpManager {
     }
     this.workerPlaywrightClients.delete(workerId)
     this.workerPlaywrightTools.delete(workerId)
+    this.workerAllowedDirIds.delete(workerId)
     this.count--
     console.log(`[MCP] Playwright client destroyed for worker ${workerId}`)
   }
@@ -345,14 +397,36 @@ export class McpManager {
    *
    * @param workerId worker 标识
    * @param needPlaywright 是否包含 Playwright MCP 工具
-   * @param conversationId 当前会话 ID，用于录制事件关联
    */
-  async getToolsForWorker(workerId: string, needPlaywright = true, conversationId?: string): Promise<StructuredTool[]> {
+  async getToolsForWorker(workerId: string, needPlaywright = true): Promise<StructuredTool[]> {
     const globalTools = await getGlobalMcpTools()
     const playwrightTools = needPlaywright ? this.workerPlaywrightTools.get(workerId) ?? [] : []
     const userTools = this._getEnabledUserMcpTools()
 
-    return [...globalTools, ...playwrightTools, ...userTools]
+    // Keep low-level browser open/connect tools internal. The agent should use
+    // roxy_browser_launch, which opens a window and attaches Playwright in one step.
+    const visible = filterHiddenBuiltinTools([...globalTools, ...playwrightTools, ...userTools])
+    // 窗口作用域在工具调用层强制，而不是只靠提示词约束。
+    return visible.map(tool => withWindowScopeGuard(tool, () => this.workerAllowedDirIds.get(workerId)))
+  }
+
+  /**
+   * 声明某个 worker 只允许操作这些窗口。传空数组等于清除限制。
+   */
+  setWorkerAllowedDirIds(workerId: string, dirIds: string[]): void {
+    if (dirIds.length === 0) {
+      this.workerAllowedDirIds.delete(workerId)
+      return
+    }
+    this.workerAllowedDirIds.set(workerId, new Set(dirIds))
+  }
+
+  getWorkerAllowedDirIds(workerId: string): string[] {
+    return Array.from(this.workerAllowedDirIds.get(workerId) ?? [])
+  }
+
+  clearWorkerAllowedDirIds(workerId: string): void {
+    this.workerAllowedDirIds.delete(workerId)
   }
 
   private _getEnabledUserMcpTools(): StructuredTool[] {
@@ -376,34 +450,6 @@ export class McpManager {
     return Array.from(this.userMcpEntries.entries())
       .map(([name, entry]) => ({ name, ...entry }))
       .sort((a, b) => b.createdAt - a.createdAt)
-  }
-
-  /** 获取完整 MCP 列表：内置（builtin=true）置顶 + 用户自定义按创建时间倒序 */
-  listAllMcpServers(): UserMcpEntry[] {
-    const builtins: UserMcpEntry[] = [
-      {
-        name: 'roxybrowser-openapi-mcp',
-        config: { description: 'RoxyBrowser OpenAPI MCP' },
-        enabled: true,
-        createdAt: 0,
-        builtin: true,
-      },
-      {
-        name: 'roxybrowser_playwright',
-        config: { description: 'RoxyBrowser Playwright MCP' },
-        enabled: true,
-        createdAt: 0,
-        builtin: true,
-      },
-      {
-        name: 'roxybrowser-faq-mcp',
-        config: { url: 'https://faq.roxybrowser.com/mcp', description: 'RoxyBrowser FAQ MCP' },
-        enabled: true,
-        createdAt: 0,
-        builtin: true,
-      },
-    ]
-    return [...builtins, ...this.listUserMcpServers()]
   }
 
   /** 新增或更新用户自定义 MCP 配置 */

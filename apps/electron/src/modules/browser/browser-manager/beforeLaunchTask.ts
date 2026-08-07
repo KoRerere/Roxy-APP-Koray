@@ -22,6 +22,14 @@ import { appendOpenUrlsToLaunchArgs } from './utils/splitOpenUrlsForLaunch'
 const RE_MEM_TOTAL = /MemTotal:\s+(\d+)/
 const RE_MEM_AVAILABLE = /MemAvailable:\s+(\d+)/
 
+const firefoxBackgroundAutomationPrefs = [
+  'user_pref("focusmanager.testmode", true);',
+  'user_pref("layout.testing.top-level-always-active", true);',
+  'user_pref("dom.min_background_timeout_value", 0);',
+  'user_pref("dom.min_background_timeout_value_without_budget_throttling", 0);',
+  'user_pref("dom.timeout.enable_budget_timer_throttling", false);',
+]
+
 /** 最后一次发送的消息 */
 export interface LastMessage {
   dirId: string
@@ -366,8 +374,6 @@ export class BeforeLaunchTask {
     const {
       startupParam,
       positionSwitch,
-      openWidth,
-      openHeight,
       dirId,
       openWorkbench,
       allOpenUrl,
@@ -482,9 +488,6 @@ export class BeforeLaunchTask {
         args.push(`--load-extension=${plugins.join(',')}`)
       }
     }
-
-    /** 内置命令行参数 keys */
-    const builtInArgKeys = args.map(arg => arg.split('=')[0])
 
     // 开启沙盒模式
     if (sandboxPermission) {
@@ -798,6 +801,8 @@ export class BeforeLaunchTask {
       const { useGpu, sandboxPermission } = this.browserItem.winInfo
       const managedPrefs: string[] = [
         '// Roxy Browser managed preferences',
+        // 保持后台 Firefox profile 可响应 BiDi 合成点击，并避免后台渲染/计时器节流影响自动化。
+        ...firefoxBackgroundAutomationPrefs,
         // page=1：启动时显示主页（对应设置 → 主页 → 主页和新窗口 = "Firefox 主页（默认）"）
         // 不使用 page=3，避免 session 恢复与 CLI URL 重复开 tab
         // 'user_pref("browser.startup.page", 1);',

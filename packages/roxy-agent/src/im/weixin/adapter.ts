@@ -9,9 +9,13 @@ const ILINK_APP_ID = 'bot'
 const ILINK_APP_CLIENT_VERSION = buildClientVersion(CHANNEL_VERSION)
 const RETRY_INTERVAL_MS = 3000
 const REPLY_MAX_CHARS = 2000
+const TYPING_KEEPALIVE_INTERVAL_MS = 5000
+const TYPING_STATUS_TYPING = 1
+const TYPING_STATUS_CANCEL = 2
 
 interface WeixinConfig {
   botToken?: string
+  baseUrl?: string
 }
 
 interface WeixinTextItem {
@@ -41,6 +45,11 @@ interface GetUpdatesResponse {
   get_updates_buf?: string
 }
 
+interface GetConfigResponse {
+  ret?: number
+  typing_ticket?: string
+}
+
 interface ApiErrorResponse {
   ret?: number
   errmsg?: string
@@ -50,7 +59,7 @@ interface ApiErrorResponse {
 export async function startWeixinAdapter(
   bridge: IMBridge,
   config: WeixinConfig,
-): Promise<void> {
+): Promise<() => void> {
   if (!config.botToken) {
     throw new Error('Weixin bot token is required. Configure it from the frontend before starting IM mode.')
   }
@@ -58,25 +67,36 @@ export async function startWeixinAdapter(
   const adapter = new WeixinAdapter(bridge, config)
   adapter.start()
   console.log('[Weixin] Adapter started.')
+
+  return () => {
+    adapter.stop()
+  }
 }
 
 class WeixinAdapter {
   private readonly bridge: IMBridge
   private readonly botToken: string
-  private emptyPollCount = 0
+  private readonly baseUrl: string
+  private readonly typingTickets = new Map<string, string>()
   private getUpdatesBuf = ''
+  private stopped = false
 
   constructor(bridge: IMBridge, config: WeixinConfig) {
     this.bridge = bridge
     this.botToken = config.botToken!
+    this.baseUrl = normalizeBaseUrl(config.baseUrl)
   }
 
   start(): void {
     void this.runLoop()
   }
 
+  stop(): void {
+    this.stopped = true
+  }
+
   private async runLoop(): Promise<void> {
-    while (true) {
+    while (!this.stopped) {
       try {
         // Don't reset cursor here - keep it across retries
         await this.pollUpdatesLoop()
@@ -90,9 +110,8 @@ class WeixinAdapter {
   }
 
   private async pollUpdatesLoop(): Promise<void> {
-    while (true) {
+    while (!this.stopped) {
       const previousCursor = this.getUpdatesBuf
-      console.debug(`[Weixin] getupdates request with cursor: ${truncateForLog(previousCursor, 60)}`)
 
       const response = await this.apiPost<GetUpdatesResponse>('ilink/bot/getupdates', {
         get_updates_buf: previousCursor,
@@ -102,19 +121,6 @@ class WeixinAdapter {
       const messages = Array.isArray(response.msgs) ? response.msgs : []
       const responseCursor = response.get_updates_buf || ''
 
-      console.debug(`[Weixin] getupdates response: msgs=${messages.length}, cursor=${truncateForLog(responseCursor, 60)}`)
-
-      if (messages.length > 0) {
-        this.emptyPollCount = 0
-        console.info(`[Weixin] getupdates returned ${messages.length} message(s)`)
-      }
-      else {
-        this.emptyPollCount++
-        if (this.emptyPollCount % 20 === 0) {
-          console.info('[Weixin] getupdates heartbeat: no new messages')
-        }
-      }
-
       for (const message of messages) {
         await this.handleInboundMessage(message)
       }
@@ -122,7 +128,6 @@ class WeixinAdapter {
       // Always update cursor if server returns a non-empty one
       if (responseCursor && responseCursor.length > 0) {
         this.getUpdatesBuf = responseCursor
-        console.debug(`[Weixin] cursor updated to: ${truncateForLog(responseCursor, 60)}`)
       }
     }
   }
@@ -172,6 +177,7 @@ class WeixinAdapter {
 
     const scriptMatch = trimmedText.match(/^\/script\s+(\S[\s\S]*)$/i)
     if (scriptMatch) {
+      const typing = await this.startTypingIndicator(fromUserId, contextToken)
       try {
         const reply = await this.bridge.handleMessage(channelId, scriptMatch[1].trim(), undefined)
         await this.sendText(fromUserId, reply, contextToken)
@@ -180,9 +186,13 @@ class WeixinAdapter {
         console.error('[Weixin] script handleMessage error:', err)
         await this.sendText(fromUserId, formatError(err), contextToken)
       }
+      finally {
+        await typing.stop()
+      }
       return
     }
 
+    const typing = await this.startTypingIndicator(fromUserId, contextToken)
     try {
       const reply = await this.bridge.handleMessage(channelId, trimmedText)
       await this.sendText(fromUserId, reply, contextToken)
@@ -190,6 +200,9 @@ class WeixinAdapter {
     catch (err) {
       console.error('[Weixin] handleMessage error:', err)
       await this.sendText(fromUserId, formatError(err), contextToken)
+    }
+    finally {
+      await typing.stop()
     }
   }
 
@@ -226,7 +239,7 @@ class WeixinAdapter {
 
   private async apiPost<T>(endpoint: string, body: unknown): Promise<T> {
     const payload = JSON.stringify(body)
-    const response = await fetch(`${DEFAULT_BASE_URL}/${endpoint}`, {
+    const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -253,7 +266,96 @@ class WeixinAdapter {
     if (endpoint === 'ilink/bot/sendmessage') {
       console.info('[Weixin] sendmessage accepted by server')
     }
+    else if (endpoint === 'ilink/bot/sendtyping') {
+      console.debug('[Weixin] sendtyping accepted by server')
+    }
     return data
+  }
+
+  private async startTypingIndicator(toUserId: string, contextToken: string): Promise<{ stop: () => Promise<void> }> {
+    let stopped = false
+    let active = false
+    let timer: ReturnType<typeof setInterval> | undefined
+
+    const send = async (status: number): Promise<boolean> => {
+      try {
+        return await this.sendTyping(toUserId, contextToken, status)
+      }
+      catch (err) {
+        const action = status === TYPING_STATUS_CANCEL ? 'cancel' : 'send'
+        console.warn(`[Weixin] typing ${action} failed:`, err)
+        return false
+      }
+    }
+
+    active = await send(TYPING_STATUS_TYPING)
+
+    if (active && !stopped) {
+      timer = setInterval(() => {
+        void send(TYPING_STATUS_TYPING).then((ok) => {
+          if (!ok && timer) {
+            active = false
+            clearInterval(timer)
+            timer = undefined
+          }
+        })
+      }, TYPING_KEEPALIVE_INTERVAL_MS)
+    }
+
+    return {
+      stop: async () => {
+        if (stopped) {
+          return
+        }
+        stopped = true
+        if (timer) {
+          clearInterval(timer)
+        }
+        if (active) {
+          await send(TYPING_STATUS_CANCEL)
+        }
+      },
+    }
+  }
+
+  private async sendTyping(toUserId: string, contextToken: string, status: number): Promise<boolean> {
+    const typingTicket = await this.getTypingTicket(toUserId, contextToken)
+    if (!typingTicket) {
+      console.debug(`[Weixin] typing ticket is empty for user=${toUserId}`)
+      return false
+    }
+
+    try {
+      await this.apiPost('ilink/bot/sendtyping', {
+        ilink_user_id: toUserId,
+        typing_ticket: typingTicket,
+        status,
+        base_info: buildBaseInfo(),
+      })
+    }
+    catch (err) {
+      this.typingTickets.delete(toUserId)
+      throw err
+    }
+    return true
+  }
+
+  private async getTypingTicket(toUserId: string, contextToken: string): Promise<string> {
+    const cached = this.typingTickets.get(toUserId)
+    if (cached) {
+      return cached
+    }
+
+    const response = await this.apiPost<GetConfigResponse>('ilink/bot/getconfig', {
+      ilink_user_id: toUserId,
+      context_token: contextToken,
+      base_info: buildBaseInfo(),
+    })
+    const ticket = response.typing_ticket?.trim() || ''
+    if (ticket) {
+      this.typingTickets.set(toUserId, ticket)
+    }
+    return ticket
   }
 }
 
@@ -319,6 +421,10 @@ function buildClientVersion(version: string): number {
 
 function buildClientId(): string {
   return `roxy-weixin-${randomUUID()}`
+}
+
+function normalizeBaseUrl(baseUrl: string | undefined): string {
+  return (baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, '')
 }
 
 function sleep(ms: number): Promise<void> {

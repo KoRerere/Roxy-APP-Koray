@@ -6,6 +6,7 @@ import path from 'node:path'
 import { syncAutoStart } from '/@/modules/app/auto-start'
 import { browserManager } from '/@/modules/browser'
 import { initDictCache } from '/@/modules/dict'
+import { mcpManager } from '/@/modules/mcp'
 import { openAPIServer } from '/@/modules/openapi'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
@@ -43,7 +44,8 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     // aliOSS.init()
     // 重新获取用户配置
     await fetchUserConfig()
-    openAPIServer.start()
+    await openAPIServer.start()
+    void mcpManager.startRoxyClawIfEnabled('login', { ensureOpenAPIServer: false })
     console.log('user:setUserInfo', store.autoStart)
     syncAutoStart(Boolean(store.autoStart))
   })
@@ -52,6 +54,7 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:logout', async () => {
     closeAllSyncDialogs()
     openAPIServer.stop()
+    await mcpManager.closeMcpServer({ waitForExit: true })
     await browserManager.closeAll({ ensureServerSync: true, syncProgressReason: 'logout' }).finally(() => {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')

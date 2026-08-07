@@ -1,5 +1,7 @@
 import type { Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import express from 'express'
+import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { store } from '/@/modules/store'
 import { setupMiddlewares } from './middlewares/'
@@ -25,20 +27,25 @@ export const openAPIServer = new class OpenAPIServer {
       if (data.open) {
         await this.stop()
 
-        this.#server = this.app.listen(data.port, '0.0.0.0', (error: any) => {
-          if (error) {
-            console.error('OpenAPI server start error:', error)
-            store.apiPort = -1
-          }
-          else {
-            const port = this.app.get('port') || (this.#server?.address() as any)?.port
-            if (port) {
-              store.apiPort = port
+        try {
+          const port = await getPortPromise({ port: data.port })
+          const actualPort = await this.listen(port)
+          store.apiPort = actualPort
+          store.apiKey = data.apiKey
+          console.log(`OpenAPI server is running on ${actualPort}`)
+
+          if (actualPort !== data.port) {
+            console.warn(`OpenAPI port ${data.port} is occupied, switched to ${actualPort}`)
+            const result = await API.base.userSetUserApiCreate({ ...data, port: actualPort })
+            if (result.code !== 0) {
+              console.error('OpenAPI server failed to save fallback port:', result.msg)
             }
-            console.log(`OpenAPI server is running on ${port}`)
           }
-        })
-        store.apiKey = data.apiKey
+        }
+        catch (error) {
+          console.error('OpenAPI server start error:', error)
+          store.apiPort = -1
+        }
       }
       else {
         store.apiPort = -1
@@ -48,6 +55,24 @@ export const openAPIServer = new class OpenAPIServer {
     else {
       console.log('OpenAPI server failed to start:', msg)
     }
+  }
+
+  private async listen(port: number) {
+    return new Promise<number>((resolve, reject) => {
+      const server = this.app.listen(port, '0.0.0.0')
+      this.#server = server
+
+      server.once('error', (error) => {
+        if (this.#server === server)
+          this.#server = null
+        reject(error)
+      })
+
+      server.once('listening', () => {
+        const address = server.address()
+        resolve(typeof address === 'object' && address ? (address as AddressInfo).port : port)
+      })
+    })
   }
 
   async stop() {

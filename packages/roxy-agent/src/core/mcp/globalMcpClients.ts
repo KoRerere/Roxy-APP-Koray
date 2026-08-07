@@ -13,7 +13,8 @@ import type { DynamicStructuredTool, StructuredTool } from '@langchain/core/tool
 import { loadMcpTools, MultiServerMCPClient } from '@langchain/mcp-adapters'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { RoxyBrowserMCPServer } from '@roxybrowser/openapi'
+import { createRoxyMcpServer } from '@roxybrowser/openapi'
+import { env } from '../../config'
 
 interface GlobalMcpEntry {
   name: string
@@ -21,9 +22,24 @@ interface GlobalMcpEntry {
   cache?: StructuredTool[]
 }
 
+function getOpenApiServerOptions() {
+  const workspaceId = Number(env.ROXY_WORKSPACE_ID)
+  const context = Number.isFinite(workspaceId)
+    ? { workspaceId }
+    : undefined
+
+  return {
+    roxy: {
+      apiHost: env.ROXY_API_HOST,
+      apiKey: env.ROXY_API_KEY,
+    },
+    ...(context ? { context } : {}),
+  }
+}
+
 async function createOpenApiTools(): Promise<DynamicStructuredTool[]> {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
-  const roxyServer = new RoxyBrowserMCPServer()
+  const roxyServer = createRoxyMcpServer(getOpenApiServerOptions())
   await roxyServer.connect(serverTransport)
   const mcpClient = new Client(
     { name: 'roxybrowser-openapi-mcp', version: '1.0.0' },
@@ -84,7 +100,7 @@ export async function getGlobalMcpTools(): Promise<StructuredTool[]> {
 
 /**
  * 仅获取 OpenAPI 工具（不含 FAQ）
- * 供 script agent 使用（RPA 场景不需要 FAQ）
+ * 供脚本编写/调试流程使用（RPA 场景不需要 FAQ）
  */
 export async function getOpenApiTools(): Promise<StructuredTool[]> {
   const entry = GLOBAL_MCP_REGISTRY.find(e => e.name === 'openapi')!

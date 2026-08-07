@@ -1,0 +1,1458 @@
+<script setup lang="ts">
+import { EditorContent } from '@tiptap/vue-3'
+import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentTodoProgress } from '../types'
+import type { AgentComposerItem } from './chat-composer/types'
+import AgentTodoPill from './AgentTodoPill.vue'
+import AgentTooltip from './AgentTooltip.vue'
+import ComposerToolbar from './ComposerToolbar.vue'
+import SuggestionMenu from './chat-composer/SuggestionMenu.vue'
+import { getClipboardFiles } from './chat-composer/clipboardFiles'
+import {
+  getInvalidTemplateReferenceLabels,
+  getMissingComposerTokenLabels,
+} from './chat-composer/protocol'
+import { useAgentComposer } from './chat-composer/useAgentComposer'
+
+const props = defineProps<{
+  autoFocus?: boolean
+  focusKey?: number | string
+  hitlRequest?: AgentHitlRequest
+  pendingAttachments: AgentAttachment[]
+  placeholder?: string
+  promptMinHeight?: string
+  readonly?: boolean
+  recommendedTemplateItems?: AgentComposerItem[]
+  thinking: boolean
+  showGlow?: boolean
+  todoProgress?: AgentTodoProgress
+  variant?: 'chat' | 'prompt-field'
+}>()
+
+const emit = defineEmits<{
+  addAttachments: [files: File[]]
+  addFolder: [folder: AgentFolderSelection]
+  addPathAttachment: [selection: AgentPathSelection]
+  removeAttachment: [fileId: string]
+  send: []
+  stop: []
+  submitHitl: [payload: AgentHitlSubmitPayload]
+}>()
+
+const model = defineModel<string>({ required: true })
+const recommendedTemplateItems = computed(() => props.recommendedTemplateItems ?? [])
+const isPromptField = computed(() => props.variant === 'prompt-field')
+const isEditable = computed(() => !props.readonly)
+const composerPlaceholder = computed(() => props.placeholder ?? '')
+const composerStyle = computed(() => isPromptField.value && props.promptMinHeight
+  ? { '--agent-prompt-field-min-height': props.promptMinHeight }
+  : undefined)
+
+const shellRef = ref<HTMLElement | null>(null)
+const composerShellRef = ref<HTMLElement | null>(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const inputTokenInputRef = ref<HTMLInputElement | null>(null)
+const inputTokenPopoverRef = ref<HTMLElement | null>(null)
+const hitlValues = ref<Record<string, AgentHitlControlValue>>({})
+const inputTokenValue = ref('')
+const inputTokenComposing = ref(false)
+const missingPromptWarning = ref('')
+const inputTokenPopoverStyle = reactive({
+  left: '0px',
+  top: '0px',
+  transform: 'translate(-50%, -100%)',
+  maxWidth: '460px',
+  zIndex: '80',
+})
+const inputTokenPopoverPlacement = ref<'top' | 'bottom'>('top')
+const pastedTextFileIndex = ref(0)
+
+const PASTED_TEXT_FILE_MIN_LENGTH = 4000
+const PASTED_TEXT_FILE_MIN_LINES = 40
+
+const {
+  allMentionItemsSelected,
+  cancelMentionSelection,
+  canSubmit,
+  chooseItem,
+  closeSuggestion,
+  cancelInputTokenEdit,
+  editor,
+  focusEditor,
+  confirmMentionSelection,
+  confirmInputTokenEdit,
+  inputEditor,
+  isEmpty,
+  markSuggestionItemRead,
+  navigateSuggestion,
+  profileHasMore,
+  profileLoadError,
+  profileLoadingMore,
+  profileReloading,
+  profileSelectingAll,
+  projectOptions,
+  loadMoreProfiles,
+  selectedMentionCount,
+  selectedMentionIds,
+  selectedProjectId,
+  retryLoadProfiles,
+  selectToolbar,
+  suggestion,
+  toggleAllMentionItems,
+  updateSelectedProject,
+  updateSuggestionQuery,
+} = useAgentComposer({
+  model,
+  editable: isEditable,
+  onSend: handleComposerSend,
+  recommendedSlashItems: recommendedTemplateItems,
+  submitOnEnter: !isPromptField.value,
+})
+
+const hasAttachmentUploading = computed(() => props.pendingAttachments.some(attachment => attachment.uploadStatus === 'uploading'))
+const composerCanSubmit = computed(() => {
+  return !hasAttachmentUploading.value && (canSubmit.value || props.pendingAttachments.length > 0)
+})
+let autoFocusFrame = 0
+let inputTokenPopoverFrame = 0
+let inputTokenGlobalListenersBound = false
+let inputTokenPopoverResizeObserver: ResizeObserver | undefined
+
+function requestEditorFocus() {
+  if (!props.autoFocus || props.hitlRequest)
+    return
+
+  if (typeof window === 'undefined') {
+    focusEditor()
+    return
+  }
+
+  if (autoFocusFrame)
+    window.cancelAnimationFrame(autoFocusFrame)
+
+  autoFocusFrame = window.requestAnimationFrame(() => {
+    autoFocusFrame = 0
+    focusEditor()
+  })
+}
+
+function getFileExtension(fileName: string) {
+  const ext = fileName.split('.').pop()
+  return ext && ext !== fileName ? ext.toUpperCase() : $t('文件')
+}
+
+function getAttachmentPreview(attachment: AgentAttachment) {
+  return attachment.preview || attachment.url || attachment.localUrl || attachment.fileUrl || attachment.remoteUrl || ''
+}
+
+function isImageFileName(fileName: string) {
+  return /\.(?:png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(fileName)
+}
+
+function isImageAttachment(attachment: AgentAttachment) {
+  return attachment.kind === 'file'
+    && (attachment.mimeType.startsWith('image/') || isImageFileName(attachment.fileName))
+    && Boolean(getAttachmentPreview(attachment))
+}
+
+function getAttachmentTypeLabel(attachment: AgentAttachment) {
+  if (attachment.uploadStatus === 'uploading')
+    return $t('上传中')
+
+  if (attachment.kind === 'folder')
+    return 'Folder'
+
+  return getFileExtension(attachment.fileName)
+}
+
+function getPathBaseName(value: string) {
+  return value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || value
+}
+
+function getFolderNameFromFiles(files: File[]) {
+  const first = files[0] as (File & { webkitRelativePath?: string }) | undefined
+  const relativePath = first?.webkitRelativePath
+  return relativePath?.split('/').filter(Boolean)[0] || first?.name || $t('文件夹')
+}
+
+async function openAttachmentPicker() {
+  if (props.thinking)
+    return
+
+  if (globalThis.isElectron) {
+    try {
+      const selected = await globalThis.electronAPI.send('dialog:selectFileOrDirInfo')
+      if (selected?.path) {
+        emit('addPathAttachment', {
+          kind: selected.type === 'dir' ? 'folder' : 'file',
+          name: selected.name || getPathBaseName(selected.path),
+          path: selected.path,
+        })
+      }
+      return
+    }
+    catch (error) {
+      console.error('[agent-console] Failed to select attachment:', error)
+    }
+  }
+
+  fileInputRef.value?.click()
+}
+
+function addFiles(files: File[]) {
+  if (!files.length || props.thinking)
+    return
+
+  emit('addAttachments', files)
+}
+
+function shouldConvertPastedTextToFile(text: string) {
+  const normalized = text.trim()
+  if (!normalized)
+    return false
+
+  return normalized.length >= PASTED_TEXT_FILE_MIN_LENGTH
+    || normalized.split(/\r?\n/).length >= PASTED_TEXT_FILE_MIN_LINES
+}
+
+function createPastedTextFile(text: string) {
+  pastedTextFileIndex.value += 1
+  const suffix = pastedTextFileIndex.value === 1 ? '' : `-${pastedTextFileIndex.value}`
+  return new File([text], `pasted-text${suffix}.txt`, {
+    lastModified: Date.now(),
+    type: 'text/plain',
+  })
+}
+
+function handleComposerPaste(event: ClipboardEvent) {
+  const files = getClipboardFiles(event.clipboardData)
+  if (isPromptField.value || props.readonly)
+    return
+
+  if (files.length) {
+    event.preventDefault()
+    addFiles(files)
+    return
+  }
+
+  const text = event.clipboardData?.getData('text/plain') ?? ''
+  if (!shouldConvertPastedTextToFile(text))
+    return
+
+  event.preventDefault()
+  addFiles([createPastedTextFile(text)])
+}
+
+function handleFileInputChange(event: Event) {
+  const input = event.target as HTMLInputElement | null
+  addFiles(Array.from(input?.files ?? []))
+  if (input)
+    input.value = ''
+}
+
+function handleFolderInputChange(event: Event) {
+  const input = event.target as HTMLInputElement | null
+  const files = Array.from(input?.files ?? [])
+  if (files.length > 0)
+    emit('addFolder', { name: getFolderNameFromFiles(files), files })
+  if (input)
+    input.value = ''
+}
+
+function setActiveSuggestion(item: AgentComposerItem) {
+  const index = suggestion.items.findIndex(candidate => candidate.id === item.id)
+
+  if (index >= 0)
+    suggestion.activeIndex = index
+}
+
+function handleSendButtonClick() {
+  if (props.thinking) {
+    emit('stop')
+    return
+  }
+
+  if (!composerCanSubmit.value)
+    return
+
+  handleComposerSend()
+}
+
+function handleComposerSend() {
+  if (!composerCanSubmit.value)
+    return
+
+  const missingLabels = getMissingComposerTokenLabels(model.value)
+  if (missingLabels.length) {
+    missingPromptWarning.value = $t('请补充：{items}', { items: missingLabels.join('、') })
+    focusEditor()
+    return
+  }
+
+  if (getInvalidTemplateReferenceLabels(model.value).length) {
+    missingPromptWarning.value = $t('模板引用无效，请重新选择模板')
+    focusEditor()
+    return
+  }
+
+  missingPromptWarning.value = ''
+  emit('send')
+}
+
+function submitInputTokenEdit() {
+  inputTokenComposing.value = false
+  confirmInputTokenEdit(inputTokenValue.value)
+  missingPromptWarning.value = ''
+}
+
+function handleInputTokenKeydown(event: KeyboardEvent) {
+  event.stopPropagation()
+
+  if (inputTokenComposing.value || event.isComposing || event.keyCode === 229)
+    return
+
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    submitInputTokenEdit()
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelInputTokenEdit()
+  }
+}
+
+function scheduleInputTokenPopoverSync() {
+  if (!inputEditor.open || !inputEditor.anchorEl)
+    return
+
+  if (inputTokenPopoverFrame)
+    window.cancelAnimationFrame(inputTokenPopoverFrame)
+
+  inputTokenPopoverFrame = window.requestAnimationFrame(() => {
+    inputTokenPopoverFrame = 0
+    syncInputTokenPopoverPosition()
+  })
+}
+function getInputTokenPopoverZIndex(anchorEl: HTMLElement) {
+  let highestAncestorZIndex = 80
+  let current: HTMLElement | null = anchorEl
+
+  while (current) {
+    const zIndex = Number.parseInt(window.getComputedStyle(current).zIndex, 10)
+    if (Number.isFinite(zIndex))
+      highestAncestorZIndex = Math.max(highestAncestorZIndex, zIndex)
+
+    if (current === document.body)
+      break
+
+    current = current.parentElement
+  }
+
+  return highestAncestorZIndex + 1
+}
+
+function syncInputTokenPopoverPosition() {
+  const anchorEl = inputEditor.anchorEl
+  if (!inputEditor.open || !anchorEl)
+    return
+
+  const anchorRect = anchorEl.getBoundingClientRect()
+  const popoverEl = inputTokenPopoverRef.value
+  const popoverWidth = popoverEl?.offsetWidth || 360
+  const popoverHeight = popoverEl?.offsetHeight || 120
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const topSpace = anchorRect.top
+  const bottomSpace = viewportHeight - anchorRect.bottom
+  const placement = topSpace >= popoverHeight + 16 || topSpace >= bottomSpace ? 'top' : 'bottom'
+  const left = Math.min(
+    Math.max(anchorRect.left + anchorRect.width / 2, popoverWidth / 2 + 12),
+    viewportWidth - popoverWidth / 2 - 12,
+  )
+  const top = placement === 'top'
+    ? anchorRect.top - 8
+    : anchorRect.bottom + 8
+
+  inputTokenPopoverStyle.left = `${left}px`
+  inputTokenPopoverStyle.top = `${top}px`
+  inputTokenPopoverStyle.transform = placement === 'top'
+    ? 'translate(-50%, -100%)'
+    : 'translate(-50%, 0)'
+  inputTokenPopoverStyle.maxWidth = `${Math.min(460, viewportWidth - 24)}px`
+  inputTokenPopoverStyle.zIndex = String(getInputTokenPopoverZIndex(anchorEl))
+  inputTokenPopoverPlacement.value = placement
+}
+
+function onInputTokenDocumentPointerDown(event: PointerEvent) {
+  if (!inputEditor.open)
+    return
+
+  const path = event.composedPath()
+  if (inputTokenPopoverRef.value && path.includes(inputTokenPopoverRef.value))
+    return
+
+  if (inputEditor.anchorEl && path.includes(inputEditor.anchorEl))
+    return
+
+  cancelInputTokenEdit()
+}
+
+function onInputTokenDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape')
+    cancelInputTokenEdit()
+}
+
+function bindInputTokenGlobalListeners() {
+  if (inputTokenGlobalListenersBound || typeof window === 'undefined')
+    return
+
+  inputTokenGlobalListenersBound = true
+  document.addEventListener('pointerdown', onInputTokenDocumentPointerDown, true)
+  document.addEventListener('keydown', onInputTokenDocumentKeydown)
+  window.addEventListener('resize', scheduleInputTokenPopoverSync)
+  window.addEventListener('scroll', scheduleInputTokenPopoverSync, true)
+}
+
+function unbindInputTokenGlobalListeners() {
+  if (!inputTokenGlobalListenersBound || typeof window === 'undefined')
+    return
+
+  inputTokenGlobalListenersBound = false
+  document.removeEventListener('pointerdown', onInputTokenDocumentPointerDown, true)
+  document.removeEventListener('keydown', onInputTokenDocumentKeydown)
+  window.removeEventListener('resize', scheduleInputTokenPopoverSync)
+  window.removeEventListener('scroll', scheduleInputTokenPopoverSync, true)
+}
+
+function dismissSuggestionMenu() {
+  if (!suggestion.open)
+    return
+
+  if (suggestion.kind === 'mention') {
+    cancelMentionSelection()
+    return
+  }
+
+  closeSuggestion()
+}
+
+function handleToolbarSelect(trigger: 'attach' | '@' | '/') {
+  if (trigger === 'attach') {
+    dismissSuggestionMenu()
+    void openAttachmentPicker()
+    return
+  }
+
+  const kind = trigger === '@' ? 'mention' : 'slash'
+  if (suggestion.open && suggestion.kind === kind) {
+    dismissSuggestionMenu()
+    return
+  }
+
+  void selectToolbar(trigger)
+}
+
+const hitlChoiceControls = computed<AgentHitlChoiceControl[]>(() => {
+  return props.hitlRequest?.controls.filter((control): control is AgentHitlChoiceControl => control.kind === 'choice') ?? []
+})
+
+const hitlInputControls = computed<AgentHitlTextControl[]>(() => {
+  return props.hitlRequest?.controls.filter((control): control is AgentHitlTextControl => control.kind === 'text' || control.kind === 'textarea') ?? []
+})
+
+const isHitlSubmitting = computed(() => props.hitlRequest?.status === 'submitting')
+
+function getHitlInputValue(controlId: string) {
+  const value = hitlValues.value[controlId]
+  return value === undefined || value === null ? '' : String(value)
+}
+
+function setHitlInputValue(controlId: string, value: string) {
+  hitlValues.value = {
+    ...hitlValues.value,
+    [controlId]: value,
+  }
+}
+
+function handleHitlInput(controlId: string, event: Event) {
+  const target = event.target
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
+    setHitlInputValue(controlId, target.value)
+}
+
+function submitHitlChoice(control: AgentHitlChoiceControl, value: AgentHitlControlValue) {
+  const request = props.hitlRequest
+  if (!request || isHitlSubmitting.value)
+    return
+
+  emit('submitHitl', {
+    requestId: request.id,
+    values: {
+      ...hitlValues.value,
+      [control.id]: value,
+    },
+  })
+}
+
+watch(() => props.hitlRequest?.id, () => {
+  const values: Record<string, AgentHitlControlValue> = {
+    ...(props.hitlRequest?.values ?? {}),
+  }
+
+  for (const control of props.hitlRequest?.controls ?? []) {
+    if ((control.kind === 'text' || control.kind === 'textarea') && values[control.id] === undefined)
+      values[control.id] = control.defaultValue ?? ''
+  }
+
+  hitlValues.value = values
+}, { immediate: true })
+
+watch(
+  () => [props.autoFocus, props.focusKey, props.hitlRequest?.id, editor.value] as const,
+  async ([autoFocus, _focusKey, hitlRequestId]) => {
+    if (!autoFocus || hitlRequestId || !editor.value)
+      return
+
+    await nextTick()
+    requestEditorFocus()
+  },
+  { flush: 'post', immediate: true },
+)
+
+watch(
+  () => [inputEditor.open, inputEditor.label, inputEditor.value] as const,
+  async ([open, _label, value]) => {
+    if (!open) {
+      inputTokenComposing.value = false
+      unbindInputTokenGlobalListeners()
+      inputTokenPopoverResizeObserver?.disconnect()
+      inputTokenPopoverResizeObserver = undefined
+      return
+    }
+
+    inputTokenComposing.value = false
+    inputTokenValue.value = value
+    bindInputTokenGlobalListeners()
+    await nextTick()
+    if (typeof ResizeObserver !== 'undefined' && inputTokenPopoverRef.value) {
+      inputTokenPopoverResizeObserver?.disconnect()
+      inputTokenPopoverResizeObserver = new ResizeObserver(() => scheduleInputTokenPopoverSync())
+      inputTokenPopoverResizeObserver.observe(inputTokenPopoverRef.value)
+    }
+    inputTokenInputRef.value?.focus()
+    inputTokenInputRef.value?.select()
+    scheduleInputTokenPopoverSync()
+  },
+)
+
+watch(model, (value) => {
+  if (!missingPromptWarning.value)
+    return
+
+  if (!getMissingComposerTokenLabels(value).length)
+    missingPromptWarning.value = ''
+})
+
+onBeforeUnmount(() => {
+  if (autoFocusFrame)
+    window.cancelAnimationFrame(autoFocusFrame)
+
+  if (inputTokenPopoverFrame)
+    window.cancelAnimationFrame(inputTokenPopoverFrame)
+
+  unbindInputTokenGlobalListeners()
+  inputTokenPopoverResizeObserver?.disconnect()
+})
+
+defineExpose({
+  getEmptyInputTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
+    '[data-agent-token="input"].agent-token--input-empty',
+  ) ?? null,
+  getEmptyProfileTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
+    '[data-agent-token="profile"].agent-token--profile-empty',
+  ) ?? null,
+  getSelectTemplateButtonElement: () => composerShellRef.value?.querySelector<HTMLElement>(
+    '[data-agent-select-template]',
+  ) ?? null,
+  getShellElement: () => shellRef.value,
+  focusEditor,
+})
+</script>
+
+<template>
+  <div
+    ref="shellRef"
+    class="composer-shell"
+    :class="{
+      'composer-shell--glow': showGlow,
+      'composer-shell--inline': isPromptField,
+      'composer-shell--shadow': !showGlow && !isPromptField,
+    }"
+    :style="composerStyle"
+  >
+    <div v-if="todoProgress && !hitlRequest" class="thinking-strip">
+      <AgentTodoPill :progress="todoProgress" />
+    </div>
+
+    <div v-if="hitlRequest" class="hitl-card" role="group" :aria-label="hitlRequest.title">
+      <div class="hitl-card__header">
+        <SvgIcon name="roxy-agent/rx-ic-ask" size="16" color="currentColor" />
+        <span>{{ hitlRequest.title }}</span>
+      </div>
+
+      <p class="hitl-card__prompt">
+        {{ hitlRequest.prompt }}
+      </p>
+
+      <div v-if="hitlInputControls.length" class="hitl-card__inputs">
+        <label v-for="control in hitlInputControls" :key="control.id" class="hitl-card__field">
+          <span v-if="control.label">{{ control.label }}</span>
+          <textarea
+            v-if="control.kind === 'textarea'"
+            :value="getHitlInputValue(control.id)"
+            :placeholder="control.placeholder"
+            :disabled="isHitlSubmitting"
+            @input="handleHitlInput(control.id, $event)"
+          />
+          <input
+            v-else
+            type="text"
+            :value="getHitlInputValue(control.id)"
+            :placeholder="control.placeholder"
+            :disabled="isHitlSubmitting"
+            @input="handleHitlInput(control.id, $event)"
+          >
+        </label>
+      </div>
+
+      <div class="hitl-card__actions">
+        <template v-for="control in hitlChoiceControls" :key="control.id">
+          <button
+            v-for="option in control.options"
+            :key="option.id"
+            class="hitl-card__button"
+            :class="`hitl-card__button--${option.variant ?? 'secondary'}`"
+            type="button"
+            :disabled="isHitlSubmitting"
+            @click="submitHitlChoice(control, option.value)"
+          >
+            {{ option.label }}
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <div
+      v-else
+      ref="composerShellRef"
+      class="composer"
+      :class="{ 'composer--prompt-field': isPromptField, 'composer--readonly': readonly }"
+      :aria-readonly="readonly || undefined"
+      @click="focusEditor"
+      @paste.capture="handleComposerPaste"
+    >
+      <input v-if="!isPromptField" ref="fileInputRef" class="composer-file-input" type="file" multiple @change="handleFileInputChange">
+      <input
+        v-if="!isPromptField"
+        class="composer-file-input"
+        type="file"
+        multiple
+        webkitdirectory
+        directory
+        @change="handleFolderInputChange"
+      >
+
+      <div class="composer-editor-area">
+        <div v-if="!isPromptField && pendingAttachments.length" class="attachment-strip">
+          <article v-for="attachment in pendingAttachments" :key="attachment.fileId" class="attachment-chip">
+            <div class="attachment-chip__preview">
+              <img v-if="isImageAttachment(attachment)" :src="getAttachmentPreview(attachment)" :alt="attachment.fileName">
+              <SvgIcon v-else-if="attachment.kind === 'folder'" name="roxy-agent/rx-ic-folder" size="24" color="var(--color-text-disabled)" />
+              <SvgIcon v-else name="roxy-agent/rx-ic-property" size="24" color="var(--color-text-disabled)" />
+            </div>
+
+            <div class="attachment-chip__meta">
+              <div class="attachment-chip__name">
+                {{ attachment.fileName }}
+              </div>
+              <div class="attachment-chip__type">
+                {{ getAttachmentTypeLabel(attachment) }}
+              </div>
+            </div>
+
+            <button
+              class="attachment-chip__remove"
+              type="button"
+              :aria-label="$t('移除附件')"
+              :disabled="attachment.uploadStatus === 'uploading'"
+              @click.stop="emit('removeAttachment', attachment.fileId)"
+            >
+              <SvgIcon name="roxy-agent/rx-ic-close2" size="14" color="currentColor" />
+            </button>
+          </article>
+        </div>
+
+        <div class="editor-wrap">
+          <div v-if="isEmpty" class="composer-placeholder">
+            <template v-if="isPromptField">
+              {{ composerPlaceholder }}
+            </template>
+            <template v-else>
+              {{ $t('直接对我说出您的需求，输入 {at} 选择窗口，/ 使用模板', { at: '@' }) }}
+            </template>
+          </div>
+          <EditorContent v-if="editor" :editor="editor" />
+        </div>
+      </div>
+
+      <div v-if="!isPromptField && missingPromptWarning" class="composer-warning">
+        {{ missingPromptWarning }}
+      </div>
+
+      <div v-if="!isPromptField" class="composer-row">
+        <ComposerToolbar @select="handleToolbarSelect" />
+
+        <AgentTooltip :content="$t('停止')" placement="top" :disabled="!thinking">
+          <button
+            class="send-button"
+            :class="{ thinking }"
+            type="button"
+            :aria-label="thinking ? $t('停止') : 'Send'"
+            :disabled="!thinking && !composerCanSubmit"
+            :title="thinking ? undefined : 'Send'"
+            @click="handleSendButtonClick"
+          >
+            <span v-if="thinking" class="send-button__pause" aria-hidden="true" />
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M7.33332 12.6667V4.49221C6.95089 4.8352 6.52102 5.29457 6.10806 5.7702C5.68411 6.2585 5.29087 6.74911 5.00259 7.11851C4.8588 7.30277 4.7416 7.45619 4.6608 7.56317C4.62041 7.61665 4.58874 7.65864 4.5677 7.68687C4.55723 7.70092 4.54948 7.71173 4.54426 7.71877C4.54165 7.72229 4.53964 7.72491 4.5384 7.72658L4.5371 7.72854L4.49348 7.78127C4.26672 8.03171 3.88276 8.07497 3.60481 7.87046C3.30842 7.65219 3.24476 7.23462 3.46288 6.93817H3.46353V6.93752L3.46418 6.93687C3.46462 6.93627 3.46539 6.93527 3.46614 6.93427C3.46772 6.93213 3.46979 6.92901 3.47265 6.92515C3.47863 6.91708 3.48737 6.90518 3.49869 6.88999C3.52129 6.85967 3.5542 6.81558 3.59635 6.75979C3.68076 6.64802 3.80239 6.48884 3.95116 6.2982C4.24817 5.91761 4.65733 5.40815 5.10155 4.8965C5.54288 4.3882 6.03209 3.86267 6.48892 3.459C6.71652 3.2579 6.9516 3.07257 7.18098 2.93427C7.39214 2.80697 7.68257 2.66669 7.99999 2.66669C8.31741 2.66669 8.60786 2.80698 8.819 2.93427C9.04838 3.07257 9.28347 3.25791 9.51106 3.459C9.96789 3.86266 10.4571 4.38821 10.8984 4.8965C11.3427 5.40815 11.7518 5.91762 12.0488 6.2982C12.1976 6.48884 12.3192 6.64803 12.4036 6.75979C12.4458 6.81558 12.4787 6.85967 12.5013 6.88999C12.5126 6.90517 12.5214 6.91708 12.5273 6.92515C12.5302 6.92901 12.5323 6.93213 12.5338 6.93427C12.5346 6.93528 12.5354 6.93627 12.5358 6.93687L12.5364 6.93752V6.93817H12.5371C12.7552 7.23462 12.6916 7.65218 12.3952 7.87046C12.0987 8.08858 11.6812 8.02492 11.4629 7.72854L11.4616 7.72658C11.4603 7.72491 11.4583 7.7223 11.4557 7.71877C11.4505 7.71173 11.4428 7.70092 11.4323 7.68687C11.4112 7.65864 11.3796 7.61665 11.3392 7.56317C11.2584 7.45619 11.1412 7.30277 10.9974 7.11851C10.7091 6.74911 10.3159 6.2585 9.89192 5.7702C9.47896 5.29458 9.04909 4.8352 8.66666 4.49221V12.6667C8.66666 13.0349 8.36818 13.3334 7.99999 13.3334C7.6318 13.3334 7.33332 13.0349 7.33332 12.6667Z" fill="white" />
+            </svg>
+          </button>
+        </AgentTooltip>
+      </div>
+    </div>
+
+    <SuggestionMenu
+      :anchor="composerShellRef"
+      :all-selected="allMentionItemsSelected"
+      :has-more="profileHasMore"
+      :load-error="profileLoadError"
+      :loading-more="profileLoadingMore"
+      :project-options="projectOptions"
+      :selected-count="selectedMentionCount"
+      :selected-ids="selectedMentionIds"
+      :selected-project-id="selectedProjectId"
+      :select-all-loading="profileSelectingAll || profileReloading"
+      :state="suggestion"
+      @cancel="cancelMentionSelection"
+      @choose="chooseItem"
+      @confirm="confirmMentionSelection"
+      @dismiss="dismissSuggestionMenu"
+      @hover="setActiveSuggestion"
+      @load-more="loadMoreProfiles"
+      @navigate="navigateSuggestion"
+      @project-change="updateSelectedProject"
+      @read="markSuggestionItemRead"
+      @retry="retryLoadProfiles"
+      @search="updateSuggestionQuery"
+      @toggle-all="toggleAllMentionItems"
+    />
+
+    <Teleport to="body">
+      <div
+        v-if="inputEditor.open"
+        ref="inputTokenPopoverRef"
+        class="input-token-popover"
+        :class="`input-token-popover--${inputTokenPopoverPlacement}`"
+        :style="inputTokenPopoverStyle"
+        @click.stop
+      >
+        <div class="input-token-popover__label">
+          {{ inputEditor.label }}
+        </div>
+        <div class="input-token-popover__row">
+          <input
+            ref="inputTokenInputRef"
+            v-model="inputTokenValue"
+            type="text"
+            :placeholder="$t('请输入内容')"
+            @compositionend="inputTokenComposing = false"
+            @compositionstart="inputTokenComposing = true"
+            @keydown="handleInputTokenKeydown"
+          >
+          <button type="button" class="input-token-popover__button" @click="cancelInputTokenEdit">
+            {{ $t('取消') }}
+          </button>
+          <button type="button" class="input-token-popover__button input-token-popover__button--primary" @click="submitInputTokenEdit">
+            {{ $t('确定') }}
+          </button>
+        </div>
+        <span class="input-token-popover__arrow" aria-hidden="true" />
+      </div>
+    </Teleport>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.composer-shell {
+  --agent-composer-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.08);
+
+  position: absolute;
+  bottom: 39px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  width: var(--agent-chat-content-width, min(800px, calc(100% - 68px)));
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    z-index: 0;
+    width: 100%;
+    border-radius: 16px;
+    background: linear-gradient(
+      140.743deg,
+      rgba(63, 170, 246, 0.3) 10.127%,
+      rgba(243, 89, 220, 0.3) 44.937%,
+      rgba(242, 143, 176, 0.3) 100%
+    );
+    filter: blur(25px);
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+}
+
+.composer-shell--shadow .composer,
+.composer-shell--shadow .hitl-card {
+  box-shadow: var(--agent-composer-shadow);
+}
+
+.composer-shell--glow::before {
+  content: '';
+}
+.composer-shell--inline {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  z-index: auto;
+  width: 100%;
+  align-items: stretch;
+  pointer-events: auto;
+  transform: none;
+
+  &::before {
+    display: none;
+  }
+}
+
+:global([data-theme='dark']) .composer-shell {
+  --agent-composer-shadow: 0 0 20px 0 rgba(255, 255, 255, 0.08);
+}
+
+.thinking-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  color: #c11574;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  pointer-events: auto;
+}
+
+.hitl-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-height: 128px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 16px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.hitl-card__header {
+  display: flex;
+  height: 20px;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.hitl-card__prompt {
+  max-width: calc(100% - 170px);
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hitl-card__inputs {
+  display: flex;
+  width: calc(100% - 170px);
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hitl-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.hitl-card__field input,
+.hitl-card__field textarea {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+  font: inherit;
+  line-height: 18px;
+}
+
+.hitl-card__field textarea {
+  max-height: 48px;
+  resize: none;
+}
+
+.hitl-card__actions {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hitl-card__button {
+  display: inline-flex;
+  min-width: 55px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 10px;
+  appearance: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.hitl-card__button--secondary,
+.hitl-card__button--danger {
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+}
+
+.hitl-card__button--primary {
+  border-color: var(--color-bg-primary-inverse);
+  color: var(--color-text-primary-inverse);
+  background: var(--color-bg-primary-inverse);
+}
+
+.composer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-height: 128px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 16px;
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+.composer--prompt-field {
+  min-height: var(--agent-prompt-field-min-height, 76px);
+  gap: 0;
+  justify-content: flex-start;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: none;
+
+  .editor-wrap,
+  :deep(.agent-composer-editor) {
+    min-height: calc(var(--agent-prompt-field-min-height, 76px) - 26px);
+  }
+
+  :deep(.agent-composer-editor) {
+    max-height: 280px;
+  }
+}
+
+.composer--readonly {
+  cursor: default;
+
+  :deep(.agent-token),
+  :deep(.mention) {
+    cursor: default;
+  }
+
+  :deep(.agent-token__remove) {
+    display: none;
+  }
+}
+
+.composer-file-input {
+  display: none;
+}
+
+.attachment-strip {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-color: var(--color-border-secondary) transparent;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--color-border-secondary);
+  }
+}
+
+.attachment-chip {
+  position: relative;
+  display: flex;
+  width: 128px;
+  max-width: 260px;
+  min-width: 128px;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 33px 8px 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+}
+
+.attachment-chip__preview {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-bg-tertiary);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.attachment-chip__meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.attachment-chip__name {
+  width: 100%;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-chip__type {
+  width: 100%;
+  overflow: hidden;
+  color: var(--color-text-disabled);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-chip__remove {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  color: var(--color-fg-primary);
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+.composer-editor-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.editor-wrap {
+  position: relative;
+  min-height: 40px;
+}
+
+.composer-placeholder {
+  position: absolute;
+  inset: 0;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  pointer-events: none;
+}
+
+.composer-warning {
+  color: #c2410c;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+:deep(.agent-composer-editor) {
+  position: relative;
+  z-index: 1;
+  min-height: 24px;
+  max-height: 144px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  word-break: break-word;
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: 6px;
+  }
+
+  a {
+    color: var(--color-text-blue);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+:deep(.agent-token),
+:deep(.mention) {
+  display: inline-flex;
+  max-width: 280px;
+  min-height: 24px;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 4px;
+  margin: 0 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 18px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+:deep(.agent-token__icon) {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.agent-token__icon roxy-svg-icon) {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.agent-token__label) {
+  min-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.agent-token__remove) {
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: currentColor;
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+:deep(.agent-token__remove:hover) {
+  opacity: 1;
+}
+
+:deep(.agent-token__remove roxy-svg-icon) {
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+
+:deep(.agent-token--profile),
+:deep(.mention) {
+  color: var(--color-text-tag-purple);
+  background: var(--color-bg-tag-purple);
+}
+
+:deep(.agent-token--profile-empty) {
+  border: 1px dashed #7a5af8;
+}
+
+:deep(.agent-token__count) {
+  display: inline-flex;
+  min-width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 30px;
+  color: var(--color-text-tag-purple);
+  background: var(--color-bg-tag-purple-hover);
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+:deep(.agent-token--skill) {
+  color: var(--color-text-tag-pink);
+  background: var(--color-bg-tag-pink);
+}
+
+:deep(.agent-token--script) {
+  color: var(--color-text-tag-blue);
+  background: var(--color-bg-tag-blue);
+}
+
+:deep(.agent-token--input) {
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+}
+
+:deep(.agent-token--input-empty) {
+  border: 1px dashed currentColor;
+  color: #c2410c;
+  background: rgba(251, 146, 60, 0.12);
+}
+
+.input-token-popover {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  width: min(460px, calc(100vw - 24px));
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.input-token-popover__label {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.input-token-popover__row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-token-popover__row input {
+  min-width: 0;
+  flex: 1;
+  height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.input-token-popover__row input:focus {
+  border-color: var(--color-bg-primary-inverse);
+}
+
+.input-token-popover__button {
+  display: inline-flex;
+  flex: none;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  appearance: none;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.input-token-popover__button--primary {
+  border-color: var(--color-bg-primary-inverse);
+  color: var(--color-text-primary-inverse);
+  background: var(--color-bg-primary-inverse);
+}
+
+.input-token-popover__arrow {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  transform: translateX(-50%);
+}
+
+.input-token-popover--top .input-token-popover__arrow {
+  bottom: -6px;
+  border-top: 6px solid var(--color-border-secondary);
+}
+
+.input-token-popover--bottom .input-token-popover__arrow {
+  top: -6px;
+  border-bottom: 6px solid var(--color-border-secondary);
+}
+
+.composer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(101deg, #3faaf6 10.13%, #f359dc 44.94%, #f28fb0 100%);
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &.thinking:not(:disabled):hover {
+    filter: brightness(0.92);
+    box-shadow: 0 2px 8px rgba(63, 170, 246, 0.35);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+.send-button__pause {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+}
+</style>

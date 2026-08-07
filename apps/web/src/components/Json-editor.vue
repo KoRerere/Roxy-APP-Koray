@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { linter, lintGutter } from '@codemirror/lint'
 import type { Diagnostic } from '@codemirror/lint'
+import { javascript } from '@codemirror/lang-javascript'
 import { json } from '@codemirror/lang-json'
 import { tags } from '@lezer/highlight'
 import { merge } from 'es-toolkit'
@@ -14,12 +15,15 @@ defineOptions({ inheritAttrs: false })
 const {
   editable = true,
   showLineNumbers = false,
+  language = 'json',
   theme = {},
 } = defineProps<Props>()
 
 interface Props {
   editable?: boolean
   showLineNumbers?: boolean
+  /** 编辑器语言模式，默认 'json'（含语法校验与专属高亮）；'javascript' 仅做语法高亮，不做 JSON 校验 */
+  language?: 'json' | 'javascript'
   theme?: object
 }
 
@@ -62,6 +66,24 @@ const jsonHighlightStyle = HighlightStyle.define([
   { tag: tags.punctuation, color: 'rgba(255, 255, 255,0.4)' },
 ])
 
+/** javascript 模式的语法高亮：配色对齐 --pattern-editor-key/--pattern-editor-value 等暗色编辑器底色下的既有色板 */
+const codeHighlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: '#F2994A' },
+  { tag: tags.controlKeyword, color: '#F2994A' },
+  { tag: tags.operatorKeyword, color: '#F2994A' },
+  { tag: tags.string, color: '#A5D6FF' },
+  { tag: tags.comment, color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' },
+  { tag: tags.number, color: '#9543de' },
+  { tag: tags.bool, color: '#F2994A' },
+  { tag: tags.null, color: '#D73A49' },
+  { tag: tags.propertyName, color: '#6EC3FF' },
+  { tag: tags.function(tags.variableName), color: '#F57FFD' },
+  { tag: tags.definition(tags.variableName), color: '#79C0FF' },
+  { tag: tags.typeName, color: '#79C0FF' },
+  { tag: tags.punctuation, color: 'rgba(255, 255, 255, 0.6)' },
+  { tag: tags.operator, color: 'rgba(255, 255, 255, 0.8)' },
+])
+
 const defaultTheme = {
   '&': {
     height: '100%',
@@ -89,7 +111,7 @@ const defaultTheme = {
   '.cm-content': {
     backgroundColor: 'var(--pattern-editor-bg, #2C2E30)',
     padding: '12px',
-    color: '#24292E',
+    color: 'var(--pattern-editor-code, #ffffff)',
     fontFamily: 'JetBrains Mono',
     fontSize: '12px',
     fontWeight: '500',
@@ -124,11 +146,13 @@ function initEditor() {
   if (!editorRef.value)
     return
 
+  const isJson = language === 'json'
+
   const state = EditorState.create({
     doc: modelValue.value,
     extensions: [
       showLineNumbers ? lineNumbers() : [],
-      showLineNumbers ? lintGutter() : [],
+      (showLineNumbers && isJson) ? lintGutter() : [],
       history({ minDepth: 20 }),
       keymap.of([...historyKeymap, ...defaultKeymap, indentWithTab]),
       EditorView.editable.of(editable),
@@ -139,9 +163,9 @@ function initEditor() {
       }),
       EditorView.lineWrapping,
       EditorView.theme(merge(defaultTheme, theme)),
-      jsonLinter,
-      syntaxHighlighting(jsonHighlightStyle),
-      json(),
+      isJson ? jsonLinter : [],
+      syntaxHighlighting(isJson ? jsonHighlightStyle : codeHighlightStyle),
+      isJson ? json() : javascript({ typescript: true }),
     ],
   })
 

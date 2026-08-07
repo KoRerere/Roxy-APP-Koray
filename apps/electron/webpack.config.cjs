@@ -14,9 +14,6 @@ module.exports = {
     main: './dist-vite/index.mjs',
     fileWorker: './dist-vite/fileWorker.mjs',
     browserIconRenderWorker: './dist-vite/browserIconRenderWorker.mjs',
-    // openapiMcp: './dist-vite/openapiMcp.mjs',
-    // playwrightMcp: './dist-vite/playwrightMcp.mjs',
-    // orchestrator: './dist-vite/orchestrator.mjs',
   },
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录
@@ -48,9 +45,6 @@ module.exports = {
     '@roxy/crypto': 'module @roxy/crypto',
     // @napi-rs/canvas 含 platform-specific Skia .node 二进制，必须从 node_modules 运行时加载
     '@napi-rs/canvas': 'node-commonjs @napi-rs/canvas',
-    // 'better-sqlite3': 'node-commonjs better-sqlite3',
-    // 'bindings': 'node-commonjs bindings',
-    // 'file-uri-to-path': 'node-commonjs file-uri-to-path',
   },
   externalsType: 'node-commonjs', // 指定外部依赖的类型为 Node.js CommonJS
   optimization: {

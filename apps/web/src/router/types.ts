@@ -9,12 +9,13 @@ declare module 'vue-router' {
     roles?: Role[]
     hideInMenu?: boolean
     shared?: boolean
-    type?: 'group' | 'button' | (string & {})
+    type?: 'group' | 'flat' | 'button' | (string & {})
     /** 菜单按钮动作标识，由 aside-menu 统一 dispatch */
     menuAction?: string
     onClick?: (event: Event) => void | Promise<void>
     icon?: SvgNames
     isRoxyAgent?: boolean
+    isRoxyClaw?: boolean
     version?: string[]
     /** 不填 = 所有 workspaceType 可见；普通路由设 [Private]，电商路由设 [ECommerce] */
     workspaceTypes?: WorkspaceType[]
@@ -24,6 +25,8 @@ declare module 'vue-router' {
     locales?: string[]
     /** 菜单标题旁展示火焰徽章 */
     showFireBadge?: boolean
+    /** Show a New badge beside the menu title. */
+    showNewBadge?: boolean
     slotName?: string
   }
 }

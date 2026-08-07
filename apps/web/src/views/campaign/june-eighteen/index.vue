@@ -14,7 +14,7 @@ const { collapsed = false, localStorageKey } = defineProps<{
   localStorageKey: string
 }>()
 
-const REOPEN_INTERVAL_MS = 1000 * 60 * 60 * 24
+const REOPEN_INTERVAL_MS = 1000 * 60 * 60 * 8
 /** 下次自动弹出时间戳，与 opened 标记分开存，避免重挂载重复排程 */
 const nextOpenStorageKey = `${localStorageKey}:nextOpen`
 

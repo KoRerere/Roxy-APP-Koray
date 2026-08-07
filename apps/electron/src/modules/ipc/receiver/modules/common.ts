@@ -1,6 +1,9 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { dialog } from 'electron'
+import fsPromises from 'node:fs/promises'
+import path from 'node:path'
 import { osConfig } from '/@/constants'
+import { isMac } from '/@/constants/common'
 import { updateDict } from '/@/modules/dict'
 import { setWebReady } from '/@/utils'
 
@@ -45,6 +48,32 @@ export function setupCommonIpc(ipcMain: IPCMainInstance) {
     catch (error) {
       console.log(error)
       return ''
+    }
+  })
+
+  /** 选择文件或文件夹，并返回路径类型 */
+  ipcMain.on('dialog:selectFileOrDirInfo', async (event, options?: { filters?: any[], defaultPath?: string }) => {
+    try {
+      const { filePaths } = await dialog.showOpenDialog({
+        // Windows 和 Linux 同时启用两种模式时会退化为仅选择目录。
+        properties: isMac ? ['openFile', 'openDirectory'] : ['openFile'],
+        filters: options?.filters,
+        defaultPath: options?.defaultPath,
+      })
+      const selectedPath = filePaths[0]
+      if (!selectedPath)
+        return null
+
+      const stats = await fsPromises.stat(selectedPath)
+      return {
+        path: selectedPath,
+        name: path.basename(selectedPath),
+        type: stats.isDirectory() ? 'dir' : 'file',
+      }
+    }
+    catch (error) {
+      console.log(error)
+      return null
     }
   })
 

@@ -19,7 +19,15 @@
       "Bash(pnpm build:dev)",
       "Bash(pnpm tsx *)",
       "Bash(powershell *)",
-      "Bash(explorer *)"
+      "Bash(explorer *)",
+      "Bash(npx vitest *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat\\(runtime\\): 为 glob/grep 工具添加 max_results+offset 分页支持 *)",
+      "Bash(pnpm build *)",
+      "Bash(file apps/electron/src/modules/mcp/agent/*)",
+      "Bash(grep -rn \"userGetRoxyClawList\\\\|RoxyClaw\" apps/electron/src --include-dir=. -l)",
+      "Bash(grep -rn \"mcp:config\\\\|localhost:\\\\${\\\\|serverUrl\\\\|VITE_\\\\|proxy\" apps/web/src/stores/agent.ts apps/web/src/views/agent-console apps/web/src/views/mcp/agent-api.ts)",
+      "Bash(rsync -a --exclude 'node_modules' --exclude 'dist' --exclude 'dist-vite' --exclude '.turbo' --exclude 'pnpm-lock.yaml' roxy-agent/ roxy-agent-app/)"
     ]
   },
   "enabledPlugins": {

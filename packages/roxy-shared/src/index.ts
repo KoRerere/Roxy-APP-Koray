@@ -1,3 +1,5 @@
+export * from './agent-composer-protocol'
 export * from './fonts'
 export * from './getGatewayConfig'
 export * from './randomFingerprint'
+export * from './template-ref'

@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { env } from '../../config.js'
+import { agentPaths } from '@/core/storage/agentPaths'
 
 interface ThreadMapping {
   [channelId: string]: string
@@ -16,7 +16,8 @@ export class ThreadManager {
   private readonly storePath: string
 
   private constructor() {
-    this.storePath = path.join(env.DOWNLOADS_DIR, 'im-threads.json')
+    // IM 线程映射从系统下载目录迁到 state/im/threads.json
+    this.storePath = agentPaths.imThreadsFile
     this.load()
   }
 

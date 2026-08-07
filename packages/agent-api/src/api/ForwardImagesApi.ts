@@ -26,14 +26,26 @@ export class ForwardImagesApi<SecurityDataType = unknown> {
   }
 
   /**
-   * @description Forward image generation requests to the configured upstream provider. Image quota is checked before forwarding and deducted after successful generation.
+   * @description 创建生图任务并立即返回 task_id；客户端轮询 GET /v1/tasks/{task_id} 查询进度。
    *
    * @tags Forward-Images
    * @name ImageGenerationsV1ImagesGenerationsPost
-   * @summary OpenAI image generations
+   * @summary 异步文生图
    * @request POST:/v1/images/generations
    * @response `200` `ImageGenerationsV1ImagesGenerationsPostData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
   imageGenerationsV1ImagesGenerationsPost = (params: RequestParams = {}) =>
     this.http.request<
@@ -46,14 +58,26 @@ export class ForwardImagesApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description Forward image edit requests to the configured upstream provider. Image quota is checked before forwarding and deducted after successful editing.
+   * @description 创建编辑任务并立即返回 task_id；支持 multipart 与 JSON。
    *
    * @tags Forward-Images
    * @name ImageEditsV1ImagesEditsPost
-   * @summary OpenAI image edits
+   * @summary 异步图片编辑
    * @request POST:/v1/images/edits
    * @response `200` `ImageEditsV1ImagesEditsPostData` Successful Response
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
   imageEditsV1ImagesEditsPost = (params: RequestParams = {}) =>
     this.http.request<

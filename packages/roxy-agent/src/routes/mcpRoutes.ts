@@ -29,13 +29,32 @@ const ImportSchema = z.object({
   mcpServers: z.record(z.string(), z.any(), { error: 'mcpServers is required' }),
 })
 
+function validateTransportConfig(config: UserMcpServerConfig): string | null {
+  const rawType = (config as UserMcpServerConfig & { type?: unknown }).type
+  if (rawType !== undefined && rawType !== 'stdio' && rawType !== 'http') {
+    return `unsupported transport type: ${String(rawType)}`
+  }
+
+  const type = rawType ?? (config.command ? 'stdio' : config.url ? 'http' : undefined)
+  if (!type) {
+    return 'cannot determine transport type: provide command (stdio) or url (http)'
+  }
+  if (type === 'stdio' && !config.command) {
+    return 'stdio transport requires "command"'
+  }
+  if (type === 'http' && !config.url) {
+    return 'http transport requires "url"'
+  }
+  return null
+}
+
 /**
  * GET /api/mcp/servers
  * 返回所有用户自定义 MCP 配置及状态
  */
 router.get('/servers', (_req: Request, res: Response) => {
   try {
-    const servers = mcpManager.listAllMcpServers()
+    const servers = mcpManager.listUserMcpServers()
     res.json({ code: 0, data: servers })
   }
   catch (err: any) {
@@ -61,11 +80,17 @@ router.post('/servers', async (req: Request, res: Response) => {
   }
   try {
     const { name, config, oldName } = parsed.data
+    const typedConfig = config as UserMcpServerConfig
+    const validationError = validateTransportConfig(typedConfig)
+    if (validationError) {
+      return res.json({ code: 1, msg: validationError })
+    }
+
     if (oldName && oldName !== name) {
-      await mcpManager.renameUserMcpServer(oldName, name, config as UserMcpServerConfig)
+      await mcpManager.renameUserMcpServer(oldName, name, typedConfig)
     }
     else {
-      await mcpManager.upsertUserMcpServer(name, config as UserMcpServerConfig, true)
+      await mcpManager.upsertUserMcpServer(name, typedConfig, true)
     }
     res.json({ code: 0, msg: 'MCP server saved' })
   }
@@ -111,18 +136,9 @@ router.post('/servers/import', async (req: Request, res: Response) => {
 
       const config = rawConfig as UserMcpServerConfig
 
-      // 基本校验：stdio 需要 command，http/sse 需要 url
-      const type = config.type ?? (config.command ? 'stdio' : config.url ? 'sse' : undefined)
-      if (!type) {
-        errors.push({ name, reason: 'cannot determine transport type: provide command (stdio) or url (http/sse)' })
-        continue
-      }
-      if (type === 'stdio' && !config.command) {
-        errors.push({ name, reason: 'stdio transport requires "command"' })
-        continue
-      }
-      if ((type === 'sse' || type === 'http') && !config.url) {
-        errors.push({ name, reason: `${type} transport requires "url"` })
+      const validationError = validateTransportConfig(config)
+      if (validationError) {
+        errors.push({ name, reason: validationError })
         continue
       }
 
@@ -212,7 +228,11 @@ router.post('/servers/:name/test', async (req: Request, res: Response) => {
     let result
     if (config) {
       // 直接测试传入的配置
-      result = await mcpManager.testUserMcpServerConfig(name, config)
+      const typedConfig = config as UserMcpServerConfig
+      const validationError = validateTransportConfig(typedConfig)
+      if (validationError)
+        return res.json({ code: 1, msg: validationError })
+      result = await mcpManager.testUserMcpServerConfig(name, typedConfig)
     }
     else {
       // 测试已保存的配置

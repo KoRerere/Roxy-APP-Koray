@@ -24,6 +24,7 @@
   },
   "scripts": {
     "dev": "tsx scripts/watch.ts --watch",
+    "dev:next": "cross-env ROXY_AGENT_ENTRY=next tsx scripts/watch.ts --watch",
     "start": "tsx scripts/watch.ts",
     "dev:web": "pnpm -F web dev",
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
@@ -67,7 +68,7 @@
     "test:crypto": "node scripts/test-roxy-crypto.mjs && node scripts/test-roxy-crypto-dist.mjs",
     "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js",
     "reset:main": "node scripts/confirm-reset.js",
-    "agent:build": "pnpm -F roxy-agent run build && pnpm -F @roxy/playwright run build && pnpm -F @roxy/openapi run build && pnpm -F roxy-skills run build",
+    "agent:build": "pnpm -F roxy-agent run build && pnpm -F roxy-skills run build",
     "agent:compile": "pnpm agent:build && pnpm -C ./apps/electron exec electron ../../scripts/compile-bytenode.mjs",
     "publish:agent:dev": "pnpm agent:build && cross-env NODE_ENV=development pnpx tsx ./scripts/upload-agent.mts",
     "publish:agent:prod": "pnpm agent:build && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-agent.mts",

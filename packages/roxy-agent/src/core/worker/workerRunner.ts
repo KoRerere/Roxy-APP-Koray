@@ -1,9 +1,12 @@
 import type { ParentToWorkerMessage, WorkerResult, WorkerResultStatus, WorkerToParentMessage } from './protocol'
+import type { AgentRunEvent } from '@roxy/shared/channel'
 import type { ChildProcess } from 'node:child_process'
 import { fork } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { streamAdapter } from '@/core/sse/streamAdapter'
+import { withWorkerId } from '@/core/agent-events/events'
+import { streamEvents } from '@/core/agent-events/streamEvents'
+import { taskMonitorHub } from '@/core/task-monitor'
 import {
   WORKER_HEARTBEAT_INTERVAL_MS,
   WORKER_HEARTBEAT_TIMEOUT_MS,
@@ -13,7 +16,7 @@ export const WORKER_GRACEFUL_SHUTDOWN_MS = 15_000
 export const WORKER_DESTROY_TIMEOUT_MS = 12_000
 export const WORKER_FORCE_KILL_MS = 5_000
 export const WORKER_RESULT_EXIT_GRACE_MS = WORKER_GRACEFUL_SHUTDOWN_MS
-export const DEFAULT_WORKER_TIMEOUT_MS = 600_000
+export const DEFAULT_WORKER_TIMEOUT_MS = 3_600_000
 const WORKER_HEARTBEAT_CHECK_MS = 5_000
 
 type RunnerState = 'starting' | 'running' | 'cancelling' | 'terminating' | 'done'
@@ -44,7 +47,7 @@ export class WorkerRunner {
     private readonly payloadPath: string,
     private readonly agentScriptPath: string,
     private readonly timeoutMs: number,
-    private readonly writer: (event: string) => void,
+    private readonly writer: (event: AgentRunEvent) => void,
     private readonly onAbort?: AbortSignal,
   ) {
     this.promise = new Promise(resolve => (this.resolvePromise = resolve))
@@ -60,7 +63,13 @@ export class WorkerRunner {
       {
         stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
         execArgv: ['--experimental-strip-types'],
-        execPath: process.execPath,  // 需设置 execPath，否则会出现无法找到 electron node 导致进程无法启动
+        execPath: process.execPath, // 需设置 execPath，否则会出现无法找到 electron node 导致进程无法启动
+        env: {
+          ...process.env,
+          ROXY_MODE: 'worker',
+          // 注入 workerId，供 worker logger 命名 {workerId}.log / {workerId}-perfmon.log
+          ROXY_WORKER_ID: this.workerId,
+        },
       },
     )
     this.child = child
@@ -142,15 +151,10 @@ export class WorkerRunner {
       this.lastHeartbeatAt = Date.now()
     }
     else if (msg.type === 'event') {
-      // Forward worker SSE event to HTTP response
-      const event = {
-        ...msg.sse,
-        data: {
-          ...(msg.sse.data ?? {}),
-          taskId: this.workerId,
-        },
-      }
-      this.writer(streamAdapter.formatSSE(event))
+      this.writer(withWorkerId(msg.event, this.workerId))
+    }
+    else if (msg.type === 'task_monitor') {
+      taskMonitorHub.applyEvent(msg.event)
     }
     else if (msg.type === 'result') {
       // Only store first result message
@@ -200,8 +204,7 @@ export class WorkerRunner {
       console.warn(`[WorkerRunner:${this.workerId}] ${this.postResultExitError}`)
     }
 
-    // Emit final worker_result SSE for frontend
-    this.writer(streamAdapter.workerResult({
+    this.writer(streamEvents.workerResult({
       taskId: this.workerId,
       status,
       exitCode,
@@ -235,8 +238,13 @@ export class WorkerRunner {
   }
 
   private sendCancel(reason: 'user' | 'timeout' | 'parent_exit', message: string): void {
-    if (!this.child || this.child.killed)
+    if (!this.child || this.child.killed) {
       return
+    }
+    if (!this.child.connected) {
+      console.error(`[WorkerRunner:${this.workerId}] Failed to send cancel message: IPC channel is disconnected`)
+      return
+    }
 
     const msg: ParentToWorkerMessage = {
       type: 'cancel',
@@ -245,10 +253,18 @@ export class WorkerRunner {
       message,
     }
     try {
-      this.child.send(msg)
+      const accepted = this.child.send(msg, (error) => {
+        if (error) {
+          console.error(`[WorkerRunner:${this.workerId}] Failed to send cancel message: ${error.message}`)
+        }
+      })
+      if (!accepted) {
+        console.warn(`[WorkerRunner:${this.workerId}] IPC send queue is under backpressure for cancel message`)
+      }
     }
-    catch {
-      // IPC channel already closed
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`[WorkerRunner:${this.workerId}] Failed to send cancel message: ${message}`)
     }
   }
 
@@ -257,7 +273,7 @@ export class WorkerRunner {
       return
 
     this.userStoppedEmitted = true
-    this.writer(streamAdapter.workerStopped({
+    this.writer(streamEvents.workerStopped({
       taskId: this.workerId,
       status: 'failed',
       reason: 'user',

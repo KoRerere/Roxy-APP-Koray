@@ -1,7 +1,5 @@
-import type { AgentMode } from './types'
 import type { UtilityProcess } from 'electron'
 import { app, utilityProcess } from 'electron'
-import { EventEmitter } from 'node:events'
 import path from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
@@ -10,20 +8,57 @@ import { ROXY_MCP_WINDOW_ID } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
 import { isPackaged, isProd } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { mcpRuntimeState } from '/@/modules/mcp/state'
+import { openAPIServer } from '/@/modules/openapi'
 import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
 import { getErrorMessage } from '/@/utils'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
 import { getCommonRequestHeaders } from '/@/utils/common'
-import { aliOSS } from '/@/utils/oss'
 import { createMcpError } from './errors'
 import { mcpEventEmitter } from './event'
 
 export function getMcpWindow() {
   return getWindowById(ROXY_MCP_WINDOW_ID)
 }
+
+const fallbackAgentVersion = process.env.MODE === 'development'
+  ? process.env.AI_AGENT_VERSION_DEV
+  : process.env.AI_AGENT_VERSION_PROD
+
+function getMcpAppTitle() {
+  return import.meta.env.VITE_APP_TITLE || (isProd ? 'RoxyBrowser' : 'RoxyBrowserDev')
+}
+
+async function getCurrentAgentVersion() {
+  if (process.env.MODE === 'development') {
+    return fallbackAgentVersion || '0.0.0'
+  }
+
+  try {
+    const localVersionInfo = await agentUpdater.getLocalVersionInfo()
+    if (localVersionInfo.exists)
+      return localVersionInfo.version
+  }
+  catch (error) {
+    console.warn('[mcp] get local agent version failed:', getErrorMessage(error))
+  }
+
+  return fallbackAgentVersion || '0.0.0'
+}
+
+async function getMcpAgentTitle() {
+  const agentVersion = await getCurrentAgentVersion()
+  const appTitle = getMcpAppTitle()
+  return `${appTitle} AI Agent v${agentVersion}`
+}
+
+function normalizeAgentConsoleRoute(route = 'agent-console') {
+  const normalizedRoute = route.replace(/^\/+/, '').replace(/\/+$/, '')
+  return normalizedRoute || 'agent-console'
+}
+
+let suppressMcpWindowCloseUpdateCheck = false
 
 const electronAppPathEnvKeyMap = {
   home: 'HOME_DIR',
@@ -45,6 +80,14 @@ const electronAppPathEnvKeyMap = {
   crashDumps: 'CRASH_DUMPS_DIR',
 } as const satisfies Record<Parameters<typeof app.getPath>[0], string>
 
+interface StartMcpServerOptions {
+  skipScriptIntegrityCheck?: boolean
+}
+
+interface CloseMcpServerOptions {
+  waitForExit?: boolean
+}
+
 function getElectronAppPathEnv(): Record<string, string> {
   return Object.entries(electronAppPathEnvKeyMap).reduce<Record<string, string>>((acc, [pathName, envKey]) => {
     try {
@@ -58,55 +101,37 @@ function getElectronAppPathEnv(): Record<string, string> {
   }, {})
 }
 
-export interface McpImConfigPayload {
-  enableIM?: boolean
-  larkAppId?: string
-  larkAppSecret?: string
-  larkEnvironment?: 'lark' | 'feishu'
-  larkAllowedChatIds?: string
-  tgBotToken?: string
-  tgAllowedChatIds?: string
-  slackBotToken?: string
-  slackSigningSecret?: string
-  slackAppToken?: string
-  slackAllowedUserIds?: string
-  slackAllowedChannelIds?: string
-  discordBotToken?: string
-  discordAllowedUserIds?: string
-  discordAllowedChannelIds?: string
-  discordAllowedGuildIds?: string
-  weChatBotToken?: string
-}
-
 export const mcpManager = new (class McpManager {
   config: {
     port: number
   } = {
-    port: 26580,
+    port: isProd ? 26580 : 26581,
   }
 
-  eventEmitter: EventEmitter = new EventEmitter()
-
   private mcpWorker: UtilityProcess | null = null
+  private startupPromise: Promise<UtilityProcess> | null = null
+  private roxyClawStartupPromise: Promise<boolean> | null = null
+  private closingPromise: Promise<void> | null = null
 
-  async startMcpServer(agentModel?: AgentMode) {
-    // 等待更新完毕。
-    try {
-      if (agentUpdater.promise) {
-        await agentUpdater.promise
-      }
-    }
-    catch (error) {
-      console.error('agentUpdaterPromise wait error:', error)
-    }
+  async startMcpServer(options: StartMcpServerOptions = {}) {
+    if (this.mcpWorker)
+      return this.mcpWorker
 
-    // 主动触发一次更新检查，确保本地 agent 脚本与 sha512 期望值就绪
-    try {
-      await agentUpdater.checkForUpdates()
-    }
-    catch (error) {
-      console.error('[mcp] agentUpdater.checkForUpdates error:', error)
-    }
+    if (this.startupPromise)
+      return this.startupPromise
+
+    this.startupPromise = this.startMcpServerInner(options).finally(() => {
+      this.startupPromise = null
+    })
+
+    return this.startupPromise
+  }
+
+  private async startMcpServerInner(options: StartMcpServerOptions = {}) {
+    await this.waitForCloseInProgress()
+    await agentUpdater.waitForDownloadIfPending().catch((error) => {
+      console.error('[mcp] wait pending agent download error:', getErrorMessage(error))
+    })
 
     if (this.mcpWorker) {
       return this.mcpWorker
@@ -115,11 +140,7 @@ export const mcpManager = new (class McpManager {
     // 是否处于开发环境，pnpm dev 启动时，为true，打包后为false
     const isDevelopment = process.env.MODE === 'development'
 
-    const OPENAPI_SCRIPT_PATH = isDevelopment ? path.join(import.meta.dirname, './openapiMcp.mjs') : appConfig.openapiMcpBinPath
-
-    const PLAYWRIGHT_SCRIPT_PATH = isDevelopment ? path.join(import.meta.dirname, './playwrightMcp.mjs') : appConfig.playwrightMcpBinPath
-
-    const AGENT_ENTRY_SCRIPT = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : appConfig.agentBinPath
+    const AGENT_SCRIPT_PATH = isDevelopment ? path.join(import.meta.dirname, './agent.mjs') : appConfig.agentBinPath
 
     const electronAppPathEnv = getElectronAppPathEnv()
 
@@ -131,7 +152,7 @@ export const mcpManager = new (class McpManager {
     const ROXY_SERVER_URL = getBaseUrl() || await getGatewayConfig()
 
     // 启动前校验：验证本地脚本与远端 sha512 是否匹配，不匹配则自动重新下载
-    if (!isDevelopment) {
+    if (!isDevelopment && !options.skipScriptIntegrityCheck) {
       try {
         const corrupted = await agentUpdater.checkScriptIntegrity()
         if (corrupted.length > 0) {
@@ -154,7 +175,7 @@ export const mcpManager = new (class McpManager {
       }
     }
 
-    const env = {
+    const env: Record<string, any> = {
       ...process.env,
       ENV_TYPE: isDevelopment ? 'development' : (isProd ? 'production' : 'staging'),
 
@@ -162,13 +183,15 @@ export const mcpManager = new (class McpManager {
       ROXY_SERVER_URL,
       ROXY_SERVER_HEADERS: JSON.stringify(getCommonRequestHeaders()),
 
-      // openapi 和 playwright mcp 执行脚本路径，已经相关参数。
-      OPENAPI_SCRIPT_PATH,
       ROXY_API_KEY: store.apiKey,
       ROXY_API_HOST: `http://127.0.0.1:${store.apiPort}`,
-      PLAYWRIGHT_SCRIPT_PATH,
 
-      AGENT_SCRIPT_PATH: AGENT_ENTRY_SCRIPT,
+      AGENT_SCRIPT_PATH,
+
+      // agent 数据根目录（新存储结构的唯一锚点）。
+      // 旧的 CHECKPOINT_DIR / AGENT_WORK_DIR / SKILLS_DIR 暂时保留，作为迁移源与回退，
+      // 待迁移器与 agentPaths 全面接管后（见 docs/agent-data-directory-design.md 的 P5）移除。
+      // ROXY_AGENT_HOME: appConfig.agentDataDir,
 
       CHECKPOINT_DIR,
 
@@ -186,8 +209,8 @@ export const mcpManager = new (class McpManager {
       ...electronAppPathEnv,
       SKILLS_DIR: agentUpdater.agentDir,
 
-      // // 启动模式：启用 IM 时以 im 模式运行，否则以 agent 模式运行（两者互斥，只有一个进程）
-      ROXY_MODE: agentModel || 'agent',
+      // 统一以 agent 进程运行，RoxyClaw 作为同一进程内的 IM 能力按需启动。
+      ROXY_MODE: 'agent',
     }
 
     // 移除从宿主机 process.env 透传进来的 Anthropic SDK 鉴权变量。
@@ -211,7 +234,7 @@ export const mcpManager = new (class McpManager {
       }
     })
 
-    const worker = utilityProcess.fork(AGENT_ENTRY_SCRIPT, [], {
+    const worker = utilityProcess.fork(AGENT_SCRIPT_PATH, [], {
       env,
       execArgv: [isProd ? '--inspect=20580' : '--inspect=20581', '--experimental-network-inspection', '--experimental-strip-types'],
       stdio: 'pipe',
@@ -219,25 +242,23 @@ export const mcpManager = new (class McpManager {
 
     this.config.port = port
     this.mcpWorker = worker
+    agentUpdater.setRunningAgentVersion(await getCurrentAgentVersion())
 
     // 无论开发/生产环境，worker 退出时都要清空引用，确保下次能重新启动
     worker.once('exit', (code: number) => {
       console.log(`[MCP Worker Exit] code=${code}`)
-      this.mcpWorker = null
+      if (this.mcpWorker === worker) {
+        this.mcpWorker = null
+      }
+      if (!this.mcpWorker)
+        agentUpdater.setRunningAgentVersion(null)
     })
 
-    if (isDevelopment || !isProd) {
-      this.attachMcpWorkerDiagnostics(worker, AGENT_ENTRY_SCRIPT)
-    }
+    this.attachMcpWorkerDiagnostics(worker, AGENT_SCRIPT_PATH)
 
     worker.on('message', async (message) => {
       console.log('[MCP Worker Message]', message)
-      const event = message?.event
-      switch (event) {
-        case 'save_chat_message':
-          this.handleSaveChatMessage(message)
-          break
-      }
+      // const event = message?.event
     })
 
     mcpEventEmitter.on('baseUrlChanged', (baseUrl) => {
@@ -293,89 +314,122 @@ export const mcpManager = new (class McpManager {
     })
   }
 
-  private async handleSaveChatMessage(message: {
-    event: 'save_chat_message'
-    data: { conversationId: string, file: string, message: string, inputToken: number, outputToken: number, time: number, taskType: string }
-  }) {
-    const remoteUrl = await this.handleOssFileSave(message.data.file)
-    try {
-      const result = await API.base.userSaveLlmDataCreate({
-        content: message.data.message,
-        resultUrl: remoteUrl || '',
-        conversationId: message.data.conversationId,
-        inputToken: message.data.inputToken,
-        outputToken: message.data.outputToken,
+  async closeMcpServer(options: CloseMcpServerOptions = {}) {
+    const worker = this.mcpWorker
+    this.startupPromise = null
+    if (!worker) {
+      if (options.waitForExit)
+        await this.waitForCloseInProgress()
+      return
+    }
+
+    this.mcpWorker = null
+
+    const exitPromise = new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, 5000)
+      worker.once('exit', () => {
+        clearTimeout(timeout)
+        resolve()
       })
-      if (result.code !== 0) {
-        console.error('save chat message error:', result.msg)
-      }
-    }
-    catch (error) {
-      console.error('save chat message error:', error)
-    }
+      worker.once('error', () => {
+        clearTimeout(timeout)
+        resolve()
+      })
+    })
+    const closingPromise = exitPromise.finally(() => {
+      if (this.closingPromise === closingPromise)
+        this.closingPromise = null
+    })
+    this.closingPromise = closingPromise
+
+    worker.kill()
+    if (options.waitForExit)
+      await this.closingPromise
   }
 
-  /**
-   * 将ai回复的消息保存到阿里云oss
-   * @param file 文件路径
-   */
-  private async handleOssFileSave(file: string) {
-    const fileName = path.basename(file)
+  private async waitForCloseInProgress() {
+    const closingPromise = this.closingPromise
+    if (closingPromise)
+      await closingPromise
+  }
+
+  async startRoxyClawIfEnabled(source = 'background', options: { ensureOpenAPIServer?: boolean } = {}) {
+    if (this.roxyClawStartupPromise) {
+      return this.roxyClawStartupPromise
+    }
+
+    this.roxyClawStartupPromise = this.startRoxyClawIfEnabledInner(source, options).finally(() => {
+      this.roxyClawStartupPromise = null
+    })
+
+    return this.roxyClawStartupPromise
+  }
+
+  private async startRoxyClawIfEnabledInner(source: string, options: { ensureOpenAPIServer?: boolean }) {
+    if (!store.token) {
+      console.info(`[mcp] Skip RoxyClaw ${source} startup: user is not logged in.`)
+      return false
+    }
+
     try {
-      const { url } = await aliOSS.put(`/groupdata/workspace/${store.workspaceId}/mcp/${fileName}`, file)
-      console.log('oss file save url:', url)
-      return url
+      const result = await API.base.userGetRoxyClawList()
+      if (result.code !== 0 || result.data?.enabled !== 1) {
+        console.info(`[mcp] Skip RoxyClaw ${source} startup: disabled by remote config.`)
+        return false
+      }
+
+      if (options.ensureOpenAPIServer !== false) {
+        await openAPIServer.start()
+      }
+
+      if (!store.apiPort || store.apiPort === -1) {
+        console.warn(`[mcp] Skip RoxyClaw ${source} startup: OpenAPI server is not enabled.`)
+        return false
+      }
+
+      await this.startMcpServer()
+      console.info(`[mcp] Agent server started for RoxyClaw from ${source} remote config.`)
+      return true
     }
     catch (error) {
-      console.error('oss file save error:', error)
+      console.error(`[mcp] Failed to start RoxyClaw from ${source} remote config:`, error)
+      return false
     }
-  }
-
-  closeMcpServer() {
-    if (this.mcpWorker) {
-      this.mcpWorker.kill()
-      this.mcpWorker = null
-    }
-  }
-
-  isWorkerConnected() {
-    return !!this.mcpWorker
-  }
-
-  async restartMcpServer() {
-    this.closeMcpServer()
-    await this.startMcpServer()
   }
 })()
 
-export async function createMcpWindow(scene?: string, skill?: string) {
-  // 用 encodeURIComponent 而非 URLSearchParams：后者会把空格编码成 `+`，
-  // 而 vue-router 解析 query 时用 decodeURIComponent，不会把 `+` 还原成空格。
-  const parts: string[] = []
-  if (scene)
-    parts.push(`scene=${encodeURIComponent(scene)}`)
-  if (skill)
-    parts.push(`skill=${encodeURIComponent(skill)}`)
-  const query = parts.join('&')
-  const suffix = query ? `?${query}` : ''
+export async function createMcpWindow(route?: string) {
+  return createMcpWindowWithRoute(route)
+}
 
+export async function createMcpWindowWithRoute(route = 'agent-console') {
+  const agentTitle = await getMcpAgentTitle()
   const targetWin = getMcpWindow()
 
   if (targetWin) {
-    if (query) {
-      targetWin.loadURL(`${await getWebEntryUrl('mcp')}${suffix}`)
+    if (targetWin.isMinimized()) {
+      targetWin.restore()
     }
     targetWin.show()
+    targetWin.focus()
+    targetWin.setTitle(agentTitle)
+    const normalizedRoute = normalizeAgentConsoleRoute(route)
+    if (normalizedRoute !== 'agent-console') {
+      targetWin.webContents.send('IPC-bridge', {
+        name: 'mcp:navigate',
+        payload: [`/${normalizedRoute}`],
+      })
+    }
     return
   }
 
   const win = createWindow({
     roxyWindowId: ROXY_MCP_WINDOW_ID,
     autoHideMenuBar: true,
-    width: 1000,
-    height: 720,
-    minWidth: 1000,
-    minHeight: 720,
+    width: 1440,
+    height: 926,
+    minWidth: 944,
+    minHeight: 750,
     // resizable: false,
     // frame: false,
     // alwaysOnTop: false,
@@ -384,17 +438,20 @@ export async function createMcpWindow(scene?: string, skill?: string) {
     // show: true,
   })
 
-  win.on('close', () => {
-    mcpRuntimeState.setMcpWindowOpen(false)
-    if (!agentUpdater.isInProgress) {
-      agentUpdater.stopInterval()
-      agentUpdater.checkForUpdates()
-    }
-    mcpManager.closeMcpServer()
-    win.destroy()
+  win.setTitle(agentTitle)
+  win.on('page-title-updated', (event) => {
+    event.preventDefault()
   })
 
-  win.loadURL(`${await getWebEntryUrl('mcp')}${suffix}`)
+  win.once('closed', () => {
+    if (!suppressMcpWindowCloseUpdateCheck) {
+      mcpManager.closeMcpServer().catch((error) => {
+        console.error('[mcp] close MCP server on MCP window close error:', error)
+      })
+    }
+  })
+
+  win.loadURL(await getWebEntryUrl(normalizeAgentConsoleRoute(route)))
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);
@@ -402,9 +459,6 @@ export async function createMcpWindow(scene?: string, skill?: string) {
     win.webContents.openDevTools()
   }
   handleWindowMove(win)
-  win.on('close', async () => {
-    win.destroy()
-  })
 }
 
 export async function closeMcpWindow() {
@@ -412,4 +466,39 @@ export async function closeMcpWindow() {
   if (targetWin) {
     targetWin.destroy()
   }
+}
+
+async function destroyMcpWindowForRestart() {
+  const targetWin = getMcpWindow()
+  if (!targetWin || targetWin.isDestroyed())
+    return
+
+  suppressMcpWindowCloseUpdateCheck = true
+  try {
+    await new Promise<void>((resolve) => {
+      targetWin.once('closed', () => resolve())
+      targetWin.destroy()
+    })
+  }
+  finally {
+    suppressMcpWindowCloseUpdateCheck = false
+  }
+}
+
+export async function restartMcpForAgentUpdate(route = 'agent-console') {
+  if (agentUpdater.isInProgress)
+    throw createMcpError('agent_update_in_progress', 'AI Agent 更新资源下载中，请稍后再试')
+
+  agentUpdater.clearUpdateMessageData()
+  await mcpManager.closeMcpServer({ waitForExit: true })
+  await agentUpdater.checkForUpdates({
+    allowDownload: true,
+    throwOnDownloadFailure: true,
+  })
+  await destroyMcpWindowForRestart()
+  await mcpManager.startMcpServer({
+    skipScriptIntegrityCheck: true,
+  })
+  agentUpdater.clearUpdateMessageData()
+  await createMcpWindowWithRoute(route)
 }

@@ -46,6 +46,10 @@ function validatePayload(payload: WorkerPayload) {
     console.error('[worker] Invalid payload: parentRunId must be a non-empty string')
     process.exit(2)
   }
+  if (!payload.conversationId || typeof payload.conversationId !== 'string') {
+    console.error('[worker] Invalid payload: conversationId must be a non-empty string')
+    process.exit(2)
+  }
   if (!payload.task || typeof payload.task !== 'string') {
     console.error('[worker] Invalid payload: task must be a non-empty string')
     process.exit(2)

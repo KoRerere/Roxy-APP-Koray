@@ -2,14 +2,12 @@ import type { McpFailureType, ResourceUpdateMessage } from './mainMessage'
 import type {
   EnsureBrowserCacheRootDirResult,
   UnwrapRowsType,
-  UnwrapRowType,
   UserAddWindowInfoV2CreatePayload,
   UserGetAppUpgradeCreateData,
   UserGetCoreUpgradeCreateData,
   UserGetSystemPluginListData,
   UserGetUserConfigListData,
 } from '@roxy/backend-api'
-import type { OsConfig } from '#roxybrowser/constants'
 import type { CoreType } from '#roxybrowser/modules/browser/browser-manager/adapter'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
@@ -22,8 +20,8 @@ import type {
   CheckLocalExtensionUpdatePayload,
   UploadExtensionToOSSResult,
 } from '#roxybrowser/modules/extension/types'
-import type { StoreType } from '#roxybrowser/modules/store/types'
 import type { RestoreClientNetworkCheckResult } from '#roxybrowser/modules/store/restoreClientNetwork'
+import type { StoreType } from '#roxybrowser/modules/store/types'
 import type { RoxySyncStartResult } from '#roxybrowser/modules/sync-control/bin'
 import type { OpenPreferencesDialogPayload } from '#roxybrowser/modules/sync-control/dialog/preferences'
 import type {
@@ -143,6 +141,8 @@ export interface RenderMessage {
   'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
   /** 选择文件或文件夹 */
   'dialog:selectFileOrDir': (options?: { filters?: FileFilter[], defaultPath?: string }) => Promise<string>
+  /** 选择文件或文件夹，并返回路径类型 */
+  'dialog:selectFileOrDirInfo': (options?: { filters?: FileFilter[], defaultPath?: string }) => Promise<{ path: string, name: string, type: 'file' | 'dir' } | null>
 
   /** 开启系统代理 */
   'app:setProxy': (payload: { proxyRules?: string, proxyBypassRules?: string }) => void
@@ -180,8 +180,6 @@ export interface RenderMessage {
   'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
   'app:getAppVersion': () => string
-  /** 获取功能开关（由主进程运行时读取 env 决定） */
-  'app:getFeatureFlags': () => { scriptRecording: boolean }
   /** 卸载反馈已提交 */
   'app:uninstall-feedback-submitted': (payload: { reasons: number[], selectedReasons: string[] }) => Promise<void>
   /** 跳过卸载反馈 */
@@ -190,6 +188,8 @@ export interface RenderMessage {
   'app:uninstall-directly': () => Promise<void>
   /** 打开外部链接 */
   'app:open-external-url': (url: string) => Promise<void>
+  /** 下载本地文件 */
+  'app:downloadLocalFile': (payload: { filePath: string, fileName?: string }) => Promise<{ canceled: boolean, filePath?: string }>
   /** 取消卸载 */
   'app:uninstall-cancelled': () => Promise<void>
   /** openapi 端口或开关变的时候，需要重启服务 */
@@ -363,24 +363,24 @@ export interface RenderMessage {
    * 批量输入文本
    *
    * body参数格式
-    {
-      "mode":xx(string),
-      "data":xxx(string)
-    }
-
-    当mode为same的时候，表示所有窗口使用相同文本，data为文本内容
-    当mode为diff的时候，表示每个窗口使用不同的内容，data为每个窗口的内容,用dict表示,可以为pid,value为文本内容，例如：
-    {
-      "10000":"aaaa",
-      "10002":"bbbb"
-    }
-
-    当mode为random的时候,表示随机生成，data为随机策略，格式为dict,
-    {
-      // 随机范围 -- 注意传入的是string类型
-      "min":"111",
-      "max":"2222",
-    }
+   * {
+   *   "mode":xx(string),
+   *   "data":xxx(string)
+   * }
+   *
+   * 当mode为same的时候，表示所有窗口使用相同文本，data为文本内容
+   * 当mode为diff的时候，表示每个窗口使用不同的内容，data为每个窗口的内容,用dict表示,可以为pid,value为文本内容，例如：
+   * {
+   *   "10000":"aaaa",
+   *   "10002":"bbbb"
+   * }
+   *
+   * 当mode为random的时候,表示随机生成，data为随机策略，格式为dict,
+   * {
+   *   // 随机范围 -- 注意传入的是string类型
+   *   "min":"111",
+   *   "max":"2222",
+   * }
    */
   'syncControl:batchInputText': (
     payload: SyncControlSendTextPayload,
@@ -462,69 +462,50 @@ export interface RenderMessage {
   'syncControl:resume': () => void
 
   /** 打开 MCP */
-  'mcp:open': (options?: { scene?: string, skill?: string }) => Promise<{
+  'mcp:open': (payload?: {
+    route?: string
+  }) => Promise<{
     success: boolean
     type?: McpFailureType
     message?: string
     details?: Record<string, any>
   }>
   /** 获取 MCP 配置 */
-  'mcp:config': () => Promise<{ port: number }>
-  /** 关闭 MCP */
-  'mcp:close': () => Promise<void>
-  /** 获取 MCP 状态 */
-  'mcp:getStatus': () => Promise<{
-    mcpWindowOpen: boolean
-    roxyClawEnabled: boolean
-    mcpServerRunning: boolean
+  'mcp:config': () => Promise<{
+    port: number
   }>
-
-  /** 启动 RoxyClaw */
-  'mcp:startRoxyClaw': (payload?: {
-    enableIM?: boolean
-    larkAppId?: string
-    larkAppSecret?: string
-    larkEnvironment?: 'lark' | 'feishu'
-    larkAllowedChatIds?: string
-    tgBotToken?: string
-    tgAllowedChatIds?: string
-  }) => Promise<{
+  /** 确保 Agent Server 已启动并返回当前端口 */
+  'mcp:ensureServer': () => Promise<{
     success: boolean
-    data?: { message: string }
+    data?: {
+      port: number
+    }
     type?: McpFailureType
     message?: string
     details?: Record<string, any>
   }>
-  /** 停止 RoxyClaw */
-  'mcp:stopRoxyClaw': () => Promise<{ success: boolean, message?: string }>
-  /** 获取 RoxyClaw 状态 */
-  'mcp:roxyClawStatus': () => Promise<{ enabled: boolean, connected: boolean }>
-  /** 测试 Telegram 连接 */
-  'mcp:testTelegram': (token: string) => Promise<{ success: boolean, message?: string }>
-  /** 测试 Lark 连接 */
-  'mcp:testLark': (appId: string, appSecret: string, environment: 'lark' | 'feishu') => Promise<{ success: boolean, message?: string }>
-  /** 测试 Slack 连接 */
-  'mcp:testSlack': (botToken: string) => Promise<{ success: boolean, message?: string }>
-  /** 测试 Discord 连接 */
-  'mcp:testDiscord': (botToken: string) => Promise<{ success: boolean, message?: string }>
-  /** 获取微信 Bot 登录二维码 */
-  'mcp:getWeixinBotQrcode': () => Promise<{
+  /** 获取 agent 更新状态 */
+  'mcp:getAgentUpdateInfo': () => Promise<ResourceUpdateMessage | null>
+  /** 手动检测 agent 更新 */
+  'mcp:checkAgentForUpdates': () => Promise<ResourceUpdateMessage | null>
+  /** 应用 agent 更新并重启 Agent 窗口 */
+  'mcp:restartAgentForUpdate': (payload?: {
+    route?: string
+  }) => Promise<{
     success: boolean
+    type?: McpFailureType
     message?: string
-    data?: {
-      qrcode: string
-      url: string
-      qrcodeImgContent: string
-    }
+    details?: Record<string, any>
   }>
-  /** 查询微信 Bot 二维码状态 */
-  'mcp:getWeixinBotQrcodeStatus': (qrcode: string) => Promise<{
+  /** 触发 agent 更新；语义别名，供前端不用绑定到 restart 命名 */
+  'mcp:triggerAgentUpdate': (payload?: {
+    route?: string
+  }) => Promise<{
     success: boolean
+    type?: McpFailureType
     message?: string
-    data?: {
-      status: string
-      botToken: string
-      baseUrl: string
-    }
+    details?: Record<string, any>
   }>
+  /** 关闭 MCP */
+  'mcp:close': () => Promise<void>
 }

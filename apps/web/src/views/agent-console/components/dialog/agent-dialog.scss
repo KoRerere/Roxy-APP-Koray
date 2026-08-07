@@ -1,0 +1,262 @@
+@use '../form/agent-form';
+
+.agent-console-dialog.p-dialog {
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 16px;
+  background: var(--color-bg-primary);
+  box-shadow: var(--agent-dialog-shadow);
+  color: var(--color-text-primary);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  overflow: hidden;
+}
+
+.agent-console-dialog.p-dialog .p-dialog-content {
+  display: flex;
+  min-height: 0;
+  padding: 0;
+  border-radius: 16px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.agent-console-dialog.p-dialog .p-dialog-header {
+  display: none;
+}
+
+.agent-console-dialog__shell {
+  display: flex;
+  width: 100%;
+  max-height: calc(100dvh - 32px);
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  overflow: hidden;
+}
+
+.agent-console-create-template-dialog.p-dialog {
+  max-height: min(780px, calc(100dvh - 32px));
+}
+
+.agent-console-create-template-dialog.p-dialog .p-dialog-content {
+  min-height: 0;
+  max-height: inherit;
+}
+
+.create-template-dialog {
+  height: auto;
+  max-height: min(780px, calc(100dvh - 32px));
+}
+
+.agent-console-custom-template-dialog.p-dialog {
+  max-height: calc(100dvh - 32px);
+}
+
+.agent-console-custom-template-dialog.p-dialog .p-dialog-content {
+  min-height: 0;
+  max-height: inherit;
+}
+
+.agent-console-dialog__header,
+.agent-console-dialog__footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 12px 20px;
+}
+
+.agent-console-dialog__header {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.agent-console-dialog__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.agent-console-dialog__close {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 9999px;
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-quaternary);
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    width: 14px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: currentColor;
+    content: '';
+  }
+
+  &::before {
+    transform: rotate(45deg);
+  }
+
+  &::after {
+    transform: rotate(-45deg);
+  }
+}
+
+.agent-console-dialog__body {
+  flex: 1;
+  min-height: 0;
+  padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--color-border-primary) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--color-border-primary);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.agent-console-dialog__footer {
+  justify-content: flex-end;
+  border-top: 0;
+}
+
+.agent-console-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.agent-console-dialog__button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-shadow: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-bg-secondary-hover);
+  }
+
+  &.primary {
+    border: none;
+    color: var(--agent-gradient-foreground);
+    background: var(--agent-gradient);
+  }
+
+  &.dark {
+    border-color: var(--color-bg-primary-inverse);
+    color: var(--color-text-primary-inverse);
+    background: var(--color-bg-primary-inverse);
+
+    &:hover {
+      background: var(--color-bg-primary-inverse-hover);
+    }
+  }
+}
+
+.agent-schedule-datepicker-panel.p-datepicker-panel {
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 16px;
+  background: var(--color-bg-primary);
+  box-shadow: var(--agent-dialog-shadow);
+}
+
+.agent-schedule-datepicker-panel {
+  .p-datepicker-day,
+  .p-datepicker-hour-picker > span,
+  .p-datepicker-minute-picker > span,
+  .p-datepicker-second-picker > span {
+    border-radius: 999px;
+  }
+
+  .p-datepicker-today .p-datepicker-day:not(.p-datepicker-day-selected) {
+    background: var(--color-bg-tertiary-hover);
+  }
+
+  .p-datepicker-day:not(.p-datepicker-day-selected):not(.p-disabled):hover {
+    background: var(--color-bg-tertiary-hover);
+  }
+
+  .p-datepicker-hour-picker > span:hover,
+  .p-datepicker-minute-picker > span:hover,
+  .p-datepicker-second-picker > span:hover,
+  .p-datepicker-increment-button:hover,
+  .p-datepicker-decrement-button:hover {
+    background: var(--color-bg-secondary-hover);
+  }
+
+  .p-datepicker-day-selected,
+  .p-datepicker-today .p-datepicker-day.p-datepicker-day-selected {
+    color: var(--color-text-primary-inverse);
+    background: var(--color-bg-primary-inverse);
+  }
+}
+
+@media (max-width: 520px) {
+  .agent-console-dialog.p-dialog {
+    width: calc(100vw - 24px) !important;
+  }
+
+  .agent-console-dialog__shell {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .agent-console-create-template-dialog.p-dialog,
+  .create-template-dialog {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .agent-console-custom-template-dialog.p-dialog {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .agent-console-dialog__header,
+  .agent-console-dialog__body,
+  .agent-console-dialog__footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}

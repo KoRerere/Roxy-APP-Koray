@@ -1,7 +1,9 @@
 import type { WorkerResultStatus } from '../core/worker/protocol'
+import type { AgentRunEvent } from '@roxy/shared/channel'
 import { HumanMessage } from '@langchain/core/messages'
-import { env } from '../config'
-import { streamAdapter } from '../core/sse/streamAdapter'
+import { streamEvents } from '../core/agent-events/streamEvents'
+import { startResourceMonitor } from '../core/diagnostics/resourceMonitor'
+import { writePerfmon } from '../core/logger'
 import { loadWorkerPayload } from '../core/worker/payload'
 import {
   closeIpcAndExit,
@@ -17,13 +19,10 @@ import { handleWorkerStream, StreamState } from '../deepagents/handle-stream'
 const WORKER_DESTROY_TIMEOUT_MS = 12_000
 
 export async function runWorkerMode(): Promise<() => Promise<void>> {
-  if (!env.CHECKPOINT_DIR) {
-    throw new Error('CHECKPOINT_DIR must be set before starting worker process')
-  }
-
   const payload = await loadWorkerPayload()
 
-  const { workerId, task, timeoutMs, conversationId, turnId } = payload
+  const { workerId, task, timeoutMs, conversationId, turnId, dispatchTaskId, allowedDirIds } = payload
+  const writer = (event: AgentRunEvent) => sendEvent(workerId, event)
 
   console.log(`[worker] Starting workerId=${workerId} pid=${process.pid} timeoutMs=${timeoutMs}`)
 
@@ -59,15 +58,22 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
   }, timeoutMs)
   timeoutHandle.unref()
 
+  const stopResourceMonitor = startResourceMonitor({
+    label: 'worker',
+    intervalMs: 15_000,
+    receiver: writePerfmon,
+  })
+
   let agent, destroy
   try {
     ;({ agent, destroy } = await createChatAgent({
-      mode: 'simple',
+      role: 'worker',
       workerId,
       conversationId,
       turnId,
-      // worker 内模型调用网络中断也自动重试；经 IPC 回传 worker_retry（带 taskId），前端据此停计时 / 截断块、不展示提示
-      onRetry: info => sendEvent(workerId, streamAdapter.workerRetryEvent({ taskId: workerId, ...info })),
+      taskMonitorTaskId: dispatchTaskId ?? workerId,
+      allowedDirIds,
+      onRetry: info => writer(streamEvents.workerRetryEvent({ taskId: workerId, ...info })),
     }))
 
     const streamState = new StreamState()
@@ -79,19 +85,21 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
         tags: [workerId],
         streamMode: ['messages', 'custom', 'tools'],
         signal: abortController.signal,
+        taskMonitorTaskId: workerId,
+        writer,
       } as any,
     )
 
     for await (const rawChunk of stream) {
       const events = handleWorkerStream(rawChunk, streamState)
       for (const event of events) {
-        sendEvent(workerId, event)
+        writer(event)
       }
     }
 
     const finishedThinking = streamState.finishThinking(Date.now())
     if (finishedThinking) {
-      sendEvent(workerId, streamAdapter.thinkingCompleteEvent(finishedThinking))
+      writer(streamEvents.thinkingCompleteEvent(finishedThinking))
     }
 
     if (abortController.signal.aborted) {
@@ -115,6 +123,7 @@ export async function runWorkerMode(): Promise<() => Promise<void>> {
   finally {
     clearTimeout(timeoutHandle)
     clearInterval(heartbeatHandle)
+    stopResourceMonitor()
 
     delivered = await sendResult({
       workerId,

@@ -1,4 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
+import AgentConsoleIndex from '/@/views/agent-console/index.vue'
+import AgentChatRoute from '/@/views/agent-console/pages/AgentChatRoute.vue'
 
 export const baseRoutes: RouteRecordRaw[] = [
   {
@@ -61,41 +63,116 @@ export const baseRoutes: RouteRecordRaw[] = [
     component: () => import('/@/views/sync-control/dialog/syncing-window-list.vue'),
   },
   {
-    name: 'mcp',
-    path: '/mcp',
-    meta: { title: 'MCP' },
-    component: () => import('/@/views/mcp/index.vue'),
-    redirect: { name: 'mcp-chat' },
+    name: 'agent-console',
+    path: '/agent-console',
+    meta: {
+      title: 'AI Agent',
+      isRoxyAgent: true,
+      permissions: ['Roxy_AI_Agent_All'],
+    },
+    component: AgentConsoleIndex,
     children: [
       {
-        name: 'mcp-chat',
-        path: 'chat',
-        meta: { title: 'MCP Chat' },
-        component: () => import('/@/views/mcp/chat/chat-view.vue'),
+        name: 'agent-console-chat',
+        path: '',
+        meta: { title: 'AI Agent' },
+        component: AgentChatRoute,
       },
       {
-        name: 'mcp-settings',
+        name: 'agent-console-conversation',
+        path: 'c/:conversationId',
+        meta: { title: 'AI Agent' },
+        component: AgentChatRoute,
+      },
+      {
+        name: 'agent-console-task-manager',
+        path: 'task-manager',
+        meta: { title: 'Task Manager' },
+        component: () => import('/@/views/agent-console/pages/TaskManagerRoute.vue'),
+      },
+      {
+        name: 'agent-console-my-templates',
+        path: 'templates',
+        meta: { title: '我的模板' },
+        component: () => import('/@/views/agent-console/pages/MyTemplatesRoute.vue'),
+      },
+      {
+        name: 'agent-console-template-store',
+        path: 'template-store',
+        meta: { title: '模板商城' },
+        component: () => import('/@/views/agent-console/pages/TemplateStoreRoute.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw',
+        path: 'roxyclaw',
+        meta: {
+          title: 'RoxyClaw',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/AgentRoxyClawRoute.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw-telegram',
+        path: 'roxyclaw/telegram',
+        meta: {
+          title: 'Telegram Bot',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/roxy-claw/telegram-config.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw-lark',
+        path: 'roxyclaw/lark',
+        meta: {
+          title: 'Lark / Feishu Bot',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/roxy-claw/lark-config.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw-slack',
+        path: 'roxyclaw/slack',
+        meta: {
+          title: 'Slack Bot',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/roxy-claw/slack-config.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw-discord',
+        path: 'roxyclaw/discord',
+        meta: {
+          title: 'Discord Bot',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/roxy-claw/discord-config.vue'),
+      },
+      {
+        name: 'agent-console-roxyclaw-wechat',
+        path: 'roxyclaw/wechat',
+        meta: {
+          title: 'WeChat Bot',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/roxy-claw/wechat-config.vue'),
+      },
+      {
+        name: 'agent-console-credits',
+        path: 'credits',
+        meta: {
+          title: 'Credits',
+          permissions: ['Cost_Center_all'],
+        },
+        component: () => import('/@/views/agent-console/pages/CreditsRoute.vue'),
+      },
+      {
+        name: 'agent-console-settings',
         path: 'settings',
-        meta: { title: 'MCP Settings' },
-        component: () => import('/@/views/mcp/settings/settings-view.vue'),
-      },
-      {
-        name: 'mcp-skills-store',
-        path: 'skills-store',
-        meta: { title: 'Skills Store' },
-        component: () => import('/@/views/mcp/skills-store/index.vue'),
-      },
-      {
-        name: 'mcp-points',
-        path: 'points',
-        meta: { title: 'Points' },
-        component: () => import('/@/views/mcp/points/points-view.vue'),
-      },
-      {
-        name: 'mcp-scripts',
-        path: 'scripts',
-        meta: { title: 'MCP Scripts' },
-        component: () => import('/@/views/mcp/scripts/scripts-view.vue'),
+        meta: {
+          title: 'Settings',
+          agentConsoleLayout: 'settings',
+        },
+        component: () => import('/@/views/agent-console/pages/AgentSettingsRoute.vue'),
       },
     ],
   },
@@ -104,5 +181,18 @@ export const baseRoutes: RouteRecordRaw[] = [
     path: '/tutorial/before-enter',
     meta: { title: $t('开始之前') },
     component: () => import('/@/views/tutorial/before-enter/index.vue'),
+  },
+  {
+    path: '/mcp',
+    name: 'mcp',
+    meta: {
+      title: 'AI Agent',
+      type: 'button',
+      menuAction: 'roxy-agent',
+      icon: 'roxy-agent/rx-ic-logo',
+      isRoxyClaw: true,
+      permissions: ['Roxy_AI_Agent_All'],
+    },
+    component: AgentConsoleIndex,
   },
 ]

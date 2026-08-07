@@ -35,7 +35,7 @@ apps/electron/src/index.ts (67 lines)
 - logs/: Log file serving
 
 **mcp/**
-- MCP server integration
+- Forks the AI agent via `utilityProcess.fork()` (McpManager; port from 26580, all env injected by Electron)
 - Playwright and OpenAPI MCP coordination
 
 **roxynet/**

@@ -1,5 +1,5 @@
 import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
-import { canShowProxyQrcode } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
+import { canShowProxyQrcode, isDirectExportBlocked } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
@@ -30,6 +30,7 @@ function getRowState(datas: ProxyItem[]) {
   let canRenew = true
   let canRefresh = true
   let isDirect = false
+  let blockDirectExport = false
   let canUpgrade = false
 
   for (const item of datas) {
@@ -55,6 +56,8 @@ function getRowState(datas: ProxyItem[]) {
 
     if (item.isDirect)
       isDirect = true
+    if (isDirectExportBlocked(item))
+      blockDirectExport = true
 
     if (item.canBandwidthUpgrade)
       canUpgrade = true
@@ -70,6 +73,7 @@ function getRowState(datas: ProxyItem[]) {
     canRenew,
     canRefresh,
     isDirect,
+    blockDirectExport,
     canUpgrade,
   }
 }
@@ -87,6 +91,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     canRenew,
     canRefresh,
     isDirect,
+    blockDirectExport,
     canUpgrade,
   } = getRowState(rows)
 
@@ -130,7 +135,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_download',
       tooltip: $t('下载'),
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
       multiple: true,
       multipleProps: {
         disabledTooltip: isGift ? $t('官方赠送的代理 IP 无法下载') : undefined,
@@ -143,7 +148,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       label: $t('扫码导出'),
       icon: 'base/rx_ic_qrcode',
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
       hideSubmenuIcon: !canShowQrcode,
       ...(canShowQrcode
         ? {

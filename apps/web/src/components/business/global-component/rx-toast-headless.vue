@@ -30,6 +30,23 @@ function closeToast(slotData: Recordable) {
   closeCallback()
 }
 
+function handleToastClick(slotData: Recordable) {
+  const { message } = slotData
+  if (typeof message.onClick !== 'function')
+    return
+
+  closeToast(slotData)
+  message.onClick()
+}
+
+function handleToastKeydown(event: KeyboardEvent, slotData: Recordable) {
+  if (event.key !== 'Enter' && event.key !== ' ')
+    return
+
+  event.preventDefault()
+  handleToastClick(slotData)
+}
+
 function handleMouseenter(slotData: Recordable) {
   const { message } = slotData
   const key = toastCacheKey(message)
@@ -73,15 +90,13 @@ function cacheToast(slotData: Recordable) {
   })
 
   if (duplicateItem) {
-    message.hide = true
-    message.life = 1
-    setTimeout(closeCallback)
-    duplicateItem.message.count = (duplicateItem.message.count || 1) + 1
+    duplicateItem.message.hide = true
+    message.hide = false
+    message.count = (duplicateItem.message.count || 1) + 1
+    message.life = duplicateItem.message.originLife || message.life || 2500
     clearTimeout(duplicateItem.closeTimeout)
-    duplicateItem.closeTimeout = setTimeout(() => {
-      closeToast({ message: duplicateItem.message, closeCallback: duplicateItem.closeCallback })
-    }, duplicateItem.message.originLife)
-    return
+    Reflect.deleteProperty(messageMap, toastCacheKey(duplicateItem.message))
+    setTimeout(duplicateItem.closeCallback)
   }
 
   if (!messageMap[cacheKey] && message.life) {
@@ -98,12 +113,19 @@ function cacheToast(slotData: Recordable) {
 </script>
 
 <template>
-  <Toast position="top-center" unstyled :pt="{ root: 'translate-x-[-50%] z-10' }">
+  <Toast position="top-center" unstyled :pt="{ root: 'rx-toast-headless translate-x-[-50%] z-10' }">
     <template #container="{ message, closeCallback }">
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
-        <section class="alert" :data-life="cacheToast({ message, closeCallback })"
-                 @mouseenter="handleMouseenter({ message, closeCallback })"
-                 @mouseleave="handleMouseleave({ message, closeCallback })"
+        <section
+          class="alert"
+          :class="{ 'alert--clickable': typeof message.onClick === 'function' }"
+          :data-life="cacheToast({ message, closeCallback })"
+          :role="typeof message.onClick === 'function' ? 'button' : undefined"
+          :tabindex="typeof message.onClick === 'function' ? 0 : undefined"
+          @click="handleToastClick({ message, closeCallback })"
+          @keydown="handleToastKeydown($event, { message, closeCallback })"
+          @mouseenter="handleMouseenter({ message, closeCallback })"
+          @mouseleave="handleMouseleave({ message, closeCallback })"
         >
           <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
@@ -123,7 +145,7 @@ function cacheToast(slotData: Recordable) {
             </div>
           </div>
           <div class="alert-close">
-            <SvgIcon name="base/rx_ic_delete" size="16" class="cursor-pointer" @click="closeToast({ message, closeCallback })" />
+            <SvgIcon name="base/rx_ic_delete" size="16" class="cursor-pointer" @click.stop="closeToast({ message, closeCallback })" />
           </div>
         </section>
       </OverlayBadge>
@@ -132,6 +154,11 @@ function cacheToast(slotData: Recordable) {
 </template>
 
 <style lang="scss" scoped>
+:global(.rx-toast-headless > div) {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
 .alert {
   display: flex;
   width: 360px;
@@ -148,6 +175,15 @@ function cacheToast(slotData: Recordable) {
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+}
+
+.alert--clickable {
+  cursor: pointer;
+}
+
+.alert--clickable:focus-visible {
+  outline: 2px solid var(--colors-text-text-brand, #12a3fc);
+  outline-offset: 2px;
 }
 
 .badge.success {

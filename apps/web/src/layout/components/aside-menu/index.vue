@@ -256,6 +256,12 @@ async function genCustomerParams(data: any) {
   isolation: isolate;
   overflow: hidden;
 
+  &:not(.collapsed) {
+    .menu {
+      scrollbar-gutter: stable;
+    }
+  }
+
   &.collapsed {
     .menu::-webkit-scrollbar {
       display: none;

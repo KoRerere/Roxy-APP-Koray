@@ -1,240 +1,306 @@
-import type { UserSkill } from '@/api/skills'
-import type { SkillMetadataLoadErrorCode, SkillMetadataLoadFailure } from '@/core/skills/metadata'
-import type { RuntimeAvailability, RuntimeCommandRunner, SkillRuntimeDescriptor, SkillRuntimeSource } from '@/core/skills/runtime'
-import AdmZip from 'adm-zip'
-import { Buffer } from 'node:buffer'
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import os from 'node:os'
-import path from 'node:path'
-import { aiAgentSkillsApi } from '@/api/skills'
-import { loadSkillMetadataFromDir } from '@/core/skills/metadata'
+import type { TemplateRefValue } from '@roxy/shared'
+import { isTemplateRef } from '@roxy/shared'
+import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
 import {
-  detectSkillRuntimes,
-  isSupportedRuntimeId,
-  probeRuntimeAvailability,
-} from '@/core/skills/runtime'
-import { env } from '../config'
-
-export type SkillValidationErrorCode
-  = | SkillMetadataLoadErrorCode
-    | 'path-not-found'
-    | 'invalid-source-type'
-    | 'zip-extract-failed'
-
-export interface SkillValidationResult {
-  valid: boolean
-  name?: string
-  description?: string
-  error?: string
-  errorCode?: SkillValidationErrorCode
-}
-
-export type SkillSource = 'user' | 'store'
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from 'node:fs/promises'
+import path from 'node:path'
+import {
+  loadSkillMetadataFromDir,
+  MAX_SKILL_FILE_SIZE_BYTES,
+} from '@/core/skills/metadata'
+import { agentPaths } from '@/core/storage/agentPaths'
 
 export interface SkillEntry {
   name: string
-  /** 国际化展示名：商城 skill 来自后端（按 Language 返回），用户导入的 skill 为空，回退到 name */
-  title?: string | null
   description: string
-  dirName: string
-  rootDir: string
-  installedAt: number
-  hasScripts: boolean
-  runtimeSource: SkillRuntimeSource
-  runtimes: Array<SkillRuntimeDescriptor & RuntimeAvailability>
-  missingRuntimeIds: string[]
-  /** 来源：用户自行导入 or 商城安装 */
-  source: SkillSource
-  /** 是否启用，禁用后不会被 agent 加载，但不会删除 */
-  enabled: boolean
-  /** 商城 skill 的 slug，用于关联远端记录 */
-  slug?: string
+  ref?: TemplateRefValue
 }
 
+export type SkillSource = 'builtin' | 'installed' | 'user'
+
 interface SkillMeta {
-  installedAt?: number
-  sourcePath?: string
+  source?: string
   slug?: string
+  sha512?: string
+  templateRef?: string
+  installedAt?: number
   enabled?: boolean | 0 | 1
 }
 
-interface InstallSkillOptions {
-  source?: SkillSource
+export interface LocalSkillRecord extends SkillEntry {
+  dirPath: string
+  rootDir: string
+  source: SkillSource
   slug?: string
-  enabled?: boolean
+  sha512?: string
 }
 
-interface SkillManagerDeps {
-  runtimeCommandRunner?: RuntimeCommandRunner
+export interface TemplateSkillIdentity {
+  templateRef: TemplateRefValue
+  sha512: string
+  slug?: string
+  packageName?: string
+}
+
+export interface ResolvedLocalSkillFile {
+  entry: SkillEntry
+  filePath: string
+  relativePath: string
+}
+
+function readNonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
 function toSafeDirName(name: string): string {
-  return name.trim().replace(/[^\w\-]/g, '_').replace(/_+/g, '_')
+  return name.trim().replace(/[^\w-]/g, '_').replace(/_+/g, '_')
 }
 
-async function copyDirRecursive(src: string, dest: string): Promise<void> {
-  await mkdir(dest, { recursive: true })
-  for (const entry of readdirSync(src)) {
-    const srcPath = path.join(src, entry)
-    const destPath = path.join(dest, entry)
-    if (statSync(srcPath).isDirectory()) {
-      await copyDirRecursive(srcPath, destPath)
+function isPathInsideOrEqual(parent: string, target: string): boolean {
+  const relative = path.relative(parent, target)
+  return parent === target || (relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative))
+}
+
+function normalizeRelativeSkillFile(file: string): string {
+  const normalizedInput = file.replace(/\\/g, '/')
+  if (!normalizedInput || path.posix.isAbsolute(normalizedInput) || /^[a-z]:/i.test(normalizedInput)) {
+    throw new Error('Skill file must be a non-empty relative path.')
+  }
+
+  const normalized = path.posix.normalize(normalizedInput).replace(/^\.\//, '')
+  if (normalized === '.' || normalized === '..' || normalized.startsWith('../') || normalized.includes('/../')) {
+    throw new Error('Skill file must stay inside the Skill directory.')
+  }
+
+  return normalized
+}
+
+async function ensureNoSymlink(rootDir: string, candidate: string): Promise<void> {
+  const relative = path.relative(rootDir, candidate)
+  const segments = relative.split(path.sep).filter(Boolean)
+  let current = rootDir
+
+  for (const segment of segments) {
+    current = path.join(current, segment)
+    const stat = await lstat(current).catch(() => null)
+    if (!stat) {
+      throw new Error('Skill file was not found.')
     }
-    else {
-      await copyFile(srcPath, destPath)
+    if (stat.isSymbolicLink()) {
+      throw new Error('Symbolic links are not allowed in Skills.')
     }
   }
 }
 
-async function extractZipToTemp(zipPath: string): Promise<{ tempDir: string, skillRootDir: string }> {
-  const tempDir = path.join(os.tmpdir(), `roxy-skill-${Date.now()}`)
-  await mkdir(tempDir, { recursive: true })
+async function copyDirectoryContents(sourceDir: string, targetDir: string): Promise<void> {
+  await mkdir(targetDir, { recursive: true })
+  const entries = await readdir(sourceDir, { withFileTypes: true })
 
-  const zip = new AdmZip(zipPath)
-  zip.extractAllTo(tempDir, true)
+  for (const entry of entries) {
+    const sourcePath = path.join(sourceDir, entry.name)
+    const targetPath = path.join(targetDir, entry.name)
 
-  const rootEntries = readdirSync(tempDir).filter(entry => !entry.startsWith('.'))
-  const hasSkillMdAtRoot = existsSync(path.join(tempDir, 'SKILL.md'))
-
-  if (!hasSkillMdAtRoot && rootEntries.length === 1) {
-    const singleEntry = path.join(tempDir, rootEntries[0])
-    if (statSync(singleEntry).isDirectory()) {
-      return { tempDir, skillRootDir: singleEntry }
+    if (entry.isSymbolicLink()) {
+      throw new Error('Symbolic links are not allowed in Skills.')
     }
+    if (entry.isDirectory()) {
+      await copyDirectoryContents(sourcePath, targetPath)
+      continue
+    }
+    if (!entry.isFile()) {
+      throw new Error(`Unsupported Skill entry: ${entry.name}`)
+    }
+
+    const data = await readFile(sourcePath)
+    await writeFile(targetPath, data, { flag: 'wx' })
   }
-
-  return { tempDir, skillRootDir: tempDir }
-}
-
-function formatValidationError(result: SkillMetadataLoadFailure): string {
-  switch (result.code) {
-    case 'missing-skill-md':
-      return '目录中缺少 SKILL.md 文件'
-    case 'read-failed':
-      return `无法读取 SKILL.md: ${result.message}`
-    case 'missing-frontmatter':
-      return 'SKILL.md 缺少 YAML frontmatter（需要以 --- 包裹）'
-    case 'invalid-yaml':
-      return 'SKILL.md frontmatter 不是合法 YAML'
-    case 'frontmatter-not-mapping':
-      return 'SKILL.md frontmatter 必须是对象'
-    case 'missing-name':
-      return 'SKILL.md frontmatter 缺少 name 字段'
-    case 'missing-description':
-      return 'SKILL.md frontmatter 缺少 description 字段'
-    case 'content-too-large':
-      return 'SKILL.md 文件过大'
-    default:
-      return result.message
-  }
-}
-
-function isRemoteSkillEnabled(skill: UserSkill): boolean {
-  return skill.enabled !== false && skill.enabled !== 0
 }
 
 export class SkillManager {
   private readonly skillsDir: string
-  private readonly storeSkillsDir: string
-  private readonly builtinSkills: Set<string>
-  private readonly runtimeCommandRunner?: RuntimeCommandRunner
+  private readonly installedSkillsDir: string
+  private readonly builtinSkillsDir: string
 
-  constructor(skillsDir: string, deps: SkillManagerDeps = {}) {
-    this.skillsDir = path.join(skillsDir, 'skills')
-    this.storeSkillsDir = path.join(skillsDir, 'store-skills')
+  constructor(dirs: { skillsDir: string, installedSkillsDir: string, builtinSkillsDir: string }) {
+    this.skillsDir = dirs.skillsDir
+    this.installedSkillsDir = dirs.installedSkillsDir
+    this.builtinSkillsDir = dirs.builtinSkillsDir
+
     mkdirSync(this.skillsDir, { recursive: true })
-    mkdirSync(this.storeSkillsDir, { recursive: true })
-    this.builtinSkills = new Set(['roxybrowser-openapi-skills', 'roxybrowser-playwright-skills', 'playwright-rpa-enhance-skills'])
-    this.runtimeCommandRunner = deps.runtimeCommandRunner
-    this.migrateLegacyStoreSkills()
-  }
-
-  private isBuiltinSkill(dirName: string): boolean {
-    return this.builtinSkills.has(dirName)
-  }
-
-  async validateSkillSource(sourcePath: string): Promise<SkillValidationResult> {
-    if (!existsSync(sourcePath)) {
-      return { valid: false, error: `路径不存在: ${sourcePath}`, errorCode: 'path-not-found' }
-    }
-
-    const isZip = sourcePath.toLowerCase().endsWith('.zip') && statSync(sourcePath).isFile()
-
-    if (isZip) {
-      let tempDir: string | undefined
-      try {
-        const extracted = await extractZipToTemp(sourcePath)
-        tempDir = extracted.tempDir
-        return await this.validateSkillDir(extracted.skillRootDir)
-      }
-      catch (error: any) {
-        return { valid: false, error: `zip 解压失败: ${error.message}`, errorCode: 'zip-extract-failed' }
-      }
-      finally {
-        if (tempDir) {
-          await rm(tempDir, { recursive: true, force: true }).catch(() => {})
-        }
-      }
-    }
-
-    if (!statSync(sourcePath).isDirectory()) {
-      return { valid: false, error: '路径既不是目录，也不是 .zip 文件', errorCode: 'invalid-source-type' }
-    }
-
-    return this.validateSkillDir(sourcePath)
-  }
-
-  private async validateSkillDir(dirPath: string): Promise<SkillValidationResult> {
-    const result = await loadSkillMetadataFromDir(dirPath)
-    if (!result.ok) {
-      return {
-        valid: false,
-        error: formatValidationError(result),
-        errorCode: result.code,
-      }
-    }
-
-    return {
-      valid: true,
-      name: result.metadata.name,
-      description: result.metadata.description,
-    }
-  }
-
-  async listSkills(options: { language?: string } = {}): Promise<SkillEntry[]> {
-    const runtimeAvailabilityCache = new Map<string, Promise<RuntimeAvailability>>()
-    const results: SkillEntry[] = []
-    for (const { dirPath, dirName, source } of this.listManagedSkillDirs()) {
-      if (this.isBuiltinSkill(dirName)) {
-        continue
-      }
-      const entry = await this.readEntry(dirPath, dirName, source, runtimeAvailabilityCache)
-      if (entry) {
-        results.push(entry)
-      }
-    }
-    // 用后端国际化数据覆盖商城 skill 的 title/description
-    await this.applyStoreLocalization(results, options.language)
-    // 商城安装的 skill 前置，然后按安装时间倒序排序
-    return results.sort((a, b) => {
-      if (a.source !== b.source) {
-        return a.source === 'store' ? -1 : 1
-      }
-      return b.installedAt - a.installedAt
-    })
+    mkdirSync(this.installedSkillsDir, { recursive: true })
+    mkdirSync(this.builtinSkillsDir, { recursive: true })
   }
 
   async listAvailableSkills(): Promise<SkillEntry[]> {
-    const runtimeAvailabilityCache = new Map<string, Promise<RuntimeAvailability>>()
-    const results: SkillEntry[] = []
-    for (const { dirPath, dirName, source } of this.listLoadableSkillDirs()) {
-      const entry = await this.readEntry(dirPath, dirName, source, runtimeAvailabilityCache)
-      if (entry && entry.enabled) {
-        results.push(entry)
-      }
+    const records = await this.listAvailableSkillRecords()
+    return records
+      .map(({ name, description, ref }) => ({
+        name,
+        description,
+        ...(ref ? { ref } : {}),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  async resolveAvailableSkillFile(
+    name: string,
+    file = 'SKILL.md',
+  ): Promise<ResolvedLocalSkillFile | null> {
+    const normalizedName = name.trim()
+    if (!normalizedName) {
+      return null
     }
-    return results.sort((a, b) => a.name.localeCompare(b.name))
+
+    const matches = (await this.listAvailableSkillRecords()).filter(record =>
+      record.name === normalizedName,
+    )
+    if (matches.length === 0) {
+      return null
+    }
+    if (matches.length > 1) {
+      throw new Error(`Skill name "${normalizedName}" is ambiguous.`)
+    }
+
+    const record = matches[0]!
+    const relativePath = normalizeRelativeSkillFile(file)
+    const filePath = path.resolve(record.rootDir, ...relativePath.split('/'))
+    if (!isPathInsideOrEqual(record.rootDir, filePath)) {
+      throw new Error('Skill file escapes the Skill directory.')
+    }
+
+    await ensureNoSymlink(record.rootDir, filePath)
+    const stat = await lstat(filePath).catch(() => null)
+    if (!stat?.isFile() || stat.isSymbolicLink()) {
+      throw new Error(`Skill file ${relativePath} was not found.`)
+    }
+    if (stat.size > MAX_SKILL_FILE_SIZE_BYTES) {
+      throw new Error(`Skill file exceeds the ${MAX_SKILL_FILE_SIZE_BYTES} byte limit.`)
+    }
+
+    return {
+      entry: {
+        name: record.name,
+        description: record.description,
+        ...(record.ref ? { ref: record.ref } : {}),
+      },
+      filePath,
+      relativePath,
+    }
+  }
+
+  async findInstalledTemplateSkill(identity: TemplateSkillIdentity): Promise<LocalSkillRecord | null> {
+    const records = await this.listSkillRecords('installed')
+
+    return records.find((record) => {
+      if (record.ref === identity.templateRef) {
+        return true
+      }
+      if (identity.slug && record.slug === identity.slug) {
+        return true
+      }
+      if (identity.slug && record.slug) {
+        return false
+      }
+
+      return Boolean(identity.packageName && record.name === identity.packageName)
+    }) ?? null
+  }
+
+  async refreshInstalledTemplateSkillMetadata(
+    record: LocalSkillRecord,
+    identity: TemplateSkillIdentity,
+  ): Promise<LocalSkillRecord> {
+    if (record.source !== 'installed') {
+      throw new Error('Only installed Skills can receive template metadata.')
+    }
+
+    const current = await this.readMeta(record.dirPath)
+    await this.writeTemplateMeta(record.dirPath, current, identity)
+
+    const refreshed = await this.readRecord(record.dirPath, 'installed')
+    if (!refreshed) {
+      throw new Error(`Failed to refresh installed Skill "${record.name}".`)
+    }
+
+    return refreshed
+  }
+
+  async installTemplateSkillFromDir(
+    sourceDir: string,
+    identity: TemplateSkillIdentity,
+  ): Promise<LocalSkillRecord> {
+    const metadata = await loadSkillMetadataFromDir(sourceDir)
+    if (!metadata.ok) {
+      throw new Error(metadata.message)
+    }
+
+    const existing = await this.findInstalledTemplateSkill({
+      ...identity,
+      packageName: identity.packageName ?? metadata.metadata.name,
+    })
+    const dirName = existing ? path.basename(existing.dirPath) : toSafeDirName(metadata.metadata.name)
+    if (!dirName) {
+      throw new Error('Skill name cannot be converted to a local directory name.')
+    }
+
+    const targetDir = existing?.dirPath ?? path.join(this.installedSkillsDir, dirName)
+    if (!existing && existsSync(targetDir)) {
+      throw new Error(`Installed Skill directory "${dirName}" already exists with a different identity.`)
+    }
+
+    // Prepare and validate the complete replacement before touching the installed directory.
+    const stagingDir = await mkdtemp(path.join(this.installedSkillsDir, `.${dirName}.install-`))
+    const backupDir = `${stagingDir}.backup`
+    let originalMoved = false
+    let replacementMoved = false
+
+    try {
+      await copyDirectoryContents(sourceDir, stagingDir)
+      const currentMeta = existing ? await this.readMeta(existing.dirPath) : {}
+      await this.writeTemplateMeta(stagingDir, currentMeta, identity)
+
+      const staged = await this.readRecord(stagingDir, 'installed')
+      if (!staged) {
+        throw new Error(`Failed to validate installed Skill "${metadata.metadata.name}".`)
+      }
+
+      if (existing) {
+        await rename(targetDir, backupDir)
+        originalMoved = true
+      }
+
+      await rename(stagingDir, targetDir)
+      replacementMoved = true
+
+      const installed = await this.readRecord(targetDir, 'installed')
+      if (!installed) {
+        throw new Error(`Failed to read installed Skill "${metadata.metadata.name}".`)
+      }
+
+      await rm(backupDir, { recursive: true, force: true }).catch(() => {})
+      return installed
+    }
+    catch (error) {
+      if (replacementMoved) {
+        await rm(targetDir, { recursive: true, force: true }).catch(() => {})
+      }
+      if (originalMoved) {
+        await rename(backupDir, targetDir)
+      }
+
+      throw error
+    }
+    finally {
+      await rm(stagingDir, { recursive: true, force: true }).catch(() => {})
+    }
   }
 
   private listSubDirs(dir: string): string[] {
@@ -256,432 +322,115 @@ export class SkillManager {
     })
   }
 
-  private async readEntry(
+  private listSkillRoots(): Array<{ rootDir: string, source: SkillSource }> {
+    return [
+      { rootDir: path.resolve(this.skillsDir), source: 'user' },
+      { rootDir: path.resolve(this.installedSkillsDir), source: 'installed' },
+      { rootDir: path.resolve(this.builtinSkillsDir), source: 'builtin' },
+    ]
+  }
+
+  private async listAvailableSkillRecords(): Promise<LocalSkillRecord[]> {
+    const records = await Promise.all(
+      this.listSkillRoots().flatMap(({ rootDir, source }) =>
+        this.listSubDirs(rootDir).map(dirName => this.readRecord(path.join(rootDir, dirName), source)),
+      ),
+    )
+
+    return records.filter((record): record is LocalSkillRecord => record !== null)
+  }
+
+  private async listSkillRecords(source: SkillSource): Promise<LocalSkillRecord[]> {
+    const root = this.listSkillRoots().find(item => item.source === source)
+    if (!root) {
+      return []
+    }
+
+    const records = await Promise.all(
+      this.listSubDirs(root.rootDir).map(dirName => this.readRecord(path.join(root.rootDir, dirName), source, false)),
+    )
+    return records.filter((record): record is LocalSkillRecord => record !== null)
+  }
+
+  private async readRecord(
     dirPath: string,
-    dirName: string,
     source: SkillSource,
-    runtimeAvailabilityCache = new Map<string, Promise<RuntimeAvailability>>(),
-  ): Promise<SkillEntry | null> {
-    const result = await loadSkillMetadataFromDir(dirPath)
-    if (!result.ok) {
+    requireEnabled = true,
+  ): Promise<LocalSkillRecord | null> {
+    const metadata = await loadSkillMetadataFromDir(dirPath)
+    if (!metadata.ok) {
       return null
     }
 
     const meta = await this.readMeta(dirPath)
+    if (requireEnabled && (meta.enabled === false || meta.enabled === 0)) {
+      return null
+    }
 
-    return this.buildSkillEntry(result, dirName, source, meta, runtimeAvailabilityCache)
+    const ref = isTemplateRef(meta.templateRef) ? meta.templateRef : undefined
+    const slug = readNonEmptyString(meta.slug)
+    const sha512 = readNonEmptyString(meta.sha512)?.toLowerCase()
+    return {
+      name: metadata.metadata.name,
+      description: metadata.metadata.description,
+      ...(ref ? { ref } : {}),
+      dirPath,
+      rootDir: metadata.rootDir,
+      source,
+      ...(slug ? { slug } : {}),
+      ...(sha512 ? { sha512 } : {}),
+    }
   }
 
   private async readMeta(dirPath: string): Promise<SkillMeta> {
     const metaPath = path.join(dirPath, '.skill_meta.json')
-    if (existsSync(metaPath)) {
-      try {
-        return JSON.parse(await readFile(metaPath, 'utf-8')) as SkillMeta
-      }
-      catch {
-      }
-    }
-    return {}
-  }
-
-  private async buildSkillEntry(
-    metadataResult: Extract<Awaited<ReturnType<typeof loadSkillMetadataFromDir>>, { ok: true }>,
-    dirName: string,
-    source: SkillSource,
-    meta: SkillMeta,
-    runtimeAvailabilityCache = new Map<string, Promise<RuntimeAvailability>>(),
-  ): Promise<SkillEntry> {
-    const runtimeDetection = await detectSkillRuntimes(
-      metadataResult.rootDir,
-      metadataResult.metadata.runtimes,
-    )
-
-    const runtimes = await Promise.all(
-      runtimeDetection.runtimes.map(async (runtime) => {
-        const availability = isSupportedRuntimeId(runtime.id)
-          ? await this.getRuntimeAvailability(runtime.id, runtimeAvailabilityCache)
-          : { installed: false }
-
-        return {
-          ...runtime,
-          ...availability,
-        }
-      }),
-    )
-
-    return {
-      name: metadataResult.metadata.name,
-      description: metadataResult.metadata.description,
-      dirName,
-      rootDir: metadataResult.rootDir,
-      installedAt: meta.installedAt ?? 0,
-      hasScripts: runtimeDetection.hasScripts,
-      runtimeSource: runtimeDetection.runtimeSource,
-      runtimes,
-      missingRuntimeIds: runtimes
-        .filter(runtime => isSupportedRuntimeId(runtime.id) && !runtime.installed)
-        .map(runtime => runtime.id),
-      source,
-      enabled: meta.enabled !== false && meta.enabled !== 0,
-      slug: meta.slug,
-    }
-  }
-
-  /**
-   * 用后端国际化数据（title/description）覆盖商城 skill 的展示文案。
-   * 本地 SKILL.md 只有单语言，而后端按 Language header 返回国际化内容。
-   * 失败时静默降级为本地 SKILL.md 文案。
-   */
-  private async applyStoreLocalization(entries: SkillEntry[], language?: string): Promise<void> {
-    const storeEntries = entries.filter(entry => entry.source === 'store' && entry.slug)
-    if (storeEntries.length === 0) {
-      return
+    if (!existsSync(metaPath)) {
+      return {}
     }
 
     try {
-      const remoteSkills = await aiAgentSkillsApi.listUserSkills(language ? { language } : {})
-      const bySlug = new Map(remoteSkills.map(skill => [skill.slug, skill]))
-      for (const entry of storeEntries) {
-        const remote = bySlug.get(entry.slug!)
-        if (!remote) {
-          continue
-        }
-        // 用后端国际化的 title 作为展示名
-        if (remote.title) {
-          entry.title = remote.title
-        }
-        // 用后端国际化的 description 覆盖本地 SKILL.md 的 description
-        if (remote.description) {
-          entry.description = remote.description
-        }
-      }
+      const parsed = JSON.parse(await readFile(metaPath, 'utf8'))
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed as SkillMeta
+        : {}
     }
-    catch (error: any) {
-      console.warn(`Failed to apply store localization: ${error.message}`)
+    catch {
+      return {}
     }
   }
 
-  private getRuntimeAvailability(
-    runtimeId: 'node' | 'python',
-    runtimeAvailabilityCache: Map<string, Promise<RuntimeAvailability>>,
-  ): Promise<RuntimeAvailability> {
-    const cached = runtimeAvailabilityCache.get(runtimeId)
-    if (cached) {
-      return cached
-    }
-
-    const pending = probeRuntimeAvailability(runtimeId, this.runtimeCommandRunner)
-    runtimeAvailabilityCache.set(runtimeId, pending)
-    return pending
-  }
-
-  async installSkill(sourcePath: string, options: InstallSkillOptions = {}): Promise<SkillEntry> {
-    if (!existsSync(sourcePath)) {
-      throw new Error(`路径不存在: ${sourcePath}`)
-    }
-
-    const isZip = sourcePath.toLowerCase().endsWith('.zip') && statSync(sourcePath).isFile()
-
-    if (isZip) {
-      let tempDir: string | undefined
-      try {
-        const extracted = await extractZipToTemp(sourcePath)
-        tempDir = extracted.tempDir
-        return await this.installFromDir(extracted.skillRootDir, sourcePath, options)
-      }
-      finally {
-        if (tempDir) {
-          await rm(tempDir, { recursive: true, force: true }).catch(() => {})
-        }
-      }
-    }
-
-    return this.installFromDir(sourcePath, sourcePath, options)
-  }
-
-  private async installFromDir(dirPath: string, originalSource: string, options: InstallSkillOptions = {}): Promise<SkillEntry> {
-    const validation = await this.validateSkillDir(dirPath)
-    if (!validation.valid) {
-      throw new Error(validation.error)
-    }
-
-    const dirName = toSafeDirName(validation.name!)
-    const source = options.source ?? 'user'
-    const destPath = path.join(source === 'store' ? this.storeSkillsDir : this.skillsDir, dirName)
-
-    if (existsSync(destPath)) {
-      throw new Error(`Skill "${validation.name}" 已安装，如需更新请先卸载`)
-    }
-
-    await copyDirRecursive(dirPath, destPath)
-
-    const installedAt = Date.now()
+  private async writeTemplateMeta(
+    dirPath: string,
+    current: SkillMeta,
+    identity: TemplateSkillIdentity,
+  ): Promise<void> {
     const meta: SkillMeta = {
-      installedAt,
-      sourcePath: originalSource,
-      enabled: options.enabled ?? true,
-      ...(options.slug ? { slug: options.slug } : {}),
-    }
-    writeFileSync(
-      path.join(destPath, '.skill_meta.json'),
-      JSON.stringify(meta, null, 2),
-    )
-
-    const entry = await this.readEntry(destPath, dirName, source)
-    if (!entry) {
-      throw new Error(`Failed to read installed skill "${validation.name}"`)
+      ...current,
+      source: 'store',
+      sha512: identity.sha512.toLowerCase(),
+      templateRef: identity.templateRef,
+      installedAt: current.installedAt ?? Date.now(),
+      enabled: true,
+      ...(identity.slug ? { slug: identity.slug } : {}),
     }
 
-    return entry
-  }
-
-  /** 设置 skill 启用/禁用状态。禁用后不会被 agent 加载，但不会删除。 */
-  async setSkillEnabled(name: string, enabled: boolean): Promise<void> {
-    const match = await this.findManagedSkillByName(name)
-    if (!match) {
-      throw new Error(`Skill "${name}" 未安装`)
-    }
-
-    const meta = await this.readMeta(match.dirPath)
-    meta.enabled = enabled
-    writeFileSync(
-      path.join(match.dirPath, '.skill_meta.json'),
-      JSON.stringify(meta, null, 2),
-    )
-
-    if (match.source === 'store' && match.meta.slug) {
-      void aiAgentSkillsApi.setUserSkillEnabled(match.meta.slug, enabled).catch((error: any) => {
-        console.warn(`Failed to sync store skill "${match.meta.slug}" enabled state: ${error.message}`)
-      })
-    }
-  }
-
-  async uninstallSkill(name: string): Promise<void> {
-    const dirName = toSafeDirName(name)
-
-    if (this.isBuiltinSkill(dirName)) {
-      throw new Error(`内置 Skill "${name}" 不能卸载`)
-    }
-
-    const match = await this.findManagedSkillByName(name)
-    if (!match) {
-      throw new Error(`Skill "${name}" 未安装`)
-    }
-
-    if (match.source === 'store' && match.meta.slug) {
-      await aiAgentSkillsApi.removeInstalledSkill(match.meta.slug)
-    }
-
-    await rm(match.dirPath, { recursive: true, force: true })
-  }
-
-  /** 通过商城 slug 卸载本地 skill（本地目录名基于 SKILL.md 的 name，与 slug 不一定相同） */
-  async uninstallSkillBySlug(slug: string): Promise<void> {
-    const match = await this.findStoreSkillBySlug(slug)
-    if (match) {
-      await rm(match.dirPath, { recursive: true, force: true })
-      return
-    }
-    throw new Error(`未找到 slug 为 "${slug}" 的本地 Skill`)
-  }
-
-  private async findStoreSkillBySlug(slug: string): Promise<{ dirName: string, dirPath: string } | null> {
-    for (const dirName of this.listSubDirs(this.storeSkillsDir)) {
-      const dirPath = path.join(this.storeSkillsDir, dirName)
-      const meta = await this.readMeta(dirPath)
-      if (meta.slug === slug) {
-        return { dirName, dirPath }
-      }
-    }
-    return null
-  }
-
-  private async listStoreSkillDirs(): Promise<Array<{ dirName: string, dirPath: string, meta: SkillMeta }>> {
-    const dirs: Array<{ dirName: string, dirPath: string, meta: SkillMeta }> = []
-    for (const dirName of this.listSubDirs(this.storeSkillsDir)) {
-      const dirPath = path.join(this.storeSkillsDir, dirName)
-      const meta = await this.readMeta(dirPath)
-      dirs.push({ dirName, dirPath, meta })
-    }
-    return dirs
-  }
-
-  async installFromRemote(slug: string, enabled = true): Promise<SkillEntry> {
-    const existing = await this.findStoreSkillBySlug(slug)
-    if (existing) {
-      await this.writeSkillMeta(existing.dirPath, { enabled, slug })
-      const entry = await this.readEntry(existing.dirPath, existing.dirName, 'store')
-      if (!entry) {
-        throw new Error(`Failed to read installed skill "${slug}"`)
-      }
-      return entry
-    }
-
-    let tempDir: string | undefined
-    try {
-      const binary = await aiAgentSkillsApi.downloadSkill(slug)
-      tempDir = path.join(os.tmpdir(), `roxy-store-skill-${Date.now()}`)
-      await mkdir(tempDir, { recursive: true })
-      const zipPath = path.join(tempDir, `${slug}.zip`)
-      await writeFile(zipPath, Buffer.from(binary.data))
-
-      return await this.installSkill(zipPath, { source: 'store', slug, enabled })
-    }
-    finally {
-      if (tempDir) {
-        await rm(tempDir, { recursive: true, force: true }).catch(() => {})
-      }
-    }
-  }
-
-  async syncSkills(userSkills?: UserSkill[]): Promise<void> {
-    const remoteSkills = userSkills ?? await aiAgentSkillsApi.listUserSkills()
-    const remoteBySlug = new Map(remoteSkills.map(skill => [skill.slug, skill]))
-
-    for (const localSkill of await this.listStoreSkillDirs()) {
-      if (!localSkill.meta.slug || !remoteBySlug.has(localSkill.meta.slug)) {
-        await rm(localSkill.dirPath, { recursive: true, force: true })
-      }
-    }
-
-    for (const skill of remoteSkills) {
-      try {
-        const enabled = isRemoteSkillEnabled(skill)
-        const existing = await this.findStoreSkillBySlug(skill.slug)
-        if (!existing) {
-          await this.installFromRemote(skill.slug, enabled)
-          continue
-        }
-
-        const meta = await this.readMeta(existing.dirPath)
-        if (meta.enabled !== enabled || meta.slug !== skill.slug) {
-          await this.writeSkillMeta(existing.dirPath, { enabled, slug: skill.slug })
-        }
-      }
-      catch (error: any) {
-        console.warn(`Failed to sync store skill "${skill.slug}": ${error.message}`)
-      }
-    }
-  }
-
-  isPathInsideSkillsRoot(targetPath: string): boolean {
-    const normalizedPath = path.resolve(targetPath)
-    return this.listSkillRoots().some(root => isPathInsideOrEqual(root, normalizedPath))
-  }
-
-  resolveSkillDirForPath(targetPath: string): string | null {
-    const normalizedPath = path.resolve(targetPath)
-    for (const root of this.listSkillRoots()) {
-      if (!isPathInsideOrEqual(root, normalizedPath)) {
-        continue
-      }
-      const relativePath = path.relative(root, normalizedPath)
-      const dirName = relativePath.split(path.sep)[0]
-      return dirName ? path.join(root, dirName) : null
-    }
-    return null
-  }
-
-  private listSkillRoots(): string[] {
-    return [this.skillsDir, this.storeSkillsDir].map(dir => path.resolve(dir))
-  }
-
-  private listLoadableSkillDirs(): Array<{ dirPath: string, dirName: string, source: SkillSource }> {
-    return [
-      ...this.listSubDirs(this.skillsDir).map(dirName => ({
-        dirName,
-        dirPath: path.join(this.skillsDir, dirName),
-        source: 'user' as const,
-      })),
-      ...this.listSubDirs(this.storeSkillsDir).map(dirName => ({
-        dirName,
-        dirPath: path.join(this.storeSkillsDir, dirName),
-        source: 'store' as const,
-      })),
-    ]
-  }
-
-  private listManagedSkillDirs(): Array<{ dirPath: string, dirName: string, source: SkillSource }> {
-    return this.listLoadableSkillDirs().filter(skill => !this.isBuiltinSkill(skill.dirName))
-  }
-
-  private async findManagedSkillByName(name: string): Promise<{ dirName: string, dirPath: string, source: SkillSource, meta: SkillMeta } | null> {
-    const safeDirName = toSafeDirName(name)
-    for (const skill of this.listManagedSkillDirs()) {
-      if (skill.dirName === safeDirName) {
-        const meta = await this.readMeta(skill.dirPath)
-        return { ...skill, meta }
-      }
-    }
-
-    for (const skill of this.listManagedSkillDirs()) {
-      const entry = await this.readEntry(skill.dirPath, skill.dirName, skill.source)
-      if (entry?.name === name) {
-        const meta = await this.readMeta(skill.dirPath)
-        return { ...skill, meta }
-      }
-    }
-
-    return null
-  }
-
-  private async writeSkillMeta(dirPath: string, updates: SkillMeta): Promise<void> {
-    const meta = await this.readMeta(dirPath)
-    writeFileSync(
+    await writeFile(
       path.join(dirPath, '.skill_meta.json'),
-      JSON.stringify({ ...meta, ...updates }, null, 2),
+      JSON.stringify(meta, null, 2),
     )
   }
-
-  private migrateLegacyStoreSkills(): void {
-    for (const dirName of this.listSubDirs(this.skillsDir)) {
-      if (this.isBuiltinSkill(dirName)) {
-        continue
-      }
-
-      const legacyPath = path.join(this.skillsDir, dirName)
-      const metaPath = path.join(legacyPath, '.skill_meta.json')
-      if (!existsSync(metaPath)) {
-        continue
-      }
-
-      try {
-        const meta = JSON.parse(readFileSync(metaPath, 'utf-8')) as SkillMeta & { source?: SkillSource }
-        if (meta.source !== 'store') {
-          continue
-        }
-
-        const destPath = path.join(this.storeSkillsDir, dirName)
-        if (existsSync(destPath)) {
-          rmSync(legacyPath, { recursive: true, force: true })
-          continue
-        }
-
-        renameSync(legacyPath, destPath)
-        delete meta.source
-        writeFileSync(metaPath.replace(legacyPath, destPath), JSON.stringify(meta, null, 2))
-      }
-      catch (error: any) {
-        console.warn(`Failed to migrate legacy store skill "${dirName}": ${error.message}`)
-      }
-    }
-  }
 }
 
-function isPathInside(parent: string, target: string): boolean {
-  const relative = path.relative(parent, target)
-  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
-}
-
-function isPathInsideOrEqual(parent: string, target: string): boolean {
-  return parent === target || isPathInside(parent, target)
-}
-
-let _skillManager: SkillManager | null = null
+let skillManager: SkillManager | null = null
 
 export function getSkillManager(): SkillManager {
-  if (!_skillManager) {
-    _skillManager = new SkillManager(env.SKILLS_DIR)
+  if (!skillManager) {
+    skillManager = new SkillManager({
+      skillsDir: agentPaths.skillsUserDir,
+      installedSkillsDir: agentPaths.skillsInstalledDir,
+      builtinSkillsDir: agentPaths.skillsBuiltinDir,
+    })
   }
-  return _skillManager
+
+  return skillManager
 }

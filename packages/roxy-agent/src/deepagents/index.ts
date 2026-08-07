@@ -1,39 +1,20 @@
 import type { CollectedFile } from './fileCollector'
-import type { ImageGenerationSpec } from './imageSpec'
 import type { DeepAgent } from 'deepagents'
 import fs from 'node:fs/promises'
-import path from 'node:path'
-import { env } from '../config'
+import { conversationCheckpointPath } from './checkpointPaths'
 import { closeCheckpointer } from './sqlite-checkpointer'
-
-export interface AgentConfig {
-  apiKey: string
-  baseUrl?: string
-  modelName: string
-  temperature: number
-  maxTokens?: number
-  thinking?: {
-    budgetTokens: number
-  }
-}
 
 export interface AgentInstance {
   agent: DeepAgent
   destroy: () => Promise<void>
-  imageProviderOptions?: {
-    imageModel?: string
-    imageProtocol?: string
-  }
-  consumeImageSpec?: () => ImageGenerationSpec | undefined
   consumeFiles?: () => CollectedFile[]
 }
 
 export { createChatAgent } from './agent/chat'
 export { createClawAgent } from './agent/claw'
-export { createImageAgent } from './agent/image'
 
 export async function deleteCheckpoint(conversationId: string): Promise<void> {
-  const checkpointPath = path.join(env.CHECKPOINT_DIR!, `checkpoint_${conversationId}.db`)
+  const checkpointPath = conversationCheckpointPath(conversationId)
   closeCheckpointer(checkpointPath)
 
   const paths = [

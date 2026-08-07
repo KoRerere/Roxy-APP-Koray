@@ -1,5 +1,7 @@
 import { ToolMessage } from '@langchain/core/messages'
+import { isGraphBubbleUp } from '@langchain/langgraph'
 import { createMiddleware } from 'langchain'
+import { isAbortLike } from '@/core/agentError'
 
 const DEFAULT_MAX_ERRORS = 10
 
@@ -14,7 +16,7 @@ const DEFAULT_MAX_ERRORS = 10
  * `execute` 等）以及所有 MCP 工具——这些工具的调用都会经过 `wrapToolCall` 钩子。
  *
  * 熔断：每个 middleware 实例维护一个错误计数，达到 `maxErrors` 后返回"请结束任务"。
- * orchestrator 下每个 worker 是独立子进程 / 独立 agent 实例 / 独立 middleware 实例，
+ * 普通 chat agent 下每个 worker 是独立子进程 / 独立 agent 实例 / 独立 middleware 实例，
  * 因此实例级计数等价于 worker 级计数；计数随实例销毁自动释放，不会跨 run 累积。
  */
 export function createToolErrorFallbackMiddleware(options?: { maxErrors?: number }) {
@@ -28,6 +30,10 @@ export function createToolErrorFallbackMiddleware(options?: { maxErrors?: number
         return await handler(request)
       }
       catch (error: any) {
+        if (isGraphBubbleUp(error) || isAbortLike(error)) {
+          throw error
+        }
+
         errorCount += 1
 
         const toolName = request.toolCall?.name ?? 'unknown'
@@ -63,7 +69,7 @@ ${badInput ? `**Your Input**: ${badInput}` : ''}
           content,
           status: 'error',
           name: toolName,
-          tool_call_id: toolCallId,
+          tool_call_id: toolCallId || '',
         })
       }
     },

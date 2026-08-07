@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxc/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "no-useless-constructor": "off",
+    "no-await-in-loop": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "pino",
+            "message": "Use the built-in ILogger (src/logging). External loggers are disallowed."
+          },
+          {
+            "name": "winston",
+            "message": "Use the built-in ILogger (src/logging). External loggers are disallowed."
+          },
+          {
+            "name": "reflect-metadata",
+            "message": "No runtime metadata reflection. The skills system is SKILL.md-driven."
+          }
+        ]
+      }
+    ]
+  }
+}

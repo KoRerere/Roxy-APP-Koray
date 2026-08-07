@@ -1,0 +1,381 @@
+import type { UserTemplateInfo } from '@roxy/agent-api'
+import {
+  FilesApi,
+  HttpClient,
+  OfficialScriptsApi,
+  PlanTypeEnum,
+  TaskStateRequestActionEnum,
+  TaskStateRequestResultStatusEnum,
+  TaskStateRequestTriggerTypeEnum,
+  TemplatesApi,
+  UserApi,
+  UserTasksApi,
+  UserTemplatesApi,
+} from '@roxy/agent-api'
+import { aiAgentToken, aiAgentUrl, env } from '../config'
+import { AiAgentHttpError } from './errors'
+import { installAxiosGetRetryInterceptor } from './getRetry'
+
+/**
+ * roxy-agent-server 统一响应信封：{ code, data, message }，code === 0 为成功。
+ * @roxy/agent-api 的方法返回 axios response.data，即整个信封（未 unwrap）。
+ */
+interface AgentApiResponse<T> {
+  code: number
+  data: T
+  message: string
+}
+
+/**
+ * 基于 @roxy/agent-api 的 HttpClient，统一承载 Agent 后端的非 LLM 接口。
+ * - baseURL = aiAgentUrl（${ROXY_SERVER_URL}/llm-proxy）
+ * - Authorization: Bearer ${aiAgentToken}（${ROXY_API_KEY}:${ROXY_USER_TOKEN}）
+ * - WorkspaceID / Language / ai-agent-version 统一由请求拦截器注入
+ * LLM 请求由 LangChain model client 直接访问 /llm-proxy。
+ */
+const httpClient = new HttpClient({
+  baseURL: aiAgentUrl,
+  timeout: 15000,
+})
+
+httpClient.instance.interceptors.request.use((config) => {
+  Object.assign(config.headers, {
+    'Authorization': `Bearer ${aiAgentToken}`,
+    'WorkspaceID': env.ROXY_WORKSPACE_ID,
+    'ai-agent-version': env.AI_AGENT_VERSION,
+  })
+  // Language 仅在调用方未指定时用系统默认。
+  if (!config.headers.Language)
+    config.headers.Language = env.SYSTEM_LANGUAGE
+  return config
+}, (error) => {
+  return Promise.reject(error)
+})
+
+installAxiosGetRetryInterceptor(httpClient.instance, {
+  shouldRetryResponse: (response) => {
+    const payload = response.data as { code?: unknown } | undefined
+    return payload?.code === 'service_unavailable'
+  },
+})
+
+/**
+ * HTTP 错误（4xx/5xx）转 AiAgentHttpError，供任务和路由调用方按状态码
+ * 区分可重试错误、租约冲突与上游失败。
+ */
+httpClient.instance.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    const status = error?.response?.status
+    if (typeof status === 'number') {
+      const payload = error.response.data
+      const message = payload?.message || payload?.msg || `${status} ${error.response.statusText ?? ''}`.trim()
+      return Promise.reject(new AiAgentHttpError(status, message, { payload }))
+    }
+    return Promise.reject(error)
+  },
+)
+
+/**
+ * unwrap 后端响应：code !== 0 抛 AiAgentHttpError，否则返回 data。
+ * 调用方拿到的已是 data 字段。
+ */
+async function unwrap<T>(p: Promise<AgentApiResponse<T>>): Promise<T> {
+  const res = await p
+  if (res.code !== 0) {
+    throw new AiAgentHttpError(
+      200,
+      res.message || `AI Agent request failed with code ${res.code}`,
+      { code: res.code, payload: res },
+    )
+  }
+  return res.data
+}
+
+const officialScriptsApi = new OfficialScriptsApi(httpClient)
+const templatesApi = new TemplatesApi(httpClient)
+const filesApi = new FilesApi(httpClient)
+const userApi = new UserApi(httpClient)
+const userTasksApi = new UserTasksApi(httpClient)
+const userTemplatesApi = new UserTemplatesApi(httpClient)
+
+export interface FileUploadResult {
+  file_id: string
+  filename: string | null
+  content_type: string
+  size: number
+  url: string
+}
+
+/**
+ * 官方脚本只读接口（GET /v1/official/scripts）。
+ * 官方脚本包含多语言字段，与用户脚本 DTO 不同；调用方保留 unknown 并按场景归一化。
+ */
+export const agentOfficialScriptsApi = {
+  getBySlug(slug: string): Promise<unknown> {
+    return unwrap(officialScriptsApi.getOfficialScript({ scriptIdOrSlug: slug }))
+  },
+}
+
+export const agentTemplatesApi = {
+  getById(templateId: number): Promise<unknown> {
+    return unwrap(templatesApi.getOfficialTemplate({ templateIdOrSlug: String(templateId) }))
+  },
+}
+
+/**
+ * 文件上传（POST /v2/files/upload，OSS）。
+ * 接口与原 aiAgentFilesApi.upload 一致：传 Blob + fileName，返回 { file_id, url, ... }。
+ * 预构造 FormData 以保留文件名（@roxy/agent-api 的 createFormData 对 FormData 直通）。
+ */
+export const agentFilesApi = {
+  upload(file: Blob, fileName: string): Promise<FileUploadResult> {
+    const formData = new FormData()
+    formData.append('file', file, fileName)
+    return unwrap<FileUploadResult>(filesApi.uploadFileV2V2FilesUploadPost(formData as never))
+  },
+}
+
+// ── 用户模型相关类型 ──
+export type AiAgentModelApiFormat = 'anthropic' | 'openai' | 'google' | 'moonshot' | string
+
+export interface AiAgentModelConfig {
+  model?: string
+  api_format?: AiAgentModelApiFormat
+}
+
+export interface UserModelInfo {
+  text_model?: AiAgentModelConfig | null
+  vlm_model?: AiAgentModelConfig | null
+}
+
+/**
+ * 用户模型配置。内部走 @roxy/agent-api 的 UserApi。
+ * getUserModel 支持传 headers（tracing headers 如 Conversation-Id/Turn-Id）和 AbortSignal。
+ */
+export const agentModelApi = {
+  getUserModel(params: { headers?: Record<string, string>, signal?: AbortSignal } = {}): Promise<UserModelInfo> {
+    return unwrap<UserModelInfo>(userApi.getUserModel({
+      ...(params.headers ? { headers: params.headers } : {}),
+      ...(params.signal ? { signal: params.signal } : {}),
+    }))
+  },
+}
+
+export type UserTaskPlanType = 'manual' | 'once' | 'cron'
+export type UserTaskTemplateType = 'script' | 'skill' | 'prompt'
+export type TaskExecutionResultStatus = 'success' | 'partial_failed' | 'failed' | 'interrupted'
+
+const TASK_STATE_TRIGGER_TYPES: Readonly<Record<UserTaskPlanType, TaskStateRequestTriggerTypeEnum>> = {
+  manual: TaskStateRequestTriggerTypeEnum.Manual,
+  once: TaskStateRequestTriggerTypeEnum.Once,
+  cron: TaskStateRequestTriggerTypeEnum.Cron,
+}
+
+const USER_TASK_LIST_PLAN_TYPES: Readonly<Record<UserTaskPlanType, PlanTypeEnum>> = {
+  manual: PlanTypeEnum.Manual,
+  once: PlanTypeEnum.Once,
+  cron: PlanTypeEnum.Cron,
+}
+
+const TASK_STATE_RESULT_STATUSES: Readonly<Record<TaskExecutionResultStatus, TaskStateRequestResultStatusEnum>> = {
+  success: TaskStateRequestResultStatusEnum.Success,
+  partial_failed: TaskStateRequestResultStatusEnum.PartialFailed,
+  failed: TaskStateRequestResultStatusEnum.Failed,
+  interrupted: TaskStateRequestResultStatusEnum.Interrupted,
+}
+
+export interface UserTaskDto {
+  id: number
+  workspaceId: string
+  name: string
+  userTemplateId: number
+  windowIds: string[]
+  metadata: Record<string, unknown>
+  planType: UserTaskPlanType
+  cron: string | null
+  timezone: string | null
+  executeAt: string | null
+  nextExecuteAt: string | null
+  enabled: boolean
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface UserTemplateDto {
+  id: number
+  workspaceId: string
+  officialTemplateId: number | null
+  templateType: UserTaskTemplateType
+  name: string
+  description: string | null
+  source: 'custom' | 'official'
+  metadata: Record<string, unknown>
+  hasFile: boolean
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface UserTemplatePage {
+  items: UserTemplateDto[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface UserTemplateListParams {
+  limit?: number
+  offset?: number
+  templateType?: UserTaskTemplateType
+}
+
+export interface UserTaskPage {
+  items: UserTaskDto[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface UserTaskListParams {
+  limit?: number
+  offset?: number
+  planType?: UserTaskPlanType
+}
+
+export interface TaskLeaseStartInput {
+  taskLogId: string
+  triggerType: UserTaskPlanType
+  scheduledAt?: string | null
+}
+
+export interface TaskLeaseStartResult {
+  acquired: boolean
+  reason?: string | null
+  leaseToken?: string | null
+  occurrenceId?: string | null
+}
+
+export interface TaskLeaseFinishInput {
+  taskLogId: string
+  leaseToken: string
+  resultStatus: TaskExecutionResultStatus
+}
+
+export interface TaskLeaseFinishResult {
+  finished: boolean
+  reason?: string | null
+}
+
+export interface TaskLeaseHeartbeatInput {
+  taskLogId: string
+  leaseToken: string
+}
+
+export interface TaskLeaseHeartbeatResult {
+  renewed: boolean
+  reason?: string | null
+}
+
+function invalidAgentApiData(endpoint: string, payload: unknown): AiAgentHttpError {
+  return new AiAgentHttpError(200, `AI Agent returned invalid data for ${endpoint}`, { payload })
+}
+
+function isUserTaskTemplateType(value: string): value is UserTaskTemplateType {
+  return value === 'script' || value === 'skill' || value === 'prompt'
+}
+
+function isUserTemplateSource(value: string): value is UserTemplateDto['source'] {
+  return value === 'custom' || value === 'official'
+}
+
+function normalizeUserTemplate(template: UserTemplateInfo, endpoint: string): UserTemplateDto {
+  if (!isUserTaskTemplateType(template.templateType) || !isUserTemplateSource(template.source))
+    throw invalidAgentApiData(endpoint, template)
+
+  return {
+    ...template,
+    templateType: template.templateType,
+    source: template.source,
+  }
+}
+
+export const agentUserTemplatesApi = {
+  async list(params: UserTemplateListParams = {}): Promise<UserTemplatePage> {
+    const page = await unwrap(userTemplatesApi.listUserTemplates({
+      limit: params.limit,
+      offset: params.offset,
+      template_type: params.templateType,
+    }))
+    return {
+      ...page,
+      items: page.items.map(template => normalizeUserTemplate(template, 'GET /v1/user/templates')),
+    }
+  },
+  async getById(templateId: number): Promise<UserTemplateDto> {
+    const template = await unwrap(userTemplatesApi.getUserTemplate({ templateId }))
+    return normalizeUserTemplate(template, 'GET /v1/user/templates/{template_id}')
+  },
+}
+
+export const agentUserTasksApi = {
+  list(params: UserTaskListParams = {}): Promise<UserTaskPage> {
+    return unwrap<UserTaskPage>(userTasksApi.listUserTasks({
+      limit: params.limit,
+      offset: params.offset,
+      plan_type: params.planType ? USER_TASK_LIST_PLAN_TYPES[params.planType] : undefined,
+    }))
+  },
+  getById(taskId: number): Promise<UserTaskDto> {
+    return unwrap<UserTaskDto>(
+      userTasksApi.getUserTask({ taskId }),
+    )
+  },
+  setEnabled(taskId: number, enabled: boolean): Promise<UserTaskDto> {
+    return unwrap<UserTaskDto>(
+      userTasksApi.updateUserTask({ taskId }, { enabled }),
+    )
+  },
+  async startExecution(taskId: number, input: TaskLeaseStartInput): Promise<TaskLeaseStartResult> {
+    const result = await unwrap(userTasksApi.updateUserTaskState(
+      { taskId },
+      {
+        action: TaskStateRequestActionEnum.Start,
+        task_log_id: input.taskLogId,
+        trigger_type: TASK_STATE_TRIGGER_TYPES[input.triggerType],
+        scheduled_at: input.scheduledAt ?? null,
+      },
+    ))
+    if (!('acquired' in result)) {
+      throw invalidAgentApiData('POST /v1/user/tasks/{task_id}/state (start)', result)
+    }
+    return result
+  },
+  async finishExecution(taskId: number, input: TaskLeaseFinishInput): Promise<TaskLeaseFinishResult> {
+    const result = await unwrap(userTasksApi.updateUserTaskState(
+      { taskId },
+      {
+        action: TaskStateRequestActionEnum.Finish,
+        task_log_id: input.taskLogId,
+        lease_token: input.leaseToken,
+        result_status: TASK_STATE_RESULT_STATUSES[input.resultStatus],
+      },
+    ))
+    if (!('finished' in result)) {
+      throw invalidAgentApiData('POST /v1/user/tasks/{task_id}/state (finish)', result)
+    }
+    return result
+  },
+  heartbeat(taskId: number, input: TaskLeaseHeartbeatInput): Promise<TaskLeaseHeartbeatResult> {
+    return unwrap<TaskLeaseHeartbeatResult>(
+      userTasksApi.heartbeatUserTask(
+        { taskId },
+        {
+          task_log_id: input.taskLogId,
+          lease_token: input.leaseToken,
+        },
+      ),
+    )
+  },
+}

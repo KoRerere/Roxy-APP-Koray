@@ -7,7 +7,9 @@ import {
   getProxyDownloadBlockTooltip,
   getProxyDownloadBlockVariant,
   isBuyProxy,
+  isDirectExportBlocked,
   openProxyKycVerification,
+  resolveProxyDownloadRow,
 } from '../utils/proxy-download-kyc-gate'
 import type { ProxyItem } from '../operation'
 
@@ -44,8 +46,10 @@ const blockedTooltipOptions = computed(() => ({
   },
 }))
 
+const directExportBlocked = computed(() => isDirectExportBlocked(data))
+
 onMounted(async () => {
-  if (data.isDirect)
+  if (directExportBlocked.value)
     return
 
   if (!isBuyProxy(data)) {
@@ -53,6 +57,7 @@ onMounted(async () => {
     return
   }
 
+  kycBlocked.value = null
   const unlocked = await fetchWorkspaceKycUnlockedCached()
   kycBlocked.value = !unlocked
   if (unlocked)
@@ -60,18 +65,23 @@ onMounted(async () => {
 })
 
 async function genQrCode() {
-  const { isDirect, protocol, host, port, proxyUserName, proxyPassword } = data
+  const { protocol } = data
 
-  if (isDirect || !proxyUserName || !proxyPassword)
+  if (directExportBlocked.value || !protocol)
     return
 
-  const protocols = protocol.split('/').map((item: string) => item.toLocaleLowerCase()) || []
-  const ports = port.toString().split('/') || []
+  const { host, port, username, password } = await resolveProxyDownloadRow(data)
 
-  qrcodeList.value = await Promise.all(protocols.map(async (protocol: string, index: number) => {
-    const btoaStr = btoa(`${proxyUserName}:${proxyPassword}@${host}:${ports[index] || ports[0]}`)
-    const qrcodeValue = await QRCode.toDataURL(`${protocol}://${btoaStr}`, { margin: 0 })
-    return { name: protocol, value: qrcodeValue }
+  if (!host || !port || !username || !password)
+    return
+
+  const protocols = protocol.split('/').map((item: string) => item.toLocaleLowerCase())
+  const ports = port.toString().split('/')
+
+  qrcodeList.value = await Promise.all(protocols.map(async (protocolItem: string, index: number) => {
+    const btoaStr = btoa(`${username}:${password}@${host}:${ports[index] || ports[0]}`)
+    const qrcodeValue = await QRCode.toDataURL(`${protocolItem}://${btoaStr}`, { margin: 0 })
+    return { name: protocolItem, value: qrcodeValue }
   }))
 
   qrcode.value = qrcodeList.value[0].value
@@ -123,7 +133,7 @@ function onPanelGoVerify() {
 
   <!-- trigger：图标 + Tooltip（快捷栏等场景） -->
   <template v-else>
-    <div v-if="data.isDirect" class="flex items-center">
+    <div v-if="directExportBlocked" class="flex items-center">
       <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
     </div>
     <RxTooltip

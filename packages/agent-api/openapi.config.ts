@@ -21,6 +21,11 @@ generateApi({
   generateResponses: true,
   hooks: {
     onCreateRoute(routeData) {
+      const tags = routeData.raw.tags ?? []
+      if (tags.some(tag => /^(admin)\b/i.test(tag))) {
+        return false
+      }
+
       routeData.namespace = `${routeData.namespace}API`
       return routeData
     },

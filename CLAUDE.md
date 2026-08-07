@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Roxy Browser is an Electron-based browser automation platform with AI agent capabilities. The project is a pnpm monorepo with 4 apps and 12 packages, using Turbo for build orchestration.
+RoxyBrowser is an Electron-based **anti-detect / fingerprint browser** with a built-in AI agent that drives the browser via MCP. The project is a pnpm + Turbo monorepo with **6 apps and 16 packages**.
 
 ## 开始工作前必读
 
@@ -18,13 +18,16 @@ Roxy Browser is an Electron-based browser automation platform with AI agent capa
 
 这些 codemaps 提供了项目的高层架构概览，帮助你快速理解代码库的组织结构和关键组件之间的关系。每个文件都经过优化，适合 AI 上下文消费（约 700-900 tokens）。
 
+> ⚠️ codemaps 是高层地图，部分内容可能偏旧（例如包名仍可能沿用 `roxybrowser-*-mcp`）。包清单、agent 架构、执行模式**以本 CLAUDE.md 与各子包 CLAUDE.md 为准**。
+
 ## Development Commands
 
 ### Initial Setup
 ```bash
 pnpm install                    # Install dependencies and build packages
 pnpm genLanguage                # Generate i18n language files
-pnpm openapi                    # Generate API client from OpenAPI spec
+pnpm openapi                    # Regenerate @roxy/backend-api client (main product backend spec)
+pnpm openapi:agent              # Regenerate @roxy/agent-api client (LLM-proxy / agent backend spec)
 ```
 
 ### Development
@@ -53,10 +56,11 @@ pnpm publish:agent:prod         # Compile + upload to OSS (prod)
 
 ### Linting & Testing
 ```bash
-pnpm lint                       # Run ESLint across all packages
+pnpm lint                       # Run ESLint across all packages (turbo run lint)
 pnpm lint:fix                   # Auto-fix ESLint issues
-pnpm test                       # Run test script
+pnpm test                       # ⚠️ points at scripts/test.ts, which does NOT exist — no formal test framework
 ```
+> No repo-wide test suite. `packages/roxy-agent-runtime` is the exception: it uses vitest + a mandatory TDD workflow (see its `AGENTS.md`). To hand-verify agent logic use `tsx packages/roxy-agent/src/cli.ts`.
 
 ### Utilities
 ```bash
@@ -69,18 +73,36 @@ pnpm install:electron           # Manually install Electron (with proxy)
 
 ### Monorepo Structure
 
-**Apps:**
-- `apps/electron` (roxybrowserdev): Main Electron process
-- `apps/web`: Vue 3 renderer UI
-- `apps/preload`: IPC bridge between main and renderer
-- `apps/tauri`: Alternative native wrapper (experimental)
+**Apps (6):**
+- `apps/electron` (`roxybrowserdev`): Main Electron process — desktop shell, IPC, browser management; packaged/notarized as the RoxyBrowser installer
+- `apps/web` (`web`): Vue 3 + PrimeVue renderer SPA — all product UI (also published as web source to OSS)
+- `apps/preload` (`@roxy/electron-preload`): IPC bridge between main and renderer
+- `apps/tauri` (`tauri`): **Experimental** Rust/Tauri launcher shipping two variants — RoxyChrome & RoxyFirefox (not the main app)
+- `apps/cloud-browser-gateway` (`@roxy/cloud-browser-gateway`): **NEW** NestJS control plane for the cloud-browser feature — token auth + per-user Docker/neko container lifecycle + Redis + WS/proxy gateway (see its `PLAN.md`)
+- `apps/cloud-browser-user` (`@roxy/cloud-browser-user`): **NEW** Vue 3 cloud-browser client — a neko (m1k1o/neko) WebRTC streaming UI to view/control the remote browser
 
-**Key Packages:**
-- `packages/roxy-agent`: AI agent orchestrator using LangGraph
-- `packages/roxybrowser-playwright-mcp`: Playwright MCP server
-- `packages/roxybrowser-mcp-server`: OpenAPI MCP server
-- `packages/backend-api`: Auto-generated OpenAPI client
-- `packages/roxy-shared`: Shared types and utilities
+**Packages (16):**
+
+*Agent / MCP*
+- `packages/roxy-agent` (`roxy-agent`): **Currently shipped** AI agent (deepagents/LangChain engine); built & pushed to OSS via `agent:build`/`publish:agent`. Has its own authoritative `CLAUDE.md`.
+- `packages/roxy-agent-runtime` (`roxy-agent-runtime`): From-scratch, Anthropic-native agent framework rewrite intended to supersede `roxy-agent` — **under heavy active development**; has its own `CLAUDE.md`/`AGENTS.md`.
+- `packages/roxy-openapi` (`@roxybrowser/openapi`, **vendored prebuilt `dist/` only**): RoxyBrowser control-plane MCP SDK; consumed by `roxy-agent`. Source repo is the sibling `roxybrowser-mcp-server`.
+- `packages/roxy-playwright` (`@roxybrowser/playwright`, **vendored prebuilt `dist/` only**): Playwright-over-CDP automation MCP SDK; consumed by `roxy-agent`. Source repo is the sibling `roxybrowser-playwright-mcp`.
+- `packages/roxy-sandbox` (`@roxy/sandbox`): Capability modules (utils/human/llm/table/kv/debug) injected into the agent's sandbox VM for user scripts. Has its own `CLAUDE.md`.
+- `packages/roxy-skills` (`roxy-skills`): Zips agent "skill" bundles for OSS distribution.
+
+*API clients (swagger-typescript-api → axios)*
+- `packages/backend-api` (`@roxy/backend-api`): Client for the **main product backend** (Apifox spec); regen via `pnpm openapi`.
+- `packages/agent-api` (`@roxy/agent-api`): **NEW** client for the **LLM-proxy / agent backend** (`.../llm-proxy/openapi.json`); regen via `pnpm openapi:agent`.
+
+*Shared / native / build*
+- `packages/roxy-shared` (`@roxy/shared`): Shared types & utilities (web + electron + gateway); bidirectional Agent WebSocket schemas are published from `@roxy/shared/channel` and use Zod as the runtime/type source of truth
+- `packages/diskspace-native` (`@roxy/diskspace-native`): **NEW** napi-rs/Rust native module — Windows disk-space query for the main process
+- `packages/node-typesafe-worker-messages` (`@repo/node-typesafe-worker-messages`): Type-safe Node worker-thread messaging (used by electron main)
+- `packages/gen-primevue-preset` (`gen-primevue-preset`): Figma plugin that generates PrimeVue theme presets
+- `packages/vite-plugins` (`@roxy/vite-plugins`) / `packages/webpack-plugins` (`@roxy/webpack-plugins`): Internal build plugins (JS obfuscation, zip/upload)
+- `packages/language-localization` (`@roxy/language-localization`): i18n tooling — CLI behind `web genLanguage` + auto-translate Vite plugin
+- `packages/puppeteer-google-translate` (`@roxy/puppeteer-google-translate`): Headless-Chrome Google Translate scraper (translation engine behind language-localization)
 
 ### Electron Main Process Architecture
 
@@ -150,23 +172,17 @@ Renderer: window.electronAPI.invoke('browser:launch', config)
 - Organized by feature: browser, agent, mcp, projects, extensions, etc.
 - Each view is a route in the router
 
-### AI Agent System (packages/roxy-agent/)
+### AI Agent System (`packages/roxy-agent/`)
 
-**Dual-Mode Architecture:**
+> The agent code lives under `src/deepagents/` (not `src/agent/`). For anything beyond this overview, read **`packages/roxy-agent/CLAUDE.md`** — it is authoritative on structure, the Electron env contract, modes, MCP, skills, and scripts.
 
-1. **Simple Mode** (`src/agent/simple/`): Single agent with iterative tool calling
-2. **Orchestrator Mode** (`src/agent/orchestrator/`): Multi-agent with planning, parallel execution, and synthesis
+**Execution modes** (selected by `ROXY_MODE` env or the first CLI arg): `agent` (Express HTTP server, default), `im` (IM adapters: Feishu/Telegram/Slack/Discord/WeChat), `worker` (orchestrator subprocess, forked over IPC), `sandbox` (isolated `node:vm` runtime executing user automation scripts).
 
-**Orchestrator Workflow:**
-- **Planning Phase**: Orchestrator generates JSON task plan
-- **Execution Phase**: Parallel workers execute tasks with isolated MCP clients
-- **Synthesis Phase**: Orchestrator combines results into final answer
+**Agent conversation model**: The frontend does not select Simple, Orchestrator, or image modes. Every turn uses the same conversation agent; multi-window work is dispatched through `parallel_dispatch` / `run_worker`, with each worker using an isolated MCP client. User messages and run events use the bidirectional `/api/events` WebSocket; both directions validate the shared Zod protocol from `@roxy/shared/channel`. Conversation metadata and files remain HTTP CRUD.
 
-**MCP Integration** (`src/mcpManager.ts`):
-- Each worker gets isolated MCP client to prevent resource conflicts
-- Two MCP servers per worker:
-  1. OpenAPI MCP (roxybrowser_openapi): RoxyBrowser API tools
-  2. Playwright MCP (roxybrowser_playwright_{workerId}): Browser automation
+**MCP integration** (`src/core/mcp/mcpManager.ts`): OpenAPI MCP (`roxybrowser_openapi`, shared, InMemoryTransport) + one Playwright MCP per worker (`roxybrowser_playwright_{workerId}`, stdio subprocess) + optional user-configured MCP servers. Skills are lazy-loaded (`load_skills`) and inject the corresponding MCP tools on demand.
+
+**In production the agent is NOT a standalone process** — the Electron main process (`apps/electron/src/modules/mcp/index.ts`) forks it via `utilityProcess.fork()` on a dynamically-allocated port (from 26580) with **all env injected by Electron**. Only local dev (`tsx src/cli.ts`) reads `.env`. The agent + MCP bundle + skills ship over OSS independently of app auto-update.
 
 ### Browser Management
 
@@ -275,7 +291,7 @@ Ignore changes to:
 **Key Variables:**
 - `VITE_SENTRY_DSN`: Sentry error tracking
 - `ROXY_API_HOST`: Backend API endpoint
-- `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`: AI agent config
+- Agent LLM config is fetched at runtime from the backend `/llm-proxy` (no `LLM_PROVIDER`/`LLM_MODEL`/`LLM_API_KEY`); traffic authenticates with `ROXY_SERVER_URL` + `ROXY_API_KEY:ROXY_USER_TOKEN`. See `packages/roxy-agent/CLAUDE.md`.
 - `CHECKPOINT_DIR`: Agent conversation storage
 - `ROXY_SERVER_PORT`: Agent server port (default 3000)
 

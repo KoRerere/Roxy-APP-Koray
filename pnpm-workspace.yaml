@@ -4,7 +4,7 @@ packages:
   - tools/*
 
 catalog:
-  '@larksuiteoapi/node-sdk': 1.60.0
+  '@larksuiteoapi/node-sdk': 1.70.0
   '@modelcontextprotocol/sdk': ^1.25.1
   axios: ^1.18.1
   dompurify: ^3.3.1
@@ -21,22 +21,14 @@ catalogMode: manual
 
 cleanupUnusedCatalogs: true
 
-# @electron/rebuild@3.7.2 依赖通过 git+ssh 引用 @electron/node-gyp（git@github.com:electron/node-gyp.git），
-# 无 SSH 密钥的环境会克隆失败。改用 npm 官方 node-gyp（与 @electron/rebuild@4 内部一致）。
+onlyBuiltDependencies:
+  - electron
+
 overrides:
   '@electron/node-gyp': npm:node-gyp@^11.5.0
 
-supportedArchitectures:
-  os:
-    - current
-    - darwin
-  cpu:
-    - current
-    - x64
-    - arm64
-
 patchedDependencies:
-  '@larksuiteoapi/node-sdk@1.60.0': patches/@larksuiteoapi__node-sdk@1.60.0.patch
+  '@larksuiteoapi/node-sdk@1.70.0': patches/@larksuiteoapi__node-sdk@1.70.0.patch
   '@modelcontextprotocol/sdk@1.25.1': patches/@modelcontextprotocol__sdk@1.25.1.patch
   langchain: patches/langchain.patch
 
@@ -44,5 +36,9 @@ peerDependencyRules:
   allowedVersions: {}
 
 shellEmulator: true
+
+supportedArchitectures:
+  cpu: [current, x64, arm64]
+  os: [current, darwin]
 
 trustPolicy: no-downgrade

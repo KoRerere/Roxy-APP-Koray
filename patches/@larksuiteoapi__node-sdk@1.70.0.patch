@@ -1,0 +1,21 @@
+diff --git a/es/index.js b/es/index.js
+index f7b78ab..d2ad474 100644
+--- a/es/index.js
++++ b/es/index.js
+@@ -20,6 +20,7 @@ import pickBy from 'lodash.pickby';
+ import merge from 'lodash.merge';
+ import qs from 'querystring';
+ import WebSocket from 'ws';
++import protobufMinimal from 'protobufjs/minimal';
+ import { gzipSync } from 'zlib';
+ import http from 'http';
+ import https from 'https';
+@@ -88465,7 +88466,7 @@ var messageCard = /*#__PURE__*/Object.freeze({
+ 
+ // @ts-nocheck
+ /*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
+-const $protobuf = require("protobufjs/minimal");
++const $protobuf = protobufMinimal;
+ 
+ $protobuf.util.Long = undefined;
+ $protobuf.configure();

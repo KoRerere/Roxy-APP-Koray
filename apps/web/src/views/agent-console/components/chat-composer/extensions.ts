@@ -1,0 +1,219 @@
+import { Extension, mergeAttributes, Node } from '@tiptap/core'
+import Link from '@tiptap/extension-link'
+import { Suggestion } from '@tiptap/suggestion'
+import type { AgentComposerItem, AgentComposerTokenKind } from './types'
+import { tokenToProtocol } from './protocol'
+
+export const ComposerLink = Link.extend({
+  inclusive: false,
+
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      markdownSource: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-markdown-source'),
+        renderHTML: attributes => attributes.markdownSource
+          ? { 'data-markdown-source': attributes.markdownSource }
+          : {},
+      },
+    }
+  },
+})
+
+export const AgentToken = Node.create({
+  name: 'agentToken',
+  group: 'inline',
+  inline: true,
+  atom: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      id: { default: '' },
+      kind: { default: 'skill' },
+      title: { default: '' },
+      label: { default: '' },
+      description: { default: '' },
+      iconName: { default: '' },
+      group: { default: '' },
+      payload: { default: {} },
+    }
+  },
+
+  parseHTML() {
+    return [{
+      tag: 'span[data-agent-token]',
+      getAttrs: (element) => {
+        const payload = element.getAttribute('data-payload')
+
+        return {
+          id: element.getAttribute('data-id') || '',
+          kind: element.getAttribute('data-kind') || element.getAttribute('data-agent-token') || 'skill',
+          title: element.getAttribute('data-title') || element.textContent?.trim() || '',
+          label: element.getAttribute('data-label') || '',
+          description: element.getAttribute('data-description') || '',
+          iconName: element.getAttribute('data-icon-name') || '',
+          group: element.getAttribute('data-group') || '',
+          payload: payload ? parseTokenPayload(payload) : {},
+        }
+      },
+    }]
+  },
+
+  renderHTML({ node }) {
+    const attrs = node.attrs as AgentComposerItem
+    const kind = normalizeTokenKind(attrs.kind)
+    const iconName = attrs.iconName || getAgentTokenIconName(kind)
+    const label = getAgentTokenLabel(attrs)
+    const profileCount = getProfileTokenCount(attrs)
+    const isEmptyInput = kind === 'input' && !attrs.payload.value?.trim()
+    const isEmptyProfile = kind === 'profile' && profileCount === 0
+
+    return [
+      'span',
+      mergeAttributes({
+        'data-agent-token': kind,
+        'data-id': attrs.id,
+        'data-kind': kind,
+        'data-title': attrs.title,
+        'data-label': attrs.label || '',
+        'data-description': attrs.description,
+        'data-icon-name': attrs.iconName,
+        'data-group': attrs.group,
+        'data-payload': JSON.stringify(attrs.payload || {}),
+        'class': [
+          'agent-token',
+          `agent-token--${kind}`,
+          isEmptyInput ? 'agent-token--input-empty' : '',
+          isEmptyProfile ? 'agent-token--profile-empty' : '',
+        ].filter(Boolean).join(' '),
+      }),
+      [
+        'span',
+        { class: 'agent-token__icon' },
+        [
+          'roxy-svg-icon',
+          {
+            name: iconName,
+            fallback: getAgentTokenIconName(kind),
+            size: 16,
+          },
+        ],
+      ],
+      [
+        'span',
+        { class: 'agent-token__label' },
+        label,
+      ],
+      ...(kind === 'profile' && profileCount > 0
+        ? [[
+            'span',
+            { class: 'agent-token__count' },
+            String(profileCount),
+          ]]
+        : []),
+      ...(kind === 'input'
+        ? []
+        : [[
+            'span',
+            {
+              'aria-label': 'Remove token',
+              'contenteditable': 'false',
+              'data-agent-token-remove': '',
+              'role': 'button',
+              'class': 'agent-token__remove',
+            },
+            [
+              'roxy-svg-icon',
+              {
+                name: 'base/rx_ic_delete',
+                size: 12,
+              },
+            ],
+          ]]),
+    ]
+  },
+
+  renderText({ node }) {
+    return tokenToProtocol(node.attrs as AgentComposerItem)
+  },
+})
+
+export function createSlashCommandExtension(options: {
+  getItems: (query: string) => AgentComposerItem[] | Promise<AgentComposerItem[]>
+  command: (options: { editor: any, range: any, item: AgentComposerItem }) => void
+  render: any
+}) {
+  return Extension.create({
+    name: 'slashCommand',
+
+    addProseMirrorPlugins() {
+      return [
+        Suggestion({
+          editor: this.editor,
+          char: '/',
+          items: ({ query }) => options.getItems(query),
+          command: ({ editor, range, props }) => {
+            options.command({ editor, range, item: props as AgentComposerItem })
+          },
+          render: options.render,
+        }),
+      ]
+    },
+  })
+}
+
+function parseTokenPayload(payload: string) {
+  try {
+    return JSON.parse(payload)
+  }
+  catch {
+    return {}
+  }
+}
+
+export function normalizeTokenKind(kind: string): AgentComposerTokenKind {
+  return kind === 'profile' || kind === 'script' || kind === 'skill' || kind === 'input' ? kind : 'skill'
+}
+
+export function getAgentTokenIconName(kind: AgentComposerTokenKind) {
+  if (kind === 'input')
+    return 'roxy-agent/rx-ic-prompts'
+
+  if (kind === 'profile')
+    return 'roxy-agent/rx-ic-token-profile'
+
+  if (kind === 'script')
+    return 'roxy-agent/rx-ic-scripts'
+
+  return 'roxy-agent/rx-ic-skills'
+}
+
+function getAgentTokenLabel(attrs: AgentComposerItem) {
+  if (attrs.kind === 'profile')
+    return getProfileTokenCount(attrs) > 0 ? $t('窗口') : $t('选择窗口')
+
+  if (attrs.kind !== 'input')
+    return attrs.title
+
+  return attrs.payload.value?.trim() || attrs.title
+}
+
+function getProfileTokenCount(attrs: AgentComposerItem) {
+  if (attrs.kind !== 'profile')
+    return 0
+
+  const targets = attrs.payload.dirIds || attrs.payload.dirId || attrs.id || ''
+
+  if (targets.trim()) {
+    return targets
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .length
+  }
+
+  const count = Number(attrs.payload.count)
+  return Number.isFinite(count) ? count : 0
+}

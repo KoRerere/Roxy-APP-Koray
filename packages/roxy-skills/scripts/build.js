@@ -9,13 +9,20 @@ const srcDir = path.join(rootDir, 'src');
 const distDir = path.join(rootDir, 'dist');
 
 const skills = [
-  'roxybrowser-playwright-skills',
-  'roxybrowser-openapi-skills',
-  'playwright-rpa-enhance-skills',
+  'roxybrowser-control',
+  'roxybrowser-automation',
+  'automation-script-writing',
 ];
 
 if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir, { recursive: true });
+}
+else {
+  for (const filename of fs.readdirSync(distDir)) {
+    if (path.extname(filename).toLowerCase() === '.zip') {
+      fs.rmSync(path.join(distDir, filename), { force: true });
+    }
+  }
 }
 
 async function build() {
@@ -36,7 +43,11 @@ async function build() {
       });
       archive.on('error', reject);
       archive.pipe(output);
-      archive.directory(sourceDir, false);
+      archive.glob('**/*', {
+        cwd: sourceDir,
+        dot: false,
+        ignore: ['**/.DS_Store'],
+      });
       archive.finalize();
     });
   }

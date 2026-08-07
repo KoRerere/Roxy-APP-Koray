@@ -1,8 +1,8 @@
-import type { StreamEvent } from '@/core/sse/streamAdapter'
+import type { StreamEvent } from '@/core/agent-events/streamEvents'
 import type { AIMessageChunk } from '@langchain/core/messages'
-import { streamAdapter } from '@/core/sse/streamAdapter'
-import { ScriptStore } from '@/database/conversations'
-import { resolveSkillFilePathFromPath, resolveSkillNameFromPath } from './tools/skill'
+import { streamEvents } from '@/core/agent-events/streamEvents'
+import { LibraryStore } from '@/script/libraryStore'
+import { resolveSkillDisplay } from './tools/skill'
 
 /**
  * 工具入参可能是 JSON 字符串或对象，统一解析为对象（失败返回空对象）。
@@ -34,9 +34,10 @@ function basenameOf(p: string | undefined | null): string {
 function resolveScriptDisplayLabel(raw: string): string {
   if (typeof raw !== 'string' || !raw)
     return ''
-  if (raw.startsWith('scr_')) {
+  // 本地库脚本以 slug（文件名）为身份：尝试解析出展示名。
+  if (!raw.includes('/') && !/^https?:/i.test(raw)) {
     try {
-      return ScriptStore.getById(raw)?.name ?? raw
+      return LibraryStore.get(raw)?.name ?? raw
     }
     catch {
       return raw
@@ -60,22 +61,12 @@ export class StreamState {
   map: Record<string, string> = {}
   private currentThinking: { id: string, taskId: string, startAt: number } | null = null
 
-  getRandomId() {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2, 15)
-  }
-
   setChunkContent(type: 'text', content: string, id: string) {
     if (!this.map[id]) {
       this.arr.push({ type, id })
       this.map[id] = ''
     }
     this.map[id] += content
-  }
-
-  getChunkContent() {
-    return this.arr.map((item) => {
-      return `[assistant]: ${this.map[item.id]}\n`
-    }).join('\n')
   }
 
   getLastChunkContent() {
@@ -118,8 +109,6 @@ export class StreamState {
       durationMs: Math.max(0, endTs - startAt),
     }
   }
-
-  theLastMessageIsThinking() {}
 }
 
 function handleMessage(chunk: AIMessageChunk, state: StreamState): StreamEventResult {
@@ -134,12 +123,12 @@ function handleMessage(chunk: AIMessageChunk, state: StreamState): StreamEventRe
         if (item.type === 'text' && item.text) {
           const contentId = `content:${chunk.id}`
           state.setChunkContent('text', item.text as string, contentId)
-          return streamAdapter.contentEvent(item.text as string, contentId, state.taskId)
+          return streamEvents.contentEvent(item.text as string, contentId, state.taskId)
         }
         else if (item.type === 'thinking' && item.thinking) {
           const thinkingId = `thinking:${chunk.id}`
           state.setChunkContent('text', item.thinking as string, thinkingId)
-          return streamAdapter.thinkingEvent(item.thinking as string, thinkingId, state.taskId)
+          return streamEvents.thinkingEvent(item.thinking as string, thinkingId, state.taskId)
         }
         return undefined
       }).filter((event): event is StreamEvent => Boolean(event))
@@ -147,14 +136,14 @@ function handleMessage(chunk: AIMessageChunk, state: StreamState): StreamEventRe
     else if (typeof chunk.content === 'string') {
       const contentId = `content:${chunk.id}`
       state.setChunkContent('text', chunk.content, contentId)
-      return streamAdapter.contentEvent(chunk.content, contentId, state.taskId)
+      return streamEvents.contentEvent(chunk.content, contentId, state.taskId)
     }
   }
 
   const reasoningContent = chunk?.additional_kwargs?.reasoning_content || chunk.lc_kwargs?.additional_kwargs?.reasoning_content || ''
   if (reasoningContent) {
     const thinkingId = `thinking:${chunk.id}`
-    return streamAdapter.thinkingEvent(reasoningContent as string, thinkingId, state.taskId)
+    return streamEvents.thinkingEvent(reasoningContent as string, thinkingId, state.taskId)
   }
 }
 
@@ -164,28 +153,30 @@ function handleTool(chunk: any, state: StreamState): StreamEventResult {
     if (chunk.event === 'on_tool_start') {
       const todos = JSON.parse(chunk.input)
       if (state.taskId) {
-        return streamAdapter.workerTodoEvent(state.taskId, todos)
+        return streamEvents.workerTodoEvent(state.taskId, todos)
       }
-      return streamAdapter.todoEvent(todos)
+      return streamEvents.todoEvent(todos)
     }
     return
   }
 
   if (chunk.event === 'on_tool_start') {
-    const data: { toolName: string, args: any, toolId: string, taskId: string, assignmentsCount?: number, skillName?: string, skillFilePath?: string, target?: string } = {
+    const data: { toolName: string, args: any, toolId: string, taskId?: string, assignmentsCount?: number, skillName?: string, skillFilePath?: string, target?: string } = {
       toolName: chunk.name,
       args: chunk.input,
       toolId: chunk.toolCallId,
-      taskId: state.taskId,
     }
+    if (state.taskId)
+      data.taskId = state.taskId
 
     // 为特定工具注入前端展示所需的标量字段（args 是 JSON 字符串，前端不可靠解析，故由后端解析后下发）
     // - parallel_dispatch：并行任务数
-    // - load_skill_file：skill 名（从路径解析）
+    // - load_skill_file：Skill name/ref 与相对文件路径
     // - read_file/write_file/edit_file：文件名（file_path 的 basename）
     // - ls：目录名（path 的 basename，根目录/当前目录不注入）
     // - glob/grep：匹配模式（pattern 原样，可能含通配符）
     // - run_script：脚本名（script.scriptName）
+    // - execute：命令内容（command 参数，前端 ellipsis-1 单行截断）
     if (chunk.name === 'parallel_dispatch') {
       const parsed = safeParseInput(chunk.input)
       if (Array.isArray(parsed.assignments)) {
@@ -196,8 +187,15 @@ function handleTool(chunk: any, state: StreamState): StreamEventResult {
       const parsed = safeParseInput(chunk.input)
       // skillFilePath 含 skill 名 + 文件相对路径（如 tiktok-matrix-upload/references/harness.md），
       // 优先用于前端展示；skillName 仅作老前端兼容回退
-      data.skillFilePath = resolveSkillFilePathFromPath(parsed.path)
-      data.skillName = resolveSkillNameFromPath(parsed.path)
+      if (typeof parsed.name === 'string' || typeof parsed.ref === 'string') {
+        const display = resolveSkillDisplay({
+          ...(typeof parsed.name === 'string' ? { name: parsed.name } : {}),
+          ...(typeof parsed.ref === 'string' ? { ref: parsed.ref } : {}),
+          ...(typeof parsed.file === 'string' ? { file: parsed.file } : {}),
+        })
+        data.skillFilePath = display.skillFilePath
+        data.skillName = display.skillName
+      }
     }
     else if (chunk.name === 'read_file' || chunk.name === 'write_file' || chunk.name === 'edit_file') {
       const parsed = safeParseInput(chunk.input)
@@ -219,27 +217,34 @@ function handleTool(chunk: any, state: StreamState): StreamEventResult {
       const parsed = safeParseInput(chunk.input)
       data.target = resolveScriptDisplayLabel(parsed.script?.scriptName ?? '')
     }
+    else if (chunk.name === 'execute') {
+      const parsed = safeParseInput(chunk.input)
+      // command 可能很长或含换行；前端 ellipsis-1 单行截断展示
+      data.target = typeof parsed.command === 'string' ? parsed.command : ''
+    }
 
-    return streamAdapter.toolCallEvent(data)
+    return streamEvents.toolCallEvent(data)
   }
 
   if (chunk.event === 'on_tool_end') {
-    return streamAdapter.toolResultEvent({
+    return streamEvents.toolResultEvent({
       toolName: chunk.name,
       result: chunk.output.content,
       toolId: chunk.toolCallId,
       status: 'success',
-      taskId: state.taskId,
+      ...(state.taskId ? { taskId: state.taskId } : {}),
     })
   }
 
   if (chunk.event === 'on_tool_error') {
-    return streamAdapter.toolResultEvent({
+    const errorContent = chunk.output?.content || chunk.error?.message
+
+    return streamEvents.toolResultEvent({
       toolName: chunk.name,
-      result: chunk.output?.content || chunk.error.message,
+      result: errorContent,
       toolId: chunk.toolCallId,
       status: 'failed',
-      taskId: state.taskId,
+      ...(state.taskId ? { taskId: state.taskId } : {}),
     })
   }
 }
@@ -251,11 +256,8 @@ function asStreamEventArray(result: StreamEventResult): StreamEvent[] {
 }
 
 function getThinkingMeta(event: StreamEvent): { thinkingId: string, taskId: string } | null {
-  if (event.type === 'thinking' && event.data?.thinkingId) {
-    return { thinkingId: event.data.thinkingId, taskId: '' }
-  }
-  if (event.type === 'worker_thinking' && event.data?.thinkingId) {
-    return { thinkingId: event.data.thinkingId, taskId: event.data.taskId ?? '' }
+  if (event.type === 'thinking_delta' && event.data.thinkingId) {
+    return { thinkingId: event.data.thinkingId, taskId: event.data.workerId ?? '' }
   }
   return null
 }
@@ -273,14 +275,14 @@ function withThinkingTiming(result: StreamEventResult, state: StreamState): Stre
     if (meta) {
       const finishedPrev = state.noteThinking(meta.thinkingId, meta.taskId, ts)
       if (finishedPrev) {
-        out.push(streamAdapter.thinkingCompleteEvent(finishedPrev))
+        out.push(streamEvents.thinkingCompleteEvent(finishedPrev))
       }
       out.push(event)
     }
     else {
       const finished = state.finishThinking(ts)
       if (finished) {
-        out.push(streamAdapter.thinkingCompleteEvent(finished))
+        out.push(streamEvents.thinkingCompleteEvent(finished))
       }
       out.push(event)
     }
@@ -297,16 +299,6 @@ export function handleStreamEvents(rawChunk: any, state: StreamState): StreamEve
     return withThinkingTiming(handleTool(chunk, state), state)
   }
   // custom 也不透传，避免 thinking/tool 的衍生噪音
-}
-
-export function handleStream(rawChunk: any, state: StreamState): string | string[] | undefined {
-  const events = asStreamEventArray(handleStreamEvents(rawChunk, state))
-  if (events.length === 0) {
-    return
-  }
-
-  const formatted = events.map(event => streamAdapter.formatSSE(event))
-  return formatted.length === 1 ? formatted[0] : formatted
 }
 
 export function handleWorkerStream(rawChunk: any, state: StreamState): StreamEvent[] {

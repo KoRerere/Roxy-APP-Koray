@@ -31,7 +31,19 @@ export class ForwardChatApi<SecurityDataType = unknown> {
    * @summary OpenAI Chat 补全
    * @request POST:/v1/chat/completions
    * @response `200` `ChatCompletionsV1ChatCompletionsPostData` OpenAI 兼容的补全结果；流式时为 SSE 数据块。
-   * @response `422` `HTTPValidationError` Validation Error
+   * @response `400` `ApiErrorResponse` Bad Request
+   * @response `401` `ApiErrorResponse` Unauthorized
+   * @response `402` `ApiErrorResponse` Payment Required
+   * @response `403` `ApiErrorResponse` Forbidden
+   * @response `404` `ApiErrorResponse` Not Found
+   * @response `409` `ApiErrorResponse` Conflict
+   * @response `413` `ApiErrorResponse` Request Entity Too Large
+   * @response `415` `ApiErrorResponse` Unsupported Media Type
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `429` `ApiErrorResponse` Too Many Requests
+   * @response `500` `ApiErrorResponse` Internal Server Error
+   * @response `503` `ApiErrorResponse` Service Unavailable
+   * @response `504` `ApiErrorResponse` Gateway Timeout
    */
   chatCompletionsV1ChatCompletionsPost = (params: RequestParams = {}) =>
     this.http.request<

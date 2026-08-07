@@ -27,6 +27,7 @@ import { isMainWindow } from '/@/utils'
 import { getLastRoute, resolveLastRoute } from '/@/utils/lastRoute'
 import { isEqual } from 'es-toolkit'
 import type { LocationQueryRaw, RouteLocationNormalized, RouteLocationRaw } from 'vue-router'
+import { createPerfTimer, perfLog } from '/@/utils/perf-log'
 
 // --- Guard context ---
 
@@ -203,11 +204,20 @@ function mergeQuery(to: RouteLocationNormalized): LocationQueryRaw {
 
 export async function runNavigationGuards(to: RouteLocationNormalized): Promise<GuardResult> {
   const ctx = createGuardContext()
+  const endWaitInit = createPerfTimer('guards:waitInitUserInfo', {
+    routeName: String(to.name ?? ''),
+    path: to.path,
+  })
 
   await ctx.userStore.hasCallInitUserInfo.promise
+  endWaitInit()
 
   // init 完成后再读，避免 createGuardContext 时 currentWorkspace 尚未赋值
   const currentWorkspace = ctx.workspaceStore.currentWorkspace
+  perfLog('guards:initReady', {
+    workspaceId: currentWorkspace?.id,
+    workspaceType: currentWorkspace?.workspaceType,
+  })
 
   const query = mergeQuery(to)
   const routeContext = buildRouteContext({

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { Router } from 'express'
 import path from 'node:path'
 import { z } from 'zod'
+import * as chatService from '@/services/chatService'
 import * as fileService from '@/services/fileService'
 
 const router: Router = Router()
@@ -10,6 +11,7 @@ const UploadSchema = z.object({
   data: z.string({ error: 'data, mimeType and fileName are required' }),
   mimeType: z.string({ error: 'data, mimeType and fileName are required' }),
   fileName: z.string({ error: 'data, mimeType and fileName are required' }),
+  conversationId: z.string().optional(),
 })
 
 function toContentDisposition(fileName: string, disposition: 'inline' | 'attachment') {
@@ -24,6 +26,9 @@ router.post('/upload', async (req: Request, res: Response) => {
     return res.json({ code: 1, msg: parsed.error.issues[0]?.message ?? 'data, mimeType and fileName are required' })
   }
   try {
+    if (parsed.data.conversationId && !chatService.getConversation(parsed.data.conversationId)) {
+      return res.json({ code: 1, msg: 'conversation not found', error: 'conversation not found' })
+    }
     const data = await fileService.saveUpload(parsed.data)
     res.json({
       code: 0,

@@ -77,14 +77,11 @@
 - **获取频道 ID**: 右键点击频道名称 → **"复制频道 ID"**
 - **获取服务器 ID**: 右键点击服务器图标 → **"复制服务器 ID"**
 
-## 三、配置环境变量
+## 三、配置 RoxyClaw
 
-在 Roxy Agent 的环境变量配置中添加以下内容：
+在 RoxyClaw 配置中启用 Discord，并填写以下内容：
 
 ```bash
-# 启用 IM 功能
-ENABLE_IM=true
-
 # ========== Discord 配置 ==========
 # Bot Token（从 Bot 页面获取）
 DISCORD_BOT_TOKEN=MTIzNDU2Nzg5MDEyMzQ1Njc4.GhijKl.MnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWx
@@ -103,10 +100,9 @@ DISCORD_ALLOWED_GUILD_IDS=135792468013579246
 
 ## 四、启动服务
 
-配置完成后，启动 Roxy Agent 服务。如果配置正确，你会在日志中看到：
+配置完成后，Electron 会在后台按 RoxyClaw 的 `enabled` 配置启动同一个 agent 进程内的 IM 能力。如果配置正确，你会在日志中看到：
 
 ```
-[IM] startIMServiceIfEnabled called, ENABLE_IM = true
 [IM] Checking Discord config: BOT_TOKEN=set
 [Discord] Creating lightweight Discord client...
 [Discord] Connecting to gateway: ...

@@ -2,6 +2,10 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import type { VNode } from 'vue'
 
+export interface RxToastMessageOptions extends ToastMessageOptions {
+  onClick?: () => void
+}
+
 // import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 export function useResponseToast() {
@@ -13,7 +17,7 @@ export function useResponseToast() {
     error: $t('操作失败'),
   }
 
-  function showToast(code: number, message: string | VNode, options?: ToastMessageOptions) {
+  function showToast(code: number, message: string | VNode, options?: RxToastMessageOptions) {
     if (code === 0) {
       toast.add({ severity: 'success', summary: summary.success, detail: message, ...Object.assign(({ life: 3000 } as ToastMessageOptions), options) })
     }
@@ -24,7 +28,7 @@ export function useResponseToast() {
     }
   }
 
-  function onlyErrorToast(code: number, message: string | VNode, options?: ToastMessageOptions) {
+  function onlyErrorToast(code: number, message: string | VNode, options?: RxToastMessageOptions) {
     if (code !== 0) {
       toast.add({ severity: 'error', summary: summary.error, detail: message, ...Object.assign(({ life: 5000 } as ToastMessageOptions), options) })
     }

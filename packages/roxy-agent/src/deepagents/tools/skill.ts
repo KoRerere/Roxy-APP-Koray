@@ -1,23 +1,19 @@
-import type { SkillEntry } from '@/core/skillManager'
 import type { StructuredToolInterface } from '@langchain/core/tools'
+import type { TemplateRefValue } from '@roxy/shared'
+import { isTemplateRef } from '@roxy/shared'
 import { tool } from 'langchain'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
 import { getSkillManager } from '@/core/skillManager'
 import {
-  loadSkillMetadataFromDir,
-  MAX_SKILL_FILE_SIZE_BYTES,
-} from '@/core/skills/metadata'
+  getKnownTemplateSkill,
+  resolveTemplateSkillFile,
+  TemplateReferenceError,
+} from '@/services/templateService'
 
+const DEFAULT_SKILL_FILE = 'SKILL.md'
 const DEFAULT_SKILL_READ_LINE_LIMIT = 1000
-
-interface SkillSummary {
-  name: string
-  description: string
-  skillMdPath: string
-  rootDir: string
-}
 
 function formatNumberedTextSlice(content: string, offset = 0, limit = DEFAULT_SKILL_READ_LINE_LIMIT): string {
   const lines = content.split(/\r?\n/)
@@ -34,98 +30,103 @@ function formatNumberedTextSlice(content: string, offset = 0, limit = DEFAULT_SK
     .join('\n')
 }
 
-function isPathInsideOrEqual(parent: string, target: string): boolean {
-  const relative = path.relative(parent, target)
-  return parent === target || (relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative))
+export async function listAvailableLocalSkills() {
+  return getSkillManager().listAvailableSkills()
 }
 
-function toSkillSummary(entry: SkillEntry): SkillSummary {
+export function resolveSkillDisplay(
+  input: { name?: string, ref?: string, file?: string },
+): { skillName: string, skillFilePath: string } {
+  const knownSkill = input.ref && isTemplateRef(input.ref)
+    ? getKnownTemplateSkill(input.ref)
+    : undefined
+  const skillName = knownSkill?.name ?? input.name ?? input.ref ?? 'Skill'
+  const relativeFile = (input.file ?? DEFAULT_SKILL_FILE)
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '') || DEFAULT_SKILL_FILE
+
   return {
-    name: entry.name,
-    description: entry.description,
-    skillMdPath: path.join(entry.rootDir, 'SKILL.md'),
-    rootDir: entry.rootDir,
+    skillName,
+    skillFilePath: `${skillName}/${relativeFile}`,
   }
 }
 
-export async function listInstalledSkills(): Promise<SkillSummary[]> {
-  return (await getSkillManager().listAvailableSkills()).map(toSkillSummary)
+function isRelativeSkillFile(file: string): boolean {
+  const normalizedInput = file.replace(/\\/g, '/')
+  if (path.posix.isAbsolute(normalizedInput) || /^[a-z]:/i.test(normalizedInput)) {
+    return false
+  }
+
+  const normalized = path.posix.normalize(normalizedInput).replace(/^\.\//, '')
+  return normalized !== '.'
+    && normalized !== '..'
+    && !normalized.startsWith('../')
+    && !normalized.includes('/../')
 }
 
-/**
- * 从 skills 目录内的文件路径同步解析出 skill 名（目录名），用于前端展示。
- * 读 SKILL.md 与 skill 内子文件都解析到同一 skill 目录，故显示同名。
- * 同步实现，可安全用于流式事件热路径（不读 SKILL.md frontmatter）。
- */
-export function resolveSkillNameFromPath(p: string): string | undefined {
-  const dir = getSkillManager().resolveSkillDirForPath(path.resolve(p))
-  return dir ? path.basename(dir) : undefined
+const loadSkillFileSchema = z.object({
+  name: z.string().trim().min(1).optional().describe('Exact SKILL.md frontmatter name of an available local Skill'),
+  ref: z.string().refine(isTemplateRef, {
+    message: 'Expected official:<positive id> or user:<positive id>.',
+  }).optional().describe('Canonical official:<id> or user:<id> Skill template reference'),
+  file: z.string().trim().min(1).refine(isRelativeSkillFile, {
+    message: 'Skill file must be a relative path inside the Skill root.',
+  }).optional().describe(`Relative file path inside the Skill (default ${DEFAULT_SKILL_FILE})`),
+  offset: z.number().int().min(0).optional().describe('0-based line offset to start reading from'),
+  limit: z.number().int().min(1).max(DEFAULT_SKILL_READ_LINE_LIMIT).optional().describe(`Maximum number of lines to read (default ${DEFAULT_SKILL_READ_LINE_LIMIT})`),
+}).strict().superRefine((input, context) => {
+  if (Boolean(input.name) === Boolean(input.ref)) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Provide exactly one of name or ref.',
+      path: ['name'],
+    })
+  }
+})
+
+type SkillFileInput = z.infer<typeof loadSkillFileSchema>
+
+async function resolveSkillFile(input: SkillFileInput): Promise<{ filePath: string }> {
+  const file = input.file ?? DEFAULT_SKILL_FILE
+  if (input.ref) {
+    return resolveTemplateSkillFile(input.ref as TemplateRefValue, file)
+  }
+
+  const name = input.name
+  if (!name) {
+    throw new Error('Exactly one of Skill name or ref is required.')
+  }
+
+  const resolved = await getSkillManager().resolveAvailableSkillFile(name, file)
+  if (!resolved) {
+    throw new Error(`Skill "${name}" not found.`)
+  }
+
+  return resolved
 }
 
-/**
- * 从 skills 目录内的文件路径同步解析出「skill 名 + 文件相对 skill 目录的路径」，
- * 用于前端展示具体加载的文件（如 "tiktok-matrix-upload/references/harness.md"）。
- * 读 SKILL.md 与 skill 内子文件区分展示。同步实现，可安全用于流式事件热路径。
- * 解析失败（路径不在 skills 目录内）返回 undefined。
- */
-export function resolveSkillFilePathFromPath(p: string): string | undefined {
-  const resolved = path.resolve(p)
-  const skillDir = getSkillManager().resolveSkillDirForPath(resolved)
-  if (!skillDir)
-    return undefined
-  const skillName = path.basename(skillDir)
-  const rel = path.relative(skillDir, resolved)
-  // rel 为空字符串表示路径就是 skill 目录本身（不应发生于文件加载），兜底返回目录名
-  const relNormalized = rel ? rel.split(path.sep).join('/') : ''
-  return relNormalized ? `${skillName}/${relNormalized}` : skillName
+async function readSkillFile(input: SkillFileInput): Promise<string> {
+  try {
+    const resolved = await resolveSkillFile(input)
+    const content = await fs.readFile(resolved.filePath, 'utf8')
+    return formatNumberedTextSlice(content, input.offset, input.limit)
+  }
+  catch (error) {
+    if (error instanceof TemplateReferenceError) {
+      return `Error [${error.code}]: ${error.message}`
+    }
+
+    return `Error reading Skill file: ${error instanceof Error ? error.message : String(error)}`
+  }
 }
 
 export const loadSkillFileTools = [
   tool(
-    async (input: { path: string, offset?: number, limit?: number }): Promise<string> => {
-      const requestedPath = path.resolve(input.path)
-      if (!getSkillManager().isPathInsideSkillsRoot(requestedPath)) {
-        return `Error: Path '${input.path}' is outside the skills directory`
-      }
-
-      // 检查该 skill 是否被禁用
-      const skillDir = getSkillManager().resolveSkillDirForPath(requestedPath)
-      if (skillDir) {
-        const skills = await getSkillManager().listAvailableSkills()
-        if (!skills.some(skill => isPathInsideOrEqual(skillDir, skill.rootDir))) {
-          const skillMetadata = await loadSkillMetadataFromDir(skillDir)
-          const skillName = skillMetadata.ok ? skillMetadata.metadata.name : path.basename(skillDir)
-          return `Error: Skill "${skillName}" not found.`
-        }
-      }
-
-      try {
-        const stat = await fs.lstat(requestedPath)
-        if (stat.isSymbolicLink()) {
-          return `Error: Symlinks are not allowed: ${input.path}`
-        }
-        if (!stat.isFile()) {
-          return `Error: File '${input.path}' not found`
-        }
-        if (stat.size > MAX_SKILL_FILE_SIZE_BYTES) {
-          return `Error: Skill file '${input.path}' exceeds the ${MAX_SKILL_FILE_SIZE_BYTES} byte limit`
-        }
-
-        const content = await fs.readFile(requestedPath, 'utf8')
-        return formatNumberedTextSlice(content, input.offset, input.limit)
-      }
-      catch (error: any) {
-        return `Error reading skill file '${input.path}': ${error.message}`
-      }
-    },
+    readSkillFile,
     {
       name: 'load_skill_file',
-      description: 'Read a file from the installed skills library without human approval. Only files inside the configured skills directory are allowed.',
-      schema: z.object({
-        path: z.string().describe('Absolute path to a file inside the skills directory'),
-        offset: z.number().int().min(0).optional().describe('0-based line offset to start reading from'),
-        limit: z.number().int().min(1).max(DEFAULT_SKILL_READ_LINE_LIMIT).optional().describe(`Maximum number of lines to read (default ${DEFAULT_SKILL_READ_LINE_LIMIT})`),
-      }),
+      description: 'Read a Skill file using exactly one identifier: name for an available local Skill, or ref for a canonical Skill template. The file path is relative to the resolved Skill root and defaults to SKILL.md. A ref is resolved, downloaded when needed, and installed locally before reading.',
+      schema: loadSkillFileSchema,
     },
   ) as unknown as StructuredToolInterface,
 ]

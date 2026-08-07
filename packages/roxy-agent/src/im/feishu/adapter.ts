@@ -1,7 +1,6 @@
 import type { ContentBlock, IMBridge } from '../core/IMBridge.js'
 import * as lark from '@larksuiteoapi/node-sdk'
 import { Buffer } from 'node:buffer'
-import { env } from '../../config.js'
 import { normalizeImText } from '../core/outputGuard.js'
 import { proxyFetch } from '../core/proxy.js'
 import { StreamSender } from '../core/StreamSender.js'
@@ -61,7 +60,7 @@ function isDuplicate(messageId: string): boolean {
 export async function startFeishuAdapter(
   bridge: IMBridge,
   config: FeishuConfig,
-): Promise<void> {
+): Promise<() => void> {
   const { appId, appSecret, domain: rawDomain } = config
   const allowedUserIds = parseList(config.allowedUserIds)
 
@@ -109,6 +108,10 @@ export async function startFeishuAdapter(
   } as any)
 
   console.log('[Feishu] Adapter started.')
+
+  return () => {
+    wsClient.close({ force: true })
+  }
 }
 
 async function handleFeishuMessage(

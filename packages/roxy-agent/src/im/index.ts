@@ -6,7 +6,30 @@ import { startSlackAdapter } from './slack/adapter.js'
 import { startTelegramAdapter } from './telegram/adapter.js'
 import { startWeixinAdapter } from './weixin/adapter.js'
 
-export async function startIMServiceIfEnabled(): Promise<void> {
+type StopIMAdapter = () => void | Promise<void>
+
+let imServiceStarted = false
+let imServiceStarting: Promise<boolean> | null = null
+let stopIMAdapters: StopIMAdapter[] = []
+
+export async function startIMServiceIfEnabled(): Promise<boolean> {
+  if (imServiceStarted) {
+    console.info('[IM] IM service is already running.')
+    return true
+  }
+
+  if (imServiceStarting) {
+    return await imServiceStarting
+  }
+
+  imServiceStarting = startIMServiceIfEnabledInner().finally(() => {
+    imServiceStarting = null
+  })
+
+  return await imServiceStarting
+}
+
+async function startIMServiceIfEnabledInner(): Promise<boolean> {
   let data: any
   try {
     const roxyClawConfig = await API.base.userGetRoxyClawList()
@@ -19,12 +42,19 @@ export async function startIMServiceIfEnabled(): Promise<void> {
   }
 
   const enableIM = data?.enabled === 1
+  if (!enableIM) {
+    console.info('[IM] IM service disabled by config.')
+    return false
+  }
 
   let started = 0
 
-  async function safeStartAdapter(name: string, imName: string, startFn: () => Promise<void>) {
+  async function safeStartAdapter(name: string, startFn: () => Promise<StopIMAdapter | void>) {
     try {
-      await startFn()
+      const stop = await startFn()
+      if (stop) {
+        stopIMAdapters.push(stop)
+      }
       console.info(`[IM] ${name} adapter started`)
       started++
     }
@@ -34,8 +64,6 @@ export async function startIMServiceIfEnabled(): Promise<void> {
   }
 
   const config = {
-    ROXY_MODE: enableIM ? 'im' : 'agent',
-    ENABLE_IM: enableIM,
     FEISHU_APP_ID: data?.lark_app_id,
     FEISHU_APP_SECRET: data?.lark_app_secret,
     FEISHU_ENVIRONMENT: data?.lark_environment as 'lark' | 'feishu' | undefined,
@@ -50,13 +78,12 @@ export async function startIMServiceIfEnabled(): Promise<void> {
     DISCORD_BOT_TOKEN: data?.discord_bot_token,
     DISCORD_ALLOWED_USER_IDS: data?.discord_allowed_user_ids,
     WECHAT_BOT_TOKEN: data?.wechat_bot_token,
+    WECHAT_BOT_BASE_URL: data?.wechat_bot_base_url || data?.weixin_bot_base_url,
   }
-
-  console.log('im config:', config)
 
   if (config.FEISHU_APP_ID && config.FEISHU_APP_SECRET) {
     const feishuBridge = new IMBridge(config.FEISHU_ENVIRONMENT === 'lark' ? 'lark' : 'feishu')
-    await safeStartAdapter('Feishu', config.FEISHU_ENVIRONMENT === 'lark' ? 'lark' : 'feishu', () => startFeishuAdapter(feishuBridge, {
+    await safeStartAdapter('Feishu', () => startFeishuAdapter(feishuBridge, {
       appId: config.FEISHU_APP_ID!,
       appSecret: config.FEISHU_APP_SECRET!,
       allowedUserIds: config.FEISHU_ALLOWED_USER_IDS || '',
@@ -66,7 +93,7 @@ export async function startIMServiceIfEnabled(): Promise<void> {
 
   if (config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_ALLOWED_CHAT_IDS) {
     const telegramBridge = new IMBridge('telegram')
-    await safeStartAdapter('Telegram', 'telegram', () => startTelegramAdapter(telegramBridge, {
+    await safeStartAdapter('Telegram', () => startTelegramAdapter(telegramBridge, {
       botToken: config.TELEGRAM_BOT_TOKEN!,
       allowedChatIds: config.TELEGRAM_ALLOWED_CHAT_IDS || '',
     }))
@@ -74,7 +101,7 @@ export async function startIMServiceIfEnabled(): Promise<void> {
 
   if (config.SLACK_BOT_TOKEN && config.SLACK_SIGNING_SECRET) {
     const slackBridge = new IMBridge('slack')
-    await safeStartAdapter('Slack', 'slack', () => startSlackAdapter(slackBridge, {
+    await safeStartAdapter('Slack', () => startSlackAdapter(slackBridge, {
       botToken: config.SLACK_BOT_TOKEN!,
       signingSecret: config.SLACK_SIGNING_SECRET!,
       appToken: config.SLACK_APP_TOKEN,
@@ -85,7 +112,7 @@ export async function startIMServiceIfEnabled(): Promise<void> {
 
   if (config.DISCORD_BOT_TOKEN) {
     const discordBridge = new IMBridge('discord')
-    await safeStartAdapter('Discord', 'discord', () => startDiscordAdapter(discordBridge, {
+    await safeStartAdapter('Discord', () => startDiscordAdapter(discordBridge, {
       botToken: config.DISCORD_BOT_TOKEN!,
       allowedUserIds: config.DISCORD_ALLOWED_USER_IDS || '',
     }))
@@ -93,15 +120,42 @@ export async function startIMServiceIfEnabled(): Promise<void> {
 
   if (config.WECHAT_BOT_TOKEN) {
     const weixinBridge = new IMBridge('weixin')
-    await safeStartAdapter('Weixin', 'weixin', () => startWeixinAdapter(weixinBridge, {
+    await safeStartAdapter('Weixin', () => startWeixinAdapter(weixinBridge, {
       botToken: config.WECHAT_BOT_TOKEN,
+      baseUrl: config.WECHAT_BOT_BASE_URL,
     }))
   }
 
   if (started > 0) {
+    imServiceStarted = true
     console.info(`[IM] IM service running with ${started} platform(s).`)
+    return true
   }
   else {
     console.warn('[IM] No IM adapters started successfully.')
+    return false
   }
+}
+
+export async function stopIMService(): Promise<void> {
+  if (imServiceStarting) {
+    await imServiceStarting
+  }
+
+  if (!imServiceStarted && stopIMAdapters.length === 0) {
+    console.info('[IM] IM service is not running.')
+    return
+  }
+
+  const stoppers = stopIMAdapters
+  stopIMAdapters = []
+  imServiceStarted = false
+
+  const results = await Promise.allSettled(stoppers.map(stop => stop()))
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('[IM] Failed to stop adapter:', result.reason)
+    }
+  }
+  console.info('[IM] IM service stopped.')
 }

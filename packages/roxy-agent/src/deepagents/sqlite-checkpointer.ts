@@ -14,6 +14,7 @@ import {
   maxChannelVersion,
   TASKS,
 } from '@langchain/langgraph-checkpoint'
+import { HumanMessage } from 'langchain'
 import { Buffer } from 'node:buffer'
 import { DatabaseSync } from 'node:sqlite'
 
@@ -83,6 +84,93 @@ function toBindValue(v: unknown): string | number | bigint | Buffer | Uint8Array
   if (typeof v === 'object' && v !== null && ArrayBuffer.isView(v))
     return v as Uint8Array
   return String(v)
+}
+
+function getMessageType(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null)
+    return undefined
+
+  const message = value as {
+    type?: unknown
+    _getType?: () => unknown
+    getType?: () => unknown
+  }
+
+  if (typeof message.type === 'string')
+    return message.type
+
+  try {
+    const type = message._getType?.() ?? message.getType?.()
+    return typeof type === 'string' ? type : undefined
+  }
+  catch {
+    return undefined
+  }
+}
+
+function normalizeSummaryMessage(value: unknown): unknown {
+  if (value instanceof HumanMessage)
+    return value
+
+  if (getMessageType(value) !== 'human')
+    return value
+
+  const message = value as {
+    content?: unknown
+    id?: string
+    name?: string
+    additional_kwargs?: Record<string, unknown>
+    response_metadata?: Record<string, unknown>
+  }
+
+  return new HumanMessage({
+    content: message.content as never,
+    id: message.id,
+    name: message.name,
+    additional_kwargs: message.additional_kwargs ?? {},
+    response_metadata: message.response_metadata ?? {},
+  })
+}
+
+function normalizeSummarizationEventContainer(value: unknown): void {
+  if (typeof value !== 'object' || value === null)
+    return
+
+  const container = value as {
+    _summarizationEvent?: {
+      summaryMessage?: unknown
+    }
+  }
+
+  normalizeSummarizationEvent(container._summarizationEvent)
+}
+
+function normalizeSummarizationEvent(value: unknown): void {
+  if (typeof value !== 'object' || value === null)
+    return
+
+  const event = value as {
+    summaryMessage?: unknown
+  }
+
+  if (event.summaryMessage)
+    event.summaryMessage = normalizeSummaryMessage(event.summaryMessage)
+}
+
+function normalizeCheckpointSummarizationState(checkpoint: Checkpoint): Checkpoint {
+  normalizeSummarizationEventContainer(
+    (checkpoint as { channel_values?: Record<string, unknown> }).channel_values,
+  )
+  return checkpoint
+}
+
+function normalizePendingWriteValue(channel: string, value: unknown): unknown {
+  if (channel === '_summarizationEvent')
+    normalizeSummarizationEvent(value)
+  else
+    normalizeSummarizationEventContainer(value)
+
+  return value
 }
 
 function prepareSql(db: DatabaseType, checkpointId: boolean) {
@@ -284,9 +372,13 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
       checkpoint_id,
     } = config.configurable ?? {}
 
-    const args = [thread_id, checkpoint_ns]
+    if (!thread_id) {
+      throw new Error('Missing thread_id field in config.configurable.')
+    }
+
+    const args = [toBindValue(thread_id), toBindValue(checkpoint_ns)]
     if (checkpoint_id)
-      args.push(checkpoint_id)
+      args.push(toBindValue(checkpoint_id))
 
     const stm = checkpoint_id ? this.withCheckpoint : this.withoutCheckpoint
     const row = stm.get(...args) as CheckpointRow | undefined
@@ -315,22 +407,26 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
     const pendingWrites = await Promise.all(
       (JSON.parse(row.pending_writes) as PendingWriteColumn[]).map(
         async (write) => {
+          const value = await this.serde.loadsTyped(
+            write.type ?? 'json',
+            write.value ?? '',
+          )
+
           return [
             write.task_id,
             write.channel,
-            await this.serde.loadsTyped(
-              write.type ?? 'json',
-              write.value ?? '',
-            ),
+            normalizePendingWriteValue(write.channel, value),
           ] as [string, string, unknown]
         },
       ),
     )
 
-    const checkpoint = (await this.serde.loadsTyped(
-      row.type ?? 'json',
-      row.checkpoint,
-    )) as Checkpoint
+    const checkpoint = normalizeCheckpointSummarizationState(
+      (await this.serde.loadsTyped(
+        row.type ?? 'json',
+        row.checkpoint,
+      )) as Checkpoint,
+    )
 
     if (checkpoint.v < 4 && row.parent_checkpoint_id != null) {
       await this.migratePendingSends(
@@ -461,22 +557,26 @@ CREATE INDEX IF NOT EXISTS idx_writes_channel
         const pendingWrites = await Promise.all(
           (JSON.parse(row.pending_writes) as PendingWriteColumn[]).map(
             async (write) => {
+              const value = await this.serde.loadsTyped(
+                write.type ?? 'json',
+                write.value ?? '',
+              )
+
               return [
                 write.task_id,
                 write.channel,
-                await this.serde.loadsTyped(
-                  write.type ?? 'json',
-                  write.value ?? '',
-                ),
+                normalizePendingWriteValue(write.channel, value),
               ] as [string, string, unknown]
             },
           ),
         )
 
-        const checkpoint = (await this.serde.loadsTyped(
-          row.type ?? 'json',
-          row.checkpoint,
-        )) as Checkpoint
+        const checkpoint = normalizeCheckpointSummarizationState(
+          (await this.serde.loadsTyped(
+            row.type ?? 'json',
+            row.checkpoint,
+          )) as Checkpoint,
+        )
 
         if (checkpoint.v < 4 && row.parent_checkpoint_id != null) {
           await this.migratePendingSends(

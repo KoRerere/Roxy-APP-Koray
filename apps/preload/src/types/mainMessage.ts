@@ -80,12 +80,10 @@ export interface BrowserCacheRootDirFallbackPayload {
 
 /** MCP 错误类型 */
 export type McpFailureType =
-  /** RoxyClaw 已在运行 */
-  | 'roxyclaw_already_running'
-  /** MCP 窗口已打开 */
-  | 'mcp_window_already_open'
   /** 脚本完整性校验失败，修复后仍不通过 */
-  | 'script_repair_failed'
+  'script_repair_failed'
+  /** Agent 更新资源仍在下载中 */
+  | 'agent_update_in_progress'
   /** 未知错误 */
   | 'unknown_error'
 
@@ -110,10 +108,10 @@ export interface MainMessage {
   'invite:to-project': (payload: string) => void
   /** 计算消费 token 数量 */
   'mcp:token-usage': (payload: any) => void
-  /** 通知已打开的 Agent 窗口切换场景（如从资源生成入口进入） */
-  'mcp:use-scene': (scene: string) => void
-  /** 通知已打开的 Agent 窗口使用某个 skill（从 Skills 商城「去使用」触发），参数为 skill 的 slug */
-  'mcp:use-skill': (slug: string) => void
+  /** 通知 MCP 窗口跳转到指定页面 */
+  'mcp:navigate': (payload: string) => void
+  /** 通知 MCP 窗口更新 agent 状态 */
+  'mcp:resource-update': (payload: ResourceUpdateMessage) => void
   /** 打开某个页面 */
   'open:page': (payload: string) => void
   /** APP、patch、web 资源更新事件 */

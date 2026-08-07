@@ -222,7 +222,7 @@ class SimpleDiscordClient {
 export async function startDiscordAdapter(
   bridge: IMBridge,
   config: DiscordConfig,
-): Promise<void> {
+): Promise<() => Promise<void>> {
   const { botToken } = config
   const allowedUserIds = parseIdSet(config.allowedUserIds)
 
@@ -411,6 +411,10 @@ export async function startDiscordAdapter(
 
   await client.connect(handleEvent)
   console.log('[Discord] Adapter started.')
+
+  return async () => {
+    await client.disconnect()
+  }
 }
 
 function parseIdSet(raw: string | undefined): Set<string> {

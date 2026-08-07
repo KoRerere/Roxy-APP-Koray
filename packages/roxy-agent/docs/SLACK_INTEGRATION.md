@@ -113,14 +113,11 @@
 2. 点击 **"Reinstall to Workspace"**
 3. 点击 **"允许"**
 
-## 三、配置环境变量
+## 三、配置 RoxyClaw
 
-在 Roxy Agent 的环境变量配置中添加以下内容：
+在 RoxyClaw 配置中启用 Slack，并填写以下内容：
 
 ```bash
-# 启用 IM 功能
-ENABLE_IM=true
-
 # ========== Slack 配置 ==========
 # Bot User OAuth Token（从 OAuth & Permissions 页面获取）
 SLACK_BOT_TOKEN=xoxb-xxxxxxxxxxxx-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx
@@ -155,10 +152,9 @@ SLACK_ALLOWED_CHANNEL_IDS=C0123456789,C9876543210
 
 ## 五、启动服务
 
-配置完成后，启动 Roxy Agent 服务。如果配置正确，你会在日志中看到：
+配置完成后，Electron 会在后台按 RoxyClaw 的 `enabled` 配置启动同一个 agent 进程内的 IM 能力。如果配置正确，你会在日志中看到：
 
 ```
-[IM] startIMServiceIfEnabled called, ENABLE_IM = true
 [IM] Checking Slack config: BOT_TOKEN=set, SIGNING_SECRET=set
 [Slack] Creating Slack app with proxy support...
 [Slack] Starting Slack app with proxy support...

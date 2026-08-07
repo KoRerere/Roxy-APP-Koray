@@ -1,6 +1,4 @@
 <script setup lang="tsx">
-import { RxSvgIcon } from '/@/components/rx-icon/'
-
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
 import RxToastHeadless from './rx-toast-headless.vue'
 import DomSpotlightRing from './dom-spotlight-ring.vue'
@@ -60,7 +58,7 @@ setTimeout(() => {
             <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">
               {{ message.checkboxProps.label }}
             </label>
-            <RxSvgIcon v-if="message.checkboxProps.tooltip" v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
+            <SvgIcon v-if="message.checkboxProps.tooltip" v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
           </div>
 
           <RxButton outlined :label="$t('取消')" v-bind="message.rejectProps" @click="rejectCallback" />

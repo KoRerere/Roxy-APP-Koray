@@ -139,8 +139,6 @@ async function startUpload() {
   for (const platform of platformList) {
     const scripts = [
       { key: 'roxy-agent', localPath: 'packages/roxy-agent/dist/roxy-agent.mjs' },
-      { key: 'roxy-playwright', localPath: 'packages/roxy-playwright/dist/roxy-playwright.mjs' },
-      { key: 'roxy-openapi', localPath: 'packages/roxy-openapi/dist/roxy-openapi.mjs' },
     ]
 
     const checksums: Record<string, string> = {}

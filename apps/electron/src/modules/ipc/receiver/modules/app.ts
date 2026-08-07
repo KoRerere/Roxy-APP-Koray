@@ -1,8 +1,10 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
+import { copyFile, stat } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { compare } from 'compare-versions'
-import { app, BrowserWindow, nativeTheme, screen, shell } from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, screen, shell } from 'electron'
 import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { proxyManager } from '/@/modules/app/proxy-manager'
 import { refreshTrayContextMenu } from '/@/modules/app/tray'
@@ -40,16 +42,6 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** macOS：用户确认后执行 copy-replace 修复并自动重启 */
   ipcMain.on('app:confirmMacOwnershipFix', () => {
     return confirmMacAppOwnershipFix()
-  })
-
-  /**
-   * 获取功能开关
-   * scriptRecording：是否启用自动化脚本库与录制入口，由主进程 env ENABLE_SCRIPT_RECORDING=yes 开启
-   */
-  ipcMain.on('app:getFeatureFlags', (event) => {
-    return {
-      scriptRecording: process.env.ENABLE_SCRIPT_RECORDING === 'yes',
-    }
   })
 
   /** 设置系统主题 */
@@ -369,6 +361,31 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     shell.openExternal(url)
   })
 
+  /** 下载本地文件 */
+  ipcMain.on('app:downloadLocalFile', async (event, payload: { filePath: string, fileName?: string }) => {
+    if (!payload?.filePath)
+      throw new Error('Local file path is required')
+
+    const sourcePath = normalizeLocalFilePath(payload.filePath)
+    const sourceStat = await stat(sourcePath)
+    if (!sourceStat.isFile())
+      throw new Error('Local path is not a file')
+
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender)
+    const saveDialogOptions = {
+      defaultPath: payload.fileName || path.basename(sourcePath),
+    }
+    const { canceled, filePath: targetPath } = ownerWindow
+      ? await dialog.showSaveDialog(ownerWindow, saveDialogOptions)
+      : await dialog.showSaveDialog(saveDialogOptions)
+
+    if (canceled || !targetPath)
+      return { canceled: true }
+
+    await copyFile(sourcePath, targetPath)
+    return { canceled: false, filePath: targetPath }
+  })
+
   /** 取消卸载 */
   ipcMain.on('app:uninstall-cancelled', async (event) => {
     console.log('Uninstall cancelled by user')
@@ -407,4 +424,41 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('app:cancelRestoreWindow', (event) => {
     cancelRestoreLastWindowOpenStatus()
   })
+}
+
+function normalizeLocalFilePath(filePath: string) {
+  if (!filePath.startsWith('file://'))
+    return filePath
+
+  const decodedFilePath = decodeFileUrl(filePath)
+  const windowsDrivePath = resolveWindowsDriveFileUrl(decodedFilePath)
+  if (windowsDrivePath)
+    return windowsDrivePath
+
+  try {
+    return fileURLToPath(decodedFilePath)
+  }
+  catch {
+    return filePath
+  }
+}
+
+function resolveWindowsDriveFileUrl(fileUrl: string) {
+  const fileUrlPath = fileUrl.slice('file://'.length)
+  if (/^\/[a-z]:[\\/]/i.test(fileUrlPath))
+    return fileUrlPath.slice(1)
+
+  if (/^[a-z]:[\\/]/i.test(fileUrlPath))
+    return fileUrlPath
+
+  return ''
+}
+
+function decodeFileUrl(fileUrl: string) {
+  try {
+    return decodeURI(fileUrl)
+  }
+  catch {
+    return fileUrl
+  }
 }

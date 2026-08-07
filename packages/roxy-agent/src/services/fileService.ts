@@ -1,53 +1,22 @@
 import { Buffer } from 'node:buffer'
-import path from 'node:path'
-import { fileManager } from '@/core/fileManager'
+import { fileManager, resolveFileMimeType } from '@/core/fileManager'
+import { agentPaths } from '@/core/storage/agentPaths'
 import { FileRecordStore } from '@/database/conversations'
 import { env } from '../config'
 
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/avif',
-  'application/pdf',
-  'text/plain',
-  'application/json',
-  'text/markdown',
-  'text/x-markdown',
-  'text/csv',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-])
-
-const EXTENSION_MIME_TYPES: Record<string, string> = {
-  '.json': 'application/json',
-  '.md': 'text/markdown',
-  '.markdown': 'text/markdown',
-}
-
 const INLINE_TEXT_MIME_TYPES = new Set([
   'text/plain',
+  'text/typescript',
   'application/json',
   'text/markdown',
   'text/x-markdown',
 ])
 
-/**
- * 5MB
- */
-const MAX_FILE_SIZE = 5 * 1024 * 1024
+const MAX_FILE_SIZE_MB = 100
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
 export function normalizeMimeType(mimeType: string) {
   return mimeType.split(';')[0].trim().toLowerCase()
-}
-
-function resolveUploadMimeType(mimeType: string, fileName: string) {
-  const normalized = normalizeMimeType(mimeType)
-  if (normalized && normalized !== 'application/octet-stream')
-    return normalized
-
-  return EXTENSION_MIME_TYPES[path.extname(fileName).toLowerCase()] || normalized
 }
 
 export function extractBase64Payload(data: string) {
@@ -71,6 +40,7 @@ export interface UploadInput {
   data: string
   mimeType: string
   fileName: string
+  conversationId?: string
 }
 
 export interface UploadResult {
@@ -85,25 +55,19 @@ export interface UploadResult {
 }
 
 /**
- * 处理附件上传：校验 MIME 与大小，写本地 + sha256 去重 + 同步上传 OSS + 元信息入库。
- * 校验失败抛 Error（由路由捕获转 `{ code: 1, msg }`）。
+ * 处理附件上传：保留客户端 MIME（未知类型兜底为 application/octet-stream），校验大小，
+ * 写本地 + sha256 去重 + 同步上传 OSS + 元信息入库。
+ * 大小校验失败抛 Error（由路由捕获转 `{ code: 1, msg }`）。
  */
 export async function saveUpload(input: UploadInput): Promise<UploadResult> {
-  const { data, mimeType, fileName } = input
+  const { data, mimeType, fileName, conversationId } = input
 
-  const normalizedMimeType = resolveUploadMimeType(mimeType, fileName)
   const { base64, mimeType: detectedMimeType } = extractBase64Payload(data)
-  const finalMimeType = detectedMimeType
-    ? resolveUploadMimeType(detectedMimeType, fileName)
-    : normalizedMimeType
-
-  if (!ALLOWED_MIME_TYPES.has(finalMimeType)) {
-    throw new Error(`Unsupported file type: ${finalMimeType}`)
-  }
+  const finalMimeType = resolveFileMimeType(detectedMimeType ?? mimeType, fileName)
 
   const buffer = Buffer.from(base64, 'base64')
   if (buffer.length > MAX_FILE_SIZE) {
-    throw new Error('File size exceeds 5MB limit')
+    throw new Error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit`)
   }
 
   // 统一交给 FileManager：写本地 + sha256 去重 + 同步上传 OSS + 元信息入库
@@ -113,6 +77,7 @@ export async function saveUpload(input: UploadInput): Promise<UploadResult> {
     mimeType: finalMimeType,
     source: 'upload',
     uploadNow: true,
+    ...(conversationId ? { uploadsDir: agentPaths.sessionUploadsDir(conversationId) } : {}),
   })
   const localUrl = `/api/files/${record.file_id}`
 
@@ -169,22 +134,52 @@ function asRemoteFileUrl(url?: string) {
   return url && /^https?:\/\//i.test(url) ? url : undefined
 }
 
-export async function resolveAttachmentRemoteUrl(att: AttachmentRef, options: { required?: boolean } = {}) {
+export async function resolveAttachmentRemoteUrl(att: AttachmentRef) {
   // 前端回传的远程 URL 可信，优先复用；否则交给 FileManager（按 hash 去重 / 上传 / 回填）
   const direct = asRemoteFileUrl(att.remoteUrl) || asRemoteFileUrl(att.fileUrl)
   if (direct)
     return direct
-  const remoteUrl = await fileManager.resolveRemoteUrl(att.fileId)
-  if (!remoteUrl && options.required)
-    throw new Error(`Failed to upload attachment to file server: ${att.fileName || att.fileId}`)
-  return remoteUrl
+  return fileManager.resolveRemoteUrl(att.fileId)
 }
 
-export async function hydrateAttachmentFileUrls(attachments: Array<Partial<AttachmentRef> & { fileId: string }>) {
+function abortReason(signal: AbortSignal): Error {
+  return signal.reason instanceof Error
+    ? signal.reason
+    : new DOMException('User cancelled', 'AbortError')
+}
+
+async function awaitWithSignal<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) {
+    return promise
+  }
+  if (signal.aborted) {
+    throw abortReason(signal)
+  }
+
+  let onAbort: (() => void) | undefined
+  const aborted = new Promise<never>((_resolve, reject) => {
+    onAbort = () => reject(abortReason(signal))
+    signal.addEventListener('abort', onAbort, { once: true })
+  })
+
+  try {
+    return await Promise.race([promise, aborted])
+  }
+  finally {
+    if (onAbort) {
+      signal.removeEventListener('abort', onAbort)
+    }
+  }
+}
+
+export async function hydrateAttachmentFileUrls(
+  attachments: Array<Partial<AttachmentRef> & { fileId: string }>,
+  signal?: AbortSignal,
+) {
   return Promise.all(attachments.map(async (input) => {
     // 前端仅回传 fileId，其余信息（fileName/mimeType/size/本地与远程 URL）由 FileManager 从 files 表补全
     const att = fileManager.toAttachmentRef(input.fileId, input)
-    const remoteUrl = await resolveAttachmentRemoteUrl(att)
+    const remoteUrl = await awaitWithSignal(resolveAttachmentRemoteUrl(att), signal)
     return {
       ...att,
       ...(remoteUrl ? { remoteUrl, fileUrl: remoteUrl } : {}),
@@ -192,86 +187,8 @@ export async function hydrateAttachmentFileUrls(attachments: Array<Partial<Attac
   }))
 }
 
-function readAttachmentAsDataUrl(att: AttachmentRef) {
-  return fileManager.readDataUrl(att.fileId, att.mimeType)
-}
-
 /**
- * 构建 LangChain HumanMessage 的多模态内容数组
- */
-export async function buildMessageContent(
-  message: string,
-  attachments: AttachmentRef[],
-  options: { requireRemoteImageUrl?: boolean } = {},
-): Promise<any[] | string> {
-  const parts: any[] = []
-  const attachmentInfos: string[] = []
-  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
-
-  if (message?.trim()) {
-    parts.push({ type: 'text', text: message })
-  }
-
-  for (const att of attachments) {
-    const filePath = getAttachmentFilePath(att.fileId)
-    const remoteUrl = att.remoteUrl || att.fileUrl
-    const hasLocalFile = att.fileId ? fileManager.exists(att.fileId) : false
-    if (!hasLocalFile && !remoteUrl) {
-      console.warn(`Attachment file not found: ${att.fileId}`)
-      continue
-    }
-
-    attachmentInfos.push(isZh
-      ? `- 文件名: ${att.fileName}, 本地路径: ${hasLocalFile ? filePath : 'N/A'}, 文件URL: ${remoteUrl || '未上传'}, 类型: ${att.mimeType}`
-      : `- filename: ${att.fileName}, local path: ${hasLocalFile ? filePath : 'N/A'}, file URL: ${remoteUrl || 'not uploaded'}, type: ${att.mimeType}`)
-
-    if (att.mimeType.startsWith('image/')) {
-      let imageUrl = remoteUrl
-      if (!imageUrl && options.requireRemoteImageUrl)
-        imageUrl = await resolveAttachmentRemoteUrl(att, { required: true })
-
-      parts.push({
-        type: 'image_url',
-        image_url: { url: imageUrl || readAttachmentAsDataUrl(att) },
-      })
-    }
-    else if (INLINE_TEXT_MIME_TYPES.has(normalizeMimeType(att.mimeType))) {
-      if (!hasLocalFile)
-        continue
-
-      const text = fileManager.readBuffer(att.fileId).toString('utf-8')
-      parts.push({ type: 'text', text: isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}` })
-    }
-    else if (att.mimeType === 'application/pdf') {
-      if (!hasLocalFile)
-        continue
-
-      parts.push({
-        type: 'image_url',
-        image_url: { url: readAttachmentAsDataUrl(att) },
-      })
-    }
-  }
-
-  if (attachmentInfos.length > 0) {
-    parts.push({
-      type: 'text',
-      text: isZh
-        ? `\n[附件信息 - 可用于文件操作的本地路径]\n${attachmentInfos.join('\n')}`
-        : `\n[Attachment info - local paths for file operations]\n${attachmentInfos.join('\n')}`,
-    })
-  }
-
-  if (parts.length === 0)
-    return ''
-  if (parts.length === 1 && parts[0].type === 'text')
-    return parts[0].text
-  return parts
-}
-
-/**
- * 纯文本 HumanMessage：文本类附件内联全文，其余类型只写本地路径与元数据（兼容不支持多模态的模型）。
- * 需要 base64 图片/PDF 等多模态时请用 `buildMessageContent`，并在请求中传 `multimodalAttachments: true`。
+ * 构建 HumanMessage 文本：文本类附件内联全文，其余类型只写本地路径与元数据。
  */
 export function buildMessageContentAsPlainText(message: string, attachments: AttachmentRef[]): string {
   const chunks: string[] = []

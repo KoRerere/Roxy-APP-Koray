@@ -10,6 +10,11 @@ export function supportsApp4_0_0() {
   return isNewerOrEqualVersion('4.0.0')
 }
 
+/** 当前客户端是否 ≥ v4.0.2（Agent Console） */
+export function supportsApp4_0_2() {
+  return isNewerOrEqualVersion('4.0.2')
+}
+
 /**
  * 是否启用自动化脚本库与录制入口。
  * Electron 端由主进程 env ENABLE_SCRIPT_RECORDING=yes 控制；

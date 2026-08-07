@@ -17,6 +17,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import { serializeRequestParams } from '/@/api/serializeRequestParams'
+import { installEtagCache } from '/@/api/etag-cache'
 import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByCountryChange } from '/@/api/getGatewayConfig'
 import { getCommonHeaders, getDeviceId, getInviteCode, needDeviceIdApis } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -45,7 +46,10 @@ const showBackDefaultWorkspace = debounce(() => {
   emitter.emit('backDefaultWorkspace')
 }, 200)
 
-export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (config: any) => any) {
+export function createHttpClient(
+  Client: typeof HttpClient,
+  resetConfigFn?: (config: any) => void | Promise<void>,
+) {
   const httpClient = new Client({
   /**
    * baseURL: import.meta.env.VITE_BASE_URL,
@@ -57,6 +61,10 @@ export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (con
       return serializeRequestParams(params)
     },
   })
+
+  // 先于业务拦截器注册：axios request 拦截器逆序执行（业务先跑）、response
+  // 拦截器顺序执行（ETag 先跑），使 304 在业务拦截器看到之前就被归一为 200 + 本地 body
+  installEtagCache(httpClient.instance)
 
   httpClient.instance.interceptors.request.use(async (config) => {
     const baseURL = getBaseUrl() || await getGatewayConfig()
@@ -101,7 +109,7 @@ export function createHttpClient(Client: typeof HttpClient, resetConfigFn?: (con
     // R-VERSION:1.0.0
     // await handleRequest(config)
 
-    resetConfigFn?.(config)
+    await resetConfigFn?.(config)
 
     return config
   }, (error) => {

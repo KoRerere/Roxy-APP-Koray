@@ -44,6 +44,7 @@ const downloadClientChannels = [
   'extension:showExtensionDir',
   'util:genApiKey',
   'mcp:open',
+  'mcp:ensureServer',
 ]
 
 const availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []

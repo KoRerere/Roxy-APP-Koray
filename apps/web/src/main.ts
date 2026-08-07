@@ -12,35 +12,36 @@ import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
 import { defaultLanguage, setupI18n } from '/@/locales'
 import type { SupportedLanguagesType } from '/@/locales'
 import { getCookie, initCrypto } from '/@/utils'
+import { createPerfTimer, perfLog } from '/@/utils/perf-log'
 
 globalThis.isElectron = Boolean(globalThis.electronAPI)
+perfLog('main:bootstrap')
 
 queueMicrotask(async () => {
+  const endInitCrypto = createPerfTimer('main:initCrypto')
   await initCrypto()
+  endInitCrypto()
   if (globalThis.isElectron) {
+    perfLog('main:electron-mode')
     globalThis.electronAPI.send('app:getAppVersion').then((appVersion) => {
+      perfLog('main:appVersion:resolved', { appVersion })
       globalThis.$appVersion = appVersion
     })
-
-    // 功能开关：在 app 挂载前就绪，供渲染层同步读取（如脚本录制入口可见性）
-    const featureFlagsPromise = globalThis.electronAPI.send('app:getFeatureFlags')
 
     import('./web-auto-updater')
 
     globalThis.electronAPI.send('app:getSoftConfig').then(async (softConfig) => {
+      const endSoftConfig = createPerfTimer('main:getSoftConfig', {
+        hasToken: Boolean(softConfig.token),
+      })
       const { language, token, lastSelectedNetworkNode = 'auto' } = softConfig
 
       console.debug('init', { language, token, lastSelectedNetworkNode })
 
-      try {
-        globalThis.$featureFlags = await featureFlagsPromise
-      } catch {
-        // 暂时忽略不存在的 feature flag
-        console.log('ignoring feature flag')
-      }
       globalThis.$lastSelectedNetworkNode = lastSelectedNetworkNode
 
       setupI18n({ defaultLocale: language as SupportedLanguagesType }).finally(async () => {
+        perfLog('main:setupI18n:done', { language })
         const { app } = await import('./app')
         const { useSimpleLocale } = await import('/@/stores/locale')
         const { useUserStore } = await import('/@/stores/user')
@@ -49,15 +50,18 @@ queueMicrotask(async () => {
         const userStore = useUserStore()
         simpleLocale.currentLocale = language
         userStore.setToken(token || '')
+        perfLog('main:userStore:setToken', { hasToken: Boolean(token) })
         userStore.initUserInfo()
+        perfLog('main:userStore:initUserInfo:called')
         app.mount('#app')
+        perfLog('main:app:mounted')
+        endSoftConfig()
       })
     })
   }
   else {
     // web端无需版本控制
     globalThis.$appVersion = import.meta.env.VITE_APP_VERSION
-    globalThis.$featureFlags = { scriptRecording: import.meta.env.VITE_ENABLE_SCRIPT_RECORDING === 'yes' }
     await import('./polyfill')
     const searchParams = new URLSearchParams(window.location.search)
     const officialSiteLang = searchParams.get(OFFICIAL_SITE_LANG)
@@ -89,10 +93,11 @@ queueMicrotask(async () => {
       }
     }
 
-    console.log('currentLocale', cacheData?.currentLocale)
+    perfLog('main:web-mode', { currentLocale: cacheData?.currentLocale })
     const locale = cacheData?.currentLocale || defaultLanguage
 
     setupI18n({ defaultLocale: locale as SupportedLanguagesType }).finally(async () => {
+      perfLog('main:web:setupI18n:done', { locale })
       await import('./electron-api-polyfill')
       import('./web-auto-updater')
 
@@ -105,7 +110,7 @@ queueMicrotask(async () => {
       simpleLocale.currentLocale = locale
 
       if (localeHandoffToken) {
-        console.log('localeHandoffToken', localeHandoffToken)
+        perfLog('main:web:localeHandoffToken', { localeHandoffToken: Boolean(localeHandoffToken) })
         userStore.setToken(localeHandoffToken)
         const url = new URL(window.location.href)
         if (redirectAction) {
@@ -114,7 +119,8 @@ queueMicrotask(async () => {
         url.searchParams.delete(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY)
         url.searchParams.delete(OFFICIAL_SITE_REDIRECT)
         window.history.replaceState(null, '', `${officialSiteRedirect || url.pathname}${url.search}${url.hash}`)
-      } else {
+      }
+      else {
         try {
           const roxyToken = await getCookie('roxy_token')
           if (roxyToken)
@@ -126,7 +132,9 @@ queueMicrotask(async () => {
       }
 
       userStore.initUserInfo()
+      perfLog('main:web:userStore:initUserInfo:called')
       app.mount('#app')
+      perfLog('main:web:app:mounted')
 
       // 埋点：点击进入网页版登录
       if (jumpReferer) {

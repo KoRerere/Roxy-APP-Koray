@@ -14,7 +14,8 @@ const sessionVariables = computed(() => {
 })
 const customerName = computed(() => {
   const { username } = globalThis.$softConfig.userInfo || {}
-  return `[Roxy]-${username || '游客'}-[拟卸载用户]`
+  const { workspaceType } = globalThis.$softConfig || {}
+  return `[Roxy]-[${workspaceType === 2 ? '电商模式' : '普通模式'}]-${username || '游客'}-[拟卸载用户]`
 })
 
 function handleVisibilityChanged(data: any) {

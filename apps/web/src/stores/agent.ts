@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { sleep } from '/@/utils'
-import { withTimeout } from '/@/views/mcp/util'
+
+type AgentHealthStatus = 'idle' | 'starting' | 'connecting' | 'ready' | 'unhealthy' | 'stopped'
+
+const INITIAL_READY_TIMEOUT = 15000
+const AGENT_CHANNEL_FAILURE_LIMIT = 10
 
 export const useAgentStore = defineStore('agent', () => {
   const [, onlyErrorToast] = useResponseToast()
@@ -10,147 +13,135 @@ export const useAgentStore = defineStore('agent', () => {
   const serverUrl = computed(() => (mcpPort.value ? `http://localhost:${mcpPort.value}` : ''))
 
   const health = reactive({
-    loop: true,
-    loading: true,
+    loading: false,
     isOk: false,
-    count: 0,
-    shortInterval: 1000,
-    longInterval: 60 * 1000,
-    controller: null as AbortController | null,
+    status: 'idle' as AgentHealthStatus,
+    consecutiveFailures: 0,
+    lastSuccessAt: 0,
+    lastError: '',
   })
 
-  // 全局唯一就绪信号：拿到端口且「本次」/health 成功才算服务端启动完毕。
-  // 任何依赖 agent 的请求、以及后续的全局 loading 页，都应只以它为准。
+  // 全局唯一就绪信号：拿到端口且统一 WebSocket 收到 channel.ready。
   const isReady = computed(() => !!serverUrl.value && health.isOk)
-
   const initialized = ref(false)
-  let healthCheckRunning = false
-  let firstCheckResolve: (() => void) | null = null
-  let firstCheckReject: ((reason?: unknown) => void) | null = null
 
-  async function initMcp() {
-    // 端口只需获取一次
-    if (!mcpPort.value) {
-      try {
-        const softConfig = await globalThis.electronAPI.send('mcp:config')
-        mcpPort.value = softConfig.port
-      }
-      catch (e) {
-        console.error('Failed to init MCP:', e)
-        return
-      }
-    }
-    initialized.value = true
+  let ensureServerPromise: Promise<number> | null = null
+  let readyPromise: Promise<void> | null = null
+  let readyPromiseTimeout: number | undefined
+  let crashToastShown = false
 
-    // 健康检查正在运行且当前确实就绪 → 直接返回，无需重新等待首检。
-    if (healthCheckRunning && isReady.value)
-      return
+  async function ensureServer() {
+    if (mcpPort.value)
+      return mcpPort.value
 
-    // 否则（首次进入、或离开页面后重新进入导致健康检查已停止）：
-    // 重新启动健康检查并等待「本次」首检结果，确保 isOk 反映当前真实状态，
-    // 而不是沿用上一次遗留的 isOk=true 就放行后续请求。
-    await new Promise<void>((resolve, reject) => {
-      firstCheckResolve = resolve
-      firstCheckReject = reject
-      startHealthCheck()
-    })
-      .catch((e) => {
-        // 首检失败不阻断页面渲染：健康检查会在后台持续重试以自愈，
-        // 依赖 agent 的请求/页面继续等待 isReady 即可。
-        console.error('MCP first health check failed:', e)
+    if (ensureServerPromise)
+      return ensureServerPromise
+
+    health.status = 'starting'
+    health.loading = true
+    health.lastError = ''
+
+    ensureServerPromise = (async () => {
+      const result = await globalThis.electronAPI.send('mcp:ensureServer')
+      if (!result?.success || !result.data?.port)
+        throw new Error(result?.message || 'Agent server failed to start')
+
+      mcpPort.value = result.data.port
+      initialized.value = true
+      health.status = 'connecting'
+      return result.data.port
+    })()
+      .catch((error) => {
+        health.isOk = false
+        health.status = 'unhealthy'
+        health.loading = false
+        health.lastError = error instanceof Error ? error.message : String(error)
+        throw error
       })
       .finally(() => {
-        firstCheckResolve = null
-        firstCheckReject = null
+        ensureServerPromise = null
       })
+
+    return ensureServerPromise
   }
 
-  function startHealthCheck() {
-    if (healthCheckRunning) {
-      return
-    }
-    healthCheckRunning = true
-    health.loop = true
-    // 每次（重新）启动都复位为初始状态，杜绝沿用上一次的 isOk=true，
-    // 保证 isOk 永远只代表当前这一轮 /health 的真实结果。
+  function markAgentChannelConnecting() {
     health.isOk = false
     health.loading = true
-    health.count = 0
-    checkConnection()
+    health.status = 'connecting'
   }
 
-  function stopHealthCheck() {
-    health.loop = false
-    health.controller?.abort()
-    healthCheckRunning = false
+  function markAgentChannelReady() {
+    health.isOk = true
+    health.loading = false
+    health.status = 'ready'
+    health.consecutiveFailures = 0
+    health.lastSuccessAt = Date.now()
+    health.lastError = ''
+    crashToastShown = false
   }
 
-  async function checkConnection() {
-    try {
-      while (health.loop) {
-        if (!serverUrl.value) {
-          await sleep(health.shortInterval)
-          continue
-        }
+  function markAgentChannelFailure(error: string) {
+    health.isOk = false
+    health.consecutiveFailures++
+    health.lastError = error
+    const failedPermanently = health.consecutiveFailures >= AGENT_CHANNEL_FAILURE_LIMIT
+    health.loading = !failedPermanently
+    health.status = failedPermanently ? 'unhealthy' : 'connecting'
 
-        health.controller?.abort()
-        health.controller = new AbortController()
-        health.count++
+    if (failedPermanently && !crashToastShown) {
+      crashToastShown = true
+      console.error('Agent WebSocket failed after max retries:', error)
+      onlyErrorToast(-1, $t('Roxy Agent 出现问题，请尝试重新启动 Agent'), { life: 0 })
+    }
+  }
 
-        try {
-          const { c: timeoutCtrl, cleanup } = withTimeout(5000)
-          const signal = AbortSignal.any
-            ? AbortSignal.any([health.controller.signal, timeoutCtrl.signal])
-            : health.controller.signal
+  function markAgentChannelStopped() {
+    health.isOk = false
+    health.loading = false
+    health.status = 'stopped'
+  }
 
-          const response = await fetch(`${serverUrl.value}/health`, { signal, cache: 'no-store' })
-          cleanup?.()
+  async function waitUntilReady(timeout = INITIAL_READY_TIMEOUT) {
+    await ensureServer()
 
-          if (!response.ok) {
-            onlyErrorToast(response.status, $t('Roxy Agent 服务异常，请尝试重启服务'))
+    if (isReady.value)
+      return
+
+    if (readyPromise)
+      return readyPromise
+
+    readyPromise = new Promise<void>((resolve, reject) => {
+      const stop = watch(
+        isReady,
+        (ready) => {
+          if (ready) {
+            cleanup()
+            resolve()
           }
+        },
+        { immediate: true },
+      )
 
-          const data = await response.json()
+      readyPromiseTimeout = window.setTimeout(() => {
+        cleanup()
+        reject(new Error('Agent server is not ready'))
+      }, timeout)
 
-          const ok = data?.code === 0
-          if (!ok) {
-            onlyErrorToast(data?.code, $t('API 服务异常，请检查端口是否被占用'))
-          }
-
-          health.isOk = ok
-          health.loading = false
-
-          if (ok) {
-            firstCheckResolve?.()
-            firstCheckResolve = null
-            firstCheckReject = null
-          }
-        }
-        catch (e) {
-          if (!health.loop) {
-            break
-          }
-          health.isOk = false
-        }
-
-        // 初始连续探测失败达到上限：只触发一次——让 initMcp 的首检 await 结束（不再 hang），
-        // 但绝不终止循环。agent 可能稍后才启动完成，循环需持续探测以自愈，
-        // 否则一旦首次 /health 失败，后续所有依赖 agent 的请求都会永远等不到 isReady。
-        if (!health.isOk && firstCheckReject && health.count >= 10) {
-          health.loading = false
-          onlyErrorToast(-1, $t('服务异常，请关闭 MCP 服务稍后重试'))
-          firstCheckReject(new Error('MCP health check failed after max retries'))
-          firstCheckResolve = null
-          firstCheckReject = null
-        }
-
-        await sleep(health.isOk ? health.longInterval : health.shortInterval)
+      function cleanup() {
+        stop()
+        if (readyPromiseTimeout !== undefined)
+          window.clearTimeout(readyPromiseTimeout)
+        readyPromiseTimeout = undefined
+        readyPromise = null
       }
-    }
-    finally {
-      // 循环结束时复位运行标记，确保下次进入页面 startHealthCheck 能重新拉起。
-      healthCheckRunning = false
-    }
+    })
+
+    return readyPromise
+  }
+
+  async function initMcp(timeout = INITIAL_READY_TIMEOUT) {
+    await waitUntilReady(timeout)
   }
 
   return {
@@ -159,8 +150,12 @@ export const useAgentStore = defineStore('agent', () => {
     health,
     isReady,
     initialized,
+    ensureServer,
+    waitUntilReady,
     initMcp,
-    startHealthCheck,
-    stopHealthCheck,
+    markAgentChannelConnecting,
+    markAgentChannelFailure,
+    markAgentChannelReady,
+    markAgentChannelStopped,
   }
 })

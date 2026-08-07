@@ -24,7 +24,7 @@ export class IPCMain<
     fn: (event: IpcMainInvokeEvent, ...args: Parameters<MessageType[T]>) => ReturnType<MessageType[T]>,
   ): void {
     if (this.listeners[name])
-      throw new Error(`消息处理器 ${String(name)} 已存在`)
+      throw new Error(`[IPC] ${String(name)} message handler already exists`)
     this.listeners[name] = fn
   }
 
@@ -53,7 +53,7 @@ export class IPCMain<
         })
       }
       catch (error) {
-        console.error(`[IPC] 发送消息失败 ${String(name)}:`, error)
+        console.error(`[IPC] Failed to send message ${String(name)}:`, error)
       }
     })
   }
@@ -77,7 +77,7 @@ export class IPCMain<
         })
       }
       else {
-        throw new Error(`未知的 IPC 消息 ${String(payload.name)}`)
+        throw new Error(`[IPC] Unknown message ${String(payload.name)}`)
       }
     }
     catch (e: any) {

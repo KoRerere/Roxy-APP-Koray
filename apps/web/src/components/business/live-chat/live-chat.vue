@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { LiveChatWidget, } from '@livechat/widget-vue'
+import { LiveChatWidget } from '@livechat/widget-vue'
 import { useUserStore } from '/@/stores/user'
-import { emitter, type MittEvents } from '/@/utils/eventBus'
+import { emitter } from '/@/utils/eventBus'
+import type { MittEvents } from '/@/utils/eventBus'
 import { useThemeStore } from '/@/stores/theme'
+import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 
 const userStore = useUserStore()
 const route = useRoute()
@@ -11,7 +13,7 @@ const themeStore = useThemeStore()
 const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
 
 const sessionVariables = computed(() => {
-  const { userName, } = userStore.userInfo
+  const { userName } = userStore.userInfo
   const { maxWindowCount, useWindowCount } = userStore.userPayInfo
   return {
     username: `[Roxy]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
@@ -21,7 +23,7 @@ const sessionVariables = computed(() => {
 })
 const customerName = computed(() => {
   const { userName } = userStore.userInfo
-  return `[Roxy]-${userName || '游客'}`
+  return `[Roxy]-[${isCurrentEcommerceWorkspace() ? '电商模式' : '普通模式'}]-${userName || '游客'}`
 })
 
 function handleVisibilityChanged(data: any) {
@@ -46,7 +48,8 @@ onErrorCaptured((err) => {
 
 <template>
   <LiveChatWidget :key="$route.query.theme" license="18087441" :customer-name="customerName"
-    :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged" />
+                  :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged"
+  />
 </template>
 
 <style></style>

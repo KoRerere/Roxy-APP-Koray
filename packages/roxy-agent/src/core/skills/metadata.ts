@@ -1,10 +1,16 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import yaml from 'yaml'
-import { normalizeDeclaredRuntimes, type SkillRuntimeDeclaration } from './runtime'
 
 export const MAX_SKILL_FILE_SIZE_BYTES = 10 * 1024 * 1024
 export const MAX_SKILL_DESCRIPTION_LENGTH = 1024
+
+export interface SkillRuntimeDeclaration {
+  id: string
+  homepage?: string
+  displayName?: string
+  versionHint?: string
+}
 
 export interface SkillMetadataSummary {
   name: string
@@ -12,15 +18,15 @@ export interface SkillMetadataSummary {
   runtimes?: SkillRuntimeDeclaration[]
 }
 
-export type SkillMetadataLoadErrorCode =
-  | 'missing-skill-md'
-  | 'read-failed'
-  | 'content-too-large'
-  | 'missing-frontmatter'
-  | 'invalid-yaml'
-  | 'frontmatter-not-mapping'
-  | 'missing-name'
-  | 'missing-description'
+export type SkillMetadataLoadErrorCode
+  = | 'missing-skill-md'
+    | 'read-failed'
+    | 'content-too-large'
+    | 'missing-frontmatter'
+    | 'invalid-yaml'
+    | 'frontmatter-not-mapping'
+    | 'missing-name'
+    | 'missing-description'
 
 export interface SkillMetadataParseSuccess {
   ok: true
@@ -34,9 +40,9 @@ export interface SkillMetadataParseFailure {
   message: string
 }
 
-export type SkillMetadataParseResult =
-  | SkillMetadataParseSuccess
-  | SkillMetadataParseFailure
+export type SkillMetadataParseResult
+  = | SkillMetadataParseSuccess
+    | SkillMetadataParseFailure
 
 export interface SkillMetadataLoadSuccess {
   ok: true
@@ -52,9 +58,54 @@ export interface SkillMetadataLoadFailure {
   message: string
 }
 
-export type SkillMetadataLoadResult =
-  | SkillMetadataLoadSuccess
-  | SkillMetadataLoadFailure
+export type SkillMetadataLoadResult
+  = | SkillMetadataLoadSuccess
+    | SkillMetadataLoadFailure
+
+function normalizeDeclaredRuntimes(
+  value: unknown,
+  skillPath: string,
+): { runtimes?: SkillRuntimeDeclaration[], warnings: string[] } {
+  if (value == null) {
+    return { warnings: [] }
+  }
+
+  if (!Array.isArray(value)) {
+    return {
+      warnings: [`Ignoring invalid runtimes in ${skillPath}: expected an array`],
+    }
+  }
+
+  const warnings: string[] = []
+  const runtimes: SkillRuntimeDeclaration[] = []
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      warnings.push(`Ignoring invalid runtime entry in ${skillPath}: expected an object`)
+      continue
+    }
+
+    const record = item as Record<string, unknown>
+    const id = String(record.id ?? '').trim()
+    if (!id) {
+      warnings.push(`Ignoring runtime entry without an id in ${skillPath}`)
+      continue
+    }
+
+    const homepage = typeof record.homepage === 'string' ? record.homepage.trim() : ''
+    const displayName = typeof record.displayName === 'string' ? record.displayName.trim() : ''
+    const versionHint = typeof record.versionHint === 'string' ? record.versionHint.trim() : ''
+
+    runtimes.push({
+      id,
+      ...(homepage ? { homepage } : {}),
+      ...(displayName ? { displayName } : {}),
+      ...(versionHint ? { versionHint } : {}),
+    })
+  }
+
+  return { runtimes, warnings }
+}
 
 export async function resolveSkillMdPath(dirPath: string): Promise<string | null> {
   const directPath = path.join(dirPath, 'SKILL.md')
@@ -99,7 +150,7 @@ export function parseSkillMetadataFromContent(
   }
 
   const normalized = content.replace(/^\uFEFF/, '')
-  const match = normalized.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/)
+  const match = normalized.match(/^---[^\S\r\n]*\r?\n([\s\S]*?)\r?\n---[^\S\r\n]*(?:\r?\n|$)/)
   if (!match) {
     return {
       ok: false,

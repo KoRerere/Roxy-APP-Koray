@@ -28,11 +28,9 @@ The current production flow is:
 
 ## Environment Variables
 
-These values are expected to be injected by Electron at startup:
+These values come from the RoxyClaw configuration fetched by the running agent process:
 
 ```bash
-ENABLE_IM=true
-ROXY_MODE=im
 WEIXIN_BOT_ENABLE=true
 WEIXIN_BOT_TOKEN=...
 WEIXIN_BOT_BASE_URL=https://ilinkai.weixin.qq.com
@@ -44,6 +42,8 @@ The adapter:
 
 - polls `ilink/bot/getupdates`
 - accepts direct messages only
+- fetches `typing_ticket` through `ilink/bot/getconfig`
+- sends `ilink/bot/sendtyping` while the agent is processing a message
 - sends a single final reply through `ilink/bot/sendmessage`
 - supports `/new`, `/clear`, and `/status`
 
@@ -52,6 +52,7 @@ The adapter does not:
 - generate QR codes
 - perform QR login
 - persist token or cursor to local files as source of truth
+- stream partial response text to Weixin
 
 ## Troubleshooting
 
@@ -74,3 +75,9 @@ The adapter does not:
 - Check `context_token` from inbound message is being passed back unchanged.
 - Check token is still valid.
 - Check the reply length is within adapter split limits.
+
+### Weixin does not show typing state
+
+- Check `ilink/bot/getconfig` returns a non-empty `typing_ticket`.
+- Check `ilink/bot/sendtyping` accepts both `status=1` and `status=2`.
+- Check the backend-saved `weixin_bot_base_url` / `wechat_bot_base_url`, if present, points at the same iLink base URL used during binding.

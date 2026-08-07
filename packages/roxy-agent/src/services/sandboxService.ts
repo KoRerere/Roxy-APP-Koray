@@ -1,10 +1,21 @@
 import type { SandboxProfile } from '@/core/sandbox/sandbox-runtime'
+import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
 import { fork } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '@/config'
+import { isLoginRequired } from '@/core/sandbox/script-entry'
+import { agentPaths } from '@/core/storage/agentPaths'
+import {
+  publishTaskMonitorBrowserAttached,
+  publishTaskMonitorBrowserEvent,
+  publishTaskMonitorBrowserFinished,
+} from '@/core/task-monitor'
+import { assertAllowedRemoteScriptUrl } from '@/script/remoteScriptPolicy'
+import { readScriptPermissions } from '@/security/scriptPermissions'
 
 export type SandboxRunStatus = 'done' | 'failed' | 'killed' | 'timeout'
 
@@ -20,18 +31,38 @@ export interface SandboxArtifact {
   size: number
   /** 相对于 outputDir 的路径（含子目录层级，如 output/a.csv） */
   relPath?: string
+  changeType?: SandboxFileChangeType
+}
+
+export type SandboxFileChangeType = 'created' | 'modified'
+export type SandboxRunOutputType = 'log' | 'kv' | 'table'
+
+export interface SandboxRunOutputOperation {
+  action: string
+  count: number
+  rowCount?: number
+}
+
+export interface SandboxRunOutput {
+  type: SandboxRunOutputType
+  path: string
+  changeType?: SandboxFileChangeType
+  operations?: SandboxRunOutputOperation[]
 }
 
 export interface SandboxRunResult {
   status: SandboxRunStatus
   exitCode: number | null
+  returnValue?: string
   artifacts: SandboxArtifact[]
+  outputs: SandboxRunOutput[]
   logFilePath?: string
 }
 
 export interface StartSandboxScriptRunOptions {
   scriptPath: string
-  cdpUrl?: string
+  scriptSha512?: string
+  assetSlug?: string
   browserUrl?: string
   browserType?: 'chromium' | 'firefox'
   dirId?: string
@@ -41,14 +72,20 @@ export interface StartSandboxScriptRunOptions {
   outputDir?: string
   logsDir?: string
   logFilePath?: string
+  permissionsFile?: string
   options?: unknown
   signal?: AbortSignal
   onLog?: (event: SandboxLogEvent) => void
+  taskMonitor?: {
+    taskId: string
+    browserId?: string
+    label?: string
+    input?: Record<string, unknown>
+  }
 }
 
 export interface StartedSandboxScriptRun {
   runId: string
-  cdpUrl?: string
   browserUrl?: string
   browserType?: 'chromium' | 'firefox'
   dirId?: string
@@ -62,28 +99,46 @@ export interface StartedSandboxScriptRun {
 
 const occupiedDirIds = new Set<string>()
 
-function currentProcessEntryPath(): string | undefined {
-  const entry = process.argv[1]
-  if (!entry)
-    return undefined
-  return path.isAbsolute(entry) ? entry : path.resolve(entry)
-}
+function captureChildOutput(
+  stream: NodeJS.ReadableStream | null | undefined,
+  source: 'stdout' | 'stderr',
+  logFilePath: string,
+  runId: string,
+  onLog?: (event: SandboxLogEvent) => void,
+): void {
+  if (!stream)
+    return
 
-function sandboxPath(): string {
-  const explicitPath = env.AGENT_SCRIPT_PATH || env.AGENT_ENTRY_SCRIPT
-  if (explicitPath)
-    return explicitPath
+  let pending = ''
+  const level = source === 'stderr' ? 'error' : 'info'
 
-  if (env.ENV_TYPE === 'development') {
-    const entryPath = currentProcessEntryPath()
-    if (entryPath)
-      return entryPath
+  function appendLine(line: string): void {
+    if (!line)
+      return
+    const message = `[sandbox ${source}] ${line}`
+    const timestamp = new Date().toISOString()
+    try {
+      fs.appendFileSync(logFilePath, `[${timestamp}] [${level.toUpperCase()}] ${message}\n`, 'utf-8')
+    }
+    catch (err: any) {
+      console.error(`[sandboxService] Failed to capture ${source}: ${err?.message ?? err}`)
+    }
+    onLog?.({ level, message, runId })
   }
 
-  if (env.CHECKPOINT_DIR)
-    return path.resolve(env.CHECKPOINT_DIR, '../roxy-agent.mjs')
-
-  throw new Error('AGENT_SCRIPT_PATH or CHECKPOINT_DIR must be set before starting sandbox process')
+  stream.setEncoding?.('utf-8')
+  stream.on('data', (chunk: string | Buffer) => {
+    pending += chunk.toString()
+    const lines = pending.split(/\r?\n/)
+    pending = lines.pop() ?? ''
+    for (const line of lines)
+      appendLine(line)
+  })
+  stream.on('end', () => {
+    if (pending)
+      appendLine(pending)
+    pending = ''
+  })
 }
 
 export function getOccupiedSandboxDirIds(): string[] {
@@ -100,13 +155,74 @@ export interface BrowserConnection {
 
 /**
  * 由 launchInfo 的 marionette_port 字段推断浏览器内核类型。
- * RoxyBrowser 仅 Firefox 内核会暴露 marionette_port（供 Selenium/GeckoDriver 使用），
  * chromium 内核该字段为 undefined / 空字符串。任何无法判定的情况都降级为 chromium。
  */
 function inferBrowserType(marionettePort: unknown): 'firefox' | 'chromium' {
   return marionettePort !== undefined && marionettePort !== null && String(marionettePort) !== ''
     ? 'firefox'
     : 'chromium'
+}
+
+function scriptPathToAssetSlug(scriptPath: string): string {
+  const baseName = path.basename(scriptPath)
+  const ext = path.extname(baseName)
+  return (ext ? baseName.slice(0, -ext.length) : baseName) || 'script'
+}
+
+function isRemoteScriptPath(scriptPath: string): boolean {
+  return /^https?:\/\//.test(scriptPath)
+}
+
+/**
+ * 从入口 bundle 所在目录向上逐级收集存在的 node_modules 目录。
+ * dev 环境下入口（apps/electron/dist-vite/agent.mjs）会 externalize axios 等依赖，
+ * Node ESM resolver 需读取这些 node_modules 下的 package.json；权限模型必须放行。
+ * 入口 bundle 是受信任代码，放开其依赖树的读取是安全的。
+ */
+function collectEntryNodeModules(modulePath: string): string[] {
+  const found: string[] = []
+  let dir = path.dirname(path.resolve(modulePath))
+  while (true) {
+    const candidate = path.join(dir, 'node_modules')
+    if (fs.existsSync(candidate))
+      found.push(candidate)
+    const parent = path.dirname(dir)
+    if (parent === dir)
+      break
+    dir = parent
+  }
+  return found
+}
+
+function buildSandboxExecArgv(
+  modulePath: string,
+  scriptPath: string,
+  outputDir: string,
+  logsDir: string,
+  extraReadPaths: string[],
+): string[] {
+  const readPaths = new Set<string>([
+    path.resolve(modulePath),
+    path.dirname(path.resolve(modulePath)),
+    path.resolve(outputDir),
+  ])
+
+  for (const nodeModulesDir of collectEntryNodeModules(modulePath))
+    readPaths.add(nodeModulesDir)
+
+  if (!isRemoteScriptPath(scriptPath))
+    readPaths.add(path.resolve(scriptPath))
+  for (const readPath of extraReadPaths)
+    readPaths.add(readPath)
+
+  return [
+    '--experimental-strip-types',
+    '--experimental-vm-modules',
+    // '--permission',
+    // ...Array.from(readPaths, p => `--allow-fs-read=${p}`),
+    // `--allow-fs-write=${path.resolve(outputDir)}`,
+    // `--allow-fs-write=${path.resolve(logsDir)}`,
+  ]
 }
 
 export async function openBrowserForDirId(dirId: string): Promise<BrowserConnection> {
@@ -174,13 +290,11 @@ export async function getOpenedCdpForDirId(dirId: string): Promise<BrowserConnec
 
 /** 产物黑名单：元文件不作为产物收集 */
 const ARTIFACT_BLACKLIST = new Set([
-  'events.jsonl',
-  'conversation.jsonl',
-  'recording_summary.md',
-  'refined_script.ts',
-  'enhanced_script.ts',
-  'raw_skeleton.ts',
-  'enhance_session.jsonl',
+  'source.ts',
+  'script.ts',
+  'schema.json',
+  'recording.jsonl',
+  'meta.json',
 ])
 
 function isBlacklisted(fileName: string): boolean {
@@ -217,6 +331,11 @@ async function scanArtifacts(outputDir: string): Promise<Map<string, SandboxArti
       const stat = await fsPromises.stat(full).catch(() => null)
       if (!stat?.isFile())
         continue
+
+      if (entry.name.endsWith('.log')) {
+        continue
+      }
+
       const resolved = path.resolve(full)
       found.set(resolved, {
         fileName: entry.name,
@@ -231,13 +350,23 @@ async function scanArtifacts(outputDir: string): Promise<Map<string, SandboxArti
   return found
 }
 
-/**
- * 收集脚本产物：IPC 上报清单优先 + 递归扫描兜底，取并集去重。
- * 即使脚本是浮动 Promise、IPC 上报为空或漏报，只要文件真正落盘即可采到。
- * @param outputDir sandbox 工作目录（base）
- * @param reportedPaths IPC 上报的绝对路径列表（可能为空）
- */
-async function collectArtifacts(outputDir: string, reportedPaths?: string[]): Promise<SandboxArtifact[]> {
+function isCurrentRunArtifact(stat: { mtimeMs: number }, startedAtMs?: number): boolean {
+  if (startedAtMs === undefined)
+    return true
+  // Give the filesystem timestamp a little slack for coarse mtime precision.
+  return stat.mtimeMs >= startedAtMs - 1000
+}
+
+function resolveChangeType(filePath: string, existingFilePaths?: Set<string>): SandboxFileChangeType {
+  return existingFilePaths?.has(path.resolve(filePath)) ? 'modified' : 'created'
+}
+
+async function collectArtifacts(
+  outputDir: string,
+  reportedPaths?: string[],
+  startedAtMs?: number,
+  existingFilePaths?: Set<string>,
+): Promise<SandboxArtifact[]> {
   const base = path.resolve(outputDir)
   // 以绝对路径为 key 去重，IPC 与扫描结果合并
   const byPath = new Map<string, SandboxArtifact>()
@@ -253,17 +382,24 @@ async function collectArtifacts(outputDir: string, reportedPaths?: string[]): Pr
     const stat = await fsPromises.stat(resolved).catch(() => null)
     if (!stat?.isFile())
       continue
+    if (!isCurrentRunArtifact(stat, startedAtMs))
+      continue
     byPath.set(resolved, {
       fileName,
       localPath: resolved,
       size: stat.size,
       relPath: path.relative(base, resolved),
+      changeType: resolveChangeType(resolved, existingFilePaths),
     })
   }
 
   // 2) 递归扫描兜底（覆盖 IPC 漏报 / 上报时机过早 / 子进程写入）
   const scanned = await scanArtifacts(outputDir)
   for (const [resolved, artifact] of scanned) {
+    const stat = await fsPromises.stat(resolved).catch(() => null)
+    if (!stat?.isFile() || !isCurrentRunArtifact(stat, startedAtMs))
+      continue
+    artifact.changeType = resolveChangeType(resolved, existingFilePaths)
     if (!byPath.has(resolved))
       byPath.set(resolved, artifact)
   }
@@ -271,19 +407,137 @@ async function collectArtifacts(outputDir: string, reportedPaths?: string[]): Pr
   return Array.from(byPath.values())
 }
 
-export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions): Promise<StartedSandboxScriptRun> {
+function outputTypeForFile(fileName: string): SandboxRunOutputType | null {
+  if (fileName.endsWith('.kv.json'))
+    return 'kv'
+  if (fileName.endsWith('.csv'))
+    return 'table'
+  return null
+}
+
+async function collectRunOutputs(
+  outputDir: string,
+  logFilePath: string,
+  startedAtMs?: number,
+  existingFilePaths?: Set<string>,
+  reportedChanges?: SandboxRunOutput[],
+): Promise<SandboxRunOutput[]> {
+  const outputs = new Map<string, SandboxRunOutput>()
+
+  const add = (type: SandboxRunOutputType, filePath: string, operations?: SandboxRunOutputOperation[]): void => {
+    const resolved = path.resolve(filePath)
+    const key = `${type}:${resolved}`
+    const previous = outputs.get(key)
+    outputs.set(key, {
+      type,
+      path: resolved,
+      changeType: resolveChangeType(resolved, existingFilePaths),
+      ...((operations?.length ? operations : previous?.operations)?.length
+        ? { operations: operations?.length ? operations : previous!.operations }
+        : {}),
+    })
+  }
+
+  for (const change of reportedChanges ?? [])
+    add(change.type, change.path, change.operations)
+
+  const logStat = await fsPromises.stat(logFilePath).catch(() => null)
+  if (logStat?.isFile())
+    add('log', logFilePath)
+
+  const base = path.resolve(outputDir)
+  async function walk(dir: string): Promise<void> {
+    const entries = await fsPromises.readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full)
+        continue
+      }
+      if (!entry.isFile())
+        continue
+
+      const type = outputTypeForFile(entry.name)
+      if (!type)
+        continue
+
+      const stat = await fsPromises.stat(full).catch(() => null)
+      if (!stat?.isFile() || !isCurrentRunArtifact(stat, startedAtMs))
+        continue
+
+      const resolved = path.resolve(full)
+      if (resolved === base || !resolved.startsWith(base + path.sep))
+        continue
+      add(type, resolved)
+    }
+  }
+
+  await walk(base)
+  const typeOrder: Record<SandboxRunOutputType, number> = { log: 0, kv: 1, table: 2 }
+  return Array.from(outputs.values())
+    .sort((a, b) => typeOrder[a.type] - typeOrder[b.type] || a.path.localeCompare(b.path))
+}
+
+async function collectExistingFilePaths(outputDir: string, logFilePath: string): Promise<Set<string>> {
+  const existing = new Set<string>()
+
+  const addIfFile = async (filePath: string): Promise<void> => {
+    const resolved = path.resolve(filePath)
+    const stat = await fsPromises.stat(resolved).catch(() => null)
+    if (stat?.isFile())
+      existing.add(resolved)
+  }
+
+  async function walk(dir: string): Promise<void> {
+    const entries = await fsPromises.readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full)
+        continue
+      }
+      if (entry.isFile())
+        existing.add(path.resolve(full))
+    }
+  }
+
+  await Promise.all([
+    walk(path.resolve(outputDir)),
+    addIfFile(logFilePath),
+  ])
+  return existing
+}
+
+async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions): Promise<StartedSandboxScriptRun> {
+  if (isRemoteScriptPath(opts.scriptPath))
+    assertAllowedRemoteScriptUrl(opts.scriptPath)
+
   const profile = opts.profile ?? 'release'
   const runId = opts.runId ?? `run_${Date.now()}_${randomUUID().slice(0, 8)}`
   const dirId = opts.dirId
-  // browserUrl/browserType：仅当 SUPPORT_FIREFOX 开启并成功获取浏览器类型时才填充，
-  // 否则保持 undefined，注入阶段回退到原 CDP_URL 方案。
+  const startedAtMs = Date.now()
+  // browserUrl/browserType：从 RoxyBrowser 窗口连接信息统一填充；调用方也可直接提供。
   let browserUrl = opts.browserUrl
   let browserType: 'chromium' | 'firefox' | undefined = opts.browserType
-  let cdpUrl = opts.cdpUrl
   let dirOccupied = false
 
-  // 统一 outputDir：父进程与子进程使用同一路径
-  const outputDir = opts.outputDir ?? path.join(env.CHECKPOINT_DIR, 'script-runs', runId, 'workspace')
+  const requestedAssetSlug = opts.assetSlug ?? scriptPathToAssetSlug(opts.scriptPath)
+  // 父子进程共用脚本工作区；table/kv 与其他长期产物均归属 workdir/{slug}。
+  const outputDir = opts.outputDir ?? agentPaths.workdir(requestedAssetSlug)
+  const assetSlug = path.basename(outputDir)
+  const browserOutputDir = path.join(
+    outputDir,
+    path.relative(agentPaths.workdir(requestedAssetSlug), agentPaths.workdirBrowserDir(requestedAssetSlug)),
+  )
+  const logFilePath = opts.logFilePath ?? agentPaths.workdirRunLogFile(assetSlug, runId)
+  const logsDir = opts.logsDir ?? path.dirname(logFilePath)
+  const permissionsFile = opts.permissionsFile ?? agentPaths.scriptPermissionsFile(requestedAssetSlug)
+  const permissions = await readScriptPermissions(permissionsFile)
+  await fsPromises.mkdir(outputDir, { recursive: true })
+  await fsPromises.mkdir(browserOutputDir, { recursive: true })
+  await fsPromises.mkdir(logsDir, { recursive: true })
+  await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true })
+  const existingFilePaths = await collectExistingFilePaths(outputDir, logFilePath)
 
   if (dirId) {
     if (occupiedDirIds.has(dirId)) {
@@ -294,10 +548,8 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
   }
 
   // 准备运行环境：获取 RoxyBrowser 窗口的连接端点。
-  // - SUPPORT_FIREFOX 开启：先取浏览器类型（marionette_port 推断），成功则注入
-  //   BROWSER_URL（=ws）+ BROWSER_TYPE，脚本走 chromium/firefox .connect(BROWSER_URL)。
-  // - 否则（开关关闭，或获取失败，或调用方已直接提供端点）：维持原 CDP_URL 方案。
-  if (!browserUrl && !cdpUrl && dirId) {
+  // 统一注入 BROWSER_URL（=ws）+ BROWSER_TYPE（chromium/firefox），
+  if (!browserUrl && dirId) {
     // 先尝试复用已打开窗口，避免无谓 forceOpen 重开
     let conn: BrowserConnection | null = null
     try {
@@ -316,39 +568,38 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
       }
     }
 
-    if (env.SUPPORT_FIREFOX && conn) {
-      // feature gate 开启且成功获取类型 → 注入 BROWSER_URL/BROWSER_TYPE
-      browserUrl = conn.ws
-      browserType = conn.browserType
-    }
-    else {
-      // 开关关闭或获取失败 → 维持原 CDP_URL 方案（ws 端点对 chromium 仍是 CDP 端点）
-      cdpUrl = conn.ws
-    }
+    // 无论 chromium/firefox 都统一注入 BROWSER_URL/BROWSER_TYPE
+    browserUrl = conn.ws
+    browserType = conn.browserType
   }
 
-  const modulePath = sandboxPath()
+  const modulePath = env.AGENT_SCRIPT_PATH
   let worker: ChildProcess
   try {
     worker = fork(modulePath, [opts.scriptPath], {
       env: {
         ...process.env,
         ROXY_MODE: 'sandbox',
-        // BROWSER_URL/BROWSER_TYPE 仅在 SUPPORT_FIREFOX 开启且成功获取浏览器类型时注入；
-        // 否则注入 CDP_URL，脚本走 chromium.connectOverCDP 兼容路径。
-        ...(browserUrl ? { BROWSER_URL: browserUrl, BROWSER_TYPE: browserType ?? 'chromium' } : {}),
-        ...(cdpUrl ? { CDP_URL: cdpUrl } : {}),
+        // 统一注入 BROWSER_URL/BROWSER_TYPE chromium/firefox.connect(BROWSER_URL)。
         SANDBOX_RUN_ID: runId,
+        SANDBOX_ASSET_SLUG: assetSlug,
         ...(dirId ? { SANDBOX_DIR_ID: dirId } : {}),
-        SANDBOX_PROFILE: profile,
+        SANDBOX_DEBUG: profile === 'debug' ? '1' : '0',
         SANDBOX_OUTPUT_DIR: outputDir,
+        SANDBOX_BROWSER_DIR: browserOutputDir,
+        // Playwright Page API uses this root for relative screenshot paths.
+        ROXY_PLAYWRIGHT_SCREENSHOTS_DIR: browserOutputDir,
+        BROWSER_URL: browserUrl ?? '',
+        BROWSER_TYPE: browserType ?? 'chromium',
         ...(opts.workspaceDir ? { SANDBOX_WORKSPACE_DIR: opts.workspaceDir } : {}),
-        ...(opts.logsDir ? { SANDBOX_LOGS_DIR: opts.logsDir } : {}),
-        ...(opts.logFilePath ? { SANDBOX_LOG_FILE: opts.logFilePath } : {}),
+        SANDBOX_LOGS_DIR: logsDir,
+        SANDBOX_LOG_FILE: logFilePath,
+        SANDBOX_PERMISSIONS: JSON.stringify(permissions),
         ...(opts.options !== undefined ? { SANDBOX_OPTIONS: JSON.stringify(opts.options) } : {}),
+        ...(opts.scriptSha512 ? { SANDBOX_SCRIPT_SHA512: opts.scriptSha512 } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-      execArgv: ['--experimental-strip-types', '--experimental-vm-modules'],
+      execArgv: buildSandboxExecArgv(modulePath, opts.scriptPath, outputDir, logsDir, permissions.fs.read),
       execPath: process.execPath,
     })
   }
@@ -359,10 +610,12 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
     throw err
   }
 
-  worker.stdout?.resume()
-  worker.stderr?.resume()
+  captureChildOutput(worker.stdout, 'stdout', logFilePath, runId, opts.onLog)
+  captureChildOutput(worker.stderr, 'stderr', logFilePath, runId, opts.onLog)
 
   let reportedArtifactPaths: string[] | undefined
+  let reportedOutputChanges: SandboxRunOutput[] | undefined
+  let reportedReturnValue: string | undefined
 
   let settled = false
   let resolveFinished!: (result: SandboxRunResult) => void
@@ -378,8 +631,21 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
       occupiedDirIds.delete(dirId)
     }
     opts.signal?.removeEventListener('abort', onAbort)
-    const artifacts = status === 'done' ? await collectArtifacts(outputDir, reportedArtifactPaths) : []
-    resolveFinished({ status, exitCode, artifacts, logFilePath: opts.logFilePath })
+    const [artifacts, outputs] = await Promise.all([
+      status === 'done' ? collectArtifacts(outputDir, reportedArtifactPaths, startedAtMs, existingFilePaths) : Promise.resolve([]),
+      collectRunOutputs(outputDir, logFilePath, startedAtMs, existingFilePaths, reportedOutputChanges),
+    ])
+    const normalizedStatus = status === 'done' && isLoginRequired(reportedReturnValue)
+      ? 'failed'
+      : status
+    resolveFinished({
+      status: normalizedStatus,
+      exitCode,
+      ...(reportedReturnValue !== undefined ? { returnValue: reportedReturnValue } : {}),
+      artifacts,
+      outputs,
+      logFilePath,
+    })
   }
 
   function onAbort(): void {
@@ -399,8 +665,30 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
     if (!msg || typeof msg !== 'object')
       return
 
-    if (msg.type === 'script_artifacts') {
+    if (msg.type === 'script_result') {
+      if (msg.runId === runId && typeof msg.returnValue === 'string') {
+        reportedReturnValue = msg.returnValue
+      }
+    }
+    else if (msg.type === 'script_artifacts') {
       reportedArtifactPaths = Array.isArray(msg.paths) ? msg.paths : []
+      reportedOutputChanges = Array.isArray(msg.changes)
+        ? msg.changes
+            .filter((change: any) => (change?.type === 'kv' || change?.type === 'table') && typeof change.path === 'string')
+            .map((change: any) => ({
+              type: change.type,
+              path: change.path,
+              operations: Array.isArray(change.operations)
+                ? change.operations
+                    .filter((op: any) => typeof op?.action === 'string' && typeof op?.count === 'number')
+                    .map((op: any) => ({
+                      action: op.action,
+                      count: op.count,
+                      ...(typeof op.rowCount === 'number' ? { rowCount: op.rowCount } : {}),
+                    }))
+                : undefined,
+            }))
+        : undefined
     }
     else if (msg.type === 'script_log') {
       opts.onLog?.({
@@ -416,7 +704,8 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
     void settle('failed', null)
   })
 
-  worker.on('exit', (code, signal) => {
+  // close fires after stdout/stderr have closed, so all fallback output is in the script log before completion.
+  worker.on('close', (code, signal) => {
     if (signal === 'SIGKILL') {
       void settle('killed', null)
     }
@@ -435,15 +724,136 @@ export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions):
 
   return {
     runId,
-    cdpUrl,
     browserUrl,
     browserType: browserUrl ? browserType : undefined,
     dirId,
     profile,
     outputDir,
-    logFilePath: opts.logFilePath,
+    logFilePath,
     worker,
     finished,
     stop: () => worker.kill('SIGTERM'),
+  }
+}
+
+export async function startSandboxScriptRun(opts: StartSandboxScriptRunOptions): Promise<StartedSandboxScriptRun> {
+  const taskMonitor = opts.taskMonitor
+  if (!taskMonitor) {
+    return startSandboxScriptRunInternal(opts)
+  }
+
+  const runId = opts.runId ?? `run_${Date.now()}_${randomUUID().slice(0, 8)}`
+  const profile = opts.profile ?? 'release'
+  const dirId = opts.dirId
+  const browserId = taskMonitor.browserId ?? dirId ?? runId
+  const monitorInput = taskMonitor.input ?? {
+    scriptPath: opts.scriptPath,
+    ...(dirId ? { dirId } : {}),
+    runId,
+    profile,
+  }
+  const monitorStartedAt = Date.now()
+  let browserFinishedPublished = false
+
+  const publishBrowserFinished = (): void => {
+    if (browserFinishedPublished) {
+      return
+    }
+
+    browserFinishedPublished = true
+    publishTaskMonitorBrowserFinished({
+      taskId: taskMonitor.taskId,
+      browserId,
+      dirId,
+    })
+  }
+
+  publishTaskMonitorBrowserAttached({
+    taskId: taskMonitor.taskId,
+    browserId,
+    dirId,
+    label: taskMonitor.label ?? dirId ?? browserId,
+  })
+  publishTaskMonitorBrowserEvent({
+    taskId: taskMonitor.taskId,
+    browserId,
+    dirId,
+    stage: 'start',
+    toolName: 'run_script',
+    input: monitorInput,
+    success: true,
+    timestamp: monitorStartedAt,
+  })
+
+  const publishFailure = (error: unknown): void => {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    publishTaskMonitorBrowserEvent({
+      taskId: taskMonitor.taskId,
+      browserId,
+      dirId,
+      stage: 'error',
+      toolName: 'run_script',
+      input: monitorInput,
+      result: errorMessage,
+      success: false,
+      errorMessage,
+      durationMs: Date.now() - monitorStartedAt,
+      timestamp: Date.now(),
+    })
+  }
+
+  try {
+    const run = await startSandboxScriptRunInternal({ ...opts, runId })
+    publishTaskMonitorBrowserAttached({
+      taskId: taskMonitor.taskId,
+      browserId,
+      dirId,
+      label: taskMonitor.label ?? dirId ?? browserId,
+      ws: run.browserUrl,
+      browserType: run.browserType,
+    })
+
+    const finished = run.finished.then((result) => {
+      try {
+        const succeeded = result.status === 'done' && !isLoginRequired(result.returnValue)
+        const monitorResult = result.returnValue ?? result.status
+        publishTaskMonitorBrowserEvent({
+          taskId: taskMonitor.taskId,
+          browserId,
+          dirId,
+          stage: succeeded ? 'end' : 'error',
+          toolName: 'run_script',
+          input: monitorInput,
+          result: monitorResult,
+          success: succeeded,
+          errorMessage: succeeded ? undefined : monitorResult,
+          durationMs: Date.now() - monitorStartedAt,
+          timestamp: Date.now(),
+        })
+      }
+      finally {
+        publishBrowserFinished()
+      }
+      return result
+    }, (error) => {
+      try {
+        publishFailure(error)
+      }
+      finally {
+        publishBrowserFinished()
+      }
+      throw error
+    })
+
+    return { ...run, finished }
+  }
+  catch (error) {
+    try {
+      publishFailure(error)
+    }
+    finally {
+      publishBrowserFinished()
+    }
+    throw error
   }
 }

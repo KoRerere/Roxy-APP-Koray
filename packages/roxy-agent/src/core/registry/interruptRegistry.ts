@@ -55,8 +55,10 @@ export function hasPendingInterrupt(conversationId: string): boolean {
  */
 export function cancelInterrupt(conversationId: string): void {
   const pending = registry.get(conversationId)
-  if (!pending)
+  if (!pending) {
     return
+  }
+
   registry.delete(conversationId)
   pending.reject(new Error('User cancelled'))
 }

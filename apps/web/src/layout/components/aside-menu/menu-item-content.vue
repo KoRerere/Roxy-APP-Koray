@@ -7,6 +7,7 @@ import { useProxy } from '/@/views/agent/hooks'
 import { menuActionHandlers } from '/@/router/menu-shared'
 import { emitter } from '/@/utils/eventBus'
 import type { RouteRecordNameGeneric, RouteRecordRaw, UseLinkReturn } from 'vue-router'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const props = defineProps<{
   item: RouteRecordRaw
@@ -91,8 +92,8 @@ function onAsideBuy() {
               : getImage('roxy-claw/menu/sidenav-inactive-dark.png'))" class="block w-4.5" draggable="false"
           > -->
           <div class="flex items-center justify-between w-full menu-title">
-            <div :title="item.meta?.title">
-              <span>{{ item.meta?.title }}</span>
+            <div class="min-w-0" :title="item.meta?.title">
+              <span class="roxy-agent-title ellipsis-1">{{ item.meta?.title }}</span>
             </div>
 
             <svg v-if="roxyClawStore.isEnabled" v-tooltip="{ value: $t('RoxyClaw 已启动') }" class="text-3" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none">
@@ -107,7 +108,7 @@ function onAsideBuy() {
           <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
           <div class="flex items-center justify-between w-full menu-title">
             <span class="roxy-agent-title ellipsis-1">{{ item.meta?.title }}</span>
-            <!-- <span class="new-badge">NEW</span> -->
+            <span v-if="item.meta?.showNewBadge" class="new-badge">New</span>
           </div>
         </template>
 
@@ -116,7 +117,8 @@ function onAsideBuy() {
           <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon rounded-0.75" :size="18" />
 
           <div class="relative flex items-center gap-1.5 overflow-hidden menu-title" :title="item.meta?.title">
-            <span class="ellipsis-1">{{ item.meta?.title }}</span>
+            <span class="min-w-0 ellipsis-1">{{ item.meta?.title }}</span>
+            <RxSvgIcon v-if="item.meta?.showNewBadge" class="new-badge-icon" name="base/new_badge" />
             <span v-if="item.meta?.slotName === 'proxy' || item.meta?.showFireBadge" class="inline-flex items-center gap-0.5">
               <SvgIcon name="base/fire" />
               <span v-if="item.meta?.slotName === 'proxy' && isZh" class="color-[#F53838] text-3.25 font-600">特惠</span>
@@ -241,15 +243,26 @@ function onAsideBuy() {
   -webkit-text-fill-color: transparent;
 }
 
+.new-badge-icon {
+  display: block;
+  width: 25px;
+  height: 19px;
+  flex: 0 0 25px;
+}
+
 .new-badge {
+  display: inline-flex;
   flex-shrink: 0;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: linear-gradient(101deg, #3faaf6 -10.13%, #f359dc 44.94%, #f28fb0 100%);
-  color: #fff;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 1px solid var(--colors-border-border-brand, #11a3fd);
+  border-radius: 40px;
+  color: var(--colors-text-text-brand, #11a3fd);
   font-size: 10px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: -0.1px;
 }
 </style>

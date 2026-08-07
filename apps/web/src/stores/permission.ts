@@ -117,6 +117,14 @@ export const usePermissionStore = defineStore('permission', () => {
     permissions.value = normalizeBackendModules(data)
   }
 
+  function setPermissionCodes(codes: readonly string[]) {
+    permissions.value = [...codes]
+  }
+
+  function getPermissionCodes() {
+    return permissions.value.filter((permission): permission is string => typeof permission === 'string')
+  }
+
   function resetPermissions() {
     permissions.value = []
   }
@@ -128,6 +136,8 @@ export const usePermissionStore = defineStore('permission', () => {
     canAll,
     check,
     setPermissions,
+    setPermissionCodes,
+    getPermissionCodes,
     resetPermissions,
   }
 }, {

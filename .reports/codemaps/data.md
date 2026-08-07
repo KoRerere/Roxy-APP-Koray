@@ -94,6 +94,15 @@ Local Profile → API POST /profiles → Backend DB
 Backend DB → API GET /profiles → Local Cache
 ```
 
+## Agent Data (SQLite)
+
+The AI agent persists to SQLite under `CHECKPOINT_DIR` (see packages/roxy-agent):
+- **conversations.db**: `conversations`, `messages`, `scripts`
+- **checkpoint.db**: `conversation_contexts` (summary + allowed_skills + token usage)
+- **tasks.db**: `task_logs` (device-local task execution history; task definitions remain on the backend)
+- **checkpoint_{conversationId}.db**: per-conversation LangGraph checkpoint
+- Sandbox script workspace also holds `browser-ops.jsonl` (managed by `conversationLogManager`)
+
 ## Logs
 
 ### Log Files (apps/electron/src/modules/log/)

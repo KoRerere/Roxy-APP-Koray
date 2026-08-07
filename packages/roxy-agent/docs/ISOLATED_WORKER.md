@@ -96,7 +96,7 @@ Payload 结构：
   "workerId": "profile-worker-0-a1b2c3d4-0",
   "parentRunId": "conv_123",
   "task": "Self-contained delegated prompt",
-  "timeoutMs": 600000
+  "timeoutMs": 3600000
 }
 ```
 
@@ -126,7 +126,7 @@ if (!checkpointDir) {
 
 如果缺少 `CHECKPOINT_DIR`，不要启动 worker 子进程；否则 worker 会退回到 `process.cwd()` 写日志和状态文件，导致 payload、日志、MCP 状态与父进程不在同一 checkpoint 根目录下。
 
-Agent 运行依赖的 `AGENT_SCRIPT_PATH`、`OPENAPI_SCRIPT_PATH`、`PLAYWRIGHT_SCRIPT_PATH`、`ROXY_API_KEY`、`ROXY_API_HOST`、`ROXY_SERVER_URL`、`ROXY_SERVER_HEADERS`、`DOWNLOADS_DIR`、`DESKTOP_DIR`、`SKILLS_DIR`、`ROXY_USER_ID`、`ROXY_WORKSPACE_ID`、`SYSTEM_LANGUAGE` 等变量由 fork 默认继承。runner 不应在子进程侧重新推导这些变量，也不应手写一个只包含少数字段的 `env` 对象。
+Agent 运行依赖的 `AGENT_SCRIPT_PATH`、`ROXY_API_KEY`、`ROXY_API_HOST`、`ROXY_SERVER_URL`、`ROXY_SERVER_HEADERS`、`DOWNLOADS_DIR`、`DESKTOP_DIR`、`SKILLS_DIR`、`ROXY_USER_ID`、`ROXY_WORKSPACE_ID`、`SYSTEM_LANGUAGE` 等变量由 fork 默认继承。runner 不应在子进程侧重新推导这些变量，也不应手写一个只包含少数字段的 `env` 对象。
 
 当前 logger 对非 sandbox mode 使用 `logs/{mode}.log` 和 `logs/{mode}.2.log`。实现 worker mode 时必须避免多个并发 worker 共同写入并轮转同一个 `${CHECKPOINT_DIR}/logs/worker.log`。推荐改为：
 
@@ -236,7 +236,7 @@ Worker 进程主动发送心跳，父进程只用心跳判断 worker 是否仍�
 }
 ```
 
-默认心跳间隔为 `WORKER_HEARTBEAT_INTERVAL_MS = 15000`。父进程的过期阈值为 `WORKER_HEARTBEAT_TIMEOUT_MS = 60000`，等价于连续错过 4 次心跳后才判定 worker 不可响应。这个阈值足够覆盖短暂 GC、CPU 抖动和单次事件循环延迟，同时比业务级 `DEFAULT_WORKER_TIMEOUT_MS = 600000` 更早发现进程级卡死。
+默认心跳间隔为 `WORKER_HEARTBEAT_INTERVAL_MS = 15000`。父进程的过期阈值为 `WORKER_HEARTBEAT_TIMEOUT_MS = 60000`，等价于连续错过 4 次心跳后才判定 worker 不可响应。这个阈值足够覆盖短暂 GC、CPU 抖动和单次事件循环延迟，同时比业务级 `DEFAULT_WORKER_TIMEOUT_MS = 3600000` 更早发现进程级卡死。
 
 #### result
 
@@ -359,7 +359,7 @@ fork(agentScriptPath, ['worker', '--payload-file', payloadPath], {
 | `WORKER_EXIT_FALLBACK_MS` | 2000 | worker 关闭 IPC 后仍有残留句柄时，主动 `process.exit()` 的兜底延迟。 |
 | `WORKER_HEARTBEAT_INTERVAL_MS` | 15000 | worker 主动发送 IPC 心跳的间隔。 |
 | `WORKER_HEARTBEAT_TIMEOUT_MS` | 60000 | 父进程连续 4 次未收到 heartbeat 后视为 worker 不可响应。 |
-| `DEFAULT_WORKER_TIMEOUT_MS` | 600000 | 父进程写 payload 时使用的默认单 worker 业务执行超时。 |
+| `DEFAULT_WORKER_TIMEOUT_MS` | 3600000 | 父进程写 payload 时使用的默认单 worker 业务执行超时。`parallel_dispatch.timeout` 可按毫秒覆盖该值。 |
 
 ### Timeout 处理
 

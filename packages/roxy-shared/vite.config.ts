@@ -8,9 +8,13 @@ import { dependencies } from './package.json'
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      fileName: 'index',
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        'agent-paths': resolve(__dirname, 'src/agent-paths.ts'),
+        channel: resolve(__dirname, 'src/channel/index.ts'),
+      },
       formats: ['es', 'cjs'],
+      fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
       external: [

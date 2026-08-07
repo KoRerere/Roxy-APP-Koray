@@ -1,6 +1,5 @@
 import type { IMBridge } from '../core/IMBridge.js'
 import { App } from '@slack/bolt'
-import { env } from '../../config.js'
 import { buildMessageContent } from '../core/attachments.js'
 import { normalizeImText } from '../core/outputGuard.js'
 import { proxyFetch } from '../core/proxy.js'
@@ -19,7 +18,7 @@ interface SlackConfig {
 export async function startSlackAdapter(
   bridge: IMBridge,
   config: SlackConfig,
-): Promise<void> {
+): Promise<() => Promise<void>> {
   const { botToken, signingSecret, appToken } = config
   const allowedUserIds = parseIdSet(config.allowedUserIds)
   const allowedChannelIds = parseIdSet(config.allowedChannelIds)
@@ -136,6 +135,10 @@ export async function startSlackAdapter(
   // 启动应用
   await app.start(process.env.PORT || 3001)
   console.log('[Slack] Adapter started.')
+
+  return async () => {
+    await (app as any).stop?.()
+  }
 }
 
 async function handleSlackMessage(

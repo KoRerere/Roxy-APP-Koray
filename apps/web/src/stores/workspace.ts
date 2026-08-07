@@ -14,12 +14,17 @@ import { getCurrentRoute, navigateToLogin, replaceOnWorkspaceSwitch, replaceOnWo
 import { emitter } from '/@/utils/eventBus'
 import { useListCacheStore } from '/@/stores/listCache'
 import { useProxyStore } from '/@/stores/proxy'
+import { createPerfTimer } from '/@/utils/perf-log'
+import { safeParseJSON } from '/@/utils'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
 type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
 type SharedWorkspace = UnwrapRowsType<UserGetPublicWorkspaceListListData>
 
 const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME)
+const WORKSPACE_CACHE_TTL = 5 * 60 * 1000
+const WORKSPACE_LIST_CACHE_KEY = 'workspace:fetchWorkspaceList:cache'
+const WORKSPACE_PERMISSION_CACHE_KEY = 'workspace:getPermissionByWorkspace:cache'
 
 let hidePageLoadingTimeout: any
 let workspaceSwitchTask: Promise<void> = Promise.resolve()
@@ -30,6 +35,19 @@ function getUserStore() {
 
 function getProxyStore() {
   return useProxyStore()
+}
+
+interface WorkspaceListCache {
+  workspaceList: Workspace[]
+  sharedWorkspaceList?: SharedWorkspace
+  currentWorkspaceId?: number
+  updatedAt: number
+}
+
+interface WorkspacePermissionCache {
+  workspaceId: number
+  permissions: string[]
+  updatedAt: number
 }
 
 export const useWorkspaceStore = defineStore('workspace', () => {
@@ -60,6 +78,41 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const rememberLastWorkspace = debounce(() => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
+
+  function readWorkspaceListCache() {
+    const cache = safeParseJSON(localStorage.getItem(WORKSPACE_LIST_CACHE_KEY), null) as WorkspaceListCache | null
+    if (!cache?.workspaceList?.length)
+      return null
+    if (Date.now() - cache.updatedAt > WORKSPACE_CACHE_TTL)
+      return null
+    return cache
+  }
+
+  function writeWorkspaceListCache() {
+    localStorage.setItem(WORKSPACE_LIST_CACHE_KEY, JSON.stringify({
+      workspaceList: workspaceList.value,
+      sharedWorkspaceList: sharedWorkspaceList.value,
+      currentWorkspaceId: currentWorkspace.value?.id,
+      updatedAt: Date.now(),
+    } satisfies WorkspaceListCache))
+  }
+
+  function readWorkspacePermissionCache(workspaceId: number) {
+    const cache = safeParseJSON(localStorage.getItem(WORKSPACE_PERMISSION_CACHE_KEY), null) as WorkspacePermissionCache | null
+    if (!cache || cache.workspaceId !== workspaceId)
+      return null
+    if (Date.now() - cache.updatedAt > WORKSPACE_CACHE_TTL)
+      return null
+    return cache
+  }
+
+  function writeWorkspacePermissionCache(workspaceId: number) {
+    localStorage.setItem(WORKSPACE_PERMISSION_CACHE_KEY, JSON.stringify({
+      workspaceId,
+      permissions: permissionStore.getPermissionCodes(),
+      updatedAt: Date.now(),
+    } satisfies WorkspacePermissionCache))
+  }
 
   function syncElectronWorkspaceId(workspaceId: number, workspaceType?: number) {
     if (isMainWindow)
@@ -146,10 +199,37 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   async function fetchWorkspaceList() {
+    const endFetchWorkspaceList = createPerfTimer('workspace:fetchWorkspaceList')
+    const cache = readWorkspaceListCache()
+    if (cache) {
+      workspaceList.value = cache.workspaceList
+      sharedWorkspaceList.value = cache.sharedWorkspaceList
+      if (!currentWorkspace.value) {
+        currentWorkspace.value = workspaceList.value.find(item => item.id === cache.currentWorkspaceId)
+          ?? workspaceList.value.find(item => item.workspaceDefault)
+      }
+      endFetchWorkspaceList({
+        cached: true,
+        rows: workspaceList.value.length,
+        sharedRows: sharedWorkspaceList.value?.length ?? 0,
+      })
+      return {
+        code: 0,
+        data: {
+          rows: workspaceList.value,
+        },
+      } as Awaited<ReturnType<typeof API.limit.userGetWorkspaceListList>>
+    }
+
     const [result, sharedWorkspace] = await Promise.all([
       API.limit.userGetWorkspaceListList(),
       fetchSharedWorkspaceList(),
     ])
+    endFetchWorkspaceList({
+      rows: result.data?.rows?.length ?? 0,
+      sharedRows: sharedWorkspace?.length ?? 0,
+      code: result.code,
+    })
 
     // 如果获取团队列表失败，则清除用户信息
     if (result.code !== 0 || !result.data?.rows?.length) {
@@ -169,6 +249,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (workspaceList.value.length) {
       globalThis.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
     }
+
+    writeWorkspaceListCache()
 
     return result
   }
@@ -207,22 +289,46 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     workspaceId: number,
     options?: { pendingSwitch?: boolean },
   ) {
+    const endGetPermission = createPerfTimer('workspace:getPermissionByWorkspace', {
+      workspaceId,
+      pendingSwitch: Boolean(options?.pendingSwitch),
+    })
+    const cache = readWorkspacePermissionCache(workspaceId)
+    if (cache) {
+      permissionStore.setPermissionCodes(cache.permissions)
+      endGetPermission({
+        permissionCount: cache.permissions.length,
+        cached: true,
+      })
+      return
+    }
+
     const { code, data, msg } = await API.team.userGetTeamPermissionsList({ workspaceId: workspaceId.toString() })
     onlyErrorToast(code, msg)
     if (code !== 0)
       return
+    endGetPermission({
+      permissionCount: data.rows.length,
+      code,
+    })
 
     // 切换前预拉目标空间权限时 currentWorkspace 仍是旧值，需允许写入
     if (!options?.pendingSwitch && workspaceId !== currentWorkspace.value?.id)
       return
 
     permissionStore.setPermissions(data.rows)
+    writeWorkspacePermissionCache(workspaceId)
   }
 
   async function setCurrentWorkspace(
     workspaceId: number,
-    options?: { silent?: boolean },
+    options?: { silent?: boolean, force?: boolean },
   ) {
+    const endSetCurrentWorkspace = createPerfTimer('workspace:setCurrentWorkspace', {
+      workspaceId,
+      silent: Boolean(options?.silent),
+      force: Boolean(options?.force),
+    })
     const run = async () => {
       isSwitchingWorkspace.value = true
       try {
@@ -236,7 +342,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         if (!workspaceEntrySilent.value)
           isMainWindow && showPageLoading()
 
-        if (!workspaceList.value.length)
+        if (!workspaceList.value.length || options?.force)
           await fetchWorkspaceList()
 
         const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
@@ -266,6 +372,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       }
       finally {
         isSwitchingWorkspace.value = false
+        endSetCurrentWorkspace({
+          currentWorkspaceId: currentWorkspace.value?.id,
+        })
       }
     }
 
@@ -277,9 +386,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   /** 静默准备 workspace 上下文（默认 silent），不触发全局 loading 与进空间副作用 */
   async function prepareWorkspace(
     workspaceId: number,
-    options?: { silent?: boolean },
+    options?: { silent?: boolean, force?: boolean },
   ) {
-    return setCurrentWorkspace(workspaceId, { silent: options?.silent ?? true })
+    return setCurrentWorkspace(workspaceId, {
+      silent: options?.silent ?? true,
+      force: options?.force,
+    })
   }
 
   /** 正式进空间：关闭 silent 并触发 loading + 进空间副作用 */

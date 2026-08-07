@@ -8,6 +8,7 @@ import type { App } from 'vue'
 import { useUserStore } from '/@/stores/user'
 import { isMainWindow } from '/@/utils'
 import { saveLastRoute } from '/@/utils/lastRoute'
+import { perfLog } from '/@/utils/perf-log'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,7 +41,15 @@ router.beforeEach(async (to) => {
   return runNavigationGuards(to)
 })
 
+router.beforeResolve((to) => {
+  if (String(to.name ?? '').startsWith('agent-console'))
+    perfLog('router:beforeResolve', { name: String(to.name ?? ''), path: to.path })
+})
+
 router.afterEach((to) => {
+  if (String(to.name ?? '').startsWith('agent-console'))
+    perfLog('router:afterEach', { name: String(to.name ?? ''), path: to.path })
+
   if (!globalThis.isElectron || !isMainWindow)
     return
 

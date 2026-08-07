@@ -3,6 +3,7 @@ import { API } from '/@/api'
 import { store } from '/@/modules/store'
 import accountRouter from './account'
 import browserRouter from './browser'
+import projectRouter from './project'
 import proxyRouter from './proxy'
 
 const notNeedTokenRoutes = [
@@ -16,6 +17,7 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/open',
   '/browser/workspace',
   '/browser/clear_local_cache',
+  '/project/list',
   '/user/info',
   '/user/config',
 ]
@@ -61,6 +63,7 @@ export function setupRoutes(app: Application) {
 
   app.use('/account', accountRouter)
   app.use('/browser', browserRouter)
+  app.use('/project', projectRouter)
   app.use('/proxy', proxyRouter)
 
   app.use((req, res) => {

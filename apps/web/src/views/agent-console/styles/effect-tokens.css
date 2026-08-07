@@ -1,0 +1,16 @@
+body.agent-console-window {
+  --agent-gradient: linear-gradient(135deg, #3FAAF6 0%, #F359DC 54%, #F28FB0 100%);
+  --agent-gradient-soft: linear-gradient(155deg, rgb(63 170 246 / 10%) 10%, rgb(243 89 220 / 10%) 45%, rgb(242 143 176 / 10%) 100%);
+  --agent-gradient-foreground: #FCFCFC;
+  --agent-dialog-shadow: 0 20px 60px rgb(15 15 15 / 12%);
+  --agent-floating-banner-shadow: 0 12px 32px rgb(15 15 15 / 10%);
+  --agent-focus-ring: 0 0 0 2px rgb(20 20 20 / 12%);
+}
+
+html[data-theme="dark"] body.agent-console-window,
+html.app-dark body.agent-console-window {
+  --agent-gradient-soft: linear-gradient(155deg, rgb(63 170 246 / 16%) 10%, rgb(243 89 220 / 16%) 45%, rgb(242 143 176 / 16%) 100%);
+  --agent-dialog-shadow: 0 20px 60px rgb(0 0 0 / 36%);
+  --agent-floating-banner-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+  --agent-focus-ring: 0 0 0 2px rgb(252 252 252 / 18%);
+}

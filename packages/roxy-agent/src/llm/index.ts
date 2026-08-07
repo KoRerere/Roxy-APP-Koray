@@ -1,20 +1,23 @@
-import type { UserModelInfo } from '../api/model'
+import type { UserModelInfo } from '../api/agentApiClient'
 import type { ChatOpenAICallOptions } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatGoogle } from '@langchain/google'
 import { ChatOpenAI } from '@langchain/openai'
-import { aiAgentModelApi } from '../api/model'
+import { agentModelApi } from '../api/agentApiClient'
 import { aiAgentToken, aiAgentUrl, env } from '../config'
 
 export type LLMInstance = ChatAnthropic | ChatGoogle | ChatOpenAI<ChatOpenAICallOptions>
+
+export const DEEPSEEK_MAX_OUTPUT_TOKENS = 8192
+export const DEEPSEEK_THINKING_BUDGET_TOKENS = 4096
 
 export interface CreateLLMOptions {
   enableThinking?: boolean
   conversationId?: string
   turnId?: string
-  /** 指定使用的模型类型：生成图片用 vlm_model，其他全部用 text_model（默认） */
   modelType?: 'text_model' | 'vlm_model'
   isStreaming?: boolean
+  signal?: AbortSignal
 }
 
 function buildTracingHeaders(options: CreateLLMOptions = {}) {
@@ -43,9 +46,11 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
 
   let llm: LLMInstance
   if (apiFormat === 'anthropic') {
+    const isDeepSeek = model.toLowerCase().startsWith('deepseek')
     const anthropic = new ChatAnthropic({
       model,
       apiKey,
+      ...(isDeepSeek ? { maxTokens: DEEPSEEK_MAX_OUTPUT_TOKENS } : {}),
       anthropicApiUrl: baseURL, // 使用 anthropicApiUrl 设置自定义 API 端点
       streaming: options.isStreaming,
       clientOptions: {
@@ -54,7 +59,7 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
         },
       },
       thinking: enableThinking
-        ? { type: 'enabled', budget_tokens: 4096 }
+        ? { type: 'enabled', budget_tokens: DEEPSEEK_THINKING_BUDGET_TOKENS }
         : undefined,
       ...(enableThinking ? {} : { temperature: 0.5 }),
     })
@@ -109,14 +114,15 @@ export function createLLMFromModelInfo(data: UserModelInfo, options: CreateLLMOp
 
 /**
  * 创建 LLM
- * @param enableThinking 是否开启深度思考模式
+ * @param options 创建 LLM Instance 的选项
  * @returns 返回对应的 LLM
  */
 export async function createLLM(options: CreateLLMOptions = {}): Promise<LLMInstance> {
   let data: UserModelInfo
   try {
-    data = await aiAgentModelApi.getUserModel({
+    data = await agentModelApi.getUserModel({
       headers: buildTracingHeaders(options),
+      signal: options.signal,
     })
   }
   catch (error) {

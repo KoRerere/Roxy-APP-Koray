@@ -1,33 +1,24 @@
-import type { Express, Request, Response } from 'express'
+import type { Express } from 'express'
+import type { Server } from 'node:http'
 import cors from 'cors'
 import express from 'express'
-import fs from 'node:fs'
-import path from 'node:path'
+import { createServer } from 'node:http'
+import { AgentChannelServer } from '@/core/agent-channel/server'
 import { fileManager } from '@/core/fileManager'
 import { env } from './config'
-import chatRoutes from './routes/chatRoutes'
 import conversationRoutes from './routes/conversationRoutes'
 import fileRoutes from './routes/fileRoutes'
 import mcpRoutes from './routes/mcpRoutes'
-import modelRoutes from './routes/modelRoutes'
-import recordingRoutes from './routes/recordingRoutes'
-import scheduleRoutes from './routes/scheduleRoutes'
+import roxyClawRoutes from './routes/roxyClawRoutes'
 import scriptRoutes from './routes/scriptRoutes'
-import skillRoutes from './routes/skillRoutes'
+import taskRoutes from './routes/taskRoutes'
 
 /**
- * 初始化路由所需目录（static、sse、uploads），幂等。
+ * 初始化路由所需的 uploads 目录，幂等。
  * uploads 目录由 FileManager 统一管理。
  */
 function initRouteDirs() {
-  const staticDir = path.join(env.CHECKPOINT_DIR, 'static')
-  if (!fs.existsSync(staticDir)) {
-    fs.mkdirSync(staticDir, { recursive: true })
-  }
-  if (!fs.existsSync(path.join(env.CHECKPOINT_DIR, 'sse')))
-    fs.mkdirSync(path.join(env.CHECKPOINT_DIR, 'sse'), { recursive: true })
   fileManager.ensureDir()
-  return staticDir
 }
 
 /**
@@ -35,75 +26,78 @@ function initRouteDirs() {
  * 所有目录初始化副作用在此函数内完成，模块 import 时不产生任何副作用。
  */
 export function createApp(): Express {
-  const staticDir = initRouteDirs()
+  initRouteDirs()
 
   const app = express()
 
   // Middleware
   app.use(cors())
-  app.use(express.json({ limit: '10mb' }))
+  // Uploads are sent as base64 JSON payloads; 100MB files need room for base64 overhead.
+  app.use(express.json({ limit: '150mb' }))
 
-  // Chat / 会话 / 文件 API routes (must be before static files)
+  // Chat / 会话 / 文件 API routes
   app.use('/api', fileRoutes)
   app.use('/api', conversationRoutes)
-  app.use('/api', chatRoutes)
 
   // MCP management routes
   app.use('/api/mcp', mcpRoutes)
 
-  // User model routes
-  app.use('/api/model', modelRoutes)
-
-  // Skill management routes
-  app.use('/api/skills', skillRoutes)
-
-  // Recording routes
-  app.use('/api/recording', recordingRoutes)
-
-  // Script CRUD and run routes
+  // Script metadata parsing
   app.use('/api/scripts', scriptRoutes)
 
-  // Schedule (定时任务) CRUD and run history routes
-  app.use('/api/schedules', scheduleRoutes)
+  // Remote task scheduling, execution and local run logs
+  app.use('/api/tasks', taskRoutes)
 
-  // Serve static files from root directory (must be after API routes)
-  app.use(express.static(staticDir))
-
-  // Health check
-  app.get('/health', async (_req: Request, res: Response) => {
-    const result = await fetch(`${env.ROXY_API_HOST}/health`, {
-      method: 'GET',
-      headers: {
-        token: env.ROXY_API_KEY!,
-      },
-    })
-    if (result.ok) {
-      res.json({ code: 0, msg: 'ok' })
-    }
-    else {
-      res.json({ code: 1, msg: 'Health check failed', error: 'Health check failed' })
-    }
-  })
+  // RoxyClaw IM control and integration checks
+  app.use('/api/roxy-claw', roxyClawRoutes)
 
   return app
 }
 
+let httpServer: Server | null = null
+let agentChannelServer: AgentChannelServer | null = null
+
 /**
- * 启动 HTTP 服务器（agent 模式专用）。
- * 不再包含任何 IM 初始化逻辑——IM 由 im 模式独立启动。
+ * 启动 HTTP 服务器。
+ * RoxyClaw（IM）由 agent 模式在同一进程内按配置启动。
  */
 export async function startServer(): Promise<void> {
   const app = createApp()
   return new Promise((resolve, reject) => {
-    app.listen(env.ROXY_SERVER_PORT, (error?: Error) => {
-      if (error) {
-        console.error(error)
+    const onError = (error: Error) => {
+      console.error(error)
+      void channel.close()
+      reject(error)
+    }
+    const server = createServer(app)
+    const channel = new AgentChannelServer(server)
+    server.listen(env.ROXY_SERVER_PORT, () => {
+      server.off('error', onError)
+      httpServer = server
+      agentChannelServer = channel
+      console.log(`🚀 API Server running on http://localhost:${env.ROXY_SERVER_PORT}`)
+      resolve()
+    })
+
+    server.once('error', onError)
+  })
+}
+
+export async function stopServer(): Promise<void> {
+  if (!httpServer)
+    return
+
+  const server = httpServer
+  httpServer = null
+  const channel = agentChannelServer
+  agentChannelServer = null
+  await channel?.close()
+  await new Promise<void>((resolve, reject) => {
+    server.close((error?: Error) => {
+      if (error)
         reject(error)
-      }
-      else {
-        console.log(`🚀 API Server running on http://localhost:${env.ROXY_SERVER_PORT}`)
+      else
         resolve()
-      }
     })
   })
 }

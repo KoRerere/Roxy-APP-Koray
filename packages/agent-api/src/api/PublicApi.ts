@@ -11,8 +11,9 @@
  */
 
 import {
-  AdminRedirectAdminGetData,
   HealthHealthGetData,
+  HealthHealthGetError,
+  HealthHealthGetParams,
 } from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
@@ -24,34 +25,24 @@ export class PublicApi<SecurityDataType = unknown> {
   }
 
   /**
-   * @description Return service status, environment, and configured base path.
+   * @description Return service status, environment, and configured base path. Use `?deep=1` to probe MySQL/Redis and report cache status; returns HTTP 503 when hard dependencies are unavailable.
    *
    * @tags public
    * @name HealthHealthGet
    * @summary Health check
    * @request GET:/health
    * @response `200` `HealthHealthGetData` Successful Response
+   * @response `422` `ApiErrorResponse` Unprocessable Entity
+   * @response `503` `ApiErrorResponse` Service Unavailable
    */
-  healthHealthGet = (params: RequestParams = {}) =>
-    this.http.request<HealthHealthGetData, any>({
+  healthHealthGet = (
+    query: HealthHealthGetParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<HealthHealthGetData, HealthHealthGetError>({
       path: `/health`,
       method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description Redirect to the mounted admin UI root.
-   *
-   * @tags public
-   * @name AdminRedirectAdminGet
-   * @summary Admin entry
-   * @request GET:/admin
-   * @response `200` `AdminRedirectAdminGetData` Successful Response
-   */
-  adminRedirectAdminGet = (params: RequestParams = {}) =>
-    this.http.request<AdminRedirectAdminGetData, any>({
-      path: `/admin`,
-      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { WorkspaceType } from '/@/enums'
-import { roxyGeoRoute } from './menu-shared'
 
 const privateOnly = [WorkspaceType.Private] as const
 
@@ -79,7 +78,7 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: $t('工具'), type: 'group', workspaceTypes: [...privateOnly] },
+    meta: { title: $t('工具'), type: 'flat', workspaceTypes: [...privateOnly] },
     children: [
       {
         path: 'agent',
@@ -150,7 +149,6 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         },
         component: () => import('/@/views/extensions'),
       },
-      roxyGeoRoute,
     ],
   },
 ]

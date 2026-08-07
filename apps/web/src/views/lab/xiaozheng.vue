@@ -1,253 +1,1067 @@
 <script setup lang="ts">
-import ScrollOverflowEffect from '/@/components/scroll-overflow-effect.vue'
+import { Extension, mergeAttributes, Node } from '@tiptap/core'
+import Mention from '@tiptap/extension-mention'
+import { Suggestion } from '@tiptap/suggestion'
+import StarterKit from '@tiptap/starter-kit'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 
-type EffectMode = 'indicator' | 'shadow' | 'opening' | 'mask'
+type TokenKind = 'profile' | 'skill' | 'script'
 
-const activeMode = ref<EffectMode>('opening')
-const light = ref(false)
-const resizable = ref(true)
-const shadowHeight = ref(12)
-const shadowOpacity = ref(0.5)
+interface ComposerItem {
+  id: string
+  kind: TokenKind
+  title: string
+  label?: string
+  description: string
+  icon: string
+  group: string
+  payload: Record<string, string>
+}
 
-const modes: Array<{ label: string, value: EffectMode }> = [
-  { label: 'Indicator', value: 'indicator' },
-  { label: 'Shadow', value: 'shadow' },
-  { label: 'Opening', value: 'opening' },
-  { label: 'Mask', value: 'mask' },
+interface SuggestionState {
+  open: boolean
+  kind: 'mention' | 'slash'
+  trigger: '@' | '/'
+  query: string
+  activeIndex: number
+  items: ComposerItem[]
+  command?: (item: ComposerItem) => void
+  rect: {
+    left: number
+    top: number
+    width: number
+    maxHeight: number
+  }
+}
+
+const mentionItems: ComposerItem[] = [
+  {
+    id: 'profile-mou-72',
+    kind: 'profile',
+    title: 'MOU-72 · dance_daily',
+    label: 'MOU-72 · dance_daily',
+    description: 'tiktok.com/@dance_daily',
+    icon: '🌐',
+    group: 'Windows',
+    payload: { dirId: 'profile-mou-72' },
+  },
+  {
+    id: 'profile-mou-89',
+    kind: 'profile',
+    title: 'MOU-89 · store_admin',
+    label: 'MOU-89 · store_admin',
+    description: 'facebook.com/store_admin',
+    icon: '🌐',
+    group: 'Windows',
+    payload: { dirId: 'profile-mou-89' },
+  },
+  {
+    id: 'profile-mou-90',
+    kind: 'profile',
+    title: 'MOU-90 · page_ops',
+    label: 'MOU-90 · page_ops',
+    description: 'instagram.com/page_ops',
+    icon: '🌐',
+    group: 'Windows',
+    payload: { dirId: 'profile-mou-90' },
+  },
 ]
 
-const paragraphs = [
-  '这个组件把原来 codepen 里的滚动提示效果封装成了一个独立的 Vue 3 组件，内容通过默认插槽传入，所以后续不管是文章卡片、设置面板还是帮助说明，都可以直接复用。',
-  '顶部和底部的状态不再依赖 gsap，而是根据当前滚动位置、容器高度和内容总高度实时计算两个进度值，再通过 CSS 变量驱动不同模式的视觉变化。',
-  'Indicator 模式更像传统的滚动提示条，适合让用户明确知道还有内容没看完；Shadow 和 Opening 更克制一些，适合后台面板或侧边抽屉。',
-  'Mask 模式则更偏视觉化，会把内容边缘直接做成渐隐遮罩，整体会比单独的箭头或阴影更轻，但也更依赖内容区本身的背景和排版。',
-  '如果你后面想把它接到业务页面里，我建议保留目前这套 props：模式、亮暗、阴影高度、透明度、边缘阈值和是否允许手动 resize，已经足够覆盖大部分场景。',
-  '实验室页面这里我把容器设成了可拖拽缩放，这样你可以顺手看一眼不同尺寸下的表现，尤其是较短容器和较长文案组合时，顶底提示是否还自然。',
-  '后续如果你想继续增强，也可以把标题区、底部操作栏、滚动到顶/底的快捷按钮一起做进插槽体系里，不过我先保持组件职责单一，方便后面继续演进。',
+const slashItems: ComposerItem[] = [
+  {
+    id: 'batch-account-nurturing',
+    kind: 'skill',
+    title: 'Batch account nurturing',
+    description: 'Multi-account concurrent simulation of real person behavior',
+    icon: '🧩',
+    group: 'Skills',
+    payload: { skillMdPath: '/Users/anbin/.roxy/skills/batch-account-nurturing/SKILL.md' },
+  },
+  {
+    id: 'login-state-checker',
+    kind: 'skill',
+    title: 'Login state checker',
+    description: 'Open windows and verify platform login state',
+    icon: '🧩',
+    group: 'Skills',
+    payload: { skillMdPath: '/Users/anbin/.roxy/skills/login-state-checker/SKILL.md' },
+  },
+  {
+    id: 'profile-warmup-script',
+    kind: 'script',
+    title: 'Profile warmup script',
+    description: 'Run a local browser warmup script before account operations',
+    icon: '📄',
+    group: 'Scripts',
+    payload: { target: '/Users/anbin/.roxy/scripts/profile-warmup.ts' },
+  },
 ]
+
+const suggestion = reactive<SuggestionState>({
+  open: false,
+  kind: 'mention',
+  trigger: '@',
+  query: '',
+  activeIndex: 0,
+  items: [],
+  rect: { left: 0, top: 0, width: 0, maxHeight: 320 },
+})
+
+const composerShellRef = ref<HTMLElement | null>(null)
+const serializedPrompt = ref('')
+const demoPresetPrompt = [
+  'Open [@profile:MOU-89 · store_admin](profile-mou-89) and run [$Login state checker](/Users/anbin/.roxy/skills/login-state-checker/SKILL.md).',
+  'Then execute [@script:Profile warmup script](/Users/anbin/.roxy/scripts/profile-warmup.ts) before posting **normal Markdown source**.',
+].join('\n')
+
+function searchItems(source: ComposerItem[], query: string) {
+  const keyword = query.trim().toLowerCase()
+
+  if (!keyword)
+    return source
+
+  return source.filter(item => [item.title, item.description, item.id, item.group]
+    .some(value => value.toLowerCase().includes(keyword)))
+}
+
+function groupedItems(items: ComposerItem[]) {
+  const groups = new Map<string, ComposerItem[]>()
+
+  items.forEach((item) => {
+    const group = groups.get(item.group) ?? []
+    group.push(item)
+    groups.set(item.group, group)
+  })
+
+  return Array.from(groups.entries()).map(([name, groupItems]) => ({ name, items: groupItems }))
+}
+
+const suggestionGroups = computed(() => groupedItems(suggestion.items))
+
+function syncSuggestionPosition(props: any, kind: SuggestionState['kind']) {
+  const composerRect = composerShellRef.value?.getBoundingClientRect()
+  const triggerRect = props.clientRect?.()
+  const rect = composerRect ?? triggerRect
+
+  suggestion.open = true
+  suggestion.kind = kind
+  suggestion.trigger = kind === 'mention' ? '@' : '/'
+  suggestion.query = props.query ?? ''
+  suggestion.items = props.items ?? []
+  suggestion.command = props.command
+  suggestion.activeIndex = Math.min(suggestion.activeIndex, Math.max(suggestion.items.length - 1, 0))
+
+  if (rect && composerRect) {
+    suggestion.rect.left = rect.left
+    suggestion.rect.top = rect.top - 8
+    suggestion.rect.width = rect.width
+    suggestion.rect.maxHeight = Math.max(140, Math.min(360, rect.top - 24))
+  }
+  else if (rect) {
+    suggestion.rect.left = rect.left
+    suggestion.rect.top = rect.bottom + 8
+    suggestion.rect.width = 800
+    suggestion.rect.maxHeight = 320
+  }
+}
+
+function openAnchoredSuggestion(options: {
+  kind: SuggestionState['kind']
+  items: ComposerItem[]
+  command: (item: ComposerItem) => void
+  query?: string
+  activeId?: string
+}) {
+  const composerRect = composerShellRef.value?.getBoundingClientRect()
+  const activeIndex = options.activeId
+    ? options.items.findIndex(item => item.id === options.activeId)
+    : -1
+
+  suggestion.open = true
+  suggestion.kind = options.kind
+  suggestion.trigger = options.kind === 'mention' ? '@' : '/'
+  suggestion.query = options.query ?? ''
+  suggestion.items = options.items
+  suggestion.command = options.command
+  suggestion.activeIndex = Math.max(activeIndex, 0)
+
+  if (composerRect) {
+    suggestion.rect.left = composerRect.left
+    suggestion.rect.top = composerRect.top - 8
+    suggestion.rect.width = composerRect.width
+    suggestion.rect.maxHeight = Math.max(140, Math.min(360, composerRect.top - 24))
+  }
+}
+
+function closeSuggestion() {
+  suggestion.open = false
+  suggestion.items = []
+  suggestion.command = undefined
+  suggestion.activeIndex = 0
+}
+
+function createSuggestionRenderer(kind: SuggestionState['kind']) {
+  return () => ({
+    onStart: (props: any) => {
+      suggestion.activeIndex = 0
+      syncSuggestionPosition(props, kind)
+    },
+    onUpdate: (props: any) => {
+      syncSuggestionPosition(props, kind)
+    },
+    onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+      if (!suggestion.open)
+        return false
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        suggestion.activeIndex = (suggestion.activeIndex + 1) % Math.max(suggestion.items.length, 1)
+        return true
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        suggestion.activeIndex = (suggestion.activeIndex - 1 + Math.max(suggestion.items.length, 1)) % Math.max(suggestion.items.length, 1)
+        return true
+      }
+
+      if (event.key === 'Enter' || event.key === 'Tab') {
+        event.preventDefault()
+        chooseItem(suggestion.items[suggestion.activeIndex])
+        return true
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeSuggestion()
+        return true
+      }
+
+      return false
+    },
+    onExit: closeSuggestion,
+  })
+}
+
+const AgentToken = Node.create({
+  name: 'agentToken',
+  group: 'inline',
+  inline: true,
+  atom: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      id: { default: '' },
+      kind: { default: 'skill' },
+      title: { default: '' },
+      description: { default: '' },
+      icon: { default: '' },
+      group: { default: '' },
+      payload: { default: {} },
+    }
+  },
+
+  parseHTML() {
+    return [{
+      tag: 'span[data-agent-token]',
+      getAttrs: element => ({
+        id: element.getAttribute('data-id') || '',
+        kind: element.getAttribute('data-kind') || element.getAttribute('data-agent-token') || 'skill',
+        title: element.getAttribute('data-title') || element.textContent?.trim() || '',
+        description: element.getAttribute('data-description') || '',
+        icon: element.getAttribute('data-icon') || '',
+        group: element.getAttribute('data-group') || '',
+        payload: element.getAttribute('data-payload')
+          ? JSON.parse(element.getAttribute('data-payload') || '{}')
+          : {},
+      }),
+    }]
+  },
+
+  renderHTML({ node }) {
+    const attrs = node.attrs as ComposerItem
+
+    return [
+      'span',
+      mergeAttributes({
+        'data-agent-token': attrs.kind,
+        'data-id': attrs.id,
+        'data-kind': attrs.kind,
+        'data-title': attrs.title,
+        'data-description': attrs.description,
+        'data-icon': attrs.icon,
+        'data-group': attrs.group,
+        'data-payload': JSON.stringify(attrs.payload || {}),
+        'class': `agent-token agent-token--${attrs.kind}`,
+      }),
+      `${attrs.icon} ${attrs.title}`,
+    ]
+  },
+
+  renderText({ node }) {
+    const attrs = node.attrs as ComposerItem
+    return tokenToProtocol(attrs)
+  },
+})
+
+const SlashCommand = Extension.create({
+  name: 'slashCommand',
+
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        char: '/',
+        allowSpaces: true,
+        items: ({ query }) => searchItems(slashItems, query),
+        command: ({ editor, range, props }) => {
+          const item = props as ComposerItem
+
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .insertContent([
+              { type: 'agentToken', attrs: item },
+              { type: 'text', text: ' ' },
+            ])
+            .run()
+        },
+        render: createSuggestionRenderer('slash'),
+      }),
+    ]
+  },
+})
+
+const editor = useEditor({
+  autofocus: true,
+  editable: true,
+  content: {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [
+          { type: 'text', text: 'Open ' },
+          {
+            type: 'mention',
+            attrs: {
+              id: 'profile-mou-72',
+              label: 'MOU-72 · dance_daily',
+              kind: 'profile',
+              description: 'tiktok.com/@dance_daily',
+              icon: '🌐',
+            },
+          },
+          { type: 'text', text: ' and use ' },
+          {
+            type: 'agentToken',
+            attrs: slashItems[0],
+          },
+          { type: 'text', text: ' to warm up accounts.' },
+        ],
+      },
+      {
+        type: 'paragraph',
+        content: [
+          { type: 'text', text: 'Try typing @ for windows, / for skills/scripts, and normal Markdown source such as **bold**.' },
+        ],
+      },
+    ],
+  },
+  extensions: [
+    StarterKit.configure({
+      heading: false,
+      blockquote: false,
+      bulletList: false,
+      orderedList: false,
+      codeBlock: false,
+      horizontalRule: false,
+    }),
+    AgentToken,
+    Mention.configure({
+      HTMLAttributes: {
+        class: 'agent-token agent-token--profile',
+      },
+      renderText({ node }) {
+        return tokenToProtocol({
+          id: node.attrs.id,
+          kind: 'profile',
+          title: node.attrs.label || node.attrs.id,
+          description: node.attrs.description,
+          icon: node.attrs.icon || '🌐',
+          group: 'Windows',
+          payload: { dirId: node.attrs.id },
+        })
+      },
+      renderHTML({ node, options }) {
+        return [
+          'span',
+          mergeAttributes(options.HTMLAttributes, {
+            'data-agent-token': 'profile',
+            'data-id': node.attrs.id,
+            'data-kind': node.attrs.kind || 'profile',
+            'data-description': node.attrs.description || '',
+          }),
+          `${node.attrs.icon || '🌐'} ${node.attrs.label || node.attrs.id}`,
+        ]
+      },
+      suggestion: {
+        char: '@',
+        allowSpaces: true,
+        items: ({ query }) => searchItems(mentionItems, query),
+        render: createSuggestionRenderer('mention'),
+      },
+    }),
+    SlashCommand,
+  ],
+  editorProps: {
+    attributes: {
+      'class': 'tiptap-composer__editor',
+      'aria-label': 'Roxy AI Agent prompt composer demo',
+    },
+    handleClickOn(_view, _pos, node, nodePos, event, direct) {
+      if (!direct || (node.type.name !== 'mention' && node.type.name !== 'agentToken'))
+        return false
+
+      event.preventDefault()
+      openTokenPicker(node, nodePos)
+      return true
+    },
+    handleClick(_view, _pos, event) {
+      const target = event.target as HTMLElement | null
+
+      if (!target?.closest('.agent-token, .mention'))
+        closeSuggestion()
+
+      return false
+    },
+  },
+  onUpdate: ({ editor }) => {
+    serializedPrompt.value = serializeDoc(editor.getJSON())
+  },
+  onCreate: ({ editor }) => {
+    serializedPrompt.value = serializeDoc(editor.getJSON())
+  },
+})
+
+const canSubmit = computed(() => Boolean(editor.value?.getText().trim()))
+const editorJson = computed(() => JSON.stringify(editor.value?.getJSON() ?? {}, null, 2))
+
+function chooseItem(item?: ComposerItem) {
+  if (!item || !suggestion.command)
+    return
+
+  suggestion.command(item)
+  closeSuggestion()
+}
+
+function openTokenPicker(node: any, nodePos: number) {
+  const isProfile = node.type.name === 'mention'
+  const items = isProfile ? mentionItems : slashItems
+
+  openAnchoredSuggestion({
+    kind: isProfile ? 'mention' : 'slash',
+    items,
+    activeId: node.attrs.id,
+    command: (item) => {
+      const activeEditor = editor.value
+
+      if (!activeEditor)
+        return
+
+      const { schema, tr } = activeEditor.view.state
+      const replacement = item.kind === 'profile'
+        ? schema.nodes.mention.create({
+            id: item.id,
+            label: item.label || item.title,
+            kind: 'profile',
+            description: item.description,
+            icon: item.icon,
+          })
+        : schema.nodes.agentToken.create(item)
+
+      activeEditor.view.dispatch(tr.replaceWith(nodePos, nodePos + node.nodeSize, replacement))
+      activeEditor.view.focus()
+    },
+  })
+}
+
+function selectToolbar(trigger: '@' | '/') {
+  editor.value?.chain().focus().insertContent(trigger).run()
+}
+
+function focusEditor(event?: MouseEvent) {
+  const target = event?.target as HTMLElement | null
+
+  if (target?.closest('.ProseMirror'))
+    return
+
+  editor.value?.chain().focus('end').run()
+}
+
+function clearEditor() {
+  editor.value?.commands.clearContent()
+  serializedPrompt.value = ''
+}
+
+function restoreSerializedPrompt() {
+  loadPromptString(serializedPrompt.value)
+}
+
+function loadDemoPresetPrompt() {
+  loadPromptString(demoPresetPrompt)
+}
+
+function loadPromptString(prompt: string) {
+  editor.value?.commands.setContent(parsePromptString(prompt))
+  serializedPrompt.value = serializeDoc(editor.value?.getJSON())
+}
+
+function tokenToProtocol(item: ComposerItem) {
+  if (item.kind === 'profile')
+    return `[@profile:${item.title}](${item.payload.dirId || item.id})`
+
+  if (item.kind === 'script')
+    return `[@script:${item.title}](${item.payload.target || item.id})`
+
+  return `[$${item.title}](${item.payload.skillMdPath || item.id})`
+}
+
+function findStoredItem(kind: TokenKind, title: string, target: string): ComposerItem {
+  if (kind === 'profile') {
+    const profile = mentionItems.find(item =>
+      item.id === target
+      || item.payload.dirId === target
+      || item.title === title
+      || item.label === title)
+
+    return profile ?? {
+      id: target,
+      kind: 'profile',
+      title,
+      label: title,
+      description: '',
+      icon: '🌐',
+      group: 'Windows',
+      payload: { dirId: target },
+    }
+  }
+
+  const item = slashItems.find(option =>
+    option.kind === kind
+    && (
+      option.id === target
+      || option.title === title
+      || option.payload.skillMdPath === target
+      || option.payload.target === target
+    ))
+
+  return item ?? {
+    id: target,
+    kind,
+    title,
+    description: '',
+    icon: kind === 'skill' ? '🧩' : '📄',
+    group: kind === 'skill' ? 'Skills' : 'Scripts',
+    payload: kind === 'skill'
+      ? { skillMdPath: target }
+      : { target },
+  }
+}
+
+function promptItemToNode(item: ComposerItem) {
+  if (item.kind === 'profile') {
+    return {
+      type: 'mention',
+      attrs: {
+        id: item.payload.dirId || item.id,
+        label: item.label || item.title,
+        kind: 'profile',
+        description: item.description,
+        icon: item.icon,
+      },
+    }
+  }
+
+  return {
+    type: 'agentToken',
+    attrs: item,
+  }
+}
+
+function parseInlinePrompt(line: string) {
+  const nodes: any[] = []
+  const tokenPattern = /\[(@profile|@script):([^\]]+)\]\(([^)]+)\)|\[\$([^\]]+)\]\(([^)]+)\)/g
+  let cursor = 0
+
+  for (const match of line.matchAll(tokenPattern)) {
+    const index = match.index ?? 0
+
+    if (index > cursor)
+      nodes.push({ type: 'text', text: line.slice(cursor, index) })
+
+    const kind: TokenKind = match[1] === '@profile'
+      ? 'profile'
+      : match[1] === '@script'
+        ? 'script'
+        : 'skill'
+    const title = match[2] || match[4]
+    const target = match[3] || match[5]
+
+    nodes.push(promptItemToNode(findStoredItem(kind, title, target)))
+    cursor = index + match[0].length
+  }
+
+  if (cursor < line.length)
+    nodes.push({ type: 'text', text: line.slice(cursor) })
+
+  return nodes
+}
+
+function parsePromptString(prompt: string) {
+  const lines = prompt.split(/\n/)
+  const content = lines.map(line => ({
+    type: 'paragraph',
+    content: parseInlinePrompt(line),
+  }))
+
+  return {
+    type: 'doc',
+    content: content.length ? content : [{ type: 'paragraph' }],
+  }
+}
+
+function serializeDoc(doc: any) {
+  const lines: string[] = []
+
+  function visit(node: any): string {
+    if (!node)
+      return ''
+
+    if (node.type === 'text')
+      return node.text || ''
+
+    if (node.type === 'mention') {
+      return tokenToProtocol({
+        id: node.attrs.id,
+        kind: 'profile',
+        title: node.attrs.label || node.attrs.id,
+        description: node.attrs.description || '',
+        icon: node.attrs.icon || '🌐',
+        group: 'Windows',
+        payload: { dirId: node.attrs.id },
+      })
+    }
+
+    if (node.type === 'agentToken')
+      return tokenToProtocol(node.attrs)
+
+    const children = (node.content || []).map(visit).join('')
+
+    if (node.type === 'paragraph') {
+      lines.push(children)
+      return ''
+    }
+
+    return children
+  }
+
+  visit(doc)
+  return lines.join('\n').trim()
+}
+
+onBeforeUnmount(() => {
+  editor.value?.destroy()
+})
 </script>
 
 <template>
-  <div class="scroll-lab">
-    <div class="scroll-lab__intro">
-      <p class="scroll-lab__eyebrow">
-        Scroll Overflow Effect
-      </p>
-      <h2 class="scroll-lab__title">
-        CodePen 效果 Vue 3 封装预览
-      </h2>
-      <p class="scroll-lab__desc">
-        现在可以直接切换模式和参数，确认最终想保留的表现。组件内部已经去掉 `gsap`，改成原生滚动计算。
-      </p>
-    </div>
-
-    <div class="scroll-lab__panel">
-      <div class="scroll-lab__controls">
-        <div class="scroll-lab__control-group">
-          <span class="scroll-lab__label">模式</span>
-          <div class="scroll-lab__mode-list">
-            <button
-              v-for="item in modes"
-              :key="item.value"
-              type="button"
-              class="scroll-lab__mode-button"
-              :class="{ 'is-active': activeMode === item.value }"
-              @click="activeMode = item.value"
-            >
-              {{ item.label }}
-            </button>
-          </div>
+  <div class="tiptap-demo">
+    <section class="demo-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">
+            Tiptap headless
+          </p>
+          <h2>Agent composer proof of concept</h2>
         </div>
 
-        <label class="scroll-lab__switch">
-          <input v-model="light" type="checkbox">
-          <span>亮色模式</span>
-        </label>
-
-        <label class="scroll-lab__switch">
-          <input v-model="resizable" type="checkbox">
-          <span>允许拖拽缩放</span>
-        </label>
-
-        <label class="scroll-lab__range">
-          <span>阴影高度</span>
-          <input v-model.number="shadowHeight" type="range" min="4" max="24" step="1">
-          <strong>{{ shadowHeight }}px</strong>
-        </label>
-
-        <label class="scroll-lab__range">
-          <span>阴影透明度</span>
-          <input v-model.number="shadowOpacity" type="range" min="0.1" max="0.9" step="0.05">
-          <strong>{{ shadowOpacity.toFixed(2) }}</strong>
-        </label>
+        <div class="toolbar">
+          <button type="button" title="Mention window" @click="selectToolbar('@')">
+            @
+          </button>
+          <button type="button" title="Invoke skills / scripts" @click="selectToolbar('/')">
+            /
+          </button>
+          <button type="button" title="Clear" @click="clearEditor">
+            Clear
+          </button>
+          <button type="button" title="Set content from the serialized prompt string" @click="restoreSerializedPrompt">
+            Reload string
+          </button>
+          <button type="button" title="Load a saved prompt string" @click="loadDemoPresetPrompt">
+            Load preset
+          </button>
+        </div>
       </div>
 
-      <div class="scroll-lab__preview">
-        <ScrollOverflowEffect
-          :mode="activeMode"
-          :light="light"
-          :resizable="resizable"
-          :shadow-height="shadowHeight"
-          :shadow-opacity="shadowOpacity"
-          width="min(42ch, 100%)"
-          max-height="640px"
+      <div ref="composerShellRef" class="composer-shell" @click="focusEditor">
+        <EditorContent v-if="editor" :editor="editor" />
+
+        <div class="composer-row">
+          <div class="composer-tools">
+            <button type="button" title="Attach file">
+              📎
+            </button>
+            <button type="button" title="Cite window" @click="selectToolbar('@')">
+              @
+            </button>
+            <button type="button" title="Invoke skills / scripts" @click="selectToolbar('/')">
+              /
+            </button>
+            <button class="approval-mode" type="button">
+              🛡 Ask for approval
+            </button>
+          </div>
+
+          <button class="send-button" type="button" :disabled="!canSubmit">
+            ↑
+          </button>
+        </div>
+      </div>
+
+      <Teleport to="body">
+        <div
+          v-if="suggestion.open"
+          class="suggestion-popover"
+          :style="{
+            left: `${suggestion.rect.left}px`,
+            top: `${suggestion.rect.top}px`,
+            width: `${suggestion.rect.width}px`,
+            maxHeight: `${suggestion.rect.maxHeight}px`,
+            transform: composerShellRef ? 'translateY(-100%)' : 'none',
+          }"
         >
-          <p v-for="paragraph in paragraphs" :key="paragraph">
-            {{ paragraph }}
-          </p>
-        </ScrollOverflowEffect>
+          <template v-if="suggestionGroups.length">
+            <section v-for="group in suggestionGroups" :key="group.name" class="suggestion-group">
+              <div class="suggestion-heading">
+                {{ group.name }}({{ group.items.length }})
+              </div>
+              <button
+                v-for="item in group.items"
+                :key="item.id"
+                class="suggestion-item"
+                :class="{ 'suggestion-item--active': suggestion.items[suggestion.activeIndex]?.id === item.id }"
+                type="button"
+                @mouseenter="suggestion.activeIndex = suggestion.items.findIndex(option => option.id === item.id)"
+                @mousedown.prevent="chooseItem(item)"
+              >
+                <span class="suggestion-icon">{{ item.icon }}</span>
+                <span class="suggestion-title">{{ item.title }}</span>
+                <span class="suggestion-desc">{{ item.description }}</span>
+              </button>
+            </section>
+          </template>
+          <div v-else class="suggestion-empty">
+            No result for "{{ suggestion.query }}"
+          </div>
+        </div>
+      </Teleport>
+    </section>
+
+    <section class="inspector-grid">
+      <div class="inspector">
+        <h3>Serialized prompt</h3>
+        <pre>{{ serializedPrompt }}</pre>
       </div>
-    </div>
+
+      <div class="inspector inspector--wide">
+        <h3>Tiptap JSON</h3>
+        <pre>{{ editorJson }}</pre>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped lang="scss">
-.scroll-lab {
+.tiptap-demo {
   min-height: 100%;
+  padding: 32px;
+  color: #141414;
+  background: #f7f8fa;
+}
+
+.demo-panel,
+.inspector {
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  background: #fcfcfc;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.demo-panel {
+  max-width: 920px;
   padding: 24px;
-  color: var(--colors-text-color-primary);
-  background:
-    radial-gradient(circle at top left, rgb(76 132 255 / 0.16), transparent 28%),
-    radial-gradient(circle at right, rgb(16 185 129 / 0.14), transparent 24%),
-    linear-gradient(180deg, var(--colors-background-bg-block), rgb(8 12 20 / 0.04));
 }
 
-.scroll-lab__intro {
-  max-width: 760px;
-}
-
-.scroll-lab__eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgb(56 189 248);
-}
-
-.scroll-lab__title {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.15;
-}
-
-.scroll-lab__desc {
-  margin: 12px 0 0;
-  max-width: 760px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--colors-text-color-secondary);
-}
-
-.scroll-lab__panel {
-  display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(320px, 1fr);
-  gap: 20px;
-  margin-top: 24px;
-}
-
-.scroll-lab__controls,
-.scroll-lab__preview {
-  border: 1px solid rgb(148 163 184 / 0.18);
-  border-radius: 24px;
-  background: rgb(255 255 255 / 0.72);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 24px 80px -44px rgb(15 23 42 / 0.45);
-}
-
-.scroll-lab__controls {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 20px;
-}
-
-.scroll-lab__control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.scroll-lab__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--colors-text-color-secondary);
-}
-
-.scroll-lab__mode-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.scroll-lab__mode-button {
-  padding: 9px 14px;
-  border: 1px solid rgb(148 163 184 / 0.25);
-  border-radius: 999px;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--colors-text-color-primary);
-  cursor: pointer;
-  transition: all 160ms ease;
-}
-
-.scroll-lab__mode-button:hover {
-  border-color: rgb(59 130 246 / 0.45);
-  transform: translateY(-1px);
-}
-
-.scroll-lab__mode-button.is-active {
-  border-color: transparent;
-  background: linear-gradient(135deg, rgb(37 99 235), rgb(14 165 233));
-  color: #fff;
-  box-shadow: 0 12px 30px -18px rgb(37 99 235 / 0.9);
-}
-
-.scroll-lab__switch,
-.scroll-lab__range {
+.panel-heading {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 14px;
-}
-
-.scroll-lab__switch input {
-  width: 16px;
-  height: 16px;
-}
-
-.scroll-lab__range {
   justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 2px 0 0;
+    font-size: 20px;
+    font-weight: 650;
+    line-height: 28px;
+  }
 }
 
-.scroll-lab__range span {
-  min-width: 84px;
+.eyebrow {
+  margin: 0;
+  color: #737373;
+  font-size: 12px;
+  line-height: 18px;
+  text-transform: uppercase;
 }
 
-.scroll-lab__range input[type='range'] {
-  flex: 1;
+.toolbar,
+.composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  button {
+    display: inline-flex;
+    min-width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 999px;
+    color: #141414;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+      background: #f5f5f5;
+    }
+  }
 }
 
-.scroll-lab__range strong {
-  min-width: 52px;
-  text-align: right;
-  font-size: 13px;
+.composer-shell {
+  position: relative;
+  display: flex;
+  min-height: 128px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid #3faaf6;
+  border-radius: 16px;
+  background: #fafafa;
+  box-shadow: 0 16px 40px rgba(243, 89, 220, 0.14);
 }
 
-.scroll-lab__preview {
+.composer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.approval-mode {
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.send-button {
   display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
   place-items: center;
-  padding: 24px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(101deg, #3faaf6 10%, #f359dc 45%, #f28fb0 100%);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.45;
+  }
 }
 
-@media (max-width: 900px) {
-  .scroll-lab__panel {
-    grid-template-columns: 1fr;
+:deep(.tiptap-composer__editor) {
+  min-height: 48px;
+  max-height: 180px;
+  overflow-y: auto;
+  outline: none;
+  color: #141414;
+  font-size: 14px;
+  line-height: 22px;
+
+  p {
+    margin: 0;
   }
 
-  .scroll-lab__title {
-    font-size: 24px;
+  p + p {
+    margin-top: 6px;
   }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 6px;
+    color: #c11574;
+    background: #fce7f6;
+  }
+}
+
+:deep(.agent-token),
+:deep(.mention) {
+  display: inline-flex;
+  max-width: 260px;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+:deep(.agent-token--profile),
+:deep(.mention) {
+  color: #175cd3;
+  background: #d1e9ff;
+}
+
+:deep(.agent-token--skill) {
+  color: #c11574;
+  background: #fce7f6;
+}
+
+:deep(.agent-token--script) {
+  color: #067647;
+  background: #dcfae6;
+}
+
+.inspector-grid {
+  display: grid;
+  max-width: 1100px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.inspector {
+  min-height: 220px;
+  padding: 16px;
+
+  h3 {
+    margin: 0 0 12px;
+    color: #525252;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+  }
+
+  pre {
+    max-height: 360px;
+    margin: 0;
+    overflow: auto;
+    color: #292929;
+    font-size: 12px;
+    line-height: 18px;
+    white-space: pre-wrap;
+  }
+}
+
+.inspector--wide {
+  grid-column: 1 / -1;
+}
+</style>
+
+<style lang="scss">
+.suggestion-popover {
+  position: fixed;
+  z-index: 9999;
+  width: min(800px, calc(100vw - 48px));
+  max-height: min(360px, calc(100vh - 80px));
+  overflow: auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  background: #fcfcfc;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+}
+
+.suggestion-group + .suggestion-group {
+  border-top: 1px solid #e5e5e5;
+}
+
+.suggestion-heading {
+  padding: 12px 20px;
+  color: #737373;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.suggestion-item {
+  display: flex;
+  width: calc(100% - 24px);
+  align-items: center;
+  gap: 9px;
+  margin: 0 12px 4px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  color: #141414;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+
+  &:hover,
+  &--active {
+    background: #f5f5f5;
+  }
+}
+
+.suggestion-icon {
+  flex: none;
+  width: 16px;
+  text-align: center;
+}
+
+.suggestion-title {
+  flex: none;
+  white-space: nowrap;
+}
+
+.suggestion-desc {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #737373;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-empty {
+  padding: 20px;
+  color: #737373;
+  font-size: 14px;
+  text-align: center;
 }
 </style>

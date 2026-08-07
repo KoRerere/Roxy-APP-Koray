@@ -46,12 +46,12 @@ interface TelegramConfig {
 export async function startTelegramAdapter(
   bridge: IMBridge,
   config: TelegramConfig,
-): Promise<void> {
+): Promise<() => Promise<void>> {
   const { botToken } = config
   const allowedChatIds = parseIdSet(config.allowedChatIds)
 
   if (allowedChatIds.size === 0) {
-    return
+    return async () => {}
   }
 
   const bot = new Bot(botToken, {
@@ -191,7 +191,6 @@ export async function startTelegramAdapter(
   bot.on('message', async (ctx) => {
     const channelId = `tg:${ctx.chat.id}`
     const text = ctx.message.text ?? ctx.message.caption ?? ''
-    const messageId = ctx.message.message_id
 
     const imageUrls: string[] = []
     if (ctx.message.photo) {
@@ -278,6 +277,10 @@ export async function startTelegramAdapter(
   })
 
   console.log('[Telegram] Adapter started successfully')
+
+  return async () => {
+    await (bot as any).stop?.()
+  }
 }
 
 /**

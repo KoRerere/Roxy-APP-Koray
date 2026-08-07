@@ -2,15 +2,15 @@
   "name": "roxy-agent",
   "type": "module",
   "version": "1.0.0",
-  "description": "Minimal LangChain MVP CLI with OpenRouter - Interactive chat with thinking mode",
+  "description": "Embedded RoxyBrowser agent runtime for chat, automation, tasks, skills, sandbox, and IM integrations",
   "author": "",
   "license": "ISC",
   "keywords": [
-    "langchain",
-    "openrouter",
-    "cli",
+    "agent",
+    "automation",
+    "browser",
     "chat",
-    "ai"
+    "websocket"
   ],
   "main": "src/index.ts",
   "scripts": {
@@ -19,11 +19,9 @@
     "run:dist": "node scripts/run-dist.mjs"
   },
   "dependencies": {
+    "@babel/parser": "7.29.7",
     "@langchain/anthropic": "^1.3.26",
-    "@langchain/community": "1.1.27",
     "@langchain/core": "^1.1.39",
-    "@langchain/daytona": "0.2.0",
-    "@langchain/deepseek": "1.0.24",
     "@langchain/google": "^0.1.10",
     "@langchain/langgraph": "^1.2.8",
     "@langchain/langgraph-checkpoint": "^1.0.1",
@@ -31,28 +29,22 @@
     "@langchain/openai": "^1.4.4",
     "@larksuiteoapi/node-sdk": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
+    "@roxy/agent-api": "workspace:*",
     "@roxy/backend-api": "workspace:*",
-    "@roxybrowser/openapi": "1.0.17",
-    "@roxybrowser/playwright": "2.0.2-beta.30",
-    "@roxybrowser/playwright-mcp": "0.0.8-beta.10",
+    "@roxy/sandbox": "workspace:*",
+    "@roxy/shared": "workspace:*",
+    "@roxybrowser/openapi": "2.0.4",
+    "@roxybrowser/playwright": "2.0.5-beta.1",
     "@slack/bolt": "^3.22.0",
     "@slack/web-api": "^7.15.1",
     "adm-zip": "^0.6.0",
     "cors": "^2.8.5",
     "deepagents": "^1.9.0",
     "discord-api-types": "0.38.46",
-    "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "fix-path": "^5.0.0",
     "grammy": "^1.30.0",
     "langchain": "catalog:",
-    "node-cron": "^3.0.3",
-    "openai": "^6.15.0",
-    "ora": "^5.4.1",
-    "otplib": "^13.1.1",
-    "protobufjs": "^7.2.6",
-    "qrcode": "^1.5.4",
-    "undici": "^6.24.1",
     "uuid": "^13.0.0",
     "ws": "^8.16.0",
     "yaml": "2.9.0",
@@ -61,20 +53,16 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.0.0",
-    "@types/node-cron": "^3.0.11",
-    "electron": "40.8.3",
-    "patch-package": "^8.0.1",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^16.4.5",
+    "electron": "41.10.2",
     "terser-webpack-plugin": "^5.6.1",
     "tsx": "^4.19.0",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vitest": "^4.1.9",
     "webpack": "catalog:",
     "webpack-cli": "catalog:"
-  },
-  "nodemonConfig": {
-    "ignore": [
-      "logs/**/*"
-    ]
   }
 }
