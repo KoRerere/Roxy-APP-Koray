@@ -13,7 +13,7 @@ import { useRoleStore } from '/@/stores/role'
 import { usePermissionStore } from '/@/stores/permission'
 import { useToast } from 'primevue/usetoast'
 import { PayIdentity, SubLevelEnum } from '/@/enums/pay'
-import { encryptAESGCMLocal, getCookie, hidePageLoading, isMainWindow, isMobile, isWindows, removeCookie, safeParseJSON, sleep } from '/@/utils'
+import { encryptAESGCMLocal, getCookie, hidePageLoading, isMainWindow, isMobile, isWindows, removeCookie, sleep } from '/@/utils'
 import type { OauthLoginType } from '/@/utils'
 import type { ProxyDetectionResult } from '#roxybrowser/utils'
 import { clearSessionLost, markSessionLost } from '/@/utils/sessionLost'
@@ -36,15 +36,6 @@ type UserPayInfo = UserGetUserPayInfoListData['data']
 type LoginWay = 'password' | 'phone' | OauthLoginType
 
 const INIT_USER_INFO_CACHE_KEY = 'user:initUserInfo:cache'
-const INIT_USER_INFO_CACHE_TTL = 5 * 60 * 1000
-
-interface InitUserInfoCache {
-  token: string
-  userInfo: UserInfo
-  workspace?: ReturnType<typeof useWorkspaceStore>['currentWorkspace']
-  permissions?: string[]
-  updatedAt: number
-}
 
 function getWorkspaceStore() {
   return useWorkspaceStore()
@@ -275,61 +266,14 @@ export const useUserStore = defineStore(
       }
     }
 
-    function readInitUserInfoCache() {
-      const cache = safeParseJSON(localStorage.getItem(INIT_USER_INFO_CACHE_KEY), null) as InitUserInfoCache | null
-      if (!cache?.token || !cache?.userInfo?.id)
-        return null
-
-      if (cache.token !== token.value)
-        return null
-
-      if (Date.now() - cache.updatedAt > INIT_USER_INFO_CACHE_TTL)
-        return null
-
-      return cache
-    }
-
     function restoreInitUserInfoCache() {
-      const endRestoreCache = createPerfTimer('user:initUserInfo:cache:restore')
-      const cache = readInitUserInfoCache()
-      if (!cache) {
-        endRestoreCache({ hit: false })
-        return false
-      }
-
-      userInfo.value = cache.userInfo
-      if (cache.workspace)
-        getWorkspaceStore().currentWorkspace = cache.workspace
-      if (cache.permissions?.length)
-        permissionStore.setPermissionCodes(cache.permissions)
-
-      endRestoreCache({
-        hit: true,
-        userId: cache.userInfo.id,
-        workspaceId: cache.workspace?.id,
-        permissionCount: cache.permissions?.length ?? 0,
-      })
-      return true
+      localStorage.removeItem(INIT_USER_INFO_CACHE_KEY)
+      perfLog('user:initUserInfo:cache:disabled')
+      return false
     }
 
     function writeInitUserInfoCache() {
-      if (!token.value || !userInfo.value.id)
-        return
-
-      const workspaceStore = getWorkspaceStore()
-      const permissions = permissionStore.getPermissionCodes()
-      localStorage.setItem(INIT_USER_INFO_CACHE_KEY, JSON.stringify({
-        token: token.value,
-        userInfo: userInfo.value,
-        workspace: workspaceStore.currentWorkspace,
-        permissions,
-        updatedAt: Date.now(),
-      } satisfies InitUserInfoCache))
-      perfLog('user:initUserInfo:cache:write', {
-        userId: userInfo.value.id,
-        workspaceId: workspaceStore.currentWorkspace?.id,
-        permissionCount: permissions.length,
-      })
+      localStorage.removeItem(INIT_USER_INFO_CACHE_KEY)
     }
 
     function clearInitUserInfoCache() {

@@ -67,6 +67,7 @@ const currentCompProps = ref<Recordable>()
 
 onMounted(() => {
   token.value = ''
+  workspaceStore.resetWorkspace()
 })
 
 async function decryptPassword() {

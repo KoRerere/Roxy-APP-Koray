@@ -15,16 +15,16 @@ import { emitter } from '/@/utils/eventBus'
 import { useListCacheStore } from '/@/stores/listCache'
 import { useProxyStore } from '/@/stores/proxy'
 import { createPerfTimer } from '/@/utils/perf-log'
-import { safeParseJSON } from '/@/utils'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
 type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
 type SharedWorkspace = UnwrapRowsType<UserGetPublicWorkspaceListListData>
 
 const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME)
-const WORKSPACE_CACHE_TTL = 5 * 60 * 1000
-const WORKSPACE_LIST_CACHE_KEY = 'workspace:fetchWorkspaceList:cache'
-const WORKSPACE_PERMISSION_CACHE_KEY = 'workspace:getPermissionByWorkspace:cache'
+const LEGACY_WORKSPACE_LIST_CACHE_KEY = 'workspace:fetchWorkspaceList:cache'
+const LEGACY_WORKSPACE_PERMISSION_CACHE_KEY = 'workspace:getPermissionByWorkspace:cache'
+const WORKSPACE_LIST_CACHE_KEY_PREFIX = 'workspace:fetchWorkspaceList:cache:v2'
+const WORKSPACE_PERMISSION_CACHE_KEY_PREFIX = 'workspace:getPermissionByWorkspace:cache:v2'
 
 let hidePageLoadingTimeout: any
 let workspaceSwitchTask: Promise<void> = Promise.resolve()
@@ -35,19 +35,6 @@ function getUserStore() {
 
 function getProxyStore() {
   return useProxyStore()
-}
-
-interface WorkspaceListCache {
-  workspaceList: Workspace[]
-  sharedWorkspaceList?: SharedWorkspace
-  currentWorkspaceId?: number
-  updatedAt: number
-}
-
-interface WorkspacePermissionCache {
-  workspaceId: number
-  permissions: string[]
-  updatedAt: number
 }
 
 export const useWorkspaceStore = defineStore('workspace', () => {
@@ -79,39 +66,19 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
 
-  function readWorkspaceListCache() {
-    const cache = safeParseJSON(localStorage.getItem(WORKSPACE_LIST_CACHE_KEY), null) as WorkspaceListCache | null
-    if (!cache?.workspaceList?.length)
-      return null
-    if (Date.now() - cache.updatedAt > WORKSPACE_CACHE_TTL)
-      return null
-    return cache
-  }
+  function clearWorkspaceCache() {
+    localStorage.removeItem(LEGACY_WORKSPACE_LIST_CACHE_KEY)
+    localStorage.removeItem(LEGACY_WORKSPACE_PERMISSION_CACHE_KEY)
 
-  function writeWorkspaceListCache() {
-    localStorage.setItem(WORKSPACE_LIST_CACHE_KEY, JSON.stringify({
-      workspaceList: workspaceList.value,
-      sharedWorkspaceList: sharedWorkspaceList.value,
-      currentWorkspaceId: currentWorkspace.value?.id,
-      updatedAt: Date.now(),
-    } satisfies WorkspaceListCache))
-  }
-
-  function readWorkspacePermissionCache(workspaceId: number) {
-    const cache = safeParseJSON(localStorage.getItem(WORKSPACE_PERMISSION_CACHE_KEY), null) as WorkspacePermissionCache | null
-    if (!cache || cache.workspaceId !== workspaceId)
-      return null
-    if (Date.now() - cache.updatedAt > WORKSPACE_CACHE_TTL)
-      return null
-    return cache
-  }
-
-  function writeWorkspacePermissionCache(workspaceId: number) {
-    localStorage.setItem(WORKSPACE_PERMISSION_CACHE_KEY, JSON.stringify({
-      workspaceId,
-      permissions: permissionStore.getPermissionCodes(),
-      updatedAt: Date.now(),
-    } satisfies WorkspacePermissionCache))
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index)
+      if (
+        key?.startsWith(`${WORKSPACE_LIST_CACHE_KEY_PREFIX}:`)
+        || key?.startsWith(`${WORKSPACE_PERMISSION_CACHE_KEY_PREFIX}:`)
+      ) {
+        localStorage.removeItem(key)
+      }
+    }
   }
 
   function syncElectronWorkspaceId(workspaceId: number, workspaceType?: number) {
@@ -200,26 +167,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   async function fetchWorkspaceList() {
     const endFetchWorkspaceList = createPerfTimer('workspace:fetchWorkspaceList')
-    const cache = readWorkspaceListCache()
-    if (cache) {
-      workspaceList.value = cache.workspaceList
-      sharedWorkspaceList.value = cache.sharedWorkspaceList
-      if (!currentWorkspace.value) {
-        currentWorkspace.value = workspaceList.value.find(item => item.id === cache.currentWorkspaceId)
-          ?? workspaceList.value.find(item => item.workspaceDefault)
-      }
-      endFetchWorkspaceList({
-        cached: true,
-        rows: workspaceList.value.length,
-        sharedRows: sharedWorkspaceList.value?.length ?? 0,
-      })
-      return {
-        code: 0,
-        data: {
-          rows: workspaceList.value,
-        },
-      } as Awaited<ReturnType<typeof API.limit.userGetWorkspaceListList>>
-    }
 
     const [result, sharedWorkspace] = await Promise.all([
       API.limit.userGetWorkspaceListList(),
@@ -250,8 +197,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       globalThis.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
     }
 
-    writeWorkspaceListCache()
-
     return result
   }
 
@@ -281,6 +226,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     workspaceList.value = []
     sharedWorkspaceList.value = []
     workspaceEntrySilent.value = false
+    clearWorkspaceCache()
     getProxyStore().clearProxyVendors()
     globalThis.electronAPI.send('user:setSharedWorkspaceList', [])
   }
@@ -293,16 +239,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       workspaceId,
       pendingSwitch: Boolean(options?.pendingSwitch),
     })
-    const cache = readWorkspacePermissionCache(workspaceId)
-    if (cache) {
-      permissionStore.setPermissionCodes(cache.permissions)
-      endGetPermission({
-        permissionCount: cache.permissions.length,
-        cached: true,
-      })
-      return
-    }
-
     const { code, data, msg } = await API.team.userGetTeamPermissionsList({ workspaceId: workspaceId.toString() })
     onlyErrorToast(code, msg)
     if (code !== 0)
@@ -317,7 +253,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       return
 
     permissionStore.setPermissions(data.rows)
-    writeWorkspacePermissionCache(workspaceId)
   }
 
   async function setCurrentWorkspace(
@@ -359,7 +294,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
               workspaceId: nextWorkspace.id,
               workspaceName: nextWorkspace.workspaceName,
             })
-          } else if (document.visibilityState === 'visible') {
+          }
+          else if (document.visibilityState === 'visible') {
             const userStore = getUserStore()
 
             workspaceChangeChannel.postMessage({
@@ -493,6 +429,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     workspaceEntrySilent,
     maxCreateWindowCount,
     resetWorkspace,
+    clearWorkspaceCache,
     getWorkspaceList,
     setCurrentWorkspace,
     prepareWorkspace,
