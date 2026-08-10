@@ -8,8 +8,8 @@ const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')
 const themeStore = useThemeStore()
 
 const qrcodeImage = computed(() => themeStore.realTheme === 'dark'
-  ? '/images/agent-console/custom-template-wechat-dark.png'
-  : '/images/agent-console/custom-template-wechat-light.png')
+  ? '/images/agent-console/feedback-consultant-qr-dark.svg'
+  : '/images/agent-console/feedback-consultant-qr-light.svg')
 
 const benefits = computed(() => [
   $t('一对一梳理您的使用场景、目标和风控要求'),

@@ -48,6 +48,7 @@ const hasMore = ref(true)
 const records = ref<CreditsRecord[]>([])
 const listRef = ref<HTMLElement | null>(null)
 const filterSelectRef = ref<HTMLElement | null>(null)
+let latestLoadId = 0
 
 const tabs = [
   { id: 'recharge', label: $t('充值记录') },
@@ -107,10 +108,10 @@ function setFilter(filter: TimeFilter) {
   loadData(true)
 }
 
-function getDateQuery() {
-  if (activeFilter.value === 'all') return {}
+function getDateQuery(filter: TimeFilter) {
+  if (filter === 'all') return {}
 
-  const days = activeFilter.value === '30d' ? 30 : 90
+  const days = filter === '30d' ? 30 : 90
   return {
     startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
@@ -118,10 +119,17 @@ function getDateQuery() {
 }
 
 async function loadData(reset = false) {
-  if ((reset ? loading.value : loadingMore.value) || (!reset && !hasMore.value)) return
+  if (!reset && (loading.value || loadingMore.value || !hasMore.value))
+    return
+
+  const loadId = reset ? ++latestLoadId : latestLoadId
+  const requestedTab = activeTab.value
+  const requestedFilter = activeFilter.value
+  const requestedPage = reset ? 1 : pageIndex.value
 
   if (reset) {
     loading.value = true
+    loadingMore.value = false
     pageIndex.value = 1
     total.value = 0
     hasMore.value = true
@@ -132,12 +140,12 @@ async function loadData(reset = false) {
 
   try {
     const query = {
-      page_index: pageIndex.value,
+      page_index: requestedPage,
       page_size: PAGE_SIZE,
-      ...getDateQuery(),
+      ...getDateQuery(requestedFilter),
     }
     const request =
-      activeTab.value === 'recharge'
+      requestedTab === 'recharge'
         ? API.points.userGetPointsRechargeRecordsList(query)
         : API.points.userGetPointsChargesRecordsList({
             ...query,
@@ -147,25 +155,27 @@ async function loadData(reset = false) {
 
     const { code, data } = (await request) as any
 
-    if (code !== 0) return
+    if (loadId !== latestLoadId || code !== 0)
+      return
 
-    const timeField = activeTab.value === 'charge' ? 'chargedAt' : 'payTime'
+    const timeField = requestedTab === 'charge' ? 'chargedAt' : 'payTime'
     const nextRecords = (data?.rows ?? []).map((row: any, index: number) => ({
-      id: row.orderNo || row.id || `${activeTab.value}-${pageIndex.value}-${index}`,
+      id: row.orderNo || row.id || `${requestedTab}-${requestedPage}-${index}`,
       date: formatRecordTime(row[timeField]),
       points: row.points || 0,
-      amount: activeTab.value === 'recharge' && row.amount ? `$${row.amount}` : undefined,
+      amount: requestedTab === 'recharge' && row.amount ? `$${row.amount}` : undefined,
       description:
-        activeTab.value === 'recharge'
+        requestedTab === 'recharge'
           ? OrderTypeStr[row.orderType] || row.orderType || $t('充值')
           : row.description || row.name || row.scene || $t('使用'),
     }))
 
     total.value = Number(data?.total) || 0
-    records.value = reset ? nextRecords : [...records.value, ...nextRecords]
-    hasMore.value = total.value > 0 ? records.value.length < total.value : nextRecords.length === PAGE_SIZE
+    const updatedRecords = reset ? nextRecords : [...records.value, ...nextRecords]
+    records.value = updatedRecords
+    hasMore.value = total.value > 0 ? updatedRecords.length < total.value : nextRecords.length === PAGE_SIZE
 
-    if (hasMore.value) pageIndex.value += 1
+    if (hasMore.value) pageIndex.value = requestedPage + 1
 
     if (reset) {
       nextTick(() => {
@@ -175,8 +185,10 @@ async function loadData(reset = false) {
   } catch (error) {
     console.error('Failed to load credits data:', error)
   } finally {
-    loading.value = false
-    loadingMore.value = false
+    if (loadId === latestLoadId) {
+      loading.value = false
+      loadingMore.value = false
+    }
   }
 }
 
