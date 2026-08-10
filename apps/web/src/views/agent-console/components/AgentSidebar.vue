@@ -165,9 +165,9 @@ onBeforeUnmount(() => {
       @scroll.passive="syncSidebarScrollMask"
     >
       <div class="sidebar-menu">
+        <AgentNav :items="secondaryNavItems" @select="onNavSelect" />
         <AgentNav :items="primaryNavItems" @select="onNavSelect" />
         <TemplateMenu />
-        <AgentNav :items="secondaryNavItems" @select="onNavSelect" />
       </div>
       <ConversationList
         :active-conversation-id="activeConversationId"

@@ -77,7 +77,7 @@ function onAsideBuy() {
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ 'active': isActive, 'roxy-agent': item.meta?.isRoxyAgent, 'roxy-claw': item.meta?.isRoxyClaw }"
          @click.prevent="handleClickItem($event, navigate)"
       >
         <!-- Roxy Claw 菜单样式 -->
@@ -106,9 +106,9 @@ function onAsideBuy() {
         <!-- Roxy Agent 菜单样式 -->
         <template v-else-if="item.meta?.isRoxyAgent">
           <SvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
-          <div class="flex items-center justify-between w-full menu-title">
+          <div class="flex items-center gap-2 menu-title">
             <span class="roxy-agent-title ellipsis-1">{{ item.meta?.title }}</span>
-            <span v-if="item.meta?.showNewBadge" class="new-badge">New</span>
+            <span v-if="item.meta?.showNewBadge" class="new-badge">{{ $t('自动化') }}</span>
           </div>
         </template>
 
@@ -237,10 +237,16 @@ function onAsideBuy() {
 }
 
 .roxy-agent-title {
-  background: linear-gradient(101deg, #3faaf6 -10.13%, #f359dc 44.94%, #f28fb0 100%);
+  background: linear-gradient(103.72deg, #3faaf6 10.6%, #f359dc 55.3%, #f28fb0 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-family: Archivo, sans-serif;
+  font-size: 16px;
+  font-variation-settings: 'wdth' 100;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.14px;
 }
 
 .new-badge-icon {
@@ -252,17 +258,21 @@ function onAsideBuy() {
 
 .new-badge {
   display: inline-flex;
-  flex-shrink: 0;
-  height: 16px;
+  width: max-content;
+  min-width: 40px;
+  height: 15px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
-  border: 1px solid var(--colors-border-border-brand, #11a3fd);
-  border-radius: 40px;
-  color: var(--colors-text-text-brand, #11a3fd);
+  padding: 0 5px;
+  border: 0;
+  border-radius: 7.5px;
+  background: linear-gradient(113.67deg, #12a3fc 0%, #c36df4 100%);
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', sans-serif;
   font-size: 10px;
-  font-weight: 500;
-  line-height: 14px;
-  letter-spacing: -0.1px;
+  font-weight: 400;
+  line-height: 15px;
+  white-space: nowrap;
 }
 </style>

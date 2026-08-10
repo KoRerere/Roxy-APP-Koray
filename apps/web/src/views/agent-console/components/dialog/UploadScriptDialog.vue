@@ -43,9 +43,11 @@ const parsed = ref<AgentScriptSelfDescription>()
 const errorMessage = ref('')
 const parsing = ref(false)
 const uploading = ref(false)
+const isDraggingFile = ref(false)
 const parsedName = computed(() => pickLocalized(parsed.value?.metadata.name, localeStore.currentLocale))
 const parsedDescription = computed(() => pickLocalized(parsed.value?.metadata.description, localeStore.currentLocale))
 let parseRequestId = 0
+let dragDepth = 0
 
 function closeDialog() {
   dialogRef?.value.close()
@@ -90,12 +92,7 @@ async function parseSource(value: string) {
   }
 }
 
-async function selectFile(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file)
-    return
+async function loadFile(file: File) {
   if (!/\.(?:js|ts)$/i.test(file.name)) {
     errorMessage.value = $t('仅支持 .js 或 .ts 脚本文件')
     return
@@ -104,6 +101,56 @@ async function selectFile(event: Event) {
   parsed.value = undefined
   source.value = await file.text()
   await parseSource(source.value)
+}
+
+async function selectFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (file)
+    await loadFile(file)
+}
+
+function isFileDrag(event: DragEvent) {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files')
+}
+
+function resetDragState() {
+  dragDepth = 0
+  isDraggingFile.value = false
+}
+
+function handleDragEnter(event: DragEvent) {
+  if (!isFileDrag(event))
+    return
+  event.preventDefault()
+  dragDepth += 1
+  isDraggingFile.value = true
+}
+
+function handleDragOver(event: DragEvent) {
+  if (!isFileDrag(event))
+    return
+  event.preventDefault()
+  if (event.dataTransfer)
+    event.dataTransfer.dropEffect = 'copy'
+}
+
+function handleDragLeave(event: DragEvent) {
+  if (!isFileDrag(event))
+    return
+  event.preventDefault()
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (dragDepth === 0)
+    isDraggingFile.value = false
+}
+
+async function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  const file = event.dataTransfer?.files?.[0]
+  resetDragState()
+  if (file)
+    await loadFile(file)
 }
 
 function downloadTemplate() {
@@ -224,9 +271,20 @@ watch(source, () => {
             :placeholder="$t('请在此粘贴符合格式要求的脚本...')"
             spellcheck="false"
           />
-          <button v-else class="upload-script-dialog__dropzone" type="button" @click="fileInput?.click()">
+          <button
+            v-else
+            class="upload-script-dialog__dropzone"
+            :class="{ 'is-dragging': isDraggingFile }"
+            type="button"
+            @click="fileInput?.click()"
+            @dragenter="handleDragEnter"
+            @dragleave="handleDragLeave"
+            @dragover="handleDragOver"
+            @drop="handleDrop"
+          >
             <SvgIcon name="extension/rx_ic_upload" size="20" />
             <span>{{ selectedFile?.name || $t('选择 .js 或 .ts 文件') }}</span>
+            <small>{{ $t('点击上传文件，也可直接拖拽上传') }}</small>
           </button>
           <input ref="fileInput" type="file" accept=".js,.ts,application/javascript,text/javascript,application/typescript" hidden @change="selectFile">
         </section>
@@ -429,6 +487,26 @@ watch(source, () => {
   color: var(--color-text-tertiary);
   background: var(--color-bg-primary);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+  small {
+    color: var(--color-text-disabled);
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  &:hover,
+  &:focus-visible,
+  &.is-dragging {
+    border-color: var(--color-border-primary-inverse);
+    color: var(--color-text-primary);
+    background: var(--color-bg-quaternary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-border-primary-inverse) 12%, transparent);
+    outline-offset: 2px;
+  }
 }
 
 .upload-script-dialog__result {

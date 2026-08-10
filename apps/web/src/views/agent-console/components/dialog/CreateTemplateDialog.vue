@@ -96,10 +96,12 @@ const loadingSources = ref(false)
 const loadingDetail = ref(needsDetailLoad)
 const detailError = ref('')
 const uploadingSkill = ref(false)
+const isDraggingSkillFile = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const skillInput = ref<HTMLInputElement>()
 let sourceRequest = 0
+let skillDragDepth = 0
 
 const isEditing = computed(() => Boolean(editingTemplate))
 const isReadonly = computed(() => Boolean(dialogData.readonly))
@@ -277,6 +279,7 @@ function selectType(kind: MyTemplateKind) {
   description.value = ''
   prompt.value = ''
   formError.value = ''
+  resetSkillDragState()
   hydrateScriptParamsForm({})
   void loadOfficialSources(kind)
 }
@@ -350,12 +353,7 @@ function openScriptUpload() {
   })
 }
 
-async function uploadSkillFile(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file)
-    return
+async function uploadSkill(file: File) {
   if (!file.name.toLowerCase().endsWith('.zip')) {
     formError.value = $t('仅支持 .zip Skill 包')
     return
@@ -393,6 +391,67 @@ async function uploadSkillFile(event: Event) {
   finally {
     uploadingSkill.value = false
   }
+}
+
+async function uploadSkillFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (file)
+    await uploadSkill(file)
+}
+
+function isFileDrag(event: DragEvent) {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files')
+}
+
+function canDropSkillFile(event: DragEvent) {
+  return templateType.value === 'skill'
+    && !sourceLocked.value
+    && !isReadonly.value
+    && !saving.value
+    && !uploadingSkill.value
+    && isFileDrag(event)
+}
+
+function resetSkillDragState() {
+  skillDragDepth = 0
+  isDraggingSkillFile.value = false
+}
+
+function handleSkillDragEnter(event: DragEvent) {
+  if (!canDropSkillFile(event))
+    return
+  event.preventDefault()
+  skillDragDepth += 1
+  isDraggingSkillFile.value = true
+}
+
+function handleSkillDragOver(event: DragEvent) {
+  if (!canDropSkillFile(event))
+    return
+  event.preventDefault()
+  if (event.dataTransfer)
+    event.dataTransfer.dropEffect = 'copy'
+}
+
+function handleSkillDragLeave(event: DragEvent) {
+  if (!isFileDrag(event))
+    return
+  event.preventDefault()
+  skillDragDepth = Math.max(0, skillDragDepth - 1)
+  if (skillDragDepth === 0)
+    isDraggingSkillFile.value = false
+}
+
+async function handleSkillDrop(event: DragEvent) {
+  if (!canDropSkillFile(event))
+    return
+  event.preventDefault()
+  const file = event.dataTransfer?.files?.[0]
+  resetSkillDragState()
+  if (file)
+    await uploadSkill(file)
 }
 
 async function closeDialog() {
@@ -551,7 +610,21 @@ onMounted(() => {
         :template-type="templateType"
         scope="content"
       />
-      <section v-else-if="templateType !== 'prompt'" class="create-template-dialog__content-panel">
+      <section
+        v-else-if="templateType !== 'prompt'"
+        class="create-template-dialog__content-panel"
+        :class="{ 'is-skill-dragging': isDraggingSkillFile }"
+        @dragenter="handleSkillDragEnter"
+        @dragleave="handleSkillDragLeave"
+        @dragover="handleSkillDragOver"
+        @drop="handleSkillDrop"
+      >
+        <div v-if="isDraggingSkillFile" class="create-template-dialog__skill-drop-prompt" aria-hidden="true">
+          <SvgIcon name="extension/rx_ic_upload" size="20" />
+          <span>{{ $t('拖拽到此处上传 Skill') }}</span>
+          <small>{{ $t('仅支持 .zip 格式的 Skill 包') }}</small>
+        </div>
+
         <AgentFormField :label="templateType === 'script' ? $t('选择脚本') : $t('选择 Skill')">
           <div class="create-template-dialog__source-row">
             <AgentInput v-if="sourceLocked" :model-value="sourceLockedLabel" disabled />
@@ -796,6 +869,7 @@ onMounted(() => {
 }
 
 .create-template-dialog__content-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -803,6 +877,42 @@ onMounted(() => {
   border: 1px solid var(--color-border-secondary);
   border-radius: 12px;
   background: var(--color-bg-tertiary);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &.is-skill-dragging {
+    border: 1px dashed var(--color-border-primary-inverse);
+    border-radius: 10px;
+    color: var(--color-text-primary);
+    background: var(--color-bg-quaternary);
+
+    > :not(.create-template-dialog__skill-drop-prompt) {
+      opacity: 0;
+    }
+  }
+}
+
+.create-template-dialog__skill-drop-prompt {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-bg-quaternary);
+  pointer-events: none;
+
+  small {
+    color: var(--color-text-disabled);
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 
 .create-template-dialog__source-row {

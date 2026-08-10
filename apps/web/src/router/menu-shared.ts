@@ -57,6 +57,7 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
           type: 'button',
           menuAction: 'roxy-agent',
           icon: 'roxy-agent/rx-ic-logo',
+          isRoxyAgent: true,
           showNewBadge: true,
           permissions: ['Roxy_AI_Agent_All'],
         },

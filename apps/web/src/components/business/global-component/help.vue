@@ -7,34 +7,20 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 // import { useWorkspaceStore } from '/@/stores/workspace'
 import { useSimpleLocale } from '/@/stores/locale'
 // import { useRoleStore } from '/@/stores/role'
-import { usePermission } from '/@/hooks/usePermission'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { getDictMap } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { API } from '/@/api'
 // import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
-import AgentLabel from './agent-label.vue'
-import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 import type { ViewportPoint } from '/@/hooks/useViewportDraggableFloating'
 import { clampPointToViewport, useViewportDraggableFloatingGroup } from '/@/hooks/useViewportDraggableFloating'
-import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
-import { useDocumentVisibility } from '@vueuse/core'
 import { useRouteContext } from '/@/composables/useRouteContext'
 
 let timer: any = null
 const showTooltipDelay = 60 * 1000
 
-// 用于强制重新创建 AgentLabel 组件的 key
-const agentLabelKey = ref(0)
-// 每 1 分钟刷新一次组件（强制重新创建 AgentLabel）
-const AGENT_LABEL_REFRESH_INTERVAL = 1 * 60 * 1000
-
-const visibility = useDocumentVisibility()
-const agentLabelPaused = computed(() => visibility.value !== 'visible')
-
 const route = useRoute()
 const router = useRouter()
-const { check } = usePermission()
 const { currentLocale, getOfficialWebsite } = useSimpleLocale()
 const { isEcommerce } = useRouteContext()
 // const { currentWorkspace } = storeToRefs(useWorkspaceStore())
@@ -43,11 +29,8 @@ const { isEcommerce } = useRouteContext()
 // const { onboardingTaskStatus } = useOnboardingTaskStatus()
 const { showMenu } = usePopupMenu()
 const [showModal] = useDialog()
-const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
-const isBeforeEnterPage = computed(() => route.name === 'before-enter')
-
-/** 帮助区悬浮组（Agent + 气泡）整体位置持久化 */
+/** 帮助气泡位置持久化 */
 const HELP_FLOAT_STORAGE_KEY = 'roxy-browser.helpFloatPositions.v2'
 const HELP_FLOAT_STORAGE_KEY_V1 = 'roxy-browser.helpFloatPositions.v1'
 const HELP_FLOAT_RIGHT_GAP = 16
@@ -110,12 +93,6 @@ function onBubbleTriggeredClick(ev: MouseEvent) {
   if (helpDockFloat.swallowFollowingClick(ev))
     return
   showHelp(ev)
-}
-
-function onAgentTriggeredClick(ev: MouseEvent) {
-  if (helpDockFloat.swallowFollowingClick(ev))
-    return
-  openRoxyAIAgent()
 }
 
 const showTooltip = ref(false)
@@ -231,11 +208,6 @@ onMounted(() => {
   bootstrapHelpFloatLayout()
 })
 
-// 每 1 分钟更新一次 key，强制重新创建 AgentLabel（页面 hidden 时暂停）
-useVisibilityAwareInterval(() => {
-  agentLabelKey.value++
-}, AGENT_LABEL_REFRESH_INTERVAL)
-
 async function getFaqList() {
   const { code, data } = await API.base.getFaqHelpList()
   if (code !== 0)
@@ -310,15 +282,12 @@ function openScore() {
 </script>
 
 <template>
-  <!-- Agent + 帮助气泡并排，整体拖拽 -->
+  <!-- 帮助气泡 -->
   <div ref="helpDock" class="help-float-dock touch-none select-none" :class="[
     { 'help-float-dock-dragging': helpDockFloat.dragging },
     helpFloatLayoutReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
   ]" :style="helpDockCss" @pointerdown="helpDockFloat.onPointerDown"
   >
-    <div v-if="check('Roxy_AI_Agent_All') && !isEcommerce && !isBeforeEnterPage" id="mcp" class="help-float-item help-float-item-agent flex shrink-0" @click="onAgentTriggeredClick">
-      <AgentLabel :key="agentLabelKey" :paused="agentLabelPaused" />
-    </div>
     <div class="help-float-item help-float-item-bubble relative shrink-0" @click="onBubbleTriggeredClick">
       <div v-show="showTooltip" class="absolute right-0 -top-7.5 inline-flex px-2 py-1 rounded-1 whitespace-nowrap tooltip pointer-events-none">
         {{ $t('有疑问吗？欢迎随时与我们联系！') }}
