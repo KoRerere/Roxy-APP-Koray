@@ -1,6 +1,5 @@
 import { useDialog } from 'primevue/usedialog'
 import { useUserStore } from '/@/stores/user'
-import { usePermission } from '/@/hooks/usePermission'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
@@ -16,7 +15,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { enhanceCountdown, genDriver, getImage, getLocalStorageDriverStatus, isMainWindow, setLocalStorageDriverStatus, sleep, supportsApp4_0_0 } from '/@/utils'
+import { enhanceCountdown, getImage, isMainWindow, supportsApp4_0_0 } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -59,7 +58,6 @@ export function useSubscribe() {
   const { getUserPayInfo, clearUserInfo } = userStore
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { isOwner } = storeToRefs(useRoleStore())
-  const { check } = usePermission()
   // const { currentLocale } = useSimpleLocale()
 
   // const $t528 = localStorage.getItem('$T528')
@@ -259,7 +257,7 @@ export function useSubscribe() {
             <AppUpgradeTips
               onSkip={() => {
                 handleCancel()
-                showMcpDriver()
+                checkScoreDialog()
               }}
               newFeatureTips={newFeatureTips}
             />
@@ -424,34 +422,6 @@ export function useSubscribe() {
         container: ({ handleCancel }) => <WelcomeModal onClose={handleCancel} />,
       },
     })
-  }
-
-  async function showMcpDriver() {
-    if (getLocalStorageDriverStatus('mcpGuide') || !check('Roxy_AI_Agent_All'))
-      return
-
-    await Promise.all([
-      sleep(50), // 延迟 50ms 让外部元素加载完成
-      nextTick(),
-    ])
-
-    const driverObj = genDriver({
-      steps: [
-        {
-          element: '#mcp',
-          popover: {
-            description: $t('Roxy AI Agent 可以帮你管理浏览器窗口、平台账号还有代理 IP，并帮助您实现浏览器的自动化操作'),
-            side: 'left',
-            align: 'center',
-          },
-        },
-      ],
-      onDestroyed: () => {
-        setLocalStorageDriverStatus('mcpGuide', true)
-        checkScoreDialog()
-      },
-    })
-    driverObj.drive()
   }
 
   function checkScoreDialog() {
