@@ -54,11 +54,11 @@ watchEffect(() => {
 
 <template>
   <AnimatePresence :initial="false">
-    <motion.div v-if="items.length && !collapsedChildren" v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }" :animate="{ height: 'auto', opacity: 1, y: 0 }"
-                :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
-                  duration: 0.6,
-                  ease: [0, 0.71, 0.2, 1.01],
-                  opacity: { duration: 0.3, ease: 'backOut' },
+    <motion.div v-if="items.length && !collapsedChildren" v-bind="$attrs" :initial="{ height: '0px', opacity: 0 }" :animate="{ height: 'auto', opacity: 1 }"
+                :exit="{ height: '0px', opacity: 0 }" :transition="{
+                  duration: 0.25,
+                  ease: [0.4, 0, 0.2, 1],
+                  opacity: { duration: 0.15, ease: 'easeOut' },
                 }" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }"
     >
       <template v-for="item in items" :key="item.name">
@@ -95,7 +95,7 @@ watchEffect(() => {
   padding-left: calc(32px * v-bind(level));
 
   &.level-1 {
-    overflow: hidden;
+  overflow: hidden;
   }
 
   &:last-of-type,
