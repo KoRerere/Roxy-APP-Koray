@@ -1025,7 +1025,7 @@ onBeforeUnmount(() => {
                     :disabled="resolvingTemplateId !== undefined"
                     @click="runHomeTemplate(card)"
                   >
-                    {{ $t('执行') }}
+                    {{ $t('使用') }}
                   </button>
                 </div>
               </article>

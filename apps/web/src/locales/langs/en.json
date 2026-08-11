@@ -1705,7 +1705,6 @@
   "打开账号": "Open Account",
   "打开账号时，是否打开工作台页面": "Whether to open the workbench page when launching an account",
   "打开账号时，浏览器使用的默认搜索引擎": "Default search engine used by the browser when launching an account",
-  "执行": "Run",
   "执行不可逆操作前，均需获得您的确认": "Ask for confirmation before irreversible actions",
   "执行中": "Running",
   "执行信息": "Execution Information",
