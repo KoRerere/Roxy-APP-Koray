@@ -62,9 +62,15 @@ export function hasComposerProtocolTokens(prompt: string) {
 }
 
 export function getMissingComposerTokenLabels(prompt: string) {
+  const tokens = scanComposerProtocolTokens(prompt)
+  const requiresFilledInputs = tokens.some(token => token.kind === 'skill' && token.templateRef)
+
+  if (!requiresFilledInputs)
+    return []
+
   const labels: string[] = []
 
-  for (const token of scanComposerProtocolTokens(prompt)) {
+  for (const token of tokens) {
     if (token.kind === 'input' && !token.target.trim()) {
       labels.push(token.title)
     }

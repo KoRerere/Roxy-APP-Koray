@@ -342,7 +342,7 @@ describe('template protocol tokens', () => {
 })
 
 describe('input protocol tokens', () => {
-  it('parses empty input placeholders and reports them as missing', () => {
+  it('parses empty input placeholders without requiring them outside a skill', () => {
     const doc = parsePromptString('我的产品：[input:产品名]；目标市场：[input:目标市场]()', {
       profiles: [],
       slashItems: [],
@@ -350,7 +350,7 @@ describe('input protocol tokens', () => {
 
     assert.equal(doc.content?.[0]?.content?.[1]?.attrs?.kind, 'input')
     assert.equal(doc.content?.[0]?.content?.[1]?.attrs?.title, '产品名')
-    assert.deepEqual(getMissingComposerTokenLabels(serializePromptDoc(doc)), ['产品名', '目标市场'])
+    assert.deepEqual(getMissingComposerTokenLabels(serializePromptDoc(doc)), [])
   })
 
   it('serializes filled input chips as plain text', () => {
@@ -380,10 +380,21 @@ describe('input protocol tokens', () => {
     assert.equal(serializePromptDoc(doc), '我的产品：XX榨汁杯')
   })
 
-  it('reports empty input tokens but allows an unselected profile token before send', () => {
+  it('reports empty input tokens when a skill is referenced', () => {
     assert.deepEqual(
-      getMissingComposerTokenLabels('我的产品：[input:产品名]() 打开 [@profile:0]()'),
+      getMissingComposerTokenLabels('[$市场分析](user:42) 我的产品：[input:产品名]() 打开 [@profile:0]()'),
       ['产品名'],
+    )
+  })
+
+  it('does not require empty input tokens for scripts or prompts', () => {
+    assert.deepEqual(
+      getMissingComposerTokenLabels('[@script:市场分析](official:104) 目标市场：[input:目标市场]()'),
+      [],
+    )
+    assert.deepEqual(
+      getMissingComposerTokenLabels('目标市场：[input:目标市场]()'),
+      [],
     )
   })
 
