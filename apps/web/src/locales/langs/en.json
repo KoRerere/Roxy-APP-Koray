@@ -16,7 +16,6 @@
   "* 我们推荐您使用 /new 指令来开始新任务，以提升 Roxy AI Agent 的表现": "* We recommend using /new to start a new task for better Roxy AI Agent performance",
   "* 打开窗口后，您也可以使用快捷键 {shortcut} 重新进行网格排列。": "* After opening profiles, you can also use the shortcut {shortcut} to rearrange them in a grid.",
   "* 支付遇到问题？ {link}": "* Payment issues? {link}",
-  "* 数据为通用模式下的消耗统计，使用专家模式可能积分消耗更快。": "* Data represents consumption statistics in General Mode; using Expert Mode may consume credits faster.",
   "* 活动期间成功充值，即可解锁以上权益": "* Top-up to unlocks the above benefits",
   "* 要查看所有交易记录，请访问{billing}。": "* To view all transaction records, please visit {billing}.",
   "* 请开启全局代理 / TUN 模式，以确保网络环境一致": "* Enable global proxy / TUN mode to ensure a consistent network environment",

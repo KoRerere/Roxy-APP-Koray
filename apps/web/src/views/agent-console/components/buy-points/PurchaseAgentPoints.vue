@@ -382,10 +382,6 @@ function handleClose() {
               </p>
             </li>
           </ul>
-
-          <p class="text-3 leading-[1.4] font-normal my-0 tt-inactive">
-            {{ $t('* 数据为通用模式下的消耗统计，使用专家模式可能积分消耗更快。') }}
-          </p>
         </div>
       </div>
 
