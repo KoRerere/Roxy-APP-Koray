@@ -2,9 +2,11 @@
 import currency from 'currency.js'
 import { useCampaignStore } from '/@/stores/campaign'
 
-const { presets = [50, 100, 500, 1000], disabled = false } = defineProps<{
+const { presets = [50, 100, 500, 1000], disabled = false, min = 0 } = defineProps<{
   presets?: number[]
   disabled?: boolean
+  /** 低于该金额的快捷选项禁用 */
+  min?: number
 }>()
 
 const emit = defineEmits<{
@@ -22,12 +24,13 @@ const actualPresets = computed(() => {
       text: currency(value, { precision: 0 }).format(),
       percentage,
       value,
+      disabled: disabled || value < min,
     }
   })
 })
 
-function handleSelect(value: number) {
-  if (disabled)
+function handleSelect(value: number, itemDisabled: boolean) {
+  if (itemDisabled)
     return
 
   emit('select', value)
@@ -36,8 +39,8 @@ function handleSelect(value: number) {
 
 <template>
   <div class="flex items-center gap-2">
-    <div v-for="item in actualPresets" :key="item.value" class="relative min-w-25 py-1.5 px-4 text-center rounded-1.5 cursor-pointer select-none preset" :class="{ disabled }"
-         @click="handleSelect(item.value)"
+    <div v-for="item in actualPresets" :key="item.value" class="relative min-w-25 py-1.5 px-4 text-center rounded-1.5 cursor-pointer select-none preset" :class="{ disabled: item.disabled }"
+         @click="handleSelect(item.value, item.disabled)"
     >
       <span class="preset-text">{{ item.text }}</span>
       <AnimationBorder v-if="seasonalActivity.juneEighteen && item.percentage" class="absolute -top-0.5 right-1 position-y-center" :gradient="['#05caed', '#05caed', '#47d769']" :animation="false" :deg="110"

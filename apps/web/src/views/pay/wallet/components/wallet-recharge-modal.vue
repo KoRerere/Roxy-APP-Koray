@@ -2,7 +2,6 @@
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPaymentMethods from '/@/views/pay/wallet/components/wallet-payment-methods.vue'
 import NextBouns from '/@/views/campaign/june-eighteen/next-bouns.vue'
-import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 import { debounce } from 'es-toolkit'
 import { useUserStore } from '/@/stores/user'
@@ -31,16 +30,22 @@ const paywayList = [PayWay.Wechat, PayWay.Alipay, PayWay.Card, PayWay.USDT, PayW
 const selectedPayway = ref(paywayList[0].value)
 
 const disabledMethods = ref<PayWay[]>([])
-const min = 10
-const max = 10 ** 5
-const step = 10
-const amount = ref(10)
+const DEFAULT_MIN = 10
+const DEFAULT_MAX = 10 ** 5
+const DEFAULT_STEP = 10
 const loading = ref(false)
 const lockModal = ref(false)
-const minRechargeAmount = 1
 const playInfoList = ref()
 
-const rechargeAmount = computed(() => needAmount ? Math.max(needAmount, minRechargeAmount) : (amount.value ?? min))
+/** 余额不足时最低充值不得低于缺口金额（按 step 向上取整） */
+const min = computed(() => {
+  if (!needAmount)
+    return DEFAULT_MIN
+  return Math.max(ceilByStep(currency(needAmount).value, DEFAULT_STEP), DEFAULT_MIN)
+})
+
+const amount = ref(min.value)
+const rechargeAmount = computed(() => amount.value ?? min.value)
 const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，请勿关闭。') : '')
 
 const playInfo = computed(() => {
@@ -92,13 +97,13 @@ async function querySupportPayway() {
 
 function onUpdate(value: number) {
   nextTick(() => {
-    amount.value = Math.min(Math.max(ceilByStep(currency(value).value, step), min), max)
+    amount.value = Math.min(Math.max(ceilByStep(currency(value).value, DEFAULT_STEP), min.value), DEFAULT_MAX)
     delayQuery()
   })
 }
 
 function quickSelect(value: number) {
-  amount.value = value
+  amount.value = Math.min(Math.max(value, min.value), DEFAULT_MAX)
   delayQuery()
 }
 
@@ -130,51 +135,27 @@ function close(isCancel: boolean) {
 </script>
 
 <template>
-  <div class="flex flex-col pt-4 gap-6 overflow-hidden popup">
-    <div class="h-10 relative flex justify-between items-center px-6 header">
-      <span>{{ $t('钱包充值') }}</span>
+  <div class="flex flex-col pt-4 gap-6 overflow-hidden w-140">
+    <div class="h-10 relative flex justify-between items-center px-6">
+      <span class="tt-primary text-5 font-700 leading-normal">{{ $t('钱包充值') }}</span>
       <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)"
                @click="close(true)"
       />
     </div>
-    <div class="flex flex-col gap-6 px-6">
-      <div v-if="needAmount" class="flex flex-col gap-4">
-        <div v-if="playInfo.feeRate > 0" class="flex flex-col gap-2 w-full">
-          <div class="flex justify-between items-center">
-            <div class="text-3.5 text-[var(--colors-text-text-tertiary)] font-500">
-              {{ $t('充值金额') }}
-            </div>
-            <div class="text-[var(--colors-text-text-secondary)]">
-              {{ currency(rechargeAmount).format() }}
-            </div>
-          </div>
 
-          <div class="flex justify-between items-center">
-            <div class="flex gap-1 items-center text-3.5 text-[var(--colors-text-text-tertiary)] font-500">
-              <div>{{ $t('收取 {feeRate}% 的手续', { feeRate: playInfo.feeRate }) }}</div>
-              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo.feeRate }) }" class="flex items-center">
-                <SvgIcon name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
-              </div>
-            </div>
-            <div class="text-[var(--colors-text-text-secondary)]">
-              {{ currency(playInfo.fee).format() }}
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-between items-center need">
-          <div class="need-label">
-            {{ $t('实付金额') }}
-          </div>
-          <div class="need-value">
-            {{ currency(playInfo.total).format() }}
-          </div>
-        </div>
-        <RxAlert v-if="needAmount < minRechargeAmount" class="w-full" type="info" :content="$t('根据支付平台的要求，最低充值金额为 {amount}。', { amount: currency(minRechargeAmount).format() })" />
+    <div v-if="needAmount" class="px-6 flex justify-between items-center need">
+      <div class="tt-primary text-3.5 leading-5">
+        {{ $t('至少还需充值') }}
       </div>
-      <ItemBlock v-else :title="$t('请输入充值金额')">
+      <div class="tt-brand text-5 font-600 leading-normal">
+        {{ currency(needAmount).format() }}
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-6 px-6">
+      <ItemBlock :title="$t('请输入充值金额')">
         <div class="flex flex-col items-center gap-4">
-          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="max" :step="step" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
+          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="DEFAULT_MAX" :step="DEFAULT_STEP" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
                        :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
           />
           <div class="px-6 justify-between flex gap-3 tt-tertiary">
@@ -192,13 +173,12 @@ function close(isCancel: boolean) {
             </div>
           </div>
           <div class="mt-1 flex flex-col gap-2.5">
-            <RxAmountQuickCheck @select="quickSelect" />
+            <RxAmountQuickCheck :min="min" @select="quickSelect" />
             <NextBouns :amount="rechargeAmount" />
           </div>
         </div>
       </ItemBlock>
     </div>
-
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">
         <WalletPaymentMethods v-model="selectedPayway" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods"
@@ -208,32 +188,3 @@ function close(isCancel: boolean) {
     </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.popup {
-  width: 560px;
-}
-
-.header {
-  color: var(--colors-text-text-primary);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: normal;
-}
-
-.need {
-  &-label {
-    color: var(--colors-text-text-primary);
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 20px;
-  }
-
-  &-value {
-    color: var(--color-blue-300, #12a3fc);
-    font-size: 20px;
-    font-weight: 600;
-    line-height: normal;
-  }
-}
-</style>
