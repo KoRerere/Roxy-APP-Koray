@@ -77,6 +77,7 @@ import {
   UserGetProxyVendorJumpInfoListData,
   UserGetProxyVendorJumpInfoListParams,
   UserGetProxyVendorListListData,
+  UserGetRandomAvailableProxyMergedListData,
   UserGetTimezoneByCoordinatesInfoListData,
   UserGetTimezoneByCoordinatesInfoListParams,
   UserGetTimezoneByIpListData,
@@ -1158,6 +1159,22 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetRandomAvailableProxyMergedList
+   * @summary 随机获取一条可用代理
+   * @request GET:/user_get_random_available_proxy_merged
+   * @response `200` `UserGetRandomAvailableProxyMergedListData`
+   */
+  userGetRandomAvailableProxyMergedList = (params: RequestParams = {}) =>
+    this.http.request<UserGetRandomAvailableProxyMergedListData, any>({
+      path: `/user_get_random_available_proxy_merged`,
+      method: "GET",
       format: "json",
       ...params,
     });

@@ -3,17 +3,24 @@ import SingleProxies from './components/single-proxies.vue'
 import batchProxies from './components/batch-proxies.vue'
 import { useProxyCreateLabels } from './proxy-create-mode'
 import type { ProxyCreateMode } from './proxy-create-mode'
+import { useProxy } from '/@/views/agent/hooks'
 import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
+import { BuyEntryType } from '/@/enums'
 
 const { mode: modeProp } = defineProps<{
   mode?: ProxyCreateMode
 }>()
 
+const router = useRouter()
 const { mixpanelTrack } = useUserStore()
 const { saveProxyModules } = useProxyModuleCreate()
+const { buyProxy } = useProxy()
+const [showToast] = useResponseToast()
 
 const labels = useProxyCreateLabels(computed(() => modeProp ?? 'proxy'))
+const isDeviceMode = computed(() => labels.value.mode === 'device')
 
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
@@ -21,13 +28,43 @@ const tabs = ref([
 ])
 const tabsValue = ref('single')
 
-async function saveProxies(__proxies: any[]) {
-  await saveProxyModules(__proxies, { labels: labels.value })
+async function saveProxies(proxies: any[]) {
+  await saveProxyModules(proxies, { labels: labels.value })
+}
+
+/** 单条表单 confirm 已改为单对象，这里包成数组走统一保存 */
+async function saveSingleProxy(formData: Record<string, any>) {
+  await saveProxies([formData])
 }
 
 function onTabsChange(value: string | number) {
   if (value === 'batch')
     mixpanelTrack('click_batch_add_proxy')
+}
+
+/** 全页广告「立即购买」：弹购买菜单，成功后回列表并高亮新单 */
+async function onBuyClick() {
+  try {
+    const orderInfo = await buyProxy({
+      entryType: BuyEntryType.Immediate,
+      ...(isDeviceMode.value ? { mode: 'device' as const } : {}),
+    })
+
+    showToast(0, isDeviceMode.value
+      ? $t('设备已购买成功，正在为您配置中，请稍后。若长时间未加载设备，请刷新页面或联系技术支持。')
+      : $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
+
+    const routeName = labels.value.successRouteName
+    router.replace({
+      name: routeName,
+      query: routeName === 'agent-list'
+        ? { name: 'shop', orderNo: orderInfo?.orderNo }
+        : { orderNo: orderInfo?.orderNo },
+    })
+  }
+  catch {
+    // 用户关闭购买弹窗时 buyProxy reject，忽略即可
+  }
 }
 </script>
 
@@ -44,8 +81,8 @@ function onTabsChange(value: string | number) {
       </Tabs>
     </div>
     <div class="flex-ovh-1 w-full">
-      <div class="mx-auto h-full pt-4 pb-5">
-        <SingleProxies v-show="tabsValue === 'single'" show-remark :on-confirm="saveProxies" />
+      <div class="flex mx-auto h-full min-h-0">
+        <SingleProxies v-show="tabsValue === 'single'" :mode="modeProp ?? 'proxy'" show-remark show-advertise :on-confirm="saveSingleProxy" @buy="onBuyClick" />
       </div>
       <batchProxies v-show="tabsValue === 'batch'" :on-confirm="saveProxies" />
     </div>

@@ -1,7 +1,7 @@
 import { ROXY_SYNC_CONTROL_WINDOW_ID } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { canUseSyncControl } from '/@/modules/store'
 import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
@@ -41,7 +41,7 @@ export async function createSynchronizerWindow() {
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools()
   }
   handleWindowMove(win)

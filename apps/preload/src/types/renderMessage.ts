@@ -236,7 +236,7 @@ export interface RenderMessage {
   /** 动态设置窗口大小 */
   'app:resizeWindow': (payload: { width?: number, height?: number, center?: boolean }) => void
   /** 获取新功能提示，不为空数组表示有新功能提示 */
-  'app:getNewFeatureTips': () => string[]
+  'app:getNewFeatureTips': () => Promise<Array<{ content?: string, [key: string]: any }>>
   /** 获取最后一次跟新特性 */
   'app:getLastUpdateFeature': () => any
   /** 用户已读新功能提示 */

@@ -19,13 +19,13 @@ const {
   gradient = ['#12a3fc', '#ec51f7', '#ec51f7'],
 } = defineProps<Props>()
 
-const [startColor, midColor, endColor] = gradient
 const _borderWidth = CSS.px(borderWidth).toString()
 const _borderRadius = CSS.px(borderRadius).toString()
 
 const cssVar = computed(() => ({
   '--angle': `${deg}deg`,
   '--animation-duration': `${animationDuration}s`,
+  '--gradient-stops': gradient.join(', '),
 }))
 </script>
 
@@ -47,7 +47,7 @@ const cssVar = computed(() => ({
   border-radius: v-bind(_borderRadius);
   background:
     linear-gradient(v-bind(bgColor), v-bind(bgColor)) padding-box,
-    linear-gradient(var(--angle), v-bind(startColor), v-bind(midColor), v-bind(endColor)) border-box;
+    linear-gradient(var(--angle), var(--gradient-stops)) border-box;
 }
 
 .animation {

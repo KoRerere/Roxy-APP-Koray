@@ -1,9 +1,14 @@
 import { useConfirm } from 'primevue/useconfirm'
+import type { InjectionKey } from 'vue'
 import { API } from '/@/api'
-import { createDefaultObject, isEmptyValue } from '/@/utils'
+import { createDefaultObject, isEmptyValue, setOperationLoading } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { BuyEntryType, BuyProxyListType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
+import { usePermission } from '/@/hooks/usePermission'
+import { useProxyStore } from '/@/stores/proxy'
+import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import type { CheckResult } from '/@/views/agent/hooks'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
 import { clearProxyKeys, silentUpdateProxy } from '../components/util'
 
@@ -13,6 +18,14 @@ interface ProfileLike {
   moduleId?: number
   openTime?: string | number | null
   [key: string]: any
+}
+
+type ProfileRow = UserGetWindowInfoListListData['data']['rows'][number]
+
+/** 双开抽屉打开时的回调：购买成功回传可绑定代理行，添加成功回传表单 */
+export interface ProxyBuyAddDrawerHandlers {
+  onBuySuccess?: (proxy: any) => void | Promise<void>
+  onAddConfirm?: (formData: Record<string, any>) => void | Promise<void>
 }
 
 /** 资源型代理模块测速结果同步（同一 moduleId 可绑定多窗口，批量测速时应对 moduleId 去重后只调一次） */
@@ -39,6 +52,31 @@ export async function persistProfileRowAfterProxySpeedTest(
 
   const { code, msg } = await API.window.userMdfWindowProxyCheckBatchCreate({ proxyList, requestType: ProfileReqType.SpeedTest } as any)
   options.onlyErrorToast?.(code, msg)
+}
+
+/** 即时订单成功后解析可绑定代理行；非即时则跳转代理列表 */
+async function resolvePurchasedProxyFromOrder(
+  orderInfo: any,
+  options: {
+    router: ReturnType<typeof useRouter>
+    showToast: (code: number, msg: string) => void
+  },
+) {
+  options.showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
+
+  if (!orderInfo?.immediate) {
+    options.router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
+    return
+  }
+
+  const { code, data } = await API.proxy.userGetUserBuyProxyListList({
+    orderNo: orderInfo?.orderNo,
+    type: BuyProxyListType.Use,
+  } as any)
+  if (code !== 0 || !data.rows?.[0])
+    return
+
+  return data.rows[0]
 }
 
 export function useProfileProxy() {
@@ -108,4 +146,201 @@ export function useProfileProxy() {
     buildProxyData,
     confirmDeleteProxy,
   }
+}
+
+/**
+ * 购买官方即时代理 IP。
+ * 成功返回可绑定的代理行；用户取消、非即时订单跳转、或拉取失败时返回 undefined。
+ */
+export function usePurchaseOfficialProxy() {
+  const router = useRouter()
+  const [showToast] = useResponseToast()
+  const { buyProxy } = useProxy()
+  const { getProxyVendors } = useProxyStore()
+  const proxyProvider = ref<any>()
+
+  async function purchaseImmediateOfficialProxy() {
+    if (!proxyProvider.value) {
+      const vendors = await getProxyVendors()
+      if (!vendors)
+        return
+      proxyProvider.value = vendors.find((item: any) => item.isOfficial)
+    }
+
+    if (!proxyProvider.value)
+      return
+
+    const provider = {
+      proxyProviderId: proxyProvider.value.id,
+      proxyProviderWebsite: proxyProvider.value.vendorWebsite,
+      proxyProviderIcon: proxyProvider.value.vendorIcon,
+      proxyProviderName: proxyProvider.value.vendorName,
+    }
+
+    try {
+      const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
+      return await resolvePurchasedProxyFromOrder(orderInfo, { router, showToast })
+    }
+    catch {
+      // 用户关闭购买弹窗时 buyProxy reject，忽略即可
+    }
+  }
+
+  return { purchaseImmediateOfficialProxy }
+}
+
+/**
+ * 窗口列表「添加代理 IP」双开抽屉（购买 + 手动添加）。
+ * 需在页面级挂载 ProxyBuyAddDrawer，并通过 provide 下发给 ProfileInfo。
+ */
+export function useProxyBuyAddDrawer() {
+  const router = useRouter()
+  const [showToast] = useResponseToast()
+  const { check } = usePermission()
+  const { getProxyVendors } = useProxyStore()
+
+  const visible = ref(false)
+  const proxyProvider = ref<any>()
+  const handlers = shallowRef<ProxyBuyAddDrawerHandlers>({})
+
+  const showBuy = computed(() => check('Cost_Center_all'))
+  const showAdd = computed(() => check('Profiles_add_proxy_outside'))
+
+  const provider = computed(() => {
+    if (!proxyProvider.value)
+      return undefined
+
+    return {
+      proxyProviderId: proxyProvider.value.id,
+      proxyProviderWebsite: proxyProvider.value.vendorWebsite,
+      proxyProviderIcon: proxyProvider.value.vendorIcon,
+      proxyProviderName: proxyProvider.value.vendorName,
+    }
+  })
+
+  async function openProxyBuyAddDrawer(nextHandlers: ProxyBuyAddDrawerHandlers = {}) {
+    if (showBuy.value && !proxyProvider.value) {
+      const vendors = await getProxyVendors()
+      if (!vendors)
+        return
+      proxyProvider.value = vendors.find((item: any) => item.isOfficial)
+    }
+
+    // 无可展示面板时不打开
+    if (!showBuy.value && !showAdd.value)
+      return
+
+    handlers.value = nextHandlers
+    visible.value = true
+  }
+
+  function closeProxyBuyAddDrawer() {
+    visible.value = false
+  }
+
+  async function onProxyBuyAddBuySuccess(orderInfo: any) {
+    try {
+      const proxy = await resolvePurchasedProxyFromOrder(orderInfo, { router, showToast })
+      if (proxy)
+        await handlers.value.onBuySuccess?.(proxy)
+    }
+    finally {
+      closeProxyBuyAddDrawer()
+    }
+  }
+
+  async function onProxyBuyAddAddConfirm(formData: Record<string, any>) {
+    try {
+      await handlers.value.onAddConfirm?.(formData)
+    }
+    finally {
+      closeProxyBuyAddDrawer()
+    }
+  }
+
+  return {
+    visible,
+    showBuy,
+    showAdd,
+    provider,
+    openProxyBuyAddDrawer,
+    closeProxyBuyAddDrawer,
+    onProxyBuyAddBuySuccess,
+    onProxyBuyAddAddConfirm,
+  }
+}
+
+export type ProxyBuyAddDrawerApi = ReturnType<typeof useProxyBuyAddDrawer>
+
+export const PROXY_BUY_ADD_DRAWER_KEY: InjectionKey<ProxyBuyAddDrawerApi> = Symbol('proxyBuyAddDrawer')
+
+/**
+ * 窗口列表测速：并发检测、按行写窗口、按 moduleId 去重写代理模块（与 ProfileInfo 单行菜单共用 persist/notify）
+ */
+export function useProfileProxySpeedTest() {
+  const { testProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
+  const [, onlyErrorToast] = useResponseToast()
+
+  async function runProxySpeedTestForRows(targets: ProfileRow[], options?: Record<string, unknown>) {
+    if (!targets.length)
+      return
+    if (!globalThis.isElectron) {
+      return globalThis.electronAPI.send('proxy:detect', {} as any)
+    }
+
+    const { operationName, showConcurrentTaskTopBar, silent } = { operationName: 'checkProxy', showConcurrentTaskTopBar: false, silent: false, ...options }
+
+    const tasks = targets.map((item) => {
+      setOperationLoading(item, operationName, true)
+      return async () => {
+        try {
+          Reflect.deleteProperty(item, '_checkRes')
+          const checkRes = await testProxy(toRaw(item))
+          silentUpdateProxy(item, checkRes, { replaceProxy: false })
+          Reflect.set(item, '_checkRes', toRaw(checkRes))
+          return { item, checkRes }
+        }
+        finally {
+          setOperationLoading(item, operationName, false)
+        }
+      }
+    })
+
+    await concurrentProxyTest({
+      tasks,
+      showConcurrentTaskTopBar,
+      tasksCompleted: async (results: any[], cancelled: boolean) => {
+        results.forEach((res, i) => {
+          if (res === undefined)
+            setOperationLoading(targets[i]!, operationName, false)
+        })
+
+        const validResults = results.filter(Boolean)
+
+        if (!cancelled && !silent) {
+          batchTestShowToast(
+            validResults.map(p => ({ ...p.checkRes, proxyType: p.item.buyProxyType })),
+            { reCheck: () => runProxySpeedTestForRows(targets, options) },
+          )
+        }
+
+        const moduleDone = new Map<number, any>()
+        for (const { item, checkRes } of validResults) {
+          if (item.moduleId && item.buyProxyType === ProxyType.resource && !moduleDone.has(item.moduleId)) {
+            moduleDone.set(item.moduleId, { id: item.moduleId, ...checkRes })
+          }
+        }
+
+        notifyProxyModuleSpeedTest(Array.from(moduleDone.values()))
+        await persistProfileRowAfterProxySpeedTest(results, { onlyErrorToast: silent ? undefined : onlyErrorToast })
+      },
+    }).catch((err) => {
+      onlyErrorToast(-1, err.message)
+      targets.forEach((item) => {
+        setOperationLoading(item, operationName, false)
+      })
+    })
+  }
+
+  return { runProxySpeedTestForRows }
 }

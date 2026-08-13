@@ -83,6 +83,10 @@ export const appUpdater = new class AppUpdater {
     this.#updateMessageData.currentVersion = app.getVersion()
     this.#updateMessageData.releaseTime = releaseTime
     this.#updateMessageData.newFeatureTips = structuredClone(newFeatureTips ?? {})
+    // 远端 forceUpgrade 变化时同步退出安装开关（已初始化场景也会走到这里）
+    if (this.#isInitialized) {
+      this.#syncAutoInstallOnAppQuit()
+    }
 
     const baseUrl = await resolveAppGatewayBaseUrl()
     if (!baseUrl) {
@@ -123,7 +127,7 @@ export const appUpdater = new class AppUpdater {
 
   /** 冷启动：本地探测待安装包，命中则安装并跳过其余启动流程（仅 Windows） */
   async tryInstallPendingUpdateOnLaunch(): Promise<boolean> {
-    if (!isWindows || !isPackaged || !getAutoUpdateAppOnLaunch()) {
+    if (!isWindows || !isPackaged) {
       return false
     }
 
@@ -146,6 +150,14 @@ export const appUpdater = new class AppUpdater {
     if (!compare(pendingVersion, app.getVersion(), '>')) {
       this.#clearPendingAppUpdateMarker()
       return false
+    }
+
+    // 用户关闭自动更新时，仅 forceUpgrade 待装包仍强制安装
+    if (!getAutoUpdateAppOnLaunch()) {
+      if (!store.pendingAppUpdateForceUpgrade) {
+        return false
+      }
+      console.log('[AppUpdater] forceUpgrade pending, install despite autoUpdateAppOnLaunch=false')
     }
 
     const cache = await probeLocalPendingUpdate(pendingVersion)
@@ -181,6 +193,7 @@ export const appUpdater = new class AppUpdater {
   #clearPendingAppUpdateMarker() {
     store.pendingAppUpdateVersion = undefined
     store.pendingAppUpdateFeedUrl = undefined
+    store.pendingAppUpdateForceUpgrade = undefined
     forceSaveConfig()
   }
 
@@ -192,12 +205,25 @@ export const appUpdater = new class AppUpdater {
     if (this.#pendingFeedUrl) {
       store.pendingAppUpdateFeedUrl = this.#pendingFeedUrl
     }
+    // 与 pending 包同生命周期，供下次冷启动覆盖 autoUpdateAppOnLaunch
+    store.pendingAppUpdateForceUpgrade = Boolean(this.#updateMessageData.originUpgradeData?.forceUpgrade)
     forceSaveConfig()
   }
 
+  /** 当前是否处于强制升级（store 待装标记或本次会话升级载荷） */
+  isForceUpgradePending(): boolean {
+    return Boolean(store.pendingAppUpdateForceUpgrade)
+      || Boolean(this.#updateMessageData.originUpgradeData?.forceUpgrade)
+  }
+
+  /** 是否应自动安装：用户开启自动更新，或服务端 forceUpgrade */
+  shouldAutoInstallUpdate(): boolean {
+    return getAutoUpdateAppOnLaunch() || this.isForceUpgradePending()
+  }
+
   #syncAutoInstallOnAppQuit() {
-    // Windows 走冷启动安装，退出时不交给 electron-updater
-    this.#autoUpdater.autoInstallOnAppQuit = !isWindows && getAutoUpdateAppOnLaunch()
+    // Windows 走冷启动安装，退出时不交给 electron-updater；非 Windows 在自动更新或强制升级时退出安装
+    this.#autoUpdater.autoInstallOnAppQuit = !isWindows && this.shouldAutoInstallUpdate()
   }
 
   /** electron-updater 使用独立 netSession，显式直连，不继承 defaultSession / 系统代理 */
@@ -284,7 +310,11 @@ export const appUpdater = new class AppUpdater {
     this.#autoUpdater.on('update-available', (updateInfo) => {
       this.isInProgress = true
       console.log(`Update available`, updateInfo)
-      // autoDownload 默认开启，electron-updater 会自动下载，无需在此处理
+      // 检查一结束 download 就会开始；立刻标成 downloading，避免 checkForUpdates 仍返回上次的 downloaded
+      this.#updateMessageData.status = 'downloading'
+      if (typeof this.#updateMessageData.percent !== 'number' || this.#updateMessageData.percent >= 100)
+        this.#updateMessageData.percent = 0
+      this.sendSuccessMessage()
     })
 
     // 更新下载完成
@@ -295,8 +325,11 @@ export const appUpdater = new class AppUpdater {
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
       this.#markPendingAppUpdate(event.version)
+      // forceUpgrade 可能刚写入，刷新退出时是否自动安装
+      this.#syncAutoInstallOnAppQuit()
       this.sendSuccessMessage()
-      store.showNewFeatureTips = Boolean(this.#updateMessageData.newFeatureTips?.[store.language]?.length)
+      // 登录前 tips 常为空；开关仅表示「安装后需按空间检查一次」，内容在登录后现拉
+      store.showNewFeatureTips = true
       forceSaveConfig()
 
       // 安转包下载完成后，20 秒后检查是否为空闲状态，如果为空闲状态，则自动更新
@@ -334,7 +367,7 @@ export const appUpdater = new class AppUpdater {
     console.info(`Checking for updates checkAppUpdate`, this.isInProgress)
 
     if (this.isInProgress) {
-      return
+      return this.#updateMessageData
     }
 
     if (!this.#isInitialized) {
@@ -365,7 +398,9 @@ export const appUpdater = new class AppUpdater {
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
       console.log(`checkForUpdates error`, error)
     }).finally(() => {
-      this.isInProgress = false
+      // 下载仍在进行时不能清 isInProgress，否则后续 check 会把过期 downloaded 回给前端
+      if (this.#updateMessageData.status !== 'downloading')
+        this.isInProgress = false
     })
 
     console.log(`checkResult`, checkResult)
@@ -377,12 +412,42 @@ export const appUpdater = new class AppUpdater {
     return this.#updateMessageData
   }
 
-  async getLastUpdateFeature() {
-    if (!isDevelopment) {
-      return this.#updateMessageData
+  /**
+   * 登录后轻量刷新升级版本载荷（不含新特性 tips）
+   * 不触碰 feed / checkForUpdates，避免干扰已在跑的更新检测
+   */
+  async refreshUpgradePayload() {
+    const result = await API.base.getAppUpgradeCreate(osConfig)
+    console.debug('[AppUpdater] refreshUpgradePayload result', result)
+
+    if (result.code !== 0 || !result.data) {
+      console.log('[AppUpdater] refreshUpgradePayload empty, skip')
+      return result
     }
 
-    const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
+    const { version, upgradeContent, upgradeTitle, releaseTime } = result.data
+    this.#updateMessageData.originUpgradeData = structuredClone(result.data)
+    this.#updateMessageData.upgradeContent = upgradeContent
+    this.#updateMessageData.title = upgradeTitle || 'RoxyBrowser'
+    this.#updateMessageData.version = version
+    this.#updateMessageData.currentVersion = app.getVersion()
+    this.#updateMessageData.releaseTime = releaseTime
+    this.#syncAutoInstallOnAppQuit()
+    return result
+  }
+
+  /**
+   * 按当前登录用户 / workspace 拉取新特性 tips（独立接口，与升级版本解耦）
+   * 后端在返回时自行 ack，客户端无需再调 userAckFeatureTipsCreate
+   */
+  async fetchAppFeatureTips() {
+    const result = await API.base.userGetAppFeatureTipsCreate(osConfig)
+    console.debug('[AppUpdater] fetchAppFeatureTips result', result)
+    return result
+  }
+
+  async getLastUpdateFeature() {
+    const { code, data } = await API.base.userGetAppFeatureTipsCreate(osConfig)
     if (code !== 0 || !data) {
       return {}
     }
@@ -397,8 +462,30 @@ export const appUpdater = new class AppUpdater {
     return Boolean(version) && compare(version, app.getVersion(), '>')
   }
 
-  /** 立即退出应用并且更新 (先同步用户数据, 再触发安装) */
-  async upgradeNow() {
+  /**
+   * 用户主动退出入口。
+   * forceUpgrade 且安装包已下载时走 upgradeNow（自定义 before-quit 不会靠 autoInstallOnAppQuit 装上，
+   * 且 Windows 退出时本就不开启 autoInstallOnAppQuit）。
+   * 纯退出安装完成后不拉起 APP（relaunch: false）。
+   */
+  quitApp() {
+    if (this.isForceUpgradePending() && this.#updateMessageData.status === 'downloaded') {
+      console.log('[AppUpdater] forceUpgrade on quit, calling upgradeNow without relaunch')
+      this.upgradeNow({ relaunch: false }).catch((error) => {
+        console.error('[AppUpdater] upgradeNow on quit failed, fallback to app.quit:', error)
+        app.quit()
+      })
+      return
+    }
+    app.quit()
+  }
+
+  /**
+   * 立即退出应用并且更新 (先同步用户数据, 再触发安装)
+   * @param options.relaunch 安装完成后是否重新打开 APP，默认 true；纯退出升级传 false
+   */
+  async upgradeNow(options?: { relaunch?: boolean }) {
+    const relaunch = options?.relaunch ?? true
     if (this.upgradeInProgress) {
       console.log('upgradeNow already in progress, skipping duplicate call')
       return
@@ -414,7 +501,7 @@ export const appUpdater = new class AppUpdater {
     this.upgradeInProgress = true
     this.isQuittingForUpdate = true
 
-    console.info('Preparing to quit and update: syncing browser data first')
+    console.info('Preparing to quit and update: syncing browser data first', { relaunch })
 
     try {
       await syncBrowserDataBeforeQuit()
@@ -423,12 +510,12 @@ export const appUpdater = new class AppUpdater {
       // 背景：macOS Intel 上磁盘 IO 较慢，若 await forceSaveConfig 期间
       // before-quit 快捷路径未调用 event.preventDefault() 就放行 quit，
       // 会导致进程在 quitAndInstall 调用前就退出，ShipIt 只收到 InstallOnly。
-      // 改为 fire-and-forget：先确保 Squirrel 收到 InstallAndRelaunch 指令，配置市异步保存。
+      // 改为 fire-and-forget：先确保 Squirrel 收到安装指令，配置市异步保存。
       forceSaveConfig()
       console.info('Browser data synced, quitting app and updating immediately')
 
       if (isPackaged) {
-        await this.quitAndInstall()
+        await this.quitAndInstall(relaunch)
       }
     }
     catch (error) {
@@ -440,18 +527,24 @@ export const appUpdater = new class AppUpdater {
     }
   }
 
-  async quitAndInstall() {
+  /**
+   * @param relaunch 安装完成后是否重新打开 APP；true=装完重开，false=仅安装不拉起
+   */
+  async quitAndInstall(relaunch = true) {
     this.quitAndInstallPromiser = Promise.withResolvers<void>()
     this.isQuittingForUpdate = true
 
+    // electron-updater 非静默时会忽略 quitAndInstall 第二参数，改用 autoRunAppAfterInstall
+    // 决定是否给 NSIS 传 --force-run；必须在此同步，纯退出才能装完不拉起
+    this.#autoUpdater.autoRunAppAfterInstall = relaunch
     // isSilent=false: 让真实 NSIS 安装器以非静默方式运行并显示安装进度（仅对 Windows 生效）
-    this.#autoUpdater.quitAndInstall(false, true)
+    this.#autoUpdater.quitAndInstall(false, relaunch)
     // return this.quitAndInstallPromiser.promise
   }
 
   /** 当 APP 处于空闲状态时，安装更新 */
   async installUpdateWhenIdle() {
-    if (!getAutoUpdateAppOnLaunch() || !getAppIdleState()) {
+    if (!this.shouldAutoInstallUpdate() || !getAppIdleState()) {
       return
     }
 

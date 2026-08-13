@@ -1,16 +1,12 @@
 import { toRaw, unref } from 'vue'
-import type { ComputedRef, MaybeRef, Ref } from 'vue'
-import type { Router } from 'vue-router'
+import type { ComputedRef, MaybeRef } from 'vue'
 import RxButton from '/@/components/rx-button'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { API } from '/@/api'
-import { BuyEntryType, BuyProxyListType, ProxyType } from '/@/enums'
-import { notifyProxyModuleSpeedTest, persistProfileRowAfterProxySpeedTest } from '../../hooks/useProfileProxy'
-import { useProxyStore } from '/@/stores/proxy'
+import { ProxyType } from '/@/enums'
+import { notifyProxyModuleSpeedTest, persistProfileRowAfterProxySpeedTest, usePurchaseOfficialProxy } from '../../hooks/useProfileProxy'
 import { silentUpdateProxy } from '/@/views/browser/list/profiles/components/util'
 
 type CheckProxyFn = ReturnType<typeof import('/@/views/agent/hooks')['useCheckProxy']>['testProxy']
-type BuyProxyFn = ReturnType<typeof import('/@/views/agent/hooks')['useProxy']>['buyProxy']
 type BatchTestShowToastFn = ReturnType<typeof import('/@/views/agent/hooks')['useCheckProxy']>['batchTestShowToast']
 type BuildProxyDataFn = (profile: Record<string, any>) => Record<string, any>
 type ConfirmDeleteProxyFn = (origin: Record<string, any>) => void
@@ -21,17 +17,15 @@ export function useProfileInfoProxyMenu(options: {
   buildProxyData: BuildProxyDataFn
   confirmDeleteProxy: ConfirmDeleteProxyFn
   check: (key: string) => boolean
-  router: Router
   showToast: (code: number, ...rest: any[]) => void
   onlyErrorToast: (code: number, msg: string) => void
   checkProxy: CheckProxyFn
   batchTestShowToast: BatchTestShowToastFn
-  buyProxy: BuyProxyFn
-  createProxy: (proxyData?: Record<string, any>) => Promise<void>
+  openAddProxy: () => void | Promise<void>
+  editProxy: (proxyData: Record<string, any>) => Promise<void>
   openProxyDrawer: (proxyData: Record<string, any>) => Promise<void>
   setChooseProxy: (formData: any) => void
   saveLocalTrack: (name: string | undefined) => void
-  proxyProvider: Ref<any>
   proxyCss: Record<string, string>
 }) {
   const {
@@ -40,21 +34,19 @@ export function useProfileInfoProxyMenu(options: {
     buildProxyData,
     confirmDeleteProxy,
     check,
-    router,
     showToast,
     onlyErrorToast,
     checkProxy,
     batchTestShowToast,
-    buyProxy,
-    createProxy,
+    openAddProxy,
+    editProxy,
     openProxyDrawer,
     setChooseProxy,
     saveLocalTrack,
-    proxyProvider,
     proxyCss,
   } = options
 
-  const { getProxyVendors } = useProxyStore()
+  const { purchaseImmediateOfficialProxy } = usePurchaseOfficialProxy()
 
   function getProxyModel() {
     const row = unref(data)
@@ -67,7 +59,7 @@ export function useProfileInfoProxyMenu(options: {
         icon: 'base/rx_ic_plus',
         visible: !hasProxy.value && check('Profiles_add_proxy_outside'),
         command: async () => {
-          await createProxy()
+          await openAddProxy()
         },
       },
       {
@@ -126,7 +118,7 @@ export function useProfileInfoProxyMenu(options: {
             showToast(-1, $t('该代理 IP 已加密无法编辑，如需更换，请先删除此代理 IP 或选择其他代理 IP'))
             return
           }
-          await createProxy(proxyData)
+          await editProxy(proxyData)
         },
       },
       {
@@ -148,38 +140,9 @@ export function useProfileInfoProxyMenu(options: {
         icon: 'base/rx_ic_cart',
         visible: check('Cost_Center_all'),
         command: async () => {
-          if (!proxyProvider.value) {
-            const data = await getProxyVendors()
-            if (!data)
-              return
-            proxyProvider.value = data.find((item: any) => item.isOfficial)
-          }
-
-          const provider = {
-            proxyProviderId: proxyProvider.value.id,
-            proxyProviderWebsite: proxyProvider.value.vendorWebsite,
-            proxyProviderIcon: proxyProvider.value.vendorIcon,
-            proxyProviderName: proxyProvider.value.vendorName,
-          }
-
-          try {
-            const orderInfo = await buyProxy({ provider, entryType: BuyEntryType.Immediate })
-
-            showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
-
-            if (!orderInfo?.immediate) {
-              router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
-              return
-            }
-
-            const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
-            if (code !== 0 || !data.rows?.[0]) {
-              return
-            }
-
-            setChooseProxy(data.rows[0])
-          }
-          catch (error) { }
+          const proxy = await purchaseImmediateOfficialProxy()
+          if (proxy)
+            setChooseProxy(proxy)
         },
         render: (props: any) => {
           return (

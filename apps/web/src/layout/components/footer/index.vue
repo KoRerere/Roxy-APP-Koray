@@ -5,52 +5,74 @@ import TaskCircle from '/@/views/tutorial/components/task-progress.vue'
 import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { useRouteContext } from '/@/composables/useRouteContext'
+import { usePermission } from '/@/hooks/usePermission'
 import { getRoleLabelMap } from '/@/enums'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useSimpleLocale } from '/@/stores/locale'
+import { resolveFooterMenuRoutes } from '/@/router/resolve-menu'
+import type { SvgNames } from '/@/components/rx-icon'
+import type { RouteRecordNameGeneric } from 'vue-router'
 
 const router = useRouter()
 const roleStore = useRoleStore()
+const { check } = usePermission()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const { isPublicMember, isEcommerce } = useRouteContext()
+const { ctx, isPublicMember, isEcommerce } = useRouteContext()
 const { userInfo } = storeToRefs(useUserStore())
+const { siteLocale } = storeToRefs(useSimpleLocale())
 const roleLabelMap = getRoleLabelMap()
 const menuCss = useCssModule('menu')
 const { showPreventMask, hidePreventMask } = usePreventMask()
 
 const collapsed = defineModel('collapsed', { default: false })
 
-const items = computed(() => {
-  if (isPublicMember.value) {
-    return []
-  }
+interface FooterMenuItem {
+  label: string
+  icon: SvgNames
+  rootMenu: true
+  routeName: RouteRecordNameGeneric
+  shiny?: boolean
+  showFireBadge?: boolean
+  visible?: boolean
+  command: () => void
+  extra?: () => ReturnType<typeof h>
+}
 
-  return [
-    {
-      label: $t('新手教程'),
-      icon: 'base/rx_ic_books',
+const items = computed(() => {
+  if (isPublicMember.value)
+    return []
+
+  const routes = resolveFooterMenuRoutes({
+    ctx: ctx.value,
+    siteLocale: siteLocale.value,
+    checkPermission: check,
+  })
+
+  return routes.map((route): FooterMenuItem => {
+    const routeName = route.name
+    const item: FooterMenuItem = {
+      label: String(route.meta?.title ?? ''),
+      icon: route.meta?.icon as SvgNames,
       rootMenu: true,
-      routeName: 'tutorial',
-      visible: userInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus === false && !isEcommerce.value,
+      routeName,
+      showFireBadge: route.meta?.showFireBadge,
+      // 仅展示层差异，不进 RouteMeta
+      shiny: routeName === 'referral-program',
       command: () => {
-        router.push({ name: 'tutorial' })
+        if (routeName != null)
+          router.push({ name: routeName })
       },
-      extra: () => h(TaskCircle, {
-        class: 'mx-auto mr-0',
-      }),
-    },
-    {
-      label: $t('推广计划'),
-      icon: 'base/rx_ic_coins_hand',
-      rootMenu: true,
-      // showFireBadge: true,
-      routeName: 'referral-program',
-      shiny: true,
-      command: () => {
-        router.push({ name: 'referral-program' })
-      },
-    },
-  ].filter(item => item.visible !== false)
+    }
+
+    // 新手教程依赖 onboarding / 电商态等运行时条件
+    if (routeName === 'tutorial') {
+      item.visible = userInfo.value.onboardingTaskStatus?.hideSidebarEntryStatus === false && !isEcommerce.value
+      item.extra = () => h(TaskCircle, { class: 'mx-auto mr-0' })
+    }
+
+    return item
+  }).filter(item => item.visible !== false)
 })
 </script>
 

@@ -117,6 +117,8 @@ export interface StoreType {
   pendingAppUpdateVersion?: string
   /** 待安装包对应的 generic feed URL（Windows 冷启动安装需要） */
   pendingAppUpdateFeedUrl?: string
+  /** 待安装包是否强制升级（下载完成时写入，供冷启动覆盖自动更新开关） */
+  pendingAppUpdateForceUpgrade?: boolean
   /** 窗口自动恢复, 0: 关闭, 1: 开启, 2: 弹出提示 */
   autoRestoreWindow?: 0 | 1 | 2
   /** 恢复窗口前客户端网络变化时的处理方式：prompt | continue | abort */

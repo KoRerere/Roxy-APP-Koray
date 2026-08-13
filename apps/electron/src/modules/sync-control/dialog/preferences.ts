@@ -1,6 +1,6 @@
 import { ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
 
@@ -31,7 +31,7 @@ export async function openPreferencesDialog(payload: OpenPreferencesDialogPayloa
     hasShadow: true,
   })
   win.loadURL(await getWebEntryUrl(`sync-control-preferences-dialog?tab=${tab}`))
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools()
   }
   handleWindowMove(win)

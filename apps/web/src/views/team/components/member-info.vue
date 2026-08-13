@@ -17,9 +17,11 @@ const { hiddenAvatar = false, onlyAvatar = false } = defineProps<Props>()
   <div class="flex items-center gap-3">
     <RxAvatar v-if="!hiddenAvatar" :tooltip="nickName || userName" :avatar="avatar" :name="userName" :color="avatarColor" :class="{ 'no-avatar': !avatarColor }" :size="28" :font-size="14" />
     <div v-if="!onlyAvatar" class="flex-1 flex flex-col items-start justify-center gap-0.5 min-w-50">
-      <div class="ellipsis-1 tt-primary text-3.25 leading-4 font-500">
-        {{ userName }}
-      </div>
+      <slot name="name">
+        <div class="ellipsis-1 tt-primary text-3.25 leading-4 font-500">
+          {{ userName }}
+        </div>
+      </slot>
       <div class="ellipsis-1 font-[JetBrains_Mono] font-500 text-3 leading-4">
         {{ email || phone }}
       </div>

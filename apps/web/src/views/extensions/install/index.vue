@@ -247,8 +247,9 @@ async function operationHandler(operate: any, data: any) {
 
 async function uploadRecordCheck() {
   const { data, msg } = await API.plugins.userRecordPluginUploadV2List()
-  if (!data)
+  if (!data) {
     throw msg
+  }
 }
 
 function installViaUrl() {
@@ -473,7 +474,7 @@ defineExpose({
   >
     <template #filter-after>
       <div class="flex items-start justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
           <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="labels.addGoogle" @click.stop="installViaUrl" />
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click.stop="onUploadExtension()" />

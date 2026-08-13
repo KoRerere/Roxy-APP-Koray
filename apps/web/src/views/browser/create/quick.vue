@@ -1,157 +1,173 @@
-<script setup lang="ts">
-import TsFormInputTextarea from '/@/views/lab/components/form/m-input-textarea.vue'
-import { useThemeStore } from '/@/stores/theme'
-import { useProxyStore } from '/@/stores/proxy'
-import { useUserStore } from '/@/stores/user'
-import { useProxy } from '/@/views/agent/hooks'
-import { API } from '/@/api'
+<script lang="ts" setup>
+import AccordionInputs from './components/accordion-inputs.vue'
+import BasicInfo from './components/basic-info.vue'
+import PreviewCard from './components/preview-card.vue'
+import LastPayModal from './components/last-pay-modal.vue'
+import RxButton from '/@/components/rx-button'
+import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { getImage, parseProxyUrl } from '/@/utils/basic'
-import { IPType } from '/@/enums'
-import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import QuickCreateGuide from '/@/views/browser/create/quick-create-guide.vue'
+import { useThemeStore } from '/@/stores/theme'
+import { createTableContext } from './hooks/useContext'
+import { useWindowCreateCore } from './hooks/useWindowCreateCore'
+import { createSingleWindowAccordions } from './modes/createDefaultAccordions'
+import { h, toRaw } from 'vue'
+import { getImage } from '/@/utils'
 
-const { isEdit, data, onConfirm } = defineProps<{
-  isEdit?: boolean
-  data?: { proxyInfo: string }
-  onConfirm: (params?: any) => Promise<void>
+const props = defineProps<{
+  /** 已存模板回填；无模板时传空对象 */
+  template?: Record<string, any>
+  onClose?: () => void
+  onSaved?: (payload: { formData: Record<string, any>, createAndRun: boolean }) => void | Promise<void>
 }>()
 
-defineEmits(['close'])
-
 const { realTheme } = storeToRefs(useThemeStore())
-const { getProxyVendors } = useProxyStore()
-const { buyProxy } = useProxy()
 const [, onlyErrorToast] = useResponseToast()
-const userStore = useUserStore()
-const [showModal] = RxUseDialog()
+const [showModal] = useDialog()
 
-const proxies = ref(data?.proxyInfo ?? '')
-const dontShowAgain = ref(false)
+const presetTemplate = ref()
+const oneClickSettings = ref()
+createTableContext({
+  isBatch: ref(false),
+  createCount: ref(1),
+  presetTemplate,
+  oneClickSettings,
+})
+
+const accordions = ref(createSingleWindowAccordions())
+const collapsed = ref(true)
+const formInitialized = ref(false)
+const saving = ref(false)
+
+const {
+  inputsGroup,
+  loading,
+  formGate,
+  canSubmit,
+  initialize,
+  shuffleFingerprint,
+  buildCreateParams,
+  prepareCreateParams,
+} = useWindowCreateCore()
+
+const windowInputs = computed(() => inputsGroup.value?.[0] ?? [])
+const canSave = computed(() => formInitialized.value && canSubmit.value && !saving.value)
 
 const bgSrc = computed(() => {
   return realTheme.value === 'light' ? `url('${getImage('browser/quick_create_bg_light.svg')}')` : `url('${getImage('browser/quick_create_bg_dark.svg')}')`
 })
 
-watch(dontShowAgain, (val) => {
-  if (val) {
-    showModal({
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        content: '!pa-0',
-      },
-      slots: {
-        container: ({ hideModal }) => h(QuickCreateGuide, {
-          onClose: () => {
-            hideModal()
-          },
-          onConfirm: () => {
-            hideModal()
-          },
-        }),
-      },
-    })
-  }
+onBeforeMount(async () => {
+  formInitialized.value = false
+  const template = props.template ?? {}
+  // 已有模板：保留 proxy / webGLManufacturer / webGLRender 等回填，不要刷指纹覆盖
+  await initialize(template, {
+    refreshFingerprint: Object.keys(template).length === 0,
+  })
+  formInitialized.value = true
 })
 
-async function onBuyProxy() {
-  const data = await getProxyVendors()
-  if (!data)
+async function saveTemplate(createAndRun: boolean) {
+  if (!canSave.value) {
     return
-  const vendors = data.find((item: any) => item.isJump && item.vendorName === 'Rola-IP')
-  if (!vendors)
-    return
-
-  const provider = {
-    proxyProviderId: vendors.id,
-    proxyProviderWebsite: vendors.vendorWebsite,
-    proxyProviderIcon: vendors.vendorIcon,
-    proxyProviderName: vendors.vendorName,
-    autoJump: true,
   }
 
-  await buyProxy({ provider })
-}
-
-async function saveDontShowAgain() {
-  if (!dontShowAgain.value)
-    return
-
-  const { code, msg } = await API.base.userSetUserConfigCreate({ quickCreateModalSwitch: false } as any)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    globalThis.electronAPI.send('app:saveSoftConfig', { quickCreateModalSwitch: false } as never)
-    userStore.updateUserConfig()
+  await formGate.waitUntilReady()
+  saving.value = true
+  try {
+    // 仅保存模板：不走 API 静默提取/测速，避免改写已有代理的 lastIp
+    // 保存并运行：创建前才 ensure（prepareCreateParams 内仅 api 未测过时测速）
+    const formData = createAndRun
+      ? await prepareCreateParams()
+      : buildCreateParams()
+    await props.onSaved?.({
+      formData,
+      createAndRun,
+    })
+  }
+  catch (error: any) {
+    console.error('[QuickCreate] save template failed', error)
+    onlyErrorToast(-1, error?.message || $t('保存配置'))
+  }
+  finally {
+    saving.value = false
   }
 }
 
-async function onSkipAndCreate() {
-  await saveDontShowAgain()
-  await onConfirm()
-}
-
-async function onQuickCreateProfile() {
-  if (!isEdit && !proxies.value) {
-    await onSkipAndCreate()
+async function onSaveAndRun() {
+  if (!presetTemplate.value) {
+    await saveTemplate(true)
     return
   }
 
-  const { host, protocol, ...rest } = parseProxyUrl(proxies.value)
-  const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
-
-  const params = {
-    ...rest,
-    ipType,
-    host: host?.replace(/\[|\]/g, ''),
-    protocol: protocol || 'SOCKS5',
-    proxyCategory: protocol || 'SOCKS5',
-  }
-
-  await saveDontShowAgain()
-  await onConfirm(params)
+  // 付费预设代理：先走支付确认再存模板并创建
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(LastPayModal, {
+        data: { ...toRaw(presetTemplate.value.proxyInfo), description: presetTemplate.value.description },
+        isDirect: presetTemplate.value.isDirect,
+        onClose: hideModal,
+        onSuccess: async ({ id: moduleId, lastCity, lastCountry, lastIp }: any) => {
+          hideModal()
+          await formGate.waitUntilReady()
+          saving.value = true
+          try {
+            const formData = await prepareCreateParams({
+              additionalParams: {
+                moduleId,
+                lastCity,
+                lastCountry,
+                lastIp,
+                proxyMethod: 'choose',
+              },
+            })
+            await props.onSaved?.({
+              formData,
+              createAndRun: true,
+            })
+          }
+          catch (error: any) {
+            console.error('[QuickCreate] save and run failed', error)
+            onlyErrorToast(-1, error?.message || $t('保存并运行'))
+          }
+          finally {
+            saving.value = false
+          }
+        },
+      }),
+    },
+  })
 }
 </script>
 
 <template>
-  <div class="w-180 flex flex-col gap-4 pa-6 pt-4 rounded-2 popup">
-    <div class="h-9 flex items-center justify-between">
-      <div class="tt-primary text-4 font-600 leading-normal">
-        {{ $t('快速创建配置') }}
+  <div class="quick-create-editor flex flex-col overflow-hidden popup">
+    <div class="flex shrink-0 items-start justify-between gap-4 px-6 pt-4 pb-2">
+      <div class="tt-primary text-5 font-600 leading-normal">
+        {{ $t('快速创建') }}
       </div>
-      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
+      <SvgIcon class="mt-1 shrink-0 cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="props.onClose?.()" />
     </div>
-    <div class="flex flex-col self-stretch gap-4">
-      <div class="tt-primary text-3.5 leading-4">
-        {{ $t('请您为窗口配置一条代理 IP。') }}
+
+    <div class="flex min-h-0 flex-1 overflow-hidden overflow-x-auto px-6">
+      <div class="ma-auto flex h-full min-h-0 w-full gap-8" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
+        <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+          <template #before>
+            <!-- 等 initialize 完成再挂载，避免 async onBeforeMount 竞态下 ProxyInfo 用空列表 hydrate -->
+            <BasicInfo v-if="formInitialized" :window-inputs="windowInputs" :autofill-window-name="false" />
+          </template>
+        </AccordionInputs>
+        <PreviewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :is-batch="false" :create-count="1" :is-import="false" :on-shuffle="shuffleFingerprint" />
       </div>
-
-      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-border-base)" />
-
-      <div class="flex items-center justify-between">
-        <div class="tt-primary text-3.5 font-600 leading-5">
-          {{ $t('代理 IP 配置（支持动态 IP 自动刷新）：') }}
-        </div>
-        <RxButton size="md" variant="outlined" :label="$t('去 Rola-IP 购买')" icon="base/rx_ic_cart" @click="onBuyProxy" />
-      </div>
-
-      <TsFormInputTextarea v-model="proxies" size="md" rows="4"
-                           :placeholder="$t('示例（刷新 URL为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]', { at: '@' })"
-      />
     </div>
-    <div class="flex items-center pt-4 justify-between">
-      <div class="flex items-center gap-1.5">
-        <RxCheckbox v-model="dontShowAgain" input-id="dontShowAgain" binary />
-        <label for="dontShowAgain" class="select-none text-3 tt-primary font-500 leading-5">{{ $t('不再显示') }}</label>
-        <SvgIcon v-tooltip.top="$t('你可以在 设置中心 → 软件设置 中找到快速模板的配置和修改')" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
-      </div>
-      <div class="flex items-center gap-2">
-        <template v-if="!isEdit">
-          <RxButton size="md" variant="text" severity="secondary" :label="$t('跳过并创建窗口')" @click="onSkipAndCreate" />
-          <RxButton size="md" icon="base/rx_ic_browser_flash" :label="$t('快速创建窗口')" @click="onQuickCreateProfile" />
-        </template>
-        <RxButton v-else size="md" icon="base/rx_ic_browser_flash" :label="$t('确认修改')" @click="onQuickCreateProfile" />
+
+    <div class="relative shrink-0 px-6">
+      <div class="foot-separator" />
+      <div class="mx-auto flex min-h-16 items-center justify-end gap-2 py-4" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
+        <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" severity="secondary" outlined :label="$t('保存并运行')" :disabled="!canSave" :loading="saving || loading" @click="onSaveAndRun" />
+        <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" :label="$t('保存配置')" :disabled="!canSave" :loading="saving || loading" @click="saveTemplate(false)" />
       </div>
     </div>
   </div>
@@ -166,11 +182,7 @@ async function onQuickCreateProfile() {
   &::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--colors-background-bg-page);
+    inset: 0;
   }
 
   &::before {
@@ -182,7 +194,24 @@ async function onQuickCreateProfile() {
   }
 
   &::after {
+    background-color: var(--colors-background-bg-page);
     z-index: -2;
   }
+}
+
+.quick-create-editor {
+  width: min(1140px, 92vw);
+  height: min(820px, 88vh);
+  border-radius: var(--radius-2xl, 16px);
+}
+
+.foot-separator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 1px;
+  background-color: var(--colors-border-divider);
 }
 </style>

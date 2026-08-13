@@ -1,23 +1,18 @@
 <script setup lang="tsx">
-import { h } from 'vue'
-import QuickOpen from '/@/views/browser/create/quick.vue'
 import SubMenuItem from './sub-menu-item.vue'
 import { API } from '/@/api'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
-import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
 import { resolveMenuRoutes } from '/@/router/resolve-menu'
 import { useSimpleLocale } from '/@/stores/locale'
-import { buildQuickCreateProxyParams, formatProxyInfoToString, genDriver, isDev, isEmptyValue, safeParseJSON, tryRefreshProxyUrl } from '/@/utils'
-import { useDialog } from '/@/hooks/useDialog'
+import { genDriver, safeParseJSON } from '/@/utils'
 import { usePermission } from '/@/hooks/usePermission'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { blurDomSpotlight, focusDomSpotlight } from '/@/hooks/useDomSpotlight'
-import { genDefaultProfileByCount } from '/@/views/browser/create/form-inputs'
 import { emitter } from '/@/utils/eventBus'
 import { ProjectPin, WorkspaceType } from '/@/enums'
 
@@ -31,15 +26,13 @@ const route = useRoute()
 const router = useRouter()
 const roleStore = useRoleStore()
 const projectStore = useProjectStore()
-const userStore = useUserStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { ctx } = useRouteContext()
 const tutorialLabels = useTutorialEntityLabels()
 const { siteLocale } = storeToRefs(useSimpleLocale())
 const { check } = usePermission()
 const { handleBusinessCode } = useHandleBusinessCode()
-const [showToast, onlyErrorToast] = useResponseToast()
-const [showModal] = useDialog()
+const [, onlyErrorToast] = useResponseToast()
 
 const badgeMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>(safeParseJSON(localStorage.getItem('badgeMapCache') || {}))
 const driverObj = ref()
@@ -162,76 +155,6 @@ function toCreateAccount() {
 
   router.push({ name: 'ecommerce-account-create', query })
 }
-
-async function saveQuickCreateProxyInfo(proxyInfo: string) {
-  const { code, msg } = await API.base.userSetUserConfigCreate({ quickCreateProxyTemplate: proxyInfo } as any)
-  onlyErrorToast(code, msg)
-  if (code === 0) {
-    globalThis.electronAPI.send('app:saveSoftConfig', { quickCreateProxyTemplate: proxyInfo } as never)
-    userStore.updateUserConfig()
-  }
-}
-
-async function quickCreateProfile(proxyData?: Record<string, any>) {
-  console.log('proxyData', proxyData)
-  const refreshResult = await tryRefreshProxyUrl(proxyData?.refreshUrl)
-  if (refreshResult !== null)
-    showToast(refreshResult ? 0 : -1, proxyData!.refreshUrl)
-
-  const customerParams = await genCustomerParams(proxyData)
-  const [windowId] = await genDefaultProfileByCount(1, customerParams)
-  emitter.emit('refreshProfileList', windowId)
-  return windowId
-}
-
-async function quickGenBrowser() {
-  const isOk = await checkWindowTotalCountOk()
-  if (!isOk)
-    return
-
-  const userConfig = await userStore.getUserConfig()
-  const showModalEveryTime = (userConfig as any)?.quickCreateModalSwitch ?? true
-  const proxyInfoText = ((userConfig as any)?.quickCreateProxyTemplate ?? '').trim()
-
-  if (!showModalEveryTime) {
-    const proxyData = proxyInfoText ? buildQuickCreateProxyParams(proxyInfoText) : undefined
-    await quickCreateProfile(proxyData)
-    return
-  }
-
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => h(QuickOpen, {
-        isEdit: !!proxyInfoText,
-        data: proxyInfoText ? { proxyInfo: proxyInfoText } : undefined,
-        onClose: hideModal,
-        onConfirm: async (params) => {
-          await quickCreateProfile(params)
-          if (params) {
-            await saveQuickCreateProxyInfo(formatProxyInfoToString(params))
-          }
-          hideModal()
-        },
-      }),
-    },
-  })
-}
-
-async function genCustomerParams(data: any) {
-  if (isEmptyValue(data))
-    return {}
-
-  return {
-    proxyInfoList: [{
-      _tempId: Date.now().toString(32),
-      proxyMethod: 'custom',
-      ...data,
-    }],
-  }
-}
 </script>
 
 <template>
@@ -239,9 +162,8 @@ async function genCustomerParams(data: any) {
     <div v-if="check('Profiles_add') && (ctx.isNormal || ctx.isEcommerce)" class="flex items-center gap-2">
       <RxButton v-if="ctx.isNormal" id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
       <RxButton v-if="ctx.isEcommerce" id="NEW_ACCOUNT" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建账号')" @click="toCreateAccount" />
-      <RxButton v-if="!collapsed && isDev && ctx.isNormal" id="QUICK_PROFILE" v-tooltip.top="{ value: $t('快速创建') }" class="!h-9" icon="base/rx_ic_browser_flash" @click="quickGenBrowser" />
     </div>
-    <div class="relative flex-1 overflow-hidden">
+    <div class="relative flex-1 min-h-0 overflow-hidden">
       <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">
         <SubMenuItem v-model:badge-map="badgeMap" class="relative z-1" :items="menus" :collapsed />
       </nav>
@@ -267,6 +189,29 @@ async function genCustomerParams(data: any) {
       display: none;
     }
   }
+
+  // 默认透明，避免被 reset.css 的 *::-webkit-scrollbar 盖过；进入侧栏容器再显示
+  .menu {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+
+    &::-webkit-scrollbar-thumb,
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+
+  &:hover .menu {
+    scrollbar-color: var(--component-scrollbar-indicator) var(--component-scrollbar-bg);
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--component-scrollbar-indicator);
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--component-scrollbar-bg);
+    }
+  }
 }
 
 .new-profile-btn {
@@ -277,21 +222,6 @@ async function genCustomerParams(data: any) {
   word-break: keep-all;
   font-size: 14px;
   z-index: 10;
-}
-
-.menu {
-  &::-webkit-scrollbar-thumb,
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &:hover::-webkit-scrollbar-thumb {
-    background: var(--component-scrollbar-indicator);
-  }
-
-  &:hover::-webkit-scrollbar-track {
-    background: var(--component-scrollbar-bg);
-  }
 }
 
 .mask {

@@ -52,7 +52,9 @@
 ; 自定义完成页：实现"非静默更新但全自动"
 ; ============================================================================
 ; - 首次安装（非更新）：保留带"运行应用"勾选的标准完成页，由用户点击完成
-; - 自动更新（${isUpdated}）：自动拉起新版本并跳过完成页，做到全程无需点击
+; - 自动更新（${isUpdated}）：跳过完成页；仅当 electron-updater 传入 --force-run
+;   （对应 quitAndInstall 的 isForceRunAfter=true）时才拉起新版本。
+;   纯退出升级传 isForceRunAfter=false，装完不拉起。
 ;   （许可页/目录页由 electron-builder 的 skipPageIfUpdated 自动跳过，
 ;     安装模式页由上面的 customInstallMode 自动跳过，安装进度页正常显示）
 !macro customFinishPage
@@ -65,11 +67,13 @@
     ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$1"
   FunctionEnd
 
-  ; 更新场景下：隐藏窗口 -> 启动新版本 -> Abort 跳过完成页
+  ; 更新场景下：隐藏窗口；仅 force-run 时启动新版本；Abort 跳过完成页
   Function finishPagePre
     ${if} ${isUpdated}
       HideWindow
-      Call StartApp
+      ${if} ${isForceRun}
+        Call StartApp
+      ${endif}
       Abort
     ${endif}
   FunctionEnd

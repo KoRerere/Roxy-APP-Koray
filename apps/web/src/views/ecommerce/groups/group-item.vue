@@ -115,7 +115,7 @@ function editGroup() {
         </div>
         <SvgIcon v-if="check('Projects_edit')" class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-text-text-secondary)" @click="editGroup" />
       </template>
-      <MemberDropdownList v-if="check('Team_Member_view_page')" :members="members" />
+      <MemberDropdownList v-if="check('Team_Member_view_page')" v-model:members="members" />
       <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
     </ViewsHeader>
     <div class="flex-1 overflow-hidden">

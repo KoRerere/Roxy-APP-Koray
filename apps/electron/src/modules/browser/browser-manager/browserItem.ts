@@ -42,6 +42,8 @@ export class BrowserItem {
 
   /** 启动后是否已经同步过窗口打开状态 */
   isSyncedWindowOpenStatus = false
+  /** 启动成功时间戳（毫秒），用于关闭时计算本次打开时长 */
+  openedAt?: number
   /** 通过哪种方式启动的浏览器 */
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
@@ -229,6 +231,8 @@ export class BrowserItem {
       this.browserPid = this.#browser!.process()?.pid
       // 异步执行启动后的任务, 不需要等待
       await this.afterLaunchTask.run()
+      // 仅新开实例计时；已打开再激活不重置，保证关闭上报覆盖整段会话
+      this.openedAt = Date.now()
 
       // ipcSender.user.mixpanelTrack('profile_start', {
       //   coreVersion: this.coreVersion.coreVersion,
@@ -346,6 +350,10 @@ export class BrowserItem {
           fileCount: isUploadSuccess ? needSyncFiles.length : syncValue?.fileCount,
         },
         openStatus: false,
+        // 本次打开时长（秒），随关闭同步一并上报
+        useDuration: this.openedAt
+          ? Math.max(0, Math.floor((Date.now() - this.openedAt) / 1000))
+          : undefined,
       }
 
       return { requestHeaders: this.requestHeaders, uploadParams }

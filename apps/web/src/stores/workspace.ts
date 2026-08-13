@@ -7,6 +7,7 @@ import type { WorkspaceType } from '/@/enums'
 import { Role } from '/@/enums'
 import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
+import { useCommonStore } from '/@/stores/common'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePermissionStore } from '/@/stores/permission'
 import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
@@ -35,6 +36,10 @@ function getUserStore() {
 
 function getProxyStore() {
   return useProxyStore()
+}
+
+function getCommonStore() {
+  return useCommonStore()
 }
 
 export const useWorkspaceStore = defineStore('workspace', () => {
@@ -90,6 +95,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     clearTimeout(hidePageLoadingTimeout)
 
     debounceGetPayInfo()
+    // 正式进空间后 header 已有 workspaceId，按普通/电商模式拉取公告
+    void getCommonStore().refreshAnntList()
 
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
@@ -109,7 +116,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   watch(currentWorkspace, (val, old) => {
-    // silent 阶段仅同步 workspaceId，供 API 拦截器写入 header
+    // silent 阶段仅同步 workspaceId，供 API 拦截器写入 header；公告等正式进空间再拉
     if (workspaceEntrySilent.value) {
       val?.id && syncElectronWorkspaceId(val.id, val.workspaceType)
       return
@@ -125,6 +132,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         getProxyStore().clearProxyVendors()
         replaceOnWorkspaceTypeSwitch(val.workspaceType, val.role)
         syncElectronWorkspaceId(val.id, val.workspaceType)
+        // 普通 ↔ 电商切换后公告集可能变化
+        void getCommonStore().refreshAnntList()
       }
 
       val?.id && hidePageLoading()
@@ -228,6 +237,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     workspaceEntrySilent.value = false
     clearWorkspaceCache()
     getProxyStore().clearProxyVendors()
+    getCommonStore().clearAnntList()
     globalThis.electronAPI.send('user:setSharedWorkspaceList', [])
   }
 

@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import ProxyCreate from '/@/views/agent/create/quick.vue'
+import { h } from 'vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import ProxyBuyAddDrawer from './proxy-buy-add-drawer.vue'
 import ProxyCountrySwitch from '/@/views/browser/create/components/proxy-country-switch.vue'
 import { RxAlert } from '/@/components/rx-alert'
 // import currency from 'currency.js'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { deepClone, isEmptyValue, sleep, strConcat } from '/@/utils'
+import { deepClone, isEmptyValue, strConcat } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
+import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
+import { createProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { usePermission } from '/@/hooks/usePermission'
@@ -22,10 +24,12 @@ import type { SvgNames } from '/@/components/rx-icon/'
 defineOptions({
   inheritAttrs: false,
 })
-const { isBatch, createCount, driverObj, presetTemplate } = useTableContext()
+const { isBatch, createCount, presetTemplate } = useTableContext()
 
 const router = useRouter()
 const drawerInstance = useDrawer()
+const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
+const proxyCreateLabels = createProxyCreateLabels('proxy')
 const network = useNetworkStore()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const { getProxyVendors } = useProxyStore()
@@ -48,9 +52,9 @@ const moreCountryDrawerVisible = ref(false)
 const proxyAlertMessage = computed(() => {
   return sumProxyCount.value > createCount.value
     ? $t('仅 {count} 个窗口将会绑定代理 IP。请移除多余的 {beyond} 条代理 IP。', {
-      count: createCount.value,
-      beyond: sumProxyCount.value - createCount.value,
-    })
+        count: createCount.value,
+        beyond: sumProxyCount.value - createCount.value,
+      })
     : $t('仅 {count} 个窗口将会绑定代理 IP', { count: sumProxyCount.value })
 })
 
@@ -69,15 +73,7 @@ const providerProps = computed(() => {
   }
 })
 
-function driverNext() {
-  moreCountryDrawerVisible.value = false
-
-  sleep(300).then(() => driverObj?.value?.drive(1))
-}
-
 async function openDualDrawer() {
-  driverObj?.value?.destroy()
-
   if (canBuy.value && !proxyProvider.value) {
     const data = await getProxyVendors()
     if (!data)
@@ -147,27 +143,29 @@ function onEdit(item: any) {
 }
 
 function toggleDrawer(type: 'create' | 'list', item?: any) {
-  driverObj?.value?.destroy()
+  if (type === 'create') {
+    showProxyFormDrawer({
+      title: proxyCreateLabels.pageTitle,
+      data: deepClone(item),
+      mode: 'proxy',
+      onConfirm: (formData) => {
+        addProxy(formData)
+      },
+    })
+    return
+  }
 
-  const dismissable = type === 'list'
-  const title = dismissable ? $t('代理 IP 列表') : $t('添加代理 IP')
-  const data = dismissable
-    ? isBatch.value ? selectedPorxys.value : selectedPorxys.value[0]
-    : deepClone(item)
-  const RenderComponent = dismissable ? ProxyQuick : ProxyCreate
-
+  const data = isBatch.value ? selectedPorxys.value : selectedPorxys.value[0]
   drawerInstance.showDrawer({
-    title,
-    dismissable,
-    onHide: () => driverNext(),
+    title: $t('代理 IP 列表'),
     slots: {
-      container: () => h(RenderComponent, {
+      container: () => h(ProxyQuick, {
         data,
         isBatch: isBatch.value,
         createCount: createCount.value,
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: (formData: Record<string, any>) => {
-          dismissable ? onChoose(formData) : addProxy(formData)
+          onChoose(formData)
           drawerInstance.hideDrawer()
         },
       }),
@@ -218,7 +216,7 @@ function onChoose(data: any) {
   }
 }
 
-async function testProxySpeed({ _checkRes, bindList, ...data }: any, index: number) {
+async function testProxySpeed({ _checkRes, bindList: _bindList, ...data }: any, index: number) {
   checkIndex[index] = true
   const result = await checkProxy({ ...toRaw(data), apiCheck: false })
   checkIndex[index] = false
@@ -310,19 +308,18 @@ function switchProxyCountry() {
         </div>
       </div>
 
-      <div class="flex items-center gap-2 guide1">
-        <!-- 外层 span 用于引导脉冲高亮：::after 不能挂在 .p-button 上，否则会被按钮 overflow 裁切 -->
-        <span v-if="canBuy || canAdd" class="guide1-pulse-target inline-flex rounded-md">
-          <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="proxyList.length && !isBatch ? $t('购买') : $t('购买 / 添加')" @click="openDualDrawer" />
-        </span>
+      <div v-if="canBuy || canAdd" class="flex items-center gap-2">
+        <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_cart" :label="proxyList.length && !isBatch ? $t('购买') : $t('购买 / 添加')" @click="openDualDrawer" />
       </div>
       <RxButton v-if="check('Profiles_select_proxy')" size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
     </div>
-    <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="driverNext" @buy-success="onDualDrawerBuySuccess"
-      @add-confirm="onDualDrawerAddConfirm" />
+    <ProxyBuyAddDrawer v-model:visible="dualDrawerVisible" :show-buy="canBuy" :show-add="canAdd" :provider="providerProps" @close="moreCountryDrawerVisible = false" @buy-success="onDualDrawerBuySuccess"
+                       @add-confirm="onDualDrawerAddConfirm"
+    />
     <div class="pl-27 flex flex-col gap-3 empty:hidden">
       <RxAlert v-if="isBatch && sumProxyCount && sumProxyCount !== createCount" class="w-full whitespace-pre-line" :type="sumProxyCount > createCount ? 'warn' : 'info'" :closable="false"
-        :title="proxyAlertMessage" />
+               :title="proxyAlertMessage"
+      />
       <div v-if="!presetTemplate && proxyList.length" class="grid gap-2 list">
         <RxCard v-for="(item, index) in proxyList" :key="index" class="flex gap-2 items-start overflow-hidden" :closable="false" @click="onEdit(item)">
           <SvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
@@ -348,7 +345,8 @@ function switchProxyCountry() {
           </div>
           <div class="mt-0.5 flex gap-2">
             <SvgIcon v-if="check('Profiles_speed_test_proxy')" class="cursor-pointer" :class="{ 'pi-spin': checkIndex[index] }"
-              :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))" />
+                     :name="checkIndex[index] ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" color="var(--colors-icon-icon-tertiary)" @click.stop="testProxySpeed(item, Number(index))"
+            />
             <SvgIcon v-if="check('Profiles_delete_proxy_outside')" class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteProxy(Number(index))" />
           </div>
         </RxCard>

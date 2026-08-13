@@ -54,11 +54,16 @@ function toRola() {
             <div class="flex items-center gap-3">
               <img class="block w-8 rounded-1.5 image" :src="data.image">
               <div class="flex flex-col text-left gap-0.5">
-                <div class="title">
-                  {{ data.title }}
+                <div class="flex items-center gap-1.5">
+                  <span class="tt-primary font-[Archivo] text-5 font-700 leading-7">
+                    {{ data.title }}
+                  </span>
+                  <span class="py-1 px-2 rounded-full color-white font-[DingTalk_JinBuTi] text-3 font-400 leading-none" :class="[data.isJump ? 'partners-tag' : 'official-tag']">{{ data.isJump
+                    ? $t('战略合作') : $t('官方自营') }}</span>
                 </div>
-                <div v-if="!data.isJump" class="desc">
-                  {{ $t('超高质量·无网包退') }}
+
+                <div class="font-[DingTalk_JinBuTi] text-3 font-400 leading-none" :class="[data.isJump ? 'partners-desc' : 'official-desc']">
+                  {{ data.isJump ? $t('全球动态代理 IP') : $t('超高质量·无网包退') }}
                 </div>
               </div>
             </div>
@@ -90,23 +95,30 @@ function toRola() {
   border: 1px solid var(--colors-border-border-inactive);
 }
 
-.title {
-  color: var(--colors-text-text-primary);
-  font-family: Archivo;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 28px;
+.official {
+  &-tag {
+    background: linear-gradient(90deg, #15a2fd 0%, #da54f9 100%);
+  }
+
+  &-desc {
+    background: linear-gradient(90deg, #fc9d12 0%, #fdae3a 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
-.desc {
-  font-family: 'DingTalk JinBuTi';
-  font-size: 14px;
-  line-height: normal;
+.partners {
+  &-tag {
+    background: linear-gradient(90deg, #2dc637 0%, #44affb 100%);
+  }
 
-  background: linear-gradient(90deg, #fc9d12 0%, #fdae3a 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  &-desc {
+    background: linear-gradient(90deg, #2dc637 0%, #44affb 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 .content {

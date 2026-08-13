@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { Accordions } from './type.ts'
+import type { Accordions, FormPanel } from './type.ts'
 import WindowFormRenderer from './window-form-renderer.vue'
 
 interface Props {
@@ -13,6 +13,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const outsidePanels = computed(() => props.accordions?.panels.filter(panel => panel.placement === 'outside') ?? [])
 const accordionPanels = computed(() => props.accordions?.panels.filter(panel => panel.placement === 'accordion') ?? [])
+
+/** 面板主 group + extraGroupIndexes 的渲染列表 */
+function panelRenderGroups(panel: FormPanel) {
+  return [panel.groupIndex, ...(panel.extraGroupIndexes ?? [])]
+}
 </script>
 
 <template>
@@ -37,12 +42,16 @@ const accordionPanels = computed(() => props.accordions?.panels.filter(panel => 
             </div>
           </AccordionHeader>
           <AccordionContent>
-            <WindowFormRenderer
-              :inputs="props.inputsGroup[panel.groupIndex]"
-              :inputs-group="props.inputsGroup"
-              :variant="panel.variant"
-              :excluded-fields="panel.excludedFields"
-            />
+            <div class="flex flex-col gap-4">
+              <WindowFormRenderer
+                v-for="(groupIndex, renderIndex) in panelRenderGroups(panel)"
+                :key="`${panel.value}-${groupIndex}`"
+                :inputs="props.inputsGroup[groupIndex]"
+                :inputs-group="props.inputsGroup"
+                :variant="renderIndex === 0 ? panel.variant : 'settings'"
+                :excluded-fields="renderIndex === 0 ? panel.excludedFields : undefined"
+              />
+            </div>
           </AccordionContent>
         </AccordionPanel>
       </RxAccordion>

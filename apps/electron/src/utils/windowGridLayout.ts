@@ -1,14 +1,14 @@
 /**
- * 多显示器窗口网格布局 + 整块虚拟工作台 workArea 外包矩形（DIP）。
- * chunk 铺满与 windowRatioPosition 换算共用本文件。
+ * 多显示器窗口网格布局 + windowRatioPosition 的比例基准矩形（DIP）。
  */
 
 import { screen } from 'electron'
 
 // ---------------------------------------------------------------------------
-// 虚拟工作台 workArea 外包矩形（windowRatioPosition 比例基准）
+// windowRatioPosition 比例基准矩形
 // ---------------------------------------------------------------------------
 
+/** 窗口定位用的基准矩形（DIP），原点为左上角 */
 export interface VirtualWorkAreaUnion {
   originX: number
   originY: number
@@ -17,27 +17,12 @@ export interface VirtualWorkAreaUnion {
 }
 
 /**
- * 当前所有显示器 workArea 的外包矩形（DIP）。
- * windowRatioPosition 的 x/y 解释为相对该矩形的锚点（与 Chromium 虚拟桌面坐标一致）。
+ * 鼠标所在显示器的 workArea（DIP），作为 windowRatioPosition 的比例基准。
+ * 用户在哪块屏幕上点击启动，内核窗口就以那块屏幕为基准定位。
  */
-export function getVirtualWorkAreaUnion(): VirtualWorkAreaUnion {
-  const displays = screen.getAllDisplays()
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-
-  for (const d of displays) {
-    const { x, y, width, height } = d.workArea
-    minX = Math.min(minX, x)
-    minY = Math.min(minY, y)
-    maxX = Math.max(maxX, x + width)
-    maxY = Math.max(maxY, y + height)
-  }
-
-  if (!Number.isFinite(minX)) {
-    const p = screen.getPrimaryDisplay()
-    const wa = p.workArea
+export function getCursorDisplayWorkArea(): VirtualWorkAreaUnion {
+  try {
+    const wa = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea
     return {
       originX: wa.x,
       originY: wa.y,
@@ -45,26 +30,17 @@ export function getVirtualWorkAreaUnion(): VirtualWorkAreaUnion {
       height: Math.max(1, wa.height),
     }
   }
-
-  return {
-    originX: minX,
-    originY: minY,
-    width: Math.max(1, maxX - minX),
-    height: Math.max(1, maxY - minY),
+  catch (error) {
+    // 无显示器信息或鼠标坐标不可用时退回主屏，保证启动不因定位失败中断
+    console.warn('[windowGridLayout] failed to resolve cursor display, fallback to primary', error)
+    const wa = screen.getPrimaryDisplay().workArea
+    return {
+      originX: wa.x,
+      originY: wa.y,
+      width: Math.max(1, wa.width),
+      height: Math.max(1, wa.height),
+    }
   }
-}
-
-/** 绝对左上角 DIP → windowRatioPosition 字符串（左上锚点 tl） */
-export function absoluteTopLeftToWindowRatioPosition(
-  topLeftX: number,
-  topLeftY: number,
-  bounds: VirtualWorkAreaUnion,
-): string {
-  const vw = bounds.width || 1
-  const vh = bounds.height || 1
-  const rx = (topLeftX - bounds.originX) / vw
-  const ry = (topLeftY - bounds.originY) / vh
-  return `${rx},${ry},tl`
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +164,10 @@ export function sortDisplaysSpatial(displays: DisplayLayoutInput[]): DisplayLayo
   )
 }
 
-/** 将网格结果转为 batchLaunch — customParamsByDirId（windowRatioPosition 相对整块虚拟工作台 workArea） */
+/**
+ * 将网格结果转为 batchLaunch — customParamsByDirId。
+ * 网格本身要跨屏铺满，坐标已是虚拟桌面绝对值，直接下发绝对坐标而不经比例换算。
+ */
 export function buildChunkLaunchParamsByDirId(
   dirIds: string[],
   layouts: WindowRect[],
@@ -196,9 +175,8 @@ export function buildChunkLaunchParamsByDirId(
   openWidth: string
   openHeight: string
   positionSwitch: boolean
-  windowRatioPosition: string
+  windowAbsolutePosition: string
 }> {
-  const virtualBounds = getVirtualWorkAreaUnion()
   const map: Record<string, any> = {}
   for (let i = 0; i < dirIds.length; i++) {
     const layout = layouts[i]
@@ -208,7 +186,7 @@ export function buildChunkLaunchParamsByDirId(
       openWidth: String(layout.width),
       openHeight: String(layout.height),
       positionSwitch: true,
-      windowRatioPosition: absoluteTopLeftToWindowRatioPosition(layout.x, layout.y, virtualBounds),
+      windowAbsolutePosition: `${layout.x},${layout.y}`,
     }
   }
   return map

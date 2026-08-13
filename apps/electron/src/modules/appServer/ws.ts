@@ -10,6 +10,7 @@ import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl, restoreOrCreateWindow } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
 import { CoreType } from '/@/modules/browser/browser-manager/adapter'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { shortcutStore } from '/@/modules/shortcut-manager/ShortcutStore'
 import { store } from '/@/modules/store'
@@ -261,7 +262,7 @@ async function showDefaultBrowserWindow(dirId: string, coreType: CoreType) {
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools()
   }
   win.on('close', () => {

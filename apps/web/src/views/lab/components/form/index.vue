@@ -90,7 +90,8 @@ function setInputsProps(map: Record<string, any>, inputs: Input[]) {
     else if (Object.hasOwn(map, item.name)) {
       const { value, ...props } = map[item.name]
       Reflect.set(item, 'props', { ...item.props, ...props })
-      if (value) {
+      // 用 undefined 判断：避免合法 falsy（如 0、''）被跳过导致字段未写入
+      if (value !== undefined) {
         Reflect.set(initialValues, item.name, value)
         formRef.value?.setFieldValue(item.name, value)
       }

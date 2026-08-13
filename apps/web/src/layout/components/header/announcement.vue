@@ -104,7 +104,7 @@ function handleCloseProxyExpired() {
 </script>
 
 <template>
-  <div class="mr-4 flex flex-col gap-2 announcement">
+  <div v-if="unReadAnnts" class="mr-4 flex flex-col gap-2 announcement">
     <Message v-for="annt in unReadAnnts" :key="annt.id" severity="success" class="w-full rounded-1 announcement_content" closable @close="handleCloseAnnt(annt.id!)">
       <template #default>
         <div class="break-all" @click="onHtmlClick" v-html="annt.announcement" />

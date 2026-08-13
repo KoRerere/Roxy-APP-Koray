@@ -432,6 +432,8 @@ defineExpose({
   },
   clearSelection: _clearSelection,
   updateDataList: _updateDataList,
+  /** 当前表格展示的数据（与内部 _dataList / props.dataList 一致） */
+  getDataList: () => tableList.value as any[] | undefined,
   getParams: _getParams,
   restoreFromCache,
   getCachedEntry: () => {

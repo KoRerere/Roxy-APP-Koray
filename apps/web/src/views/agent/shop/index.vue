@@ -4,7 +4,6 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 // import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
 import BandwidthCell from '/@/views/agent/shop/components/bandwidth-cell.vue'
-import EditProxy from '/@/views/agent/create/quick.vue'
 import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
@@ -24,14 +23,13 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { genPollingChecker, isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
+import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
 import { getRelatedProfileLabels, useColumns } from './columns'
 import { useProviderJump } from './hooks/useProviderJump'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
-import {
-  canShowProxyQrcode,
-  fetchWorkspaceKycUnlockedCached,
-  isBuyProxy,
-} from './utils/proxy-download-kyc-gate'
+import { canShowProxyQrcode, fetchWorkspaceKycUnlockedCached, isBuyProxy } from './utils/proxy-download-kyc-gate'
+import { isProxySpeedTestable } from './utils/proxy-speed-testable'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyReqType, ProxyType } from '/@/enums'
@@ -45,6 +43,8 @@ const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
+const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
+const { updateProxyModules } = useProxyModuleCreate()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
@@ -127,7 +127,7 @@ onBeforeUnmount(() => {
 
 async function getTableList(params: any) {
   const data = await tableRequest({ ...proxyFilter.getApiParams(), type: hideTypeConfig.value, ...params })
-  dataList.value = (data.data?.rows || []).filter(item => item.proxyType === ProxyType.resource || (item.proxyExpireStatus !== ProxyExpireStatus.expired && [ProxyOrderStatus.done, ProxyOrderStatus.refunding, ProxyOrderStatus.changing].includes(item.orderStatus!)))
+  dataList.value = (data.data?.rows || []).filter(item => isProxySpeedTestable(item as ProxyItem))
   return data
 }
 
@@ -176,22 +176,18 @@ function createProxy() {
 }
 
 function editProxy(data: ProxyItem) {
-  drawerInstance.showDrawer({
+  showProxyFormDrawer({
     title: $t('编辑代理 IP'),
-    slots: {
-      container: () => h(EditProxy, {
-        data,
-        showRemark: true,
-        onConfirm: async (formData: any) => {
-          const isOK = await updateResourceProxy({
-            proxyList: [formData],
-          })
-          if (!isOK)
-            return
-          onRefreshTable()
-          drawerInstance.hideDrawer()
-        },
-      }),
+    data,
+    showRemark: true,
+    mode: 'proxy',
+    onConfirm: async (formData) => {
+      const isOK = await updateProxyModules({
+        proxyList: [formData],
+      })
+      if (!isOK)
+        return false
+      onRefreshTable()
     },
   })
 }
@@ -291,8 +287,49 @@ async function testAllProxy(silent = false) {
   if (checkerLoading.value)
     return
   checkerLoading.value = true
-  await concurrentProxyTest(buildShopProxySpeedTestRun(dataList.value, { operateName: 'test', silent }))
-  checkerLoading.value = false
+  try {
+    await concurrentProxyTest(buildShopProxySpeedTestRun(dataList.value, { operateName: 'test', silent }))
+    // 全部测速后把失败项置顶，仅本地重排，不触发列表接口
+    moveFailedProxiesToFront()
+  }
+  finally {
+    checkerLoading.value = false
+  }
+}
+
+/** 将测速失败的代理排到当前列表最前，并同步表格展示数据 */
+function moveFailedProxiesToFront() {
+  // 必须以表格完整行为准重排：dataList 是测速用的过滤子集，直接拿它 updateDataList 会丢掉未纳入测速的行
+  const tableRows = tableRef.value?.getDataList()
+  const source = tableRows?.length ? tableRows : (dataList.value as ProxyItem[] | undefined)
+  if (!source?.length)
+    return
+
+  const isFailed = (item: ProxyItem) =>
+    isProxySpeedTestable(item)
+    && (checkedMessage.value[item.id!] ?? item.checkStatus) === ProxyCheckStatus.failure
+
+  const failed: ProxyItem[] = []
+  const others: ProxyItem[] = []
+  for (const item of source) {
+    if (isFailed(item))
+      failed.push(item)
+    else
+      others.push(item)
+  }
+  if (!failed.length)
+    return
+
+  const reordered = [...failed, ...others]
+  tableRef.value?.updateDataList(reordered)
+
+  // dataList 保持为同一批对象，仅按新顺序同步，避免与表格脱节
+  if (dataList.value?.length) {
+    const order = new Map(reordered.map((item, index) => [item.id, index]))
+    dataList.value = [...dataList.value].sort(
+      (a, b) => (order.get(a.id!) ?? 0) - (order.get(b.id!) ?? 0),
+    )
+  }
 }
 
 function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }: { operateName: string, silent?: boolean }): ConcurrentProxyTestRun {
@@ -332,17 +369,11 @@ function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }:
       API.proxy.userBatchMdfProxyModuleCheckCreate({ proxyList })// 自动检测无日志
     }
     else {
-      updateResourceProxy({ proxyList, requestType: ProxyReqType.SpeedTest })
+      updateProxyModules({ proxyList, requestType: ProxyReqType.SpeedTest })
     }
   }
 
   return { tasks, tasksCompleted }
-}
-
-async function updateResourceProxy(params: { proxyList: any[], requestType?: ProxyReqType }) {
-  const { code, msg } = await API.proxy.userMdfProxyModuleCreate(params)
-  onlyErrorToast(code, msg)
-  return code === 0
 }
 
 function onRenewProxy(datas: ProxyItem[]) {
@@ -531,7 +562,7 @@ function bindProfiles(data: ProxyItem) {
   <div class="flex flex-col w-full h-full">
     <ProviderSimpleList :on-buy-proxy="onBuyProxy" />
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="shoptable" v-model:columns="columns" cache-key="agent-shop" selection-mode="multiple" class="agent-shop-table" :table-request="getTableList" :table-operation="tableOperation"
+      <RyTable ref="shoptable" v-model:columns="columns" lazy cache-key="agent-shop" selection-mode="multiple" class="agent-shop-table" :table-request="getTableList" :table-operation="tableOperation"
                removable-sort :table-sort="getSorts" :row-class="rowClass" :operation-handler="operationHandler" :before-refresh="tableBeforeRefresh" :virtual-scroller-options="{ itemSize: 60 }"
       >
         <template #filter-after>

@@ -16,7 +16,6 @@ import { migrateAutoUpdateAppOnLaunchFromLegacy } from '/@/modules/store/autoUpd
 import { migrateNetworkModeFromLegacy } from '/@/modules/store/networkMode'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { ensureBrowserCacheRootDir, fileExists, getInstallerParams, safeParseJSON } from '/@/utils'
-import { absoluteTopLeftToWindowRatioPosition, getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
 
 function normalizeSimulationConfig(simulation: Record<string, any> | undefined) {
   if (!simulation || typeof simulation !== 'object') {
@@ -387,8 +386,7 @@ export async function restoreLastWindowOpenStatus() {
 
           console.log('store.waitingRestoreWindowBounds', store.waitingRestoreWindowBounds)
 
-          const virtual = getVirtualWorkAreaUnion()
-
+          // 恢复上次退出时的窗口位置：坐标已是虚拟桌面绝对值，直接下发，避免比例换算跨屏漂移
           const customParamsByDirId = dirIds.reduce((acc, dirId) => {
             const bounds = store.waitingRestoreWindowBounds?.[dirId]
             if (!bounds) {
@@ -399,10 +397,10 @@ export async function restoreLastWindowOpenStatus() {
               positionSwitch: true,
               openWidth: bounds.width,
               openHeight: bounds.height,
-              windowRatioPosition: absoluteTopLeftToWindowRatioPosition(bounds.left, bounds.top, virtual),
+              windowAbsolutePosition: `${bounds.left},${bounds.top}`,
             }
             return acc
-          }, {} as Record<string, { positionSwitch: boolean, openWidth: number, openHeight: number, windowRatioPosition: string }>)
+          }, {} as Record<string, { positionSwitch: boolean, openWidth: number, openHeight: number, windowAbsolutePosition: string }>)
 
           console.log('customParamsByDirId', customParamsByDirId)
 

@@ -2,7 +2,6 @@ import currency from 'currency.js'
 import { driver } from 'driver.js'
 import type { Config } from 'driver.js'
 import type { SvgNames } from '/@/components/rx-icon'
-import { IPType } from '/@/enums'
 
 export function getRawType(data: any) {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
@@ -246,42 +245,6 @@ export function parseProxyUrl(url: string): {
     proxyPassword: data?.pass,
     refreshUrl: data?.refresh,
     remark: data?.remark,
-  }
-}
-
-export function formatProxyInfoToString(proxyInfo?: {
-  host?: string
-  port?: string
-  proxyUserName?: string
-  proxyPassword?: string
-  refreshUrl?: string
-  remark?: string
-}) {
-  if (!proxyInfo)
-    return ''
-
-  const { host, port, proxyUserName, proxyPassword, refreshUrl, remark } = proxyInfo
-  let result = [host, port, proxyUserName, proxyPassword].filter(str => Boolean(str)).join(':')
-
-  if (refreshUrl)
-    result = `${result}[${refreshUrl}]`
-
-  if (remark)
-    result = `${result}{${remark}}`
-
-  return result
-}
-
-export function buildQuickCreateProxyParams(proxyText: string) {
-  const { host, protocol, ...rest } = parseProxyUrl(proxyText)
-  const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
-
-  return {
-    ...rest,
-    ipType,
-    host: host?.replace(/\[|\]/g, ''),
-    protocol: protocol || 'SOCKS5',
-    proxyCategory: protocol || 'SOCKS5',
   }
 }
 

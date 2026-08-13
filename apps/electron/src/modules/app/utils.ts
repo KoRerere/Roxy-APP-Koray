@@ -70,8 +70,8 @@ export function handleCloseWindow(event: Electron.Event) {
         // event.preventDefault();
       }
       else {
-        // 退出程序: 交给 app.quit() 走 before-quit 流程(先同步窗口数据并显示进度遮罩), 同步完成后再清理退出.
-        app.quit()
+        // 退出程序: forceUpgrade 已下载则安装；否则走 before-quit 同步后退出
+        appUpdater.quitApp()
       }
     })
   }
@@ -83,9 +83,9 @@ export function handleCloseWindow(event: Electron.Event) {
   }
   else if (closeSoft === 'exit') {
     // 退出程序: 先拦下默认关闭(避免窗口被直接销毁导致看不到同步进度),
-    // 交给 app.quit() 走 before-quit 流程同步窗口数据并显示进度遮罩, 完成后再清理退出.
+    // forceUpgrade 已下载则安装；否则走 before-quit 同步后退出
     event.preventDefault()
-    app.quit()
+    appUpdater.quitApp()
   }
 }
 

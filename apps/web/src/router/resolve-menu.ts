@@ -2,6 +2,7 @@ import { cloneDeep } from 'es-toolkit'
 import type { WorkspaceType } from '/@/enums'
 import { LEGACY_SHARED_ROUTE_NAME } from '/@/domain/workspace-routing'
 import { ecommerceMenuRoutes, normalMenuRoutes, sharedMenuRoutes } from '/@/router/menu-routes'
+import { footerMenuRouteNames } from '/@/router/menu-shared'
 import type { RouteContext } from '/@/composables/useRouteContext'
 import type { Permission, PermissionMode } from '/@/hooks/usePermission/type'
 import type { RouteMeta, RouteRecordRaw } from 'vue-router'
@@ -63,6 +64,42 @@ export function filterMenuRoutes(
     const hasLocale = matchesLocale(item.meta, siteLocale)
 
     return !item.meta?.hideInMenu && hasPermission && hasWorkspaceType && hasLocale
+  })
+}
+
+export interface ResolveFooterMenuOptions {
+  ctx: RouteContext
+  siteLocale: string
+  checkPermission: ResolveMenuOptions['checkPermission']
+}
+
+/** 按 footerMenuRouteNames 从 shared 路由表取入口，复用既有 meta（title/icon/permissions） */
+export function resolveFooterMenuRoutes(options: ResolveFooterMenuOptions): RouteRecordRaw[] {
+  const { ctx, siteLocale, checkPermission } = options
+
+  if (ctx.isPublicMember)
+    return []
+
+  const byName = new Map(
+    sharedMenuRoutes
+      .filter(route => route.name != null)
+      .map(route => [route.name, route]),
+  )
+
+  return footerMenuRouteNames.flatMap((name) => {
+    const route = byName.get(name)
+    if (!route)
+      return []
+
+    const hasPermission = !route.meta?.permissions?.length
+      || checkPermission(route.meta.permissions, route.meta.permissionMode)
+    const hasWorkspaceType = matchesWorkspaceType(route.meta, ctx.workspaceType)
+    const hasLocale = matchesLocale(route.meta, siteLocale)
+
+    if (!hasPermission || !hasWorkspaceType || !hasLocale)
+      return []
+
+    return [cloneDeep(route)]
   })
 }
 

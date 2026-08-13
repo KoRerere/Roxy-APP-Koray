@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { handleRichHtmlLinkClick, navigateByRichHtmlUrl } from '/@/utils/rich-html-link'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   newFeatureTips: Record<string, any>[]
-}>()
+  /** dismiss：了解/完成；upgrade：重启并更新 / 暂不更新 */
+  actionMode?: 'dismiss' | 'upgrade'
+}>(), {
+  actionMode: 'dismiss',
+})
 
 const emit = defineEmits<{
   (e: 'skip'): void
+  (e: 'upgrade'): void
 }>()
 
 const router = useRouter()
@@ -15,8 +20,20 @@ const features = ref(props.newFeatureTips)
 const page = ref(0)
 const appUpgradeTips = ref<HTMLElement | null>(null)
 
+const isLastPage = computed(() => page.value === features.value.length - 1)
+
 const nextText = computed(() => {
-  return page.value === features.value.length - 1 ? $t('完成') : $t('下一个')
+  if (!isLastPage.value)
+    return $t('下一个')
+  return props.actionMode === 'upgrade' ? $t('重启并更新') : $t('完成')
+})
+
+const singlePageLabel = computed(() => {
+  return props.actionMode === 'upgrade' ? $t('重启并更新') : $t('了解')
+})
+
+const skipLabel = computed(() => {
+  return props.actionMode === 'upgrade' ? $t('暂不更新') : $t('跳过')
 })
 
 const formatFeatures = computed(() => {
@@ -66,13 +83,21 @@ function syncVideoPlayback() {
   })
 }
 
-async function handleSkip() {
+function handlePrimaryAction() {
+  if (props.actionMode === 'upgrade')
+    emit('upgrade')
+  else
+    emit('skip')
+}
+
+function handleSkip() {
   emit('skip')
 }
 
 function handleNext() {
-  if (page.value === features.value.length - 1) {
-    handleSkip()
+  if (isLastPage.value) {
+    handlePrimaryAction()
+    return
   }
   page.value = Math.min(page.value + 1, features.value.length - 1)
   nextTick(() => {
@@ -114,7 +139,7 @@ function onHtmlClick(e: MouseEvent) {
     <div class="flex items-center justify-between">
       <template v-if="formatFeatures.length > 1">
         <RxButton severity="secondary" outlined @click="handleSkip">
-          {{ $t('跳过') }}
+          {{ skipLabel }}
         </RxButton>
 
         <div class="flex items-center gap-2">
@@ -126,9 +151,17 @@ function onHtmlClick(e: MouseEvent) {
           </RxButton>
         </div>
       </template>
+      <template v-else-if="actionMode === 'upgrade'">
+        <RxButton severity="secondary" outlined class="mt-[6px]" @click="handleSkip">
+          {{ skipLabel }}
+        </RxButton>
+        <RxButton class="mt-[6px]" @click="handlePrimaryAction">
+          {{ singlePageLabel }}
+        </RxButton>
+      </template>
       <template v-else>
-        <RxButton class="ml-auto mt-[6px]" @click="handleSkip">
-          {{ $t('了解') }}
+        <RxButton class="ml-auto mt-[6px]" @click="handlePrimaryAction">
+          {{ singlePageLabel }}
         </RxButton>
       </template>
     </div>

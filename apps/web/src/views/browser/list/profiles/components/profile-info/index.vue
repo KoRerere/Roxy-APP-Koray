@@ -7,9 +7,9 @@ import Earth from './earth.vue'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
-import { useProfileProxy } from '../../hooks/useProfileProxy'
+import { PROXY_BUY_ADD_DRAWER_KEY, useProfileProxy } from '../../hooks/useProfileProxy'
 import { usePermission } from '/@/hooks/usePermission'
 import { useProfileInfoAccountMenu } from './useProfileInfoAccountMenu'
 import { useProfileInfoList } from './useProfileInfoList'
@@ -43,18 +43,16 @@ const {
   readonly,
 } = props
 
-const router = useRouter()
 const drawerInstance = useDrawer()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-const { buyProxy } = useProxy()
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
+const proxyBuyAddDrawer = inject(PROXY_BUY_ADD_DRAWER_KEY, null)
 
 const proxyCss = useCssModule('proxy')
-const proxyProvider = ref()
 
 const { hasProxy, isOpenBrowser, list } = useProfileInfoList(
   toRef(props, 'data'),
@@ -62,7 +60,7 @@ const { hasProxy, isOpenBrowser, list } = useProfileInfoList(
   toRef(props, 'filterKeys'),
 )
 
-const { updateProfile, setChooseProxy, createProxy, openProxyDrawer } = useProfileInfoMutations({
+const { updateProfile, setChooseProxy, addCustomProxy, editProxy, openProxyDrawer } = useProfileInfoMutations({
   data: toRef(props, 'data'),
   workspaceName: toRef(props, 'workspaceName'),
   drawerInstance,
@@ -70,23 +68,28 @@ const { updateProfile, setChooseProxy, createProxy, openProxyDrawer } = useProfi
   onlyErrorToast,
 })
 
+async function openAddProxy() {
+  await proxyBuyAddDrawer?.openProxyBuyAddDrawer({
+    onBuySuccess: proxy => setChooseProxy(proxy),
+    onAddConfirm: formData => addCustomProxy(formData),
+  })
+}
+
 const { getProxyModel } = useProfileInfoProxyMenu({
   data: toRef(props, 'data'),
   hasProxy,
   buildProxyData,
   confirmDeleteProxy,
   check,
-  router,
   showToast: showToast as (code: number, ...rest: any[]) => void,
   onlyErrorToast,
   checkProxy,
   batchTestShowToast,
-  buyProxy,
-  createProxy,
+  openAddProxy,
+  editProxy,
   openProxyDrawer,
   setChooseProxy,
   saveLocalTrack,
-  proxyProvider,
   proxyCss,
 })
 

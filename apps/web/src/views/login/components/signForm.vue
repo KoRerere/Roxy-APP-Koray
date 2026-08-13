@@ -257,7 +257,7 @@ defineExpose({
   </I18nT>
   <div class="self-stretch flex items-center justify-between">
     <SignCardHeader :title="$t('欢迎使用')" />
-    <RxSelectButton v-if="isZhLocale" v-model="loginTypeZh" class="shrink-0" :options="loginTypeOptions" size="xxs" option-label="name" option-value="value" data-key="value" />
+    <RxSelectButton v-if="isZhLocale" v-model="loginTypeZh" class="shrink-0" :options="loginTypeOptions" option-label="name" option-value="value" data-key="value" />
   </div>
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit">
     <template #before-field-password>

@@ -5,29 +5,31 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import type { WindowMetaData } from './components/type'
 import AccordionInputs from './components/accordion-inputs.vue'
+import BasicInfo from './components/basic-info.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createFormAsyncGate } from './hooks/useAsyncGate'
 import { createTableContext } from './hooks/useContext'
+import { createSingleWindowAccordions } from './modes/createDefaultAccordions'
+import { ensureApiExtractProxyInfo } from './components/proxy-info/api-extract'
+import { buildUiProxyInfoList, toSingleWindowProxyParams } from './components/proxy-info/proxy-params'
 import { useBackRoute } from '/@/router/navigation'
-import { getFormDataByList } from '/@/utils'
+import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
+import { findInputByName, getFormDataByList } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
+import { useCheckProxy } from '/@/views/agent/hooks'
 
 const router = useRouter()
 const route = useRoute()
 const { mixpanelTrack } = useUserStore()
+const { userConfig, userPayInfo } = storeToRefs(useUserStore())
+const { testProxy } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { path, query } = useBackRoute()
+const { invalidateCache } = useListCacheActions()
 
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
-const accordions = ref({
-  value: [],
-  panels: [
-    { value: 'window', groupIndex: 0, placement: 'outside' as const, variant: 'window' as const },
-    ...[$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
-      .map((title, index) => ({ title, value: index.toString(), groupIndex: index + 1, placement: 'accordion' as const })),
-  ],
-})
+const accordions = ref(createSingleWindowAccordions())
 const inputsGroup = ref()
 const original = ref()
 const metaData = ref<WindowMetaData>()
@@ -38,6 +40,7 @@ const formInitialized = ref(false)
 const windowInfo = ref({})
 
 const canSave = computed(() => formInitialized.value && formGate.isReady.value && !loading.value)
+const windowInputs = computed(() => inputsGroup.value?.[0] ?? [])
 
 onBeforeMount(async () => {
   formInitialized.value = false
@@ -68,6 +71,18 @@ async function onShuffle() {
   showToast(0, $t('指纹刷新成功'))
 }
 
+/** 保存后失效窗口列表缓存，避免返回时 restore 到编辑前的旧行数据 */
+function invalidateBrowserListCache() {
+  invalidateCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId: '' })
+  const projectIds = new Set(
+    [metaData.value?.projectId, (windowInfo.value as { projectId?: string | number })?.projectId]
+      .filter(id => id != null && String(id) !== '')
+      .map(String),
+  )
+  for (const projectId of projectIds)
+    invalidateCache(LIST_CACHE_NAMESPACE.BROWSER_LIST, { projectId })
+}
+
 async function createProfile() {
   if (!formInitialized.value || !inputsGroup.value)
     return
@@ -78,12 +93,26 @@ async function createProfile() {
     ...original.value,
     ...formData,
   }
+  const ensured = await ensureApiExtractProxyInfo(params, {
+    checkChannel: userConfig.value.ipChecker,
+    isDirect: userPayInfo.value.isDirectWhitelist,
+    testProxy,
+  })
+  // 仅 API 静默提取成功时写回，避免 choose/custom 的 UI 草稿被扁平重建冲掉
+  if (ensured !== params) {
+    const proxyInput = findInputByName(inputsGroup.value[0] ?? [], 'proxyInfoList')
+    if (proxyInput)
+      proxyInput.value = buildUiProxyInfoList(ensured)
+  }
+
+  const requestParams = toSingleWindowProxyParams(ensured)
   loading.value = true
-  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
+  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(requestParams as any)
   loading.value = false
   onlyErrorToast(code, msg)
   if (code === 0) {
     mixpanelTrack('profile_edit')
+    invalidateBrowserListCache()
     if (path === '/browser/edit') {
       router.replace({ path: '/browser' })
     }
@@ -107,11 +136,9 @@ function oldFieldsFormat() {
     <ViewsHeader show-back :title="$t('编辑窗口')" />
     <div class="px-16 flex flex-1 min-h-0 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex min-h-0 gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
-        <AccordionInputs class="min-h-0 min-w-0 flex-1" :window-info="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
+        <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
           <template #before>
-            <div class="flex items-center justify-between px-4 py-4 subtitle">
-              {{ $t('窗口信息') }}
-            </div>
+            <BasicInfo :window-inputs="windowInputs" />
           </template>
         </AccordionInputs>
         <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" is-edit :on-shuffle="onShuffle" />
@@ -128,12 +155,6 @@ function oldFieldsFormat() {
 </template>
 
 <style lang="scss" scoped>
-.subtitle {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-}
-
 .footer {
   :deep(.p-button) {
     max-width: 150px;

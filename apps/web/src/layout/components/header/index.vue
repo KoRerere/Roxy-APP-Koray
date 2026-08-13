@@ -4,6 +4,9 @@ import Notification from './notification.vue'
 import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
 import DownloadAppButton from './download-app-button.vue'
+import Reload from './reload.vue'
+
+const isElectron = globalThis.isElectron
 </script>
 
 <template>
@@ -11,9 +14,10 @@ import DownloadAppButton from './download-app-button.vue'
     <div class="top-bar-items">
       <Network />
       <Divider class="!ma-0" layout="vertical" />
-      <ResourceUpdater v-if="$isElectron" />
+      <ResourceUpdater v-if="isElectron" />
       <DownloadAppButton v-else />
       <Notification />
+      <Reload />
       <Divider class="!ma-0" layout="vertical" />
       <Profile />
     </div>

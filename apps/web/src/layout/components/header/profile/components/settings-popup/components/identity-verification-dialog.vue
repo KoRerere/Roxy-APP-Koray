@@ -4,6 +4,8 @@ import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import IdentityIdUpload from './identity-id-upload.vue'
 import {
+  formatIdentityRejectedTooltip,
+  getIdentityStatus,
   submitIdentityVerification,
   validateKycCreditCode,
   validateKycIdNumber,
@@ -15,15 +17,29 @@ const props = defineProps<{
   defaultTab?: IdentityVerificationType
   /** 代理导出/二维码 KYC 拦截跳转时展示法规说明 */
   showRegulatoryNotice?: boolean
+  /** 审核未通过重新提交时展示失败原因（与法规说明互斥） */
+  showRejectedNotice?: boolean
   onSuccess: () => void
 }>()
 
 const [showToast, onlyErrorToast] = useResponseToast()
 const proxyLabels = useProxyShopLabels()
+const identityInfo = getIdentityStatus()
 
 const activeTab = ref(props.defaultTab ?? 'personal')
 const agreed = ref(false)
 const submitting = ref(false)
+
+/** 顶部 Alert 文案：失败原因优先于法规说明 */
+const noticeText = computed(() => {
+  if (props.showRejectedNotice)
+    return formatIdentityRejectedTooltip(identityInfo.value.rejectedReasons)
+  if (props.showRegulatoryNotice)
+    return proxyLabels.value.exportRequiresKycDesc
+  return ''
+})
+
+const showNoticeAlert = computed(() => !!noticeText.value)
 
 const personalForm = reactive({
   realName: '',
@@ -142,15 +158,15 @@ async function handleSubmit() {
 <template>
   <div class="identity-form">
     <RxAlert
-      v-if="showRegulatoryNotice"
+      v-if="showNoticeAlert"
       :visible="true"
-      type="info"
+      :type="showRejectedNotice ? 'error' : 'info'"
       :closable="false"
       class="w-full"
     >
       <template #content>
-        <p class="identity-form__notice">
-          {{ proxyLabels.exportRequiresKycDesc }}
+        <p class="identity-form__notice" :class="{ 'whitespace-pre-wrap': showRejectedNotice }">
+          {{ noticeText }}
         </p>
       </template>
     </RxAlert>

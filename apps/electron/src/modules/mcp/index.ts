@@ -6,8 +6,9 @@ import { API } from '/@/api'
 import { getBaseUrl, getGatewayConfig } from '/@/api/getGatewayConfig'
 import { ROXY_MCP_WINDOW_ID } from '/@/constants'
 import { appConfig } from '/@/constants/appConfig'
-import { isPackaged, isProd } from '/@/constants/common'
+import { isProd } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { openAPIServer } from '/@/modules/openapi'
 import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
@@ -234,9 +235,11 @@ export const mcpManager = new (class McpManager {
       }
     })
 
+    // 调试端口只在开发者工具解锁后才开放；解锁前启动的 worker 需重启才会带上 --inspect
+    const inspectArgv = isDevToolsUnlocked() ? [isProd ? '--inspect=20580' : '--inspect=20581'] : []
     const worker = utilityProcess.fork(AGENT_SCRIPT_PATH, [], {
       env,
-      execArgv: [isProd ? '--inspect=20580' : '--inspect=20581', '--experimental-network-inspection', '--experimental-strip-types'],
+      execArgv: [...inspectArgv, '--experimental-network-inspection', '--experimental-strip-types'],
       stdio: 'pipe',
     })
 
@@ -455,7 +458,7 @@ export async function createMcpWindowWithRoute(route = 'agent-console') {
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools()
   }
   handleWindowMove(win)

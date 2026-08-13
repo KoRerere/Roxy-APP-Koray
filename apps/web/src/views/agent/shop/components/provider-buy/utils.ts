@@ -6,6 +6,7 @@ export interface BusinessUseOption {
   desc?: string
   badgeType: string
   badgeDesc?: string
+  scenePriceDesc?: string
   badgeClass?: string
   isSpecialOffer?: boolean
 }

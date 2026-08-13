@@ -74,7 +74,6 @@ const inputs = [
       placeholder: $t('请输入或选择平台网址'),
       optionValue: 'value',
       editable: true,
-      filter: true,
       darkMode: realTheme.value === 'dark',
       onChange: ({ value, props }: any) => {
         const platform = props.options.find((item: any) => item.value === value)

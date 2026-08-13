@@ -3,7 +3,6 @@ import PurchaseAgentPoints from './PurchaseAgentPoints.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import type { PointsData } from './interface.ts'
 import { OrderType, PayWay } from '/@/enums/pay'
-import type { RoxyGiftsType } from '/@/enums/pay'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
@@ -26,7 +25,7 @@ export function useBuyPoints() {
           discountAmount: pointsData.originalAmount - pointsData.actualAmount,
           onClose: hideModal,
           onCancel: () => onFinished?.(false),
-          onConfirm: async ({ payType, ...params }: { payType: PayWay, giftType: RoxyGiftsType, purchaseMember: { staff: number, workspace: number } }) => {
+          onConfirm: async ({ payType, ...params }) => {
             const { code, data, msg } = await API.points.userBuyPointsSettlementCreate({
               rechargeAmount: pointsData.points,
               orderType: OrderType.PointsRecharge,
@@ -36,12 +35,11 @@ export function useBuyPoints() {
             onlyErrorToast(code, msg)
             if (code === 0) {
               if (payType === PayWay.Balance) {
-                console.log('123123')
                 await purchaseSuccessIntoPoints()
                 onFinished?.(true)
               }
               else {
-                openProcessing({ payType, ...data }, OrderType.PointsRecharge)
+                openProcessing(data, OrderType.PointsRecharge)
                   .then(() => onFinished?.(true))
                   .catch(() => onFinished?.(false))
               }
@@ -69,12 +67,11 @@ export function useBuyPoints() {
       showHeader: false,
       modal: true,
       blockScroll: true,
-      class: '!w-[680px]',
+      handleCancel: () => finish(false),
       slots: {
-        container: ({ hideModal }) => (
+        container: ({ handleCancel }) => (
           <PurchaseAgentPoints
-            hideModal={hideModal}
-            onClose={() => finish(false)}
+            hideModal={handleCancel}
             onConfirm={pointsData => handleConfirm(pointsData, finish)}
           >
           </PurchaseAgentPoints>

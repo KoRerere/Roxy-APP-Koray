@@ -76,6 +76,10 @@ export function getRawColumns(options?: any) {
       },
     },
     {
+      title: $t('IP 用途'),
+      key: 'businessUse',
+    },
+    {
       title: $t('IP 查询渠道'),
       key: 'ipChecker',
       render: ({ data }: any) => <RxTag tooltip={$t('为保障测试结果统一，暂时仅支持官方指定的查询渠道。')} icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>,

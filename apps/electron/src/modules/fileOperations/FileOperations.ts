@@ -3,6 +3,7 @@ import type { UtilityProcess } from 'electron'
 import { app, utilityProcess } from 'electron'
 import path from 'node:path'
 import { appCliStartArgs, isDev } from '/@/constants/common'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 
 let inspectPort = 9230
 let workerNo = 1
@@ -23,9 +24,10 @@ export class FileOperations {
 
   /**  创建 worker */
   private createWorker(): UtilityProcess {
-    // 加 inspect 9230
+    // 调试端口需同时满足开发者工具已解锁，避免正式版对外暴露 Node 调试接口
+    const enableInspect = isDevToolsUnlocked() && (appCliStartArgs['roxy-log-level'] === 'debug' || isDev)
     const worker = utilityProcess.fork(path.join(import.meta.dirname, './fileWorker.mjs'), [], {
-      execArgv: appCliStartArgs['roxy-log-level'] === 'debug' || isDev ? [`--inspect=${inspectPort++}`] : [],
+      execArgv: enableInspect ? [`--inspect=${inspectPort++}`] : [],
       serviceName: `roxyFileWorker${workerNo++}`,
     })
     console.log('worker created', worker.pid)

@@ -106,6 +106,62 @@ function getCheckFunction(protocol: ProtocolMapType) {
   return protocolCheckMap[protocol] || noProxy
 }
 
+/**
+ * 从单次检测失败中提取可诊断字段。
+ * Axios / 代理握手错误信息散落在 code、response、cause 中，直接打印 Error 往往只有 message。
+ */
+function formatProxyCheckError(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    return {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      responseData: error.response?.data,
+      url: error.config?.url,
+      // 代理/TLS 等底层错误常挂在 cause 上
+      cause: error.cause instanceof Error
+        ? { name: error.cause.name, message: error.cause.message, code: (error.cause as NodeJS.ErrnoException).code }
+        : error.cause,
+    }
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      code: (error as NodeJS.ErrnoException).code,
+      cause: error.cause instanceof Error
+        ? { name: error.cause.name, message: error.cause.message }
+        : error.cause,
+    }
+  }
+
+  return { message: String(error) }
+}
+
+/**
+ * 打印代理检测失败详情。
+ * Promise.any 失败时只有 AggregateError("All promises were rejected")，必须展开 errors 才能看到各检测节点的真实原因。
+ */
+function logProxyDetectionError(error: unknown) {
+  if (error instanceof AggregateError) {
+    console.error('proxyDetection AggregateError: all check endpoints failed', {
+      message: error.message,
+      count: error.errors.length,
+      errors: error.errors.map(formatProxyCheckError),
+    })
+    return
+  }
+
+  // 非 AggregateError 时去掉 axios config，避免日志里刷出整份请求配置
+  if (error && typeof error === 'object') {
+    Reflect.deleteProperty(error as object, 'config')
+  }
+  console.error('proxyDetection error', formatProxyCheckError(error), error)
+}
+
 /** 代理 => 刷新 URL */
 export function tryRefreshUrl(refreshUrl: string) {
   return axios
@@ -261,8 +317,7 @@ async function runProxyDetection(proxyDetectionParams: ProxyDetectionParams): Pr
     const checkMode = getCheckFunction(params.proxyCategory as ProtocolMapType)
     console.log('proxyDetection params', params)
     const result = await checkMode(params, !!isUseSystemProxy).catch((error) => {
-      Reflect.deleteProperty(error, 'config')
-      console.error('proxyDetection error', error)
+      logProxyDetectionError(error)
       return Promise.reject(getProxyEntityLabels().detectFailedCheckConfig)
     })
 

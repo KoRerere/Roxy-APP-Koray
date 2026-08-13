@@ -2,7 +2,7 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { onMounted, ref, useTemplateRef } from 'vue'
 
-import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
+// import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
 import { useToast } from 'primevue/usetoast'
@@ -21,6 +21,7 @@ import {
 import { CoreType } from '/@/enums/'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { emitter } from '/@/utils/eventBus.ts'
+import { tryShowPreUpgradeFeatureTips } from './try-show-pre-upgrade-tips'
 
 interface KernelUpdateGroup {
   title: string
@@ -99,6 +100,12 @@ function applyClientUpdate(data: ResourceUpdateMessage) {
   if (clientUpdates.value.length > 1 && clientUpdates.value.some(data => data.type === 'app')) {
     clientUpdates.value = clientUpdates.value.filter(data => data.type === 'app')
   }
+
+  void tryShowPreUpgradeFeatureTips(
+    data,
+    simpleLocale.currentLocale,
+    () => clientUpdates.value.find(item => item.type === 'app'),
+  )
 }
 
 async function checkForUpdates() {
@@ -297,7 +304,7 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
 </script>
 
 <template>
-  <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" />
+  <!-- <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" :update-info="updateInfo" /> -->
 
   <div v-tooltip.left="{ value: $t('更新'), showDelay: 600 }" class="flex justify-center" :data-force-upgrade="isForceUpgrade" :data-update-info="updateInfo">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">

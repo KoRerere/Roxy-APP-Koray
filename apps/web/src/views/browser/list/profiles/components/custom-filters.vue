@@ -282,7 +282,7 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}</span>
         <span v-if="item.type !== 'switch'" class="cursor-pointer">: {{ item._text || item.value }}</span>
       </div>
-      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu" />
+      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选') : ''" :disabled="currentFilter?.disabledFilter" @click="showMenu" />
     </div>
     <div v-show="enabledFilterSave && isChanged" class="flex items-start">
       <div class="labels-actions">

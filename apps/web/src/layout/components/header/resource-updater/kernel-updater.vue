@@ -57,10 +57,12 @@ const currentKernel = computed(() => {
   const filteredAvailable = available.map(group => ({
     ...group,
     list: group.list.filter((item) => {
-      if (kernelType.value === KernelFilter.All)
+      if (kernelType.value === KernelFilter.All) {
         return true
-      if (kernelType.value === KernelFilter.Firefox)
+      }
+      if (kernelType.value === KernelFilter.Firefox) {
         return isFirefoxCore(item.coreType)
+      }
       return isChromeCore(item.coreType)
     }),
   })).filter(group => group.list.length > 0)
@@ -227,7 +229,7 @@ defineExpose({
 <template>
   <div class="flex flex-col items-start gap-3">
     <div class="-mb-3 flex items-center justify-between pa-3 w-full">
-      <RxSelectButton v-model="kernelType" :options="kernelOptions" size="xxs" option-disabled="disabled" option-label="name" option-value="value" data-key="value" :pt="{
+      <RxSelectButton v-model="kernelType" :options="kernelOptions" option-disabled="disabled" option-label="name" option-value="value" data-key="value" :pt="{
         root: select.bg,
         pcToggleButton: {
           root: select.btn,

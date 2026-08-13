@@ -17,7 +17,7 @@ export function getRegisterValidation(z: z.ZodString) {
   })
 }
 
-export function getEmailSchemas(isRegister = false) {
+export function getEmailSchemas() {
   return defineFormSchema([
     {
       field: 'user_name',
@@ -35,11 +35,7 @@ export function getEmailSchemas(isRegister = false) {
       rule: {
         trigger: 'change',
         validator(zod) {
-          const z = zod.string()
-          if (isRegister) {
-            return z.min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
-          }
-          return z.min(1, $t('请输入您的邮箱'))
+          return zod.string().min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
         },
       },
     },
@@ -108,7 +104,7 @@ export function getFormSchemas(
     : []
 
   return defineFormSchema([
-    ...getEmailSchemas(isRegister),
+    ...getEmailSchemas(),
     {
       field: 'password',
       component: ({ formModel }) => {

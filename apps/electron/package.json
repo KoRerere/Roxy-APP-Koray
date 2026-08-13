@@ -81,7 +81,7 @@
     "geo-tz": "^8.1.5",
     "get-folder-size": "^5.0.0",
     "http-proxy-agent": "^9.1.0",
-    "http-proxy-middleware": "^4.1.1",
+    "http-proxy-middleware": "^4.2.0",
     "https-proxy-agent": "^9.1.0",
     "intl-messageformat": "^11.2.8",
     "node-2fa": "^2.0.3",

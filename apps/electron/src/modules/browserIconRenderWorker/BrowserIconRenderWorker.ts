@@ -5,6 +5,7 @@ import { app, utilityProcess } from 'electron'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { appCliStartArgs, isDev } from '/@/constants/common'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { writeBrowserIconFile } from './writeBrowserIcon'
 
 interface PendingTask {
@@ -88,8 +89,10 @@ export class BrowserIconRenderWorker {
       return this.worker
 
     const workerScript = this.resolveWorkerScriptPath()
+    // 调试端口需同时满足开发者工具已解锁，避免正式版对外暴露 Node 调试接口
+    const enableInspect = isDevToolsUnlocked() && (appCliStartArgs['roxy-log-level'] === 'debug' || isDev)
     const worker = utilityProcess.fork(workerScript, [], {
-      execArgv: appCliStartArgs['roxy-log-level'] === 'debug' || isDev ? [`--inspect=${browserIconWorkerInspectPort++}`] : [],
+      execArgv: enableInspect ? [`--inspect=${browserIconWorkerInspectPort++}`] : [],
       serviceName: 'roxyBrowserIconRenderWorker',
     })
 

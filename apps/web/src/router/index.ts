@@ -18,15 +18,7 @@ const router = createRouter({
       name: 'home',
       path: '/',
       component: () => import('/@/layout/index.vue'),
-      children: [
-        ...menuRoutes,
-        {
-          name: 'referral-program',
-          path: 'referral-program',
-          meta: { title: '推广计划', icon: 'base/rc_ic_user_referral' },
-          component: () => import('/@/views/referral-program/index.vue'),
-        },
-      ],
+      children: menuRoutes,
     },
     {
       path: '/:pathMatch(.*)*',

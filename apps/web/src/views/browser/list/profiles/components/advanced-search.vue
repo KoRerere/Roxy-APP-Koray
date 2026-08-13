@@ -184,7 +184,7 @@ function handleBlur() {
 
 <template>
   <div class="relative transition-all duration-300 ease" :class="[searchQuery || isFocus ? 'w-50' : 'w-35']">
-    <TsFormInputText ref="input" v-model="searchQuery" size="xxs" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索 {shortcut}', { shortcut: shortcutText })" :disabled="loading" @focus="handleFocus"
+    <TsFormInputText ref="input" v-model="searchQuery" class="!h-6.5" size="xxs" pre-icon="base/rx_ic_magnify" :placeholder="$t('搜索 {shortcut}', { shortcut: shortcutText })" :disabled="loading" @focus="handleFocus"
                      @blur="handleBlur" @keydown="handleKeydown"
     >
       <template v-if="searchQuery" #icon>

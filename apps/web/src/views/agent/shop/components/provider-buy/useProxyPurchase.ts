@@ -39,6 +39,7 @@ export function useProxyPurchaseApi(options: {
       desc: item.sceneDesc,
       badgeType: item.badgeType ?? '',
       badgeDesc: item.badgeTypeDesc ?? undefined,
+      scenePriceDesc: item.scenePriceDesc ?? undefined,
       badgeClass: item.badgeType?.toLocaleLowerCase(),
       isSpecialOffer: item.isSpecialOffer,
     })).filter((item) => {

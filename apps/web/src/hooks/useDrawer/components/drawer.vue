@@ -21,14 +21,16 @@ const passThrough = {
 <template>
   <Drawer :position="position" :pt="passThrough" v-bind="$attrs">
     <template #container="{ closeCallback }">
-      <slot name="header" :closeCallback="closeCallback">
-        <div class="flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3" :class="cssModule.header">
-          <div class="tt-primary text-3.5 font-600 leading-4.5">{{ title }}</div>
-          <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeCallback" />
+      <div class="flex flex-col h-full min-h-0 overflow-hidden">
+        <slot name="header" :closeCallback="closeCallback">
+          <div class="flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3 shrink-0" :class="cssModule.header">
+            <div class="tt-primary text-3.5 font-600 leading-4.5">{{ title }}</div>
+            <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeCallback" />
+          </div>
+        </slot>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <slot name="container"></slot>
         </div>
-      </slot>
-      <div class="flex-1 overflow-hidden">
-        <slot name="container"></slot>
       </div>
     </template>
   </Drawer>

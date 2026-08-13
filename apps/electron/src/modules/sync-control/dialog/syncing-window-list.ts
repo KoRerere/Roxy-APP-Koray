@@ -1,6 +1,6 @@
 import { ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
 
@@ -28,7 +28,7 @@ export async function openSyncingWindowList() {
     hasShadow: true,
   })
   win.loadURL(await getWebEntryUrl('syncing-window-list-dialog'))
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools()
   }
   handleWindowMove(win)

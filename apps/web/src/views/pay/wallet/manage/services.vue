@@ -75,6 +75,7 @@ const otherCards = computed(() => {
       total: maxWorkspaceCount,
       text: $t('已使用'),
       addText: $t('新增'),
+      visible: isOwner.value,
       addClick: () => onExpand('workspace'),
     },
     {
@@ -154,8 +155,8 @@ const animationGradient = computed(() => {
   const freeBg = 'var(--pattern-wallet-free-bg)'
   return (freeOrExpired.value)
     // no linear-gradient for free or expired
-    ? [freeBg, freeBg, freeBg]
-    : ['#2CB8FE 14.71%', '#EC51F7 111.53%', '#EC51F7 111.53%']
+    ? [freeBg, freeBg]
+    : ['#2CB8FE 14.71%', '#EC51F7 111.53%']
 })
 
 const subscribeInfo = computed(() => {

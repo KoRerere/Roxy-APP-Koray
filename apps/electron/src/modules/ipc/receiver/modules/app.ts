@@ -261,27 +261,63 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     }
   })
 
-  /** 获取新功能提示 */
-  ipcMain.on('app:getNewFeatureTips', async (event) => {
+  /**
+   * 获取新功能提示（登录后按当前 workspaceId 现拉）
+   * - 版本门禁：仍走 getAppUpgradeCreate
+   * - tips 内容：走 userGetAppFeatureTipsCreate
+   */
+  ipcMain.on('app:getNewFeatureTips', async () => {
     console.log('showNewFeatureTips', store.showNewFeatureTips)
     if (!store.showNewFeatureTips) {
       return []
     }
 
-    {
-      const { version } = appUpdater.getUpdateMessageData()
-      // return newFeatureTips?.[store.language] || []
-      if (!version) {
-        await appUpdater.init()
-      }
+    // 登录/空间未就绪：不消费开关，等就绪后再查
+    if (!store.token || !store.workspaceId) {
+      console.log('[app:getNewFeatureTips] token or workspaceId missing, skip')
+      return []
     }
 
-    const { version, newFeatureTips } = appUpdater.getUpdateMessageData()
-    if (version && compare(app.getVersion(), version, '>=')) {
-      return newFeatureTips?.[store.language]?.[0]?.content ? newFeatureTips?.[store.language] : []
+    // 版本信息仍走老接口，仅用于「本地已升级到远端版本」门禁
+    const refreshResult = await appUpdater.refreshUpgradePayload().catch((error) => {
+      console.error('[app:getNewFeatureTips] refreshUpgradePayload failed', error)
+      return null
+    })
+    // 版本拉取失败：不消费开关，避免瞬时错误挡住后续 tips
+    if (!refreshResult || refreshResult.code !== 0 || !refreshResult.data) {
+      return []
     }
 
-    return []
+    let { version } = appUpdater.getUpdateMessageData()
+    if (!version) {
+      await appUpdater.init()
+      ;({ version } = appUpdater.getUpdateMessageData())
+    }
+
+    if (!(version && compare(app.getVersion(), version, '>='))) {
+      return []
+    }
+
+    // tips 走独立接口；失败不消费开关
+    const tipsResult = await appUpdater.fetchAppFeatureTips().catch((error) => {
+      console.error('[app:getNewFeatureTips] fetchAppFeatureTips failed', error)
+      return null
+    })
+    if (!tipsResult || tipsResult.code !== 0 || !tipsResult.data) {
+      return []
+    }
+
+    const { newFeatureTips } = tipsResult.data
+    const languageTips = newFeatureTips?.[store.language as 'zh-CN' | 'en' | 'ru']
+    const tips = languageTips?.[0]?.content ? languageTips : []
+
+    // 当前空间无 tips：消费开关，避免反复请求；切空间也不再弹
+    if (!tips.length) {
+      store.showNewFeatureTips = false
+      return []
+    }
+
+    return tips
   })
 
   /** 获取最后一次跟新特性 */
@@ -290,7 +326,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 用户已读新功能提示 */
-  ipcMain.on('app:hideNewFeatureTips', (event) => {
+  ipcMain.on('app:hideNewFeatureTips', () => {
     store.showNewFeatureTips = false
   })
 

@@ -23,7 +23,7 @@ const { invalidateCache: invalidateListCache } = useListCacheActions()
 
 const projectRef = useTemplateRef('project')
 const projectId = ref(Number(route.params.id))
-const projectName = ref(route.query.title)
+const projectName = ref(String(route.query.title))
 const members = ref()
 
 function invalidateCurrentProjectProfilesCache() {
@@ -39,7 +39,7 @@ function refreshProjectProfiles() {
 
 watch(() => route.params.id, (value) => {
   projectId.value = Number(value)
-  projectName.value = route.query.title
+  projectName.value = String(route.query.title)
   getMemberByCurrentProject()
 })
 
@@ -115,7 +115,7 @@ function editProject() {
         </div>
         <SvgIcon v-if="check('Projects_edit')" class="cursor-pointer" name="base/rx_ic_edit" color="var(--colors-text-text-secondary)" @click="editProject" />
       </template>
-      <MemberDropdownList v-if="check('Team_Member_view_page')" :members="members" />
+      <MemberDropdownList v-if="check('Team_Member_view_page')" v-model:members="members" :project-id="projectId" :project-name="projectName" />
       <RxButton v-if="check('Team_Member_invite')" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
     </ViewsHeader>
     <div class="flex-1 overflow-hidden">

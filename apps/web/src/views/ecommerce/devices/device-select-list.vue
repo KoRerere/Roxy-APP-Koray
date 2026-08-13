@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import { h } from 'vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import DeviceOutboundCell from './components/device-outbound-cell.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
-import EditProxy from '/@/views/agent/create/quick.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDrawer } from '/@/hooks/useDrawer'
@@ -13,6 +11,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
 import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
 import { createProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
 import { BuyEntryType, BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
@@ -40,10 +39,11 @@ const totalMark = defineModel<number>('total')
 
 const router = useRouter()
 const drawerInstance = useDrawer()
+const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
 const { check } = usePermission()
 const { buyProxy } = useProxy()
 const { testProxy, batchTestShowToast } = useCheckProxy()
-const { saveProxyModules } = useProxyModuleCreate()
+const { saveProxyModules, updateProxyModules } = useProxyModuleCreate()
 const [showToast, onlyErrorToast] = useResponseToast()
 const deviceCreateLabels = createProxyCreateLabels('device')
 
@@ -96,12 +96,14 @@ const selection = ref<DeviceItem | Record<string, unknown> | undefined>(
 /** 列表行就绪后，用当前页真实行对象对齐 selection（PrimeVue dataKey 比对更稳） */
 function syncSelectionWithRows(rows: DeviceItem[]) {
   const selectedId = selection.value?.id != null ? Number(selection.value.id) : presetSelectedId
-  if (!selectedId || !rows?.length)
+  if (!selectedId || !rows?.length) {
     return
+  }
 
   const matched = rows.find(row => Number(row.id) === selectedId)
-  if (matched)
+  if (matched) {
     selection.value = matched
+  }
 }
 
 const columns = getDeviceSelectColumns()
@@ -175,8 +177,9 @@ async function fetchCreatedDevice(formData: Record<string, any>) {
     queryValue: formData.host,
     type: BuyProxyListType.Use,
   })
-  if (result.code !== 0 || !result.data?.rows?.length)
+  if (result.code !== 0 || !result.data?.rows?.length) {
     return undefined
+  }
 
   const rows = result.data.rows as DeviceItem[]
   return rows.find(
@@ -191,29 +194,29 @@ function onAddDevice() {
     return
   }
 
-  drawerInstance.showDrawer({
-    title: $t('添加设备'),
+  showProxyFormDrawer({
+    title: deviceCreateLabels.pageTitle,
+    showRemark: true,
+    mode: 'device',
     dismissable: false,
-    slots: {
-      container: () => h(EditProxy, {
-        showRemark: true,
-        onConfirm: async (formData: Record<string, any>) => {
-          await saveProxyModules([formData], {
-            labels: deviceCreateLabels,
-            onSuccess: async () => {
-              const created = await fetchCreatedDevice(formData)
-              if (!created) {
-                onlyErrorToast(-1, $t('设备添加成功，但未能自动绑定，请手动选择'))
-                onRefreshTable({}, true)
-                drawerInstance.hideDrawer()
-                return
-              }
-              drawerInstance.hideDrawer()
-              await onConfirm(toRaw(created))
-            },
-          })
+    onConfirm: async (formData) => {
+      let saved = false
+      await saveProxyModules([formData], {
+        labels: deviceCreateLabels,
+        onSuccess: async () => {
+          saved = true
+          const created = await fetchCreatedDevice(formData)
+          if (!created) {
+            onlyErrorToast(-1, $t('设备添加成功，但未能自动绑定，请手动选择'))
+            onRefreshTable({}, true)
+            return
+          }
+          await onConfirm(toRaw(created))
         },
-      }),
+      })
+      if (!saved) {
+        return false
+      }
     },
   })
 }
@@ -254,7 +257,7 @@ async function onCheckProxyStatus(datas: DeviceItem[], options: { key: string, a
 
   const proxyList = results.filter((item: any) => item.proxyType === ProxyType.resource)
   if (proxyList.length) {
-    API.proxy.userMdfProxyModuleCreate({ proxyList: results, requestType: ProxyReqType.SpeedTest })
+    updateProxyModules({ proxyList: results, requestType: ProxyReqType.SpeedTest })
   }
 
   return results
@@ -282,9 +285,6 @@ async function saveSelected() {
           <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买设备')" @click.stop="onBuyProxy()" />
           <RxButton v-if="check('Proxy_List_add')" variant="outlined" severity="secondary" size="xxs" icon="base/rx_ic_plus" :label="$t('添加设备')" @click.stop="onAddDevice()" />
           <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-          <!-- <RxSelectButton v-for="item in filters.list" :key="item.name" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
-                          @change="filters.onChange"
-          /> -->
         </div>
         <div class="flex items-center gap-1.5 flex-wrap">
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />

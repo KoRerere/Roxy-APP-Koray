@@ -11,11 +11,11 @@ import ProfileName from './components/profile-name.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import GuideModal from '/@/views/tutorial/components/guide-modal.vue'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
+import ProxyBuyAddDrawer from '/@/views/browser/create/components/proxy-buy-add-drawer.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
@@ -40,8 +40,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
-import { useProfileProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
-import { useProfileProxySpeedTest } from '/@/views/browser/list/profiles/hooks/useProfileProxySpeedTest'
+import { PROXY_BUY_ADD_DRAWER_KEY, useProfileProxy, useProfileProxySpeedTest, useProxyBuyAddDrawer, usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/useProfileOpenState'
@@ -52,6 +51,7 @@ import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/
 import { useSimpleLocale } from '/@/stores/locale'
 import { LIST_CACHE_NAMESPACE, useListCacheActions, useListCacheStore } from '/@/stores/listCache'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useQuickCreate } from '/@/views/browser/create/hooks/useQuickCreate'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -92,6 +92,26 @@ const workspaceStore = useWorkspaceStore()
 const listCacheStore = useListCacheStore()
 const { invalidateCache: invalidateProfilesListCache } = useListCacheActions()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { purchaseImmediateOfficialProxy } = usePurchaseOfficialProxy()
+const proxyBuyAddDrawer = useProxyBuyAddDrawer()
+const {
+  visible: proxyBuyAddVisible,
+  showBuy: proxyBuyAddShowBuy,
+  showAdd: proxyBuyAddShowAdd,
+  provider: proxyBuyAddProvider,
+  onProxyBuyAddBuySuccess,
+  onProxyBuyAddAddConfirm,
+} = proxyBuyAddDrawer
+provide(PROXY_BUY_ADD_DRAWER_KEY, proxyBuyAddDrawer)
+
+const {
+  canQuickCreate,
+  onQuickCreateMainClick,
+  onQuickCreateSettingsClick,
+} = useQuickCreate()
+
+/** 列表快速创建入口：暂仅 owner + Profiles_add */
+const showQuickCreateEntry = computed(() => canQuickCreate() && check('Profiles_add'))
 
 const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
@@ -394,6 +414,7 @@ const operationHandler = createProfileOperationHandler({
   createDesktopShortcut,
   multipleProxyChange,
   multipleProxyDelete,
+  buyProxyForProfiles,
   multipleAccountChange,
   tagsIconRef,
   addTag,
@@ -612,16 +633,22 @@ async function onMoveToProject(data: any) {
 }
 
 function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }: any) {
-  const { promise, resolve } = Promise.withResolvers<void>()
-
   const datas = ([] as Data[]).concat(data)
   const isMulti = operationType === 'batch'
   const isChoose = proxyMethod === 'choose'
 
+  // 添加代理走双开抽屉（购买 + 手动添加），与创建窗口一致
+  if (!isChoose) {
+    return openAddProxyBuyAddDrawer(datas)
+  }
+
+  const { promise, resolve } = Promise.withResolvers<void>()
   const _proxydata = buildProxyData(datas[0]!)
 
-  const containerRender = isChoose
-    ? () => (
+  drawerInstance.showDrawer({
+    title: $t('选择代理 IP'),
+    slots: {
+      container: () => (
         <div class="h-full flex flex-col">
           {isMulti && (
             <div class="px-4 pt-4">
@@ -632,55 +659,103 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
             <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
           </div>
         </div>
-      )
-    : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
-
-  drawerInstance.showDrawer({
-    title: isChoose ? $t('选择代理 IP') : $t('添加代理 IP'),
-    dismissable: false,
-    slots: {
-      container: containerRender,
+      ),
     },
     onHide: resolve,
   })
 
-  async function onConfirm({ id, ...formData }: any) {
-    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
-      type: isChoose ? ProfileModifyType.ProxySelect : ProfileModifyType.ProxyAdd,
-      requestType: isChoose ? ProfileReqType.SelectProxy : ProfileReqType.AddProxy,
-      ids: datas.map(item => item.id!),
-      paramList: {
-        moduleId: id ?? 0,
-        proxyMethod,
-        ...formData,
-      },
-    })
+  async function onConfirm(formData: any) {
     drawerInstance.hideDrawer()
-    onlyErrorToast(code, msg)
-    if (code !== 0)
-      return
-
-    const { protocol, proxyCategory, proxyType, isDirect, ...rest } = formData
-    const params = {
-      ...rest,
-      moduleId: id ?? 0,
-      isDirect,
-      proxyMethod,
-      protocol,
-      proxyCategory: proxyCategory || protocol,
-      buyProxyType: proxyType ?? ProxyType.resource,
-    }
-    datas.forEach((item) => {
-      silentUpdateProxy(item, params)
-    })
+    await bindChosenProxyToProfiles(datas, formData)
   }
 
   return promise
 }
 
+/** 打开添加代理双开抽屉，并在确认后绑定到目标窗口 */
+async function openAddProxyBuyAddDrawer(datas: Data[]) {
+  await proxyBuyAddDrawer.openProxyBuyAddDrawer({
+    onBuySuccess: proxy => bindChosenProxyToProfiles(datas, proxy),
+    onAddConfirm: formData => bindCustomProxyToProfiles(datas, formData),
+  })
+}
+
+/** 选择/购买的代理绑定到窗口 */
+async function bindChosenProxyToProfiles(datas: Data[], formData: any) {
+  const { id, ...restForm } = formData as any
+  const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+    type: ProfileModifyType.ProxySelect,
+    requestType: ProfileReqType.SelectProxy,
+    ids: datas.map(item => item.id!),
+    paramList: {
+      moduleId: id ?? 0,
+      proxyMethod: 'choose',
+      ...restForm,
+    },
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return
+
+  const { protocol, proxyCategory, proxyType, isDirect, ...rest } = restForm
+  const params = {
+    ...rest,
+    moduleId: id ?? 0,
+    isDirect,
+    proxyMethod: 'choose',
+    protocol,
+    proxyCategory: proxyCategory || protocol,
+    buyProxyType: proxyType ?? ProxyType.resource,
+  }
+  datas.forEach((item) => {
+    silentUpdateProxy(item, params)
+  })
+}
+
+/** 手动添加的自定义代理绑定到窗口 */
+async function bindCustomProxyToProfiles(datas: Data[], formData: Record<string, any>) {
+  const { id, ...restForm } = formData
+  const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+    type: ProfileModifyType.ProxyAdd,
+    requestType: ProfileReqType.AddProxy,
+    ids: datas.map(item => item.id!),
+    paramList: {
+      moduleId: id ?? 0,
+      proxyMethod: 'custom',
+      ...restForm,
+    },
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return
+
+  const { protocol, proxyCategory, proxyType, isDirect, ...rest } = restForm
+  const params = {
+    ...rest,
+    moduleId: id ?? 0,
+    isDirect,
+    proxyMethod: 'custom',
+    protocol,
+    proxyCategory: proxyCategory || protocol,
+    buyProxyType: proxyType ?? ProxyType.resource,
+  }
+  datas.forEach((item) => {
+    silentUpdateProxy(item, params)
+  })
+}
+
 function multipleProxyDelete(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
   return confirmDeleteProxy(datas)
+}
+
+/** 购买代理 IP 并绑定到选中窗口（即时订单成功后自动选择） */
+async function buyProxyForProfiles(data: Data | Data[]) {
+  const datas = ([] as Data[]).concat(data)
+  const proxy = await purchaseImmediateOfficialProxy()
+  if (!proxy)
+    return
+  await bindChosenProxyToProfiles(datas, proxy)
 }
 
 function multipleAccountChange(data: Data | Data[], { operationType, isChoose = false }: any) {
@@ -706,7 +781,6 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
 
   drawerInstance.showDrawer({
     title,
-    dismissable: false,
     slots: {
       container: containerRender,
     },
@@ -958,6 +1032,10 @@ defineExpose({
   >
     <template #filter-after>
       <div class="w-full flex items-start gap-2">
+        <div v-if="showQuickCreateEntry" class="quick-create-entry flex shrink-0 items-stretch">
+          <RxButton class="!h-6.5 quick-create-entry__main" size="xxs" outlined severity="primary" icon="base/rx_ic_browser_flash" :label="$t('快速创建')" @click.stop="onQuickCreateMainClick" />
+          <RxButton v-tooltip.top="{ value: $t('配置快速创建偏好') }" class="!h-6.5 quick-create-entry__gear" size="xxs" outlined severity="primary" icon="base/rx_ic_gear" @click.stop="onQuickCreateSettingsClick" />
+        </div>
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :video-url="getVideoSource('profile-filter.mp4')"
@@ -1080,18 +1158,15 @@ defineExpose({
           </template>
         </template>
         <template v-else>
-          <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-               class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
-               @click.stop="operationHandler({ name: 'fav' }, data)"
-          >
-            <SvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
-          </div>
           <Actions :operation="getOperation(data)" :loading-operation-map="data.loadingOperationMap" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>
       </div>
     </template>
   </RyTable>
   <TagsIcon ref="tagsIcon" :labels="[]" :show-create-tag="false" @update="updateProfileMeta($event, tableRef?.selectionData)" />
+  <ProxyBuyAddDrawer v-model:visible="proxyBuyAddVisible" :show-buy="proxyBuyAddShowBuy" :show-add="proxyBuyAddShowAdd" :provider="proxyBuyAddProvider" @buy-success="onProxyBuyAddBuySuccess"
+                     @add-confirm="onProxyBuyAddAddConfirm"
+  />
 </template>
 
 <style lang="scss" scoped>
@@ -1134,18 +1209,6 @@ defineExpose({
   }
 }
 
-.quick-icon {
-  color: var(--colors-icon-icon-secondary, #575d60);
-
-  &:active:not(.disabled) {
-    color: orange;
-  }
-
-  &.disabled {
-    cursor: not-allowed;
-  }
-}
-
 :deep(.window-table) {
   tr:not([data-p-selected='true']):hover .direct-info {
     background-color: var(--component-table-bg-hover);
@@ -1160,5 +1223,19 @@ defineExpose({
   width: 30px;
   height: 1px;
   border-top: 1px dashed var(--colors-border-border-inactive, #c7d1d6);
+}
+
+.quick-create-entry {
+  :deep(.quick-create-entry__main.p-button) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right-width: 0;
+  }
+
+  :deep(.quick-create-entry__gear.p-button) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding-inline: 6px;
+  }
 }
 </style>

@@ -113,6 +113,8 @@ import {
   UserCloseValidatorCreateData,
   UserCloseValidatorCreatePayload,
   UserGetAnntListListData,
+  UserGetAppFeatureTipsCreateData,
+  UserGetAppFeatureTipsCreatePayload,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
   UserGetBannerPictureListListData,
@@ -137,7 +139,10 @@ import {
   UserGetInviteUserListV2ListParams,
   UserGetLlmInfoListData,
   UserGetLoginInfoListData,
+  UserGetMessageTipsCreateData,
+  UserGetMessageTipsCreatePayload,
   UserGetNotifyListData,
+  UserGetNotifyListParams,
   UserGetOssCredentialV2ListData,
   UserGetPhoneListData,
   UserGetPromotionInfoByTypeListData,
@@ -914,10 +919,14 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_notify
    * @response `200` `UserGetNotifyListData`
    */
-  userGetNotifyList = (params: RequestParams = {}) =>
+  userGetNotifyList = (
+    query: UserGetNotifyListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetNotifyListData, any>({
       path: `/user_get_notify`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -2550,6 +2559,48 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<GetCoreDownloadUrlsCreateData, any>({
       path: `/get_core_download_urls`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 定向新特性内容优先，统一返回 newFeatureTips
+   *
+   * @tags Base
+   * @name UserGetAppFeatureTipsCreate
+   * @summary 获取新特性
+   * @request POST:/user_get_app_feature_tips
+   * @response `200` `UserGetAppFeatureTipsCreateData`
+   */
+  userGetAppFeatureTipsCreate = (
+    data: UserGetAppFeatureTipsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetAppFeatureTipsCreateData, any>({
+      path: `/user_get_app_feature_tips`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetMessageTipsCreate
+   * @summary 获取定向消息弹窗
+   * @request POST:/user_get_message_tips
+   * @response `200` `UserGetMessageTipsCreateData`
+   */
+  userGetMessageTipsCreate = (
+    data: UserGetMessageTipsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetMessageTipsCreateData, any>({
+      path: `/user_get_message_tips`,
       method: "POST",
       body: data,
       type: ContentType.Json,

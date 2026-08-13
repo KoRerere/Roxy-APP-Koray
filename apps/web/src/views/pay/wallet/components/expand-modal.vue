@@ -8,6 +8,7 @@ import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
 
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
+import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useDialog } from '/@/hooks/useDialog'
@@ -18,17 +19,19 @@ const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 
-const { userPayInfo } = storeToRefs(useUserStore())
 const billingLabels = useBillingEntityLabels()
+
+const { isOwner } = storeToRefs(useRoleStore())
+const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
-const [showModal] = useDialog()
 const { showFreedomActivityModal } = useFreedomActivity()
+const [showModal] = useDialog()
 
 const min = 0
 const max = 500
 
-const buyList = ref<any[]>([
+const buyList = ref([
   {
     key: 'staff',
     label: $t('团队成员'),
@@ -40,8 +43,9 @@ const buyList = ref<any[]>([
     label: $t('团队'),
     value: 0,
     cost: 10,
+    visible: isOwner.value,
   },
-])
+].filter(item => item.visible !== false))
 
 const renderList = computed<any[]>(() => {
   return [...buyList.value, { label: 'activity', render: () => h(ActivityInfoExpand) }]
@@ -170,7 +174,7 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pl-8 pr-6 py-6 gap-6 popup">
     <div class="relative flex items-center h-10">
       <div class="flex items-center gap-1 header">
-        <span>{{ $t('购买团队成员和团队') }}</span>
+        <span>{{ $t('扩充您的团队') }}</span>
         <SvgIcon v-tooltip.top="billingLabels.teamIsolationDescription" class="cursor-pointer" name="base/rx_ic_info" size="20" color="var(--colors-icon-icon-tertiary)" />
       </div>
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />

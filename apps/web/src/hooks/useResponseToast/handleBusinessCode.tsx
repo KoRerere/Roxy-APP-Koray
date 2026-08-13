@@ -101,7 +101,8 @@ export function useHandleBusinessCode() {
   const { check } = usePermission()
 
   async function handleBusinessCode(code: number, next?: () => void) {
-    const privateMoreExpand = check('Cost_Center_all') ? buyMoreExpand : executeSomethingByBackToSelfWorkspace(buyMoreExpand)
+    const buyMoreExpandOnSelfWorkspace = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
+    const privateMoreExpand = check('Cost_Center_all') ? buyMoreExpand : buyMoreExpandOnSelfWorkspace
 
     // 团队数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
@@ -110,7 +111,7 @@ export function useHandleBusinessCode() {
         summary: $t('团队用量不足'),
         detail: (
           <I18nT keypath={$t('您已达到最大团队创建限制，可通过删除不再使用的团队或 {link}', { link: '{link}' })}>
-            {{ link: () => <a class="cursor-pointer" onClick={() => privateMoreExpand('workspace')}>{$t('购买更多')}</a> }}
+            {{ link: () => <a class="cursor-pointer" onClick={() => buyMoreExpandOnSelfWorkspace('workspace')}>{$t('购买更多')}</a> }}
           </I18nT>
         ),
         life: 5000,

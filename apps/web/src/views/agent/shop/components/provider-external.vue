@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useI18n } from '/@/locales'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/basic'
 import { useProviderJump } from '/@/views/agent/shop/hooks/useProviderJump'
@@ -14,7 +13,6 @@ const { data } = defineProps<{
 const autoJump = defineModel<boolean>('autoJump')
 
 const [showToast] = useResponseToast()
-const { locale } = useI18n()
 const { jumpToProvider } = useProviderJump()
 
 const account = computed(() => [
@@ -39,19 +37,47 @@ function onCopy(value: string) {
   copyText(value)
   showToast(0, $t('复制成功'))
 }
-
 </script>
 
 <template>
   <div class="relative flex flex-col gap-6 px-30 py-15 overflow-y-auto">
     <div class="flex flex-col gap-4">
-      <img class="block w-14 h-14 rounded-lg border-1 border-solid border-color-[var(--colors-border-border-action)]" :src="data.vendorIcon">
-      <div class="flex flex-col gap-2.5">
-        <div class=" tt-primary text-5 font-600 leading-normal provider-name">
-          {{ data.vendorName }}
+      <div class="flex items-center gap-4">
+        <img class="block w-14 h-14 rounded-lg border-1 border-solid border-color-[var(--colors-border-border-action)]" :src="data.vendorIcon">
+        <div class="flex flex-col gap-2">
+          <div class="tt-primary text-6 font-600 leading-8">
+            {{ data.vendorName }}
+          </div>
+          <div class="flex gap-1.5">
+            <span v-for="item in data.proxyTypeList" :key="item" class="provider-tag">{{ item }}</span>
+          </div>
         </div>
-        <div class="flex gap-1.5">
-          <span v-for="item in data.proxyTypeList" :key="item" class="provider-tag">{{ item }}</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <div v-for="item in data.vendorAdv" :key="item" class="flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M11.4714 5.52892C11.7317 5.78927 11.7317 6.21138 11.4714 6.47173L7.47139 10.4717C7.21105 10.7321 6.78893 10.7321 6.52859 10.4717L4.52859 8.47173C4.26824 8.21138 4.26824 7.78927 4.52859 7.52892C4.78893 7.26857 5.21105 7.26857 5.47139 7.52892L6.99999 9.05752L10.5286 5.52892C10.7889 5.26857 11.211 5.26857 11.4714 5.52892Z"
+              fill="url(#paint0_linear_51_5755)"
+            />
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M0.666656 8.00033C0.666656 3.95024 3.9499 0.666992 7.99999 0.666992C12.05 0.666992 15.3333 3.95023 15.3333 8.00033C15.3333 12.0504 12.05 15.3337 7.99999 15.3337C3.9499 15.3337 0.666656 12.0504 0.666656 8.00033ZM7.99999 2.00033C4.68628 2.00033 1.99999 4.68662 1.99999 8.00033C1.99999 11.314 4.68628 14.0003 7.99999 14.0003C11.3137 14.0003 14 11.314 14 8.00033C14 4.68662 11.3137 2.00033 7.99999 2.00033Z"
+                  fill="url(#paint1_linear_51_5755)"
+            />
+            <defs>
+              <linearGradient id="paint0_linear_51_5755" x1="15.3333" y1="8.00033" x2="0.666656" y2="8.00033" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#11CD69" />
+                <stop offset="1" stop-color="#05B1D7" />
+              </linearGradient>
+              <linearGradient id="paint1_linear_51_5755" x1="15.3333" y1="8.00033" x2="0.666656" y2="8.00033" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#11CD69" />
+                <stop offset="1" stop-color="#05B1D7" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="tt-primary text-3 font-500 leading-4.5">
+            {{ item }}
+          </div>
         </div>
       </div>
       <div class="whitespace-pre-line tt-secondary text-3.25 leading-4.5" v-html="data.vendorDesc" />

@@ -24,6 +24,7 @@ import { store } from '/@/modules/store'
 import { scheduleRestoreClientNetworkSnapshotUpdate } from '/@/modules/store/restoreClientNetwork'
 import { appUpdater } from '/@/modules/updater'
 import { asyncDebounce, getCachePath, getProxyEntityLabels } from '/@/utils'
+import { getCursorDisplayWorkArea } from '/@/utils/windowGridLayout'
 
 const batchLaunchLimit = pLimit(5)
 
@@ -247,8 +248,12 @@ export class BrowserManager {
     const { workspaceId, customParams, customParamsByDirId } = options ?? {}
     console.log(`BrowserManager === Batch launching browsers`, dirIds)
 
+    // 批量启动可能持续数十秒，基准屏幕只在入口取一次，避免中途鼠标移动导致同批窗口散落在不同显示器
+    const windowPositionBase = getCursorDisplayWorkArea()
+
     const mergeLaunchPayload = (winInfo: WindowItemType) => ({
       ...winInfo,
+      windowPositionBase,
       ...customParams,
       ...(winInfo.dirId ? (customParamsByDirId?.[winInfo.dirId] ?? {}) : {}),
     })

@@ -196,7 +196,7 @@ function getPreview(list: any[]) {
           <div class="h-6 w-full invisible" />
         </div>
       </div>
-      <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle" />
+      <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle()" />
     </div>
   </div>
 </template>

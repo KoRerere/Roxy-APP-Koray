@@ -1,4 +1,5 @@
 import { getProxyFilterGroups } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
+import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyBindStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
@@ -44,6 +45,7 @@ function getDeviceRowState(datas: DeviceItem[]) {
   let hasExpired = false
   let isDone = true
   let isResource = true
+  let canTest = true
   let canRenew = true
   let canRefresh = true
   let isDirect = false
@@ -59,6 +61,8 @@ function getDeviceRowState(datas: DeviceItem[]) {
     if (item.proxyType !== ProxyType.resource)
       isResource = false
 
+    if (!isProxySpeedTestable(item))
+      canTest = false
     if (!item.canRenew)
       canRenew = false
     if (!item.refreshUrl)
@@ -75,6 +79,7 @@ function getDeviceRowState(datas: DeviceItem[]) {
     hasExpired,
     isDone,
     isResource,
+    canTest,
     canRenew,
     canRefresh,
     isDirect,
@@ -82,15 +87,9 @@ function getDeviceRowState(datas: DeviceItem[]) {
   }
 }
 
-/** 电商测速：排除配置中、已退款；已购过期不可测，导入过期可测 */
+/** 设备是否可测速（与代理 IP 列表共用口径） */
 export function isDeviceTestable(item: DeviceItem): boolean {
-  if (item.orderStatus === ProxyOrderStatus.pending)
-    return false
-  if (item.orderStatus === ProxyOrderStatus.refunded)
-    return false
-  if (item.proxyExpireStatus === ProxyExpireStatus.expired)
-    return item.proxyType === ProxyType.resource
-  return true
+  return isProxySpeedTestable(item)
 }
 
 /** 从列表中筛出可参与「测试全部」的设备 */
@@ -137,13 +136,13 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
     hasExpired,
     // isDone,
     isResource,
+    canTest,
     canRenew,
     // canRefresh,
     // isDirect,
     // canUpgrade,
   } = getDeviceRowState(rows)
 
-  const testDisabled = rows.some(item => !isDeviceTestable(item))
   const hidden = new Set(DEVICE_HIDDEN_OPERATION_NAMES)
 
   const operations = [
@@ -160,7 +159,7 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
       label: $t('测试设备'),
       icon: 'base/rx_ic_speed_test',
       tooltip: $t('测试设备'),
-      disabled: testDisabled,
+      disabled: !canTest,
       power: check('Proxy_List_speed_test'),
       multiple: true,
       multipleProps: {

@@ -72,7 +72,11 @@ function resolveInputComponent(type: InputType | undefined): Component {
   <DefineTemplate v-slot="{ input: ipt, class: fieldClass }">
     <FormField v-slot="$field" class="flex flex-col gap-1" :class="fieldClass" :name="ipt.name">
       <MCustom v-if="ipt.render" :field="$field" :input="ipt" />
-      <component :is="resolveInputComponent(ipt.type)" v-else v-bind="ipt.props" />
+      <component :is="resolveInputComponent(ipt.type)" v-else v-bind="ipt.props">
+        <template v-for="(slotFn, name) in (ipt.slots ?? {})" :key="name" #[name]="slotProps">
+          <component :is="slotFn(slotProps)" />
+        </template>
+      </component>
       <component :is="(ipt.afterRender as Component)" v-if="ipt.afterRender" :field="$field" :input="ipt" />
       <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">
         {{ $field.error?.message }}

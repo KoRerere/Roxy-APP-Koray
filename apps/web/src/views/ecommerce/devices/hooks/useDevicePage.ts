@@ -1,5 +1,4 @@
 import { h } from 'vue'
-import EditProxy from '/@/views/agent/create/quick.vue'
 import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import DeviceDetail from '/@/views/ecommerce/devices/device-detail.vue'
@@ -12,6 +11,8 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { isEmptyValue, setOperationLoading, setRowsLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
+import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
 import { useProviderJump } from '/@/views/agent/shop/hooks/useProviderJump'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
 import { useDeviceColumns } from '../device-columns'
@@ -42,6 +43,8 @@ export function useDevicePage() {
   const router = useRouter()
   const confirm = useConfirm()
   const drawerInstance = useDrawer()
+  const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
+  const { updateProxyModules } = useProxyModuleCreate()
   const [showModal] = useDialog()
   const [showToast, onlyErrorToast] = useResponseToast()
   const { userConfig } = storeToRefs(useUserStore())
@@ -191,23 +194,19 @@ export function useDevicePage() {
   }
 
   function editDevice(data: DeviceItem) {
-    drawerInstance.showDrawer({
+    showProxyFormDrawer({
       title: $t('编辑设备'),
-      slots: {
-        container: () => h(EditProxy, {
-          data,
-          showRemark: true,
-          onConfirm: async (formData: any) => {
-            const isOK = await updateResourceDevice({
-              proxyList: [formData],
-            })
-            if (!isOK)
-              return
-            onRefreshTable()
-            refreshAccountListIfBoundDevices(data)
-            drawerInstance.hideDrawer()
-          },
-        }),
+      data,
+      showRemark: true,
+      mode: 'device',
+      onConfirm: async (formData) => {
+        const isOK = await updateProxyModules({
+          proxyList: [formData],
+        })
+        if (!isOK)
+          return false
+        onRefreshTable()
+        refreshAccountListIfBoundDevices(data)
       },
     })
   }
@@ -360,17 +359,11 @@ export function useDevicePage() {
         API.proxy.userBatchMdfProxyModuleCheckCreate({ proxyList })
       }
       else {
-        updateResourceDevice({ proxyList, requestType: ProxyReqType.SpeedTest })
+        updateProxyModules({ proxyList, requestType: ProxyReqType.SpeedTest })
       }
     }
 
     return { tasks, tasksCompleted }
-  }
-
-  async function updateResourceDevice(params: { proxyList: any[], requestType?: ProxyReqType }) {
-    const { code, msg } = await API.proxy.userMdfProxyModuleCreate(params)
-    onlyErrorToast(code, msg)
-    return code === 0
   }
 
   function onRenewDevices(datas: DeviceItem[]) {

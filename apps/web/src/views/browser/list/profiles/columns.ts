@@ -124,8 +124,8 @@ export function getColumns() {
         slot: 'actions',
         style: {
           width: '0%',
-          minWidth: '120px',
-          maxWidth: '120px',
+          minWidth: '80px',
+          maxWidth: '80px',
         },
       },
     ],

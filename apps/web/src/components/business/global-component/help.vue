@@ -312,7 +312,7 @@ function openScore() {
 <style lang="scss" scoped>
 .help-float-dock {
   position: fixed;
-  z-index: 100;
+  z-index: 1500;
   display: flex;
   flex-direction: row;
   align-items: center;

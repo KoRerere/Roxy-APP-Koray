@@ -49,8 +49,9 @@ const imageSrc = computed(() => {
 
 onMounted(() => {
   void resolveAppVersion().finally(() => {
-    requestModal('agent')
+    // 先活动海报，再 Agent 升级；与 drainModalQueue 优先级一致
     requestModal('activity')
+    requestModal('agent')
   })
 })
 
@@ -115,13 +116,13 @@ function drainModalQueue() {
   if (currentModal.value || dialogInstance.value)
     return
 
-  if (agentRequested.value) {
-    agentRequested.value = false
-    openAgentModal()
-  }
-  else if (activityRequested.value) {
+  if (activityRequested.value) {
     activityRequested.value = false
     openActivityModal()
+  }
+  else if (agentRequested.value) {
+    agentRequested.value = false
+    openAgentModal()
   }
 }
 

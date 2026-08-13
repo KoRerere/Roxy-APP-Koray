@@ -15,7 +15,7 @@ import { getExtensionIDByPath } from '/@/modules/extension/helper'
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getDiskInfoByPath, getErrorMessage, getProxyEntityLabels } from '/@/utils'
-import { getVirtualWorkAreaUnion } from '/@/utils/windowGridLayout'
+import { getCursorDisplayWorkArea } from '/@/utils/windowGridLayout'
 import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
 import { appendOpenUrlsToLaunchArgs } from './utils/splitOpenUrlsForLaunch'
 
@@ -435,7 +435,6 @@ export class BeforeLaunchTask {
       useGpu,
       workspaceId,
       openWorkbench,
-      windowRatioPosition,
       positionSwitch,
     } = this.browserItem.winInfo
 
@@ -523,29 +522,8 @@ export class BeforeLaunchTask {
     else {
       args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
 
-      const virtual = getVirtualWorkAreaUnion()
-
-      // rxRaw 和 ryRaw 是相对于虚拟工作台的百分比，direction 是方向
-      const [rxRaw = '0', ryRaw = '0', direction = 'tl'] = windowRatioPosition?.split(',') ?? []
-      const xx = virtual.originX + Math.floor(virtual.width * Number(rxRaw))
-      const yy = virtual.originY + Math.floor(virtual.height * Number(ryRaw))
-      const winWidth = Number(openWidth)
-      const winHeight = Number(openHeight)
-      let positions: number[] = [xx, yy]
-      console.log('virtualWorkArea', virtual)
-      console.log('windowRatioPosition', windowRatioPosition, positions)
-
-      if (direction === 'tr') {
-        positions = [xx - winWidth, yy]
-      }
-      else if (direction === 'br') {
-        positions = [xx - winWidth, yy - winHeight]
-      }
-      else if (direction === 'bl') {
-        positions = [xx, yy - winHeight]
-      }
-      console.log('positions', positions)
-      args.push(`--window-position=${positions.join(',')}`)
+      const { x, y } = this.resolveWindowTopLeft(Number(openWidth) || 0, Number(openHeight) || 0)
+      args.push(`--window-position=${x},${y}`)
     }
 
     // 如果是移动端，打开开发者工具
@@ -564,6 +542,49 @@ export class BeforeLaunchTask {
 
     // 用户配置的打开标签页（通过 CLI 打开，确保在 afterLaunchTask 注入 cookie 后 reload 即可生效）
     return this.appendOpenUrls(args, allOpenUrl).filter(item => item.trim() !== '')
+  }
+
+  /**
+   * 解析窗口左上角绝对坐标（DIP），Chrome CLI 与 Firefox xulstore 共用。
+   *
+   * 优先级：
+   * 1. windowAbsolutePosition —— 宫格铺屏/自定义布局已算好跨屏坐标，直接采用；
+   * 2. windowRatioPosition —— 以 windowPositionBase（批量启动快照）或鼠标所在屏 workArea 为基准换算，
+   *    这样用户在哪块屏幕点击启动，窗口就从那块屏幕开始排布。
+   */
+  private resolveWindowTopLeft(winWidth: number, winHeight: number): { x: number, y: number } {
+    const { windowAbsolutePosition, windowPositionBase, windowRatioPosition } = this.browserItem.winInfo
+
+    if (windowAbsolutePosition) {
+      const [ax = '0', ay = '0'] = windowAbsolutePosition.split(',')
+      return { x: Math.round(Number(ax) || 0), y: Math.round(Number(ay) || 0) }
+    }
+
+    const base = windowPositionBase ?? getCursorDisplayWorkArea()
+    // rxRaw / ryRaw 是相对基准矩形的百分比，direction 为窗口自身的锚点方向
+    const [rxRaw = '0', ryRaw = '0', direction = 'tl'] = windowRatioPosition?.split(',') ?? []
+    const anchorX = base.originX + Math.floor(base.width * (Number(rxRaw) || 0))
+    const anchorY = base.originY + Math.floor(base.height * (Number(ryRaw) || 0))
+
+    let x = anchorX
+    let y = anchorY
+    if (direction === 'tr') {
+      x = anchorX - winWidth
+    }
+    else if (direction === 'br') {
+      x = anchorX - winWidth
+      y = anchorY - winHeight
+    }
+    else if (direction === 'bl') {
+      y = anchorY - winHeight
+    }
+
+    // 夹取在基准矩形内：否则 tr/br 锚点在窗口宽高大于屏幕时会算出负偏移，把窗口甩到相邻显示器
+    x = Math.min(Math.max(x, base.originX), base.originX + base.width - 1)
+    y = Math.min(Math.max(y, base.originY), base.originY + base.height - 1)
+
+    console.log('resolveWindowTopLeft', { base, windowRatioPosition, x, y })
+    return { x, y }
   }
 
   /** 更新浏览器偏好设置 */
@@ -969,7 +990,7 @@ export class BeforeLaunchTask {
    * { "chrome://browser/content/browser.xhtml": { "main-window": { "screenX": "100", "screenY": "100", "sizemode": "normal" } } }
    */
   private async writeFirefoxWindowPosition(profileDir: string) {
-    const { positionSwitch, openWidth, openHeight, windowRatioPosition } = this.browserItem.winInfo
+    const { positionSwitch, openWidth, openHeight } = this.browserItem.winInfo
     const xulstorePath = join(profileDir, 'xulstore.json')
 
     // 读取已有 xulstore.json，不存在则初始化为空对象
@@ -997,27 +1018,10 @@ export class BeforeLaunchTask {
       if (openHeight)
         win.height = String(openHeight)
 
-      // 计算绝对像素坐标（复用 Chrome 的虚拟工作台逻辑）
-      const virtual = getVirtualWorkAreaUnion()
-      const [rxRaw = '0', ryRaw = '0', direction = 'tl'] = windowRatioPosition?.split(',') ?? []
-      let xx = virtual.originX + Math.floor(virtual.width * Number(rxRaw))
-      let yy = virtual.originY + Math.floor(virtual.height * Number(ryRaw))
-      const winWidth = Number(openWidth) || 0
-      const winHeight = Number(openHeight) || 0
-
-      if (direction === 'tr') {
-        xx = xx - winWidth
-      }
-      else if (direction === 'br') {
-        xx = xx - winWidth
-        yy = yy - winHeight
-      }
-      else if (direction === 'bl') {
-        yy = yy - winHeight
-      }
-
-      win.screenX = String(xx)
-      win.screenY = String(yy)
+      // 与 Chrome 共用同一套定位换算（鼠标所在屏为基准 / 绝对坐标优先）
+      const { x, y } = this.resolveWindowTopLeft(Number(openWidth) || 0, Number(openHeight) || 0)
+      win.screenX = String(x)
+      win.screenY = String(y)
     }
 
     xulstore[windowKey]['main-window'] = win

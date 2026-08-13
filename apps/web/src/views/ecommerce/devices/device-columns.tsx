@@ -44,6 +44,10 @@ function buildDeviceColumns(options?: any) {
       },
     },
     {
+      title: $t('设备用途'),
+      key: 'businessUse',
+    },
+    {
       title: $t('状态'),
       key: 'proxyExpireStatus',
       render: ({ data }: any) => {

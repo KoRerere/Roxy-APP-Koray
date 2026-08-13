@@ -2,7 +2,7 @@
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 
 import LockScreen from '/@/components/lock-screen/index.vue'
-import AppForceUpgradeModal from '/@/components/business/global-component/app-force-upgrade-modal.vue'
+// import AppForceUpgradeModal from '/@/components/business/global-component/app-force-upgrade-modal.vue'
 
 import { useApp } from '/@/hooks/useApp/'
 
@@ -14,7 +14,7 @@ useApp()
     <RouterView />
   </LockScreen>
   <GlobalComponent />
-  <AppForceUpgradeModal />
+  <!-- <AppForceUpgradeModal /> -->
 </template>
 
 <style lang="scss">

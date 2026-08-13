@@ -97,6 +97,13 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
 
 const deleteFailDisabled = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
 
+/** 任一连通性测试进行中（批量或单行）时禁止保存 */
+const isTesting = computed(() =>
+  isTestingAll.value || dataList.value.some(item => item.loadingOperationMap?.test || item.historyChecking),
+)
+
+const saveDisabled = computed(() => !dataList.value?.length || isTesting.value)
+
 const historyMatchCount = computed(() => dataList.value.filter(item => item.hasImportRecord).length)
 
 const historyWarningMessage = computed(() => $t('有 {count} 条设备命中平台半年内历史库，继续导入可能造成账号关联风险。', { count: historyMatchCount.value }))
@@ -453,6 +460,10 @@ function deleteFailProxy() {
 }
 
 async function onSave() {
+  // 测试未结束时不允许提交，避免保存未出结果的代理
+  if (saveDisabled.value)
+    return
+
   const list = dataList.value.map(item => ({
     ...item,
     checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
@@ -587,7 +598,7 @@ async function onSave() {
       </div>
     </div>
     <div class="flex justify-end footer">
-      <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
+      <RxButton :label="$t('保存')" :disabled="saveDisabled" @click.stop="onSave" />
     </div>
   </div>
 </template>

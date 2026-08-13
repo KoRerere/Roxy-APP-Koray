@@ -8,6 +8,7 @@ import { useUserStore } from '/@/stores/user'
 import { emitter } from '/@/utils/eventBus'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { useTutorialEntityLabels } from '/@/composables/useTutorialEntityLabels'
+import { confirmAppQuitAndInstall, getLocalizedFeatureTips } from './confirm-app-quit-and-install'
 
 const { upgradeList } = defineProps<{
   upgradeList: ResourceUpdateMessage[]
@@ -21,13 +22,6 @@ const { getOfficialWebsite } = simpleLocale
 
 const updateFeature = ref()
 const updateSummary = ref()
-
-function getLocalizedFeatureTips(newFeatureTips?: Record<string, any>) {
-  const localFeature = newFeatureTips?.[simpleLocale.currentLocale]
-  return localFeature?.[0]?.content
-    ? localFeature.filter((item: { content?: string }) => item.content?.length)
-    : []
-}
 
 function extractFeatureTitles(tipsList: Array<{ content: string }>): string[] {
   return tipsList
@@ -47,7 +41,7 @@ watchEffect(() => {
     return
   }
 
-  const tipsList = getLocalizedFeatureTips(appUpdate.newFeatureTips)
+  const tipsList = getLocalizedFeatureTips(appUpdate.newFeatureTips, simpleLocale.currentLocale)
   const titles = extractFeatureTitles(tipsList)
   updateSummary.value = titles.length
     ? titles
@@ -79,20 +73,10 @@ function showAppUpdaterDialog(item: ResourceUpdateMessage) {
     return $t('正在下载')
   }
   else if (item.status === 'downloaded') {
-    confirm.require({
-      message: tutorialLabels.value.closeAllEntitiesOnUpdate,
-      header: $t('你确认要重启并安装新版本吗？'),
-      rejectProps: {
-        label: $t('取消'),
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptProps: {
-        label: $t('重启'),
-      },
-      accept: () => {
-        globalThis.electronAPI.send('app:quitAndInstall', item)
-      },
+    confirmAppQuitAndInstall({
+      require: confirm.require,
+      closeAllEntitiesMessage: tutorialLabels.value.closeAllEntitiesOnUpdate,
+      updateItem: item,
     })
   }
   else if (item.status === 'failed') {
@@ -116,9 +100,9 @@ async function handleClientItemClick(item: ResourceUpdateMessage) {
 
 async function showLastUpdateLog() {
   updateFeature.value ??= await electronAPI.send('app:getLastUpdateFeature')
-  const newFeatureTips = getLocalizedFeatureTips(updateFeature.value?.newFeatureTips)
-  if (newFeatureTips.length) {
-    emitter.emit('showAppUpgradeDialog', newFeatureTips)
+  const tips = getLocalizedFeatureTips(updateFeature.value?.newFeatureTips, simpleLocale.currentLocale)
+  if (tips.length) {
+    emitter.emit('showAppUpgradeDialog', { tips, actionMode: 'dismiss' })
   }
 }
 

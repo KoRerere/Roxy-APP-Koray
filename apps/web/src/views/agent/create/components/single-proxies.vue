@@ -8,27 +8,47 @@ import RemarkIcon from '/@/components/remark-icon'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { RxAlert } from '/@/components/rx-alert'
 
-import { deepClone, getDictMap, isEmptyValue, parseProxyUrl, strConcat } from '/@/utils'
+import { deepClone, getDictMap, getImage, isEmptyValue, parseProxyUrl, strConcat } from '/@/utils'
 import { IPType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
 import { useProxyCreateLabels } from '../proxy-create-mode'
+import type { ProxyCreateMode } from '../proxy-create-mode'
 import { useDialog } from '/@/hooks/useDialog'
 import type { CheckResult } from '/@/views/agent/hooks'
 
 const {
   data = {},
   showRemark = false,
+  showAdvertise = false,
+  mode,
   onConfirm,
 } = defineProps<{
   data?: Record<string, any>
   showRemark?: boolean
-  onConfirm?: (params: Record<string, any>[]) => void | Promise<void>
+  /** 是否展示购买广告；抽屉与全页单条导入均可开启 */
+  showAdvertise?: boolean
+  /** 显式模式；抽屉场景必传。全页有上层 provide 时可省略 */
+  mode?: ProxyCreateMode
+  onConfirm?: (formData: Record<string, any>) => void | Promise<void>
 }>()
 
-const labels = useProxyCreateLabels()
+const emit = defineEmits<{
+  /** 点击广告「立即购买」；双抽屉聚焦购买区，全页弹出购买菜单 */
+  buy: []
+}>()
+
+/** 广告购买入口：交给父级决定聚焦购买抽屉或弹出购买菜单 */
+function onBuyClick() {
+  emit('buy')
+}
+
+// 显式 mode 时自提供文案；否则读全页 create/index 的 inject
+const labels = mode !== undefined
+  ? useProxyCreateLabels(() => mode)
+  : useProxyCreateLabels()
 
 const [showToast] = useResponseToast()
 const { getUserConfig } = useUserStore()
@@ -40,8 +60,36 @@ const lastTestResult = ref<CheckResult | null>(null)
 const isDeviceMode = computed(() => labels.value.mode === 'device')
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
+const bgSrc1 = `url('${getImage('proxy/proxy_advertise1.png')}')`
+const bgSrc2 = `url('${getImage('proxy/proxy_advertise2.png')}')`
+
+/** 顶部广告文案（代理 / 设备） */
+const advertiseTop = computed(() => isDeviceMode.value
+  ? {
+      title: $t('让电商账号从设备开始更稳定'),
+      keypath: $t('RoxyIP 原生适配 RoxyBrowser，{light}', { light: '{light}' }),
+      highlight: $t('纯净独享，覆盖 100+ 国家'),
+    }
+  : {
+      title: $t('让浏览器环境从代理 IP 开始更稳定'),
+      keypath: $t('RoxyIP 原生适配 RoxyBrowser，{light}', { light: '{light}' }),
+      highlight: $t('纯净独享，覆盖 100+ 国家'),
+    })
+
+/** 表单底部广告文案（代理 / 设备） */
+const advertiseBottom = computed(() => isDeviceMode.value
+  ? {
+      line1: $t('导入设备不稳定？'),
+      line2: $t('RoxyIP 已适配 RoxyBrowser，价格更低，连接更稳定。'),
+    }
+  : {
+      line1: $t('导入代理 IP 不稳定？'),
+      line2: $t('RoxyIP 已适配 RoxyBrowser，价格更低，连接更稳定。'),
+    })
+
 const formRef = useTemplateRef('form')
 const alertRef = useTemplateRef('alert')
+const advertiseFailRef = useTemplateRef<HTMLElement>('advertiseFail')
 const cssModule = useCssModule()
 const loading = ref(false)
 const alertVisible = ref(false)
@@ -148,7 +196,7 @@ const inputs = computed(() => [
         },
       },
       {
-        itemClass: `justify-center ${cssModule.separator}`,
+        itemClass: `justify-center ${cssModule.dot_eparator}`,
         render: () => <span>:</span>,
       },
       {
@@ -290,6 +338,7 @@ async function onCheckProxyStatus() {
 
   const formData = getFormData()
   alertVisible.value = false
+  lastTestResult.value = null
   loading.value = true
   // 直连白名单用户标记
   const result = await testProxy({ ...formData, isDirect: userPayInfo.value.isDirectWhitelist })
@@ -304,6 +353,11 @@ async function onCheckProxyStatus() {
       alertRef.value?.$el.scrollIntoView({ behavior: 'smooth' })
     })
   }
+  else if (showAdvertise) {
+    nextTick(() => {
+      advertiseFailRef.value?.scrollIntoView({ behavior: 'smooth' })
+    })
+  }
 }
 
 function addRemark(platformRemarks: string) {
@@ -311,12 +365,12 @@ function addRemark(platformRemarks: string) {
 }
 
 function buildSubmitPayload(formData: Record<string, any>, checkResult?: CheckResult) {
-  return [{
+  return {
     ...original.value,
     ...formData,
     ...(checkResult ?? {}),
     protocol: formData.proxyCategory, // 兼容新版接口字段名 protocol
-  }]
+  }
 }
 
 /** 电商模式：弹窗内完成连通性与历史库检测后再导入 */
@@ -366,8 +420,25 @@ defineExpose({
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-4">
-    <TutorialVideo v-if="!isDeviceMode && !onboardingTaskStatus?.createProxyVideoEntryStatus" video-type="proxy_management" :autoplay="false">
+  <div class="flex flex-col gap-4 min-w-96 h-full min-h-0 overflow-hidden pa-4 pb-5">
+    <div v-if="showAdvertise" class="flex items-center pa-3.5 gap-5 shrink-0 rounded-2 advertise1">
+      <div class="flex-1 flex flex-col gap-0.5">
+        <div class="text-3.75 leading-normal color-[#111213] font-[DingTalk_JinBuTi]">
+          {{ advertiseTop.title }}
+        </div>
+        <div class="text-3 leading-4 color-[#111213] font-[DingTalk_JinBuTi]">
+          <i18n-t tag="span" scope="global" :keypath="advertiseTop.keypath">
+            <template #light>
+              <span class="text-3.25 color-[#11A3FD]">
+                {{ advertiseTop.highlight }}
+              </span>
+            </template>
+          </i18n-t>
+        </div>
+      </div>
+      <RxButton icon="base/rx_ic_cart" size="xs" :label="$t('立即购买')" @click="onBuyClick" />
+    </div>
+    <TutorialVideo v-if="!isDeviceMode && !onboardingTaskStatus?.createProxyVideoEntryStatus" class="shrink-0" video-type="proxy_management" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
           <div class="flex items-center pa-2 rounded-md video-icon">
@@ -385,8 +456,10 @@ defineExpose({
         </div>
       </template>
     </TutorialVideo>
-    <div class="flex-1 flex flex-col gap-4 overflow-y-auto scrollbar">
+    <!-- min-h-0 让 flex 子项可收缩，仅表单区域滚动 -->
+    <div class="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto scrollbar">
       <TsForm v-if="inputs" ref="form" :inputs="inputs" />
+      <!-- 检测成功展示结果；失败且开启广告时展示底部购买引导 -->
       <RxAlert ref="alert" v-model:visible="alertVisible" class="shrink-0 !w-full" type="success" :title="$t('测试成功')">
         <template #content>
           <i18n-t class="whitespace-pre-wrap" tag="div" scope="global"
@@ -394,13 +467,26 @@ defineExpose({
           />
         </template>
       </RxAlert>
-    </div>
-    <slot name="footer" :submit="onSubmit">
-      <div class="inline-flex flex-row-reverse justify-between w-full">
-        <RxButton size="sm" :label="$t('保存')" @click="onSubmit" />
-        <RemarkIcon v-if="showRemark" :title="labels.remarkTitle" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
+      <div v-if="showAdvertise && lastTestResult?.error" ref="advertiseFail" class="flex items-center pa-3.5 gap-5 shrink-0 rounded-2 advertise2">
+        <div class="flex-1 flex flex-col gap-0.5">
+          <div class="text-3.75 leading-normal color-white font-[DingTalk_JinBuTi]">
+            {{ advertiseBottom.line1 }}
+          </div>
+          <div class="text-3 leading-normal color-white font-[DingTalk_JinBuTi]">
+            {{ advertiseBottom.line2 }}
+          </div>
+        </div>
+        <RxButton severity="secondary" size="xs" icon="base/rx_ic_cart" :label="$t('立即购买')" @click="onBuyClick" />
       </div>
-    </slot>
+    </div>
+    <div class="shrink-0">
+      <slot name="footer" :submit="onSubmit">
+        <div class="inline-flex flex-row-reverse justify-between w-full">
+          <RxButton size="sm" :label="$t('保存')" @click="onSubmit" />
+          <RemarkIcon v-if="showRemark" :title="labels.remarkTitle" :label="$t('备注')" mode="button" :value="original.remark" :on-confirm="addRemark" />
+        </div>
+      </slot>
+    </div>
   </div>
 </template>
 
@@ -411,7 +497,7 @@ defineExpose({
   }
 }
 
-.separator {
+.dot_eparator {
   padding: 8px 0;
   border-left-width: 0px;
   border-right-width: 0px;
@@ -427,6 +513,66 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
+.advertise1 {
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &::before {
+    background-image: v-bind(bgSrc1);
+    background-size: auto 100%;
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    z-index: -1;
+  }
+
+  &::after {
+    z-index: -2;
+    background:
+      linear-gradient(180deg, rgba(17, 163, 253, 0.2) 0%, rgba(17, 163, 253, 0.08) 100%),
+      linear-gradient(0deg, #fff 0%, #fff 100%), linear-gradient(0deg, #bcf257 0%, #bcf257 100%),
+      linear-gradient(91deg, #fbecd2 0%, #ead3f5 50%, #dff7f8 100%);
+  }
+}
+
+.advertise2 {
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &::before {
+    background-image: v-bind(bgSrc2);
+    background-size: auto 100%;
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    z-index: -1;
+  }
+
+  &::after {
+    z-index: -2;
+    background:
+      linear-gradient(94deg, #3990f8 -1.41%, #13dd8d 99.64%), linear-gradient(87deg, #03c1d9 0%, #57da48 107.49%);
+  }
+}
+
 .video {
   background: linear-gradient(
     90deg,

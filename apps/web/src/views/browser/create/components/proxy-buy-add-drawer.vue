@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import Drawer from 'primevue/drawer'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
+import SingleProxies from '/@/views/agent/create/components/single-proxies.vue'
+import { RxBreathingLight } from '/@/components/rx-breathing-light'
+import { createProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
 import { BuyEntryType } from '/@/enums/proxy'
 
 const { showBuy = true, showAdd = true, provider } = defineProps<{
@@ -17,6 +19,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = defineModel<boolean>('visible', { default: false })
+const proxyCreateLabels = createProxyCreateLabels('proxy')
+/** 左侧购买区呼吸光，由右侧广告「立即购买」触发 */
+const buyBreathingRef = useTemplateRef<InstanceType<typeof RxBreathingLight>>('buyBreathing')
 
 const DRAWER_INSET = 'var(--spacing-xl, 12px)'
 const DRAWER_GAP = '12px'
@@ -86,53 +91,54 @@ function closeDrawer() {
   visible.value = false
 }
 
+/** 聚焦左侧购买区：播放一次贴边呼吸光，引导用户注意下单面板 */
+function focusBuyPanel() {
+  if (!showBuy)
+    return
+  buyBreathingRef.value?.trigger()
+}
+
 watch(visible, (val, oldVal) => {
-  if (!val && oldVal)
+  if (!val && oldVal) {
+    buyBreathingRef.value?.stop()
     emit('close')
+  }
 })
 </script>
 
 <template>
-  <Drawer
-    v-if="showBuy"
-    v-model:visible="visible"
-    position="left"
-    :modal="true"
-    :show-close-icon="false"
-    :pt="buyDrawerPt"
-  >
+  <Drawer v-if="showBuy" v-model:visible="visible" position="left" :modal="true" :show-close-icon="false" :pt="buyDrawerPt">
     <template #container>
-      <div class="drawer-panel drawer-buy-panel">
-        <ChooseModal
-          v-if="provider"
-          :provider="provider"
-          :entry-type="BuyEntryType.Immediate"
-          @close="closeDrawer()"
-          @success="$emit('buySuccess', $event)"
+      <div class="drawer-buy-shell">
+        <div class="drawer-panel drawer-buy-panel">
+          <ChooseModal v-if="provider" :provider="provider" :entry-type="BuyEntryType.Immediate" @close="closeDrawer()" @success="$emit('buySuccess', $event)" />
+        </div>
+        <!-- overlay 贴抽屉外壳，offset>0 让光带落在边框外侧，接近 demo 包住卡片的效果 -->
+        <RxBreathingLight
+          ref="buyBreathing"
+          overlay
+          radius="var(--radius-lg, 8px)"
+          color="#11A3FD"
+          :thickness="2"
+          :glow="28"
+          :offset="3"
+          :duration="2600"
         />
       </div>
     </template>
   </Drawer>
 
-  <Drawer
-    v-if="showAdd"
-    v-model:visible="visible"
-    position="right"
-    :modal="!showBuy"
-    :dismissable="false"
-    :show-close-icon="false"
-    :pt="addDrawerPt"
-  >
+  <Drawer v-if="showAdd" v-model:visible="visible" position="right" :modal="!showBuy" :dismissable="false" :show-close-icon="false" :pt="addDrawerPt">
     <template #container>
       <div class="drawer-panel drawer-add-panel flex flex-col">
         <div class="drawer-header flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3 shrink-0">
           <div class="drawer-title">
-            {{ $t('添加代理 IP') }}
+            {{ proxyCreateLabels.pageTitle }}
           </div>
           <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeDrawer()" />
         </div>
         <div class="drawer-add-body">
-          <ProxyCreate :on-confirm="(formData) => $emit('addConfirm', formData)" />
+          <SingleProxies mode="proxy" show-advertise :on-confirm="(formData) => $emit('addConfirm', formData)" @buy="focusBuyPanel" />
         </div>
       </div>
     </template>
@@ -165,6 +171,21 @@ watch(visible, (val, oldVal) => {
   overflow: hidden;
 }
 
+/* 购买抽屉常驻放开裁切：内容圆角由内层 panel 负责，根节点留给外扩呼吸光 */
+:global(.proxy-dual-drawer-buy-root.p-drawer) {
+  overflow: visible;
+}
+
+.drawer-buy-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
 .drawer-panel {
   display: flex;
   flex-direction: column;
@@ -174,7 +195,9 @@ watch(visible, (val, oldVal) => {
 }
 
 .drawer-buy-panel {
+  /* 内容圆角裁切下沉到内层，根节点留给外扩呼吸光 */
   overflow: auto;
+  border-radius: var(--radius-lg, 8px);
 
   :deep(.popup) {
     display: flex;
@@ -199,14 +222,15 @@ watch(visible, (val, oldVal) => {
 .drawer-add-body {
   flex: 1;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   :deep(> div) {
     width: 100%;
     min-width: 0 !important;
-    height: auto;
-    min-height: 100%;
+    flex: 1;
+    min-height: 0;
   }
 }
 

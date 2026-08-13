@@ -238,7 +238,7 @@ const notes = computed(() => labels.value.notes)
 }
 
 .direct {
-  color: #34393d;
+  color: #fff;
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
   line-height: 18px;

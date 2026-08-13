@@ -1,7 +1,6 @@
 import { API } from '/@/api'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
 import { isLikeFunction } from '/@/utils'
 import { createProjectFormSchemas } from '/@/views/projects/schemas'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'

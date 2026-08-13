@@ -18,6 +18,8 @@ import {
   UserCalculatePointsPriceListParams,
   UserGetPointsChargesRecordsListData,
   UserGetPointsChargesRecordsListParams,
+  UserGetPointsDailyConsumptionListData,
+  UserGetPointsDailyConsumptionListParams,
   UserGetPointsRechargeRecordsListData,
   UserGetPointsRechargeRecordsListParams,
 } from "./data-contracts";
@@ -122,6 +124,26 @@ export class PointsApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserGetPointsChargesRecordsListData, any>({
       path: `/user_get_points_charges_records`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags points
+   * @name UserGetPointsDailyConsumptionList
+   * @summary 获取用户每日积分消耗统计
+   * @request GET:/user_get_points_daily_consumption
+   * @response `200` `UserGetPointsDailyConsumptionListData`
+   */
+  userGetPointsDailyConsumptionList = (
+    query: UserGetPointsDailyConsumptionListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetPointsDailyConsumptionListData, any>({
+      path: `/user_get_points_daily_consumption`,
       method: "GET",
       query: query,
       format: "json",

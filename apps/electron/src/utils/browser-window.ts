@@ -3,8 +3,9 @@ import { BrowserWindow, net, session } from 'electron'
 import { pathToFileURL } from 'node:url'
 import { getBaseUrl } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
+import { isMac, isPackaged } from '/@/constants/common'
 import { getRemoteConfig } from '/@/modules/browser/browser-manager/utils'
+import { enableUnlockCombo } from '/@/modules/devtools-guard'
 import { encryptAESGCM, getCommonRequestHeaders, getDeviceId, getInviteCode } from '/@/utils'
 
 /** 通用创建窗口 */
@@ -26,10 +27,24 @@ export function createWindow(options: BrowserWindowConstructorOptions & { roxyWi
       webviewTag: false,
       sandbox: false,
       ...options.webPreferences,
+      // 该项创建后不可修改，若关掉则解锁时只能重建窗口；
+      // 锁定统一由 setupDevToolsGuard 在 JS 层维持
+      devTools: true,
     },
   })
 
   browserWindow[ROXY_WINDOW_ID_KEY] = roxyWindowId
+
+  // Windows/Linux 下即使应用菜单已置空，窗口级菜单仍可能被 Alt 唤出
+  if (!isMac) {
+    browserWindow.setMenu(null)
+  }
+
+  // 主窗口保留隐藏连击入口，供开发人员排查问题；
+  // 快捷键与 openDevTools 拦截由全局的 setupDevToolsGuard 负责
+  if (roxyWindowId === ROXY_MAIN_WINDOW_ID) {
+    enableUnlockCombo(browserWindow.webContents)
+  }
 
   return browserWindow
 }

@@ -3,8 +3,17 @@ import mitt from 'mitt'
 import type { Handler } from 'mitt'
 import type { ToastMessageOptions } from 'primevue/toast'
 import type { UserGetNotifyListData, UserGetWindowInfoListListData, UserPaySettlementCreateData } from '@roxy/backend-api'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
 export type PayWallType = 'synchronizer' | 'createProfileTemplates' | 'transfer'
+
+/** 更新公告弹窗参数（前置升级 / 历史日志 / 兼容入口） */
+export interface ShowAppUpgradeDialogPayload {
+  tips: Array<{ content?: string, [key: string]: any }>
+  actionMode?: 'dismiss' | 'upgrade'
+  /** upgrade 模式下用于 quitAndInstall */
+  updateItem?: Partial<ResourceUpdateMessage>
+}
 
 export type MittEvents = {
   notifyUpdateData: UserGetNotifyListData
@@ -66,14 +75,17 @@ export type MittEvents = {
     settingsKey: 'profiles' | 'authentication' | 'preferences' | 'network' | 'loginActivity'
     anchorPoint?: string
   }
-  /** 直接打开实名认证弹窗（不经过设置页） */
+  /** 直接打开实名认证弹窗（不经过设置页）；按当前 KYC 状态分流详情/审核中/表单 */
   openIdentityVerification?: {
     showRegulatoryNotice?: boolean
+    showRejectedNotice?: boolean
   }
   /** 更新代理 IP 列表 */
   updateShopList?: string
   badgeMap: string
-  showAppUpgradeDialog: any
+  showAppUpgradeDialog: ShowAppUpgradeDialogPayload
+  /** 定向消息弹窗（富文本 tips，格式同 newFeatureTips） */
+  showMessageTipsDialog: Array<{ content?: string, id?: number }>
   backDefaultWorkspace: void
   /** 刷新窗口列表 */
   refreshProfileList?: number

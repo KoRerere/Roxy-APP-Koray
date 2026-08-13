@@ -53,7 +53,7 @@ const statusColor = computed(() => status.value.color)
         {{ status.text }}
       </div>
     </div>
-    <RxButton v-if="showRenew && isRenewable" outlined severity="secondary" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" @click.stop="onRenew" />
+    <RxButton v-if="showRenew && isRenewable" variant="outlined" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" @click.stop="onRenew" />
   </div>
 </template>
 

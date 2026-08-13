@@ -97,8 +97,9 @@ const { columns, updateColumns } = useColumns({
 watch(() => teamLabels.value.relatedProjectsColumn, (title) => {
   updateColumns((cols) => {
     const col = cols.find(item => item.key === 'relatedProjects')
-    if (col)
+    if (col) {
       col.title = title
+    }
   })
 }, { immediate: true })
 
@@ -144,8 +145,9 @@ onMounted(() => {
 })
 
 function showWarnTipsModal() {
-  if (!isOwner.value || onboardingTaskStatus.value?.newSpaceCreateTeamStatus !== false)
+  if (!isOwner.value || onboardingTaskStatus.value?.newSpaceCreateTeamStatus !== false) {
     return
+  }
 
   showModal({
     showHeader: false,
@@ -259,8 +261,9 @@ async function deleteMember(data: TableRow) {
         projectIds,
       })
       onlyErrorToast(code, msg)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
       filters.onChange()
     },
   })
@@ -331,7 +334,7 @@ function onRefreshTable(params = {}) {
     <template #filter-after>
       <div class="flex items-center w-full gap-3">
         <AdvancedSearch :search="onAdvancedSearch" :clear="onAdvancedSearch" />
-        <RxSelectButton v-model="filters.value" :options="filters.options" size="xxs" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>

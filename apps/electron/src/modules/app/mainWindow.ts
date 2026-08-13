@@ -3,9 +3,10 @@ import { app, screen } from 'electron'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { appConfig, ROXY_MAIN_WINDOW_ID } from '/@/constants'
-import { isPackaged, isProd, isWindows } from '/@/constants/common'
+import { isPackaged, isWindows } from '/@/constants/common'
 import { sendLaunchMessage } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
@@ -47,11 +48,6 @@ function createMainWindow(options?: BrowserWindowConstructorOptions) {
   // browserWindow.on('ready-to-show', () => {
   //   browserWindow?.show?.()
   // })
-
-  if (isProd) {
-    // 生产禁用菜单栏
-    // browserWindow.setMenu(null)
-  }
 
   return browserWindow
 }
@@ -148,7 +144,7 @@ export async function intoMainPage() {
     ipcSender.window.onFocus()
   })
 
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     mainWin?.webContents.openDevTools({ mode: 'detach' })
   }
   console.log('Entering main application')

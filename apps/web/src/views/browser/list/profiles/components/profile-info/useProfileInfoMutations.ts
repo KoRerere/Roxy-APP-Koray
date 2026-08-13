@@ -1,10 +1,10 @@
 import { h, unref } from 'vue'
 import type { MaybeRef } from 'vue'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyQuick from '/@/views/agent/quick.vue'
 import { API } from '/@/api'
 import { ProfileReqType, ProxyType } from '/@/enums'
 import { isLikeFunction } from '/@/utils'
+import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
 import { silentUpdateProxy } from '../util'
 
 export function useProfileInfoMutations(options: {
@@ -15,7 +15,7 @@ export function useProfileInfoMutations(options: {
   onlyErrorToast: (code: number, msg: string) => void
 }) {
   const { data, workspaceName, drawerInstance, emit, onlyErrorToast } = options
-
+  const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
   async function updateProfile(params: any, opts?: Record<string, any>) {
     const { isRefresh, fallback, success } = { isRefresh: false, success: () => { }, fallback: () => { }, ...opts }
     const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
@@ -25,10 +25,11 @@ export function useProfileInfoMutations(options: {
       if (isRefresh) {
         emit('refresh')
       }
+      return true
     }
-    else {
-      isLikeFunction(fallback) && fallback()
-    }
+
+    isLikeFunction(fallback) && fallback()
+    return false
   }
 
   function setChooseProxy(formData: any) {
@@ -54,29 +55,38 @@ export function useProfileInfoMutations(options: {
     })
   }
 
-  async function createProxy(proxyData?: Record<string, any>) {
+  /** 手动添加自定义代理并绑定到当前窗口 */
+  function addCustomProxy(formData: Record<string, any>) {
+    const row = unref(data)
+    const { id, dirId } = row
+    const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: ProfileReqType.AddProxy }
+    updateProfile(params, {
+      success: () => {
+        Reflect.deleteProperty(row, '_checkRes')
+        silentUpdateProxy(row, params)
+      },
+    })
+  }
+
+  /** 编辑已有代理（仍走单侧抽屉，不使用双开） */
+  async function editProxy(proxyData: Record<string, any>) {
     const row = unref(data)
     const ws = unref(workspaceName)
-    await drawerInstance.showDrawer({
-      title: proxyData
-        ? $t('为[{workspaceName}-{uid}]编辑代理 IP', { workspaceName: ws, uid: row.windowSortNum })
-        : $t('为[{workspaceName}-{uid}]添加代理 IP', { workspaceName: ws, uid: row.windowSortNum }),
-      dismissable: false,
-      slots: {
-        container: () => h(ProxyCreate, {
-          data: proxyData,
-          onConfirm: (formData: any) => {
-            const { id, dirId } = row
-            const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: proxyData ? ProfileReqType.EditProxy : ProfileReqType.AddProxy }
-            updateProfile(params, {
-              success: () => {
-                Reflect.deleteProperty(row, '_checkRes')
-                silentUpdateProxy(row, params)
-              },
-            })
-            drawerInstance.hideDrawer()
+    await showProxyFormDrawer({
+      title: $t('为[{workspaceName}-{uid}]编辑代理 IP', { workspaceName: ws, uid: row.windowSortNum }),
+      data: proxyData,
+      mode: 'proxy',
+      onConfirm: async (formData) => {
+        const { id, dirId } = row
+        const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom', requestType: ProfileReqType.EditProxy }
+        const ok = await updateProfile(params, {
+          success: () => {
+            Reflect.deleteProperty(row, '_checkRes')
+            silentUpdateProxy(row, params)
           },
-        }),
+        })
+        if (!ok)
+          return false
       },
     })
   }
@@ -86,7 +96,7 @@ export function useProfileInfoMutations(options: {
     const ws = unref(workspaceName)
     await drawerInstance.showDrawer({
       title: $t('为[{workspaceName}-{uid}]选择代理 IP', { workspaceName: ws, uid: row.windowSortNum }),
-      dismissable: false,
+      closeOnEscape: false,
       slots: {
         container: () => h(ProxyQuick, {
           data: proxyData,
@@ -102,7 +112,8 @@ export function useProfileInfoMutations(options: {
   return {
     updateProfile,
     setChooseProxy,
-    createProxy,
+    addCustomProxy,
+    editProxy,
     openProxyDrawer,
   }
 }

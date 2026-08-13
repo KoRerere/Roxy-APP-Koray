@@ -130,6 +130,8 @@ defineExpose({
 
 // 图标位置
 .p-iconfield .p-inputicon {
+  display: flex;
+  align-items: center;
   &:first-child {
     left: var(--input-left-padding);
     inset-inline-start: var(--input-left-padding);

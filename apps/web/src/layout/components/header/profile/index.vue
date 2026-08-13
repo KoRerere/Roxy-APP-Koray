@@ -158,7 +158,7 @@ const items = computed(() => {
       icon: 'base/rx_ic_doc_api',
       vIf: () => import.meta.hot,
       command: () => {
-        router.push({ name: 'cattle-slaughter' })
+        router.push({ name: 'roxy-lab' })
       },
     },
     {

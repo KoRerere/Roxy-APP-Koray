@@ -5,6 +5,7 @@ import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { ProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
+import type { ProxyReqType } from '/@/enums'
 import type { UserAddProxyModuleV2CreatePayload } from '@roxy/backend-api'
 
 export interface SaveProxyModulesOptions {
@@ -15,10 +16,23 @@ export interface SaveProxyModulesOptions {
   onSuccess?: () => void | Promise<void>
 }
 
+/** 更新代理/设备模块资源（编辑、测速上报等） */
+export interface UpdateProxyModulesParams {
+  proxyList: any[]
+  requestType?: ProxyReqType
+}
+
 export function useProxyModuleCreate() {
   const router = useRouter()
   const [_, onlyErrorToast] = useResponseToast()
   const [showModal] = useDialog()
+
+  /** 调用 userMdfProxyModuleCreate，统一 toast；返回是否成功 */
+  async function updateProxyModules(params: UpdateProxyModulesParams) {
+    const { code, msg } = await API.proxy.userMdfProxyModuleCreate(params)
+    onlyErrorToast(code, msg)
+    return code === 0
+  }
 
   async function saveProxyModules(__proxies: any[], options: SaveProxyModulesOptions) {
     const { labels, extraParams } = options
@@ -78,5 +92,5 @@ export function useProxyModuleCreate() {
     onlyErrorToast(code, msg)
   }
 
-  return { saveProxyModules }
+  return { saveProxyModules, updateProxyModules }
 }

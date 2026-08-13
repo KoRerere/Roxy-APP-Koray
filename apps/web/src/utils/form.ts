@@ -18,20 +18,30 @@ export function findInputByName(inputs: any[], name: string): any {
   }
 }
 
+/**
+ * 按 `names` 顺序返回匹配的 input；同一 name 取首次命中，未找到的 name 跳过。
+ */
 export function filterInputsByNames(inputs: any[], names: string[]) {
-  const list: any[] = []
-  inputs?.forEach((input: any) => {
-    if (Array.isArray(input)) {
-      list.push(...filterInputsByNames(input, names))
-    }
-    else if (Array.isArray(input.items)) {
-      list.push(...filterInputsByNames(input.items, names))
-    }
-    else if (names.includes(input.name)) {
-      list.push(input)
-    }
-  })
-  return list
+  const nameSet = new Set(names)
+  const found = new Map<string, any>()
+
+  function walk(list: any[] | undefined) {
+    list?.forEach((input: any) => {
+      if (Array.isArray(input)) {
+        walk(input)
+        return
+      }
+      if (Array.isArray(input.items)) {
+        walk(input.items)
+        return
+      }
+      if (nameSet.has(input.name) && !found.has(input.name))
+        found.set(input.name, input)
+    })
+  }
+
+  walk(inputs)
+  return names.map(name => found.get(name)).filter(Boolean)
 }
 
 export function getFormData(

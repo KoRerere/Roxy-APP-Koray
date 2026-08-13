@@ -7,7 +7,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { executeSomethingByTargetWorkspace } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { RoxyGiftsType } from '/@/enums/pay'
-import { useEmitterEvent } from '/@/utils/eventBus'
+import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { handleRichHtmlLinkClick, navigateByRichHtmlUrl } from '/@/utils/rich-html-link'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import type { UserGetNotifyListData } from '@roxy/backend-api'
@@ -218,7 +218,23 @@ function showRedeemCodeRecord() {
   })
 }
 
+/** KYC 系统通知「查看详情」约定链接，打开实名认证入口（按状态分流弹窗） */
+function isOpenIdentityVerificationHref(href: string) {
+  return href === 'roxy-action:open-identity-verification'
+    || href.startsWith('roxy-action:open-identity-verification?')
+}
+
 function onHtmlClick(e: MouseEvent) {
+  const link = (e.target as HTMLElement | null)?.closest?.('a')
+  const href = link?.getAttribute('href') ?? ''
+  if (isOpenIdentityVerificationHref(href)) {
+    e.preventDefault()
+    e.stopPropagation()
+    popRef.value?.instance?.hide?.()
+    emitter.emit('openIdentityVerification')
+    return
+  }
+
   handleRichHtmlLinkClick(e, {
     router,
     onNavigate(url) {

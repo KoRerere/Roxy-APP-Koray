@@ -271,7 +271,7 @@ function handleClose() {
 </script>
 
 <template>
-  <div class="bg-[var(--colors-background-bg-page)] flex flex-col gap-6 p-6 rounded-3">
+  <div class="!w-[680px] bg-[var(--colors-background-bg-page)] flex flex-col gap-6 p-6 rounded-3">
     <!-- ── Header ────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between shrink-0 w-full">
       <p class="text-5 font-semibold text-[var(--colors-text-text-primary)] leading-normal my-0">

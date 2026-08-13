@@ -51,7 +51,7 @@ function showSpecialOfferHint(option: BusinessUseOption) {
             </div>
           </div>
           <div v-if="showSpecialOfferHint(option)" class="color-[#FF7A00] font-[DingTalk_JinBuTi] text-3.25 leading-3.5">
-            {{ $t('🔥限时最低 $5.5/月') }}
+            {{ option.scenePriceDesc }}
           </div>
         </div>
         <template v-if="!!option.desc?.trim()" #content>

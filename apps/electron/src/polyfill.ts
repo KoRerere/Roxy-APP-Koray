@@ -1,22 +1,12 @@
-import inspector from 'node:inspector'
-import { isDev } from '/@/constants/common'
+import { enableInspector, ignoreDebugStartupArgs, setupDevToolsGuard } from '/@/modules/devtools-guard'
 
-function enableDebugger() {
-  try {
-    // 检查是否已经开启了调试器
-    if (inspector.url()) {
-      console.log('Debugger already enabled:', inspector.url())
-      return
-    }
+// 必须先于 enableInspector：命令行带 --inspect 时端口已被 Electron 打开，
+// 这里先摘掉，避免下面的开关判断被启动参数绕过
+ignoreDebugStartupArgs()
 
-    const port = isDev ? 9237 : 9238
-    // 只在特定条件下启用调试器
-    inspector.open(port, '127.0.0.1', false)
-    console.debug(`Debugger started on ws://127.0.0.1:${port}`)
-  }
-  catch (error) {
-    console.warn('Failed to enable debugger:', error)
-  }
-}
+// 在模块加载期注册，早于启动窗口等任何 webContents 的创建
+setupDevToolsGuard()
 
-enableDebugger()
+// 打包版默认不开启，enableInspector 内部按开发者工具开关判断，
+// 保证正式发布版启动后不监听任何 Node 调试端口
+enableInspector()

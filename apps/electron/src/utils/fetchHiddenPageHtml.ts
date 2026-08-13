@@ -1,7 +1,6 @@
 import type { WebContents } from 'electron'
 import { BrowserWindow, WebContentsView } from 'electron'
 import crypto from 'node:crypto'
-
 export interface FetchHiddenPageHtmlOptions {
   timeoutMs?: number
   settleTimeMs?: number

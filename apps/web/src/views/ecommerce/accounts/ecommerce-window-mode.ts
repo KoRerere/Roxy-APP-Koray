@@ -22,6 +22,8 @@ export interface EcommerceWindowPlatformItem {
   platformIconDark?: string
   platformUserName?: string
   platformPassword?: string
+  /** 提交时保留级联选中的原始节点，编辑回显优先读取 */
+  _accountPlatform?: AccountPlatform | null
 }
 
 export interface EcommerceDeviceInfo {
@@ -501,6 +503,11 @@ function buildAccountPlatformFromSource(source: Record<string, unknown>): Accoun
     ? source.windowPlatformList[0] as Record<string, unknown> | undefined
     : undefined
 
+  // 优先用提交时写入的原始级联节点，避免从 displayId/url 反推丢层级信息
+  const fromStored = normalizeAccountPlatform(windowPlatform?._accountPlatform)
+  if (fromStored)
+    return fromStored
+
   if (!windowPlatform && !source.platformUrl)
     return null
 
@@ -582,6 +589,7 @@ export function buildWindowPlatformList(
     platformIconDark,
     platformUserName: info.platformUserName.trim(),
     platformPassword: info.platformPassword.trim(),
+    _accountPlatform: { ...platform },
   }]
 }
 

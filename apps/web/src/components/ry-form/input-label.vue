@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useElementSize } from '@vueuse/core';
+import { useElementSize } from '@vueuse/core'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 interface Props {
@@ -44,5 +44,6 @@ const stopWatch = watch(height, () => {
   line-height: v-bind(lineHeight);
   color: var(--colors-text-text-primary);
   font-size: 13px;
+  user-select: none;
 }
 </style>

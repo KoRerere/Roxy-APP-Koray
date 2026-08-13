@@ -101,7 +101,6 @@ export function useProfileInfoAccountMenu(options: {
         command: async () => {
           await drawerInstance.showDrawer({
             title: $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName: ws, uid: row.windowSortNum }),
-            dismissable: false,
             slots: {
               container: () => h(AccountList, {
                 data: row,

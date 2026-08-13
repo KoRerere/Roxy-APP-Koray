@@ -9,6 +9,7 @@ import { ROXY_UPDATED_ARG } from '/@/modules/app/relaunch'
 import { isUninstallFeedbackMode } from '/@/modules/app/uninstallFeedback'
 import { cleanupAndExit, clearLauncherLog, showUninstallFeedback } from '/@/modules/app/utils'
 import { openBrowserWindow } from '/@/modules/appServer/ws'
+import { setupAppMenu } from '/@/modules/devtools-guard/appMenu'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
@@ -25,11 +26,10 @@ if (!app.isPackaged) {
   app.getVersion = () => import.meta.env.VITE_APP_VERSION
 }
 
-// 设置主进程调试端口
-// app.commandLine.appendSwitch('inspect', '9229');
-// 设置渲染进程远程调试端口
-// app.commandLine.appendSwitch('remote-debugging-port', '8315');
-app.commandLine.appendSwitch('experimental-network-inspection')
+// 正式版禁止通过 --inspect / --remote-debugging-port 开放 Node.js 或 Chromium 调试接口，
+// 开发人员排查走 devtools-guard 的解锁入口，切勿在此处追加调试类启动参数。
+// 注意：--experimental-network-inspection 是 Node CLI flag，appendSwitch 对它无效，
+// 只能在进程启动时出现在 argv 上，由 devtools-guard 进入诊断模式时重启带入。
 app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=3072')
 app.commandLine.appendSwitch('no-sandbox')
@@ -98,6 +98,9 @@ export async function dispatchRoxyAction(argv: readonly string[], source: 'secon
 }
 
 export async function setupApp() {
+  // 尽早收敛菜单，避免默认菜单的 View → Toggle Developer Tools 暴露入口
+  setupAppMenu()
+
   app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
     if (process.argv.length >= 2) {

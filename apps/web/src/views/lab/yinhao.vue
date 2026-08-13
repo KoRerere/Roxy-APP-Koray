@@ -15,7 +15,6 @@ import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk
 import ConsultantModal from '/@/views/tutorial/before-enter/consultant-modal.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
-import DoubeOpen from './doube-open.vue'
 // ============ table ===================
 // import wcisTable from './components/table/table.vue'
 // import { useUserStore } from '/@/stores/user'
@@ -464,6 +463,8 @@ function _open122() {
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
+    <RxButton severity="success" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" />
+
     <RxButton :label="$t('before enter')" @click="_open122" />
     <div>
       <RxInputGroup v-model="ipValues" :items="ipItems" class="max-w-xs" />
@@ -488,7 +489,6 @@ function _open122() {
     <RxButton label="consultant modal" @click="openConsultantModal" />
     <RxButton label="bind risk" @click="_openBindRisk" />
     <!-- <RxButton label="open2" @click="_open2" /> -->
-    <!-- <DoubeOpen /> -->
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
@@ -582,6 +582,14 @@ function _open122() {
 </style>
 
 <style lang="scss" scoped>
+.aaaaa {
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(17, 163, 253, 0.2) 0%, rgba(17, 163, 253, 0.08) 100%),
+    linear-gradient(0deg, #fff 0%, #fff 100%), linear-gradient(0deg, #bcf257 0%, #bcf257 100%),
+    linear-gradient(91deg, #fbecd2 0%, #ead3f5 50%, #dff7f8 100%);
+}
+
 .fake-highlight {
   position: relative;
   z-index: 10001;

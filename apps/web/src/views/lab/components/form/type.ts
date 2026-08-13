@@ -7,6 +7,8 @@ interface BaseInput {
   labelPosition?: FormLabelPosition
   labelProps?: Record<string, any>
   props?: Record<string, any>
+  /** 转发给输入组件的具名插槽（字段顶层配置，勿写在 props 内） */
+  slots?: Record<string, (...args: any[]) => any>
   resolver?: (zod: typeof z) => ZodFirstPartySchemaTypes
   [key: string]: any
 }

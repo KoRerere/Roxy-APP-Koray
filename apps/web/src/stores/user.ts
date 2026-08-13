@@ -35,6 +35,12 @@ type UserCards = UnwrapRowsType<UserGetBindCardListListData>
 type UserPayInfo = UserGetUserPayInfoListData['data']
 type LoginWay = 'password' | 'phone' | OauthLoginType
 
+/** 拉取用户信息后的进空间行为 */
+export interface GetUserInfoOptions {
+  /** 默认 true：拉取用户信息后正式进空间；false 时仅更新 userInfo */
+  enterWorkspace?: boolean
+}
+
 const INIT_USER_INFO_CACHE_KEY = 'user:initUserInfo:cache'
 
 function getWorkspaceStore() {
@@ -130,11 +136,6 @@ export const useUserStore = defineStore(
       return { identity, ...identityMap[identity] }
     })
 
-    interface GetUserInfoOptions {
-      /** 默认 true：拉取用户信息后正式进空间；false 时仅更新 userInfo */
-      enterWorkspace?: boolean
-    }
-
     async function enterWorkspace(workspaceId?: number) {
       const workspaceStore = getWorkspaceStore()
       const resolvedId = workspaceId ?? workspaceStore.currentWorkspace?.id ?? userInfo.value.workspaceId
@@ -198,25 +199,25 @@ export const useUserStore = defineStore(
 
     async function setUserInfo(info: UserInfo) {
       userInfo.value = info
-      const appSoftConfig = await globalThis.electronAPI.send('app:getSoftConfig')
+      // const appSoftConfig = await globalThis.electronAPI.send('app:getSoftConfig')
 
-      const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000
+      // const isNewUser = !appSoftConfig.hasLoggedIn && userInfo.value.createTime && new Date(userInfo.value.createTime).getTime() > Date.now() - 5 * 60 * 1000
 
       // 如果是 5 分钟内的新用户，则记录新用户事件
-      if (isNewUser && appSoftConfig.visitorId) {
-        API.appTrackingEvent.appTrackingEventCreate({
-          uuid: appSoftConfig.visitorId,
-          userId: userInfo.value.id,
-          eventType: 'registration_complete',
-        })
-      }
+      // if (isNewUser && appSoftConfig.visitorId) {
+      //   API.appTrackingEvent.appTrackingEventCreate({
+      //     uuid: appSoftConfig.visitorId,
+      //     userId: userInfo.value.id,
+      //     eventType: 'registration_complete',
+      //   })
+      // }
 
       // 如果不是新用户，则取消记录用户事件
-      if (!isNewUser && appSoftConfig.visitorId) {
-        API.appTrackingEvent.appTrackingEventDelete({
-          uuid: appSoftConfig.visitorId,
-        })
-      }
+      // if (!isNewUser && appSoftConfig.visitorId) {
+      //   API.appTrackingEvent.appTrackingEventDelete({
+      //     uuid: appSoftConfig.visitorId,
+      //   })
+      // }
 
       if (isMainWindow) {
         // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿

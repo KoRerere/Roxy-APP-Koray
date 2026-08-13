@@ -15,7 +15,7 @@ const styles = useCssModule()
     <div class="w-20 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0">
       {{ $t('时长:') }}
     </div>
-    <div class="flex gap-3">
+    <div class="flex gap-3 flex-wrap">
       <div v-for="option in options" :key="option.value" class="w-38 h-10 flex items-center justify-center leading-none cursor-pointer select-none"
            :class="[styles.period, styles.radio, modelValue?.value === option.value ? styles.active : '']" @click="modelValue = option"
       >

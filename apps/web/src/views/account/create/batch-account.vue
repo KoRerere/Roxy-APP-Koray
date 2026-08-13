@@ -68,7 +68,6 @@ const input = ref<Record<string, any>>({
     placeholder: $t('请输入或选择平台网址'),
     optionValue: 'value',
     editable: true,
-    filter: true,
     size: 'xxs',
     getOptions: async () => {
       const { data: { rows } } = await API.platform.userGetPlatformInfoList({})

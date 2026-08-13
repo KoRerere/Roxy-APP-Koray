@@ -46,8 +46,17 @@ const advancedSearchOptions = [
   },
 ]
 
-const selection = ref(data?.windowPlatformList.filter((item: any) => item.id))
+/** 仅回显带有效 id 的已选账号，与代理 quick 的 resolveInitialSelection 对齐 */
+const selection = ref(resolveInitialSelection(data?.windowPlatformList))
 const sumProxyCount = computed(() => selection.value?.length ?? 0)
+
+/**
+ * 解析表格初始选中项
+ */
+function resolveInitialSelection(list?: any[]) {
+  const selected = list?.filter((item: any) => item?.id != null && item.id !== 0) ?? []
+  return selected.length ? selected : undefined
+}
 
 function onAdvancedSearch(search?: Record<string, any>) {
   const { key, value } = search || {}
@@ -55,11 +64,21 @@ function onAdvancedSearch(search?: Record<string, any>) {
 }
 
 async function tableRequest(params: any) {
-  return API.platform.userGetPlatformInfoV2List(params)
+  const result = await API.platform.userGetPlatformInfoV2List(params)
+
+  // 用当前页同源行替换选中对象，保证 dataKey 回显稳定（跨页未出现的项保留原对象）
+  if (result.code === 0 && selection.value?.length) {
+    const rows = result.data?.rows ?? []
+    selection.value = selection.value.map((selected: any) => {
+      return rows.find((row: any) => row.id === selected.id) ?? selected
+    })
+  }
+
+  return result
 }
 
 function handleSave() {
-  emit('confirm', selection.value)
+  emit('confirm', selection.value ?? [])
   emit('close')
 }
 </script>
@@ -71,7 +90,9 @@ function handleSave() {
     />
     <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
     <div class="flex-ovh-1">
-      <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
+      <!-- clear-selection-on-request=false：保留 v-model:selection，避免列表请求把已选回显清掉 -->
+      <RyTable ref="quick" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns"
+               :clear-selection-on-request="false" :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
                :show-display="false" :context-menu="false" :show-actions="false"
       >
         <template #table-empty>

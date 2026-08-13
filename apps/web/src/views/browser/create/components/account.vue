@@ -45,14 +45,13 @@ const selectedAccount = computed(() => windowPlatformList.value?.filter((item: a
 const sumAccountCount = computed(() => windowPlatformList.value?.length ?? 0)
 
 function toggleDrawer(addType: 'create' | 'list', item?: any) {
-  const dismissable = addType === 'list'
-  const title = dismissable ? $t('平台账号列表') : $t('添加平台账号')
-  const data = dismissable ? { windowPlatformList: selectedAccount.value } : deepClone(item)
-  const RenderComponent = dismissable ? AccountList : AccountCreate
+  const isChoose = addType === 'list'
+  const title = isChoose ? $t('平台账号列表') : $t('添加平台账号')
+  const data = isChoose ? { windowPlatformList: selectedAccount.value } : deepClone(item)
+  const RenderComponent = isChoose ? AccountList : AccountCreate
 
   drawerInstance.showDrawer({
     title,
-    dismissable,
     slots: {
       container: () => h(RenderComponent, {
         data,

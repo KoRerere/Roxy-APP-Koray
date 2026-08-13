@@ -127,18 +127,6 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         component: () => import('/@/views/account/create'),
       },
       {
-        path: 'cattle-slaughter',
-        name: 'cattle-slaughter',
-        meta: {
-          title: 'Roxy Lab',
-          icon: 'base/rx_ic_keys',
-          hideInMenu: true,
-          // 开发测试页，两种业务模式均需可直达（父级 resource 为 Private only）
-          workspaceTypes: [WorkspaceType.Private, WorkspaceType.ECommerce],
-        },
-        component: () => import('/@/views/lab'),
-      },
-      {
         path: 'extensions',
         name: 'extensions',
         meta: {

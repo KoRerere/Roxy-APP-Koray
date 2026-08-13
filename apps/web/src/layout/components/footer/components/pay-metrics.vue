@@ -119,7 +119,7 @@ function toggle(event: Event) {
 
 <template>
   <DefineTemplate>
-    <div class="pay-metrics" :class="{ collapsed }">
+    <div v-if="actions" class="pay-metrics" :class="{ collapsed }">
       <PayMetricsCard v-for="item in actions" :key="item.label" class="cursor-pointer" @click="item.command">
         <div class="pay-metrics-title">
           <div class="pay-metrics-title-badge">

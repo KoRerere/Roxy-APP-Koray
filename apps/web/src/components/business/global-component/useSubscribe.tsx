@@ -1,15 +1,15 @@
 import { useDialog } from 'primevue/usedialog'
 import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
-// import { useSimpleLocale } from '/@/stores/locale'
 import type { RoxyGiftsType } from '/@/enums/pay'
 import { OrderType, PayWay, PurchaseType } from '/@/enums/pay'
 import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { emitter } from '/@/utils/eventBus'
-import type { MittEvents } from '/@/utils/eventBus'
+import type { MittEvents, ShowAppUpgradeDialogPayload } from '/@/utils/eventBus'
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
@@ -23,6 +23,7 @@ import RxButton from '/@/components/rx-button'
 import styles from './schemas.module.css'
 import type { OpenBrowserFailureType } from '@roxy/electron-preload'
 import { useThemeStore } from '/@/stores/theme'
+import { useCampaignStore } from '/@/stores/campaign'
 import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
@@ -35,6 +36,10 @@ const Score = defineAsyncComponent(() => import('/@/views/tutorial/components/sc
 const BackDefaultWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/back-default-workspace.vue'))
 
 let isSubscribe = false
+/** 本会话是否已调度过评价弹窗检查（切空间 / 登出重置） */
+let hasCheckedScoreDialog = false
+/** 定向消息弹窗是否已打开，避免 header 连变叠层 */
+let isShowingMessageTips = false
 let lastFocusTime = Date.now()
 let countdown: ReturnType<typeof enhanceCountdown>
 
@@ -55,48 +60,31 @@ export function useSubscribe() {
   const [showResToast, onlyErrorToast] = useResponseToast()
   const { handleBusinessCode } = useHandleBusinessCode()
   const userStore = useUserStore()
+  const { currentWorkspace } = storeToRefs(useWorkspaceStore())
   const { getUserPayInfo, clearUserInfo } = userStore
   const { updateOnboardingTaskStatus } = useOnboardingTaskStatus()
   const { isOwner } = storeToRefs(useRoleStore())
-  // const { currentLocale } = useSimpleLocale()
-
-  // const $t528 = localStorage.getItem('$T528')
 
   watchEffect(() => {
-    if (userStore.token && userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
-      // if (!$t528) {
-      //   showTempMambaLastUpdateLog()
-      //   return
-      // }
+    if (!globalThis.isElectron)
+      return
 
-      // 检查是否显示新功能提示
-      globalThis.electronAPI.send('app:getNewFeatureTips').then((result) => {
-        console.log('app:getNewFeatureTips', result)
-        const newFeatureTips = result?.filter(item => item.content?.length)
-        if (newFeatureTips?.length) {
-          showAppUpgradeDialog(newFeatureTips)
-        }
-        else {
-          checkScoreDialog()
-        }
-      })
+    // token 清空时 effect 会重跑，顺带重置本会话检查标记，无需额外 watch
+    if (!userStore.token) {
+      hasCheckedScoreDialog = false
+      return
     }
+    if (!userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus)
+      return
+
+    const workspace = currentWorkspace.value
+    if (!workspace?.id || hasCheckedScoreDialog)
+      return
+
+    hasCheckedScoreDialog = true
+    // 更新公告已前置到下载完成（ResourceUpdater）；登录就绪后只调度评价弹窗
+    checkScoreDialog()
   })
-
-  // async function showTempMambaLastUpdateLog() {
-  //   if (localStorage.getItem('$T528'))
-  //     return
-
-  //   localStorage.setItem('$T528', '1')
-  //   const updateFeature = await globalThis.electronAPI.send('app:getLastUpdateFeature')
-  //   const localFeature = updateFeature.newFeatureTips?.[currentLocale]
-  //   const localContent = localFeature?.[0]?.content ? localFeature : []
-  //   const newFeatureTips = localContent?.filter((item: any) => item.content?.length)
-  //   console.debug('newFeatureTips', newFeatureTips)
-  //   if (newFeatureTips?.length) {
-  //     showAppUpgradeDialog(newFeatureTips)
-  //   }
-  // }
 
   // 显示toast
   emitter.on('showToast', showToast)
@@ -163,8 +151,8 @@ export function useSubscribe() {
 
   /** 初始化事件监听 */
   function initListener() {
-    // 显示最后一次跟新特性
-    emitter.on('showAppUpgradeDialog', showAppUpgradeDialog)
+    // 定向消息弹窗
+    emitter.on('showMessageTipsDialog', showMessageTipsDialog)
     // 显示升级套餐弹窗
     emitter.on('showUpgradePlanDialog', showUpgradePlanDialog)
     // 显示订阅到期弹窗
@@ -197,6 +185,9 @@ export function useSubscribe() {
       }
     })
   }
+
+  // 下载完成可能早于 idle：更新公告监听须尽早注册，避免丢事件
+  emitter.on('showAppUpgradeDialog', showAppUpgradeDialog)
 
   requestIdleCallback(async () => {
     globalThis.electronAPI.send('web:ready')
@@ -237,11 +228,58 @@ export function useSubscribe() {
     })
   }
 
-  /** 显示 APP 新特性升级弹窗 */
-  async function showAppUpgradeDialog(newFeatureTips: any[]) {
+  /** 显示 APP 更新公告弹窗（前置升级 / 上次更新日志） */
+  async function showAppUpgradeDialog(payload: ShowAppUpgradeDialogPayload) {
+    const { tips, actionMode = 'dismiss', updateItem } = payload
+    if (!tips?.length)
+      return
+
     const appVersion = await globalThis.electronAPI.send('app:getAppVersion')
+    const headerVersion = updateItem?.version || appVersion
+    const header = actionMode === 'upgrade'
+      ? $t('检测到新版本 v{appVersion}', { appVersion: headerVersion })
+      : $t('v{appVersion} 更新概览', { appVersion: headerVersion })
+
     showModal({
-      header: $t('v{appVersion} 更新概览', { appVersion }),
+      header,
+      class: 'w-125 max-h-[90vh] !transform-none',
+      pt: {
+        root: '!will-change-auto',
+        mask: 'z-1002',
+      },
+      draggable: false,
+      slots: {
+        default: ({ handleCancel }) => {
+          return (
+            <AppUpgradeTips
+              actionMode={actionMode}
+              onSkip={() => {
+                handleCancel()
+                if (actionMode === 'dismiss')
+                  checkScoreDialog()
+              }}
+              onUpgrade={() => {
+                handleCancel()
+                // 自动弹窗已展示更新内容，不再二次确认，直接走现有安装流程
+                globalThis.electronAPI.send('app:quitAndInstall', updateItem || { type: 'app' })
+              }}
+              newFeatureTips={tips}
+            />
+          )
+        },
+        footer: undefined,
+      },
+    })
+  }
+
+  /** 显示定向消息弹窗（复用 AppUpgradeTips 富文本翻页） */
+  function showMessageTipsDialog(tips: MittEvents['showMessageTipsDialog']) {
+    if (isShowingMessageTips || !tips?.length)
+      return
+
+    isShowingMessageTips = true
+    showModal({
+      header: $t('消息提醒'),
       class: 'w-125 max-h-[90vh] !transform-none',
       pt: {
         root: '!will-change-auto',
@@ -249,7 +287,7 @@ export function useSubscribe() {
       },
       draggable: false,
       handleCancel: () => {
-        globalThis.electronAPI.send('app:hideNewFeatureTips')
+        isShowingMessageTips = false
       },
       slots: {
         default: ({ handleCancel }) => {
@@ -257,9 +295,8 @@ export function useSubscribe() {
             <AppUpgradeTips
               onSkip={() => {
                 handleCancel()
-                checkScoreDialog()
               }}
-              newFeatureTips={newFeatureTips}
+              newFeatureTips={tips}
             />
           )
         },
@@ -427,6 +464,10 @@ export function useSubscribe() {
   function checkScoreDialog() {
     countdown?.stop()
 
+    // 活动期间不自动弹评价，避免与活动海报抢焦点
+    if (useCampaignStore().seasonalActivity.active)
+      return
+
     if (userStore.userInfo.onboardingTaskStatus?.autoRatingStatus === false) {
       const $score_timestamp = localStorage.getItem('$score_timestamp')
       const default_timestamp = Date.now() + 3 * 24 * 60 * 60 * 1000
@@ -438,6 +479,9 @@ export function useSubscribe() {
       countdown = enhanceCountdown(Number($score_timestamp || default_timestamp), () => { }, {
         onEnd: () => {
           localStorage.removeItem('$score_timestamp')
+          // 倒计时结束时若仍在活动期，跳过本次自动弹出
+          if (useCampaignStore().seasonalActivity.active)
+            return
           showModal({
             showHeader: false,
             modal: true,

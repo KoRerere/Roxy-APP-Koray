@@ -49,8 +49,9 @@ const blockedTooltipOptions = computed(() => ({
 const directExportBlocked = computed(() => isDirectExportBlocked(data))
 
 onMounted(async () => {
-  if (directExportBlocked.value)
+  if (directExportBlocked.value) {
     return
+  }
 
   if (!isBuyProxy(data)) {
     await genQrCode()
@@ -60,20 +61,23 @@ onMounted(async () => {
   kycBlocked.value = null
   const unlocked = await fetchWorkspaceKycUnlockedCached()
   kycBlocked.value = !unlocked
-  if (unlocked)
+  if (unlocked) {
     await genQrCode()
+  }
 })
 
 async function genQrCode() {
   const { protocol } = data
 
-  if (directExportBlocked.value || !protocol)
+  if (directExportBlocked.value || !protocol) {
     return
+  }
 
   const { host, port, username, password } = await resolveProxyDownloadRow(data)
 
-  if (!host || !port || !username || !password)
+  if (!host || !port || !username || !password) {
     return
+  }
 
   const protocols = protocol.split('/').map((item: string) => item.toLocaleLowerCase())
   const ports = port.toString().split('/')
@@ -88,8 +92,9 @@ async function genQrCode() {
 }
 
 function onBlockedClick() {
-  if (!canGoVerify.value)
+  if (!canGoVerify.value) {
     return
+  }
 
   openProxyKycVerification()
 }
@@ -124,7 +129,7 @@ function onPanelGoVerify() {
       <SvgIcon name="base/rx_ic_qrcode" color="var(--colors-icon-icon-inactive)" />
     </div>
     <div v-else-if="qrcode" class="flex flex-col items-center gap-3 ">
-      <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" size="xxs" option-label="name" option-value="value" data-key="value" />
+      <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" option-label="name" option-value="value" data-key="value" />
       <div class=" py-4.5 rounded-1">
         <img class="block w-36 aspect-square" :src="qrcode">
       </div>
@@ -177,7 +182,7 @@ function onPanelGoVerify() {
       </template>
       <template #content>
         <div class="flex flex-col items-center gap-3">
-          <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" size="xxs" option-label="name" option-value="value" data-key="value" />
+          <RxSelectButton v-if="qrcodeList && qrcodeList.length > 1" v-model="qrcode" :options="qrcodeList" option-label="name" option-value="value" data-key="value" />
           <div class="py-4.5 rounded-1">
             <img class="block w-36 aspect-square" :src="qrcode">
           </div>

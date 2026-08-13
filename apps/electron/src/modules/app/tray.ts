@@ -255,30 +255,44 @@ function createContextMenu() {
 
         await forceSaveConfig()
 
-        if (!isWindows) {
-          // 先判断是否有可用更新, 再分支:
-        //   有更新 -> 走 autoUpdater.quitAndInstall(), 由 autoUpdater 在合适的时机驱动 quit
-        //   无更新 -> 走纯重启路径 app.relaunch() + app.quit(), 不再依赖 setTimeout race
-        // macOS 上原先的 `quitAndInstall + setTimeout(1000) + app.relaunch+app.quit`:
-        //   - quitAndInstall 是异步的, 可能在 1s 内还没真正接管退出
-        //   - autoUpdater 在没有可下载更新时会 reject/no-op, 一旦走到兜底分支,
-        //     SIGKILL 杀死 relaunch 中介子进程会导致 macOS 上重启彻底失效
-          let hasUpdate = false
+        // 重启时是否走安装:
+        // - Windows: 托盘重启默认带 skipPendingUpdate，会跳过冷启动安装；forceUpgrade 时必须当场 upgradeNow，
+        //   若本会话尚未 hydrate 已下载包，则不带 skip 重启，交给下次冷启动安装
+        // - 非 Windows: 有可用更新则 quitAndInstall（含 forceUpgrade / 普通自动更新）
+        let shouldUpgradeOnRestart = false
+        if (isWindows) {
+          if (appUpdater.isForceUpgradePending()) {
+            if (appUpdater.getUpdateMessageData().status === 'downloaded') {
+              shouldUpgradeOnRestart = true
+            }
+            else {
+              console.log('[tray] forceUpgrade pending without hydrated package, relaunch without skip')
+              relaunchApp({ skipPendingUpdate: false })
+              return
+            }
+          }
+        }
+        else {
+          // macOS 上原先的 `quitAndInstall + setTimeout(1000) + app.relaunch+app.quit`:
+          //   - quitAndInstall 是异步的, 可能在 1s 内还没真正接管退出
+          //   - autoUpdater 在没有可下载更新时会 reject/no-op, 一旦走到兜底分支,
+          //     SIGKILL 杀死 relaunch 中介子进程会导致 macOS 上重启彻底失效
           try {
-            hasUpdate = await appUpdater.hasUpdate()
+            shouldUpgradeOnRestart = await appUpdater.hasUpdate()
           }
           catch (error) {
             console.error('[tray] hasUpdate check failed, fallback to plain relaunch:', error)
           }
+        }
 
-          if (hasUpdate) {
-            console.log('[tray] restart with update, calling upgradeNow')
-            appUpdater.upgradeNow().catch((error) => {
-              console.error('[tray] upgradeNow failed, fallback to plain relaunch:', error)
-              relaunchApp({ skipPendingUpdate: true })
-            })
-            return
-          }
+        if (shouldUpgradeOnRestart) {
+          console.log('[tray] restart with update, calling upgradeNow')
+          appUpdater.upgradeNow().catch((error) => {
+            console.error('[tray] upgradeNow failed, fallback to relaunch:', error)
+            // Windows 强制升级失败时不带 skip，让下次冷启动仍能装上
+            relaunchApp({ skipPendingUpdate: isWindows ? !appUpdater.isForceUpgradePending() : true })
+          })
+          return
         }
 
         console.log('[tray] restart without update, calling relaunch + quit')
@@ -304,9 +318,8 @@ function createContextMenu() {
     {
       label: $t('退出'),
       click: () => {
-        // 不在此处销毁窗口/托盘: 先交给 before-quit 同步窗口数据并显示同步进度遮罩,
-        // 同步完成后再由 cleanupAndExit 统一清理窗口/托盘并退出.
-        app.quit()
+        // 不在此处销毁窗口/托盘: forceUpgrade 时走 upgradeNow，否则交给 before-quit 同步后退出
+        appUpdater.quitApp()
       },
     },
   ])

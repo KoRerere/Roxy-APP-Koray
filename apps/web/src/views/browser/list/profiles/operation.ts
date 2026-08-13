@@ -275,7 +275,6 @@ export function getOperation(row: any = {}) {
       label: $t('转移窗口'),
       icon: 'base/rx_ic_transfer',
       tooltip: $t('转移窗口'),
-      quick: true,
       multiple: true,
       multipleProps: {
         name: 'G3',
@@ -376,8 +375,18 @@ export function getOperation(row: any = {}) {
       label: $t('代理 IP 操作'),
       icon: 'base/rx_ic_internet',
       multiple: true,
-      power: check(['Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy'], 'any'),
+      power: check(['Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Cost_Center_all'], 'any'),
       items: [
+        {
+          name: 'buyProxy',
+          label: $t('购买代理 IP'),
+          icon: 'base/rx_ic_cart',
+          power: check('Cost_Center_all'),
+        },
+        {
+          separator: true,
+          power: check('Cost_Center_all'),
+        },
         {
           name: 'addProxy',
           label: $t('添加代理 IP'),
@@ -430,7 +439,7 @@ export function getOperation(row: any = {}) {
       ],
     },
     {
-      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Profiles_add_platform_outside', 'Profiles_select_platform'], 'any'),
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_add_proxy_outside', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Profiles_add_platform_outside', 'Profiles_select_platform', 'Cost_Center_all'], 'any'),
       separator: true,
       multiple: true,
     },
@@ -449,7 +458,13 @@ export function getOperation(row: any = {}) {
       multiple: true,
     },
     {
-      power: check(['Profiles_edit_remark', 'Profiles_select_label'], 'any'),
+      name: 'fav',
+      label: row.isOften ? $t('取消收藏') : $t('收藏'),
+      icon: row.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark',
+      iconClass: row.isOften ? 'text-orange' : '',
+      tooltip: row.isOften ? $t('取消收藏') : $t('收藏'),
+    },
+    {
       separator: true,
       multiple: true,
     },

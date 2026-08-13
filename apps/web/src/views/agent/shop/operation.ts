@@ -1,4 +1,5 @@
 import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
+import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
 import { canShowProxyQrcode, isDirectExportBlocked } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
@@ -27,6 +28,7 @@ function getRowState(datas: ProxyItem[]) {
   let isDone = true
   let isResource = true
   let isGift = false
+  let canTest = true
   let canRenew = true
   let canRefresh = true
   let isDirect = false
@@ -49,6 +51,9 @@ function getRowState(datas: ProxyItem[]) {
 
     if (!item.proxyProviderId && !item.renewalTime && item.proxyType === ProxyType.buy)
       isGift = true
+
+    if (!isProxySpeedTestable(item))
+      canTest = false
     if (!item.canRenew)
       canRenew = false
     if (!item.refreshUrl)
@@ -70,6 +75,7 @@ function getRowState(datas: ProxyItem[]) {
     isDone,
     isResource,
     isGift,
+    canTest,
     canRenew,
     canRefresh,
     isDirect,
@@ -88,6 +94,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     isDone,
     isResource,
     isGift,
+    canTest,
     canRenew,
     canRefresh,
     isDirect,
@@ -96,6 +103,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
   } = getRowState(rows)
 
   const canShowQrcode = canShowProxyQrcode(rowData)
+  // 与「测试全部」筛选口径一致：导入过期仍可测，不能仅凭 hasExpired 禁用
 
   return [
     {
@@ -111,7 +119,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       label: $t('测试代理 IP'),
       icon: 'base/rx_ic_speed_test',
       tooltip: $t('测试代理 IP'),
-      disabled: hasExpired || hasPending || hasRefunded,
+      disabled: !canTest,
       power: check('Proxy_List_speed_test'),
       quick: true,
       multiple: true,
@@ -126,7 +134,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_refresh',
       power: check('Proxy_List_refresh_proxy'),
       tooltip: $t('刷新代理 IP'),
-      disabled: isDirect || !canRefresh,
+      disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect || !canRefresh,
       disabledTooltip: !canRefresh ? $t('未配置刷新URL') : undefined,
     },
     {

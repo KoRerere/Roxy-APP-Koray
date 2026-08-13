@@ -17,9 +17,9 @@ export const roxyGeoRoute: RouteRecordRaw = {
     title: $t('跨境营销'),
     icon: 'websites/rx_accounts_tiktok',
     type: 'button',
+    // locales: ['zh'],
     external: true,
     showFireBadge: true,
-    workspaceTypes: [WorkspaceType.Private, WorkspaceType.ECommerce],
     onClick: async () => {
       const userStore = await import('/@/stores/user').then(m => m.useUserStore())
       const simpleLocale = await import('/@/stores/locale').then(m => m.useSimpleLocale())
@@ -133,17 +133,18 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
         },
         component: () => import('/@/views/team'),
       },
-      {
-        name: 'wallet',
-        path: 'wallet',
-        meta: {
-          title: $t('费用中心'),
-          icon: 'base/rx_ic_wallet',
-          permissions: ['Cost_Center_all'],
-        },
-        component: () => import('/@/views/pay/wallet'),
-      },
     ],
+  },
+  {
+    name: 'wallet',
+    path: 'wallet',
+    meta: {
+      title: $t('费用中心'),
+      icon: 'base/rx_ic_wallet',
+      hideInMenu: true,
+      permissions: ['Cost_Center_all'],
+    },
+    component: () => import('/@/views/pay/wallet'),
   },
   {
     name: 'subscribe-plan',
@@ -172,12 +173,38 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     path: 'tutorial',
     meta: {
       title: $t('新手教程'),
-      icon: 'base/rx_ic_wallet',
+      icon: 'base/rx_ic_books',
       hideInMenu: true,
     },
     component: () => import('/@/views/tutorial'),
   },
+  {
+    name: 'referral-program',
+    path: 'referral-program',
+    meta: {
+      title: $t('推广计划'),
+      icon: 'base/rx_ic_coins_hand',
+      hideInMenu: true,
+    },
+    component: () => import('/@/views/referral-program/index.vue'),
+  },
+  {
+    path: 'roxy-lab',
+    name: 'roxy-lab',
+    meta: {
+      title: 'Roxy Lab',
+      icon: 'base/rx_ic_keys',
+      hideInMenu: true,
+    },
+    component: () => import('/@/views/lab'),
+  },
 ]
+
+/**
+ * 侧栏底部入口（顺序即展示顺序）。
+ * 路由仍用 hideInMenu 从侧栏树排除；footer 按此名单取 title/icon/permissions，避免与路由表双份维护。
+ */
+export const footerMenuRouteNames = ['tutorial', 'wallet', 'referral-program'] as const
 
 async function handleSyncControlClick(event: Event) {
   const { mixpanelTrack } = useUserStore()

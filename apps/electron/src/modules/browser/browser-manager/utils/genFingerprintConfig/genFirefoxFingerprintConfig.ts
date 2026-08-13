@@ -7,7 +7,7 @@ import { store } from '/@/modules/store'
 import { isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxyAddress } from '/@/utils'
 import { ensureFirefoxIcon, fitBadgeText } from './browserIcon'
-import { getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
+import { genAutofillWebSiteMult, getCityCode, getEcommerceDirectWhiteList, toNumber } from './util'
 
 /** 生成 Firefox 浏览器指纹配置（结构按 docs/firefox指纹参数使用说明.md） */
 export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}, userDataDir: string) {
@@ -207,11 +207,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       return domainList?.length ? domainList : store.blockDomainList?.filter?.(Boolean) || []
     },
     blockDomainPageFile: join(appConfig.buildInWebDir, 'blockDomain.html'),
-    autofillWebSiteMult: winInfo.windowPlatformList.map(item => ({
-      url: item.platformUrl,
-      username: item.platformUserName,
-      password: item.platformPassword,
-    })),
+    autofillWebSiteMult: genAutofillWebSiteMult(winInfo.windowPlatformList),
     disablePlaySound: !winInfo.forbidAudio,
     disablePasswordSaveTips: !winInfo.forbidSavePassword,
     get allowFontList() {

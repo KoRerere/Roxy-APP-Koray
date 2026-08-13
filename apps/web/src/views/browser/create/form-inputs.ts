@@ -4,12 +4,13 @@ import { API } from '/@/api'
 import { CoreType, UaStrictMode, WorkspaceType } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
-import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, supportsApp3_8_8, validateCookieInput } from '/@/utils'
+import { filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, parseCookies, safeParseJSON, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, stringifyCookies, supportsApp3_8_8, validateCookieInput } from '/@/utils'
 import { z } from 'zod'
 import { AccountBindType } from '/@/enums/account'
 import { createProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { buildUiProxyInfoList, formatProxyInfoListValue, resolveFlatProxyFields } from './components/proxy-info/proxy-params'
 
 function getCookiePlatformUrls(inputs: any[]) {
   const platformList = findInputByName(inputs, 'windowPlatformList')?.value ?? []
@@ -62,7 +63,20 @@ const defaultFingerOptions = {
 }
 
 export async function ceateRandomFinger(inupts: any, options?: { count?: number, preview?: boolean }) {
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion, coreType } = getFormDataByList(inupts)
+  const {
+    fontType,
+    canvas,
+    webGL,
+    audioContext,
+    speechVoices,
+    clientRects,
+    macInfo,
+    os,
+    osVersion,
+    coreVersion,
+    coreType,
+    webGLInfo,
+  } = getFormDataByList(inupts)
   const { count, preview } = { ...defaultFingerOptions, ...options }
   const fingerDetail = await globalThis.electronAPI.send('util:genRandomFingerprint', {
     fontType,
@@ -82,7 +96,13 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
 
   if (preview) {
     const { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName } = fingerDetail[0]
-    setInputValueByFormData(inupts, { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName })// 批量创建时用于界面显示
+    // webGLInfo === 2 为自定义：保留表单已有厂商/渲染，避免初始化刷指纹冲掉回填
+    const previewPatch: Record<string, any> = { userAgent, macAddr, deviceName }
+    if (webGLInfo !== 2) {
+      previewPatch.webGLManufacturer = webGLManufacturer
+      previewPatch.webGLRender = webGLRender
+    }
+    setInputValueByFormData(inupts, previewPatch)// 批量创建时用于界面显示
   }
 
   const ua = findInputByName(inupts[0], 'userAgent')
@@ -155,12 +175,22 @@ function isUseLatestCoreOption(option?: { value?: string }) {
   return option?.value === USE_LATEST_CORE_VALUE
 }
 
-/** 在真实内核版本列表前插入「保持最新」虚拟选项 */
-function withUseLatestCoreOption(options: any[]) {
+/** 在真实内核版本列表前插入「保持最新」虚拟选项；有 tooltip 时同步挂到真实列表第一项（最新版本） */
+function withUseLatestCoreOption(options: any[], tooltip?: string) {
   if (options.some(isUseLatestCoreOption)) {
     return options
   }
-  return [{ label: $t('保持最新'), value: USE_LATEST_CORE_VALUE }, ...options]
+  const versionOptions = tooltip && options[0]
+    ? [{ ...options[0], tooltip }, ...options.slice(1)]
+    : options
+  return [
+    {
+      label: $t('保持最新'),
+      value: USE_LATEST_CORE_VALUE,
+      ...(tooltip ? { tooltip } : {}),
+    },
+    ...versionOptions,
+  ]
 }
 
 /** 从 options 中取第一个真实内核版本号（字典已按版本降序，即最新版） */
@@ -204,7 +234,7 @@ function getInitialCoreVersionValue(options: any[], data: any) {
 }
 
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }, gate?: Pick<FormAsyncGate, 'run'>) {
-  const run = gate?.run ?? (<T>(task: () => Promise<T>) => task())
+  const run = gate?.run ?? (<T> (task: () => Promise<T>) => task())
 
   const isEcommerce = useWorkspaceStore().currentWorkspace?.workspaceType === WorkspaceType.ECommerce
   const profileLabels = createProfileEntityLabels(isEcommerce)
@@ -244,7 +274,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     const filtered = os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0) ?? '')
       ? chromeVersions.filter((item: any) => item.value === '109') // win7，win8 只有 109 内核版本
       : chromeVersions
-    return withUseLatestCoreOption(filtered)
+    // 第一项「保持最新」展示产品同步进度；版本号取字典最新版（非本机/系统过滤后的版本）
+    const latestVersion = $dict_map.coreVersion?.[0]?.value
+    const latestTooltip = latestVersion
+      ? $t('Roxy内核已同步至 Chrome {version}，始终与谷歌官方保持一致，安全性领先同行。', { version: latestVersion })
+      : undefined
+    return withUseLatestCoreOption(filtered, latestTooltip)
   }
 
   const osOptions = $dict_map.os!.map(({ label, ...item }: any) => {
@@ -280,7 +315,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     },
   ]
   const initialCoreVersionOptions = getCoreVersionOptionsByType(initialCoreType, osValue?.value, osVersionValue?.value)
-  // TODO:(anbin)
   const searchEngineOptions = searchEngine.code === 0
     ? (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon }))
     : []
@@ -294,18 +328,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
   /**
-   * 代理加密相关字段
+   * 代理：单窗事实源是扁平字段；proxyInfoList 仅 UI 容器（由扁平组装，长度 ≤ 1）。
+   * 旧快速创建模板若只有 list，resolve 时补齐扁平后再组装，避免双源回填。
    */
   const encryptProxyKeys = ['isEncryptProxy', 'proxyEncryptInfo']
-  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
-  const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
-    ? [{
-        id: data.moduleId,
-        proxyCategory: data.proxyCategory,
-        checkChannel: data.checkChannel,
-        ...Object.fromEntries([...encryptProxyKeys, ...proxyInfoKeys].map(key => [key, data[key]])),
-      }]
-    : []
+  const flatProxy = resolveFlatProxyFields(data)
+  const proxyInfoList = buildUiProxyInfoList(data)
 
   const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(osValue?.value, $dict_map)
   const resolutionValue = resolutionOptions!.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
@@ -319,7 +347,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     ...getDefaultValue(),
     // 补充 searchEngine 默认值，保证 Firefox 下隐藏该字段时仍能提交（data 有值时会被下方 spread 覆盖）
     searchEngine: searchEngineValue,
-    ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))), // 过滤掉加密字段
+    // 不把 proxyInfoList 带进 original，避免单窗/模板经 ...original 再次双源
+    ...Object.fromEntries(
+      Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key) && key !== 'proxyInfoList'),
+    ),
+    ...flatProxy,
   })
 
   let highLevelInputs: any[] = []
@@ -364,12 +396,15 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
               osVersionInput.change?.(osVersionInput)
 
               const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(item.value.value, $dict_map)
-              const resolutionInput = findInputByName(highLevelInputs, 'resolution')
+              const [resolutionInput, deviceNameInput] = filterInputsByNames(highLevelInputs, ['resolution', 'deviceName'])
+
               if (resolutionInput._isMobile !== isMobile) {
                 resolutionInput._isMobile = isMobile
                 resolutionInput.value = defaultValue
                 resolutionInput.options = resolutionOptions
               }
+
+              deviceNameInput?.iconClick()
 
               const moblieVisible = ['Android', 'IOS'].includes(item.value.value) && coreType !== CoreType.Firefox
               switchMoblieInputVisible(highLevelInputs, moblieVisible)
@@ -582,18 +617,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
       label: proxyLabels.entity,
       name: 'proxyInfoList',
       value: proxyInfoList,
-      formatValue: (input: any, _inputs: any, formData: any) => {
-        const { id, lastCity, lastCountry, lastIp, ...value } = input.value[0] || {
-          ...createDefaultObject(proxyInfoKeys, ''),
-          moduleId: 0, // 删除代理库关联 id
-          proxyCategory: 'noproxy', // 删除代理时要手动标记直连
-        }
-
-        const proxyData = id ? { moduleId: id, proxyMethod: 'choose' } : { ...value, proxyMethod: 'custom' }
-        Object.assign(formData, { lastCity, lastCountry, lastIp, ...proxyData })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
-
-        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
-      },
+      formatValue: (input: any, _inputs: any, formData: any) => formatProxyInfoListValue(input, formData),
       slot: 'proxy',
     },
     {
@@ -1234,7 +1258,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
       name: 'deviceName',
       value: data.deviceName,
       icon: 'base/rx_ic_shuffle',
-      disabled: true,
       // Firefox 不支持设备名称指纹；Chrome 下受父控件 deviceNameSwitch 约束
       visible: !isFirefox && initInputVisible(data.deviceNameSwitch, true, true),
       iconClick: () => {

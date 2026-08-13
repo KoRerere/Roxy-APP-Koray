@@ -10,6 +10,506 @@
  * ---------------------------------------------------------------
  */
 
+export type BatchResponse = SimpleResponse & {
+  /** 批量操作结果明细 */
+  data?: {
+    /** 成功数量 */
+    successCount?: number;
+    /** 失败数量 */
+    failCount?: number;
+    /** 成功项明细 */
+    successDetails?: {
+      /** 本地 ID */
+      id?: string;
+      msg?: string;
+    }[];
+    /** 失败项明细 */
+    failDetails?: {
+      /** 本地 ID */
+      id?: string;
+      /** 错误码 */
+      code?: number;
+      /** 错误信息 */
+      msg?: string;
+    }[];
+  };
+};
+
+export type MemberResponse = SimpleResponse & {
+  data?: Member;
+};
+
+export type MemberListResponse = SimpleResponse & {
+  data?: Member[];
+};
+
+export interface Member {
+  /**
+   * 本地成员 ID
+   * @format int64
+   */
+  id?: number;
+  /**
+   * 用户 ID
+   * @format int64
+   */
+  userId?: number;
+  nickname?: string;
+  account?: string;
+  role?: MemberRoleEnum;
+  status?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export type TeamInfoResponse = SimpleResponse & {
+  data?: {
+    /** @format int64 */
+    id?: number;
+    workspaceId?: string;
+    name?: string;
+    email?: string;
+    status?: number;
+    createdAt?: number;
+    updatedAt?: number;
+  };
+};
+
+export type NetConfigResponse = SimpleResponse & {
+  data?: {
+    blackList?: string[];
+    whiteList?: string[];
+  };
+};
+
+export type ShellResponse = SimpleResponse & {
+  data?: {
+    output?: string;
+    exitCode?: number;
+  };
+};
+
+export type ADBResponse = SimpleResponse & {
+  data?: {
+    id?: string;
+    /** 0-关闭 1-开启 */
+    adbStatus?: number;
+    adbPort?: number;
+  }[];
+};
+
+export type GPSResponse = SimpleResponse & {
+  data?: {
+    id?: string;
+    /** @format double */
+    longitude?: number;
+    /** @format double */
+    latitude?: number;
+  }[];
+};
+
+export type ClonePhonesResponse = SimpleResponse & {
+  data?: {
+    successDetails?: {
+      id?: string;
+      serialName?: string;
+      msg?: string;
+    }[];
+  };
+};
+
+export type StatusPhonesResponse = SimpleResponse & {
+  data?: {
+    id?: string;
+    /** 0-运行 1-启动中 2-关机 3-过期 */
+    status?: number;
+  }[];
+};
+
+export type StartPhonesResponse = SimpleResponse & {
+  data?: {
+    totalAmount?: number;
+    successAmount?: number;
+    failAmount?: number;
+    failDetails?: {
+      code?: number;
+      id?: string;
+      msg?: string;
+    }[];
+    successDetails?: {
+      /** 上游环境 ID */
+      id?: string;
+      /** 本地白标 ID */
+      phoneId?: number;
+      /** 播放地址（已改写为本服务白标 URL） */
+      url?: string;
+      msg?: string;
+    }[];
+  };
+};
+
+export type CreatePhonesResponse = SimpleResponse & {
+  data?: {
+    successDetails?: {
+      /** 本地白标 ID */
+      id?: string;
+      /** 上游环境 ID */
+      geelarkEnvId?: string;
+      serialName?: string;
+      msg?: string;
+    }[];
+  };
+};
+
+export type DetailPhonesResponse = SimpleResponse & {
+  data?: Phone[];
+};
+
+export type ListPhonesResponse = SimpleResponse & {
+  data?: {
+    items?: Phone[];
+    page?: number;
+    pageSize?: number;
+    total?: number;
+  };
+};
+
+export type TaskResultResponse = SimpleResponse & {
+  data?: {
+    taskId?: string;
+    /** 0-进行中 1-成功 2-失败 */
+    status?: number;
+    /** 结果详情 */
+    result?: string;
+    /** 结果文件下载链接 */
+    url?: string;
+  };
+};
+
+export type TaskResponse = SimpleResponse & {
+  data?: {
+    /** 异步任务 ID */
+    taskId?: string;
+  };
+};
+
+export interface SimpleResponse {
+  success?: boolean;
+  code?: number;
+  msg?: string;
+  traceId?: string;
+  detail?: string;
+  error?: string;
+  isPartial?: boolean;
+}
+
+export interface Proxy {
+  /** 代理类型 socks5/http/https */
+  type?: string;
+  /** 代理服务器地址 */
+  server?: string;
+  /** 端口 */
+  port?: number;
+  /** 用户名 */
+  username?: string;
+  /** 密码 */
+  password?: string;
+}
+
+/** 设备信息 */
+export interface EquipmentInfo {
+  /** 蓝牙 MAC */
+  bluetoothMac?: string;
+  /** IMEI */
+  imei?: string;
+  /** WiFi MAC */
+  mac?: string;
+  /** 手机号 */
+  phoneNumber?: string;
+  /** 设备品牌 */
+  deviceBrand?: string;
+  /** 设备型号 */
+  deviceModel?: string;
+  /** 设备名称 */
+  deviceName?: string;
+  /** Android 版本 */
+  osVersion?: string;
+  /** 网络类型 0-WiFi 1-移动网络 */
+  netType?: number;
+  /** 国家 */
+  countryName?: string;
+  /** 语言 */
+  language?: string;
+  /** 时区 */
+  timeZone?: string;
+  city?: string;
+  province?: string;
+  /** WiFi BSSID */
+  wifiBssid?: string;
+  /** 是否启用 SIM 卡 1=启用 */
+  enableSim?: number;
+}
+
+export interface Tag {
+  /** 标签 ID */
+  id?: string;
+  /** 标签名称 */
+  name?: string;
+  /** 标签颜色 */
+  color?: string;
+  /** 标签备注 */
+  remark?: string;
+}
+
+export interface Group {
+  /** 分组 ID */
+  id?: string;
+  /** 分组名称 */
+  name?: string;
+  /** 分组备注 */
+  remark?: string;
+}
+
+/** 云手机对象 */
+export interface Phone {
+  /** 本地白标 ID */
+  id?: string;
+  /** 上游序号 */
+  serialNo?: string;
+  /** 上游名称 */
+  serialName?: string;
+  /** 本地备注名（自定义） */
+  name?: string;
+  /** 本地自定义编号 */
+  custno?: string;
+  group?: Group;
+  /** 本地分组 ID */
+  groupId?: number;
+  remark?: string;
+  /** 0-运行 1-启动中 2-关机 3-过期 */
+  status?: number;
+  /** 0-按量 1-包月 */
+  chargeMode?: number;
+  /** 创建时间（秒级时间戳） */
+  createTime?: number;
+  /** 创建时间（毫秒级） */
+  createTimeMs?: number;
+  /** 是否绑定包月 */
+  hasBind?: boolean;
+  /** 包月过期时间 */
+  monthlyExpire?: number;
+  /** RPA 是否运行：1=运行，0=不运行 */
+  rpaStatus?: number;
+  /** 设备信息 */
+  equipmentInfo?: EquipmentInfo;
+  proxy?: Proxy;
+  tags?: Tag[];
+  /** 是否在回收站 */
+  deleted?: boolean;
+  /** 操作系统版本 */
+  osVersion?: string;
+  /** 区域 */
+  region?: string;
+  /** 国家 */
+  country?: string;
+}
+
+export interface MemberAddRequest {
+  /** 成员账号 */
+  account: string;
+  nickname?: string;
+  /** @default "member" */
+  role?: MemberAddRequestRoleEnum;
+}
+
+export interface UploadFileRequest {
+  id: string;
+  /** 文件可下载 URL */
+  fileUrl: string;
+}
+
+export interface HideAccessibilityRequest {
+  ids: string[];
+  pkgName: string[];
+}
+
+export interface Contact {
+  email1?: string;
+  email2?: string;
+  fax?: string;
+  firstName?: string;
+  lastName?: string;
+  mobile?: string;
+  work?: string;
+}
+
+export interface ImportContactsRequest {
+  id: string;
+  contacts: Contact[];
+}
+
+export interface TransferPhoneRequest {
+  /** 目标账号 */
+  account: string;
+  ids: string[];
+  transferOption?: {
+    name?: boolean;
+    proxy?: boolean;
+    tag?: boolean;
+    remark?: boolean;
+    files?: boolean;
+  };
+}
+
+export interface NetConfigSetRequest {
+  blackList: string[];
+}
+
+export interface NetSetRequest {
+  id: string;
+  /** 0-Wi-Fi 1-移动网络 */
+  netType: number;
+}
+
+export interface MoveGroupRequest {
+  envIds: string[];
+  groupId: string;
+}
+
+export interface ShellRequest {
+  id: string;
+  cmd: string;
+}
+
+export interface ADBSetRequest {
+  ids: string[];
+  open: boolean;
+}
+
+export interface RootSetRequest {
+  ids: string[];
+  open: boolean;
+}
+
+export interface GPSSetRequest {
+  list: {
+    id: string;
+    /** @format double */
+    longitude: number;
+    /** @format double */
+    latitude: number;
+  }[];
+}
+
+export interface TaskIDRequest {
+  taskId: string;
+}
+
+export interface ScreenshotRequest {
+  id: string;
+}
+
+export interface NewOneRequest {
+  /** 本地 ID */
+  id: string;
+  changeBrandModel?: boolean;
+  keepNetType?: boolean;
+  keepPhoneNumber?: boolean;
+  keepRegion?: boolean;
+  keepLanguage?: boolean;
+  mobileType?: string;
+}
+
+export interface ClonePhoneRequest {
+  /** 本地 ID */
+  envId: string;
+  /** 克隆数量 */
+  amount: number;
+  groupId?: string;
+  cloneName?: boolean;
+  cloneRemark?: boolean;
+  cloneTag?: boolean;
+  cloneProxy?: boolean;
+  cloneNetType?: boolean;
+}
+
+export interface UpdatePhoneRequest {
+  /** 本地 ID */
+  id: string;
+  name?: string;
+  remark?: string;
+  /** 分组 ID */
+  groupID?: string;
+  tagIDs?: string[];
+  proxyConfig?: string;
+  proxyQueryChannel?: number;
+  proxyId?: string;
+  chargeMode?: number;
+  phoneNumber?: string;
+}
+
+export interface IDsRequest {
+  /** 本地白标 ID 列表 */
+  ids: string[];
+}
+
+export interface EnvRowRequest {
+  /** 环境名称（必填） */
+  profileName: string;
+  /** 代理信息（host:port:user:pass） */
+  proxyInformation?: string;
+  /** 代理更新 URL */
+  refreshUrl?: string;
+  proxyQueryChannel?: number;
+  proxyNumber?: number;
+  dynamicProxy?: string;
+  dynamicProxyLocation?: string;
+  mobileRegion?: string;
+  mobileProvince?: string;
+  mobileCity?: string;
+  mobileLanguage?: string;
+  /** 分组名称 */
+  profileGroup?: string;
+  profileTags?: string[];
+  profileNote?: string;
+  surfaceBrandName?: string;
+  surfaceModelName?: string;
+  isTeamBrand?: boolean;
+  /** 0-Wi-Fi 1-移动网络 */
+  netType?: number;
+  phoneNumber?: string;
+  phoneName?: string;
+}
+
+export interface CreatePhonesRequest {
+  /** 机型标识（上游机型） */
+  mobileType: string;
+  /** 0-按量 1-包月 */
+  chargeMode?: number;
+  /** 机房区域 */
+  region?: string;
+  data: EnvRowRequest[];
+}
+
+export interface ListPhonesRequest {
+  /** @default 1 */
+  page?: number;
+  /** @default 10 */
+  pageSize?: number;
+  /** 本地 ID 列表 */
+  ids?: string[];
+  /** 按名称精确查询 */
+  serialName?: string;
+  remark?: string;
+  groupName?: string;
+  tags?: string[];
+  /** 0-按量 1-包月 */
+  chargeMode?: number;
+  openStatus?: number;
+  proxyIds?: string[];
+  serialNos?: string[];
+}
+
 export type UserAllRatingsResponse = BaseResponse & {
   data?: UserRatingRecord[];
 };
@@ -210,10 +710,31 @@ export interface KycPersonalSubmitRequest {
 }
 
 export interface ApiResponse {
-  /** 业务码，0 表示成功 */
-  code: number;
-  msg: string;
-  data?: string;
+  success?: boolean;
+  code?: number;
+  msg?: string;
+  /** 链路追踪 ID */
+  traceId?: string;
+  detail?: string;
+  /** 错误详情（失败时） */
+  error?: string;
+  /** 批量操作部分成功 */
+  isPartial?: boolean;
+  /** 业务数据（透传上游结构） */
+  data?: object;
+}
+
+export enum MemberRoleEnum {
+  Owner = "owner",
+  Admin = "admin",
+  Member = "member",
+}
+
+/** @default "member" */
+export enum MemberAddRequestRoleEnum {
+  Owner = "owner",
+  Admin = "admin",
+  Member = "member",
 }
 
 /** 0未认证 1审核中 2已通过 3已拒绝 */
@@ -2431,6 +2952,8 @@ export interface GetAppUpgradeCreateData {
      * 下载地址
      */
     downloadUrl: string;
+    /** 判断是否强制，true强制，false不强制 */
+    forceUpgrade: boolean;
     /**
      * 版本号，我们自己定义的版本号，用来和客户端的比对
      * 版本号，我们自己定义的版本号，用来和客户端的比对
@@ -2758,6 +3281,19 @@ export interface UserGetAnntListListData {
     }[];
   };
   msg: string;
+}
+
+export interface UserGetNotifyListParams {
+  /**
+   * 默认1
+   * @example "1"
+   */
+  page_index?: string;
+  /**
+   * 默认15
+   * @example "15"
+   */
+  page_size?: string;
 }
 
 export interface UserGetNotifyListData {
@@ -4248,6 +4784,62 @@ export interface GetCoreDownloadUrlsCreateData {
   msg: string;
 }
 
+export interface UserGetAppFeatureTipsCreatePayload {
+  /** 操作系统,如 "win32", "darwin"，"linux",str，必传 */
+  os: string;
+  /** cpu架构,darwin专用：interl/apple，str，darwin时必传 */
+  osBit: string;
+  /** 操作系统位数,win32/linux专用，32或64，str，win32/linux时必传 */
+  cpu: string;
+}
+
+export interface UserGetAppFeatureTipsCreateData {
+  code: number;
+  data: {
+    newFeatureTips?: {
+      "zh-CN": {
+        content?: string;
+        id?: number;
+      }[];
+      en: {
+        content?: string;
+        id?: number;
+      }[];
+      ru: {
+        content?: string;
+        id?: number;
+      }[];
+    };
+    version: null;
+  };
+  msg: string;
+}
+
+export type UserGetMessageTipsCreatePayload = object;
+
+export interface UserGetMessageTipsCreateData {
+  code: number;
+  data: {
+    /** 数据格式同原newFeatureTips */
+    messageTips?: {
+      "zh-CN": {
+        content?: string;
+        id?: number;
+      }[];
+      en: {
+        content?: string;
+        id?: number;
+      }[];
+      ru: {
+        content?: string;
+        id?: number;
+      }[];
+    };
+    version: null;
+  };
+  msg: string;
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -4387,7 +4979,11 @@ export interface UserGetWindowInfoListListData {
       windowRemark?: string;
       isOften?: boolean;
       openStatus?: boolean;
-      statusInfo?: string[];
+      statusInfo?: {
+        openUserId?: number;
+        openUserName?: string;
+        openTime?: string;
+      }[];
       labelId?: number;
       labelColor?: string;
       labelName?: string;
@@ -5162,6 +5758,8 @@ export type UserMdfWindowSyncV2CreatePayload = {
   loginData?: string[];
   syncValue?: object;
   openStatus?: boolean;
+  /** 窗口打开时长，单位为秒 */
+  useDuration?: number;
 }[];
 
 export interface UserMdfWindowSyncV2CreateData {
@@ -6062,6 +6660,7 @@ export interface UserAddProxyTemplateCreatePayload {
   protocol: string;
   proxyCategory: string;
   checkChannel: string;
+  extInfo: object;
 }
 
 export interface UserAddProxyTemplateCreateData {
@@ -6084,31 +6683,23 @@ export interface UserGetProxyTemplateListData {
       checkChannel: string;
       createTime: string;
       updateTime: string;
+      extInfo: object;
     };
-    port: string;
-    proxyUserName: string;
-    proxyPassword: string;
-    ipType: string;
-    host: string;
-    protocol: string;
-    proxyCategory: string;
-    checkChannel: string;
-    createTime: string;
-    updateTime: string;
   };
   msg: string;
 }
 
 export interface UserMdfProxyTemplateCreatePayload {
   id: number;
-  port?: string;
-  proxyUserName?: string;
-  proxyPassword?: string;
-  ipType?: string;
-  host?: string;
-  protocol?: string;
-  proxyCategory?: string;
-  checkChannel?: string;
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  ipType: string;
+  host: string;
+  protocol: string;
+  proxyCategory: string;
+  checkChannel: string;
+  extInfo: object;
 }
 
 export interface UserMdfProxyTemplateCreateData {
@@ -7061,6 +7652,101 @@ export type UserGetWindowInfoDetailListError = {
   data?: string;
 };
 
+export interface UserGetQuickCreateTemplateListData {
+  code: number;
+  msg: string;
+  /** 无模板时为 null */
+  data: {
+    /**
+     * 模板ID
+     * @example 1
+     */
+    id: number;
+    /** 前端原样 JSON 对象（传什么存什么） */
+    templateInfo: {
+      /** 示例字段：代理主机 */
+      host?: string;
+      /** 示例字段：端口 */
+      port?: string;
+      /** 示例字段：协议 */
+      protocol?: string;
+      [key: string]: any;
+    };
+    /** 创建时间 */
+    createTime: string;
+    /** 更新时间 */
+    updateTime: string;
+  } | null;
+}
+
+/** 任意 JSON 对象，整包入库；下列为示例字段，可按需增删 */
+export interface UserAddQuickCreateTemplateCreatePayload {
+  /** 示例字段：代理主机 */
+  host?: string;
+  /** 示例字段：端口 */
+  port?: string;
+  /** 示例字段：协议 */
+  protocol?: string;
+  /** 示例字段：代理类型 */
+  proxyCategory?: string;
+  /** 示例字段：检测通道 */
+  checkChannel?: string;
+  /** 可继续扩展任意字段 */
+  anyKey?: Record<string, any>;
+  [key: string]: any;
+}
+
+export interface UserAddQuickCreateTemplateCreateData {
+  code: number;
+  msg: string;
+}
+
+/** id 外其余字段整包覆盖入库；下列为示例字段，可按需增删 */
+export interface UserMdfQuickCreateTemplateCreatePayload {
+  /**
+   * 模板 ID
+   * @example 1
+   */
+  id: number;
+  /** 示例字段：代理主机 */
+  host?: string;
+  /** 示例字段：端口 */
+  port?: string;
+  /** 示例字段：协议 */
+  protocol?: string;
+  /** 可继续扩展任意字段 */
+  foo?: boolean;
+  [key: string]: any;
+}
+
+export interface UserMdfQuickCreateTemplateCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDeleteQuickCreateTemplateCreatePayload {
+  /**
+   * 模板 ID
+   * @example 1
+   */
+  id: number;
+}
+
+export interface UserDeleteQuickCreateTemplateCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetWindowSortNumListData {
+  code: number;
+  /** 下次创建会用到的序号 */
+  data: {
+    /** 当前已分配的最大序号 */
+    windowSortNum: number;
+    maxWindowSort: number;
+  };
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -7869,6 +8555,7 @@ export interface UserGetProxyListMergedListData {
       workspaceId?: number;
       canBandwidthUpgrade?: boolean;
       proxyProviderId?: number;
+      businessUse?: string;
       orderNo?: string;
       orderStatus?: number;
       ipType?: string;
@@ -8456,6 +9143,74 @@ export interface UserAddProxyModuleV2CreateData {
     index?: number;
     msg?: string[];
   }[];
+  msg: string;
+}
+
+export interface UserGetRandomAvailableProxyMergedListData {
+  code: number;
+  data: {
+    id: number;
+    userId: number;
+    workspaceId: number;
+    proxyProviderId: number;
+    orderNo: string;
+    orderStatus: number;
+    ipType: string;
+    host: string;
+    protocol: string;
+    country: string;
+    lastIp: string;
+    port: string;
+    proxyUserName: string;
+    proxyPassword: string;
+    proxyCheckChannel: string;
+    remark: string;
+    lastCountry: string;
+    lastState: string;
+    lastCity: string;
+    checkStatus: number;
+    proxyExpireStatus: number;
+    checkTime: string;
+    renewalTime: null;
+    createTime: string;
+    proxyMonths: number;
+    unitPrice: number;
+    updateTime: string;
+    expireDate: string;
+    replaceStatus: number;
+    proxyProviderName: string;
+    proxyType: number;
+    providerType: string;
+    opName: string;
+    moduleOpName: string;
+    giftDays: number;
+    autoRenew: number;
+    canRenew: boolean;
+    modelParam: string;
+    refreshUrl: string;
+    isSpecialOffer: number;
+    bandwidthSpeed: number;
+    bandwidthPrice: number;
+    isPermanent: number;
+    isDirect: boolean;
+    isMaintenance: number;
+    dataType: string;
+    buyProxyType: number;
+    badgeTypeDesc: string;
+    businessUse: string;
+    checkChannel: string;
+    checkChannelValue: string;
+    isBind: boolean;
+    bindCount: number;
+    bindList: string[];
+    bindAccountList: string[];
+    canBandwidthUpgrade: boolean;
+    proxyProviderPrice: number;
+    proxyProviderDiscountPrice: number;
+    canRefund: boolean;
+    isEncryptProxy: boolean;
+    proxyEncryptInfo: string;
+  };
   msg: string;
 }
 
@@ -10853,6 +11608,29 @@ export interface UserGetPointsChargesRecordsListParams {
 }
 
 export type UserGetPointsChargesRecordsListData = object;
+
+export interface UserGetPointsDailyConsumptionListParams {
+  /**
+   * 不填默认查询最近七天
+   * @example "2026-06-02"
+   */
+  startDate?: string;
+  /** @example "2026-06-17" */
+  endDate?: string;
+}
+
+export interface UserGetPointsDailyConsumptionListData {
+  code: number;
+  data: {
+    startDate: string;
+    endDate: string;
+    rows: {
+      day: string;
+      data: number;
+    }[];
+  };
+  msg: string;
+}
 
 export type WorkspaceStatusListData = ApiResponse & {
   data?: KycWorkspaceStatusResult;

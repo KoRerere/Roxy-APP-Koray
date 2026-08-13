@@ -1,7 +1,7 @@
 import type { BrowserWindow } from 'electron'
 import { ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { isDevToolsUnlocked } from '/@/modules/devtools-guard'
 import { closeBatchInputsDialogWindow } from '/@/modules/sync-control/dialog/batch-inputs'
 import { closeCustomLayoutsDialogWindow } from '/@/modules/sync-control/dialog/custom-layout'
 import { createWindow, getWindowById } from '/@/utils/browser-window'
@@ -43,7 +43,7 @@ export async function createSynchronizerActionBarWindow() {
   // win.setShape([])
   // 设置窗口部分点击可穿透
   // win.setIgnoreMouseEvents(true);
-  if (!isPackaged) {
+  if (isDevToolsUnlocked()) {
     win.webContents.openDevTools({ mode: 'detach' })
   }
 

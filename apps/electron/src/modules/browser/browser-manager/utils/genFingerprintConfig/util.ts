@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { store } from '/@/modules/store'
 import { safeParseJSON } from '/@/utils'
+import { isEcommerceWorkspace } from '/@/utils/proxyEntityLabels'
 
 let language: any[]
 
@@ -58,6 +59,129 @@ export const getRemoteConfig = (() => {
     }
   }
 })()
+
+/** 传给内核的自动填充账号密码站点 */
+interface AutofillWebSite {
+  /** 业务平台 origin（协议+主机+端口+尾斜杠；Google 密码管理器不能带路径/query） */
+  url: string
+  /** 平台账号 */
+  username: string
+  /** 平台密码 */
+  password: string
+}
+
+/** 平台账号列表项（仅取生成 autofill 所需字段） */
+interface WindowPlatformItem {
+  platformUrl?: string
+  platformUserName?: string
+  platformPassword?: string
+  /** 账号平台元信息；redirectUrls 为同账号可登录的其它入口 */
+  _accountPlatform?: {
+    redirectUrls?: string[]
+  }
+}
+
+/** 用 WHATWG URL 解析；缺协议时补 https，否则 `new URL` 无法解析裸主机 */
+function parseAutofillUrl(url: string): URL | null {
+  const trimmed = url.trim()
+  if (!trimmed) {
+    return null
+  }
+  try {
+    return new URL(trimmed)
+  }
+  catch {
+    try {
+      return new URL(`https://${trimmed}`)
+    }
+    catch {
+      return null
+    }
+  }
+}
+
+/** origin 本身不含尾斜杠；密码管理器按站点根路径匹配，需要补成 `https://host/` */
+function withTrailingSlash(origin: string): string {
+  return origin.endsWith('/') ? origin : `${origin}/`
+}
+
+/** 去掉路径、query、hash，只保留带尾斜杠的 origin；解析失败则原样返回（去空白后） */
+function toAutofillOrigin(url: string): string {
+  const trimmed = url.trim()
+  const origin = parseAutofillUrl(trimmed)?.origin
+  return origin ? withTrailingSlash(origin) : trimmed
+}
+
+/**
+ * 匹配主机名末尾的国家代码后缀：两位字母 ccTLD，以及 .com.br / .co.uk / .co.jp 这类挂在 ccTLD 下的二级后缀。
+ * 二级部分整体替换，避免 mercadolivre.com.br 被换成 mercadolivre.com.com。
+ */
+const COUNTRY_SUFFIX_RE = /(?:\.(?:com|co|net|org|gov|edu|ac|or|ne|in))?\.[a-z]{2}$/i
+
+/**
+ * 生成自动填充站点列表。
+ *
+ * url 只保留 origin：内核会写入 Google 密码管理器，带路径/query 无法按站点匹配填充。
+ * 同一账号除 platformUrl 外，还会展开 `_accountPlatform.redirectUrls`（如 TikTok Shop 多登录入口），共用同一套用户名密码。
+ * 电商模式下，同一套账号通常在国际站（.com）也可登录，但用户往往只配置了本地站（如 amazon.de、mercadolivre.com.br），
+ * 因此为国家代码后缀的地址补一条 .com 版本紧跟其后。补全仅作兜底：原列表中已存在同主机名的条目时不再补，
+ * 以用户自己的配置为准。
+ */
+export function genAutofillWebSiteMult(windowPlatformList: WindowPlatformItem[] = []): AutofillWebSite[] {
+  const list = windowPlatformList.flatMap((item) => {
+    const username = item.platformUserName ?? ''
+    const password = item.platformPassword ?? ''
+    // platformUrl 始终占一条；redirectUrls 去重后追加，避免与主地址重复写入
+    const urls = [item.platformUrl ?? '', ...(item._accountPlatform?.redirectUrls ?? [])]
+    const seen = new Set<string>()
+    return urls
+      .map(url => toAutofillOrigin(url))
+      .filter((url) => {
+        if (!url || seen.has(url)) {
+          return false
+        }
+        seen.add(url)
+        return true
+      })
+      .map(url => ({ url, username, password }))
+  })
+
+  if (!isEcommerceWorkspace()) {
+    return list
+  }
+
+  const existedHosts = new Set(
+    list
+      .map(item => parseAutofillUrl(item.url)?.hostname.toLowerCase())
+      .filter(Boolean) as string[],
+  )
+
+  const result: AutofillWebSite[] = []
+  for (const item of list) {
+    result.push(item)
+
+    const parsed = parseAutofillUrl(item.url)
+    if (!parsed || !COUNTRY_SUFFIX_RE.test(parsed.hostname)) {
+      continue
+    }
+
+    const comHost = parsed.hostname.replace(COUNTRY_SUFFIX_RE, '.com')
+    if (existedHosts.has(comHost.toLowerCase())) {
+      continue
+    }
+    existedHosts.add(comHost.toLowerCase())
+
+    // 只改主机名，协议/端口跟原 origin 走，避免再手拼 URL
+    const comUrl = new URL(parsed.origin)
+    comUrl.hostname = comHost
+    result.push({
+      ...item,
+      url: withTrailingSlash(comUrl.origin),
+    })
+  }
+
+  return result
+}
 
 const ECOMMERCE_DIRECT_WHITELIST_TTL_MS = 1000 * 60 * 5
 

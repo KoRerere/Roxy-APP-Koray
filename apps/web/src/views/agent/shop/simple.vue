@@ -9,8 +9,8 @@ import { RxInputNumber } from '/@/components/rx-input-number'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
-import { useCheckProxy } from '/@/views/agent/hooks'
-import { BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
+import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
+import { BuyEntryType, BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
 import { getRawColumns, getRelatedProfileLabels } from '/@/views/agent/shop/columns.tsx'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from '/@/views/agent/shop/operation.ts'
 import type { ProxyCheckStatus } from '/@/enums'
@@ -28,8 +28,10 @@ const { data: outerData, isBatch = false, onConfirm } = defineProps<Props>()
 
 const totalMark = defineModel<number>('total')
 
+const router = useRouter()
+const { buyProxy } = useProxy()
 const { testProxy, batchTestShowToast } = useCheckProxy()
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('agent')
@@ -75,10 +77,12 @@ const checking = ref(false)
  */
 function resolveInitialSelection(data: any, batch: boolean) {
   const raw = toRaw(data)
-  if (batch)
+  if (batch) {
     return raw
-  if (raw?.id != null && raw.id !== 0)
+  }
+  if (raw?.id != null && raw.id !== 0) {
     return raw
+  }
   return undefined
 }
 
@@ -145,8 +149,9 @@ async function getTableList(params: any) {
 
   if (result.code === 0) {
     const _rows = result.data.rows.map((item) => {
-      if (!isBatch)
+      if (!isBatch) {
         return item
+      }
       const target = selection.value?.find((it: any) => item.id === it.id)
       return { ...item, _proxyCount: target?._proxyCount ?? 1, _disabled: !target }
     })
@@ -157,8 +162,9 @@ async function getTableList(params: any) {
     // 用当前页同源行替换选中对象，保证 dataKey 回显稳定
     if (!isBatch && selection.value?.id != null) {
       const matched = _rows.find((item: any) => item.id === selection.value.id)
-      if (matched)
+      if (matched) {
         selection.value = matched
+      }
     }
   }
 
@@ -221,6 +227,36 @@ async function onCheckProxyStatus(datas: ProxyItem[], options: { key: string, ap
   return results
 }
 
+/**
+ * 购买并关联：走 Immediate 入口，成功后通过 onConfirm 回传给外层（含 quick.vue 包装层）
+ * 各调用方自行处理绑定/关抽屉，避免在多处入口重复购买逻辑
+ */
+async function onBuyProxy() {
+  try {
+    const orderInfo = await buyProxy({ entryType: BuyEntryType.Immediate })
+
+    showToast(0, $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
+
+    // 非即时订单（如线下支付）落到代理列表页，由用户稍后手动选择
+    if (!orderInfo?.immediate) {
+      router.push({ name: 'agent-list', query: { name: 'shop', orderNo: orderInfo?.orderNo } })
+      return
+    }
+
+    const { code, data } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo?.orderNo, type: BuyProxyListType.Use } as any)
+    if (code !== 0 || !data.rows?.[0]) {
+      return
+    }
+
+    // 批量创建窗口时保留关联数量字段，与列表勾选确认的数据结构一致
+    const rows = data.rows.map((item: any) => ({ ...toRaw(item), _proxyCount: 1 }))
+    await onConfirm(isBatch ? rows : rows[0])
+  }
+  catch {
+    // 用户关闭购买弹窗时 buyProxy reject，忽略即可
+  }
+}
+
 async function saveSelected() {
   const selectProxy = [].concat(selection.value)
   // 用户打算使用代理，关闭 apiCheck 让所有购买的代理走本地检测
@@ -236,6 +272,7 @@ async function saveSelected() {
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex flex-wrap gap-1.5 items-center justify-between proxy-header">
       <div class="flex items-center gap-1.5 flex-wrap">
+        <RxButton size="xxs" icon="base/rx_ic_cart" :label="$t('购买')" @click.stop="onBuyProxy()" />
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxSelectButton v-for="item in filters.list" :key="item.name" v-model="item.value" :options="item.options" size="xxs" option-label="name" option-value="value" data-key="value"
                         @change="filters.onChange"

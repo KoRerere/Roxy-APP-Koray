@@ -27,7 +27,10 @@ export function useIdentityVerificationEntry() {
     syncIdentityStatusPolling()
   }
 
-  function showIdentityFormDialog(defaultTab?: IdentityVerificationType, showRegulatoryNotice = false) {
+  function showIdentityFormDialog(
+    defaultTab?: IdentityVerificationType,
+    options?: { showRegulatoryNotice?: boolean, showRejectedNotice?: boolean },
+  ) {
     showModal({
       header: $t('实名认证'),
       class: '!w-[560px]',
@@ -35,7 +38,8 @@ export function useIdentityVerificationEntry() {
         default: ({ hideModal }: UseDialogInstance) => (
           <IdentityVerificationDialog
             defaultTab={defaultTab}
-            showRegulatoryNotice={showRegulatoryNotice}
+            showRegulatoryNotice={options?.showRegulatoryNotice}
+            showRejectedNotice={options?.showRejectedNotice}
             onSuccess={() => {
               hideModal()
               refreshIdentityInfo()
@@ -86,7 +90,19 @@ export function useIdentityVerificationEntry() {
     } as unknown as UseDialogProps)
   }
 
-  async function handleIdentityAction(options?: { showRegulatoryNotice?: boolean }) {
+  /** 表单顶部 Alert：法规说明与失败原因互斥，法规优先 */
+  function resolveFormNoticeOptions(options?: { showRegulatoryNotice?: boolean, showRejectedNotice?: boolean }) {
+    const showRegulatoryNotice = options?.showRegulatoryNotice ?? false
+    if (showRegulatoryNotice)
+      return { showRegulatoryNotice: true, showRejectedNotice: false }
+
+    return {
+      showRegulatoryNotice: false,
+      showRejectedNotice: options?.showRejectedNotice ?? false,
+    }
+  }
+
+  async function handleIdentityAction(options?: { showRegulatoryNotice?: boolean, showRejectedNotice?: boolean }) {
     const { status, type } = identityInfo.value
     if (status === 'verified') {
       showIdentityDetailsDialog()
@@ -101,14 +117,25 @@ export function useIdentityVerificationEntry() {
     }
     if (status === 'rejected') {
       await refreshIdentityInfo()
-      showIdentityFormDialog(identityInfo.value.type ?? type, options?.showRegulatoryNotice)
+      if (identityInfo.value.status !== 'rejected') {
+        await handleIdentityAction(options)
+        return
+      }
+      // 未通过重新提交：默认展示失败原因；调用方显式传法规说明时不覆盖
+      const noticeOptions = resolveFormNoticeOptions({
+        showRegulatoryNotice: options?.showRegulatoryNotice,
+        showRejectedNotice: options?.showRejectedNotice ?? true,
+      })
+      showIdentityFormDialog(identityInfo.value.type ?? type, noticeOptions)
       return
     }
-    showIdentityFormDialog(type, options?.showRegulatoryNotice)
+    showIdentityFormDialog(type, resolveFormNoticeOptions(options))
   }
 
-  async function openIdentityVerificationEntry(options?: { showRegulatoryNotice?: boolean }) {
-    await handleIdentityAction({ showRegulatoryNotice: options?.showRegulatoryNotice ?? true })
+  async function openIdentityVerificationEntry(options?: { showRegulatoryNotice?: boolean, showRejectedNotice?: boolean }) {
+    // 通知等外部入口先拉最新状态，再按 verified / rejected / pending 分流弹窗
+    await refreshIdentityInfo()
+    await handleIdentityAction(options)
   }
 
   return {

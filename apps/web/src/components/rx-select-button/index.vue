@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import SelectButton, { type SelectButtonProps } from 'primevue/selectbutton';
+import SelectButton from 'primevue/selectbutton'
+import type { SelectButtonProps } from 'primevue/selectbutton'
 
-interface Props extends /* @vue-ignore */  Omit<SelectButtonProps, 'size' | 'allowEmpty'> {
+interface Props extends /* @vue-ignore */ Omit<SelectButtonProps, 'size' | 'allowEmpty'> {
   size?: 'xxs' | 'sm' | 'lg' | (string & {})
   allowEmpty?: boolean
 }
 
 const { size = 'sm', allowEmpty = false, ...props } = defineProps<Props>()
-
 </script>
 
 <template>
-  <SelectButton v-bind="props" :class="size" :allowEmpty="allowEmpty">
-    <template v-for="(_, slotName) in $slots" v-slot:[slotName]="slotProps">
-      <slot :name="slotName" v-bind="slotProps ?? {}"></slot>
+  <SelectButton v-bind="props" :class="size" :allow-empty="allowEmpty">
+    <template v-for="(_, slotName) in $slots" #[slotName]="slotProps">
+      <slot :name="slotName" v-bind="slotProps ?? {}" />
     </template>
   </SelectButton>
 </template>
@@ -25,6 +25,7 @@ const { size = 'sm', allowEmpty = false, ...props } = defineProps<Props>()
   --font-size: 12px;
   --border-width: 0.5px;
   --border-radius: 4px;
+  --line-height: 12px;
 }
 
 .sm {
@@ -33,6 +34,7 @@ const { size = 'sm', allowEmpty = false, ...props } = defineProps<Props>()
   --font-size: 13px;
   --border-width: 1px;
   --border-radius: 6px;
+  --line-height: 15px;
 }
 
 .lg {
@@ -41,11 +43,13 @@ const { size = 'sm', allowEmpty = false, ...props } = defineProps<Props>()
   --font-size: 13px;
   --border-width: 1px;
   --border-radius: 6px;
+  --line-height: 18px;
 }
 
 :deep(.p-togglebutton) {
   padding: var(--button-padding);
   font-size: var(--font-size);
+  line-height: var(--line-height);
 }
 
 :deep(.p-togglebutton-content) {

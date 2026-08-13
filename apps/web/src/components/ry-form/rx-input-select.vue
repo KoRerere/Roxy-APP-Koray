@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props {
   name: string
@@ -31,8 +32,9 @@ const attrs = useAttrs()
 </script>
 
 <template>
-  <Select class="w-full" v-bind="attrs" :optionLabel="optionLabel" :optionValue="optionValue" :filter="filter" :inputId="name" :pt="{ root: size, option: classes.option }"
-    @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="attrs" :option-label="optionLabel" :option-value="optionValue" :filter="filter" :input-id="name" :pt="{ root: size, option: classes.option }"
+          @change="$emit('change', $event)"
+  >
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -42,14 +44,18 @@ const attrs = useAttrs()
         <img v-if="value.image" class="select-item__image" :src="value.image">
         <div>{{ value.label }}</div>
       </div>
-      <div v-else>{{ placeholder }}</div>
+      <div v-else>
+        {{ placeholder }}
+      </div>
     </template>
     <template #option="{ option }">
-      <div class="select-item">
+      <div v-tooltip.top="{ value: option.tooltip }" class="select-item">
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
-        <div>{{ option.label }}</div>
-        <slot name="option-extra" :option="option"></slot>
+        <div>
+          {{ option.label }}
+        </div>
+        <slot name="option-extra" :option="option" />
       </div>
     </template>
   </Select>

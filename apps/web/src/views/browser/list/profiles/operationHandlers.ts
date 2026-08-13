@@ -22,6 +22,8 @@ export interface ProfileOperationDeps {
   createDesktopShortcut: (data: ProfileOpData) => Promise<void>
   multipleProxyChange: (data: ProfileOpData | ProfileOpData[], opts: { operationType: string, proxyMethod: string }) => Promise<void>
   multipleProxyDelete: (data: ProfileOpData | ProfileOpData[]) => void
+  /** 窗口列表购买代理入口；电商账号等场景可不传 */
+  buyProxyForProfiles?: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   multipleAccountChange: (data: ProfileOpData | ProfileOpData[], opts: { operationType: string, isChoose: boolean }) => Promise<void>
   tagsIconRef: Ref<any>
   addTag: (opts: any) => void
@@ -109,6 +111,7 @@ const operationMap: Record<string, (ctx: OpCtx) => void | Promise<void>> = {
   createDesktopShortcut: async ctx => ctx.createDesktopShortcut(ctx.data),
   addProxy: async ctx => ctx.multipleProxyChange(ctx.data, { operationType: ctx.operationType, proxyMethod: 'custom' }),
   chooseProxy: async ctx => ctx.multipleProxyChange(ctx.data, { operationType: ctx.operationType, proxyMethod: 'choose' }),
+  buyProxy: async ctx => ctx.buyProxyForProfiles?.(ctx.data),
   deleteProxy: async ctx => ctx.multipleProxyDelete(ctx.data),
   checkProxy: async ctx => ctx.onTestProxy(ctx.data),
   addPlatformAccount: async ctx => ctx.multipleAccountChange(ctx.data, { operationType: ctx.operationType, isChoose: false }),

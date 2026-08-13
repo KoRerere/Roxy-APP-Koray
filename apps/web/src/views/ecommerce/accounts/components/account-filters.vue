@@ -180,7 +180,7 @@ function onFilterChange() {
         <span class="select-none">{{ item.label }}</span>
         <span v-if="item.type !== 'switch'" class="cursor-pointer">: {{ item._text || item.value }}</span>
       </div>
-      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选条件') : ''" @click="showMenu" />
+      <RxButton severity="secondary" size="xxs" text icon="base/rx_ic_filter" :label="!labels.length ? $t('筛选') : ''" @click="showMenu" />
     </div>
     <div v-show="labels.length" class="flex items-start">
       <div class="labels-actions">

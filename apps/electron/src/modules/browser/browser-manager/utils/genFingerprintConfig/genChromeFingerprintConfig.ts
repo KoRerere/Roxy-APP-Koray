@@ -7,7 +7,7 @@ import { store } from '/@/modules/store'
 import { isRoxynetUpstreamReady } from '/@/modules/store/networkMode'
 import { getSystemProxyAddress } from '/@/utils'
 import { ensureChromeIcon, fitBadgeText } from './browserIcon'
-import { getCityCode, getEcommerceDirectWhiteList, getRemoteConfig, toNumber } from './util'
+import { genAutofillWebSiteMult, getCityCode, getEcommerceDirectWhiteList, getRemoteConfig, toNumber } from './util'
 
 /** 生成浏览器指纹配置 */
 export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}, userDataDir = '') {
@@ -421,11 +421,7 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
       username: winInfo.platformUserName,
       password: winInfo.platformPassword,
     },
-    autofillWebSiteMult: winInfo.windowPlatformList.map(item => ({
-      url: item.platformUrl,
-      username: item.platformUserName,
-      password: item.platformPassword,
-    })),
+    autofillWebSiteMult: genAutofillWebSiteMult(winInfo.windowPlatformList),
     /** Chrome 内核应用图标路径（按 windowSortNum 动态生成带数字徽章；格式随 OS 自适应：Windows→.ico / macOS→.icns / Linux→.png） */
     browserIconPath,
     /** 在任务栏ICON上绘制小圆点 */

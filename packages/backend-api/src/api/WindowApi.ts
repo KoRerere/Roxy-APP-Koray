@@ -17,6 +17,8 @@ import {
   UserAddLabelInfoCreatePayload,
   UserAddProxyTemplateCreateData,
   UserAddProxyTemplateCreatePayload,
+  UserAddQuickCreateTemplateCreateData,
+  UserAddQuickCreateTemplateCreatePayload,
   UserAddWindowFilterNameCreateData,
   UserAddWindowFilterNameCreatePayload,
   UserAddWindowInfoV2CreateData,
@@ -39,6 +41,8 @@ import {
   UserCreateWindowInspectListData,
   UserDeleteProxyTemplateCreateData,
   UserDeleteProxyTemplateCreatePayload,
+  UserDeleteQuickCreateTemplateCreateData,
+  UserDeleteQuickCreateTemplateCreatePayload,
   UserDeleteWindowFilterNameCreateData,
   UserDeleteWindowFilterNameCreatePayload,
   UserDeleteWindowTemplateInfoCreateData,
@@ -64,6 +68,7 @@ import {
   UserGetMacAddrV2ListData,
   UserGetMacAddrV2ListParams,
   UserGetProxyTemplateListData,
+  UserGetQuickCreateTemplateListData,
   UserGetTransferReceiveWindowListListData,
   UserGetTransferReceiveWindowListListParams,
   UserGetTransferRecordListListData,
@@ -87,6 +92,7 @@ import {
   UserGetWindowOneClickProxyInfoListListParams,
   UserGetWindowPlatformAccountListListData,
   UserGetWindowRowsSortListData,
+  UserGetWindowSortNumListData,
   UserGetWindowStatusInfoCreateData,
   UserGetWindowStatusInfoCreatePayload,
   UserGetWindowTableSortOrderListData,
@@ -101,6 +107,8 @@ import {
   UserMdfPlatformBindWindowCreatePayload,
   UserMdfProxyTemplateCreateData,
   UserMdfProxyTemplateCreatePayload,
+  UserMdfQuickCreateTemplateCreateData,
+  UserMdfQuickCreateTemplateCreatePayload,
   UserMdfWindowDataBatchCreateData,
   UserMdfWindowDataBatchCreatePayload,
   UserMdfWindowInfoBatchV2CreateData,
@@ -1442,6 +1450,101 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_window_info_detail`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 旁路缓存查询；返回 templateInfo 为前端原样 JSON 对象。无数据时 data 为 null。
+   *
+   * @tags Window
+   * @name UserGetQuickCreateTemplateList
+   * @summary 查询用户快速创建模板
+   * @request GET:/user_get_quick_create_template
+   * @response `200` `UserGetQuickCreateTemplateListData`
+   */
+  userGetQuickCreateTemplateList = (params: RequestParams = {}) =>
+    this.http.request<UserGetQuickCreateTemplateListData, any>({
+      path: `/user_get_quick_create_template`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 每用户仅一条。请求 body 为任意 JSON 对象，传什么存什么（整包序列化入库）。
+   *
+   * @tags Window
+   * @name UserAddQuickCreateTemplateCreate
+   * @summary 新增用户快速创建模板
+   * @request POST:/user_add_quick_create_template
+   * @response `200` `UserAddQuickCreateTemplateCreateData`
+   */
+  userAddQuickCreateTemplateCreate = (
+    data: UserAddQuickCreateTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddQuickCreateTemplateCreateData, any>({
+      path: `/user_add_quick_create_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description id 必填；其余字段整包覆盖 templateInfo（传什么存什么）。
+   *
+   * @tags Window
+   * @name UserMdfQuickCreateTemplateCreate
+   * @summary 修改用户快速创建模板
+   * @request POST:/user_mdf_quick_create_template
+   * @response `200` `UserMdfQuickCreateTemplateCreateData`
+   */
+  userMdfQuickCreateTemplateCreate = (
+    data: UserMdfQuickCreateTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfQuickCreateTemplateCreateData, any>({
+      path: `/user_mdf_quick_create_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 按 id 删除当前用户的快速创建模板。
+   *
+   * @tags Window
+   * @name UserDeleteQuickCreateTemplateCreate
+   * @summary 删除用户快速创建模板
+   * @request POST:/user_delete_quick_create_template
+   * @response `200` `UserDeleteQuickCreateTemplateCreateData`
+   */
+  userDeleteQuickCreateTemplateCreate = (
+    data: UserDeleteQuickCreateTemplateCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDeleteQuickCreateTemplateCreateData, any>({
+      path: `/user_delete_quick_create_template`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowSortNumList
+   * @summary 查询下一个窗口序号
+   * @request GET:/user_get_window_sort_num
+   * @response `200` `UserGetWindowSortNumListData`
+   */
+  userGetWindowSortNumList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowSortNumListData, any>({
+      path: `/user_get_window_sort_num`,
+      method: "GET",
       format: "json",
       ...params,
     });
