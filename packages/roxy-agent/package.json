@@ -33,7 +33,7 @@
     "@roxy/backend-api": "workspace:*",
     "@roxy/sandbox": "workspace:*",
     "@roxy/shared": "workspace:*",
-    "@roxybrowser/openapi": "2.0.4",
+    "@roxybrowser/openapi": "2.0.5",
     "@roxybrowser/playwright": "2.0.5-beta.1",
     "@slack/bolt": "^3.22.0",
     "@slack/web-api": "^7.15.1",
