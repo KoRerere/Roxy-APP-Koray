@@ -2,6 +2,7 @@ import type { AgentAttachment, AgentConsoleState, AgentConversation, AgentFolder
 import type { AgentChannelMessage, AgentConversationRunEventDTO } from '@roxy/shared/channel'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { collectTaskConversationIds } from '../agent-channel-state'
 import { useAgentConsoleApi } from '../api'
 import type { ConversationReadTarget } from '../conversation-unread-state'
@@ -9,10 +10,31 @@ import { getConversationReadTarget } from '../conversation-unread-state'
 import { appendConversationRunEvent, LocallyStoppedConversationRunRegistry, PendingConversationRunRegistry, reconcileConversationRunSummary, replaceConversationRunEvents, terminalRunStatus } from '../conversation-run-state'
 import { createHitlRequestFromAgentEvent, createLegacyResumeDecisions } from '../hitlAdapter'
 import { buildProcessFromEvents, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
+import {
+  AI_BATCH_CREATE_PROMPT_QUERY_KEY,
+  AI_BATCH_CREATE_TEMPLATE_SLUG,
+  isAiBatchCreatePromptRequest,
+  pickAiBatchCreatePrompt,
+} from '../batch-create-prefill'
+import { requestAiBatchCreateGuide } from '../batch-create-guide'
+import {
+  buildCreateAutomationPromptAfterWindowLoad,
+  CREATE_AUTOMATION_QUERY_KEY,
+  CREATE_AUTOMATION_WINDOW_IDS_QUERY_KEY,
+  isCreateAutomationRequest,
+  parseCreateAutomationWindowIds,
+} from '../create-automation-prefill'
+import { requestCreateAutomationGuide } from '../create-automation-guide'
+import { readHomeTemplateCache } from '../home-template-cache'
+import { cacheAgentProfileLabels } from '../profile-token-display'
+import { fetchTaskWindowOptionsByDirIds } from '../task-window-options'
+import { readCatalogList } from '../template-store'
+import type { OfficialTemplate } from '../template-store'
 import { useAgentAccessMode } from './useAgentAccessMode'
 import { useAgentChannelState } from './useAgentChannel'
 import { useTaskMonitor } from './useTaskMonitor'
 import { createPerfTimer, perfLog } from '/@/utils/perf-log'
+import { useSimpleLocale } from '/@/stores/locale'
 
 let state: AgentConsoleState | undefined
 const homePrompt = ref('')
@@ -427,6 +449,8 @@ export function useAgentConsole() {
   const consoleState = getState()
   const agentApi = useAgentConsoleApi()
   const userStore = useUserStore()
+  const workspaceStore = useWorkspaceStore()
+  const localeStore = useSimpleLocale()
   const { fullAccess } = useAgentAccessMode()
   const [showToast, onlyErrorToast] = useResponseToast()
   const agentChannel = useAgentChannelState()
@@ -434,6 +458,119 @@ export function useAgentConsole() {
   const route = useRoute()
   const router = useRouter()
   perfLog('agent-console:useAgentConsole:start')
+
+  let aiBatchCreatePromptRequestId = 0
+  let createAutomationPromptRequestId = 0
+
+  async function consumeAiBatchCreatePrompt() {
+    const requestId = ++aiBatchCreatePromptRequestId
+    homePrompt.value = ''
+    revokeAttachments(homePendingAttachments.value)
+    homePendingAttachments.value = []
+
+    try {
+      const response = await agentApi.templates.listOfficialTemplates({
+        limit: 20,
+        search: AI_BATCH_CREATE_TEMPLATE_SLUG,
+        templateType: 'prompt',
+      })
+      const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
+      const prompt = pickAiBatchCreatePrompt(templates, localeStore.currentLocale)
+      if (!prompt)
+        throw new Error($t('未找到批量创建窗口模板'))
+
+      if (requestId === aiBatchCreatePromptRequestId && route.name === 'agent-console-chat')
+        homePrompt.value = prompt
+    }
+    catch (error) {
+      const cachedPrompt = pickAiBatchCreatePrompt(
+        readHomeTemplateCache()?.templates ?? [],
+        localeStore.currentLocale,
+      )
+      if (requestId === aiBatchCreatePromptRequestId && route.name === 'agent-console-chat') {
+        if (cachedPrompt) {
+          homePrompt.value = cachedPrompt
+        }
+        else {
+          console.error('[agent-console] Failed to load the batch profile creation template:', error)
+          onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
+        }
+      }
+    }
+    finally {
+      if (requestId === aiBatchCreatePromptRequestId && route.name === 'agent-console-chat') {
+        const query = { ...route.query }
+        delete query[AI_BATCH_CREATE_PROMPT_QUERY_KEY]
+        void router.replace({ name: 'agent-console-chat', query })
+      }
+    }
+  }
+
+  async function consumeCreateAutomationPrompt() {
+    const requestId = ++createAutomationPromptRequestId
+    const windowIds = parseCreateAutomationWindowIds(
+      route.query[CREATE_AUTOMATION_WINDOW_IDS_QUERY_KEY],
+    )
+    homePrompt.value = ''
+    revokeAttachments(homePendingAttachments.value)
+    homePendingAttachments.value = []
+
+    try {
+      const prompt = await buildCreateAutomationPromptAfterWindowLoad(
+        windowIds,
+        async (selectedWindowIds) => {
+          const windows = await fetchTaskWindowOptionsByDirIds(
+            selectedWindowIds,
+            workspaceStore.currentWorkspace?.workspaceName,
+          )
+          cacheAgentProfileLabels(windows.map(window => ({
+            id: window.id,
+            label: window.code || window.name || window.id,
+          })))
+        },
+        profileReference => $t('在 {profile} 窗口中运行', { profile: profileReference }),
+      )
+
+      if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat')
+        homePrompt.value = prompt
+    }
+    catch (error) {
+      if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat') {
+        console.error('[agent-console] Failed to load windows for automation prefill:', error)
+        onlyErrorToast(-1, error instanceof Error ? error.message : $t('获取窗口信息失败'))
+      }
+    }
+    finally {
+      if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat') {
+        const query = { ...route.query }
+        delete query[CREATE_AUTOMATION_QUERY_KEY]
+        delete query[CREATE_AUTOMATION_WINDOW_IDS_QUERY_KEY]
+        void router.replace({ name: 'agent-console-chat', query })
+      }
+    }
+  }
+
+  watch(
+    () => [
+      route.name,
+      route.query[AI_BATCH_CREATE_PROMPT_QUERY_KEY],
+      route.query[CREATE_AUTOMATION_WINDOW_IDS_QUERY_KEY],
+    ] as const,
+    ([routeName, prefill]) => {
+      if (routeName !== 'agent-console-chat')
+        return
+
+      if (isAiBatchCreatePromptRequest(prefill)) {
+        requestAiBatchCreateGuide()
+        void consumeAiBatchCreatePrompt()
+      }
+      else if (isCreateAutomationRequest(prefill)) {
+        requestCreateAutomationGuide()
+        void consumeCreateAutomationPrompt()
+      }
+    },
+    { immediate: true },
+  )
 
   function refreshPayInfoAfterAgentActivity(): void {
     void userStore.getUserPayInfo().catch((error) => {

@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core'
 
-export type AgentComposerTokenKind = 'profile' | 'skill' | 'script' | 'input'
+export type AgentComposerTokenKind = 'profile' | 'skill' | 'script' | 'input' | 'url'
 export type AgentComposerItemKind = AgentComposerTokenKind | 'template'
 
 export type AgentComposerSuggestionKind = 'mention' | 'slash'

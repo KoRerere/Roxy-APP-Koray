@@ -76,6 +76,21 @@ test('stops bare URLs before CJK closing punctuation', () => {
   assert.doesNotMatch(output, /product%EF%BC%89%E5%9C%A8/)
 })
 
+test('renders agent tokens immediately after punctuation that ends a bare URL', () => {
+  const output = renderMarkdown('账号信息：https://www.facebook.com，[input:点击填写账密信息]()。')
+
+  assert.match(output, /href="https:\/\/www\.facebook\.com"/)
+  assert.match(output, /<\/a>，<roxy-agent-token kind="input" title="点击填写账密信息" target=""><\/roxy-agent-token>。/)
+  assert.doesNotMatch(output, /\[input:点击填写账密信息\]/)
+})
+
+test('keeps HTML escaped when reparsing text after a bare URL boundary', () => {
+  const output = renderMarkdown('查看 https://example.com，<input value="secret">')
+
+  assert.match(output, /<\/a>，&lt;input value=&quot;secret&quot;&gt;/)
+  assert.doesNotMatch(output, /<input\b/)
+})
+
 test('stops www URLs before CJK closing punctuation', () => {
   const output = renderMarkdown('评估 111（www.baidu.com）在 小红书 的社媒爆款潜力，并给出趋势阶段、风险、内容角度和首轮测试方案。')
 
@@ -145,7 +160,15 @@ test('renders input protocol tokens like composer tokens', () => {
   assert.match(empty, /<roxy-agent-token kind="input" title="Product name" target=""><\/roxy-agent-token>/)
 })
 
-test('renders profile references with the composer-style count badge', () => {
+test('renders url protocol tokens with their dedicated token kind', () => {
+  const httpsUrl = renderMarkdown('Open [url:Website](https://example.com/docs)')
+  const empty = renderMarkdown('Open [url:Website]()')
+
+  assert.match(httpsUrl, /<roxy-agent-token kind="url" title="https:\/\/example\.com\/docs" target="https:\/\/example\.com\/docs"><\/roxy-agent-token>/)
+  assert.match(empty, /<roxy-agent-token kind="url" title="Website" target=""><\/roxy-agent-token>/)
+})
+
+test('renders profile references with the split profile badge details', () => {
   const originalTranslate = globalThis.$t
   globalThis.$t = (key, params) => key.replace('{count}', String(params?.count))
 
@@ -155,6 +178,7 @@ test('renders profile references with the composer-style count badge', () => {
     assert.match(output, /<roxy-agent-token[^>]+kind="profile"/)
     assert.match(output, /title="窗口"/)
     assert.match(output, /count="2"/)
+    assert.doesNotMatch(output, /details=/)
     assert.doesNotMatch(output, /title="2 窗口"/)
     assert.doesNotMatch(output, /Window/)
   }

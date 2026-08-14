@@ -5,12 +5,24 @@ import {
   serializeAgentSkillReference,
 } from '@roxy/shared'
 import type { AgentComposerDoc, AgentComposerItem, AgentComposerTokenKind } from './types'
+import { cacheAgentProfileLabels, getCachedAgentProfileLabels, normalizeAgentProfileLabel } from '../../profile-token-display'
 
 function createProtocolTokenPattern() {
-  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[input:([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
+  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[(input|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
 }
 
 const MARKDOWN_LINK_PATTERN = /\[((?:\\.|[^\]\\\n])*)\]\(((?:\\.|[^)\\\n])*)\)/g
+const TODAY_DATE_INPUT_DEFAULT = '今天日期'
+
+export function resolveInputDefaultValue(value: string, now = new Date()): string {
+  if (value.trim() !== TODAY_DATE_INPUT_DEFAULT)
+    return value
+
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export interface ComposerProtocolToken {
   index: number
@@ -26,11 +38,11 @@ function parseProtocolToken(match: RegExpMatchArray): ComposerProtocolToken {
     ? 'profile'
     : match[1] === '@script'
       ? 'script'
-      : match[4]
-        ? 'input'
+      : match[4] === 'input' || match[4] === 'url'
+        ? match[4]
         : 'skill'
-  const title = match[2] || match[4] || match[6] || ''
-  const target = match[3] ?? match[5] ?? match[7] ?? ''
+  const title = match[2] || match[5] || match[7] || ''
+  const target = match[3] ?? match[6] ?? match[8] ?? ''
   const token: ComposerProtocolToken = {
     index: match.index ?? 0,
     kind,
@@ -57,7 +69,7 @@ export function scanComposerProtocolTokens(prompt: string): ComposerProtocolToke
 
 export function hasComposerProtocolTokens(prompt: string) {
   return scanComposerProtocolTokens(prompt).some((token) => {
-    return token.kind === 'profile' || token.kind === 'input' || Boolean(token.templateRef)
+    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'url' || Boolean(token.templateRef)
   })
 }
 
@@ -71,7 +83,7 @@ export function getMissingComposerTokenLabels(prompt: string) {
   const labels: string[] = []
 
   for (const token of tokens) {
-    if (token.kind === 'input' && !token.target.trim()) {
+    if ((token.kind === 'input' || token.kind === 'url') && !token.target.trim()) {
       labels.push(token.title)
     }
   }
@@ -108,7 +120,7 @@ export function searchComposerItems(items: AgentComposerItem[], query: string) {
 }
 
 export function tokenToProtocol(item: AgentComposerItem) {
-  if (item.kind === 'input')
+  if (item.kind === 'input' || item.kind === 'url')
     return inputTokenToProtocol(item)
 
   if (item.kind === 'profile')
@@ -143,6 +155,9 @@ function getItemTemplateRef(item: AgentComposerItem): string | undefined {
 function inputTokenToProtocol(item: AgentComposerItem) {
   const value = item.payload.value?.trim()
 
+  if (item.kind === 'url')
+    return `[url:${item.title || item.id}](${normalizeUrlValue(value)})`
+
   if (value)
     return value
 
@@ -170,6 +185,14 @@ export function getProfileDirIds(item: AgentComposerItem) {
 export function createProfileAggregateItem(items: AgentComposerItem[]): AgentComposerItem {
   const dirIds = items.flatMap(getProfileDirIds)
   const label = `Window × ${dirIds.length}`
+  const profileLabels = items.flatMap((item) => {
+    const itemIds = getProfileDirIds(item)
+    const storedLabels = readStoredProfileLabels(item)
+
+    return itemIds.map((id, index) => storedLabels[index] || getProfileItemDisplayLabel(item) || id)
+  })
+
+  cacheAgentProfileLabels(dirIds.map((id, index) => ({ id, label: profileLabels[index] || id })))
 
   return {
     id: dirIds.join(','),
@@ -182,8 +205,26 @@ export function createProfileAggregateItem(items: AgentComposerItem[]): AgentCom
     payload: {
       dirIds: dirIds.join(','),
       count: String(dirIds.length),
+      profileLabels: JSON.stringify(profileLabels),
     },
   }
+}
+
+function readStoredProfileLabels(item: AgentComposerItem) {
+  if (!item.payload.profileLabels)
+    return []
+
+  try {
+    const labels = JSON.parse(item.payload.profileLabels)
+    return Array.isArray(labels) ? labels.filter((label): label is string => typeof label === 'string') : []
+  }
+  catch {
+    return []
+  }
+}
+
+function getProfileItemDisplayLabel(item: AgentComposerItem) {
+  return normalizeAgentProfileLabel(item.payload.displayLabel || item.label || item.title)
 }
 
 export function findStoredComposerItem(options: {
@@ -195,22 +236,21 @@ export function findStoredComposerItem(options: {
 }): AgentComposerItem | undefined {
   const { kind, title, target, profiles, slashItems } = options
 
-  if (kind === 'input') {
-    return createInputTokenItem(title, target)
+  if (kind === 'input' || kind === 'url') {
+    return createInputTokenItem(title, target, kind)
   }
 
   if (kind === 'profile') {
     const profile = profiles.find(item =>
       item.id === target
-      || item.payload.dirId === target
-      || item.title === title
-      || item.label === title)
+      || item.payload.dirId === target)
+    const cachedLabel = getCachedAgentProfileLabels([target])[0]
 
     return profile ?? {
       id: target,
       kind: 'profile',
-      title,
-      label: title,
+      title: cachedLabel || target,
+      label: cachedLabel || target,
       description: '',
       iconName: 'country-code/US',
       group: 'Windows',
@@ -266,23 +306,54 @@ function createTemplateReferenceItem(options: {
   }
 }
 
-export function createInputTokenItem(title: string, value = ''): AgentComposerItem {
+export function createInputTokenItem(
+  title: string,
+  value = '',
+  kind: Extract<AgentComposerTokenKind, 'input' | 'url'> = 'input',
+): AgentComposerItem {
+  const normalizedValue = kind === 'url' ? normalizeUrlValue(value) : value
   return {
-    id: `input:${title}`,
-    kind: 'input',
+    id: `${kind}:${title}`,
+    kind,
     title,
     label: title,
     description: '',
-    iconName: 'roxy-agent/rx-ic-prompts',
+    iconName: kind === 'url' ? 'roxy-agent/rx-ic-url' : 'roxy-agent/rx-ic-prompts',
     group: 'Inputs',
-    payload: { name: title, value },
+    payload: { name: title, value: normalizedValue },
   }
+}
+
+export function splitUrlValue(value: string | undefined): {
+  protocol: 'http://' | 'https://'
+  value: string
+} {
+  const trimmedValue = value?.trim() ?? ''
+  const protocolMatch = /^(https?):\/\//i.exec(trimmedValue)
+
+  if (!protocolMatch) {
+    return {
+      protocol: 'https://',
+      value: trimmedValue.replace(/^\/\//, ''),
+    }
+  }
+
+  return {
+    protocol: protocolMatch[1].toLowerCase() === 'http' ? 'http://' : 'https://',
+    value: trimmedValue.slice(protocolMatch[0].length),
+  }
+}
+
+export function normalizeUrlValue(value: string | undefined) {
+  const parts = splitUrlValue(value)
+  return parts.value ? `${parts.protocol}${parts.value}` : ''
 }
 
 export function updateInputTokenValue(
   doc: AgentComposerDoc | undefined,
   title: string,
   value: string,
+  kind: Extract<AgentComposerTokenKind, 'input' | 'url'> = 'input',
 ) {
   if (!doc)
     return doc
@@ -294,7 +365,7 @@ export function updateInputTokenValue(
       return node
 
     if (node.type === 'agentToken') {
-      if (node.attrs?.kind === 'input' && getInputTokenTitle(node.attrs) === normalizedTitle) {
+      if (node.attrs?.kind === kind && getInputTokenTitle(node.attrs) === normalizedTitle) {
         return {
           ...node,
           attrs: {
@@ -304,7 +375,7 @@ export function updateInputTokenValue(
             payload: {
               ...(node.attrs?.payload || {}),
               name: normalizedTitle,
-              value,
+              value: kind === 'url' ? normalizeUrlValue(value) : value,
             },
           },
         }
@@ -553,8 +624,11 @@ function parsePromptLine(
       const token = parseProtocolToken(tokenMatch)
       const targets = token.kind === 'profile' ? splitProfileDirIds(token.target) : [token.target]
 
-      if (token.kind === 'input') {
-        nodes.push(composerItemToNode(createInputTokenItem(token.title, token.target)))
+      if (token.kind === 'input' || token.kind === 'url') {
+        const value = token.kind === 'input'
+          ? resolveInputDefaultValue(token.target)
+          : token.target
+        nodes.push(composerItemToNode(createInputTokenItem(token.title, value, token.kind)))
       }
       else if (token.kind === 'profile') {
         const profileItems = targets.map(profileTarget => findStoredComposerItem({

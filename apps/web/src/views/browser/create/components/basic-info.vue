@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
 import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import CookiesItem from './cookies.vue'
 import ProxyInfo from './proxy-info/index.vue'
 import AccountPlatform from './account-platform.vue'
 import RxButton from '/@/components/rx-button'
-import { API } from '/@/api'
 import { filterInputsByNames } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
 import { useTableContext } from '../hooks/useContext'
+import { fetchDefaultWindowName, hasWindowName } from '../utils'
 
 interface Props {
   /** 窗口组 inputs（inputsGroup[0]） */
@@ -19,7 +18,7 @@ interface Props {
   templateLabel?: string
   /** 是否展示模板选择（编辑页可不传） */
   showTemplate?: boolean
-  /** 空名称时是否按日期+序号预填；快速创建不要写死名称进模板 */
+  /** 空名称时是否按日期+序号预填；编辑快速创建配置时关闭，避免把一次性序号写进模板 */
   autofillWindowName?: boolean
 }
 
@@ -68,8 +67,8 @@ let fillSeq = 0
 watch(
   () => nameInput.value,
   (input) => {
-    // 批量/编辑/快速创建/已有名称（含模板回填）不抢写；仅单个创建空名称时预填
-    if (!props.autofillWindowName || isBatch.value || !input || input.dirId || String(input.value ?? '').trim()) {
+    // 批量/编辑/快速创建配置/已有名称（含模板回填）不抢写；仅单个创建空名称时预填
+    if (!props.autofillWindowName || isBatch.value || !input || input.dirId || hasWindowName(input.value)) {
       return
     }
     void fillDefaultWindowName(input)
@@ -80,21 +79,15 @@ watch(
 /** 按「yyMMdd-下一个窗口序号」预填，减少每次手填 */
 async function fillDefaultWindowName(input: WindowNameInput) {
   const seq = ++fillSeq
-  try {
-    const { code, data } = await API.window.userGetWindowSortNumList()
-    if (seq !== fillSeq || code !== 0 || data?.windowSortNum == null) {
-      return
-    }
-    // 请求返回前用户或模板可能已写入，不再覆盖
-    if (String(input.value ?? '').trim()) {
-      return
-    }
-    const sortNum = data.windowSortNum || 1
-    input.value = `${format(new Date(), 'yyMMdd')}-${sortNum}`
+  const name = await fetchDefaultWindowName()
+  if (seq !== fillSeq || !name) {
+    return
   }
-  catch (error) {
-    console.error('[BasicInfo] failed to autofill window name', error)
+  // 请求返回前用户或模板可能已写入，不再覆盖
+  if (hasWindowName(input.value)) {
+    return
   }
+  input.value = name
 }
 
 function onCopy(dirId: string) {

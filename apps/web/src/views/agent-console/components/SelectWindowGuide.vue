@@ -11,7 +11,10 @@ interface SpotlightRect {
 }
 
 const props = defineProps<{
+  calloutAboveContainer?: boolean
+  interactiveTarget?: boolean
   label: string
+  zIndex?: number
   target: HTMLElement | null
   visible: boolean
 }>()
@@ -21,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const targetRect = ref<SpotlightRect>()
+const containerTop = ref<number>()
 const targetBorderRadius = ref(0)
 const viewportWidth = ref(0)
 const viewportHeight = ref(0)
@@ -30,6 +34,7 @@ const CALLOUT_GAP = 37
 const GUIDE_LINE_LENGTH = 32
 const CALLOUT_EDGE_GAP = 12
 const CALLOUT_HALF_WIDTH = 82
+const CONTAINER_CALLOUT_GAP = 12
 
 let positionFrame = 0
 let resizeObserver: ResizeObserver | undefined
@@ -100,38 +105,63 @@ const targetCenterX = computed(() => {
   return rect.left + rect.width / 2
 })
 
+const calloutTop = computed(() => {
+  const spotlightTop = spotlightRect.value?.top ?? 0
+  const targetTop = spotlightTop - CALLOUT_GAP
+
+  if (!props.calloutAboveContainer || containerTop.value === undefined)
+    return Math.max(CALLOUT_EDGE_GAP, targetTop)
+
+  return Math.max(CALLOUT_EDGE_GAP, containerTop.value - CONTAINER_CALLOUT_GAP)
+})
+
 const calloutStyle = computed<CSSProperties>(() => {
-  const spotlight = spotlightRect.value
   const minLeft = CALLOUT_EDGE_GAP + CALLOUT_HALF_WIDTH
   const maxLeft = Math.max(minLeft, viewportWidth.value - CALLOUT_EDGE_GAP - CALLOUT_HALF_WIDTH)
   const left = Math.min(Math.max(targetCenterX.value, minLeft), maxLeft)
 
   return {
     left: `${left}px`,
-    top: `${Math.max(CALLOUT_EDGE_GAP, (spotlight?.top ?? 0) - CALLOUT_GAP)}px`,
+    top: `${calloutTop.value}px`,
   }
 })
 
 const guideLineStyle = computed<CSSProperties>(() => ({
   left: `${targetCenterX.value}px`,
-  top: `${Math.max(CALLOUT_EDGE_GAP, (spotlightRect.value?.top ?? 0) - CALLOUT_GAP)}px`,
-  height: `${GUIDE_LINE_LENGTH}px`,
+  top: `${calloutTop.value}px`,
+  height: `${Math.max(GUIDE_LINE_LENGTH, (spotlightRect.value?.top ?? 0) - calloutTop.value - SPOTLIGHT_PADDING)}px`,
 }))
+
+const targetHitAreaStyle = computed<CSSProperties>(() => {
+  const rect = targetRect.value
+  if (!rect)
+    return {}
+
+  return {
+    left: `${rect.left}px`,
+    top: `${rect.top}px`,
+    width: `${rect.width}px`,
+    height: `${rect.height}px`,
+  }
+})
 
 function readTargetPosition() {
   positionFrame = 0
   if (!props.visible || !props.target) {
     targetRect.value = undefined
+    containerTop.value = undefined
     targetBorderRadius.value = 0
     return
   }
 
   const rect = props.target.getBoundingClientRect()
+  const containerRect = props.target.closest('.composer-shell')?.getBoundingClientRect()
   const computedStyle = window.getComputedStyle(props.target)
   const borderRadius = Number.parseFloat(computedStyle.borderTopLeftRadius)
 
   viewportWidth.value = window.innerWidth
   viewportHeight.value = window.innerHeight
+  containerTop.value = containerRect?.top
   targetBorderRadius.value = Number.isFinite(borderRadius) ? borderRadius : 0
   targetRect.value = {
     left: rect.left,
@@ -154,14 +184,16 @@ function handleDismiss() {
   emit('dismiss')
 }
 
+function handleTargetClick() {
+  props.target?.click()
+}
+
 function unbindTarget() {
   if (typeof window !== 'undefined') {
-    window.removeEventListener('blur', handleDismiss)
     window.removeEventListener('resize', schedulePositionSync)
     window.removeEventListener('scroll', schedulePositionSync, true)
   }
 
-  boundTarget?.removeEventListener('blur', handleDismiss)
   boundTarget?.removeEventListener('click', handleDismiss)
   resizeObserver?.disconnect()
   resizeObserver = undefined
@@ -172,6 +204,7 @@ function unbindTarget() {
 function bindTarget() {
   unbindTarget()
   targetRect.value = undefined
+  containerTop.value = undefined
   targetBorderRadius.value = 0
 
   if (!props.visible || !props.target || typeof window === 'undefined')
@@ -179,9 +212,7 @@ function bindTarget() {
 
   boundTarget = props.target
   boundShell = props.target.closest('.composer-shell')
-  boundTarget.addEventListener('blur', handleDismiss)
   boundTarget.addEventListener('click', handleDismiss)
-  window.addEventListener('blur', handleDismiss)
   window.addEventListener('resize', schedulePositionSync)
   window.addEventListener('scroll', schedulePositionSync, true)
 
@@ -215,6 +246,7 @@ onBeforeUnmount(() => {
       class="select-window-guide"
       role="dialog"
       :aria-label="label"
+      :style="zIndex === undefined ? undefined : { zIndex }"
       @touchmove.prevent
       @wheel.prevent
     >
@@ -229,17 +261,28 @@ onBeforeUnmount(() => {
           :d="spotlightPath"
           fill-rule="evenodd"
           clip-rule="evenodd"
-          @pointerdown="handleDismiss"
         />
       </svg>
 
       <div class="select-window-guide__callout" :style="calloutStyle">
-        {{ label }}
+        <span class="select-window-guide__label">{{ label }}</span>
+        <button type="button" class="select-window-guide__skip" @click.stop="handleDismiss">
+          {{ $t('跳过') }}
+        </button>
       </div>
 
       <div class="select-window-guide__line" :style="guideLineStyle" aria-hidden="true">
         <span />
       </div>
+
+      <button
+        v-if="interactiveTarget"
+        class="select-window-guide__target-hit-area"
+        type="button"
+        :aria-label="label"
+        :style="targetHitAreaStyle"
+        @click.stop="handleTargetClick"
+      />
     </div>
   </Teleport>
 </template>
@@ -249,6 +292,9 @@ onBeforeUnmount(() => {
   --select-window-guide-mask: rgba(15, 15, 15, 0.48);
   --select-window-guide-callout-shadow: 0 8px 24px rgba(15, 15, 15, 0.2);
   --select-window-guide-accent-ring: rgba(238, 70, 188, 0.4);
+  --select-window-guide-skip-bg: var(--color-bg-primary);
+  --select-window-guide-skip-border: var(--border-width-border, 1px) solid var(--color-border-secondary);
+  --select-window-guide-skip-color: var(--color-text-primary);
 }
 
 :global(html[data-theme='dark'] body.agent-console-window),
@@ -256,6 +302,9 @@ onBeforeUnmount(() => {
   --select-window-guide-mask: rgba(38, 38, 38, 0.8);
   --select-window-guide-callout-shadow: var(--agent-floating-banner-shadow, 0 12px 32px rgba(0, 0, 0, 0.28));
   --select-window-guide-accent-ring: rgba(250, 167, 223, 0.4);
+  --select-window-guide-skip-bg: var(--color-bg-primary-inverse);
+  --select-window-guide-skip-border: 0;
+  --select-window-guide-skip-color: var(--color-bg-primary);
 }
 
 .select-window-guide {
@@ -282,7 +331,12 @@ onBeforeUnmount(() => {
 .select-window-guide__callout {
   position: fixed;
   z-index: 2;
+  display: flex;
   max-width: calc(100vw - 24px);
+  min-width: 180px;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
   transform: translate(-50%, -100%);
   border-radius: 12px;
@@ -293,9 +347,46 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
-  pointer-events: none;
-  text-align: center;
+  pointer-events: auto;
+}
+
+.select-window-guide__label {
+  white-space: normal;
+}
+
+.select-window-guide__skip {
+  box-sizing: border-box;
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  align-self: flex-end;
+  justify-content: center;
+  padding: 6px 10px;
+  border: var(--select-window-guide-skip-border);
+  border-radius: 10px;
+  color: var(--select-window-guide-skip-color);
+  background: var(--select-window-guide-skip-bg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
   white-space: nowrap;
+}
+
+.select-window-guide__skip:hover {
+  filter: saturate(1.08) brightness(0.98);
+}
+
+:global(html[data-theme='dark'] body.agent-console-window .select-window-guide__skip:hover),
+:global(html.app-dark body.agent-console-window .select-window-guide__skip:hover) {
+  background: var(--color-bg-primary-inverse-hover);
+  filter: none;
+}
+
+.select-window-guide__skip:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .select-window-guide__line {
@@ -317,5 +408,16 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--color-fg-pink, #ee46bc);
   box-shadow: 0 0 0 3px var(--select-window-guide-accent-ring, rgba(238, 70, 188, 0.4));
+}
+
+.select-window-guide__target-hit-area {
+  position: fixed;
+  z-index: 3;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
 }
 </style>

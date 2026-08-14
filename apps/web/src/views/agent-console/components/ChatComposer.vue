@@ -10,11 +10,13 @@ import { getClipboardFiles } from './chat-composer/clipboardFiles'
 import {
   getInvalidTemplateReferenceLabels,
   getMissingComposerTokenLabels,
+  splitUrlValue,
 } from './chat-composer/protocol'
 import { useAgentComposer } from './chat-composer/useAgentComposer'
 
 const props = defineProps<{
   autoFocus?: boolean
+  contentKey?: number | string
   focusKey?: number | string
   hitlRequest?: AgentHitlRequest
   pendingAttachments: AgentAttachment[]
@@ -54,6 +56,7 @@ const inputTokenInputRef = ref<HTMLInputElement | null>(null)
 const inputTokenPopoverRef = ref<HTMLElement | null>(null)
 const hitlValues = ref<Record<string, AgentHitlControlValue>>({})
 const inputTokenValue = ref('')
+const inputUrlProtocol = ref<'http://' | 'https://'>('https://')
 const inputTokenComposing = ref(false)
 const missingPromptWarning = ref('')
 const inputTokenPopoverStyle = reactive({
@@ -103,6 +106,7 @@ const {
 } = useAgentComposer({
   model,
   editable: isEditable,
+  contentKey: computed(() => props.contentKey),
   onSend: handleComposerSend,
   recommendedSlashItems: recommendedTemplateItems,
   submitOnEnter: !isPromptField.value,
@@ -300,8 +304,25 @@ function handleComposerSend() {
 
 function submitInputTokenEdit() {
   inputTokenComposing.value = false
-  confirmInputTokenEdit(inputTokenValue.value)
+  let value = inputTokenValue.value
+  if (inputEditor.kind === 'url' && value.trim()) {
+    const hasExplicitProtocol = /^https?:\/\//i.test(value.trim())
+    const parts = splitUrlValue(value)
+    value = `${hasExplicitProtocol ? parts.protocol : inputUrlProtocol.value}${parts.value}`
+  }
+  confirmInputTokenEdit(value)
   missingPromptWarning.value = ''
+}
+
+function handleUrlTokenPaste(event: ClipboardEvent) {
+  const pastedValue = event.clipboardData?.getData('text/plain')?.trim()
+  if (!pastedValue)
+    return
+
+  const parts = splitUrlValue(pastedValue)
+  inputUrlProtocol.value = parts.protocol
+  inputTokenValue.value = parts.value
+  event.preventDefault()
 }
 
 function handleInputTokenKeydown(event: KeyboardEvent) {
@@ -532,7 +553,14 @@ watch(
     }
 
     inputTokenComposing.value = false
-    inputTokenValue.value = value
+    if (inputEditor.kind === 'url') {
+      const parts = splitUrlValue(value)
+      inputUrlProtocol.value = parts.protocol
+      inputTokenValue.value = parts.value
+    }
+    else {
+      inputTokenValue.value = value
+    }
     bindInputTokenGlobalListeners()
     await nextTick()
     if (typeof ResizeObserver !== 'undefined' && inputTokenPopoverRef.value) {
@@ -566,11 +594,15 @@ onBeforeUnmount(() => {
 })
 
 defineExpose({
+  getComposerElement: () => composerShellRef.value,
   getEmptyInputTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
     '[data-agent-token="input"].agent-token--input-empty',
   ) ?? null,
   getEmptyProfileTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
     '[data-agent-token="profile"].agent-token--profile-empty',
+  ) ?? null,
+  getSelectWindowButtonElement: () => composerShellRef.value?.querySelector<HTMLElement>(
+    '[data-agent-select-window]',
   ) ?? null,
   getSelectTemplateButtonElement: () => composerShellRef.value?.querySelector<HTMLElement>(
     '[data-agent-select-template]',
@@ -771,15 +803,19 @@ defineExpose({
           {{ inputEditor.label }}
         </div>
         <div class="input-token-popover__row">
-          <input
-            ref="inputTokenInputRef"
-            v-model="inputTokenValue"
-            type="text"
-            :placeholder="$t('请输入内容')"
-            @compositionend="inputTokenComposing = false"
-            @compositionstart="inputTokenComposing = true"
-            @keydown="handleInputTokenKeydown"
-          >
+          <div class="input-token-popover__input" :class="{ 'input-token-popover__input--url': inputEditor.kind === 'url' }">
+            <span v-if="inputEditor.kind === 'url'" class="input-token-popover__protocol">{{ inputUrlProtocol }}</span>
+            <input
+              ref="inputTokenInputRef"
+              v-model="inputTokenValue"
+              type="text"
+              :placeholder="inputEditor.kind === 'url' ? 'example.com' : $t('请输入内容')"
+              @compositionend="inputTokenComposing = false"
+              @compositionstart="inputTokenComposing = true"
+              @keydown="handleInputTokenKeydown"
+              @paste="inputEditor.kind === 'url' && handleUrlTokenPaste($event)"
+            >
+          </div>
           <button type="button" class="input-token-popover__button" @click="cancelInputTokenEdit">
             {{ $t('取消') }}
           </button>
@@ -1247,6 +1283,35 @@ defineExpose({
   white-space: nowrap;
 }
 
+:deep(.agent-token__profile-prefix),
+:deep(.agent-token__profile-detail) {
+  display: inline-flex;
+  width: max-content;
+  min-height: 24px;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 4px;
+  padding: 2px 6px;
+}
+
+:deep(.agent-token__profile-prefix) {
+  border-radius: 8px 0 0 8px;
+  background: var(--color-bg-tag-purple);
+}
+
+:deep(.agent-token__profile-detail) {
+  min-width: 0;
+  border-radius: 0 8px 8px 0;
+  background: var(--color-bg-tag-purple-hover);
+}
+
+:deep(.agent-token__profile-names) {
+  flex: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 :deep(.agent-token__remove) {
   display: inline-flex;
   width: 12px;
@@ -1273,27 +1338,33 @@ defineExpose({
 
 :deep(.agent-token--profile),
 :deep(.mention) {
+  width: max-content;
+  max-width: none;
+  flex: none;
   color: var(--color-text-tag-purple);
-  background: var(--color-bg-tag-purple);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+:deep(.agent-token--profile .agent-token__label),
+:deep(.mention .agent-token__label) {
+  overflow: visible;
+  flex: none;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+:deep(.agent-token--profile:not(.agent-token--profile-empty)) {
+  gap: 0;
+  padding: 0;
 }
 
 :deep(.agent-token--profile-empty) {
-  border: 1px dashed #7a5af8;
-}
-
-:deep(.agent-token__count) {
-  display: inline-flex;
-  min-width: 16px;
-  height: 16px;
-  align-items: center;
-  justify-content: center;
+  gap: 4px;
   padding: 2px 8px;
-  border-radius: 30px;
-  color: var(--color-text-tag-purple);
-  background: var(--color-bg-tag-purple-hover);
-  box-sizing: border-box;
-  font-size: 12px;
-  line-height: 12px;
+  border: 1px dashed #7a5af8;
+  background: var(--color-bg-tag-purple);
 }
 
 :deep(.agent-token--skill) {
@@ -1306,7 +1377,8 @@ defineExpose({
   background: var(--color-bg-tag-blue);
 }
 
-:deep(.agent-token--input) {
+:deep(.agent-token--input),
+:deep(.agent-token--url) {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
 }
@@ -1350,23 +1422,45 @@ defineExpose({
   gap: 8px;
 }
 
-.input-token-popover__row input {
+.input-token-popover__input {
   min-width: 0;
   flex: 1;
   height: 32px;
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
   border: 1px solid var(--color-border-secondary);
   border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
+.input-token-popover__input input {
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  padding: 6px 10px;
+  border: 0;
   outline: none;
   color: var(--color-text-primary);
-  background: var(--color-bg-primary);
+  background: transparent;
   box-sizing: border-box;
   font-size: 14px;
   line-height: 20px;
 }
 
-.input-token-popover__row input:focus {
+.input-token-popover__input:focus-within {
   border-color: var(--color-bg-primary-inverse);
+}
+
+.input-token-popover__protocol {
+  display: flex;
+  height: 100%;
+  flex: none;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  user-select: none;
 }
 
 .input-token-popover__button {

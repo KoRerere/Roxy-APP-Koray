@@ -9,6 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { filterFieldByValue, getFormDataByList, isEmptyValue } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
+import { fetchDefaultWindowName, hasWindowName } from '/@/views/browser/create/utils'
 import { ceateRandomFinger, getInputsGroup } from '/@/views/browser/create/form-inputs'
 import { ensureApiExtractProxyInfo } from '/@/views/browser/create/components/proxy-info/api-extract'
 import { toSingleWindowProxyParams } from '/@/views/browser/create/components/proxy-info/proxy-params'
@@ -124,6 +125,12 @@ export function useQuickCreate() {
     const metaData = await resolveDefaultMetaData()
     const filteredMetadata = filterFieldByValue(toRaw(metaData), value => !isEmptyValue(value))
     const formData = getFormDataByList(inputsGroup, filteredMetadata)
+    // 配置里未设名称时，建窗再按单窗规则补 yyMMdd-序号，不写回模板
+    if (!hasWindowName(formData.windowName)) {
+      const defaultName = await fetchDefaultWindowName()
+      if (defaultName)
+        formData.windowName = defaultName
+    }
     const params = toSingleWindowProxyParams({
       createCount: 1,
       ...toRaw(original),

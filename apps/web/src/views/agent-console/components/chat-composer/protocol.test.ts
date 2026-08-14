@@ -6,9 +6,12 @@ import {
   getMissingComposerTokenLabels,
   hasComposerProtocolTokens,
   parsePromptString,
+  resolveInputDefaultValue,
   serializePromptDoc,
+  splitUrlValue,
   updateInputTokenValue,
 } from './protocol'
+import { cacheAgentProfileLabels } from '../../profile-token-display'
 import type { AgentComposerItem } from './types'
 
 const profiles: AgentComposerItem[] = [
@@ -182,6 +185,7 @@ describe('profile protocol tokens', () => {
   it('detects composer protocol tokens before custom paste handling', () => {
     assert.equal(hasComposerProtocolTokens('[@script:Cookie机器人](official:104) run [@profile:1](profile-mou-72)'), true)
     assert.equal(hasComposerProtocolTokens('我的产品：[input:产品名]'), true)
+    assert.equal(hasComposerProtocolTokens('目标网站：[url:网站]()'), true)
     assert.equal(hasComposerProtocolTokens('Open [@profile:0]()'), true)
     assert.equal(hasComposerProtocolTokens('[$Batch account nurturing](user:42)'), true)
     assert.equal(hasComposerProtocolTokens('[@script:Legacy](104)'), false)
@@ -224,6 +228,48 @@ describe('profile protocol tokens', () => {
     assert.deepEqual(doc.content?.[0]?.content?.map(node => node.type), ['text', 'agentToken'])
     assert.equal(doc.content?.[0]?.content?.[1]?.attrs?.title, 'Window × 2')
     assert.equal(doc.content?.[0]?.content?.[1]?.attrs?.payload?.dirIds, 'profile-mou-72,profile-mou-89')
+  })
+
+  it('never uses the aggregate count as a fallback profile label before profiles load', () => {
+    const doc = parsePromptString('Run [@profile:3](window-a,window-b,window-c)', {
+      profiles: [{
+        id: 'unrelated-window',
+        kind: 'profile',
+        title: '3',
+        label: '3',
+        description: '',
+        iconName: 'country-code/US',
+        group: 'Windows',
+        payload: { dirId: 'unrelated-window' },
+      }],
+      slashItems: [],
+    })
+    const profileToken = doc.content?.[0]?.content?.[1]
+
+    assert.deepEqual(
+      JSON.parse(profileToken?.attrs?.payload?.profileLabels),
+      ['@window-a', '@window-b', '@window-c'],
+    )
+    assert.doesNotMatch(profileToken?.attrs?.payload?.profileLabels, /@3/)
+  })
+
+  it('uses window labels cached before the prompt is parsed', () => {
+    cacheAgentProfileLabels([
+      { id: 'prefill-window-a', label: '213-19' },
+      { id: 'prefill-window-b', label: '213-18' },
+      { id: 'prefill-window-c', label: '213-17' },
+    ])
+
+    const doc = parsePromptString(
+      'Run [@profile:3](prefill-window-a,prefill-window-b,prefill-window-c)',
+      { profiles: [], slashItems: [] },
+    )
+    const profileToken = doc.content?.[0]?.content?.[1]
+
+    assert.deepEqual(
+      JSON.parse(profileToken?.attrs?.payload?.profileLabels),
+      ['@213-19', '@213-18', '@213-17'],
+    )
   })
 
   it('parses an empty profile token as the default unselected window token', () => {
@@ -342,6 +388,34 @@ describe('template protocol tokens', () => {
 })
 
 describe('input protocol tokens', () => {
+  it('resolves the today-date default for input tokens using the local date', () => {
+    assert.equal(
+      resolveInputDefaultValue('今天日期', new Date(2026, 7, 12, 23, 59)),
+      '2026-08-12',
+    )
+    assert.equal(resolveInputDefaultValue('普通默认值', new Date(2026, 7, 12)), '普通默认值')
+  })
+
+  it('replaces the today-date input default while parsing a template prompt', () => {
+    const doc = parsePromptString('统计日期：[input:日期](今天日期)', {
+      profiles: [],
+      slashItems: [],
+    })
+    const input = doc.content?.[0]?.content?.[1]
+
+    assert.equal(input?.attrs?.kind, 'input')
+    assert.match(input?.attrs?.payload?.value ?? '', /^\d{4}-\d{2}-\d{2}$/)
+    assert.doesNotMatch(serializePromptDoc(doc), /今天日期/)
+  })
+
+  it('does not replace the today-date marker for url tokens or ordinary text', () => {
+    const prompt = '保留今天日期，网址：[url:地址](今天日期)'
+    const doc = parsePromptString(prompt, { profiles: [], slashItems: [] })
+
+    assert.equal(doc.content?.[0]?.content?.[1]?.attrs?.payload?.value, 'https://今天日期')
+    assert.equal(serializePromptDoc(doc), '保留今天日期，网址：[url:地址](https://今天日期)')
+  })
+
   it('parses empty input placeholders without requiring them outside a skill', () => {
     const doc = parsePromptString('我的产品：[input:产品名]；目标市场：[input:目标市场]()', {
       profiles: [],
@@ -438,6 +512,63 @@ describe('input protocol tokens', () => {
     assert.equal(
       serializePromptDoc(updateInputTokenValue(doc, '产品名', 'XX榨汁杯')),
       'XX榨汁杯 / XX榨汁杯',
+    )
+  })
+})
+
+describe('url protocol tokens', () => {
+  it('parses url placeholders into editable url tokens', () => {
+    const doc = parsePromptString('打开 [url:目标网站]()', {
+      profiles: [],
+      slashItems: [],
+    })
+
+    const token = doc.content?.[0]?.content?.[1]
+    assert.equal(token?.attrs?.kind, 'url')
+    assert.equal(token?.attrs?.title, '目标网站')
+    assert.equal(token?.attrs?.payload?.value, '')
+    assert.equal(serializePromptDoc(doc), '打开 [url:目标网站]()')
+  })
+
+  it('normalizes url values while preserving an explicitly pasted scheme', () => {
+    assert.deepEqual(splitUrlValue('example.com/docs'), {
+      protocol: 'https://',
+      value: 'example.com/docs',
+    })
+    assert.deepEqual(splitUrlValue('HTTP://example.com/docs'), {
+      protocol: 'http://',
+      value: 'example.com/docs',
+    })
+
+    const httpsDoc = parsePromptString('[url:目标网站](example.com/docs)', {
+      profiles: [],
+      slashItems: [],
+    })
+    const httpDoc = parsePromptString('[url:目标网站](http://example.com/docs)', {
+      profiles: [],
+      slashItems: [],
+    })
+
+    assert.equal(serializePromptDoc(httpsDoc), '[url:目标网站](https://example.com/docs)')
+    assert.equal(serializePromptDoc(httpDoc), '[url:目标网站](http://example.com/docs)')
+  })
+
+  it('updates url tokens without changing text inputs with the same title', () => {
+    const doc = parsePromptString('[url:地址]() [input:地址]()', {
+      profiles: [],
+      slashItems: [],
+    })
+
+    assert.equal(
+      serializePromptDoc(updateInputTokenValue(doc, '地址', 'example.com', 'url')),
+      '[url:地址](https://example.com) [input:地址]()',
+    )
+  })
+
+  it('reports an empty url field when a skill is referenced', () => {
+    assert.deepEqual(
+      getMissingComposerTokenLabels('[$采集](user:42) [url:目标网站]()'),
+      ['目标网站'],
     )
   })
 })

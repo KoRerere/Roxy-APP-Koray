@@ -14,6 +14,7 @@ import type { TaskSchedulePlan } from '../task-schedule'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import AgentConsolePageLayout from '../components/AgentConsolePageLayout.vue'
 import AgentSelect from '../components/form/AgentSelect.vue'
@@ -95,9 +96,11 @@ const stoppingStatusLabel = computed(() => $t('停止中...').replace(/\.\.\.$/,
 const activeTab = ref<TaskView>('tasks')
 const agentApi = useAgentConsoleApi()
 const agentChannel = useAgentChannelState()
+const localeStore = useSimpleLocale()
 const workspaceStore = useWorkspaceStore()
 const dialog = useDialog()
 const confirm = useConfirm()
+const taskManagerLocaleClass = computed(() => `task-manager-content--${localeStore.siteLocale}`)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { executeTemplateTask } = useTemplateTaskExecution(prompt)
 const tasks = ref<TaskTableItem[]>([])
@@ -974,7 +977,7 @@ onBeforeUnmount(() => {
     :title="$t('任务管理')"
     :task-monitor-toggle-label="$t('窗口监控')"
   >
-    <div class="task-manager-content">
+    <div class="task-manager-content" :class="taskManagerLocaleClass">
       <h1>{{ $t('任务管理') }}</h1>
 
       <div class="task-tabs" role="tablist" :aria-label="$t('任务管理视图')">
@@ -1524,25 +1527,69 @@ h1 {
 }
 
 .col-task {
-  width: 15%;
+  width: calc(17.647059% - 21.176471px);
 }
 .col-template {
-  width: 15%;
+  width: calc(17.647059% - 21.176471px);
 }
 .col-windows {
-  width: 14%;
+  width: calc(16.470588% - 19.764706px);
 }
 .col-created {
-  width: 12%;
+  width: calc(14.117647% - 16.941176px);
 }
 .col-schedule {
-  width: 16%;
+  width: calc(18.823529% - 22.588235px);
 }
 .col-status {
-  width: 13%;
+  width: calc(15.294118% - 18.352941px);
 }
 .col-actions {
-  width: 15%;
+  width: 120px;
+}
+
+.task-manager-content--en {
+  .col-task,
+  .col-template {
+    width: calc(17.647059% - 24.705882px);
+  }
+  .col-windows {
+    width: calc(16.470588% - 23.058824px);
+  }
+  .col-created {
+    width: calc(14.117647% - 19.764706px);
+  }
+  .col-schedule {
+    width: calc(18.823529% - 26.352941px);
+  }
+  .col-status {
+    width: calc(15.294118% - 21.411765px);
+  }
+  .col-actions {
+    width: 125px;
+  }
+}
+
+.task-manager-content--ru {
+  .col-task,
+  .col-template {
+    width: calc(17.647059% - 38.823529px);
+  }
+  .col-windows {
+    width: calc(16.470588% - 36.235294px);
+  }
+  .col-created {
+    width: calc(14.117647% - 31.058824px);
+  }
+  .col-schedule {
+    width: calc(18.823529% - 41.411765px);
+  }
+  .col-status {
+    width: calc(20%);
+  }
+  .col-actions {
+    width: 190px;
+  }
 }
 
 .task-name-cell {
@@ -1850,25 +1897,65 @@ h1 {
 }
 
 .col-activity-task {
-  width: 13%;
+  width: calc(19.117647% - 22.941176px);
 }
 .col-activity-template {
-  width: 12%;
+  width: calc(17.647059% - 21.176471px);
 }
 .col-activity-windows {
-  width: 13%;
+  width: calc(19.117647% - 22.941176px);
 }
 .col-activity-started {
-  width: 11%;
+  width: calc(18.176471% - 10px);
 }
 .col-activity-ended {
-  width: 11%;
+  width: calc(18.176471% - 10px);
 }
 .col-activity-status {
-  width: 8%;
+  width: calc(8.764705% - 14.117647px);
 }
 .col-activity-actions {
-  width: 12%;
+  width: 120px;
+}
+
+.task-manager-content--en {
+  .col-activity-task,
+  .col-activity-windows {
+    width: calc(19.117647% - 26.726847px);
+  }
+  .col-activity-template {
+    width: calc(17.647059% - 24.670538px);
+  }
+  .col-activity-started,
+  .col-activity-ended {
+    width: calc(18.176471% - 13.599301px);
+  }
+  .col-activity-status {
+    width: calc(8.764705% - 15.853232px);
+  }
+  .col-activity-actions {
+    width: 140px;
+  }
+}
+
+.task-manager-content--ru {
+  .col-activity-task,
+  .col-activity-windows {
+    width: calc(19.117647% - 41.869539px);
+  }
+  .col-activity-template {
+    width: calc(17.647059% - 38.648807px);
+  }
+  .col-activity-started,
+  .col-activity-ended {
+    width: calc(18.176471% - 27.996506px);
+  }
+  .col-activity-status {
+    width: calc(8.764705% - 22.795573px);
+  }
+  .col-activity-actions {
+    width: 230px;
+  }
 }
 
 .activity-actions {

@@ -6,6 +6,7 @@ import type { SvgNames } from '/@/components/rx-icon'
 import type { OfficialTemplate, TemplateKind } from '../template-store'
 import type { AgentComposerItem } from './chat-composer/types'
 import {
+  serializeAgentProfileReference,
   serializeAgentSkillReference,
   serializeTemplateRef,
 } from '@roxy/shared'
@@ -34,6 +35,7 @@ import {
   serializeTemplateQuery,
 } from '../template-store'
 import AgentConsolePageLayout from './AgentConsolePageLayout.vue'
+import AgentOnboarding from './AgentOnboarding.vue'
 import CreateTemplateDialog from './dialog/CreateTemplateDialog.vue'
 import HomeTemplateCardSkeleton from './skeleton/HomeTemplateCardSkeleton.vue'
 import ChatComposer from './ChatComposer.vue'
@@ -59,14 +61,43 @@ import {
   NEW_TEMPLATE_GUIDE_EVENT,
 } from '../template-guide'
 import { createPerfTimer, perfLog } from '/@/utils/perf-log'
+import {
+  AI_BATCH_CREATE_GUIDE_EVENT,
+  clearPendingAiBatchCreateGuide,
+  hasPendingAiBatchCreateGuide,
+  hasShownAiBatchCreateGuide,
+  isAiBatchCreateGuideForced,
+  markAiBatchCreateGuideShown,
+  requestAiBatchCreateGuide,
+} from '../batch-create-guide'
+import {
+  AI_BATCH_CREATE_TEMPLATE_SLUG,
+  pickAiBatchCreatePrompt,
+} from '../batch-create-prefill'
+import {
+  clearPendingCreateAutomationGuide,
+  CREATE_AUTOMATION_GUIDE_EVENT,
+  hasPendingCreateAutomationGuide,
+  hasShownCreateAutomationGuide,
+  markCreateAutomationGuideShown,
+} from '../create-automation-guide'
 
 interface ChatComposerExpose {
   focusEditor: () => void
+  getComposerElement: () => HTMLElement | null
   getEmptyInputTokenElement: () => HTMLElement | null
   getEmptyProfileTokenElement: () => HTMLElement | null
   getSelectTemplateButtonElement: () => HTMLElement | null
+  getSelectWindowButtonElement: () => HTMLElement | null
   getShellElement: () => HTMLElement | null
 }
+
+const ONBOARDING_SCRIPT_TEMPLATE_SLUGS = {
+  nurture: 'official-tiktok-for-you-nurture',
+  analytics: 'official-tiktok-comment-analyzer',
+} as const
+
+type OnboardingScriptTemplateSlug = typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS[keyof typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS]
 
 interface DroppedFileEntry {
   file: (success: (file: File) => void, error?: (error: DOMException) => void) => void
@@ -96,6 +127,7 @@ interface TemplateCard {
   title: string
   description: string
   iconName: SvgNames
+  iconSize: 32 | 44
   imageIcon: string
   iconColor: string
   iconBackground: string
@@ -145,9 +177,17 @@ const resolvingTemplateId = ref<number>()
 const selectWindowGuideVisible = ref(false)
 const selectWindowGuideTarget = shallowRef<HTMLElement | null>(null)
 const selectWindowGuideLabel = ref('')
+const aiBatchCreateGuideVisible = ref(false)
+const aiBatchCreateGuideTarget = shallowRef<HTMLElement | null>(null)
+const aiBatchCreateGuideLabel = ref('')
+const createAutomationGuideVisible = ref(false)
+const createAutomationGuideTarget = shallowRef<HTMLElement | null>(null)
+const createAutomationGuideLabel = ref('')
 const newTemplateGuideVisible = ref(false)
 const newTemplateGuideTarget = shallowRef<HTMLElement | null>(null)
 const newTemplateGuideLabel = ref('')
+const onboardingVisible = ref(false)
+const onboardingSessionKey = ref(0)
 const agentApi = useAgentConsoleApi()
 const dialog = useDialog()
 const localeStore = useSimpleLocale()
@@ -216,6 +256,7 @@ const templateCards = computed<TemplateCard[]>(() => officialTemplates.value.sli
     title: item.title,
     description: item.description || $t('暂无描述'),
     iconName,
+    iconSize: templateIcon ? 44 : 32,
     imageIcon,
     iconColor,
     iconBackground,
@@ -237,14 +278,6 @@ const recommendedTemplateItems = computed<AgentComposerItem[]>(() => templateCar
 
   return mapUserTemplateComposerItem(installedTemplate, localeStore.currentLocale)
 }))
-
-function getTemplateKindLabel(kind: TemplateKind) {
-  return {
-    script: $t('脚本'),
-    skill: 'Skill',
-    prompt: $t('提示词'),
-  }[kind]
-}
 
 async function loadTemplateCards() {
   const endLoadTemplateCards = createPerfTimer('chat-workspace:loadTemplateCards')
@@ -581,7 +614,7 @@ function markSelectWindowGuideShown(storageKey: string) {
 }
 
 async function maybeShowTemplateGuide(templateKind: TemplateKind) {
-  if (typeof window === 'undefined' || selectWindowGuideVisible.value)
+  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value)
     return
 
   const storageKey = getSelectWindowGuideStorageKey()
@@ -615,6 +648,8 @@ function dismissSelectWindowGuide() {
   selectWindowGuideVisible.value = false
   selectWindowGuideTarget.value = null
   selectWindowGuideLabel.value = ''
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
   void maybeShowNewTemplateGuide()
 }
 
@@ -623,7 +658,7 @@ function getNewTemplateGuideAccountId() {
 }
 
 async function maybeShowNewTemplateGuide() {
-  if (typeof window === 'undefined' || selectWindowGuideVisible.value || newTemplateGuideVisible.value)
+  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
     return
 
   const accountId = getNewTemplateGuideAccountId()
@@ -635,7 +670,7 @@ async function maybeShowNewTemplateGuide() {
     window.requestAnimationFrame(() => resolve())
   })
 
-  if (selectWindowGuideVisible.value || newTemplateGuideVisible.value)
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
     return
   if (hasShownNewTemplateGuide(accountId) || !hasNewTemplateGuidePending(accountId))
     return
@@ -655,10 +690,211 @@ function dismissNewTemplateGuide() {
   newTemplateGuideVisible.value = false
   newTemplateGuideTarget.value = null
   newTemplateGuideLabel.value = ''
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
+}
+
+async function maybeShowAiBatchCreateGuide() {
+  if (typeof window === 'undefined' || !hasPendingAiBatchCreateGuide())
+    return
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+    return
+
+  const accountId = getNewTemplateGuideAccountId()
+  if (!accountId)
+    return
+  const forced = isAiBatchCreateGuideForced()
+  if (!forced && hasShownAiBatchCreateGuide(accountId)) {
+    clearPendingAiBatchCreateGuide()
+    return
+  }
+
+  await nextTick()
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => resolve())
+  })
+
+  if (!hasPendingAiBatchCreateGuide())
+    return
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+    return
+
+  const target = composerRef.value?.getComposerElement() ?? null
+  if (!target)
+    return
+
+  aiBatchCreateGuideTarget.value = target
+  aiBatchCreateGuideLabel.value = $t('支持粘贴/拖入代理信息文件和账号信息文件')
+  aiBatchCreateGuideVisible.value = true
+  if (!forced)
+    markAiBatchCreateGuideShown(accountId)
+  clearPendingAiBatchCreateGuide()
+}
+
+function dismissAiBatchCreateGuide() {
+  aiBatchCreateGuideVisible.value = false
+  aiBatchCreateGuideTarget.value = null
+  aiBatchCreateGuideLabel.value = ''
+  void maybeShowCreateAutomationGuide()
+  void maybeShowNewTemplateGuide()
+}
+
+async function maybeShowCreateAutomationGuide() {
+  if (typeof window === 'undefined' || !hasPendingCreateAutomationGuide())
+    return
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+    return
+
+  const accountId = getNewTemplateGuideAccountId()
+  if (!accountId)
+    return
+  if (hasShownCreateAutomationGuide(accountId)) {
+    clearPendingCreateAutomationGuide()
+    return
+  }
+
+  await nextTick()
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => resolve())
+  })
+
+  if (!hasPendingCreateAutomationGuide())
+    return
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+    return
+
+  const target = composerRef.value?.getSelectTemplateButtonElement() ?? null
+  if (!target)
+    return
+
+  createAutomationGuideTarget.value = target
+  createAutomationGuideLabel.value = $t('点击选择要执行的自动化模板')
+  createAutomationGuideVisible.value = true
+  markCreateAutomationGuideShown(accountId)
+  clearPendingCreateAutomationGuide()
+}
+
+function dismissCreateAutomationGuide() {
+  createAutomationGuideVisible.value = false
+  createAutomationGuideTarget.value = null
+  createAutomationGuideLabel.value = ''
+  void maybeShowAiBatchCreateGuide()
+  void maybeShowNewTemplateGuide()
+}
+
+function handleCreateAutomationGuideRequest() {
+  void maybeShowCreateAutomationGuide()
+}
+
+function handleAiBatchCreateGuideRequest() {
+  void maybeShowAiBatchCreateGuide()
 }
 
 function handleNewTemplateCreated() {
   void maybeShowNewTemplateGuide()
+}
+
+function dismissAllGuides() {
+  selectWindowGuideVisible.value = false
+  selectWindowGuideTarget.value = null
+  selectWindowGuideLabel.value = ''
+  aiBatchCreateGuideVisible.value = false
+  aiBatchCreateGuideTarget.value = null
+  aiBatchCreateGuideLabel.value = ''
+  createAutomationGuideVisible.value = false
+  createAutomationGuideTarget.value = null
+  createAutomationGuideLabel.value = ''
+  newTemplateGuideVisible.value = false
+  newTemplateGuideTarget.value = null
+  newTemplateGuideLabel.value = ''
+}
+
+function openOnboarding() {
+  dismissAllGuides()
+  onboardingSessionKey.value += 1
+  onboardingVisible.value = true
+}
+
+async function findOfficialScriptTemplate(slug: OnboardingScriptTemplateSlug) {
+  const response = await agentApi.templates.listOfficialTemplates({
+    limit: 20,
+    search: slug,
+    templateType: 'script',
+  })
+  const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
+  return templates.find(template => template.slug === slug)
+}
+
+async function showOnboardingWindowGuide(target: 'button' | 'token') {
+  await nextTick()
+  await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()))
+  const element = target === 'button'
+    ? composerRef.value?.getSelectWindowButtonElement() ?? null
+    : composerRef.value?.getEmptyProfileTokenElement() ?? null
+  if (!element)
+    return
+
+  selectWindowGuideTarget.value = element
+  selectWindowGuideLabel.value = $t('点击选择窗口')
+  selectWindowGuideVisible.value = true
+}
+
+async function fillOnboardingScriptPrompt(slug: OnboardingScriptTemplateSlug) {
+  try {
+    const template = await findOfficialScriptTemplate(slug)
+    if (!template)
+      throw new Error($t('官方模板不存在或已下架'))
+
+    updatePromptAndFocus(scriptTemplateToRunPrompt(
+      mapTemplateStoreItem(template, localeStore.currentLocale).title,
+      serializeTemplateRef('official', template.id),
+    ))
+    await showOnboardingWindowGuide('token')
+  }
+  catch (error) {
+    console.error(`[agent-console] Failed to prepare onboarding template: ${slug}`, error)
+    onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
+  }
+}
+
+async function handleOnboardingExperience(scenario: 'create' | 'publish' | 'nurture' | 'analytics') {
+  if (!onboardingVisible.value)
+    return
+
+  onboardingVisible.value = false
+
+  if (scenario === 'create') {
+    try {
+      const response = await agentApi.templates.listOfficialTemplates({
+        limit: 20,
+        search: AI_BATCH_CREATE_TEMPLATE_SLUG,
+        templateType: 'prompt',
+      })
+      const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
+      const templatePrompt = pickAiBatchCreatePrompt(templates, localeStore.currentLocale)
+      if (!templatePrompt)
+        throw new Error($t('未找到批量创建窗口模板'))
+
+      updatePromptAndFocus(templatePrompt)
+      requestAiBatchCreateGuide(true)
+    }
+    catch (error) {
+      console.error('[agent-console] Failed to prepare onboarding batch-create template', error)
+      onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
+    }
+    return
+  }
+
+  if (scenario === 'publish') {
+    updatePromptAndFocus($t('在 {profile} 窗口中运行 {script}', {
+      profile: serializeAgentProfileReference([]),
+      script: $t("发布视频"),
+    }))
+    await showOnboardingWindowGuide('token')
+    return
+  }
+
+  await fillOnboardingScriptPrompt(ONBOARDING_SCRIPT_TEMPLATE_SLUGS[scenario])
 }
 
 function isFileDrag(event: DragEvent) {
@@ -908,24 +1144,39 @@ async function handleWorkspaceDrop(event: DragEvent) {
 watch(composerRef, async () => {
   await nextTick()
   composerShellElement.value = composerRef.value?.getShellElement() ?? null
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
   void maybeShowNewTemplateGuide()
 }, { flush: 'post', immediate: true })
 
 watch(() => props.activeConversationId, () => {
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
   void maybeShowNewTemplateGuide()
+})
+
+watch(() => getNewTemplateGuideAccountId(), () => {
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
 })
 
 onMounted(() => {
   perfLog('chat-workspace:mounted')
+  window.addEventListener(AI_BATCH_CREATE_GUIDE_EVENT, handleAiBatchCreateGuideRequest)
+  window.addEventListener(CREATE_AUTOMATION_GUIDE_EVENT, handleCreateAutomationGuideRequest)
   window.addEventListener(NEW_TEMPLATE_GUIDE_EVENT, handleNewTemplateCreated)
   void loadTemplateCards()
   void loadRecommendedTemplates().catch((error) => {
     console.error('Failed to preload recommended templates', error)
   })
+  void maybeShowCreateAutomationGuide()
+  void maybeShowAiBatchCreateGuide()
   void maybeShowNewTemplateGuide()
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener(AI_BATCH_CREATE_GUIDE_EVENT, handleAiBatchCreateGuideRequest)
+  window.removeEventListener(CREATE_AUTOMATION_GUIDE_EVENT, handleCreateAutomationGuideRequest)
   window.removeEventListener(NEW_TEMPLATE_GUIDE_EVENT, handleNewTemplateCreated)
 })
 </script>
@@ -953,12 +1204,22 @@ onBeforeUnmount(() => {
         <TaskMonitorToggle :label="$t('窗口监控')" variant="pill" />
       </header>
 
-      <TaskMonitorToggle
-        v-if="isHome"
-        class="chat-home-monitor"
-        :label="$t('窗口监控')"
-        variant="pill"
-      />
+      <div v-if="isHome" class="chat-home-actions">
+        <button
+          class="chat-home-onboarding"
+          type="button"
+          :aria-label="$t('打开新手引导')"
+          @click="openOnboarding"
+        >
+          <span>?</span>
+          {{ $t('新手引导') }}
+        </button>
+        <TaskMonitorToggle
+          class="chat-home-monitor"
+          :label="$t('窗口监控')"
+          variant="pill"
+        />
+      </div>
 
       <section v-if="isHome" class="home-scroll-shell">
         <div class="home-scroll">
@@ -991,7 +1252,7 @@ onBeforeUnmount(() => {
                     <SvgIcon
                       v-else
                       :name="card.iconName"
-                      size="44"
+                      :size="card.iconSize"
                       :color="card.iconColor"
                     />
                   </div>
@@ -1055,6 +1316,7 @@ onBeforeUnmount(() => {
         ref="composerRef"
         v-model="prompt"
         auto-focus
+        :content-key="activeConversationId ?? 'home'"
         :focus-key="composerAutoFocusKey"
         :hitl-request="hitlRequest"
         :pending-attachments="pendingAttachments"
@@ -1079,10 +1341,32 @@ onBeforeUnmount(() => {
       />
 
       <SelectWindowGuide
+        :label="aiBatchCreateGuideLabel"
+        :target="aiBatchCreateGuideTarget"
+        :visible="aiBatchCreateGuideVisible"
+        @dismiss="dismissAiBatchCreateGuide"
+      />
+
+      <SelectWindowGuide
+        callout-above-container
+        :label="createAutomationGuideLabel"
+        :target="createAutomationGuideTarget"
+        :visible="createAutomationGuideVisible"
+        @dismiss="dismissCreateAutomationGuide"
+      />
+
+      <SelectWindowGuide
         :label="newTemplateGuideLabel"
         :target="newTemplateGuideTarget"
         :visible="newTemplateGuideVisible"
         @dismiss="dismissNewTemplateGuide"
+      />
+
+      <AgentOnboarding
+        :session-key="onboardingSessionKey"
+        :visible="onboardingVisible"
+        @close="onboardingVisible = false"
+        @experience="handleOnboardingExperience"
       />
 
       <div v-if="isDraggingFiles" class="chat-drop-overlay" aria-hidden="true" />
@@ -1106,8 +1390,51 @@ onBeforeUnmount(() => {
   isolation: isolate;
 }
 
-:deep(.task-monitor-toggle.chat-home-monitor) {
-  --task-monitor-toggle-inline-offset: 10px;
+.chat-home-actions {
+  position: absolute;
+  top: 18px;
+  right: 28px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-home-actions :deep(.task-monitor-toggle.chat-home-monitor) {
+  position: static;
+}
+
+.chat-home-onboarding {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 999px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+
+  &:hover {
+    background: var(--color-bg-secondary-hover);
+  }
+
+  > span {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #6172f3;
+    border-radius: 50%;
+    color: #6172f3;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    place-items: center;
+  }
 }
 
 .chat-container--awaiting-approval :deep(.composer-shell) {
@@ -1196,14 +1523,7 @@ onBeforeUnmount(() => {
   background: var(--color-bg-primary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 18%,
-    #0000001f 40%,
-    #00000080 68%,
-    #000 100%
-  );
+  mask-image: linear-gradient(to bottom, transparent 0, transparent 18%, #0000001f 40%, #00000080 68%, #000 100%);
   mask-repeat: no-repeat;
   mask-size: 100% 100%;
   -webkit-mask-image: linear-gradient(

@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { AgentAccessMode } from '../composables/useAgentAccessMode'
 import { useAgentAccessMode } from '../composables/useAgentAccessMode'
 import AgentTooltip from './AgentTooltip.vue'
@@ -48,7 +48,7 @@ function handleSelect(trigger: 'attach' | '@' | '/') {
 <template>
   <div class="composer-toolbar">
     <AgentTooltip :content="$t('点击选择窗口，也可输入 “{at}” 选择', { at: '@' })" placement="top" :offset="8">
-      <button data-composer-suggestion-trigger class="toolbar-action" type="button" aria-label="Select window" @click="handleSelect('@')">
+      <button data-agent-select-window data-composer-suggestion-trigger class="toolbar-action" type="button" aria-label="Select window" @click="handleSelect('@')">
         <SvgIcon class="toolbar-action__icon" name="roxy-agent/rx-ic-at" size="16" color="currentColor" />
         <span>{{ $t('选窗口') }}</span>
       </button>

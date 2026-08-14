@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
+import AgentButton from '../form/AgentButton.vue'
 import AgentCheckbox from '../form/AgentCheckbox.vue'
 import AgentSelect from '../form/AgentSelect.vue'
 import AgentBadge from '../form/AgentBadge.vue'
@@ -82,6 +83,17 @@ function chooseActiveItem(event?: KeyboardEvent) {
     </div>
 
     <div class="window-picker-search-wrap">
+      <AgentCheckbox
+        :model-value="allSelected"
+        class="window-picker-select-all"
+        input-id="window-picker-select-all"
+        :disabled="selectAllLoading || (!items.length && !hasMore)"
+        @update:model-value="emit('toggleAll')"
+      >
+        <i v-if="selectAllLoading" class="pi pi-spin pi-spinner" aria-hidden="true" />
+        <span>{{ $t('全选') }}</span>
+      </AgentCheckbox>
+
       <AgentSelect
         class="window-picker-project-select"
         :model-value="selectedProjectId"
@@ -152,24 +164,13 @@ function chooseActiveItem(event?: KeyboardEvent) {
     </div>
 
     <div class="window-picker-footer">
-      <AgentCheckbox
-        :model-value="allSelected"
-        class="window-picker-select-all"
-        input-id="window-picker-select-all"
-        :disabled="selectAllLoading || (!items.length && !hasMore)"
-        @update:model-value="emit('toggleAll')"
-      >
-        <i v-if="selectAllLoading" class="pi pi-spin pi-spinner" aria-hidden="true" />
-        <span>{{ $t('全部') }}</span>
-      </AgentCheckbox>
-
       <div class="window-picker-actions">
-        <button class="window-picker-cancel" type="button" @mousedown.prevent="emit('cancel')">
+        <AgentButton :icon="false" class="window-picker-cancel" variant="secondary" @mousedown.prevent="emit('cancel')">
           {{ $t('取消') }}
-        </button>
-        <button class="window-picker-done" type="button" @mousedown.prevent="emit('confirm')">
+        </AgentButton>
+        <AgentButton :icon="false" class="window-picker-done" variant="primary" @mousedown.prevent="emit('confirm')">
           {{ $t('完成') }} ({{ selectedCount }})
-        </button>
+        </AgentButton>
       </div>
     </div>
   </div>
@@ -263,6 +264,21 @@ function chooseActiveItem(event?: KeyboardEvent) {
   gap: 8px;
   padding: 12px 12px 4px;
   background: var(--color-bg-primary, var(--color-bg-primary));
+}
+
+.window-picker-select-all {
+  min-height: 36px;
+  flex: none;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--color-text-primary, var(--color-text-primary));
+  background: transparent;
+  font-weight: 400;
+
+  &:hover:not(.agent-checkbox--disabled) {
+    background: var(--color-bg-secondary-hover, var(--color-bg-quaternary));
+  }
 }
 
 .window-picker-project-select {
@@ -382,37 +398,12 @@ function chooseActiveItem(event?: KeyboardEvent) {
 
 .window-picker-footer {
   display: flex;
-  min-height: 60px;
+  min-height: 56px;
   flex: none;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start;
   padding: 12px 20px;
   border-top: 1px solid var(--color-border-secondary, var(--color-border-secondary));
-}
-
-.window-picker-select-all,
-.window-picker-cancel,
-.window-picker-done {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  appearance: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  white-space: nowrap;
-}
-
-.window-picker-select-all {
-  gap: 8px;
-  padding: 0;
-  font-weight: 400;
-  color: var(--color-text-primary, var(--color-text-primary));
-  background: transparent;
 }
 
 .window-picker-actions {
@@ -420,24 +411,5 @@ function chooseActiveItem(event?: KeyboardEvent) {
   flex: none;
   align-items: center;
   gap: 4px;
-}
-
-.window-picker-cancel {
-  min-width: 80px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: var(--color-text-primary, var(--color-text-primary));
-  background: transparent;
-}
-
-.window-picker-done {
-  min-width: 80px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: var(--color-text-primary-inverse, var(--color-bg-primary));
-  background: var(--color-bg-primary-inverse, var(--color-bg-primary));
-  box-shadow:
-    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 }
 </style>

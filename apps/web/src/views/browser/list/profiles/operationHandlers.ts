@@ -36,6 +36,7 @@ export interface ProfileOperationDeps {
   exportProfile: (data: any) => void | Promise<void>
   deleteProfile: (datas: any, ids: number[]) => void | Promise<void>
   onTestProxy: (datas: ProfileOpData) => void | Promise<void>
+  createAutomation: (datas: ProfileOpData[]) => void | Promise<void>
 }
 
 type OpCtx = ProfileOperationDeps & {
@@ -106,6 +107,7 @@ const operationMap: Record<string, (ctx: OpCtx) => void | Promise<void>> = {
   transfer: async ctx => ctx.onTransfer(ctx.datas, ctx.operate),
   moveToProject: async ctx => ctx.onMoveToProject(ctx.data),
   open: async ctx => ctx.openBrowserBefore(ctx.data),
+  createAutomation: async ctx => ctx.createAutomation(ctx.datas),
   view: async ctx => ctx.openBrowserBefore(ctx.data),
   setAsDefaultBrowser: async ctx => ctx.setAsDefaultBrowser(ctx.data),
   createDesktopShortcut: async ctx => ctx.createDesktopShortcut(ctx.data),

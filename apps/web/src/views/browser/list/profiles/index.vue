@@ -52,6 +52,8 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { LIST_CACHE_NAMESPACE, useListCacheActions, useListCacheStore } from '/@/stores/listCache'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useQuickCreate } from '/@/views/browser/create/hooks/useQuickCreate'
+import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
+import { buildCreateAutomationAgentRoute } from '/@/views/agent-console/create-automation-prefill'
 
 import useColumns from '/@/hooks/useColumns'
 
@@ -87,6 +89,7 @@ const { runProxySpeedTestForRows } = useProfileProxySpeedTest()
 const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
+const { opening: automationOpening, openRoxyAIAgent } = useOpenRoxyAIAgent()
 const { getVideoSource } = useSimpleLocale()
 const workspaceStore = useWorkspaceStore()
 const listCacheStore = useListCacheStore()
@@ -115,6 +118,10 @@ const showQuickCreateEntry = computed(() => canQuickCreate() && check('Profiles_
 
 const tableRef = useTemplateRef('windowTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
+const selectedProfiles = computed<Data[]>(() => tableRef.value?.selectionData ?? [])
+const createAutomationLabel = computed(() => selectedProfiles.value.length
+  ? $t('AI 自动化 ({count})', { count: selectedProfiles.value.length })
+  : $t('AI 自动化'))
 const filtersMenu = ref()
 const listInitialized = ref(false)
 const advancedSearchOptions = getAdvancedSearch()
@@ -364,6 +371,14 @@ async function onTestProxy(data: any) {
   await runProxySpeedTestForRows(targets)
 }
 
+async function createAutomation(data: Data[] = selectedProfiles.value) {
+  const windowIds = data.flatMap(item => item.dirId ? [item.dirId] : [])
+  if (!windowIds.length)
+    return
+
+  await openRoxyAIAgent(buildCreateAutomationAgentRoute(windowIds))
+}
+
 async function saveFilters(formData: any) {
   if (!filtersMenu.value.some((item: any) => item.value)) {
     return
@@ -427,6 +442,7 @@ const operationHandler = createProfileOperationHandler({
   exportProfile,
   deleteProfile,
   onTestProxy,
+  createAutomation,
 })
 
 async function setAsDefaultBrowser(data: Data) {
@@ -1041,6 +1057,21 @@ defineExpose({
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :video-url="getVideoSource('profile-filter.mp4')"
                        :save-filters="saveFilters" @filter-change="onRefreshTable"
         />
+        <span
+          v-if="check('Roxy_AI_Agent_All')"
+          v-tooltip.top="{ value: selectedProfiles.length ? '' : $t('请先勾选窗口') }"
+          class="inline-flex"
+        >
+          <RxButton
+            class="create-automation-button"
+            size="xxs"
+            outlined
+            icon="roxy-agent/rx-ic-create-automation"
+            :label="createAutomationLabel"
+            :disabled="!selectedProfiles.length || automationOpening"
+            @click.stop="createAutomation()"
+          />
+        </span>
         <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />
       </div>
     </template>
@@ -1206,6 +1237,65 @@ defineExpose({
 .note-light {
   :deep(svg) {
     color: var(--colors-text-text-brand, #11a3fd) !important;
+  }
+}
+
+.quick-icon {
+  color: var(--colors-icon-icon-secondary, #575d60);
+
+  &:active:not(.disabled) {
+    color: orange;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
+.create-automation-button {
+  --create-automation-bg: var(--colors-background-bg-action, #fff);
+  --create-automation-border: linear-gradient(139.35deg, #3faaf6 0%, #f359dc 50%, #f28fb0 100%);
+
+  border: 0.5px solid transparent !important;
+  background:
+    linear-gradient(var(--create-automation-bg), var(--create-automation-bg)) padding-box,
+    var(--create-automation-border) border-box !important;
+
+  :deep(svg) {
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    padding: 0.667px;
+  }
+
+  :deep(.p-button-label) {
+    color: transparent;
+    background: linear-gradient(124.78deg, #3faaf6 0%, #f359dc 50%, #f28fb0 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  &:not(:disabled):hover {
+    border-color: transparent !important;
+    background:
+      linear-gradient(
+          139.35deg,
+          rgba(63, 170, 246, 0.05) 0%,
+          rgba(243, 89, 220, 0.05) 50%,
+          rgba(242, 143, 176, 0.05) 100%
+        )
+        padding-box,
+      linear-gradient(var(--create-automation-bg), var(--create-automation-bg)) padding-box,
+      var(--create-automation-border) border-box !important;
+  }
+
+  &:disabled {
+    border-color: transparent !important;
+    background:
+      linear-gradient(var(--create-automation-bg), var(--create-automation-bg)) padding-box,
+      var(--create-automation-border) border-box !important;
+    opacity: 0.5;
   }
 }
 

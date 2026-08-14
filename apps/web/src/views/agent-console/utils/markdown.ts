@@ -1,17 +1,18 @@
 import type { Tokens } from 'marked'
 import { marked, Renderer } from 'marked'
 import { escapeHtml } from './markdownHtml'
+import { formatAgentProfileDetails, getCachedAgentProfileLabels } from '../profile-token-display'
 
 interface AgentMarkdownToken {
   raw?: string
-  kind: 'profile' | 'script' | 'skill' | 'input'
+  kind: 'profile' | 'script' | 'skill' | 'input' | 'url'
   marker: '@' | '/' | ''
   title: string
   target: string
 }
 
-const AGENT_TOKEN_START_PATTERN = /\[(@profile|@script|input):|\[\$/
-const AGENT_PROTOCOL_TOKEN_PATTERN = /\[(@profile|@script):([^\]]+)\]\(([^)]*)\)|\[input:([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]+)\)/g
+const AGENT_TOKEN_START_PATTERN = /\[(@profile|@script|input|url):|\[\$/
+const AGENT_PROTOCOL_TOKEN_PATTERN = /\[(@profile|@script):([^\]]+)\]\(([^)]*)\)|\[(input|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]+)\)/g
 const defaultRenderer = new Renderer()
 
 marked.use({
@@ -44,7 +45,7 @@ marked.use({
   ],
 })
 
-export function renderMarkdown(text: string, options: { preserveLineBreaks?: boolean } = {}) {
+export function renderMarkdown(text: string, options: { preserveLineBreaks?: boolean, labelVersion?: number } = {}) {
   const html = marked.parse(normalizeWindowsLocalFileLinkDestinations(text), {
     async: false,
     breaks: options.preserveLineBreaks ?? false,
@@ -86,27 +87,28 @@ function tokenFromProtocolMatch(match: RegExpExecArray): AgentMarkdownToken {
     }
   }
 
-  if (match[4]) {
+  if (match[4] === 'input' || match[4] === 'url') {
     return {
-      kind: 'input',
+      kind: match[4],
       marker: '',
-      title: match[4],
-      target: match[5] || '',
+      title: match[5],
+      target: match[6] || '',
     }
   }
 
   return {
     kind: 'skill',
     marker: '/',
-    title: match[6] || '',
-    target: match[7] || '',
+    title: match[7] || '',
+    target: match[8] || '',
   }
 }
 
 function renderAgentTokenHtml(token: AgentMarkdownToken) {
   const display = getAgentTokenDisplay(token)
   const countAttribute = display.count ? ` count="${escapeAttribute(display.count)}"` : ''
-  return `<roxy-agent-token kind="${escapeAttribute(token.kind)}" title="${escapeAttribute(display.title)}" target="${escapeAttribute(token.target)}"${countAttribute}></roxy-agent-token>`
+  const detailsAttribute = display.details ? ` details="${escapeAttribute(display.details)}"` : ''
+  return `<roxy-agent-token kind="${escapeAttribute(token.kind)}" title="${escapeAttribute(display.title)}" target="${escapeAttribute(token.target)}"${countAttribute}${detailsAttribute}></roxy-agent-token>`
 }
 
 function renderMarkdownTableHtml(token: Tokens.Table, parser: unknown) {
@@ -146,7 +148,8 @@ function renderMarkdownLinkHtml(token: Tokens.Link, parser: unknown) {
     tokens: [{ type: 'text', raw: linkText, text: linkText }],
   }
 
-  return `${addMarkdownSourceAttribute(defaultRenderer.link(linkToken), linkToken.raw)}${escapeHtml(suffix)}`
+  const suffixHtml = marked.parseInline(suffix, { async: false })
+  return `${addMarkdownSourceAttribute(defaultRenderer.link(linkToken), linkToken.raw)}${suffixHtml}`
 }
 
 function addMarkdownSourceAttribute(linkHtml: string, markdownSource: string) {
@@ -245,20 +248,22 @@ function normalizeWindowsDriveLocalPath(filePath: string) {
 
 function getAgentTokenDisplay(
   token: Pick<AgentMarkdownToken, 'kind' | 'title' | 'target'>,
-): { title: string, count: string } {
-  if (token.kind === 'input')
-    return { title: token.target.trim() || token.title, count: '' }
+): { title: string, count: string, details: string } {
+  if (token.kind === 'input' || token.kind === 'url')
+    return { title: token.target.trim() || token.title, count: '', details: '' }
 
   if (token.kind !== 'profile')
-    return { title: token.title, count: '' }
+    return { title: token.title, count: '', details: '' }
 
   const titleCount = Number(token.title)
   const targetCount = token.target.split(',').filter(Boolean).length
   const count = Number.isFinite(titleCount) && titleCount > 0 ? titleCount : targetCount
+  const ids = token.target.split(',').map(id => id.trim()).filter(Boolean)
 
   return {
     title: count > 0 ? $t('窗口') : $t('选择窗口'),
     count: count > 0 ? String(count) : '',
+    details: count > 0 ? formatAgentProfileDetails(getCachedAgentProfileLabels(ids), count) : '',
   }
 }
 

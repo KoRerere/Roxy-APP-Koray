@@ -515,3 +515,27 @@ export async function parseTextFile(file: File) {
 export function getDefaultWindowName() {
   return $t('未命名窗口')
 }
+
+/**
+ * 与单窗创建一致：`yyMMdd-下一个窗口序号`。
+ * 接口失败时返回 undefined，调用方保持空名称。
+ */
+export async function fetchDefaultWindowName(): Promise<string | undefined> {
+  try {
+    const { code, data } = await API.window.userGetWindowSortNumList()
+    if (code !== 0 || data?.windowSortNum == null)
+      return undefined
+
+    const sortNum = data.windowSortNum || 1
+    return `${format(new Date(), 'yyMMdd')}-${sortNum}`
+  }
+  catch (error) {
+    console.error('[fetchDefaultWindowName] failed to resolve window name', error)
+    return undefined
+  }
+}
+
+/** 用户是否已填写窗口名称（空白视为未设置） */
+export function hasWindowName(value: unknown) {
+  return Boolean(String(value ?? '').trim())
+}

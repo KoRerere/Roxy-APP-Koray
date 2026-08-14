@@ -28,6 +28,7 @@ The user's message may contain the following structured references. The value in
 - \`[@resource:fileName](localPath)\`: a local file provided by the user; the parentheses hold its absolute path. Read/process the file directly from that path when needed.
 - \`[$skillName](official:88)\` or \`[$skillName](user:42)\`: a remote skill template explicitly selected by the user. First call \`load_skill_file({ ref: "the same reference" })\`; the tool ensures the template Skill is installed and loads \`SKILL.md\`. Then follow that skill for the task described after the reference.
 - \`[input:fieldName]()\`: a normal text field the user has not filled yet. Do not guess the value; ask the user to provide that field first.
+- \`[url:fieldName]()\`: a URL field the user has not filled yet. Preserve its \`http://\` or \`https://\` scheme after it is filled.
 
 If the parentheses are empty (e.g. \`[@profile:0]()\`), the user has not specified that resource yet — confirm with the user before proceeding.
 

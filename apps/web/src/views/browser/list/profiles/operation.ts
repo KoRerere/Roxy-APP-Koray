@@ -308,6 +308,17 @@ export function getOperation(row: any = {}) {
       },
     },
     {
+      name: 'createAutomation',
+      label: $t('AI 自动化'),
+      icon: 'roxy-agent/rx-ic-create-automation-actionbar',
+      multiple: true,
+      multipleProps: {
+        name: 'G1.5',
+        showLabel: true,
+      },
+      power: check('Roxy_AI_Agent_All'),
+    },
+    {
       name: 'close',
       label: $t('关闭窗口'),
       icon: 'base/rx_ic_shut_down',

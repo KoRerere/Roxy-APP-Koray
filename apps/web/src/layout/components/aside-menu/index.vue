@@ -159,9 +159,9 @@ function toCreateAccount() {
 
 <template>
   <aside class="relative -mt-6.5 pt-5.25 -mb-3 pb-3 -ml-0.5 pl-0.5 -mr-0.75 pr-0.75 flex-1 flex flex-col self-stretch gap-3 aside" :class="{ collapsed }">
-    <div v-if="check('Profiles_add') && (ctx.isNormal || ctx.isEcommerce)" class="flex items-center gap-2">
-      <RxButton v-if="ctx.isNormal" id="NEW_PROFILE" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
-      <RxButton v-if="ctx.isEcommerce" id="NEW_ACCOUNT" class="!h-9 new-profile-btn" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建账号')" @click="toCreateAccount" />
+    <div v-if="check('Profiles_add') && (ctx.isNormal || ctx.isEcommerce)" class="flex items-center gap-1.5">
+      <RxButton v-if="ctx.isNormal" id="NEW_PROFILE" class="!h-9 new-profile-btn" size="md" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建窗口')" @click="toCreateBrowser" />
+      <RxButton v-if="ctx.isEcommerce" id="NEW_ACCOUNT" class="!h-9 new-profile-btn" size="md" icon="base/rx_ic_browser_add" :label="collapsed ? undefined : $t('创建账号')" @click="toCreateAccount" />
     </div>
     <div class="relative flex-1 min-h-0 overflow-hidden">
       <nav class="h-full flex flex-col items-start self-stretch gap-3 overflow-y-auto menu">
@@ -216,11 +216,12 @@ function toCreateAccount() {
 
 .new-profile-btn {
   flex: 1;
+  min-width: 0;
   position: relative;
   flex-shrink: 0;
   white-space: nowrap;
   word-break: keep-all;
-  font-size: 14px;
+  font-size: 13px;
   z-index: 10;
 }
 

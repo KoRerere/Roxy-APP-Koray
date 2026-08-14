@@ -264,7 +264,7 @@ function onAsideBuy() {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
+  padding: 0 4px;
   border: 0;
   border-radius: 7.5px;
   background: linear-gradient(113.67deg, #12a3fc 0%, #c36df4 100%);

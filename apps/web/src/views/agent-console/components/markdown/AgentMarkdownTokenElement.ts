@@ -7,6 +7,12 @@ const styles = `
   vertical-align: middle;
 }
 
+:host([kind="profile"]) {
+  width: max-content;
+  max-width: none;
+  white-space: nowrap;
+}
+
 .agent-token {
   display: inline-flex;
   max-width: 280px;
@@ -46,28 +52,71 @@ const styles = `
   text-overflow: ellipsis;
 }
 
-.agent-token__count {
+.agent-token__profile-prefix,
+.agent-token__profile-detail {
   display: inline-flex;
-  min-width: 16px;
-  height: 16px;
+  width: max-content;
+  min-height: 24px;
+  flex: none;
   align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-radius: 30px;
-  color: var(--color-text-tag-purple, #5925dc);
-  background: var(--color-bg-tag-purple-hover, #d9d6fe);
   box-sizing: border-box;
-  font-size: 12px;
-  line-height: 12px;
+  gap: 4px;
+  padding: 2px 6px;
 }
 
-.agent-token--profile {
-  color: var(--color-text-tag-purple, #5925dc);
+.agent-token__profile-prefix {
+  border-radius: 8px 0 0 8px;
   background: var(--color-bg-tag-purple, #ebe9fe);
 }
 
+.agent-token__profile-detail {
+  min-width: 0;
+  border-radius: 0 8px 8px 0;
+  background: var(--color-bg-tag-purple-hover, #d9d6fe);
+}
+
+.agent-token__profile-names {
+  flex: none;
+  white-space: nowrap;
+}
+
+.agent-token__remove {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 12px;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.agent-token--profile {
+  width: max-content;
+  max-width: none;
+  flex: none;
+  color: var(--color-text-tag-purple, #5925dc);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.agent-token--profile .agent-token__label {
+  overflow: visible;
+  flex: none;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.agent-token--profile:not(.agent-token--profile-empty) {
+  gap: 0;
+  padding: 0;
+}
+
 .agent-token--profile-empty {
+  gap: 4px;
+  padding: 2px 6px;
   border: 1px dashed #7a5af8;
+  background: var(--color-bg-tag-purple, #ebe9fe);
 }
 
 .agent-token--skill {
@@ -80,7 +129,8 @@ const styles = `
   background: var(--color-bg-tag-blue, #d1e9ff);
 }
 
-.agent-token--input {
+.agent-token--input,
+.agent-token--url {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
 }
@@ -111,11 +161,10 @@ const styles = `
 }
 `
 
-
-export type AgentMarkdownTokenKind = 'profile' | 'skill' | 'script' | 'input'
+export type AgentMarkdownTokenKind = 'profile' | 'skill' | 'script' | 'input' | 'url'
 
 export function normalizeAgentMarkdownTokenKind(kind: unknown): AgentMarkdownTokenKind {
-  return kind === 'profile' || kind === 'skill' || kind === 'script' || kind === 'input'
+  return kind === 'profile' || kind === 'skill' || kind === 'script' || kind === 'input' || kind === 'url'
     ? kind
     : 'skill'
 }
@@ -125,7 +174,7 @@ export function getAgentMarkdownTokenLabel(
   title: string,
   target: string,
 ) {
-  return kind === 'input' ? target.trim() || title : title
+  return kind === 'input' || kind === 'url' ? target.trim() || title : title
 }
 
 const AgentMarkdownTokenElement = defineCustomElement({
@@ -134,6 +183,7 @@ const AgentMarkdownTokenElement = defineCustomElement({
     title: { type: String, default: '' },
     target: { type: String, default: '' },
     count: { type: String, default: '' },
+    details: { type: String, default: '' },
   },
   styles: [styles],
   render() {
@@ -141,7 +191,7 @@ const AgentMarkdownTokenElement = defineCustomElement({
     const iconName = getAgentTokenIconName(kind)
     const count = kind === 'profile' ? this.count.trim() : ''
     const isEmptyProfile = kind === 'profile' && !this.target.trim()
-    const isEmptyInput = kind === 'input' && !this.target.trim()
+    const isEmptyInput = (kind === 'input' || kind === 'url') && !this.target.trim()
     const label = getAgentMarkdownTokenLabel(kind, this.title, this.target)
 
     return h('span', {
@@ -156,18 +206,30 @@ const AgentMarkdownTokenElement = defineCustomElement({
       'data-title': this.title,
       'data-target': this.target,
       'data-count': count,
+      'data-details': this.details,
     }, [
-      h('span', { class: 'agent-token__icon' }, [
-        h('roxy-svg-icon', {
-          name: iconName,
-          fallback: iconName,
-          size: 16,
-        }),
-      ]),
-      h('span', { class: 'agent-token__label' }, label),
       ...(count
-        ? [h('span', { class: 'agent-token__count' }, count)]
-        : []),
+        ? [
+            h('span', { class: 'agent-token__profile-prefix' }, [
+              h('span', { class: 'agent-token__icon' }, [
+                h('roxy-svg-icon', { name: iconName, fallback: iconName, size: 16 }),
+              ]),
+              h('span', { class: 'agent-token__label' }, label),
+            ]),
+            h('span', { class: 'agent-token__profile-detail' }, [
+              h('span', { class: 'agent-token__profile-names' }, this.details),
+            ]),
+          ]
+        : [
+            h('span', { class: 'agent-token__icon' }, [
+              h('roxy-svg-icon', {
+                name: iconName,
+                fallback: iconName,
+                size: 16,
+              }),
+            ]),
+            h('span', { class: 'agent-token__label' }, label),
+          ]),
     ])
   },
 })
@@ -178,6 +240,9 @@ function getAgentTokenIconName(kind: string) {
 
   if (kind === 'input')
     return 'roxy-agent/rx-ic-prompts'
+
+  if (kind === 'url')
+    return 'roxy-agent/rx-ic-url'
 
   if (kind === 'script')
     return 'roxy-agent/rx-ic-scripts'

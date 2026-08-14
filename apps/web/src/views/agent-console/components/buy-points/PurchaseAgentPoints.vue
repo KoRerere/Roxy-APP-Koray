@@ -180,11 +180,11 @@ const BENEFIT_ITEMS = [
     tooltip: $t('通用模式下，Agent 自主在 TikTok 发布一个视频，消耗约 {n} 积分', { n: '{n}' }),
     divisor: 2,
   },
-  {
-    keypath: $t('可生成约 {n} 个素材', { n: '{n}' }),
-    tooltip: $t('通用模式下，Agent 生成 1 个图片素材消耗约 {n} 积分', { n: '{n}' }),
-    divisor: 8,
-  },
+  // {
+  //   keypath: $t('可生成约 {n} 个素材', { n: '{n}' }),
+  //   tooltip: $t('通用模式下，Agent 生成 1 个图片素材消耗约 {n} 积分', { n: '{n}' }),
+  //   divisor: 8,
+  // },
   {
     keypath: $t('竞品数据采集约 {n} 次', { n: '{n}' }),
     tooltip: $t('通用模式下，Agent 完成 1 次竞品网站数据收集消耗约 {n} 积分', { n: '{n}' }),

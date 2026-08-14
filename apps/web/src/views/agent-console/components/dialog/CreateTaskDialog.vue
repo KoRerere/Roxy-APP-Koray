@@ -48,6 +48,7 @@ interface CreateTaskDialogData {
 }
 
 const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')
+const router = useRouter()
 
 function getDialogData(): CreateTaskDialogData {
   return (dialogRef?.value.data ?? {}) as CreateTaskDialogData
@@ -253,6 +254,11 @@ async function closeDialog() {
   dialogRef?.value.close()
 }
 
+async function openTemplateStore() {
+  await closeDialog()
+  await router.push({ name: 'agent-console-template-store' })
+}
+
 async function saveTask() {
   if (windowOptionsLoading.value)
     return
@@ -359,12 +365,24 @@ onBeforeUnmount(() => {
       </AgentFormField>
 
       <AgentFormField :label="$t('任务模板')">
-        <AgentSelect
-          v-model="selectedTemplateId"
-          :options="templateOptions"
-          :placeholder="$t('请选择任务模板')"
-          :disabled="templateLocked || saving"
-        />
+        <div class="template-picker-row">
+          <AgentSelect
+            v-model="selectedTemplateId"
+            class="template-select"
+            :options="templateOptions"
+            :placeholder="$t('请选择任务模板')"
+            :disabled="templateLocked || saving"
+          />
+          <button
+            v-if="!editing"
+            class="template-more-button"
+            type="button"
+            @click="openTemplateStore"
+          >
+            <SvgIcon name="roxy-agent/rx-ic-templates-store" size="18" />
+            <span>{{ $t('更多模板') }}</span>
+          </button>
+        </div>
         <p v-if="editing" class="field-hint">
           {{ $t('任务创建后不可更换来源模板。') }}
         </p>
@@ -576,6 +594,47 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 12px;
   line-height: 16px;
+}
+
+.template-picker-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-select {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.template-more-button {
+  display: inline-flex;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid #ee46bc;
+  border-radius: 10px;
+  color: #ee46bc;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+
+  &:hover {
+    background: #fce7f6;
+  }
+}
+
+:global(html[data-theme='dark'] .template-more-button:hover),
+:global(html.app-dark .template-more-button:hover) {
+  background: #300f27;
 }
 
 .field-hint,

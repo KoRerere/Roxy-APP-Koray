@@ -3,6 +3,7 @@ import Link from '@tiptap/extension-link'
 import { Suggestion } from '@tiptap/suggestion'
 import type { AgentComposerItem, AgentComposerTokenKind } from './types'
 import { tokenToProtocol } from './protocol'
+import { formatAgentProfileDetails, getAgentProfileLabelsFromPayload } from '../../profile-token-display'
 
 export const ComposerLink = Link.extend({
   inclusive: false,
@@ -67,7 +68,12 @@ export const AgentToken = Node.create({
     const iconName = attrs.iconName || getAgentTokenIconName(kind)
     const label = getAgentTokenLabel(attrs)
     const profileCount = getProfileTokenCount(attrs)
-    const isEmptyInput = kind === 'input' && !attrs.payload.value?.trim()
+    const profileDetails = formatAgentProfileDetails(
+      getAgentProfileLabelsFromPayload(attrs.payload),
+      profileCount,
+      getProfileTokenDirIds(attrs),
+    )
+    const isEmptyInput = (kind === 'input' || kind === 'url') && !attrs.payload.value?.trim()
     const isEmptyProfile = kind === 'profile' && profileCount === 0
 
     return [
@@ -89,31 +95,50 @@ export const AgentToken = Node.create({
           isEmptyProfile ? 'agent-token--profile-empty' : '',
         ].filter(Boolean).join(' '),
       }),
-      [
-        'span',
-        { class: 'agent-token__icon' },
-        [
-          'roxy-svg-icon',
-          {
-            name: iconName,
-            fallback: getAgentTokenIconName(kind),
-            size: 16,
-          },
-        ],
-      ],
-      [
-        'span',
-        { class: 'agent-token__label' },
-        label,
-      ],
       ...(kind === 'profile' && profileCount > 0
-        ? [[
-            'span',
-            { class: 'agent-token__count' },
-            String(profileCount),
-          ]]
-        : []),
-      ...(kind === 'input'
+        ? [
+            [
+              'span',
+              { class: 'agent-token__profile-prefix' },
+              [
+                'span',
+                { class: 'agent-token__icon' },
+                [
+                  'roxy-svg-icon',
+                  {
+                    name: iconName,
+                    fallback: getAgentTokenIconName(kind),
+                    size: 16,
+                  },
+                ],
+              ],
+              [
+                'span',
+                { class: 'agent-token__label' },
+                label,
+              ],
+            ],
+            [
+              'span',
+              { class: 'agent-token__profile-detail' },
+              ['span', { class: 'agent-token__profile-names' }, profileDetails],
+              ['span', {
+                'aria-label': 'Remove token',
+                'contenteditable': 'false',
+                'data-agent-token-remove': '',
+                'role': 'button',
+                'class': 'agent-token__remove',
+              }, ['roxy-svg-icon', { name: 'base/rx_ic_delete', size: 12 }]],
+            ],
+          ]
+        : [
+            ['span', { class: 'agent-token__icon' }, [
+              'roxy-svg-icon',
+              { name: iconName, fallback: getAgentTokenIconName(kind), size: 16 },
+            ]],
+            ['span', { class: 'agent-token__label' }, label],
+          ]),
+      ...(kind === 'input' || kind === 'url' || (kind === 'profile' && profileCount > 0)
         ? []
         : [[
             'span',
@@ -174,12 +199,15 @@ function parseTokenPayload(payload: string) {
 }
 
 export function normalizeTokenKind(kind: string): AgentComposerTokenKind {
-  return kind === 'profile' || kind === 'script' || kind === 'skill' || kind === 'input' ? kind : 'skill'
+  return kind === 'profile' || kind === 'script' || kind === 'skill' || kind === 'input' || kind === 'url' ? kind : 'skill'
 }
 
 export function getAgentTokenIconName(kind: AgentComposerTokenKind) {
   if (kind === 'input')
     return 'roxy-agent/rx-ic-prompts'
+
+  if (kind === 'url')
+    return 'roxy-agent/rx-ic-url'
 
   if (kind === 'profile')
     return 'roxy-agent/rx-ic-token-profile'
@@ -194,7 +222,7 @@ function getAgentTokenLabel(attrs: AgentComposerItem) {
   if (attrs.kind === 'profile')
     return getProfileTokenCount(attrs) > 0 ? $t('窗口') : $t('选择窗口')
 
-  if (attrs.kind !== 'input')
+  if (attrs.kind !== 'input' && attrs.kind !== 'url')
     return attrs.title
 
   return attrs.payload.value?.trim() || attrs.title
@@ -216,4 +244,14 @@ function getProfileTokenCount(attrs: AgentComposerItem) {
 
   const count = Number(attrs.payload.count)
   return Number.isFinite(count) ? count : 0
+}
+
+function getProfileTokenDirIds(attrs: AgentComposerItem) {
+  if (attrs.kind !== 'profile')
+    return []
+
+  return (attrs.payload.dirIds || attrs.payload.dirId || attrs.id || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
 }

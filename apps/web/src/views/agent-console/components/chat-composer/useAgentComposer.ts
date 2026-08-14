@@ -5,6 +5,11 @@ import { useEditor } from '@tiptap/vue-3'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import {
+  ensureAgentProfileLabelsForPrompt,
+  getAgentProfileIdsFromPrompt,
+} from '../../profile-token-display'
+import { fetchTaskWindowOptionsByDirIds } from '../../task-window-options'
 import { AgentToken, ComposerLink, createSlashCommandExtension, getAgentTokenIconName } from './extensions'
 import { readProjectSelection, writeProjectSelection } from './projectSelectionCache'
 import {
@@ -44,6 +49,7 @@ const ALL_PROJECTS_VALUE = '__all__'
 export function useAgentComposer(options: {
   model: Ref<string>
   editable?: Readonly<Ref<boolean>>
+  contentKey?: Readonly<Ref<number | string | undefined>>
   onChooseItem?: (item: AgentComposerItem) => boolean | AgentComposerItem | Promise<boolean | AgentComposerItem>
   onSend: () => void
   recommendedSlashItems?: Readonly<Ref<AgentComposerItem[]>>
@@ -67,7 +73,6 @@ export function useAgentComposer(options: {
     unread: isComposerTemplateUnread(unreadTemplateDrawerKeys.value, item),
   })))
   const loaded = reactive({ profile: false, slash: false })
-  const updatingFromEditor = ref(false)
   const preserveMentionSuggestion = ref(false)
   const pendingMentionIds = ref<Set<string>>(new Set())
   const profileQuery = ref('')
@@ -81,6 +86,7 @@ export function useAgentComposer(options: {
   const completeProfileItems = ref<AgentComposerItem[] | undefined>()
   const inputEditor = reactive({
     open: false,
+    kind: 'input' as 'input' | 'url',
     label: '',
     value: '',
     nodePos: 0,
@@ -92,6 +98,7 @@ export function useAgentComposer(options: {
   let selectionScrollFrame = 0
   let slashItemsPromise: Promise<void> | undefined
   let projectOptionsPromise: Promise<void> | undefined
+  let promptRenderSequence = 0
 
   const suggestion = reactive<AgentComposerSuggestionState>({
     open: false,
@@ -106,13 +113,16 @@ export function useAgentComposer(options: {
   void loadProfiles()
   void loadProjectOptions()
 
+  const initialPrompt = options.model.value
   const editor = useEditor({
     autofocus: false,
     editable: options.editable?.value ?? true,
-    content: parsePromptString(options.model.value, {
-      profiles: profileItems.value,
-      slashItems: slashItems.value,
-    }),
+    content: getAgentProfileIdsFromPrompt(initialPrompt).length
+      ? ''
+      : parsePromptString(initialPrompt, {
+          profiles: profileItems.value,
+          slashItems: slashItems.value,
+        }),
     extensions: [
       StarterKit.configure({
         heading: false,
@@ -274,7 +284,7 @@ export function useAgentComposer(options: {
           return true
         }
 
-        if (node.type.name === 'agentToken' && node.attrs.kind === 'input') {
+        if (node.type.name === 'agentToken' && (node.attrs.kind === 'input' || node.attrs.kind === 'url')) {
           event.preventDefault()
           openInputTokenEditor(node, nodePos, target?.closest('.agent-token, .mention') as HTMLElement | null)
           return true
@@ -299,13 +309,8 @@ export function useAgentComposer(options: {
     onUpdate: ({ editor }) => {
       const nextValue = serializePromptDoc(editor.getJSON())
 
-      if (options.model.value !== nextValue) {
-        updatingFromEditor.value = true
+      if (options.model.value !== nextValue)
         options.model.value = nextValue
-        queueMicrotask(() => {
-          updatingFromEditor.value = false
-        })
-      }
 
       scheduleSelectionScroll(editor)
     },
@@ -315,22 +320,67 @@ export function useAgentComposer(options: {
   const canSubmit = computed(() => Boolean(options.model.value.trim()))
   const isEmpty = computed(() => !options.model.value.trim())
 
+  watch(editor, (activeEditor) => {
+    if (!activeEditor)
+      return
+
+    const value = options.model.value
+    const currentValue = serializePromptDoc(activeEditor.getJSON())
+    if (currentValue !== value)
+      void renderPromptAfterProfileLabelsLoad(value)
+  }, { immediate: true })
+
   watch(
-    () => options.model.value,
-    (value) => {
-      if (updatingFromEditor.value || !editor.value)
+    () => [options.model.value, options.contentKey?.value] as const,
+    ([value, contentKey], previous) => {
+      if (!editor.value)
         return
 
       const currentValue = serializePromptDoc(editor.value.getJSON())
-      if (currentValue === value)
+      const contentKeyChanged = contentKey !== previous?.[1]
+      if (!contentKeyChanged && currentValue === value)
         return
 
-      editor.value.commands.setContent(parsePromptString(value, {
-        profiles: profileItems.value,
-        slashItems: slashItems.value,
-      }))
+      void renderPromptAfterProfileLabelsLoad(value)
     },
   )
+
+  async function renderPromptAfterProfileLabelsLoad(value: string) {
+    const renderSequence = ++promptRenderSequence
+
+    try {
+      await ensureAgentProfileLabelsForPrompt(value, async (ids) => {
+        const windows = await fetchTaskWindowOptionsByDirIds(
+          ids,
+          workspaceStore.currentWorkspace?.workspaceName,
+        )
+        return windows.map(window => ({
+          id: window.id,
+          label: window.code || window.name || window.id,
+        }))
+      })
+    }
+    catch (error) {
+      console.error('Failed to load Agent composer profile labels:', error)
+      return
+    }
+
+    if (
+      renderSequence !== promptRenderSequence
+      || options.model.value !== value
+      || !editor.value
+    ) {
+      return
+    }
+
+    editor.value.commands.setContent(
+      parsePromptString(value, {
+        profiles: profileItems.value,
+        slashItems: slashItems.value,
+      }),
+      { emitUpdate: false },
+    )
+  }
 
   watch(
     () => options.editable?.value,
@@ -470,6 +520,7 @@ export function useAgentComposer(options: {
   function openInputTokenEditor(node: any, nodePos: number, anchorEl?: HTMLElement | null) {
     closeSuggestion()
     inputEditor.open = true
+    inputEditor.kind = node.attrs.kind === 'url' ? 'url' : 'input'
     inputEditor.label = node.attrs.title || node.attrs.label || node.attrs.id
     inputEditor.value = node.attrs.payload?.value || ''
     inputEditor.nodePos = nodePos
@@ -488,7 +539,7 @@ export function useAgentComposer(options: {
     if (!activeEditor || !inputEditor.open)
       return
 
-    const updatedDoc = updateInputTokenValue(activeEditor.getJSON(), inputEditor.label, value.trim())
+    const updatedDoc = updateInputTokenValue(activeEditor.getJSON(), inputEditor.label, value.trim(), inputEditor.kind)
     activeEditor.commands.setContent(updatedDoc ?? activeEditor.getJSON())
     activeEditor.view.focus()
     inputEditor.open = false

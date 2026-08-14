@@ -124,7 +124,7 @@ onBeforeUnmount(() => {
           <SvgIcon
             v-else
             :name="defaultIcon.name"
-            size="44"
+            size="32"
             :color="defaultIcon.color"
             aria-hidden="true"
           />

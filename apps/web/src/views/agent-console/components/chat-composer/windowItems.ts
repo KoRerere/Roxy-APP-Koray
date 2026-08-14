@@ -1,5 +1,6 @@
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { API } from '/@/api'
+import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 import { getAgentOpenedWindowIds } from '../../opened-window-state'
 import {
   getAgentWindowDisplay,
@@ -26,6 +27,12 @@ function mapWindowComposerItem(row: WindowRow, workspaceName?: string): AgentCom
 
   const display = getAgentWindowDisplay(row)
   const title = display.name || formatWindowFallback(row)
+  const prefix = getWorkspaceNamePrefix(row.workspaceName || workspaceName)
+  const windowCode = row.windowSortNum == null
+    ? ''
+    : prefix
+      ? `${prefix}-${row.windowSortNum}`
+      : String(row.windowSortNum)
 
   if (!title)
     return undefined
@@ -48,6 +55,7 @@ function mapWindowComposerItem(row: WindowRow, workspaceName?: string): AgentCom
       projectName: row.projectName || '',
       workspaceName: row.workspaceName || workspaceName || '',
       windowSortNum: row.windowSortNum?.toString() || '',
+      displayLabel: windowCode || display.name || row.dirId,
     },
   }
 }

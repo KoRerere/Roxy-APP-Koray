@@ -2,6 +2,14 @@
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { supportsApp4_0_0 } from '/@/utils/app-supports'
 import { renderMarkdown } from '../utils/markdown'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { fetchTaskWindowOptionsByDirIds } from '../task-window-options'
+import {
+  agentProfileLabelVersion,
+  cacheAgentProfileLabels,
+  getAgentProfileIdsFromPrompt,
+  getUncachedAgentProfileIds,
+} from '../profile-token-display'
 import { registerAgentMarkdownTableCopyElement } from './markdown/AgentMarkdownTableCopyElement'
 import { registerAgentMarkdownTokenElement } from './markdown/AgentMarkdownTokenElement'
 import '../styles/markdown.scss'
@@ -19,9 +27,35 @@ registerAgentMarkdownTokenElement()
 registerAgentMarkdownTableCopyElement()
 
 const [, onlyErrorToast] = useResponseToast()
+const workspaceStore = useWorkspaceStore()
 const html = computed(() => renderMarkdown(props.content, {
+  labelVersion: agentProfileLabelVersion.value,
   preserveLineBreaks: props.preserveLineBreaks,
 }))
+
+watch(
+  () => props.content,
+  async (content) => {
+    const missingIds = getUncachedAgentProfileIds(getAgentProfileIdsFromPrompt(content))
+    if (!missingIds.length)
+      return
+
+    try {
+      const options = await fetchTaskWindowOptionsByDirIds(
+        missingIds,
+        workspaceStore.currentWorkspace?.workspaceName,
+      )
+      cacheAgentProfileLabels(options.map(option => ({
+        id: option.id,
+        label: option.code || option.name || option.id,
+      })))
+    }
+    catch (error) {
+      console.error('Failed to load Agent profile token labels:', error)
+    }
+  },
+  { immediate: true },
+)
 
 function handleMarkdownClick(event: MouseEvent) {
   if (!(event.target instanceof Element))
