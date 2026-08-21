@@ -427,7 +427,7 @@ describe('input protocol tokens', () => {
     assert.deepEqual(getMissingComposerTokenLabels(serializePromptDoc(doc)), [])
   })
 
-  it('serializes filled input chips as plain text', () => {
+  it('preserves filled input chips in the serialized prompt', () => {
     const doc = {
       type: 'doc',
       content: [{
@@ -451,7 +451,7 @@ describe('input protocol tokens', () => {
       }],
     }
 
-    assert.equal(serializePromptDoc(doc), '我的产品：XX榨汁杯')
+    assert.equal(serializePromptDoc(doc), '我的产品：[input:产品名](XX榨汁杯)')
   })
 
   it('reports empty input tokens when a skill is referenced', () => {
@@ -511,7 +511,7 @@ describe('input protocol tokens', () => {
 
     assert.equal(
       serializePromptDoc(updateInputTokenValue(doc, '产品名', 'XX榨汁杯')),
-      'XX榨汁杯 / XX榨汁杯',
+      '[input:产品名](XX榨汁杯) / [input:产品名](XX榨汁杯)',
     )
   })
 })

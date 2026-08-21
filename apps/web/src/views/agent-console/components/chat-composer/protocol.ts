@@ -158,10 +158,7 @@ function inputTokenToProtocol(item: AgentComposerItem) {
   if (item.kind === 'url')
     return `[url:${item.title || item.id}](${normalizeUrlValue(value)})`
 
-  if (value)
-    return value
-
-  return `[input:${item.title || item.id}]()`
+  return `[input:${item.title || item.id}](${value ?? ''})`
 }
 
 export function templateItemToPrompt(
