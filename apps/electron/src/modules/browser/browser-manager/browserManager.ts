@@ -7,7 +7,7 @@ import { app } from 'electron'
 import { debounce, isPlainObject } from 'es-toolkit'
 import { readdir, readFile, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
-import { scheduler, setTimeout } from 'node:timers/promises'
+import { setTimeout } from 'node:timers/promises'
 import pLimit from 'p-limit'
 import { API } from '/@/api'
 import { Role } from '/@/constants/common'
@@ -239,6 +239,11 @@ export class BrowserManager {
     }
   }
 
+  /** 通过全局启动池启动浏览器，最多同时启动 5 个 */
+  async launchWithLimit(winInfo: WindowItemType, launchBy?: LaunchBy) {
+    return batchLaunchLimit(() => this.launch(winInfo, launchBy))
+  }
+
   /** 批量启动浏览器 */
   async batchLaunch(dirIds: string[], options?: {
     workspaceId?: number
@@ -264,17 +269,17 @@ export class BrowserManager {
     const winInfoList = await this.getWindowList(firstBatch, workspaceId).catch(() => [])
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
 
-    const launchTasks = winInfoList.map(winInfo => batchLaunchLimit(() => this.launch(mergeLaunchPayload(winInfo)).catch((error) => {
+    const launchTasks = winInfoList.map(winInfo => this.launchWithLimit(mergeLaunchPayload(winInfo)).catch((error) => {
       console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
-    })))
+    }))
 
     for (let i = 0; i < remainingIds.length; i += 15) {
       const batchIds = remainingIds.slice(i, i + 15)
       const batchWinInfoList = await this.getWindowList(batchIds, workspaceId).catch(() => [])
 
-      const batchTasks = batchWinInfoList.map(winInfo => batchLaunchLimit(() => this.launch(mergeLaunchPayload(winInfo)).catch((error) => {
+      const batchTasks = batchWinInfoList.map(winInfo => this.launchWithLimit(mergeLaunchPayload(winInfo)).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === Launch failed`, error)
-      })))
+      }))
 
       launchTasks.push(...batchTasks)
       await setTimeout(1500)

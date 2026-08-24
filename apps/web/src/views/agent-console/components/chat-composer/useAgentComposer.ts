@@ -14,10 +14,10 @@ import { AgentToken, ComposerLink, createSlashCommandExtension, getAgentTokenIco
 import { readProjectSelection, writeProjectSelection } from './projectSelectionCache'
 import {
   composerItemToNode,
-  createProfileAggregateItem,
   getProfileDirIds,
   hasComposerProtocolTokens,
   parsePromptString,
+  resolveProfileSelectionItem,
   searchComposerItems,
   serializePromptDoc,
   templateItemToPrompt,
@@ -28,9 +28,15 @@ import {
   getComposerSelectionBehavior,
   getNextSuggestionIndex,
   getPromptTokenTargets,
+  shouldAppendComposerItemSpace,
 } from './selection'
 import type { SuggestionNavigationDirection } from './selection'
-import { mapUserTemplateComposerItem, mergeTemplateComposerItems } from './templateItems'
+import {
+  getAgentSkillInstalledRoot,
+  mapUserTemplateComposerItem,
+  mergeTemplateComposerItems,
+  setAgentSkillInstalledRoot,
+} from './templateItems'
 import type { AgentComposerItem, AgentComposerProjectOption, AgentComposerSuggestionKind, AgentComposerSuggestionState } from './types'
 import { fetchAgentComposerWindowsPage, fetchAllAgentComposerWindows } from './windowItems'
 import { useAgentConsoleApi } from '../../api'
@@ -94,7 +100,7 @@ export function useAgentComposer(options: {
     anchorEl: null as HTMLElement | null,
   })
   let profileRequestSequence = 0
-  let profileSearchTimer: ReturnType<typeof window.setTimeout> | undefined
+  let profileSearchTimer: number | undefined
   let selectionScrollFrame = 0
   let slashItemsPromise: Promise<void> | undefined
   let projectOptionsPromise: Promise<void> | undefined
@@ -223,20 +229,25 @@ export function useAgentComposer(options: {
         'aria-label': 'Roxy AI Agent prompt composer',
       },
       handleKeyDown(_view, event) {
-        if (options.editable?.value === false || options.submitOnEnter === false)
+        if (options.editable?.value === false || options.submitOnEnter === false) {
           return false
+        }
 
-        if (event.key !== 'Enter')
+        if (event.key !== 'Enter') {
           return false
+        }
 
-        if (suggestion.open)
+        if (suggestion.open) {
           return false
+        }
 
-        if (event.isComposing || event.keyCode === 229)
+        if (event.isComposing || event.keyCode === 229) {
           return false
+        }
 
-        if (event.shiftKey)
+        if (event.shiftKey) {
           return false
+        }
 
         if (!event.altKey) {
           event.preventDefault()
@@ -247,21 +258,24 @@ export function useAgentComposer(options: {
         return false
       },
       handlePaste(_view, event) {
-        if (options.editable?.value === false)
+        if (options.editable?.value === false) {
           return false
+        }
 
         const text = event.clipboardData?.getData('text/plain') ?? ''
 
-        if (!hasComposerProtocolTokens(text))
+        if (!hasComposerProtocolTokens(text)) {
           return false
+        }
 
         const content = promptTextToInsertContent(text, {
           profiles: profileItems.value,
           slashItems: slashItems.value,
         })
 
-        if (!content.length)
+        if (!content.length) {
           return false
+        }
 
         event.preventDefault()
         closeSuggestion()
@@ -269,11 +283,13 @@ export function useAgentComposer(options: {
         return true
       },
       handleClickOn(_view, _pos, node, nodePos, event, direct) {
-        if (options.editable?.value === false)
+        if (options.editable?.value === false) {
           return false
+        }
 
-        if (!direct || (node.type.name !== 'mention' && node.type.name !== 'agentToken'))
+        if (!direct || (node.type.name !== 'mention' && node.type.name !== 'agentToken')) {
           return false
+        }
 
         const target = event.target as HTMLElement | null
         if (target?.closest('[data-agent-token-remove]')) {
@@ -290,8 +306,9 @@ export function useAgentComposer(options: {
           return true
         }
 
-        if (node.type.name === 'agentToken' && node.attrs.kind !== 'profile')
+        if (node.type.name === 'agentToken' && node.attrs.kind !== 'profile') {
           return false
+        }
 
         event.preventDefault()
         void openTokenPicker(node, nodePos)
@@ -300,8 +317,9 @@ export function useAgentComposer(options: {
       handleClick(_view, _pos, event) {
         const target = event.target as HTMLElement | null
 
-        if (suggestion.open && !target?.closest('.agent-token, .mention'))
+        if (suggestion.open && !target?.closest('.agent-token, .mention')) {
           dismissSuggestion()
+        }
 
         return false
       },
@@ -309,8 +327,9 @@ export function useAgentComposer(options: {
     onUpdate: ({ editor }) => {
       const nextValue = serializePromptDoc(editor.getJSON())
 
-      if (options.model.value !== nextValue)
+      if (options.model.value !== nextValue) {
         options.model.value = nextValue
+      }
 
       scheduleSelectionScroll(editor)
     },
@@ -321,25 +340,29 @@ export function useAgentComposer(options: {
   const isEmpty = computed(() => !options.model.value.trim())
 
   watch(editor, (activeEditor) => {
-    if (!activeEditor)
+    if (!activeEditor) {
       return
+    }
 
     const value = options.model.value
     const currentValue = serializePromptDoc(activeEditor.getJSON())
-    if (currentValue !== value)
+    if (currentValue !== value) {
       void renderPromptAfterProfileLabelsLoad(value)
+    }
   }, { immediate: true })
 
   watch(
     () => [options.model.value, options.contentKey?.value] as const,
     ([value, contentKey], previous) => {
-      if (!editor.value)
+      if (!editor.value) {
         return
+      }
 
       const currentValue = serializePromptDoc(editor.value.getJSON())
       const contentKeyChanged = contentKey !== previous?.[1]
-      if (!contentKeyChanged && currentValue === value)
+      if (!contentKeyChanged && currentValue === value) {
         return
+      }
 
       void renderPromptAfterProfileLabelsLoad(value)
     },
@@ -401,8 +424,9 @@ export function useAgentComposer(options: {
       },
       onUpdate: (props: any) => syncSuggestionPosition(props, kind),
       onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-        if (!suggestion.open)
+        if (!suggestion.open) {
           return false
+        }
 
         if (event.key === 'ArrowDown') {
           event.preventDefault()
@@ -476,13 +500,15 @@ export function useAgentComposer(options: {
     suggestion.range = next.range
     suggestion.activeIndex = Math.max(activeIndex, 0)
 
-    if (next.kind === 'mention')
+    if (next.kind === 'mention') {
       resetPendingMentionIds()
+    }
   }
 
   function handleSuggestionExit() {
-    if (preserveMentionSuggestion.value && suggestion.kind === 'mention')
+    if (preserveMentionSuggestion.value && suggestion.kind === 'mention') {
       return
+    }
 
     closeSuggestion()
   }
@@ -513,8 +539,9 @@ export function useAgentComposer(options: {
     // Reuse Tiptap Suggestion's native Escape path so the current trigger range stays dismissed.
     const handled = activeEditor.view.someProp('handleKeyDown', handler => handler(activeEditor.view, event))
 
-    if (!handled)
+    if (!handled) {
       closeSuggestion()
+    }
   }
 
   function openInputTokenEditor(node: any, nodePos: number, anchorEl?: HTMLElement | null) {
@@ -536,8 +563,9 @@ export function useAgentComposer(options: {
   function confirmInputTokenEdit(value: string) {
     const activeEditor = editor.value
 
-    if (!activeEditor || !inputEditor.open)
+    if (!activeEditor || !inputEditor.open) {
       return
+    }
 
     const updatedDoc = updateInputTokenValue(activeEditor.getJSON(), inputEditor.label, value.trim(), inputEditor.kind)
     activeEditor.commands.setContent(updatedDoc ?? activeEditor.getJSON())
@@ -547,12 +575,14 @@ export function useAgentComposer(options: {
   }
 
   function markSuggestionItemRead(item: AgentComposerItem) {
-    if (suggestion.kind !== 'slash' || !item.unread)
+    if (suggestion.kind !== 'slash' || !item.unread) {
       return
+    }
 
     const identity = readComposerTemplateIdentity(item)
-    if (identity)
+    if (identity) {
       unreadTemplateDrawerKeys.value = markTemplateDrawerRead(identity)
+    }
   }
 
   function chooseItem(item?: AgentComposerItem) {
@@ -632,8 +662,9 @@ export function useAgentComposer(options: {
   }
 
   function clearProfileSearchTimer() {
-    if (!profileSearchTimer)
+    if (!profileSearchTimer) {
       return
+    }
 
     window.clearTimeout(profileSearchTimer)
     profileSearchTimer = undefined
@@ -651,11 +682,13 @@ export function useAgentComposer(options: {
     profileSearchTimer = window.setTimeout(() => {
       profileSearchTimer = undefined
       void loadProfiles(query, { showSuggestionLoading: false }).then(() => {
-        if (!suggestion.open || suggestion.kind !== 'mention')
+        if (!suggestion.open || suggestion.kind !== 'mention') {
           return
+        }
 
-        if (suggestion.query.trim() !== normalizedQuery)
+        if (suggestion.query.trim() !== normalizedQuery) {
           return
+        }
 
         suggestion.items = profileItems.value
       })
@@ -663,14 +696,16 @@ export function useAgentComposer(options: {
   }
 
   async function loadProjectOptions() {
-    if (projectOptionsPromise)
+    if (projectOptionsPromise) {
       return projectOptionsPromise
+    }
 
     const request = (async () => {
       try {
         const response = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-        if (response.code !== 0)
+        if (response.code !== 0) {
           throw new Error(response.msg || 'Failed to load projects')
+        }
 
         const seen = new Set<string>()
         projectOptions.value = [
@@ -678,8 +713,9 @@ export function useAgentComposer(options: {
           ...(response.data?.rows ?? [])
             .flatMap((item) => {
               const value = item.project_id?.toString()
-              if (!value || seen.has(value))
+              if (!value || seen.has(value)) {
                 return []
+              }
 
               seen.add(value)
               return [{
@@ -689,8 +725,9 @@ export function useAgentComposer(options: {
             }),
         ]
 
-        if (!projectOptions.value.some(option => option.value === selectedProjectId.value))
+        if (!projectOptions.value.some(option => option.value === selectedProjectId.value)) {
           resetSelectedProject(true)
+        }
       }
       catch (error) {
         console.error('Failed to load agent projects', error)
@@ -704,18 +741,21 @@ export function useAgentComposer(options: {
       await request
     }
     finally {
-      if (projectOptionsPromise === request)
+      if (projectOptionsPromise === request) {
         projectOptionsPromise = undefined
+      }
     }
   }
 
   function resetSelectedProject(persist: boolean) {
-    if (selectedProjectId.value === ALL_PROJECTS_VALUE)
+    if (selectedProjectId.value === ALL_PROJECTS_VALUE) {
       return
+    }
 
     selectedProjectId.value = ALL_PROJECTS_VALUE
-    if (persist)
+    if (persist) {
       writeProjectSelection(workspaceStore.currentWorkspace?.id, ALL_PROJECTS_VALUE)
+    }
     void reloadProfilesForSelectedProject()
   }
 
@@ -731,40 +771,54 @@ export function useAgentComposer(options: {
 
     await loadProfiles(suggestion.query, { showSuggestionLoading: false })
 
-    if (!suggestion.open || suggestion.kind !== 'mention')
+    if (!suggestion.open || suggestion.kind !== 'mention') {
       return
+    }
 
     suggestion.items = profileItems.value
   }
 
   function focusEditor(event?: MouseEvent) {
-    if (options.editable?.value === false)
+    if (options.editable?.value === false) {
       return
+    }
 
     const target = event?.target as HTMLElement | null
 
-    if (target?.closest('.ProseMirror, button'))
+    if (target?.closest('.ProseMirror, button')) {
       return
+    }
 
     editor.value?.chain().focus('end').run()
   }
 
-  function scheduleSelectionScroll(activeEditor: NonNullable<typeof editor.value>) {
-    if (typeof window === 'undefined')
+  function scheduleSelectionScroll(activeEditor: {
+    isDestroyed: boolean
+    view: {
+      hasFocus: () => boolean
+      dom: HTMLElement
+      state: { selection: { head: number } }
+      coordsAtPos: (position: number) => { top: number, bottom: number }
+    }
+  }) {
+    if (typeof window === 'undefined') {
       return
+    }
 
-    if (selectionScrollFrame)
+    if (selectionScrollFrame) {
       window.cancelAnimationFrame(selectionScrollFrame)
+    }
 
     selectionScrollFrame = window.requestAnimationFrame(() => {
       selectionScrollFrame = 0
 
-      if (activeEditor.isDestroyed || !activeEditor.view.hasFocus())
+      if (activeEditor.isDestroyed || !activeEditor.view.hasFocus()) {
         return
+      }
 
       const scrollContainer = activeEditor.view.dom
       const containerRect = scrollContainer.getBoundingClientRect()
-      const caretRect = activeEditor.view.coordsAtPos(activeEditor.state.selection.head)
+      const caretRect = activeEditor.view.coordsAtPos(activeEditor.view.state.selection.head)
       const edgePadding = 4
 
       if (caretRect.bottom > containerRect.bottom - edgePadding) {
@@ -790,8 +844,9 @@ export function useAgentComposer(options: {
       command: (item) => {
         const activeEditor = editor.value
 
-        if (!activeEditor)
+        if (!activeEditor) {
           return
+        }
 
         const { tr } = activeEditor.view.state
         const replacement = activeEditor.view.state.schema.nodeFromJSON(composerItemToNode(item))
@@ -801,8 +856,9 @@ export function useAgentComposer(options: {
       },
     })
 
-    if (kind === 'mention')
+    if (kind === 'mention') {
       pendingMentionIds.value = getProfileIdsFromNode(node)
+    }
   }
 
   async function ensureItems(kind: AgentComposerSuggestionKind) {
@@ -812,8 +868,9 @@ export function useAgentComposer(options: {
       return profileItems.value
     }
 
-    if (!loaded.slash)
+    if (!loaded.slash) {
       await loadSlashItems()
+    }
 
     return slashItems.value
   }
@@ -856,8 +913,9 @@ export function useAgentComposer(options: {
         projectId: getSelectedProjectFilter(),
       }, workspaceStore.currentWorkspace?.workspaceName)
 
-      if (requestSequence !== profileRequestSequence)
+      if (requestSequence !== profileRequestSequence) {
         return
+      }
 
       profileItems.value = page.items
       cacheProfileItems(page.items)
@@ -915,30 +973,35 @@ export function useAgentComposer(options: {
         projectId: getSelectedProjectFilter(),
       }, workspaceStore.currentWorkspace?.workspaceName)
 
-      if (requestSequence !== profileRequestSequence)
+      if (requestSequence !== profileRequestSequence) {
         return
+      }
 
       const mergedItems = mergeProfileItems(page.items)
       profileItems.value = mergedItems
       cacheProfileItems(page.items)
       profilePageIndex.value = nextPageIndex
       profileHasMore.value = page.hasMore
-      if (!completeProfileItems.value && !page.hasMore)
+      if (!completeProfileItems.value && !page.hasMore) {
         completeProfileItems.value = mergedItems
+      }
 
-      if (suggestion.open && suggestion.kind === 'mention')
+      if (suggestion.open && suggestion.kind === 'mention') {
         suggestion.items = mergedItems
+      }
     }
     catch (error) {
-      if (requestSequence !== profileRequestSequence)
+      if (requestSequence !== profileRequestSequence) {
         return
+      }
 
       console.error('Failed to load more agent windows', error)
       profileLoadError.value = error instanceof Error ? error.message : $t('获取窗口信息失败')
     }
     finally {
-      if (requestSequence === profileRequestSequence)
+      if (requestSequence === profileRequestSequence) {
         profileLoadingMore.value = false
+      }
     }
   }
 
@@ -950,8 +1013,9 @@ export function useAgentComposer(options: {
 
     if (profilePageIndex.value === 0) {
       void loadProfiles(suggestion.query, { showSuggestionLoading: false }).then(() => {
-        if (suggestion.open && suggestion.kind === 'mention')
+        if (suggestion.open && suggestion.kind === 'mention') {
           suggestion.items = profileItems.value
+        }
       })
       return
     }
@@ -960,11 +1024,13 @@ export function useAgentComposer(options: {
   }
 
   async function getAllProfileItemsForCurrentFilter() {
-    if (profileReloading.value)
+    if (profileReloading.value) {
       return undefined
+    }
 
-    if (completeProfileItems.value)
+    if (completeProfileItems.value) {
       return completeProfileItems.value
+    }
 
     const requestedQuery = suggestion.query.trim()
     if (requestedQuery !== profileQuery.value) {
@@ -984,16 +1050,18 @@ export function useAgentComposer(options: {
         getSelectedProjectFilter(),
       )
 
-      if (requestSequence !== profileRequestSequence)
+      if (requestSequence !== profileRequestSequence) {
         return undefined
+      }
 
       cacheProfileItems(items)
       completeProfileItems.value = items
       return items
     }
     catch (error) {
-      if (requestSequence !== profileRequestSequence)
+      if (requestSequence !== profileRequestSequence) {
         return undefined
+      }
 
       console.error('Failed to load all agent windows', error)
       profileLoadError.value = error instanceof Error ? error.message : $t('获取窗口信息失败')
@@ -1015,7 +1083,16 @@ export function useAgentComposer(options: {
 
     const request = (async () => {
       try {
-        await agentApi.initializePresetTemplates()
+        // await agentApi.initializePresetTemplates()
+        if (!getAgentSkillInstalledRoot()) {
+          try {
+            const info = await agentApi.skillPathInfo()
+            setAgentSkillInstalledRoot(info.installedRoot)
+          }
+          catch (error) {
+            console.error('Failed to load Skill installed root', error)
+          }
+        }
 
         const rows: UserTemplateDTO[] = []
         let offset = 0
@@ -1061,8 +1138,9 @@ export function useAgentComposer(options: {
   }
 
   watch(slashItems, (items) => {
-    if (!suggestion.open || suggestion.kind !== 'slash')
+    if (!suggestion.open || suggestion.kind !== 'slash') {
       return
+    }
 
     suggestion.items = searchComposerItems(items, suggestion.query)
     suggestion.activeIndex = Math.min(suggestion.activeIndex, Math.max(0, suggestion.items.length - 1))
@@ -1070,14 +1148,16 @@ export function useAgentComposer(options: {
 
   onBeforeUnmount(() => {
     clearProfileSearchTimer()
-    if (selectionScrollFrame)
+    if (selectionScrollFrame) {
       window.cancelAnimationFrame(selectionScrollFrame)
+    }
     editor.value?.destroy()
   })
 
   const selectedMentionIds = computed(() => {
-    if (suggestion.open && suggestion.kind === 'mention')
+    if (suggestion.open && suggestion.kind === 'mention') {
       return pendingMentionIds.value
+    }
 
     return getCommittedMentionIds()
   })
@@ -1085,8 +1165,9 @@ export function useAgentComposer(options: {
   const selectedMentionCount = computed(() => selectedMentionIds.value.size)
 
   const allMentionItemsSelected = computed(() => {
-    if (!completeProfileItems.value)
+    if (!completeProfileItems.value) {
       return false
+    }
 
     const selectableIds = getSelectableMentionIds(completeProfileItems.value)
     return Boolean(selectableIds.length) && selectableIds.every(id => pendingMentionIds.value.has(id))
@@ -1108,22 +1189,26 @@ export function useAgentComposer(options: {
     const nextIds = new Set(pendingMentionIds.value)
 
     getProfileDirIds(item).forEach((id) => {
-      if (nextIds.has(id))
+      if (nextIds.has(id)) {
         nextIds.delete(id)
-      else
+      }
+      else {
         nextIds.add(id)
+      }
     })
 
     pendingMentionIds.value = nextIds
   }
 
   async function toggleAllMentionItems() {
-    if (profileSelectingAll.value)
+    if (profileSelectingAll.value) {
       return
+    }
 
     const items = await getAllProfileItemsForCurrentFilter()
-    if (!items)
+    if (!items) {
       return
+    }
 
     const selectableIds = getSelectableMentionIds(items)
     const nextIds = new Set(pendingMentionIds.value)
@@ -1131,10 +1216,12 @@ export function useAgentComposer(options: {
       && selectableIds.every(id => nextIds.has(id))
 
     selectableIds.forEach((id) => {
-      if (shouldDeselect)
+      if (shouldDeselect) {
         nextIds.delete(id)
-      else
+      }
+      else {
         nextIds.add(id)
+      }
     })
 
     pendingMentionIds.value = nextIds
@@ -1148,8 +1235,9 @@ export function useAgentComposer(options: {
   function confirmMentionSelection() {
     const activeEditor = editor.value
 
-    if (!activeEditor)
+    if (!activeEditor) {
       return
+    }
 
     const selectedItems = Array.from(pendingMentionIds.value).map(id => (
       profileItemCache.get(id)
@@ -1168,9 +1256,7 @@ export function useAgentComposer(options: {
 
     preserveMentionSuggestion.value = true
 
-    const selectedProfileItem = selectedItems.length
-      ? createProfileAggregateItem(selectedItems)
-      : undefined
+    const selectedProfileItem = resolveProfileSelectionItem(selectedItems, Boolean(suggestion.range))
 
     if (suggestion.range && selectedProfileItem) {
       insertComposerItem(activeEditor, selectedProfileItem, suggestion.range)
@@ -1182,8 +1268,9 @@ export function useAgentComposer(options: {
       removeProfileTokens(activeEditor)
     }
 
-    if (!suggestion.range && selectedProfileItem)
+    if (!suggestion.range && selectedProfileItem) {
       insertComposerItem(activeEditor, selectedProfileItem)
+    }
 
     suggestion.range = undefined
     closeSuggestion()
@@ -1230,8 +1317,9 @@ function readComposerTemplateIdentity(item: AgentComposerItem) {
   const id = Number(item.payload.userTemplateId)
   const workspaceId = item.payload.workspaceId?.trim()
 
-  if (!workspaceId || !Number.isSafeInteger(id) || id <= 0)
+  if (!workspaceId || !Number.isSafeInteger(id) || id <= 0) {
     return undefined
+  }
 
   return { id, workspaceId }
 }
@@ -1242,8 +1330,9 @@ function isComposerTemplateUnread(keys: ReadonlySet<string>, item: AgentComposer
 }
 
 function insertComposerItem(editor: any, item: AgentComposerItem, range?: { from: number, to: number }) {
-  if (!editor)
+  if (!editor) {
     return
+  }
 
   if (item.kind === 'template') {
     insertTemplatePrompt(editor, item, range)
@@ -1251,14 +1340,17 @@ function insertComposerItem(editor: any, item: AgentComposerItem, range?: { from
   }
 
   const chain = editor.chain().focus()
+  const rangeTarget = range ? editor.state.doc.nodeAt(range.from) : undefined
+  const shouldAppendSpace = shouldAppendComposerItemSpace(rangeTarget, range)
 
-  if (range)
+  if (range) {
     chain.deleteRange(range)
+  }
 
   chain
     .insertContent([
       composerItemToNode(item),
-      { type: 'text', text: ' ' },
+      ...(shouldAppendSpace ? [{ type: 'text', text: ' ' }] : []),
     ])
     .run()
 }
@@ -1267,8 +1359,9 @@ function insertTemplatePrompt(editor: any, item: AgentComposerItem, range?: { fr
   const isSkillTemplate = item.payload.templateType === 'skill' || item.payload.templateType === 'skills'
   const prompt = templateItemToPrompt(item, { includeAuxiliaryPrompt: !isSkillTemplate })
 
-  if (!prompt)
+  if (!prompt) {
     return
+  }
 
   const content = parsePromptString(prompt, {
     profiles: [],
@@ -1276,8 +1369,9 @@ function insertTemplatePrompt(editor: any, item: AgentComposerItem, range?: { fr
   }).content ?? []
   const chain = editor.chain().focus()
 
-  if (range)
+  if (range) {
     chain.deleteRange(range)
+  }
 
   chain
     .insertContent([
@@ -1306,8 +1400,9 @@ function promptTextToInsertContent(
 }
 
 function deleteSuggestionRange(editor: any, range?: { from: number, to: number }) {
-  if (!range)
+  if (!range) {
     return
+  }
 
   editor.chain().focus().deleteRange(range).run()
 }
@@ -1326,8 +1421,9 @@ function deleteTokenNode(view: any, nodePos: number, nodeSize: number) {
   else {
     const prevChar = doc.textBetween(Math.max(tokenFrom - 1, 0), tokenFrom)
 
-    if (prevChar === ' ')
+    if (prevChar === ' ') {
       deleteFrom = tokenFrom - 1
+    }
   }
 
   view.dispatch(tr.delete(deleteFrom, deleteTo))
@@ -1338,14 +1434,16 @@ function removeProfileTokens(editor: any) {
   const ranges: Array<{ from: number, to: number }> = []
 
   editor.state.doc.descendants((node: any, pos: number) => {
-    if (!isProfileNode(node))
+    if (!isProfileNode(node)) {
       return
+    }
 
     ranges.push({ from: pos, to: pos + node.nodeSize })
   })
 
-  if (!ranges.length)
+  if (!ranges.length) {
     return
+  }
 
   const { tr } = editor.state
 
@@ -1366,11 +1464,13 @@ function isProfileNode(node: any) {
 }
 
 function getProfileIdsFromNode(node: any) {
-  if (node.type.name === 'mention')
+  if (node.type.name === 'mention') {
     return new Set<string>(node.attrs.id ? [node.attrs.id] : [])
+  }
 
-  if (node.type.name === 'agentToken' && node.attrs.kind === 'profile')
+  if (node.type.name === 'agentToken' && node.attrs.kind === 'profile') {
     return new Set<string>(getProfileDirIds(node.attrs))
+  }
 
   return new Set<string>()
 }

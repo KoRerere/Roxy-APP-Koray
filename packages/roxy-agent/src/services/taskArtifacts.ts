@@ -1,7 +1,7 @@
 import type { TaskArtifactCandidate, TaskArtifactSaveResult } from '@/tasks/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { extToMime, fileManager } from '@/core/fileManager'
+import { fileManager, generatedArtifactMimeType } from '@/core/fileManager'
 
 function displayName(candidate: TaskArtifactCandidate): string {
   const source = (candidate.displayName ?? candidate.realPath).replace(/\\/g, '/')
@@ -23,18 +23,25 @@ export async function persistTaskArtifacts(
     uniquePaths.add(realPath)
 
     const fileName = displayName(candidate)
+    const mimeType = generatedArtifactMimeType(fileName)
+    if (!mimeType) {
+      failedFiles.push(fileName)
+      console.warn(`[task] Skipping unsupported artifact ${fileName}`)
+      continue
+    }
     try {
       const buffer = await fs.readFile(realPath)
       const record = await fileManager.saveBuffer({
         buffer,
         fileName,
-        mimeType: extToMime(fileName) ?? 'application/octet-stream',
+        mimeType,
         source: 'task',
         uploadNow: true,
       })
       fileIds.push(record.file_id)
-      if (!record.oss_url)
+      if (!record.oss_url) {
         failedFiles.push(fileName)
+      }
     }
     catch (error) {
       console.warn(`[task] Failed to persist artifact ${realPath}:`, error)

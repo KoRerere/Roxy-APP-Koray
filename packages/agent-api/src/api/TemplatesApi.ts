@@ -40,6 +40,7 @@ export class TemplatesApi<SecurityDataType = unknown> {
    * @summary 列出启用的模板标签分类
    * @request GET:/v1/template-label-categories
    * @response `200` `ListTemplateLabelCategoriesData` Successful Response
+   * @response `304` `void` Not Modified
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
    * @response `402` `ApiErrorResponse` Payment Required
@@ -72,6 +73,7 @@ export class TemplatesApi<SecurityDataType = unknown> {
    * @summary 列出启用的模板标签
    * @request GET:/v1/template-labels
    * @response `200` `ListTemplateLabelsData` Successful Response
+   * @response `304` `void` Not Modified
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
    * @response `402` `ApiErrorResponse` Payment Required
@@ -105,6 +107,7 @@ export class TemplatesApi<SecurityDataType = unknown> {
    * @summary 列出官方模板
    * @request GET:/v1/templates
    * @response `200` `ListOfficialTemplatesData` Successful Response
+   * @response `304` `void` Not Modified
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
    * @response `402` `ApiErrorResponse` Payment Required
@@ -138,6 +141,7 @@ export class TemplatesApi<SecurityDataType = unknown> {
    * @summary 按 ID 或 slug 获取模板详情
    * @request GET:/v1/templates/{template_id_or_slug}
    * @response `200` `GetOfficialTemplateData` Successful Response
+   * @response `304` `void` Not Modified
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
    * @response `402` `ApiErrorResponse` Payment Required

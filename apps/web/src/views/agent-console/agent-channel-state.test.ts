@@ -5,6 +5,7 @@ import {
   applyAgentChannelMessage,
   collectTaskConversationIds,
   createAgentChannelDedupState,
+  resetAgentChannelMonitorSnapshots,
   replaceTaskExecutionReplays,
   type AgentChannelDataState,
 } from './agent-channel-state'
@@ -156,6 +157,68 @@ describe('agent channel state', () => {
 
     applyAgentChannelMessage(dataState, dedupState, message)
     assert.equal(dataState.taskMonitorSnapshot?.data.generatedAt, 123)
+  })
+
+  it('stores the profile-monitor snapshot for the new idle-aware UI', () => {
+    const dataState = state()
+    applyAgentChannelMessage(dataState, createAgentChannelDedupState(), {
+      id: 'message-profile-monitor',
+      type: 'profile_monitor.snapshot',
+      data: {
+        type: 'snapshot',
+        data: {
+          generatedAt: 321,
+          profiles: [{
+            dirId: 'dir-1',
+            status: 'idle',
+            connectedAt: 1,
+            updatedAt: 2,
+            idleSince: 2,
+            events: [],
+          }],
+        },
+      },
+    })
+    assert.equal(dataState.profileMonitorSnapshot?.data.generatedAt, 321)
+    assert.equal(dataState.profileMonitorSnapshot?.data.profiles[0]?.status, 'idle')
+  })
+
+  it('clears monitor protocol state before reconnecting to another Agent version', () => {
+    const dataState = state()
+    dataState.taskMonitorSnapshot = {
+      type: 'snapshot',
+      data: { generatedAt: 1, tasks: [] },
+    }
+    dataState.profileMonitorSnapshot = {
+      type: 'snapshot',
+      data: { generatedAt: 2, profiles: [] },
+    }
+
+    resetAgentChannelMonitorSnapshots(dataState)
+
+    assert.equal(dataState.taskMonitorSnapshot, undefined)
+    assert.equal(dataState.profileMonitorSnapshot, undefined)
+  })
+
+  it('stores the unified execution-center snapshot', () => {
+    const dataState = state()
+    const dedupState = createAgentChannelDedupState()
+    applyAgentChannelMessage(dataState, dedupState, {
+      id: 'message-executions',
+      type: 'execution_center.snapshot',
+      data: {
+        type: 'snapshot',
+        generatedAt: 456,
+        entries: [{
+          id: 'run-1',
+          source: 'im',
+          status: 'waiting',
+          createdAt: 1,
+          updatedAt: 2,
+        }],
+      },
+    })
+    assert.equal(dataState.executionCenterSnapshot?.entries[0]?.source, 'im')
   })
 
   it('hydrates execution details and applies sequenced live increments', () => {

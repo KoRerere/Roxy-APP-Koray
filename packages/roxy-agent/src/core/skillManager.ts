@@ -1,4 +1,5 @@
 import type { TemplateRefValue } from '@roxy/shared'
+import type { SkillManifest } from 'roxy-agent-runtime'
 import { isTemplateRef } from '@roxy/shared'
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
 import {
@@ -38,6 +39,8 @@ interface SkillMeta {
 export interface LocalSkillRecord extends SkillEntry {
   dirPath: string
   rootDir: string
+  bodyPath: string
+  frontmatter: Record<string, unknown>
   source: SkillSource
   slug?: string
   sha512?: string
@@ -45,7 +48,7 @@ export interface LocalSkillRecord extends SkillEntry {
 
 export interface TemplateSkillIdentity {
   templateRef: TemplateRefValue
-  sha512: string
+  sha512?: string
   slug?: string
   packageName?: string
 }
@@ -150,6 +153,19 @@ export class SkillManager {
       .sort((a, b) => a.name.localeCompare(b.name))
   }
 
+  async listRuntimeSkillManifests(): Promise<SkillManifest[]> {
+    const records = await this.listAvailableSkillRecords()
+    return records
+      .map((record): SkillManifest => ({
+        name: record.name,
+        description: record.description,
+        sourcePath: record.rootDir,
+        bodyPath: record.bodyPath,
+        frontmatter: record.frontmatter,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name) || a.bodyPath.localeCompare(b.bodyPath))
+  }
+
   async resolveAvailableSkillFile(
     name: string,
     file = 'SKILL.md',
@@ -200,14 +216,14 @@ export class SkillManager {
     const records = await this.listSkillRecords('installed')
 
     return records.find((record) => {
-      if (record.ref === identity.templateRef) {
-        return true
-      }
       if (identity.slug && record.slug === identity.slug) {
         return true
       }
       if (identity.slug && record.slug) {
         return false
+      }
+      if (record.ref === identity.templateRef) {
+        return true
       }
 
       return Boolean(identity.packageName && record.name === identity.packageName)
@@ -246,7 +262,7 @@ export class SkillManager {
       ...identity,
       packageName: identity.packageName ?? metadata.metadata.name,
     })
-    const dirName = existing ? path.basename(existing.dirPath) : toSafeDirName(metadata.metadata.name)
+    const dirName = existing ? path.basename(existing.dirPath) : toSafeDirName(identity.slug ?? metadata.metadata.name)
     if (!dirName) {
       throw new Error('Skill name cannot be converted to a local directory name.')
     }
@@ -376,6 +392,8 @@ export class SkillManager {
       ...(ref ? { ref } : {}),
       dirPath,
       rootDir: metadata.rootDir,
+      bodyPath: metadata.skillMdPath,
+      frontmatter: metadata.frontmatter,
       source,
       ...(slug ? { slug } : {}),
       ...(sha512 ? { sha512 } : {}),
@@ -407,10 +425,10 @@ export class SkillManager {
     const meta: SkillMeta = {
       ...current,
       source: 'store',
-      sha512: identity.sha512.toLowerCase(),
       templateRef: identity.templateRef,
       installedAt: current.installedAt ?? Date.now(),
       enabled: true,
+      ...(identity.sha512 ? { sha512: identity.sha512.toLowerCase() } : {}),
       ...(identity.slug ? { slug: identity.slug } : {}),
     }
 

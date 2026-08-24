@@ -1,6 +1,6 @@
 import type { TaskErrorCode } from './errorCodes'
 import type { TaskLogStatus, TaskScriptRun, TaskTriggerType } from '@/database/tasks'
-import type { CollectedFile } from '@/deepagents/fileCollector'
+import type { CollectedFile } from '@/runtime/file-collector-store'
 import type { SandboxArtifact, SandboxRunOutput } from '@/services/sandboxService'
 
 export interface ResolvedTaskWindow {

@@ -113,29 +113,6 @@ async function startUpload() {
     return hashSum.digest('hex')
   }
 
-  // 读取 roxy-skills/dist 下所有压缩包并上传（不写死名称）
-  const skillsDistDir = path.join(process.cwd(), 'packages/roxy-skills/dist')
-  const skillNames: string[] = []
-  if (fs.existsSync(skillsDistDir)) {
-    const distFiles = fs.readdirSync(skillsDistDir)
-    const zipFiles = distFiles.filter(f => path.extname(f).toLowerCase() === '.zip')
-    for (const filename of zipFiles) {
-      const localPath = path.join(skillsDistDir, filename)
-      if (!fs.statSync(localPath).isFile())
-        continue
-      await ossClient.put(
-        `/public/package/agent/scripts/${version}/skills/${filename}`,
-        localPath,
-      )
-
-      skillNames.push(filename)
-      console.log('上传 skill 压缩包成功：', filename)
-    }
-  }
-  if (skillNames.length === 0) {
-    console.log('未发现 packages/roxy-skills/dist 下的压缩包，跳过 skills 上传')
-  }
-
   for (const platform of platformList) {
     const scripts = [
       { key: 'roxy-agent', localPath: 'packages/roxy-agent/dist/roxy-agent.mjs' },
@@ -178,7 +155,8 @@ async function startUpload() {
     version,
     minimum_app_version: minAppVersion,
     releaseTime: getCurrentFormattedTime(),
-    skills: skillNames,
+    // 系统 Skills 已内嵌到 roxy-agent.mjs，Electron 更新器无需再下载额外 zip。
+    skills: [],
   }
 
   const existingIndex = compatIndex.findIndex(e => e.minimum_app_version === minAppVersion)

@@ -87,7 +87,7 @@ async function fetchWindowRowsPage(options: FetchAgentComposerWindowsPageOptions
   })
 
   if (response.code !== 0)
-    throw new Error(response.msg || response.message || 'Failed to load windows')
+    throw new Error(response.msg || 'Failed to load windows')
 
   const rows = response.data?.rows ?? []
   const total = response.data?.total ?? rows.length

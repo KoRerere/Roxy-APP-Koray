@@ -1,18 +1,24 @@
-import assert from 'node:assert/strict'
-import { createServer } from 'node:http'
-import type { AddressInfo } from 'node:net'
+import type { AgentChannelCommands } from './server'
+import type { TaskLog, TaskLogStoreEvent } from '@/database/tasks'
 import type {
   AgentChannelMessage,
   AgentConversationRunEventDTO,
+  AgentProfileMonitorSnapshot,
   AgentTaskExecutionEvent,
   AgentTaskMonitorSnapshot,
 } from '@roxy/shared/channel'
+import type { AddressInfo } from 'node:net'
 import { AgentChannelMessageSchema } from '@roxy/shared/channel'
-import type { TaskLog, TaskLogStoreEvent } from '@/database/tasks'
+import assert from 'node:assert/strict'
+import { Buffer } from 'node:buffer'
+import { createServer } from 'node:http'
 import { afterEach, describe, it, vi } from 'vitest'
-import { validate as validateUuid, version as uuidVersion } from 'uuid'
 import { WebSocket } from 'ws'
-import { AgentChannelServer, type AgentChannelCommands } from './server'
+import { AgentChannelServer } from './server'
+
+function assertUuidV7(value: string): void {
+  assert.match(value, /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+}
 
 function taskLog(status: TaskLog['status']): TaskLog {
   return {
@@ -49,7 +55,24 @@ function monitorSnapshot(): AgentTaskMonitorSnapshot {
   }
 }
 
-describe('AgentChannelServer', () => {
+function profileSnapshot(): AgentProfileMonitorSnapshot {
+  return {
+    type: 'snapshot',
+    data: {
+      generatedAt: Date.now(),
+      profiles: [{
+        dirId: 'dir-1',
+        status: 'idle',
+        connectedAt: 1,
+        updatedAt: 1,
+        idleSince: 1,
+        events: [],
+      }],
+    },
+  }
+}
+
+describe('agentChannelServer', () => {
   const resources: Array<() => Promise<void>> = []
 
   afterEach(async () => {
@@ -58,6 +81,7 @@ describe('AgentChannelServer', () => {
 
   it('sends initial snapshots and pushes task changes with UUIDv7 message IDs', async () => {
     let taskMonitorSubscriber: ((snapshot: AgentTaskMonitorSnapshot) => void) | undefined
+    let profileMonitorSubscriber: ((snapshot: AgentProfileMonitorSnapshot) => void) | undefined
     let taskLogSubscriber: ((event: TaskLogStoreEvent) => void) | undefined
     let taskExecutionSubscriber: ((event: AgentTaskExecutionEvent) => void) | undefined
     const snapshot = monitorSnapshot()
@@ -65,10 +89,17 @@ describe('AgentChannelServer', () => {
     const channel = new AgentChannelServer(server, {
       taskMonitor: {
         getSnapshot: () => snapshot,
+        getProfileSnapshot: profileSnapshot,
         subscribe: (callback) => {
           taskMonitorSubscriber = callback
           return () => {
             taskMonitorSubscriber = undefined
+          }
+        },
+        subscribeProfiles: (callback) => {
+          profileMonitorSubscriber = callback
+          return () => {
+            profileMonitorSubscriber = undefined
           }
         },
       },
@@ -104,30 +135,34 @@ describe('AgentChannelServer', () => {
     const messages: AgentChannelMessage[] = []
     client.on('message', data => messages.push(AgentChannelMessageSchema.parse(JSON.parse(data.toString()))))
     resources.unshift(async () => {
-      if (client.readyState === WebSocket.OPEN)
+      if (client.readyState === WebSocket.OPEN) {
         client.close()
+      }
     })
 
     await new Promise<void>((resolve, reject) => {
       client.once('open', resolve)
       client.once('error', reject)
     })
-    await vi.waitFor(() => assert.equal(messages.length, 3))
+    await vi.waitFor(() => assert.equal(messages.length, 5))
     assert.deepEqual(messages.map(message => message.type), [
       'task_logs.snapshot',
       'task_monitor.snapshot',
+      'profile_monitor.snapshot',
+      'execution_center.snapshot',
       'channel.ready',
     ])
     for (const message of messages) {
-      assert.equal(validateUuid(message.id), true)
-      assert.equal(uuidVersion(message.id), 7)
+      assertUuidV7(message.id)
     }
 
     taskLogSubscriber?.({ type: 'changed', log: taskLog('running') })
     taskMonitorSubscriber?.(monitorSnapshot())
-    await vi.waitFor(() => assert.equal(messages.length, 5))
-    assert.equal(messages[3].type, 'task_log.changed')
-    assert.equal(messages[4].type, 'task_monitor.snapshot')
+    profileMonitorSubscriber?.(profileSnapshot())
+    await vi.waitFor(() => assert.equal(messages.length, 8))
+    assert.equal(messages[5].type, 'task_log.changed')
+    assert.equal(messages[6].type, 'task_monitor.snapshot')
+    assert.equal(messages[7].type, 'profile_monitor.snapshot')
 
     taskExecutionSubscriber?.({
       taskLogId: 'log-1',
@@ -139,19 +174,18 @@ describe('AgentChannelServer', () => {
         text: 'started\n',
       },
     })
-    await vi.waitFor(() => assert.equal(messages.length, 6))
-    assert.equal(messages[5].type, 'task_execution.event')
+    await vi.waitFor(() => assert.equal(messages.length, 9))
+    assert.equal(messages[8].type, 'task_execution.event')
 
     taskLogSubscriber?.({ type: 'deleted', logId: 'log-1' })
-    await vi.waitFor(() => assert.equal(messages.length, 7))
-    assert.deepEqual(messages[6], {
-      id: messages[6]?.id,
+    await vi.waitFor(() => assert.equal(messages.length, 10))
+    assert.deepEqual(messages[9], {
+      id: messages[9]?.id,
       type: 'task_log.deleted',
       data: { logId: 'log-1' },
     })
     for (const message of messages) {
-      assert.equal(validateUuid(message.id), true)
-      assert.equal(uuidVersion(message.id), 7)
+      assertUuidV7(message.id)
     }
 
     await new Promise(resolve => setTimeout(resolve, 60))
@@ -195,8 +229,9 @@ describe('AgentChannelServer', () => {
     const messages: AgentChannelMessage[] = []
     client.on('message', data => messages.push(AgentChannelMessageSchema.parse(JSON.parse(data.toString()))))
     resources.unshift(async () => {
-      if (client.readyState === WebSocket.OPEN)
+      if (client.readyState === WebSocket.OPEN) {
         client.close()
+      }
     })
 
     await new Promise<void>((resolve, reject) => {
@@ -208,10 +243,11 @@ describe('AgentChannelServer', () => {
     assert.equal(messages.length, 0)
 
     completeMigration?.()
-    await vi.waitFor(() => assert.equal(messages.length, 4))
+    await vi.waitFor(() => assert.equal(messages.length, 5))
     assert.deepEqual(messages.map(message => message.type), [
       'task_logs.snapshot',
       'task_monitor.snapshot',
+      'execution_center.snapshot',
       'task_log.changed',
       'channel.ready',
     ])
@@ -255,7 +291,7 @@ describe('AgentChannelServer', () => {
     assert.deepEqual(messages, [])
   })
 
-  it('pushes conversation events and accepts only valid text commands after readiness', async () => {
+  it('pushes conversation events and accepts stop commands before readiness', async () => {
     let conversationSubscriber: ((event: AgentConversationRunEventDTO) => void) | undefined
     const replayEvent: AgentConversationRunEventDTO = {
       conversationId: 'conversation-1',
@@ -273,14 +309,21 @@ describe('AgentChannelServer', () => {
         },
       },
     }
+    let stopBeforeReady = false
     const commands: AgentChannelCommands = {
       startRun: vi.fn(async () => {
         throw new Error('start failed')
       }),
-      stopRun: vi.fn(),
+      stopRun: vi.fn(() => {
+        stopBeforeReady = true
+      }),
       submitApproval: vi.fn(),
     }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let completeReadiness: (() => void) | undefined
+    const readiness = new Promise<void>((resolve) => {
+      completeReadiness = resolve
+    })
     const server = createServer()
     const channel = new AgentChannelServer(server, {
       taskMonitor: {
@@ -299,7 +342,7 @@ describe('AgentChannelServer', () => {
         },
       },
       getTaskLogSnapshot: () => [],
-    }, 1_000, async () => {}, commands)
+    }, 1_000, () => readiness, commands)
     await new Promise<void>((resolve, reject) => {
       server.listen(0, '127.0.0.1', resolve)
       server.once('error', reject)
@@ -315,21 +358,40 @@ describe('AgentChannelServer', () => {
     const messages: AgentChannelMessage[] = []
     client.on('message', data => messages.push(AgentChannelMessageSchema.parse(JSON.parse(data.toString()))))
     resources.unshift(async () => {
-      if (client.readyState === WebSocket.OPEN)
+      if (client.readyState === WebSocket.OPEN) {
         client.close()
+      }
     })
     await new Promise<void>((resolve, reject) => {
       client.once('open', resolve)
       client.once('error', reject)
     })
+    client.send(JSON.stringify({
+      id: 'request-stop-before-ready',
+      type: 'conversation.run.stop',
+      data: { conversationId: 'conversation-1' },
+    }))
+    client.send(JSON.stringify({
+      id: 'request-start-before-ready',
+      type: 'conversation.run.start',
+      data: {
+        conversationId: 'conversation-1',
+        message: 'Do not start before snapshots are ready',
+      },
+    }))
+    await vi.waitFor(() => assert.equal(vi.mocked(commands.stopRun).mock.calls.length, 1))
+    assert.equal(stopBeforeReady, true)
+    assert.equal(vi.mocked(commands.startRun).mock.calls.length, 0)
+    completeReadiness?.()
     await vi.waitFor(() => assert.equal(messages.at(-1)?.type, 'channel.ready'))
     assert.deepEqual(messages.map(message => message.type), [
+      'conversation.run.event',
       'task_logs.snapshot',
       'task_monitor.snapshot',
-      'conversation.run.event',
+      'execution_center.snapshot',
       'channel.ready',
     ])
-    assert.deepEqual(messages[2]?.data, replayEvent)
+    assert.deepEqual(messages.find(message => message.type === 'conversation.run.event')?.data, replayEvent)
 
     const event: AgentConversationRunEventDTO = {
       conversationId: 'conversation-1',
@@ -349,8 +411,7 @@ describe('AgentChannelServer', () => {
       },
     }
     conversationSubscriber?.(event)
-    await vi.waitFor(() => assert.equal(messages.at(-1)?.type, 'conversation.run.event'))
-    assert.deepEqual(messages.at(-1)?.data, event)
+    await vi.waitFor(() => assert.deepEqual(messages.at(-1)?.data, event))
 
     const scriptEvent: AgentConversationRunEventDTO = {
       ...event,
@@ -377,13 +438,14 @@ describe('AgentChannelServer', () => {
         conversationId: 'conversation-1',
         message: 'Run the report',
         attachments: [{ fileId: 'file-1' }],
+        localAttachments: [{
+          kind: 'file',
+          fileName: 'screen.png',
+          mimeType: 'image/png',
+          localPath: '/tmp/screen.png',
+        }],
         fullAccess: true,
       },
-    }))
-    client.send(JSON.stringify({
-      id: 'request-stop',
-      type: 'conversation.run.stop',
-      data: { conversationId: 'conversation-1' },
     }))
     client.send(JSON.stringify({
       id: 'request-approval',
@@ -392,15 +454,9 @@ describe('AgentChannelServer', () => {
         conversationId: 'conversation-1',
         approvalId: 'approval-1',
         decisions: [{ type: 'approve' }],
+        fullAccess: true,
       },
     }))
-    await vi.waitFor(() => {
-      assert.equal(vi.mocked(commands.startRun).mock.calls.length, 1)
-      assert.equal(vi.mocked(commands.stopRun).mock.calls.length, 1)
-      assert.equal(vi.mocked(commands.submitApproval).mock.calls.length, 1)
-      assert.equal(warn.mock.calls.some(call => String(call[0]).includes('conversation.run.start')), true)
-    })
-
     client.send('{')
     client.send(JSON.stringify({
       id: 'invalid-empty-message',
@@ -414,7 +470,15 @@ describe('AgentChannelServer', () => {
     })))
     await new Promise(resolve => setTimeout(resolve, 30))
     assert.equal(vi.mocked(commands.startRun).mock.calls.length, 1)
+    assert.deepEqual(vi.mocked(commands.startRun).mock.calls[0]?.[0].data.localAttachments, [{
+      kind: 'file',
+      fileName: 'screen.png',
+      mimeType: 'image/png',
+      localPath: '/tmp/screen.png',
+    }])
     assert.equal(vi.mocked(commands.stopRun).mock.calls.length, 1)
     assert.equal(vi.mocked(commands.submitApproval).mock.calls.length, 1)
+    assert.equal(vi.mocked(commands.submitApproval).mock.calls[0]?.[0].data.fullAccess, true)
+    assert.equal(warn.mock.calls.some(call => String(call[0]).includes('conversation.run.start')), true)
   })
 })

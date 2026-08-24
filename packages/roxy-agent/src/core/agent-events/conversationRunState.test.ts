@@ -1,10 +1,23 @@
-import type { Conversation, Message } from '@/database/conversations'
+import type { Conversation } from '@/database/conversations'
 import type { AgentConversationRunEventDTO, AgentRunEvent } from '@roxy/shared/channel'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { installConversationRunStatePersistence, persistConversationRunState, recoverInterruptedConversationRuns } from './conversationRunState'
+
+const testState = vi.hoisted(() => ({ root: '' }))
+
+vi.mock('@/core/storage/agentPaths', () => ({
+  agentPaths: {
+    sessionDir(conversationId: string) {
+      return path.join(testState.root, 'sessions', conversationId)
+    },
+    sessionRollout(conversationId: string) {
+      return path.join(testState.root, 'sessions', conversationId, 'rollout.jsonl')
+    },
+  },
+}))
 
 function runEvent(
   event: AgentRunEvent,
@@ -78,56 +91,38 @@ describe('conversation run state persistence', () => {
     expect(unsubscribe).toHaveBeenCalledOnce()
   })
 
-  it('ends interrupted runs before startup without duplicating existing terminal events', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-conversation-recovery-'))
-    const interruptedPath = path.join(root, 'interrupted.jsonl')
-    const completedPath = path.join(root, 'completed.jsonl')
-    const interruptedEvents = [
-      runEvent({
-        type: 'run_started',
-        data: { source: 'user', assistantMessageId: 'assistant-1', startedAt: 100 },
-      }),
-      runEvent(
-        { type: 'content_delta', data: { contentId: 'content-1', text: 'partial' } },
-        { sequence: 2, timestamp: 200 },
-      ),
-    ]
-    const completedEvents = [
-      runEvent(
-        {
-          type: 'run_started',
-          data: { source: 'user', assistantMessageId: 'assistant-2', startedAt: 100 },
-        },
-        { conversationId: 'conversation-2', runId: 'run-2', assistantMessageId: 'assistant-2' },
-      ),
-      runEvent(
-        { type: 'run_completed', data: {} },
-        {
-          conversationId: 'conversation-2',
-          runId: 'run-2',
-          assistantMessageId: 'assistant-2',
-          sequence: 2,
-          timestamp: 200,
-        },
-      ),
-    ]
-    fs.writeFileSync(interruptedPath, `${interruptedEvents.map(item => JSON.stringify(item)).join('\n')}\n`)
-    fs.writeFileSync(completedPath, `${completedEvents.map(item => JSON.stringify(item)).join('\n')}\n`)
+  it('recovers streaming runs from rollout terminal facts', () => {
+    testState.root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-conversation-recovery-'))
+    writeRollout('conversation-1', [
+      { type: 'session_start', sessionId: 'conversation-1', createdAt: 1 },
+      { type: 'user_input', message: { role: 'user', content: 'partial' }, ts: 100 },
+      {
+        type: 'assistant_turn',
+        items: [{ type: 'message', id: 'm1', role: 'assistant', content: [{ type: 'output_text', text: 'partial' }] }],
+        stopReason: 'end_turn',
+        ts: 200,
+      },
+    ])
+    writeRollout('conversation-2', [
+      { type: 'session_start', sessionId: 'conversation-2', createdAt: 1 },
+      { type: 'user_input', message: { role: 'user', content: 'done' }, ts: 100 },
+      {
+        type: 'assistant_turn',
+        items: [{ type: 'message', id: 'm2', role: 'assistant', content: [{ type: 'output_text', text: 'done' }] }],
+        stopReason: 'end_turn',
+        ts: 200,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 300 },
+    ])
 
-    const conversations = [
-      conversation('conversation-1', 'run-1', 'streaming'),
-      conversation('conversation-2', 'run-2', 'streaming'),
-      conversation('conversation-3', 'run-3', 'completed'),
-      conversation('conversation-4', 'run-4', 'streaming'),
-    ]
-    const messagesByConversation: Record<string, Message[]> = {
-      'conversation-1': [assistantMessage('conversation-1', 'assistant-1', 'run-1', interruptedPath, interruptedEvents)],
-      'conversation-2': [assistantMessage('conversation-2', 'assistant-2', 'run-2', completedPath, completedEvents)],
-    }
     const store = {
       ...createStore(),
-      getConversations: vi.fn(() => conversations),
-      getMessagesByConversation: vi.fn((conversationId: string) => messagesByConversation[conversationId] ?? []),
+      getConversations: vi.fn(() => [
+        conversation('conversation-1', 'run-1', 'streaming'),
+        conversation('conversation-2', 'run-2', 'streaming'),
+        conversation('conversation-3', 'run-3', 'completed'),
+        conversation('conversation-4', 'run-4', 'streaming'),
+      ]),
     }
 
     try {
@@ -141,98 +136,52 @@ describe('conversation run state persistence', () => {
         ['conversation-1', 'run-1'],
         ['conversation-4', 'run-4'],
       ])
-
-      const recoveredEvents = fs.readFileSync(interruptedPath, 'utf-8')
-        .trim()
-        .split('\n')
-        .map(line => JSON.parse(line) as AgentConversationRunEventDTO)
-      expect(recoveredEvents.at(-1)).toEqual({
-        conversationId: 'conversation-1',
-        runId: 'run-1',
-        turnId: 'turn-1',
-        assistantMessageId: 'assistant-1',
-        sequence: 3,
-        timestamp: 300,
-        event: {
-          type: 'run_cancelled',
-          data: {
-            reason: 'process_exit',
-            message: 'Agent process exited before the run completed.',
-          },
-        },
-      })
-      expect(fs.readFileSync(completedPath, 'utf-8').trim().split('\n')).toHaveLength(2)
     }
     finally {
-      fs.rmSync(root, { recursive: true, force: true })
+      fs.rmSync(testState.root, { recursive: true, force: true })
     }
   })
 
-  it('marks a previously persisted process-exit cancellation as read', () => {
-    const events = [
-      runEvent({
-        type: 'run_started',
-        data: { source: 'user', assistantMessageId: 'assistant-1', startedAt: 100 },
-      }),
-      runEvent(
-        {
-          type: 'run_cancelled',
-          data: { reason: 'process_exit', message: 'Agent process exited before the run completed.' },
-        },
-        { sequence: 2, timestamp: 200 },
-      ),
-    ]
+  it('marks an aborted rollout turn as read during recovery', () => {
+    testState.root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-conversation-abort-recovery-'))
+    writeRollout('conversation-1', [
+      { type: 'session_start', sessionId: 'conversation-1', createdAt: 1 },
+      { type: 'user_input', message: { role: 'user', content: 'stop' }, ts: 100 },
+      { type: 'turn_aborted', message: 'Agent stopped: User cancelled', ts: 200 },
+    ])
     const store = {
       ...createStore(),
       getConversations: vi.fn(() => [conversation('conversation-1', 'run-1', 'streaming')]),
-      getMessagesByConversation: vi.fn(() => [
-        assistantMessage('conversation-1', 'assistant-1', 'run-1', '', events),
-      ]),
     }
 
-    expect(recoverInterruptedConversationRuns(store, () => 300)).toBe(1)
-    expect(store.markConversationRead).toHaveBeenCalledWith('conversation-1', 'run-1')
-    expect(store.finishConversationRun).toHaveBeenCalledWith('conversation-1', 'run-1', 'cancelled')
+    try {
+      expect(recoverInterruptedConversationRuns(store, () => 300)).toBe(1)
+      expect(store.markConversationRead).toHaveBeenCalledWith('conversation-1', 'run-1')
+      expect(store.finishConversationRun).toHaveBeenCalledWith('conversation-1', 'run-1', 'cancelled')
+    }
+    finally {
+      fs.rmSync(testState.root, { recursive: true, force: true })
+    }
   })
 
-  it('recovers from the persisted prefix when the final in-memory block was lost', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-conversation-prefix-recovery-'))
-    const eventPath = path.join(root, 'events.jsonl')
-    const events = [
-      runEvent({
-        type: 'run_started',
-        data: { source: 'user', assistantMessageId: 'assistant-1', startedAt: 100 },
-      }),
-    ]
-    fs.writeFileSync(eventPath, `${JSON.stringify(events[0])}\n`)
+  it('recovers from latest run state when rollout has no terminal boundary', () => {
+    testState.root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-conversation-prefix-recovery-'))
+    writeRollout('conversation-1', [
+      { type: 'session_start', sessionId: 'conversation-1', createdAt: 1 },
+      { type: 'user_input', message: { role: 'user', content: 'partial' }, ts: 100 },
+    ])
     const store = {
       ...createStore(),
       getConversations: vi.fn(() => [conversation('conversation-1', 'run-1', 'streaming')]),
-      getMessagesByConversation: vi.fn(() => [
-        assistantMessage('conversation-1', 'assistant-1', 'run-1', eventPath, events),
-      ]),
     }
 
     try {
       expect(recoverInterruptedConversationRuns(store, () => 200)).toBe(1)
       expect(store.markConversationRead).toHaveBeenCalledWith('conversation-1', 'run-1')
       expect(store.finishConversationRun).toHaveBeenCalledWith('conversation-1', 'run-1', 'cancelled')
-
-      const recovered = fs.readFileSync(eventPath, 'utf8')
-        .trim()
-        .split('\n')
-        .map(line => JSON.parse(line) as AgentConversationRunEventDTO)
-      expect(recovered.map(item => item.sequence)).toEqual([1, 2])
-      expect(recovered.at(-1)?.event).toEqual({
-        type: 'run_cancelled',
-        data: {
-          reason: 'process_exit',
-          message: 'Agent process exited before the run completed.',
-        },
-      })
     }
     finally {
-      fs.rmSync(root, { recursive: true, force: true })
+      fs.rmSync(testState.root, { recursive: true, force: true })
     }
   })
 })
@@ -256,22 +205,8 @@ function conversation(
   }
 }
 
-function assistantMessage(
-  conversationId: string,
-  messageId: string,
-  runId: string,
-  filePath: string,
-  events: AgentConversationRunEventDTO[],
-): Message {
-  return {
-    id: messageId,
-    conversation_id: conversationId,
-    role: 'assistant',
-    content_type: 'file',
-    storage_type: 'file',
-    file_path: filePath,
-    metadata: { runId },
-    events,
-    created_at: '2026-07-31 00:00:00',
-  }
+function writeRollout(conversationId: string, events: unknown[]): void {
+  const rolloutPath = path.join(testState.root, 'sessions', conversationId, 'rollout.jsonl')
+  fs.mkdirSync(path.dirname(rolloutPath), { recursive: true })
+  fs.writeFileSync(rolloutPath, `${events.map(event => JSON.stringify(event)).join('\n')}\n`)
 }

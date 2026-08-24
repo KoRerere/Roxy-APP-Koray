@@ -1,5 +1,7 @@
 import type {
   AgentChannelMessage,
+  AgentExecutionSnapshot,
+  AgentProfileMonitorSnapshot,
   AgentTaskExecutionDetailDTO,
   AgentTaskExecutionEvent,
   AgentTaskExecutionReplay,
@@ -14,6 +16,8 @@ export interface AgentChannelDataState {
   taskExecutionReady: boolean
   taskExecutionGapDetected: boolean
   taskMonitorSnapshot?: AgentTaskMonitorSnapshot
+  profileMonitorSnapshot?: AgentProfileMonitorSnapshot
+  executionCenterSnapshot?: AgentExecutionSnapshot
 }
 
 export interface AgentChannelDedupState {
@@ -34,6 +38,13 @@ const SEEN_MESSAGE_TTL_MS = 30 * 60 * 1000
 
 export function createAgentChannelDedupState(): AgentChannelDedupState {
   return { seenMessageIds: new Map() }
+}
+
+export function resetAgentChannelMonitorSnapshots(
+  state: Pick<AgentChannelDataState, 'taskMonitorSnapshot' | 'profileMonitorSnapshot'>,
+): void {
+  state.taskMonitorSnapshot = undefined
+  state.profileMonitorSnapshot = undefined
 }
 
 function sortTaskLogs(logs: AgentTaskLogDTO[]): AgentTaskLogDTO[] {
@@ -227,6 +238,12 @@ export function applyAgentChannelMessage(
   }
   else if (message.type === 'task_monitor.snapshot') {
     state.taskMonitorSnapshot = message.data
+  }
+  else if (message.type === 'profile_monitor.snapshot') {
+    state.profileMonitorSnapshot = message.data
+  }
+  else if (message.type === 'execution_center.snapshot') {
+    state.executionCenterSnapshot = message.data
   }
 
   return true

@@ -7,6 +7,7 @@ defineProps<{
 
 const labels = computed<Record<AgentTaskStatus, string>>(() => ({
   running: $t('执行中'),
+  idle: $t('空闲中'),
   queued: 'Queued',
   completed: 'Completed',
   failed: 'Failed',
@@ -88,6 +89,17 @@ const labels = computed<Record<AgentTaskStatus, string>>(() => ({
         border-top: 0;
         transform: skewX(16deg);
       }
+    }
+  }
+
+  &.idle {
+    color: var(--color-text-quaternary);
+
+    .status-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: currentColor;
     }
   }
 

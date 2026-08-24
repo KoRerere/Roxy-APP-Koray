@@ -3,7 +3,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { UserTemplateDTO } from './my-templates'
 import type { UserTaskDTO } from './task-manager'
+import { setAgentSkillInstalledRoot } from './components/chat-composer/templateItems'
 import { buildTemplateTaskComposerPrompt } from './template-task-execution'
+
+const skillRoot = '/tmp/roxy-agent/library/skills/installed'
+const skillPath = `${skillRoot}/research-skill/SKILL.md`
+
+setAgentSkillInstalledRoot(skillRoot)
 
 function template(overrides: Partial<UserTemplateDTO> = {}): UserTemplateDTO {
   return {
@@ -12,7 +18,7 @@ function template(overrides: Partial<UserTemplateDTO> = {}): UserTemplateDTO {
     templateType: 'skill',
     name: 'Research Skill',
     source: 'official',
-    metadata: { skillMdPath: 'SKILL.md' },
+    metadata: { packageSlug: 'research-skill', skillMdPath: 'SKILL.md' },
     ...overrides,
   }
 }
@@ -34,14 +40,14 @@ function task(overrides: Partial<UserTaskDTO> = {}): UserTaskDTO {
 test('Skill task composer prompt preserves the template token, snapshot prompt, and windows', () => {
   assert.equal(
     buildTemplateTaskComposerPrompt(template(), task()),
-    '[$Research Skill](user:7) Summarize recent changes. [@profile:2](window-a,window-b)',
+    `[$Research Skill](${skillPath}) Summarize recent changes. [@profile:2](window-a,window-b)`,
   )
 })
 
 test('Skill task can run without an auxiliary prompt', () => {
   assert.equal(
     buildTemplateTaskComposerPrompt(template(), task({ metadata: { prompt: null } })),
-    '[$Research Skill](user:7) [@profile:2](window-a,window-b)',
+    `[$Research Skill](${skillPath}) [@profile:2](window-a,window-b)`,
   )
 })
 

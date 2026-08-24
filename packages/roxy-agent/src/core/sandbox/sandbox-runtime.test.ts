@@ -1,25 +1,27 @@
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
+import { EventEmitter } from 'node:events'
 import fsPromises from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { it, vi } from 'vitest'
-import { buildSandboxProcess, createRuntimeContext, createSandboxFsModules, enterSandboxWorkingDirectory } from './sandbox-runtime'
+import { buildSandboxProcess, createRuntimeContext, createSandboxFsModules } from './sandbox-runtime'
 
-it('passes through native fs methods without rewriting them', () => {
-  const modules = createSandboxFsModules()
+it('maps relative fs paths to the run output directory', async () => {
+  const outputDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-fs-'))
+  const written: string[] = []
+  const modules = createSandboxFsModules({ outputDir, onWrite: filePath => written.push(filePath) })
   const fsModule = modules.fs as any
   const promisesModule = modules.promises as any
-
-  assert.equal(fsModule.readFile, fs.readFile)
-  assert.equal(fsModule.writeFile, fs.writeFile)
-  assert.equal(fsModule.open, fs.open)
-  assert.equal(fsModule.default, fs)
-  assert.equal(fsModule.promises, fsPromises)
-  assert.equal(promisesModule.readFile, fsPromises.readFile)
-  assert.equal(promisesModule.writeFile, fsPromises.writeFile)
-  assert.equal(promisesModule.open, fsPromises.open)
-  assert.equal(promisesModule.default, fsPromises)
+  try {
+    await promisesModule.writeFile('result.txt', 'ok', 'utf-8')
+    assert.equal(await promisesModule.readFile('result.txt', 'utf-8'), 'ok')
+    assert.deepEqual(written, [path.join(outputDir, 'result.txt')])
+    assert.equal(fsModule.default, fsModule)
+    assert.equal(promisesModule.default, promisesModule)
+  }
+  finally {
+    await fsPromises.rm(outputDir, { recursive: true, force: true })
+  }
 })
 
 it('exposes SANDBOX_DEBUG through the curated sandbox environment', () => {
@@ -38,32 +40,38 @@ it('exposes SANDBOX_DEBUG through the curated sandbox environment', () => {
   assert.equal(Object.isFrozen(sandboxProcess.env), true)
 })
 
-it('sets the host cwd to the sandbox output dir for relative artifact paths', async () => {
-  const originalCwd = process.cwd()
-  const outputDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-cwd-'))
-  const realOutputDir = await fsPromises.realpath(outputDir)
-  const restore = enterSandboxWorkingDirectory(outputDir)
+it('isolates process events and stdout between VM sessions', () => {
+  const firstEvents = new EventEmitter()
+  const secondEvents = new EventEmitter()
+  const firstOutput: string[] = []
+  const secondOutput: string[] = []
+  const first = buildSandboxProcess({
+    outputDir: '/tmp/first',
+    env: {},
+    events: firstEvents,
+    write: (_level, text) => firstOutput.push(text),
+    exit: () => {},
+  })
+  const second = buildSandboxProcess({
+    outputDir: '/tmp/second',
+    env: {},
+    events: secondEvents,
+    write: (_level, text) => secondOutput.push(text),
+    exit: () => {},
+  })
+  let firstSignals = 0
+  first.on('custom', () => firstSignals++)
+  ;(second as any).emit('custom')
+  second.stdout.write('second')
 
-  try {
-    assert.equal(process.cwd(), realOutputDir)
-
-    await fsPromises.writeFile('relative-screenshot.png', 'png-bytes', 'utf-8')
-    assert.equal(
-      await fsPromises.readFile(path.join(outputDir, 'relative-screenshot.png'), 'utf-8'),
-      'png-bytes',
-    )
-  }
-  finally {
-    restore()
-    assert.equal(process.cwd(), originalCwd)
-    await fsPromises.rm(outputDir, { recursive: true, force: true })
-  }
+  assert.equal(firstSignals, 0)
+  assert.deepEqual(firstOutput, [])
+  assert.deepEqual(secondOutput, ['second'])
 })
 
-it('delegates file ownership to the process logger without appending a duplicate line', async () => {
+it('writes run logs without forwarding through the Host console', async () => {
   const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-runtime-log-'))
   const logFilePath = path.join(tempDir, 'run.log')
-  const hostLog = vi.spyOn(console, 'log').mockImplementation(() => {})
   const sent: unknown[] = []
 
   try {
@@ -74,14 +82,12 @@ it('delegates file ownership to the process logger without appending a duplicate
       outputDir: tempDir,
       logsDir: tempDir,
       logFilePath,
-      processLoggerOwnsLogFile: true,
       ipcSend: message => sent.push(message),
     })
 
     runtime.console.log('script progress')
 
-    assert.deepEqual(hostLog.mock.calls, [['script progress']])
-    await assert.rejects(fsPromises.access(logFilePath))
+    assert.match(await fsPromises.readFile(logFilePath, 'utf-8'), /script progress/)
     assert.deepEqual(sent, [{
       type: 'script_log',
       level: 'info',
@@ -90,7 +96,43 @@ it('delegates file ownership to the process logger without appending a duplicate
     }])
   }
   finally {
-    hostLog.mockRestore()
+    await fsPromises.rm(tempDir, { recursive: true, force: true })
+  }
+})
+
+it('writes run log timestamps in the local timezone', async () => {
+  // Regression: sandbox run logs used Date.toISOString(), so human-readable log
+  // files were pinned to UTC instead of the user's local timezone.
+  // Fixed by: sharing the local logger timestamp formatter.
+  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-runtime-log-'))
+  const logFilePath = path.join(tempDir, 'run.log')
+  const previousTimezone = process.env.TZ
+  process.env.TZ = 'Asia/Shanghai'
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-08-19T08:04:02.000Z'))
+
+  try {
+    const runtime = createRuntimeContext({
+      profile: 'release',
+      runId: 'run-1',
+      dirId: 'profile-1',
+      outputDir: tempDir,
+      logsDir: tempDir,
+      logFilePath,
+    })
+
+    runtime.console.log('script progress')
+
+    assert.match(await fsPromises.readFile(logFilePath, 'utf-8'), /\[2026-08-19 16:04:02\] \[INFO\] script progress/)
+  }
+  finally {
+    vi.useRealTimers()
+    if (previousTimezone === undefined) {
+      delete process.env.TZ
+    }
+    else {
+      process.env.TZ = previousTimezone
+    }
     await fsPromises.rm(tempDir, { recursive: true, force: true })
   }
 })

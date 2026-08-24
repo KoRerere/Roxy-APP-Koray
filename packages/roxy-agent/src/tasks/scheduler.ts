@@ -108,12 +108,14 @@ export class TaskScheduler {
 
   async stop(): Promise<void> {
     this.stopping = true
-    if (this.syncTimer)
+    if (this.syncTimer) {
       clearInterval(this.syncTimer)
+    }
     this.syncTimer = undefined
     for (const entry of this.entries.values()) {
-      if (entry.timer)
+      if (entry.timer) {
         clearTimeout(entry.timer)
+      }
     }
     this.entries.clear()
     await this.deps.stopTasks()
@@ -240,8 +242,9 @@ export class TaskScheduler {
       console.error(`[task-scheduler] Failed to trigger taskId=${entry.task.id}:`, error)
     }
     finally {
-      if (entry.task.planType === 'once' && !disableOnceAfterCompletion)
+      if (entry.task.planType === 'once' && !disableOnceAfterCompletion) {
         await this.disableOnce(entry.task.id)
+      }
       if (!this.stopping) {
         await this.sync().catch(error =>
           console.warn(`[task-scheduler] Failed to resync after taskId=${entry.task.id}:`, error))

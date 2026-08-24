@@ -1,130 +1,291 @@
-import { describe, expect, it } from "vitest";
-import { buildTestAgent, endTurnResponse, toolCallResponse } from "../helpers/buildTestAgent.ts";
-import { todo_writeTool } from "../../src/tools/builtin/todo_write.ts";
+import { describe, expect, it } from 'vitest'
+import { buildTestAgent, chatResponse, endTurnResponse, toolCallResponse } from '../helpers/buildTestAgent.ts'
+import { toolUse } from '../helpers/makeFakeProvider.ts'
+import { updatePlanTool } from '../../src/tools/builtin/update_plan.ts'
+import { StrictHitlHandler } from '../../src/hitl/handler.ts'
+import type { ApprovalRequest } from '../../src/core/interfaces.ts'
+import { testToolInputSchema } from '../helpers/toolSchema.ts'
 
-describe("AgentImpl.invoke", () => {
-  it("pure text response: returns assistant message with no tool turns", async () => {
-    const { agent } = buildTestAgent({ responses: [endTurnResponse("Hello!")] });
-    const res = await agent.invoke("say hi");
-    expect(res.messages).toHaveLength(1);
-    expect(res.messages[0]?.role).toBe("assistant");
-    expect(res.messages[0]?.content).toBe("Hello!");
-  });
+describe('AgentImpl.invoke', () => {
+  it('persists trailing hidden user messages after the visible request', async () => {
+    const { agent, provider, memory } = buildTestAgent({ responses: [endTurnResponse('done')] })
 
-  it("single tool call: model → tool_use → result → end_turn", async () => {
-    let callIndex = 0;
+    await agent.invoke({
+      input: [{ role: 'user', content: 'inspect the page' }],
+      trailingMessages: [{ role: 'user', content: '[attachment] notes.txt', visible: false }],
+    })
+
+    expect(provider.calls[0]!.messages).toEqual([
+      { role: 'user', content: 'inspect the page' },
+      { role: 'user', content: '[attachment] notes.txt', visible: false },
+    ])
+    expect(await memory.getAll(agent.sessionId)).toEqual([
+      { role: 'user', content: 'inspect the page' },
+      { role: 'user', content: '[attachment] notes.txt', visible: false },
+      expect.objectContaining({ role: 'assistant' }),
+    ])
+  })
+
+  it('persists hidden leading user messages while keeping their presentation marker', async () => {
+    // Regression: AgentInput accepted Message[] but silently discarded every
+    // message before the final user message, so the model input and rollout
+    // could not be reconstructed completely.
+    // Fixed by: append and record every turn-start user message in order.
+    const { agent, provider, memory } = buildTestAgent({ responses: [endTurnResponse('done')] })
+
+    await agent.invoke([
+      {
+        role: 'user',
+        content: '<environment_context><os>Darwin</os></environment_context>',
+        visible: false,
+      },
+      { role: 'user', content: 'inspect the page' },
+    ])
+
+    expect(provider.calls[0]!.messages).toEqual([
+      {
+        role: 'user',
+        content: '<environment_context><os>Darwin</os></environment_context>',
+        visible: false,
+      },
+      { role: 'user', content: 'inspect the page' },
+    ])
+    expect(await memory.getAll(agent.sessionId)).toEqual([
+      {
+        role: 'user',
+        content: '<environment_context><os>Darwin</os></environment_context>',
+        visible: false,
+      },
+      { role: 'user', content: 'inspect the page' },
+      expect.objectContaining({ role: 'assistant' }),
+    ])
+  })
+
+  it('pure text response: returns assistant message with no tool turns', async () => {
+    const { agent } = buildTestAgent({ responses: [endTurnResponse('Hello!')] })
+    const res = await agent.invoke('say hi')
+    expect(res.messages).toHaveLength(1)
+    expect(res.messages[0]?.role).toBe('assistant')
+    expect(res.messages[0]?.content).toBe('Hello!')
+  })
+
+  it('continues sampling when the provider reports endTurn=false', async () => {
+    // Regression: Responses completed events with end_turn=false were treated
+    // as final end_turn responses, so the agent stopped before the follow-up.
+    // Fixed by: the runtime keeps the loop alive until endTurn is not false.
+    const { agent, provider } = buildTestAgent({
+      responses: [{ ...endTurnResponse('first'), endTurn: false }, endTurnResponse('final')],
+    })
+
+    const result = await agent.invoke('continue until done')
+
+    expect(provider.calls).toHaveLength(2)
+    expect(result.messages.map((message) => message.content)).toEqual(['first', 'final'])
+  })
+
+  it('single tool call: model → tool_use → result → end_turn', async () => {
+    let callIndex = 0
     const { agent, registry } = buildTestAgent({
       handler: () => {
-        callIndex++;
-        if (callIndex === 1) return toolCallResponse("id1", "echo", { text: "ping" });
-        return endTurnResponse("done");
+        callIndex++
+        if (callIndex === 1) {
+          return toolCallResponse('id1', 'echo', { text: 'ping' })
+        }
+        return endTurnResponse('done')
       },
-    });
-    registry.add({ name: "echo", description: "echo", inputSchema: {}, source: "builtin" }, async (input) => ({
-      content: `echoed:${(input as { text: string }).text}`,
-      isError: false,
-    }));
-    const res = await agent.invoke("call echo");
+    })
+    registry.add(
+      { name: 'echo', description: 'echo', inputSchema: testToolInputSchema, source: 'builtin' },
+      async (input) => ({
+        content: `echoed:${(input as { text: string }).text}`,
+        isError: false,
+      }),
+    )
+    const res = await agent.invoke('call echo')
     // assistant(tool_use), user(tool_result), assistant(end_turn)
-    expect(res.messages).toHaveLength(3);
-    expect(res.messages[0]?.role).toBe("assistant");
-    expect(res.messages[1]?.role).toBe("user");
-    expect(res.messages[2]?.role).toBe("assistant");
-  });
+    expect(res.messages).toHaveLength(3)
+    expect(res.messages[0]?.role).toBe('assistant')
+    expect(res.messages[1]?.role).toBe('user')
+    expect(res.messages[2]?.role).toBe('assistant')
+  })
 
-  it("two sequential tool calls then end_turn", async () => {
-    let n = 0;
+  it('two sequential tool calls then end_turn', async () => {
+    let n = 0
     const { agent, registry } = buildTestAgent({
       handler: () => {
-        n++;
-        if (n === 1) return toolCallResponse("id1", "echo", { text: "a" });
-        if (n === 2) return toolCallResponse("id2", "echo", { text: "b" });
-        return endTurnResponse("all done");
+        n++
+        if (n === 1) {
+          return toolCallResponse('id1', 'echo', { text: 'a' })
+        }
+        if (n === 2) {
+          return toolCallResponse('id2', 'echo', { text: 'b' })
+        }
+        return endTurnResponse('all done')
       },
-    });
-    registry.add({ name: "echo", description: "echo", inputSchema: {}, source: "builtin" }, async (input) => ({
-      content: (input as { text: string }).text,
-      isError: false,
-    }));
-    const res = await agent.invoke("call echo twice");
+    })
+    registry.add(
+      { name: 'echo', description: 'echo', inputSchema: testToolInputSchema, source: 'builtin' },
+      async (input) => ({
+        content: (input as { text: string }).text,
+        isError: false,
+      }),
+    )
+    const res = await agent.invoke('call echo twice')
     // turn1: assistant(tool_use a), user(tool_result a)
     // turn2: assistant(tool_use b), user(tool_result b)
     // turn3: assistant(end_turn)
-    expect(res.messages).toHaveLength(5);
-  });
+    expect(res.messages).toHaveLength(5)
+  })
 
-  it("AbortSignal already aborted: invoke.abort hook fires and invoke completes", async () => {
-    const ac = new AbortController();
-    let abortFired = false;
+  it('passes the tool diff preview to invoke-mode approval', async () => {
+    // Regression: AgentImpl.invoke requested approval without running
+    // ToolDescriptor.previewFn, unlike HitlInterceptor.
+    // Fixed by: using the same approval-request builder in every execution path.
+    let request: ApprovalRequest | undefined
+    let n = 0
+    const hitl = new StrictHitlHandler(false, {
+      resolver: (value) => {
+        request = value
+        return { decision: 'approve' }
+      },
+    })
+    const { agent, registry } = buildTestAgent({
+      hitl,
+      handler: () => {
+        n++
+        if (n === 1) {
+          return toolCallResponse('write-1', 'preview_write', { path: 'note.txt' })
+        }
+        return endTurnResponse('done')
+      },
+    })
+    registry.add(
+      {
+        name: 'preview_write',
+        description: 'write with preview',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+        previewFn: async () => 'preview diff',
+      },
+      async () => ({ content: 'ran', isError: false }),
+    )
+
+    await agent.invoke('test')
+
+    expect(request?.diff).toBe('preview diff')
+  })
+
+  it('AbortSignal already aborted: invoke.abort hook fires and invoke completes', async () => {
+    const ac = new AbortController()
+    let abortFired = false
     const { agent } = buildTestAgent({
-      responses: [endTurnResponse("done")],
+      responses: [endTurnResponse('done')],
       hooks: {
         invoke: {
           abort: () => {
-            abortFired = true;
+            abortFired = true
           },
         },
       },
-    });
-    ac.abort();
-    await agent.invoke("test", ac.signal);
-    expect(abortFired).toBe(true);
-  });
+    })
+    ac.abort()
+    await agent.invoke('test', ac.signal)
+    expect(abortFired).toBe(true)
+  })
 
-  it("trajectory has model_thought events", async () => {
-    const { agent } = buildTestAgent({ responses: [endTurnResponse("hi")] });
-    const res = await agent.invoke("test");
-    expect(res.trajectory.some((e) => e.phase === "model_thought")).toBe(true);
-  });
+  it('trajectory has model_thought events', async () => {
+    const { agent } = buildTestAgent({ responses: [endTurnResponse('hi')] })
+    const res = await agent.invoke('test')
+    expect(res.trajectory.some((e) => e.phase === 'model_thought')).toBe(true)
+  })
 
-  it("todo_write records its complete snapshot in the trajectory", async () => {
-    let modelCalls = 0;
-    const todoTool = todo_writeTool();
+  it('update_plan records its complete snapshot in the trajectory', async () => {
+    let modelCalls = 0
+    const todoTool = updatePlanTool()
     const { agent } = buildTestAgent({
       handler: () => {
-        modelCalls++;
+        modelCalls++
         if (modelCalls === 1) {
-          return toolCallResponse("todo-1", "todo_write", {
-            todos: [{ content: "Inspect page", status: "in_progress" }],
-          });
+          return toolCallResponse('todo-1', 'update_plan', {
+            plan: [{ step: 'Inspect page', status: 'in_progress' }],
+          })
         }
-        return endTurnResponse("done");
+        return endTurnResponse('done')
       },
       tools: [todoTool],
-    });
+    })
 
-    const response = await agent.invoke("test");
+    const response = await agent.invoke('test')
     expect(response.trajectory).toContainEqual(
       expect.objectContaining({
-        phase: "todo_updated",
-        data: { todos: [{ content: "Inspect page", status: "in_progress" }] },
+        phase: 'plan_updated',
+        data: { todos: [{ content: 'Inspect page', status: 'in_progress' }] },
       }),
-    );
-  });
+    )
+  })
 
-  it("unknown tool is stripped — loop ends without tool_result (avoids provider 400)", async () => {
+  it('unknown tool is stripped — loop ends without tool_result (avoids provider 400)', async () => {
     // When the model calls a tool not in the registry (e.g. provider-internal tools
     // like DeepSeek built-ins), we strip the tool_use and treat the response as
     // end_turn rather than sending a tool_result that the provider would reject.
-    let n = 0;
+    let n = 0
     const { agent } = buildTestAgent({
       handler: () => {
-        n++;
-        if (n === 1) return toolCallResponse("id1", "no_such_tool", {});
-        return endTurnResponse("done");
+        n++
+        if (n === 1) {
+          return toolCallResponse('id1', 'no_such_tool', {})
+        }
+        return endTurnResponse('done')
       },
-    });
-    const res = await agent.invoke("call unknown tool");
+    })
+    const res = await agent.invoke('call unknown tool')
     // Only ONE model call — no second loop iteration after stripping
-    expect(n).toBe(1);
+    expect(n).toBe(1)
     // No tool_result message in history
-    const toolResultMsg = res.messages.find((m) => m.role === "user" && Array.isArray(m.content));
-    expect(toolResultMsg).toBeUndefined();
+    const toolResultMsg = res.messages.find((m) => m.role === 'user' && Array.isArray(m.content))
+    expect(toolResultMsg).toBeUndefined()
     // No unresolved tool_use blocks remain in the assistant message
-    const assistantMsg = res.messages.find((m) => m.role === "assistant");
+    const assistantMsg = res.messages.find((m) => m.role === 'assistant')
     if (assistantMsg && Array.isArray(assistantMsg.content)) {
-      const toolUseBlocks = (assistantMsg.content as Array<{ type: string }>).filter((b) => b.type === "tool_use");
-      expect(toolUseBlocks).toHaveLength(0);
+      const toolUseBlocks = (assistantMsg.content as Array<{ type: string }>).filter((b) => b.type === 'tool_use')
+      expect(toolUseBlocks).toHaveLength(0)
     }
-  });
-});
+  })
+
+  it('max_tokens with a partial tool call is stripped from history', async () => {
+    // Regression: a truncated function_call was stored as assistant(tool_use)
+    // with no following tool_result, corrupting the next provider request.
+    const { agent } = buildTestAgent({
+      responses: [
+        chatResponse(
+          {
+            role: 'assistant',
+            content: [toolUse('patch-1', 'apply_patch', '*** Begin Patch\n*** Add File: script.ts\n+partial')],
+            transcriptItems: [
+              {
+                type: 'tool_call',
+                id: 'patch-1',
+                callId: 'patch-1',
+                name: 'apply_patch',
+                arguments: '*** Begin Patch\n*** Add File: script.ts\n+partial',
+                toolKind: 'custom',
+              },
+            ],
+          },
+          'max_tokens',
+        ),
+      ],
+    })
+
+    const res = await agent.invoke('write a large file')
+    expect(res.messages).toHaveLength(1)
+    const assistantMsg = res.messages[0]
+    expect(assistantMsg?.role).toBe('assistant')
+    expect(assistantMsg?.transcriptItems?.some((item) => item.type === 'tool_call')).toBe(false)
+    expect(
+      Array.isArray(assistantMsg?.content) ? assistantMsg.content.some((block) => block.type === 'tool_use') : false,
+    ).toBe(false)
+    expect(res.messages.some((message) => message.role === 'user' && Array.isArray(message.content))).toBe(false)
+  })
+})

@@ -1,4 +1,4 @@
-import type { ParamsSchema } from '@roxy/sandbox'
+import type { ParamsSchema } from '@/modes/sandbox-api'
 
 export function isScriptParamsRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

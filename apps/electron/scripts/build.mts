@@ -104,6 +104,24 @@ function canvasPlatformBinaries(): NonNullable<Configuration['extraResources']> 
   })
 }
 
+function ripgrepResourceEntries(): NonNullable<Configuration['extraResources']> {
+  const ripgrepPkgPath = path.join(workDir, 'node_modules/@vscode/ripgrep/package.json')
+  const ripgrepVersion = JSON.parse(readFileSync(ripgrepPkgPath, 'utf-8')).version as string
+  const binaryName = isWindows ? 'rg.exe' : 'rg'
+  // electron-builder expands ${arch} per target package, so x64 and ia32
+  // installers each receive only their matching ripgrep binary.
+  // eslint-disable-next-line no-template-curly-in-string
+  const archMacro = '${arch}'
+  const packageName = `@vscode/ripgrep-${platform}-${archMacro}`
+  const storeDirName = packageName.replace('/', '+')
+  return [
+    {
+      from: `../../node_modules/.pnpm/${storeDirName}@${ripgrepVersion}/node_modules/${packageName}/bin/${binaryName}`,
+      to: `rg/${binaryName}`,
+    },
+  ]
+}
+
 // 打包前准备 roxynet / roxysync 内置 seed（按当前平台目标 arch 下载并校验）
 await prepareBinSeed()
 
@@ -129,11 +147,7 @@ const extraResources: NonNullable<Configuration['extraResources']> = [
     filter: ['package.json', 'index.js', 'js-binding.js', 'load-image.js', 'node-canvas.js', 'geometry.js'],
   },
   ...canvasPlatformBinaries(),
-  {
-    from: '../../node_modules/bytenode',
-    to: 'node_modules/bytenode',
-    filter: ['**/*'],
-  },
+  ...ripgrepResourceEntries(),
 ]
 
 // roxynet / roxysync 内置 seed（利用 ${arch} 宏按安装包 arch 分别内置，x86 装 x86、x64 装 x64）

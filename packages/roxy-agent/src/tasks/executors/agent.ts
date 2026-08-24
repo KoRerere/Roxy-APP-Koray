@@ -1,13 +1,12 @@
 import type { ResolvedTaskWindow, TaskExecutorResult } from '../types'
 import type { ResolvedTemplate } from '@/services/templateService'
-import type { TemplateRef } from '@roxy/shared'
 import type { AgentRunEvent } from '@roxy/shared/channel'
-import { HumanMessage } from '@langchain/core/messages'
 import {
   serializeAgentProfileReference,
   serializeAgentSkillReference,
 } from '@roxy/shared'
 import { randomUUID } from 'node:crypto'
+import { withAgentPath } from '@/core/agent-events/events'
 import { runEventHub } from '@/core/agent-events/runEventHub'
 import { streamEvents } from '@/core/agent-events/streamEvents'
 import { normalizeAgentError } from '@/core/agentError'
@@ -15,8 +14,7 @@ import { t } from '@/core/i18n'
 import { cleanupRun, createAbort } from '@/core/registry/abortRegistry'
 import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '@/core/task-monitor'
 import { ChatContextAPI } from '@/database/conversations'
-import { createChatAgent } from '@/deepagents/agent/chat'
-import { handleWorkerStream, StreamState } from '@/deepagents/handle-stream'
+import { createRuntimeChatAgent, RuntimeEventPublisher } from '@/runtime'
 import { generateConversationTitle } from '@/services/chatService'
 import { persistTaskArtifacts } from '@/services/taskArtifacts'
 import {
@@ -30,7 +28,7 @@ import { collectedFiles } from '../types'
 const TASK_AGENT_DESTROY_TIMEOUT_MS = 12_000
 
 export interface PreparedTaskSkill {
-  ref: TemplateRef
+  skillMdPath: string
 }
 
 export interface AgentTaskExecutionInput {
@@ -53,13 +51,13 @@ export async function prepareTaskSkill(
   }
 
   const installed = await ensureResolvedTemplateSkillInstalled(template, signal)
-  return { ref: installed.ref }
+  return { skillMdPath: installed.skillMdPath }
 }
 
 export function buildTaskInitialUserMessage(input: AgentTaskExecutionInput): string {
   const parts: string[] = []
   if (input.skill) {
-    parts.push(serializeAgentSkillReference(input.templateName, input.skill.ref))
+    parts.push(serializeAgentSkillReference(input.templateName, input.skill.skillMdPath))
   }
 
   parts.push(input.prompt.trim())
@@ -109,7 +107,6 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
   const userMessageCreatedAt = new Date().toISOString()
   const assistantMessageId = `taskmsg_${randomUUID()}`
   const assistantMessageCreatedAt = new Date().toISOString()
-  const events: AgentRunEvent[] = []
   let destroy: (() => Promise<void>) | undefined
 
   ChatContextAPI.createConversation({
@@ -150,18 +147,16 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
     conversation_id: conversationId,
     role: 'assistant',
     content: '',
-    content_type: 'file',
-    storage_type: 'file',
-    file_path: publisher.filePath,
+    content_type: 'text',
+    storage_type: 'inline',
     metadata: {
       source: 'conversation_run',
-      format: 'jsonl',
       taskLogId: input.taskLogId,
       runId: input.taskLogId,
       turnId,
     },
   })
-  publisher.publish({
+  publisher.publish(withAgentPath({
     type: 'user_message',
     data: {
       messageId: turnId,
@@ -169,7 +164,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
       attachments: [],
       createdAt: Date.now(),
     },
-  })
+  }, '/root'))
   input.onConversationCreated?.(conversationId)
   recordTaskExecutionEvent(input.taskLogId, {
     type: 'agent.message.upsert',
@@ -191,25 +186,30 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
 
   const abortController = createAbort(input.taskLogId)
   const abortFromTask = () => abortController.abort(input.signal.reason ?? 'Task execution interrupted')
-  if (input.signal.aborted)
+  if (input.signal.aborted) {
     abortFromTask()
-  else
+  }
+  else {
     input.signal.addEventListener('abort', abortFromTask, { once: true })
+  }
 
   try {
     await generateConversationTitle(initialUserMessage, [], conversationId, turnId, event => publisher.publish(event), abortController.signal)
       .then((title) => {
-        if (title)
+        if (title) {
           ChatContextAPI.updateConversation(conversationId, { title, is_title_set: 1 })
+        }
       })
       .catch((error) => {
-        if (!abortController.signal.aborted)
+        if (!abortController.signal.aborted) {
           console.warn(`[task] Failed to generate task conversation title ${input.taskLogId}:`, error)
+        }
       })
 
-    const instance = await createChatAgent({
-      workerId: `task_${input.taskLogId}`,
+    const instance = await createRuntimeChatAgent({
       conversationId,
+      executionId: input.taskLogId,
+      runId: input.taskLogId,
       turnId,
       fullAccess: true,
       signal: abortController.signal,
@@ -217,38 +217,15 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
       allowedDirIds: input.windows.map(window => window.dirId),
     })
     destroy = instance.destroy
-    const state = new StreamState()
-
-    const stream = await instance.agent.stream(
-      { messages: [new HumanMessage(initialUserMessage)] },
-      {
-        configurable: { thread_id: threadId },
-        conversationId,
-        turnId,
-        taskMonitorTaskId: input.taskLogId,
-        streamMode: ['messages', 'custom', 'tools'],
-        signal: abortController.signal,
-        writer: (event: AgentRunEvent) => publisher.publish(event),
-      } as any,
-    )
-    for await (const rawChunk of stream) {
-      const nextEvents = handleWorkerStream(rawChunk, state)
-      events.push(...nextEvents)
-      for (const event of nextEvents) {
-        publisher.publish(event)
-        if (event.type !== 'content_delta' || event.data.workerId) {
-          continue
-        }
-
-        const contentId = event.data.contentId
-        if (!contentId || !event.data.text)
-          continue
-
+    const runtimePublisher = new RuntimeEventPublisher(event => publisher.publish(event), { emitDone: false, agentPath: '/root' })
+    for await (const event of instance.agent.stream(instance.createInput(initialUserMessage), abortController.signal)) {
+      runtimePublisher.handle(event)
+      if (event.type === 'text') {
         recordTaskExecutionEvent(input.taskLogId, {
           type: 'agent.message.delta',
           conversationId,
           messageId: assistantMessageId,
-          delta: event.data.text,
+          delta: event.delta,
           createdAt: assistantMessageCreatedAt,
         })
       }
@@ -260,13 +237,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
         : new DOMException('Task execution was interrupted', 'AbortError')
     }
 
-    const assistantMessages = collectTaskAssistantMessages(events)
-    if (assistantMessages.length === 0) {
-      const fallbackContent = state.getLastChunkContent().trim()
-      if (fallbackContent)
-        assistantMessages.push({ contentId: 'fallback', content: fallbackContent })
-    }
-    const finalContent = assistantMessages.map(message => message.content).join('\n\n')
+    const finalContent = runtimePublisher.getFinalAnswer().trim()
     recordTaskExecutionEvent(input.taskLogId, {
       type: 'agent.message.upsert',
       conversationId,
@@ -284,7 +255,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
       artifacts: taskArtifacts(artifacts.fileIds),
     })
     if (artifacts.failedFiles.length > 0) {
-      publisher.publish(streamEvents.done(finalContent))
+      publisher.publish(withAgentPath(streamEvents.done(finalContent), '/root'))
       return {
         status: 'partial_failed',
         conversationId,
@@ -292,7 +263,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
         endReasonCode: TASK_ERROR_CODES.artifactUploadPartialFailure,
       }
     }
-    publisher.publish(streamEvents.done(finalContent))
+    publisher.publish(withAgentPath(streamEvents.done(finalContent), '/root'))
     return { status: 'success', conversationId, fileIds: artifacts.fileIds }
   }
   catch (error) {
@@ -316,9 +287,9 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
         createdAt: assistantMessageCreatedAt,
       },
     })
-    publisher.publish(interrupted
+    publisher.publish(withAgentPath(interrupted
       ? streamEvents.cancelled({ message })
-      : streamEvents.error(normalizeAgentError(error)))
+      : streamEvents.error(normalizeAgentError(error)), '/root'))
     return {
       status: interrupted ? 'interrupted' : 'failed',
       conversationId,

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   clientConnect: vi.fn(),
   createLinkedPair: vi.fn(() => ['client-transport', 'server-transport']),
-  loadMcpTools: vi.fn(async () => []),
+  createRuntimeMcpToolBundle: vi.fn(async () => ({ tools: [] })),
   serverConnect: vi.fn(),
   serverOptions: [] as any[],
 }))
@@ -16,20 +16,19 @@ vi.mock('@modelcontextprotocol/sdk/inMemory.js', () => ({
 }))
 
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
-  Client: vi.fn(function () {
+  Client: vi.fn(() => {
     return {
       connect: mocks.clientConnect,
     }
   }),
 }))
 
-vi.mock('@langchain/mcp-adapters', () => ({
-  loadMcpTools: mocks.loadMcpTools,
-  MultiServerMCPClient: vi.fn(),
+vi.mock('./runtimeMcpTool', () => ({
+  createRuntimeMcpToolBundle: mocks.createRuntimeMcpToolBundle,
 }))
 
 vi.mock('@roxybrowser/openapi', () => ({
-  createRoxyMcpServer: vi.fn((options) => {
+  createRoxyBrowserMcpServer: vi.fn((options) => {
     mocks.serverOptions.push(options)
     return {
       connect: mocks.serverConnect,
@@ -45,7 +44,7 @@ beforeEach(() => {
   vi.resetModules()
   mocks.clientConnect.mockClear()
   mocks.createLinkedPair.mockClear()
-  mocks.loadMcpTools.mockClear()
+  mocks.createRuntimeMcpToolBundle.mockClear()
   mocks.serverConnect.mockClear()
   mocks.serverOptions.length = 0
   process.env.ROXY_API_HOST = 'http://127.0.0.1:26580'
@@ -54,18 +53,24 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  if (originalApiHost === undefined)
+  if (originalApiHost === undefined) {
     delete process.env.ROXY_API_HOST
-  else
+  }
+  else {
     process.env.ROXY_API_HOST = originalApiHost
-  if (originalApiKey === undefined)
+  }
+  if (originalApiKey === undefined) {
     delete process.env.ROXY_API_KEY
-  else
+  }
+  else {
     process.env.ROXY_API_KEY = originalApiKey
-  if (originalWorkspaceId === undefined)
+  }
+  if (originalWorkspaceId === undefined) {
     delete process.env.ROXY_WORKSPACE_ID
-  else
+  }
+  else {
     process.env.ROXY_WORKSPACE_ID = originalWorkspaceId
+  }
 })
 
 it('binds the current workspace id into the embedded OpenAPI MCP server context', async () => {
@@ -81,5 +86,24 @@ it('binds the current workspace id into the embedded OpenAPI MCP server context'
     context: {
       workspaceId: 42,
     },
+    excludeTools: ['roxy_profile_open'],
   })
+})
+
+it('can omit the FAQ MCP for callers using Responses web search', async () => {
+  const { getGlobalMcpTools } = await import('./globalMcpClients')
+
+  await getGlobalMcpTools({ includeFaq: false })
+
+  assert.equal(mocks.createRuntimeMcpToolBundle.mock.calls.length, 1)
+  assert.equal(mocks.serverConnect.mock.calls.length, 1)
+})
+
+it('keeps the FAQ MCP disabled even when a legacy caller opts in', async () => {
+  const { getGlobalMcpTools } = await import('./globalMcpClients')
+
+  await getGlobalMcpTools({ includeFaq: true })
+
+  assert.equal(mocks.createRuntimeMcpToolBundle.mock.calls.length, 1)
+  assert.equal(mocks.serverConnect.mock.calls.length, 1)
 })

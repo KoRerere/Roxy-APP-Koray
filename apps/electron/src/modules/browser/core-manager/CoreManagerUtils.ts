@@ -46,6 +46,8 @@ export class CoreManagerUtils {
   pendingUnzipCoreMap = new Map<string, () => Promise<any>>()
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, CoreDownloadTask>()
+  /** 当前下载进度快照 */
+  private downloadPayloadMap = new Map<string, ResourceUpdateMessage>()
   /** msgCallback task map */
   private msgCallbackTaskMap = new Map<string, ((payload: Partial<ResourceUpdateMessage>) => void)[]>()
   /** 正在使用中的内核 */
@@ -144,6 +146,30 @@ export class CoreManagerUtils {
     }
 
     return this.getLocalCoreStatus(core)
+  }
+
+  getCoreDownloadPayload(coreVersion: string) {
+    return this.downloadPayloadMap.get(coreVersion)
+  }
+
+  async isCoreReadyForLaunch(coreVersion: string) {
+    if (this.usingCores.has(coreVersion)) {
+      return true
+    }
+
+    const availableCore = this.getAvailableCore(coreVersion)
+    if (availableCore && await this.checkCoreIsPendingUnzip(availableCore)) {
+      return true
+    }
+
+    const coreDir = this.genCoreDir(coreVersion)
+    const exePath = this.genCoreExePath(coreVersion)
+    const [isExeExists, isVersionFileExists] = await Promise.all([
+      fileExists(exePath),
+      fileExists(join(coreDir, 'version')),
+    ])
+
+    return isExeExists && isVersionFileExists
   }
 
   private async getLocalCoreStatus(core: UnwrapRowType<UserGetCoreUpgradeCreateData>) {
@@ -359,7 +385,7 @@ export class CoreManagerUtils {
     ])
     console.log('unzipToCoreDirTask start', coreVersion, this.coreType)
     // 将本地内核移动到旧内核目录
-    await rename(this.genCoreDir(coreVersion), this.genOldCoreDir(coreVersion)).catch((error) => {
+    await rename(this.genCoreDir(coreVersion), this.genOldCoreDir(coreVersion)).catch(() => {
       // console.error('rename to oldCoreDir error', error)
     })
     // 将解压后的内核移动到内核目录
@@ -425,6 +451,7 @@ export class CoreManagerUtils {
     }
 
     const doMsgCallbacks = () => {
+      this.downloadPayloadMap.set(coreVersion, { ...payload })
       ipcSender.app.resourceUpdate(payload)
       msgCallback?.(payload)
       if (this.msgCallbackTaskMap.has(coreVersion)) {
@@ -586,6 +613,7 @@ export class CoreManagerUtils {
       finally {
         // 无论成功与否，记得将其从下载队列中移除
         this.downloadingMap.delete(coreVersion)
+        this.downloadPayloadMap.delete(coreVersion)
         this.msgCallbackTaskMap.delete(coreVersion)
       }
     }
@@ -597,6 +625,7 @@ export class CoreManagerUtils {
       throwOnCancel,
     }
 
+    this.downloadPayloadMap.set(coreVersion, { ...payload })
     this.downloadingMap.set(coreVersion, downloadEntry)
     return downloadEntry.promise
   }
@@ -626,6 +655,7 @@ export class CoreManagerUtils {
     if (this.usingCores.has(coreVersion)) {
       return Promise.reject($t('当前内核正在使用中，无法删除'))
     }
+    this.downloadPayloadMap.delete(coreVersion)
     await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })
   }
 

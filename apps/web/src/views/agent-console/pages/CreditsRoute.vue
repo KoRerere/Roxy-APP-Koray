@@ -5,6 +5,8 @@ import { OrderTypeStr } from '/@/enums/pay'
 import { usePermission } from '/@/hooks/usePermission'
 import { useUserStore } from '/@/stores/user'
 import AgentConsolePageLayout from '../components/AgentConsolePageLayout.vue'
+import CreditsUsageChart from '../components/CreditsUsageChart.vue'
+import type { CreditsUsageDatum } from '../components/CreditsUsageChart.vue'
 import { useBuyPoints } from '../components/buy-points/useBuyPoints'
 import { getImage } from '/@/utils'
 
@@ -14,9 +16,15 @@ type TimeFilter = 'all' | '30d' | '90d'
 interface CreditsRecord {
   id: string
   date: string
+  timestamp?: number
   points: number | string
   amount?: string
   description: string
+}
+
+interface DailyConsumptionRecord {
+  day: string
+  data: number
 }
 
 defineProps<{
@@ -46,6 +54,7 @@ const pageIndex = ref(1)
 const total = ref(0)
 const hasMore = ref(true)
 const records = ref<CreditsRecord[]>([])
+const dailyConsumptionRecords = ref<DailyConsumptionRecord[]>([])
 const listRef = ref<HTMLElement | null>(null)
 const filterSelectRef = ref<HTMLElement | null>(null)
 let latestLoadId = 0
@@ -66,6 +75,35 @@ const activeFilterLabel = computed(
 )
 const creditBalance = computed(() => userPayInfo.value?.points ?? 0)
 const canTopUp = computed(() => check('Cost_Center_all'))
+const POINTS_DISPLAY_SCALE = 100
+
+function roundPointsForDisplay(points: number) {
+  return Math.round((points + Number.EPSILON) * POINTS_DISPLAY_SCALE) / POINTS_DISPLAY_SCALE
+}
+
+const usageChartData = computed<CreditsUsageDatum[]>(() => {
+  const pointTotals = new Map<string, number>()
+
+  dailyConsumptionRecords.value.forEach((record) => {
+    const points = Math.abs(Number(record.data))
+    pointTotals.set(record.day, (pointTotals.get(record.day) ?? 0) + (Number.isFinite(points) ? points : 0))
+  })
+
+  const days = activeFilter.value === '90d' ? 90 : 30
+  const today = new Date()
+
+  return Array.from({ length: days }, (_, index) => {
+    const date = subDays(today, days - index - 1)
+    const dateKey = format(date, 'yyyy-MM-dd')
+
+    return {
+      date: dateKey,
+      axisLabel: format(date, 'M/d'),
+      tooltipDate: format(date, 'yyyy.M.d'),
+      points: roundPointsForDisplay(pointTotals.get(dateKey) ?? 0),
+    }
+  })
+})
 const activeTabMeta = computed(() => {
   return activeTab.value === 'recharge'
     ? {
@@ -113,8 +151,25 @@ function getDateQuery(filter: TimeFilter) {
 
   const days = filter === '30d' ? 30 : 90
   return {
-    startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
+    startDate: format(subDays(new Date(), days - 1), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
+  }
+}
+
+function mapRecord(row: any, tab: RecordTab, page: number, index: number): CreditsRecord {
+  const timeField = tab === 'charge' ? 'chargedAt' : 'payTime'
+  const timestamp = normalizeTimestamp(row[timeField])
+
+  return {
+    id: row.orderNo || row.id || `${tab}-${page}-${index}`,
+    date: formatRecordTime(timestamp),
+    timestamp,
+    points: row.points || 0,
+    amount: tab === 'recharge' && row.amount ? `$${row.amount}` : undefined,
+    description:
+      tab === 'recharge'
+        ? OrderTypeStr[row.orderType] || row.orderType || $t('充值')
+        : row.description || row.name || row.scene || $t('使用'),
   }
 }
 
@@ -134,42 +189,40 @@ async function loadData(reset = false) {
     total.value = 0
     hasMore.value = true
     records.value = []
+    dailyConsumptionRecords.value = []
   } else {
     loadingMore.value = true
   }
 
   try {
+    if (requestedTab === 'charge') {
+      const { code, data } = (await API.points.userGetPointsDailyConsumptionList(
+        getDateQuery(requestedFilter),
+      )) as any
+
+      if (loadId !== latestLoadId || code !== 0) {
+        return
+      }
+
+      dailyConsumptionRecords.value = data?.rows ?? []
+      total.value = dailyConsumptionRecords.value.length
+      hasMore.value = false
+      return
+    }
+
     const query = {
       page_index: requestedPage,
       page_size: PAGE_SIZE,
       ...getDateQuery(requestedFilter),
     }
-    const request =
-      requestedTab === 'recharge'
-        ? API.points.userGetPointsRechargeRecordsList(query)
-        : API.points.userGetPointsChargesRecordsList({
-            ...query,
-            page_index: String(query.page_index),
-            page_size: String(query.page_size),
-          })
+    const { code, data } = (await API.points.userGetPointsRechargeRecordsList(query)) as any
 
-    const { code, data } = (await request) as any
-
-    if (loadId !== latestLoadId || code !== 0)
+    if (loadId !== latestLoadId || code !== 0) {
       return
+    }
 
-    const timeField = requestedTab === 'charge' ? 'chargedAt' : 'payTime'
-    const nextRecords = (data?.rows ?? []).map((row: any, index: number) => ({
-      id: row.orderNo || row.id || `${requestedTab}-${requestedPage}-${index}`,
-      date: formatRecordTime(row[timeField]),
-      points: row.points || 0,
-      amount: requestedTab === 'recharge' && row.amount ? `$${row.amount}` : undefined,
-      description:
-        requestedTab === 'recharge'
-          ? OrderTypeStr[row.orderType] || row.orderType || $t('充值')
-          : row.description || row.name || row.scene || $t('使用'),
-    }))
-
+    const rows = data?.rows ?? []
+    const nextRecords = rows.map((row: any, index: number) => mapRecord(row, requestedTab, requestedPage, index))
     total.value = Number(data?.total) || 0
     const updatedRecords = reset ? nextRecords : [...records.value, ...nextRecords]
     records.value = updatedRecords
@@ -207,6 +260,10 @@ function formatRecordTime(timestamp?: number | string | null): string {
 }
 
 function onListScroll(event: Event) {
+  if (activeTab.value === 'charge') {
+    return
+  }
+
   const target = event.target as HTMLElement
   const threshold = 24
   const isNearBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - threshold
@@ -291,7 +348,17 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div ref="listRef" class="credits-list" @scroll="onListScroll">
+      <div v-if="activeTab === 'charge'" class="usage-chart-wrap">
+        <div v-if="loading" class="usage-chart-state">
+          {{ $t('加载中...') }}
+        </div>
+        <div v-else-if="dailyConsumptionRecords.length === 0" class="usage-chart-state">
+          {{ activeTabMeta.empty }}
+        </div>
+        <CreditsUsageChart v-else :data="usageChartData" />
+      </div>
+
+      <div v-else ref="listRef" class="credits-list" @scroll="onListScroll">
         <div v-if="loading" class="credits-state">{{ $t('加载中...') }}</div>
 
         <div v-else-if="records.length === 0" class="credits-state">
@@ -534,6 +601,24 @@ h1 {
   margin-top: 12px;
   padding-bottom: 12px;
   overflow: auto;
+}
+
+.usage-chart-wrap {
+  min-height: 0;
+  flex: 1 1 0;
+  margin-top: 12px;
+}
+
+.usage-chart-state {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--color-text-quaternary);
+  background: var(--color-bg-tertiary);
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .credits-record {

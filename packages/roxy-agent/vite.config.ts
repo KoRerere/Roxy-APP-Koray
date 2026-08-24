@@ -1,4 +1,5 @@
 import type { UserConfig } from 'vite'
+import { createSystemSkillsBundlePlugin } from '@roxy/vite-plugins'
 import { join } from 'node:path'
 // import { node } from './.electron-vendors.cache.json'
 
@@ -36,7 +37,11 @@ const config: UserConfig = {
     emptyOutDir: true,
     reportCompressedSize: false,
   },
-  plugins: [],
+  plugins: [
+    createSystemSkillsBundlePlugin({
+      systemSkillsDir: join(PACKAGE_ROOT, 'src/system-skills'),
+    }),
+  ],
 }
 
 export default config

@@ -8,7 +8,7 @@
 
 契约定义在 `src/core/interfaces.ts`：
 
-- `TrajectoryPhase` — `model_thought` / `tool_selected` / `hitl_intercept` / `tool_executed` / `result_returned` / `memory_trimmed` / `subagent_delegated` / `error`。
+- `TrajectoryPhase` — `model_thought` / `tool_selected` / `hitl_intercept` / `tool_executed` / `result_returned` / `memory_trimmed` / `error`。
 - `TrajectoryEvent` `{ traceId, ts, phase, data }`。
 - `ITrajectoryRecorder` — `start(input) → traceId`；`emit(event)`；`end(traceId)`；`getTrace(traceId) → TrajectoryEvent[]`。
 
@@ -50,7 +50,7 @@
 ]
 ```
 
-非工具 turn 可能附带 `memory_trimmed` / `subagent_delegated` / `error`。
+非工具 turn 可能附带 `memory_trimmed` / `error`。Agent tree 生命周期通过 `AgentManagerOptions.onEvent` 单独发布。
 
 ### 3.2 JsonlTrajectoryRecorder 写出的两行
 

@@ -22,6 +22,8 @@ import {
   UserGetPointsDailyConsumptionListParams,
   UserGetPointsRechargeRecordsListData,
   UserGetPointsRechargeRecordsListParams,
+  UserGrantOnboardingGuidePointsCreateData,
+  UserGrantOnboardingGuidePointsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -146,6 +148,27 @@ export class PointsApi<SecurityDataType = unknown> {
       path: `/user_get_points_daily_consumption`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags points
+   * @name UserGrantOnboardingGuidePointsCreate
+   * @summary 新手引导赠送积分
+   * @request POST:/user_grant_onboarding_guide_points
+   * @response `200` `UserGrantOnboardingGuidePointsCreateData`
+   */
+  userGrantOnboardingGuidePointsCreate = (
+    data: UserGrantOnboardingGuidePointsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGrantOnboardingGuidePointsCreateData, any>({
+      path: `/user_grant_onboarding_guide_points`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

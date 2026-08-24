@@ -25,6 +25,8 @@ export interface TaskMonitorBrowserAttachInput {
   label?: string
   ws?: string
   browserType?: string
+  workerId?: string
+  conversationId?: string
 }
 
 export interface TaskMonitorBrowserEventInput {

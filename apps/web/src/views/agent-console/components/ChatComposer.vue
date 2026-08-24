@@ -1,18 +1,23 @@
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
-import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentTodoProgress } from '../types'
+import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlChoiceOption, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
 import type { AgentComposerItem } from './chat-composer/types'
 import AgentTodoPill from './AgentTodoPill.vue'
 import AgentTooltip from './AgentTooltip.vue'
 import ComposerToolbar from './ComposerToolbar.vue'
+import PromptQueue from './PromptQueue.vue'
 import SuggestionMenu from './chat-composer/SuggestionMenu.vue'
 import { getClipboardFiles } from './chat-composer/clipboardFiles'
+import { shouldConvertPastedTextToFile } from './chat-composer/pasteText'
 import {
   getInvalidTemplateReferenceLabels,
   getMissingComposerTokenLabels,
   splitUrlValue,
 } from './chat-composer/protocol'
 import { useAgentComposer } from './chat-composer/useAgentComposer'
+import { observeUrlFavicons } from '../utils/urlFavicon'
+import { applyClarificationOptionSelection, collectStructuredClarificationAnswers } from '../clarificationAnswerState'
 
 const props = defineProps<{
   autoFocus?: boolean
@@ -20,6 +25,7 @@ const props = defineProps<{
   focusKey?: number | string
   hitlRequest?: AgentHitlRequest
   pendingAttachments: AgentAttachment[]
+  queuedPrompts?: AgentQueuedPrompt[]
   placeholder?: string
   promptMinHeight?: string
   readonly?: boolean
@@ -35,6 +41,9 @@ const emit = defineEmits<{
   addFolder: [folder: AgentFolderSelection]
   addPathAttachment: [selection: AgentPathSelection]
   removeAttachment: [fileId: string]
+  removeQueuedPrompt: [promptId: string]
+  reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
+  restoreQueuedPrompt: [promptId: string]
   send: []
   stop: []
   submitHitl: [payload: AgentHitlSubmitPayload]
@@ -68,9 +77,13 @@ const inputTokenPopoverStyle = reactive({
 })
 const inputTokenPopoverPlacement = ref<'top' | 'bottom'>('top')
 const pastedTextFileIndex = ref(0)
+const clarificationDescriptionOverflow = ref<Record<string, boolean>>({})
+const clarificationQuestionIndex = ref(0)
+const clarificationSelections = ref<Record<string, string>>({})
 
-const PASTED_TEXT_FILE_MIN_LENGTH = 4000
-const PASTED_TEXT_FILE_MIN_LINES = 40
+interface ClarificationDisplayOption extends AgentHitlChoiceOption {
+  description?: string
+}
 
 const {
   allMentionItemsSelected,
@@ -116,22 +129,31 @@ const hasAttachmentUploading = computed(() => props.pendingAttachments.some(atta
 const composerCanSubmit = computed(() => {
   return !hasAttachmentUploading.value && (canSubmit.value || props.pendingAttachments.length > 0)
 })
+const hasPromptContent = computed(() => Boolean(model.value.trim()))
+const hasComposerPayload = computed(() => hasPromptContent.value || props.pendingAttachments.length > 0)
+const showStopButton = computed(() => props.thinking && !hasComposerPayload.value)
 let autoFocusFrame = 0
 let inputTokenPopoverFrame = 0
 let inputTokenGlobalListenersBound = false
 let inputTokenPopoverResizeObserver: ResizeObserver | undefined
+let clarificationDescriptionFrame = 0
+let clarificationDescriptionResizeObserver: ResizeObserver | undefined
+const clarificationDescriptionEls = new Map<string, HTMLElement>()
+let stopObservingUrlFavicons = () => {}
 
 function requestEditorFocus() {
-  if (!props.autoFocus || props.hitlRequest)
+  if (!props.autoFocus || props.hitlRequest) {
     return
+  }
 
   if (typeof window === 'undefined') {
     focusEditor()
     return
   }
 
-  if (autoFocusFrame)
+  if (autoFocusFrame) {
     window.cancelAnimationFrame(autoFocusFrame)
+  }
 
   autoFocusFrame = window.requestAnimationFrame(() => {
     autoFocusFrame = 0
@@ -159,11 +181,13 @@ function isImageAttachment(attachment: AgentAttachment) {
 }
 
 function getAttachmentTypeLabel(attachment: AgentAttachment) {
-  if (attachment.uploadStatus === 'uploading')
+  if (attachment.uploadStatus === 'uploading') {
     return $t('上传中')
+  }
 
-  if (attachment.kind === 'folder')
+  if (attachment.kind === 'folder') {
     return 'Folder'
+  }
 
   return getFileExtension(attachment.fileName)
 }
@@ -179,9 +203,6 @@ function getFolderNameFromFiles(files: File[]) {
 }
 
 async function openAttachmentPicker() {
-  if (props.thinking)
-    return
-
   if (globalThis.isElectron) {
     try {
       const selected = await globalThis.electronAPI.send('dialog:selectFileOrDirInfo')
@@ -203,19 +224,11 @@ async function openAttachmentPicker() {
 }
 
 function addFiles(files: File[]) {
-  if (!files.length || props.thinking)
+  if (!files.length || props.thinking) {
     return
+  }
 
   emit('addAttachments', files)
-}
-
-function shouldConvertPastedTextToFile(text: string) {
-  const normalized = text.trim()
-  if (!normalized)
-    return false
-
-  return normalized.length >= PASTED_TEXT_FILE_MIN_LENGTH
-    || normalized.split(/\r?\n/).length >= PASTED_TEXT_FILE_MIN_LINES
 }
 
 function createPastedTextFile(text: string) {
@@ -229,61 +242,71 @@ function createPastedTextFile(text: string) {
 
 function handleComposerPaste(event: ClipboardEvent) {
   const files = getClipboardFiles(event.clipboardData)
-  if (isPromptField.value || props.readonly)
+  if (isPromptField.value || props.readonly) {
     return
+  }
 
   if (files.length) {
     event.preventDefault()
+    event.stopPropagation()
     addFiles(files)
     return
   }
 
   const text = event.clipboardData?.getData('text/plain') ?? ''
-  if (!shouldConvertPastedTextToFile(text))
+  if (!shouldConvertPastedTextToFile(text)) {
     return
+  }
 
   event.preventDefault()
+  event.stopPropagation()
   addFiles([createPastedTextFile(text)])
 }
 
 function handleFileInputChange(event: Event) {
   const input = event.target as HTMLInputElement | null
   addFiles(Array.from(input?.files ?? []))
-  if (input)
+  if (input) {
     input.value = ''
+  }
 }
 
 function handleFolderInputChange(event: Event) {
   const input = event.target as HTMLInputElement | null
   const files = Array.from(input?.files ?? [])
-  if (files.length > 0)
+  if (files.length > 0) {
     emit('addFolder', { name: getFolderNameFromFiles(files), files })
-  if (input)
+  }
+  if (input) {
     input.value = ''
+  }
 }
 
 function setActiveSuggestion(item: AgentComposerItem) {
   const index = suggestion.items.findIndex(candidate => candidate.id === item.id)
 
-  if (index >= 0)
+  if (index >= 0) {
     suggestion.activeIndex = index
+  }
 }
 
 function handleSendButtonClick() {
-  if (props.thinking) {
+  if (showStopButton.value) {
     emit('stop')
     return
   }
 
-  if (!composerCanSubmit.value)
+  if (!composerCanSubmit.value) {
     return
+  }
 
   handleComposerSend()
 }
 
 function handleComposerSend() {
-  if (!composerCanSubmit.value)
+  if (!composerCanSubmit.value) {
     return
+  }
 
   const missingLabels = getMissingComposerTokenLabels(model.value)
   if (missingLabels.length) {
@@ -302,6 +325,11 @@ function handleComposerSend() {
   emit('send')
 }
 
+function handleRestoreQueuedPrompt(promptId: string) {
+  emit('restoreQueuedPrompt', promptId)
+  nextTick(focusEditor)
+}
+
 function submitInputTokenEdit() {
   inputTokenComposing.value = false
   let value = inputTokenValue.value
@@ -316,8 +344,9 @@ function submitInputTokenEdit() {
 
 function handleUrlTokenPaste(event: ClipboardEvent) {
   const pastedValue = event.clipboardData?.getData('text/plain')?.trim()
-  if (!pastedValue)
+  if (!pastedValue) {
     return
+  }
 
   const parts = splitUrlValue(pastedValue)
   inputUrlProtocol.value = parts.protocol
@@ -328,8 +357,9 @@ function handleUrlTokenPaste(event: ClipboardEvent) {
 function handleInputTokenKeydown(event: KeyboardEvent) {
   event.stopPropagation()
 
-  if (inputTokenComposing.value || event.isComposing || event.keyCode === 229)
+  if (inputTokenComposing.value || event.isComposing || event.keyCode === 229) {
     return
+  }
 
   if (event.key === 'Enter') {
     event.preventDefault()
@@ -344,11 +374,13 @@ function handleInputTokenKeydown(event: KeyboardEvent) {
 }
 
 function scheduleInputTokenPopoverSync() {
-  if (!inputEditor.open || !inputEditor.anchorEl)
+  if (!inputEditor.open || !inputEditor.anchorEl) {
     return
+  }
 
-  if (inputTokenPopoverFrame)
+  if (inputTokenPopoverFrame) {
     window.cancelAnimationFrame(inputTokenPopoverFrame)
+  }
 
   inputTokenPopoverFrame = window.requestAnimationFrame(() => {
     inputTokenPopoverFrame = 0
@@ -361,11 +393,13 @@ function getInputTokenPopoverZIndex(anchorEl: HTMLElement) {
 
   while (current) {
     const zIndex = Number.parseInt(window.getComputedStyle(current).zIndex, 10)
-    if (Number.isFinite(zIndex))
+    if (Number.isFinite(zIndex)) {
       highestAncestorZIndex = Math.max(highestAncestorZIndex, zIndex)
+    }
 
-    if (current === document.body)
+    if (current === document.body) {
       break
+    }
 
     current = current.parentElement
   }
@@ -375,8 +409,9 @@ function getInputTokenPopoverZIndex(anchorEl: HTMLElement) {
 
 function syncInputTokenPopoverPosition() {
   const anchorEl = inputEditor.anchorEl
-  if (!inputEditor.open || !anchorEl)
+  if (!inputEditor.open || !anchorEl) {
     return
+  }
 
   const anchorRect = anchorEl.getBoundingClientRect()
   const popoverEl = inputTokenPopoverRef.value
@@ -406,27 +441,32 @@ function syncInputTokenPopoverPosition() {
 }
 
 function onInputTokenDocumentPointerDown(event: PointerEvent) {
-  if (!inputEditor.open)
+  if (!inputEditor.open) {
     return
+  }
 
   const path = event.composedPath()
-  if (inputTokenPopoverRef.value && path.includes(inputTokenPopoverRef.value))
+  if (inputTokenPopoverRef.value && path.includes(inputTokenPopoverRef.value)) {
     return
+  }
 
-  if (inputEditor.anchorEl && path.includes(inputEditor.anchorEl))
+  if (inputEditor.anchorEl && path.includes(inputEditor.anchorEl)) {
     return
+  }
 
   cancelInputTokenEdit()
 }
 
 function onInputTokenDocumentKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape')
+  if (event.key === 'Escape') {
     cancelInputTokenEdit()
+  }
 }
 
 function bindInputTokenGlobalListeners() {
-  if (inputTokenGlobalListenersBound || typeof window === 'undefined')
+  if (inputTokenGlobalListenersBound || typeof window === 'undefined') {
     return
+  }
 
   inputTokenGlobalListenersBound = true
   document.addEventListener('pointerdown', onInputTokenDocumentPointerDown, true)
@@ -436,8 +476,9 @@ function bindInputTokenGlobalListeners() {
 }
 
 function unbindInputTokenGlobalListeners() {
-  if (!inputTokenGlobalListenersBound || typeof window === 'undefined')
+  if (!inputTokenGlobalListenersBound || typeof window === 'undefined') {
     return
+  }
 
   inputTokenGlobalListenersBound = false
   document.removeEventListener('pointerdown', onInputTokenDocumentPointerDown, true)
@@ -447,8 +488,9 @@ function unbindInputTokenGlobalListeners() {
 }
 
 function dismissSuggestionMenu() {
-  if (!suggestion.open)
+  if (!suggestion.open) {
     return
+  }
 
   if (suggestion.kind === 'mention') {
     cancelMentionSelection()
@@ -483,6 +525,84 @@ const hitlInputControls = computed<AgentHitlTextControl[]>(() => {
 })
 
 const isHitlSubmitting = computed(() => props.hitlRequest?.status === 'submitting')
+const isClarificationHitl = computed(() => {
+  const payload = props.hitlRequest?.source?.payload
+  return Boolean(payload && typeof payload === 'object' && !Array.isArray(payload) && (payload as Record<string, unknown>).requestKind === 'clarification')
+})
+const clarificationQuestions = computed(() => {
+  return isClarificationHitl.value ? props.hitlRequest?.clarificationQuestions ?? [] : []
+})
+const hasStructuredClarificationQuestions = computed(() => clarificationQuestions.value.length > 0)
+const activeClarificationQuestion = computed(() => {
+  return clarificationQuestions.value[clarificationQuestionIndex.value]
+})
+const clarificationChoiceControl = computed(() => {
+  if (!isClarificationHitl.value || hasStructuredClarificationQuestions.value) {
+    return undefined
+  }
+
+  return hitlChoiceControls.value.find(control => control.id === 'answer') ?? hitlChoiceControls.value[0]
+})
+const clarificationSubmitControl = computed(() => {
+  if (!isClarificationHitl.value) {
+    return undefined
+  }
+
+  return hitlChoiceControls.value.find(control => control.id === 'submit')
+})
+const clarificationTextControl = computed(() => {
+  if (!isClarificationHitl.value || hasStructuredClarificationQuestions.value) {
+    return undefined
+  }
+
+  return hitlInputControls.value.find(control => control.id === 'answer') ?? hitlInputControls.value[0]
+})
+const clarificationAnswerControlId = computed(() => {
+  if (activeClarificationQuestion.value) {
+    return `answer:${activeClarificationQuestion.value.id}`
+  }
+  return clarificationTextControl.value?.id ?? clarificationChoiceControl.value?.id ?? 'answer'
+})
+const clarificationOptions = computed<ClarificationDisplayOption[]>(() => {
+  const question = activeClarificationQuestion.value
+  if (question) {
+    return question.options.map((option, index) => ({
+      id: `${question.id}-option-${index + 1}`,
+      label: option.label,
+      value: option.label,
+      description: option.description,
+    }))
+  }
+
+  return clarificationChoiceControl.value?.options ?? []
+})
+const shouldRenderClarificationEditor = computed(() => Boolean(isClarificationHitl.value && props.hitlRequest))
+const nonClarificationChoiceControls = computed(() => {
+  return isClarificationHitl.value ? [] : hitlChoiceControls.value
+})
+const nonClarificationInputControls = computed(() => {
+  return isClarificationHitl.value ? [] : hitlInputControls.value
+})
+const clarificationInputPlaceholder = computed(() => {
+  if (activeClarificationQuestion.value) {
+    return $t('输入你的回答，也可以先选择上方建议')
+  }
+  return clarificationTextControl.value?.placeholder ?? $t('输入你的回答，也可以先选择上方建议')
+})
+const displayedHitlPrompt = computed(() => activeClarificationQuestion.value?.question ?? props.hitlRequest?.prompt ?? '')
+const canSubmitClarification = computed(() => {
+  if (!props.hitlRequest || isHitlSubmitting.value) {
+    return false
+  }
+
+  const value = getHitlInputValue(clarificationAnswerControlId.value).trim()
+  if (hasStructuredClarificationQuestions.value) {
+    return true
+  }
+
+  const required = clarificationTextControl.value?.required ?? clarificationChoiceControl.value?.required ?? true
+  return !required || Boolean(value)
+})
 
 function getHitlInputValue(controlId: string) {
   const value = hitlValues.value[controlId]
@@ -498,14 +618,16 @@ function setHitlInputValue(controlId: string, value: string) {
 
 function handleHitlInput(controlId: string, event: Event) {
   const target = event.target
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
     setHitlInputValue(controlId, target.value)
+  }
 }
 
 function submitHitlChoice(control: AgentHitlChoiceControl, value: AgentHitlControlValue) {
   const request = props.hitlRequest
-  if (!request || isHitlSubmitting.value)
+  if (!request || isHitlSubmitting.value) {
     return
+  }
 
   emit('submitHitl', {
     requestId: request.id,
@@ -513,7 +635,239 @@ function submitHitlChoice(control: AgentHitlChoiceControl, value: AgentHitlContr
       ...hitlValues.value,
       [control.id]: value,
     },
+    fullAccess: control.id === 'approval'
+      && control.options.find(option => option.value === value)?.id === 'full-access',
   })
+}
+
+function hitlValueToEditableText(value: AgentHitlControlValue, fallback = '') {
+  return value === undefined || value === null ? fallback : String(value)
+}
+
+function clarificationAnswers(): Record<string, string> {
+  return collectStructuredClarificationAnswers({
+    questions: clarificationQuestions.value,
+    hitlValues: hitlValues.value,
+    selections: clarificationSelections.value,
+  })
+}
+
+function submitStructuredClarification() {
+  const request = props.hitlRequest
+  if (!request || isHitlSubmitting.value) {
+    return
+  }
+
+  emit('submitHitl', {
+    requestId: request.id,
+    values: {
+      ...hitlValues.value,
+      answer: JSON.stringify(clarificationAnswers()),
+    },
+  })
+}
+
+function previousClarificationQuestion() {
+  clarificationQuestionIndex.value = Math.max(0, clarificationQuestionIndex.value - 1)
+}
+
+function nextClarificationQuestion() {
+  if (clarificationQuestionIndex.value >= clarificationQuestions.value.length - 1) {
+    submitStructuredClarification()
+    return
+  }
+
+  clarificationQuestionIndex.value += 1
+}
+
+function chooseClarificationOption(option: ClarificationDisplayOption) {
+  const question = activeClarificationQuestion.value
+  if (question) {
+    const nextState = applyClarificationOptionSelection({
+      hitlValues: hitlValues.value,
+      selections: clarificationSelections.value,
+      questionId: question.id,
+      answer: hitlValueToEditableText(option.value, option.label),
+    })
+    hitlValues.value = nextState.hitlValues
+    clarificationSelections.value = nextState.selections
+    nextClarificationQuestion()
+    return
+  }
+
+  const control = clarificationChoiceControl.value
+  if (!control || isHitlSubmitting.value) {
+    return
+  }
+
+  submitClarificationAnswer(hitlValueToEditableText(option.value, option.label))
+}
+
+function submitClarificationAnswer(answerOverride?: string) {
+  const request = props.hitlRequest
+  if (!request || isHitlSubmitting.value) {
+    return
+  }
+
+  const answerControlId = clarificationAnswerControlId.value
+  const answer = (answerOverride ?? getHitlInputValue(answerControlId)).trim()
+  if (activeClarificationQuestion.value) {
+    setHitlInputValue(answerControlId, answer)
+    nextClarificationQuestion()
+    return
+  }
+
+  if (!answer && !canSubmitClarification.value) {
+    return
+  }
+
+  const values: Record<string, AgentHitlControlValue> = {
+    ...hitlValues.value,
+    answer,
+    [answerControlId]: answer,
+  }
+
+  if (clarificationSubmitControl.value) {
+    values[clarificationSubmitControl.value.id] = clarificationSubmitControl.value.options[0]?.value ?? true
+  }
+
+  emit('submitHitl', {
+    requestId: request.id,
+    values,
+  })
+}
+
+function submitClarificationSkip() {
+  const request = props.hitlRequest
+  if (!request || isHitlSubmitting.value) {
+    return
+  }
+
+  const answerControlId = clarificationAnswerControlId.value
+  const question = activeClarificationQuestion.value
+  if (question) {
+    setHitlInputValue(answerControlId, '')
+    const { [question.id]: _removed, ...rest } = clarificationSelections.value
+    clarificationSelections.value = rest
+    nextClarificationQuestion()
+    return
+  }
+
+  const values: Record<string, AgentHitlControlValue> = {
+    ...hitlValues.value,
+    answer: '',
+    [answerControlId]: '',
+  }
+
+  if (clarificationSubmitControl.value) {
+    values[clarificationSubmitControl.value.id] = clarificationSubmitControl.value.options[0]?.value ?? true
+  }
+
+  emit('submitHitl', {
+    requestId: request.id,
+    values,
+  })
+}
+
+function handleClarificationKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter' || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) {
+    return
+  }
+
+  event.preventDefault()
+  submitClarificationAnswer()
+}
+
+function getClarificationOptionTitle(option: ClarificationDisplayOption) {
+  return splitClarificationOptionLabel(option.label).title
+}
+
+function getClarificationOptionDescription(option: ClarificationDisplayOption) {
+  return option.description ?? splitClarificationOptionLabel(option.label).description
+}
+
+function isClarificationOptionSelected(option: ClarificationDisplayOption) {
+  const question = activeClarificationQuestion.value
+  return Boolean(question && clarificationSelections.value[question.id] === hitlValueToEditableText(option.value, option.label).trim())
+}
+
+function isClarificationDescriptionOverflowing(optionId: string) {
+  return Boolean(clarificationDescriptionOverflow.value[optionId])
+}
+
+function scheduleClarificationDescriptionMeasure() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if (clarificationDescriptionFrame) {
+    window.cancelAnimationFrame(clarificationDescriptionFrame)
+  }
+
+  clarificationDescriptionFrame = window.requestAnimationFrame(() => {
+    clarificationDescriptionFrame = 0
+    measureClarificationDescriptionOverflow()
+  })
+}
+
+function getClarificationDescriptionResizeObserver() {
+  if (!clarificationDescriptionResizeObserver) {
+    clarificationDescriptionResizeObserver = new ResizeObserver(() => {
+      scheduleClarificationDescriptionMeasure()
+    })
+  }
+
+  return clarificationDescriptionResizeObserver
+}
+
+function setClarificationDescriptionRef(optionId: string, el: Element | ComponentPublicInstance | null) {
+  const nextEl = el instanceof HTMLElement ? el : null
+  const previousEl = clarificationDescriptionEls.get(optionId)
+
+  if (previousEl === nextEl) {
+    return
+  }
+
+  if (previousEl) {
+    clarificationDescriptionResizeObserver?.unobserve(previousEl)
+  }
+
+  if (!nextEl) {
+    clarificationDescriptionEls.delete(optionId)
+    const { [optionId]: _removed, ...rest } = clarificationDescriptionOverflow.value
+    clarificationDescriptionOverflow.value = rest
+    return
+  }
+
+  clarificationDescriptionEls.set(optionId, nextEl)
+  getClarificationDescriptionResizeObserver().observe(nextEl)
+  scheduleClarificationDescriptionMeasure()
+}
+
+function measureClarificationDescriptionOverflow() {
+  const nextOverflow: Record<string, boolean> = {}
+
+  clarificationDescriptionEls.forEach((el, optionId) => {
+    nextOverflow[optionId] = el.scrollWidth > el.clientWidth + 1
+  })
+
+  clarificationDescriptionOverflow.value = nextOverflow
+}
+
+function splitClarificationOptionLabel(label: string) {
+  const [title, ...descriptionParts] = label.split(/[:：]/)
+  const description = descriptionParts.join('：').trim()
+  if (!description) {
+    return {
+      title: label,
+      description: '',
+    }
+  }
+
+  return {
+    title: title.trim(),
+    description,
+  }
 }
 
 watch(() => props.hitlRequest?.id, () => {
@@ -522,18 +876,28 @@ watch(() => props.hitlRequest?.id, () => {
   }
 
   for (const control of props.hitlRequest?.controls ?? []) {
-    if ((control.kind === 'text' || control.kind === 'textarea') && values[control.id] === undefined)
+    if ((control.kind === 'text' || control.kind === 'textarea') && values[control.id] === undefined) {
       values[control.id] = control.defaultValue ?? ''
+    }
   }
 
   hitlValues.value = values
+  clarificationQuestionIndex.value = 0
+  clarificationSelections.value = {}
+  clarificationDescriptionOverflow.value = {}
+  void nextTick(scheduleClarificationDescriptionMeasure)
 }, { immediate: true })
+
+watch(() => clarificationOptions.value.map(option => option.label).join('\n'), () => {
+  void nextTick(scheduleClarificationDescriptionMeasure)
+}, { flush: 'post' })
 
 watch(
   () => [props.autoFocus, props.focusKey, props.hitlRequest?.id, editor.value] as const,
   async ([autoFocus, _focusKey, hitlRequestId]) => {
-    if (!autoFocus || hitlRequestId || !editor.value)
+    if (!autoFocus || hitlRequestId || !editor.value) {
       return
+    }
 
     await nextTick()
     requestEditorFocus()
@@ -575,22 +939,36 @@ watch(
 )
 
 watch(model, (value) => {
-  if (!missingPromptWarning.value)
+  if (!missingPromptWarning.value) {
     return
+  }
 
-  if (!getMissingComposerTokenLabels(value).length)
+  if (!getMissingComposerTokenLabels(value).length) {
     missingPromptWarning.value = ''
+  }
+})
+
+onMounted(() => {
+  stopObservingUrlFavicons = observeUrlFavicons(composerShellRef.value)
 })
 
 onBeforeUnmount(() => {
-  if (autoFocusFrame)
+  if (autoFocusFrame) {
     window.cancelAnimationFrame(autoFocusFrame)
+  }
 
-  if (inputTokenPopoverFrame)
+  if (inputTokenPopoverFrame) {
     window.cancelAnimationFrame(inputTokenPopoverFrame)
+  }
+
+  if (clarificationDescriptionFrame) {
+    window.cancelAnimationFrame(clarificationDescriptionFrame)
+  }
 
   unbindInputTokenGlobalListeners()
   inputTokenPopoverResizeObserver?.disconnect()
+  clarificationDescriptionResizeObserver?.disconnect()
+  stopObservingUrlFavicons()
 })
 
 defineExpose({
@@ -627,18 +1005,112 @@ defineExpose({
       <AgentTodoPill :progress="todoProgress" />
     </div>
 
+    <PromptQueue
+      v-if="!isPromptField && !hitlRequest"
+      :prompts="queuedPrompts ?? []"
+      @remove="emit('removeQueuedPrompt', $event)"
+      @reorder="emit('reorderQueuedPrompt', $event)"
+      @restore="handleRestoreQueuedPrompt"
+    />
+
     <div v-if="hitlRequest" class="hitl-card" role="group" :aria-label="hitlRequest.title">
       <div class="hitl-card__header">
-        <SvgIcon name="roxy-agent/rx-ic-ask" size="16" color="currentColor" />
         <span>{{ hitlRequest.title }}</span>
+        <div v-if="hasStructuredClarificationQuestions" class="hitl-card__clarification-nav">
+          <span class="hitl-card__clarification-position">
+            {{ clarificationQuestionIndex + 1 }} / {{ clarificationQuestions.length }}
+          </span>
+          <button
+            class="hitl-card__clarification-nav-button"
+            type="button"
+            :title="$t('上一题')"
+            :aria-label="$t('上一题')"
+            :disabled="isHitlSubmitting || clarificationQuestionIndex === 0"
+            @click="previousClarificationQuestion"
+          >
+            <SvgIcon name="base/rx_ic_arrow_left" size="16" color="currentColor" />
+          </button>
+          <button
+            class="hitl-card__clarification-nav-button"
+            type="button"
+            :title="clarificationQuestionIndex === clarificationQuestions.length - 1 ? $t('提交回答') : $t('下一题')"
+            :aria-label="clarificationQuestionIndex === clarificationQuestions.length - 1 ? $t('提交回答') : $t('下一题')"
+            :disabled="isHitlSubmitting"
+            @click="nextClarificationQuestion"
+          >
+            <SvgIcon name="base/rx_ic_arrow_right_2" size="16" color="currentColor" />
+          </button>
+        </div>
       </div>
 
       <p class="hitl-card__prompt">
-        {{ hitlRequest.prompt }}
+        {{ displayedHitlPrompt }}
       </p>
 
-      <div v-if="hitlInputControls.length" class="hitl-card__inputs">
-        <label v-for="control in hitlInputControls" :key="control.id" class="hitl-card__field">
+      <div v-if="hitlRequest.subjects.length" class="hitl-card__subjects">
+        <article v-for="subject in hitlRequest.subjects" :key="subject.id" class="hitl-card__subject">
+          <div class="hitl-card__subject-title">
+            {{ subject.title }}
+          </div>
+          <pre v-if="subject.diff" class="hitl-card__diff">{{ subject.diff }}</pre>
+        </article>
+      </div>
+
+      <div v-if="shouldRenderClarificationEditor" class="hitl-card__clarification">
+        <button
+          v-for="(option, index) in clarificationOptions"
+          :key="option.id"
+          class="hitl-card__suggestion"
+          :class="{ 'hitl-card__suggestion--selected': isClarificationOptionSelected(option) }"
+          type="button"
+          :aria-pressed="isClarificationOptionSelected(option)"
+          :disabled="isHitlSubmitting"
+          @click="chooseClarificationOption(option)"
+        >
+          <span class="hitl-card__badge">{{ index + 1 }}</span>
+          <span class="hitl-card__suggestion-copy">
+            <span class="hitl-card__suggestion-title">{{ getClarificationOptionTitle(option) }}</span>
+            <AgentTooltip
+              v-if="getClarificationOptionDescription(option)"
+              :content="getClarificationOptionDescription(option)"
+              :disabled="!isClarificationDescriptionOverflowing(option.id)"
+              placement="top"
+              trigger-class="hitl-card__suggestion-description-wrap"
+            >
+              <span
+                :ref="el => setClarificationDescriptionRef(option.id, el)"
+                class="hitl-card__suggestion-description"
+              >{{ getClarificationOptionDescription(option) }}</span>
+            </AgentTooltip>
+          </span>
+          <SvgIcon class="hitl-card__suggestion-arrow" name="base/rx_ic_arrow_right_2" size="18" color="currentColor" />
+        </button>
+
+        <label class="hitl-card__freeform">
+          <span class="hitl-card__badge hitl-card__badge--edit">
+            <SvgIcon name="base/rx_ic_agent_edit" size="14" color="currentColor" />
+          </span>
+          <input
+            type="text"
+            :value="getHitlInputValue(clarificationAnswerControlId)"
+            :placeholder="clarificationInputPlaceholder"
+            :disabled="isHitlSubmitting"
+            @input="handleHitlInput(clarificationAnswerControlId, $event)"
+            @keydown="handleClarificationKeydown"
+          >
+          <button
+            class="hitl-card__skip"
+            type="button"
+            :disabled="isHitlSubmitting"
+            @click="submitClarificationSkip"
+          >
+            {{ $t('跳过') }}
+          </button>
+        </label>
+      </div>
+
+      <div v-if="nonClarificationInputControls.length" class="hitl-card__inputs">
+        <label v-for="control in nonClarificationInputControls" :key="control.id" class="hitl-card__field">
           <span v-if="control.label">{{ control.label }}</span>
           <textarea
             v-if="control.kind === 'textarea'"
@@ -658,8 +1130,8 @@ defineExpose({
         </label>
       </div>
 
-      <div class="hitl-card__actions">
-        <template v-for="control in hitlChoiceControls" :key="control.id">
+      <div v-if="nonClarificationChoiceControls.length" class="hitl-card__actions">
+        <template v-for="control in nonClarificationChoiceControls" :key="control.id">
           <button
             v-for="option in control.options"
             :key="option.id"
@@ -745,17 +1217,17 @@ defineExpose({
       <div v-if="!isPromptField" class="composer-row">
         <ComposerToolbar @select="handleToolbarSelect" />
 
-        <AgentTooltip :content="$t('停止')" placement="top" :disabled="!thinking">
+        <AgentTooltip :content="$t('停止')" placement="top" :disabled="!showStopButton">
           <button
             class="send-button"
-            :class="{ thinking }"
+            :class="{ thinking: showStopButton }"
             type="button"
-            :aria-label="thinking ? $t('停止') : 'Send'"
-            :disabled="!thinking && !composerCanSubmit"
-            :title="thinking ? undefined : 'Send'"
+            :aria-label="showStopButton ? $t('停止') : 'Send'"
+            :disabled="!showStopButton && !composerCanSubmit"
+            :title="showStopButton ? undefined : 'Send'"
             @click="handleSendButtonClick"
           >
-            <span v-if="thinking" class="send-button__pause" aria-hidden="true" />
+            <span v-if="showStopButton" class="send-button__pause" aria-hidden="true" />
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M7.33332 12.6667V4.49221C6.95089 4.8352 6.52102 5.29457 6.10806 5.7702C5.68411 6.2585 5.29087 6.74911 5.00259 7.11851C4.8588 7.30277 4.7416 7.45619 4.6608 7.56317C4.62041 7.61665 4.58874 7.65864 4.5677 7.68687C4.55723 7.70092 4.54948 7.71173 4.54426 7.71877C4.54165 7.72229 4.53964 7.72491 4.5384 7.72658L4.5371 7.72854L4.49348 7.78127C4.26672 8.03171 3.88276 8.07497 3.60481 7.87046C3.30842 7.65219 3.24476 7.23462 3.46288 6.93817H3.46353V6.93752L3.46418 6.93687C3.46462 6.93627 3.46539 6.93527 3.46614 6.93427C3.46772 6.93213 3.46979 6.92901 3.47265 6.92515C3.47863 6.91708 3.48737 6.90518 3.49869 6.88999C3.52129 6.85967 3.5542 6.81558 3.59635 6.75979C3.68076 6.64802 3.80239 6.48884 3.95116 6.2982C4.24817 5.91761 4.65733 5.40815 5.10155 4.8965C5.54288 4.3882 6.03209 3.86267 6.48892 3.459C6.71652 3.2579 6.9516 3.07257 7.18098 2.93427C7.39214 2.80697 7.68257 2.66669 7.99999 2.66669C8.31741 2.66669 8.60786 2.80698 8.819 2.93427C9.04838 3.07257 9.28347 3.25791 9.51106 3.459C9.96789 3.86266 10.4571 4.38821 10.8984 4.8965C11.3427 5.40815 11.7518 5.91762 12.0488 6.2982C12.1976 6.48884 12.3192 6.64803 12.4036 6.75979C12.4458 6.81558 12.4787 6.85967 12.5013 6.88999C12.5126 6.90517 12.5214 6.91708 12.5273 6.92515C12.5302 6.92901 12.5323 6.93213 12.5338 6.93427C12.5346 6.93528 12.5354 6.93627 12.5358 6.93687L12.5364 6.93752V6.93817H12.5371C12.7552 7.23462 12.6916 7.65218 12.3952 7.87046C12.0987 8.08858 11.6812 8.02492 11.4629 7.72854L11.4616 7.72658C11.4603 7.72491 11.4583 7.7223 11.4557 7.71877C11.4505 7.71173 11.4428 7.70092 11.4323 7.68687C11.4112 7.65864 11.3796 7.61665 11.3392 7.56317C11.2584 7.45619 11.1412 7.30277 10.9974 7.11851C10.7091 6.74911 10.3159 6.2585 9.89192 5.7702C9.47896 5.29458 9.04909 4.8352 8.66666 4.49221V12.6667C8.66666 13.0349 8.36818 13.3334 7.99999 13.3334C7.6318 13.3334 7.33332 13.0349 7.33332 12.6667Z" fill="white" />
             </svg>
@@ -911,10 +1383,10 @@ defineExpose({
   z-index: 1;
   display: flex;
   width: 100%;
-  min-height: 128px;
+  min-height: 0;
   flex-direction: column;
-  gap: 10px;
-  padding: 15px;
+  gap: 14px;
+  padding: 16px;
   border: 1px solid var(--color-border-secondary);
   border-radius: 16px;
   color: var(--color-text-primary);
@@ -925,30 +1397,100 @@ defineExpose({
 
 .hitl-card__header {
   display: flex;
-  height: 20px;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 12px;
   color: var(--color-text-primary);
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 20px;
 }
 
+.hitl-card__clarification-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hitl-card__clarification-position {
+  min-width: 32px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.hitl-card__clarification-nav-button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  appearance: none;
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary, #f5f5f5);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
 .hitl-card__prompt {
-  max-width: calc(100% - 170px);
   margin: 0;
-  overflow: hidden;
   color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 22px;
+}
+
+.hitl-card__subjects {
+  display: flex;
+  max-height: 180px;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+
+.hitl-card__subject {
+  min-width: 0;
+}
+
+.hitl-card__subject-title {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.hitl-card__diff {
+  max-height: 128px;
+  margin: 4px 0 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary, var(--color-bg-primary));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre;
+}
+
 .hitl-card__inputs {
   display: flex;
-  width: calc(100% - 170px);
   flex-direction: column;
   gap: 6px;
 }
@@ -982,12 +1524,163 @@ defineExpose({
   resize: none;
 }
 
+.hitl-card__clarification {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hitl-card__suggestion,
+.hitl-card__freeform {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 20px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary, #f5f5f5);
+  box-sizing: border-box;
+}
+
+.hitl-card__suggestion {
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-tertiary, #f0f0f0);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.hitl-card__badge {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 50%;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.hitl-card__badge--edit {
+  color: var(--color-text-secondary);
+}
+
+.hitl-card__suggestion-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 6px 0;
+}
+
+.hitl-card__suggestion-title {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+:deep(.hitl-card__suggestion-description-wrap) {
+  display: block;
+  min-width: 0;
+}
+
+.hitl-card__suggestion-description {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hitl-card__suggestion-arrow {
+  flex: 0 0 auto;
+  color: var(--color-text-tertiary);
+}
+
+.hitl-card__freeform {
+  background: transparent;
+}
+
+.hitl-card__freeform input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: none;
+  color: var(--color-text-primary);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+  }
+}
+
+.hitl-card__skip {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  appearance: none;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary, #f5f5f5);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
 .hitl-card__actions {
-  position: absolute;
-  right: 15px;
-  bottom: 15px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -1023,6 +1716,23 @@ defineExpose({
   border-color: var(--color-bg-primary-inverse);
   color: var(--color-text-primary-inverse);
   background: var(--color-bg-primary-inverse);
+}
+
+@media (max-width: 600px) {
+  .hitl-card {
+    padding: 14px;
+  }
+
+  .hitl-card__suggestion,
+  .hitl-card__freeform {
+    min-height: 44px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .hitl-card__suggestion-copy {
+    gap: 1px;
+  }
 }
 
 .composer {
@@ -1239,6 +1949,48 @@ defineExpose({
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+
+  a[data-agent-favicon-url] {
+    position: relative;
+  }
+
+  a[data-agent-favicon-url]::before,
+  a[data-agent-favicon-url]::after {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    content: '';
+    vertical-align: -2px;
+    pointer-events: none;
+  }
+
+  a[data-agent-favicon-url]::before {
+    background-color: var(--color-text-tertiary);
+    mask: var(--agent-favicon-fallback-image) center / contain no-repeat;
+    -webkit-mask: var(--agent-favicon-fallback-image) center / contain no-repeat;
+    opacity: var(--agent-favicon-fallback-opacity, 1);
+    transform: scale(var(--agent-favicon-fallback-scale, 1));
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
+  }
+
+  a[data-agent-favicon-url]::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    background-image: var(--agent-favicon-image);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: var(--agent-favicon-opacity, 0);
+    transform: translateY(2px) scale(var(--agent-favicon-scale, 0.85));
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
   }
 }
 

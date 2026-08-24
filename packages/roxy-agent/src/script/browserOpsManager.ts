@@ -32,8 +32,9 @@ export class BrowserOpsManager {
    */
   async ensure(conversationId: string): Promise<RecordingState> {
     const existing = this.sessions.get(conversationId)
-    if (existing)
+    if (existing) {
       return existing
+    }
 
     const eventsFilePath = agentPaths.sessionRecordingLog(conversationId)
     fs.mkdirSync(path.dirname(eventsFilePath), { recursive: true })
@@ -58,6 +59,7 @@ export class BrowserOpsManager {
   canAppendEvents(conversationId: string): boolean {
     return this.sessions.has(conversationId)
   }
+
   get sessionCount(): number {
     return this.sessions.size
   }
@@ -86,8 +88,9 @@ export class BrowserOpsManager {
     workerId?: string
   }): void {
     const session = this.sessions.get(conversationId)
-    if (!session)
+    if (!session) {
       return
+    }
 
     session.eventSeq++
 
@@ -123,8 +126,9 @@ export class BrowserOpsManager {
       return lines.map(line => JSON.parse(line) as BrowserOpEvent)
     }
     catch (err: any) {
-      if (err.code === 'ENOENT')
+      if (err.code === 'ENOENT') {
         return []
+      }
       throw err
     }
   }
@@ -152,18 +156,20 @@ function sanitizeInput(input: Record<string, any>): Record<string, any> {
 
 /** 截断长字符串 */
 function truncate(str: string, maxLen: number): string {
-  if (str.length <= maxLen)
+  if (str.length <= maxLen) {
     return str
+  }
   return `${str.substring(0, maxLen)}...[truncated]`
 }
 
 function inferPrimaryDirId(events: BrowserOpEvent[]): string | undefined {
   for (let i = events.length - 1; i >= 0; i--) {
     const event = events[i]
-    if (event?.dirId)
+    if (event?.dirId) {
       return event.dirId
+    }
   }
   return undefined
 }
 
-export const conversationLogManager = new BrowserOpsManager()
+export const browserOpsManager = new BrowserOpsManager()

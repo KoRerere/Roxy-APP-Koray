@@ -83,7 +83,7 @@
 agent state ↔ Anthropic 消息循环：
 
 ```
-model 节点 → provider.chat(req)
+model 节点 → provider.invoke(req)
   返回 stopReason: tool_use + ToolUseBlock[]
   → assistant 消息(含 tool_use) 追加进 messages
 tools 节点 → executor.execute(name, input, ctx, toolUseId)

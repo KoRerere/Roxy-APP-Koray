@@ -15,8 +15,9 @@ const MARKDOWN_LINK_PATTERN = /\[((?:\\.|[^\]\\\n])*)\]\(((?:\\.|[^)\\\n])*)\)/g
 const TODAY_DATE_INPUT_DEFAULT = '今天日期'
 
 export function resolveInputDefaultValue(value: string, now = new Date()): string {
-  if (value.trim() !== TODAY_DATE_INPUT_DEFAULT)
+  if (value.trim() !== TODAY_DATE_INPUT_DEFAULT) {
     return value
+  }
 
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -29,8 +30,15 @@ export interface ComposerProtocolToken {
   kind: AgentComposerTokenKind
   raw: string
   target: string
+  skillPath?: string
   templateRef?: string
   title: string
+}
+
+const INSTALLED_SKILL_MARKDOWN_PATH_PATTERN = /(?:^|[\\/])library[\\/]skills[\\/]installed[\\/][A-Z0-9][\w-]{0,127}[\\/]SKILL\.md$/i
+
+function isAgentSkillMarkdownPath(value: string): boolean {
+  return INSTALLED_SKILL_MARKDOWN_PATH_PATTERN.test(value.trim())
 }
 
 function parseProtocolToken(match: RegExpMatchArray): ComposerProtocolToken {
@@ -51,13 +59,16 @@ function parseProtocolToken(match: RegExpMatchArray): ComposerProtocolToken {
     title,
   }
 
-  if (kind === 'script' || kind === 'skill') {
+  if (kind === 'script') {
     try {
       token.templateRef = parseTemplateRef(target).value
     }
     catch {
       // Invalid historical references remain plain text in the composer.
     }
+  }
+  else if (kind === 'skill' && isAgentSkillMarkdownPath(target)) {
+    token.skillPath = target.trim()
   }
 
   return token
@@ -69,16 +80,17 @@ export function scanComposerProtocolTokens(prompt: string): ComposerProtocolToke
 
 export function hasComposerProtocolTokens(prompt: string) {
   return scanComposerProtocolTokens(prompt).some((token) => {
-    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'url' || Boolean(token.templateRef)
+    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'url' || Boolean(token.templateRef || token.skillPath)
   })
 }
 
 export function getMissingComposerTokenLabels(prompt: string) {
   const tokens = scanComposerProtocolTokens(prompt)
-  const requiresFilledInputs = tokens.some(token => token.kind === 'skill' && token.templateRef)
+  const requiresFilledInputs = tokens.some(token => token.kind === 'skill' && token.skillPath)
 
-  if (!requiresFilledInputs)
+  if (!requiresFilledInputs) {
     return []
+  }
 
   const labels: string[] = []
 
@@ -94,7 +106,7 @@ export function getMissingComposerTokenLabels(prompt: string) {
 export function getInvalidTemplateReferenceLabels(prompt: string): string[] {
   return Array.from(new Set(
     scanComposerProtocolTokens(prompt)
-      .filter(token => (token.kind === 'script' || token.kind === 'skill') && !token.templateRef)
+      .filter(token => token.kind === 'script' && !token.templateRef)
       .map(token => token.title || token.target),
   ))
 }
@@ -102,8 +114,9 @@ export function getInvalidTemplateReferenceLabels(prompt: string): string[] {
 export function searchComposerItems(items: AgentComposerItem[], query: string) {
   const keyword = query.trim().toLowerCase()
 
-  if (!keyword)
+  if (!keyword) {
     return items
+  }
 
   return items.filter(item => [
     item.title,
@@ -115,27 +128,32 @@ export function searchComposerItems(items: AgentComposerItem[], query: string) {
     item.template?.prompt,
     item.payload.dirIds,
     item.payload.dirId,
+    item.payload.skillPath,
+    item.payload.skillSlug,
     item.payload.templateRef,
   ].some(value => value?.toLowerCase().includes(keyword)))
 }
 
-export function tokenToProtocol(item: AgentComposerItem) {
-  if (item.kind === 'input' || item.kind === 'url')
+export function tokenToProtocol(item: AgentComposerItem): string {
+  if (item.kind === 'input' || item.kind === 'url') {
     return inputTokenToProtocol(item)
+  }
 
-  if (item.kind === 'profile')
+  if (item.kind === 'profile') {
     return profileTokenToProtocol(getProfileDirIds(item))
+  }
 
   if (item.kind === 'script') {
     const templateRef = getItemTemplateRef(item)
     return templateRef ? serializeAgentScriptReference(item.title, templateRef) : ''
   }
 
-  if (item.kind === 'template')
+  if (item.kind === 'template') {
     return templateItemToPrompt(item)
+  }
 
-  const templateRef = getItemTemplateRef(item)
-  return templateRef ? serializeAgentSkillReference(item.title, templateRef) : ''
+  const skillPath = getItemSkillPath(item)
+  return skillPath ? serializeAgentSkillReference(item.title, skillPath) : ''
 }
 
 function getItemTemplateRef(item: AgentComposerItem): string | undefined {
@@ -152,11 +170,17 @@ function getItemTemplateRef(item: AgentComposerItem): string | undefined {
   }
 }
 
+function getItemSkillPath(item: AgentComposerItem): string | undefined {
+  const skillPath = item.payload.skillPath?.trim()
+  return skillPath && isAgentSkillMarkdownPath(skillPath) ? skillPath : undefined
+}
+
 function inputTokenToProtocol(item: AgentComposerItem) {
   const value = item.payload.value?.trim()
 
-  if (item.kind === 'url')
+  if (item.kind === 'url') {
     return `[url:${item.title || item.id}](${normalizeUrlValue(value)})`
+  }
 
   return `[input:${item.title || item.id}](${value ?? ''})`
 }
@@ -164,8 +188,8 @@ function inputTokenToProtocol(item: AgentComposerItem) {
 export function templateItemToPrompt(
   item: AgentComposerItem,
   options: { includeAuxiliaryPrompt?: boolean } = {},
-) {
-  const tokenPrompt = item.template?.tokens.map(tokenToProtocol).join(' ') ?? ''
+): string {
+  const tokenPrompt: string = item.template?.tokens.map(tokenToProtocol).join(' ') ?? ''
   const prompt = options.includeAuxiliaryPrompt === false ? '' : item.template?.prompt.trim() ?? ''
 
   return [tokenPrompt, prompt].filter(Boolean).join(' ').trim()
@@ -207,9 +231,17 @@ export function createProfileAggregateItem(items: AgentComposerItem[]): AgentCom
   }
 }
 
+export function resolveProfileSelectionItem(
+  items: AgentComposerItem[],
+  preserveEmpty: boolean,
+): AgentComposerItem | undefined {
+  return items.length || preserveEmpty ? createProfileAggregateItem(items) : undefined
+}
+
 function readStoredProfileLabels(item: AgentComposerItem) {
-  if (!item.payload.profileLabels)
+  if (!item.payload.profileLabels) {
     return []
+  }
 
   try {
     const labels = JSON.parse(item.payload.profileLabels)
@@ -259,22 +291,27 @@ export function findStoredComposerItem(options: {
     return undefined
   }
 
-  try {
-    const templateRef = parseTemplateRef(target).value
-    const storedItem = slashItems.find(item => item.kind === kind && item.payload.templateRef === templateRef)
+  if (kind === 'skill') {
+    const skillPath = isAgentSkillMarkdownPath(target) ? target.trim() : ''
+    if (!skillPath) {
+      return undefined
+    }
+
+    const storedItem = slashItems.find(item => item.kind === 'skill' && item.payload.skillPath === skillPath)
 
     if (storedItem) {
       return storedItem
     }
 
-    const conflictingItem = slashItems.find(item =>
-      (item.kind === 'script' || item.kind === 'skill')
-      && item.kind !== kind
-      && item.payload.templateRef === templateRef,
-    )
+    return createTemplateReferenceItem({ kind, title, skillPath })
+  }
 
-    if (conflictingItem) {
-      return undefined
+  try {
+    const templateRef = parseTemplateRef(target).value
+    const storedItem = slashItems.find(item => item.kind === 'script' && item.payload.templateRef === templateRef)
+
+    if (storedItem) {
+      return storedItem
     }
 
     return createTemplateReferenceItem({ kind, title, templateRef })
@@ -286,20 +323,24 @@ export function findStoredComposerItem(options: {
 
 function createTemplateReferenceItem(options: {
   kind: 'script' | 'skill'
+  skillPath?: string
   title: string
-  templateRef: string
+  templateRef?: string
 }): AgentComposerItem {
-  const { kind, title, templateRef } = options
+  const { kind, title } = options
+  const identity = kind === 'skill' ? options.skillPath ?? '' : options.templateRef ?? ''
 
   return {
-    id: templateRef,
+    id: identity,
     kind,
     title,
     label: title,
     description: '',
     iconName: kind === 'skill' ? 'roxy-agent/rx-ic-skills' : 'roxy-agent/rx-ic-scripts',
     group: kind === 'skill' ? 'Skills' : 'Scripts',
-    payload: { templateRef },
+    payload: kind === 'skill'
+      ? { skillPath: options.skillPath ?? '' }
+      : { templateRef: options.templateRef ?? '' },
   }
 }
 
@@ -352,14 +393,16 @@ export function updateInputTokenValue(
   value: string,
   kind: Extract<AgentComposerTokenKind, 'input' | 'url'> = 'input',
 ) {
-  if (!doc)
+  if (!doc) {
     return doc
+  }
 
   const normalizedTitle = title.trim()
 
   function visit(node: any): any {
-    if (!node || typeof node !== 'object')
+    if (!node || typeof node !== 'object') {
       return node
+    }
 
     if (node.type === 'agentToken') {
       if (node.attrs?.kind === kind && getInputTokenTitle(node.attrs) === normalizedTitle) {
@@ -422,11 +465,13 @@ export function serializePromptDoc(doc: AgentComposerDoc | undefined) {
   const lines: string[] = []
 
   function visit(node: any): string {
-    if (!node)
+    if (!node) {
       return ''
+    }
 
-    if (node.type === 'text')
+    if (node.type === 'text') {
       return node.text || ''
+    }
 
     if (node.type === 'mention') {
       return tokenToProtocol({
@@ -441,8 +486,9 @@ export function serializePromptDoc(doc: AgentComposerDoc | undefined) {
       })
     }
 
-    if (node.type === 'agentToken')
+    if (node.type === 'agentToken') {
       return tokenToProtocol(node.attrs)
+    }
 
     if (node.type === 'paragraph') {
       lines.push(serializeParagraphContent(node.content || []))
@@ -464,8 +510,9 @@ function serializeParagraphContent(nodes: any[]) {
   let pendingWhitespace = ''
 
   function flushProfiles() {
-    if (!pendingProfileDirIds.length)
+    if (!pendingProfileDirIds.length) {
       return
+    }
 
     chunks.push(profileTokenToProtocol(pendingProfileDirIds))
     pendingProfileDirIds = []
@@ -517,23 +564,26 @@ function serializeParagraphContent(nodes: any[]) {
 
   flushProfiles()
 
-  if (pendingWhitespace)
+  if (pendingWhitespace) {
     chunks.push(pendingWhitespace)
+  }
 
   return chunks.join('')
 }
 
 function getLinkHref(node: any): string {
-  if (node?.type !== 'text' || !Array.isArray(node.marks))
+  if (node?.type !== 'text' || !Array.isArray(node.marks)) {
     return ''
+  }
 
   const linkMark = node.marks.find((mark: any) => mark?.type === 'link')
   return typeof linkMark?.attrs?.href === 'string' ? linkMark.attrs.href.trim() : ''
 }
 
 function getLinkMarkdownSource(node: any): string {
-  if (node?.type !== 'text' || !Array.isArray(node.marks))
+  if (node?.type !== 'text' || !Array.isArray(node.marks)) {
     return ''
+  }
 
   const linkMark = node.marks.find((mark: any) => mark?.type === 'link')
   return typeof linkMark?.attrs?.markdownSource === 'string'
@@ -542,11 +592,13 @@ function getLinkMarkdownSource(node: any): string {
 }
 
 function serializeLink(label: string, href: string, needsExplicitBoundary = false, markdownSource = '') {
-  if (markdownSource && label === href)
+  if (markdownSource && label === href) {
     return markdownSource
+  }
 
-  if (!label || (label === href && !needsExplicitBoundary))
+  if (!label || (label === href && !needsExplicitBoundary)) {
     return href
+  }
 
   const escapedLabel = label
     .replaceAll('\\', '\\\\')
@@ -560,18 +612,21 @@ function serializeLink(label: string, href: string, needsExplicitBoundary = fals
 }
 
 function serializeInlineNode(node: any): string {
-  if (!node)
+  if (!node) {
     return ''
+  }
 
-  if (node.type === 'text')
+  if (node.type === 'text') {
     return node.text || ''
+  }
 
   if (node.type === 'hardBreak') {
     return '\n'
   }
 
-  if (node.type === 'agentToken')
+  if (node.type === 'agentToken') {
     return tokenToProtocol(node.attrs)
+  }
 
   if (node.type === 'mention') {
     return tokenToProtocol({
@@ -609,8 +664,9 @@ function parsePromptLine(
     const useToken = tokenMatch && (!linkMatch || tokenMatch.index <= linkMatch.index)
     const nextMatch = useToken ? tokenMatch : linkMatch
 
-    if (!nextMatch)
+    if (!nextMatch) {
       break
+    }
 
     const index = nextMatch.index
     if (index > cursor) {
@@ -639,11 +695,12 @@ function parsePromptLine(
         nodes.push(composerItemToNode(createProfileAggregateItem(profileItems)))
       }
       else {
-        const storedItem = token.templateRef
+        const tokenTarget = token.kind === 'skill' ? token.skillPath : token.templateRef
+        const storedItem = tokenTarget
           ? findStoredComposerItem({
               kind: token.kind,
               title: token.title,
-              target: token.templateRef,
+              target: tokenTarget,
               profiles: options.profiles,
               slashItems: options.slashItems,
             })
@@ -659,6 +716,10 @@ function parsePromptLine(
 
       cursor = token.index + token.raw.length
       continue
+    }
+
+    if (!linkMatch) {
+      break
     }
 
     const label = unescapeMarkdownLinkValue(linkMatch[1])

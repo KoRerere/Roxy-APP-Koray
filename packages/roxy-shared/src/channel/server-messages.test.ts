@@ -5,6 +5,8 @@ import {
   AgentChannelReadyDataSchema,
   AgentChannelReadyMessageSchema,
   AgentConversationRunEventMessageSchema,
+  AgentExecutionCenterSnapshotMessageSchema,
+  AgentProfileMonitorSnapshotMessageSchema,
   AgentTaskExecutionEventMessageSchema,
   AgentTaskLogChangedMessageSchema,
   AgentTaskLogDeletedDataSchema,
@@ -70,6 +72,26 @@ const serverMessageCases: Array<{
     data: { type: 'snapshot', data: { generatedAt: 1, tasks: [] } },
   },
   {
+    type: 'profile_monitor.snapshot',
+    schema: AgentProfileMonitorSnapshotMessageSchema,
+    data: {
+      type: 'snapshot',
+      data: {
+        generatedAt: 1,
+        profiles: [{
+          dirId: 'dir-1',
+          status: 'idle',
+          endpoint: 'ws://localhost/devtools/browser/1',
+          browserType: 'chromium',
+          connectedAt: 1,
+          updatedAt: 1,
+          idleSince: 1,
+          events: [],
+        }],
+      },
+    },
+  },
+  {
     type: 'conversation.run.event',
     schema: AgentConversationRunEventMessageSchema,
     data: {
@@ -80,6 +102,23 @@ const serverMessageCases: Array<{
       sequence: 1,
       timestamp: 1,
       event: { type: 'user_message', data: { messageId: 'message-1', content: 'hello', attachments: [], createdAt: 1 } },
+    },
+  },
+  {
+    type: 'execution_center.snapshot',
+    schema: AgentExecutionCenterSnapshotMessageSchema,
+    data: {
+      type: 'snapshot',
+      generatedAt: 1,
+      entries: [{
+        id: 'run-1',
+        source: 'conversation',
+        status: 'running',
+        conversationId: 'conversation-1',
+        createdAt: 1,
+        startedAt: 1,
+        updatedAt: 1,
+      }],
     },
   },
 ]
@@ -107,4 +146,3 @@ describe('server channel message schemas', () => {
     expect(AgentChannelMessageSchema.safeParse({ id: '', type: 'channel.ready', data: { connectedAt: 'now' } }).success).toBe(false)
   })
 })
-

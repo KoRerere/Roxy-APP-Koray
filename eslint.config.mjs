@@ -20,7 +20,9 @@ export default antfu(
   {
     // Without `files`, they are general rules for all files
     rules: {
+      'curly': ['error', 'all'],
       'no-console': 'off',
+      'style/brace-style': ['error', 'stroustrup', { allowSingleLine: false }],
       // 'style/multiline-comment-style': ['error', 'starred-block'],
       'jsdoc/convert-to-jsdoc-comments': ['warn'],
       'n/prefer-global/process': 'off',

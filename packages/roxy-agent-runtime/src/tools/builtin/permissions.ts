@@ -1,6 +1,6 @@
-import { realpathSync } from "node:fs";
-import { basename, dirname, relative, resolve, sep } from "node:path";
-import type { IHITLHandler, ToolContext, ToolHandlerResult } from "../../core/interfaces.ts";
+import { realpathSync } from 'node:fs'
+import { basename, dirname, relative, resolve, sep } from 'node:path'
+import type { IHITLHandler, ToolContext, ToolHandlerResult } from '../../core/interfaces.ts'
 
 /**
  * Default deny list of sensitive file patterns. Applied in ALL HITL modes
@@ -9,36 +9,36 @@ import type { IHITLHandler, ToolContext, ToolHandlerResult } from "../../core/in
  * and against the full absolute path.
  */
 export const DEFAULT_DENY_PATTERNS: string[] = [
-  ".env",
-  ".env.*",
-  "**/.ssh/**",
-  "**/*.pem",
-  "**/*.key",
-  "**/id_rsa*",
-  "**/.aws/credentials",
-  "**/.npmrc",
-];
+  '.env',
+  '.env.*',
+  '**/.ssh/**',
+  '**/*.pem',
+  '**/*.key',
+  '**/id_rsa*',
+  '**/.aws/credentials',
+  '**/.npmrc',
+]
 
-export type PathVerdict = "allow" | "ask" | "deny";
+export type PathVerdict = 'allow' | 'ask' | 'deny'
 
 /** Convert a glob pattern to a RegExp. Handles `*` (within segment) and `**`. */
 function globToRegex(pattern: string): RegExp {
   // Private-use sentinel so `**` is processed before `*` without a control char.
-  const SENTINEL = "";
+  const SENTINEL = ''
   const escaped = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
     .replace(/\*\*/g, SENTINEL)
-    .replace(/\*/g, "[^/]*")
-    .replace(new RegExp(SENTINEL, "g"), ".*");
-  return new RegExp(`(^|/)${escaped}$`);
+    .replace(/\*/g, '[^/]*')
+    .replace(new RegExp(SENTINEL, 'g'), '.*')
+  return new RegExp(`(^|/)${escaped}$`)
 }
 
 export interface PathPermissionsOptions {
-  allowRoots?: string[];
-  extraAllowRoots?: string[];
-  extraDeny?: string[];
+  allowRoots?: string[]
+  extraAllowRoots?: string[]
+  extraDeny?: string[]
   /** Omit the {@link DEFAULT_DENY_PATTERNS} (only apply `extraDeny`). */
-  disableDefaultDeny?: boolean;
+  disableDefaultDeny?: boolean
 }
 
 /**
@@ -63,46 +63,52 @@ export interface PathPermissionsOptions {
  * are configured.
  */
 export class PathPermissions {
-  private readonly declaredAllowRoots: string[];
-  private readonly allowRoots: string[];
-  private readonly deny: RegExp[];
+  private readonly declaredAllowRoots: string[]
+  private readonly allowRoots: string[]
+  private readonly deny: RegExp[]
 
   constructor(opts: PathPermissionsOptions = {}) {
-    this.declaredAllowRoots = [...(opts.allowRoots ?? []), ...(opts.extraAllowRoots ?? [])].map((root) =>
-      resolve(root),
-    );
-    this.allowRoots = this.declaredAllowRoots.map(canonicalizeExistingPath);
-    const patterns = [...(opts.disableDefaultDeny ? [] : DEFAULT_DENY_PATTERNS), ...(opts.extraDeny ?? [])];
-    this.deny = patterns.map(globToRegex);
+    this.declaredAllowRoots = [...(opts.allowRoots ?? []), ...(opts.extraAllowRoots ?? [])].map((root) => resolve(root))
+    this.allowRoots = this.declaredAllowRoots.map(canonicalizeExistingPath)
+    const patterns = [...(opts.disableDefaultDeny ? [] : DEFAULT_DENY_PATTERNS), ...(opts.extraDeny ?? [])]
+    this.deny = patterns.map(globToRegex)
   }
 
   /** Is `path` inside any allow root? Empty allowRoots ⇒ unrestricted (true). */
   private insideAnyRoot(absPath: string): boolean {
-    if (this.allowRoots.length === 0) return true;
-    return this.allowRoots.some((root) => insideRoot(root, absPath));
+    if (this.allowRoots.length === 0) {
+      return true
+    }
+    return this.allowRoots.some((root) => insideRoot(root, absPath))
   }
 
   private matchesDeny(absPath: string): boolean {
-    return this.deny.some((re) => re.test(absPath));
+    return this.deny.some((re) => re.test(absPath))
   }
 
   private escapesDeclaredRoot(lexicalPath: string, canonicalPath: string): boolean {
     const matchingRoots = this.declaredAllowRoots
       .map((root, index) => ({ root, canonicalRoot: this.allowRoots[index]! }))
-      .filter(({ root }) => insideRoot(root, lexicalPath));
+      .filter(({ root }) => insideRoot(root, lexicalPath))
     return (
       matchingRoots.length > 0 && !matchingRoots.some(({ canonicalRoot }) => insideRoot(canonicalRoot, canonicalPath))
-    );
+    )
   }
 
   /** Binary verdict: a path is readable iff inside a root and not denied. */
   checkPath(absPath: string): PathVerdict {
-    const lexical = resolve(absPath);
-    const canonical = canonicalizeExistingPath(absPath);
-    if (this.matchesDeny(lexical) || this.matchesDeny(canonical)) return "deny";
-    if (this.escapesDeclaredRoot(lexical, canonical)) return "deny";
-    if (this.insideAnyRoot(canonical)) return "allow";
-    return "deny";
+    const lexical = resolve(absPath)
+    const canonical = canonicalizeExistingPath(absPath)
+    if (this.matchesDeny(lexical) || this.matchesDeny(canonical)) {
+      return 'deny'
+    }
+    if (this.escapesDeclaredRoot(lexical, canonical)) {
+      return 'deny'
+    }
+    if (this.insideAnyRoot(canonical)) {
+      return 'allow'
+    }
+    return 'deny'
   }
 
   /**
@@ -112,41 +118,51 @@ export class PathPermissions {
    * is `allow`.
    */
   classify(absPath: string): PathVerdict {
-    const lexical = resolve(absPath);
-    const canonical = canonicalizeExistingPath(absPath);
-    if (this.matchesDeny(lexical) || this.matchesDeny(canonical)) return "deny";
-    if (this.escapesDeclaredRoot(lexical, canonical)) return "deny";
-    if (this.insideAnyRoot(canonical)) return "allow";
+    const lexical = resolve(absPath)
+    const canonical = canonicalizeExistingPath(absPath)
+    if (this.matchesDeny(lexical) || this.matchesDeny(canonical)) {
+      return 'deny'
+    }
+    if (this.escapesDeclaredRoot(lexical, canonical)) {
+      return 'deny'
+    }
+    if (this.insideAnyRoot(canonical)) {
+      return 'allow'
+    }
     // Outside all roots and not denied.
-    return this.allowRoots.length === 0 ? "allow" : "ask";
+    return this.allowRoots.length === 0 ? 'allow' : 'ask'
   }
 }
 
 function insideRoot(root: string, path: string): boolean {
-  if (path === root) return true;
-  const rel = relative(root, path);
-  return rel !== "" && !rel.startsWith("..") && !rel.split(sep).includes("..");
+  if (path === root) {
+    return true
+  }
+  const rel = relative(root, path)
+  return rel !== '' && !rel.startsWith('..') && !rel.split(sep).includes('..')
 }
 
 function canonicalizeExistingPath(path: string): string {
-  const resolved = resolve(path);
-  const suffix: string[] = [];
-  let candidate = resolved;
+  const resolved = resolve(path)
+  const suffix: string[] = []
+  let candidate = resolved
   while (true) {
     try {
-      return resolve(realpathSync.native(candidate), ...suffix);
+      return resolve(realpathSync.native(candidate), ...suffix)
     } catch {
-      const parent = dirname(candidate);
-      if (parent === candidate) return resolved;
-      suffix.unshift(basename(candidate));
-      candidate = parent;
+      const parent = dirname(candidate)
+      if (parent === candidate) {
+        return resolved
+      }
+      suffix.unshift(basename(candidate))
+      candidate = parent
     }
   }
 }
 
 export interface PermissionDeps {
-  permissions?: PathPermissions;
-  hitl?: IHITLHandler;
+  permissions?: PathPermissions
+  hitl?: IHITLHandler
 }
 
 /**
@@ -169,23 +185,31 @@ export async function readPermissionGuard(
   toolName: string,
   ctx: ToolContext,
 ): Promise<ToolHandlerResult | null> {
-  if (!deps.permissions) return null; // unrestricted
-  const verdict = deps.permissions.classify(path);
-  if (verdict === "allow") return null;
-  if (verdict === "deny") {
-    return { content: `${toolName}: path not allowed: ${path}`, isError: true };
+  if (!deps.permissions) {
+    return null
+  } // unrestricted
+  const verdict = deps.permissions.classify(path)
+  if (verdict === 'allow') {
+    return null
+  }
+  if (verdict === 'deny') {
+    return { content: `${toolName}: path not allowed: ${path}`, isError: true }
   }
   // ask — route to HITL if present (strict/delegate). Full-mode handler
   // (FullAccessHandler) and absent hitl both resolve approve, so full mode
   // auto-allows.
-  if (!deps.hitl) return null;
+  if (!deps.hitl) {
+    return null
+  }
   const decision = await deps.hitl.requestApproval({
     toolName,
     input: { path },
     reason: `read outside allowed roots: ${path}`,
     traceId: ctx.traceId,
-  });
-  if (decision.decision === "approve") return null;
-  const feedback = decision.feedback ?? `${toolName}: read of ${path} was rejected by HITL`;
-  return { content: feedback, isError: true };
+  })
+  if (decision.decision === 'approve') {
+    return null
+  }
+  const feedback = decision.feedback ?? `${toolName}: read of ${path} was rejected by HITL`
+  return { content: feedback, isError: true }
 }

@@ -6,7 +6,7 @@ Skills 是 `SKILL.md` 驱动的 prompt package，不是获得额外权限的工�
 
 Progressive disclosure 分三层：
 
-1. system 中的 `<skills_instructions>` 以 Markdown 列表只提供 name、description 和 `SKILL.md` locator。
+1. 隐藏的 `<skills_instructions>` 提供 name、description、`SKILL.md` locator 和 Skills 使用规则。
 2. 隐式匹配时，模型通过 `read_file` 按需读取 `SKILL.md`。
 3. 显式 `SkillSelection { name, path }` 在当前 turn 注入 user-role `<skill>`，references/scripts/assets 仍按需访问。
 
@@ -28,7 +28,8 @@ Progressive disclosure 分三层：
 
 ## 3. Prompt 结构
 
-Catalog 是 Anthropic top-level system block：
+Catalog 在 Responses 请求中是 developer input；不支持 developer message role 的 provider
+会把它适配到自己的 top-level system 字段：
 
 ```xml
 <skills_instructions>
@@ -38,8 +39,6 @@ Catalog 是 Anthropic top-level system block：
 - git-helper: Common git workflows. (file: /abs/skills/git-helper/SKILL.md)
 
 ### How to use skills
-- Use a skill when the user explicitly names it or when the task clearly matches its description.
-- Before using an implicitly selected skill, read its SKILL.md completely with read_file.
 ...
 </skills_instructions>
 ```
@@ -65,7 +64,7 @@ description: Common git workflows.
 
 - Skill 目录只加入 read allow roots；默认敏感文件 deny 规则仍生效。
 - 已存在路径按 realpath 检查，Skill 根内 symlink 逃逸是硬拒绝。
-- Skill 脚本只能由模型通过普通 `execute` 运行，继续经过 CommandPermissions、HITL、timeout 和输出上限。
+- Skill 脚本只能由模型通过普通 `exec_command` 运行，继续经过 CommandPermissions、HITL、生命周期超时和输出上限。
 - Skill 指令不能扩大 filesystem、command、network 或 approval 权限。
 - 不存在 `invoke_skill`，也不会扫描 `scripts/` 自动注册或执行入口。
 

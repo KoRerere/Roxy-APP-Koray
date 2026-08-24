@@ -19,25 +19,29 @@ export class WindowReservationRegistry {
 
     for (const dirId of dirIds) {
       const currentOwner = this.ownersByDirId.get(dirId)
-      if (currentOwner && currentOwner !== ownerId)
+      if (currentOwner && currentOwner !== ownerId) {
         continue
+      }
       this.ownersByDirId.set(dirId, ownerId)
       ownerDirIds.add(dirId)
       reserved.push(dirId)
     }
 
-    if (ownerDirIds.size === 0)
+    if (ownerDirIds.size === 0) {
       this.dirIdsByOwner.delete(ownerId)
+    }
     return reserved
   }
 
   release(ownerId: string): void {
     const dirIds = this.dirIdsByOwner.get(ownerId)
-    if (!dirIds)
+    if (!dirIds) {
       return
+    }
     for (const dirId of dirIds) {
-      if (this.ownersByDirId.get(dirId) === ownerId)
+      if (this.ownersByDirId.get(dirId) === ownerId) {
         this.ownersByDirId.delete(dirId)
+      }
     }
     this.dirIdsByOwner.delete(ownerId)
   }

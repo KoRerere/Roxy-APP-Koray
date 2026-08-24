@@ -77,11 +77,13 @@ function reconcileSelectedLabelIds(nextCategories: TemplateLabelCategory[], next
 
   Object.keys(selectedLabelIds).forEach((categoryIdValue) => {
     const categoryId = Number(categoryIdValue)
-    if (categoryIds.has(categoryId))
+    if (categoryIds.has(categoryId)) {
       return
+    }
 
-    if (typeof selectedLabelIds[categoryId] === 'number')
+    if (typeof selectedLabelIds[categoryId] === 'number') {
       activeSelectionChanged = true
+    }
     delete selectedLabelIds[categoryId]
   })
 
@@ -160,8 +162,9 @@ async function fetchTemplates() {
     }
   }
   catch (error) {
-    if (requestSequence !== templateRequestSequence)
+    if (requestSequence !== templateRequestSequence) {
       return
+    }
 
     console.error('Failed to load official templates', error)
     templatesError.value = true
@@ -169,14 +172,16 @@ async function fetchTemplates() {
     templates.value = []
   }
   finally {
-    if (requestSequence === templateRequestSequence)
+    if (requestSequence === templateRequestSequence) {
       templatesLoading.value = false
+    }
   }
 }
 
 async function fetchLabelCatalog() {
-  if (!hasLabelCatalog)
+  if (!hasLabelCatalog) {
     catalogLoading.value = true
+  }
   catalogError.value = false
 
   try {
@@ -191,8 +196,9 @@ async function fetchLabelCatalog() {
     hasLabelCatalog = true
     writeTemplateLabelCatalogCache(nextCategories, nextLabels)
 
-    if (activeSelectionChanged)
+    if (activeSelectionChanged) {
       void fetchTemplates()
+    }
   }
   catch (error) {
     console.error('Failed to load template label catalog', error)
@@ -224,8 +230,9 @@ async function fetchUserTemplates() {
       rows.push(...page.items)
       expectedTotal = page.total
       offset += page.items.length
-      if (!page.items.length)
+      if (!page.items.length) {
         break
+      }
     } while (offset < expectedTotal)
 
     userTemplates.value = rows
@@ -297,8 +304,9 @@ async function saveOfficialTemplate(templateId: number, payload: CustomTemplateP
 }
 
 function openOfficialTemplateDialog(templateId: number, submitMode: 'run' | 'save') {
-  if (templateActions[templateId])
+  if (templateActions[templateId]) {
     return
+  }
   const officialTemplate = officialTemplates.value.find(template => template.id === templateId)
   if (!officialTemplate) {
     onlyErrorToast(-1, $t('官方模板不存在或已下架'))
@@ -334,8 +342,9 @@ function openOfficialTemplateDialog(templateId: number, submitMode: 'run' | 'sav
 }
 
 async function acquireTemplate(templateId: number, saveAndRun: boolean) {
-  if (templateActions[templateId])
+  if (templateActions[templateId]) {
     return
+  }
   const officialTemplate = officialTemplates.value.find(template => template.id === templateId)
   if (!officialTemplate) {
     onlyErrorToast(-1, $t('官方模板不存在或已下架'))
@@ -359,8 +368,9 @@ function addTemplate(templateId: number) {
 }
 
 async function runInstalledTemplate(templateId: number, template: UserTemplateDTO) {
-  if (templateActions[templateId])
+  if (templateActions[templateId]) {
     return
+  }
 
   templateActions[templateId] = 'run'
   try {
@@ -391,8 +401,9 @@ function runTemplate(templateId: number) {
 
 function handleTemplatePanelScroll(event: Event) {
   const panel = event.target
-  if (!(panel instanceof HTMLElement) || !panel.matches('[data-agent-page-scroll]'))
+  if (!(panel instanceof HTMLElement) || !panel.matches('[data-agent-page-scroll]')) {
     return
+  }
 
   const scrollTop = panel.scrollTop
   const delta = scrollTop - lastTemplatePanelScrollTop
@@ -421,7 +432,6 @@ onMounted(() => {
     :class="{ 'template-store-workspace--dark': themeStore.realTheme === 'dark' }"
     :style="{ backgroundImage: `url(${storeBackground})` }"
     :title="$t('模板商城')"
-    :task-monitor-toggle-label="$t('窗口监控')"
     @scroll="handleTemplatePanelScroll"
   >
     <section class="template-store-panel">

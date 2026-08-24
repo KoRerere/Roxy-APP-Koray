@@ -16,8 +16,9 @@ const ScriptSelfDescriptionSchema = z.object({
 /** POST /api/scripts/self-description - 静态解析脚本源码，不执行脚本代码。 */
 router.post('/self-description', (req: Request, res: Response) => {
   const parsed = ScriptSelfDescriptionSchema.safeParse(req.body)
-  if (!parsed.success)
+  if (!parsed.success) {
     return res.json({ code: 1, msg: firstIssue(parsed.error, 'Invalid request') })
+  }
 
   try {
     const result = extractScriptSelfDescription(parsed.data.code)

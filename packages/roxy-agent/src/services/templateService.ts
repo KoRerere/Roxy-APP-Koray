@@ -22,12 +22,10 @@ import {
 } from '@/core/skills/metadata'
 import { agentPaths } from '@/core/storage/agentPaths'
 import { assertAllowedRemoteScriptUrl } from '@/script/remoteScriptPolicy'
-import { assertSha512 } from '@/security/scriptIntegrity'
 
 const MAX_TEMPLATE_SKILL_PACKAGE_BYTES = 50 * 1024 * 1024
 const MAX_TEMPLATE_SKILL_ARCHIVE_ENTRY_COUNT = 2_000
 const MAX_TEMPLATE_SKILL_UNPACKED_BYTES = 100 * 1024 * 1024
-const SHA512_HEX_PATTERN = /^[a-f0-9]{128}$/i
 
 type TemplateReferenceErrorCode
   = | 'invalid_template_ref'
@@ -38,7 +36,6 @@ type TemplateReferenceErrorCode
     | 'template_detail_invalid'
     | 'template_asset_incomplete'
     | 'template_asset_download_failed'
-    | 'template_asset_integrity_failed'
     | 'skill_file_invalid'
     | 'skill_file_not_found'
 
@@ -68,6 +65,13 @@ export interface ResolvedTemplate {
   updatedAt: string
 }
 
+export interface ResolvedRemoteSkill {
+  slug: string
+  name: string
+  description?: string
+  metadata: Record<string, unknown>
+}
+
 interface InstalledTemplateSkill {
   ref: TemplateRef
   rootDir: string
@@ -83,7 +87,7 @@ interface InstalledTemplateSkillFile extends InstalledTemplateSkill {
 
 interface TemplateSkillAsset {
   ossUrl: string
-  sha512: string
+  sha512?: string
   skillMdPath: string
   packageSlug?: string
   packageName?: string
@@ -105,6 +109,37 @@ interface TemplateDetail {
   created_at?: unknown
   updatedAt?: unknown
   updated_at?: unknown
+}
+
+interface RemoteSkillDetail {
+  slug?: unknown
+  name?: unknown
+  title?: unknown
+  description?: unknown
+  usage_example?: unknown
+  usageExample?: unknown
+  metadata?: unknown
+  meta?: unknown
+  ossUrl?: unknown
+  oss_url?: unknown
+  fileId?: unknown
+  file_id?: unknown
+  file_url?: unknown
+  fileUrl?: unknown
+  skillMdPath?: unknown
+  skill_md_path?: unknown
+  packageSlug?: unknown
+  package_slug?: unknown
+  packageName?: unknown
+  package_name?: unknown
+  packageDescription?: unknown
+  package_description?: unknown
+  packageFilename?: unknown
+  package_filename?: unknown
+  fileCount?: unknown
+  file_count?: unknown
+  files?: unknown
+  sha512?: unknown
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -161,6 +196,14 @@ function readLocalizedString(value: unknown): string | undefined {
   }
 
   return undefined
+}
+
+function toOfficialSkillSlug(slug: string): string {
+  return slug.startsWith('official-') ? slug : `official-${slug}`
+}
+
+function toInstalledSkillSlug(slug: string): string {
+  return slug.startsWith('official-') ? slug.slice('official-'.length) : slug
 }
 
 function readDate(detail: TemplateDetail, field: 'created' | 'updated'): string {
@@ -365,19 +408,6 @@ function readTemplateSkillAsset(template: ResolvedTemplate): TemplateSkillAsset 
   }
 
   const sha512 = readString(template.metadata.sha512)
-  if (!sha512) {
-    throw new TemplateReferenceError(
-      'template_asset_incomplete',
-      `Skill template ${template.ref.value} is missing SHA-512.`,
-    )
-  }
-
-  if (!SHA512_HEX_PATTERN.test(sha512)) {
-    throw new TemplateReferenceError(
-      'template_asset_integrity_failed',
-      `Skill template ${template.ref.value} has an invalid SHA-512.`,
-    )
-  }
 
   const skillMdPath = normalizeRelativeFile(
     readString(template.metadata.skillMdPath, template.metadata.skill_md_path) ?? 'SKILL.md',
@@ -399,8 +429,8 @@ function readTemplateSkillAsset(template: ResolvedTemplate): TemplateSkillAsset 
 
   return {
     ossUrl,
-    sha512: sha512.toLowerCase(),
     skillMdPath,
+    ...(sha512 ? { sha512: sha512.toLowerCase() } : {}),
     ...(packageSlug ? { packageSlug } : {}),
     ...(packageName ? { packageName } : {}),
   }
@@ -678,10 +708,180 @@ function toTemplateSkillIdentity(
 ): TemplateSkillIdentity {
   return {
     templateRef: template.ref.value,
-    sha512: asset.sha512,
+    ...(asset.sha512 ? { sha512: asset.sha512 } : {}),
     ...(asset.packageSlug ? { slug: asset.packageSlug } : {}),
     ...(asset.packageName ? { packageName: asset.packageName } : {}),
   }
+}
+
+function normalizeRemoteSkillDetail(slug: string, rawDetail: unknown): ResolvedRemoteSkill {
+  if (!isRecord(rawDetail)) {
+    throw new TemplateReferenceError(
+      'template_detail_invalid',
+      `Skill template ${slug} returned an invalid detail response.`,
+    )
+  }
+
+  const detail = rawDetail as RemoteSkillDetail
+  const canonicalSlug = readString(detail.slug) ?? slug
+  const metadata = isRecord(detail.metadata)
+    ? { ...detail.metadata }
+    : isRecord(detail.meta)
+      ? { ...detail.meta }
+      : {}
+  const name = readLocalizedString(detail.name) ?? readString(detail.name, detail.title, canonicalSlug)
+  if (!canonicalSlug || !name) {
+    throw new TemplateReferenceError(
+      'template_detail_invalid',
+      `Skill template ${slug} returned incomplete detail metadata.`,
+    )
+  }
+
+  const ossUrl = readString(
+    detail.ossUrl,
+    detail.oss_url,
+    metadata.ossUrl,
+    metadata.oss_url,
+    detail.file_url,
+    detail.fileUrl,
+    metadata.file_url,
+    metadata.fileUrl,
+  )
+  if (ossUrl && metadata.ossUrl === undefined) {
+    metadata.ossUrl = ossUrl
+  }
+
+  const sha512 = readString(detail.sha512, metadata.sha512)
+  if (sha512 && metadata.sha512 === undefined) {
+    metadata.sha512 = sha512
+  }
+
+  const skillMdPath = readString(
+    detail.skillMdPath,
+    detail.skill_md_path,
+    metadata.skillMdPath,
+    metadata.skill_md_path,
+  )
+  if (skillMdPath && metadata.skillMdPath === undefined) {
+    metadata.skillMdPath = skillMdPath
+  }
+
+  const packageSlug = readString(
+    detail.packageSlug,
+    detail.package_slug,
+    metadata.packageSlug,
+    metadata.package_slug,
+    canonicalSlug,
+  )
+  if (packageSlug && metadata.packageSlug === undefined) {
+    metadata.packageSlug = packageSlug
+  }
+
+  const packageName = readString(
+    detail.packageName,
+    detail.package_name,
+    metadata.packageName,
+    metadata.package_name,
+    name,
+  )
+  if (packageName && metadata.packageName === undefined) {
+    metadata.packageName = packageName
+  }
+
+  const packageDescription = readString(
+    detail.packageDescription,
+    detail.package_description,
+    metadata.packageDescription,
+    metadata.package_description,
+    readLocalizedString(detail.description),
+    readString(detail.description, detail.usage_example, detail.usageExample),
+  )
+  if (packageDescription && metadata.packageDescription === undefined) {
+    metadata.packageDescription = packageDescription
+  }
+
+  const packageFilename = readString(
+    detail.packageFilename,
+    detail.package_filename,
+    metadata.packageFilename,
+    metadata.package_filename,
+  )
+  if (packageFilename && metadata.packageFilename === undefined) {
+    metadata.packageFilename = packageFilename
+  }
+
+  const fileCount = readPositiveInteger(detail.fileCount ?? detail.file_count ?? metadata.fileCount ?? metadata.file_count)
+  if (fileCount !== undefined && metadata.fileCount === undefined) {
+    metadata.fileCount = fileCount
+  }
+
+  const files = Array.isArray(detail.files)
+    ? detail.files
+    : Array.isArray(metadata.files)
+      ? metadata.files
+      : undefined
+  if (files && metadata.files === undefined) {
+    metadata.files = files
+  }
+
+  return {
+    slug: canonicalSlug,
+    name,
+    ...(packageDescription ? { description: packageDescription } : {}),
+    metadata,
+  }
+}
+
+function remoteSkillToResolvedTemplate(skill: ResolvedRemoteSkill): ResolvedTemplate {
+  const installedSlug = toInstalledSkillSlug(skill.slug)
+  return {
+    ref: {
+      namespace: 'official',
+      id: Number.MAX_SAFE_INTEGER,
+      value: `official:${Number.MAX_SAFE_INTEGER}`,
+    },
+    kind: 'skill',
+    id: Number.MAX_SAFE_INTEGER,
+    name: skill.name,
+    ...(skill.description ? { description: skill.description } : {}),
+    metadata: {
+      ...skill.metadata,
+      slug: installedSlug,
+      packageSlug: installedSlug,
+      packageName: skill.name,
+    },
+    slug: installedSlug,
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
+export async function ensureRemoteSkillInstalledBySlug(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<InstalledTemplateSkill> {
+  const normalizedSlug = readString(slug)
+  if (!normalizedSlug) {
+    throw new TemplateReferenceError('invalid_template_ref', 'Invalid Skill slug.')
+  }
+  const officialSlug = toOfficialSkillSlug(normalizedSlug)
+
+  let rawDetail: unknown
+  try {
+    rawDetail = await agentTemplatesApi.getById(officialSlug)
+  }
+  catch (error) {
+    throw new TemplateReferenceError(
+      'template_fetch_failed',
+      `Failed to fetch Skill ${officialSlug}.`,
+      error,
+    )
+  }
+
+  return ensureResolvedTemplateSkillInstalled(
+    remoteSkillToResolvedTemplate(normalizeRemoteSkillDetail(normalizedSlug, rawDetail)),
+    signal,
+  )
 }
 
 async function tryReuseInstalledSkill(
@@ -690,7 +890,10 @@ async function tryReuseInstalledSkill(
   identity: TemplateSkillIdentity,
   existing: LocalSkillRecord | null,
 ): Promise<InstalledTemplateSkill | null> {
-  if (!existing || existing.sha512 !== asset.sha512) {
+  if (!existing) {
+    return null
+  }
+  if (asset.sha512 && existing.sha512 !== asset.sha512) {
     return null
   }
 
@@ -727,6 +930,12 @@ async function ensureTemplateSkillInstalledUncached(
   let data: Buffer
   try {
     assertAllowedRemoteScriptUrl(asset.ossUrl)
+    console.info('[skill-install] Downloading Skill package', {
+      templateRef: ref.value,
+      packageSlug: asset.packageSlug,
+      skillMdPath: asset.skillMdPath,
+      ossUrl: asset.ossUrl,
+    })
     const response = await fetch(asset.ossUrl, { signal })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`)
@@ -746,17 +955,6 @@ async function ensureTemplateSkillInstalledUncached(
     throw new TemplateReferenceError(
       'template_asset_download_failed',
       `Failed to download Skill template ${ref.value}.`,
-      error,
-    )
-  }
-
-  try {
-    assertSha512(data, asset.sha512)
-  }
-  catch (error) {
-    throw new TemplateReferenceError(
-      'template_asset_integrity_failed',
-      `Skill template ${ref.value} failed SHA-512 verification.`,
       error,
     )
   }

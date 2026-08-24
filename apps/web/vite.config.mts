@@ -19,6 +19,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 import viteCompression from 'vite-plugin-compression'
 import { chrome } from '../electron/.electron-vendors.cache.json'
+import { createRolloutViewerDevPlugin } from './agent-inspect/server'
 
 const PACKAGE_ROOT = __dirname
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..')
@@ -162,6 +163,7 @@ const config: UserConfig = {
         'main': join(PACKAGE_ROOT, 'index.html'),
         'launch': join(PACKAGE_ROOT, 'launch.html'),
         'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
+        'agent-inspect': join(PACKAGE_ROOT, 'agent-inspect.html'),
         'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
         'default-browser': join(PACKAGE_ROOT, 'default-browser.html'),
         'proxy-segment-replace': join(PACKAGE_ROOT, 'proxy-segment-replace.html'),
@@ -192,6 +194,7 @@ const config: UserConfig = {
   },
 
   plugins: [
+    createRolloutViewerDevPlugin(),
     roxyCryptoWasmResolver(),
     // {
     //   name: 'generate-manifest-like-file',

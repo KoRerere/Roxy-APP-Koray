@@ -14,6 +14,8 @@ const props = defineProps<{
   detailReady: boolean
   endReason: string
   windowLabels: Record<string, string>
+  deletedWindowLabels: Record<string, boolean>
+  windowLabelsReady: boolean
   fileUrl: (fileId: string, options?: { download?: boolean, fileName?: string }) => string
 }>()
 
@@ -38,8 +40,18 @@ const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
 const scriptWindows = computed(() => props.detail?.scriptWindows ?? [])
-const selectedWindow = computed(() => scriptWindows.value.find(item => item.key === selectedWindowKey.value)
-  ?? scriptWindows.value[0])
+const displayedScriptWindows = computed(() => {
+  if (scriptWindows.value.length === 0) {
+    return []
+  }
+
+  const existingWindows = scriptWindows.value.filter(item => !item.dirId || props.windowLabels[item.dirId])
+  return existingWindows.length > 0
+    ? existingWindows
+    : [scriptWindows.value[0]]
+})
+const selectedWindow = computed(() => displayedScriptWindows.value.find(item => item.key === selectedWindowKey.value)
+  ?? displayedScriptWindows.value[0])
 
 const formattedDuration = computed(() => {
   const durationMs = getTaskDurationMs(props.log, now.value)
@@ -54,14 +66,45 @@ const formattedDuration = computed(() => {
     : $t('{minutes} 分 {seconds} 秒', { minutes, seconds })
 })
 
-const formattedWindows = computed(() => props.log.windowDirIds
-  .map(id => props.windowLabels[id] ?? id)
-  .join('、') || '-')
+function isWindowReferenceResolved(id: string) {
+  return Boolean(props.windowLabels[id] || props.deletedWindowLabels[id])
+}
+
+const formattedWindows = computed(() => {
+  if (props.log.windowDirIds.length === 0) {
+    return '-'
+  }
+
+  if (!props.log.windowDirIds.every(isWindowReferenceResolved)) {
+    return $t('加载中...')
+  }
+
+  const labels = props.log.windowDirIds
+    .map(id => props.windowLabels[id])
+    .filter((label): label is string => Boolean(label))
+  return labels.length > 0
+    ? labels.join('、')
+    : $t('窗口已删除')
+})
 
 function displayWindowLabel(key: string, label: string, dirId: string | null) {
-  if (dirId && props.windowLabels[dirId])
+  if (!dirId) {
+    return label || key
+  }
+
+  if (props.windowLabels[dirId]) {
     return props.windowLabels[dirId]
-  return label || key
+  }
+
+  if (props.deletedWindowLabels[dirId]) {
+    return $t('窗口已删除')
+  }
+
+  if (label && label !== dirId && label !== key) {
+    return label
+  }
+
+  return $t('加载中...')
 }
 
 function artifactSize(size: number | null) {
@@ -167,12 +210,19 @@ onBeforeUnmount(() => {
               <p>{{ $t('并行执行时，可点击不同窗口查看对应的运行日志。') }}</p>
             </div>
 
-            <div v-if="!detailReady" class="detail-placeholder">{{ $t('正在加载运行日志...') }}</div>
-            <div v-else-if="!scriptWindows.length" class="detail-placeholder">{{ $t('暂无运行日志') }}</div>
+            <div v-if="!windowLabelsReady" class="detail-placeholder">
+              {{ $t('正在加载窗口编号...') }}
+            </div>
+            <div v-else-if="!detailReady" class="detail-placeholder">
+              {{ $t('正在加载运行日志...') }}
+            </div>
+            <div v-else-if="!displayedScriptWindows.length" class="detail-placeholder">
+              {{ $t('暂无运行日志') }}
+            </div>
             <template v-else>
               <div class="window-tabs" role="tablist" :aria-label="$t('执行窗口')">
                 <button
-                  v-for="item in scriptWindows"
+                  v-for="item in displayedScriptWindows"
                   :key="item.key"
                   type="button"
                   role="tab"

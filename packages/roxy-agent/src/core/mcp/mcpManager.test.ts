@@ -1,8 +1,8 @@
-import type { StructuredTool } from '@langchain/core/tools'
 import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { zodToJsonSchema } from 'roxy-agent-runtime'
 import { it } from 'vitest'
 
 it('createPlaywrightClientForWorker starts playwright MCP in memory', async () => {
@@ -22,6 +22,7 @@ it('createPlaywrightClientForWorker starts playwright MCP in memory', async () =
     const manager = new McpManager()
 
     assert.deepEqual((manager as any)._buildConnection('remote-http', { url: 'https://example.com/mcp' }), {
+      name: 'remote-http',
       transport: 'http',
       url: 'https://example.com/mcp',
     })
@@ -30,45 +31,65 @@ it('createPlaywrightClientForWorker starts playwright MCP in memory', async () =
       /Unknown transport type "sse"/,
     )
 
-    await manager.createPlaywrightClientForWorker('worker-1', 'session-1')
-    const tools = (manager as any).workerPlaywrightTools.get('worker-1') as StructuredTool[]
-
-    assert.ok(tools.some(tool => tool.name === 'browser_snapshot'))
-    assert.ok(tools.some(tool => tool.name === 'roxy_browser_launch'))
-    // 低层 open/connect 工具不应暴露给模型；统一走 roxy_browser_launch。
-    const visible = await manager.getToolsForWorker('worker-1', true)
-    assert.ok(!visible.some(tool => tool.name === 'roxy_open_browsers'))
-    assert.ok(!visible.some(tool => tool.name === 'roxy_browser_open'))
-    assert.ok(!visible.some(tool => tool.name === 'roxy_browser_connect'))
+    await manager.createProfileBinding({
+      bindingId: 'worker-1',
+      executionId: 'run-1',
+      conversationId: 'session-1',
+      allowedDirIds: ['allowed-dir'],
+    })
+    assert.equal(manager.playwright.getArtifactDir('worker-1'), undefined)
+    const playwrightOnly = await manager.getPlaywrightToolsForBinding('worker-1')
+    assert.ok(playwrightOnly.some(tool => tool.descriptor.name === 'mcp_roxybrowser_playwright_worker-1__browser_snapshot'))
+    assert.ok(playwrightOnly.some(tool => tool.descriptor.name === 'mcp_roxybrowser_playwright_worker-1__roxy_browser_connect'))
+    const visible = await manager.getToolsForBinding('worker-1', true)
+    assert.ok(visible.some(tool => tool.descriptor.name === 'mcp_roxybrowser_playwright_worker-1__roxy_browser_connect'))
+    assert.ok(visible.some(tool => tool.descriptor.name.startsWith('mcp_roxybrowser-openapi-mcp__')))
+    for (const tool of visible) {
+      const schema = zodToJsonSchema(tool.descriptor.inputSchema)
+      assert.equal(schema.type, 'object', `${tool.descriptor.name} must expose an object input schema`)
+    }
 
     // 窗口作用域：绑定窗口后越界 dirId 必须被拒绝
-    manager.setWorkerAllowedDirIds('worker-1', ['allowed-dir'])
     assert.deepEqual(manager.getWorkerAllowedDirIds('worker-1'), ['allowed-dir'])
-    const launchTool = visible.find(tool => tool.name === 'roxy_browser_launch')!
-    const rejected = await launchTool.invoke({ dirId: 'other-account-dir' } as any)
-    assert.match(String(rejected), /不在本次任务授权的窗口范围内/)
+    const launchTool = visible.find(tool => tool.descriptor.name === 'mcp_roxybrowser_playwright_worker-1__roxy_browser_launch')!
+    const rejected = await launchTool.handler({ dirId: 'other-account-dir' }, {
+      agentId: 'test',
+      traceId: 'test',
+      toolUseId: 'test',
+      signal: new AbortController().signal,
+    })
+    assert.match(rejected.content, /不在本次任务授权的窗口范围内/)
 
-    await manager.destroyPlaywrightClientForWorker('worker-1')
+    manager.releaseProfileBinding('worker-1')
+    await manager.releaseExecution('run-1')
     assert.equal(manager.count, 0)
   }
   finally {
     await mcpManager.shutdown()
-    if (originalAgentHome === undefined)
+    if (originalAgentHome === undefined) {
       delete process.env.ROXY_AGENT_HOME
-    else
+    }
+    else {
       process.env.ROXY_AGENT_HOME = originalAgentHome
-    if (originalApiHost === undefined)
+    }
+    if (originalApiHost === undefined) {
       delete process.env.ROXY_API_HOST
-    else
+    }
+    else {
       process.env.ROXY_API_HOST = originalApiHost
-    if (originalApiKey === undefined)
+    }
+    if (originalApiKey === undefined) {
       delete process.env.ROXY_API_KEY
-    else
+    }
+    else {
       process.env.ROXY_API_KEY = originalApiKey
-    if (originalWorkspaceId === undefined)
+    }
+    if (originalWorkspaceId === undefined) {
       delete process.env.ROXY_WORKSPACE_ID
-    else
+    }
+    else {
       process.env.ROXY_WORKSPACE_ID = originalWorkspaceId
+    }
     rmSync(agentHome, { recursive: true, force: true })
   }
 })

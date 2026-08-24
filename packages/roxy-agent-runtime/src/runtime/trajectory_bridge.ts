@@ -1,5 +1,5 @@
-import type { TrajectoryEvent } from "../core/interfaces.ts";
-import { NotImplementedError } from "../core/errors.ts";
+import type { TrajectoryEvent } from '../core/interfaces.ts'
+import { NotImplementedError } from '../core/errors.ts'
 
 /**
  * Translate runtime stream events + node instrumentation into the framework's
@@ -7,6 +7,6 @@ import { NotImplementedError } from "../core/errors.ts";
  */
 export class TrajectoryBridge {
   emit(_event: TrajectoryEvent): void {
-    throw new NotImplementedError("TrajectoryBridge.emit");
+    throw new NotImplementedError('TrajectoryBridge.emit')
   }
 }

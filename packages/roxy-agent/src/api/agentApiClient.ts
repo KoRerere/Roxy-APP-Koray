@@ -31,7 +31,7 @@ interface AgentApiResponse<T> {
  * - baseURL = aiAgentUrl（${ROXY_SERVER_URL}/llm-proxy）
  * - Authorization: Bearer ${aiAgentToken}（${ROXY_API_KEY}:${ROXY_USER_TOKEN}）
  * - WorkspaceID / Language / ai-agent-version 统一由请求拦截器注入
- * LLM 请求由 LangChain model client 直接访问 /llm-proxy。
+ * LLM 请求由 runtime provider 直接访问 /llm-proxy。
  */
 const httpClient = new HttpClient({
   baseURL: aiAgentUrl,
@@ -45,8 +45,9 @@ httpClient.instance.interceptors.request.use((config) => {
     'ai-agent-version': env.AI_AGENT_VERSION,
   })
   // Language 仅在调用方未指定时用系统默认。
-  if (!config.headers.Language)
+  if (!config.headers.Language) {
     config.headers.Language = env.SYSTEM_LANGUAGE
+  }
   return config
 }, (error) => {
   return Promise.reject(error)
@@ -120,8 +121,8 @@ export const agentOfficialScriptsApi = {
 }
 
 export const agentTemplatesApi = {
-  getById(templateId: number): Promise<unknown> {
-    return unwrap(templatesApi.getOfficialTemplate({ templateIdOrSlug: String(templateId) }))
+  getById(templateIdOrSlug: string | number): Promise<unknown> {
+    return unwrap(templatesApi.getOfficialTemplate({ templateIdOrSlug: String(templateIdOrSlug) }))
   },
 }
 
@@ -144,6 +145,7 @@ export type AiAgentModelApiFormat = 'anthropic' | 'openai' | 'google' | 'moonsho
 export interface AiAgentModelConfig {
   model?: string
   api_format?: AiAgentModelApiFormat
+  meta?: Record<string, unknown> | null
 }
 
 export interface UserModelInfo {
@@ -291,8 +293,9 @@ function isUserTemplateSource(value: string): value is UserTemplateDto['source']
 }
 
 function normalizeUserTemplate(template: UserTemplateInfo, endpoint: string): UserTemplateDto {
-  if (!isUserTaskTemplateType(template.templateType) || !isUserTemplateSource(template.source))
+  if (!isUserTaskTemplateType(template.templateType) || !isUserTemplateSource(template.source)) {
     throw invalidAgentApiData(endpoint, template)
+  }
 
   return {
     ...template,

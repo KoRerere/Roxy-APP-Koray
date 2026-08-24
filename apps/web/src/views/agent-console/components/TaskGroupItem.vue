@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AgentTask, AgentTaskGroup } from '../types'
+import type { SvgNames } from '/@/components/rx-icon'
 import AgentTooltip from './AgentTooltip.vue'
 import TaskStatusBadge from './TaskStatusBadge.vue'
 
@@ -35,13 +36,13 @@ function getTaskTitle(task: AgentTask): string {
   return task.windowName || task.name
 }
 
-function getCountryIcon(task: AgentTask): string {
-  return task.countryCode ? `country-code/${task.countryCode}` : 'roxy-agent/rx-ic-browser-control'
+function getCountryIcon(task: AgentTask): SvgNames {
+  return (task.countryCode ? `country-code/${task.countryCode}` : 'roxy-agent/rx-ic-browser-control') as SvgNames
 }
 </script>
 
 <template>
-  <section class="task-group" :class="{ expanded: group.expanded }">
+  <section class="task-group" :class="{ expanded: group.expanded, idle: group.kind === 'idle' }">
     <AgentTooltip
       :content="group.title"
       :disabled="!groupTitleOverflowed"
@@ -53,7 +54,7 @@ function getCountryIcon(task: AgentTask): string {
           <SvgIcon name="roxy-agent/rx-ic-browser-control" class="group-icon" size="20" color="var(--color-text-primary)" />
           <div class="group-copy__text">
             <div ref="groupTitleRef" class="group-title">
-              {{ group.title }}
+              {{ group.kind === 'idle' ? $t('空闲中') : group.title }}
             </div>
           </div>
         </div>

@@ -1,9 +1,9 @@
-import type { IContextContributor } from "./context.ts";
-import type { AgentLifecycleHooks } from "./lifecycle.ts";
-import type { ILogger } from "./logging.ts";
-import type { SessionId } from "./memory.ts";
-import type { Message, StopReason, ToolResultBlock } from "./provider.ts";
-import type { ToolDescriptor, ToolHandler, ToolResult, ToolSource } from "./tools.ts";
+import type { IContextContributor } from './context.ts'
+import type { AgentLifecycleHooks } from './lifecycle.ts'
+import type { ILogger } from './logging.ts'
+import type { SessionId } from './memory.ts'
+import type { Message, StopReason } from './provider.ts'
+import type { ToolDescriptor, ToolHandler, ToolResult, ToolSource } from './tools.ts'
 
 // ---------------------------------------------------------------------------
 // Plugins
@@ -15,14 +15,14 @@ import type { ToolDescriptor, ToolHandler, ToolResult, ToolSource } from "./tool
  * metrics, and conditional routing.
  */
 export interface ToolMiddlewareContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  toolName: string;
-  toolSource: ToolSource;
-  toolUseId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  toolName: string
+  toolSource: ToolSource
+  toolUseId: string
   /** 0-based index of this tool call within the current invoke. */
-  callIndex: number;
+  callIndex: number
 }
 
 /**
@@ -31,6 +31,8 @@ export interface ToolMiddlewareContext {
  * middleware transforms data and can abort execution.
  *
  * Execution model — onion layers:
+ *  - `preview` runs before HITL approval and may only normalize input for a
+ *    tool's diff preview. It must not stage work or mutate external state.
  *  - `before` runs in registration order (first-registered = outermost).
  *  - `after`  runs in REVERSE order (outermost last), mirroring middleware
  *    conventions (Express, Koa, etc.).
@@ -58,7 +60,7 @@ export interface ToolMiddlewareContext {
  * @example
  * // Block shell tools when running in read-only mode
  * api.addToolMiddleware({
- *   match: /^(execute|shell|run_)/,
+ *   match: /^(exec_command|shell|run_)/,
  *   before(_input, ctx) {
  *     throw new Error(`tool '${ctx.toolName}' blocked in read-only mode`);
  *   },
@@ -69,9 +71,10 @@ export interface ToolMiddleware {
    * Filter by tool name. Accepts an exact string, a glob pattern
    * (e.g. `"write_*"`, `"mcp_*"`), or a RegExp. When absent all tools match.
    */
-  match?: string | RegExp;
-  before?(input: unknown, ctx: ToolMiddlewareContext): unknown | Promise<unknown>;
-  after?(result: ToolResult, ctx: ToolMiddlewareContext): ToolResult | Promise<ToolResult>;
+  match?: string | RegExp
+  preview?(input: unknown, ctx: ToolMiddlewareContext): unknown | Promise<unknown>
+  before?(input: unknown, ctx: ToolMiddlewareContext): unknown | Promise<unknown>
+  after?(result: ToolResult, ctx: ToolMiddlewareContext): ToolResult | Promise<ToolResult>
 }
 
 /**
@@ -88,40 +91,50 @@ export interface MemoryLifecycle {
    * Called after one invoke()/stream() turn has completed and all produced
    * messages have been appended to session working memory.
    */
-  onTurnEnd?(ctx: MemoryTurnEndContext): void | Promise<void>;
+  onTurnEnd?(ctx: MemoryTurnEndContext): void | Promise<void>
   /**
    * Called when trim + summarization compacts messages out of the working
    * context. This is the natural time to persist facts that are leaving the
    * short-term window.
    */
-  onCompaction?(ctx: MemoryCompactionContext): void | Promise<void>;
+  onCompaction?(ctx: MemoryCompactionContext): void | Promise<void>
+  /** Called after trim and before asynchronous summary generation. */
+  onCompactionStarted?(ctx: MemoryCompactionStartedContext): void | Promise<void>
+}
+
+export interface MemoryCompactionStartedContext {
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  removedCount: number
+  ts: number
 }
 
 export interface MemoryTurnEndContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  input: import("./agent.ts").AgentInput;
-  userMessage: Message;
-  producedMessages: Message[];
-  stopReason: StopReason;
-  totalModelCalls: number;
-  totalToolCalls: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  durationMs: number;
-  aborted: boolean;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  input: import('./agent.ts').AgentInput
+  userMessage: Message
+  producedMessages: Message[]
+  stopReason: StopReason
+  totalModelCalls: number
+  totalToolCalls: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  durationMs: number
+  aborted: boolean
 }
 
 export interface MemoryCompactionContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  archivedText: string;
-  archivedMessages: Message[];
-  removedCount: number;
-  summary: string;
-  ts: number;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  archivedText: string
+  archivedMessages: Message[]
+  removedCount: number
+  summary: string
+  ts: number
 }
 
 /**
@@ -131,13 +144,13 @@ export interface MemoryCompactionContext {
  */
 export interface AuthRequest {
   /** Short service identifier for logging and UI labelling (e.g. `"figma"`, `"notion"`). */
-  service: string;
+  service: string
   /** The OAuth authorization URL to open in the user's browser. */
-  authUrl: string;
+  authUrl: string
   /** Requested scopes, displayed to the user for informed consent. */
-  scopes?: string[];
+  scopes?: string[]
   /** Human-readable description surfaced in the auth UI (e.g. "Needs access to your design files."). */
-  description?: string;
+  description?: string
 }
 
 /**
@@ -145,15 +158,15 @@ export interface AuthRequest {
  * The plugin is responsible for storing/refreshing the token as needed.
  */
 export interface AuthToken {
-  accessToken: string;
+  accessToken: string
   /** e.g. `"Bearer"`. Absent when implied by the service protocol. */
-  tokenType?: string;
+  tokenType?: string
   /** Unix epoch ms — absent if the token does not expire. */
-  expiresAt?: number;
+  expiresAt?: number
   /** Refresh token for offline re-authorization, if issued by the provider. */
-  refreshToken?: string;
+  refreshToken?: string
   /** Provider-specific additional fields. */
-  extra?: Record<string, unknown>;
+  extra?: Record<string, unknown>
 }
 
 /**
@@ -162,7 +175,7 @@ export interface AuthToken {
  */
 export interface PluginSetupContext {
   /** Scoped logger, child-scoped to the plugin name. */
-  readonly logger: ILogger;
+  readonly logger: ILogger
 }
 
 /**
@@ -177,7 +190,7 @@ export interface PluginSetupContext {
  */
 export interface PluginAPI {
   /** Runtime context available during setup. */
-  readonly ctx: PluginSetupContext;
+  readonly ctx: PluginSetupContext
 
   /**
    * Register one or more tools. Each `{ descriptor, handler }` pair follows
@@ -187,29 +200,29 @@ export interface PluginAPI {
    * are exposed to the model in the tool list.
    *
    * @example
+   * const inputSchema = z.strictObject({ query: z.string() });
    * api.registerTools([{
-   *   descriptor: { name: "search_memory", description: "...", inputSchema: {...}, source: "builtin" },
+   *   descriptor: { name: "search_memory", description: "...", inputSchema, source: "builtin" },
    *   handler: async (input, ctx) => ({ content: await db.search(input), isError: false }),
    * }]);
    */
-  registerTools(tools: Array<{ descriptor: ToolDescriptor; handler: ToolHandler }>): void;
+  registerTools(tools: Array<{ descriptor: ToolDescriptor; handler: ToolHandler }>): void
 
   /**
-   * Add a context contributor. Called before each LLM API call to inject
-   * additional {@link SystemBlock}s after the built-in system blocks (base +
-   * skill-catalog + summary). Multiple contributors are chained in registration
-   * order and each is awaited, so async retrieval (vector DB, HTTP) is fully
-   * supported — but keep latency in mind since this runs every model call.
+   * Add a context contributor. Called once at turn start to create internal
+   * developer messages before the visible user request. Contributions are persisted
+   * to memory and rollout for exact replay, while user-facing projections hide
+   * them. Multiple contributors are chained in registration order and awaited.
    *
    * @example
    * api.addContextContributor({
    *   async contribute({ recentMessages }) {
    *     const hits = await vectorDb.search(recentMessages);
-   *     return hits.map(h => ({ type: "text", text: `[memory] ${h.text}` }));
+   *     return hits.map(h => ({ name: "retrieved_memory", content: h.text }));
    *   },
    * });
    */
-  addContextContributor(contributor: IContextContributor): void;
+  addContextContributor(contributor: IContextContributor): void
 
   /**
    * Register lifecycle hooks. Multiple plugins can register hooks; the
@@ -222,7 +235,7 @@ export interface PluginAPI {
    *   invoke: { after: ({ totalOutputTokens }) => metrics.inc("tokens", totalOutputTokens) },
    * });
    */
-  addHooks(hooks: AgentLifecycleHooks): void;
+  addHooks(hooks: AgentLifecycleHooks): void
 
   /**
    * Add a tool middleware interceptor. See {@link ToolMiddleware} for the
@@ -234,7 +247,7 @@ export interface PluginAPI {
    *   after(result) { return { ...result, content: redact(result.content) }; },
    * });
    */
-  addToolMiddleware(middleware: ToolMiddleware): void;
+  addToolMiddleware(middleware: ToolMiddleware): void
 
   /**
    * Register a long-term memory lifecycle. Use this for the write side of a
@@ -242,7 +255,7 @@ export interface PluginAPI {
    * summarization queues, etc. Pair it with {@link addContextContributor} for
    * the read side that injects retrieved memories into model context.
    */
-  addMemoryLifecycle(lifecycle: MemoryLifecycle): void;
+  addMemoryLifecycle(lifecycle: MemoryLifecycle): void
 
   /**
    * Initiate an interactive OAuth authorization flow. The runtime suspends
@@ -269,7 +282,7 @@ export interface PluginAPI {
    *   this.figmaClient = new FigmaClient(token.accessToken);
    * }
    */
-  requestAuth(req: AuthRequest): Promise<AuthToken>;
+  requestAuth(req: AuthRequest): Promise<AuthToken>
 
   /**
    * Register a teardown callback. All registered callbacks are called (in
@@ -283,7 +296,7 @@ export interface PluginAPI {
    * const db = await VectorDB.connect(opts.dbUrl);
    * api.onDispose(() => db.close());
    */
-  onDispose(fn: () => void | Promise<void>): void;
+  onDispose(fn: () => void | Promise<void>): void
 }
 
 /**
@@ -326,7 +339,7 @@ export interface PluginAPI {
  *     api.addContextContributor({
  *       async contribute({ recentMessages }) {
  *         const hits = await db.search(recentMessages);
- *         return hits.map(h => ({ type: "text", text: `[memory] ${h.text}` }));
+ *         return hits.map(h => ({ name: "retrieved_memory", content: h.text }));
  *       },
  *     });
  *
@@ -353,7 +366,7 @@ export interface PluginAPI {
  *   name: "sanitizer",
  *   setup(api) {
  *     api.addToolMiddleware({
- *       match: /^(execute|shell|run_)/,
+ *       match: /^(exec_command|shell|run_)/,
  *       before(input) { return stripSensitiveEnvVars(input); },
  *       after(result) { return { ...result, content: redactSecrets(result.content) }; },
  *     });
@@ -387,9 +400,9 @@ export interface RoxyPlugin {
    * Two plugins with the same name in the same {@link AgentDefinition} cause
    * `AgentRuntime.create` to throw.
    */
-  name: string;
+  name: string
   /** Semantic version string (e.g. `"1.2.3"`). Logged at setup; optional. */
-  version?: string;
+  version?: string
   /**
    * Plugin entry point. Called once during {@link AgentRuntime.create}, in
    * declaration order, before the first `invoke()`. The assembler awaits each
@@ -400,5 +413,5 @@ export interface RoxyPlugin {
    * - Async is fully supported (DB connections, remote config, OAuth).
    * - Throw to abort `AgentRuntime.create` with a descriptive error.
    */
-  setup(api: PluginAPI): void | Promise<void>;
+  setup(api: PluginAPI): void | Promise<void>
 }

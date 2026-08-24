@@ -1,41 +1,56 @@
-import type { IClarificationHandler } from "../../core/interfaces.ts";
-import type { BuiltinTool } from "./index.ts";
+import { z } from 'zod'
+import type { IClarificationHandler } from '../../core/interfaces.ts'
+import type { BuiltinTool } from './index.ts'
+import { defineTool } from '../schema.ts'
+
+const nonEmptyString = z.string().refine((value) => value.trim().length > 0, 'Value must not be empty.')
+
+const askUserOptionSchema = z.strictObject({
+  label: nonEmptyString
+    .refine((value) => value.trim().split(/\s+/).length <= 5, 'Option label must contain 1 to 5 words.')
+    .refine((value) => !/^(other|其他)$/i.test(value.trim()), 'Do not add an Other option; the client supplies it.'),
+  description: nonEmptyString.describe('One sentence describing this option’s impact or tradeoff.'),
+})
+
+const askUserQuestionSchema = z.strictObject({
+  header: nonEmptyString.max(12).describe('Short UI title, at most 12 characters.'),
+  id: nonEmptyString.describe('Stable identifier; use snake_case when practical.'),
+  question: nonEmptyString.describe('One-sentence question for the user.'),
+  options: z
+    .array(askUserOptionSchema)
+    .min(2)
+    .max(3)
+    .describe('Two or three mutually exclusive choices; put the recommendation first.'),
+})
+
+export const askUserInputSchema = z.strictObject({
+  questions: z
+    .array(askUserQuestionSchema)
+    .min(1)
+    .max(3)
+    .describe('One to three questions. This is the only top-level input field.'),
+})
 
 /** Model-initiated user clarification tool. */
 export function ask_userTool(clarificationHandler: IClarificationHandler): BuiltinTool {
-  return {
-    descriptor: {
-      name: "ask_user",
-      description: "Ask the user a clarifying question and wait for their reply.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          question: { type: "string", description: "One concrete question to ask the user." },
-          options: {
-            type: "array",
-            items: { type: "string" },
-            description: "Optional finite set of choices. User must pick one.",
-          },
-          timeoutMs: { type: "number", description: "Auto-resolve with empty string after this many milliseconds." },
-        },
-        required: ["question"],
-      },
-      source: "builtin",
-      metadata: { sensitive: false },
-    },
+  return defineTool({
+    name: 'ask_user',
+    description: [
+      'Ask the user one to three clarifying questions and wait for their reply.',
+      'Input must be exactly { questions: [...] }. Each question needs header, stable id, one-sentence question, and 2-3 mutually exclusive options.',
+      'Put the recommended option first. Do not add an Other option; the client adds free-form input automatically.',
+      'The tool result is a JSON object mapping each question id to the user’s selected or typed answer.',
+    ].join(' '),
+    inputSchema: askUserInputSchema,
+    source: 'builtin',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     handler: async (input, _ctx) => {
-      const raw = input as Record<string, unknown>;
-      if (typeof raw?.question !== "string" || raw.question.length === 0) {
-        return { content: "ask_user: 'question' is required and must be a non-empty string", isError: true };
-      }
       const req = {
         traceId: _ctx.traceId,
-        question: raw.question as string,
-        ...(Array.isArray(raw.options) ? { options: raw.options as string[] } : {}),
-        ...(typeof raw.timeoutMs === "number" ? { timeoutMs: raw.timeoutMs as number } : {}),
-      };
-      const result = await clarificationHandler.request(req);
-      return { content: result.answer, isError: false };
+        questions: input.questions,
+      }
+      const result = await clarificationHandler.request(req)
+      return { content: result.answer, isError: false }
     },
-  };
+  })
 }

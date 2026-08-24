@@ -12,6 +12,7 @@ import { AiAgentHttpError } from '@/api/errors'
 import { env } from '@/config'
 import {
   ensureResolvedTemplateSkillInstalled,
+  ensureRemoteSkillInstalledBySlug,
   ensureTemplateSkillInstalled,
   resolveTemplate,
   resolveTemplateSkillFile,
@@ -158,7 +159,91 @@ describe('resolveTemplate', () => {
   })
 })
 
+describe('ensureRemoteSkillInstalledBySlug', () => {
+  it('downloads a remote Skill through the official template slug endpoint without requiring SHA-512 metadata', async () => {
+    const data = skillArchive('Remote skill content.')
+    const responseBody = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+    mocks.officialGetById.mockResolvedValue({
+      id: 999,
+      slug: 'amazon-price-tracker',
+      templateType: 'skill',
+      name: { us: 'Amazon Price Tracker' },
+      description: { us: 'Track product prices' },
+      meta: {
+        ossUrl: 'https://roxy-web.oss-cn-beijing.aliyuncs.com/skills/amazon-price-tracker.zip',
+        packageSlug: 'amazon-price-tracker',
+        skillMdPath: 'SKILL.md',
+      },
+    })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      arrayBuffer: async () => responseBody,
+      headers: new Headers({ 'content-length': String(data.byteLength) }),
+    } as unknown as Response)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const installed = await ensureRemoteSkillInstalledBySlug('amazon-price-tracker')
+
+    assert.equal(installed.skillMdPath, `${mocks.root}/library/skills/installed/amazon-price-tracker/SKILL.md`)
+    assert.equal(installed.name, 'Template Skill')
+    assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'official-amazon-price-tracker')
+    assert.equal(fetchMock.mock.calls.length, 1)
+  })
+
+  it('keeps an existing official- slug stable while still installing under the local slug', async () => {
+    const data = skillArchive('Remote skill content.')
+    const responseBody = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+    mocks.officialGetById.mockResolvedValue({
+      id: 1000,
+      slug: 'official-amazon-price-tracker',
+      templateType: 'skill',
+      name: { us: 'Amazon Price Tracker' },
+      description: { us: 'Track product prices' },
+      meta: {
+        ossUrl: 'https://roxy-web.oss-cn-beijing.aliyuncs.com/skills/amazon-price-tracker.zip',
+        packageSlug: 'amazon-price-tracker',
+        skillMdPath: 'SKILL.md',
+      },
+    })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      arrayBuffer: async () => responseBody,
+      headers: new Headers({ 'content-length': String(data.byteLength) }),
+    } as unknown as Response)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const installed = await ensureRemoteSkillInstalledBySlug('official-amazon-price-tracker')
+
+    assert.equal(installed.skillMdPath, `${mocks.root}/library/skills/installed/amazon-price-tracker/SKILL.md`)
+    assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'official-amazon-price-tracker')
+  })
+})
+
 describe('template Skill installation', () => {
+  it('installs a Skill template without requiring SHA-512 metadata', async () => {
+    const data = skillArchive()
+    mocks.userGetById.mockResolvedValue({
+      ...templateDetail(42, 'skill'),
+      name: 'Template Skill',
+      metadata: {
+        ossUrl: 'https://roxy-web.oss-cn-beijing.aliyuncs.com/skills/template-skill.zip',
+        skillMdPath: 'SKILL.md',
+      },
+    })
+    const fetchMock = vi.fn(async () => new Response(data))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const installed = await resolveTemplateSkillFile('user:42', 'SKILL.md')
+
+    assert.equal(installed.ref.value, 'user:42')
+    assert.equal(installed.name, 'Template Skill')
+    assert.equal(fetchMock.mock.calls.length, 1)
+  })
+
   it('installs a remote Skill under library/skills/installed and reads relative files', async () => {
     const data = skillArchive()
     mocks.userGetById.mockResolvedValue(skillTemplateDetail(data))

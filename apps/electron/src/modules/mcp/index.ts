@@ -2,6 +2,7 @@ import type { UtilityProcess } from 'electron'
 import { app, utilityProcess } from 'electron'
 import path from 'node:path'
 import { getPortPromise } from 'portfinder'
+import { getBundledAgentVersion } from 'roxy-agent/src/core/agentVersion'
 import { API } from '/@/api'
 import { getBaseUrl, getGatewayConfig } from '/@/api/getGatewayConfig'
 import { ROXY_MCP_WINDOW_ID } from '/@/constants'
@@ -23,17 +24,17 @@ export function getMcpWindow() {
   return getWindowById(ROXY_MCP_WINDOW_ID)
 }
 
-const fallbackAgentVersion = process.env.MODE === 'development'
-  ? process.env.AI_AGENT_VERSION_DEV
-  : process.env.AI_AGENT_VERSION_PROD
-
 function getMcpAppTitle() {
   return import.meta.env.VITE_APP_TITLE || (isProd ? 'RoxyBrowser' : 'RoxyBrowserDev')
 }
 
+function getFallbackAgentVersion() {
+  return getBundledAgentVersion(process.env.MODE === 'development' ? 'development' : 'production')
+}
+
 async function getCurrentAgentVersion() {
   if (process.env.MODE === 'development') {
-    return fallbackAgentVersion || '0.0.0'
+    return getFallbackAgentVersion()
   }
 
   try {
@@ -45,7 +46,7 @@ async function getCurrentAgentVersion() {
     console.warn('[mcp] get local agent version failed:', getErrorMessage(error))
   }
 
-  return fallbackAgentVersion || '0.0.0'
+  return getFallbackAgentVersion()
 }
 
 async function getMcpAgentTitle() {
@@ -100,6 +101,14 @@ function getElectronAppPathEnv(): Record<string, string> {
 
     return acc
   }, {})
+}
+
+function prependEnvPath(env: Record<string, any>, binDir: string) {
+  const pathKey = process.platform === 'win32'
+    ? Object.keys(env).find(key => key.toLowerCase() === 'path') ?? 'Path'
+    : 'PATH'
+  const currentPath = typeof env[pathKey] === 'string' ? env[pathKey] : ''
+  env[pathKey] = currentPath ? `${binDir}${path.delimiter}${currentPath}` : binDir
 }
 
 export const mcpManager = new (class McpManager {
@@ -212,6 +221,10 @@ export const mcpManager = new (class McpManager {
 
       // 统一以 agent 进程运行，RoxyClaw 作为同一进程内的 IM 能力按需启动。
       ROXY_MODE: 'agent',
+    }
+
+    if (path.isAbsolute(appConfig.rgBinPath)) {
+      prependEnvPath(env, path.dirname(appConfig.rgBinPath))
     }
 
     // 移除从宿主机 process.env 透传进来的 Anthropic SDK 鉴权变量。

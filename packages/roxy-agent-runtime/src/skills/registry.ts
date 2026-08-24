@@ -1,5 +1,5 @@
-import type { ISkillRegistry, SkillDiagnostics, SkillManifest } from "../core/interfaces.ts";
-import { scanSkillsWithDiagnostics } from "./manifest.ts";
+import type { ISkillRegistry, SkillDiagnostics, SkillManifest } from '../core/interfaces.ts'
+import { scanSkillsWithDiagnostics } from './manifest.ts'
 
 /**
  * SKILL.md-driven registry. Startup scan + manual `reload()` refreshes the
@@ -9,36 +9,36 @@ import { scanSkillsWithDiagnostics } from "./manifest.ts";
  * (`sourcePath`/`bodyPath`), which the system prompt advertises.
  */
 export class SkillRegistry implements ISkillRegistry {
-  private readonly rootDir: string;
-  private manifests: SkillManifest[] = [];
-  private latestDiagnostics: SkillDiagnostics = { errors: [], warnings: [] };
+  private readonly rootDir: string
+  private manifests: SkillManifest[] = []
+  private latestDiagnostics: SkillDiagnostics = { errors: [], warnings: [] }
 
   constructor(rootDir: string) {
-    this.rootDir = rootDir;
+    this.rootDir = rootDir
   }
 
   async scan(): Promise<void> {
-    const result = await scanSkillsWithDiagnostics(this.rootDir);
-    this.manifests = result.skills;
-    this.latestDiagnostics = { errors: result.errors, warnings: result.warnings };
+    const result = await scanSkillsWithDiagnostics(this.rootDir)
+    this.manifests = result.skills
+    this.latestDiagnostics = { errors: result.errors, warnings: result.warnings }
   }
 
   async reload(): Promise<void> {
-    await this.scan();
+    await this.scan()
   }
 
   list(): SkillManifest[] {
-    return [...this.manifests];
+    return [...this.manifests]
   }
 
   get(name: string): SkillManifest | undefined {
-    return this.manifests.find((m) => m.name === name);
+    return this.manifests.find((m) => m.name === name)
   }
 
   diagnostics(): SkillDiagnostics {
     return {
       errors: [...this.latestDiagnostics.errors],
       warnings: [...this.latestDiagnostics.warnings],
-    };
+    }
   }
 }

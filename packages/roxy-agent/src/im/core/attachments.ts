@@ -30,14 +30,16 @@ export async function buildMessageContent(
   text: string,
   imageUrls: string[] = [],
 ): Promise<string | ContentBlock[]> {
-  if (imageUrls.length === 0)
+  if (imageUrls.length === 0) {
     return text || '（无文字内容）'
+  }
 
   const blocks: ContentBlock[] = []
   for (const url of imageUrls) {
     blocks.push(await imageUrlToBlock(url))
   }
-  if (text)
+  if (text) {
     blocks.push({ type: 'text', text })
+  }
   return blocks
 }

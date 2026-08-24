@@ -35,18 +35,10 @@ function getFinalAnswerFromEvents(events: AgentProcessEvent[]): string {
     if (event.type === 'final_answer' && event.content.trim())
       return event.content
 
-    if (event.type === 'worker_task') {
-      const content = getFinalAnswerFromEvents(event.events)
+    if (event.type === 'agent_lifecycle') {
+      const content = getFinalAnswerFromEvents(event.events) || getFinalAnswerFromEvents(event.children)
       if (content)
         return content
-    }
-
-    if (event.type === 'parallel_dispatch') {
-      for (let taskIndex = event.tasks.length - 1; taskIndex >= 0; taskIndex--) {
-        const content = getFinalAnswerFromEvents(event.tasks[taskIndex].events)
-        if (content)
-          return content
-      }
     }
   }
 
@@ -62,8 +54,16 @@ function isAssistantRunning() {
   return props.message.role === 'assistant' && (props.message.status === 'thinking' || props.message.status === 'streaming')
 }
 
+function shouldRenderMessage() {
+  if (props.message.role === 'assistant') {
+    return Boolean(props.message.process || props.message.content.trim() || props.message.errorData)
+  }
+
+  return Boolean(props.message.content.trim() || props.message.attachments?.length)
+}
+
 function shouldShowActions() {
-  return Boolean(props.message.createdAt) && !isAssistantRunning()
+  return shouldRenderMessage() && Boolean(props.message.createdAt) && !isAssistantRunning()
 }
 
 function shouldShowCopyButton() {
@@ -131,19 +131,11 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
 </script>
 
 <template>
-  <article class="chat-message" :class="message.role">
+  <article v-if="shouldRenderMessage()" class="chat-message" :class="message.role">
     <div class="message-body">
-      <!-- <div v-if="message.role === 'assistant'" class="assistant-heading">
-        <span class="assistant-logo-mark" aria-hidden="true">
-          <SvgIcon name="roxy-agent/rx-ic-logo" size="32" />
-        </span>
-        <div class="assistant-title">
-          {{ message.author }}
-        </div>
-      </div> -->
-
       <AgentProcessTimeline
         v-if="message.role === 'assistant' && message.process"
+        :has-message-content="Boolean(message.content.trim())"
         :process="message.process"
         :message-status="message.status"
       />
@@ -225,32 +217,6 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
   }
 }
 
-.assistant-heading {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.assistant-logo-mark {
-  display: grid;
-  position: relative;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  flex: 0 0 32px;
-  border-radius: 999px;
-  background: var(--agent-gradient);
-  overflow: hidden;
-
-  :deep(.svg) {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 32px;
-    height: 32px;
-  }
-}
-
 .message-body {
   display: flex;
   width: 100%;
@@ -258,14 +224,6 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
   max-width: 100%;
   flex-direction: column;
   gap: 12px;
-}
-
-.assistant-title {
-  color: var(--color-text-primary);
-  font-family: Archivo, Inter, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 28px;
 }
 
 .message-actions {

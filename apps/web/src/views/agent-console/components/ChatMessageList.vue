@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AgentMessage, AgentProcessEvent } from '../types'
+import type { AgentMessage } from '../types'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/basic'
 import AgentCopyNotification from './AgentCopyNotification.vue'
@@ -8,12 +8,15 @@ import { getSelectionMarkdown } from '../utils/markdownSelection'
 
 const props = defineProps<{
   activeConversationId?: string
+  hasEarlierMessages: boolean
   hasHeader?: boolean
+  loadingEarlierMessages: boolean
   messages: AgentMessage[]
 }>()
 
 const emit = defineEmits<{
   addToChat: [text: string]
+  loadEarlierMessages: []
   saveAsPrompt: [text: string]
 }>()
 
@@ -22,6 +25,12 @@ interface SelectionMenuState {
   markdownText: string
   text: string
   top: number
+}
+
+interface HistoryLoadAnchor {
+  firstMessageId?: string
+  scrollHeight: number
+  scrollTop: number
 }
 
 const SELECTION_MENU_GAP = 10
@@ -44,9 +53,11 @@ let lastScrollTop = 0
 let programmaticScrollUntil = 0
 let touchStartY = 0
 let resizeObserver: ResizeObserver | null = null
+let historyLoadAnchor: HistoryLoadAnchor | null = null
 
 const SCROLL_BOTTOM_THRESHOLD = 96
 const SCROLL_BOTTOM_RESUME_THRESHOLD = 4
+const LOAD_EARLIER_THRESHOLD = 48
 
 function closeSelectionMenu(clearSelection = false) {
   selectionMenu.value = null
@@ -188,39 +199,6 @@ function handleSaveAsPrompt() {
   emit('saveAsPrompt', text)
 }
 
-function getProcessEventSignature(events?: AgentProcessEvent[]): string {
-  if (!events?.length)
-    return ''
-
-  return events.map((event) => {
-    if (event.type === 'content' || event.type === 'final_answer')
-      return `${event.id}:${event.type}:${event.content.length}:${event.content}`
-
-    if (event.type === 'thinking')
-      return `${event.id}:${event.type}:${event.status}:${event.content.length}:${event.content}`
-
-    if (event.type === 'worker_task')
-      return `${event.id}:${event.type}:${event.status}:${getProcessEventSignature(event.events)}`
-
-    if (event.type === 'parallel_dispatch')
-      return `${event.id}:${event.type}:${event.status}:${event.tasks.map(task => getProcessEventSignature([task])).join(',')}`
-
-    if (event.type === 'tool_call')
-      return `${event.id}:${event.type}:${event.status}:${event.toolName}:${event.label ?? ''}:${event.target ?? ''}`
-
-    if (event.type === 'skill_load')
-      return `${event.id}:${event.type}:${event.status}:${event.skillPath}`
-
-    if (event.type === 'script_log')
-      return `${event.id}:${event.type}:${event.status}:${event.lines.map(line => `${line.level ?? ''}:${line.message}`).join('\n')}`
-
-    if (event.type === 'agent_file')
-      return `${event.id}:${event.type}:${event.files.map(file => `${file.fileId}:${file.fileName}:${file.size}`).join(',')}`
-
-    return `${event.id}:${event.type}:${event.status ?? ''}`
-  }).join('|')
-}
-
 const scrollSignature = computed(() => {
   const lastMessage = props.messages.at(-1)
   return [
@@ -233,7 +211,8 @@ const scrollSignature = computed(() => {
     lastMessage?.process?.durationState,
     lastMessage?.process?.durationStartedAt,
     lastMessage?.process?.durationEndedAt,
-    getProcessEventSignature(lastMessage?.process?.events),
+    lastMessage?.process?.revision,
+    lastMessage?.process?.events.length,
   ].join('|')
 })
 
@@ -278,9 +257,28 @@ function scheduleScrollToBottom() {
   void nextTick(() => {
     scrollFrame = requestAnimationFrame(() => {
       scrollToBottom()
-      scrollFrame = requestAnimationFrame(() => scrollToBottom())
+      scrollFrame = 0
     })
   })
+}
+
+function requestEarlierMessages() {
+  const list = listRef.value
+  if (
+    !list
+    || historyLoadAnchor
+    || !props.hasEarlierMessages
+    || props.loadingEarlierMessages
+  ) {
+    return
+  }
+
+  historyLoadAnchor = {
+    firstMessageId: props.messages[0]?.id,
+    scrollHeight: list.scrollHeight,
+    scrollTop: list.scrollTop,
+  }
+  emit('loadEarlierMessages')
 }
 
 function handleScroll() {
@@ -304,6 +302,10 @@ function handleScroll() {
     else {
       shouldAutoScroll = !userPausedAutoScroll && bottomDistance <= SCROLL_BOTTOM_THRESHOLD
     }
+
+    if (isScrollingUp && currentScrollTop <= LOAD_EARLIER_THRESHOLD) {
+      requestEarlierMessages()
+    }
   }
 
   lastScrollTop = list.scrollTop
@@ -317,8 +319,12 @@ function pauseAutoScroll() {
 }
 
 function handleWheel(event: WheelEvent) {
-  if (event.deltaY < 0)
+  if (event.deltaY < 0) {
     pauseAutoScroll()
+    if ((listRef.value?.scrollTop ?? 0) <= LOAD_EARLIER_THRESHOLD) {
+      requestEarlierMessages()
+    }
+  }
 }
 
 function handleTouchStart(event: TouchEvent) {
@@ -327,8 +333,12 @@ function handleTouchStart(event: TouchEvent) {
 
 function handleTouchMove(event: TouchEvent) {
   const touchY = event.touches[0]?.clientY ?? touchStartY
-  if (touchY > touchStartY)
+  if (touchY > touchStartY) {
     pauseAutoScroll()
+    if ((listRef.value?.scrollTop ?? 0) <= LOAD_EARLIER_THRESHOLD) {
+      requestEarlierMessages()
+    }
+  }
 }
 
 function handleScrollToBottomClick() {
@@ -340,8 +350,7 @@ function handleScrollToBottomClick() {
 
 function handleListResize() {
   if (shouldAutoScroll) {
-    scrollToBottom()
-    requestAnimationFrame(() => scrollToBottom())
+    scheduleScrollToBottom()
     return
   }
 
@@ -353,23 +362,51 @@ watch(() => props.activeConversationId, (conversationId) => {
     return
 
   lastConversationId = conversationId
+  historyLoadAnchor = null
   userPausedAutoScroll = false
   shouldAutoScroll = true
   scheduleScrollToBottom()
 })
 
+watch(
+  () => [props.messages[0]?.id, props.loadingEarlierMessages] as const,
+  async ([firstMessageId, loadingEarlierMessages]) => {
+    const anchor = historyLoadAnchor
+    if (!anchor) {
+      return
+    }
+
+    if (firstMessageId !== anchor.firstMessageId) {
+      await nextTick()
+      const list = listRef.value
+      if (list) {
+        markProgrammaticScroll()
+        list.scrollTop = anchor.scrollTop + list.scrollHeight - anchor.scrollHeight
+        lastScrollTop = list.scrollTop
+        updateScrollButton()
+      }
+      historyLoadAnchor = null
+      return
+    }
+
+    if (!loadingEarlierMessages) {
+      historyLoadAnchor = null
+    }
+  },
+  { flush: 'post' },
+)
+
 watch(scrollSignature, () => {
   const shouldFollow = shouldAutoScroll
 
-  void nextTick(() => {
-    if (shouldFollow) {
-      scheduleScrollToBottom()
-    }
-    else {
-      requestAnimationFrame(updateScrollButton)
-    }
-  })
-}, { flush: 'pre' })
+  if (shouldFollow) {
+    scrollToBottom()
+    scheduleScrollToBottom()
+  }
+  else {
+    requestAnimationFrame(updateScrollButton)
+  }
+}, { flush: 'post' })
 
 onMounted(() => {
   document.addEventListener('pointerdown', handleDocumentPointerDown, true)
@@ -378,6 +415,7 @@ onMounted(() => {
 
   userPausedAutoScroll = false
   shouldAutoScroll = true
+  scrollToBottom()
   scheduleScrollToBottom()
 
   if (listRef.value) {
@@ -404,6 +442,7 @@ onBeforeUnmount(() => {
   <div class="message-list-shell" :class="{ 'message-list-shell--with-header': hasHeader }">
     <div
       ref="listRef"
+      :aria-busy="loadingEarlierMessages"
       class="message-list"
       @pointerup="handlePointerUp"
       @contextmenu="handleContextMenu"
@@ -487,6 +526,10 @@ onBeforeUnmount(() => {
   gap: 32px;
   padding: var(--agent-message-list-inner-top-padding) 0 var(--agent-composer-reserved-bottom, 250px);
   box-sizing: border-box;
+}
+
+.message-list__inner :deep(.chat-message.user + .chat-message.assistant) {
+  margin-top: 24px;
 }
 
 .selection-action-menu {

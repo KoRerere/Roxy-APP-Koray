@@ -1,7 +1,9 @@
 import { app } from 'electron'
+import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { isPackaged, isProd, isWindows } from '/@/constants/common'
 
+const require = createRequire(import.meta.url)
 const sessionDir = app.getPath('sessionData')
 const roxyDataDirName = isProd ? '.roxybrowser' : '.roxybrowser-dev'
 const roxyDataDir = join(app.getPath('home'), roxyDataDirName)
@@ -44,6 +46,13 @@ export const appConfig = {
   /** roxysync 内置 seed 目录（只读，仅 Windows 内置） */
   get roxySyncSeedDir() {
     return join(process.resourcesPath, 'roxy-sync-seed')
+  },
+  /** 内置 ripgrep 执行文件路径（供 Agent 子进程 PATH 注入；无热更新） */
+  get rgBinPath() {
+    if (isPackaged) {
+      return join(process.resourcesPath, 'rg', isWindows ? 'rg.exe' : 'rg')
+    }
+    return require('@vscode/ripgrep').rgPath as string
   },
   /** agent 脚本文件 */
   get agentBinPath() {

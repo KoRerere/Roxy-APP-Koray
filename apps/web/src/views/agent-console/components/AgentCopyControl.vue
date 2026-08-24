@@ -27,7 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const copied = ref(false)
-let copiedTimer: ReturnType<typeof window.setTimeout> | null = null
+let copiedTimer: number | null = null
 
 const unavailable = computed(() => props.disabled || !props.text)
 const label = computed(() => copied.value
@@ -36,19 +36,22 @@ const label = computed(() => copied.value
 const iconName = computed(() => copied.value ? AGENT_COPY_SUCCESS_ICON : AGENT_COPY_ICON)
 
 async function copy() {
-  if (unavailable.value)
+  if (unavailable.value) {
     return
+  }
 
   try {
     const didCopy = await copyAgentText(props.text)
-    if (!didCopy)
+    if (!didCopy) {
       return
+    }
 
     copied.value = true
     emit('copied', props.text)
 
-    if (copiedTimer)
+    if (copiedTimer) {
       window.clearTimeout(copiedTimer)
+    }
 
     copiedTimer = window.setTimeout(() => {
       copied.value = false
@@ -61,8 +64,9 @@ async function copy() {
 }
 
 onBeforeUnmount(() => {
-  if (copiedTimer)
+  if (copiedTimer) {
     window.clearTimeout(copiedTimer)
+  }
 })
 </script>
 
@@ -93,7 +97,10 @@ onBeforeUnmount(() => {
   cursor: pointer;
   line-height: 1;
   outline: none;
-  transition: color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+  transition:
+    color 0.16s ease,
+    transform 0.16s ease,
+    opacity 0.16s ease;
 
   &:hover,
   &:focus-visible {

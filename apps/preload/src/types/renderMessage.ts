@@ -50,6 +50,11 @@ interface ReGetUpdateInfoType {
   kernel: UserGetCoreUpgradeCreateData
 }
 
+export type LocalFileActionResult
+  = | { action: 'opened-directory', canceled: false, filePath: string }
+    | { action: 'downloaded-file', canceled: true }
+    | { action: 'downloaded-file', canceled: false, filePath: string }
+
 export type ChunkBrowsersByScreenPayload
   = | string[]
     | {
@@ -188,8 +193,8 @@ export interface RenderMessage {
   'app:uninstall-directly': () => Promise<void>
   /** 打开外部链接 */
   'app:open-external-url': (url: string) => Promise<void>
-  /** 下载本地文件 */
-  'app:downloadLocalFile': (payload: { filePath: string, fileName?: string }) => Promise<{ canceled: boolean, filePath?: string }>
+  /** 打开本地目录或下载本地文件 */
+  'app:downloadLocalFile': (payload: { filePath: string, fileName?: string }) => Promise<LocalFileActionResult>
   /** 取消卸载 */
   'app:uninstall-cancelled': () => Promise<void>
   /** openapi 端口或开关变的时候，需要重启服务 */

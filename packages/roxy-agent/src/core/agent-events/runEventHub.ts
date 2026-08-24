@@ -3,9 +3,7 @@ import type {
   AgentRunEvent,
   AgentRunEventMap,
 } from '@roxy/shared/channel'
-import fs from 'node:fs'
-import path from 'node:path'
-import { agentPaths } from '@/core/storage/agentPaths'
+import { withAgentPath } from './events'
 
 export interface RunIdentity {
   conversationId: string
@@ -43,10 +41,9 @@ const TERMINAL_TYPES = new Set<AgentRunEvent['type']>([
 ])
 
 export class RunEventPublisher {
-  readonly filePath: string
   private sequence = 0
-  private persistedSequence = 0
   private terminal = false
+  private terminalStatusValue: 'completed' | 'failed' | 'cancelled' | undefined
   private approvalId: string | undefined
   private readonly liveEvents: LiveEventEntry[] = []
   private readonly activeBlocks = new Map<string, LiveEventEntry>()
@@ -57,14 +54,14 @@ export class RunEventPublisher {
   constructor(
     readonly identity: RunIdentity,
     private readonly hub: RunEventHub,
-  ) {
-    this.filePath = agentPaths.sessionTurnEvents(identity.conversationId, identity.assistantMessageId)
-    fs.mkdirSync(path.dirname(this.filePath), { recursive: true })
-    fs.writeFileSync(this.filePath, '', { flag: 'a' })
-  }
+  ) {}
 
   get isTerminal(): boolean {
     return this.terminal
+  }
+
+  get terminalStatus(): 'completed' | 'failed' | 'cancelled' | undefined {
+    return this.terminalStatusValue
   }
 
   get pendingApprovalId(): string | undefined {
@@ -87,25 +84,20 @@ export class RunEventPublisher {
   }
 
   private eventScope(event: AgentRunEvent): string {
-    return 'workerId' in event.data && event.data.workerId ? event.data.workerId : ''
+    return 'agentPath' in event.data && event.data.agentPath ? event.data.agentPath : '/root'
   }
 
   private fragmentKey(event: FragmentEvent): string {
     const scope = this.eventScope(event)
     if (event.type === 'thinking_delta') {
-      return `${scope}:thinking:${event.data.thinkingId}`
+      return `${scope}:thinking:${event.data.id ?? event.data.thinkingId}`
     }
 
-    return `${scope}:content:${event.data.contentId}:${event.data.phase ?? ''}`
+    return `${scope}:content:${event.data.id ?? event.data.contentId}:${event.data.phase ?? ''}`
   }
 
   private appendPersisted(item: AgentConversationRunEventDTO): void {
-    const persistedItem: AgentConversationRunEventDTO = {
-      ...item,
-      sequence: ++this.persistedSequence,
-    }
-    delete persistedItem.startSequence
-    fs.appendFileSync(this.filePath, `${JSON.stringify(persistedItem)}\n`, 'utf-8')
+    void item
   }
 
   private appendBlocks(blocks: LiveEventEntry[]): void {
@@ -252,7 +244,7 @@ export class RunEventPublisher {
     }
 
     const scope = this.eventScope(entry.item.event)
-    const key = `${scope}:thinking:${entry.item.event.data.thinkingId}`
+    const key = `${scope}:thinking:${entry.item.event.data.id ?? entry.item.event.data.thinkingId}`
     const pending = this.activeBlocks.get(key)
     if (pending) {
       this.removeActiveBlock(pending)
@@ -345,36 +337,42 @@ export class RunEventPublisher {
       return null
     }
 
+    const scopedEvent = 'agentPath' in event.data && event.data.agentPath
+      ? event
+      : withAgentPath(event, '/root')
     const item: AgentConversationRunEventDTO = {
       ...this.identity,
       sequence: ++this.sequence,
       timestamp,
-      event,
+      event: scopedEvent,
     }
 
-    if (event.type === 'thinking_delta' || event.type === 'content_delta') {
-      this.bufferFragment(item, event)
+    if (scopedEvent.type === 'thinking_delta' || scopedEvent.type === 'content_delta') {
+      this.bufferFragment(item, scopedEvent)
     }
     else {
       const entry: LiveEventEntry = {
         item,
         persistence: 'pending',
-        scope: this.eventScope(event),
+        scope: this.eventScope(scopedEvent),
         span: 1,
       }
       this.liveEvents.push(entry)
       this.persist(entry)
     }
 
-    if (event.type === 'approval_requested') {
-      this.approvalId = event.data.approvalId
+    if (scopedEvent.type === 'approval_requested') {
+      this.approvalId = scopedEvent.data.approvalId
     }
-    else if (event.type === 'approval_resolved') {
+    else if (scopedEvent.type === 'approval_resolved') {
       this.approvalId = undefined
     }
 
-    if (TERMINAL_TYPES.has(event.type)) {
+    if (TERMINAL_TYPES.has(scopedEvent.type)) {
       this.terminal = true
+      this.terminalStatusValue = scopedEvent.type === 'run_completed'
+        ? 'completed'
+        : event.type === 'run_failed' ? 'failed' : 'cancelled'
     }
 
     this.hub.emit(item)

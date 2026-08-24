@@ -4,12 +4,13 @@ import type { SandboxRunResult } from '@/services/sandboxService'
 import type { ResolvedTemplate } from '@/services/templateService'
 import fs from 'node:fs/promises'
 import { isLoginRequired } from '@/core/sandbox/script-entry'
+import { profileLeaseRegistry } from '@/core/profiles/profileLeaseRegistry'
 import {
   publishTaskMonitorTaskFinished,
   publishTaskMonitorTaskStarted,
 } from '@/core/task-monitor'
-import { createRunId } from '@/deepagents/tools/run_script'
-import { resolveExecutableScriptSource } from '@/deepagents/tools/script_source'
+import { createRunId } from '@/runtime/tools/roxy_script_run'
+import { resolveExecutableScriptSource } from '@/runtime/tools/script_source'
 import { startSandboxScriptRun } from '@/services/sandboxService'
 import { persistTaskArtifacts } from '@/services/taskArtifacts'
 import {
@@ -50,18 +51,22 @@ function scriptUnitSucceeded(unit: ScriptUnitResult): boolean {
 }
 
 function windowLabel(window: ResolvedTaskWindow | undefined, fallback: string): string {
-  if (!window)
+  if (!window) {
     return fallback
-  if (window.windowName)
+  }
+  if (window.windowName) {
     return window.windowName
-  if (window.windowSortNum !== undefined)
+  }
+  if (window.windowSortNum !== undefined) {
     return String(window.windowSortNum)
+  }
   return window.dirId
 }
 
 async function readRunLog(filePath: string | undefined): Promise<string> {
-  if (!filePath)
+  if (!filePath) {
     return ''
+  }
   return fs.readFile(filePath, 'utf8').catch(() => '')
 }
 
@@ -152,6 +157,7 @@ async function runUnit(
       assetSlug: plan.prepared.assetSlug,
       dirId: window?.dirId,
       runId,
+      executionId: plan.taskLogId,
       profile: 'release',
       options: plan.params,
       signal,
@@ -164,8 +170,9 @@ async function runUnit(
           }
         : undefined,
       onLog: (event) => {
-        if (event.message.startsWith('[sandbox stdout]') || event.message.startsWith('[sandbox stderr]'))
+        if (event.message.startsWith('[sandbox stdout]') || event.message.startsWith('[sandbox stderr]')) {
           return
+        }
         recordTaskExecutionEvent(plan.taskLogId, {
           type: 'script.log.append',
           windowKey,
@@ -291,14 +298,16 @@ export async function executeScriptTask(
     let successfulWindows = 0
     let artifactFailures = 0
     for (const unit of units) {
-      if (!scriptUnitSucceeded(unit))
+      if (!scriptUnitSucceeded(unit)) {
         continue
+      }
       const artifacts = await persistTaskArtifacts(
         sandboxFiles(unit.result?.artifacts || [], unit.result?.outputs || []),
       )
       const scriptRun = scriptRunsById.get(unit.scriptRun.runId)
-      if (scriptRun)
+      if (scriptRun) {
         scriptRun.fileIds = [...artifacts.fileIds]
+      }
       artifactFailures += artifacts.failedFiles.length
       recordTaskExecutionEvent(plan.taskLogId, {
         type: 'artifacts.updated',
@@ -349,6 +358,7 @@ export async function executeScriptTask(
     }
   }
   finally {
+    profileLeaseRegistry.release(plan.taskLogId)
     publishTaskMonitorTaskFinished(plan.taskLogId)
   }
 }

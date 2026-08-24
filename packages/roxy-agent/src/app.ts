@@ -11,6 +11,7 @@ import fileRoutes from './routes/fileRoutes'
 import mcpRoutes from './routes/mcpRoutes'
 import roxyClawRoutes from './routes/roxyClawRoutes'
 import scriptRoutes from './routes/scriptRoutes'
+import skillRoutes from './routes/skillRoutes'
 import taskRoutes from './routes/taskRoutes'
 
 /**
@@ -45,6 +46,9 @@ export function createApp(): Express {
   // Script metadata parsing
   app.use('/api/scripts', scriptRoutes)
 
+  // Local Skill metadata and path helpers
+  app.use('/api/skills', skillRoutes)
+
   // Remote task scheduling, execution and local run logs
   app.use('/api/tasks', taskRoutes)
 
@@ -64,13 +68,13 @@ let agentChannelServer: AgentChannelServer | null = null
 export async function startServer(): Promise<void> {
   const app = createApp()
   return new Promise((resolve, reject) => {
+    const server = createServer(app)
+    const channel = new AgentChannelServer(server)
     const onError = (error: Error) => {
       console.error(error)
       void channel.close()
       reject(error)
     }
-    const server = createServer(app)
-    const channel = new AgentChannelServer(server)
     server.listen(env.ROXY_SERVER_PORT, () => {
       server.off('error', onError)
       httpServer = server
@@ -84,8 +88,9 @@ export async function startServer(): Promise<void> {
 }
 
 export async function stopServer(): Promise<void> {
-  if (!httpServer)
+  if (!httpServer) {
     return
+  }
 
   const server = httpServer
   httpServer = null
@@ -94,10 +99,12 @@ export async function stopServer(): Promise<void> {
   await channel?.close()
   await new Promise<void>((resolve, reject) => {
     server.close((error?: Error) => {
-      if (error)
+      if (error) {
         reject(error)
-      else
+      }
+      else {
         resolve()
+      }
     })
   })
 }

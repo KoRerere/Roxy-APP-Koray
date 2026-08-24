@@ -17,7 +17,11 @@ import {
 } from '../my-templates'
 import { useAgentConsoleApi } from '../api'
 import { isTemplateUnread, markTemplateRead, markTemplateUnread, readUnreadTemplateKeys } from '../template-unread'
-import { userTemplateToChatPrompt } from '../components/chat-composer/templateItems'
+import {
+  getAgentSkillInstalledRoot,
+  setAgentSkillInstalledRoot,
+  userTemplateToChatPrompt,
+} from '../components/chat-composer/templateItems'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useConfirm } from 'primevue/useconfirm'
@@ -170,8 +174,9 @@ function openTemplateDialog(template?: MyTemplateItem) {
     showTemplateDialog()
     return
   }
-  if (openingTemplateId.value !== undefined)
+  if (openingTemplateId.value !== undefined) {
     return
+  }
 
   openingTemplateId.value = template.id
   markTemplateAsRead(template)
@@ -179,8 +184,9 @@ function openTemplateDialog(template?: MyTemplateItem) {
 }
 
 async function createTaskFromTemplate(item: MyTemplateItem) {
-  if (creatingTaskId.value)
+  if (creatingTaskId.value) {
     return
+  }
 
   creatingTaskId.value = item.id
   try {
@@ -195,7 +201,16 @@ async function createTaskFromTemplate(item: MyTemplateItem) {
   }
 }
 
-function runTemplateInChat(item: MyTemplateItem) {
+async function runTemplateInChat(item: MyTemplateItem) {
+  if (!getAgentSkillInstalledRoot()) {
+    try {
+      const info = await agentApi.skillPathInfo()
+      setAgentSkillInstalledRoot(info.installedRoot)
+    }
+    catch (error) {
+      console.error('Failed to load Skill installed root', error)
+    }
+  }
   prompt.value = userTemplateToChatPrompt(item)
   void router.push({
     name: 'agent-console-chat',
@@ -205,10 +220,12 @@ function runTemplateInChat(item: MyTemplateItem) {
 
 function setTemplateDeleting(templateId: number, deleting: boolean) {
   const nextDeletingIds = new Set(deletingTemplateIds.value)
-  if (deleting)
+  if (deleting) {
     nextDeletingIds.add(templateId)
-  else
+  }
+  else {
     nextDeletingIds.delete(templateId)
+  }
   deletingTemplateIds.value = nextDeletingIds
 }
 
@@ -240,8 +257,9 @@ function deleteTemplate(item: MyTemplateItem) {
 function getRouteTemplateId() {
   const value = route.query.editTemplateId
   const normalizedValue = Array.isArray(value) ? value[0] : value
-  if (typeof normalizedValue !== 'string')
+  if (typeof normalizedValue !== 'string') {
     return undefined
+  }
 
   const templateId = Number(normalizedValue)
   return Number.isSafeInteger(templateId) && templateId > 0 ? templateId : undefined
@@ -249,8 +267,9 @@ function getRouteTemplateId() {
 
 async function openRouteTemplate() {
   const templateId = getRouteTemplateId()
-  if (!templateId)
+  if (!templateId) {
     return
+  }
 
   const template = templates.value.find(item => item.id === templateId)
   await router.replace({
@@ -258,8 +277,9 @@ async function openRouteTemplate() {
     query: { ...route.query, editTemplateId: undefined },
   })
 
-  if (template)
+  if (template) {
     openTemplateDialog(template)
+  }
 }
 
 async function fetchAllTemplates() {
@@ -281,15 +301,17 @@ async function fetchAllTemplates() {
       })
       const page = readUserTemplatePage(response, $t('加载我的模板失败'))
 
-      if (currentRequest !== requestSequence)
+      if (currentRequest !== requestSequence) {
         return
+      }
 
       rows.push(...page.items)
       expectedTotal = page.total
       offset += page.items.length
 
-      if (page.items.length === 0)
+      if (page.items.length === 0) {
         break
+      }
     } while (offset < expectedTotal)
 
     if (currentRequest === requestSequence) {
@@ -298,8 +320,9 @@ async function fetchAllTemplates() {
     }
   }
   catch (error) {
-    if (currentRequest !== requestSequence)
+    if (currentRequest !== requestSequence) {
       return
+    }
 
     console.error('Failed to load user templates', error)
     templates.value = []
@@ -307,14 +330,22 @@ async function fetchAllTemplates() {
     loadError.value = true
   }
   finally {
-    if (currentRequest === requestSequence)
+    if (currentRequest === requestSequence) {
       loading.value = false
+    }
   }
 }
 
 onMounted(() => {
   void (async () => {
-    await agentApi.initializePresetTemplates()
+    // await agentApi.initializePresetTemplates()
+    try {
+      const info = await agentApi.skillPathInfo()
+      setAgentSkillInstalledRoot(info.installedRoot)
+    }
+    catch (error) {
+      console.error('Failed to load Skill installed root', error)
+    }
     await fetchAllTemplates()
     await openRouteTemplate()
   })()
@@ -327,7 +358,6 @@ onMounted(() => {
     padding="56px 20px 40px"
     mobile-padding="56px 16px 32px"
     :title="$t('我的模板')"
-    :task-monitor-toggle-label="$t('窗口监控')"
   >
     <div class="my-templates-content">
       <h1>{{ $t('我的模板') }}</h1>

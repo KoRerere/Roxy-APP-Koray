@@ -46,6 +46,16 @@ test('adds a copy control that preserves source markdown for tables', () => {
   assert.equal(match ? decodeURIComponent(match[1]) : '', source)
 })
 
+test('adds a copy control that copies code block text', () => {
+  const source = '```ts\nconst answer = 42\n```'
+  const output = renderMarkdown(source)
+  const match = output.match(/encoded-code="([^"]+)"/)
+
+  assert.match(output, /class="agent-md-code"/)
+  assert.match(output, /<roxy-agent-code-copy/)
+  assert.equal(match ? decodeURIComponent(match[1]) : '', 'const answer = 42')
+})
+
 test('renders links with empty destinations as plain Markdown text', () => {
   const output = renderMarkdown('[xxxx]()')
 
@@ -59,6 +69,13 @@ test('keeps the original Markdown source on rendered links for selection actions
   const match = output.match(/data-markdown-source="([^"]+)"/)
 
   assert.equal(match ? decodeURIComponent(match[1]) : '', source)
+})
+
+test('adds favicon targets to web links and skips local file links', () => {
+  const output = renderMarkdown('Open https://example.com/docs and [report](/Users/admin/report.md)')
+
+  assert.match(output, /data-agent-favicon-url="https:\/\/example\.com\/favicon\.ico"/)
+  assert.equal([...output.matchAll(/data-agent-favicon-url=/g)].length, 1)
 })
 
 test('preserves soft line breaks only when requested', () => {

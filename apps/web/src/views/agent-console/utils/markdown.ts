@@ -2,6 +2,7 @@ import type { Tokens } from 'marked'
 import { marked, Renderer } from 'marked'
 import { escapeHtml } from './markdownHtml'
 import { formatAgentProfileDetails, getCachedAgentProfileLabels } from '../profile-token-display'
+import { getUrlFaviconUrl } from './urlFavicon'
 
 interface AgentMarkdownToken {
   raw?: string
@@ -23,6 +24,9 @@ marked.use({
     link(this: { parser: unknown }, token: Tokens.Link) {
       return renderMarkdownLinkHtml(token, this.parser)
     },
+    code(token: Tokens.Code) {
+      return renderMarkdownCodeHtml(token)
+    },
     table(this: { parser: unknown }, token: Tokens.Table) {
       return renderMarkdownTableHtml(token, this.parser)
     },
@@ -38,8 +42,11 @@ marked.use({
       tokenizer(src: string) {
         return matchAgentTokenAtStart(src)
       },
-      renderer(token: AgentMarkdownToken) {
-        return renderAgentTokenHtml(token)
+      renderer(token: Tokens.Generic) {
+        if (token.type !== 'agentToken')
+          return ''
+
+        return renderAgentTokenHtml(token as unknown as AgentMarkdownToken)
       },
     },
   ],
@@ -126,6 +133,18 @@ function renderMarkdownTableHtml(token: Tokens.Table, parser: unknown) {
   ].join('')
 }
 
+function renderMarkdownCodeHtml(token: Tokens.Code) {
+  const codeHtml = defaultRenderer.code(token)
+  const encodedCode = encodeURIComponent(token.text)
+
+  return [
+    '<div class="agent-md-code">',
+    codeHtml,
+    `<roxy-agent-code-copy encoded-code="${encodedCode}"></roxy-agent-code-copy>`,
+    '</div>',
+  ].join('')
+}
+
 function renderMarkdownLinkHtml(token: Tokens.Link, parser: unknown) {
   if (!token.href.trim()) {
     return escapeHtml(token.raw)
@@ -135,7 +154,7 @@ function renderMarkdownLinkHtml(token: Tokens.Link, parser: unknown) {
 
   const boundaryIndex = getBareUrlCjkBoundaryIndex(token)
   if (boundaryIndex === -1)
-    return addMarkdownSourceAttribute(defaultRenderer.link(token), token.raw)
+    return addMarkdownSourceAttribute(defaultRenderer.link(token), token.raw, token.href)
 
   const linkText = token.text.slice(0, boundaryIndex)
   const suffix = token.text.slice(boundaryIndex)
@@ -149,13 +168,18 @@ function renderMarkdownLinkHtml(token: Tokens.Link, parser: unknown) {
   }
 
   const suffixHtml = marked.parseInline(suffix, { async: false })
-  return `${addMarkdownSourceAttribute(defaultRenderer.link(linkToken), linkToken.raw)}${suffixHtml}`
+  return `${addMarkdownSourceAttribute(defaultRenderer.link(linkToken), linkToken.raw, linkToken.href)}${suffixHtml}`
 }
 
-function addMarkdownSourceAttribute(linkHtml: string, markdownSource: string) {
+function addMarkdownSourceAttribute(linkHtml: string, markdownSource: string, href: string) {
+  const faviconUrl = getUrlFaviconUrl(href)
+  const faviconAttribute = faviconUrl
+    ? ` data-agent-favicon-url="${escapeAttribute(faviconUrl)}"`
+    : ''
+
   return linkHtml.replace(
     '<a ',
-    `<a data-markdown-source="${encodeURIComponent(markdownSource)}" `,
+    `<a data-markdown-source="${encodeURIComponent(markdownSource)}"${faviconAttribute} `,
   )
 }
 

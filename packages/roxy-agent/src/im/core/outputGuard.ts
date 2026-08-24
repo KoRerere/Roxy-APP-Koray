@@ -13,8 +13,9 @@ export interface NormalizeOptions {
  */
 export function normalizeImText(raw: string, options: NormalizeOptions): string {
   const fallback = options.fallbackText ?? '（内容为空）'
-  if (!raw)
+  if (!raw) {
     return fallback
+  }
 
   let text = raw
     .replace(CONTROL_CHARS_RE, '')
@@ -22,8 +23,9 @@ export function normalizeImText(raw: string, options: NormalizeOptions): string 
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 
-  if (!text)
+  if (!text) {
     return fallback
+  }
 
   if (text.length > options.maxChars) {
     text = `${text.slice(0, Math.max(0, options.maxChars - 1))}…`

@@ -89,8 +89,9 @@ const QrcodeSchema = z.object({ qrcode: z.string().min(1) })
 router.post('/start', async (_req: Request, res: Response) => {
   try {
     const started = await startIMServiceIfEnabled()
-    if (!started)
+    if (!started) {
       return fail(res, 'RoxyClaw 未启用或未配置可启动的平台')
+    }
 
     return ok(res, { message: 'RoxyClaw started successfully' }, 'RoxyClaw started successfully')
   }
@@ -113,15 +114,17 @@ router.post('/stop', async (_req: Request, res: Response) => {
 
 router.post('/test/telegram', async (req: Request, res: Response) => {
   const parsed = TokenSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'Telegram bot token is required')
+  }
 
   try {
     const response = await fetch(`https://api.telegram.org/bot${parsed.data.token}/getMe`)
     const data: any = await response.json()
 
-    if (data.ok && data.result && data.result.is_bot)
+    if (data.ok && data.result && data.result.is_bot) {
       return ok(res, null, 'Telegram bot token 有效')
+    }
 
     return fail(res, 'Telegram bot token 无效')
   }
@@ -133,8 +136,9 @@ router.post('/test/telegram', async (req: Request, res: Response) => {
 
 router.post('/test/lark', async (req: Request, res: Response) => {
   const parsed = LarkTestSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'app credentials is required')
+  }
 
   try {
     const domain = parsed.data.environment === 'lark' ? 'open.larksuite.com' : 'open.feishu.cn'
@@ -148,8 +152,9 @@ router.post('/test/lark', async (req: Request, res: Response) => {
     })
     const data: any = await response.json()
 
-    if (data.code === 0 && data.tenant_access_token)
+    if (data.code === 0 && data.tenant_access_token) {
       return ok(res, null, 'Lark / 飞书 app credentials 有效!')
+    }
 
     return fail(res, 'app credentials 无效')
   }
@@ -197,16 +202,19 @@ router.post('/lark/scan-install', async (_req: Request, res: Response) => {
       })
     },
     onStatusChange(info: { status: LarkScanStatus, interval?: number }) {
-      if (info.status)
+      if (info.status) {
         session.status = info.status
-      if (info.interval)
+      }
+      if (info.interval) {
         session.interval = info.interval
+      }
     },
   }).then((result: any) => {
     const appId = result?.client_id
     const appSecret = result?.client_secret
-    if (!appId || !appSecret)
+    if (!appId || !appSecret) {
       throw new Error('扫码授权成功但未返回 App ID 或 App Secret')
+    }
 
     const environment = result?.user_info?.tenant_brand === 'lark' ? 'lark' : 'feishu'
     session.status = 'connected'
@@ -244,12 +252,14 @@ router.post('/lark/scan-install', async (_req: Request, res: Response) => {
 
 router.get('/lark/scan-install/:installId', async (req: Request, res: Response) => {
   const parsed = InstallIdSchema.safeParse(req.params)
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'installId is required')
+  }
 
   const session = larkScanInstallSessions.get(parsed.data.installId)
-  if (!session)
+  if (!session) {
     return fail(res, '扫码接入会话不存在或已过期')
+  }
 
   return ok(res, {
     status: session.status,
@@ -261,12 +271,14 @@ router.get('/lark/scan-install/:installId', async (req: Request, res: Response) 
 
 router.delete('/lark/scan-install/:installId', async (req: Request, res: Response) => {
   const parsed = InstallIdSchema.safeParse(req.params)
-  if (!parsed.success)
+  if (!parsed.success) {
     return ok(res, null)
+  }
 
   const session = larkScanInstallSessions.get(parsed.data.installId)
-  if (!session)
+  if (!session) {
     return ok(res, null)
+  }
 
   session.status = 'cancelled'
   session.controller.abort()
@@ -276,8 +288,9 @@ router.delete('/lark/scan-install/:installId', async (req: Request, res: Respons
 
 router.post('/test/slack', async (req: Request, res: Response) => {
   const parsed = BotTokenSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'Slack bot token is required')
+  }
 
   try {
     const response = await fetch('https://slack.com/api/auth.test', {
@@ -289,8 +302,9 @@ router.post('/test/slack', async (req: Request, res: Response) => {
     })
     const data: any = await response.json()
 
-    if (data.ok)
+    if (data.ok) {
       return ok(res, null, 'Slack bot token 有效!')
+    }
 
     return fail(res, data.error || 'Slack bot token 无效')
   }
@@ -302,16 +316,18 @@ router.post('/test/slack', async (req: Request, res: Response) => {
 
 router.post('/test/discord', async (req: Request, res: Response) => {
   const parsed = BotTokenSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'Discord bot token is required')
+  }
 
   try {
     const response = await fetch('https://discord.com/api/v10/users/@me', {
       headers: { Authorization: `Bot ${parsed.data.botToken}` },
     })
 
-    if (response.ok)
+    if (response.ok) {
       return ok(res, null, 'Discord bot token 有效!')
+    }
 
     const data: any = await response.json().catch(() => null)
     return fail(res, data?.message || 'Discord bot token 无效')
@@ -327,8 +343,9 @@ router.get('/weixin/qrcode', async (_req: Request, res: Response) => {
     const response = await fetch(`${WEIXIN_BOT_BASE_URL}/ilink/bot/get_bot_qrcode?bot_type=3`)
     const data: any = await response.json()
 
-    if (!response.ok || !data?.qrcode)
+    if (!response.ok || !data?.qrcode) {
       return fail(res, data?.errmsg || data?.msg || 'Failed to get Weixin QR code')
+    }
 
     return ok(res, {
       qrcode: data.qrcode || '',
@@ -344,15 +361,17 @@ router.get('/weixin/qrcode', async (_req: Request, res: Response) => {
 
 router.get('/weixin/qrcode-status', async (req: Request, res: Response) => {
   const parsed = QrcodeSchema.safeParse(req.query)
-  if (!parsed.success)
+  if (!parsed.success) {
     return fail(res, 'qrcode is required')
+  }
 
   try {
     const response = await fetch(`${WEIXIN_BOT_BASE_URL}/ilink/bot/get_qrcode_status?qrcode=${encodeURIComponent(parsed.data.qrcode)}`)
     const data: any = await response.json()
 
-    if (!response.ok)
+    if (!response.ok) {
       return fail(res, data?.errmsg || data?.msg || 'Failed to get Weixin QR status')
+    }
 
     return ok(res, {
       status: data?.status || '',

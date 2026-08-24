@@ -1,7 +1,4 @@
-import type {
-  UserGetWindowInfoListListData,
-  UserGetWindowInfoV2ListData,
-} from '@roxy/backend-api'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 import { getAgentOpenedWindowIds } from './opened-window-state'
@@ -22,22 +19,24 @@ interface BrowserItem {
   country?: string
   lastCountry?: string
   openStatus?: boolean
+  workspaceName?: string
 }
 
 type ListBrowserItem = UserGetWindowInfoListListData['data']['rows'][number]
-type V2BrowserItem = UserGetWindowInfoV2ListData['data']['rows'][number]
-
 const WINDOW_PAGE_SIZE = 100
 const WINDOW_QUERY_BATCH_SIZE = 50
 const WINDOW_QUERY_CONCURRENCY = 4
 
-function formatWindowNumber(item: BrowserItem, width: number, workspaceName?: string) {
-  if (item.windowSortNum === undefined)
+type WindowInfoListLookupParams = Parameters<typeof API.window.userGetWindowInfoListList>[0] & {
+  dirIds?: string
+}
+
+function formatWindowNumber(item: BrowserItem, workspaceName?: string) {
+  if (item.windowSortNum == null)
     return ''
 
-  const prefix = getWorkspaceNamePrefix(workspaceName)
-  const sortNumber = `${item.windowSortNum}`.padStart(width, '0')
-  return prefix ? `${prefix}-${sortNumber}` : sortNumber
+  const prefix = getWorkspaceNamePrefix(item.workspaceName || workspaceName)
+  return prefix ? `${prefix}-${item.windowSortNum}` : `${item.windowSortNum}`
 }
 
 function toTaskWindowOptions(
@@ -45,14 +44,12 @@ function toTaskWindowOptions(
   workspaceName?: string,
   openedWindowIds: ReadonlySet<string> = new Set(),
 ) {
-  const largestSortNumber = rows.reduce((max, item) => Math.max(max, item.windowSortNum ?? 0), 0)
-  const width = Math.max(1, `${largestSortNumber}`.length)
-
   const options = rows.flatMap((item): TaskWindowOption[] => item.dirId
     ? [{
         id: item.dirId,
-        code: formatWindowNumber(item, width, workspaceName),
+        code: formatWindowNumber(item, workspaceName),
         windowSortNum: item.windowSortNum,
+        workspaceName: item.workspaceName || workspaceName,
         projectId: item.projectId?.toString(),
         projectName: item.projectName,
         ...getAgentWindowDisplay(mergeAgentWindowOpenStatus(item, openedWindowIds)),
@@ -66,28 +63,28 @@ export function reformatTaskWindowOptions(
   options: readonly TaskWindowOption[],
   workspaceName?: string,
 ) {
-  const largestSortNumber = options.reduce((max, item) => Math.max(max, item.windowSortNum ?? 0), 0)
-  const width = Math.max(1, `${largestSortNumber}`.length)
-
   return options.map(item => ({
     ...item,
     code: item.windowSortNum === undefined
       ? item.code
-      : formatWindowNumber(item, width, workspaceName),
+      : formatWindowNumber(item, item.workspaceName || workspaceName),
   }))
 }
 
-async function fetchWindowInfoV2Batch(dirIds: string[]) {
-  const response = await API.window.userGetWindowInfoV2List({
+async function fetchWindowInfoListBatch(dirIds: string[]) {
+  const response = await API.window.userGetWindowInfoListList({
     page_index: 1,
     page_size: dirIds.length,
     dirIds: dirIds.join(','),
     isDelete: 0,
-  })
+    orderName: 'createTime',
+    orderType: 'desc',
+  } as WindowInfoListLookupParams)
   if (response.code !== 0)
     throw new Error(response.msg || 'Failed to load task windows')
 
-  return response.data?.rows ?? []
+  const requestedIdSet = new Set(dirIds)
+  return (response.data?.rows ?? []).filter(row => row.dirId && requestedIdSet.has(row.dirId))
 }
 
 export async function fetchTaskWindowOptionsByDirIds(
@@ -103,12 +100,12 @@ export async function fetchTaskWindowOptionsByDirIds(
   for (let index = 0; index < uniqueDirIds.length; index += WINDOW_QUERY_BATCH_SIZE)
     batches.push(uniqueDirIds.slice(index, index + WINDOW_QUERY_BATCH_SIZE))
 
-  const rows: V2BrowserItem[] = []
+  const rows: ListBrowserItem[] = []
   for (let index = 0; index < batches.length; index += WINDOW_QUERY_CONCURRENCY) {
     const batchRows = await Promise.all(
       batches
         .slice(index, index + WINDOW_QUERY_CONCURRENCY)
-        .map(batch => fetchWindowInfoV2Batch(batch)),
+        .map(batch => fetchWindowInfoListBatch(batch)),
     )
     rows.push(...batchRows.flat())
   }

@@ -18,8 +18,9 @@ export class StreamSender {
     this.buffer += text
 
     const now = Date.now()
-    if (now - this.lastSent < this.throttleMs)
+    if (now - this.lastSent < this.throttleMs) {
       return
+    }
 
     await this.flush(sendNew, editMsg)
     this.lastSent = now
@@ -29,12 +30,14 @@ export class StreamSender {
     sendNew: (text: string) => Promise<string>,
     editMsg: (id: string, text: string) => Promise<void>,
   ): Promise<void> {
-    if (!this.buffer)
+    if (!this.buffer) {
       return
+    }
 
     // 检查内容是否有变化
-    if (this.buffer === this.lastSentText)
+    if (this.buffer === this.lastSentText) {
       return
+    }
 
     if (!this.messageId) {
       this.messageId = await sendNew(this.buffer)

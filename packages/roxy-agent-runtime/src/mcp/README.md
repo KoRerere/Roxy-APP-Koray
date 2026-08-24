@@ -10,7 +10,7 @@
 
 - `McpClient implements IMcpClient`（`src/mcp/client.ts`）— `connect` / `disconnect` / `listTools` / `callTool`，只读 `name` 与 `connected`。
 - `McpServerRegistry implements IMcpServerRegistry`（`src/mcp/registry.ts`）— `load(configs)` 惰性连接、`tools()` 枚举、`disconnectAll()`。
-- `mergeMcpToolsInto(registry)`（`src/mcp/index.ts`）— 把远端工具并入给定 `ToolRegistry`（沿用短名冲突策略）。
+- `mergeMcpToolsInto(registry)`（`src/mcp/index.ts`）— 把已经按 server name 命名空间化的远端工具并入给定 `ToolRegistry`。
 
 相关契约类型：`McpServerConfig`、`McpTransport`、`IMcpClient`、`IMcpServerRegistry`、`ToolDescriptor`、`ToolResult`、`ToolContext`。
 
@@ -38,11 +38,11 @@
 
 ```jsonc
 {
-  "name": "search_web",
+  "name": "mcp_remote-search__search_web",
   "description": "Search the public web.",
   "inputSchema": { "type": "object", "properties": { "q": { "type": "string" } }, "required": ["q"] },
   "source": "mcp",
-  "metadata": {},
+  "annotations": { "readOnlyHint": true, "openWorldHint": true },
 }
 ```
 
@@ -57,8 +57,8 @@
 时序：
 
 1. 启动：宿主以 `McpServerConfig[]` 调 `registry.load(configs)`，对每个 server 创建 `McpClient`，并将生成的工具显式注册进其 `IToolRegistry`。
-2. `tools()` 汇总所有已连接 client 的 `listTools()` → 统一 `ToolDescriptor[]`（`source:"mcp"`），经 `mergeMcpToolsInto` 调 `registry.add` 并入主工具表（冲突按 `IToolRegistry` 短名策略：覆盖 + warn）。
-3. 模型调用某 mcp 工具 → executor 路由到对应 `McpClient.callTool(name, input, ctx, toolUseId)` → 远端 `tools/call` → 回 `ToolResult`。
+2. `tools()` 汇总所有已连接 client 的 `listTools()` → 统一 `ToolDescriptor[]`（`source:"mcp"`）；每个工具统一暴露为 `mcp_{server-name}__{tool-name}`，再经 `mergeMcpToolsInto` 并入主工具表。
+3. 模型调用某 MCP 工具 → executor 把命名空间化名称交给对应 `McpClient.callTool(name, input, ctx, toolUseId)`；client 恢复原始远端 tool name 后发起 `tools/call` → 回 `ToolResult`。
 4. 关闭：runtime 调 `registry.disconnectAll()`，逐 client `disconnect()`。
 
 异常语义（v1 契约要点）：
@@ -71,15 +71,15 @@
 
 ### 远端 MCP 工具 → `ToolDescriptor{source:"mcp"}`
 
-MCP `tools/list` 返回的每个 tool `{ name, description, inputSchema }` 映射为：
+MCP `tools/list` 返回的每个 tool `{ name, description, inputSchema, annotations }` 映射为：
 
-| MCP tool 字段 | `ToolDescriptor` 字段         | 说明                                                               |
-| ------------- | ----------------------------- | ------------------------------------------------------------------ |
-| `name`        | `name`                        | 直传；并入主表后参与短名冲突判定                                   |
-| `description` | `description`                 | 直传                                                               |
-| `inputSchema` | `inputSchema`（`JsonSchema`） | MCP 用 JSON Schema，与 `JsonSchema` 子集兼容，直传                 |
-| —             | `source`                      | 固定 `"mcp"`                                                       |
-| —             | `metadata`                    | 空对象或标记远端来源信息；HITL 可据此把 mcp 工具视作潜在 sensitive |
+| MCP tool 字段 | `ToolDescriptor` 字段         | 说明                                                        |
+| ------------- | ----------------------------- | ----------------------------------------------------------- |
+| `name`        | `name`                        | 统一转换为 `mcp_{server-name}__{tool-name}`                 |
+| `description` | `description`                 | 直传                                                        |
+| `inputSchema` | `inputSchema`（`JsonSchema`） | MCP 用 JSON Schema，与 `JsonSchema` 子集兼容，直传          |
+| `annotations` | `annotations`                 | MCP 标准 ToolAnnotations，直传给 runtime HITL 策略作为 hint |
+| —             | `source`                      | 固定 `"mcp"`                                                |
 
 ### `callTool` → `ToolResult`
 
@@ -98,14 +98,14 @@ v1 MCP 模块尚无独立契约测试；以下为实现完成后必须满足的�
 
 - `McpClient`：
   - `connect()` 后 `connected === true`，`disconnect()` 后 `=== false`。
-  - `listTools()` 返回远端工具投影为 `ToolDescriptor[]`，每项 `source === "mcp"`。
+  - `listTools()` 返回远端工具投影为 `ToolDescriptor[]`，每项 `source === "mcp"`，名称为 `mcp_{server-name}__{tool-name}`。
   - `callTool(name, input, ctx, toolUseId)` 回传 `ToolResult`，`toolUseId` 透传；远端 `isError` → `ToolResult.isError`。
   - 支持 `stdio`（`StdioClientTransport`，用 `command`+`args`+`env`）与 `http`（`StreamableHTTPClientTransport`，用 `url`，`token` 作 Bearer）。
 - `McpServerRegistry`：
   - `load(configs)` 惰性连接全部已配置 server。
   - `tools()` 返回所有已连接 server 的工具并集，统一 `source:"mcp"`。
   - `disconnectAll()` 关闭全部 client。
-- `mergeMcpToolsInto(registry)`：把 `registry.tools()` 逐个 `registry.add` 并入主 `ToolRegistry`，冲突走短名覆盖 + warn（同 `IToolRegistry.add` 契约）。
+- `mergeMcpToolsInto(registry)`：把 `registry.tools()` 逐个 `registry.add` 并入主 `ToolRegistry`；不同 MCP server 的同名工具因 server name 命名空间而彼此隔离，只有完整名称相同时才走覆盖 + warn。
 - 越界 transport 类型视为配置错误（v1 仅 `stdio` / `http`）。
 
 ## 7. 边界用例 / 不做清单（v1 out of scope）
@@ -113,7 +113,7 @@ v1 MCP 模块尚无独立契约测试；以下为实现完成后必须满足的�
 - 不做 MCP server 进程自动重启 / 健康探活（连接断了由 runtime 决定是否重连）。
 - 不做 MCP `resources` / `prompts` 的暴露（v1 仅消费 `tools`）。
 - 不做远端工具的本地 schema 校验兜底（直传 `inputSchema`，校验由 handler/远端负责）。
-- 不做 mcp 工具的细粒度敏感标注策略（默认 whole-server 视作 sensitive，交 HITL `delegate` 规则匹配名前缀如 `mcp_*`）。
+- 不在 MCP adapter 中写入非标准敏感标记。MCP 工具的 HITL 风险提示来自标准 `annotations`；宿主仍可用 `delegate` 规则按名称前缀（如 `mcp_*`）覆盖默认策略。
 - 不做 `http` 之外的自定义传输（WebSocket / SSE 仅在 StreamableHTTP 范围内）。
 - 不做并发连接数限流 / 鉴权刷新。
 - 不做 server 能力协商后的差异化行为（统一当作提供 tools 的 server）。

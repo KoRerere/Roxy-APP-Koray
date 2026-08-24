@@ -1,3 +1,5 @@
+import { getBundledAgentVersion } from './core/agentVersion'
+
 // type NodeEnv = 'production' | 'development' | 'staging'
 
 export const env = {
@@ -7,6 +9,7 @@ export const env = {
   ROXY_USER_TOKEN: process.env.ROXY_USER_TOKEN!,
 
   SYSTEM_LANGUAGE: process.env.SYSTEM_LANGUAGE,
+  DEBUG: process.env.DEBUG === 'true' || process.env.DEBUG === '1',
   ROXY_API_KEY: process.env.ROXY_API_KEY,
   ROXY_API_HOST: process.env.ROXY_API_HOST,
   CHECKPOINT_DIR: process.env.CHECKPOINT_DIR!,
@@ -20,17 +23,17 @@ export const env = {
   DESKTOP_DIR: process.env.DESKTOP_DIR!,
   SKILLS_DIR: process.env.SKILLS_DIR!,
 
-  ROXY_MODE: process.env.ROXY_MODE || '',
   ROXY_SERVER_URL: process.env.ROXY_SERVER_URL!,
 
   AGENT_WORK_DIR: process.env.AGENT_WORK_DIR!,
   ROXY_SERVER_HEADERS: JSON.parse(process.env.ROXY_SERVER_HEADERS || '{}'),
 
-  AI_AGENT_VERSION: process.env.ENV_TYPE === 'development'
-    ? process.env.AI_AGENT_VERSION_DEV!
-    : process.env.AI_AGENT_VERSION_PROD!,
+  AI_AGENT_VERSION: getBundledAgentVersion(process.env.ENV_TYPE),
 }
 
 export const aiAgentUrl = `${env.ROXY_SERVER_URL}/llm-proxy`
+// Responses API is exposed by llm-proxy under its OpenAI-compatible v1 route.
+// Keep aiAgentUrl unchanged for the generated agent API client.
+export const aiAgentResponsesUrl = `${aiAgentUrl}/v1`
 
 export const aiAgentToken = `${env.ROXY_API_KEY}:${env.ROXY_USER_TOKEN}`

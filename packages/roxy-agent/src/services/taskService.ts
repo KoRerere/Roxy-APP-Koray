@@ -17,8 +17,9 @@ export type StopTaskLogResult = 'stopping' | 'not_found' | 'not_active'
 export type DeleteTaskLogResult = 'deleted' | 'not_found' | 'active'
 
 function requiredScopeValue(value: string | undefined, name: string): string {
-  if (!value)
+  if (!value) {
     throw new Error(`${name} is not configured`)
+  }
   return value
 }
 
@@ -32,8 +33,9 @@ function currentScope() {
 function durationMs(log: TaskLog, now: number): number | null {
   const startedAt = Date.parse(log.started_at)
   const endedAt = log.ended_at ? Date.parse(log.ended_at) : now
-  if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt))
+  if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt)) {
     return null
+  }
   return Math.max(0, endedAt - startedAt)
 }
 
@@ -72,8 +74,9 @@ export function listAllTaskLogs(): TaskLogDTO[] {
     const page = taskLogStore.list({ ...scope, limit, offset })
     items.push(...page.items.map(log => toTaskLogDTO(log, now)))
     offset += page.items.length
-    if (page.items.length === 0 || offset >= page.total)
+    if (page.items.length === 0 || offset >= page.total) {
       break
+    }
   }
   return items
 }
@@ -96,10 +99,12 @@ export function replayTaskExecution(logId: string): AgentTaskExecutionReplay | n
 export function stopTaskLog(logId: string): StopTaskLogResult {
   const scope = currentScope()
   const log = taskLogStore.getById(logId, scope.userId, scope.workspaceId)
-  if (!log)
+  if (!log) {
     return 'not_found'
-  if (log.status !== 'preparing' && log.status !== 'running')
+  }
+  if (log.status !== 'preparing' && log.status !== 'running') {
     return 'not_active'
+  }
   return taskRunner.stop(logId) ? 'stopping' : 'not_active'
 }
 

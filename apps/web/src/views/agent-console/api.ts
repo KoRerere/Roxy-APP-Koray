@@ -1,4 +1,4 @@
-import { FeedbackApi, FilesApi, HttpClient, TemplatesApi, UserTasksApi, UserTemplatesApi } from '@roxy/agent-api'
+import { FeedbackApi, FilesApi, HttpClient, OfficialScriptsApi, TemplatesApi, UserTasksApi, UserTemplatesApi } from '@roxy/agent-api'
 import type {
   AgentConversationRunEventDTO,
   AgentTaskLogStatus,
@@ -12,6 +12,8 @@ import {
 } from './agent-backend-auth'
 import { createPerfTimer, perfLog } from '/@/utils/perf-log'
 import { safeParseJSON } from '/@/utils'
+
+type AgentConversationMessageCursor = string
 
 export interface AgentConsoleConversationDTO {
   id: string
@@ -111,6 +113,11 @@ export interface PresetTemplateInitialization {
   createdCount: number
 }
 
+export interface AgentSkillPathInfo {
+  installedRoot: string
+  skillMdPath?: string
+}
+
 function getResponseMessage(value: AgentConsoleApiResponse<unknown>) {
   return value.msg || value.message || 'Agent request failed'
 }
@@ -125,8 +132,9 @@ async function readAgentResponse<T>(response: Response): Promise<T> {
     catch {
       // 响应体不是合法 JSON（如网关 5xx 返回的 HTML 或空 body）：
       // 不能让 JSON 解析错误掩盖真实 HTTP 状态。
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(`Agent request failed: ${response.status}`)
+      }
       throw new Error('Agent response is not valid JSON')
     }
   }
@@ -140,8 +148,9 @@ async function readAgentResponse<T>(response: Response): Promise<T> {
 
   if (payload && typeof payload === 'object' && 'code' in payload) {
     const wrapped = payload as AgentConsoleApiResponse<T>
-    if (wrapped.code !== undefined && wrapped.code !== 0)
+    if (wrapped.code !== undefined && wrapped.code !== 0) {
       throw new Error(getResponseMessage(wrapped))
+    }
 
     return wrapped.data as T
   }
@@ -167,12 +176,15 @@ let agentBackendAuthPromise: Promise<AgentBackendAuthContext> | undefined
 
 function readAgentBackendAuthCache(workspaceId?: number) {
   const cache = safeParseJSON(localStorage.getItem(AGENT_BACKEND_AUTH_CACHE_KEY), null) as AgentBackendAuthCache | null
-  if (!cache?.workspaceId || !cache?.apiKey)
+  if (!cache?.workspaceId || !cache?.apiKey) {
     return null
-  if (workspaceId && cache.workspaceId !== workspaceId)
+  }
+  if (workspaceId && cache.workspaceId !== workspaceId) {
     return null
-  if (Date.now() - cache.updatedAt > AGENT_BACKEND_AUTH_CACHE_TTL)
+  }
+  if (Date.now() - cache.updatedAt > AGENT_BACKEND_AUTH_CACHE_TTL) {
     return null
+  }
   return cache
 }
 
@@ -196,13 +208,15 @@ async function loadAgentBackendAuth(): Promise<AgentBackendAuthContext> {
     perfLog('agent-api:loadAgentBackendAuth:getSoftConfig:start')
     const { workspaceId } = await globalThis.electronAPI.send('app:getSoftConfig')
     perfLog('agent-api:loadAgentBackendAuth:getSoftConfig:end', { workspaceId })
-    if (workspaceId && workspaceId !== workspaceStore.currentWorkspace?.id)
+    if (workspaceId && workspaceId !== workspaceStore.currentWorkspace?.id) {
       await workspaceStore.prepareWorkspace(workspaceId)
+    }
   }
 
   const workspaceId = workspaceStore.currentWorkspace?.id
-  if (!workspaceId)
+  if (!workspaceId) {
     throw new Error($t('当前团队不可用'))
+  }
 
   const cached = readAgentBackendAuthCache(workspaceId)
   if (cached) {
@@ -247,14 +261,20 @@ export function initializeAgentBackendAuth(): Promise<AgentBackendAuthContext> {
   return agentBackendAuthPromise
 }
 
-const agentBackendHttpClient = createHttpClient(HttpClient, async (config) => {
-  const { apiKey } = await initializeAgentBackendAuth()
-  config.headers.Authorization = buildAgentBackendAuthorization(
-    apiKey,
-    String(config.headers.token ?? ''),
-  )
-  config.baseURL = `${config.baseURL}/llm-proxy`
-})
+// The shared API helper is typed against the main backend client's generated
+// HttpClient. The agent API client is generated separately, so its otherwise
+// compatible client has a distinct private field and needs a local adapter.
+const agentBackendHttpClient = createHttpClient(
+  HttpClient as unknown as typeof import('@roxy/backend-api').HttpClient,
+  async (config) => {
+    const { apiKey } = await initializeAgentBackendAuth()
+    config.headers.Authorization = buildAgentBackendAuthorization(
+      apiKey,
+      String(config.headers.token ?? ''),
+    )
+    config.baseURL = `${config.baseURL}/llm-proxy`
+  },
+) as unknown as HttpClient
 
 const presetInitializationByWorkspace = new Map<string, Promise<void>>()
 
@@ -263,6 +283,7 @@ export function useAgentConsoleApi() {
   const workspaceStore = useWorkspaceStore()
   const feedback = new FeedbackApi(agentBackendHttpClient)
   const files = new FilesApi(agentBackendHttpClient)
+  const officialScripts = new OfficialScriptsApi(agentBackendHttpClient)
   const templates = new TemplatesApi(agentBackendHttpClient)
   const userTasks = new UserTasksApi(agentBackendHttpClient)
   const userTemplates = new UserTemplatesApi(agentBackendHttpClient)
@@ -271,8 +292,9 @@ export function useAgentConsoleApi() {
     const endEnsureAgentReady = createPerfTimer('agent-api:ensureAgentReady')
     await agentStore.initMcp()
 
-    if (!agentStore.serverUrl)
+    if (!agentStore.serverUrl) {
       throw new Error('Agent server is not ready')
+    }
     endEnsureAgentReady({ serverUrl: agentStore.serverUrl })
   }
 
@@ -299,17 +321,28 @@ export function useAgentConsoleApi() {
 
   function conversationList(options: { limit?: number, offset?: number } = {}) {
     const query = new URLSearchParams()
-    if (options.limit !== undefined)
+    if (options.limit !== undefined) {
       query.set('limit', String(options.limit))
-    if (options.offset !== undefined)
+    }
+    if (options.offset !== undefined) {
       query.set('offset', String(options.offset))
+    }
 
     const queryString = query.toString()
     return request<AgentConsoleConversationDTO[]>(`/api/conversations/list${queryString ? `?${queryString}` : ''}`)
   }
 
-  function conversationDetail(conversationId: string) {
+  function conversationDetail(
+    conversationId: string,
+    options: { cursor?: AgentConversationMessageCursor, limit?: number } = {},
+  ) {
     const query = new URLSearchParams({ conversationId })
+    if (options.cursor !== undefined) {
+      query.set('cursor', options.cursor)
+    }
+    if (options.limit !== undefined) {
+      query.set('limit', String(options.limit))
+    }
     return request<AgentConsoleConversationDetailDTO>(`/api/conversations/detail?${query}`)
   }
 
@@ -341,6 +374,11 @@ export function useAgentConsoleApi() {
     })
   }
 
+  function skillPathInfo(slug?: string) {
+    const query = slug ? `?${new URLSearchParams({ slug })}` : ''
+    return request<AgentSkillPathInfo>(`/api/skills/path-info${query}`)
+  }
+
   async function uploadFile(data: string, mimeType: string, fileName: string, conversationId?: string) {
     return request<AgentConsoleUploadResult>('/api/upload', {
       method: 'POST',
@@ -364,10 +402,12 @@ export function useAgentConsoleApi() {
   function getFileUrl(fileId: string, options: { download?: boolean, fileName?: string } = {}) {
     const serverUrl = agentStore.serverUrl
     const params = new URLSearchParams()
-    if (options.download)
+    if (options.download) {
       params.set('download', '1')
-    if (options.fileName)
+    }
+    if (options.fileName) {
       params.set('filename', options.fileName)
+    }
     const query = params.toString()
     return `${serverUrl}/api/files/${encodeURIComponent(fileId)}${query ? `?${query}` : ''}`
   }
@@ -392,31 +432,34 @@ export function useAgentConsoleApi() {
     return request<AgentTaskSyncResult>('/api/tasks/sync', { method: 'POST' })
   }
 
-  function initializePresetTemplates() {
-    const workspaceId = workspaceStore.currentWorkspace?.id
-    if (!workspaceId)
-      return Promise.resolve()
+  // function initializePresetTemplates() {
+  //   const workspaceId = workspaceStore.currentWorkspace?.id
+  //   if (!workspaceId) {
+  //     return Promise.resolve()
+  //   }
 
-    const key = String(workspaceId)
-    const pending = presetInitializationByWorkspace.get(key)
-    if (pending)
-      return pending
+  //   const key = String(workspaceId)
+  //   const pending = presetInitializationByWorkspace.get(key)
+  //   if (pending) {
+  //     return pending
+  //   }
 
-    const request = agentBackendHttpClient.request<AgentConsoleApiResponse<PresetTemplateInitialization>>({
-      path: '/v1/user/templates/initialize-presets',
-      method: 'POST',
-      format: 'json',
-    }).then((response) => {
-      if (response.code !== undefined && response.code !== 0)
-        throw new Error(getResponseMessage(response))
-    }).catch((error) => {
-      presetInitializationByWorkspace.delete(key)
-      console.error('[agent-console] Failed to initialize preset templates:', error)
-    })
+  //   const request = agentBackendHttpClient.request<AgentConsoleApiResponse<PresetTemplateInitialization>>({
+  //     path: '/v1/user/templates/initialize-presets',
+  //     method: 'POST',
+  //     format: 'json',
+  //   }).then((response) => {
+  //     if (response.code !== undefined && response.code !== 0) {
+  //       throw new Error(getResponseMessage(response))
+  //     }
+  //   }).catch((error) => {
+  //     presetInitializationByWorkspace.delete(key)
+  //     console.error('[agent-console] Failed to initialize preset templates:', error)
+  //   })
 
-    presetInitializationByWorkspace.set(key, request)
-    return request
-  }
+  //   presetInitializationByWorkspace.set(key, request)
+  //   return request
+  // }
 
   return {
     createConversation,
@@ -426,12 +469,13 @@ export function useAgentConsoleApi() {
     ensureAgentReady,
     feedback,
     files,
-    initializePresetTemplates,
     initializeAgentBackendAuth,
     markConversationRead,
+    officialScripts,
     fileToBase64,
     getFileUrl,
     scriptSelfDescription,
+    skillPathInfo,
     stopTaskLog,
     syncTasks,
     deleteTaskLog,

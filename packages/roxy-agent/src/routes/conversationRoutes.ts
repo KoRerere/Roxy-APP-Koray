@@ -19,6 +19,11 @@ const FixedConversationIdSchema = z.strictObject({
   conversationId: z.string().trim().min(1).max(128),
 })
 
+const FixedConversationDetailSchema = FixedConversationIdSchema.extend({
+  cursor: z.string().regex(/^\d+$/).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+})
+
 const FixedUpdateConversationSchema = FixedConversationIdSchema.extend({
   title: z.string().trim().min(1).max(200),
 })
@@ -30,8 +35,9 @@ const FixedMarkConversationReadSchema = FixedConversationIdSchema.extend({
 const terminalRunStatuses = new Set(['completed', 'failed', 'cancelled'])
 
 function timestamp(value: string | undefined): number {
-  if (!value)
+  if (!value) {
     return 0
+  }
   const parsed = new Date(value.replace(' ', 'T')).getTime()
   return Number.isNaN(parsed) ? 0 : parsed
 }
@@ -97,13 +103,15 @@ function internalError(res: Response, action: string, error: unknown) {
 // Fixed GET/POST protocol shared with roxy-agent-app.
 router.post('/conversations/create', async (req: Request, res: Response) => {
   const parsed = FixedCreateConversationSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request body')
+  }
 
   try {
     const conversation = chatService.createConversation()
-    if (parsed.data.title)
+    if (parsed.data.title) {
       chatService.updateConversation(conversation.id, { title: parsed.data.title, isTitleSet: true })
+    }
     const saved = chatService.getConversation(conversation.id) ?? conversation
     return res.status(201).json({ code: 0, data: presentConversation(saved) })
   }
@@ -114,8 +122,9 @@ router.post('/conversations/create', async (req: Request, res: Response) => {
 
 router.get('/conversations/list', async (req: Request, res: Response) => {
   const parsed = FixedListConversationsSchema.safeParse(req.query)
-  if (!parsed.success)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request query')
+  }
 
   try {
     const offset = parsed.data.offset ?? 0
@@ -130,15 +139,20 @@ router.get('/conversations/list', async (req: Request, res: Response) => {
 })
 
 router.get('/conversations/detail', async (req: Request, res: Response) => {
-  const parsed = FixedConversationIdSchema.safeParse(req.query)
-  if (!parsed.success)
+  const parsed = FixedConversationDetailSchema.safeParse(req.query)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request query')
+  }
 
   try {
     const conversation = chatService.getConversation(parsed.data.conversationId)
-    if (!conversation)
+    if (!conversation) {
       return conversationNotFound(res)
-    const detail = chatService.getConversationDetail(parsed.data.conversationId)
+    }
+    const detail = chatService.getConversationDetail(parsed.data.conversationId, {
+      cursor: parsed.data.cursor,
+      limit: parsed.data.limit ?? 5,
+    })
     const messages = Array.isArray(detail.messages) ? detail.messages : []
     return res.json({
       code: 0,
@@ -146,6 +160,8 @@ router.get('/conversations/detail', async (req: Request, res: Response) => {
         conversation: presentConversation(conversation),
         messages: messages.map(presentMessage),
         artifacts: [],
+        hasMore: detail.hasMore,
+        nextCursor: detail.nextCursor,
       },
     })
   }
@@ -156,15 +172,18 @@ router.get('/conversations/detail', async (req: Request, res: Response) => {
 
 router.post('/conversations/update', async (req: Request, res: Response) => {
   const parsed = FixedUpdateConversationSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request body')
+  }
 
   try {
-    if (!chatService.updateConversation(parsed.data.conversationId, { title: parsed.data.title }))
+    if (!chatService.updateConversation(parsed.data.conversationId, { title: parsed.data.title })) {
       return conversationNotFound(res)
+    }
     const conversation = chatService.getConversation(parsed.data.conversationId)
-    if (!conversation)
+    if (!conversation) {
       return conversationNotFound(res)
+    }
     return res.json({ code: 0, data: presentConversation(conversation) })
   }
   catch (error) {
@@ -174,8 +193,9 @@ router.post('/conversations/update', async (req: Request, res: Response) => {
 
 router.post('/conversations/mark-read', async (req: Request, res: Response) => {
   const parsed = FixedMarkConversationReadSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request body')
+  }
 
   try {
     const conversation = chatService.markConversationRead(parsed.data.conversationId, parsed.data.runId)
@@ -191,12 +211,14 @@ router.post('/conversations/mark-read', async (req: Request, res: Response) => {
 
 router.post('/conversations/delete', async (req: Request, res: Response) => {
   const parsed = FixedConversationIdSchema.safeParse(req.body ?? {})
-  if (!parsed.success)
+  if (!parsed.success) {
     return invalidRequest(res, 'Invalid request body')
+  }
 
   try {
-    if (!await chatService.deleteConversation(parsed.data.conversationId))
+    if (!await chatService.deleteConversation(parsed.data.conversationId)) {
       return conversationNotFound(res)
+    }
     return res.json({ code: 0, data: { deleted: true } })
   }
   catch (error) {

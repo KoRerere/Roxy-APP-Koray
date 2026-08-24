@@ -10,106 +10,37 @@ export const secondaryNavItems: AgentNavItem[] = [
 ]
 
 export const conversations: AgentConversation[] = [
-  { id: 'conv-1', title: 'Search global daily news', updatedAt: '', latestRunId: 'run-1', runningRunIds: [] },
-  { id: 'conv-2', title: 'Facebook account login operation', updatedAt: '', latestRunId: 'run-2', runningRunIds: ['run-2'] },
-  { id: 'conv-3', title: 'Facebook account login operation', updatedAt: '', latestRunId: 'run-3', runningRunIds: [] },
-  { id: 'conv-4', title: 'In usability studies, feedback...', updatedAt: '', runningRunIds: [] },
-  { id: 'conv-5', title: 'Some are classic phrases t...', updatedAt: '', runningRunIds: [] },
-  { id: 'conv-6', title: 'Some are classic phrases t...', updatedAt: '', runningRunIds: [] },
+  { id: 'conv-1', title: 'Search global daily news', updatedAt: '', latestRunId: 'run-1', runningRunIds: [], unread: false },
+  { id: 'conv-2', title: 'Facebook account login operation', updatedAt: '', latestRunId: 'run-2', runningRunIds: ['run-2'], unread: false },
+  { id: 'conv-3', title: 'Facebook account login operation', updatedAt: '', latestRunId: 'run-3', runningRunIds: [], unread: false },
+  { id: 'conv-4', title: 'In usability studies, feedback...', updatedAt: '', runningRunIds: [], unread: false },
+  { id: 'conv-5', title: 'Some are classic phrases t...', updatedAt: '', runningRunIds: [], unread: false },
+  { id: 'conv-6', title: 'Some are classic phrases t...', updatedAt: '', runningRunIds: [], unread: false },
 ]
 
 const newsSearchProcess: AgentConversationProcess = {
   id: 'process-news-search',
   durationLabel: '任务耗时40s',
   events: [
+    { id: 'thinking-main', type: 'thinking', title: '思考过程', expanded: true, content: '先打开浏览器，再分别交给两个智能体搜索新闻。' },
+    { id: 'tool-open-browsers', type: 'tool_call', toolName: 'roxy_open_browsers', status: 'success', input: { count: 2 }, output: '已打开 2 个浏览器' },
     {
-      id: 'thinking-main',
-      type: 'thinking',
-      title: '思考过程',
-      expanded: true,
-      content: '用户想要：\n1. 打开两个浏览器（刚才创建的两个：`548e30cf0cada4585661c68b6d222428`和`1982d0a0385d3c030451e47c25092b3c`）2. 在它们里面搜索新闻首先我需要打开这两个浏览器，获取 CDP endpoints，然后用 parallel_dispatch 同时让两个 worker 去搜索新闻。让我先打开两个浏览器。',
+      id: 'agent-profile-one', type: 'agent_lifecycle', agentPath: '/root/profile_one', parentAgentPath: '/root', agentName: 'profile_one', agentType: 'browser_worker', lifecycleStatus: 'completed', status: 'success',
+      title: '已创建智能体 profile_one', events: [
+        { id: 'profile-one-thinking', type: 'thinking', title: '思考过程', content: '读取新闻页面', status: 'success' },
+        { id: 'profile-one-tool', type: 'tool_call', toolName: 'browser_snapshot', status: 'success', input: {}, output: '新闻页面快照' },
+        { id: 'profile-one-content', type: 'content', emphasis: true, content: '完成新闻搜索：西班牙 1:0 战胜阿根廷。' },
+      ], children: [],
     },
     {
-      id: 'content-open-browsers',
-      type: 'content',
-      content: '先打开两个浏览器获取连接端点，再并行搜索新闻。',
+      id: 'agent-profile-two', type: 'agent_lifecycle', agentPath: '/root/profile_two', parentAgentPath: '/root', agentName: 'profile_two', agentType: 'browser_worker', lifecycleStatus: 'completed', status: 'success',
+      title: '已创建智能体 profile_two', events: [
+        { id: 'profile-two-thinking', type: 'thinking', title: '思考过程', content: '读取新闻页面', status: 'success' },
+        { id: 'profile-two-tool', type: 'tool_call', toolName: 'browser_snapshot', status: 'success', input: {}, output: '新闻页面快照' },
+        { id: 'profile-two-content', type: 'content', emphasis: true, content: '完成新闻搜索：西班牙 1:0 战胜阿根廷。' },
+      ], children: [],
     },
-    {
-      id: 'tool-open-browsers',
-      type: 'tool_call',
-      toolName: 'roxy_open_browsers',
-      status: 'success',
-    },
-    {
-      id: 'parallel-search-news',
-      type: 'parallel_dispatch',
-      title: '创建 2 个并行任务',
-      count: 2,
-      expanded: true,
-      tasks: [
-        {
-          id: 'worker-browser-1',
-          type: 'worker_task',
-          title: '执行任务在浏览器1中搜索新闻',
-          expanded: true,
-          status: 'success',
-          events: [
-            {
-              id: 'worker-browser-1-thinking',
-              type: 'thinking',
-              title: '思考过程',
-              expanded: true,
-              content: '用户想要：\n1. 打开两个浏览器（刚才创建的两个：`548e30cf0cada4585661c68b6d222428`和`1982d0a0385d3c030451e47c25092b3c`）2. 在它们里面搜索新闻首先我需要打开这两个浏览器，获取 CDP endpoints，然后用 parallel_dispatch 同时让两个 worker 去搜索新闻。让我先打开两个浏览器。',
-            },
-            {
-              id: 'worker-browser-1-skill',
-              type: 'skill_load',
-              skillPath: 'roxybrowser-playwright-skills/SKILL.md',
-              status: 'success',
-            },
-            {
-              id: 'worker-browser-1-content',
-              type: 'content',
-              emphasis: true,
-              content: '2026美加墨世界杯决赛：西班牙1:0战胜阿根廷，队史第二次夺冠',
-            },
-          ],
-        },
-        {
-          id: 'worker-browser-2',
-          type: 'worker_task',
-          title: '执行任务在浏览器2中搜索新闻',
-          expanded: true,
-          status: 'success',
-          events: [
-            {
-              id: 'worker-browser-2-thinking',
-              type: 'thinking',
-              title: '思考过程',
-              expanded: true,
-              content: '用户想要：\n1. 打开两个浏览器（刚才创建的两个：`548e30cf0cada4585661c68b6d222428`和`1982d0a0385d3c030451e47c25092b3c`）2. 在它们里面搜索新闻首先我需要打开这两个浏览器，获取 CDP endpoints，然后用 parallel_dispatch 同时让两个 worker 去搜索新闻。让我先打开两个浏览器。',
-            },
-            {
-              id: 'worker-browser-2-skill',
-              type: 'skill_load',
-              skillPath: 'roxybrowser-playwright-skills/SKILL.md',
-              status: 'success',
-            },
-            {
-              id: 'worker-browser-2-content',
-              type: 'content',
-              emphasis: true,
-              content: '2026美加墨世界杯决赛：西班牙1:0战胜阿根廷，队史第二次夺冠',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'final-news-summary',
-      type: 'final_answer',
-      content: 'Search for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every daySearch for the latest political, financial and technological news from around the world every day',
-    },
+    { id: 'final-news-summary', type: 'final_answer', content: '已完成两个浏览器的新闻搜索。' },
   ],
 }
 
@@ -221,6 +152,7 @@ export function createInitialAgentConsoleState(): AgentConsoleState {
     conversationIds,
     conversationsById,
     draftsByConversationId: Object.fromEntries(conversationIds.map(conversationId => [conversationId, { conversationId, prompt: '', attachments: [] }])),
+    queuedPromptsByConversationId: Object.fromEntries(conversationIds.map(conversationId => [conversationId, []])),
     messagesByConversationId: Object.fromEntries(conversationIds.map(conversationId => [
       conversationId,
       (messagesByConversationId[conversationId] ?? []).map(message => ({ ...message })),
@@ -235,6 +167,7 @@ export function createInitialAgentConsoleState(): AgentConsoleState {
       'run-2': { id: 'stream-2', conversationId: 'conv-2', runId: 'run-2', status: 'streaming', events: [], lastSequence: 0 },
     },
     todoProgressByRunId: {},
+    pendingHitlByConversationId: {},
     taskGroupsByConversationId: Object.fromEntries(conversationIds.map(conversationId => [
       conversationId,
       (taskGroupsByConversationId[conversationId] ?? []).map(group => ({

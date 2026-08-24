@@ -17,8 +17,9 @@ const workspaceId = env.ROXY_WORKSPACE_ID
 
 function utcToLocal(utcStr: string): string {
   const d = new Date(`${utcStr.replace(' ', 'T')}Z`)
-  if (Number.isNaN(d.getTime()))
+  if (Number.isNaN(d.getTime())) {
     return utcStr
+  }
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
@@ -28,28 +29,29 @@ function getDefaultConversationWorkspacePath(conversationId: string): string {
 }
 
 /** 读取 assistant 消息的 canonical JSONL 事件文件。 */
-function readMessageEventFile(filePath: string): { content?: string, events?: AgentConversationRunEventDTO[] } | null {
-  if (path.extname(filePath).toLowerCase() !== '.jsonl')
+function readMessageEventFile(filePath: string): { content?: string; events?: AgentConversationRunEventDTO[] } | null {
+  if (path.extname(filePath).toLowerCase() !== '.jsonl') {
     return null
+  }
 
   let content: string
   try {
     content = fs.readFileSync(filePath, 'utf-8').toString()
-  }
-  catch {
+  } catch {
     return null
   }
 
   const events: AgentConversationRunEventDTO[] = []
   for (const line of content.split(/\r?\n/)) {
-    if (!line.trim())
+    if (!line.trim()) {
       continue
+    }
     try {
       const item = JSON.parse(line) as AgentConversationRunEventDTO
-      if (item && typeof item.sequence === 'number' && item.event?.type)
+      if (item && typeof item.sequence === 'number' && item.event?.type) {
         events.push(item)
-    }
-    catch {
+      }
+    } catch {
       return null
     }
   }
@@ -58,12 +60,12 @@ function readMessageEventFile(filePath: string): { content?: string, events?: Ag
 
 /** 删除一条 file 存储消息对应的 canonical JSONL 事件文件。 */
 function deleteMessageEventFile(filePath: string): void {
-  if (path.extname(filePath).toLowerCase() !== '.jsonl')
+  if (path.extname(filePath).toLowerCase() !== '.jsonl') {
     return
+  }
   try {
     fs.rmSync(filePath, { force: true })
-  }
-  catch {
+  } catch {
     // 忽略删除失败
   }
 }
@@ -84,20 +86,27 @@ const safeWorkspaceId: string = workspaceId as string
 // 静态依赖被 webpack 打进同一 bundle）不会触发写入 agent 数据根目录而 ERR_ACCESS_DENIED。
 let _db: DatabaseSync | undefined
 function ensureDb(): DatabaseSync {
-  if (_db)
+  if (_db) {
     return _db
-  if (!userId || !workspaceId)
+  }
+  if (!userId || !workspaceId) {
     throw new Error('Missing required environment variables: ROXY_USER_ID and ROXY_WORKSPACE_ID')
-  // 数据库初始化（迁移到 state/legacy/：deepagents 消息正文库，runtime 落地后随引擎退役清理）
+  }
+  // 数据库初始化（迁移到 state/legacy/：历史消息正文库，runtime rollout 负责执行态）
   const dbPath = agentPaths.legacyConversationsDb
   // 确保数据库目录存在
   fs.mkdirSync(path.dirname(dbPath), { recursive: true })
   _db = new DatabaseSync(dbPath)
   // 启用 WAL 模式以提高并发性能
-  _db.exec('PRAGMA journal_mode = \'WAL\'')
+  _db.exec("PRAGMA journal_mode = 'WAL'")
   // 初始化数据库表结构（此时 _db 已赋值，initDatabase 经 db 代理会解析到它）
   initDatabase()
   return _db
+}
+
+/** Initialize the conversations database after startup migrations have completed. */
+export function initializeDatabase(): void {
+  ensureDb()
 }
 
 const db: DatabaseSync = new Proxy({} as DatabaseSync, {
@@ -176,41 +185,45 @@ function initDatabase() {
 
   // 数据库迁移：脚本后端同步链路已删除，移除不再使用的远程文件 ID。
   try {
-    const tableInfo = db.prepare('PRAGMA table_info(files)').all() as unknown as Array<{ name: string }>
-    const hasRemoteFileId = tableInfo.some(col => col.name === 'remote_file_id')
+    const tableInfo = db.prepare('PRAGMA table_info(files)').all() as unknown as Array<{
+      name: string
+    }>
+    const hasRemoteFileId = tableInfo.some((col) => col.name === 'remote_file_id')
     if (hasRemoteFileId) {
       db.exec('ALTER TABLE files DROP COLUMN remote_file_id;')
       console.log(`✅ Removed legacy remote_file_id column from files table`)
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.warn(`⚠️ Migration check for files.remote_file_id failed:`, error)
   }
 
   // 数据库迁移：普通 chat agent 已统一执行形态，删除历史消息模式字段。
   try {
-    const tableInfo = db.prepare('PRAGMA table_info(messages)').all() as unknown as Array<{ name: string }>
-    const hasAgentMode = tableInfo.some(col => col.name === 'agent_mode')
+    const tableInfo = db.prepare('PRAGMA table_info(messages)').all() as unknown as Array<{
+      name: string
+    }>
+    const hasAgentMode = tableInfo.some((col) => col.name === 'agent_mode')
 
     if (hasAgentMode) {
       db.exec('ALTER TABLE messages DROP COLUMN agent_mode;')
       console.log(`✅ Removed legacy agent_mode column from messages table`)
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.warn(`⚠️ Migration check for agent_mode failed:`, error)
   }
 
   // 数据库迁移：为已存在的 conversations 表添加 is_active 字段
   try {
-    const tableInfo = db.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{ name: string }>
-    const hasConversationType = tableInfo.some(col => col.name === 'conversation_type')
+    const tableInfo = db.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{
+      name: string
+    }>
+    const hasConversationType = tableInfo.some((col) => col.name === 'conversation_type')
     if (hasConversationType) {
       db.exec('ALTER TABLE conversations DROP COLUMN conversation_type;')
       console.log(`✅ Removed legacy conversation_type column from conversations table`)
     }
 
-    const hasWorkspacePath = tableInfo.some(col => col.name === 'workspace_path')
+    const hasWorkspacePath = tableInfo.some((col) => col.name === 'workspace_path')
     if (!hasWorkspacePath) {
       db.exec(`
         ALTER TABLE conversations ADD COLUMN workspace_path TEXT;
@@ -218,7 +231,7 @@ function initDatabase() {
       console.log(`✅ Added workspace_path column to conversations table`)
     }
 
-    const hasIsActive = tableInfo.some(col => col.name === 'is_active')
+    const hasIsActive = tableInfo.some((col) => col.name === 'is_active')
 
     if (!hasIsActive) {
       db.exec(`
@@ -227,7 +240,7 @@ function initDatabase() {
       console.log(`✅ Added is_active column to conversations table`)
     }
 
-    const hasIsTask = tableInfo.some(col => col.name === 'is_task')
+    const hasIsTask = tableInfo.some((col) => col.name === 'is_task')
     if (hasIsTask) {
       db.exec(`
         ALTER TABLE conversations DROP COLUMN is_task;
@@ -235,7 +248,7 @@ function initDatabase() {
       console.log(`✅ Removed legacy is_task column from conversations table`)
     }
 
-    const hasScheduled = tableInfo.some(col => col.name === 'scheduled')
+    const hasScheduled = tableInfo.some((col) => col.name === 'scheduled')
     if (hasScheduled) {
       // 删除列前先清理历史遗留的隐藏 scheduled 会话（scheduled=1），否则 drop 列后
       // 它们会出现在用户主会话列表里。本库未开启 foreign_keys pragma，需手动删除消息。
@@ -253,7 +266,7 @@ function initDatabase() {
       ['last_read_run_id', 'TEXT'],
     ] as const
     for (const [column, type] of runStateColumns) {
-      if (tableInfo.some(item => item.name === column)) {
+      if (tableInfo.some((item) => item.name === column)) {
         continue
       }
       db.exec(`ALTER TABLE conversations ADD COLUMN ${column} ${type};`)
@@ -264,16 +277,17 @@ function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_conversations_workspace_user_list
         ON conversations(workspace_id, user_id, is_active DESC, created_at DESC, id DESC);
     `)
-  }
-  catch (error) {
+  } catch (error) {
     // 如果表不存在或其他错误，忽略（表会在上面创建）
     console.warn(`⚠️ Migration check for is_active failed:`, error)
   }
 
   // 数据库迁移：为已存在的 conversations 表添加 is_title_set 字段
   try {
-    const tableInfo = db.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{ name: string }>
-    const hasIsTitleSet = tableInfo.some(col => col.name === 'is_title_set')
+    const tableInfo = db.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{
+      name: string
+    }>
+    const hasIsTitleSet = tableInfo.some((col) => col.name === 'is_title_set')
 
     if (!hasIsTitleSet) {
       db.exec(`
@@ -281,8 +295,7 @@ function initDatabase() {
       `)
       console.log(`✅ Added is_title_set column to conversations table`)
     }
-  }
-  catch (error) {
+  } catch (error) {
     // 如果表不存在或其他错误，忽略（表会在上面创建）
     console.warn(`⚠️ Migration check for is_title_set failed:`, error)
   }
@@ -290,8 +303,7 @@ function initDatabase() {
   // 生图业务已下线；仅删除其专用元数据表，通用 files 表和物理文件保留。
   try {
     db.exec('DROP TABLE IF EXISTS assets_fts; DROP TABLE IF EXISTS assets;')
-  }
-  catch (error) {
+  } catch (error) {
     console.warn(`⚠️ Failed to remove legacy asset tables:`, error)
   }
 }
@@ -331,11 +343,11 @@ export interface Message {
   content?: string
   content_type: 'text' | 'file'
   storage_type: 'inline' | 'file' /**
-                                   * 内联存储或文件存储
-                                   */
+   * 内联存储或文件存储
+   */
   file_path?: string /**
-                      * 当storage_type='file'时必填
-                      */
+   * 当storage_type='file'时必填
+   */
   metadata?: any
   events?: AgentConversationRunEventDTO[]
   created_at: string
@@ -347,13 +359,13 @@ type StatementMap = Record<string, ReturnType<DatabaseSync['prepare']>>
 let _statements: StatementMap | undefined
 function buildStatements(): StatementMap {
   return {
-  // Conversation operations
-  insertConversation: db.prepare(`
+    // Conversation operations
+    insertConversation: db.prepare(`
     INSERT INTO conversations (id, user_id, workspace_id, title, thread_id, workspace_path, model, is_active, is_title_set)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
-  updateConversation: db.prepare(`
+    updateConversation: db.prepare(`
     UPDATE conversations SET
       title = COALESCE(?, title),
       model = COALESCE(?, model),
@@ -362,7 +374,7 @@ function buildStatements(): StatementMap {
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
-  startConversationRun: db.prepare(`
+    startConversationRun: db.prepare(`
     UPDATE conversations SET
       latest_run_id = ?,
       latest_run_status = 'streaming',
@@ -370,19 +382,19 @@ function buildStatements(): StatementMap {
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
-  finishConversationRun: db.prepare(`
+    finishConversationRun: db.prepare(`
     UPDATE conversations SET
       latest_run_status = ?,
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ? AND workspace_id = ? AND latest_run_id = ?
   `),
 
-  markConversationRead: db.prepare(`
+    markConversationRead: db.prepare(`
     UPDATE conversations SET last_read_run_id = ?
     WHERE id = ? AND user_id = ? AND workspace_id = ? AND latest_run_id = ?
   `),
 
-  setActiveConversation: db.prepare(`
+    setActiveConversation: db.prepare(`
     UPDATE conversations 
     SET is_active = CASE 
       WHEN id = ? THEN 1 
@@ -392,26 +404,26 @@ function buildStatements(): StatementMap {
     WHERE user_id = ? AND workspace_id = ?
   `),
 
-  getActiveConversation: db.prepare(`
+    getActiveConversation: db.prepare(`
     SELECT * FROM conversations 
     WHERE user_id = ? AND workspace_id = ? AND is_active = 1
     LIMIT 1
   `),
 
-  clearAllActive: db.prepare(`
+    clearAllActive: db.prepare(`
     UPDATE conversations 
     SET is_active = 0, updated_at = CURRENT_TIMESTAMP
     WHERE user_id = ? AND workspace_id = ?
   `),
 
-  deleteConversation: db.prepare('DELETE FROM conversations WHERE id = ? AND user_id = ? AND workspace_id = ?'),
+    deleteConversation: db.prepare('DELETE FROM conversations WHERE id = ? AND user_id = ? AND workspace_id = ?'),
 
-  updateConversationWorkspacePath: db.prepare(`
+    updateConversationWorkspacePath: db.prepare(`
     UPDATE conversations SET workspace_path = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ? AND workspace_id = ?
   `),
 
-  getConversationsByWorkspace: db.prepare(`
+    getConversationsByWorkspace: db.prepare(`
     SELECT c.*
     FROM conversations c
     WHERE c.workspace_id = ? AND c.user_id = ?
@@ -419,70 +431,66 @@ function buildStatements(): StatementMap {
     LIMIT ? OFFSET ?
   `),
 
-  getConversation: db.prepare('SELECT * FROM conversations WHERE id = ? AND user_id = ? AND workspace_id = ?'),
+    getConversation: db.prepare('SELECT * FROM conversations WHERE id = ? AND user_id = ? AND workspace_id = ?'),
 
-  getConversationByThreadId: db.prepare('SELECT * FROM conversations WHERE thread_id = ? AND user_id = ? AND workspace_id = ?'),
+    getConversationByThreadId: db.prepare('SELECT * FROM conversations WHERE thread_id = ? AND user_id = ? AND workspace_id = ?'),
 
-  // Message operations
-  insertMessage: db.prepare(`
+    // Message operations
+    insertMessage: db.prepare(`
     INSERT INTO messages (id, conversation_id, role, content, content_type, storage_type, file_path, metadata)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
-  getMessagesByConversation: db.prepare(`
+    getMessagesByConversation: db.prepare(`
     SELECT * FROM messages
     WHERE conversation_id = ?
     ORDER BY created_at ASC, rowid ASC
   `),
 
-  deleteMessagesByConversation: db.prepare('DELETE FROM messages WHERE conversation_id = ?'),
+    deleteMessagesByConversation: db.prepare('DELETE FROM messages WHERE conversation_id = ?'),
 
-  // 取某会话所有 file 存储消息的 file_path（用于删除对话时清理 JSONL 事件文件）
-  getMessageFilePathsByConversation: db.prepare(
-    `SELECT file_path FROM messages WHERE conversation_id = ? AND storage_type = 'file' AND file_path IS NOT NULL`,
-  ),
+    // 取某会话所有 file 存储消息的 file_path（用于删除对话时清理 JSONL 事件文件）
+    getMessageFilePathsByConversation: db.prepare(
+      `SELECT file_path FROM messages WHERE conversation_id = ? AND storage_type = 'file' AND file_path IS NOT NULL`,
+    ),
 
-  // 删除对话时清理消息附件所需
-  getMessageMetadataByConversation: db.prepare(
-    `SELECT metadata FROM messages WHERE conversation_id = ? AND metadata IS NOT NULL`,
-  ),
-  countFilesByLocalPath: db.prepare(
-    `SELECT COUNT(*) AS n FROM files WHERE local_path = ?`,
-  ),
-  deleteFileByFileId: db.prepare('DELETE FROM files WHERE file_id = ?'),
+    // 删除对话时清理消息附件所需
+    getMessageMetadataByConversation: db.prepare(`SELECT metadata FROM messages WHERE conversation_id = ? AND metadata IS NOT NULL`),
+    countFilesByLocalPath: db.prepare(`SELECT COUNT(*) AS n FROM files WHERE local_path = ?`),
+    deleteFileByFileId: db.prepare('DELETE FROM files WHERE file_id = ?'),
 
-  // File operations
-  insertFile: db.prepare(`
+    // File operations
+    insertFile: db.prepare(`
     INSERT INTO files (file_id, file_name, local_path, oss_url, mime_type, size, hash, source)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
-  getFileById: db.prepare('SELECT * FROM files WHERE file_id = ?'),
+    getFileById: db.prepare('SELECT * FROM files WHERE file_id = ?'),
 
-  getFileByHashAny: db.prepare('SELECT * FROM files WHERE hash = ? ORDER BY created_at ASC LIMIT 1'),
+    getFileByHashAny: db.prepare('SELECT * FROM files WHERE hash = ? ORDER BY created_at ASC LIMIT 1'),
 
-  getFileByHashWithOss: db.prepare(`
+    getFileByHashWithOss: db.prepare(`
     SELECT * FROM files
     WHERE hash = ? AND oss_url IS NOT NULL AND oss_url <> ''
     ORDER BY created_at ASC LIMIT 1
   `),
 
-  updateFileOssByHash: db.prepare(`
+    updateFileOssByHash: db.prepare(`
     UPDATE files SET oss_url = ?, updated_at = CURRENT_TIMESTAMP
     WHERE hash = ? AND (oss_url IS NULL OR oss_url = '')
   `),
 
-  updateFileOssById: db.prepare(`
+    updateFileOssById: db.prepare(`
     UPDATE files SET oss_url = ?, updated_at = CURRENT_TIMESTAMP WHERE file_id = ?
   `),
-
   }
 }
 
 const statements: StatementMap = new Proxy({} as StatementMap, {
   get(_target, prop) {
-    if (!_statements)
+    if (!_statements) {
       _statements = buildStatements()
+    }
     return _statements[prop as string]
   },
 })
@@ -490,16 +498,20 @@ const statements: StatementMap = new Proxy({} as StatementMap, {
 // 对话管理
 export class ConversationManager {
   static create(
-    conversation: Omit<Conversation, 'created_at' | 'updated_at' | 'user_id' | 'workspace_id' | 'is_active' | 'is_title_set' | 'latest_run_id' | 'latest_run_status' | 'last_read_run_id'>,
-    options: { activate?: boolean, isTitleSet?: boolean } = {},
+    conversation: Omit<
+      Conversation,
+      'created_at' | 'updated_at' | 'user_id' | 'workspace_id' | 'is_active' | 'is_title_set' | 'latest_run_id' | 'latest_run_status' | 'last_read_run_id'
+    >,
+    options: { activate?: boolean; isTitleSet?: boolean } = {},
   ): Conversation {
     const workspacePath = ensureDirectory(conversation.workspace_path || getDefaultConversationWorkspacePath(conversation.id))
     const activate = options.activate !== false
 
     try {
       db.exec('BEGIN')
-      if (activate)
+      if (activate) {
         statements.clearAllActive.run(safeUserId, safeWorkspaceId)
+      }
       statements.insertConversation.run(
         conversation.id,
         safeUserId,
@@ -512,8 +524,7 @@ export class ConversationManager {
         options.isTitleSet ? 1 : 0,
       )
       db.exec('COMMIT')
-    }
-    catch (error) {
+    } catch (error) {
       db.exec('ROLLBACK')
       throw error
     }
@@ -525,22 +536,15 @@ export class ConversationManager {
     return result as unknown as Conversation
   }
 
-  static update(
-    conversationId: string,
-    updates: Partial<Pick<Conversation, 'title' | 'model' | 'is_title_set'>>,
-  ): boolean {
-    if (
-      updates.title === undefined
-      && updates.model === undefined
-      && updates.is_title_set === undefined
-    ) {
+  static update(conversationId: string, updates: Partial<Pick<Conversation, 'title' | 'model' | 'is_title_set'>>): boolean {
+    if (updates.title === undefined && updates.model === undefined && updates.is_title_set === undefined) {
       return false
     }
 
     const result = statements.updateConversation.run(
-      updates.title ?? null as any,
-      updates.model ?? null as any,
-      updates.is_title_set ?? null as any,
+      updates.title ?? (null as any),
+      updates.model ?? (null as any),
+      updates.is_title_set ?? (null as any),
       conversationId,
       safeUserId,
       safeWorkspaceId,
@@ -549,38 +553,17 @@ export class ConversationManager {
   }
 
   static startRun(conversationId: string, runId: string): boolean {
-    const result = statements.startConversationRun.run(
-      runId,
-      conversationId,
-      safeUserId,
-      safeWorkspaceId,
-    )
+    const result = statements.startConversationRun.run(runId, conversationId, safeUserId, safeWorkspaceId)
     return result.changes > 0
   }
 
-  static finishRun(
-    conversationId: string,
-    runId: string,
-    status: Exclude<ConversationRunStatus, 'streaming'>,
-  ): boolean {
-    const result = statements.finishConversationRun.run(
-      status,
-      conversationId,
-      safeUserId,
-      safeWorkspaceId,
-      runId,
-    )
+  static finishRun(conversationId: string, runId: string, status: Exclude<ConversationRunStatus, 'streaming'>): boolean {
+    const result = statements.finishConversationRun.run(status, conversationId, safeUserId, safeWorkspaceId, runId)
     return result.changes > 0
   }
 
   static markRead(conversationId: string, runId: string): boolean {
-    const result = statements.markConversationRead.run(
-      runId,
-      conversationId,
-      safeUserId,
-      safeWorkspaceId,
-      runId,
-    )
+    const result = statements.markConversationRead.run(runId, conversationId, safeUserId, safeWorkspaceId, runId)
     return result.changes > 0
   }
 
@@ -591,8 +574,7 @@ export class ConversationManager {
       const result = statements.deleteConversation.run(conversationId, safeUserId, safeWorkspaceId)
       db.exec('COMMIT')
       return result.changes > 0
-    }
-    catch (error) {
+    } catch (error) {
       db.exec('ROLLBACK')
       throw error
     }
@@ -604,17 +586,12 @@ export class ConversationManager {
   }
 
   static getPage(limit: number, offset: number): Conversation[] {
-    const rows = statements.getConversationsByWorkspace.all(
-      safeWorkspaceId,
-      safeUserId,
-      limit,
-      offset,
-    ) as unknown as Conversation[]
+    const rows = statements.getConversationsByWorkspace.all(safeWorkspaceId, safeUserId, limit, offset) as unknown as Conversation[]
     return ConversationManager.mapRows(rows)
   }
 
   private static mapRows(rows: Conversation[]): Conversation[] {
-    return rows.map(conversation => ({
+    return rows.map((conversation) => ({
       ...conversation,
       created_at: utcToLocal(conversation.created_at),
       updated_at: utcToLocal(conversation.updated_at),
@@ -628,8 +605,9 @@ export class ConversationManager {
 
   static ensureWorkspace(conversationId: string): string {
     const conversation = ConversationManager.getById(conversationId)
-    if (!conversation)
+    if (!conversation) {
       throw new Error(`Conversation not found: ${conversationId}`)
+    }
 
     const workspacePath = ensureDirectory(conversation.workspace_path || getDefaultConversationWorkspacePath(conversationId))
     if (conversation.workspace_path !== workspacePath) {
@@ -661,8 +639,7 @@ export class ConversationManager {
       db.exec('BEGIN')
       statements.setActiveConversation.run(conversationId, safeUserId, safeWorkspaceId)
       db.exec('COMMIT')
-    }
-    catch (error) {
+    } catch (error) {
       db.exec('ROLLBACK')
       throw error
     }
@@ -689,17 +666,21 @@ export class MessageManager {
       message.id,
       message.conversation_id,
       message.role,
-      message.content ?? null as any,
+      message.content ?? (null as any),
       message.content_type,
       message.storage_type,
-      message.file_path ?? null as any,
+      message.file_path ?? (null as any),
       metadataJson as any,
     )
 
     // 返回刚插入的消息（包含创建时间）
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       SELECT * FROM messages WHERE id = ?
-    `).get(message.id) as unknown as Message
+    `,
+      )
+      .get(message.id) as unknown as Message
 
     if (result && result.metadata) {
       result.metadata = JSON.parse(result.metadata as string)
@@ -712,18 +693,20 @@ export class MessageManager {
     const messages = statements.getMessagesByConversation.all(conversationId) as unknown as Message[]
 
     // 处理消息内容和元数据
-    return messages.map((msg) => {
+    const hydratedMessages = messages.map((msg) => {
       let content = msg.content
       const metadata = msg.metadata ? JSON.parse(msg.metadata as string) : undefined
 
       // assistant 的大消息使用 canonical JSONL 事件文件存储。
       if (msg.storage_type === 'file' && msg.file_path) {
         const fileContent = readMessageEventFile(msg.file_path)
-        if (!fileContent)
+        if (!fileContent) {
           console.warn(`Failed to read message file: ${msg.file_path}`)
+        }
         content = fileContent?.content ?? 'read history record failed'
-        if (fileContent?.events)
+        if (fileContent?.events) {
           msg.events = fileContent.events
+        }
       }
 
       return {
@@ -733,6 +716,8 @@ export class MessageManager {
         created_at: utcToLocal(msg.created_at),
       }
     })
+
+    return hydratedMessages
   }
 
   static deleteByConversation(conversationId: string): boolean {
@@ -740,11 +725,11 @@ export class MessageManager {
     try {
       const rows = statements.getMessageFilePathsByConversation.all(conversationId) as unknown as Array<{ file_path: string }>
       for (const row of rows) {
-        if (row.file_path)
+        if (row.file_path) {
           deleteMessageEventFile(row.file_path)
+        }
       }
-    }
-    catch (err: any) {
+    } catch (err: any) {
       console.warn(`清理会话事件文件失败 ${conversationId}:`, err?.message)
     }
     const result = statements.deleteMessagesByConversation.run(conversationId)
@@ -801,23 +786,25 @@ export class FileRecordStore {
   static insert(input: CreateFileInput): FileRecord {
     statements.insertFile.run(
       input.file_id,
-      input.file_name ?? null as any,
-      input.local_path ?? null as any,
-      input.oss_url ?? null as any,
-      input.mime_type ?? null as any,
-      input.size ?? null as any,
-      input.hash ?? null as any,
+      input.file_name ?? (null as any),
+      input.local_path ?? (null as any),
+      input.oss_url ?? (null as any),
+      input.mime_type ?? (null as any),
+      input.size ?? (null as any),
+      input.hash ?? (null as any),
       input.source ?? 'upload',
     )
     const row = statements.getFileById.get(input.file_id)
-    if (!row)
+    if (!row) {
       throw new Error('Failed to create file record')
+    }
     return mapFileRow(row)
   }
 
   static getByFileId(fileId: string): FileRecord | null {
-    if (!fileId)
+    if (!fileId) {
       return null
+    }
     const row = statements.getFileById.get(fileId)
     return row ? mapFileRow(row) : null
   }
@@ -833,12 +820,12 @@ export class FileRecordStore {
         if (Array.isArray(atts)) {
           for (const a of atts) {
             const fid = a?.fileId ?? a?.file_id
-            if (typeof fid === 'string' && fid)
+            if (typeof fid === 'string' && fid) {
               ids.add(fid)
+            }
           }
         }
-      }
-      catch {
+      } catch {
         // metadata 解析失败忽略
       }
     }
@@ -849,7 +836,10 @@ export class FileRecordStore {
    * 删除一条 file 记录，并返回其物理路径与「删除后是否已无其它记录引用该物理文件」。
    * 因 files 表按 hash 去重（多条 file_id 共享同一 local_path），只有最后一条引用被删时才可删物理文件。
    */
-  static deleteFileRecord(fileId: string): { localPath: string | null, lastRef: boolean } {
+  static deleteFileRecord(fileId: string): {
+    localPath: string | null
+    lastRef: boolean
+  } {
     const record = FileRecordStore.getByFileId(fileId)
     const localPath = record?.local_path ?? null
     statements.deleteFileByFileId.run(fileId)
@@ -863,35 +853,38 @@ export class FileRecordStore {
 
   /** 取同 hash 最早一条（用于复用其本地物理文件路径） */
   static getByHashAny(hash: string): FileRecord | null {
-    if (!hash)
+    if (!hash) {
       return null
+    }
     const row = statements.getFileByHashAny.get(hash)
     return row ? mapFileRow(row) : null
   }
 
   /** 取同 hash 中最早一条已具备 oss_url 的记录（用于复用 OSS，跳过重复上传） */
   static getByHashWithOss(hash: string): FileRecord | null {
-    if (!hash)
+    if (!hash) {
       return null
+    }
     const row = statements.getFileByHashWithOss.get(hash)
     return row ? mapFileRow(row) : null
   }
 
   /** 回填同 hash 下所有尚未具备 oss_url 的记录 */
   static setOssByHash(hash: string, ossUrl: string): number {
-    if (!hash || !ossUrl)
+    if (!hash || !ossUrl) {
       return 0
+    }
     const result = statements.updateFileOssByHash.run(ossUrl, hash)
     return Number(result.changes)
   }
 
   static setOssById(fileId: string, ossUrl: string): boolean {
-    if (!fileId || !ossUrl)
+    if (!fileId || !ossUrl) {
       return false
+    }
     const result = statements.updateFileOssById.run(ossUrl, fileId)
     return Number(result.changes) > 0
   }
-
 }
 
 // 导出便捷的组合函数
@@ -915,7 +908,6 @@ export const ChatContextAPI = {
   addMessage: MessageManager.add,
   getMessagesByConversation: MessageManager.getByConversation,
   deleteMessagesByConversation: MessageManager.deleteByConversation,
-
 }
 
 /**

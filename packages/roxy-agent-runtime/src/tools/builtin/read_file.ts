@@ -1,141 +1,240 @@
-import { readFile, stat } from "node:fs/promises";
-import type { BuiltinTool } from "./index.ts";
-import { readPermissionGuard } from "./permissions.ts";
-import { splitOverlongLine } from "./truncate.ts";
-import { MAX_LINE_LENGTH, MAX_READ_BYTES, MAX_READ_LINES_CEILING, MAX_READ_LINES_DEFAULT } from "./limits.ts";
+import { createReadStream } from 'node:fs'
+import { readFile, stat } from 'node:fs/promises'
+import { TextDecoder } from 'node:util'
+import { z } from 'zod'
+import type { Stats } from 'node:fs'
+import type { BuiltinTool } from './index.ts'
+import { readPermissionGuard } from './permissions.ts'
+import { READ_LIMIT, READ_MAX_BYTES, READ_MAX_LINE_LENGTH, READ_STREAM_MIN_SIZE } from './limits.ts'
+import { buildWindow, formatReadOutput, ReadFileError } from './read_file_render.ts'
+import { defineTool } from '../schema.ts'
+
+const BINARY_SAMPLE_BYTES = 8_192
+
+export const readFileInputSchema = z.strictObject({
+  path: z.string().min(1).describe('Path to read. Relative paths resolve from the current process working directory.'),
+  offset: z.number().int().min(1).default(1).describe('1-based first line to return. Defaults to 1.'),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(READ_LIMIT)
+    .optional()
+    .describe(`Maximum number of lines to return. Defaults to ${READ_LIMIT}.`),
+})
 
 export interface ReadFileToolDeps {
-  permissions?: import("./permissions.ts").PathPermissions;
-  hitl?: import("../../core/interfaces.ts").IHITLHandler;
+  permissions?: import('./permissions.ts').PathPermissions
+  hitl?: import('../../core/interfaces.ts').IHITLHandler
+}
+
+export interface ReadInput {
+  path: string
+  offset: number
+  limit: number
 }
 
 /**
- * Read a file's contents with pagination, line numbers, and binary detection.
+ * Validate constraints and apply DSH read defaults. Zod enforces the public
+ * schema; this helper keeps direct helper tests and future callers honest too.
+ */
+export function parseReadArgs(
+  args: { path: string; offset?: number; limit?: number },
+  maxLimit = READ_LIMIT,
+): ReadInput {
+  if (args.path.trim().length === 0) {
+    throw new ReadFileError('path must be a non-empty string')
+  }
+  const offset = args.offset ?? 1
+  const limit = args.limit ?? maxLimit
+  if (!Number.isFinite(offset) || !Number.isInteger(offset) || offset < 1) {
+    throw new ReadFileError('offset must be a positive integer')
+  }
+  if (!Number.isFinite(limit) || !Number.isInteger(limit) || limit < 1) {
+    throw new ReadFileError('limit must be a positive integer')
+  }
+  if (limit > maxLimit) {
+    throw new ReadFileError(`limit must be less than or equal to ${maxLimit}`)
+  }
+  return { path: args.path, offset, limit }
+}
+
+/**
+ * Read a UTF-8 text file with DSH-compatible 1-based pagination.
  *
- * - `offset` (0-indexed) + `limit` (default 100, clamped to 1000) paginate
- *   large files instead of loading them whole.
- * - Output is `cat -n` style (`N\t<line>`); lines longer than ~2000 chars split
- *   into `N.1`/`N.2` continuations.
- * - Whole-file reads above {@link MAX_READ_BYTES} are refused unless the caller
- *   asks for an explicit offset+limit window.
- * - Binary files (NUL byte) are reported by size/mime but NOT inlined (content
- *   is a string; image blocks aren't supported here).
- * - A tail footer teaches the model how to continue (`offset=N`).
- *
- * Path access is gated by the optional {@link PathPermissions} layer (skill
- * roots + workdir auto-allowed; sensitive paths denied everywhere; outside-root
- * reads `ask` HITL in strict/delegate). No `permissions` dep ⇒ unrestricted.
+ * Path access is gated by the optional {@link PathPermissions} layer before any
+ * filesystem metadata/content I/O. Successful output is always an XML-like
+ * `<path>/<type>/<content>` envelope with numbered lines. Large files stream;
+ * invalid UTF-8, binary files, non-regular files, and out-of-range offsets
+ * return `isError:true`.
  */
 export function read_fileTool(deps: ReadFileToolDeps = {}): BuiltinTool {
-  return {
-    descriptor: {
-      name: "read_file",
-      description:
-        "Read a file's contents, paginated with line numbers. By default returns the first 100 lines (cat -n format). For large files use offset+limit to page through; overlong lines are split as N.1/N.2. Binary files are reported but not inlined. Skill/workspace paths are allowed; sensitive files (.env, keys) are blocked.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          path: { type: "string", description: "Absolute or relative path to the file." },
-          offset: {
-            type: "integer",
-            description: "0-indexed line to start reading from (default 0).",
-          },
-          limit: {
-            type: "integer",
-            description: "Max lines to return (default 100).",
-          },
-          line_numbers: {
-            type: "boolean",
-            description: "Prefix each line with its number, cat -n style (default true).",
-          },
-        },
-        required: ["path"],
-      },
-      source: "builtin",
-      metadata: { sensitive: false },
-    },
+  return defineTool({
+    name: 'read_file',
+    description:
+      `Read a UTF-8 text file and return line-numbered content in a <path>/<type>/<content> envelope. ` +
+      `Offset is 1-based and defaults to 1. Limit defaults to ${READ_LIMIT} and cannot exceed ${READ_LIMIT}. ` +
+      `Large files are streamed; binary files, invalid UTF-8 text, and sensitive paths are rejected.`,
+    inputSchema: readFileInputSchema,
+    source: 'builtin',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     handler: async (input, ctx) => {
-      const raw = input as Record<string, unknown>;
-      if (typeof raw?.path !== "string" || raw.path.length === 0) {
-        return { content: "read_file: 'path' is required", isError: true };
-      }
-      const offset = clampInt(raw.offset, 0, 0);
-      const requestedLimit = raw.limit === undefined ? undefined : clampInt(raw.limit, 1, 1);
-      const limit = Math.min(requestedLimit ?? MAX_READ_LINES_DEFAULT, MAX_READ_LINES_CEILING);
-      const lineNumbers = raw.line_numbers === undefined ? true : Boolean(raw.line_numbers);
+      const parsed = parseReadArgs(input)
 
-      const guard = await readPermissionGuard(deps, raw.path, "read_file", ctx);
-      if (guard) return guard;
+      const guard = await readPermissionGuard(deps, parsed.path, 'read_file', ctx)
+      if (guard) {
+        return guard
+      }
 
       try {
-        const info = await stat(raw.path);
-        if (info.size > MAX_READ_BYTES && requestedLimit === undefined) {
-          return {
-            content: `read_file: ${raw.path} is ${info.size} bytes (cap ${MAX_READ_BYTES}). Re-call with offset and limit to read a window.`,
-            isError: true,
-          };
-        }
+        const info = await statRegularFile(parsed.path, ctx.signal)
+        const chunks =
+          info.size >= READ_STREAM_MIN_SIZE
+            ? streamWholeText(parsed.path, ctx.signal)
+            : [await readWholeText(parsed.path, ctx.signal)]
+        const window = await buildWindow(
+          chunks,
+          {
+            offset: parsed.offset,
+            limit: parsed.limit,
+            maxLineLength: READ_MAX_LINE_LENGTH,
+            maxBytes: READ_MAX_BYTES,
+          },
+          parsed.path,
+        )
 
-        const buf = await readFile(raw.path);
-        if (buf.includes(0)) {
-          const mime = mimeFromExt(raw.path);
-          return {
-            content: `read_file: ${raw.path} is a binary file (${info.size} bytes${mime ? `, ${mime}` : ""}). Not inlined.`,
-            isError: true,
-          };
-        }
-        const text = buf.toString("utf8");
-        const allLines = text.split("\n");
-        const total = allLines.length;
-        const slice = allLines.slice(offset, offset + limit);
-
-        const rendered: string[] = [];
-        for (let i = 0; i < slice.length; i++) {
-          const line = slice[i]!;
-          const lineNo = offset + i + 1;
-          if (lineNumbers) {
-            rendered.push(...splitOverlongLine(line, MAX_LINE_LENGTH, lineNo));
-          } else {
-            rendered.push(line);
-          }
-        }
-        let out = rendered.join("\n");
-
-        const lastShown = offset + slice.length;
-        if (lineNumbers && lastShown < total) {
-          out += `\n(showing lines ${offset + 1}-${lastShown} of ${total}; call read_file again with offset=${lastShown} to continue)`;
-        } else if (lineNumbers && offset > 0 && slice.length === 0) {
-          out = `(offset ${offset} is past end of file; ${total} lines total)`;
-        }
-        return { content: out, isError: false };
-      } catch (err) {
         return {
-          content: String(err instanceof Error ? err.message : String(err)),
+          content: formatReadOutput(parsed.path, {
+            offset: parsed.offset,
+            lines: window.lines,
+            totalLines: window.totalLines,
+            ...(window.truncatedByBytes ? { truncatedByBytes: true } : {}),
+          }),
+          isError: false,
+        }
+      } catch (error) {
+        return {
+          content: renderReadError(error),
           isError: true,
-        };
+        }
       }
     },
-  };
+  })
 }
 
-function clampInt(v: unknown, min: number, _default: number): number {
-  if (typeof v !== "number" || !Number.isFinite(v)) return _default;
-  return Math.max(min, Math.floor(v));
+export async function statRegularFile(path: string, signal?: AbortSignal): Promise<Stats> {
+  throwIfReadAborted(signal)
+  let info: Stats
+  try {
+    info = await stat(path)
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new ReadFileError('read aborted')
+    }
+    if (hasNodeCode(error, 'ENOENT') || hasNodeCode(error, 'ENOTDIR')) {
+      throw new ReadFileError(`cannot read "${path}": not found`)
+    }
+    throw new ReadFileError(`cannot read "${path}": ${errorMessage(error)}`)
+  }
+  throwIfReadAborted(signal)
+  if (!info.isFile()) {
+    throw new ReadFileError(`cannot read "${path}": not a regular file`)
+  }
+  return info
 }
 
-function mimeFromExt(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase() ?? "";
-  const map: Record<string, string> = {
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    gif: "image/gif",
-    webp: "image/webp",
-    pdf: "application/pdf",
-    zip: "application/zip",
-    gz: "application/gzip",
-    mp3: "audio/mpeg",
-    mp4: "video/mp4",
-  };
-  return map[ext] ?? "";
+export async function readWholeText(path: string, signal?: AbortSignal): Promise<string> {
+  throwIfReadAborted(signal)
+  let raw: Buffer
+  try {
+    raw = await readFile(path, signal ? { signal } : {})
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new ReadFileError('read aborted')
+    }
+    throw error
+  }
+  throwIfReadAborted(signal)
+  if (raw.subarray(0, BINARY_SAMPLE_BYTES).includes(0)) {
+    throw new ReadFileError(`cannot read "${path}": binary file`)
+  }
+  return decodeUtf8(raw, path)
+}
+
+export async function* streamWholeText(path: string, signal?: AbortSignal): AsyncIterable<string> {
+  throwIfReadAborted(signal)
+  const stream = createReadStream(path, signal ? { signal } : {})
+  const decoder = new TextDecoder('utf-8', { fatal: true })
+  let sampledBytes = 0
+
+  function scanBinarySample(chunk: Buffer): void {
+    if (sampledBytes >= BINARY_SAMPLE_BYTES) {
+      return
+    }
+    const sample = chunk.subarray(0, Math.min(chunk.length, BINARY_SAMPLE_BYTES - sampledBytes))
+    if (sample.includes(0)) {
+      throw new ReadFileError(`cannot read "${path}": binary file`)
+    }
+    sampledBytes += sample.length
+  }
+
+  try {
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      scanBinarySample(chunk)
+      yield decodeUtf8Stream(decoder, chunk, path)
+    }
+    yield decodeUtf8Stream(decoder, undefined, path)
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new ReadFileError('read aborted')
+    }
+    throw error
+  }
+}
+
+function decodeUtf8(buffer: Uint8Array, path: string): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer)
+  } catch (error) {
+    if (!(error instanceof TypeError)) {
+      throw error
+    }
+    throw new ReadFileError(`cannot read "${path}": not a UTF-8 text file`)
+  }
+}
+
+function decodeUtf8Stream(decoder: TextDecoder, chunk: Uint8Array | undefined, path: string): string {
+  try {
+    return chunk ? decoder.decode(chunk, { stream: true }) : decoder.decode()
+  } catch (error) {
+    if (!(error instanceof TypeError)) {
+      throw error
+    }
+    throw new ReadFileError(`cannot read "${path}": not a UTF-8 text file`)
+  }
+}
+
+function throwIfReadAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new ReadFileError('read aborted')
+  }
+}
+
+function renderReadError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  return String(error)
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError'
+}
+
+function hasNodeCode(error: unknown, code: string): boolean {
+  return error instanceof Error && 'code' in error && error.code === code
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }

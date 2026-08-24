@@ -118,7 +118,7 @@ function handleDelete() {
 </script>
 
 <template>
-  <AgentConsolePageLayout :show-task-monitor-toggle="false" overflow="auto" padding="0" mobile-padding="0">
+  <AgentConsolePageLayout :show-profile-monitor-toggle="false" overflow="auto" padding="0" mobile-padding="0">
     <div class="roxy-config-page" :class="{ 'roxy-config-page--compact': props.compact }">
       <!-- Back button -->
       <button class="back-button" type="button" @click="router.back()">

@@ -23,3 +23,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module 'virtual:roxy-system-skills-zip' {
+  export const systemSkillsZipBase64: string
+  export const systemSkillsContentSha512: string
+}

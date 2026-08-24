@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UserTaskCreate, UserTaskUpdate } from '@roxy/agent-api'
+import type { Ref } from 'vue'
 import type { AgentTaskLogDTO, AgentTaskLogStatus } from '../api'
 import type { UserTemplateDTO } from '../my-templates'
 import type {
@@ -36,7 +37,6 @@ import {
   buildTaskTemplateOptions,
   findLatestTaskLogForTask,
   formatTaskDateTime,
-  formatTaskWindowNumbers,
   getTaskDisplayStatus,
   getTaskErrorI18nKey,
   mapTaskTableItem,
@@ -106,6 +106,7 @@ const { executeTemplateTask } = useTemplateTaskExecution(prompt)
 const tasks = ref<TaskTableItem[]>([])
 const templates = ref<UserTemplateDTO[]>([])
 const windows = ref<TaskWindowOption[]>([])
+const activityWindows = ref<TaskWindowOption[]>([])
 const total = ref(0)
 const loading = ref(false)
 const loadError = ref(false)
@@ -141,16 +142,37 @@ let previousTaskLogStatuses = new Map<string, AgentTaskLogStatus>()
 let taskReferencesReady = false
 let taskStatusRefreshStarted = false
 let taskManagerMounted = false
-let taskWindowLookup = new Set<string>()
+const pendingTaskWindowLookups = new Map<string, Promise<void>>()
+const pendingActivityWindowLookups = new Map<string, Promise<void>>()
+const deletedTaskWindowIds = ref(new Set<string>())
+const deletedActivityWindowIds = ref(new Set<string>())
 
 const templateOptions = computed(() => buildTaskTemplateOptions(templates.value))
 const windowOptions = computed(() => windows.value)
-const windowLabels = computed(() => Object.fromEntries(windowOptions.value.map(item => [item.id, item.code])))
+const activityWindowOptions = computed(() => activityWindows.value)
+const windowNumbersById = computed(() => new Map(windowOptions.value.map(item => [item.id, item.code])))
+const activityWindowNumbersById = computed(() => new Map(activityWindowOptions.value.map(item => [item.id, item.code])))
+const activityWindowLabels = computed(() => Object.fromEntries(activityWindowNumbersById.value))
+const deletedActivityWindowLabels = computed<Record<string, boolean>>(() => Object.fromEntries(
+  Array.from(deletedActivityWindowIds.value).map(id => [id, true]),
+))
 const selectedActivityLog = computed(() => agentChannel.taskLogs.value
   .find(log => log.id === selectedActivityLogId.value))
 const selectedActivityDetail = computed(() => selectedActivityLogId.value
   ? agentChannel.taskExecutionDetails.value[selectedActivityLogId.value]
   : undefined)
+const selectedActivityWindowIds = computed(() => {
+  const log = selectedActivityLog.value
+  if (!log) {
+    return []
+  }
+
+  const detailWindowIds = selectedActivityDetail.value?.scriptWindows
+    .map(item => item.dirId)
+    .filter((id): id is string => Boolean(id)) ?? []
+  return getUniqueWindowIds([log.windowDirIds, detailWindowIds])
+})
+const selectedActivityWindowLabelsReady = computed(() => activityWindowOptionsReady(selectedActivityWindowIds.value))
 const canCreateTask = computed(() => !loading.value && templateOptions.value.length > 0)
 
 function onActivityPageSizeChange() {
@@ -163,14 +185,16 @@ watch(
     const lastPageFirst = totalRecords > 0
       ? Math.floor((totalRecords - 1) / rows) * rows
       : 0
-    if (activityPageFirst.value > lastPageFirst)
+    if (activityPageFirst.value > lastPageFirst) {
       activityPageFirst.value = lastPageFirst
+    }
   },
 )
 
 function stickyActionColumnOverlaps(element: HTMLElement | null) {
-  if (!element)
+  if (!element) {
     return false
+  }
   const maxScrollLeft = element.scrollWidth - element.clientWidth
   return maxScrollLeft > 1 && element.scrollLeft < maxScrollLeft - 1
 }
@@ -192,12 +216,14 @@ watch(
   () => [taskTableScrollRef.value, activityTableScrollRef.value] as const,
   (elements, previousElements) => {
     previousElements?.forEach((element) => {
-      if (element)
+      if (element) {
         tableScrollResizeObserver?.unobserve(element)
+      }
     })
     elements.forEach((element) => {
-      if (element)
+      if (element) {
         tableScrollResizeObserver?.observe(element)
+      }
     })
     void nextTick(syncStickyActionColumnBoundaries)
   },
@@ -226,8 +252,9 @@ async function fetchAllTasks() {
     rows.push(...page.items)
     expectedTotal = page.total
     offset += page.items.length
-    if (!page.items.length)
+    if (!page.items.length) {
       break
+    }
   } while (offset < expectedTotal)
 
   return { rows, total: expectedTotal }
@@ -249,8 +276,9 @@ async function fetchAllTemplates() {
     rows.push(...page.items)
     expectedTotal = page.total
     offset += page.items.length
-    if (!page.items.length)
+    if (!page.items.length) {
       break
+    }
   } while (offset < expectedTotal)
 
   return rows
@@ -260,50 +288,140 @@ function currentWorkspaceName() {
   return workspaceStore.currentWorkspace?.workspaceName
 }
 
-function mergeTaskWindowOptions(options: readonly TaskWindowOption[]) {
-  if (options.length === 0)
+function mergeWindowOptions(target: Ref<TaskWindowOption[]>, options: readonly TaskWindowOption[]) {
+  if (options.length === 0) {
     return
+  }
 
-  const byId = new Map(windows.value.map(item => [item.id, item]))
+  const byId = new Map(target.value.map(item => [item.id, item]))
   options.forEach(item => byId.set(item.id, item))
-  windows.value = reformatTaskWindowOptions(Array.from(byId.values()), currentWorkspaceName())
+  target.value = reformatTaskWindowOptions(Array.from(byId.values()), currentWorkspaceName())
+}
+
+function mergeTaskWindowOptions(options: readonly TaskWindowOption[]) {
+  mergeWindowOptions(windows, options)
+}
+
+function mergeActivityWindowOptions(options: readonly TaskWindowOption[]) {
+  mergeWindowOptions(activityWindows, options)
 }
 
 function getUniqueWindowIds(windowIdLists: readonly (readonly string[] | null | undefined)[]) {
   return Array.from(new Set(windowIdLists.flatMap(windowIds => windowIds ?? []).filter(Boolean)))
 }
 
-async function ensureWindowOptions(requestedIds: readonly string[]) {
-  if (requestedIds.length === 0)
+function updateDeletedWindowIds(
+  target: Ref<Set<string>>,
+  deletedIds: readonly string[],
+  restoredIds: readonly string[] = [],
+) {
+  if (deletedIds.length === 0 && restoredIds.length === 0) {
     return
-
-  const knownIds = new Set([
-    ...windows.value.map(item => item.id),
-    ...taskWindowLookup,
-  ])
-  const missingIds = requestedIds.filter(id => !knownIds.has(id))
-  if (missingIds.length === 0)
-    return
-
-  taskWindowLookup = new Set([...taskWindowLookup, ...missingIds])
-  try {
-    const options = await fetchTaskWindowOptionsByDirIds(missingIds, currentWorkspaceName())
-    mergeTaskWindowOptions(options)
   }
-  catch (error) {
-    const nextLookup = new Set(taskWindowLookup)
-    missingIds.forEach(id => nextLookup.delete(id))
-    taskWindowLookup = nextLookup
-    console.warn('Failed to load referenced task windows', error)
+
+  const next = new Set(target.value)
+  deletedIds.forEach(id => next.add(id))
+  restoredIds.forEach(id => next.delete(id))
+  target.value = next
+}
+
+function isWindowReferenceResolved(
+  id: string,
+  labelsById: ReadonlyMap<string, string>,
+  deletedIds: ReadonlySet<string>,
+) {
+  return labelsById.has(id) || deletedIds.has(id)
+}
+
+interface WindowLookupScope {
+  options: Ref<TaskWindowOption[]>
+  deletedIds: Ref<Set<string>>
+  pendingLookups: Map<string, Promise<void>>
+  mergeOptions: (options: readonly TaskWindowOption[]) => void
+}
+
+async function ensureWindowOptions(requestedIds: readonly string[], scope: WindowLookupScope) {
+  const uniqueRequestedIds = Array.from(new Set(requestedIds.filter(Boolean)))
+  if (uniqueRequestedIds.length === 0) {
+    return
+  }
+
+  const loadedIds = new Set(scope.options.value.map(item => item.id))
+  const pendingRequests: Promise<void>[] = []
+  const missingIds: string[] = []
+  for (const id of uniqueRequestedIds) {
+    if (loadedIds.has(id) || scope.deletedIds.value.has(id)) {
+      continue
+    }
+
+    const pending = scope.pendingLookups.get(id)
+    if (pending) {
+      pendingRequests.push(pending)
+    }
+    else {
+      missingIds.push(id)
+    }
+  }
+
+  if (missingIds.length > 0) {
+    const request = (async () => {
+      try {
+        const options = await fetchTaskWindowOptionsByDirIds(missingIds, currentWorkspaceName())
+        scope.mergeOptions(options)
+
+        const foundIds = new Set(options.map(item => item.id))
+        updateDeletedWindowIds(
+          scope.deletedIds,
+          missingIds.filter(id => !foundIds.has(id)),
+          Array.from(foundIds),
+        )
+      }
+      catch (error) {
+        console.warn('Failed to load referenced task windows', error)
+      }
+      finally {
+        missingIds.forEach((id) => {
+          scope.pendingLookups.delete(id)
+        })
+      }
+    })()
+    missingIds.forEach(id => scope.pendingLookups.set(id, request))
+    pendingRequests.push(request)
+  }
+
+  if (pendingRequests.length > 0) {
+    await Promise.allSettled(Array.from(new Set(pendingRequests)))
   }
 }
 
 function ensureTaskWindowOptions(taskRows: readonly UserTaskDTO[]) {
-  return ensureWindowOptions(getUniqueWindowIds(taskRows.map(task => task.windowIds)))
+  return ensureWindowOptions(getUniqueWindowIds(taskRows.map(task => task.windowIds)), {
+    options: windows,
+    deletedIds: deletedTaskWindowIds,
+    pendingLookups: pendingTaskWindowLookups,
+    mergeOptions: mergeTaskWindowOptions,
+  })
+}
+
+function activityWindowOptionsReady(requestedIds: readonly string[]) {
+  return requestedIds.every(id => isWindowReferenceResolved(
+    id,
+    activityWindowNumbersById.value,
+    deletedActivityWindowIds.value,
+  ))
+}
+
+function ensureActivityWindowIds(windowIds: readonly string[]) {
+  return ensureWindowOptions(windowIds, {
+    options: activityWindows,
+    deletedIds: deletedActivityWindowIds,
+    pendingLookups: pendingActivityWindowLookups,
+    mergeOptions: mergeActivityWindowOptions,
+  })
 }
 
 function ensureActivityWindowOptions(logs: readonly AgentTaskLogDTO[]) {
-  return ensureWindowOptions(getUniqueWindowIds(logs.map(log => log.windowDirIds)))
+  return ensureActivityWindowIds(getUniqueWindowIds(logs.map(log => log.windowDirIds)))
 }
 
 function buildTaskRows(taskRows: UserTaskDTO[], templateRows: UserTemplateDTO[], windowRows: TaskWindowOption[]) {
@@ -327,22 +445,21 @@ async function loadTasks(): Promise<boolean> {
       fetchAllTasks(),
       fetchAllTemplates(),
     ])
-    if (currentRequest !== requestSequence)
+    if (currentRequest !== requestSequence) {
       return false
-
-    await ensureTaskWindowOptions(taskPage.rows)
-    if (currentRequest !== requestSequence)
-      return false
+    }
 
     templates.value = templateRows
     tasks.value = buildTaskRows(taskPage.rows, templateRows, windowOptions.value)
     total.value = taskPage.total
     taskReferencesReady = true
+    void ensureTaskWindowOptions(taskPage.rows)
     return true
   }
   catch (error) {
-    if (currentRequest !== requestSequence)
+    if (currentRequest !== requestSequence) {
       return false
+    }
     console.error('Failed to load user tasks', error)
     tasks.value = []
     total.value = 0
@@ -350,22 +467,26 @@ async function loadTasks(): Promise<boolean> {
     return false
   }
   finally {
-    if (currentRequest === requestSequence)
+    if (currentRequest === requestSequence) {
       loading.value = false
+    }
   }
 }
 
 function formatSchedule(task: TaskTableItem) {
-  if (task.planType === 'manual')
+  if (task.planType === 'manual') {
     return $t('手动执行')
+  }
 
   if (task.planType === 'once') {
     const value = task.nextExecuteAt ?? task.executeAt
-    if (!value)
+    if (!value) {
       return $t('单次执行')
+    }
     const executeAt = new Date(value)
-    if (Number.isNaN(executeAt.getTime()))
+    if (Number.isNaN(executeAt.getTime())) {
       return value
+    }
     return new Intl.DateTimeFormat(undefined, {
       year: 'numeric',
       month: '2-digit',
@@ -376,12 +497,14 @@ function formatSchedule(task: TaskTableItem) {
     }).format(executeAt)
   }
 
-  if (!task.cron)
+  if (!task.cron) {
     return '-'
+  }
 
   const fields = task.cron.trim().split(/\s+/)
-  if (fields.length !== 5)
+  if (fields.length !== 5) {
     return task.cron
+  }
   const [minute, hour, day, month, week] = fields
   const nextExecuteAt = new Date(task.nextExecuteAt ?? '')
   const hasNextExecuteAt = !Number.isNaN(nextExecuteAt.getTime())
@@ -389,8 +512,9 @@ function formatSchedule(task: TaskTableItem) {
     ? new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }).format(nextExecuteAt)
     : `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
 
-  if (day === '*' && month === '*' && week === '*')
+  if (day === '*' && month === '*' && week === '*') {
     return $t('每天 {time}', { time })
+  }
   if (day === '*' && month === '*' && week !== '*') {
     const weekday = hasNextExecuteAt
       ? new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(nextExecuteAt)
@@ -439,9 +563,33 @@ function isTaskStopping(task: TaskTableItem) {
   return Boolean(logId && stoppingLogIds.value.has(logId))
 }
 
+function formatWindowIds(
+  windowIds: readonly string[],
+  labelsById: ReadonlyMap<string, string>,
+  deletedIds: ReadonlySet<string>,
+) {
+  if (windowIds.length === 0) {
+    return '-'
+  }
+
+  if (!windowIds.every(id => isWindowReferenceResolved(id, labelsById, deletedIds))) {
+    return $t('加载中...')
+  }
+
+  const labels = windowIds
+    .map(id => labelsById.get(id))
+    .filter((label): label is string => Boolean(label))
+  return labels.length > 0
+    ? labels.join('、')
+    : $t('窗口已删除')
+}
+
+function formatTaskWindows(task: Pick<UserTaskDTO, 'windowIds'>) {
+  return formatWindowIds(task.windowIds, windowNumbersById.value, deletedTaskWindowIds.value)
+}
+
 function formatActivityWindows(log: AgentTaskLogDTO) {
-  const windowNumbersById = new Map(windowOptions.value.map(item => [item.id, item.code]))
-  return formatTaskWindowNumbers(log.windowDirIds, windowNumbersById) || '-'
+  return formatWindowIds(log.windowDirIds, activityWindowNumbersById.value, deletedActivityWindowIds.value)
 }
 
 function activityEndReason(log: AgentTaskLogDTO) {
@@ -452,6 +600,7 @@ function activityEndReason(log: AgentTaskLogDTO) {
 
 function openActivityLogDetail(log: AgentTaskLogDTO) {
   selectedActivityLogId.value = log.id
+  void ensureActivityWindowOptions([log])
 }
 
 function closeActivityLogDetail() {
@@ -463,11 +612,15 @@ function openTaskActivityLog(task: TaskTableItem) {
   activeTab.value = 'activity'
   const log = findLatestTaskLogForTask(agentChannel.taskLogs.value, task.id)
   selectedActivityLogId.value = log?.id
+  if (log) {
+    void ensureActivityWindowOptions([log])
+  }
   const logIndex = log
     ? agentChannel.taskLogs.value.findIndex(item => item.id === log.id)
     : -1
-  if (logIndex >= 0)
+  if (logIndex >= 0) {
     activityPageFirst.value = Math.floor(logIndex / activityPageSize.value) * activityPageSize.value
+  }
 }
 
 function taskInitialValues(task: TaskTableItem): TaskDialogInitialValues {
@@ -700,16 +853,19 @@ async function syncLocalTasks() {
 
 function setTaskStarting(taskId: number, starting: boolean) {
   const next = new Set(startingTaskIds.value)
-  if (starting)
+  if (starting) {
     next.add(taskId)
-  else
+  }
+  else {
     next.delete(taskId)
+  }
   startingTaskIds.value = next
 }
 
 async function refreshTaskStatuses(silent = true) {
-  if (!taskReferencesReady)
+  if (!taskReferencesReady) {
     return
+  }
 
   const currentRequest = ++requestSequence
   if (!silent) {
@@ -719,32 +875,35 @@ async function refreshTaskStatuses(silent = true) {
 
   try {
     const taskPage = await fetchAllTasks()
-    if (currentRequest !== requestSequence)
+    if (currentRequest !== requestSequence) {
       return
-    await ensureTaskWindowOptions(taskPage.rows)
-    if (currentRequest !== requestSequence)
-      return
+    }
     tasks.value = buildTaskRows(taskPage.rows, templates.value, windowOptions.value)
+    void ensureTaskWindowOptions(taskPage.rows)
     clearFinishedStoppingLogIds()
     total.value = taskPage.total
     loadError.value = false
   }
   catch (error) {
-    if (currentRequest !== requestSequence)
+    if (currentRequest !== requestSequence) {
       return
+    }
     console.error('Failed to refresh user task statuses', error)
-    if (!silent)
+    if (!silent) {
       loadError.value = true
+    }
   }
   finally {
-    if (!silent && currentRequest === requestSequence)
+    if (!silent && currentRequest === requestSequence) {
       loading.value = false
+    }
   }
 }
 
 async function runTaskNow(task: TaskTableItem) {
-  if (startingTaskIds.value.has(task.id) || isTaskRunning(task))
+  if (startingTaskIds.value.has(task.id) || isTaskRunning(task)) {
     return
+  }
   setTaskStarting(task.id, true)
   try {
     const template = templates.value.find(item => item.id === task.userTemplateId)
@@ -788,15 +947,17 @@ function openTemplatePreview(task: TaskTableItem) {
 }
 
 function stopTaskStatusRefresh() {
-  if (taskStatusRefreshTimer)
+  if (taskStatusRefreshTimer) {
     clearTimeout(taskStatusRefreshTimer)
+  }
   taskStatusRefreshTimer = undefined
 }
 
 function scheduleTaskStatusRefresh() {
   stopTaskStatusRefresh()
-  if (document.visibilityState !== 'visible')
+  if (document.visibilityState !== 'visible') {
     return
+  }
   taskStatusRefreshTimer = setTimeout(async () => {
     await refreshTaskStatuses()
     scheduleTaskStatusRefresh()
@@ -804,8 +965,9 @@ function scheduleTaskStatusRefresh() {
 }
 
 function startTaskStatusRefresh() {
-  if (!taskManagerMounted || taskStatusRefreshStarted)
+  if (!taskManagerMounted || taskStatusRefreshStarted) {
     return
+  }
   taskStatusRefreshStarted = true
   window.addEventListener('focus', refreshVisibleTaskStatuses)
   document.addEventListener('visibilitychange', refreshVisibleTaskStatuses)
@@ -813,8 +975,9 @@ function startTaskStatusRefresh() {
 }
 
 async function retryLoadTasks() {
-  if (await loadTasks())
+  if (await loadTasks()) {
     startTaskStatusRefresh()
+  }
 }
 
 function refreshVisibleTaskStatuses() {
@@ -826,9 +989,20 @@ function refreshVisibleTaskStatuses() {
 }
 
 watch(
+  activityLogs,
+  logs => void ensureActivityWindowOptions(logs),
+  { immediate: true },
+)
+
+watch(
+  selectedActivityWindowIds,
+  ids => void ensureActivityWindowIds(ids),
+  { immediate: true },
+)
+
+watch(
   agentChannel.taskLogs,
   (logs) => {
-    void ensureActivityWindowOptions(logs)
     const nextStatuses = new Map(logs.map(log => [log.id, log.status]))
     const finishedLocally = logs.some((log) => {
       const previous = previousTaskLogStatuses.get(log.id)
@@ -836,38 +1010,44 @@ watch(
     })
 
     previousTaskLogStatuses = nextStatuses
-    if (finishedLocally && taskReferencesReady)
+    if (finishedLocally && taskReferencesReady) {
       void refreshTaskStatuses()
+    }
   },
   { immediate: true },
 )
 
 function setPendingLogId(target: { value: Set<string> }, logId: string, pending: boolean) {
   const next = new Set(target.value)
-  if (pending)
+  if (pending) {
     next.add(logId)
-  else
+  }
+  else {
     next.delete(logId)
+  }
   target.value = next
 }
 
 function clearFinishedStoppingLogIds() {
-  if (stoppingLogIds.value.size === 0)
+  if (stoppingLogIds.value.size === 0) {
     return
+  }
 
   const taskById = new Map(tasks.value.map(task => [task.id, task]))
   const finishedLogIds = agentChannel.taskLogs.value
     .filter((log) => {
-      if (!stoppingLogIds.value.has(log.id) || isActiveTaskLog(log.status))
+      if (!stoppingLogIds.value.has(log.id) || isActiveTaskLog(log.status)) {
         return false
+      }
 
       const task = taskById.get(log.taskId)
       return !task || !isTaskRunning(task)
     })
     .map(log => log.id)
 
-  if (finishedLogIds.length === 0)
+  if (finishedLogIds.length === 0) {
     return
+  }
 
   const nextStoppingLogIds = new Set(stoppingLogIds.value)
   finishedLogIds.forEach(logId => nextStoppingLogIds.delete(logId))
@@ -875,16 +1055,18 @@ function clearFinishedStoppingLogIds() {
 }
 
 async function stopTask(task: TaskTableItem) {
-  if (!isTaskRunning(task))
+  if (!isTaskRunning(task)) {
     return
+  }
 
   const logId = taskActiveLogId(task)
   if (!logId) {
     onlyErrorToast(-1, $t('停止任务失败'))
     return
   }
-  if (stoppingLogIds.value.has(logId))
+  if (stoppingLogIds.value.has(logId)) {
     return
+  }
 
   setPendingLogId(stoppingLogIds, logId, true)
   try {
@@ -901,8 +1083,9 @@ async function stopTask(task: TaskTableItem) {
 
 async function stopActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
-  if (!isActiveTaskLog(log.status) || stoppingLogIds.value.has(log.id))
+  if (!isActiveTaskLog(log.status) || stoppingLogIds.value.has(log.id)) {
     return
+  }
 
   setPendingLogId(stoppingLogIds, log.id, true)
   try {
@@ -918,8 +1101,9 @@ async function stopActivityLog(log: AgentTaskLogDTO) {
 
 function deleteActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
-  if (isActiveTaskLog(log.status) || deletingLogIds.value.has(log.id))
+  if (isActiveTaskLog(log.status) || deletingLogIds.value.has(log.id)) {
     return
+  }
 
   confirm.require({
     group: 'agentConsoleDeleteConfirmDialog',
@@ -948,13 +1132,15 @@ onMounted(() => {
   taskManagerMounted = true
   tableScrollResizeObserver = new ResizeObserver(syncStickyActionColumnBoundaries)
   for (const element of [taskTableScrollRef.value, activityTableScrollRef.value]) {
-    if (element)
+    if (element) {
       tableScrollResizeObserver.observe(element)
+    }
   }
   syncStickyActionColumnBoundaries()
   void loadTasks().then((ready) => {
-    if (ready)
+    if (ready) {
       startTaskStatusRefresh()
+    }
   })
 })
 
@@ -975,7 +1161,6 @@ onBeforeUnmount(() => {
     padding="56px 20px 40px"
     mobile-padding="56px 16px 32px"
     :title="$t('任务管理')"
-    :task-monitor-toggle-label="$t('窗口监控')"
   >
     <div class="task-manager-content" :class="taskManagerLocaleClass">
       <h1>{{ $t('任务管理') }}</h1>
@@ -996,7 +1181,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="activeTab === 'tasks'" class="task-list-toolbar">
-        <Skeleton v-if="loading" width="96px" height="20px" border-radius="4px" />
+        <Skeleton v-if="loading && !tasks.length" width="96px" height="20px" border-radius="4px" />
         <p v-else>
           {{ $t('共 {count} 个任务', { count: total }) }}
         </p>
@@ -1012,9 +1197,9 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="activeTab === 'tasks'" class="task-view">
-        <TaskTableSkeleton v-if="loading" variant="tasks" :rows="5" />
+        <TaskTableSkeleton v-if="loading && !tasks.length" variant="tasks" :rows="5" />
 
-        <div v-else-if="loadError" class="task-state">
+        <div v-else-if="loadError && !tasks.length" class="task-state">
           <SvgIcon name="roxy-agent/rx-ic-task-manager" size="32" />
           <strong>{{ $t('任务加载失败') }}</strong>
           <span>{{ $t('请检查网络连接后重试。') }}</span>
@@ -1080,7 +1265,7 @@ onBeforeUnmount(() => {
                     <span class="template-badge__name">{{ task.templateName }}</span>
                   </button>
                 </td>
-                <td><OverflowTooltip :content="task.windowNumbers" /></td>
+                <td><OverflowTooltip :content="formatTaskWindows(task)" /></td>
                 <td>{{ formatTaskDateTime(task.createdAt) }}</td>
                 <td><OverflowTooltip :content="formatSchedule(task)" /></td>
                 <td>
@@ -1350,7 +1535,9 @@ onBeforeUnmount(() => {
       :detail="selectedActivityDetail"
       :detail-ready="agentChannel.taskExecutionReady.value"
       :end-reason="activityEndReason(selectedActivityLog)"
-      :window-labels="windowLabels"
+      :window-labels="activityWindowLabels"
+      :deleted-window-labels="deletedActivityWindowLabels"
+      :window-labels-ready="selectedActivityWindowLabelsReady"
       :file-url="agentApi.getFileUrl"
       @close="closeActivityLogDetail"
     />

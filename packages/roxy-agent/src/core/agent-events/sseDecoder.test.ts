@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { decodeLegacySse, legacySseEventToRunEvent, SseDecoder } from './sseDecoder'
 
-describe('SseDecoder', () => {
+describe('sseDecoder', () => {
   it('decodes split CRLF blocks, comments, and multiline data', () => {
     const decoder = new SseDecoder()
     expect(decoder.push(': keepalive\r\nevent: message\r\nid: 10\r\ndata: {"type":"content",\r\n')).toEqual([])
@@ -24,14 +24,14 @@ describe('SseDecoder', () => {
 })
 
 describe('legacySseEventToRunEvent', () => {
-  it('maps planning to todo_delta and worker content to content_delta with workerId', () => {
+  it('maps planning to plan_updated and worker content to content_delta with workerId', () => {
     expect(legacySseEventToRunEvent({
       event: 'message',
       data: '',
       id: '1',
       value: { type: 'planning', data: { todos: [{ content: 'step' }] } },
     })).toEqual({
-      type: 'todo_delta',
+      type: 'plan_updated',
       data: { todos: [{ content: 'step' }] },
     })
 
@@ -42,7 +42,7 @@ describe('legacySseEventToRunEvent', () => {
       value: { type: 'worker_content', data: { taskId: 'worker-1', contentId: 'answer', text: 'done' } },
     })).toEqual({
       type: 'content_delta',
-      data: { workerId: 'worker-1', contentId: 'answer', text: 'done' },
+      data: { id: 'answer', workerId: 'worker-1', contentId: 'answer', text: 'done' },
     })
   })
 

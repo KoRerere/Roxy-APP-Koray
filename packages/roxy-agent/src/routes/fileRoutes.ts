@@ -69,8 +69,9 @@ router.get('/files/:fileId', (req: Request, res: Response) => {
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     }, (error) => {
-      if (!error)
+      if (!error) {
         return
+      }
 
       console.error('Error sending file:', error)
       if (!res.headersSent) {

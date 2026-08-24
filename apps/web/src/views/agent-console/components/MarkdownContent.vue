@@ -2,6 +2,7 @@
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { supportsApp4_0_0 } from '/@/utils/app-supports'
 import { renderMarkdown } from '../utils/markdown'
+import { registerAgentMarkdownCodeCopyElement } from './markdown/AgentMarkdownCodeCopyElement'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { fetchTaskWindowOptionsByDirIds } from '../task-window-options'
 import {
@@ -12,6 +13,7 @@ import {
 } from '../profile-token-display'
 import { registerAgentMarkdownTableCopyElement } from './markdown/AgentMarkdownTableCopyElement'
 import { registerAgentMarkdownTokenElement } from './markdown/AgentMarkdownTokenElement'
+import { observeUrlFavicons } from '../utils/urlFavicon'
 import '../styles/markdown.scss'
 
 const props = withDefaults(defineProps<{
@@ -25,13 +27,24 @@ const props = withDefaults(defineProps<{
 
 registerAgentMarkdownTokenElement()
 registerAgentMarkdownTableCopyElement()
+registerAgentMarkdownCodeCopyElement()
 
 const [, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
+const markdownRef = ref<HTMLElement | null>(null)
+let stopObservingUrlFavicons = () => {}
 const html = computed(() => renderMarkdown(props.content, {
   labelVersion: agentProfileLabelVersion.value,
   preserveLineBreaks: props.preserveLineBreaks,
 }))
+
+onMounted(() => {
+  stopObservingUrlFavicons = observeUrlFavicons(markdownRef.value)
+})
+
+onBeforeUnmount(() => {
+  stopObservingUrlFavicons()
+})
 
 watch(
   () => props.content,
@@ -90,6 +103,7 @@ function isNodeError(error: unknown): error is { code?: string } {
 
 <template>
   <div
+    ref="markdownRef"
     class="agent-markdown"
     :class="{ 'agent-markdown--answer': variant === 'answer' }"
     @click="handleMarkdownClick"

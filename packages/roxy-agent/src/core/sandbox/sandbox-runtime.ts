@@ -1,21 +1,13 @@
+import { EventEmitter } from 'node:events'
 import fs from 'node:fs'
-import fsPromises from 'node:fs/promises'
 import path from 'node:path'
+import { Writable } from 'node:stream'
+import { formatLocalLogTimestamp } from '@/core/logger'
+export { createSandboxFsModules } from './sandbox-fs'
 
 export type SandboxProfile = 'debug' | 'release'
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug'
-
-/** 原生 fs 模块映射；权限完全由子进程的 Node permission flags 强制。 */
-export function createSandboxFsModules(): {
-  fs: Record<string, unknown>
-  promises: Record<string, unknown>
-} {
-  return {
-    fs: { ...fs, default: fs, promises: fsPromises },
-    promises: { ...fsPromises, default: fsPromises },
-  }
-}
 
 /**
  * 注入沙箱的 console：拦截脚本日志，落盘 + 转发宿主 console + IPC 事件推送。
@@ -42,15 +34,14 @@ export interface CreateRuntimeContextOptions {
   outputDir: string
   logsDir: string
   logFilePath?: string
-  /** The process logger already writes console output to logFilePath. Avoid appending a duplicate line. */
-  processLoggerOwnsLogFile?: boolean
   /** Optional parent IPC sender for log streaming. */
   ipcSend?: (msg: unknown) => void
 }
 
 function safeStringify(value: unknown): string {
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return value
+  }
   try {
     return JSON.stringify(value)
   }
@@ -65,13 +56,14 @@ function formatArgs(args: unknown[]): string {
 }
 
 function formatLogLine(level: LogLevel, message: string): string {
-  const ts = new Date().toISOString()
+  const ts = formatLocalLogTimestamp()
   return `[${ts}] [${level.toUpperCase()}] ${message}`
 }
 
 function appendLogFile(filePath: string | undefined, line: string): void {
-  if (!filePath)
+  if (!filePath) {
     return
+  }
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
     fs.appendFileSync(filePath, `${line}\n`, 'utf-8')
@@ -87,18 +79,7 @@ export function createRuntimeContext(opts: CreateRuntimeContextOptions): Sandbox
 
   function emitLog(level: LogLevel, args: unknown[]): void {
     const message = formatArgs(args)
-    const output = opts.processLoggerOwnsLogFile ? message : formatLogLine(level, message)
-    if (!opts.processLoggerOwnsLogFile)
-      appendLogFile(opts.logFilePath, output)
-    if (level === 'error') {
-      console.error(output)
-    }
-    else if (level === 'warn') {
-      console.warn(output)
-    }
-    else {
-      console.log(output)
-    }
+    appendLogFile(opts.logFilePath, formatLogLine(level, message))
     ipcSend?.({ type: 'script_log', level, message, runId })
   }
 
@@ -114,59 +95,52 @@ export function createRuntimeContext(opts: CreateRuntimeContextOptions): Sandbox
   return { console: sandboxConsole }
 }
 
-/**
- * Align the real host-side cwd with the sandbox output directory.
- *
- * Scripts see `process.cwd()` through a sandbox proxy, but host-backed modules
- * such as Playwright resolve relative artifact paths against the real Node cwd.
- * Entering this scope makes `page.screenshot({ path: 'x.png' })` land beside
- * other script artifacts.
- */
-export function enterSandboxWorkingDirectory(outputDir: string): () => void {
-  const previousCwd = process.cwd()
-  process.chdir(outputDir)
-
-  let restored = false
-  return () => {
-    if (restored)
-      return
-    restored = true
-    process.chdir(previousCwd)
-  }
-}
-
 export interface SandboxProcessOptions {
   /** 脚本工作目录（宿主真实路径）；脚本侧以 cwd()===workdir/{slug} 为工作目录 */
   outputDir: string
-  /** 注入脚本的 env 白名单（不暴露宿主 env；运行所需项原样透传，含真实 outputDir） */
+  /** 注入脚本的 env 白名单（不暴露宿主 env）。 */
   env: Record<string, string>
   /** 安全退出：先 flush IPC 产物再 exit */
   exit: (code?: number) => void
   /** 脚本路径，仅取 basename 用于脱敏后的 argv，避免泄露本机目录 */
   scriptPath?: string
+  /** Session-local process events; never register listeners on the Host process. */
+  events?: EventEmitter
+  /** Safe stdout/stderr sink for the current run. */
+  write?: (level: 'info' | 'error', text: string) => void
 }
 
 /**
  * 构造注入沙箱的 process 对象：
  * - cwd() 返回真实脚本工作目录 workdir/{slug}
- * - env 白名单透传（含 BROWSER_URL/CDP_URL/SANDBOX_* 等运行所需项），不暴露宿主凭据
- * - 安全透传标准 API（platform/version/pid/stdout/nextTick/hrtime/信号事件 等）
+ * - env 只暴露 BROWSER_URL / BROWSER_TYPE / SANDBOX_DEBUG，不暴露宿主凭据
+ * - platform/version/pid 等只读透传；stdout/stderr 和事件 API 为 session-local facade
  * - 危险内部接口用 no-op 填充（binding/dlopen/mainModule/send/kill 等），调用静默无效
  * - Proxy get 兜底 undefined：未知内部接口默认不可见，最小化逃逸面
  */
 export function buildSandboxProcess(opts: SandboxProcessOptions): NodeJS.Process {
   const { outputDir, env, exit, scriptPath } = opts
   const safeScriptName = (scriptPath ? path.basename(scriptPath) : 'script')
+  const events = opts.events ?? new EventEmitter()
 
   const noop = () => undefined
 
   /**
-   * 暴露给脚本的 env：冻结白名单项。值为真实目录的（如 SANDBOX_OUTPUT_DIR）
-   * 保持真实路径——脚本需用它或 process.cwd() 定位产物目录。
+   * 暴露给脚本的 env：冻结白名单项，不包含宿主路径或凭据。
    */
   const sandboxEnv: NodeJS.ProcessEnv = Object.freeze({ ...env })
 
-  // 白名单透传：绑定到真实 process 的函数、快照标量/对象。
+  const createSink = (level: 'info' | 'error'): NodeJS.WriteStream => new Writable({
+    write(chunk, _encoding, callback) {
+      opts.write?.(level, String(chunk))
+      callback()
+    },
+  }) as NodeJS.WriteStream
+
+  const stdout = createSink('info')
+  const stderr = createSink('error')
+
+  // 白名单透传：只读标量与纯观测函数。事件和 stream 使用 session-local facade。
   const passthrough = new Set<string>([
     'argv0',
     'pid',
@@ -178,9 +152,6 @@ export function buildSandboxProcess(opts: SandboxProcessOptions): NodeJS.Process
     'versions',
     'release',
     'title',
-    'stdout',
-    'stderr',
-    'stdin',
     'nextTick',
     'hrtime',
     'hrtime.bigint',
@@ -188,31 +159,16 @@ export function buildSandboxProcess(opts: SandboxProcessOptions): NodeJS.Process
     'cpuUsage',
     'resourceUsage',
     'uptime',
-    'emitWarning',
     'umask',
     'getActiveResourcesInfo',
     'hasUnrefableHandle',
-    'on',
-    'once',
-    'off',
-    'addListener',
-    'removeListener',
-    'removeAllListeners',
-    'emit',
-    'listeners',
-    'listenerCount',
-    'rawListeners',
-    'eventNames',
-    'setMaxListeners',
-    'getMaxListeners',
     'allowedNodeEnvironmentFlags',
   ])
 
   /** 危险项 no-op / 中性默认值：字段仍在（避免探测崩溃），但行为无效。 */
   const overrides: Record<string, unknown> = {
     /**
-     * 真实产物目录：脚本用 process.cwd() 定位工作目录，
-     * 相对路径相对此解析，绝对路径访问宿主外部位置（敏感路径由 fs 守卫拦截）。
+     * 虚拟产物目录：脚本用 process.cwd() 定位工作目录；Host 真实 cwd 不变化。
      */
     cwd: () => outputDir,
     chdir: noop,
@@ -221,6 +177,23 @@ export function buildSandboxProcess(opts: SandboxProcessOptions): NodeJS.Process
     argv: ['node', 'sandbox', safeScriptName],
     execPath: 'node',
     execArgv: [],
+    stdout,
+    stderr,
+    stdin: null,
+    on: events.on.bind(events),
+    once: events.once.bind(events),
+    off: events.off.bind(events),
+    addListener: events.addListener.bind(events),
+    removeListener: events.removeListener.bind(events),
+    removeAllListeners: events.removeAllListeners.bind(events),
+    emit: events.emit.bind(events),
+    listeners: events.listeners.bind(events),
+    listenerCount: events.listenerCount.bind(events),
+    rawListeners: events.rawListeners.bind(events),
+    eventNames: events.eventNames.bind(events),
+    setMaxListeners: events.setMaxListeners.bind(events),
+    getMaxListeners: events.getMaxListeners.bind(events),
+    emitWarning: noop,
     // 危险函数：no-op（send/kill 返回语义安全的布尔）
     binding: noop,
     _linkedBinding: noop,

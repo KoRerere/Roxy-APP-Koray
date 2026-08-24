@@ -23,8 +23,9 @@ function stringArray(value: unknown): value is string[] {
 }
 
 export function parseScriptPermissions(raw: unknown): ScriptPermissions {
-  if (!raw || typeof raw !== 'object')
+  if (!raw || typeof raw !== 'object') {
     throw new Error('Invalid script permissions: expected an object')
+  }
 
   const input = raw as Record<string, unknown>
   const fsPolicy = input.fs && typeof input.fs === 'object' ? input.fs as Record<string, unknown> : {}
@@ -32,8 +33,9 @@ export function parseScriptPermissions(raw: unknown): ScriptPermissions {
   const read = fsPolicy.read ?? []
   const allow = fetchPolicy.allow ?? []
 
-  if (input.version !== 1 || !stringArray(read) || !stringArray(allow))
+  if (input.version !== 1 || !stringArray(read) || !stringArray(allow)) {
     throw new Error('Invalid script permissions: expected version 1 with string-array fs.read and fetch.allow')
+  }
 
   return {
     version: 1,
@@ -47,10 +49,12 @@ export async function readScriptPermissions(filePath: string): Promise<ScriptPer
     return parseScriptPermissions(JSON.parse(await fsPromises.readFile(filePath, 'utf-8')))
   }
   catch (error: any) {
-    if (error?.code === 'ENOENT')
+    if (error?.code === 'ENOENT') {
       return emptyPermissions()
-    if (error instanceof SyntaxError)
+    }
+    if (error instanceof SyntaxError) {
       throw new Error(`Invalid script permissions: ${error.message}`)
+    }
     throw error
   }
 }
@@ -76,13 +80,15 @@ export function assertFetchAllowed(input: string | URL, permissions: ScriptPermi
     throw new PermissionDeniedError(`invalid fetch URL: ${String(input)}`)
   }
 
-  if (url.protocol !== 'http:' && url.protocol !== 'https:')
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new PermissionDeniedError(`fetch protocol ${url.protocol}`)
+  }
 
   const hostname = url.hostname.toLowerCase()
   const allowed = permissions.fetch.allow.some(rule => matchesManifestFetchRule(hostname, rule))
     || DEFAULT_FETCH_ALLOWLIST.some(domain => matchesDefaultFetchDomain(hostname, domain))
-  if (!allowed)
+  if (!allowed) {
     throw new PermissionDeniedError(`fetch host ${hostname}`)
+  }
   return url
 }

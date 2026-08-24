@@ -1,4 +1,4 @@
-import type { Message } from "../core/interfaces.ts";
+import type { Message } from '../core/interfaces.ts'
 
 /**
  * Cheap ~4 chars/token estimate. Used where an EXACT count is not worth a
@@ -9,8 +9,8 @@ import type { Message } from "../core/interfaces.ts";
  */
 export function estimateTokens(messages: Message[]): number {
   const totalChars = messages.reduce((sum, m) => {
-    const text = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
-    return sum + text.length;
-  }, 0);
-  return Math.ceil(totalChars / 4);
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content)
+    return sum + text.length
+  }, 0)
+  return Math.ceil(totalChars / 4)
 }

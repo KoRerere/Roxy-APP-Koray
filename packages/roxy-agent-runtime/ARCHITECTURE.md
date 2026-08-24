@@ -8,9 +8,12 @@ roxy-agent 是模块化通用 AI Agent 框架。runtime 内部使用统一的 me
 
 五大功能模块：动态技能（SKILL.md 模型驱动）、MCP、记忆、HITL、子 Agent；外加基础设施（logging/observability/provider）与编排层（runtime）。
 
-**内置工具：** `ls` / `read_file` / `write_file`（HITL diff 预览）/ `edit_file`（multi-edit 原子写，HITL diff 预览）/ `glob`（max_results+offset 分页）/ `grep`（max_results+offset 分页）/ `execute`（命令级权限 `CommandPermissions`）/ `web_fetch` / `ask_user`（真实澄清通道）/ `todo_write`。
+**内置工具：** `ls` / `read_file` / `write_file` / `edit_file`（默认文件更新工具，HITL diff 预览）/ `apply_patch`（DeepSeek Responses custom V4A 多文件补丁，显式启用时替换 write/edit）/ `glob`（max_results+offset 分页）/ `grep`（max_results+offset 分页）/ `exec_command`（Codex 风格 shell 执行，命令级权限 `CommandPermissions`）/ `write_stdin`（后台命令 session 轮询）/ `ask_user`（真实澄清通道）/ `update_plan`。
 
-`todo_write` 是无状态的完整快照工具：模型的 tool-call 参数随会话历史持久化，工具通过 `ToolContext.emit` 发出 `todo_updated`，由宿主/UI 保存最新展示状态。runtime 不维护独立 Todo Store。
+联网搜索由 OpenAI Responses API / DeepSeek Responses API 的服务端
+`{ type: "web_search" }` 工具提供，runtime 不注册本地 `web_fetch` 工具。
+
+`update_plan` 是无状态的完整快照工具：模型的 tool-call 参数随会话历史持久化，工具通过 `ToolContext.emit` 发出 `plan_updated`，由宿主/UI 保存最新展示状态。runtime 不维护独立 Todo Store。
 
 ### 模块依赖图
 
@@ -24,11 +27,11 @@ roxy-agent 是模块化通用 AI Agent 框架。runtime 内部使用统一的 me
          │                 │            │                    │  ▲    │
          │                 │            │            ┌───────┘  │    │
          │                 │            │      ┌─────▼──┐   skills  │
-         │                 │            │      │builtin │   (read_file/execute)
+         │                 │            │      │builtin │   (read_file/exec_command)
          │                 │            │      └────────┘   │
          │                 │            │            mcp ────┤ (写入 ToolRegistry)
          │                 │            │                    │
-         │                 │            │      hitl ◀─── 依据 descriptor.metadata.sensitive
+         │                 │            │      hitl ◀─── 标准 annotations + 显式规则
          │                 │            │            │
          └────────┬────────┴────────────┴───┐        │
                   ▼                         ▼        │
@@ -45,8 +48,8 @@ roxy-agent 是模块化通用 AI Agent 框架。runtime 内部使用统一的 me
 要点：
 
 - `core/interfaces.ts` 被所有模块依赖，自身零依赖。
-- 工具来源统一进 `ToolRegistry`：`builtin`、`skill`、`mcp`。Skills 本身不是工具：Catalog 进入 system，隐式匹配用 `read_file`，显式选择用临时 user-role `<skill>`；脚本统一走 `execute`。
-- `hitl` 不拥有工具，依据 `ToolDescriptor.metadata.sensitive` 判定是否拦截。
+- 工具来源统一进 `ToolRegistry`：`builtin`、`skill`、`mcp`。Skills 本身不是工具：Catalog 进入 developer context，隐式匹配用 `read_file`，显式选择用临时 user-role `<skill>`；脚本统一走 `exec_command`。
+- `hitl` 不拥有工具，依据标准 `ToolDescriptor.annotations` 和显式规则判定是否拦截。
 - 每个子 Agent 拥有独立 `IMemoryProvider` 与 `thread_id`。
 - `AgentRuntime.create(AgentDefinition)` 只消费宿主构造好的对象图，不解析 JSON/YAML、env 或默认路径，也不替宿主选择 provider、tools、MCP、skills 与 session store。
 - 外部记忆系统优先做成 plugin：`api.addMemoryLifecycle()` 负责 turn-end /
@@ -61,10 +64,11 @@ roxy-agent 是模块化通用 AI Agent 框架。runtime 内部使用统一的 me
 
 ## 3. 依赖约束
 
-运行时依赖（仅这些 + 其传递依赖 `@langchain/core`，后者永不直接 import）：
+运行时依赖仅包含 provider 和协议所需的基础包；框架核心不依赖 LangChain。
 
 - `@anthropic-ai/sdk` — Anthropic messages API。
-- `openai` — OpenAI Responses API（也用于 Responses-compatible endpoint）。
+- `openai` — OpenAI SDK；`OpenAIResponsesProvider` 通过 `customToolNames` 适配 DeepSeek Responses custom tool contract。
+- 本地 `applyDiff` — 从 `@openai/agents-core@0.15.0` 的 MIT 源码提取，许可见 `THIRD_PARTY_NOTICES.md`；runtime 不依赖完整 Agents SDK。
 - `@modelcontextprotocol/sdk` — MCP client（stdio + StreamableHTTP）。
 - `zod` — 工具入参 schema，以及私有 CLI adapter 的输入校验。
 - `js-yaml` — SKILL.md frontmatter 与私有 CLI 配置解析。
@@ -83,10 +87,10 @@ const provider = new AnthropicProvider({
   apiKey: hostSecrets.agentToken,
   model: resolvedModel.name,
   baseURL: resolvedModel.baseURL,
-});
+})
 
-const tools = new ToolRegistry();
-for (const tool of hostToolCatalog) tools.add(tool.descriptor, tool.handler);
+const tools = new ToolRegistry()
+for (const tool of hostToolCatalog) tools.add(tool.descriptor, tool.handler)
 
 const definition: AgentDefinition = {
   sessionId: run.sessionId,
@@ -101,13 +105,13 @@ const definition: AgentDefinition = {
   sessionStore: hostSessionStore,
   clarification: hostClarificationHandler,
   hooks: hostLifecycleHooks,
-};
+}
 
-const agent = await AgentRuntime.create(definition);
+const agent = await AgentRuntime.create(definition)
 
 const data = await agent
   .structured(z.object({ name: z.string(), activeTasks: z.number() }))
-  .invoke("Inspect the customer");
+  .invoke('Inspect the customer')
 ```
 
 宿主可以使用任意配置来源，但必须先完成解析并构造上述实例。framework 不公开 config schema、provider factory 或默认装配器。
@@ -140,14 +144,14 @@ contract 测试锚点：`test/helpers/miniToolRegistry.ts`（工具契约）、`
 
 - `AnthropicProvider`（含 prompt caching、真实 `countTokens` API、`withStructuredOutput`）
 - `DeepseekProvider`（Anthropic 兼容面，自动关闭 caching 与 countTokens）
-- `OpenAIResponsesProvider`（通用 Responses API；支持 OpenAI、DeepSeek 及兼容 endpoint）
+- `OpenAIResponsesProvider`（通用 Responses API；显式 `customToolNames: ['apply_patch']` 时使用 DeepSeek custom tool）
 - `AgentRuntime.create` + `.invoke` + `.stream` + `.structured` 公共生命周期接口
 - 内部 `AgentImpl.invoke` + `.stream` 完整运行循环（含 usage-driven compaction）
-- 所有内置工具（ls/read_file/write_file/edit_file multi-edit/glob/grep/execute/web_fetch/ask_user/todo_write）
-- `todo_write` 无状态快照与 `todo_updated` 工具事件转发
+- 所有内置工具（ls/read_file/write_file/edit_file/apply_patch/glob/grep/exec_command/write_stdin/ask_user/update_plan）
+- `update_plan` 无状态快照与 `plan_updated` 工具事件转发
 - `glob` / `grep` 分页（`max_results` + `offset`，附 footer 提示总数与下一页 offset）
-- `write_file` / `edit_file` HITL diff 预览（`ToolDescriptor.previewFn` + unified diff）
-- `CommandPermissions`（deny > compound > allow > ask 优先级，glob 匹配，支持运行时 `addAllow`）
+- `write_file` / `edit_file` 默认提供 unified diff HITL 预览；Responses custom apply_patch 路径提供 V4A patch 预览
+- `CommandPermissions`（deny > 安全命令链校验 > allow > ask 优先级，glob 匹配，支持运行时 `addAllow`）
 - `SuspendingClarificationHandler`（Promise parking，onPending 回调）
 - `StrictHitlHandler` / `DelegateHitlHandler` / `FullAccessHandler`
 - `DelegateHitlHandler.addRule`（运行时动态插入规则，"永不再问"功能）
@@ -158,7 +162,7 @@ contract 测试锚点：`test/helpers/miniToolRegistry.ts`（工具契约）、`
 - `JsonlSessionStore`（durable rollout）、`replayIntoMemory`
 - `McpClient` / `McpServerRegistry`（stdio + StreamableHTTP）
 - `SkillRegistry`（严格 scan + diagnostics + XML 外壳/Markdown Catalog + 显式 SkillSelection）
-- `SubAgentDispatcher`（named subagents via `task` tool，cached instance）
+- `AgentManager`（具名 agent tree、后台 `spawn_agent`、动态 subtree wait、固定并发配额和 cleanup barrier）
 - Plugin memory lifecycle（`addMemoryLifecycle`：turn-end + compaction 写入）
 - `metricsPlugin`（per-turn hooks）
 - CLI（Ink App.tsx + ClarifyPrompt + HitlConfirm）
@@ -167,4 +171,3 @@ contract 测试锚点：`test/helpers/miniToolRegistry.ts`（工具契约）、`
 
 - `TrajectoryBridge.emit` — `src/runtime/trajectory_bridge.ts`
 - `replayTrajectory` — `src/debug/replay.ts`
-- `buildSequentialPipeline` / `buildParallelFanOut` — `src/subagent/graphs.ts`

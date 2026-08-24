@@ -21,8 +21,6 @@ import {
   GetUserTemplateData,
   GetUserTemplateError,
   GetUserTemplateParams,
-  InitializeUserTemplatePresetsData,
-  InitializeUserTemplatePresetsError,
   ListUserTemplatesData,
   ListUserTemplatesError,
   ListUserTemplatesParams,
@@ -180,38 +178,6 @@ export class UserTemplatesApi<SecurityDataType = unknown> {
       path: `/v1/user/templates`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags UserTemplates
-   * @name InitializeUserTemplatePresets
-   * @summary 为未初始化的空 workspace 初始化预置用户模板
-   * @request POST:/v1/user/templates/initialize-presets
-   * @response `200` `InitializeUserTemplatePresetsData` Successful Response
-   * @response `400` `ApiErrorResponse` Bad Request
-   * @response `401` `ApiErrorResponse` Unauthorized
-   * @response `402` `ApiErrorResponse` Payment Required
-   * @response `403` `ApiErrorResponse` Forbidden
-   * @response `404` `ApiErrorResponse` Not Found
-   * @response `409` `ApiErrorResponse` Conflict
-   * @response `413` `ApiErrorResponse` Request Entity Too Large
-   * @response `415` `ApiErrorResponse` Unsupported Media Type
-   * @response `422` `ApiErrorResponse` Unprocessable Entity
-   * @response `429` `ApiErrorResponse` Too Many Requests
-   * @response `500` `ApiErrorResponse` Internal Server Error
-   * @response `503` `ApiErrorResponse` Service Unavailable
-   * @response `504` `ApiErrorResponse` Gateway Timeout
-   */
-  initializeUserTemplatePresets = (params: RequestParams = {}) =>
-    this.http.request<
-      InitializeUserTemplatePresetsData,
-      InitializeUserTemplatePresetsError
-    >({
-      path: `/v1/user/templates/initialize-presets`,
-      method: "POST",
       format: "json",
       ...params,
     });

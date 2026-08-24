@@ -18,7 +18,7 @@ export async function proxyFetch(
     return response as Response
   }
   catch (error) {
-    console.warn('[Proxy] Electron net.fetch failed:', error.message)
+    console.warn('[Proxy] Electron net.fetch failed:', error instanceof Error ? error.message : String(error))
   }
 
   // 回退到全局 fetch

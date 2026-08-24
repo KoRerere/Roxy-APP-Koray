@@ -84,6 +84,11 @@ export class TaskLogStore {
 
   constructor(private readonly dbPath: string = agentPaths.tasksDb) {}
 
+  /** Initialize the task database after startup migrations have completed. */
+  initialize(): void {
+    this.ensureDb()
+  }
+
   private ensureDb(): DatabaseSync {
     if (this.db) {
       return this.db
@@ -178,8 +183,9 @@ export class TaskLogStore {
       input.scriptRuns === undefined ? null : JSON.stringify(input.scriptRuns),
       id,
     )
-    if (Number(result.changes) === 0)
+    if (Number(result.changes) === 0) {
       throw new Error(`Task log ${id} is not preparing`)
+    }
     return this.emitChanged(this.getRequired(id))
   }
 
@@ -196,8 +202,9 @@ export class TaskLogStore {
       input.fileIds === undefined ? null : JSON.stringify(input.fileIds),
       id,
     )
-    if (Number(result.changes) === 0)
+    if (Number(result.changes) === 0) {
       throw new Error(`Task log ${id} is not active`)
+    }
     return this.emitChanged(this.getRequired(id))
   }
 
@@ -228,8 +235,9 @@ export class TaskLogStore {
       input.fileIds === undefined ? null : JSON.stringify(input.fileIds),
       id,
     )
-    if (Number(result.changes) === 0)
+    if (Number(result.changes) === 0) {
       throw new Error(`Task log ${id} is not active`)
+    }
     return this.emitChanged(this.getRequired(id))
   }
 
@@ -303,8 +311,9 @@ export class TaskLogStore {
   }
 
   close(): void {
-    if (!this.db)
+    if (!this.db) {
       return
+    }
     this.db.close()
     this.db = undefined
   }
@@ -334,13 +343,18 @@ export class TaskLogStore {
 
   private getRequired(id: string): TaskLog {
     const row = this.getById(id)
-    if (!row)
+    if (!row) {
       throw new Error(`Task log ${id} not found`)
+    }
     return row
   }
 }
 
 export const taskLogStore = new TaskLogStore()
+
+export function initializeTasksDatabase(): void {
+  taskLogStore.initialize()
+}
 
 export function closeTasksDatabase(): void {
   taskLogStore.close()

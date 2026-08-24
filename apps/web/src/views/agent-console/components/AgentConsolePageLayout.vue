@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TaskMonitorToggle from './TaskMonitorToggle.vue'
+import ProfileMonitorToggle from './ProfileMonitorToggle.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -11,9 +11,9 @@ const props = withDefaults(
     padding?: string
     mobilePadding?: string
     title?: string
-    showTaskMonitorToggle?: boolean
-    taskMonitorToggleLabel?: string
-    taskMonitorToggleVariant?: 'pill' | 'icon'
+    showProfileMonitorToggle?: boolean
+    profileMonitorToggleLabel?: string
+    profileMonitorToggleVariant?: 'pill' | 'icon'
   }>(),
   {
     contentDisplay: 'block',
@@ -22,8 +22,8 @@ const props = withDefaults(
     justifyContent: 'initial',
     overflow: 'hidden',
     padding: '66px 23px 40px',
-    showTaskMonitorToggle: true,
-    taskMonitorToggleVariant: 'pill',
+    showProfileMonitorToggle: true,
+    profileMonitorToggleVariant: 'pill',
   },
 )
 
@@ -70,22 +70,20 @@ function handlePageScroll(event: Event) {
     <Transition name="agent-console-page-layout__header">
       <header v-if="title && compactHeaderVisible" class="agent-console-page-layout__header">
         <h1>{{ title }}</h1>
-        <TaskMonitorToggle
-          v-if="showTaskMonitorToggle"
+        <ProfileMonitorToggle
+          v-if="showProfileMonitorToggle"
           class="agent-console-page-layout__monitor"
-          :label="taskMonitorToggleLabel"
-          :variant="taskMonitorToggleVariant"
+          :variant="profileMonitorToggleVariant"
         />
       </header>
     </Transition>
 
     <section class="agent-console-page-layout__panel" data-agent-page-scroll :style="panelStyle">
-      <TaskMonitorToggle
-        v-if="showTaskMonitorToggle"
+      <ProfileMonitorToggle
+        v-if="showProfileMonitorToggle"
         class="agent-console-page-layout__floating-monitor"
         :class="{ 'is-hidden': compactHeaderVisible }"
-        :label="taskMonitorToggleLabel"
-        :variant="taskMonitorToggleVariant"
+        :variant="profileMonitorToggleVariant"
       />
       <slot />
     </section>

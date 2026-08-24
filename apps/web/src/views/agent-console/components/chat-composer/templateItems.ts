@@ -12,6 +12,27 @@ import type { AgentComposerItem } from './types'
 
 type UserTemplateComposerSource = UserTemplateDTO | MyTemplateItem
 
+let agentSkillInstalledRoot = ''
+
+const SKILL_SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/
+
+export function setAgentSkillInstalledRoot(root: string | undefined) {
+  agentSkillInstalledRoot = typeof root === 'string' ? root.trim() : ''
+}
+
+export function getAgentSkillInstalledRoot() {
+  return agentSkillInstalledRoot
+}
+
+export function buildAgentSkillMarkdownPath(slug: string | undefined): string {
+  const normalizedSlug = slug?.trim()
+  if (!agentSkillInstalledRoot || !normalizedSlug || !SKILL_SLUG_PATTERN.test(normalizedSlug)) {
+    return ''
+  }
+
+  return `${agentSkillInstalledRoot.replace(/[\\/]+$/, '')}/${normalizedSlug}/SKILL.md`
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -46,6 +67,47 @@ function readFirstString(source: Record<string, unknown>, keys: string[], locale
   return ''
 }
 
+function normalizeTemplateSlugAsSkillSlug(slug: string): string {
+  return slug.startsWith('official-') ? slug.slice('official-'.length) : slug
+}
+
+function readSkillSlugFromMetadata(metadata: Record<string, unknown>): string {
+  const direct = readFirstString(metadata, [
+    'packageSlug',
+    'package_slug',
+    'skillSlug',
+    'skill_slug',
+  ])
+  if (direct) {
+    return direct
+  }
+
+  if (isRecord(metadata.skillMetadata)) {
+    const nestedDirect = readFirstString(metadata.skillMetadata, ['packageSlug', 'package_slug', 'skillSlug', 'skill_slug'])
+    if (nestedDirect) {
+      return nestedDirect
+    }
+
+    const nestedTemplateSlug = readString(metadata.skillMetadata.slug)
+    if (nestedTemplateSlug) {
+      return normalizeTemplateSlugAsSkillSlug(nestedTemplateSlug)
+    }
+  }
+
+  const templateSlug = readString(metadata.slug)
+  return templateSlug ? normalizeTemplateSlugAsSkillSlug(templateSlug) : ''
+}
+
+function readRecommendedSkillSlug(template: Pick<RecommendedTemplateComposerSource, 'metadata' | 'slug'>): string {
+  const metadataSlug = readSkillSlugFromMetadata(template.metadata ?? {})
+  if (metadataSlug) {
+    return metadataSlug
+  }
+
+  const templateSlug = template.slug?.trim() ?? ''
+  return normalizeTemplateSlugAsSkillSlug(templateSlug)
+}
+
 function readTemplatePrompt(metadata: Record<string, unknown>, locale?: string): string {
   return readFirstString(metadata, [
     'prompt',
@@ -66,20 +128,29 @@ function createTemplateToken(options: {
   id: number
   kind: 'script' | 'skill'
   namespace: TemplateNamespace
+  skillSlug?: string
   title: string
   description: string
 }): AgentComposerItem {
   const templateRef = serializeTemplateRef(options.namespace, options.id)
+  const skillPath = options.kind === 'skill'
+    ? buildAgentSkillMarkdownPath(options.skillSlug)
+    : ''
 
   return {
-    id: templateRef,
+    id: skillPath || templateRef,
     kind: options.kind,
     title: options.title,
     label: options.title,
     description: options.description,
     iconName: options.kind === 'skill' ? 'roxy-agent/rx-ic-skills' : 'roxy-agent/rx-ic-scripts',
     group: options.kind === 'skill' ? 'Skills' : 'Scripts',
-    payload: { templateRef },
+    payload: options.kind === 'skill'
+      ? {
+          ...(options.skillSlug ? { skillSlug: options.skillSlug } : {}),
+          ...(skillPath ? { skillPath } : {}),
+        }
+      : { templateRef },
   }
 }
 
@@ -94,6 +165,7 @@ export function mapUserTemplateComposerItem(row: UserTemplateComposerSource, loc
         id: row.id,
         kind: templateKind,
         namespace: 'user',
+        skillSlug: templateKind === 'skill' ? readSkillSlugFromMetadata(metadata) : undefined,
         title,
         description,
       })]
@@ -127,6 +199,8 @@ export function mapUserTemplateComposerItem(row: UserTemplateComposerSource, loc
 interface RecommendedTemplateComposerSource {
   id: number
   kind: MyTemplateKind
+  metadata?: Record<string, unknown>
+  slug?: string
   title: string
   description: string
   iconName: string
@@ -141,6 +215,9 @@ export function mapRecommendedTemplateComposerItem(
         id: template.id,
         kind: template.kind,
         namespace: 'official',
+        skillSlug: template.kind === 'skill'
+          ? readRecommendedSkillSlug(template)
+          : undefined,
         title: template.title,
         description: template.description,
       })]
@@ -212,6 +289,25 @@ export function userTemplateToChatPrompt(row: UserTemplateComposerSource, locale
   }
 
   return userTemplateToPrompt(row, locale)
+}
+
+export function recommendedTemplateToChatPrompt(
+  template: RecommendedTemplateComposerSource,
+  userTemplate?: UserTemplateComposerSource,
+  locale?: string,
+): string {
+  if (userTemplate?.officialTemplateId === template.id) {
+    return userTemplateToChatPrompt(userTemplate, locale)
+  }
+
+  if (template.kind === 'script') {
+    return scriptTemplateToRunPrompt(
+      template.title,
+      serializeTemplateRef('official', template.id),
+    )
+  }
+
+  return templateItemToPrompt(mapRecommendedTemplateComposerItem(template))
 }
 
 export function userTemplateToReference(row: UserTemplateComposerSource, locale?: string): string {

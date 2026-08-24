@@ -9,8 +9,8 @@ export function serializeAgentScriptReference(name: string, templateRef: Templat
   return `[@script:${name}](${templateRefValue(templateRef)})`
 }
 
-export function serializeAgentSkillReference(name: string, templateRef: TemplateRef | string): string {
-  return `[$${name}](${templateRefValue(templateRef)})`
+export function serializeAgentSkillReference(name: string, skillMdPath: string): string {
+  return `[$${name}](${skillMdPath.trim()})`
 }
 
 export function serializeAgentProfileReference(dirIds: readonly string[]): string {

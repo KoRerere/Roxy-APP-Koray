@@ -1,5 +1,4 @@
 import type { IMBridge } from '../core/IMBridge.js'
-import type { ApiClientOptions } from 'grammy'
 import { Bot } from 'grammy'
 import { env } from '../../config.js'
 import { buildMessageContent } from '../core/attachments.js'
@@ -10,18 +9,19 @@ import { StreamSender } from '../core/StreamSender.js'
 /**
  * 自定义 fetch 适配器，确保 grammy 使用代理支持
  */
-const customFetchAdapter: ApiClientOptions['fetch'] = async (url, options, _signal) => {
+async function customFetchAdapter(url: string | URL | Request, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController()
-  const combinedSignal = _signal
+  const requestSignal = options.signal
+  const combinedSignal = requestSignal
     ? (() => {
         const combined = new AbortController()
-        _signal.addEventListener('abort', () => combined.abort())
-        return combined
+        requestSignal.addEventListener('abort', () => combined.abort())
+        return combined.signal
       })()
     : controller.signal
 
   try {
-    const response = await proxyFetch(url, {
+    const response = await proxyFetch(String(url), {
       ...options,
       signal: combinedSignal,
     })
@@ -56,7 +56,7 @@ export async function startTelegramAdapter(
 
   const bot = new Bot(botToken, {
     client: {
-      fetch: customFetchAdapter,
+      fetch: customFetchAdapter as any,
     },
   })
 
@@ -159,7 +159,7 @@ export async function startTelegramAdapter(
             }
           },
         )
-      }, 'script')
+      })
 
       await streamer.flush(
         async (txt) => {
@@ -299,10 +299,12 @@ function parseIdSet(raw: string | undefined): Set<number> {
 
 function formatError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
-  if (msg.includes('401'))
+  if (msg.includes('401')) {
     return '❌ API 认证失败，请检查配置。'
-  if (msg.includes('529') || msg.includes('overloaded'))
+  }
+  if (msg.includes('529') || msg.includes('overloaded')) {
     return '⏳ API 繁忙，请稍后重试。'
+  }
   const userMsg = `❌ 出现错误：${msg.slice(0, 200)}`
   return userMsg
 }

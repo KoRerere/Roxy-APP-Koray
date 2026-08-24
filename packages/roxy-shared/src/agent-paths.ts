@@ -5,7 +5,7 @@ import path from 'node:path'
  * agent 数据目录 schema 版本。迁移器据此决定是否升级目录结构。
  * 设计见 docs/agent-data-directory-design.md。
  */
-export const STORAGE_SCHEMA_VERSION = 2
+export const STORAGE_SCHEMA_VERSION = 4
 
 /**
  * ~/.roxy-agent(-dev)
@@ -42,6 +42,14 @@ function runtimeLogShard(date: Date = new Date()): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return path.join(y, `${m}-${d}`)
+}
+
+function runtimeLogShardFromStamp(stamp: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(stamp)
+  if (!match) {
+    return runtimeLogShard()
+  }
+  return path.join(match[1], `${match[2]}-${match[3]}`)
 }
 
 /**
@@ -86,9 +94,9 @@ export interface AgentPaths {
   /** @deprecated 仅供 v1 存储迁移识别旧会话事件。 */
   sessionTurnSse: (sessionId: string, messageId: string, createdAt?: Date) => string
   sessionTurnEvents: (sessionId: string, messageId: string, createdAt?: Date) => string
-  /** 仅 deepagents 会话使用 */
+  /** 仅历史会话兼容路径使用 */
   sessionCheckpointDb: (sessionId: string, createdAt?: Date) => string
-  /** deepagents 遗留；runtime 只引用上传文件的绝对路径。 */
+  /** 历史遗留；runtime 只引用上传文件的绝对路径。 */
   sessionUploadsDir: (sessionId: string, createdAt?: Date) => string
   /** @deprecated 兼容旧录制工作区；新代码直接使用 sessionDir。 */
   sessionArtifactsDir: (sessionId: string, createdAt?: Date) => string
@@ -103,6 +111,13 @@ export interface AgentPaths {
   sessionRecordingLog: (sessionId: string, createdAt?: Date) => string
   /** 无法归属 sessionId 的孤儿上传落点 */
   readonly orphanedUploadsDir: string
+
+  /**
+   * ── memory（跨会话长期记忆，由 Agent 通过文件工具维护）
+   */
+  readonly memoryDir: string
+  readonly memoryIndexFile: string
+  memoryFile: (name: string) => string
 
   /**
    * ── library（跨会话资产库，长期保存）
@@ -139,16 +154,14 @@ export interface AgentPaths {
   /**
    * ── logs（可清空，按天滚动）
    *
-   * 运行日志与性能监控日志统一落 logs/{yyyy}/{mm-dd}/，按文件名区分：
-   * agent.log / {workerId}.log / agent-perfmon.log / {workerId}-perfmon.log。
+   * 运行日志统一落 logs/{yyyy}/{mm-dd}/，按文件名区分：
+   * agent.log / {workerId}.log。
    * 旧 logs/agent、logs/worker 布局不做迁移，由 retention 自然清理。
    */
   readonly logsDir: string
   runtimeLogDir: (date?: Date) => string
   agentLogFile: (date?: Date) => string
   workerLogFile: (workerId: string, date?: Date) => string
-  agentPerfmonLogFile: (date?: Date) => string
-  workerPerfmonLogFile: (workerId: string, date?: Date) => string
   executionLogsDir: (scope: 'agent' | 'worker') => string
   agentExecutionLogFile: (date?: Date) => string
   workerExecutionLogFile: (pid: number, date?: Date) => string
@@ -207,6 +220,10 @@ export function createAgentPaths(home: string = resolveAgentHome()): AgentPaths 
     sessionRecordingLog: (id, at) => path.join(sessionsRoot(id, at), 'recording.jsonl'),
     orphanedUploadsDir: pathJoin('sessions', '_orphaned', 'uploads'),
 
+    memoryDir: pathJoin('memory'),
+    memoryIndexFile: pathJoin('memory', 'MEMORY.md'),
+    memoryFile: name => pathJoin('memory', `${sanitizeId(name)}.md`),
+
     scriptsRoot: pathJoin('library', 'scripts'),
     scriptFile: slug => pathJoin('library', 'scripts', `${sanitizeId(slug)}.ts`),
     scriptPermissionsFile: slug => pathJoin('library', 'scripts', `${sanitizeId(slug)}.permissions.json`),
@@ -223,15 +240,13 @@ export function createAgentPaths(home: string = resolveAgentHome()): AgentPaths 
 
     browserDir: pathJoin('browser'),
 
-    executionLogsDir: scope => pathJoin('logs', scope),
-    agentExecutionLogFile: date => pathJoin('logs', 'agent', `${dayStamp(date)}.jsonl`),
-    workerExecutionLogFile: (pid, date) => pathJoin('logs', 'worker', dayStamp(date), `${pid}.jsonl`),
+    executionLogsDir: scope => pathJoin('logs', runtimeLogShard(), scope),
+    agentExecutionLogFile: date => pathJoin('logs', runtimeLogShard(date), 'agent.jsonl'),
+    workerExecutionLogFile: (pid, date) => pathJoin('logs', runtimeLogShard(date), `worker-${pid}.jsonl`),
     runtimeLogDir: date => pathJoin('logs', runtimeLogShard(date)),
     agentLogFile: date => pathJoin('logs', runtimeLogShard(date), 'agent.log'),
     workerLogFile: (workerId, date) => pathJoin('logs', runtimeLogShard(date), `${sanitizeId(workerId)}.log`),
-    agentPerfmonLogFile: date => pathJoin('logs', runtimeLogShard(date), 'agent-perfmon.log'),
-    workerPerfmonLogFile: (workerId, date) => pathJoin('logs', runtimeLogShard(date), `${sanitizeId(workerId)}-perfmon.log`),
-    migrationLogFile: stamp => pathJoin('logs', 'agent', `migration-${stamp}.log`),
+    migrationLogFile: stamp => pathJoin('logs', runtimeLogShardFromStamp(stamp), `migration-${stamp}.log`),
     logsDir: pathJoin('logs'),
 
     sseCacheDir: pathJoin('cache', 'sse'),

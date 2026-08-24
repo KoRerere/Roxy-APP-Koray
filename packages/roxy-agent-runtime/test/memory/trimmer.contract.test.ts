@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type { Message, TrimPolicy } from "../../src/core/interfaces.ts";
-import { MiniTrimmer } from "../helpers/miniTrimmer.ts";
+import { describe, expect, it } from 'vitest'
+import type { Message, TrimPolicy } from '../../src/core/interfaces.ts'
+import { MiniTrimmer } from '../helpers/miniTrimmer.ts'
+import { SlidingWindowTrimmer } from '../../src/memory/trimmer.ts'
 
 /**
  * CONTRACT tests for the sliding-window trimmer. Production impl
@@ -8,79 +9,124 @@ import { MiniTrimmer } from "../helpers/miniTrimmer.ts";
  */
 
 // 16-char content → ~4 tokens each (ceil(16/4))
-const msgs = (roles: Message["role"][]): Message[] => roles.map((role) => ({ role, content: `${role}-message-xxxx` }));
+const msgs = (roles: Message['role'][]): Message[] => roles.map((role) => ({ role, content: `${role}-message-xxxx` }))
 
-describe("trimmer contract — turns mode", () => {
-  it("keeps the last N messages, archives the head", () => {
-    const tr = new MiniTrimmer();
-    const { kept, summary } = tr.trim(msgs(["user", "assistant", "user", "assistant"]), {
-      mode: "turns",
+describe('trimmer contract — turns mode', () => {
+  it('keeps the last N messages, archives the head', () => {
+    const tr = new MiniTrimmer()
+    const { kept, summary } = tr.trim(msgs(['user', 'assistant', 'user', 'assistant']), {
+      mode: 'turns',
       keep: 2,
-    } satisfies TrimPolicy);
-    expect(kept.map((m) => m.role)).toEqual(["user", "assistant"]);
-    expect(summary.removedCount).toBe(2);
-    expect(summary.archivedText).toBe("user: user-message-xxxx\nassistant: assistant-message-xxxx");
-  });
+    } satisfies TrimPolicy)
+    expect(kept.map((m) => m.role)).toEqual(['user', 'assistant'])
+    expect(summary.removedCount).toBe(2)
+    expect(summary.archivedText).toBe('user: user-message-xxxx\nassistant: assistant-message-xxxx')
+  })
 
-  it("never drops the most recent message even when keep < 1", () => {
-    const tr = new MiniTrimmer();
-    const { kept } = tr.trim(msgs(["user", "assistant"]), {
-      mode: "turns",
+  it('never drops the most recent message even when keep < 1', () => {
+    const tr = new MiniTrimmer()
+    const { kept } = tr.trim(msgs(['user', 'assistant']), {
+      mode: 'turns',
       keep: 0,
-    } satisfies TrimPolicy);
-    expect(kept).toHaveLength(1);
-    expect(kept[0]?.role).toBe("assistant");
-  });
+    } satisfies TrimPolicy)
+    expect(kept).toHaveLength(1)
+    expect(kept[0]?.role).toBe('assistant')
+  })
 
-  it("archives nothing when within budget", () => {
-    const tr = new MiniTrimmer();
-    const { summary } = tr.trim(msgs(["user"]), { mode: "turns", keep: 5 });
-    expect(summary.removedCount).toBe(0);
-    expect(summary.archivedText).toBe("");
-  });
-});
+  it('archives nothing when within budget', () => {
+    const tr = new MiniTrimmer()
+    const { summary } = tr.trim(msgs(['user']), { mode: 'turns', keep: 5 })
+    expect(summary.removedCount).toBe(0)
+    expect(summary.archivedText).toBe('')
+  })
+})
 
-describe("trimmer contract — tokens mode", () => {
+describe('trimmer contract — tokens mode', () => {
   // content "user-message-xxxx" (16 chars) ≈ 4 tokens
-  it("keeps a tail within the token budget, archiving the older head", () => {
-    const tr = new MiniTrimmer();
-    const { kept, summary } = tr.trim(msgs(["user", "assistant", "user", "assistant"]), {
-      mode: "tokens",
+  it('keeps a tail within the token budget, archiving the older head', () => {
+    const tr = new MiniTrimmer()
+    const { kept, summary } = tr.trim(msgs(['user', 'assistant', 'user', 'assistant']), {
+      mode: 'tokens',
       keep: 4,
-    } satisfies TrimPolicy);
+    } satisfies TrimPolicy)
     // budget 4 fits at most one message → keep only the latest
-    expect(kept).toHaveLength(1);
-    expect(kept[0]?.role).toBe("assistant");
+    expect(kept).toHaveLength(1)
+    expect(kept[0]?.role).toBe('assistant')
     // the archived head is everything that was removed
-    expect(summary.removedCount).toBe(3);
-    expect(summary.archivedText.startsWith("user:")).toBe(true);
-  });
+    expect(summary.removedCount).toBe(3)
+    expect(summary.archivedText.startsWith('user:')).toBe(true)
+  })
 
-  it("always keeps the most recent message regardless of budget", () => {
-    const tr = new MiniTrimmer();
-    const { kept } = tr.trim(msgs(["user", "assistant"]), {
-      mode: "tokens",
+  it('always keeps the most recent message regardless of budget', () => {
+    const tr = new MiniTrimmer()
+    const { kept } = tr.trim(msgs(['user', 'assistant']), {
+      mode: 'tokens',
       keep: 0,
-    } satisfies TrimPolicy);
-    expect(kept).toHaveLength(1);
-    expect(kept[0]?.role).toBe("assistant");
-  });
+    } satisfies TrimPolicy)
+    expect(kept).toHaveLength(1)
+    expect(kept[0]?.role).toBe('assistant')
+  })
 
-  it("kept tail tokens never exceed the budget (except the required latest)", () => {
-    const tr = new MiniTrimmer();
-    const { kept } = tr.trim(msgs(["user", "assistant", "user", "assistant"]), {
-      mode: "tokens",
+  it('kept tail tokens never exceed the budget (except the required latest)', () => {
+    const tr = new MiniTrimmer()
+    const { kept } = tr.trim(msgs(['user', 'assistant', 'user', 'assistant']), {
+      mode: 'tokens',
       keep: 4,
-    } satisfies TrimPolicy);
+    } satisfies TrimPolicy)
     // only the required latest message is kept (4 tokens), nothing more
-    expect(kept).toHaveLength(1);
-  });
+    expect(kept).toHaveLength(1)
+  })
 
-  it("empty history trims to empty", () => {
-    const tr = new MiniTrimmer();
-    const { kept, summary } = tr.trim([], { mode: "tokens", keep: 10 });
-    expect(kept).toEqual([]);
-    expect(summary.removedCount).toBe(0);
-    expect(summary.archivedText).toBe("");
-  });
-});
+  it('empty history trims to empty', () => {
+    const tr = new MiniTrimmer()
+    const { kept, summary } = tr.trim([], { mode: 'tokens', keep: 10 })
+    expect(kept).toEqual([])
+    expect(summary.removedCount).toBe(0)
+    expect(summary.archivedText).toBe('')
+  })
+})
+
+describe('Codex retention', () => {
+  const trimmer = new SlidingWindowTrimmer((messages) =>
+    messages.reduce((total, message) => {
+      const text = typeof message.content === 'string' ? message.content : JSON.stringify(message.content)
+      return total + Math.ceil(text.length / 4)
+    }, 0),
+  )
+
+  it('summarizes the complete history but keeps only recent user turns', () => {
+    const messages: Message[] = [
+      { role: 'user', content: 'old user' },
+      { role: 'assistant', content: 'old assistant' },
+      { role: 'user', content: 'recent user' },
+      { role: 'assistant', content: 'recent assistant' },
+    ]
+    const result = trimmer.trim(messages, {
+      mode: 'codex',
+      keep: 1,
+      retainedUserTokens: 2,
+    })
+
+    expect(result.summary.summarizeText).toContain('old assistant')
+    expect(result.summary.summarizeText).toContain('recent assistant')
+    expect(result.kept.map((message) => message.content)).toEqual(['recent user'])
+  })
+
+  it('retains a tool turn as a complete pair without orphaning results', () => {
+    const messages: Message[] = [
+      { role: 'user', content: 'old' },
+      { role: 'assistant', content: [{ type: 'tool_use', id: 'call-1', name: 'search', input: {} }] },
+      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'call-1', content: 'result' }] },
+      { role: 'user', content: 'latest' },
+      { role: 'assistant', content: [{ type: 'tool_use', id: 'call-2', name: 'search', input: {} }] },
+      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'call-2', content: 'latest result' }] },
+    ]
+    const result = trimmer.trim(messages, { mode: 'codex', keep: 1, retainedUserTokens: 1 })
+
+    expect(result.kept[0]?.role).toBe('user')
+    expect(result.kept).toHaveLength(3)
+    expect(result.kept[1]?.role).toBe('assistant')
+    expect(result.kept[2]?.role).toBe('user')
+    expect(result.kept[2]?.content).toEqual([{ type: 'tool_result', tool_use_id: 'call-2', content: 'latest result' }])
+  })
+})

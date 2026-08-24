@@ -48,7 +48,36 @@ const EXT_TO_MIME: Record<string, string> = {
   '.webm': 'video/webm',
   '.mpeg': 'video/mpeg',
   '.avi': 'video/x-msvideo',
+  '.zip': 'application/zip',
 }
+
+const SCRIPT_MIME_BY_EXTENSION: Record<string, string> = {
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.cjs': 'text/javascript',
+  '.ts': 'text/typescript',
+  '.tsx': 'text/typescript',
+  '.jsx': 'text/javascript',
+}
+
+const TEXT_ARTIFACT_EXTENSIONS = new Set([
+  '.md',
+  '.markdown',
+  '.html',
+  '.htm',
+  '.css',
+  '.scss',
+  '.less',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.ini',
+  '.sh',
+  '.bash',
+  '.zsh',
+  '.sql',
+])
 
 const EXTENSION_PREFERRED_MIME_TYPES = new Set([
   '',
@@ -71,11 +100,30 @@ export function extToMime(nameOrPath: string): string | undefined {
   return EXT_TO_MIME[path.extname(nameOrPath).toLowerCase()]
 }
 
+/**
+ * MIME accepted by the agent file service for generated conversation files.
+ * Markdown and other text formats are uploaded as text/plain because the
+ * endpoint intentionally accepts text rather than arbitrary document types.
+ * Unknown binary extensions return undefined so one unsupported artifact does
+ * not poison the rest of a conversation's upload batch.
+ */
+export function generatedArtifactMimeType(nameOrPath: string): string | undefined {
+  const extension = path.extname(nameOrPath).toLowerCase()
+  if (SCRIPT_MIME_BY_EXTENSION[extension]) {
+    return SCRIPT_MIME_BY_EXTENSION[extension]
+  }
+  if (TEXT_ARTIFACT_EXTENSIONS.has(extension)) {
+    return 'text/plain'
+  }
+  return EXT_TO_MIME[extension]
+}
+
 export function resolveFileMimeType(mimeType?: string, fileName?: string): string {
   const normalized = normalizeMimeType(mimeType)
   const inferred = fileName ? extToMime(fileName) : undefined
-  if (inferred && EXTENSION_PREFERRED_MIME_TYPES.has(normalized))
+  if (inferred && EXTENSION_PREFERRED_MIME_TYPES.has(normalized)) {
     return inferred
+  }
   return normalized || inferred || 'application/octet-stream'
 }
 
@@ -121,8 +169,9 @@ export class FileManager {
   readonly uploadsDir = agentPaths.orphanedUploadsDir
 
   ensureDir(): void {
-    if (!fs.existsSync(this.uploadsDir))
+    if (!fs.existsSync(this.uploadsDir)) {
       fs.mkdirSync(this.uploadsDir, { recursive: true })
+    }
   }
 
   private hashBuffer(buffer: Buffer): string {
@@ -146,8 +195,9 @@ export class FileManager {
     const result = await agentFilesApi.upload(blob, filename)
     // V2 接口返回的 url 直接为可永久访问的 OSS URL
     const ossUrl = result.url
-    if (typeof ossUrl !== 'string' || !ossUrl)
+    if (typeof ossUrl !== 'string' || !ossUrl) {
       throw new Error('File upload response did not include url')
+    }
     return ossUrl
   }
 
@@ -155,8 +205,9 @@ export class FileManager {
   private uploadToOss(file: { fileId?: string, fileName?: string, filePath: string, mimeType?: string }): Promise<string | undefined> {
     const key = file.fileId || path.resolve(file.filePath)
     const existing = uploadTasks.get(key)
-    if (existing)
+    if (existing) {
       return existing
+    }
 
     const task = this.uploadLocalFileToOss(file)
       .catch((error) => {
@@ -164,8 +215,9 @@ export class FileManager {
         return undefined
       })
       .then((remoteUrl) => {
-        if (!remoteUrl)
+        if (!remoteUrl) {
           uploadTasks.delete(key)
+        }
         return remoteUrl
       })
 
@@ -180,8 +232,9 @@ export class FileManager {
   async saveBuffer(input: SaveBufferInput): Promise<FileRecord> {
     this.ensureDir()
     const uploadsDir = input.uploadsDir || this.uploadsDir
-    if (!fs.existsSync(uploadsDir))
+    if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true })
+    }
     const mimeType = resolveFileMimeType(input.mimeType, input.fileName)
     const buffer = input.buffer
     const hash = this.hashBuffer(buffer)
@@ -225,8 +278,9 @@ export class FileManager {
    */
   registerLocalFile(input: { fileId: string, fileName?: string, mimeType?: string, filePath?: string, ossUrl?: string, source?: string }): FileRecord | null {
     const filePath = input.filePath || path.join(this.uploadsDir, input.fileId)
-    if (!fs.existsSync(filePath))
+    if (!fs.existsSync(filePath)) {
       return null
+    }
     const buffer = fs.readFileSync(filePath)
     const mimeType = normalizeMimeType(input.mimeType) || extToMime(input.fileId) || 'application/octet-stream'
     return FileRecordStore.insert({
@@ -243,13 +297,16 @@ export class FileManager {
 
   /** 按 fileId 查记录；DB 未命中但本地存在则补登记（向后兼容历史文件） */
   get(fileId: string): FileRecord | null {
-    if (!fileId)
+    if (!fileId) {
       return null
+    }
     const record = FileRecordStore.getByFileId(fileId)
-    if (record)
+    if (record) {
       return record
-    if (fs.existsSync(path.join(this.uploadsDir, fileId)))
+    }
+    if (fs.existsSync(path.join(this.uploadsDir, fileId))) {
       return this.registerLocalFile({ fileId })
+    }
     return null
   }
 
@@ -261,12 +318,14 @@ export class FileManager {
    * 保证任意重定位后旧附件仍可被读到。
    */
   private resolveLocalPath(recordLocalPath: string | null | undefined, fileId: string): string {
-    if (recordLocalPath && fs.existsSync(recordLocalPath))
+    if (recordLocalPath && fs.existsSync(recordLocalPath)) {
       return recordLocalPath
+    }
     if (recordLocalPath) {
       const relocated = path.join(this.uploadsDir, path.basename(recordLocalPath))
-      if (fs.existsSync(relocated))
+      if (fs.existsSync(relocated)) {
         return relocated
+      }
     }
     return path.join(this.uploadsDir, fileId)
   }
@@ -293,8 +352,9 @@ export class FileManager {
     for (const fileId of fileIds) {
       try {
         const { localPath, lastRef } = FileRecordStore.deleteFileRecord(fileId)
-        if (!lastRef)
+        if (!lastRef) {
           continue
+        }
         // 删物理文件：原 local_path + basename 回退到当前 uploadsDir（容忍迁移后失效）+ uploadsDir/fileId
         const candidates = new Set<string>()
         if (localPath) {
@@ -333,10 +393,12 @@ export class FileManager {
    */
   async resolveRemoteUrl(fileId: string): Promise<string | undefined> {
     const record = this.get(fileId)
-    if (!record)
+    if (!record) {
       return undefined
-    if (record.oss_url)
+    }
+    if (record.oss_url) {
       return record.oss_url
+    }
 
     if (record.hash) {
       const hit = FileRecordStore.getByHashWithOss(record.hash)
@@ -347,8 +409,9 @@ export class FileManager {
     }
 
     const localPath = this.resolveLocalPath(record.local_path, fileId)
-    if (!fs.existsSync(localPath))
+    if (!fs.existsSync(localPath)) {
       return undefined
+    }
 
     const ossUrl = await this.uploadToOss({
       fileId,
@@ -357,10 +420,12 @@ export class FileManager {
       mimeType: record.mime_type ?? undefined,
     })
     if (ossUrl) {
-      if (record.hash)
+      if (record.hash) {
         FileRecordStore.setOssByHash(record.hash, ossUrl)
-      else
+      }
+      else {
         FileRecordStore.setOssById(fileId, ossUrl)
+      }
     }
     return ossUrl
   }

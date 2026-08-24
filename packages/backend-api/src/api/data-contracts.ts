@@ -10760,33 +10760,18 @@ export interface UserPaySettlementCreateData {
 }
 
 export interface UserRechargeSettlementCreatePayload {
-  /**
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   */
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card,ApplePay,GooglePay */
   payType: string;
-  /**
-   * 充值金额
-   * 充值金额
-   */
+  /** 充值金额 */
   rechargeAmount: number;
-  /**
-   * 支付方式ID
-   * 支付方式ID
-   */
-  paymentMethodId?: string;
-  /**
-   * 银行卡ID
-   * 银行卡ID
-   */
-  cardId?: string;
-  /**
-   * 客户key
-   * 客户key
-   */
-  customerIdKey?: string;
+  /** 支付方式ID */
+  paymentMethodId: string;
+  /** 银行卡ID */
+  cardId: string;
+  /** 客户key */
+  customerIdKey: string;
   /** 支付方式 为USDT USDC时候传 链类型 （TRX BSC SOLANA POLYGON） */
-  chainType?: string;
+  chainType: string;
 }
 
 export interface UserRechargeSettlementCreateData {
@@ -11628,6 +11613,21 @@ export interface UserGetPointsDailyConsumptionListData {
       day: string;
       data: number;
     }[];
+  };
+  msg: string;
+}
+
+export type UserGrantOnboardingGuidePointsCreatePayload = object;
+
+export interface UserGrantOnboardingGuidePointsCreateData {
+  code: number;
+  data: {
+    alreadyGifted: boolean;
+    grantedPoints: number;
+    workspaceId: number;
+    userId: number;
+    balance: number;
+    orderNo: string;
   };
   msg: string;
 }

@@ -11,8 +11,9 @@ import { extractScriptMeta } from './scriptMeta'
  * 这里统一按当前 SYSTEM_LANGUAGE 取值并回退，保证列表展示到脚本的真实名称/描述而非文件名。
  */
 function pickMetaText(value: unknown): string {
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return value.trim()
+  }
   if (value && typeof value === 'object') {
     const dict = value as Record<string, string>
     const key = env.SYSTEM_LANGUAGE === 'zh-CN' ? 'cn' : 'en'

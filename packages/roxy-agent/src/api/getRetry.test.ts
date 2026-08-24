@@ -1,9 +1,9 @@
-import type { AxiosRequestConfig, AxiosResponse } from 'axios'
+import type { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import axios, { AxiosError } from 'axios'
 import { describe, expect, it } from 'vitest'
 import { installAxiosGetRetryInterceptor } from './getRetry'
 
-function createResponse(config: AxiosRequestConfig, status: number, data: unknown = {}) {
+function createResponse(config: InternalAxiosRequestConfig, status: number, data: unknown = {}) {
   return {
     data,
     status,
@@ -13,9 +13,9 @@ function createResponse(config: AxiosRequestConfig, status: number, data: unknow
   } as AxiosResponse
 }
 
-function adapterThatFailsOnce(failure: (config: AxiosRequestConfig) => unknown) {
+function adapterThatFailsOnce(failure: (config: InternalAxiosRequestConfig) => unknown) {
   let calls = 0
-  const adapter = async (config: AxiosRequestConfig) => {
+  const adapter = async (config: InternalAxiosRequestConfig) => {
     calls++
     if (calls === 1) {
       throw failure(config)

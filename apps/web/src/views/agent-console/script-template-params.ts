@@ -302,8 +302,10 @@ export function createScriptParamsAjv(schema: ScriptParamsSchema): AjvCore {
 export function validateScriptParamsData(
   schema: ScriptParamsSchema,
   data: Record<string, unknown>,
+  locale?: string,
 ): ErrorObject[] {
-  const validate = createScriptParamsAjv(schema).compile(schema)
+  const localizedSchema = localizeScriptParamsSchema(schema, locale)
+  const validate = createScriptParamsAjv(localizedSchema).compile(localizedSchema)
   return validate(data) ? [] : [...(validate.errors ?? [])]
 }
 

@@ -310,7 +310,7 @@ export function getOperation(row: any = {}) {
     {
       name: 'createAutomation',
       label: $t('AI 自动化'),
-      icon: 'roxy-agent/rx-ic-create-automation-actionbar',
+      icon: 'roxy-agent/rx-ic-logo',
       multiple: true,
       multipleProps: {
         name: 'G1.5',

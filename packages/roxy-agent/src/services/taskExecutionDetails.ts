@@ -11,8 +11,9 @@ import type {
 import { sanitizeId } from '@roxy/shared/agent-paths'
 import fs from 'node:fs'
 import path from 'node:path'
+import { projectMessagesFromRollout } from '@/core/agent-events/rolloutHistory'
 import { agentPaths } from '@/core/storage/agentPaths'
-import { ChatContextAPI, FileRecordStore } from '@/database/conversations'
+import { FileRecordStore } from '@/database/conversations'
 
 type TaskExecutionSubscriber = (event: AgentTaskExecutionEvent) => void
 
@@ -158,7 +159,7 @@ function scriptWindowStatus(
 }
 
 const localReplayDependencies: LocalTaskExecutionReplayDependencies = {
-  getConversationMessages: conversationId => ChatContextAPI.getMessagesByConversation(conversationId),
+  getConversationMessages: conversationId => projectMessagesFromRollout(conversationId, { source: 'scheduled_task' }),
   readScriptRunLog: readTaskScriptRunLog,
   describeArtifacts: taskArtifacts,
 }

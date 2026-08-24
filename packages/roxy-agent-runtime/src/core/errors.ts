@@ -9,11 +9,11 @@
  * Implementation phases replace these stubs one by one.
  */
 export class NotImplementedError extends Error {
-  readonly feature: string;
+  readonly feature: string
 
   constructor(feature: string) {
-    super(`Not implemented yet: ${feature}`);
-    this.name = "NotImplementedError";
-    this.feature = feature;
+    super(`Not implemented yet: ${feature}`)
+    this.name = 'NotImplementedError'
+    this.feature = feature
   }
 }

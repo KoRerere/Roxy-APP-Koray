@@ -9,8 +9,9 @@ export function assertAllowedRemoteScriptUrl(rawUrl: string): void {
     throw new Error(`Invalid script URL: ${rawUrl}`)
   }
 
-  if (url.protocol !== 'http:' && url.protocol !== 'https:')
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error(`Unsupported script URL protocol: ${url.protocol}`)
+  }
 
   if (url.hostname !== ALLOWED_REMOTE_SCRIPT_HOST) {
     throw new Error(

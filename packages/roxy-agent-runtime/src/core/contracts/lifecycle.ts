@@ -1,8 +1,7 @@
-import type { AgentInput, AgentStreamEvent } from "./agent.ts";
-import type { SessionId } from "./memory.ts";
-import type { StopReason } from "./provider.ts";
-import type { SubAgentOptions } from "./subagent.ts";
-import type { ToolErrorKind, ToolSource } from "./tools.ts";
+import type { AgentInput, AgentStreamEvent } from './agent.ts'
+import type { SessionId } from './memory.ts'
+import type { StopReason } from './provider.ts'
+import type { ToolErrorKind, ToolSource } from './tools.ts'
 
 // ---------------------------------------------------------------------------
 // Lifecycle Hooks (external observation — metrics / eval / benchmarking)
@@ -16,101 +15,120 @@ import type { ToolErrorKind, ToolSource } from "./tools.ts";
  */
 
 export interface InvokeBeforeContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
   /** Which entry-point the caller used — useful for separating invoke vs stream metrics. */
-  mode: "invoke" | "stream";
-  input: AgentInput;
+  mode: 'invoke' | 'stream'
+  input: AgentInput
+  /** Model context window configured or provider-derived for this agent, when known. */
+  contextWindowTokens?: number
+  /** Absolute compaction trigger used for this invocation, when known. */
+  triggerTokens?: number
 }
 
 export interface InvokeAfterContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  stopReason: StopReason;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  stopReason: StopReason
   /** Total number of LLM API calls made inside this invoke. */
-  totalModelCalls: number;
-  totalToolCalls: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  durationMs: number;
+  totalModelCalls: number
+  totalToolCalls: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  durationMs: number
   /** True when the caller's AbortSignal fired; results are incomplete. */
-  aborted: boolean;
+  aborted: boolean
 }
 
 export interface InvokeAbortContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
   /** Wall-clock time from invoke.before to the abort signal. */
-  elapsedMs: number;
+  elapsedMs: number
   /** Progress counters at the moment of abort. */
-  modelCallsSoFar: number;
-  toolCallsSoFar: number;
+  modelCallsSoFar: number
+  toolCallsSoFar: number
 }
 
 export interface ModelBeforeContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
   /** 0-based index of this LLM call within the current invoke. */
-  callIndex: number;
-  model: string;
+  callIndex: number
+  model: string
   /** Number of SystemBlock entries in ChatRequest.system. */
-  systemBlockCount: number;
+  systemBlockCount: number
   /** Token estimate for the system prompt blocks (local chars/4 heuristic). */
-  estimatedSystemTokens: number;
+  estimatedSystemTokens: number
   /** Token estimate for the message history (local chars/4 heuristic). */
-  estimatedHistoryTokens: number;
+  estimatedHistoryTokens: number
+  /** Character count of the complete top-level system prompt for this request. */
+  systemPromptChars: number
+  /** Estimated total input context for this request. */
+  contextTokens: number
   /** Number of tools exposed in this request. */
-  toolCount: number;
+  toolCount: number
 }
 
 export interface ModelFirstTokenContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  callIndex: number;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  callIndex: number
   /** Wall-clock milliseconds from model.before to the first text delta. */
-  latencyMs: number;
+  latencyMs: number
 }
 
 export interface ModelAfterContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  callIndex: number;
-  model: string;
-  stopReason: StopReason;
-  inputTokens: number;
-  outputTokens: number;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  callIndex: number
+  model: string
+  stopReason: StopReason
+  inputTokens: number
+  outputTokens: number
+  cachedInputTokens?: number
   /** Wall-clock ms for the full model call (request sent → last token). */
-  durationMs: number;
+  durationMs: number
   // Derived: tokens/s = outputTokens / (durationMs / 1000)
 }
 
+export interface ModelErrorContext {
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  callIndex: number
+  model: string
+  error: string
+  durationMs: number
+}
+
 export interface ToolBeforeContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  toolName: string;
-  toolSource: ToolSource;
-  toolUseId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  toolName: string
+  toolSource: ToolSource
+  toolUseId: string
   /** 0-based index of this tool call within the current invoke. */
-  callIndex: number;
-  /** True when descriptor.metadata.sensitive === true. */
-  isSensitive: boolean;
+  callIndex: number
+  /** True when the standard tool annotations policy requires approval. */
+  isSensitive: boolean
 }
 
 export interface ToolAfterContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  toolName: string;
-  toolSource: ToolSource;
-  toolUseId: string;
-  callIndex: number;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
+  toolName: string
+  toolSource: ToolSource
+  toolUseId: string
+  callIndex: number
   /**
    * Whether the tool produced an error result **as seen by the model** —
    * i.e. the POST-{@link ToolMiddleware} state. If a middleware recovered
@@ -124,7 +142,7 @@ export interface ToolAfterContext {
    *
    * See the Execution Order Contract comment block for the full pipeline.
    */
-  isError: boolean;
+  isError: boolean
   /**
    * Present only when `isError` is `true`. Classifies the error origin.
    * Also reflects the post-middleware value: if middleware changed `isError`
@@ -132,40 +150,19 @@ export interface ToolAfterContext {
    * {@link ToolResult} (carried here as a convention — the runtime reads
    * it from the result's metadata when available, else infers from context).
    */
-  errorKind?: ToolErrorKind;
+  errorKind?: ToolErrorKind
   /** Wall-clock ms from tool.before hook to tool.after hook (step ⑨ → ⑬), including middleware execution time. */
-  durationMs: number;
-}
-
-export interface SubagentBeforeContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  task: string;
-  options: SubAgentOptions;
-}
-
-export interface SubagentAfterContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
-  task: string;
-  options: SubAgentOptions;
-  /** Actual number of subagents that completed (parallel may be < count on error). */
-  completedCount: number;
-  durationMs: number;
-  /** True if any subagent returned an error response. */
-  hasErrors: boolean;
+  durationMs: number
 }
 
 export interface StreamChunkContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
   /** The AgentStreamEvent being emitted on this tick. */
-  event: AgentStreamEvent;
+  event: AgentStreamEvent
   /** 0-based index of this chunk within the current stream() call. */
-  chunkIndex: number;
+  chunkIndex: number
 }
 
 /**
@@ -180,7 +177,6 @@ export interface StreamChunkContext {
  *   invoke   — the full invoke() / stream() lifecycle (start, end, abort)
  *   model    — each LLM API call within the loop (before, first token, after)
  *   tool     — each tool execution (before handler runs, after it resolves)
- *   subagent — delegation to child agents (before fan-out, after all complete)
  *   stream   — per-chunk observation during stream() (not fired by invoke())
  *
  * ALL hooks are synchronous — the runtime never awaits them. If you need
@@ -214,36 +210,32 @@ export interface StreamChunkContext {
 export interface AgentLifecycleHooks {
   /** Fires once at the boundary of invoke() / stream(). */
   invoke?: {
-    before?: (ctx: InvokeBeforeContext) => void;
-    after?: (ctx: InvokeAfterContext) => void;
+    before?: (ctx: InvokeBeforeContext) => void
+    after?: (ctx: InvokeAfterContext) => void
     /** Fires immediately when the AbortSignal fires, before the loop exits. */
-    abort?: (ctx: InvokeAbortContext) => void;
-  };
+    abort?: (ctx: InvokeAbortContext) => void
+  }
   /** Fires for each LLM API call within the invoke loop. */
   model?: {
-    before?: (ctx: ModelBeforeContext) => void;
+    before?: (ctx: ModelBeforeContext) => void
     /** Fires on the first streaming text delta — primary latency measurement point. */
-    firstToken?: (ctx: ModelFirstTokenContext) => void;
-    after?: (ctx: ModelAfterContext) => void;
-  };
+    firstToken?: (ctx: ModelFirstTokenContext) => void
+    after?: (ctx: ModelAfterContext) => void
+    error?: (ctx: ModelErrorContext) => void
+  }
   /** Fires for each tool execution (after HITL approval, if any). */
   tool?: {
-    before?: (ctx: ToolBeforeContext) => void;
-    after?: (ctx: ToolAfterContext) => void;
-  };
-  /** Fires when the agent delegates to subagents via {@link Agent.delegate}. */
-  subagent?: {
-    before?: (ctx: SubagentBeforeContext) => void;
-    after?: (ctx: SubagentAfterContext) => void;
-  };
+    before?: (ctx: ToolBeforeContext) => void
+    after?: (ctx: ToolAfterContext) => void
+  }
   /**
    * Fires for every {@link AgentStreamEvent} emitted during stream().
    * Not fired during invoke(). Use for side-channel observation when you
    * are not the primary consumer of the async iterable.
    */
   stream?: {
-    chunk?: (ctx: StreamChunkContext) => void;
-  };
+    chunk?: (ctx: StreamChunkContext) => void
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -252,7 +244,7 @@ export interface AgentLifecycleHooks {
 //
 // Canonical reference for WHEN each hook fires, WHEN middleware runs, and
 // WHEN contributors are called — relative to each other, and to HITL,
-// clarification, and subagent events.
+// clarification events.
 //
 // Key invariants:
 //   • Hooks observe the OUTER boundary.  Hooks always see POST-middleware
@@ -280,13 +272,14 @@ export interface AgentLifecycleHooks {
 //
 //   ① invoke.before hook  (sync, multi-cast)
 //
+//   ② IContextContributor.contribute() × N  (awaited, in order)
+//      → internal developer messages persisted before the visible user request
+//
 //   ┌─ agent loop  (repeats for every model turn until stop ≠ tool_use) ──┐
 //   │                                                                      │
-//   │  ② IContextContributor.contribute() × N  (awaited, in order)        │
-//   │     → returns extra SystemBlock[] appended AFTER built-in blocks     │
-//   │                                                                      │
 //   │  ③ ChatRequest assembled:                                            │
-//   │     system = [base | skill-catalog | summary | contributor blocks…]  │
+//   │     system = [stable base]                                           │
+//   │     messages = persisted history including internal turn context     │
 //   │                                                                      │
 //   │  ④ model.before hook  (sync)                                         │
 //   │     systemBlockCount and estimatedTokens reflect contributor output  │
@@ -328,13 +321,6 @@ export interface AgentLifecycleHooks {
 //   │        fires.  Emits clarification_pending stream event.             │
 //   │        Hooks and middleware apply identically to any other tool.     │
 //   │                                                                      │
-//   │        ── subagent dispatch tool ───────────────────────────────── │
-//   │        Handler calls Agent.delegate(); inside that call:             │
-//   │          subagent.before hook                                        │
-//   │          [child agents run — each has its own full loop above]       │
-//   │          subagent.after hook                                         │
-//   │        Handler returns, execution continues at ⑫.                   │
-//   │                                                                      │
 //   └──────────────────────────────────────────────────────────────────────┘
 //
 //   ⑭ invoke.after hook  (sync)
@@ -347,7 +333,7 @@ export interface AgentLifecycleHooks {
 //
 //   stream.chunk hook fires for EVERY AgentStreamEvent emitted:
 //     text | tool_call | hitl_pending | clarification_pending |
-//     tool_result | todo_updated | done
+//     tool_result | plan_updated | done
 //   Not fired during invoke().  Fires AFTER the event has been enqueued in
 //   the async iterable (the consumer may not have pulled it yet).
 //
@@ -371,8 +357,8 @@ export interface AgentLifecycleHooks {
 //   CONTRIBUTORS (IContextContributor.contribute call order):
 //     1. Standalone contributors (AgentGraphDeps.contributors, in array order).
 //     2. Plugin contributors (plugin declaration order).
-//   Blocks from later contributors appear later in the system prompt
-//   (i.e. closer to the model call — highest recency priority).
+//   Messages from later contributors appear later in the internal turn
+//   context, immediately before the visible user request.
 //
 //   MIDDLEWARE.before (execution order):
 //     Registration order — first-registered = outermost (runs first).

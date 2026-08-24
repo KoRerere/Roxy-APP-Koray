@@ -32,7 +32,7 @@
 ### 3.2 scope 继承
 
 ```ts
-logger.child("runtime").child("graph").info("node entered", { node: "tools" });
+logger.child('runtime').child('graph').info('node entered', { node: 'tools' })
 // scope: "runtime:graph"
 ```
 

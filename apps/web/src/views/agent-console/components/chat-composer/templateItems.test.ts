@@ -7,7 +7,9 @@ import {
   mapRecommendedTemplateComposerItem,
   mapUserTemplateComposerItem,
   mergeTemplateComposerItems,
+  recommendedTemplateToChatPrompt,
   scriptTemplateToRunPrompt,
+  setAgentSkillInstalledRoot,
   userScriptTemplateToRunPrompt,
   userTemplateToChatPrompt,
   userTemplateToPrompt,
@@ -15,8 +17,15 @@ import {
 } from './templateItems'
 
 (globalThis as typeof globalThis & { $t: (key: string, params?: Record<string, string>) => string }).$t = (key, params = {}) => {
-  return key.replace(/\{(\w+)\}/g, (_, name: string) => params[name] ?? `{${name}}`)
+  return key.replace(/\{(\w+)\}/g, (_match: string, name: string) => params[name] ?? `{${name}}`)
 }
+
+const skillRoot = '/tmp/roxy-agent/library/skills/installed'
+const skillPath = `${skillRoot}/amazon-price-tracker/SKILL.md`
+const configuredSkillPath = `${skillRoot}/configured-skill/SKILL.md`
+const officialSkillPath = `${skillRoot}/official-skill/SKILL.md`
+
+setAgentSkillInstalledRoot(skillRoot)
 
 function userTemplate(overrides: Partial<UserTemplateDTO> = {}): UserTemplateDTO {
   return {
@@ -90,21 +99,38 @@ test('recommended Script slash selection inserts only an official Script referen
   )
 })
 
-test('recommended Skill uses an official reference without a prepared local path', () => {
+test('recommended Skill uses a canonical installed SKILL.md path', () => {
   const item = mapRecommendedTemplateComposerItem({
     id: 105,
     kind: 'skill',
     title: 'Competitor teardown',
     description: 'Analyze a competitor.',
     iconName: 'roxy-agent/rx-ic-skills',
+    metadata: { packageSlug: 'amazon-price-tracker' },
     prompt: 'Analyze the selected competitor.',
   })
 
-  assert.equal(item.template?.tokens[0]?.payload.templateRef, 'official:105')
+  assert.equal(item.template?.tokens[0]?.payload.skillPath, skillPath)
   assert.equal(
     templateItemToPrompt(item),
-    '[$Competitor teardown](official:105) Analyze the selected competitor.',
+    `[$Competitor teardown](${skillPath}) Analyze the selected competitor.`,
   )
+})
+
+test('recommended Skill derives its package slug from an official template slug when metadata is missing', () => {
+  const item = mapRecommendedTemplateComposerItem({
+    id: 137,
+    slug: 'official-viral-trend-catcher',
+    kind: 'skill',
+    title: '社媒爆品评估',
+    description: '评估爆款潜力。',
+    iconName: 'roxy-agent/rx-ic-skills',
+    prompt: '评估这个产品。',
+  })
+
+  const viralTrendSkillPath = `${skillRoot}/viral-trend-catcher/SKILL.md`
+  assert.equal(item.template?.tokens[0]?.payload.skillPath, viralTrendSkillPath)
+  assert.equal(templateItemToPrompt(item), `[$社媒爆品评估](${viralTrendSkillPath}) 评估这个产品。`)
 })
 
 test('user template metadata never changes the user template reference', () => {
@@ -124,11 +150,12 @@ test('user template metadata never changes the user template reference', () => {
   )
 })
 
-test('user Skill uses a canonical user reference and ignores legacy path metadata', () => {
+test('user Skill uses a canonical installed SKILL.md path from package slug metadata', () => {
   const item = mapUserTemplateComposerItem(userTemplate({
     templateType: 'skill',
     name: 'Readable Skill Name',
     metadata: {
+      packageSlug: 'amazon-price-tracker',
       skillMetadata: {
         name: 'official-internal-slug',
         entry: 'SKILL.md',
@@ -139,11 +166,29 @@ test('user Skill uses a canonical user reference and ignores legacy path metadat
   }))
 
   assert.equal(item.template?.tokens[0]?.title, 'Readable Skill Name')
-  assert.equal(item.template?.tokens[0]?.payload.templateRef, 'user:42')
+  assert.equal(item.template?.tokens[0]?.payload.skillPath, skillPath)
   assert.equal(
     templateItemToPrompt(item),
-    '[$Readable Skill Name](user:42) Auxiliary prompt.',
+    `[$Readable Skill Name](${skillPath}) Auxiliary prompt.`,
   )
+})
+
+test('official-derived user Skill strips the template slug prefix when package slug metadata is missing', () => {
+  const item = mapUserTemplateComposerItem(userTemplate({
+    id: 137,
+    officialTemplateId: 137,
+    templateType: 'skill',
+    name: '社媒爆品评估',
+    metadata: {
+      slug: 'official-viral-trend-catcher',
+      prompt: '评估这个产品。',
+    },
+  }))
+
+  const viralTrendSkillPath = `${skillRoot}/viral-trend-catcher/SKILL.md`
+  assert.equal(item.template?.tokens[0]?.payload.skillSlug, 'viral-trend-catcher')
+  assert.equal(item.template?.tokens[0]?.payload.skillPath, viralTrendSkillPath)
+  assert.equal(templateItemToPrompt(item), `[$社媒爆品评估](${viralTrendSkillPath}) 评估这个产品。`)
 })
 
 test('user prompt template only expands its prompt text', () => {
@@ -179,4 +224,99 @@ test('a matching user template replaces a recommended item with its user referen
   assert.deepEqual(merged.map(item => item.id), ['user-template-42', 'user-template-43', 'user-template-44'])
   assert.equal(merged[0], installedPreset)
   assert.equal(templateItemToPrompt(merged[0]!), '[@script:Team script](user:42) Use the installed template.')
+})
+
+test('home recommendations prefer matching user templates for every template kind', () => {
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 8,
+      kind: 'script',
+      title: 'Official script',
+      description: 'Official script description',
+      iconName: 'roxy-agent/rx-ic-scripts',
+      prompt: '',
+    }, userTemplate({
+      id: 81,
+      officialTemplateId: 8,
+      name: 'Configured script',
+    })),
+    '在 [@profile:0]() 窗口中运行 [@script:Configured script](user:81)',
+  )
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 9,
+      kind: 'skill',
+      title: 'Official skill',
+      description: 'Official skill description',
+      iconName: 'roxy-agent/rx-ic-skills',
+      prompt: 'Official usage example.',
+    }, userTemplate({
+      id: 91,
+      officialTemplateId: 9,
+      templateType: 'skill',
+      name: 'Configured skill',
+      metadata: { packageSlug: 'configured-skill', prompt: 'Configured usage example.' },
+    })),
+    `[$Configured skill](${configuredSkillPath}) Configured usage example.`,
+  )
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 10,
+      kind: 'prompt',
+      title: 'Official prompt',
+      description: 'Official prompt description',
+      iconName: 'roxy-agent/rx-ic-prompts',
+      prompt: 'Official prompt text.',
+    }, userTemplate({
+      id: 101,
+      officialTemplateId: 10,
+      templateType: 'prompt',
+      name: 'Configured prompt',
+      metadata: { prompt: 'Configured prompt text.' },
+    })),
+    'Configured prompt text.',
+  )
+})
+
+test('home recommendations use official templates when no matching user template exists', () => {
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 8,
+      kind: 'script',
+      title: 'Official script',
+      description: 'Official script description',
+      iconName: 'roxy-agent/rx-ic-scripts',
+      prompt: '',
+    }),
+    '在 [@profile:0]() 窗口中运行 [@script:Official script](official:8)',
+  )
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 9,
+      kind: 'skill',
+      slug: 'official-skill',
+      title: 'Official skill',
+      description: 'Official skill description',
+      iconName: 'roxy-agent/rx-ic-skills',
+      metadata: { packageSlug: 'official-skill' },
+      prompt: 'Official usage example.',
+    }),
+    `[$Official skill](${officialSkillPath}) Official usage example.`,
+  )
+  assert.equal(
+    recommendedTemplateToChatPrompt({
+      id: 10,
+      kind: 'prompt',
+      title: 'Official prompt',
+      description: 'Official prompt description',
+      iconName: 'roxy-agent/rx-ic-prompts',
+      prompt: 'Official prompt text.',
+    }, userTemplate({
+      id: 111,
+      officialTemplateId: 11,
+      templateType: 'prompt',
+      metadata: { prompt: 'Unrelated prompt text.' },
+    })),
+    'Official prompt text.',
+  )
 })

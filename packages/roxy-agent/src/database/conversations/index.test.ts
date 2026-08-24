@@ -27,6 +27,9 @@ vi.mock('@/core/storage/agentPaths', () => ({
     sessionDir(conversationId: string) {
       return path.join(testState.root, 'sessions', conversationId)
     },
+    sessionRollout(conversationId: string) {
+      return path.join(testState.root, 'sessions', conversationId, 'rollout.jsonl')
+    },
   },
 }))
 
@@ -39,7 +42,7 @@ afterAll(() => {
   fs.rmSync(testState.root, { recursive: true, force: true })
 })
 
-describe('ConversationManager.update', () => {
+describe('conversationManager.update', () => {
   it('updates title state only when is_title_set is provided explicitly', () => {
     const conversationId = 'conversation-title-state'
     ConversationManager.create({
@@ -53,32 +56,35 @@ describe('ConversationManager.update', () => {
 
     assert.equal(ConversationManager.update(conversationId, { title: 'Temporary title' }), true)
     const temporaryConversation = ConversationManager.getById(conversationId)
-    assert.deepEqual(
-      pickTitleState(temporaryConversation),
-      { title: 'Temporary title', is_title_set: 0 },
-    )
+    assert.deepEqual(pickTitleState(temporaryConversation), {
+      title: 'Temporary title',
+      is_title_set: 0,
+    })
     assert.equal(temporaryConversation?.model, 'model-a')
 
-    assert.equal(ConversationManager.update(conversationId, {
+    assert.equal(
+      ConversationManager.update(conversationId, {
+        title: 'Generated title',
+        is_title_set: 1,
+      }),
+      true,
+    )
+    assert.deepEqual(pickTitleState(ConversationManager.getById(conversationId)), {
       title: 'Generated title',
       is_title_set: 1,
-    }), true)
-    assert.deepEqual(
-      pickTitleState(ConversationManager.getById(conversationId)),
-      { title: 'Generated title', is_title_set: 1 },
-    )
+    })
 
     assert.equal(ConversationManager.update(conversationId, { title: 'Renamed title' }), true)
-    assert.deepEqual(
-      pickTitleState(ConversationManager.getById(conversationId)),
-      { title: 'Renamed title', is_title_set: 1 },
-    )
+    assert.deepEqual(pickTitleState(ConversationManager.getById(conversationId)), {
+      title: 'Renamed title',
+      is_title_set: 1,
+    })
 
     assert.equal(ConversationManager.update(conversationId, { is_title_set: 0 }), true)
-    assert.deepEqual(
-      pickTitleState(ConversationManager.getById(conversationId)),
-      { title: 'Renamed title', is_title_set: 0 },
-    )
+    assert.deepEqual(pickTitleState(ConversationManager.getById(conversationId)), {
+      title: 'Renamed title',
+      is_title_set: 0,
+    })
 
     assert.equal(ConversationManager.update(conversationId, { model: 'model-b' }), true)
     const updatedConversation = ConversationManager.getById(conversationId)
@@ -89,27 +95,30 @@ describe('ConversationManager.update', () => {
   })
 })
 
-describe('ConversationManager.create', () => {
+describe('conversationManager.create', () => {
   it('creates a visible finalized conversation without changing the active conversation', () => {
     const activeConversation = ConversationManager.create({
       id: 'active-conversation',
       title: 'Active conversation',
       thread_id: 'active-thread',
     })
-    const taskConversation = ConversationManager.create({
-      id: 'scheduled-task-conversation',
-      title: 'Scheduled task',
-      thread_id: 'scheduled-task-thread',
-    }, {
-      activate: false,
-      isTitleSet: true,
-    })
+    const taskConversation = ConversationManager.create(
+      {
+        id: 'scheduled-task-conversation',
+        title: 'Scheduled task',
+        thread_id: 'scheduled-task-thread',
+      },
+      {
+        activate: false,
+        isTitleSet: true,
+      },
+    )
 
     assert.equal(activeConversation.is_active, 1)
     assert.equal(taskConversation.is_active, 0)
     assert.equal(taskConversation.is_title_set, 1)
     assert.equal(ConversationManager.getActive()?.id, activeConversation.id)
-    assert.ok(ConversationManager.getAll().some(item => item.id === taskConversation.id))
+    assert.ok(ConversationManager.getAll().some((item) => item.id === taskConversation.id))
   })
 })
 
@@ -120,18 +129,18 @@ describe('conversation manager pagination', () => {
     const pagedConversationIds: string[] = []
 
     for (let offset = 0; offset < allConversations.length; offset += pageSize) {
-      pagedConversationIds.push(...ConversationManager.getPage(pageSize, offset).map(conversation => conversation.id))
+      pagedConversationIds.push(...ConversationManager.getPage(pageSize, offset).map((conversation) => conversation.id))
     }
 
     assert.deepEqual(
       pagedConversationIds,
-      allConversations.map(conversation => conversation.id),
+      allConversations.map((conversation) => conversation.id),
     )
     assert.deepEqual(ConversationManager.getPage(pageSize, allConversations.length), [])
   })
 })
 
-describe('ConversationManager run read state', () => {
+describe('conversationManager run read state', () => {
   it('tracks the latest run and marks only that exact run as read', () => {
     const conversationId = 'conversation-read-state'
     ConversationManager.create({
@@ -165,23 +174,9 @@ describe('ConversationManager run read state', () => {
 
   it('can start a new run after recovering an interrupted run', () => {
     const conversationId = 'conversation-restart-after-recovery'
-    const assistantMessageId = 'assistant-interrupted'
     const runId = 'run-interrupted'
-    const eventPath = path.join(testState.root, 'sessions', conversationId, 'turns', `${assistantMessageId}.jsonl`)
     const checkpointPath = path.join(testState.root, 'sessions', conversationId, 'checkpoint.db')
-    fs.mkdirSync(path.dirname(eventPath), { recursive: true })
-    fs.writeFileSync(eventPath, `${JSON.stringify({
-      conversationId,
-      runId,
-      turnId: 'turn-interrupted',
-      assistantMessageId,
-      sequence: 1,
-      timestamp: 100,
-      event: {
-        type: 'run_started',
-        data: { source: 'user', assistantMessageId, startedAt: 100 },
-      },
-    })}\n`)
+    fs.mkdirSync(path.dirname(checkpointPath), { recursive: true })
     fs.writeFileSync(checkpointPath, 'checkpoint-state')
 
     ConversationManager.create({
@@ -189,18 +184,12 @@ describe('ConversationManager run read state', () => {
       title: 'Restart after recovery',
       thread_id: 'thread-restart-after-recovery',
     })
-    ChatContextAPI.addMessage({
-      id: assistantMessageId,
-      conversation_id: conversationId,
-      role: 'assistant',
-      content_type: 'file',
-      storage_type: 'file',
-      file_path: eventPath,
-      metadata: { runId, turnId: 'turn-interrupted' },
-    })
     assert.equal(ConversationManager.startRun(conversationId, runId), true)
 
-    assert.equal(recoverInterruptedConversationRuns(ChatContextAPI, () => 200), 1)
+    assert.equal(
+      recoverInterruptedConversationRuns(ChatContextAPI, () => 200),
+      1,
+    )
     assert.deepEqual(pickRunState(ConversationManager.getById(conversationId)), {
       latest_run_id: runId,
       latest_run_status: 'cancelled',
@@ -214,8 +203,68 @@ describe('ConversationManager run read state', () => {
       last_read_run_id: runId,
     })
     assert.equal(ConversationManager.getById(conversationId)?.thread_id, 'thread-restart-after-recovery')
-    assert.ok(fs.existsSync(eventPath))
     assert.equal(fs.readFileSync(checkpointPath, 'utf-8'), 'checkpoint-state')
+  })
+
+  it('keeps legacy message reads separate from rollout history projection', () => {
+    const conversationId = 'conversation-legacy-message-read'
+    const rolloutPath = path.join(testState.root, 'sessions', conversationId, 'rollout.jsonl')
+    fs.mkdirSync(path.dirname(rolloutPath), { recursive: true })
+    fs.writeFileSync(
+      rolloutPath,
+      [
+        JSON.stringify({ type: 'session_start', sessionId: conversationId, createdAt: 1 }),
+        JSON.stringify({ type: 'user_input', message: { role: 'user', content: 'runtime user text' }, ts: 1000 }),
+        JSON.stringify({
+          type: 'assistant_turn',
+          items: [{
+            type: 'message',
+            id: 'msg-1',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 'rollout answer' }],
+          }],
+          stopReason: 'end_turn',
+          ts: 2000,
+        }),
+        '',
+      ].join('\n'),
+    )
+
+    ConversationManager.create({
+      id: conversationId,
+      title: 'Legacy message read',
+      thread_id: 'thread-legacy-message-read',
+    })
+    ChatContextAPI.addMessage({
+      id: 'user-legacy-message-read',
+      conversation_id: conversationId,
+      role: 'user',
+      content: 'db user text',
+      content_type: 'text',
+      storage_type: 'inline',
+      metadata: { attachments: [{ fileId: 'file-1', fileName: 'a.txt' }] },
+    })
+    ChatContextAPI.addMessage({
+      id: 'assistant-legacy-message-read',
+      conversation_id: conversationId,
+      role: 'assistant',
+      content: 'db assistant text',
+      content_type: 'text',
+      storage_type: 'inline',
+      metadata: { runId: 'run-legacy-message-read' },
+    })
+
+    const messages = ChatContextAPI.getMessagesByConversation(conversationId)
+    assert.deepEqual(
+      messages.map((message) => [message.id, message.role, message.content, message.events]),
+      [
+        ['user-legacy-message-read', 'user', 'db user text', undefined],
+        ['assistant-legacy-message-read', 'assistant', 'db assistant text', undefined],
+      ],
+    )
+    assert.deepEqual(messages[0]?.metadata, {
+      attachments: [{ fileId: 'file-1', fileName: 'a.txt' }],
+    })
   })
 })
 
@@ -309,32 +358,54 @@ describe('conversation schema migration', () => {
     `)
     legacyDb.close()
 
-    assert.ok(ConversationManager.getAll().some(item => item.id === 'legacy-task-conversation'))
-    assert.equal(
-      ChatContextAPI.getMessagesByConversation('legacy-task-conversation')[0]?.content,
-      'Legacy result',
-    )
+    assert.ok(ConversationManager.getAll().some((item) => item.id === 'legacy-task-conversation'))
+    assert.equal(ChatContextAPI.getMessagesByConversation('legacy-task-conversation')[0]?.content, 'Legacy result')
 
     closeDatabase()
     const migratedDb = new DatabaseSync(dbPath)
     const columns = migratedDb.prepare('PRAGMA table_info(conversations)').all() as unknown as Array<{ name: string }>
-    assert.equal(columns.some(column => column.name === 'is_task'), false)
-    assert.equal(columns.some(column => column.name === 'conversation_type'), false)
-    assert.equal(columns.some(column => column.name === 'latest_run_id'), true)
-    assert.equal(columns.some(column => column.name === 'latest_run_status'), true)
-    assert.equal(columns.some(column => column.name === 'last_read_run_id'), true)
-    const messageColumns = migratedDb.prepare('PRAGMA table_info(messages)').all() as unknown as Array<{ name: string }>
-    assert.equal(messageColumns.some(column => column.name === 'agent_mode'), false)
-    const fileColumns = migratedDb.prepare('PRAGMA table_info(files)').all() as unknown as Array<{ name: string }>
-    assert.equal(fileColumns.some(column => column.name === 'remote_file_id'), false)
-    const tables = migratedDb.prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'view')").all() as unknown as Array<{ name: string }>
-    assert.equal(tables.some(table => table.name === 'assets'), false)
-    assert.equal(tables.some(table => table.name === 'assets_fts'), false)
     assert.equal(
-      migratedDb.prepare('SELECT COUNT(*) AS count FROM conversations WHERE id = ?')
-        .get('legacy-task-conversation')?.count,
-      1,
+      columns.some((column) => column.name === 'is_task'),
+      false,
     )
+    assert.equal(
+      columns.some((column) => column.name === 'conversation_type'),
+      false,
+    )
+    assert.equal(
+      columns.some((column) => column.name === 'latest_run_id'),
+      true,
+    )
+    assert.equal(
+      columns.some((column) => column.name === 'latest_run_status'),
+      true,
+    )
+    assert.equal(
+      columns.some((column) => column.name === 'last_read_run_id'),
+      true,
+    )
+    const messageColumns = migratedDb.prepare('PRAGMA table_info(messages)').all() as unknown as Array<{ name: string }>
+    assert.equal(
+      messageColumns.some((column) => column.name === 'agent_mode'),
+      false,
+    )
+    const fileColumns = migratedDb.prepare('PRAGMA table_info(files)').all() as unknown as Array<{
+      name: string
+    }>
+    assert.equal(
+      fileColumns.some((column) => column.name === 'remote_file_id'),
+      false,
+    )
+    const tables = migratedDb.prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'view')").all() as unknown as Array<{ name: string }>
+    assert.equal(
+      tables.some((table) => table.name === 'assets'),
+      false,
+    )
+    assert.equal(
+      tables.some((table) => table.name === 'assets_fts'),
+      false,
+    )
+    assert.equal(migratedDb.prepare('SELECT COUNT(*) AS count FROM conversations WHERE id = ?').get('legacy-task-conversation')?.count, 1)
     migratedDb.close()
   })
 })

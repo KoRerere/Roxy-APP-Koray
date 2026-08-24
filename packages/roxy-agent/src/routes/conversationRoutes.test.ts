@@ -60,6 +60,8 @@ beforeEach(async () => {
         created_at: '2026-07-26 08:01:00',
       },
     ],
+    hasMore: false,
+    nextCursor: null,
   })
   mocks.listConversations.mockReturnValue([conversation])
   mocks.markConversationRead.mockReturnValue(conversation)
@@ -133,6 +135,8 @@ describe('fixed conversation routes', () => {
         conversation: { id: string }
         messages: Array<Record<string, unknown>>
         artifacts: unknown[]
+        hasMore: boolean
+        nextCursor: string | null
       }
     }
     assert.equal(payload.data.conversation.id, 'conversation-1')
@@ -140,6 +144,21 @@ describe('fixed conversation routes', () => {
     assert.equal('conversation_id' in payload.data.messages[0]!, false)
     assert.equal('storage_type' in payload.data.messages[0]!, false)
     assert.deepEqual(payload.data.artifacts, [])
+    assert.equal(payload.data.hasMore, false)
+    assert.equal(payload.data.nextCursor, null)
+    assert.deepEqual(mocks.getConversationDetail.mock.calls.at(-1), [
+      'conversation-1',
+      { cursor: undefined, limit: 5 },
+    ])
+  })
+
+  it('passes the message-pair cursor and page size to conversation detail', async () => {
+    const response = await fetch(`${baseUrl}/api/conversations/detail?conversationId=conversation-1&limit=5&cursor=10`)
+    assert.equal(response.status, 200)
+    assert.deepEqual(mocks.getConversationDetail.mock.calls.at(-1), [
+      'conversation-1',
+      { cursor: '10', limit: 5 },
+    ])
   })
 
   it('updates and deletes conversations through POST actions', async () => {

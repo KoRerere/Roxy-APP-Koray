@@ -230,8 +230,9 @@ router.post('/servers/:name/test', async (req: Request, res: Response) => {
       // 直接测试传入的配置
       const typedConfig = config as UserMcpServerConfig
       const validationError = validateTransportConfig(typedConfig)
-      if (validationError)
+      if (validationError) {
         return res.json({ code: 1, msg: validationError })
+      }
       result = await mcpManager.testUserMcpServerConfig(name, typedConfig)
     }
     else {

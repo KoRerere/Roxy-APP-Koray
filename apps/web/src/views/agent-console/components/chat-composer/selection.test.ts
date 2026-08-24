@@ -5,7 +5,10 @@ import {
   getComposerSelectionBehavior,
   getNextSuggestionIndex,
   getPromptTokenTargets,
+  shouldAppendComposerItemSpace,
 } from './selection'
+
+const skillRoot = '/tmp/roxy-agent/library/skills/installed'
 
 describe('getComposerSelectionBehavior', () => {
   it('keeps the picker open for multi-select window mentions', () => {
@@ -32,13 +35,13 @@ describe('getComposerSelectionBehavior', () => {
   it('tracks only canonical Script and Skill template references', () => {
     const prompt = [
       '[@script:Official script](official:8)',
-      '[$User skill](user:42)',
+      `[$User skill](${skillRoot}/user-skill/SKILL.md)`,
       '[@script:Legacy script](8)',
       '[$Legacy skill](/skills/legacy/SKILL.md)',
     ].join(' ')
 
     assert.deepEqual(Array.from(getPromptTokenTargets(prompt, 'script')), ['official:8'])
-    assert.deepEqual(Array.from(getPromptTokenTargets(prompt, 'skill')), ['user:42'])
+    assert.deepEqual(Array.from(getPromptTokenTargets(prompt, 'skill')), [`${skillRoot}/user-skill/SKILL.md`])
   })
 })
 
@@ -52,5 +55,35 @@ describe('getNextSuggestionIndex', () => {
 
   it('keeps an empty list at index zero', () => {
     assert.equal(getNextSuggestionIndex(3, 0, 'next'), 0)
+  })
+})
+
+describe('shouldAppendComposerItemSpace', () => {
+  it('appends a space for new items and typed suggestion ranges', () => {
+    assert.equal(shouldAppendComposerItemSpace(undefined), true)
+    assert.equal(shouldAppendComposerItemSpace(
+      { type: { name: 'text' }, nodeSize: 8 },
+      { from: 4, to: 6 },
+    ), true)
+  })
+
+  it('preserves surrounding whitespace when replacing a complete token', () => {
+    const range = { from: 4, to: 5 }
+
+    assert.equal(shouldAppendComposerItemSpace(
+      { type: { name: 'agentToken' }, nodeSize: 1 },
+      range,
+    ), false)
+    assert.equal(shouldAppendComposerItemSpace(
+      { type: { name: 'mention' }, nodeSize: 1 },
+      range,
+    ), false)
+  })
+
+  it('still appends a space when a range does not replace the complete token', () => {
+    assert.equal(shouldAppendComposerItemSpace(
+      { type: { name: 'agentToken' }, nodeSize: 1 },
+      { from: 4, to: 6 },
+    ), true)
   })
 })

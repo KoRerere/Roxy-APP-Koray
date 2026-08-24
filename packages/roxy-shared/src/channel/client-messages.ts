@@ -5,12 +5,20 @@ export const AgentConversationRunAttachmentSchema = z.strictObject({
   fileId: z.string().min(1),
 })
 
+export const AgentConversationRunLocalAttachmentSchema = z.strictObject({
+  kind: z.enum(['file', 'folder']),
+  fileName: z.string().min(1),
+  mimeType: z.string().min(1),
+  localPath: z.string().min(1),
+})
+
 export const AgentConversationRunStartCommandSchema = z.strictObject({
   conversationId: z.string().min(1),
   message: z.string(),
   attachments: z.array(AgentConversationRunAttachmentSchema).optional(),
+  localAttachments: z.array(AgentConversationRunLocalAttachmentSchema).optional(),
   fullAccess: z.boolean().optional(),
-}).refine(data => Boolean(data.message.trim()) || Boolean(data.attachments?.length))
+}).refine(data => Boolean(data.message.trim()) || Boolean(data.attachments?.length) || Boolean(data.localAttachments?.length))
 
 export type AgentConversationRunStartCommand = z.infer<typeof AgentConversationRunStartCommandSchema>
 
@@ -24,9 +32,19 @@ export const AgentConversationApprovalSubmitCommandSchema = z.strictObject({
   conversationId: z.string().min(1),
   approvalId: z.string().min(1),
   decisions: z.array(z.unknown()),
+  fullAccess: z.boolean().optional(),
 })
 
 export type AgentConversationApprovalSubmitCommand = z.infer<typeof AgentConversationApprovalSubmitCommandSchema>
+
+export const AgentExecutionControlActionSchema = z.enum(['cancel', 'pause', 'resume'])
+export type AgentExecutionControlAction = z.infer<typeof AgentExecutionControlActionSchema>
+
+export const AgentExecutionControlCommandSchema = z.strictObject({
+  executionId: z.string().min(1),
+  action: AgentExecutionControlActionSchema,
+})
+export type AgentExecutionControlCommand = z.infer<typeof AgentExecutionControlCommandSchema>
 
 export const AgentConversationRunStartMessageSchema = z.strictObject({
   id: AgentChannelMessageIdSchema,
@@ -46,16 +64,24 @@ export const AgentConversationApprovalSubmitMessageSchema = z.strictObject({
   data: AgentConversationApprovalSubmitCommandSchema,
 })
 
+export const AgentExecutionControlMessageSchema = z.strictObject({
+  id: AgentChannelMessageIdSchema,
+  type: z.literal('execution.control'),
+  data: AgentExecutionControlCommandSchema,
+})
+
 export const AgentChannelClientMessageSchema = z.discriminatedUnion('type', [
   AgentConversationRunStartMessageSchema,
   AgentConversationRunStopMessageSchema,
   AgentConversationApprovalSubmitMessageSchema,
+  AgentExecutionControlMessageSchema,
 ])
 
 export interface AgentChannelClientMessageMap {
   'conversation.run.start': AgentConversationRunStartCommand
   'conversation.run.stop': AgentConversationRunStopCommand
   'conversation.approval.submit': AgentConversationApprovalSubmitCommand
+  'execution.control': AgentExecutionControlCommand
 }
 
 export type AgentChannelClientMessageType = keyof AgentChannelClientMessageMap

@@ -26,15 +26,16 @@ function todosFrom(value: unknown): unknown[] {
 
 export const runEvents = {
   thinking(text: string, thinkingId: string, workerId?: string) {
-    return event('thinking_delta', { text, thinkingId, ...(workerId ? { workerId } : {}) })
+    return event('thinking_delta', { id: thinkingId, text, thinkingId, ...(workerId ? { workerId } : {}) })
   },
 
   thinkingCompleted(data: AgentRunEventMap['thinking_completed']) {
-    return event('thinking_completed', data)
+    return event('thinking_completed', { ...data, id: data.id ?? data.thinkingId })
   },
 
   content(text: string, contentId: string, workerId?: string, phase?: 'answer' | 'synthesis') {
     return event('content_delta', {
+      id: contentId,
       text,
       contentId,
       ...(workerId ? { workerId } : {}),
@@ -42,8 +43,8 @@ export const runEvents = {
     })
   },
 
-  todo(value: unknown, workerId?: string) {
-    return event('todo_delta', {
+  planUpdated(value: unknown, workerId?: string) {
+    return event('plan_updated', {
       todos: todosFrom(value),
       ...(workerId ? { workerId } : {}),
     })
@@ -57,12 +58,16 @@ export const runEvents = {
     return event('tool_finished', data)
   },
 
-  workerDispatched(workerId: string, title: string) {
-    return event('worker_dispatched', { workerId, title })
+  workerDispatched(workerId: string, title: string, dispatchId?: string) {
+    return event('worker_dispatched', { workerId, title, ...(dispatchId ? { dispatchId } : {}) })
   },
 
   workerCompleted(data: AgentRunEventMap['worker_completed']) {
     return event('worker_completed', data)
+  },
+
+  agentLifecycle(data: AgentRunEventMap['agent_lifecycle']) {
+    return event('agent_lifecycle', data)
   },
 
   retry(data: AgentRunEventMap['run_retrying']) {
@@ -91,6 +96,10 @@ export const runEvents = {
 
   tokenUsage(data: AgentRunEventMap['token_usage']) {
     return event('token_usage', data)
+  },
+
+  contextCompacted(data: AgentRunEventMap['context_compacted']) {
+    return event('context_compacted', data)
   },
 
   completed(finalAnswer?: string) {
@@ -132,7 +141,7 @@ export const runEvents = {
 
 export function withWorkerId(input: AgentRunEvent, workerId: string): AgentRunEvent {
   switch (input.type) {
-    case 'todo_delta':
+    case 'plan_updated':
     case 'thinking_delta':
     case 'thinking_completed':
     case 'content_delta':
@@ -140,6 +149,7 @@ export function withWorkerId(input: AgentRunEvent, workerId: string): AgentRunEv
     case 'tool_finished':
     case 'run_retrying':
     case 'script_output':
+    case 'context_compacted':
       return {
         ...input,
         data: { ...input.data, workerId },
@@ -147,4 +157,11 @@ export function withWorkerId(input: AgentRunEvent, workerId: string): AgentRunEv
     default:
       return input
   }
+}
+
+export function withAgentPath(input: AgentRunEvent, agentPath = '/root'): AgentRunEvent {
+  return {
+    ...input,
+    data: { ...input.data, agentPath },
+  } as AgentRunEvent
 }

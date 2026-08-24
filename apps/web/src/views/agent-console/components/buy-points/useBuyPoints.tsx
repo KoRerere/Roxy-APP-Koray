@@ -3,6 +3,7 @@ import PurchaseAgentPoints from './PurchaseAgentPoints.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import type { PointsData } from './interface.ts'
 import { OrderType, PayWay } from '/@/enums/pay'
+import type { RoxyGiftsType } from '/@/enums/pay'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
@@ -25,7 +26,7 @@ export function useBuyPoints() {
           discountAmount: pointsData.originalAmount - pointsData.actualAmount,
           onClose: hideModal,
           onCancel: () => onFinished?.(false),
-          onConfirm: async ({ payType, ...params }) => {
+          onConfirm: async ({ payType, ...params }: { payType: PayWay, giftType: RoxyGiftsType, purchaseMember: { staff: number, workspace: number } }) => {
             const { code, data, msg } = await API.points.userBuyPointsSettlementCreate({
               rechargeAmount: pointsData.points,
               orderType: OrderType.PointsRecharge,
@@ -39,7 +40,7 @@ export function useBuyPoints() {
                 onFinished?.(true)
               }
               else {
-                openProcessing(data, OrderType.PointsRecharge)
+                openProcessing({ ...data, payType }, OrderType.PointsRecharge)
                   .then(() => onFinished?.(true))
                   .catch(() => onFinished?.(false))
               }
@@ -67,12 +68,14 @@ export function useBuyPoints() {
       showHeader: false,
       modal: true,
       blockScroll: true,
+      pt: { root: '!w-[680px]' },
       handleCancel: () => finish(false),
       slots: {
         container: ({ handleCancel }) => (
           <PurchaseAgentPoints
             hideModal={handleCancel}
-            onConfirm={pointsData => handleConfirm(pointsData, finish)}
+            onClose={() => finish(false)}
+            onConfirm={(pointsData: PointsData) => handleConfirm(pointsData, finish)}
           >
           </PurchaseAgentPoints>
         ),

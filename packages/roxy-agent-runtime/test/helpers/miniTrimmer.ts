@@ -1,4 +1,4 @@
-import type { Message, ToolHandlerResult, TrimPolicy, Trimmer, TrimSummary } from "../../src/core/interfaces.ts";
+import type { Message, ToolHandlerResult, TrimPolicy, Trimmer, TrimSummary } from '../../src/core/interfaces.ts'
 
 /**
  * MINIMAL reference {@link Trimmer} satisfying the documented contract.
@@ -13,8 +13,10 @@ import type { Message, ToolHandlerResult, TrimPolicy, Trimmer, TrimSummary } fro
  *   "<role>: <content-as-string>" joined by "\n".
  */
 function toText(m: Message): string {
-  if (typeof m.content === "string") return m.content;
-  return JSON.stringify(m.content);
+  if (typeof m.content === 'string') {
+    return m.content
+  }
+  return JSON.stringify(m.content)
 }
 
 export class MiniTrimmer implements Trimmer {
@@ -26,42 +28,46 @@ export class MiniTrimmer implements Trimmer {
     messages: Message[],
     policy: TrimPolicy,
   ): {
-    kept: Message[];
-    summary: TrimSummary;
+    kept: Message[]
+    summary: TrimSummary
   } {
     if (messages.length === 0) {
       return {
         kept: [],
-        summary: { removedCount: 0, removedTokens: 0, archivedText: "" },
-      };
+        summary: { removedCount: 0, removedTokens: 0, archivedText: '' },
+      }
     }
-    let cut: number;
-    if (policy.mode === "turns") {
-      cut = Math.max(0, messages.length - policy.keep);
+    let cut: number
+    if (policy.mode === 'turns') {
+      cut = Math.max(0, messages.length - policy.keep)
     } else {
       // tokens: greedily keep the tail under budget, always keep latest
-      let tokens = 0;
-      let keptFrom = messages.length;
+      let tokens = 0
+      let keptFrom = messages.length
       for (let i = messages.length - 1; i >= 0; i--) {
-        const t = this.countTokens([messages[i]!]);
-        if (i < messages.length - 1 && tokens + t > policy.keep) break;
-        tokens += t;
-        keptFrom = i;
+        const t = this.countTokens([messages[i]!])
+        if (i < messages.length - 1 && tokens + t > policy.keep) {
+          break
+        }
+        tokens += t
+        keptFrom = i
       }
-      cut = keptFrom;
+      cut = keptFrom
     }
     // never drop the most recent message
-    if (cut >= messages.length) cut = messages.length - 1;
-    const removed = messages.slice(0, cut);
-    const kept = messages.slice(cut);
-    const archivedText = removed.map((m) => `${m.role}: ${toText(m)}`).join("\n");
+    if (cut >= messages.length) {
+      cut = messages.length - 1
+    }
+    const removed = messages.slice(0, cut)
+    const kept = messages.slice(cut)
+    const archivedText = removed.map((m) => `${m.role}: ${toText(m)}`).join('\n')
     const summary: TrimSummary = {
       removedCount: removed.length,
       removedTokens: this.countTokens(removed),
       archivedText,
-    };
-    return { kept, summary };
+    }
+    return { kept, summary }
   }
 }
 
-export type { ToolHandlerResult };
+export type { ToolHandlerResult }

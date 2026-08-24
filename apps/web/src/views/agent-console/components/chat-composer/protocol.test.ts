@@ -7,12 +7,15 @@ import {
   hasComposerProtocolTokens,
   parsePromptString,
   resolveInputDefaultValue,
+  resolveProfileSelectionItem,
   serializePromptDoc,
   splitUrlValue,
   updateInputTokenValue,
 } from './protocol'
 import { cacheAgentProfileLabels } from '../../profile-token-display'
 import type { AgentComposerItem } from './types'
+
+const skillRoot = '/tmp/roxy-agent/library/skills/installed'
 
 const profiles: AgentComposerItem[] = [
   {
@@ -187,7 +190,7 @@ describe('profile protocol tokens', () => {
     assert.equal(hasComposerProtocolTokens('我的产品：[input:产品名]'), true)
     assert.equal(hasComposerProtocolTokens('目标网站：[url:网站]()'), true)
     assert.equal(hasComposerProtocolTokens('Open [@profile:0]()'), true)
-    assert.equal(hasComposerProtocolTokens('[$Batch account nurturing](user:42)'), true)
+    assert.equal(hasComposerProtocolTokens(`[$Batch account nurturing](${skillRoot}/batch-account-nurturing/SKILL.md)`), true)
     assert.equal(hasComposerProtocolTokens('[@script:Legacy](104)'), false)
     assert.equal(hasComposerProtocolTokens('[$Legacy](/skills/batch/SKILL.md)'), false)
     assert.equal(hasComposerProtocolTokens('plain text with https://example.com'), false)
@@ -284,6 +287,21 @@ describe('profile protocol tokens', () => {
     assert.deepEqual(getMissingComposerTokenLabels(serializePromptDoc(doc)), [])
   })
 
+  it('creates an empty profile aggregate that preserves the unselected window token', () => {
+    const item = resolveProfileSelectionItem([], true)!
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'agentToken', attrs: item }],
+      }],
+    }
+
+    assert.equal(item.payload.count, '0')
+    assert.equal(serializePromptDoc(doc), '[@profile:0]()')
+    assert.equal(resolveProfileSelectionItem([], false), undefined)
+  })
+
   it('does not report a selected profile token as missing', () => {
     assert.deepEqual(
       getMissingComposerTokenLabels('Open [@profile:1](profile-mou-72)'),
@@ -305,20 +323,20 @@ describe('template protocol tokens', () => {
       payload: { templateRef: 'official:104' },
     },
     {
-      id: 'user:42',
+      id: `${skillRoot}/batch-account-nurturing/SKILL.md`,
       kind: 'skill',
       title: 'Batch account nurturing',
       label: 'Batch account nurturing',
       description: '',
       iconName: 'roxy-agent/rx-ic-skills',
       group: 'Skills',
-      payload: { templateRef: 'user:42' },
+      payload: { skillPath: `${skillRoot}/batch-account-nurturing/SKILL.md` },
     },
   ]
 
   it('restores canonical Script and Skill references only when the kind and ref match', () => {
     const doc = parsePromptString(
-      'Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](user:42)',
+      `Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](${skillRoot}/batch-account-nurturing/SKILL.md)`,
       { profiles: [], slashItems },
     )
     const nodes = doc.content?.[0]?.content ?? []
@@ -326,22 +344,22 @@ describe('template protocol tokens', () => {
     assert.equal(nodes[1]?.attrs?.kind, 'script')
     assert.equal(nodes[1]?.attrs?.payload?.templateRef, 'official:104')
     assert.equal(nodes[3]?.attrs?.kind, 'skill')
-    assert.equal(nodes[3]?.attrs?.payload?.templateRef, 'user:42')
+    assert.equal(nodes[3]?.attrs?.payload?.skillPath, `${skillRoot}/batch-account-nurturing/SKILL.md`)
     assert.equal(
       serializePromptDoc(doc),
-      'Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](user:42)',
+      `Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](${skillRoot}/batch-account-nurturing/SKILL.md)`,
     )
   })
 
   it('restores canonical references before slash items are loaded', () => {
-    const prompt = 'Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](user:42)'
+    const prompt = `Run [@script:Cookie机器人](official:104) with [$Batch account nurturing](${skillRoot}/batch-account-nurturing/SKILL.md)`
     const doc = parsePromptString(prompt, { profiles: [], slashItems: [] })
     const nodes = doc.content?.[0]?.content ?? []
 
     assert.equal(nodes[1]?.attrs?.kind, 'script')
     assert.equal(nodes[1]?.attrs?.payload?.templateRef, 'official:104')
     assert.equal(nodes[3]?.attrs?.kind, 'skill')
-    assert.equal(nodes[3]?.attrs?.payload?.templateRef, 'user:42')
+    assert.equal(nodes[3]?.attrs?.payload?.skillPath, `${skillRoot}/batch-account-nurturing/SKILL.md`)
     assert.equal(serializePromptDoc(doc), prompt)
   })
 
@@ -375,7 +393,7 @@ describe('template protocol tokens', () => {
     assert.ok(nodes.every(node => node.type === 'text'))
     assert.equal(nodes.map(node => node.text).join(''), prompt)
     assert.equal(serializePromptDoc(doc), prompt)
-    assert.deepEqual(getInvalidTemplateReferenceLabels(prompt), ['Legacy', 'Legacy skill'])
+    assert.deepEqual(getInvalidTemplateReferenceLabels(prompt), ['Legacy'])
   })
 
   it('does not recover a canonical reference through a title or cross-kind fallback', () => {
@@ -456,7 +474,7 @@ describe('input protocol tokens', () => {
 
   it('reports empty input tokens when a skill is referenced', () => {
     assert.deepEqual(
-      getMissingComposerTokenLabels('[$市场分析](user:42) 我的产品：[input:产品名]() 打开 [@profile:0]()'),
+      getMissingComposerTokenLabels(`[$市场分析](${skillRoot}/market-analysis/SKILL.md) 我的产品：[input:产品名]() 打开 [@profile:0]()`),
       ['产品名'],
     )
   })
@@ -567,7 +585,7 @@ describe('url protocol tokens', () => {
 
   it('reports an empty url field when a skill is referenced', () => {
     assert.deepEqual(
-      getMissingComposerTokenLabels('[$采集](user:42) [url:目标网站]()'),
+      getMissingComposerTokenLabels(`[$采集](${skillRoot}/collect/SKILL.md) [url:目标网站]()`),
       ['目标网站'],
     )
   })

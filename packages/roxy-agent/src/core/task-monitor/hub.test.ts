@@ -1,21 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { API } from '@/api'
 import { env } from '@/config'
-import { taskMonitorHub } from './hub'
+import { profileMonitorHub } from './hub'
 
 async function settleAsyncWork(): Promise<void> {
-  for (let index = 0; index < 5; index++)
+  for (let index = 0; index < 5; index++) {
     await Promise.resolve()
+  }
 }
 
-describe('taskMonitorHub', () => {
+describe('profileMonitorHub', () => {
   afterEach(() => {
-    taskMonitorHub.clear()
+    profileMonitorHub.clear()
     vi.restoreAllMocks()
   })
 
   it('only exposes tasks after a browser is attached and releases them on finish', () => {
-    taskMonitorHub.startTask({
+    profileMonitorHub.startTask({
       taskId: 'task-1',
       title: 'Check browser',
       sourceType: 'chat',
@@ -23,9 +24,9 @@ describe('taskMonitorHub', () => {
       runId: 'run-1',
     })
 
-    expect(taskMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
+    expect(profileMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
 
-    taskMonitorHub.attachBrowser({
+    profileMonitorHub.attachBrowser({
       taskId: 'task-1',
       browserId: 'browser-1',
       dirId: 'dir-1',
@@ -34,7 +35,7 @@ describe('taskMonitorHub', () => {
       browserType: 'chromium',
     })
 
-    let snapshot = taskMonitorHub.getSnapshot()
+    let snapshot = profileMonitorHub.getSnapshot()
     expect(snapshot.data.tasks).toHaveLength(1)
     expect(snapshot.data.tasks[0].browsers).toMatchObject([
       {
@@ -45,7 +46,7 @@ describe('taskMonitorHub', () => {
       },
     ])
 
-    taskMonitorHub.recordBrowserEvent({
+    profileMonitorHub.recordBrowserEvent({
       taskId: 'task-1',
       browserId: 'browser-1',
       stage: 'end',
@@ -56,7 +57,7 @@ describe('taskMonitorHub', () => {
       durationMs: 42,
     })
 
-    snapshot = taskMonitorHub.getSnapshot()
+    snapshot = profileMonitorHub.getSnapshot()
     expect(snapshot.data.tasks[0].browsers[0].events).toMatchObject([
       {
         stage: 'end',
@@ -68,37 +69,64 @@ describe('taskMonitorHub', () => {
       },
     ])
 
-    taskMonitorHub.finishTask('task-1')
+    profileMonitorHub.finishTask('task-1')
 
-    expect(taskMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
+    expect(profileMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
+    expect(profileMonitorHub.getProfileSnapshot().data.profiles).toMatchObject([
+      { dirId: 'dir-1', status: 'idle' },
+    ])
+  })
+
+  it('tracks manually opened profiles and removes only connections that disappear', () => {
+    profileMonitorHub.syncConnections([
+      {
+        dirId: 'manual-1',
+        endpoint: 'ws://localhost/devtools/browser/manual-1',
+        browserType: 'chromium',
+        connectedAt: 10,
+        windowName: 'Manual profile',
+      },
+    ])
+
+    expect(profileMonitorHub.getProfileSnapshot().data.profiles).toMatchObject([
+      {
+        dirId: 'manual-1',
+        status: 'idle',
+        endpoint: 'ws://localhost/devtools/browser/manual-1',
+        windowName: 'Manual profile',
+      },
+    ])
+
+    profileMonitorHub.syncConnections([])
+    expect(profileMonitorHub.getProfileSnapshot().data.profiles).toEqual([])
   })
 
   it('removes a completed browser while retaining other active browsers', () => {
-    taskMonitorHub.startTask({
+    profileMonitorHub.startTask({
       taskId: 'task-1',
       title: 'Batch script',
       sourceType: 'script',
     })
-    taskMonitorHub.attachBrowser({
+    profileMonitorHub.attachBrowser({
       taskId: 'task-1',
       browserId: 'browser-1',
       dirId: 'dir-1',
       label: 'dir-1',
     })
-    taskMonitorHub.attachBrowser({
+    profileMonitorHub.attachBrowser({
       taskId: 'task-1',
       browserId: 'browser-2',
       dirId: 'dir-2',
       label: 'dir-2',
     })
 
-    taskMonitorHub.finishBrowser({
+    profileMonitorHub.finishBrowser({
       taskId: 'task-1',
       browserId: 'browser-1',
       dirId: 'dir-1',
     })
 
-    const snapshot = taskMonitorHub.getSnapshot()
+    const snapshot = profileMonitorHub.getSnapshot()
     expect(snapshot.data.tasks).toHaveLength(1)
     expect(snapshot.data.tasks[0].browsers).toMatchObject([
       { id: 'browser-2', dirId: 'dir-2' },
@@ -106,31 +134,31 @@ describe('taskMonitorHub', () => {
   })
 
   it('hides a task after its last browser finishes and allows a later browser to reappear', () => {
-    taskMonitorHub.startTask({
+    profileMonitorHub.startTask({
       taskId: 'task-1',
       title: 'Batch script',
       sourceType: 'script',
     })
-    taskMonitorHub.attachBrowser({
+    profileMonitorHub.attachBrowser({
       taskId: 'task-1',
       browserId: 'browser-1',
       dirId: 'dir-1',
       label: 'dir-1',
     })
 
-    taskMonitorHub.applyEvent({
+    profileMonitorHub.applyEvent({
       type: 'browser_finished',
       data: { taskId: 'task-1', dirId: 'dir-1' },
     })
-    expect(taskMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
+    expect(profileMonitorHub.getSnapshot().data.tasks).toHaveLength(0)
 
-    taskMonitorHub.attachBrowser({
+    profileMonitorHub.attachBrowser({
       taskId: 'task-1',
       browserId: 'browser-2',
       dirId: 'dir-2',
       label: 'dir-2',
     })
-    expect(taskMonitorHub.getSnapshot().data.tasks[0].browsers).toMatchObject([
+    expect(profileMonitorHub.getSnapshot().data.tasks[0].browsers).toMatchObject([
       { id: 'browser-2', dirId: 'dir-2' },
     ])
   })
@@ -169,13 +197,13 @@ describe('taskMonitorHub', () => {
       } as any)
 
     try {
-      taskMonitorHub.startTask({
+      profileMonitorHub.startTask({
         taskId: 'task-1',
         title: 'Check browser',
         sourceType: 'chat',
       })
 
-      taskMonitorHub.attachBrowser({
+      profileMonitorHub.attachBrowser({
         taskId: 'task-1',
         browserId: 'browser-1',
         dirId: 'dir-1',
@@ -183,7 +211,7 @@ describe('taskMonitorHub', () => {
       })
 
       await vi.waitFor(() => {
-        expect(taskMonitorHub.getSnapshot().data.tasks[0].browsers[0]).toMatchObject({
+        expect(profileMonitorHub.getSnapshot().data.tasks[0].browsers[0]).toMatchObject({
           windowName: 'MOU-72',
           windowSortNum: 72,
           platformUrl: 'https://www.tiktok.com/@dance_daily',
@@ -236,12 +264,12 @@ describe('taskMonitorHub', () => {
       } as any)
 
     try {
-      taskMonitorHub.startTask({
+      profileMonitorHub.startTask({
         taskId: 'task-1',
         title: 'Check browser',
         sourceType: 'chat',
       })
-      taskMonitorHub.attachBrowser({
+      profileMonitorHub.attachBrowser({
         taskId: 'task-1',
         browserId: 'browser-1',
         dirId: 'dir-1',
@@ -250,21 +278,21 @@ describe('taskMonitorHub', () => {
       await settleAsyncWork()
 
       expect(listWindows).toHaveBeenCalledTimes(1)
-      expect(taskMonitorHub.getSnapshot().data.tasks[0].browsers[0].windowName).toBeUndefined()
+      expect(profileMonitorHub.getSnapshot().data.tasks[0].browsers[0].windowName).toBeUndefined()
 
       vi.setSystemTime(new Date('2026-07-31T08:00:11.000Z'))
-      taskMonitorHub.recordBrowserEvent({
+      profileMonitorHub.recordBrowserEvent({
         taskId: 'task-1',
         browserId: 'browser-1',
         dirId: 'dir-1',
         stage: 'end',
-        toolName: 'run_script',
+        toolName: 'roxy_script_run',
         success: true,
       })
       await settleAsyncWork()
 
       expect(listWindows).toHaveBeenCalledTimes(2)
-      expect(taskMonitorHub.getSnapshot().data.tasks[0].browsers[0]).toMatchObject({
+      expect(profileMonitorHub.getSnapshot().data.tasks[0].browsers[0]).toMatchObject({
         windowName: 'MOU-72',
         platformUserName: 'dance_daily',
       })

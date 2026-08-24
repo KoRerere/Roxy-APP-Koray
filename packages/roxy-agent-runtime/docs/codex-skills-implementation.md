@@ -104,8 +104,8 @@ my-skill/
 
 ```markdown
 ---
-name: "database-migration"
-description: "Use when creating, reviewing, or executing database schema migrations."
+name: 'database-migration'
+description: 'Use when creating, reviewing, or executing database schema migrations.'
 ---
 
 # Database Migration
@@ -142,18 +142,18 @@ description: "Use when creating, reviewing, or executing database schema migrati
 
 ```yaml
 interface:
-  display_name: "Database Migration"
-  short_description: "Create and validate schema migrations"
-  icon_small: "./assets/icon-small.svg"
-  icon_large: "./assets/icon.png"
-  brand_color: "#111111"
-  default_prompt: "Use Database Migration to prepare this schema change."
+  display_name: 'Database Migration'
+  short_description: 'Create and validate schema migrations'
+  icon_small: './assets/icon-small.svg'
+  icon_large: './assets/icon.png'
+  brand_color: '#111111'
+  default_prompt: 'Use Database Migration to prepare this schema change.'
 
 dependencies:
   tools:
-    - type: "mcp"
-      value: "database"
-      description: "Database MCP server"
+    - type: 'mcp'
+      value: 'database'
+      description: 'Database MCP server'
 
 policy:
   allow_implicit_invocation: true
@@ -1237,7 +1237,7 @@ sequenceDiagram
 5. 增加有分页和响应上限的 `skills.list` / `skills.read`，只用于非本地 provider。
 6. 增加 name/path enable rules、scope 和 namespace。
 7. 增加 watcher invalidation 和 immutable snapshot，避免热更新影响正在执行的 turn。
-8. 将 Skill script 执行统一路由到现有 `execute`、PathPermissions、CommandPermissions 和 HITL，禁止 Skill 绕过 ToolExecutor。
+8. 将 Skill script 执行统一路由到现有 `exec_command`、PathPermissions、CommandPermissions 和 HITL，禁止 Skill 绕过 ToolExecutor。
 9. 增加 invocation telemetry，区分 explicit、model-read 和 script-run。
 
 每个阶段都应先写失败测试，尤其覆盖：

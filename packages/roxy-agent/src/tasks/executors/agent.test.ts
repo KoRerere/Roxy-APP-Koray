@@ -36,12 +36,13 @@ describe('prepareTaskSkill', () => {
   it('installs the resolved canonical Skill template through the template service', async () => {
     templateServiceMocks.ensureResolvedTemplateSkillInstalled.mockResolvedValue({
       ref: { namespace: 'user', id: 1, value: 'user:1' },
+      skillMdPath: '/tmp/agent-skills/installed/task-skill/SKILL.md',
     })
 
     const prepared = await prepareTaskSkill(createResolvedTemplate())
 
     assert.deepEqual(prepared, {
-      ref: { namespace: 'user', id: 1, value: 'user:1' },
+      skillMdPath: '/tmp/agent-skills/installed/task-skill/SKILL.md',
     })
     assert.deepEqual(templateServiceMocks.ensureResolvedTemplateSkillInstalled.mock.calls[0]?.[0].ref, {
       namespace: 'user',
@@ -77,13 +78,13 @@ describe('buildTaskInitialUserMessage', () => {
       ],
       signal: new AbortController().signal,
       skill: {
-        ref: { namespace: 'user', id: 42, value: 'user:42' },
+        skillMdPath: '/tmp/agent-skills/installed/research-assistant/SKILL.md',
       },
     })
 
     assert.equal(
       message,
-      '[$Research Assistant](user:42) Research this topic. [请使用 [@profile:2](window-a,window-b) 窗口完成这个任务]',
+      '[$Research Assistant](/tmp/agent-skills/installed/research-assistant/SKILL.md) Research this topic. [请使用 [@profile:2](window-a,window-b) 窗口完成这个任务]',
     )
   })
 
@@ -96,13 +97,13 @@ describe('buildTaskInitialUserMessage', () => {
       windows: [{ id: 1, dirId: 'window-a' }],
       signal: new AbortController().signal,
       skill: {
-        ref: { namespace: 'user', id: 42, value: 'user:42' },
+        skillMdPath: '/tmp/agent-skills/installed/research-assistant/SKILL.md',
       },
     })
 
     assert.equal(
       message,
-      '[$Research Assistant](user:42) [请使用 [@profile:1](window-a) 窗口完成这个任务]',
+      '[$Research Assistant](/tmp/agent-skills/installed/research-assistant/SKILL.md) [请使用 [@profile:1](window-a) 窗口完成这个任务]',
     )
   })
 

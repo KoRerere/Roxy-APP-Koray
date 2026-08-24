@@ -1,46 +1,48 @@
-import type { ILogger, LogLevel } from "../core/interfaces.ts";
-import type { ILogSink } from "./sinks.ts";
+import type { ILogger, LogLevel } from '../core/interfaces.ts'
+import type { ILogSink } from './sinks.ts'
 
-const LEVELS: LogLevel[] = ["trace", "debug", "info", "warn", "error"];
+const LEVELS: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error']
 
 function levelIndex(l: LogLevel): number {
-  return LEVELS.indexOf(l);
+  return LEVELS.indexOf(l)
 }
 
 export interface CreateLoggerOptions {
-  level?: LogLevel;
-  scope?: string;
-  sinks?: ILogSink[];
+  level?: LogLevel
+  scope?: string
+  sinks?: ILogSink[]
 }
 
 function makeLogger(minLevel: number, scope: string, sinks: ILogSink[]): ILogger {
   function emit(level: LogLevel, msg: string, meta: Record<string, unknown>): void {
-    if (levelIndex(level) < minLevel) return;
+    if (levelIndex(level) < minLevel) {
+      return
+    }
     for (const sink of sinks) {
-      sink.write(level, scope, msg, meta);
+      sink.write(level, scope, msg, meta)
     }
   }
 
   return {
     child(childScope: string): ILogger {
-      return makeLogger(minLevel, `${scope}:${childScope}`, sinks);
+      return makeLogger(minLevel, `${scope}:${childScope}`, sinks)
     },
     trace(msg, meta = {}) {
-      emit("trace", msg, meta);
+      emit('trace', msg, meta)
     },
     debug(msg, meta = {}) {
-      emit("debug", msg, meta);
+      emit('debug', msg, meta)
     },
     info(msg, meta = {}) {
-      emit("info", msg, meta);
+      emit('info', msg, meta)
     },
     warn(msg, meta = {}) {
-      emit("warn", msg, meta);
+      emit('warn', msg, meta)
     },
     error(msg, meta = {}) {
-      emit("error", msg, meta);
+      emit('error', msg, meta)
     },
-  };
+  }
 }
 
 /**
@@ -48,8 +50,8 @@ function makeLogger(minLevel: number, scope: string, sinks: ILogSink[]): ILogger
  * (silent) when none are provided. Use `createConsoleSink()` for production.
  */
 export function createLogger(opts: CreateLoggerOptions = {}): ILogger {
-  const minLevel = levelIndex(opts.level ?? "trace");
-  const scope = opts.scope ?? "app";
-  const sinks = opts.sinks ?? [];
-  return makeLogger(minLevel, scope, sinks);
+  const minLevel = levelIndex(opts.level ?? 'trace')
+  const scope = opts.scope ?? 'app'
+  const sinks = opts.sinks ?? []
+  return makeLogger(minLevel, scope, sinks)
 }

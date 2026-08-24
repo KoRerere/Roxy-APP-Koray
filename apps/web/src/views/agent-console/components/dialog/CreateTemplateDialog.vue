@@ -23,9 +23,11 @@ import {
 import {
   buildScriptParams,
   createScriptParamsData,
+  createScriptParamsFormSchema,
   isScriptParamsRecord,
   parseScriptParamsSchema,
   ScriptParamsFormError,
+  validateScriptParamsData,
 } from '../../script-template-params'
 import { pickLocalized, pickOfficialTemplatePrompt, readCatalogList } from '../../template-store'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -484,6 +486,12 @@ function normalizeScriptParams() {
     return {}
   if (scriptSchemaError.value)
     throw new ScriptParamsFormError(scriptSchemaError.value)
+
+  scriptParamsErrors.value = validateScriptParamsData(
+    createScriptParamsFormSchema(schema),
+    scriptParamsData.value,
+    localeStore.currentLocale,
+  )
   return buildScriptParams(scriptParamsData.value, scriptParamsErrors.value)
 }
 
@@ -508,12 +516,13 @@ async function saveTemplate(saveAndRun: boolean) {
   }
   if (templateType.value === 'script') {
     showScriptParamsValidation.value = true
-    if (scriptParamsErrors.value.length)
-      return
     try {
       scriptParams.value = normalizeScriptParams()
     }
     catch (error) {
+      if (error instanceof ScriptParamsFormError && scriptParamsErrors.value.length) {
+        return
+      }
       formError.value = error instanceof ScriptParamsFormError ? error.message : $t('脚本参数校验失败')
       return
     }

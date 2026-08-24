@@ -1,10 +1,11 @@
-import { agentPaths } from '@/core/storage/agentPaths'
 import type { AgentConversationRunEventDTO, AgentRunEvent } from '@roxy/shared/channel'
+import type { RolloutEvent } from 'roxy-agent-runtime'
 import { sanitizeId, STORAGE_SCHEMA_VERSION } from '@roxy/shared/agent-paths'
 import fs from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { decodeLegacySse } from '@/core/agent-events/sseDecoder'
+import { agentPaths } from '@/core/storage/agentPaths'
 
 /**
  * 存储结构迁移器：把旧的 CHECKPOINT_DIR / AGENT_WORK_DIR / SKILLS_DIR / DOWNLOADS_DIR 布局
@@ -23,6 +24,7 @@ import { decodeLegacySse } from '@/core/agent-events/sseDecoder'
  *     统一信道会等迁移完成后再发送初始快照和 `channel.ready`。单个大库固化是同步的，期间会短暂占用事件循环。
  * - **复制而非移动 + 校验后删源**：迁移全程源目录完整；固化完成并校验目标库行数（≥ 源且 > 0）后才删源。
  * - 幂等：由 {home}/.version 守卫（阶段 2 完成后才写版本号）；目标文件已存在则跳过。
+ * - v4 rollout 补迁完全后台执行，不参与 ready 门禁：最近会话优先、逐会话让出事件循环、失败即跳过。
  * - 不抛出：任何单步失败都记入迁移日志并继续，绝不阻断 agent 启动。
  */
 
@@ -81,10 +83,12 @@ function yieldTick(): Promise<void> {
 /** 复制单个文件；源不存在或目标已存在则跳过（保护先到的数据）。 */
 function copyFile(src: string, dest: string, lines: string[]): boolean {
   try {
-    if (!fs.existsSync(src))
+    if (!fs.existsSync(src)) {
       return false
-    if (fs.existsSync(dest))
+    }
+    if (fs.existsSync(dest)) {
       return false
+    }
     ensureDir(path.dirname(dest))
     fs.copyFileSync(src, dest)
     return true
@@ -98,8 +102,9 @@ function copyFile(src: string, dest: string, lines: string[]): boolean {
 /** 删除旧布局里明确无需迁移的数据；不存在则跳过。 */
 function removePath(target: string, lines: string[], label: string): boolean {
   try {
-    if (!fs.existsSync(target))
+    if (!fs.existsSync(target)) {
       return false
+    }
     const resolved = path.resolve(target)
     if (resolved === path.parse(resolved).root || resolved === agentPaths.home) {
       log(lines, `删除跳过（路径不安全）：${resolved}`)
@@ -128,8 +133,9 @@ function isDangerousUserDirectory(dir: string): boolean {
   const resolved = path.resolve(dir)
   const homeDir = process.env.HOME || process.env.USERPROFILE
 
-  if (!homeDir)
+  if (!homeDir) {
     return false
+  }
 
   // 危险的用户目录列表
   const dangerousDirs = [
@@ -146,8 +152,9 @@ function isDangerousUserDirectory(dir: string): boolean {
   // 检查是否是危险目录本身或其父目录
   for (const dangerousDir of dangerousDirs) {
     const resolvedDangerous = path.resolve(dangerousDir)
-    if (resolved === resolvedDangerous || isSameOrChild(resolvedDangerous, resolved))
+    if (resolved === resolvedDangerous || isSameOrChild(resolvedDangerous, resolved)) {
       return true
+    }
   }
 
   return false
@@ -165,8 +172,9 @@ function isAgentPackageDir(dir: string): boolean {
 function cleanupAgentPackageDir(dir: string, lines: string[]): void {
   const keepFiles = new Set(['roxy-agent.mjs', 'version'])
   for (const name of fs.readdirSync(dir)) {
-    if (keepFiles.has(name))
+    if (keepFiles.has(name)) {
       continue
+    }
 
     const target = path.join(dir, name)
     try {
@@ -182,10 +190,12 @@ function cleanupAgentPackageDir(dir: string, lines: string[]): void {
 /** 递归复制整个目录（目标已存在则跳过整树，避免半迁状态互相覆盖）。 */
 function copyDir(src: string, dest: string, lines: string[]): boolean {
   try {
-    if (!fs.existsSync(src) || !fs.statSync(src).isDirectory())
+    if (!fs.existsSync(src) || !fs.statSync(src).isDirectory()) {
       return false
-    if (fs.existsSync(dest))
+    }
+    if (fs.existsSync(dest)) {
       return false
+    }
     ensureDir(path.dirname(dest))
     fs.cpSync(src, dest, { recursive: true })
     return true
@@ -202,8 +212,9 @@ function copyDir(src: string, dest: string, lines: string[]): boolean {
  * 源库不被修改。因此无论源处于何种 WAL 状态都不会丢数据。源不存在或目标已存在则跳过。
  */
 function consolidateSqlite(srcDb: string, destDb: string, lines: string[]): boolean {
-  if (!fs.existsSync(srcDb))
+  if (!fs.existsSync(srcDb)) {
     return false
+  }
   if (fs.existsSync(destDb)) {
     log(lines, `跳过（目标已存在）：${destDb}`)
     return false
@@ -236,8 +247,9 @@ function consolidateSqlite(srcDb: string, destDb: string, lines: string[]): bool
 
 /** 读取某表行数（读写打开以回放 WAL；表不存在/打开失败视为 0）。用于删源前的完整性校验。 */
 function rowCount(dbPath: string, table: string): number {
-  if (!fs.existsSync(dbPath))
+  if (!fs.existsSync(dbPath)) {
     return 0
+  }
   let db: DatabaseSync | undefined
   try {
     db = new DatabaseSync(dbPath)
@@ -257,17 +269,20 @@ function rowCount(dbPath: string, table: string): number {
 
 /** 从一条 message.metadata 里提取用户上传附件的 fileId 列表（结构容错）。 */
 function attachmentFileIds(metadata: string | null): string[] {
-  if (!metadata)
+  if (!metadata) {
     return []
+  }
   try {
     const atts = JSON.parse(metadata)?.attachments
-    if (!Array.isArray(atts))
+    if (!Array.isArray(atts)) {
       return []
+    }
     const ids: string[] = []
     for (const a of atts) {
       const fid = a?.fileId ?? a?.file_id
-      if (typeof fid === 'string' && fid)
+      if (typeof fid === 'string' && fid) {
         ids.push(fid)
+      }
     }
     return ids
   }
@@ -295,8 +310,9 @@ interface MigrationPlan {
 function collectPlan(oldCheckpoint: string, lines: string[]): MigrationPlan {
   const plan: MigrationPlan = { oldCheckpoint, sessionIds: [], sseBasenames: [], fileIds: [] }
   const legacy = agentPaths.legacyConversationsDb
-  if (!fs.existsSync(legacy))
+  if (!fs.existsSync(legacy)) {
     return plan
+  }
 
   const sse = new Set<string>()
   const files = new Set<string>()
@@ -304,17 +320,21 @@ function collectPlan(oldCheckpoint: string, lines: string[]): MigrationPlan {
   try {
     db = new DatabaseSync(legacy)
     for (const row of db.prepare('SELECT id FROM conversations').all() as Array<{ id: string }>) {
-      if (row.id)
+      if (row.id) {
         plan.sessionIds.push(row.id)
+      }
     }
     for (const row of db.prepare('SELECT file_path, storage_type, metadata FROM messages').all() as Array<{ file_path: string | null, storage_type: string | null, metadata: string | null }>) {
-      if (row.storage_type === 'file' && row.file_path)
+      if (row.storage_type === 'file' && row.file_path) {
         sse.add(path.basename(row.file_path))
-      for (const fid of attachmentFileIds(row.metadata))
+      }
+      for (const fid of attachmentFileIds(row.metadata)) {
         files.add(fid)
+      }
     }
-    for (const row of db.prepare('SELECT file_id FROM assets WHERE file_id IS NOT NULL').all() as Array<{ file_id: string }>)
+    for (const row of db.prepare('SELECT file_id FROM assets WHERE file_id IS NOT NULL').all() as Array<{ file_id: string }>) {
       files.add(row.file_id)
+    }
   }
   catch (err) {
     log(lines, `枚举会话清单失败（阶段 2 将只搬全局域）：${(err as Error).message}`)
@@ -351,8 +371,9 @@ interface EventMigrationItem {
 }
 
 function eventTimestamp(value: string | null | undefined): number {
-  if (!value)
+  if (!value) {
     return Date.now()
+  }
   const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`
   const timestamp = Date.parse(normalized)
   return Number.isFinite(timestamp) ? timestamp : Date.now()
@@ -376,15 +397,18 @@ function attachmentDtos(metadata: string | null): any[] {
 function validateJsonl(filePath: string): boolean {
   try {
     const lines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(Boolean)
-    if (lines.length < 2)
+    if (lines.length < 2) {
       return false
+    }
     let previous = 0
     for (const line of lines) {
       const item = JSON.parse(line) as AgentConversationRunEventDTO
-      if (!item.conversationId || !item.runId || !item.turnId || !item.assistantMessageId)
+      if (!item.conversationId || !item.runId || !item.turnId || !item.assistantMessageId) {
         return false
-      if (!Number.isInteger(item.sequence) || item.sequence !== previous + 1 || !item.event?.type)
+      }
+      if (!Number.isInteger(item.sequence) || item.sequence !== previous + 1 || !item.event?.type) {
         return false
+      }
       previous = item.sequence
     }
     return true
@@ -441,8 +465,9 @@ function buildLegacyRunEvents(
   ]
 
   for (const decoded of decodeLegacySse(source)) {
-    if (decoded.event.type === 'run_started' || decoded.event.type === 'user_message')
+    if (decoded.event.type === 'run_started' || decoded.event.type === 'user_message') {
       continue
+    }
     events.push({ event: decoded.event, timestamp: decoded.timestamp ?? startedAt })
   }
   if (!events.some(item => item.event.type === 'run_completed' || item.event.type === 'run_failed' || item.event.type === 'run_cancelled')) {
@@ -463,8 +488,9 @@ function buildLegacyRunEvents(
  */
 export function migrateLegacyConversationEvents(lines: string[] = []): number {
   const dbPath = agentPaths.legacyConversationsDb
-  if (!fs.existsSync(dbPath))
+  if (!fs.existsSync(dbPath)) {
     return 0
+  }
 
   let db: DatabaseSync | undefined
   const items: EventMigrationItem[] = []
@@ -483,26 +509,45 @@ export function migrateLegacyConversationEvents(lines: string[] = []): number {
         previousUser.set(row.conversation_id, row)
         continue
       }
-      if (row.role !== 'assistant' || row.storage_type !== 'file' || !row.file_path)
+      if (row.role !== 'assistant' || row.storage_type !== 'file' || !row.file_path) {
         continue
+      }
 
       const targetPath = agentPaths.sessionTurnEvents(row.conversation_id, row.id)
       const targetValid = fs.existsSync(targetPath) && validateJsonl(targetPath)
-      if (path.resolve(row.file_path) === path.resolve(targetPath) && targetValid)
+      if (path.resolve(row.file_path) === path.resolve(targetPath) && targetValid) {
         continue
+      }
 
       const sourcePath = resolveLegacySsePath(row.file_path)
       if (!targetValid) {
-        if (!sourcePath)
-          throw new Error(`会话事件源文件缺失：${row.file_path}`)
-        const source = fs.readFileSync(sourcePath, 'utf-8')
+        if (!sourcePath) {
+          // log(lines, `跳过缺失的会话事件源文件：${row.file_path}`)
+          continue
+        }
+        let source = ''
+        try {
+          source = fs.readFileSync(sourcePath, 'utf-8')
+        }
+        catch (err) {
+          log(lines, `跳过无法读取的会话事件源文件 ${sourcePath}：${(err as Error).message}`)
+          continue
+        }
         const events = buildLegacyRunEvents(row, previousUser.get(row.conversation_id), source)
         const tempPath = `${targetPath}.tmp`
         ensureDir(path.dirname(targetPath))
-        fs.writeFileSync(tempPath, `${events.map(event => JSON.stringify(event)).join('\n')}\n`, 'utf-8')
-        if (!validateJsonl(tempPath)) {
+        try {
+          fs.writeFileSync(tempPath, `${events.map(event => JSON.stringify(event)).join('\n')}\n`, 'utf-8')
+          if (!validateJsonl(tempPath)) {
+            fs.rmSync(tempPath, { force: true })
+            log(lines, `跳过校验失败的会话事件 JSONL：${targetPath}`)
+            continue
+          }
+        }
+        catch (err) {
           fs.rmSync(tempPath, { force: true })
-          throw new Error(`会话事件 JSONL 校验失败：${targetPath}`)
+          log(lines, `跳过无法写入的会话事件 JSONL ${targetPath}：${(err as Error).message}`)
+          continue
         }
       }
 
@@ -514,43 +559,58 @@ export function migrateLegacyConversationEvents(lines: string[] = []): number {
       items.push({ messageId: row.id, sourcePath, targetPath, metadata })
     }
 
+    const readyItems: EventMigrationItem[] = []
     for (const item of items) {
       const tempPath = `${item.targetPath}.tmp`
-      if (fs.existsSync(tempPath))
-        fs.renameSync(tempPath, item.targetPath)
-      if (!validateJsonl(item.targetPath))
-        throw new Error(`会话事件 JSONL 最终校验失败：${item.targetPath}`)
-    }
-
-    db.exec('BEGIN IMMEDIATE')
-    try {
-      const update = db.prepare(`
-        UPDATE messages
-        SET file_path = ?, content = '', content_type = 'file', storage_type = 'file', metadata = ?
-        WHERE id = ?
-      `)
-      for (const item of items)
-        update.run(item.targetPath, item.metadata, item.messageId)
-      db.exec('COMMIT')
-    }
-    catch (error) {
-      db.exec('ROLLBACK')
-      throw error
-    }
-
-    for (const item of items) {
-      if (item.sourcePath && path.resolve(item.sourcePath) !== path.resolve(item.targetPath))
-        fs.rmSync(item.sourcePath, { force: true })
-    }
-    if (fs.existsSync(agentPaths.sseCacheDir)) {
-      for (const name of fs.readdirSync(agentPaths.sseCacheDir)) {
-        if (name.endsWith('.sse'))
-          fs.rmSync(path.join(agentPaths.sseCacheDir, name), { force: true })
+      try {
+        if (fs.existsSync(tempPath)) {
+          fs.renameSync(tempPath, item.targetPath)
+        }
+        if (!validateJsonl(item.targetPath)) {
+          log(lines, `跳过最终校验失败的会话事件 JSONL：${item.targetPath}`)
+          continue
+        }
+        readyItems.push(item)
+      }
+      catch (err) {
+        log(lines, `跳过无法发布的会话事件 JSONL ${item.targetPath}：${(err as Error).message}`)
       }
     }
-    if (items.length > 0)
-      log(lines, `已将历史 SSE 会话记录转换为 JSONL ${items.length} 条`)
-    return items.length
+
+    if (readyItems.length > 0) {
+      db.exec('BEGIN IMMEDIATE')
+      try {
+        const update = db.prepare(`
+          UPDATE messages
+          SET file_path = ?, content = '', content_type = 'file', storage_type = 'file', metadata = ?
+          WHERE id = ?
+        `)
+        for (const item of readyItems) {
+          update.run(item.targetPath, item.metadata, item.messageId)
+        }
+        db.exec('COMMIT')
+      }
+      catch (error) {
+        db.exec('ROLLBACK')
+        log(lines, `更新历史会话事件引用失败（忽略）：${(error as Error).message}`)
+        return 0
+      }
+    }
+
+    for (const item of readyItems) {
+      if (item.sourcePath && path.resolve(item.sourcePath) !== path.resolve(item.targetPath)) {
+        try {
+          fs.rmSync(item.sourcePath, { force: true })
+        }
+        catch (err) {
+          log(lines, `删除已迁移 SSE 源文件失败（忽略）${item.sourcePath}：${(err as Error).message}`)
+        }
+      }
+    }
+    if (readyItems.length > 0) {
+      log(lines, `已将历史 SSE 会话记录转换为 JSONL ${readyItems.length} 条`)
+    }
+    return readyItems.length
   }
   finally {
     try {
@@ -560,19 +620,420 @@ export function migrateLegacyConversationEvents(lines: string[] = []): number {
   }
 }
 
+// ==================== 历史 turns → runtime rollout（v4，后台 best-effort）====================
+
+interface LegacyTurn {
+  conversationId: string
+  startedAt: number
+  userContent: string
+  assistantText: string
+  assistantTimestamp: number
+  terminal: 'completed' | 'aborted' | 'failed'
+  terminalMessage?: string
+  terminalTimestamp: number
+}
+
+interface LegacySessionCandidate {
+  sessionDir: string
+  turnsDir?: string
+  updatedAt: number
+}
+
+const LEGACY_TOOL_OUTPUT_LIMIT = 2_000
+
+function turnFileTimestamp(filePath: string): number {
+  const match = path.basename(filePath).match(/(?:^|_)(\d{10,})(?:_|\.|$)/)
+  if (!match?.[1]) {
+    return 0
+  }
+  const timestamp = Number(match[1])
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function finiteTimestamp(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function eventData(event: AgentConversationRunEventDTO): Record<string, unknown> {
+  const data = event.event?.data
+  return data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : {}
+}
+
+function stringifyLegacyToolOutput(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.slice(0, LEGACY_TOOL_OUTPUT_LIMIT)
+  }
+  try {
+    return JSON.stringify(value).slice(0, LEGACY_TOOL_OUTPUT_LIMIT)
+  }
+  catch {
+    return ''
+  }
+}
+
+function legacyToolSummary(events: AgentConversationRunEventDTO[]): string {
+  const tools: Array<{ name: string, status: string, output: string }> = []
+  for (const event of events) {
+    if (event.event.type !== 'tool_finished') {
+      continue
+    }
+    const data = eventData(event)
+    tools.push({
+      name: typeof data.toolName === 'string' ? data.toolName : 'tool',
+      status: data.status === 'failed' ? '失败' : '成功',
+      output: stringifyLegacyToolOutput(data.output),
+    })
+  }
+  if (tools.length === 0) {
+    return ''
+  }
+  const lines = ['历史执行摘要：', ...tools.map(tool => `- ${tool.name}：${tool.status}`)]
+  const lastOutput = [...tools].reverse().find(tool => tool.output.trim())?.output.trim()
+  if (lastOutput) {
+    lines.push('', '最后一次工具结果：', lastOutput)
+  }
+  return lines.join('\n')
+}
+
+function finalAssistantText(events: AgentConversationRunEventDTO[]): { text: string, timestamp: number } {
+  const chunks = new Map<string, { text: string, timestamp: number, order: number }>()
+  let anonymousIndex = 0
+  let order = 0
+  for (const event of events) {
+    if (event.event.type !== 'content_delta') {
+      continue
+    }
+    const data = eventData(event)
+    const text = typeof data.text === 'string' ? data.text : ''
+    if (!text) {
+      continue
+    }
+    const id = typeof data.contentId === 'string'
+      ? data.contentId
+      : typeof data.id === 'string'
+        ? data.id
+        : `anonymous-${++anonymousIndex}`
+    const previous = chunks.get(id)
+    chunks.set(id, {
+      text: `${previous?.text ?? ''}${text}`,
+      timestamp: finiteTimestamp(event.timestamp, previous?.timestamp ?? Date.now()),
+      order: previous?.order ?? ++order,
+    })
+  }
+  const last = [...chunks.values()].sort((a, b) => a.order - b.order).at(-1)
+  return last ? { text: last.text, timestamp: last.timestamp } : { text: '', timestamp: 0 }
+}
+
+async function readLegacyTurn(filePath: string, lines: string[]): Promise<LegacyTurn | undefined> {
+  let source = ''
+  try {
+    source = await fs.promises.readFile(filePath, 'utf-8')
+  }
+  catch (err) {
+    log(lines, `跳过无法读取的历史 turn ${filePath}：${(err as Error).message}`)
+    return undefined
+  }
+
+  const events: AgentConversationRunEventDTO[] = []
+  for (const line of source.split(/\r?\n/)) {
+    if (!line.trim()) {
+      continue
+    }
+    try {
+      const parsed = JSON.parse(line) as AgentConversationRunEventDTO
+      if (parsed?.event?.type && Number.isInteger(parsed.sequence)) {
+        events.push(parsed)
+      }
+    }
+    catch {
+      // 单行损坏不影响同一 turn 里其余仍可恢复的事件。
+    }
+  }
+  events.sort((a, b) => a.sequence - b.sequence)
+  const userEvent = events.find(event => event.event.type === 'user_message')
+  if (!userEvent?.conversationId) {
+    log(lines, `跳过缺少用户消息的历史 turn：${filePath}`)
+    return undefined
+  }
+  const userData = eventData(userEvent)
+  const userContent = typeof userData.content === 'string' ? userData.content : ''
+  if (!userContent.trim()) {
+    log(lines, `跳过空用户消息的历史 turn：${filePath}`)
+    return undefined
+  }
+
+  const startedAt = finiteTimestamp(userData.createdAt, finiteTimestamp(userEvent.timestamp, Date.now()))
+  const content = finalAssistantText(events)
+  const assistantText = content.text.trim() || legacyToolSummary(events)
+  const terminalEvent = [...events].reverse().find(event =>
+    event.event.type === 'run_completed'
+    || event.event.type === 'run_failed'
+    || event.event.type === 'run_cancelled',
+  )
+  const terminalData = terminalEvent ? eventData(terminalEvent) : {}
+  const terminal = terminalEvent?.event.type === 'run_failed'
+    ? 'failed'
+    : terminalEvent?.event.type === 'run_completed'
+      ? 'completed'
+      : 'aborted'
+  const terminalMessage = typeof terminalData.message === 'string' ? terminalData.message : undefined
+  const terminalTimestamp = finiteTimestamp(terminalEvent?.timestamp, content.timestamp || startedAt)
+
+  return {
+    conversationId: userEvent.conversationId,
+    startedAt,
+    userContent,
+    assistantText,
+    assistantTimestamp: content.timestamp || terminalTimestamp,
+    terminal,
+    terminalMessage,
+    terminalTimestamp,
+  }
+}
+
+function rolloutFromTurns(conversationId: string, turns: LegacyTurn[]): RolloutEvent[] {
+  const events: RolloutEvent[] = [{
+    type: 'session_start',
+    sessionId: conversationId,
+    createdAt: turns[0]?.startedAt ?? Date.now(),
+    ts: turns[0]?.startedAt ?? Date.now(),
+  }]
+  let assistantIndex = 0
+  for (const turn of turns) {
+    events.push({
+      type: 'user_input',
+      message: { role: 'user', content: turn.userContent },
+      ts: turn.startedAt,
+    })
+    if (turn.assistantText) {
+      events.push({
+        type: 'assistant_turn',
+        items: [{
+          type: 'message',
+          id: `legacy-message-${++assistantIndex}`,
+          role: 'assistant',
+          content: [{ type: 'output_text', text: turn.assistantText }],
+        }],
+        stopReason: 'end_turn',
+        ts: turn.assistantTimestamp,
+      })
+    }
+    if (turn.terminal === 'completed') {
+      events.push({ type: 'turn_completed', stopReason: 'end_turn', ts: turn.terminalTimestamp })
+    }
+    else if (turn.terminal === 'failed') {
+      events.push({ type: 'turn_failed', message: turn.terminalMessage ?? '历史会话执行失败', ts: turn.terminalTimestamp })
+    }
+    else {
+      events.push({ type: 'turn_aborted', ...(turn.terminalMessage ? { message: turn.terminalMessage } : {}), ts: turn.terminalTimestamp })
+    }
+  }
+  return events
+}
+
+async function collectLegacySessionCandidates(lines: string[]): Promise<LegacySessionCandidate[]> {
+  const sessionsRoot = path.join(agentPaths.home, 'sessions')
+  const candidates: LegacySessionCandidate[] = []
+  const pending = [sessionsRoot]
+  while (pending.length > 0) {
+    const current = pending.pop()!
+    let entries: fs.Dirent[]
+    try {
+      entries = await fs.promises.readdir(current, { withFileTypes: true })
+    }
+    catch {
+      continue
+    }
+    const turnsEntry = entries.find(entry => entry.isDirectory() && entry.name === 'turns')
+    const hasRollout = entries.some(entry => entry.isFile() && entry.name === 'rollout.jsonl')
+    const hasCheckpoint = entries.some(entry => entry.isFile() && (
+      entry.name === 'checkpoint.db'
+      || entry.name === 'checkpoint.db-shm'
+      || entry.name === 'checkpoint.db-wal'
+    ))
+    if (turnsEntry || hasRollout || hasCheckpoint) {
+      const turnsDir = turnsEntry ? path.join(current, turnsEntry.name) : undefined
+      let turnFiles: string[] = []
+      if (turnsDir) {
+        try {
+          turnFiles = (await fs.promises.readdir(turnsDir))
+            .filter(name => name.endsWith('.jsonl'))
+            .map(name => path.join(turnsDir, name))
+        }
+        catch {
+          turnFiles = []
+        }
+      }
+      let updatedAt = turnFiles.length > 0 ? Math.max(...turnFiles.map(turnFileTimestamp)) : 0
+      if (updatedAt === 0) {
+        const timestampFiles = [
+          ...turnFiles,
+          ...(hasRollout ? [path.join(current, 'rollout.jsonl')] : []),
+          ...(hasCheckpoint ? [path.join(current, 'checkpoint.db')] : []),
+        ]
+        for (const file of timestampFiles) {
+          try {
+            updatedAt = Math.max(updatedAt, (await fs.promises.stat(file)).mtimeMs)
+          }
+          catch {
+            // 单个历史文件 stat 失败不影响 session 发现。
+          }
+        }
+      }
+      candidates.push({ sessionDir: current, ...(turnsDir ? { turnsDir } : {}), updatedAt })
+      // current 已经是 session 根；不要继续扫描 browser/downloads 等会话产物。
+      await yieldTick()
+      continue
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name === '_orphaned') {
+        continue
+      }
+      const child = path.join(current, entry.name)
+      pending.push(child)
+    }
+    await yieldTick()
+  }
+  if (candidates.length > 0) {
+    log(lines, `发现 ${candidates.length} 个待检查历史 session，按最近记录优先补迁 rollout`)
+  }
+  return candidates.sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+async function writeRolloutIfMissing(session: LegacySessionCandidate, lines: string[]): Promise<boolean> {
+  const rolloutPath = path.join(session.sessionDir, 'rollout.jsonl')
+  let rolloutExists = false
+  try {
+    await fs.promises.access(rolloutPath)
+    rolloutExists = true
+  }
+  catch {}
+
+  if (!session.turnsDir) {
+    await cleanupLegacySessionFiles(session.sessionDir, false, lines)
+    return false
+  }
+
+  if (rolloutExists) {
+    await cleanupLegacySessionFiles(session.sessionDir, true, lines)
+    return false
+  }
+
+  let names: string[]
+  try {
+    names = (await fs.promises.readdir(session.turnsDir)).filter(name => name.endsWith('.jsonl'))
+  }
+  catch (err) {
+    log(lines, `跳过无法枚举 turns 的 session ${session.sessionDir}：${(err as Error).message}`)
+    await cleanupLegacySessionFiles(session.sessionDir, false, lines)
+    return false
+  }
+  const turns: LegacyTurn[] = []
+  for (let index = 0; index < names.length; index++) {
+    const turn = await readLegacyTurn(path.join(session.turnsDir, names[index]!), lines)
+    if (turn) {
+      turns.push(turn)
+    }
+    if ((index + 1) % 16 === 0) {
+      await yieldTick()
+    }
+  }
+  turns.sort((a, b) => a.startedAt - b.startedAt)
+  if (turns.length === 0) {
+    await cleanupLegacySessionFiles(session.sessionDir, false, lines)
+    return false
+  }
+  const conversationId = turns[0]!.conversationId
+  const consistentTurns = turns.filter(turn => turn.conversationId === conversationId)
+  const rollout = rolloutFromTurns(conversationId, consistentTurns)
+  const tempPath = `${rolloutPath}.migrate-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  try {
+    const content = `${rollout.map(event => JSON.stringify(event)).join('\n')}\n`
+    await fs.promises.writeFile(tempPath, content, { encoding: 'utf-8', flag: 'wx' })
+    // hard link 是不覆盖目标的原子发布；若用户已开始新一轮并创建 rollout，EEXIST 即放弃旧数据。
+    await fs.promises.link(tempPath, rolloutPath)
+    log(lines, `已补迁历史 rollout：${conversationId}（${consistentTurns.length} 轮）`)
+    await cleanupLegacySessionFiles(session.sessionDir, true, lines)
+    return true
+  }
+  catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+      await cleanupLegacySessionFiles(session.sessionDir, true, lines)
+    }
+    else {
+      log(lines, `补迁历史 rollout 失败（忽略）${session.sessionDir}：${(err as Error).message}`)
+      await cleanupLegacySessionFiles(session.sessionDir, false, lines)
+    }
+    return false
+  }
+  finally {
+    try {
+      await fs.promises.rm(tempPath, { force: true })
+    }
+    catch {}
+  }
+}
+
+async function cleanupLegacySessionFiles(sessionDir: string, removeTurns: boolean, lines: string[]): Promise<void> {
+  const targets = [
+    path.join(sessionDir, 'checkpoint.db'),
+    path.join(sessionDir, 'checkpoint.db-shm'),
+    path.join(sessionDir, 'checkpoint.db-wal'),
+    ...(removeTurns ? [path.join(sessionDir, 'turns')] : []),
+  ]
+  for (const target of targets) {
+    try {
+      await fs.promises.rm(target, { recursive: true, force: true })
+    }
+    catch (err) {
+      log(lines, `删除历史 session 文件失败（忽略）${target}：${(err as Error).message}`)
+    }
+  }
+}
+
+/**
+ * 异步、逐 session、最近优先地把历史 turns 补成 runtime rollout。
+ * 任意读取/解析/写入失败都只跳过对应数据；已有 rollout 永不覆盖。
+ */
+export async function migrateLegacyTurnsToRollouts(lines: string[] = []): Promise<number> {
+  let migratedCount = 0
+  let candidates: LegacySessionCandidate[] = []
+  try {
+    candidates = await collectLegacySessionCandidates(lines)
+  }
+  catch (err) {
+    log(lines, `扫描历史 session 失败（忽略）：${(err as Error).message}`)
+    return 0
+  }
+  for (const candidate of candidates) {
+    try {
+      if (await writeRolloutIfMissing(candidate, lines)) {
+        migratedCount += 1
+      }
+    }
+    catch (err) {
+      log(lines, `补迁 session 失败（忽略）${candidate.sessionDir}：${(err as Error).message}`)
+    }
+    await yieldTick()
+  }
+  return migratedCount
+}
+
 /** 脚本草稿不迁移：清空旧 conversations.workspace_path，避免后续工具读到已删除的旧草稿目录。 */
 function clearLegacyScriptDraftWorkspaceRefs(oldCheckpoint: string, lines: string[]): void {
   const legacy = agentPaths.legacyConversationsDb
-  if (!fs.existsSync(legacy))
+  if (!fs.existsSync(legacy)) {
     return
+  }
 
   const oldDraftRoot = path.resolve(oldCheckpoint, 'agent-workspaces')
   let db: DatabaseSync | undefined
   try {
     db = new DatabaseSync(legacy)
     const columns = db.prepare('PRAGMA table_info(conversations)').all() as Array<{ name: string }>
-    if (!columns.some(col => col.name === 'workspace_path'))
+    if (!columns.some(col => col.name === 'workspace_path')) {
       return
+    }
 
     const rows = db.prepare('SELECT id, workspace_path FROM conversations WHERE workspace_path IS NOT NULL').all() as Array<{ id: string, workspace_path: string }>
     const update = db.prepare('UPDATE conversations SET workspace_path = NULL WHERE id = ?')
@@ -584,8 +1045,9 @@ function clearLegacyScriptDraftWorkspaceRefs(oldCheckpoint: string, lines: strin
         cleared += 1
       }
     }
-    if (cleared > 0)
+    if (cleared > 0) {
       log(lines, `已清空旧脚本草稿 workspace_path ${cleared} 条`)
+    }
   }
   catch (err) {
     log(lines, `清空旧脚本草稿引用失败（忽略）：${(err as Error).message}`)
@@ -654,15 +1116,19 @@ function migrateSkills(oldSkills: string, lines: string[]): void {
   if (fs.existsSync(oldUserDir)) {
     for (const name of fs.readdirSync(oldUserDir)) {
       const src = path.join(oldUserDir, name)
-      if (name.startsWith('.') || !isDirectory(src))
+      if (name.startsWith('.') || !isDirectory(src)) {
         continue
+      }
       let destRoot: string
-      if (BUILTIN_SKILL_NAMES.has(name))
+      if (BUILTIN_SKILL_NAMES.has(name)) {
         destRoot = agentPaths.skillsBuiltinDir
-      else if (readSkillSource(src) === 'store')
+      }
+      else if (readSkillSource(src) === 'store') {
         destRoot = agentPaths.skillsInstalledDir
-      else
+      }
+      else {
         destRoot = agentPaths.skillsUserDir
+      }
       copyDir(src, path.join(destRoot, name), lines)
     }
   }
@@ -671,8 +1137,9 @@ function migrateSkills(oldSkills: string, lines: string[]): void {
   if (fs.existsSync(oldStoreDir)) {
     for (const name of fs.readdirSync(oldStoreDir)) {
       const src = path.join(oldStoreDir, name)
-      if (name.startsWith('.') || !isDirectory(src))
+      if (name.startsWith('.') || !isDirectory(src)) {
         continue
+      }
       copyDir(src, path.join(agentPaths.skillsInstalledDir, name), lines)
     }
   }
@@ -698,8 +1165,9 @@ function cleanupSource(expectedConvCount: number, lines: string[]): void {
     process.env.AGENT_WORK_DIR,
     process.env.SKILLS_DIR,
   ]) {
-    if (!dir || !fs.existsSync(dir))
+    if (!dir || !fs.existsSync(dir)) {
       continue
+    }
     // 目标数据全部落在 agentPaths.home 下；绝不删到 home 内部（防止误配 CHECKPOINT_DIR=home 时自删）。
     const resolved = path.resolve(dir)
     if (resolved === agentPaths.home || resolved.startsWith(agentPaths.home + path.sep)) {
@@ -770,7 +1238,10 @@ function runPhase1(lines: string[]): MigrationPlan | null {
   clearLegacyScriptDraftWorkspaceRefs(oldCheckpoint, lines)
 
   const plan = collectPlan(oldCheckpoint, lines)
-  const total = plan.sessionIds.length + plan.sseBasenames.length + plan.fileIds.length + 1 /* 全局域整体算 1 单元 */
+  /**
+   * 全局域整体算 1 单元
+   */
+  const total = plan.sessionIds.length + plan.sseBasenames.length + plan.fileIds.length + 1
   status.total = total
   status.done = 0
   log(lines, `阶段 1 完成：会话 ${plan.sessionIds.length}、SSE ${plan.sseBasenames.length}、上传/资产 ${plan.fileIds.length}`)
@@ -803,8 +1274,9 @@ async function runPhase2(plan: MigrationPlan, lines: string[]): Promise<void> {
   for (const base of plan.sseBasenames) {
     copyFile(path.join(oldCheckpoint, 'sse', base), path.join(agentPaths.sseCacheDir, base), lines)
     bump('聊天记录')
-    if (++i % 32 === 0)
+    if (++i % 32 === 0) {
       await yieldTick()
+    }
   }
   await yieldTick()
 
@@ -813,8 +1285,9 @@ async function runPhase2(plan: MigrationPlan, lines: string[]): Promise<void> {
   for (const fid of plan.fileIds) {
     copyFile(path.join(oldCheckpoint, 'uploads', fid), path.join(agentPaths.orphanedUploadsDir, fid), lines)
     bump('附件')
-    if (++i % 32 === 0)
+    if (++i % 32 === 0) {
       await yieldTick()
+    }
   }
   await yieldTick()
 
@@ -825,22 +1298,26 @@ async function runPhase2(plan: MigrationPlan, lines: string[]): Promise<void> {
   const oldDownloads = process.env.DOWNLOADS_DIR
   consolidateSqlite(path.join(oldCheckpoint, 'checkpoint.db'), path.join(agentPaths.legacyDir, 'checkpoint.db'), lines)
   migrateMcpConfig(oldCheckpoint, lines)
-  copyDir(path.join(oldCheckpoint, 'static'), agentPaths.staticCacheDir, lines)
-  if (oldDownloads)
+  copyDir(path.join(oldCheckpoint, 'static'), path.join(agentPaths.home, 'cache', 'static'), lines)
+  if (oldDownloads) {
     copyFile(path.join(oldDownloads, 'im-threads.json'), agentPaths.imThreadsFile, lines)
-  if (oldSkills)
+  }
+  if (oldSkills) {
     migrateSkills(oldSkills, lines)
+  }
 
   // 日志与脚本草稿/运行记录不做迁移，明确清理旧布局里的这些可丢弃数据。
   removePath(path.join(oldCheckpoint, 'agent-workspaces'), lines, '旧脚本草稿')
   removePath(path.join(oldCheckpoint, 'script-runs'), lines, '旧脚本运行记录')
   const checkpointLogs = path.join(oldCheckpoint, 'logs')
-  if (path.resolve(checkpointLogs) !== agentPaths.logsDir)
+  if (path.resolve(checkpointLogs) !== agentPaths.logsDir) {
     removePath(checkpointLogs, lines, '旧日志')
+  }
   if (oldWork) {
     const oldWorkLogs = path.join(oldWork, 'logs')
-    if (path.resolve(oldWorkLogs) !== agentPaths.logsDir)
+    if (path.resolve(oldWorkLogs) !== agentPaths.logsDir) {
       removePath(oldWorkLogs, lines, '旧日志')
+    }
   }
   bump('配置与技能')
   await yieldTick()
@@ -900,7 +1377,7 @@ function acquireLock(): number | undefined {
   }
 }
 
-/** 收尾：仅在全部阶段成功后写版本号；无论成功与否都落日志并释放锁。 */
+/** 收尾：结构迁移调度完成后写版本号；历史数据缺失不阻止升级。 */
 function finalizeMigration(lockFd: number | undefined, lines: string[], completed: boolean): void {
   if (completed) {
     try {
@@ -911,17 +1388,9 @@ function finalizeMigration(lockFd: number | undefined, lines: string[], complete
     }
   }
   try {
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const logFile = agentPaths.migrationLogFile(stamp)
-    ensureDir(path.dirname(logFile))
-    fs.writeFileSync(logFile, `${lines.join('\n')}\n`, 'utf-8')
-  }
-  catch {
-    // 忽略日志写入失败
-  }
-  try {
-    if (lockFd !== undefined)
+    if (lockFd !== undefined) {
       fs.closeSync(lockFd)
+    }
     fs.rmSync(agentPaths.migrateLockFile, { force: true })
   }
   catch {
@@ -931,33 +1400,45 @@ function finalizeMigration(lockFd: number | undefined, lines: string[], complete
 
 let migrated = false
 
+function legacyLayoutStillExists(): boolean {
+  const checkpoint = process.env.CHECKPOINT_DIR
+  const workDir = process.env.AGENT_WORK_DIR
+  const skillsDir = process.env.SKILLS_DIR
+  const isLegacyDir = (dir: string | undefined): boolean => Boolean(
+    dir && fs.existsSync(dir) && !isAgentPackageDir(dir),
+  )
+
+  return Boolean(
+    isLegacyDir(checkpoint)
+    || isLegacyDir(workDir)
+    || isLegacyDir(skillsDir),
+  )
+}
+
 /**
- * 执行存储迁移（阶段 1 同步、阶段 2 后台异步、幂等、不抛出）。仅在主模式（agent/im）执行；
- * worker/sandbox 子进程跳过（父进程已完成，且并发迁移无意义）。
+ * 执行存储迁移（阶段 1 同步、阶段 2 后台异步、幂等、不抛出）。
+ * 调用方负责在 agent 启动阶段调用；sandbox host 不应加载或调用此函数。
  *
  * 同步返回时保证：骨架已建、conversations/schedules 库已固化到位 —— 满足随后 DB 模块 import 期打开的前提。
  * 大件搬迁在阶段 2 后台进行，进度经 getMigrationStatus() 暴露给前端。
  */
 export function runStorageMigration(): void {
-  if (migrated)
+  if (migrated) {
     return
+  }
   migrated = true
 
-  const argMode = process.argv[2]
-  const mode = argMode || process.env.ROXY_MODE || 'agent'
-  if (mode === 'worker' || mode === 'sandbox')
-    return
-
   const fromVersion = readVersion()
-  if (fromVersion >= STORAGE_SCHEMA_VERSION) {
+  if (fromVersion >= STORAGE_SCHEMA_VERSION && !legacyLayoutStillExists()) {
     status.state = 'done'
     return
   }
 
   ensureDir(agentPaths.home)
   const lockFd = acquireLock()
-  if (lockFd === undefined)
-    return // 另一活进程正在迁移，本进程跳过
+  if (lockFd === undefined) {
+    return
+  } // 另一活进程正在迁移，本进程跳过
 
   const lines: string[] = []
   status.state = 'running'
@@ -967,42 +1448,70 @@ export function runStorageMigration(): void {
   let plan: MigrationPlan | null = null
   try {
     log(lines, `开始从 schema v${fromVersion} 迁移到 v${STORAGE_SCHEMA_VERSION}（home=${agentPaths.home}）`)
-    if (fromVersion < 1)
+    if (fromVersion < 1) {
       plan = runPhase1(lines)
-    else
+    }
+    else {
       ensureSkeleton()
+    }
   }
   catch (err) {
     log(lines, `阶段 1 异常（不阻断启动）：${(err as Error).message}`)
-    status.state = 'error'
-    status.error = (err as Error).message
-    status.finishedAt = Date.now()
-    finalizeMigration(lockFd, lines, false)
-    return
+    try {
+      ensureSkeleton()
+    }
+    catch (skeletonError) {
+      log(lines, `创建存储骨架失败（忽略）：${(skeletonError as Error).message}`)
+    }
   }
 
-  // 大件目录迁移（v0）完成后，再统一转换 legacy SSE；v1 用户直接进入转换阶段。
+  /**
+   * 大件目录迁移（v0）完成后，再尽力转换 legacy SSE；任何历史数据问题都不阻止升级。
+   * turns → rollout 在本结构迁移结束后独立后台执行，不纳入 status/ready 门禁。
+   */
   const finishMigration = async () => {
-    if (plan)
-      await runPhase2(plan, lines)
+    if (plan) {
+      try {
+        await runPhase2(plan, lines)
+      }
+      catch (err) {
+        log(lines, `旧目录迁移未完整完成（忽略）：${(err as Error).message}`)
+      }
+    }
     status.phase = 'events'
     status.currentLabel = '会话记录'
     await yieldTick()
-    migrateLegacyConversationEvents(lines)
+    try {
+      migrateLegacyConversationEvents(lines)
+    }
+    catch (err) {
+      log(lines, `历史 SSE 转换未完整完成（忽略）：${(err as Error).message}`)
+    }
   }
 
   let completed = false
   finishMigration()
     .then(() => {
-      log(lines, '迁移完成')
+      log(lines, '结构迁移完成，开始后台补迁历史 rollout')
       status.state = 'done'
+      status.phase = null
       status.currentLabel = ''
-      completed = true
+      return migrateLegacyTurnsToRollouts(lines)
+        .catch((err) => {
+          log(lines, `历史 rollout 补迁异常（忽略）：${(err as Error).message}`)
+          return 0
+        })
+        .then((count) => {
+          log(lines, `后台历史 rollout 补迁完成：${count} 个 session`)
+          completed = true
+        })
     })
     .catch((err) => {
-      log(lines, `阶段 2 异常（不阻断启动）：${(err as Error).message}`)
-      status.state = 'error'
-      status.error = (err as Error).message
+      log(lines, `迁移调度异常（忽略）：${(err as Error).message}`)
+      status.state = 'done'
+      status.phase = null
+      status.currentLabel = ''
+      completed = true
     })
     .finally(() => {
       status.finishedAt = Date.now()

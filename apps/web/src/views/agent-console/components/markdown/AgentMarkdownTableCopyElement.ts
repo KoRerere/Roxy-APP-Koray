@@ -63,7 +63,7 @@ const AgentMarkdownTableCopyElement = defineCustomElement({
   data() {
     return {
       copied: false,
-      copiedTimer: null as ReturnType<typeof window.setTimeout> | null,
+      copiedTimer: null as number | null,
     }
   },
   unmounted() {

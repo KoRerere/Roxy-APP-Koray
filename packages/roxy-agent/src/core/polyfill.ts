@@ -1,8 +1,8 @@
 if (!Promise.withResolvers) {
-  // @ts-expect-error 不需要检测
-  Promise.withResolvers = function () {
-    let resolve, reject
-    const promise = new Promise((res, rej) => {
+  Promise.withResolvers = function <T>(): PromiseWithResolvers<T> {
+    let resolve!: PromiseWithResolvers<T>['resolve']
+    let reject!: PromiseWithResolvers<T>['reject']
+    const promise = new Promise<T>((res, rej) => {
       resolve = res
       reject = rej
     })

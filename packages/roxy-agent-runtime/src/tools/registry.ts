@@ -1,39 +1,42 @@
-import type { AnthropicTool, IToolRegistry, ToolDescriptor, ToolHandler } from "../core/interfaces.ts";
+import type { AnthropicTool, IToolRegistry, ToolDescriptor, ToolHandler } from '../core/interfaces.ts'
+import { zodToJsonSchema } from './schema.ts'
 
-type Entry = { descriptor: ToolDescriptor; handler: ToolHandler };
+type Entry = { descriptor: ToolDescriptor; handler: ToolHandler }
 
 export class ToolRegistry implements IToolRegistry {
-  private readonly tools = new Map<string, Entry>();
-  private readonly onWarn: (msg: string) => void;
+  private readonly tools = new Map<string, Entry>()
+  private readonly onWarn: (msg: string) => void
 
   constructor(opts: { onWarn?: (msg: string) => void } = {}) {
-    this.onWarn = opts.onWarn ?? ((msg) => console.warn(`[ToolRegistry] ${msg}`));
+    this.onWarn = opts.onWarn ?? ((msg) => console.warn(`[ToolRegistry] ${msg}`))
   }
 
   add(descriptor: ToolDescriptor, handler: ToolHandler): void {
     if (this.tools.has(descriptor.name)) {
-      this.onWarn(`tool name collision: ${descriptor.name} (overwriting)`);
+      this.onWarn(`tool name collision: ${descriptor.name} (overwriting)`)
     }
-    this.tools.set(descriptor.name, { descriptor, handler });
+    this.tools.set(descriptor.name, { descriptor, handler })
   }
 
   remove(name: string): void {
-    this.tools.delete(name);
+    this.tools.delete(name)
   }
 
   resolve(name: string): Entry | undefined {
-    return this.tools.get(name);
+    return this.tools.get(name)
   }
 
   all(): ToolDescriptor[] {
-    return [...this.tools.values()].map((e) => e.descriptor);
+    return [...this.tools.values()].map((e) => e.descriptor)
   }
 
   toAnthropicTools(): AnthropicTool[] {
-    return this.all().map((d) => ({
-      name: d.name,
-      description: d.description,
-      input_schema: d.inputSchema,
-    }));
+    return this.all()
+      .filter((descriptor) => descriptor.kind !== 'custom')
+      .map((d) => ({
+        name: d.name,
+        description: d.description,
+        input_schema: zodToJsonSchema(d.inputSchema),
+      }))
   }
 }

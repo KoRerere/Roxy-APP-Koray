@@ -18,7 +18,7 @@ agent loop 要发送给模型的短期消息历史、summary 与 trim 后上下�
 - `Trimmer` — `trim(messages, policy) → { kept, summary }`（同步）。
 - `TrimPolicy` `{ mode: "turns" | "tokens"; keep: number }`；`TrimSummary` `{ removedCount, removedTokens, archivedText }`。
 - `Summarizer` — `summarize(archivedText) → Promise<string>`。
-- `SystemPromptBuilder` — `(base, summary | null) → string`。
+- `SystemPromptBuilder` — `(base) → SystemBlock[]`；只装配稳定的宿主 system prompt。
 - 长期记忆写入生命周期位于 plugin 系统：`MemoryLifecycle.onTurnEnd`
   适合记录完整 turn，`MemoryLifecycle.onCompaction` 适合记录即将离开
   working context 的 archived messages 与 summary。
@@ -73,14 +73,19 @@ extended thinking 的宿主必须提供不小于其 thinking budget 的合法输
 
 `{ "mode": "tokens", "keep": 4 }` → `kept` 仅含最后一条 `assistant`，`removedCount: 3`，`archivedText` 以 `user:` 开头。
 
-### 3.3 裁剪后 + 摘要注入 ChatRequest.system
+### 3.3 裁剪后 + 摘要注入 ChatRequest.messages
 
-裁剪 → `archivedText` 喂给 `Summarizer.summarize` → `setSummary("用户曾询问 X；助手回答 Y。")` → 下一轮 `buildSystemPrompt`：
+裁剪 → `archivedText` 喂给 `Summarizer.summarize` → 摘要以隐藏的 developer message 写入 working memory：
 
 ```json
 {
-  "system": "[Archived Context Summary: 用户曾询问 X；助手回答 Y。]\n\nYou are roxy.",
+  "system": [{ "type": "text", "text": "You are roxy." }],
   "messages": [
+    {
+      "role": "developer",
+      "content": "Previous conversation summary:\n<summary>\n用户曾询问 X；助手回答 Y。\n</summary>",
+      "visible": false
+    },
     { "role": "user", "content": "user-message-xxxx" },
     { "role": "assistant", "content": "assistant-message-xxxx" }
   ]
@@ -92,19 +97,21 @@ extended thinking 的宿主必须提供不小于其 thinking budget 的合法输
 ## 4. 调用时序与异常语义
 
 - `trim` 从历史 **HEAD** 移除消息，**始终保留最新一条**（即便 `keep < 1` 或 token 预算为 0，也至少保留尾部一条）。
+- 发生真实裁剪时，runtime memory 会按 `compactionKey` 取最新一条隐藏上下文、按 `compactionOrder` 排序并放回保留历史头部；已保留的同 key 消息先去重。`removedCount: 0` 时不改写历史。
 - `archivedText` 稳定格式：每条被移除消息渲染为 `"<role>: <text-or-json>"`，以 `"\n"` 连接；字符串内容用字符串，块数组用 `JSON.stringify`。**不包含**保留的尾部。
 - `Summarizer.summarize` 失败时记录 warn 并 **resolve `""`**——**永不 reject**，runtime 据此省略摘要块而非崩溃。
-- `buildSystemPrompt(base, summary)`：`summary` 为 `null` / `""` / 纯空白 → 原样返回 `base`；非空 → 返回 `"[Archived Context Summary: <summary>]\n\n" + base`。
-- 摘要失败不会中断 turn；成功时 runtime 会在下一次模型调用前等待摘要完成，并把摘要作为 synthetic user message 注入保留历史头部。
+- `buildSystemPrompt(base)` 始终只返回稳定的 base block；summary、skill 与 contributor 上下文不改变顶层 system prompt。
+- 摘要失败不会中断 turn；成功时 runtime 会在下一次模型调用前等待摘要完成，并把摘要作为 synthetic developer message 注入保留历史头部。
 
 ## 5. 协议映射 / 关键约定
 
 - runtime 组装 `ChatRequest.messages` 时调用 `memory.getAll()`（或 `getSince(n)`）；超预算先 `trim(policy)` 再调用 provider。
 - `provider.countTokens(messages)` 的结果作为 `SlidingWindowTrimmer` 的 `countTokens` 回调，驱动 tokens 模式。
-- 摘要经 `setSummary` 存储后，下一轮由 `buildSystemPrompt` 注入 `ChatRequest.system` 顶部，匹配 Anthropic 协议（system 为顶层字段）。
+- turn-start 的 summary、skill catalog 和 contributor 输出以 `visible: false` 的 developer message 写入 memory 与 rollout；显式 skill 仍以 user message 注入，再随历史进入 `ChatRequest.messages`。
+- 宿主可用 `Message.compactionKey` / `compactionOrder` 标记 metadata、长期记忆等压缩后必须恢复的上下文；compaction 事件的 `keptMessages` 会包含恢复结果，rollout replay 因此与实时 history 一致。
 - 外部长期记忆的读回通过 `IContextContributor.contribute()` 注入
-  `ChatRequest.system`；写入通过 plugin memory lifecycle 在 turn-end 与
-  compaction 时机接收完整 payload。
+  隐藏 developer message；写入通过 plugin memory lifecycle 在 turn-end 与
+  compaction 时机接收完整 payload。contributor 每轮只调用一次。
 - canonical phase：裁剪产生 `memory_trimmed` 事件（见 observability）。
 
 ## 6. 验收标准
@@ -113,12 +120,12 @@ extended thinking 的宿主必须提供不小于其 thinking budget 的合法输
 - **turns always-keep-latest**：`keep: 0` 时 `kept` 仍长度 1 且为最后一条。
 - **turns within-budget**：在预算内 `removedCount: 0`、`archivedText: ""`。
 - **tokens**：尾部不超预算（除强制保留的最新条）；`keep: 4` 四条 4-token 消息 → 仅留 1 条；空历史 → `kept: []`、`removedCount: 0`、`archivedText: ""`。
-- **buildSystemPrompt**：非空 → `"[Archived Context Summary: summary text]\n\nYou are roxy."`；`null` → `base`；`""` / `"   "` → `base`（`test/memory/systemPrompt.test.ts`）。
+- **buildSystemPrompt**：只返回非空 base block；动态摘要和 skill 不进入 system（`test/memory/systemPrompt.test.ts`）。
 - 生产实现 `SlidingWindowTrimmer` 必须满足 `test/helpers/miniTrimmer.ts` 的参考行为。
 
 ## 7. 边界用例 / 不做清单（out of scope）
 
 - live memory 一律 **in-memory**（进程退出即丢）；不做 sqlite/关系型 provider——schema 迁移成本换不来收益，跨进程恢复交给 rollout。
-- 摘要 **fire-and-forget**，不提供同步等待、不保证当轮注入。
+- 摘要生成在触发 compaction 的模型调用前等待完成，并以隐藏 developer message 注入。
 - `archivedText` 永不包含保留尾部；`role: "system"` 永不进入 `ChatRequest.messages`。
 - 不做跨会话持久化摘要索引、不做向量检索召回（非本模块职责）。

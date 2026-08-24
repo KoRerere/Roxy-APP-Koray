@@ -37,8 +37,88 @@ export interface ResolvedAgentError {
   requestId?: string
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function firstString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim())
+      return value
+  }
+}
+
+function normalizeErrorCode(code: unknown, message?: string): string | undefined {
+  if (typeof code === 'string' && code.trim()) {
+    if (/^\d+$/.test(code.trim()))
+      return normalizeErrorCode(Number(code), message)
+    return code
+  }
+
+  const lowerMessage = message?.toLowerCase() ?? ''
+  if (code === 402 || lowerMessage.includes('insufficient points') || lowerMessage.includes('points balance is insufficient') || message?.includes('积分不足'))
+    return 'insufficient_points'
+
+  if (code === 429)
+    return 'upstream_rate_limited'
+
+  return undefined
+}
+
+function extractErrorFields(data?: AgentErrorData | string | null): {
+  code?: string
+  message?: string
+  requestId?: string
+  retryable?: boolean
+} {
+  if (!isRecord(data))
+    return {}
+
+  const response = isRecord(data.response) ? data.response : undefined
+  const responseData = response && isRecord(response.data) ? response.data : undefined
+  const nestedError = isRecord(data.error) ? data.error : undefined
+  const source = responseData ?? nestedError ?? data
+  const message = firstString(
+    source.message,
+    data.message,
+    response?.message,
+    responseData?.message,
+    nestedError?.message,
+  )
+  const code = normalizeErrorCode(
+    source.code ?? data.code ?? response?.status ?? responseData?.status ?? nestedError?.code,
+    message,
+  )
+
+  return {
+    code,
+    message,
+    requestId: firstString(
+      source.requestId,
+      source.request_id,
+      data.requestId,
+      data.request_id,
+      data.requestID,
+      response?.requestID,
+      response?.requestId,
+      responseData?.requestId,
+      responseData?.request_id,
+      nestedError?.requestID,
+      nestedError?.requestId,
+      nestedError?.request_id,
+    ),
+    retryable: typeof source.retryable === 'boolean'
+      ? source.retryable
+      : typeof responseData?.retryable === 'boolean'
+        ? responseData.retryable
+        : typeof data.retryable === 'boolean'
+          ? data.retryable
+          : undefined,
+  }
+}
+
 export function getAgentErrorCode(data?: AgentErrorData | string | null) {
-  return data && typeof data === 'object' && typeof data.code === 'string' ? data.code : undefined
+  return extractErrorFields(data).code
 }
 
 export function isAgentCancelledError(data?: AgentErrorData | string | null) {
@@ -52,14 +132,15 @@ export function resolveAgentError(data?: AgentErrorData | string | null): Resolv
   if (typeof data === 'string')
     return { message: data || getDefaultMessage(), retryable: false }
 
-  const code = getAgentErrorCode(data)
-  const requestId = typeof data?.requestId === 'string' ? data.requestId : undefined
+  const fields = extractErrorFields(data)
+  const code = fields.code
+  const requestId = fields.requestId
   const codeMessage = getCodeMessage()
 
   return {
-    message: (code && codeMessage[code]) || getDefaultMessage(),
+    message: (code && codeMessage[code]) || fields.message || getDefaultMessage(),
     code,
-    retryable: data?.retryable === true,
+    retryable: fields.retryable === true,
     requestId,
   }
 }

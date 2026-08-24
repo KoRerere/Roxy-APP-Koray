@@ -4,8 +4,10 @@ import AgentTooltip from './AgentTooltip.vue'
 type TooltipPlacement = 'top' | 'top-start' | 'bottom' | 'bottom-start'
 
 const props = withDefaults(defineProps<{
+  contentClass?: string
   content: string
   fallback?: string
+  overflowTargetSelector?: string
   placement?: TooltipPlacement
   zIndex?: number
 }>(), {
@@ -16,11 +18,15 @@ const props = withDefaults(defineProps<{
 
 const textRef = useTemplateRef<HTMLElement>('textRef')
 const overflowed = ref(false)
+const tooltipContentClass = computed(() => ['overflow-tooltip-content', props.contentClass].filter(Boolean).join(' '))
 let resizeObserver: ResizeObserver | undefined
 
 function measureOverflow() {
   const element = textRef.value
-  overflowed.value = Boolean(element && element.scrollWidth > element.clientWidth + 1)
+  const overflowTarget = props.overflowTargetSelector
+    ? element?.querySelector<HTMLElement>(props.overflowTargetSelector)
+    : element
+  overflowed.value = Boolean(overflowTarget && overflowTarget.scrollWidth > overflowTarget.clientWidth + 1)
 }
 
 watch(() => props.content, () => nextTick(measureOverflow), { flush: 'post' })
@@ -39,7 +45,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   <span class="overflow-tooltip">
     <AgentTooltip
       :content="content"
-      content-class="overflow-tooltip-content"
+      :content-class="tooltipContentClass"
       :disabled="!overflowed || !content"
       :placement="placement"
       :z-index="zIndex"

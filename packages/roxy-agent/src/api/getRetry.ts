@@ -165,7 +165,7 @@ async function retryRequest(
     options.maxDelayMs,
   )
   if (delayMs > 0) {
-    await waitForRetry(delayMs, config.signal)
+    await waitForRetry(delayMs, config.signal as AbortSignal | undefined)
   }
 
   return instance.request(config)

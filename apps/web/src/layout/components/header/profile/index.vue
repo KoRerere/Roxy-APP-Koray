@@ -146,6 +146,19 @@ const items = computed(() => {
       },
     },
     {
+      label: 'Agent Inspect(仅开发)',
+      icon: 'base/rx_ic_outlink',
+      vIf: () => import.meta.hot,
+      command: () => {
+        const url = `${location.origin}/agent-inspect.html`
+        if (globalThis.electronAPI) {
+          globalThis.electronAPI.send('app:open-external-url', url)
+          return
+        }
+        window.open(url, '_blank', 'noopener,noreferrer')
+      },
+    },
+    {
       label: '多语言(仅开发)',
       icon: 'base/rx_ic_outlink',
       vIf: () => import.meta.hot,

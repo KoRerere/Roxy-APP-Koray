@@ -21,6 +21,8 @@ interface DiscordConfig {
 class SimpleDiscordClient {
   private token: string
   private gatewayUrl?: string
+  private sessionId?: string
+  private resumeGatewayUrl?: string
   private ws?: WebSocket
   private heartbeatInterval?: NodeJS.Timeout
   private lastSequenceNumber?: number
@@ -54,7 +56,7 @@ class SimpleDiscordClient {
     if (response.status === 204) {
       return undefined as T
     }
-    return response.json()
+    return await response.json() as T
   }
 
   async getGateway(): Promise<string> {
@@ -298,7 +300,7 @@ export async function startDiscordAdapter(
                 }
               },
             )
-          }, 'script')
+          })
           await streamer.flush(
             async (txt) => {
               const safeText = normalizeImText(txt, { maxChars: DISCORD_TEXT_MAX_CHARS, fallbackText: '（无回复）' })

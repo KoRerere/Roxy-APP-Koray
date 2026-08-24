@@ -1,15 +1,22 @@
-import type { AgentAttachment, AgentConsoleState, AgentConversation, AgentFolderSelection, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentProcessEvent, AgentRunStatus, AgentTodoItem, AgentTodoItemStatus, AgentTodoProgress } from '../types'
+import type { AgentAttachment, AgentConsoleState, AgentConversation, AgentFolderSelection, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentProcessEvent, AgentQueuedPrompt, AgentRunStatus, AgentTodoItem, AgentTodoItemStatus, AgentTodoProgress } from '../types'
 import type { AgentChannelMessage, AgentConversationRunEventDTO } from '@roxy/shared/channel'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { collectTaskConversationIds } from '../agent-channel-state'
+import type { AgentConsoleConversationDetailDTO } from '../api'
 import { useAgentConsoleApi } from '../api'
 import type { ConversationReadTarget } from '../conversation-unread-state'
 import { getConversationReadTarget } from '../conversation-unread-state'
-import { appendConversationRunEvent, LocallyStoppedConversationRunRegistry, PendingConversationRunRegistry, reconcileConversationRunSummary, replaceConversationRunEvents, terminalRunStatus } from '../conversation-run-state'
+import type { PendingRunPresentation } from '../conversation-run-state'
+import { appendConversationRunEvent, appendConversationRunPresentationEvents, appendOrderedConversationRunEvents, createPendingRunMessages, LocallyStoppedConversationRunRegistry, PendingConversationRunRegistry, reconcileConversationRunMessages, reconcileConversationRunSummary, replaceConversationRunEvents, shouldPinConversationMessageCache, shouldRequestConversationDetail, terminalRunStatus } from '../conversation-run-state'
 import { createHitlRequestFromAgentEvent, createLegacyResumeDecisions } from '../hitlAdapter'
-import { buildProcessFromEvents, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
+import { resolveHitlActionTitles } from '../hitlResourcePresentation'
+import { buildProcessFromEvents, formatDuration, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
+import { resolveScriptRunPresentationEvents } from '../scriptRunPresentation'
+import { createIdleAwareStreamTextEventBufferScheduler, StreamTextEventBuffer } from '../streamTextEventBuffer'
+import { createQueuedPrompt, reorderQueuedPrompt as movePromptInQueue, removeQueuedPrompt as removePromptFromQueue } from '../prompt-queue'
+import { collectLocalPathAttachments } from '../local-path-context'
 import {
   AI_BATCH_CREATE_PROMPT_QUERY_KEY,
   AI_BATCH_CREATE_TEMPLATE_SLUG,
@@ -32,19 +39,24 @@ import { readCatalogList } from '../template-store'
 import type { OfficialTemplate } from '../template-store'
 import { useAgentAccessMode } from './useAgentAccessMode'
 import { useAgentChannelState } from './useAgentChannel'
-import { useTaskMonitor } from './useTaskMonitor'
+import { useProfileMonitor } from './useProfileMonitor'
 import { createPerfTimer, perfLog } from '/@/utils/perf-log'
 import { useSimpleLocale } from '/@/stores/locale'
 
 let state: AgentConsoleState | undefined
 const homePrompt = ref('')
 const homePendingAttachments = ref<AgentAttachment[]>([])
+const homePendingMessages = ref<AgentMessage[]>([])
+const homeQueuedPrompts = ref<AgentQueuedPrompt[]>([])
+let homeRunPreparationToken: string | undefined
 
 const CONVERSATION_PAGE_SIZE = 10
+const CONVERSATION_MESSAGE_PAGE_SIZE = 5
+const STREAM_TEXT_BUFFER_TTL_MS = 50
+const ASSISTANT_REFRESH_INTERVAL_MS = 50
 
-const loadedConversationDetails = new Set<string>()
 const loadingConversationDetails = new Set<string>()
-const recoveringRunIds = new Set<string>()
+const refreshingServerTerminalRuns = new Set<string>()
 const bufferedRunEvents = new Map<string, AgentConversationRunEventDTO[]>()
 let conversationListLoadPromise: Promise<void> | undefined
 let conversationListMorePromise: Promise<void> | undefined
@@ -53,16 +65,35 @@ const conversationListHasMore = ref(true)
 const conversationListLoadingMore = ref(false)
 let conversationRunSubscriberInstalled = false
 
-interface PendingRunStart {
-  requestId: string
+interface ConversationMessagePaginationState {
+  hasMore: boolean
+  loading: boolean
+  nextCursor: string | null
+}
+
+const conversationMessagePaginationById = reactive<Record<string, ConversationMessagePaginationState>>({})
+
+interface PendingRunDraft extends PendingRunPresentation {
   content: string
   draftContent: string
   attachments: AgentAttachment[]
 }
 
+interface PendingRunStart extends PendingRunDraft {
+  requestId: string
+}
+
+interface SendPromptOptions {
+  attachments?: AgentAttachment[]
+  content?: string
+  conversationId?: string
+  fromQueue?: boolean
+}
+
 const PENDING_RUN_START_TIMEOUT_MS = 15_000
 const pendingRunStarts = new PendingConversationRunRegistry<PendingRunStart>()
 const pendingRunPayloads = new Map<string, PendingRunStart>()
+const preparingRunStarts = new Map<string, PendingRunDraft>()
 const locallyStoppedRuns = new LocallyStoppedConversationRunRegistry<PendingRunStart>()
 const pendingRunVersion = ref(0)
 
@@ -76,6 +107,7 @@ function createEmptyAgentConsoleState(): AgentConsoleState {
     conversationIds: [],
     conversationsById: {},
     draftsByConversationId: {},
+    queuedPromptsByConversationId: {},
     messagesByConversationId: {},
     runsById: {},
     streamsByRunId: {},
@@ -86,16 +118,18 @@ function createEmptyAgentConsoleState(): AgentConsoleState {
 }
 
 function getRouteConversationId(value: unknown) {
-  if (Array.isArray(value))
+  if (Array.isArray(value)) {
     return value[0]
+  }
 
   return typeof value === 'string' ? value : undefined
 }
 
 function createConversationTitle(prompt?: string) {
   const normalized = prompt?.trim()
-  if (!normalized)
+  if (!normalized) {
     return 'New conversation'
+  }
 
   return normalized.length > 42 ? `${normalized.slice(0, 42)}...` : normalized
 }
@@ -104,7 +138,12 @@ function getCurrentDisplayTime() {
   return formatTime(Date.now())
 }
 
-function createConversation(consoleState: AgentConsoleState, title = 'New conversation', conversationId?: string) {
+function createConversation(
+  consoleState: AgentConsoleState,
+  title = 'New conversation',
+  conversationId?: string,
+  initializeMessageCache = true,
+) {
   const id = conversationId ?? `conv-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
   const conversation: AgentConversation = {
     id,
@@ -117,17 +156,22 @@ function createConversation(consoleState: AgentConsoleState, title = 'New conver
   consoleState.conversationIds.unshift(id)
   consoleState.conversationsById[id] = conversation
   consoleState.draftsByConversationId[id] = { conversationId: id, prompt: '', attachments: [] }
-  consoleState.messagesByConversationId[id] = []
+  consoleState.queuedPromptsByConversationId[id] = []
+  if (initializeMessageCache) {
+    consoleState.messagesByConversationId[id] = []
+  }
   consoleState.taskGroupsByConversationId[id] = []
 
   return conversation
 }
 
 function ensureConversation(consoleState: AgentConsoleState, conversationId?: string) {
-  if (!conversationId)
+  if (!conversationId) {
     return undefined
+  }
 
-  return consoleState.conversationsById[conversationId] ?? createConversation(consoleState, 'Loading conversation...', conversationId)
+  return consoleState.conversationsById[conversationId]
+    ?? createConversation(consoleState, 'Loading conversation...', conversationId, false)
 }
 
 function setRunStatus(
@@ -143,8 +187,9 @@ function setRunStatus(
   if (run) {
     run.status = status
     run.error = error
-    if (status === 'completed' || status === 'failed' || status === 'cancelled')
+    if (status === 'completed' || status === 'failed' || status === 'cancelled') {
       run.completedAt = getCurrentDisplayTime()
+    }
   }
 
   if (stream) {
@@ -158,10 +203,12 @@ function setRunStatus(
       conversation.latestRunStatus = status
       conversation.runningRunIds = conversation.runningRunIds.filter(id => id !== runId)
       // 会话由运行中转为空闲时纳入 LRU 管理（可能触发淘汰最早的非运行中会话）
-      if (conversation.runningRunIds.length === 0)
+      if (conversation.runningRunIds.length === 0) {
         touchConversationCache(consoleState, run.conversationId)
-      if (options.markUnread)
+      }
+      if (options.markUnread) {
         conversation.unread = true
+      }
     }
     delete consoleState.todoProgressByRunId[runId]
     delete consoleState.pendingHitlByConversationId[run.conversationId]
@@ -172,10 +219,17 @@ function isRunActive(status?: AgentRunStatus) {
   return status === 'queued' || status === 'streaming'
 }
 
+function isTerminalRunStatus(
+  status?: AgentRunStatus,
+): status is Extract<AgentRunStatus, 'completed' | 'failed' | 'cancelled'> {
+  return status === 'completed' || status === 'failed' || status === 'cancelled'
+}
+
 function isConversationRunning(consoleState: AgentConsoleState, conversationId: string) {
   const conversation = consoleState.conversationsById[conversationId]
-  if (!conversation)
+  if (!conversation) {
     return false
+  }
 
   return conversation.runningRunIds.some((runId) => {
     const run = consoleState.runsById[runId]
@@ -188,24 +242,53 @@ const MESSAGE_CACHE_LIMIT = 3
 // Map 保持插入顺序：delete 后重新 set 即把会话移到"最近使用"位置。
 const recentConversationIds = new Map<string, true>()
 
-function evictConversationMessages(consoleState: AgentConsoleState, conversationId: string) {
-  delete consoleState.messagesByConversationId[conversationId]
-  loadedConversationDetails.delete(conversationId)
+function isConversationCachePinned(consoleState: AgentConsoleState, conversationId: string): boolean {
+  const hasRunningAssistantMessage = consoleState.messagesByConversationId[conversationId]?.some((message) => {
+    return message.role === 'assistant'
+      && (message.status === 'thinking' || message.status === 'streaming')
+  }) ?? false
+
+  return shouldPinConversationMessageCache({
+    hasActiveRun: isConversationRunning(consoleState, conversationId),
+    hasPendingRun: pendingRunStarts.has(conversationId),
+    hasPreparingRun: preparingRunStarts.has(conversationId),
+    hasRunningMessage: hasRunningAssistantMessage,
+    hasStoppedPendingRun: locallyStoppedRuns.hasPending(conversationId),
+  })
 }
 
-// 将会话标记为最近使用并纳入 LRU 管理；超出上限时淘汰最久未用的非运行中会话消息。
-// 运行中会话常驻，不进入 LRU。普通 delete 不清理消息，故 run 启动时从 LRU 移除是安全的。
-function touchConversationCache(consoleState: AgentConsoleState, conversationId: string) {
-  if (isConversationRunning(consoleState, conversationId))
+function pinConversationCache(conversationId: string): void {
+  recentConversationIds.delete(conversationId)
+}
+
+function evictConversationMessages(consoleState: AgentConsoleState, conversationId: string): void {
+  if (isConversationCachePinned(consoleState, conversationId)) {
+    pinConversationCache(conversationId)
     return
+  }
+
+  delete consoleState.messagesByConversationId[conversationId]
+  delete conversationMessagePaginationById[conversationId]
+}
+
+/**
+ * 将会话标记为最近使用并纳入 LRU 管理；超出上限时淘汰最久未用的非运行中会话消息。
+ * preparing、pending 和运行中会话常驻内存，不进入 LRU。
+ */
+function touchConversationCache(consoleState: AgentConsoleState, conversationId: string) {
+  if (isConversationCachePinned(consoleState, conversationId)) {
+    pinConversationCache(conversationId)
+    return
+  }
 
   recentConversationIds.delete(conversationId)
   recentConversationIds.set(conversationId, true)
 
   while (recentConversationIds.size > MESSAGE_CACHE_LIMIT) {
     const oldest = recentConversationIds.keys().next().value
-    if (oldest === undefined)
+    if (oldest === undefined) {
       break
+    }
 
     recentConversationIds.delete(oldest)
     evictConversationMessages(consoleState, oldest)
@@ -216,66 +299,17 @@ function isLocalConversationId(id: string) {
   return id.startsWith('conv-')
 }
 
-function isLocalMessageForActiveRun(consoleState: AgentConsoleState, message: AgentMessage) {
-  if (message.status === 'thinking' || message.status === 'streaming')
-    return true
-
-  if (!message.runId)
-    return false
-
-  return isRunActive(consoleState.runsById[message.runId]?.status)
-}
-
-function getMessageSignature(message: AgentMessage) {
-  return `${message.role}:${message.content.trim()}`
-}
-
-function mergeHistoryMessages(consoleState: AgentConsoleState, conversationId: string, historyMessages: AgentMessage[]) {
-  const localMessages = consoleState.messagesByConversationId[conversationId] ?? []
-  const hasLocalRunMessages = localMessages.some(message => message.runId && consoleState.runsById[message.runId])
-
-  if (!historyMessages.length && hasLocalRunMessages)
-    return false
-
-  const frozenMessagesById = new Map(
-    localMessages
-      .filter(message => message.runId && locallyStoppedRuns.hasRun(message.runId))
-      .map(message => [message.id, message]),
-  )
-  const mergedHistoryMessages = historyMessages.map(message => frozenMessagesById.get(message.id) ?? message)
-  const activeLocalMessages = localMessages.filter((message) => {
-    return isLocalMessageForActiveRun(consoleState, message)
-      || Boolean(message.runId && locallyStoppedRuns.hasRun(message.runId))
-  })
-
-  if (!activeLocalMessages.length) {
-    consoleState.messagesByConversationId[conversationId] = mergedHistoryMessages
-    return true
-  }
-
-  const historyIds = new Set(mergedHistoryMessages.map(message => message.id))
-  const historySignatures = new Set(mergedHistoryMessages.map(message => getMessageSignature(message)))
-  const optimisticMessages = activeLocalMessages.filter((message) => {
-    if (historyIds.has(message.id))
-      return false
-
-    return !message.content.trim() || !historySignatures.has(getMessageSignature(message))
-  })
-
-  consoleState.messagesByConversationId[conversationId] = [...mergedHistoryMessages, ...optimisticMessages]
-  return historyMessages.length > 0
-}
-
 function removeConversation(consoleState: AgentConsoleState, conversationId: string) {
   conversationServerIds = conversationServerIds.filter(id => id !== conversationId)
   revokeAttachments(consoleState.draftsByConversationId[conversationId]?.attachments)
   consoleState.conversationIds = consoleState.conversationIds.filter(id => id !== conversationId)
   delete consoleState.conversationsById[conversationId]
   delete consoleState.draftsByConversationId[conversationId]
+  delete consoleState.queuedPromptsByConversationId[conversationId]
   delete consoleState.messagesByConversationId[conversationId]
+  delete conversationMessagePaginationById[conversationId]
   delete consoleState.taskGroupsByConversationId[conversationId]
   delete consoleState.pendingHitlByConversationId[conversationId]
-  loadedConversationDetails.delete(conversationId)
   loadingConversationDetails.delete(conversationId)
   recentConversationIds.delete(conversationId)
 
@@ -285,8 +319,9 @@ function removeConversation(consoleState: AgentConsoleState, conversationId: str
   locallyStoppedRuns.removeConversation(conversationId, conversationRunIds)
 
   for (const runId of Object.keys(consoleState.runsById)) {
-    if (consoleState.runsById[runId]?.conversationId !== conversationId)
+    if (consoleState.runsById[runId]?.conversationId !== conversationId) {
       continue
+    }
 
     delete consoleState.runsById[runId]
     delete consoleState.streamsByRunId[runId]
@@ -300,8 +335,9 @@ function createEmptyDraft(conversationId: string) {
 
 function revokeAttachments(attachments?: AgentAttachment[]) {
   for (const attachment of attachments ?? []) {
-    if (attachment.preview)
+    if (attachment.preview) {
       URL.revokeObjectURL(attachment.preview)
+    }
   }
 }
 
@@ -315,8 +351,9 @@ function inferMimeType(file: File) {
 }
 
 function inferMimeTypeFromName(fileName: string, fallback = 'application/octet-stream') {
-  if (fallback && fallback !== 'application/octet-stream')
+  if (fallback && fallback !== 'application/octet-stream') {
     return fallback
+  }
 
   const ext = fileName.split('.').pop()?.toLowerCase()
   const mimeByExt: Record<string, string> = {
@@ -383,20 +420,23 @@ function createLocalPathAttachment(selection: AgentPathSelection): AgentAttachme
 }
 
 function normalizeTodoStatus(value: unknown): AgentTodoItemStatus {
-  if (value === 'in_progress' || value === 'completed')
+  if (value === 'in_progress' || value === 'completed') {
     return value
+  }
 
   return 'pending'
 }
 
 function getTodoSource(data: unknown): unknown[] {
-  if (Array.isArray(data))
+  if (Array.isArray(data)) {
     return data
+  }
 
   if (data && typeof data === 'object') {
     const todos = (data as { todos?: unknown }).todos
-    if (Array.isArray(todos))
+    if (Array.isArray(todos)) {
       return todos
+    }
   }
 
   return []
@@ -422,8 +462,9 @@ function buildTodoProgress(conversationId: string, runId: string, data: unknown)
     })
     .filter(item => item.content.trim())
 
-  if (!todos.length)
+  if (!todos.length) {
     return undefined
+  }
 
   const activeIndex = todos.findIndex(item => item.status === 'in_progress')
   const pendingIndex = todos.findIndex(item => item.status === 'pending')
@@ -454,10 +495,25 @@ export function useAgentConsole() {
   const { fullAccess } = useAgentAccessMode()
   const [showToast, onlyErrorToast] = useResponseToast()
   const agentChannel = useAgentChannelState()
-  const taskMonitor = useTaskMonitor()
+  const profileMonitor = useProfileMonitor()
   const route = useRoute()
   const router = useRouter()
   perfLog('agent-console:useAgentConsole:start')
+  const queuedAssistantRefreshes = new Map<string, {
+    assistantMessageId: string
+    conversationId: string
+  }>()
+  const releasedRunEvents = new Map<string, AgentConversationRunEventDTO[]>()
+  const presentationEventQueues = new Map<string, AgentConversationRunEventDTO[]>()
+  const drainingPresentationRuns = new Set<string>()
+  let assistantRefreshTimer: number | undefined
+
+  onBeforeUnmount(() => {
+    if (assistantRefreshTimer !== undefined) {
+      window.clearTimeout(assistantRefreshTimer)
+    }
+    queuedAssistantRefreshes.clear()
+  })
 
   let aiBatchCreatePromptRequestId = 0
   let createAutomationPromptRequestId = 0
@@ -476,11 +532,13 @@ export function useAgentConsole() {
       })
       const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
       const prompt = pickAiBatchCreatePrompt(templates, localeStore.currentLocale)
-      if (!prompt)
+      if (!prompt) {
         throw new Error($t('未找到批量创建窗口模板'))
+      }
 
-      if (requestId === aiBatchCreatePromptRequestId && route.name === 'agent-console-chat')
+      if (requestId === aiBatchCreatePromptRequestId && route.name === 'agent-console-chat') {
         homePrompt.value = prompt
+      }
     }
     catch (error) {
       const cachedPrompt = pickAiBatchCreatePrompt(
@@ -531,8 +589,9 @@ export function useAgentConsole() {
         profileReference => $t('在 {profile} 窗口中运行', { profile: profileReference }),
       )
 
-      if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat')
+      if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat') {
         homePrompt.value = prompt
+      }
     }
     catch (error) {
       if (requestId === createAutomationPromptRequestId && route.name === 'agent-console-chat') {
@@ -557,8 +616,9 @@ export function useAgentConsole() {
       route.query[CREATE_AUTOMATION_WINDOW_IDS_QUERY_KEY],
     ] as const,
     ([routeName, prefill]) => {
-      if (routeName !== 'agent-console-chat')
+      if (routeName !== 'agent-console-chat') {
         return
+      }
 
       if (isAiBatchCreatePromptRequest(prefill)) {
         requestAiBatchCreateGuide()
@@ -585,8 +645,9 @@ export function useAgentConsole() {
     ([routeName, conversationId]) => {
       if (routeName === 'agent-console-conversation') {
         ensureConversation(consoleState, conversationId)
-        if (conversationId)
+        if (conversationId) {
           void loadConversationDetail(conversationId)
+        }
       }
     },
     { immediate: true },
@@ -601,7 +662,7 @@ export function useAgentConsole() {
       for (const conversationId of conversationIds) {
         if (!consoleState.conversationsById[conversationId]
           || !consoleState.conversationIds.includes(conversationId)) {
-          void loadConversationDetail(conversationId, true)
+          void loadConversationList()
         }
       }
     },
@@ -615,8 +676,9 @@ export function useAgentConsole() {
 
   const activeConversationId = computed(() => {
     const conversationId = routeConversationId.value
-    if (conversationId && consoleState.conversationsById[conversationId])
+    if (conversationId && consoleState.conversationsById[conversationId]) {
       return conversationId
+    }
 
     return undefined
   })
@@ -630,8 +692,9 @@ export function useAgentConsole() {
 
   async function markConversationRead(target: ConversationReadTarget) {
     const key = `${target.conversationId}:${target.runId}`
-    if (markingConversationReadKeys.has(key))
+    if (markingConversationReadKeys.has(key)) {
       return
+    }
 
     markingConversationReadKeys.add(key)
     try {
@@ -649,8 +712,9 @@ export function useAgentConsole() {
   watch(
     () => getConversationReadTarget(activeConversation.value, activeConversationId.value),
     (target) => {
-      if (target)
+      if (target) {
         void markConversationRead(target)
+      }
     },
     { immediate: true },
   )
@@ -659,10 +723,24 @@ export function useAgentConsole() {
 
   const messageList = computed(() => {
     const conversationId = activeConversationId.value
-    return conversationId ? consoleState.messagesByConversationId[conversationId] ?? [] : []
+    return conversationId ? consoleState.messagesByConversationId[conversationId] ?? [] : homePendingMessages.value
   })
 
-  const taskGroupList = taskMonitor.taskGroupList
+  const messageHistoryHasMore = computed(() => {
+    const conversationId = activeConversationId.value
+    return conversationId
+      ? conversationMessagePaginationById[conversationId]?.hasMore === true
+      : false
+  })
+
+  const messageHistoryLoading = computed(() => {
+    const conversationId = activeConversationId.value
+    return conversationId
+      ? conversationMessagePaginationById[conversationId]?.loading === true
+      : false
+  })
+
+  const taskGroupList = profileMonitor.taskGroupList
 
   const activeHitlRequest = computed(() => {
     const conversationId = activeConversationId.value
@@ -672,15 +750,17 @@ export function useAgentConsole() {
 
   const activeTodoProgress = computed(() => {
     const conversation = activeConversation.value
-    if (!conversation)
+    if (!conversation) {
       return undefined
+    }
 
     for (let index = conversation.runningRunIds.length - 1; index >= 0; index--) {
       const runId = conversation.runningRunIds[index]
       const run = consoleState.runsById[runId]
       const progress = consoleState.todoProgressByRunId[runId]
-      if (progress && (run?.status === 'queued' || run?.status === 'streaming'))
+      if (progress && (run?.status === 'queued' || run?.status === 'streaming')) {
         return progress
+      }
     }
 
     return undefined
@@ -705,26 +785,133 @@ export function useAgentConsole() {
     },
   })
 
+  const queuedPrompts = computed(() => {
+    const conversationId = activeConversationId.value
+    if (!conversationId) {
+      return homeQueuedPrompts.value
+    }
+
+    return consoleState.queuedPromptsByConversationId[conversationId] ||= []
+  })
+
+  const drainingPromptQueues = new Set<string>()
+
+  function getPromptQueue(conversationId?: string) {
+    if (!conversationId) {
+      return homeQueuedPrompts.value
+    }
+
+    return consoleState.queuedPromptsByConversationId[conversationId] ||= []
+  }
+
+  function enqueuePrompt(
+    conversationId: string | undefined,
+    content: string,
+    options: { attachments?: AgentAttachment[], draftContent?: string } = {},
+  ) {
+    const normalized = content.trim()
+    if (!normalized && !options.attachments?.length) {
+      return
+    }
+
+    getPromptQueue(conversationId).push(createQueuedPrompt(
+      conversationId ?? 'home',
+      normalized,
+      Date.now(),
+      options,
+    ))
+  }
+
+  function removeQueuedPrompt(promptId: string) {
+    const item = removePromptFromQueue(queuedPrompts.value, promptId)
+    revokeAttachments(item?.attachments)
+  }
+
+  function reorderQueuedPrompt(payload: { promptId: string, targetIndex: number }) {
+    movePromptInQueue(queuedPrompts.value, payload.promptId, payload.targetIndex)
+  }
+
+  function restoreQueuedPrompt(promptId: string) {
+    const item = removePromptFromQueue(queuedPrompts.value, promptId)
+    if (item) {
+      prompt.value = item.draftContent ?? item.content
+      if (item.attachments?.length) {
+        const conversationId = activeConversationId.value
+        if (!conversationId) {
+          homePendingAttachments.value = [...homePendingAttachments.value, ...item.attachments]
+        }
+        else {
+          const draft = consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
+          draft.attachments.push(...item.attachments)
+        }
+      }
+    }
+  }
+
+  function isConversationStarting(conversationId: string) {
+    return isConversationRunning(consoleState, conversationId)
+      || pendingRunStarts.has(conversationId)
+      || preparingRunStarts.has(conversationId)
+  }
+
+  function schedulePromptQueueDrain(conversationId?: string) {
+    const queueKey = conversationId ?? 'home'
+    queueMicrotask(() => void drainPromptQueue(conversationId, queueKey))
+  }
+
+  async function drainPromptQueue(conversationId: string | undefined, queueKey: string) {
+    if (drainingPromptQueues.has(queueKey)) {
+      return
+    }
+
+    if (conversationId ? isConversationStarting(conversationId) : Boolean(homeRunPreparationToken)) {
+      return
+    }
+
+    const queue = getPromptQueue(conversationId)
+    const item = queue[0]
+    if (!item) {
+      return
+    }
+
+    drainingPromptQueues.add(queueKey)
+    try {
+      const started = await sendPrompt({
+        attachments: item.attachments ?? [],
+        content: item.content,
+        conversationId,
+        fromQueue: true,
+      })
+      if (started) {
+        removePromptFromQueue(queue, item.id)
+      }
+    }
+    finally {
+      drainingPromptQueues.delete(queueKey)
+    }
+  }
+
   const pendingAttachments = computed(() => {
     const conversationId = activeConversationId.value
-    if (!conversationId)
+    if (!conversationId) {
       return homePendingAttachments.value
+    }
 
     consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
     return consoleState.draftsByConversationId[conversationId].attachments
   })
 
-  const hasPendingAttachmentUploads = computed(() => {
-    return pendingAttachments.value.some(attachment => attachment.uploadStatus === 'uploading')
-  })
-
   const isThinking = computed(() => {
     const conversation = activeConversation.value
-    if (!conversation)
-      return false
+    if (!conversation) {
+      return homePendingMessages.value.some((message) => {
+        return message.role === 'assistant' && (message.status === 'thinking' || message.status === 'streaming')
+      })
+    }
 
-    if (pendingRunVersion.value >= 0 && pendingRunStarts.has(conversation.id))
+    if (pendingRunVersion.value >= 0 && pendingRunStarts.has(conversation.id)) {
       return true
+    }
 
     return conversation.runningRunIds.some((runId) => {
       const run = consoleState.runsById[runId]
@@ -733,8 +920,9 @@ export function useAgentConsole() {
   })
 
   const runningTaskCount = computed(() => {
-    return taskMonitor.runningTaskCount.value
+    return profileMonitor.runningTaskCount.value
   })
+  const profileCount = computed(() => profileMonitor.profileCount.value)
 
   function routeToConversation(conversationId: string) {
     return router.push({
@@ -749,6 +937,9 @@ export function useAgentConsole() {
   }
 
   async function startNewChat() {
+    homeRunPreparationToken = undefined
+    homePendingMessages.value = []
+    homeQueuedPrompts.value = []
     homePrompt.value = ''
     clearPendingAttachments()
     await router.push({
@@ -758,11 +949,18 @@ export function useAgentConsole() {
   }
 
   function toggleTaskGroup(id: string) {
-    taskMonitor.toggleTaskGroup(id)
+    profileMonitor.toggleTaskGroup(id)
   }
 
   function mergeConversation(conversation: AgentConversation) {
     const existing = consoleState.conversationsById[conversation.id]
+    const previousRunId = existing?.latestRunId
+    const previousRun = previousRunId ? consoleState.runsById[previousRunId] : undefined
+    const wasRunning = Boolean(
+      previousRunId
+      && previousRunId === conversation.latestRunId
+      && (isRunActive(previousRun?.status) || existing?.runningRunIds.includes(previousRunId)),
+    )
     const runSummary = reconcileConversationRunSummary(
       existing,
       conversation,
@@ -776,13 +974,24 @@ export function useAgentConsole() {
     }
 
     consoleState.draftsByConversationId[conversation.id] ||= createEmptyDraft(conversation.id)
-    consoleState.messagesByConversationId[conversation.id] ||= []
+    consoleState.queuedPromptsByConversationId[conversation.id] ||= []
     consoleState.taskGroupsByConversationId[conversation.id] ||= []
+
+    if (wasRunning && conversation.latestRunId && isTerminalRunStatus(runSummary.latestRunStatus)) {
+      finalizeRunFromServer(conversation.id, conversation.latestRunId, runSummary.latestRunStatus)
+      refreshServerTerminalRun(conversation.id, conversation.latestRunId)
+    }
+
+    if (isConversationCachePinned(consoleState, conversation.id)) {
+      consoleState.messagesByConversationId[conversation.id] ||= []
+      pinConversationCache(conversation.id)
+    }
   }
 
   async function loadConversationList() {
-    if (conversationListLoadPromise)
+    if (conversationListLoadPromise) {
       return conversationListLoadPromise
+    }
 
     const endLoadConversationList = createPerfTimer('agent-console:loadConversationList')
     conversationListLoadPromise = (async () => {
@@ -810,8 +1019,9 @@ export function useAgentConsole() {
         conversationListHasMore.value = conversations.length === limit
         consoleState.conversationIds = [...localIdsToKeep, ...conversationServerIds]
 
-        if (conversationId)
+        if (conversationId) {
           await loadConversationDetail(conversationId)
+        }
       }
       catch (error) {
         console.error('[agent-console] Failed to load conversation list:', error)
@@ -828,10 +1038,12 @@ export function useAgentConsole() {
   }
 
   async function loadMoreConversations() {
-    if (conversationListLoadPromise)
+    if (conversationListLoadPromise) {
       await conversationListLoadPromise
-    if (!conversationListHasMore.value || conversationListMorePromise)
+    }
+    if (!conversationListHasMore.value || conversationListMorePromise) {
       return conversationListMorePromise
+    }
 
     conversationListLoadingMore.value = true
     conversationListMorePromise = (async () => {
@@ -868,37 +1080,86 @@ export function useAgentConsole() {
     return conversationListMorePromise
   }
 
-  async function loadConversationDetail(conversationId: string, force = false) {
+  function canLoadConversationDetail(conversationId: string): boolean {
+    const conversation = consoleState.conversationsById[conversationId]
+    const isTerminal = conversation?.latestRunStatus === 'completed'
+      || conversation?.latestRunStatus === 'failed'
+      || conversation?.latestRunStatus === 'cancelled'
+    const isKnownConversation = conversationServerIds.includes(conversationId) || isTerminal
+    const hasMessageCache = Object.hasOwn(consoleState.messagesByConversationId, conversationId)
+    const isRunning = isConversationCachePinned(consoleState, conversationId)
+
+    return shouldRequestConversationDetail({
+      hasMessageCache,
+      isKnownConversation,
+      isRunning,
+    })
+  }
+
+  async function resolveHistoryScriptRunPresentation(detail: AgentConsoleConversationDetailDTO): Promise<AgentConsoleConversationDetailDTO> {
+    const messages = await Promise.all(detail.messages.map(async (message) => {
+      if (!message.events?.length) {
+        return message
+      }
+
+      return {
+        ...message,
+        events: await resolveScriptRunPresentationEvents(message.events, {
+          templates: agentApi.templates,
+          userTemplates: agentApi.userTemplates,
+          locale: localeStore.currentLocale,
+          workspaceId: workspaceStore.currentWorkspace?.id,
+        }),
+      }
+    }))
+
+    return { ...detail, messages }
+  }
+
+  async function loadConversationDetail(conversationId: string) {
+    if (!canLoadConversationDetail(conversationId) || loadingConversationDetails.has(conversationId)) {
+      return
+    }
+
     touchConversationCache(consoleState, conversationId)
-    if (!force && loadedConversationDetails.has(conversationId))
-      return
-    if (loadingConversationDetails.has(conversationId))
-      return
 
     const endLoadConversationDetail = createPerfTimer('agent-console:loadConversationDetail', {
       conversationId,
-      force,
     })
     loadingConversationDetails.add(conversationId)
 
     try {
-      const detail = await agentApi.conversationDetail(conversationId)
+      let detail = await agentApi.conversationDetail(conversationId, {
+        limit: CONVERSATION_MESSAGE_PAGE_SIZE,
+      })
+      if (!canLoadConversationDetail(conversationId)) {
+        return
+      }
+      detail = await resolveHistoryScriptRunPresentation(detail)
+      if (!canLoadConversationDetail(conversationId)) {
+        return
+      }
+
       const conversation = mapHistoryConversation(detail.conversation)
       mergeConversation(conversation)
 
-      if (!consoleState.conversationIds.includes(conversation.id))
+      if (!consoleState.conversationIds.includes(conversation.id)) {
         consoleState.conversationIds.unshift(conversation.id)
+      }
 
       const terminalRuns: Array<{ runId: string, status: AgentRunStatus, error?: string }> = []
       for (const message of detail.messages) {
-        if (message.role !== 'assistant' || !message.events?.length)
+        if (message.role !== 'assistant' || !message.events?.length) {
           continue
-        if (locallyStoppedRuns.hasRun(message.events[0].runId))
+        }
+        if (locallyStoppedRuns.hasRun(message.events[0].runId)) {
           continue
+        }
 
         const stream = ensureConversationRunState(message.events[0])
-        if (!replaceConversationRunEvents(stream, message.events))
+        if (!replaceConversationRunEvents(stream, message.events)) {
           continue
+        }
         const terminal = message.events.map(terminalRunStatus).findLast(Boolean)
         if (terminal) {
           const failure = message.events.findLast(item => item.event.type === 'run_failed')
@@ -910,13 +1171,17 @@ export function useAgentConsole() {
         }
       }
 
-      if (mergeHistoryMessages(consoleState, conversationId, mapHistoryMessages(detail)))
-        loadedConversationDetails.add(conversationId)
-      else
-        loadedConversationDetails.delete(conversationId)
+      consoleState.messagesByConversationId[conversationId] = mapHistoryMessages(detail)
+      conversationMessagePaginationById[conversationId] = {
+        hasMore: detail.hasMore === true && detail.nextCursor !== null,
+        loading: false,
+        nextCursor: detail.nextCursor ?? null,
+      }
 
-      for (const terminal of terminalRuns)
+      for (const terminal of terminalRuns) {
         setRunStatus(consoleState, terminal.runId, terminal.status, terminal.error)
+        schedulePromptQueueDrain(conversationId)
+      }
     }
     catch (error) {
       console.error(`[agent-console] Failed to load conversation detail ${conversationId}:`, error)
@@ -924,16 +1189,56 @@ export function useAgentConsole() {
     finally {
       loadingConversationDetails.delete(conversationId)
       endLoadConversationDetail({
-        loaded: loadedConversationDetails.has(conversationId),
+        loaded: Object.hasOwn(consoleState.messagesByConversationId, conversationId),
       })
+    }
+  }
+
+  async function loadEarlierMessages() {
+    const conversationId = activeConversationId.value
+    if (!conversationId) {
+      return
+    }
+
+    const pagination = conversationMessagePaginationById[conversationId]
+    if (!pagination?.hasMore || pagination.loading || !pagination.nextCursor) {
+      return
+    }
+
+    pagination.loading = true
+    try {
+      const response = await agentApi.conversationDetail(conversationId, {
+        cursor: pagination.nextCursor,
+        limit: CONVERSATION_MESSAGE_PAGE_SIZE,
+      })
+      const detail = await resolveHistoryScriptRunPresentation(response)
+      const currentMessages = consoleState.messagesByConversationId[conversationId] ?? []
+      const currentMessageIds = new Set(currentMessages.map(message => message.id))
+      const earlierMessages = mapHistoryMessages(detail)
+        .filter(message => !currentMessageIds.has(message.id))
+
+      consoleState.messagesByConversationId[conversationId] = [
+        ...earlierMessages,
+        ...currentMessages,
+      ]
+      pagination.hasMore = detail.hasMore === true && detail.nextCursor !== null
+      pagination.nextCursor = detail.nextCursor ?? null
+      touchConversationCache(consoleState, conversationId)
+    }
+    catch (error) {
+      console.error(`[agent-console] Failed to load earlier messages for ${conversationId}:`, error)
+    }
+    finally {
+      pagination.loading = false
     }
   }
 
   function ensureConversationRunState(item: AgentConversationRunEventDTO) {
     const { conversationId, runId, assistantMessageId } = item
     const conversation = ensureConversation(consoleState, conversationId)!
-    if (!consoleState.conversationIds.includes(conversationId))
+    if (!consoleState.conversationIds.includes(conversationId)) {
       consoleState.conversationIds.unshift(conversationId)
+    }
 
     const startedAt = item.event.type === 'run_started'
       ? item.event.data.startedAt
@@ -959,9 +1264,9 @@ export function useAgentConsole() {
     conversation.latestRunStatus = 'streaming'
     if (!conversation.runningRunIds.includes(runId)) {
       conversation.runningRunIds.push(runId)
-      // 运行中会话常驻内存：从 LRU 移除（普通 delete 不清理消息）
-      recentConversationIds.delete(conversationId)
     }
+    // 运行中会话常驻内存：从 LRU 移除（普通 delete 不清理消息）
+    pinConversationCache(conversationId)
 
     consoleState.messagesByConversationId[conversationId] ||= []
     if (!getAssistantMessage(conversationId, runId, assistantMessageId)) {
@@ -976,6 +1281,7 @@ export function useAgentConsole() {
         status: 'streaming',
         process: {
           id: `pending-process-${assistantMessageId}`,
+          revision: 0,
           completed: false,
           durationState: 'thinking',
           durationStartedAt: startedAt,
@@ -989,49 +1295,157 @@ export function useAgentConsole() {
   }
 
   function getAssistantMessage(conversationId: string, runId: string, assistantMessageId?: string): AgentMessage | undefined {
-    return consoleState.messagesByConversationId[conversationId]?.find((item) => {
-      if (assistantMessageId)
-        return item.id === assistantMessageId
+    const messages = consoleState.messagesByConversationId[conversationId]
+    if (!messages) {
+      return undefined
+    }
 
-      return item.runId === runId && item.role === 'assistant'
+    const matchesAssistant = (message: AgentMessage) => {
+      return message.role === 'assistant'
+        && (message.runId === runId || Boolean(assistantMessageId && message.id === assistantMessageId))
+    }
+    const assistantMessage = messages.find(matchesAssistant)
+    if (!assistantMessage) {
+      return undefined
+    }
+
+    for (let index = messages.length - 1; index >= 0; index--) {
+      const message = messages[index]!
+      if (message !== assistantMessage && matchesAssistant(message)) {
+        messages.splice(index, 1)
+      }
+    }
+
+    return assistantMessage
+  }
+
+  function settleProcessEvents(events: AgentProcessEvent[], failed: boolean) {
+    for (const event of events) {
+      if (event.status === 'running' || event.status === 'pending') {
+        event.status = failed ? 'failed' : 'success'
+      }
+    }
+  }
+
+  function finalizeRunFromServer(conversationId: string, runId: string, status: Extract<AgentRunStatus, 'completed' | 'failed' | 'cancelled'>) {
+    const message = getAssistantMessage(conversationId, runId)
+    if (message?.process) {
+      const endedAt = Date.now()
+      const startedAt = message.process.durationStartedAt ?? endedAt
+      message.process.durationEndedAt = endedAt
+      message.process.durationLabel ??= formatTerminalDuration(status, Math.max(0, endedAt - startedAt))
+      message.process.durationState = undefined
+      message.process.completed = status === 'completed'
+      message.process.collapsed = status === 'completed'
+      settleProcessEvents(message.process.events, status === 'failed')
+    }
+
+    if (message) {
+      message.status = status === 'failed' ? 'error' : 'done'
+      message.createdAt ||= getCurrentDisplayTime()
+    }
+    setRunStatus(consoleState, runId, status)
+    schedulePromptQueueDrain(conversationId)
+  }
+
+  function refreshServerTerminalRun(conversationId: string, runId: string) {
+    if (refreshingServerTerminalRuns.has(runId)) {
+      return
+    }
+
+    refreshingServerTerminalRuns.add(runId)
+    queueMicrotask(() => {
+      void loadConversationDetail(conversationId)
+        .finally(() => refreshingServerTerminalRuns.delete(runId))
     })
   }
 
   function refreshAssistantFromEvents(conversationId: string, runId: string, assistantMessageId: string, finalize = false) {
     const stream = consoleState.streamsByRunId[runId]
-    if (!stream)
+    if (!stream) {
       return undefined
+    }
 
-    const parsed = buildProcessFromEvents(assistantMessageId, stream.events, { finalize })
+    const presentationEvents = releasedRunEvents.get(runId) ?? stream.events
+    const parsed = buildProcessFromEvents(assistantMessageId, presentationEvents, { finalize })
     const message = getAssistantMessage(conversationId, runId, assistantMessageId)
 
     if (message) {
+      const frontendStartedAt = message.process?.durationStartedAt
+      if (frontendStartedAt !== undefined
+        && (parsed.process.durationStartedAt === undefined || frontendStartedAt < parsed.process.durationStartedAt)) {
+        parsed.process.durationStartedAt = frontendStartedAt
+        if (parsed.process.durationEndedAt !== undefined) {
+          parsed.process.durationLabel = formatDuration(Math.max(0, parsed.process.durationEndedAt - frontendStartedAt))
+        }
+      }
       message.content = parsed.content
       message.process = parsed.process
       message.errorData = parsed.errorData
       message.status = finalize ? parsed.status : (parsed.status === 'error' ? 'error' : 'streaming')
-      if (finalize)
+      if (finalize) {
         message.createdAt = parsed.completedAt
+      }
     }
 
     return parsed
   }
 
-  function updateHitlFromEvent(conversationId: string, runId: string, data: Record<string, unknown> | undefined) {
-    const request = createHitlRequestFromAgentEvent(conversationId, runId, data)
-    if (!request)
+  function flushAssistantRefresh(runId: string, finalize = false) {
+    const queued = queuedAssistantRefreshes.get(runId)
+    if (!queued) {
+      return undefined
+    }
+
+    queuedAssistantRefreshes.delete(runId)
+    const parsed = refreshAssistantFromEvents(queued.conversationId, runId, queued.assistantMessageId, finalize)
+    if (assistantRefreshTimer !== undefined && queuedAssistantRefreshes.size === 0) {
+      window.clearTimeout(assistantRefreshTimer)
+      assistantRefreshTimer = undefined
+    }
+    return parsed
+  }
+
+  function scheduleAssistantRefresh(conversationId: string, runId: string, assistantMessageId: string): void {
+    queuedAssistantRefreshes.set(runId, { assistantMessageId, conversationId })
+    if (assistantRefreshTimer !== undefined) {
       return
+    }
+
+    assistantRefreshTimer = window.setTimeout(() => {
+      assistantRefreshTimer = undefined
+      const runIds = [...queuedAssistantRefreshes.keys()]
+      for (const queuedRunId of runIds) {
+        flushAssistantRefresh(queuedRunId)
+      }
+    }, ASSISTANT_REFRESH_INTERVAL_MS)
+  }
+
+  async function updateHitlFromEvent(conversationId: string, runId: string, data: Record<string, unknown> | undefined) {
+    const actionTitles = await resolveHitlActionTitles(data?.actionRequests, {
+      officialScripts: agentApi.officialScripts,
+      templates: agentApi.templates,
+      userTemplates: agentApi.userTemplates,
+      locale: localeStore.currentLocale,
+      workspaceName: workspaceStore.currentWorkspace?.workspaceName,
+    })
+    const request = createHitlRequestFromAgentEvent(conversationId, runId, data, { actionTitles })
+    if (!request) {
+      return
+    }
 
     consoleState.pendingHitlByConversationId[conversationId] = request
   }
 
   function clearHitlFromEvent(conversationId: string, approvalId?: string) {
     const request = consoleState.pendingHitlByConversationId[conversationId]
-    if (!request)
+    if (!request) {
       return
+    }
 
-    if (!approvalId || approvalId === request.id)
+    if (!approvalId || approvalId === request.id) {
       delete consoleState.pendingHitlByConversationId[conversationId]
+    }
   }
 
   function updateTodoProgress(conversationId: string, runId: string, data: unknown) {
@@ -1045,8 +1459,9 @@ export function useAgentConsole() {
   }
 
   function eventAttachments(item: AgentConversationRunEventDTO): AgentAttachment[] {
-    if (item.event.type !== 'user_message')
+    if (item.event.type !== 'user_message') {
       return []
+    }
     return item.event.data.attachments.map(attachment => ({
       fileId: attachment.fileId,
       kind: 'file',
@@ -1062,8 +1477,9 @@ export function useAgentConsole() {
   }
 
   function upsertUserMessage(item: AgentConversationRunEventDTO): void {
-    if (item.event.type !== 'user_message')
+    if (item.event.type !== 'user_message') {
       return
+    }
     const { conversationId, runId, assistantMessageId } = item
     const pending = pendingRunPayloads.get(runId)
     const messages = consoleState.messagesByConversationId[conversationId] ||= []
@@ -1078,7 +1494,9 @@ export function useAgentConsole() {
       createdAt: formatTime(item.event.data.createdAt || item.timestamp),
       status: 'done',
     }
-    const existingIndex = messages.findIndex(message => message.id === next.id)
+    const existingIndex = messages.findIndex((message) => {
+      return message.id === next.id || message.id === pending?.userMessageId
+    })
     if (existingIndex >= 0) {
       messages[existingIndex] = next
     }
@@ -1089,27 +1507,147 @@ export function useAgentConsole() {
     pendingRunPayloads.delete(runId)
   }
 
-  async function recoverConversationRun(conversationId: string, runId: string): Promise<void> {
-    if (recoveringRunIds.has(runId))
+  async function processAcceptedConversationRunEvent(item: AgentConversationRunEventDTO): Promise<void> {
+    const event = item.event
+    const { conversationId, runId, assistantMessageId } = item
+    if (event.type === 'user_message') {
+      upsertUserMessage(item)
+    }
+    else if (event.type === 'title_changed') {
+      const conversation = consoleState.conversationsById[conversationId]
+      if (conversation && event.data.title.trim()) {
+        conversation.title = event.data.title.trim()
+      }
+    }
+    else if (event.type === 'plan_updated') {
+      updateTodoProgress(conversationId, runId, event.data.todos)
+    }
+    else if (event.type === 'approval_requested') {
+      await updateHitlFromEvent(conversationId, runId, {
+        ...event.data,
+        interruptsId: event.data.approvalId,
+      })
+    }
+    else if (event.type === 'approval_resolved') {
+      clearHitlFromEvent(conversationId, event.data.approvalId)
+    }
+
+    const terminal = terminalRunStatus(item)
+    queuedAssistantRefreshes.set(runId, { assistantMessageId, conversationId })
+    if (!terminal) {
+      scheduleAssistantRefresh(conversationId, runId, assistantMessageId)
       return
-    recoveringRunIds.add(runId)
+    }
+
+    const parsed = flushAssistantRefresh(runId, true)
+
+    if (terminal === 'cancelled') {
+      finalizeCancelledRunMessage(conversationId, runId)
+    }
+    setRunStatus(
+      consoleState,
+      runId,
+      terminal,
+      event.type === 'run_failed' ? event.data.message : undefined,
+      { markUnread: true },
+    )
+    schedulePromptQueueDrain(conversationId)
+    if (parsed?.status === 'error') {
+      const message = getAssistantMessage(conversationId, runId, assistantMessageId)
+      if (message) {
+        message.status = 'error'
+      }
+    }
+    refreshPayInfoAfterAgentActivity()
+    void loadConversationList()
+  }
+
+  async function releaseConversationRunEvents(items: AgentConversationRunEventDTO[]): Promise<void> {
+    const presentationItems = await resolveScriptRunPresentationEvents(items, {
+      templates: agentApi.templates,
+      userTemplates: agentApi.userTemplates,
+      locale: localeStore.currentLocale,
+      workspaceId: workspaceStore.currentWorkspace?.id,
+    })
+    const runIds = new Set<string>()
+    const terminalRunIds = new Set<string>()
+    for (const item of presentationItems) {
+      const presentationEvents = releasedRunEvents.get(item.runId) ?? []
+      appendConversationRunPresentationEvents(presentationEvents, [item])
+      releasedRunEvents.set(item.runId, presentationEvents)
+      runIds.add(item.runId)
+      if (terminalRunStatus(item)) {
+        terminalRunIds.add(item.runId)
+      }
+      await processAcceptedConversationRunEvent(item)
+    }
+
+    for (const runId of runIds) {
+      flushAssistantRefresh(runId)
+    }
+    await nextTick()
+
+    for (const runId of terminalRunIds) {
+      releasedRunEvents.delete(runId)
+      presentationEventQueues.delete(runId)
+    }
+  }
+
+  const streamTextEventBuffer = new StreamTextEventBuffer({
+    ttlMs: STREAM_TEXT_BUFFER_TTL_MS,
+    scheduler: createIdleAwareStreamTextEventBufferScheduler(window),
+    onFlush: releaseConversationRunEvents,
+    onError(error) {
+      console.error('[agent-console] Failed to flush buffered stream text events:', error)
+    },
+  })
+
+  async function drainPresentationEvents(runId: string): Promise<void> {
+    if (drainingPresentationRuns.has(runId)) {
+      return
+    }
+
+    drainingPresentationRuns.add(runId)
     try {
-      for (let attempt = 0; loadingConversationDetails.has(conversationId) && attempt < 100; attempt++)
-        await new Promise(resolve => setTimeout(resolve, 20))
-      await loadConversationDetail(conversationId, true)
+      const queue = presentationEventQueues.get(runId)
+      while (queue?.length) {
+        const item = queue.shift()!
+        if (streamTextEventBuffer.enqueue(item)) {
+          continue
+        }
+
+        try {
+          await streamTextEventBuffer.flushRun(runId)
+        }
+        catch (error) {
+          console.error('[agent-console] Failed to render buffered stream text before a run event:', error)
+        }
+        await releaseConversationRunEvents([item])
+      }
     }
     finally {
-      recoveringRunIds.delete(runId)
-      const buffered = bufferedRunEvents.get(runId) ?? []
-      bufferedRunEvents.delete(runId)
-      for (const item of buffered.sort((a, b) => a.sequence - b.sequence))
-        handleConversationRunEvent(item)
+      drainingPresentationRuns.delete(runId)
+      if (presentationEventQueues.get(runId)?.length) {
+        void drainPresentationEvents(runId)
+      }
     }
+  }
+
+  function enqueuePresentationEvent(item: AgentConversationRunEventDTO): void {
+    const queue = presentationEventQueues.get(item.runId) ?? []
+    queue.push(item)
+    presentationEventQueues.set(item.runId, queue)
+    void drainPresentationEvents(item.runId)
   }
 
   function handleConversationRunEvent(item: AgentConversationRunEventDTO): void {
     const stoppedPending = locallyStoppedRuns.resolve(item)
     if (stoppedPending) {
+      reconcileConversationRunMessages(
+        consoleState.messagesByConversationId[item.conversationId] ?? [],
+        stoppedPending,
+        item,
+      )
       const stream = ensureConversationRunState(item)
       appendConversationRunEvent(stream, item)
       pendingRunPayloads.set(item.runId, stoppedPending)
@@ -1127,99 +1665,63 @@ export function useAgentConsole() {
       })
       finalizeCancelledRunMessage(item.conversationId, item.runId)
       setRunStatus(consoleState, item.runId, 'cancelled')
+      schedulePromptQueueDrain(item.conversationId)
     }
 
     if (locallyStoppedRuns.hasRun(item.runId)) {
       if (terminalRunStatus(item)) {
         refreshPayInfoAfterAgentActivity()
-        loadedConversationDetails.delete(item.conversationId)
         void loadConversationList()
       }
       return
     }
 
-    if (recoveringRunIds.has(item.runId)) {
-      const buffered = bufferedRunEvents.get(item.runId) ?? []
-      buffered.push(item)
-      bufferedRunEvents.set(item.runId, buffered)
-      return
+    if (item.event.type === 'run_started') {
+      const startedPending = pendingRunStarts.acknowledge(
+        item.conversationId,
+        item.event.data.requestId,
+      )
+      if (startedPending) {
+        pendingRunPayloads.set(item.runId, startedPending)
+        reconcileConversationRunMessages(
+          consoleState.messagesByConversationId[item.conversationId] ?? [],
+          startedPending,
+          item,
+        )
+      }
+
+      const conversation = consoleState.conversationsById[item.conversationId]
+      if (conversation) {
+        conversation.unread = false
+        if (startedPending && (conversation.title === 'New conversation' || conversation.title === 'New Chat' || conversation.title === 'Loading conversation...')) {
+          conversation.title = createConversationTitle(startedPending.content)
+        }
+      }
+      pendingRunVersion.value++
     }
 
     const stream = ensureConversationRunState(item)
-    const appendResult = appendConversationRunEvent(stream, item)
-    if (appendResult === 'duplicate')
-      return
-    if (appendResult === 'gap') {
-      bufferedRunEvents.set(item.runId, [item])
-      void recoverConversationRun(item.conversationId, item.runId)
-      return
-    }
-
-    const { conversationId, runId, assistantMessageId } = item
-    const event = item.event
-    if (event.type === 'run_started') {
-      const conversation = consoleState.conversationsById[conversationId]
-      if (conversation)
-        conversation.unread = false
-      const pending = pendingRunStarts.acknowledge(conversationId, event.data.requestId)
-      if (pending) {
-        pendingRunPayloads.set(runId, pending)
-        const conversation = consoleState.conversationsById[conversationId]
-        if (conversation && (conversation.title === 'New conversation' || conversation.title === 'New Chat' || conversation.title === 'Loading conversation...'))
-          conversation.title = createConversationTitle(pending.content)
-      }
-      pendingRunVersion.value++
-      void loadConversationDetail(conversationId, true)
-    }
-    else if (event.type === 'user_message') {
-      upsertUserMessage(item)
-    }
-    else if (event.type === 'title_changed') {
-      const conversation = consoleState.conversationsById[conversationId]
-      if (conversation && event.data.title.trim())
-        conversation.title = event.data.title.trim()
-    }
-    else if (event.type === 'todo_delta') {
-      updateTodoProgress(conversationId, runId, event.data.todos)
-    }
-    else if (event.type === 'approval_requested') {
-      updateHitlFromEvent(conversationId, runId, {
-        interruptsId: event.data.approvalId,
-        actionRequests: event.data.actionRequests,
-        reviewConfigs: event.data.reviewConfigs,
-      })
-    }
-    else if (event.type === 'approval_resolved') {
-      clearHitlFromEvent(conversationId, event.data.approvalId)
-    }
-
-    const terminal = terminalRunStatus(item)
-    const parsed = refreshAssistantFromEvents(conversationId, runId, assistantMessageId, Boolean(terminal))
-    if (!terminal)
-      return
-
-    if (terminal === 'cancelled')
-      finalizeCancelledRunMessage(conversationId, runId)
-    setRunStatus(
-      consoleState,
-      runId,
-      terminal,
-      event.type === 'run_failed' ? event.data.message : undefined,
-      { markUnread: true },
+    const ordered = appendOrderedConversationRunEvents(
+      stream,
+      bufferedRunEvents.get(item.runId) ?? [],
+      item,
     )
-    if (parsed?.status === 'error') {
-      const message = getAssistantMessage(conversationId, runId, assistantMessageId)
-      if (message)
-        message.status = 'error'
+    if (ordered.buffered.length > 0) {
+      bufferedRunEvents.set(item.runId, ordered.buffered)
     }
-    refreshPayInfoAfterAgentActivity()
-    loadedConversationDetails.delete(conversationId)
-    void loadConversationList()
+    else {
+      bufferedRunEvents.delete(item.runId)
+    }
+
+    for (const acceptedItem of ordered.accepted) {
+      enqueuePresentationEvent(acceptedItem)
+    }
   }
 
   function installConversationRunSubscriber(): void {
-    if (conversationRunSubscriberInstalled)
+    if (conversationRunSubscriberInstalled) {
       return
+    }
     conversationRunSubscriberInstalled = true
     agentChannel.subscribe((message: AgentChannelMessage) => {
       if (message.type === 'conversation.run.event') {
@@ -1228,7 +1730,6 @@ export function useAgentConsole() {
       }
       if (message.type === 'channel.ready') {
         refreshPayInfoAfterAgentActivity()
-        loadedConversationDetails.clear()
         void loadConversationList()
       }
     })
@@ -1238,10 +1739,12 @@ export function useAgentConsole() {
 
   function completeRun(conversationId: string, runId: string) {
     const message = consoleState.messagesByConversationId[conversationId]?.find(item => item.runId === runId && item.role === 'assistant')
-    if (message)
+    if (message) {
       message.status = 'done'
+    }
 
     setRunStatus(consoleState, runId, 'completed', undefined, { markUnread: true })
+    schedulePromptQueueDrain(conversationId)
   }
 
   function failRun(conversationId: string, runId: string, error: string) {
@@ -1253,44 +1756,68 @@ export function useAgentConsole() {
     }
 
     setRunStatus(consoleState, runId, 'failed', error, { markUnread: true })
+    schedulePromptQueueDrain(conversationId)
   }
 
   function formatStoppedDuration(ms: number) {
-    if (ms < 1000)
+    if (ms < 1000) {
       return `${$t('已停止')} 1s`
+    }
 
     const seconds = Math.round(ms / 1000)
-    if (seconds < 60)
+    if (seconds < 60) {
       return `${$t('已停止')} ${seconds}s`
+    }
 
     const minutes = Math.floor(seconds / 60)
     const restSeconds = seconds % 60
     return restSeconds > 0 ? `${$t('已停止')} ${minutes}m${restSeconds}s` : `${$t('已停止')} ${minutes}m`
   }
 
+  function formatTerminalDuration(status: AgentRunStatus, ms: number) {
+    if (status === 'cancelled') {
+      return formatStoppedDuration(ms)
+    }
+
+    if (ms < 1000) {
+      return `${$t('任务耗时')} 1s`
+    }
+
+    const seconds = Math.round(ms / 1000)
+    if (seconds < 60) {
+      return `${$t('任务耗时')} ${seconds}s`
+    }
+
+    const minutes = Math.floor(seconds / 60)
+    const restSeconds = seconds % 60
+    return restSeconds > 0 ? `${$t('任务耗时')} ${minutes}m${restSeconds}s` : `${$t('任务耗时')} ${minutes}m`
+  }
+
   function markProcessEventsStopped(events: AgentProcessEvent[]) {
     for (const event of events) {
-      if (event.status === 'running' || event.status === 'pending')
+      if (event.status === 'running' || event.status === 'pending') {
         event.status = 'failed'
+      }
 
-      if (event.type === 'parallel_dispatch')
-        markProcessEventsStopped(event.tasks)
-
-      if (event.type === 'worker_task')
+      if (event.type === 'agent_lifecycle') {
         markProcessEventsStopped(event.events)
+        markProcessEventsStopped(event.children)
+      }
     }
   }
 
   function finalizeCancelledRunMessage(conversationId: string, runId: string) {
     const message = getAssistantMessage(conversationId, runId)
-    if (!message)
+    if (!message) {
       return
+    }
 
     message.status = 'done'
     message.createdAt ||= getCurrentDisplayTime()
 
-    if (!message.process)
+    if (!message.process) {
       return
+    }
 
     const endedAt = Date.now()
     const startedAt = message.process.durationStartedAt ?? endedAt
@@ -1302,10 +1829,11 @@ export function useAgentConsole() {
     markProcessEventsStopped(message.process.events)
   }
 
-  function cancelRun(runId: string) {
+  async function cancelRun(runId: string) {
     const run = consoleState.runsById[runId]
-    if (!run)
+    if (!run) {
       return
+    }
 
     const requestId = agentChannel.send('conversation.run.stop', { conversationId: run.conversationId })
     if (!requestId) {
@@ -1314,17 +1842,35 @@ export function useAgentConsole() {
     }
 
     locallyStoppedRuns.addRun(runId)
+    try {
+      await streamTextEventBuffer.flushRun(runId)
+    }
+    catch (error) {
+      console.error('[agent-console] Failed to render buffered stream text before stopping a run:', error)
+    }
+    presentationEventQueues.delete(runId)
+    streamTextEventBuffer.discardRun(runId)
+    flushAssistantRefresh(runId)
     bufferedRunEvents.delete(runId)
-    recoveringRunIds.delete(runId)
+    queuedAssistantRefreshes.delete(runId)
+    releasedRunEvents.delete(runId)
     finalizeCancelledRunMessage(run.conversationId, runId)
     setRunStatus(consoleState, runId, 'cancelled')
-    loadedConversationDetails.delete(run.conversationId)
+    schedulePromptQueueDrain(run.conversationId)
   }
 
   function cancelActiveRun() {
     const conversation = activeConversation.value
-    if (!conversation)
+    if (!conversation && homeRunPreparationToken) {
+      homeRunPreparationToken = undefined
+      homePendingMessages.value = []
+      schedulePromptQueueDrain()
       return
+    }
+
+    if (!conversation) {
+      return
+    }
 
     if (pendingRunStarts.has(conversation.id)) {
       const requestId = agentChannel.send('conversation.run.stop', { conversationId: conversation.id })
@@ -1336,8 +1882,20 @@ export function useAgentConsole() {
       const pending = pendingRunStarts.acknowledge(conversation.id)
       if (pending) {
         locallyStoppedRuns.addPending(conversation.id, pending.requestId, pending)
+        const message = consoleState.messagesByConversationId[conversation.id]?.find(item => item.id === pending.assistantMessageId)
+        if (message) {
+          message.status = 'done'
+          message.createdAt = getCurrentDisplayTime()
+          if (message.process) {
+            const endedAt = Date.now()
+            message.process.durationEndedAt = endedAt
+            message.process.durationLabel = formatStoppedDuration(Math.max(0, endedAt - pending.startedAt))
+            message.process.durationState = undefined
+          }
+        }
       }
       pendingRunVersion.value++
+      schedulePromptQueueDrain(conversation.id)
       return
     }
 
@@ -1345,7 +1903,7 @@ export function useAgentConsole() {
       const runId = conversation.runningRunIds[index]
       const run = consoleState.runsById[runId]
       if (!run || isRunActive(run.status)) {
-        cancelRun(runId)
+        void cancelRun(runId)
         return
       }
     }
@@ -1353,8 +1911,9 @@ export function useAgentConsole() {
 
   async function deleteConversation(conversationId: string) {
     const conversation = consoleState.conversationsById[conversationId]
-    if (!conversation)
+    if (!conversation) {
       return
+    }
 
     if (isConversationRunning(consoleState, conversationId)) {
       onlyErrorToast(-1, $t('任务进行中，请先停止再删除'))
@@ -1363,15 +1922,24 @@ export function useAgentConsole() {
 
     try {
       await agentApi.deleteConversation(conversationId)
+      streamTextEventBuffer.removeConversation(conversationId)
+      for (const stream of Object.values(consoleState.streamsByRunId)) {
+        if (stream.conversationId === conversationId) {
+          presentationEventQueues.delete(stream.runId)
+          releasedRunEvents.delete(stream.runId)
+        }
+      }
       removeConversation(consoleState, conversationId)
       showToast(0, $t('对话已删除'))
 
       if (activeConversationId.value === conversationId) {
         const nextConversationId = consoleState.conversationIds[0]
-        if (nextConversationId)
+        if (nextConversationId) {
           await routeToConversation(nextConversationId)
-        else
+        }
+        else {
           await router.push({ name: 'agent-console-chat', query: route.query })
+        }
       }
     }
     catch (error) {
@@ -1383,10 +1951,12 @@ export function useAgentConsole() {
   async function renameConversation(conversationId: string, title: string) {
     const conversation = consoleState.conversationsById[conversationId]
     const normalizedTitle = title.trim()
-    if (!conversation || !normalizedTitle)
+    if (!conversation || !normalizedTitle) {
       return false
-    if (normalizedTitle === conversation.title)
+    }
+    if (normalizedTitle === conversation.title) {
       return true
+    }
 
     try {
       const updatedConversation = mapHistoryConversation(
@@ -1405,19 +1975,29 @@ export function useAgentConsole() {
   async function submitHitl(payload: AgentHitlSubmitPayload) {
     const conversationId = activeConversationId.value
     const request = conversationId ? consoleState.pendingHitlByConversationId[conversationId] : undefined
-    if (!conversationId || !request || request.id !== payload.requestId)
+    if (!conversationId || !request || request.id !== payload.requestId) {
       return
+    }
 
     request.status = 'submitting'
 
     try {
+      const decisions = createLegacyResumeDecisions(request, payload).map(decision =>
+        payload.fullAccess && decision.type === 'approve'
+          ? { ...decision, fullAccess: true }
+          : decision,
+      )
       const commandId = agentChannel.send('conversation.approval.submit', {
         conversationId,
         approvalId: request.id,
-        decisions: createLegacyResumeDecisions(request, payload),
+        decisions,
       })
-      if (!commandId)
+      if (!commandId) {
         throw new Error('Agent WebSocket is not ready')
+      }
+      if (payload.fullAccess) {
+        fullAccess.value = true
+      }
     }
     catch (error) {
       request.status = 'error'
@@ -1427,12 +2007,14 @@ export function useAgentConsole() {
   }
 
   function addPendingAttachments(files: File[]) {
-    if (!files.length || isThinking.value)
+    if (!files.length || isThinking.value) {
       return
+    }
 
     const nextAttachments = files.map(file => createLocalAttachment(file))
-    if (!nextAttachments.length)
+    if (!nextAttachments.length) {
       return
+    }
 
     const conversationId = activeConversationId.value
     if (!conversationId) {
@@ -1445,8 +2027,9 @@ export function useAgentConsole() {
   }
 
   function addPendingFolder(folder: AgentFolderSelection) {
-    if (isThinking.value)
+    if (isThinking.value) {
       return
+    }
 
     const nextAttachment = createLocalFolderAttachment(folder)
     const conversationId = activeConversationId.value
@@ -1460,9 +2043,6 @@ export function useAgentConsole() {
   }
 
   function addPendingPathAttachment(selection: AgentPathSelection) {
-    if (isThinking.value)
-      return
-
     const nextAttachment = createLocalPathAttachment(selection)
     const conversationId = activeConversationId.value
     if (!conversationId) {
@@ -1477,8 +2057,9 @@ export function useAgentConsole() {
   function removePendingAttachment(fileId: string) {
     const attachments = pendingAttachments.value
     const index = attachments.findIndex(attachment => attachment.fileId === fileId)
-    if (index < 0)
+    if (index < 0) {
       return
+    }
 
     const [attachment] = attachments.splice(index, 1)
     revokeAttachments(attachment ? [attachment] : [])
@@ -1492,15 +2073,28 @@ export function useAgentConsole() {
     }
 
     const draft = consoleState.draftsByConversationId[conversationId]
-    if (!draft)
+    if (!draft) {
       return
+    }
 
     revokeAttachments(draft.attachments)
     draft.attachments = []
   }
 
-  async function uploadPendingAttachmentsForConversation(conversationId: string) {
-    const attachments = pendingAttachments.value.slice()
+  function detachPendingAttachments(conversationId?: string) {
+    if (!conversationId) {
+      homePendingAttachments.value = []
+      return
+    }
+
+    const draft = consoleState.draftsByConversationId[conversationId]
+    if (draft) {
+      draft.attachments = []
+    }
+  }
+
+  async function uploadPendingAttachmentsForConversation(conversationId: string, sourceAttachments: AgentAttachment[]) {
+    const attachments = sourceAttachments.slice()
     const uploadedAttachments: AgentAttachment[] = []
 
     for (const attachment of attachments) {
@@ -1514,9 +2108,10 @@ export function useAgentConsole() {
       }
 
       if (attachment.kind === 'folder' && attachment.localFiles?.length) {
-        const latest = pendingAttachments.value.find(item => item.fileId === attachment.fileId)
-        if (latest)
+        const latest = sourceAttachments.find(item => item.fileId === attachment.fileId)
+        if (latest) {
           latest.uploadStatus = 'uploading'
+        }
 
         try {
           const uploadedFiles: AgentAttachment[] = []
@@ -1545,9 +2140,9 @@ export function useAgentConsole() {
           })
           uploadedAttachments.push(...uploadedFiles)
 
-          const latestIndex = pendingAttachments.value.findIndex(item => item.fileId === attachment.fileId)
+          const latestIndex = sourceAttachments.findIndex(item => item.fileId === attachment.fileId)
           if (latestIndex >= 0) {
-            pendingAttachments.value[latestIndex] = {
+            sourceAttachments[latestIndex] = {
               ...attachment,
               localFiles: undefined,
               uploadStatus: 'uploaded',
@@ -1555,9 +2150,10 @@ export function useAgentConsole() {
           }
         }
         catch (error) {
-          const failed = pendingAttachments.value.find(item => item.fileId === attachment.fileId)
-          if (failed)
+          const failed = sourceAttachments.find(item => item.fileId === attachment.fileId)
+          if (failed) {
             failed.uploadStatus = 'error'
+          }
           throw error
         }
         continue
@@ -1568,9 +2164,10 @@ export function useAgentConsole() {
         continue
       }
 
-      const latest = pendingAttachments.value.find(item => item.fileId === attachment.fileId)
-      if (latest)
+      const latest = sourceAttachments.find(item => item.fileId === attachment.fileId)
+      if (latest) {
         latest.uploadStatus = 'uploading'
+      }
 
       try {
         const base64 = await agentApi.fileToBase64(attachment.localFile)
@@ -1592,14 +2189,16 @@ export function useAgentConsole() {
         uploadedAttachments.push(uploadedAttachment)
         revokeAttachments([attachment])
 
-        const latestIndex = pendingAttachments.value.findIndex(item => item.fileId === attachment.fileId)
-        if (latestIndex >= 0)
-          pendingAttachments.value[latestIndex] = uploadedAttachment
+        const latestIndex = sourceAttachments.findIndex(item => item.fileId === attachment.fileId)
+        if (latestIndex >= 0) {
+          sourceAttachments[latestIndex] = uploadedAttachment
+        }
       }
       catch (error) {
-        const failed = pendingAttachments.value.find(item => item.fileId === attachment.fileId)
-        if (failed)
+        const failed = sourceAttachments.find(item => item.fileId === attachment.fileId)
+        if (failed) {
           failed.uploadStatus = 'error'
+        }
         throw error
       }
     }
@@ -1607,98 +2206,203 @@ export function useAgentConsole() {
     return uploadedAttachments
   }
 
-  function appendLocalPathContext(content: string, attachments: AgentAttachment[]) {
-    const localPathAttachments = attachments.filter(attachment => attachment.localPath)
-    if (!localPathAttachments.length)
-      return content
+  async function sendPrompt(options: SendPromptOptions = {}): Promise<boolean> {
+    const startedAt = Date.now()
+    let conversationId = options.conversationId ?? activeConversationId.value
+    const content = (options.content ?? prompt.value).trim()
+    const sourceAttachments = options.attachments ?? (options.content === undefined ? pendingAttachments.value : [])
+    if ((!content && sourceAttachments.length === 0) || sourceAttachments.some(attachment => attachment.uploadStatus === 'uploading')) {
+      return false
+    }
 
-    const pathLines = localPathAttachments.map((attachment) => {
-      const params = { name: attachment.fileName, path: attachment.localPath }
-      return attachment.kind === 'folder'
-        ? $t('[目录] 名称: {name}, 本地路径: {path}', params)
-        : $t('[文件] 名称: {name}, 本地路径: {path}', params)
+    const conversationBusy = conversationId
+      ? isConversationStarting(conversationId)
+      : Boolean(homeRunPreparationToken)
+    if (conversationBusy) {
+      if (
+        options.fromQueue
+        || (!content && sourceAttachments.length === 0)
+        || sourceAttachments.some(attachment => !attachment.localPath)
+      ) {
+        return false
+      }
+
+      enqueuePrompt(conversationId, content, {
+        attachments: sourceAttachments.slice(),
+        draftContent: content,
+      })
+      detachPendingAttachments(conversationId)
+      prompt.value = ''
+      return true
+    }
+
+    const token = `${startedAt}-${Math.random().toString(16).slice(2, 8)}`
+    const startedFromHome = !conversationId
+    const optimistic = createPendingRunMessages({
+      conversationId: conversationId ?? `pending-home-${token}`,
+      content,
+      attachments: [...sourceAttachments],
+      createdAt: formatTime(startedAt),
+      startedAt,
+      token,
     })
-    return [content, pathLines.join('\n')].filter(Boolean).join('\n\n')
-  }
+    const preparing: PendingRunDraft = {
+      ...optimistic.presentation,
+      content,
+      draftContent: content,
+      attachments: optimistic.messages[0]?.attachments ?? [],
+    }
 
-  async function sendPrompt() {
-    let conversationId = activeConversationId.value
-    const content = prompt.value.trim()
-    if ((!content && pendingAttachments.value.length === 0) || hasPendingAttachmentUploads.value)
-      return
+    if (startedFromHome) {
+      homeRunPreparationToken = token
+      homePendingMessages.value = optimistic.messages
+    }
+    else {
+      consoleState.messagesByConversationId[conversationId] ||= []
+      consoleState.messagesByConversationId[conversationId].push(...optimistic.messages)
+      preparingRunStarts.set(conversationId, preparing)
+      pinConversationCache(conversationId)
+    }
 
-    if (conversationId && (isConversationRunning(consoleState, conversationId) || pendingRunStarts.has(conversationId)))
-      return
+    if (startedFromHome) {
+      let conversation: AgentConversation
+      try {
+        conversation = mapHistoryConversation(await agentApi.createConversation())
+      }
+      catch (error) {
+        if (homeRunPreparationToken === token) {
+          homeRunPreparationToken = undefined
+          homePendingMessages.value = []
+        }
+        console.error('[agent-console] Failed to create conversation:', error)
+        onlyErrorToast(-1, error instanceof Error ? error.message : $t('创建会话失败'))
+        return false
+      }
 
-    if (!conversationId) {
-      const conversation = mapHistoryConversation(await agentApi.createConversation())
+      if (homeRunPreparationToken !== token) {
+        return false
+      }
+
       mergeConversation(conversation)
-      if (!consoleState.conversationIds.includes(conversation.id))
+      if (!consoleState.conversationIds.includes(conversation.id)) {
         consoleState.conversationIds.unshift(conversation.id)
-      loadedConversationDetails.add(conversation.id)
-
+      }
       conversationId = conversation.id
-      consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
+      const pendingHomeQueue = homeQueuedPrompts.value
+      for (const queuedPrompt of pendingHomeQueue) {
+        queuedPrompt.conversationId = conversationId
+      }
+      consoleState.queuedPromptsByConversationId[conversationId] = pendingHomeQueue
+      homeQueuedPrompts.value = []
+      consoleState.messagesByConversationId[conversationId] ||= []
+      for (const message of optimistic.messages) {
+        message.conversationId = conversationId
+      }
+      consoleState.messagesByConversationId[conversationId].push(...optimistic.messages)
       consoleState.draftsByConversationId[conversationId].prompt = content
       consoleState.draftsByConversationId[conversationId].attachments = homePendingAttachments.value
+      preparingRunStarts.set(conversationId, preparing)
+      pinConversationCache(conversationId)
       homePendingAttachments.value = []
       homePrompt.value = ''
       await routeToConversation(conversationId)
+      if (homeRunPreparationToken === token) {
+        homeRunPreparationToken = undefined
+        homePendingMessages.value = []
+      }
+    }
+
+    function removePreparingMessages(): void {
+      const messages = consoleState.messagesByConversationId[conversationId] ?? []
+      consoleState.messagesByConversationId[conversationId] = messages.filter((message) => {
+        return message.id !== preparing.userMessageId && message.id !== preparing.assistantMessageId
+      })
+      preparingRunStarts.delete(conversationId)
+      touchConversationCache(consoleState, conversationId)
     }
 
     let uploadedAttachments: AgentAttachment[] = []
     try {
-      uploadedAttachments = await uploadPendingAttachmentsForConversation(conversationId)
+      uploadedAttachments = await uploadPendingAttachmentsForConversation(conversationId, sourceAttachments)
     }
     catch (error) {
+      removePreparingMessages()
       console.error('[agent-console] Failed to upload attachments:', error)
       onlyErrorToast(-1, error instanceof Error ? error.message : $t('文件上传失败'))
-      return
+      return false
     }
 
-    const outgoingContent = appendLocalPathContext(content, uploadedAttachments)
+    const localAttachments = collectLocalPathAttachments(uploadedAttachments)
     const displayAttachments = uploadedAttachments.filter((attachment) => {
-      if (attachment.kind === 'folder')
+      if (attachment.kind === 'folder') {
         return true
+      }
 
       return !attachment.fileName.includes('/')
     })
     const chatAttachments = uploadedAttachments.filter(attachment => attachment.kind === 'file' && !attachment.localPath)
+    try {
+      await agentChannel.waitUntilConnected()
+    }
+    catch (error) {
+      removePreparingMessages()
+      console.error('[agent-console] Agent channel is not ready:', error)
+      onlyErrorToast(-1, $t('Agent 连接尚未就绪'))
+      return false
+    }
     const requestId = agentChannel.send('conversation.run.start', {
       conversationId,
-      message: outgoingContent,
+      message: content,
       attachments: chatAttachments.map(attachment => ({ fileId: attachment.fileId })),
+      ...(localAttachments.length > 0 ? { localAttachments } : {}),
       fullAccess: fullAccess.value,
     })
     if (!requestId) {
+      removePreparingMessages()
       onlyErrorToast(-1, $t('Agent 连接尚未就绪'))
-      return
+      return false
     }
 
     const pending: PendingRunStart = {
+      ...preparing,
       requestId,
-      content: outgoingContent,
-      draftContent: content,
+      content,
       attachments: displayAttachments,
     }
+    const optimisticUserMessage = consoleState.messagesByConversationId[conversationId]?.find(message => message.id === preparing.userMessageId)
+    if (optimisticUserMessage) {
+      optimisticUserMessage.content = content
+      optimisticUserMessage.attachments = displayAttachments
+    }
+    preparingRunStarts.delete(conversationId)
     pendingRunStarts.begin(
       conversationId,
       requestId,
       pending,
       PENDING_RUN_START_TIMEOUT_MS,
       (expired) => {
+        const messages = consoleState.messagesByConversationId[conversationId] ?? []
+        consoleState.messagesByConversationId[conversationId] = messages.filter((message) => {
+          return message.id !== expired.userMessageId && message.id !== expired.assistantMessageId
+        })
         const draft = consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
-        if (!draft.prompt)
+        if (!draft.prompt) {
           draft.prompt = expired.draftContent
-        if (draft.attachments.length === 0)
+        }
+        if (draft.attachments.length === 0) {
           draft.attachments = expired.attachments
+        }
+        touchConversationCache(consoleState, conversationId)
         pendingRunVersion.value++
       },
     )
     pendingRunVersion.value++
-    const draft = consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
-    draft.prompt = ''
-    draft.attachments = []
+    if (!options.fromQueue) {
+      const draft = consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
+      draft.prompt = ''
+      draft.attachments = []
+    }
+    return true
   }
 
   return {
@@ -1719,20 +2423,28 @@ export function useAgentConsole() {
     failRun,
     isThinking,
     loadMoreConversations,
+    loadEarlierMessages,
     messageList,
+    messageHistoryHasMore,
+    messageHistoryLoading,
     pendingAttachments,
     pendingApprovalConversationIds,
     prompt,
+    queuedPrompts,
     removePendingAttachment,
+    removeQueuedPrompt,
     renameConversation,
+    reorderQueuedPrompt,
+    restoreQueuedPrompt,
     runningTaskCount,
+    profileCount,
     selectConversation,
     sendPrompt,
     startNewChat,
     submitHitl,
     state: consoleState,
     taskGroupList,
-    taskMonitorConnected: taskMonitor.connected,
+    profileMonitorConnected: profileMonitor.connected,
     toggleTaskGroup,
   }
 }

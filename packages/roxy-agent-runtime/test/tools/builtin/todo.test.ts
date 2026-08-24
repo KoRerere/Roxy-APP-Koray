@@ -1,52 +1,59 @@
-import { describe, expect, it } from "vitest";
-import { todo_writeTool } from "../../../src/tools/builtin/todo_write.ts";
-import type { ToolContext, ToolEvent } from "../../../src/core/interfaces.ts";
+import { describe, expect, it } from 'vitest'
+import { updatePlanTool } from '../../../src/tools/builtin/update_plan.ts'
+import type { ToolContext, ToolEvent } from '../../../src/core/interfaces.ts'
 
 function ctx(emit?: (event: ToolEvent) => void): ToolContext {
-  return { agentId: "a", traceId: "t", signal: new AbortController().signal, emit };
+  return { agentId: 'a', traceId: 't', signal: new AbortController().signal, emit }
 }
 
-describe("todo_write tool", () => {
-  it("has descriptor with name 'todo_write', builtin source", () => {
-    const { descriptor } = todo_writeTool();
-    expect(descriptor.name).toBe("todo_write");
-    expect(descriptor.source).toBe("builtin");
-  });
+describe('update_plan tool', () => {
+  it("has descriptor with name 'update_plan', builtin source", () => {
+    const { descriptor } = updatePlanTool()
+    expect(descriptor.name).toBe('update_plan')
+    expect(descriptor.source).toBe('builtin')
+  })
 
-  it("returns and emits the complete updated list", async () => {
-    const events: ToolEvent[] = [];
-    const { handler } = todo_writeTool();
+  it('returns and emits the complete updated list', async () => {
+    const events: ToolEvent[] = []
+    const { handler } = updatePlanTool()
     const input = {
-      todos: [
-        { content: "First task", status: "in_progress" },
-        { content: "Second task", status: "in_progress" },
+      plan: [
+        { step: 'First task', status: 'in_progress' },
+        { step: 'Second task', status: 'completed' },
       ],
-    };
+    }
     const result = await handler(
       input,
       ctx((event) => events.push(event)),
-    );
-    expect(result.isError).toBe(false);
-    expect(result.content).toContain("First task");
-    expect(result.content).toContain("Second task");
-    expect(events).toEqual([{ type: "todo_updated", todos: input.todos }]);
-  });
+    )
+    expect(result.isError).toBe(false)
+    expect(result.content).toBe('Plan updated')
+    expect(events).toEqual([
+      {
+        type: 'plan_updated',
+        todos: [
+          { content: 'First task', status: 'in_progress' },
+          { content: 'Second task', status: 'completed' },
+        ],
+      },
+    ])
+  })
 
-  it("returns isError when the input schema is violated", async () => {
-    const { handler } = todo_writeTool();
-    const result = await handler({ todos: [{ bad: true }] }, ctx());
-    expect(result.isError).toBe(true);
-  });
+  it('returns isError when the input schema is violated', async () => {
+    const { handler } = updatePlanTool()
+    const result = await handler({ plan: [{ bad: true }] }, ctx())
+    expect(result.isError).toBe(true)
+  })
 
-  it("does not retain state between snapshots", async () => {
-    const events: ToolEvent[] = [];
-    const { handler } = todo_writeTool();
-    const context = ctx((event) => events.push(event));
-    await handler({ todos: [{ content: "old", status: "in_progress" }] }, context);
-    await handler({ todos: [{ content: "new", status: "completed" }] }, context);
+  it('does not retain state between snapshots', async () => {
+    const events: ToolEvent[] = []
+    const { handler } = updatePlanTool()
+    const context = ctx((event) => events.push(event))
+    await handler({ plan: [{ step: 'old', status: 'in_progress' }] }, context)
+    await handler({ plan: [{ step: 'new', status: 'completed' }] }, context)
     expect(events.at(-1)).toEqual({
-      type: "todo_updated",
-      todos: [{ content: "new", status: "completed" }],
-    });
-  });
-});
+      type: 'plan_updated',
+      todos: [{ content: 'new', status: 'completed' }],
+    })
+  })
+})

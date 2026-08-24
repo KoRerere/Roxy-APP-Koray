@@ -1,7 +1,7 @@
 import type { ContentBlock } from './attachments.js'
-import { HumanMessage } from '@langchain/core/messages'
+import { executionCenter } from '../../core/registry/executionCenter.js'
 import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '../../core/task-monitor/index.js'
-import { createClawAgent } from '../../deepagents/index.js'
+import { createRuntimeChatAgent, RuntimeEventPublisher } from '../../runtime/index.js'
 import { ThreadManager } from './threadManager.js'
 
 export type { ContentBlock }
@@ -15,11 +15,11 @@ interface SessionState {
   conversationId: string
   lastActivity: number
   isProcessing: boolean
+  activeRunId?: string
+  abortController?: AbortController
 }
 
 export class IMBridge {
-  private static readonly WORKER_ID = 'im-single-worker'
-
   private readonly imName: string
   private sessions: Map<string, SessionState> = new Map()
   private threadManager: ThreadManager
@@ -70,71 +70,62 @@ export class IMBridge {
       runId: messageId,
     })
 
+    const abortController = new AbortController()
+    session.activeRunId = messageId
+    session.abortController = abortController
+    executionCenter.register({
+      id: messageId,
+      source: 'im',
+      conversationId: threadId,
+      title: taskTitle,
+      metadata: { channelId, imName: this.imName },
+      cancel: () => {
+        abortController.abort('User cancelled')
+        return true
+      },
+    })
+    executionCenter.start(messageId)
+
     let destroy: (() => Promise<void>) | undefined
+    let outcome: 'completed' | 'failed' | 'cancelled' = 'completed'
     try {
-      const agentInstance = await createClawAgent({
-        workerId: IMBridge.WORKER_ID,
+      const agentInstance = await createRuntimeChatAgent({
         conversationId: threadId,
+        executionId: messageId,
+        runId: messageId,
         turnId: messageId,
+        fullAccess: true,
         taskMonitorTaskId: messageId,
       })
-      const { agent, destroy: _destroy } = agentInstance
+      const { agent, createInput, destroy: _destroy } = agentInstance
       destroy = _destroy
-      const input = {
-        messages: [
-          Array.isArray(content)
-            ? new HumanMessage({ content })
-            : new HumanMessage(content || ''),
-        ],
-      }
-
-      const stream = await agent.stream(input, {
-        configurable: {
-          thread_id: threadId,
-        },
-        streamMode: ['messages'],
-      } as any)
-
-      for await (const rawChunk of stream as any) {
-        const [namespace, chunks] = rawChunk
-
-        if (namespace === 'messages' && chunks?.[0]) {
-          const chunk = chunks?.[0]
-
-          if ((chunk as any)?.type === 'tool') {
-            continue
-          }
-
-          const msg = chunk
-          let text = ''
-          if (typeof msg.content === 'string') {
-            text = msg.content
-          }
-          else if (Array.isArray(msg.content)) {
-            text = msg.content
-              .filter((b: any) => b.type === 'text')
-              .map((b: any) => b.text)
-              .join('')
-          }
-
-          if (text) {
-            fullText += text
-          }
-
-          if (text && onChunk) {
-            await onChunk(text)
-          }
+      const publisher = new RuntimeEventPublisher(() => {}, { emitDone: false, agentPath: '/root' })
+      const input = Array.isArray(content)
+        ? content.filter(block => block.type === 'text').map(block => block.text ?? '').join(' ')
+        : content || ''
+      for await (const event of agent.stream(createInput(input), abortController.signal)) {
+        publisher.handle(event)
+        if (event.type === 'text' && onChunk) {
+          await onChunk(event.delta)
         }
       }
+      fullText = publisher.getFinalAnswer()
 
       return fullText
     }
+    catch (error) {
+      outcome = abortController.signal.aborted ? 'cancelled' : 'failed'
+      throw error
+    }
     finally {
+      executionCenter.finish(messageId, abortController.signal.aborted ? 'cancelled' : outcome)
       publishTaskMonitorTaskFinished(messageId)
       if (destroy) {
         await destroy()
       }
       session.isProcessing = false
+      session.activeRunId = undefined
+      session.abortController = undefined
     }
   }
 

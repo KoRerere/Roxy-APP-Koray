@@ -114,29 +114,29 @@ messages.append({"role": "assistant", "content": response.content})
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
+const client = new Anthropic()
 
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [{ role: "user", content: "Help me build a website" }];
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [{ role: 'user', content: 'Help me build a website' }]
 
 const response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
     edits: [
       {
-        type: "compact_20260112",
+        type: 'compact_20260112',
       },
     ],
   },
-});
+})
 
 // Append the response (including any compaction block) to continue the conversation
 messages.push({
-  role: "assistant",
+  role: 'assistant',
   content: response.content,
-});
+})
 ```
 
 ```csharp C#
@@ -335,26 +335,26 @@ response = client.beta.messages.create(
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = []
 
 const response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
     edits: [
       {
-        type: "compact_20260112",
+        type: 'compact_20260112',
         trigger: {
-          type: "input_tokens",
+          type: 'input_tokens',
           value: 150000,
         },
       },
     ],
   },
-});
+})
 ```
 
 ```csharp C#
@@ -523,23 +523,23 @@ response = client.beta.messages.create(
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = []
 
 const response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
     edits: [
       {
-        type: "compact_20260112",
-        instructions: "Focus on preserving code snippets, variable names, and technical decisions.",
+        type: 'compact_20260112',
+        instructions: 'Focus on preserving code snippets, variable names, and technical decisions.',
       },
     ],
   },
-});
+})
 ```
 
 ```csharp C#
@@ -755,42 +755,42 @@ if response.stop_reason == "compaction":
 ````
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [{ role: "user", content: "Hello, Claude" }];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [{ role: 'user', content: 'Hello, Claude' }]
 
 let response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
     edits: [
       {
-        type: "compact_20260112",
+        type: 'compact_20260112',
         pause_after_compaction: true,
       },
     ],
   },
-});
+})
 
 // Check if compaction triggered a pause
-if (response.stop_reason === "compaction") {
+if (response.stop_reason === 'compaction') {
   // Response contains only the compaction block
   messages.push({
-    role: "assistant",
+    role: 'assistant',
     content: response.content,
-  });
+  })
 
   // Continue the request
   response = await client.beta.messages.create({
-    betas: ["compact-2026-01-12"],
-    model: "claude-opus-4-8",
+    betas: ['compact-2026-01-12'],
+    model: 'claude-opus-4-8',
     max_tokens: 4096,
     messages,
     context_management: {
-      edits: [{ type: "compact_20260112" }],
+      edits: [{ type: 'compact_20260112' }],
     },
-  });
+  })
 }
 ```
 
@@ -1147,38 +1147,38 @@ response = client.beta.messages.create(
 ````
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = []
 
 // Assume we already have a response from a previous request
 const response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
-    edits: [{ type: "compact_20260112" }],
+    edits: [{ type: 'compact_20260112' }],
   },
-});
+})
 
 // After receiving a response with a compaction block
 messages.push({
-  role: "assistant",
+  role: 'assistant',
   content: response.content,
-});
+})
 
 // Continue the conversation
-messages.push({ role: "user", content: "Now add error handling" });
+messages.push({ role: 'user', content: 'Now add error handling' })
 
 const nextResponse = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
-    edits: [{ type: "compact_20260112" }],
+    edits: [{ type: 'compact_20260112' }],
   },
-});
+})
 ```
 
 ```csharp C#
@@ -1439,41 +1439,41 @@ with client.beta.messages.stream(
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = []
 
 const stream = await client.beta.messages.stream({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   messages,
   context_management: {
-    edits: [{ type: "compact_20260112" }],
+    edits: [{ type: 'compact_20260112' }],
   },
-});
+})
 
 for await (const event of stream) {
-  if (event.type === "content_block_start") {
-    if (event.content_block.type === "compaction") {
-      console.log("Compaction started...");
-    } else if (event.content_block.type === "text") {
-      console.log("Text response started...");
+  if (event.type === 'content_block_start') {
+    if (event.content_block.type === 'compaction') {
+      console.log('Compaction started...')
+    } else if (event.content_block.type === 'text') {
+      console.log('Text response started...')
     }
-  } else if (event.type === "content_block_delta") {
-    if (event.delta.type === "compaction_delta") {
-      console.log(`Compaction complete: ${event.delta.content?.length ?? 0} chars`);
-    } else if (event.delta.type === "text_delta") {
-      process.stdout.write(event.delta.text);
+  } else if (event.type === 'content_block_delta') {
+    if (event.delta.type === 'compaction_delta') {
+      console.log(`Compaction complete: ${event.delta.content?.length ?? 0} chars`)
+    } else if (event.delta.type === 'text_delta') {
+      process.stdout.write(event.delta.text)
     }
   }
 }
 
 // Get the final accumulated message
-const message = await stream.finalMessage();
+const message = await stream.finalMessage()
 messages.push({
-  role: "assistant",
+  role: 'assistant',
   content: message.content,
-});
+})
 ```
 
 ```csharp C#
@@ -1733,25 +1733,25 @@ response = client.beta.messages.create(
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
-const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+const client = new Anthropic()
+const messages: Anthropic.Beta.Messages.BetaMessageParam[] = []
 
 const response = await client.beta.messages.create({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   max_tokens: 4096,
   system: [
     {
-      type: "text",
-      text: "You are a helpful coding assistant...",
-      cache_control: { type: "ephemeral" }, // Cache the system prompt separately
+      type: 'text',
+      text: 'You are a helpful coding assistant...',
+      cache_control: { type: 'ephemeral' }, // Cache the system prompt separately
     },
   ],
   messages,
   context_management: {
-    edits: [{ type: "compact_20260112" }],
+    edits: [{ type: 'compact_20260112' }],
   },
-});
+})
 ```
 
 ```csharp C#
@@ -1957,13 +1957,13 @@ The token counting endpoint (`/v1/messages/count_tokens`) applies existing `comp
   YAML
 
 CURRENT=$(ant beta:messages count-tokens \
- --beta compact-2026-01-12 \
- --transform input_tokens --raw-output < request.yaml)
+--beta compact-2026-01-12 \
+--transform input_tokens --raw-output < request.yaml)
 
 ORIGINAL=$(ant beta:messages count-tokens \
- --beta compact-2026-01-12 \
- --transform context_management.original_input_tokens \
- --raw-output < request.yaml)
+--beta compact-2026-01-12 \
+--transform context_management.original_input_tokens \
+--raw-output < request.yaml)
 
 printf 'Current tokens: %s\n' "$CURRENT"
   printf 'Original tokens: %s\n' "$ORIGINAL"
@@ -1985,22 +1985,22 @@ print(f"Original tokens: {count_response.context_management.original_input_token
 ````
 
 ```typescript TypeScript
-const client = new Anthropic();
+const client = new Anthropic()
 const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
-  { role: "user", content: "Summarize the key points of our conversation so far." },
-];
+  { role: 'user', content: 'Summarize the key points of our conversation so far.' },
+]
 
 const countResponse = await client.beta.messages.countTokens({
-  betas: ["compact-2026-01-12"],
-  model: "claude-opus-4-8",
+  betas: ['compact-2026-01-12'],
+  model: 'claude-opus-4-8',
   messages,
   context_management: {
-    edits: [{ type: "compact_20260112" }],
+    edits: [{ type: 'compact_20260112' }],
   },
-});
+})
 
-console.log(`Current tokens: ${countResponse.input_tokens}`);
-console.log(`Original tokens: ${countResponse.context_management!.original_input_tokens}`);
+console.log(`Current tokens: ${countResponse.input_tokens}`)
+console.log(`Original tokens: ${countResponse.context_management!.original_input_tokens}`)
 ```
 
 ```csharp C#
@@ -2166,40 +2166,40 @@ print(chat("Now add rate limiting and error handling"))
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
+const client = new Anthropic()
 
-const messages: Anthropic.Beta.BetaMessageParam[] = [];
+const messages: Anthropic.Beta.BetaMessageParam[] = []
 
 async function chat(userMessage: string): Promise<string> {
-  messages.push({ role: "user", content: userMessage });
+  messages.push({ role: 'user', content: userMessage })
 
   const response = await client.beta.messages.create({
-    betas: ["compact-2026-01-12"],
-    model: "claude-opus-4-8",
+    betas: ['compact-2026-01-12'],
+    model: 'claude-opus-4-8',
     max_tokens: 4096,
     messages,
     context_management: {
       edits: [
         {
-          type: "compact_20260112",
-          trigger: { type: "input_tokens", value: 100000 },
+          type: 'compact_20260112',
+          trigger: { type: 'input_tokens', value: 100000 },
         },
       ],
     },
-  });
+  })
 
   // Append response (compaction blocks are automatically included)
-  messages.push({ role: "assistant", content: response.content });
+  messages.push({ role: 'assistant', content: response.content })
 
   // Return the text content
-  const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock?.text ?? "";
+  const textBlock = response.content.find((block) => block.type === 'text')
+  return textBlock?.text ?? ''
 }
 
 // Run a long conversation
-console.log(await chat("Help me build a Python web scraper"));
-console.log(await chat("Add support for JavaScript-rendered pages"));
-console.log(await chat("Now add rate limiting and error handling"));
+console.log(await chat('Help me build a Python web scraper'))
+console.log(await chat('Add support for JavaScript-rendered pages'))
+console.log(await chat('Now add rate limiting and error handling'))
 // ... continue as long as needed
 ```
 
@@ -2524,71 +2524,71 @@ print(chat("Now add rate limiting and error handling"))
 ```
 
 ```typescript TypeScript
-const client = new Anthropic();
+const client = new Anthropic()
 
-let messages: Anthropic.Beta.BetaMessageParam[] = [];
+let messages: Anthropic.Beta.BetaMessageParam[] = []
 
 async function chat(userMessage: string): Promise<string> {
-  messages.push({ role: "user", content: userMessage });
+  messages.push({ role: 'user', content: userMessage })
 
   let response = await client.beta.messages.create({
-    betas: ["compact-2026-01-12"],
-    model: "claude-opus-4-8",
+    betas: ['compact-2026-01-12'],
+    model: 'claude-opus-4-8',
     max_tokens: 4096,
     messages,
     context_management: {
       edits: [
         {
-          type: "compact_20260112",
-          trigger: { type: "input_tokens", value: 100000 },
+          type: 'compact_20260112',
+          trigger: { type: 'input_tokens', value: 100000 },
           pause_after_compaction: true,
         },
       ],
     },
-  });
+  })
 
   // Check if compaction occurred and paused
-  if (response.stop_reason === "compaction") {
+  if (response.stop_reason === 'compaction') {
     // Get the compaction block from the response
-    const compactionBlock = response.content[0];
+    const compactionBlock = response.content[0]
 
     // Preserve the prior exchange + current user message (3 messages)
     // by including them after the compaction block
-    const preservedMessages = messages.length >= 3 ? messages.slice(-3) : [...messages];
+    const preservedMessages = messages.length >= 3 ? messages.slice(-3) : [...messages]
 
     // Build new message list: compaction + preserved messages
     const messagesAfterCompaction: Anthropic.Beta.BetaMessageParam[] = [
-      { role: "assistant", content: [compactionBlock] },
+      { role: 'assistant', content: [compactionBlock] },
       ...preservedMessages,
-    ];
+    ]
 
     // Continue the request with the compacted context + preserved messages
     response = await client.beta.messages.create({
-      betas: ["compact-2026-01-12"],
-      model: "claude-opus-4-8",
+      betas: ['compact-2026-01-12'],
+      model: 'claude-opus-4-8',
       max_tokens: 4096,
       messages: messagesAfterCompaction,
       context_management: {
-        edits: [{ type: "compact_20260112" }],
+        edits: [{ type: 'compact_20260112' }],
       },
-    });
+    })
 
     // Update our message list to reflect the compaction
-    messages = messagesAfterCompaction;
+    messages = messagesAfterCompaction
   }
 
   // Append the final response
-  messages.push({ role: "assistant", content: response.content });
+  messages.push({ role: 'assistant', content: response.content })
 
   // Return the text content
-  const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock?.text ?? "";
+  const textBlock = response.content.find((block) => block.type === 'text')
+  return textBlock?.text ?? ''
 }
 
 // Run a long conversation
-console.log(await chat("Help me build a Python web scraper"));
-console.log(await chat("Add support for JavaScript-rendered pages"));
-console.log(await chat("Now add rate limiting and error handling"));
+console.log(await chat('Help me build a Python web scraper'))
+console.log(await chat('Add support for JavaScript-rendered pages'))
+console.log(await chat('Now add rate limiting and error handling'))
 // ... continue as long as needed
 ```
 

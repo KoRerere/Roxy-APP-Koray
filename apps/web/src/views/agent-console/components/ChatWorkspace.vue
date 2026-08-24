@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { UserTemplateCreate } from '@roxy/agent-api'
 import type { CustomTemplatePayload, UserTemplateDTO } from '../my-templates'
-import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentTodoProgress } from '../types'
+import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { OfficialTemplate, TemplateKind } from '../template-store'
 import type { AgentComposerItem } from './chat-composer/types'
 import {
   serializeAgentProfileReference,
-  serializeAgentSkillReference,
   serializeTemplateRef,
 } from '@roxy/shared'
 import { useElementSize } from '@vueuse/core'
@@ -22,10 +21,7 @@ import {
   readUserTemplateMutation,
   readUserTemplatePage,
 } from '../my-templates'
-import {
-  prepareOfficialTemplateAcquisition,
-} from '../official-template-acquisition'
-import { markTemplateRead, markTemplateUnread } from '../template-unread'
+import { markTemplateUnread } from '../template-unread'
 import {
   isTemplateImageIconSource,
   mapTemplateStoreItem,
@@ -41,14 +37,16 @@ import HomeTemplateCardSkeleton from './skeleton/HomeTemplateCardSkeleton.vue'
 import ChatComposer from './ChatComposer.vue'
 import { useDialog } from 'primevue/usedialog'
 import {
+  getAgentSkillInstalledRoot,
   mapRecommendedTemplateComposerItem,
   mapUserTemplateComposerItem,
+  recommendedTemplateToChatPrompt,
   scriptTemplateToRunPrompt,
-  userTemplateToPrompt,
+  setAgentSkillInstalledRoot,
 } from './chat-composer/templateItems'
 import ChatMessageList from './ChatMessageList.vue'
 import OverflowTooltip from './OverflowTooltip.vue'
-import TaskMonitorToggle from './TaskMonitorToggle.vue'
+import ProfileMonitorToggle from './ProfileMonitorToggle.vue'
 import SelectWindowGuide from './SelectWindowGuide.vue'
 import {
   announceNewTemplateCreated,
@@ -92,6 +90,34 @@ interface ChatComposerExpose {
   getShellElement: () => HTMLElement | null
 }
 
+const props = defineProps<{
+  activeConversationId?: string
+  composerFocusKey?: number
+  conversationTitle?: string
+  hitlRequest?: AgentHitlRequest
+  hasEarlierMessages: boolean
+  loadingEarlierMessages: boolean
+  messages: AgentMessage[]
+  pendingAttachments: AgentAttachment[]
+  queuedPrompts: AgentQueuedPrompt[]
+  thinking: boolean
+  todoProgress?: AgentTodoProgress
+}>()
+
+const emit = defineEmits<{
+  addAttachments: [files: File[]]
+  addFolder: [folder: AgentFolderSelection]
+  addPathAttachment: [selection: AgentPathSelection]
+  loadEarlierMessages: []
+  removeAttachment: [fileId: string]
+  removeQueuedPrompt: [promptId: string]
+  reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
+  restoreQueuedPrompt: [promptId: string]
+  send: []
+  stop: []
+  submitHitl: [payload: AgentHitlSubmitPayload]
+}>()
+
 const ONBOARDING_SCRIPT_TEMPLATE_SLUGS = {
   nurture: 'official-tiktok-for-you-nurture',
   analytics: 'official-tiktok-comment-analyzer',
@@ -124,6 +150,7 @@ interface DroppedTransferEntry {
 
 interface TemplateCard {
   id: number
+  slug: string
   title: string
   description: string
   iconName: SvgNames
@@ -132,6 +159,7 @@ interface TemplateCard {
   iconColor: string
   iconBackground: string
   kind: TemplateKind
+  metadata: Record<string, unknown>
   tags: {
     id: number | string
     label: string
@@ -139,27 +167,6 @@ interface TemplateCard {
   }[]
   prompt: string
 }
-
-const props = defineProps<{
-  activeConversationId?: string
-  composerFocusKey?: number
-  conversationTitle?: string
-  hitlRequest?: AgentHitlRequest
-  messages: AgentMessage[]
-  pendingAttachments: AgentAttachment[]
-  thinking: boolean
-  todoProgress?: AgentTodoProgress
-}>()
-
-const emit = defineEmits<{
-  addAttachments: [files: File[]]
-  addFolder: [folder: AgentFolderSelection]
-  addPathAttachment: [selection: AgentPathSelection]
-  removeAttachment: [fileId: string]
-  send: []
-  stop: []
-  submitHitl: [payload: AgentHitlSubmitPayload]
-}>()
 
 const prompt = defineModel<string>('prompt', { required: true })
 
@@ -229,8 +236,7 @@ const defaultIconByKind = {
   color: string
 }>
 
-const isHome = computed(() => !props.activeConversationId)
-const showComposerGlow = computed(() => isHome.value && props.messages.length === 0)
+const isHome = computed(() => !props.activeConversationId && props.messages.length === 0)
 const isDraggingFiles = computed(() => dragDepth.value > 0)
 const displayConversationTitle = computed(() => props.conversationTitle?.trim() || $t('新建对话'))
 const composerOccupiedBottom = computed(() => {
@@ -253,6 +259,7 @@ const templateCards = computed<TemplateCard[]>(() => officialTemplates.value.sli
   const iconBackground = pickTemplateThemeValue(item.iconInfo?.bgColor, darkTheme) || 'var(--color-bg-tertiary)'
   return {
     id: item.id,
+    slug: item.slug,
     title: item.title,
     description: item.description || $t('暂无描述'),
     iconName,
@@ -261,6 +268,7 @@ const templateCards = computed<TemplateCard[]>(() => officialTemplates.value.sli
     iconColor,
     iconBackground,
     kind: item.kind,
+    metadata: row.metadata,
     tags: [
       ...item.labels.slice(0, 2).map(label => ({
         id: label.id,
@@ -302,6 +310,20 @@ async function loadTemplateCards() {
   }
 }
 
+async function ensureSkillInstalledRootLoaded() {
+  if (getAgentSkillInstalledRoot()) {
+    return
+  }
+
+  try {
+    const info = await agentApi.skillPathInfo()
+    setAgentSkillInstalledRoot(info.installedRoot)
+  }
+  catch (error) {
+    console.error('[agent-console] Failed to load Skill installed root:', error)
+  }
+}
+
 async function loadRecommendedTemplates() {
   if (recommendedTemplatesLoaded) {
     perfLog('chat-workspace:loadRecommendedTemplates:skip-loaded')
@@ -314,7 +336,8 @@ async function loadRecommendedTemplates() {
 
   const endLoadRecommendedTemplates = createPerfTimer('chat-workspace:loadRecommendedTemplates')
   const request = (async () => {
-    await agentApi.initializePresetTemplates()
+    // await agentApi.initializePresetTemplates()
+    await ensureSkillInstalledRootLoaded()
 
     const matchedTemplates = new Map<number, UserTemplateDTO>()
     let offset = 0
@@ -366,8 +389,9 @@ async function loadRecommendedTemplates() {
 }
 
 function storeRecommendedTemplate(template: UserTemplateDTO) {
-  if (typeof template.officialTemplateId !== 'number')
+  if (typeof template.officialTemplateId !== 'number') {
     return template
+  }
 
   const nextTemplates = new Map(recommendedTemplates.value)
   nextTemplates.set(template.officialTemplateId, template)
@@ -399,84 +423,6 @@ async function createOfficialUserTemplate(request: UserTemplateCreate) {
   }
 }
 
-function acquireTemplateWithDialog(
-  officialTemplate: OfficialTemplate,
-): Promise<UserTemplateDTO | undefined> {
-  return new Promise((resolve, reject) => {
-    let settled = false
-    const finish = (template?: UserTemplateDTO) => {
-      if (settled)
-        return
-      settled = true
-      resolve(template)
-    }
-
-    try {
-      dialog.open(CreateTemplateDialog, {
-        props: {
-          modal: true,
-          blockScroll: true,
-          dismissableMask: false,
-          draggable: false,
-          showHeader: false,
-          style: { width: 'min(540px, calc(100vw - 32px))' },
-          pt: {
-            root: 'agent-console-dialog agent-console-create-template-dialog',
-            content: '!p-0 !overflow-hidden',
-          },
-        },
-        data: {
-          officialTemplate,
-          lockSource: true,
-          submitMode: 'run',
-          onCancel: () => finish(),
-          onSave: async (payload: CustomTemplatePayload) => {
-            const template = await createOfficialUserTemplate(buildCustomTemplateRequest(payload))
-            if (!template) {
-              return false
-            }
-            finish(template)
-            return true
-          },
-        },
-        onClose: () => finish(),
-      })
-    }
-    catch (error) {
-      reject(error)
-    }
-  })
-}
-
-async function ensureRecommendedTemplate(card: TemplateCard) {
-  await loadRecommendedTemplates()
-
-  const installedTemplate = recommendedTemplates.value.get(card.id)
-  if (installedTemplate) {
-    return { template: installedTemplate, acquired: false }
-  }
-
-  const officialTemplate = officialTemplates.value.find(template => template.id === card.id)
-  if (!officialTemplate) {
-    throw new Error($t('官方模板不存在或已下架'))
-  }
-
-  const acquisition = prepareOfficialTemplateAcquisition(
-    officialTemplate,
-    localeStore.currentLocale,
-  )
-  const template = acquisition.requiresConfirmation
-    ? await acquireTemplateWithDialog(officialTemplate)
-    : await createOfficialUserTemplate(acquisition.request)
-
-  return template ? { template, acquired: true } : undefined
-}
-
-function getSkillUsageExample(card: TemplateCard) {
-  const officialTemplate = officialTemplates.value.find(item => item.id === card.id)
-  return pickOfficialTemplatePrompt(officialTemplate, localeStore.currentLocale)
-}
-
 function updatePromptAndFocus(value: string) {
   prompt.value = value
   void nextTick(() => {
@@ -491,8 +437,9 @@ function addSelectionToCurrentChat(text: string) {
 
 function markNewTemplateGuidePendingForCurrentAccount() {
   const accountId = getAgentConsoleAccountId(userStore.userInfo)
-  if (!accountId)
+  if (!accountId) {
     return
+  }
 
   markNewTemplateGuidePending(accountId)
   announceNewTemplateCreated()
@@ -519,8 +466,9 @@ function openSaveAsPromptDialog(text: string) {
       submitMode: 'save',
       onSave: async (payload: CustomTemplatePayload) => {
         const created = await createOfficialUserTemplate(buildCustomTemplateRequest(payload))
-        if (!created)
+        if (!created) {
           return false
+        }
 
         markNewTemplateGuidePendingForCurrentAccount()
         return true
@@ -530,50 +478,26 @@ function openSaveAsPromptDialog(text: string) {
 }
 
 async function useTemplate(card: TemplateCard) {
-  if (card.kind === 'script') {
-    const scriptPrompt = scriptTemplateToRunPrompt(
-      card.title,
-      serializeTemplateRef('official', card.id),
-    )
-    if (!scriptPrompt) {
-      onlyErrorToast(-1, $t('脚本引用为空'))
-      return false
-    }
-    updatePromptAndFocus(scriptPrompt)
-    return true
-  }
-
-  if (card.kind === 'skill') {
-    const usageExample = getSkillUsageExample(card)
-    if (!usageExample) {
-      onlyErrorToast(-1, $t('Skill 使用示例为空'))
-      return false
-    }
-
-    const skillReference = serializeAgentSkillReference(
-      card.title,
-      serializeTemplateRef('official', card.id),
-    )
-    updatePromptAndFocus(`${skillReference} ${usageExample}`)
-    return true
-  }
-
-  if (resolvingTemplateId.value !== undefined)
+  if (resolvingTemplateId.value !== undefined) {
     return false
+  }
 
   resolvingTemplateId.value = card.id
   try {
-    const resolved = await ensureRecommendedTemplate(card)
-    if (!resolved)
-      return false
+    await ensureSkillInstalledRootLoaded()
+    await loadRecommendedTemplates()
 
-    if (resolved.acquired)
-      markTemplateRead(resolved.template)
-
-    const templatePrompt = userTemplateToPrompt(resolved.template)
-    if (!templatePrompt)
+    const userTemplate = recommendedTemplates.value.get(card.id)
+    const templatePrompt = recommendedTemplateToChatPrompt(
+      card,
+      userTemplate,
+      localeStore.currentLocale,
+    )
+    if (!templatePrompt) {
       throw new Error($t('模板提示词为空'))
-    prompt.value = templatePrompt
+    }
+
+    updatePromptAndFocus(templatePrompt)
     return true
   }
   catch (error) {
@@ -589,8 +513,9 @@ async function useTemplate(card: TemplateCard) {
 function getSelectWindowGuideStorageKey() {
   const userInfo = userStore.userInfo
   const accountId = userInfo.id ?? userInfo.email ?? userInfo.phone
-  if (accountId === undefined || accountId === null || accountId === '')
+  if (accountId === undefined || accountId === null || accountId === '') {
     return ''
+  }
 
   return `${SELECT_WINDOW_GUIDE_STORAGE_PREFIX}${encodeURIComponent(String(accountId))}`
 }
@@ -614,12 +539,14 @@ function markSelectWindowGuideShown(storageKey: string) {
 }
 
 async function maybeShowTemplateGuide(templateKind: TemplateKind) {
-  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value)
+  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value) {
     return
+  }
 
   const storageKey = getSelectWindowGuideStorageKey()
-  if (!storageKey || hasShownSelectWindowGuide(storageKey))
+  if (!storageKey || hasShownSelectWindowGuide(storageKey)) {
     return
+  }
 
   await nextTick()
   await new Promise<void>((resolve) => {
@@ -630,8 +557,9 @@ async function maybeShowTemplateGuide(templateKind: TemplateKind) {
   const target = isSkillGuide
     ? composerRef.value?.getEmptyInputTokenElement() ?? null
     : composerRef.value?.getEmptyProfileTokenElement() ?? null
-  if (!target)
+  if (!target) {
     return
+  }
 
   selectWindowGuideTarget.value = target
   selectWindowGuideLabel.value = isSkillGuide ? $t('点击填写参数') : $t('点击选择窗口')
@@ -640,8 +568,9 @@ async function maybeShowTemplateGuide(templateKind: TemplateKind) {
 }
 
 async function runHomeTemplate(card: TemplateCard) {
-  if (await useTemplate(card))
+  if (await useTemplate(card)) {
     await maybeShowTemplateGuide(card.kind)
+  }
 }
 
 function dismissSelectWindowGuide() {
@@ -658,26 +587,31 @@ function getNewTemplateGuideAccountId() {
 }
 
 async function maybeShowNewTemplateGuide() {
-  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  if (typeof window === 'undefined' || selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
+  }
 
   const accountId = getNewTemplateGuideAccountId()
-  if (!accountId || hasShownNewTemplateGuide(accountId) || !hasNewTemplateGuidePending(accountId))
+  if (!accountId || hasShownNewTemplateGuide(accountId) || !hasNewTemplateGuidePending(accountId)) {
     return
+  }
 
   await nextTick()
   await new Promise<void>((resolve) => {
     window.requestAnimationFrame(() => resolve())
   })
 
-  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
-  if (hasShownNewTemplateGuide(accountId) || !hasNewTemplateGuidePending(accountId))
+  }
+  if (hasShownNewTemplateGuide(accountId) || !hasNewTemplateGuidePending(accountId)) {
     return
+  }
 
   const target = composerRef.value?.getSelectTemplateButtonElement() ?? null
-  if (!target)
+  if (!target) {
     return
+  }
 
   newTemplateGuideTarget.value = target
   newTemplateGuideLabel.value = $t('有新模板，试试点击这里使用。')
@@ -695,14 +629,17 @@ function dismissNewTemplateGuide() {
 }
 
 async function maybeShowAiBatchCreateGuide() {
-  if (typeof window === 'undefined' || !hasPendingAiBatchCreateGuide())
+  if (typeof window === 'undefined' || !hasPendingAiBatchCreateGuide()) {
     return
-  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  }
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
+  }
 
   const accountId = getNewTemplateGuideAccountId()
-  if (!accountId)
+  if (!accountId) {
     return
+  }
   const forced = isAiBatchCreateGuideForced()
   if (!forced && hasShownAiBatchCreateGuide(accountId)) {
     clearPendingAiBatchCreateGuide()
@@ -714,20 +651,24 @@ async function maybeShowAiBatchCreateGuide() {
     window.requestAnimationFrame(() => resolve())
   })
 
-  if (!hasPendingAiBatchCreateGuide())
+  if (!hasPendingAiBatchCreateGuide()) {
     return
-  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  }
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
+  }
 
   const target = composerRef.value?.getComposerElement() ?? null
-  if (!target)
+  if (!target) {
     return
+  }
 
   aiBatchCreateGuideTarget.value = target
   aiBatchCreateGuideLabel.value = $t('支持粘贴/拖入代理信息文件和账号信息文件')
   aiBatchCreateGuideVisible.value = true
-  if (!forced)
+  if (!forced) {
     markAiBatchCreateGuideShown(accountId)
+  }
   clearPendingAiBatchCreateGuide()
 }
 
@@ -740,14 +681,17 @@ function dismissAiBatchCreateGuide() {
 }
 
 async function maybeShowCreateAutomationGuide() {
-  if (typeof window === 'undefined' || !hasPendingCreateAutomationGuide())
+  if (typeof window === 'undefined' || !hasPendingCreateAutomationGuide()) {
     return
-  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  }
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
+  }
 
   const accountId = getNewTemplateGuideAccountId()
-  if (!accountId)
+  if (!accountId) {
     return
+  }
   if (hasShownCreateAutomationGuide(accountId)) {
     clearPendingCreateAutomationGuide()
     return
@@ -758,14 +702,17 @@ async function maybeShowCreateAutomationGuide() {
     window.requestAnimationFrame(() => resolve())
   })
 
-  if (!hasPendingCreateAutomationGuide())
+  if (!hasPendingCreateAutomationGuide()) {
     return
-  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value)
+  }
+  if (selectWindowGuideVisible.value || aiBatchCreateGuideVisible.value || createAutomationGuideVisible.value || newTemplateGuideVisible.value) {
     return
+  }
 
   const target = composerRef.value?.getSelectTemplateButtonElement() ?? null
-  if (!target)
+  if (!target) {
     return
+  }
 
   createAutomationGuideTarget.value = target
   createAutomationGuideLabel.value = $t('点击选择要执行的自动化模板')
@@ -831,8 +778,9 @@ async function showOnboardingWindowGuide(target: 'button' | 'token') {
   const element = target === 'button'
     ? composerRef.value?.getSelectWindowButtonElement() ?? null
     : composerRef.value?.getEmptyProfileTokenElement() ?? null
-  if (!element)
+  if (!element) {
     return
+  }
 
   selectWindowGuideTarget.value = element
   selectWindowGuideLabel.value = $t('点击选择窗口')
@@ -842,8 +790,9 @@ async function showOnboardingWindowGuide(target: 'button' | 'token') {
 async function fillOnboardingScriptPrompt(slug: OnboardingScriptTemplateSlug) {
   try {
     const template = await findOfficialScriptTemplate(slug)
-    if (!template)
+    if (!template) {
       throw new Error($t('官方模板不存在或已下架'))
+    }
 
     updatePromptAndFocus(scriptTemplateToRunPrompt(
       mapTemplateStoreItem(template, localeStore.currentLocale).title,
@@ -858,8 +807,9 @@ async function fillOnboardingScriptPrompt(slug: OnboardingScriptTemplateSlug) {
 }
 
 async function handleOnboardingExperience(scenario: 'create' | 'publish' | 'nurture' | 'analytics') {
-  if (!onboardingVisible.value)
+  if (!onboardingVisible.value) {
     return
+  }
 
   onboardingVisible.value = false
 
@@ -872,8 +822,9 @@ async function handleOnboardingExperience(scenario: 'create' | 'publish' | 'nurt
       })
       const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
       const templatePrompt = pickAiBatchCreatePrompt(templates, localeStore.currentLocale)
-      if (!templatePrompt)
+      if (!templatePrompt) {
         throw new Error($t('未找到批量创建窗口模板'))
+      }
 
       updatePromptAndFocus(templatePrompt)
       requestAiBatchCreateGuide(true)
@@ -888,7 +839,7 @@ async function handleOnboardingExperience(scenario: 'create' | 'publish' | 'nurt
   if (scenario === 'publish') {
     updatePromptAndFocus($t('在 {profile} 窗口中运行 {script}', {
       profile: serializeAgentProfileReference([]),
-      script: $t("发布视频"),
+      script: $t('发布视频'),
     }))
     await showOnboardingWindowGuide('token')
     return
@@ -910,8 +861,9 @@ function normalizePath(value: string) {
 }
 
 function getFileLocalPath(file: File) {
-  if (!globalThis.isElectron)
+  if (!globalThis.isElectron) {
     return ''
+  }
 
   try {
     return globalThis.electronAPI.getPathForFile(file) || ''
@@ -928,12 +880,14 @@ function getDirectoryPathFromChildFile(filePath: string, relativePath: string, r
   const rootIndex = relativeParts[0] === rootName ? 1 : 0
   const childPathUnderRoot = relativeParts.slice(rootIndex).join('/')
 
-  if (!childPathUnderRoot)
+  if (!childPathUnderRoot) {
     return filePath
+  }
 
   const suffix = `/${childPathUnderRoot}`
-  if (normalizedFilePath.endsWith(suffix))
+  if (normalizedFilePath.endsWith(suffix)) {
     return filePath.slice(0, -suffix.length)
+  }
 
   return ''
 }
@@ -966,8 +920,9 @@ async function readDroppedDirectoryEntries(entry: DroppedDirectoryEntry) {
     const batch = await new Promise<DroppedFileSystemEntry[]>((resolve, reject) => {
       reader.readEntries(resolve, reject)
     })
-    if (!batch.length)
+    if (!batch.length) {
       break
+    }
     entries.push(...batch)
   }
 
@@ -996,12 +951,14 @@ async function findFirstDroppedDirectoryFile(entry: DroppedDirectoryEntry, paren
 
   for (const child of entries) {
     const childPath = `${parentPath}/${child.name}`
-    if (child.isFile)
+    if (child.isFile) {
       return readDroppedFile(child, childPath)
+    }
 
     const file = await findFirstDroppedDirectoryFile(child, childPath)
-    if (file)
+    if (file) {
       return file
+    }
   }
 
   return undefined
@@ -1029,15 +986,17 @@ async function addDroppedDirectory(entry: DroppedDirectoryEntry) {
   }
 
   const files = await collectDroppedDirectoryFiles(entry)
-  if (!files.length)
+  if (!files.length) {
     return
+  }
 
   emit('addFolder', { name: entry.name, files })
 }
 
 function addDroppedFiles(files: File[]) {
-  if (!files.length)
+  if (!files.length) {
     return
+  }
 
   if (!globalThis.isElectron) {
     emit('addAttachments', files)
@@ -1059,8 +1018,9 @@ function addDroppedFiles(files: File[]) {
     })
   }
 
-  if (uploadFallback.length)
+  if (uploadFallback.length) {
     emit('addAttachments', uploadFallback)
+  }
 }
 
 async function addDroppedItems(dataTransfer: DataTransfer) {
@@ -1099,39 +1059,45 @@ async function addDroppedItems(dataTransfer: DataTransfer) {
 }
 
 function handleWorkspaceDragEnter(event: DragEvent) {
-  if (!isFileDrag(event) || props.thinking)
+  if (!isFileDrag(event)) {
     return
+  }
 
   event.preventDefault()
   dragDepth.value += 1
 }
 
 function handleWorkspaceDragOver(event: DragEvent) {
-  if (!isFileDrag(event) || props.thinking)
+  if (!isFileDrag(event)) {
     return
+  }
 
   event.preventDefault()
-  if (event.dataTransfer)
+  if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'copy'
+  }
 }
 
 function handleWorkspaceDragLeave(event: DragEvent) {
-  if (!isFileDrag(event))
+  if (!isFileDrag(event)) {
     return
+  }
 
   event.preventDefault()
   dragDepth.value = Math.max(0, dragDepth.value - 1)
 }
 
 async function handleWorkspaceDrop(event: DragEvent) {
-  if (!isFileDrag(event) || props.thinking)
+  if (!isFileDrag(event)) {
     return
+  }
 
   event.preventDefault()
   dragDepth.value = 0
 
-  if (!event.dataTransfer)
+  if (!event.dataTransfer) {
     return
+  }
 
   try {
     await addDroppedItems(event.dataTransfer)
@@ -1186,7 +1152,7 @@ onBeforeUnmount(() => {
     class="chat-workspace"
     :class="{ 'chat-workspace--home': isHome }"
     padding="0"
-    :show-task-monitor-toggle="false"
+    :show-profile-monitor-toggle="false"
   >
     <div
       class="chat-container"
@@ -1201,7 +1167,7 @@ onBeforeUnmount(() => {
         <div class="chat-header__title" :title="displayConversationTitle">
           {{ displayConversationTitle }}
         </div>
-        <TaskMonitorToggle :label="$t('窗口监控')" variant="pill" />
+        <ProfileMonitorToggle variant="pill" />
       </header>
 
       <div v-if="isHome" class="chat-home-actions">
@@ -1214,9 +1180,8 @@ onBeforeUnmount(() => {
           <span>?</span>
           {{ $t('新手引导') }}
         </button>
-        <TaskMonitorToggle
+        <ProfileMonitorToggle
           class="chat-home-monitor"
-          :label="$t('窗口监控')"
           variant="pill"
         />
       </div>
@@ -1305,10 +1270,13 @@ onBeforeUnmount(() => {
       <ChatMessageList
         v-else
         :active-conversation-id="activeConversationId"
+        :has-earlier-messages="hasEarlierMessages"
         has-header
+        :loading-earlier-messages="loadingEarlierMessages"
         :messages="messages"
         @add-to-chat="addSelectionToCurrentChat"
         @save-as-prompt="openSaveAsPromptDialog"
+        @load-earlier-messages="emit('loadEarlierMessages')"
       />
       <div class="composer-scroll-mask" aria-hidden="true" />
       <div v-if="hitlRequest" class="hitl-overlay" aria-hidden="true" />
@@ -1320,14 +1288,18 @@ onBeforeUnmount(() => {
         :focus-key="composerAutoFocusKey"
         :hitl-request="hitlRequest"
         :pending-attachments="pendingAttachments"
+        :queued-prompts="queuedPrompts"
         :recommended-template-items="recommendedTemplateItems"
-        :show-glow="showComposerGlow"
+        :show-glow="isHome"
         :thinking="thinking"
         :todo-progress="todoProgress"
         @add-attachments="emit('addAttachments', $event)"
         @add-folder="emit('addFolder', $event)"
         @add-path-attachment="emit('addPathAttachment', $event)"
         @remove-attachment="emit('removeAttachment', $event)"
+        @remove-queued-prompt="emit('removeQueuedPrompt', $event)"
+        @reorder-queued-prompt="emit('reorderQueuedPrompt', $event)"
+        @restore-queued-prompt="emit('restoreQueuedPrompt', $event)"
         @send="emit('send')"
         @stop="emit('stop')"
         @submit-hitl="emit('submitHitl', $event)"

@@ -1,16 +1,143 @@
 import type { AgentConversationRunEventDTO } from '@roxy/shared/channel'
-import type { AgentRunStatus, AgentStream } from './types'
+import type { AgentAttachment, AgentMessage, AgentRunStatus, AgentStream } from './types'
 
 export type ConversationRunEventAppendResult = 'accepted' | 'duplicate' | 'gap'
 
+export interface PendingRunPresentation {
+  assistantMessageId: string
+  startedAt: number
+  userMessageId: string
+}
+
+interface CreatePendingRunMessagesOptions {
+  attachments: AgentAttachment[]
+  content: string
+  conversationId: string
+  createdAt?: string
+  startedAt: number
+  token: string
+}
+
+interface ConversationDetailRequestState {
+  hasMessageCache: boolean
+  isKnownConversation: boolean
+  isRunning: boolean
+}
+
+interface ConversationMessageCachePinState {
+  hasActiveRun: boolean
+  hasPendingRun: boolean
+  hasPreparingRun: boolean
+  hasRunningMessage: boolean
+  hasStoppedPendingRun: boolean
+}
+
+export function shouldRequestConversationDetail(state: ConversationDetailRequestState): boolean {
+  return state.isKnownConversation && !state.isRunning && !state.hasMessageCache
+}
+
+export function shouldPinConversationMessageCache(state: ConversationMessageCachePinState): boolean {
+  return state.hasActiveRun
+    || state.hasPendingRun
+    || state.hasPreparingRun
+    || state.hasRunningMessage
+    || state.hasStoppedPendingRun
+}
+
+export function createPendingRunMessages(options: CreatePendingRunMessagesOptions): {
+  messages: AgentMessage[]
+  presentation: PendingRunPresentation
+} {
+  const userMessageId = `pending-user-${options.token}`
+  const assistantMessageId = `pending-assistant-${options.token}`
+  const presentation: PendingRunPresentation = {
+    assistantMessageId,
+    startedAt: options.startedAt,
+    userMessageId,
+  }
+
+  return {
+    presentation,
+    messages: [
+      {
+        id: userMessageId,
+        conversationId: options.conversationId,
+        role: 'user',
+        author: 'You',
+        content: options.content,
+        attachments: options.attachments,
+        createdAt: options.createdAt ?? '',
+        status: 'streaming',
+      },
+      {
+        id: assistantMessageId,
+        conversationId: options.conversationId,
+        role: 'assistant',
+        author: 'Roxy AI Agent',
+        content: '',
+        createdAt: '',
+        status: 'streaming',
+        process: {
+          id: `pending-process-${options.token}`,
+          completed: false,
+          durationState: 'thinking',
+          durationStartedAt: options.startedAt,
+          collapsed: false,
+          events: [],
+        },
+      },
+    ],
+  }
+}
+
+export function reconcileConversationRunMessages(
+  messages: AgentMessage[],
+  presentation: PendingRunPresentation,
+  item: AgentConversationRunEventDTO,
+): void {
+  if (item.event.type !== 'run_started') {
+    return
+  }
+
+  const userMessage = messages.find(message => message.id === presentation.userMessageId)
+  if (userMessage) {
+    userMessage.runId = item.runId
+    userMessage.status = 'done'
+  }
+
+  const assistantMessage = messages.find(message => message.id === presentation.assistantMessageId)
+  if (!assistantMessage) {
+    return
+  }
+
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index]!
+    if (message === assistantMessage || message.role !== 'assistant') {
+      continue
+    }
+    if (message.id === item.assistantMessageId || message.runId === item.runId) {
+      messages.splice(index, 1)
+    }
+  }
+
+  assistantMessage.id = item.assistantMessageId
+  assistantMessage.runId = item.runId
+  if (assistantMessage.process) {
+    assistantMessage.process.id = `pending-process-${item.assistantMessageId}`
+    assistantMessage.process.durationStartedAt = presentation.startedAt
+  }
+}
+
 function eventBlockKey(item: AgentConversationRunEventDTO): string | undefined {
   const { event } = item
-  const scope = 'workerId' in event.data && event.data.workerId ? event.data.workerId : ''
+  const agentPath = 'agentPath' in event.data && event.data.agentPath
+  const workerId = 'workerId' in event.data && event.data.workerId
+  const scope = agentPath || workerId || '/root'
   if (event.type === 'thinking_delta') {
-    return `${scope}:thinking:${event.data.thinkingId}`
+    return `${scope}:thinking:${event.data.id ?? event.data.thinkingId}`
   }
   if (event.type === 'content_delta') {
-    return `${scope}:content:${event.data.contentId}:${event.data.phase ?? ''}`
+    return `${scope}:content:${event.data.id ?? event.data.contentId}:${event.data.phase ?? ''}`
   }
 }
 
@@ -65,6 +192,65 @@ export function appendConversationRunEvent(
   return 'accepted'
 }
 
+export function appendOrderedConversationRunEvents(
+  stream: Pick<AgentStream, 'runId' | 'events' | 'lastSequence'>,
+  bufferedEvents: AgentConversationRunEventDTO[],
+  item: AgentConversationRunEventDTO,
+): { accepted: AgentConversationRunEventDTO[], buffered: AgentConversationRunEventDTO[] } {
+  const eventsBySequenceRange = new Map<string, AgentConversationRunEventDTO>()
+  for (const candidate of [...bufferedEvents, item]) {
+    const startSequence = candidate.startSequence ?? candidate.sequence
+    eventsBySequenceRange.set(`${startSequence}:${candidate.sequence}`, candidate)
+  }
+
+  const candidates = [...eventsBySequenceRange.values()].sort((left, right) => {
+    const startDifference = (left.startSequence ?? left.sequence) - (right.startSequence ?? right.sequence)
+    return startDifference || left.sequence - right.sequence
+  })
+  const accepted: AgentConversationRunEventDTO[] = []
+
+  for (let index = 0; index < candidates.length; index++) {
+    const candidate = candidates[index]!
+    const result = appendConversationRunEvent(stream, candidate)
+    if (result === 'gap') {
+      return { accepted, buffered: candidates.slice(index) }
+    }
+    if (result === 'accepted') {
+      accepted.push(candidate)
+    }
+  }
+
+  return { accepted, buffered: [] }
+}
+
+export function appendConversationRunPresentationEvents(
+  events: AgentConversationRunEventDTO[],
+  items: AgentConversationRunEventDTO[],
+): void {
+  const sequenceRanges = new Set(events.map((item) => {
+    return `${item.startSequence ?? item.sequence}:${item.sequence}`
+  }))
+
+  for (const item of items) {
+    const blockKey = compactedBlockKey(item)
+    if (blockKey) {
+      replaceCompactedBlock(events, item, blockKey)
+      continue
+    }
+
+    const sequenceRange = `${item.startSequence ?? item.sequence}:${item.sequence}`
+    if (!sequenceRanges.has(sequenceRange)) {
+      events.push(item)
+      sequenceRanges.add(sequenceRange)
+    }
+  }
+
+  events.sort((left, right) => {
+    const startDifference = (left.startSequence ?? left.sequence) - (right.startSequence ?? right.sequence)
+    return startDifference || left.sequence - right.sequence
+  })
+}
+
 export function replaceConversationRunEvents(
   stream: Pick<AgentStream, 'runId' | 'events' | 'lastSequence'>,
   events: AgentConversationRunEventDTO[],
@@ -94,12 +280,15 @@ export function replaceConversationRunEvents(
 }
 
 export function terminalRunStatus(item: AgentConversationRunEventDTO): AgentRunStatus | undefined {
-  if (item.event.type === 'run_completed')
+  if (item.event.type === 'run_completed') {
     return 'completed'
-  if (item.event.type === 'run_failed')
+  }
+  if (item.event.type === 'run_failed') {
     return 'failed'
-  if (item.event.type === 'run_cancelled')
+  }
+  if (item.event.type === 'run_cancelled') {
     return 'cancelled'
+  }
 }
 
 interface ConversationRunSummary {
@@ -161,6 +350,10 @@ export class LocallyStoppedConversationRunRegistry<T> {
     return this.runIds.has(runId)
   }
 
+  hasPending(conversationId: string): boolean {
+    return this.pendingByConversation.has(conversationId)
+  }
+
   removeConversation(conversationId: string, runIds: string[]): void {
     this.pendingByConversation.delete(conversationId)
     for (const runId of runIds) {
@@ -188,8 +381,9 @@ export class PendingConversationRunRegistry<T> {
     this.clear(conversationId)
     const timer = setTimeout(() => {
       const entry = this.entries.get(conversationId)
-      if (!entry || entry.requestId !== requestId)
+      if (!entry || entry.requestId !== requestId) {
         return
+      }
       this.entries.delete(conversationId)
       onExpired(entry.value)
     }, timeoutMs)
@@ -198,8 +392,9 @@ export class PendingConversationRunRegistry<T> {
 
   acknowledge(conversationId: string, requestId?: string): T | undefined {
     const entry = this.entries.get(conversationId)
-    if (!entry || (requestId && entry.requestId !== requestId))
+    if (!entry || (requestId && entry.requestId !== requestId)) {
       return undefined
+    }
     clearTimeout(entry.timer)
     this.entries.delete(conversationId)
     return entry.value
@@ -211,8 +406,9 @@ export class PendingConversationRunRegistry<T> {
 
   clear(conversationId: string): void {
     const entry = this.entries.get(conversationId)
-    if (!entry)
+    if (!entry) {
       return
+    }
     clearTimeout(entry.timer)
     this.entries.delete(conversationId)
   }

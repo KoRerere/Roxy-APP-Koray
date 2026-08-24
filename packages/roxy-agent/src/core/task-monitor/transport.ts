@@ -5,17 +5,10 @@ import type {
   TaskMonitorIpcEvent,
   TaskMonitorTaskInput,
 } from './types'
-import { sendTaskMonitorEvent } from '@/core/worker/protocol'
-import { taskMonitorHub } from './hub'
+import { profileMonitorHub } from './hub'
 
 function publish(event: TaskMonitorIpcEvent): void {
-  if (process.env.ROXY_MODE === 'worker') {
-    if (sendTaskMonitorEvent(event)) {
-      return
-    }
-  }
-
-  taskMonitorHub.applyEvent(event)
+  profileMonitorHub.applyEvent(event)
 }
 
 export function publishTaskMonitorTaskStarted(data: TaskMonitorTaskInput): void {

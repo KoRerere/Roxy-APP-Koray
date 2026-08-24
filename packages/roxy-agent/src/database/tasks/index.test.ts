@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, it } from 'vitest'
 import { TaskLogStore } from './index'
 
-describe('TaskLogStore', () => {
+describe('taskLogStore', () => {
   let tempDir: string
   let dbPath: string
   let store: TaskLogStore
@@ -257,8 +257,9 @@ describe('TaskLogStore', () => {
   it('deletes only terminal logs in the requested scope', () => {
     const deletedLogIds: string[] = []
     store.subscribe((event) => {
-      if (event.type === 'deleted')
+      if (event.type === 'deleted') {
         deletedLogIds.push(event.logId)
+      }
     })
     for (const id of ['running', 'success', 'other-workspace']) {
       store.create({

@@ -50,14 +50,17 @@ router.get('/logs/:logId/replay', (req: Request, res: Response) => {
 
 router.post('/logs/:logId/stop', (req: Request, res: Response) => {
   const parsed = LogIdSchema.safeParse(param(req.params.logId))
-  if (!parsed.success)
+  if (!parsed.success) {
     return res.status(400).json({ code: 1, msg: t('任务日志 ID 不正确') })
+  }
   try {
     const result = stopTaskLog(parsed.data)
-    if (result === 'not_found')
+    if (result === 'not_found') {
       return res.status(404).json({ code: 1, msg: t('未找到任务日志') })
-    if (result === 'not_active')
+    }
+    if (result === 'not_active') {
       return res.status(409).json({ code: 1, msg: t('任务已经结束，无法停止') })
+    }
     return res.status(202).json({ code: 0, data: { stopping: true } })
   }
   catch (error) {
@@ -67,14 +70,17 @@ router.post('/logs/:logId/stop', (req: Request, res: Response) => {
 
 router.delete('/logs/:logId', (req: Request, res: Response) => {
   const parsed = LogIdSchema.safeParse(param(req.params.logId))
-  if (!parsed.success)
+  if (!parsed.success) {
     return res.status(400).json({ code: 1, msg: t('任务日志 ID 不正确') })
+  }
   try {
     const result = deleteTaskLog(parsed.data)
-    if (result === 'not_found')
+    if (result === 'not_found') {
       return res.status(404).json({ code: 1, msg: t('未找到任务日志') })
-    if (result === 'active')
+    }
+    if (result === 'active') {
       return res.status(409).json({ code: 1, msg: t('请先停止正在执行的任务') })
+    }
     return res.json({ code: 0, data: { deleted: true } })
   }
   catch (error) {
@@ -93,8 +99,9 @@ router.post('/sync', async (_req: Request, res: Response) => {
 
 router.post('/:taskId/run', async (req: Request, res: Response) => {
   const parsed = TaskIdSchema.safeParse(param(req.params.taskId))
-  if (!parsed.success)
+  if (!parsed.success) {
     return res.status(400).json({ code: 1, msg: t('任务 ID 不正确') })
+  }
   try {
     const log = await runTaskNow(parsed.data)
     return res.status(202).json({

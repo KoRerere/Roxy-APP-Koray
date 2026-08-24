@@ -2,80 +2,33 @@
 
 ## 1. 模块职责
 
-把一个任务委托给若干子 agent 执行——支持顺序流水线与并行扇出后聚合，每个子 agent 拥有独立记忆与线程。
+`AgentManager` 管理一棵会话级具名 agent tree。根节点固定为 `/root`；child path 由可信 parent path 与 model 提供的 snake_case `name` 组成。每个 child 是独立 Agent，拥有自己的 memory、session、tool set 与宿主资源。
 
-## 2. 对外暴露的接口
+## 2. 核心契约
 
-契约定义在 `src/core/interfaces.ts`：
+- `SubAgentSpec`：由宿主预注册的 `agentType`、能力描述、system prompt、工具 allowlist 与静态 token 配置。
+- `ManagedAgentBuilder`：根据 spec 与 manager 分配的 path 构造隔离 child。
+- `AgentManager`：注册 root、原子保留 path/并发 slot、托管后台 child、保存快照、等待 subtree、级联取消与清理。
+- `spawn_agent`：接收 `agent_type`、`name`、`message` 与可选 `dirIds`，立即返回 `starting` receipt，不等待 child 完成。
+- `list_agents`：按路径边界返回稳定排序的 tree snapshot。
+- `wait_agent`：等待调用者 descendants 达到业务终态；timeout 只结束本次等待，不取消 child。
 
-- `ISubAgentManager` — `delegate(task, mode, count?) → Promise<AgentResponse[]>`。
-- `SubAgentMode` `"sequential" | "parallel"`。
-- `Agent` — `delegate(...)` 顶层入口（转发到 manager）。
-- `AgentResponse` `{ messages, trajectory }`。
+## 3. 生命周期
 
-实现文件：
-
-- `manager.ts` → 子 agent 编排（sequential / parallel）。
-- `graphs.ts` → 两种执行图的构造（当前仍是桩）。
-
-## 3. 数据示例
-
-### 3.1 sequential（流水线）
-
-`delegate("research then summarize", "sequential", 3)`：
-
-```
-task → subagent[0] → output[0]
-output[0] 作为 user msg → subagent[1] → output[1]
-output[1] 作为 user msg → subagent[2] → output[2]
-返回 [output[0], output[1], output[2]]
+```text
+starting -> running -> completed
+                   |-> failed
+                   |-> cancelled
 ```
 
-每个 `AgentResponse.messages` 为该子 agent 本次调用产生的消息（不含输入）。
+业务终态与资源终态分开：`wait_agent` 在 descendants 全部 terminal 后返回；并发 slot、manager `dispose()` 与会话 teardown 直到 `cleanupSettled=true` 才完成。cleanup 失败写入 `cleanupError`，不覆盖已经确定的业务状态。
 
-### 3.2 parallel（扇出 + 聚合）
+root 不计入并发配额。默认一棵 tree 最多 10 个 active subagent；`starting`、`running` 和 cleanup 尚未 settled 的 terminal child 都占 slot。达到上限时不排队、不创建 node，返回 `agent_concurrency_limit_reached`。
 
-`delegate("批判性评审方案", "parallel", 3)`：
+## 4. 取消边界
 
-```
-task ─┬─ subagent[0] → output[0]
-      ├─ subagent[1] → output[1]
-      └─ subagent[2] → output[2]
-join(output[0..2]) → 聚合结果
-返回 [output[0], output[1], output[2]]
-```
+调用方 turn 的 AbortSignal 不取消已经成功创建的 child。root stop、manager dispose 或显式 `cancelSubtree()` 才沿 tree 级联取消。一个 child 失败不会取消 sibling；parent 正常结束不会取消已经启动的 descendants，但 terminal parent 不能再创建 child。
 
-### 3.3 AgentResponse 片段
+## 5. 历史兼容
 
-```json
-{
-  "messages": [{ "role": "assistant", "content": "子 agent 0 的结论" }],
-  "trajectory": [{ "traceId": "sub-0", "ts": 1719300000000, "phase": "model_thought", "data": {} }]
-}
-```
-
-## 4. 调用时序与异常语义
-
-- **sequential**：N 号子 agent 的输出作为 N+1 号子 agent 的 user 消息；任一环失败则链路中止。
-- **parallel**：N 个子 agent 同时扇出执行，全部完成后 join 聚合（聚合策略由 manager 决定）。
-- **每个子 agent 拥有独立的 `IMemoryProvider` 与独立的 `thread_id`**——互不污染历史。
-- 子 agent 的 trajectory 各自独立（`AgentResponse.trajectory` 为 per-call，非跨调用累积）。
-
-## 5. 协议映射 / 关键约定
-
-- 委托是 runtime 之上的编排能力；每个子 agent 内部仍是一条标准消息循环（model→hitl→tools）。
-- canonical phase：委托触发 `subagent_delegated`（见 observability）。
-- 顶层 `Agent.delegate` 转发到 `ISubAgentManager.delegate`，签名一致。
-
-## 6. 验收标准
-
-- sequential：子 agent 按顺序执行，N 的输出成为 N+1 的输入，返回数组长度等于 `count`。
-- parallel：子 agent 并发执行，结果按 subagent 顺序聚合返回。
-- 每个子 agent 拥有独立 memory 与 thread_id，历史互不可见。
-- 返回值为 `AgentResponse[]`，trajectory 为各自 per-call 事件。
-
-## 7. 边界用例 / 不做清单（out of scope）
-
-- 隔离粒度仅为 **per-thread_id**（独立记忆/轨迹），**非进程级隔离**。
-- 不做子 agent 之间的实时通信 / 共享黑板（v1 各自独立）。
-- 不做自动 `count` 推断（未传 `count` 时由 manager 默认策略决定）。
+`RolloutEvent.subagent_delegated` 只作为已有 parent-child session link 的持久化格式继续读取。它不代表旧 `Agent.delegate()`、anonymous fan-out 或 pipeline 执行面仍然存在。

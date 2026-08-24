@@ -1,4 +1,4 @@
-import type { ParamsSchema } from '@roxy/sandbox'
+import type { ParamsSchema } from '@/modes/sandbox-api'
 import assert from 'node:assert/strict'
 import { it } from 'vitest'
 import {

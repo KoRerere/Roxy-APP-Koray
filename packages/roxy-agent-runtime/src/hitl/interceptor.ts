@@ -1,4 +1,39 @@
-import type { ApprovalResult, IHITLHandler, ToolContext, ToolDescriptor, ToolResult } from "../core/interfaces.ts";
+import type { ApprovalResult, IHITLHandler, ToolContext, ToolDescriptor, ToolResult } from '../core/interfaces.ts'
+import type { ApprovalRequest } from '../core/interfaces.ts'
+
+/** Build the request shared by interceptor, invoke, and streaming HITL paths. */
+export async function buildApprovalRequest(
+  descriptor: ToolDescriptor,
+  input: unknown,
+  traceId: string,
+  options: {
+    reason?: string
+    previewInput?: unknown
+    skipPreview?: boolean
+  } = {},
+): Promise<ApprovalRequest> {
+  let diff: string | undefined
+  if (descriptor.previewFn && !options.skipPreview) {
+    try {
+      const preview = await descriptor.previewFn(
+        Object.prototype.hasOwnProperty.call(options, 'previewInput') ? options.previewInput : input,
+      )
+      if (preview && preview.length > 0) {
+        diff = preview
+      }
+    } catch {
+      // A preview is advisory and must never block the approval flow.
+    }
+  }
+
+  return {
+    toolName: descriptor.name,
+    input,
+    reason: options.reason ?? `Tool "${descriptor.name}" requires approval`,
+    traceId,
+    ...(diff !== undefined ? { diff } : {}),
+  }
+}
 
 /**
  * Approval interceptor. Before executing a tool, if
@@ -7,10 +42,10 @@ import type { ApprovalResult, IHITLHandler, ToolContext, ToolDescriptor, ToolRes
  * sees the human correction instead of the tool output.
  */
 export class HitlInterceptor {
-  private readonly handler: IHITLHandler;
+  private readonly handler: IHITLHandler
 
   constructor(handler: IHITLHandler) {
-    this.handler = handler;
+    this.handler = handler
   }
 
   async intercept(
@@ -19,39 +54,23 @@ export class HitlInterceptor {
     ctx: ToolContext,
   ): Promise<{ approved: true } | { approved: false; result: ToolResult }> {
     if (!this.handler.needsApproval(descriptor, input)) {
-      return { approved: true };
+      return { approved: true }
     }
 
-    // Compute diff preview if the tool supports it; errors are silently ignored.
-    let diff: string | undefined;
-    if (descriptor.previewFn) {
-      try {
-        const preview = await descriptor.previewFn(input);
-        if (preview && preview.length > 0) diff = preview;
-      } catch {
-        // intentionally swallowed — a missing diff never blocks approval
-      }
-    }
+    const request = await buildApprovalRequest(descriptor, input, ctx.traceId)
+    const approval: ApprovalResult = await this.handler.requestApproval(request)
 
-    const approval: ApprovalResult = await this.handler.requestApproval({
-      toolName: descriptor.name,
-      input,
-      reason: `Tool "${descriptor.name}" requires approval`,
-      traceId: ctx.traceId,
-      ...(diff !== undefined ? { diff } : {}),
-    });
-
-    if (approval.decision === "approve") {
+    if (approval.decision === 'approve') {
       if (approval.remember && this.handler.addRule) {
         this.handler.addRule(
           { match: approval.remember.toolPattern, sensitive: false },
           approval.remember.commandPattern,
-        );
+        )
       }
-      return { approved: true };
+      return { approved: true }
     }
 
-    const feedback = approval.feedback ?? `Tool "${descriptor.name}" was rejected by HITL`;
+    const feedback = approval.feedback ?? `Tool "${descriptor.name}" was rejected by HITL`
     return {
       approved: false,
       result: {
@@ -59,8 +78,8 @@ export class HitlInterceptor {
         content: feedback,
         isError: true,
       },
-    };
+    }
   }
 }
 
-export type { ApprovalResult };
+export type { ApprovalResult }

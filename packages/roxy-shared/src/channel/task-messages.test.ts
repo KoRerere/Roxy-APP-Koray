@@ -15,11 +15,50 @@ import {
   AgentTaskMonitorSnapshotSchema,
   AgentTaskMonitorSourceTypeSchema,
   AgentTaskMonitorTaskSchema,
+  AgentProfileMonitorProfileSchema,
+  AgentProfileMonitorSnapshotSchema,
   AgentTaskScriptRunDTOSchema,
   AgentTaskScriptWindowDTOSchema,
   AgentTaskScriptWindowStatusSchema,
   AgentTaskTriggerTypeSchema,
 } from './task-messages'
+
+describe('profile monitor schemas', () => {
+  it('validates running and idle profiles strictly', () => {
+    const running = {
+      dirId: 'dir-1',
+      status: 'running',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      browserType: 'chromium',
+      connectedAt: 1,
+      updatedAt: 2,
+      owner: {
+        taskId: 'task-1',
+        title: 'Operate profile',
+        sourceType: 'chat',
+        conversationId: 'conversation-1',
+        runId: 'run-1',
+        startedAt: 1,
+      },
+      events: [],
+    }
+    const idle = {
+      dirId: 'dir-2',
+      status: 'idle',
+      connectedAt: 1,
+      updatedAt: 3,
+      idleSince: 2,
+      events: [],
+    }
+
+    expectStrictModel(AgentProfileMonitorProfileSchema, running)
+    expectStrictModel(AgentProfileMonitorProfileSchema, idle)
+    expectStrictModel(AgentProfileMonitorSnapshotSchema, {
+      type: 'snapshot',
+      data: { generatedAt: 3, profiles: [running, idle] },
+    })
+  })
+})
 
 const artifact = {
   fileId: 'file-1',
@@ -200,4 +239,3 @@ describe('task channel schemas', () => {
     })
   })
 })
-

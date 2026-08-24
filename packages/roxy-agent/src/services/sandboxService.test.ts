@@ -1,18 +1,32 @@
+import type { SandboxHostRunResult, SandboxRunPayload } from '@/core/sandbox/host-protocol'
 import assert from 'node:assert/strict'
-import { EventEmitter } from 'node:events'
 import fsPromises from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, it, vi } from 'vitest'
 
-const fork = vi.fn()
+const { profilesOpen, profilesConnectionInfo, RoxyBrowserClient } = vi.hoisted(() => ({
+  profilesOpen: vi.fn(),
+  profilesConnectionInfo: vi.fn(),
+  RoxyBrowserClient: vi.fn().mockImplementation(function () {
+    return {
+      profiles: {
+        open: profilesOpen,
+        connectionInfo: profilesConnectionInfo,
+      },
+    }
+  }),
+}))
+
+vi.mock('@roxybrowser/openapi', () => ({ RoxyBrowserClient }))
+
+const reserve = vi.fn()
 const publishTaskMonitorBrowserAttached = vi.fn()
 const publishTaskMonitorBrowserEvent = vi.fn()
 const publishTaskMonitorBrowserFinished = vi.fn()
 
-vi.mock('node:child_process', () => ({
-  fork,
+vi.mock('./sandboxHostManager', () => ({
+  sandboxHostManager: { reserve, shutdown: vi.fn() },
 }))
 
 vi.mock('@/core/task-monitor', () => ({
@@ -21,9 +35,58 @@ vi.mock('@/core/task-monitor', () => ({
   publishTaskMonitorBrowserFinished,
 }))
 
+interface HostHarness {
+  payload?: SandboxRunPayload
+  runId?: string
+  handlers?: { onLog?: (event: { level: string, message: string, runId: string }) => void }
+  resolve: (result: SandboxHostRunResult) => void
+  reject: (error: Error) => void
+  start: ReturnType<typeof vi.fn>
+  stop: ReturnType<typeof vi.fn>
+  release: ReturnType<typeof vi.fn>
+}
+
+function createHostHarness(): HostHarness {
+  let resolve!: (result: SandboxHostRunResult) => void
+  let reject!: (error: Error) => void
+  const finished = new Promise<SandboxHostRunResult>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  const harness = {} as HostHarness
+  const stop = vi.fn()
+  const release = vi.fn()
+  const start = vi.fn(async (runId: string, payload: SandboxRunPayload, handlers: HostHarness['handlers']) => {
+    harness.runId = runId
+    harness.payload = payload
+    harness.handlers = handlers
+    return { finished, stop }
+  })
+  Object.assign(harness, { resolve, reject, start, stop, release })
+  reserve.mockResolvedValue({ start, release })
+  return harness
+}
+
+async function createTempRun(prefix: string): Promise<{
+  root: string
+  outputDir: string
+  logFilePath: string
+  permissionsFile: string
+}> {
+  const root = await fsPromises.mkdtemp(path.join(os.tmpdir(), prefix))
+  return {
+    root,
+    outputDir: path.join(root, 'output'),
+    logFilePath: path.join(root, 'logs', 'run.log'),
+    permissionsFile: path.join(root, 'missing.permissions.json'),
+  }
+}
+
 beforeEach(() => {
   vi.resetModules()
-  fork.mockReset()
+  reserve.mockReset()
+  profilesOpen.mockReset()
+  profilesConnectionInfo.mockReset()
   publishTaskMonitorBrowserAttached.mockReset()
   publishTaskMonitorBrowserEvent.mockReset()
   publishTaskMonitorBrowserFinished.mockReset()
@@ -38,494 +101,303 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('injects the opened browser websocket as BROWSER_URL', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-browser-env-'))
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
-  vi.stubGlobal('fetch', vi.fn(async () => ({
-    ok: true,
-    json: async () => ({
-      code: 0,
-      data: [{ dirId: 'profile-1', ws: 'ws://127.0.0.1/devtools/browser/abc' }],
-    }),
-  })))
-
-  try {
-    const { startSandboxScriptRun } = await import('./sandboxService')
-    await startSandboxScriptRun({
-      scriptPath: '/tmp/script.ts',
-      scriptSha512: 'a'.repeat(128),
-      dirId: 'profile-1',
-      runId: 'run_test_123',
-      outputDir: path.join(tempDir, 'workdir'),
-      logFilePath: path.join(tempDir, 'logs', 'run.log'),
-      permissionsFile: path.join(tempDir, 'missing.permissions.json'),
-    })
-
-    const forkEnv = fork.mock.calls[0][2].env
-    const today = new Date()
-    const dayStamp = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, '0'),
-      String(today.getDate()).padStart(2, '0'),
-    ].join('-')
-    const browserOutputDir = path.join(tempDir, 'workdir', 'browser', dayStamp)
-    assert.equal(forkEnv.BROWSER_URL, 'ws://127.0.0.1/devtools/browser/abc')
-    assert.equal(forkEnv.BROWSER_TYPE, 'chromium')
-    assert.equal(forkEnv.SANDBOX_SCRIPT_SHA512, 'a'.repeat(128))
-    assert.equal(forkEnv.SANDBOX_LOGS_DIR, path.join(tempDir, 'logs'))
-    assert.equal(forkEnv.SANDBOX_DEBUG, '0')
-    assert.equal(forkEnv.ROXY_PLAYWRIGHT_SCREENSHOTS_DIR, browserOutputDir)
-    assert.equal(forkEnv.SANDBOX_OUTPUT_DIR, path.join(tempDir, 'workdir'))
-  }
-  finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
-  }
-})
-
-it('publishes task monitor events around the shared sandbox execution boundary', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-task-monitor-'))
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
+it('opens Chromium after reserving a Host slot and sends a structured run payload', async () => {
+  const temp = await createTempRun('roxy-sandbox-browser-')
+  const host = createHostHarness()
+  profilesConnectionInfo.mockResolvedValueOnce([])
+  profilesOpen.mockResolvedValueOnce({ ws: 'ws://127.0.0.1/devtools/browser/abc' })
 
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
     const run = await startSandboxScriptRun({
       scriptPath: '/tmp/script.ts',
-      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-      browserType: 'chromium',
       dirId: 'profile-1',
-      runId: 'run_task_monitor',
-      outputDir: path.join(tempDir, 'output'),
-      logFilePath: path.join(tempDir, 'logs', 'run.log'),
-      taskMonitor: {
-        taskId: 'task-1',
-        browserId: 'profile-1',
-        label: 'profile-1',
-        input: { scriptPath: 'official-script', dirId: 'profile-1', debug: false },
-      },
+      runId: 'run-1',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
     })
 
-    assert.deepEqual(publishTaskMonitorBrowserAttached.mock.calls, [
-      [{ taskId: 'task-1', browserId: 'profile-1', dirId: 'profile-1', label: 'profile-1' }],
-      [{
-        taskId: 'task-1',
-        browserId: 'profile-1',
-        dirId: 'profile-1',
-        label: 'profile-1',
-        ws: 'ws://127.0.0.1/devtools/browser/abc',
-        browserType: 'chromium',
-      }],
-    ])
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[0]?.[0].stage, 'start')
-    assert.deepEqual(publishTaskMonitorBrowserEvent.mock.calls[0]?.[0].input, {
-      scriptPath: 'official-script',
-      dirId: 'profile-1',
-      debug: false,
-    })
+    assert.equal(reserve.mock.calls.length, 1)
+    assert.equal(host.runId, 'run-1')
+    assert.equal(host.payload?.browserUrl, 'ws://127.0.0.1/devtools/browser/abc')
+    assert.equal(host.payload?.browserType, 'chromium')
+    assert.equal(host.payload?.outputDir, temp.outputDir)
+    assert.equal(host.payload?.logFilePath, temp.logFilePath)
+    assert.equal(host.payload?.scriptPath, '/tmp/script.ts')
+    assert.equal(run.browserType, 'chromium')
+    assert.equal(RoxyBrowserClient.mock.calls[0]?.[0].baseUrl, 'http://127.0.0.1:26580')
+    assert.equal(RoxyBrowserClient.mock.calls[0]?.[0].apiKey, 'api-key')
+    assert.equal(RoxyBrowserClient.mock.calls[0]?.[0].workspaceId, 42)
+    assert.deepEqual(profilesConnectionInfo.mock.calls, [[['profile-1']]])
+    assert.deepEqual(profilesOpen.mock.calls, [['profile-1', { forceOpen: true }]])
 
-    worker.emit('close', 0, null)
-    const result = await run.finished
-
-    assert.equal(result.status, 'done')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].stage, 'end')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].result, 'done')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].success, true)
-    assert.deepEqual(publishTaskMonitorBrowserFinished.mock.calls, [[{
-      taskId: 'task-1',
-      browserId: 'profile-1',
-      dirId: 'profile-1',
-    }]])
+    host.resolve({ status: 'done', exitCode: 0, artifactPaths: [], storageChanges: [] })
+    assert.equal((await run.finished).status, 'done')
   }
   finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
 })
 
-it('returns the script main value and reports LoginRequired as a monitored failure', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-script-result-'))
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
+it('preserves return values, artifacts and categorized storage outputs', async () => {
+  const temp = await createTempRun('roxy-sandbox-output-')
+  const host = createHostHarness()
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
     const run = await startSandboxScriptRun({
       scriptPath: '/tmp/script.ts',
       browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-      dirId: 'profile-1',
-      runId: 'run_login_required',
-      outputDir: path.join(tempDir, 'output'),
-      logFilePath: path.join(tempDir, 'logs', 'run.log'),
-      taskMonitor: {
-        taskId: 'task-login-required',
-        browserId: 'profile-1',
-      },
+      runId: 'run-output',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
     })
 
-    worker.emit('message', {
-      type: 'script_result',
-      runId: 'run_login_required',
-      returnValue: 'LoginRequired',
-    })
-    worker.emit('close', 0, null)
-
-    const result = await run.finished
-    assert.equal(result.status, 'failed')
-    assert.equal(result.returnValue, 'LoginRequired')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].stage, 'error')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].result, 'LoginRequired')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].success, false)
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].errorMessage, 'LoginRequired')
-    assert.deepEqual(publishTaskMonitorBrowserFinished.mock.calls, [[{
-      taskId: 'task-login-required',
-      browserId: 'profile-1',
-      dirId: 'profile-1',
-    }]])
-  }
-  finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
-  }
-})
-
-it('captures direct child stdout and stderr in the script log', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-log-'))
-  const logFilePath = path.join(tempDir, 'run.log')
-  const outputDir = path.join(tempDir, 'output')
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
-  try {
-    const { startSandboxScriptRun } = await import('./sandboxService')
-    const run = await startSandboxScriptRun({
-      scriptPath: '/tmp/script.ts',
-      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-      runId: 'run_log_test',
-      outputDir,
-      logFilePath,
-    })
-
-    worker.stdout.end('native stdout message\n')
-    worker.stderr.end('native stderr message\n')
-    await new Promise(resolve => setImmediate(resolve))
-    worker.emit('close', 1, null)
-
-    const log = await fsPromises.readFile(logFilePath, 'utf-8')
-    assert.match(log, /\[sandbox stdout\] native stdout message/)
-    assert.match(log, /\[sandbox stderr\] native stderr message/)
-    assert.deepEqual(await run.finished, {
-      status: 'failed',
-      exitCode: 1,
-      artifacts: [],
-      outputs: [{ type: 'log', path: logFilePath, changeType: 'created' }],
-      logFilePath,
-    })
-  }
-  finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
-  }
-})
-
-it('returns categorized run outputs for the current sandbox run', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-outputs-'))
-  const logFilePath = path.join(tempDir, 'output', 'logs', 'run.log')
-  const outputDir = path.join(tempDir, 'output')
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
-  try {
-    const oldKvPath = path.join(outputDir, 'old.kv.json')
-    const stateKvPath = path.join(outputDir, 'state.kv.json')
-    await fsPromises.mkdir(outputDir, { recursive: true })
-    await fsPromises.writeFile(oldKvPath, '{}', 'utf-8')
-    await fsPromises.writeFile(stateKvPath, '{"before":true}', 'utf-8')
-    const oldDate = new Date(Date.now() - 10_000)
-    await fsPromises.utimes(oldKvPath, oldDate, oldDate)
-    await fsPromises.utimes(stateKvPath, oldDate, oldDate)
-
-    const { startSandboxScriptRun } = await import('./sandboxService')
-    const run = await startSandboxScriptRun({
-      scriptPath: '/tmp/script.ts',
-      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-      runId: 'run_outputs_test',
-      outputDir,
-      logFilePath,
-    })
-
-    await fsPromises.writeFile(stateKvPath, '{"ok":true}', 'utf-8')
-    await fsPromises.writeFile(path.join(outputDir, 'rows.csv'), 'id\n1\n', 'utf-8')
-    await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true })
-    await fsPromises.writeFile(logFilePath, 'run log\n', 'utf-8')
-    worker.emit('message', {
-      type: 'script_artifacts',
-      runId: 'run_outputs_test',
-      paths: [stateKvPath, path.join(outputDir, 'rows.csv')],
-      changes: [
-        {
-          type: 'kv',
-          path: stateKvPath,
-          name: 'state',
-          operations: [
-            { action: 'set', count: 2 },
-            { action: 'delete', count: 1 },
-          ],
-        },
-        {
-          type: 'table',
-          path: path.join(outputDir, 'rows.csv'),
-          name: 'rows',
-          operations: [{ action: 'append', count: 1, rowCount: 1 }],
-        },
+    const csv = path.join(temp.outputDir, 'rows.csv')
+    const kv = path.join(temp.outputDir, 'state.kv.json')
+    await fsPromises.mkdir(temp.outputDir, { recursive: true })
+    await fsPromises.writeFile(csv, 'id\n1\n')
+    await fsPromises.writeFile(kv, '{"ok":true}')
+    await fsPromises.mkdir(path.dirname(temp.logFilePath), { recursive: true })
+    await fsPromises.writeFile(temp.logFilePath, 'run log\n')
+    host.resolve({
+      status: 'done',
+      exitCode: 0,
+      returnValue: 'ok',
+      artifactPaths: [csv, kv],
+      storageChanges: [
+        { type: 'table', name: 'rows', path: csv, operations: [{ action: 'append', count: 1, rowCount: 1 }] },
+        { type: 'kv', name: 'state', path: kv, operations: [{ action: 'set', count: 1 }] },
       ],
     })
-    worker.emit('close', 0, null)
 
     const result = await run.finished
+    assert.equal(result.returnValue, 'ok')
+    assert.deepEqual(result.artifacts.map(item => item.localPath).sort(), [csv, kv].sort())
     assert.deepEqual(result.outputs, [
-      { type: 'log', path: logFilePath, changeType: 'created' },
-      {
-        type: 'kv',
-        path: stateKvPath,
-        changeType: 'modified',
-        operations: [
-          { action: 'set', count: 2 },
-          { action: 'delete', count: 1 },
-        ],
-      },
-      {
-        type: 'table',
-        path: path.join(outputDir, 'rows.csv'),
-        changeType: 'created',
-        operations: [{ action: 'append', count: 1, rowCount: 1 }],
-      },
+      { type: 'log', path: temp.logFilePath, changeType: 'created' },
+      { type: 'kv', path: kv, changeType: 'created', operations: [{ action: 'set', count: 1 }] },
+      { type: 'table', path: csv, changeType: 'created', operations: [{ action: 'append', count: 1, rowCount: 1 }] },
     ])
   }
   finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
 })
 
-it('maps the manifest and workdir to Node filesystem permission flags', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-flags-'))
-  const permissionsFile = path.join(tempDir, 'script.permissions.json')
-  await fsPromises.writeFile(permissionsFile, JSON.stringify({
-    version: 1,
-    fs: { read: ['/Users/foo/data/', '/abs/path/to/'] },
-    fetch: { allow: [] },
-  }))
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
-  vi.stubGlobal('fetch', vi.fn(async () => ({
-    ok: true,
-    json: async () => ({
-      code: 0,
-      data: [{ dirId: 'profile-1', ws: 'ws://127.0.0.1/devtools/browser/abc' }],
-    }),
-  })))
-
+it('streams Host run logs to the caller', async () => {
+  const temp = await createTempRun('roxy-sandbox-log-')
+  const host = createHostHarness()
+  const logs: unknown[] = []
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
-    await startSandboxScriptRun({
-      scriptPath: '/tmp/source-script.ts',
-      dirId: 'profile-1',
-      runId: 'run_test_permissions',
-      outputDir: '/tmp/roxy-script-output',
-      logFilePath: '/tmp/roxy-script-logs/run.log',
-      permissionsFile,
-    })
-
-    const execArgv = fork.mock.calls[0][2].execArgv
-    assert.ok(execArgv.includes('--permission'))
-    assert.equal(execArgv.includes('--allow-child-process'), false)
-    assert.equal(execArgv.includes('--allow-worker'), false)
-
-    const writeFlags = execArgv.filter((arg: string) => arg.startsWith('--allow-fs-write='))
-    assert.deepEqual(writeFlags, [
-      '--allow-fs-write=/tmp/roxy-script-output',
-      '--allow-fs-write=/tmp/roxy-script-logs',
-    ])
-
-    const readFlags = execArgv.filter((arg: string) => arg.startsWith('--allow-fs-read='))
-    assert.deepEqual(readFlags, [
-      '--allow-fs-read=/tmp/roxy-agent.mjs',
-      '--allow-fs-read=/tmp',
-      '--allow-fs-read=/tmp/roxy-script-output',
-      '--allow-fs-read=/tmp/source-script.ts',
-      '--allow-fs-read=/Users/foo/data/',
-      '--allow-fs-read=/abs/path/to/',
-    ])
-  }
-  finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
-  }
-})
-
-it('does not widen filesystem permissions in development', async () => {
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-  process.env.ENV_TYPE = 'development'
-
-  const { startSandboxScriptRun } = await import('./sandboxService')
-  await startSandboxScriptRun({
-    scriptPath: '/tmp/source-script.ts',
-    browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-    runId: 'run_test_dependency_reads',
-    outputDir: '/tmp/roxy-script-output',
-    logFilePath: '/tmp/roxy-script-logs/run.log',
-  })
-
-  const execArgv = fork.mock.calls[0][2].execArgv
-  assert.ok(execArgv.includes('--permission'))
-  assert.equal(execArgv.includes('--allow-fs-read=*'), false)
-  assert.ok(execArgv.includes('--allow-fs-read=/tmp/roxy-script-output'))
-  assert.equal(execArgv.some((arg: string) => arg.startsWith('--allow-fs-write=')), true)
-})
-
-it('allowlists node_modules dirs reachable from the entry bundle for dependency resolution', async () => {
-  // dev 入口（dist-vite/agent.mjs）externalize axios 等依赖，ESM resolver 需读取其 node_modules 下的 package.json。
-  const entryDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-entry-'))
-  const entryNodeModules = path.join(entryDir, 'node_modules')
-  await fsPromises.mkdir(entryNodeModules)
-  process.env.AGENT_SCRIPT_PATH = path.join(entryDir, 'agent.mjs')
-
-  const worker = new EventEmitter() as any
-  worker.stdout = new PassThrough()
-  worker.stderr = new PassThrough()
-  worker.kill = vi.fn()
-  fork.mockReturnValue(worker)
-
-  try {
-    const { startSandboxScriptRun } = await import('./sandboxService')
-    await startSandboxScriptRun({
-      scriptPath: '/tmp/source-script.ts',
+    const run = await startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
       browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-      runId: 'run_test_node_modules_reads',
-      outputDir: '/tmp/roxy-script-output',
-      logFilePath: '/tmp/roxy-script-logs/run.log',
+      runId: 'run-log',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+      onLog: event => logs.push(event),
     })
-
-    const execArgv = fork.mock.calls[0][2].execArgv
-    assert.ok(execArgv.includes(`--allow-fs-read=${entryNodeModules}`))
+    host.handlers?.onLog?.({ level: 'info', message: 'progress', runId: 'run-log' })
+    host.resolve({ status: 'done', exitCode: 0, artifactPaths: [], storageChanges: [] })
+    await run.finished
+    assert.deepEqual(logs, [{ level: 'info', message: 'progress', runId: 'run-log' }])
   }
   finally {
-    await fsPromises.rm(entryDir, { recursive: true, force: true })
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
 })
 
-it('rejects an untrusted remote script before opening a browser', async () => {
-  vi.stubGlobal('fetch', vi.fn(async () => {
-    throw new Error('fetch should not be called for untrusted script URLs')
-  }))
+it('preserves Host failure error details on the finished result', async () => {
+  const temp = await createTempRun('roxy-sandbox-error-')
+  const host = createHostHarness()
+  try {
+    const { startSandboxScriptRun } = await import('./sandboxService')
+    const run = await startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
+      runId: 'run-error',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+    })
+    host.resolve({
+      status: 'failed',
+      exitCode: 1,
+      error: 'TypeError: labelRe.test is not a function',
+      artifactPaths: [],
+      storageChanges: [],
+    })
+    const result = await run.finished
+    assert.equal(result.status, 'failed')
+    assert.equal(result.error, 'TypeError: labelRe.test is not a function')
+  }
+  finally {
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
+  }
+})
 
+it('maps LoginRequired to failure and publishes one monitored terminal event', async () => {
+  const temp = await createTempRun('roxy-sandbox-monitor-')
+  const host = createHostHarness()
+  try {
+    const { startSandboxScriptRun } = await import('./sandboxService')
+    const run = await startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
+      dirId: 'profile-1',
+      runId: 'run-login',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+      taskMonitor: { taskId: 'task-1', browserId: 'profile-1' },
+    })
+    host.resolve({
+      status: 'done',
+      exitCode: 0,
+      returnValue: 'LoginRequired',
+      artifactPaths: [],
+      storageChanges: [],
+    })
+    const result = await run.finished
+    assert.equal(result.status, 'failed')
+    assert.equal(publishTaskMonitorBrowserEvent.mock.calls.at(-1)?.[0].stage, 'error')
+    assert.equal(publishTaskMonitorBrowserEvent.mock.calls.at(-1)?.[0].errorMessage, 'LoginRequired')
+    assert.equal(publishTaskMonitorBrowserFinished.mock.calls.length, 1)
+  }
+  finally {
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
+  }
+})
+
+it('forwards stop to the active Host run', async () => {
+  const temp = await createTempRun('roxy-sandbox-stop-')
+  const host = createHostHarness()
+  try {
+    const { startSandboxScriptRun } = await import('./sandboxService')
+    const run = await startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+    })
+    run.stop()
+    assert.deepEqual(host.stop.mock.calls, [['user']])
+    host.resolve({ status: 'timeout', exitCode: 124, artifactPaths: [], storageChanges: [] })
+    await run.finished
+  }
+  finally {
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
+  }
+})
+
+it('allows Firefox before starting a Host run', async () => {
+  const temp = await createTempRun('roxy-sandbox-firefox-')
+  const host = createHostHarness()
+  try {
+    const { startSandboxScriptRun } = await import('./sandboxService')
+    const run = await startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/session/firefox',
+      browserType: 'firefox',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+    })
+    assert.equal(host.start.mock.calls.length, 1)
+    assert.equal(host.payload?.browserType, 'firefox')
+    assert.equal(run.browserType, 'firefox')
+    host.resolve({ status: 'done', exitCode: 0, artifactPaths: [], storageChanges: [] })
+    await run.finished
+  }
+  finally {
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
+  }
+})
+
+it('rejects untrusted remote scripts before reserving or opening a browser', async () => {
+  vi.stubGlobal('fetch', vi.fn())
   const { startSandboxScriptRun } = await import('./sandboxService')
-
-  await assert.rejects(
-    () => startSandboxScriptRun({
-      scriptPath: 'https://example.com/scripts/remote-script.ts',
-      dirId: 'profile-1',
-      runId: 'run_test_456',
-    }),
-    /Remote script host is not allowed/,
-  )
-
-  assert.equal(fork.mock.calls.length, 0)
+  await assert.rejects(() => startSandboxScriptRun({
+    scriptPath: 'https://example.com/script.ts',
+    dirId: 'profile-1',
+  }), /Remote script host is not allowed/)
+  assert.equal(reserve.mock.calls.length, 0)
   assert.equal((fetch as any).mock.calls.length, 0)
-
-  vi.unstubAllGlobals()
 })
 
-it('rejects a malformed script permission manifest before forking the sandbox', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-permissions-'))
-  const permissionsFile = path.join(tempDir, 'script.permissions.json')
-  await fsPromises.writeFile(permissionsFile, JSON.stringify({ version: 2 }))
-
+it('rejects malformed permission manifests before reserving the Host', async () => {
+  const temp = await createTempRun('roxy-sandbox-permission-')
+  await fsPromises.writeFile(temp.permissionsFile, JSON.stringify({ version: 2 }))
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
-    await assert.rejects(
-      () => startSandboxScriptRun({
-        scriptPath: '/tmp/script.ts',
-        browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-        runId: 'run_invalid_permissions',
-        permissionsFile,
-        taskMonitor: {
-          taskId: 'task-invalid-permissions',
-          browserId: 'profile-1',
-        },
-      }),
-      /Invalid script permissions/,
-    )
-    assert.equal(fork.mock.calls.length, 0)
-    assert.equal(publishTaskMonitorBrowserAttached.mock.calls.length, 1)
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[0]?.[0].stage, 'start')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].stage, 'error')
-    assert.match(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].errorMessage, /Invalid script permissions/)
-    assert.deepEqual(publishTaskMonitorBrowserFinished.mock.calls, [[{
-      taskId: 'task-invalid-permissions',
-      browserId: 'profile-1',
-      dirId: undefined,
-    }]])
+    await assert.rejects(() => startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+    }), /Invalid script permissions/)
+    assert.equal(reserve.mock.calls.length, 0)
   }
   finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
 })
 
-it('removes the monitored browser when sandbox startup fails', async () => {
-  const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'roxy-sandbox-start-failure-'))
-  fork.mockImplementation(() => {
-    throw new Error('sandbox process could not start')
-  })
-
+it('rejects a sandbox run while another Agent execution owns the same profile', async () => {
+  const temp = await createTempRun('roxy-sandbox-shared-lease-')
+  const host = createHostHarness()
+  const { profileLeaseRegistry } = await import('@/core/profiles/profileLeaseRegistry')
+  profileLeaseRegistry.acquire({ executionId: 'agent-run', sourceType: 'chat' }, ['profile-1'])
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
-    await assert.rejects(
-      () => startSandboxScriptRun({
-        scriptPath: '/tmp/script.ts',
-        browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
-        dirId: 'profile-1',
-        runId: 'run_start_failure',
-        outputDir: path.join(tempDir, 'output'),
-        logFilePath: path.join(tempDir, 'logs', 'run.log'),
-        taskMonitor: {
-          taskId: 'task-start-failure',
-          browserId: 'profile-1',
-        },
-      }),
-      /sandbox process could not start/,
-    )
-
-    assert.equal(publishTaskMonitorBrowserAttached.mock.calls.length, 1)
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[0]?.[0].stage, 'start')
-    assert.equal(publishTaskMonitorBrowserEvent.mock.calls[1]?.[0].stage, 'error')
-    assert.deepEqual(publishTaskMonitorBrowserFinished.mock.calls, [[{
-      taskId: 'task-start-failure',
-      browserId: 'profile-1',
+    await assert.rejects(() => startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
       dirId: 'profile-1',
-    }]])
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+    }), /正在被其他会话操作/)
+    assert.equal(host.start.mock.calls.length, 0)
+    assert.equal(host.release.mock.calls.length, 1)
   }
   finally {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
+    profileLeaseRegistry.clear()
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
+  }
+})
+
+it('does not publish a transient browser monitor entry when Host startup fails', async () => {
+  // Regression: monitoring published a browser attachment before the Host had
+  // started, so the panel flashed open for a browser connection that never existed.
+  // Fixed by: publish monitor lifecycle events only after Sandbox startup succeeds.
+  const temp = await createTempRun('roxy-sandbox-start-failure-')
+  const host = createHostHarness()
+  host.start.mockRejectedValueOnce(new Error('host failed'))
+  try {
+    const { getOccupiedSandboxDirIds, startSandboxScriptRun } = await import('./sandboxService')
+    await assert.rejects(() => startSandboxScriptRun({
+      scriptPath: '/tmp/script.ts',
+      browserUrl: 'ws://127.0.0.1/devtools/browser/abc',
+      dirId: 'profile-1',
+      outputDir: temp.outputDir,
+      logFilePath: temp.logFilePath,
+      permissionsFile: temp.permissionsFile,
+      taskMonitor: { taskId: 'task-failure', browserId: 'profile-1' },
+    }), /host failed/)
+    assert.deepEqual(getOccupiedSandboxDirIds(), [])
+    assert.equal(host.release.mock.calls.length, 1)
+    assert.equal(publishTaskMonitorBrowserAttached.mock.calls.length, 0)
+    assert.equal(publishTaskMonitorBrowserEvent.mock.calls.length, 0)
+    assert.equal(publishTaskMonitorBrowserFinished.mock.calls.length, 0)
+  }
+  finally {
+    await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
 })

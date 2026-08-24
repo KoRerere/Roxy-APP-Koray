@@ -227,3 +227,48 @@ export const AgentTaskMonitorSnapshotSchema = z.strictObject({
 
 export type AgentTaskMonitorSnapshot = z.infer<typeof AgentTaskMonitorSnapshotSchema>
 
+export const AgentProfileMonitorStatusSchema = z.enum(['running', 'idle'])
+
+export type AgentProfileMonitorStatus = z.infer<typeof AgentProfileMonitorStatusSchema>
+
+export const AgentProfileMonitorOwnerSchema = z.strictObject({
+  taskId: z.string(),
+  title: z.string(),
+  sourceType: AgentTaskMonitorSourceTypeSchema,
+  conversationId: z.string().optional(),
+  runId: z.string().optional(),
+  workerId: z.string().optional(),
+  startedAt: z.number(),
+})
+
+export type AgentProfileMonitorOwner = z.infer<typeof AgentProfileMonitorOwnerSchema>
+
+export const AgentProfileMonitorProfileSchema = z.strictObject({
+  dirId: z.string(),
+  status: AgentProfileMonitorStatusSchema,
+  endpoint: z.string().optional(),
+  browserType: z.string().optional(),
+  windowName: z.string().optional(),
+  windowSortNum: z.number().optional(),
+  platformUrl: z.string().optional(),
+  platformUserName: z.string().optional(),
+  platformIcon: z.string().optional(),
+  countryCode: z.string().optional(),
+  connectedAt: z.number(),
+  updatedAt: z.number(),
+  idleSince: z.number().optional(),
+  owner: AgentProfileMonitorOwnerSchema.optional(),
+  events: z.array(AgentTaskMonitorBrowserEventSchema),
+})
+
+export type AgentProfileMonitorProfile = z.infer<typeof AgentProfileMonitorProfileSchema>
+
+export const AgentProfileMonitorSnapshotSchema = z.strictObject({
+  type: z.literal('snapshot'),
+  data: z.strictObject({
+    generatedAt: z.number(),
+    profiles: z.array(AgentProfileMonitorProfileSchema),
+  }),
+})
+
+export type AgentProfileMonitorSnapshot = z.infer<typeof AgentProfileMonitorSnapshotSchema>

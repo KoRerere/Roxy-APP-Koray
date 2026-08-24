@@ -6,8 +6,9 @@ export type { Locale } from './messages'
 /** 解析当前后端 locale：env.SYSTEM_LANGUAGE 命中翻译表则用之，否则回退 DEFAULT_LOCALE。 */
 function resolveLocale(): keyof typeof MESSAGES {
   const lang = env.SYSTEM_LANGUAGE
-  if (lang && lang in MESSAGES)
+  if (lang && lang in MESSAGES) {
     return lang as keyof typeof MESSAGES
+  }
   return DEFAULT_LOCALE
 }
 
@@ -18,8 +19,9 @@ function resolveLocale(): keyof typeof MESSAGES {
 export function t(key: string, params?: Record<string, string | number>): string {
   const locale = resolveLocale()
   const template = MESSAGES[locale]?.[key] ?? MESSAGES[DEFAULT_LOCALE][key] ?? key
-  if (!params)
+  if (!params) {
     return template
+  }
   return template.replace(/\{(\w+)\}/g, (_match, name: string) => {
     const v = params[name]
     return v == null ? `{${name}}` : String(v)

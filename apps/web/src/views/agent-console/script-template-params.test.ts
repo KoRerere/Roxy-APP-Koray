@@ -12,6 +12,7 @@ import {
   parseScriptParamsSchema,
   validateScriptParamsData,
 } from './script-template-params'
+import type { ScriptParamsSchema } from './script-template-params'
 
 const schema = parseScriptParamsSchema(JSON.stringify({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -67,7 +68,7 @@ test('preserves schemas and default data when property names match annotation ke
         },
       },
     },
-  }, 'zh-CN')
+  } as unknown as ScriptParamsSchema, 'zh-CN')
 
   assert.equal(localized.properties?.title?.type, 'string')
   assert.equal(localized.properties?.title?.title, '标题字段')
@@ -155,6 +156,76 @@ test('returns valid form data and surfaces JSON Forms validation errors', () => 
     params: { missingProperty: 'keyword' },
     message: 'must have required property keyword',
   }]), /keyword/)
+})
+
+test('validates current template parameters against JSON Schema constraints before saving', () => {
+  const constrainedSchema = parseScriptParamsSchema({
+    type: 'object',
+    properties: {
+      videoCount: {
+        type: 'number',
+        description: {
+          zh: '观看视频数量，默认 10',
+          us: 'Videos to watch, default 10',
+          ru: 'Количество видео для просмотра, по умолчанию 10',
+        },
+        default: 10,
+      },
+      likeProbability: {
+        type: 'number',
+        minimum: 0,
+        maximum: 1,
+        description: {
+          zh: '点赞率（0-1），默认 0.1',
+          us: 'Like rate (0-1), default 0.1',
+          ru: 'Вероятность лайка (0-1), по умолчанию 0.1',
+        },
+        default: 0.1,
+      },
+      followProbability: {
+        type: 'number',
+        minimum: 0,
+        maximum: 1,
+        description: {
+          zh: '关注率（0-1，进入作者主页后触发），默认 0.05',
+          us: 'Follow rate (0-1, triggered after visiting creator profile), default 0.05',
+          ru: 'Вероятность подписки (0-1, срабатывает после посещения профиля), по умолчанию 0.05',
+        },
+        default: 0.05,
+      },
+    },
+    additionalProperties: false,
+  })!
+
+  assert.deepEqual(validateScriptParamsData(constrainedSchema, {
+    videoCount: 10,
+    likeProbability: 0.1,
+    followProbability: 0.05,
+  }, 'zh-CN'), [])
+  assert.deepEqual(validateScriptParamsData(constrainedSchema, {
+    videoCount: 3,
+    likeProbability: 0.25,
+    followProbability: 0,
+  }, 'en'), [])
+  assert.deepEqual(
+    validateScriptParamsData(constrainedSchema, {
+      videoCount: 3,
+      likeProbability: -0.1,
+      followProbability: 1.1,
+      extra: true,
+    }, 'ru')
+      .map(error => error.keyword),
+    ['additionalProperties', 'minimum', 'maximum'],
+  )
+  assert.deepEqual(
+    validateScriptParamsData(constrainedSchema, {
+      videoCount: '3' as unknown as number,
+      likeProbability: 0.1,
+      followProbability: 0.05,
+    }).map(error => error.keyword),
+    ['type'],
+  )
+  assert.equal(typeof constrainedSchema.properties?.videoCount?.description, 'object')
 })
 
 test('hides debug fields and excludes them from form validation without changing source schema', () => {

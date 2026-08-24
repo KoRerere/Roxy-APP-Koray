@@ -19,6 +19,7 @@ import {
 } from '@/api/agentApiClient'
 import { AiAgentHttpError } from '@/api/errors'
 import { env } from '@/config'
+import { executionCenter } from '@/core/registry/executionCenter'
 import { taskLogStore } from '@/database/tasks'
 import { resolveTemplate } from '@/services/templateService'
 import {
@@ -249,12 +250,31 @@ export class TaskRunner {
     const abortController = new AbortController()
     const completion = Promise.resolve()
       .then(() => this.execute(log, task, template, input, trigger, abortController))
+      .then((finished) => {
+        executionCenter.finish(log.id, finished.status === 'success' ? 'completed' : finished.status === 'interrupted' ? 'cancelled' : 'failed', {
+          taskId: task.id,
+          endReasonCode: finished.end_reason_code,
+        })
+        return finished
+      }, (error) => {
+        executionCenter.finish(log.id, 'failed', { taskId: task.id })
+        throw error
+      })
       .finally(() => {
         if (this.active.get(taskId)?.completion === completion) {
           this.active.delete(taskId)
         }
       })
     this.active.set(taskId, { logId: log.id, abortController, completion })
+    executionCenter.register({
+      id: log.id,
+      source: 'scheduled_task',
+      conversationId: log.conversation_id ?? undefined,
+      title: task.name,
+      metadata: { taskId: task.id, triggerType: trigger.triggerType },
+      cancel: () => this.stop(log.id),
+    })
+    executionCenter.start(log.id)
     return { log, completion }
   }
 

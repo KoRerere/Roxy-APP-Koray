@@ -120,8 +120,9 @@ describe('taskLeaseHeartbeat', () => {
       abortController,
       async () => {
         const result = results.shift()
-        if (result instanceof Error)
+        if (result instanceof Error) {
           throw result
+        }
         return result ?? { renewed: true }
       },
     )

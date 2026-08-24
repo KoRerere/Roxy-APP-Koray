@@ -288,7 +288,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <AgentConsolePageLayout :show-task-monitor-toggle="false" overflow="auto" padding="110px 24px 48px" mobile-padding="72px 16px 32px">
+  <AgentConsolePageLayout :show-profile-monitor-toggle="false" overflow="auto" padding="110px 24px 48px" mobile-padding="72px 16px 32px">
     <div class="hero">
       <div class="claw-mark">
         <img

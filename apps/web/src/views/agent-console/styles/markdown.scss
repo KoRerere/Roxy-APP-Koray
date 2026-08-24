@@ -26,11 +26,11 @@
     line-height: 20px;
   }
 
-  :where(p, ul, ol, pre, blockquote, table, .agent-md-table) {
+  :where(p, ul, ol, pre, blockquote, table, .agent-md-table, .agent-md-code) {
     margin: 0 0 10px;
   }
 
-  :where(p:last-child, ul:last-child, ol:last-child, pre:last-child, blockquote:last-child, table:last-child, .agent-md-table:last-child) {
+  :where(p:last-child, ul:last-child, ol:last-child, pre:last-child, blockquote:last-child, table:last-child, .agent-md-table:last-child, .agent-md-code:last-child) {
     margin-bottom: 0;
   }
 
@@ -54,6 +54,48 @@
     &:hover {
       color: var(--color-text-blue-hover);
     }
+  }
+
+  :where(a[data-agent-favicon-url]) {
+    position: relative;
+  }
+
+  :where(a[data-agent-favicon-url])::before,
+  :where(a[data-agent-favicon-url])::after {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    content: '';
+    vertical-align: -2px;
+    pointer-events: none;
+  }
+
+  :where(a[data-agent-favicon-url])::before {
+    background-color: var(--color-text-tertiary);
+    mask: var(--agent-favicon-fallback-image) center / contain no-repeat;
+    -webkit-mask: var(--agent-favicon-fallback-image) center / contain no-repeat;
+    opacity: var(--agent-favicon-fallback-opacity, 1);
+    transform: scale(var(--agent-favicon-fallback-scale, 1));
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
+  }
+
+  :where(a[data-agent-favicon-url])::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    background-image: var(--agent-favicon-image);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: var(--agent-favicon-opacity, 0);
+    transform: translateY(2px) scale(var(--agent-favicon-scale, 0.85));
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
   }
 
   :where(a:has(code)) {
@@ -104,6 +146,15 @@
     background: var(--color-bg-tertiary);
   }
 
+  :where(.agent-md-code) {
+    position: relative;
+  }
+
+  :where(.agent-md-code pre) {
+    margin: 0;
+    padding-right: 40px;
+  }
+
   :where(pre code) {
     padding: 0;
     background: transparent;
@@ -130,6 +181,12 @@
   }
 
   :where(roxy-agent-table-copy) {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+
+  :where(roxy-agent-code-copy) {
     position: absolute;
     top: 4px;
     right: 4px;

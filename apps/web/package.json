@@ -64,6 +64,7 @@
     "dom-align": "^1.12.4",
     "dompurify": "catalog:",
     "driver.js": "^1.4.0",
+    "echarts": "6.1.0",
     "electron-log": "^5.4.4",
     "emoji-mart": "^5.6.0",
     "es-toolkit": "^1.49.0",
@@ -115,6 +116,6 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-vue-devtools": "^8.2.1",
     "vite-svg-loader": "^5.1.1",
-    "vue-tsc": "^3.3.8"
+    "vue-tsc": "^3.3.9"
   }
 }

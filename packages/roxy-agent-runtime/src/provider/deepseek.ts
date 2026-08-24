@@ -1,6 +1,6 @@
-import type Anthropic from "@anthropic-ai/sdk";
-import { AnthropicProvider } from "./anthropic.ts";
-import type { AnthropicProviderOptions } from "./anthropic.ts";
+import type Anthropic from '@anthropic-ai/sdk'
+import { AnthropicProvider } from './anthropic.ts'
+import type { AnthropicProviderOptions } from './anthropic.ts'
 import type {
   ChatRequest,
   ChatResponse,
@@ -10,14 +10,14 @@ import type {
   Message,
   StructuredOutputFn,
   StructuredOutputOptions,
-} from "../core/interfaces.ts";
-import { zodToJsonSchema } from "../tools/schema.ts";
-import type { ZodType } from "zod";
+} from '../core/interfaces.ts'
+import { zodToJsonSchema } from '../tools/schema.ts'
+import type { ZodType } from 'zod'
 
 /**
  * DeepSeek talks the Anthropic messages protocol (its `/anthropic` endpoint),
- * so this provider does NOT reimplement a separate wire format for chat — it
- * delegates {@link chat}/{@link chatStream}/{@link countTokens} to
+ * so this provider does NOT reimplement a separate wire format for invoke — it
+ * delegates {@link invoke}/{@link stream}/{@link countTokens} to
  * {@link AnthropicProvider} (pointed at DeepSeek, bearer auth) and only owns
  * DeepSeek's own quirks:
  *
@@ -35,7 +35,7 @@ import type { ZodType } from "zod";
  */
 
 /** Reasonable cap so JSON output is not truncated mid-object (doc note #3). */
-const JSON_OUTPUT_MAX_TOKENS = 4096;
+const JSON_OUTPUT_MAX_TOKENS = 4096
 
 /**
  * Content-block `type`s DeepSeek's Anthropic API marks "Not Supported" — these
@@ -47,30 +47,30 @@ const JSON_OUTPUT_MAX_TOKENS = 4096;
  * supported, so stripping only ever fires on foreign/future blocks (e.g. images).
  */
 const UNSUPPORTED_BLOCK_TYPES = new Set<string>([
-  "image",
-  "document",
-  "search_result",
-  "redacted_thinking",
-  "code_execution_tool_result",
-  "mcp_tool_use",
-  "mcp_tool_result",
-  "container_upload",
-]);
+  'image',
+  'document',
+  'search_result',
+  'redacted_thinking',
+  'code_execution_tool_result',
+  'mcp_tool_use',
+  'mcp_tool_result',
+  'container_upload',
+])
 
 // ---------------------------------------------------------------------------
 // JSON Output (OpenAI-compatible /chat/completions) — structured output seam
 // ---------------------------------------------------------------------------
 
 export interface DeepseekJsonRequest {
-  model: string;
-  messages: Array<{ role: string; content: string }>;
-  response_format: { type: "json_object" };
-  max_tokens: number;
-  temperature?: number;
+  model: string
+  messages: Array<{ role: string; content: string }>
+  response_format: { type: 'json_object' }
+  max_tokens: number
+  temperature?: number
 }
 
 export interface DeepseekJsonResponse {
-  choices: Array<{ message: { content: string | null } }>;
+  choices: Array<{ message: { content: string | null } }>
 }
 
 /**
@@ -79,47 +79,47 @@ export interface DeepseekJsonResponse {
  * prompt-building + parse/validate logic offline.
  */
 export interface DeepseekJsonClient {
-  create(body: DeepseekJsonRequest, signal?: AbortSignal): Promise<DeepseekJsonResponse>;
+  create(body: DeepseekJsonRequest, signal?: AbortSignal): Promise<DeepseekJsonResponse>
 }
 
 export interface DeepseekProviderOptions {
   /** API key already resolved by the host application. */
-  apiKey: string;
-  model: string;
+  apiKey: string
+  model: string
   /**
    * Required API root. Passed directly to the Anthropic protocol client; the
    * JSON Output transport appends `/chat/completions`.
    */
-  baseURL: string;
+  baseURL: string
   /**
    * Extra headers forwarded unchanged to the underlying Anthropic client.
    * When omitted, DeepSeek bearer authentication is derived from `apiKey`.
    */
-  defaultHeaders?: Record<string, string>;
+  defaultHeaders?: Record<string, string>
   /** Override model context window tokens (default 65536 for deepseek-chat). */
-  contextWindowTokens?: number;
-  /** Test back-door: inject the Anthropic client (chat/stream path). */
-  _client?: Anthropic;
+  contextWindowTokens?: number
+  /** Test back-door: inject the Anthropic client (invoke/stream path). */
+  _client?: Anthropic
   /** Test back-door: inject the JSON Output client (structured-output path). */
-  _jsonClient?: DeepseekJsonClient;
+  _jsonClient?: DeepseekJsonClient
 }
 
 /** Map DeepSeek options to the delegated Anthropic protocol provider. */
 export function buildDeepseekAnthropicOptions(opts: DeepseekProviderOptions): AnthropicProviderOptions {
   if (!opts.baseURL) {
-    throw new Error("DeepseekProvider: baseURL is required (e.g. https://api.deepseek.com)");
+    throw new Error('DeepseekProvider: baseURL is required (e.g. https://api.deepseek.com)')
   }
 
   return {
     model: opts.model,
     apiKey: opts.apiKey,
-    baseURL: opts.baseURL.replace(/\/$/, ""),
+    baseURL: opts.baseURL.replace(/\/$/, ''),
     defaultHeaders: opts.defaultHeaders ?? { Authorization: `Bearer ${opts.apiKey}` },
     contextWindowTokens: opts.contextWindowTokens ?? 65536,
     promptCaching: false,
     countTokensApi: false,
     ...(opts._client ? { _client: opts._client } : {}),
-  };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -134,16 +134,20 @@ export function buildDeepseekAnthropicOptions(opts: DeepseekProviderOptions): An
  * (which it rejects), and the user/assistant/tool turn structure is preserved.
  */
 export function sanitizeForDeepseek(req: ChatRequest): ChatRequest {
-  let changed = false;
+  let changed = false
   const messages: Message[] = req.messages.map((m) => {
-    if (typeof m.content === "string") return m;
-    const kept = m.content.filter((b) => !UNSUPPORTED_BLOCK_TYPES.has(b.type));
-    if (kept.length === m.content.length) return m;
-    changed = true;
-    const content: ContentBlock[] = kept.length > 0 ? kept : [{ type: "text", text: "[non-text content omitted]" }];
-    return { ...m, content };
-  });
-  return changed ? { ...req, messages } : req;
+    if (typeof m.content === 'string') {
+      return m
+    }
+    const kept = m.content.filter((b) => !UNSUPPORTED_BLOCK_TYPES.has(b.type))
+    if (kept.length === m.content.length) {
+      return m
+    }
+    changed = true
+    const content: ContentBlock[] = kept.length > 0 ? kept : [{ type: 'text', text: '[non-text content omitted]' }]
+    return { ...m, content }
+  })
+  return changed ? { ...req, messages } : req
 }
 
 // ---------------------------------------------------------------------------
@@ -157,25 +161,34 @@ export function sanitizeForDeepseek(req: ChatRequest): ChatRequest {
  */
 function buildJsonSystemPrompt(jsonSchema: unknown): string {
   return [
-    "You are a strict data-extraction assistant.",
-    "Respond with a SINGLE valid json object and nothing else — no prose, no markdown fences.",
-    "The json object MUST conform to this JSON Schema:",
+    'You are a strict data-extraction assistant.',
+    'Respond with a SINGLE valid json object and nothing else — no prose, no markdown fences.',
+    'The json object MUST conform to this JSON Schema:',
     JSON.stringify(jsonSchema),
-  ].join("\n");
+  ].join('\n')
 }
 
 /** Flatten a roxy message's content to a plain string for the OpenAI endpoint. */
 function messageContentToString(m: Message): string {
-  if (typeof m.content === "string") return m.content;
-  return m.content.map((b) => (b.type === "text" ? b.text : JSON.stringify(b))).join("\n");
+  if (typeof m.content === 'string') {
+    return m.content
+  }
+  return m.content.map((b) => (b.type === 'text' ? b.text : JSON.stringify(b))).join('\n')
 }
 
 function normalizeJsonInput(input: string | Message[]): Array<{ role: string; content: string }> {
-  const messages = typeof input === "string" ? [{ role: "user", content: input } as Message] : input;
+  const messages = typeof input === 'string' ? [{ role: 'user', content: input } as Message] : input
   return messages.map((m) => ({
-    role: m.role === "assistant" ? "assistant" : m.role === "system" ? "system" : "user",
+    role:
+      m.role === 'assistant'
+        ? 'assistant'
+        : m.role === 'developer'
+          ? 'developer'
+          : m.role === 'system'
+            ? 'system'
+            : 'user',
     content: messageContentToString(m),
-  }));
+  }))
 }
 
 function createJsonHttpClient(
@@ -183,26 +196,26 @@ function createJsonHttpClient(
   rootBaseURL: string,
   defaultHeaders?: Record<string, string>,
 ): DeepseekJsonClient {
-  const url = `${rootBaseURL.replace(/\/$/, "")}/chat/completions`;
-  const headers = defaultHeaders ?? { authorization: `Bearer ${apiKey}` };
+  const url = `${rootBaseURL.replace(/\/$/, '')}/chat/completions`
+  const headers = defaultHeaders ?? { authorization: `Bearer ${apiKey}` }
   return {
     async create(body, signal) {
       const res = await fetch(url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "content-type": "application/json",
+          'content-type': 'application/json',
           ...headers,
         },
         body: JSON.stringify(body),
         ...(signal ? { signal } : {}),
-      });
+      })
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`DeepSeek JSON request failed: ${res.status} ${res.statusText} ${text}`);
+        const text = await res.text().catch(() => '')
+        throw new Error(`DeepSeek JSON request failed: ${res.status} ${res.statusText} ${text}`)
       }
-      return (await res.json()) as DeepseekJsonResponse;
+      return (await res.json()) as DeepseekJsonResponse
     },
-  };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -210,37 +223,45 @@ function createJsonHttpClient(
 // ---------------------------------------------------------------------------
 
 /**
- * DeepSeek provider — chat/stream/countTokens delegate to {@link AnthropicProvider}
+ * DeepSeek provider — invoke/stream/countTokens delegate to {@link AnthropicProvider}
  * (DeepSeek speaks the Anthropic protocol), with DeepSeek-specific input
  * sanitization; structured output uses DeepSeek's native JSON Output feature.
  */
 export class DeepseekProvider implements IModelProvider {
-  readonly id = "deepseek";
-  readonly contextWindowTokens: number;
-  private readonly inner: AnthropicProvider;
-  private readonly jsonClient: DeepseekJsonClient;
-  private readonly defaultModel: string;
+  readonly id = 'deepseek'
+  readonly contextWindowTokens: number
+  private readonly inner: AnthropicProvider
+  private readonly jsonClient: DeepseekJsonClient
+  private readonly defaultModel: string
 
   constructor(opts: DeepseekProviderOptions) {
-    this.defaultModel = opts.model;
-    const anthropicOptions = buildDeepseekAnthropicOptions(opts);
-    const root = anthropicOptions.baseURL!;
+    this.defaultModel = opts.model
+    const anthropicOptions = buildDeepseekAnthropicOptions(opts)
+    const root = anthropicOptions.baseURL!
 
-    this.inner = new AnthropicProvider(anthropicOptions);
-    this.contextWindowTokens = this.inner.contextWindowTokens;
-    this.jsonClient = opts._jsonClient ?? createJsonHttpClient(opts.apiKey, root, opts.defaultHeaders);
+    this.inner = new AnthropicProvider(anthropicOptions)
+    this.contextWindowTokens = this.inner.contextWindowTokens
+    this.jsonClient = opts._jsonClient ?? createJsonHttpClient(opts.apiKey, root, opts.defaultHeaders)
   }
 
-  chat(req: ChatRequest, signal?: AbortSignal): Promise<ChatResponse> {
-    return this.inner.chat(sanitizeForDeepseek(req), signal);
+  invoke(req: ChatRequest, signal?: AbortSignal): Promise<ChatResponse> {
+    return this.inner.invoke(sanitizeForDeepseek(req), signal)
   }
 
-  chatStream(req: ChatRequest, signal?: AbortSignal): AsyncIterable<ChatStreamChunk> {
-    return this.inner.chatStream(sanitizeForDeepseek(req), signal);
+  stream(req: ChatRequest, signal?: AbortSignal): AsyncIterable<ChatStreamChunk> {
+    return this.inner.stream(sanitizeForDeepseek(req), signal)
+  }
+
+  toProviderRequest(req: ChatRequest): unknown {
+    return this.inner.toProviderRequest(sanitizeForDeepseek(req))
+  }
+
+  fromProviderResponse(response: unknown): ChatResponse {
+    return this.inner.fromProviderResponse(response)
   }
 
   countTokens(messages: Message[]): Promise<number> {
-    return this.inner.countTokens(messages);
+    return this.inner.countTokens(messages)
   }
 
   /**
@@ -255,39 +276,39 @@ export class DeepseekProvider implements IModelProvider {
     schema: ZodType<T>,
     options?: StructuredOutputOptions & { includeRaw?: IncludeRaw },
   ): StructuredOutputFn<IncludeRaw extends true ? { raw: Message; parsed: T } : T> {
-    const includeRaw = options?.includeRaw ?? false;
-    const systemPrompt = buildJsonSystemPrompt(zodToJsonSchema(schema));
+    const includeRaw = options?.includeRaw ?? false
+    const systemPrompt = buildJsonSystemPrompt(zodToJsonSchema(schema))
 
     const fn = async (input: string | Message[], signal?: AbortSignal): Promise<T | { raw: Message; parsed: T }> => {
       const res = await this.jsonClient.create(
         {
           model: this.defaultModel,
-          messages: [{ role: "system", content: systemPrompt }, ...normalizeJsonInput(input)],
-          response_format: { type: "json_object" },
+          messages: [{ role: 'system', content: systemPrompt }, ...normalizeJsonInput(input)],
+          response_format: { type: 'json_object' },
           max_tokens: JSON_OUTPUT_MAX_TOKENS,
         },
         signal,
-      );
-      const content = res.choices[0]?.message?.content;
+      )
+      const content = res.choices[0]?.message?.content
       if (!content) {
         throw new Error(
-          "DeepseekProvider.withStructuredOutput: DeepSeek returned empty content for json_object (doc note #4 — try adjusting the prompt)",
-        );
+          'DeepseekProvider.withStructuredOutput: DeepSeek returned empty content for json_object (doc note #4 — try adjusting the prompt)',
+        )
       }
-      let raw: unknown;
+      let raw: unknown
       try {
-        raw = JSON.parse(content);
+        raw = JSON.parse(content)
       } catch {
-        throw new Error(`DeepseekProvider.withStructuredOutput: response was not valid JSON: ${content}`);
+        throw new Error(`DeepseekProvider.withStructuredOutput: response was not valid JSON: ${content}`)
       }
-      const parsed = schema.parse(raw);
+      const parsed = schema.parse(raw)
       if (includeRaw) {
-        const rawMsg: Message = { role: "assistant", content: [{ type: "text", text: content }] };
-        return { raw: rawMsg, parsed };
+        const rawMsg: Message = { role: 'assistant', content: [{ type: 'text', text: content }] }
+        return { raw: rawMsg, parsed }
       }
-      return parsed;
-    };
+      return parsed
+    }
 
-    return fn as StructuredOutputFn<IncludeRaw extends true ? { raw: Message; parsed: T } : T>;
+    return fn as StructuredOutputFn<IncludeRaw extends true ? { raw: Message; parsed: T } : T>
   }
 }

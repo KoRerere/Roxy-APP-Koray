@@ -85,6 +85,7 @@ export interface TaskWindowOption {
   id: string
   code: string
   windowSortNum?: number
+  workspaceName?: string
   projectId?: string
   projectName?: string
   iconName: string

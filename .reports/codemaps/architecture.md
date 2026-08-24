@@ -1,95 +1,129 @@
 # Architecture Overview
 
-<!-- Generated: 2026-03-26 | Last refreshed: 2026-07-08 | Token estimate: ~950 -->
+<!-- Updated: 2026-08-14 | High-level codemap; source code and package docs remain authoritative -->
 
-## Project Type
-Electron + Vue 3 monorepo (pnpm workspaces + Turbo). Product: **RoxyBrowser**, an anti-detect / fingerprint browser with a built-in AI agent. **6 apps, 16 packages.**
+## Project Shape
 
-## System Diagram
+RoxyBrowser is an Electron anti-detect/fingerprint browser with an embedded AI Agent. It is a pnpm + Turbo monorepo with **6 apps, 14 packages, and 1 workspace tool**.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        RoxyBrowser                            │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐         ┌──────────────┐                   │
-│  │   Electron   │◄────────┤   Preload    │                   │
-│  │   Main       │  IPC    │(@roxy/electron-preload)          │
-│  │   Process    │─────────►              │                   │
-│  └──────┬───────┘         └──────┬───────┘                   │
-│         │                        ▼                            │
-│         │              ┌──────────────────┐                  │
-│         │              │  Vue 3 Web App   │ (renderer/SPA)   │
-│         │              │  PrimeVue + Pinia│                  │
-│         │              └──────────────────┘                  │
-│         ▼                                                     │
-│  ┌─────────────────────────────────────────┐                │
-│  │  Browser Manager (Puppeteer Core)        │                │
-│  │  profiles · cookies · fingerprints       │                │
-│  └─────────────────────────────────────────┘                │
-│         │ utilityProcess.fork() (port from 26580)            │
-│         ▼                                                     │
-│  ┌─────────────────────────────────────────┐                │
-│  │  Roxy Agent (packages/roxy-agent)        │                │
-│  │  modes: agent · im · worker · sandbox    │                │
-│  │  engine: deepagents / LangChain          │                │
-│  └───────────┬─────────────────────────────┘                │
-│              │ MCP (InMemory + stdio)                        │
-│      ┌───────┴────────┐                                      │
-│      ▼                ▼                                       │
-│  OpenAPI MCP      Playwright MCP (per worker, over CDP)      │
-│ (@roxybrowser/    (@roxybrowser/playwright)                  │
-│  openapi)                                                     │
-└─────────────────────────────────────────────────────────────┘
+```text
+Vue product UI
+  <-> typed preload IPC
+Electron main process
+  ├── browser/profile lifecycle (Puppeteer + Chrome/Firefox)
+  ├── local App Server + RoxyBrowser OpenAPI server
+  ├── roxynet/sync/updater/native integrations
+  └── utilityProcess.fork(roxy-agent)
+         ├── HTTP CRUD + /api/events WebSocket + tasks + RoxyClaw
+         ├── product tools, persistence, sandbox host and MCP assembly
+         └── roxy-agent-runtime
+                ├── provider-neutral agent loop
+                ├── tools, memory, compaction, HITL and clarification
+                └── plugins, MCP adapters, skills and named subagent tree
 
-Separate feature (own services): Cloud Browser
-  cloud-browser-gateway (NestJS + Docker + neko + Redis)
-    └─ cloud-browser-user (Vue neko WebRTC streaming client)
+Separate deployable feature:
+cloud-browser-user -> cloud-browser-gateway -> Docker/neko -> RoxyChrome
 ```
 
-## Service Boundaries
+## Workspace Boundaries
 
 ### Apps (6)
-- **electron** (`roxybrowserdev`, v3.0.0): Main process — IPC, browser management, agent fork, updater
-- **web** (`web`): Vue 3 + PrimeVue renderer SPA (all product UI; also published as web source)
-- **preload** (`@roxy/electron-preload`): Bridge between main and renderer
-- **tauri** (`tauri`): Experimental Rust/Tauri launcher — RoxyChrome & RoxyFirefox variants
-- **cloud-browser-gateway** (`@roxy/cloud-browser-gateway`): NEW — NestJS control plane for cloud browser (auth + Docker/neko lifecycle + Redis + WS/proxy)
-- **cloud-browser-user** (`@roxy/cloud-browser-user`): NEW — Vue neko WebRTC client for the remote cloud browser
 
-### Packages (16)
-- **roxy-agent**: Shipped AI agent (deepagents/LangChain); `src/deepagents/`, 4 modes
-- **roxy-agent-runtime**: From-scratch Anthropic-native agent rewrite — heavy WIP (own CLAUDE.md/AGENTS.md)
-- **roxy-openapi** (`@roxybrowser/openapi`): Vendored prebuilt control-plane MCP SDK (src repo: sibling roxybrowser-mcp-server)
-- **roxy-playwright** (`@roxybrowser/playwright`): Vendored prebuilt Playwright-over-CDP MCP SDK (src repo: sibling roxybrowser-playwright-mcp)
-- **roxy-sandbox** (`@roxy/sandbox`): Capability modules (utils/human/llm/table/kv/debug) injected into the agent sandbox VM
-- **roxy-skills**: Zips agent skill bundles for OSS
-- **backend-api** (`@roxy/backend-api`): Main-backend API client (`pnpm openapi`)
-- **agent-api** (`@roxy/agent-api`): NEW — LLM-proxy/agent backend API client (`pnpm openapi:agent`)
-- **roxy-shared** (`@roxy/shared`): Shared types & utilities; `@roxy/shared/channel` owns the Zod-validated Agent WebSocket protocol
-- **diskspace-native** (`@roxy/diskspace-native`): NEW — napi-rs/Rust native (Windows disk space)
-- **node-typesafe-worker-messages** (`@repo/...`): Type-safe worker-thread messaging
-- **gen-primevue-preset**: Figma plugin → PrimeVue theme presets
-- **vite-plugins** / **webpack-plugins**: Internal build plugins (obfuscation, zip/upload)
-- **language-localization** / **puppeteer-google-translate**: i18n tooling + Google-Translate scraper
+- `apps/electron` (`roxybrowserdev`): Desktop main process, browser lifecycle, IPC, local services, Agent lifecycle, updates and packaging.
+- `apps/web` (`web`): Vue 3 product SPA plus standalone multi-page tools such as Agent Inspect.
+- `apps/preload` (`@roxy/electron-preload`): Typed bridge exposed as `window.electronAPI`.
+- `apps/tauri` (`tauri`): Experimental Rust/Tauri launcher for RoxyChrome and RoxyFirefox.
+- `apps/cloud-browser-gateway` (`@roxy/cloud-browser-gateway`): NestJS service that authenticates users, prepares profiles, provisions Docker/neko containers, tracks sessions in Redis and connects to the browser over Puppeteer/CDP.
+- `apps/cloud-browser-user` (`@roxy/cloud-browser-user`): Vue/neko client that renders and controls the remote browser over WebRTC.
 
-## Data Flow
+### Packages (14)
 
+**Agent and distribution**
+
+- `roxy-agent`: Shipped product host. Owns HTTP/WebSocket transport, RoxyBrowser APIs, tasks, persistence, MCP assembly, browser subagents, sandbox hosting and RoxyClaw/IM integrations.
+- `roxy-agent-runtime`: Private generic Agent framework used by `roxy-agent` in production. Owns the agent loop, public contracts, providers, tools, memory, HITL, clarification, plugins, replay and subagent tree.
+- `roxy-skills`: Builds distributable Agent skill archives.
+
+**Generated clients**
+
+- `@roxy/backend-api`: Main product backend client; regenerate with `pnpm openapi`.
+- `@roxy/agent-api`: Agent backend client for model metadata, templates, tasks, files and related APIs; regenerate with `pnpm openapi:agent`.
+
+**Shared, native and security**
+
+- `@roxy/shared`: Cross-app types/utilities. `@roxy/shared/channel` owns Agent WebSocket Zod schemas; `@roxy/shared/agent-paths` owns the Agent data-directory schema.
+- `@roxy/crypto`: AES-256-GCM WebAssembly implementation used by Electron, web and cloud gateway.
+- `@roxy/diskspace-native`: napi-rs/Rust Windows disk-space module.
+- `@repo/node-typesafe-worker-messages`: Typed Node worker-thread messaging.
+
+**Build and localization**
+
+- `gen-primevue-preset`: Figma plugin that generates PrimeVue presets.
+- `@roxy/vite-plugins` / `@roxy/webpack-plugins`: Internal build plugins.
+- `@roxy/language-localization`: Locale generation and auto-translation tooling.
+- `@roxy/puppeteer-google-translate`: Translation scraper used by localization tooling.
+
+**Workspace tool**
+
+- `tools/delay-launcher` (`@roxy/delay-launcher`): Platform-specific delayed launcher used by desktop packaging/default-browser flows.
+
+`@roxybrowser/openapi` and `@roxybrowser/playwright` are npm dependencies of `roxy-agent`, not workspace packages. Sandbox capability implementations now live in `roxy-agent/src/modes/sandbox-api/`; there is no `packages/roxy-sandbox`.
+
+## Agent Architecture
+
+### Ownership Split
+
+`roxy-agent-runtime` is the engine, not a future replacement. `roxy-agent` injects all product-specific dependencies into it:
+
+```text
+roxy-agent
+  constructs provider + ToolRegistry + memory + rollout store + plugins
+  registers product/MCP/script/subagent tools
+  creates AgentManager and browser_worker spec
+  -> AgentRuntime.create(AgentDefinition)
 ```
-User Input → Vue Router → Pinia Store → ElectronAPI (IPC)
-  → Main Process → Browser Manager → Puppeteer → Chrome/Firefox
-Conversation commands: Web → shared Zod validation → agent WebSocket `/api/events` → shared Zod validation → deepagents → MCP → browser (CDP)
-Conversation events: upstream LLM SSE → canonical run events → agent WebSocket → Web; thinking/content fragments stay in active-run memory and are merged into JSONL only at completion boundaries
-Conversation metadata/files: Web → agent HTTP CRUD
-Local task state: agent WebSocket → Web（task logs + task execution + task monitor）
-Cross-client task state: Web → roxy-agent-server HTTP（cached definitions + live Redis lease）
+
+- Runtime never reads product env, selects RoxyBrowser models, scans product directories or knows HTTP/WebSocket DTOs.
+- Product host converts runtime events into canonical `conversation.run.event` messages and persists frontend replay data.
+- Root and browser child agents run in the same Agent process. Children have isolated runtime sessions, memory, Playwright MCP clients, browser scopes and `agentPath` lifecycle events.
+- Current modes are only `agent` and `sandbox`. RoxyClaw runs inside `agent`; browser workers are runtime subagents, not subprocess modes.
+
+### MCP and Model Flow
+
+- RoxyBrowser OpenAPI MCP: shared in-process server/client using `InMemoryTransport`.
+- Playwright MCP: in-process client per root/child browser worker, with isolated artifact and browser scope.
+- User MCP: configurable stdio or Streamable HTTP connections through runtime adapters.
+- Model metadata comes from the Agent backend; shipped conversations use `OpenAIResponsesProvider` against `/llm-proxy/v1`.
+
+## Main Data Flows
+
+```text
+Product operation:
+Vue -> preload IPC -> Electron handler -> BrowserManager -> Puppeteer -> Chrome/Firefox
+
+Agent conversation:
+Vue HTTP CRUD -------------------------------> roxy-agent services/storage
+Vue /api/events command -> shared Zod schema -> roxy-agent -> AgentRuntime
+provider stream -> runtime events -> canonical run events -> /api/events -> Vue
+browser tool -> AgentManager child -> per-worker Playwright MCP -> browser profile
+
+Cloud browser:
+web client -> gateway connect/heartbeat -> backend auth + Redis session
+           -> Docker/neko container -> WebRTC remote browser client
 ```
 
-## Key Technologies
-- Electron 40.10.5
-- Vue 3.5.25 + Vue Router 5 + Pinia 3
-- PrimeVue 4.5.4 (UI) + UnoCSS
-- Puppeteer Core 24.36.1
-- TypeScript 6 + Vite 8 + Webpack 5
-- Turbo (build orchestration), pnpm 10.18.3, Node ≥ 22.20
-- Agent: deepagents / LangChain, MCP (@modelcontextprotocol/sdk)
-```
+## Version Baseline
+
+- Root: pnpm >= 10.18.3, Node >= 22.20, Turbo 2.10, TypeScript 6.0, Vite 8.1.
+- Desktop: Electron 40.10, Puppeteer Core 24.36.
+- Web: Vue 3.5, Vue Router 5.2, Pinia 4, PrimeVue 4.5, UnoCSS 66.
+- Runtime package: Node >= 24, provider/MCP SDKs, Vitest + mandatory TDD.
+
+## Authoritative Detail
+
+- Frontend: `.reports/codemaps/frontend.md`
+- Electron/embedded services: `.reports/codemaps/backend.md`
+- Storage: `.reports/codemaps/data.md`
+- Integrations/dependencies: `.reports/codemaps/dependencies.md`
+- Shipped Agent host: `packages/roxy-agent/CLAUDE.md`
+- Generic runtime: `packages/roxy-agent-runtime/ARCHITECTURE.md` and `AGENTS.md`

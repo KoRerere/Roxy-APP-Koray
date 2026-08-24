@@ -31,6 +31,7 @@ export type SkillMetadataLoadErrorCode
 export interface SkillMetadataParseSuccess {
   ok: true
   metadata: SkillMetadataSummary
+  frontmatter: Record<string, unknown>
   warnings: string[]
 }
 
@@ -49,6 +50,7 @@ export interface SkillMetadataLoadSuccess {
   skillMdPath: string
   rootDir: string
   metadata: SkillMetadataSummary
+  frontmatter: Record<string, unknown>
   warnings: string[]
 }
 
@@ -220,6 +222,7 @@ export function parseSkillMetadataFromContent(
       description,
       ...(normalizedRuntimes.runtimes ? { runtimes: normalizedRuntimes.runtimes } : {}),
     },
+    frontmatter: frontmatterData,
     warnings,
   }
 }
@@ -261,6 +264,7 @@ export async function loadSkillMetadataFromDir(dirPath: string): Promise<SkillMe
     skillMdPath,
     rootDir: path.dirname(skillMdPath),
     metadata: parsed.metadata,
+    frontmatter: parsed.frontmatter,
     warnings: parsed.warnings,
   }
 }

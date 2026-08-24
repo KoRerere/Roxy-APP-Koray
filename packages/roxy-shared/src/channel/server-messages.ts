@@ -1,9 +1,11 @@
 import { z } from 'zod'
 import { AgentChannelMessageIdSchema } from './common'
 import { AgentConversationRunEventDTOSchema } from './conversation-events'
+import { AgentExecutionSnapshotSchema } from './execution-messages'
 import {
   AgentTaskExecutionEventSchema,
   AgentTaskLogDTOSchema,
+  AgentProfileMonitorSnapshotSchema,
   AgentTaskMonitorSnapshotSchema,
 } from './task-messages'
 
@@ -55,10 +57,22 @@ export const AgentTaskMonitorSnapshotMessageSchema = z.strictObject({
   data: AgentTaskMonitorSnapshotSchema,
 })
 
+export const AgentProfileMonitorSnapshotMessageSchema = z.strictObject({
+  id: AgentChannelMessageIdSchema,
+  type: z.literal('profile_monitor.snapshot'),
+  data: AgentProfileMonitorSnapshotSchema,
+})
+
 export const AgentConversationRunEventMessageSchema = z.strictObject({
   id: AgentChannelMessageIdSchema,
   type: z.literal('conversation.run.event'),
   data: AgentConversationRunEventDTOSchema,
+})
+
+export const AgentExecutionCenterSnapshotMessageSchema = z.strictObject({
+  id: AgentChannelMessageIdSchema,
+  type: z.literal('execution_center.snapshot'),
+  data: AgentExecutionSnapshotSchema,
 })
 
 export const AgentChannelMessageSchema = z.discriminatedUnion('type', [
@@ -68,7 +82,9 @@ export const AgentChannelMessageSchema = z.discriminatedUnion('type', [
   AgentTaskLogDeletedMessageSchema,
   AgentTaskExecutionEventMessageSchema,
   AgentTaskMonitorSnapshotMessageSchema,
+  AgentProfileMonitorSnapshotMessageSchema,
   AgentConversationRunEventMessageSchema,
+  AgentExecutionCenterSnapshotMessageSchema,
 ])
 
 export interface AgentChannelMessageMap {
@@ -78,7 +94,9 @@ export interface AgentChannelMessageMap {
   'task_log.deleted': z.infer<typeof AgentTaskLogDeletedDataSchema>
   'task_execution.event': z.infer<typeof AgentTaskExecutionEventSchema>
   'task_monitor.snapshot': z.infer<typeof AgentTaskMonitorSnapshotSchema>
+  'profile_monitor.snapshot': z.infer<typeof AgentProfileMonitorSnapshotSchema>
   'conversation.run.event': z.infer<typeof AgentConversationRunEventDTOSchema>
+  'execution_center.snapshot': z.infer<typeof AgentExecutionSnapshotSchema>
 }
 
 export type AgentChannelMessageType = keyof AgentChannelMessageMap
@@ -87,4 +105,3 @@ type InferredAgentChannelMessage = z.infer<typeof AgentChannelMessageSchema>
 
 export type AgentChannelMessage<T extends AgentChannelMessageType = AgentChannelMessageType>
   = Extract<InferredAgentChannelMessage, { type: T }>
-

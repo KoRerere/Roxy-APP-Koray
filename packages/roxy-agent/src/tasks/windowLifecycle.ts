@@ -35,10 +35,10 @@ export async function closeTaskBrowserWindow(dirId: string): Promise<void> {
 
 export async function closeTaskBrowserWindows(
   windows: ResolvedTaskWindow[],
+  closeWindow: (dirId: string) => Promise<void> = closeTaskBrowserWindow,
 ): Promise<string[]> {
   const dirIds = Array.from(new Set(windows.map(window => window.dirId)))
-  const results = await Promise.allSettled(dirIds.map(dirId =>
-    closeTaskBrowserWindow(dirId)))
+  const results = await Promise.allSettled(dirIds.map(dirId => closeWindow(dirId)))
 
   results.forEach((result, index) => {
     if (result.status === 'rejected') {

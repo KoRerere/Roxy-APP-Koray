@@ -1,6 +1,5 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { copyFile, stat } from 'node:fs/promises'
-import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { compare } from 'compare-versions'
 import { app, BrowserWindow, dialog, nativeTheme, screen, shell } from 'electron'
@@ -20,6 +19,7 @@ import { getNetworkMode } from '/@/modules/store/networkMode'
 import { appUpdater, confirmMacAppOwnershipFix, getMacAppOwnershipFixStatus } from '/@/modules/updater'
 import { ensureBrowserCacheRootDir, fileExists, getDiskInfoByPath, getFolderSize, getMacAddress } from '/@/utils'
 import { getProdWebDomain } from '/@/utils/getProdWebDomain'
+import { openOrDownloadLocalPath } from './localFileAction'
 
 let appIdleState = false
 
@@ -397,29 +397,28 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     shell.openExternal(url)
   })
 
-  /** 下载本地文件 */
+  /** 打开本地目录或下载本地文件 */
   ipcMain.on('app:downloadLocalFile', async (event, payload: { filePath: string, fileName?: string }) => {
-    if (!payload?.filePath)
+    if (!payload?.filePath) {
       throw new Error('Local file path is required')
+    }
 
     const sourcePath = normalizeLocalFilePath(payload.filePath)
-    const sourceStat = await stat(sourcePath)
-    if (!sourceStat.isFile())
-      throw new Error('Local path is not a file')
-
     const ownerWindow = BrowserWindow.fromWebContents(event.sender)
-    const saveDialogOptions = {
-      defaultPath: payload.fileName || path.basename(sourcePath),
-    }
-    const { canceled, filePath: targetPath } = ownerWindow
-      ? await dialog.showSaveDialog(ownerWindow, saveDialogOptions)
-      : await dialog.showSaveDialog(saveDialogOptions)
-
-    if (canceled || !targetPath)
-      return { canceled: true }
-
-    await copyFile(sourcePath, targetPath)
-    return { canceled: false, filePath: targetPath }
+    return openOrDownloadLocalPath(
+      {
+        sourcePath,
+        fileName: payload.fileName,
+      },
+      {
+        copyFile,
+        openPath: targetPath => shell.openPath(targetPath),
+        showSaveDialog: defaultPath => ownerWindow
+          ? dialog.showSaveDialog(ownerWindow, { defaultPath })
+          : dialog.showSaveDialog({ defaultPath }),
+        stat,
+      },
+    )
   })
 
   /** 取消卸载 */

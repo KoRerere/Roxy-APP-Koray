@@ -76,7 +76,8 @@ describe('task routes', () => {
 
     assert.equal(response.status, 200)
     assert.deepEqual(mocks.replayTaskExecution.mock.calls[0], ['log-1'])
-    assert.equal((await response.json()).data.revision, 2)
+    const body = await response.json() as { data: { revision: number } }
+    assert.equal(body.data.revision, 2)
   })
 
   it('waits for an explicit scheduler sync', async () => {

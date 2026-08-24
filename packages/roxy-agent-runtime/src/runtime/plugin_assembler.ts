@@ -5,11 +5,11 @@ import type {
   MemoryLifecycle,
   RoxyPlugin,
   ToolMiddleware,
-} from "../core/interfaces.ts";
-import type { AssembledPlugins } from "./plugin_api.ts";
-import { PluginAPIImpl } from "./plugin_api.ts";
+} from '../core/interfaces.ts'
+import type { AssembledPlugins } from './plugin_api.ts'
+import { PluginAPIImpl } from './plugin_api.ts'
 
-export type { AssembledPlugins };
+export type { AssembledPlugins }
 
 /**
  * Iterate `plugins` in declaration order, call `setup(api)` on each, and
@@ -20,32 +20,32 @@ export async function assemblePlugins(
   logger: ILogger,
   clarification?: IClarificationHandler,
 ): Promise<AssembledPlugins> {
-  const seen = new Set<string>();
-  const allTools: AssembledPlugins["tools"] = [];
-  const allContributors: IContextContributor[] = [];
-  const allHooks: AssembledPlugins["hooks"] = [];
-  const allMiddleware: ToolMiddleware[] = [];
-  const allMemoryLifecycles: MemoryLifecycle[] = [];
-  const allDisposeCallbacks: Array<() => void | Promise<void>> = [];
+  const seen = new Set<string>()
+  const allTools: AssembledPlugins['tools'] = []
+  const allContributors: IContextContributor[] = []
+  const allHooks: AssembledPlugins['hooks'] = []
+  const allMiddleware: ToolMiddleware[] = []
+  const allMemoryLifecycles: MemoryLifecycle[] = []
+  const allDisposeCallbacks: Array<() => void | Promise<void>> = []
 
   for (const plugin of plugins) {
     if (seen.has(plugin.name)) {
-      throw new Error(`AgentRuntime.create: duplicate plugin name "${plugin.name}"`);
+      throw new Error(`AgentRuntime.create: duplicate plugin name "${plugin.name}"`)
     }
-    seen.add(plugin.name);
+    seen.add(plugin.name)
 
-    const childLogger = logger.child(`plugin:${plugin.name}`);
-    const api = new PluginAPIImpl(childLogger, clarification);
+    const childLogger = logger.child(`plugin:${plugin.name}`)
+    const api = new PluginAPIImpl(childLogger, clarification)
 
-    await plugin.setup(api);
+    await plugin.setup(api)
 
-    const { tools, contributors, hooks, middleware, memoryLifecycles, disposeCallbacks } = api.collect();
-    allTools.push(...tools);
-    allContributors.push(...contributors);
-    allHooks.push(...hooks);
-    allMiddleware.push(...middleware);
-    allMemoryLifecycles.push(...memoryLifecycles);
-    allDisposeCallbacks.push(...disposeCallbacks);
+    const { tools, contributors, hooks, middleware, memoryLifecycles, disposeCallbacks } = api.collect()
+    allTools.push(...tools)
+    allContributors.push(...contributors)
+    allHooks.push(...hooks)
+    allMiddleware.push(...middleware)
+    allMemoryLifecycles.push(...memoryLifecycles)
+    allDisposeCallbacks.push(...disposeCallbacks)
   }
 
   return {
@@ -55,7 +55,7 @@ export async function assemblePlugins(
     middleware: allMiddleware,
     memoryLifecycles: allMemoryLifecycles,
     disposeCallbacks: allDisposeCallbacks,
-  };
+  }
 }
 
 /**
@@ -64,9 +64,11 @@ export async function assemblePlugins(
  * determines firing order.
  */
 export function mergeHooks(
-  hooksList: AssembledPlugins["hooks"],
-): import("../core/interfaces.ts").AgentLifecycleHooks | undefined {
-  if (hooksList.length === 0) return undefined;
+  hooksList: AssembledPlugins['hooks'],
+): import('../core/interfaces.ts').AgentLifecycleHooks | undefined {
+  if (hooksList.length === 0) {
+    return undefined
+  }
   return {
     invoke: {
       before: (ctx) => hooksList.forEach((h) => h.invoke?.before?.(ctx)),
@@ -77,17 +79,14 @@ export function mergeHooks(
       before: (ctx) => hooksList.forEach((h) => h.model?.before?.(ctx)),
       firstToken: (ctx) => hooksList.forEach((h) => h.model?.firstToken?.(ctx)),
       after: (ctx) => hooksList.forEach((h) => h.model?.after?.(ctx)),
+      error: (ctx) => hooksList.forEach((h) => h.model?.error?.(ctx)),
     },
     tool: {
       before: (ctx) => hooksList.forEach((h) => h.tool?.before?.(ctx)),
       after: (ctx) => hooksList.forEach((h) => h.tool?.after?.(ctx)),
     },
-    subagent: {
-      before: (ctx) => hooksList.forEach((h) => h.subagent?.before?.(ctx)),
-      after: (ctx) => hooksList.forEach((h) => h.subagent?.after?.(ctx)),
-    },
     stream: {
       chunk: (ctx) => hooksList.forEach((h) => h.stream?.chunk?.(ctx)),
     },
-  };
+  }
 }

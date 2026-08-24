@@ -147,15 +147,6 @@ export interface ApiResponseOfficialTemplateInfo {
   message: string;
 }
 
-/** ApiResponse[PresetInitializationResult] */
-export interface ApiResponsePresetInitializationResult {
-  /** Code */
-  code: 0;
-  data: PresetInitializationResult;
-  /** Message */
-  message: string;
-}
-
 /** ApiResponse[SkillInfo] */
 export interface ApiResponseSkillInfo {
   /** Code */
@@ -890,7 +881,7 @@ export interface ModelCreate {
   currency?: string;
   /**
    * Api Format
-   * API 格式：openai 或 anthropic
+   * API 格式：anthropic 或 responses
    * @default "openai"
    */
   api_format?: string;
@@ -1147,19 +1138,18 @@ export interface OfficialTemplateInfo {
   /** Slug */
   slug: string;
   /** Templatetype */
-  templateType: string;
+  templateType: OfficialTemplateInfoTemplateTypeEnum;
   /** Name */
   name: Record<string, string>;
   /** Description */
   description: Record<string, string> | null;
-  /** Iconinfo */
-  iconInfo: Record<string, JsonValue> | null;
+  iconInfo: TemplateIconInfo | null;
   /** Sortorder */
   sortOrder: number;
   /** Ishot */
   isHot: boolean;
-  /** Metadata */
-  metadata: Record<string, JsonValue>;
+  /** 官方模板 metadata 的稳定业务字段；允许保留未来扩展键。 */
+  metadata: OfficialTemplateMetadataInfo;
   /** Labels */
   labels: TemplateLabelInfo[];
   /** Labelids */
@@ -1168,6 +1158,32 @@ export interface OfficialTemplateInfo {
   createdAt: string | null;
   /** Updatedat */
   updatedAt: string | null;
+}
+
+/**
+ * OfficialTemplateMetadataInfo
+ * 官方模板 metadata 的稳定业务字段；允许保留未来扩展键。
+ */
+export interface OfficialTemplateMetadataInfo {
+  /** Fileid */
+  fileId?: string | null;
+  /** Ossurl */
+  ossUrl?: string | null;
+  /** Sha512 */
+  sha512?: string | null;
+  /** Version */
+  version?: number | null;
+  /** Scriptversion */
+  scriptVersion?: string | null;
+  /** Optionsschema */
+  optionsSchema?: string | null;
+  /** Skillmetadata */
+  skillMetadata?: Record<string, any> | null;
+  /** Prompt */
+  prompt?: Record<string, string> | null;
+  /** Usageexample */
+  usageExample?: Record<string, string> | null;
+  [key: string]: any;
 }
 
 /** PointsGrant */
@@ -1183,14 +1199,6 @@ export interface PointsGrant {
    * 赠送备注
    */
   description?: string | null;
-}
-
-/** PresetInitializationResult */
-export interface PresetInitializationResult {
-  /** Initialized */
-  initialized: boolean;
-  /** Createdcount */
-  createdCount: number;
 }
 
 /** PricingRuleCreate */
@@ -1483,6 +1491,43 @@ export interface RatesInput {
    * @default 0
    */
   video_second?: number;
+}
+
+/**
+ * ResponsesResponse
+ * OpenAI Responses API 响应的稳定顶层字段。
+ */
+export interface ResponsesResponse {
+  /**
+   * Id
+   * @default ""
+   */
+  id?: string;
+  /**
+   * Object
+   * @default "response"
+   */
+  object?: string;
+  /**
+   * Created At
+   * @default 0
+   */
+  created_at?: number;
+  /**
+   * Status
+   * @default ""
+   */
+  status?: string;
+  /**
+   * Model
+   * @default ""
+   */
+  model?: string;
+  /** Output */
+  output?: Record<string, any>[];
+  /** Usage */
+  usage?: Record<string, any> | null;
+  [key: string]: any;
 }
 
 /** ScriptCategoryCreate */
@@ -1899,6 +1944,14 @@ export interface TemplateCreate {
   label_ids?: number[];
 }
 
+/** TemplateIconInfo */
+export interface TemplateIconInfo {
+  icon?: TemplateThemePairInfo | null;
+  primaryColor?: TemplateThemePairInfo | null;
+  bgColor?: TemplateThemePairInfo | null;
+  [key: string]: any;
+}
+
 /** TemplateLabelBatch */
 export interface TemplateLabelBatch {
   /** Action */
@@ -2065,6 +2118,14 @@ export interface TemplateSkillAssetInfo {
   files: string[] | null;
   /** Skillmdpath */
   skillMdPath: string | null;
+}
+
+/** TemplateThemePairInfo */
+export interface TemplateThemePairInfo {
+  /** Light */
+  light?: string | null;
+  /** Dark */
+  dark?: string | null;
 }
 
 /** TemplateUpdate */
@@ -2265,10 +2326,7 @@ export interface UserTaskCreate {
    * @default true
    */
   enabled?: boolean;
-  /**
-   * Metadata
-   * 任务执行配置；当前仅支持脚本任务并发数
-   */
+  /** 任务执行配置；当前仅支持脚本任务并发数 */
   metadata?: UserTaskMetadata | null;
 }
 
@@ -2309,8 +2367,6 @@ export interface UserTaskMetadata {
   /**
    * Concurrency
    * 脚本任务单次执行的最大并发数；非脚本任务忽略
-   * @min 1
-   * @max 9007199254740991
    */
   concurrency?: number | null;
 }
@@ -2389,10 +2445,7 @@ export interface UserTaskUpdate {
   execute_at?: string | null;
   /** Enabled */
   enabled?: boolean | null;
-  /**
-   * Metadata
-   * 任务执行配置；传 null 或不含 concurrency 时删除脚本并发配置
-   */
+  /** 任务执行配置；传 null 或不含 concurrency 时删除脚本并发配置 */
   metadata?: UserTaskMetadata | null;
 }
 
@@ -2591,6 +2644,13 @@ export enum MediaTaskInfoPhaseEnum {
   Done = "done",
 }
 
+/** Templatetype */
+export enum OfficialTemplateInfoTemplateTypeEnum {
+  Script = "script",
+  Skill = "skill",
+  Prompt = "prompt",
+}
+
 /** Action */
 export enum TaskStateRequestActionEnum {
   Start = "start",
@@ -2674,6 +2734,10 @@ export type HealthHealthGetError = ApiErrorResponse;
 export type ChatCompletionsV1ChatCompletionsPostData = ChatCompletionResponse;
 
 export type ChatCompletionsV1ChatCompletionsPostError = ApiErrorResponse;
+
+export type ResponsesV1ResponsesPostData = ResponsesResponse;
+
+export type ResponsesV1ResponsesPostError = ApiErrorResponse;
 
 export type ImageGenerationsV1ImagesGenerationsPostData =
   ApiResponseImageTaskCreateResponse;
@@ -3020,11 +3084,6 @@ export interface ListUserTemplatesParams {
 export type ListUserTemplatesData = ApiResponseUserTemplatePage;
 
 export type ListUserTemplatesError = ApiErrorResponse;
-
-export type InitializeUserTemplatePresetsData =
-  ApiResponsePresetInitializationResult;
-
-export type InitializeUserTemplatePresetsError = ApiErrorResponse;
 
 export interface GetUserTemplateParams {
   /** Template Id */
@@ -3471,22 +3530,6 @@ export interface ListRechargeRecordsAdminApiUsersRechargeRecordsGetParams {
    * Filter by user.userName (partial match)
    */
   userName?: string | null;
-  /**
-   * Days
-   * Recent N days: 7 / 14 / 30
-   * @default 30
-   */
-  days?: number;
-  /**
-   * Start Date
-   * Custom start date YYYY-MM-DD
-   */
-  start_date?: string | null;
-  /**
-   * End Date
-   * Custom end date YYYY-MM-DD
-   */
-  end_date?: string | null;
 }
 
 export type ListRechargeRecordsAdminApiUsersRechargeRecordsGetData = any;
@@ -3529,6 +3572,84 @@ export interface GrantPointsAdminApiUsersUserIdPointsGrantPostParams {
 export type GrantPointsAdminApiUsersUserIdPointsGrantPostData = any;
 
 export type GrantPointsAdminApiUsersUserIdPointsGrantPostError =
+  HTTPValidationError;
+
+export interface ListUserWorkspacesAdminApiUsersUserIdWorkspacesGetParams {
+  /** User Id */
+  userId: string;
+}
+
+export type ListUserWorkspacesAdminApiUsersUserIdWorkspacesGetData = any;
+
+export type ListUserWorkspacesAdminApiUsersUserIdWorkspacesGetError =
+  HTTPValidationError;
+
+export interface ListBillingWorkspacesAdminApiUsersUserIdBillingWorkspacesGetParams {
+  /** User Id */
+  userId: string;
+}
+
+export type ListBillingWorkspacesAdminApiUsersUserIdBillingWorkspacesGetData =
+  any;
+
+export type ListBillingWorkspacesAdminApiUsersUserIdBillingWorkspacesGetError =
+  HTTPValidationError;
+
+export interface ListBillingMembersAdminApiUsersUserIdBillingMembersGetParams {
+  /**
+   * Workspace Id
+   * 工作空间 ID，不传则查全部
+   */
+  workspace_id?: string | null;
+  /** User Id */
+  userId: string;
+}
+
+export type ListBillingMembersAdminApiUsersUserIdBillingMembersGetData = any;
+
+export type ListBillingMembersAdminApiUsersUserIdBillingMembersGetError =
+  HTTPValidationError;
+
+export interface UserDailyPointsAdminApiUsersUserIdStatsDailyPointsGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+  /**
+   * Group By
+   * 分组维度：model（模型）/ caller_id（成员）
+   * @default "model"
+   */
+  group_by?: string;
+  /**
+   * Workspace Id
+   * 工作空间 ID，不传则查全部
+   */
+  workspace_id?: string | null;
+  /**
+   * Member Caller Id
+   * 成员 caller_id，不传则查全部成员
+   */
+  member_caller_id?: string | null;
+  /** User Id */
+  userId: string;
+}
+
+export type UserDailyPointsAdminApiUsersUserIdStatsDailyPointsGetData = any;
+
+export type UserDailyPointsAdminApiUsersUserIdStatsDailyPointsGetError =
   HTTPValidationError;
 
 export interface ListTransactionsAdminApiUsersUserIdTransactionsGetParams {
@@ -3583,6 +3704,36 @@ export interface ListRequestsAdminApiUsersUserIdRequestsGetParams {
 export type ListRequestsAdminApiUsersUserIdRequestsGetData = any;
 
 export type ListRequestsAdminApiUsersUserIdRequestsGetError =
+  HTTPValidationError;
+
+export interface ListConversationsAdminApiUsersUserIdConversationsGetParams {
+  /**
+   * Limit
+   * Page size
+   * @min 1
+   * @max 100
+   * @default 20
+   */
+  limit?: number;
+  /**
+   * Offset
+   * Offset
+   * @min 0
+   * @default 0
+   */
+  offset?: number;
+  /**
+   * Conversation Id
+   * Conversation ID
+   */
+  conversation_id?: string | null;
+  /** User Id */
+  userId: string;
+}
+
+export type ListConversationsAdminApiUsersUserIdConversationsGetData = any;
+
+export type ListConversationsAdminApiUsersUserIdConversationsGetError =
   HTTPValidationError;
 
 export interface ListUploadedFilesAdminApiUsersUserIdFilesGetParams {
@@ -3670,6 +3821,12 @@ export interface ExportConversationMarkdownAdminApiUsersUserIdRequestsExportConv
    * Filter by turn ID
    */
   turn_id?: string | null;
+  /**
+   * Preview
+   * Preview truncated markdown without download
+   * @default false
+   */
+  preview?: boolean;
   /** User Id */
   userId: string;
 }
@@ -3731,6 +3888,29 @@ export type DailyTokensByModelAdminApiStatsDailyTokensByModelGetData = any;
 export type DailyTokensByModelAdminApiStatsDailyTokensByModelGetError =
   HTTPValidationError;
 
+export interface DailyPointsAdminApiStatsDailyPointsGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+}
+
+export type DailyPointsAdminApiStatsDailyPointsGetData = any;
+
+export type DailyPointsAdminApiStatsDailyPointsGetError = HTTPValidationError;
+
 export interface DailyUsageByModelAdminApiStatsDailyUsageByModelGetParams {
   /**
    * Days
@@ -3754,6 +3934,29 @@ export type DailyUsageByModelAdminApiStatsDailyUsageByModelGetData = any;
 
 export type DailyUsageByModelAdminApiStatsDailyUsageByModelGetError =
   HTTPValidationError;
+
+export interface AppEventsAdminApiStatsAppEventsGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+}
+
+export type AppEventsAdminApiStatsAppEventsGetData = any;
+
+export type AppEventsAdminApiStatsAppEventsGetError = HTTPValidationError;
 
 export interface DailyRechargeAdminApiStatsDailyRechargeGetParams {
   /**
@@ -3803,6 +4006,54 @@ export type DailyActiveUsersAdminApiStatsDailyActiveUsersGetData = any;
 export type DailyActiveUsersAdminApiStatsDailyActiveUsersGetError =
   HTTPValidationError;
 
+export interface DailyApiRequestsAdminApiStatsDailyApiRequestsGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+}
+
+export type DailyApiRequestsAdminApiStatsDailyApiRequestsGetData = any;
+
+export type DailyApiRequestsAdminApiStatsDailyApiRequestsGetError =
+  HTTPValidationError;
+
+export interface DailyNewUsersAdminApiStatsDailyNewUsersGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+}
+
+export type DailyNewUsersAdminApiStatsDailyNewUsersGetData = any;
+
+export type DailyNewUsersAdminApiStatsDailyNewUsersGetError =
+  HTTPValidationError;
+
 export interface TopSkillInstallsAdminApiStatsTopSkillInstallsGetParams {
   /**
    * Limit
@@ -3817,6 +4068,28 @@ export interface TopSkillInstallsAdminApiStatsTopSkillInstallsGetParams {
 export type TopSkillInstallsAdminApiStatsTopSkillInstallsGetData = any;
 
 export type TopSkillInstallsAdminApiStatsTopSkillInstallsGetError =
+  HTTPValidationError;
+
+export interface TopTemplateAdditionsAdminApiStatsTopTemplateAdditionsGetParams {
+  /**
+   * Templatetype
+   * 模板类型：script / skill
+   * @default "script"
+   */
+  templateType?: string;
+  /**
+   * Limit
+   * 返回条数
+   * @min 1
+   * @max 100
+   * @default 10
+   */
+  limit?: number;
+}
+
+export type TopTemplateAdditionsAdminApiStatsTopTemplateAdditionsGetData = any;
+
+export type TopTemplateAdditionsAdminApiStatsTopTemplateAdditionsGetError =
   HTTPValidationError;
 
 export interface FailedRequestsAdminApiStatsFailedRequestsGetParams {
@@ -3856,6 +4129,11 @@ export interface FailedRequestsAdminApiStatsFailedRequestsGetParams {
 export type FailedRequestsAdminApiStatsFailedRequestsGetData = any;
 
 export type FailedRequestsAdminApiStatsFailedRequestsGetError =
+  HTTPValidationError;
+
+export type AppVersionUsersAdminApiStatsAppVersionUsersGetData = any;
+
+export type AppVersionUsersAdminApiStatsAppVersionUsersGetError =
   HTTPValidationError;
 
 export interface DownloadConversationAdminApiConversationGetParams {
@@ -4571,9 +4849,9 @@ export interface ListFeedbacksAdminApiFeedbacksGetParams {
   offset?: number;
   /**
    * Status
-   * 按状态过滤：pending/processing/resolved/ignored
+   * 按状态过滤，可重复传入：status=pending&status=processing；也兼容逗号分隔。
    */
-  status?: string | null;
+  status?: string[] | null;
   /**
    * Search
    * 按内容、联系方式模糊搜索
@@ -4659,6 +4937,53 @@ export type ListOssFilesAdminApiOssFilesGetError = HTTPValidationError;
 export type UploadOssFileAdminApiOssFilesUploadPostData = any;
 
 export type UploadOssFileAdminApiOssFilesUploadPostError = HTTPValidationError;
+
+export interface ListRequestLogArchivesAdminApiRequestLogArchivesGetParams {
+  /**
+   * Limit
+   * @min 1
+   * @max 200
+   * @default 20
+   */
+  limit?: number;
+  /**
+   * Offset
+   * @min 0
+   * @default 0
+   */
+  offset?: number;
+  /**
+   * Status
+   * pending|processing|completed|failed
+   */
+  status?: string | null;
+  /**
+   * Log From
+   * 日志时间范围起点 YYYY-MM-DD
+   */
+  log_from?: string | null;
+  /**
+   * Log To
+   * 日志时间范围终点 YYYY-MM-DD
+   */
+  log_to?: string | null;
+}
+
+export type ListRequestLogArchivesAdminApiRequestLogArchivesGetData = any;
+
+export type ListRequestLogArchivesAdminApiRequestLogArchivesGetError =
+  HTTPValidationError;
+
+export interface GetRequestLogArchiveAdminApiRequestLogArchivesArchiveIdGetParams {
+  /** Archive Id */
+  archiveId: number;
+}
+
+export type GetRequestLogArchiveAdminApiRequestLogArchivesArchiveIdGetData =
+  any;
+
+export type GetRequestLogArchiveAdminApiRequestLogArchivesArchiveIdGetError =
+  HTTPValidationError;
 
 export interface ListIpWhitelistAdminApiIpWhitelistGetParams {
   /**

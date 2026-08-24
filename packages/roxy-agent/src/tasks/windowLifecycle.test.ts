@@ -47,8 +47,9 @@ describe('closeTaskBrowserWindows', () => {
 
   it('continues closing remaining windows when one close fails', async () => {
     const closeWindow = vi.fn(async (dirId: string) => {
-      if (dirId === 'window-b')
+      if (dirId === 'window-b') {
         throw new Error('close failed')
+      }
     })
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 

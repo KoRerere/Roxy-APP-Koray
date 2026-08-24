@@ -5,14 +5,17 @@ import {
   AgentConversationApprovalSubmitCommandSchema,
   AgentConversationApprovalSubmitMessageSchema,
   AgentConversationRunAttachmentSchema,
+  AgentConversationRunLocalAttachmentSchema,
   AgentConversationRunStartCommandSchema,
   AgentConversationRunStartMessageSchema,
   AgentConversationRunStopCommandSchema,
   AgentConversationRunStopMessageSchema,
+  AgentExecutionControlCommandSchema,
+  AgentExecutionControlMessageSchema,
 } from './client-messages'
 
 const commandCases: Array<{
-  type: 'conversation.run.start' | 'conversation.run.stop' | 'conversation.approval.submit'
+  type: 'conversation.run.start' | 'conversation.run.stop' | 'conversation.approval.submit' | 'execution.control'
   commandSchema: z.ZodType
   messageSchema: z.ZodType
   data: Record<string, unknown>
@@ -33,7 +36,13 @@ const commandCases: Array<{
     type: 'conversation.approval.submit',
     commandSchema: AgentConversationApprovalSubmitCommandSchema,
     messageSchema: AgentConversationApprovalSubmitMessageSchema,
-    data: { conversationId: 'conversation-1', approvalId: 'approval-1', decisions: [{ type: 'approve' }] },
+    data: { conversationId: 'conversation-1', approvalId: 'approval-1', decisions: [{ type: 'approve' }], fullAccess: true },
+  },
+  {
+    type: 'execution.control',
+    commandSchema: AgentExecutionControlCommandSchema,
+    messageSchema: AgentExecutionControlMessageSchema,
+    data: { executionId: 'run-1', action: 'pause' },
   },
 ]
 
@@ -42,6 +51,17 @@ describe('client channel message schemas', () => {
     expect(AgentConversationRunAttachmentSchema.safeParse({ fileId: 'file-1' }).success).toBe(true)
     expect(AgentConversationRunAttachmentSchema.safeParse({ fileId: '' }).success).toBe(false)
     expect(AgentConversationRunAttachmentSchema.safeParse({ fileId: 'file-1', name: 'extra' }).success).toBe(false)
+  })
+
+  it('validates local run attachments strictly', () => {
+    const attachment = {
+      kind: 'file',
+      fileName: 'screen.png',
+      mimeType: 'image/png',
+      localPath: '/tmp/screen.png',
+    }
+    expect(AgentConversationRunLocalAttachmentSchema.safeParse(attachment).success).toBe(true)
+    expect(AgentConversationRunLocalAttachmentSchema.safeParse({ ...attachment, unexpected: true }).success).toBe(false)
   })
 
   it.each(commandCases)('validates $type command and envelope', ({ type, commandSchema, messageSchema, data }) => {
@@ -57,6 +77,16 @@ describe('client channel message schemas', () => {
       conversationId: 'conversation-1',
       message: '   ',
       attachments: [{ fileId: 'file-1' }],
+    }).success).toBe(true)
+    expect(AgentConversationRunStartCommandSchema.safeParse({
+      conversationId: 'conversation-1',
+      message: '   ',
+      localAttachments: [{
+        kind: 'folder',
+        fileName: 'work',
+        mimeType: 'inode/directory',
+        localPath: '/tmp/work',
+      }],
     }).success).toBe(true)
     expect(AgentConversationRunStartCommandSchema.safeParse({
       conversationId: 'conversation-1',

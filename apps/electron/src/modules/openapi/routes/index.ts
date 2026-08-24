@@ -15,6 +15,8 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/connection_info',
   '/browser/close',
   '/browser/open',
+  '/browser/agent/open',
+  '/browser/agent/open_status',
   '/browser/workspace',
   '/browser/clear_local_cache',
   '/project/list',

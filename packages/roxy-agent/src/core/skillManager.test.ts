@@ -123,6 +123,30 @@ describe('skillManager local Skill index', () => {
       /ambiguous/,
     )
   })
+
+  it('returns runtime Skill manifests with absolute SKILL.md paths', async () => {
+    // Regression: chat-agent created AgentRuntime without SkillManifest data,
+    // so the runtime skill catalog renderer always received an empty list.
+    // Fixed by: exposing local Skill records as runtime manifests and passing
+    // them into AgentRuntime.create.
+    const { dirs, manager } = await createFixture()
+    const skillDir = path.join(dirs.builtinSkillsDir, 'runtime-skill')
+    await writeSkill(skillDir, 'runtime-skill', 'Runtime visible', 'Runtime instructions')
+
+    const manifests = await manager.listRuntimeSkillManifests()
+
+    assert.equal(manifests.length, 1)
+    assert.deepEqual(manifests[0], {
+      name: 'runtime-skill',
+      description: 'Runtime visible',
+      sourcePath: skillDir,
+      bodyPath: path.join(skillDir, 'SKILL.md'),
+      frontmatter: {
+        name: 'runtime-skill',
+        description: 'Runtime visible',
+      },
+    })
+  })
 })
 
 describe('skillManager template installation', () => {
@@ -137,7 +161,7 @@ describe('skillManager template installation', () => {
       slug: 'template-package',
     })
 
-    assert.equal(installed.dirPath, path.join(dirs.installedSkillsDir, 'template-skill'))
+    assert.equal(installed.dirPath, path.join(dirs.installedSkillsDir, 'template-package'))
     assert.equal(installed.ref, 'user:84')
     assert.equal(installed.sha512, 'a'.repeat(128))
     const meta = JSON.parse(await readFile(path.join(installed.dirPath, '.skill_meta.json'), 'utf8'))
@@ -149,6 +173,26 @@ describe('skillManager template installation', () => {
     const resolvedByName = await manager.resolveAvailableSkillFile('template-skill')
     assert.ok(resolvedByName)
     assert.equal(resolvedByName.entry.ref, 'user:84')
+  })
+
+  it('installs template Skills without SHA-512 metadata', async () => {
+    const { dirs, manager } = await createFixture()
+    const sourceDir = path.join(path.dirname(dirs.skillsDir), 'source-skill-without-sha')
+    await writeSkill(sourceDir, 'template-skill', 'Template Skill', 'Version one')
+
+    const installed = await manager.installTemplateSkillFromDir(sourceDir, {
+      templateRef: 'user:84',
+      slug: 'template-package',
+    })
+
+    assert.equal(installed.dirPath, path.join(dirs.installedSkillsDir, 'template-package'))
+    assert.equal(installed.ref, 'user:84')
+    assert.equal(installed.sha512, undefined)
+    const meta = JSON.parse(await readFile(path.join(installed.dirPath, '.skill_meta.json'), 'utf8'))
+    assert.equal(meta.source, 'store')
+    assert.equal(meta.slug, 'template-package')
+    assert.equal(meta.templateRef, 'user:84')
+    assert.equal(meta.sha512, undefined)
   })
 
   it('updates the matching installed package without overwriting the user directory', async () => {

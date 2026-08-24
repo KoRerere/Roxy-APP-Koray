@@ -14,8 +14,9 @@ function parseBlock(block: string): DecodedSseEvent | null {
   const dataLines: string[] = []
 
   for (const line of block.split(/\r?\n/)) {
-    if (!line || line.startsWith(':'))
+    if (!line || line.startsWith(':')) {
       continue
+    }
     if (line.startsWith('event:')) {
       event = line.slice(6).trim()
     }
@@ -29,8 +30,9 @@ function parseBlock(block: string): DecodedSseEvent | null {
   }
 
   const data = dataLines.join('\n')
-  if (!data || data === '[DONE]')
+  if (!data || data === '[DONE]') {
     return null
+  }
 
   try {
     return { event, id, data, value: JSON.parse(data) }
@@ -52,16 +54,18 @@ export class SseDecoder {
       const block = this.buffer.slice(0, match.index)
       this.buffer = this.buffer.slice(match.index + match[0].length)
       const parsed = parseBlock(block)
-      if (parsed)
+      if (parsed) {
         out.push(parsed)
+      }
       match = /\r?\n\r?\n/.exec(this.buffer)
     }
 
     if (flush && this.buffer.trim()) {
       const parsed = parseBlock(this.buffer)
       this.buffer = ''
-      if (parsed)
+      if (parsed) {
         out.push(parsed)
+      }
     }
     return out
   }
@@ -99,7 +103,7 @@ export function legacySseEventToRunEvent(decoded: DecodedSseEvent): AgentRunEven
     case 'planning':
     case 'todo':
     case 'worker_todo':
-      return runEvents.todo(data, workerId)
+      return runEvents.planUpdated(data, workerId)
     case 'tool_call':
       return runEvents.toolStarted({
         toolName: data.toolName ?? 'tool',
@@ -219,8 +223,9 @@ export function decodeLegacySse(content: string): Array<{ event: AgentRunEvent, 
   const decoder = new SseDecoder()
   return decoder.push(content, true).flatMap((item) => {
     const event = legacySseEventToRunEvent(item)
-    if (!event)
+    if (!event) {
       return []
+    }
     const payload = record(item.value)
     const timestamp = Number(payload.timestamp ?? item.id)
     return [{ event, ...(Number.isFinite(timestamp) ? { timestamp } : {}) }]

@@ -12,6 +12,7 @@ import { useAgentStore } from '/@/stores/agent'
 import {
   applyAgentChannelMessage,
   createAgentChannelDedupState,
+  resetAgentChannelMonitorSnapshots,
   replaceTaskExecutionReplays,
   type AgentChannelDataState,
 } from '../agent-channel-state'
@@ -27,6 +28,7 @@ interface AgentChannelState extends AgentChannelDataState {
 
 const RECONNECT_BASE_DELAY_MS = 500
 const RECONNECT_MAX_DELAY_MS = 15_000
+const CONNECTED_WAIT_TIMEOUT_MS = 15_000
 const state = reactive<AgentChannelState>({
   status: 'disconnected',
   taskLogs: [],
@@ -46,7 +48,12 @@ let shouldReconnect = false
 let activeAgentStore: AgentStore | undefined
 let taskExecutionCalibration = 0
 let bufferedTaskExecutionMessages: Array<AgentChannelMessage<'task_execution.event'>> = []
+let recentConversationRunMessages: Array<AgentChannelMessage<'conversation.run.event'>> = []
 const messageListeners = new Set<(message: AgentChannelMessage) => void>()
+const MAX_RECENT_CONVERSATION_RUN_MESSAGES = 500
+let connectedWaitPromise: Promise<void> | undefined
+let connectedWaitTimeout: ReturnType<typeof setTimeout> | undefined
+let rejectConnectedWait: ((reason?: unknown) => void) | undefined
 
 function notifyMessageListeners(message: AgentChannelMessage): void {
   for (const listener of messageListeners) {
@@ -63,7 +70,14 @@ function sendAgentChannelMessage<T extends AgentChannelClientMessageType>(
   type: T,
   data: AgentChannelClientMessageMap[T],
 ): string | undefined {
-  if (state.status !== 'connected' || socket?.readyState !== WebSocket.OPEN)
+  const allowWhileConnecting = type === 'conversation.run.stop'
+    || type === 'conversation.approval.submit'
+    || type === 'execution.control'
+
+  if (socket?.readyState !== WebSocket.OPEN)
+    return undefined
+
+  if (!allowWhileConnecting && state.status !== 'connected')
     return undefined
 
   const id = crypto.randomUUID()
@@ -74,9 +88,70 @@ function sendAgentChannelMessage<T extends AgentChannelClientMessageType>(
   return id
 }
 
+function waitUntilConnected(timeoutMs = CONNECTED_WAIT_TIMEOUT_MS): Promise<void> {
+  if (state.status === 'connected') {
+    return Promise.resolve()
+  }
+  if (state.status === 'disconnected') {
+    return Promise.reject(new Error('Agent WebSocket is not ready'))
+  }
+  if (connectedWaitPromise) {
+    return connectedWaitPromise
+  }
+
+  connectedWaitPromise = new Promise<void>((resolve, reject) => {
+    rejectConnectedWait = reject
+    const stop = watch(
+      () => state.status,
+      (status) => {
+        if (status === 'connected') {
+          cleanup()
+          resolve()
+          return
+        }
+        if (status === 'disconnected') {
+          cleanup()
+          reject(new Error('Agent WebSocket is not ready'))
+        }
+      },
+      { immediate: true },
+    )
+
+    connectedWaitTimeout = setTimeout(() => {
+      cleanup()
+      reject(new Error('Agent WebSocket is not ready'))
+    }, timeoutMs)
+
+    function cleanup() {
+      stop()
+      if (connectedWaitTimeout !== undefined)
+        clearTimeout(connectedWaitTimeout)
+      connectedWaitTimeout = undefined
+      rejectConnectedWait = undefined
+      connectedWaitPromise = undefined
+    }
+  })
+
+  return connectedWaitPromise
+}
+
 function subscribeAgentChannelMessages(listener: (message: AgentChannelMessage) => void): () => void {
   messageListeners.add(listener)
+  for (const message of recentConversationRunMessages) {
+    try {
+      listener(message)
+    }
+    catch (error) {
+      console.error('[agent-channel] Message listener failed:', error)
+    }
+  }
   return () => messageListeners.delete(listener)
+}
+
+function rememberConversationRunMessage(message: AgentChannelMessage<'conversation.run.event'>): void {
+  recentConversationRunMessages.push(message)
+  if (recentConversationRunMessages.length > MAX_RECENT_CONVERSATION_RUN_MESSAGES)
+    recentConversationRunMessages = recentConversationRunMessages.slice(-MAX_RECENT_CONVERSATION_RUN_MESSAGES)
 }
 
 function toWebSocketUrl(serverUrl: string): string {
@@ -197,6 +272,8 @@ function connect(generation: number): void {
         }
         if (!applyAgentChannelMessage(state, dedupState, message))
           return
+        if (message.type === 'conversation.run.event')
+          rememberConversationRunMessage(message)
         if (state.taskExecutionGapDetected) {
           state.lastError = 'Agent WebSocket task execution sequence gap'
           void calibrateTaskExecutions(generation)
@@ -248,7 +325,9 @@ function startAgentChannel(serverUrl: string): void {
   state.taskLogsReady = false
   state.taskExecutionReady = false
   state.taskExecutionGapDetected = false
+  resetAgentChannelMonitorSnapshots(state)
   bufferedTaskExecutionMessages = []
+  recentConversationRunMessages = []
   state.lastError = undefined
   const generation = ++connectionGeneration
   connect(generation)
@@ -266,9 +345,11 @@ function stopAgentChannel(notifyStore = true): void {
   shouldReconnect = false
   boundServerUrl = ''
   perfLog('agent-channel:stop')
+  rejectConnectedWait?.(new Error('Agent WebSocket is not ready'))
   reconnectAttempt = 0
   taskExecutionCalibration++
   bufferedTaskExecutionMessages = []
+  recentConversationRunMessages = []
   connectionGeneration++
   clearReconnectTimer()
   const currentSocket = socket
@@ -285,6 +366,7 @@ export function useAgentChannelState() {
     lastError: computed(() => state.lastError),
     reconnect: reconnectAgentChannel,
     send: sendAgentChannelMessage,
+    waitUntilConnected,
     status: computed(() => state.status),
     subscribe: subscribeAgentChannelMessages,
     taskLogs: computed(() => state.taskLogs),
@@ -292,6 +374,10 @@ export function useAgentChannelState() {
     taskExecutionDetails: computed(() => state.taskExecutionDetails),
     taskExecutionReady: computed(() => state.taskExecutionReady),
     taskMonitorSnapshot: computed(() => state.taskMonitorSnapshot),
+    profileMonitorSnapshot: computed(() => state.profileMonitorSnapshot),
+    executionCenterSnapshot: computed(() => state.executionCenterSnapshot),
+    controlExecution: (executionId: string, action: 'cancel' | 'pause' | 'resume') =>
+      sendAgentChannelMessage('execution.control', { executionId, action }),
   }
 }
 

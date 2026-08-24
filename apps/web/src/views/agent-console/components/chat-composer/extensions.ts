@@ -4,9 +4,23 @@ import { Suggestion } from '@tiptap/suggestion'
 import type { AgentComposerItem, AgentComposerTokenKind } from './types'
 import { tokenToProtocol } from './protocol'
 import { formatAgentProfileDetails, getAgentProfileLabelsFromPayload } from '../../profile-token-display'
+import { getUrlFaviconUrl } from '../../utils/urlFavicon'
 
 export const ComposerLink = Link.extend({
   inclusive: false,
+
+  renderHTML({ HTMLAttributes }) {
+    const faviconUrl = getUrlFaviconUrl(HTMLAttributes.href)
+    const faviconAttributes = faviconUrl
+      ? { 'data-agent-favicon-url': faviconUrl }
+      : {}
+
+    return [
+      'a',
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, faviconAttributes),
+      0,
+    ]
+  },
 
   addAttributes() {
     return {
@@ -20,6 +34,8 @@ export const ComposerLink = Link.extend({
       },
     }
   },
+}).configure({
+  shouldAutoLink: url => /^https?:\/\//i.test(url),
 })
 
 export const AgentToken = Node.create({
@@ -203,34 +219,41 @@ export function normalizeTokenKind(kind: string): AgentComposerTokenKind {
 }
 
 export function getAgentTokenIconName(kind: AgentComposerTokenKind) {
-  if (kind === 'input')
+  if (kind === 'input') {
     return 'roxy-agent/rx-ic-prompts'
+  }
 
-  if (kind === 'url')
+  if (kind === 'url') {
     return 'roxy-agent/rx-ic-url'
+  }
 
-  if (kind === 'profile')
+  if (kind === 'profile') {
     return 'roxy-agent/rx-ic-token-profile'
+  }
 
-  if (kind === 'script')
+  if (kind === 'script') {
     return 'roxy-agent/rx-ic-scripts'
+  }
 
   return 'roxy-agent/rx-ic-skills'
 }
 
 function getAgentTokenLabel(attrs: AgentComposerItem) {
-  if (attrs.kind === 'profile')
+  if (attrs.kind === 'profile') {
     return getProfileTokenCount(attrs) > 0 ? $t('窗口') : $t('选择窗口')
+  }
 
-  if (attrs.kind !== 'input' && attrs.kind !== 'url')
+  if (attrs.kind !== 'input' && attrs.kind !== 'url') {
     return attrs.title
+  }
 
   return attrs.payload.value?.trim() || attrs.title
 }
 
 function getProfileTokenCount(attrs: AgentComposerItem) {
-  if (attrs.kind !== 'profile')
+  if (attrs.kind !== 'profile') {
     return 0
+  }
 
   const targets = attrs.payload.dirIds || attrs.payload.dirId || attrs.id || ''
 
@@ -247,8 +270,9 @@ function getProfileTokenCount(attrs: AgentComposerItem) {
 }
 
 function getProfileTokenDirIds(attrs: AgentComposerItem) {
-  if (attrs.kind !== 'profile')
+  if (attrs.kind !== 'profile') {
     return []
+  }
 
   return (attrs.payload.dirIds || attrs.payload.dirId || attrs.id || '')
     .split(',')

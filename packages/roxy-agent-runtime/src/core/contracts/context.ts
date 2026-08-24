@@ -1,9 +1,15 @@
-import type { Message, SystemBlock } from "./provider.ts";
-import type { SessionId } from "./memory.ts";
+import type { Message } from './provider.ts'
+import type { SessionId } from './memory.ts'
 
 // ---------------------------------------------------------------------------
-// Context Contributors (inject SystemBlocks before each model call)
+// Context Contributors (persist internal developer context at turn start)
 // ---------------------------------------------------------------------------
+
+/** One named context fragment rendered by the runtime inside an XML envelope. */
+export interface ContextContribution {
+  name: string
+  content: string
+}
 
 /**
  * Context available to a contributor when it is asked to inject blocks.
@@ -12,32 +18,33 @@ import type { SessionId } from "./memory.ts";
  * the full history across every contributor call.
  */
 export interface ContributorContext {
-  agentId: string;
-  sessionId: SessionId;
-  traceId: string;
+  agentId: string
+  sessionId: SessionId
+  traceId: string
   /**
    * The most recent messages from the session history (oldest-first, bounded
    * window — default last 10). Use for semantic search: "what is the user
    * working on right now?". Not the full history — callers that need more
    * should query their own store.
    */
-  recentMessages: Message[];
+  recentMessages: Message[]
 }
 
 /**
- * Injects additional {@link SystemBlock}s into the system prompt immediately
- * before each LLM API call.
+ * Supplies additional internal context at the start of a turn.
+ * The runtime XML-escapes each contribution and inserts it as a developer-role
+ * message before the current real user request. Contributor output is appended
+ * to memory and the durable rollout with `visible: false`, allowing
+ * exact replay while presentation layers omit it from user-facing history.
  *
  * Distinct from {@link AgentLifecycleHooks} (fire-and-forget observers):
  * contributors are on the REQUEST PATH — they can inject arbitrary context
  * (retrieved memories, relevant docs, dynamic rules) synchronously to the
  * model call assembly.
  *
- * Multiple contributors are chained in registration order; their blocks are
- * appended AFTER the built-in blocks (base + skill-catalog + summary). Each
- * contributor is awaited in sequence so async retrieval (vector DB, HTTP) is
- * fully supported — but keep latency in mind since this runs on every model
- * call.
+ * Multiple contributors are chained in registration order. Each contributor
+ * is awaited in sequence so async retrieval (vector DB, HTTP) is fully
+ * supported — keep latency in mind since this runs once per turn.
  *
  * Registered either standalone via {@link AgentGraphDeps.contributors} or
  * through a {@link RoxyPlugin} via {@link PluginAPI.addContextContributor}.
@@ -46,10 +53,10 @@ export interface ContributorContext {
  * contributor never crashes the model call.
  *
  * @example
- * // Standalone — inject a static disclaimer block
+ * // Standalone — inject retrieved context
  * const contributor: IContextContributor = {
  *   async contribute() {
- *     return [{ type: "text", text: "Always cite sources." }];
+ *     return [{ name: "retrieved_memory", content: "Prior verified fact." }];
  *   },
  * };
  *
@@ -58,10 +65,10 @@ export interface ContributorContext {
  * api.addContextContributor({
  *   async contribute({ recentMessages }) {
  *     const hits = await vectorDb.search(recentMessages);
- *     return hits.map(h => ({ type: "text", text: `[memory] ${h.text}` }));
+ *     return hits.map(h => ({ name: "retrieved_memory", content: h.text }));
  *   },
  * });
  */
 export interface IContextContributor {
-  contribute(ctx: ContributorContext): Promise<SystemBlock[]>;
+  contribute(ctx: ContributorContext): Promise<ContextContribution[]>
 }

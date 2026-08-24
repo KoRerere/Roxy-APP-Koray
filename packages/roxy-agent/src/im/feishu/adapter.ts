@@ -48,11 +48,13 @@ function isDuplicate(messageId: string): boolean {
   const now = Date.now()
   // 清理过期条目
   for (const [id, ts] of processedMsgIds) {
-    if (now - ts > DEDUP_TTL_MS)
+    if (now - ts > DEDUP_TTL_MS) {
       processedMsgIds.delete(id)
+    }
   }
-  if (processedMsgIds.has(messageId))
+  if (processedMsgIds.has(messageId)) {
     return true
+  }
   processedMsgIds.set(messageId, now)
   return false
 }
@@ -122,8 +124,9 @@ async function handleFeishuMessage(
 ) {
   const msg = data.message
   const sender = data.sender
-  if (!['text', 'image'].includes(msg.message_type))
+  if (!['text', 'image'].includes(msg.message_type)) {
     return
+  }
 
   const senderOpenId: string = sender?.sender_id?.open_id ?? ''
   if (allowedUserIds.size > 0 && !allowedUserIds.has(senderOpenId)) {
@@ -167,10 +170,15 @@ async function handleFeishuMessage(
         fullText += chunk
         await streamer.onChunk(
           chunk,
-          async () => { await updateCard(client, cardMsgId, fullText); return cardMsgId },
-          async () => { await updateCard(client, cardMsgId, fullText) },
+          async () => {
+            await updateCard(client, cardMsgId, fullText)
+            return cardMsgId
+          },
+          async () => {
+            await updateCard(client, cardMsgId, fullText)
+          },
         )
-      }, 'script')
+      })
       await updateCard(client, cardMsgId, fullText || '（无回复）')
     }
     catch (err) {
@@ -209,7 +217,9 @@ async function handleFeishuMessage(
           await updateCard(client, cardMsgId, fullText)
           return cardMsgId
         },
-        async () => { await updateCard(client, cardMsgId, fullText) },
+        async () => {
+          await updateCard(client, cardMsgId, fullText)
+        },
       )
     })
     await updateCard(client, cardMsgId, fullText || '（无回复）')
@@ -244,8 +254,9 @@ async function sendCard(client: lark.Client, chatId: string, text: string): Prom
 }
 
 async function updateCard(client: lark.Client, messageId: string, text: string) {
-  if (!messageId)
+  if (!messageId) {
     return
+  }
   const safeText = normalizeImText(text, {
     maxChars: FEISHU_CARD_MAX_CHARS,
     fallbackText: '（无回复）',
@@ -264,7 +275,7 @@ function buildCard(text: string): object {
 }
 
 async function downloadFeishuImage(client: lark.Client, imageKey: string): Promise<ContentBlock> {
-  const resp = await (client.im.media as any).download({ path: { file_key: imageKey } })
+  const resp = await (client.im as any).media.download({ path: { file_key: imageKey } })
   const buffer = resp instanceof Buffer
     ? resp
     : await streamToBuffer(resp as NodeJS.ReadableStream)
@@ -280,16 +291,19 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 }
 
 function parseList(raw: string): Set<string> {
-  if (!raw)
+  if (!raw) {
     return new Set()
+  }
   return new Set(raw.split(',').map(s => s.trim()).filter(Boolean))
 }
 
 function formatError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
-  if (msg.includes('401'))
+  if (msg.includes('401')) {
     return '❌ API 认证失败，请检查配置。'
-  if (msg.includes('529') || msg.includes('overloaded'))
+  }
+  if (msg.includes('529') || msg.includes('overloaded')) {
     return '⏳ API 繁忙，请稍后重试。'
+  }
   return `❌ 出现错误：${msg.slice(0, 300)}`
 }

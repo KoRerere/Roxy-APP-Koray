@@ -1,8 +1,8 @@
 import type { RunEventHub } from './runEventHub'
-import type { Conversation, Message } from '@/database/conversations'
+import type { Conversation } from '@/database/conversations'
 import type { AgentConversationRunEventDTO, AgentRunTerminalStatus } from '@roxy/shared/channel'
-import fs from 'node:fs'
 import { ChatContextAPI } from '@/database/conversations'
+import { readRolloutEvents } from './rolloutHistory'
 import { runEventHub } from './runEventHub'
 
 interface ConversationRunStateStore {
@@ -12,11 +12,8 @@ interface ConversationRunStateStore {
 
 interface ConversationRunRecoveryStore extends ConversationRunStateStore {
   getConversations: () => Conversation[]
-  getMessagesByConversation: (conversationId: string) => Message[]
   markConversationRead: (conversationId: string, runId: string) => boolean
 }
-
-const PROCESS_EXIT_MESSAGE = 'Agent process exited before the run completed.'
 
 function terminalStatus(item: AgentConversationRunEventDTO): AgentRunTerminalStatus | undefined {
   if (item.event.type === 'run_completed') {
@@ -33,94 +30,47 @@ function terminalStatus(item: AgentConversationRunEventDTO): AgentRunTerminalSta
   return undefined
 }
 
-function findRunMessage(messages: Message[], runId: string): Message | undefined {
-  for (let index = messages.length - 1; index >= 0; index--) {
-    const message = messages[index]
-    if (message.role === 'assistant' && message.metadata?.runId === runId) {
-      return message
-    }
-  }
-  return undefined
-}
-
-function findTerminalEvent(events: AgentConversationRunEventDTO[]): AgentConversationRunEventDTO | undefined {
+function latestRolloutTerminalStatus(conversationId: string): AgentRunTerminalStatus | undefined {
+  const events = readRolloutEvents(conversationId)
   for (let index = events.length - 1; index >= 0; index--) {
-    if (terminalStatus(events[index])) {
-      return events[index]
+    const event = events[index]
+    if (event?.type === 'turn_completed') {
+      return 'completed'
+    }
+    if (event?.type === 'turn_aborted') {
+      return 'cancelled'
+    }
+    if (event?.type === 'turn_failed') {
+      return 'failed'
+    }
+    if (event?.type === 'user_input') {
+      return undefined
     }
   }
   return undefined
-}
-
-function isProcessExitCancellation(item: AgentConversationRunEventDTO | undefined): boolean {
-  return item?.event.type === 'run_cancelled' && item.event.data.reason === 'process_exit'
-}
-
-function appendProcessExitEvent(
-  conversation: Conversation,
-  message: Message | undefined,
-  now: () => number,
-): void {
-  const events = message?.events ?? []
-  const lastEvent = events.at(-1)
-  if (
-    !message?.file_path
-    || !lastEvent
-    || lastEvent.conversationId !== conversation.id
-    || lastEvent.runId !== conversation.latest_run_id
-  ) {
-    return
-  }
-
-  const item: AgentConversationRunEventDTO = {
-    conversationId: conversation.id,
-    runId: lastEvent.runId,
-    turnId: lastEvent.turnId,
-    assistantMessageId: lastEvent.assistantMessageId,
-    sequence: lastEvent.sequence + 1,
-    timestamp: now(),
-    event: {
-      type: 'run_cancelled',
-      data: {
-        reason: 'process_exit',
-        message: PROCESS_EXIT_MESSAGE,
-      },
-    },
-  }
-  fs.appendFileSync(message.file_path, `${JSON.stringify(item)}\n`, 'utf-8')
 }
 
 /**
  * Agent 进程启动时终结上一次进程遗留的 streaming 会话。
  *
- * 这里只补齐运行事件和列表状态，不删除 thread、checkpoint 或会话工作区；用户可以在
- * 同一会话中发起新一轮，并从既有 LangGraph checkpoint 继续。
+ * 这里只补齐列表状态，不删除 thread、checkpoint、rollout 或会话工作区；用户可以在
+ * 同一会话中发起新一轮，并从既有 rollout/checkpoint 继续。
  */
 export function recoverInterruptedConversationRuns(
   store: ConversationRunRecoveryStore = ChatContextAPI,
-  now: () => number = Date.now,
+  _now: () => number = Date.now,
 ): number {
   let recovered = 0
   const conversations = store.getConversations()
 
   for (const conversation of conversations) {
     const runId = conversation.latest_run_id
-    if (conversation.latest_run_status !== 'streaming' || !runId)
+    if (conversation.latest_run_status !== 'streaming' || !runId) {
       continue
-
-    const message = findRunMessage(store.getMessagesByConversation(conversation.id), runId)
-    const existingTerminalEvent = findTerminalEvent(message?.events ?? [])
-    const recoveredStatus = existingTerminalEvent ? terminalStatus(existingTerminalEvent)! : 'cancelled'
-    const shouldMarkRead = !existingTerminalEvent || isProcessExitCancellation(existingTerminalEvent)
-
-    if (!existingTerminalEvent) {
-      try {
-        appendProcessExitEvent(conversation, message, now)
-      }
-      catch (error) {
-        console.warn(`[conversation-run-state] Failed to append process-exit event for ${conversation.id}:`, error)
-      }
     }
+
+    const recoveredStatus = latestRolloutTerminalStatus(conversation.id) ?? 'cancelled'
+    const shouldMarkRead = recoveredStatus === 'cancelled'
 
     // 先标记已读再写终态；即使进程在两次写入之间再次退出，下次启动仍会继续恢复。
     if (shouldMarkRead) {

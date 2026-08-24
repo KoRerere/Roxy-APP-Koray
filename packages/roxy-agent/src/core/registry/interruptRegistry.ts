@@ -5,14 +5,19 @@
  */
 
 export interface InterruptDecision {
-  decisions: Array<{
-    type: 'approve' | 'reject' | 'edit'
-    reason?: string
-    editedAction?: {
-      name: string
-      args: any
+  decisions: Array<
+    | {
+      type: 'approve' | 'reject' | 'edit'
+      reason?: string
+      editedAction?: {
+        name: string
+        args: any
+      }
     }
-  }>
+    | { type: 'answer', answer: string }
+  >
+  /** Switch the current conversation Agent to full access after approval. */
+  fullAccess?: boolean
 }
 
 interface PendingInterrupt {
@@ -36,8 +41,9 @@ export function createInterruptGate(conversationId: string): Promise<InterruptDe
  */
 export function resolveInterrupt(conversationId: string, decision: InterruptDecision): boolean {
   const pending = registry.get(conversationId)
-  if (!pending)
+  if (!pending) {
     return false
+  }
   registry.delete(conversationId)
   pending.resolve(decision)
   return true

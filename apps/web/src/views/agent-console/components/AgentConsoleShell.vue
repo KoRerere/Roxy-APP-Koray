@@ -6,12 +6,12 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useAgentConsoleApi } from '../api'
 import { useAgentChannel } from '../composables/useAgentChannel'
 import { useAgentConsole } from '../composables/useAgentConsole'
-import { provideTaskMonitorContext } from '../composables/useTaskMonitorContext'
+import { provideProfileMonitorContext } from '../composables/useProfileMonitorContext'
 import AgentDeleteConfirmDialog from './AgentDeleteConfirmDialog.vue'
 import AgentSidebar from './AgentSidebar.vue'
 import FeedbackDialog from './dialog/FeedbackDialog.vue'
 import RenameConversationDialog from './dialog/RenameConversationDialog.vue'
-import TaskMonitorPanel from './TaskMonitorPanel.vue'
+import ProfileMonitorPanel from './ProfileMonitorPanel.vue'
 import { perfLog } from '/@/utils/perf-log'
 
 perfLog('agent-shell:setup:start')
@@ -46,12 +46,20 @@ const {
   conversationListLoadingMore,
   isThinking,
   loadMoreConversations,
+  loadEarlierMessages,
   messageList,
+  messageHistoryHasMore,
+  messageHistoryLoading,
   pendingAttachments,
   pendingApprovalConversationIds,
+  profileCount,
   prompt,
+  queuedPrompts,
   removePendingAttachment,
+  removeQueuedPrompt,
   renameConversation,
+  reorderQueuedPrompt,
+  restoreQueuedPrompt,
   runningTaskCount,
   taskGroupList,
   deleteConversation,
@@ -74,7 +82,8 @@ const AGENT_SIDEBAR_MAX_WIDTH = 360
 const CHAT_MIN_WIDTH = 460
 const AGENT_UPDATE_CHECK_INTERVAL_MS = 10 * 60 * 1000
 const taskMonitorOpen = ref(false)
-const taskMonitorAvailable = ref(typeof window === 'undefined' ? true : window.innerWidth >= TASK_MONITOR_MIN_VIEWPORT_WIDTH)
+const taskMonitorViewportAvailable = ref(typeof window === 'undefined' ? true : window.innerWidth >= TASK_MONITOR_MIN_VIEWPORT_WIDTH)
+const taskMonitorAvailable = computed(() => taskMonitorViewportAvailable.value && profileCount.value > 0)
 const taskMonitorVisible = computed(() => taskMonitorOpen.value && taskMonitorAvailable.value)
 const taskMonitorWidth = ref(TASK_MONITOR_DEFAULT_WIDTH)
 const agentSidebarWidth = ref(AGENT_SIDEBAR_DEFAULT_WIDTH)
@@ -82,12 +91,15 @@ const agentConsoleLayoutStyle = computed(() => ({
   '--agent-sidebar-width': `${agentSidebarWidth.value}px`,
   '--task-monitor-width': `${taskMonitorWidth.value}px`,
 }))
-const taskMonitorWindowKeys = computed(() => taskGroupList.value.flatMap(group => group.tasks.map(task => `${group.id}:${task.id}`)))
+const taskMonitorWindowKeys = computed(() => taskGroupList.value.flatMap(group =>
+  group.tasks.filter(task => task.status === 'running').map(task => `${group.id}:${task.id}`),
+))
 
 watch(taskMonitorWindowKeys, (windowKeys, previousWindowKeys) => {
   const previousWindowKeySet = new Set(previousWindowKeys)
-  if (windowKeys.some(windowKey => !previousWindowKeySet.has(windowKey)))
+  if (windowKeys.some(windowKey => !previousWindowKeySet.has(windowKey))) {
     taskMonitorOpen.value = true
+  }
 })
 const route = useRoute()
 const router = useRouter()
@@ -132,8 +144,9 @@ let removeMcpResourceUpdateListener: (() => void) | null = null
 let agentUpdateCheckTimer: ReturnType<typeof setInterval> | null = null
 
 function getTaskMonitorMaxWidth(): number {
-  if (typeof window === 'undefined')
+  if (typeof window === 'undefined') {
     return TASK_MONITOR_MAX_WIDTH
+  }
 
   return Math.max(
     TASK_MONITOR_MIN_WIDTH,
@@ -150,8 +163,9 @@ function resizeTaskMonitorBy(delta: number) {
 }
 
 function getAgentSidebarMaxWidth(): number {
-  if (typeof window === 'undefined')
+  if (typeof window === 'undefined') {
     return AGENT_SIDEBAR_MAX_WIDTH
+  }
 
   const monitorOccupiedWidth = taskMonitorVisible.value ? taskMonitorWidth.value : 0
   return Math.max(
@@ -175,8 +189,9 @@ function stopTaskMonitorResize() {
 }
 
 function startTaskMonitorResize(event: PointerEvent) {
-  if (event.button !== 0)
+  if (event.button !== 0) {
     return
+  }
 
   event.preventDefault()
   stopTaskMonitorResize()
@@ -211,8 +226,9 @@ function stopAgentSidebarResize() {
 }
 
 function startAgentSidebarResize(event: PointerEvent) {
-  if (event.button !== 0)
+  if (event.button !== 0) {
     return
+  }
 
   event.preventDefault()
   stopAgentSidebarResize()
@@ -241,10 +257,11 @@ function startAgentSidebarResize(event: PointerEvent) {
 }
 
 function syncTaskMonitorAvailability(available: boolean) {
-  if (taskMonitorAvailable.value === available)
+  if (taskMonitorViewportAvailable.value === available) {
     return
+  }
 
-  taskMonitorAvailable.value = available
+  taskMonitorViewportAvailable.value = available
 
   if (!available) {
     stopTaskMonitorResize()
@@ -252,9 +269,16 @@ function syncTaskMonitorAvailability(available: boolean) {
   }
 }
 
+watch(taskMonitorAvailable, (available) => {
+  if (!available) {
+    taskMonitorOpen.value = false
+  }
+})
+
 async function restartAgentForUpdate() {
-  if (!globalThis.isElectron || !agentUpdateReady.value || applyingAgentUpdate.value)
+  if (!globalThis.isElectron || !agentUpdateReady.value || applyingAgentUpdate.value) {
     return
+  }
 
   applyingAgentUpdate.value = true
   try {
@@ -282,8 +306,9 @@ async function triggerAgentUpdate(routePath: string) {
 }
 
 async function checkAgentForUpdates() {
-  if (!globalThis.isElectron)
+  if (!globalThis.isElectron) {
     return
+  }
 
   try {
     const data = await checkAgentForUpdatesByIpc()
@@ -306,8 +331,9 @@ async function checkAgentForUpdatesByIpc() {
 }
 
 function handleRestartAgentForUpdate() {
-  if (!agentUpdateReady.value)
+  if (!agentUpdateReady.value) {
     return
+  }
 
   if (!hasRunningAgentActivity.value) {
     void restartAgentForUpdate()
@@ -349,8 +375,9 @@ function isPromptRouteName(routeName: string | symbol | null | undefined) {
 
 function confirmDeleteConversation(conversationId: string) {
   const conversation = conversationList.value.find(item => item.id === conversationId)
-  if (!conversation)
+  if (!conversation) {
     return
+  }
 
   confirm.require({
     group: 'agentConsoleDeleteConfirmDialog',
@@ -366,8 +393,9 @@ function confirmDeleteConversation(conversationId: string) {
 
 function openRenameConversationDialog(conversationId: string) {
   const conversation = conversationList.value.find(item => item.id === conversationId)
-  if (!conversation)
+  if (!conversation) {
     return
+  }
 
   dialog.open(RenameConversationDialog, {
     props: {
@@ -424,14 +452,16 @@ onMounted(() => {
 
   if (globalThis.isElectron) {
     removeMcpNavigateListener = globalThis.electronAPI.on('mcp:navigate', (targetPath) => {
-      if (!targetPath)
+      if (!targetPath) {
         return
+      }
       void router.push(targetPath).catch(() => {})
     })
 
     removeMcpResourceUpdateListener = globalThis.electronAPI.on('mcp:resource-update', (data) => {
-      if (data.type === 'agent')
+      if (data.type === 'agent') {
         agentUpdateInfo.value = data
+      }
     })
 
     void checkAgentForUpdates()
@@ -461,7 +491,7 @@ watch(taskMonitorVisible, () => {
   agentSidebarWidth.value = clampAgentSidebarWidth(agentSidebarWidth.value)
 })
 
-provideTaskMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskCount)
+provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskCount)
 </script>
 
 <template>
@@ -578,7 +608,10 @@ provideTaskMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskCoun
         :composer-focus-key="newChatFocusKey"
         :hitl-request="activeHitlRequest"
         :messages="messageList"
+        :has-earlier-messages="messageHistoryHasMore"
+        :loading-earlier-messages="messageHistoryLoading"
         :pending-attachments="pendingAttachments"
+        :queued-prompts="queuedPrompts"
         :route-title="currentRoute.meta.title"
         :thinking="isThinking"
         :todo-progress="activeTodoProgress"
@@ -586,6 +619,10 @@ provideTaskMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskCoun
         @add-folder="addPendingFolder"
         @add-path-attachment="addPendingPathAttachment"
         @remove-attachment="removePendingAttachment"
+        @remove-queued-prompt="removeQueuedPrompt"
+        @reorder-queued-prompt="reorderQueuedPrompt"
+        @restore-queued-prompt="restoreQueuedPrompt"
+        @load-earlier-messages="loadEarlierMessages"
         @send="sendPrompt"
         @stop="cancelActiveRun"
         @submit-hitl="submitHitl"
@@ -609,7 +646,7 @@ provideTaskMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskCoun
       <component :is="Component" v-else />
     </RouterView>
 
-    <TaskMonitorPanel
+    <ProfileMonitorPanel
       v-if="taskMonitorVisible && !isSettingsLayout"
       :groups="taskGroupList"
       :max-width="getTaskMonitorMaxWidth()"

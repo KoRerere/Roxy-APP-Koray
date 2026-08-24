@@ -8,10 +8,12 @@ const originalEnvType = process.env.ENV_TYPE
 
 afterEach(() => {
   vi.resetModules()
-  if (originalEnvType === undefined)
+  if (originalEnvType === undefined) {
     delete process.env.ENV_TYPE
-  else
+  }
+  else {
     process.env.ENV_TYPE = originalEnvType
+  }
 })
 
 it('maps session browser output and script workdirs to their owning data roots', () => {
@@ -22,6 +24,10 @@ it('maps session browser output and script workdirs to their owning data roots',
   assert.equal(paths.exitStateFile, path.join(home, 'exit_state'))
   assert.equal(paths.tasksDir, path.join(home, 'state', 'tasks'))
   assert.equal(paths.tasksDb, path.join(home, 'state', 'tasks', 'tasks.db'))
+
+  assert.equal(paths.memoryDir, path.join(home, 'memory'))
+  assert.equal(paths.memoryIndexFile, path.join(home, 'memory', 'MEMORY.md'))
+  assert.equal(paths.memoryFile('browser-paths'), path.join(home, 'memory', 'browser-paths.md'))
 
   assert.equal(paths.sessionBrowserDir('session/1'), path.join(home, 'sessions', 'session_1', 'browser'))
   assert.equal(paths.sessionBrowserScreenshotsDir('session/1'), path.join(home, 'sessions', 'session_1', 'browser', 'screenshots'))
@@ -35,10 +41,11 @@ it('maps session browser output and script workdirs to their owning data roots',
   assert.equal(paths.workdirRunLogFile('daily/report', 'run/1', date), path.join(home, 'workdir', 'daily_report', 'logs', '2026-07-15', 'run_1.log'))
 
   assert.equal(paths.runtimeLogDir(date), path.join(home, 'logs', '2026', '07-15'))
+  assert.equal(paths.agentExecutionLogFile(date), path.join(home, 'logs', '2026', '07-15', 'agent.jsonl'))
+  assert.equal(paths.workerExecutionLogFile(1234, date), path.join(home, 'logs', '2026', '07-15', 'worker-1234.jsonl'))
   assert.equal(paths.agentLogFile(date), path.join(home, 'logs', '2026', '07-15', 'agent.log'))
   assert.equal(paths.workerLogFile('worker-1', date), path.join(home, 'logs', '2026', '07-15', 'worker-1.log'))
-  assert.equal(paths.agentPerfmonLogFile(date), path.join(home, 'logs', '2026', '07-15', 'agent-perfmon.log'))
-  assert.equal(paths.workerPerfmonLogFile('worker-1', date), path.join(home, 'logs', '2026', '07-15', 'worker-1-perfmon.log'))
+  assert.equal(paths.migrationLogFile('2026-07-15T10-20-30-000Z'), path.join(home, 'logs', '2026', '07-15', 'migration-2026-07-15T10-20-30-000Z.log'))
 })
 
 it('creates agent paths with production root when ENV_TYPE is production', async () => {

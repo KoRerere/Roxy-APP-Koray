@@ -1,4 +1,8 @@
 import { Buffer } from 'node:buffer'
+import fs from 'node:fs'
+import path from 'node:path'
+import type { AgentConversationRunStartCommand } from '@roxy/shared/channel'
+import type { ImageBlock, Message, TextBlock } from 'roxy-agent-runtime'
 import { fileManager, resolveFileMimeType } from '@/core/fileManager'
 import { agentPaths } from '@/core/storage/agentPaths'
 import { FileRecordStore } from '@/database/conversations'
@@ -14,6 +18,11 @@ const INLINE_TEXT_MIME_TYPES = new Set([
 
 const MAX_FILE_SIZE_MB = 100
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
+const MAX_INLINE_IMAGE_SIZE_MB = 32
+const MAX_INLINE_IMAGE_SIZE = MAX_INLINE_IMAGE_SIZE_MB * 1024 * 1024
+const VISION_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+
+type LocalAttachmentRef = NonNullable<AgentConversationRunStartCommand['localAttachments']>[number]
 
 export function normalizeMimeType(mimeType: string) {
   return mimeType.split(';')[0].trim().toLowerCase()
@@ -130,6 +139,130 @@ function getAttachmentFilePath(fileId: string) {
   return fileManager.getLocalPath(fileId)
 }
 
+function resolveImageMimeType(mimeType: string): string | undefined {
+  const normalized = normalizeMimeType(mimeType)
+  const canonical = normalized === 'image/jpg' ? 'image/jpeg' : normalized
+  return VISION_IMAGE_MIME_TYPES.has(canonical) ? canonical : undefined
+}
+
+/**
+ * Builds the visible user turn. Image attachments only contribute base64 image
+ * blocks and never append attachment-description text to the user's prompt.
+ */
+function readLocalImageBlock(att: LocalAttachmentRef): ImageBlock | undefined {
+  const imageMimeType = resolveImageMimeType(att.mimeType)
+  if (!imageMimeType) {
+    return undefined
+  }
+  if (att.kind !== 'file' || !path.isAbsolute(att.localPath)) {
+    throw new Error(`Invalid local image attachment path: ${att.localPath}`)
+  }
+
+  const stats = fs.statSync(att.localPath)
+  if (!stats.isFile()) {
+    throw new Error(`Local image attachment is not a file: ${att.localPath}`)
+  }
+  if (stats.size > MAX_INLINE_IMAGE_SIZE) {
+    throw new Error(`Image size exceeds ${MAX_INLINE_IMAGE_SIZE_MB}MB limit: ${att.fileName}`)
+  }
+
+  return {
+    type: 'image',
+    data: fs.readFileSync(att.localPath).toString('base64'),
+    mimeType: imageMimeType,
+  }
+}
+
+export function buildUserMessageContent(
+  message: string,
+  attachments: AttachmentRef[],
+  localAttachments: LocalAttachmentRef[] = [],
+): Message['content'] {
+  const content: Array<TextBlock | ImageBlock> = []
+  if (message?.trim()) {
+    content.push({ type: 'text', text: message.trim() })
+  }
+
+  for (const att of attachments) {
+    const imageMimeType = resolveImageMimeType(att.mimeType)
+    if (!imageMimeType) {
+      continue
+    }
+    if (!att.fileId || !fileManager.exists(att.fileId)) {
+      console.warn(`Attachment file not found: ${att.fileId}`)
+      continue
+    }
+
+    content.push({
+      type: 'image',
+      data: fileManager.readBuffer(att.fileId).toString('base64'),
+      mimeType: imageMimeType,
+    })
+  }
+
+  for (const att of localAttachments) {
+    const imageBlock = readLocalImageBlock(att)
+    if (imageBlock) {
+      content.push(imageBlock)
+    }
+  }
+
+  return content
+}
+
+/** Builds one hidden user message containing every non-image attachment. */
+export function buildNonImageAttachmentContent(attachments: AttachmentRef[]): string {
+  const chunks: string[] = []
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
+
+  for (const att of attachments) {
+    if (resolveImageMimeType(att.mimeType)) {
+      continue
+    }
+    const filePath = getAttachmentFilePath(att.fileId)
+    if (!att.fileId || !fileManager.exists(att.fileId)) {
+      console.warn(`Attachment file not found: ${att.fileId}`)
+      continue
+    }
+
+    if (INLINE_TEXT_MIME_TYPES.has(normalizeMimeType(att.mimeType))) {
+      const text = fileManager.readBuffer(att.fileId).toString('utf-8')
+      chunks.push(isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}`)
+      continue
+    }
+
+    chunks.push(isZh
+      ? `[附件] 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`
+      : `[attachment] filename: ${att.fileName}, local path: ${filePath}, type: ${att.mimeType}`,
+    )
+  }
+
+  return chunks.join('\n\n')
+}
+
+/** Builds hidden context for Electron-selected local files and folders. */
+export function buildLocalAttachmentContent(attachments: LocalAttachmentRef[] = []): string {
+  const chunks: string[] = []
+  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
+
+  for (const att of attachments) {
+    if (resolveImageMimeType(att.mimeType)) {
+      continue
+    }
+
+    chunks.push(att.kind === 'folder'
+      ? (isZh
+          ? `[目录] 名称: ${att.fileName}, 本地路径: ${att.localPath}`
+          : `[folder] name: ${att.fileName}, local path: ${att.localPath}`)
+      : (isZh
+          ? `[文件] 名称: ${att.fileName}, 本地路径: ${att.localPath}`
+          : `[file] name: ${att.fileName}, local path: ${att.localPath}`),
+    )
+  }
+
+  return chunks.join('\n')
+}
+
 function asRemoteFileUrl(url?: string) {
   return url && /^https?:\/\//i.test(url) ? url : undefined
 }
@@ -137,8 +270,9 @@ function asRemoteFileUrl(url?: string) {
 export async function resolveAttachmentRemoteUrl(att: AttachmentRef) {
   // 前端回传的远程 URL 可信，优先复用；否则交给 FileManager（按 hash 去重 / 上传 / 回填）
   const direct = asRemoteFileUrl(att.remoteUrl) || asRemoteFileUrl(att.fileUrl)
-  if (direct)
+  if (direct) {
     return direct
+  }
   return fileManager.resolveRemoteUrl(att.fileId)
 }
 
@@ -192,29 +326,14 @@ export async function hydrateAttachmentFileUrls(
  */
 export function buildMessageContentAsPlainText(message: string, attachments: AttachmentRef[]): string {
   const chunks: string[] = []
-  const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
 
   if (message?.trim()) {
     chunks.push(message.trim())
   }
 
-  for (const att of attachments) {
-    const filePath = getAttachmentFilePath(att.fileId)
-    if (!att.fileId || !fileManager.exists(att.fileId)) {
-      console.warn(`Attachment file not found: ${att.fileId}`)
-      continue
-    }
-
-    if (INLINE_TEXT_MIME_TYPES.has(normalizeMimeType(att.mimeType))) {
-      const text = fileManager.readBuffer(att.fileId).toString('utf-8')
-      chunks.push(isZh ? `[文件: ${att.fileName}]\n${text}` : `[file: ${att.fileName}]\n${text}`)
-    }
-    else {
-      chunks.push(isZh
-        ? `[附件] 文件名: ${att.fileName}, 本地路径: ${filePath}, 类型: ${att.mimeType}`
-        : `[attachment] filename: ${att.fileName}, local path: ${filePath}, type: ${att.mimeType}`,
-      )
-    }
+  const attachmentContent = buildNonImageAttachmentContent(attachments)
+  if (attachmentContent) {
+    chunks.push(attachmentContent)
   }
 
   return chunks.join('\n\n')

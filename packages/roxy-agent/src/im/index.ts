@@ -1,8 +1,7 @@
 import { API } from '../api'
 import { IMBridge } from './core/IMBridge.js'
-import { startDiscordAdapter } from './discord/adapter.js'
+// import { startDiscordAdapter } from './discord/adapter.js'
 import { startFeishuAdapter } from './feishu/adapter.js'
-import { startSlackAdapter } from './slack/adapter.js'
 import { startTelegramAdapter } from './telegram/adapter.js'
 import { startWeixinAdapter } from './weixin/adapter.js'
 
@@ -99,24 +98,13 @@ async function startIMServiceIfEnabledInner(): Promise<boolean> {
     }))
   }
 
-  if (config.SLACK_BOT_TOKEN && config.SLACK_SIGNING_SECRET) {
-    const slackBridge = new IMBridge('slack')
-    await safeStartAdapter('Slack', () => startSlackAdapter(slackBridge, {
-      botToken: config.SLACK_BOT_TOKEN!,
-      signingSecret: config.SLACK_SIGNING_SECRET!,
-      appToken: config.SLACK_APP_TOKEN,
-      allowedUserIds: config.SLACK_ALLOWED_USER_IDS || '',
-      allowedChannelIds: config.SLACK_ALLOWED_CHANNEL_IDS || '',
-    }))
-  }
-
-  if (config.DISCORD_BOT_TOKEN) {
-    const discordBridge = new IMBridge('discord')
-    await safeStartAdapter('Discord', () => startDiscordAdapter(discordBridge, {
-      botToken: config.DISCORD_BOT_TOKEN!,
-      allowedUserIds: config.DISCORD_ALLOWED_USER_IDS || '',
-    }))
-  }
+  // if (config.DISCORD_BOT_TOKEN) {
+  //   const discordBridge = new IMBridge('discord')
+  //   await safeStartAdapter('Discord', () => startDiscordAdapter(discordBridge, {
+  //     botToken: config.DISCORD_BOT_TOKEN!,
+  //     allowedUserIds: config.DISCORD_ALLOWED_USER_IDS || '',
+  //   }))
+  // }
 
   if (config.WECHAT_BOT_TOKEN) {
     const weixinBridge = new IMBridge('weixin')

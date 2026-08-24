@@ -1,5 +1,5 @@
 import type { AgentErrorEnvelope } from '@/core/agentError'
-import type { AgentRunEvent, AgentRunEventMap } from '@roxy/shared/channel'
+import type { AgentClarificationQuestion, AgentRunEvent, AgentRunEventMap } from '@roxy/shared/channel'
 import { runEvents } from './events'
 
 export type StreamEvent = AgentRunEvent
@@ -9,6 +9,7 @@ export const streamEvents = {
     return runEvents.thinking(text, thinkingId, workerId)
   },
   thinkingCompleteEvent(data: {
+    id?: string
     thinkingId: string
     startTimestamp: number
     endTimestamp: number
@@ -19,6 +20,7 @@ export const streamEvents = {
     const { taskId, workerId, ...timing } = data
     return runEvents.thinkingCompleted({
       ...timing,
+      id: data.id ?? data.thinkingId,
       ...((workerId ?? taskId) ? { workerId: workerId ?? taskId } : {}),
     })
   },
@@ -33,7 +35,8 @@ export const streamEvents = {
   },
   workerResultEvent(data: {
     taskId: string
-    status: 'success' | 'failed'
+    dispatchId?: string
+    status: 'success' | 'failed' | 'cancelled' | 'timeout'
     exitCode?: number | null
     signal?: NodeJS.Signals | null
     error?: unknown
@@ -41,6 +44,7 @@ export const streamEvents = {
   }) {
     return runEvents.workerCompleted({
       workerId: data.taskId,
+      ...(data.dispatchId ? { dispatchId: data.dispatchId } : {}),
       status: data.status,
       exitCode: data.exitCode,
       signal: data.signal,
@@ -50,7 +54,8 @@ export const streamEvents = {
   },
   workerResult(data: {
     taskId: string
-    status: 'success' | 'failed'
+    dispatchId?: string
+    status: 'success' | 'failed' | 'cancelled' | 'timeout'
     exitCode?: number | null
     signal?: NodeJS.Signals | null
     error?: unknown
@@ -68,10 +73,13 @@ export const streamEvents = {
   workerStopped(data: { taskId: string, error: string }) {
     return this.workerStoppedEvent(data)
   },
-  workerDispatchEvent(data: { taskId: string, title: string }) {
-    return runEvents.workerDispatched(data.taskId, data.title)
+  agentLifecycle(data: AgentRunEventMap['agent_lifecycle']) {
+    return runEvents.agentLifecycle(data)
   },
-  workerDispatch(data: { taskId: string, title: string }) {
+  workerDispatchEvent(data: { taskId: string, title: string, dispatchId?: string }) {
+    return runEvents.workerDispatched(data.taskId, data.title, data.dispatchId)
+  },
+  workerDispatch(data: { taskId: string, title: string, dispatchId?: string }) {
     return this.workerDispatchEvent(data)
   },
   retryEvent(data: { id?: string, attempt: number, maxAttempts: number, reason?: string, workerId?: string }) {
@@ -103,6 +111,7 @@ export const streamEvents = {
     taskId?: string
     toolId?: string
     assignmentsCount?: number
+    patchType?: 'create' | 'update' | 'delete' | 'mixed'
     skillName?: string
     skillFilePath?: string
     target?: string
@@ -112,6 +121,7 @@ export const streamEvents = {
       input: data.args,
       toolId: data.toolId,
       workerId: data.taskId,
+      patchType: data.patchType,
       assignmentsCount: data.assignmentsCount,
       skillName: data.skillName,
       skillFilePath: data.skillFilePath,
@@ -135,11 +145,11 @@ export const streamEvents = {
       status: data.status,
     })
   },
-  todoEvent(data: unknown) {
-    return runEvents.todo(data)
+  planUpdatedEvent(data: unknown) {
+    return runEvents.planUpdated(data)
   },
-  workerTodoEvent(workerId: string, data: unknown) {
-    return runEvents.todo(data, workerId)
+  workerPlanUpdatedEvent(workerId: string, data: unknown) {
+    return runEvents.planUpdated(data, workerId)
   },
   title(title: string) {
     return runEvents.title(title)
@@ -157,17 +167,67 @@ export const streamEvents = {
       decisions: data.decisions,
     })
   },
-  scriptLogEvent(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string, workerId?: string }) {
+  clarificationRequest(data: {
+    clarificationId: string
+    questions?: AgentClarificationQuestion[]
+    question?: string
+    options?: string[]
+  }) {
+    const firstQuestion = data.questions?.[0]
+    const controls = firstQuestion
+      ? []
+      : data.options?.length
+      ? [{
+          id: 'answer',
+          kind: 'choice',
+          required: true,
+          options: data.options.map((option, index) => ({
+            id: `option-${index + 1}`,
+            label: option,
+            value: option,
+            variant: 'secondary',
+          })),
+        }]
+      : [
+          {
+            id: 'answer',
+            kind: 'textarea',
+            label: '回答',
+            required: true,
+            placeholder: '请输入回答',
+          },
+          {
+            id: 'submit',
+            kind: 'choice',
+            required: true,
+            options: [{ id: 'submit', label: '提交', value: true, variant: 'primary' }],
+          },
+        ]
+    return runEvents.approvalRequested({
+      approvalId: data.clarificationId,
+      actionRequests: [],
+      reviewConfigs: [],
+      requestKind: 'clarification',
+      title: '需要您的输入',
+      prompt: firstQuestion?.question ?? data.question,
+      subjects: [],
+      controls,
+      values: { answer: null },
+      ...(data.questions ? { questions: data.questions } : {}),
+    })
+  },
+  scriptLogEvent(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string, dirId?: string, workerId?: string }) {
     return runEvents.scriptOutput({
       scriptName: data.scriptName,
       level: data.level,
       message: data.message,
       toolId: data.toolId,
       scriptRunId: data.runId,
+      dirId: data.dirId,
       workerId: data.workerId,
     })
   },
-  scriptLog(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string, workerId?: string }) {
+  scriptLog(data: { scriptName?: string, level: string, message: string, toolId?: string, runId?: string, dirId?: string, workerId?: string }) {
     return this.scriptLogEvent(data)
   },
   agentFile(data: {
@@ -187,6 +247,9 @@ export const streamEvents = {
   },
   tokenUsage(data: AgentRunEventMap['token_usage']) {
     return runEvents.tokenUsage(data)
+  },
+  contextCompacted(data: AgentRunEventMap['context_compacted']) {
+    return runEvents.contextCompacted(data)
   },
   done(finalAnswer?: string) {
     return runEvents.completed(finalAnswer)

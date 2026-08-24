@@ -3,7 +3,7 @@ import type {
   ClarificationResult,
   IClarificationHandler,
   PendingClarification,
-} from "../core/interfaces.ts";
+} from '../core/interfaces.ts'
 
 /**
  * Auto-responds to every clarification with an empty answer. Use in:
@@ -17,7 +17,7 @@ import type {
  */
 export class NullClarificationHandler implements IClarificationHandler {
   async request(_req: ClarificationRequest): Promise<ClarificationResult> {
-    return { answer: "" };
+    return { answer: '' }
   }
 }
 
@@ -39,30 +39,36 @@ export class NullClarificationHandler implements IClarificationHandler {
  */
 export class SuspendingClarificationHandler implements IClarificationHandler {
   /** Wired by AgentImpl at construction; UIs may chain onto it. */
-  onPending?: (pending: PendingClarification) => void;
-  private readonly defaultTimeoutMs?: number;
+  onPending?: (pending: PendingClarification) => void
+  private readonly defaultTimeoutMs?: number
 
   constructor(opts: { timeoutMs?: number } = {}) {
-    this.defaultTimeoutMs = opts.timeoutMs;
+    this.defaultTimeoutMs = opts.timeoutMs
   }
 
   request(req: ClarificationRequest): Promise<ClarificationResult> {
-    if (!this.onPending) return Promise.resolve({ answer: "" });
+    if (!this.onPending) {
+      return Promise.resolve({ answer: '' })
+    }
     return new Promise((resolve) => {
-      let settled = false;
-      let timer: NodeJS.Timeout | undefined;
+      let settled = false
+      let timer: NodeJS.Timeout | undefined
       const finish = (result: ClarificationResult): void => {
-        if (settled) return;
-        settled = true;
-        if (timer) clearTimeout(timer);
-        resolve(result);
-      };
-      const timeoutMs = req.timeoutMs ?? this.defaultTimeoutMs;
-      if (timeoutMs !== undefined && timeoutMs > 0) {
-        timer = setTimeout(() => finish({ answer: "" }), timeoutMs);
+        if (settled) {
+          return
+        }
+        settled = true
+        if (timer) {
+          clearTimeout(timer)
+        }
+        resolve(result)
       }
-      this.onPending!({ traceId: req.traceId, request: req, resume: finish });
-    });
+      const timeoutMs = req.timeoutMs ?? this.defaultTimeoutMs
+      if (timeoutMs !== undefined && timeoutMs > 0) {
+        timer = setTimeout(() => finish({ answer: '' }), timeoutMs)
+      }
+      this.onPending!({ traceId: req.traceId, request: req, resume: finish })
+    })
   }
 }
 
@@ -73,21 +79,21 @@ export class SuspendingClarificationHandler implements IClarificationHandler {
  * async I/O. Throws if the queue is exhausted.
  */
 export class ScriptedClarificationHandler implements IClarificationHandler {
-  private readonly queue: string[];
-  readonly calls: ClarificationRequest[] = [];
+  private readonly queue: string[]
+  readonly calls: ClarificationRequest[] = []
 
   constructor(answers: string[]) {
-    this.queue = [...answers];
+    this.queue = [...answers]
   }
 
   async request(req: ClarificationRequest): Promise<ClarificationResult> {
-    this.calls.push(req);
-    const answer = this.queue.shift();
+    this.calls.push(req)
+    const answer = this.queue.shift()
     if (answer === undefined) {
       throw new Error(
         `ScriptedClarificationHandler: no scripted answer for call #${this.calls.length} ("${req.question}")`,
-      );
+      )
     }
-    return { answer };
+    return { answer }
   }
 }

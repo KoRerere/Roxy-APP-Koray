@@ -5,6 +5,10 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useAgentConsoleApi } from '../api'
 import { readUserTaskPage } from '../task-manager'
 import {
+  getAgentSkillInstalledRoot,
+  setAgentSkillInstalledRoot,
+} from '../components/chat-composer/templateItems'
+import {
   buildTemplateTaskComposerPrompt,
   getRunnableTemplateKind,
 } from '../template-task-execution'
@@ -56,6 +60,16 @@ export function useTemplateTaskExecution(prompt: Ref<string>) {
         showToast(0, $t('任务已开始'))
         await router.push({ name: 'agent-console-task-manager', query: route.query })
         return true
+      }
+
+      if (kind === 'skill' && !getAgentSkillInstalledRoot()) {
+        try {
+          const info = await agentApi.skillPathInfo()
+          setAgentSkillInstalledRoot(info.installedRoot)
+        }
+        catch (error) {
+          console.error('Failed to load Skill installed root', error)
+        }
       }
 
       const composerPrompt = buildTemplateTaskComposerPrompt(template, task)

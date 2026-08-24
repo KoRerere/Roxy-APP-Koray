@@ -194,4 +194,35 @@ export const browserListMappingV3 = {
   updateTime: '2023-12-04 21:56:01', // 窗口修改时间, str类型
   userName: 'roxytest', // 窗口归属人用户名,即用户账号, str类型
   workspaceName: 'Roxytest', // 团队名称, str类型
+  projectId: 4, // 项目ID, int类型
+  projectName: 'Roxytest', // 项目名称, str类型
+  labelInfo: [
+    {
+      labelId: 859, // 标签ID，int类型
+      labelName: 'Roxytest', // 标签名称，str类型
+      labelColor: '#FC9D12', // 标签颜色，str类型
+    },
+  ], // 标签详细信息，List类型
+  isOften: false, // 是否收藏，true：是，false：否，布尔类型
+  proxyInfo: {
+    proxyMethod: 'custom', // 代理方式，枚举值：手动填写：custom，选择代理资源：choose，API接入：api，str类型
+    proxyCategory: 'noproxy', // 代理类型，枚举值：noproxy, HTTP, HTTPS, SOCKS5, SSH, str类型
+    ipType: 'IPV4', // 网络协议, 枚举值：IPV4, IPV6，str类型
+    protocol: 'SOCKS5', // 代理协议，枚举值：HTTP, HTTPS, SOCKS5，str类型
+    host: '122.11.11.11', // 代理主机，str类型
+    port: '37746', // 代理端口，str类型
+    proxyUserName: 'roxytest', // 代理账号，str类型
+    proxyPassword: 'roxytest', // 代理密码，str类型
+    refreshUrl: 'http://refresh-hk.roxybrowser.com', // 刷新URL，str类型
+    lastIp: '119.1.2.3', // 出口IP，str类型
+    lastCountry: 'CN', // 出口国家，str类型
+    checkChannel: 'http://iprust.io/ip.json', // IP查询渠道，str类型
+  },
+  windowPlatformList: [{
+    platformUrl: 'https://www.tiktok.com/', // 业务平台URL，str类型
+    platformUserName: 'Roxytest', // 平台账号，str类型
+    platformPassword: 'Roxytest', // 平台密码，str类型
+    platformEfa: '2F3CD67B6D', // efa，str类型
+    platformRemarks: 'Roxytest', // 平台备注，str类型
+  }],
 }

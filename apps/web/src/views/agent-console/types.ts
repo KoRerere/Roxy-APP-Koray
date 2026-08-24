@@ -1,7 +1,10 @@
 import type { SvgNames } from '/@/components/rx-icon'
 import type { RouteLocationRaw } from 'vue-router'
 import type {
+  AgentClarificationQuestion,
   AgentConversationRunEventDTO,
+  AgentProfileMonitorProfile,
+  AgentProfileMonitorSnapshot,
   AgentTaskMonitorBrowserSession,
   AgentTaskMonitorEventStage,
   AgentTaskMonitorSnapshot,
@@ -9,6 +12,8 @@ import type {
   AgentTaskMonitorTask,
 } from '@roxy/shared/channel'
 import type { AgentErrorData } from './utils/agent-error'
+
+export type { AgentClarificationQuestion } from '@roxy/shared/channel'
 
 export type AgentNavId
   = | 'new-chat'
@@ -26,7 +31,7 @@ export type AgentMessageStatus = 'thinking' | 'streaming' | 'done' | 'error'
 
 export type AgentRunStatus = 'queued' | 'streaming' | 'completed' | 'failed' | 'cancelled'
 
-export type AgentTaskStatus = 'running' | 'queued' | 'completed' | 'failed'
+export type AgentTaskStatus = 'running' | 'idle' | 'queued' | 'completed' | 'failed'
 
 export type AgentTaskSourceType = AgentTaskMonitorSourceType
 
@@ -35,13 +40,15 @@ export type AgentTaskEventStage = AgentTaskMonitorEventStage
 export type AgentProcessEventType
   = | 'thinking'
     | 'tool_call'
-    | 'parallel_dispatch'
-    | 'worker_task'
+    | 'agent_lifecycle'
     | 'skill_load'
     | 'content'
     | 'final_answer'
     | 'script_log'
+    | 'context_compacted'
+    | 'retrying'
     | 'agent_file'
+    | 'hitl'
 
 export type AgentProcessEventStatus = 'pending' | 'running' | 'success' | 'failed'
 
@@ -112,6 +119,7 @@ export interface AgentAttachment {
 
 export interface AgentConversationProcess {
   id: string
+  revision?: number
   completed?: boolean
   durationLabel?: string
   durationState?: 'thinking' | 'processed'
@@ -134,26 +142,37 @@ export interface AgentThinkingProcessEvent extends AgentProcessBaseEvent {
   type: 'thinking'
   title: string
   content: string
+  durationStartedAt?: number
+  durationEndedAt?: number
+  durationMs?: number
 }
 
 export interface AgentToolCallProcessEvent extends AgentProcessBaseEvent {
   type: 'tool_call'
   toolName: string
+  finished?: boolean
   label?: string
   target?: string
+  patchType?: 'create' | 'update' | 'delete' | 'mixed'
+  input?: unknown
+  output?: unknown
+  durationMs?: number
 }
 
-export interface AgentParallelDispatchProcessEvent extends AgentProcessBaseEvent {
-  type: 'parallel_dispatch'
-  title: string
-  count: number
-  tasks: AgentWorkerTaskProcessEvent[]
-}
-
-export interface AgentWorkerTaskProcessEvent extends AgentProcessBaseEvent {
-  type: 'worker_task'
-  title: string
+export interface AgentLifecycleProcessEvent extends AgentProcessBaseEvent {
+  type: 'agent_lifecycle'
+  renderRevision?: number
+  agentPath: string
+  parentAgentPath?: string
+  agentName: string
+  agentType: string
+  lifecycleStatus: 'starting' | 'running' | 'completed' | 'failed' | 'cancelled'
+  startedAt?: number
+  finishedAt?: number
+  report?: string
+  error?: string
   events: AgentProcessEvent[]
+  children: AgentLifecycleProcessEvent[]
 }
 
 export interface AgentSkillLoadProcessEvent extends AgentProcessBaseEvent {
@@ -179,8 +198,46 @@ export interface AgentScriptLogLine {
 
 export interface AgentScriptLogProcessEvent extends AgentProcessBaseEvent {
   type: 'script_log'
+  toolId?: string
+  scriptRunId?: string
+  dirId?: string
   scriptName?: string
   lines: AgentScriptLogLine[]
+}
+
+export interface AgentContextCompactedProcessEvent extends AgentProcessBaseEvent {
+  type: 'context_compacted'
+  title: string
+  compactedCount: number
+  summary?: string
+}
+
+export interface AgentRetryProcessEvent extends AgentProcessBaseEvent {
+  type: 'retrying'
+  title: string
+  attempt: number
+  maxAttempts: number
+  reason?: string
+}
+
+export interface AgentHitlClarificationAnswer {
+  id: string
+  question: string
+  answer: string
+  recommended: boolean
+}
+
+export interface AgentHitlProcessEvent extends AgentProcessBaseEvent {
+  type: 'hitl'
+  title: string
+  prompt: string
+  description?: string
+  detail?: string
+  requestKind?: 'approval' | 'clarification'
+  clarificationQuestionCount?: number
+  clarificationQuestions?: AgentClarificationQuestion[]
+  clarificationAnswers?: AgentHitlClarificationAnswer[]
+  approvalId?: string
 }
 
 export interface AgentFileArtifact {
@@ -199,13 +256,15 @@ export interface AgentFileProcessEvent extends AgentProcessBaseEvent {
 export type AgentProcessEvent
   = | AgentThinkingProcessEvent
     | AgentToolCallProcessEvent
-    | AgentParallelDispatchProcessEvent
-    | AgentWorkerTaskProcessEvent
+    | AgentLifecycleProcessEvent
     | AgentSkillLoadProcessEvent
     | AgentContentProcessEvent
     | AgentFinalAnswerProcessEvent
     | AgentScriptLogProcessEvent
+    | AgentContextCompactedProcessEvent
+    | AgentRetryProcessEvent
     | AgentFileProcessEvent
+    | AgentHitlProcessEvent
 
 export interface AgentRun {
   id: string
@@ -265,7 +324,8 @@ export interface AgentHitlSubject {
   title: string
   name?: string
   description?: string
-  input?: Record<string, unknown>
+  input?: unknown
+  diff?: string
 }
 
 export interface AgentHitlRequest {
@@ -279,6 +339,7 @@ export interface AgentHitlRequest {
   subjects: AgentHitlSubject[]
   controls: AgentHitlControl[]
   values: Record<string, AgentHitlControlValue>
+  clarificationQuestions?: AgentClarificationQuestion[]
   source?: {
     kind: 'legacy-agent-interrupt' | 'agent-hitl'
     payload?: unknown
@@ -288,6 +349,8 @@ export interface AgentHitlRequest {
 export interface AgentHitlSubmitPayload {
   requestId: string
   values: Record<string, AgentHitlControlValue>
+  /** Continue this run with all subsequent tool calls in full-access mode. */
+  fullAccess?: boolean
 }
 
 export interface AgentTask {
@@ -321,6 +384,7 @@ export interface AgentTaskGroup {
   browserCount?: number
   lastActivityAt?: number
   tasks: AgentTask[]
+  kind?: 'running' | 'idle'
 }
 
 export interface AgentTaskEvent {
@@ -341,11 +405,22 @@ export interface AgentTaskEvent {
 export type TaskMonitorBrowserSessionDTO = AgentTaskMonitorBrowserSession
 export type TaskMonitorTaskDTO = AgentTaskMonitorTask
 export type TaskMonitorSnapshotDTO = AgentTaskMonitorSnapshot
+export type ProfileMonitorProfileDTO = AgentProfileMonitorProfile
+export type ProfileMonitorSnapshotDTO = AgentProfileMonitorSnapshot
 
 export interface AgentConversationDraft {
   conversationId: string
   prompt: string
   attachments: AgentAttachment[]
+}
+
+export interface AgentQueuedPrompt {
+  id: string
+  conversationId: string
+  content: string
+  draftContent?: string
+  attachments?: AgentAttachment[]
+  createdAt: number
 }
 
 export type AgentTodoItemStatus = 'pending' | 'in_progress' | 'completed'
@@ -370,6 +445,7 @@ export interface AgentConsoleState {
   conversationIds: string[]
   conversationsById: Record<string, AgentConversation>
   draftsByConversationId: Record<string, AgentConversationDraft>
+  queuedPromptsByConversationId: Record<string, AgentQueuedPrompt[]>
   messagesByConversationId: Record<string, AgentMessage[]>
   runsById: Record<string, AgentRun>
   streamsByRunId: Record<string, AgentStream>

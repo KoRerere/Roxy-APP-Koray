@@ -3,11 +3,11 @@ import { AbortError } from './registry/abortRegistry'
 /**
  * Agent 错误归一化。
  *
- * 背景：agent-server 通过 LangChain（ChatOpenAI / ChatAnthropic / ChatMoonshot / ChatGoogle）
+ * 背景：agent-server 通过 runtime provider 访问上游模型
  * 请求上游的 `llm-proxy`（见 src/config.ts 的 aiAgentUrl）。上游遵循 docs/error_codes.md 定义的
  * 错误信封：`{ code, message, data: { source, category, retryable, request_id, ... } }`。
  *
- * 但 LangChain 把上游错误包成普通 Error 抛出，信封往往只残留在 `error.error`（SDK 解析后的 body）
+ * SDK 可能把上游错误包成普通 Error，信封往往只残留在 `error.error`（解析后的 body）
  * 或 `error.message` 内的 JSON 片段里。本模块负责把任意抛出的错误收敛为统一的
  * {@link AgentErrorEnvelope}，前端只需依赖稳定的 `code` 分支、用 `requestId` 上报。
  */
@@ -74,13 +74,16 @@ export class AgentUpstreamError extends Error {
 
 /** 用户取消 / 客户端断开。这类错误不应作为「错误」呈现，调用方通常单独处理。 */
 export function isAbortLike(error: unknown): boolean {
-  if (AbortError.isAbortError(error))
+  if (AbortError.isAbortError(error)) {
     return true
+  }
   const err = error as { name?: string, message?: string } | null
-  if (!err)
+  if (!err) {
     return false
-  if (err.name === 'AbortError' || err.name === 'APIUserAbortError')
+  }
+  if (err.name === 'AbortError' || err.name === 'APIUserAbortError') {
     return true
+  }
   return typeof err.message === 'string' && /\b(?:abort(?:ed)?|user cancelled|cancell?ed)\b/i.test(err.message)
 }
 
@@ -105,25 +108,28 @@ const NETWORK_MESSAGE_RE = /\b(?:terminated|fetch failed|other side closed|socke
  * 判定是否为「传输层网络中断」错误（如 SSE 流被上游/中间设备提前掐断导致 undici `TypeError: terminated`）。
  *
  * 这类错误既无 HTTP 状态码也无业务错误信封，区别于业务/鉴权/限流等可归类错误，应作为**可重试的瞬时网络错误**
- * 处理。供 modelRetry 中间件的 `retryOn` 与 {@link normalizeAgentError} 共用，保证「重试判定」与「错误归类」口径一致。
+ * 处理。供 runtime provider retry 与 {@link normalizeAgentError} 共用，保证「重试判定」与「错误归类」口径一致。
  *
  * 用户主动取消 / 客户端断开（abort）**不算**网络中断，绝不重试。
  */
 export function isNetworkError(error: unknown): boolean {
-  if (isAbortLike(error))
+  if (isAbortLike(error)) {
     return false
+  }
 
   let cur: any = error
   const seen = new Set<any>()
   while (cur && typeof cur === 'object' && !seen.has(cur)) {
     seen.add(cur)
     const code = typeof cur.code === 'string' ? cur.code : undefined
-    if (code && NETWORK_ERROR_CODES.has(code))
+    if (code && NETWORK_ERROR_CODES.has(code)) {
       return true
+    }
     const message = typeof cur.message === 'string' ? cur.message : ''
-    if (message && NETWORK_MESSAGE_RE.test(message))
+    if (message && NETWORK_MESSAGE_RE.test(message)) {
       return true
-    // 沿 cause 链下探（LangChain 的 MiddlewareError 把底层 undici 错误包在 cause 里）
+    }
+    // 沿 cause 链下探，兼容底层 HTTP client 的错误包装
     cur = cur.cause
   }
   return false
@@ -197,33 +203,38 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function firstString(...values: unknown[]): string | undefined {
   for (const value of values) {
-    if (typeof value === 'string' && value.trim())
+    if (typeof value === 'string' && value.trim()) {
       return value
+    }
   }
   return undefined
 }
 
 function firstNumber(...values: unknown[]): number | undefined {
   for (const value of values) {
-    if (typeof value === 'number' && Number.isFinite(value))
+    if (typeof value === 'number' && Number.isFinite(value)) {
       return value
-    if (typeof value === 'string' && /^\d+$/.test(value.trim()))
+    }
+    if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
       return Number(value)
+    }
   }
   return undefined
 }
 
 /**
- * 从 message 里抠出嵌入的 JSON 片段。LangChain 常把上游响应拼成
+ * 从 message 里抠出嵌入的 JSON 片段。上游 SDK 常把响应拼成
  * `"402 {\"code\":\"insufficient_points\",...}"` 这种字符串抛出。
  */
 function parseEmbeddedJson(message: string | undefined): Record<string, unknown> | undefined {
-  if (!message)
+  if (!message) {
     return undefined
+  }
   const start = message.indexOf('{')
   const end = message.lastIndexOf('}')
-  if (start === -1 || end <= start)
+  if (start === -1 || end <= start) {
     return undefined
+  }
   try {
     const parsed = JSON.parse(message.slice(start, end + 1))
     return isRecord(parsed) ? parsed : undefined
@@ -255,8 +266,9 @@ function extractEnvelope(candidate: unknown): {
   data?: Record<string, unknown>
   upstreamError?: Record<string, unknown>
 } | undefined {
-  if (!isRecord(candidate))
+  if (!isRecord(candidate)) {
     return undefined
+  }
 
   // 标准信封：顶层 code + data
   if (typeof candidate.code === 'string' && isRecord(candidate.data)) {
@@ -312,7 +324,7 @@ export function normalizeAgentError(error: unknown): AgentErrorEnvelope {
     }
   }
 
-  // 传输层网络中断：modelRetry 重试耗尽后仍抛出的 terminated 等错误，归一为可重试的 network_interrupted，
+  // 传输层网络中断：重试耗尽后仍抛出的 terminated 等错误，归一为可重试的 network_interrupted，
   // 前端据此展示「网络异常，请稍后重试」而非迷惑的「内部错误」。须先于信封/状态码解析，因其无信封无状态码。
   if (isNetworkError(error)) {
     return {
